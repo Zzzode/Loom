@@ -2008,6 +2008,11 @@ TEST(Tools, RuntimeComputerUseDispatchesInputActionsToProvider) {
     using namespace cc::core::computer_use;
 
     RuntimeComputerUseProviderGuard guard;
+    // On Apple the native manager returns a post-action screenshot even for
+    // plain input actions, so the computer_use path encodes through the
+    // orchestration-installed image codec port. Linux's default capture is
+    // empty (no screenshot), so this is a no-op there but required for mac.
+    FileToolServicesGuard codec_guard;
     std::vector<ComputerAction> actions;
     cc::tools::set_runtime_computer_use_input_provider_for_testing(
         [&](const ComputerAction& action) -> std::expected<void, std::string> {

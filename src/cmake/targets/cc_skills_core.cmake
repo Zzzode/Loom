@@ -3,6 +3,7 @@ add_library(cc_skills_core)
 target_sources(cc_skills_core
     PUBLIC FILE_SET CXX_MODULES FILES
         skills/skill.cppm
+        skills/file_access_port.cppm
 )
 target_link_libraries(cc_skills_core
     PUBLIC

@@ -35,7 +35,7 @@ import cc.utils.file_read_cache;
 import cc.utils.string_utils;
 import cc.utils.path;
 import cc.tools.sed_edit_parser;
-import cc.skills.skill;
+import cc.skills.file_access.port;
 
 export namespace cc::tools::file_edit {
 

@@ -14,7 +14,7 @@ import cc.services.image;
 import cc.tools.tool;
 import cc.tools.notebook;
 import cc.utils.json;
-import cc.skills.skill;
+import cc.skills.file_access.port;
 
 export namespace cc::tools::file_read {
 

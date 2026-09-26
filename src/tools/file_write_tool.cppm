@@ -10,7 +10,7 @@ import cc.utils.file;
 import cc.utils.error;
 import cc.tools.tool;
 import cc.utils.json;
-import cc.skills.skill;
+import cc.skills.file_access.port;
 
 export namespace cc::tools::file_write {
 

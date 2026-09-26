@@ -25,7 +25,8 @@ import cc.tools.team;
 import cc.tools.mcp;
 import cc.tools.sleep;
 import cc.tools.web_fetch;
-import cc.skills.skill;
+// RFC-0001 B10 — dead `import cc.skills.skill;` deleted: the file-access
+// hook move unmasked it (zero cc.skills references in this TU).
 import cc.utils.team_helpers;
 import cc.services.api.client;
 import cc.services.api.streaming;

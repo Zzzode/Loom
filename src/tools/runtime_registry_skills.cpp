@@ -1,5 +1,6 @@
 // Implementation unit for cc.tools.runtime_registry — the skill loader
-// executor, the runtime tool-name list, and tool_search.
+// executor slot, the terminal manual SKILL.md fallback, the runtime
+// tool-name list, and tool_search.
 module;
 
 #include <cstdlib>  // std::getenv("HOME") in execute_skill_tool
@@ -9,8 +10,7 @@ module cc.tools.runtime_registry;
 import std;
 
 import cc.tools.tool;
-import cc.skills.skill;
-import cc.tools.agent_runtime;
+import cc.tools.runtime_backends.port;
 import cc.tools.feature_flags;
 import cc.utils.json;
 
@@ -26,26 +26,9 @@ namespace fs = std::filesystem;
     auto name = json_string(input.json(), "name").or_else([&] { return json_string(input.json(), "skill"); });
     if (!name || name->empty()) return ToolResult::error("skill requires name");
 
-    cc::skills::SkillLoader loader;
-    if (const char* home = std::getenv("HOME")) {
-        loader.add_search_path(fs::path{home} / ".codex" / "skills");
-        loader.add_search_path(fs::path{home} / ".agents" / "skills");
-    }
-    loader.add_search_path(fs::current_path() / "skills");
-
-    std::vector<std::pair<std::string, fs::path>> plugin_skill_paths;
-    for (const auto& plugin : cc::tools::agent_runtime::discover_plugin_component_paths()) {
-        for (const auto& path : plugin.skills_paths) {
-            plugin_skill_paths.emplace_back(plugin.plugin_name, path);
-        }
-    }
-    auto discovered = loader.discover_all_with_plugin_skills(plugin_skill_paths);
-    if (discovered) {
-        for (const auto& skill : *discovered) {
-            if (skill.name == *name) return ToolResult::success(skill.content);
-        }
-    }
-
+    // Terminal fallback for when no orchestration-installed SkillLoader
+    // executor claimed the skill (hermetic binaries, unset deployments):
+    // walk the well-known skill roots for a <name>/SKILL.md file directly.
     std::vector<fs::path> roots;
     if (const char* home = std::getenv("HOME")) {
         roots.push_back(fs::path{home} / ".codex" / "skills");
@@ -192,9 +175,23 @@ namespace fs = std::filesystem;
     return ToolResult::success(out);
 }
 
+[[nodiscard]] std::optional<SkillLoaderExecutor>& skill_loader_executor_override() {
+    // Function-local slot: no static-init ordering dependency, single anchor.
+    static std::optional<SkillLoaderExecutor> slot;
+    return slot;
+}
+
 } // namespace cc::tools::detail
 
 namespace cc::tools {
+
+void set_skill_loader_executor(SkillLoaderExecutor executor) {
+    detail::skill_loader_executor_override() = std::move(executor);
+}
+
+void clear_skill_loader_executor() {
+    detail::skill_loader_executor_override().reset();
+}
 
 [[nodiscard]] std::vector<std::string> runtime_tool_names() {
     return detail::runtime_tool_names_impl();

@@ -383,22 +383,27 @@ struct RuntimeComputerUseProviderGuard {
     }
 };
 
-// RFC-0001 B11: the image codec is a process-global function-local static
-// installed by cc::orchestration::install_runtime_backends() (std::call_once;
-// safe for the per-request server threads). Every test that reads an image
-// or PDF through Read, or exercises a computer_use screenshot/base64 path,
-// installs the real services-backed codec for its duration and clears the
-// slot in the destructor so later cases stay hermetic. The constructor
-// installs directly as well: call_once makes a repeat install a no-op after
-// a previous guard's destructor cleared the slot.
+// RFC-0001 B11/B12: the image codec and the SkillLoader skill executor are
+// process-global function-local statics installed by
+// cc::orchestration::install_runtime_backends() (std::call_once; safe for
+// the per-request server threads). Every test that reads an image or PDF
+// through Read, exercises a computer_use screenshot/base64 path, or relies
+// on SkillLoader directory/plugin discovery installs the real
+// services-backed backends for its duration and clears the slots in the
+// destructor so later cases stay hermetic. The constructor installs
+// directly as well: call_once makes a repeat install a no-op after a
+// previous guard's destructor cleared the slots.
 struct FileToolServicesGuard {
     FileToolServicesGuard() {
         cc::orchestration::install_runtime_backends();
         cc::tools::image_codec::set_codec(
             cc::orchestration::make_image_codec());
+        cc::tools::set_skill_loader_executor(
+            cc::orchestration::make_skill_loader_executor());
     }
     ~FileToolServicesGuard() {
         cc::tools::image_codec::clear_codec();
+        cc::tools::clear_skill_loader_executor();
     }
 };
 
@@ -4114,6 +4119,10 @@ Inspect the patch before reporting findings.
 }
 
 TEST(Tools, AgentToolLoadsPluginAgentsAndPluginSkills) {
+    // RFC-0001 B12: the 'plugin-fixture:review-skill' skill execution below
+    // goes through the orchestration-installed SkillLoader executor (plugin
+    // component discovery runs per call against this test's cwd).
+    FileToolServicesGuard services_guard;
     auto root = fs::temp_directory_path() / "loom_plugin_agent_skills_test";
     fs::remove_all(root);
     const auto plugin_root = root / ".loom" / "plugins" / "plugin-fixture";
@@ -4272,6 +4281,62 @@ Use the plugin review checklist.
     }
 
     ASSERT_TRUE(cc::tools::sync_native_mcp_servers({}).has_value());
+    fs::remove_all(root);
+}
+
+// RFC-0001 B12: with NO orchestration-installed SkillLoader executor, the
+// 'skill' dispatch falls through to the terminal manual SKILL.md walk kept
+// in cc_tools. This test deliberately instantiates NO FileToolServicesGuard
+// (the process-global executor slot is unset), proving cc_tools stays
+// self-contained for hermetic binaries.
+TEST(Tools, SkillToolFallsBackToManualWalkWithoutExecutor) {
+    // Distinctive body: pins that success comes from the manual SKILL.md walk
+    // (which returns the file content), not a leaked executor returning nullopt
+    // or an empty success.
+    static constexpr std::string_view kManualWalkBody =
+        "B12-MANUAL-WALK-MARKER: manual skill fallback body v1";
+    auto root = fs::temp_directory_path() / "loom_skill_manual_walk_test";
+    fs::remove_all(root);
+    fs::create_directories(root / "skills" / "b12-manual-walk-skill");
+    {
+        std::ofstream skill(root / "skills" / "b12-manual-walk-skill" / "SKILL.md");
+        skill << kManualWalkBody;
+    }
+
+    cc::core::ToolRegistry registry;
+    cc::tools::register_runtime_tools(registry);
+
+    CurrentPathGuard cwd(root);
+
+    auto found = registry.execute("skill", cc::core::ToolInput::from_json(R"({
+      "name": "b12-manual-walk-skill"
+    })"));
+    ASSERT_TRUE(found.has_value());
+    EXPECT_FALSE(found->is_error);
+    ASSERT_FALSE(found->content.empty());
+    // The simple resolver accepts any non-empty SKILL.md too; the body pin is
+    // what proves the request was serviced from this exact fixture (a leaked
+    // executor returning nullopt still lands in the same walk, but an empty or
+    // different-content success can no longer satisfy the test).
+    EXPECT_EQ(found->content.front().text, kManualWalkBody);
+
+    auto missing = registry.execute("skill", cc::core::ToolInput::from_json(R"({
+      "name": "b12-no-such-skill-fixture"
+    })"));
+    ASSERT_TRUE(missing.has_value());
+    ASSERT_TRUE(missing->is_error);
+    ASSERT_FALSE(missing->content.empty());
+    EXPECT_NE(missing->content.front().text.find(
+                  "Skill not found: b12-no-such-skill-fixture"),
+              std::string::npos);
+
+    auto unnamed = registry.execute("skill", cc::core::ToolInput::from_json(R"({})"));
+    ASSERT_TRUE(unnamed.has_value());
+    ASSERT_TRUE(unnamed->is_error);
+    ASSERT_FALSE(unnamed->content.empty());
+    EXPECT_NE(unnamed->content.front().text.find("skill requires name"),
+              std::string::npos);
+
     fs::remove_all(root);
 }
 

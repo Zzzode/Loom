@@ -42,6 +42,9 @@ target_sources(cc_tools
         tools/powershell_tool.cppm
         tools/repl_tool.cppm
         tools/runtime_computer_use.cppm
+        # RFC-0001 B12 — unified runtime-backends seam (cc_orchestration
+        # installs the concrete SkillLoader-backed skill executor).
+        tools/runtime_backends_port.cppm
         tools/runtime_message_delivery.cppm
         tools/runtime_registry.cppm
         tools/runtime_shared_utils.cppm

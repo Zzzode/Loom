@@ -223,6 +223,16 @@ using cc::core::ToolResult;
         // error (so tools that pass "name" only still work).
         auto simple = cc::tools::skill::execute_skill_tool_simple(input.json());
         if (simple) return ToolResult::success(*simple);
+        // RFC-0001 B12: the concrete SkillLoader discovery (HOME roots,
+        // cwd/skills, plugin components) is an orchestration-installed
+        // executor. std::nullopt means it did not claim the skill — fall
+        // through to the terminal manual SKILL.md walk in execute_skill_tool.
+        if (auto& skill_executor = skill_loader_executor_override();
+            skill_executor) {
+            if (auto executed = (*skill_executor)(input)) {
+                return std::move(*executed);
+            }
+        }
         return execute_skill_tool(input);
     }
     if (name == "sleep") {

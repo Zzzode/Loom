@@ -33,6 +33,7 @@ import cc.tools.web_browser;
 import cc.tools.runtime_message_delivery;
 import cc.tools.runtime_team_shared;
 import cc.tools.runtime_shared_utils;
+import cc.tools.runtime_backends.port;
 import cc.utils.json;
 
 export namespace cc::tools {
@@ -308,6 +309,15 @@ struct ComputerUseCommandBackendResult {
 inline std::optional<cc::core::computer_use::CaptureProvider> computer_use_capture_provider_override;
 inline std::optional<cc::core::computer_use::InputProvider> computer_use_input_provider_override;
 
+// Process-wide SkillLoader executor installed by cc_orchestration. The
+// concrete cc::skills::SkillLoader-backed implementation lives above the
+// tools layer (cc.tools.runtime_backends.port); when the slot is unset the
+// 'skill' dispatch falls through to the terminal manual SKILL.md walk in
+// execute_skill_tool. The function-local slot and the setter/clearer are
+// anchored in runtime_registry_skills.cpp (impl unit) so this frozen
+// interface gains no inline bodies.
+[[nodiscard]] std::optional<SkillLoaderExecutor>& skill_loader_executor_override();
+
 } // namespace detail
 
 // Definitions in runtime_registry_computer_use.cpp.
@@ -320,6 +330,13 @@ void set_runtime_computer_use_input_provider_for_testing(
     cc::core::computer_use::InputProvider provider);
 
 void clear_runtime_computer_use_input_provider_for_testing();
+
+// SkillLoader executor override; the concrete cc::skills::SkillLoader-backed
+// executor is built and installed by cc_orchestration at process startup.
+// Definitions in runtime_registry_skills.cpp.
+void set_skill_loader_executor(SkillLoaderExecutor executor);
+
+void clear_skill_loader_executor();
 
 namespace detail {
 

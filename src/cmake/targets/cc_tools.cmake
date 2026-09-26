@@ -131,7 +131,6 @@ target_link_libraries(cc_tools
         cc_config
         cc_services
         cc_skills_core
-        cc_hooks
         yyjson
         uv_a
 )

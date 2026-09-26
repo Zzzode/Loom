@@ -50,7 +50,6 @@ target_link_libraries(cc_hooks
         cc_config
         cc_state
         cc_context
-        cc_services
         cc_vim
         uv_a
 )

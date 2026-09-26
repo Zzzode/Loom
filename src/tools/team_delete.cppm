@@ -8,7 +8,7 @@ import std;
 
 import cc.tools.tool;
 import cc.tools.runtime_registry;
-import cc.tools.agent;
+import cc.tools.agent_types;
 import cc.tools.team;
 import cc.utils.json;
 import cc.utils.error;

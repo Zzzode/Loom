@@ -16,7 +16,7 @@ export module cc.tools.runtime_registry;
 import std;
 
 import cc.tools.tool;
-import cc.tools.agent;
+import cc.tools.agent_types;
 import cc.tools.agent_runtime;
 import cc.tools.bash;
 import cc.tools.computer_use;
@@ -411,8 +411,8 @@ constexpr auto try_start_native_agent_resume = &runtime_message_delivery::try_st
 
 using cc::core::SchemaProperty;
 using cc::core::ToolPermission;
-using cc::tools::agent::AgentLivePermissionCheck;
-using cc::tools::agent::AgentLivePermissionCheckFn;
+using cc::tools::AgentLivePermissionCheck;
+using cc::tools::AgentLivePermissionCheckFn;
 
 struct RuntimeToolOptions {
     std::optional<std::string> parent_permission_mode;

@@ -49,4 +49,40 @@ inline auto parse_agent_type(std::string_view str) -> std::optional<AgentType> {
     return std::nullopt;
 }
 
+// Agent Configuration
+// =========================================================================
+
+struct AgentConfig {
+    int max_turns = 200;           // Max agentic loop iterations
+    int max_depth = 3;             // Max recursive agent nesting depth
+    std::string default_model = "claude-sonnet-4-20250514";
+    std::vector<std::string> allowed_tools;  // Empty = inherit all from parent
+    std::vector<std::string> denied_tools;   // Explicitly blocked tools for sub-agents
+    std::optional<std::string> parent_agent_id;
+    std::optional<std::string> parent_permission_mode;
+    bool prefer_in_process_teammate = false;
+};
+
+struct AgentLivePermissionCheck {
+    bool allowed = true;
+    std::optional<std::string> updated_input_json;
+    std::optional<std::string> message;
+};
+
+using AgentLivePermissionCheckFn = std::function<AgentLivePermissionCheck(
+    std::string_view tool_name,
+    std::string_view input_json,
+    std::string_view tool_use_id
+)>;
+
 } // namespace cc::tools
+
+// Re-export the DTOs under the agent namespace spelling so importers that
+// name them cc::tools::agent::X can depend on this zero-service leaf alone.
+export namespace cc::tools::agent {
+
+using cc::tools::AgentConfig;
+using cc::tools::AgentLivePermissionCheck;
+using cc::tools::AgentLivePermissionCheckFn;
+
+} // namespace cc::tools::agent

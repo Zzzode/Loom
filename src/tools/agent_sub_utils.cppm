@@ -9,6 +9,7 @@ import std;
 import cc.utils.json;
 import cc.tools.tool;
 import cc.tools.agent_runtime;
+import cc.tools.agent_types;
 import cc.tools.mcp;
 // Team / MemberRole (cc.tools.team), AgentColor (cc.utils.swarm_backends)
 // and SkillDefinition (cc.skills.skill) are named in declarations kept in
@@ -34,29 +35,14 @@ using cc::services::api::ContentBlockType;
 
 // Agent Configuration
 // =========================================================================
+// The AgentConfig / AgentLivePermissionCheck(Fn) DTOs live in the
+// zero-service-dependency leaf cc.tools.agent_types; re-export them under
+// the agent::utils spelling so the agent subtree keeps resolving without
+// touching its using-declarations.
 
-struct AgentConfig {
-    int max_turns = 200;           // Max agentic loop iterations
-    int max_depth = 3;             // Max recursive agent nesting depth
-    std::string default_model = "claude-sonnet-4-20250514";
-    std::vector<std::string> allowed_tools;  // Empty = inherit all from parent
-    std::vector<std::string> denied_tools;   // Explicitly blocked tools for sub-agents
-    std::optional<std::string> parent_agent_id;
-    std::optional<std::string> parent_permission_mode;
-    bool prefer_in_process_teammate = false;
-};
-
-struct AgentLivePermissionCheck {
-    bool allowed = true;
-    std::optional<std::string> updated_input_json;
-    std::optional<std::string> message;
-};
-
-using AgentLivePermissionCheckFn = std::function<AgentLivePermissionCheck(
-    std::string_view tool_name,
-    std::string_view input_json,
-    std::string_view tool_use_id
-)>;
+using cc::tools::AgentConfig;
+using cc::tools::AgentLivePermissionCheck;
+using cc::tools::AgentLivePermissionCheckFn;
 
 [[nodiscard]] std::string json_escape_string(std::string_view value);
 

@@ -30,17 +30,20 @@ constexpr auto task_status_name(TaskStatus s) -> std::string_view {
     }
 }
 
-// Agent specialization types
-enum class AgentType {
+// Agent specialization types for task execution. Named TaskAgentType: the
+// unqualified cc::tools::AgentType spelling belongs to the agent DTO leaf
+// cc.tools.agent_types (Explore/Plan/Verify/...), and the two attached
+// enums could never be imported by one translation unit together.
+enum class TaskAgentType {
     Search,
     GeneralPurpose,
 };
 
-constexpr auto agent_type_name(AgentType t) -> std::string_view {
+constexpr auto agent_type_name(TaskAgentType t) -> std::string_view {
     switch (t) {
-        case AgentType::Search:         return "search";
-        case AgentType::GeneralPurpose: return "general_purpose";
-        default:                        return "unknown";
+        case TaskAgentType::Search:         return "search";
+        case TaskAgentType::GeneralPurpose: return "general_purpose";
+        default:                            return "unknown";
     }
 }
 
@@ -77,7 +80,7 @@ struct Task {
     std::string id;
     std::string description;
     TaskStatus status{TaskStatus::Pending};
-    AgentType agent_type{AgentType::GeneralPurpose};
+    TaskAgentType agent_type{TaskAgentType::GeneralPurpose};
     std::optional<std::string> result;
     std::optional<std::string> error_message;
     std::string output;
@@ -93,7 +96,7 @@ public:
 
     TaskStore() = default;
 
-    auto create(std::string id, std::string description, AgentType type)
+    auto create(std::string id, std::string description, TaskAgentType type)
         -> std::expected<Task*, TaskError>
     {
         if (id.empty()) return std::unexpected(TaskError::IdEmpty);
@@ -207,8 +210,8 @@ inline TaskStore& global_task_store() {
     return TaskStatus::Pending;
 }
 
-[[nodiscard]] inline AgentType native_task_agent_type(std::string_view agent_type) {
-    return agent_type == "search" ? AgentType::Search : AgentType::GeneralPurpose;
+[[nodiscard]] inline TaskAgentType native_task_agent_type(std::string_view agent_type) {
+    return agent_type == "search" ? TaskAgentType::Search : TaskAgentType::GeneralPurpose;
 }
 
 [[nodiscard]] inline std::string native_task_description(const agent_runtime::NativeAgentRecord& record) {
@@ -326,7 +329,7 @@ public:
     static constexpr std::string_view name = "task_create";
     static constexpr std::string_view description = "Create a new background task for an agent to execute";
 
-    auto execute(std::string id, std::string desc, AgentType type = AgentType::GeneralPurpose)
+    auto execute(std::string id, std::string desc, TaskAgentType type = TaskAgentType::GeneralPurpose)
         -> std::expected<const Task*, TaskError>
     {
         auto result = global_task_store().create(std::move(id), std::move(desc), type);

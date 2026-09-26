@@ -8,6 +8,7 @@ import std;
 
 import cc.config.config;
 import cc.hooks.tool_permissions;
+import cc.orchestration.runtime_backends;
 import cc.query.query_engine;
 import cc.services.api.session_ingress;
 import cc.session.storage;
@@ -767,6 +768,13 @@ namespace detail {
                     return response;
                 });
         }
+
+        // RFC-0001 B11: ensure orchestration runtime backends (image codec
+        // this batch) are installed before this per-session ToolRegistry can
+        // dispatch Read/computer_use. This handler runs on a per-connection
+        // thread, so the installer is std::call_once-guarded: repeat calls
+        // (and the loom main() install in the same process) are no-ops.
+        cc::orchestration::install_runtime_backends();
 
         cc::core::ToolRegistry registry;
         cc::tools::register_runtime_tools(registry, cc::tools::RuntimeToolOptions{

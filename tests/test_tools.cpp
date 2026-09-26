@@ -29,6 +29,8 @@ import cc.tools.web_search;
 import cc.tools.web_browser;
 import cc.tools.mcp;
 import cc.commands.mcp.core_settings_loader;
+import cc.orchestration.runtime_backends;
+import cc.tools.image_codec.port;
 import cc.tools.worktree;
 import cc.tools.agent;
 import cc.tools.agent_runtime;
@@ -378,6 +380,25 @@ struct RuntimeComputerUseProviderGuard {
     ~RuntimeComputerUseProviderGuard() {
         cc::tools::clear_runtime_computer_use_capture_provider_for_testing();
         cc::tools::clear_runtime_computer_use_input_provider_for_testing();
+    }
+};
+
+// RFC-0001 B11: the image codec is a process-global function-local static
+// installed by cc::orchestration::install_runtime_backends() (std::call_once;
+// safe for the per-request server threads). Every test that reads an image
+// or PDF through Read, or exercises a computer_use screenshot/base64 path,
+// installs the real services-backed codec for its duration and clears the
+// slot in the destructor so later cases stay hermetic. The constructor
+// installs directly as well: call_once makes a repeat install a no-op after
+// a previous guard's destructor cleared the slot.
+struct FileToolServicesGuard {
+    FileToolServicesGuard() {
+        cc::orchestration::install_runtime_backends();
+        cc::tools::image_codec::set_codec(
+            cc::orchestration::make_image_codec());
+    }
+    ~FileToolServicesGuard() {
+        cc::tools::image_codec::clear_codec();
     }
 };
 
@@ -1822,6 +1843,7 @@ TEST(Tools, RuntimeComputerUseScreenshotReturnsImageContentFromCaptureProvider) 
     using Rect = cc::core::computer_use::Rect;
 
     RuntimeComputerUseProviderGuard guard;
+    FileToolServicesGuard services_guard;
     bool saw_region = false;
     cc::tools::set_runtime_computer_use_capture_provider_for_testing(
         [&](std::optional<Rect> region) -> std::expected<ImageData, std::string> {
@@ -1863,6 +1885,7 @@ TEST(Tools, RuntimeComputerUseScreenshotReturnsImageContentFromCaptureProvider) 
 
 TEST(Tools, RuntimeComputerUseUsesCommandBackendForScreenshotAndInputActions) {
     RuntimeComputerUseProviderGuard guard;
+    FileToolServicesGuard services_guard;
     EnvironmentGuard disable_native_input("LOOM_DISABLE_NATIVE_COMPUTER_INPUT", "1");
 
     auto root = fs::temp_directory_path() / "loom_computer_use_command_backend_test";
@@ -2711,6 +2734,7 @@ TEST(Tools, FileReadFormatsNotebookCellsForToolResult) {
 }
 
 TEST(Tools, FileReadReturnsImageContentBlock) {
+    FileToolServicesGuard services_guard;
     auto root = fs::temp_directory_path() / "loom_image_read_test";
     fs::remove_all(root);
     fs::create_directories(root);
@@ -2745,6 +2769,7 @@ TEST(Tools, FileReadReturnsImageContentBlock) {
 }
 
 TEST(Tools, FileReadReturnsPdfDocumentBlock) {
+    FileToolServicesGuard services_guard;
     auto root = fs::temp_directory_path() / "loom_pdf_read_test";
     fs::remove_all(root);
     fs::create_directories(root);
@@ -2770,6 +2795,52 @@ TEST(Tools, FileReadReturnsPdfDocumentBlock) {
     EXPECT_TRUE(result->content[1].data->starts_with("JVBER"));
 
     fs::remove_all(root);
+}
+
+// RFC-0001 B11: the installed services-backed codec parses a real PNG IHDR
+// through the port (width/height/size plus the services' mime and summary).
+TEST(Tools, ImageCodecGetInfoMapsPngHeaderToMetadata) {
+    FileToolServicesGuard services_guard;
+    auto root = fs::temp_directory_path() / "loom_image_codec_info_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    auto image_path = root / "header.png";
+    {
+        const unsigned char png_header[] = {
+            0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n',
+            0x00, 0x00, 0x00, 0x0d, 'I', 'H', 'D', 'R',
+            0x00, 0x00, 0x00, 0x03,
+            0x00, 0x00, 0x00, 0x02,
+        };
+        std::ofstream image(image_path, std::ios::binary);
+        image.write(reinterpret_cast<const char*>(png_header), sizeof(png_header));
+    }
+
+    const auto& codec = cc::tools::image_codec::codec();
+    auto info = codec.get_info(image_path);
+
+    ASSERT_TRUE(info.has_value()) << info.error();
+    EXPECT_EQ(info->width, 3u);
+    EXPECT_EQ(info->height, 2u);
+    EXPECT_EQ(info->size_bytes, std::size_t{24});
+    EXPECT_EQ(info->mime, "image/png");
+    EXPECT_EQ(info->summary, "3x2 png (24 bytes)");
+
+    fs::remove_all(root);
+}
+
+// RFC-0001 B11: base64 encode/decode round-trip through the installed codec.
+TEST(Tools, ImageCodecBase64RoundTripsBytes) {
+    FileToolServicesGuard services_guard;
+    const std::vector<std::uint8_t> bytes{1, 2, 3, 4};
+
+    const auto& codec = cc::tools::image_codec::codec();
+    const auto encoded = codec.to_base64(std::span<const std::uint8_t>(bytes));
+    EXPECT_EQ(encoded, "AQIDBA==");
+
+    auto decoded = codec.from_base64(encoded);
+    ASSERT_TRUE(decoded.has_value()) << decoded.error();
+    EXPECT_EQ(*decoded, bytes);
 }
 
 TEST(Tools, AgentRuntimeLoadsMarkdownDefinitions) {

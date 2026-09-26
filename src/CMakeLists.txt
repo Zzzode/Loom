@@ -116,6 +116,11 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_hooks.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_cli.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_bridge.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_skills.cmake")
+# RFC 0001 Phase B — rank-9 orchestration layer. Included after every link
+# dependency it needs this batch (cc_tools :112, cc_services :114,
+# cc_skills_core :111) and before the upper layers (cc_ui, cc_server) that
+# link it.
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_orchestration.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_vim.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_daemon.cmake")

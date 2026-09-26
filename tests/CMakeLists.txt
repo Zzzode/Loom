@@ -110,6 +110,7 @@ target_link_libraries(test_tools
     PRIVATE
         cc_core
         cc_tools           # all 40+ cc.tools.* imports
+        cc_orchestration   # RFC-0001 B11: cc.orchestration.runtime_backends
         cc_hooks           # cc.hooks.tool_permissions
         cc_services        # cc.services.api.client, cc.services.mcp.*
         cc_utils           # cc.utils.* helpers

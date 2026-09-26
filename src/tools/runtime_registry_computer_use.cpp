@@ -16,7 +16,7 @@ import cc.tools.runtime_computer_use;
 import cc.tools.mcp;
 import cc.utils.json;
 import cc.utils.bash_execution;
-import cc.services.image;
+import cc.tools.image_codec.port;
 
 namespace cc::tools::detail {
 
@@ -134,8 +134,14 @@ constexpr std::string_view kComputerUseMcpServerName = "computer-use";
         if (!root) return std::unexpected(root.error());
 
         if (!root->screenshot_base64) return std::unexpected("Computer-use command backend did not return screenshot_base64");
-        auto decoded = cc::services::image::ImageService::from_base64(*root->screenshot_base64);
-        if (!decoded) return std::unexpected(decoded.error().message);
+        // RFC-0001 B11: base64 decoding goes through the orchestration-
+        // installed image codec port.
+        const auto& codec = cc::tools::image_codec::codec();
+        if (!codec) {
+            return std::unexpected("Computer-use image codec is not configured");
+        }
+        auto decoded = codec.from_base64(*root->screenshot_base64);
+        if (!decoded) return std::unexpected(decoded.error());
 
         if (!root->width || !root->height || *root->width <= 0 || *root->height <= 0) {
             return std::unexpected("Computer-use command backend screenshot requires positive width and height");
@@ -278,7 +284,13 @@ connected_computer_use_mcp_server() {
         return ToolResult::error(result.error_message);
     }
     if (result.screenshot) {
-        auto data = cc::services::image::ImageService::to_base64(
+        // RFC-0001 B11: screenshot encoding goes through the
+        // orchestration-installed image codec port.
+        const auto& codec = cc::tools::image_codec::codec();
+        if (!codec) {
+            return ToolResult::error("Computer-use image codec is not configured");
+        }
+        auto data = codec.to_base64(
             std::span<const std::uint8_t>(result.screenshot->pixels.data(), result.screenshot->pixels.size()));
         // Pass through the backend-declared encoding, restricted to the
         // media types the Anthropic API accepts (png/jpeg/webp/gif). Native

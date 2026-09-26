@@ -30,6 +30,9 @@ target_sources(cc_tools
         tools/file_write_tool.cppm
         tools/glob_tool.cppm
         tools/grep_tool.cppm
+        # RFC-0001 B11 — image codec callback leaf (cc_orchestration installs
+        # the concrete cc.services.image-backed implementation).
+        tools/image_codec_port.cppm
         tools/list_mcp_resources_tool.cppm
         tools/lsp_tool.cppm
         tools/mcp_classify.cppm

@@ -10,7 +10,7 @@ import std;
 
 import cc.utils.file;
 import cc.utils.error;
-import cc.services.image;
+import cc.tools.image_codec.port;
 import cc.tools.tool;
 import cc.tools.notebook;
 import cc.utils.json;
@@ -27,8 +27,6 @@ using cc::core::ToolPermission;
 using cc::core::InputSchema;
 using cc::core::SchemaProperty;
 using cc::utils::Result;
-using cc::services::image::ImageService;
-using cc::services::image::format_to_mime;
 
 namespace fs = std::filesystem;
 
@@ -506,38 +504,54 @@ private:
     
     /// Read image file
     Result<ToolResult> read_image(const FileReadInput& input) {
+        // RFC-0001 B11: the concrete cc::services::image codec lives behind
+        // the orchestration-installed port. Binaries that never install one
+        // (hermetic tests) fail closed here instead of reaching a concrete
+        // service the tools layer can no longer link.
+        const auto& codec = cc::tools::image_codec::codec();
+        if (!codec) {
+            return ToolResult::error("Image support is not configured");
+        }
+
         auto bytes = read_binary_file(input.file_path);
         if (!bytes) {
             return ToolResult::error(bytes.error());
         }
 
-        auto info = ImageService::get_info(input.file_path);
+        auto info = codec.get_info(input.file_path);
         if (!info) {
-            return ToolResult::error(info.error().message);
+            return ToolResult::error(info.error());
         }
-        auto media_type = std::string(format_to_mime(info->format));
+        auto media_type = info->mime;
         if (media_type == "application/octet-stream") {
             return ToolResult::error(std::format("Unsupported image format: {}", input.file_path.string()));
         }
 
-        auto data = ImageService::to_base64(std::span<const std::uint8_t>(bytes->data(), bytes->size()));
+        auto data = codec.to_base64(std::span<const std::uint8_t>(bytes->data(), bytes->size()));
         return ToolResult::success_multi({
             ToolOutputContent::text_output(std::format(
                 "Image file read: {} ({})",
                 input.file_path.string(),
-                info->summary())),
+                info->summary)),
             ToolOutputContent::image_output(std::move(media_type), std::move(data)),
         });
     }
-    
+
     /// Read PDF file
     Result<ToolResult> read_pdf(const FileReadInput& input) {
+        // PDF bodies are emitted as base64 document blocks through the same
+        // orchestration-installed image codec.
+        const auto& codec = cc::tools::image_codec::codec();
+        if (!codec) {
+            return ToolResult::error("Image support is not configured");
+        }
+
         auto bytes = read_binary_file(input.file_path);
         if (!bytes) {
             return ToolResult::error(bytes.error());
         }
 
-        auto data = ImageService::to_base64(std::span<const std::uint8_t>(bytes->data(), bytes->size()));
+        auto data = codec.to_base64(std::span<const std::uint8_t>(bytes->data(), bytes->size()));
         const auto file_size = bytes->size();
         return ToolResult::success_multi({
             ToolOutputContent::text_output(std::format(

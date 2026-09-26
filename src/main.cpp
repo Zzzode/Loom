@@ -28,6 +28,7 @@ import cc.commands.command;
 import cc.commands.registry;
 import cc.commands.mcp.core_settings_loader;
 import cc.bootstrap.mcp_connectivity;
+import cc.orchestration.runtime_backends;
 import cc.constants.product;
 import cc.services.api.session_ingress;
 import cc.utils.session_storage;
@@ -1838,6 +1839,14 @@ int main(int argc, const char* argv[]) {
         }
         return 0;
     }
+
+    // RFC-0001 B11: install the orchestration runtime backends (the image
+    // codec this batch) before any path can dispatch a tool that needs them:
+    // --list-runtime-tools and the two register_runtime_tools sites below,
+    // --run-runtime-tool (Read on an image / computer_use screenshots), and
+    // the in-process server routes (which install again per session; that
+    // repeat is a std::call_once no-op in this one binary).
+    cc::orchestration::install_runtime_backends();
 
     if (opts.list_runtime_tools) {
         auto tool_registry = cc::core::ToolRegistry{};

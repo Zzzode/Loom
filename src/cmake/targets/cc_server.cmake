@@ -6,4 +6,14 @@ target_sources(cc_server
         server/server_routes.cppm
         server/types.cppm
 )
-target_link_libraries(cc_server PUBLIC cc_utils cc_session cc_query cc_tools OpenSSL::Crypto)
+# RFC-0001 B11: cc_orchestration is PUBLIC — server_main.cppm and the
+# test_services TU import cc.server.server_routes, whose module interface
+# imports cc.orchestration.runtime_backends; consumers need its BMI on their
+# compile line.
+target_link_libraries(cc_server PUBLIC
+    cc_utils
+    cc_session
+    cc_query
+    cc_tools
+    cc_orchestration
+    OpenSSL::Crypto)

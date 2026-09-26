@@ -12,6 +12,9 @@ target_sources(cc_tools
         tools/agent_resume.cppm
         tools/agent_fork.cppm
         tools/agent_types.cppm
+        # RFC-0001 B14 — agent worktree cleanup leaf (runtime_team_shared
+        # imports this instead of the cc.tools.agent facade).
+        tools/agent_worktree.cppm
         tools/ask_user_tool.cppm
         tools/bash_permissions.cppm
         tools/bash_security.cppm
@@ -125,6 +128,8 @@ target_sources(cc_tools
         tools/agent_sub_utils_teammates.cpp
         tools/agent_sub_utils_messages.cpp
         tools/agent_sub_utils_budget.cpp
+        # RFC-0001 B14 — cc.tools.agent_worktree implementation unit.
+        tools/agent_worktree.cpp
         # RFC-0001 B4 — cc.tools.mcp loader-sink storage (`module cc.tools.mcp;`).
         tools/mcp_core_settings_loader.cpp
         # RFC-0001 B6 — cc.tools.mcp snapshot-sink storage (same discipline).

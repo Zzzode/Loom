@@ -10,6 +10,7 @@ import cc.utils.json;
 import cc.tools.tool;
 import cc.tools.agent_runtime;
 import cc.tools.agent_types;
+import cc.tools.agent_worktree;
 import cc.tools.mcp;
 // Team / MemberRole (cc.tools.team), AgentColor (cc.utils.swarm_backends)
 // and SkillDefinition (cc.skills.skill) are named in declarations kept in
@@ -577,14 +578,12 @@ void append_hook_additional_context_messages(
 
 void upsert_agent_record_for_plan(const AgentExecutionPlan& plan);
 
-struct AgentWorktreeCleanupResult {
-    bool attempted = false;
-    bool removed = false;
-    bool changed = false;
-    std::string message;
-};
-
-[[nodiscard]] AgentWorktreeCleanupResult cleanup_agent_worktree(std::string_view agent_id);
+// Worktree cleanup (result + entry point) lives on the zero-facade leaf
+// cc.tools.agent_worktree (RFC-0001 B14); re-export under the utils spelling
+// so the agent subtree and the cc.tools.agent facade keep resolving with no
+// call-site churn.
+using cc::tools::agent::AgentWorktreeCleanupResult;
+using cc::tools::agent::cleanup_agent_worktree;
 
 [[nodiscard]] std::string agent_output_file_path(std::string_view agent_id);
 

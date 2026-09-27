@@ -198,18 +198,37 @@ Policy in C6:
   files are only ever written as JSON by Loom).
 - user/local parse errors (missing file tolerable as today; JSON parse
   failure / root-not-object): the tier contributes ZERO entries and a
-  single diagnostic is recorded — stderr `warning: ignoring <path>: not
-  valid JSON (use 'loom mcp' to edit MCP configuration)` for CLI commands
-  and the existing core-loader error/trace channel for the startup path;
-  loading continues with lower tiers. The tier is NOT marked writable for
-  in-place patch: an `add --scope user` against an unparseable user file
-  writes via the patcher only after explicit handling — C6 makes upsert
-  FAIL with an actionable error ("<path> is not valid JSON; move it aside
-  first") rather than overwriting user data. (Removing/patching a
-  parseable file is unaffected.)
+  single diagnostic is recorded — exactly ONE stderr warning per bad path
+  per process (`warning: ignoring <path>: not valid JSON (use 'loom mcp'
+  to edit MCP configuration)`, de-duplicated per ConfigManager instance,
+  so the CLI command path's load + forced post-mutation reload does not
+  print it twice). There is no trace/toast seam available mid-session;
+  routing this into a TUI toast instead of stderr is a Tier-2 follow-up.
+  Both the CLI command path and the startup core-settings loader path
+  (src/commands/mcp/core_settings_loader.cppm) go through the same
+  load() seam, continue, and do not suppress other tiers. A zero-length
+  or all-whitespace user/local file is treated as MISSING (no warning; an
+  upsert creates it fresh); only genuine non-JSON/non-object content gets
+  the §A policy. The tier is NOT marked writable for in-place patch: an
+  `add --scope user` against an unparseable user file FAILS with an
+  actionable error ("<path> is not valid JSON; move it aside first")
+  rather than overwriting user data; remove/enable/disable against such a
+  tier simply find no entry there. (Removing/patching a parseable file is
+  unaffected.)
 - Tier-2 follow-up (recorded, not in C6): repoint the `config` tool to a
   non-JSON file (or make it JSON-aware) so the collision disappears;
   candidate: reuse settings.json or `~/.loom/config.env`.
+- Tier-2 follow-up (recorded, not in C6): **`/config set` full-save data
+  loss.** `ConfigCommand` (src/commands/config.cppm) never calls
+  `ConfigManager::load()` — its default-constructed manager holds fresh
+  default Settings, so `save()` rewrites the project config.json with
+  defaults, dropping file-defined `mcpServers`, `x-custom` keys, and the
+  on-disk `model` section even when the set key is unrelated. §B bounds
+  the mcpServers damage after a load, but this path does not load, so the
+  general rewrite still loses non-MCP sections. Fix in the next batch
+  (separate commit, own tests): load before mutate, or route /config set
+  to a section-preserving targeted patch; the settings dialog Ctrl-S path
+  should be audited with it.
 
 ### §B — Full-save must not leak higher-tier entries (blocking fix)
 
@@ -227,13 +246,14 @@ file: emit a merged entry E only if
 
 i.e. entries added solely at user/local never enter the tracked file, and
 names the project file already contains are not destructively dropped
- merely because a higher tier shadows them. The global tier is left to the
- existing behavior (the pre-existing global→project copy class is a Tier-2
- cleanup, explicitly not widened here). Full-save to any non-project target
- follows the analogous "at or below this tier, or already physically there"
- rule (no current callers, implemented for symmetry). This also closes
- scoped-remove resurrection: a name removed from user/local can't be
- rewritten there by a later full save.
+ merely because a higher tier shadows them. The global tier INTENTIONALLY
+keeps the legacy full-merge behavior (full save to global is
+out-of-scope: there are no production callers, so no analogous filter is
+applied to non-project targets). This also closes scoped-remove
+resurrection: a name removed from user/local can't be rewritten there by
+a later full save, and the per-tier mutators keep the in-memory
+bookkeeping consistent so even a same-instance save (no intervening
+reload) cannot rewrite a just-removed entry.
 
 ### Patch mechanics
 

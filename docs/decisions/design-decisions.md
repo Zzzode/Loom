@@ -1751,6 +1751,19 @@ promoted to the repository root in the same series of commits, so
   project's own cascade directory name — **reading a legacy `~/.claude` must not make new projects
   write into `./.claude/`**.
 
+- **`src/config/config.cppm` (RFC-0001 B followup c6)** — Core MCP server config is stored in **four
+  physical files** — legacy `~/.config/loom/config.json` (global, read tier),
+  `$LOOM_CONFIG_DIR/config.json` else `~/.loom/config.json` (user), `<project>/.loom/config.json`
+  (project, VCS-tracked), and `<project>/.loom/config.local.json` (local, gitignored) — merged by
+  **per-entry name overlay** (a project file no longer replaces the whole global `mcpServers` block,
+  and `{}` overrides nothing). `mcp add/remove/enable/disable --scope` patch one file in place
+  (atomic tmp+rename, whole-file yyjson-pretty reformat) instead of full-saving the merged vector.
+  Two compatibility policies bracket the merge: a **non-JSON user/local file** (the registered
+  `config` tool appends `key=value` lines to `~/.loom/config.json`) contributes zero entries plus a
+  single warning and must not be overwritten by an upsert, while a **full save to the project file**
+  re-emits only entries physically present in that file (using that file's own parsed value) or owned
+  by global/project — a user/local shadow carrying `Authorization` headers must never enter VCS.
+
 - **`cpp_migration/src/memdir/paths.cppm:161-165`** — `loom_config_home()` uses the **WRITE** resolution
   **on purpose**: these are directories we create and manage (auto-memory, session-memory, `projects/`),
   so they belong under our own name even when a legacy `~/.claude` exists and is readable. Reading is a

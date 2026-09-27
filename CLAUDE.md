@@ -110,6 +110,19 @@ config directory would interleave two tools' state. Both cascades are
 implemented in `src/constants/paths.cppm` — eight call sites previously
 reimplemented the lookup and silently drifted.
 
+MCP server config (`loom mcp add/remove/enable/disable`) lives in FOUR
+physical JSON files, highest precedence first; same-named entries overlay
+per entry across the files, and `--scope` patches exactly one file in place:
+
+    local    <project>/.loom/config.local.json  (gitignored; derived next to the project file)
+    project  <project>/.loom/config.json         (VCS-tracked)
+    user     $LOOM_CONFIG_DIR/config.json, else ~/.loom/config.json
+    global   ~/.config/loom/config.json          (legacy READ tier; written only to remove pollution)
+
+A non-JSON/key=value user/local file is tolerated (zero entries + one
+warning); a full save to the project file never copies user/local-only
+entries — which may carry Authorization headers — into VCS.
+
 ### Wire backends
 
 `wire_api` config key or `LOOM_WIRE_API` env selects the backend; unset ⇒

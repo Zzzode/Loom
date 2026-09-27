@@ -76,8 +76,8 @@ enum class McpAction : std::uint8_t {
     Remove,      // Remove an MCP server configuration
     Show,        // Show a server's capabilities
     Restart,     // Restart a server connection
-    Enable,      // Enable (connect) a disabled server
-    Disable,     // Disable (disconnect) a server
+    Enable,      // Clear the "disabled" flag (takes effect on next start; D5)
+    Disable,     // Set the "disabled" flag (takes effect on next start; D5)
     Reconnect,   // Force reconnect a server
     // XAA subcommands (top-level: /mcp xaa setup|login|show|clear)
     XaaSetup,
@@ -185,11 +185,11 @@ public:
         switch (action) {
             case McpAction::List:      return execute_list();
             case McpAction::Add:       return execute_add(ctx.args);
-            case McpAction::Remove:    return execute_remove(ctx.args[1]);
+            case McpAction::Remove:    return execute_remove(ctx.args);
             case McpAction::Show:      return execute_show(ctx.args[1]);
             case McpAction::Restart:   return execute_restart(ctx.args[1]);
-            case McpAction::Enable:    return execute_enable(ctx.args[1]);
-            case McpAction::Disable:   return execute_disable(ctx.args[1]);
+            case McpAction::Enable:    return execute_enable(ctx.args);
+            case McpAction::Disable:   return execute_disable(ctx.args);
             case McpAction::Reconnect: return execute_reconnect(ctx.args[1]);
             case McpAction::XaaSetup:  return execute_xaa_setup(ctx);
             case McpAction::XaaLogin:  return execute_xaa_login(ctx);
@@ -253,6 +253,20 @@ private:
         }
         return {};
     }
+
+    /// Reload the on-disk configuration after a targeted file mutation, then
+    /// push the fresh list into the native runtime. A failed reload aborts
+    /// BEFORE syncing: a failed load() blanks the manager's settings_, and an
+    /// unconditional sync would push an EMPTY server list into the live
+    /// runtime (RFC-0001 B followup c6). Body lives in the mcp_cmd.cpp module
+    /// implementation unit (inline-def ratchet).
+    [[nodiscard]] VoidResult reload_and_sync();
+
+    /// Scan args[start..] for an optional --scope/-s <label>. add accepts
+    /// local|user|project only; remove/enable/disable also accept global.
+    [[nodiscard]] static Result<std::optional<McpStorageScope>>
+    extract_scope_arg(std::span<const std::string> args, std::size_t start,
+                      bool allow_global);
 
     /// Parse action string to enum. Recognizes /mcp xaa <sub> by peeking args[1].
     [[nodiscard]] static std::optional<McpAction> parse_action(
@@ -527,8 +541,13 @@ private:
 
         while (index < args.size()) {
             const auto& tok = args[index];
-            bool advanced = false;
 
+            // Value-flags advance ONTO their value here; the unconditional
+            // ++index at the loop tail then advances past it. A previous
+            // version also advanced the tail, double-consuming flag values
+            // (e.g. phantom "user" in stdio args, hard failure on remote
+            // --url/-H). Boolean flags and bare positionals consume only the
+            // single tail increment.
             auto consume_value = [&](std::string_view flag)
                 -> Result<std::string> {
                     if (index + 1 >= args.size()) {
@@ -537,7 +556,6 @@ private:
                             std::format("{} requires a value", flag)));
                     }
                     ++index;
-                    advanced = true;
                     return args[index];
                 };
 
@@ -609,7 +627,7 @@ private:
                 return CommandResult::fail(
                     std::format("Unexpected argument for remote MCP server: {}", tok));
             }
-            if (!advanced) ++index;
+            ++index;
         }
 
         if (config.transport == "stdio") {
@@ -677,19 +695,18 @@ private:
             }
         }
 
-        auto& servers = config_manager_.settings_mut().mcp_servers;
-        auto existing = std::ranges::find_if(servers, [&](const auto& s) {
-            return s.name == config.name;
-        });
-        if (existing == servers.end()) {
-            servers.push_back(std::move(config));
-        } else {
-            *existing = std::move(config);
+        // RFC-0001 B followup c6: write ONLY the scope's physical file via a
+        // targeted patch (no full save, no copy-down), then reload and sync.
+        const auto target_scope = ConfigManager::mcp_scope_from_label(scope);
+        if (!target_scope) {
+            return CommandResult::fail(
+                std::format("Invalid scope '{}'. Use local | user | project", scope));
         }
-        if (auto result = config_manager_.save(); !result) {
-            return std::unexpected(result.error());
+        if (auto upserted = config_manager_.upsert_mcp_server(*target_scope, config);
+            !upserted) {
+            return std::unexpected(upserted.error());
         }
-        if (auto synced = sync_native_runtime(); !synced) {
+        if (auto synced = reload_and_sync(); !synced) {
             return std::unexpected(synced.error());
         }
 
@@ -717,27 +734,74 @@ private:
         return CommandResult::success(std::move(out));
     }
 
-    /// Remove an MCP server configuration.
-    [[nodiscard]] Result<CommandResult> execute_remove(std::string_view name) {
+    /// Remove an MCP server configuration. With no --scope this is
+    /// best-effort across EVERY tier file physically containing the name
+    /// (including the polluted legacy global file); --scope/-s restricts the
+    /// removal to one tier (local|user|project|global). The outcome has
+    /// three renderings (D3): absent everywhere, >=1 file changed, present
+    /// but zero writes succeeded.
+    [[nodiscard]] Result<CommandResult> execute_remove(std::span<const std::string> args) {
+        if (args.size() < 2) {
+            return CommandResult::fail("Usage: /mcp remove <name> [--scope local|user|project|global]");
+        }
         if (auto loaded = ensure_config_loaded(); !loaded) {
             return std::unexpected(loaded.error());
         }
-        auto& servers = config_manager_.settings_mut().mcp_servers;
-        auto it = std::ranges::find_if(servers,
-            [name](const auto& s) { return s.name == name; });
-        if (it == servers.end()) {
+
+        const std::string name = args[1];
+        std::string scope_label;
+        auto parsed_scope = extract_scope_arg(args, 2, /*allow_global=*/true);
+        if (!parsed_scope) {
+            return std::unexpected(parsed_scope.error());
+        }
+        for (std::size_t i = 2; i + 1 < args.size(); ++i) {
+            if (args[i] == "--scope" || args[i] == "-s") scope_label = args[i + 1];
+        }
+
+        auto outcome = config_manager_.remove_mcp_server(name, *parsed_scope);
+        if (!outcome) {
+            return std::unexpected(outcome.error());
+        }
+
+        auto join_paths = [](const std::vector<std::filesystem::path>& paths) {
+            std::string joined;
+            for (std::size_t i = 0; i < paths.size(); ++i) {
+                if (i) joined += ", ";
+                joined += paths[i].string();
+            }
+            return joined;
+        };
+
+        if (outcome->touched.empty() && outcome->failed.empty()) {
+            if (!scope_label.empty()) {
+                return CommandResult::fail(std::format(
+                    "MCP server '{}' not found in the '{}' scope", name, scope_label));
+            }
             return CommandResult::fail(
                 std::format("MCP server '{}' not found", name));
         }
-        servers.erase(it);
-        if (auto result = config_manager_.save(); !result) {
-            return std::unexpected(result.error());
+
+        if (outcome->touched.empty()) {
+            // Present in one or more files, but EVERY write failed.
+            return CommandResult::fail(std::format(
+                "MCP server '{}' was found but could not be removed; "
+                "failed to write: {}",
+                name, join_paths(outcome->failed)));
         }
-        if (auto synced = sync_native_runtime(); !synced) {
+
+        // Only reload/sync when at least one file actually changed.
+        if (auto synced = reload_and_sync(); !synced) {
             return std::unexpected(synced.error());
         }
-        return CommandResult::success(
-            std::format("Removed MCP server '{}'", name));
+
+        std::string out = std::format(
+            "Removed MCP server '{}' from: {}", name, join_paths(outcome->touched));
+        if (!outcome->failed.empty()) {
+            out += std::format(
+                "\nWarning: the name remains in these files (could not write): {}",
+                join_paths(outcome->failed));
+        }
+        return CommandResult::success(std::move(out));
     }
 
     /// Show detailed capabilities of a server (text fallback + row builders).
@@ -849,88 +913,27 @@ private:
 
     // ---- enable / disable / reconnect --------------------------------------
 
-    /// Enable a server (mark not disabled in config, sync runtime).
-    [[nodiscard]] Result<CommandResult> execute_enable(std::string_view name) {
-        if (auto loaded = ensure_config_loaded(); !loaded)
-            return std::unexpected(loaded.error());
+    /// Shared worker for enable (disabled=false) and disable (disabled=true).
+    /// Patches the "disabled" flag in place on the owner FILE(S) — never a
+    /// full save (D5). With no --scope the highest-precedence file owning
+    /// each effective entry is patched (a global-only entry therefore
+    /// patches the legacy global file); with --scope only that file is
+    /// touched. "all" resolves each owner and patches each distinct file
+    /// once; file-level failures aggregate. Body lives in the mcp_cmd.cpp
+    /// module implementation unit (inline-def ratchet).
+    [[nodiscard]] Result<CommandResult>
+    execute_set_disabled(std::span<const std::string> args, bool disabled);
 
-        bool all = (name == "all");
-        std::vector<std::string> toggled;
-
-        for (auto& s : config_manager_.settings_mut().mcp_servers) {
-            bool target = all ? true : (s.name == name);
-            if (!target) continue;
-            if (!s.disabled.value_or(false)) continue;
-            s.disabled = false;
-            toggled.push_back(s.name);
-        }
-
-        if (!all && toggled.empty()) {
-            if (std::ranges::find_if(config_manager_.settings().mcp_servers,
-                [name](const auto& s){ return s.name == name; })
-                == config_manager_.settings().mcp_servers.end()) {
-                return CommandResult::fail(
-                    std::format("MCP server '{}' not found", name));
-            }
-        }
-
-        if (toggled.empty()) {
-            return CommandResult::success(all
-                ? std::string("All MCP servers are already enabled")
-                : std::format("MCP server '{}' is already enabled", name));
-        }
-
-        if (auto r = config_manager_.save(); !r) return std::unexpected(r.error());
-        if (auto s = sync_native_runtime(); !s) return std::unexpected(s.error());
-
-        if (all) {
-            return CommandResult::success(
-                std::format("Enabled {} MCP server(s)", toggled.size()));
-        }
-        return CommandResult::success(
-            std::format("MCP server '{}' enabled", toggled.front()));
+    /// Enable a server (clear the "disabled" flag; applies on next start).
+    [[nodiscard]] Result<CommandResult>
+    execute_enable(std::span<const std::string> args) {
+        return execute_set_disabled(args, /*disabled=*/false);
     }
 
-    /// Disable a server (mark disabled in config, sync runtime).
-    [[nodiscard]] Result<CommandResult> execute_disable(std::string_view name) {
-        if (auto loaded = ensure_config_loaded(); !loaded)
-            return std::unexpected(loaded.error());
-
-        bool all = (name == "all");
-        std::vector<std::string> toggled;
-
-        for (auto& s : config_manager_.settings_mut().mcp_servers) {
-            bool target = all ? true : (s.name == name);
-            if (!target) continue;
-            if (s.disabled.value_or(false)) continue;
-            s.disabled = true;
-            toggled.push_back(s.name);
-        }
-
-        if (!all && toggled.empty()) {
-            if (std::ranges::find_if(config_manager_.settings().mcp_servers,
-                [name](const auto& s){ return s.name == name; })
-                == config_manager_.settings().mcp_servers.end()) {
-                return CommandResult::fail(
-                    std::format("MCP server '{}' not found", name));
-            }
-        }
-
-        if (toggled.empty()) {
-            return CommandResult::success(all
-                ? std::string("All MCP servers are already disabled")
-                : std::format("MCP server '{}' is already disabled", name));
-        }
-
-        if (auto r = config_manager_.save(); !r) return std::unexpected(r.error());
-        if (auto s = sync_native_runtime(); !s) return std::unexpected(s.error());
-
-        if (all) {
-            return CommandResult::success(
-                std::format("Disabled {} MCP server(s)", toggled.size()));
-        }
-        return CommandResult::success(
-            std::format("MCP server '{}' disabled", toggled.front()));
+    /// Disable a server (set the "disabled" flag; applies on next start).
+    [[nodiscard]] Result<CommandResult>
+    execute_disable(std::span<const std::string> args) {
+        return execute_set_disabled(args, /*disabled=*/true);
     }
 
     /// Reconnect: drop and re-establish the connection for a named server.
@@ -977,13 +980,11 @@ private:
 
         for (std::size_t i = 2; i < ctx.args.size(); ++i) {
             const auto& tok = ctx.args[i];
-            bool advanced = false;
             auto next = [&]() -> Result<std::string> {
                 if (i + 1 >= ctx.args.size())
                     return std::unexpected(Error::make(ErrorCode::InvalidRequest,
                         std::format("{} requires a value", tok)));
-                ++i;
-                advanced = true;
+                ++i;  // onto the value; the for-header ++i skips past it
                 return ctx.args[i];
             };
             if (tok == "--issuer") {
@@ -1003,7 +1004,6 @@ private:
                 return CommandResult::fail(
                     std::format("Unexpected flag for /mcp xaa setup: {}", tok));
             }
-            if (!advanced) {}
         }
 
         if (!issuer) return CommandResult::fail(
@@ -1077,17 +1077,14 @@ private:
         std::optional<std::string> inject_token;
         for (std::size_t i = 2; i < ctx.args.size(); ++i) {
             const auto& tok = ctx.args[i];
-            bool advanced = false;
             if (tok == "--force") { force = true; continue; }
             if (tok == "--id-token") {
                 if (i + 1 >= ctx.args.size())
                     return CommandResult::fail("--id-token requires a JWT value");
-                ++i;
-                advanced = true;
+                ++i;  // onto the token; the for-header ++i skips past it
                 inject_token = ctx.args[i];
                 continue;
             }
-            if (!advanced) {}
             return CommandResult::fail(
                 std::format("Unexpected flag for /mcp xaa login: {}", tok));
         }

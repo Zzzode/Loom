@@ -201,6 +201,91 @@ TEST(AppCommandRegistry, DispatchesMigratedRuntimeCommands) {
     EXPECT_EQ(exit->metadata, "EXIT");
 }
 
+// RFC-0001 B followup c6 review: the /mcp add flag loop used to double-
+// consume every value-flag (the inner consumer AND the loop tail both
+// advanced), so the flag's VALUE was revisited as a positional token:
+// `--scope project` leaked a phantom "project" stdio arg and remote
+// `--url`/`-H` values hard-failed as unexpected arguments. Driven through
+// the real AppCommandRegistry with temp HOME / LOOM_CONFIG_DIR / CWD.
+TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
+    namespace fs = std::filesystem;
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_cmd_c6_flags_" + std::to_string(suffix));
+    fs::remove_all(root);
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work);
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    {
+        // Construct AFTER env/cwd are set: the command's default
+        // ConfigManager binds its paths in its constructor.
+        cc::commands::AppCommandRegistry registry;
+
+        // stdio scoped add: the scope value must not become a phantom arg.
+        auto scoped = registry.execute(
+            "/mcp add s1 node serve.js --scope project", ctx());
+        ASSERT_TRUE(scoped.has_value());
+        ASSERT_TRUE(scoped->ok) << scoped->message;
+
+        auto project = cc::utils::json::parse_file(work / ".loom" / "config.json");
+        ASSERT_TRUE(project.has_value());
+        const auto s1 = project->root().get("mcpServers").get("s1");
+        ASSERT_TRUE(s1.is_obj());
+        EXPECT_EQ(s1.get("command").as_str(), std::string_view("node"));
+        ASSERT_TRUE(s1.get("args").is_arr());
+        ASSERT_EQ(s1.get("args").size(), 1u);
+        EXPECT_EQ(s1.get("args").at(0).as_str(), std::string_view("serve.js"));
+        EXPECT_EQ(s1.get("configScope").as_str(), std::string_view("project"));
+
+        // Remote add with a positional URL + -H header + --url/value flag:
+        // before the fix every flag value was revisited and this hard-failed
+        // ("Unexpected argument for remote MCP server").
+        auto remote = registry.execute(
+            "/mcp add r1 https://mcp.example.com/mcp -H X-Test:1 --url https://mcp.example.com/v2",
+            ctx());
+        ASSERT_TRUE(remote.has_value());
+        ASSERT_TRUE(remote->ok) << remote->message;
+
+        // Default scope is local: header must land in the local tier file.
+        auto local = cc::utils::json::parse_file(work / ".loom" / "config.local.json");
+        ASSERT_TRUE(local.has_value());
+        const auto r1 = local->root().get("mcpServers").get("r1");
+        ASSERT_TRUE(r1.is_obj());
+        EXPECT_EQ(r1.get("type").as_str(), std::string_view("http"));
+        EXPECT_EQ(r1.get("url").as_str(), std::string_view("https://mcp.example.com/v2"));
+        EXPECT_EQ(r1.get("headers").get("X-Test").as_str(), std::string_view("1"));
+        EXPECT_FALSE(r1.has("args"));
+        EXPECT_FALSE(r1.has("command"));
+
+        // Two --scope flags: LAST token wins everywhere.
+        auto two_scopes = registry.execute(
+            "/mcp add s2 node s2.js --scope project --scope user", ctx());
+        ASSERT_TRUE(two_scopes.has_value());
+        ASSERT_TRUE(two_scopes->ok) << two_scopes->message;
+
+        auto user = cc::utils::json::parse_file(cfg / "config.json");
+        ASSERT_TRUE(user.has_value());
+        EXPECT_TRUE(user->root().get("mcpServers").has("s2"));
+        EXPECT_FALSE(project->root().get("mcpServers").has("s2"));
+    }
+
+    cleanup();
+}
+
 TEST(AppCommandRegistry, RuntimeSurfaceCommandsExecuteLocalLogic) {
     cc::commands::AppCommandRegistry registry;
 

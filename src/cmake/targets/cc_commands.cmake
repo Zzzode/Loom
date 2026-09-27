@@ -116,6 +116,7 @@ target_sources(cc_commands PRIVATE
     commands/command_registry_init_c.cpp
     commands/command_registry_init_d.cpp
     commands/command_registry_init_e.cpp
+    commands/mcp_cmd.cpp
 )
 target_link_libraries(cc_commands
     PUBLIC

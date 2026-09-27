@@ -23,6 +23,7 @@ import cc.cli.ccr_client;
 import cc.cli.sse_transport;
 import cc.bridge.core;
 import cc.config.config;
+import cc.constants.paths;
 import cc.services.api.client;
 import cc.services.api.errors;
 import cc.services.api.session_ingress;
@@ -5889,9 +5890,14 @@ TEST(McpTypes, AbsentDisabledAndIssuerKeysStayUnset) {
     fs::remove_all(root);
 }
 
-TEST(McpTypes, ProjectMcpServersReplaceGlobal) {
+// RFC-0001 B followup c6 (D2): mcpServers now merge with per-entry name
+// overlay across global -> user -> project -> local instead of the project
+// file replacing the whole global block. Global g1/g2 survive a project file
+// that defines p1 (and overrides g1 when it redefines it), and an EMPTY
+// project mcpServers object overrides nothing.
+TEST(McpTypes, ProjectMcpServersOverlayGlobal) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_types_replace_test_" + std::to_string(suffix));
+    const auto root = fs::temp_directory_path() / ("loom_mcp_types_overlay_test_" + std::to_string(suffix));
     fs::create_directories(root);
     const auto global_path = root / "global.json";
     const auto project_path = root / "project.json";
@@ -5907,6 +5913,7 @@ TEST(McpTypes, ProjectMcpServersReplaceGlobal) {
         std::ofstream project_file(project_path);
         project_file << R"JSON({
   "mcpServers": {
+    "g1": {"command": "node", "args": ["p-g1.js"]},
     "p1": {"command": "node", "args": ["p1.js"]}
   }
 })JSON";
@@ -5914,8 +5921,30 @@ TEST(McpTypes, ProjectMcpServersReplaceGlobal) {
 
     cc::core::ConfigManager manager(global_path, project_path);
     ASSERT_TRUE(manager.load().has_value());
-    ASSERT_EQ(manager.settings().mcp_servers.size(), 1u);
-    EXPECT_EQ(manager.settings().mcp_servers.front().name, "p1");
+    // Overlay: same-named g1 is replaced in place at the project tier, so the
+    // effective order is g2, g1(project), p1.
+    const auto& servers = manager.settings().mcp_servers;
+    ASSERT_EQ(servers.size(), 3u);
+    EXPECT_EQ(servers[0].name, "g2");
+    EXPECT_EQ(servers[1].name, "g1");
+    EXPECT_EQ(servers[1].args, (std::vector<std::string>{"p-g1.js"}));
+    EXPECT_EQ(servers[2].name, "p1");
+    ASSERT_TRUE(manager.mcp_server_owner("g1").has_value());
+    EXPECT_EQ(*manager.mcp_server_owner("g1"), cc::core::McpStorageScope::Project);
+    EXPECT_EQ(*manager.mcp_server_owner("g2"), cc::core::McpStorageScope::Global);
+
+    // An empty project mcpServers object overrides NOTHING: globals survive.
+    {
+        std::ofstream project_file(project_path, std::ios::trunc);
+        project_file << R"JSON({
+  "mcpServers": {}
+})JSON";
+    }
+    cc::core::ConfigManager empty_object_manager(global_path, project_path);
+    ASSERT_TRUE(empty_object_manager.load().has_value());
+    ASSERT_EQ(empty_object_manager.settings().mcp_servers.size(), 2u);
+    EXPECT_EQ(empty_object_manager.settings().mcp_servers[0].name, "g1");
+    EXPECT_EQ(empty_object_manager.settings().mcp_servers[1].name, "g2");
 
     fs::remove_all(root);
 }
@@ -5999,6 +6028,1155 @@ TEST(McpTypes, EnvironmentLayerLeavesMcpServersUntouched) {
     EXPECT_EQ(server.headers.at("X-Test"), "present");
     ASSERT_TRUE(server.headers_helper.has_value());
     EXPECT_EQ(*server.headers_helper, "node headers.js");
+
+    fs::remove_all(root);
+}
+
+// ============================================================================
+// RFC-0001 B followup c6: per-tier MCP file routing (design doc groups 2-13)
+// ============================================================================
+
+namespace {
+
+[[nodiscard]] std::string c6_read_file(const fs::path& path) {
+    std::ifstream file(path);
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
+
+void c6_write_file(const fs::path& path, std::string_view content) {
+    fs::create_directories(path.parent_path());
+    std::ofstream file(path);
+    file << content;
+}
+
+[[nodiscard]] std::size_t c6_count_occurrences(std::string_view haystack,
+                                               std::string_view needle) {
+    std::size_t count = 0;
+    std::size_t pos = 0;
+    while ((pos = haystack.find(needle, pos)) != std::string_view::npos) {
+        ++count;
+        pos += needle.size();
+    }
+    return count;
+}
+
+[[nodiscard]] std::vector<std::string>
+c6_json_keys(cc::utils::json::JsonVal object) {
+    std::vector<std::string> keys;
+    object.iter_obj([&](auto key, auto) {
+        if (key.is_str()) keys.emplace_back(key.as_str());
+    });
+    return keys;
+}
+
+}  // namespace
+
+// Group 2: four physical files, lowest-to-highest precedence; a name in all
+// four resolves to the local value; the legacy global tier is still read.
+TEST(McpTypes, McpStorageFourFilePrecedence) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_four_file_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path   = root / "project.local.json";
+
+    c6_write_file(global_path, R"JSON({
+  "mcpServers": {
+    "onlyg": {"command": "node", "args": ["g.js"]},
+    "shared": {"command": "node", "args": ["global.js"]}
+  }
+})JSON");
+    c6_write_file(user_path, R"JSON({
+  "mcpServers": {
+    "onlyu": {"command": "node", "args": ["u.js"]},
+    "shared": {"command": "node", "args": ["user.js"]}
+  }
+})JSON");
+    c6_write_file(project_path, R"JSON({
+  "mcpServers": {
+    "onlyp": {"command": "node", "args": ["p.js"]},
+    "shared": {"command": "node", "args": ["project.js"]}
+  }
+})JSON");
+    c6_write_file(local_path, R"JSON({
+  "mcpServers": {
+    "onlyl": {"command": "node", "args": ["l.js"]},
+    "shared": {"command": "node", "args": ["local.js"]}
+  }
+})JSON");
+
+    cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+    const auto paths = manager.mcp_scope_paths();
+    ASSERT_EQ(paths.size(), 4u);
+    EXPECT_EQ(paths[0].first, cc::core::McpStorageScope::Global);
+    EXPECT_EQ(paths[1].first, cc::core::McpStorageScope::User);
+    EXPECT_EQ(paths[2].first, cc::core::McpStorageScope::Project);
+    EXPECT_EQ(paths[3].first, cc::core::McpStorageScope::Local);
+
+    ASSERT_TRUE(manager.load().has_value());
+    std::map<std::string, cc::core::McpServerConfig> by_name;
+    for (const auto& server : manager.settings().mcp_servers) {
+        by_name[server.name] = server;
+    }
+    ASSERT_EQ(by_name.size(), 5u);
+    EXPECT_EQ(by_name.at("shared").args, (std::vector<std::string>{"local.js"}));
+    EXPECT_EQ(by_name.at("onlyg").args, (std::vector<std::string>{"g.js"}));
+    EXPECT_EQ(by_name.at("onlyu").args, (std::vector<std::string>{"u.js"}));
+    EXPECT_EQ(by_name.at("onlyp").args, (std::vector<std::string>{"p.js"}));
+    EXPECT_EQ(by_name.at("onlyl").args, (std::vector<std::string>{"l.js"}));
+
+    EXPECT_EQ(*manager.mcp_server_owner("shared"), cc::core::McpStorageScope::Local);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyg"),  cc::core::McpStorageScope::Global);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyu"),  cc::core::McpStorageScope::User);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyp"),  cc::core::McpStorageScope::Project);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyl"),  cc::core::McpStorageScope::Local);
+
+    const auto shared_files = manager.find_mcp_server_files("shared");
+    ASSERT_EQ(shared_files.size(), 4u);
+    EXPECT_EQ(shared_files.back().first, cc::core::McpStorageScope::Local);
+    EXPECT_TRUE(manager.find_mcp_server_files("onlyg").size() == 1u);
+
+    fs::remove_all(root);
+}
+
+// Groups 3 + 8: upsert(User) writes ONLY the user file (no model/display/
+// features sections, other files untouched), and the patched entry is
+// compared STRUCTURALLY with the C4-pinned key set/order preserved.
+TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_user_upsert_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path   = root / "project.local.json";
+
+    cc::core::McpServerConfig cfg;
+    cfg.name = "srv";
+    cfg.transport = "http";
+    cfg.args = {"a1", "a2"};
+    cfg.env = {{"K", "V"}};
+    cfg.url = "https://mcp.example.com/mcp";
+    cfg.headers = {{"Authorization", "Bearer abc"}};
+    cfg.headers_helper = "node h.js";
+    cfg.disabled = false;
+    cfg.config_scope = "user";
+    cc::core::McpOAuthConfig oauth;
+    oauth.auth_server_metadata_url = "https://auth.example.com/meta";
+    oauth.callback_port = 19485;
+    oauth.client_id = "client-1";
+    oauth.xaa = true;
+    oauth.issuer = "https://issuer.example.com";
+    cfg.oauth = oauth;
+
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        auto upserted = manager.upsert_mcp_server(cc::core::McpStorageScope::User, cfg);
+        ASSERT_TRUE(upserted.has_value()) << upserted.error().message;
+    }
+
+    EXPECT_FALSE(fs::exists(global_path));
+    EXPECT_TRUE(fs::exists(user_path));
+    EXPECT_FALSE(fs::exists(project_path));
+    EXPECT_FALSE(fs::exists(local_path));
+
+    auto parsed = cc::utils::json::parse_file(user_path);
+    ASSERT_TRUE(parsed.has_value());
+    // The file contains exactly one top-level section: mcpServers.
+    const auto root_keys = c6_json_keys(parsed->root());
+    ASSERT_EQ(root_keys.size(), 1u);
+    EXPECT_EQ(root_keys[0], "mcpServers");
+
+    const auto servers = parsed->root().get("mcpServers");
+    ASSERT_TRUE(servers.is_obj());
+    const auto entry = servers.get("srv");
+    ASSERT_TRUE(entry.is_obj());
+
+    // Key order is exactly the C4-pinned set (command omitted as empty).
+    const auto keys = c6_json_keys(entry);
+    EXPECT_EQ(keys, (std::vector<std::string>{
+        "type", "args", "env", "url", "headers", "headersHelper",
+        "disabled", "configScope", "oauth"}));
+    EXPECT_EQ(entry.get("type").as_str(), std::string_view("http"));
+    ASSERT_TRUE(entry.get("args").is_arr());
+    EXPECT_EQ(entry.get("args").at(0).as_str(), std::string_view("a1"));
+    EXPECT_EQ(entry.get("args").at(1).as_str(), std::string_view("a2"));
+    EXPECT_EQ(entry.get("env").get("K").as_str(), std::string_view("V"));
+    EXPECT_EQ(entry.get("url").as_str(), std::string_view("https://mcp.example.com/mcp"));
+    EXPECT_EQ(entry.get("headers").get("Authorization").as_str(),
+              std::string_view("Bearer abc"));
+    EXPECT_EQ(entry.get("headersHelper").as_str(), std::string_view("node h.js"));
+    EXPECT_FALSE(entry.get("disabled").as_bool());
+    EXPECT_EQ(entry.get("configScope").as_str(), std::string_view("user"));
+    const auto oauth_json = entry.get("oauth");
+    ASSERT_TRUE(oauth_json.is_obj());
+    EXPECT_EQ(c6_json_keys(oauth_json), (std::vector<std::string>{
+        "authServerMetadataUrl", "callbackPort", "clientId", "xaa", "issuer"}));
+    EXPECT_EQ(oauth_json.get("callbackPort").as_int(), 19485);
+    EXPECT_EQ(oauth_json.get("clientId").as_str(), std::string_view("client-1"));
+    EXPECT_TRUE(oauth_json.get("xaa").as_bool());
+
+    // Reload picks the user entry up.
+    {
+        cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(reloaded.load().has_value());
+        ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
+        EXPECT_EQ(reloaded.settings().mcp_servers[0].name, "srv");
+        EXPECT_EQ(*reloaded.settings().mcp_servers[0].url, "https://mcp.example.com/mcp");
+
+        // Same-name upsert replaces, never duplicates.
+        cfg.url = "https://mcp.example.com/v2";
+        ASSERT_TRUE(reloaded.upsert_mcp_server(cc::core::McpStorageScope::User, cfg)
+                        .has_value());
+    }
+    auto reparsed = cc::utils::json::parse_file(user_path);
+    ASSERT_TRUE(reparsed.has_value());
+    EXPECT_EQ(reparsed->root().get("mcpServers").size(), 1u);
+    EXPECT_EQ(reparsed->root().get("mcpServers").get("srv").get("url").as_str(),
+              std::string_view("https://mcp.example.com/v2"));
+
+    fs::remove_all(root);
+}
+
+// Group 8 (stdio variant): the patched file is whole-file yyjson-PRETTY
+// (inline arrays become multiline), the key order survives, and a reload
+// round-trips every field structurally.
+TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_shape_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path   = root / "project.local.json";
+
+    cc::core::McpServerConfig cfg;
+    cfg.name = "runner";
+    cfg.transport = "stdio";
+    cfg.command = "node";
+    cfg.args = {"serve.js", "--port", "9000"};
+    cfg.env = {{"DEBUG", "1"}};
+    cfg.disabled = true;
+    cfg.config_scope = "project";
+
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Project, cfg)
+                        .has_value());
+    }
+
+    const std::string text = c6_read_file(project_path);
+    // Pretty reformat: the inline args array is now multiline.
+    EXPECT_NE(text.find("\"args\": [\n"), std::string::npos);
+    auto parsed = cc::utils::json::parse_file(project_path);
+    ASSERT_TRUE(parsed.has_value());
+    const auto entry = parsed->root().get("mcpServers").get("runner");
+    ASSERT_TRUE(entry.is_obj());
+    EXPECT_EQ(c6_json_keys(entry),
+              (std::vector<std::string>{"type", "command", "args", "env",
+                                        "disabled", "configScope"}));
+    EXPECT_EQ(entry.get("type").as_str(), std::string_view("stdio"));
+    EXPECT_EQ(entry.get("command").as_str(), std::string_view("node"));
+    EXPECT_EQ(entry.get("args").size(), 3u);
+    EXPECT_TRUE(entry.get("disabled").as_bool());
+
+    cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+    ASSERT_TRUE(reloaded.load().has_value());
+    ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
+    const auto& back = reloaded.settings().mcp_servers[0];
+    EXPECT_EQ(back.command, "node");
+    EXPECT_EQ(back.args, (std::vector<std::string>{"serve.js", "--port", "9000"}));
+    EXPECT_EQ(back.env.at("DEBUG"), "1");
+    ASSERT_TRUE(back.disabled.has_value());
+    EXPECT_TRUE(*back.disabled);
+    EXPECT_EQ(back.config_scope, "project");
+
+    fs::remove_all(root);
+}
+
+// Group 4: the default Local scope creates config.local.json (no
+// config.json) and appends its basename to ./.gitignore exactly once,
+// coping with a pre-existing file that has no trailing newline.
+TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_local_gitignore_" + std::to_string(suffix));
+    fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
+
+    // Existing .gitignore with NO trailing newline.
+    c6_write_file(root / ".gitignore", "sentinel");
+
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / ".loom" / "config.json";
+    const auto local_path   = root / ".loom" / "config.local.json";
+
+    auto make_stdio = [](std::string name) {
+        cc::core::McpServerConfig cfg;
+        cfg.name = std::move(name);
+        cfg.transport = "stdio";
+        cfg.command = "node";
+        cfg.args = {"s.js"};
+        cfg.config_scope = "local";
+        return cfg;
+    };
+
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Local,
+                                              make_stdio("l1")).has_value());
+    }
+    EXPECT_TRUE(fs::exists(local_path));
+    EXPECT_FALSE(fs::exists(project_path));
+    EXPECT_EQ(c6_read_file(root / ".gitignore"), "sentinel\nconfig.local.json\n");
+
+    // The local tier is the documented secret holder: owner-only (0600).
+    {
+        std::error_code ec;
+        const auto status = fs::status(local_path, ec);
+        ASSERT_FALSE(ec);
+        const auto perms = status.permissions();
+        const auto none = fs::perms::none;
+        EXPECT_EQ(perms & (fs::perms::group_read | fs::perms::group_write |
+                           fs::perms::group_exec | fs::perms::others_read |
+                           fs::perms::others_write | fs::perms::others_exec),
+                  none);
+        EXPECT_NE(perms & fs::perms::owner_read, none);
+        EXPECT_NE(perms & fs::perms::owner_write, none);
+    }
+
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Local,
+                                              make_stdio("l2")).has_value());
+    }
+    const std::string gitignore = c6_read_file(root / ".gitignore");
+    EXPECT_EQ(c6_count_occurrences(gitignore, "config.local.json"), 1u);
+    auto parsed = cc::utils::json::parse_file(local_path);
+    ASSERT_TRUE(parsed.has_value());
+    EXPECT_EQ(parsed->root().get("mcpServers").size(), 2u);
+
+    fs::remove_all(root);
+}
+
+// Groups 5 + 13 (headline duplication regression): a Local upsert next to a
+// legacy global server leaves the global file byte-identical, creates no
+// project config.json, and reloads as the {global, local} overlay; core
+// commands also never touch the services-layer mcp_servers.json files.
+TEST(McpTypes, McpLocalUpsertDoesNotDuplicateGlobal) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_dup_guard_" + std::to_string(suffix));
+    fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
+    EnvironmentGuard home_guard("HOME", root.string());
+
+    // Services-layer files (mcp_servers.json names) must stay untouched.
+    const auto svc_global = cc::services::mcp::ConfigPaths::global_config();
+    const auto svc_user   = cc::services::mcp::ConfigPaths::user_config();
+    const auto svc_local  = cc::services::mcp::ConfigPaths::local_config(root);
+    c6_write_file(svc_global, "{\"serviceGlobal\": true}\n");
+    c6_write_file(svc_user,   "{\"serviceUser\": true}\n");
+    c6_write_file(svc_local,  "{\"serviceLocal\": true}\n");
+    const std::string svc_global_before = c6_read_file(svc_global);
+    const std::string svc_user_before   = c6_read_file(svc_user);
+    const std::string svc_local_before  = c6_read_file(svc_local);
+
+    const auto global_path  = root / ".config" / "loom" / "config.json";
+    const auto project_path = root / ".loom" / "config.json";
+    c6_write_file(global_path, R"JSON({
+  "mcpServers": {
+    "g1": {"command": "node", "args": ["g1.js"]}
+  }
+})JSON");
+    const std::string global_before = c6_read_file(global_path);
+
+    cc::core::McpServerConfig local_cfg;
+    local_cfg.name = "l1";
+    local_cfg.transport = "stdio";
+    local_cfg.command = "node";
+    local_cfg.args = {"l1.js"};
+    local_cfg.config_scope = "local";
+
+    {
+        // 2-arg ctor: local path is derived as project.local.json.
+        cc::core::ConfigManager manager(global_path, project_path);
+        ASSERT_EQ(manager.mcp_scope_paths().size(), 3u);  // user tier absent
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_EQ(manager.settings().mcp_servers.size(), 1u);
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Local,
+                                              local_cfg).has_value());
+    }
+
+    EXPECT_EQ(c6_read_file(global_path), global_before);
+    EXPECT_FALSE(fs::exists(project_path));
+    EXPECT_TRUE(fs::exists(root / ".loom" / "config.local.json"));
+
+    cc::core::ConfigManager reloaded(global_path, project_path);
+    ASSERT_TRUE(reloaded.load().has_value());
+    std::map<std::string, cc::core::McpServerConfig> by_name;
+    for (const auto& server : reloaded.settings().mcp_servers) by_name[server.name] = server;
+    EXPECT_EQ(by_name.size(), 2u);
+    EXPECT_EQ(by_name.at("g1").args, (std::vector<std::string>{"g1.js"}));
+    EXPECT_EQ(by_name.at("l1").args, (std::vector<std::string>{"l1.js"}));
+
+    EXPECT_EQ(c6_read_file(svc_global), svc_global_before);
+    EXPECT_EQ(c6_read_file(svc_user),   svc_user_before);
+    EXPECT_EQ(c6_read_file(svc_local),  svc_local_before);
+
+    fs::remove_all(root);
+}
+
+// Group 6: default remove clears every physical copy and is idempotent;
+// --scope touches one file (including the legacy global); unknown names
+// yield an empty outcome; removing the last entry drops mcpServers but
+// preserves sibling sections.
+TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_remove_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path   = root / "project.local.json";
+
+    // Default removal touches both polluted copies.
+    c6_write_file(global_path, R"JSON({
+  "mcpServers": {
+    "dup": {"command": "node", "args": ["g.js"]},
+    "gonly": {"command": "node", "args": ["go.js"]}
+  }
+})JSON");
+    c6_write_file(project_path, R"JSON({
+  "mcpServers": {
+    "dup": {"command": "node", "args": ["p.js"]},
+    "ponly": {"command": "node", "args": ["po.js"]}
+  }
+})JSON");
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        auto outcome = manager.remove_mcp_server("dup");
+        ASSERT_TRUE(outcome.has_value());
+        EXPECT_EQ(outcome->touched.size(), 2u);
+        EXPECT_TRUE(outcome->failed.empty());
+
+        // Idempotent re-run: nothing present anymore.
+        auto again = manager.remove_mcp_server("dup");
+        ASSERT_TRUE(again.has_value());
+        EXPECT_TRUE(again->touched.empty());
+        EXPECT_TRUE(again->failed.empty());
+    }
+    {
+        cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(reloaded.load().has_value());
+        std::set<std::string> names;
+        for (const auto& server : reloaded.settings().mcp_servers) names.insert(server.name);
+        EXPECT_EQ(names, (std::set<std::string>{"gonly", "ponly"}));
+    }
+
+    // Scoped removal touches only that tier.
+    c6_write_file(global_path, R"JSON({"mcpServers": {"s": {"command": "node"}}})JSON");
+    c6_write_file(project_path, R"JSON({"mcpServers": {"s": {"command": "node"}}})JSON");
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        auto outcome = manager.remove_mcp_server(
+            "s", cc::core::McpStorageScope::Project);
+        ASSERT_TRUE(outcome.has_value());
+        EXPECT_EQ(outcome->touched.size(), 1u);
+        EXPECT_EQ(outcome->touched[0], project_path);
+    }
+    {
+        cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(reloaded.load().has_value());
+        ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
+        EXPECT_EQ(reloaded.settings().mcp_servers[0].name, "s");  // survives in global
+    }
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        auto outcome = manager.remove_mcp_server(
+            "s", cc::core::McpStorageScope::Global);
+        ASSERT_TRUE(outcome.has_value());
+        EXPECT_EQ(outcome->touched.size(), 1u);
+        EXPECT_EQ(outcome->touched[0], global_path);
+    }
+
+    // Unknown names: empty outcome both unscoped and scoped.
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        EXPECT_TRUE(manager.remove_mcp_server("ghost")->touched.empty());
+        auto scoped = manager.remove_mcp_server("ghost", cc::core::McpStorageScope::Local);
+        ASSERT_TRUE(scoped.has_value());
+        EXPECT_TRUE(scoped->touched.empty());
+    }
+
+    // Removing the last entry drops mcpServers but keeps sibling sections.
+    c6_write_file(global_path, R"JSON({
+  "systemPrompt": "keep",
+  "mcpServers": {"last": {"command": "node"}}
+})JSON");
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_TRUE(manager.remove_mcp_server(
+            "last", cc::core::McpStorageScope::Global).has_value());
+        auto parsed = cc::utils::json::parse_file(global_path);
+        ASSERT_TRUE(parsed.has_value());
+        EXPECT_FALSE(parsed->root().has("mcpServers"));
+        EXPECT_EQ(parsed->root().get("systemPrompt").as_str(), std::string_view("keep"));
+    }
+
+    fs::remove_all(root);
+}
+
+// Group 7: enable/disable patch only "disabled" on the owner file; unknown
+// sibling keys survive; lower tiers are untouched; the batch helper patches
+// one file per distinct owner; a global-only entry patches the legacy file.
+TEST(McpTypes, McpEnableDisablePatchesOwnerFilesAndGlobal) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_disable_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path   = root / "project.local.json";
+
+    c6_write_file(global_path, R"JSON({
+  "mcpServers": {
+    "goff": {"command": "node", "disabled": true},
+    "gx": {"command": "node", "weird": 123}
+  }
+})JSON");
+    c6_write_file(project_path, R"JSON({
+  "mcpServers": {"pon": {"command": "node"}}
+})JSON");
+    c6_write_file(local_path, R"JSON({
+  "mcpServers": {"lon": {"command": "node"}}
+})JSON");
+
+    const std::string project_before = c6_read_file(project_path);
+    const std::string local_before = c6_read_file(local_path);
+
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+
+        // Highest-precedence owner is global; enabling flips only that file.
+        ASSERT_TRUE(manager.set_mcp_server_disabled("goff", false).has_value());
+        auto global_doc = cc::utils::json::parse_file(global_path);
+        ASSERT_TRUE(global_doc.has_value());
+        EXPECT_FALSE(global_doc->root().get("mcpServers").get("goff").get("disabled").as_bool());
+
+        // Unknown sibling key survives a disable/enable round trip.
+        ASSERT_TRUE(manager.set_mcp_server_disabled("gx", true).has_value());
+        ASSERT_TRUE(manager.set_mcp_server_disabled("gx", false).has_value());
+        global_doc = cc::utils::json::parse_file(global_path);
+        ASSERT_TRUE(global_doc.has_value());
+        const auto gx = global_doc->root().get("mcpServers").get("gx");
+        EXPECT_EQ(gx.get("weird").as_int(), 123);
+        EXPECT_FALSE(gx.get("disabled").as_bool());
+
+        // Project owner patches project; global/local bytes untouched.
+        ASSERT_TRUE(manager.set_mcp_server_disabled("pon", true).has_value());
+        EXPECT_EQ(c6_read_file(global_path).find("\"pon\""), std::string::npos);
+        EXPECT_EQ(c6_read_file(local_path), local_before);
+
+        // Unknown name and wrong-scope name are errors.
+        EXPECT_FALSE(manager.set_mcp_server_disabled("zzz", true).has_value());
+        EXPECT_FALSE(manager.set_mcp_server_disabled(
+            "pon", true, cc::core::McpStorageScope::Local).has_value());
+    }
+    EXPECT_NE(c6_read_file(project_path), project_before);
+
+    // Global-only entry patches the legacy global file, creates nothing else.
+    {
+        const auto root2 = fs::temp_directory_path() /
+            ("loom_mcp_c6_disable_global_only_" + std::to_string(suffix + 1));
+        fs::create_directories(root2);
+        const auto g2 = root2 / "global.json";
+        const auto u2 = root2 / "user.json";
+        const auto p2 = root2 / "project.json";
+        const auto l2 = root2 / "project.local.json";
+        c6_write_file(g2, R"JSON({"mcpServers": {"solo": {"command": "node"}}})JSON");
+        cc::core::ConfigManager manager(g2, u2, p2, l2);
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_TRUE(manager.set_mcp_server_disabled("solo", true).has_value());
+        EXPECT_TRUE(cc::utils::json::parse_file(g2)->root()
+                        .get("mcpServers").get("solo").get("disabled").as_bool());
+        EXPECT_FALSE(fs::exists(p2));
+        EXPECT_FALSE(fs::exists(l2));
+        fs::remove_all(root2);
+    }
+
+    // "all" shape: one batch call per distinct owner file.
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        const std::vector<std::string> global_names{"goff", "gx"};
+        const std::vector<std::string> project_names{"pon"};
+        const std::vector<std::string> local_names{"lon"};
+        EXPECT_TRUE(manager.set_mcp_servers_disabled_in(
+            cc::core::McpStorageScope::Global, global_names, true).has_value());
+        EXPECT_TRUE(manager.set_mcp_servers_disabled_in(
+            cc::core::McpStorageScope::Project, project_names, true).has_value());
+        EXPECT_TRUE(manager.set_mcp_servers_disabled_in(
+            cc::core::McpStorageScope::Local, local_names, true).has_value());
+        for (const auto& [path, names] : {
+                 std::pair{global_path, std::vector<std::string>{"goff", "gx"}},
+                 std::pair{project_path, std::vector<std::string>{"pon"}},
+                 std::pair{local_path, std::vector<std::string>{"lon"}}}) {
+            auto doc = cc::utils::json::parse_file(path);
+            ASSERT_TRUE(doc.has_value()) << path.string();
+            for (const auto& name : names) {
+                EXPECT_TRUE(doc->root().get("mcpServers").get(name)
+                                .get("disabled").as_bool()) << path.string() << " " << name;
+            }
+        }
+    }
+
+    fs::remove_all(root);
+}
+
+// Group 9 (§A): key=value user content and a non-object local root make
+// those tiers contribute zero entries with one diagnostic each, while the
+// global/project tiers keep loading; upserts against an unparseable tier
+// fail with an actionable message and leave bytes untouched.
+TEST(McpTypes, McpGarbageUserLocalFilesSkippedAndUpsertRejected) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_garbage_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path   = root / "project.local.json";
+
+    c6_write_file(global_path, R"JSON({"mcpServers": {"g1": {"command": "node"}}})JSON");
+    c6_write_file(user_path, "FOO=bar\nBAZ=qux\n");              // not JSON
+    c6_write_file(local_path, "[1, 2]\n");                        // valid JSON, wrong root
+    c6_write_file(project_path, R"JSON({"mcpServers": {"p1": {"command": "node"}}})JSON");
+
+    const std::string user_before = c6_read_file(user_path);
+    const std::string local_before = c6_read_file(local_path);
+
+    cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+    ASSERT_TRUE(manager.load().has_value());
+    std::set<std::string> names;
+    for (const auto& server : manager.settings().mcp_servers) names.insert(server.name);
+    EXPECT_EQ(names, (std::set<std::string>{"g1", "p1"}));
+
+    cc::core::McpServerConfig cfg;
+    cfg.name = "newu";
+    cfg.transport = "stdio";
+    cfg.command = "node";
+    cfg.config_scope = "user";
+    auto user_upsert = manager.upsert_mcp_server(cc::core::McpStorageScope::User, cfg);
+    ASSERT_FALSE(user_upsert.has_value());
+    EXPECT_NE(user_upsert.error().message.find(user_path.string()), std::string::npos);
+    EXPECT_NE(user_upsert.error().message.find("not valid JSON"), std::string::npos);
+    EXPECT_EQ(c6_read_file(user_path), user_before);
+
+    cfg.name = "newl";
+    auto local_upsert = manager.upsert_mcp_server(cc::core::McpStorageScope::Local, cfg);
+    ASSERT_FALSE(local_upsert.has_value());
+    EXPECT_EQ(c6_read_file(local_path), local_before);
+
+    // Other tiers remain patchable.
+    cfg.name = "newp";
+    ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Project, cfg)
+                    .has_value());
+    cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+    ASSERT_TRUE(reloaded.load().has_value());
+    names.clear();
+    for (const auto& server : reloaded.settings().mcp_servers) names.insert(server.name);
+    EXPECT_EQ(names, (std::set<std::string>{"g1", "newp", "p1"}));
+
+    fs::remove_all(root);
+}
+
+// Group 10: $LOOM_CONFIG_DIR routes the user tier; config_home_write() and
+// the default ConfigManager constructor both honor it.
+TEST(McpTypes, McpUserScopeHonorsConfigDirEnv) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_env_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto fake_home = root / "home";
+    const auto config_dir = root / "cfgdir";
+    const auto work = root / "work";
+    fs::create_directories(fake_home);
+    fs::create_directories(config_dir);
+    fs::create_directories(work);
+
+    EnvironmentGuard home_guard("HOME", fake_home.string());
+    EnvironmentGuard dir_guard("LOOM_CONFIG_DIR", config_dir.string());
+    CurrentPathGuard cwd_guard(work);
+
+    EXPECT_EQ(cc::constants::paths::config_home_write(), config_dir);
+
+    cc::core::McpServerConfig cfg;
+    cfg.name = "u1";
+    cfg.transport = "stdio";
+    cfg.command = "node";
+    cfg.config_scope = "user";
+
+    {
+        cc::core::ConfigManager manager;
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::User, cfg)
+                        .has_value());
+    }
+    EXPECT_TRUE(fs::exists(config_dir / "config.json"));
+    EXPECT_FALSE(fs::exists(fake_home / ".loom" / "config.json"));
+
+    {
+        cc::core::ConfigManager reloaded;
+        ASSERT_TRUE(reloaded.load().has_value());
+        ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
+        EXPECT_EQ(reloaded.settings().mcp_servers[0].name, "u1");
+    }
+
+    fs::remove_all(root);
+}
+
+// Group 11: unwritable files aggregate into the failed list without
+// aborting writable tiers; all-unwritable-present is an empty touched list
+// rather than NotFound. Skipped when running as root (perms are bypassed).
+TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
+    if (::getuid() == 0) {
+        GTEST_SKIP() << "read-only permissions are bypassed for root";
+    }
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_unwritable_" + std::to_string(suffix));
+    fs::create_directories(root);
+
+    {
+        const auto ro = root / "ro";
+        fs::create_directories(ro);
+        const auto global_path  = ro / "global.json";
+        const auto project_path = root / "project.json";
+        c6_write_file(global_path, R"JSON({"mcpServers": {"dup": {"command": "node"}}})JSON");
+        c6_write_file(project_path, R"JSON({"mcpServers": {"dup": {"command": "node"}}})JSON");
+
+        fs::permissions(ro, fs::perms::owner_read | fs::perms::owner_exec,
+                        fs::perm_options::replace);
+        cc::core::ConfigManager manager(global_path, project_path);
+        ASSERT_TRUE(manager.load().has_value());
+        auto outcome = manager.remove_mcp_server("dup");
+        ASSERT_TRUE(outcome.has_value());
+        EXPECT_EQ(outcome->touched.size(), 1u);
+        EXPECT_EQ(outcome->touched[0], project_path);
+        EXPECT_EQ(outcome->failed.size(), 1u);
+        EXPECT_EQ(outcome->failed[0], global_path);
+
+        fs::permissions(ro, fs::perms::owner_all, fs::perm_options::replace);
+    }
+
+    {
+        // Both files present in one read-only directory: present, zero writes.
+        const auto ro2 = root / "ro2";
+        fs::create_directories(ro2);
+        const auto global_path  = ro2 / "global.json";
+        const auto project_path = ro2 / "project.json";
+        c6_write_file(global_path, R"JSON({"mcpServers": {"dup": {"command": "node"}}})JSON");
+        c6_write_file(project_path, R"JSON({"mcpServers": {"dup": {"command": "node"}}})JSON");
+
+        fs::permissions(ro2, fs::perms::owner_read | fs::perms::owner_exec,
+                        fs::perm_options::replace);
+        cc::core::ConfigManager manager(global_path, project_path);
+        ASSERT_TRUE(manager.load().has_value());
+        auto outcome = manager.remove_mcp_server("dup");
+        ASSERT_TRUE(outcome.has_value());
+        EXPECT_TRUE(outcome->touched.empty());
+        EXPECT_EQ(outcome->failed.size(), 2u);
+
+        fs::permissions(ro2, fs::perms::owner_all, fs::perm_options::replace);
+    }
+
+    fs::remove_all(root);
+}
+
+// Group 12 (§B secret boundary): a full save to the PROJECT file omits
+// user/local-only entries (which may carry Authorization headers) and
+// re-emits the PROJECT FILE'S OWN value for physically-present names, never
+// the shadowing higher-tier value; global-owned entries still copy down.
+TEST(McpTypes, McpProjectSaveDoesNotLeakUserLocalSecrets) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_secret_boundary_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path   = root / "project.local.json";
+
+    c6_write_file(global_path, R"JSON({
+  "mcpServers": {"g1": {"command": "node", "args": ["g.js"]}}
+})JSON");
+    c6_write_file(project_path, R"JSON({
+  "mcpServers": {
+    "p1": {"command": "node", "args": ["p.js"]},
+    "shared": {
+      "type": "http",
+      "url": "https://mcp.example.com/mcp",
+      "headers": {"X-Public": "1"}
+    }
+  }
+})JSON");
+    c6_write_file(user_path, R"JSON({
+  "mcpServers": {
+    "secret-srv": {
+      "type": "http",
+      "url": "https://secret.example.com/mcp",
+      "headers": {"Authorization": "Bearer user-secret"}
+    },
+    "shared": {
+      "type": "http",
+      "url": "https://mcp.example.com/mcp",
+      "headers": {"Authorization": "Bearer user-shadow-secret"}
+    }
+  }
+})JSON");
+    c6_write_file(local_path, R"JSON({
+  "mcpServers": {
+    "localsecret": {
+      "type": "http",
+      "url": "https://local.example.com/mcp",
+      "headers": {"Authorization": "Bearer local-secret"}
+    }
+  }
+})JSON");
+
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        // The overlay carries the secret-bearing user/local entries.
+        ASSERT_TRUE(manager.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+
+    const std::string rewritten = c6_read_file(project_path);
+    auto doc = cc::utils::json::parse(rewritten);
+    ASSERT_TRUE(doc.has_value());
+    const auto servers = doc->root().get("mcpServers");
+    ASSERT_TRUE(servers.is_obj());
+    const auto keys = c6_json_keys(servers);
+    EXPECT_EQ(std::set<std::string>(keys.begin(), keys.end()),
+              (std::set<std::string>{"g1", "p1", "shared"}));
+    // No user/local names and no secret material leak into the tracked file.
+    EXPECT_EQ(rewritten.find("secret-srv"), std::string::npos);
+    EXPECT_EQ(rewritten.find("localsecret"), std::string::npos);
+    EXPECT_EQ(rewritten.find("Bearer"), std::string::npos);
+    EXPECT_EQ(rewritten.find("Authorization"), std::string::npos);
+    // The physically-present shared entry keeps the PROJECT file's own value.
+    const auto shared = servers.get("shared");
+    ASSERT_TRUE(shared.is_obj());
+    EXPECT_EQ(shared.get("headers").get("X-Public").as_str(), std::string_view("1"));
+    EXPECT_FALSE(shared.get("headers").has("Authorization"));
+    EXPECT_EQ(servers.get("p1").get("command").as_str(), std::string_view("node"));
+    EXPECT_EQ(servers.get("g1").get("command").as_str(), std::string_view("node"));
+
+    fs::remove_all(root);
+}
+
+// B1 (review followup): mutators must keep in-memory bookkeeping and the
+// merged vector consistent with disk, so a full save on the SAME
+// ConfigManager instance (no reload) cannot resurrect a removed entry or
+// misapply the §B filter, and an upsert stays coherent through a save.
+TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_b1_" + std::to_string(suffix));
+    fs::create_directories(root);
+    // The Local-upsert gitignore applier targets CWD/.gitignore by design;
+    // pin CWD to the temp root so test runs never touch the real checkout.
+    CurrentPathGuard cwd_guard(root);
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path   = root / "project.local.json";
+
+    c6_write_file(global_path, R"JSON({
+  "mcpServers": {"g1": {"command": "node", "args": ["g.js"]}}
+})JSON");
+    c6_write_file(project_path, R"JSON({
+  "mcpServers": {
+    "p1": {"command": "node", "args": ["p.js"]},
+    "p2": {"command": "node", "args": ["p2.js"]}
+  }
+})JSON");
+
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_EQ(manager.settings().mcp_servers.size(), 3u);
+
+        // Remove a PROJECT entry and immediately full-save on the SAME
+        // instance (the old bug rewrote the stale merged entry back).
+        auto removed = manager.remove_mcp_server(
+            "p1", cc::core::McpStorageScope::Project);
+        ASSERT_TRUE(removed.has_value());
+        EXPECT_EQ(removed->touched.size(), 1u);
+        EXPECT_TRUE(std::ranges::none_of(manager.settings().mcp_servers,
+            [](const auto& s) { return s.name == "p1"; }));
+        ASSERT_TRUE(manager.save(cc::core::ConfigSource::ProjectConfig).has_value());
+
+        const std::string text = c6_read_file(project_path);
+        EXPECT_EQ(text.find("p1"), std::string::npos);
+        auto reparsed = cc::utils::json::parse(text);
+        ASSERT_TRUE(reparsed.has_value());
+        const auto servers = reparsed->root().get("mcpServers");
+        EXPECT_FALSE(servers.has("p1"));
+        EXPECT_TRUE(servers.has("p2"));
+        EXPECT_TRUE(servers.has("g1"));  // global copy-down preserved
+    }
+
+    // A FRESH instance sees the same state.
+    {
+        cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(reloaded.load().has_value());
+        std::set<std::string> names;
+        for (const auto& s : reloaded.settings().mcp_servers) names.insert(s.name);
+        EXPECT_EQ(names, (std::set<std::string>{"g1", "p2"}));
+    }
+
+    // Upsert -> same-instance save coherence: new local entry must not be
+    // copied down into the project file by the subsequent save (§B uses the
+    // updated bookkeeping), and a project upsert round-trips.
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+
+        cc::core::McpServerConfig local_cfg;
+        local_cfg.name = "l1";
+        local_cfg.transport = "stdio";
+        local_cfg.command = "node";
+        local_cfg.args = {"l.js"};
+        local_cfg.config_scope = "local";
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Local, local_cfg)
+                        .has_value());
+        ASSERT_EQ(manager.settings().mcp_servers.size(), 3u);  // g1, p2, l1
+        ASSERT_TRUE(manager.mcp_server_owner("l1").has_value());
+        EXPECT_EQ(*manager.mcp_server_owner("l1"), cc::core::McpStorageScope::Local);
+
+        cc::core::McpServerConfig project_cfg;
+        project_cfg.name = "p3";
+        project_cfg.transport = "stdio";
+        project_cfg.command = "node";
+        project_cfg.args = {"p3.js"};
+        project_cfg.config_scope = "project";
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Project, project_cfg)
+                        .has_value());
+
+        ASSERT_TRUE(manager.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        const std::string text = c6_read_file(project_path);
+        EXPECT_EQ(text.find("l1"), std::string::npos);  // not copied down
+        auto reparsed = cc::utils::json::parse(text);
+        ASSERT_TRUE(reparsed.has_value());
+        const auto servers = reparsed->root().get("mcpServers");
+        EXPECT_TRUE(servers.has("p2"));
+        EXPECT_TRUE(servers.has("p3"));
+
+        // A lower-tier upsert while a higher tier shadows the name keeps the
+        // higher value effective and the higher owner.
+        cc::core::McpServerConfig shadow;
+        shadow.name = "l1";
+        shadow.transport = "stdio";
+        shadow.command = "node";
+        shadow.args = {"project-shadow.js"};
+        shadow.config_scope = "project";
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Project, shadow)
+                        .has_value());
+        auto effective = std::ranges::find(manager.settings().mcp_servers, "l1",
+                                          [](const auto& s) { return s.name; });
+        ASSERT_NE(effective, manager.settings().mcp_servers.end());
+        EXPECT_EQ(effective->args, (std::vector<std::string>{"l.js"}));  // local wins
+        EXPECT_EQ(*manager.mcp_server_owner("l1"), cc::core::McpStorageScope::Local);
+    }
+
+    fs::remove_all(root);
+}
+
+// §A followup: a zero-length or all-whitespace user/local file behaves like
+// a MISSING file — no warning state, zero entries, and an upsert creates it
+// fresh — while genuine garbage keeps the rejection policy.
+TEST(McpTypes, McpBlankUserLocalFilesTreatedAsMissing) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_blank_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path   = root / "project.local.json";
+
+    // --- §A asymmetry: global/project stay HARD failures even when blank or
+    // garbage; only user/local get the soft policy. -----------------------
+    { std::ofstream(global_path) << ""; }
+    {
+        cc::core::ConfigManager m(global_path, user_path, project_path, local_path);
+        EXPECT_FALSE(m.load().has_value());
+    }
+    { std::ofstream(global_path) << "FOO=bar\n"; }  // non-JSON garbage
+    {
+        cc::core::ConfigManager m(global_path, user_path, project_path, local_path);
+        EXPECT_FALSE(m.load().has_value());
+    }
+
+    fs::remove(global_path);
+    { std::ofstream(project_path) << "   \n"; }  // blank project file
+    {
+        cc::core::ConfigManager m(global_path, user_path, project_path, local_path);
+        EXPECT_FALSE(m.load().has_value());
+    }
+    c6_write_file(global_path, R"JSON({"mcpServers": {"g1": {"command": "node"}}})JSON");
+    { std::ofstream(project_path) << "[1, 2]\n"; }  // valid JSON, wrong root
+    {
+        cc::core::ConfigManager m(global_path, user_path, project_path, local_path);
+        EXPECT_FALSE(m.load().has_value());
+    }
+
+    // --- Blank user/local: tolerated like a missing file, NO warning, and a
+    // subsequent upsert creates the file fresh. ---------------------------
+    fs::remove(project_path);
+    { std::ofstream(user_path) << ""; }
+    { std::ofstream(local_path) << "  \n\t \n"; }
+    {
+        testing::internal::CaptureStderr();
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        const std::string warnings = testing::internal::GetCapturedStderr();
+        EXPECT_EQ(warnings.find("not valid JSON"), std::string::npos);
+        ASSERT_EQ(manager.settings().mcp_servers.size(), 1u);
+        EXPECT_EQ(manager.settings().mcp_servers[0].name, "g1");
+
+        cc::core::McpServerConfig cfg;
+        cfg.name = "u1";
+        cfg.transport = "stdio";
+        cfg.command = "node";
+        cfg.config_scope = "user";
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::User, cfg).has_value());
+        auto user_doc = cc::utils::json::parse_file(user_path);
+        ASSERT_TRUE(user_doc.has_value());
+        EXPECT_TRUE(user_doc->root().get("mcpServers").has("u1"));
+    }
+
+    // --- Genuine garbage in user/local is DISTINCT from blank: the tier is
+    // skipped but a warning names each bad path, and lower tiers load. ----
+    fs::remove(user_path);
+    fs::remove(local_path);
+    { std::ofstream(user_path) << "FOO=bar\nBAZ=qux\n"; }
+    { std::ofstream(local_path) << "[1, 2]\n"; }
+    {
+        testing::internal::CaptureStderr();
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        const std::string warnings = testing::internal::GetCapturedStderr();
+        EXPECT_NE(warnings.find(user_path.string()), std::string::npos);
+        EXPECT_NE(warnings.find(local_path.string()), std::string::npos);
+        EXPECT_EQ(c6_count_occurrences(warnings, "not valid JSON"), 2u);
+        ASSERT_EQ(manager.settings().mcp_servers.size(), 1u);
+        EXPECT_EQ(manager.settings().mcp_servers[0].name, "g1");
+    }
+
+    fs::remove_all(root);
+}
+
+// Mode/gitignore follow-up: tmp+rename must preserve a pre-existing
+// non-local file's mode (pre-C6 in-place ofstream kept the inode mode),
+// while every LOCAL patch forces 0600 and gitignores the local basename
+// even when the local file pre-existed non-empty.
+TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
+    if (::getuid() == 0) {
+        GTEST_SKIP() << "file mode restrictions are bypassed for root";
+    }
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_modes_" + std::to_string(suffix));
+    fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / ".loom" / "config.json";
+    const auto local_path   = root / ".loom" / "config.local.json";
+
+    auto make_cfg = [](std::string name) {
+        cc::core::McpServerConfig cfg;
+        cfg.name = std::move(name);
+        cfg.transport = "stdio";
+        cfg.command = "node";
+        cfg.args = {"a.js"};
+        return cfg;
+    };
+    auto mode_of = [](const fs::path& path) {
+        std::error_code ec;
+        return fs::status(path, ec).permissions() & fs::perms::mask;
+    };
+
+    // Pre-existing 0600 project file keeps 0600 across upsert + disable.
+    c6_write_file(project_path, R"JSON({
+  "mcpServers": {"p1": {"command": "node"}}
+})JSON");
+    fs::permissions(project_path, fs::perms::owner_read | fs::perms::owner_write,
+                    fs::perm_options::replace);
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Project,
+                                              make_cfg("p2")).has_value());
+        EXPECT_EQ(mode_of(project_path),
+                  fs::perms::owner_read | fs::perms::owner_write);
+        ASSERT_TRUE(manager.set_mcp_server_disabled(
+            "p1", true, cc::core::McpStorageScope::Project).has_value());
+        EXPECT_EQ(mode_of(project_path),
+                  fs::perms::owner_read | fs::perms::owner_write);
+    }
+
+    // Pre-existing 0640 user file keeps 0640 across an upsert.
+    c6_write_file(user_path, R"JSON({
+  "mcpServers": {"u1": {"command": "node"}}
+})JSON");
+    fs::permissions(user_path,
+                    fs::perms::owner_read | fs::perms::owner_write | fs::perms::group_read,
+                    fs::perm_options::replace);
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::User,
+                                              make_cfg("u2")).has_value());
+        EXPECT_EQ(mode_of(user_path),
+                  fs::perms::owner_read | fs::perms::owner_write | fs::perms::group_read);
+    }
+
+    // A hand-created, non-empty LOCAL file with a server entry is still
+    // gitignored on the next patch, and forced to 0600.
+    c6_write_file(local_path, R"JSON({
+  "mcpServers": {"l1": {"command": "node"}}
+})JSON");
+    fs::permissions(local_path,
+                    fs::perms::owner_read | fs::perms::owner_write | fs::perms::others_read,
+                    fs::perm_options::replace);
+    // No .gitignore yet.
+    EXPECT_FALSE(fs::exists(root / ".gitignore"));
+    {
+        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Local,
+                                              make_cfg("l2")).has_value());
+    }
+    ASSERT_TRUE(fs::exists(root / ".gitignore"));
+    EXPECT_NE(c6_read_file(root / ".gitignore").find("config.local.json"),
+              std::string::npos);
+    EXPECT_EQ(mode_of(local_path),
+              fs::perms::owner_read | fs::perms::owner_write);
+    // Both entries survive (pre-existing local content is not overwritten).
+    auto local_doc = cc::utils::json::parse_file(local_path);
+    ASSERT_TRUE(local_doc.has_value());
+    EXPECT_TRUE(local_doc->root().get("mcpServers").has("l1"));
+    EXPECT_TRUE(local_doc->root().get("mcpServers").has("l2"));
 
     fs::remove_all(root);
 }

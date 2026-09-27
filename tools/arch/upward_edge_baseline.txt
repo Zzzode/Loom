@@ -14,10 +14,5 @@ cc.config.settings -> cc.utils.json
 # Config migration code sits in the config layer and uses utils json/file
 # helpers — same class as cc.config.config -> cc.utils.json above.
 cc.migrations.concrete -> cc.utils.json
-cc.migrations.config_orchestrator -> cc.utils.error
-cc.migrations.config_orchestrator -> cc.utils.file_persistence
-cc.migrations.config_orchestrator -> cc.utils.json
-cc.migrations.config_orchestrator -> cc.utils.lockfile
-cc.migrations.migration_registry -> cc.utils.json
 cc.migrations.schema_versions -> cc.utils.file_persistence
 cc.migrations.schema_versions -> cc.utils.lockfile

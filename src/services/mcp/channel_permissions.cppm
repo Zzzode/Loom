@@ -416,8 +416,8 @@ inline auto parse_permission_reply(std::string_view reply)
 // NOTE: The TS file implements the channel *relay* system (sending prompts
 // over Telegram/Discord). The permission *store* — persistent rules about
 // which MCP servers/tools are Allowed/Denied/Prompt — is a CPP-side
-// extension designed to match the UX described in the MCP security dialog
-// (ui/mcp/mcp_security_dialog.cppm) and the --allowed-tools CLI surface.
+// extension designed to match the UX described in the MCP security dialog UI
+// and the --allowed-tools CLI surface.
 //
 // Rules are stored in ~/.loom/mcp-channel-permissions.json with a
 // most-specific-wins resolution (Tool > Server > Global > default Prompt).

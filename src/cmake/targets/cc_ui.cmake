@@ -176,10 +176,6 @@ target_sources(cc_ui
         ui/features/plugins/plugin_manage_panel.cppm
         ui/features/plugins/plugin_marketplace_browse.cppm
         ui/features/plugins/plugin_settings_dialog.cppm
-        ui/features/mcp/mcp_security_dialog.cppm
-        ui/features/mcp/mcp_server_details.cppm
-        ui/features/mcp/mcp_server_list.cppm
-        ui/features/mcp/mcp_elicitation.cppm
         ui/chrome/ink_utils.cppm
         ui/chrome/renderer.cppm
         ui/chrome/text_measure.cppm

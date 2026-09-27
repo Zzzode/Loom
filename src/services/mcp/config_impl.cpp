@@ -1,6 +1,5 @@
 module;
 #include <cstdlib>
-#include <cstddef>
 
 module cc.services.mcp.config;
 
@@ -250,78 +249,6 @@ std::expected<McpConfig, ConfigError> ConfigLoader::load_scope(ConfigScope scope
         config.servers[name] = std::move(server);
     }
     return config;
-}
-
-std::expected<void, ConfigError> ConfigLoader::save_server(
-    const ServerConfig& server, ConfigScope scope) const {
-    std::filesystem::path path;
-    switch (scope) {
-        case ConfigScope::Global: path = ConfigPaths::global_config(); break;
-        case ConfigScope::User: path = ConfigPaths::user_config(); break;
-        case ConfigScope::Project: path = ConfigPaths::project_config(project_root_); break;
-        case ConfigScope::Local: path = ConfigPaths::local_config(project_root_); break;
-    }
-
-    std::filesystem::create_directories(path.parent_path());
-
-    auto json = serialize_server(server);
-    std::ofstream file(path, std::ios::app);
-    if (!file.is_open()) return std::unexpected(ConfigError::PermissionDenied);
-    file << json;
-    return {};
-}
-
-std::string ConfigLoader::serialize_server(const ServerConfig& server) {
-    std::string json = std::format(R"("{}":{{)", server.name);
-    if (server.transport == TransportType::Stdio) {
-        json += std::format(R"("command":"{}")", server.command);
-        if (!server.args.empty()) {
-            json += R"(,"args":[)";
-            for (std::size_t i = 0; i < server.args.size(); ++i) {
-                if (i > 0) json += ",";
-                json += std::format(R"("{}")", server.args[i]);
-            }
-            json += "]";
-        }
-	} else {
-	    json += std::format(R"("url":"{}")", server.url);
-	}
-	if (!server.headers.empty()) {
-	    json += R"(,"headers":{)";
-	    std::size_t header_index = 0;
-	    for (const auto& [key, value] : server.headers) {
-	        if (header_index++ > 0) json += ",";
-	        json += std::format(R"("{}":"{}")", key, value);
-	    }
-	    json += "}";
-	}
-	if (!server.headers_helper.empty()) {
-	    json += std::format(R"(,"headersHelper":"{}")", server.headers_helper);
-	}
-	if (server.oauth) {
-	    json += R"(,"oauth":{)";
-	    bool wrote_oauth = false;
-	    auto add_oauth = [&](std::string field) {
-	        if (wrote_oauth) json += ",";
-	        json += field;
-	        wrote_oauth = true;
-	    };
-	    if (server.oauth->auth_server_metadata_url) {
-	        add_oauth(std::format(R"("authServerMetadataUrl":"{}")", *server.oauth->auth_server_metadata_url));
-	    }
-	    if (server.oauth->callback_port) {
-	        add_oauth(std::format(R"("callbackPort":{})", *server.oauth->callback_port));
-	    }
-	    if (server.oauth->client_id) {
-	        add_oauth(std::format(R"("clientId":"{}")", *server.oauth->client_id));
-	    }
-	    if (server.oauth->xaa) {
-	        add_oauth(R"("xaa":true)");
-	    }
-	    json += "}";
-	}
-	json += "}";
-	return json;
 }
 
 } // namespace cc::services::mcp

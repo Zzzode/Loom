@@ -112,14 +112,7 @@ public:
     // Load only a specific scope
     [[nodiscard]] std::expected<McpConfig, ConfigError> load_scope(ConfigScope scope) const;
 
-    // Write a server config to the specified scope
-    [[nodiscard]] std::expected<void, ConfigError> save_server(
-        const ServerConfig& server, ConfigScope scope) const;
-
 private:
-    // Serialize a server config to JSON
-    [[nodiscard]] static std::string serialize_server(const ServerConfig& server);
-
     std::filesystem::path project_root_;
 };
 

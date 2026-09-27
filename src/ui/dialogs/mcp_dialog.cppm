@@ -70,7 +70,6 @@ struct McpDialogOptions {
     std::function<void(const std::string& server_name)> on_disconnect;
     std::function<void(const std::string& server_name)> on_restart;
     std::function<void(const std::string& server_name, const std::string& tool_name, bool enabled)> on_toggle_tool;
-    std::function<void()> on_add_server;
     std::function<void()> on_close;
 };
 
@@ -331,10 +330,6 @@ struct McpDialogOptions {
         }
 
         // Global shortcuts
-        if (event == Event::Character('a')) {
-            if (state->opts.on_add_server) state->opts.on_add_server();
-            return true;
-        }
         if (event == Event::Character('r')) {
             if (state->opts.on_restart && server_count > 0) {
                 state->opts.on_restart(state->opts.servers[state->opts.selected_server].name);

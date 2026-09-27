@@ -44,7 +44,6 @@ cc.ui.messages.messages_interactions 23
 cc.ui.messages.messages_list 22 c1 c2-done
 cc.utils.json 22 c2-done
 cc.utils.swarm_backends 22 c2-done
-cc.ui.features.tasks.task_list_view 20
 cc.orchestration.agent 19
 cc.tools.agent_runtime 18 c1 c2-done
 cc.ui.visual.code_highlight 17

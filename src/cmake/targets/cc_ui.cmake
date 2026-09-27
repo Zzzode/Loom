@@ -8,13 +8,9 @@ target_sources(cc_ui
         ui/app/app_dialog_registration.cppm
         ui/widgets/components.cppm
         ui/features/agents/agent_cards.cppm
-        ui/features/agents/agent_details_dialog.cppm
-        ui/features/agents/agent_editor.cppm
-        ui/features/agents/agent_list.cppm
         ui/features/agents/agent_shared_widgets.cppm
         ui/features/agents/agent_wizard.cppm
         ui/widgets/all_components.cppm
-        ui/features/agents/agent_view.cppm
         ui/visual/code_highlight.cppm
         ui/widgets/custom_select.cppm
         ui/widgets/dev_bar.cppm
@@ -34,7 +30,6 @@ target_sources(cc_ui
         ui/visual/structured_diff.cppm
         ui/visual/file_edit_tool_diff.cppm
         ui/widgets/tag_tabs.cppm
-        ui/features/tasks/task_view.cppm
         ui/widgets/text_input.cppm
         ui/widgets/text_input_widget.cppm
         ui/messages/user_bash_input_message.cppm
@@ -144,11 +139,6 @@ target_sources(cc_ui
         ui/features/plugins/plugin_settings_dialog.cppm
         ui/chrome/ink_utils.cppm
         ui/chrome/text_measure.cppm
-        ui/features/tasks/task_components.cppm
-        ui/features/tasks/task_details_dialog.cppm
-        ui/features/tasks/task_list_view.cppm
-        ui/features/tasks/task_wizard.cppm
-        ui/features/tasks/task_list_ui.cppm
         ui/tools/tool_ui_registry.cppm
         ui/tools/tool_ui_init.cppm
         ui/tools/tool_ui_generic.cppm
@@ -166,10 +156,6 @@ target_sources(cc_ui
         ui/tools/tool_ui_mcp.cppm
         ui/tools/tool_ui_lsp.cppm
         ui/tools/tool_ui_longtail.cppm
-        ui/features/teams/teams_overview.cppm
-        ui/features/teams/team_details_dialog.cppm
-        ui/features/teams/swarm_collaboration_view.cppm
-        ui/features/teams/team_status.cppm
         ui/features/teams/live_teammates.cppm
         ui/chrome/terminal_io.cppm
         ui/features/hooks_ui.cppm

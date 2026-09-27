@@ -62,7 +62,7 @@ CPP_KEYWORDS = {
 # Target layer rank (RFC 0001 REV 3). Every live area must appear here so
 # that no edge is silently skipped.
 TARGET_RANK = {
-    "cc.types": 0, "cc.constants": 0, "cc.schemas": 0,
+    "cc.types": 0, "cc.constants": 0,
     "cc.wire": 0, "cc.core": 0,
     # coordinator types are pure-data leaves today.
     "cc.coordinator": 0,

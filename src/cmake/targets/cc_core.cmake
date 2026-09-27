@@ -32,7 +32,6 @@ target_link_libraries(cc_core
         cc_daemon
         cc_migrations
         cc_server
-        cc_schemas
         cc_benchmarks
         cc_plugins
         cc_task_types

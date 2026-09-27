@@ -31,9 +31,6 @@ target_sources(cc_tools
         # RFC-0001 B11 — image codec callback leaf (cc_orchestration installs
         # the concrete cc.services.image-backed implementation).
         tools/image_codec_port.cppm
-        # KEPT in cc_tools during B15 to bound the atomic diff (zero
-        # importers; independent follow-up prune).
-        tools/list_mcp_resources_tool.cppm
         tools/mcp_classify.cppm
         tools/notebook_tool.cppm
         tools/plan_mode_tool.cppm
@@ -69,7 +66,6 @@ target_sources(cc_tools
         tools/tool_display_names.cppm
         tools/tool_registry.cppm
         tools/tungsten_tool.cppm
-        services/tools/streaming_executor.cppm
         tools/web_browser_tool.cppm
         tools/web_fetch_tool.cppm
         tools/web_search_tool.cppm

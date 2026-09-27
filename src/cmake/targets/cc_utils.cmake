@@ -165,7 +165,6 @@ target_sources(cc_utils
         utils/swarm/swarm_coordination.cppm
         utils/swarm/swarm_helpers.cppm
         utils/swarm/swarm_pane_observer.cppm
-        utils/tools/tool_management.cppm
         utils/mcp/mcp_transport.cppm
         utils/media/image_store.cppm
         utils/platform/platform_paths.cppm

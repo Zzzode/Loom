@@ -4,10 +4,11 @@
 // (and again, call_once-noop, per server session); gtest_main gives tests no
 // such hook, so this namespace-scope initializer performs the same one-shot
 // slot assignment before any TEST body runs. This is what makes the lifted
-// 'lsp' / 'mcp*' / 'computer_use' dispatch branches, the missing-tool MCP
-// fallback, and the 'Agent' tool resolve through
-// cc.tools.runtime_backends.port exactly as they do in loom — no per-test
-// factory bind sites. The image-codec/skill slots are still additionally
+// 'lsp' / 'mcp*' / 'computer_use' dispatch branches and the 'Agent' tool
+// resolve through cc.tools.runtime_backends.port exactly as they do in loom
+// — no per-test factory bind sites. (The missing-tool MCP fallback was
+// never a slot: roots bind it per ToolRegistry; same for the MCP snapshot
+// providers.) The image-codec/skill slots are still additionally
 // reset by FileToolServicesGuard around the cases that need them.
 import std;
 import cc.orchestration.runtime_backends;

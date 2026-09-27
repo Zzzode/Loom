@@ -39,14 +39,6 @@ enum class TaskAgentType {
     GeneralPurpose,
 };
 
-constexpr auto agent_type_name(TaskAgentType t) -> std::string_view {
-    switch (t) {
-        case TaskAgentType::Search:         return "search";
-        case TaskAgentType::GeneralPurpose: return "general_purpose";
-        default:                            return "unknown";
-    }
-}
-
 // Error types for task operations
 enum class TaskError {
     IdEmpty,

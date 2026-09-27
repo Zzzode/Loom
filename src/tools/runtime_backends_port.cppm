@@ -16,10 +16,13 @@
 ///   - six runtime tool backends: lsp, mcp, list_mcp_resources,
 ///     read_mcp_resource, mcp_auth, computer_use (the last one covers BOTH
 ///     the internal 'computer_use' and the native-wire 'computer' name);
-///   - the registry's missing-tool fallback (MCP per-server tools);
-///   - the two MCP snapshot-derived providers (visible tool definitions and
-///     their verbatim input schemas) consumed at request-build time;
 ///   - the Agent tool factory (5-arg make_agent_tool shape).
+///
+/// The registry missing-tool fallback and the MCP snapshot-derived tool
+/// providers deliberately have NO slot here: roots (main / server_routes)
+/// bind cc::orchestration::make_missing_tool_backend() and the
+/// cc::tools::collect_mcp_* collectors directly onto each ToolRegistry /
+/// request config, so a process-global slot had no reader.
 ///
 /// The MCP *snapshot sink* itself (set_mcp_snapshots_sink) deliberately does
 /// NOT live here: its signature names cc::services::mcp::McpServerSnapshot,
@@ -36,7 +39,11 @@ import std;
 
 import cc.types.types;
 import cc.types.tool_types;
-import cc.tools.tool;
+// The surviving AgentToolFactory alias names cc::core::ITool and
+// cc::core::ToolRegistry, both `class` declarations in cc.tools.tool that
+// graph_check's textual symbol harvest does not see; the pre-C3
+// ToolDefinition evidence left with the deleted MCP provider alias.
+import cc.tools.tool;               // arch-check: keep-import
 import cc.tools.agent_types;
 
 export namespace cc::tools {
@@ -54,19 +61,6 @@ using SkillLoaderExecutor = std::function<
 using RuntimeToolExecutor =
     std::function<cc::core::Result<cc::core::ToolResult>(
         const cc::core::ToolInput&)>;
-
-/// ToolRegistry missing-tool fallback. Installed by orchestration to route
-/// unregistered tool names (per-server MCP tools) to connected servers.
-using MissingToolBackend =
-    std::function<cc::core::Result<cc::core::ToolResult>(
-        std::string_view tool_name, const cc::core::ToolInput& input)>;
-
-/// Snapshot-derived providers: the MCP tool definitions appended to
-/// config.tools and their verbatim input schemas.
-using McpToolDefinitionsProvider =
-    std::function<std::vector<cc::core::ToolDefinition>()>;
-using McpInputSchemasProvider =
-    std::function<std::unordered_map<std::string, std::string>()>;
 
 /// 5-arg Agent tool factory — the exact make_agent_tool shape owned by the
 /// lifted cc.orchestration.agent module:
@@ -109,20 +103,6 @@ void clear_mcp_auth_backend();
 void set_computer_use_backend(RuntimeToolExecutor executor);
 void clear_computer_use_backend();
 [[nodiscard]] RuntimeToolExecutor& computer_use_backend();
-
-// ── Missing-tool fallback ─────────────────────────────────────────────────
-void set_missing_tool_backend(MissingToolBackend backend);
-void clear_missing_tool_backend();
-[[nodiscard]] MissingToolBackend& missing_tool_backend();
-
-// ── MCP snapshot-derived providers ────────────────────────────────────────
-void set_mcp_tool_definitions_provider(McpToolDefinitionsProvider provider);
-void clear_mcp_tool_definitions_provider();
-[[nodiscard]] McpToolDefinitionsProvider& mcp_tool_definitions_provider();
-
-void set_mcp_input_schemas_provider(McpInputSchemasProvider provider);
-void clear_mcp_input_schemas_provider();
-[[nodiscard]] McpInputSchemasProvider& mcp_input_schemas_provider();
 
 // ── Agent tool factory ────────────────────────────────────────────────────
 void set_agent_tool_factory(AgentToolFactory factory);

@@ -666,9 +666,9 @@ int run_runtime_tool_once(const CliOptions& opts) {
         .parent_permission_mode = parent_permission_mode_from_options(opts),
     });
     // TS PARITY FALLBACK: route unregistered tool names to MCP servers.
-    // RFC-0001 B15: the lambda (NativeMcpRuntime iteration, last_error, exact
-    // ToolNotFound text) lives in cc.orchestration; the install above bound
-    // it, and main asks the seam for the same factory here.
+    // RFC-0001 B15: the fallback (NativeMcpRuntime iteration, last_error,
+    // exact ToolNotFound text) is built directly from cc.orchestration;
+    // main binds it onto this registry itself, there is no seam slot.
     tool_registry.set_missing_tool_handler(
         cc::orchestration::make_missing_tool_backend());
     auto result = tool_registry.execute(
@@ -1790,12 +1790,14 @@ int main(int argc, const char* argv[]) {
     cc::commands::install_core_settings_mcp_loader();
 
     // RFC-0001 B15: ONE orchestration install binds every runtime backend —
-    // image codec, skill executor, the six lifted tool backends, the
-    // missing-tool MCP fallback, the MCP snapshot providers, the Agent tool
-    // factory, AND (folding the old B7/B8 bridge) the MCP-connectivity
-    // snapshot sink. call_once-guarded; must dominate every register /
-    // all_statuses path below (--run-runtime-tool, --list-runtime-tools,
-    // the two register sites, and the in-process server routes).
+    // image codec, skill executor, the six lifted tool backends, the Agent
+    // tool factory, AND (folding the old B7/B8 bridge) the MCP-connectivity
+    // snapshot sink. The missing-tool fallback and MCP snapshot providers
+    // are NOT slots (post-followup-C3): roots bind them directly onto each
+    // ToolRegistry / request config below. call_once-guarded; must dominate
+    // every register / all_statuses path below (--run-runtime-tool,
+    // --list-runtime-tools, the two register sites, and the in-process
+    // server routes).
     cc::orchestration::install_runtime_backends();
 
     // Resolve leader/teammate identity from the environment just exported by

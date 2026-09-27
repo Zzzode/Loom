@@ -7,10 +7,13 @@
 //   - cc.skills::SkillLoader-backed skill executor (B12);
 //   - the six lifted runtime tool backends (lsp / mcp / list_mcp_resources /
 //     read_mcp_resource / mcp_auth / computer_use, B15);
-//   - the registry missing-tool fallback (per-server MCP tools, B15);
-//   - the MCP snapshot-derived tool-definition / input-schema providers;
 //   - the Agent tool factory (cc.orchestration.agent, B15);
 //   - the MCP-connectivity -> hook snapshot sink (rehomed bridge, B15).
+//
+// The registry missing-tool fallback (make_missing_tool_backend) and the MCP
+// snapshot-derived providers (collect_mcp_*) are BUILT/DECLARED here but not
+// installed into slots: roots bind them directly onto each ToolRegistry and
+// request config. The post-B15 process-global slots had no readers.
 //
 // All bodies that need services types live in the implementation units
 // runtime_backends_{lsp,mcp,computer_use}.cpp; the install entry point is
@@ -173,7 +176,8 @@ namespace fs = std::filesystem;
 /// lambdas (including std::string{input.json()}, last_error capture, and the
 /// exact ToolNotFound text); the last tried server's error, including a
 /// terminal ToolNotFound, is appended to the final message verbatim.
-[[nodiscard]] inline cc::tools::MissingToolBackend make_missing_tool_backend() {
+[[nodiscard]] inline cc::core::ToolRegistry::MissingToolHandler
+make_missing_tool_backend() {
     return [](std::string_view tool_name,
               const cc::core::ToolInput& input) -> cc::core::Result<cc::core::ToolResult> {
         auto& runtime = cc::tools::NativeMcpRuntime::instance();
@@ -223,12 +227,6 @@ inline void install_runtime_backends() {
             [](const cc::core::ToolInput& input) {
                 return cc::tools::detail::execute_computer_use(input);
             });
-
-        cc::tools::set_missing_tool_backend(make_missing_tool_backend());
-        cc::tools::set_mcp_tool_definitions_provider(
-            &cc::tools::collect_mcp_tool_definitions);
-        cc::tools::set_mcp_input_schemas_provider(
-            &cc::tools::collect_mcp_input_schemas);
 
         // Agent tool factory (exact 5-arg make_agent_tool shape). The factory
         // is invoked per register_runtime_tools() call with that call's own

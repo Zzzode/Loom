@@ -80,8 +80,4 @@ inline void clear_codec() {
     return detail::image_codec_storage();
 }
 
-[[nodiscard]] inline bool has_codec() {
-    return static_cast<bool>(detail::image_codec_storage());
-}
-
 } // namespace cc::tools::image_codec

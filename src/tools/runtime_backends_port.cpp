@@ -11,7 +11,7 @@ import std;
 
 // arch-check: keep-import (all four) — this impl unit uses the imported
 // types only UNQUALIFIED inside namespace cc::tools (RuntimeToolExecutor,
-// ToolDefinition, ITool, AgentConfig, ...), which graph_check's textual
+// SkillLoaderExecutor, ITool, AgentConfig, ...), which graph_check's textual
 // evidence heuristic cannot attribute; the imports are required for the
 // std::function slot definitions.
 import cc.types.types;              // arch-check: keep-import
@@ -32,13 +32,6 @@ struct RuntimeBackendSlots {
     RuntimeToolExecutor read_mcp_resource;
     RuntimeToolExecutor mcp_auth;
     RuntimeToolExecutor computer_use;
-
-    // Registry missing-tool fallback.
-    MissingToolBackend missing_tool;
-
-    // MCP snapshot-derived providers.
-    McpToolDefinitionsProvider mcp_tool_definitions;
-    McpInputSchemasProvider mcp_input_schemas;
 
     // Agent tool factory.
     AgentToolFactory agent_tool_factory;
@@ -113,37 +106,6 @@ void clear_computer_use_backend() {
 }
 RuntimeToolExecutor& computer_use_backend() {
     return detail::runtime_backend_slots().computer_use;
-}
-
-// ── Missing-tool fallback ─────────────────────────────────────────────────
-void set_missing_tool_backend(MissingToolBackend backend) {
-    detail::runtime_backend_slots().missing_tool = std::move(backend);
-}
-void clear_missing_tool_backend() {
-    detail::runtime_backend_slots().missing_tool = nullptr; }
-MissingToolBackend& missing_tool_backend() {
-    return detail::runtime_backend_slots().missing_tool;
-}
-
-// ── MCP snapshot-derived providers ────────────────────────────────────────
-void set_mcp_tool_definitions_provider(McpToolDefinitionsProvider provider) {
-    detail::runtime_backend_slots().mcp_tool_definitions = std::move(provider);
-}
-void clear_mcp_tool_definitions_provider() {
-    detail::runtime_backend_slots().mcp_tool_definitions = nullptr;
-}
-McpToolDefinitionsProvider& mcp_tool_definitions_provider() {
-    return detail::runtime_backend_slots().mcp_tool_definitions;
-}
-
-void set_mcp_input_schemas_provider(McpInputSchemasProvider provider) {
-    detail::runtime_backend_slots().mcp_input_schemas = std::move(provider);
-}
-void clear_mcp_input_schemas_provider() {
-    detail::runtime_backend_slots().mcp_input_schemas = nullptr;
-}
-McpInputSchemasProvider& mcp_input_schemas_provider() {
-    return detail::runtime_backend_slots().mcp_input_schemas;
 }
 
 // ── Agent tool factory ────────────────────────────────────────────────────

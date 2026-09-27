@@ -66,7 +66,6 @@ target_sources(cc_ui
         ui/dialogs/confirmation_dialog.cppm
         ui/dialogs/ide_dialogs.cppm
         ui/dialogs/managed_settings_security.cppm
-        ui/dialogs/mcp_dialog.cppm
         ui/dialogs/mcp_dialogs.cppm
         ui/dialogs/output_style_picker.cppm
         ui/dialogs/permission_dialog.cppm

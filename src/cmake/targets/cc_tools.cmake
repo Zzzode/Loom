@@ -15,11 +15,9 @@ target_sources(cc_tools
         tools/bash_security.cppm
         tools/bash_tool.cppm
         tools/bash_result_formatting.cppm
-        tools/brief_tool.cppm
         tools/built_in_agents.cppm
         tools/command_semantics.cppm
         tools/computer_use.cppm
-        tools/config_tool.cppm
         tools/cron_tool.cppm
         tools/file_edit_prompt.cppm
         tools/file_edit_tool.cppm
@@ -48,19 +46,13 @@ target_sources(cc_tools
         tools/script_tool.cppm
         tools/script_types.cppm
         tools/send_message_tool.cppm
-        tools/shared_tool.cppm
         tools/skill_tool.cppm
         tools/sleep_tool.cppm
         tools/synthetic_output_tool.cppm
-        tools/task_get.cppm
-        tools/task_output.cppm
-        tools/task_stop.cppm
         tools/task_tool.cppm
-        tools/task_update.cppm
         tools/team_create.cppm
         tools/team_delete.cppm
         tools/team_tool.cppm
-        tools/testing_tool.cppm
         tools/todo_write_tool.cppm
         tools/tool.cppm
         tools/tool_display_names.cppm

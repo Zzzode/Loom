@@ -36,7 +36,6 @@ cc.ui.widgets.text_input 28 c2-done
 cc.utils.file_edit 27
 cc.ui.dialogs.settings_dialog 26
 cc.ui.dialogs.wizard_dialog 25
-cc.ui.permissions.advanced_prompts 25
 cc.ui.screens.resume_screen 25
 cc.tools.path_validation 24
 cc.ui.screens.doctor_screen 24

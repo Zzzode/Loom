@@ -114,23 +114,16 @@ target_sources(cc_ui
         ui/messages/scroll_keybindings.cppm       # UI22 — ScrollKeybindingHandler (1011 → 752 loc)
         ui/messages/virtual_message_list.cppm     # UI22 — VirtualScroll (1081 → 857 loc)
         ui/chrome/panels.cppm
-        ui/permissions/permission_request.cppm
-        ui/permissions/permission_rules.cppm
-        ui/permissions/permission_views.cppm
         ui/permissions/permission_bash.cppm
         ui/permissions/permission_computer_use.cppm
         ui/permissions/permission_file_edit.cppm
         ui/permissions/permission_file_write.cppm
         ui/permissions/permission_rules_ui.cppm
         ui/permissions/permission_shell_helpers.cppm
-        ui/permissions/permission_worker_badge.cppm
         ui/permissions/permissions_components.cppm
         ui/permissions/permission_scope_editor.cppm
         ui/permissions/permission_rule_list.cppm        # UI24 — PermissionRuleList
-        ui/permissions/permission_advanced_prompts.cppm # UI24b — AskUserQuestion+Skill+Fallback advanced prompts
         ui/permissions/permission_single_prompt.cppm
-        ui/permissions/permission_batch_panel.cppm
-        ui/permissions/sandbox_config_dialog.cppm
         ui/prompt/at_attachments.cppm
         ui/prompt/file_index.cppm
         ui/prompt/fuzzy_rank_nucleo.cppm

@@ -140,4 +140,3 @@ cc.utils.settings_manager -> cc.utils.settings_merge
 cc.utils.settings_manager -> cc.utils.settings_paths
 cc.utils.settings_manager -> cc.utils.settings_sources
 cc.utils.settings_manager -> cc.utils.settings_validation
-cc.utils.swarm -> cc.utils.string

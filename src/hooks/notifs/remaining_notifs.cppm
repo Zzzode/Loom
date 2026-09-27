@@ -57,8 +57,6 @@ export module cc.hooks.remaining_notifs;
 
 import std;
 
-import cc.utils.json;
-
 export namespace cc::hooks::notifs {
 
 // --------------------------------------------------------------------------

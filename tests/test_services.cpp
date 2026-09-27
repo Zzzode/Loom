@@ -5601,8 +5601,9 @@ TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
     {
         std::ofstream file(project_path);
         // Every legacy snake_case key the parser historically accepted, plus
-        // "transport" (instead of "type") and the two documented-but-unread
-        // keys "disabled" / oauth "issuer".
+        // "transport" (instead of "type") and the previously dropped keys
+        // "disabled" / oauth "issuer"; configScope is intentionally absent
+        // so the "project" default path is exercised.
         file << R"JSON({
   "mcpServers": {
     "legacy": {
@@ -5642,12 +5643,16 @@ TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
         ASSERT_TRUE(server.oauth->client_id.has_value());
         EXPECT_EQ(*server.oauth->client_id, "client-1");
         EXPECT_TRUE(server.oauth->xaa);
-        // ACTUAL PARSER BEHAVIOR (RFC-0001 B4): neither MCP "disabled" nor
-        // oauth "issuer" is read by ConfigManager::load_from_file even though
-        // both fields exist on the canonical structs — the legacy values are
-        // dropped on read, not round-tripped.
-        EXPECT_FALSE(server.disabled.has_value());
-        EXPECT_FALSE(server.oauth->issuer.has_value());
+        // Round-trip guarantee (RFC-0001 B followup c4): the previously
+        // dropped fields now survive. "disabled" is optional<bool>, so an
+        // explicit false is captured rather than defaulted away; oauth
+        // "issuer" is read in canonical spelling; and an absent configScope
+        // falls back to the "project" default.
+        ASSERT_TRUE(server.disabled.has_value());
+        EXPECT_FALSE(*server.disabled);
+        ASSERT_TRUE(server.oauth->issuer.has_value());
+        EXPECT_EQ(*server.oauth->issuer, "https://issuer.example.com");
+        EXPECT_EQ(server.config_scope, "project");
     };
 
     {
@@ -5677,15 +5682,209 @@ TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
     EXPECT_EQ(rewritten.find("client_id"), std::string::npos);
     EXPECT_NE(rewritten.find("\"type\": \"http\""), std::string::npos);
     EXPECT_EQ(rewritten.find("\"transport\""), std::string::npos);
-    // Unread keys are not synthesized back into the rewrite.
-    EXPECT_EQ(rewritten.find("disabled"), std::string::npos);
-    EXPECT_EQ(rewritten.find("issuer"), std::string::npos);
+    // Previously dropped fields are rewritten in canonical form; configScope
+    // is always written (defaulting to "project"), never in snake_case.
+    EXPECT_NE(rewritten.find("\"disabled\": false"), std::string::npos);
+    EXPECT_NE(rewritten.find("\"issuer\""), std::string::npos);
+    EXPECT_NE(rewritten.find("\"configScope\": \"project\""), std::string::npos);
+    EXPECT_EQ(rewritten.find("config_scope"), std::string::npos);
 
     {
         cc::core::ConfigManager reloaded(global_path, project_path);
         ASSERT_TRUE(reloaded.load().has_value());
         assert_legacy_fields(reloaded);
     }
+
+    fs::remove_all(root);
+}
+
+// RFC-0001 B followup c4: canonical camelCase input with an explicitly
+// disabled server and an oauth issuer must survive load -> save -> reload
+// byte-for-byte in meaning, and be rewritten in canonical spelling.
+TEST(McpTypes, DisabledAndOauthIssuerSurviveConfigRewrite) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_types_disabled_issuer_test_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path = root / "global.json";
+    const auto project_path = root / "project.json";
+
+    {
+        std::ofstream file(project_path);
+        file << R"JSON({
+  "mcpServers": {
+    "canonical": {
+      "type": "http",
+      "url": "https://mcp.example.com/mcp",
+      "disabled": true,
+      "configScope": "user",
+      "oauth": {
+        "issuer": "https://issuer.example.com"
+      }
+    }
+  }
+})JSON";
+    }
+
+    {
+        cc::core::ConfigManager loaded(global_path, project_path);
+        ASSERT_TRUE(loaded.load().has_value());
+        ASSERT_EQ(loaded.settings().mcp_servers.size(), 1u);
+        const auto& server = loaded.settings().mcp_servers.front();
+        ASSERT_TRUE(server.disabled.has_value());
+        EXPECT_TRUE(*server.disabled);
+        EXPECT_EQ(server.config_scope, "user");
+        ASSERT_TRUE(server.oauth.has_value());
+        ASSERT_TRUE(server.oauth->issuer.has_value());
+        EXPECT_EQ(*server.oauth->issuer, "https://issuer.example.com");
+
+        ASSERT_TRUE(loaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+
+    std::string rewritten;
+    {
+        std::ifstream file(project_path);
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        rewritten = buffer.str();
+    }
+    EXPECT_NE(rewritten.find("\"disabled\": true"), std::string::npos);
+    EXPECT_NE(rewritten.find("\"issuer\": \"https://issuer.example.com\""), std::string::npos);
+    EXPECT_NE(rewritten.find("\"configScope\": \"user\""), std::string::npos);
+    EXPECT_EQ(rewritten.find("config_scope"), std::string::npos);
+
+    cc::core::ConfigManager reloaded(global_path, project_path);
+    ASSERT_TRUE(reloaded.load().has_value());
+    ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
+    const auto& server = reloaded.settings().mcp_servers.front();
+    ASSERT_TRUE(server.disabled.has_value());
+    EXPECT_TRUE(*server.disabled);
+    EXPECT_EQ(server.config_scope, "user");
+    ASSERT_TRUE(server.oauth.has_value());
+    ASSERT_TRUE(server.oauth->issuer.has_value());
+    EXPECT_EQ(*server.oauth->issuer, "https://issuer.example.com");
+
+    fs::remove_all(root);
+}
+
+// RFC-0001 B followup c4: configScope reads canonical camelCase and legacy
+// snake_case alike, but every rewrite emits only the canonical camelCase
+// key, including across a reload.
+TEST(McpTypes, ConfigScopeRoundTripsInCanonicalCamelCase) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_types_scope_test_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path = root / "global.json";
+    const auto project_path = root / "project.json";
+
+    {
+        std::ofstream file(project_path);
+        file << R"JSON({
+  "mcpServers": {
+    "legacy-scope": {
+      "command": "node",
+      "args": ["legacy.js"],
+      "config_scope": "user"
+    },
+    "canonical-scope": {
+      "command": "node",
+      "args": ["canonical.js"],
+      "configScope": "local"
+    },
+    "both-scopes": {
+      "command": "node",
+      "args": ["both.js"],
+      "configScope": "local",
+      "config_scope": "user"
+    }
+  }
+})JSON";
+    }
+
+    {
+        cc::core::ConfigManager loaded(global_path, project_path);
+        ASSERT_TRUE(loaded.load().has_value());
+        ASSERT_EQ(loaded.settings().mcp_servers.size(), 3u);
+        EXPECT_EQ(loaded.settings().mcp_servers[0].config_scope, "user");
+        EXPECT_EQ(loaded.settings().mcp_servers[1].config_scope, "local");
+        // When both spellings are present, canonical camelCase wins
+        // (json_string(...).or_else(...) short-circuits on the first hit).
+        EXPECT_EQ(loaded.settings().mcp_servers[2].config_scope, "local");
+
+        ASSERT_TRUE(loaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+
+    std::string rewritten;
+    {
+        std::ifstream file(project_path);
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        rewritten = buffer.str();
+    }
+    EXPECT_NE(rewritten.find("\"configScope\": \"user\""), std::string::npos);
+    EXPECT_NE(rewritten.find("\"configScope\": \"local\""), std::string::npos);
+    EXPECT_EQ(rewritten.find("config_scope"), std::string::npos);
+
+    cc::core::ConfigManager reloaded(global_path, project_path);
+    ASSERT_TRUE(reloaded.load().has_value());
+    ASSERT_EQ(reloaded.settings().mcp_servers.size(), 3u);
+    EXPECT_EQ(reloaded.settings().mcp_servers[0].config_scope, "user");
+    EXPECT_EQ(reloaded.settings().mcp_servers[1].config_scope, "local");
+    EXPECT_EQ(reloaded.settings().mcp_servers[2].config_scope, "local");
+
+    fs::remove_all(root);
+}
+
+// RFC-0001 B followup c4: absent optional keys stay unset. A minimal server
+// must round-trip without a "disabled" or oauth "issuer" key in the rewrite,
+// while configScope is still written with its "project" default.
+TEST(McpTypes, AbsentDisabledAndIssuerKeysStayUnset) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_types_absent_test_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path = root / "global.json";
+    const auto project_path = root / "project.json";
+
+    {
+        std::ofstream file(project_path);
+        file << R"JSON({
+  "mcpServers": {
+    "minimal": {
+      "command": "node"
+    }
+  }
+})JSON";
+    }
+
+    {
+        cc::core::ConfigManager loaded(global_path, project_path);
+        ASSERT_TRUE(loaded.load().has_value());
+        ASSERT_EQ(loaded.settings().mcp_servers.size(), 1u);
+        const auto& server = loaded.settings().mcp_servers.front();
+        EXPECT_FALSE(server.disabled.has_value());
+        EXPECT_FALSE(server.oauth.has_value());
+        EXPECT_EQ(server.config_scope, "project");
+
+        ASSERT_TRUE(loaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+
+    std::string rewritten;
+    {
+        std::ifstream file(project_path);
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        rewritten = buffer.str();
+    }
+    EXPECT_EQ(rewritten.find("disabled"), std::string::npos);
+    EXPECT_EQ(rewritten.find("issuer"), std::string::npos);
+    EXPECT_NE(rewritten.find("\"configScope\": \"project\""), std::string::npos);
+
+    cc::core::ConfigManager reloaded(global_path, project_path);
+    ASSERT_TRUE(reloaded.load().has_value());
+    ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
+    const auto& server = reloaded.settings().mcp_servers.front();
+    EXPECT_FALSE(server.disabled.has_value());
+    EXPECT_FALSE(server.oauth.has_value());
+    EXPECT_EQ(server.config_scope, "project");
 
     fs::remove_all(root);
 }

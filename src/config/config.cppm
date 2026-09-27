@@ -471,6 +471,14 @@ private:
                 }
                 cfg.headers_helper = json_string(val, "headersHelper")
                     .or_else([&] { return json_string(val, "headers_helper"); });
+                // disabled is optional<bool>: an explicit JSON false must be
+                // captured, while an absent key stays nullopt.
+                if (auto disabled = val.get("disabled"); disabled.is_bool()) {
+                    cfg.disabled = disabled.as_bool();
+                }
+                cfg.config_scope = json_string(val, "configScope")
+                    .or_else([&] { return json_string(val, "config_scope"); })
+                    .value_or("project");
                 if (auto oauth = val.get("oauth"); oauth.is_obj()) {
                     McpOAuthConfig oauth_cfg;
                     oauth_cfg.auth_server_metadata_url = json_string(oauth, "authServerMetadataUrl")
@@ -485,6 +493,7 @@ private:
                     if (auto xaa = oauth.get("xaa"); xaa.is_bool()) {
                         oauth_cfg.xaa = xaa.as_bool();
                     }
+                    oauth_cfg.issuer = json_string(oauth, "issuer");
                     cfg.oauth = std::move(oauth_cfg);
                 }
                 settings_.mcp_servers.push_back(std::move(cfg));
@@ -664,6 +673,14 @@ private:
             if (server.headers_helper) {
                 add_field(std::format("\"headersHelper\": \"{}\"", escape_json(*server.headers_helper)));
             }
+            // disabled is optional<bool>: omit when unset so "absent"
+            // round-trips; explicit true/false is always written.
+            if (server.disabled.has_value()) {
+                add_field(std::format("\"disabled\": {}", *server.disabled ? "true" : "false"));
+            }
+            // configScope is a non-optional std::string ("project" default):
+            // always written in canonical camelCase, even when defaulted.
+            add_field(std::format("\"configScope\": \"{}\"", escape_json(server.config_scope)));
             if (server.oauth) {
                 std::string oauth_json = "\"oauth\": {";
                 bool wrote_oauth = false;
@@ -684,6 +701,9 @@ private:
                 }
                 if (server.oauth->xaa) {
                     add_oauth("\"xaa\": true");
+                }
+                if (server.oauth->issuer) {
+                    add_oauth(std::format("\"issuer\": \"{}\"", escape_json(*server.oauth->issuer)));
                 }
                 oauth_json += "}";
                 add_field(std::move(oauth_json));

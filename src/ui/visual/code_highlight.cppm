@@ -1,12 +1,12 @@
 /// @file code_highlight.cppm
 /// @brief Syntax-highlighted code rendering with theme support and line
 /// numbers. Migrated from HighlightedCode/ and StructuredDiff/colorDiff.ts.
-/// PARTIAL COMPLETED by UI27: HighlightedCode Fallback (heuristic regex
-///   colorizer) lives in cc.ui.widgets.partial_completions —
-///   RenderHighlightedCodeFallback(code, lang, opts). Integration point:
-///   replace the `if (!shiki_available)` branch in RenderCodeBlock with a
-///   call to it; the 6-rule (comment > string > keyword/type > number >
-///   function) heuristic matches TS Fallback.tsx line-for-line.
+/// PARTIAL: the UI27 HighlightedCode Fallback (a 6-rule heuristic regex
+///   colorizer — comment > string > keyword/type > number > function —
+///   matching TS Fallback.tsx line-for-line) was an unreferenced faithful
+///   port and was removed with it (RFC-0001 B18). The
+///   `if (!shiki_available)` branch in RenderCodeBlock is the integration
+///   point if the fallback is ever reintroduced.
 module;
 
 #include <cstdint>

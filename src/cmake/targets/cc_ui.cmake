@@ -20,21 +20,16 @@ target_sources(cc_ui
         ui/foundation/components_figures.cppm
         ui/features/grove.cppm
         ui/features/plugins/lsp_recommendation_menu.cppm
-        ui/widgets/partial_completions.cppm   # UI27 — TreeSelect + ShikiFallback (PARTIAL -> DONE)
         ui/widgets/passes.cppm
         ui/features/plugins/plugin_hint_menu.cppm
         ui/widgets/pr_badge.cppm
         ui/widgets/spinner.cppm
-        ui/widgets/spinner_widget.cppm
         ui/widgets/stats.cppm
         ui/visual/structured_diff.cppm
         ui/visual/file_edit_tool_diff.cppm
         ui/widgets/tag_tabs.cppm
         ui/widgets/text_input.cppm
         ui/widgets/text_input_widget.cppm
-        ui/messages/user_bash_input_message.cppm
-        ui/messages/shell_progress_message.cppm
-        ui/messages/shell_time_display.cppm
         ui/widgets/spinner_animations.cppm
         ui/foundation/ui_types.cppm
         ui/foundation/declared_cursor.cppm
@@ -76,7 +71,6 @@ target_sources(cc_ui
         ui/messages/assistant_message.cppm
         ui/messages/error_message.cppm
         ui/messages/message_components.cppm
-        ui/messages/message_response.cppm
         ui/messages/message_row.cppm
         ui/messages/message_timestamp.cppm
         ui/messages/message_advisor.cppm
@@ -88,7 +82,6 @@ target_sources(cc_ui
         ui/messages/message_task_assignment.cppm
         ui/messages/message_tool_result.cppm
         ui/messages/thinking_message.cppm
-        ui/messages/tool_messages.cppm
         ui/messages/tool_use_message.cppm
         ui/messages/user_message.cppm
         ui/messages/message_image.cppm
@@ -123,11 +116,9 @@ target_sources(cc_ui
         ui/prompt/file_index.cppm
         ui/prompt/fuzzy_rank_nucleo.cppm
         ui/prompt/mode_indicator.cppm  # P0: 3-way prefix glyph (❯/!/agent-tint) TS PromptInputModeIndicator
-        ui/prompt/notifications.cppm
         ui/prompt/prompt_input_footer.cppm  # M5 — faithful TS PromptInputFooter port
         ui/prompt/prompt_input_full.cppm
         ui/prompt/prompt_paste_handler.cppm
-        ui/prompt/prompt_queued_commands.cppm
         ui/prompt/prompt_stash_notice.cppm
         ui/prompt/combined_highlights.cppm  # P1: 8-tier combined highlights builder
         ui/prompt/placeholder_cascade.cppm  # P1: 4-tier memoized placeholder cascade

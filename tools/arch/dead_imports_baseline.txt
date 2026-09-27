@@ -123,12 +123,7 @@ cc.ui.dialogs.feature_dialogs -> cc.tools.agent_memory
 cc.ui.messages.assistant_text_message -> cc.ui.foundation.design_tokens
 cc.ui.messages.message_components -> cc.ui.chrome.layout
 cc.ui.messages.message_row -> cc.ui.messages.message_compact_boundary
-cc.ui.messages.shell_progress_message -> cc.ui.foundation.design_tokens
-cc.ui.messages.shell_time_display -> cc.ui.foundation.design_tokens
-cc.ui.messages.tool_messages -> cc.ui.chrome.layout
 cc.ui.messages.tool_use_message -> cc.ui.widgets.spinner
-cc.ui.messages.user_bash_input_message -> cc.ui.foundation.design_tokens
-cc.ui.messages.user_bash_input_message -> cc.utils.format
 cc.ui.messages.virtual_list -> cc.ui.foundation.design_tokens
 cc.ui.permissions.permission_rules_ui -> cc.types.types
 cc.ui.prompt.at_attachments [impl:ui/prompt/at_attachments_impl.cpp] -> cc.orchestration.tools.mcp
@@ -136,7 +131,6 @@ cc.ui.prompt.autocomplete_sources [impl:ui/prompt/autocomplete_sources_impl.cpp]
 cc.ui.prompt.prompt_input_full -> cc.ui.chrome.layout
 cc.ui.prompt.prompt_input_full -> cc.ui.foundation.design_figures
 cc.ui.screens.repl_state -> cc.ui.visual.markdown
-cc.ui.widgets.partial_completions -> cc.ui.foundation.design_tokens
 cc.utils.plugin_loader -> cc.utils.plugin_versioning
 cc.utils.plugin_manager -> cc.utils.plugin_identifier
 cc.utils.plugin_manager -> cc.utils.plugin_loader

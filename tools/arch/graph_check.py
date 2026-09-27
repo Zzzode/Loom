@@ -82,7 +82,6 @@ TARGET_RANK = {
     "cc.commands": 11,
     "cc.keybindings": 11,
     "cc.ui": 12,
-    "cc.buddy": 12,
     "cc.server": 13, "cc.daemon": 13,
     "cc.bridge": 13,
     "cc.bootstrap": 13,

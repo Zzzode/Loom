@@ -31,7 +31,6 @@ target_link_libraries(cc_core
         cc_ui
         cc_vim
         cc_daemon
-        cc_buddy
         cc_migrations
         cc_server
         cc_schemas

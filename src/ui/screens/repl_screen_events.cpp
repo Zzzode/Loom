@@ -44,8 +44,7 @@ using namespace ftxui;
             state->permission_request) {
             // dlg-permission-legacy: state-owned TS-faithful panel
             // (TS REF: PermissionRequest.tsx:47-82 dispatch by tool
-            // identity) replaces the legacy paragraph(
-            // render_permission_dialog(...)) ANSI string.
+            // identity) replaces the legacy paragraph(...) ANSI string.
             Element base = RenderReplScreen(*state, cb->on_retry, cb->on_clear_session, cb->streaming_md);
             Element panel = dialog_router::render_tool_permission(state, cb);
             return dbox({

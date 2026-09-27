@@ -49,7 +49,6 @@ cc.ui.features.tasks.task_list_view 20
 cc.orchestration.agent 19
 cc.tools.agent_runtime 18 c1 c2-done
 cc.ui.visual.code_highlight 17
-cc.ui.dialogs.sandbox_settings 15
 cc.services.mcp.client 12 c2-done
 cc.tools.readonly_validation 12
 cc.state.store 8

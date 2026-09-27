@@ -8,9 +8,9 @@
 /// Reuses:
 ///   - cc.ui.features.teams.teams_overview (MemberPresence / MembershipRole /
 ///     RoleTag / AgentAvatar / RelativeTime helpers)
-///   - cc.ui.dialogs.usage_dialog (UsageSnapshot struct; rendering is NOT
-///     imported to avoid a hard link cycle - callers provide a pre-rendered
-///     Element via options; annotated import note below)
+///   - local usage-stat summary (UsageSnapshot-style struct; rendering is
+///     kept local rather than imported - callers provide a pre-rendered
+///     Element via options; annotated note below)
 ///   - cc.ui.features.agents.agent_view  (state helpers)
 ///
 /// Engine logic delegated to the coordinator / permission engine - the
@@ -34,8 +34,8 @@ import cc.types.types;
 import cc.ui.features.teams.team_status;
 import cc.ui.features.teams.teams_overview; // Member/Activity/avatar helpers
 import cc.ui.features.agents.agent_view;
-// Note: import cc.ui.dialogs.usage_dialog would be ideal, but we keep this
-// file standalone.  The caller pre-renders the usage stats Element and
+// Note: usage stats are rendered locally; this file stays standalone.
+// The caller pre-renders the usage stats Element and
 // passes it via `usage_stats_element` if they want real numbers.
 
 export namespace cc::ui::teams::details {
@@ -264,7 +264,7 @@ struct TeamDetailsDialogOptions {
 
     // --- Tab 4: Billing / Integrations ---
     // Pre-rendered usage stats element (may be empty).  Callers who wish to
-    // use cc.ui.dialogs.usage_dialog can pass the rendered subtree here.
+    // wishing to supply usage stats can pass the rendered subtree here.
     Element usage_stats_element;
     std::vector<IntegrationRow> integrations;
 

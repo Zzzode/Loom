@@ -45,38 +45,20 @@ target_sources(cc_ui
         ui/foundation/declared_cursor.cppm
         ui/dialogs/dialog_system.cppm
         ui/dialogs/dialog_frame.cppm
-        ui/dialogs/dialog_launchers.cppm
         ui/dialogs/dialog_default_renderers.cppm
         ui/dialogs/hooks_dialog_renderer.cppm
         ui/dialogs/diff_dialog.cppm
         ui/dialogs/elicitation_dialog.cppm
-        ui/dialogs/feedback_survey.cppm
-        ui/dialogs/help_view.cppm
-        ui/dialogs/settings_view.cppm
-        ui/dialogs/about_dialog.cppm
-        ui/dialogs/confirmation_dialog.cppm
-        ui/dialogs/ide_dialogs.cppm
-        ui/dialogs/managed_settings_security.cppm
         ui/dialogs/mcp_dialogs.cppm
-        ui/dialogs/output_style_picker.cppm
-        ui/dialogs/permission_dialog.cppm
-        ui/dialogs/permission_prompts.cppm
         ui/dialogs/plugin_dialog.cppm
         ui/dialogs/plugin_dialog_renderer.cppm
         ui/dialogs/prompt_dialog.cppm
         ui/dialogs/quick_open.cppm
-        ui/dialogs/sandbox_dialog.cppm
-        ui/dialogs/sandbox_settings.cppm        # new: SandboxSettings faithful port (tabs + doctor)
         ui/dialogs/settings_dialog.cppm
-        ui/dialogs/settings_status_page.cppm
-        ui/dialogs/usage_dialog.cppm
         ui/dialogs/trust_dialog.cppm
         ui/dialogs/trust_utils.cppm
         ui/dialogs/wizard_dialog.cppm
-        ui/dialogs/bridge_dialog.cppm
         ui/dialogs/cost_threshold_dialog.cppm
-        ui/dialogs/global_search_dialog.cppm
-        ui/dialogs/idle_return_dialog.cppm
         ui/dialogs/all_renderers.cppm            # new: DialogRendererRegistry + all renderers
         ui/dialogs/bottom_renderers.cppm         # new: Bottom-band dialog renderers
         ui/dialogs/modal_renderers.cppm          # new: Overlay/Modal dialog renderers

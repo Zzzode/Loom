@@ -13,7 +13,7 @@
 ///
 /// Backend wiring status (mirrors TS src/hooks/notifs/*):
 ///   * McpConnectivity      -> SLOT, fed externally by the rank-13
-///                             cc.bootstrap.mcp_connectivity bridge over the
+///                             cc.orchestration.mcp_connectivity bridge over the
 ///                             cc.tools MCP snapshot sink (the sole writer
 ///                             since the B8 cut; this module has no services
 ///                             dependency).

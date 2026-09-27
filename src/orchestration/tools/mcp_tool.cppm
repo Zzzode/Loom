@@ -3,7 +3,7 @@ module;
 #include <cctype>
 #include <cstdlib>
 
-export module cc.tools.mcp;
+export module cc.orchestration.tools.mcp;
 
 import std;
 
@@ -840,7 +840,7 @@ inline void merge_native_mcp_servers(
 
 // RFC-0001 B4: sink that lets the production composition root feed the
 // cc::core::ConfigManager ("core settings") MCP layer into the native runtime
-// without cc.tools.mcp importing cc.config.config. The loader returns the
+// without cc.orchestration.tools.mcp importing cc.config.config. The loader returns the
 // mapped native servers (or the ConfigManager load error verbatim). When no
 // loader is installed (test binaries), the core settings layer is skipped and
 // only the services ConfigLoader + plugin discovery layers run.

@@ -7,7 +7,7 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.tools.agent;
+export module cc.orchestration.agent;
 
 import std;
 
@@ -25,7 +25,7 @@ import cc.tools.bash;
 import cc.tools.todo_write;
 import cc.tools.send_message;
 import cc.tools.team;
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
 import cc.tools.sleep;
 import cc.tools.web_fetch;
 import cc.skills.skill;
@@ -40,10 +40,10 @@ import cc.utils.tool_helpers;
 import cc.utils.bash_execution;
 
 // Sub-modules created during P1-04 split
-import cc.tools.agent.utils;
-import cc.tools.agent.run;
-import cc.tools.agent.fork;
-import cc.tools.agent.resume;
+import cc.orchestration.agent.utils;
+import cc.orchestration.agent.run;
+import cc.orchestration.agent.fork;
+import cc.orchestration.agent.resume;
 
 export namespace cc::tools::agent {
 

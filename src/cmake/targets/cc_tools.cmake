@@ -6,14 +6,9 @@ target_sources(cc_tools
         tools/agent_constants.cppm
         tools/agent_memory.cppm
         tools/agent_memory_snapshot.cppm
-        tools/agent_tool.cppm
-        tools/agent_sub_utils.cppm
-        tools/agent_run.cppm
-        tools/agent_resume.cppm
-        tools/agent_fork.cppm
         tools/agent_types.cppm
         # RFC-0001 B14 — agent worktree cleanup leaf (runtime_team_shared
-        # imports this instead of the cc.tools.agent facade).
+        # imports this instead of the lifted cc.orchestration.agent facade).
         tools/agent_worktree.cppm
         tools/ask_user_tool.cppm
         tools/bash_permissions.cppm
@@ -36,10 +31,10 @@ target_sources(cc_tools
         # RFC-0001 B11 — image codec callback leaf (cc_orchestration installs
         # the concrete cc.services.image-backed implementation).
         tools/image_codec_port.cppm
+        # KEPT in cc_tools during B15 to bound the atomic diff (zero
+        # importers; independent follow-up prune).
         tools/list_mcp_resources_tool.cppm
-        tools/lsp_tool.cppm
         tools/mcp_classify.cppm
-        tools/mcp_tool.cppm
         tools/notebook_tool.cppm
         tools/plan_mode_tool.cppm
         tools/powershell_tool.cppm
@@ -59,7 +54,6 @@ target_sources(cc_tools
         tools/shared_tool.cppm
         tools/skill_tool.cppm
         tools/sleep_tool.cppm
-        tools/spawn_multi_agent.cppm
         tools/synthetic_output_tool.cppm
         tools/task_get.cppm
         tools/task_output.cppm
@@ -106,11 +100,13 @@ target_sources(cc_tools
         tools/runtime_registry_json.cpp
         tools/runtime_registry_executors.cpp
         tools/runtime_registry_native_agents.cpp
-        tools/runtime_registry_computer_use.cpp
         tools/runtime_registry_skills.cpp
         tools/runtime_registry_dispatch.cpp
         tools/runtime_registry_team_dispatch.cpp
         tools/runtime_registry_register.cpp
+        # RFC-0001 B15 — unified runtime-backends seam slots
+        # (`module cc.tools.runtime_backends.port;`).
+        tools/runtime_backends_port.cpp
         # RFC 0001 Phase C batch 3 — agent_runtime module implementation units
         # (`module cc.tools.agent_runtime;`); same PRIVATE-only discipline.
         tools/agent_runtime_text_impl.cpp
@@ -119,28 +115,18 @@ target_sources(cc_tools
         tools/agent_runtime_builtin_impl.cpp
         tools/agent_runtime_sidechain_impl.cpp
         tools/agent_runtime_store_impl.cpp
-        # RFC 0001 Phase C batch 4 — agent_sub_utils module implementation
-        # units (`module cc.tools.agent.utils;`); same PRIVATE-only discipline.
-        tools/agent_sub_utils_json.cpp
-        tools/agent_sub_utils_config.cpp
-        tools/agent_sub_utils_tools_mcp.cpp
-        tools/agent_sub_utils_hooks.cpp
-        tools/agent_sub_utils_teammates.cpp
-        tools/agent_sub_utils_messages.cpp
-        tools/agent_sub_utils_budget.cpp
         # RFC-0001 B14 — cc.tools.agent_worktree implementation unit.
         tools/agent_worktree.cpp
-        # RFC-0001 B4 — cc.tools.mcp loader-sink storage (`module cc.tools.mcp;`).
-        tools/mcp_core_settings_loader.cpp
-        # RFC-0001 B6 — cc.tools.mcp snapshot-sink storage (same discipline).
-        tools/mcp_snapshots_sink.cpp
 )
+# RFC-0001 B15 final link set: the lifted agent/mcp/lsp/computer-use TUs
+# left for cc_orchestration; zero remaining cc.tools.* modules import
+# cc.services.* / cc.config.* / cc.hooks.* (grep-verified on the spike
+# tree). The 3 cc_skills_core edges are the skills file_access.port
+# contracts.
 target_link_libraries(cc_tools
     PUBLIC
         cc_utils
         cc_types
-        cc_config
-        cc_services
         cc_skills_core
         yyjson
         uv_a

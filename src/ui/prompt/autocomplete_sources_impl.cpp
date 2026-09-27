@@ -13,7 +13,7 @@ import cc.skills.skill;
 import cc.skills.load_skills_dir;
 import cc.skills.bundled;
 import cc.tools.agent_runtime;
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
 import cc.ui.prompt.fuzzy_rank_nucleo;
 import cc.utils.json;
 

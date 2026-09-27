@@ -1,13 +1,13 @@
-// Implementation unit for cc.tools.agent.utils — tool allow/disallow rule
+// Implementation unit for cc.orchestration.agent.utils — tool allow/disallow rule
 // parsing and matching, agent-type permission rules, native MCP server
 // connect/prepare/upsert mapping, and skill discovery/preload.
 module;
 
-module cc.tools.agent.utils;
+module cc.orchestration.agent.utils;
 
 import std;
 
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
 import cc.services.mcp.types;
 import cc.tools.agent_runtime;
 import cc.skills.skill;

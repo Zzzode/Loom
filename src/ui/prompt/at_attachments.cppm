@@ -54,7 +54,7 @@ struct MaterializeResult {
 };
 
 // AT-10/AT-11: defined in at_attachments_impl.cpp (impl unit) to keep the heavy
-// cc.tools.agent_runtime + cc.tools.mcp imports out of this module's BMI (clang
+// cc.tools.agent_runtime + cc.orchestration.tools.mcp imports out of this module's BMI (clang
 // 2GB source-location budget — app.cppm transitively imports this module).
 [[nodiscard]] std::optional<core::ContentBlock> try_attach_agent(
     std::string_view name, const fs::path& cwd);

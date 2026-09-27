@@ -1,6 +1,6 @@
 /// @file at_attachments_impl.cpp
 /// @brief impl unit for cc.ui.prompt.at_attachments. Holds the heavy
-/// cc.tools.agent_runtime + cc.tools.mcp imports (AT-10 agent-mention and
+/// cc.tools.agent_runtime + cc.orchestration.tools.mcp imports (AT-10 agent-mention and
 /// AT-11 MCP-resource attachment) OUT of the interface module's BMI, so that
 /// app.cppm (which imports this module) doesn't transitively pull them in and
 /// blow clang's 2GB source-location budget in importers like tests/test_ui.cpp.
@@ -13,7 +13,7 @@ import std;
 import cc.types.types;  // arch-check: keep-import
 
 import cc.tools.agent_runtime;
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
 
 namespace cc::ui::prompt::at_attachments {
 

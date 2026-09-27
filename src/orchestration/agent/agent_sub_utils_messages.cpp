@@ -1,9 +1,9 @@
-// Implementation unit for cc.tools.agent.utils — fork-context parsing, the
+// Implementation unit for cc.orchestration.agent.utils — fork-context parsing, the
 // four resume message filters, content-replacement application, sidechain
 // append, and message text extraction.
 module;
 
-module cc.tools.agent.utils;
+module cc.orchestration.agent.utils;
 
 import std;
 

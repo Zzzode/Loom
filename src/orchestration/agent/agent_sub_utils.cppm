@@ -2,7 +2,7 @@ module;
 
 #include <cstdlib>
 
-export module cc.tools.agent.utils;
+export module cc.orchestration.agent.utils;
 
 import std;
 
@@ -11,7 +11,7 @@ import cc.tools.tool;
 import cc.tools.agent_runtime;
 import cc.tools.agent_types;
 import cc.tools.agent_worktree;
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
 // Team / MemberRole (cc.tools.team), AgentColor (cc.utils.swarm_backends)
 // and SkillDefinition (cc.skills.skill) are named in declarations kept in
 // this interface, so their owner modules must be imported here even though
@@ -580,7 +580,7 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan);
 
 // Worktree cleanup (result + entry point) lives on the zero-facade leaf
 // cc.tools.agent_worktree (RFC-0001 B14); re-export under the utils spelling
-// so the agent subtree and the cc.tools.agent facade keep resolving with no
+// so the agent subtree and the cc.orchestration.agent facade keep resolving with no
 // call-site churn.
 using cc::tools::agent::AgentWorktreeCleanupResult;
 using cc::tools::agent::cleanup_agent_worktree;

@@ -20,14 +20,12 @@ import cc.types.types;
 import cc.tools.tool;
 import cc.tools.agent_runtime;
 import cc.tools.runtime_registry;
-import cc.tools.mcp;
 import cc.hooks.tool_permissions;
 import cc.hooks.lifecycle_hooks;
 import cc.types.command;
 import cc.commands.command;
 import cc.commands.registry;
 import cc.commands.mcp.core_settings_loader;
-import cc.bootstrap.mcp_connectivity;
 import cc.orchestration.runtime_backends;
 import cc.constants.product;
 import cc.services.api.session_ingress;
@@ -668,24 +666,11 @@ int run_runtime_tool_once(const CliOptions& opts) {
         .parent_permission_mode = parent_permission_mode_from_options(opts),
     });
     // TS PARITY FALLBACK: route unregistered tool names to MCP servers.
+    // RFC-0001 B15: the lambda (NativeMcpRuntime iteration, last_error, exact
+    // ToolNotFound text) lives in cc.orchestration; the install above bound
+    // it, and main asks the seam for the same factory here.
     tool_registry.set_missing_tool_handler(
-        [](std::string_view tool_name,
-           const cc::core::ToolInput& input) -> cc::core::Result<cc::core::ToolResult> {
-            namespace mcp = cc::tools;
-            auto& runtime = mcp::NativeMcpRuntime::instance();
-            std::string last_error;
-            auto statuses = runtime.all_statuses();
-            for (const auto& s : statuses) {
-                auto result = runtime.call_tool(s.name, tool_name, std::string{input.json()});
-                if (result) {
-                    return mcp::mcp_result_to_tool_result(*result);
-                }
-                last_error = std::string{mcp::format_error(result.error())};
-            }
-            return std::unexpected(cc::core::Error::make(cc::core::ErrorCode::ToolNotFound,
-                std::format("Tool '{}' not found in registry or on any configured MCP server{}", tool_name,
-                    last_error.empty() ? "" : " (" + last_error + ")")));
-        });
+        cc::orchestration::make_missing_tool_backend());
     auto result = tool_registry.execute(
         *opts.runtime_tool_name,
         cc::core::ToolInput::from_json(opts.runtime_tool_input_json.value_or("{}")));
@@ -1804,13 +1789,14 @@ int main(int argc, const char* argv[]) {
     // in-process server routes all run in this one binary).
     cc::commands::install_core_settings_mcp_loader();
 
-    // RFC-0001 B7/B8: install the MCP-connectivity snapshot-sink bridge
-    // immediately after the B4 loader. Same domination argument — every
-    // NativeMcpRuntime::all_statuses() path (runtime-tool fallback, daemon
-    // modes, dynamic providers, in-process server routes) runs after this
-    // point in the one binary. Since the B8 atomic cut this sink is the sole
-    // writer of the hook connectivity slot.
-    cc::bootstrap::mcp_connectivity::wire_mcp_connectivity();
+    // RFC-0001 B15: ONE orchestration install binds every runtime backend —
+    // image codec, skill executor, the six lifted tool backends, the
+    // missing-tool MCP fallback, the MCP snapshot providers, the Agent tool
+    // factory, AND (folding the old B7/B8 bridge) the MCP-connectivity
+    // snapshot sink. call_once-guarded; must dominate every register /
+    // all_statuses path below (--run-runtime-tool, --list-runtime-tools,
+    // the two register sites, and the in-process server routes).
+    cc::orchestration::install_runtime_backends();
 
     // Resolve leader/teammate identity from the environment just exported by
     // apply_teammate_environment and the canonical <team>/config.json (see
@@ -1840,13 +1826,8 @@ int main(int argc, const char* argv[]) {
         return 0;
     }
 
-    // RFC-0001 B11: install the orchestration runtime backends (the image
-    // codec this batch) before any path can dispatch a tool that needs them:
-    // --list-runtime-tools and the two register_runtime_tools sites below,
-    // --run-runtime-tool (Read on an image / computer_use screenshots), and
-    // the in-process server routes (which install again per session; that
-    // repeat is a std::call_once no-op in this one binary).
-    cc::orchestration::install_runtime_backends();
+    // (cc::orchestration::install_runtime_backends() already ran above —
+    // single call_once point for the whole binary.)
 
     if (opts.list_runtime_tools) {
         auto tool_registry = cc::core::ToolRegistry{};
@@ -1962,61 +1943,11 @@ int main(int argc, const char* argv[]) {
     // call on each; NativeMcpRuntime::call_tool auto-connects if
     // needed.  The first successful result is returned.  If no server
     // has the tool, the original ToolNotFound error is preserved.
+    // RFC-0001 B15: the unified missing-tool fallback (all_statuses order,
+    // std::string{input.json()}, exact ToolNotFound text) is built by
+    // cc.orchestration; the per-site lambdas are gone.
     tool_registry.set_missing_tool_handler(
-        [](std::string_view tool_name,
-           const cc::core::ToolInput& input) -> cc::core::Result<cc::core::ToolResult> {
-            namespace mcp = cc::tools;
-            auto& runtime = mcp::NativeMcpRuntime::instance();
-
-            // Collect all server names to try.  Start with servers
-            // whose status we know (from all_statuses), then add any
-            // configured servers we haven't snapshotted yet.
-            std::vector<std::string> server_names;
-            {
-                auto statuses = runtime.all_statuses();
-                for (const auto& s : statuses) {
-                    server_names.push_back(s.name);
-                }
-            }
-            // Also try servers that are configured but might not yet
-            // be in the status list (lazy connection).
-            // NativeMcpRuntime::call_tool will auto-connect them.
-            // We discover these by trying the configured-server lookup
-            // for common server names, or by relying on all_statuses
-            // which already includes all configured servers.
-
-            std::string last_error;
-            for (const auto& server_name : server_names) {
-                auto result = runtime.call_tool(
-                    server_name, tool_name, std::string{input.json()});
-                if (result) {
-                    // Preserves screenshot image blocks from computer-use
-                    // MCP servers (required after every computer action).
-                    return mcp::mcp_result_to_tool_result(*result);
-                }
-                auto ec = result.error();
-                last_error = std::string{mcp::format_error(ec)};
-                // If the error is ToolNotFound, try the next server.
-                // For any other error (auth, connection, etc.) we also
-                // try the next server — the tool might live on a
-                // different one.  ServerNotFound also means "keep
-                // trying".
-                if (ec != mcp::McpError::ToolNotFound &&
-                    ec != mcp::McpError::ServerNotFound) {
-                    // Non-routing error: still try other servers,
-                    // but remember this one's error for the final
-                    // message if all fail.
-                }
-            }
-
-            // No MCP server has this tool — return the original
-            // ToolNotFound error.
-            return std::unexpected(cc::core::Error::make(
-                cc::core::ErrorCode::ToolNotFound,
-                std::format("Tool '{}' not found in registry or on any configured MCP server{}",
-                    tool_name,
-                    last_error.empty() ? "" : " (" + last_error + ")")));
-        });
+        cc::orchestration::make_missing_tool_backend());
 
     // Populate config.tools with definitions for the API request body
     config.tools = tool_registry.get_visible_definitions();

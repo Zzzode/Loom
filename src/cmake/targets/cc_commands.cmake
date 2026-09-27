@@ -124,5 +124,8 @@ target_link_libraries(cc_commands
         cc_config
         cc_state
         cc_tools
+        # RFC-0001 B15: mcp_cmd / mcp.core_settings_loader import the lifted
+        # cc.orchestration.tools.mcp; color.cppm imports cc.orchestration.agent.utils.
+        cc_orchestration
         cc_vim
 )

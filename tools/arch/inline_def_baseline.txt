@@ -46,7 +46,7 @@ cc.ui.messages.messages_list 22 c1 c2-done
 cc.utils.json 22 c2-done
 cc.utils.swarm_backends 22 c2-done
 cc.ui.features.tasks.task_list_view 20
-cc.tools.agent 19
+cc.orchestration.agent 19
 cc.tools.agent_runtime 18 c1 c2-done
 cc.ui.visual.code_highlight 17
 cc.ui.dialogs.sandbox_settings 15
@@ -54,8 +54,8 @@ cc.services.mcp.client 12 c2-done
 cc.tools.readonly_validation 12
 cc.state.store 8
 cc.ui.visual.markdown 7 c2-done
-cc.tools.agent.utils 6 c1 c2-done
+cc.orchestration.agent.utils 6 c1 c2-done
 cc.ui.foundation.design_tokens 6
 cc.state.selectors 5 c2-done
-cc.tools.runtime_registry 5 c1 c2-done
+cc.tools.runtime_registry 9 c1 c2-done  # B15: 4 computer-use test setters inlined (bodies moved out of the moved TU)
 cc.ui.screens.repl_screen 0 c1 c2-done

@@ -1,7 +1,10 @@
 // Implementation unit for cc.tools.runtime_registry — the simple runtime tool
-// executors (shell/lsp/script/task/config/resource/notebook/worktree/brief/
+// executors (shell/script/task/config/resource/notebook/worktree/brief/
 // web-browser). Bodies moved out of the god interface so an edit to one
 // executor recompiles this object instead of the importer fan-out.
+//
+// RFC-0001 B15: parse_lsp_action / format_lsp_result / execute_lsp_tool moved
+// verbatim to cc.orchestration.runtime_backends (runtime_backends_lsp.cpp).
 module;
 
 #include <cctype>   // std::isalnum in safe_ref
@@ -12,7 +15,6 @@ module cc.tools.runtime_registry;
 import std;
 
 import cc.types.tool_types;
-import cc.tools.lsp;
 import cc.tools.script;
 import cc.tools.script_types;
 import cc.tools.task;
@@ -47,70 +49,6 @@ namespace fs = std::filesystem;
         return ToolResult::error(std::format("Command failed with status {}:\n{}", status, output));
     }
     return ToolResult::success(output);
-}
-
-[[nodiscard]] LspAction parse_lsp_action(std::string_view action) {
-    // Canonical action strings mirror lsp_action_name() in lsp_tool.cppm.
-    // Without these mappings the runtime registry's execute_lsp_tool would
-    // silently fall through to LspAction::Symbols for the newer actions.
-    if (action == "diagnostics") return LspAction::Diagnostics;
-    if (action == "definition") return LspAction::Definition;
-    if (action == "references") return LspAction::References;
-    if (action == "completion") return LspAction::Completion;
-    if (action == "hover") return LspAction::Hover;
-    if (action == "symbols") return LspAction::Symbols;
-    if (action == "implementation") return LspAction::Implementation;
-    if (action == "workspaceSymbol") return LspAction::WorkspaceSymbol;
-    if (action == "prepareCallHierarchy") return LspAction::PrepareCallHierarchy;
-    if (action == "incomingCalls") return LspAction::IncomingCalls;
-    if (action == "outgoingCalls") return LspAction::OutgoingCalls;
-    return LspAction::Symbols;
-}
-
-[[nodiscard]] std::string format_lsp_result(const LspResult& result, std::string_view action) {
-    if (result.empty()) return std::format("No LSP results for action '{}'.", action);
-    std::string out;
-    for (const auto& diagnostic : result.diagnostics) {
-        out += std::format("{}:{}:{} {}\n", diagnostic.source,
-            diagnostic.range.start.line, diagnostic.range.start.character, diagnostic.message);
-    }
-    for (const auto& location : result.locations) {
-        out += std::format("{}:{}:{}\n", location.uri, location.range.start.line, location.range.start.character);
-    }
-    for (const auto& completion : result.completions) {
-        out += std::format("{} {}\n", completion.label, completion.detail);
-    }
-    for (const auto& symbol : result.symbols) {
-        out += std::format("{} {}\n", symbol.kind, symbol.name);
-    }
-    if (result.hover) out += result.hover->contents;
-    return out.empty() ? std::format("No LSP results for action '{}'.", action) : out;
-}
-
-[[nodiscard]] Result<ToolResult> execute_lsp_tool(const ToolInput& input) {
-    auto json = input.json();
-    auto file_text = json_string(json, "file_path").or_else([&] { return json_string(json, "path"); });
-    auto action = json_string(json, "action").value_or("symbols");
-    if (!file_text || file_text->empty()) {
-        return ToolResult::error("lsp requires file_path");
-    }
-    fs::path file = *file_text;
-    if (!fs::exists(file)) {
-        return ToolResult::error(std::format("File not found: {}", file.string()));
-    }
-
-    LspTool tool;
-    tool.set_connected(true);
-    LspRequest request{
-        .action = parse_lsp_action(action),
-        .file_path = file,
-        .position = LspPosition{.line = json_int(json, "line").value_or(0),
-                                .character = json_int(json, "character").value_or(0)},
-        .query = json_string(json, "query"),
-    };
-    auto result = tool.execute(std::move(request));
-    if (!result) return ToolResult::error(std::string(format_error(result.error())));
-    return ToolResult::success(format_lsp_result(*result, action));
 }
 
 [[nodiscard]] Result<ToolResult> execute_script(const ToolInput& input) {

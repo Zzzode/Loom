@@ -307,6 +307,9 @@ target_link_libraries(cc_ui
         cc_types
         cc_query
         cc_commands
+        # RFC-0001 B15: at_attachments/autocomplete impl TUs import
+        # cc.orchestration.tools.mcp.
+        cc_orchestration
         cc_vim
         cc_hooks
         cc_plugins

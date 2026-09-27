@@ -6,7 +6,7 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.tools.agent.resume;
+export module cc.orchestration.agent.resume;
 
 import std;
 
@@ -22,7 +22,7 @@ import cc.tools.bash;
 import cc.tools.todo_write;
 import cc.tools.send_message;
 import cc.tools.team;
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
 import cc.tools.sleep;
 import cc.tools.web_fetch;
 // RFC-0001 B10 — dead `import cc.skills.skill;` deleted: the file-access
@@ -36,7 +36,7 @@ import cc.utils.swarm_backends;
 import cc.utils.env_utils;
 import cc.utils.tool_helpers;
 import cc.utils.bash_execution;
-import cc.tools.agent.utils;
+import cc.orchestration.agent.utils;
 
 export namespace cc::tools::agent::resume_ {
 

@@ -4,7 +4,7 @@ module;
 
 // LspTool - LSP operations wrapper for code intelligence actions
 
-export module cc.tools.lsp;
+export module cc.orchestration.tools.lsp;
 
 import std;
 

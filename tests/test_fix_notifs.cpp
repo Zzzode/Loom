@@ -1,6 +1,6 @@
 /// @file test_fix_notifs.cpp
 /// @brief Coverage for the MCP-connectivity bridge in
-///        cc.bootstrap.mcp_connectivity (to_hook_status / project_connectivity
+///        cc.orchestration.mcp_connectivity (to_hook_status / project_connectivity
 ///        / wire_mcp_connectivity, the sole writer of the hook MCP slot since
 ///        the B8 cut) and for the real-backend teammate bridge still living in
 ///        cc.hooks.remaining_notifs:
@@ -16,12 +16,12 @@ import std;
 import cc.hooks.remaining_notifs;
 import cc.services.mcp.connection_manager;
 import cc.services.mcp.types;
-import cc.bootstrap.mcp_connectivity;
-import cc.tools.mcp;
+import cc.orchestration.mcp_connectivity;
+import cc.orchestration.tools.mcp;
 
 namespace notif = cc::hooks::notifs;
 namespace svc_mcp = cc::services::mcp;
-namespace bridge = cc::bootstrap::mcp_connectivity;
+namespace bridge = cc::orchestration::mcp_connectivity;
 
 using namespace std::chrono_literals;
 
@@ -78,7 +78,7 @@ notif::TeammateShutdownCause to_cause(const FakeTask& t) {
 // ─── MCP status mapping ─────────────────────────────────────────────────────
 
 // RFC-0001 B8: the hook-local mapper was deleted with the direct
-// hooks->services leg; cc.bootstrap.mcp_connectivity::to_hook_status is now
+// hooks->services leg; cc.orchestration.mcp_connectivity::to_hook_status is now
 // the only ConnectionStatus -> McpServerStatus mapping.
 
 TEST(FixNotifs, McpStatusMappingConnected) {

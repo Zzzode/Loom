@@ -17,13 +17,13 @@ import std;
 import cc.types.types;
 import cc.commands.command;
 import cc.config.config;
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
 import cc.services.mcp.connection_manager;
 import cc.services.mcp.xaa_idp_login;
 import cc.services.mcp.types;
 import cc.services.mcp.config;
 
-// Alias NativeMcpStatus to the runtime type defined in cc.tools.mcp so the
+// Alias NativeMcpStatus to the runtime type defined in cc.orchestration.tools.mcp so the
 // data-prep row builders below can use a short name without pulling in all
 // of the connection-manager snapshot machinery.
 namespace cc::tools {
@@ -87,7 +87,7 @@ enum class McpAction : std::uint8_t {
 };
 
 /// Runtime snapshot of an MCP server (kept minimal; full state lives in
-/// cc.services.mcp.connection_manager and cc.tools.mcp).
+/// cc.services.mcp.connection_manager and cc.orchestration.tools.mcp).
 struct McpServerStatus {
     std::string name;
     std::string status_text;       // human-readable status label

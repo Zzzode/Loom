@@ -21,10 +21,14 @@ target_sources(cc_skills
         skills/simplify.cppm
         skills/verify_content.cppm
 )
+# RFC-0001 B15: the load_skills_dir cc_tools edge left with the lifted agent
+# subtree (the skill executor now lives in cc_orchestration); no skills
+# module imports cc.tools.* anymore.
 target_link_libraries(cc_skills
     PUBLIC
         cc_utils
+        cc_config           # skills/bundled/* import cc.config.config (was
+                            # transitive via cc_tools PUBLIC before B15).
         cc_skills_core
-        cc_tools
         yyjson
 )

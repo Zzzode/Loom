@@ -29,7 +29,7 @@
 #include <unistd.h>
 
 import std;
-import cc.tools.lsp;
+import cc.orchestration.tools.lsp;
 import cc.utils.json;
 import cc.services.lsp.types;
 import cc.services.lsp.LSPServerInstance;

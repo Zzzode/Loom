@@ -1,19 +1,24 @@
-// Implementation unit for cc.tools.runtime_registry — native computer-use
-// routing: the local command backend, action parsing, the connected
-// computer-use MCP server check, and the exported testing override setters.
+// Implementation unit for cc.orchestration.runtime_backends (moved
+// verbatim from cc.tools.runtime_registry in RFC-0001 B15) — native
+// computer-use routing: the local command backend, action parsing, the
+// connected computer-use MCP server check, and execute_computer_use. The
+// four test setters stayed in cc_tools (inline in runtime_registry.cppm);
+// this unit reaches the exported inline override variables through
+// cc.tools.runtime_registry.
 module;
 
 #include <cctype>   // std::isalnum in normalize_name_for_mcp
 #include <cstdlib>  // std::getenv for LOOM_COMPUTER_USE_CMD
 
-module cc.tools.runtime_registry;
+module cc.orchestration.runtime_backends;
 
 import std;
 
 import cc.types.tool_types;
 import cc.tools.computer_use;
 import cc.tools.runtime_computer_use;
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
+import cc.tools.runtime_registry;
 import cc.utils.json;
 import cc.utils.bash_execution;
 import cc.tools.image_codec.port;
@@ -27,6 +32,25 @@ namespace {
 constexpr std::string_view kComputerUseMcpServerName = "computer-use";
 
 } // namespace
+
+// RFC-0001 B15: these were declared in the cc.tools.runtime_registry
+// interface solely for cross-TU use by this one implementation unit. After
+// the move they are TU-local to cc.orchestration.runtime_backends.
+struct ComputerUseCommandBackendResult {
+    std::optional<std::string> screenshot_base64;
+    std::optional<std::string> format;
+    std::optional<std::int64_t> width;
+    std::optional<std::int64_t> height;
+};
+
+[[nodiscard]] std::optional<std::string> computer_json_optional_string(
+    cc::utils::json::JsonVal root,
+    std::string_view key
+) {
+    auto value = root.get(key);
+    if (!value || !value.is_str()) return std::nullopt;
+    return std::string(value.as_str());
+}
 
 [[nodiscard]] std::optional<cc::core::computer_use::ActionType> parse_computer_action(
     std::string_view action) {
@@ -77,15 +101,6 @@ constexpr std::string_view kComputerUseMcpServerName = "computer-use";
     }
     if (output.empty()) return std::unexpected("Computer-use command backend returned no JSON");
     return output;
-}
-
-[[nodiscard]] std::optional<std::string> computer_json_optional_string(
-    cc::utils::json::JsonVal root,
-    std::string_view key
-) {
-    auto value = root.get(key);
-    if (!value || !value.is_str()) return std::nullopt;
-    return std::string(value.as_str());
 }
 
 [[nodiscard]] std::expected<ComputerUseCommandBackendResult, std::string> parse_computer_command_result(
@@ -316,25 +331,3 @@ connected_computer_use_mcp_server() {
 }
 
 } // namespace cc::tools::detail
-
-namespace cc::tools {
-
-void set_runtime_computer_use_capture_provider_for_testing(
-    cc::core::computer_use::CaptureProvider provider) {
-    detail::computer_use_capture_provider_override = std::move(provider);
-}
-
-void clear_runtime_computer_use_capture_provider_for_testing() {
-    detail::computer_use_capture_provider_override.reset();
-}
-
-void set_runtime_computer_use_input_provider_for_testing(
-    cc::core::computer_use::InputProvider provider) {
-    detail::computer_use_input_provider_override = std::move(provider);
-}
-
-void clear_runtime_computer_use_input_provider_for_testing() {
-    detail::computer_use_input_provider_override.reset();
-}
-
-} // namespace cc::tools

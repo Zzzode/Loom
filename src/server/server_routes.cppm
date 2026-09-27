@@ -12,7 +12,6 @@ import cc.orchestration.runtime_backends;
 import cc.query.query_engine;
 import cc.services.api.session_ingress;
 import cc.session.storage;
-import cc.tools.mcp;
 import cc.tools.runtime_registry;
 import cc.tools.tool;
 import cc.types.types;
@@ -792,31 +791,11 @@ namespace detail {
         });
 
         // TS PARITY FALLBACK: route unregistered tool names (e.g. MCP server
-        // tools like "analyze_image") to connected MCP servers.  In TS,
-        // `assembleToolPool` merges built-in tools with per-server MCP tools
-        // so the model can call them directly by short name.
+        // tools like "analyze_image") to connected MCP servers. RFC-0001 B15:
+        // the unified fallback is built by cc.orchestration (byte-identical
+        // iteration/last_error/ToolNotFound text).
         registry.set_missing_tool_handler(
-            [](std::string_view tool_name,
-               const cc::core::ToolInput& input) -> cc::core::Result<cc::core::ToolResult> {
-                namespace mcp = cc::tools;
-                auto& runtime = mcp::NativeMcpRuntime::instance();
-                std::string last_error;
-                auto statuses = runtime.all_statuses();
-                for (const auto& s : statuses) {
-                    auto result = runtime.call_tool(
-                        s.name, tool_name, std::string{input.json()});
-                    if (result) {
-                        return mcp::mcp_result_to_tool_result(*result);
-                    }
-                    last_error = std::string{mcp::format_error(result.error())};
-                }
-                return std::unexpected(cc::core::Error::make(
-                    cc::core::ErrorCode::ToolNotFound,
-                    std::format("Tool '{}' not found in registry or on any "
-                                "configured MCP server{}",
-                                tool_name,
-                                last_error.empty() ? "" : " (" + last_error + ")")));
-            });
+            cc::orchestration::make_missing_tool_backend());
 
         config.tools = registry.get_visible_definitions();
         // TS PARITY: MCP tools discovered dynamically after server connection.

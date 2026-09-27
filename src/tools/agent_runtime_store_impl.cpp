@@ -372,7 +372,7 @@ std::expected<AgentExecutionResult, std::string> run_agent(const AgentRuntimeCon
     // need metadata / transcript / persistence semantics.
     //
     // To actually execute a query loop, instantiate an AgentWorker from the
-    // cc.tools.agent module and invoke build_agent_execution_plan() followed
+    // cc.orchestration.agent module and invoke build_agent_execution_plan() followed
     // by run_agent_loop(). Those are wire-compatible with the TS `runAgent`
     // generator: same permission handling, same MCP isolation, same
     // SubagentStart/SubagentStop hook execution, same transcript persistence.

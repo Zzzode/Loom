@@ -10,10 +10,10 @@ import std;
 
 import cc.types.tool_types;
 import cc.tools.tool;  // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
+import cc.tools.runtime_backends.port;
 import cc.tools.ask_user;
 import cc.tools.plan_mode;
 import cc.tools.worktree;
-import cc.tools.mcp;
 import cc.tools.powershell;
 import cc.tools.cron;
 import cc.tools.runtime_message_delivery;
@@ -60,8 +60,13 @@ using cc::core::ToolResult;
     if (name == "brief") return execute_brief(input);
     // "computer" is the Anthropic native wire name (model sees it via the
     // computer_20241022 tool); "computer_use" is the internal registry name.
-    if (name == "computer_use" || name == "computer")
-        return execute_computer_use(input);
+    // RFC-0001 B15: the ONE computer_use backend slot covers both; the body
+    // lives in cc.orchestration.runtime_backends.
+    if (name == "computer_use" || name == "computer") {
+        if (auto& backend = computer_use_backend(); backend) return backend(input);
+        return ToolResult::error(std::format(
+            "Runtime tool '{}' has no runtime handler", name));
+    }
     if (name == "config") return execute_config_tool(input);
     if (name == "enter_plan_mode") {
         EnterPlanModeTool tool;
@@ -100,58 +105,33 @@ using cc::core::ToolResult;
         return ToolResult::success(std::format("Exited worktree {} and returned to {}",
             result->branch_name, result->original_path.string()));
     }
-    if (name == "lsp") return execute_lsp_tool(input);
+    // RFC-0001 B15: the LSP and four MCP branches moved to
+    // cc.orchestration.runtime_backends; dispatch only does the seam lookup.
+    // Every null slot returns the byte-identical terminal error literal.
+    if (name == "lsp") {
+        if (auto& backend = lsp_backend(); backend) return backend(input);
+        return ToolResult::error(std::format(
+            "Runtime tool '{}' has no runtime handler", name));
+    }
     if (name == "list_mcp_resources") {
-        auto server = json_string(json, "server_name").or_else([&] { return json_string(json, "server"); });
-        ListMcpResourcesTool tool;
-        auto resources = tool.execute(server);
-        if (!resources) return ToolResult::error(std::string(format_error(resources.error())));
-        std::string out = "MCP resources:\n";
-        for (const auto& resource : *resources) {
-            out += std::format("- {} ({})\n", resource.uri, resource.mime_type);
-        }
-        if (resources->empty()) out += "No MCP resources are registered.\n";
-        return ToolResult::success(out);
+        if (auto& backend = list_mcp_resources_backend(); backend) return backend(input);
+        return ToolResult::error(std::format(
+            "Runtime tool '{}' has no runtime handler", name));
     }
     if (name == "read_mcp_resource") {
-        auto server = json_string(json, "server_name").or_else([&] { return json_string(json, "server"); });
-        auto uri = json_string(json, "resource_uri").or_else([&] { return json_string(json, "uri"); });
-        if (!server || !uri) return ToolResult::error("read_mcp_resource requires server_name and resource_uri");
-        ReadMcpResourceTool tool;
-        auto result = tool.execute(*server, *uri);
-        if (!result) return ToolResult::error(std::string(format_error(result.error())));
-        return ToolResult::success(result->content);
+        if (auto& backend = read_mcp_resource_backend(); backend) return backend(input);
+        return ToolResult::error(std::format(
+            "Runtime tool '{}' has no runtime handler", name));
     }
     if (name == "mcp") {
-        auto server = json_string(json, "server_name").or_else([&] { return json_string(json, "server"); });
-        auto tool = json_string(json, "tool_name").or_else([&] { return json_string(json, "tool"); });
-        if (!server || !tool) return ToolResult::error("mcp requires server_name and tool_name");
-        McpTool mcp_tool;
-        auto arguments = json_raw_value(json, "arguments").or_else([&] { return json_raw_value(json, "input"); })
-            .value_or("{}");
-        auto result = mcp_tool.execute(McpToolRequest{
-            .server_name = *server,
-            .tool_name = *tool,
-            .arguments = {},
-            .arguments_json = arguments,
-        });
-        if (!result) return ToolResult::error(std::string(format_error(result.error())));
-        // Preserves structured content items (screenshots, multi-text).
-        return mcp_result_to_tool_result(*result);
+        if (auto& backend = mcp_backend(); backend) return backend(input);
+        return ToolResult::error(std::format(
+            "Runtime tool '{}' has no runtime handler", name));
     }
     if (name == "mcp_auth") {
-        auto server = json_string(json, "server_name").or_else([&] { return json_string(json, "server"); });
-        if (!server) return ToolResult::error("mcp_auth requires server_name");
-        auto code = json_string(json, "auth_code").or_else([&] { return json_string(json, "code"); });
-        auto wait_for_callback =
-            json_bool(json, "wait_for_callback", false) ||
-            json_bool(json, "waitForCallback", false);
-        auto authorization_url_file = json_string(json, "authorization_url_file")
-            .or_else([&] { return json_string(json, "authorizationUrlFile"); });
-        McpAuthTool tool;
-        auto result = tool.execute(*server, code, wait_for_callback, authorization_url_file);
-        if (!result) return ToolResult::error(std::string(format_error(result.error())));
-        return ToolResult::success(*result);
+        if (auto& backend = mcp_auth_backend(); backend) return backend(input);
+        return ToolResult::error(std::format(
+            "Runtime tool '{}' has no runtime handler", name));
     }
     if (name == "notebook_edit") return execute_notebook_edit(input);
     if (name == "powershell") {
@@ -227,7 +207,7 @@ using cc::core::ToolResult;
         // cwd/skills, plugin components) is an orchestration-installed
         // executor. std::nullopt means it did not claim the skill — fall
         // through to the terminal manual SKILL.md walk in execute_skill_tool.
-        if (auto& skill_executor = skill_loader_executor_override();
+        if (auto& skill_executor = skill_loader_executor_slot();
             skill_executor) {
             if (auto executed = (*skill_executor)(input)) {
                 return std::move(*executed);

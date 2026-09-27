@@ -1,11 +1,11 @@
-// Implementation unit for cc.tools.agent.utils — GrowthBook env overrides,
+// Implementation unit for cc.orchestration.agent.utils — GrowthBook env overrides,
 // threshold maps, tool-result candidate grouping, persisted-output
 // replacement writing, and budget application. The template
 // with_agent_growthbook_env_overrides stays defined in the interface and is
 // merely called from here.
 module;
 
-module cc.tools.agent.utils;
+module cc.orchestration.agent.utils;
 
 import std;
 

@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.agent.utils — the three RAII cleanup
+// Implementation unit for cc.orchestration.agent.utils — the three RAII cleanup
 // guard destructors, command-hook execution (popen/pclose + WIF* status
 // macros), hook JSON output parsers, frontmatter/tool hook runners, hook
 // context formatting, worktree creation, cwd normalization, agent
@@ -15,7 +15,7 @@ module;
 #include <cstdio>
 #include <sys/wait.h>
 
-module cc.tools.agent.utils;
+module cc.orchestration.agent.utils;
 
 import std;
 
@@ -24,7 +24,7 @@ import cc.utils.bash_execution;
 import cc.utils.json;
 import cc.tools.todo_write;
 import cc.tools.bash;
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
 import cc.tools.agent_runtime;
 import cc.services.api.client;
 

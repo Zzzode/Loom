@@ -1,10 +1,10 @@
-// Implementation unit for cc.tools.agent.utils — JSON getters/parsers,
+// Implementation unit for cc.orchestration.agent.utils — JSON getters/parsers,
 // tool-input agent_id injection and cwd-override shaping,
 // parse_agent_tool_request, content-block/message JSON (de)serialization,
 // and sidechain/message JSON.
 module;
 
-module cc.tools.agent.utils;
+module cc.orchestration.agent.utils;
 
 import std;
 

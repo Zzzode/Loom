@@ -105,7 +105,9 @@ target_link_libraries(test_state
 gtest_discover_tests(test_state DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 
-add_executable(test_tools test_tools.cpp)
+# RFC-0001 B15: the second TU performs the pre-main install_runtime_backends
+# slot assignment (module TU; scanned by clang-scan-deps like every source).
+add_executable(test_tools test_tools.cpp test_runtime_backends_install.cpp)
 target_link_libraries(test_tools
     PRIVATE
         cc_core
@@ -584,7 +586,7 @@ target_link_libraries(test_fix_notifs
         cc_core
         cc_hooks
         cc_services
-        cc_bootstrap
+        cc_orchestration   # RFC-0001 B15: cc.orchestration.mcp_connectivity + tools.mcp
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_notifs DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

@@ -27,12 +27,13 @@ import cc.tools.send_message;
 import cc.tools.web_fetch;
 import cc.tools.web_search;
 import cc.tools.web_browser;
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
 import cc.commands.mcp.core_settings_loader;
 import cc.orchestration.runtime_backends;
+import cc.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import cc.tools.image_codec.port;
 import cc.tools.worktree;
-import cc.tools.agent;
+import cc.orchestration.agent;
 import cc.tools.agent_runtime;
 import cc.tools.file_read;
 import cc.tools.file_write;
@@ -60,7 +61,7 @@ import cc.services.mcp.types;
 import cc.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import cc.tools.repl;
 import cc.tools.skill;
-import cc.tools.agent.utils;
+import cc.orchestration.agent.utils;
 import cc.tools.destructive_command_warning;
 
 namespace fs = std::filesystem;

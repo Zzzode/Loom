@@ -1,8 +1,8 @@
 /// @file agent_worktree.cppm
 /// @brief Agent worktree cleanup leaf (RFC-0001 B14 / F14 Alpha 2).
 ///
-/// The cleanup entry point used to live on the cc.tools.agent facade
-/// (declared in cc.tools.agent.utils, defined in its hooks impl unit). Team
+/// The cleanup entry point used to live on the cc.orchestration.agent facade
+/// (declared in cc.orchestration.agent.utils, defined in its hooks impl unit). Team
 /// teardown (runtime_team_shared) needs ONLY this function off the agent
 /// subtree, so it is parked on this zero-facade leaf: the team module can
 /// import cc.tools.agent_worktree without an edge back into the facade that

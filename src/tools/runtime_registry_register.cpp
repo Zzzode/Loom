@@ -9,7 +9,8 @@ module cc.tools.runtime_registry;
 import std;
 
 import cc.tools.tool;
-import cc.tools.agent;
+import cc.tools.agent_types;
+import cc.tools.runtime_backends.port;
 import cc.tools.bash;
 import cc.tools.built_in_agents;
 import cc.tools.feature_flags;
@@ -20,7 +21,6 @@ import cc.tools.glob;
 // make_grep_tool() is called below; the arch checker's trailing-return-type
 // extraction does not see it exported (pre-existing false negative).
 import cc.tools.grep;  // arch-check: keep-import
-import cc.tools.mcp;
 import cc.tools.todo_write;
 import cc.tools.web_fetch;
 import cc.tools.web_search;
@@ -111,15 +111,27 @@ get_built_in_agent_definitions() {
 void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions options) {
     namespace features = cc::tools::features;
 
-    auto permission_check = std::move(options.permission_check);
+    // RFC-0001 B15: AgentTool lives in cc_orchestration now. The factory
+    // arrives via the per-call option (tests: 7 bind sites) or the process
+    // slot installed once by cc::orchestration::install_runtime_backends().
+    // Resolve and invoke it BEFORE the permission checker is moved, passing
+    // a COPY — the simple() lambda below keeps reusing the checker.
+    const auto& slot_factory = agent_tool_factory();
+    const auto& agent_factory = options.agent_tool_factory
+        ? options.agent_tool_factory
+        : slot_factory;
     AgentConfig agent_config;
     agent_config.parent_permission_mode = std::move(options.parent_permission_mode);
-    registry.register_tool(make_agent_tool(
-        std::move(agent_config),
-        0,
-        &registry,
-        permission_check,
-        options.permission_hook_valid_for_background));
+    if (agent_factory) {
+        registry.register_tool(agent_factory(
+            std::move(agent_config),
+            0,
+            &registry,
+            options.permission_check,
+            options.permission_hook_valid_for_background));
+    }
+
+    auto permission_check = std::move(options.permission_check);
 
     // TS REF: src/tools.ts:199 (isBashToolDisabled runtime check)
     if constexpr (features::kBashToolEnabled) {
@@ -504,58 +516,6 @@ void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions
 
 void register_runtime_tools(cc::core::ToolRegistry& registry) {
     register_runtime_tools(registry, RuntimeToolOptions{});
-}
-
-// ── MCP tool pool for config.tools ────────────────────────────────────────
-// TS PARITY: assembleToolPool() merges built-in tools with per-server MCP
-// tools so the model can call them directly by name.  In CPP, individual MCP
-// tools are NOT registered in ToolRegistry (only the generic "mcp" wrapper
-// is).  This helper collects tool definitions from all known MCP servers so
-// they can be appended to config.tools and sent to the API.
-//
-// Each MCP tool gets a generic "object" input schema (the model infers
-// parameters from the description).  Execution is routed via
-// ToolRegistry::set_missing_tool_handler() → NativeMcpRuntime::call_tool().
-[[nodiscard]] std::vector<cc::core::ToolDefinition> collect_mcp_tool_definitions() {
-    std::vector<cc::core::ToolDefinition> defs;
-    auto& runtime = NativeMcpRuntime::instance();
-    for (const auto& server : runtime.all_statuses()) {
-        for (const auto& tool : server.tools) {
-            // Skip tools that might collide with built-in names.
-            if (tool.name.empty()) continue;
-            cc::core::ToolDefinition def;
-            def.name = tool.name;
-            def.description = tool.description;
-            // The simplified property model cannot represent nested MCP
-            // input schemas. The verbatim schema is carried by
-            // NativeMcpRuntime and surfaced at request serialization time
-            // (see QueryEngine's tool serializer); leave the simplified
-            // schema empty here.
-            def.input_schema = cc::core::InputSchema{};
-            def.permission = cc::core::ToolPermission::Network;
-            def.is_hidden = false;
-            def.category = std::format("mcp:{}", server.name);
-            defs.push_back(std::move(def));
-        }
-    }
-    return defs;
-}
-
-/// Snapshot connected MCP tools' verbatim input schemas keyed by tool name.
-/// Fed to QueryEngineConfig::mcp_input_schema_provider so the request
-/// serializer emits the servers' real (possibly nested) JSON schemas rather
-/// than the empty simplified schema stored on the tool defs.
-[[nodiscard]] std::unordered_map<std::string, std::string>
-collect_mcp_input_schemas() {
-    std::unordered_map<std::string, std::string> schemas;
-    for (const auto& server : NativeMcpRuntime::instance().all_statuses()) {
-        for (const auto& tool : server.tools) {
-            if (!tool.input_schema_json.empty()) {
-                schemas.emplace(tool.name, tool.input_schema_json);
-            }
-        }
-    }
-    return schemas;
 }
 
 } // namespace cc::tools

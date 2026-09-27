@@ -22,7 +22,7 @@ module;
 
 #include <cstdint>
 
-export module cc.bootstrap.mcp_connectivity;
+export module cc.orchestration.mcp_connectivity;
 
 // graph_check parser hazard: qualify cc.tools symbols WITHOUT a leading "::"
 // (write cc::tools::set_mcp_snapshots_sink, never ::cc::tools::...). A
@@ -34,9 +34,9 @@ import std;
 import cc.hooks.remaining_notifs;
 import cc.services.mcp.types;
 import cc.services.mcp.connection_manager;
-import cc.tools.mcp;
+import cc.orchestration.tools.mcp;
 
-export namespace cc::bootstrap::mcp_connectivity {
+export namespace cc::orchestration::mcp_connectivity {
 
 // The 5-arm ConnectionStatus -> McpServerStatus mapping. The hook-local
 // copy (to_mcp_server_status) was deleted with the B8 cut; this is the only
@@ -87,4 +87,4 @@ inline void wire_mcp_connectivity() {
         });
 }
 
-} // export namespace cc::bootstrap::mcp_connectivity
+} // export namespace cc::orchestration::mcp_connectivity

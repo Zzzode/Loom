@@ -3,11 +3,11 @@ module;
 #include <cstddef>
 
 
-export module cc.tools.spawn_multi_agent;
+export module cc.orchestration.agent.spawn_multi_agent;
 
 import std;
 
-import cc.tools.agent;
+import cc.orchestration.agent;
 import cc.tools.agent_types;
 import cc.types.tool_types;
 

@@ -18,6 +18,9 @@ target_link_libraries(cc_core
         cc_bootstrap
         cc_tasks
         cc_tools
+        # RFC-0001 B15: test_fix_lsp_tool links cc_core ONLY and imports
+        # cc.orchestration.tools.lsp; the aggregator must carry it.
+        cc_orchestration
         cc_commands
         cc_services
         cc_hooks

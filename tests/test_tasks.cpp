@@ -7,7 +7,7 @@
 import std;
 import cc.tools.agent_runtime;
 import cc.tools.agent_types;
-import cc.tools.spawn_multi_agent;
+import cc.orchestration.agent.spawn_multi_agent;
 import cc.tools.team;
 import cc.tasks.local_agent_task;
 import cc.tasks.in_process_teammate_task;

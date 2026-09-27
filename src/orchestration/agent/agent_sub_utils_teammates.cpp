@@ -1,8 +1,8 @@
-// Implementation unit for cc.tools.agent.utils — teammate role/color
+// Implementation unit for cc.orchestration.agent.utils — teammate role/color
 // mapping, parent session id, team completion status, and ToolResult text.
 module;
 
-module cc.tools.agent.utils;
+module cc.orchestration.agent.utils;
 
 import std;
 

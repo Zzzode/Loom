@@ -20,7 +20,6 @@ import cc.tools.agent_types;
 import cc.tools.agent_runtime;
 import cc.tools.bash;
 import cc.tools.computer_use;
-import cc.tools.lsp;
 import cc.tools.notebook;
 import cc.tools.task;
 import cc.tools.team;
@@ -151,12 +150,6 @@ constexpr auto runtime_shell_quote = &runtime_shared_utils::shell_quote;
 
 [[nodiscard]] bool is_source_file(const fs::path& path);
 
-[[nodiscard]] LspAction parse_lsp_action(std::string_view action);
-
-[[nodiscard]] std::string format_lsp_result(const LspResult& result, std::string_view action);
-
-[[nodiscard]] Result<ToolResult> execute_lsp_tool(const ToolInput& input);
-
 [[nodiscard]] Result<ToolResult> execute_script(const ToolInput& input);
 
 [[nodiscard]] TaskStatus parse_task_status(std::string_view status);
@@ -278,74 +271,41 @@ constexpr auto collect_team_native_agents = &runtime_team_shared::collect_team_n
 
 [[nodiscard]] Result<ToolResult> execute_web_browser(const ToolInput& input);
 
-[[nodiscard]] std::optional<cc::core::computer_use::ActionType> parse_computer_action(
-    std::string_view action);
-
-[[nodiscard]] std::expected<std::string, std::string> run_computer_use_command_backend(
-    const cc::core::computer_use::ComputerAction& action
-);
-
-[[nodiscard]] std::optional<std::string> computer_json_optional_string(
-    cc::utils::json::JsonVal root,
-    std::string_view key
-);
-
-struct ComputerUseCommandBackendResult {
-    std::optional<std::string> screenshot_base64;
-    std::optional<std::string> format;
-    std::optional<std::int64_t> width;
-    std::optional<std::int64_t> height;
-};
-
-[[nodiscard]] std::expected<ComputerUseCommandBackendResult, std::string> parse_computer_command_result(
-    std::string_view output
-);
-
-[[nodiscard]] std::optional<cc::core::computer_use::CaptureProvider> computer_use_command_capture_provider();
-
-[[nodiscard]] std::optional<cc::core::computer_use::InputProvider> computer_use_command_input_provider();
-
-// Mutable inline overrides read/written across implementation units.
+// RFC-0001 B15: the computer-use parse/backend/collector declarations and
+// execute_computer_use moved to cc.orchestration.runtime_backends; dispatch
+// reaches the single computer_use backend (covering BOTH 'computer_use' and
+// the native 'computer' name) through cc.tools.runtime_backends.port. These
+// two mutable inline overrides stay here: they are named by the inline test
+// setters below and by the moved orchestration implementation unit (which
+// imports this module for them and for the json_* helpers).
 inline std::optional<cc::core::computer_use::CaptureProvider> computer_use_capture_provider_override;
 inline std::optional<cc::core::computer_use::InputProvider> computer_use_input_provider_override;
 
-// Process-wide SkillLoader executor installed by cc_orchestration. The
-// concrete cc::skills::SkillLoader-backed implementation lives above the
-// tools layer (cc.tools.runtime_backends.port); when the slot is unset the
-// 'skill' dispatch falls through to the terminal manual SKILL.md walk in
-// execute_skill_tool. The function-local slot and the setter/clearer are
-// anchored in runtime_registry_skills.cpp (impl unit) so this frozen
-// interface gains no inline bodies.
-[[nodiscard]] std::optional<SkillLoaderExecutor>& skill_loader_executor_override();
+} // namespace cc::tools::detail
 
-} // namespace detail
+// RFC-0001 B15: the four computer-use test setters keep their strong symbols
+// IN cc_tools. Their trivial bodies are inline in this interface and assign
+// the exported inline override variables above; the production computer-use
+// implementation unit (now in cc_orchestration) reads those same variables.
+inline void set_runtime_computer_use_capture_provider_for_testing(
+    cc::core::computer_use::CaptureProvider provider) {
+    detail::computer_use_capture_provider_override = std::move(provider);
+}
 
-// Definitions in runtime_registry_computer_use.cpp.
-void set_runtime_computer_use_capture_provider_for_testing(
-    cc::core::computer_use::CaptureProvider provider);
+inline void clear_runtime_computer_use_capture_provider_for_testing() {
+    detail::computer_use_capture_provider_override.reset();
+}
 
-void clear_runtime_computer_use_capture_provider_for_testing();
+inline void set_runtime_computer_use_input_provider_for_testing(
+    cc::core::computer_use::InputProvider provider) {
+    detail::computer_use_input_provider_override = std::move(provider);
+}
 
-void set_runtime_computer_use_input_provider_for_testing(
-    cc::core::computer_use::InputProvider provider);
-
-void clear_runtime_computer_use_input_provider_for_testing();
-
-// SkillLoader executor override; the concrete cc::skills::SkillLoader-backed
-// executor is built and installed by cc_orchestration at process startup.
-// Definitions in runtime_registry_skills.cpp.
-void set_skill_loader_executor(SkillLoaderExecutor executor);
-
-void clear_skill_loader_executor();
+inline void clear_runtime_computer_use_input_provider_for_testing() {
+    detail::computer_use_input_provider_override.reset();
+}
 
 namespace detail {
-
-[[nodiscard]] std::string normalize_name_for_mcp(std::string name);
-
-[[nodiscard]] std::optional<std::string>
-connected_computer_use_mcp_server();
-
-[[nodiscard]] Result<ToolResult> execute_computer_use(const ToolInput& input);
 
 [[nodiscard]] bool safe_ref(std::string_view text);
 
@@ -418,6 +378,11 @@ struct RuntimeToolOptions {
     std::optional<std::string> parent_permission_mode;
     AgentLivePermissionCheckFn permission_check;
     bool permission_hook_valid_for_background = false;
+    // Agent tool factory for tests and embedders. Empty by default (DMI
+    // suppresses -Wmissing-designated-field-initializers at the ~80
+    // RuntimeToolOptions{...} sites); register_runtime_tools falls back to
+    // the process slot cc::tools::agent_tool_factory().
+    AgentToolFactory agent_tool_factory = {};
 };
 
 [[nodiscard]] std::vector<std::string> runtime_tool_names();
@@ -431,9 +396,9 @@ void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions
 
 void register_runtime_tools(cc::core::ToolRegistry& registry);
 
-[[nodiscard]] std::vector<cc::core::ToolDefinition> collect_mcp_tool_definitions();
-
-[[nodiscard]] std::unordered_map<std::string, std::string>
-collect_mcp_input_schemas();
+// RFC-0001 B15: collect_mcp_tool_definitions / collect_mcp_input_schemas
+// moved to cc.orchestration.runtime_backends (exported in cc::tools there);
+// their data comes from the lifted NativeMcpRuntime and reaches main/server
+// via the orchestration module, not this rank-8 registry.
 
 } // namespace cc::tools

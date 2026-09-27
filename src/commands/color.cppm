@@ -14,7 +14,7 @@ import cc.types.types;
 import cc.commands.command;
 import cc.state.app_state;
 import cc.tools.agent_color_manager;
-import cc.tools.agent.utils;
+import cc.orchestration.agent.utils;
 
 export namespace cc::commands {
 

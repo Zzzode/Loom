@@ -1,11 +1,11 @@
-// Implementation unit for cc.tools.mcp — RFC-0001 B6 snapshot-sink storage.
+// Implementation unit for cc.orchestration.tools.mcp — RFC-0001 B6 snapshot-sink storage.
 // The two bodies live here (not in the .cppm) so the inline-definition
-// ratchet on cc.tools.mcp does not grow; the single function-local static
+// ratchet on cc.orchestration.tools.mcp does not grow; the single function-local static
 // below is the one strong symbol every TU binds to, matching the
 // core_settings_mcp_loader / global_mcp_router anchor style.
 module;
 
-module cc.tools.mcp;
+module cc.orchestration.tools.mcp;
 
 import std;
 

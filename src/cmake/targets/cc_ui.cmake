@@ -42,16 +42,7 @@ target_sources(cc_ui
         ui/messages/shell_time_display.cppm
         ui/widgets/spinner_animations.cppm
         ui/foundation/ui_types.cppm
-        ui/foundation/ui_formatting.cppm
         ui/foundation/declared_cursor.cppm
-        ui/foundation/dialog.cppm
-        ui/foundation/divider.cppm
-        ui/foundation/list_item.cppm
-        ui/foundation/progress_bar.cppm
-        ui/foundation/status_icon.cppm
-        ui/foundation/tabs.cppm
-        ui/foundation/themed_box.cppm
-        ui/foundation/themed_text.cppm
         ui/dialogs/dialog_system.cppm
         ui/dialogs/dialog_frame.cppm
         ui/dialogs/dialog_launchers.cppm
@@ -177,7 +168,6 @@ target_sources(cc_ui
         ui/features/plugins/plugin_marketplace_browse.cppm
         ui/features/plugins/plugin_settings_dialog.cppm
         ui/chrome/ink_utils.cppm
-        ui/chrome/renderer.cppm
         ui/chrome/text_measure.cppm
         ui/features/tasks/task_components.cppm
         ui/features/tasks/task_details_dialog.cppm
@@ -219,7 +209,6 @@ target_sources(cc_ui
         ui/foundation/theme_provider.cppm
         ui/foundation/design_logo.cppm
         ui/foundation/component_primitives.cppm
-        ui/foundation/design_extras.cppm       # UI27 — fuzzy picker + theme picker + design extras
 )
 # Module implementation units for cc.ui.app_dialog_registration — one per
 # dialog-renderer aggregator, so no single TU imports more than one aggregator's

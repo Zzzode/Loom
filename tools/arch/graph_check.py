@@ -96,7 +96,6 @@ TARGET_RANK = {
 MODULE_RANK_OVERRIDE = {
     "cc.cli.ccr_client": 2,
     "cc.cli.sse_transport": 2,
-    "cc.cli.transports": 2,
     "cc.cli.websocket_transport": 2,
     "cc.cli.update": 2,
 }

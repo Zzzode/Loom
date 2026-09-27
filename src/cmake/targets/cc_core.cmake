@@ -8,7 +8,6 @@ target_link_libraries(cc_core
         cc_constants
         cc_types
         cc_config
-        cc_context
         cc_keybindings
         cc_memdir
         cc_coordinator

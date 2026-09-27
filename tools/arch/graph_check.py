@@ -64,8 +64,8 @@ CPP_KEYWORDS = {
 TARGET_RANK = {
     "cc.types": 0, "cc.constants": 0, "cc.schemas": 0,
     "cc.wire": 0, "cc.core": 0,
-    # mailbox/coordinator types are pure-data leaves today.
-    "cc.context": 0, "cc.coordinator": 0,
+    # coordinator types are pure-data leaves today.
+    "cc.coordinator": 0,
     "cc.config": 1,
     "cc.migrations": 1,
     "cc.utils": 2,

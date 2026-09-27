@@ -34,7 +34,6 @@ cc.commands.runtime_surface_commands -> cc.commands.init_verifiers
 cc.commands.runtime_surface_commands -> cc.commands.keybindings_cmd
 cc.commands.runtime_surface_commands -> cc.commands.security_review
 cc.keybindings.shortcut_format -> cc.keybindings.defaults
-cc.services.compact -> cc.utils.string
 cc.services.extract_memories -> cc.utils.file
 cc.skills.bundled.stuck -> cc.skills.load_skills_dir
 cc.skills.load_skills_dir -> cc.utils.markdown_utils

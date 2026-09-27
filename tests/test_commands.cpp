@@ -286,6 +286,242 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
     cleanup();
 }
 
+// RFC-0001 B followup c8: ConfigCommand held a default-constructed
+// ConfigManager and never called load(), so /config list and /config get
+// rendered built-in DEFAULTS instead of the user's files. Seeds the project
+// .loom/config.json and drives the real AppCommandRegistry (see c6 above).
+TEST(AppCommandRegistry, ConfigListGetReflectLoadedConfig) {
+    namespace fs = std::filesystem;
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_cmd_c8_list_" + std::to_string(suffix));
+    fs::remove_all(root);
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    // load() applies LOOM_MODEL over file config; unset it so the seeded
+    // model value is what comes back.
+    EnvironmentUnsetGuard model_guard("LOOM_MODEL");
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    {
+        {
+            std::ofstream seed(work / ".loom" / "config.json");
+            seed << "{\n"
+                    "  \"model\": { \"default_model\": \"custom-model-x\" },\n"
+                    "  \"display\": { \"theme\": \"light\" },\n"
+                    "  \"network\": { \"timeout_seconds\": 42 }\n"
+                    "}\n";
+        }
+
+        // Construct AFTER env/cwd are set: the command's default
+        // ConfigManager binds its paths in its constructor.
+        cc::commands::AppCommandRegistry registry;
+
+        auto list = registry.execute("/config list", ctx());
+        ASSERT_TRUE(list.has_value());
+        ASSERT_TRUE(list->ok) << list->message;
+        // Seeded values appear...
+        EXPECT_NE(list->message.find("custom-model-x"), std::string::npos);
+        EXPECT_NE(list->message.find("= light"), std::string::npos);
+        EXPECT_NE(list->message.find("= 42s"), std::string::npos);
+        // ...and the defaults they replaced do not.
+        EXPECT_EQ(list->message.find("claude-sonnet-4-20250514"), std::string::npos);
+        EXPECT_EQ(list->message.find("= auto"), std::string::npos);
+        EXPECT_EQ(list->message.find("= 120s"), std::string::npos);
+
+        auto get_model = registry.execute("/config get model.default_model", ctx());
+        ASSERT_TRUE(get_model.has_value());
+        ASSERT_TRUE(get_model->ok) << get_model->message;
+        EXPECT_EQ(get_model->message, "model.default_model = custom-model-x");
+
+        auto get_theme = registry.execute("/config get display.theme", ctx());
+        ASSERT_TRUE(get_theme.has_value());
+        ASSERT_TRUE(get_theme->ok) << get_theme->message;
+        EXPECT_EQ(get_theme->message, "display.theme = light");
+
+        auto get_timeout = registry.execute("/config get network.timeout", ctx());
+        ASSERT_TRUE(get_timeout.has_value());
+        ASSERT_TRUE(get_timeout->ok) << get_timeout->message;
+        EXPECT_EQ(get_timeout->message, "network.timeout = 42");
+    }
+
+    cleanup();
+}
+
+// RFC-0001 B followup c8: /config set applied onto default settings and the
+// full save rewrote the project file, destroying its model/display values
+// and project-owned mcpServers, while copying user-scope-only MCP entries
+// (with Authorization headers) into the tracked file. After the fix the set
+// mutates the LOADED settings and C6's §B filter still holds at the save.
+TEST(AppCommandRegistry, ConfigSetPreservesExistingSections) {
+    namespace fs = std::filesystem;
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_cmd_c8_preserve_" + std::to_string(suffix));
+    fs::remove_all(root);
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    EnvironmentUnsetGuard model_guard("LOOM_MODEL");
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    auto read_file = [](const fs::path& p) {
+        std::ifstream in(p, std::ios::binary);
+        return std::string((std::istreambuf_iterator<char>(in)),
+                           std::istreambuf_iterator<char>());
+    };
+
+    const fs::path project_path = work / ".loom" / "config.json";
+    const fs::path user_path = cfg / "config.json";
+
+    {
+        {
+            std::ofstream seed(project_path);
+            seed << "{\n"
+                    "  \"model\": { \"default_model\": \"custom-model-x\" },\n"
+                    "  \"display\": { \"theme\": \"dark\" },\n"
+                    "  \"mcpServers\": {\n"
+                    "    \"proj-srv\": {\n"
+                    "      \"type\": \"stdio\",\n"
+                    "      \"command\": \"run-proj\",\n"
+                    "      \"args\": [\"--flag\"]\n"
+                    "    }\n"
+                    "  }\n"
+                    "}\n";
+        }
+        {
+            std::ofstream seed(user_path);
+            seed << "{\n"
+                    "  \"mcpServers\": {\n"
+                    "    \"user-secret\": {\n"
+                    "      \"type\": \"http\",\n"
+                    "      \"url\": \"https://secrets.example.com/mcp\",\n"
+                    "      \"headers\": { \"Authorization\": \"Bearer hunter2\" }\n"
+                    "    }\n"
+                    "  }\n"
+                    "}\n";
+        }
+        const std::string user_bytes_before = read_file(user_path);
+
+        cc::commands::AppCommandRegistry registry;
+        auto set = registry.execute("/config set display.theme light", ctx());
+        ASSERT_TRUE(set.has_value());
+        ASSERT_TRUE(set->ok) << set->message;
+        EXPECT_EQ(set->message, "Set display.theme = light");
+
+        auto project = cc::utils::json::parse_file(project_path);
+        ASSERT_TRUE(project.has_value());
+        const auto root_node = project->root();
+        EXPECT_EQ(root_node.get("model").get("default_model").as_str(),
+                  std::string_view("custom-model-x"));
+        EXPECT_EQ(root_node.get("display").get("theme").as_str(),
+                  std::string_view("light"));
+
+        // The project-owned server survives with its OWN parsed value.
+        const auto servers = root_node.get("mcpServers");
+        ASSERT_TRUE(servers.is_obj());
+        ASSERT_TRUE(servers.has("proj-srv"));
+        const auto proj = servers.get("proj-srv");
+        EXPECT_EQ(proj.get("type").as_str(), std::string_view("stdio"));
+        EXPECT_EQ(proj.get("command").as_str(), std::string_view("run-proj"));
+
+        // §B: the user-scope-only server name and its secret never enter the
+        // tracked project file.
+        const std::string project_bytes = read_file(project_path);
+        EXPECT_FALSE(servers.has("user-secret"));
+        EXPECT_EQ(project_bytes.find("user-secret"), std::string::npos);
+        EXPECT_EQ(project_bytes.find("Bearer"), std::string::npos);
+        EXPECT_EQ(project_bytes.find("Authorization"), std::string::npos);
+
+        // The user tier file is never touched by a project save.
+        EXPECT_EQ(read_file(user_path), user_bytes_before);
+    }
+
+    cleanup();
+}
+
+// RFC-0001 B followup c8: a hard parse error in the PROJECT file must fail
+// /config set BEFORE any mutation or save — the command must never rewrite
+// an unreadable file from default settings (nor leave a tmp file behind).
+TEST(AppCommandRegistry, ConfigSetFailsOnUnreadableProjectConfig) {
+    namespace fs = std::filesystem;
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_cmd_c8_unreadable_" + std::to_string(suffix));
+    fs::remove_all(root);
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    const fs::path project_path = work / ".loom" / "config.json";
+
+    {
+        {
+            std::ofstream seed(project_path);
+            seed << "{ this is not valid json\n";
+        }
+        auto read_file = [](const fs::path& p) {
+            std::ifstream in(p, std::ios::binary);
+            return std::string((std::istreambuf_iterator<char>(in)),
+                               std::istreambuf_iterator<char>());
+        };
+        const std::string bytes_before = read_file(project_path);
+
+        cc::commands::AppCommandRegistry registry;
+        auto set = registry.execute("/config set display.theme dark", ctx());
+        ASSERT_TRUE(set.has_value());
+        EXPECT_FALSE(set->ok);
+        EXPECT_FALSE(set->message.empty());
+
+        // File bytes untouched, no atomic-write tmp, no new files in .loom.
+        EXPECT_EQ(read_file(project_path), bytes_before);
+        EXPECT_FALSE(fs::exists(work / ".loom" / "config.json.tmp"));
+        std::error_code ec;
+        EXPECT_EQ(std::distance(fs::directory_iterator(work / ".loom", ec),
+                                fs::directory_iterator()), 1);
+    }
+
+    cleanup();
+}
+
 TEST(AppCommandRegistry, RuntimeSurfaceCommandsExecuteLocalLogic) {
     cc::commands::AppCommandRegistry registry;
 

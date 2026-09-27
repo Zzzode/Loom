@@ -92,6 +92,19 @@ public:
 
         auto action = parse_action(ctx.args[0]).value_or(ConfigAction::List);
 
+        // list/get/set read or mutate the EFFECTIVE on-disk settings, so the
+        // config must be loaded once before touching them. Without this, the
+        // default-constructed manager renders defaults for list/get and a set
+        // rewrites the project file from defaults, destroying the file's
+        // existing sections and mcpServers entries (RFC-0001 B followup c8).
+        // Bare /config, open/edit (handled above), and path need no load.
+        if (action == ConfigAction::List || action == ConfigAction::Get ||
+            action == ConfigAction::Set) {
+            if (auto loaded = ensure_loaded(); !loaded) {
+                return CommandResult::fail(loaded.error().message);
+            }
+        }
+
         switch (action) {
             case ConfigAction::List: return execute_list();
             case ConfigAction::Get:  return execute_get(ctx.args[1]);
@@ -126,6 +139,22 @@ public:
 
 private:
     ConfigManager config_manager_;
+    bool loaded_ = false;  // Ensures load() runs at most once successfully.
+
+    /// Load the existing config tiers once before a read/mutation.
+    /// ConfigManager::load() tolerates MISSING tier files (they surface
+    /// ConfigNotFound and are skipped); hard parse errors in the global/
+    /// project files return an error, while user/local parse errors are soft
+    /// (C6 §A). The guard latches only on success: after a hard failure the
+    /// caller sees the error and a later invocation retries once the file is
+    /// repaired, rather than being permanently stuck on default settings.
+    [[nodiscard]] VoidResult ensure_loaded() {
+        if (loaded_) return {};
+        auto result = config_manager_.load();
+        if (!result) return std::unexpected(result.error());
+        loaded_ = true;
+        return {};
+    }
 
     /// Parse action string to enum
     [[nodiscard]] static std::optional<ConfigAction> parse_action(std::string_view str) {
@@ -188,7 +217,18 @@ private:
         auto apply_result = apply_setting(key, value);
         if (!apply_result) return std::unexpected(apply_result.error());
 
-        // Persist changes
+        // Persist changes.
+        //
+        // Serializer boundary (RFC-0001 B followup c8, Tier-2): save() runs
+        // ConfigManager's hand-rolled FULL serializer over the loaded
+        // settings, so unknown top-level keys in the project file (e.g.
+        // "x-custom") still do not survive a /config set; preserving them
+        // needs unknown-key-preserving section patching and is deliberately
+        // out of scope here. All KNOWN sections (model/display/network/…) are
+        // the loaded values, and C6's §B filter — gated on the completed
+        // load() above — emits the project file's OWN mcpServers entries with
+        // their own values while omitting user/local-only entries that may
+        // carry Authorization headers.
         if (auto save_result = config_manager_.save(); !save_result) {
             return std::unexpected(save_result.error());
         }

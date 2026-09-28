@@ -9758,6 +9758,16 @@ TEST(ConfigManagerUserSettings, ConfigDirRoutingOnlyUserTouched) {
 // Provenance: source env/file/default, the LOOM_MODEL shadow bit, and
 // presence-only secret projection (credential bytes never serialized).
 TEST(ConfigManagerUserSettings, ProvenanceShadowAndSecretPresence) {
+    // Presence/provenance assertions are sensitive to ambient credential
+    // env vars (including ANTHROPIC_AUTH_TOKEN, which counts as presence
+    // for network.api_key); start hermetic. Inner EnvironmentGuards below
+    // restore into the unset state, and these restore the shell at exit.
+    EnvironmentUnsetGuard g_api("ANTHROPIC_API_KEY");
+    EnvironmentUnsetGuard g_auth("ANTHROPIC_AUTH_TOKEN");
+    EnvironmentUnsetGuard g_base("ANTHROPIC_BASE_URL");
+    EnvironmentUnsetGuard g_http_proxy("HTTP_PROXY");
+    EnvironmentUnsetGuard g_https_proxy("HTTPS_PROXY");
+
     C13Paths p("provenance");
     c13_write_file(p.user_path, R"JSON({
       "model": {"default_model": "file-model", "max_output_tokens": 111},
@@ -9948,4 +9958,275 @@ TEST(ConfigManagerUserSettings, SpecTableIsClosed) {
                     .has_value());
     EXPECT_FALSE(cc::core::ConfigManager::blocked_setting_message("model.temperature")
                      .has_value());
+}
+
+// ===========================================================================
+// RFC-0001 B followup c13c — hardened atomic writer + coercion/env/BOM nits.
+// ===========================================================================
+
+// Pre-placed config.json.tmp symlink must never be followed: the victim is
+// untouched, config.json ends up a regular file, and the stale symlink is
+// removed rather than left behind.
+TEST(ConfigManagerUserSettings, AtomicWriterTmpSymlinkNeverFollowed) {
+    C13Paths p("symlink");
+    fs::create_directories(p.root);
+    const auto victim = p.root / "victim.txt";
+    constexpr std::string_view kCanary = "VICTIM-CANARY-c13c-7788";
+    { std::ofstream(victim) << kCanary; }
+    // The pre-c13c writer used the fixed suffix user_path + ".tmp";
+    // pre-place that exact name as a symlink to the victim.
+    const auto legacy_tmp = p.user_path.parent_path() /
+                            (p.user_path.filename().string() + ".tmp");
+    fs::remove(legacy_tmp);
+    fs::create_symlink(victim, legacy_tmp);
+
+    auto m = p.manager();
+    ASSERT_TRUE(m.load().has_value());
+    auto out = m.set_user_setting("network.max_retries", c13_parse("3"));
+    ASSERT_TRUE(out.has_value()) << out.error().message;
+
+    // Victim bytes unchanged.
+    {
+        std::ifstream f(victim);
+        const std::string bytes((std::istreambuf_iterator<char>(f)),
+                                std::istreambuf_iterator<char>());
+        EXPECT_EQ(bytes, kCanary);
+    }
+    // config.json is a REGULAR file with the correct JSON.
+    std::error_code ec;
+    EXPECT_EQ(fs::symlink_status(p.user_path, ec).type(),
+              fs::file_type::regular);
+    auto root = c13_parse([&] { std::ifstream f(p.user_path);
+        return std::string(std::istreambuf_iterator<char>(f),
+                           std::istreambuf_iterator<char>()); }());
+    EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 3);
+    // No leftover attacker symlink.
+    EXPECT_NE(fs::symlink_status(legacy_tmp, ec).type(),
+              fs::file_type::symlink);
+}
+
+// A pre-created directory or FIFO at the legacy tmp name yields a clean
+// error and clobbers nothing.
+TEST(ConfigManagerUserSettings, AtomicWriterTmpDirAndFifoRefused) {
+    C13Paths p("tmpblock");
+    const auto legacy_tmp = p.root /
+                            (p.user_path.filename().string() + ".tmp");
+    for (const bool as_dir : {true, false}) {
+        std::error_code ec;
+        fs::remove_all(legacy_tmp, ec);
+        if (as_dir) {
+            fs::create_directories(legacy_tmp, ec);
+            ASSERT_FALSE(ec);
+        } else {
+            ASSERT_EQ(::mkfifo(legacy_tmp.c_str(), 0600), 0);
+        }
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        auto out = m.set_user_setting("network.max_retries", c13_parse("3"));
+        EXPECT_FALSE(out.has_value());
+        if (as_dir) {
+            EXPECT_EQ(fs::symlink_status(legacy_tmp).type(),
+                      fs::file_type::directory);
+        } else {
+            EXPECT_EQ(fs::symlink_status(legacy_tmp).type(),
+                      fs::file_type::fifo);
+        }
+        fs::remove_all(legacy_tmp, ec);
+    }
+}
+
+// 20 parallel processes hammering distinct settings on one config dir:
+// every child either writes parse-valid JSON or fails cleanly, no torn
+// files, no fixed-tmp "Failed to replace" collisions; the final file is
+// valid and holds the last successful value for each key.
+TEST(ConfigManagerUserSettings, ConcurrentSetProcessesNoCollisions) {
+    C13Paths p("concurrent");
+    constexpr int kProcesses = 20;
+    constexpr std::array<std::string_view, 7> keys = {{
+        "network.max_retries",
+        "model.max_output_tokens",
+        "model.context_window_size",
+        "model.thinking_budget",
+        "model.extended_thinking",
+        "model.temperature",
+        "model.default_model",
+    }};
+    std::array<std::string, keys.size()> last_values{{
+        "100", "20000", "300000", "4096", "true", "0.5", "concurrent-model"
+    }};
+    std::vector<pid_t> children;
+    for (int i = 0; i < kProcesses; ++i) {
+        pid_t pid = ::fork();
+        ASSERT_GE(pid, 0);
+        if (pid == 0) {
+            const auto& key = keys[static_cast<std::size_t>(i % keys.size())];
+            auto m = p.manager();
+            (void)m.load();
+            const std::string value = last_values[i % keys.size()];
+            const std::string payload =
+                key == "model.default_model"
+                    ? std::format("\"{}\"", value)
+                    : value;
+            auto out = m.set_user_setting(key, c13_parse(payload));
+            _exit(out.has_value() ? 0 : 2);
+        }
+        children.push_back(pid);
+    }
+    int clean_failures = 0;
+    for (pid_t pid : children) {
+        int status = 0;
+        ASSERT_EQ(::waitpid(pid, &status, 0), pid);
+        ASSERT_TRUE(WIFEXITED(status));
+        const int code = WEXITSTATUS(status);
+        ASSERT_NE(code, 2) << "child reported a write-level error";
+        if (code != 0) ++clean_failures;
+    }
+    // At least the seven keys' final writes must land (single wave, unique
+    // tmp names — expected zero failures).
+    EXPECT_EQ(clean_failures, 0);
+
+    auto doc = cc::utils::json::parse_file(p.user_path);
+    ASSERT_TRUE(doc.has_value());
+    const auto root = doc->root();
+    ASSERT_TRUE(root.is_obj());
+    EXPECT_EQ(root.get("network").get("max_retries").as_int(), 100);
+    EXPECT_EQ(root.get("model").get("max_output_tokens").as_int(), 20000);
+    EXPECT_EQ(root.get("model").get("context_window_size").as_int(), 300000);
+    EXPECT_EQ(root.get("model").get("thinking_budget").as_int(), 4096);
+    EXPECT_EQ(root.get("model").get("extended_thinking").as_bool(), true);
+    EXPECT_DOUBLE_EQ(root.get("model").get("temperature").as_double(), 0.5);
+    EXPECT_EQ(root.get("model").get("default_model").as_str(),
+              std::string_view("concurrent-model"));
+
+    // No stale tmp debris (fixed or unique-named) remains.
+    for (const auto& entry : fs::directory_iterator(p.root)) {
+        const auto name = entry.path().filename().string();
+        EXPECT_EQ(name.find(".tmp"), std::string::npos) << name;
+    }
+}
+
+// Native JSON numbers that are integral doubles within uint32 range are
+// accepted; fractional/negative/overflow values rejected (D7).
+TEST(ConfigManagerUserSettings, IntegralDoubleCoercion) {
+    C13Paths p("intdouble");
+    auto m = p.manager();
+    ASSERT_TRUE(m.load().has_value());
+
+    ASSERT_TRUE(m.set_user_setting("model.max_output_tokens", c13_parse("4096.0"))
+                    .has_value());
+    ASSERT_TRUE(m.set_user_setting("model.context_window_size", c13_parse("100000.0"))
+                    .has_value());
+    ASSERT_TRUE(m.set_user_setting("network.max_retries", c13_parse("0.0"))
+                    .has_value());
+    ASSERT_TRUE(m.set_user_setting("model.thinking_budget", c13_parse("2048.0"))
+                    .has_value());
+
+    for (const auto* bad : {"4096.5", "-1.0", "4294967296.0", "1e40"}) {
+        EXPECT_FALSE(m.set_user_setting("model.max_output_tokens",
+                                        c13_parse(bad)).has_value()) << bad;
+    }
+    auto reloaded = p.manager();
+    ASSERT_TRUE(reloaded.load().has_value());
+    EXPECT_EQ(reloaded.settings().model.max_output_tokens, 4096u);
+    EXPECT_EQ(reloaded.settings().model.context_window_size, 100000u);
+    EXPECT_EQ(reloaded.settings().network.max_retries, 0u);
+    EXPECT_EQ(*reloaded.settings().model.thinking_budget, 2048u);
+}
+
+// LOOM_MAX_TOKENS engagement is ONE range-checked predicate for both get
+// provenance and set shadow disclosure: engaged iff digits parse into
+// [1, uint32_max]. Returns {source_env, shadowed, effective_value}.
+TEST(ConfigManagerUserSettings, MaxTokensEnvEngagementConsistent) {
+    C13Paths p("envrange");
+    c13_write_file(p.user_path,
+                   R"JSON({"model":{"max_output_tokens": 777}})JSON");
+
+    struct Observation {
+        bool source_env;
+        bool shadowed;
+        std::uint32_t effective;
+    };
+    const auto observe = [&](const char* raw) {
+        EnvironmentGuard guard("LOOM_MAX_TOKENS", raw);
+        auto m = p.manager();
+        EXPECT_TRUE(m.load().has_value());
+        auto token = c13_parse(
+            *m.agent_setting_value_json("model.max_output_tokens"));
+        const bool source_env =
+            std::string(token.root.get("source").as_str()) == "env";
+        auto out = m.set_user_setting("model.max_output_tokens",
+                                      c13_parse("888"));
+        EXPECT_TRUE(out.has_value());
+        // The post-write quiet reload re-applies the same env predicate, so
+        // the effective value is read while the guard is still live.
+        return Observation{
+            source_env, out->shadowed, m.settings().model.max_output_tokens};
+    };
+
+    for (const char* bad : {"4294967296", "18446744073709551616", "abc",
+                            "0", "-1", "12x"}) {
+        auto o = observe(bad);
+        EXPECT_FALSE(o.source_env) << bad;
+        EXPECT_FALSE(o.shadowed) << bad;
+        EXPECT_EQ(o.effective, 888u) << bad;  // file write is effective
+    }
+    {
+        auto o = observe("12345");
+        EXPECT_TRUE(o.source_env);
+        EXPECT_TRUE(o.shadowed);
+        // Effective value comes from the env; the 888 file write is
+        // shadowed while the override is engaged.
+        EXPECT_EQ(o.effective, 12345u);
+    }
+    // With the env unset again the last file write is effective.
+    {
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        EXPECT_EQ(m.settings().model.max_output_tokens, 888u);
+    }
+}
+
+// A leading UTF-8 BOM is stripped in both tier load and the patcher:
+// a clean BOM object loads normally; BOM+object+junk is salvaged with the
+// leading object's keys preserved.
+TEST(ConfigManagerUserSettings, BomStrippedOnLoadAndPatch) {
+    C13Paths p("bom");
+    // BOM + complete leading object (carrying a sibling leaf) + trailing
+    // junk. The junk keeps the §A soft-load skip; the salvage must recover
+    // the leading object after stripping the BOM.
+    {
+        std::ofstream f(p.user_path, std::ios::binary);
+        f << "\xEF\xBB\xBF"
+          << R"({"network":{"max_retries":4},)"
+          << R"("model":{"default_model":"bom-kept"}} TRAIL JUNK)";
+    }
+    {
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());  // soft tier tolerated
+        auto out = m.set_user_setting("network.max_retries", c13_parse("5"));
+        ASSERT_TRUE(out.has_value());
+        ASSERT_TRUE(out->repaired.has_value());
+        EXPECT_EQ(*out->repaired, "trailing_junk_dropped");
+        auto repaired = cc::utils::json::parse_file(p.user_path);
+        ASSERT_TRUE(repaired.has_value());
+        const auto root = repaired->root();
+        EXPECT_EQ(root.get("network").get("max_retries").as_int(), 5);
+        EXPECT_EQ(root.get("model").get("default_model").as_str(),
+                  std::string_view("bom-kept"));
+    }
+    {
+        std::ofstream f(p.user_path, std::ios::binary);
+        f << "\xEF\xBB\xBF" << R"({"network":{"max_retries":6}})";
+    }
+    {
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        EXPECT_EQ(m.settings().network.max_retries, 6u);
+        auto out = m.set_user_setting("network.max_retries", c13_parse("7"));
+        ASSERT_TRUE(out.has_value());
+        EXPECT_FALSE(out->repaired.has_value());
+        auto reloaded = p.manager();
+        ASSERT_TRUE(reloaded.load().has_value());
+        EXPECT_EQ(reloaded.settings().network.max_retries, 7u);
+    }
 }

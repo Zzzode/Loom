@@ -13142,6 +13142,58 @@ TEST(RuntimeConfigTool, SecretBytesNeverLeakResponses) {
     EXPECT_EQ(std::string(setting.get("source").as_str()), "env");
 }
 
+// ANTHROPIC_AUTH_TOKEN (Bearer on the wire) also yields set:true presence
+// for network.api_key without leaking the token, alone and alongside
+// ANTHROPIC_API_KEY.
+TEST(RuntimeConfigTool, AuthTokenPresenceAndSecretOmission) {
+    RtConfigEnv env;
+    cc::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+
+    constexpr std::string_view kTokenSecret =
+        "SECRET-rt-c13c-auth-token-9911";
+    {
+        EnvironmentUnsetGuard no_api_key("ANTHROPIC_API_KEY");
+        EnvironmentGuard token_guard("ANTHROPIC_AUTH_TOKEN",
+                                     std::string(kTokenSecret));
+
+        auto presence = rt_config_run(
+            registry, R"({"action":"get","key":"network.api_key"})");
+        ASSERT_TRUE(presence.has_value());
+        EXPECT_EQ(presence->content.front().text.find(kTokenSecret),
+                  std::string::npos)
+            << presence->content.front().text;
+        RtConfigJson parsed(presence->content.front().text);
+        const auto setting = parsed.root.get("setting");
+        EXPECT_EQ(setting.get("set").as_bool(), true);
+        EXPECT_EQ(std::string(setting.get("source").as_str()), "env");
+
+        // Combined with an API key: still set, and neither secret leaks.
+        EnvironmentGuard key_guard("ANTHROPIC_API_KEY",
+                                   "SECRET-rt-c13c-api-key-3322");
+        auto both = rt_config_run(
+            registry, R"({"action":"get","key":"network.api_key"})");
+        ASSERT_TRUE(both.has_value());
+        const auto& text = both->content.front().text;
+        EXPECT_EQ(text.find("SECRET-rt-c13c-auth-token-9911"),
+                  std::string::npos);
+        EXPECT_EQ(text.find("SECRET-rt-c13c-api-key-3322"),
+                  std::string::npos);
+        RtConfigJson bparsed(text);
+        EXPECT_EQ(bparsed.root.get("setting").get("set").as_bool(), true);
+    }
+
+    // Neither set → presence false / source none.
+    EnvironmentUnsetGuard no_api_key("ANTHROPIC_API_KEY");
+    EnvironmentUnsetGuard no_token("ANTHROPIC_AUTH_TOKEN");
+    auto none = rt_config_run(
+        registry, R"({"action":"get","key":"network.api_key"})");
+    RtConfigJson nparsed(none->content.front().text);
+    EXPECT_EQ(nparsed.root.get("setting").get("set").as_bool(), false);
+    EXPECT_EQ(std::string(nparsed.root.get("setting").get("source").as_str()),
+              "none");
+}
+
 // A set shadowed by an engaged env var still writes and reports shadowed.
 TEST(RuntimeConfigTool, EnvShadowDisclosure) {
     RtConfigEnv env;

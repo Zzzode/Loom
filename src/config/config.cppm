@@ -7,6 +7,11 @@ module;
 #include <cstdlib>
 #include <cstdint>
 #include <cstdio>
+#include <cerrno>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/file.h>
 
 export module cc.config.config;
 
@@ -834,14 +839,15 @@ private:
         std::string content((std::istreambuf_iterator<char>(file)),
                             std::istreambuf_iterator<char>());
 
-        auto doc_result = cc::utils::json::parse(content);
+        const std::string_view json_text = strip_leading_bom(content);
+        auto doc_result = cc::utils::json::parse(json_text);
         if (!doc_result || !doc_result->root().is_obj()) {
             // A zero-length / all-whitespace user/local file is treated as
             // MISSING: the tier contributes nothing, emits no warning, and a
             // later upsert creates it fresh (rather than rejecting it as
             // invalid JSON). Garbage/non-object content keeps the §A policy.
             const bool blank =
-                content.find_first_not_of(" \t\r\n") == std::string::npos;
+                json_text.find_first_not_of(" \t\r\n") == std::string::npos;
             if (soft_tier && blank) {
                 return std::unexpected(Error::make(
                     ErrorCode::ConfigNotFound,
@@ -1162,16 +1168,11 @@ private:
             settings_.network.proxy = val2;
         }
 
-        // LOOM_MAX_TOKENS -> model.max_output_tokens. An unparsable value is
-        // ignored (legacy behavior) and therefore does NOT count as an
-        // engaged override for provenance/shadow reporting.
-        if (auto* val = std::getenv("LOOM_MAX_TOKENS")) {
-            try {
-                settings_.model.max_output_tokens = static_cast<std::uint32_t>(std::stoul(val));
-                env_max_tokens_engaged_ = true;
-            } catch (...) {
-                // Ignore invalid values
-            }
+        // LOOM_MAX_TOKENS -> model.max_output_tokens. Engagement uses the
+        // single range-checked predicate shared with set-shadow disclosure.
+        if (auto parsed = parse_env_max_tokens(std::getenv("LOOM_MAX_TOKENS"))) {
+            settings_.model.max_output_tokens = *parsed;
+            env_max_tokens_engaged_ = true;
         }
     }
 
@@ -1520,6 +1521,17 @@ private:
     // c13b user-setting private machinery
     // ================================================================
 
+    /// Drop one leading UTF-8 BOM (EF BB BF) so BOM-prefixed config files
+    /// parse like their plain-JSON contents (editors on Windows frequently
+    /// save one). Applied at every config read path: tier loads, the strict
+    /// patcher parse, and parse_first salvage.
+    [[nodiscard]] static std::string_view
+    strip_leading_bom(std::string_view text) noexcept {
+        constexpr std::string_view kBom = "\xEF\xBB\xBF";
+        if (text.starts_with(kBom)) text.remove_prefix(kBom.size());
+        return text;
+    }
+
     /// Coerced user value: the canonical JSON token to write plus the
     /// explicit-null-clear marker for the two optional leaves.
     struct CoercedUserValue {
@@ -1581,6 +1593,58 @@ private:
         return value;
     }
 
+    /// Shared range check for the LOOM_MAX_TOKENS override, used BOTH when
+    /// applying the environment at load and when disclosing shadow on a
+    /// write: engaged iff the text is ASCII digits parsing into the valid
+    /// positive uint32 range [1, uint32_max] (max_output_tokens is a
+    /// positive uint). Sign text, junk, 0, and over-range values never
+    /// engage, so get-source and set-shadow can never disagree.
+    [[nodiscard]] static std::optional<std::uint32_t>
+    parse_env_max_tokens(const char* raw) {
+        if (raw == nullptr) return std::nullopt;
+        const std::string_view text = trim_setting_text(raw);
+        if (text.empty()) return std::nullopt;
+        if (!std::ranges::all_of(text, [](char c) {
+                return c >= '0' && c <= '9';
+            })) {
+            return std::nullopt;
+        }
+        std::int64_t value = 0;
+        const auto* begin = text.data();
+        const auto [ptr, ec] = std::from_chars(begin, begin + text.size(), value);
+        if (ec != std::errc{} || ptr != begin + text.size()) {
+            return std::nullopt;
+        }
+        if (value < 1 ||
+            static_cast<std::uint64_t>(value) >
+                static_cast<std::uint64_t>(std::numeric_limits<std::uint32_t>::max())) {
+            return std::nullopt;
+        }
+        return static_cast<std::uint32_t>(value);
+    }
+
+    /// Extract an integral non-negative value from a native JSON number:
+    /// an integer token or a REAL token whose value is finite and integral.
+    /// Fractional, negative, and > uint32-max doubles are rejected so
+    /// 4096.0 is accepted but 4096.5 / 4294967296.0 are not (D7).
+    [[nodiscard]] static Result<std::int64_t>
+    integral_json_number(const cc::utils::json::JsonVal& value,
+                         std::string_view key) {
+        if (value.is_int()) return value.as_int();
+        if (value.is_num()) {
+            const double real = value.as_double();
+            constexpr double kMax =
+                static_cast<double>(std::numeric_limits<std::uint32_t>::max());
+            if (std::isfinite(real) && real >= 0.0 && real <= kMax &&
+                real == std::floor(real)) {
+                return static_cast<std::int64_t>(real);
+            }
+        }
+        return std::unexpected(Error::make(
+            ErrorCode::InvalidInput,
+            std::format("'{}' must be a non-negative integer", key)));
+    }
+
     /// Kind-level coercion (D7). Key-specific ranges (temperature [0,1],
     /// thinking_budget >=1024/0-clear) are applied by set_user_setting.
     [[nodiscard]] static Result<CoercedUserValue>
@@ -1623,8 +1687,10 @@ private:
         }
         case UserSettingKind::UInteger: {
             std::int64_t parsed = 0;
-            if (value.is_int()) {
-                parsed = value.as_int();
+            if (value.is_num()) {
+                auto number = integral_json_number(value, spec.key);
+                if (!number) return std::unexpected(number.error());
+                parsed = *number;
             } else if (value.is_str()) {
                 auto text_result = parse_uint_token(value.as_str());
                 if (!text_result) return std::unexpected(text_result.error());
@@ -1716,8 +1782,10 @@ private:
             return CoercedUserValue{"null", true};
         }
         std::int64_t parsed = 0;
-        if (value.is_int()) {
-            parsed = value.as_int();
+        if (value.is_num()) {
+            auto number = integral_json_number(value, key);
+            if (!number) return std::unexpected(number.error());
+            parsed = *number;
         } else if (value.is_str()) {
             const std::string_view text = trim_setting_text(value.as_str());
             if (text == "0") return CoercedUserValue{"null", true};
@@ -1858,6 +1926,65 @@ private:
         ReplacedUnparseable,   // No recoverable OBJECT; file rebuilt from {}.
     };
 
+    /// Identity signature of a target config file: every successful atomic
+    /// replace lands as a NEW tmp inode renamed over the path, so the
+    /// (existence, inode) pair uniquely identifies the version the patcher
+    /// read and is the compare token for the CAS retry.
+    struct FileSignature {
+        bool exists = false;
+        std::uint64_t inode = 0;
+    };
+
+    [[nodiscard]] static FileSignature
+    file_signature(const std::filesystem::path& path) noexcept {
+        struct ::stat st {};
+        if (::lstat(path.c_str(), &st) != 0) return {};
+        return {true, static_cast<std::uint64_t>(st.st_ino)};
+    }
+
+    /// Result of one atomic CAS write attempt.
+    enum class AtomicWriteOutcome : std::uint8_t {
+        Renamed,
+        Conflict,  // Target changed between read and rename; caller retries.
+        Failed,
+    };
+
+    /// Process-shared advisory lock guarding one read-modify-write of a
+    /// config file. Every writer goes through patch_object_file, so the
+    /// flock (a separate open-file-description per holder, which also
+    /// serializes threads in one process) makes the absent→present
+    /// transition atomic and converges concurrent DISTINCT-key patches.
+    /// Same-key concurrent writes remain last-writer-wins.
+    struct ConfigFileLock {
+        int fd = -1;
+
+        explicit ConfigFileLock(const std::filesystem::path& path) {
+            const std::filesystem::path lock_path = path.string() + ".lock";
+            if (auto parent = path.parent_path(); !parent.empty()) {
+                std::error_code ec;
+                std::filesystem::create_directories(parent, ec);
+                if (ec) return;
+            }
+            // O_NOFOLLOW: a pre-placed symlink can never be locked/followed.
+            fd = ::open(lock_path.c_str(),
+                        O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
+            if (fd < 0) return;
+            if (::flock(fd, LOCK_EX) != 0) {
+                ::close(fd);
+                fd = -1;
+            }
+        }
+        ConfigFileLock(const ConfigFileLock&) = delete;
+        ConfigFileLock& operator=(const ConfigFileLock&) = delete;
+        ~ConfigFileLock() {
+            if (fd >= 0) {
+                (void)::flock(fd, LOCK_UN);
+                (void)::close(fd);
+            }
+        }
+        [[nodiscard]] bool locked() const noexcept { return fd >= 0; }
+    };
+
     [[nodiscard]] static VoidResult
     patch_object_file(const std::filesystem::path& path,
                       const std::function<VoidResult(
@@ -1867,65 +1994,121 @@ private:
                       SalvageMode salvage,
                       const Error& strict_error,
                       SalvageResult& salvage_out) {
-        cc::utils::json::JsonMutDoc doc;
-        cc::utils::json::JsonMutVal root;
-        salvage_out = SalvageResult::Untouched;
-        bool file_present = std::filesystem::exists(path);
-        bool blank = false;
-        std::string content;
-        if (file_present) {
-            std::ifstream file(path);
-            if (!file.is_open()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::ConfigWriteError,
-                    std::format("Cannot open config file for editing: {}", path.string())));
+        // Bounded optimistic-concurrency loop (defense in depth behind the
+        // flock): each attempt reads the current file, applies the
+        // mutation, and the writer only renames its unique tmp over the
+        // path while the path still identifies the version that was read
+        // (same inode, or still absent). A competing replace yields
+        // Conflict and the attempt restarts from the newer bytes.
+        //
+        // Lock acquisition is deferred to the first VALIDATED attempt:
+        // parse (strict) and mutator errors must return before any file is
+        // created in the target directory, so rejected writes leave no
+        // lockfile behind. Once acquired, the attempt restarts under the
+        // lock so the read-modify-write is one serialized critical region.
+        constexpr int kMaxCasAttempts = 32;
+        std::unique_ptr<ConfigFileLock> file_lock;
+        for (int attempt = 0; attempt < kMaxCasAttempts; ++attempt) {
+            cc::utils::json::JsonMutDoc doc;
+            cc::utils::json::JsonMutVal root;
+            salvage_out = SalvageResult::Untouched;
+            bool file_present = false;
+            bool blank = false;
+            std::string content;
+
+            {
+                struct ::stat direct_st {};
+                if (::lstat(path.c_str(), &direct_st) == 0) {
+                    // Only a regular file (or absent path) is patchable.
+                    if (!S_ISREG(direct_st.st_mode)) {
+                        return std::unexpected(Error::make(
+                            ErrorCode::ConfigWriteError,
+                            std::format("Cannot open config file for editing: {}",
+                                        path.string())));
+                    }
+                    file_present = true;
+                }
             }
-            content.assign((std::istreambuf_iterator<char>(file)),
-                           std::istreambuf_iterator<char>());
-            blank = content.find_first_not_of(" \t\r\n") == std::string::npos;
-            if (!blank) {
-                auto parsed = cc::utils::json::parse(content);
-                if (parsed && parsed->root().is_obj()) {
-                    root = doc.copy_val(parsed->root());
-                    doc.set_root(root);
-                } else if (salvage == SalvageMode::Strict) {
-                    // Parse failure or non-object root: hand the caller's
-                    // pinned error back before any write happens.
-                    return std::unexpected(strict_error);
-                } else {
-                    // SalvageTrailing: preserve a complete leading OBJECT and
-                    // drop only the trailing bytes. With no recoverable
-                    // OBJECT the whole file is replaced from {}.
-                    auto first = cc::utils::json::parse_first(content);
-                    if (first && first->root().is_obj()) {
-                        root = doc.copy_val(first->root());
+            if (file_present) {
+                std::ifstream file(path);
+                if (!file.is_open()) {
+                    return std::unexpected(Error::make(
+                        ErrorCode::ConfigWriteError,
+                        std::format("Cannot open config file for editing: {}", path.string())));
+                }
+                content.assign((std::istreambuf_iterator<char>(file)),
+                               std::istreambuf_iterator<char>());
+                const std::string_view json_text = strip_leading_bom(content);
+                blank = json_text.find_first_not_of(" \t\r\n") == std::string::npos;
+                if (!blank) {
+                    auto parsed = cc::utils::json::parse(json_text);
+                    if (parsed && parsed->root().is_obj()) {
+                        root = doc.copy_val(parsed->root());
                         doc.set_root(root);
-                        salvage_out = SalvageResult::TrailingJunkDropped;
+                    } else if (salvage == SalvageMode::Strict) {
+                        // Parse failure or non-object root: hand the caller's
+                        // pinned error back before any write happens.
+                        return std::unexpected(strict_error);
                     } else {
-                        root = doc.object();
-                        doc.set_root(root);
-                        salvage_out = SalvageResult::ReplacedUnparseable;
+                        // SalvageTrailing: preserve a complete leading OBJECT
+                        // and drop only the trailing bytes. With no
+                        // recoverable OBJECT the whole file is replaced.
+                        auto first = cc::utils::json::parse_first(json_text);
+                        if (first && first->root().is_obj()) {
+                            root = doc.copy_val(first->root());
+                            doc.set_root(root);
+                            salvage_out = SalvageResult::TrailingJunkDropped;
+                        } else {
+                            root = doc.object();
+                            doc.set_root(root);
+                            salvage_out = SalvageResult::ReplacedUnparseable;
+                        }
                     }
                 }
             }
-        }
-        if (!file_present || blank) {
-            // Missing file or a zero-length/all-whitespace file: start from
-            // {} and let the patch create it fresh.
-            root = doc.object();
-            doc.set_root(root);
-        }
+            if (!file_present || blank) {
+                // Missing file or a zero-length/all-whitespace file: start
+                // from {} and let the patch create it fresh.
+                root = doc.object();
+                doc.set_root(root);
+            }
 
-        if (auto mutated = mutate(root, doc); !mutated) {
-            return std::unexpected(mutated.error());
-        }
+            if (auto mutated = mutate(root, doc); !mutated) {
+                return std::unexpected(mutated.error());
+            }
 
-        if (auto written = write_config_file_atomic(
-                path, doc.to_pretty_string(), owner_only);
-            !written) {
-            return std::unexpected(written.error());
+            if (!file_lock) {
+                // First validated attempt: take the inter-process lock and
+                // restart so read+mutate+write all happen inside it.
+                file_lock = std::make_unique<ConfigFileLock>(path);
+                if (!file_lock->locked()) {
+                    return std::unexpected(Error::make(
+                        ErrorCode::ConfigWriteError,
+                        std::format("Cannot open config file for writing: {}",
+                                    path.string())));
+                }
+                continue;
+            }
+
+            // Signature of the file this attempt started from: the real
+            // inode for a present (including blank) file, an absent marker
+            // when the path did not exist.
+            const FileSignature expected = file_present
+                ? file_signature(path)
+                : FileSignature{};
+            Error write_error = Error::make(ErrorCode::InternalError, {});
+            const AtomicWriteOutcome outcome = write_config_file_atomic_cas(
+                path, doc.to_pretty_string(), owner_only, expected, write_error);
+            if (outcome == AtomicWriteOutcome::Renamed) return {};
+            if (outcome == AtomicWriteOutcome::Failed) {
+                return std::unexpected(write_error);
+            }
+            // Conflict: a concurrent replace landed; restart from the new
+            // bytes. The mutator is replayed on a fresh document.
         }
-        return {};
+        return std::unexpected(Error::make(
+            ErrorCode::ConfigWriteError,
+            std::format("Failed to replace config file: {}", path.string())));
     }
 
     /// Read-modify-write one MCP tier file. Thin wrapper over
@@ -1992,18 +2175,35 @@ private:
     ///   file's mode (tmp+rename would otherwise reset a 0600/0640 file to
     ///   the umask default); any status/chmod error falls back to default
     ///   behavior. A NEW file keeps the default umask mode.
-    [[nodiscard]] static VoidResult
-    write_config_file_atomic(const std::filesystem::path& path,
-                             const std::string& content,
-                             bool owner_only = false) {
+    ///
+    /// c13c hardening: the temp file is UNIQUELY named
+    /// (`<path>.tmp.<pid>.<counter>`; a process-global counter keeps both
+    /// concurrent processes and concurrent in-process writers apart) and
+    /// created with open(O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW): a pre-created
+    /// symlink at that name can never be followed (O_NOFOLLOW/EEXIST), and
+    /// a racing creator loses into EEXIST which retries with a fresh name.
+    /// The legacy fixed `<path>.tmp` is additionally probed: a pre-placed
+    /// symlink is unlinked (unlink removes the link, never its target); any
+    /// other pre-existing entry (directory, FIFO, regular debris) is a
+    /// clean refusal rather than an open that blocks or truncates.
+    [[nodiscard]] static AtomicWriteOutcome
+    write_config_file_atomic_cas(const std::filesystem::path& path,
+                                 const std::string& content,
+                                 bool owner_only,
+                                 const FileSignature& expected,
+                                 Error& error_out) {
+        auto fail = [&](std::string message) {
+            error_out = Error::make(ErrorCode::ConfigWriteError,
+                                    std::move(message));
+            return AtomicWriteOutcome::Failed;
+        };
         auto parent = path.parent_path();
         if (!parent.empty()) {
             std::error_code ec;
             std::filesystem::create_directories(parent, ec);
             if (ec) {
-                return std::unexpected(Error::make(
-                    ErrorCode::ConfigWriteError,
-                    std::format("Failed to create config directory: {}", parent.string())));
+                return fail(std::format("Failed to create config directory: {}",
+                                        parent.string()));
             }
         }
         // Capture the existing file's mode before the tmp replaces it.
@@ -2014,60 +2214,117 @@ private:
         const auto existing_perms = preserve_mode
             ? (existing_status.permissions() & std::filesystem::perms::mask)
             : std::filesystem::perms::unknown;
-        auto temp = path;
-        temp += ".tmp";
+
+        // Neutralize the pre-c13c fixed tmp name. symlink_status does NOT
+        // follow the link; unlink on a symlink removes only the directory
+        // entry. A non-symlink entry is refused (opening a directory/FIFO
+        // would fail oddly or block waiting for a reader).
+        const std::filesystem::path legacy_tmp = path.string() + ".tmp";
         {
-            std::ofstream file(temp, std::ios::trunc);
-            if (!file.is_open()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::ConfigWriteError,
-                    std::format("Cannot open config file for writing: {}", path.string())));
-            }
-            file << content;
-            file.close();
-            if (!file) {
-                std::error_code ec;
-                std::filesystem::remove(temp, ec);
-                return std::unexpected(Error::make(
-                    ErrorCode::ConfigWriteError,
-                    std::format("Failed to write config file: {}", path.string())));
+            std::error_code probe_ec;
+            const auto probe =
+                std::filesystem::symlink_status(legacy_tmp, probe_ec);
+            if (!probe_ec &&
+                probe.type() != std::filesystem::file_type::not_found) {
+                if (probe.type() == std::filesystem::file_type::symlink) {
+                    std::error_code remove_ec;
+                    std::filesystem::remove(legacy_tmp, remove_ec);
+                } else {
+                    return fail(std::format(
+                        "Cannot open config file for writing: {}",
+                        legacy_tmp.string()));
+                }
             }
         }
-        if (owner_only) {
-            std::error_code perm_ec;
-            std::filesystem::permissions(
-                temp,
-                std::filesystem::perms::owner_read |
-                    std::filesystem::perms::owner_write,
-                std::filesystem::perm_options::replace,
-                perm_ec);
-            // Non-fatal: the write itself succeeded; warn once via stderr
-            // rather than discarding the configuration.
-            if (perm_ec) {
-                std::println(stderr,
-                    "warning: could not restrict permissions on {}: {}",
-                    path.string(), perm_ec.message());
+
+        static std::atomic<std::uint64_t> tmp_counter{0};
+        constexpr int kMaxTmpAttempts = 32;
+        for (int attempt = 0; attempt < kMaxTmpAttempts; ++attempt) {
+            const std::filesystem::path temp =
+                path.string() + ".tmp." + std::to_string(::getpid()) + "." +
+                std::to_string(tmp_counter.fetch_add(1, std::memory_order_relaxed));
+
+            // 0600 base for mode-managed writes (fchmod sets the exact mode
+            // next); 0666 for a brand-new default-mode file so the umask is
+            // applied by the kernel exactly as ofstream did (0644 @ 022).
+            const mode_t open_mode =
+                (owner_only || preserve_mode) ? 0600 : 0666;
+            const int fd = ::open(temp.c_str(),
+                                  O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW |
+                                      O_CLOEXEC,
+                                  open_mode);
+            if (fd < 0) {
+                if (errno == EEXIST) continue;  // raced; take a fresh name
+                return fail(std::format(
+                    "Cannot open config file for writing: {}", path.string()));
             }
-        } else if (preserve_mode) {
-            // Keep the pre-existing inode's mode across the tmp+rename;
-            // on failure leave the tmp at its umask default.
-            std::error_code perm_ec;
-            std::filesystem::permissions(
-                temp, existing_perms,
-                std::filesystem::perm_options::replace,
-                perm_ec);
-            (void)perm_ec;
-        }
-        std::error_code ec;
-        std::filesystem::rename(temp, path, ec);
-        if (ec) {
+
+            // Apply the mode BEFORE data lands and before the rename.
+            if (owner_only) {
+                if (::fchmod(fd, S_IRUSR | S_IWUSR) != 0) {
+                    std::println(stderr,
+                        "warning: could not restrict permissions on {}: {}",
+                        path.string(),
+                        std::error_code(errno, std::generic_category()).message());
+                }
+            } else if (preserve_mode) {
+                // Keep the pre-existing inode's mode across the replace;
+                // failure leaves the 0600 base mode (stricter), ignored.
+                (void)::fchmod(fd, static_cast<mode_t>(existing_perms));
+            }
+
+            bool write_ok = true;
+            std::size_t total = 0;
+            while (total < content.size()) {
+                const ssize_t written = ::write(
+                    fd, content.data() + total, content.size() - total);
+                if (written < 0) {
+                    if (errno == EINTR) continue;
+                    write_ok = false;
+                    break;
+                }
+                total += static_cast<std::size_t>(written);
+            }
+            if (write_ok && ::fsync(fd) != 0) write_ok = false;
+            if (::close(fd) != 0) write_ok = false;
+
+            if (!write_ok) {
+                std::error_code remove_ec;
+                std::filesystem::remove(temp, remove_ec);
+                return fail(std::format("Failed to write config file: {}",
+                                       path.string()));
+            }
+
+            // CAS gate immediately before rename: the target must still
+            // identify the version this attempt read. A competing replace
+            // always installs a new inode, so this detects it; the tmp is
+            // discarded and the caller re-reads and replays.
+            const FileSignature current = file_signature(path);
+            if (current.exists != expected.exists ||
+                current.inode != expected.inode) {
+                std::error_code remove_ec;
+                std::filesystem::remove(temp, remove_ec);
+                return AtomicWriteOutcome::Conflict;
+            }
+
+            if (::rename(temp.c_str(), path.c_str()) == 0) {
+                return AtomicWriteOutcome::Renamed;
+            }
+            // ENOENT/ENOTDIR here means the directory entry raced away in a
+            // way that changes the target identity — re-read and retry.
+            if (errno == ENOENT || errno == ENOTDIR || errno == EISDIR) {
+                std::error_code remove_ec;
+                std::filesystem::remove(temp, remove_ec);
+                return AtomicWriteOutcome::Conflict;
+            }
             std::error_code remove_ec;
             std::filesystem::remove(temp, remove_ec);
-            return std::unexpected(Error::make(
-                ErrorCode::ConfigWriteError,
-                std::format("Failed to replace config file: {}", path.string())));
+            return fail(std::format("Failed to replace config file: {}",
+                                   path.string()));
         }
-        return {};
+        // Exhausted unique names (an attacker racing every O_EXCL create).
+        return fail(std::format("Cannot open config file for writing: {}",
+                                path.string()));
     }
 
     /// First Local write: append the resolved local basename (e.g.
@@ -2287,7 +2544,11 @@ ConfigManager::agent_secret_presence_json(std::string_view dotted) const {
     const char* env_value = nullptr;
     if (dotted == "network.api_key") {
         leaf = "api_key";
+        // The wire accepts either the x-api-key credential or a Bearer
+        // auth token; presence covers both (the value itself is never
+        // projected).
         env_value = std::getenv("ANTHROPIC_API_KEY");
+        if (env_value == nullptr) env_value = std::getenv("ANTHROPIC_AUTH_TOKEN");
     } else if (dotted == "network.base_url") {
         leaf = "base_url";
         env_value = std::getenv("ANTHROPIC_BASE_URL");
@@ -2380,16 +2641,11 @@ ConfigManager::set_user_setting(std::string_view dotted,
         outcome.shadowed = true;
         outcome.shadowed_by = "LOOM_MODEL";
     } else if (spec->env_var == "LOOM_MAX_TOKENS") {
-        if (const char* raw = std::getenv("LOOM_MAX_TOKENS"); raw != nullptr) {
-            try {
-                if (const auto parsed = std::stoul(raw);
-                    parsed <= std::numeric_limits<std::uint32_t>::max()) {
-                    outcome.shadowed = true;
-                    outcome.shadowed_by = "LOOM_MAX_TOKENS";
-                }
-            } catch (...) {
-                // Unparsable env does not engage the override.
-            }
+        // Same predicate as apply_environment_variables: an over-range or
+        // junk env does not engage the override.
+        if (auto parsed = parse_env_max_tokens(std::getenv("LOOM_MAX_TOKENS"))) {
+            outcome.shadowed = true;
+            outcome.shadowed_by = "LOOM_MAX_TOKENS";
         }
     }
 

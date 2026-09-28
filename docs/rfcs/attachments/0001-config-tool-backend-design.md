@@ -210,8 +210,10 @@ Moderate agent-facing change: output raw-text→JSON (input shape compatible;
 no documented consumer; old scraping never worked); get can surface hard
 global/project load errors; server-route per-request reload means writes
 affect subsequent requests in the same server process (disclosed, not
-claimed as future-only); fixed-tmp concurrent-write lost updates; pretty
-formatting normalized on salvage.
+claimed as future-only); fixed-tmp concurrent-write lost updates; every
+set re-serializes the full document pretty-printed (the shared MCP patcher
+behavior — JSON key order and sibling sections are preserved, but the file
+is always fully rewritten, not only after salvage).
 
 ## Implementation precision notes (second review round)
 

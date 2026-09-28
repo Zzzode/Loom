@@ -38,6 +38,30 @@ import cc.ui.messages.message_image;
 
 namespace {
 namespace fs = std::filesystem;
+
+// RAII cwd redirect so dialog-driven default-ConfigManager saves land in a
+// temp directory instead of the ctest working directory (a project save
+// walks up to the checkout .git and would append ignore rules there).
+struct TempCwdGuard {
+    fs::path previous;
+    explicit TempCwdGuard() {
+        previous = fs::current_path();
+        const auto dir = fs::temp_directory_path() /
+            ("loom_ui_dialog_cwd_" +
+             std::to_string(std::chrono::system_clock::now()
+                                .time_since_epoch().count()));
+        fs::create_directories(dir);
+        fs::current_path(dir);
+    }
+    TempCwdGuard(const TempCwdGuard&) = delete;
+    TempCwdGuard& operator=(const TempCwdGuard&) = delete;
+    ~TempCwdGuard() {
+        std::error_code ec;
+        const auto dir = fs::current_path();
+        fs::current_path(previous, ec);
+        fs::remove_all(dir, ec);
+    }
+};
 }
 
 
@@ -81,6 +105,7 @@ TEST(WizardDialog, RendersStepFactoryContent) {
 TEST(SettingsDialog, ApiKeyRowDoesNotWritePlaceholderSecret) {
     namespace settings_dialog = cc::ui::dialogs::settings_dialog;
 
+    TempCwdGuard cwd_guard;
     cc::core::ConfigManager cfg;
     settings_dialog::SettingsDialogOptions opts;
     opts.initial_tab = settings_dialog::SettingsTabId::API;
@@ -98,6 +123,7 @@ TEST(SettingsDialog, ApiKeyRowDoesNotWritePlaceholderSecret) {
 TEST(SettingsDialog, McpAddKeyDoesNotCreatePlaceholderServer) {
     namespace settings_dialog = cc::ui::dialogs::settings_dialog;
 
+    TempCwdGuard cwd_guard;
     cc::core::ConfigManager cfg;
     settings_dialog::SettingsDialogOptions opts;
     opts.initial_tab = settings_dialog::SettingsTabId::MCP;

@@ -1938,8 +1938,8 @@ private:
     /// strict_error before assigning anything else. The SalvageTrailing
     /// mode and its tri-state signal are fully produced here; the first
     /// caller that consumes a salvage result arrives in c13b (the config
-    /// tool). On success the result is written atomically via a fixed tmp
-    /// name + rename.
+    /// tool). On success the result is written through the hardened
+    /// bounded-lock + unique-tmp atomic replace (write_config_file_replace).
     enum class SalvageMode : std::uint8_t { Strict, SalvageTrailing };
 
     enum class SalvageResult : std::uint8_t {
@@ -2346,28 +2346,22 @@ private:
         return {};
     }
 
-    /// Atomic write mirroring settings_manager's private template: fixed
-    /// `<path>.tmp` + rename, no fsync (concurrent CLIs in one CWD can
-    /// collide on the tmp name — known limitation copied by design).
+    /// Hardened atomic config replace (c13c/c13d).
     ///
-    /// Permissions on the replacement file:
-    /// - `owner_only` (the LOCAL tier): the tmp is forced to 0600 before
-    ///   the rename; a chmod failure warns but is non-fatal.
-    /// - otherwise, when replacing an EXISTING file, the tmp inherits that
-    ///   file's mode (tmp+rename would otherwise reset a 0600/0640 file to
-    ///   the umask default); any status/chmod error falls back to default
-    ///   behavior. A NEW file keeps the default umask mode.
-    ///
-    /// c13c/c13d-hardened unique-tmp atomic replace.
-    ///
-    /// The temp file is UNIQUELY named
-    /// (`<path>.tmp.<pid>.<counter>.<64-bit random>`) and created with
+    /// The write runs behind the bounded per-path flock in ConfigFileLock
+    /// (LOCK_NB acquire, ~10s poll) and goes through a UNIQUELY named temp
+    /// file `<path>.tmp.<pid>.<counter>.<64-bit random>` created with
     /// open(O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW): a pre-created symlink at
     /// that name can never be followed (O_NOFOLLOW fails ELOOP), and a
     /// racing creator loses into EEXIST/ELOOP and retries with a fresh
-    /// name. `expected != nullptr` enables the read-modify-write CAS gate
-    /// (rename only while the target still has the read inode; mismatch →
-    /// Conflict so the caller re-reads). A full save passes nullptr: the
+    /// name. Bytes are fsync(2)-ed before the atomic rename(2); stale
+    /// debris at the reserved legacy fixed tmp name is cleaned first.
+    ///
+    /// Permissions: `owner_only` (the LOCAL tier) forces the tmp to 0600
+    /// before data lands; replacing an EXISTING non-owner file inherits
+    /// that file's mode; a brand-new file keeps the umask default. When
+    /// `expected` is non-null, an inode CAS gate guards the rename (mismatch
+    /// → Conflict so the caller re-reads); a full save passes nullptr: the
     /// in-memory document intentionally replaces the file, still under the
     /// caller-held flock.
     [[nodiscard]] static AtomicWriteOutcome
@@ -2510,17 +2504,47 @@ private:
                                 path.string()));
     }
 
-    /// Append missing gitignore basename lines to the workspace-root
-    /// .gitignore (the appender's existing location; a bare basename
-    /// pattern matches the file at any depth, so .loom/<name> is covered).
-    /// Membership is line-exact (not substring) so an existing
-    /// "config.local.json.lock" line cannot make "config.local.json" look
-    /// present. Idempotent; copes with a missing trailing newline; a
-    /// missing/unwritable .gitignore is non-fatal.
+    /// Walk UP from `start` (cwd) to the filesystem root looking for a git
+    /// work-tree marker: a `.git` directory (normal repo) or a `.git` file
+    /// (worktree/submodule gitdir pointer). Filesystem checks only — the
+    /// git binary must not be required. Returns the work-tree root (the
+    /// directory containing `.git`), or nullopt outside any work tree.
+    [[nodiscard]] static std::optional<std::filesystem::path>
+    find_git_worktree_root(std::filesystem::path start) {
+        std::error_code ec;
+        for (;;) {
+            const auto marker = start / ".git";
+            const auto status = std::filesystem::symlink_status(marker, ec);
+            if (!ec) {
+                if (status.type() == std::filesystem::file_type::directory ||
+                    status.type() == std::filesystem::file_type::regular ||
+                    status.type() == std::filesystem::file_type::symlink) {
+                    return start;
+                }
+            }
+            const auto parent = start.parent_path();
+            if (parent == start || parent.empty()) return std::nullopt;
+            start = parent;
+        }
+    }
+
+    /// Append missing gitignore basename lines to the work-tree-root
+    /// .gitignore (found by walking up from cwd; a bare basename matches
+    /// the file at any depth, so <root>/.loom/<name> is covered even when
+    /// the process runs from a nested directory). Outside a git work tree
+    /// the append is skipped entirely — a plain directory must not be
+    /// littered with a .gitignore. Membership is line-exact (not substring)
+    /// so an existing "config.local.json.lock" line cannot make
+    /// "config.local.json" look present. Idempotent; copes with a missing
+    /// trailing newline; an existing but unwritable .gitignore is best
+    /// effort and non-fatal.
     void append_gitignore_basenames(
         std::span<const std::string_view> basenames) const {
         if (basenames.empty()) return;
-        const auto gitignore = std::filesystem::current_path() / ".gitignore";
+        const auto repo_root =
+            find_git_worktree_root(std::filesystem::current_path());
+        if (!repo_root) return;
+        const auto gitignore = *repo_root / ".gitignore";
         std::string content;
         std::error_code ec;
         if (std::filesystem::exists(gitignore, ec)) {
@@ -2575,14 +2599,6 @@ private:
         case McpStorageScope::User:
             return;
         }
-    }
-
-    /// First Local write: append the resolved local basename (e.g.
-    /// config.local.json) AND its lock sibling to the workspace-root
-    /// .gitignore. Kept as a named entry point for the MCP wrapper; the
-    /// tier-generic implementation lives in ensure_config_gitignored.
-    void ensure_local_config_gitignored() const {
-        ensure_config_gitignored(McpStorageScope::Local);
     }
 };
 

@@ -5516,6 +5516,7 @@ TEST(ConfigManager, PersistsMcpServerSettings) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_config_test_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
 
     cc::core::ConfigManager manager(root / "global.json", root / "project.json");
     auto& settings = manager.settings_mut();
@@ -5545,6 +5546,7 @@ TEST(ConfigManager, PreservesRemoteMcpServerAuthSettings) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_remote_mcp_config_test_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
 
     cc::core::ConfigManager manager(root / "global.json", root / "project.json");
     auto& settings = manager.settings_mut();
@@ -5597,6 +5599,7 @@ TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_types_legacy_test_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
     const auto project_path = root / "project.json";
 
@@ -5707,6 +5710,7 @@ TEST(McpTypes, DisabledAndOauthIssuerSurviveConfigRewrite) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_types_disabled_issuer_test_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
     const auto project_path = root / "project.json";
 
@@ -5775,6 +5779,7 @@ TEST(McpTypes, ConfigScopeRoundTripsInCanonicalCamelCase) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_types_scope_test_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
     const auto project_path = root / "project.json";
 
@@ -5843,6 +5848,7 @@ TEST(McpTypes, AbsentDisabledAndIssuerKeysStayUnset) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_types_absent_test_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
     const auto project_path = root / "project.json";
 
@@ -5901,6 +5907,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
     const auto root = fs::temp_directory_path() /
         ("loom_mcp_types_xaa_idp_test_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
     const auto project_path = root / "project.json";
 
@@ -6019,6 +6026,7 @@ TEST(McpTypes, XaaIdpOmittedWhenUnset) {
     const auto root = fs::temp_directory_path() /
         ("loom_mcp_types_xaa_idp_absent_test_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
     const auto project_path = root / "project.json";
 
@@ -6418,6 +6426,7 @@ TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_c6_shape_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
     const auto user_path    = root / "user.json";
     const auto project_path = root / "project.json";
@@ -6472,10 +6481,15 @@ TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
 // config.json) and appends its basename to ./.gitignore exactly once,
 // coping with a pre-existing file that has no trailing newline.
 TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
+    if (std::system("git --version >/dev/null 2>&1") != 0) {
+        GTEST_SKIP() << "git not available";
+    }
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_c6_local_gitignore_" + std::to_string(suffix));
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
+    // c13e: .gitignore appends happen only inside a git work tree.
+    ASSERT_EQ(std::system("git init -q --initial-branch main"), 0);
 
     // Existing .gitignore with NO trailing newline.
     c6_write_file(root / ".gitignore", "sentinel");
@@ -6615,6 +6629,7 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_c6_remove_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
     const auto user_path    = root / "user.json";
     const auto project_path = root / "project.json";
@@ -6719,6 +6734,7 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFilesAndGlobal) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_c6_disable_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
     const auto user_path    = root / "user.json";
     const auto project_path = root / "project.json";
@@ -6828,6 +6844,7 @@ TEST(McpTypes, McpGarbageUserLocalFilesSkippedAndUpsertRejected) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_c6_garbage_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
     const auto user_path    = root / "user.json";
     const auto project_path = root / "project.json";
@@ -6930,6 +6947,7 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_c6_unwritable_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
 
     {
         const auto ro = root / "ro";
@@ -6985,6 +7003,7 @@ TEST(McpTypes, McpProjectSaveDoesNotLeakUserLocalSecrets) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_c6_secret_boundary_" + std::to_string(suffix));
     fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
     const auto user_path    = root / "user.json";
     const auto project_path = root / "project.json";
@@ -7267,10 +7286,15 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     if (::getuid() == 0) {
         GTEST_SKIP() << "file mode restrictions are bypassed for root";
     }
+    if (std::system("git --version >/dev/null 2>&1") != 0) {
+        GTEST_SKIP() << "git not available";
+    }
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_c6_modes_" + std::to_string(suffix));
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
+    // c13e: gitignore appends require a work tree.
+    ASSERT_EQ(std::system("git init -q --initial-branch main"), 0);
     const auto global_path  = root / "global.json";
     const auto user_path    = root / "user.json";
     const auto project_path = root / ".loom" / "config.json";
@@ -10733,4 +10757,223 @@ TEST(ConfigManagerC13d, PresprayedPredictableTmpNamesDefeated) {
         return std::string(std::istreambuf_iterator<char>(f),
                            std::istreambuf_iterator<char>()); }());
     EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 3);
+}
+
+// ===========================================================================
+// RFC-0001 B followup c13e — git-worktree-gated ignores + same-path
+// save/patch contention.
+// ===========================================================================
+
+// Plain non-git directory: local AND project writes must NOT create any
+// .gitignore anywhere (the data write itself is unaffected).
+TEST(ConfigManagerC13e, PlainDirectoryWritesNoGitignore) {
+    // Pick a base directory whose walk-up ancestry has NO .git marker
+    // (this box carries a stray /tmp/.git, so prefer XDG_RUNTIME_DIR /
+    // /dev/shm; skip only when every candidate sits under a work tree).
+    auto ancestry_clean = [](const fs::path& base) {
+        std::error_code ec;
+        for (auto d = base; ; d = d.parent_path()) {
+            if (fs::exists(d / ".git", ec)) return false;
+            if (d.parent_path() == d || d.parent_path().empty()) return true;
+        }
+    };
+    std::optional<fs::path> base;
+    for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
+        if (const char* v = std::getenv(var);
+            v != nullptr && fs::is_directory(v) && ancestry_clean(v)) {
+            base = fs::path(v);
+            break;
+        }
+    }
+    if (!base && fs::is_directory("/dev/shm") && ancestry_clean("/dev/shm")) {
+        base = fs::path("/dev/shm");
+    }
+    if (!base && ancestry_clean(fs::temp_directory_path())) {
+        base = fs::temp_directory_path();
+    }
+    if (!base) GTEST_SKIP() << "no .git-free temp base directory available";
+
+    const auto suffix =
+        std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = *base / ("loom_c13e_plain_" + std::to_string(suffix));
+    fs::create_directories(root);
+    CurrentPathGuard cwd_guard(root);
+
+    const auto global_path  = root / "global.json";
+    const auto user_path    = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path   = root / "project.local.json";
+
+    cc::core::McpServerConfig local;
+    local.name = "ls";
+    local.transport = "stdio";
+    local.command = "node";
+    cc::core::McpServerConfig project = local;
+    project.name = "ps";
+
+    {
+        cc::core::ConfigManager m(global_path, user_path,
+                                  project_path, local_path);
+        ASSERT_TRUE(m.load().has_value());
+        ASSERT_TRUE(m.upsert_mcp_server(cc::core::McpStorageScope::Local, local)
+                        .has_value());
+        ASSERT_TRUE(m.upsert_mcp_server(cc::core::McpStorageScope::Project,
+                                        project).has_value());
+        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+    EXPECT_TRUE(fs::exists(local_path));
+    EXPECT_TRUE(fs::exists(project_path));
+    EXPECT_FALSE(fs::exists(root / ".gitignore"));
+    // Data files are still correct.
+    auto ldoc = cc::utils::json::parse_file(local_path);
+    ASSERT_TRUE(ldoc.has_value());
+    EXPECT_TRUE(ldoc->root().get("mcpServers").has("ls"));
+
+    std::error_code ec;
+    fs::remove_all(root, ec);
+}
+
+// Nested cwd inside a git repo: the ignore lines land in the REPO ROOT
+// .gitignore via walk-up, not the nested working directory.
+TEST(ConfigManagerC13e, NestedCwdAppendsAtRepoRoot) {
+    if (std::system("git --version >/dev/null 2>&1") != 0) {
+        GTEST_SKIP() << "git not available";
+    }
+    const auto suffix =
+        std::chrono::system_clock::now().time_since_epoch().count();
+    const auto base = fs::temp_directory_path() /
+                      ("loom_c13e_nested_" + std::to_string(suffix));
+    fs::create_directories(base);
+    const auto repo = base / "r";
+    fs::create_directories(repo);
+    {
+        CurrentPathGuard init_guard(repo);
+        ASSERT_EQ(std::system("git init -q --initial-branch main"), 0);
+    }
+    const auto nested = repo / "sub" / "deep";
+    fs::create_directories(nested);
+
+    const auto global_path  = nested / "global.json";
+    const auto user_path    = nested / "user.json";
+    const auto project_path = nested / ".loom" / "config.json";
+    const auto local_path   = nested / ".loom" / "config.local.json";
+
+    {
+        CurrentPathGuard cwd_guard(nested);
+        cc::core::ConfigManager m(global_path, user_path,
+                                  project_path, local_path);
+        ASSERT_TRUE(m.load().has_value());
+        cc::core::McpServerConfig cfg;
+        cfg.name = "deep-srv";
+        cfg.transport = "stdio";
+        cfg.command = "node";
+        ASSERT_TRUE(m.upsert_mcp_server(cc::core::McpStorageScope::Local, cfg)
+                        .has_value());
+        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+
+        // Nothing written at the nested cwd level.
+        EXPECT_FALSE(fs::exists(nested / ".gitignore"));
+        // Lines landed at the walk-up repo root.
+        const auto root_gi = repo / ".gitignore";
+        ASSERT_TRUE(fs::exists(root_gi));
+        std::ifstream f(root_gi);
+        const std::string text((std::istreambuf_iterator<char>(f)),
+                               std::istreambuf_iterator<char>());
+        EXPECT_NE(text.find("config.local.json.lock"), std::string::npos);
+        EXPECT_NE(text.find("config.local.json\n"), std::string::npos);
+        EXPECT_NE(text.find("config.json.lock"), std::string::npos);
+        EXPECT_EQ(text.find("config.json\n"), std::string::npos);
+    }
+    fs::remove_all(base);
+}
+
+// Full save() and patched set_user_setting writes hit the SAME user file
+// concurrently: every child exits 0 (bounded lock/CAS keep failures clean),
+// and a sampled sweep plus the final file always parse as JSON objects with
+// no tmp debris. save() can only target project_path_, so the manager is
+// constructed with project_path_ aliasing the user config location.
+TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
+    C13Paths p("samefile");
+    // Forked children inherit cwd: keep every ignore-append probe inside
+    // the temp root (a plain dir with no .git up-tree) so the repo-root
+    // .gitignore can never be touched.
+    CurrentPathGuard cwd_guard(p.root);
+    c13_write_file(p.project_path, R"JSON({
+      "network": {"max_retries": 1},
+      "model": {"default_model": "seed-model"}
+    })JSON");
+
+    // Manager whose SAVE target is the same file the patchers write:
+    // save(ProjectConfig) writes project_path_; set_user_setting writes
+    // user_path_ — point both at one path.
+    auto make_aligned = [&] {
+        return cc::core::ConfigManager(p.global_path, p.project_path,
+                                       p.project_path,
+                                       p.project_path.string() + ".local");
+    };
+
+    constexpr int kPatchers = 8;
+    constexpr int kSavers = 4;
+    constexpr int kTotal = kPatchers + kSavers;
+    std::array<pid_t, kTotal> pids{};
+    int idx = 0;
+    for (int s = 0; s < kSavers; ++s) {
+        const pid_t pid = ::fork();
+        ASSERT_GE(pid, 0);
+        if (pid == 0) {
+            auto m = make_aligned();
+            (void)m.load();
+            // Mutate so each full-save document is distinct, then replace
+            // the SAME file the patchers update.
+            m.settings_mut().network.max_retries =
+                static_cast<std::uint32_t>(1000 + s);
+            _exit(m.save(cc::core::ConfigSource::ProjectConfig) ? 0 : 2);
+        }
+        pids[static_cast<std::size_t>(idx++)] = pid;
+    }
+    const std::array<std::string_view, 5> keys = {{
+        "network.max_retries",
+        "model.max_output_tokens",
+        "model.context_window_size",
+        "model.extended_thinking",
+        "model.default_model",
+    }};
+    for (int k = 0; k < kPatchers; ++k) {
+        const pid_t pid = ::fork();
+        ASSERT_GE(pid, 0);
+        if (pid == 0) {
+            auto m = make_aligned();
+            (void)m.load();
+            const auto& key = keys[static_cast<std::size_t>(k % keys.size())];
+            const char* payload =
+                key == "model.default_model" ? R"("contend-model")"
+                : key == "model.extended_thinking" ? "true"
+                : key == "model.max_output_tokens" ? "2048"
+                : key == "model.context_window_size" ? "100000"
+                : "7";
+            auto out = m.set_user_setting(key, c13_parse(payload));
+            _exit(out.has_value() ? 0 : 2);
+        }
+        pids[static_cast<std::size_t>(idx++)] = pid;
+    }
+    for (pid_t pid : pids) {
+        int status = 0;
+        ASSERT_EQ(::waitpid(pid, &status, 0), pid);
+        ASSERT_TRUE(WIFEXITED(status));
+        // Only 0 (success) or a CLEAN lock/CAS-style error (2) are allowed;
+        // crash/signal would fail here. With the bounded flock + CAS retry
+        // the writer converges, so expect all-success in practice.
+        EXPECT_EQ(WEXITSTATUS(status), 0);
+    }
+
+    // Final file is a parseable object.
+    auto doc = cc::utils::json::parse_file(p.project_path);
+    ASSERT_TRUE(doc.has_value());
+    EXPECT_TRUE(doc->root().is_obj());
+    // No torn tmp leftovers; no stray local file (that path is never
+    // written here — local_path_ aliases a different name).
+    for (const auto& entry : fs::directory_iterator(p.root)) {
+        const auto name = entry.path().filename().string();
+        EXPECT_EQ(name.find(".tmp"), std::string::npos) << name;
+    }
 }

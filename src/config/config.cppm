@@ -1349,16 +1349,51 @@ private:
     using McpPatchFn = std::function<VoidResult(
         cc::utils::json::JsonMutVal&, cc::utils::json::JsonMutDoc&)>;
 
-    /// Read-modify-write one MCP tier file. A missing file is treated as
-    /// `{}`. The whole document is strict-parsed (a parse failure or a
-    /// non-object root is an error — the bytes are never overwritten), the
-    /// mcpServers object is ensured, the mutator applied, an emptied
-    /// mcpServers object dropped (other top-level sections preserved), and
-    /// the result written atomically via a fixed tmp name + rename.
-    [[nodiscard]] VoidResult
-    patch_mcp_file(const std::filesystem::path& path, const McpPatchFn& mutator) {
+    /// Generic read-modify-write for a JSON OBJECT config file. A missing,
+    /// zero-length, or all-whitespace file starts from a fresh `{}`. An
+    /// existing file is strict-parsed: an OBJECT root is copied into a
+    /// mutable document and `mutate` is applied; anything else (parse
+    /// failure or non-object root) is handled per `salvage`:
+    ///   - Strict: `strict_error` is returned BEFORE any write, so the file
+    ///     bytes are never touched.
+    ///   - SalvageTrailing: parse_first keeps a complete leading OBJECT
+    ///     (duplicate keys retained exactly as yyjson reads them) and drops
+    ///     only trailing bytes; with no recoverable leading OBJECT (pure
+    ///     junk, or a leading non-object such as `[1,2]`) the file is
+    ///     replaced from `{}`.
+    /// `salvage_out` reports how an existing non-blank file's bytes were
+    /// reconciled: Untouched (missing/blank, or a strict-valid OBJECT
+    /// preserved verbatim), TrailingJunkDropped (a complete leading OBJECT
+    /// recovered with parse_first — duplicate keys retained exactly as
+    /// yyjson reads them — and only trailing bytes discarded), or
+    /// ReplacedUnparseable (no recoverable leading OBJECT — pure junk, or a
+    /// leading non-object such as `[1,2]` — so the file is replaced from
+    /// `{}`). It is initialized Untouched at entry; Strict mode returns
+    /// strict_error before assigning anything else. The SalvageTrailing
+    /// mode and its tri-state signal are fully produced here; the first
+    /// caller that consumes a salvage result arrives in c13b (the config
+    /// tool). On success the result is written atomically via a fixed tmp
+    /// name + rename.
+    enum class SalvageMode : std::uint8_t { Strict, SalvageTrailing };
+
+    enum class SalvageResult : std::uint8_t {
+        Untouched,             // Fresh/blank file or a strict-valid object.
+        TrailingJunkDropped,   // Leading OBJECT kept; trailing bytes dropped.
+        ReplacedUnparseable,   // No recoverable OBJECT; file rebuilt from {}.
+    };
+
+    [[nodiscard]] static VoidResult
+    patch_object_file(const std::filesystem::path& path,
+                      const std::function<VoidResult(
+                          cc::utils::json::JsonMutVal& root,
+                          cc::utils::json::JsonMutDoc& doc)>& mutate,
+                      bool owner_only,
+                      SalvageMode salvage,
+                      const Error& strict_error,
+                      SalvageResult& salvage_out) {
         cc::utils::json::JsonMutDoc doc;
         cc::utils::json::JsonMutVal root;
+        salvage_out = SalvageResult::Untouched;
         bool file_present = std::filesystem::exists(path);
         bool blank = false;
         std::string content;
@@ -1374,15 +1409,28 @@ private:
             blank = content.find_first_not_of(" \t\r\n") == std::string::npos;
             if (!blank) {
                 auto parsed = cc::utils::json::parse(content);
-                if (!parsed || !parsed->root().is_obj()) {
-                    return std::unexpected(Error::make(
-                        ErrorCode::ConfigParseError,
-                        std::format("{} is not valid JSON; move it aside first "
-                                    "(use 'loom mcp' to edit MCP configuration)",
-                                    path.string())));
+                if (parsed && parsed->root().is_obj()) {
+                    root = doc.copy_val(parsed->root());
+                    doc.set_root(root);
+                } else if (salvage == SalvageMode::Strict) {
+                    // Parse failure or non-object root: hand the caller's
+                    // pinned error back before any write happens.
+                    return std::unexpected(strict_error);
+                } else {
+                    // SalvageTrailing: preserve a complete leading OBJECT and
+                    // drop only the trailing bytes. With no recoverable
+                    // OBJECT the whole file is replaced from {}.
+                    auto first = cc::utils::json::parse_first(content);
+                    if (first && first->root().is_obj()) {
+                        root = doc.copy_val(first->root());
+                        doc.set_root(root);
+                        salvage_out = SalvageResult::TrailingJunkDropped;
+                    } else {
+                        root = doc.object();
+                        doc.set_root(root);
+                        salvage_out = SalvageResult::ReplacedUnparseable;
+                    }
                 }
-                root = doc.copy_val(parsed->root());
-                doc.set_root(root);
             }
         }
         if (!file_present || blank) {
@@ -1392,25 +1440,61 @@ private:
             doc.set_root(root);
         }
 
-        auto servers = root.ensure_object("mcpServers");
-        if (auto mutated = mutator(servers, doc); !mutated) {
+        if (auto mutated = mutate(root, doc); !mutated) {
             return std::unexpected(mutated.error());
         }
-        // Drop an emptied mcpServers object; keep other sections untouched.
-        if (servers.is_obj() && servers.size() == 0) {
-            (void)root.remove("mcpServers");
-        }
 
+        if (auto written = write_config_file_atomic(
+                path, doc.to_pretty_string(), owner_only);
+            !written) {
+            return std::unexpected(written.error());
+        }
+        return {};
+    }
+
+    /// Read-modify-write one MCP tier file. Thin wrapper over
+    /// patch_object_file: strict parsing with the MCP-specific refusal
+    /// text, the mcpServers key ensured inside the mutator and an emptied
+    /// object dropped (other top-level sections preserved), LOCAL-tier
+    /// owner-only mode, and the local gitignore guard after every
+    /// successful write.
+    [[nodiscard]] VoidResult
+    patch_mcp_file(const std::filesystem::path& path, const McpPatchFn& mutator) {
         // The LOCAL tier is the documented secret holder (it shadows tracked
         // files precisely to keep Authorization headers out of VCS): create
         // it owner-only, like ssh-style secret files. Applied to the tmp
         // BEFORE rename so the final file never briefly exists world-readable.
         const bool target_is_local = (path == local_path_);
-        if (auto written = write_config_file_atomic(
-                path, doc.to_pretty_string(), /*owner_only=*/target_is_local);
-            !written) {
-            return std::unexpected(written.error());
-        }
+        // The exact pre-extraction inline parse-failure error: same code and
+        // literal, path interpolated here so the C6-pinned refusal text
+        // stays byte-identical.
+        const Error strict_error = Error::make(
+            ErrorCode::ConfigParseError,
+            std::format("{} is not valid JSON; move it aside first "
+                        "(use 'loom mcp' to edit MCP configuration)",
+                        path.string()));
+        // Strict mode always reports Untouched; the tri-state exists for
+        // the c13b salvage caller, so discard it here.
+        SalvageResult salvage_out = SalvageResult::Untouched;
+        auto patched = patch_object_file(path,
+            [&](cc::utils::json::JsonMutVal& root,
+                cc::utils::json::JsonMutDoc& doc) -> VoidResult {
+                auto servers = root.ensure_object("mcpServers");
+                if (auto mutated = mutator(servers, doc); !mutated) {
+                    return std::unexpected(mutated.error());
+                }
+                // Drop an emptied mcpServers object; keep other sections untouched.
+                if (servers.is_obj() && servers.size() == 0) {
+                    (void)root.remove("mcpServers");
+                }
+                return {};
+            },
+            /*owner_only=*/target_is_local,
+            SalvageMode::Strict,
+            strict_error,
+            salvage_out);
+        if (!patched) return std::unexpected(patched.error());
+        (void)salvage_out;
         // Protect the local tier on EVERY patch, not just when this process
         // created it: a hand-created non-empty config.local.json must end up
         // gitignored too. The applier is idempotent (no-op on a present

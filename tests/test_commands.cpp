@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 #include <cstdlib>
+#include <atomic>
+#include <unistd.h>
 
 import std;
 import cc.commands.command;
@@ -41,28 +43,44 @@ namespace fs = std::filesystem;
     }
 }
 
-[[nodiscard]] fs::path cmd_make_temp_root(std::string_view name) {
-    std::optional<fs::path> base;
+[[nodiscard]] std::optional<fs::path> cmd_clean_temp_base() {
+    std::error_code ec;
     for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
         if (const char* v = std::getenv(var);
-            v != nullptr && fs::is_directory(v) && cmd_ancestry_clean(v)) {
-            base = fs::path(v);
-            break;
+            v != nullptr && fs::is_directory(v, ec) && !ec &&
+            cmd_ancestry_clean(v)) {
+            return fs::path(v);
         }
+        ec.clear();
     }
-    if (!base && fs::is_directory("/dev/shm") && cmd_ancestry_clean("/dev/shm")) {
-        base = fs::path("/dev/shm");
+    if (fs::is_directory("/dev/shm", ec) && !ec &&
+        cmd_ancestry_clean("/dev/shm")) {
+        return fs::path("/dev/shm");
     }
-    if (!base && cmd_ancestry_clean(fs::temp_directory_path())) {
-        base = fs::temp_directory_path();
+    if (cmd_ancestry_clean(fs::temp_directory_path())) {
+        return fs::temp_directory_path();
     }
-    const fs::path root =
-        (base.value_or(fs::temp_directory_path())) /
-        (std::string(name) +
-         std::to_string(std::chrono::system_clock::now()
-                            .time_since_epoch().count()));
-    fs::create_directories(root);
-    return root;
+    return std::nullopt;
+}
+
+[[nodiscard]] fs::path cmd_make_temp_root(std::string_view name) {
+    static std::atomic<unsigned> counter{0};
+    const fs::path base_dir =
+        cmd_clean_temp_base().value_or(fs::temp_directory_path());
+    for (int attempt = 0; attempt < 64; ++attempt) {
+        const fs::path root =
+            base_dir /
+            (std::string(name) + std::to_string(::getpid()) + "_" +
+             std::to_string(counter.fetch_add(1,
+                 std::memory_order_relaxed)) + "_" +
+             std::to_string(std::chrono::system_clock::now()
+                                 .time_since_epoch().count()));
+        std::error_code create_ec;
+        fs::create_directories(root, create_ec);
+        std::error_code probe_ec;
+        if (fs::is_directory(root, probe_ec) && !probe_ec) return root;
+    }
+    return fs::temp_directory_path();
 }
 
 struct EnvironmentGuard {

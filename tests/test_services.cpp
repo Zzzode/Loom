@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cstdint>
 #include <cstdlib>
+#include <atomic>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -91,15 +92,20 @@ struct CurrentPathGuard {
 /// Pick a temp base directory whose ancestry contains no git work tree
 /// (this dev box carries a stray /tmp/.git; CI /tmp is clean). Tries
 /// XDG_RUNTIME_DIR, TMPDIR, /dev/shm, then the system temp dir. Returns
-/// nullopt only if every candidate is inside a work tree.
+/// nullopt only if every candidate is inside a work tree. Env-supplied
+/// paths are probed with the error_code overload so EACCES never throws.
 [[nodiscard]] std::optional<fs::path> c13_clean_temp_base() {
+    std::error_code ec;
     for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
         if (const char* v = std::getenv(var);
-            v != nullptr && fs::is_directory(v) && c13_ancestry_clean(v)) {
+            v != nullptr && fs::is_directory(v, ec) && !ec &&
+            c13_ancestry_clean(v)) {
             return fs::path(v);
         }
+        ec.clear();
     }
-    if (fs::is_directory("/dev/shm") && c13_ancestry_clean("/dev/shm")) {
+    if (fs::is_directory("/dev/shm", ec) && !ec &&
+        c13_ancestry_clean("/dev/shm")) {
         return fs::path("/dev/shm");
     }
     if (c13_ancestry_clean(fs::temp_directory_path())) {
@@ -108,18 +114,52 @@ struct CurrentPathGuard {
     return std::nullopt;
 }
 
+/// Snapshot of every existing `.gitignore` on the walk-up chain from
+/// `root` through `base`. Comparing before/after writes detects a NEW
+/// ignore file created by the appender without false-failing on unrelated
+/// pre-existing .gitignore files in a shared temp base.
+[[nodiscard]] std::set<fs::path>
+c13_gitignores_on_chain(const fs::path& root, const fs::path& base) {
+    std::set<fs::path> found;
+    std::error_code ec;
+    for (auto d = root; ; d = d.parent_path()) {
+        if (fs::exists(d / ".gitignore", ec)) found.insert(d / ".gitignore");
+        ec.clear();
+        if (d == base || d.parent_path() == d) break;
+    }
+    return found;
+}
+
 /// Temp root for a write test: anchored under a git-ancestry-clean base
 /// so a .gitignore appender walking up from cwd can never reach a real
-/// work tree such as a stray /tmp/.git. Creates the directory.
+/// work tree such as a stray /tmp/.git. The unique name carries pid + an
+/// in-process counter + timestamp, and create is retried on collision or
+/// transient failure.
 [[nodiscard]] fs::path c13_make_temp_root(std::string_view name) {
+    static std::atomic<unsigned> counter{0};
     const auto base = c13_clean_temp_base();
-    const fs::path root =
-        (base.value_or(fs::temp_directory_path())) /
-        (std::string(name) +
-         std::to_string(std::chrono::system_clock::now()
-                            .time_since_epoch().count()));
-    fs::create_directories(root);
-    return root;
+    const fs::path base_dir = base.value_or(fs::temp_directory_path());
+    constexpr int kMaxAttempts = 64;
+    for (int attempt = 0; attempt < kMaxAttempts; ++attempt) {
+        const fs::path root =
+            base_dir /
+            (std::string(name) + std::to_string(::getpid()) + "_" +
+             std::to_string(counter.fetch_add(1,
+                 std::memory_order_relaxed)) + "_" +
+             std::to_string(std::chrono::system_clock::now()
+                                 .time_since_epoch().count()));
+        std::error_code create_ec;
+        fs::create_directories(root, create_ec);
+        std::error_code probe_ec;
+        if (fs::is_directory(root, probe_ec) && !probe_ec) {
+            return root;  // created, or a unique name that now exists
+        }
+        // Collision / transient: take the next unique name.
+    }
+    // Exhausted (effectively impossible with unique names): return the
+    // system temp dir so a failure surfaces as a clear test error rather
+    // than a dangling empty path.
+    return fs::temp_directory_path();
 }
 
 struct EnvironmentGuard {
@@ -9331,6 +9371,7 @@ namespace {
 
 struct C13Paths {
     fs::path root;
+    fs::path base;  // The actually-selected ancestry-clean base.
     fs::path global_path;
     fs::path user_path;
     fs::path project_path;
@@ -9343,8 +9384,8 @@ struct C13Paths {
         // base always exists (/dev/shm on Linux, clean /tmp on mac/CI), and
         // the PlainDirectoryWritesNoGitignore semantic pin performs the
         // explicit skip in void test context.
-        const auto clean = c13_clean_temp_base();
-        const fs::path base = clean.value_or(fs::temp_directory_path());
+        static std::atomic<unsigned> counter{0};
+        base = c13_clean_temp_base().value_or(fs::temp_directory_path());
         const auto suffix =
             std::chrono::system_clock::now().time_since_epoch().count();
         // Anchored under a git-ancestry-clean base so project/local writes
@@ -9352,6 +9393,9 @@ struct C13Paths {
         // never reach a real work tree such as a stray /tmp/.git.
         root = base /
                (std::string("loom_c13_") + std::string(tag) + "_" +
+                std::to_string(::getpid()) + "_" +
+                std::to_string(counter.fetch_add(1,
+                    std::memory_order_relaxed)) + "_" +
                 std::to_string(suffix));
         fs::create_directories(root);
         global_path  = root / "global.json";
@@ -10820,6 +10864,10 @@ TEST(ConfigManagerC13e, PlainDirectoryWritesNoGitignore) {
     const auto project_path = root / "project.json";
     const auto local_path   = root / "project.local.json";
 
+    // Snapshot any PRE-EXISTING (unrelated) .gitignore on the chain so the
+    // post-write assertion is immune to a dirty shared temp base.
+    const auto ignores_before = c13_gitignores_on_chain(root, *base);
+
     cc::core::McpServerConfig local;
     local.name = "ls";
     local.transport = "stdio";
@@ -10839,16 +10887,13 @@ TEST(ConfigManagerC13e, PlainDirectoryWritesNoGitignore) {
     }
     EXPECT_TRUE(fs::exists(local_path));
     EXPECT_TRUE(fs::exists(project_path));
-    EXPECT_FALSE(fs::exists(root / ".gitignore"));
-    // Negative assertion for the whole walk-up chain: with no .git marker
-    // above the temp root, the appender must not have created a .gitignore
-    // anywhere up to (and including) the chosen base.
-    for (auto d = root; ; d = d.parent_path()) {
-        EXPECT_FALSE(fs::exists(d / ".gitignore")) << d;
-        if (d == *base || d.parent_path() == d || d.parent_path().empty()) {
-            break;
-        }
+    // No NEW .gitignore appeared anywhere on the walk-up chain to the base.
+    const auto ignores_after = c13_gitignores_on_chain(root, *base);
+    for (const auto& path : ignores_after) {
+        EXPECT_TRUE(ignores_before.count(path) != 0)
+            << "unexpected new .gitignore: " << path;
     }
+    EXPECT_FALSE(fs::exists(root / ".gitignore"));
     // Data files are still correct.
     auto ldoc = cc::utils::json::parse_file(local_path);
     ASSERT_TRUE(ldoc.has_value());
@@ -10932,6 +10977,11 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
       "model": {"default_model": "seed-model"}
     })JSON");
 
+    // Snapshot pre-existing .gitignore files on the exact chain this
+    // fixture uses (recorded in p.base) before the fork storm.
+    const auto ignores_before =
+        c13_gitignores_on_chain(p.root, p.base);
+
     // Manager whose SAVE target is the same file the patchers write:
     // save(ProjectConfig) writes project_path_; set_user_setting writes
     // user_path_ — point both at one path.
@@ -11005,12 +11055,13 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
         const auto name = entry.path().filename().string();
         EXPECT_EQ(name.find(".tmp"), std::string::npos) << name;
     }
-    // Negative assertion: the fork storm created NO .gitignore anywhere on
-    // the clean walk-up chain from the temp root to its base.
-    const auto clean_base = c13_clean_temp_base();
-    ASSERT_TRUE(clean_base.has_value());
-    for (auto d = p.root; ; d = d.parent_path()) {
-        EXPECT_FALSE(fs::exists(d / ".gitignore")) << d;
-        if (d == *clean_base || d.parent_path() == d) break;
+    // Snapshot-negative assertion: the fork storm created NO new .gitignore
+    // anywhere on the exact chain from the temp root to p's recorded base
+    // (pre-existing unrelated ignores in a shared base stay allowed).
+    const auto ignores_after =
+        c13_gitignores_on_chain(p.root, p.base);
+    for (const auto& path : ignores_after) {
+        EXPECT_TRUE(ignores_before.count(path) != 0)
+            << "unexpected new .gitignore: " << path;
     }
 }

@@ -2,6 +2,8 @@
 /// @brief Split from test_ui.cpp - McpElicitation, Permissions, SettingsDialog, ToolPermission, WizardDialog (SLOC budget fix)
 
 #include <cstdlib>
+#include <atomic>
+#include <unistd.h>
 
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
@@ -49,17 +51,43 @@ namespace fs = std::filesystem;
 }
 
 // Git-ancestry-clean temp base (this box carries a stray /tmp/.git).
-[[nodiscard]] fs::path ui_dialog_clean_base() {
+[[nodiscard]] std::optional<fs::path> ui_dialog_clean_base() {
+    std::error_code ec;
     for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
         if (const char* v = std::getenv(var);
-            v != nullptr && fs::is_directory(v) &&
+            v != nullptr && fs::is_directory(v, ec) && !ec &&
             ui_dialog_ancestry_clean(v)) {
             return fs::path(v);
         }
+        ec.clear();
     }
-    if (fs::is_directory("/dev/shm") &&
+    if (fs::is_directory("/dev/shm", ec) && !ec &&
         ui_dialog_ancestry_clean("/dev/shm")) {
         return fs::path("/dev/shm");
+    }
+    if (ui_dialog_ancestry_clean(fs::temp_directory_path())) {
+        return fs::temp_directory_path();
+    }
+    return std::nullopt;
+}
+
+// Unique, retried temp directory under the clean base.
+[[nodiscard]] fs::path ui_dialog_make_temp_dir(std::string_view name) {
+    static std::atomic<unsigned> counter{0};
+    const fs::path base_dir =
+        ui_dialog_clean_base().value_or(fs::temp_directory_path());
+    for (int attempt = 0; attempt < 64; ++attempt) {
+        const fs::path dir =
+            base_dir /
+            (std::string(name) + std::to_string(::getpid()) + "_" +
+             std::to_string(counter.fetch_add(1,
+                 std::memory_order_relaxed)) + "_" +
+             std::to_string(std::chrono::system_clock::now()
+                                 .time_since_epoch().count()));
+        std::error_code create_ec;
+        fs::create_directories(dir, create_ec);
+        std::error_code probe_ec;
+        if (fs::is_directory(dir, probe_ec) && !probe_ec) return dir;
     }
     return fs::temp_directory_path();
 }
@@ -71,11 +99,7 @@ struct TempCwdGuard {
     fs::path previous;
     explicit TempCwdGuard() {
         previous = fs::current_path();
-        const auto dir = ui_dialog_clean_base() /
-            ("loom_ui_dialog_cwd_" +
-             std::to_string(std::chrono::system_clock::now()
-                                .time_since_epoch().count()));
-        fs::create_directories(dir);
+        const auto dir = ui_dialog_make_temp_dir("loom_ui_dialog_cwd_");
         fs::current_path(dir);
     }
     TempCwdGuard(const TempCwdGuard&) = delete;

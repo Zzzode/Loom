@@ -7,6 +7,7 @@ module;
 #if !defined(_WIN32)
 #include <fcntl.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <cstddef>
 #endif
@@ -50,7 +51,8 @@ inline std::mutex& teammate_inbox_mutex() {
 /// never produce a successful acquisition past 10s — an overshoot merely
 /// means fewer polls. The lock file is opened with O_NOFOLLOW, so a
 /// pre-placed symlink at the lock name fails the open (ELOOP) instead of
-/// being locked through.
+/// being locked through, and fstat()+S_ISREG rejects a pre-existing
+/// FIFO/socket/device at the same name (flock works on any fd type).
 class ScopedInboxLock {
 public:
     // Keep these in sync with ConfigFileLock in src/config/config.cppm
@@ -69,6 +71,19 @@ public:
         fd_ = ::open(lock_path_.c_str(),
                      O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
         if (fd_ < 0) return;
+        // Require a regular file: O_NOFOLLOW above only rejects symlinks,
+        // but a pre-existing FIFO/socket/device at the lock name opens
+        // successfully (O_RDWR on a FIFO needs no reader/writer peer on
+        // Linux/macOS) and flock(2) works on ANY fd type, so without this
+        // check the lock would be taken on a non-regular file instead of
+        // rejected.
+        struct stat lock_stat {};
+        if (::fstat(fd_, &lock_stat) != 0 ||
+            !S_ISREG(lock_stat.st_mode)) {
+            ::close(fd_);
+            fd_ = -1;
+            return;
+        }
         // Hard wall-clock deadline; see the class comment for why this is a
         // deadline loop on LOCK_NB rather than N blocking attempts.
         const auto deadline =

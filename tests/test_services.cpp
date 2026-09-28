@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #include <sys/wait.h>
@@ -11037,6 +11038,88 @@ TEST(ScopedInboxLockC14, SymlinkedLockNameRejectedAndTargetUntouched) {
     EXPECT_EQ(c14_read_file(canary_path), canary);
     EXPECT_FALSE(fs::exists(inbox))
         << "failed lock acquisition must bail before any inbox write";
+}
+
+// RFC-0001 B followup c15 — a pre-placed FIFO at the lock name opens
+// successfully (O_RDWR on a FIFO needs no reader/writer peer) and flock(2)
+// works on any fd type, so without fstat()+S_ISREG the lock would be taken
+// on a FIFO instead of rejected. Acquisition must fail FAST (no deadline
+// wait), the guarded mailbox writer must fail closed, and the FIFO itself
+// must be left in place.
+TEST(ScopedInboxLockC15, FifoLockNameRejectedWithoutBlocking) {
+    C14TeamEnv env;
+    const auto inbox = c14_inbox_path();
+    fs::create_directories(inbox.parent_path());
+    const fs::path lock_path = fs::path{inbox} += ".lock";
+    ASSERT_EQ(::mkfifo(lock_path.c_str(), 0600), 0);
+
+    const auto direct_start = std::chrono::steady_clock::now();
+    bool direct_locked = true;
+    {
+        cc::utils::ScopedInboxLock lock(inbox);
+        direct_locked = lock.locked();
+    }
+    const auto direct_elapsed = c14_elapsed_ms(direct_start);
+    EXPECT_FALSE(direct_locked);
+    EXPECT_LT(direct_elapsed, 3000)
+        << "non-regular lock name must fail fast, never await the deadline";
+
+    const auto write_start = std::chrono::steady_clock::now();
+    auto written = cc::utils::write_to_mailbox(
+        "worker",
+        cc::utils::TeammateMessage{
+            .from = "lead",
+            .text = "must-not-land",
+            .timestamp = "2",
+            .read = false,
+            .color = std::nullopt,
+            .summary = std::nullopt,
+        },
+        std::optional<std::string_view>{"c14team"});
+    const auto write_elapsed = c14_elapsed_ms(write_start);
+    ASSERT_FALSE(written.has_value());
+    EXPECT_NE(written.error().find("lock"), std::string::npos)
+        << written.error();
+    EXPECT_LT(write_elapsed, 3000)
+        << "guarded writer must fail fast on a non-regular lock";
+    EXPECT_FALSE(fs::exists(inbox))
+        << "failed lock acquisition must bail before any inbox write";
+    std::error_code ec;
+    EXPECT_TRUE(fs::is_fifo(lock_path, ec))
+        << "the FIFO itself must never be unlinked or replaced";
+}
+
+// Same FIFO-at-lock-name defense for ConfigFileLock: set_user_setting must
+// surface ConfigWriteError with the existing open-failure shape (not the
+// symlink-specific wording), leave the FIFO in place, create no user.json,
+// and return without awaiting the 10s bound.
+TEST(ConfigManagerC15, FifoLockNameRejectedWithoutBlocking) {
+    C13Paths p("fifolock");
+    const std::string lock_path = p.user_path.string() + ".lock";
+    ASSERT_EQ(::mkfifo(lock_path.c_str(), 0600), 0);
+
+    auto m = p.manager();
+    const auto start = std::chrono::steady_clock::now();
+    auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+    const auto elapsed = std::chrono::duration_cast<
+        std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start).count();
+    ASSERT_FALSE(out.has_value());
+    EXPECT_NE(out.error().message.find("Cannot open config file for writing"),
+              std::string::npos)
+        << out.error().message;
+    EXPECT_NE(out.error().message.find("user.json.lock"),
+              std::string::npos)
+        << out.error().message;
+    EXPECT_EQ(out.error().message.find("symbolic link"), std::string::npos)
+        << "FIFO rejection must not borrow the symlink-specific wording";
+    EXPECT_LT(elapsed, 3000)
+        << "non-regular lock name must fail fast, never await the deadline";
+    EXPECT_FALSE(fs::exists(p.user_path))
+        << "failed lock acquisition must bail before any data-file write";
+    std::error_code ec;
+    EXPECT_TRUE(fs::is_fifo(lock_path, ec))
+        << "the FIFO itself must never be unlinked or replaced";
 }
 
 // Stale regular-file/FIFO debris at the reserved legacy tmp name is an old

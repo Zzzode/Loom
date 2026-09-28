@@ -2131,6 +2131,21 @@ private:
                     : ConfigLockState::Failed;
                 return;
             }
+            // Require a regular file: O_NOFOLLOW only rejects symlinks.
+            // A pre-existing FIFO/socket/device at the lock name opens
+            // successfully (O_RDWR on a FIFO needs no peer) and flock
+            // works on any fd type, so reject it as an ordinary open
+            // failure rather than locking a non-regular file. Reported as
+            // Failed (not Symlink): the specific symlink wording is
+            // reserved for the ELOOP/EMLINK path.
+            struct stat lock_stat {};
+            if (::fstat(fd, &lock_stat) != 0 ||
+                !S_ISREG(lock_stat.st_mode)) {
+                ::close(fd);
+                fd = -1;
+                state = ConfigLockState::Failed;
+                return;
+            }
             const auto deadline =
                 std::chrono::steady_clock::now() + kLockWaitTimeout;
             for (;;) {

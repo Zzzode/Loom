@@ -915,6 +915,9 @@ class WorkerPermissionGrants {public:
           agent_name_(std::move(agent_name)) {}
 
     /// True when a whole-tool allow rule covers this exact tool name.
+    /// Lock-free snapshot read, like cc::utils::read_inbox: a torn read
+    /// during a concurrent rewrite fails to parse and yields no rules
+    /// (fail closed). The RMW in apply_updates is the only writer.
     [[nodiscard]] bool allows(std::string_view tool_name) {
         for (const auto& rule : load_rules()) {
             if (rule.rule_content.empty() && rule.tool_name == tool_name) {
@@ -932,6 +935,23 @@ class WorkerPermissionGrants {public:
         if (!parsed) return;
         const auto root = parsed->root();
         if (!root.is_arr()) return;
+
+        // ONE locked read-modify-write region, in the same order as
+        // write_to_mailbox: in-process mutex first, then the cross-process
+        // flock on the grants path sibling, and ONLY THEN load+merge+write.
+        // The previous code loaded OUTSIDE save_rules' flock, so two
+        // processes (or threads) could load the same baseline and the last
+        // writer silently dropped the other's distinct rules.
+        std::lock_guard<std::mutex> proc_lock(grants_mutex_);
+        const auto path = grants_path();
+        cc::utils::ScopedFileLock flock(path);
+        if (!flock.locked()) {
+            // Fail closed: drop this update rather than persist against an
+            // unlocked file. The grant was already enforced for THIS call;
+            // a future identical tool use simply re-prompts the leader,
+            // which re-sends the same addRules update.
+            return;
+        }
 
         std::vector<WorkerAllowRule> rules = load_rules();
         std::size_t added = 0;
@@ -964,7 +984,7 @@ class WorkerPermissionGrants {public:
                 }
             });
         });
-        if (added > 0) save_rules(rules);
+        if (added > 0) write_rules_locked(path, rules);
     }
 
 private:
@@ -976,6 +996,9 @@ private:
                 ".json");
     }
 
+    /// Raw unlocked parse of the grant file. Callers either hold the RMW
+    /// locks (apply_updates) or tolerate a stale/fail-closed snapshot
+    /// (allows). A missing/corrupt file yields an empty rule set.
     [[nodiscard]] std::vector<WorkerAllowRule> load_rules() {
         std::vector<WorkerAllowRule> rules;
         const auto path = grants_path();
@@ -1000,10 +1023,14 @@ private:
         return rules;
     }
 
-    void save_rules(const std::vector<WorkerAllowRule>& rules) {
-        const auto path = grants_path();
-        cc::utils::ScopedFileLock lock(path);
-        if (!lock.locked()) return;
+    /// Raw full-file rewrite of the grant file. CALLER MUST HOLD
+    /// grants_mutex_ AND the ScopedFileLock on `path` for the whole
+    /// surrounding load-merge-write. (The old save_rules() took only the
+    /// flock itself and was called after an unlocked load, which lost
+    /// concurrent updates; a self-flock here would also deadlock against
+    /// the caller's held flock on a second fd.)
+    void write_rules_locked(const fs::path& path,
+                            const std::vector<WorkerAllowRule>& rules) {
         std::error_code ec;
         fs::create_directories(path.parent_path(), ec);
         std::ofstream out(path, std::ios::trunc);
@@ -1022,6 +1049,18 @@ private:
 
     std::string team_name_;
     std::string agent_name_;
+
+    // Process-wide lock serializing in-process read-modify-write cycles on
+    // worker grant files, mirroring teammate_inbox_mutex() for inboxes but
+    // deliberately SEPARATE: grant files live under permissions/ (not an
+    // inbox). Cross-process serialization is the ScopedFileLock flock on
+    // the grants path sibling taken in apply_updates; this static mutex
+    // serializes the multiple in-process threads (e.g. concurrent pane
+    // permission checks) whose RMW would otherwise last-writer-win even
+    // though each write flocked — the flock in the old save_rules() did
+    // not cover the load in apply_updates (measured: 133/400 rules lost
+    // across threads, 100/200 across processes).
+    inline static std::mutex grants_mutex_{};
 };
 
 inline std::string PermissionSync::generate_request_id() {

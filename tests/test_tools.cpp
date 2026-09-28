@@ -11,7 +11,9 @@
 #ifndef _WIN32
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #endif
 
@@ -12801,6 +12803,219 @@ TEST(SwarmPermissionSync, AlwaysAllowUpdatesPersistAndGrant) {
     EXPECT_FALSE(strict.allows("Edit"));
 
     fs::remove_all(runtime_dir);
+}
+
+// ===========================================================================
+// RFC-0001 B followup c15 — WorkerPermissionGrants read-merge-write must be
+// ONE region under BOTH the in-process mutex and the cross-process flock on
+// the grants path sibling. Before the fix load_rules() ran OUTSIDE the
+// flock that only save_rules() took, so concurrent last-writer-wins lost
+// distinct rules (measured: 100/200 cross-process, 133/400 in-process).
+// ===========================================================================
+namespace {
+
+// Hermetic team runtime root for c15 grant tests: every grant path
+// resolves under it via LOOM_TEAM_RUNTIME_DIR, so no test touches the repo
+// cwd's .loom tree.
+struct C15GrantsEnv {
+    fs::path root;
+    EnvironmentGuard guard;
+
+    C15GrantsEnv()
+        : root(fs::temp_directory_path() /
+               ("loom_c15grants_" +
+                std::to_string(::getpid()) + "_" +
+                std::to_string(
+                    std::chrono::steady_clock::now().time_since_epoch().count()))),
+          guard("LOOM_TEAM_RUNTIME_DIR", root.string()) {
+        fs::create_directories(root);
+    }
+    ~C15GrantsEnv() {
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
+};
+
+[[nodiscard]] fs::path c15_grants_file(std::string_view team,
+                                       std::string_view agent) {
+    return fs::path{cc::utils::team_dir(team)} / "permissions" /
+           ("worker-allow-" + std::string(agent) + ".json");
+}
+
+// One addRules/allow batch as the leader would emit it.
+[[nodiscard]] std::string c15_updates_json(int producer, int count,
+                                           std::string_view prefix) {
+    std::string out =
+        R"([{"type":"addRules","behavior":"allow","rules":[)";
+    for (int i = 0; i < count; ++i) {
+        if (i != 0) out += ',';
+        out += R"({"toolName":")";
+        out += std::format("{}-{}-{}", prefix, producer, i);
+        out += "\"}";
+    }
+    out += "]}]";
+    return out;
+}
+
+[[nodiscard]] std::set<std::string> c15_read_rule_names(const fs::path& path) {
+    std::set<std::string> names;
+    auto parsed = cc::utils::json::parse_file(path);
+    if (!parsed) return names;
+    const auto list = parsed->root().get("rules");
+    if (!list.is_arr()) return names;
+    list.iter([&](cc::utils::json::JsonVal rule) {
+        const auto name = rule.get("tool_name");
+        if (name.is_str()) names.insert(std::string(name.as_str()));
+    });
+    return names;
+}
+
+constexpr std::string_view kC15XTeam = "c15xteam";
+constexpr std::string_view kC15XAgent = "worker";
+constexpr int kC15Producers = 8;
+constexpr int kC15RulesPerProducer = 25;
+
+}  // namespace
+
+// 8 forked processes apply 25 DISTINCT rules each (200 total) through the
+// real WorkerPermissionGrants API concurrently: the file must finish with
+// exactly 200 unique rules and valid JSON (the pre-fix attacker lost
+// 100/200). Children re-apply until their own 25 read back — the update is
+// idempotent, so this only rides out lock contention, never masks a loss.
+TEST(WorkerPermissionGrantsC15, CrossProcessMergeLosesNoRules) {
+    namespace sh = cc::utils::swarm_helpers;
+    C15GrantsEnv env;
+
+    auto child_loop = [](int producer) {
+        const std::string updates =
+            c15_updates_json(producer, kC15RulesPerProducer, "c15xtool");
+        bool settled = false;
+        for (int attempt = 0; attempt < 50; ++attempt) {
+            {
+                sh::WorkerPermissionGrants grants{std::string(kC15XTeam),
+                                                  std::string(kC15XAgent)};
+                grants.apply_updates(updates);
+            }
+            sh::WorkerPermissionGrants reader{std::string(kC15XTeam),
+                                              std::string(kC15XAgent)};
+            settled = true;
+            for (int i = 0; i < kC15RulesPerProducer; ++i) {
+                if (!reader.allows(
+                        std::format("c15xtool-{}-{}", producer, i))) {
+                    settled = false;
+                    break;
+                }
+            }
+            if (settled) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+        _exit(settled ? 0 : 1);
+    };
+
+    pid_t pids[kC15Producers];
+    for (int c = 0; c < kC15Producers; ++c) {
+        const pid_t pid = ::fork();
+        if (pid < 0) _exit(2);
+        if (pid == 0) child_loop(c);
+        pids[c] = pid;
+    }
+    for (int c = 0; c < kC15Producers; ++c) {
+        int status = 0;
+        ASSERT_EQ(::waitpid(pids[c], &status, 0), pids[c]);
+        ASSERT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0)
+            << "producer " << c << " never observed all its grants";
+    }
+
+    const auto grants_file = c15_grants_file(kC15XTeam, kC15XAgent);
+    auto parsed = cc::utils::json::parse_file(grants_file);
+    ASSERT_TRUE(parsed.has_value()) << "grant file must be valid JSON";
+    const auto list = parsed->root().get("rules");
+    ASSERT_TRUE(list.is_arr());
+
+    const auto names = c15_read_rule_names(grants_file);
+    EXPECT_EQ(names.size(),
+              static_cast<std::size_t>(
+                  kC15Producers * kC15RulesPerProducer));
+    EXPECT_EQ(list.size(), names.size())
+        << "no duplicate rules may be persisted";
+    for (int c = 0; c < kC15Producers; ++c) {
+        for (int i = 0; i < kC15RulesPerProducer; ++i) {
+            EXPECT_TRUE(names.contains(
+                std::format("c15xtool-{}-{}", c, i)))
+                << "missing rule from producer " << c << " index " << i;
+        }
+    }
+}
+
+// 4 in-process threads apply 100 DISTINCT rules each (400 total) through
+// separate WorkerPermissionGrants instances, as concurrent pane permission
+// checks do: all 400 must persist, valid JSON (pre-fix: 133/400 lost).
+TEST(WorkerPermissionGrantsC15, InProcessThreadsMergeLosesNoRules) {
+    namespace sh = cc::utils::swarm_helpers;
+    C15GrantsEnv env;
+    const std::string team = "c15tteam";
+    const std::string agent = "worker";
+    constexpr int kThreads = 4;
+    constexpr int kPerThread = 100;
+
+    std::vector<std::thread> threads;
+    threads.reserve(kThreads);
+    for (int t = 0; t < kThreads; ++t) {
+        threads.emplace_back([t, &team, &agent] {
+            const std::string updates =
+                c15_updates_json(t, kPerThread, "c15ttool");
+            sh::WorkerPermissionGrants grants(team, agent);
+            grants.apply_updates(updates);
+        });
+    }
+    for (auto& thread : threads) thread.join();
+
+    const auto grants_file = c15_grants_file(team, agent);
+    auto parsed = cc::utils::json::parse_file(grants_file);
+    ASSERT_TRUE(parsed.has_value()) << "grant file must be valid JSON";
+    const auto list = parsed->root().get("rules");
+    ASSERT_TRUE(list.is_arr());
+
+    const auto names = c15_read_rule_names(grants_file);
+    EXPECT_EQ(names.size(),
+              static_cast<std::size_t>(kThreads * kPerThread));
+    EXPECT_EQ(list.size(), names.size())
+        << "no duplicate rules may be persisted";
+    for (int t = 0; t < kThreads; ++t) {
+        for (int i = 0; i < kPerThread; ++i) {
+            EXPECT_TRUE(names.contains(
+                std::format("c15ttool-{}-{}", t, i)));
+        }
+    }
+}
+
+// A pre-placed FIFO at the grants lock name must be rejected FAST after
+// open via fstat()+S_ISREG: the update is dropped (fail closed), the data
+// file is never created, and no writer waits on the (uncontended) FIFO.
+TEST(WorkerPermissionGrantsC15, FifoLockNameRejectedWithoutBlocking) {
+    namespace sh = cc::utils::swarm_helpers;
+    C15GrantsEnv env;
+    const std::string team = "c15fteam";
+    const std::string agent = "worker";
+    const auto grants_file = c15_grants_file(team, agent);
+    fs::create_directories(grants_file.parent_path());
+    const auto lock_path = grants_file.string() + ".lock";
+    ASSERT_EQ(::mkfifo(lock_path.c_str(), 0600), 0);
+
+    sh::WorkerPermissionGrants grants(team, agent);
+    const auto start = std::chrono::steady_clock::now();
+    grants.apply_updates(sh::build_always_allow_updates_json("Bash"));
+    const auto elapsed = std::chrono::duration_cast<
+        std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start).count();
+    EXPECT_LT(elapsed, 3000)
+        << "non-regular lock name must fail fast, never await the deadline";
+    EXPECT_FALSE(fs::exists(grants_file))
+        << "failed lock must bail before any grant-file write";
+    EXPECT_FALSE(grants.allows("Bash"));
+    std::error_code ec;
+    EXPECT_TRUE(fs::is_fifo(lock_path, ec))
+        << "the FIFO itself must be left untouched";
 }
 
 // Approval dialog input formatting: Edit payloads render as a -/+ diff;

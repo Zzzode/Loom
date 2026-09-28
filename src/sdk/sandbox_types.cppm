@@ -7,11 +7,11 @@
 /// Both the SDK and the settings validation import from here.
 module;
 
-export module cc.entrypoints.sandbox_types;
+export module cc.sdk.sandbox_types;
 
 import std;
 
-export namespace cc::entrypoints::sandbox {
+export namespace cc::sdk::sandbox {
 
 // ============================================================================
 // Network Configuration
@@ -155,4 +155,4 @@ using SandboxIgnoreViolations = std::unordered_map<std::string, std::vector<std:
     return true;
 }
 
-} // namespace cc::entrypoints::sandbox
+} // namespace cc::sdk::sandbox

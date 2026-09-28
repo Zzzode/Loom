@@ -5,4 +5,4 @@ target_sources(cc_coordinator
         coordinator/coordinator_types.cppm
         coordinator/swarm.cppm
 )
-target_link_libraries(cc_coordinator PUBLIC cc_utils cc_state cc_entrypoints)
+target_link_libraries(cc_coordinator PUBLIC cc_utils cc_state)

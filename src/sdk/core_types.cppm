@@ -7,13 +7,13 @@ module;
 
 #include <cstdint>
 
-export module cc.entrypoints.core_types;
+export module cc.sdk.core_types;
 
 import std;
 
-import cc.entrypoints.core_schemas;
+import cc.sdk.core_schemas;
 
-export namespace cc::entrypoints::core_types {
+export namespace cc::sdk::core_types {
 
 // Re-export fundamental types from core_schemas
 using ModelUsage = core_schemas::ModelUsage;
@@ -281,4 +281,4 @@ inline constexpr std::array EXIT_REASONS = {
     "other", "bypass_permissions_disabled",
 };
 
-} // namespace cc::entrypoints::core_types
+} // namespace cc::sdk::core_types

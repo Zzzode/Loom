@@ -13,7 +13,6 @@ target_link_libraries(cc_core
         cc_coordinator
         cc_query
         cc_session
-        cc_entrypoints
         cc_bootstrap
         cc_tasks
         cc_tools

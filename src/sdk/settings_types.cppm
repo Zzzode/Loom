@@ -8,13 +8,13 @@
 module;
 
 
-export module cc.entrypoints.settings_types;
+export module cc.sdk.settings_types;
 
 import std;
 
-import cc.entrypoints.sandbox_types;
+import cc.sdk.sandbox_types;
 
-export namespace cc::entrypoints::settings {
+export namespace cc::sdk::settings {
 
 // ============================================================================
 // Settings Type
@@ -96,4 +96,4 @@ struct MergedSettings {
     std::vector<SettingsLayer> sources;
 };
 
-} // namespace cc::entrypoints::settings
+} // namespace cc::sdk::settings

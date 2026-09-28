@@ -8,14 +8,14 @@ module;
 
 #include <cstdint>
 
-export module cc.entrypoints.runtime_types;
+export module cc.sdk.runtime_types;
 
 import std;
 
-import cc.entrypoints.core_types;
-import cc.entrypoints.core_schemas;
+import cc.sdk.core_types;
+import cc.sdk.core_schemas;
 
-export namespace cc::entrypoints::runtime {
+export namespace cc::sdk::runtime {
 
 // ============================================================================
 // Effort Level
@@ -181,4 +181,4 @@ struct McpSdkServerConfigWithInstance {
     std::shared_ptr<void> server;
 };
 
-} // namespace cc::entrypoints::runtime
+} // namespace cc::sdk::runtime

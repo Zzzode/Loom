@@ -1,11 +1,11 @@
-/// @file sdk_types.cppm
+/// @file types.cppm
 /// @brief SDK type definitions for external integration.
 /// Migrated from src/entrypoints/sdk/ (coreTypes, controlTypes, toolTypes, etc.)
 module;
 
 #include <cstdint>
 
-export module cc.entrypoints.sdk_types;
+export module cc.sdk.types;
 
 import std;
 

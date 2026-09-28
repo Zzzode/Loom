@@ -8,13 +8,13 @@ module;
 
 #include <cstdint>
 
-export module cc.entrypoints.control_schemas;
+export module cc.sdk.control_schemas;
 
 import std;
 
-import cc.entrypoints.core_schemas;
+import cc.sdk.core_schemas;
 
-export namespace cc::entrypoints::control {
+export namespace cc::sdk::control {
 
 // ============================================================================
 // Hook Callback Types
@@ -494,4 +494,4 @@ struct UpdateEnvironmentVariablesMessage {
     std::unordered_map<std::string, std::string> variables;
 };
 
-} // namespace cc::entrypoints::control
+} // namespace cc::sdk::control

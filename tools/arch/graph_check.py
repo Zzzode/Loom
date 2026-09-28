@@ -86,7 +86,7 @@ TARGET_RANK = {
     "cc.bridge": 13,
     "cc.bootstrap": 13,
     "cc.cli": 14,
-    "cc.entrypoints": 15,
+    "cc.sdk": 16,
     "cc.benchmarks": 15,
 }
 

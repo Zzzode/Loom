@@ -8,11 +8,11 @@ module;
 
 #include <cstdint>
 
-export module cc.entrypoints.core_schemas;
+export module cc.sdk.core_schemas;
 
 import std;
 
-export namespace cc::entrypoints::core_schemas {
+export namespace cc::sdk::core_schemas {
 
 // ============================================================================
 // Usage & Model Types
@@ -467,4 +467,4 @@ struct RewindFilesResult {
     std::optional<int> deletions;
 };
 
-} // namespace cc::entrypoints::core_schemas
+} // namespace cc::sdk::core_schemas

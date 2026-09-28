@@ -8,14 +8,14 @@ module;
 
 #include <cstdint>
 
-export module cc.entrypoints.control_types;
+export module cc.sdk.control_types;
 
 import std;
 
-import cc.entrypoints.core_types;
-import cc.entrypoints.control_schemas;
+import cc.sdk.core_types;
+import cc.sdk.control_schemas;
 
-export namespace cc::entrypoints::control_types {
+export namespace cc::sdk::control_types {
 
 // Re-export control schemas types as canonical control types
 using SDKControlInitializeRequest = control::ControlInitializeRequest;
@@ -149,4 +149,4 @@ using StdinMessage = std::variant<
     control::UpdateEnvironmentVariablesMessage
 >;
 
-} // namespace cc::entrypoints::control_types
+} // namespace cc::sdk::control_types

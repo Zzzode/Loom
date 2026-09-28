@@ -732,7 +732,7 @@ get_diff_syntax_theme(const std::string& theme_name) {
 
 // ============================================================
 // Factory: Render a full structured diff from raw file contents.
-// Public API for consumers (assistant_text_message, diff_dialog, …).
+// Public API for consumers (assistant_text_message, message diff rows, …).
 // ============================================================
 
 /// Inputs for RenderStructuredDiff factory.

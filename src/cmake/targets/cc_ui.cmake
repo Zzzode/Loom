@@ -37,7 +37,6 @@ target_sources(cc_ui
         ui/dialogs/dialog_frame.cppm
         ui/dialogs/dialog_default_renderers.cppm
         ui/dialogs/hooks_dialog_renderer.cppm
-        ui/dialogs/diff_dialog.cppm
         ui/dialogs/elicitation_dialog.cppm
         ui/dialogs/mcp_dialogs.cppm
         ui/dialogs/plugin_dialog.cppm
@@ -96,7 +95,6 @@ target_sources(cc_ui
         ui/messages/collapsed_content_message.cppm
         ui/messages/local_command_output_message.cppm
         ui/messages/messages_list.cppm            # UI21 — Messages.tsx + Message.tsx (834+626 → 1308 loc)
-        ui/messages/messages_interactions.cppm    # UI25 — MessageSelector + messageActions
         ui/messages/message_pipeline.cppm         # P0-2 — 7-stage message pipeline (dedup/tag-filter/augment/hide/index)
         ui/messages/collapse_background_bash.cppm  # P0-2 — collapseBackgroundBashNotifications pass (Messages.tsx:520)
         ui/messages/scroll_keybindings.cppm       # UI22 — ScrollKeybindingHandler (1011 → 752 loc)

@@ -8,8 +8,9 @@
 //
 // To upgrade to nucleo/fuse quality WITHOUT breaking the offsets, this module
 // keeps the identical {0..3} contract but lets a real fuzzy_match score
-// (boundary/camel/consecutive/gap/path bonuses — ported from
-// cc.utils.file_index) decide WHICH bucket a candidate lands in. A strong
+// (boundary/camel/consecutive/gap/path bonuses — the same scoring scheme
+// used by the file-index fuzzy matcher) decide WHICH bucket a candidate
+// lands in. A strong
 // nucleo match (consecutive, at a path/camel boundary) can reach bucket 0/1
 // even when it isn't an exact prefix; a weak scattered subsequence drops to 3.
 //
@@ -27,8 +28,8 @@ import std;
 export namespace cc::ui::prompt::fuzzy_rank_nucleo {
 
 // =========================================================================
-// Scoring constants (fzf-v2 / nucleo compatible; mirrored from
-// cc.utils.file_index so the two stay in sync without a hard import).
+// Scoring constants (fzf-v2 / nucleo compatible; mirroring the file-index
+// fuzzy-match scoring design — kept self-contained here, no hard import).
 // =========================================================================
 
 constexpr int SCORE_MATCH = 16;

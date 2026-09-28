@@ -67,7 +67,14 @@ using cc::core::ToolResult;
         return ToolResult::error(std::format(
             "Runtime tool '{}' has no runtime handler", name));
     }
-    if (name == "config") return execute_config_tool(input);
+    // c13b: the structured config tool backend lives in
+    // cc.orchestration.runtime_backends; dispatch only does the seam
+    // lookup and fails closed with the standard terminal text.
+    if (name == "config") {
+        if (auto& backend = config_backend(); backend) return backend(input);
+        return ToolResult::error(std::format(
+            "Runtime tool '{}' has no runtime handler", name));
+    }
     if (name == "enter_plan_mode") {
         EnterPlanModeTool tool;
         auto title = json_string(json, "title").or_else([&] { return json_string(json, "goal"); }).value_or("Plan");

@@ -55,6 +55,8 @@ using cc::core::ToolResult;
 [[nodiscard]] Result<ToolResult> list_mcp_resources_backend(const ToolInput& input);
 [[nodiscard]] Result<ToolResult> read_mcp_resource_backend(const ToolInput& input);
 [[nodiscard]] Result<ToolResult> mcp_auth_backend(const ToolInput& input);
+// c13b structured config runtime tool.
+[[nodiscard]] Result<ToolResult> config_backend(const ToolInput& input);
 
 } // namespace cc::orchestration::detail
 
@@ -170,6 +172,16 @@ namespace fs = std::filesystem;
     };
 }
 
+/// Build the c13b structured config runtime tool backend. Exposed (not just
+/// used by the installer) so the null-slot test can reinstall it after
+/// clearing the process-global slot. Path/env resolution and the quiet load
+/// happen per call inside detail::config_backend.
+[[nodiscard]] inline cc::tools::RuntimeToolExecutor make_config_backend() {
+    return [](const cc::core::ToolInput& input) {
+        return detail::config_backend(input);
+    };
+}
+
 /// Build the registry missing-tool fallback: route unregistered tool names
 /// (per-server MCP tools exposed as short names) to connected MCP servers in
 /// all_statuses() order. Lifted verbatim from the main.cpp / server_routes
@@ -227,6 +239,8 @@ inline void install_runtime_backends() {
             [](const cc::core::ToolInput& input) {
                 return cc::tools::detail::execute_computer_use(input);
             });
+        // c13b: structured user-tier config tool.
+        cc::tools::set_config_backend(make_config_backend());
 
         // Agent tool factory (exact 5-arg make_agent_tool shape). The factory
         // is invoked per register_runtime_tools() call with that call's own

@@ -104,6 +104,11 @@ void set_computer_use_backend(RuntimeToolExecutor executor);
 void clear_computer_use_backend();
 [[nodiscard]] RuntimeToolExecutor& computer_use_backend();
 
+/// c13b: structured config runtime tool backend (user-tier JSON settings).
+void set_config_backend(RuntimeToolExecutor executor);
+void clear_config_backend();
+[[nodiscard]] RuntimeToolExecutor& config_backend();
+
 // ── Agent tool factory ────────────────────────────────────────────────────
 void set_agent_tool_factory(AgentToolFactory factory);
 void clear_agent_tool_factory();

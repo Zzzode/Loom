@@ -274,8 +274,27 @@ void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions
         }, "computer_use"));
     registry.register_tool(simple("brief", "Read or write the workspace brief",
         ToolPermission::Write, {prop("content", "string", "Brief content to save", false)}, "context"));
-    registry.register_tool(simple("config", "Read or update LOOM configuration",
-        ToolPermission::Write, {prop("action", "string", "get or set", false)}, "config"));
+    registry.register_tool(simple("config",
+        "Read and update the closed set of Loom user-configuration scalars "
+        "(model and network settings) used by the headless direct-query "
+        "server, which re-reads the user configuration on every request. The "
+        "interactive TUI resolves model/network settings from environment "
+        "variables and command-line flags only, so a write does not change "
+        "this session. Actions: \"get\" (default; with no key, returns every "
+        "projected key with its effective value and source; with a key, "
+        "returns one key), \"set\" (validates and writes the user-tier "
+        "config.json — value may be a string or a native JSON boolean or "
+        "number; null clears model.temperature or model.thinking_budget in "
+        "the user tier only), \"list\" (the writable, read-only, and blocked "
+        "key sets). Values currently supplied by an environment variable are "
+        "still written but reported as shadowed. API keys, endpoints, TLS, "
+        "permissions, prompts, and MCP servers are not writable with this "
+        "tool and credential values are never returned.",
+        ToolPermission::Write, {
+            prop("action", "string", "get (default), set, or list", false),
+            prop("key", "string", "Dotted configuration key, e.g. \"model.default_model\" (get/set)", false),
+            prop("value", "string", "New value as a string or a native JSON boolean/number; null clears model.temperature or model.thinking_budget (set only)", false),
+        }, "config"));
     registry.register_tool(simple("enter_plan_mode", "Enter plan mode",
         ToolPermission::Write, {}, "planning"));
     registry.register_tool(simple("exit_plan_mode", "Exit plan mode",

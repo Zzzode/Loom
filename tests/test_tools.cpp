@@ -41,6 +41,7 @@ import cc.tools.todo_write;
 import cc.tools.notebook;
 import cc.tools.registry;
 import cc.tools.runtime_registry;
+import cc.config.config;
 import cc.tools.path_validation;
 import cc.tools.bash_security;
 import cc.tools.bash_permissions;
@@ -12825,4 +12826,346 @@ TEST(SwarmPermissionSync, PermissionInputFormatting) {
         /*max_chars=*/100);
     EXPECT_LE(truncated.size(), 120u);
     EXPECT_NE(truncated.find("[truncated]"), std::string::npos);
+}
+
+// ===========================================================================
+// RFC-0001 B followup c13b — structured 'config' runtime tool, registry E2E.
+// ===========================================================================
+namespace {
+
+struct RtConfigJson {
+    cc::utils::json::JsonDoc doc;
+    cc::utils::json::JsonVal root;
+    explicit RtConfigJson(std::string_view text) {
+        if (auto parsed = cc::utils::json::parse(text)) {
+            doc = std::move(*parsed);
+            root = doc.root();
+        }
+    }
+};
+
+// Temp HOME + cwd with LOOM_CONFIG_DIR unset: the default ConfigManager the
+// backend builds per call resolves a fully hermetic user file.
+struct RtConfigEnv {
+    fs::path root;
+    fs::path home;
+    fs::path work;
+    EnvironmentUnsetGuard dir_guard;
+    EnvironmentGuard home_guard;
+    CurrentPathGuard cwd_guard;
+
+    RtConfigEnv()
+        : root(fs::temp_directory_path() /
+               ("loom_rt_config_" +
+                std::to_string(std::chrono::system_clock::now()
+                                   .time_since_epoch().count()))),
+          dir_guard("LOOM_CONFIG_DIR"),
+          home_guard("HOME", [&] { fs::create_directories(root);
+                                   home = root / "home";
+                                   work = root / "work";
+                                   fs::create_directories(home);
+                                   fs::create_directories(work);
+                                   return home.string(); }()),
+          cwd_guard(work) {}
+
+    ~RtConfigEnv() {
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
+
+    [[nodiscard]] fs::path user_file() const { return home / ".loom" / "config.json"; }
+
+    static cc::core::ToolRegistry& registry_with_perms(
+        cc::core::ToolRegistry& registry) {
+        cc::tools::register_runtime_tools(
+            registry,
+            cc::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+        return registry;
+    }
+};
+
+[[nodiscard]] cc::core::Result<cc::core::ToolResult>
+rt_config_run(cc::core::ToolRegistry& registry, std::string_view json) {
+    return registry.execute("config",
+                            cc::core::ToolInput::from_json(std::string(json)));
+}
+
+} // namespace
+
+// get on a missing installation returns structured defaults and creates no
+// files or directories.
+TEST(RuntimeConfigTool, GetMissingReturnsDefaultsAndCreatesNothing) {
+    RtConfigEnv env;
+    cc::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+
+    auto result = rt_config_run(registry, R"({"action":"get"})");
+    ASSERT_TRUE(result.has_value());
+    ASSERT_FALSE(result->content.empty());
+    EXPECT_FALSE(result->is_error) << result->content.front().text;
+
+    RtConfigJson parsed(result->content.front().text);
+    ASSERT_TRUE(parsed.root.is_obj());
+    EXPECT_EQ(std::string(parsed.root.get("action").as_str()), "get");
+    EXPECT_EQ(parsed.root.get("user_file_valid").as_bool(), true);
+    const auto model = parsed.root.get("settings").get("model");
+    EXPECT_TRUE(model.get("default_model").get("value").is_str());
+    EXPECT_EQ(std::string(model.get("default_model").get("source").as_str()),
+              "default");
+    EXPECT_TRUE(model.get("temperature").get("value").is_null());
+
+    EXPECT_FALSE(fs::exists(env.home / ".loom"));
+    EXPECT_FALSE(fs::exists(env.work / ".loom"));
+    EXPECT_FALSE(fs::exists(env.home / ".config"));
+}
+
+// Typed native values land on disk and are verified by a real ConfigManager
+// load; a single-key get reports source=file.
+TEST(RuntimeConfigTool, SetTypedValuesVerifiedByRealLoad) {
+    RtConfigEnv env;
+    cc::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+
+    const std::array<std::string_view, 4> sets = {{
+        R"({"action":"set","key":"model.temperature","value":0.7})",
+        R"({"action":"set","key":"model.extended_thinking","value":true})",
+        R"({"action":"set","key":"network.max_retries","value":2})",
+        R"({"action":"set","key":"model.default_model","value":"rt-model"})",
+    }};
+    for (const auto payload : sets) {
+        auto result = rt_config_run(registry, payload);
+        ASSERT_TRUE(result.has_value()) << payload;
+        EXPECT_FALSE(result->is_error) << result->content.front().text;
+    }
+
+    cc::core::ConfigManager manager;
+    ASSERT_TRUE(manager.load(cc::core::LoadOptions{.quiet = true}).has_value());
+    EXPECT_DOUBLE_EQ(*manager.settings().model.temperature, 0.7);
+    EXPECT_TRUE(manager.settings().model.extended_thinking);
+    EXPECT_EQ(manager.settings().network.max_retries, 2u);
+    EXPECT_EQ(manager.settings().model.default_model, "rt-model");
+
+    auto one = rt_config_run(
+        registry, R"({"action":"get","key":"network.max_retries"})");
+    ASSERT_TRUE(one.has_value());
+    RtConfigJson parsed(one->content.front().text);
+    const auto setting = parsed.root.get("setting");
+    EXPECT_EQ(std::string(setting.get("source").as_str()), "file");
+    EXPECT_EQ(setting.get("value").as_int(), 2);
+    EXPECT_EQ(setting.get("writable").as_bool(), true);
+}
+
+// Invalid values, read-only keys, blocked surfaces, and unknown keys are
+// terminal tool errors.
+TEST(RuntimeConfigTool, InvalidReadonlyBlockedUnknownAreErrors) {
+    RtConfigEnv env;
+    cc::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+
+    auto expect_error = [&](std::string_view payload, std::string_view hint) {
+        auto result = rt_config_run(registry, payload);
+        ASSERT_TRUE(result.has_value()) << payload;
+        EXPECT_TRUE(result->is_error) << payload;
+        EXPECT_NE(result->content.front().text.find(hint),
+                  std::string::npos)
+            << result->content.front().text;
+        EXPECT_FALSE(fs::exists(env.user_file()));
+    };
+    expect_error(R"({"action":"set","key":"model.temperature","value":2})",
+                 "between 0 and 1");
+    expect_error(R"({"action":"set","key":"model.default_model","value":""})",
+                 "must not be empty");
+    expect_error(R"({"action":"set","key":"display.theme","value":"dark"})",
+                 "not writable through this tool");
+    expect_error(R"({"action":"set","key":"network.api_key","value":"abc"})",
+                 "ANTHROPIC_API_KEY");
+    expect_error(R"({"action":"set","key":"mcpServers","value":{}})",
+                 "loom mcp");
+    expect_error(R"({"action":"set","key":"xaaIdp","value":{}})", "/mcp xaa");
+    expect_error(R"({"action":"set","key":"nope.nope","value":1})",
+                 "Unknown configuration key");
+    expect_error(R"({"action":"set"})", "requires a key");
+    expect_error(R"({"action":"set","key":"network.max_retries"})",
+                 "requires a value");
+    expect_error(R"({"action":"get","key":"nope.nope"})",
+                 "Unknown configuration key");
+}
+
+// $LOOM_CONFIG_DIR routes both the write and subsequent reads.
+TEST(RuntimeConfigTool, HonorsConfigDirEnvRouting) {
+    const auto root = fs::temp_directory_path() / "loom_rt_config_dir";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    const auto cfg_dir = root / "cfg";
+    fs::create_directories(cfg_dir);
+    EnvironmentGuard dir_guard("LOOM_CONFIG_DIR", cfg_dir.string());
+    CurrentPathGuard cwd_guard(root);
+
+    cc::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+    auto result = rt_config_run(
+        registry, R"({"action":"set","key":"network.max_retries","value":6})");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_FALSE(result->is_error) << result->content.front().text;
+    EXPECT_TRUE(fs::exists(cfg_dir / "config.json"));
+
+    auto got = rt_config_run(registry, R"({"action":"get"})");
+    RtConfigJson parsed(got->content.front().text);
+    EXPECT_EQ(parsed.root.get("settings").get("network")
+                  .get("max_retries").get("value").as_int(), 6);
+
+    std::error_code ec;
+    fs::remove_all(root, ec);
+}
+
+// Junk user files are repaired through the salvage state machine and the
+// tri-state string is in the response.
+TEST(RuntimeConfigTool, JunkRepairResponsesCarrySalvageState) {
+    RtConfigEnv env;
+    cc::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+
+    fs::create_directories(env.user_file().parent_path());
+    {
+        std::ofstream(env.user_file())
+            << R"({"model":{"default_model":"kept"}} TRAILING JUNK)";
+    }
+    auto dropped = rt_config_run(
+        registry,
+        R"({"action":"set","key":"network.max_retries","value":3})");
+    ASSERT_TRUE(dropped.has_value());
+    RtConfigJson d(dropped->content.front().text);
+    EXPECT_EQ(std::string(d.root.get("repaired").as_str()),
+              "trailing_junk_dropped");
+
+    {
+        std::ofstream(env.user_file()) << "[1, 2] AND JUNK";
+    }
+    auto replaced = rt_config_run(
+        registry,
+        R"({"action":"set","key":"network.max_retries","value":4})");
+    ASSERT_TRUE(replaced.has_value());
+    RtConfigJson r(replaced->content.front().text);
+    EXPECT_EQ(std::string(r.root.get("repaired").as_str()),
+              "replaced_unparseable");
+
+    auto clean = rt_config_run(
+        registry,
+        R"({"action":"set","key":"network.max_retries","value":5})");
+    ASSERT_TRUE(clean.has_value());
+    RtConfigJson c(clean->content.front().text);
+    EXPECT_TRUE(c.root.get("repaired").is_null());
+
+    auto got = rt_config_run(registry, R"({"action":"get"})");
+    RtConfigJson g(got->content.front().text);
+    EXPECT_EQ(g.root.get("settings").get("network")
+                  .get("max_retries").get("value").as_int(), 5);
+}
+
+// list returns the closed writable/read-only/blocked sets plus null-clear
+// metadata.
+TEST(RuntimeConfigTool, ListPayloadShape) {
+    RtConfigEnv env;
+    cc::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+
+    auto result = rt_config_run(registry, R"({"action":"list"})");
+    ASSERT_TRUE(result.has_value());
+    ASSERT_FALSE(result->content.empty());
+    RtConfigJson parsed(result->content.front().text);
+    ASSERT_TRUE(parsed.root.is_obj());
+    const auto specs = parsed.root.get("specs");
+    EXPECT_EQ(specs.get("writable").size(), 7u);
+    EXPECT_EQ(specs.get("read_only").size(), 9u);
+    EXPECT_GE(specs.get("blocked").size(), 9u);
+    EXPECT_EQ(specs.get("null_clear_keys").size(), 2u);
+    EXPECT_TRUE(specs.get("null_clear_note").is_str());
+}
+
+// Null slot fails closed with the standard text; make_config_backend
+// reinstalls the real handler.
+TEST(RuntimeConfigTool, NullSlotFailsClosedThenReinstalls) {
+    RtConfigEnv env;
+    cc::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+
+    cc::tools::clear_config_backend();
+    {
+        auto result = rt_config_run(registry, R"({"action":"get"})");
+        ASSERT_TRUE(result.has_value());
+        EXPECT_TRUE(result->is_error);
+        EXPECT_EQ(result->content.front().text,
+                  "Runtime tool 'config' has no runtime handler");
+    }
+    cc::tools::set_config_backend(
+        cc::orchestration::make_config_backend());
+    {
+        auto result = rt_config_run(registry, R"({"action":"get"})");
+        ASSERT_TRUE(result.has_value());
+        EXPECT_FALSE(result->is_error) << result->content.front().text;
+    }
+}
+
+// Credential bytes never appear in any tool response, from file or env.
+TEST(RuntimeConfigTool, SecretBytesNeverLeakResponses) {
+    RtConfigEnv env;
+    cc::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+
+    constexpr std::string_view kSecret = "SECRET-rt-c13-distinctive-4242";
+    fs::create_directories(env.user_file().parent_path());
+    {
+        std::ofstream f(env.user_file());
+        f << "{\"network\":{\"api_key\":\"" << kSecret
+          << "\",\"base_url\":\"https://" << kSecret << ".invalid/\"}}";
+    }
+    EnvironmentGuard key_guard("ANTHROPIC_API_KEY", std::string(kSecret));
+
+    const std::array<std::string_view, 3> payloads = {{
+        R"({"action":"get","key":"network.api_key"})",
+        R"({"action":"get","key":"network.base_url"})",
+        R"({"action":"get"})",
+    }};
+    for (const auto payload : payloads) {
+        auto result = rt_config_run(registry, payload);
+        ASSERT_TRUE(result.has_value()) << payload;
+        EXPECT_EQ(result->content.front().text.find(kSecret),
+                  std::string::npos)
+            << result->content.front().text;
+    }
+
+    auto presence = rt_config_run(
+        registry, R"({"action":"get","key":"network.api_key"})");
+    RtConfigJson parsed(presence->content.front().text);
+    const auto setting = parsed.root.get("setting");
+    EXPECT_EQ(setting.get("set").as_bool(), true);
+    EXPECT_EQ(std::string(setting.get("source").as_str()), "env");
+}
+
+// A set shadowed by an engaged env var still writes and reports shadowed.
+TEST(RuntimeConfigTool, EnvShadowDisclosure) {
+    RtConfigEnv env;
+    cc::core::ToolRegistry registry;
+    RtConfigEnv::registry_with_perms(registry);
+    EnvironmentGuard model_guard("LOOM_MODEL", "env-rt-model");
+
+    auto result = rt_config_run(
+        registry,
+        R"({"action":"set","key":"model.default_model","value":"file-rt-model"})");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_FALSE(result->is_error) << result->content.front().text;
+    RtConfigJson parsed(result->content.front().text);
+    EXPECT_EQ(parsed.root.get("shadowed").as_bool(), true);
+    EXPECT_EQ(std::string(parsed.root.get("shadowed_by").as_str()),
+              "LOOM_MODEL");
+    EXPECT_EQ(std::string(parsed.root.get("value").as_str()),
+              "file-rt-model");
+
+    auto got = rt_config_run(
+        registry, R"({"action":"get","key":"model.default_model"})");
+    RtConfigJson g(got->content.front().text);
+    EXPECT_EQ(std::string(g.root.get("setting").get("source").as_str()),
+              "env");
+    EXPECT_EQ(std::string(g.root.get("setting").get("value").as_str()),
+              "env-rt-model");
 }

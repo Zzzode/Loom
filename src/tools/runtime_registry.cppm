@@ -251,10 +251,6 @@ constexpr auto collect_team_native_agents = &runtime_team_shared::collect_team_n
 
 [[nodiscard]] Result<ToolResult> execute_task_tool(std::string_view tool_name, const ToolInput& input);
 
-[[nodiscard]] fs::path config_path();
-
-[[nodiscard]] Result<ToolResult> execute_config_tool(const ToolInput& input);
-
 [[nodiscard]] Result<ToolResult> execute_skill_tool(const ToolInput& input);
 
 [[nodiscard]] Result<ToolResult> execute_local_resource_read(const ToolInput& input);

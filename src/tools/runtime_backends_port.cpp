@@ -32,6 +32,8 @@ struct RuntimeBackendSlots {
     RuntimeToolExecutor read_mcp_resource;
     RuntimeToolExecutor mcp_auth;
     RuntimeToolExecutor computer_use;
+    // c13b structured config runtime tool.
+    RuntimeToolExecutor config;
 
     // Agent tool factory.
     AgentToolFactory agent_tool_factory;
@@ -107,6 +109,12 @@ void clear_computer_use_backend() {
 RuntimeToolExecutor& computer_use_backend() {
     return detail::runtime_backend_slots().computer_use;
 }
+
+void set_config_backend(RuntimeToolExecutor executor) {
+    detail::runtime_backend_slots().config = std::move(executor);
+}
+void clear_config_backend() { detail::runtime_backend_slots().config = nullptr; }
+RuntimeToolExecutor& config_backend() { return detail::runtime_backend_slots().config; }
 
 // ── Agent tool factory ────────────────────────────────────────────────────
 void set_agent_tool_factory(AgentToolFactory factory) {

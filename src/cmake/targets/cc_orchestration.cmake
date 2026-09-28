@@ -39,6 +39,8 @@ target_sources(cc_orchestration
         orchestration/runtime_backends_lsp.cpp
         orchestration/runtime_backends_mcp.cpp
         orchestration/runtime_backends_computer_use.cpp
+        # c13b structured config runtime tool.
+        orchestration/runtime_backends_config.cpp
 )
 # Every link goes to a strictly lower-ranked layer. cc_tools is the rank-8
 # seam owner (runtime_backends.port / image_codec.port / runtime_registry);

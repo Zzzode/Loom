@@ -8,7 +8,6 @@
 module;
 
 #include <cctype>   // std::isalnum in safe_ref
-#include <cstdlib>  // std::getenv in config_path
 
 module cc.tools.runtime_registry;
 
@@ -242,34 +241,6 @@ namespace fs = std::filesystem;
         return ToolResult::success(output->empty() ? "(no output)" : std::string(*output));
     }
     return ToolResult::error(std::format("Unknown task tool: {}", tool_name));
-}
-
-[[nodiscard]] fs::path config_path() {
-    if (const char* home = std::getenv("HOME")) return fs::path{home} / ".loom" / "config.json";
-    return fs::path{".loom"} / "config.json";
-}
-
-[[nodiscard]] Result<ToolResult> execute_config_tool(const ToolInput& input) {
-    auto json = input.json();
-    auto action = json_string(json, "action").value_or("get");
-    auto key = json_string(json, "key");
-    auto value = json_string(json, "value");
-    auto path = config_path();
-    fs::create_directories(path.parent_path());
-
-    if (action == "set") {
-        if (!key || !value) return ToolResult::error("config set requires key and value");
-        std::ofstream out(path, std::ios::app);
-        if (!out) return ToolResult::error(std::format("Cannot write {}", path.string()));
-        out << *key << "=" << *value << "\n";
-        return ToolResult::success(std::format("Set {} in {}", *key, path.string()));
-    }
-
-    std::ifstream in(path);
-    if (!in) return ToolResult::success(std::format("No config file found at {}", path.string()));
-    std::stringstream buffer;
-    buffer << in.rdbuf();
-    return ToolResult::success(buffer.str());
 }
 
 [[nodiscard]] Result<ToolResult> execute_local_resource_read(const ToolInput& input) {

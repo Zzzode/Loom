@@ -5,7 +5,6 @@ target_sources(cc_config
         config/mcp_types.cppm
         config/config.cppm
         config/feature_flags.cppm
-        config/model_config.cppm
         config/settings.cppm
 )
 target_link_libraries(cc_config PUBLIC cc_utils cc_types cc_constants)

@@ -4,8 +4,6 @@ target_sources(cc_constants
     PUBLIC FILE_SET CXX_MODULES FILES
         constants/constants.cppm
         constants/cost_tracker.cppm
-        constants/figures.cppm
-        constants/output_styles.cppm
         constants/paths.cppm
         constants/product.cppm
         constants/prompts.cppm

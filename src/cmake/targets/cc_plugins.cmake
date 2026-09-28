@@ -2,7 +2,6 @@
 add_library(cc_plugins)
 target_sources(cc_plugins
     PUBLIC FILE_SET CXX_MODULES FILES
-        plugins/loader.cppm
         plugins/marketplace.cppm
         plugins/plugin.cppm
 )

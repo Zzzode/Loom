@@ -10,7 +10,6 @@ target_sources(cc_skills
         skills/bundled/skillify.cppm
         skills/bundled/stuck.cppm
         skills/bundled/update_config.cppm
-        skills/bundled/verify.cppm
         skills/loom_api.cppm
         skills/loom_api_content.cppm
         skills/keybindings.cppm

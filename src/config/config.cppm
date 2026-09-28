@@ -360,9 +360,22 @@ public:
         return {};
     }
 
-    /// Save current settings to the specified config file
+    /// Save current settings to the specified config file. c13d: routed
+    /// through the SAME hardened machinery as the patcher — symlink-leaf
+    /// refusal, bounded flock, unique O_EXCL|O_NOFOLLOW tmp, pre-existing
+    /// mode preservation, fsync, atomic rename — instead of a truncating
+    /// std::ofstream that followed symlinks and could leave a partial
+    /// file. This is a FULL replace (no read-modify-write CAS): the
+    /// in-memory document intentionally wins; a concurrent patched write
+    /// and a full save remain last-writer-wins by nature, never torn.
     [[nodiscard]] VoidResult save(ConfigSource target = ConfigSource::ProjectConfig) {
-        const auto& path = (target == ConfigSource::GlobalConfig) ? global_path_ : project_path_;
+        const bool is_global = (target == ConfigSource::GlobalConfig);
+        const auto& path = is_global ? global_path_ : project_path_;
+
+        // Fail closed on a symlinked leaf before touching anything.
+        if (auto link_error = symlinked_leaf_error(path)) {
+            return std::unexpected(*link_error);
+        }
 
         // Ensure parent directory exists
         auto parent = path.parent_path();
@@ -377,18 +390,27 @@ public:
             }
         }
 
-        // Serialize and write
-        auto json = serialize_settings(target);
-        std::ofstream file(path);
-        if (!file.is_open()) {
-            return std::unexpected(Error::make(
-                ErrorCode::ConfigWriteError,
-                std::format("Cannot open config file for writing: {}", path.string())
-            ));
+        const ConfigFileLock file_lock(path);
+        if (!file_lock.locked()) {
+            return std::unexpected(*file_lock.error());
         }
 
-        file << json;
+        // Serialize inside the lock and atomically replace (no CAS).
+        const auto json = serialize_settings(target);
+        Error write_error = Error::make(ErrorCode::InternalError, {});
+        const auto outcome = write_config_file_replace(
+            path, json, /*owner_only=*/false, /*expected=*/nullptr,
+            write_error);
+        if (outcome != AtomicWriteOutcome::Renamed) {
+            return std::unexpected(write_error);
+        }
         dirty_ = false;
+
+        // The project file itself stays VCS-tracked; only its lock sibling
+        // is ignored. Global/user saves never touch a .gitignore.
+        if (!is_global) {
+            ensure_config_gitignored(McpStorageScope::Project);
+        }
         return {};
     }
 
@@ -1942,37 +1964,157 @@ private:
         return {true, static_cast<std::uint64_t>(st.st_ino)};
     }
 
-    /// Result of one atomic CAS write attempt.
+    /// 16 hex chars (64 bits) of tmp-name randomness, so pre-spraying
+    /// symlinks at guessed "<path>.tmp.<pid>.<n>" names cannot exhaust the
+    /// retry loop. arc4random where the platform ships it; random_device +
+    /// mt19937_64 elsewhere (mirrors cc.tasks id generation).
+    [[nodiscard]] static std::string random_tmp_suffix() {
+        std::uint64_t value = 0;
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+        ::arc4random_buf(&value, sizeof(value));
+#else
+        static thread_local std::mt19937_64 rng{std::random_device{}()};
+        value = rng();
+#endif
+        constexpr char hex[] = "0123456789abcdef";
+        std::string out;
+        out.reserve(16);
+        for (int shift = 60; shift >= 0; shift -= 4) {
+            out.push_back(hex[(value >> shift) & 0x0F]);
+        }
+        return out;
+    }
+
+    /// Fail-closed classification of the target config leaf: a symlink
+    /// yields a SPECIFIC refusal (the old ofstream rename silently severed
+    /// it), an absent path or a regular file is writable.
+    [[nodiscard]] static std::optional<Error>
+    symlinked_leaf_error(const std::filesystem::path& path) {
+        std::error_code ec;
+        const auto status = std::filesystem::symlink_status(path, ec);
+        if (ec || status.type() == std::filesystem::file_type::not_found) {
+            return std::nullopt;
+        }
+        if (status.type() == std::filesystem::file_type::symlink) {
+            return Error::make(
+                ErrorCode::ConfigWriteError,
+                std::format(
+                    "{} is a symbolic link; refusing to write through a "
+                    "symlinked configuration file",
+                    path.string()));
+        }
+        if (status.type() != std::filesystem::file_type::regular) {
+            return Error::make(
+                ErrorCode::ConfigWriteError,
+                std::format("Cannot open config file for editing: {}",
+                            path.string()));
+        }
+        return std::nullopt;
+    }
+
+    /// Remove stale debris at the pre-c13c RESERVED fixed tmp name
+    /// (`<path>.tmp`, no pid suffix). A symlink is unlinked (link only),
+    /// and c13d also removes a regular file or FIFO (an old Loom crash
+    /// artifact that would otherwise block writes forever). A directory is
+    /// kept refused (it may contain real data). Returns false (with error)
+    /// only for that directory case or a failed unlink.
+    [[nodiscard]] static bool
+    clear_legacy_tmp(const std::filesystem::path& path, Error& error_out) {
+        const std::filesystem::path legacy_tmp = path.string() + ".tmp";
+        std::error_code probe_ec;
+        const auto probe =
+            std::filesystem::symlink_status(legacy_tmp, probe_ec);
+        if (probe_ec ||
+            probe.type() == std::filesystem::file_type::not_found) {
+            return true;
+        }
+        if (probe.type() == std::filesystem::file_type::directory) {
+            error_out = Error::make(
+                ErrorCode::ConfigWriteError,
+                std::format("Cannot open config file for writing: {}",
+                            legacy_tmp.string()));
+            return false;
+        }
+        std::error_code remove_ec;
+        std::filesystem::remove(legacy_tmp, remove_ec);
+        if (remove_ec) {
+            error_out = Error::make(
+                ErrorCode::ConfigWriteError,
+                std::format("Cannot open config file for writing: {}",
+                            legacy_tmp.string()));
+            return false;
+        }
+        return true;
+    }
+
+    /// Result of one atomic replace attempt.
     enum class AtomicWriteOutcome : std::uint8_t {
         Renamed,
         Conflict,  // Target changed between read and rename; caller retries.
         Failed,
     };
 
-    /// Process-shared advisory lock guarding one read-modify-write of a
-    /// config file. Every writer goes through patch_object_file, so the
-    /// flock (a separate open-file-description per holder, which also
-    /// serializes threads in one process) makes the absent→present
-    /// transition atomic and converges concurrent DISTINCT-key patches.
-    /// Same-key concurrent writes remain last-writer-wins.
+    /// Outcome of acquiring a ConfigFileLock.
+    enum class ConfigLockState : std::uint8_t {
+        Locked,
+        Timeout,   // Another holder kept the lock for the whole bounded wait.
+        Symlink,   // The lock path itself is a pre-placed symlink.
+        Failed,
+    };
+
+    /// Process-shared advisory lock guarding one read-modify-write (or full
+    /// replace) of a config file. The flock (a separate open-file
+    /// description per holder, which also serializes threads in one
+    /// process) makes the absent→present transition atomic and converges
+    /// concurrent DISTINCT-key patches. Same-key concurrent writes remain
+    /// last-writer-wins.
+    ///
+    /// Acquisition is BOUNDED: LOCK_NB + poll mirrors ScopedInboxLock
+    /// (200 attempts at 50ms ≈ 10s), so an external holder parks the agent
+    /// tool call for at most ~10s before it fails closed with a specific
+    /// message. A stale lock FILE left by a dead holder never blocks — the
+    /// kernel releases the flock when the holder's fd closes.
     struct ConfigFileLock {
         int fd = -1;
+        ConfigLockState state = ConfigLockState::Failed;
+        std::filesystem::path lock_path;
 
         explicit ConfigFileLock(const std::filesystem::path& path) {
-            const std::filesystem::path lock_path = path.string() + ".lock";
+            lock_path = path.string() + ".lock";
             if (auto parent = path.parent_path(); !parent.empty()) {
                 std::error_code ec;
                 std::filesystem::create_directories(parent, ec);
                 if (ec) return;
             }
-            // O_NOFOLLOW: a pre-placed symlink can never be locked/followed.
+            // O_NOFOLLOW: a pre-placed symlink at the lock name can never
+            // be locked or followed (open fails ELOOP).
             fd = ::open(lock_path.c_str(),
                         O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
-            if (fd < 0) return;
-            if (::flock(fd, LOCK_EX) != 0) {
+            if (fd < 0) {
+                state = (errno == ELOOP || errno == EMLINK)
+                    ? ConfigLockState::Symlink
+                    : ConfigLockState::Failed;
+                return;
+            }
+            constexpr int kMaxAttempts = 200;  // ~10s at 50ms
+            for (int attempt = 0; attempt < kMaxAttempts; ++attempt) {
+                if (::flock(fd, LOCK_EX | LOCK_NB) == 0) {
+                    state = ConfigLockState::Locked;
+                    return;
+                }
+                if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                    continue;
+                }
+                if (errno == EINTR) continue;
                 ::close(fd);
                 fd = -1;
+                state = ConfigLockState::Failed;
+                return;
             }
+            ::close(fd);
+            fd = -1;
+            state = ConfigLockState::Timeout;
         }
         ConfigFileLock(const ConfigFileLock&) = delete;
         ConfigFileLock& operator=(const ConfigFileLock&) = delete;
@@ -1982,7 +2124,38 @@ private:
                 (void)::close(fd);
             }
         }
-        [[nodiscard]] bool locked() const noexcept { return fd >= 0; }
+        [[nodiscard]] bool locked() const noexcept {
+            return state == ConfigLockState::Locked;
+        }
+
+        /// Terminal error for a non-Locked acquisition, or nullopt.
+        [[nodiscard]] std::optional<Error> error() const {
+            switch (state) {
+            case ConfigLockState::Locked:
+                return std::nullopt;
+            case ConfigLockState::Timeout:
+                return Error::make(
+                    ErrorCode::ConfigWriteError,
+                    std::format(
+                        "Timed out waiting for the configuration lock at {} "
+                        "(another Loom process is updating this configuration)",
+                        lock_path.string()));
+            case ConfigLockState::Symlink:
+                return Error::make(
+                    ErrorCode::ConfigWriteError,
+                    std::format(
+                        "{} is a symbolic link; refusing to write through a "
+                        "symlinked configuration lock file",
+                        lock_path.string()));
+            case ConfigLockState::Failed:
+                return Error::make(
+                    ErrorCode::ConfigWriteError,
+                    std::format("Cannot open config file for writing: {}",
+                                lock_path.string()));
+            }
+            return Error::make(ErrorCode::ConfigWriteError,
+                               "Cannot acquire configuration lock");
+        }
     };
 
     [[nodiscard]] static VoidResult
@@ -2019,7 +2192,13 @@ private:
             {
                 struct ::stat direct_st {};
                 if (::lstat(path.c_str(), &direct_st) == 0) {
-                    // Only a regular file (or absent path) is patchable.
+                    // Only a regular file (or absent path) is patchable; a
+                    // symlink leaf gets its specific fail-closed refusal.
+                    if (S_ISLNK(direct_st.st_mode)) {
+                        if (auto link_error = symlinked_leaf_error(path)) {
+                            return std::unexpected(*link_error);
+                        }
+                    }
                     if (!S_ISREG(direct_st.st_mode)) {
                         return std::unexpected(Error::make(
                             ErrorCode::ConfigWriteError,
@@ -2082,10 +2261,7 @@ private:
                 // restart so read+mutate+write all happen inside it.
                 file_lock = std::make_unique<ConfigFileLock>(path);
                 if (!file_lock->locked()) {
-                    return std::unexpected(Error::make(
-                        ErrorCode::ConfigWriteError,
-                        std::format("Cannot open config file for writing: {}",
-                                    path.string())));
+                    return std::unexpected(*file_lock->error());
                 }
                 continue;
             }
@@ -2097,8 +2273,9 @@ private:
                 ? file_signature(path)
                 : FileSignature{};
             Error write_error = Error::make(ErrorCode::InternalError, {});
-            const AtomicWriteOutcome outcome = write_config_file_atomic_cas(
-                path, doc.to_pretty_string(), owner_only, expected, write_error);
+            const AtomicWriteOutcome outcome = write_config_file_replace(
+                path, doc.to_pretty_string(), owner_only, &expected,
+                write_error);
             if (outcome == AtomicWriteOutcome::Renamed) return {};
             if (outcome == AtomicWriteOutcome::Failed) {
                 return std::unexpected(write_error);
@@ -2124,6 +2301,11 @@ private:
         // it owner-only, like ssh-style secret files. Applied to the tmp
         // BEFORE rename so the final file never briefly exists world-readable.
         const bool target_is_local = (path == local_path_);
+        const McpStorageScope target_scope =
+            target_is_local ? McpStorageScope::Local
+            : (path == project_path_) ? McpStorageScope::Project
+            : (path == user_path_) ? McpStorageScope::User
+            : McpStorageScope::Global;
         // The exact pre-extraction inline parse-failure error: same code and
         // literal, path interpolated here so the C6-pinned refusal text
         // stays byte-identical.
@@ -2154,12 +2336,12 @@ private:
             salvage_out);
         if (!patched) return std::unexpected(patched.error());
         (void)salvage_out;
-        // Protect the local tier on EVERY patch, not just when this process
-        // created it: a hand-created non-empty config.local.json must end up
-        // gitignored too. The applier is idempotent (no-op on a present
-        // entry) and never fatal.
-        if (target_is_local) {
-            ensure_local_config_gitignored();
+        // Local tier: data + lock both ignored (secret holder). Project
+        // tier: the data file stays VCS-tracked, only its .lock sibling is
+        // ignored. Idempotent and never fatal.
+        if (target_scope == McpStorageScope::Local ||
+            target_scope == McpStorageScope::Project) {
+            ensure_config_gitignored(target_scope);
         }
         return {};
     }
@@ -2176,22 +2358,24 @@ private:
     ///   the umask default); any status/chmod error falls back to default
     ///   behavior. A NEW file keeps the default umask mode.
     ///
-    /// c13c hardening: the temp file is UNIQUELY named
-    /// (`<path>.tmp.<pid>.<counter>`; a process-global counter keeps both
-    /// concurrent processes and concurrent in-process writers apart) and
-    /// created with open(O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW): a pre-created
-    /// symlink at that name can never be followed (O_NOFOLLOW/EEXIST), and
-    /// a racing creator loses into EEXIST which retries with a fresh name.
-    /// The legacy fixed `<path>.tmp` is additionally probed: a pre-placed
-    /// symlink is unlinked (unlink removes the link, never its target); any
-    /// other pre-existing entry (directory, FIFO, regular debris) is a
-    /// clean refusal rather than an open that blocks or truncates.
+    /// c13c/c13d-hardened unique-tmp atomic replace.
+    ///
+    /// The temp file is UNIQUELY named
+    /// (`<path>.tmp.<pid>.<counter>.<64-bit random>`) and created with
+    /// open(O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW): a pre-created symlink at
+    /// that name can never be followed (O_NOFOLLOW fails ELOOP), and a
+    /// racing creator loses into EEXIST/ELOOP and retries with a fresh
+    /// name. `expected != nullptr` enables the read-modify-write CAS gate
+    /// (rename only while the target still has the read inode; mismatch →
+    /// Conflict so the caller re-reads). A full save passes nullptr: the
+    /// in-memory document intentionally replaces the file, still under the
+    /// caller-held flock.
     [[nodiscard]] static AtomicWriteOutcome
-    write_config_file_atomic_cas(const std::filesystem::path& path,
-                                 const std::string& content,
-                                 bool owner_only,
-                                 const FileSignature& expected,
-                                 Error& error_out) {
+    write_config_file_replace(const std::filesystem::path& path,
+                              const std::string& content,
+                              bool owner_only,
+                              const FileSignature* expected,
+                              Error& error_out) {
         auto fail = [&](std::string message) {
             error_out = Error::make(ErrorCode::ConfigWriteError,
                                     std::move(message));
@@ -2215,34 +2399,27 @@ private:
             ? (existing_status.permissions() & std::filesystem::perms::mask)
             : std::filesystem::perms::unknown;
 
-        // Neutralize the pre-c13c fixed tmp name. symlink_status does NOT
-        // follow the link; unlink on a symlink removes only the directory
-        // entry. A non-symlink entry is refused (opening a directory/FIFO
-        // would fail oddly or block waiting for a reader).
-        const std::filesystem::path legacy_tmp = path.string() + ".tmp";
-        {
-            std::error_code probe_ec;
-            const auto probe =
-                std::filesystem::symlink_status(legacy_tmp, probe_ec);
-            if (!probe_ec &&
-                probe.type() != std::filesystem::file_type::not_found) {
-                if (probe.type() == std::filesystem::file_type::symlink) {
-                    std::error_code remove_ec;
-                    std::filesystem::remove(legacy_tmp, remove_ec);
-                } else {
-                    return fail(std::format(
-                        "Cannot open config file for writing: {}",
-                        legacy_tmp.string()));
-                }
-            }
+        // Neutralize the pre-c13c fixed tmp name (`<path>.tmp`, no pid
+        // suffix). A symlink is unlinked (link only, target untouched);
+        // regular-file/FIFO debris from an old Loom crash is removed too so
+        // it cannot permanently block writes post-upgrade; a directory is
+        // refused. Unique-named tmp files are NEVER cleaned up here.
+        if (!clear_legacy_tmp(path, error_out)) {
+            return AtomicWriteOutcome::Failed;
         }
 
         static std::atomic<std::uint64_t> tmp_counter{0};
         constexpr int kMaxTmpAttempts = 32;
         for (int attempt = 0; attempt < kMaxTmpAttempts; ++attempt) {
+            // pid + in-process counter + 64 bits of randomness: guessing a
+            // name in advance (to pre-place a symlink) is impractical, and
+            // an attacker who does race the exact name merely loses into
+            // EEXIST/ELOOP and this loop picks another.
             const std::filesystem::path temp =
                 path.string() + ".tmp." + std::to_string(::getpid()) + "." +
-                std::to_string(tmp_counter.fetch_add(1, std::memory_order_relaxed));
+                std::to_string(tmp_counter.fetch_add(1,
+                    std::memory_order_relaxed)) + "." +
+                random_tmp_suffix();
 
             // 0600 base for mode-managed writes (fchmod sets the exact mode
             // next); 0666 for a brand-new default-mode file so the umask is
@@ -2254,7 +2431,9 @@ private:
                                       O_CLOEXEC,
                                   open_mode);
             if (fd < 0) {
-                if (errno == EEXIST) continue;  // raced; take a fresh name
+                // Raced on the unique name, or a symlink was pre-placed at
+                // it (O_NOFOLLOW → ELOOP): take a fresh random name.
+                if (errno == EEXIST || errno == ELOOP) continue;
                 return fail(std::format(
                     "Cannot open config file for writing: {}", path.string()));
             }
@@ -2298,13 +2477,16 @@ private:
             // CAS gate immediately before rename: the target must still
             // identify the version this attempt read. A competing replace
             // always installs a new inode, so this detects it; the tmp is
-            // discarded and the caller re-reads and replays.
-            const FileSignature current = file_signature(path);
-            if (current.exists != expected.exists ||
-                current.inode != expected.inode) {
-                std::error_code remove_ec;
-                std::filesystem::remove(temp, remove_ec);
-                return AtomicWriteOutcome::Conflict;
+            // discarded and the caller re-reads and replays. A full save
+            // (expected == nullptr) skips the compare by design.
+            if (expected != nullptr) {
+                const FileSignature current = file_signature(path);
+                if (current.exists != expected->exists ||
+                    current.inode != expected->inode) {
+                    std::error_code remove_ec;
+                    std::filesystem::remove(temp, remove_ec);
+                    return AtomicWriteOutcome::Conflict;
+                }
             }
 
             if (::rename(temp.c_str(), path.c_str()) == 0) {
@@ -2312,7 +2494,8 @@ private:
             }
             // ENOENT/ENOTDIR here means the directory entry raced away in a
             // way that changes the target identity — re-read and retry.
-            if (errno == ENOENT || errno == ENOTDIR || errno == EISDIR) {
+            if (expected != nullptr &&
+                (errno == ENOENT || errno == ENOTDIR || errno == EISDIR)) {
                 std::error_code remove_ec;
                 std::filesystem::remove(temp, remove_ec);
                 return AtomicWriteOutcome::Conflict;
@@ -2327,26 +2510,79 @@ private:
                                 path.string()));
     }
 
-    /// First Local write: append the resolved local basename (e.g.
-    /// config.local.json) to the workspace-root .gitignore. The pattern
-    /// matches the file at any depth, so .loom/config.local.json is
-    /// ignored. Mirrors settings_manager: idempotent, copes with a missing
-    /// trailing newline; a missing/unwritable .gitignore is non-fatal.
-    void ensure_local_config_gitignored() const {
+    /// Append missing gitignore basename lines to the workspace-root
+    /// .gitignore (the appender's existing location; a bare basename
+    /// pattern matches the file at any depth, so .loom/<name> is covered).
+    /// Membership is line-exact (not substring) so an existing
+    /// "config.local.json.lock" line cannot make "config.local.json" look
+    /// present. Idempotent; copes with a missing trailing newline; a
+    /// missing/unwritable .gitignore is non-fatal.
+    void append_gitignore_basenames(
+        std::span<const std::string_view> basenames) const {
+        if (basenames.empty()) return;
         const auto gitignore = std::filesystem::current_path() / ".gitignore";
-        const std::string entry = local_path_.filename().string();
         std::string content;
         std::error_code ec;
         if (std::filesystem::exists(gitignore, ec)) {
             std::ifstream in(gitignore);
             content.assign(std::istreambuf_iterator<char>(in),
                            std::istreambuf_iterator<char>());
-            if (content.find(entry) != std::string::npos) return;
         }
+        const auto has_line = [&](std::string_view wanted) {
+            std::size_t pos = 0;
+            while (pos < content.size()) {
+                const std::size_t nl = content.find('\n', pos);
+                std::string_view line(content.data() + pos,
+                    (nl == std::string::npos ? content.size() : nl) - pos);
+                if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
+                if (line == wanted) return true;
+                if (nl == std::string::npos) break;
+                pos = nl + 1;
+            }
+            return false;
+        };
+
+        std::string additions;
+        for (const auto name : basenames) {
+            if (has_line(name)) continue;
+            if (!content.empty() && content.back() != '\n') additions += '\n';
+            additions += std::string(name) + '\n';
+            content += std::string(name) + '\n';
+        }
+        if (additions.empty()) return;
         std::ofstream out(gitignore, std::ios::app);
         if (!out.is_open()) return;
-        if (!content.empty() && content.back() != '\n') out << '\n';
-        out << entry << '\n';
+        out << additions;
+    }
+
+    /// Ensure the data + lock basenames of a written tier are ignored.
+    /// The PROJECT data file (.loom/config.json) is intentionally
+    /// VCS-TRACKED, so only its `.lock` sibling is ignored; the LOCAL data
+    /// file and lock are both secret-bearing and both ignored. User/global
+    /// tiers never touch a .gitignore.
+    void ensure_config_gitignored(McpStorageScope scope) const {
+        static constexpr std::string_view local[] = {
+            "config.local.json", "config.local.json.lock"};
+        static constexpr std::string_view project[] = {"config.json.lock"};
+        switch (scope) {
+        case McpStorageScope::Local:
+            append_gitignore_basenames(local);
+            return;
+        case McpStorageScope::Project:
+            append_gitignore_basenames(project);
+            return;
+        case McpStorageScope::Global:
+        case McpStorageScope::User:
+            return;
+        }
+    }
+
+    /// First Local write: append the resolved local basename (e.g.
+    /// config.local.json) AND its lock sibling to the workspace-root
+    /// .gitignore. Kept as a named entry point for the MCP wrapper; the
+    /// tier-generic implementation lives in ensure_config_gitignored.
+    void ensure_local_config_gitignored() const {
+        ensure_config_gitignored(McpStorageScope::Local);
     }
 };
 

@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/file.h>
 #include <unistd.h>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
@@ -6502,7 +6503,9 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     }
     EXPECT_TRUE(fs::exists(local_path));
     EXPECT_FALSE(fs::exists(project_path));
-    EXPECT_EQ(c6_read_file(root / ".gitignore"), "sentinel\nconfig.local.json\n");
+    // c13d: the local lock sibling is ignored alongside the data file.
+    EXPECT_EQ(c6_read_file(root / ".gitignore"),
+              "sentinel\nconfig.local.json\nconfig.local.json.lock\n");
 
     // The local tier is the documented secret holder: owner-only (0600).
     {
@@ -6526,7 +6529,10 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
                                               make_stdio("l2")).has_value());
     }
     const std::string gitignore = c6_read_file(root / ".gitignore");
-    EXPECT_EQ(c6_count_occurrences(gitignore, "config.local.json"), 1u);
+    // Line-exact idempotency (the lock line contains the data basename as
+    // a substring, so count whole lines).
+    EXPECT_EQ(c6_count_occurrences(gitignore, "config.local.json\n"), 1u);
+    EXPECT_EQ(c6_count_occurrences(gitignore, "config.local.json.lock\n"), 1u);
     auto parsed = cc::utils::json::parse_file(local_path);
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->root().get("mcpServers").size(), 2u);
@@ -7326,8 +7332,13 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     fs::permissions(local_path,
                     fs::perms::owner_read | fs::perms::owner_write | fs::perms::others_read,
                     fs::perm_options::replace);
-    // No .gitignore yet.
-    EXPECT_FALSE(fs::exists(root / ".gitignore"));
+    // c13d: the earlier PROJECT-tier writes already ignore the lock
+    // sibling, but the local data basename is not ignored yet.
+    if (fs::exists(root / ".gitignore")) {
+        const auto prior = c6_read_file(root / ".gitignore");
+        EXPECT_EQ(prior.find("config.local.json"), std::string::npos);
+        EXPECT_NE(prior.find("config.json.lock"), std::string::npos);
+    }
     {
         cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
@@ -7336,6 +7347,8 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     }
     ASSERT_TRUE(fs::exists(root / ".gitignore"));
     EXPECT_NE(c6_read_file(root / ".gitignore").find("config.local.json"),
+              std::string::npos);
+    EXPECT_NE(c6_read_file(root / ".gitignore").find("config.local.json.lock"),
               std::string::npos);
     EXPECT_EQ(mode_of(local_path),
               fs::perms::owner_read | fs::perms::owner_write);
@@ -10005,33 +10018,42 @@ TEST(ConfigManagerUserSettings, AtomicWriterTmpSymlinkNeverFollowed) {
               fs::file_type::symlink);
 }
 
-// A pre-created directory or FIFO at the legacy tmp name yields a clean
-// error and clobbers nothing.
-TEST(ConfigManagerUserSettings, AtomicWriterTmpDirAndFifoRefused) {
+// A pre-created directory at the legacy tmp name is refused cleanly; a
+// pre-created FIFO is treated as old crash debris and auto-unlinked so the
+// write proceeds (c13d; regular/FIFO debris must not block post-upgrade).
+TEST(ConfigManagerUserSettings, AtomicWriterTmpDirRefusedFifoCleared) {
     C13Paths p("tmpblock");
     const auto legacy_tmp = p.root /
                             (p.user_path.filename().string() + ".tmp");
-    for (const bool as_dir : {true, false}) {
+
+    // Directory: refused, nothing clobbered.
+    {
         std::error_code ec;
         fs::remove_all(legacy_tmp, ec);
-        if (as_dir) {
-            fs::create_directories(legacy_tmp, ec);
-            ASSERT_FALSE(ec);
-        } else {
-            ASSERT_EQ(::mkfifo(legacy_tmp.c_str(), 0600), 0);
-        }
+        fs::create_directories(legacy_tmp, ec);
+        ASSERT_FALSE(ec);
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
         auto out = m.set_user_setting("network.max_retries", c13_parse("3"));
         EXPECT_FALSE(out.has_value());
-        if (as_dir) {
-            EXPECT_EQ(fs::symlink_status(legacy_tmp).type(),
-                      fs::file_type::directory);
-        } else {
-            EXPECT_EQ(fs::symlink_status(legacy_tmp).type(),
-                      fs::file_type::fifo);
-        }
+        EXPECT_EQ(fs::symlink_status(legacy_tmp).type(),
+                  fs::file_type::directory);
         fs::remove_all(legacy_tmp, ec);
+    }
+
+    // FIFO: treated as stale debris, removed, write succeeds (no blocking
+    // open).
+    {
+        ASSERT_EQ(::mkfifo(legacy_tmp.c_str(), 0600), 0);
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        auto out = m.set_user_setting("network.max_retries", c13_parse("3"));
+        EXPECT_TRUE(out.has_value()) << out.error().message;
+        EXPECT_FALSE(fs::exists(legacy_tmp));
+        auto root = c13_parse([&] { std::ifstream f(p.user_path);
+            return std::string(std::istreambuf_iterator<char>(f),
+                               std::istreambuf_iterator<char>()); }());
+        EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 3);
     }
 }
 
@@ -10229,4 +10251,486 @@ TEST(ConfigManagerUserSettings, BomStrippedOnLoadAndPatch) {
         ASSERT_TRUE(reloaded.load().has_value());
         EXPECT_EQ(reloaded.settings().network.max_retries, 7u);
     }
+}
+
+// ===========================================================================
+// RFC-0001 B followup c13d — lockfile gitignore, bounded lock, full-save
+// hardening, legacy-tmp/random-name attacks.
+// ===========================================================================
+namespace {
+
+// Scratch git repo for gitignore tests; skipped when git is unavailable.
+struct C13GitRepo {
+    fs::path root;
+    fs::path loom;
+    fs::path outside;
+    std::unique_ptr<CurrentPathGuard> cwd_guard;
+    bool available = false;
+
+    explicit C13GitRepo(std::string_view tag)
+        : root(fs::temp_directory_path() /
+               (std::string("loom_c13_git_") + std::string(tag) + "_" +
+                std::to_string(std::chrono::system_clock::now()
+                                   .time_since_epoch().count()))) {
+        if (std::system("git --version >/dev/null 2>&1") != 0) return;
+        fs::create_directories(root);
+        loom = root / ".loom";
+        outside = root / "outside";
+        fs::create_directories(loom);
+        fs::create_directories(outside);
+        if (std::system(("git -C \"" + root.string() +
+                         "\" init -q --initial-branch main")
+                            .c_str()) != 0) {
+            return;
+        }
+        std::system(("git -C \"" + root.string() +
+                     "\" config user.email t@example.invalid").c_str());
+        std::system(("git -C \"" + root.string() +
+                     "\" config user.name c13d").c_str());
+        // Enter the repo only after it exists.
+        cwd_guard = std::make_unique<CurrentPathGuard>(root);
+        available = true;
+    }
+    ~C13GitRepo() {
+        // Restore cwd before removing the tree.
+        cwd_guard.reset();
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
+
+    void git(std::string_view cmd) const {
+        ASSERT_EQ(std::system(std::string(cmd).c_str()), 0) << cmd;
+    }
+
+    [[nodiscard]] std::string porcelain() const {
+        const auto out = root / "porcelain.txt";
+        const std::string cmd =
+            "git status --porcelain=v1 > " + out.string() + " 2>/dev/null";
+        std::system(cmd.c_str());
+        std::ifstream f(out);
+        return std::string((std::istreambuf_iterator<char>(f)),
+                           std::istreambuf_iterator<char>());
+    }
+
+    [[nodiscard]] cc::core::ConfigManager manager() const {
+        return cc::core::ConfigManager(outside / "global.json",
+                                       outside / "user.json",
+                                       loom / "config.json",
+                                       loom / "config.local.json");
+    }
+};
+
+bool c13_git_available() {
+    return std::system("git --version >/dev/null 2>&1") == 0;
+}
+
+} // namespace
+
+// Local-tier write: data file AND lock ignored, .gitignore tracked.
+TEST(ConfigManagerC13d, LocalWriteIgnoresDataAndLockTracksGitignore) {
+    if (!c13_git_available()) GTEST_SKIP() << "git not available";
+    C13GitRepo repo("local");
+    ASSERT_TRUE(repo.available);
+
+    cc::core::McpServerConfig cfg;
+    cfg.name = "srv";
+    cfg.transport = "stdio";
+    cfg.command = "node";
+    {
+        auto m = repo.manager();
+        ASSERT_TRUE(m.load().has_value());
+        ASSERT_TRUE(m.upsert_mcp_server(cc::core::McpStorageScope::Local, cfg)
+                        .has_value());
+    }
+    EXPECT_TRUE(fs::exists(repo.loom / "config.local.json"));
+    EXPECT_TRUE(fs::exists(repo.loom / "config.local.json.lock"));
+
+    repo.git("git add -A");
+    const auto status = repo.porcelain();
+    EXPECT_NE(status.find(".gitignore"), std::string::npos);
+    EXPECT_EQ(status.find("config.local.json"), std::string::npos) << status;
+    EXPECT_EQ(status.find("config.local.json.lock"), std::string::npos)
+        << status;
+}
+
+// Project-tier save: config.json TRACKED, only the lock is ignored.
+TEST(ConfigManagerC13d, ProjectSaveTracksDataIgnoresLock) {
+    if (!c13_git_available()) GTEST_SKIP() << "git not available";
+    C13GitRepo repo("project");
+    ASSERT_TRUE(repo.available);
+
+    {
+        auto m = repo.manager();
+        ASSERT_TRUE(m.load().has_value());
+        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+    EXPECT_TRUE(fs::exists(repo.loom / "config.json"));
+    EXPECT_TRUE(fs::exists(repo.loom / "config.json.lock"));
+
+    repo.git("git add -A");
+    const auto status = repo.porcelain();
+    EXPECT_NE(status.find(".loom/config.json"), std::string::npos) << status;
+    EXPECT_EQ(status.find("config.json.lock"), std::string::npos) << status;
+
+    // The .gitignore rule names the lock, never the data file.
+    std::ifstream gi(repo.root / ".gitignore");
+    const std::string text((std::istreambuf_iterator<char>(gi)),
+                           std::istreambuf_iterator<char>());
+    EXPECT_NE(text.find("config.json.lock"), std::string::npos);
+    EXPECT_EQ(text.find("\nconfig.json\n"), std::string::npos);
+}
+
+// Repeated local/project writes never duplicate ignore lines.
+TEST(ConfigManagerC13d, GitignoreLinesAreIdempotent) {
+    if (!c13_git_available()) GTEST_SKIP() << "git not available";
+    C13GitRepo repo("idem");
+    ASSERT_TRUE(repo.available);
+
+    cc::core::McpServerConfig cfg;
+    cfg.name = "srv";
+    cfg.transport = "stdio";
+    cfg.command = "node";
+    auto m = repo.manager();
+    ASSERT_TRUE(m.load().has_value());
+    for (int i = 0; i < 3; ++i) {
+        cfg.name = std::string("srv") + std::to_string(i);
+        ASSERT_TRUE(m.upsert_mcp_server(cc::core::McpStorageScope::Local, cfg)
+                        .has_value());
+    }
+    ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+
+    const std::string text = [] {
+        std::ifstream f(fs::current_path() / ".gitignore");
+        return std::string((std::istreambuf_iterator<char>(f)),
+                           std::istreambuf_iterator<char>());
+    }();
+    EXPECT_EQ(c6_count_occurrences(text, "config.local.json\n"), 1u) << text;
+    EXPECT_EQ(c6_count_occurrences(text, "config.local.json.lock\n"), 1u)
+        << text;
+    EXPECT_EQ(c6_count_occurrences(text, "config.json.lock\n"), 1u) << text;
+}
+
+// User/global tier writes create no .gitignore at all.
+TEST(ConfigManagerC13d, UserGlobalWritesNoGitignore) {
+    if (!c13_git_available()) GTEST_SKIP() << "git not available";
+    C13GitRepo repo("user");
+    ASSERT_TRUE(repo.available);
+
+    {
+        auto m = repo.manager();
+        ASSERT_TRUE(m.load().has_value());
+        ASSERT_TRUE(m.set_user_setting("network.max_retries", c13_parse("2"))
+                        .has_value());
+    }
+    EXPECT_FALSE(fs::exists(repo.root / ".gitignore"));
+    // The user-tier write lives outside the project tree; .loom stays
+    // empty (it is a pre-created empty directory from the fixture).
+    EXPECT_EQ(std::distance(fs::directory_iterator(repo.loom),
+                            fs::directory_iterator()), 0);
+    EXPECT_TRUE(fs::exists(repo.outside / "user.json"));
+}
+
+// A 2s external lock holder makes the writer WAIT and then succeed; a
+// long holder trips the ~10s bound with a clean, specific error and
+// leaves the file and directory untouched.
+TEST(ConfigManagerC13d, BoundedLockWaitSuccessThenTimeout) {
+    C13Paths p("lockwait");
+    const auto lock_path = p.user_path.string() + ".lock";
+
+    auto hold_for = [&](int seconds) {
+        pid_t pid = ::fork();
+        if (pid == 0) {
+            const int fd = ::open(lock_path.c_str(),
+                                  O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+            if (fd < 0) _exit(10);
+            if (::flock(fd, LOCK_EX) != 0) _exit(11);
+            for (int i = 0; i < seconds * 10; ++i) {
+                struct timespec ts{0, 100 * 1000 * 1000};
+                ::nanosleep(&ts, nullptr);
+            }
+            _exit(0);
+        }
+        return pid;
+    };
+
+    // Short holder: wait then succeed.
+    {
+        pid_t holder = hold_for(2);
+        // Ensure the child reaches flock before we start.
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        auto m = p.manager();
+        const auto start = std::chrono::steady_clock::now();
+        auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+        const auto elapsed = std::chrono::duration_cast<
+            std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start).count();
+        ASSERT_TRUE(out.has_value()) << (out ? "" : out.error().message);
+        EXPECT_GE(elapsed, 1500) << "writer should have waited on the lock";
+        int status = 0;
+        ASSERT_EQ(::waitpid(holder, &status, 0), holder);
+        auto fresh = p.manager();
+        ASSERT_TRUE(fresh.load().has_value());
+        EXPECT_EQ(fresh.settings().network.max_retries, 1u);
+    }
+
+    // Long holder: bounded wait fails closed with the specific message.
+    {
+        pid_t holder = hold_for(13);
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        c13_write_file(p.user_path, R"JSON({"network":{"max_retries":9}})JSON");
+        auto m = p.manager();
+        const auto start = std::chrono::steady_clock::now();
+        auto out = m.set_user_setting("network.max_retries", c13_parse("7"));
+        const auto elapsed = std::chrono::duration_cast<
+            std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start).count();
+        ASSERT_FALSE(out.has_value());
+        EXPECT_NE(out.error().message.find("another Loom process is updating"),
+                  std::string::npos);
+        EXPECT_NE(out.error().message.find(lock_path), std::string::npos);
+        EXPECT_GE(elapsed, 9000) << "should wait up to the ~10s bound";
+        EXPECT_LE(elapsed, 12000) << "must not park much past the bound";
+        ::kill(holder, SIGKILL);
+        int status = 0;
+        ASSERT_EQ(::waitpid(holder, &status, 0), holder);
+
+        // File unmodified; no tmp debris of any kind.
+        auto doc = cc::utils::json::parse_file(p.user_path);
+        ASSERT_TRUE(doc.has_value());
+        EXPECT_EQ(doc->root().get("network").get("max_retries").as_int(), 9);
+        for (const auto& entry : fs::directory_iterator(p.root)) {
+            const auto name = entry.path().filename().string();
+            EXPECT_EQ(name.find(".tmp."), std::string::npos) << name;
+            EXPECT_NE(name, "user.json.tmp") << name;
+        }
+    }
+}
+
+// Stale regular-file/FIFO debris at the reserved legacy tmp name is an old
+// crash artifact: auto-unlinked, the write proceeds cleanly.
+TEST(ConfigManagerC13d, LegacyTmpRegularAndFifoDebrisAutoRemoved) {
+    C13Paths p("legacydebris");
+    auto m = p.manager();
+    ASSERT_TRUE(m.load().has_value());
+
+    {
+        std::ofstream(p.user_path.string() + ".tmp") << "old crash junk";
+        auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+        ASSERT_TRUE(out.has_value()) << out.error().message;
+        EXPECT_FALSE(fs::exists(p.user_path.string() + ".tmp"));
+        auto root = c13_parse([&] { std::ifstream f(p.user_path);
+            return std::string(std::istreambuf_iterator<char>(f),
+                               std::istreambuf_iterator<char>()); }());
+        EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 1);
+    }
+    {
+        ASSERT_EQ(::mkfifo((p.user_path.string() + ".tmp").c_str(), 0600), 0);
+        auto out = m.set_user_setting("network.max_retries", c13_parse("2"));
+        ASSERT_TRUE(out.has_value()) << out.error().message;
+        EXPECT_FALSE(fs::exists(p.user_path.string() + ".tmp"));
+        auto root = c13_parse([&] { std::ifstream f(p.user_path);
+            return std::string(std::istreambuf_iterator<char>(f),
+                               std::istreambuf_iterator<char>()); }());
+        EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 2);
+    }
+}
+
+// A symlinked config LEAF fails closed with the specific message; a
+// symlinked lock path names the lock rather than its target.
+TEST(ConfigManagerC13d, SymlinkedLeafAndLockRefusedWithSpecificErrors) {
+    C13Paths p("leafsym");
+    const auto victim = p.root / "victim.txt";
+    constexpr std::string_view kCanary = "VICTIM-c13d-leaf-5521";
+    { std::ofstream(victim) << kCanary; }
+
+    // Symlinked data leaf.
+    fs::create_symlink(victim, p.user_path);
+    {
+        auto m = p.manager();
+        auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+        ASSERT_FALSE(out.has_value());
+        EXPECT_NE(out.error().message.find("symbolic link"),
+                  std::string::npos);
+        EXPECT_NE(out.error().message.find("symlinked configuration file"),
+                  std::string::npos);
+    }
+    {
+        std::ifstream f(victim);
+        const std::string bytes((std::istreambuf_iterator<char>(f)),
+                                std::istreambuf_iterator<char>());
+        EXPECT_EQ(bytes, kCanary);
+        std::error_code ec;
+        EXPECT_TRUE(fs::is_symlink(p.user_path, ec));
+    }
+
+    // Symlinked lock path.
+    fs::remove(p.user_path);
+    fs::create_symlink(victim, p.user_path.string() + ".lock");
+    {
+        auto m = p.manager();
+        auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+        ASSERT_FALSE(out.has_value());
+        EXPECT_NE(out.error().message.find("symlinked configuration lock"),
+                  std::string::npos);
+        EXPECT_NE(out.error().message.find("user.json.lock"),
+                  std::string::npos);
+        std::ifstream f(victim);
+        const std::string bytes((std::istreambuf_iterator<char>(f)),
+                                std::istreambuf_iterator<char>());
+        EXPECT_EQ(bytes, kCanary);
+    }
+}
+
+// save() through a pre-placed tmp symlink: victim intact, regular JSON.
+TEST(ConfigManagerC13d, FullSaveTmpSymlinkNeverFollowed) {
+    C13Paths p("savesym");
+    CurrentPathGuard cwd_guard(p.root);
+    const auto victim = p.root / "victim.txt";
+    constexpr std::string_view kCanary = "VICTIM-c13d-save-8830";
+    { std::ofstream(victim) << kCanary; }
+    fs::create_symlink(victim, p.project_path.string() + ".tmp");
+
+    auto m = p.manager();
+    ASSERT_TRUE(m.load().has_value());
+    ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+
+    {
+        std::ifstream f(victim);
+        const std::string bytes((std::istreambuf_iterator<char>(f)),
+                                std::istreambuf_iterator<char>());
+        EXPECT_EQ(bytes, kCanary);
+    }
+    std::error_code ec;
+    EXPECT_EQ(fs::symlink_status(p.project_path, ec).type(),
+              fs::file_type::regular);
+    auto doc = cc::utils::json::parse_file(p.project_path);
+    ASSERT_TRUE(doc.has_value());
+    EXPECT_TRUE(doc->root().is_obj());
+    EXPECT_FALSE(fs::exists(p.project_path.string() + ".tmp"));
+}
+
+// save() preserves a pre-existing 0600 mode across the replace.
+TEST(ConfigManagerC13d, FullSavePreservesMode) {
+    if (::getuid() == 0) GTEST_SKIP() << "modes are bypassed for root";
+    C13Paths p("savemode");
+    CurrentPathGuard cwd_guard(p.root);
+    c13_write_file(p.project_path, R"JSON({"network":{"max_retries":1}})JSON");
+    fs::permissions(p.project_path,
+                    fs::perms::owner_read | fs::perms::owner_write,
+                    fs::perm_options::replace);
+    auto m = p.manager();
+    ASSERT_TRUE(m.load().has_value());
+    ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    const auto mode = fs::status(p.project_path).permissions() & fs::perms::mask;
+    EXPECT_EQ(mode, fs::perms::owner_read | fs::perms::owner_write);
+}
+
+// save() through a symlinked leaf refuses with the specific error.
+TEST(ConfigManagerC13d, FullSaveSymlinkedLeafRefused) {
+    C13Paths p("saveleaf");
+    CurrentPathGuard cwd_guard(p.root);
+    const auto victim = p.root / "victim.txt";
+    { std::ofstream(victim) << "VICTIM-c13d-saveleaf"; }
+    fs::create_symlink(victim, p.project_path);
+    auto m = p.manager();
+    // No load(): a symlinked project leaf already hard-fails the tier read;
+    // here we verify save() itself fails closed when reached directly.
+    auto out = m.save(cc::core::ConfigSource::ProjectConfig);
+    ASSERT_FALSE(out.has_value());
+    EXPECT_NE(out.error().message.find("symlinked configuration file"),
+              std::string::npos);
+}
+
+// One full save() racing ten patched setters: every child succeeds and
+// the final file (and no intermediate one observed) is parseable JSON with
+// no tmp debris — never torn, last-writer-wins by nature.
+TEST(ConfigManagerC13d, ConcurrentSaveAndPatchersAlwaysParseable) {
+    C13Paths p("saveconcurrent");
+    CurrentPathGuard cwd_guard(p.root);
+    c13_write_file(p.user_path, R"JSON({"network":{"max_retries":1}})JSON");
+
+    constexpr int kChildren = 11;
+    std::array<int, kChildren> pids{};
+    for (int i = 0; i < kChildren; ++i) {
+        const pid_t pid = ::fork();
+        ASSERT_GE(pid, 0);
+        if (pid == 0) {
+            auto m = p.manager();
+            (void)m.load();
+            if (i == kChildren - 1) {
+                _exit(m.save(cc::core::ConfigSource::ProjectConfig)
+                          ? 0 : 2);
+            }
+            const char* keys[] = {"network.max_retries",
+                                  "model.max_output_tokens",
+                                  "model.context_window_size",
+                                  "model.thinking_budget",
+                                  "model.extended_thinking"};
+            const char* vals[] = {"100", "20000", "300000", "4096", "true"};
+            const int k = i % 5;
+            auto out = m.set_user_setting(
+                keys[k], c13_parse(vals[k]));
+            _exit(out.has_value() ? 0 : 2);
+        }
+        pids[static_cast<std::size_t>(i)] = pid;
+    }
+    for (pid_t pid : pids) {
+        int status = 0;
+        ASSERT_EQ(::waitpid(pid, &status, 0), pid);
+        ASSERT_TRUE(WIFEXITED(status));
+        EXPECT_EQ(WEXITSTATUS(status), 0);
+    }
+
+    // User file: every patcher landed distinct keys (project save targets
+    // a different path, so it cannot clobber the user file).
+    auto doc = cc::utils::json::parse_file(p.user_path);
+    ASSERT_TRUE(doc.has_value());
+    ASSERT_TRUE(doc->root().is_obj());
+    EXPECT_EQ(doc->root().get("model").get("max_output_tokens").as_int(),
+              20000);
+    EXPECT_EQ(doc->root().get("model").get("extended_thinking").as_bool(),
+              true);
+    // Project save produced a parseable full document.
+    auto project_doc = cc::utils::json::parse_file(p.project_path);
+    ASSERT_TRUE(project_doc.has_value());
+    EXPECT_TRUE(project_doc->root().is_obj());
+    for (const auto& entry : fs::directory_iterator(p.root)) {
+        EXPECT_EQ(entry.path().filename().string().find(".tmp."),
+                  std::string::npos);
+    }
+}
+
+// Pre-spraying symlinks at predictable legacy-style tmp names cannot block
+// the random-suffixed writer or reach the victim.
+TEST(ConfigManagerC13d, PresprayedPredictableTmpNamesDefeated) {
+    C13Paths p("prespray");
+    const auto victim = p.root / "victim.txt";
+    constexpr std::string_view kCanary = "VICTIM-c13d-prespray-2299";
+    { std::ofstream(victim) << kCanary; }
+    const pid_t pid = ::getpid();
+    for (int i = 0; i < 64; ++i) {
+        fs::create_symlink(
+            victim,
+            p.user_path.string() + ".tmp." + std::to_string(pid) + "." +
+                std::to_string(i));
+    }
+    auto m = p.manager();
+    ASSERT_TRUE(m.load().has_value());
+    auto out = m.set_user_setting("network.max_retries", c13_parse("3"));
+    ASSERT_TRUE(out.has_value()) << out.error().message;
+
+    {
+        std::ifstream f(victim);
+        const std::string bytes((std::istreambuf_iterator<char>(f)),
+                                std::istreambuf_iterator<char>());
+        EXPECT_EQ(bytes, kCanary);
+    }
+    std::error_code ec;
+    EXPECT_EQ(fs::symlink_status(p.user_path, ec).type(),
+              fs::file_type::regular);
+    auto root = c13_parse([&] { std::ifstream f(p.user_path);
+        return std::string(std::istreambuf_iterator<char>(f),
+                           std::istreambuf_iterator<char>()); }());
+    EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 3);
 }

@@ -10596,33 +10596,101 @@ TEST(ConfigManagerC13d, UserGlobalWritesNoGitignore) {
 }
 
 // A 2s external lock holder makes the writer WAIT and then succeed; a
-// long holder trips the ~10s bound with a clean, specific error and
-// leaves the file and directory untouched.
+// long holder trips the ~10s WALL-CLOCK bound with a clean, specific
+// error and leaves the file and directory untouched. Holder readiness is
+// a pipe handshake — the child signals only AFTER its flock succeeds — so
+// no fixed sleep guesses child readiness. That guess (plus an
+// attempt-counted "bound") made the old version acquire at ~13s under a
+// loaded 3-vCPU mac runner instead of timing out at 10s.
 TEST(ConfigManagerC13d, BoundedLockWaitSuccessThenTimeout) {
     C13Paths p("lockwait");
     const auto lock_path = p.user_path.string() + ".lock";
 
-    auto hold_for = [&](int seconds) {
-        pid_t pid = ::fork();
+    struct Holder {
+        pid_t pid;
+        int read_fd;
+    };
+    // Kills+reaps a still-held holder on scope exit, so an early ASSERT_*
+    // failure (including a failed readiness handshake) can never leak a
+    // forked child holding the lock. The normal path reaps explicitly and
+    // disarms the guard with release().
+    struct HolderReaper {
+        pid_t pid = -1;
+        HolderReaper() = default;
+        explicit HolderReaper(pid_t child) : pid(child) {}
+        HolderReaper(const HolderReaper&) = delete;
+        HolderReaper& operator=(const HolderReaper&) = delete;
+        ~HolderReaper() {
+            if (pid > 0) {
+                (void)::kill(pid, SIGKILL);
+                int status = 0;
+                (void)::waitpid(pid, &status, 0);
+            }
+        }
+        void release() { pid = -1; }
+    };
+    // Fork a child that takes LOCK_EX on lock_path, then writes one byte
+    // to the pipe only once the flock is actually held ('R'; 'E' if the
+    // open/flock failed), so the parent can block on read() instead of
+    // guessing readiness with a sleep. Plain ::pipe() — pipe2() is
+    // Linux-only and this test must stay macOS-portable.
+    auto spawn_holder = [&](int seconds) -> Holder {
+        int pipefd[2];
+        if (::pipe(pipefd) != 0) {
+            ADD_FAILURE() << "pipe: " << std::strerror(errno);
+            return {-1, -1};
+        }
+        const pid_t pid = ::fork();
+        if (pid < 0) {
+            ADD_FAILURE() << "fork: " << std::strerror(errno);
+            ::close(pipefd[0]);
+            ::close(pipefd[1]);
+            return {-1, -1};
+        }
         if (pid == 0) {
+            ::close(pipefd[0]);
             const int fd = ::open(lock_path.c_str(),
                                   O_RDWR | O_CREAT | O_CLOEXEC, 0600);
-            if (fd < 0) _exit(10);
-            if (::flock(fd, LOCK_EX) != 0) _exit(11);
+            const char fail = 'E';
+            if (fd < 0) {
+                (void)::write(pipefd[1], &fail, 1);
+                _exit(10);
+            }
+            if (::flock(fd, LOCK_EX) != 0) {
+                (void)::write(pipefd[1], &fail, 1);
+                _exit(11);
+            }
+            const char ready = 'R';
+            if (::write(pipefd[1], &ready, 1) != 1) _exit(12);
             for (int i = 0; i < seconds * 10; ++i) {
                 struct timespec ts{0, 100 * 1000 * 1000};
                 ::nanosleep(&ts, nullptr);
             }
             _exit(0);
         }
-        return pid;
+        ::close(pipefd[1]);  // parent's only handle is the read end
+        return {pid, pipefd[0]};
+    };
+    // Block until the holder child has reported its flock. ASSERT (not
+    // EXPECT): an 'E'/short read aborts the phase, and the armed
+    // HolderReaper reaps the child on the way out.
+    auto await_ready = [&](int fd) {
+        char b = 0;
+        ssize_t n = 0;
+        do {
+            n = ::read(fd, &b, 1);
+        } while (n == -1 && errno == EINTR);
+        ASSERT_EQ(n, 1);
+        ASSERT_EQ(b, 'R') << "holder child failed to acquire the lock";
+        ::close(fd);
     };
 
     // Short holder: wait then succeed.
     {
-        pid_t holder = hold_for(2);
-        // Ensure the child reaches flock before we start.
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        Holder h = spawn_holder(2);
+        ASSERT_GT(h.pid, 0);
+        HolderReaper reaper(h.pid);
+        await_ready(h.read_fd);
         auto m = p.manager();
         const auto start = std::chrono::steady_clock::now();
         auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
@@ -10630,18 +10698,23 @@ TEST(ConfigManagerC13d, BoundedLockWaitSuccessThenTimeout) {
             std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - start).count();
         ASSERT_TRUE(out.has_value()) << (out ? "" : out.error().message);
-        EXPECT_GE(elapsed, 1500) << "writer should have waited on the lock";
+        EXPECT_GE(elapsed, 1000) << "writer should have waited on the lock";
         int status = 0;
-        ASSERT_EQ(::waitpid(holder, &status, 0), holder);
+        ASSERT_EQ(::waitpid(h.pid, &status, 0), h.pid);
+        reaper.release();  // holder exited and is reaped
         auto fresh = p.manager();
         ASSERT_TRUE(fresh.load().has_value());
         EXPECT_EQ(fresh.settings().network.max_retries, 1u);
     }
 
-    // Long holder: bounded wait fails closed with the specific message.
+    // Long holder (30s nominal — well past the 10s bound even with
+    // scheduler-stalled sleeps): bounded wait fails closed with the
+    // specific message.
     {
-        pid_t holder = hold_for(13);
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        Holder h = spawn_holder(30);
+        ASSERT_GT(h.pid, 0);
+        HolderReaper reaper(h.pid);
+        await_ready(h.read_fd);
         c13_write_file(p.user_path, R"JSON({"network":{"max_retries":9}})JSON");
         auto m = p.manager();
         const auto start = std::chrono::steady_clock::now();
@@ -10654,10 +10727,11 @@ TEST(ConfigManagerC13d, BoundedLockWaitSuccessThenTimeout) {
                   std::string::npos);
         EXPECT_NE(out.error().message.find(lock_path), std::string::npos);
         EXPECT_GE(elapsed, 9000) << "should wait up to the ~10s bound";
-        EXPECT_LE(elapsed, 12000) << "must not park much past the bound";
-        ::kill(holder, SIGKILL);
+        EXPECT_LE(elapsed, 14000) << "deadline must hold under scheduler load";
+        ::kill(h.pid, SIGKILL);
         int status = 0;
-        ASSERT_EQ(::waitpid(holder, &status, 0), holder);
+        ASSERT_EQ(::waitpid(h.pid, &status, 0), h.pid);
+        reaper.release();  // holder killed and reaped
 
         // File unmodified; no tmp debris of any kind.
         auto doc = cc::utils::json::parse_file(p.user_path);

@@ -2098,12 +2098,18 @@ private:
     /// concurrent DISTINCT-key patches. Same-key concurrent writes remain
     /// last-writer-wins.
     ///
-    /// Acquisition is BOUNDED: LOCK_NB + poll mirrors ScopedInboxLock
-    /// (200 attempts at 50ms ≈ 10s), so an external holder parks the agent
-    /// tool call for at most ~10s before it fails closed with a specific
-    /// message. A stale lock FILE left by a dead holder never blocks — the
-    /// kernel releases the flock when the holder's fd closes.
+    /// Acquisition is BOUNDED by a steady_clock DEADLINE, not an attempt
+    /// count: LOCK_NB + 50ms poll for at most kLockWaitTimeout (10s, the
+    /// same bound as ScopedInboxLock). The deadline is checked before every
+    /// flock attempt, so a poll sleep that overshoots under scheduler
+    /// pressure (sleep_for is not real-time) can never produce a successful
+    /// acquisition past 10s — an overshoot merely means fewer polls. A
+    /// stale lock FILE left by a dead holder never blocks (the kernel
+    /// releases the flock when the holder's fd closes).
     struct ConfigFileLock {
+        static constexpr auto kLockWaitTimeout = std::chrono::seconds(10);
+        static constexpr auto kLockPollInterval = std::chrono::milliseconds(50);
+
         int fd = -1;
         ConfigLockState state = ConfigLockState::Failed;
         std::filesystem::path lock_path;
@@ -2125,25 +2131,43 @@ private:
                     : ConfigLockState::Failed;
                 return;
             }
-            constexpr int kMaxAttempts = 200;  // ~10s at 50ms
-            for (int attempt = 0; attempt < kMaxAttempts; ++attempt) {
+            const auto deadline =
+                std::chrono::steady_clock::now() + kLockWaitTimeout;
+            for (;;) {
+                // Deadline gate BEFORE the attempt: once expired, never
+                // call flock again, so no overshot sleep can acquire past
+                // the bound.
+                if (std::chrono::steady_clock::now() >= deadline) {
+                    ::close(fd);
+                    fd = -1;
+                    state = ConfigLockState::Timeout;
+                    return;
+                }
                 if (::flock(fd, LOCK_EX | LOCK_NB) == 0) {
                     state = ConfigLockState::Locked;
                     return;
                 }
                 if (errno == EWOULDBLOCK || errno == EAGAIN) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                    // Sleep no longer than the remaining budget: a
+                    // scheduler-stalled sleep still re-enters at the
+                    // deadline gate above and times out rather than
+                    // acquiring.
+                    const auto remaining =
+                        deadline - std::chrono::steady_clock::now();
+                    if (remaining <= std::chrono::steady_clock::duration::zero()) {
+                        continue;  // top-of-loop gate closes this out
+                    }
+                    const auto poll = std::chrono::duration_cast<
+                        std::chrono::steady_clock::duration>(kLockPollInterval);
+                    std::this_thread::sleep_for(std::min(poll, remaining));
                     continue;
                 }
-                if (errno == EINTR) continue;
+                if (errno == EINTR) continue;  // retry; gate re-checks time
                 ::close(fd);
                 fd = -1;
                 state = ConfigLockState::Failed;
                 return;
             }
-            ::close(fd);
-            fd = -1;
-            state = ConfigLockState::Timeout;
         }
         ConfigFileLock(const ConfigFileLock&) = delete;
         ConfigFileLock& operator=(const ConfigFileLock&) = delete;

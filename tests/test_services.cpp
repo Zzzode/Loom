@@ -78,6 +78,50 @@ struct CurrentPathGuard {
     }
 };
 
+/// True when walking up from `base` finds NO `.git` work-tree marker
+/// (directory for a normal repo, file for a worktree/submodule).
+[[nodiscard]] bool c13_ancestry_clean(const fs::path& base) {
+    std::error_code ec;
+    for (auto d = base; ; d = d.parent_path()) {
+        if (fs::exists(d / ".git", ec)) return false;
+        if (d.parent_path() == d || d.parent_path().empty()) return true;
+    }
+}
+
+/// Pick a temp base directory whose ancestry contains no git work tree
+/// (this dev box carries a stray /tmp/.git; CI /tmp is clean). Tries
+/// XDG_RUNTIME_DIR, TMPDIR, /dev/shm, then the system temp dir. Returns
+/// nullopt only if every candidate is inside a work tree.
+[[nodiscard]] std::optional<fs::path> c13_clean_temp_base() {
+    for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
+        if (const char* v = std::getenv(var);
+            v != nullptr && fs::is_directory(v) && c13_ancestry_clean(v)) {
+            return fs::path(v);
+        }
+    }
+    if (fs::is_directory("/dev/shm") && c13_ancestry_clean("/dev/shm")) {
+        return fs::path("/dev/shm");
+    }
+    if (c13_ancestry_clean(fs::temp_directory_path())) {
+        return fs::temp_directory_path();
+    }
+    return std::nullopt;
+}
+
+/// Temp root for a write test: anchored under a git-ancestry-clean base
+/// so a .gitignore appender walking up from cwd can never reach a real
+/// work tree such as a stray /tmp/.git. Creates the directory.
+[[nodiscard]] fs::path c13_make_temp_root(std::string_view name) {
+    const auto base = c13_clean_temp_base();
+    const fs::path root =
+        (base.value_or(fs::temp_directory_path())) /
+        (std::string(name) +
+         std::to_string(std::chrono::system_clock::now()
+                            .time_since_epoch().count()));
+    fs::create_directories(root);
+    return root;
+}
+
 struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
@@ -5513,8 +5557,7 @@ rl.on('line', line => {
 }
 
 TEST(ConfigManager, PersistsMcpServerSettings) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_config_test_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_config_test_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
 
@@ -5543,8 +5586,7 @@ TEST(ConfigManager, PersistsMcpServerSettings) {
 }
 
 TEST(ConfigManager, PreservesRemoteMcpServerAuthSettings) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_remote_mcp_config_test_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_remote_mcp_config_test_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
 
@@ -5596,8 +5638,7 @@ TEST(ConfigManager, PreservesRemoteMcpServerAuthSettings) {
 // cc.config.mcp_types settings shape — legacy snake_case reads, project/global
 // layering, and environment-layer non-interference.
 TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_types_legacy_test_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_types_legacy_test_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
@@ -5707,8 +5748,7 @@ TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
 // disabled server and an oauth issuer must survive load -> save -> reload
 // byte-for-byte in meaning, and be rewritten in canonical spelling.
 TEST(McpTypes, DisabledAndOauthIssuerSurviveConfigRewrite) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_types_disabled_issuer_test_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_types_disabled_issuer_test_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
@@ -5776,8 +5816,7 @@ TEST(McpTypes, DisabledAndOauthIssuerSurviveConfigRewrite) {
 // snake_case alike, but every rewrite emits only the canonical camelCase
 // key, including across a reload.
 TEST(McpTypes, ConfigScopeRoundTripsInCanonicalCamelCase) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_types_scope_test_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_types_scope_test_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
@@ -5845,8 +5884,7 @@ TEST(McpTypes, ConfigScopeRoundTripsInCanonicalCamelCase) {
 // must round-trip without a "disabled" or oauth "issuer" key in the rewrite,
 // while configScope is still written with its "project" default.
 TEST(McpTypes, AbsentDisabledAndIssuerKeysStayUnset) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_types_absent_test_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_types_absent_test_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
@@ -5904,8 +5942,7 @@ TEST(McpTypes, AbsentDisabledAndIssuerKeysStayUnset) {
 // Bad-typed members are tolerated (folded-in second phase below).
 TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() /
-        ("loom_mcp_types_xaa_idp_test_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_types_xaa_idp_test_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
@@ -6022,9 +6059,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
 // and a save/load/save cycle with the section absent is byte-stable (this
 // is also what makes /mcp xaa clear remove the section on rewrite).
 TEST(McpTypes, XaaIdpOmittedWhenUnset) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() /
-        ("loom_mcp_types_xaa_idp_absent_test_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_types_xaa_idp_absent_test_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path = root / "global.json";
@@ -6423,8 +6458,7 @@ TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
 // (inline arrays become multiline), the key order survives, and a reload
 // round-trips every field structurally.
 TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_shape_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_c6_shape_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
@@ -6559,9 +6593,7 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
 // project config.json, and reloads as the {global, local} overlay; core
 // commands also never touch the services-layer mcp_servers.json files.
 TEST(McpTypes, McpLocalUpsertDoesNotDuplicateGlobal) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_dup_guard_" + std::to_string(suffix));
-    fs::create_directories(root);
+    const auto root = c13_make_temp_root("loom_mcp_c6_dup_guard_");
     CurrentPathGuard cwd_guard(root);
     EnvironmentGuard home_guard("HOME", root.string());
 
@@ -6626,8 +6658,7 @@ TEST(McpTypes, McpLocalUpsertDoesNotDuplicateGlobal) {
 // yield an empty outcome; removing the last entry drops mcpServers but
 // preserves sibling sections.
 TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_remove_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_c6_remove_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
@@ -6732,7 +6763,7 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
 // one file per distinct owner; a global-only entry patches the legacy file.
 TEST(McpTypes, McpEnableDisablePatchesOwnerFilesAndGlobal) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_disable_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_c6_disable_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
@@ -6841,8 +6872,7 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFilesAndGlobal) {
 // global/project tiers keep loading; upserts against an unparseable tier
 // fail with an actionable message and leave bytes untouched.
 TEST(McpTypes, McpGarbageUserLocalFilesSkippedAndUpsertRejected) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_garbage_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_c6_garbage_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
@@ -6944,8 +6974,7 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
     if (::getuid() == 0) {
         GTEST_SKIP() << "read-only permissions are bypassed for root";
     }
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_unwritable_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_c6_unwritable_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
 
@@ -7000,8 +7029,7 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
 // re-emits the PROJECT FILE'S OWN value for physically-present names, never
 // the shadowing higher-tier value; global-owned entries still copy down.
 TEST(McpTypes, McpProjectSaveDoesNotLeakUserLocalSecrets) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_secret_boundary_" + std::to_string(suffix));
+    const auto root = c13_make_temp_root("loom_mcp_c6_secret_boundary_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
@@ -7082,11 +7110,9 @@ TEST(McpTypes, McpProjectSaveDoesNotLeakUserLocalSecrets) {
 // ConfigManager instance (no reload) cannot resurrect a removed entry or
 // misapply the §B filter, and an upsert stays coherent through a save.
 TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_b1_" + std::to_string(suffix));
-    fs::create_directories(root);
-    // The Local-upsert gitignore applier targets CWD/.gitignore by design;
-    // pin CWD to the temp root so test runs never touch the real checkout.
+    const auto root = c13_make_temp_root("loom_mcp_c6_b1_");
+    // Pin CWD to the git-ancestry-clean temp root so the walk-up
+    // gitignore appender never reaches a real work tree (e.g. /tmp/.git).
     CurrentPathGuard cwd_guard(root);
     const auto global_path  = root / "global.json";
     const auto user_path    = root / "user.json";
@@ -9311,9 +9337,20 @@ struct C13Paths {
     fs::path local_path;
 
     explicit C13Paths(std::string_view tag) {
+        // GTEST_SKIP() cannot run from a constructor (it expands to a
+        // `return <void-expr>`), so a ctor without any clean base falls back
+        // to the system temp dir rather than skipping; in practice a clean
+        // base always exists (/dev/shm on Linux, clean /tmp on mac/CI), and
+        // the PlainDirectoryWritesNoGitignore semantic pin performs the
+        // explicit skip in void test context.
+        const auto clean = c13_clean_temp_base();
+        const fs::path base = clean.value_or(fs::temp_directory_path());
         const auto suffix =
             std::chrono::system_clock::now().time_since_epoch().count();
-        root = fs::temp_directory_path() /
+        // Anchored under a git-ancestry-clean base so project/local writes
+        // and full saves (whose .gitignore appender walks up from cwd) can
+        // never reach a real work tree such as a stray /tmp/.git.
+        root = base /
                (std::string("loom_c13_") + std::string(tag) + "_" +
                 std::to_string(suffix));
         fs::create_directories(root);
@@ -10767,30 +10804,9 @@ TEST(ConfigManagerC13d, PresprayedPredictableTmpNamesDefeated) {
 // Plain non-git directory: local AND project writes must NOT create any
 // .gitignore anywhere (the data write itself is unaffected).
 TEST(ConfigManagerC13e, PlainDirectoryWritesNoGitignore) {
-    // Pick a base directory whose walk-up ancestry has NO .git marker
-    // (this box carries a stray /tmp/.git, so prefer XDG_RUNTIME_DIR /
-    // /dev/shm; skip only when every candidate sits under a work tree).
-    auto ancestry_clean = [](const fs::path& base) {
-        std::error_code ec;
-        for (auto d = base; ; d = d.parent_path()) {
-            if (fs::exists(d / ".git", ec)) return false;
-            if (d.parent_path() == d || d.parent_path().empty()) return true;
-        }
-    };
-    std::optional<fs::path> base;
-    for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
-        if (const char* v = std::getenv(var);
-            v != nullptr && fs::is_directory(v) && ancestry_clean(v)) {
-            base = fs::path(v);
-            break;
-        }
-    }
-    if (!base && fs::is_directory("/dev/shm") && ancestry_clean("/dev/shm")) {
-        base = fs::path("/dev/shm");
-    }
-    if (!base && ancestry_clean(fs::temp_directory_path())) {
-        base = fs::temp_directory_path();
-    }
+    // Anchored under the shared git-ancestry-clean temp base (this box
+    // carries a stray /tmp/.git, so XDG_RUNTIME_DIR / /dev/shm win).
+    const auto base = c13_clean_temp_base();
     if (!base) GTEST_SKIP() << "no .git-free temp base directory available";
 
     const auto suffix =
@@ -10824,6 +10840,15 @@ TEST(ConfigManagerC13e, PlainDirectoryWritesNoGitignore) {
     EXPECT_TRUE(fs::exists(local_path));
     EXPECT_TRUE(fs::exists(project_path));
     EXPECT_FALSE(fs::exists(root / ".gitignore"));
+    // Negative assertion for the whole walk-up chain: with no .git marker
+    // above the temp root, the appender must not have created a .gitignore
+    // anywhere up to (and including) the chosen base.
+    for (auto d = root; ; d = d.parent_path()) {
+        EXPECT_FALSE(fs::exists(d / ".gitignore")) << d;
+        if (d == *base || d.parent_path() == d || d.parent_path().empty()) {
+            break;
+        }
+    }
     // Data files are still correct.
     auto ldoc = cc::utils::json::parse_file(local_path);
     ASSERT_TRUE(ldoc.has_value());
@@ -10893,10 +10918,14 @@ TEST(ConfigManagerC13e, NestedCwdAppendsAtRepoRoot) {
 // no tmp debris. save() can only target project_path_, so the manager is
 // constructed with project_path_ aliasing the user config location.
 TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
+    // C13Paths anchors p.root under a git-ANCESTRY-CLEAN base (this box
+    // carries a stray /tmp/.git, which would otherwise make forked savers
+    // write config.json.lock into /tmp/.gitignore), so the claim below is
+    // now true rather than merely CI-lucky.
     C13Paths p("samefile");
     // Forked children inherit cwd: keep every ignore-append probe inside
-    // the temp root (a plain dir with no .git up-tree) so the repo-root
-    // .gitignore can never be touched.
+    // the clean temp root, whose walk-up contains no .git marker, so no
+    // .gitignore can be created anywhere up the chain.
     CurrentPathGuard cwd_guard(p.root);
     c13_write_file(p.project_path, R"JSON({
       "network": {"max_retries": 1},
@@ -10975,5 +11004,13 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
     for (const auto& entry : fs::directory_iterator(p.root)) {
         const auto name = entry.path().filename().string();
         EXPECT_EQ(name.find(".tmp"), std::string::npos) << name;
+    }
+    // Negative assertion: the fork storm created NO .gitignore anywhere on
+    // the clean walk-up chain from the temp root to its base.
+    const auto clean_base = c13_clean_temp_base();
+    ASSERT_TRUE(clean_base.has_value());
+    for (auto d = p.root; ; d = d.parent_path()) {
+        EXPECT_FALSE(fs::exists(d / ".gitignore")) << d;
+        if (d == *clean_base || d.parent_path() == d) break;
     }
 }

@@ -28,6 +28,43 @@ import cc.utils.hyperlink;
 
 namespace {
 
+namespace fs = std::filesystem;
+
+/// Git-ancestry-clean temp root (mirrors the helper in test_services):
+/// this box carries a stray /tmp/.git, so a chdir under a plain /tmp tree
+/// would let the config gitignore appender reach it.
+[[nodiscard]] bool cmd_ancestry_clean(const fs::path& base) {
+    std::error_code ec;
+    for (auto d = base; ; d = d.parent_path()) {
+        if (fs::exists(d / ".git", ec)) return false;
+        if (d.parent_path() == d || d.parent_path().empty()) return true;
+    }
+}
+
+[[nodiscard]] fs::path cmd_make_temp_root(std::string_view name) {
+    std::optional<fs::path> base;
+    for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
+        if (const char* v = std::getenv(var);
+            v != nullptr && fs::is_directory(v) && cmd_ancestry_clean(v)) {
+            base = fs::path(v);
+            break;
+        }
+    }
+    if (!base && fs::is_directory("/dev/shm") && cmd_ancestry_clean("/dev/shm")) {
+        base = fs::path("/dev/shm");
+    }
+    if (!base && cmd_ancestry_clean(fs::temp_directory_path())) {
+        base = fs::temp_directory_path();
+    }
+    const fs::path root =
+        (base.value_or(fs::temp_directory_path())) /
+        (std::string(name) +
+         std::to_string(std::chrono::system_clock::now()
+                            .time_since_epoch().count()));
+    fs::create_directories(root);
+    return root;
+}
+
 struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
@@ -209,8 +246,7 @@ TEST(AppCommandRegistry, DispatchesMigratedRuntimeCommands) {
 // the real AppCommandRegistry with temp HOME / LOOM_CONFIG_DIR / CWD.
 TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
     namespace fs = std::filesystem;
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_cmd_c6_flags_" + std::to_string(suffix));
+    const auto root = cmd_make_temp_root("loom_cmd_c6_flags_");
     fs::remove_all(root);
     const auto home = root / "home";
     const auto cfg  = root / "cfg";
@@ -368,8 +404,7 @@ TEST(AppCommandRegistry, ConfigListGetReflectLoadedConfig) {
 // mutates the LOADED settings and C6's §B filter still holds at the save.
 TEST(AppCommandRegistry, ConfigSetPreservesExistingSections) {
     namespace fs = std::filesystem;
-    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_cmd_c8_preserve_" + std::to_string(suffix));
+    const auto root = cmd_make_temp_root("loom_cmd_c8_preserve_");
     fs::remove_all(root);
     const auto home = root / "home";
     const auto cfg  = root / "cfg";

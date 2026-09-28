@@ -39,14 +39,39 @@ import cc.ui.messages.message_image;
 namespace {
 namespace fs = std::filesystem;
 
+// True when walking up from `base` finds no `.git` work-tree marker.
+[[nodiscard]] bool ui_dialog_ancestry_clean(const fs::path& base) {
+    std::error_code ec;
+    for (auto d = base; ; d = d.parent_path()) {
+        if (fs::exists(d / ".git", ec)) return false;
+        if (d.parent_path() == d || d.parent_path().empty()) return true;
+    }
+}
+
+// Git-ancestry-clean temp base (this box carries a stray /tmp/.git).
+[[nodiscard]] fs::path ui_dialog_clean_base() {
+    for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
+        if (const char* v = std::getenv(var);
+            v != nullptr && fs::is_directory(v) &&
+            ui_dialog_ancestry_clean(v)) {
+            return fs::path(v);
+        }
+    }
+    if (fs::is_directory("/dev/shm") &&
+        ui_dialog_ancestry_clean("/dev/shm")) {
+        return fs::path("/dev/shm");
+    }
+    return fs::temp_directory_path();
+}
+
 // RAII cwd redirect so dialog-driven default-ConfigManager saves land in a
-// temp directory instead of the ctest working directory (a project save
-// walks up to the checkout .git and would append ignore rules there).
+// git-ancestry-clean temp directory (a project save walks up for a .git
+// work tree; under a plain /tmp on this box it would reach /tmp/.git).
 struct TempCwdGuard {
     fs::path previous;
     explicit TempCwdGuard() {
         previous = fs::current_path();
-        const auto dir = fs::temp_directory_path() /
+        const auto dir = ui_dialog_clean_base() /
             ("loom_ui_dialog_cwd_" +
              std::to_string(std::chrono::system_clock::now()
                                 .time_since_epoch().count()));

@@ -14,7 +14,6 @@ target_sources(cc_ui
         ui/visual/code_highlight.cppm
         ui/widgets/custom_select.cppm
         ui/widgets/dev_bar.cppm
-        ui/visual/diff_view.cppm
         ui/widgets/fast_icon.cppm
         ui/dialogs/feature_dialogs.cppm
         ui/foundation/components_figures.cppm

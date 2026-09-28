@@ -40,31 +40,71 @@ inline std::mutex& teammate_inbox_mutex() {
 /// exclusive lock on a sibling "<inbox>.lock" file; flock is released on
 /// close (RAII) and automatically if the holder dies. TS uses proper-lockfile
 /// around every mailbox mutation.
+///
+/// Acquisition is BOUNDED by a steady_clock DEADLINE, not an attempt count:
+/// LOCK_NB + 50ms poll for at most kLockWaitTimeout (10s). A blocking
+/// flock(LOCK_EX) never returns EWOULDBLOCK while contended, so an
+/// attempt-counter loop only advanced on EINTR and could wait forever. The
+/// deadline is checked before every flock attempt, so a poll sleep that
+/// overshoots under scheduler pressure (sleep_for is not real-time) can
+/// never produce a successful acquisition past 10s — an overshoot merely
+/// means fewer polls. The lock file is opened with O_NOFOLLOW, so a
+/// pre-placed symlink at the lock name fails the open (ELOOP) instead of
+/// being locked through.
 class ScopedInboxLock {
 public:
+    // Keep these in sync with ConfigFileLock in src/config/config.cppm
+    // (RFC-0001 B followup c13i) — the two locks advertise the same bound.
+    static constexpr auto kLockWaitTimeout = std::chrono::seconds(10);
+    static constexpr auto kLockPollInterval = std::chrono::milliseconds(50);
+
     explicit ScopedInboxLock(const fs::path& inbox_path) {
 #if !defined(_WIN32)
         std::error_code ec;
         fs::create_directories(inbox_path.parent_path(), ec);
         lock_path_ = fs::path{inbox_path} += ".lock";
-        fd_ = ::open(lock_path_.c_str(), O_CREAT | O_RDWR | O_CLOEXEC, 0600);
+        // O_NOFOLLOW: a pre-placed symlink at the lock name can never be
+        // locked or followed (open fails ELOOP). Failure keeps fd_ < 0 and
+        // locked_ false; callers only have locked() to distinguish outcomes.
+        fd_ = ::open(lock_path_.c_str(),
+                     O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
         if (fd_ < 0) return;
-        // EINTR-safe bounded exclusive lock acquisition.
-        constexpr int kMaxAttempts = 200;  // ~10s at 50ms
-        for (int attempt = 0; attempt < kMaxAttempts; ++attempt) {
-            if (::flock(fd_, LOCK_EX) == 0) {
-                locked_ = true;
-                return;
-            }
-            if (errno != EINTR) {
+        // Hard wall-clock deadline; see the class comment for why this is a
+        // deadline loop on LOCK_NB rather than N blocking attempts.
+        const auto deadline =
+            std::chrono::steady_clock::now() + kLockWaitTimeout;
+        for (;;) {
+            // Deadline gate BEFORE the attempt: once expired, never call
+            // flock again, so no overshot sleep can acquire past the bound.
+            if (std::chrono::steady_clock::now() >= deadline) {
                 ::close(fd_);
                 fd_ = -1;
                 return;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            if (::flock(fd_, LOCK_EX | LOCK_NB) == 0) {
+                locked_ = true;
+                return;
+            }
+            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                // Sleep no longer than the remaining budget: a
+                // scheduler-stalled sleep still re-enters at the deadline
+                // gate above and times out rather than acquiring.
+                const auto remaining =
+                    deadline - std::chrono::steady_clock::now();
+                if (remaining <=
+                    std::chrono::steady_clock::duration::zero()) {
+                    continue;  // top-of-loop gate closes this out
+                }
+                const auto poll = std::chrono::duration_cast<
+                    std::chrono::steady_clock::duration>(kLockPollInterval);
+                std::this_thread::sleep_for(std::min(poll, remaining));
+                continue;
+            }
+            if (errno == EINTR) continue;  // retry; gate re-checks time
+            ::close(fd_);
+            fd_ = -1;
+            return;
         }
-        ::close(fd_);
-        fd_ = -1;
 #else
         (void)inbox_path;
 #endif

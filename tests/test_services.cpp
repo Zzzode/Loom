@@ -6,10 +6,13 @@
 #include <cstdlib>
 #include <atomic>
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netinet/in.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/file.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
@@ -10743,6 +10746,297 @@ TEST(ConfigManagerC13d, BoundedLockWaitSuccessThenTimeout) {
             EXPECT_NE(name, "user.json.tmp") << name;
         }
     }
+}
+
+// ===========================================================================
+// RFC-0001 B followup c14 — ScopedInboxLock hard wall-clock deadline and
+// O_NOFOLLOW. The old loop advertised "200 attempts ~10s" but called a
+// BLOCKING flock(LOCK_EX): while contended it never returns EWOULDBLOCK, so
+// the counter advanced only on EINTR and the wait was effectively unbounded.
+// These tests pin the same steady_clock deadline pattern/constants as
+// ConfigFileLock (c13i) and refusal of a symlinked lock name.
+// ===========================================================================
+namespace {
+
+// Hermetic team runtime root: every inbox path resolves under it via
+// LOOM_TEAM_RUNTIME_DIR, so no test ever touches the repo cwd's .loom tree.
+struct C14TeamEnv {
+    fs::path root;
+    EnvironmentGuard team_dir_guard;
+
+    C14TeamEnv()
+        : root([] {
+              static std::atomic<unsigned> counter{0};
+              const auto suffix =
+                  std::chrono::system_clock::now().time_since_epoch().count();
+              return fs::temp_directory_path() /
+                     (std::string("loom_c14_") +
+                      std::to_string(::getpid()) + "_" +
+                      std::to_string(counter.fetch_add(
+                          1, std::memory_order_relaxed)) +
+                      "_" + std::to_string(suffix));
+          }()),
+          team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string()) {
+        fs::create_directories(root);
+    }
+    ~C14TeamEnv() {
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
+};
+
+[[nodiscard]] fs::path c14_inbox_path(
+    std::string_view agent = "worker",
+    std::string_view team = "c14team") {
+    return fs::path{cc::utils::get_inbox_path(
+        agent, std::optional<std::string_view>{team})};
+}
+
+[[nodiscard]] std::string c14_read_file(const fs::path& path) {
+    std::ifstream in(path, std::ios::binary);
+    return std::string((std::istreambuf_iterator<char>(in)),
+                       std::istreambuf_iterator<char>());
+}
+
+struct C14Holder {
+    pid_t pid;
+    int read_fd;
+};
+
+// Kills+reaps a still-held holder on scope exit, so an early ASSERT_* can
+// never leak a forked child holding the lock. Mirrors the c13i reaper.
+struct C14HolderReaper {
+    pid_t pid = -1;
+    C14HolderReaper() = default;
+    explicit C14HolderReaper(pid_t child) : pid(child) {}
+    C14HolderReaper(const C14HolderReaper&) = delete;
+    C14HolderReaper& operator=(const C14HolderReaper&) = delete;
+    ~C14HolderReaper() {
+        if (pid > 0) {
+            (void)::kill(pid, SIGKILL);
+            int status = 0;
+            (void)::waitpid(pid, &status, 0);
+        }
+    }
+    void release() { pid = -1; }
+};
+
+// Fork a child that takes LOCK_EX on lock_path, then writes one byte to the
+// pipe only once the flock is actually held ('R'; 'E' on open/flock
+// failure), so the parent blocks on read() instead of guessing readiness
+// with a sleep. Plain ::pipe() for macOS portability (no pipe2).
+[[nodiscard]] C14Holder c14_spawn_holder(const std::string& lock_path,
+                                         int seconds) {
+    int pipefd[2];
+    if (::pipe(pipefd) != 0) {
+        ADD_FAILURE() << "pipe: " << std::strerror(errno);
+        return {-1, -1};
+    }
+    const pid_t pid = ::fork();
+    if (pid < 0) {
+        ADD_FAILURE() << "fork: " << std::strerror(errno);
+        ::close(pipefd[0]);
+        ::close(pipefd[1]);
+        return {-1, -1};
+    }
+    if (pid == 0) {
+        ::close(pipefd[0]);
+        const int fd = ::open(lock_path.c_str(),
+                              O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+        const char fail = 'E';
+        if (fd < 0) {
+            (void)::write(pipefd[1], &fail, 1);
+            _exit(10);
+        }
+        if (::flock(fd, LOCK_EX) != 0) {
+            (void)::write(pipefd[1], &fail, 1);
+            _exit(11);
+        }
+        const char ready = 'R';
+        if (::write(pipefd[1], &ready, 1) != 1) _exit(12);
+        for (int i = 0; i < seconds * 10; ++i) {
+            struct timespec ts{0, 100 * 1000 * 1000};
+            ::nanosleep(&ts, nullptr);
+        }
+        _exit(0);
+    }
+    ::close(pipefd[1]);  // parent's only handle is the read end
+    return {pid, pipefd[0]};
+}
+
+// Block until the holder child has reported its flock; ASSERT on any
+// handshake failure so the armed reaper cleans the child up.
+void c14_await_ready(int fd) {
+    char b = 0;
+    ssize_t n = 0;
+    do {
+        n = ::read(fd, &b, 1);
+    } while (n == -1 && errno == EINTR);
+    ASSERT_EQ(n, 1);
+    ASSERT_EQ(b, 'R') << "holder child failed to acquire the lock";
+    ::close(fd);
+}
+
+[[nodiscard]] long long c14_elapsed_ms(
+    const std::chrono::steady_clock::time_point& start) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::chrono::steady_clock::now() - start)
+        .count();
+}
+
+}  // namespace
+
+// A 2s external holder makes acquisition WAIT (blocking-style behavior) and
+// then succeed once the holder exits and the kernel releases the flock.
+TEST(ScopedInboxLockC14, BoundedWaitSucceedsAfterHolderReleases) {
+    C14TeamEnv env;
+    const auto inbox = c14_inbox_path();
+    fs::create_directories(inbox.parent_path());
+    const std::string lock_path = inbox.string() + ".lock";
+
+    C14Holder h = c14_spawn_holder(lock_path, 2);
+    ASSERT_GT(h.pid, 0);
+    C14HolderReaper reaper(h.pid);
+    c14_await_ready(h.read_fd);
+
+    const auto start = std::chrono::steady_clock::now();
+    cc::utils::ScopedInboxLock lock(inbox);
+    const auto elapsed = c14_elapsed_ms(start);
+    ASSERT_TRUE(lock.locked());
+    EXPECT_GE(elapsed, 1000) << "acquisition should wait on the holder";
+    EXPECT_LE(elapsed, 6000)
+        << "lock should be granted shortly after the 2s holder exits";
+
+    int status = 0;
+    ASSERT_EQ(::waitpid(h.pid, &status, 0), h.pid);
+    reaper.release();  // holder exited and is reaped
+}
+
+// A 30s holder trips the ~10s WALL-CLOCK bound: direct construction reports
+// locked()==false within [9s, 14s], and the production guarded mailbox
+// writer fails closed in the same contention window without touching the
+// inbox. Both contenders run concurrently so the suite pays one 10s wait,
+// not two; holder readiness is the pipe handshake, never a sleep guess.
+TEST(ScopedInboxLockC14, BoundedWaitTimesOutAndMailboxWriteFailsClosed) {
+    C14TeamEnv env;
+    const auto inbox = c14_inbox_path();
+    fs::create_directories(inbox.parent_path());
+    const std::string canary =
+        R"JSON([{"from":"lead","text":"keep","timestamp":"1","read":true}])JSON";
+    {
+        std::ofstream out(inbox, std::ios::binary);
+        out << canary;
+    }
+    const std::string lock_path = inbox.string() + ".lock";
+
+    C14Holder h = c14_spawn_holder(lock_path, 30);
+    ASSERT_GT(h.pid, 0);
+    C14HolderReaper reaper(h.pid);
+    c14_await_ready(h.read_fd);
+
+    struct DirectResult {
+        bool locked = true;
+        long long elapsed_ms = 0;
+    } direct;
+    std::thread contender([&] {
+        const auto t0 = std::chrono::steady_clock::now();
+        cc::utils::ScopedInboxLock lock(inbox);
+        direct.elapsed_ms = c14_elapsed_ms(t0);
+        direct.locked = lock.locked();
+    });
+
+    const auto write_start = std::chrono::steady_clock::now();
+    auto written = cc::utils::write_to_mailbox(
+        "worker",
+        cc::utils::TeammateMessage{
+            .from = "lead",
+            .text = "must-not-land",
+            .timestamp = "2",
+            .read = false,
+            .color = std::nullopt,
+            .summary = std::nullopt,
+        },
+        std::optional<std::string_view>{"c14team"});
+    const auto write_elapsed = c14_elapsed_ms(write_start);
+    contender.join();
+
+    EXPECT_FALSE(direct.locked);
+    EXPECT_GE(direct.elapsed_ms, 9000) << "should wait up to the ~10s bound";
+    EXPECT_LE(direct.elapsed_ms, 14000)
+        << "deadline must hold under scheduler load";
+
+    ASSERT_FALSE(written.has_value());
+    EXPECT_NE(written.error().find("lock"), std::string::npos)
+        << written.error();
+    EXPECT_GE(write_elapsed, 9000) << "guarded writer should share the bound";
+    EXPECT_LE(write_elapsed, 14000) << "guarded writer must hold the deadline";
+
+    ::kill(h.pid, SIGKILL);
+    int status = 0;
+    ASSERT_EQ(::waitpid(h.pid, &status, 0), h.pid);
+    reaper.release();  // holder killed and reaped
+
+    // Inbox bytes unmodified; only the inbox and its lock file exist.
+    EXPECT_EQ(c14_read_file(inbox), canary);
+    bool saw_lock = false;
+    for (const auto& entry :
+         fs::directory_iterator(inbox.parent_path())) {
+        const auto name = entry.path().filename().string();
+        if (name == "worker.json") continue;
+        if (name == "worker.json.lock") {
+            saw_lock = true;
+            continue;
+        }
+        ADD_FAILURE() << "unexpected inbox-dir debris: " << name;
+    }
+    EXPECT_TRUE(saw_lock);
+}
+
+// A pre-placed symlink at the lock name fails the O_NOFOLLOW open
+// immediately: locked()==false, the guarded writer fails closed, and neither
+// the symlink nor its target is ever followed or modified.
+TEST(ScopedInboxLockC14, SymlinkedLockNameRejectedAndTargetUntouched) {
+    C14TeamEnv env;
+    const auto inbox = c14_inbox_path();
+    fs::create_directories(inbox.parent_path());
+    const fs::path lock_path = fs::path{inbox} += ".lock";
+    const auto canary_path = env.root / "canary.txt";
+    const std::string canary = "symlink-target-canary\n";
+    {
+        std::ofstream out(canary_path, std::ios::binary);
+        out << canary;
+    }
+    fs::create_symlink(canary_path, lock_path);
+    ASSERT_TRUE(fs::is_symlink(lock_path));
+
+    {
+        cc::utils::ScopedInboxLock lock(inbox);
+        EXPECT_FALSE(lock.locked());
+    }
+    EXPECT_TRUE(fs::is_symlink(lock_path))
+        << "failed open must not unlink or replace the symlink";
+    EXPECT_EQ(c14_read_file(canary_path), canary);
+
+    // The production guarded writer fails closed on the same lock name,
+    // without a deadline wait and without creating the inbox.
+    auto written = cc::utils::write_to_mailbox(
+        "worker",
+        cc::utils::TeammateMessage{
+            .from = "lead",
+            .text = "must-not-land",
+            .timestamp = "2",
+            .read = false,
+            .color = std::nullopt,
+            .summary = std::nullopt,
+        },
+        std::optional<std::string_view>{"c14team"});
+    ASSERT_FALSE(written.has_value());
+    EXPECT_NE(written.error().find("lock"), std::string::npos)
+        << written.error();
+    EXPECT_TRUE(fs::is_symlink(lock_path));
+    EXPECT_EQ(c14_read_file(canary_path), canary);
+    EXPECT_FALSE(fs::exists(inbox))
+        << "failed lock acquisition must bail before any inbox write";
 }
 
 // Stale regular-file/FIFO debris at the reserved legacy tmp name is an old

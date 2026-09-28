@@ -19,6 +19,7 @@ import std;
 
 import cc.types.types;
 import cc.utils.json;
+import cc.utils.parse_int;
 import cc.constants.paths;
 
 export import cc.config.mcp_types;
@@ -1587,7 +1588,9 @@ private:
         }
         std::int64_t value = 0;
         const auto* begin = text.data();
-        const auto [ptr, ec] = std::from_chars(begin, begin + text.size(), value);
+        // Portable shim: std::from_chars(int) is macOS-26-gated in libc++.
+        const auto [ptr, ec] =
+            cc::utils::from_chars(begin, begin + text.size(), value);
         if (ec != std::errc{} || ptr != begin + text.size()) {
             return std::unexpected(Error::make(
                 ErrorCode::InvalidInput, "integer value is out of range"));
@@ -1603,11 +1606,35 @@ private:
             return std::unexpected(Error::make(
                 ErrorCode::InvalidInput, "must be a number"));
         }
-        double value = 0.0;
-        const auto* begin = text.data();
-        const auto [ptr, ec] = std::from_chars(
-            begin, begin + text.size(), value, std::chars_format::general);
-        if (ec != std::errc{} || ptr != begin + text.size() ||
+        // Preserve std::from_chars(chars_format::general) strictness that
+        // plain strtod lacks: only [0-9.eE+-] characters (this also rejects
+        // hex floats such as "0x1p4" and the words nan/inf/infinity), with
+        // at least one ASCII digit. strtod itself enforces full consumption
+        // below, so malformed punctuation inside the allowlist (e.g. "1.2.3"
+        // or "e5") is rejected by the end-pointer check.
+        bool saw_digit = false;
+        for (const char ch : text) {
+            const bool digit = (ch >= '0' && ch <= '9');
+            saw_digit = saw_digit || digit;
+            const bool allowed = digit || ch == '.' || ch == 'e' ||
+                                 ch == 'E' || ch == '+' || ch == '-';
+            if (!allowed) {
+                return std::unexpected(Error::make(
+                    ErrorCode::InvalidInput, "must be a finite number"));
+            }
+        }
+        if (!saw_digit) {
+            return std::unexpected(Error::make(
+                ErrorCode::InvalidInput, "must be a finite number"));
+        }
+        // Portable strtod parse (mirrors src/utils/serdes/yaml.cppm):
+        // std::from_chars(double) is macOS-26-gated in Apple libc++.
+        const std::string buffer(text);  // NUL-terminated for strtod
+        errno = 0;
+        char* end = nullptr;
+        const char* begin = buffer.c_str();
+        const double value = std::strtod(begin, &end);
+        if (errno == ERANGE || end != begin + buffer.size() ||
             !std::isfinite(value)) {
             return std::unexpected(Error::make(
                 ErrorCode::InvalidInput, "must be a finite number"));
@@ -1633,7 +1660,9 @@ private:
         }
         std::int64_t value = 0;
         const auto* begin = text.data();
-        const auto [ptr, ec] = std::from_chars(begin, begin + text.size(), value);
+        // Portable shim: std::from_chars(int) is macOS-26-gated in libc++.
+        const auto [ptr, ec] =
+            cc::utils::from_chars(begin, begin + text.size(), value);
         if (ec != std::errc{} || ptr != begin + text.size()) {
             return std::nullopt;
         }

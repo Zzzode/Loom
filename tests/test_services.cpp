@@ -10260,6 +10260,65 @@ TEST(ConfigManagerUserSettings, IntegralDoubleCoercion) {
     EXPECT_EQ(*reloaded.settings().model.thinking_budget, 2048u);
 }
 
+// Temperature TEXT parsing must keep std::from_chars(chars_format::general)
+// strictness on the portable strtod path: hex floats, NaN/Inf words,
+// overflow, and trailing junk are rejected at PARSE time; otherwise-well
+// formed out-of-range values are rejected later by the [0,1] check instead.
+TEST(ConfigManagerUserSettings, TemperatureTextStrictDoublePortable) {
+    C13Paths p("strictdouble");
+    auto m = p.manager();
+    ASSERT_TRUE(m.load().has_value());
+
+    auto try_text = [&](const char* text) {
+        return m.set_user_setting(
+            "model.temperature",
+            c13_parse(std::format("\"{}\"", text)));
+    };
+
+    // Parser rejects (naive strtod would accept the hex float and the
+    // nan/inf words): must fail at the finite-number parse step.
+    const char* parse_rejected[] = {
+        "0x1p4", "nan", "inf", "infinity", "-inf",
+        "NAN", "Inf", "1e309", "-1e309", "0.5x",
+        "1.2.3", "e5", "..5", "1e", "+", "-",
+    };
+    for (const char* bad : parse_rejected) {
+        auto out = try_text(bad);
+        ASSERT_FALSE(out.has_value()) << bad;
+        EXPECT_NE(out.error().message.find("finite number"),
+                  std::string::npos)
+            << bad << ": " << out.error().message;
+    }
+
+    // Well-formed doubles that only fail the [0,1] range prove the parser
+    // accepted the spelling (error comes from the range check, not parse).
+    const char* range_rejected[] = {
+        "-.5", "-0.25", "1e2", "1E2",
+    };
+    for (const char* text : range_rejected) {
+        auto out = try_text(text);
+        ASSERT_FALSE(out.has_value()) << text;
+        EXPECT_NE(out.error().message.find("between 0 and 1"),
+                  std::string::npos)
+            << text << ": " << out.error().message;
+    }
+
+    // In-range spellings fully accepted and verified by a real reload.
+    for (const auto& [text, expected] :
+         std::vector<std::pair<const char*, double>>{
+             {"  0.5", 0.5}, {"0.5", 0.5}, {"+.5", 0.5}, {".5", 0.5},
+             {"0.0", 0.0}, {"1.5e-1", 0.15}, {"1e-2", 0.01},
+             {"+1", 1.0}, {"1.", 1.0}}) {
+        auto out = try_text(text);
+        ASSERT_TRUE(out.has_value())
+            << text << ": " << (out ? "" : out.error().message);
+        auto check = p.manager();
+        ASSERT_TRUE(check.load().has_value());
+        EXPECT_DOUBLE_EQ(*check.settings().model.temperature, expected)
+            << text;
+    }
+}
+
 // LOOM_MAX_TOKENS engagement is ONE range-checked predicate for both get
 // provenance and set shadow disclosure: engaged iff digits parse into
 // [1, uint32_max]. Returns {source_env, shadowed, effective_value}.

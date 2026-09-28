@@ -954,6 +954,23 @@ private:
             settings_.features = FeatureFlags(static_cast<std::uint32_t>(v.as_int()));
         }
 
+        // XAA IdP connection (TS reference: settings.xaaIdp; consumed by
+        // /mcp xaa setup|login|show|clear through settings_.xaa_idp).
+        // The section did not exist in the C++ tree before followup c12, so
+        // the canonical camelCase keys are the only spellings. Members of
+        // the wrong type are ignored, as in every other section.
+        if (auto xaa = root.get("xaaIdp"); xaa.is_obj()) {
+            if (auto v = xaa.get("issuer"); v.is_str()) {
+                settings_.xaa_idp.issuer = std::string(v.as_str());
+            }
+            if (auto v = xaa.get("clientId"); v.is_str()) {
+                settings_.xaa_idp.client_id = std::string(v.as_str());
+            }
+            if (auto v = xaa.get("callbackPort"); v.is_num()) {
+                settings_.xaa_idp.callback_port = static_cast<int>(v.as_int());
+            }
+        }
+
         return {};
     }
 
@@ -1026,6 +1043,35 @@ private:
         if (!settings_.custom_instructions.empty()) {
             json += ",\n  \"customInstructions\": ";
             append_string_array(json, settings_.custom_instructions);
+        }
+
+        // XAA IdP connection, last top-level section alongside the other
+        // optional trailing scalars. Omitted entirely while all three fields
+        // are unset so a default save stays churn-free; /mcp xaa clear relies
+        // on this to remove the section on rewrite. This section is outside
+        // the §B mcpServers secret-boundary filter.
+        const auto& xaa = settings_.xaa_idp;
+        if (!xaa.issuer.empty() || !xaa.client_id.empty() ||
+            xaa.callback_port.has_value()) {
+            json += ",\n  \"xaaIdp\": {\n";
+            bool first_field = true;
+            if (!xaa.issuer.empty()) {
+                json += std::format("    \"issuer\": \"{}\"",
+                                    escape_json(xaa.issuer));
+                first_field = false;
+            }
+            if (!xaa.client_id.empty()) {
+                if (!first_field) json += ",\n";
+                json += std::format("    \"clientId\": \"{}\"",
+                                    escape_json(xaa.client_id));
+                first_field = false;
+            }
+            if (xaa.callback_port.has_value()) {
+                if (!first_field) json += ",\n";
+                json += std::format("    \"callbackPort\": {}",
+                                    *xaa.callback_port);
+            }
+            json += "\n  }";
         }
         json += "\n}\n";
         return json;

@@ -5890,6 +5890,173 @@ TEST(McpTypes, AbsentDisabledAndIssuerKeysStayUnset) {
     fs::remove_all(root);
 }
 
+// RFC-0001 B followup c12: the xaaIdp section (issuer/clientId/callbackPort)
+// used to be dropped by the hand-rolled full-save serializer. All three
+// values must survive an unrelated mutation + rewrite + reload, and the
+// rewritten document must carry the canonical camelCase keys exactly once.
+// Bad-typed members are tolerated (folded-in second phase below).
+TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() /
+        ("loom_mcp_types_xaa_idp_test_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path = root / "global.json";
+    const auto project_path = root / "project.json";
+
+    {
+        std::ofstream file(project_path);
+        file << R"JSON({
+  "model": {
+    "default_model": "claude-x"
+  },
+  "mcpServers": {
+    "keep-me": {
+      "command": "node",
+      "args": ["serve.js"]
+    }
+  },
+  "xaaIdp": {
+    "issuer": "https://idp.example.com",
+    "clientId": "loom-cli",
+    "callbackPort": 8765
+  }
+})JSON";
+    }
+
+    {
+        cc::core::ConfigManager loaded(global_path, project_path);
+        ASSERT_TRUE(loaded.load().has_value());
+        const auto& xaa = loaded.settings().xaa_idp;
+        EXPECT_EQ(xaa.issuer, "https://idp.example.com");
+        EXPECT_EQ(xaa.client_id, "loom-cli");
+        ASSERT_TRUE(xaa.callback_port.has_value());
+        EXPECT_EQ(*xaa.callback_port, 8765);
+        ASSERT_EQ(loaded.settings().mcp_servers.size(), 1u);
+        EXPECT_EQ(loaded.settings().mcp_servers.front().name, "keep-me");
+        EXPECT_EQ(loaded.settings().model.default_model, "claude-x");
+
+        // Mutate something unrelated (display theme), then full-save.
+        loaded.settings_mut().display.theme = "dark";
+        ASSERT_TRUE(loaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+
+    // Byte-semantic check of the rewritten document.
+    std::string rewritten;
+    {
+        std::ifstream file(project_path);
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        rewritten = buffer.str();
+    }
+    auto doc = cc::utils::json::parse(rewritten);
+    ASSERT_TRUE(doc.has_value());
+    const auto xaa_obj = doc->root().get("xaaIdp");
+    ASSERT_TRUE(xaa_obj.is_obj());
+    EXPECT_EQ(std::string(xaa_obj.get("issuer").as_str()), "https://idp.example.com");
+    EXPECT_EQ(std::string(xaa_obj.get("clientId").as_str()), "loom-cli");
+    ASSERT_TRUE(xaa_obj.get("callbackPort").is_num());
+    EXPECT_EQ(xaa_obj.get("callbackPort").as_int(), 8765);
+    // Canonical camelCase only; the section appears exactly once.
+    EXPECT_EQ(rewritten.find("client_id"), std::string::npos);
+    EXPECT_EQ(rewritten.find("callback_port"), std::string::npos);
+    ASSERT_NE(rewritten.find("xaaIdp"), std::string::npos);
+    EXPECT_EQ(rewritten.find("xaaIdp"), rewritten.rfind("xaaIdp"));
+    // The unrelated mcp server and the mutation survive untouched.
+    const auto servers = doc->root().get("mcpServers");
+    ASSERT_TRUE(servers.is_obj());
+    const auto keep = servers.get("keep-me");
+    ASSERT_TRUE(keep.is_obj());
+    EXPECT_EQ(std::string(keep.get("command").as_str()), "node");
+    EXPECT_EQ(std::string(doc->root().get("display").get("theme").as_str()), "dark");
+
+    // Reload: all three XAA values survive.
+    cc::core::ConfigManager reloaded(global_path, project_path);
+    ASSERT_TRUE(reloaded.load().has_value());
+    const auto& xaa = reloaded.settings().xaa_idp;
+    EXPECT_EQ(xaa.issuer, "https://idp.example.com");
+    EXPECT_EQ(xaa.client_id, "loom-cli");
+    ASSERT_TRUE(xaa.callback_port.has_value());
+    EXPECT_EQ(*xaa.callback_port, 8765);
+    ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
+    EXPECT_EQ(reloaded.settings().mcp_servers.front().name, "keep-me");
+
+    fs::remove_all(root);
+
+    // Bad-type tolerance: a numeric issuer and a string callbackPort are
+    // ignored without failing the load, while a well-typed clientId in the
+    // same object still parses.
+    const auto bad_root = fs::temp_directory_path() /
+        ("loom_mcp_types_xaa_idp_bad_" + std::to_string(suffix));
+    fs::create_directories(bad_root);
+    const auto bad_global = bad_root / "global.json";
+    const auto bad_project = bad_root / "project.json";
+    {
+        std::ofstream file(bad_project);
+        file << R"JSON({
+  "xaaIdp": {
+    "issuer": 42,
+    "clientId": "partial-client",
+    "callbackPort": "8080"
+  }
+})JSON";
+    }
+    cc::core::ConfigManager bad(bad_global, bad_project);
+    ASSERT_TRUE(bad.load().has_value());
+    const auto& bad_xaa = bad.settings().xaa_idp;
+    EXPECT_TRUE(bad_xaa.issuer.empty());
+    EXPECT_EQ(bad_xaa.client_id, "partial-client");
+    EXPECT_FALSE(bad_xaa.callback_port.has_value());
+
+    fs::remove_all(bad_root);
+}
+
+// RFC-0001 B followup c12: default settings never emit an xaaIdp section,
+// and a save/load/save cycle with the section absent is byte-stable (this
+// is also what makes /mcp xaa clear remove the section on rewrite).
+TEST(McpTypes, XaaIdpOmittedWhenUnset) {
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() /
+        ("loom_mcp_types_xaa_idp_absent_test_" + std::to_string(suffix));
+    fs::create_directories(root);
+    const auto global_path = root / "global.json";
+    const auto project_path = root / "project.json";
+
+    std::string first;
+    {
+        cc::core::ConfigManager fresh(global_path, project_path);
+        ASSERT_TRUE(fresh.load().has_value());
+        EXPECT_TRUE(fresh.settings().xaa_idp.issuer.empty());
+        EXPECT_TRUE(fresh.settings().xaa_idp.client_id.empty());
+        EXPECT_FALSE(fresh.settings().xaa_idp.callback_port.has_value());
+        ASSERT_TRUE(fresh.save(cc::core::ConfigSource::ProjectConfig).has_value());
+
+        std::ifstream file(project_path);
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        first = buffer.str();
+    }
+    EXPECT_EQ(first.find("xaaIdp"), std::string::npos);
+
+    {
+        cc::core::ConfigManager reloaded(global_path, project_path);
+        ASSERT_TRUE(reloaded.load().has_value());
+        EXPECT_TRUE(reloaded.settings().xaa_idp.issuer.empty());
+        EXPECT_FALSE(reloaded.settings().xaa_idp.callback_port.has_value());
+        ASSERT_TRUE(reloaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+    std::string second;
+    {
+        std::ifstream file(project_path);
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        second = buffer.str();
+    }
+    EXPECT_EQ(second.find("xaaIdp"), std::string::npos);
+    EXPECT_EQ(first, second);
+
+    fs::remove_all(root);
+}
+
 // RFC-0001 B followup c6 (D2): mcpServers now merge with per-entry name
 // overlay across global -> user -> project -> local instead of the project
 // file replacing the whole global block. Global g1/g2 survive a project file

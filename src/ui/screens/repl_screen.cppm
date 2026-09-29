@@ -116,11 +116,11 @@ namespace unseen_detail {
 
 }  // namespace unseen_detail
 
-/// Compute the UnseenDivider from state.divider_index + messages.
+/// Compute the UnseenDivider from state.messages_store.divider_index + messages.
 [[nodiscard]] std::optional<::cc::ui::messages_list::UnseenDivider>
 ComputeUnseenDivider(const ReplScreenState& s);
 
-/// Project state.messages, appending the active local-jsx command rows.
+/// Project state.messages_store.messages, appending the active local-jsx command rows.
 [[nodiscard]] std::vector<MessageDisplayEntry> BuildVisibleMessages(
     const ReplScreenState& s);
 

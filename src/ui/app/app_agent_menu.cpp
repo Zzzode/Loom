@@ -145,8 +145,8 @@ bool AppAdapter::HandleLocalJsxEvent(const Event& ev) {
                     screen_state_->agent_cards[agent_index].id;
             }
             ClearActiveLocalJsxCommand();
-            screen_state_->scroll_offset = 0;
-            screen_state_->scroll_pinned_to_bottom = true;
+            screen_state_->messages_store.scroll_offset = 0;
+            screen_state_->messages_store.scroll_pinned_to_bottom = true;
             HandleCommand(command);
             PostRenderEvent();
             return true;
@@ -288,8 +288,8 @@ void AppAdapter::SyncState() {
     messages = ApplyMessageCollapsePipeline(std::move(messages));
     cc::utils::debug("app.sync",
         "SyncState: engine has {} messages", messages.size());
-    screen_state_->messages.clear();
-    screen_state_->messages.reserve(messages.size());
+    screen_state_->messages_store.messages.clear();
+    screen_state_->messages_store.messages.reserve(messages.size());
     // Assign a 24-char prefix per source Message.
     auto make_uuid24 = [](std::uint64_t msg_idx, const std::string& seed) {
         std::uint64_t h = 1469598103934665603ULL;  // FNV offset basis
@@ -318,14 +318,14 @@ void AppAdapter::SyncState() {
         const std::string u24 = make_uuid24(msg_idx, seed_preview);
         for (auto& e : projected) {
             e.id = u24;
-            screen_state_->messages.push_back(std::move(e));
+            screen_state_->messages_store.messages.push_back(std::move(e));
         }
         ++msg_idx;
     }
     AppendLocalMessagesToScreenState();
     std::stable_sort(
-        screen_state_->messages.begin(),
-        screen_state_->messages.end(),
+        screen_state_->messages_store.messages.begin(),
+        screen_state_->messages_store.messages.end(),
         [](const repl::MessageDisplayEntry& a,
            const repl::MessageDisplayEntry& b) {
             return a.timestamp < b.timestamp;
@@ -334,7 +334,7 @@ void AppAdapter::SyncState() {
     // Debug: log projected message summary
     {
         std::size_t n_user = 0, n_asst = 0, n_sys = 0, n_tool = 0;
-        for (const auto& e : screen_state_->messages) {
+        for (const auto& e : screen_state_->messages_store.messages) {
             if (e.role == "user") ++n_user;
             else if (e.role == "assistant") {
                 ++n_asst;
@@ -345,10 +345,10 @@ void AppAdapter::SyncState() {
         cc::utils::debug("app.sync",
             "SyncState done: {} projected entries "
             "(user={}, asst={}, tool_use={}, sys={})",
-            screen_state_->messages.size(),
+            screen_state_->messages_store.messages.size(),
             n_user, n_asst, n_tool, n_sys);
-        for (std::size_t i = 0; i < screen_state_->messages.size(); ++i) {
-            const auto& e = screen_state_->messages[i];
+        for (std::size_t i = 0; i < screen_state_->messages_store.messages.size(); ++i) {
+            const auto& e = screen_state_->messages_store.messages[i];
             if (e.role == "assistant" && !e.is_tool_use && !e.is_thinking) {
                 cc::utils::debug("app.sync",
                     "  msg[{}] assistant text: len={}, streaming={}, preview='{}'",
@@ -422,7 +422,7 @@ void AppAdapter::ConsumePendingResult() {
             err.find("expired") != std::string::npos) {
             error_entry.session_expired = true;
         }
-        screen_state_->messages.push_back(std::move(error_entry));
+        screen_state_->messages_store.messages.push_back(std::move(error_entry));
     }
     screen_state_->spinner_mode = repl::SpinnerMode::Hidden;
     screen_state_->spinner_verb = std::nullopt;

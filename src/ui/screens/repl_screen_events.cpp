@@ -297,7 +297,7 @@ using namespace ftxui;
         } else {
             // Normal mode: expand or collapse all tool rows.
             if (state->expanded_keys.empty()) {
-                for (const auto& m : state->messages) {
+                for (const auto& m : state->messages_store.messages) {
                     if (m.tool_name && !m.tool_name->empty()) {
                         state->expanded_keys.insert(*m.tool_name);
                     }
@@ -363,7 +363,7 @@ using namespace ftxui;
         }
     }
     if (!in_dialog && state->autocomplete_suggestions.empty()) {
-        const int page = std::max(1, state->viewport_height_lines / 2);
+        const int page = std::max(1, state->messages_store.viewport_height_lines / 2);
         if (ev == Event::PageUp) {
             return ScrollTranscript(state, -page);
         }
@@ -610,8 +610,8 @@ using namespace ftxui;
                 state->dismissed_autocomplete_for_input = state->input_text;
                 state->autocomplete_suggestions.clear();
                 state->autocomplete_index = -1; return true; }
-            if (state->selected_message_idx >= 0)
-                { state->selected_message_idx = -1; return true; }
+            if (state->messages_store.selected_message_idx >= 0)
+                { state->messages_store.selected_message_idx = -1; return true; }
             // Esc double-press to clear non-empty input.
             // TS REF: src/hooks/useTextInput.ts:126-153 (handleEscape) +
             // src/hooks/useDoublePress.ts:6 DOUBLE_PRESS_TIMEOUT_MS = 800.

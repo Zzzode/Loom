@@ -677,12 +677,12 @@ public:
         return screen_state_->autocomplete_index;
     }
 
-    // Debug/testing: snapshot screen_state_->messages as "label:preview" rows
+    // Debug/testing: snapshot screen_state_->messages_store.messages as "label:preview" rows
     // to verify transcript ordering (local-command vs user vs assistant).
     [[nodiscard]] std::vector<std::string> messages_for_testing() const {
         std::vector<std::string> out;
-        out.reserve(screen_state_->messages.size());
-        for (const auto& m : screen_state_->messages) {
+        out.reserve(screen_state_->messages_store.messages.size());
+        for (const auto& m : screen_state_->messages_store.messages) {
             std::string label = m.role;
             if (m.is_local_command_input) label = "lc-input";
             else if (m.is_local_command_output) label = "lc-output";

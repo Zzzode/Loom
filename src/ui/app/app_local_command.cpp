@@ -51,8 +51,8 @@ void AppAdapter::AppendLocalMessagesToScreenState() {
             it->id = std::string(buf, 24);
         }
     }
-    screen_state_->messages.insert(
-        screen_state_->messages.end(),
+    screen_state_->messages_store.messages.insert(
+        screen_state_->messages_store.messages.end(),
         local_command_messages_.begin(),
         local_command_messages_.end());
 }

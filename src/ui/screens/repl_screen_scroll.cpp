@@ -75,29 +75,29 @@ namespace unseen_detail {
 
 }  // namespace unseen_detail
 
-/// Compute the UnseenDivider from state.divider_index + messages.
+/// Compute the UnseenDivider from state.messages_store.divider_index + messages.
 /// Returns nullopt when divider_index is unset, out of range, or no
 /// messages have arrived past the divider.  TS REF: computeUnseenDivider
 /// (FullscreenLayout.tsx L239-256).
 [[nodiscard]] std::optional<::cc::ui::messages_list::UnseenDivider>
 ComputeUnseenDivider(const ReplScreenState& s) {
-    if (!s.divider_index.has_value()) return std::nullopt;
-    const auto idx = *s.divider_index;
-    if (idx >= s.messages.size()) return std::nullopt;
+    if (!s.messages_store.divider_index.has_value()) return std::nullopt;
+    const auto idx = *s.messages_store.divider_index;
+    if (idx >= s.messages_store.messages.size()) return std::nullopt;
 
     // Find first non-system entry at or after divider_index (TS: anchorIdx
     // skips progress + null attachments).
     std::size_t anchor_idx = idx;
-    while (anchor_idx < s.messages.size() &&
-           s.messages[anchor_idx].role == "system") {
+    while (anchor_idx < s.messages_store.messages.size() &&
+           s.messages_store.messages[anchor_idx].role == "system") {
         ++anchor_idx;
     }
-    if (anchor_idx >= s.messages.size()) return std::nullopt;
+    if (anchor_idx >= s.messages_store.messages.size()) return std::nullopt;
 
-    const auto& anchor = s.messages[anchor_idx];
+    const auto& anchor = s.messages_store.messages[anchor_idx];
     const std::size_t count = std::max(
         std::size_t{1},
-        unseen_detail::count_unseen_assistant_turns(s.messages, idx));
+        unseen_detail::count_unseen_assistant_turns(s.messages_store.messages, idx));
 
     ::cc::ui::messages_list::UnseenDivider ud;
     ud.first_unseen_uuid_prefix = anchor.id;
@@ -107,7 +107,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 
 [[nodiscard]] std::vector<MessageDisplayEntry> BuildVisibleMessages(
     const ReplScreenState& s) {
-    auto entries = s.messages;
+    auto entries = s.messages_store.messages;
     if (!s.active_local_jsx_command) return entries;
 
     MessageDisplayEntry command;
@@ -196,19 +196,19 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
                              int delta) {
     if (!state || delta == 0) return false;
 
-    const int viewport_rows = std::max(1, state->viewport_height_lines);
+    const int viewport_rows = std::max(1, state->messages_store.viewport_height_lines);
 
     // P0-3 path: if the VirtualMessageList is active for this frame, use
     // its JumpHandle (prefix-sum table of exact visual lines) for O(log N)
     // scroll bounds instead of the crude EstimateTranscriptRows heuristic.
-    if (state->virtual_list_active) {
+    if (state->messages_store.virtual_list_active) {
         namespace vl = cc::ui::messages::virtual_list;
-        const vl::JumpHandle& jh = state->virtual_jh;
+        const vl::JumpHandle& jh = state->messages_store.virtual_jh;
         const int total_lines = jh.total();
         if (total_lines <= viewport_rows) return false;
         const int max_top = total_lines - viewport_rows;
 
-        const int old_top = std::clamp(state->scroll_offset, 0, max_top);
+        const int old_top = std::clamp(state->messages_store.scroll_offset, 0, max_top);
         int target = old_top + delta;
         // Guarantee at least one row moves on PageUp/PageDown style deltas:
         // if target equals old_top, step by one row in the requested
@@ -223,27 +223,27 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
         target = std::clamp(target, 0, max_top);
         if (target == old_top) return false;
 
-        state->scroll_offset = target;
-        const bool was_pinned = state->scroll_pinned_to_bottom;
-        state->scroll_pinned_to_bottom = (target >= max_top);
+        state->messages_store.scroll_offset = target;
+        const bool was_pinned = state->messages_store.scroll_pinned_to_bottom;
+        state->messages_store.scroll_pinned_to_bottom = (target >= max_top);
 
         // TS REF: useUnseenDivider onScrollAway — on FIRST scroll-away from
         // bottom, snapshot message count as divider_index.  On repin, clear.
-        if (was_pinned && !state->scroll_pinned_to_bottom) {
-            state->divider_index = state->messages.size();
-            state->message_count_at_scroll_away = state->messages.size();
-        } else if (!was_pinned && state->scroll_pinned_to_bottom) {
-            state->divider_index.reset();
-            state->unseen_divider.reset();
-            state->unseen_message_count = 0;
-            state->pill_visible = false;
+        if (was_pinned && !state->messages_store.scroll_pinned_to_bottom) {
+            state->messages_store.divider_index = state->messages_store.messages.size();
+            state->messages_store.message_count_at_scroll_away = state->messages_store.messages.size();
+        } else if (!was_pinned && state->messages_store.scroll_pinned_to_bottom) {
+            state->messages_store.divider_index.reset();
+            state->messages_store.unseen_divider.reset();
+            state->messages_store.unseen_message_count = 0;
+            state->messages_store.pill_visible = false;
         }
 
         // If we are maintaining a live VirtualListState (Component-mode
         // wiring), also update its scroll_top so Render() reuses it.
-        if (state->virtual_list_state) {
-            state->virtual_list_state->scroll_top = target;
-            vl::update_sticky_after_scroll(*state->virtual_list_state,
+        if (state->messages_store.virtual_list_state) {
+            state->messages_store.virtual_list_state->scroll_top = target;
+            vl::update_sticky_after_scroll(*state->messages_store.virtual_list_state,
                                             old_top);
         }
         return true;
@@ -256,19 +256,19 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
     if (max_offset == 0) return false;
 
     const int next =
-        std::clamp(state->scroll_offset + delta, 0, max_offset);
-    state->scroll_offset = next;
-    const bool was_pinned = state->scroll_pinned_to_bottom;
-    state->scroll_pinned_to_bottom = next >= max_offset;
+        std::clamp(state->messages_store.scroll_offset + delta, 0, max_offset);
+    state->messages_store.scroll_offset = next;
+    const bool was_pinned = state->messages_store.scroll_pinned_to_bottom;
+    state->messages_store.scroll_pinned_to_bottom = next >= max_offset;
     // TS REF: useUnseenDivider onScrollAway/onRepin.
-    if (was_pinned && !state->scroll_pinned_to_bottom) {
-        state->divider_index = state->messages.size();
-        state->message_count_at_scroll_away = state->messages.size();
-    } else if (!was_pinned && state->scroll_pinned_to_bottom) {
-        state->divider_index.reset();
-        state->unseen_divider.reset();
-        state->unseen_message_count = 0;
-        state->pill_visible = false;
+    if (was_pinned && !state->messages_store.scroll_pinned_to_bottom) {
+        state->messages_store.divider_index = state->messages_store.messages.size();
+        state->messages_store.message_count_at_scroll_away = state->messages_store.messages.size();
+    } else if (!was_pinned && state->messages_store.scroll_pinned_to_bottom) {
+        state->messages_store.divider_index.reset();
+        state->messages_store.unseen_divider.reset();
+        state->messages_store.unseen_message_count = 0;
+        state->messages_store.pill_visible = false;
     }
     return true;
 }

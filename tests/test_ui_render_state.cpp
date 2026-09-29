@@ -345,7 +345,7 @@ TEST(ReplScreen, MouseWheelScrollsTranscript) {
     namespace repl = cc::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->viewport_height_lines = 8;
+    state->messages_store.viewport_height_lines = 8;
 
     repl::MessageDisplayEntry message;
     message.is_local_command_output = true;
@@ -353,17 +353,17 @@ TEST(ReplScreen, MouseWheelScrollsTranscript) {
         message.content_preview += std::format("line-{:02}", i);
         if (i != 39) message.content_preview += '\n';
     }
-    state->messages.push_back(std::move(message));
+    state->messages_store.messages.push_back(std::move(message));
 
     auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
     ftxui::Mouse wheel;
     wheel.button = ftxui::Mouse::WheelDown;
 
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
-    EXPECT_GT(state->scroll_offset, 0);
-    EXPECT_FALSE(state->scroll_pinned_to_bottom);
+    EXPECT_GT(state->messages_store.scroll_offset, 0);
+    EXPECT_FALSE(state->messages_store.scroll_pinned_to_bottom);
 
     wheel.button = ftxui::Mouse::WheelUp;
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
-    EXPECT_EQ(state->scroll_offset, 0);
+    EXPECT_EQ(state->messages_store.scroll_offset, 0);
 }

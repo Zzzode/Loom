@@ -255,12 +255,12 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     cbs.on_clear_session = [this]() {
         static_cast<cc::core::QueryEngine*>(engine_raw())->clear_conversation();
         local_command_messages_.clear();
-        screen_state_->divider_index.reset();
-        screen_state_->unseen_divider.reset();
-        screen_state_->unseen_message_count = 0;
-        screen_state_->pill_visible = false;
-        screen_state_->scroll_offset = 0;
-        screen_state_->scroll_pinned_to_bottom = true;
+        screen_state_->messages_store.divider_index.reset();
+        screen_state_->messages_store.unseen_divider.reset();
+        screen_state_->messages_store.unseen_message_count = 0;
+        screen_state_->messages_store.pill_visible = false;
+        screen_state_->messages_store.scroll_offset = 0;
+        screen_state_->messages_store.scroll_pinned_to_bottom = true;
         this->SyncState();
     };
 

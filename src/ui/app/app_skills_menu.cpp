@@ -151,8 +151,8 @@ void AppAdapter::OpenSkillsMenu() {
     screen_state_->active_local_jsx_command_args.clear();
     screen_state_->active_local_jsx_content =
         FormatSkillsMenuOutput(std::move(skills));
-    screen_state_->scroll_offset = 0;
-    screen_state_->scroll_pinned_to_bottom = false;
+    screen_state_->messages_store.scroll_offset = 0;
+    screen_state_->messages_store.scroll_pinned_to_bottom = false;
     PostRenderEvent();
 }
 

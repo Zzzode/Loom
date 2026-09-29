@@ -328,8 +328,8 @@ TEST(ReplScreen, TranscriptScrollOffsetMovesLongLocalCommandOutput) {
     namespace repl = cc::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.viewport_height_lines = 8;
-    state.scroll_pinned_to_bottom = false;
+    state.messages_store.viewport_height_lines = 8;
+    state.messages_store.scroll_pinned_to_bottom = false;
 
     repl::MessageDisplayEntry message;
     message.is_local_command_output = true;
@@ -337,26 +337,26 @@ TEST(ReplScreen, TranscriptScrollOffsetMovesLongLocalCommandOutput) {
         message.content_preview += std::format("line-{:02}", i);
         if (i != 39) message.content_preview += '\n';
     }
-    state.messages.push_back(std::move(message));
+    state.messages_store.messages.push_back(std::move(message));
 
     auto top = strip_ansi(render_to_plain_text(
-        repl::RenderMessages(state.messages,
-                             state.selected_message_idx,
-                             state.viewport_height_lines,
-                             state.scroll_offset,
-                             state.scroll_pinned_to_bottom),
+        repl::RenderMessages(state.messages_store.messages,
+                             state.messages_store.selected_message_idx,
+                             state.messages_store.viewport_height_lines,
+                             state.messages_store.scroll_offset,
+                             state.messages_store.scroll_pinned_to_bottom),
         120,
         8));
     EXPECT_NE(top.find("line-00"), std::string::npos);
     EXPECT_EQ(top.find("line-24"), std::string::npos);
 
-    state.scroll_offset = 24;
+    state.messages_store.scroll_offset = 24;
     auto scrolled = strip_ansi(render_to_plain_text(
-        repl::RenderMessages(state.messages,
-                             state.selected_message_idx,
-                             state.viewport_height_lines,
-                             state.scroll_offset,
-                             state.scroll_pinned_to_bottom),
+        repl::RenderMessages(state.messages_store.messages,
+                             state.messages_store.selected_message_idx,
+                             state.messages_store.viewport_height_lines,
+                             state.messages_store.scroll_offset,
+                             state.messages_store.scroll_pinned_to_bottom),
         120,
         8));
     EXPECT_EQ(scrolled.find("line-00"), std::string::npos);

@@ -1005,7 +1005,7 @@ Element AppAdapter::Render() {
     const bool qr = query_running_.load();
     cc::utils::debug("app.render",
         "Render: query_running={}, messages={}, spinner_mode={}",
-        qr, screen_state_->messages.size(),
+        qr, screen_state_->messages_store.messages.size(),
         static_cast<int>(screen_state_->spinner_mode));
 
     if (qr) {
@@ -1015,8 +1015,8 @@ Element AppAdapter::Render() {
         auto messages = static_cast<cc::core::QueryEngine*>(engine_raw())->get_conversation();
         // TS Messages.tsx:520 collapse chain (background-bash so far).
         messages = ApplyMessageCollapsePipeline(std::move(messages));
-        screen_state_->messages.clear();
-        screen_state_->messages.reserve(
+        screen_state_->messages_store.messages.clear();
+        screen_state_->messages_store.messages.reserve(
             messages.size() + streaming_tools_.size() +
             streaming_thinking_.size() + 1);
 
@@ -1051,7 +1051,7 @@ Element AppAdapter::Render() {
             const std::string u24 = make_uuid24(tick_msg_idx, seed_preview);
             for (auto& e : projected) {
                 e.id = u24;
-                screen_state_->messages.push_back(std::move(e));
+                screen_state_->messages_store.messages.push_back(std::move(e));
             }
             ++tick_msg_idx;
         }
@@ -1059,8 +1059,8 @@ Element AppAdapter::Render() {
         // Restore chronological order (see SyncState). Applied BEFORE the
         // in-flight streaming projection so streaming rows stay last.
         std::stable_sort(
-            screen_state_->messages.begin(),
-            screen_state_->messages.end(),
+            screen_state_->messages_store.messages.begin(),
+            screen_state_->messages_store.messages.end(),
             [](const repl::MessageDisplayEntry& a,
                const repl::MessageDisplayEntry& b) {
                 return a.timestamp < b.timestamp;
@@ -1115,7 +1115,7 @@ Element AppAdapter::Render() {
         cc::utils::debug("app.render",
             "  streaming-path: committed_msgs={}, in_flight={} "
             "(text_len={}, tools={}, thinking={})",
-            screen_state_->messages.size(), has_in_flight,
+            screen_state_->messages_store.messages.size(), has_in_flight,
             streaming_text_.size(), streaming_tools_.size(),
             streaming_thinking_.size());
 
@@ -1169,7 +1169,7 @@ Element AppAdapter::Render() {
                     e.content_preview = thk->second.text.substr(0, 200);
                     e.timestamp = now;
                     e.id = streaming_uuid24;
-                    screen_state_->messages.push_back(std::move(e));
+                    screen_state_->messages_store.messages.push_back(std::move(e));
                     continue;
                 }
                 // Tool-use block
@@ -1217,7 +1217,7 @@ Element AppAdapter::Render() {
                     e.is_error = tlu->second.is_error;
                     e.timestamp = now;
                     e.id = streaming_uuid24;
-                    screen_state_->messages.push_back(std::move(e));
+                    screen_state_->messages_store.messages.push_back(std::move(e));
                     continue;
                 }
                 // Text block (streaming)
@@ -1228,17 +1228,17 @@ Element AppAdapter::Render() {
                     e.is_streaming = true;
                     e.timestamp = now;
                     e.id = streaming_uuid24;
-                    screen_state_->messages.push_back(std::move(e));
+                    screen_state_->messages_store.messages.push_back(std::move(e));
                     continue;
                 }
             }
 
-            screen_state_->scroll_pinned_to_bottom = true;
+            screen_state_->messages_store.scroll_pinned_to_bottom = true;
             // Clear unseen divider on repin (TS: onRepin → setDividerIndex(null))
-            screen_state_->divider_index.reset();
-            screen_state_->unseen_divider.reset();
-            screen_state_->unseen_message_count = 0;
-            screen_state_->pill_visible = false;
+            screen_state_->messages_store.divider_index.reset();
+            screen_state_->messages_store.unseen_divider.reset();
+            screen_state_->messages_store.unseen_message_count = 0;
+            screen_state_->messages_store.pill_visible = false;
         }
     }
 

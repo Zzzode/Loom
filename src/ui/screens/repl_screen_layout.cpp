@@ -86,7 +86,7 @@ using namespace ftxui;
     auto [term_cols, term_rows] = cc::ui::ink_utils::query_terminal_size();
     if (term_cols <= 0) term_cols = 80;
     if (term_rows <= 0) term_rows = 24;
-    s.viewport_height_lines = std::max(1, term_rows - 5);
+    s.messages_store.viewport_height_lines = std::max(1, term_rows - 5);
 
     // Spinner frame tick: monotonically increments per render call so the
     // tool-use header spinner animates.  (The interactive ToolUseMessage
@@ -99,14 +99,14 @@ using namespace ftxui;
     // When the user has scrolled away from bottom, compute the in-transcript
     // "N new messages" divider anchor + count.  Cleared on repin by
     // ScrollTranscript / on_pill_click (divider_index.reset()).
-    if (s.divider_index.has_value()) {
-        s.unseen_divider = ComputeUnseenDivider(s);
-        if (s.unseen_divider.has_value()) {
-            s.unseen_message_count = static_cast<int>(s.unseen_divider->count);
-            s.pill_visible = true;
+    if (s.messages_store.divider_index.has_value()) {
+        s.messages_store.unseen_divider = ComputeUnseenDivider(s);
+        if (s.messages_store.unseen_divider.has_value()) {
+            s.messages_store.unseen_message_count = static_cast<int>(s.messages_store.unseen_divider->count);
+            s.messages_store.pill_visible = true;
         }
     } else {
-        s.unseen_divider.reset();
+        s.messages_store.unseen_divider.reset();
     }
 
     namespace fl = cc::ui::layout::fullscreen;
@@ -139,11 +139,11 @@ using namespace ftxui;
     // is reachable by scrolling up.
     //
     // EXCEPTION: when a local command overlay (/skills, /help, etc.) is
-    // active with no real conversation messages (s.messages empty), we
+    // active with no real conversation messages (s.messages_store.messages empty), we
     // skip the logo so the command output has full viewport space.  This
     // matches TS where command overlays are not "real" transcript entries.
     Elements logo_leading;
-    const bool has_real_messages = !s.messages.empty();
+    const bool has_real_messages = !s.messages_store.messages.empty();
     const bool has_command_overlay = s.active_local_jsx_command;
     if (has_real_messages || !has_command_overlay) {
         logo_leading.push_back(
@@ -158,10 +158,10 @@ using namespace ftxui;
     // space above messages), and scrolls to bottom only when content
     // exceeds viewport.
     scroll_rows.push_back(RenderMessages(
-        visible_messages, s.selected_message_idx,
-        s.viewport_height_lines, s.scroll_offset,
-        s.scroll_pinned_to_bottom, spinner_frame,
-        s.unseen_divider,
+        visible_messages, s.messages_store.selected_message_idx,
+        s.messages_store.viewport_height_lines, s.messages_store.scroll_offset,
+        s.messages_store.scroll_pinned_to_bottom, spinner_frame,
+        s.messages_store.unseen_divider,
         std::move(logo_leading),
         s.is_brief_mode,
         s.expanded_keys,
@@ -438,12 +438,12 @@ using namespace ftxui;
     // ── M1 FullscreenLayout: 3-state sticky prompt chrome ─────────────
     // TS REF: FullscreenLayout.tsx lines 339-351 (3-state discriminant,
     //        padCollapsed resolution, headerPrompt guard).
-    slots.sticky_prompt         = s.sticky_prompt;
-    slots.sticky_clicked        = s.sticky_prompt_clicked;
+    slots.sticky_prompt         = s.messages_store.sticky_prompt;
+    slots.sticky_clicked        = s.messages_store.sticky_prompt_clicked;
     slots.hide_sticky           = false;
-    slots.pill_visible          = s.pill_visible;
+    slots.pill_visible          = s.messages_store.pill_visible;
     slots.hide_pill             = false;
-    slots.new_message_count     = s.unseen_message_count;
+    slots.new_message_count     = s.messages_store.unseen_message_count;
 
     // on_sticky_click: the TS pattern "onClick={headerPrompt.scrollTo}"
     // (line 344) sets stickyPrompt='clicked' (the literal sentinel) via a
@@ -458,13 +458,13 @@ using namespace ftxui;
     // stable across renders.  The callback is only invoked from within
     // FTXUI event dispatch (same thread), so no data races.
     slots.on_sticky_click = [&s](const fl::StickyPrompt& sp) {
-        s.sticky_prompt_clicked = true;
+        s.messages_store.sticky_prompt_clicked = true;
         // Jump so the target visual line is at the TOP of the viewport.
         // scroll_target_row is measured from scroll_top=0 (content
         // coordinates); ScrollTranscript(delta) is relative — so delta =
         // target - current.  Clamp against viewport_rows to avoid
         // overshooting below min-scroll.
-        int current = std::max(0, s.scroll_offset);
+        int current = std::max(0, s.messages_store.scroll_offset);
         int delta   = static_cast<int>(sp.scroll_target_row) - current;
         if (delta != 0) {
             // We need to call ScrollTranscript which takes
@@ -475,11 +475,11 @@ using namespace ftxui;
             // (clicking the header is a scroll, not engine-state mutation),
             // a direct offset mutation achieves the same effect without
             // requiring the shared_ptr here.
-            int viewport = std::max(1, s.viewport_height_lines);
+            int viewport = std::max(1, s.messages_store.viewport_height_lines);
             int total;
-            if (s.virtual_list_active) {
+            if (s.messages_store.virtual_list_active) {
                 namespace vl = cc::ui::messages::virtual_list;
-                total = s.virtual_jh.total();
+                total = s.messages_store.virtual_jh.total();
             } else {
                 const auto vm = BuildVisibleMessages(s);
                 total = EstimateTranscriptRows(vm);
@@ -488,12 +488,12 @@ using namespace ftxui;
             int old_top = std::clamp(current, 0, max_top);
             int target  = std::clamp(old_top + delta, 0, max_top);
             if (target != old_top) {
-                s.scroll_offset = target;
-                s.scroll_pinned_to_bottom = (target >= max_top);
-                if (s.virtual_list_state) {
+                s.messages_store.scroll_offset = target;
+                s.messages_store.scroll_pinned_to_bottom = (target >= max_top);
+                if (s.messages_store.virtual_list_state) {
                     namespace vl = cc::ui::messages::virtual_list;
-                    s.virtual_list_state->scroll_top = target;
-                    vl::update_sticky_after_scroll(*s.virtual_list_state,
+                    s.messages_store.virtual_list_state->scroll_top = target;
+                    vl::update_sticky_after_scroll(*s.messages_store.virtual_list_state,
                                                     old_top);
                 }
             }
@@ -509,32 +509,32 @@ using namespace ftxui;
     // on_pill_click: TS lines 371-381 — clicking the "N new messages" pill
     // re-pins to the bottom.  Same lifetime reasoning as on_sticky_click.
     slots.on_pill_click = [&s] {
-        int viewport = std::max(1, s.viewport_height_lines);
+        int viewport = std::max(1, s.messages_store.viewport_height_lines);
         int total;
-        if (s.virtual_list_active) {
+        if (s.messages_store.virtual_list_active) {
             namespace vl = cc::ui::messages::virtual_list;
-            total = s.virtual_jh.total();
+            total = s.messages_store.virtual_jh.total();
         } else {
             const auto vm = BuildVisibleMessages(s);
             total = EstimateTranscriptRows(vm);
         }
         int max_top = std::max(0, total - viewport);
-        int old_top = std::clamp(s.scroll_offset, 0, max_top);
+        int old_top = std::clamp(s.messages_store.scroll_offset, 0, max_top);
         if (max_top != old_top) {
-            s.scroll_offset = max_top;
-            s.scroll_pinned_to_bottom = true;
-            if (s.virtual_list_state) {
+            s.messages_store.scroll_offset = max_top;
+            s.messages_store.scroll_pinned_to_bottom = true;
+            if (s.messages_store.virtual_list_state) {
                 namespace vl = cc::ui::messages::virtual_list;
-                s.virtual_list_state->scroll_top = max_top;
-                vl::update_sticky_after_scroll(*s.virtual_list_state, old_top);
+                s.messages_store.virtual_list_state->scroll_top = max_top;
+                vl::update_sticky_after_scroll(*s.messages_store.virtual_list_state, old_top);
             }
             // Clear the pill + unseen count on repin (mirrors TS onRepin
             // setting dividerIndex=null — the pill only shows while
             // pill_visible=true AND a divider snapshot exists.)
-            s.pill_visible = false;
-            s.unseen_message_count = 0;
-            s.divider_index.reset();
-            s.unseen_divider.reset();
+            s.messages_store.pill_visible = false;
+            s.messages_store.unseen_message_count = 0;
+            s.messages_store.divider_index.reset();
+            s.messages_store.unseen_divider.reset();
         }
     };
 

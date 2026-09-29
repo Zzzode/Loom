@@ -76,10 +76,6 @@ target_link_libraries(cc_services
         OpenSSL::SSL
         OpenSSL::Crypto
 )
-# Native macOS Keychain backend (services/oauth) uses the Security framework.
-if(APPLE)
-    target_link_libraries(cc_services PUBLIC "-framework Security" "-framework CoreFoundation")
-endif()
 target_link_libraries(cc_commands
     PUBLIC
         cc_services

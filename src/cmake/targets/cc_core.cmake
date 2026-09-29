@@ -29,7 +29,6 @@ target_link_libraries(cc_core
         cc_ui
         cc_vim
         cc_daemon
-        cc_migrations
         cc_server
         cc_benchmarks
         cc_plugins

@@ -7,6 +7,13 @@
 /// dropped (the bodies now live in this impl unit, the Phase-C recipe, so
 /// a body edit recompiles exactly this object — fan-out = 1 — and the
 /// declarations-only BMI keeps importers cheap).
+///
+/// This is the ONLY unit in the module that sees ftxui: the interface
+/// (ansi_render.cppm) names no ftxui type, so the ~10.8 MB ftxui BMI
+/// weight stays out of importers.  sgr_color_value_to_ftxui is internal
+/// here (called only by ansi_to_ftxui_elements), and
+/// ansi_to_ftxui_elements returns its per-line vector type-erased as
+/// std::shared_ptr<void> (see ansi_render.cppm for the rationale).
 module;
 
 #include <ftxui/dom/elements.hpp>
@@ -134,12 +141,16 @@ void apply_sgr_run(std::string_view params, cc::ui::termio::SgrAttr& attr) {
     }
 }
 
-/// Split an ANSI-decorated string into ftxui Elements that honor SGR color
-/// and basic attributes.  Newlines produce a vbox of hboxes; a single-line
-/// input returns a plain hbox (still an Element).  Empty / escape-only input
-/// produces an empty text element.  Reusable for any string carrying SGR
-/// codes (tool output, markdown code blocks, etc.).
-[[nodiscard]] Element ansi_to_ftxui_elements(std::string_view input) {
+/// Split an ANSI-decorated string into per-line ftxui Elements that honor
+/// SGR color and basic attributes.  Newlines produce one hbox per line; a
+/// single-line input returns a vector holding that one hbox.  Empty /
+/// escape-only input produces one blank text element.  Reusable for any
+/// string carrying SGR codes (tool output, markdown code blocks, etc.).
+///
+/// The per-line vector is returned type-erased as std::shared_ptr<void>
+/// (actually std::shared_ptr<std::vector<Element>>) so the module interface
+/// names no ftxui type; callers cast it back (see ansi_render.cppm).
+[[nodiscard]] std::shared_ptr<void> ansi_to_ftxui_elements(std::string_view input) {
     using namespace cc::ui::termio;
 
     SgrAttr attr{};          // running SGR state, mutated by each SGR run
@@ -216,9 +227,10 @@ void apply_sgr_run(std::string_view params, cc::ui::termio::SgrAttr& attr) {
     }
     flush_line();
 
-    if (lines.empty()) return text("");
-    if (lines.size() == 1) return std::move(lines[0]);
-    return vbox(std::move(lines));
+    // lines is never empty: flush_line() always pushes at least one element
+    // (a blank text element when there are no runs).  Return the per-line
+    // vector type-erased so the interface names no ftxui type.
+    return std::make_shared<std::vector<Element>>(std::move(lines));
 }
 
 } // namespace cc::ui::messages

@@ -304,8 +304,12 @@ struct ToolResultOptions {
         // Tool/bash output may carry embedded ANSI SGR sequences; render
         // them as colored ftxui Elements instead of leaking ESC bytes as
         // literal text.  `dim` is kept as the base style so un-styled
-        // spans match the previous subdued look.
-        elements.push_back(ansi_to_ftxui_elements(*opts.output) | dim);
+        // spans match the previous subdued look.  ansi_to_ftxui_elements
+        // returns its per-line vector type-erased (see ansi_render.cppm);
+        // cast it back and compose the lines.
+        auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
+            ansi_to_ftxui_elements(*opts.output));
+        elements.push_back(vbox(std::move(*ansi_elems)) | dim);
     }
     if (opts.error_message) {
         elements.push_back(text(*opts.error_message) | color(Color::Red));
@@ -584,7 +588,11 @@ constexpr int kMaxRenderedLines = 10;
     }
 
     Elements lines;
-    lines.push_back(ansi_to_ftxui_elements(display_text) | color(Color::Red));
+    {
+        auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
+            ansi_to_ftxui_elements(display_text));
+        lines.push_back(vbox(std::move(*ansi_elems)) | color(Color::Red));
+    }
 
     if (!verbose && plus_lines > 0) {
         std::string hint;
@@ -728,8 +736,10 @@ constexpr int kMaxRenderedLines = 10;
                                (text_content.back() == '\n' || text_content.back() == '\r'))
                             text_content.pop_back();
                         if (text_content.empty()) continue;
+                        auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
+                            ansi_to_ftxui_elements(text_content));
                         elems.push_back(detail::wrap_message_response(
-                            ansi_to_ftxui_elements(text_content)));
+                            vbox(std::move(*ansi_elems))));
                     } else if (item.type == "image") {
                         elems.push_back(detail::wrap_message_response(
                             text("[Image]") | dim));
@@ -751,8 +761,10 @@ constexpr int kMaxRenderedLines = 10;
                     std::string_view line = (nl == std::string::npos)
                         ? std::string_view(output).substr(line_start)
                         : std::string_view(output).substr(line_start, nl - line_start);
+                    auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
+                        ansi_to_ftxui_elements(line));
                     elems.push_back(detail::wrap_message_response(
-                        ansi_to_ftxui_elements(line)));
+                        vbox(std::move(*ansi_elems))));
                     if (nl == std::string::npos) break;
                     line_start = nl + 1;
                 }

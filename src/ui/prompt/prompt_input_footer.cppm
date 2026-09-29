@@ -487,7 +487,11 @@ struct StatusLineOptions {
     //       force a neutral userMessageBackground RGB(20,20,22) as the row bg
     //       so the content stays subdued and in-theme.
     namespace msgs = cc::ui::messages;
-    Element content = msgs::ansi_to_ftxui_elements(opts.content)
+    // ansi_to_ftxui_elements returns its per-line vector type-erased as
+    // shared_ptr<void> (see ansi_render.cppm); cast it back and compose.
+    auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
+        msgs::ansi_to_ftxui_elements(opts.content));
+    Element content = vbox(std::move(*ansi_elems))
                    | dim
                    | bgcolor(Color::RGB(20, 20, 22));
 

@@ -65,6 +65,45 @@ namespace acsrc = cc::ui::autocomplete_sources;
 namespace frn = cc::ui::prompt::fuzzy_rank_nucleo;
 namespace fidx = cc::ui::prompt::file_index;
 
+// RFC 0001 Phase C batch 2: folded from app.cppm — sole caller is
+// RefreshAutocompleteSuggestions below. Plain (non-inline) definition;
+// the declaration stays exported in app.cppm.
+[[nodiscard]] AutocompleteToken token_around_cursor(
+    std::string_view input,
+    std::size_t cursor) {
+    if (cursor == std::string::npos || cursor > input.size()) {
+        cursor = input.size();
+    }
+
+    std::size_t start = cursor;
+    while (start > 0 && !ascii_isspace(input[start - 1])) --start;
+
+    std::size_t end = cursor;
+    while (end < input.size() && !ascii_isspace(input[end])) ++end;
+
+    // TS REF: src/hooks/useTypeahead.tsx:272-286 — quoted @ mention detection.
+    // If the token starts with @", extend end to include the full quoted content
+    // (up to closing quote or end of input). This allows @"path with spaces"
+    // to be treated as a single token for autocomplete.
+    std::string text_before = std::string(input.substr(start, cursor - start));
+    std::size_t token_end = cursor;
+    if (text_before.starts_with("@\"")) {
+        // Find the closing quote after cursor, or end of input.
+        std::size_t close = input.find('"', cursor);
+        if (close != std::string_view::npos) {
+            token_end = close + 1;  // include the closing quote
+        } else {
+            token_end = input.size();  // unterminated quote — extend to end
+        }
+    }
+
+    return AutocompleteToken{
+        .start = start,
+        .end = token_end,
+        .text = std::string(input.substr(start, cursor - start)),
+    };
+}
+
 void AppAdapter::RefreshAutocompleteSuggestions() {
     const auto previous_suggestions = screen_state_->autocomplete_suggestions;
     const int previous_index = screen_state_->autocomplete_index;
@@ -940,6 +979,20 @@ AppAdapter::~AppAdapter() {
     if (skills_changed_unsubscribe_) {
         try { skills_changed_unsubscribe_(); } catch (...) {}
     }
+}
+
+// RFC 0001 Phase C batch 2: folded from app.cppm — sole callers are the
+// Render() streaming-thinking path below.
+bool AppAdapter::is_streaming_thinking_visible() const {
+    auto now = std::chrono::steady_clock::now();
+    for (const auto& [idx, stp] : streaming_thinking_) {
+        if (!stp.complete) return true;
+        if (stp.streaming_ended_at &&
+            std::chrono::duration_cast<std::chrono::seconds>(
+                now - *stp.streaming_ended_at).count() < 30)
+            return true;
+    }
+    return false;
 }
 
 Element AppAdapter::Render() {

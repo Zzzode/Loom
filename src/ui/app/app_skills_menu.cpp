@@ -6,9 +6,8 @@
 //   AppAdapter member: OpenSkillsMenu
 //
 // Declarations stay in app.cppm. OpenSkillsMenu mutates screen_state_ and
-// calls PostRenderEvent(), which stays inline in the interface in this
-// batch (it moves in batch 2); an out-of-line member calling an inline one
-// compiles fine.
+// calls PostRenderEvent(), whose body moved to app_animation.cpp in batch
+// 2 (a private member callable from member functions in any impl unit).
 //
 // LLVM #184957: like app_extra_methods.cpp / app_handle_submit.cpp /
 // app_prompt_suggestion_wiring.cpp / app_team.cpp / app_run.cpp, this unit

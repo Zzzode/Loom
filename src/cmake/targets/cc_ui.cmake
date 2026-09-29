@@ -187,9 +187,15 @@ target_sources(cc_ui PRIVATE
     # Module implementation units for cc.ui.app.app (RFC 0001 Phase C
     # batch 1): env/text/UTF helpers + skills-menu formatting, moved out of
     # app.cppm for edit isolation. Textual-std (LLVM #184957) — see the
-    # header comment in each file and CMakeLists.txt:283-290.
+    # header comment in each file and CMakeLists.txt:283-292.
     ui/app/app_helpers.cpp
     ui/app/app_skills_menu.cpp
+    # Module implementation units for cc.ui.app.app (RFC 0001 Phase C
+    # batch 2): animation ticker + render-event post, local-command /
+    # local-JSX rows. Textual-std (LLVM #184957) — see the header comment
+    # in each file and CMakeLists.txt:283-292.
+    ui/app/app_animation.cpp
+    ui/app/app_local_command.cpp
     ui/dialogs/hooks_dialog_renderer_impl.cpp
     ui/dialogs/plugin_dialog_renderer_impl.cpp
     # Module implementation units for cc.ui.visual.markdown (RFC 0001 Phase C

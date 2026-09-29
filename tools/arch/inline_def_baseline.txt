@@ -20,7 +20,6 @@ cc.utils.swarm_helpers 42
 cc.tools.bash 41
 cc.ui.dialogs.system 41
 cc.services.api.client 39
-cc.ui.app.app 39
 cc.ui.widgets.custom_select 39
 cc.ui.screens.log_selector 38
 cc.services.prompt_suggestion 37
@@ -29,6 +28,7 @@ cc.commands.mcp_cmd 33
 cc.ui.widgets.text_input_widget 32
 cc.ui.foundation.logo_v2 30
 cc.ui.prompt.prompt_input_footer 30
+cc.ui.app.app 29 c2-done
 cc.utils.hooks_execution 29
 cc.ui.widgets.text_input 28 c2-done
 cc.utils.file_edit 27

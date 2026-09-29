@@ -583,4 +583,12 @@ bool AppAdapter::ExecuteStatuslineCommand(std::string_view command,
     return true;
 }
 
+// RFC 0001 Phase C batch 2: folded from app.cppm into the statusline
+// cluster. Called from three impl units + StartUiAnimationTicker.
+void AppAdapter::TriggerStatuslineUpdate() {
+    if (screen_state_->status_line_command.empty()) return;
+    statusline_dirty_.store(true);
+    statusline_cv_.notify_one();
+}
+
 }  // namespace cc::ui

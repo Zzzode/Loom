@@ -104,41 +104,12 @@ struct AutocompleteToken {
 // Body in app_helpers.cpp (RFC 0001 Phase C batch 1).
 [[nodiscard]] bool ascii_isspace(char ch);
 
-[[nodiscard]] inline AutocompleteToken token_around_cursor(
+// Body in app_autocomplete.cpp (RFC 0001 Phase C batch 2) — sole caller
+// is RefreshAutocompleteSuggestions in the same TU. inline dropped; the
+// impl unit holds the single strong definition.
+[[nodiscard]] AutocompleteToken token_around_cursor(
     std::string_view input,
-    std::size_t cursor) {
-    if (cursor == std::string::npos || cursor > input.size()) {
-        cursor = input.size();
-    }
-
-    std::size_t start = cursor;
-    while (start > 0 && !ascii_isspace(input[start - 1])) --start;
-
-    std::size_t end = cursor;
-    while (end < input.size() && !ascii_isspace(input[end])) ++end;
-
-    // TS REF: src/hooks/useTypeahead.tsx:272-286 — quoted @ mention detection.
-    // If the token starts with @", extend end to include the full quoted content
-    // (up to closing quote or end of input). This allows @"path with spaces"
-    // to be treated as a single token for autocomplete.
-    std::string text_before = std::string(input.substr(start, cursor - start));
-    std::size_t token_end = cursor;
-    if (text_before.starts_with("@\"")) {
-        // Find the closing quote after cursor, or end of input.
-        std::size_t close = input.find('"', cursor);
-        if (close != std::string_view::npos) {
-            token_end = close + 1;  // include the closing quote
-        } else {
-            token_end = input.size();  // unterminated quote — extend to end
-        }
-    }
-
-    return AutocompleteToken{
-        .start = start,
-        .end = token_end,
-        .text = std::string(input.substr(start, cursor - start)),
-    };
-}
+    std::size_t cursor);
 
 // AT-12: fuzzy_match_ascii / fuzzy_rank_ascii removed — all autocomplete
 // ranking now delegates to cc::ui::prompt::fuzzy_rank_nucleo (frn::), which
@@ -337,17 +308,8 @@ private:
     // grace period (TS: Date.now() - streamingEndedAt < 30000).
     // Drives G3 (hide all completed thinking when streaming visible) and
     // keeps the tail visible after ContentBlockStop fires.
-    bool is_streaming_thinking_visible() const {
-        auto now = std::chrono::steady_clock::now();
-        for (const auto& [idx, stp] : streaming_thinking_) {
-            if (!stp.complete) return true;
-            if (stp.streaming_ended_at &&
-                std::chrono::duration_cast<std::chrono::seconds>(
-                    now - *stp.streaming_ended_at).count() < 30)
-                return true;
-        }
-        return false;
-    }
+    // Body in app_autocomplete.cpp (RFC 0001 Phase C batch 2).
+    bool is_streaming_thinking_visible() const;
     // P0-2 Stage 1: per-turn dedup tracker for ContentBlock index transitions.
     // One per App (one instantiation per repl lifetime; cleared on each turn start.
     cc::ui::messages::pipeline::DedupTracker event_dedup_;
@@ -432,60 +394,15 @@ private:
     std::string last_branch_cwd_;
     std::string cached_git_branch_;
 
-    void StartUiAnimationTicker() {
-        spinner_thread_ = std::jthread([this](std::stop_token st) {
-            constexpr auto kTick = std::chrono::milliseconds(50);
-            // TS is event-driven: Ink re-renders only on state changes, never
-            // on a fixed timer.  This ticker exists solely to advance ANIMATIONS
-            // (the welcome-intro asterisk hue sweep, the query spinner).  Once
-            // the welcome intro has played (asterisk_sweep_ms × sweep_count =
-            // 1500 × 2 = 3000ms ≈ 60 ticks) the screen is static, so we stop
-            // forcing re-renders at idle — FTXUI otherwise re-emits the whole
-            // frame + cursor-move sequences 20×/s, which flickers on terminals
-            // that paint hidden-cursor movement.  Event-driven re-renders
-            // (input, queries, statusline, cost hooks) still work normally.
-            constexpr int kWelcomeIntroTicks = 80;  // 80 × 50ms = 4s (3s sweep + margin)
-            int query_statusline_tick = 0;
-            int welcome_render_ticks = 0;
-            while (!st.stop_requested()) {
-                std::this_thread::sleep_for(kTick);
-                if (st.stop_requested()) break;
+    // Animation ticker — body in app_animation.cpp (RFC 0001 Phase C
+    // batch 2). The jthread lambda moves verbatim: same `this` capture,
+    // same stop_token loop, same TriggerStatuslineUpdate() call.
+    void StartUiAnimationTicker();
 
-                const bool query_active = query_running_.load();
-                const bool welcome_active =
-                    screen_state_ &&
-                    screen_state_->messages.empty() &&
-                    screen_state_->spinner_mode == repl::SpinnerMode::Hidden;
-                if (!welcome_active) welcome_render_ticks = 0;
-
-                // Re-render only while an animation is actually advancing:
-                // an active query (spinner) or the welcome-intro sweep.
-                // At static idle we skip — no animation to drive.
-                if (query_active) {
-                    // spinner animation: keep ticking
-                } else if (welcome_active &&
-                           welcome_render_ticks < kWelcomeIntroTicks) {
-                    ++welcome_render_ticks;
-                } else {
-                    query_statusline_tick = 0;
-                    continue;
-                }
-
-                ui_animation_tick_count_.fetch_add(1, std::memory_order_relaxed);
-                PostRenderEvent();
-
-                if (query_active && ++query_statusline_tick % 20 == 0) {
-                    this->TriggerStatuslineUpdate();
-                }
-            }
-        });
-    }
-
-    void PostRenderEvent() {
-        if (auto* screen = screen_.load(std::memory_order_acquire)) {
-            screen->Post(Event::Custom);
-        }
-    }
+    // Post(Event::Custom) helper — body in app_animation.cpp (RFC 0001
+    // Phase C batch 2). Private member; callable from member functions in
+    // any impl unit (private access holds within member functions).
+    void PostRenderEvent();
 
     // ── Teammate inbox worker ───────────────────────────────────────────────
 
@@ -501,50 +418,16 @@ private:
     void enqueue_teammate_prompt(std::string prompt);
     void poll_teammate_inbox_once(const std::string& agent, const std::string& team);
 
-    void AppendLocalMessagesToScreenState() {
-        // Ensure local-command entries have a synthetic 24-char uuids so the
-        // UnseenDivider anchor match still lands consistently.  Each local
-        // command row is self-contained (not part of any source Message) so
-        // each gets its own unique prefix.  A monotonically counter ensures
-        // no collisions.
-        static std::uint64_t s_local_seq = 0;
-        for (auto it = local_command_messages_.begin();
-             it != local_command_messages_.end(); ++it) {
-            if (it->id.empty()) {
-                char buf[32];
-                std::snprintf(buf, sizeof(buf), "loc_%016llx",
-                              (unsigned long long)s_local_seq++);
-                it->id = std::string(buf, 24);
-            }
-        }
-        screen_state_->messages.insert(
-            screen_state_->messages.end(),
-            local_command_messages_.begin(),
-            local_command_messages_.end());
-    }
+    // Local-command / local-JSX rows — bodies in app_local_command.cpp
+    // (RFC 0001 Phase C batch 2). AppendLocalCommandMessage's default
+    // argument stays on this declaration; the out-of-line definition
+    // omits it (a default must not be redefined by a later declaration
+    // in the same scope).
+    void AppendLocalMessagesToScreenState();
 
-    void AppendLocalCommandInputMessage(std::string command) {
-        if (command.empty()) return;
-        repl::MessageDisplayEntry entry;
-        entry.role = "user";
-        entry.content_preview = std::move(command);
-        entry.is_local_command_input = true;
-        entry.timestamp = std::chrono::system_clock::now();
-        local_command_messages_.push_back(std::move(entry));
-    }
+    void AppendLocalCommandInputMessage(std::string command);
 
-    void AppendLocalCommandMessage(std::string message, bool is_error = false) {
-        if (message.empty()) return;
-        repl::MessageDisplayEntry entry;
-        entry.role = "system";
-        entry.content_preview = std::move(message);
-        entry.is_local_command_output = true;
-        entry.is_error = is_error;
-        entry.timestamp = std::chrono::system_clock::now();
-        local_command_messages_.push_back(std::move(entry));
-        this->SyncState();
-        PostRenderEvent();
-    }
+    void AppendLocalCommandMessage(std::string message, bool is_error = false);
 
 
     // TS REF: src/utils/processUserInput/processBashCommand.tsx
@@ -562,25 +445,9 @@ private:
     // assistant summary are produced — matching the TS transcript exactly.
     void RunLocalBashCommand(std::string command);
 
-    void ClearActiveLocalJsxCommand() {
-        screen_state_->active_local_jsx_command = false;
-        screen_state_->active_local_jsx_command_name.clear();
-        screen_state_->active_local_jsx_command_args.clear();
-        screen_state_->active_local_jsx_content.clear();
-        screen_state_->active_agents_selection_position = 0;
-    }
+    void ClearActiveLocalJsxCommand();
 
-    void DismissLocalJsxCommand(std::string result_message) {
-        if (!screen_state_->active_local_jsx_command) return;
-        std::string command = "/" + screen_state_->active_local_jsx_command_name;
-        if (!screen_state_->active_local_jsx_command_args.empty()) {
-            command += " " + screen_state_->active_local_jsx_command_args;
-        }
-
-        ClearActiveLocalJsxCommand();
-        AppendLocalCommandInputMessage(std::move(command));
-        AppendLocalCommandMessage(std::move(result_message), false);
-    }
+    void DismissLocalJsxCommand(std::string result_message);
 
     // Static text/UTF helpers — bodies in app_helpers.cpp (RFC 0001
     // Phase C batch 1). The static lowercase_ascii is byte-identical to
@@ -614,7 +481,7 @@ private:
 
     // Skills-menu formatting + open — bodies in app_skills_menu.cpp
     // (RFC 0001 Phase C batch 1). OpenSkillsMenu mutates screen_state_ and
-    // calls PostRenderEvent() (inline in this batch; moves in batch 2).
+    // calls PostRenderEvent() (body in app_animation.cpp since batch 2).
     [[nodiscard]] static std::size_t skills_menu_token_estimate(
         const acsrc::SkillSuggestionData& skill);
     [[nodiscard]] static std::string collapse_home_path(std::string path);
@@ -647,11 +514,8 @@ public:
     /// Trigger an async statusline update (debounced).
     /// Faithful to TS scheduleUpdate() — sets a dirty flag and wakes the
     /// worker thread; the actual command runs after the debounce period.
-    void TriggerStatuslineUpdate() {
-        if (screen_state_->status_line_command.empty()) return;
-        statusline_dirty_.store(true);
-        statusline_cv_.notify_one();
-    }
+    /// Body in app_constructor.cpp (RFC 0001 Phase C batch 2).
+    void TriggerStatuslineUpdate();
 
     // Build the statusline JSON payload / execute the user command.
     // Out-of-line in app_constructor.cpp so cc.utils.statusline_runner,

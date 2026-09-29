@@ -711,3 +711,38 @@ tree. Three residual M3 spots in the RFC body were fixed in the same pass
 cleanup; row-8 `:491` → `:488`; 739 → 691 LOC in the state-sharding section)
 and the F1 shrinkage is now stated in full (7-area SCC → 3-area SCC
 {dialogs,features,screens}; messages/permissions/widgets/prompt drop out).
+
+**2026-09-30 — F1 implementation corrections (agent:abcf1fc17c185d03f re-review, approved):**
+
+16. **F1 row-3 sole-importer claim was stale.** The gate package states
+    "Sole importer is `app.cppm` (verified: 1 importer)". At the cut-2 parent
+    the RFC-0001 Phase-C followups had dropped that import; the live importers
+    of `all_components` are 5 test TUs and ZERO src modules. The cut is
+    unchanged (the umbrella re-export and the zero-importer `feature_dialogs`
+    module are still deleted in the same commit); only the importer claim is
+    corrected.
+17. **`cc.ui.app.app` inline count is 29, not 58.** The F1 threshold table's
+    "≤ 58" was written pre-extraction; the RFC-0001 Phase-C followups re-froze
+    the ratchet at 29 (`c2-done`). The threshold is satisfied (29 ≤ 58) and
+    the live ratchet (29) is the binding constraint for F2/F3 wiring.
+18. **F1 row-8 PSS "expected small" assumption corrected.** The gate package
+    expected the new leaf's BMI to be "small (std + ftxui + `SgrAttr` only)".
+    A declarations-only interface that NAMES ftxui types (`ftxui::Color` /
+    `Element` in the signatures) embeds ~10.8 MB of ftxui declarations in the
+    leaf BMI, which regressed `message_tool_result` producer PSS +7.3%
+    (463→497 MB) and violated the "after ≤ before" threshold. The remediation
+    (commit 109d546) redesigned the interface to name NO ftxui type:
+    `sgr_color_value_to_ftxui` is internal to the impl unit, and
+    `ansi_to_ftxui_elements` returns type-erased `shared_ptr<void>` (callers
+    cast back). Leaf BMI 10.8 MB→21 KB; PSS 497→461.8 MB (≤ 463 MB threshold
+    met; re-measured 462.1 MB). The "after ≤ before" threshold is achievable
+    ONLY via this erasure — a ftxui-naming interface cannot meet it.
+19. **Fan-out=1 instrument caveat.** The F1 threshold's instrument
+    (`ninja -n`) reports 328 objects for a one-line body edit to
+    `ansi_render.cpp` — but the same 328 objects appear for an edit to an
+    UNRELATED `.cpp` file. The cause is a pre-existing CMake dyndep cascade
+    (`CXX.dd` is regenerated on any `.cpp` edit and is an implicit dependency
+    of all cc_ui objects), not the cut. Module-level fan-out=1 (body in `.cpp`,
+    interface in `.cppm`; `.pcm` unchanged on body edit) is the correct Phase-C
+    measure and was confirmed by a real build probe (exactly 1 object
+    recompiled).

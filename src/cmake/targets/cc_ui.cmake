@@ -15,7 +15,6 @@ target_sources(cc_ui
         ui/widgets/custom_select.cppm
         ui/widgets/dev_bar.cppm
         ui/widgets/fast_icon.cppm
-        ui/dialogs/feature_dialogs.cppm
         ui/foundation/components_figures.cppm
         ui/features/grove.cppm
         ui/features/plugins/lsp_recommendation_menu.cppm

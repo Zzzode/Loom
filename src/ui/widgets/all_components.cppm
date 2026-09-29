@@ -16,7 +16,6 @@ export import cc.ui.widgets.dev_bar;
 export import cc.ui.widgets.stats;
 export import cc.ui.widgets.tag_tabs;
 export import cc.ui.widgets.text_input;
-export import cc.ui.dialogs.feature_dialogs;
 // Unified canonical PromptInputMode enum — all modules import this from here.
 export import cc.ui.foundation.ui_types;
 

@@ -13583,6 +13583,50 @@ TEST(XaaIdpLoginC20, LegacyXaaIdpFileSymlinkDoesNotBlock) {
     fs::remove_all(root);
 }
 
+// The migration reader accepts the same key spellings the legacy parser
+// (xaa.cppm read_xaa_config_file) did: leading whitespace before the key,
+// spaces around '=', and duplicate lines (last occurrence wins). A
+// commented-out line stays ignored.
+TEST(XaaIdpLoginC20, LegacyXaaIdpFileReaderAcceptsLegacyKeyFormats) {
+    const auto root = c13_make_temp_root("loom_c20_legacy_fmt_");
+    fs::create_directories(root / ".loom");
+    EnvironmentGuard home_guard("HOME", root.string());
+
+    auto write_legacy = [&](std::string_view body) {
+        std::ofstream f(root / ".loom" / "xaa-idp.txt", std::ios::trunc);
+        f << body;
+    };
+    auto read_secret = [&] {
+        return cc::services::mcp::read_legacy_idp_client_secret();
+    };
+
+    // Leading whitespace before the key.
+    write_legacy("  idp_client_secret=leading-ws\n");
+    ASSERT_TRUE(read_secret().has_value());
+    EXPECT_EQ(*read_secret(), "leading-ws");
+
+    // Spaces around '='.
+    write_legacy("idp_client_secret   =   spaced-equals\n");
+    ASSERT_TRUE(read_secret().has_value());
+    EXPECT_EQ(*read_secret(), "spaced-equals");
+
+    // Duplicate lines: last non-empty wins.
+    write_legacy("idp_client_secret=first\nidp_client_secret=second\n");
+    ASSERT_TRUE(read_secret().has_value());
+    EXPECT_EQ(*read_secret(), "second");
+
+    // An empty trailing value does not clobber a prior non-empty one.
+    write_legacy("idp_client_secret=keep-me\nidp_client_secret=\n");
+    ASSERT_TRUE(read_secret().has_value());
+    EXPECT_EQ(*read_secret(), "keep-me");
+
+    // A commented-out line is ignored even though it contains '='.
+    write_legacy("# idp_client_secret=commented\n");
+    EXPECT_FALSE(read_secret().has_value());
+
+    fs::remove_all(root);
+}
+
 // Test 5 (C1 leg): the OIDC login token-exchange error path redacts the
 // echoed body. Drives acquire_idp_id_token() with a mock IdP that returns 400
 // with the secret in a JSON client_secret field; the error must not contain

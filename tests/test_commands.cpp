@@ -20,6 +20,7 @@ import cc.commands.help;
 import cc.commands.hooks;
 import cc.commands.insights;
 import cc.commands.model;
+import cc.commands.mcp_cmd;
 import cc.commands.rewind;
 import cc.commands.plugin_cmd;
 import cc.commands.plugin_ui_data;
@@ -651,6 +652,65 @@ TEST(AppCommandRegistry, ConfigGetReflectsExternalEdit) {
         ASSERT_TRUE(get2.has_value());
         ASSERT_TRUE(get2->ok) << get2->message;
         EXPECT_EQ(get2->message, "model.default_model = v2");
+    }
+
+    cleanup();
+}
+
+// c23: the McpCommand config latch invalidates on an external edit —
+// autocomplete server-name suggestions must reflect the externally edited
+// tier file instead of serving the latched snapshot. Drives complete(),
+// which reads through ensure_config_loaded() without syncing the native
+// runtime. A regression to `if (config_loaded_) return {};` makes the
+// second half fail.
+TEST(AppCommandRegistry, McpSuggestionsReflectExternalConfigEdit) {
+    namespace fs = std::filesystem;
+    const auto root = cmd_make_temp_root("loom_cmd_c23_mcp_");
+    fs::remove_all(root);
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    const fs::path project_path = work / ".loom" / "config.json";
+    {
+        std::ofstream seed(project_path);
+        seed << "{\n  \"mcpServers\": { \"alpha\": { \"command\": \"true\" } }\n}\n";
+    }
+
+    {
+        // Construct AFTER env/cwd are set: the command's default ConfigManager
+        // binds its paths in its constructor.
+        cc::commands::McpCommand mcp;
+
+        auto sug1 = mcp.complete("alpha");
+        EXPECT_TRUE(std::ranges::find(sug1, "alpha") != sug1.end());
+
+        // External edit between calls.
+        {
+            std::ofstream edit(project_path, std::ios::trunc);
+            edit << "{\n  \"mcpServers\": {\n"
+                    "    \"alpha\": { \"command\": \"true\" },\n"
+                    "    \"beta\":  { \"command\": \"true\" }\n"
+                    "  }\n}\n";
+        }
+
+        // The latch must invalidate: the second call re-reads the tier file.
+        auto sug2 = mcp.complete("beta");
+        EXPECT_TRUE(std::ranges::find(sug2, "beta") != sug2.end());
     }
 
     cleanup();

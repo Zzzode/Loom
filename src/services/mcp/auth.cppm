@@ -754,12 +754,20 @@ Result<std::optional<OAuthServerMetadata>> fetch_auth_server_metadata(
 }
 
 // Perform MCP OAuth flow
+//
+// RFC-0001 B followup c17a: `xaa_callback_port` is the configured fixed
+// loopback port for the XAA IdP login (settings.xaaIdp.callbackPort), INJECTED
+// by the caller. This module (cc.services, rank 7) cannot read
+// cc.config.config (rank 1), so the composition layer that owns the settings —
+// which already populates server_config.oauth — supplies it here; it is
+// ignored on the non-XAA path.
 Result<void> perform_mcp_oauth_flow(
     const std::string& server_name,
     const McpServerConfig& server_config,
     std::function<void(const std::string&)> on_authorization_url,
     std::optional<std::stop_token> abort_token = std::nullopt,
-    bool skip_browser_open = false) {
+    bool skip_browser_open = false,
+    std::optional<int> xaa_callback_port = std::nullopt) {
     if (abort_token && abort_token->stop_requested()) {
         return std::unexpected(cc::utils::Error(cc::utils::ErrorCode::cancelled,
             "MCP OAuth flow was cancelled"));
@@ -779,7 +787,10 @@ Result<void> perform_mcp_oauth_flow(
         }
 
         // TS REF: xaa.ts performCrossAppAccess() + xaaIdpLogin.ts acquireIdpIdToken()
-        // Get XAA config (IdP + AS credentials from ~/.loom/xaa-idp.txt)
+        // Get XAA config (IdP + AS credentials). RFC-0001 B followup c17a: the
+        // fixed callback port is NOT read from a file here — it is injected by
+        // the caller from settings.xaaIdp.callbackPort, the single store
+        // `/mcp xaa setup --callback-port` writes.
         auto xaa_config = get_xaa_config(server_name);
         if (!xaa_config) {
             return std::unexpected(cc::utils::Error(
@@ -795,7 +806,8 @@ Result<void> perform_mcp_oauth_flow(
             *xaa_config,
             server_config.url.value_or(std::string{}),
             on_authorization_url,
-            skip_browser_open);
+            skip_browser_open,
+            xaa_callback_port);
         if (!xaa_result) {
             return std::unexpected(cc::utils::Error(
                 cc::utils::ErrorCode::permission_denied,

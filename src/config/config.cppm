@@ -1151,6 +1151,17 @@ private:
         // The section did not exist in the C++ tree before followup c12, so
         // the canonical camelCase keys are the only spellings. Members of
         // the wrong type are ignored, as in every other section.
+        //
+        // RFC-0001 B followup c17a: this per-key PARSE merges (present
+        // REPLACES, absent KEEPS — same policy as systemPrompt and the other
+        // c12 sections). c12's intent was liveness: a value in the API key
+        // above, or in a higher tier, must not be silently reset by a lower
+        // tier's unrelated section. The one user-visible consequence is that
+        // `/mcp xaa setup` (which writes only issuer/clientId/callbackPort and
+        // never omits a configured field) cannot express "clear the port while
+        // keeping the issuer" — that needs `/mcp xaa clear` (which empties all
+        // three). The port is still ONE store: the loader reads exactly this
+        // field.
         if (auto xaa = root.get("xaaIdp"); xaa.is_obj()) {
             if (auto v = xaa.get("issuer"); v.is_str()) {
                 settings_.xaa_idp.issuer = std::string(v.as_str());

@@ -27,6 +27,7 @@ import cc.utils.error;
 import cc.utils.json;
 import cc.commands.terminal_setup;
 import cc.utils.hyperlink;
+import cc.services.mcp.xaa_idp_login;
 
 namespace {
 
@@ -1403,4 +1404,70 @@ TEST(TerminalSetupCommand, PathToFileUrlEncodingAndHyperlinkGate) {
         EnvironmentUnsetGuard vte_version("VTE_VERSION");
         EXPECT_EQ(cu::make_hyperlink(url, text), text);
     }
+}
+
+// RFC-0001 B followup c17a — END-TO-END: `/mcp xaa setup --callback-port`
+// persists settings.xaaIdp.callbackPort (config.json), and the SAME store is
+// what the XAA login path resolves its fixed loopback port from. Drives the
+// real AppCommandRegistry (temp HOME / LOOM_CONFIG_DIR / CWD), then asserts
+// the persisted value flows through build_login_options() — the exact seam
+// acquire_idp_id_token() consumes. No OIDC discovery, no socket, no browser.
+//
+// This is the counter-test for FINDING 1: before c17a the CLI-writable store
+// did not reach the runtime path, and c17's added surface was a second,
+// unwritable store.
+TEST(AppCommandRegistry, XaaSetupCallbackPortReachesLoginSeam) {
+    namespace fs = std::filesystem;
+    const auto root = cmd_make_temp_root("loom_cmd_c17a_xaa_");
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work);
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    {
+        cc::commands::AppCommandRegistry registry;
+
+        auto setup = registry.execute(
+            "/mcp xaa setup --issuer https://idp.example.com "
+            "--client-id loom-cli --callback-port 19485",
+            ctx());
+        ASSERT_TRUE(setup.has_value());
+        ASSERT_TRUE(setup->ok) << setup->message;
+
+        // The value landed in the SUPPORTED store (config.json / xaaIdp), not
+        // in a separate file. Default save target is the project tier.
+        auto project = cc::utils::json::parse_file(work / ".loom" / "config.json");
+        ASSERT_TRUE(project.has_value());
+        const auto xaa = project->root().get("xaaIdp");
+        ASSERT_TRUE(xaa.is_obj());
+        EXPECT_EQ(xaa.get("issuer").as_str(), std::string_view("https://idp.example.com"));
+        EXPECT_EQ(xaa.get("clientId").as_str(), std::string_view("loom-cli"));
+        ASSERT_TRUE(xaa.get("callbackPort").is_num());
+        EXPECT_EQ(xaa.get("callbackPort").as_int(), 19485);
+
+        // The port reaches the login seam that acquire_idp_id_token() binds
+        // from: the resolved port is the configured one, not a random port.
+        auto opts = cc::services::mcp::build_login_options(
+            "https://idp.example.com", "loom-cli",
+            std::optional<int>{static_cast<int>(xaa.get("callbackPort").as_int())});
+        auto resolved = cc::services::mcp::resolve_login_callback_port(opts);
+        ASSERT_TRUE(resolved.has_value()) << resolved.error().message();
+        ASSERT_TRUE(resolved->has_value());
+        EXPECT_EQ(**resolved, 19485u);
+    }
+
+    cleanup();
 }

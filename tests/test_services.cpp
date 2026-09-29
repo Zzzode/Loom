@@ -59,6 +59,9 @@ import cc.server.server_routes;
 import cc.server.server_main;
 import cc.session.storage;
 import cc.session.history;
+import cc.commands.config;
+import cc.commands.mcp.core_settings_loader;
+import cc.orchestration.tools.mcp;
 import cc.query.query_engine;
 import cc.memdir.paths;
 import cc.tools.agent_runtime;
@@ -12588,14 +12591,20 @@ TEST(XaaIdpLoginC17, CachedIdTokenShortCircuitsBeforePortUse) {
 }
 
 // ---------------------------------------------------------------------------
-// xaa XaaConfig.callback_port — the OTHER login entry (the --xaa runtime path,
-// authenticate_xaa()) now knows a port too.
+// c17a — the callback port is a SINGLE store again: settings.xaaIdp.callbackPort,
+// injected into the --xaa runtime path by the composition layer. The
+// c17-added ~/.loom/xaa-idp.txt `callback_port` key (nothing in src/ ever
+// wrote that file) is gone; a hand-edited line is ignored like any unknown key.
 // ---------------------------------------------------------------------------
 
-// read_xaa_config_file() (~/.loom/xaa-idp.txt) parses the optional
-// callback_port line, mirroring the settings.xaaIdp.callbackPort shape.
-TEST(XaaConfigC17, XaaIdpFileParsesCallbackPort) {
-    const auto root = c13_make_temp_root("loom_c17_xaa_cfg_");
+// A `callback_port` line in a legacy / hand-edited ~/.loom/xaa-idp.txt is
+// inert: read_xaa_config_file() has no such field any more, so the parser must
+// not invent one. This pins the removal of the c17 surface.
+template <typename T>
+concept HasCallbackPort = requires(T c) { c.callback_port; };
+
+TEST(XaaConfigC17a, XaaIdpFileCallbackPortLineIsIgnored) {
+    const auto root = c13_make_temp_root("loom_c17a_xaa_cfg_");
     fs::create_directories(root / ".loom");
     EnvironmentGuard home_guard("HOME", root.string());
     {
@@ -12606,37 +12615,456 @@ TEST(XaaConfigC17, XaaIdpFileParsesCallbackPort) {
         f << "callback_port=8765\n";
     }
 
+    // The file still parses (the unknown key is skipped, not an error) but
+    // carries no port: the port can only come from settings.xaaIdp now. The
+    // concept must be dependent, so a missing member is false rather than a
+    // hard error in a non-template context.
     auto cfg = cc::services::mcp::get_xaa_config("any");
     ASSERT_TRUE(cfg.has_value());
-    ASSERT_TRUE(cfg->callback_port.has_value());
-    EXPECT_EQ(*cfg->callback_port, 8765);
-    EXPECT_EQ(
-        *xaa_login::validated_callback_port(cfg->callback_port), 8765u);
+    static_assert(!HasCallbackPort<cc::services::mcp::XaaConfig>,
+        "XaaConfig::callback_port must be removed; the port is injected from "
+        "settings.xaaIdp.callbackPort by the composition layer");
 
     fs::remove(root / ".loom" / "xaa-idp.txt");
     fs::remove_all(root);
 }
 
-// A malformed / out-of-range callback_port line is ignored (left unset), so the
-// login keeps its pre-c17 random-port behavior rather than guessing.
-TEST(XaaConfigC17, XaaIdpFileIgnoresMalformedCallbackPort) {
-    const auto root = c13_make_temp_root("loom_c17_xaa_cfg_bad_");
-    fs::create_directories(root / ".loom");
-    EnvironmentGuard home_guard("HOME", root.string());
+// ===========================================================================
+// RFC-0001 B followup c17a — findings from the c17 review.
+//
+// FINDING 1: c17 added XaaConfig::callback_port + a `callback_port=` parse in
+// ~/.loom/xaa-idp.txt, but NOTHING in src/ ever WRITES that file (only tests
+// did), while the SUPPORTED surface `/mcp xaa setup --callback-port` persists
+// settings.xaaIdp.callbackPort (config.json). Two stores for one setting, and
+// the CLI-writable one did not reach the --xaa runtime path.
+//
+// Resolution: ONE authoritative store — settings.xaaIdp.callbackPort. The
+// c17 ~/.loom/xaa-idp.txt surface is REMOVED (the test above pins that), and
+// the composition layer injects the settings value into authenticate_xaa()
+// (see cc.commands.mcp.core_settings_loader -> CoreSettingsMcpLayer ->
+// native_mcp_xaa_callback_port(), pinned in test_tools).
+//
+// FINDING 2: `idp_client_secret` was dropped on `/mcp xaa login` — setup
+// persisted it and read_xaa_idp_status() reported has_client_secret, but
+// perform_xaa_login()/build_login_options() never forwarded it, so a
+// confidential IdP client silently degraded to PKCE-only on that path.
+//
+// These tests are hermetic: no network, no socket, no browser, no OIDC
+// discovery. The port/secret decisions are observed through the exact seams
+// acquire_idp_id_token() consumes.
+// ===========================================================================
 
-    for (const char* raw : {"8080x", "0", "-1", "65536", "", "  "}) {
-        {
-            std::ofstream f(root / ".loom" / "xaa-idp.txt", std::ios::trunc);
-            f << "idp_url=https://idp.example.com\n";
-            f << "client_id=as-client\n";
-            f << "idp_token_endpoint=https://idp.example.com/token\n";
-            f << "callback_port=" << raw << "\n";
-        }
-        auto cfg = cc::services::mcp::get_xaa_config("any");
-        ASSERT_TRUE(cfg.has_value()) << "raw=" << raw;
-        EXPECT_FALSE(cfg->callback_port.has_value()) << "raw=" << raw;
+// build_login_options() resolves the IdP client secret from the SAME
+// file-based store `/mcp xaa setup` writes and read_xaa_idp_status() reads
+// (get_idp_client_secret(issuer)); an absent store leaves it unset, preserving
+// the PKCE-only behavior exactly.
+TEST(XaaIdpLoginC17a, ClientSecretForwardedWhenStored) {
+    const auto root = c13_make_temp_root("loom_c17a_secret_");
+    fs::create_directories(root);
+    C17IdpTokenCacheGuard guard(root);  // redirects HOME so the store write
+                                        // lands in the temp tree, never the
+                                        // developer's real ~/.config/loom/xaa
+
+    const std::string issuer = "https://idp.example.com";
+
+    // Absent store -> no secret in the options (PKCE-only, as before).
+    {
+        auto opts = xaa_login::build_login_options(issuer, "loom-cli", std::nullopt);
+        EXPECT_FALSE(opts.idp_client_secret.has_value());
     }
 
-    fs::remove(root / ".loom" / "xaa-idp.txt");
+    // A stored secret (the writer `/mcp xaa setup --client-secret` uses) is
+    // resolved into the options, so the token request can use basic/post auth.
+    // The store file starts absent and is created by this write — see
+    // FreshStoreWritesSecretAndToken for why that matters.
+    xaa_login::save_idp_client_secret(issuer, "s3cr3t-c17a");
+    {
+        auto opts = xaa_login::build_login_options(issuer, "loom-cli", std::nullopt);
+        ASSERT_TRUE(opts.idp_client_secret.has_value());
+        EXPECT_EQ(*opts.idp_client_secret, "s3cr3t-c17a");
+
+        // The observable resolver agrees (it is the helper build_login_options
+        // folds in), and an unrelated issuer stays unset.
+        auto resolved = xaa_login::resolve_login_client_secret(issuer);
+        ASSERT_TRUE(resolved.has_value());
+        EXPECT_EQ(*resolved, "s3cr3t-c17a");
+        EXPECT_FALSE(
+            xaa_login::resolve_login_client_secret("https://other.invalid")
+                .has_value());
+    }
+
     fs::remove_all(root);
+}
+
+// The secret and the fixed callback port are resolved together and independently:
+// storing one must not disturb the other, and an out-of-range port is still
+// ignored while the secret is still forwarded.
+TEST(XaaIdpLoginC17a, SecretAndPortResolveIndependently) {
+    const auto root = c13_make_temp_root("loom_c17a_secret_port_");
+    fs::create_directories(root);
+    C17IdpTokenCacheGuard guard(root);
+
+    const std::string issuer = "https://idp.example.com";
+    xaa_login::save_idp_client_secret(issuer, "both-c17a");
+
+    auto opts = xaa_login::build_login_options(
+        issuer, "loom-cli", std::optional<int>{8765});
+    ASSERT_TRUE(opts.idp_client_secret.has_value());
+    EXPECT_EQ(*opts.idp_client_secret, "both-c17a");
+    ASSERT_TRUE(opts.callback_port.has_value());
+    EXPECT_EQ(*opts.callback_port, 8765u);
+
+    auto bad = xaa_login::build_login_options(
+        issuer, "loom-cli", std::optional<int>{70000});
+    ASSERT_TRUE(bad.idp_client_secret.has_value());   // secret still forwarded
+    EXPECT_FALSE(bad.callback_port.has_value());      // bad port still ignored
+
+    fs::remove_all(root);
+}
+
+// Regression, found while making the c17a forwarding reachable: both XAA store
+// writers allocate the root object but (before this fix) never called
+// set_root(), so yyjson_mut_write() returned NULL and to_string() was the empty
+// string. On a FRESH store (the normal first `/mcp xaa setup --client-secret`)
+// the file was created EMPTY — the secret was silently lost, so the forwarding
+// fix could not have had any effect. A pre-existing store round-tripped only
+// because the parse branch happened to set_root().
+TEST(XaaIdpLoginC17a, FreshStoreWritesSecretAndToken) {
+    const auto root = c13_make_temp_root("loom_c17a_fresh_store_");
+    fs::create_directories(root);
+    C17IdpTokenCacheGuard guard(root);
+
+    const auto store = root / ".config" / "loom" / "xaa" / "idp_tokens.json";
+    ASSERT_FALSE(fs::exists(store));  // fresh: no parse branch, no set_root
+
+    // Secret into a fresh store is persisted and readable back.
+    xaa_login::save_idp_client_secret("https://idp.example.com", "fresh-secret");
+    ASSERT_TRUE(fs::exists(store));
+    auto secret = xaa_login::get_idp_client_secret("https://idp.example.com");
+    ASSERT_TRUE(secret.has_value());
+    EXPECT_EQ(*secret, "fresh-secret");
+
+    // The id_token writer is the same class and must be non-empty too (an
+    // unreachable IdP means no login can cache a token here, so seed via the
+    // external-token entry point, which is what `/mcp xaa login --id-token`
+    // uses and which parses the JWT exp claim).
+    xaa_login::save_idp_id_token_from_jwt("https://idp.example.com",
+                                          "header.payload.sig");
+    auto cached = xaa_login::get_cached_idp_id_token("https://idp.example.com");
+    ASSERT_TRUE(cached.has_value());
+    EXPECT_EQ(*cached, "header.payload.sig");
+
+    // Both sections survive side by side (no writer clobbers the other).
+    ASSERT_TRUE(xaa_login::get_idp_client_secret("https://idp.example.com").has_value());
+
+    fs::remove_all(root);
+}
+
+// authenticate_xaa() (the --xaa runtime login entry) gained the injected
+// callback port as its 5th parameter, so the composition layer can thread
+// settings.xaaIdp.callbackPort in without cc.services seeing cc.config. The
+// 4-argument call shape (on_auth_url + skip_browser, no port) must keep
+// compiling.
+TEST(XaaIdpLoginC17a, AuthenticateXaaAcceptsInjectedCallbackPort) {
+    using AuthFn = cc::services::mcp::Result<cc::services::mcp::XaaResult> (*)(
+        const cc::services::mcp::XaaConfig&, std::string_view,
+        std::function<void(const std::string&)>, bool, std::optional<int>);
+    static_assert(std::is_same_v<AuthFn,
+        decltype(&cc::services::mcp::authenticate_xaa)>);
+
+    const auto four_arg_call = [](const cc::services::mcp::XaaConfig& c,
+                                  std::string_view url,
+                                  std::function<void(const std::string&)> cb,
+                                  bool skip) {
+        return cc::services::mcp::authenticate_xaa(c, url, std::move(cb), skip);
+    };
+    static_assert(std::is_invocable_v<decltype(four_arg_call),
+        const cc::services::mcp::XaaConfig&, std::string_view,
+        std::function<void(const std::string&)>, bool>);
+    SUCCEED();
+}
+
+// The resolved single-store port is what the login seam would bind: the value
+// the CLI-writable store carries reaches build_login_options() and resolves to
+// that exact port (not a random one). Pairs with the CLI end-to-end test below.
+TEST(XaaIdpLoginC17a, ResolvedStorePortReachesLoginSeam) {
+    auto opts = xaa_login::build_login_options(
+        "https://idp.example.com", "loom-cli", std::optional<int>{19485});
+    auto resolved = xaa_login::resolve_login_callback_port(opts);
+    ASSERT_TRUE(resolved.has_value()) << resolved.error().message();
+    ASSERT_TRUE(resolved->has_value());
+    EXPECT_EQ(**resolved, 19485u);
+
+    // Unset store -> random/fallback port (pre-c17 behavior preserved).
+    auto unset = xaa_login::build_login_options(
+        "https://idp.example.com", "loom-cli", std::nullopt);
+    EXPECT_FALSE(unset.callback_port.has_value());
+}
+
+// FINDING 1, full chain: with the REAL production core-settings loader
+// installed (cc.commands.mcp.core_settings_loader, which is the one place
+// allowed to see both cc.config.config and cc.orchestration.tools.mcp), a
+// settings.xaaIdp.callbackPort written to the real config tiers is loaded into
+// the native runtime and surfaced by native_mcp_xaa_callback_port() — the value
+// McpAuthTool forwards to authenticate_xaa(). No fake loader, no network.
+//
+// This module reaches cc.orchestration.* through cc_core (test_tools links
+// cc_orchestration directly, test_services transitively).
+TEST(XaaIdpLoginC17a, ProductionLoaderPropagatesXaaCallbackPort) {
+    namespace fs2 = std::filesystem;
+    const auto root = c13_make_temp_root("loom_c17a_prod_loader_");
+    const auto home = root / "home";
+    const auto cfg = root / "cfg";
+    const auto work = root / "work";
+    fs2::create_directories(home);
+    fs2::create_directories(cfg);
+    fs2::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    const fs2::path previous_cwd = fs2::current_path();
+    fs2::current_path(work);
+
+    auto reset = [&] {
+        // Clear the slot and force a full reload so the runtime (a process
+        // singleton) drops BOTH the configured servers and any captured XAA
+        // callback port — a plain sync({}) marks the runtime loaded and would
+        // leave a stale port behind for the next test.
+        cc::tools::set_core_settings_mcp_loader(nullptr);
+        (void)cc::tools::reload_native_mcp_servers_from_config();
+    };
+    reset();
+
+    // Write the project config tier the production loader reads.
+    {
+        std::ofstream f(work / ".loom" / "config.json");
+        f << R"JSON({
+  "xaaIdp": { "issuer": "https://idp.example.com", "clientId": "loom-cli", "callbackPort": 19485 }
+})JSON";
+    }
+
+    // Install the REAL composition-root loader and force a fresh load.
+    cc::commands::install_core_settings_mcp_loader();
+    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+
+    auto port = cc::tools::native_mcp_xaa_callback_port();
+    ASSERT_TRUE(port.has_value());
+    EXPECT_EQ(*port, 19485);
+
+    reset();
+    std::error_code ec;
+    fs2::current_path(previous_cwd, ec);
+    fs2::remove_all(root);
+}
+
+// RFC-0001 B followup c17a — REGRESSION for the review's MAJOR: the XAA
+// callback port must survive the PRODUCTION ordering. McpCommand calls
+// sync_native_mcp_servers() (from /mcp list, /mcp show, the MCP dialog) BEFORE
+// any XAA mcp_auth; sync() sets the runtime's loaded_ flag WITHOUT running the
+// core-settings loader. A cached capture was therefore nullopt in exactly that
+// ordering and the login fell back to a random port — the very c17 defect this
+// change fixes. xaa_callback_port() now resolves through the loader on demand,
+// so a sync() first must not hide the port. No reload_to_config() here on
+// purpose: that is the path that used to mask the bug.
+TEST(XaaIdpLoginC17a, PortSurvivesSyncBeforeReadProductionOrdering) {
+    namespace fs2 = std::filesystem;
+    const auto root = c13_make_temp_root("loom_c17a_sync_order_");
+    const auto home = root / "home";
+    const auto cfg = root / "cfg";
+    const auto work = root / "work";
+    fs2::create_directories(home);
+    fs2::create_directories(cfg);
+    fs2::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    const fs2::path previous_cwd = fs2::current_path();
+    fs2::current_path(work);
+
+    auto reset = [&] {
+        cc::tools::set_core_settings_mcp_loader(nullptr);
+        (void)cc::tools::reload_native_mcp_servers_from_config();
+    };
+    reset();
+
+    {
+        std::ofstream f(work / ".loom" / "config.json");
+        f << R"JSON({
+  "xaaIdp": { "issuer": "https://idp.example.com", "clientId": "loom-cli", "callbackPort": 19485 }
+})JSON";
+    }
+
+    cc::commands::install_core_settings_mcp_loader();
+
+    // Production ordering: sync() FIRST (this sets loaded_ = true and never
+    // ran the loader), THEN read the port.
+    ASSERT_TRUE(cc::tools::sync_native_mcp_servers({}).has_value());
+    auto port = cc::tools::native_mcp_xaa_callback_port();
+    ASSERT_TRUE(port.has_value())
+        << "sync() before the read left the port unset (the c17 random-port bug)";
+    EXPECT_EQ(*port, 19485);
+
+    // A subsequent explicit reload keeps it (and is still correct).
+    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+    ASSERT_TRUE(cc::tools::native_mcp_xaa_callback_port().has_value());
+
+    reset();
+    std::error_code ec;
+    fs2::current_path(previous_cwd, ec);
+    fs2::remove_all(root);
+}
+
+// RFC-0001 B followup c17a — the store holds an IdP client secret and a
+// cached id_token; both writers now route through
+// cc.utils.atomic_replace_file(OwnerOnly) and force the containing xaa/ dir
+// to 0700, so the credentials are owner-only at rest instead of the previous
+// 0644 file / 0755 dir under umask 022. These tests run under umask 022 (the
+// common default) for umask-independence: the mode must come from the code,
+// not the umask.
+namespace {
+/// Apply umask 022 for the scope; restore the previous mask on exit. Child
+/// tests run serially (ctest -j1) and no other test in this binary asserts a
+/// umask-dependent mode, so this is safe.
+struct UmaskGuard022 {
+    mode_t previous;
+    UmaskGuard022() : previous(::umask(022)) {}
+    ~UmaskGuard022() { ::umask(previous); }
+};
+[[nodiscard]] mode_t mode_bits(const fs::path& path) {
+    struct ::stat st {};
+    return (::stat(path.c_str(), &st) == 0) ? static_cast<mode_t>(st.st_mode & 07777u)
+                                            : static_cast<mode_t>(0);
+}
+} // namespace
+
+// Fresh store: the file is created 0600 and its parent dir 0700, regardless
+// of the process umask.
+TEST(XaaIdpLoginC17a, StoreIsOwnerOnlyOnFreshWrite) {
+    const auto root = c13_make_temp_root("loom_c17a_mode_fresh_");
+    fs::create_directories(root);
+    C17IdpTokenCacheGuard guard(root);
+    UmaskGuard022 umask_guard;
+
+    cc::services::mcp::save_idp_client_secret("https://idp.example.com", "owner-only");
+    const auto store = root / ".config" / "loom" / "xaa" / "idp_tokens.json";
+    ASSERT_TRUE(fs::exists(store));
+    EXPECT_EQ(mode_bits(store), static_cast<mode_t>(0600u)) << "file must be owner-only";
+    EXPECT_EQ(mode_bits(store.parent_path()), static_cast<mode_t>(0700u))
+        << "store dir must be owner-only";
+
+    // The secret still round-trips (0600 must not break the read path).
+    auto secret = cc::services::mcp::get_idp_client_secret("https://idp.example.com");
+    ASSERT_TRUE(secret.has_value());
+    EXPECT_EQ(*secret, "owner-only");
+
+    fs::remove_all(root);
+}
+
+// A pre-existing 0644 store (the pre-c17a world) is TIGHTENED to 0600 on the
+// next write — the mode is corrected, not merely applied at creation.
+TEST(XaaIdpLoginC17a, ExistingWideStoreTightenedToOwnerOnly) {
+    const auto root = c13_make_temp_root("loom_c17a_mode_tighten_");
+    fs::create_directories(root);
+    C17IdpTokenCacheGuard guard(root);
+    UmaskGuard022 umask_guard;
+
+    // Seed a 0644 store with a different issuer so the rewrite is a read-
+    // modify-write of a real pre-existing file.
+    const auto store = root / ".config" / "loom" / "xaa" / "idp_tokens.json";
+    fs::create_directories(store.parent_path());
+    {
+        std::ofstream f(store);
+        f << R"JSON({"mcpXaaIdpConfig":{"https://existing.invalid":{"clientSecret":"old"}}})JSON";
+    }
+    ASSERT_EQ(::chmod(store.c_str(), 0644), 0);
+    ASSERT_EQ(mode_bits(store), static_cast<mode_t>(0644u));
+
+    cc::services::mcp::save_idp_client_secret("https://idp.example.com", "new-secret");
+    EXPECT_EQ(mode_bits(store), static_cast<mode_t>(0600u)) << "mode must be corrected";
+
+    // Both the pre-existing and the new entry survive the rewrite.
+    EXPECT_TRUE(cc::services::mcp::get_idp_client_secret("https://existing.invalid").has_value());
+    EXPECT_TRUE(cc::services::mcp::get_idp_client_secret("https://idp.example.com").has_value());
+
+    fs::remove_all(root);
+}
+
+// A pre-existing stricter mode (0400) is replaced by exactly 0600 — never a
+// wider mode, and the read path still works; and the store dir is 0700.
+TEST(XaaIdpLoginC17a, StricterExistingModeNotLoosened) {
+    const auto root = c13_make_temp_root("loom_c17a_mode_strict_");
+    fs::create_directories(root);
+    C17IdpTokenCacheGuard guard(root);
+    UmaskGuard022 umask_guard;
+
+    const auto store = root / ".config" / "loom" / "xaa" / "idp_tokens.json";
+    fs::create_directories(store.parent_path());
+    {
+        std::ofstream f(store);
+        f << "{}";
+    }
+    ASSERT_EQ(::chmod(store.c_str(), 0400), 0);
+
+    cc::services::mcp::save_idp_client_secret("https://idp.example.com", "strict");
+    const auto bits = mode_bits(store);
+    EXPECT_EQ(bits, static_cast<mode_t>(0600u))
+        << "replace sets exactly 0600 (owner rw); never wider";
+    EXPECT_EQ(bits & static_cast<mode_t>(0077u), static_cast<mode_t>(0u))
+        << "no group/other bit may survive";
+    EXPECT_TRUE(cc::services::mcp::get_idp_client_secret("https://idp.example.com").has_value());
+
+    fs::remove_all(root);
+}
+
+// A symlinked store leaf is REFUSED (no clobber-follow): atomic_replace_file's
+// leaf gate rejects it, so the symlink target is left untouched and the
+// symlink itself is not replaced by a regular file.
+TEST(XaaIdpLoginC17a, SymlinkedStoreLeafRefused) {
+    const auto root = c13_make_temp_root("loom_c17a_mode_symlink_");
+    fs::create_directories(root);
+    C17IdpTokenCacheGuard guard(root);
+
+    const auto store = root / ".config" / "loom" / "xaa" / "idp_tokens.json";
+    fs::create_directories(store.parent_path());
+    const auto victim = root / "victim.json";
+    {
+        std::ofstream f(victim);
+        f << "SENTINEL-VICTIM";
+    }
+    ASSERT_EQ(::symlink(victim.c_str(), store.c_str()), 0);
+    ASSERT_TRUE(fs::is_symlink(store));
+
+    cc::services::mcp::save_idp_client_secret("https://idp.example.com", "must-not-land");
+
+    // The victim is byte-unchanged and the leaf is still a symlink (the write
+    // was refused, not followed and not turned into a regular file).
+    std::ifstream in(victim);
+    std::string body((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    EXPECT_EQ(body, "SENTINEL-VICTIM");
+    EXPECT_TRUE(fs::is_symlink(store));
+
+    fs::remove_all(root);
+}
+
+// FINDING 1, is_xaa gate: the configured port is forwarded ONLY for an
+// XAA-configured server. xaa_login_callback_port_for() is the extracted pure
+// seam McpAuthTool consults; inverting or deleting the gate (e.g. returning
+// `configured_port` unconditionally) fails this test. Hermetic: no network,
+// no loader, no configured server needed.
+TEST(XaaIdpLoginC17a, CallbackPortForwardedOnlyForXaaServers) {
+    // The positive case: an XAA server gets the configured port.
+    EXPECT_EQ(cc::tools::xaa_login_callback_port_for(true, std::optional<int>{19485}),
+              std::optional<int>{19485});
+    // The negative case: a NON-XAA OAuth server must NOT be pinned to it, even
+    // when a port is configured — otherwise a plain OAuth login would bind the
+    // IdP port.
+    EXPECT_FALSE(cc::tools::xaa_login_callback_port_for(false, std::optional<int>{19485})
+                     .has_value());
+    // No configured port -> nullopt either way (random port preserved).
+    EXPECT_FALSE(cc::tools::xaa_login_callback_port_for(true, std::nullopt).has_value());
+    EXPECT_FALSE(cc::tools::xaa_login_callback_port_for(false, std::nullopt).has_value());
+
+    // And the runtime helper the gate reads is independently observable.
+    cc::tools::set_core_settings_mcp_loader(nullptr);
+    EXPECT_FALSE(cc::tools::native_mcp_xaa_callback_port().has_value());
 }

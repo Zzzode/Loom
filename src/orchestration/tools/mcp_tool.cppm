@@ -844,8 +844,23 @@ inline void merge_native_mcp_servers(
 // mapped native servers (or the ConfigManager load error verbatim). When no
 // loader is installed (test binaries), the core settings layer is skipped and
 // only the services ConfigLoader + plugin discovery layers run.
+//
+// RFC-0001 B followup c17a: the loader also yields the configured XAA IdP
+// callback port from the SAME ConfigManager load (settings.xaaIdp.callbackPort,
+// written by `/mcp xaa setup --callback-port`). The XAA runtime login path
+// (McpAuthTool -> perform_mcp_oauth_flow -> authenticate_xaa) needs that port
+// but cannot read cc.config.config, so the composition layer supplies it here.
+// The runtime reads it FRESH per lookup (NativeMcpRuntime::xaa_callback_port)
+// rather than caching it, so it is available regardless of whether a config
+// load or a sync() populated the runtime first. It is a member (not a second
+// closure) so a test may install a loader without a ConfigManager and still
+// assert the forwarded port.
+struct CoreSettingsMcpLayer {
+    std::vector<NativeMcpConfiguredServer> servers;
+    std::optional<int> xaa_callback_port = std::nullopt;
+};
 using CoreSettingsMcpServersLoader = std::function<
-    std::expected<std::vector<NativeMcpConfiguredServer>, std::string>()>;
+    std::expected<CoreSettingsMcpLayer, std::string>()>;
 
 namespace detail {
 // Function-local static: one strong symbol across TUs, same anchor pattern as
@@ -957,9 +972,9 @@ public:
         // plugin discovery layers below still run unchanged.
         std::vector<NativeMcpConfiguredServer> servers;
         if (auto& loader = detail::core_settings_mcp_loader_slot(); loader) {
-            auto core_servers = loader();
-            if (!core_servers) return std::unexpected(core_servers.error());
-            servers = std::move(*core_servers);
+            auto core_layer = loader();
+            if (!core_layer) return std::unexpected(core_layer.error());
+            servers = std::move(core_layer->servers);
         }
 	if (auto service_config = svc_mcp::ConfigLoader(fs::current_path()).load()) {
 	    std::vector<NativeMcpConfiguredServer> service_servers;
@@ -1037,6 +1052,30 @@ public:
 	});
 	if (it == configured_servers_.end()) return std::nullopt;
 	return *it;
+    }
+
+    /// RFC-0001 B followup c17a — the configured XAA IdP callback port from
+    /// the core-settings layer (settings.xaaIdp.callbackPort). It is resolved
+    /// FRESH on every call through the loader sink, because it must not be
+    /// cached behind `loaded_`: the production `McpCommand` calls sync() (from
+    /// `/mcp list`, `/mcp show`, the MCP dialog) BEFORE any XAA `mcp_auth`, and
+    /// sync() sets `loaded_ = true` without running the loader — a cached
+    /// capture would therefore stay nullopt in exactly the production ordering.
+    /// The loader holds a ConfigManager whose path/env resolution happens at
+    /// call time, so re-reading the current value is correct even if the file
+    /// changed since the config load.
+    ///
+    /// The sink is called WITHOUT `mutex_` held: a loader is a ConfigManager
+    /// read (filesystem I/O) and must not run under the runtime lock.
+    /// nullopt when no loader is installed (test binaries) or the port is
+    /// unset. Consumed by McpAuthTool on the XAA path only.
+    [[nodiscard]] std::optional<int> xaa_callback_port() {
+	if (auto& loader = detail::core_settings_mcp_loader_slot(); loader) {
+	    auto core_layer = loader();
+	    if (!core_layer) return std::nullopt;
+	    return core_layer->xaa_callback_port;
+	}
+	return std::nullopt;
     }
 
     [[nodiscard]] std::vector<NativeMcpServerStatus> all_statuses() {
@@ -1318,6 +1357,26 @@ inline std::optional<NativeMcpConfiguredServer> native_mcp_configured_server(std
     return NativeMcpRuntime::instance().configured_server(server_name);
 }
 
+/// RFC-0001 B followup c17a — the configured XAA IdP callback port the XAA
+/// login path should use, resolved on demand from the core-settings loader
+/// (see CoreSettingsMcpLayer). nullopt means "no fixed port" (or no loader
+/// installed): the login keeps its random-port behavior.
+inline std::optional<int> native_mcp_xaa_callback_port() {
+    return NativeMcpRuntime::instance().xaa_callback_port();
+}
+
+/// RFC-0001 B followup c17a — the is_xaa gate, as a pure seam: McpAuthTool
+/// forwards the configured callback port ONLY for an XAA-configured server,
+/// and nullopt otherwise, so a non-XAA OAuth server never has its loopback
+/// redirect pinned to the IdP port. Extracted (like build_login_options on
+/// the services side) so a hermetic test can pin the gate without running a
+/// flow — inverting or deleting it must fail that test.
+[[nodiscard]] inline std::optional<int> xaa_login_callback_port_for(
+    bool is_xaa,
+    std::optional<int> configured_port) {
+    return is_xaa ? configured_port : std::nullopt;
+}
+
 inline std::vector<NativeMcpServerStatus> native_mcp_statuses() {
     return NativeMcpRuntime::instance().all_statuses();
 }
@@ -1560,6 +1619,14 @@ public:
 	    );
 	}
 
+	// RFC-0001 B followup c17a: on the XAA path, forward the configured fixed
+	// callback port (settings.xaaIdp.callbackPort, captured by the core-settings
+	// loader) so the loopback redirect_uri matches an IdP-side allowlist.
+	// Resolved once here, before the flow is dispatched to a worker thread.
+	// The is_xaa gate lives in xaa_login_callback_port_for() (a pure seam).
+	const std::optional<int> xaa_port = xaa_login_callback_port_for(
+	    configured->oauth->xaa, native_mcp_xaa_callback_port());
+
 	if (wait_for_callback) {
 	    if (!authorization_url_file || authorization_url_file->empty()) {
 	        return std::unexpected(McpError::InvalidInput);
@@ -1579,7 +1646,8 @@ public:
 	            }
 	        },
 	        std::nullopt,
-	        true
+	        true,
+	        xaa_port
 	    );
 	    if (!result) {
 	        return std::unexpected(McpError::AuthFailed);
@@ -1598,7 +1666,7 @@ public:
 
 	auto state = std::make_shared<AuthFlowState>();
 	auto oauth_config = to_oauth_server_config(*configured);
-	std::thread([state, server_name, oauth_config = std::move(oauth_config)]() mutable {
+	std::thread([state, server_name, oauth_config = std::move(oauth_config), xaa_port]() mutable {
 	    auto result = svc_mcp::perform_mcp_oauth_flow(
 	        server_name,
 	        oauth_config,
@@ -1610,7 +1678,8 @@ public:
 	            state->cv.notify_all();
 	        },
 	        std::nullopt,
-	        true
+	        true,
+	        xaa_port
 	    );
 	    {
 	        std::lock_guard lock(state->mutex);

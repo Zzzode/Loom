@@ -27,6 +27,7 @@ export module cc.services.mcp.xaa_idp_login;
 
 import std;
 
+import cc.utils.atomic_replace;
 import cc.utils.crypto;
 import cc.utils.error;
 import cc.utils.json;
@@ -146,6 +147,31 @@ namespace detail {
     return fs::path(home) / ".config" / "loom" / "xaa" / "idp_tokens.json";
 }
 
+/// RFC-0001 B followup c17a — the store sits under a per-user secret
+/// directory and must be owner-only at rest. Create the containing directory
+/// (and its parents) and force the FINAL component to 0700.
+///
+/// `fs::create_directories` applies the umask (0755 @ 022), so the mode is
+/// set explicitly afterwards. It is set with `fs::perms::replace` on the
+/// xaa/ leaf, never loosened: an already-present stricter mode is left alone
+/// because `replace` only ever moves the leaf to exactly 0700 — a stricter
+/// 0500/0700 dir becomes 0700 (a superset that keeps the owner's rwx and
+/// cannot expose the path to group/other), and a wider 0755 dir is narrowed.
+/// Only the leaf is touched; the pre-existing ~/.config and ~/.config/loom
+/// directories are not re-permissioned (we did not create them).
+/// Best-effort: a failure here never blocks the write (the file itself is
+/// still written 0600 regardless).
+inline void ensure_owner_only_store_dir(const fs::path& file_path) {
+    auto dir = file_path.parent_path();
+    if (dir.empty()) return;
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+    fs::permissions(dir,
+                    fs::perms::owner_all,
+                    fs::perm_options::replace,
+                    ec);
+}
+
 /// TS REF: xaaIdpLogin.ts:99-107 getCachedIdpIdToken()
 /// Read cached id_token for the given IdP issuer from secure storage.
 /// Returns nullopt if missing or within expiry buffer.
@@ -196,12 +222,20 @@ inline void write_cached_idp_token(
     std::string_view id_token,
     int64_t expires_at_ms) {
     auto path = idp_token_storage_path();
-    std::error_code ec;
-    fs::create_directories(path.parent_path(), ec);
+    // RFC-0001 B followup c17a: owner-only at rest (0700 dir / 0600 file).
+    ensure_owner_only_store_dir(path);
 
     // Read existing data
     JsonMutDoc doc;
     auto root = doc.object();
+    // Commit the new root BEFORE any mutation. yyjson only serializes what is
+    // reachable from the document root: with no set_root() call the root value
+    // is a valid object but yyjson_mut_doc_get_root() is NULL, so
+    // yyjson_mut_write() returns NULL and to_string() below yields the empty
+    // string — the file was then created EMPTY and the id_token was never
+    // actually cached on a fresh store. (Pre-existing; found while making the
+    // c17a client-secret forwarding reachable.)
+    doc.set_root(root);
 
     auto existing = cc::utils::json::parse_file(path);
     if (existing && existing->root().is_obj()) {
@@ -219,11 +253,13 @@ inline void write_cached_idp_token(
     entry.add("expiresAt", doc.number(expires_at_ms));
     mcp_xaa.add(key, entry);
 
-    // Write to file
-    std::ofstream file(path);
-    if (file.is_open()) {
-        file << doc.to_string();
-    }
+    // RFC-0001 B followup c17a: hardened owner-only atomic write (0600,
+    // symlink/FIFO-leaf refusal, unique O_EXCL|O_NOFOLLOW tmp, fsync, atomic
+    // rename) instead of a truncating std::ofstream that applied the umask
+    // (0644) and followed symlinks. Best-effort like before: a store write
+    // failure does not fail the login that produced the token.
+    (void)cc::utils::atomic_replace_file(path, doc.to_string(),
+                                         cc::utils::AtomicMode::OwnerOnly);
 }
 
 /// TS REF: xaaIdpLogin.ts:143-150 clearIdpIdToken()
@@ -244,10 +280,9 @@ inline void remove_cached_idp_token(std::string_view idp_issuer) {
     auto key = issuer_key(idp_issuer);
     (void)mcp_xaa.remove(key);
 
-    std::ofstream file(path);
-    if (file.is_open()) {
-        file << doc.to_string();
-    }
+    // c17a: owner-only atomic write (see write_cached_idp_token).
+    (void)cc::utils::atomic_replace_file(path, doc.to_string(),
+                                         cc::utils::AtomicMode::OwnerOnly);
 }
 
 /// TS REF: xaaIdpLogin.ts:159-172 saveIdpClientSecret() / 177-181 getIdpClientSecret()
@@ -255,11 +290,18 @@ inline void write_idp_client_secret(
     std::string_view idp_issuer,
     std::string_view client_secret) {
     auto path = idp_token_storage_path();
-    std::error_code ec;
-    fs::create_directories(path.parent_path(), ec);
+    // RFC-0001 B followup c17a: owner-only at rest (0700 dir / 0600 file).
+    ensure_owner_only_store_dir(path);
 
     JsonMutDoc doc;
     auto root = doc.object();
+    // Commit the new root BEFORE mutation, or yyjson_mut_write() returns NULL
+    // and the file below is written empty (see write_cached_idp_token). Without
+    // this a secret stored into a FRESH store was silently lost, so the c17a
+    // forwarding fix could not have worked for the first `/mcp xaa setup
+    // --client-secret`. (Pre-existing; found while making the forwarding
+    // reachable.)
+    doc.set_root(root);
 
     auto existing = cc::utils::json::parse_file(path);
     if (existing && existing->root().is_obj()) {
@@ -273,10 +315,10 @@ inline void write_idp_client_secret(
     entry.add("clientSecret", doc.string(client_secret));
     config.add(key, entry);
 
-    std::ofstream file(path);
-    if (file.is_open()) {
-        file << doc.to_string();
-    }
+    // c17a: owner-only atomic write (see write_cached_idp_token). The secret
+    // store must never be world-readable.
+    (void)cc::utils::atomic_replace_file(path, doc.to_string(),
+                                         cc::utils::AtomicMode::OwnerOnly);
 }
 
 [[nodiscard]] inline std::optional<std::string> read_idp_client_secret(
@@ -320,10 +362,9 @@ inline void remove_idp_client_secret(std::string_view idp_issuer) {
     auto key = issuer_key(idp_issuer);
     (void)config.remove(key);
 
-    std::ofstream file(path);
-    if (file.is_open()) {
-        file << doc.to_string();
-    }
+    // c17a: owner-only atomic write (see write_cached_idp_token).
+    (void)cc::utils::atomic_replace_file(path, doc.to_string(),
+                                         cc::utils::AtomicMode::OwnerOnly);
 }
 
 } // namespace detail
@@ -948,18 +989,39 @@ private:
 
 // ─── Wrapper options builder (observable seam) ────────────────────────────
 
+/// RFC-0001 B followup c17a — resolve the IdP client secret for `idp_url`.
+/// Split out (like resolve_login_callback_port) so a hermetic test can assert
+/// what the /mcp xaa login path forwards with no network and no store on disk:
+/// a stored secret resolves (client_secret_post / basic auth reach the token
+/// request), and an absent store yields nullopt, preserving the PKCE-only
+/// behavior exactly. get_idp_client_secret() itself returns nullopt for an
+/// absent file, so this is a thin, observable wrapper.
+[[nodiscard]] inline std::optional<std::string> resolve_login_client_secret(
+    std::string_view idp_url) {
+    auto secret = get_idp_client_secret(idp_url);
+    if (!secret || secret->empty()) return std::nullopt;
+    return secret;
+}
+
 /// RFC-0001 B followup c17 — build the IdpLoginOptions that perform_xaa_login()
 /// hands to acquire_idp_id_token(). Split out so a hermetic test can assert
-/// exactly what the /mcp xaa login path forwards (issuer, client_id, and the
-/// validated fixed callback port) WITHOUT performing OIDC discovery, binding a
-/// listener, or opening a browser: the options struct is otherwise unobservable
-/// from outside this module.
+/// exactly what the /mcp xaa login path forwards (issuer, client_id, the
+/// stored client secret and the validated fixed callback port) WITHOUT
+/// performing OIDC discovery, binding a listener, or opening a browser: the
+/// options struct is otherwise unobservable from outside this module.
 ///
 /// `configured_callback_port` is the raw `int` from settings.xaaIdp.callbackPort.
 /// It is an `int` (not uint16_t) on purpose: validation happens here, once,
 /// through validated_callback_port(), so an out-of-range value can be IGNORED
 /// rather than silently wrapped by the caller before we ever see it
 /// (65536 -> 0, 70000 -> 4464 would bind a port the user never asked for).
+///
+/// RFC-0001 B followup c17a: the IdP client secret is resolved HERE, from the
+/// file-based secure store (~/.config/loom/xaa/idp_tokens.json) keyed by the
+/// issuer — the same source read_xaa_idp_status() reads and the same source
+/// `/mcp xaa setup` writes. It is not a parameter because a caller could not
+/// supply a secret it does not read; resolving it in this seam keeps the
+/// forwarding symmetric with the callback port and testable hermetically.
 [[nodiscard]] inline IdpLoginOptions build_login_options(
     std::string_view idp_url,
     std::string_view client_id,
@@ -967,6 +1029,7 @@ private:
     IdpLoginOptions login_opts;
     login_opts.idp_issuer = std::string(idp_url);
     login_opts.idp_client_id = std::string(client_id);
+    login_opts.idp_client_secret = resolve_login_client_secret(idp_url);
     login_opts.callback_port = validated_callback_port(configured_callback_port);
     return login_opts;
 }
@@ -989,6 +1052,13 @@ private:
 ///        (random port as before) rather than truncated. When present and
 ///        usable, the redirect_uri is pinned to it, which is what an IdP-side
 ///        redirect-URI allowlist keyed to that port requires.
+///
+/// RFC-0001 B followup c17a: the IdP client secret stored for `idp_url`
+/// (~/.config/loom/xaa/idp_tokens.json, the source `/mcp xaa setup` writes and
+/// read_xaa_idp_status() reads) is forwarded through build_login_options() so a
+/// confidential IdP client no longer silently degrades to PKCE-only on this
+/// path. When no secret is stored the options carry nullopt — exactly the
+/// previous behavior.
 [[nodiscard]] inline std::expected<XaaLoginResult, std::string> perform_xaa_login(
     std::string_view idp_url,
     std::string_view client_id,

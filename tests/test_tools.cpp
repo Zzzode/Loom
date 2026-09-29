@@ -9926,13 +9926,15 @@ TEST(Tools, CoreSettingsMcpLoaderFeedsLazyLoad) {
     CoreSettingsMcpLoaderGuard loader_guard;
 
     cc::tools::set_core_settings_mcp_loader(
-        []() -> std::expected<std::vector<cc::tools::NativeMcpConfiguredServer>, std::string> {
+        []() -> std::expected<cc::tools::CoreSettingsMcpLayer, std::string> {
             cc::tools::NativeMcpConfiguredServer server;
             server.name = "loader_fixture";
             server.transport = cc::services::mcp::TransportType::StreamableHttp;
             server.url = "https://loader.example.com/mcp";
             server.headers.emplace("X-Loader", "yes");
-            return std::vector<cc::tools::NativeMcpConfiguredServer>{std::move(server)};
+            cc::tools::CoreSettingsMcpLayer layer;
+            layer.servers.push_back(std::move(server));
+            return layer;
         });
 
     {
@@ -9954,13 +9956,43 @@ TEST(Tools, CoreSettingsMcpLoaderFeedsLazyLoad) {
 TEST(Tools, CoreSettingsMcpLoaderErrorPropagates) {
     CoreSettingsMcpLoaderGuard loader_guard;
     cc::tools::set_core_settings_mcp_loader(
-        []() -> std::expected<std::vector<cc::tools::NativeMcpConfiguredServer>, std::string> {
+        []() -> std::expected<cc::tools::CoreSettingsMcpLayer, std::string> {
             return std::unexpected(std::string("boom"));
         });
 
     auto reloaded = cc::tools::reload_native_mcp_servers_from_config();
     ASSERT_FALSE(reloaded.has_value());
     EXPECT_NE(reloaded.error().find("boom"), std::string::npos) << reloaded.error();
+}
+
+// RFC-0001 B followup c17a — the composition-layer loader also carries the
+// configured XAA IdP callback port (settings.xaaIdp.callbackPort) into the
+// runtime, where the XAA login path forwards it to authenticate_xaa(). This
+// pins that seam hermetically (a fake loader, no ConfigManager): a loader that
+// yields a port surfaces it through native_mcp_xaa_callback_port(), and a
+// loader with no port leaves it unset (random-port behavior preserved).
+TEST(Tools, CoreSettingsLoaderCarriesXaaCallbackPort) {
+    CoreSettingsMcpLoaderGuard loader_guard;
+
+    cc::tools::set_core_settings_mcp_loader(
+        []() -> std::expected<cc::tools::CoreSettingsMcpLayer, std::string> {
+            cc::tools::CoreSettingsMcpLayer layer;
+            layer.xaa_callback_port = 19485;
+            return layer;
+        });
+
+    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+    auto port = cc::tools::native_mcp_xaa_callback_port();
+    ASSERT_TRUE(port.has_value());
+    EXPECT_EQ(*port, 19485);
+
+    // A loader with no configured port leaves it unset.
+    cc::tools::set_core_settings_mcp_loader(
+        []() -> std::expected<cc::tools::CoreSettingsMcpLayer, std::string> {
+            return cc::tools::CoreSettingsMcpLayer{};
+        });
+    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+    EXPECT_FALSE(cc::tools::native_mcp_xaa_callback_port().has_value());
 }
 
 // RFC-0001 B6: the additive snapshots sink receives exactly one vector per
@@ -10036,7 +10068,7 @@ TEST(Tools, McpSnapshotsSinkNotFiredWhenConfigLoadFails) {
     McpSnapshotsSinkGuard sink_guard;
     CoreSettingsMcpLoaderGuard loader_guard;
     cc::tools::set_core_settings_mcp_loader(
-        []() -> std::expected<std::vector<cc::tools::NativeMcpConfiguredServer>, std::string> {
+        []() -> std::expected<cc::tools::CoreSettingsMcpLayer, std::string> {
             return std::unexpected(std::string("sink-boom"));
         });
 

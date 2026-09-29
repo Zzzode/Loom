@@ -23,6 +23,7 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
+#include <limits>
 
 import std;
 import cc.cli.ccr_client;
@@ -48,6 +49,9 @@ import cc.services.mcp.vscode_sdk_mcp;
 import cc.services.memory.sessionMemory;
 import cc.services.extract_memories;
 import cc.services.mcp.types;
+import cc.services.mcp.xaa;
+import cc.services.mcp.xaa_idp_login;
+import cc.services.mcp.oauth_port;
 import cc.services.rate_limit;
 import cc.services.token_estimation;
 import cc.services.prompt_suggestion;
@@ -12383,4 +12387,256 @@ TEST(TeamDataC16a, TeamFileReaderSwapLeavesFailFastAndRegularParses) {
         ASSERT_TRUE(rec->description.has_value());
         EXPECT_EQ(*rec->description, "the c16a team");
     }
+}
+
+// ===========================================================================
+// RFC-0001 B followup c17 — the /mcp xaa login path must forward the
+// configured fixed callbackPort to the loopback listener.
+//
+// Origin: the c12 review noted that settings.xaaIdp.callbackPort parsed and
+// serialized correctly, and read_xaa_idp_status() surfaced it, but neither
+// perform_xaa_login() nor the /mcp xaa login handler passed it through — so a
+// user with a fixed callback port still got a RANDOM one, breaking an
+// IdP-side redirect-URI allowlist keyed to that port.
+//
+// These tests are hermetic: no OIDC discovery, no socket, no browser. The
+// port decision is observed through the seams the module already exposes
+// (build_login_options / resolve_login_callback_port), which are the exact
+// values acquire_idp_id_token() uses to bind detail::CallbackServer.
+// ===========================================================================
+
+namespace xaa_login = cc::services::mcp;
+
+namespace {
+
+/// Guard that unlinks the XAA id_token cache file on scope exit, so a test
+/// that exercises the cached-id_token short-circuit cannot leak state into
+/// later tests in this binary. HOME is redirected for the duration.
+struct C17IdpTokenCacheGuard {
+    fs::path home;
+    EnvironmentGuard home_guard;
+    fs::path cache_file;
+
+    explicit C17IdpTokenCacheGuard(fs::path new_home)
+        : home(std::move(new_home)),
+          home_guard("HOME", home.string()),
+          cache_file(home / ".config" / "loom" / "xaa" / "idp_tokens.json") {}
+
+    ~C17IdpTokenCacheGuard() {
+        std::error_code ec;
+        fs::remove(cache_file, ec);
+        fs::remove_all(home / ".config", ec);
+    }
+};
+
+} // namespace
+
+// The configured port reaches the IdpLoginOptions that acquire_idp_id_token()
+// consumes (and therefore the loopback listener), instead of being dropped.
+TEST(XaaIdpLoginC17, ConfiguredPortReachesListenerOptions) {
+    auto opts = xaa_login::build_login_options(
+        "https://idp.example.com", "loom-cli", std::optional<int>{8765});
+    ASSERT_TRUE(opts.callback_port.has_value());
+    EXPECT_EQ(*opts.callback_port, 8765);
+
+    // The observable listener-resolved port is the configured one, not a
+    // random ephemeral port.
+    auto resolved = xaa_login::resolve_login_callback_port(opts);
+    ASSERT_TRUE(resolved.has_value()) << resolved.error().message();
+    ASSERT_TRUE(resolved->has_value());
+    EXPECT_EQ(**resolved, 8765);
+
+    // issuer / client_id survive the seam unchanged.
+    EXPECT_EQ(opts.idp_issuer, "https://idp.example.com");
+    EXPECT_EQ(opts.idp_client_id, "loom-cli");
+}
+
+// Absent port -> nullopt in the options; the resolver then picks a port via
+// find_available_oauth_port(), i.e. the pre-c17 random behavior.
+TEST(XaaIdpLoginC17, AbsentPortSelectsRandomPort) {
+    const char* old_env = std::getenv("MCP_OAUTH_CALLBACK_PORT");
+    std::optional<std::string> saved = old_env ? std::optional<std::string>(old_env)
+                                               : std::nullopt;
+    unsetenv("MCP_OAUTH_CALLBACK_PORT");
+
+    auto opts = xaa_login::build_login_options(
+        "https://idp.example.com", "loom-cli", std::nullopt);
+    EXPECT_FALSE(opts.callback_port.has_value());
+
+    auto resolved = xaa_login::resolve_login_callback_port(opts);
+    ASSERT_TRUE(resolved.has_value()) << resolved.error().message();
+    ASSERT_TRUE(resolved->has_value());
+    const bool in_ephemeral = **resolved >= xaa_login::kRedirectPortRangeStart &&
+                              **resolved <= xaa_login::kRedirectPortRangeEnd;
+    const bool is_fallback = **resolved == xaa_login::kRedirectPortFallback;
+    EXPECT_TRUE(in_ephemeral || is_fallback) << "got port " << **resolved;
+
+    if (saved) setenv("MCP_OAUTH_CALLBACK_PORT", saved->c_str(), 1);
+    else       unsetenv("MCP_OAUTH_CALLBACK_PORT");
+}
+
+// Out-of-range int -> IGNORED (nullopt), never truncated. A static_cast would
+// wrap 65596 -> 60, 70000 -> 4464 and 65536 -> 0, each of which binds a port
+// the user never asked for; the chosen behavior matches the rest of the
+// codebase's tolerance for invalid config (config.cppm ignores a malformed
+// value and keeps the default) and mirrors find_available_oauth_port, which
+// rejects an impossible MCP_OAUTH_CALLBACK_PORT rather than using it.
+TEST(XaaIdpLoginC17, OutOfRangePortIgnoredNotTruncated) {
+    // Negative int -> ignored. (Defensive: the /mcp xaa setup parser, the only
+    // writer, already rejects <= 0 before it can be stored.)
+    EXPECT_FALSE(xaa_login::build_login_options(
+        "https://idp.example.com", "loom-cli", std::optional<int>{-1})
+        .callback_port.has_value());
+
+    // Above uint16_t: 65536 would truncate to 0 and 70000 to 4464. Both are
+    // ignored, and the resolver falls back to the random/fallback path.
+    for (int bad : {65536, 70000, std::numeric_limits<int>::max()}) {
+        auto opts = xaa_login::build_login_options(
+            "https://idp.example.com", "loom-cli", std::optional<int>{bad});
+        EXPECT_FALSE(opts.callback_port.has_value()) << "bad port " << bad;
+
+        auto resolved = xaa_login::resolve_login_callback_port(opts);
+        ASSERT_TRUE(resolved.has_value()) << resolved.error().message();
+        ASSERT_TRUE(resolved->has_value());
+        EXPECT_NE(**resolved, 0u) << "must never bind an ephemeral 0 from " << bad;
+    }
+}
+
+// Boundaries are kept: 1 and 65535 are both valid fixed ports.
+TEST(XaaIdpLoginC17, BoundaryPortsAccepted) {
+    EXPECT_EQ(*xaa_login::build_login_options(
+        "https://idp.example.com", "loom-cli", std::optional<int>{1}).callback_port,
+        1);
+    EXPECT_EQ(*xaa_login::build_login_options(
+        "https://idp.example.com", "loom-cli", std::optional<int>{65535}).callback_port,
+        65535);
+}
+
+// The pure counter-test for the above: validated_callback_port() is the single
+// narrowing decision point (and it is constexpr, so it stays cheap).
+TEST(XaaIdpLoginC17, ValidatedCallbackPortAcceptsOnlyUsableTcpPorts) {
+    EXPECT_FALSE(xaa_login::validated_callback_port(std::nullopt).has_value());
+    EXPECT_FALSE(xaa_login::validated_callback_port(0).has_value());
+    EXPECT_FALSE(xaa_login::validated_callback_port(-1).has_value());
+    EXPECT_FALSE(xaa_login::validated_callback_port(65536).has_value());
+    EXPECT_EQ(*xaa_login::validated_callback_port(1), 1u);
+    EXPECT_EQ(*xaa_login::validated_callback_port(8765), 8765u);
+    EXPECT_EQ(*xaa_login::validated_callback_port(65535), 65535u);
+}
+
+// perform_xaa_login() accepts the port as its 4th argument and keeps the old
+// 3-argument call shape compiling (scope and callback_port both default). The
+// 3-arg shape is checked by an actual call at a 3-argument call site; the
+// 4-arg shape by the call in CachedIdTokenShortCircuitsBeforePortUse.
+TEST(XaaIdpLoginC17, PerformXaaLoginKeepsBackwardCompatibleSignature) {
+    using LoginFn = std::expected<xaa_login::XaaLoginResult, std::string> (*)(
+        std::string_view, std::string_view, std::optional<std::string_view>,
+        std::optional<int>);
+    static_assert(std::is_same_v<LoginFn,
+        decltype(&xaa_login::perform_xaa_login)>);
+    static_assert(std::is_same_v<
+        decltype(&xaa_login::perform_xaa_login),
+        std::expected<xaa_login::XaaLoginResult, std::string> (*)(
+            std::string_view, std::string_view, std::optional<std::string_view>,
+            std::optional<int>)>);
+    (void)static_cast<LoginFn>(&xaa_login::perform_xaa_login);
+
+    // A 3-argument call site still compiles and resolves against the same
+    // function (both trailing parameters default).
+    const auto three_arg_call = [](std::string_view a, std::string_view b,
+                                   std::optional<std::string_view> c) {
+        return xaa_login::perform_xaa_login(a, b, c);
+    };
+    static_assert(std::is_invocable_v<decltype(three_arg_call),
+        std::string_view, std::string_view, std::optional<std::string_view>>);
+    SUCCEED();
+}
+
+// A cached id_token short-circuits acquire_idp_id_token() before any port is
+// selected: the port is not consulted, so a fixed port cannot make a cached
+// login bind a socket. (Hermetic: seed the cache file, then run the login.)
+TEST(XaaIdpLoginC17, CachedIdTokenShortCircuitsBeforePortUse) {
+    const auto root = c13_make_temp_root("loom_c17_idp_cache_");
+    fs::create_directories(root);
+    C17IdpTokenCacheGuard guard(root);
+
+    // A JWT-shaped token with an exp far in the future, seeded directly in the
+    // same file shape detail::write_cached_idp_token() writes.
+    const auto cache_dir = root / ".config" / "loom" / "xaa";
+    fs::create_directories(cache_dir);
+    const std::int64_t future_ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count() + 3'600'000;
+    {
+        std::ofstream out(cache_dir / "idp_tokens.json", std::ios::binary);
+        out << R"JSON({"mcpXaaIdp":{"https://idp.invalid":{"idToken":"cached-id-token-c17","expiresAt":)JSON"
+            << future_ms << R"JSON(}}})JSON";
+    }
+
+    // Cached token is returned without OIDC discovery (which would fail
+    // against the unreachable issuer and is exactly what we are proving is
+    // NOT reached). A fixed callback port is passed on purpose: it must not
+    // be used, because the cache hit returns before port selection.
+    auto result = xaa_login::perform_xaa_login(
+        "https://idp.invalid", "loom-cli", std::nullopt, std::optional<int>{8765});
+    ASSERT_TRUE(result.has_value()) << result.error();
+    EXPECT_EQ(result->id_token, "cached-id-token-c17");
+    EXPECT_EQ(result->access_token, "cached-id-token-c17");
+    EXPECT_EQ(result->authorization_server_url, "https://idp.invalid");
+
+    fs::remove_all(root);
+}
+
+// ---------------------------------------------------------------------------
+// xaa XaaConfig.callback_port — the OTHER login entry (the --xaa runtime path,
+// authenticate_xaa()) now knows a port too.
+// ---------------------------------------------------------------------------
+
+// read_xaa_config_file() (~/.loom/xaa-idp.txt) parses the optional
+// callback_port line, mirroring the settings.xaaIdp.callbackPort shape.
+TEST(XaaConfigC17, XaaIdpFileParsesCallbackPort) {
+    const auto root = c13_make_temp_root("loom_c17_xaa_cfg_");
+    fs::create_directories(root / ".loom");
+    EnvironmentGuard home_guard("HOME", root.string());
+    {
+        std::ofstream f(root / ".loom" / "xaa-idp.txt");
+        f << "idp_url=https://idp.example.com\n";
+        f << "client_id=as-client\n";
+        f << "idp_token_endpoint=https://idp.example.com/token\n";
+        f << "callback_port=8765\n";
+    }
+
+    auto cfg = cc::services::mcp::get_xaa_config("any");
+    ASSERT_TRUE(cfg.has_value());
+    ASSERT_TRUE(cfg->callback_port.has_value());
+    EXPECT_EQ(*cfg->callback_port, 8765);
+    EXPECT_EQ(
+        *xaa_login::validated_callback_port(cfg->callback_port), 8765u);
+
+    fs::remove(root / ".loom" / "xaa-idp.txt");
+    fs::remove_all(root);
+}
+
+// A malformed / out-of-range callback_port line is ignored (left unset), so the
+// login keeps its pre-c17 random-port behavior rather than guessing.
+TEST(XaaConfigC17, XaaIdpFileIgnoresMalformedCallbackPort) {
+    const auto root = c13_make_temp_root("loom_c17_xaa_cfg_bad_");
+    fs::create_directories(root / ".loom");
+    EnvironmentGuard home_guard("HOME", root.string());
+
+    for (const char* raw : {"8080x", "0", "-1", "65536", "", "  "}) {
+        {
+            std::ofstream f(root / ".loom" / "xaa-idp.txt", std::ios::trunc);
+            f << "idp_url=https://idp.example.com\n";
+            f << "client_id=as-client\n";
+            f << "idp_token_endpoint=https://idp.example.com/token\n";
+            f << "callback_port=" << raw << "\n";
+        }
+        auto cfg = cc::services::mcp::get_xaa_config("any");
+        ASSERT_TRUE(cfg.has_value()) << "raw=" << raw;
+        EXPECT_FALSE(cfg->callback_port.has_value()) << "raw=" << raw;
+    }
+
+    fs::remove(root / ".loom" / "xaa-idp.txt");
+    fs::remove_all(root);
 }

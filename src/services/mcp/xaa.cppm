@@ -94,6 +94,11 @@ struct XaaConfig {
     std::string idp_issuer;
     /// Optional scope
     std::optional<std::string> scope;
+    /// RFC-0001 B followup c17 — optional fixed loopback callback port for the
+    /// IdP login, read from the `callback_port` line of ~/.loom/xaa-idp.txt.
+    /// Validated via validated_callback_port() before it reaches
+    /// IdpLoginOptions (see xaa_idp_login.cppm).
+    std::optional<int> callback_port;
 };
 
 /// TS REF: xaa.ts:126-129 ProtectedResourceMetadata
@@ -805,6 +810,27 @@ namespace detail {
             config.idp_id_token = value;
         } else if (key == "scope") {
             config.scope = value;
+        } else if (key == "callback_port") {
+            // RFC-0001 B followup c17 — parse the optional fixed callback port.
+            // Only a strictly-positive decimal that fits an int is kept; a
+            // malformed / out-of-range value leaves callback_port unset, so the
+            // login falls back to find_available_oauth_port() exactly as it did
+            // before this key existed. Range validation to a usable uint16_t
+            // happens in validated_callback_port().
+            bool digits = !value.empty();
+            for (char ch : value) {
+                if (ch < '0' || ch > '9') { digits = false; break; }
+            }
+            if (digits) {
+                try {
+                    const long parsed = std::stol(value);
+                    if (parsed >= 1 && parsed <= 65535) {
+                        config.callback_port = static_cast<int>(parsed);
+                    }
+                } catch (const std::exception&) {
+                    // Overflow beyond long: leave unset (ignore, don't guess).
+                }
+            }
         }
     }
 
@@ -885,6 +911,10 @@ namespace detail {
             login_opts.idp_issuer = config.idp_issuer;
             login_opts.idp_client_id = config.idp_client_id;
             login_opts.idp_client_secret = config.idp_client_secret;
+            // RFC-0001 B followup c17: honor the configured fixed callback
+            // port on this login path too. validated_callback_port() ignores
+            // an out-of-range value rather than truncating it.
+            login_opts.callback_port = validated_callback_port(config.callback_port);
             login_opts.on_authorization_url = std::move(on_auth_url);
             login_opts.skip_browser_open = skip_browser;
 

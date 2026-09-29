@@ -1114,8 +1114,14 @@ private:
                 status.issuer));
         }
 
+        // RFC-0001 B followup c17: forward the configured fixed callback port
+        // so the loopback redirect_uri matches an IdP-side allowlist keyed to
+        // that port. status.callback_port is the raw `int`; perform_xaa_login()
+        // does the int -> uint16_t narrowing through validated_callback_port()
+        // and IGNORES an out-of-range value (random port as today) rather than
+        // wrapping it (65536 -> 0, 70000 -> 4464 are wrong ports, not errors).
         auto result = cc::services::mcp::perform_xaa_login(
-            status.issuer, status.client_id);
+            status.issuer, status.client_id, std::nullopt, status.callback_port);
         if (!result) {
             return CommandResult::fail(
                 std::format("IdP login failed: {}", result.error()));

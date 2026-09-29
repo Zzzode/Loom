@@ -77,6 +77,26 @@ struct OidcMetadata {
     std::optional<std::vector<std::string>> token_endpoint_auth_methods_supported;
 };
 
+/// RFC-0001 B followup c17 — validate a configured callbackPort (config stores
+/// it as `int`) before it can become an `IdpLoginOptions::callback_port`
+/// (`uint16_t`). Returns the port only when it is a usable TCP port; anything
+/// else — <= 0, > 65535, and 0 (which would mean "let the kernel assign") —
+/// yields nullopt so the caller falls back to find_available_oauth_port().
+///
+/// Mirrors the rest of the codebase's tolerance for invalid config: the value
+/// is IGNORED (treated as absent), never truncated. A silent static_cast would
+/// wrap 65536 -> 0 and 70000 -> 4464, i.e. bind a port the user never asked
+/// for; that is a wrong answer, not an error. `/mcp xaa setup` already rejects
+/// such values at parse time (parse_port), so an out-of-range configured value
+/// can only come from a hand-edited config file.
+[[nodiscard]] constexpr std::optional<uint16_t> validated_callback_port(
+    std::optional<int> configured) noexcept {
+    if (!configured) return std::nullopt;
+    const int p = *configured;
+    if (p < 1 || p > 65535) return std::nullopt;
+    return static_cast<uint16_t>(p);
+}
+
 /// Result returned to auth.cppm (backward-compatible interface)
 struct XaaLoginResult {
     std::string access_token;
@@ -733,6 +753,34 @@ private:
 
 } // namespace detail
 
+// ─── Loopback Listener Options (observable seam) ──────────────────────────
+
+/// RFC-0001 B followup c17 — the login path configures the OIDC flow through
+/// an IdpLoginOptions, but the only thing that must actually reach the loopback
+/// listener is the selected callback port (or nullopt = "find a free port").
+/// That struct is not otherwise readable without performing the network flow,
+/// so this seam splits the SELECTION out of acquire_idp_id_token():
+///
+///   * acquire_idp_id_token() calls this first and returns early on an error,
+///     so the selection is performed exactly once on the live path;
+///   * tests can assert the selected port with no network, no browser and no
+///     listener — idp_url / client_id are opaque here and are not validated.
+///
+/// nullopt means "no fixed port configured": the caller then picks one via
+/// find_available_oauth_port(), i.e. a random port exactly as before c17.
+[[nodiscard]] inline Result<std::optional<uint16_t>> resolve_login_callback_port(
+    const IdpLoginOptions& opts) {
+    if (opts.callback_port) {
+        return *opts.callback_port;
+    }
+    auto port_result = find_available_oauth_port();
+    if (!port_result) {
+        return std::unexpected(Error(ErrorCode::unavailable,
+            "XAA IdP: " + port_result.error()));
+    }
+    return std::optional<uint16_t>(*port_result);
+}
+
 // ─── Main: acquireIdpIdToken ──────────────────────────────────────────────
 
 /// TS REF: xaaIdpLogin.ts:401-487 acquireIdpIdToken()
@@ -751,18 +799,13 @@ private:
     auto metadata = discover_oidc(opts.idp_issuer);
     if (!metadata) return std::unexpected(metadata.error());
 
-    // 3. Select callback port
-    uint16_t port;
-    if (opts.callback_port) {
-        port = *opts.callback_port;
-    } else {
-        auto port_result = find_available_oauth_port();
-        if (!port_result) {
-            return std::unexpected(Error(ErrorCode::unavailable,
-                "XAA IdP: " + port_result.error()));
-        }
-        port = *port_result;
-    }
+    // 3. Select callback port. The fixed-port / bind-probe decision lives in
+    //    resolve_login_callback_port() (above), which is also the seam the c17
+    //    tests observe; this early return preserves the previous "no port
+    //    available" error exactly.
+    auto port_result = resolve_login_callback_port(opts);
+    if (!port_result) return std::unexpected(port_result.error());
+    const uint16_t port = **port_result;
 
     std::string redirect_uri = "http://localhost:" + std::to_string(port) + "/callback";
 
@@ -903,6 +946,31 @@ private:
     return id_token;
 }
 
+// ─── Wrapper options builder (observable seam) ────────────────────────────
+
+/// RFC-0001 B followup c17 — build the IdpLoginOptions that perform_xaa_login()
+/// hands to acquire_idp_id_token(). Split out so a hermetic test can assert
+/// exactly what the /mcp xaa login path forwards (issuer, client_id, and the
+/// validated fixed callback port) WITHOUT performing OIDC discovery, binding a
+/// listener, or opening a browser: the options struct is otherwise unobservable
+/// from outside this module.
+///
+/// `configured_callback_port` is the raw `int` from settings.xaaIdp.callbackPort.
+/// It is an `int` (not uint16_t) on purpose: validation happens here, once,
+/// through validated_callback_port(), so an out-of-range value can be IGNORED
+/// rather than silently wrapped by the caller before we ever see it
+/// (65536 -> 0, 70000 -> 4464 would bind a port the user never asked for).
+[[nodiscard]] inline IdpLoginOptions build_login_options(
+    std::string_view idp_url,
+    std::string_view client_id,
+    std::optional<int> configured_callback_port = std::nullopt) {
+    IdpLoginOptions login_opts;
+    login_opts.idp_issuer = std::string(idp_url);
+    login_opts.idp_client_id = std::string(client_id);
+    login_opts.callback_port = validated_callback_port(configured_callback_port);
+    return login_opts;
+}
+
 // ─── Backward-Compatible Wrapper ──────────────────────────────────────────
 
 /// TS REF: xaaIdpLogin.ts acquireIdpIdToken() — convenience wrapper for the
@@ -915,14 +983,20 @@ private:
 /// @param idp_url   The IdP issuer URL
 /// @param client_id The IdP client ID
 /// @param scope     Optional scope (defaults to "openid")
+/// @param callback_port Optional fixed loopback callback port. The configured
+///        `settings.xaaIdp.callbackPort` is `int`; it is validated through
+///        validated_callback_port() and an out-of-range value is IGNORED
+///        (random port as before) rather than truncated. When present and
+///        usable, the redirect_uri is pinned to it, which is what an IdP-side
+///        redirect-URI allowlist keyed to that port requires.
 [[nodiscard]] inline std::expected<XaaLoginResult, std::string> perform_xaa_login(
     std::string_view idp_url,
     std::string_view client_id,
-    std::optional<std::string_view> scope = std::nullopt) {
+    std::optional<std::string_view> scope = std::nullopt,
+    std::optional<int> callback_port = std::nullopt) {
 
-    IdpLoginOptions login_opts;
-    login_opts.idp_issuer = std::string(idp_url);
-    login_opts.idp_client_id = std::string(client_id);
+    IdpLoginOptions login_opts = build_login_options(
+        idp_url, client_id, callback_port);
     if (scope && !scope->empty()) {
         // scope is passed to the authorization URL; for IdP login it's
         // typically "openid" which is already the default in acquire_idp_id_token.

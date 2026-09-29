@@ -9,6 +9,7 @@ export module cc.tools.team;
 import std;
 
 import cc.utils.json;
+import cc.utils.atomic_replace;
 
 export namespace cc::tools {
 
@@ -166,8 +167,9 @@ inline bool persist_team_record(const Team& team) {
     std::error_code ec;
     fs::create_directories(team_runtime_dir(), ec);
     if (ec) return false;
-    std::ofstream out(team_record_path(team.id), std::ios::trunc);
-    if (!out) return false;
+    // c16: assemble the exact pre-existing bytes, then land them through
+    // the atomic symlink/FIFO-safe replace instead of a truncating open.
+    std::ostringstream out;
     out << R"({"id":")" << team_json_escape(team.id)
         << R"(","name":")" << team_json_escape(team.name)
         << R"(","members":[)";
@@ -193,7 +195,8 @@ inline bool persist_team_record(const Team& team) {
         out << '}';
     }
     out << "]}";
-    return out.good();
+    return cc::utils::atomic_replace_file(team_record_path(team.id),
+                                          out.str()).has_value();
 }
 
 [[nodiscard]] inline std::optional<Team> load_team_record_from_path(const fs::path& path) {

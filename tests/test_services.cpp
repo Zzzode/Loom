@@ -65,6 +65,7 @@ import cc.utils.error;
 import cc.services.ide_integration;
 import cc.utils.json;
 import cc.utils.team_helpers;
+import cc.utils.atomic_replace;
 
 namespace fs = std::filesystem;
 
@@ -11574,4 +11575,599 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
         EXPECT_TRUE(ignores_before.count(path) != 0)
             << "unexpected new .gitignore: " << path;
     }
+}
+
+// ===========================================================================
+// RFC-0001 B followup c16 — atomic, symlink/FIFO-safe team-data replaces;
+// shared-lock readers; per-path grants mutex shards.
+// ===========================================================================
+namespace {
+
+// Mode bits of a path as lstat(2) sees them (no symlink follow).
+[[nodiscard]] mode_t c16_mode_bits(const fs::path& path) {
+    struct ::stat st {};
+    EXPECT_EQ(::lstat(path.c_str(), &st), 0) << path.string();
+    return st.st_mode & 07777;
+}
+
+// True when the directory contains no atomic-replace tmp debris.
+[[nodiscard]] bool c16_no_tmp_debris(const fs::path& dir) {
+    std::error_code ec;
+    for (const auto& entry : fs::directory_iterator(dir, ec)) {
+        if (entry.path().filename().string().find(".tmp.") !=
+            std::string::npos) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Forked PRE-FIX style writer: truncating open + two non-atomic write()
+// halves + close, looped for `duration_ms`. Small deliberate gaps
+// reproduce the visible truncate/partial window a slow multi-insert
+// std::ofstream (or a contended page cache) presents; reads landing in the
+// three windows (post-truncate empty, first half, between halves) fail to
+// parse. Exists only to MEASURE the torn window c16 removes.
+void c16_raw_truncating_writer(const fs::path& path,
+                               std::string half1,
+                               std::string half2,
+                               int duration_ms) {
+    constexpr struct timespec kGap1{0, 300 * 1000};   // 300us
+    constexpr struct timespec kGap2{0, 200 * 1000};   // 200us
+    const auto deadline = std::chrono::steady_clock::now() +
+                          std::chrono::milliseconds(duration_ms);
+    while (std::chrono::steady_clock::now() < deadline) {
+        const int fd = ::open(path.c_str(),
+                              O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (fd < 0) _exit(20);
+        ::nanosleep(&kGap1, nullptr);  // post-truncate empty window
+        const ssize_t n1 =
+            ::write(fd, half1.data(), half1.size());
+        ::nanosleep(&kGap2, nullptr);  // partial-content window
+        const ssize_t n2 =
+            ::write(fd, half2.data(), half2.size());
+        if (n1 < 0 || n2 < 0) {
+            ::close(fd);
+            _exit(21);
+        }
+        ::close(fd);
+    }
+    _exit(0);
+}
+
+struct C16TornCounters {
+    std::atomic<std::uint64_t> attempts{0};
+    std::atomic<std::uint64_t> torn{0};
+};
+
+// Raw unlocked JSON-array reader (pre-c16 read_inbox shape).
+void c16_raw_array_reader(const fs::path& path,
+                          C16TornCounters& counters,
+                          std::atomic<bool>* stop,
+                          std::uint64_t max_attempts) {
+    while (!stop->load(std::memory_order_relaxed) &&
+           counters.attempts.load(std::memory_order_relaxed) < max_attempts) {
+        auto parsed = cc::utils::json::parse_file(path);
+        counters.attempts.fetch_add(1, std::memory_order_relaxed);
+        if (!parsed || !parsed->root().is_arr()) {
+            counters.torn.fetch_add(1, std::memory_order_relaxed);
+        }
+    }
+}
+
+// c16 production-shape storm child: an exclusive RMW rewrite of the inbox
+// (lock + atomic replace, rotating payload) followed by a full team
+// config.json rewrite, looped until the deadline.
+void c16_storm_writer_child(std::string teams_root,
+                            std::string team,
+                            std::string agent,
+                            int duration_ms) {
+    ::setenv("LOOM_TEAM_RUNTIME_DIR", teams_root.c_str(), 1);
+    const auto inbox =
+        fs::path{cc::utils::get_inbox_path(agent,
+                    std::optional<std::string_view>{team})};
+    const auto deadline = std::chrono::steady_clock::now() +
+                          std::chrono::milliseconds(duration_ms);
+    std::uint64_t seq = 0;
+    while (std::chrono::steady_clock::now() < deadline) {
+        {
+            cc::utils::ScopedInboxLock flock(inbox);
+            if (!flock.locked()) _exit(30);
+            std::vector<cc::utils::TeammateMessage> messages;
+            for (int m = 0; m < 3; ++m) {
+                messages.push_back(cc::utils::TeammateMessage{
+                    .from = std::format("w{}", m),
+                    .text = std::format("seq-{}-msg-{}", seq, m),
+                    .timestamp = std::to_string(seq),
+                    .read = (m == 0),
+                    .color = std::nullopt,
+                    .summary = std::nullopt,
+                });
+            }
+            if (!cc::utils::detail::write_messages(inbox, messages)) {
+                _exit(31);
+            }
+        }
+        {
+            cc::utils::TeamFileRecord record;
+            record.name = team;
+            record.lead_agent_id = "team-lead@" + team;
+            record.created_at = static_cast<std::int64_t>(seq);
+            for (int m = 0; m < 2; ++m) {
+                cc::utils::TeamMemberRecord member;
+                member.agent_id = std::format("w{}@{}", m, team);
+                member.name = std::format("w{}", m);
+                member.tmux_pane_id = std::to_string((seq + m) % 7);
+                member.cwd = "/tmp";
+                member.joined_at = static_cast<std::int64_t>(seq);
+                record.members.push_back(std::move(member));
+            }
+            if (!cc::utils::write_team_file(team, record)) _exit(32);
+        }
+        ++seq;
+    }
+    _exit(0);
+}
+
+}  // namespace
+
+// The replace primitive itself: new files follow umask, rewrites preserve
+// the existing mode, OwnerOnly forces 0600, payload bytes are exact, and no
+// tmp debris remains after success.
+TEST(AtomicReplaceC16, ModePolicyBytesAndNoDebris) {
+    ::umask(0022);
+    C14TeamEnv env;
+    const auto path = env.root / "data.json";
+
+    ASSERT_TRUE(cc::utils::atomic_replace_file(path, "[]").has_value());
+    EXPECT_EQ(c14_read_file(path), "[]");
+    EXPECT_EQ(c16_mode_bits(path), 0644u);
+
+    ASSERT_TRUE(cc::utils::atomic_replace_file(path, "[1]").has_value());
+    EXPECT_EQ(c14_read_file(path), "[1]");
+    EXPECT_EQ(c16_mode_bits(path), 0644u);
+
+    ASSERT_EQ(::chmod(path.string().c_str(), 0600), 0);
+    ASSERT_TRUE(cc::utils::atomic_replace_file(path, "[2]").has_value());
+    EXPECT_EQ(c16_mode_bits(path), 0600u)
+        << "PreserveOrUmask must keep a pre-existing 0600 mode";
+
+    ASSERT_EQ(::chmod(path.string().c_str(), 0640), 0);
+    ASSERT_TRUE(cc::utils::atomic_replace_file(path, "[3]").has_value());
+    EXPECT_EQ(c16_mode_bits(path), 0640u)
+        << "PreserveOrUmask must keep a pre-existing 0640 mode";
+
+    ASSERT_TRUE(cc::utils::atomic_replace_file(
+        path, "[4]", cc::utils::AtomicMode::OwnerOnly).has_value());
+    EXPECT_EQ(c16_mode_bits(path), 0600u)
+        << "OwnerOnly must force 0600 regardless of the prior mode";
+    EXPECT_EQ(c14_read_file(path), "[4]");
+    EXPECT_TRUE(c16_no_tmp_debris(env.root));
+}
+
+// Symlinked data leaves (to a canary, or dangling) and a FIFO at the data
+// name are refused SPECIFICALLY and fast: no follow, no clobber, no block.
+TEST(AtomicReplaceC16, SymlinkDanglingAndFifoLeavesRefusedFast) {
+    C14TeamEnv env;
+    const auto path = env.root / "data.json";
+    const auto canary = env.root / "canary.txt";
+    constexpr std::string_view kCanary = "c16-canary-7741";
+    { std::ofstream out(canary, std::ios::binary); out << kCanary; }
+
+    // Symlink to a real victim.
+    fs::create_symlink(canary, path);
+    auto t0 = std::chrono::steady_clock::now();
+    auto result = cc::utils::atomic_replace_file(path, "[]");
+    auto elapsed = c14_elapsed_ms(t0);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_NE(result.error().find("symbolic link"), std::string::npos)
+        << result.error();
+    EXPECT_LT(elapsed, 2000);
+    EXPECT_TRUE(fs::is_symlink(path));
+    EXPECT_EQ(c14_read_file(canary), std::string(kCanary));
+
+    // Dangling symlink.
+    std::error_code ec;
+    fs::remove(path, ec);
+    fs::create_symlink(env.root / "missing", path);
+    result = cc::utils::atomic_replace_file(path, "[]");
+    ASSERT_FALSE(result.has_value());
+    EXPECT_NE(result.error().find("symbolic link"), std::string::npos)
+        << result.error();
+    EXPECT_TRUE(fs::is_symlink(path));
+    EXPECT_FALSE(fs::exists(path, ec)) << "the dangling target stays uncreated";
+
+    // FIFO at the data name: the lstat gate refuses before any open(), so
+    // the O_RDWR/FIFO blocking rule never comes into play.
+    fs::remove(path, ec);
+    ASSERT_EQ(::mkfifo(path.string().c_str(), 0600), 0);
+    t0 = std::chrono::steady_clock::now();
+    result = cc::utils::atomic_replace_file(path, "[]");
+    elapsed = c14_elapsed_ms(t0);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_NE(result.error().find("not a regular file"), std::string::npos)
+        << result.error();
+    EXPECT_LT(elapsed, 2000) << "a FIFO leaf must never block the writer";
+    EXPECT_TRUE(fs::is_fifo(path, ec));
+}
+
+// BEFORE/AFTER measurement. The same 8-process rewrite storm, read 4-way:
+//   * raw truncating writers + unlocked reads (the pre-c16 hazard) measure
+//     a non-zero torn/parse-failure rate and log it;
+//   * the production c16 writers (LOCK_EX + unique-tmp atomic replace) with
+//     the production LOCK_SH readers must show ZERO torn reads across at
+//     least 100 000 production read attempts, and finish with valid data.
+TEST(TeamDataC16, StormReadersMeasureZeroTornAcrossInboxAndTeamFile) {
+    constexpr int kWriters = 8;
+    constexpr std::uint64_t kMinReads = 100'000;
+
+    // ── Baseline: old-style truncating storm (measurement only) ──────────
+    {
+        C14TeamEnv env;
+        const auto path = c14_inbox_path("raw", "c16rawteam");
+        fs::create_directories(path.parent_path());
+        const std::string whole =
+            "[{\"from\":\"a\",\"text\":\"" + std::string(220, 'x') +
+            "\",\"timestamp\":\"1\",\"read\":false}]";
+        const std::string h1 = whole.substr(0, whole.size() / 2);
+        const std::string h2 = whole.substr(whole.size() / 2);
+        {
+            std::ofstream seed(path, std::ios::binary);
+            seed << whole;
+        }
+        constexpr int kRawMs = 1500;
+        pid_t pids[kWriters];
+        for (int w = 0; w < kWriters; ++w) {
+            const pid_t pid = ::fork();
+            if (pid < 0) _exit(2);
+            if (pid == 0) {
+                c16_raw_truncating_writer(path, h1, h2, kRawMs);
+            }
+            pids[w] = pid;
+        }
+        C16TornCounters raw;
+        std::atomic<bool> stop{false};
+        std::vector<std::thread> readers;
+        for (int r = 0; r < 4; ++r) {
+            readers.emplace_back([&] {
+                c16_raw_array_reader(path, raw, &stop,
+                                     std::numeric_limits<std::uint64_t>::max());
+            });
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(kRawMs));
+        stop.store(true, std::memory_order_relaxed);
+        for (auto& t : readers) t.join();
+        for (pid_t pid : pids) {
+            int status = 0;
+            ASSERT_EQ(::waitpid(pid, &status, 0), pid);
+            ASSERT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+        }
+        const auto attempts = raw.attempts.load();
+        const auto torn = raw.torn.load();
+        const double rate = attempts
+            ? (100.0 * static_cast<double>(torn) /
+               static_cast<double>(attempts))
+            : 0.0;
+        std::printf(
+            "[c16] PRE-FIX raw truncating storm: %llu torn / %llu reads "
+            "(%.2f%%) — the transient parse-failure window c16 removes\n",
+            static_cast<unsigned long long>(torn),
+            static_cast<unsigned long long>(attempts), rate);
+        // Informational baseline: never flake the suite if the window was
+        // not sampled on a fast scheduler; the post-fix assertion is the
+        // load-bearing one below.
+        EXPECT_GT(attempts, 1000u);
+    }
+
+    // ── Production c16 storm: locked atomic writers, SH readers ──────────
+    C14TeamEnv env;
+    const std::string team = "c16storm";
+    const auto inbox = c14_inbox_path("worker", team);
+    // Seed both files so a read never legitimately returns empty/absent.
+    {
+        cc::utils::TeammateMessage seed{
+            .from = "lead", .text = "seed", .timestamp = "0", .read = false, .color = std::nullopt, .summary = std::nullopt};
+        ASSERT_TRUE(cc::utils::detail::write_messages(inbox, {seed}));
+        cc::utils::TeamFileRecord record;
+        record.name = team;
+        record.lead_agent_id = "team-lead@" + team;
+        ASSERT_TRUE(cc::utils::write_team_file(team, record));
+    }
+
+    constexpr int kStormMs = 6000;
+    pid_t pids[kWriters];
+    for (int w = 0; w < kWriters; ++w) {
+        const pid_t pid = ::fork();
+        if (pid < 0) _exit(2);
+        if (pid == 0) {
+            c16_storm_writer_child(
+                (env.root / "teams").string(), team, "worker", kStormMs);
+        }
+        pids[w] = pid;
+    }
+
+    C16TornCounters inbox_counts;
+    C16TornCounters team_counts;
+    std::atomic<bool> stop{false};
+    std::vector<std::thread> readers;
+    for (int r = 0; r < 4; ++r) {
+        readers.emplace_back([&] {
+            while (!stop.load(std::memory_order_relaxed)) {
+                auto msgs = cc::utils::read_inbox(
+                    "worker", std::optional<std::string_view>{team});
+                inbox_counts.attempts.fetch_add(1, std::memory_order_relaxed);
+                if (!msgs || msgs->empty()) {
+                    inbox_counts.torn.fetch_add(1,
+                        std::memory_order_relaxed);
+                }
+                // Leave EX writers real lock windows (production polls on
+                // a 1.5 s cadence); a non-yielding SH spin can starve
+                // flock-EX writers up to their bounded wait.
+                std::this_thread::sleep_for(std::chrono::microseconds(100));
+            }
+        });
+    }
+    for (int r = 0; r < 4; ++r) {
+        readers.emplace_back([&] {
+            while (!stop.load(std::memory_order_relaxed)) {
+                auto file = cc::utils::read_team_file(team);
+                team_counts.attempts.fetch_add(1, std::memory_order_relaxed);
+                if (!file) team_counts.torn.fetch_add(1,
+                    std::memory_order_relaxed);
+                std::this_thread::sleep_for(std::chrono::microseconds(100));
+            }
+        });
+    }
+    // Reap the storm writers first (they self-exit after kStormMs). The
+    // LOCK_SH readers keep running; once the writers are gone the readers
+    // are uncontended, so the 100k floor is reached deterministically
+    // regardless of machine speed or load (the torn count is what the
+    // storm-under-contention phase proves; extra uncontended reads simply
+    // keep being torn-free).
+    for (pid_t pid : pids) {
+        int status = 0;
+        ASSERT_EQ(::waitpid(pid, &status, 0), pid);
+        ASSERT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0)
+            << "storm writer failed: " << WEXITSTATUS(status);
+    }
+    const auto read_deadline =
+        std::chrono::steady_clock::now() + std::chrono::seconds(20);
+    while (std::chrono::steady_clock::now() < read_deadline) {
+        const std::uint64_t total =
+            inbox_counts.attempts.load() + team_counts.attempts.load();
+        if (total >= kMinReads) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    stop.store(true, std::memory_order_relaxed);
+    for (auto& t : readers) t.join();
+
+    const auto inbox_attempts = inbox_counts.attempts.load();
+    const auto team_attempts = team_counts.attempts.load();
+    std::printf(
+        "[c16] POST-FIX locked atomic storm: inbox %llu torn / %llu reads; "
+        "team file %llu torn / %llu reads (0 expected)\n",
+        static_cast<unsigned long long>(inbox_counts.torn.load()),
+        static_cast<unsigned long long>(inbox_attempts),
+        static_cast<unsigned long long>(team_counts.torn.load()),
+        static_cast<unsigned long long>(team_attempts));
+    EXPECT_GE(inbox_attempts + team_attempts, kMinReads)
+        << "storm must exercise at least 100k production reads";
+    EXPECT_EQ(inbox_counts.torn.load(), 0u);
+    EXPECT_EQ(team_counts.torn.load(), 0u);
+
+    // Final content is valid.
+    auto final_inbox = cc::utils::read_inbox(
+        "worker", std::optional<std::string_view>{team});
+    ASSERT_TRUE(final_inbox.has_value());
+    EXPECT_FALSE(final_inbox->empty());
+    auto final_team = cc::utils::read_team_file(team);
+    ASSERT_TRUE(final_team.has_value());
+    EXPECT_EQ(final_team->name, team);
+    EXPECT_EQ(final_team->members.size(), 2u);
+    EXPECT_TRUE(c16_no_tmp_debris(inbox.parent_path()));
+    EXPECT_TRUE(c16_no_tmp_debris(
+        fs::path{cc::utils::team_file_path(team)}.parent_path()));
+}
+
+// Data-leaf attacks on the live inbox RMW path: a symlink (dangling or to
+// a canary) or a FIFO at the inbox name makes write_to_mailbox fail clean,
+// fast, and leaves the victim and the leaf untouched — never block, never
+// follow, never clobber.
+TEST(TeamDataC16, InboxLeafAttacksFailCleanFastWithoutFollowing) {
+    struct Case { const char* name; int kind; };  // 0 symlink, 1 dangling, 2 fifo
+    for (const auto& tc : std::array<Case, 3>{
+            Case{"symlink", 0}, Case{"dangling", 1}, Case{"fifo", 2}}) {
+        C14TeamEnv env;
+        const auto inbox = c14_inbox_path("worker", "c16attack");
+        fs::create_directories(inbox.parent_path());
+        const auto canary = env.root / "canary.txt";
+        constexpr std::string_view kCanary = "c16-inbox-canary-3180";
+
+        if (tc.kind == 0) {
+            { std::ofstream out(canary, std::ios::binary); out << kCanary; }
+            fs::create_symlink(canary, inbox);
+        } else if (tc.kind == 1) {
+            fs::create_symlink(env.root / "gone", inbox);
+        } else {
+            ASSERT_EQ(::mkfifo(inbox.string().c_str(), 0600), 0);
+        }
+
+        const auto t0 = std::chrono::steady_clock::now();
+        auto written = cc::utils::write_to_mailbox(
+            "worker",
+            cc::utils::TeammateMessage{
+                .from = "lead",
+                .text = "must-not-land",
+                .timestamp = "9",
+                .read = false,
+                .color = std::nullopt,
+                .summary = std::nullopt,
+            },
+            std::optional<std::string_view>{"c16attack"});
+        const auto elapsed = c14_elapsed_ms(t0);
+        ASSERT_FALSE(written.has_value()) << tc.name;
+        EXPECT_LT(elapsed, 3000)
+            << tc.name << ": non-regular leaf must fail fast, never block";
+
+        std::error_code ec;
+        if (tc.kind == 0) {
+            EXPECT_TRUE(fs::is_symlink(inbox, ec)) << tc.name;
+            EXPECT_EQ(c14_read_file(canary), std::string(kCanary)) << tc.name;
+        } else if (tc.kind == 1) {
+            EXPECT_TRUE(fs::is_symlink(inbox, ec)) << tc.name;
+        } else {
+            EXPECT_TRUE(fs::is_fifo(inbox, ec)) << tc.name;
+        }
+        // The unlocked/locked reads also fail safe (empty) and never block.
+        auto msgs = cc::utils::read_inbox(
+            "worker", std::optional<std::string_view>{"c16attack"});
+        ASSERT_TRUE(msgs.has_value()) << tc.name;
+        EXPECT_TRUE(msgs->empty()) << tc.name;
+        EXPECT_TRUE(c16_no_tmp_debris(inbox.parent_path())) << tc.name;
+    }
+}
+
+// The same leaf gate for the canonical team config.json writer.
+TEST(TeamDataC16, TeamFileLeafAttacksFailCleanFast) {
+    C14TeamEnv env;
+    const fs::path path{cc::utils::team_file_path("c16tattack")};
+    fs::create_directories(path.parent_path());
+    const auto canary = env.root / "canary.txt";
+    constexpr std::string_view kCanary = "c16-team-canary-6204";
+
+    cc::utils::TeamFileRecord record;
+    record.name = "c16tattack";
+    record.lead_agent_id = "team-lead@c16tattack";
+
+    { std::ofstream out(canary, std::ios::binary); out << kCanary; }
+    fs::create_symlink(canary, path);
+    auto t0 = std::chrono::steady_clock::now();
+    EXPECT_FALSE(cc::utils::write_team_file("c16tattack", record));
+    EXPECT_LT(c14_elapsed_ms(t0), 3000);
+    EXPECT_TRUE(fs::is_symlink(path));
+    EXPECT_EQ(c14_read_file(canary), std::string(kCanary));
+
+    std::error_code ec;
+    fs::remove(path, ec);
+    ASSERT_EQ(::mkfifo(path.string().c_str(), 0600), 0);
+    t0 = std::chrono::steady_clock::now();
+    EXPECT_FALSE(cc::utils::write_team_file("c16tattack", record));
+    EXPECT_LT(c14_elapsed_ms(t0), 3000)
+        << "a FIFO config leaf must never block the writer";
+    EXPECT_TRUE(fs::is_fifo(path, ec));
+}
+
+// Mode preservation across the live inbox and team-config writers, and the
+// 0644-under-022 mode for brand-new files.
+TEST(TeamDataC16, InboxAndTeamFileModesPreservedAcrossRewrites) {
+    ::umask(0022);
+    C14TeamEnv env;
+    const auto inbox = c14_inbox_path("worker", "c16mode");
+
+    cc::utils::TeammateMessage m{
+        .from = "lead", .text = "one", .timestamp = "1", .read = false, .color = std::nullopt, .summary = std::nullopt};
+    ASSERT_TRUE(cc::utils::write_to_mailbox(
+        "worker", m, std::optional<std::string_view>{"c16mode"}).has_value());
+    EXPECT_EQ(c16_mode_bits(inbox), 0644u);
+
+    ASSERT_EQ(::chmod(inbox.string().c_str(), 0600), 0);
+    m.text = "two";
+    m.timestamp = "2";
+    ASSERT_TRUE(cc::utils::write_to_mailbox(
+        "worker", m, std::optional<std::string_view>{"c16mode"}).has_value());
+    EXPECT_EQ(c16_mode_bits(inbox), 0600u)
+        << "inbox rewrite must preserve a pre-existing 0600 mode";
+
+    ASSERT_EQ(::chmod(inbox.string().c_str(), 0640), 0);
+    m.text = "three";
+    m.timestamp = "3";
+    ASSERT_TRUE(cc::utils::write_to_mailbox(
+        "worker", m, std::optional<std::string_view>{"c16mode"}).has_value());
+    EXPECT_EQ(c16_mode_bits(inbox), 0640u)
+        << "inbox rewrite must preserve a pre-existing 0640 mode";
+
+    const fs::path config{cc::utils::team_file_path("c16mode")};
+    cc::utils::TeamFileRecord record;
+    record.name = "c16mode";
+    record.lead_agent_id = "team-lead@c16mode";
+    ASSERT_TRUE(cc::utils::write_team_file("c16mode", record));
+    EXPECT_EQ(c16_mode_bits(config), 0644u);
+    ASSERT_EQ(::chmod(config.string().c_str(), 0600), 0);
+    record.created_at = 7;
+    ASSERT_TRUE(cc::utils::write_team_file("c16mode", record));
+    EXPECT_EQ(c16_mode_bits(config), 0600u)
+        << "team config rewrite must preserve a pre-existing 0600 mode";
+}
+
+// Shared-lock reader semantics: while an exclusive holder owns the inbox
+// sibling, read_inbox fails closed (empty) at the ~10s bound (it never
+// sees partial bytes), and many concurrent LOCK_SH readers on an
+// uncontended inbox all succeed simultaneously.
+TEST(ScopedInboxLockC16, SharedReaderFailsClosedAndSharedReadersConcur) {
+    C14TeamEnv env;
+    const auto inbox = c14_inbox_path("worker", "c16sh");
+    fs::create_directories(inbox.parent_path());
+    const std::string canary =
+        R"JSON([{"from":"lead","text":"keep","timestamp":"1","read":true}])JSON";
+    { std::ofstream out(inbox, std::ios::binary); out << canary; }
+
+    const std::string lock_path = inbox.string() + ".lock";
+    C14Holder h = c14_spawn_holder(lock_path, 30);
+    ASSERT_GT(h.pid, 0);
+    C14HolderReaper reaper(h.pid);
+    c14_await_ready(h.read_fd);
+
+    struct ReadResult {
+        bool has_value = false;
+        bool empty = true;
+        long long elapsed_ms = 0;
+    };
+    ReadResult reader;
+    std::thread contended([&] {
+        const auto t0 = std::chrono::steady_clock::now();
+        auto msgs = cc::utils::read_inbox(
+            "worker", std::optional<std::string_view>{"c16sh"});
+        reader.elapsed_ms = c14_elapsed_ms(t0);
+        reader.has_value = msgs.has_value();
+        reader.empty = msgs && msgs->empty();
+    });
+
+    // Meanwhile, 8 concurrent LOCK_SH readers on a DIFFERENT, uncontended
+    // inbox must all succeed at once (shared locks do not exclude each
+    // other).
+    const auto other = c14_inbox_path("worker", "c16sh-other");
+    fs::create_directories(other.parent_path());
+    {
+        cc::utils::TeammateMessage seed{
+            .from = "lead", .text = "hi", .timestamp = "1", .read = false, .color = std::nullopt, .summary = std::nullopt};
+        ASSERT_TRUE(cc::utils::detail::write_messages(other, {seed}));
+    }
+    std::atomic<int> shared_ok{0};
+    std::vector<std::thread> shared_readers;
+    for (int i = 0; i < 8; ++i) {
+        shared_readers.emplace_back([&] {
+            cc::utils::ScopedInboxLock lock(
+                other, cc::utils::LockKind::Shared);
+            if (lock.locked()) shared_ok.fetch_add(1);
+        });
+    }
+    for (auto& t : shared_readers) t.join();
+    EXPECT_EQ(shared_ok.load(), 8)
+        << "concurrent shared locks must all be granted";
+
+    contended.join();
+    EXPECT_TRUE(reader.has_value);
+    EXPECT_TRUE(reader.empty)
+        << "reader must fail closed to empty, never return partial bytes";
+    EXPECT_GE(reader.elapsed_ms, 9000)
+        << "shared acquisition shares the 10s bounded wait";
+    EXPECT_LE(reader.elapsed_ms, 14000);
+
+    // The contended read never parsed partial bytes: the canary is intact.
+    EXPECT_EQ(c14_read_file(inbox), canary);
+
+    ::kill(h.pid, SIGKILL);
+    int status = 0;
+    ASSERT_EQ(::waitpid(h.pid, &status, 0), h.pid);
+    reaper.release();
 }

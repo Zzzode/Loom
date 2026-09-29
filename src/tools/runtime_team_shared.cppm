@@ -25,6 +25,7 @@ import cc.tools.bash;                 // stop_background_tasks_for_agent
 import cc.tools.team;
 import cc.tools.runtime_shared_utils; // safe_runtime_dir_component, path helpers
 import cc.utils.team_helpers;         // team_runtime_dir
+import cc.utils.atomic_replace;       // c16 hardened team-data replaces
 import cc.utils.swarm_backends;       // BackendRegistry
 
 export namespace cc::tools::runtime_team_shared {
@@ -265,10 +266,8 @@ inline bool write_empty_inbox_if_missing(const fs::path& inbox_path) {
     fs::create_directories(inbox_path.parent_path(), ec);
     if (ec) return false;
     if (fs::exists(inbox_path, ec)) return true;
-    std::ofstream out(inbox_path, std::ios::trunc);
-    if (!out) return false;
-    out << "[]";
-    return out.good();
+    // c16: atomic, symlink/FIFO-safe creation of the "[]" seed.
+    return cc::utils::atomic_replace_file(inbox_path, "[]").has_value();
 }
 
 /// Serialise the current shared task list to `tasks.json` via `JsonMutDoc`
@@ -282,8 +281,6 @@ inline bool write_team_task_snapshot(
     fs::create_directories(task_path.parent_path(), ec);
     if (ec) return false;
 
-    std::ofstream out(task_path, std::ios::trunc);
-    if (!out) return false;
     json::JsonMutDoc doc;
     auto arr = doc.array();
     for (const auto& task : tasks) {
@@ -296,8 +293,8 @@ inline bool write_team_task_snapshot(
         arr.append(obj);
     }
     doc.set_root(arr);
-    out << doc.to_string();
-    return out.good();
+    return cc::utils::atomic_replace_file(task_path, doc.to_string())
+        .has_value();
 }
 
 namespace team_config_detail {
@@ -399,8 +396,6 @@ inline bool write_team_config_file(
     std::error_code ec;
     fs::create_directories(config_path.parent_path(), ec);
     if (ec) return false;
-    std::ofstream out(config_path, std::ios::trunc);
-    if (!out) return false;
 
     const auto timestamp_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
@@ -440,8 +435,14 @@ inline bool write_team_config_file(
     }
     root.add("members", members);
     doc.set_root(root);
-    out << doc.to_string();
-    return out.good();
+    // c16: LOCK_EX on the same "<path>.lock" sibling the canonical
+    // cc::utils::write_team_file and the LOCK_SH roster readers use, so the
+    // byte-identical payload lands atomically and readers cannot order
+    // between concurrent config rewrites.
+    cc::utils::ScopedFileLock flock(config_path);
+    if (!flock.locked()) return false;
+    return cc::utils::atomic_replace_file(config_path, doc.to_string())
+        .has_value();
 }
 
 // ---------------------------------------------------------------------------

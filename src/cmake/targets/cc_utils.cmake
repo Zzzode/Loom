@@ -34,6 +34,7 @@ target_sources(cc_utils
         utils/fs/file.cppm
         utils/fs/file_edit_utils.cppm
         utils/fs/file_persistence.cppm
+        utils/fs/atomic_replace.cppm
         utils/fs/file_read_cache.cppm
         utils/platform/find_executable.cppm
         utils/diagnostics/fps_tracker.cppm
@@ -144,6 +145,7 @@ target_sources(cc_utils
         utils/swarm/swarm_backends_executor.cpp
         utils/swarm/swarm_backends_registry.cpp
         utils/swarm/swarm_backends_detail.cpp
+        utils/swarm/swarm_helpers_shard.cpp
 )
 target_link_libraries(cc_utils
     PUBLIC

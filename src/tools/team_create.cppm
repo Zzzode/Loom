@@ -11,6 +11,7 @@ import cc.tools.agent_types;
 import cc.tools.team;
 import cc.utils.json;
 import cc.utils.error;
+import cc.utils.atomic_replace;
 
 export namespace cc::tools::team_create {
 
@@ -213,8 +214,11 @@ std::expected<std::string, std::string> TeamCreateTool::write_team_file(
     fs::create_directories(path.parent_path(), ec);
     if (ec) return std::unexpected(std::format("failed to create team directory: {}", ec.message()));
 
-    std::ofstream out(path, std::ios::trunc);
-    if (!out) return std::unexpected(std::format("failed to write team file: {}", path.string()));
+    // c16: identical bytes to the old truncating ofstream, landed through
+    // the atomic symlink/FIFO-safe replace (this flat <name>.json record is
+    // the team_create wrapper's own shape; cc::utils::write_team_file is
+    // the separate <team>/config.json canonical writer).
+    std::ostringstream out;
     out << R"({"name":")" << cc::tools::team_json_escape(file.name)
         << R"(","lead_agent_id":")" << cc::tools::team_json_escape(file.lead_agent_id)
         << R"(","lead_session_id":")" << cc::tools::team_json_escape(file.lead_session_id)
@@ -231,7 +235,11 @@ std::expected<std::string, std::string> TeamCreateTool::write_team_file(
             << R"("})";
     }
     out << "]}";
-    if (!out.good()) return std::unexpected(std::format("failed to write team file: {}", path.string()));
+    auto replaced = cc::utils::atomic_replace_file(path, out.str());
+    if (!replaced) {
+        return std::unexpected(std::format("failed to write team file: {}: {}",
+                                           path.string(), replaced.error()));
+    }
     return path.string();
 }
 

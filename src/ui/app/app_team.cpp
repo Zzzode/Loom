@@ -16,14 +16,37 @@
 // the swarm/observer import closure never enters app.cppm's source-location
 // budget. Event-driven: the observer's background poller only flags a dirty
 // atomic + posts one FTXUI event; there is NO constant-rate render ticker.
+// c16/LLVM #184957: this is one of the cc.ui.app.app implementation units
+// that must NOT `import std` — under the reduced-BMI writer a cold module
+// cache mis-merges the global aligned operator new when an app impl unit
+// imports std while the primary's GMF pulls libc++ textually via FTXUI.
+// Keep textual std headers in the global module fragment, exactly like
+// app_extra_methods.cpp / app_run.cpp (see CMakeLists.txt:283-290).
 module;
 
+#include <algorithm>
+#include <atomic>
 #include <cctype>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <cstdlib>
+#include <deque>
+#include <filesystem>
+#include <functional>
+#include <initializer_list>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <ranges>
+#include <string>
+#include <string_view>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 module cc.ui.app.app;
-
-import std;
 
 import cc.utils.json;
 import cc.utils.team_helpers;
@@ -338,32 +361,41 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
             teams_root_dir() / sanitize_team(team) / "config.json";
         std::error_code ec;
         if (fs::exists(config_path, ec)) {
-            auto doc = cc::utils::json::parse_file(config_path);
-            if (doc) {
-                const auto members = doc->root().get("members");
-                if (members.is_arr()) {
-                    members.iter([&](cc::utils::json::JsonVal member) {
-                        if (!member.is_obj()) return;
-                        const std::string name = member.get_string("name");
-                        // TS getTeammateStatuses filter (teamDiscovery.ts):
-                        // the implicit lead row is not a teammate.
-                        if (name == "team-lead") return;
-                        const std::string agent_id =
-                            member.get_string("agentId");
-                        if (agent_id.empty()) return;
-                        auto& t = out.emplace_back();
-                        t.agent_id = agent_id;
-                        t.name = name.empty() ? short_agent_name(agent_id)
-                                             : name;
-                        t.color = member.get_string("color");
-                        t.pane_id = member.get_string("tmuxPaneId");
-                        if (t.pane_id == "in-process") t.pane_id.clear();
-                        const auto is_active = member.get("isActive");
-                        t.status = (is_active.is_bool() && !is_active.as_bool())
-                                       ? "idle"
-                                       : "running";
-                        by_agent.emplace(agent_id, out.size() - 1);
-                    });
+            // c16: LOCK_SH on the same sibling write_team_config_file and
+            // cc::utils::write_team_file take LOCK_EX on — a roster poll
+            // never parses a half-written/renaming config. If the lock
+            // cannot be acquired within the bounded wait, parse failure
+            // semantics below apply (roster starts empty).
+            cc::utils::ScopedInboxLock roster_lock(
+                config_path, cc::utils::LockKind::Shared);
+            if (roster_lock.locked()) {
+                auto doc = cc::utils::json::parse_file(config_path);
+                if (doc) {
+                    const auto members = doc->root().get("members");
+                    if (members.is_arr()) {
+                        members.iter([&](cc::utils::json::JsonVal member) {
+                            if (!member.is_obj()) return;
+                            const std::string name = member.get_string("name");
+                            // TS getTeammateStatuses filter (teamDiscovery.ts):
+                            // the implicit lead row is not a teammate.
+                            if (name == "team-lead") return;
+                            const std::string agent_id =
+                                member.get_string("agentId");
+                            if (agent_id.empty()) return;
+                            auto& t = out.emplace_back();
+                            t.agent_id = agent_id;
+                            t.name = name.empty() ? short_agent_name(agent_id)
+                                                 : name;
+                            t.color = member.get_string("color");
+                            t.pane_id = member.get_string("tmuxPaneId");
+                            if (t.pane_id == "in-process") t.pane_id.clear();
+                            const auto is_active = member.get("isActive");
+                            t.status = (is_active.is_bool() && !is_active.as_bool())
+                                           ? "idle"
+                                           : "running";
+                            by_agent.emplace(agent_id, out.size() - 1);
+                        });
+                    }
                 }
             }
         }

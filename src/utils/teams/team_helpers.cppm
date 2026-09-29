@@ -17,6 +17,7 @@ export module cc.utils.team_helpers;
 import std;
 
 import cc.utils.json;
+import cc.utils.atomic_replace;
 
 export namespace cc::utils {
 
@@ -53,6 +54,18 @@ inline std::mutex& teammate_inbox_mutex() {
 /// pre-placed symlink at the lock name fails the open (ELOOP) instead of
 /// being locked through, and fstat()+S_ISREG rejects a pre-existing
 /// FIFO/socket/device at the same name (flock works on any fd type).
+///
+/// RENAME(2) AND THE LOCK SIBLING (c16): writers replace the DATA inode via
+/// atomic rename over a unique tmp, but the flock always lives on the
+/// separate "<path>.lock" sibling, whose inode is never renamed or removed.
+/// Shared readers therefore keep serializing against exclusive writers
+/// across arbitrarily many data-inode replacements: the contended kernel
+/// object never changes.
+enum class LockKind {
+    Exclusive,  // LOCK_EX — writers / read-modify-write holders.
+    Shared,     // LOCK_SH — readers; concurrent with each other, excludes EX.
+};
+
 class ScopedInboxLock {
 public:
     // Keep these in sync with ConfigFileLock in src/config/config.cppm
@@ -60,8 +73,12 @@ public:
     static constexpr auto kLockWaitTimeout = std::chrono::seconds(10);
     static constexpr auto kLockPollInterval = std::chrono::milliseconds(50);
 
-    explicit ScopedInboxLock(const fs::path& inbox_path) {
+    explicit ScopedInboxLock(
+        const fs::path& inbox_path,
+        LockKind kind = LockKind::Exclusive
+    ) {
 #if !defined(_WIN32)
+        kind_ = kind;
         std::error_code ec;
         fs::create_directories(inbox_path.parent_path(), ec);
         lock_path_ = fs::path{inbox_path} += ".lock";
@@ -96,7 +113,8 @@ public:
                 fd_ = -1;
                 return;
             }
-            if (::flock(fd_, LOCK_EX | LOCK_NB) == 0) {
+            if (::flock(fd_, (kind_ == LockKind::Shared ? LOCK_SH : LOCK_EX)
+                                 | LOCK_NB) == 0) {
                 locked_ = true;
                 return;
             }
@@ -122,6 +140,7 @@ public:
         }
 #else
         (void)inbox_path;
+        (void)kind;
 #endif
     }
 
@@ -151,6 +170,7 @@ private:
 #if !defined(_WIN32)
     int fd_ = -1;
     bool locked_ = false;
+    LockKind kind_ = LockKind::Exclusive;
     fs::path lock_path_;
 #endif
 };
@@ -418,7 +438,8 @@ std::string get_inbox_path(std::string_view agent_name);
 /// Read all messages from a teammate's inbox
 std::expected<std::vector<TeammateMessage>, std::string> read_inbox(
     std::string_view agent_name,
-    std::optional<std::string_view> team_name);
+    std::optional<std::string_view> team_name,
+    bool already_holds_exclusive_lock = false);
 
 /// Overload without team_name
 std::expected<std::vector<TeammateMessage>, std::string> read_inbox(
@@ -564,33 +585,41 @@ namespace detail {
 }
 
 [[nodiscard]] inline bool write_messages(const fs::path& inbox_path, const std::vector<TeammateMessage>& messages) {
-    std::error_code ec;
-    fs::create_directories(inbox_path.parent_path(), ec);
-    if (ec) return false;
-
-    std::ofstream out(inbox_path, std::ios::trunc);
-    if (!out) return false;
-    out << '[';
+    // c16: the bytes are the exact hand-built JSON array the old truncating
+    // ofstream wrote; the replace itself is atomic and symlink/FIFO-safe.
+    // CALLERS already hold LOCK_EX on the inbox sibling.
+    std::string out;
+    out.push_back('[');
     for (std::size_t i = 0; i < messages.size(); ++i) {
         const auto& message = messages[i];
-        if (i != 0) out << ',';
-        out << R"({"from":")" << mailbox_json_escape(message.from)
-            << R"(","text":")" << mailbox_json_escape(message.text)
-            << R"(","timestamp":")" << mailbox_json_escape(message.timestamp)
-            << R"(","read":)" << (message.read ? "true" : "false");
+        if (i != 0) out.push_back(',');
+        out += R"({"from":")";
+        out += mailbox_json_escape(message.from);
+        out += R"(","text":")";
+        out += mailbox_json_escape(message.text);
+        out += R"(","timestamp":")";
+        out += mailbox_json_escape(message.timestamp);
+        out += R"(","read":)";
+        out += (message.read ? "true" : "false");
         if (message.color) {
-            out << R"(,"color":")" << mailbox_json_escape(*message.color) << '"';
+            out += R"(,"color":")";
+            out += mailbox_json_escape(*message.color);
+            out += '"';
         }
         if (message.summary) {
-            out << R"(,"summary":")" << mailbox_json_escape(*message.summary) << '"';
+            out += R"(,"summary":")";
+            out += mailbox_json_escape(*message.summary);
+            out += '"';
         }
-        out << '}';
+        out += '}';
     }
-    out << ']';
-    return out.good();
+    out.push_back(']');
+    return atomic_replace_file(inbox_path, out).has_value();
 }
 
 } // namespace detail
+
+
 
 inline const TeammateContext* get_teammate_context() {
     return active_teammate_context ? &*active_teammate_context : nullptr;
@@ -715,11 +744,33 @@ inline std::string get_inbox_path(std::string_view agent_name) {
 
 inline std::expected<std::vector<TeammateMessage>, std::string> read_inbox(
     std::string_view agent_name,
-    std::optional<std::string_view> team_name
+    std::optional<std::string_view> team_name,
+    bool already_holds_exclusive_lock
 ) {
     const auto inbox_path = fs::path{get_inbox_path(agent_name, team_name)};
-    std::error_code ec;
-    if (!fs::exists(inbox_path, ec)) return std::vector<TeammateMessage>{};
+    // c16: LOCK_SH across read+parse. The atomic rename alone guarantees no
+    // torn bytes, but the shared lock additionally orders this read against
+    // exclusive RMW writers (and any non-atomic writer) on the unaffected
+    // .lock sibling. Fail closed to an empty inbox — the same result a
+    // missing/unreadable file yields today — if the lock cannot be acquired
+    // within the bounded wait. RMW holders already own LOCK_EX, so they pass
+    // already_holds_exclusive_lock=true: LOCK_SH on a second open file
+    // description would be denied by their own exclusive lock.
+    std::optional<ScopedInboxLock> shared;
+    if (!already_holds_exclusive_lock) {
+        shared.emplace(inbox_path, LockKind::Shared);
+        if (!shared->locked()) return std::vector<TeammateMessage>{};
+    }
+    // A trailing symlink is not followed, and a FIFO/socket/device is never
+    // opened (ifstream on a FIFO blocks for a peer); a missing file and a
+    // non-regular leaf both read as the historical empty inbox.
+    std::error_code exists_ec;
+    if (!fs::exists(inbox_path, exists_ec)) {
+        return std::vector<TeammateMessage>{};
+    }
+    if (!is_regular_data_leaf_or_absent(inbox_path)) {
+        return std::vector<TeammateMessage>{};
+    }
 
     auto parsed = cc::utils::json::parse_file(inbox_path);
     if (!parsed) return std::unexpected(parsed.error().format());
@@ -762,7 +813,8 @@ inline std::expected<void, std::string> write_to_mailbox(
     if (!flock.locked()) {
         return std::unexpected("failed to acquire cross-process inbox lock");
     }
-    auto existing = read_inbox(recipient_name, team_name);
+    auto existing = read_inbox(recipient_name, team_name,
+                              /*already_holds_exclusive_lock=*/true);
     if (!existing) return std::unexpected(existing.error());
     if (message.timestamp.empty()) message.timestamp = detail::timestamp_now();
     message.read = false;
@@ -805,7 +857,8 @@ inline std::expected<void, std::string> mark_all_read(
     if (!flock.locked()) {
         return std::unexpected("failed to acquire cross-process inbox lock");
     }
-    auto messages = read_inbox(agent_name, team_name);
+    auto messages = read_inbox(agent_name, team_name,
+                               /*already_holds_exclusive_lock=*/true);
     if (!messages) return std::unexpected(messages.error());
     for (auto& message : *messages) message.read = true;
     if (!detail::write_messages(inbox_path, *messages)) {
@@ -897,8 +950,12 @@ inline void append_optional_json_string(
 
 inline std::optional<TeamFileRecord> read_team_file(std::string_view team_name) {
     const auto path = fs::path{team_file_path(team_name)};
-    std::error_code ec;
-    if (!fs::exists(path, ec)) return std::nullopt;
+    // c16: LOCK_SH around read+parse, fail closed to nullopt within the same
+    // bound as every other team-data read; the leaf gate never follows a
+    // trailing symlink or opens a FIFO.
+    ScopedInboxLock flock(path, LockKind::Shared);
+    if (!flock.locked()) return std::nullopt;
+    if (!is_regular_data_leaf_or_absent(path)) return std::nullopt;
 
     auto parsed = cc::utils::json::parse_file(path);
     if (!parsed) return std::nullopt;
@@ -998,10 +1055,14 @@ inline bool write_team_file(std::string_view team_name, const TeamFileRecord& re
     }
     out += "}\n";
 
-    std::ofstream file(fs::path{team_file_path(team_name)}, std::ios::trunc);
-    if (!file) return false;
-    file << out;
-    return file.good();
+    // c16: serialize under LOCK_EX so shared-lock readers order against the
+    // replace, then land the byte-identical payload atomically (unique
+    // O_EXCL|O_NOFOLLOW tmp + fsync + rename). A symlinked/FIFO data leaf
+    // fails cleanly with false instead of being followed or blocking.
+    const auto path = fs::path{team_file_path(team_name)};
+    ScopedInboxLock flock(path, LockKind::Exclusive);
+    if (!flock.locked()) return false;
+    return atomic_replace_file(path, out).has_value();
 }
 
 inline std::optional<TeamMemberRecord> find_team_member(

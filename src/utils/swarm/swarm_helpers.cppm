@@ -16,6 +16,7 @@ import std;
 import cc.utils.swarm_backends;
 import cc.utils.team_helpers;
 import cc.utils.json;
+import cc.utils.atomic_replace;
 
 export namespace cc::utils::swarm_helpers {
 
@@ -779,7 +780,10 @@ inline bool remove_mailbox_message_by_text(
     // Serialize against the leader and other pane PROCESSES as well.
     cc::utils::ScopedInboxLock flock(inbox_path);
     if (!flock.locked()) return false;
-    auto messages = cc::utils::read_inbox(worker_name, team_name);
+    // Unlocked read: we already hold LOCK_EX; a nested LOCK_SH on another
+    // open file description would be denied by our own lock.
+    auto messages = cc::utils::read_inbox(worker_name, team_name,
+                                          /*already_holds_exclusive_lock=*/true);
     if (!messages) return false;
     const auto before = messages->size();
     std::erase_if(*messages, [&](const cc::utils::TeammateMessage& message) {
@@ -787,31 +791,36 @@ inline bool remove_mailbox_message_by_text(
     });
     if (messages->size() == before) return false;
 
-    std::error_code ec;
-    fs::create_directories(inbox_path.parent_path(), ec);
-    if (ec) return false;
-    std::ofstream out(inbox_path, std::ios::trunc);
-    if (!out) return false;
-    out << '[';
+    // c16: same envelope bytes as the old truncating ofstream, landed
+    // atomically through the symlink/FIFO-safe full-replace primitive.
+    std::string out;
+    out.push_back('[');
     for (std::size_t i = 0; i < messages->size(); ++i) {
         const auto& message = (*messages)[i];
-        if (i != 0) out << ',';
-        out << R"({"from":")" << json_quote(message.from)
-            << R"(","text":")" << json_quote(message.text)
-            << R"(","timestamp":")" << json_quote(message.timestamp)
-            << R"(","read":)" << (message.read ? "true" : "false");
+        if (i != 0) out.push_back(',');
+        out += R"({"from":")";
+        out += json_quote(message.from);
+        out += R"(","text":")";
+        out += json_quote(message.text);
+        out += R"(","timestamp":")";
+        out += json_quote(message.timestamp);
+        out += R"(","read":)";
+        out += (message.read ? "true" : "false");
         if (message.color) {
-            out << R"(,"color":")" << json_quote(*message.color) << '"';
+            out += R"(","color":")";
+            out += json_quote(*message.color);
+            out += '"';
         }
         if (message.summary) {
-            out << R"(,"summary":")" << json_quote(*message.summary) << '"';
+            out += R"(,"summary":")";
+            out += json_quote(*message.summary);
+            out += '"';
         }
-        out << '}';
+        out += '}';
     }
-    out << ']';
-    return out.good();
+    out.push_back(']');
+    return cc::utils::atomic_replace_file(inbox_path, out).has_value();
 }
-
 } // namespace permission_detail
 // ============================================================================
 // Worker-side "Always allow" grant persistence
@@ -908,18 +917,37 @@ struct WorkerAllowRule {
 
 /// Process-local cache + on-disk store of grants received from the leader.
 /// Instantiated per worker permission check (the store is cheap; reads are
-/// file-based and flocked, matching the mailbox protocol's trust model).
-class WorkerPermissionGrants {public:
+/// file-based and locked, matching the mailbox protocol's trust model).
+class WorkerPermissionGrants {
+public:
+    /// Fixed number of in-process RMW mutex shards (c16). One grants path
+    /// always maps to one shard; distinct paths usually map to distinct
+    /// shards, so updates for different teams/files never serialize behind
+    /// each other behind the bounded (10 s) flock wait.
+    static constexpr std::size_t kShardCount = 16;
+
     WorkerPermissionGrants(std::string team_name, std::string agent_name)
         : team_name_(std::move(team_name)),
           agent_name_(std::move(agent_name)) {}
 
+    /// Deterministic shard selection for a canonical grants path: FNV-1a
+    /// 64-bit over the path bytes, mod kShardCount. The same path always
+    /// yields the same shard (and therefore the same mutex); the function
+    /// is pure, so callers/tests can prove two paths do not contend before
+    /// doing the timing-sensitive measurement. Defined in the module
+    /// implementation unit (swarm_helpers_shard.cpp, c16).
+    [[nodiscard]] static std::size_t shard_index_for(
+        std::string_view canonical_path);
+
     /// True when a whole-tool allow rule covers this exact tool name.
-    /// Lock-free snapshot read, like cc::utils::read_inbox: a torn read
-    /// during a concurrent rewrite fails to parse and yields no rules
-    /// (fail closed). The RMW in apply_updates is the only writer.
+    /// c16: a LOCK_SH snapshot on the grants sibling, so the parse can
+    /// never observe a half-written file; a lock that cannot be acquired
+    /// in the bounded wait fails closed (no rules).
     [[nodiscard]] bool allows(std::string_view tool_name) {
-        for (const auto& rule : load_rules()) {
+        const auto path = grants_path();
+        cc::utils::ScopedFileLock flock(path, cc::utils::LockKind::Shared);
+        if (!flock.locked()) return false;
+        for (const auto& rule : load_rules_at(path)) {
             if (rule.rule_content.empty() && rule.tool_name == tool_name) {
                 return true;
             }
@@ -937,13 +965,18 @@ class WorkerPermissionGrants {public:
         if (!root.is_arr()) return;
 
         // ONE locked read-modify-write region, in the same order as
-        // write_to_mailbox: in-process mutex first, then the cross-process
-        // flock on the grants path sibling, and ONLY THEN load+merge+write.
-        // The previous code loaded OUTSIDE save_rules' flock, so two
-        // processes (or threads) could load the same baseline and the last
-        // writer silently dropped the other's distinct rules.
-        std::lock_guard<std::mutex> proc_lock(grants_mutex_);
+        // write_to_mailbox: the per-PATH in-process shard mutex first, then
+        // the cross-process flock on the grants path sibling, and ONLY THEN
+        // load+merge-write. c16: the mutex is sharded by canonical path, so
+        // a holder stalled behind a foreign flock for one team/file does not
+        // stall updates for every other team (the c15 attacker measured a
+        // 9.5 s cross-team stall through the single global mutex). The shard
+        // table is a function-local static: no map insert (wait-free
+        // dispatch), one process-wide table, no static-member lifecycle.
+        static std::array<std::mutex, kShardCount> shard_mutexes;
         const auto path = grants_path();
+        std::lock_guard<std::mutex> proc_lock(
+            shard_mutexes[shard_index_for(path.string())]);
         cc::utils::ScopedFileLock flock(path);
         if (!flock.locked()) {
             // Fail closed: drop this update rather than persist against an
@@ -953,7 +986,7 @@ class WorkerPermissionGrants {public:
             return;
         }
 
-        std::vector<WorkerAllowRule> rules = load_rules();
+        std::vector<WorkerAllowRule> rules = load_rules_at(path);
         std::size_t added = 0;
         root.iter([&](cc::utils::json::JsonVal update) {
             if (!update.is_obj()) return;
@@ -996,14 +1029,15 @@ private:
                 ".json");
     }
 
-    /// Raw unlocked parse of the grant file. Callers either hold the RMW
-    /// locks (apply_updates) or tolerate a stale/fail-closed snapshot
-    /// (allows). A missing/corrupt file yields an empty rule set.
-    [[nodiscard]] std::vector<WorkerAllowRule> load_rules() {
+    /// Raw unlocked parse of the grant file. Callers either hold LOCK_EX
+    /// (apply_updates) or LOCK_SH (allows) on the grants sibling. A
+    /// missing/corrupt file yields an empty rule set.
+    [[nodiscard]] static std::vector<WorkerAllowRule>
+    load_rules_at(const fs::path& path) {
         std::vector<WorkerAllowRule> rules;
-        const auto path = grants_path();
-        std::error_code ec;
-        if (!fs::exists(path, ec)) return rules;
+        // c16: never open a non-regular data leaf (ifstream on a FIFO blocks
+        // waiting for a peer; a symlink would read its victim).
+        if (!cc::utils::is_regular_data_leaf_or_absent(path)) return rules;
         auto parsed = cc::utils::json::parse_file(path);
         if (!parsed) return rules;
         const auto list = parsed->root().get("rules");
@@ -1023,44 +1057,28 @@ private:
         return rules;
     }
 
-    /// Raw full-file rewrite of the grant file. CALLER MUST HOLD
-    /// grants_mutex_ AND the ScopedFileLock on `path` for the whole
-    /// surrounding load-merge-write. (The old save_rules() took only the
-    /// flock itself and was called after an unlocked load, which lost
-    /// concurrent updates; a self-flock here would also deadlock against
-    /// the caller's held flock on a second fd.)
-    void write_rules_locked(const fs::path& path,
-                            const std::vector<WorkerAllowRule>& rules) {
-        std::error_code ec;
-        fs::create_directories(path.parent_path(), ec);
-        std::ofstream out(path, std::ios::trunc);
-        if (!out) return;
-        out << "{\"rules\":[";
+    /// Full-file rewrite of the grant file with the exact pre-c16 bytes,
+    /// landed through the atomic symlink/FIFO-safe replace. CALLER MUST
+    /// HOLD the per-path shard mutex AND LOCK_EX on `path` for the whole
+    /// surrounding load-merge-write.
+    static void write_rules_locked(const fs::path& path,
+                                   const std::vector<WorkerAllowRule>& rules) {
+        std::string out;
+        out += "{\"rules\":[";
         for (std::size_t i = 0; i < rules.size(); ++i) {
-            if (i != 0) out << ',';
-            out << R"({"tool_name":")"
-                << permission_detail::json_quote(rules[i].tool_name)
-                << R"(","rule_content":")"
-                << permission_detail::json_quote(rules[i].rule_content)
-                << "\"}";
+            if (i != 0) out.push_back(',');
+            out += R"({"tool_name":")";
+            out += permission_detail::json_quote(rules[i].tool_name);
+            out += R"(","rule_content":")";
+            out += permission_detail::json_quote(rules[i].rule_content);
+            out += "\"}";
         }
-        out << "]}";
+        out += "]}";
+        (void)cc::utils::atomic_replace_file(path, out);
     }
 
     std::string team_name_;
     std::string agent_name_;
-
-    // Process-wide lock serializing in-process read-modify-write cycles on
-    // worker grant files, mirroring teammate_inbox_mutex() for inboxes but
-    // deliberately SEPARATE: grant files live under permissions/ (not an
-    // inbox). Cross-process serialization is the ScopedFileLock flock on
-    // the grants path sibling taken in apply_updates; this static mutex
-    // serializes the multiple in-process threads (e.g. concurrent pane
-    // permission checks) whose RMW would otherwise last-writer-win even
-    // though each write flocked — the flock in the old save_rules() did
-    // not cover the load in apply_updates (measured: 133/400 rules lost
-    // across threads, 100/200 across processes).
-    inline static std::mutex grants_mutex_{};
 };
 
 inline std::string PermissionSync::generate_request_id() {

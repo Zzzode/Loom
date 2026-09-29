@@ -126,8 +126,8 @@ void AppAdapter::HandleSubmit(const std::string& text,
 
     query_running_.store(true);
     last_submitted_text_ = text;
-    screen_state_->spinner_mode = repl::SpinnerMode::Requesting;
-    screen_state_->spinner_verb = "Thinking";
+    screen_state_->task_view_store.spinner_mode = repl::SpinnerMode::Requesting;
+    screen_state_->task_view_store.spinner_verb = "Thinking";
     {
         std::lock_guard lk(result_mutex_);
         pending_error_.reset();
@@ -197,15 +197,15 @@ void AppAdapter::HandleSubmit(const std::string& text,
                             .complete = false,
                             .is_error = false,
                         };
-                        screen_state_->spinner_mode = repl::SpinnerMode::ToolUse;
-                        screen_state_->spinner_verb = tool->name;
+                        screen_state_->task_view_store.spinner_mode = repl::SpinnerMode::ToolUse;
+                        screen_state_->task_view_store.spinner_verb = tool->name;
                     } else if (const auto* thinking = std::get_if<core::ThinkingBlock>(&e.block)) {
                         streaming_thinking_[e.index] = StreamingThinkingPreview{
                             .text = thinking->thinking,
                             .complete = false,
                             .streaming_ended_at = std::nullopt,
                         };
-                        screen_state_->spinner_mode = repl::SpinnerMode::Thinking;
+                        screen_state_->task_view_store.spinner_mode = repl::SpinnerMode::Thinking;
                     }
                 } else if constexpr (std::is_same_v<T, core::ContentBlockDelta>) {
                     apply_event = event_dedup_.should_accept_delta(e.index);
@@ -217,8 +217,8 @@ void AppAdapter::HandleSubmit(const std::string& text,
                         thinking->second.text += e.delta_text;
                     } else {
                         streaming_text_ += e.delta_text;
-                        screen_state_->spinner_mode = repl::SpinnerMode::Responding;
-                        screen_state_->spinner_verb = std::nullopt;
+                        screen_state_->task_view_store.spinner_mode = repl::SpinnerMode::Responding;
+                        screen_state_->task_view_store.spinner_verb = std::nullopt;
                     }
                 } else if constexpr (std::is_same_v<T, core::ContentBlockStop>) {
                     apply_event = event_dedup_.should_accept_stop(e.index);
@@ -356,7 +356,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
     if (normalized == "/cost") {
         auto usage = static_cast<cc::core::QueryEngine*>(engine_raw())->get_usage();
         auto cost = static_cast<cc::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd;
-        screen_state_->spinner_tip = std::format(
+        screen_state_->task_view_store.spinner_tip = std::format(
             "Cost: ${:.4f} | In: {} | Out: {} | Ctx: {:.0f}%",
             cost, usage.input_tokens, usage.output_tokens,
             static_cast<cc::core::QueryEngine*>(engine_raw())->context_utilization() * 100.0);

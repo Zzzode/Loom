@@ -1956,8 +1956,8 @@ TEST(LiveTeamsUi, StripRendersNameStatusAndTail) {
     b.last_output_tail = "waiting for review";
     b.pane_id = "%4";
 
-    s.live_teammates = {a, b};
-    s.teammate_count = 2;
+    s.task_view_store.live_teammates = {a, b};
+    s.task_view_store.teammate_count = 2;
 
     const auto txt = strip_ansi(
         render_to_plain_text(repl::RenderReplScreen(s), 140, 40));

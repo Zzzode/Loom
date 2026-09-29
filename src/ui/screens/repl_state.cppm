@@ -27,9 +27,12 @@ export import cc.ui.screens.messages_store;      // MessagesStore / MessageDispl
 // seeing StashedPrompt during the per-store migration. Deleted in F3
 // Finalize — importers then import cc.ui.screens.prompt_store directly.
 export import cc.ui.screens.prompt_store;        // PromptStore / StashedPrompt
+// RFC 0002 F3 shim: re-exports the TaskViewStore shard so importers keep
+// seeing SpinnerMode during the per-store migration. Deleted in F3
+// Finalize — importers then import cc.ui.screens.task_view_store directly.
+export import cc.ui.screens.task_view_store;     // TaskViewStore / SpinnerMode
 import cc.ui.features.agents.agent_cards;        // AgentCardData
 import cc.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
-import cc.ui.features.teams.live_teammates;      // LiveTeammate
 import cc.ui.visual.markdown;                    // StreamingMarkdown (ptr field)
 
 export namespace cc::ui::repl_screen {
@@ -89,14 +92,6 @@ enum class ReplMode : std::uint8_t {
 /// All other values retain their names in the unified enum.
 /// TS REF: src/types/textInputTypes.ts:265 (PromptInputMode type)
 using InputMode = cc::ui::common::PromptInputMode;
-
-/// Spinner modes.  TS SpinnerMode (SpinnerAnimationRow.tsx switch cases +
-/// SpinnerWithVerb usage in REPL.tsx): requesting/thinking/responding/
-/// tool-input/tool-use + briefing/idle for KAIROS brief mode.
-enum class SpinnerMode : std::uint8_t {
-    Hidden, Requesting, Thinking, Responding,
-    ToolInput, ToolUse, Briefing, IdleBrief,
-};
 
 // =========================================================
 // Data structures (lean projections — engine owns full state)
@@ -202,7 +197,11 @@ struct ReplScreenState {
     // visible here through the re-export shim at the top of this file;
     // the shim is deleted in F3 Finalize.
     PromptStore prompt_store;
-    SpinnerMode spinner_mode = SpinnerMode::Hidden;
+    // RFC 0002 F3: task-view state (spinner mode, task notifications,
+    // agent/teammate live state) sharded into cc.ui.screens.task_view_store
+    // (TaskViewStore). SpinnerMode stays visible here through the re-export
+    // shim at the top of this file; the shim is deleted in F3 Finalize.
+    TaskViewStore task_view_store;
     // RFC 0002 F3: message-list / scroll / transcript-chrome state sharded
     // into cc.ui.screens.messages_store (MessagesStore). MessageDisplayEntry
     // stays visible here through the re-export shim at the top of this file;
@@ -369,9 +368,8 @@ struct ReplScreenState {
     // to TS useIdeAtMentioned.ts -> inputState.insert at cursor.
     std::mutex pending_at_mention_mutex;
     std::vector<std::string> pending_at_mention_inserts;
-    // Status / spinner / permission / context
+    // Status / permission / context
     StatusBarData status_bar;
-    std::optional<std::string> spinner_verb, spinner_tip;
     std::optional<PermissionRequestInfo> permission_request;    // Settings-driven UI configuration (mirrors AppState.settings subset
     // that the renderer needs — populated by the engine/app layer).
     std::string settings_model;             // Configured default model
@@ -411,22 +409,9 @@ struct ReplScreenState {
     std::string status_line_command;        // Shell command for status line
     int status_line_padding = 0;            // Horizontal padding for status line
     std::string status_line_text;           // Cached output of the status line command (may contain ANSI)
-    // Counts
-    int background_task_count = 0, teammate_count = 0;
-    bool teams_footer_selected = false;
+    // Counts and live-teams state moved to TaskViewStore (task_view_store
+    // field above) in RFC 0002 F3.
 
-    // ── Live teams (leader view) ─────────────────────────────────────────
-    // TS REF: src/components/teams/TeamStatus.tsx (footer count) +
-    // TeamsDialog.tsx (roster) + CoordinatorAgentStatus.tsx AgentLine
-    // (per-teammate live status + output tail). Projected by AppAdapter from
-    // (a) agent_runtime::native_agent_store() for in-process teammates and
-    // (b) cc::utils::swarm_pane_observer for tmux pane teammates.
-    // Event-driven: the observer posts a refresh when pane content changes;
-    // there is no render ticker (see app_team_projection.cpp).
-    std::vector<teams::live::LiveTeammate> live_teammates;
-    // Selection cursor for the TeamsView modal (TeamsViewPayload.selected_index
-    // mirrors this when the dialog is open).
-    int teams_overview_selected_index = 0;
     // Permission mode (cycled via shift+tab; TS REF: getNextPermissionMode.ts)
     cc::ui::prompt::footer::PermissionMode permission_mode =
         cc::ui::prompt::footer::PermissionMode::Default;
@@ -444,7 +429,8 @@ struct ReplScreenState {
     // UI13: agent wizard component handle (lazily created by
     // dialog_router::get_agent_wizard()).
     std::shared_ptr<void> wizard_agent;
-    std::vector<cc::ui::agents::cards::AgentCardData> agent_cards;
+    // agent_cards moved to TaskViewStore (task_view_store field above) in
+    // RFC 0002 F3.
     std::shared_ptr<void> agents_component;
     // UI8: trust dialog component handle (lazy-created; opaque).
     std::shared_ptr<void> wizard_trust;

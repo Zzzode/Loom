@@ -92,7 +92,7 @@ using namespace ftxui;
     // Standalone > Modal > Overlay > Bottom.  This block runs FIRST
     // so that a ToolPermission overlay consumes y/n/a before the
     // legacy in_dialog / input paths see it.
-    bool tool_animating = state->spinner_mode != SpinnerMode::Hidden;
+    bool tool_animating = state->task_view_store.spinner_mode != SpinnerMode::Hidden;
     if (dialog_queue_render::DispatchDialogQueueEvents(
             *state, ev, state->is_prompt_input_active,
             /*allow_dialogs_with_animation=*/!tool_animating)) {

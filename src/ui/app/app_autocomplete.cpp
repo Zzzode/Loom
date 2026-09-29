@@ -1006,7 +1006,7 @@ Element AppAdapter::Render() {
     cc::utils::debug("app.render",
         "Render: query_running={}, messages={}, spinner_mode={}",
         qr, screen_state_->messages_store.messages.size(),
-        static_cast<int>(screen_state_->spinner_mode));
+        static_cast<int>(screen_state_->task_view_store.spinner_mode));
 
     if (qr) {
         std::lock_guard lk(result_mutex_);

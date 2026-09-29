@@ -180,9 +180,9 @@ using namespace ftxui;
     // Spinner lives in the chrome BETWEEN messages list and prompt input
     // (TS BriefSpinner marginTop=1, NOT a message row inside scroll content).
     Element spinner_chrome = text("");
-    if (s.spinner_mode != SpinnerMode::Hidden)
-        spinner_chrome = RenderSpinner(s.spinner_mode, s.spinner_verb,
-                                       s.spinner_tip, spinner_frame);
+    if (s.task_view_store.spinner_mode != SpinnerMode::Hidden)
+        spinner_chrome = RenderSpinner(s.task_view_store.spinner_mode, s.task_view_store.spinner_verb,
+                                       s.task_view_store.spinner_tip, spinner_frame);
     // M7.5: Panel views (Tasks/Teams/Help/Settings/About/QuickOpen) are
     // now rendered as modal dialogs via DialogQueue — no longer inlined
     // in the scrollable slot.
@@ -298,15 +298,15 @@ using namespace ftxui;
         // leading text("") row.
         L.reserve(5);
         L.push_back(text(""));   // marginTop=1
-        if (s.spinner_mode != SpinnerMode::Hidden) {
+        if (s.task_view_store.spinner_mode != SpinnerMode::Hidden) {
             L.push_back(hbox({spinner_chrome, filler()}) | flex_shrink);
         }
         // Live teammate strip (TS CoordinatorAgentStatus.tsx AgentLine list):
         // one status + output-tail row per teammate, pinned just above the
         // prompt input. Pure render of state-owned data.
-        if (!s.live_teammates.empty()) {
+        if (!s.task_view_store.live_teammates.empty()) {
             L.push_back(hbox({
-                teams::live::RenderLiveTeammateStrip(s.live_teammates, term_cols),
+                teams::live::RenderLiveTeammateStrip(s.task_view_store.live_teammates, term_cols),
                 filler(),
             }) | flex_shrink);
         }
@@ -350,9 +350,9 @@ using namespace ftxui;
         }
         left_opts.mode_indicator.mode                 = footer_mode;
         left_opts.mode_indicator.permission_mode      = s.permission_mode;
-        left_opts.mode_indicator.background_task_count = s.background_task_count;
-        left_opts.mode_indicator.teammate_count        = s.teammate_count;
-        left_opts.mode_indicator.teams_selected        = s.teams_footer_selected;
+        left_opts.mode_indicator.background_task_count = s.task_view_store.background_task_count;
+        left_opts.mode_indicator.teammate_count        = s.task_view_store.teammate_count;
+        left_opts.mode_indicator.teams_selected        = s.task_view_store.teams_footer_selected;
         // Transcript/brief mode pills (TS REF: Messages.tsx isTranscriptMode + isBriefOnly).
         left_opts.mode_indicator.is_transcript_mode    = s.is_transcript_mode;
         left_opts.mode_indicator.is_brief_mode         = s.is_brief_mode;
@@ -551,7 +551,7 @@ using namespace ftxui;
     // terminal dimensions (cols-4, rows-PEEK-1) to modal dialogs.  Pass real
     // term_cols/term_rows here instead of the old hardcoded 120x40 so dialog
     // renderers get accurate viewport geometry.
-    bool tool_animating = s.spinner_mode != SpinnerMode::Hidden;
+    bool tool_animating = s.task_view_store.spinner_mode != SpinnerMode::Hidden;
     return dialog_queue_render::LayerAllDialogs(
         std::move(base), s, s.is_prompt_input_active,
         /*allow_dialogs_with_animation=*/!tool_animating, term_cols, term_rows);

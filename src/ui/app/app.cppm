@@ -549,7 +549,7 @@ public:
 
     void SyncState();
 
-    // Rebuild screen_state_->live_teammates from the native agent store +
+    // Rebuild screen_state_->task_view_store.live_teammates from the native agent store +
     // pane-observer snapshot. Defined in app_team_projection.cpp; callers own
     // the render wake.
     void ProjectLiveTeammatesToScreenState();
@@ -633,7 +633,7 @@ public:
     }
 
     [[nodiscard]] bool is_loading_for_testing() const noexcept {
-        return screen_state_->spinner_mode != repl::SpinnerMode::Hidden;
+        return screen_state_->task_view_store.spinner_mode != repl::SpinnerMode::Hidden;
     }
 
     [[nodiscard]] std::uint64_t ui_animation_tick_count_for_testing() const noexcept {
@@ -641,7 +641,7 @@ public:
     }
 
     [[nodiscard]] std::string status_message_for_testing() const {
-        return screen_state_->spinner_tip.value_or(std::string{});
+        return screen_state_->task_view_store.spinner_tip.value_or(std::string{});
     }
 
     [[nodiscard]] bool status_line_enabled_for_testing() const noexcept {
@@ -757,7 +757,7 @@ public:
     }
 
     [[nodiscard]] std::size_t agent_card_count_for_testing() const noexcept {
-        return screen_state_->agent_cards.size();
+        return screen_state_->task_view_store.agent_cards.size();
     }
 
     [[nodiscard]] bool has_pending_dialog_for_testing() const noexcept {
@@ -773,7 +773,7 @@ public:
     [[nodiscard]] bool teams_overview_open_for_testing() const;
 
     [[nodiscard]] int teams_overview_count_for_testing() const {
-        return static_cast<int>(screen_state_->live_teammates.size());
+        return static_cast<int>(screen_state_->task_view_store.live_teammates.size());
     }
 
     // Enqueue a stage-A permission_request as if the leader inbox poll found

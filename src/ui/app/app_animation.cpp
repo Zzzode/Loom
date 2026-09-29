@@ -55,7 +55,7 @@ void AppAdapter::StartUiAnimationTicker() {
             const bool welcome_active =
                 screen_state_ &&
                 screen_state_->messages_store.messages.empty() &&
-                screen_state_->spinner_mode == repl::SpinnerMode::Hidden;
+                screen_state_->task_view_store.spinner_mode == repl::SpinnerMode::Hidden;
             if (!welcome_active) welcome_render_ticks = 0;
 
             // Re-render only while an animation is actually advancing:

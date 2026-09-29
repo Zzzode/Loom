@@ -159,7 +159,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
             static_cast<cc::core::QueryEngine*>(engine_raw())->abort();
             if (query_thread_.joinable())
                 query_thread_.request_stop();
-            screen_state_->spinner_tip = "Cancelling...";
+            screen_state_->task_view_store.spinner_tip = "Cancelling...";
             reset_exit_handler();
             screen_state_->exit_message_until.reset();
             return;

@@ -526,9 +526,9 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
     }
     if (signature == projected_teams_signature_) return;
     projected_teams_signature_ = std::move(signature);
-    screen_state_->live_teammates = std::move(out);
-    screen_state_->teammate_count =
-        static_cast<int>(screen_state_->live_teammates.size());
+    screen_state_->task_view_store.live_teammates = std::move(out);
+    screen_state_->task_view_store.teammate_count =
+        static_cast<int>(screen_state_->task_view_store.live_teammates.size());
     // Callers own the render wake (SyncState ends in a render anyway; the
     // Custom-event caller posts nothing extra).
 }
@@ -728,9 +728,9 @@ std::size_t AppAdapter::pending_teammate_permission_count_for_testing() {
 void AppAdapter::set_live_teammates_for_testing(void* v) {
     auto& teammates =
         *static_cast<std::vector<cc::ui::teams::live::LiveTeammate>*>(v);
-    screen_state_->live_teammates = std::move(teammates);
-    screen_state_->teammate_count =
-        static_cast<int>(screen_state_->live_teammates.size());
+    screen_state_->task_view_store.live_teammates = std::move(teammates);
+    screen_state_->task_view_store.teammate_count =
+        static_cast<int>(screen_state_->task_view_store.live_teammates.size());
 }
 
 bool AppAdapter::teams_overview_open_for_testing() const {

@@ -43,7 +43,7 @@ void register_teams_dialog_renderer(
             const std::string team =
                 cc::utils::get_team_name().value_or("default");
             return cc::ui::teams::live::RenderTeamsOverview(
-                team, s->live_teammates, p->selected_index,
+                team, s->task_view_store.live_teammates, p->selected_index,
                 ctx.term_cols, ctx.term_rows);
         },
         /*event_handler=*/

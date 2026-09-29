@@ -78,7 +78,7 @@ namespace {
 
 void AppAdapter::RefreshAgentsMenuOutput() {
         screen_state_->active_local_jsx_content = FormatAgentsMenuOutput(
-            screen_state_->agent_cards,
+            screen_state_->task_view_store.agent_cards,
             screen_state_->active_agents_selection_position);
     }
 
@@ -94,7 +94,7 @@ void AppAdapter::OpenAgentsMenu() {
     /// the TeamsView modal (TS PromptInput.tsx 'teams' footer action).
 void AppAdapter::OpenTeamsOverview() {
         ProjectLiveTeammatesToScreenState();
-        screen_state_->teams_overview_selected_index = 0;
+        screen_state_->task_view_store.teams_overview_selected_index = 0;
         cc::ui::dialogs::triggers::PushTeamsView(
             screen_state_->dialog_queue,
             [this] {
@@ -110,7 +110,7 @@ bool AppAdapter::HandleLocalJsxEvent(const Event& ev) {
             return false;
         }
 
-        const auto selectable = selectable_agent_indices(screen_state_->agent_cards);
+        const auto selectable = selectable_agent_indices(screen_state_->task_view_store.agent_cards);
         const int item_count = 1 + static_cast<int>(selectable.size());
         if (item_count <= 0) return false;
 
@@ -142,7 +142,7 @@ bool AppAdapter::HandleLocalJsxEvent(const Event& ev) {
                 const auto agent_index =
                     selectable[static_cast<std::size_t>(selected - 1)];
                 command = "/agents configure " +
-                    screen_state_->agent_cards[agent_index].id;
+                    screen_state_->task_view_store.agent_cards[agent_index].id;
             }
             ClearActiveLocalJsxCommand();
             screen_state_->messages_store.scroll_offset = 0;
@@ -260,10 +260,10 @@ void AppAdapter::LoadAgentCardsForMenu() {
     auto definitions = agent_runtime::get_all_agent_definitions(std::move(cwd));
     std::ranges::sort(definitions, agent_display::CompareAgentsByName{});
 
-    screen_state_->agent_cards.clear();
-    screen_state_->agent_cards.reserve(definitions.size());
+    screen_state_->task_view_store.agent_cards.clear();
+    screen_state_->task_view_store.agent_cards.reserve(definitions.size());
     for (const auto& definition : definitions) {
-        screen_state_->agent_cards.push_back(
+        screen_state_->task_view_store.agent_cards.push_back(
             project_agent_definition_card(definition));
     }
     screen_state_->agents_component.reset();
@@ -393,11 +393,11 @@ void AppAdapter::ConsumePendingResult() {
     }
 
     if (query_running_.load()) return;
-    if (screen_state_->spinner_mode == repl::SpinnerMode::Hidden) return;
+    if (screen_state_->task_view_store.spinner_mode == repl::SpinnerMode::Hidden) return;
 
     cc::utils::debug("app.consume",
         "ConsumePendingResult firing — spinner_mode={}, calling SyncState",
-        static_cast<int>(screen_state_->spinner_mode));
+        static_cast<int>(screen_state_->task_view_store.spinner_mode));
 
     std::lock_guard lk(result_mutex_);
 
@@ -424,9 +424,9 @@ void AppAdapter::ConsumePendingResult() {
         }
         screen_state_->messages_store.messages.push_back(std::move(error_entry));
     }
-    screen_state_->spinner_mode = repl::SpinnerMode::Hidden;
-    screen_state_->spinner_verb = std::nullopt;
-    screen_state_->spinner_tip = std::nullopt;
+    screen_state_->task_view_store.spinner_mode = repl::SpinnerMode::Hidden;
+    screen_state_->task_view_store.spinner_verb = std::nullopt;
+    screen_state_->task_view_store.spinner_tip = std::nullopt;
     streaming_text_.clear();
     streaming_markdown_.reset();
     streaming_tools_.clear();

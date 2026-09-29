@@ -295,7 +295,7 @@ void close_agents_menu(
     const std::shared_ptr<ReplScreenCallbacks>& cb) {
     if (!s->agents_component) {
         agents_menu::AgentMenuOptions opts;
-        opts.agents = s->agent_cards;
+        opts.agents = s->task_view_store.agent_cards;
         opts.on_create_new = [s, cb] {
             close_agents_menu(s, cb);
             if (cb->enqueue_slash_command) cb->enqueue_slash_command("/agents create");

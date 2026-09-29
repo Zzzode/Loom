@@ -23,6 +23,7 @@ import cc.ui.permissions.permission_bash;
 import cc.ui.permissions.permission_file_edit;
 import cc.ui.permissions.permission_file_write;
 import cc.ui.permissions.single_prompt;
+import cc.ui.prompt.prompt_input_footer;  // c22: footer notification queue
 
 namespace cc::ui::repl_screen {
 using namespace ftxui;
@@ -53,6 +54,27 @@ using settings_ns::MakeSettingsDialog;
                                             ? static_cast<cc::core::ConfigManager*>(
                                                   s->settings_config)
                                             : &fallback_config;
+        if (cfg == &fallback_config) {
+            // c23: the fallback is session-scoped (thread_local static) and
+            // would otherwise serve a stale snapshot after an external edit.
+            // Reload before each dialog open — load() is idempotent and
+            // tolerates missing tiers. Quiet so a soft-tier parse warning
+            // reaches the toast sink below instead of stderr.
+            (void)fallback_config.load(cc::core::LoadOptions{.quiet = true});
+            // c22: surface soft-tier (user/local) parse warnings as toasts.
+            // QueueAddNotification dedups by key, so a repeated open does
+            // not stack duplicates.
+            namespace pif = cc::ui::prompt::footer;
+            for (auto& diag : fallback_config.drain_load_diagnostics()) {
+                pif::NotificationItem item;
+                item.key = "config-tier-warning:" + diag.path;
+                item.text = diag.message;
+                item.color = "warning";
+                item.priority = pif::NotificationPriority::High;
+                item.timeout_ms = 8000;
+                pif::QueueAddNotification(s->footer_notification_queue, item);
+            }
+        }
         SettingsDialogOptions opts;
         opts.initial_tab = static_cast<SettingsTabId>(s->settings_initial_tab);
         opts.on_close = [s, cb](std::optional<std::string>, CommandResultDisplay) {

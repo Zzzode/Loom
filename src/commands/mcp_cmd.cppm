@@ -232,8 +232,16 @@ private:
     mutable std::optional<XaaIdpStatus> cached_xaa_status_;
 
     // ---- helpers: config / native sync -------------------------------------
+    /// c23: the latch is invalidated by an external edit — tier_files_changed()
+    /// stats the four tier paths (content hash + size/inode) and forces a
+    /// reload when any differs from the snapshot recorded at the last
+    /// load()/save(). This picks up externally edited config files instead of
+    /// serving a stale session snapshot, while our own save()/patch refreshes
+    /// the recorded signature so a post-mutation reload_and_sync() still
+    /// forces a fresh load. A failed load is retried on the next command
+    /// rather than latching the failure.
     [[nodiscard]] VoidResult ensure_config_loaded() {
-        if (config_loaded_) return {};
+        if (config_loaded_ && !config_manager_.tier_files_changed()) return {};
         auto loaded = config_manager_.load();
         if (!loaded) return loaded;
         config_loaded_ = true;

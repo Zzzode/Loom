@@ -31,6 +31,7 @@ import cc.ui.foundation.theme_provider;
 import cc.ui.foundation.design_tokens;
 import cc.constants.constants;
 import cc.config.config;
+import cc.utils.json;
 import cc.ui.messages.messages;
 import cc.ui.messages.message_pipeline;
 import cc.ui.widgets.components;
@@ -184,6 +185,60 @@ TEST(SettingsDialog, McpAddKeyDoesNotCreatePlaceholderServer) {
     ASSERT_TRUE(dialog->OnEvent(ftxui::Event::Character('\x13')));
 
     EXPECT_TRUE(cfg.settings().mcp_servers.empty());
+}
+
+// RFC-0001 B followup c21: a settings-dialog save (Ctrl+S) patches the KNOWN
+// sections leaf-by-leaf, so unknown top-level keys (e.g. "x-custom") and
+// unknown keys inside a known section (e.g. a custom "model" leaf) survive.
+// Drives the real dialog component + ConfigManager save path.
+TEST(SettingsDialog, SavePreservesUnknownKeys) {
+    namespace settings_dialog = cc::ui::dialogs::settings_dialog;
+    namespace fs = std::filesystem;
+
+    TempCwdGuard cwd_guard;
+    const auto dir = fs::current_path();
+    const auto project_path = dir / ".loom" / "config.json";
+    fs::create_directories(project_path.parent_path());
+    {
+        std::ofstream seed(project_path);
+        seed << "{\n"
+                "  \"x-custom\": { \"tool\": \"loom\" },\n"
+                "  \"model\": {\n"
+                "    \"default_model\": \"seed-model-dialog\",\n"
+                "    \"x_custom_leaf\": 42\n"
+                "  },\n"
+                "  \"display\": { \"theme\": \"dark\" }\n"
+                "}\n";
+    }
+
+    // 2-arg ctor: global + project; user tier absent, local derived next to
+    // the project file. Load so the dialog snapshots the seeded values.
+    cc::core::ConfigManager cfg(dir / "global.json", project_path);
+    ASSERT_TRUE(cfg.load().has_value());
+
+    settings_dialog::SettingsDialogOptions opts;
+    auto dialog = settings_dialog::MakeSettingsDialog(cfg, std::move(opts));
+
+    // Ctrl+S: apply_to(working) + cfg->save().
+    ASSERT_TRUE(dialog->OnEvent(ftxui::Event::Character('\x13')));
+
+    auto project = cc::utils::json::parse_file(project_path);
+    ASSERT_TRUE(project.has_value());
+    const auto root_node = project->root();
+    // The unknown top-level key survives with its value intact.
+    ASSERT_TRUE(root_node.has("x-custom"));
+    EXPECT_EQ(root_node.get("x-custom").get("tool").as_str(),
+              std::string_view("loom"));
+    // The unknown key inside "model" survives alongside the known leaves.
+    const auto model = root_node.get("model");
+    ASSERT_TRUE(model.is_obj());
+    EXPECT_EQ(model.get("default_model").as_str(),
+              std::string_view("seed-model-dialog"));
+    ASSERT_TRUE(model.has("x_custom_leaf"));
+    EXPECT_EQ(model.get("x_custom_leaf").as_int(), 42);
+    // The known display value round-tripped.
+    EXPECT_EQ(root_node.get("display").get("theme").as_str(),
+              std::string_view("dark"));
 }
 
 namespace {

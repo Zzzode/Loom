@@ -203,6 +203,15 @@ struct LoadOptions {
     bool quiet = false;
 };
 
+/// c22: a soft-tier (user/local) parse warning collected during load().
+/// The CLI command path keeps its stderr println; the TUI composition root
+/// drains these into the footer notification queue after a load so an
+/// audible session surfaces the warning as a toast instead of silence.
+struct ConfigLoadDiagnostic {
+    std::string path;     // The tier file that could not be parsed.
+    std::string message;  // Human-readable reason (no "warning: " prefix).
+};
+
 /// Value kinds understood by the closed user-setting spec set.
 enum class UserSettingKind : std::uint8_t {
     String,
@@ -253,6 +262,59 @@ struct UserSettingSetOutcome {
 
 /// Manages loading, merging, and persisting configuration from multiple sources
 class ConfigManager {
+    /// c23: content signature of one tier file for external-change detection.
+    /// Richer than FileSignature (existence+inode only, used for the patch CAS
+    /// gate): an editor that truncates and rewrites the SAME file keeps the
+    /// inode, so a session latch keyed on inode alone would serve a stale
+    /// snapshot. The content hash (FNV-1a) is the definitive signal — it
+    /// detects a same-size rewrite ("v1"→"v2") that leaves mtime/size
+    /// unchanged — while mtime/size/inode are cheap secondary signals. Config
+    /// tiers are small (a few KB), so reading+hashing four of them before a
+    /// command costs microseconds.
+    struct TierSignature {
+        bool exists = false;
+        std::uint64_t inode = 0;
+        std::uint64_t size = 0;
+        std::uint64_t content_hash = 0;
+
+        [[nodiscard]] constexpr bool operator==(const TierSignature&) const = default;
+    };
+
+    /// FNV-1a 64-bit hash of a file's raw bytes. Returns 0 when the file
+    /// cannot be opened (distinct from the hash of an empty file, which is
+    /// the non-zero FNV offset basis). noexcept: ifstream signals errors via
+    /// failbit, not exceptions.
+    [[nodiscard]] static std::uint64_t
+    hash_file_content(const std::filesystem::path& path) noexcept {
+        std::ifstream in(path, std::ios::binary);
+        if (!in) return 0;
+        constexpr std::uint64_t kOffset = 14695981039346656037ULL;
+        constexpr std::uint64_t kPrime = 1099511628211ULL;
+        std::uint64_t hash = kOffset;
+        char buf[4096];
+        while (in) {
+            in.read(buf, sizeof(buf));
+            const std::streamsize n = in.gcount();
+            for (std::streamsize i = 0; i < n; ++i) {
+                hash ^= static_cast<unsigned char>(buf[i]);
+                hash *= kPrime;
+            }
+        }
+        return hash;
+    }
+
+    [[nodiscard]] static TierSignature
+    tier_signature(const std::filesystem::path& path) noexcept {
+        struct ::stat st {};
+        if (::lstat(path.c_str(), &st) != 0) return {};
+        TierSignature sig;
+        sig.exists = true;
+        sig.inode = static_cast<std::uint64_t>(st.st_ino);
+        sig.size = static_cast<std::uint64_t>(st.st_size);
+        sig.content_hash = hash_file_content(path);
+        return sig;
+    }
+
     Settings settings_;                     // Resolved effective settings
     std::filesystem::path global_path_;     // Path to global config file
     std::filesystem::path user_path_;       // Path to user config file (empty in 2-arg ctor)
@@ -277,6 +339,20 @@ class ConfigManager {
     // ConfigManager instance (a command path loads twice — initial load and
     // the forced post-mutation reload — but the warning is one per process).
     std::unordered_set<std::string> mcp_warned_paths_;
+    // c22: soft-tier parse warnings collected by the last load(), drained by
+    // the TUI composition root into the footer notification queue. Reset on
+    // every load(); the CLI path does not drain (it gets the stderr println).
+    std::vector<ConfigLoadDiagnostic> load_diagnostics_;
+
+    // c23: content signatures of the four tier files recorded at the last
+    // load()/save(), compared by tier_files_changed() before a latched command
+    // reuses the in-memory snapshot. An external edit (same-inode
+    // truncate+rewrite, rename-over, create, delete) changes a signature and
+    // forces a reload; our own save() refreshes the saved path's slot so the
+    // next command does NOT reload (which would re-apply env overlays and
+    // break the c19 same-session get-after-set invariant). The content hash
+    // catches a same-size rewrite that leaves mtime/size unchanged.
+    std::array<TierSignature, 4> tier_signatures_{};
 
     // c13b provenance: (section, leaf) scalar leaves seen on disk during the
     // tier merge, and whether the two modeled env overrides are engaged
@@ -293,7 +369,7 @@ class ConfigManager {
     // value to PERSIST); env_explicit_leaves_ additionally marks leaves the
     // /config command explicitly wrote THIS session, so an explicit set to a
     // value that happens to equal the env value still persists. The whole
-    // rule is explained at its use site in serialize_settings.
+    // rule is explained at its use site in build_save_fragments.
     std::set<std::pair<std::string, std::string>> disk_leaves_;
     std::set<std::pair<std::string, std::string>> env_explicit_leaves_;
     std::optional<std::string> env_model_value_;
@@ -353,6 +429,8 @@ public:
         env_backup_max_output_tokens_.reset();
         env_model_engaged_ = false;
         env_max_tokens_engaged_ = false;
+        // c22: per-instance diagnostics are per-load.
+        load_diagnostics_.clear();
 
         // RFC-0001 B followup c6: four physical tiers, lowest to highest.
         // global/project parse errors stay HARD failures (those files are
@@ -380,18 +458,27 @@ public:
         // Layer: Environment variables (override file configs)
         apply_environment_variables();
 
+        // c23: snapshot the tier signatures so a latched command can detect
+        // an external edit before reusing this in-memory snapshot.
+        record_tier_signatures();
+
         dirty_ = false;
         return {};
     }
 
-    /// Save current settings to the specified config file. c13d: routed
-    /// through the SAME hardened machinery as the patcher — symlink-leaf
-    /// refusal, bounded flock, unique O_EXCL|O_NOFOLLOW tmp, pre-existing
-    /// mode preservation, fsync, atomic rename — instead of a truncating
-    /// std::ofstream that followed symlinks and could leave a partial
-    /// file. This is a FULL replace (no read-modify-write CAS): the
-    /// in-memory document intentionally wins; a concurrent patched write
-    /// and a full save remain last-writer-wins by nature, never torn.
+    /// Save current settings to the specified config file. c21: routed
+    /// through patch_object_file as a READ-MODIFY-WRITE that re-emits each
+    /// KNOWN section leaf-by-leaf, so unknown top-level and intra-section
+    /// keys survive a /config set and a settings-dialog save. The §B
+    /// mcpServers secret-boundary filter and the c19 env-baking guard are
+    /// preserved: the known-section fragments come from the same in-memory
+    /// state the old full serializer used (build_save_fragments). A
+    /// non-blank unparseable file fails closed (Strict) — a save never
+    /// overwrites a broken file from in-memory defaults. The write still
+    /// goes through the hardened atomic-replace machinery (symlink-leaf
+    /// refusal, bounded flock, O_EXCL|O_NOFOLLOW tmp, fsync, atomic rename)
+    /// with an inode CAS so a competing patched write restarts the
+    /// read-modify-write instead of tearing.
     [[nodiscard]] VoidResult save(ConfigSource target = ConfigSource::ProjectConfig) {
         const bool is_global = (target == ConfigSource::GlobalConfig);
         const auto& path = is_global ? global_path_ : project_path_;
@@ -414,21 +501,31 @@ public:
             }
         }
 
-        const ConfigFileLock file_lock(path);
-        if (!file_lock.locked()) {
-            return std::unexpected(*file_lock.error());
-        }
-
-        // Serialize inside the lock and atomically replace (no CAS).
-        const auto json = serialize_settings(target);
-        Error write_error = Error::make(ErrorCode::InternalError, {});
-        const auto outcome = write_config_file_replace(
-            path, json, /*owner_only=*/false, /*expected=*/nullptr,
-            write_error);
-        if (outcome != AtomicWriteOutcome::Renamed) {
-            return std::unexpected(write_error);
-        }
+        // c21: compute the known-section fragments once. The mutator is
+        // replayed per CAS attempt but the in-memory state does not change.
+        const SaveFragments frag = build_save_fragments(target);
+        const Error strict_error = Error::make(
+            ErrorCode::ConfigParseError,
+            std::format("{} is not valid JSON; repair or move it aside before "
+                        "saving configuration", path.string()));
+        SalvageResult salvage_out = SalvageResult::Untouched;
+        auto patched = patch_object_file(path,
+            [&](cc::utils::json::JsonMutVal& root,
+                cc::utils::json::JsonMutDoc& doc) -> VoidResult {
+                return apply_save_fragments(root, doc, frag);
+            },
+            /*owner_only=*/false,
+            SalvageMode::Strict,
+            strict_error,
+            salvage_out);
+        if (!patched) return std::unexpected(patched.error());
         dirty_ = false;
+
+        // c23: our own write changed the saved tier's mtime/size; refresh its
+        // recorded signature so the next latched command does not mistake our
+        // save for an external edit and reload (which would re-apply env
+        // overlays, breaking the c19 same-session get-after-set invariant).
+        refresh_tier_signature(target);
 
         // The project file itself stays VCS-tracked; only its lock sibling
         // is ignored. Global/user saves never touch a .gitignore.
@@ -448,11 +545,11 @@ public:
     }
 
     /// c19: mark one (section, leaf) as EXPLICITLY written by the user this
-    /// session, so the env-baking guard in serialize_settings persists the
+    /// session, so the env-baking guard in build_save_fragments persists the
     /// in-memory value even if it happens to equal the value the environment
     /// overlay applied. /config set calls this before saving; a plain
     /// settings_mut() change is recognized by the value-difference rule
-    /// instead (see serialize_settings). Only the two env-overridable model
+    /// instead (see build_save_fragments). Only the two env-overridable model
     /// leaves have provenance to mark, so other keys are a no-op.
     void clear_env_provenance(std::string_view section, std::string_view leaf) {
         if ((section == "model" && leaf == "default_model") ||
@@ -527,6 +624,34 @@ public:
     /// exposes the state only through this accessor.
     [[nodiscard]] bool user_tier_unparseable() const noexcept {
         return mcp_tier_unparseable_[scope_index(McpStorageScope::User)];
+    }
+
+    /// c22: drain the soft-tier parse diagnostics collected by the last
+    /// load(). The TUI composition root calls this after a load to surface
+    /// them as toasts; the CLI command path does not drain (it receives the
+    /// stderr println instead). The vector is reset on every load().
+    [[nodiscard]] std::vector<ConfigLoadDiagnostic>
+    drain_load_diagnostics() {
+        std::vector<ConfigLoadDiagnostic> out;
+        out.swap(load_diagnostics_);
+        return out;
+    }
+
+    /// c23: whether any tier file changed on disk since the last load()/save()
+    /// (external edit, rename-over, create, delete). A latched command calls
+    /// this before reusing the in-memory snapshot: a true result forces a
+    /// reload so the command reflects the on-disk state instead of serving a
+    /// stale session snapshot (which a set would then clobber on save). The
+    /// content hash detects a same-size rewrite that leaves mtime/size
+    /// unchanged. This is a pure query — it does NOT update the recorded
+    /// signatures; load() and save() own that, so a transient external change
+    /// is not masked.
+    [[nodiscard]] bool tier_files_changed() const {
+        return tier_signature(global_path_) != tier_signatures_[scope_index(McpStorageScope::Global)]
+            || (!user_path_.empty()
+                && tier_signature(user_path_) != tier_signatures_[scope_index(McpStorageScope::User)])
+            || tier_signature(project_path_) != tier_signatures_[scope_index(McpStorageScope::Project)]
+            || tier_signature(local_path_) != tier_signatures_[scope_index(McpStorageScope::Local)];
     }
 
     /// Compact JSON object of the 16 projected keys grouped by section
@@ -917,15 +1042,23 @@ private:
             }
             if (soft_tier) {
                 mcp_tier_unparseable_[scope_index(scope)] = true;
-                // One diagnostic per path per instance: the CLI command
-                // path loads twice (initial + post-mutation reload). The
-                // quiet agent backend neither prints nor marks the path as
-                // warned, so a later audible load keeps the warning.
+                // c22: collect for the TUI toast sink (drained by the
+                // composition root after a load). Collected on every
+                // encounter; the toast queue dedups by key and load()
+                // resets the vector each time.
+                load_diagnostics_.push_back({
+                    path.string(),
+                    std::format("ignoring {}: not valid JSON "
+                                "(use 'loom mcp' to edit MCP configuration)",
+                                path.string())
+                });
+                // One stderr diagnostic per path per instance: the CLI
+                // command path loads twice (initial + post-mutation reload).
+                // The quiet agent backend neither prints nor marks the path
+                // as warned, so a later audible load keeps the warning.
                 if (!quiet && mcp_warned_paths_.insert(path.string()).second) {
-                    std::println(stderr,
-                        "warning: ignoring {}: not valid JSON "
-                        "(use 'loom mcp' to edit MCP configuration)",
-                        path.string());
+                    std::println(stderr, "warning: {}",
+                                 load_diagnostics_.back().message);
                 }
                 return {};
             }
@@ -1255,29 +1388,55 @@ private:
         }
     }
 
-    /// Serialize settings to JSON string. When writing the PROJECT file after
-    /// a real load, mcpServers go through the §B secret-boundary filter.
-    ///
-    /// c19 env-baking guard: for the two leaves the environment can overwrite
-    /// (model.default_model / model.max_output_tokens), the value to PERSIST
-    /// is the recorded pre-overlay merged value (env_backup_*) UNLESS the leaf
-    /// is user intent — either the in-memory value no longer equals the value
-    /// the env overlay applied (a settings_mut() change), or /config set
-    /// marked the leaf explicit (clear_env_provenance, which covers the case
-    /// where the user set the value back to the env value itself). This needs
-    /// no per-callsite opt-in beyond the explicit marker, so every save
-    /// surface is covered. An unrelated save thus keeps the FILE's own value
-    /// and can never bake the ephemeral LOOM_MODEL / LOOM_MAX_TOKENS value
-    /// into the project file; when the env is unset nothing is recorded and
-    /// the output is byte-identical to before. Only those two leaves are
-    /// affected — network.api_key / base_url / proxy have always been omitted
-    /// by this serializer (no credential bytes leave it), which c19 preserves
-    /// bit for bit. Runtime reads are untouched (this only changes what a
-    /// save writes).
-    [[nodiscard]] std::string serialize_settings(
-        ConfigSource target = ConfigSource::ProjectConfig) const {
-        const std::vector<const McpServerConfig*> mcp_to_emit =
-            mcp_servers_for_save(target);
+    /// c21: the known-section leaf tokens for a save, computed from the SAME
+    /// in-memory state the old full serializer used. Each string is a bare
+    /// JSON value token (e.g. "\"claude-…\"", "16384", "true") fed to
+    /// JsonMutDoc::raw_json by apply_save_fragments. The c19 env-baking
+    /// guard and the §B mcpServers secret-boundary filter are applied here,
+    /// exactly as the old serialize_settings did.
+    struct SaveFragments {
+        // model section (c19 guard applied to the two env-overridable leaves)
+        std::string model_default_model;
+        std::string model_max_output_tokens;
+        std::string model_extended_thinking;
+        std::string model_context_window_size;
+        // display
+        std::string display_show_thinking;
+        std::string display_show_token_usage;
+        std::string display_compact_mode;
+        std::string display_theme;
+        // network
+        std::string network_timeout_seconds;
+        std::string network_max_retries;
+        std::string network_verify_ssl;
+        // features top-level scalar (raw JSON token)
+        std::string features;
+        // mcpServers entries to emit (§B-filtered): name -> bare object
+        // fragment (serialize_server_object output).
+        std::vector<std::pair<std::string, std::string>> mcp_servers;
+        // Optional top-level sections: nullopt => the key is REMOVED from
+        // the file (matching the old serializer's omit-when-unset rule).
+        std::optional<std::string> system_prompt;
+        std::optional<std::string> custom_instructions;
+        // xaaIdp: xaa_present=false => the whole section is removed. When
+        // present, each field token is nullopt => that field is removed
+        // (the old serializer emitted only set fields).
+        bool xaa_present = false;
+        std::optional<std::string> xaa_issuer;
+        std::optional<std::string> xaa_client_id;
+        std::optional<std::string> xaa_callback_port;
+    };
+
+    /// c21: compute the known-section fragments for a save. The c19
+    /// env-baking guard (model.default_model / model.max_output_tokens) and
+    /// the §B mcpServers secret-boundary filter are applied here, from the
+    /// same in-memory state the old serialize_settings read. Only those two
+    /// model leaves are affected by the env guard; network.api_key /
+    /// base_url / proxy have always been omitted (no credential bytes leave
+    /// a save), which this preserves bit for bit.
+    [[nodiscard]] SaveFragments
+    build_save_fragments(ConfigSource target) const {
+        SaveFragments frag;
         const bool model_still_env =
             env_model_value_.has_value() &&
             settings_.model.default_model == *env_model_value_ &&
@@ -1297,68 +1456,204 @@ private:
                 ? env_backup_max_output_tokens_.value_or(settings_.model.max_output_tokens)
                 : settings_.model.max_output_tokens;
 
-        std::string json;
-        json += "{\n";
-        json += "  \"model\": {\n";
-        json += std::format("    \"default_model\": \"{}\",\n",
-                            escape_json(model_to_emit));
-        json += std::format("    \"max_output_tokens\": {},\n", tokens_to_emit);
-        json += std::format("    \"extended_thinking\": {},\n", settings_.model.extended_thinking ? "true" : "false");
-        json += std::format("    \"context_window_size\": {}\n", settings_.model.context_window_size);
-        json += "  },\n";
-        json += "  \"display\": {\n";
-        json += std::format("    \"show_thinking\": {},\n", settings_.display.show_thinking ? "true" : "false");
-        json += std::format("    \"show_token_usage\": {},\n", settings_.display.show_token_usage ? "true" : "false");
-        json += std::format("    \"compact_mode\": {},\n", settings_.display.compact_mode ? "true" : "false");
-        json += std::format("    \"theme\": \"{}\"\n", escape_json(settings_.display.theme));
-        json += "  },\n";
-        json += "  \"network\": {\n";
-        json += std::format("    \"timeout_seconds\": {},\n", settings_.network.timeout_seconds);
-        json += std::format("    \"max_retries\": {},\n", settings_.network.max_retries);
-        json += std::format("    \"verify_ssl\": {}\n", settings_.network.verify_ssl ? "true" : "false");
-        json += "  },\n";
-        json += std::format("  \"features\": {},\n", settings_.features.raw());
-        json += "  \"mcpServers\": ";
-        append_mcp_servers(json, mcp_to_emit);
+        frag.model_default_model =
+            std::format("\"{}\"", escape_json(model_to_emit));
+        frag.model_max_output_tokens = std::to_string(tokens_to_emit);
+        frag.model_extended_thinking =
+            settings_.model.extended_thinking ? "true" : "false";
+        frag.model_context_window_size =
+            std::to_string(settings_.model.context_window_size);
+
+        frag.display_show_thinking =
+            settings_.display.show_thinking ? "true" : "false";
+        frag.display_show_token_usage =
+            settings_.display.show_token_usage ? "true" : "false";
+        frag.display_compact_mode =
+            settings_.display.compact_mode ? "true" : "false";
+        frag.display_theme =
+            std::format("\"{}\"", escape_json(settings_.display.theme));
+
+        frag.network_timeout_seconds =
+            std::to_string(settings_.network.timeout_seconds);
+        frag.network_max_retries =
+            std::to_string(settings_.network.max_retries);
+        frag.network_verify_ssl =
+            settings_.network.verify_ssl ? "true" : "false";
+
+        frag.features = std::to_string(settings_.features.raw());
+
+        // §B mcpServers secret-boundary filter (project target only; the
+        // global target keeps the legacy full-merged list).
+        for (const McpServerConfig* server : mcp_servers_for_save(target)) {
+            frag.mcp_servers.emplace_back(
+                server->name, serialize_server_object(*server));
+        }
 
         if (settings_.system_prompt) {
-            json += std::format(",\n  \"systemPrompt\": \"{}\"", escape_json(*settings_.system_prompt));
+            frag.system_prompt =
+                std::format("\"{}\"", escape_json(*settings_.system_prompt));
         }
         if (!settings_.custom_instructions.empty()) {
-            json += ",\n  \"customInstructions\": ";
-            append_string_array(json, settings_.custom_instructions);
+            std::string arr;
+            append_string_array(arr, settings_.custom_instructions);
+            frag.custom_instructions = std::move(arr);
         }
 
-        // XAA IdP connection, last top-level section alongside the other
-        // optional trailing scalars. Omitted entirely while all three fields
-        // are unset so a default save stays churn-free; /mcp xaa clear relies
+        // XAA IdP connection. Omitted entirely while all three fields are
+        // unset so a default save stays churn-free; /mcp xaa clear relies
         // on this to remove the section on rewrite. This section is outside
         // the §B mcpServers secret-boundary filter.
         const auto& xaa = settings_.xaa_idp;
         if (!xaa.issuer.empty() || !xaa.client_id.empty() ||
             xaa.callback_port.has_value()) {
-            json += ",\n  \"xaaIdp\": {\n";
-            bool first_field = true;
+            frag.xaa_present = true;
             if (!xaa.issuer.empty()) {
-                json += std::format("    \"issuer\": \"{}\"",
-                                    escape_json(xaa.issuer));
-                first_field = false;
+                frag.xaa_issuer =
+                    std::format("\"{}\"", escape_json(xaa.issuer));
             }
             if (!xaa.client_id.empty()) {
-                if (!first_field) json += ",\n";
-                json += std::format("    \"clientId\": \"{}\"",
-                                    escape_json(xaa.client_id));
-                first_field = false;
+                frag.xaa_client_id =
+                    std::format("\"{}\"", escape_json(xaa.client_id));
             }
             if (xaa.callback_port.has_value()) {
-                if (!first_field) json += ",\n";
-                json += std::format("    \"callbackPort\": {}",
-                                    *xaa.callback_port);
+                frag.xaa_callback_port = std::to_string(*xaa.callback_port);
             }
-            json += "\n  }";
         }
-        json += "\n}\n";
-        return json;
+        return frag;
+    }
+
+    /// c21: patch the KNOWN sections of a parsed config document leaf-by-
+    /// leaf, leaving every other key (top-level and intra-section) untouched.
+    /// Each known leaf is add()-ed (yyjson_mut_obj_put replaces in place,
+    /// preserving key order; new keys append), so unknown siblings survive.
+    /// The §B filter reconciles mcpServers to the emit set (user/local-only
+    /// entries are removed); optional sections are removed when unset,
+    /// matching the old serializer's omit-when-unset rule.
+    static VoidResult
+    apply_save_fragments(cc::utils::json::JsonMutVal& root,
+                         cc::utils::json::JsonMutDoc& doc,
+                         const SaveFragments& frag) {
+        auto patch_leaf = [&](cc::utils::json::JsonMutVal& section,
+                              std::string_view leaf,
+                              const std::string& token) -> VoidResult {
+            auto val = doc.raw_json(token);
+            if (!val.valid()) {
+                return std::unexpected(Error::make(
+                    ErrorCode::InternalError,
+                    "Internal error: serialized setting is not valid JSON"));
+            }
+            section.add(leaf, val);
+            return {};
+        };
+
+        // model — ensure_object keeps unknown intra-section keys.
+        auto model = root.ensure_object("model");
+        if (auto r = patch_leaf(model, "default_model",
+                                frag.model_default_model); !r) return r;
+        if (auto r = patch_leaf(model, "max_output_tokens",
+                                frag.model_max_output_tokens); !r) return r;
+        if (auto r = patch_leaf(model, "extended_thinking",
+                                frag.model_extended_thinking); !r) return r;
+        if (auto r = patch_leaf(model, "context_window_size",
+                                frag.model_context_window_size); !r) return r;
+
+        // display
+        auto display = root.ensure_object("display");
+        if (auto r = patch_leaf(display, "show_thinking",
+                                frag.display_show_thinking); !r) return r;
+        if (auto r = patch_leaf(display, "show_token_usage",
+                                frag.display_show_token_usage); !r) return r;
+        if (auto r = patch_leaf(display, "compact_mode",
+                                frag.display_compact_mode); !r) return r;
+        if (auto r = patch_leaf(display, "theme",
+                                frag.display_theme); !r) return r;
+
+        // network
+        auto network = root.ensure_object("network");
+        if (auto r = patch_leaf(network, "timeout_seconds",
+                                frag.network_timeout_seconds); !r) return r;
+        if (auto r = patch_leaf(network, "max_retries",
+                                frag.network_max_retries); !r) return r;
+        if (auto r = patch_leaf(network, "verify_ssl",
+                                frag.network_verify_ssl); !r) return r;
+
+        // features (top-level scalar)
+        if (auto r = patch_leaf(root, "features", frag.features); !r) return r;
+
+        // mcpServers — reconcile to the §B-filtered emit set. Entries not in
+        // the emit set (user/local-only, possibly carrying Authorization
+        // headers) are removed so they never enter the tracked project file.
+        auto servers = root.ensure_object("mcpServers");
+        std::unordered_set<std::string> emit_names;
+        emit_names.reserve(frag.mcp_servers.size());
+        for (const auto& [name, fragment] : frag.mcp_servers) {
+            emit_names.insert(name);
+        }
+        std::vector<std::string> to_remove;
+        servers.iter_obj([&](cc::utils::json::JsonMutVal k,
+                             cc::utils::json::JsonMutVal) {
+            std::string name(k.as_str());
+            if (!emit_names.contains(name)) {
+                to_remove.push_back(std::move(name));
+            }
+        });
+        for (const auto& name : to_remove) {
+            (void)servers.remove(name);
+        }
+        for (const auto& [name, fragment] : frag.mcp_servers) {
+            auto val = doc.raw_json(fragment);
+            if (!val.valid()) {
+                return std::unexpected(Error::make(
+                    ErrorCode::InternalError,
+                    "Internal error: serialized MCP server is not valid JSON"));
+            }
+            servers.add(name, val);
+        }
+
+        // systemPrompt — add when set, remove when unset.
+        if (frag.system_prompt) {
+            if (auto r = patch_leaf(root, "systemPrompt",
+                                    *frag.system_prompt); !r) return r;
+        } else {
+            (void)root.remove("systemPrompt");
+        }
+
+        // customInstructions
+        if (frag.custom_instructions) {
+            if (auto r = patch_leaf(root, "customInstructions",
+                                    *frag.custom_instructions); !r) return r;
+        } else {
+            (void)root.remove("customInstructions");
+        }
+
+        // xaaIdp — ensure the section when any field is set, reconciling the
+        // three known fields (set → add, unset → remove); unknown fields
+        // inside the section survive. All-unset removes the whole section.
+        if (frag.xaa_present) {
+            auto xaa = root.ensure_object("xaaIdp");
+            if (frag.xaa_issuer) {
+                if (auto r = patch_leaf(xaa, "issuer",
+                                        *frag.xaa_issuer); !r) return r;
+            } else {
+                (void)xaa.remove("issuer");
+            }
+            if (frag.xaa_client_id) {
+                if (auto r = patch_leaf(xaa, "clientId",
+                                        *frag.xaa_client_id); !r) return r;
+            } else {
+                (void)xaa.remove("clientId");
+            }
+            if (frag.xaa_callback_port) {
+                if (auto r = patch_leaf(xaa, "callbackPort",
+                                        *frag.xaa_callback_port); !r) return r;
+            } else {
+                (void)xaa.remove("callbackPort");
+            }
+        } else {
+            (void)root.remove("xaaIdp");
+        }
+
+        return {};
     }
 
     [[nodiscard]] static std::string escape_json(std::string_view value) {
@@ -1452,9 +1747,8 @@ private:
     /// order are exactly what C4 pinned:
     /// type, command, args, env, url, headers, headersHelper, disabled,
     /// configScope, oauth{authServerMetadataUrl, callbackPort, clientId,
-    /// xaa, issuer}. Base indentation is two spaces; append_mcp_servers is
-    /// the pretty-printer that re-indents it for full saves, and the per-tier
-    /// patcher feeds this string to JsonMutDoc::raw_json.
+    /// xaa, issuer}. Base indentation is two spaces; the per-tier patcher
+    /// and the c21 save patcher feed this string to JsonMutDoc::raw_json.
     [[nodiscard]] static std::string serialize_server_object(const McpServerConfig& server) {
         std::string json = "{\n";
         bool wrote_field = false;
@@ -1528,47 +1822,6 @@ private:
         }
         json += "\n}";
         return json;
-    }
-
-    /// Pretty-print MCP servers in the historical full-save envelope. The
-    /// per-entry field text comes solely from serialize_server_object (one
-    /// logical wire shape); its 2-space base indentation is re-wrapped to
-    /// the 4/6-space envelope so the full-save wire shape is byte-identical
-    /// to the pre-C6 hand serializer.
-    static void append_mcp_servers(
-        std::string& json,
-        const std::vector<const McpServerConfig*>& servers
-    ) {
-        json += "{";
-        if (!servers.empty()) json += "\n";
-        for (std::size_t i = 0; i < servers.size(); ++i) {
-            const auto& server = *servers[i];
-            json += std::format("    \"{}\": ", escape_json(server.name));
-            const std::string fragment = serialize_server_object(server);
-            std::size_t start = 0;
-            bool first_line = true;
-            while (true) {
-                const std::size_t nl = fragment.find('\n', start);
-                const std::string_view line(
-                    fragment.data() + start,
-                    (nl == std::string::npos ? fragment.size() : nl) - start);
-                if (first_line) {
-                    json += line;  // opening "{"
-                    first_line = false;
-                } else if (line == "}") {
-                    json += "\n    }";
-                } else {
-                    // Field lines carry the 2-space base indentation.
-                    json += "\n      ";
-                    json += line.substr(2);
-                }
-                if (nl == std::string::npos) break;
-                start = nl + 1;
-            }
-            if (i + 1 < servers.size()) json += ",";
-            json += "\n";
-        }
-        json += servers.empty() ? "}" : "  }";
     }
 
     [[nodiscard]] static std::optional<std::string> json_string(
@@ -2084,6 +2337,34 @@ private:
         struct ::stat st {};
         if (::lstat(path.c_str(), &st) != 0) return {};
         return {true, static_cast<std::uint64_t>(st.st_ino)};
+    }
+
+    /// c23: snapshot all four tier signatures after a successful load(), so
+    /// tier_files_changed() has a baseline to compare against.
+    void record_tier_signatures() {
+        tier_signatures_[scope_index(McpStorageScope::Global)] =
+            tier_signature(global_path_);
+        if (!user_path_.empty()) {
+            tier_signatures_[scope_index(McpStorageScope::User)] =
+                tier_signature(user_path_);
+        }
+        tier_signatures_[scope_index(McpStorageScope::Project)] =
+            tier_signature(project_path_);
+        tier_signatures_[scope_index(McpStorageScope::Local)] =
+            tier_signature(local_path_);
+    }
+
+    /// c23: refresh just the saved tier's signature after a successful save().
+    /// Our own write changed that file's mtime/size; without this refresh the
+    /// next latched command would mistake our save for an external edit and
+    /// reload, re-applying env overlays (breaking the c19 same-session
+    /// get-after-set invariant).
+    void refresh_tier_signature(ConfigSource target) {
+        const bool is_global = (target == ConfigSource::GlobalConfig);
+        const auto scope = is_global ? McpStorageScope::Global
+                                     : McpStorageScope::Project;
+        tier_signatures_[scope_index(scope)] =
+            tier_signature(is_global ? global_path_ : project_path_);
     }
 
     /// 16 hex chars (64 bits) of tmp-name randomness, so pre-spraying

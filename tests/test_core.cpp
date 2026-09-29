@@ -111,6 +111,104 @@ TEST(CoreConfig, ConfigManagerExposesDefaultSettings) {
     EXPECT_GT(manager.settings().model.max_output_tokens, 0u);
 }
 
+// RFC-0001 B followup c22: a soft-tier (user/local) parse warning is collected
+// into a per-instance diagnostics vector (drained by the TUI toast sink) rather
+// than only printed to stderr. The CLI path keeps its stderr println; this
+// pins the collection + drain contract.
+TEST(CoreConfig, SoftTierParseWarningCollectedForDrain) {
+    namespace fs = std::filesystem;
+    const auto suffix =
+        std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root =
+        fs::temp_directory_path() / ("loom_core_c22_diag_" + std::to_string(suffix));
+    fs::remove_all(root);
+    fs::create_directories(root);
+
+    const auto global_path = root / "global.json";
+    const auto user_path = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path = root / "local.json";
+    {
+        std::ofstream seed(user_path);
+        seed << "{ this is not valid json\n";
+    }
+
+    {
+        cc::core::ConfigManager manager(global_path, user_path,
+                                        project_path, local_path);
+        // Quiet load: no stderr print, but the diagnostic is collected for
+        // the TUI composition root to drain into a toast.
+        ASSERT_TRUE(manager.load(cc::core::LoadOptions{.quiet = true}).has_value());
+
+        auto diags = manager.drain_load_diagnostics();
+        ASSERT_EQ(diags.size(), 1u);
+        EXPECT_EQ(diags[0].path, user_path.string());
+        EXPECT_NE(diags[0].message.find("not valid JSON"), std::string::npos);
+
+        // Drain clears the vector.
+        EXPECT_TRUE(manager.drain_load_diagnostics().empty());
+    }
+
+    fs::remove_all(root);
+}
+
+// RFC-0001 B followup c23: tier_files_changed() detects an external edit so a
+// latched command reloads instead of serving a stale snapshot. The content
+// hash catches a same-size rewrite ("v1"→"v2") that leaves mtime/size
+// unchanged; a longer rewrite and a delete are also detected.
+TEST(CoreConfig, TierFilesChangedDetectsExternalEdit) {
+    namespace fs = std::filesystem;
+    const auto root = fs::temp_directory_path() / "loom_core_c23_sig_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    const auto global_path = root / "global.json";
+    const auto user_path = root / "user.json";
+    const auto project_path = root / "project.json";
+    const auto local_path = root / "local.json";
+    {
+        std::ofstream seed(project_path);
+        seed << "{\"model\":{\"default_model\":\"v1\"}}";
+    }
+    {
+        cc::core::ConfigManager manager(global_path, user_path,
+                                        project_path, local_path);
+        ASSERT_TRUE(manager.load().has_value());
+        EXPECT_FALSE(manager.tier_files_changed())
+            << "no change right after load";
+
+        // Same-size rewrite (v1 -> v2): only the content hash differs.
+        {
+            std::ofstream edit(project_path, std::ios::trunc);
+            edit << "{\"model\":{\"default_model\":\"v2\"}}";
+        }
+        EXPECT_TRUE(manager.tier_files_changed())
+            << "same-size rewrite must change the content hash";
+
+        // Longer rewrite: size + content hash differ.
+        {
+            std::ofstream edit(project_path, std::ios::trunc);
+            edit << "{\"model\":{\"default_model\":\"v2-much-longer\"}}";
+        }
+        EXPECT_TRUE(manager.tier_files_changed())
+            << "longer rewrite must change size + content hash";
+
+        // Delete: exists flips false.
+        fs::remove(project_path);
+        EXPECT_TRUE(manager.tier_files_changed())
+            << "delete must flip exists";
+
+        // Recreate with DIFFERENT content: exists flips back and the hash
+        // differs from the load-time snapshot.
+        {
+            std::ofstream reseed(project_path);
+            reseed << "{\"model\":{\"default_model\":\"v3-recreated\"}}";
+        }
+        EXPECT_TRUE(manager.tier_files_changed())
+            << "recreate with new content must change the hash";
+    }
+    fs::remove_all(root);
+}
+
 TEST(CoreFeatureFlags, RuntimeManagerCanFindAndToggleFeature) {
     auto feature = cc::core::flags::FeatureFlagManager::find_by_name("PROACTIVE");
     ASSERT_TRUE(feature.has_value());

@@ -141,15 +141,24 @@ private:
     ConfigManager config_manager_;
     bool loaded_ = false;  // Ensures load() runs at most once successfully.
 
-    /// Load the existing config tiers once before a read/mutation.
-    /// ConfigManager::load() tolerates MISSING tier files (they surface
-    /// ConfigNotFound and are skipped); hard parse errors in the global/
-    /// project files return an error, while user/local parse errors are soft
-    /// (C6 §A). The guard latches only on success: after a hard failure the
-    /// caller sees the error and a later invocation retries once the file is
-    /// repaired, rather than being permanently stuck on default settings.
+    /// Load the existing config tiers before a read/mutation. c23: the latch
+    /// is invalidated by an external edit — tier_files_changed() stats the
+    /// four tier paths (content hash + size/inode) and forces a reload when
+    /// any differs from the snapshot recorded at the last load()/save().
+    /// This picks up externally edited config files instead of serving a
+    /// stale session snapshot (which a set would then clobber on save),
+    /// while preserving the c19 same-session invariant: our own save()
+    /// refreshes the saved path's signature, so a get after a set does NOT
+    /// reload (a reload would re-apply the LOOM_MODEL env overlay over the
+    /// in-memory explicit value). ConfigManager::load() tolerates MISSING
+    /// tier files (they surface ConfigNotFound and are skipped); hard parse
+    /// errors in the global/project files return an error, while user/local
+    /// parse errors are soft (C6 §A). The guard latches only on success:
+    /// after a hard failure the caller sees the error and a later invocation
+    /// retries once the file is repaired, rather than being permanently
+    /// stuck on default settings.
     [[nodiscard]] VoidResult ensure_loaded() {
-        if (loaded_) return {};
+        if (loaded_ && !config_manager_.tier_files_changed()) return {};
         auto result = config_manager_.load();
         if (!result) return std::unexpected(result.error());
         loaded_ = true;
@@ -230,13 +239,11 @@ private:
 
         // Persist changes.
         //
-        // Serializer boundary (RFC-0001 B followup c8, Tier-2): save() runs
-        // ConfigManager's hand-rolled FULL serializer over the loaded
-        // settings, so unknown top-level keys in the project file (e.g.
-        // "x-custom") still do not survive a /config set; preserving them
-        // needs unknown-key-preserving section patching and is deliberately
-        // out of scope here. All KNOWN sections (model/display/network/…) are
-        // the loaded values, and C6's §B filter — gated on the completed
+        // c21: save() patches the KNOWN sections leaf-by-leaf into the parsed
+        // project file, so unknown top-level keys (e.g. "x-custom") and
+        // unknown keys inside a known section (e.g. a custom "model" leaf)
+        // survive a /config set. All KNOWN sections (model/display/network/…)
+        // are the loaded values, and C6's §B filter — gated on the completed
         // load() above — emits the project file's OWN mcpServers entries with
         // their own values while omitting user/local-only entries that may
         // carry Authorization headers.

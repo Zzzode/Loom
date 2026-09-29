@@ -19,6 +19,11 @@ import cc.config.config;
 namespace cc::commands {
 
 [[nodiscard]] VoidResult McpCommand::reload_and_sync() {
+    // c23: drop the latch so the post-mutation reload is unconditional — the
+    // caller just patched a tier file and needs the in-memory snapshot
+    // refreshed before syncing the native runtime. (The patched file's
+    // signature also differs, so tier_files_changed() would reload anyway,
+    // but clearing the latch makes the force explicit and load-order-proof.)
     config_loaded_ = false;
     if (auto loaded = ensure_config_loaded(); !loaded) return loaded;
     return sync_native_runtime();

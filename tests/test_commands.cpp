@@ -527,6 +527,135 @@ TEST(AppCommandRegistry, ConfigSetPreservesExistingSections) {
     cleanup();
 }
 
+// RFC-0001 B followup c21: save() patches the KNOWN sections leaf-by-leaf, so
+// unknown top-level keys (e.g. "x-custom") and unknown keys inside a known
+// section (e.g. a custom "model" leaf) survive a /config set. Drives the REAL
+// command path (AppCommandRegistry) like the c8/c19 suite.
+TEST(AppCommandRegistry, ConfigSetPreservesUnknownKeys) {
+    namespace fs = std::filesystem;
+    const auto root = cmd_make_temp_root("loom_cmd_c21_unknown_");
+    fs::remove_all(root);
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    EnvironmentUnsetGuard model_guard("LOOM_MODEL");
+    EnvironmentUnsetGuard tokens_guard("LOOM_MAX_TOKENS");
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    const fs::path project_path = work / ".loom" / "config.json";
+    {
+        std::ofstream seed(project_path);
+        seed << "{\n"
+                "  \"x-custom\": { \"tool\": \"loom\" },\n"
+                "  \"model\": {\n"
+                "    \"default_model\": \"seed-model\",\n"
+                "    \"x_custom_leaf\": 42\n"
+                "  },\n"
+                "  \"display\": { \"theme\": \"dark\" }\n"
+                "}\n";
+    }
+
+    {
+        cc::commands::AppCommandRegistry registry;
+        auto set = registry.execute("/config set display.theme light", ctx());
+        ASSERT_TRUE(set.has_value());
+        ASSERT_TRUE(set->ok) << set->message;
+
+        auto project = cc::utils::json::parse_file(project_path);
+        ASSERT_TRUE(project.has_value());
+        const auto root_node = project->root();
+        // The unknown top-level key survives with its value intact.
+        ASSERT_TRUE(root_node.has("x-custom"));
+        EXPECT_EQ(root_node.get("x-custom").get("tool").as_str(),
+                  std::string_view("loom"));
+        // The unknown key inside "model" survives alongside the known leaves.
+        const auto model = root_node.get("model");
+        ASSERT_TRUE(model.is_obj());
+        EXPECT_EQ(model.get("default_model").as_str(),
+                  std::string_view("seed-model"));
+        ASSERT_TRUE(model.has("x_custom_leaf"));
+        EXPECT_EQ(model.get("x_custom_leaf").as_int(), 42);
+        // The intended write landed.
+        EXPECT_EQ(root_node.get("display").get("theme").as_str(),
+                  std::string_view("light"));
+    }
+
+    cleanup();
+}
+
+// RFC-0001 B followup c23: the session-latched ConfigManager never re-read
+// externally edited config, so a /config get after an external edit reported
+// the stale snapshot (and a /config set would clobber the edit on save). With
+// stat-based invalidation, tier_files_changed() detects the external edit
+// (content hash + size/inode) and the second command reloads before reading.
+TEST(AppCommandRegistry, ConfigGetReflectsExternalEdit) {
+    namespace fs = std::filesystem;
+    const auto root = cmd_make_temp_root("loom_cmd_c23_external_");
+    fs::remove_all(root);
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    EnvironmentUnsetGuard model_guard("LOOM_MODEL");
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    const fs::path project_path = work / ".loom" / "config.json";
+    {
+        std::ofstream seed(project_path);
+        seed << "{\n  \"model\": { \"default_model\": \"v1\" }\n}\n";
+    }
+
+    {
+        cc::commands::AppCommandRegistry registry;
+
+        auto get1 = registry.execute("/config get model.default_model", ctx());
+        ASSERT_TRUE(get1.has_value());
+        ASSERT_TRUE(get1->ok) << get1->message;
+        EXPECT_EQ(get1->message, "model.default_model = v1");
+
+        // External edit between commands.
+        {
+            std::ofstream edit(project_path, std::ios::trunc);
+            edit << "{\n  \"model\": { \"default_model\": \"v2\" }\n}\n";
+        }
+
+        // Stat-based invalidation: the second command detects the external
+        // edit (content hash change) and re-reads the file instead of serving
+        // the latched "v1" snapshot.
+        auto get2 = registry.execute("/config get model.default_model", ctx());
+        ASSERT_TRUE(get2.has_value());
+        ASSERT_TRUE(get2->ok) << get2->message;
+        EXPECT_EQ(get2->message, "model.default_model = v2");
+    }
+
+    cleanup();
+}
+
 // RFC-0001 B followup c8: a hard parse error in the PROJECT file must fail
 // /config set BEFORE any mutation or save — the command must never rewrite
 // an unreadable file from default settings (nor leave a tmp file behind).

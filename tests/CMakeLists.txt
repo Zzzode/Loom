@@ -278,6 +278,23 @@ gtest_discover_tests(test_dialog_system
 
 
 # ---------------------------------------------------------------------------
+# RFC 0002 F2 composition-root tests — doctor renderer through the registry
+# (screens-side registration) and wizard/trust flows through the
+# feature_dialog_protocol leaf (composition-root factory registration).
+# ---------------------------------------------------------------------------
+add_executable(test_f2_composition_root test_f2_composition_root.cpp)
+target_link_libraries(test_f2_composition_root
+    PRIVATE
+        cc_core
+        cc_ui                  # cc.ui.dialogs.* + cc.ui.screens.* + cc.ui.app.*
+        GTest::gtest_main
+)
+cc_test_target_enable_modules(test_f2_composition_root)
+gtest_discover_tests(test_f2_composition_root
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+
+# ---------------------------------------------------------------------------
 # M7 Dialog #3 (PromptDialog SELECT/FORM) renderer + event handling tests
 # ---------------------------------------------------------------------------
 add_executable(test_prompt_dialog test_prompt_dialog.cpp)
@@ -623,6 +640,7 @@ foreach(_cc_test IN ITEMS
     test_ui_runtime
     test_ui_dialogs
     test_dialog_system
+    test_f2_composition_root
     test_tasks
     test_commands
     test_statusline

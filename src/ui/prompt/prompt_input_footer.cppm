@@ -48,8 +48,10 @@ export module cc.ui.prompt.prompt_input_footer;
 import std;
 
 // ANSI → FTXUI element converter (used by StatusLine for colored command output).
-// Lives in message_tool_result.cppm as a shared inline utility.
-import cc.ui.messages.message_tool_result;
+// RFC 0002 F1 row 8: lives in the chrome leaf cc.ui.chrome.ansi_render (the
+// prompt -> messages back edge through message_tool_result is severed; the
+// function stays in cc::ui::messages namespace, reached via the msgs alias).
+import cc.ui.chrome.ansi_render;
 // P0-1: palette tokens (bash_border / prompt_border color resolution).
 import cc.ui.foundation.design_tokens;
 // P0-1: active theme provider for bash-border consistency (BUG-3 fix).

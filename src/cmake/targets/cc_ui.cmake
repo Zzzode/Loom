@@ -145,6 +145,7 @@ target_sources(cc_ui
         ui/tools/tool_ui_longtail.cppm
         ui/features/teams/live_teammates.cppm
         ui/chrome/terminal_io.cppm
+        ui/chrome/ansi_render.cppm          # RFC 0002 F1 row 8: ANSI/SGR -> FTXUI leaf (imports only std + terminal_io)
         ui/features/hooks_ui.cppm
         ui/screens/doctor_screen.cppm
         ui/screens/repl_state.cppm
@@ -243,6 +244,11 @@ target_sources(cc_ui PRIVATE
     ui/screens/repl_screen_agents.cpp
     ui/screens/repl_screen_dialog_panels.cpp
     ui/screens/repl_screen_events.cpp
+    # Module implementation unit for cc.ui.chrome.ansi_render (RFC 0002
+    # phase F1 row 8): the ANSI/SGR -> FTXUI bodies, extracted verbatim
+    # from message_tool_result.cppm. Bodies in the impl unit keep the
+    # declarations-only BMI cheap and give fan-out = 1 on a body edit.
+    ui/chrome/ansi_render.cpp
 )
 target_link_libraries(cc_ui
     PUBLIC

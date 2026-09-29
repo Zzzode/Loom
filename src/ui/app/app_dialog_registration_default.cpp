@@ -5,17 +5,26 @@
 // plugin_ui_data + plugin_marketplace imports live in the renderer's
 // implementation unit (plugin_dialog_renderer_impl.cpp), which has its own
 // independent source-location budget.
+//
+// RFC 0002 F2 (row 4): the Doctor dialog renderer is registered from the
+// screens side (cc.ui.screens.doctor_dialog_registration) so that the dialogs
+// area no longer imports screens (dialogs -> screens was a UI9 back edge).
+// app -> screens is downward-legal (app rank 11 > screens rank 10).
 module cc.ui.app.app_dialog_registration;
 
 import cc.ui.dialogs.system;
 import cc.ui.dialogs.default_renderers;
 import cc.ui.dialogs.plugin_dialog_renderer;
+import cc.ui.screens.doctor_dialog_registration;
 
 namespace cc::ui::app_dialogs {
 void register_default_dialog_renderers(
     cc::ui::dialogs::system::DialogRendererRegistry& registry) {
     cc::ui::dialogs::default_renderers::register_default_renderers(registry);
     cc::ui::dialogs::plugin_dialog_renderer::register_plugin_dialog_renderer(
+        registry);
+    // Doctor renderer — registered from the screens side (RFC 0002 F2 row 4).
+    cc::ui::screens::doctor_dialog_registration::register_doctor_renderer(
         registry);
 }
 }  // namespace cc::ui::app_dialogs

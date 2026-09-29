@@ -37,7 +37,6 @@ import cc.ui.permissions.components;
 import cc.ui.foundation.theme_provider;
 import cc.ui.foundation.component_primitives;
 import cc.ui.dialogs.cost_threshold_dialog;
-import cc.ui.screens.doctor_screen;
 
 export namespace cc::ui::dialogs::default_renderers {
 
@@ -503,29 +502,6 @@ inline bool HandleGenericDialogEvent(
 }
 
 // ============================================================
-// DoctorScreen holder — routes events through FTXUI child hierarchy
-// ============================================================
-
-namespace doctor_detail {
-/// Holder component that wraps a DoctorScreen so the dialog system can
-/// render it and route events to its CatchEvent handler.  ComponentBase::OnEvent
-/// is protected, so this subclass exposes a public InjectEvent() surface.
-struct DoctorDialogHolder : public ComponentBase {
-    Component screen;
-
-    explicit DoctorDialogHolder(Component s) : screen(std::move(s)) {
-        ComponentBase::Add(screen);
-    }
-
-    Element Render() override { return screen->Render(); }
-
-    bool InjectEvent(const Event& event) {
-        return ComponentBase::OnEvent(event);
-    }
-};
-} // namespace doctor_detail
-
-// ============================================================
 // Registry setup — register all default renderers
 // ============================================================
 
@@ -640,60 +616,11 @@ void register_default_renderers(dsys::DialogRendererRegistry& registry) {
     // placeholder.  When M8 chrome is actually ported, add the real FTXUI components
     // (`cc.ui.dialogs.*` module(s)) and call registry.register_dialog(...) here,
     // one block per pair, matching the 7 types above.
-
-    // ─── Doctor — standalone fullscreen diagnostics ────────────────────────────────
     //
-    // Wraps the DoctorScreen FTXUI component.  The holder (defined at
-    // namespace scope below) routes events through the child hierarchy
-    // where DoctorScreen's CatchEvent lives.
-
-    registry.register_dialog(
-        dsys::DialogType::Doctor,
-        /*renderer=*/
-        [](dsys::DialogPayloadVariant& payload,
-           const dsys::DialogRenderContext& /*ctx*/) -> Element {
-            auto* p = std::get_if<dsys::DoctorDialogPayload>(&payload);
-            if (!p) return text("");
-
-            // Lazily create the DoctorScreen component on first render.
-            if (!p->component) {
-                using namespace cc::ui::doctor_screen;
-
-                DoctorDataModel model;
-                // Populate version info from the live environment.
-                auto ctx = default_doctor_context();
-                model.version.current_version = ctx.current_version;
-                model.version.installation_type = "native";
-                model.version.installation_path = "/opt/loom/loom";
-                model.version.invoked_binary = "loom";
-                // Run all checks so results are ready when the screen opens.
-                model.results = RunAllChecks(ctx);
-
-                DoctorScreenOptions opts;
-                opts.initial = std::move(model);
-                opts.on_done = p->on_done;
-
-                auto screen = DoctorScreen(std::move(opts));
-                auto holder = std::make_shared<doctor_detail::DoctorDialogHolder>(
-                    std::move(screen));
-                p->component = holder;
-            }
-
-            auto holder = std::static_pointer_cast<doctor_detail::DoctorDialogHolder>(
-                p->component);
-            return holder ? holder->Render() : text("");
-        },
-        /*event_handler=*/
-        [](dsys::DialogPayloadVariant& payload, const Event& event) -> bool {
-            auto* p = std::get_if<dsys::DoctorDialogPayload>(&payload);
-            if (!p || !p->component) return false;
-
-            auto holder = std::static_pointer_cast<doctor_detail::DoctorDialogHolder>(
-                p->component);
-            if (!holder) return false;
-            return holder->InjectEvent(event);
-        }
-    );
+    // The Doctor dialog renderer is registered separately from the screens side
+    // by cc.ui.screens.doctor_dialog_registration (RFC 0002 F2 row-4 inversion:
+    // dialogs must not import screens).  The composition root calls
+    // register_doctor_renderer() alongside this function.
 
 }
 

@@ -148,6 +148,7 @@ target_sources(cc_ui
         ui/chrome/ansi_render.cppm          # RFC 0002 F1 row 8: ANSI/SGR -> FTXUI leaf (imports only std + terminal_io)
         ui/features/hooks_ui.cppm
         ui/screens/doctor_screen.cppm
+        ui/screens/doctor_dialog_registration.cppm  # RFC 0002 F2 row 4: doctor renderer registration (screens side; dialogs must not import screens)
         ui/screens/repl_state.cppm
         ui/screens/repl_screen.cppm
         ui/screens/resume_screen.cppm

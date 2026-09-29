@@ -18,14 +18,11 @@ export module cc.ui.app.app;
 import std;
 
 import cc.types.types;
-import cc.ui.widgets.components;
-import cc.ui.widgets.all_components;
 import cc.ui.visual.markdown;
 import cc.ui.screens.repl_state;
 import cc.ui.prompt.autocomplete_sources;
 // P0-2: 7-stage message pipeline utilities (dedup / tag filter / tool augment).
 import cc.ui.messages.message_pipeline;
-import cc.ui.features.teams.live_teammates;
 import cc.ui.dialogs.system;
 
 export namespace cc::ui {
@@ -79,75 +76,23 @@ void wire_prompt_suggestion_hook(void* hooks, void* engine,
                                  std::shared_ptr<cc::ui::repl_screen::ReplScreenState> state);
 
 using namespace ftxui;
-using namespace cc::ui::components;
 using namespace cc::core;
 
 namespace repl = cc::ui::repl_screen;
 namespace acsrc = cc::ui::autocomplete_sources;
 
-[[nodiscard]] inline std::optional<std::string> non_empty_env(const char* name) {
-    if (const char* value = std::getenv(name); value && *value) {
-        return std::string(value);
-    }
-    return std::nullopt;
-}
-
-[[nodiscard]] inline std::optional<std::string> first_non_empty_env(std::initializer_list<const char*> names) {
-    for (const auto* name : names) {
-        if (auto value = non_empty_env(name)) return value;
-    }
-    return std::nullopt;
-}
-
-[[nodiscard]] inline std::optional<bool> parse_bool_text(const std::string& value) {
-    if (value == "true" || value == "1" || value == "yes" || value == "on") return true;
-    if (value == "false" || value == "0" || value == "no" || value == "off") return false;
-    return std::nullopt;
-}
-
-[[nodiscard]] inline std::optional<int> parse_int_text(const std::string& value) {
-    try {
-        return std::stoi(value);
-    } catch (...) {
-        return std::nullopt;
-    }
-}
-
-[[nodiscard]] inline std::string trim_ascii_copy(std::string_view value) {
-    while (!value.empty() &&
-           std::isspace(static_cast<unsigned char>(value.front()))) {
-        value.remove_prefix(1);
-    }
-    while (!value.empty() &&
-           std::isspace(static_cast<unsigned char>(value.back()))) {
-        value.remove_suffix(1);
-    }
-    return std::string(value);
-}
-
-[[nodiscard]] inline std::string summarize_agent_description(
-    std::string_view description) {
-    auto newline = description.find('\n');
-    if (newline != std::string_view::npos) {
-        description = description.substr(0, newline);
-    }
-    std::string out = trim_ascii_copy(description);
-    constexpr std::size_t kMaxSummaryBytes = 160;
-    if (out.size() > kMaxSummaryBytes) {
-        out.resize(kMaxSummaryBytes);
-        out += "...";
-    }
-    return out;
-}
-
-[[nodiscard]] inline std::string lowercase_ascii(std::string_view value) {
-    std::string out(value);
-    for (char& ch : out) {
-        ch = static_cast<char>(
-            std::tolower(static_cast<unsigned char>(ch)));
-    }
-    return out;
-}
+// Env/config + text/UTF free helpers — bodies in app_helpers.cpp
+// (RFC 0001 Phase C batch 1). Plain declarations here (inline dropped;
+// the impl unit holds the single strong definition).
+[[nodiscard]] std::optional<std::string> non_empty_env(const char* name);
+[[nodiscard]] std::optional<std::string> first_non_empty_env(
+    std::initializer_list<const char*> names);
+[[nodiscard]] std::optional<bool> parse_bool_text(const std::string& value);
+[[nodiscard]] std::optional<int> parse_int_text(const std::string& value);
+[[nodiscard]] std::string trim_ascii_copy(std::string_view value);
+[[nodiscard]] std::string summarize_agent_description(
+    std::string_view description);
+[[nodiscard]] std::string lowercase_ascii(std::string_view value);
 
 
 struct AutocompleteToken {
@@ -156,9 +101,8 @@ struct AutocompleteToken {
     std::string text;
 };
 
-[[nodiscard]] inline bool ascii_isspace(char ch) {
-    return std::isspace(static_cast<unsigned char>(ch)) != 0;
-}
+// Body in app_helpers.cpp (RFC 0001 Phase C batch 1).
+[[nodiscard]] bool ascii_isspace(char ch);
 
 [[nodiscard]] inline AutocompleteToken token_around_cursor(
     std::string_view input,
@@ -638,14 +582,10 @@ private:
         AppendLocalCommandMessage(std::move(result_message), false);
     }
 
-    [[nodiscard]] static std::string lowercase_ascii(std::string_view value) {
-        std::string out(value);
-        for (char& ch : out) {
-            ch = static_cast<char>(
-                std::tolower(static_cast<unsigned char>(ch)));
-        }
-        return out;
-    }
+    // Static text/UTF helpers — bodies in app_helpers.cpp (RFC 0001
+    // Phase C batch 1). The static lowercase_ascii is byte-identical to
+    // the free function above; different scopes, no ODR issue.
+    [[nodiscard]] static std::string lowercase_ascii(std::string_view value);
 
     void RefreshAutocompleteSuggestions();
 
@@ -658,182 +598,31 @@ private:
     void OpenTeamsOverview();
     bool HandleLocalJsxEvent(const Event& ev);
 
-    [[nodiscard]] static int skill_source_order(std::string_view source) {
-        if (source == "project") return 0;
-        if (source == "user") return 1;
-        if (source == "plugin") return 2;
-        if (source == "mcp") return 3;
-        return 4;
-    }
-
+    // Skills-menu helpers — bodies in app_skills_menu.cpp (RFC 0001
+    // Phase C batch 1).
+    [[nodiscard]] static int skill_source_order(std::string_view source);
     [[nodiscard]] static bool is_visible_skills_menu_source(
-        std::string_view source) {
-        return source == "project" ||
-               source == "user" ||
-               source == "plugin" ||
-               source == "mcp";
-    }
+        std::string_view source);
 
-    [[nodiscard]] static bool utf8_continuation(unsigned char ch) {
-        return (ch & 0xC0) == 0x80;
-    }
-
+    // UTF-16 code-unit / rough-JS-token estimates — bodies in
+    // app_helpers.cpp (RFC 0001 Phase C batch 1).
+    [[nodiscard]] static bool utf8_continuation(unsigned char ch);
     [[nodiscard]] static std::size_t utf16_code_unit_count(
-        std::string_view value) {
-        std::size_t count = 0;
-        for (std::size_t i = 0; i < value.size();) {
-            const auto c0 = static_cast<unsigned char>(value[i]);
-            std::uint32_t codepoint = c0;
-            std::size_t length = 1;
-
-            if (c0 < 0x80) {
-                codepoint = c0;
-            } else if ((c0 & 0xE0) == 0xC0 &&
-                       i + 1 < value.size() &&
-                       utf8_continuation(static_cast<unsigned char>(value[i + 1]))) {
-                codepoint =
-                    (static_cast<std::uint32_t>(c0 & 0x1F) << 6) |
-                    static_cast<std::uint32_t>(
-                        static_cast<unsigned char>(value[i + 1]) & 0x3F);
-                length = 2;
-            } else if ((c0 & 0xF0) == 0xE0 &&
-                       i + 2 < value.size() &&
-                       utf8_continuation(static_cast<unsigned char>(value[i + 1])) &&
-                       utf8_continuation(static_cast<unsigned char>(value[i + 2]))) {
-                codepoint =
-                    (static_cast<std::uint32_t>(c0 & 0x0F) << 12) |
-                    (static_cast<std::uint32_t>(
-                         static_cast<unsigned char>(value[i + 1]) & 0x3F) << 6) |
-                    static_cast<std::uint32_t>(
-                        static_cast<unsigned char>(value[i + 2]) & 0x3F);
-                length = 3;
-            } else if ((c0 & 0xF8) == 0xF0 &&
-                       i + 3 < value.size() &&
-                       utf8_continuation(static_cast<unsigned char>(value[i + 1])) &&
-                       utf8_continuation(static_cast<unsigned char>(value[i + 2])) &&
-                       utf8_continuation(static_cast<unsigned char>(value[i + 3]))) {
-                codepoint =
-                    (static_cast<std::uint32_t>(c0 & 0x07) << 18) |
-                    (static_cast<std::uint32_t>(
-                         static_cast<unsigned char>(value[i + 1]) & 0x3F) << 12) |
-                    (static_cast<std::uint32_t>(
-                         static_cast<unsigned char>(value[i + 2]) & 0x3F) << 6) |
-                    static_cast<std::uint32_t>(
-                        static_cast<unsigned char>(value[i + 3]) & 0x3F);
-                length = 4;
-            }
-
-            count += codepoint > 0xFFFF ? 2 : 1;
-            i += length;
-        }
-        return count;
-    }
-
+        std::string_view value);
     [[nodiscard]] static std::size_t rough_js_token_count(
-        std::string_view value) {
-        return static_cast<std::size_t>(
-            std::llround(static_cast<double>(utf16_code_unit_count(value)) / 4.0));
-    }
+        std::string_view value);
 
+    // Skills-menu formatting + open — bodies in app_skills_menu.cpp
+    // (RFC 0001 Phase C batch 1). OpenSkillsMenu mutates screen_state_ and
+    // calls PostRenderEvent() (inline in this batch; moves in batch 2).
     [[nodiscard]] static std::size_t skills_menu_token_estimate(
-        const acsrc::SkillSuggestionData& skill) {
-        std::string frontmatter = skill.name;
-        if (!skill.description.empty()) {
-            frontmatter.push_back(' ');
-            frontmatter += skill.description;
-        }
-        return rough_js_token_count(frontmatter);
-    }
-
-    [[nodiscard]] static std::string collapse_home_path(std::string path) {
-        if (const char* home = std::getenv("HOME"); home && *home) {
-            const std::string home_path(home);
-            if (path == home_path) return "~";
-            if (path.starts_with(home_path + "/")) {
-                return "~" + path.substr(home_path.size());
-            }
-        }
-        return path;
-    }
-
+        const acsrc::SkillSuggestionData& skill);
+    [[nodiscard]] static std::string collapse_home_path(std::string path);
     [[nodiscard]] static std::string skill_source_group_title(
-        const acsrc::SkillSuggestionData& skill) {
-        if (skill.source == "project") {
-            return skill.source_detail.empty()
-                ? "Project skills"
-                : "Project skills (" + collapse_home_path(skill.source_detail) + ")";
-        }
-        if (skill.source == "user") return "User skills (~/.loom/skills)";
-        if (skill.source == "plugin") {
-            return skill.source_detail.empty()
-                ? "Plugin skills"
-                : "Plugin skills (" + skill.source_detail + ")";
-        }
-        if (skill.source == "mcp") return "MCP skills";
-        return "Other skills";
-    }
-
+        const acsrc::SkillSuggestionData& skill);
     [[nodiscard]] static std::string FormatSkillsMenuOutput(
-        std::vector<acsrc::SkillSuggestionData> skills) {
-        std::erase_if(skills, [](const auto& skill) {
-            return !is_visible_skills_menu_source(skill.source);
-        });
-
-        std::ranges::sort(skills, [](const auto& a, const auto& b) {
-            const int ao = skill_source_order(a.source);
-            const int bo = skill_source_order(b.source);
-            if (ao != bo) return ao < bo;
-            if (a.source_detail != b.source_detail) {
-                return a.source_detail < b.source_detail;
-            }
-            return a.name < b.name;
-        });
-
-        std::string out;
-        out += "Skills\n";
-        out += std::format(
-            "{} skill{}\n",
-            skills.size(),
-            skills.size() == 1 ? "" : "s");
-
-        if (skills.empty()) {
-            out += "\nNo skills found.\n";
-            out += "Create skills under `.loom/skills` or `~/.loom/skills`.\n";
-            return out;
-        }
-
-        std::string current_group;
-        bool first_group = true;
-        for (const auto& skill : skills) {
-            const std::string group = skill_source_group_title(skill);
-            if (group != current_group) {
-                if (!first_group) out += "\n";
-                first_group = false;
-                current_group = group;
-                out += "\n" + current_group + "\n";
-            }
-
-            out += skill.name;
-            out += std::format(
-                " · ~{} description tokens",
-                skills_menu_token_estimate(skill));
-            out += "\n";
-        }
-        return out;
-    }
-
-    void OpenSkillsMenu() {
-        const auto& skills = cached_skills_;
-        screen_state_->mode = repl::ReplMode::Normal;
-        screen_state_->active_local_jsx_command = true;
-        screen_state_->active_local_jsx_command_name = "skills";
-        screen_state_->active_local_jsx_command_args.clear();
-        screen_state_->active_local_jsx_content =
-            FormatSkillsMenuOutput(std::move(skills));
-        screen_state_->scroll_offset = 0;
-        screen_state_->scroll_pinned_to_bottom = false;
-        PostRenderEvent();
-    }
+        std::vector<acsrc::SkillSuggestionData> skills);
+    void OpenSkillsMenu();
 
 public:
     ~AppAdapter() override;

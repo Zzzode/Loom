@@ -9,7 +9,6 @@ cc.skills.load_skills_dir 66
 cc.server.server_routes 63
 cc.utils.plugin_loader 60
 cc.bridge.core 58
-cc.ui.app.app 58
 cc.ui.dialogs.feature_dialogs 57
 cc.services.mcp.channel_notification 53
 cc.services.lsp.client 52
@@ -21,6 +20,7 @@ cc.utils.swarm_helpers 42
 cc.tools.bash 41
 cc.ui.dialogs.system 41
 cc.services.api.client 39
+cc.ui.app.app 39
 cc.ui.widgets.custom_select 39
 cc.ui.screens.log_selector 38
 cc.services.prompt_suggestion 37
@@ -46,10 +46,10 @@ cc.tools.agent_runtime 18 c1 c2-done
 cc.ui.visual.code_highlight 17
 cc.services.mcp.client 12 c2-done
 cc.tools.readonly_validation 12
+cc.tools.runtime_registry 9 c1 c2-done  # B15: 4 computer-use test setters inlined (bodies moved out of the moved TU)
 cc.state.store 8
 cc.ui.visual.markdown 7 c2-done
 cc.orchestration.agent.utils 6 c1 c2-done
 cc.ui.foundation.design_tokens 6
 cc.state.selectors 5 c2-done
-cc.tools.runtime_registry 9 c1 c2-done  # B15: 4 computer-use test setters inlined (bodies moved out of the moved TU)
 cc.ui.screens.repl_screen 0 c1 c2-done

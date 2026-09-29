@@ -9995,6 +9995,38 @@ TEST(Tools, CoreSettingsLoaderCarriesXaaCallbackPort) {
     EXPECT_FALSE(cc::tools::native_mcp_xaa_callback_port().has_value());
 }
 
+// RFC-0001 followup c20 — the composition-layer loader also carries the IdP
+// client secret (from the hardened ~/.config/loom/xaa/idp_tokens.json store,
+// keyed by settings.xaaIdp.issuer) into the runtime, where the XAA login path
+// forwards it to perform_mcp_oauth_flow(). This pins that seam hermetically
+// (a fake loader, no ConfigManager, no filesystem): a loader that yields a
+// secret surfaces it through native_mcp_xaa_idp_client_secret(), and a loader
+// with no secret leaves it unset (PKCE-only behavior preserved). Same shape as
+// CoreSettingsLoaderCarriesXaaCallbackPort above.
+TEST(Tools, CoreSettingsLoaderCarriesXaaIdpClientSecret) {
+    CoreSettingsMcpLoaderGuard loader_guard;
+
+    cc::tools::set_core_settings_mcp_loader(
+        []() -> std::expected<cc::tools::CoreSettingsMcpLayer, std::string> {
+            cc::tools::CoreSettingsMcpLayer layer;
+            layer.xaa_idp_client_secret = "test-secret";
+            return layer;
+        });
+
+    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+    auto secret = cc::tools::native_mcp_xaa_idp_client_secret();
+    ASSERT_TRUE(secret.has_value());
+    EXPECT_EQ(*secret, "test-secret");
+
+    // A loader with no stored secret leaves it unset.
+    cc::tools::set_core_settings_mcp_loader(
+        []() -> std::expected<cc::tools::CoreSettingsMcpLayer, std::string> {
+            return cc::tools::CoreSettingsMcpLayer{};
+        });
+    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+    EXPECT_FALSE(cc::tools::native_mcp_xaa_idp_client_secret().has_value());
+}
+
 // RFC-0001 B6: the additive snapshots sink receives exactly one vector per
 // all_statuses call, carrying the same server ids/statuses the returned
 // statuses show; once cleared it is never called again.

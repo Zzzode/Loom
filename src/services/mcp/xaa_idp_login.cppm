@@ -139,6 +139,28 @@ struct XaaLoginResult {
 
 namespace detail {
 
+/// TS REF: xaa.ts:91-97 redactTokens()
+///
+/// Redacts sensitive token values from debug output. Works on both parsed and
+/// raw string bodies.
+///
+/// RFC-0001 followup c20: moved here from xaa.cppm so the C1 OIDC-login
+/// token-exchange error path (this module) and the C2 RFC 8693 leg (xaa.cppm,
+/// which imports this module) share ONE redaction helper. An IdP MAY echo
+/// request parameters — including client_secret — in a 400 body; both legs
+/// must wrap the echoed body in this before it reaches an error message.
+/// JSON-only: the regex matches the `"client_secret":"..."` shape; a
+/// form-encoded or plain-text body is NOT redacted (a pre-existing limitation
+/// of the shared helper, noted in the design).
+[[nodiscard]] inline std::string redact_tokens(std::string_view raw) {
+    static const std::regex sensitive_re(
+        R"REGEX("(access_token|refresh_token|id_token|assertion|subject_token|client_secret)"\s*:\s*"[^"]*")REGEX");
+    std::string s(raw);
+    return std::regex_replace(s, sensitive_re,
+        "\"$1\":\"[REDACTED]\"",
+        std::regex_constants::format_default);
+}
+
 /// TS REF: xaaIdpLogin.ts:27 getSecureStorage()
 /// Storage path for XAA IdP tokens: ~/.config/loom/xaa/idp_tokens.json
 [[nodiscard]] inline fs::path idp_token_storage_path() {
@@ -416,6 +438,50 @@ inline void save_idp_client_secret(
 /// Clear the client secret for an issuer.
 inline void clear_idp_client_secret(std::string_view idp_issuer) {
     detail::remove_idp_client_secret(idp_issuer);
+}
+
+/// RFC-0001 followup c20 — one-time migration reader for the legacy
+/// hand-edited `~/.loom/xaa-idp.txt` `idp_client_secret=` line. Reads ONLY
+/// that line (the file's other fields are out of scope for this follow-up),
+/// through the hardened read_regular_file() (O_RDONLY|O_NONBLOCK|O_NOFOLLOW,
+/// fstat S_ISREG gate) so a symlinked or FIFO leaf yields "absent" without
+/// blocking or following. The value is returned to the caller (the loader),
+/// never logged. ENOENT and an unreadable/non-regular leaf both map to
+/// nullopt.
+[[nodiscard]] inline std::optional<std::string> read_legacy_idp_client_secret() {
+    const char* home = std::getenv("HOME");
+    if (!home) return std::nullopt;
+    auto read = cc::utils::read_regular_file(
+        fs::path(home) / ".loom" / "xaa-idp.txt");
+    if (!read.present()) return std::nullopt;
+
+    // Parse only the idp_client_secret= line; every other key is ignored.
+    std::string_view contents = read.contents;
+    std::size_t pos = 0;
+    while (pos <= contents.size()) {
+        auto nl = contents.find('\n', pos);
+        std::string_view line = contents.substr(
+            pos, nl == std::string_view::npos ? std::string_view::npos
+                                              : nl - pos);
+        // Trim trailing whitespace / \r.
+        while (!line.empty() && (line.back() == '\r' || line.back() == ' '
+                                 || line.back() == '\t')) {
+            line.remove_suffix(1);
+        }
+        constexpr std::string_view kKey = "idp_client_secret=";
+        if (line.starts_with(kKey)) {
+            std::string value(line.substr(kKey.size()));
+            // Trim leading whitespace.
+            auto start = value.find_first_not_of(" \t");
+            if (start == std::string::npos) return std::nullopt;
+            value = value.substr(start);
+            if (value.empty()) return std::nullopt;
+            return value;
+        }
+        if (nl == std::string_view::npos) break;
+        pos = nl + 1;
+    }
+    return std::nullopt;
 }
 
 // ─── JWT Utilities ────────────────────────────────────────────────────────
@@ -942,10 +1008,16 @@ private:
             "XAA IdP: token exchange request failed"));
     }
     if (token_response->status < 200 || token_response->status >= 300) {
+        // RFC-0001 followup c20: redact the echoed body before it reaches the
+        // error message — an IdP MAY echo request parameters (including
+        // client_secret) in a 400 body, and every `/mcp xaa setup
+        // --client-secret` user now has the secret on this leg. Mirrors the
+        // C2 leg's wrap in xaa.cppm (shared detail::redact_tokens).
         return std::unexpected(Error(ErrorCode::permission_denied,
             "XAA IdP: token exchange failed: HTTP "
             + std::to_string(token_response->status) + ": "
-            + token_response->body.substr(0, 200)));
+            + detail::redact_tokens(
+                std::string_view(token_response->body).substr(0, 200))));
     }
 
     auto token_parsed = cc::utils::json::parse(token_response->body);

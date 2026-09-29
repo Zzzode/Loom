@@ -1836,3 +1836,65 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
 
     cleanup();
 }
+
+// RFC-0001 followup c20 — /mcp xaa show is presence-only: it prints
+// "(stored in keychain)" when a secret is stored, never the value itself.
+// Drives the REAL command path (AppCommandRegistry) with a secret stored via
+// /mcp xaa setup --client-secret, then asserts the show output does not echo
+// the secret bytes. The env var is unset before `show` so the assertion
+// proves the secret was persisted to the hardened store, not read from the
+// environment.
+TEST(AppCommandRegistry, XaaShowPresenceOnlyDoesNotEchoSecret) {
+    namespace fs = std::filesystem;
+    const auto root = cmd_make_temp_root("loom_cmd_c20_xaa_show_");
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work);
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    {
+        cc::commands::AppCommandRegistry registry;
+
+        // Store a secret the supported way: /mcp xaa setup --client-secret
+        // reads MCP_XAA_IDP_CLIENT_SECRET and writes it to the hardened
+        // ~/.config/loom/xaa/idp_tokens.json store.
+        {
+            EnvironmentGuard secret_guard(
+                "MCP_XAA_IDP_CLIENT_SECRET", "show-secret-never-echoed");
+            auto setup = registry.execute(
+                "/mcp xaa setup --issuer https://idp.example.com "
+                "--client-id loom-cli --client-secret",
+                ctx());
+            ASSERT_TRUE(setup.has_value());
+            ASSERT_TRUE(setup->ok) << setup->message;
+        }
+        // The env var is now restored/unset. The secret lives only in the
+        // hardened store.
+
+        auto show = registry.execute("/mcp xaa show", ctx());
+        ASSERT_TRUE(show.has_value());
+        ASSERT_TRUE(show->ok) << show->message;
+
+        // Presence-only: the output says a secret is stored, but never
+        // echoes the value.
+        EXPECT_NE(show->message.find("(stored in keychain)"), std::string::npos)
+            << show->message;
+        EXPECT_EQ(show->message.find("show-secret-never-echoed"), std::string::npos)
+            << "secret value leaked into /mcp xaa show output: " << show->message;
+    }
+
+    cleanup();
+}

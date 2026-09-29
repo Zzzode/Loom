@@ -761,13 +761,22 @@ Result<std::optional<OAuthServerMetadata>> fetch_auth_server_metadata(
 // cc.config.config (rank 1), so the composition layer that owns the settings —
 // which already populates server_config.oauth — supplies it here; it is
 // ignored on the non-XAA path.
+//
+// RFC-0001 followup c20: `xaa_idp_client_secret` is the IdP client secret from
+// the hardened store (~/.config/loom/xaa/idp_tokens.json), INJECTED by the
+// caller through the same composition seam. The --xaa runtime path used to
+// read it from the dead hand-edited ~/.loom/xaa-idp.txt line; it now comes
+// from the single store. Ignored on the non-XAA path. The value transits only
+// through this parameter -> XaaConfig field -> HTTP form body; it is never
+// logged or returned in a tool result.
 Result<void> perform_mcp_oauth_flow(
     const std::string& server_name,
     const McpServerConfig& server_config,
     std::function<void(const std::string&)> on_authorization_url,
     std::optional<std::stop_token> abort_token = std::nullopt,
     bool skip_browser_open = false,
-    std::optional<int> xaa_callback_port = std::nullopt) {
+    std::optional<int> xaa_callback_port = std::nullopt,
+    std::optional<std::string> xaa_idp_client_secret = std::nullopt) {
     if (abort_token && abort_token->stop_requested()) {
         return std::unexpected(cc::utils::Error(cc::utils::ErrorCode::cancelled,
             "MCP OAuth flow was cancelled"));
@@ -796,6 +805,16 @@ Result<void> perform_mcp_oauth_flow(
             return std::unexpected(cc::utils::Error(
                 cc::utils::ErrorCode::unavailable,
                 "XAA requires a configured IdP connection before MCP OAuth can continue."));
+        }
+
+        // RFC-0001 followup c20: the IdP client secret is INJECTED by the
+        // caller (from the hardened store via the composition seam), not read
+        // from ~/.loom/xaa-idp.txt here. This is the injection point: the
+        // secret enters XaaConfig here, populated from the store, and the
+        // dead `idp_client_secret=` file line is no longer parsed. When no
+        // secret is injected the field stays nullopt (PKCE-only, unchanged).
+        if (xaa_idp_client_secret && !xaa_idp_client_secret->empty()) {
+            xaa_config->idp_client_secret = *xaa_idp_client_secret;
         }
 
         // Run full XAA flow: acquire_idp_id_token (auth_code+PKCE) →

@@ -13233,3 +13233,494 @@ TEST(XaaIdpLoginC17a, CallbackPortForwardedOnlyForXaaServers) {
     cc::tools::set_core_settings_mcp_loader(nullptr);
     EXPECT_FALSE(cc::tools::native_mcp_xaa_callback_port().has_value());
 }
+
+// ===========================================================================
+// RFC-0001 followup c20 — the IdP client secret is a SINGLE store again: the
+// hardened ~/.config/loom/xaa/idp_tokens.json (written by `/mcp xaa setup
+// --client-secret`), injected into the --xaa runtime path through the c17a
+// composition seam. The dead hand-edited ~/.loom/xaa-idp.txt
+// `idp_client_secret` line is no longer parsed; a one-time guarded migration
+// moves it into the store. The C1 OIDC-login token-exchange error path now
+// redacts the echoed body (shared detail::redact_tokens with the C2 leg).
+// ===========================================================================
+
+namespace {
+
+/// URL-decode a percent-encoded string (no '+' -> space; the state/redirect
+/// values here are url_encode()d, which encodes '+' as %2B).
+[[nodiscard]] std::string c20_url_decode(std::string_view s) {
+    std::string out;
+    out.reserve(s.size());
+    for (std::size_t i = 0; i < s.size(); ++i) {
+        if (s[i] == '%' && i + 2 < s.size()) {
+            auto hex_val = [](char c) -> int {
+                if (c >= '0' && c <= '9') return c - '0';
+                if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+                if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+                return -1;
+            };
+            int hi = hex_val(s[i + 1]);
+            int lo = hex_val(s[i + 2]);
+            if (hi >= 0 && lo >= 0) {
+                out.push_back(static_cast<char>(hi * 16 + lo));
+                i += 2;
+                continue;
+            }
+        }
+        out.push_back(s[i]);
+    }
+    return out;
+}
+
+/// Extract and URL-decode a query parameter from a URL. `key` includes the
+/// trailing '=' (e.g. "redirect_uri=").
+[[nodiscard]] std::string c20_extract_query_param(
+    std::string_view url, std::string_view key) {
+    auto pos = url.find(key);
+    if (pos == std::string_view::npos) return {};
+    auto start = pos + key.size();
+    auto end = url.find('&', start);
+    auto value = url.substr(start,
+        end == std::string_view::npos ? std::string_view::npos : end - start);
+    return c20_url_decode(value);
+}
+
+/// Extract the TCP port from a redirect_uri like "http://localhost:8765/callback".
+[[nodiscard]] int c20_port_from_redirect_uri(std::string_view redirect_uri) {
+    auto colon = redirect_uri.rfind(':');
+    if (colon == std::string_view::npos) return 0;
+    auto slash = redirect_uri.find('/', colon + 1);
+    auto port_str = redirect_uri.substr(colon + 1,
+        slash == std::string_view::npos ? std::string_view::npos : slash - colon - 1);
+    int port = 0;
+    for (char c : port_str) {
+        if (c < '0' || c > '9') return 0;
+        port = port * 10 + (c - '0');
+    }
+    return port;
+}
+
+/// Mock IdP for the C1 (OIDC login) leg: serves OIDC discovery and a token
+/// endpoint that returns 400 with the secret echoed in a JSON client_secret
+/// field (simulating an IdP that echoes request parameters in its error body).
+class C20C1MockIdpServer {
+public:
+    explicit C20C1MockIdpServer(std::string secret) : secret_(std::move(secret)) {
+        server_.Get("/.well-known/openid-configuration",
+            [this](const httplib::Request&, httplib::Response& res) {
+                auto base = base_url();
+                res.set_content(std::format(R"({{
+                    "issuer": "{}",
+                    "authorization_endpoint": "{}/authorize",
+                    "token_endpoint": "{}/token",
+                    "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post"]
+                }})", base, base, base), "application/json");
+            });
+        server_.Post("/token",
+            [this](const httplib::Request&, httplib::Response& res) {
+                res.status = 400;
+                res.set_content(std::format(
+                    R"({{"error":"invalid_request","client_secret":"{}"}})", secret_),
+                    "application/json");
+            });
+        port_ = server_.bind_to_any_port("127.0.0.1");
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
+        server_.wait_until_ready();
+    }
+    ~C20C1MockIdpServer() {
+        server_.stop();
+        if (thread_.joinable()) thread_.join();
+    }
+    [[nodiscard]] std::string base_url() const {
+        return std::format("http://127.0.0.1:{}", port_);
+    }
+private:
+    httplib::Server server_;
+    int port_{0};
+    std::thread thread_;
+    std::string secret_;
+};
+
+/// Mock token endpoint for the C2 (RFC 8693) leg: returns 400 with the secret
+/// echoed in a JSON client_secret field.
+class C20MockTokenEndpoint {
+public:
+    explicit C20MockTokenEndpoint(std::string secret) : secret_(std::move(secret)) {
+        server_.Post("/token",
+            [this](const httplib::Request&, httplib::Response& res) {
+                res.status = 400;
+                res.set_content(std::format(
+                    R"({{"error":"invalid_request","client_secret":"{}"}})", secret_),
+                    "application/json");
+            });
+        port_ = server_.bind_to_any_port("127.0.0.1");
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
+        server_.wait_until_ready();
+    }
+    ~C20MockTokenEndpoint() {
+        server_.stop();
+        if (thread_.joinable()) thread_.join();
+    }
+    [[nodiscard]] std::string url() const {
+        return std::format("http://127.0.0.1:{}/token", port_);
+    }
+private:
+    httplib::Server server_;
+    int port_{0};
+    std::thread thread_;
+    std::string secret_;
+};
+
+} // namespace
+
+// Test 2: a `idp_client_secret` line in a legacy / hand-edited
+// ~/.loom/xaa-idp.txt is inert: read_xaa_config_file() no longer parses it.
+// The FIELD still exists on XaaConfig (consumed on both legs, populated from
+// the store via the seam); only the file parse is gone.
+template <typename T>
+concept HasIdpClientSecret = requires(T c) { c.idp_client_secret; };
+
+TEST(XaaConfigC20, XaaIdpFileClientSecretLineIsIgnored) {
+    const auto root = c13_make_temp_root("loom_c20_xaa_cfg_");
+    fs::create_directories(root / ".loom");
+    EnvironmentGuard home_guard("HOME", root.string());
+    {
+        std::ofstream f(root / ".loom" / "xaa-idp.txt");
+        f << "idp_url=https://idp.example.com\n";
+        f << "client_id=as-client\n";
+        f << "idp_token_endpoint=https://idp.example.com/token\n";
+        f << "idp_client_secret=legacy-secret\n";
+    }
+
+    auto cfg = cc::services::mcp::get_xaa_config("any");
+    ASSERT_TRUE(cfg.has_value());
+    EXPECT_FALSE(cfg->idp_client_secret.has_value())
+        << "the dead idp_client_secret= file line must not be parsed";
+
+    // The field still EXISTS on XaaConfig (the inverse of the c17a
+    // !HasCallbackPort check): it is consumed on both legs and is populated
+    // from the hardened store by the composition seam.
+    static_assert(HasIdpClientSecret<cc::services::mcp::XaaConfig>,
+        "XaaConfig::idp_client_secret must exist; it is populated from the "
+        "hardened store by the composition seam");
+
+    fs::remove(root / ".loom" / "xaa-idp.txt");
+    fs::remove_all(root);
+}
+
+// Test 7: the is_xaa gate for BOTH the port and the secret. xaa_login_secrets_for()
+// is the extracted pure seam McpAuthTool consults; inverting or deleting the
+// gate fails this test. Hermetic: no network, no loader, no filesystem.
+TEST(XaaIdpLoginC20, SecretForwardedOnlyForXaaServers) {
+    // Positive: an XAA server gets both the port and the secret.
+    auto [port, secret] = cc::tools::xaa_login_secrets_for(
+        true, std::optional<int>{19485}, std::optional<std::string>{"s3cr3t"});
+    EXPECT_EQ(port, std::optional<int>{19485});
+    ASSERT_TRUE(secret.has_value());
+    EXPECT_EQ(*secret, "s3cr3t");
+
+    // Negative: a NON-XAA OAuth server must NOT receive the secret.
+    auto [no_port, no_secret] = cc::tools::xaa_login_secrets_for(
+        false, std::optional<int>{19485}, std::optional<std::string>{"s3cr3t"});
+    EXPECT_FALSE(no_port.has_value());
+    EXPECT_FALSE(no_secret.has_value());
+
+    // No configured values -> nullopt either way.
+    auto [p2, s2] = cc::tools::xaa_login_secrets_for(true, std::nullopt, std::nullopt);
+    EXPECT_FALSE(p2.has_value());
+    EXPECT_FALSE(s2.has_value());
+    auto [p3, s3] = cc::tools::xaa_login_secrets_for(false, std::nullopt, std::nullopt);
+    EXPECT_FALSE(p3.has_value());
+    EXPECT_FALSE(s3.has_value());
+}
+
+// Test 6: the legacy hand-edited ~/.loom/xaa-idp.txt `idp_client_secret=` line
+// is migrated to the hardened store ONCE, in the loader, guarded on a
+// non-empty settings issuer.
+TEST(XaaIdpLoginC20, LegacyXaaIdpFileSecretMigratedToStore) {
+    namespace fs2 = std::filesystem;
+    const auto root = c13_make_temp_root("loom_c20_migrate_");
+    const auto home = root / "home";
+    const auto cfg = root / "cfg";
+    const auto work = root / "work";
+    fs2::create_directories(home / ".loom");
+    fs2::create_directories(cfg);
+    fs2::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    const fs2::path previous_cwd = fs2::current_path();
+    fs2::current_path(work);
+
+    auto reset = [&] {
+        cc::tools::set_core_settings_mcp_loader(nullptr);
+        (void)cc::tools::reload_native_mcp_servers_from_config();
+    };
+    reset();
+
+    // Non-empty issuer so the migration guard passes.
+    {
+        std::ofstream f(work / ".loom" / "config.json");
+        f << R"JSON({
+  "xaaIdp": { "issuer": "https://idp.example.com", "clientId": "loom-cli" }
+})JSON";
+    }
+    // Legacy hand-edited file with the secret line.
+    {
+        std::ofstream f(home / ".loom" / "xaa-idp.txt");
+        f << "idp_url=https://idp.example.com\n";
+        f << "client_id=as-client\n";
+        f << "idp_token_endpoint=https://idp.example.com/token\n";
+        f << "idp_client_secret=legacy-only-secret\n";
+    }
+
+    const auto store = home / ".config" / "loom" / "xaa" / "idp_tokens.json";
+    ASSERT_FALSE(fs2::exists(store));
+
+    // Install the REAL loader and force a fresh load. The migration runs
+    // inside the loader (on ensure_loaded_from_config).
+    cc::commands::install_core_settings_mcp_loader();
+    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+
+    // (a) The secret was migrated to the hardened store.
+    auto migrated = cc::services::mcp::get_idp_client_secret("https://idp.example.com");
+    ASSERT_TRUE(migrated.has_value());
+    EXPECT_EQ(*migrated, "legacy-only-secret");
+
+    // (b) The store file is 0600 and its parent dir 0700.
+    UmaskGuard022 umask_guard;
+    EXPECT_EQ(mode_bits(store), static_cast<mode_t>(0600u));
+    EXPECT_EQ(mode_bits(store.parent_path()), static_cast<mode_t>(0700u));
+
+    // (c) The legacy file is not re-read on a second call. Delete it and
+    // assert the second loader call still yields the secret (a re-read would
+    // fail on the missing file).
+    fs2::remove(home / ".loom" / "xaa-idp.txt");
+    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+    auto still = cc::services::mcp::get_idp_client_secret("https://idp.example.com");
+    ASSERT_TRUE(still.has_value());
+    EXPECT_EQ(*still, "legacy-only-secret");
+
+    reset();
+    std::error_code ec;
+    fs2::current_path(previous_cwd, ec);
+    fs2::remove_all(root);
+}
+
+// The empty-issuer guard: with no configured issuer (XAA not configured, or
+// after `/mcp xaa clear` reset settings.xaaIdp to {}), the migration must NOT
+// run — save_idp_client_secret("", ...) would write under the phantom key
+// mcpXaaIdpConfig."".clientSecret, after which get_idp_client_secret("") no
+// longer misses and the secret would resurface.
+TEST(XaaIdpLoginC20, LegacyMigrationSkippedWhenIssuerEmpty) {
+    namespace fs2 = std::filesystem;
+    const auto root = c13_make_temp_root("loom_c20_no_issuer_");
+    const auto home = root / "home";
+    const auto cfg = root / "cfg";
+    const auto work = root / "work";
+    fs2::create_directories(home / ".loom");
+    fs2::create_directories(cfg);
+    fs2::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    const fs2::path previous_cwd = fs2::current_path();
+    fs2::current_path(work);
+
+    auto reset = [&] {
+        cc::tools::set_core_settings_mcp_loader(nullptr);
+        (void)cc::tools::reload_native_mcp_servers_from_config();
+    };
+    reset();
+
+    // NO xaaIdp key in the config -> issuer is empty.
+    {
+        std::ofstream f(work / ".loom" / "config.json");
+        f << "{}\n";
+    }
+    // Legacy file with a secret line that must NOT be migrated.
+    {
+        std::ofstream f(home / ".loom" / "xaa-idp.txt");
+        f << "idp_url=https://idp.example.com\n";
+        f << "client_id=as-client\n";
+        f << "idp_client_secret=must-not-migrate\n";
+    }
+
+    cc::commands::install_core_settings_mcp_loader();
+    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+
+    // No phantom "" key: get_idp_client_secret("") misses.
+    EXPECT_FALSE(cc::services::mcp::get_idp_client_secret("").has_value());
+    // The loader yields no secret.
+    EXPECT_FALSE(cc::tools::native_mcp_xaa_idp_client_secret().has_value());
+    // The store file was never created.
+    EXPECT_FALSE(fs2::exists(home / ".config" / "loom" / "xaa" / "idp_tokens.json"));
+
+    reset();
+    std::error_code ec;
+    fs2::current_path(previous_cwd, ec);
+    fs2::remove_all(root);
+}
+
+// A symlinked or FIFO ~/.loom/xaa-idp.txt does not block the migration:
+// read_legacy_idp_client_secret() uses the hardened read_regular_file()
+// (O_NOFOLLOW|O_NONBLOCK, fstat S_ISREG gate).
+TEST(XaaIdpLoginC20, LegacyXaaIdpFileSymlinkDoesNotBlock) {
+    const auto root = c13_make_temp_root("loom_c20_symlink_");
+    fs::create_directories(root / ".loom");
+    EnvironmentGuard home_guard("HOME", root.string());
+
+    // Symlink to /dev/null: O_NOFOLLOW rejects with ELOOP — no follow, no block.
+    const auto legacy = root / ".loom" / "xaa-idp.txt";
+    fs::create_symlink("/dev/null", legacy);
+    EXPECT_FALSE(cc::services::mcp::read_legacy_idp_client_secret().has_value());
+
+    // FIFO: O_NONBLOCK open succeeds but fstat S_ISREG fails — no block.
+    fs::remove(legacy);
+    ASSERT_EQ(::mkfifo(legacy.c_str(), 0600), 0);
+    EXPECT_FALSE(cc::services::mcp::read_legacy_idp_client_secret().has_value());
+
+    fs::remove_all(root);
+}
+
+// Test 5 (C1 leg): the OIDC login token-exchange error path redacts the
+// echoed body. Drives acquire_idp_id_token() with a mock IdP that returns 400
+// with the secret in a JSON client_secret field; the error must not contain
+// the secret bytes. idp_id_token is EMPTY (no cached token) so the C1 leg
+// actually runs, with a simulated browser callback.
+TEST(XaaIdpLoginC20, NoSecretBytesInC1TokenExchangeError) {
+    const std::string secret = "c1-secret-must-not-leak";
+    C20C1MockIdpServer server(secret);
+
+    const auto root = c13_make_temp_root("loom_c20_c1_");
+    fs::create_directories(root);
+    C17IdpTokenCacheGuard cache_guard(root);
+
+    xaa_login::IdpLoginOptions opts;
+    opts.idp_issuer = server.base_url();
+    opts.idp_client_id = "idp-client-1";
+    opts.idp_client_secret = secret;
+    opts.skip_browser_open = true;
+    opts.on_authorization_url = [](const std::string& url) {
+        // Parse the callback port and state from the auth URL, then simulate
+        // the browser callback from a detached thread (wait_for_callback
+        // blocks this thread). A raw socket is used because httplib::Client
+        // re-encodes '+' in the query string, which would corrupt the
+        // base64 state (the CallbackServer does not URL-decode).
+        auto redirect_uri = c20_extract_query_param(url, "redirect_uri=");
+        int port = c20_port_from_redirect_uri(redirect_uri);
+        auto state = c20_extract_query_param(url, "state=");
+        std::thread([port, state]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            int sock = ::socket(AF_INET, SOCK_STREAM, 0);
+            if (sock < 0) return;
+            struct sockaddr_in addr{};
+            addr.sin_family = AF_INET;
+            addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+            addr.sin_port = htons(static_cast<uint16_t>(port));
+            if (::connect(sock, reinterpret_cast<struct sockaddr*>(&addr),
+                          sizeof(addr)) < 0) {
+                ::close(sock);
+                return;
+            }
+            std::string req = "GET /callback?code=test-auth-code&state=" + state
+                + " HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
+            ::send(sock, req.c_str(), req.size(), 0);
+            ::close(sock);
+        }).detach();
+    };
+
+    auto result = xaa_login::acquire_idp_id_token(opts);
+    ASSERT_FALSE(result.has_value());
+    const auto& msg = result.error().message();
+    EXPECT_EQ(msg.find(secret), std::string::npos)
+        << "secret leaked into C1 error: " << msg;
+    EXPECT_NE(msg.find("[REDACTED]"), std::string::npos)
+        << "redaction wrap did not run: " << msg;
+
+    fs::remove_all(root);
+}
+
+// Test 5 (C2 leg): the RFC 8693 token-exchange error path redacts the echoed
+// body (the existing C2 wrap, now sharing detail::redact_tokens with C1).
+TEST(XaaIdpLoginC20, NoSecretBytesInC2TokenExchangeError) {
+    const std::string secret = "c2-secret-must-not-leak";
+    C20MockTokenEndpoint server(secret);
+
+    try {
+        (void)xaa_login::request_jwt_authorization_grant(
+            server.url(),
+            "audience", "resource", "fake-id-token", "idp-client-1",
+            std::optional<std::string_view>{secret});
+        FAIL() << "expected XaaTokenExchangeError";
+    } catch (const xaa_login::XaaTokenExchangeError& e) {
+        const std::string msg = e.what();
+        EXPECT_EQ(msg.find(secret), std::string::npos)
+            << "secret leaked into C2 error: " << msg;
+        EXPECT_NE(msg.find("[REDACTED]"), std::string::npos) << msg;
+    }
+}
+
+// Test 8: end-to-end on the --xaa path. A secret stored in the hardened store
+// (via save_idp_client_secret, the writer `/mcp xaa setup --client-secret`
+// uses) is injected through perform_mcp_oauth_flow's xaa_idp_client_secret
+// parameter and reaches the IdP token-exchange request body. This is the
+// regression test that would have caught the original asymmetry.
+TEST(McpAuth, XaaRuntimePathUsesHardenedStoreSecret) {
+    LocalXaaIdpServer server;
+    ASSERT_TRUE(server.ready());
+
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_mcp_xaa_c20_" + std::to_string(suffix));
+    fs::remove_all(root);
+    fs::create_directories(root / ".loom");
+    EnvironmentGuard home_guard("HOME", root.string());
+    EnvironmentGuard xdg_config_guard("XDG_CONFIG_HOME", root.string());
+    EnvironmentGuard xaa_enabled_guard("LOOM_ENABLE_XAA", "1");
+    {
+        std::ofstream idp_config(root / ".loom" / "xaa-idp.txt");
+        idp_config << "idp_url=" << server.base_url() << "\n";
+        idp_config << "idp_issuer=" << server.base_url() << "\n";
+        idp_config << "idp_token_endpoint=" << server.base_url() << "/token\n";
+        idp_config << "idp_id_token=fake-id-token-for-testing\n";
+        idp_config << "client_id=idp-client-1\n";
+        idp_config << "client_secret=as-secret-1\n";
+        idp_config << "idp_client_id=idp-client-1\n";
+        idp_config << "scope=openid profile mcp\n";
+        // NO idp_client_secret= line — the secret comes from the hardened store.
+    }
+
+    const std::string secret = "e2e-hardened-secret";
+    // Store the secret the way `/mcp xaa setup --client-secret` does.
+    cc::services::mcp::save_idp_client_secret(server.base_url(), secret);
+    // The loader reads it from the same store; simulate that read here.
+    auto stored = cc::services::mcp::get_idp_client_secret(server.base_url());
+    ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(*stored, secret);
+
+    cc::services::mcp::McpServerConfig auth_config;
+    auth_config.transport = "http";
+    auth_config.url = server.base_url() + "/mcp";
+    auth_config.oauth = cc::services::mcp::McpOAuthConfig{
+        .client_id = "as-client-1",
+        .xaa = true,
+    };
+
+    auto result = cc::services::mcp::perform_mcp_oauth_flow(
+        "xaa-c20-e2e",
+        auth_config,
+        [](const std::string&) {},
+        std::nullopt,
+        true,  // skip_browser_open
+        std::nullopt,  // xaa_callback_port
+        *stored  // xaa_idp_client_secret — from the hardened store
+    );
+    ASSERT_TRUE(result.has_value()) << result.error().message();
+
+    // The IdP token-exchange (C2) request received the stored secret.
+    const auto exchange_body = server.token_exchange_body();
+    EXPECT_NE(exchange_body.find("client_secret=" + secret), std::string::npos)
+        << "stored secret not forwarded to the IdP token exchange: " << exchange_body;
+
+    fs::remove_all(root);
+}

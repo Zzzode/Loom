@@ -182,20 +182,12 @@ namespace detail {
     return scheme + "://" + host + path;
 }
 
-/// TS REF: xaa.ts:91-97 redactTokens()
-///
-/// Redacts sensitive token values from debug output. Works on both parsed and
-/// raw string bodies.
-[[nodiscard]] inline std::string redact_tokens(std::string_view raw) {
-    static const std::regex sensitive_re(
-        R"REGEX("(access_token|refresh_token|id_token|assertion|subject_token|client_secret)"\s*:\s*"[^"]*")REGEX");
-    std::string s(raw);
-    return std::regex_replace(s, sensitive_re,
-        "\"$1\":\"[REDACTED]\"",
-        std::regex_constants::format_default);
-}
-
 /// TS REF: xaa.ts:94 redactTokens() overload for unknown types
+///
+/// RFC-0001 followup c20: the string-view redact_tokens() moved to
+/// xaa_idp_login.cppm (detail::redact_tokens) so the C1 OIDC-login leg and
+/// this module's C2 leg share one helper; it is visible here via the
+/// cc.services.mcp.xaa_idp_login import above.
 [[nodiscard]] inline std::string redact_tokens_json(JsonVal val) {
     // Serialize then redact
     // We can't easily serialize a JsonVal to string without yyjson_write,
@@ -799,13 +791,25 @@ namespace detail {
             config.client_secret = value;
         } else if (key == "idp_client_id") {
             config.idp_client_id = value;
-        } else if (key == "idp_client_secret") {
-            config.idp_client_secret = value;
         } else if (key == "idp_id_token") {
             config.idp_id_token = value;
         } else if (key == "scope") {
             config.scope = value;
         }
+        // RFC-0001 followup c20 — the `idp_client_secret` key is GONE, exactly
+        // like the c17a `callback_port` key above it: nothing in src/ ever
+        // wrote ~/.loom/xaa-idp.txt, so it was a dead surface a user could
+        // only reach by hand-editing, and the supported surface
+        // (`/mcp xaa setup --client-secret` -> the hardened
+        // ~/.config/loom/xaa/idp_tokens.json store) did not reach the --xaa
+        // runtime path. The secret now comes from that single store, injected
+        // by the caller of perform_mcp_oauth_flow() on the one path that can
+        // see the settings layer (see auth.cppm's xaa_idp_client_secret
+        // parameter). A hand-edited `idp_client_secret` line is ignored,
+        // exactly like any other unknown key. The XaaConfig::idp_client_secret
+        // FIELD is kept (unlike callback_port, which was removed from the
+        // struct) because it is consumed on both the C1 and C2 legs and is
+        // now populated from the store via the seam.
         // RFC-0001 B followup c17a — the `callback_port` key added by c17 is
         // GONE: nothing in src/ ever wrote ~/.loom/xaa-idp.txt, so it was a
         // dead surface a user could only reach by hand-editing, and the

@@ -855,9 +855,20 @@ inline void merge_native_mcp_servers(
 // load or a sync() populated the runtime first. It is a member (not a second
 // closure) so a test may install a loader without a ConfigManager and still
 // assert the forwarded port.
+//
+// RFC-0001 followup c20: the loader ALSO yields the IdP client secret from the
+// hardened store (~/.config/loom/xaa/idp_tokens.json), keyed by
+// settings.xaaIdp.issuer — the same store `/mcp xaa setup --client-secret`
+// writes and read_xaa_idp_status() reads. This closes the last dead-store
+// asymmetry: the --xaa runtime path used to read idp_client_secret from the
+// hand-edited ~/.loom/xaa-idp.txt line that nothing in src/ writes. The
+// runtime reads it FRESH per lookup (NativeMcpRuntime::xaa_idp_client_secret)
+// for the same reason as the port. A one-time guarded migration of the legacy
+// line lives in the loader (see core_settings_loader.cppm).
 struct CoreSettingsMcpLayer {
     std::vector<NativeMcpConfiguredServer> servers;
     std::optional<int> xaa_callback_port = std::nullopt;
+    std::optional<std::string> xaa_idp_client_secret = std::nullopt;
 };
 using CoreSettingsMcpServersLoader = std::function<
     std::expected<CoreSettingsMcpLayer, std::string>()>;
@@ -1074,6 +1085,28 @@ public:
 	    auto core_layer = loader();
 	    if (!core_layer) return std::nullopt;
 	    return core_layer->xaa_callback_port;
+	}
+	return std::nullopt;
+    }
+
+    /// RFC-0001 followup c20 — the IdP client secret from the hardened store
+    /// (~/.config/loom/xaa/idp_tokens.json), keyed by settings.xaaIdp.issuer
+    /// and carried in the core-settings layer. Resolved FRESH on every call
+    /// through the loader sink (same rationale as xaa_callback_port(): the
+    /// production McpCommand calls sync() before any XAA mcp_auth, and sync()
+    /// sets loaded_ without running the loader, so a cached capture would
+    /// stay nullopt in exactly that ordering). The loader does filesystem I/O
+    /// (the store read + the one-time legacy migration), so it is called
+    /// WITHOUT mutex_ held. nullopt when no loader is installed (test
+    /// binaries) or no secret is stored. Consumed by McpAuthTool on the XAA
+    /// path only. The value transits only through the layer -> accessor ->
+    /// flow parameter -> XaaConfig field -> HTTP form body; it is never
+    /// logged, printed, or returned in a tool result.
+    [[nodiscard]] std::optional<std::string> xaa_idp_client_secret() {
+	if (auto& loader = detail::core_settings_mcp_loader_slot(); loader) {
+	    auto core_layer = loader();
+	    if (!core_layer) return std::nullopt;
+	    return core_layer->xaa_idp_client_secret;
 	}
 	return std::nullopt;
     }
@@ -1365,6 +1398,17 @@ inline std::optional<int> native_mcp_xaa_callback_port() {
     return NativeMcpRuntime::instance().xaa_callback_port();
 }
 
+/// RFC-0001 followup c20 — the IdP client secret the XAA login path should
+/// use, resolved on demand from the core-settings loader (see
+/// CoreSettingsMcpLayer). nullopt means "no stored secret" (or no loader
+/// installed): the login keeps its PKCE-only behavior. The value is the
+/// actual secret (the IdP token exchange needs it); it transits only through
+/// the layer -> accessor -> flow parameter -> XaaConfig field -> HTTP form
+/// body and is never logged or returned in a tool result.
+inline std::optional<std::string> native_mcp_xaa_idp_client_secret() {
+    return NativeMcpRuntime::instance().xaa_idp_client_secret();
+}
+
 /// RFC-0001 B followup c17a — the is_xaa gate, as a pure seam: McpAuthTool
 /// forwards the configured callback port ONLY for an XAA-configured server,
 /// and nullopt otherwise, so a non-XAA OAuth server never has its loopback
@@ -1375,6 +1419,23 @@ inline std::optional<int> native_mcp_xaa_callback_port() {
     bool is_xaa,
     std::optional<int> configured_port) {
     return is_xaa ? configured_port : std::nullopt;
+}
+
+/// RFC-0001 followup c20 — the is_xaa gate for BOTH the callback port and the
+/// IdP client secret, as one pure seam (sibling of xaa_login_callback_port_for
+/// above). McpAuthTool resolves the two values together and forwards them
+/// ONLY for an XAA-configured server; a non-XAA OAuth server receives
+/// {nullopt, nullopt} so neither the IdP port nor the secret can leak into a
+/// plain OAuth login. Pure (no loader call, no filesystem), so the gate is
+/// hermetically testable exactly like the port seam — inverting or deleting
+/// it must fail the XaaSecretForwardedOnlyForXaaServer test.
+[[nodiscard]] inline std::pair<std::optional<int>, std::optional<std::string>>
+xaa_login_secrets_for(
+    bool is_xaa,
+    std::optional<int> configured_port,
+    std::optional<std::string> configured_secret) {
+    if (!is_xaa) return {std::nullopt, std::nullopt};
+    return {std::move(configured_port), std::move(configured_secret)};
 }
 
 inline std::vector<NativeMcpServerStatus> native_mcp_statuses() {
@@ -1622,10 +1683,17 @@ public:
 	// RFC-0001 B followup c17a: on the XAA path, forward the configured fixed
 	// callback port (settings.xaaIdp.callbackPort, captured by the core-settings
 	// loader) so the loopback redirect_uri matches an IdP-side allowlist.
-	// Resolved once here, before the flow is dispatched to a worker thread.
-	// The is_xaa gate lives in xaa_login_callback_port_for() (a pure seam).
-	const std::optional<int> xaa_port = xaa_login_callback_port_for(
-	    configured->oauth->xaa, native_mcp_xaa_callback_port());
+	// RFC-0001 followup c20: forward the IdP client secret (the hardened
+	// ~/.config/loom/xaa/idp_tokens.json store, captured by the same loader)
+	// so the --xaa runtime path no longer reads the dead hand-edited
+	// ~/.loom/xaa-idp.txt line. Both are resolved once here, before the flow
+	// is dispatched to a worker thread. The is_xaa gate lives in
+	// xaa_login_secrets_for() (a pure seam): a non-XAA OAuth server receives
+	// neither value.
+	const auto [xaa_port, xaa_secret] = xaa_login_secrets_for(
+	    configured->oauth->xaa,
+	    native_mcp_xaa_callback_port(),
+	    native_mcp_xaa_idp_client_secret());
 
 	if (wait_for_callback) {
 	    if (!authorization_url_file || authorization_url_file->empty()) {
@@ -1647,7 +1715,8 @@ public:
 	        },
 	        std::nullopt,
 	        true,
-	        xaa_port
+	        xaa_port,
+	        xaa_secret
 	    );
 	    if (!result) {
 	        return std::unexpected(McpError::AuthFailed);
@@ -1666,7 +1735,7 @@ public:
 
 	auto state = std::make_shared<AuthFlowState>();
 	auto oauth_config = to_oauth_server_config(*configured);
-	std::thread([state, server_name, oauth_config = std::move(oauth_config), xaa_port]() mutable {
+	std::thread([state, server_name, oauth_config = std::move(oauth_config), xaa_port, xaa_secret]() mutable {
 	    auto result = svc_mcp::perform_mcp_oauth_flow(
 	        server_name,
 	        oauth_config,
@@ -1679,7 +1748,8 @@ public:
 	        },
 	        std::nullopt,
 	        true,
-	        xaa_port
+	        xaa_port,
+	        xaa_secret
 	    );
 	    {
 	        std::lock_guard lock(state->mutex);

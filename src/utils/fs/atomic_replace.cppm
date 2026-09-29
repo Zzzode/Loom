@@ -221,7 +221,7 @@ inline std::expected<void, std::string> atomic_replace_file(
 
         if (::rename(temp.c_str(), path.c_str()) == 0) {
             // Durability: fsync the parent directory so the rename is
-            // stable; best-effort (mirrors cc::utils::atomic_write).
+            // stable; best-effort.
             if (!parent.empty()) {
                 const int dir_fd =
                     detail::open_for_fsync(parent, /*is_dir=*/true);

@@ -8,7 +8,7 @@ export module cc.migrations.schema_versions;
 
 import std;
 
-import cc.utils.file_persistence;
+import cc.utils.atomic_replace;
 import cc.utils.lockfile;
 
 export namespace cc::migrations {
@@ -132,7 +132,7 @@ inline auto ensure_config_dir() -> bool {
 //   2. Acquire an advisory cross-process lock so concurrent callers do not
 //      interleave the backup/temp/rename dance.
 //   3. Write the new payload to a random temp file in the same directory,
-//      fsync it (cc::utils::atomic_write handles this), then rotate:
+//      fsync it (cc::utils::atomic_replace_file handles this), then rotate:
 //        a. If a primary exists, copy (rename) it INTO the .bak slot *only after
 //           the temp is already on disk (so a torn rename cannot destroy the
 //           only good copy).
@@ -166,10 +166,10 @@ inline auto ensure_config_dir() -> bool {
     const auto backup  = detail::get_version_backup_path();
 
     // ---- write new payload to a temp, make durable ---------------------
-    // `atomic_write` internally writes to a sibling temp + fsync + rename over
-    // its own temp. We want an extra safety layer *and* to keep a .bak of the
-    // previous primary for crash recovery. To avoid opening a window where we
-    // have neither primary nor backup, we:
+    // `atomic_replace_file` internally writes to a sibling temp + fsync +
+    // rename over its own temp. We want an extra safety layer *and* to keep a
+    // .bak of the previous primary for crash recovery. To avoid opening a
+    // window where we have neither primary nor backup, we:
     //
     //   a. write temp_v  (durable)
     //   b. if primary exists → primary.bak  (rotate)
@@ -180,9 +180,11 @@ inline auto ensure_config_dir() -> bool {
     const std::string payload = std::to_string(version) + "\n";
 
     // Step (a): use a distinct temp so we can later issue (c) without relying on
-    // the internal temp of atomic_write (which gets replaced atomically over its
-    // target... which IS the target). To honour the (a)(b)(c) ordering we use
-    // atomic_write to write to an intermediate `precommit` path first.
+    // the internal temp of atomic_replace_file (which gets replaced atomically
+    // over its target... which IS the target). To honour the (a)(b)(c) ordering
+    // we use atomic_replace_file to write to an intermediate `precommit` path
+    // first. The payload is a non-secret version integer, so PreserveOrUmask
+    // keeps the pre-existing mode (or applies the umask on a fresh file).
     std::error_code ec;
     fs::path precommit = primary;
     precommit += ".precommit";
@@ -190,7 +192,8 @@ inline auto ensure_config_dir() -> bool {
     // hold the lock so it's ours.
     fs::remove(precommit, ec);  // ignore
 
-    auto wrote = cc::utils::atomic_write(precommit, payload);
+    auto wrote = cc::utils::atomic_replace_file(
+        precommit, payload, cc::utils::AtomicMode::PreserveOrUmask);
     if (!wrote.has_value()) {
         return std::unexpected("Failed to stage schema_version precommit: " +
                                wrote.error());
@@ -232,8 +235,8 @@ inline auto ensure_config_dir() -> bool {
     }
 
     // Step (d): parent-dir fsync so the rename is durable against power loss.
-    // atomic_write already fsynced the precommit + its parent; re-fsync the
-    // parent so the final rename→primary is durable.
+    // atomic_replace_file already fsynced the precommit + its parent; re-fsync
+    // the parent so the final rename→primary is durable.
     const auto parent = primary.parent_path();
     if (!parent.empty()) {
         int dir_fd = ::open(parent.c_str(), O_RDONLY | O_DIRECTORY);

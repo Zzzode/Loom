@@ -761,18 +761,17 @@ inline std::expected<std::vector<TeammateMessage>, std::string> read_inbox(
         shared.emplace(inbox_path, LockKind::Shared);
         if (!shared->locked()) return std::vector<TeammateMessage>{};
     }
-    // A trailing symlink is not followed, and a FIFO/socket/device is never
-    // opened (ifstream on a FIFO blocks for a peer); a missing file and a
-    // non-regular leaf both read as the historical empty inbox.
-    std::error_code exists_ec;
-    if (!fs::exists(inbox_path, exists_ec)) {
-        return std::vector<TeammateMessage>{};
-    }
-    if (!is_regular_data_leaf_or_absent(inbox_path)) {
+    // Open the leaf ONCE through an O_NOFOLLOW|O_NONBLOCK fd and parse the
+    // returned buffer: a trailing symlink is not followed and a
+    // FIFO/socket/device swapped over the leaf never blocks (c16a closes the
+    // stat-gate-then-reopen TOCTOU). A missing or non-regular/unreadable
+    // file both read as the historical empty inbox.
+    const auto leaf = cc::utils::read_regular_file(inbox_path);
+    if (!leaf.present()) {
         return std::vector<TeammateMessage>{};
     }
 
-    auto parsed = cc::utils::json::parse_file(inbox_path);
+    auto parsed = cc::utils::json::parse(leaf.contents);
     if (!parsed) return std::unexpected(parsed.error().format());
     auto root = parsed->root();
     if (!root.is_arr()) return std::unexpected("teammate inbox must be a JSON array");
@@ -951,13 +950,15 @@ inline void append_optional_json_string(
 inline std::optional<TeamFileRecord> read_team_file(std::string_view team_name) {
     const auto path = fs::path{team_file_path(team_name)};
     // c16: LOCK_SH around read+parse, fail closed to nullopt within the same
-    // bound as every other team-data read; the leaf gate never follows a
-    // trailing symlink or opens a FIFO.
+    // bound as every other team-data read. c16a: the leaf is opened ONCE,
+    // O_NOFOLLOW|O_NONBLOCK, and parsed from the returned buffer — a
+    // symlink is never followed and a swapped FIFO never blocks.
     ScopedInboxLock flock(path, LockKind::Shared);
     if (!flock.locked()) return std::nullopt;
-    if (!is_regular_data_leaf_or_absent(path)) return std::nullopt;
+    const auto leaf = cc::utils::read_regular_file(path);
+    if (!leaf.present()) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse_file(path);
+    auto parsed = cc::utils::json::parse(leaf.contents);
     if (!parsed) return std::nullopt;
     const auto root = parsed->root();
     if (!root.is_obj()) return std::nullopt;

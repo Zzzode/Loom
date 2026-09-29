@@ -1035,10 +1035,13 @@ private:
     [[nodiscard]] static std::vector<WorkerAllowRule>
     load_rules_at(const fs::path& path) {
         std::vector<WorkerAllowRule> rules;
-        // c16: never open a non-regular data leaf (ifstream on a FIFO blocks
-        // waiting for a peer; a symlink would read its victim).
-        if (!cc::utils::is_regular_data_leaf_or_absent(path)) return rules;
-        auto parsed = cc::utils::json::parse_file(path);
+        // c16/c16a: open the leaf ONCE (O_NOFOLLOW|O_NONBLOCK) and parse the
+        // returned buffer — a FIFO swapped over the leaf cannot block and a
+        // symlink cannot reach its target. A missing/non-regular/corrupt
+        // file yields an empty rule set.
+        const auto leaf = cc::utils::read_regular_file(path);
+        if (!leaf.present()) return rules;
+        auto parsed = cc::utils::json::parse(leaf.contents);
         if (!parsed) return rules;
         const auto list = parsed->root().get("rules");
         if (!list.is_arr()) return rules;

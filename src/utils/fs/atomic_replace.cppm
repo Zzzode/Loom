@@ -244,21 +244,103 @@ inline std::expected<void, std::string> atomic_replace_file(
                 path.string());
 }
 
-/// True when `path` is absent or a REGULAR file (lstat(2), no symlink
-/// follow). A trailing symlink, FIFO, socket or device leaf returns false:
-/// readers use this to refuse a path whose open would follow a link or
-/// block (std::ifstream on a FIFO waits for a reader/writer peer), and
-/// atomic_replace_file() independently gates before replacing.
-inline bool is_regular_data_leaf_or_absent(const fs::path& path) {
-#if !defined(_WIN32)
+/// Outcome of read_regular_file().
+enum class RegularReadStatus : std::uint8_t {
+    /// A REGULAR file was opened through the O_NOFOLLOW fd and fully read;
+    /// RegularFileRead::contents holds its bytes.
+    Present,
+    /// No file exists at the path (open failed ENOENT).
+    Absent,
+    /// The leaf is a symlink/FIFO/socket/device, a non-regular inode raced
+    /// in between open and fstat, or the read itself failed. Nothing was
+    /// followed and the call never blocked.
+    Unreadable,
+};
+
+struct RegularFileRead {
+    RegularReadStatus status = RegularReadStatus::Unreadable;
+    std::string contents;
+
+    [[nodiscard]] bool present() const noexcept {
+        return status == RegularReadStatus::Present;
+    }
+};
+
+/// Hardened read counterpart to atomic_replace_file(): open `path` ONCE and
+/// read through that fd, so a same-uid actor cannot swap a FIFO or symlink
+/// over the leaf between a stat gate and a path-based reopen (the TOCTOU
+/// behind lstat()+yyjson_read_file: the reopen would follow the link or, on
+/// a FIFO, BLOCK with no peer and no timeout).
+///
+///   * O_RDONLY|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC: O_NOFOLLOW rejects a
+///     trailing symlink with ELOOP; O_NONBLOCK makes opening a FIFO (with no
+///     writer peer) return immediately instead of blocking — the fstat gate
+///     below then rejects it without a single read.
+///   * fstat(2) on the OPEN descriptor proves the inode is S_ISREG, closing
+///     the swap race even if the directory entry changed after open.
+///   * ENOENT maps to Absent; every other failure to Unreadable.
+///   * The read loop is EINTR-restarted. For a regular file POSIX requires
+///     O_NONBLOCK reads to behave exactly like blocking reads — EAGAIN can
+///     never occur (Linux explicitly ignores O_NONBLOCK on regular fds); a
+///     defensive bounded retry fails closed rather than spin if that
+///     guarantee were ever violated.
+inline RegularFileRead read_regular_file(const fs::path& path) {
+    RegularFileRead result;
+    const int fd = ::open(path.c_str(),
+                          O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC);
+    if (fd < 0) {
+        result.status = (errno == ENOENT) ? RegularReadStatus::Absent
+                                          : RegularReadStatus::Unreadable;
+        return result;
+    }
+
     struct ::stat st {};
-    if (::lstat(path.c_str(), &st) != 0) return errno == ENOENT;
-    return S_ISREG(st.st_mode) != 0;
-#else
-    std::error_code ec;
-    if (!fs::exists(path, ec)) return true;
-    return fs::is_regular_file(path, ec);
-#endif
+    if (::fstat(fd, &st) != 0 || !S_ISREG(st.st_mode)) {
+        (void)::close(fd);
+        result.status = RegularReadStatus::Unreadable;
+        return result;
+    }
+
+    std::string& out = result.contents;
+    if (st.st_size > 0) {
+        out.reserve(static_cast<std::size_t>(
+            std::min<std::int64_t>(st.st_size, 64 * 1024 * 1024)));
+    }
+    constexpr std::size_t kChunk = 64 * 1024;
+    int eagain_strikes = 0;
+    for (;;) {
+        char buffer[kChunk];
+        const ssize_t n = ::read(fd, buffer, sizeof(buffer));
+        if (n > 0) {
+            out.append(buffer, static_cast<std::size_t>(n));
+            continue;
+        }
+        if (n == 0) break;  // EOF
+        if (errno == EINTR) continue;
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // Unreachable for a proven-regular fd (see function comment);
+            // bound the defensive retry and fail closed.
+            if (++eagain_strikes > 100) {
+                (void)::close(fd);
+                result.status = RegularReadStatus::Unreadable;
+                result.contents.clear();
+                return result;
+            }
+            continue;
+        }
+        (void)::close(fd);
+        result.status = RegularReadStatus::Unreadable;
+        result.contents.clear();
+        return result;
+    }
+
+    if (::close(fd) != 0) {
+        result.status = RegularReadStatus::Unreadable;
+        result.contents.clear();
+        return result;
+    }
+    result.status = RegularReadStatus::Present;
+    return result;
 }
 
 }  // namespace cc::utils

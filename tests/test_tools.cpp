@@ -13803,3 +13803,70 @@ TEST(WorkerPermissionGrantsC16, ApplyStormWithSharedReadersLosesNoRules) {
     EXPECT_EQ(list.size(), names.size())
         << "no duplicate rules may be persisted";
 }
+
+// c16a: the LOCK_SH allows() reader opens the grants leaf ONCE
+// (O_NOFOLLOW|O_NONBLOCK) and parses the buffer — a FIFO swapped over the
+// leaf yields the ordinary empty rule set INSTANTLY (never blocks waiting
+// for a peer), a symlink is never followed, an absent file is empty, and a
+// regular grants file parses byte-identically.
+TEST(WorkerPermissionGrantsC16a, ReaderSwapLeavesFailFastAndRegularParses) {
+    namespace sh = cc::utils::swarm_helpers;
+    C15GrantsEnv env;
+
+    // Absent grants file: not allowed, immediate.
+    {
+        sh::WorkerPermissionGrants grants("c16aabsent", "worker");
+        const auto t0 = std::chrono::steady_clock::now();
+        EXPECT_FALSE(grants.allows("ToolA"));
+        EXPECT_LT(c16_elapsed_ms(t0), 100);
+    }
+
+    const auto path = c16_grants_path_for("c16arules");
+    fs::create_directories(path.parent_path());
+
+    // FIFO: allows() stays false and returns under 100ms.
+    ASSERT_EQ(::mkfifo(path.string().c_str(), 0600), 0);
+    {
+        sh::WorkerPermissionGrants grants("c16arules", "worker");
+        const auto t0 = std::chrono::steady_clock::now();
+        EXPECT_FALSE(grants.allows("ToolA"));
+        EXPECT_LT(c16_elapsed_ms(t0), 100)
+            << "a FIFO grants leaf must never block the shared reader";
+        std::error_code ec;
+        EXPECT_TRUE(fs::is_fifo(path, ec));
+    }
+
+    // Symlink: false, canary target never opened.
+    const auto canary = env.root / "grants-canary.txt";
+    constexpr std::string_view kCanary = "c16a-grants-canary-2956";
+    {
+        std::error_code ec;
+        fs::remove(path, ec);
+        std::ofstream out(canary, std::ios::binary);
+        out << kCanary;
+    }
+    fs::create_symlink(canary, path);
+    {
+        sh::WorkerPermissionGrants grants("c16arules", "worker");
+        EXPECT_FALSE(grants.allows("ToolA"));
+        std::ifstream in(canary, std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(in)),
+                                std::istreambuf_iterator<char>());
+        EXPECT_EQ(bytes, std::string(kCanary))
+            << "the symlinked grants target must never be opened";
+        std::error_code ec;
+        EXPECT_TRUE(fs::is_symlink(path, ec));
+    }
+
+    // Regular grants file: identical parse, the rule takes effect.
+    {
+        std::error_code ec;
+        fs::remove(path, ec);
+        sh::WorkerPermissionGrants writer("c16arules", "worker");
+        writer.apply_updates(
+            sh::build_always_allow_updates_json("ToolA"));
+        sh::WorkerPermissionGrants reader("c16arules", "worker");
+        EXPECT_TRUE(reader.allows("ToolA"));
+        EXPECT_FALSE(reader.allows("ToolOther"));
+    }
+}

@@ -12171,3 +12171,216 @@ TEST(ScopedInboxLockC16, SharedReaderFailsClosedAndSharedReadersConcur) {
     ASSERT_EQ(::waitpid(h.pid, &status, 0), h.pid);
     reaper.release();
 }
+
+// ===========================================================================
+// RFC-0001 B followup c16a — hardened fd-based team-data reader
+// (read_regular_file): no stat-gate-then-reopen TOCTOU.
+// ===========================================================================
+
+namespace {
+
+[[nodiscard]] long long c16a_elapsed_ms(
+    const std::chrono::steady_clock::time_point& start) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::chrono::steady_clock::now() - start)
+        .count();
+}
+
+}  // namespace
+
+// The primitive itself: exact bytes for a regular file, Absent for a
+// missing path, and INSTANT Unreadable (never blocked, never followed)
+// for a FIFO, a trailing symlink, or a directory at the leaf.
+TEST(ReadRegularFileC16a, ShapesPresentAbsentFifoSymlinkDirectory) {
+    C14TeamEnv env;
+
+    // Regular file: byte-identical contents.
+    const auto regular = env.root / "regular.json";
+    constexpr std::string_view kBytes =
+        "{\"team\":\"\xc3\xa9\",\"n\":7}\n";  // UTF-8 + trailing newline
+    { std::ofstream out(regular, std::ios::binary); out << kBytes; }
+    {
+        const auto r = cc::utils::read_regular_file(regular);
+        EXPECT_EQ(r.status, cc::utils::RegularReadStatus::Present);
+        EXPECT_EQ(r.contents, std::string(kBytes));
+    }
+
+    // Absent.
+    {
+        const auto r = cc::utils::read_regular_file(env.root / "missing.json");
+        EXPECT_EQ(r.status, cc::utils::RegularReadStatus::Absent);
+        EXPECT_TRUE(r.contents.empty());
+    }
+
+    // FIFO with no writer peer: O_NONBLOCK open returns immediately and
+    // fstat rejects it; the call must never block.
+    const auto fifo = env.root / "fifo.json";
+    ASSERT_EQ(::mkfifo(fifo.string().c_str(), 0600), 0);
+    {
+        const auto t0 = std::chrono::steady_clock::now();
+        const auto r = cc::utils::read_regular_file(fifo);
+        const auto elapsed = c16a_elapsed_ms(t0);
+        EXPECT_EQ(r.status, cc::utils::RegularReadStatus::Unreadable);
+        EXPECT_LT(elapsed, 100) << "FIFO leaf must be rejected instantly";
+        std::error_code ec;
+        EXPECT_TRUE(fs::is_fifo(fifo, ec));
+    }
+
+    // Trailing symlink: rejected without touching the canary target.
+    const auto canary = env.root / "canary.txt";
+    constexpr std::string_view kCanary = "c16a-read-canary-9041";
+    { std::ofstream out(canary, std::ios::binary); out << kCanary; }
+    const auto link = env.root / "link.json";
+    fs::create_symlink(canary, link);
+    {
+        const auto r = cc::utils::read_regular_file(link);
+        EXPECT_EQ(r.status, cc::utils::RegularReadStatus::Unreadable);
+        EXPECT_TRUE(r.contents.empty());
+        EXPECT_EQ(c14_read_file(canary), std::string(kCanary))
+            << "symlink target must never be opened";
+        std::error_code ec;
+        EXPECT_TRUE(fs::is_symlink(link, ec));
+    }
+
+    // Directory leaf: open may succeed, fstat rejects.
+    const auto dir = env.root / "adir";
+    fs::create_directories(dir);
+    {
+        const auto r = cc::utils::read_regular_file(dir);
+        EXPECT_EQ(r.status, cc::utils::RegularReadStatus::Unreadable);
+    }
+}
+
+// The inbox reader: FIFO/symlink swaps at the data leaf give the ordinary
+// empty inbox INSTANTLY (and never follow the link), an absent file is
+// empty, and a regular inbox array parses identically.
+TEST(TeamDataC16a, InboxReaderSwapLeavesFailFastAndRegularParses) {
+    C14TeamEnv env;
+    const auto inbox = c14_inbox_path("worker", "c16ainbox");
+    fs::create_directories(inbox.parent_path());
+
+    // Absent: historical empty inbox.
+    {
+        auto msgs = cc::utils::read_inbox(
+            "worker", std::optional<std::string_view>{"c16ainbox"});
+        ASSERT_TRUE(msgs.has_value());
+        EXPECT_TRUE(msgs->empty());
+    }
+
+    // FIFO at the leaf: empty result, under 100ms, FIFO untouched.
+    ASSERT_EQ(::mkfifo(inbox.string().c_str(), 0600), 0);
+    {
+        const auto t0 = std::chrono::steady_clock::now();
+        auto msgs = cc::utils::read_inbox(
+            "worker", std::optional<std::string_view>{"c16ainbox"});
+        const auto elapsed = c16a_elapsed_ms(t0);
+        ASSERT_TRUE(msgs.has_value());
+        EXPECT_TRUE(msgs->empty());
+        EXPECT_LT(elapsed, 100) << "FIFO inbox read must never block";
+        std::error_code ec;
+        EXPECT_TRUE(fs::is_fifo(inbox, ec));
+    }
+
+    // Symlink at the leaf: empty result, canary target never opened.
+    const auto canary = env.root / "inbox-canary.txt";
+    constexpr std::string_view kCanary = "c16a-inbox-canary-7723";
+    {
+        std::error_code ec;
+        fs::remove(inbox, ec);
+        std::ofstream out(canary, std::ios::binary);
+        out << kCanary;
+    }
+    fs::create_symlink(canary, inbox);
+    {
+        auto msgs = cc::utils::read_inbox(
+            "worker", std::optional<std::string_view>{"c16ainbox"});
+        ASSERT_TRUE(msgs.has_value());
+        EXPECT_TRUE(msgs->empty());
+        EXPECT_EQ(c14_read_file(canary), std::string(kCanary));
+    }
+
+    // Regular array: parsed byte-identically through the fd buffer.
+    {
+        std::error_code ec;
+        fs::remove(inbox, ec);
+        ASSERT_TRUE(cc::utils::write_to_mailbox(
+            "worker",
+            cc::utils::TeammateMessage{
+                .from = "lead",
+                .text = "hello-c16a",
+                .timestamp = "42",
+                .read = false,
+                .color = std::optional<std::string>{"cyan"},
+                .summary = std::nullopt,
+            },
+            std::optional<std::string_view>{"c16ainbox"})
+                        .has_value());
+        auto msgs = cc::utils::read_inbox(
+            "worker", std::optional<std::string_view>{"c16ainbox"});
+        ASSERT_TRUE(msgs.has_value());
+        ASSERT_EQ(msgs->size(), 1u);
+        EXPECT_EQ((*msgs)[0].from, "lead");
+        EXPECT_EQ((*msgs)[0].text, "hello-c16a");
+        EXPECT_EQ((*msgs)[0].timestamp, "42");
+        EXPECT_FALSE((*msgs)[0].read);
+        ASSERT_TRUE((*msgs)[0].color.has_value());
+        EXPECT_EQ(*(*msgs)[0].color, "cyan");
+    }
+}
+
+// The canonical team config.json reader: the same four shapes.
+TEST(TeamDataC16a, TeamFileReaderSwapLeavesFailFastAndRegularParses) {
+    C14TeamEnv env;
+    const fs::path path{cc::utils::team_file_path("c16ateam")};
+    fs::create_directories(path.parent_path());
+
+    // Absent: nullopt.
+    EXPECT_FALSE(cc::utils::read_team_file("c16ateam").has_value());
+
+    // FIFO: nullopt instantly.
+    ASSERT_EQ(::mkfifo(path.string().c_str(), 0600), 0);
+    {
+        const auto t0 = std::chrono::steady_clock::now();
+        auto rec = cc::utils::read_team_file("c16ateam");
+        const auto elapsed = c16a_elapsed_ms(t0);
+        EXPECT_FALSE(rec.has_value());
+        EXPECT_LT(elapsed, 100) << "FIFO team file must never block";
+        std::error_code ec;
+        EXPECT_TRUE(fs::is_fifo(path, ec));
+    }
+
+    // Symlink: nullopt, canary untouched.
+    const auto canary = env.root / "team-canary.txt";
+    constexpr std::string_view kCanary = "c16a-team-canary-5188";
+    {
+        std::error_code ec;
+        fs::remove(path, ec);
+        std::ofstream out(canary, std::ios::binary);
+        out << kCanary;
+    }
+    fs::create_symlink(canary, path);
+    {
+        auto rec = cc::utils::read_team_file("c16ateam");
+        EXPECT_FALSE(rec.has_value());
+        EXPECT_EQ(c14_read_file(canary), std::string(kCanary));
+    }
+
+    // Regular record: identical parse.
+    {
+        std::error_code ec;
+        fs::remove(path, ec);
+        cc::utils::TeamFileRecord record;
+        record.name = "c16ateam";
+        record.description = std::optional<std::string>{"the c16a team"};
+        record.created_at = 123;
+        record.lead_agent_id = "team-lead@c16ateam";
+        ASSERT_TRUE(cc::utils::write_team_file("c16ateam", record));
+        auto rec = cc::utils::read_team_file("c16ateam");
+        ASSERT_TRUE(rec.has_value());
+        EXPECT_EQ(rec->name, "c16ateam");
+        EXPECT_EQ(rec->lead_agent_id, "team-lead@c16ateam");
+        EXPECT_EQ(rec->created_at, 123);
+        ASSERT_TRUE(rec->description.has_value());
+        EXPECT_EQ(*rec->description, "the c16a team");
+    }
+}

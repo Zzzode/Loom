@@ -49,6 +49,7 @@ module;
 module cc.ui.app.app;
 
 import cc.utils.json;
+import cc.utils.atomic_replace;
 import cc.utils.team_helpers;
 import cc.utils.swarm_helpers;
 import cc.utils.swarm_backends;
@@ -369,32 +370,38 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
             cc::utils::ScopedInboxLock roster_lock(
                 config_path, cc::utils::LockKind::Shared);
             if (roster_lock.locked()) {
-                auto doc = cc::utils::json::parse_file(config_path);
-                if (doc) {
-                    const auto members = doc->root().get("members");
-                    if (members.is_arr()) {
-                        members.iter([&](cc::utils::json::JsonVal member) {
-                            if (!member.is_obj()) return;
-                            const std::string name = member.get_string("name");
-                            // TS getTeammateStatuses filter (teamDiscovery.ts):
-                            // the implicit lead row is not a teammate.
-                            if (name == "team-lead") return;
-                            const std::string agent_id =
-                                member.get_string("agentId");
-                            if (agent_id.empty()) return;
-                            auto& t = out.emplace_back();
-                            t.agent_id = agent_id;
-                            t.name = name.empty() ? short_agent_name(agent_id)
-                                                 : name;
-                            t.color = member.get_string("color");
-                            t.pane_id = member.get_string("tmuxPaneId");
-                            if (t.pane_id == "in-process") t.pane_id.clear();
-                            const auto is_active = member.get("isActive");
-                            t.status = (is_active.is_bool() && !is_active.as_bool())
-                                           ? "idle"
-                                           : "running";
-                            by_agent.emplace(agent_id, out.size() - 1);
-                        });
+                // c16a: open the leaf ONCE (O_NOFOLLOW|O_NONBLOCK) and
+                // parse the buffer — a FIFO/symlink swap between the exists
+                // probe and the read can neither block nor be followed.
+                const auto leaf = cc::utils::read_regular_file(config_path);
+                if (leaf.present()) {
+                    auto doc = cc::utils::json::parse(leaf.contents);
+                    if (doc) {
+                        const auto members = doc->root().get("members");
+                        if (members.is_arr()) {
+                            members.iter([&](cc::utils::json::JsonVal member) {
+                                if (!member.is_obj()) return;
+                                const std::string name = member.get_string("name");
+                                // TS getTeammateStatuses filter (teamDiscovery.ts):
+                                // the implicit lead row is not a teammate.
+                                if (name == "team-lead") return;
+                                const std::string agent_id =
+                                    member.get_string("agentId");
+                                if (agent_id.empty()) return;
+                                auto& t = out.emplace_back();
+                                t.agent_id = agent_id;
+                                t.name = name.empty() ? short_agent_name(agent_id)
+                                                     : name;
+                                t.color = member.get_string("color");
+                                t.pane_id = member.get_string("tmuxPaneId");
+                                if (t.pane_id == "in-process") t.pane_id.clear();
+                                const auto is_active = member.get("isActive");
+                                t.status = (is_active.is_bool() && !is_active.as_bool())
+                                               ? "idle"
+                                               : "running";
+                                by_agent.emplace(agent_id, out.size() - 1);
+                            });
+                        }
                     }
                 }
             }

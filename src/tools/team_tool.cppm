@@ -200,7 +200,11 @@ inline bool persist_team_record(const Team& team) {
 }
 
 [[nodiscard]] inline std::optional<Team> load_team_record_from_path(const fs::path& path) {
-    auto parsed = cc::utils::json::parse_file(path);
+    // c16a: open the record ONCE (O_NOFOLLOW|O_NONBLOCK) and parse the
+    // buffer — a swapped FIFO cannot block and a symlink cannot be followed.
+    const auto leaf = cc::utils::read_regular_file(path);
+    if (!leaf.present()) return std::nullopt;
+    auto parsed = cc::utils::json::parse(leaf.contents);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
     auto id = root.get_string("id");

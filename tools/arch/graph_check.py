@@ -27,6 +27,17 @@ Builds the named-module import graph from src/ and enforces:
     (cc.ui is one rank-12 area in TARGET_RANK), so this is their sole
     guard.
 
+  STORE gate (--store-lint, RFC 0002 phase F3):
+    the F3 state stores are homed in cc.ui.screens.* (rank 10). Four rules
+    over src/ui/screens/*_store.cppm: (1) naming — a store file declares
+    cc.ui.screens.<name>_store; (2) out-of-store — a store's cc.ui.*
+    imports target only areas ranked BELOW screens (no store imports the
+    composition root); (3) into-store — only app-area (composition root)
+    or screens-area modules import a store; (4) threading — 0
+    mutex/jthread/condition_variable tokens in a store module. Empty
+    baseline: passes vacuously until the first store lands, and must pass
+    from that commit on.
+
 Zero third-party dependencies.
 """
 
@@ -248,6 +259,100 @@ def ui9_check(deps):
         "dir_edges": {f"{a} -> {b}": sorted(edges)
                       for (a, b), edges in sorted(dir_edges.items())},
         "passes": passes,
+    }
+
+
+# RFC 0002 phase F3 — store placement invariant. The F3 state stores are
+# homed in cc.ui.screens.* (rank 10): screens -> features/dialogs/prompt is
+# downward-legal, so by-value concrete state fields (AgentCardData/
+# LiveTeammate vectors, DialogQueue, ...) recreate no up-edge. Four rules:
+#   naming   a src/ui/screens/*_store.cppm file declares
+#            cc.ui.screens.<name>_store;
+#   out      a store's cc.ui.* imports target only areas ranked BELOW screens
+#            (UI9_RANK < 10) — no store imports the composition root (app)
+#            or a same/higher area (a store importing another store is also
+#            banned: cross-store reads go through selectors, never a direct
+#            import);
+#   in       a module importing a store is in the app area (composition
+#            root) or the screens area (same-area) — no features/dialogs/
+#            messages/prompt/... module reaches up to a store;
+#   threads  0 mutex/jthread/condition_variable tokens in a store module —
+#            stores are UI-thread-affined plain data; the one mutex in
+#            repl_state (pending_at_mention_mutex) moves to AppImpl, not
+#            into a store.
+# Baseline: empty. The lint passes vacuously until the first store lands and
+# must pass from that commit on (gate package section F3).
+STORE_THREAD_RE = re.compile(r"\b(?:mutex|jthread|condition_variable)\b")
+
+
+def _is_store_path(path) -> bool:
+    """True for a file directly under src/ui/screens/ named *_store.cppm."""
+    try:
+        rel = pathlib.Path(path).resolve().relative_to(SRC)
+    except ValueError:
+        return False
+    parts = rel.parts
+    return (len(parts) == 3 and parts[0] == "ui" and parts[1] == "screens"
+            and parts[2].endswith("_store.cppm"))
+
+
+def store_lint_check(units, deps):
+    """RFC 0002 phase F3 — the --store-lint placement gate (see STORE_*).
+
+    Returns a dict with the four rule results and a flat `violations` list;
+    `passes` is True iff every rule is clean. Fail-closed: a store importing
+    an unranked cc.ui area, or a non-cc.ui module importing a store, is a
+    violation rather than a silently skipped edge."""
+    naming: list[str] = []
+    out_of_store: list[tuple[str, str, str]] = []
+    into_store: list[tuple[str, str]] = []
+    threading: list[tuple[str, str]] = []
+
+    store_units = [u for u in units if _is_store_path(u.path)]
+    store_modules: set[str] = {u.module for u in store_units}
+    for u in store_units:
+        expected = "cc.ui.screens." + pathlib.Path(u.path).stem
+        if u.module != expected:
+            naming.append(
+                f"{u.path}: declares {u.module}, expected {expected} "
+                f"(a store file declares cc.ui.screens.<name>_store)")
+        cleaned = _strip_comments_strings(u.text)
+        for tok in sorted(set(STORE_THREAD_RE.findall(cleaned))):
+            threading.append((u.module, tok))
+
+    for m, imps in deps.items():
+        if m in store_modules:
+            for i in sorted(imps):
+                if not i.startswith("cc.ui."):
+                    continue
+                area = ui9_area_of(i)
+                if area is None or UI9_RANK.get(area, 99) >= 10:
+                    out_of_store.append((m, i, area or "<unranked>"))
+        for i in sorted(imps):
+            if i in store_modules:
+                area = ui9_area_of(m)
+                if area not in ("cc.ui.app", "cc.ui.screens"):
+                    into_store.append((m, i))
+
+    violations = (
+        [f"naming: {v}" for v in naming]
+        + [f"store {m} imports rank>=screens area '{area}' via {i} "
+           f"(store cc.ui.* imports must rank below screens)"
+           for m, i, area in sorted(out_of_store)]
+        + [f"{m} imports store {i} (only app-area or screens-area modules "
+           f"may import a store)"
+           for m, i in sorted(into_store)]
+        + [f"store {m} uses threading token '{tok}' (stores are "
+           f"UI-thread-affined plain data; mutexes live in AppImpl)"
+           for m, tok in sorted(threading)])
+    return {
+        "stores": sorted(store_modules),
+        "naming": naming,
+        "out_of_store": [list(x) for x in sorted(out_of_store)],
+        "into_store": [list(x) for x in sorted(into_store)],
+        "threading": [list(x) for x in sorted(threading)],
+        "violations": violations,
+        "passes": not violations,
     }
 
 
@@ -774,7 +879,7 @@ def find_dead_imports(units, symbols, ns_paths):
     return dead
 
 
-def run(target, allow_dead_imports=False, target_ui9=False):
+def run(target, allow_dead_imports=False, target_ui9=False, store_lint=False):
     allow = load_allowlist()
     baseline = load_baseline()
     dead_baseline = load_pair_baseline(DEAD_BASELINE, " -> ")
@@ -832,6 +937,9 @@ def run(target, allow_dead_imports=False, target_ui9=False):
     if target_ui9:
         report["ui9"] = ui9_check(deps)
 
+    if store_lint:
+        report["store_lint"] = store_lint_check(units, deps)
+
     # Default gate fails on: unranked area, module cycles, NEW upward
     # edges, NEW dead imports. Known baseline backlog is allowed.
     current_ok = (not unranked and not cycles and not new_edges
@@ -840,6 +948,8 @@ def run(target, allow_dead_imports=False, target_ui9=False):
         not target or report.get("target_core8_passes", True))
     if target_ui9:
         report["passes"] = report["passes"] and report["ui9"]["passes"]
+    if store_lint:
+        report["passes"] = report["passes"] and report["store_lint"]["passes"]
     return report
 
 
@@ -851,11 +961,17 @@ def main():
                          "areas must be singleton SCCs and no NEW back "
                          "direction may appear under the declared 12-area "
                          "total order")
+    ap.add_argument("--store-lint", action="store_true",
+                    help="RFC 0002 F3 store placement gate: stores homed in "
+                         "cc.ui.screens.*, imports only from below-screens "
+                         "areas, importers only app/screens, no threading "
+                         "primitives")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--allow-dead-imports", action="store_true",
                     help="tolerate NEW dead imports too (escape hatch)")
     args = ap.parse_args()
-    r = run(args.target_core8, args.allow_dead_imports, args.target_ui9)
+    r = run(args.target_core8, args.allow_dead_imports, args.target_ui9,
+            args.store_lint)
 
     gate_ok = r["passes"]
 
@@ -927,6 +1043,14 @@ def main():
             print("  removed since baseline (good):")
             for a, b in u["removed_back"]:
                 print(f"    {a} -> {b}")
+    if args.store_lint:
+        s = r["store_lint"]
+        print("RFC 0002 F3 store placement lint:",
+              "PASS" if s["passes"] else "FAIL")
+        print(f"  stores: {len(s['stores'])}"
+              + (f" ({', '.join(s['stores'])})" if s["stores"] else ""))
+        for v in s["violations"]:
+            print(f"  STORE LINT: {v}")
 
     print("graph_check:", "OK" if gate_ok else "FAIL")
     return 0 if gate_ok else 1

@@ -23,6 +23,7 @@ python3 tools/arch/graph_check.py             # human-readable
 python3 tools/arch/graph_check.py --json      # machine-readable
 python3 tools/arch/graph_check.py --target-core8   # future-state Phase B gate
 python3 tools/arch/graph_check.py --target-ui9     # RFC 0002 F0 future-state gate
+python3 tools/arch/graph_check.py --store-lint     # RFC 0002 F3 store placement gate
 ```
 
 **Future-state gate (`--target-core8`):** the nine RFC 0001 target areas
@@ -53,6 +54,33 @@ repo) covers the live-tree failure and both synthetic-new-edge cases:
 
 ```bash
 python3 tools/arch/test_target_ui9.py
+```
+
+**Store placement gate (`--store-lint`, RFC 0002 phase F3):** the F3 state
+stores are homed in `cc.ui.screens.*` (rank 10 — screens→features/dialogs/
+prompt is downward-legal, so by-value concrete state fields recreate no
+up-edge). Four rules over `src/ui/screens/*_store.cppm`:
+
+1. **Naming** — a store file declares `cc.ui.screens.<name>_store`;
+2. **Out-of-store** — a store's `cc.ui.*` imports target only areas ranked
+   *below* screens (`UI9_RANK < 10`); no store imports the composition root
+   (`cc.ui.app.*`) or a same/higher area (a store importing another store is
+   also banned — cross-store reads go through selectors wired by AppAdapter);
+3. **Into-store** — only app-area (composition root) or screens-area
+   (same-area) modules import a store; no features/dialogs/messages/prompt/…
+   module reaches up to a store;
+4. **Threading** — 0 `mutex`/`jthread`/`condition_variable` tokens in a
+   store module (stores are UI-thread-affined plain data; the
+   `pending_at_mention_mutex` moves to AppImpl, not into a store).
+
+The baseline is empty: the lint passes vacuously until the first store
+lands and must pass from that commit on (run it after every store commit —
+it is a local pre-merge check, not a CI gate). The negative test
+(`test_store_lint.py`, run manually) covers the vacuous live-tree pass and
+one synthetic violation per rule plus a positive control:
+
+```bash
+python3 tools/arch/test_store_lint.py
 ```
 
 ## What counts as an upward edge

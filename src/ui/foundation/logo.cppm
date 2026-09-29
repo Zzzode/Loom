@@ -8,8 +8,6 @@ export module cc.ui.foundation.logo;
 
 import std;
 
-import cc.ui.chrome.layout;
-
 export namespace cc::ui::logo {
 
 // --- Gradient colors for ASCII art rendering ---

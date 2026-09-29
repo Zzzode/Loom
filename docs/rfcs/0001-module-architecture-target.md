@@ -424,10 +424,14 @@ PRR (§11) and in the OQ-3 attachment sequencing.
 Every phase: debug + release `-Werror` and serial ctest green, with the
 ctest total reconciled exactly on deletions (baseline 1706 @ 2026-09-23);
 PSS/fan-out/wall-time evidence recorded; truecolor goldens compared for
-Phase A; old-shaped MCP config load test for Phase B; macos-14 CI for
-A/B. The graph invariants are enforced by `tools/arch/graph_check.py`
-(current gate now; `--target-core8` = 9 singleton SCCs gates the Phase B
-merge).
+Phase A; old-shaped MCP config load test for Phase B. **Verification gate
+(directive 2026-09-29): the local `local-linux` / `local-linux-release`
+presets on this dev box — dual-preset build + serial ctest green — are the
+authoritative gate. GitHub macos-14 CI is NOT a merge gate and MUST NOT be
+waited on or monitored** (it is too slow to be useful); mac CI evidence in
+earlier §12 entries is historical. The graph invariants are enforced by
+`tools/arch/graph_check.py` (current gate now; `--target-core8` = 9
+singleton SCCs gates the Phase B merge).
 
 ## 9. Sequencing summary
 

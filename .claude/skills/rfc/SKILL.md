@@ -68,7 +68,7 @@ provisional ───────────────▶ accepted ───�
 | `provisional` | Problem statement and rough proposal; number assigned. | File exists, passes `tools/rfc/rfc_lint.py`, owner named, Goals/Non-goals/Motivation drafted. |
 | `accepted` | The problem, target shape and trade-offs are agreed; not yet cleared to build. Agent design review approved (§3.1); all template sections answered, Alternatives compared, open questions resolved or enumerated with owner + acceptance. |
 | `implementable` | Cleared to write code. Agent design AND PRR reviews approved; per-phase plan with **measurable** graduation criteria, PRR checklist filled, rollback story, tracking issue. |
-| `implemented` | Every phase complete and independently verified. | All phases `done`, metrics recorded, docs/CLAUDE.md updated, lint/CI gates green, no unresolved `TODO(rfc)`. |
+| `implemented` | Every phase complete and independently verified. | All phases `done`, metrics recorded, docs/CLAUDE.md updated, lint gates green + local dual-preset build and serial ctest green (CI is not a gate — see §4), no unresolved `TODO(rfc)`. |
 | `deferred` | Accepted but deliberately not scheduled. | Reason + revisit condition stated. |
 | `rejected` / `withdrawn` | Not pursued. | Rationale kept; number never reused. |
 | `replaced` | Superseded by another RFC. | `superseded-by: NNNN` set in both directions. |
@@ -97,7 +97,7 @@ measured and recorded (see §4).
    vibes), Goals, Non-Goals, Proposal, Alternatives.
 5. Run `python3 tools/rfc/rfc_lint.py` — it must pass.
 6. Commit as `docs(rfc): add RFC NNNN <title> (provisional)` and open the
-   tracking issue. Docs-only changes do not trigger macos CI.
+   tracking issue. CI is not a gate for any change in this project (§4).
 
 Never renumber or reuse a retired number.
 
@@ -184,8 +184,11 @@ instruments:
 
 - **BMI PSS (MB)** per affected producer TU, sampled from
   `/proc/<pid>/smaps_rollup` `Pss:` while compiling (PSS, never RSS).
-- **Cold/warm build wall time** on the macos-14 CI runner (3 vCPU / 14 GB)
-  at default Ninja parallelism.
+- **Cold/warm build wall time** on the local dev box (Homebrew LLVM 22,
+  `local-linux` / `local-linux-release` presets, default Ninja parallelism).
+  GitHub CI is NOT a verification gate and MUST NOT be waited on or
+  monitored (directive 2026-09-29: it is too slow); macos-14 numbers in
+  older RFC entries are historical evidence only.
 - **Recompile fan-out** — number of modules recompiled when one interface
   changes; body edits must eventually cost one object file.
 - **Graph invariants** — output of `tools/rfc/rfc_lint.py` plus the Tarjan

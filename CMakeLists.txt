@@ -283,10 +283,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
     # The one reduced-BMI defect (LLVM #184957, fixed on main by PR #179178,
     # absent from 22.1.x) mis-merges the global aligned operator new when an
     # implementation unit `import std;`-s while its primary's global module
-    # fragment textually pulls libc++ via FTXUI. It has manifested in SEVEN
+    # fragment textually pulls libc++ via FTXUI. It has manifested in NINE
     # cc.ui.app.app impl units (app_extra_methods / app_handle_submit /
     # app_prompt_suggestion_wiring from Phase A, app_team since follow-up
-    # c16, app_run for C-header reasons, app_animation / app_local_command
+    # c16, app_run for C-header reasons, app_helpers / app_skills_menu
+    # since Phase C batch 1, app_animation / app_local_command
     # since Phase C batch 2); those units opt OUT of `import std;` and keep
     # textual std headers in their GMF (a plain impl unit is allowed
     # textual includes even when its interface imports std).

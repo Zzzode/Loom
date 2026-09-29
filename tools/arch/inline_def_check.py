@@ -334,7 +334,13 @@ def load_baseline() -> dict[str, dict]:
         line = raw.strip()
         if not line or line.startswith('#'):
             continue
-        parts = line.split()
+        # Strip trailing comments before parsing flags — without this the
+        # comment words were parsed as flags and --update re-emitted them
+        # as mangled flag tokens (observed on the runtime_registry B15 line).
+        code = line.split('#', 1)[0].strip()
+        parts = code.split()
+        if len(parts) < 2:
+            continue
         module = parts[0]
         frozen = int(parts[1])
         flags = set(parts[2:])
@@ -427,19 +433,43 @@ def run() -> dict:
 
 def update_baseline(result: dict) -> None:
     keep_flags = {m: d['flags'] for m, d in load_baseline().items()}
+    # Preserve the file header and per-line trailing comments verbatim —
+    # a rewrite must not destroy documentation (the pre-fix --update
+    # mangled comment words into the flags column and dropped all comments).
+    header: list[str] = []
+    comments: dict[str, str] = {}
+    if BASELINE.exists():
+        in_header = True
+        for raw in BASELINE.read_text().splitlines():
+            stripped = raw.strip()
+            if in_header and stripped.startswith('#'):
+                header.append(stripped)
+                continue
+            in_header = False
+            if not stripped or stripped.startswith('#'):
+                continue
+            code, sep, comment = stripped.partition('#')
+            parts = code.split()
+            if parts and sep:
+                comments[parts[0]] = '#' + comment
+    if not header:
+        header = [
+            "# RFC 0001 Phase C — frozen SEMANTIC inline-definition counts per god interface.",
+            "# Columns: <module> <frozen semantic inline bodies> [flags]",
+            "# The ratchet (tools/arch/inline_def_check.py) FAILS on any increase;",
+            "# decreases shrink this file in the same split commit. c1 = must reach <30",
+            "# when that module's batch merges; c2-done = <=100 cap now enforced.",
+        ]
     lines = []
     for r in sorted(result['rows'], key=lambda r: -r['inline']):
         if r['state'] == 'untracked' and r['inline'] <= C2_LIMIT:
             continue
         flags = sorted(keep_flags.get(r['module'], set()))
-        lines.append(' '.join([r['module'], str(r['inline']), *flags]).rstrip())
-    header = (
-        "# RFC 0001 Phase C — frozen SEMANTIC inline-definition counts per god interface.\n"
-        "# Columns: <module> <frozen semantic inline bodies> [flags]\n"
-        "# The ratchet (tools/arch/inline_def_check.py) FAILS on any increase;\n"
-        "# decreases shrink this file in the same split commit. c1 = must reach <30\n"
-        "# when that module's batch merges; c2-done = <=100 cap now enforced.\n")
-    BASELINE.write_text(header + '\n'.join(lines) + '\n')
+        line = ' '.join([r['module'], str(r['inline']), *flags]).rstrip()
+        if r['module'] in comments:
+            line += '  ' + comments[r['module']]
+        lines.append(line)
+    BASELINE.write_text('\n'.join(header) + '\n' + '\n'.join(lines) + '\n')
 
 
 def main() -> int:

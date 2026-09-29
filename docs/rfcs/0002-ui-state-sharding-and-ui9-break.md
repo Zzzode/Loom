@@ -1,9 +1,9 @@
 ---
 rfc: 2
 title: UI state sharding and breaking the UI9 SCC
-status: provisional
+status: implementable
 owners: "@Zzzode"
-reviewers: ["agent:design-review#1 (SOUND with required changes - numbers regenerated, minimum-cut corrected to 7 dirs/10 edges, row 8 extraction, F3 threading model; all applied 2026-09-26)", "agent:design-review#2/#3/#4 (three adversarial reviews of the implementable gate package, 2026-09-29, request-changes - all required changes applied; see attachments/0002-implementable-gate.md Review history)"]
+reviewers: ["agent:design-review#1 (SOUND with required changes - numbers regenerated, minimum-cut corrected to 7 dirs/10 edges, row 8 extraction, F3 threading model; all applied 2026-09-26)", "agent:design-review#2/#3/#4 (three adversarial reviews of the implementable gate package, 2026-09-29, request-changes - all required changes applied; see attachments/0002-implementable-gate.md Review history)", "agent:design-verify (independent verification of the revised gate package + body, 2026-09-29, approved)", "agent:prr-review (independent PRR of the implementable gate, 2026-09-29, approve - 30/30 checklist rows)"]
 created: 2026-09-26
 last-reviewed: 2026-09-29
 tracking: "https://github.com/Zzzode/Loom/issues/2"
@@ -326,3 +326,4 @@ All four open questions are **resolved** (2026-09-29, gate package):
 |---|---|---|---|---|
 | 2026-09-26 | — | RFC opened (provisional) after RFC 0001 A/C/D; measured 219 modules, 9-area SCC, 32 back edges, repl_state 739 LOC; awaits RFC 0001 Phase B + E before any code | — | discovery workflow wvjr74s34; graph inventory |
 | 2026-09-29 | — | **Correction row (SKILL §5):** body reconciled with the implementable gate package after three adversarial design reviews (agent:design-review#2/#3/#4, request-changes, all required changes applied). Evidence numbers corrected to the live 2026-09-29 re-measurement: 148 `cc.ui.*` modules (was 218), 2 SCCs (7-area + 2-area, was 1 of 9), 19 SCC-internal directions (was 34), minimum FAS 5 dirs / 7 module edges (was 7/10), `repl_state.cppm` 691 LOC (was 739), ctest 1836 @ 1a83330 (was 1706). Phase table sharpened to F0–F4 (RFC F3+F4 merged into gate F3; RFC F5 → gate F4). Rows 2 and 7 marked gone (sites deleted in the graveyard cleanup). Row-8 leaf homed in chrome (`cc.ui.chrome.ansi_render`), not messages. F3 stores placed in `cc.ui.screens.*`; shard inventory re-classified against live field types. Open questions all resolved. Tracking issue added (frontmatter `tracking:`). | — | gate package section 0; `graph_check.py --json`; `ctest -N` |
+| 2026-09-29 | — | **RFC promoted provisional → implementable.** Gate package (attachments/0002-implementable-gate.md) supplies the PRR, per-phase numeric thresholds and rollback story. Design gate: three adversarial reviews (agent:design-review#2/#3/#4, request-changes, all required changes applied) + independent verification (agent:design-verify, approved). PRR gate: agent:prr-review, approve (30/30 checklist rows; one blocking ctest-arithmetic finding fixed and re-verified — local-linux `ctest -N` = 1836). `rfc_lint.py` green. | 0bd6aad | gate package Review history + sign-off table; `ctest --preset local-linux -N` = 1836 |

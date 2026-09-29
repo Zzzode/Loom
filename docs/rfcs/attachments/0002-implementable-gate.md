@@ -261,8 +261,8 @@ the local dual-preset gate is the sole build/test verification.
 | Role | Reviewer | Date | Verdict |
 |---|---|---|---|
 | Design | agent:design-review#1 | 2026-09-26 | approve (SOUND with required changes — all applied; recorded in RFC frontmatter) |
-| Design (gate package) | agent:design-review#2, agent:design-review#3, agent:design-review#4 (three adversarial reviews of this gate package) | 2026-09-29 | request-changes → all required changes applied (see Review history) |
-| Production readiness | _pending independent agent PRR run_ | — | _pending — a document cannot review itself; the independent PRR is run after this revision_ |
+| Design (gate package) | agent:design-review#2, agent:design-review#3, agent:design-review#4 (three adversarial reviews of this gate package) | 2026-09-29 | request-changes → all required changes applied; independent agent:design-verify approved (2026-09-29) |
+| Production readiness | agent:prr-review | 2026-09-29 | approve — 30/30 checklist rows; one blocking finding (ctest arithmetic 1828+6≠1836) fixed and re-verified (`ctest -N` on local-linux = 1836) |
 | Code (per phase) | per-phase independent adversarial agent | per phase | approve (required before each phase `done`) |
 
 ---

@@ -1,10 +1,15 @@
 /// @file plugin_install_flow.cppm
-/// @brief 5-step plugin install wizard using UI11 Wizard framework:
+/// @brief 5-step plugin install wizard using the neutral feature-dialog
+///        protocol (RFC 0002 F2 row 6):
 ///        Step 1 Source → Step 2 Review → Step 3 Trust validation (reuse UI8)
 ///        → Step 4 Install progress → Step 5 Complete.
 ///
-/// Step 3 fully reuses cc.ui.dialogs.trust_dialog::MakePluginTrustDialog — the
-/// wizard embeds that component.
+/// Step 3 fully reuses cc.ui.dialogs.trust_dialog::MakeTrustDialogComponent —
+/// but indirectly: this module builds a neutral FeatureTrustRequest and
+/// resolves the ViewKind::PluginTrust factory (registered by the composition
+/// root). This module no longer imports cc.ui.dialogs.trust_dialog or
+/// cc.ui.dialogs.wizard_dialog (features -> dialogs was the last UI9 back
+/// edge).
 module;
 
 #include <cstdint>
@@ -22,8 +27,7 @@ import std;
 import cc.commands.plugin_ui_data;
 import cc.commands.plugin_details_helpers;
 import cc.commands.plugin_trust_text;
-import cc.ui.dialogs.trust_dialog;
-import cc.ui.dialogs.wizard_dialog;
+import cc.ui.foundation.feature_dialog_protocol;
 
 export namespace cc::ui::plugins::plugin_install_flow {
 using namespace ftxui;
@@ -31,8 +35,7 @@ using namespace ftxui;
 namespace ui = cc::commands::plugin_ui;
 namespace pd = cc::commands::plugin;
 namespace pt = cc::commands::plugin;
-namespace wd = cc::ui::wizard_dialog;
-namespace td = cc::ui::trust_dialog;
+namespace fdp = cc::ui::feature_dialog_protocol;
 
 // =========================================================================
 // Step 1 — plugin source selection
@@ -587,12 +590,12 @@ struct InstallFlowState {
         state->source.marketplace_id = *state->inputs.preselected_marketplace;
     }
 
-    // Build the 5 wizard steps using UI11 WizardComponent
-    wd::WizardProviderProps props;
-    props.title = "Install Plugin";
+    // Build the 5 wizard steps using the neutral feature-dialog protocol.
+    fdp::FeatureWizardRequest request;
+    request.title = "Install Plugin";
 
     // Step 1 — Source
-    wd::WizardStep step1;
+    fdp::FeatureWizardStep step1;
     step1.id = "source";
     step1.title = "Installation source";
     step1.description = "Choose where the plugin comes from";
@@ -601,10 +604,10 @@ struct InstallFlowState {
             return detail::RenderSourceStep(state->source, state->source_selected);
         });
     };
-    props.steps.push_back(std::move(step1));
+    request.steps.push_back(std::move(step1));
 
     // Step 2 — Review
-    wd::WizardStep step2;
+    fdp::FeatureWizardStep step2;
     step2.id = "review";
     step2.title = "Review details";
     step2.description = "Verify plugin info and permissions";
@@ -613,30 +616,31 @@ struct InstallFlowState {
             return detail::RenderReviewStep(state->review);
         });
     };
-    props.steps.push_back(std::move(step2));
+    request.steps.push_back(std::move(step2));
 
     // Step 3 — Trust
-    wd::WizardStep step3;
+    fdp::FeatureWizardStep step3;
     step3.id = "trust";
     step3.title = "Trust validation";
     step3.description = "Security & trust check";
     step3.create_content = [state]() {
-        // Create / reuse the embedded UI8 TrustDialog component
+        // Create / reuse the embedded trust dialog component, resolved
+        // through the neutral protocol (the composition root maps the
+        // FeatureTrustRequest to a td::TrustDialogProps).
         if (!state->trust_dialog_component) {
-            td::TrustDialogProps p;
-            p.on_done = [state](td::TrustChoice choice) {
+            fdp::FeatureTrustRequest trust_req;
+            trust_req.marketplace_domain = state->trust.marketplace_domain;
+            trust_req.has_signature = state->trust.has_signature;
+            trust_req.on_done = [state](fdp::TrustChoice choice) {
                 state->trust.user_signed_trust =
-                    (choice != td::TrustChoice::Cancel);
+                    (choice != fdp::TrustChoice::Cancel);
             };
-            p.action = td::ActionType::PluginInstall;
-            p.action_label = "Plugin Installation";
-            p.marketplace_domain = state->trust.marketplace_domain;
-            p.plugin_has_signature = state->trust.has_signature;
-            // If the caller supplied PluginDefinition via inputs, it is
-            // consumed here.  For the pure-UI contract we keep the
-            // fallback to the generic trust dialog.
-            state->trust_dialog_component =
-                td::MakeTrustDialogComponent(std::move(p));
+            auto factory = fdp::resolve_dialog_factory(fdp::ViewKind::PluginTrust);
+            if (factory) {
+                state->trust_dialog_component =
+                    factory(std::make_shared<fdp::FeatureTrustRequest>(
+                        std::move(trust_req)));
+            }
         }
         return Renderer([state] {
             return detail::RenderTrustStep(
@@ -647,10 +651,10 @@ struct InstallFlowState {
             return false;
         });
     };
-    props.steps.push_back(std::move(step3));
+    request.steps.push_back(std::move(step3));
 
     // Step 4 — Install
-    wd::WizardStep step4;
+    fdp::FeatureWizardStep step4;
     step4.id = "install";
     step4.title = "Installation";
     step4.description = "Downloading, verifying, and installing";
@@ -674,10 +678,10 @@ struct InstallFlowState {
             return detail::RenderInstallStep(state->progress);
         });
     };
-    props.steps.push_back(std::move(step4));
+    request.steps.push_back(std::move(step4));
 
     // Step 5 — Complete
-    wd::WizardStep step5;
+    fdp::FeatureWizardStep step5;
     step5.id = "complete";
     step5.title = "Complete";
     step5.description = "Installation result";
@@ -686,20 +690,26 @@ struct InstallFlowState {
             return detail::RenderCompleteStep(state->complete);
         });
     };
-    props.steps.push_back(std::move(step5));
+    request.steps.push_back(std::move(step5));
 
     // Completion / cancel handlers
-    props.on_complete = [state] {
+    request.on_complete = [state] {
         if (state->complete.success && state->inputs.on_complete)
             state->inputs.on_complete(state->complete);
     };
-    props.on_cancel = [state] {
+    request.on_cancel = [state] {
         if (state->inputs.on_cancel) state->inputs.on_cancel();
     };
 
-    // Build the wizard, then wrap with per-step Enter-gating + step
-    // transition side-effects (prepare review, prepare trust, start install).
-    auto wizard = wd::WizardComponent(std::move(props));
+    // Resolve the wizard component through the neutral protocol (the
+    // composition root maps the FeatureWizardRequest to a wizard_dialog
+    // component via the generic adapter).
+    auto wizard_factory =
+        fdp::resolve_dialog_factory(fdp::ViewKind::PluginInstall);
+    auto wizard = wizard_factory
+                      ? wizard_factory(std::make_shared<fdp::FeatureWizardRequest>(
+                            std::move(request)))
+                      : Component();
 
     // Wrap with inter-step pre-computation hook
     auto base_state = state;  // capture

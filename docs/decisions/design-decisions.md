@@ -3130,6 +3130,24 @@ preserved in prose — and so a future reader knows **which** TS file the number
   hashes both a "present?" bit and the count so either change triggers a rebuild; `streaming_tail_row`
   is deliberately excluded.
 
+- **`src/ui/foundation/feature_dialog_protocol.cppm`** — RFC 0002 F2 row 6 registry inversion. The
+  `ViewKind` enum (`AgentWizard`, `PluginInstall`, `PluginTrust`) is the shared key between the
+  **producer** side (the feature modules `src/ui/features/agents/agent_wizard.cppm` and
+  `src/ui/features/plugins/plugin_install_flow.cppm`, which build a neutral `FeatureWizardRequest` /
+  `FeatureTrustRequest` and call `resolve_dialog_factory(ViewKind)`) and the **consumer** side (the
+  composition root `src/ui/app/app_feature_dialog_registration.cpp`, which calls
+  `register_dialog_factory(ViewKind, ...)` once at startup). Adding or renaming a `ViewKind`
+  enumerator on the producer side WITHOUT a matching registration in the app impl unit silently
+  yields a null factory — `resolve_dialog_factory` returns an empty `DialogFactory`, the caller
+  returns a default-constructed `Component()`, and the dialog simply does not render. That is a
+  wrong-answer-not-an-error, exactly the hazard this section catalogues. The concrete
+  `static_pointer_cast` of the erased `shared_ptr<void>` request back to `FeatureWizardRequest` /
+  `FeatureTrustRequest` is confined to `src/ui/app/app_feature_dialog_registration.cpp` (grep `src/`
+  to verify — no feature or dialogs module casts the erased request). The neutral `TrustChoice`
+  enum mirrors `cc::ui::trust_dialog::TrustChoice` 1:1; the mapping lives in
+  `to_neutral_trust_choice` in the same app impl unit, so adding a trust-dialog choice on one side
+  without the other is a compile error there, not a silent fallthrough.
+
 ---
 
 ## D. Explicitly-marked divergence blocks

@@ -104,6 +104,11 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         screen_state_->dialog_renderers);
     cc::ui::app_dialogs::register_teams_dialog_renderer(
         screen_state_->dialog_renderers);
+    // RFC 0002 F2 row 6: register the feature-dialog factories (agent
+    // wizard, plugin install wizard, plugin trust dialog) into the
+    // feature_dialog_protocol erased-factory registry, so the features area
+    // resolves its dialogs by ViewKind without importing the dialogs area.
+    cc::ui::app_dialogs::register_feature_dialog_factories();
     // The faithful MCP elicitation dialog (y/n shortcuts, Esc -> on_cancel)
     // overrides the minimal inline renderer in default_renderers. Registered
     // last so it wins the by-index slot.

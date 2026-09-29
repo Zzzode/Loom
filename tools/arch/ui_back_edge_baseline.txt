@@ -3,35 +3,30 @@
 # Two frozen sets, two checks (gate package docs/rfcs/attachments/
 # 0002-implementable-gate.md, section F0):
 #
-# [scc-internal] — the live SCC-internal cc.ui area-directions, frozen at
-#     2 (all inside the 2-area SCC {dialogs,features}). A 3rd fails;
-#     removals shrink this file. This is the SOLE guard for cc.ui-internal
-#     edges — the default rank gate is blind to them (cc.ui is one rank-12
-#     area in TARGET_RANK).
+# [scc-internal] — the live SCC-internal cc.ui area-directions. A new entry
+#     fails; removals shrink this file. This is the SOLE guard for
+#     cc.ui-internal edges — the default rank gate is blind to them (cc.ui
+#     is one rank-12 area in TARGET_RANK).
 #
 # [back] — the back directions under the declared 12-area total order
-#     (UI9_RANK in graph_check.py: A -> B is back iff rank(A) < rank(B)),
-#     frozen at 1 direction / 3 module edges. ANY other upward edge fails
-#     — including a non-SCC-forming one (e.g. visual -> foundation passes
-#     the SCC check — visual is a singleton — but fails this one).
-#     After F2 cut 6 severs the last one, this check enforces 0 upward
-#     edges, which machine-enforces the declared total order.
+#     (UI9_RANK in graph_check.py: A -> B is back iff rank(A) < rank(B)).
+#     ANY upward edge fails — including a non-SCC-forming one (e.g.
+#     visual -> foundation passes the SCC check — visual is a singleton —
+#     but fails this one). With this section empty, the check enforces
+#     0 upward edges, which machine-enforces the declared total order.
 #
-# Re-frozen 2026-09-30 from the live tree (636 modules, 767 units, 0
-# module cycles) after RFC 0002 phase F2 cut 4 (row 4 registry inversion):
-# the doctor renderer registration moved out of
-# cc.ui.dialogs.default_renderers into the screens-side module
-# cc.ui.screens.doctor_dialog_registration, severing dialogs -> screens.
-# The 3-area SCC {dialogs,features,screens} collapsed to a 2-area SCC
-# {dialogs,features} (screens is now a singleton; screens -> dialogs and
-# screens -> features are downward-legal and no longer SCC-internal).
-# The one remaining back direction (features -> dialogs) is F2 cut 6's
-# target.
+# Re-frozen 2026-09-30 from the live tree after RFC 0002 phase F2 cut 6
+# (row 6 registry inversion): the feature modules (agent_wizard,
+# plugin_install_flow) dropped their dialogs imports and now build neutral
+# requests resolved through the cc.ui.foundation.feature_dialog_protocol
+# erased-factory registry; the composition root
+# (src/ui/app/app_feature_dialog_registration.cpp) registers the concrete
+# factories and holds the only static_pointer_cast of the erased requests.
+# This severed features -> dialogs, the last back direction. All 12 cc.ui
+# areas are now singleton SCCs (0 SCCs > 1, 0 SCC-internal directions,
+# 0 back directions) — --target-ui9 PASSES.
 # Format: <from area> -> <to area>
 #
 # [scc-internal]
-cc.ui.dialogs -> cc.ui.features
-cc.ui.features -> cc.ui.dialogs
 #
 # [back]
-cc.ui.features -> cc.ui.dialogs

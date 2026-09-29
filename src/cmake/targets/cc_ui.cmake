@@ -45,6 +45,7 @@ target_sources(cc_ui
         ui/dialogs/trust_dialog.cppm
         ui/dialogs/trust_utils.cppm
         ui/dialogs/wizard_dialog.cppm
+        ui/dialogs/feature_wizard_adapter.cppm  # RFC 0002 F2 row 6: neutral FeatureWizardRequest -> wizard_dialog adapter (dialogs side; imports only the protocol leaf)
         ui/dialogs/cost_threshold_dialog.cppm
         ui/dialogs/all_renderers.cppm            # new: DialogRendererRegistry + all renderers
         ui/dialogs/bottom_renderers.cppm         # new: Bottom-band dialog renderers
@@ -159,6 +160,7 @@ target_sources(cc_ui
         ui/foundation/theme_provider.cppm
         ui/foundation/design_logo.cppm
         ui/foundation/component_primitives.cppm
+        ui/foundation/feature_dialog_protocol.cppm  # RFC 0002 F2 row 6: neutral feature-dialog vocabulary + erased factory registry (foundation leaf; imports only std + ftxui)
 )
 # Module implementation units for cc.ui.app_dialog_registration — one per
 # dialog-renderer aggregator, so no single TU imports more than one aggregator's
@@ -180,6 +182,12 @@ target_sources(cc_ui PRIVATE
     ui/app/app_dialog_registration_all.cpp
     ui/app/app_dialog_registration_hooks.cpp
     ui/app/app_dialog_registration_teams.cpp
+    # Module implementation unit for cc.ui.app.app_dialog_registration
+    # (RFC 0002 F2 row 6): the feature-dialog factory registration (agent
+    # wizard, plugin install wizard, plugin trust dialog). The concrete
+    # static_pointer_cast of the erased request lives ONLY here, so the
+    # feature and dialogs modules never name each other's types.
+    ui/app/app_feature_dialog_registration.cpp
     ui/app/app_message_projection.cpp
     ui/app/app_store_bridge.cpp
     ui/app/app_run.cpp

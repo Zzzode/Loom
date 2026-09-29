@@ -26,7 +26,9 @@
 /// On wizard completion: fires on_save with the aggregated wizard state.
 ///
 /// Reuses:
-///   - cc.ui.dialogs.wizard_dialog  (WizardComponent, WizardStep, WizardProviderProps)
+///   - cc.ui.foundation.feature_dialog_protocol (neutral wizard request +
+///     ViewKind factory registry — RFC 0002 F2 row 6 inversion; this module
+///     no longer imports cc.ui.dialogs.wizard_dialog)
 ///   - cc.ui.widgets.custom_select  (MakeSingleSelect / MakeMultiSelect for roles,
 ///                           tools, model)
 ///   - cc.ui.features.agents.agent_shared_widgets (AgentAvatar, RoleTags, RunStats)
@@ -46,7 +48,7 @@ export module cc.ui.features.agents.agent_wizard;
 
 import std;
 
-import cc.ui.dialogs.wizard_dialog;
+import cc.ui.foundation.feature_dialog_protocol;
 import cc.ui.widgets.custom_select;
 import cc.ui.features.agents.agent_shared_widgets;
 import cc.ui.features.agents.agent_cards;
@@ -56,15 +58,8 @@ import cc.utils.swarm_backends;
 export namespace cc::ui::agents::wizard {
 using namespace ftxui;
 
-// NOTE: cc.ui.dialogs.wizard_dialog exposes MakeWizard(WizardConfig, StepsFn) with
-// steps that carry Element-render + event callbacks.  Agent wizard uses a
-// different pattern (props object + steps that return full Component
-// objects).  We define local adapter types below.
-using cc::ui::wizard_dialog::WizardConfig;
-using cc::ui::wizard_dialog::WizardContext;
-using cc::ui::wizard_dialog::MakeWizard;
-using cc::ui::wizard_dialog::WizardStep;  // (imported type is *not* used
-                                            //  for the .steps field below)
+namespace fdp = cc::ui::feature_dialog_protocol;
+
 using cc::ui::custom_select::MakeMultiSelect;
 using cc::ui::custom_select::MakeSingleSelect;
 using cc::ui::custom_select::MakeCustomSelect;
@@ -72,69 +67,6 @@ using cc::ui::custom_select::SelectOption;
 using cc::ui::custom_select::SelectMode;
 using cc::ui::custom_select::CustomSelectOptions;
 using cc::ui::custom_select::CustomSelectHandle;
-
-// ---------------------------------------------------------------------------
-// Adapter: agent-wizard pattern → MakeWizard framework
-// ---------------------------------------------------------------------------
-struct AgentWizardStepEntry {
-    std::string id;
-    std::string title;
-    std::string description;
-    std::function<Component()> create_content;
-};
-
-struct WizardProviderProps {
-    std::string title;
-    bool show_step_counter = true;
-    std::function<void()> on_cancel;
-    std::function<void()> on_complete;
-    std::vector<AgentWizardStepEntry> steps;
-};
-
-/// Bridges WizardProviderProps (agent-wizard convention) to the underlying
-/// cc.ui.dialogs.wizard_dialog MakeWizard() factory.  Each step's create_content()
-/// Component is wired into the step's render + on_event callbacks.
-inline Component WizardComponent(WizardProviderProps props) {
-    WizardConfig cfg;
-    cfg.title = std::move(props.title);
-    cfg.show_step_counter = props.show_step_counter;
-
-    auto components = std::make_shared<std::vector<Component>>();
-    components->reserve(props.steps.size());
-
-    auto builder = [props = std::move(props), components](WizardContext& ctx) mutable {
-        ctx.on_cancel = [cb = std::move(props.on_cancel)](WizardContext&) {
-            if (cb) cb();
-        };
-        ctx.on_complete = [cb = std::move(props.on_complete)](WizardContext&) {
-            if (cb) cb();
-        };
-
-        for (auto& s : props.steps) {
-            Component comp = s.create_content ? s.create_content() : Component();
-            components->push_back(comp);
-            const size_t idx = components->size() - 1;
-
-            WizardStep step;
-            step.id = std::move(s.id);
-            step.title = std::move(s.title);
-            step.description = std::move(s.description);
-            step.render = [components, idx](WizardContext&) -> Element {
-                return (*components)[idx]
-                           ? (*components)[idx]->Render()
-                           : text("");
-            };
-            step.on_event = [components, idx](WizardContext&, Event e) -> bool {
-                return (*components)[idx]
-                           ? (*components)[idx]->OnEvent(std::move(e))
-                           : false;
-            };
-            ctx.steps.push_back(std::move(step));
-        }
-    };
-
-    return MakeWizard(std::move(cfg), std::move(builder));
-}
 
 using cards::AgentCardData;
 using shared::AgentAvatar;
@@ -801,8 +733,11 @@ struct AgentWizardOptions {
     std::function<void()> on_cancel;
 };
 
-/// Build the full 4-step agent wizard component. Wires WizardComponent with
-/// 4 WizardStep entries; the final Enter on step 4 fires `on_save`.
+/// Build the full 4-step agent wizard component. Builds a neutral
+/// FeatureWizardRequest and resolves the ViewKind::AgentWizard factory
+/// (registered by the composition root — RFC 0002 F2 row 6). The factory
+/// builds the concrete wizard_dialog component; this module never imports
+/// cc.ui.dialogs.wizard_dialog.
 [[nodiscard]] inline Component AgentWizard(AgentWizardOptions opts) {
     auto draft = std::make_shared<WizardDraft>();
 
@@ -831,41 +766,45 @@ struct AgentWizardOptions {
         }
     }
 
-    WizardProviderProps props;
-    props.title = opts.edit_agent ? "Edit Agent" : "Create New Agent";
-    props.show_step_counter = true;
-    props.on_cancel = std::move(opts.on_cancel);
-    props.on_complete = [draft, cb = std::move(opts.on_save)] {
+    fdp::FeatureWizardRequest request;
+    request.title = opts.edit_agent ? "Edit Agent" : "Create New Agent";
+    request.show_step_counter = true;
+    request.on_cancel = std::move(opts.on_cancel);
+    request.on_complete = [draft, cb = std::move(opts.on_save)] {
         if (cb) cb(*draft);
     };
 
     // Wire 4 steps.
-    props.steps.push_back({
+    request.steps.push_back({
         .id = "basic",
         .title = "Basic",
         .description = "Name, description, roles, avatar color",
         .create_content = [draft] { return StepBasic(draft); },
     });
-    props.steps.push_back({
+    request.steps.push_back({
         .id = "tools",
         .title = "Tools",
         .description = "Pick enabled tools + path scope",
         .create_content = [draft] { return StepTools(draft); },
     });
-    props.steps.push_back({
+    request.steps.push_back({
         .id = "model",
         .title = "Model & Prompt",
         .description = "Model, temperature, system prompt",
         .create_content = [draft] { return StepModelPrompt(draft); },
     });
-    props.steps.push_back({
+    request.steps.push_back({
         .id = "summary",
         .title = "Permissions & Summary",
         .description = "Default permission mode, confirm, review",
         .create_content = [draft] { return StepPermissions(draft); },
     });
 
-    return WizardComponent(std::move(props));
+    auto factory = fdp::resolve_dialog_factory(fdp::ViewKind::AgentWizard);
+    return factory
+               ? factory(std::make_shared<fdp::FeatureWizardRequest>(
+                     std::move(request)))
+               : Component();
 }
 
 } // namespace cc::ui::agents::wizard

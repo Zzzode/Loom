@@ -30,4 +30,12 @@ void register_hooks_dialog_renderer(
 void register_teams_dialog_renderer(
     cc::ui::dialogs::system::DialogRendererRegistry& registry);
 
+/// RFC 0002 F2 row 6: register the feature-dialog factories (agent wizard,
+/// plugin install wizard, plugin trust dialog) into the
+/// cc.ui.foundation.feature_dialog_protocol erased-factory registry. The
+/// concrete static_pointer_cast of the erased request lives in the impl unit
+/// (app_feature_dialog_registration.cpp), never in a feature or dialogs
+/// module. Called once at app startup, alongside the dialog renderers.
+void register_feature_dialog_factories();
+
 }  // namespace cc::ui::app_dialogs

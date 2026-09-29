@@ -18,6 +18,15 @@ Builds the named-module import graph from src/ and enforces:
     SCC (expected: 9 incl. orchestration). Fails today; passes after the
     14 families land.
 
+  FUTURE gate (--target-ui9, RFC 0002 phase F0):
+    the 12 cc.ui.<area> areas are pairwise acyclic — every one a singleton
+    SCC — and no NEW back direction appears under the declared 12-area
+    total order (ui_back_edge_baseline.txt). Fails today (2 SCCs: a
+    7-area SCC + chrome<->foundation); passes after the RFC 0002 F1/F2
+    cuts land. The default rank gate is blind to cc.ui-internal edges
+    (cc.ui is one rank-12 area in TARGET_RANK), so this is their sole
+    guard.
+
 Zero third-party dependencies.
 """
 
@@ -36,6 +45,7 @@ HERE = pathlib.Path(__file__).parent
 ALLOWLIST = HERE / "port_allowlist.txt"
 BASELINE = HERE / "upward_edge_baseline.txt"
 DEAD_BASELINE = HERE / "dead_imports_baseline.txt"
+UI9_BASELINE = HERE / "ui_back_edge_baseline.txt"
 
 # Whole-text (multiline) forms applied AFTER comment/string stripping and
 # backslash-newline joining, so legal spellings — `import\n cc.foo;`,
@@ -103,6 +113,142 @@ MODULE_RANK_OVERRIDE = {
 CORE8 = ["cc.config", "cc.hooks", "cc.services", "cc.skills",
          "cc.state", "cc.task_types", "cc.tools", "cc.utils"]
 TARGET_AREAS = CORE8 + ["cc.orchestration"]
+
+# RFC 0002 phase F0 — declared total order over the 12 cc.ui.<area> areas.
+# "Back edge" is operational against this table: an area-direction A -> B is
+# a back edge iff UI9_RANK[A] < UI9_RANK[B] (A imports a higher-ranked area).
+# The order is the minimum-FAS order on the live graph (exhaustive 7! search
+# over the 7-area SCC; gate package §0). visual/tools are pure leaves (zero
+# cc.ui imports), so they rank below every importer; their mutual rank is
+# irrelevant. After F2 severs all 5 back directions this table machine-
+# enforces the declared order (0 upward edges allowed).
+UI9_RANK = {
+    "cc.ui.app": 11,
+    "cc.ui.screens": 10,
+    "cc.ui.dialogs": 9,
+    "cc.ui.features": 8,
+    "cc.ui.messages": 7,
+    "cc.ui.permissions": 6,
+    "cc.ui.widgets": 5,
+    "cc.ui.prompt": 4,
+    "cc.ui.chrome": 3,
+    "cc.ui.foundation": 2,
+    "cc.ui.visual": 1,
+    "cc.ui.tools": 1,
+}
+
+
+def ui9_area_of(module: str):
+    """The cc.ui.<area> second-level area (first 3 dot-segments), or None
+    for modules outside cc.ui.*. Matches the attachment methodology: the
+    core graph uses area_of() ([:2]); the UI9 flag uses [:3]."""
+    parts = module.split(".")
+    if len(parts) >= 3 and parts[0] == "cc" and parts[1] == "ui":
+        return ".".join(parts[:3])
+    return None
+
+
+def load_ui9_baseline(path):
+    """Parse ui_back_edge_baseline.txt into (scc_internal, back) pair sets.
+
+    The file holds two frozen sets in two comment-marked sections:
+      `# [scc-internal]` — the frozen SCC-internal area-directions;
+      `# [back]`          — the frozen back directions under UI9_RANK.
+    A `from -> to` line lands in the set of the section it follows. Lines
+    before any section header are ignored (the file header)."""
+    p = pathlib.Path(path)
+    if not p.exists():
+        return set(), set()
+    internal: set[tuple[str, str]] = set()
+    back: set[tuple[str, str]] = set()
+    current = None
+    for ln in p.read_text().splitlines():
+        s = ln.strip()
+        if not s:
+            continue
+        if s.startswith("#"):
+            header = s.lstrip("#").strip()
+            if header == "[scc-internal]":
+                current = internal
+            elif header == "[back]":
+                current = back
+            continue
+        if current is not None and " -> " in s:
+            a, b = s.split(" -> ", 1)
+            current.add((a.strip(), b.strip()))
+    return internal, back
+
+
+def ui9_check(deps):
+    """RFC 0002 phase F0 — the --target-ui9 future-state gate.
+
+    Two frozen sets, two checks over the 12-area cc.ui subgraph:
+      (a) Tarjan + subset freeze — the SCC-internal area-directions are
+          frozen at the baseline (19 today); a 20th fails. This is the
+          sole guard for cc.ui-internal edges: the default rank gate is
+          blind to them (cc.ui is one rank-12 area in TARGET_RANK).
+      (b) Rank-based order conformance — under UI9_RANK, a direction
+          A -> B with rank(A) < rank(B) is a back edge; any back direction
+          not in the baseline (5 today) fails, including a NON-SCC-forming
+          one (e.g. visual -> foundation passes (a) — visual is a
+          singleton — but fails (b)). After F2 severs all 5, this enforces
+          0 upward edges.
+
+    Passes only when every area is a singleton SCC and neither frozen set
+    gained an entry. Fails today (2 SCCs); passes after F2. Removals are
+    fine and shrink the snapshot."""
+    base_internal, base_back = load_ui9_baseline(UI9_BASELINE)
+
+    # Fail closed: every cc.ui.<area> present in the graph must be ranked,
+    # so no edge is silently skipped (same discipline as TARGET_RANK).
+    unranked = sorted({
+        a for m in deps if (a := ui9_area_of(m)) is not None
+        and a not in UI9_RANK})
+
+    g: dict[str, set[str]] = {a: set() for a in UI9_RANK}
+    dir_edges: dict[tuple[str, str], set[tuple[str, str]]] = {}
+    for m, imps in deps.items():
+        a = ui9_area_of(m)
+        if a is None:
+            continue
+        for i in imps:
+            b = ui9_area_of(i)
+            if b is not None and b != a:
+                g[a].add(b)
+                dir_edges.setdefault((a, b), set()).add((m, i))
+
+    sccs = [sorted(c) for c in tarjan_scc(g) if len(c) > 1]
+
+    internal: set[tuple[str, str]] = set()
+    for c in sccs:
+        cs = set(c)
+        for a in c:
+            for b in g.get(a, ()):
+                if b in cs:
+                    internal.add((a, b))
+
+    back = {(a, b) for (a, b) in dir_edges if UI9_RANK[a] < UI9_RANK[b]}
+
+    new_internal = sorted(internal - base_internal)
+    removed_internal = sorted(base_internal - internal)
+    new_back = sorted(back - base_back)
+    removed_back = sorted(base_back - back)
+
+    passes = (not sccs and not new_internal and not new_back
+              and not unranked)
+    return {
+        "area_sccs": sccs,
+        "unranked_areas": unranked,
+        "scc_internal": sorted(internal),
+        "new_scc_internal": new_internal,
+        "removed_scc_internal": removed_internal,
+        "back": sorted(back),
+        "new_back": new_back,
+        "removed_back": removed_back,
+        "dir_edges": {f"{a} -> {b}": sorted(edges)
+                      for (a, b), edges in sorted(dir_edges.items())},
+        "passes": passes,
+    }
 
 
 def area_of(module: str) -> str:
@@ -628,7 +774,7 @@ def find_dead_imports(units, symbols, ns_paths):
     return dead
 
 
-def run(target, allow_dead_imports=False):
+def run(target, allow_dead_imports=False, target_ui9=False):
     allow = load_allowlist()
     baseline = load_baseline()
     dead_baseline = load_pair_baseline(DEAD_BASELINE, " -> ")
@@ -683,23 +829,33 @@ def run(target, allow_dead_imports=False):
         report["target_area_sccs"] = sccs
         report["target_core8_passes"] = not sccs
 
+    if target_ui9:
+        report["ui9"] = ui9_check(deps)
+
     # Default gate fails on: unranked area, module cycles, NEW upward
     # edges, NEW dead imports. Known baseline backlog is allowed.
     current_ok = (not unranked and not cycles and not new_edges
                   and (not new_dead or allow_dead_imports))
     report["passes"] = current_ok and (
         not target or report.get("target_core8_passes", True))
+    if target_ui9:
+        report["passes"] = report["passes"] and report["ui9"]["passes"]
     return report
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--target-core8", action="store_true")
+    ap.add_argument("--target-ui9", action="store_true",
+                    help="RFC 0002 F0 future-state gate: the 12 cc.ui.<area> "
+                         "areas must be singleton SCCs and no NEW back "
+                         "direction may appear under the declared 12-area "
+                         "total order")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--allow-dead-imports", action="store_true",
                     help="tolerate NEW dead imports too (escape hatch)")
     args = ap.parse_args()
-    r = run(args.target_core8, args.allow_dead_imports)
+    r = run(args.target_core8, args.allow_dead_imports, args.target_ui9)
 
     gate_ok = r["passes"]
 
@@ -739,6 +895,38 @@ def main():
               "PASS" if r["target_core8_passes"] else "FAIL")
         for c in r["target_area_sccs"]:
             print("  TARGET SCC:", ", ".join(c))
+    if args.target_ui9:
+        u = r["ui9"]
+        print("RFC 0002 F0 target (12 singleton cc.ui areas):",
+              "PASS" if u["passes"] else "FAIL")
+        for c in u["area_sccs"]:
+            print("  TARGET UI9 SCC:", ", ".join(c))
+        if u["unranked_areas"]:
+            print("  UNRANKED cc.ui AREAS (add them to UI9_RANK) — FAIL:")
+            for a in u["unranked_areas"]:
+                print(f"    {a}")
+        print(f"  SCC-internal directions: {len(u['scc_internal'])} "
+              f"(frozen baseline; {len(u['removed_scc_internal'])} removed)")
+        if u["new_scc_internal"]:
+            print("  NEW SCC-internal direction (not in baseline) — FAIL:")
+            for a, b in u["new_scc_internal"]:
+                print(f"    {a} -> {b}")
+        if u["removed_scc_internal"]:
+            print("  removed since baseline (good):")
+            for a, b in u["removed_scc_internal"]:
+                print(f"    {a} -> {b}")
+        print(f"  back directions under rank table: {len(u['back'])} "
+              f"(frozen baseline; {len(u['removed_back'])} removed)")
+        if u["new_back"]:
+            print("  NEW back direction (not in baseline) — FAIL:")
+            for a, b in u["new_back"]:
+                print(f"    {a} -> {b}")
+                for m, i in u["dir_edges"].get(f"{a} -> {b}", []):
+                    print(f"      {m} -> {i}")
+        if u["removed_back"]:
+            print("  removed since baseline (good):")
+            for a, b in u["removed_back"]:
+                print(f"    {a} -> {b}")
 
     print("graph_check:", "OK" if gate_ok else "FAIL")
     return 0 if gate_ok else 1

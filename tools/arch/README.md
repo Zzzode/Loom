@@ -22,11 +22,38 @@ Useful outputs while developing:
 python3 tools/arch/graph_check.py             # human-readable
 python3 tools/arch/graph_check.py --json      # machine-readable
 python3 tools/arch/graph_check.py --target-core8   # future-state Phase B gate
+python3 tools/arch/graph_check.py --target-ui9     # RFC 0002 F0 future-state gate
 ```
 
 **Future-state gate (`--target-core8`):** the nine RFC 0001 target areas
 must be pairwise acyclic (nine singleton SCCs). It fails today and becomes
 the Phase B completion gate after the 14 cut families land.
+
+**Future-state gate (`--target-ui9`, RFC 0002 phase F0):** the twelve
+`cc.ui.<area>` areas must be pairwise acyclic (twelve singleton SCCs), and
+no NEW back direction may appear under the declared 12-area total order
+(`UI9_RANK` in `graph_check.py`). Two frozen sets in
+`ui_back_edge_baseline.txt`, two checks:
+
+1. **Tarjan + subset freeze** — the SCC-internal area-directions are frozen
+   at 19 (17 in the 7-area SCC + 2 chrome↔foundation); a 20th fails. This is
+   the sole guard for `cc.ui`-internal edges: the default rank gate is blind
+   to them (`cc.ui` is one rank-12 area in `TARGET_RANK`).
+2. **Rank-based order conformance** — a direction `A -> B` with
+   `rank(A) < rank(B)` is a back edge; the 5 live back directions (7 module
+   edges) are baselined, and ANY other upward edge fails — including a
+   non-SCC-forming one (e.g. `visual -> foundation` passes check 1 — visual
+   is a singleton — but fails check 2). After F2 severs all 5, this enforces
+   0 upward edges, machine-enforcing the declared total order.
+
+It fails today (2 SCCs) and passes after the RFC 0002 F1/F2 cuts land.
+Additions fail; removals shrink the snapshot. The negative test
+(`test_target_ui9.py`, run manually — no Python test runner is wired in this
+repo) covers the live-tree failure and both synthetic-new-edge cases:
+
+```bash
+python3 tools/arch/test_target_ui9.py
+```
 
 ## What counts as an upward edge
 

@@ -1,0 +1,52 @@
+# RFC 0002 phase F0 — frozen UI9 baseline for graph_check.py --target-ui9.
+#
+# Two frozen sets, two checks (gate package docs/rfcs/attachments/
+# 0002-implementable-gate.md, section F0):
+#
+# [scc-internal] — the live SCC-internal cc.ui area-directions, frozen at
+#     19 (17 in the 7-area SCC {dialogs,features,messages,permissions,
+#     prompt,screens,widgets} + 2 chrome<->foundation). A 20th fails;
+#     removals shrink this file. This is the SOLE guard for cc.ui-internal
+#     edges — the default rank gate is blind to them (cc.ui is one
+#     rank-12 area in TARGET_RANK).
+#
+# [back] — the back directions under the declared 12-area total order
+#     (UI9_RANK in graph_check.py: A -> B is back iff rank(A) < rank(B)),
+#     frozen at 5 directions / 7 module edges. ANY other upward edge
+#     fails — including a non-SCC-forming one (e.g. visual -> foundation
+#     passes the SCC check — visual is a singleton — but fails this one).
+#     After F2 severs all 5, this check enforces 0 upward edges, which
+#     machine-enforces the declared total order.
+#
+# Measured 2026-09-29 from the live tree (635 modules, 761 units, 0 module
+# cycles) with graph_check.load_units()/module_deps()/tarjan_scc().
+# Format: <from area> -> <to area>
+#
+# [scc-internal]
+cc.ui.chrome -> cc.ui.foundation
+cc.ui.dialogs -> cc.ui.features
+cc.ui.dialogs -> cc.ui.permissions
+cc.ui.dialogs -> cc.ui.screens
+cc.ui.dialogs -> cc.ui.widgets
+cc.ui.features -> cc.ui.dialogs
+cc.ui.features -> cc.ui.widgets
+cc.ui.foundation -> cc.ui.chrome
+cc.ui.messages -> cc.ui.widgets
+cc.ui.permissions -> cc.ui.widgets
+cc.ui.prompt -> cc.ui.messages
+cc.ui.screens -> cc.ui.dialogs
+cc.ui.screens -> cc.ui.features
+cc.ui.screens -> cc.ui.messages
+cc.ui.screens -> cc.ui.permissions
+cc.ui.screens -> cc.ui.prompt
+cc.ui.screens -> cc.ui.widgets
+cc.ui.widgets -> cc.ui.dialogs
+cc.ui.widgets -> cc.ui.prompt
+#
+# [back]
+cc.ui.dialogs -> cc.ui.screens
+cc.ui.features -> cc.ui.dialogs
+cc.ui.foundation -> cc.ui.chrome
+cc.ui.prompt -> cc.ui.messages
+cc.ui.widgets -> cc.ui.dialogs
+

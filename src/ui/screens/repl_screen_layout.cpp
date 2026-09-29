@@ -264,7 +264,7 @@ using namespace ftxui;
         //   (b) builtin data is available (always, since cwd is set)
         // Same mode guards apply: prompt mode, not bash, not short terminal.
         const bool in_prompt_mode =
-            s.input_mode == InputMode::Normal &&
+            s.prompt_store.input_mode == InputMode::Normal &&
             !effective_is_bash(s) &&
             !is_short;
         status_line_opts.should_display = in_prompt_mode &&
@@ -280,7 +280,7 @@ using namespace ftxui;
         // unified type (cc::ui::common::PromptInputMode), so this is a
         // direct assignment with bash-detection override.
         pif::PromptInputMode footer_mode =
-            static_cast<pif::PromptInputMode>(s.input_mode);
+            static_cast<pif::PromptInputMode>(s.prompt_store.input_mode);
         if (effective_is_bash(s)) {
             footer_mode = pif::PromptInputMode::Bash;
         } else if (footer_mode == pif::PromptInputMode::Bash) {

@@ -112,14 +112,14 @@ void AppAdapter::HandleSubmit(const std::string& text,
                            : text);
         if (!stripped.empty()) {
             this->RunLocalBashCommand(stripped);
-            screen_state_->input_mode = repl::InputMode::Normal;
+            screen_state_->prompt_store.input_mode = repl::InputMode::Normal;
         }
         return;
     }
 
     if (query_running_.load()) return;
 
-    screen_state_->submit_count++;
+    screen_state_->prompt_store.submit_count++;
 
     // Persist to prompt history so @history / Ctrl+R can find this prompt.
     acsrc::append_prompt_history(text, current_session_id_, screen_state_->cwd);

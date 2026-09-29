@@ -9,8 +9,8 @@ script is run manually:
 It asserts the F3 gate contract from docs/rfcs/attachments/
 0002-implementable-gate.md (store-naming/import lint):
 
-  1. on the LIVE tree the lint passes vacuously (0 stores exist yet — the
-     first store lands with the F3 store commits);
+  1. on the LIVE tree the lint passes with the F3 stores landed so far
+     (MessagesStore, PromptStore, ... — the list grows as stores land);
   2. a store importing cc.ui.app.* fails the out-of-store rule (a store
      must not import the composition root or any area ranked >= screens);
   3. a features-area module importing a store fails the into-store rule
@@ -72,11 +72,15 @@ def store_lint_on_temp_tree(files: dict[str, str]):
 
 
 def main() -> int:
-    print("1. live tree: --store-lint passes vacuously (0 stores)")
+    print("1. live tree: --store-lint passes (F3 stores landed)")
     r = gc.run(False, store_lint=True)
     s = r["store_lint"]
     check(s["passes"], "store lint passes on the live tree")
-    check(s["stores"] == [], f"0 stores found (got {s['stores']})")
+    # Grows as F3 stores land (MessagesStore, PromptStore, ...). The lint
+    # itself has no baseline; this list is the live F3 store set.
+    check(s["stores"] == ["cc.ui.screens.messages_store",
+                          "cc.ui.screens.prompt_store"],
+          f"F3 stores found (got {s['stores']})")
     proc = subprocess.run(
         [sys.executable, str(HERE / "graph_check.py"), "--store-lint"],
         cwd=ROOT, capture_output=True, text=True)

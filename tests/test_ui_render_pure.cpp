@@ -410,8 +410,8 @@ TEST(ReplScreen, PlaceholderEmptyInputShowsExampleOnFirstSubmit) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 0;
-    state.prompt_suggestion_enabled = true;
+    state.prompt_store.submit_count = 0;
+    state.prompt_store.prompt_suggestion_enabled = true;
 
     auto placeholder = repl::ComputePlaceholder(state);
     ASSERT_TRUE(placeholder.has_value());
@@ -427,7 +427,7 @@ TEST(ReplScreen, PlaceholderNonEmptyInputReturnsNullopt) {
 
     repl::ReplScreenState state;
     state.input_text = "hello";
-    state.submit_count = 0;
+    state.prompt_store.submit_count = 0;
 
     auto placeholder = repl::ComputePlaceholder(state);
     EXPECT_FALSE(placeholder.has_value());
@@ -440,8 +440,8 @@ TEST(ReplScreen, PlaceholderAfterSubmitNoExample) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 1;  // Already submitted once
-    state.prompt_suggestion_enabled = true;
+    state.prompt_store.submit_count = 1;  // Already submitted once
+    state.prompt_store.prompt_suggestion_enabled = true;
 
     auto placeholder = repl::ComputePlaceholder(state);
     // After first submit, the onboarding example is no longer shown.
@@ -456,8 +456,8 @@ TEST(ReplScreen, PlaceholderViewingAgentShowsMessageHint) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 5;  // Past onboarding
-    state.viewing_agent_name = "researcher";
+    state.prompt_store.submit_count = 5;  // Past onboarding
+    state.prompt_store.viewing_agent_name = "researcher";
 
     auto placeholder = repl::ComputePlaceholder(state);
     ASSERT_TRUE(placeholder.has_value());
@@ -471,9 +471,9 @@ TEST(ReplScreen, PlaceholderViewingAgentLongNameTruncated) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 5;
+    state.prompt_store.submit_count = 5;
     // 25 characters — exceeds the 20-char limit.
-    state.viewing_agent_name = "very-long-agent-name-here";
+    state.prompt_store.viewing_agent_name = "very-long-agent-name-here";
 
     auto placeholder = repl::ComputePlaceholder(state);
     ASSERT_TRUE(placeholder.has_value());
@@ -490,9 +490,9 @@ TEST(ReplScreen, PlaceholderQueuedCommandsHint) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 5;  // Past onboarding
-    state.has_editable_queued_commands = true;
-    state.queued_command_hint_shown_count = 0;
+    state.prompt_store.submit_count = 5;  // Past onboarding
+    state.prompt_store.has_editable_queued_commands = true;
+    state.prompt_store.queued_command_hint_shown_count = 0;
 
     auto placeholder = repl::ComputePlaceholder(state);
     ASSERT_TRUE(placeholder.has_value());
@@ -506,9 +506,9 @@ TEST(ReplScreen, PlaceholderQueuedCommandsHintCappedAt3) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 5;
-    state.has_editable_queued_commands = true;
-    state.queued_command_hint_shown_count = 3;  // Already shown 3 times
+    state.prompt_store.submit_count = 5;
+    state.prompt_store.has_editable_queued_commands = true;
+    state.prompt_store.queued_command_hint_shown_count = 3;  // Already shown 3 times
 
     auto placeholder = repl::ComputePlaceholder(state);
     // Should NOT show the hint anymore (capped at 3).
@@ -522,10 +522,10 @@ TEST(ReplScreen, PlaceholderAiSuggestionOverridesExample) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 0;
-    state.input_mode = repl::InputMode::Normal;
+    state.prompt_store.submit_count = 0;
+    state.prompt_store.input_mode = repl::InputMode::Normal;
     state.next_action_suggestion = "explain the error above";
-    state.prompt_suggestion_enabled = true;
+    state.prompt_store.prompt_suggestion_enabled = true;
 
     auto placeholder = repl::ComputePlaceholder(state);
     ASSERT_TRUE(placeholder.has_value());
@@ -540,10 +540,10 @@ TEST(ReplScreen, PlaceholderAiSuggestionIgnoredInBashMode) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 0;
-    state.input_mode = repl::InputMode::Bash;
+    state.prompt_store.submit_count = 0;
+    state.prompt_store.input_mode = repl::InputMode::Bash;
     state.next_action_suggestion = "explain the error above";
-    state.prompt_suggestion_enabled = true;
+    state.prompt_store.prompt_suggestion_enabled = true;
 
     auto placeholder = repl::ComputePlaceholder(state);
     ASSERT_TRUE(placeholder.has_value());
@@ -559,10 +559,10 @@ TEST(ReplScreen, PlaceholderAiSuggestionIgnoredWhenViewingAgent) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 5;
-    state.input_mode = repl::InputMode::Normal;
+    state.prompt_store.submit_count = 5;
+    state.prompt_store.input_mode = repl::InputMode::Normal;
     state.next_action_suggestion = "explain the error above";
-    state.viewing_agent_name = "helper";
+    state.prompt_store.viewing_agent_name = "helper";
 
     auto placeholder = repl::ComputePlaceholder(state);
     ASSERT_TRUE(placeholder.has_value());
@@ -577,8 +577,8 @@ TEST(ReplScreen, PlaceholderAiSuggestionIgnoredWhenSlashCommand) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 5;
-    state.input_mode = repl::InputMode::Normal;
+    state.prompt_store.submit_count = 5;
+    state.prompt_store.input_mode = repl::InputMode::Normal;
     // Slash-command suggestions start with '/' — should not be used as placeholder.
     state.next_action_suggestion = "/commit";
 
@@ -602,11 +602,11 @@ TEST(ReplScreen, PlaceholderPriorityOrder) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 0;
-    state.input_mode = repl::InputMode::Normal;
-    state.prompt_suggestion_enabled = true;
-    state.has_editable_queued_commands = true;
-    state.queued_command_hint_shown_count = 0;
+    state.prompt_store.submit_count = 0;
+    state.prompt_store.input_mode = repl::InputMode::Normal;
+    state.prompt_store.prompt_suggestion_enabled = true;
+    state.prompt_store.has_editable_queued_commands = true;
+    state.prompt_store.queued_command_hint_shown_count = 0;
     state.next_action_suggestion = "do something";
 
     // ── Case 1: not viewing agent, all other conditions set ──
@@ -616,7 +616,7 @@ TEST(ReplScreen, PlaceholderPriorityOrder) {
 
     // ── Case 2: viewing agent, all conditions set ──
     // Viewing agent hint wins (AI suggestion suppressed by !viewingAgentTaskId).
-    state.viewing_agent_name = "agent1";
+    state.prompt_store.viewing_agent_name = "agent1";
     auto p2 = repl::ComputePlaceholder(state);
     EXPECT_EQ(*p2, "Message @agent1…");
 
@@ -628,19 +628,19 @@ TEST(ReplScreen, PlaceholderPriorityOrder) {
 
     // ── Case 4: not viewing agent, no AI suggestion, has queue hint ──
     // Queue hint wins.
-    state.viewing_agent_name.reset();
+    state.prompt_store.viewing_agent_name.reset();
     auto p4 = repl::ComputePlaceholder(state);
     EXPECT_EQ(*p4, "Press up to edit queued messages");
 
     // ── Case 5: not viewing agent, no AI suggestion, no queue hint ──
     // Example wins (submit_count == 0).
-    state.has_editable_queued_commands = false;
+    state.prompt_store.has_editable_queued_commands = false;
     auto p5 = repl::ComputePlaceholder(state);
     EXPECT_NE(p5->find("Try"), std::string::npos);
 
     // ── Case 6: after submit, no other conditions ──
     // No placeholder.
-    state.submit_count = 1;
+    state.prompt_store.submit_count = 1;
     auto p6 = repl::ComputePlaceholder(state);
     EXPECT_FALSE(p6.has_value());
 }
@@ -654,8 +654,8 @@ TEST(ReplScreen, PlaceholderRenderedInPromptInput) {
 
     repl::ReplScreenState state;
     state.input_text = "";
-    state.submit_count = 0;
-    state.prompt_suggestion_enabled = true;
+    state.prompt_store.submit_count = 0;
+    state.prompt_store.prompt_suggestion_enabled = true;
 
     auto rendered = strip_ansi(render_to_plain_text(
         repl::RenderPromptInput(state, 80),

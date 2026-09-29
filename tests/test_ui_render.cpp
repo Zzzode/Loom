@@ -53,7 +53,7 @@ TEST(ReplScreen, CustomStatusLineOnlyRendersInPromptMode) {
     namespace repl = cc::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.input_mode = repl::InputMode::SlashCommand;
+    state.prompt_store.input_mode = repl::InputMode::SlashCommand;
     state.status_line_enabled = true;
     state.status_line_command = ":";
     state.status_line_text = "custom status";

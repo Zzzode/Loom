@@ -276,12 +276,12 @@ TEST(ReplScreen, BashModeExitsOnBackspaceAtStart) {
 
     // Type '!' into empty input → swallowed, flips to Bash mode (TS parity).
     ASSERT_TRUE(component->OnEvent(ftxui::Event::Character("!")));
-    EXPECT_EQ(state->input_mode, repl::InputMode::Bash);
+    EXPECT_EQ(state->prompt_store.input_mode, repl::InputMode::Bash);
     EXPECT_TRUE(state->input_text.empty());  // '!' is a mode trigger, not stored
 
     // Backspace at cursor 0 must exit bash mode back to Prompt.
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Backspace));
-    EXPECT_EQ(state->input_mode, repl::InputMode::Normal);
+    EXPECT_EQ(state->prompt_store.input_mode, repl::InputMode::Normal);
 }
 
 
@@ -294,27 +294,27 @@ TEST(ReplScreen, BashModeExitsOnEscapeAndDeleteAndCtrlUAtStart) {
         auto state = std::make_shared<repl::ReplScreenState>();
         auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
         ASSERT_TRUE(component->OnEvent(ftxui::Event::Character("!")));
-        ASSERT_EQ(state->input_mode, repl::InputMode::Bash);
+        ASSERT_EQ(state->prompt_store.input_mode, repl::InputMode::Bash);
         component->OnEvent(ftxui::Event::Escape);
-        EXPECT_EQ(state->input_mode, repl::InputMode::Normal);
+        EXPECT_EQ(state->prompt_store.input_mode, repl::InputMode::Normal);
     }
     // Delete exits bash mode.
     {
         auto state = std::make_shared<repl::ReplScreenState>();
         auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
         ASSERT_TRUE(component->OnEvent(ftxui::Event::Character("!")));
-        ASSERT_EQ(state->input_mode, repl::InputMode::Bash);
+        ASSERT_EQ(state->prompt_store.input_mode, repl::InputMode::Bash);
         component->OnEvent(ftxui::Event::Delete);
-        EXPECT_EQ(state->input_mode, repl::InputMode::Normal);
+        EXPECT_EQ(state->prompt_store.input_mode, repl::InputMode::Normal);
     }
     // Ctrl+U (\x15) exits bash mode.
     {
         auto state = std::make_shared<repl::ReplScreenState>();
         auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
         ASSERT_TRUE(component->OnEvent(ftxui::Event::Character("!")));
-        ASSERT_EQ(state->input_mode, repl::InputMode::Bash);
+        ASSERT_EQ(state->prompt_store.input_mode, repl::InputMode::Bash);
         component->OnEvent(ftxui::Event::Character("\x15"));
-        EXPECT_EQ(state->input_mode, repl::InputMode::Normal);
+        EXPECT_EQ(state->prompt_store.input_mode, repl::InputMode::Normal);
     }
 }
 
@@ -328,7 +328,7 @@ TEST(ReplScreen, BashModeBackspaceMidTextDoesNotExitMode) {
 
     // Enter bash mode, then type a command so cursor is NOT at 0.
     ASSERT_TRUE(component->OnEvent(ftxui::Event::Character("!")));
-    ASSERT_EQ(state->input_mode, repl::InputMode::Bash);
+    ASSERT_EQ(state->prompt_store.input_mode, repl::InputMode::Bash);
     component->OnEvent(ftxui::Event::Character("l"));
     component->OnEvent(ftxui::Event::Character("s"));
     ASSERT_EQ(state->input_text, "ls");
@@ -336,7 +336,7 @@ TEST(ReplScreen, BashModeBackspaceMidTextDoesNotExitMode) {
     // Backspace mid-text deletes a char and stays in bash mode (cursor != 0).
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Backspace));
     EXPECT_EQ(state->input_text, "l");
-    EXPECT_EQ(state->input_mode, repl::InputMode::Bash);
+    EXPECT_EQ(state->prompt_store.input_mode, repl::InputMode::Bash);
 }
 
 

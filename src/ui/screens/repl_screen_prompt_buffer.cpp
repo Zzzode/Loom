@@ -138,12 +138,12 @@ bool StashCurrentPrompt(
     std::unordered_map<int, std::string> pasted_texts) {
     if (state->input_text.empty() && pasted_images.empty() && pasted_texts.empty())
         return false;
-    ReplScreenState::StashedPrompt sp;
+    StashedPrompt sp;
     sp.text = state->input_text;
     sp.cursor_offset = state->input_cursor;
     sp.pasted_images = std::move(pasted_images);
     sp.pasted_texts = std::move(pasted_texts);
-    state->stashed_prompt = std::move(sp);
+    state->prompt_store.stashed_prompt = std::move(sp);
     return true;
 }
 
@@ -156,9 +156,9 @@ bool RestoreStashedPrompt(
     const std::shared_ptr<ReplScreenState>& state,
     std::unordered_map<int, ::cc::core::ImageBlock>* out_images,
     std::unordered_map<int, std::string>* out_texts) {
-    if (!state->stashed_prompt.has_value()) return false;
-    auto stash = std::move(*state->stashed_prompt);
-    state->stashed_prompt.reset();
+    if (!state->prompt_store.stashed_prompt.has_value()) return false;
+    auto stash = std::move(*state->prompt_store.stashed_prompt);
+    state->prompt_store.stashed_prompt.reset();
     // Return pasted contents to the caller (engine layer).
     if (out_images) *out_images = std::move(stash.pasted_images);
     if (out_texts)  *out_texts  = std::move(stash.pasted_texts);
@@ -171,7 +171,7 @@ bool RestoreStashedPrompt(
 
 /// True when a stashed prompt exists (for UI notice rendering).
 bool HasStashedPrompt(const std::shared_ptr<ReplScreenState>& state) {
-    return state->stashed_prompt.has_value();
+    return state->prompt_store.stashed_prompt.has_value();
 }
 
 bool backspace_prompt_text(const std::shared_ptr<ReplScreenState>& state) {
@@ -195,8 +195,8 @@ bool backspace_prompt_text(const std::shared_ptr<ReplScreenState>& state) {
 // trapping the user in bash mode.  Returns true iff a mode reset occurred.
 bool exit_input_mode_if_at_start(const std::shared_ptr<ReplScreenState>& state) {
     if (input_cursor_or_end(*state) != 0) return false;
-    if (state->input_mode == InputMode::Normal) return false;
-    state->input_mode = InputMode::Normal;
+    if (state->prompt_store.input_mode == InputMode::Normal) return false;
+    state->prompt_store.input_mode = InputMode::Normal;
     state->is_prompt_input_active = true;
     state->last_keystroke = std::chrono::steady_clock::now();
     // Mode change alters the autocomplete provider context (TS parity with the
@@ -237,7 +237,7 @@ void move_prompt_cursor_right(const std::shared_ptr<ReplScreenState>& state) {
 // This means the mode is TEXT-DERIVED: pasting "!ls" or typing '!' into
 // non-empty input immediately flips the effective mode to Bash, even though
 // the user never pressed bare-'!' to toggle.  The state-mode toggle
-// (s.input_mode) only matters when the input buffer is empty — it persists
+// (s.prompt_store.input_mode) only matters when the input buffer is empty — it persists
 // the visual "! " prefix after a bare-'!' keystroke that was swallowed.
 //
 // Use this helper for ALL behavioural gates (autocomplete, @-mention
@@ -245,7 +245,7 @@ void move_prompt_cursor_right(const std::shared_ptr<ReplScreenState>& state) {
 // rendering to stay faithful to TS semantics.
 [[nodiscard]] bool effective_is_bash(const ReplScreenState& s) {
     if (!s.input_text.empty() && s.input_text.front() == '!') return true;
-    return s.input_mode == InputMode::Bash;
+    return s.prompt_store.input_mode == InputMode::Bash;
 }
 
 [[nodiscard]] std::optional<std::string> accept_selected_prompt_suggestion(

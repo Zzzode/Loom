@@ -53,15 +53,15 @@ using namespace ftxui;
 
     ph::PlaceholderContext ctx;
     ctx.input_text                    = s.input_text;
-    ctx.input_mode                    = s.input_mode;
-    ctx.submit_count                  = s.submit_count;
-    ctx.queued_hint_shown_count       = s.queued_command_hint_shown_count;
-    ctx.has_editable_queued           = s.has_editable_queued_commands;
-    ctx.prompt_suggestion_enabled     = s.prompt_suggestion_enabled;
+    ctx.input_mode                    = s.prompt_store.input_mode;
+    ctx.submit_count                  = s.prompt_store.submit_count;
+    ctx.queued_hint_shown_count       = s.prompt_store.queued_command_hint_shown_count;
+    ctx.has_editable_queued           = s.prompt_store.has_editable_queued_commands;
+    ctx.prompt_suggestion_enabled     = s.prompt_store.prompt_suggestion_enabled;
     ctx.autocomplete_suggestions_empty = s.autocomplete_suggestions.empty();
 
-    if (s.viewing_agent_name.has_value()) {
-        ctx.viewing_agent_name = std::string_view(*s.viewing_agent_name);
+    if (s.prompt_store.viewing_agent_name.has_value()) {
+        ctx.viewing_agent_name = std::string_view(*s.prompt_store.viewing_agent_name);
     }
     if (s.next_action_suggestion.has_value()) {
         ctx.next_action_suggestion = std::string_view(*s.next_action_suggestion);
@@ -83,7 +83,7 @@ using namespace ftxui;
 //
 // The pure-function signature `Element RenderPromptInput(const
 // ReplScreenState&)` is PRESERVED so app.cppm's input handling (which writes
-// s.input_text / s.input_mode / s.autocomplete_* between frames and forwards
+// s.input_text / s.prompt_store.input_mode / s.autocomplete_* between frames and forwards
 // keystrokes via ReplScreen's CatchEvent) is untouched.  The TextInputImpl
 // is used purely as a render primitive here — it is rebuilt per-frame from
 // the projection, never as the interactive event target.
@@ -91,7 +91,7 @@ using namespace ftxui;
 // Rendered faithful to TS BaseTextInput.tsx:
 //   * TS prompt glyph figures.pointer "❯" (green) for normal mode,
 //     "!" (red) for bash, "❮" (yellow/magenta) for vim Normal/Visual —
-//     driven by s.input_mode.
+//     driven by s.prompt_store.input_mode.
 //   * DECLARED CARET at the insertion point: TextInputImpl.Render() draws an
 //     inverted glyph at the cursor offset (TS parks the real terminal cursor
 //     there via useDeclaredCursor; we render a visible caret that lands on
@@ -166,8 +166,8 @@ using namespace ftxui;
     // When a viewing agent is active, the prefix is ALWAYS ❯ (never !),
     // matching TS where `viewingAgentName ?` is checked BEFORE
     // `mode === 'bash'`.
-    const bool has_viewing_agent = s.viewing_agent_name.has_value()
-        && !s.viewing_agent_name->empty();
+    const bool has_viewing_agent = s.prompt_store.viewing_agent_name.has_value()
+        && !s.prompt_store.viewing_agent_name->empty();
     const bool show_bash_glyph = is_bash_mode && !has_viewing_agent;
     prefix_str += show_bash_glyph
         ? std::string(figs::kBashGlyph)
@@ -184,13 +184,13 @@ using namespace ftxui;
     //
     // Bash mode always uses bashBorder (TS: dark rgb(255,0,135), daltonized
     // blue variants, light same).  All other modes: use the teammate color if
-    // the engine has supplied one via s.teammate_prefix_color (TS
+    // the engine has supplied one via s.prompt_store.teammate_prefix_color (TS
     // AGENT_COLOR_TO_THEME_COLOR map in agentColorManager.ts), otherwise fall
     // through to palette.text (dark: pure white, light: pure black).
     if (show_bash_glyph) {
         prefix_color = pal.bash_border;
-    } else if (s.teammate_prefix_color.has_value()) {
-        prefix_color = *s.teammate_prefix_color;
+    } else if (s.prompt_store.teammate_prefix_color.has_value()) {
+        prefix_color = *s.prompt_store.teammate_prefix_color;
     } else {
         prefix_color = pal.text;
     }
@@ -207,7 +207,7 @@ using namespace ftxui;
     if (auto computed = ComputePlaceholder(s); computed.has_value()) {
         opts.placeholder = *std::move(computed);
     } else {
-        opts.placeholder = s.input_placeholder;
+        opts.placeholder = s.prompt_store.input_placeholder;
     }
     opts.prefix       = std::move(prefix_str);   // ← RENDERED INSIDE now (BUG-2 fix)
     opts.prefix_color = prefix_color;            // ← new field: explicit color for prefix
@@ -273,11 +273,11 @@ using namespace ftxui;
     // Faithful to TS: drawn as a separate row (NOT a prefix glyph swap),
     // dim+bold, per-mode color (see vim_input.cppm mode_display).
     std::optional<std::pair<std::string, Color>> vim_badge;
-    if (s.input_mode == InputMode::VimInsert)
+    if (s.prompt_store.input_mode == InputMode::VimInsert)
         vim_badge = {"-- INSERT --", vim::mode_display(vim::VimMode::Insert).second};
-    else if (s.input_mode == InputMode::VimNormal)
+    else if (s.prompt_store.input_mode == InputMode::VimNormal)
         vim_badge = {"-- NORMAL --", vim::mode_display(vim::VimMode::Normal).second};
-    else if (s.input_mode == InputMode::VimVisual)
+    else if (s.prompt_store.input_mode == InputMode::VimVisual)
         vim_badge = {"-- VISUAL --", vim::mode_display(vim::VimMode::Visual).second};
     if (vim_badge) {
         box_body.push_back(hbox({
@@ -292,11 +292,11 @@ using namespace ftxui;
     //   when hasStash is true.  Shown above the input area so the user knows
     //   their typed input was saved and will be restored after the current
     //   request completes.
-    if (s.stashed_prompt.has_value()) {
+    if (s.prompt_store.stashed_prompt.has_value()) {
         namespace psn = cc::ui::prompt;
         psn::StashNotice notice;
-        notice.stashed_text = s.stashed_prompt->text;
-        notice.char_count = s.stashed_prompt->text.size();
+        notice.stashed_text = s.prompt_store.stashed_prompt->text;
+        notice.char_count = s.prompt_store.stashed_prompt->text.size();
         // TS REF: <Box paddingLeft={2}> — render_stash_notice handles the
         // 2-space left padding internally, matching TS paddingLeft={2}.
         box_body.push_back(psn::render_stash_notice(notice));

@@ -9,7 +9,6 @@ module;
 
 #include <cstdint>
 
-#include <ftxui/screen/color.hpp>
 #include <ftxui/component/event.hpp>
 
 export module cc.ui.screens.repl_state;
@@ -24,6 +23,10 @@ import cc.ui.prompt.prompt_input_footer;         // footer::* projection types
 // seeing MessageDisplayEntry during the per-store migration. Deleted in F3
 // Finalize — importers then import cc.ui.screens.messages_store directly.
 export import cc.ui.screens.messages_store;      // MessagesStore / MessageDisplayEntry
+// RFC 0002 F3 shim: re-exports the PromptStore shard so importers keep
+// seeing StashedPrompt during the per-store migration. Deleted in F3
+// Finalize — importers then import cc.ui.screens.prompt_store directly.
+export import cc.ui.screens.prompt_store;        // PromptStore / StashedPrompt
 import cc.ui.features.agents.agent_cards;        // AgentCardData
 import cc.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
 import cc.ui.features.teams.live_teammates;      // LiveTeammate
@@ -193,7 +196,12 @@ struct DialogContext {
 /// engine writes computed projections into this struct between frames.
 struct ReplScreenState {
     ReplMode mode = ReplMode::Normal;
-    InputMode input_mode = InputMode::Normal;
+    // RFC 0002 F3: prompt-input state (input mode, stashed prompt,
+    // placeholder cascade inputs, teammate prefix color) sharded into
+    // cc.ui.screens.prompt_store (PromptStore). StashedPrompt stays
+    // visible here through the re-export shim at the top of this file;
+    // the shim is deleted in F3 Finalize.
+    PromptStore prompt_store;
     SpinnerMode spinner_mode = SpinnerMode::Hidden;
     // RFC 0002 F3: message-list / scroll / transcript-chrome state sharded
     // into cc.ui.screens.messages_store (MessagesStore). MessageDisplayEntry
@@ -238,65 +246,11 @@ struct ReplScreenState {
 
     // Input
     std::string input_text;
-    // GAP 2: stashed-prompt-restore-logic-missing
-    // TS REF: src/screens/REPL.tsx L1373-1377 — stashedPrompt state:
-    //   {text, cursorOffset, pastedContents}.  When the user sends a message
-    //   while a background agent is running (or when permission interrupts),
-    //   the current input is stashed and can be restored after the request
-    //   completes.  Restore at:
-    //     - TS L3251-3255 (after local-jsx result returns)
-    //     - TS L3344-3348 (on submit when not slash-command)
-    //     - TS L3527-3531 (after handlePromptSubmit for slash/loading)
-    //   The stash notice (PromptInputStashNotice.tsx) renders
-    //   "{figures.pointerSmall} Stashed (auto-restores after submit)" when
-    //   hasStash is true.
-    // TS REF: src/screens/REPL.tsx L1373-1377 — stashedPrompt state:
-    //   {text, cursorOffset, pastedContents}.  pastedContents carries the
-    //   image/text paste records so that [Image #N] / [...Truncated text #N]
-    //   refs in the stashed text resolve correctly after restore.
-    struct StashedPrompt {
-        std::string text;
-        std::size_t cursor_offset = std::string::npos;
-        // TS REF: pastedContents: Record<number, PastedContent> — image pastes.
-        std::unordered_map<int, ::cc::core::ImageBlock> pasted_images;
-        // TS REF: pastedContents also holds text-type entries for truncated
-        // text pastes (inputPaste.ts maybeTruncateInput → type:'text').
-        std::unordered_map<int, std::string> pasted_texts;
-    };
-    std::optional<StashedPrompt> stashed_prompt;
-    // TS-style contextual placeholder rather than a generic default.
-    // NOTE: This is the FALLBACK only.  The actual displayed placeholder is
-    // computed dynamically by ComputePlaceholder() at render time from the
-    // cascade (teammate hint > queue hint > onboarding example > AI suggestion
-    // override).  This string is used only when all cascade conditions fail
-    // AND the caller explicitly wants a static default (e.g. standalone
-    // TextInputImpl usage outside the REPL).
-    std::string input_placeholder = "Try \"write a test\", \"/help\", or ask anything...";
-    // ── TS usePromptInputPlaceholder cascade state ──────────────────────
-    // Viewing agent/teammate name.  When set and input is empty, the
-    // placeholder becomes "Message @{name}..." (TS REF: usePromptInputPlaceholder.ts
-    // viewingAgentName branch).  Truncated to 20 chars in ComputePlaceholder().
-    std::optional<std::string> viewing_agent_name;
-    // Number of user submissions (messages sent).  Drives the onboarding
-    // example placeholder: shown only when submit_count < 1 (TS REF:
-    // usePromptInputPlaceholder.ts submitCount < 1 guard).
-    int submit_count = 0;
-    // How many times the "Press up to edit queued messages" hint has been
-    // shown.  Capped at 3 (NUM_TIMES_QUEUE_HINT_SHOWN in TS).  Incremented
-    // by the renderer each time the hint is displayed.
-    int queued_command_hint_shown_count = 0;
-    // Whether prompt suggestions (AI next-action hints) are enabled.
-    // Maps to TS AppState.promptSuggestionEnabled.
-    bool prompt_suggestion_enabled = true;
-    // True when the command queue holds user-editable pending commands
-    // (TS REF: isQueuedCommandEditable check).  Populated by the engine
-    // from the command queue state.
-    bool has_editable_queued_commands = false;
-    // TS AGENT_COLOR_TO_THEME_COLOR teammate prefix color.  Empty = use
-    // palette.text (the default prompt prefix color).  Populated from the
-    // engine's active-teammate lookup.  Rendered as the prefix glyph's
-    // foreground in RenderPromptInput (replaces the old plain white).
-    std::optional<ftxui::Color> teammate_prefix_color;
+    // RFC 0002 F3: stashed prompt (StashedPrompt), input placeholder,
+    // placeholder-cascade state (viewing_agent_name, submit_count,
+    // queued_command_hint_shown_count, prompt_suggestion_enabled,
+    // has_editable_queued_commands) and teammate_prefix_color moved to
+    // PromptStore (prompt_store field above).
     // Welcome-header data (shown when messages is empty on a fresh session).
     std::string app_version = "0.0.0";
     std::string model_display_name;

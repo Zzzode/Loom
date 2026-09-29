@@ -393,7 +393,7 @@ using namespace ftxui;
                 namespace figs = cc::ui::design::figures;
                 std::string submit_text =
                     std::string(figs::strip_mode_prefix(*accepted));
-                cb->on_submit(submit_text, state->input_mode);
+                cb->on_submit(submit_text, state->prompt_store.input_mode);
                 // TS REF: src/components/PromptInput/inputModes.ts:4-14
                 //   (prependModeCharacterToInput) + REPL.tsx:3318
                 // History stores the mode-prefixed form for round-trip
@@ -407,7 +407,7 @@ using namespace ftxui;
                         !accepted->empty() &&
                         (*accepted)[0] == figs::kBashModeChar;
                     const bool is_bash =
-                        state->input_mode == InputMode::Bash;
+                        state->prompt_store.input_mode == InputMode::Bash;
                     const std::string hist_entry =
                         (is_bash && !text_has_prefix)
                             ? figs::prepend_mode_char(
@@ -436,7 +436,7 @@ using namespace ftxui;
             namespace figs = cc::ui::design::figures;
             std::string submit_text =
                 std::string(figs::strip_mode_prefix(state->input_text));
-            if (cb->on_submit) cb->on_submit(submit_text, state->input_mode);
+            if (cb->on_submit) cb->on_submit(submit_text, state->prompt_store.input_mode);
             // TS REF: src/components/PromptInput/inputModes.ts:4-14
             //   (prependModeCharacterToInput) + REPL.tsx:3318
             // History stores the mode-prefixed form for round-trip
@@ -450,7 +450,7 @@ using namespace ftxui;
                     !state->input_text.empty() &&
                     state->input_text[0] == figs::kBashModeChar;
                 const bool is_bash =
-                    state->input_mode == InputMode::Bash;
+                    state->prompt_store.input_mode == InputMode::Bash;
                 const std::string hist_entry =
                     (is_bash && !text_has_prefix)
                         ? figs::prepend_mode_char(
@@ -567,7 +567,7 @@ using namespace ftxui;
             // the prefix glyph stays correct after the user clears the text.
             {
                 namespace figs = cc::ui::design::figures;
-                state->input_mode =
+                state->prompt_store.input_mode =
                     (figs::get_mode_from_input(state->input_text) ==
                      figs::PromptMode::kBash)
                         ? InputMode::Bash
@@ -588,7 +588,7 @@ using namespace ftxui;
                 // from the recalled entry's leading prefix character.
                 {
                     namespace figs = cc::ui::design::figures;
-                    state->input_mode =
+                    state->prompt_store.input_mode =
                         (figs::get_mode_from_input(state->input_text) ==
                          figs::PromptMode::kBash)
                             ? InputMode::Bash
@@ -757,8 +757,8 @@ using namespace ftxui;
                         figs::is_mode_character(ch) &&
                         ch.size() == 1) {
                         // Swallow the char, flip mode.  Toggle Normal↔Bash.
-                        state->input_mode =
-                            (state->input_mode == InputMode::Bash)
+                        state->prompt_store.input_mode =
+                            (state->prompt_store.input_mode == InputMode::Bash)
                                 ? InputMode::Normal
                                 : InputMode::Bash;
                         state->is_prompt_input_active = true;
@@ -787,7 +787,7 @@ using namespace ftxui;
                             figs::PromptMode::kBash &&
                         ch.size() > 1) {
                         // Strip '!', enter bash mode, insert clean text.
-                        state->input_mode = InputMode::Bash;
+                        state->prompt_store.input_mode = InputMode::Bash;
                         state->is_prompt_input_active = true;
                         state->last_keystroke =
                             std::chrono::steady_clock::now();

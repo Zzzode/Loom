@@ -15,6 +15,7 @@ import cc.types.types;
 import cc.commands.agents;
 import cc.commands.clear;
 import cc.commands.config;
+import cc.config.config;
 import cc.commands.help;
 import cc.commands.hooks;
 import cc.commands.insights;
@@ -130,6 +131,13 @@ cc::core::CommandContext ctx(std::vector<std::string> args = {}, std::string raw
         .raw_input = std::move(raw),
         .cwd = {},
     };
+}
+
+/// Read a file's bytes (empty string when absent).
+[[nodiscard]] std::string cmd_read_file(const fs::path& p) {
+    std::ifstream in(p, std::ios::binary);
+    return std::string((std::istreambuf_iterator<char>(in)),
+                       std::istreambuf_iterator<char>());
 }
 
 std::vector<cc::core::Message> compact_runtime_messages(void* state) {
@@ -1467,6 +1475,234 @@ TEST(AppCommandRegistry, XaaSetupCallbackPortReachesLoginSeam) {
         ASSERT_TRUE(resolved.has_value()) << resolved.error().message();
         ASSERT_TRUE(resolved->has_value());
         EXPECT_EQ(**resolved, 19485u);
+    }
+
+    cleanup();
+}
+
+// RFC-0001 B followup c19: an UNRELATED /config set must not bake the
+// ephemeral LOOM_MODEL / LOOM_MAX_TOKENS env values into the VCS-tracked
+// project file. Drives the REAL command path (AppCommandRegistry) with both
+// env vars exported. Test 1 of the c19 command suite.
+TEST(AppCommandRegistry, ConfigSetDoesNotBakeEnvModelIntoProjectFile) {
+    namespace fs = std::filesystem;
+    const auto root = cmd_make_temp_root("loom_cmd_c19_envbake_");
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    // The bug's trigger: an ephemeral model/token exported by the user.
+    EnvironmentGuard model_guard("LOOM_MODEL", "env-ephemeral-model-c19");
+    EnvironmentGuard tokens_guard("LOOM_MAX_TOKENS", "4321");
+
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    const fs::path project_path = work / ".loom" / "config.json";
+
+    {
+        {
+            std::ofstream seed(project_path);
+            seed << "{\n"
+                    "  \"model\": { \"default_model\": \"file-model-c19\" },\n"
+                    "  \"display\": { \"theme\": \"light\" }\n"
+                    "}\n";
+        }
+
+        // Construct AFTER env + cwd: the command's manager binds paths in its
+        // ctor and reads the env on load().
+        cc::commands::AppCommandRegistry registry;
+        auto set = registry.execute("/config set display.theme dark", ctx());
+        ASSERT_TRUE(set.has_value());
+        ASSERT_TRUE(set->ok) << set->message;
+
+        const std::string bytes = cmd_read_file(project_path);
+        // The unrelated key landed...
+        EXPECT_NE(bytes.find("\"theme\": \"dark\""), std::string::npos) << bytes;
+        // ...while the env value was never written into the tracked file.
+        EXPECT_EQ(bytes.find("env-ephemeral-model-c19"), std::string::npos)
+            << bytes;
+        EXPECT_EQ(bytes.find("4321"), std::string::npos) << bytes;
+        // The file's OWN model value is preserved (not dropped, not env).
+        auto project = cc::utils::json::parse_file(project_path);
+        ASSERT_TRUE(project.has_value());
+        EXPECT_EQ(project->root().get("model").get("default_model").as_str(),
+                  std::string_view("file-model-c19"));
+    }
+
+    // The real proof it was not baked: with the env UNSET, a fresh load
+    // yields the file's own model values, not the ephemeral ones.
+    {
+        EnvironmentUnsetGuard unset_model("LOOM_MODEL");
+        EnvironmentUnsetGuard unset_tokens("LOOM_MAX_TOKENS");
+        cc::core::ConfigManager reloaded(work / ".loom" / "config.json",
+                                         project_path);
+        ASSERT_TRUE(reloaded.load().has_value());
+        EXPECT_EQ(reloaded.settings().model.default_model, "file-model-c19");
+        EXPECT_NE(reloaded.settings().model.max_output_tokens, 4321u);
+    }
+
+    cleanup();
+}
+
+// RFC-0001 B followup c19: pin the serializer's EXISTING exclusion of the
+// network secret/endpoint values at the byte level, so a future serializer
+// change cannot silently start leaking an exported ANTHROPIC_API_KEY /
+// ANTHROPIC_BASE_URL / proxy into the tracked project file. Test 2.
+TEST(AppCommandRegistry, ConfigSetNeverWritesEnvCredentialsToFile) {
+    namespace fs = std::filesystem;
+    const auto root = cmd_make_temp_root("loom_cmd_c19_secrets_");
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    EnvironmentGuard api_guard("ANTHROPIC_API_KEY", "SECRET-c19-traceable-key");
+    EnvironmentGuard base_guard("ANTHROPIC_BASE_URL",
+                                "https://SECRET-c19-base.example.invalid/api");
+    EnvironmentGuard proxy_guard("HTTPS_PROXY",
+                                 "http://SECRET-c19-proxy.example:3128");
+
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    const fs::path project_path = work / ".loom" / "config.json";
+    {
+        std::ofstream seed(project_path);
+        seed << "{\n  \"display\": { \"theme\": \"light\" }\n}\n";
+    }
+
+    {
+        cc::commands::AppCommandRegistry registry;
+        auto set = registry.execute("/config set display.theme dark", ctx());
+        ASSERT_TRUE(set.has_value());
+        ASSERT_TRUE(set->ok) << set->message;
+
+        const std::string bytes = cmd_read_file(project_path);
+        // No transport of the exported credential/endpoint bytes anywhere.
+        EXPECT_EQ(bytes.find("SECRET-c19"), std::string::npos) << bytes;
+        EXPECT_EQ(bytes.find("api_key"), std::string::npos) << bytes;
+        EXPECT_EQ(bytes.find("base_url"), std::string::npos) << bytes;
+        EXPECT_EQ(bytes.find("proxy"), std::string::npos) << bytes;
+        // The intended write is still there.
+        EXPECT_NE(bytes.find("\"theme\": \"dark\""), std::string::npos) << bytes;
+    }
+
+    cleanup();
+}
+
+// RFC-0001 B followup c19: an EXPLICIT /config set of an env-overridden leaf
+// is user intent and MUST persist, even while the env var is exported. The
+// runtime effective value stays env-overridden until the env is unset — the
+// documented (and asserted) behavior. Test 3 + 4 (both model leaves).
+TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
+    namespace fs = std::filesystem;
+    const auto root = cmd_make_temp_root("loom_cmd_c19_explicit_");
+    const auto home = root / "home";
+    const auto cfg  = root / "cfg";
+    const auto work = root / "work";
+    fs::create_directories(home);
+    fs::create_directories(cfg);
+    fs::create_directories(work / ".loom");
+
+    EnvironmentGuard home_guard("HOME", home.string());
+    EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
+    EnvironmentGuard model_guard("LOOM_MODEL", "Y-env-model-c19");
+    EnvironmentGuard tokens_guard("LOOM_MAX_TOKENS", "9999");
+
+    const fs::path previous_cwd = fs::current_path();
+    fs::current_path(work);
+    auto cleanup = [&] {
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        fs::remove_all(root);
+    };
+
+    const fs::path project_path = work / ".loom" / "config.json";
+    {
+        std::ofstream seed(project_path);
+        seed << "{\n  \"model\": { \"default_model\": \"file-seed-c19\" }\n}\n";
+    }
+
+    {
+        cc::commands::AppCommandRegistry registry;
+
+        // Explicit user intent while LOOM_MODEL=Y: X wins on disk.
+        auto set_model = registry.execute(
+            "/config set model.default_model X-user-model-c19", ctx());
+        ASSERT_TRUE(set_model.has_value());
+        ASSERT_TRUE(set_model->ok) << set_model->message;
+        {
+            const std::string bytes = cmd_read_file(project_path);
+            EXPECT_NE(bytes.find("X-user-model-c19"), std::string::npos) << bytes;
+            EXPECT_EQ(bytes.find("Y-env-model-c19"), std::string::npos) << bytes;
+            auto project = cc::utils::json::parse_file(project_path);
+            ASSERT_TRUE(project.has_value());
+            EXPECT_EQ(project->root().get("model").get("default_model").as_str(),
+                      std::string_view("X-user-model-c19"));
+        }
+
+        // Same rule for model.max_output_tokens with LOOM_MAX_TOKENS engaged.
+        auto set_tokens = registry.execute(
+            "/config set model.max_output_tokens 2048", ctx());
+        ASSERT_TRUE(set_tokens.has_value());
+        ASSERT_TRUE(set_tokens->ok) << set_tokens->message;
+        {
+            const std::string bytes = cmd_read_file(project_path);
+            EXPECT_NE(bytes.find("\"max_output_tokens\": 2048"), std::string::npos)
+                << bytes;
+            EXPECT_EQ(bytes.find("9999"), std::string::npos) << bytes;
+        }
+
+        // Documented runtime behavior: the env overlay applies at LOAD time,
+        // so within THIS manager the explicit set is what /config get reports
+        // (the in-memory value is the user's X). A FRESH load while the env
+        // is still exported re-applies the overlay and yields Y — see below.
+        auto get_model = registry.execute("/config get model.default_model", ctx());
+        ASSERT_TRUE(get_model.has_value());
+        EXPECT_EQ(get_model->message, "model.default_model = X-user-model-c19");
+    }
+
+    // Send still exported: a fresh process re-applies the env overlay, so the
+    // EFFECTIVE runtime value is again the env one even though the file holds
+    // the user's X. This is the pre-existing env semantics, unchanged by c19.
+    {
+        cc::core::ConfigManager env_reload(project_path.parent_path() / "g.json",
+                                           project_path);
+        ASSERT_TRUE(env_reload.load().has_value());
+        EXPECT_EQ(env_reload.settings().model.default_model, "Y-env-model-c19");
+        EXPECT_EQ(env_reload.settings().model.max_output_tokens, 9999u);
+    }
+
+    // With the env unset, the file the user wrote is what a fresh process
+    // sees — proving the explicit write persisted.
+    {
+        EnvironmentUnsetGuard unset_model("LOOM_MODEL");
+        EnvironmentUnsetGuard unset_tokens("LOOM_MAX_TOKENS");
+        cc::core::ConfigManager reloaded(project_path.parent_path() / "g.json",
+                                         project_path);
+        ASSERT_TRUE(reloaded.load().has_value());
+        EXPECT_EQ(reloaded.settings().model.default_model, "X-user-model-c19");
+        EXPECT_EQ(reloaded.settings().model.max_output_tokens, 2048u);
     }
 
     cleanup();

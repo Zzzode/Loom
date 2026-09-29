@@ -281,7 +281,25 @@ class ConfigManager {
     // c13b provenance: (section, leaf) scalar leaves seen on disk during the
     // tier merge, and whether the two modeled env overrides are engaged
     // after apply_environment_variables(). Reset on every load().
+    //
+    // c19 adds env-model provenance for the two leaves the environment can
+    // overwrite AND the serializer can emit. disk_leaves_ is deliberately NOT
+    // reused: it records "this leaf was seen in some FILE", which is
+    // orthogonal to "the ENV overwrote the merged value" (a leaf can be both
+    // — LOOM_MODEL set AND model.default_model on disk — and then the env
+    // wins, so a disk_leaves_-driven serializer would bake exactly the env
+    // value we must not persist). Instead apply_environment_variables records,
+    // per leaf, the env VALUE it applied and the PRE-OVERLAY merged value (the
+    // value to PERSIST); env_explicit_leaves_ additionally marks leaves the
+    // /config command explicitly wrote THIS session, so an explicit set to a
+    // value that happens to equal the env value still persists. The whole
+    // rule is explained at its use site in serialize_settings.
     std::set<std::pair<std::string, std::string>> disk_leaves_;
+    std::set<std::pair<std::string, std::string>> env_explicit_leaves_;
+    std::optional<std::string> env_model_value_;
+    std::optional<std::string> env_backup_default_model_;
+    std::optional<std::uint32_t> env_tokens_value_;
+    std::optional<std::uint32_t> env_backup_max_output_tokens_;
     bool env_model_engaged_ = false;
     bool env_max_tokens_engaged_ = false;
 
@@ -328,6 +346,11 @@ public:
 
         // c13b: reset provenance for this fresh merge.
         disk_leaves_.clear();
+        env_explicit_leaves_.clear();
+        env_model_value_.reset();
+        env_backup_default_model_.reset();
+        env_tokens_value_.reset();
+        env_backup_max_output_tokens_.reset();
         env_model_engaged_ = false;
         env_max_tokens_engaged_ = false;
 
@@ -422,6 +445,21 @@ public:
     [[nodiscard]] Settings& settings_mut() noexcept {
         dirty_ = true;
         return settings_;
+    }
+
+    /// c19: mark one (section, leaf) as EXPLICITLY written by the user this
+    /// session, so the env-baking guard in serialize_settings persists the
+    /// in-memory value even if it happens to equal the value the environment
+    /// overlay applied. /config set calls this before saving; a plain
+    /// settings_mut() change is recognized by the value-difference rule
+    /// instead (see serialize_settings). Only the two env-overridable model
+    /// leaves have provenance to mark, so other keys are a no-op.
+    void clear_env_provenance(std::string_view section, std::string_view leaf) {
+        if ((section == "model" && leaf == "default_model") ||
+            (section == "model" && leaf == "max_output_tokens")) {
+            env_explicit_leaves_.emplace(std::string(section),
+                                         std::string(leaf));
+        }
     }
 
     /// Check if a feature flag is enabled
@@ -1189,9 +1227,14 @@ private:
             settings_.network.base_url = val;
         }
 
-        // LOOM_MODEL -> model.default_model
+        // LOOM_MODEL -> model.default_model. The pre-overlay merged value
+        // (from a file, or the built-in default) is captured alongside the
+        // env value so a save can re-emit the FILE's own value instead of the
+        // ephemeral env one.
         if (auto* val = std::getenv("LOOM_MODEL")) {
+            env_backup_default_model_ = settings_.model.default_model;
             settings_.model.default_model = val;
+            env_model_value_ = std::string(val);
             env_model_engaged_ = true;
         }
 
@@ -1205,22 +1248,61 @@ private:
         // LOOM_MAX_TOKENS -> model.max_output_tokens. Engagement uses the
         // single range-checked predicate shared with set-shadow disclosure.
         if (auto parsed = parse_env_max_tokens(std::getenv("LOOM_MAX_TOKENS"))) {
+            env_backup_max_output_tokens_ = settings_.model.max_output_tokens;
             settings_.model.max_output_tokens = *parsed;
+            env_tokens_value_ = *parsed;
             env_max_tokens_engaged_ = true;
         }
     }
 
     /// Serialize settings to JSON string. When writing the PROJECT file after
     /// a real load, mcpServers go through the §B secret-boundary filter.
+    ///
+    /// c19 env-baking guard: for the two leaves the environment can overwrite
+    /// (model.default_model / model.max_output_tokens), the value to PERSIST
+    /// is the recorded pre-overlay merged value (env_backup_*) UNLESS the leaf
+    /// is user intent — either the in-memory value no longer equals the value
+    /// the env overlay applied (a settings_mut() change), or /config set
+    /// marked the leaf explicit (clear_env_provenance, which covers the case
+    /// where the user set the value back to the env value itself). This needs
+    /// no per-callsite opt-in beyond the explicit marker, so every save
+    /// surface is covered. An unrelated save thus keeps the FILE's own value
+    /// and can never bake the ephemeral LOOM_MODEL / LOOM_MAX_TOKENS value
+    /// into the project file; when the env is unset nothing is recorded and
+    /// the output is byte-identical to before. Only those two leaves are
+    /// affected — network.api_key / base_url / proxy have always been omitted
+    /// by this serializer (no credential bytes leave it), which c19 preserves
+    /// bit for bit. Runtime reads are untouched (this only changes what a
+    /// save writes).
     [[nodiscard]] std::string serialize_settings(
         ConfigSource target = ConfigSource::ProjectConfig) const {
         const std::vector<const McpServerConfig*> mcp_to_emit =
             mcp_servers_for_save(target);
+        const bool model_still_env =
+            env_model_value_.has_value() &&
+            settings_.model.default_model == *env_model_value_ &&
+            !env_explicit_leaves_.contains({"model", "default_model"});
+        const bool tokens_still_env =
+            env_tokens_value_.has_value() &&
+            settings_.model.max_output_tokens == *env_tokens_value_ &&
+            !env_explicit_leaves_.contains({"model", "max_output_tokens"});
+        // value_or is belt-and-braces: a *still_env* leaf always has a backup
+        // (both are captured together by apply_environment_variables).
+        const std::string model_to_emit =
+            model_still_env
+                ? env_backup_default_model_.value_or(settings_.model.default_model)
+                : settings_.model.default_model;
+        const std::uint32_t tokens_to_emit =
+            tokens_still_env
+                ? env_backup_max_output_tokens_.value_or(settings_.model.max_output_tokens)
+                : settings_.model.max_output_tokens;
+
         std::string json;
         json += "{\n";
         json += "  \"model\": {\n";
-        json += std::format("    \"default_model\": \"{}\",\n", escape_json(settings_.model.default_model));
-        json += std::format("    \"max_output_tokens\": {},\n", settings_.model.max_output_tokens);
+        json += std::format("    \"default_model\": \"{}\",\n",
+                            escape_json(model_to_emit));
+        json += std::format("    \"max_output_tokens\": {},\n", tokens_to_emit);
         json += std::format("    \"extended_thinking\": {},\n", settings_.model.extended_thinking ? "true" : "false");
         json += std::format("    \"context_window_size\": {}\n", settings_.model.context_window_size);
         json += "  },\n";

@@ -10384,6 +10384,171 @@ TEST(ConfigManagerUserSettings, MaxTokensEnvEngagementConsistent) {
     }
 }
 
+// RFC-0001 B followup c19: a FULL project save while LOOM_MODEL /
+// LOOM_MAX_TOKENS are exported re-emits the PRE-OVERLAY merged value, so the
+// env value is never baked into the tracked file. Manager-level counterpart
+// to the /config command tests. Each case runs under an explicit env guard
+// over a hermetic C13Paths root.
+TEST(ConfigManagerC19, SavePreservesFileValueUnderEnvOverlay) {
+    C13Paths p("c19bake");
+    c13_write_file(p.project_path, R"JSON({
+      "model": {"default_model": "file-model-c19", "max_output_tokens": 512}
+    })JSON");
+    // The save path's .gitignore appender walks up from CWD; run inside the
+    // ancestry-clean temp root so it cannot reach a real work tree.
+    CurrentPathGuard cwd_guard(p.root);
+
+    // Case A: both env vars engaged. An unrelated full save keeps the file's
+    // OWN values (never the env ones).
+    {
+        EnvironmentGuard model_guard("LOOM_MODEL", "env-ephemeral-c19");
+        EnvironmentGuard tokens_guard("LOOM_MAX_TOKENS", "4321");
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        // Runtime reads DO see the env overlay...
+        EXPECT_EQ(m.settings().model.default_model, "env-ephemeral-c19");
+        EXPECT_EQ(m.settings().model.max_output_tokens, 4321u);
+
+        m.settings_mut().display.theme = "dark";
+        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+
+    const std::string bytes = [&] {
+        std::ifstream f(p.project_path);
+        return std::string((std::istreambuf_iterator<char>(f)),
+                           std::istreambuf_iterator<char>());
+    }();
+    EXPECT_EQ(bytes.find("env-ephemeral-c19"), std::string::npos) << bytes;
+    EXPECT_EQ(bytes.find("4321"), std::string::npos) << bytes;
+    {
+        auto doc = cc::utils::json::parse_file(p.project_path);
+        ASSERT_TRUE(doc.has_value());
+        EXPECT_EQ(doc->root().get("model").get("default_model").as_str(),
+                  std::string_view("file-model-c19"));
+        EXPECT_EQ(doc->root().get("model").get("max_output_tokens").as_int(),
+                  512);
+        EXPECT_EQ(doc->root().get("display").get("theme").as_str(),
+                  std::string_view("dark"));
+    }
+
+    // Case B (control): no env → a normal save persists the file's own
+    // values exactly as before c19.
+    {
+        EnvironmentUnsetGuard unset_model("LOOM_MODEL");
+        EnvironmentUnsetGuard unset_tokens("LOOM_MAX_TOKENS");
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        m.settings_mut().display.show_thinking = false;
+        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        auto doc = cc::utils::json::parse_file(p.project_path);
+        ASSERT_TRUE(doc.has_value());
+        EXPECT_EQ(doc->root().get("model").get("default_model").as_str(),
+                  std::string_view("file-model-c19"));
+        EXPECT_EQ(doc->root().get("model").get("max_output_tokens").as_int(),
+                  512);
+        EXPECT_EQ(doc->root().get("display").get("show_thinking").as_bool(),
+                  false);
+    }
+
+    // Case C: env engaged but with NO file value — the backup is the built-in
+    // default, so the file gets the default (never the env value).
+    C13Paths q("c19default");
+    CurrentPathGuard cwd_guard_q(q.root);
+    {
+        EnvironmentGuard model_guard("LOOM_MODEL", "env-only-c19");
+        auto m = q.manager();
+        ASSERT_TRUE(m.load().has_value());
+        m.settings_mut().display.theme = "light";
+        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+    {
+        std::ifstream f(q.project_path);
+        const std::string qbytes((std::istreambuf_iterator<char>(f)),
+                                 std::istreambuf_iterator<char>());
+        EXPECT_EQ(qbytes.find("env-only-c19"), std::string::npos) << qbytes;
+        auto doc = cc::utils::json::parse_file(q.project_path);
+        ASSERT_TRUE(doc.has_value());
+        EXPECT_EQ(doc->root().get("model").get("default_model").as_str(),
+                  std::string_view("claude-sonnet-4-20250514"));
+    }
+}
+
+// RFC-0001 B followup c19: an explicit set_user_setting of an env-overridden
+// leaf persists the user's value, and a later unrelated save in the SAME
+// instance does not revert it to the file backup. This is the exact hazard
+// that ruled out a bare "prune env leaves from disk_leaves_" design: the
+// post-write quiet reload re-marks env provenance, so the fix must keep the
+// explicit-intent bit across it.
+TEST(ConfigManagerC19, ExplicitSetSurvivesPostReloadThenUnrelatedSave) {
+    C13Paths p("c19explicit");
+    // The USER tier is the store set_user_setting writes and sits BELOW the
+    // project file; seed the file value in the USER tier so the explicit set
+    // is the effective one (matches the /config command suite, where the
+    // project file is the same file the manager was constructed over).
+    c13_write_file(p.user_path, R"JSON({
+      "model": {"default_model": "seed-c19"}
+    })JSON");
+    CurrentPathGuard cwd_guard(p.root);
+
+    EnvironmentGuard model_guard("LOOM_MODEL", "env-c19");
+    {
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        EXPECT_EQ(m.settings().model.default_model, "env-c19");  // env wins
+        auto out = m.set_user_setting("model.default_model",
+                                      c13_parse(R"("user-x-c19")"));
+        ASSERT_TRUE(out.has_value());
+        EXPECT_TRUE(out->shadowed);
+        EXPECT_EQ(out->shadowed_by, "LOOM_MODEL");
+
+        // An unrelated FULL save in the same instance must carry the user's X
+        // (loaded from the just-patched user tier over the env overlay), not
+        // the pre-write seed and not the env value.
+        m.settings_mut().display.theme = "dark";
+        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+    {
+        std::ifstream f(p.project_path);
+        const std::string bytes((std::istreambuf_iterator<char>(f)),
+                                std::istreambuf_iterator<char>());
+        EXPECT_NE(bytes.find("user-x-c19"), std::string::npos) << bytes;
+        EXPECT_EQ(bytes.find("env-c19"), std::string::npos) << bytes;
+    }
+    // With the env unset the user's value is what a fresh process sees.
+    {
+        EnvironmentUnsetGuard unset_model("LOOM_MODEL");
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        EXPECT_EQ(m.settings().model.default_model, "user-x-c19");
+    }
+}
+
+// RFC-0001 B followup c19: the corner the value-difference rule alone cannot
+// see — the user explicitly sets a leaf to EXACTLY the env value. Without the
+// explicit-intent marker the guard would re-emit the pre-overlay file value
+// and silently drop the write. clear_env_provenance() is set_user_setting's
+// user-intent signal and covers it.
+TEST(ConfigManagerC19, ExplicitSetToEnvValueStillPersists) {
+    C13Paths p("c19sameval");
+    CurrentPathGuard cwd_guard(p.root);
+
+    EnvironmentGuard model_guard("LOOM_MODEL", "same-c19");
+    {
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        // The env value is what the (absent) file would lose; the user sets
+        // the SAME string explicitly.
+        m.clear_env_provenance("model", "default_model");
+        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    }
+    {
+        std::ifstream f(p.project_path);
+        const std::string bytes((std::istreambuf_iterator<char>(f)),
+                                std::istreambuf_iterator<char>());
+        EXPECT_NE(bytes.find("same-c19"), std::string::npos) << bytes;
+    }
+}
+
 // A leading UTF-8 BOM is stripped in both tier load and the patcher:
 // a clean BOM object loads normally; BOM+object+junk is salvaged with the
 // leading object's keys preserved.

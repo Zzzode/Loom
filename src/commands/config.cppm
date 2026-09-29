@@ -217,6 +217,17 @@ private:
         auto apply_result = apply_setting(key, value);
         if (!apply_result) return std::unexpected(apply_result.error());
 
+        // c19: this is an EXPLICIT user write, so mark the leaf as user intent
+        // before the full save. Without this, `/config set model.default_model X`
+        // with LOOM_MODEL still exported would only persist X when X differs
+        // from the env value; the marker makes user intent win even when the
+        // user sets the value back to the env value. The (section, leaf) pair
+        // comes from the shared spec table, so it cannot drift from the
+        // serializer's keys (a non-model key is a no-op inside the marker).
+        if (const auto* spec = cc::core::ConfigManager::find_user_setting(key)) {
+            config_manager_.clear_env_provenance(spec->section, spec->leaf);
+        }
+
         // Persist changes.
         //
         // Serializer boundary (RFC-0001 B followup c8, Tier-2): save() runs

@@ -2,7 +2,7 @@ module;
 
 #include <cstddef>
 
-export module cc.utils.gitignore;
+export module cc.scm.git.gitignore;
 
 import std;
 

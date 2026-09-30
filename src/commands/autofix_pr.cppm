@@ -2,7 +2,7 @@ export module cc.commands.autofix_pr;
 
 import std;
 
-import cc.utils.exec_sync;
+import cc.process.exec_sync;
 
 export namespace cc::commands::autofix_pr {
 struct CommandResponse { bool ok{true}; std::string message; };

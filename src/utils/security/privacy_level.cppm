@@ -1,5 +1,5 @@
 
-export module cc.utils.privacy_level;
+export module cc.security.privacy_level;
 
 import std;
 

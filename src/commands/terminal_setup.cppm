@@ -21,7 +21,7 @@ export module cc.commands.terminal_setup;
 
 import std;
 
-import cc.utils.hyperlink;
+import cc.platform.hyperlink;
 
 export namespace cc::commands::terminal_setup {
 

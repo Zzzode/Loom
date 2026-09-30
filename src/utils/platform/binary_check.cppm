@@ -1,4 +1,4 @@
-export module cc.utils.binary_check;
+export module cc.platform.binary_check;
 
 import std;
 

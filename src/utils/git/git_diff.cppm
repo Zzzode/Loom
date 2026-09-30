@@ -1,4 +1,4 @@
-export module cc.utils.git_diff;
+export module cc.scm.git.git_diff;
 
 import std;
 

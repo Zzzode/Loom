@@ -20,7 +20,7 @@ import cc.memdir.paths;
 // global ::memdir:: qualification is invisible to it.
 import cc.memdir.memdir;  // arch-check: keep-import
 import cc.constants.paths;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 namespace cc::core {
 

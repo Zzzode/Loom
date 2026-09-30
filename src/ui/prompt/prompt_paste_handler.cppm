@@ -20,7 +20,7 @@ import std;
 import cc.text.parse_references;
 // OS clipboard image read (macOS osascript «class PNGf»).
 // TS REF: src/utils/imagePaste.ts getImageFromClipboard / hasImageInClipboard
-import cc.utils.clipboard;
+import cc.platform.clipboard;
 
 export namespace cc::ui::prompt {
 using namespace ftxui;

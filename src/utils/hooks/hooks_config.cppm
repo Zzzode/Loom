@@ -11,7 +11,7 @@ export module cc.utils.hooks_config;
 import std;
 
 import cc.utils.json;
-import cc.utils.async;
+import cc.process.async;
 import cc.utils.hooks_registry;
 
 export namespace cc::utils::hooks_config {

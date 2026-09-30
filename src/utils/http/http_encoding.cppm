@@ -9,7 +9,7 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.utils.http_encoding;
+export module cc.net.http.http_encoding;
 
 import std;
 

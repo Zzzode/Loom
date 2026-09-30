@@ -2,10 +2,10 @@ module;
 
 #include <cstdio>
 
-export module cc.utils.git_filesystem;
+export module cc.scm.git.git_filesystem;
 
 import std;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::utils {
 

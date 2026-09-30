@@ -37,7 +37,7 @@ import std;
 import cc.crypto.crypto;
 import cc.platform.env.env;
 import cc.utils.error;
-import cc.utils.http_encoding;
+import cc.net.http.http_encoding;
 import cc.utils.json;
 
 export namespace cc::services::auth::aws {

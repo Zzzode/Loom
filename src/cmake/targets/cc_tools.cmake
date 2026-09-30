@@ -79,6 +79,11 @@ target_sources(cc_tools
         # Phase 3-B/C real tool primitives: bash exec + file I/O + glob/grep
         tools/bash/impl_bash.cppm
         tools/files/impl_files.cppm
+        # RFC-0001 Phase D B3 — tools.support move (files stay at
+        # src/utils/tools/; FILE_SET membership only, per the types move
+        # precedent in B1).
+        utils/tools/script_tool_enabled.cppm
+        utils/tools/tool_helpers.cppm
 )
 # RFC 0001 Phase C — runtime_registry module implementation units. Never add
 # these to the FILE_SET CXX_MODULES list above: they are module impl units

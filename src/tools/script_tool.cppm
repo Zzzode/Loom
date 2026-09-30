@@ -13,7 +13,7 @@ import cc.tools.script_typecheck;
 import cc.tools.script_diagnostics;
 import cc.tools.script_types;
 import cc.tools.tool_display_names;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::tools {
 

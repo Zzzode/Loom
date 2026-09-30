@@ -21,7 +21,7 @@ import cc.tools.bash;
 import cc.tools.agent_runtime;
 import cc.tools.notebook;
 import cc.tools.web_browser;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 import cc.utils.json;
 
 namespace cc::tools::detail {

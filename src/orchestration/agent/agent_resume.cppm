@@ -10,7 +10,7 @@ export module cc.orchestration.agent.resume;
 
 import std;
 
-import cc.utils.git;
+import cc.scm.git.git;
 import cc.tools.tool;
 import cc.tools.agent_runtime;
 import cc.tools.agent_constants;
@@ -33,8 +33,8 @@ import cc.services.api.streaming;
 import cc.services.mcp.types;
 import cc.utils.swarm_backends;
 import cc.platform.env.env_utils;
-import cc.utils.tool_helpers;
-import cc.utils.bash_execution;
+import cc.tools.support.tool_helpers;
+import cc.process.bash.bash_execution;
 import cc.orchestration.agent.utils;
 
 export namespace cc::tools::agent::resume_ {

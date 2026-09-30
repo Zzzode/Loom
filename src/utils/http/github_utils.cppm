@@ -6,12 +6,12 @@ module;
 #include <cstdlib>
 #include <httplib.h>
 
-export module cc.utils.github_utils;
+export module cc.net.http.github_utils;
 
 import std;
 
 import cc.utils.json;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::utils {
 

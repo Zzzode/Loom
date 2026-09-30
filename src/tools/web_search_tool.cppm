@@ -11,7 +11,7 @@ import std;
 import cc.utils.error;
 import cc.tools.tool;
 import cc.utils.json;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::tools::web_search {
 

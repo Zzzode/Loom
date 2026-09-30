@@ -2,9 +2,9 @@
 
 
 import std;
-import cc.utils.shell_rule_matching;
-import cc.utils.shell_parser;
-import cc.utils.permissions;
+import cc.process.shell.shell_rule_matching;
+import cc.process.shell.shell_parser;
+import cc.security.permissions;
 
 TEST(ShellRuleMatching, ExtractsLegacyPrefixAndDetectsOnlyUnescapedWildcards) {
     using namespace cc::utils::shell_rule_matching;

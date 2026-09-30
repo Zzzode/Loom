@@ -13,7 +13,7 @@ import cc.text.parse_int;
 import cc.types.types;
 import cc.bridge.messages;
 import cc.bridge.config;
-import cc.utils.http;
+import cc.net.http.http;
 import cc.utils.json;
 
 export namespace cc::bridge {

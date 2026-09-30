@@ -6,8 +6,8 @@ export module cc.benchmarks.pare.workspace;
 
 import std;
 
-import cc.utils.process;
-import cc.utils.git;
+import cc.process.process;
+import cc.scm.git.git;
 
 export namespace cc::benchmarks::pare {
 

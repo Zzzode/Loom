@@ -3,7 +3,7 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.utils.ssrf_guard;
+export module cc.net.http.ssrf_guard;
 
 import std;
 import cc.text.parse_int;

@@ -21,7 +21,7 @@ import std;
 
 import cc.types.types;
 import cc.commands.command;
-import cc.utils.exec_sync;
+import cc.process.exec_sync;
 import cc.services.team_memory.secret_scanner;
 
 export namespace cc::commands {

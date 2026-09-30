@@ -36,7 +36,7 @@ import std;
 
 import cc.ui.messages.message_timestamp;
 import cc.media.image_store;
-import cc.utils.hyperlink;
+import cc.platform.hyperlink;
 
 export namespace cc::ui::messages::image {
 

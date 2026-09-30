@@ -19,11 +19,11 @@ export module cc.tools.bash;
 import std;
 
 import cc.utils.error;
-import cc.utils.async;
+import cc.process.async;
 import cc.tools.tool;
 import cc.tools.agent_runtime;
 import cc.utils.json;
-import cc.utils.shell_providers;
+import cc.process.shell.shell_providers;
 import cc.tools.sed_validation;
 // migrated (Agent 8): result formatting + exit-code semantics
 import cc.tools.command_semantics;

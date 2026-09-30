@@ -25,7 +25,7 @@ import std;
 import cc.types.types;
 import cc.commands.command;
 import cc.config.config;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::commands {
 

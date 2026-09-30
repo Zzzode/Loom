@@ -10,7 +10,7 @@ export module cc.bridge.session_api;
 import std;
 
 import cc.types.types;
-import cc.utils.http;
+import cc.net.http.http;
 import cc.utils.json;
 
 export namespace cc::bridge {

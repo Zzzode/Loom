@@ -48,11 +48,11 @@ import std;
 
 import cc.platform.env.env;
 import cc.utils.error;
-import cc.utils.http_encoding;
+import cc.net.http.http_encoding;
 import cc.utils.json;
 
 // bash_execution — for AzureCliCredential shell-out.
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::services::auth::azure {
 

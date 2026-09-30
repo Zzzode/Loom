@@ -8,7 +8,7 @@ module;
 
 #include <uv.h>
 
-export module cc.utils.async;
+export module cc.process.async;
 
 import std;
 

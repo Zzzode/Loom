@@ -9,7 +9,7 @@ export module cc.tools.workflow;
 import std;
 
 import cc.utils.json;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::tools {
 

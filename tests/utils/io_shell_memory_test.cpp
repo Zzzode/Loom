@@ -2,7 +2,7 @@
 
 
 import std;
-import cc.utils.bash_shell_quoting;
+import cc.process.bash.bash_shell_quoting;
 import cc.fs.memory_file_detection;
 import cc.model.model_cost;
 import cc.fs.read_file_in_range;

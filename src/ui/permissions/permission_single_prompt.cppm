@@ -16,7 +16,7 @@
 /// Keyboard shortcuts: y=Allow, n=Deny, a=Always allow, d=Always deny,
 ///                     s=Toggle sandbox, Esc=Deny, Enter=Allow once
 ///
-/// Engine logic is 100% delegated to cc.utils.permissions_engine.
+/// Engine logic is 100% delegated to cc.security.permissions_engine.
 /// This file only formats the UI and routes user input.
 module;
 
@@ -31,7 +31,7 @@ export module cc.ui.permissions.single_prompt;
 
 import std;
 
-import cc.utils.permissions_engine;
+import cc.security.permissions_engine;
 import cc.ui.permissions.components;
 
 export namespace cc::ui::permissions::single_prompt {

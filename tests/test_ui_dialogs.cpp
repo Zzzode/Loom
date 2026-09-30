@@ -26,7 +26,7 @@ import cc.ui.permissions.components;
 import cc.ui.dialogs.mcp_dialogs;
 import cc.ui.features.plugins.lsp_recommendation_menu;
 import cc.ui.features.plugins.plugin_hint_menu;
-import cc.utils.permissions_engine;
+import cc.security.permissions_engine;
 import cc.ui.foundation.theme_provider;
 import cc.ui.foundation.design_tokens;
 import cc.constants.constants;

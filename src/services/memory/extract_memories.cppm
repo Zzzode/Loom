@@ -14,7 +14,7 @@ export module cc.services.extract_memories;
 import std;
 
 import cc.types.types;
-import cc.utils.async;
+import cc.process.async;
 import cc.utils.error;
 import cc.utils.json;
 import cc.fs.file;

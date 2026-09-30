@@ -7,7 +7,7 @@ export module cc.services.api.session_ingress;
 import std;
 import cc.text.parse_int;
 
-import cc.utils.http;
+import cc.net.http.http;
 import cc.utils.json;
 
 export namespace cc::services::api {

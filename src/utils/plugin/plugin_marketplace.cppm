@@ -14,7 +14,7 @@ export module cc.utils.plugin_marketplace;
 
 import std;
 
-import cc.utils.exec_sync;
+import cc.process.exec_sync;
 import cc.utils.json;
 import cc.utils.plugin_identifier;
 import cc.utils.plugin_marketplace_rules;

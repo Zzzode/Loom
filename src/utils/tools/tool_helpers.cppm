@@ -2,7 +2,7 @@ module;
 
 #include <cstddef>
 
-export module cc.utils.tool_helpers;
+export module cc.tools.support.tool_helpers;
 
 import std;
 

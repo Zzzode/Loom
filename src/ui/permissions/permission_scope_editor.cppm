@@ -11,7 +11,7 @@
 ///           with "Add exception" per row. Two-button actions per row:
 ///           [Allow in workspace only] / [Never allow].
 ///
-/// All state mutations go through cc.utils.permissions_engine public API
+/// All state mutations go through cc.security.permissions_engine public API
 /// (add_rule / remove_rule / get_rules / export_rules / import_rules).
 /// This file never duplicates the pattern-matching or evaluation logic.
 module;
@@ -28,7 +28,7 @@ export module cc.ui.permissions.scope_editor;
 
 import std;
 
-import cc.utils.permissions_engine;
+import cc.security.permissions_engine;
 import cc.ui.permissions.components;
 
 export namespace cc::ui::permissions::scope_editor {

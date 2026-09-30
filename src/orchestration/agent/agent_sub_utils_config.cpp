@@ -8,7 +8,7 @@ module cc.orchestration.agent.utils;
 
 import std;
 
-import cc.utils.git;
+import cc.scm.git.git;
 import cc.platform.env.env_utils;
 import cc.text.parse_int;
 import cc.utils.team_helpers;

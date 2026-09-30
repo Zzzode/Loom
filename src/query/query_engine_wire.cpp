@@ -3,7 +3,7 @@
 // thinking/context-management gating, output_config JSON, task-budget
 // accounting, and the working-directory/context-utilization accessors.
 // This is the ONLY implementation unit that imports the two concrete wire
-// backends and cc.utils.tool_deny_rules.
+// backends and cc.security.tool_deny_rules.
 module;
 
 #include <cstdlib>
@@ -14,7 +14,7 @@ import std;
 
 import cc.types.types;
 import cc.utils.json;
-import cc.utils.tool_deny_rules;
+import cc.security.tool_deny_rules;
 import cc.platform.env.env_utils;
 import cc.query.wire_protocol;
 import cc.query.wire_anthropic;

@@ -16,7 +16,7 @@ import std;
 import cc.ui.screens.repl_state;
 import cc.ui.screens.messages_store;
 import cc.ui.chrome.ink_utils;
-import cc.utils.terminal_helpers;
+import cc.platform.terminal_helpers;
 import cc.ui.chrome.fullscreen_layout;
 import cc.ui.foundation.logo_v2;
 import cc.ui.features.teams.live_teammates;

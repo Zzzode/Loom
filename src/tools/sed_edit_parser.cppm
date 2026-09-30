@@ -19,7 +19,7 @@ export module cc.tools.sed_edit_parser;
 import std;
 
 import cc.parsing.cli.argument_substitution;
-import cc.utils.bash_shell_quoting;
+import cc.process.bash.bash_shell_quoting;
 
 export namespace cc::tools::sed_edit_parser {
 

@@ -20,7 +20,7 @@ import cc.tools.runtime_computer_use;
 import cc.orchestration.tools.mcp;
 import cc.tools.runtime_registry;
 import cc.utils.json;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 import cc.tools.image_codec.port;
 
 namespace cc::tools::detail {

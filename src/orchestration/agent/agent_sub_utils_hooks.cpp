@@ -19,8 +19,8 @@ module cc.orchestration.agent.utils;
 
 import std;
 
-import cc.utils.git;
-import cc.utils.bash_execution;
+import cc.scm.git.git;
+import cc.process.bash.bash_execution;
 import cc.utils.json;
 import cc.tools.todo_write;
 import cc.tools.bash;

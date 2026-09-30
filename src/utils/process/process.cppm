@@ -9,12 +9,12 @@ module;
 #include <signal.h>
 #include <sys/types.h>
 
-export module cc.utils.process;
+export module cc.process.process;
 
 import std;
 
 import cc.utils.error;
-import cc.utils.async;
+import cc.process.async;
 
 export namespace cc::utils::process {
 

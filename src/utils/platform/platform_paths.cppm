@@ -1,4 +1,4 @@
-export module cc.utils.platform_paths;
+export module cc.platform.platform_paths;
 
 import std;
 

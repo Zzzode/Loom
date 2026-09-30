@@ -2,7 +2,7 @@ module;
 
 #include <cstdint>
 
-export module cc.utils.commit_attribution;
+export module cc.scm.git.commit_attribution;
 
 import std;
 

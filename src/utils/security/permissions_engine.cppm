@@ -7,7 +7,7 @@ module;
 // Migrates: src/utils/permissions/ (24 TS files)
 // Core permission engine, rule matching, path patterns, caching
 
-export module cc.utils.permissions_engine;
+export module cc.security.permissions_engine;
 
 import std;
 

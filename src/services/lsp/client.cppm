@@ -17,7 +17,7 @@ import std;
 
 import cc.utils.json;
 import cc.types.types;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 import cc.services.lsp.diagnostic_registry;
 
 export namespace cc::services::lsp {

@@ -12,7 +12,7 @@ import std;
 
 import cc.tools.agent_runtime;
 import cc.tools.runtime_shared_utils;
-import cc.utils.git;
+import cc.scm.git.git;
 
 namespace cc::tools::agent {
 

@@ -45,7 +45,7 @@ import cc.services.api.models;
 
 import cc.platform.env.env;
 import cc.utils.error;
-import cc.utils.http_encoding;
+import cc.net.http.http_encoding;
 import cc.model.providers;
 
 export namespace cc::services::auth::byoc {

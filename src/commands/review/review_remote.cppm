@@ -17,10 +17,10 @@ import std;
 
 import cc.types.types;
 import cc.commands.command;
-import cc.utils.exec_sync;
-import cc.utils.shell;
-import cc.utils.find_executable;
-import cc.utils.detect_repository;
+import cc.process.exec_sync;
+import cc.process.shell.shell;
+import cc.platform.find_executable;
+import cc.scm.git.detect_repository;
 
 export namespace cc::commands {
 

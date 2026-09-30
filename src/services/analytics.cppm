@@ -27,7 +27,7 @@ export module cc.services.analytics;
 import std;
 
 import cc.utils.json;
-import cc.utils.xdg;
+import cc.platform.xdg;
 
 export namespace cc::services::analytics {
 

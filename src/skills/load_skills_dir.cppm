@@ -37,14 +37,14 @@ import std;
 
 import cc.utils.yaml;
 import cc.utils.frontmatter_parser;
-import cc.utils.gitignore;
+import cc.scm.git.gitignore;
 import cc.parsing.cli.argument_substitution;
 import cc.model.effort;
 import cc.platform.env.env_utils;
 import cc.diagnostics.log;
 import cc.text.markdown_utils;
 import cc.fs.path_utils;
-import cc.utils.platform_paths;
+import cc.platform.platform_paths;
 import cc.text.string_utils;
 import cc.skills.mcp_skill_builders;
 export import cc.skills.skill;

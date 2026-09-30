@@ -12,7 +12,7 @@ import std;
 
 import cc.types.types;
 import cc.coordinator.swarm;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 import cc.tasks.task;   // canonical TaskType / TaskStatus / TaskResult / task_type_to_string
 
 export namespace cc::core {

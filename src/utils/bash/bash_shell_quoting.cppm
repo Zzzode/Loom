@@ -2,7 +2,7 @@ module;
 
 #include <cctype>
 
-export module cc.utils.bash_shell_quoting;
+export module cc.process.bash.bash_shell_quoting;
 
 import std;
 

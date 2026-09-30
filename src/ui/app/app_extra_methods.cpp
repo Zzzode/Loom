@@ -45,12 +45,12 @@ import cc.utils.session_storage;
 import cc.hooks.lifecycle_hooks;
 
 // ── Imports needed by the 5 methods (not available via the interface) ────
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 import cc.model.model;
 import cc.constants.constants;
-import cc.utils.git;
+import cc.scm.git.git;
 import cc.crypto.crypto;
-import cc.utils.clipboard;
+import cc.platform.clipboard;
 import cc.text.parse_references;
 import cc.ui.messages.collapse_background_bash;
 import cc.ui.features.agents.agent_shared_widgets;

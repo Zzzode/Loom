@@ -1,6 +1,6 @@
 /// @file permissions_cmd.cppm
 /// @brief PermissionsCommand implementing the /permissions slash command.
-/// 100% delegates to cc.utils.permissions_engine for all rule management.
+/// 100% delegates to cc.security.permissions_engine for all rule management.
 /// Sub-commands: list, show TOOL, allow TOOL [SCOPE], deny TOOL [SCOPE],
 ///               reset TOOL, reset-all, dump
 /// Output is plain-text rows ready for Phase 4 FTXUI table rendering.
@@ -15,7 +15,7 @@ import std;
 
 import cc.types.types;
 import cc.commands.command;
-import cc.utils.permissions_engine;
+import cc.security.permissions_engine;
 
 export namespace cc::commands {
 

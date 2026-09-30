@@ -28,7 +28,7 @@ import cc.commands.plugin_parse_args;
 import cc.utils.error;
 import cc.utils.json;
 import cc.commands.terminal_setup;
-import cc.utils.hyperlink;
+import cc.platform.hyperlink;
 import cc.services.mcp.xaa_idp_login;
 
 namespace {

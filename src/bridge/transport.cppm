@@ -17,7 +17,7 @@ export module cc.bridge.transport;
 import std;
 
 import cc.utils.json;
-import cc.utils.http;
+import cc.net.http.http;
 
 
 export namespace cc::bridge {

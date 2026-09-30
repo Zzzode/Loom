@@ -38,7 +38,7 @@ import cc.tools.send_message;        // SendMessageTool / MessagePriority / Deli
 import cc.tools.team;                // TeamMember / global_team_store
 import cc.tools.runtime_shared_utils;
 import cc.utils.json;
-import cc.utils.http;
+import cc.net.http.http;
 import cc.crypto.uuid_utils;
 import cc.utils.team_helpers;
 

@@ -13,7 +13,7 @@ import std;
 import cc.types.types;
 import cc.commands.command;
 import cc.constants.product;
-import cc.utils.exec_sync;
+import cc.process.exec_sync;
 
 // Module-internal helpers (module linkage; intentionally not exported).
 namespace cc::commands {

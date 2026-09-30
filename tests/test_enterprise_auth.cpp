@@ -31,7 +31,7 @@
 import std;
 import cc.crypto.crypto;
 import cc.platform.env.env;
-import cc.utils.http_encoding;
+import cc.net.http.http_encoding;
 import cc.utils.json;
 
 import cc.services.auth.sigv4;

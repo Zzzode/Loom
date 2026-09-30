@@ -5,7 +5,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.utils.shell_parser;
+export module cc.process.shell.shell_parser;
 
 import std;
 

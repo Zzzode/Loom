@@ -12,7 +12,7 @@ export module cc.orchestration.agent;
 import std;
 
 import cc.utils.error;
-import cc.utils.git;
+import cc.scm.git.git;
 import cc.tools.tool;
 import cc.utils.json;
 import cc.tools.agent_runtime;
@@ -36,8 +36,8 @@ import cc.services.api.bootstrap;
 import cc.services.mcp.types;
 import cc.utils.swarm_backends;
 import cc.platform.env.env_utils;
-import cc.utils.tool_helpers;
-import cc.utils.bash_execution;
+import cc.tools.support.tool_helpers;
+import cc.process.bash.bash_execution;
 
 // Sub-modules created during P1-04 split
 import cc.orchestration.agent.utils;

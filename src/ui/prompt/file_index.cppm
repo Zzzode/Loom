@@ -16,7 +16,7 @@ export module cc.ui.prompt.file_index;
 
 import std;
 
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::ui::prompt::file_index {
 

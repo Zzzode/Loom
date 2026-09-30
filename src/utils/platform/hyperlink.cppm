@@ -4,7 +4,7 @@ module;
 // Shell quoting for safe command construction.
 #include <cctype>
 
-export module cc.utils.hyperlink;
+export module cc.platform.hyperlink;
 
 import std;
 

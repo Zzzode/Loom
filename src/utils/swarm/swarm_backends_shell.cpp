@@ -19,7 +19,7 @@ module cc.utils.swarm_backends;
 
 import std;
 
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 namespace cc::utils::swarm_backends::detail {
 

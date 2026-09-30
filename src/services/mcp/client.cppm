@@ -4,7 +4,7 @@
 // in module implementation units (client_*_transport.cpp / client_protocol.cpp
 // / client_requests.cpp, all `module cc.services.mcp.client;`) so that the
 // heavy textual third-party closures used by the implementations
-// (<yyjson.h> via cc.utils.json, <httplib.h> via cc.utils.http, and the raw
+// (<yyjson.h> via cc.utils.json, <httplib.h> via cc.net.http.http, and the raw
 // socket POSIX headers) never enter this interface's BMI. A body edit
 // recompiles one object instead of the importer fan-out.
 module;

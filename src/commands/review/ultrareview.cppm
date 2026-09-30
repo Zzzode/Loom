@@ -32,9 +32,9 @@ import cc.types.types;
 import cc.commands.command;
 import cc.config.feature_flags;
 import cc.services.api.usage;
-import cc.utils.exec_sync;
-import cc.utils.git_filesystem;
-import cc.utils.detect_repository;
+import cc.process.exec_sync;
+import cc.scm.git.git_filesystem;
+import cc.scm.git.detect_repository;
 
 export namespace cc::commands {
 

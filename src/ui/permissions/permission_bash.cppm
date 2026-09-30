@@ -37,7 +37,7 @@
 ///   - Ctrl+D    : toggle debug info (when debug enabled)
 ///
 /// Engine logic is 100% delegated to cc.tools.bash_permissions and
-/// cc.utils.permissions_engine — this file only renders the UI and
+/// cc.security.permissions_engine — this file only renders the UI and
 /// routes user input.
 module;
 

@@ -31,7 +31,7 @@ import cc.fs.atomic_replace;
 import cc.crypto.crypto;
 import cc.utils.error;
 import cc.utils.json;
-import cc.utils.hyperlink;
+import cc.platform.hyperlink;
 import cc.services.mcp.oauth_port;
 
 export namespace cc::services::mcp {

@@ -11,7 +11,7 @@ export module cc.tasks.task;
 import std;
 
 import cc.types.types;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::core {
 

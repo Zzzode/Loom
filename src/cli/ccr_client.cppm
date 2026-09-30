@@ -6,7 +6,7 @@ export module cc.cli.ccr_client;
 
 import std;
 
-import cc.utils.http;
+import cc.net.http.http;
 
 export namespace cc::cli {
 

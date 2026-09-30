@@ -80,7 +80,6 @@ target_sources(cc_utils
         utils/text/semantic_boolean.cppm
         utils/text/semantic_number.cppm
         utils/security/sanitization.cppm
-        utils/tools/script_tool_enabled.cppm
         utils/session/session_storage.cppm
         utils/containers/set_utils.cppm
         utils/settings/settings_merge.cppm
@@ -100,7 +99,6 @@ target_sources(cc_utils
         utils/parsing/text_highlighting.cppm
         utils/process/timeouts.cppm
         utils/model/token_budget.cppm
-        utils/tools/tool_helpers.cppm
         utils/security/tool_deny_rules.cppm
         utils/text/words.cppm
         utils/crypto/uuid_utils.cppm

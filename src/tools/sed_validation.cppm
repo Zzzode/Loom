@@ -24,7 +24,7 @@ import cc.tools.bash_validation;
 import cc.tools.bash_security;
 import cc.tools.destructive_command_warning;
 import cc.parsing.cli.argument_substitution;
-import cc.utils.bash_shell_quoting;
+import cc.process.bash.bash_shell_quoting;
 import cc.tools.sed_edit_parser;
 
 export namespace cc::tools::sed_validation {

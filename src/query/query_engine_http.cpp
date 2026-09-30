@@ -4,7 +4,7 @@
 // api_messages_endpoint helper. This is the ONLY implementation unit that
 // textually includes <httplib.h>; keeping it here lets the third-party
 // header leave the module interface BMI. Raw httplib types are NOT exported
-// by cc.utils.http (it includes the same header in its own global module
+// by cc.net.http.http (it includes the same header in its own global module
 // fragment and only exports cc::utils::HttpClient wrappers), so this TU
 // textually includes <httplib.h> exactly like src/services/auth/*.cppm.
 module;

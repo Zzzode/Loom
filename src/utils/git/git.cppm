@@ -7,12 +7,12 @@ module;
 #include <cstdio>
 #include <cstddef>
 
-export module cc.utils.git;
+export module cc.scm.git.git;
 
 import std;
 
 import cc.utils.error;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::utils::git {
 

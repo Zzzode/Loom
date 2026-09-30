@@ -15,7 +15,7 @@ import std;
 import cc.tools.script_types;
 import cc.tools.script_diagnostics;
 import cc.utils.json;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::tools::script_typecheck {
 

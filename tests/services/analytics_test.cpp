@@ -196,7 +196,7 @@ TEST(LocalAnalytics, ModuleSourceImportsNoHttpClient) {
     buffer << in.rdbuf();
     const auto text = buffer.str();
 
-    for (const char* forbidden : {"cc.utils.http", "cc.services.api", "curl",
+    for (const char* forbidden : {"cc.net.http.http", "cc.services.api", "curl",
                                   "httplib", "socket", "getaddrinfo"}) {
         EXPECT_EQ(text.find(forbidden), std::string::npos)
             << "analytics.cppm must stay local-only, but mentions '" << forbidden

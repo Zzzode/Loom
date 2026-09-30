@@ -2,7 +2,7 @@ export module cc.commands.commit_push_pr;
 
 import std;
 
-import cc.utils.exec_sync;
+import cc.process.exec_sync;
 
 export namespace cc::commands::commit_push_pr {
 struct CommandResponse { bool ok{true}; bool inject{false}; std::string message; };

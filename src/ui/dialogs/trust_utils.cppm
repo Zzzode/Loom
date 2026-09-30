@@ -23,7 +23,7 @@ export module cc.ui.dialogs.trust_utils;
 import std;
 
 // Reuse existing trust / security primitives instead of redefining them.
-import cc.utils.bash_security;
+import cc.process.bash.bash_security;
 import cc.services.team_memory.secret_scanner;
 import cc.commands.plugin_trust_text;
 import cc.plugins.plugin;

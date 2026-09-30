@@ -26,9 +26,9 @@ import std;
 import cc.text.parse_int;
 
 import cc.utils.json;
-import cc.utils.async;
+import cc.process.async;
 import cc.utils.hooks_registry;
-import cc.utils.ssrf_guard;
+import cc.net.http.ssrf_guard;
 
 export namespace cc::utils::hooks_execution {
 

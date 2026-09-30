@@ -12,7 +12,7 @@ module;
 #include <sys/wait.h>     // waitpid
 #include <unistd.h>       // fork, setsid, dup2, execl, _exit, STDIN_FILENO
 
-export module cc.utils.clipboard;
+export module cc.platform.clipboard;
 
 import std;
 

@@ -8,7 +8,7 @@
 /// HeaderRow, ThinDivider, StatusDot, PathContextBadge, ToolNameBadge,
 /// KeyboardHint, CheckboxToggle, and utility formatters.
 ///
-/// Engine logic is 100% delegated to cc.utils.permissions_engine — this
+/// Engine logic is 100% delegated to cc.security.permissions_engine — this
 /// file only imports display types, never duplicates matching logic.
 module;
 
@@ -24,7 +24,7 @@ export module cc.ui.permissions.components;
 
 import std;
 
-import cc.utils.permissions_engine;
+import cc.security.permissions_engine;
 
 export namespace cc::ui::permissions::components {
 using namespace ftxui;

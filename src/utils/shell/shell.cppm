@@ -10,7 +10,7 @@ module;
 #include <cstddef>
 #include <cstdlib>
 
-export module cc.utils.shell;
+export module cc.process.shell.shell;
 
 import std;
 

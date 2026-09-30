@@ -12,7 +12,7 @@
 //
 //   2. Step-level helpers: run_file / run_test / run_typecheck /
 //      install_package / format_file.  These DO spawn subprocesses
-//      (via cc.utils.bash_execution) and are used by higher-level
+//      (via cc.process.bash.bash_execution) and are used by higher-level
 //      script step orchestration.
 module;
 
@@ -25,7 +25,7 @@ import std;
 import cc.tools.script_types;
 import cc.tools.script_diagnostics;
 import cc.tools.script_typecheck;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::tools::script_primitives {
 

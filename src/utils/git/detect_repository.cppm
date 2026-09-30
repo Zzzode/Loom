@@ -2,11 +2,11 @@ module;
 
 #include <cstdio>
 
-export module cc.utils.detect_repository;
+export module cc.scm.git.detect_repository;
 
 import std;
 
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::utils {
 

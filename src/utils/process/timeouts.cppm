@@ -2,7 +2,7 @@ module;
 
 #include <cctype>
 
-export module cc.utils.timeouts;
+export module cc.process.timeouts;
 
 import std;
 

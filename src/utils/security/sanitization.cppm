@@ -5,7 +5,7 @@ module;
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
-export module cc.utils.sanitization;
+export module cc.security.sanitization;
 
 import std;
 

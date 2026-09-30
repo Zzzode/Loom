@@ -7,7 +7,7 @@ module;
 export module cc.tools.powershell;
 
 import std;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 
 export namespace cc::tools {

@@ -31,7 +31,7 @@ extern char** environ;
 #endif
 #endif
 
-export module cc.utils.bash_execution;
+export module cc.process.bash.bash_execution;
 
 import std;
 

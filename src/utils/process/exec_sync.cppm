@@ -4,10 +4,10 @@ module;
 #include <cstdio>
 #include <sys/wait.h>
 
-export module cc.utils.exec_sync;
+export module cc.process.exec_sync;
 
 import std;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::utils {
 

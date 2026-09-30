@@ -17,7 +17,7 @@ import cc.tools.agent_runtime;
 // Genuinely used for cc::utils::PERSISTED_OUTPUT_TAG / ..._CLOSING_TAG /
 // TOOL_RESULT_CLEARED_MESSAGE: namespace-scope constexpr string_views the
 // dead-import heuristic does not harvest.
-import cc.utils.tool_helpers;  // arch-check: keep-import
+import cc.tools.support.tool_helpers;  // arch-check: keep-import
 import cc.platform.env.env_utils;
 
 namespace cc::core {

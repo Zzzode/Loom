@@ -3,7 +3,7 @@ module;
 #include <cstdlib>
 #include <cctype>
 
-export module cc.utils.proxy_utils;
+export module cc.net.http.proxy_utils;
 
 import std;
 

@@ -5,7 +5,7 @@ module;
 #include <cstdlib>
 #include <httplib.h>
 
-export module cc.utils.http;
+export module cc.net.http.http;
 
 import std;
 

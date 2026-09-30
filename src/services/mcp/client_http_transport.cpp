@@ -1,5 +1,5 @@
 // Implementation unit for cc.services.mcp.client — StreamableHttpTransport
-// bodies. This is the ONLY implementation unit that imports cc.utils.http,
+// bodies. This is the ONLY implementation unit that imports cc.net.http.http,
 // so the textual <httplib.h> closure never enters the module interface BMI
 // nor the other transport units.
 module;
@@ -18,7 +18,7 @@ module cc.services.mcp.client;
 import std;
 
 import cc.services.mcp.types;
-import cc.utils.http;
+import cc.net.http.http;
 
 namespace cc::services::mcp {
 

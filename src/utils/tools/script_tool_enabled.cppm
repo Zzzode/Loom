@@ -1,5 +1,5 @@
 
-export module cc.utils.script_tool_enabled;
+export module cc.tools.support.script_tool_enabled;
 
 import std;
 

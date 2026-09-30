@@ -3,7 +3,7 @@ export module cc.commands.bughunter;
 import std;
 
 import cc.services.diagnostic.dump_diagnostic;
-import cc.utils.exec_sync;
+import cc.process.exec_sync;
 
 export namespace cc::commands::bughunter {
 namespace fs = std::filesystem;

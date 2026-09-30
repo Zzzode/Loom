@@ -2,7 +2,7 @@ module;
 
 #include <cstdlib>
 
-export module cc.utils.xdg;
+export module cc.platform.xdg;
 
 import std;
 

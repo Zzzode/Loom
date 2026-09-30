@@ -15,21 +15,21 @@
 #
 # Format: <importer> -> <imported module>
 cc.benchmarks.pare.run -> cc.fs.file
-cc.benchmarks.pare.workspace -> cc.utils.process
+cc.benchmarks.pare.workspace -> cc.process.process
 cc.bridge.api -> cc.bridge.messages
 cc.bridge.core -> cc.bridge.config
 cc.bridge.core -> cc.bridge.flush_gate
 cc.bridge.core -> cc.bridge.security
 cc.bridge.messages -> cc.types.types
-cc.bridge.session_api -> cc.utils.http
-cc.bridge.transport -> cc.utils.http
+cc.bridge.session_api -> cc.net.http.http
+cc.bridge.transport -> cc.net.http.http
 cc.commands.clear -> cc.state.app_state
-cc.commands.init_verifiers -> cc.utils.git_filesystem
+cc.commands.init_verifiers -> cc.scm.git.git_filesystem
 cc.commands.plugin_ui_data -> cc.commands.plugin_manage
-cc.commands.review.review_remote -> cc.utils.shell
+cc.commands.review.review_remote -> cc.process.shell.shell
 cc.commands.review.ultrareview -> cc.services.api.usage
-cc.commands.review.ultrareview -> cc.utils.detect_repository
-cc.commands.review.ultrareview -> cc.utils.git_filesystem
+cc.commands.review.ultrareview -> cc.scm.git.detect_repository
+cc.commands.review.ultrareview -> cc.scm.git.git_filesystem
 cc.commands.runtime_surface_commands -> cc.commands.init_verifiers
 cc.commands.runtime_surface_commands -> cc.commands.keybindings_cmd
 cc.commands.runtime_surface_commands -> cc.commands.security_review
@@ -38,7 +38,7 @@ cc.services.extract_memories -> cc.fs.file
 cc.skills.bundled.stuck -> cc.skills.load_skills_dir
 cc.skills.load_skills_dir -> cc.text.markdown_utils
 cc.skills.load_skills_dir -> cc.fs.path_utils
-cc.skills.load_skills_dir -> cc.utils.platform_paths
+cc.skills.load_skills_dir -> cc.platform.platform_paths
 cc.skills.load_skills_dir -> cc.text.string_utils
 cc.state.on_change -> cc.state.persistence
 cc.state.store -> cc.state.selectors
@@ -46,8 +46,8 @@ cc.orchestration.agent -> cc.tools.agent_color_manager
 cc.orchestration.agent -> cc.tools.agent_memory
 cc.orchestration.agent -> cc.tools.agent_memory_snapshot
 cc.orchestration.agent -> cc.platform.env.env_utils
-cc.orchestration.agent -> cc.utils.git
-cc.orchestration.agent -> cc.utils.tool_helpers
+cc.orchestration.agent -> cc.scm.git.git
+cc.orchestration.agent -> cc.tools.support.tool_helpers
 cc.orchestration.agent.fork -> cc.services.mcp.types
 cc.orchestration.agent.fork -> cc.skills.skill
 cc.orchestration.agent.fork -> cc.tools.agent_color_manager
@@ -60,12 +60,12 @@ cc.orchestration.agent.fork -> cc.tools.send_message
 cc.orchestration.agent.fork -> cc.tools.sleep
 cc.orchestration.agent.fork -> cc.tools.team
 cc.orchestration.agent.fork -> cc.tools.todo_write
-cc.orchestration.agent.fork -> cc.utils.bash_execution
+cc.orchestration.agent.fork -> cc.process.bash.bash_execution
 cc.orchestration.agent.fork -> cc.platform.env.env_utils
-cc.orchestration.agent.fork -> cc.utils.git
+cc.orchestration.agent.fork -> cc.scm.git.git
 cc.orchestration.agent.fork -> cc.utils.swarm_backends
 cc.orchestration.agent.fork -> cc.utils.team_helpers
-cc.orchestration.agent.fork -> cc.utils.tool_helpers
+cc.orchestration.agent.fork -> cc.tools.support.tool_helpers
 cc.orchestration.agent.resume -> cc.tools.agent_color_manager
 cc.orchestration.agent.resume -> cc.tools.agent_display
 cc.orchestration.agent.resume -> cc.tools.agent_memory
@@ -75,17 +75,17 @@ cc.orchestration.agent.resume -> cc.tools.team
 cc.orchestration.agent.resume -> cc.tools.todo_write
 cc.orchestration.agent.resume -> cc.tools.web_fetch
 cc.orchestration.agent.resume -> cc.platform.env.env_utils
-cc.orchestration.agent.resume -> cc.utils.git
+cc.orchestration.agent.resume -> cc.scm.git.git
 cc.orchestration.agent.resume -> cc.utils.swarm_backends
 cc.orchestration.agent.resume -> cc.utils.team_helpers
-cc.orchestration.agent.resume -> cc.utils.tool_helpers
+cc.orchestration.agent.resume -> cc.tools.support.tool_helpers
 cc.orchestration.agent.run -> cc.services.mcp.types
 cc.orchestration.agent.run -> cc.tools.agent_color_manager
 cc.orchestration.agent.run -> cc.tools.agent_display
 cc.orchestration.agent.run -> cc.tools.agent_memory
 cc.orchestration.agent.run -> cc.tools.agent_memory_snapshot
 cc.orchestration.agent.run -> cc.platform.env.env_utils
-cc.orchestration.agent.run -> cc.utils.tool_helpers
+cc.orchestration.agent.run -> cc.tools.support.tool_helpers
 cc.tools.command_semantics -> cc.text.format
 cc.tools.file_edit -> cc.text.string_utils
 cc.tools.file_read -> cc.fs.file
@@ -108,7 +108,7 @@ cc.ui.app.app [impl:ui/app/app_extra_methods.cpp] -> cc.commands.registry
 cc.ui.app.app [impl:ui/app/app_extra_methods.cpp] -> cc.hooks.lifecycle_hooks
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.ui.foundation.declared_cursor
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.diagnostics.debug
-cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.utils.hyperlink
+cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.platform.hyperlink
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.fs.path
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.utils.session_storage
 cc.ui.app.app [impl:ui/app/app_prompt_suggestion_wiring.cpp] -> cc.commands.command

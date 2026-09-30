@@ -15,7 +15,7 @@ import cc.utils.json;
 // / PERSISTED_OUTPUT_CLOSING_TAG (defined in tool_helpers.cppm); graph_check
 // cannot see qualified cc::utils::NAME evidence because cc::utils is a
 // shallow (<3 segment) namespace path.
-import cc.utils.tool_helpers;  // arch-check: keep-import
+import cc.tools.support.tool_helpers;  // arch-check: keep-import
 import cc.tools.tool;
 import cc.tools.agent_runtime;
 import cc.services.api.client;

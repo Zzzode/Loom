@@ -11,7 +11,7 @@ export module cc.skills.bundled.loom_in_chrome;
 import std;
 
 import cc.skills.load_skills_dir;
-import cc.utils.bash_execution;
+import cc.process.bash.bash_execution;
 
 export namespace cc::skills::bundled {
 

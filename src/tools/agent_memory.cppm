@@ -16,7 +16,7 @@ export module cc.tools.agent_memory;
 
 import std;
 
-import cc.utils.git;
+import cc.scm.git.git;
 
 export namespace cc::tools::agent_memory {
 

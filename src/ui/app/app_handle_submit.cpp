@@ -373,12 +373,12 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
 
             // M7.5: Show model switch confirmation banner
             dtrig::PushModelSwitch(
-                screen_state_->dialog_queue,
+                screen_state_->dialog_store.dialog_queue,
                 old_model,
                 std::string(new_model),
                 [this](bool confirm) {
                     (void)confirm; // always confirmed via /model command
-                    screen_state_->dialog_queue.pop_bottom(
+                    screen_state_->dialog_store.dialog_queue.pop_bottom(
                         /*is_prompt_input_active=*/false);
                     PostRenderEvent();
                 });
@@ -402,7 +402,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
 
     if (normalized == "/config" || normalized == "/settings") {
         screen_state_->mode = repl::ReplMode::SettingsView;
-        screen_state_->settings_config = nullptr;
+        screen_state_->dialog_store.settings_config = nullptr;
         return;
     }
 
@@ -487,8 +487,8 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
             // M7.5: Try to interpret command metadata as a dialog trigger.
             if (result->metadata && !result->metadata->empty()) {
                 if (*result->metadata == "UI:permissions") {
-                    screen_state_->settings_initial_tab = 3;
-                    screen_state_->settings_component.reset();
+                    screen_state_->dialog_store.settings_initial_tab = 3;
+                    screen_state_->dialog_store.settings_component.reset();
                     screen_state_->mode = repl::ReplMode::SettingsView;
                     this->TriggerStatuslineUpdate();
                     PostRenderEvent();
@@ -500,7 +500,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                     }
                 };
                 if (dtrig::PushFromCommandMetadata(
-                        screen_state_->dialog_queue,
+                        screen_state_->dialog_store.dialog_queue,
                         *result->metadata,
                         enqueue_fn))
                 {

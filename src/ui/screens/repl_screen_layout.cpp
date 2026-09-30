@@ -427,7 +427,7 @@ using namespace ftxui;
     // TS REF: FullscreenLayout.tsx L422-426 — ModalContext provides actual
     // terminal dimensions to dialogs.  Pass real term_cols/term_rows instead
     // of the old hardcoded 120x40.
-    if (s.dialog_queue.has_standalone()) {
+    if (s.dialog_store.dialog_queue.has_standalone()) {
         return dialog_queue_render::RenderStandaloneDialog(s, term_cols, term_rows);
     }
 

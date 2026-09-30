@@ -69,7 +69,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // ── M7: Register default dialog renderers in the registry ────
     cc::ui::dialogs::default_renderers::register_default_renderers(
-        screen_state_->dialog_renderers);
+        screen_state_->dialog_store.dialog_renderers);
 
     // ── SL-11: deterministic next-action suggestion on QueryEnd ──
     if (lifecycle_hooks_) {
@@ -93,17 +93,17 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // Register every built-in dialog renderer into the dialog registry.
     cc::ui::app_dialogs::register_default_dialog_renderers(
-        screen_state_->dialog_renderers);
+        screen_state_->dialog_store.dialog_renderers);
     cc::ui::app_dialogs::register_modal_dialog_renderers(
-        screen_state_->dialog_renderers);
+        screen_state_->dialog_store.dialog_renderers);
     cc::ui::app_dialogs::register_bottom_dialog_renderers(
-        screen_state_->dialog_renderers);
+        screen_state_->dialog_store.dialog_renderers);
     cc::ui::app_dialogs::register_all_dialog_renderers(
-        screen_state_->dialog_renderers);
+        screen_state_->dialog_store.dialog_renderers);
     cc::ui::app_dialogs::register_hooks_dialog_renderer(
-        screen_state_->dialog_renderers);
+        screen_state_->dialog_store.dialog_renderers);
     cc::ui::app_dialogs::register_teams_dialog_renderer(
-        screen_state_->dialog_renderers);
+        screen_state_->dialog_store.dialog_renderers);
     // RFC 0002 F2 row 6: register the feature-dialog factories (agent
     // wizard, plugin install wizard, plugin trust dialog) into the
     // feature_dialog_protocol erased-factory registry, so the features area
@@ -113,7 +113,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     // overrides the minimal inline renderer in default_renderers. Registered
     // last so it wins the by-index slot.
     cc::ui::dialogs::elicitation::RegisterElicitationDialog(
-        screen_state_->dialog_renderers);
+        screen_state_->dialog_store.dialog_renderers);
 
     // Seed a stable per-session welcome-tip index.
     std::size_t tip_hash = 0;
@@ -291,7 +291,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                 cost_threshold_shown_ = true;
                 const auto& bt = static_cast<cc::core::QueryEngine*>(engine_raw())->budget_tracker();
                 dtrig::PushCostThreshold(
-                    screen_state_->dialog_queue,
+                    screen_state_->dialog_store.dialog_queue,
                     bt.max_budget_usd,
                     data.session_cost,
                     screen_state_->model_display_name,
@@ -300,7 +300,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                             cost_threshold_shown_ = false;
                         }
                         if (continue_ || reset) {
-                            screen_state_->dialog_queue.pop_bottom(
+                            screen_state_->dialog_store.dialog_queue.pop_bottom(
                                 /*is_prompt_input_active=*/false);
                             PostRenderEvent();
                         } else {
@@ -320,7 +320,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                 std::lock_guard lk(elicitation_mutex_);
                 elicitation_response_.reset();
                 dtrig::PushElicitation(
-                    screen_state_->dialog_queue,
+                    screen_state_->dialog_store.dialog_queue,
                     req.server_name,
                     /*request_id=*/0,
                     req.message,
@@ -339,7 +339,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
             bool approved = *elicitation_response_;
             elicitation_response_.reset();
 
-            screen_state_->dialog_queue.pop_bottom(
+            screen_state_->dialog_store.dialog_queue.pop_bottom(
                 /*is_prompt_input_active=*/false);
             PostRenderEvent();
 
@@ -396,7 +396,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                     ask_user_cv_.notify_one();
                 };
                 dialog_id = p.id;
-                screen_state_->dialog_queue.push(std::move(p));
+                screen_state_->dialog_store.dialog_queue.push(std::move(p));
             }
             PostRenderEvent();
 
@@ -407,7 +407,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
             auto result = *ask_user_response_;
             ask_user_response_.reset();
 
-            screen_state_->dialog_queue.remove(dialog_id);
+            screen_state_->dialog_store.dialog_queue.remove(dialog_id);
             PostRenderEvent();
 
             return result;

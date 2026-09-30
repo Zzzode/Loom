@@ -544,7 +544,7 @@ bool AppAdapter::drain_one_teammate_permission() {
         // One ToolPermission overlay at a time, like every other Band3
         // request — wait for the active dialog to finish first.
         if (teammate_->teammate_pending_permissions_.empty() ||
-            screen_state_->dialog_queue.has_overlay()) {
+            screen_state_->dialog_store.dialog_queue.has_overlay()) {
             return false;
         }
         pending = std::move(teammate_->teammate_pending_permissions_.front());
@@ -586,7 +586,7 @@ bool AppAdapter::drain_one_teammate_permission() {
     };
 
     dtrig::PushToolPermission(
-        screen_state_->dialog_queue,
+        screen_state_->dialog_store.dialog_queue,
         request.tool_name,
         description,
         /*on_response=*/[this, reply](
@@ -601,12 +601,12 @@ bool AppAdapter::drain_one_teammate_permission() {
             reply(allow, always_allow,
                   allow ? std::string{}
                         : std::string{"Permission denied by team lead"});
-            screen_state_->dialog_queue.pop_overlay();
+            screen_state_->dialog_store.dialog_queue.pop_overlay();
             PostRenderEvent();
         },
         /*on_abort=*/[this, reply] {
             reply(false, false, "Permission aborted by team lead");
-            screen_state_->dialog_queue.pop_overlay();
+            screen_state_->dialog_store.dialog_queue.pop_overlay();
             PostRenderEvent();
         },
         /*can_always_allow=*/true);
@@ -734,7 +734,7 @@ void AppAdapter::set_live_teammates_for_testing(void* v) {
 }
 
 bool AppAdapter::teams_overview_open_for_testing() const {
-    auto peek = screen_state_->dialog_queue.peek_modal();
+    auto peek = screen_state_->dialog_store.dialog_queue.peek_modal();
     return peek.has_value() &&
            std::holds_alternative<
                cc::ui::dialogs::system::TeamsViewPayload>(peek->get());

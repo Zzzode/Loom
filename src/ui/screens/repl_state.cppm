@@ -36,6 +36,11 @@ export import cc.ui.screens.task_view_store;     // TaskViewStore / SpinnerMode
 // migration. Deleted in F3 Finalize — importers then import
 // cc.ui.screens.permission_store directly.
 export import cc.ui.screens.permission_store;    // PermissionStore / PermissionRequestInfo
+// RFC 0002 F3 shim: re-exports the DialogStore shard so importers keep
+// seeing the dialog component handles / DialogQueue during the per-store
+// migration. Deleted in F3 Finalize — importers then import
+// cc.ui.screens.dialog_store directly.
+export import cc.ui.screens.dialog_store;        // DialogStore / dialog handles
 import cc.ui.features.agents.agent_cards;        // AgentCardData
 import cc.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
 import cc.ui.visual.markdown;                    // StreamingMarkdown (ptr field)
@@ -371,42 +376,12 @@ struct ReplScreenState {
     bool is_tool_animation_active = false;
     std::chrono::steady_clock::time_point last_keystroke;
 
-    // UI15: opaque wizard component handles (lazily created by
-    // dialog_router::get_install_*_wizard(), stored as shared_ptr<void>
-    // so ReplScreenState doesn't need to import their types).
-    // UI13: agent wizard component handle (lazily created by
-    // dialog_router::get_agent_wizard()).
-    std::shared_ptr<void> wizard_agent;
-    // agent_cards moved to TaskViewStore (task_view_store field above) in
-    // RFC 0002 F3.
-    std::shared_ptr<void> agents_component;
-    // UI8: trust dialog component handle (lazy-created; opaque).
-    std::shared_ptr<void> wizard_trust;
-    // dlg-permission-legacy: rich permission panel for the dormant
-    // ReplMode::ToolPermission branch.  State-owned (wizard_trust
-    // pattern) so focus/PromptState survive repaint; keyed on request
-    // identity.  TS REF: PermissionRequest.tsx:47-82 (tool dispatch).
-    std::shared_ptr<void> tool_permission_component;
-    std::string tool_permission_key;
-    // UI3: settings dialog component (lazy-created).  Opaque so state
-    // doesn't need to import the settings dialog module types.
-    std::shared_ptr<void> settings_component;
-    // Optional external ConfigManager reference.  When set, settings_dialog
-    // reads/writes against this engine-owned instance; otherwise it uses a
-    // thread-local fallback (snapshot-only).
-    void* settings_config = nullptr;
-    // Initial tab when the settings dialog is opened.  Defaults to General;
-    // commands like /permissions may set this to Permissions before opening.
-    // Typed as int to keep ReplScreenState free of settings_dialog type deps.
-    int settings_initial_tab = 0;  // matches SettingsTabId::General = 0
-
-    // M7 Dialog Framework (Task #124): dialog queue (4 slots) +
-    // renderer/event-handler registry.  The engine pushes payloads into
-    // dialog_queue between frames; ReplScreen dispatches render + events
-    // through dialog_renderers at priority Standalone > Modal > Overlay
-    // > Bottom.
-    DialogQueue dialog_queue;
-    DialogRendererRegistry dialog_renderers;
+    // RFC 0002 F3: dialog state (overlay dialogs, inline panels, wizard /
+    // trust component handles, the M7 dialog queue + renderer registry)
+    // sharded into cc.ui.screens.dialog_store (DialogStore). The component
+    // handles and DialogQueue stay visible here through the re-export shim
+    // at the top of this file; the shim is deleted in F3 Finalize.
+    DialogStore dialog_store;
 };
 
 /// Engine-facing callbacks (TS ReplScreen external prop callbacks).

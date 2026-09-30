@@ -427,7 +427,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
     if (metadata == "UI:permissions") {
         // Opens the SettingsView with the Permissions tab pre-selected.
         // NOTE: the primary handler for this tag lives in app.cppm which
-        // sets screen_state_->settings_initial_tab and switches mode to
+        // sets screen_state_->dialog_store.settings_initial_tab and switches mode to
         // SettingsView directly.  This queue-push form is provided for
         // callers that route exclusively through PushFromCommandMetadata.
         PushSettingsPanel(queue, "Permissions", [](){});

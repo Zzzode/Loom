@@ -85,7 +85,7 @@ void AppAdapter::RefreshAgentsMenuOutput() {
 void AppAdapter::OpenAgentsMenu() {
         LoadAgentCardsForMenu();
         screen_state_->mode = repl::ReplMode::AgentsView;
-        screen_state_->agents_component.reset();
+        screen_state_->dialog_store.agents_component.reset();
         this->TriggerStatuslineUpdate();
         PostRenderEvent();
     }
@@ -96,9 +96,9 @@ void AppAdapter::OpenTeamsOverview() {
         ProjectLiveTeammatesToScreenState();
         screen_state_->task_view_store.teams_overview_selected_index = 0;
         cc::ui::dialogs::triggers::PushTeamsView(
-            screen_state_->dialog_queue,
+            screen_state_->dialog_store.dialog_queue,
             [this] {
-                screen_state_->dialog_queue.pop_modal();
+                screen_state_->dialog_store.dialog_queue.pop_modal();
                 PostRenderEvent();
             });
         PostRenderEvent();
@@ -266,7 +266,7 @@ void AppAdapter::LoadAgentCardsForMenu() {
         screen_state_->task_view_store.agent_cards.push_back(
             project_agent_definition_card(definition));
     }
-    screen_state_->agents_component.reset();
+    screen_state_->dialog_store.agents_component.reset();
 }
 
 // ── SyncState (moved out to remove debug import) ─────────────────────────
@@ -500,13 +500,13 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
                 if (decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow) {
                     always_allowed_tools_.insert(tool_name);
                 }
-                screen_state_->dialog_queue.pop_overlay();
+                screen_state_->dialog_store.dialog_queue.pop_overlay();
                 permission_response_ = allowed;
                 permission_cv_.notify_one();
             };
             auto abort_cb = [this] {
                 std::lock_guard lk(permission_mutex_);
-                screen_state_->dialog_queue.pop_overlay();
+                screen_state_->dialog_store.dialog_queue.pop_overlay();
                 permission_response_ = false;
                 permission_cv_.notify_one();
             };
@@ -524,7 +524,7 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
                     !computer_use_seen_in_session_;
                 computer_use_seen_in_session_ = true;
                 dtrig::PushToolPermissionDetailed(
-                    screen_state_->dialog_queue,
+                    screen_state_->dialog_store.dialog_queue,
                     std::string(tool_name),
                     std::format("Loom wants to control your screen: {}",
                                 cperm::action_description(cu_options->action)),
@@ -543,7 +543,7 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
             }
 
             dtrig::PushToolPermission(
-                screen_state_->dialog_queue,
+                screen_state_->dialog_store.dialog_queue,
                 std::string(tool_name),
                 std::string(tool_args),
                 /*on_response=*/[this, tool_name = std::string(tool_name)](
@@ -557,13 +557,13 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
                     if (decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow) {
                         always_allowed_tools_.insert(tool_name);
                     }
-                    screen_state_->dialog_queue.pop_overlay();
+                    screen_state_->dialog_store.dialog_queue.pop_overlay();
                     permission_response_ = allowed;
                     permission_cv_.notify_one();
                 },
                 /*on_abort=*/[this] {
                     std::lock_guard lk(permission_mutex_);
-                    screen_state_->dialog_queue.pop_overlay();
+                    screen_state_->dialog_store.dialog_queue.pop_overlay();
                     permission_response_ = false;
                     permission_cv_.notify_one();
                 },

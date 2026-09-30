@@ -42,17 +42,17 @@ using settings_ns::SettingsTabId;
 using settings_ns::MakeSettingsDialog;
 
 /// Lazily create (or re-create) the settings dialog component.
-/// If `state->settings_config` is non-null it is used for reads/writes,
+/// If `state->dialog_store.settings_config` is non-null it is used for reads/writes,
 /// otherwise a fresh internal ConfigManager is used (snapshot only).
 [[nodiscard]] std::shared_ptr<Component> get_settings_component(
     const std::shared_ptr<ReplScreenState>& s,
     const std::shared_ptr<ReplScreenCallbacks>& cb) {
-    if (!s->settings_component) {
+    if (!s->dialog_store.settings_component) {
         // Use the supplied config manager, otherwise manufacture a default.
         static thread_local cc::core::ConfigManager fallback_config;
-        cc::core::ConfigManager* cfg = s->settings_config
+        cc::core::ConfigManager* cfg = s->dialog_store.settings_config
                                             ? static_cast<cc::core::ConfigManager*>(
-                                                  s->settings_config)
+                                                  s->dialog_store.settings_config)
                                             : &fallback_config;
         if (cfg == &fallback_config) {
             // c23: the fallback is session-scoped (thread_local static) and
@@ -76,24 +76,24 @@ using settings_ns::MakeSettingsDialog;
             }
         }
         SettingsDialogOptions opts;
-        opts.initial_tab = static_cast<SettingsTabId>(s->settings_initial_tab);
+        opts.initial_tab = static_cast<SettingsTabId>(s->dialog_store.settings_initial_tab);
         opts.on_close = [s, cb](std::optional<std::string>, CommandResultDisplay) {
             s->mode = ReplMode::Normal;
-            s->settings_component.reset();
-            s->settings_initial_tab = 0;  // reset to General for next open
+            s->dialog_store.settings_component.reset();
+            s->dialog_store.settings_initial_tab = 0;  // reset to General for next open
             if (cb->on_mode_change) cb->on_mode_change(ReplMode::Normal);
         };
-        s->settings_component = std::make_shared<Component>(
+        s->dialog_store.settings_component = std::make_shared<Component>(
             MakeSettingsDialog(*cfg, std::move(opts)));
     }
-    return std::static_pointer_cast<Component>(s->settings_component);
+    return std::static_pointer_cast<Component>(s->dialog_store.settings_component);
 }
 
 /// Reset (destroy) the settings component so the next entry starts fresh
 /// (empty dirty flag, pristine snapshot, tab=General).
 void reset_settings_component(const std::shared_ptr<ReplScreenState>& s) {
-    s->settings_component.reset();
-    s->settings_initial_tab = 0;  // General
+    s->dialog_store.settings_component.reset();
+    s->dialog_store.settings_initial_tab = 0;  // General
 }
 
 /// Render the settings dialog content as an Element.
@@ -133,7 +133,7 @@ using trust_ns::MakeWorkspaceTrustDialog;
 [[nodiscard]] std::shared_ptr<Component> get_trust_dialog(
     const std::shared_ptr<ReplScreenState>& s,
     const std::shared_ptr<ReplScreenCallbacks>& cb) {
-    if (!s->wizard_trust) {
+    if (!s->dialog_store.wizard_trust) {
         WorkspaceTrustProps props;
         props.workspace_path = s->cwd.empty() ? "." : s->cwd;
         props.on_done = [s, cb](TrustChoice choice) {
@@ -156,12 +156,12 @@ using trust_ns::MakeWorkspaceTrustDialog;
             }
             s->mode = ReplMode::Normal;
             if (cb->on_mode_change) cb->on_mode_change(ReplMode::Normal);
-            s->wizard_trust.reset();
+            s->dialog_store.wizard_trust.reset();
         };
-        s->wizard_trust = std::make_shared<Component>(
+        s->dialog_store.wizard_trust = std::make_shared<Component>(
             MakeWorkspaceTrustDialog(std::move(props)));
     }
-    return std::static_pointer_cast<Component>(s->wizard_trust);
+    return std::static_pointer_cast<Component>(s->dialog_store.wizard_trust);
 }
 
 /// Render the trust dialog content as an Element.
@@ -253,9 +253,9 @@ enum class PermissionPanelKind { Bash, FileEdit, FileWrite, Generic };
     const auto& i = *s->permission_store.permission_request;
     const std::string leaf = i.bash_command.value_or(i.file_path.value_or(""));
     const std::string key = i.tool_name + "\x1f" + i.description + "\x1f" + leaf;
-    if (s->tool_permission_component && key == s->tool_permission_key)
-        return std::static_pointer_cast<Component>(s->tool_permission_component);
-    s->tool_permission_component.reset();
+    if (s->dialog_store.tool_permission_component && key == s->dialog_store.tool_permission_key)
+        return std::static_pointer_cast<Component>(s->dialog_store.tool_permission_component);
+    s->dialog_store.tool_permission_component.reset();
 
     auto fired = std::make_shared<bool>(false);
     auto respond = [s, cb, fired](bool ok, std::optional<bool> always) {
@@ -264,8 +264,8 @@ enum class PermissionPanelKind { Bash, FileEdit, FileWrite, Generic };
         if (cb->on_permission_response) cb->on_permission_response(ok, always);
         s->mode = ReplMode::Normal;
         s->permission_store.permission_request.reset();
-        s->tool_permission_component.reset();
-        s->tool_permission_key.clear();
+        s->dialog_store.tool_permission_component.reset();
+        s->dialog_store.tool_permission_key.clear();
         if (cb->on_mode_change) cb->on_mode_change(ReplMode::Normal);
     };
     auto deny = [respond] { respond(false, std::nullopt); };
@@ -295,7 +295,7 @@ enum class PermissionPanelKind { Bash, FileEdit, FileWrite, Generic };
             else respond(false, std::nullopt);
         };
         p.on_abort = deny;
-        s->tool_permission_component = std::make_shared<Component>(
+        s->dialog_store.tool_permission_component = std::make_shared<Component>(
             tperm_bash::MakeBashPermissionPrompt(std::move(p)));
         break;
       }
@@ -316,7 +316,7 @@ enum class PermissionPanelKind { Bash, FileEdit, FileWrite, Generic };
             else respond(false, std::nullopt);
         };
         p.on_abort = deny;
-        s->tool_permission_component = std::make_shared<Component>(
+        s->dialog_store.tool_permission_component = std::make_shared<Component>(
             tperm_edit::MakeFileEditPermissionPrompt(std::move(p)));
         break;
       }
@@ -336,7 +336,7 @@ enum class PermissionPanelKind { Bash, FileEdit, FileWrite, Generic };
             else respond(false, std::nullopt);
         };
         p.on_abort = deny;
-        s->tool_permission_component = std::make_shared<Component>(
+        s->dialog_store.tool_permission_component = std::make_shared<Component>(
             tperm_write::MakeFileWritePermissionPrompt(std::move(p)));
         break;
       }
@@ -355,13 +355,13 @@ enum class PermissionPanelKind { Bash, FileEdit, FileWrite, Generic };
             else respond(false, std::nullopt);
         };
         p.on_abort = deny;
-        s->tool_permission_component = std::make_shared<Component>(
+        s->dialog_store.tool_permission_component = std::make_shared<Component>(
             tperm_one::MakeSinglePromptDialog(std::move(p)));
         break;
       }
     }
-    s->tool_permission_key = key;
-    return std::static_pointer_cast<Component>(s->tool_permission_component);
+    s->dialog_store.tool_permission_key = key;
+    return std::static_pointer_cast<Component>(s->dialog_store.tool_permission_component);
 }
 
 [[nodiscard]] Element render_tool_permission(

@@ -682,18 +682,18 @@ TEST(KeyboardEvents, UnrelatedCharacterReturnsUnhandled) {
 
 TEST(DialogDispatchPriority, OverlayDispatchedBeforeBottom) {
     rs::ReplScreenState s;
-    dr::register_default_renderers(s.dialog_renderers);
+    dr::register_default_renderers(s.dialog_store.dialog_renderers);
 
     // Push overlay + bottom.  queue.push() auto-routes by DialogType.
     DecisionRecorder rec_bash;
     auto bash = MakeRecordedBash(rec_bash);
-    s.dialog_queue.push(std::move(bash));
+    s.dialog_store.dialog_queue.push(std::move(bash));
 
     dsys::IdleReturnPayload idle;
     idle.id = "idle-return";
     idle.idle_minutes = 42;
     idle.on_response = [](auto) {};
-    s.dialog_queue.push(std::move(idle));
+    s.dialog_store.dialog_queue.push(std::move(idle));
 
     // 'y' should be consumed by the overlay, not the idle bottom payload.
     EXPECT_TRUE(rs::dialog_queue_render::DispatchDialogQueueEvents(
@@ -705,11 +705,11 @@ TEST(DialogDispatchPriority, OverlayDispatchedBeforeBottom) {
 
 TEST(DialogDispatchPriority, Band3OverlaySuppressedWhileTyping) {
     rs::ReplScreenState s;
-    dr::register_default_renderers(s.dialog_renderers);
+    dr::register_default_renderers(s.dialog_store.dialog_renderers);
 
     DecisionRecorder rec_bash;
     auto bash = MakeRecordedBash(rec_bash);
-    s.dialog_queue.push(std::move(bash));
+    s.dialog_store.dialog_queue.push(std::move(bash));
 
     // is_prompt_input_active=true → Overlay not dispatched.
     EXPECT_FALSE(rs::dialog_queue_render::DispatchDialogQueueEvents(
@@ -728,8 +728,8 @@ TEST(DialogDispatchPriority, Band3OverlaySuppressedWhileTyping) {
 
 TEST(LayerAllDialogs, OverlaySuppressedWhenPromptActive) {
     rs::ReplScreenState s;
-    dr::register_default_renderers(s.dialog_renderers);
-    s.dialog_queue.push(MakeBashPayload());
+    dr::register_default_renderers(s.dialog_store.dialog_renderers);
+    s.dialog_store.dialog_queue.push(MakeBashPayload());
 
     auto base = ftxui::text("base chrome") | ftxui::bold;
     Element active = rs::dialog_queue_render::LayerAllDialogs(
@@ -754,7 +754,7 @@ TEST(LayerAllDialogs, StandaloneReplacesEntireChrome) {
     rs::ReplScreenState s;
     dsys::TrustDialogPayload trust;
     trust.id = "trust-dialog";
-    s.dialog_queue.push_standalone(std::move(trust));
+    s.dialog_store.dialog_queue.push_standalone(std::move(trust));
 
     // RenderReplScreen short-circuits to RenderStandaloneDialog when
     // has_standalone() → no status bar / messages / prompt in output.
@@ -817,7 +817,7 @@ TEST(ReplModeRichPermissionPanels, BashReplModeRendersRichPanel) {
     EXPECT_EQ(*rec.response, (DecisionPair{true, false}));
     EXPECT_EQ(state->mode, rs::ReplMode::Normal);
     EXPECT_FALSE(state->permission_store.permission_request.has_value());
-    EXPECT_EQ(state->tool_permission_component, nullptr);
+    EXPECT_EQ(state->dialog_store.tool_permission_component, nullptr);
 }
 
 TEST(ReplModeRichPermissionPanels, FileEditReplModeRendersRichPanel) {

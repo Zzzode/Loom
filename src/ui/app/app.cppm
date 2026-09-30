@@ -761,10 +761,10 @@ public:
     }
 
     [[nodiscard]] bool has_pending_dialog_for_testing() const noexcept {
-        return screen_state_->dialog_queue.has_overlay() ||
-               screen_state_->dialog_queue.has_any_bottom() ||
-               screen_state_->dialog_queue.has_modal() ||
-               screen_state_->dialog_queue.has_standalone();
+        return screen_state_->dialog_store.dialog_queue.has_overlay() ||
+               screen_state_->dialog_store.dialog_queue.has_any_bottom() ||
+               screen_state_->dialog_store.dialog_queue.has_modal() ||
+               screen_state_->dialog_store.dialog_queue.has_standalone();
     }
 
     // Out-of-line in the :team partition so the live_teammates /

@@ -102,11 +102,11 @@ namespace dsys = dsys_fw;
 /// dialogs own the entire screen.
 [[nodiscard]] Element RenderStandaloneDialog(ReplScreenState& s,
                                                     int w, int h) {
-    auto peek = s.dialog_queue.peek_standalone_mut();
+    auto peek = s.dialog_store.dialog_queue.peek_standalone_mut();
     if (!peek) return Element{};
     dsys::DialogPayloadVariant& payload = peek->get();
     if (std::holds_alternative<std::monostate>(payload)) return Element{};
-    return s.dialog_renderers.render(payload, MakeContext(w, h));
+    return s.dialog_store.dialog_renderers.render(payload, MakeContext(w, h));
 }
 
 /// Modal dialog (stack top): rendered full-width dbox above the rest.
@@ -117,13 +117,13 @@ namespace dsys = dsys_fw;
 /// can use actual pane geometry instead of hardcoded fallbacks.
 [[nodiscard]] Element RenderModalDialog(ReplScreenState& s,
                                                int w, int h) {
-    auto peek = s.dialog_queue.peek_modal_mut();
+    auto peek = s.dialog_store.dialog_queue.peek_modal_mut();
     if (!peek) return Element{};
     dsys::DialogPayloadVariant& payload = peek->get();
     if (std::holds_alternative<std::monostate>(payload)) return Element{};
     // is_modal=true → populate modal_available_cols/rows from TS formula.
     auto ctx = MakeContext(w, h, /*is_modal=*/true, &s);
-    auto el = s.dialog_renderers.render(payload, ctx);
+    auto el = s.dialog_store.dialog_renderers.render(payload, ctx);
     if (!el) return Element{};
     // Clamp modal content to its available height (TS maxHeight enforcement).
     if (ctx.modal_available_rows > 0) {
@@ -146,7 +146,7 @@ namespace dsys = dsys_fw;
     bool allow_dialogs_with_animation,
     int w, int h)
 {
-    auto peek = s.dialog_queue.peek_overlay_mut();
+    auto peek = s.dialog_store.dialog_queue.peek_overlay_mut();
     if (!peek) return Element{};
     dsys::DialogPayloadVariant& payload = peek->get();
     if (std::holds_alternative<std::monostate>(payload)) return Element{};
@@ -154,7 +154,7 @@ namespace dsys = dsys_fw;
                                    allow_dialogs_with_animation)) {
         return Element{};
     }
-    auto el = s.dialog_renderers.render(payload, MakeContext(w, h));
+    auto el = s.dialog_store.dialog_renderers.render(payload, MakeContext(w, h));
     if (!el) return Element{};
     // Size clamp: 60% of rows max.
     const int max_h = std::max(12, h * 3 / 5);
@@ -177,7 +177,7 @@ namespace dsys = dsys_fw;
     bool allow_dialogs_with_animation,
     int w, int h)
 {
-    auto peek = s.dialog_queue.peek_bottom_mut(is_prompt_input_active,
+    auto peek = s.dialog_store.dialog_queue.peek_bottom_mut(is_prompt_input_active,
                                                allow_dialogs_with_animation);
     if (!peek) return Element{};
     dsys::DialogPayloadVariant& payload = peek->get();
@@ -186,7 +186,7 @@ namespace dsys = dsys_fw;
                                    allow_dialogs_with_animation)) {
         return Element{};
     }
-    auto el = s.dialog_renderers.render(payload, MakeContext(w, h));
+    auto el = s.dialog_store.dialog_renderers.render(payload, MakeContext(w, h));
     if (!el) return Element{};
     return std::move(el) | size(WIDTH, EQUAL, w);
 }
@@ -200,14 +200,14 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
 
     // Standalone always takes every event.
     {
-        auto peek = s.dialog_queue.peek_standalone_mut();
+        auto peek = s.dialog_store.dialog_queue.peek_standalone_mut();
         if (peek) {
             dsys::DialogPayloadVariant& payload = peek->get();
             if (!std::holds_alternative<std::monostate>(payload)) {
-                if (s.dialog_renderers.handle_event(payload, ev)) return true;
+                if (s.dialog_store.dialog_renderers.handle_event(payload, ev)) return true;
                 // Standalone Escape fallback — closes as Abort.
                 if (ev == ftxui::Event::Escape) {
-                    s.dialog_queue.pop_standalone();
+                    s.dialog_store.dialog_queue.pop_standalone();
                     return true;
                 }
             }
@@ -216,13 +216,13 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
 
     // Modal stack top.
     {
-        auto peek = s.dialog_queue.peek_modal_mut();
+        auto peek = s.dialog_store.dialog_queue.peek_modal_mut();
         if (peek) {
             dsys::DialogPayloadVariant& payload = peek->get();
             if (!std::holds_alternative<std::monostate>(payload)) {
-                if (s.dialog_renderers.handle_event(payload, ev)) return true;
+                if (s.dialog_store.dialog_renderers.handle_event(payload, ev)) return true;
                 if (ev == ftxui::Event::Escape) {
-                    s.dialog_queue.pop_modal();
+                    s.dialog_store.dialog_queue.pop_modal();
                     return true;
                 }
             }
@@ -230,13 +230,13 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
     }
     // Overlay (Band3).  Skip when suppressed so typing can continue.
     {
-        auto peek = s.dialog_queue.peek_overlay_mut();
+        auto peek = s.dialog_store.dialog_queue.peek_overlay_mut();
         if (peek) {
             dsys::DialogPayloadVariant& payload = peek->get();
             if (!std::holds_alternative<std::monostate>(payload)) {
                 if (dsys::should_show_dialog(payload, is_prompt_input_active,
                                              allow_dialogs_with_animation)) {
-                    if (s.dialog_renderers.handle_event(payload, ev)) return true;
+                    if (s.dialog_store.dialog_renderers.handle_event(payload, ev)) return true;
                 }
             }
         }
@@ -244,14 +244,14 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
 
     // Bottom.
     {
-        auto peek = s.dialog_queue.peek_bottom_mut(is_prompt_input_active,
+        auto peek = s.dialog_store.dialog_queue.peek_bottom_mut(is_prompt_input_active,
                                                    allow_dialogs_with_animation);
         if (peek) {
             dsys::DialogPayloadVariant& payload = peek->get();
             if (!std::holds_alternative<std::monostate>(payload)) {
                 if (dsys::should_show_dialog(payload, is_prompt_input_active,
                                              allow_dialogs_with_animation)) {
-                    if (s.dialog_renderers.handle_event(payload, ev)) return true;
+                    if (s.dialog_store.dialog_renderers.handle_event(payload, ev)) return true;
                 }
             }
         }

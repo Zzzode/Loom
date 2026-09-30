@@ -41,12 +41,12 @@ using wizard_ns::WizardDraft;
 [[nodiscard]] std::shared_ptr<Component> get_agent_wizard(
     const std::shared_ptr<ReplScreenState>& s,
     const std::shared_ptr<ReplScreenCallbacks>& cb) {
-    if (!s->wizard_agent) {
+    if (!s->dialog_store.wizard_agent) {
         AgentWizardOptions opts;
         // M7: Read agent_id from the Standalone-slot EditAgentWizardPayload
         // in dialog_queue (instead of legacy DialogContext bridge struct).
         namespace dsys_gw = cc::ui::dialogs::system;
-        auto& q_gw = s->dialog_queue;
+        auto& q_gw = s->dialog_store.dialog_queue;
         if (cb->load_agent_for_wizard &&
             q_gw.contains_type(dsys_gw::DialogType::EditAgentWizard)) {
             auto st = q_gw.peek_standalone();
@@ -69,10 +69,10 @@ using wizard_ns::WizardDraft;
             s->mode = ReplMode::Normal;
             if (cb->on_mode_change) cb->on_mode_change(ReplMode::Normal);
         };
-        s->wizard_agent = std::make_shared<Component>(
+        s->dialog_store.wizard_agent = std::make_shared<Component>(
             wizard_ns::AgentWizard(std::move(opts)));
     }
-    return std::static_pointer_cast<Component>(s->wizard_agent);
+    return std::static_pointer_cast<Component>(s->dialog_store.wizard_agent);
 }
 
 /// Forward an event to the agent wizard component.
@@ -94,7 +94,7 @@ bool forward_agent(
 
 /// Reset (destroy) the agent wizard so the next entry starts fresh.
 void reset_agent_wizard(const std::shared_ptr<ReplScreenState>& s) {
-    s->wizard_agent.reset();
+    s->dialog_store.wizard_agent.reset();
 }
 
 // -------------------------------------------------------------------
@@ -286,14 +286,14 @@ void close_agents_menu(
     const std::shared_ptr<ReplScreenState>& s,
     const std::shared_ptr<ReplScreenCallbacks>& cb) {
     s->mode = ReplMode::Normal;
-    s->agents_component.reset();
+    s->dialog_store.agents_component.reset();
     if (cb->on_mode_change) cb->on_mode_change(ReplMode::Normal);
 }
 
 [[nodiscard]] std::shared_ptr<Component> get_agents_component(
     const std::shared_ptr<ReplScreenState>& s,
     const std::shared_ptr<ReplScreenCallbacks>& cb) {
-    if (!s->agents_component) {
+    if (!s->dialog_store.agents_component) {
         agents_menu::AgentMenuOptions opts;
         opts.agents = s->task_view_store.agent_cards;
         opts.on_create_new = [s, cb] {
@@ -307,10 +307,10 @@ void close_agents_menu(
         opts.on_cancel = [s, cb] {
             close_agents_menu(s, cb);
         };
-        s->agents_component = std::make_shared<Component>(
+        s->dialog_store.agents_component = std::make_shared<Component>(
             agents_menu::AgentMenuList(std::move(opts)));
     }
-    return std::static_pointer_cast<Component>(s->agents_component);
+    return std::static_pointer_cast<Component>(s->dialog_store.agents_component);
 }
 
 [[nodiscard]] Element render_agents_menu(

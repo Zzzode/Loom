@@ -4,7 +4,6 @@ target_sources(cc_ui
     PUBLIC FILE_SET CXX_MODULES FILES
         ui/app/app.cppm
         ui/app/app_impl.cppm
-        ui/prompt/autocomplete_sources.cppm
         ui/app/app_dialog_registration.cppm
         ui/widgets/components.cppm
         ui/features/agents/agent_cards.cppm
@@ -96,18 +95,6 @@ target_sources(cc_ui
         ui/permissions/permission_scope_editor.cppm
         ui/permissions/permission_rule_list.cppm        # UI24 — PermissionRuleList
         ui/permissions/permission_single_prompt.cppm
-        ui/prompt/at_attachments.cppm
-        ui/prompt/file_index.cppm
-        ui/prompt/fuzzy_rank_nucleo.cppm
-        ui/prompt/mode_indicator.cppm  # P0: 3-way prefix glyph (❯/!/agent-tint) TS PromptInputModeIndicator
-        ui/prompt/prompt_input_footer.cppm  # M5 — faithful TS PromptInputFooter port
-        ui/prompt/prompt_input_full.cppm
-        ui/prompt/prompt_paste_handler.cppm
-        ui/prompt/prompt_stash_notice.cppm
-        ui/prompt/combined_highlights.cppm  # P1: 8-tier combined highlights builder
-        ui/prompt/placeholder_cascade.cppm  # P1: 4-tier memoized placeholder cascade
-        ui/prompt/vim_input.cppm
-        ui/prompt/prompt_input.cppm
         ui/features/plugins/plugin_install_flow.cppm
         ui/features/plugins/plugin_manage_panel.cppm
         ui/features/plugins/plugin_marketplace_browse.cppm
@@ -139,9 +126,7 @@ target_sources(cc_ui PRIVATE
     ui/app/app_constructor.cpp
     ui/app/app_handle_submit.cpp
     ui/app/app_agent_menu.cpp
-    ui/prompt/autocomplete_sources_impl.cpp
     ui/app/app_prompt_suggestion_wiring.cpp
-    ui/prompt/at_attachments_impl.cpp
     ui/app/app_dialog_registration_default.cpp
     ui/app/app_dialog_registration_modal.cpp
     ui/app/app_dialog_registration_bottom.cpp
@@ -233,12 +218,19 @@ target_link_libraries(cc_ui
         # PUBLIC so the remaining areas can still import cc.ui.chrome.*
         # during the staged split.
         cc_ui_chrome
+        # RFC 0002 F4: the cc.ui.prompt.* area (prompt input, autocomplete,
+        # at-attachments, fuzzy ranking, vim input) now lives in its own
+        # library; linked PUBLIC so the remaining areas can still import
+        # cc.ui.prompt.* during the staged split.
+        cc_ui_prompt
         cc_utils
         cc_types
         cc_query
         cc_commands
-        # RFC-0001 B15: at_attachments/autocomplete impl TUs import
-        # cc.orchestration.tools.mcp.
+        # RFC-0001 B15: the at_attachments/autocomplete impl TUs that import
+        # cc.orchestration.tools.mcp moved to cc_ui_prompt in the F4 split;
+        # cc_orchestration also arrives transitively via cc_ui_prompt, but is
+        # kept explicit (over-linking is safe).
         cc_orchestration
         cc_vim
         cc_hooks
@@ -246,10 +238,8 @@ target_link_libraries(cc_ui
         cc_session
         cc_history
         cc_skills            # SkillRegistry::on_skills_changed for dynamic skill refresh
-        # U1: cc.ui.prompt.suggestion_provider imports cc.services.prompt_suggestion
-        # directly. cc_ui already consumed cc.services.* transitively via cc_hooks;
-        # making the dependency explicit is correct (no cycle: cc_services never
-        # imports cc.ui.*).
+        # cc_ui consumed cc.services.* transitively via cc_hooks; the explicit
+        # link is correct (no cycle: cc_services never imports cc.ui.*).
         cc_services
         ftxui::screen
         ftxui::dom

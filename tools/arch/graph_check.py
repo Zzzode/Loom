@@ -38,6 +38,17 @@ Builds the named-module import graph from src/ and enforces:
     baseline: passes vacuously until the first store lands, and must pass
     from that commit on.
 
+  TLL gate (--tll-lint, RFC 0002 phase F4):
+    the target_link_libraries graph parsed from src/cmake/targets/*.cmake
+    (the include()-per-target discipline) must be acyclic — 0 non-trivial
+    SCCs and no self-loops. External libs (ftxui::*, OpenSSL::*, yyjson,
+    ...) are leaf nodes. Once the cc_ui_<area> libraries land, the lint
+    also enforces the file->lib grouping: every src/ui/**/*.cppm declaring
+    cc.ui.<area>.* must be listed in the CXX_MODULES FILE_SET of
+    cc_ui_<area> and in no other cc_ui_* target (nor cc_ui). Vacuous
+    until the first area library appears (today all ui modules are in the
+    single cc_ui target).
+
 Zero third-party dependencies.
 """
 
@@ -356,6 +367,286 @@ def store_lint_check(units, deps):
         "threading": [list(x) for x in sorted(threading)],
         "violations": violations,
         "passes": not violations,
+    }
+
+
+# RFC 0002 phase F4 — target_link_libraries (TLL) graph lint. The F4 split
+# turns the single cc_ui target into ~12 cc_ui_<area> libraries; the TLL
+# graph must stay acyclic across the split. Two rules:
+#   acyc   every target_link_libraries call in src/cmake/targets/*.cmake
+#          contributes edges target -> dep; Tarjan must find 0 non-trivial
+#          SCCs (and no self-loops). External libs (ftxui::screen,
+#          OpenSSL::Crypto, yyjson, ...) are leaves with no outgoing edges.
+#   group  once a cc_ui_<area> target exists, every src/ui/**/*.cppm
+#          declaring cc.ui.<area>.* must be listed in that target's
+#          CXX_MODULES FILE_SET and in no other cc_ui_* target (nor cc_ui);
+#          symmetrically, a cc_ui_<area> FILE_SET must not list a .cppm
+#          declaring another area. Vacuous until the first area library
+#          lands (today all ui modules are in the single cc_ui target).
+TLL_SCOPE_KEYWORDS = {
+    "PUBLIC", "PRIVATE", "INTERFACE",
+    "LINK_PUBLIC", "LINK_PRIVATE",
+    "debug", "optimized", "general",
+}
+UI_AREA_TARGET_PREFIX = "cc_ui_"
+
+
+def _strip_cmake_comments(text: str) -> str:
+    """Blank CMake comments (# to EOL, #[[...]] bracket) with spaces,
+    respecting double-quoted strings (positions preserved)."""
+    out: list[str] = []
+    i, n = 0, len(text)
+    in_quote = False
+    while i < n:
+        c = text[i]
+        if in_quote:
+            out.append(c)
+            if c == "\\" and i + 1 < n:
+                out.append(text[i + 1])
+                i += 2
+                continue
+            if c == '"':
+                in_quote = False
+            i += 1
+            continue
+        if c == '"':
+            in_quote = True
+            out.append(c)
+            i += 1
+            continue
+        if c == "#":
+            if text.startswith("#[[", i):
+                end = text.find("]]", i + 3)
+                i = n if end == -1 else end + 2
+            else:
+                eol = text.find("\n", i)
+                i = n if eol == -1 else eol
+            out.append(" ")
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+def _cmake_call_bodies(text: str, command: str) -> list[str]:
+    """The argument body of every `command(...)` call in comment-stripped
+    text. Parens balance; quoted strings are skipped so a ')' or '#' inside
+    one cannot end the call early."""
+    bodies: list[str] = []
+    for m in re.finditer(r"\b" + re.escape(command) + r"\s*\(", text,
+                         re.IGNORECASE):
+        depth, j, n = 1, m.end(), len(text)
+        in_quote = False
+        while j < n and depth > 0:
+            c = text[j]
+            if in_quote:
+                if c == '"':
+                    in_quote = False
+                j += 1
+                continue
+            if c == '"':
+                in_quote = True
+            elif c == "(":
+                depth += 1
+            elif c == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        bodies.append(text[m.end():j])
+    return bodies
+
+
+def _tokenize_cmake_args(body: str) -> list[tuple[str, str]]:
+    """Split a CMake argument body into (kind, value) tokens. kind is
+    'bare' or 'quoted' (quoted values have the quotes stripped)."""
+    tokens: list[tuple[str, str]] = []
+    i, n = 0, len(body)
+    while i < n:
+        c = body[i]
+        if c.isspace():
+            i += 1
+            continue
+        if c == '"':
+            j = i + 1
+            buf: list[str] = []
+            while j < n and body[j] != '"':
+                if body[j] == "\\" and j + 1 < n:
+                    buf.append(body[j + 1])
+                    j += 2
+                    continue
+                buf.append(body[j])
+                j += 1
+            tokens.append(("quoted", "".join(buf)))
+            i = j + 1
+            continue
+        j = i
+        while j < n and not body[j].isspace():
+            j += 1
+        tokens.append(("bare", body[i:j]))
+        i = j
+    return tokens
+
+
+def parse_tll_calls(text: str) -> list[tuple[str, list[str]]]:
+    """Parse every target_link_libraries(<target> ...) call into
+    (target, deps). Handles the multi-line PUBLIC/PRIVATE/INTERFACE form,
+    inline comments, and quoted linker flags (skipped — never targets).
+    Multiple calls for one target accumulate (CMake semantics)."""
+    text = _strip_cmake_comments(text)
+    calls: list[tuple[str, list[str]]] = []
+    for body in _cmake_call_bodies(text, "target_link_libraries"):
+        toks = _tokenize_cmake_args(body)
+        if not toks or toks[0][0] != "bare":
+            continue
+        target = toks[0][1]
+        deps = [val for kind, val in toks[1:]
+                if kind == "bare" and val not in TLL_SCOPE_KEYWORDS]
+        calls.append((target, deps))
+    return calls
+
+
+def parse_cxx_module_filesets(text: str) -> dict[str, list[str]]:
+    """Parse `target_sources(<target> ... FILE_SET CXX_MODULES FILES ...)`
+    calls into {target: [listed files]}. Only the CXX_MODULES file set is
+    harvested (PRIVATE .cpp impl units are not module interfaces)."""
+    text = _strip_cmake_comments(text)
+    out: dict[str, list[str]] = {}
+    for body in _cmake_call_bodies(text, "target_sources"):
+        toks = [v for k, v in _tokenize_cmake_args(body) if k == "bare"]
+        if not toks:
+            continue
+        target = toks[0]
+        i = 1
+        while i < len(toks):
+            if (toks[i] == "FILE_SET" and i + 1 < len(toks)
+                    and toks[i + 1] == "CXX_MODULES"):
+                j = i + 2
+                # Skip BASE_DIRS <dirs>... until the FILES keyword.
+                while (j < len(toks) and toks[j] != "FILES"
+                       and toks[j] != "FILE_SET"):
+                    j += 1
+                if j < len(toks) and toks[j] == "FILES":
+                    j += 1
+                    while j < len(toks) and toks[j] != "FILE_SET":
+                        out.setdefault(target, []).append(toks[j])
+                        j += 1
+                i = j
+                continue
+            i += 1
+    return out
+
+
+def tll_lint_check(units):
+    """RFC 0002 phase F4 — the --tll-lint gate (see the TLL notes above).
+
+    Returns a dict with the graph, the SCC/self-loop findings, and the
+    file->lib grouping violations; `passes` is True iff both rules are
+    clean. The grouping rule activates per-area: a constraint fires only
+    for areas whose cc_ui_<area> target exists, so the lint is vacuous
+    until the first area library lands."""
+    targets_dir = SRC / "cmake" / "targets"
+    graph: dict[str, set[str]] = {}
+    tll_calls = 0
+    filesets: dict[str, set[str]] = {}
+    if targets_dir.is_dir():
+        for cf in sorted(targets_dir.glob("*.cmake")):
+            text = cf.read_text(encoding="utf-8", errors="ignore")
+            for target, deps in parse_tll_calls(text):
+                tll_calls += 1
+                graph.setdefault(target, set()).update(deps)
+                for d in deps:
+                    graph.setdefault(d, set())
+            for target, files in parse_cxx_module_filesets(text).items():
+                filesets.setdefault(target, set()).update(files)
+
+    sccs = [sorted(c) for c in tarjan_scc(graph) if len(c) > 1]
+    self_loops = sorted(t for t, deps in graph.items() if t in deps)
+
+    # Rule (b): file->lib grouping.
+    area_targets = {t[len(UI_AREA_TARGET_PREFIX):]: t
+                    for t in filesets
+                    if t.startswith(UI_AREA_TARGET_PREFIX)}
+    src_resolved = pathlib.Path(SRC).resolve()
+
+    def _norm_listed(p: str) -> str:
+        rp = (pathlib.Path(SRC) / p).resolve()
+        try:
+            return rp.relative_to(src_resolved).as_posix()
+        except ValueError:
+            return p.replace("\\", "/")
+
+    norm_filesets: dict[str, set[str]] = {
+        t: {_norm_listed(f) for f in fs} for t, fs in filesets.items()}
+
+    grouping: list[str] = []
+    if area_targets:
+        # Which cc_ui/cc_ui_* target lists each ui file.
+        ownership: dict[str, set[str]] = {}
+        for t, fs in norm_filesets.items():
+            if t == "cc_ui" or t.startswith(UI_AREA_TARGET_PREFIX):
+                for f in fs:
+                    ownership.setdefault(f, set()).add(t)
+        # File-side: a split-area module must be homed in its area library.
+        for u in units:
+            if not u.path.endswith(".cppm"):
+                continue
+            area = ui9_area_of(u.module)
+            if area is None:
+                continue
+            try:
+                rel = pathlib.Path(u.path).resolve().relative_to(
+                    src_resolved).as_posix()
+            except ValueError:
+                continue
+            expected = UI_AREA_TARGET_PREFIX + area.split(".")[2]
+            if expected not in norm_filesets:
+                continue  # area not split yet — the file stays in cc_ui
+            owners = ownership.get(rel, set())
+            if expected not in owners:
+                grouping.append(
+                    f"{rel} ({u.module}) must be in {expected}'s "
+                    f"CXX_MODULES FILE_SET (found in: "
+                    f"{sorted(owners) if owners else 'no cc_ui* target'})")
+            for t in sorted(owners - {expected}):
+                grouping.append(
+                    f"{rel} ({u.module}) is listed in {t}'s FILE_SET but "
+                    f"its area is {area} (only {expected} may own it)")
+        # Target-side: a cc_ui_<area> FILE_SET must not list another area's
+        # module (catches a not-yet-split area's file misplaced into a
+        # split library, which the file-side check cannot see).
+        module_by_path: dict[str, str] = {}
+        for u in units:
+            if not u.path.endswith(".cppm"):
+                continue
+            try:
+                rel = pathlib.Path(u.path).resolve().relative_to(
+                    src_resolved).as_posix()
+            except ValueError:
+                continue
+            module_by_path[rel] = u.module
+        for area, t in sorted(area_targets.items()):
+            for f in sorted(norm_filesets.get(t, ())):
+                mod = module_by_path.get(f)
+                if mod is None:
+                    continue
+                fa = ui9_area_of(mod)
+                if fa is not None and fa != "cc.ui." + area:
+                    grouping.append(
+                        f"{t} lists {f} which declares {mod} (area {fa}); "
+                        f"a cc_ui_<area> FILE_SET may list only "
+                        f"cc.ui.{area}.* modules")
+
+    passes = not sccs and not self_loops and not grouping
+    return {
+        "targets": sorted(graph),
+        "links": {t: sorted(d) for t, d in sorted(graph.items())},
+        "tll_calls": tll_calls,
+        "sccs": sccs,
+        "self_loops": self_loops,
+        "area_targets": sorted(area_targets.values()),
+        "grouping": grouping,
+        "passes": passes,
     }
 
 
@@ -882,7 +1173,8 @@ def find_dead_imports(units, symbols, ns_paths):
     return dead
 
 
-def run(target, allow_dead_imports=False, target_ui9=False, store_lint=False):
+def run(target, allow_dead_imports=False, target_ui9=False, store_lint=False,
+        tll_lint=False):
     allow = load_allowlist()
     baseline = load_baseline()
     dead_baseline = load_pair_baseline(DEAD_BASELINE, " -> ")
@@ -943,6 +1235,9 @@ def run(target, allow_dead_imports=False, target_ui9=False, store_lint=False):
     if store_lint:
         report["store_lint"] = store_lint_check(units, deps)
 
+    if tll_lint:
+        report["tll_lint"] = tll_lint_check(units)
+
     # Default gate fails on: unranked area, module cycles, NEW upward
     # edges, NEW dead imports. Known baseline backlog is allowed.
     current_ok = (not unranked and not cycles and not new_edges
@@ -953,6 +1248,8 @@ def run(target, allow_dead_imports=False, target_ui9=False, store_lint=False):
         report["passes"] = report["passes"] and report["ui9"]["passes"]
     if store_lint:
         report["passes"] = report["passes"] and report["store_lint"]["passes"]
+    if tll_lint:
+        report["passes"] = report["passes"] and report["tll_lint"]["passes"]
     return report
 
 
@@ -969,12 +1266,19 @@ def main():
                          "cc.ui.screens.*, imports only from below-screens "
                          "areas, importers only app/screens, no threading "
                          "primitives")
+    ap.add_argument("--tll-lint", action="store_true",
+                    help="RFC 0002 F4 TLL graph gate: the "
+                         "target_link_libraries graph from "
+                         "src/cmake/targets/*.cmake must be acyclic (0 "
+                         "SCCs, no self-loops); once cc_ui_<area> libraries "
+                         "exist, every cc.ui.<area>.* module must be homed "
+                         "in its area library's CXX_MODULES FILE_SET")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--allow-dead-imports", action="store_true",
                     help="tolerate NEW dead imports too (escape hatch)")
     args = ap.parse_args()
     r = run(args.target_core8, args.allow_dead_imports, args.target_ui9,
-            args.store_lint)
+            args.store_lint, args.tll_lint)
 
     gate_ok = r["passes"]
 
@@ -1054,6 +1358,21 @@ def main():
               + (f" ({', '.join(s['stores'])})" if s["stores"] else ""))
         for v in s["violations"]:
             print(f"  STORE LINT: {v}")
+    if args.tll_lint:
+        t = r["tll_lint"]
+        if t["passes"]:
+            print(f"RFC 0002 F4 TLL lint: PASS — {len(t['targets'])} "
+                  f"targets, 0 SCCs")
+        else:
+            print("RFC 0002 F4 TLL lint: FAIL")
+        print(f"  TLL calls parsed: {t['tll_calls']} "
+              f"({len(t['links'])} graph nodes)")
+        for c in t["sccs"]:
+            print("  TLL SCC:", " -> ".join(c))
+        for tgt in t["self_loops"]:
+            print(f"  TLL SELF-LOOP: {tgt} links itself")
+        for v in t["grouping"]:
+            print(f"  TLL GROUPING: {v}")
 
     print("graph_check:", "OK" if gate_ok else "FAIL")
     return 0 if gate_ok else 1

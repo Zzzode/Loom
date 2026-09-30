@@ -24,6 +24,7 @@ python3 tools/arch/graph_check.py --json      # machine-readable
 python3 tools/arch/graph_check.py --target-core8   # future-state Phase B gate
 python3 tools/arch/graph_check.py --target-ui9     # RFC 0002 F0 future-state gate
 python3 tools/arch/graph_check.py --store-lint     # RFC 0002 F3 store placement gate
+python3 tools/arch/graph_check.py --tll-lint       # RFC 0002 F4 TLL graph gate
 ```
 
 **Future-state gate (`--target-core8`):** the nine RFC 0001 target areas
@@ -81,6 +82,29 @@ one synthetic violation per rule plus a positive control:
 
 ```bash
 python3 tools/arch/test_store_lint.py
+```
+
+**TLL graph gate (`--tll-lint`, RFC 0002 phase F4):** the
+`target_link_libraries` graph parsed from `src/cmake/targets/*.cmake` (the
+include()-per-target discipline — one target's deps per file, accumulated
+across files when a target is linked from more than one) must be acyclic:
+Tarjan finds 0 non-trivial SCCs and there are no self-loops. External libs
+(`ftxui::*`, `OpenSSL::*`, `CURL::*`, `yyjson`, `uv_a`, `tree-sitter*`, …)
+are leaf nodes with no outgoing edges. The parser handles the multi-line
+`PUBLIC`/`PRIVATE`/`INTERFACE` keyword form, inline and bracket comments,
+and skips quoted linker flags (never targets). Once the `cc_ui_<area>`
+libraries land, a second rule enforces the file→lib grouping: every
+`src/ui/**/*.cppm` declaring `cc.ui.<area>.*` must be listed in the
+`CXX_MODULES` `FILE_SET` of `cc_ui_<area>` and in no other `cc_ui_*`
+target (nor `cc_ui`); symmetrically, a `cc_ui_<area>` `FILE_SET` may list
+only its own area's modules. The grouping rule activates per-area and is
+vacuous until the first area library appears (today all ui modules are in
+the single `cc_ui` target). The negative test (`test_tll_lint.py`, run
+manually) covers the live-tree pass, a synthetic TLL cycle, a self-loop,
+and both grouping-rule directions plus a positive control:
+
+```bash
+python3 tools/arch/test_tll_lint.py
 ```
 
 ## What counts as an upward edge

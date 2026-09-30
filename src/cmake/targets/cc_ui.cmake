@@ -5,19 +5,6 @@ target_sources(cc_ui
         ui/app/app.cppm
         ui/app/app_impl.cppm
         ui/app/app_dialog_registration.cppm
-        ui/screens/doctor_screen.cppm
-        ui/screens/doctor_dialog_registration.cppm  # RFC 0002 F2 row 4: doctor renderer registration (screens side; dialogs must not import screens)
-        ui/screens/repl_state.cppm
-        ui/screens/messages_store.cppm        # RFC 0002 F3: MessagesStore (message-list/scroll/chrome state shard)
-        ui/screens/prompt_store.cppm          # RFC 0002 F3: PromptStore (prompt-input state shard)
-        ui/screens/task_view_store.cppm       # RFC 0002 F3: TaskViewStore (spinner/task-notifications/agent-teammate live state shard)
-        ui/screens/permission_store.cppm      # RFC 0002 F3: PermissionStore (permission-prompt state shard)
-        ui/screens/dialog_store.cppm          # RFC 0002 F3: DialogStore (overlay dialogs / inline panels / M7 dialog queue shard)
-        ui/screens/mcp_status_store.cppm      # RFC 0002 F3: McpStatusStore (MCP at-mention drained-queue shard)
-        ui/screens/chrome_store.cppm          # RFC 0002 F3: ChromeStore (chrome/welcome-header/status-bar projection shard)
-        ui/screens/repl_screen.cppm
-        ui/screens/resume_screen.cppm
-        ui/screens/log_selector.cppm              # UI23 — LogSelector (1574 → 1730 loc)
 )
 # Module implementation units for cc.ui.app_dialog_registration — one per
 # dialog-renderer aggregator, so no single TU imports more than one aggregator's
@@ -65,21 +52,6 @@ target_sources(cc_ui PRIVATE
     # the inline-def ratchet re-freezes at the single composition body
     # (set_screen). Textual-std (LLVM #184957) — see the header comment.
     ui/app/app_testing_seams.cpp
-    # Module implementation units for cc.ui.screens.repl_screen
-    # (RFC 0001 Phase C batch 9): message-row projection, unseen-divider /
-    # scroll bounds, prompt buffer mutation, welcome/spinner, prompt
-    # rendering, dialog-queue slots, full-screen layout, agents menu,
-    # settings/trust/permission panels, and the component event factory.
-    ui/screens/repl_screen_messages.cpp
-    ui/screens/repl_screen_scroll.cpp
-    ui/screens/repl_screen_prompt_buffer.cpp
-    ui/screens/repl_screen_welcome.cpp
-    ui/screens/repl_screen_prompt_render.cpp
-    ui/screens/repl_screen_dialog_queue.cpp
-    ui/screens/repl_screen_layout.cpp
-    ui/screens/repl_screen_agents.cpp
-    ui/screens/repl_screen_dialog_panels.cpp
-    ui/screens/repl_screen_events.cpp
 )
 target_link_libraries(cc_ui
     PUBLIC
@@ -132,6 +104,11 @@ target_link_libraries(cc_ui
         # the remaining areas (screens, app) can still import
         # cc.ui.dialogs.* during the staged split.
         cc_ui_dialogs
+        # RFC 0002 F4: the cc.ui.screens.* area (REPL/resume/doctor/
+        # log-selector screens, ReplScreenState, the seven F3 stores) now
+        # lives in its own library; linked PUBLIC so the remaining area
+        # (app) can still import cc.ui.screens.* during the staged split.
+        cc_ui_screens
         cc_utils
         cc_types
         cc_query

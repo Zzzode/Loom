@@ -122,8 +122,8 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_orchestration.cmake")
 # RFC 0002 F4 — cc_ui area libraries, included in dependency order
 # (UI9_RANK ascending, leaves first: visual/tools rank 1, foundation rank 2,
 # chrome rank 3, prompt rank 4, widgets rank 5, permissions rank 6,
-# messages rank 7, features rank 8, dialogs rank 9, …). Each area library
-# must exist before cc_ui links it.
+# messages rank 7, features rank 8, dialogs rank 9, screens rank 10, …).
+# Each area library must exist before cc_ui links it.
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_visual.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_tools.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_foundation.cmake")
@@ -134,6 +134,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_permissions.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_messages.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_features.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_dialogs.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_screens.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_vim.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_daemon.cmake")

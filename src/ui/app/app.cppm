@@ -672,7 +672,7 @@ public:
     }
 
     [[nodiscard]] std::string status_bar_model_for_testing() const {
-        return screen_state_->status_bar.model_name;
+        return screen_state_->chrome_store.status_bar.model_name;
     }
 
     [[nodiscard]] std::size_t autocomplete_suggestion_count_for_testing() const noexcept {

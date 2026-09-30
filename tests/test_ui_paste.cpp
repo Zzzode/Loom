@@ -364,8 +364,8 @@ TEST(LogoV2, ReplScreenDefaultWelcomeHeaderStillCondensed) {
     namespace repl = cc::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.app_version = "9.9.9-test";
-    state.model_display_name = "GLM-5.2";
+    state.chrome_store.app_version = "9.9.9-test";
+    state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
     auto rendered = strip_ansi(render_to_plain_text(
@@ -391,11 +391,11 @@ TEST(LogoV2, ReplScreenForceFullLogoOptsIntoCardMode) {
     namespace repl = cc::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.app_version = "9.9.9-test";
-    state.model_display_name = "GLM-5.2";
+    state.chrome_store.app_version = "9.9.9-test";
+    state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
     // New user detection: no display name.
-    state.user_display_name.clear();
+    state.chrome_store.user_display_name.clear();
 
     // Wide + force_full → Horizontal mode.
     auto wide = strip_ansi(render_to_plain_text(

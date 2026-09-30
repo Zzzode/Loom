@@ -200,10 +200,10 @@ using namespace ftxui;
     // still lives inside the scrollable area (first child of yframe).
     {
         namespace lv2 = cc::ui::logo_v2;
-        const std::string version = s.app_version.empty()
-            ? std::string("0.0.0") : s.app_version;
-        const std::string model_line = !s.model_display_name.empty()
-            ? s.model_display_name
+        const std::string version = s.chrome_store.app_version.empty()
+            ? std::string("0.0.0") : s.chrome_store.app_version;
+        const std::string model_line = !s.chrome_store.model_display_name.empty()
+            ? s.chrome_store.model_display_name
             : s.settings_model;
         slots.header = lv2::render_logo_header_bar(version, model_line, term_cols);
     }
@@ -243,15 +243,15 @@ using namespace ftxui;
         // RenderStatusLine() uses this to show folder/git/model/token info.
         pif::BuiltinStatusLineData builtin_data;
         builtin_data.cwd = s.cwd;
-        builtin_data.git_branch = s.git_branch;
+        builtin_data.git_branch = s.chrome_store.git_branch;
         // Prefer model_display_name (human-friendly), fall back to model_name.
-        builtin_data.model_name = !s.model_display_name.empty()
-            ? s.model_display_name
-            : s.status_bar.model_name;
-        builtin_data.input_tokens = s.status_bar.input_tokens;
-        builtin_data.output_tokens = s.status_bar.output_tokens;
-        builtin_data.context_token_count = s.status_bar.context_token_count;
-        builtin_data.cost_usd = s.status_bar.cost_usd;
+        builtin_data.model_name = !s.chrome_store.model_display_name.empty()
+            ? s.chrome_store.model_display_name
+            : s.chrome_store.status_bar.model_name;
+        builtin_data.input_tokens = s.chrome_store.status_bar.input_tokens;
+        builtin_data.output_tokens = s.chrome_store.status_bar.output_tokens;
+        builtin_data.context_token_count = s.chrome_store.status_bar.context_token_count;
+        builtin_data.cost_usd = s.chrome_store.status_bar.cost_usd;
         // Context window size: use 200k default; model-specific overrides
         // could be added later from model metadata.
         builtin_data.context_window_size = 200000;
@@ -392,8 +392,8 @@ using namespace ftxui;
             nd.is_remote = s.is_remote_session;
             nd.debug_mode = s.debug_mode;
             nd.verbose = s.verbose;
-            nd.token_usage = s.status_bar.context_token_count;
-            nd.is_overage_mode = s.show_overage_credit_upsell;
+            nd.token_usage = s.chrome_store.status_bar.context_token_count;
+            nd.is_overage_mode = s.chrome_store.show_overage_credit_upsell;
             nd.ide.connected = s.ide_connected;
             nd.ide.file_path = s.ide_file_path;
             nd.ide.selected_lines = s.ide_selected_lines;

@@ -139,8 +139,8 @@ TEST(ReplScreen, CtrlNCtrlPNavigateAutocompleteWithWrapping) {
     namespace repl = cc::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->app_version = "9.9.9-test";
-    state->model_display_name = "GLM-5.2";
+    state->chrome_store.app_version = "9.9.9-test";
+    state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
     state->input_text = "/a";
     state->autocomplete_suggestions = {
@@ -190,8 +190,8 @@ TEST(ReplScreen, EscapeDoublePressOnWhitespaceOnlyClearsWithoutHistory) {
     namespace repl = cc::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->app_version = "9.9.9-test";
-    state->model_display_name = "GLM-5.2";
+    state->chrome_store.app_version = "9.9.9-test";
+    state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
 
     std::string saved = "untouched";
@@ -220,8 +220,8 @@ TEST(ReplScreen, EscapeDismissesPopupThenArmsThenClears) {
     namespace pif = cc::ui::prompt::footer;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->app_version = "9.9.9-test";
-    state->model_display_name = "GLM-5.2";
+    state->chrome_store.app_version = "9.9.9-test";
+    state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
     state->input_text = "query";
     state->autocomplete_suggestions = {

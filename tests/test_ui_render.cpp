@@ -34,8 +34,8 @@ TEST(ReplScreen, CustomStatusLineSuppressesDefaultHintAndNativeStatusBar) {
     state.status_line_enabled = true;
     state.status_line_command = ":";
     state.status_line_text = "custom status";
-    state.status_bar.model_name = "native-status-model";
-    state.status_bar.cost_usd = 0.1234;
+    state.chrome_store.status_bar.model_name = "native-status-model";
+    state.chrome_store.status_bar.cost_usd = 0.1234;
 
     auto rendered = strip_ansi(render_to_plain_text(
         repl::RenderReplScreen(state),
@@ -73,8 +73,8 @@ TEST(ReplScreen, PastingIndicatorShowsForBatchAndNotSingleKeystroke) {
     // A terminal paste arrives as one multi-char event; a single keystroke
     // (incl. a 3-byte CJK char) must not trigger the hint.
     repl::ReplScreenState state;
-    state.app_version = "9.9.9-test";
-    state.model_display_name = "GLM-5.2";
+    state.chrome_store.app_version = "9.9.9-test";
+    state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
     EXPECT_FALSE(state.pasting_since.has_value());
@@ -100,8 +100,8 @@ TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
     namespace repl = cc::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->app_version = "9.9.9-test";
-    state->model_display_name = "GLM-5.2";
+    state->chrome_store.app_version = "9.9.9-test";
+    state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
     state->input_text = "hello";
     state->input_cursor = 5;
@@ -133,8 +133,8 @@ TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
     // Global redraw works even while a tool-permission panel is open
     // (defaultBindings.ts:42 global context); the panel must not swallow it.
     auto pstate = std::make_shared<repl::ReplScreenState>();
-    pstate->app_version = "9.9.9-test";
-    pstate->model_display_name = "GLM-5.2";
+    pstate->chrome_store.app_version = "9.9.9-test";
+    pstate->chrome_store.model_display_name = "GLM-5.2";
     pstate->cwd = "/tmp/cpp_migration";
     pstate->mode = repl::ReplMode::ToolPermission;
     repl::PermissionRequestInfo pinfo;
@@ -155,8 +155,8 @@ TEST(ReplScreen, EscapeDoublePressClearsInputAndSavesToHistory) {
     namespace repl = cc::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->app_version = "9.9.9-test";
-    state->model_display_name = "GLM-5.2";
+    state->chrome_store.app_version = "9.9.9-test";
+    state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
 
     std::string saved;
@@ -195,8 +195,8 @@ TEST(ReplScreen, EscapeDoublePressExpiresAfterWindowAndRearms) {
     namespace repl = cc::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->app_version = "9.9.9-test";
-    state->model_display_name = "GLM-5.2";
+    state->chrome_store.app_version = "9.9.9-test";
+    state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
 
     auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
@@ -236,8 +236,8 @@ TEST(ReplScreen, BridgeStatusPillReflectsProjectionState) {
     // TS REF: PromptInputFooter.tsx BridgeStatusIndicator +
     // bridgeStatusUtil.ts:124 getBridgeStatus.
     repl::ReplScreenState state;
-    state.app_version = "9.9.9-test";
-    state.model_display_name = "GLM-5.2";
+    state.chrome_store.app_version = "9.9.9-test";
+    state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
     // Explicit remote, connected → "Remote Control" visible.
@@ -280,8 +280,8 @@ TEST(ReplScreen, FreshScreenDoesNotRenderLegacyEmptyState) {
     namespace repl = cc::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.app_version = "9.9.9-test";
-    state.model_display_name = "GLM-5.2";
+    state.chrome_store.app_version = "9.9.9-test";
+    state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
     auto rendered = strip_ansi(render_to_plain_text(

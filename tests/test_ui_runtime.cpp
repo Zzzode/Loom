@@ -1936,8 +1936,8 @@ TEST(LiveTeamsUi, StripRendersNameStatusAndTail) {
     namespace live = cc::ui::teams::live;
 
     repl::ReplScreenState s;
-    s.app_version = "9.9.9";
-    s.model_display_name = "M";
+    s.chrome_store.app_version = "9.9.9";
+    s.chrome_store.model_display_name = "M";
     s.cwd = "/tmp/x";
 
     live::LiveTeammate a;

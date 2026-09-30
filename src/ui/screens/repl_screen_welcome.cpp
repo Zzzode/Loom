@@ -208,9 +208,9 @@ using namespace ftxui;
                                                     Color text_color,
                                                     Color bg) {
     const std::string welcome = cc::ui::logo::format_welcome_message(
-        s.user_display_name);
-    const std::string model_line = !s.model_display_name.empty()
-        ? s.model_display_name
+        s.chrome_store.user_display_name);
+    const std::string model_line = !s.chrome_store.model_display_name.empty()
+        ? s.chrome_store.model_display_name
         : s.settings_model;
     std::string cwd_line = s.cwd;
     if (!cwd_line.empty()) {
@@ -263,35 +263,35 @@ using namespace ftxui;
                                                  bool force_full_logo) {
     namespace lv2 = cc::ui::logo_v2;
 
-    const std::string model_line = !s.model_display_name.empty()
-        ? s.model_display_name
+    const std::string model_line = !s.chrome_store.model_display_name.empty()
+        ? s.chrome_store.model_display_name
         : s.settings_model;
-    const std::string version = s.app_version.empty()
-        ? std::string("0.0.0") : s.app_version;
+    const std::string version = s.chrome_store.app_version.empty()
+        ? std::string("0.0.0") : s.chrome_store.app_version;
 
     // Build the LogoV2Options. Defaults mirror the TS LogoV2 component's
     // initial props (no onboarding, no release-notes → condensed branch).
     lv2::LogoV2Options opts;
     opts.version              = version;
     opts.cwd                  = s.cwd;
-    opts.billing_type         = s.billing_type;
+    opts.billing_type         = s.chrome_store.billing_type;
     // TS REF: logoV2Utils.ts:259 — agentName from getInitialSettings().agent
     opts.agent_name           = s.settings_agent_name.empty()
                               ? std::nullopt
                               : std::make_optional(s.settings_agent_name);
     opts.model_display_name   = model_line;
-    opts.username             = s.user_display_name.empty()
+    opts.username             = s.chrome_store.user_display_name.empty()
         ? std::nullopt
-        : std::make_optional(s.user_display_name);
+        : std::make_optional(s.chrome_store.user_display_name);
     opts.org_name             = std::nullopt;
-    opts.is_condensed_mode    = !force_full_logo && !s.show_onboarding;
+    opts.is_condensed_mode    = !force_full_logo && !s.chrome_store.show_onboarding;
                                                                           // TS early-return gate (L123):
                                                                           // isCondensedMode = !hasReleaseNotes
                                                                           //   && !showOnboarding && !forceFullLogo
-    opts.show_onboarding     = s.show_onboarding;        // TS L56
+    opts.show_onboarding     = s.chrome_store.show_onboarding;        // TS L56
     opts.show_sandbox_status  = false;                    // TODO(engine-wire)
-    opts.show_guest_passes    = s.show_guest_passes_upsell;  // TS L70
-    opts.show_overage_credit  = s.show_overage_credit_upsell; // TS L71
+    opts.show_guest_passes    = s.chrome_store.show_guest_passes_upsell;  // TS L70
+    opts.show_overage_credit  = s.chrome_store.show_overage_credit_upsell; // TS L71
     opts.is_debug_mode        = false;               // TODO(engine-wire)
     opts.tmux_session         = std::nullopt;        // TODO(engine-wire)
     opts.company_announcement = std::nullopt;        // TODO(engine-wire)
@@ -305,22 +305,22 @@ using namespace ftxui;
     // (TS LogoV2.tsx L421) is resolved inside the logo_v2 module when feeds
     // is empty.  We only build explicit feeds for the DEFAULT branch (no
     // onboarding / no guest / no overage) so we can inject real data from
-    // s.recent_activity_lines and s.changelog_lines.  For the other branches,
+    // s.chrome_store.recent_activity_lines and s.chrome_store.changelog_lines.  For the other branches,
     // the module builds placeholder feeds until engine wiring provides real
     // onboarding steps / guest pass counts / overage data.
     std::vector<lv2::FeedConfig> feeds;
-    const bool priority_branch_active = s.show_onboarding
-        || s.show_guest_passes_upsell || s.show_overage_credit_upsell;
+    const bool priority_branch_active = s.chrome_store.show_onboarding
+        || s.chrome_store.show_guest_passes_upsell || s.chrome_store.show_overage_credit_upsell;
     if (force_full_logo && !priority_branch_active) {
       {
         lv2::FeedConfig recent;
         recent.title = "Recent activity";
-        if (s.recent_activity_lines.empty()) {
+        if (s.chrome_store.recent_activity_lines.empty()) {
           recent.empty_message =
               "No recent conversations — start a new chat above";
         } else {
-          recent.lines.reserve(s.recent_activity_lines.size());
-          for (const auto& a : s.recent_activity_lines) {
+          recent.lines.reserve(s.chrome_store.recent_activity_lines.size());
+          for (const auto& a : s.chrome_store.recent_activity_lines) {
             recent.lines.push_back(lv2::FeedLine{
                 /*text=*/std::string(a),
                 /*timestamp=*/std::nullopt});
@@ -331,7 +331,7 @@ using namespace ftxui;
       {
         lv2::FeedConfig whats_new;
         whats_new.title = "What's new";
-        if (s.changelog_lines.empty()) {
+        if (s.chrome_store.changelog_lines.empty()) {
           whats_new.lines = {
             lv2::FeedLine{/*text=*/"Paste images into the prompt with Ctrl+V",
                           /*timestamp=*/std::nullopt},
@@ -341,8 +341,8 @@ using namespace ftxui;
                           /*timestamp=*/std::nullopt},
           };
         } else {
-          whats_new.lines.reserve(s.changelog_lines.size());
-          for (const auto& c : s.changelog_lines) {
+          whats_new.lines.reserve(s.chrome_store.changelog_lines.size());
+          for (const auto& c : s.chrome_store.changelog_lines) {
             whats_new.lines.push_back(lv2::FeedLine{
                 /*text=*/std::string(c), /*timestamp=*/std::nullopt});
           }

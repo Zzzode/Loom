@@ -44,8 +44,8 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
     namespace repl = cc::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.app_version = "9.9.9-test";
-    state.model_display_name = "GLM-5.2";
+    state.chrome_store.app_version = "9.9.9-test";
+    state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
     auto rendered = strip_ansi(render_to_plain_text(
@@ -85,8 +85,8 @@ TEST(ReplScreen, WelcomeHeaderShowsConfiguredAgentName) {
     // TS REF: logoV2Utils.ts:259 — settings.agent renders as "@<agent> · <cwd>"
     // on the welcome header's cwd line.
     repl::ReplScreenState state;
-    state.app_version = "9.9.9-test";
-    state.model_display_name = "GLM-5.2";
+    state.chrome_store.app_version = "9.9.9-test";
+    state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
     state.settings_agent_name = "custom-agent";
 
@@ -99,8 +99,8 @@ TEST(ReplScreen, WelcomeHeaderShowsConfiguredAgentName) {
 
     // With no configured agent the prefix must disappear (plain cwd only).
     repl::ReplScreenState plain;
-    plain.app_version = "9.9.9-test";
-    plain.model_display_name = "GLM-5.2";
+    plain.chrome_store.app_version = "9.9.9-test";
+    plain.chrome_store.model_display_name = "GLM-5.2";
     plain.cwd = "/tmp/cpp_migration";
     auto rendered_plain = strip_ansi(render_to_plain_text(
         repl::RenderWelcomeHeader(plain, /*spinner_frame=*/0, /*term_cols=*/120),
@@ -154,8 +154,8 @@ TEST(ReplScreen, WelcomeHeaderWidthAndClaudeColorTrackTerminal) {
     const auto previous_theme = thm::current_theme();
     thm::set_theme(thm::ThemeVariant::Dark);
     repl::ReplScreenState state;
-    state.app_version = "9.9.9-test";
-    state.model_display_name = "GLM-5.2";
+    state.chrome_store.app_version = "9.9.9-test";
+    state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/Users/example/Develop/Project";
 
     auto wide_element =
@@ -204,8 +204,8 @@ TEST(ReplScreen, WelcomeHeaderAnimatesAsteriskColor) {
     namespace repl = cc::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.app_version = "9.9.9-test";
-    state.model_display_name = "GLM-5.2";
+    state.chrome_store.app_version = "9.9.9-test";
+    state.chrome_store.model_display_name = "GLM-5.2";
 
     auto frame0 = render_to_plain_text(
         repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/120),

@@ -215,7 +215,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         if (mode == repl::ReplMode::CostThreshold) {
             (void)action;
             if (action == 1) {
-                screen_state_->status_bar.cost_usd = 0.0;
+                screen_state_->chrome_store.status_bar.cost_usd = 0.0;
             }
             if (action == 2) {
                 if (on_exit_) on_exit_();
@@ -294,7 +294,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                     screen_state_->dialog_store.dialog_queue,
                     bt.max_budget_usd,
                     data.session_cost,
-                    screen_state_->model_display_name,
+                    screen_state_->chrome_store.model_display_name,
                     [this](bool continue_, bool reset) {
                         if (reset) {
                             cost_threshold_shown_ = false;

@@ -210,25 +210,25 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
 
 // ── ProjectRuntimeMetadataToScreenState (moved out of app.cppm) ─────────
 void AppAdapter::ProjectRuntimeMetadataToScreenState() {
-    screen_state_->app_version = std::string(cc::core::constants::kVersion);
+    screen_state_->chrome_store.app_version = std::string(cc::core::constants::kVersion);
 
     const auto& model_id = static_cast<cc::core::QueryEngine*>(engine_raw())->model_params().model;
-    screen_state_->status_bar.model_name = model_id;
-    screen_state_->model_display_name =
+    screen_state_->chrome_store.status_bar.model_name = model_id;
+    screen_state_->chrome_store.model_display_name =
         cc::utils::get_model_display_name(model_id);
 
     auto usage = static_cast<cc::core::QueryEngine*>(engine_raw())->get_usage();
-    screen_state_->status_bar.input_tokens =
+    screen_state_->chrome_store.status_bar.input_tokens =
         static_cast<int>(usage.input_tokens);
-    screen_state_->status_bar.output_tokens =
+    screen_state_->chrome_store.status_bar.output_tokens =
         static_cast<int>(usage.output_tokens);
-    screen_state_->status_bar.cost_usd =
+    screen_state_->chrome_store.status_bar.cost_usd =
         static_cast<cc::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd;
-    screen_state_->status_bar.context_token_count =
+    screen_state_->chrome_store.status_bar.context_token_count =
         static_cast<int>(usage.input_tokens + usage.output_tokens);
 
     screen_state_->cwd = static_cast<cc::core::QueryEngine*>(engine_raw())->working_directory();
-    screen_state_->status_bar.current_path = screen_state_->cwd;
+    screen_state_->chrome_store.status_bar.current_path = screen_state_->cwd;
 
     // P0-6 builtin statusline: detect git branch for the current cwd.
     // Cached per-cwd-change to avoid spawning `git` on every render tick
@@ -239,7 +239,7 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
         cached_git_branch_ = cc::utils::git::get_branch(
             last_branch_cwd_.empty() ? "." : last_branch_cwd_);
     }
-    screen_state_->git_branch = cached_git_branch_;
+    screen_state_->chrome_store.git_branch = cached_git_branch_;
 }
 
 // ── ApplyMessageCollapsePipeline (moved out of app.cppm) ────────────────

@@ -369,8 +369,8 @@ void AppAdapter::SyncState() {
     cc::hooks::update_cost(cc::hooks::CostUpdate{
         .session_cost = static_cast<cc::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd,
         .monthly_cost = 0.0,
-        .input_tokens = screen_state_->status_bar.input_tokens,
-        .output_tokens = screen_state_->status_bar.output_tokens,
+        .input_tokens = screen_state_->chrome_store.status_bar.input_tokens,
+        .output_tokens = screen_state_->chrome_store.status_bar.output_tokens,
     });
 }
 

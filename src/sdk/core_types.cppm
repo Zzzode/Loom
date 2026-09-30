@@ -19,14 +19,7 @@ export namespace cc::sdk::core_types {
 using ModelUsage = core_schemas::ModelUsage;
 using ApiKeySource = core_schemas::ApiKeySource;
 using ConfigScope = core_schemas::ConfigScope;
-using ThinkingConfig = core_schemas::ThinkingConfig;
-using OutputFormat = core_schemas::OutputFormat;
-using McpServerConfig = core_schemas::McpServerConfig;
-using McpServerConfigForProcessTransport = core_schemas::McpServerConfig;
 using McpServerStatus = core_schemas::McpServerStatus;
-using PermissionMode = core_schemas::PermissionMode;
-using PermissionUpdate = core_schemas::PermissionUpdate;
-using PermissionResult = core_schemas::PermissionResult;
 using HookEvent = core_schemas::HookEvent;
 using ExitReason = core_schemas::ExitReason;
 using HookInput = core_schemas::BaseHookInput;
@@ -143,7 +136,6 @@ struct SDKSystemMessage {
     std::string session_id;
     // Additional fields depend on subtype - stored generically
     std::optional<std::string> model;
-    std::optional<PermissionMode> permission_mode;
     std::optional<std::vector<std::string>> tools;
     std::optional<std::vector<std::string>> agents;
     std::optional<std::string> cwd;
@@ -181,7 +173,6 @@ struct SDKStatusMessage {
     static constexpr auto type = "system";
     static constexpr auto subtype = "status";
     std::optional<std::string> status;  // "compacting" or null
-    std::optional<PermissionMode> permission_mode;
     std::string uuid;
     std::string session_id;
 };
@@ -246,22 +237,8 @@ using SDKMessage = std::variant<
 >;
 
 // ============================================================================
-// Session Types
+// Protocol Constants
 // ============================================================================
-
-/// Session info metadata
-struct SDKSessionInfo {
-    std::string session_id;
-    std::string summary;
-    double last_modified = 0;  // milliseconds since epoch
-    std::optional<int> file_size;
-    std::optional<std::string> custom_title;
-    std::optional<std::string> first_prompt;
-    std::optional<std::string> git_branch;
-    std::optional<std::string> cwd;
-    std::optional<std::string> tag;
-    std::optional<double> created_at;
-};
 
 /// Hook event names as compile-time constant array
 inline constexpr std::array HOOK_EVENTS = {

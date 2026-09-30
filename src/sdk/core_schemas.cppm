@@ -54,88 +54,8 @@ enum class ConfigScope : std::uint8_t {
 inline constexpr auto SDK_BETA = "context-1m-2025-08-07";
 
 // ============================================================================
-// Thinking Config Types
+// MCP Server Status Types
 // ============================================================================
-
-/// Adaptive thinking - Loom decides when and how much to think
-struct ThinkingAdaptive {
-    static constexpr auto type = "adaptive";
-};
-
-/// Fixed thinking token budget (older models)
-struct ThinkingEnabled {
-    static constexpr auto type = "enabled";
-    std::optional<int> budget_tokens;
-};
-
-/// No extended thinking
-struct ThinkingDisabled {
-    static constexpr auto type = "disabled";
-};
-
-/// Controls Loom's thinking/reasoning behavior
-using ThinkingConfig = std::variant<ThinkingAdaptive, ThinkingEnabled, ThinkingDisabled>;
-
-// ============================================================================
-// Output Format Types
-// ============================================================================
-
-/// JSON schema output format
-struct JsonSchemaOutputFormat {
-    static constexpr auto type = "json_schema";
-    std::unordered_map<std::string, std::string> schema;
-};
-
-using OutputFormat = JsonSchemaOutputFormat;
-
-// ============================================================================
-// MCP Server Config Types
-// ============================================================================
-
-/// Stdio transport MCP server config
-struct McpStdioServerConfig {
-    static constexpr auto type = "stdio";
-    std::string command;
-    std::optional<std::vector<std::string>> args;
-    std::optional<std::unordered_map<std::string, std::string>> env;
-};
-
-/// SSE transport MCP server config
-struct McpSSEServerConfig {
-    static constexpr auto type = "sse";
-    std::string url;
-    std::optional<std::unordered_map<std::string, std::string>> headers;
-};
-
-/// HTTP transport MCP server config
-struct McpHttpServerConfig {
-    static constexpr auto type = "http";
-    std::string url;
-    std::optional<std::unordered_map<std::string, std::string>> headers;
-};
-
-/// SDK transport MCP server config
-struct McpSdkServerConfig {
-    static constexpr auto type = "sdk";
-    std::string name;
-};
-
-/// Union of process-transport MCP server configurations
-using McpServerConfig = std::variant<
-    McpStdioServerConfig,
-    McpSSEServerConfig,
-    McpHttpServerConfig,
-    McpSdkServerConfig
->;
-
-/// Loom AI proxy server config (output-only)
-struct McpLoomAIProxyServerConfig {
-    static constexpr auto type = "loomai-proxy";
-    std::string url;
-    std::string id;
-};
-
-/// Tool annotation in MCP server status
 struct McpToolAnnotation {
     std::optional<bool> read_only;
     std::optional<bool> destructive;
@@ -175,123 +95,10 @@ struct McpServerStatus {
     McpConnectionStatus status;
     std::optional<McpServerInfo> server_info;
     std::optional<std::string> error;
-    std::optional<McpServerConfig> config;
     std::optional<std::string> scope;
     std::optional<std::vector<McpServerTool>> tools;
     std::optional<McpServerCapabilities> capabilities;
 };
-
-// ============================================================================
-// Permission Types
-// ============================================================================
-
-/// Destination for permission updates
-enum class PermissionUpdateDestination : std::uint8_t {
-    UserSettings,
-    ProjectSettings,
-    LocalSettings,
-    Session,
-    CliArg,
-};
-
-/// Permission behavior
-enum class PermissionBehavior : std::uint8_t {
-    Allow,
-    Deny,
-    Ask,
-};
-
-/// Permission rule value
-struct PermissionRuleValue {
-    std::string tool_name;
-    std::optional<std::string> rule_content;
-};
-
-/// Permission mode for controlling tool execution
-enum class PermissionMode : std::uint8_t {
-    Default,
-    AcceptEdits,
-    BypassPermissions,
-    Plan,
-    DontAsk,
-};
-
-/// Add rules permission update
-struct PermissionAddRules {
-    std::vector<PermissionRuleValue> rules;
-    PermissionBehavior behavior;
-    PermissionUpdateDestination destination;
-};
-
-/// Replace rules permission update
-struct PermissionReplaceRules {
-    std::vector<PermissionRuleValue> rules;
-    PermissionBehavior behavior;
-    PermissionUpdateDestination destination;
-};
-
-/// Remove rules permission update
-struct PermissionRemoveRules {
-    std::vector<PermissionRuleValue> rules;
-    PermissionBehavior behavior;
-    PermissionUpdateDestination destination;
-};
-
-/// Set mode permission update
-struct PermissionSetMode {
-    PermissionMode mode;
-    PermissionUpdateDestination destination;
-};
-
-/// Add directories permission update
-struct PermissionAddDirectories {
-    std::vector<std::string> directories;
-    PermissionUpdateDestination destination;
-};
-
-/// Remove directories permission update
-struct PermissionRemoveDirectories {
-    std::vector<std::string> directories;
-    PermissionUpdateDestination destination;
-};
-
-/// Discriminated union of permission updates
-using PermissionUpdate = std::variant<
-    PermissionAddRules,
-    PermissionReplaceRules,
-    PermissionRemoveRules,
-    PermissionSetMode,
-    PermissionAddDirectories,
-    PermissionRemoveDirectories
->;
-
-/// Classification of permission decision for telemetry
-enum class PermissionDecisionClassification : std::uint8_t {
-    UserTemporary,
-    UserPermanent,
-    UserReject,
-};
-
-/// Permission allow result
-struct PermissionAllowResult {
-    static constexpr auto behavior = "allow";
-    std::optional<std::unordered_map<std::string, std::string>> updated_input;
-    std::optional<std::vector<PermissionUpdate>> updated_permissions;
-    std::optional<std::string> tool_use_id;
-    std::optional<PermissionDecisionClassification> decision_classification;
-};
-
-/// Permission deny result
-struct PermissionDenyResult {
-    static constexpr auto behavior = "deny";
-    std::string message;
-    std::optional<bool> interrupt;
-    std::optional<std::string> tool_use_id;
-    std::optional<PermissionDecisionClassification> decision_classification;
-};
-
-/// Permission result (allow or deny)
-using PermissionResult = std::variant<PermissionAllowResult, PermissionDenyResult>;
 
 // ============================================================================
 // Hook Types
@@ -388,12 +195,6 @@ struct AccountInfo {
     std::optional<std::string> api_provider;  // "firstParty" | "bedrock" | "vertex" | "foundry"
 };
 
-/// Agent MCP server spec (can be a name string or inline config map)
-using AgentMcpServerSpec = std::variant<
-    std::string,
-    std::unordered_map<std::string, McpServerConfig>
->;
-
 /// Memory scope for agent definition
 enum class AgentMemoryScope : std::uint8_t {
     User,
@@ -408,7 +209,6 @@ struct AgentDefinition {
     std::optional<std::vector<std::string>> disallowed_tools;
     std::string prompt;
     std::optional<std::string> model;
-    std::optional<std::vector<AgentMcpServerSpec>> mcp_servers;
     std::optional<std::string> critical_system_reminder_experimental;
     std::optional<std::vector<std::string>> skills;
     std::optional<std::string> initial_prompt;
@@ -416,7 +216,6 @@ struct AgentDefinition {
     std::optional<bool> background;
     std::optional<AgentMemoryScope> memory;
     std::optional<std::string> effort;  // named level or integer as string
-    std::optional<PermissionMode> permission_mode;
 };
 
 /// Fast mode state

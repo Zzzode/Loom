@@ -13,21 +13,8 @@ export module cc.sdk.runtime_types;
 import std;
 
 import cc.sdk.core_types;
-import cc.sdk.core_schemas;
 
 export namespace cc::sdk::runtime {
-
-// ============================================================================
-// Effort Level
-// ============================================================================
-
-/// Named effort levels for model reasoning
-enum class EffortLevel : std::uint8_t {
-    Low,
-    Medium,
-    High,
-    Max,
-};
 
 // ============================================================================
 // Query Options
@@ -42,17 +29,12 @@ struct Options {
     std::optional<std::string> append_system_prompt;
     std::optional<std::vector<std::string>> allowed_tools;
     std::optional<std::vector<std::string>> disallowed_tools;
-    std::optional<std::unordered_map<std::string, core_schemas::McpServerConfig>> mcp_servers;
     std::optional<std::string> cwd;
-    std::optional<core_schemas::PermissionMode> permission_mode;
     std::optional<bool> continue_conversation;
     std::optional<bool> resume_conversation;
     std::optional<std::string> output_format;  // "text" | "json" | "stream-json"
-    std::optional<core_schemas::ThinkingConfig> thinking_config;
-    std::optional<core_schemas::OutputFormat> json_output_schema;
     std::optional<bool> debug;
     std::optional<bool> verbose;
-    std::optional<EffortLevel> effort;
     std::optional<bool> enable_remote_control;
 };
 
@@ -97,11 +79,7 @@ struct SDKSessionOptions {
     std::optional<std::string> append_system_prompt;
     std::optional<std::vector<std::string>> allowed_tools;
     std::optional<std::vector<std::string>> disallowed_tools;
-    std::optional<std::unordered_map<std::string, core_schemas::McpServerConfig>> mcp_servers;
     std::optional<std::string> cwd;
-    std::optional<core_schemas::PermissionMode> permission_mode;
-    std::optional<core_schemas::ThinkingConfig> thinking_config;
-    std::optional<EffortLevel> effort;
 };
 
 /// SDK session interface for multi-turn conversations

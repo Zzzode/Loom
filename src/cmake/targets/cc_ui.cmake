@@ -39,39 +39,6 @@ target_sources(cc_ui
         # entire target if any listed source is missing.  Only add module
         # sources that exist AND contain real implementations.  Registration
         # lives in register_default_renderers() in default_renderers.cppm.
-        ui/messages/messages.cppm
-        ui/messages/assistant_message.cppm
-        ui/messages/error_message.cppm
-        ui/messages/message_components.cppm
-        ui/messages/message_row.cppm
-        ui/messages/message_timestamp.cppm
-        ui/messages/message_advisor.cppm
-        ui/messages/message_bash_io.cppm
-        ui/messages/message_channel.cppm
-        ui/messages/message_hook_progress.cppm
-        ui/messages/message_plan_approval.cppm
-        ui/messages/message_rate_limit.cppm
-        ui/messages/message_task_assignment.cppm
-        ui/messages/message_tool_result.cppm
-        ui/messages/thinking_message.cppm
-        ui/messages/tool_use_message.cppm
-        ui/messages/user_message.cppm
-        ui/messages/message_image.cppm
-        ui/messages/message_compact_boundary.cppm
-        ui/messages/message_shutdown.cppm
-        ui/messages/message_user_command.cppm
-        ui/messages/user_text_message.cppm
-        ui/messages/assistant_text_message.cppm
-        ui/messages/system_text_message.cppm
-        ui/messages/attachment_message.cppm
-        ui/messages/api_error_message.cppm
-        ui/messages/collapsed_content_message.cppm
-        ui/messages/local_command_output_message.cppm
-        ui/messages/messages_list.cppm            # UI21 — Messages.tsx + Message.tsx (834+626 → 1308 loc)
-        ui/messages/message_pipeline.cppm         # P0-2 — 7-stage message pipeline (dedup/tag-filter/augment/hide/index)
-        ui/messages/collapse_background_bash.cppm  # P0-2 — collapseBackgroundBashNotifications pass (Messages.tsx:520)
-        ui/messages/scroll_keybindings.cppm       # UI22 — ScrollKeybindingHandler (1011 → 752 loc)
-        ui/messages/virtual_message_list.cppm     # UI22 — VirtualScroll (1081 → 857 loc)
         ui/features/plugins/plugin_install_flow.cppm
         ui/features/plugins/plugin_manage_panel.cppm
         ui/features/plugins/plugin_marketplace_browse.cppm
@@ -140,18 +107,6 @@ target_sources(cc_ui PRIVATE
     ui/app/app_testing_seams.cpp
     ui/dialogs/hooks_dialog_renderer_impl.cpp
     ui/dialogs/plugin_dialog_renderer_impl.cpp
-    # Module implementation units for cc.ui.messages.messages_list
-    # (RFC 0001 Phase C batch 7): filter/brief logic, the ~20-module
-    # std::visit search closure (isolated on purpose), row geometry,
-    # envelope/divider chrome, the heavy payload_row faithful-dispatch TU,
-    # static/virtual view builders, and the component vtable anchor.
-    ui/messages/messages_list_filter.cpp
-    ui/messages/messages_list_search.cpp
-    ui/messages/messages_list_geometry.cpp
-    ui/messages/messages_list_envelope.cpp
-    ui/messages/messages_list_payload_row.cpp
-    ui/messages/messages_list_view.cpp
-    ui/messages/messages_list_component.cpp
     # Module implementation units for cc.ui.screens.repl_screen
     # (RFC 0001 Phase C batch 9): message-row projection, unseen-divider /
     # scroll bounds, prompt buffer mutation, welcome/spinner, prompt
@@ -203,6 +158,11 @@ target_link_libraries(cc_ui
         # in its own library; linked PUBLIC so the remaining areas can still
         # import cc.ui.permissions.* during the staged split.
         cc_ui_permissions
+        # RFC 0002 F4: the cc.ui.messages.* area (message row + per-type
+        # renderers, pipeline, virtualized list) now lives in its own
+        # library; linked PUBLIC so the remaining areas can still import
+        # cc.ui.messages.* during the staged split.
+        cc_ui_messages
         cc_utils
         cc_types
         cc_query

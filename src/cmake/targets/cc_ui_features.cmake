@@ -29,7 +29,7 @@ target_sources(cc_ui_features
 # cc.ui.foundation.* (design_tokens / theme_provider / component_primitives /
 # feature_dialog_protocol) and cc.ui.widgets.* (spinner_animations /
 # custom_select). External deps: cc.tools.agent_color_manager,
-# cc.utils.swarm_backends, cc.types.types, cc.commands.plugin_*
+# cc.teams.swarm.backends, cc.types.types, cc.commands.plugin_*
 # (details_helpers / trust_text / ui_data / pagination_util / helpers), and
 # FTXUI (component / dom / screen headers). cc_std's `import std;` BMI
 # arrives via the directory-level link_libraries(cc_std). Over-linking is
@@ -42,6 +42,7 @@ target_link_libraries(cc_ui_features
         cc_utils
         cc_types
         cc_commands
+        cc_teams
         ftxui::screen
         ftxui::dom
         ftxui::component

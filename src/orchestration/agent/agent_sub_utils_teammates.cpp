@@ -6,7 +6,7 @@ module cc.orchestration.agent.utils;
 
 import std;
 
-import cc.utils.swarm_backends;
+import cc.teams.swarm.backends;
 import cc.tools.team;
 import cc.types.tool_types;
 

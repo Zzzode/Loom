@@ -56,4 +56,5 @@ target_link_libraries(cc_orchestration
         cc_config
         cc_utils
         cc_types
+        cc_teams
 )

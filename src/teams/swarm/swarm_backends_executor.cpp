@@ -1,4 +1,4 @@
-// swarm_backends_executor.cpp — implementation unit for cc.utils.swarm_backends
+// swarm_backends_executor.cpp — implementation unit for cc.teams.swarm.backends
 // (RFC 0001 Phase C batch 10). Cross-archive RAII guard and vtable anchors:
 // PaneBackend's destructor (defaulted) and non-pure capture_pane_text default,
 // TeammateExecutor's destructor (defaulted), and PaneBackendExecutor's
@@ -9,7 +9,7 @@
 // (swarm_backends.cppm.o); every other TU binds them and these bodies as U.
 module;
 
-module cc.utils.swarm_backends;
+module cc.teams.swarm.backends;
 
 import std;
 

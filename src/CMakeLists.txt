@@ -93,6 +93,10 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_std.cmake")
 # Make the `import std;` BMI available to every module target defined below.
 link_libraries(cc_std)
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_utils.cmake")
+# RFC 0001 Phase D B6 — cc_teams: teams/swarm modules moved out of cc_utils.
+# Included after cc_utils (its sole link dependency) and before cc_tools
+# (which links cc_teams).
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_teams.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_state.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_task_types.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_history.cmake")

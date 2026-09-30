@@ -53,7 +53,7 @@ import cc.ui.widgets.custom_select;
 import cc.ui.features.agents.agent_shared_widgets;
 import cc.ui.features.agents.agent_cards;
 import cc.tools.agent_color_manager;
-import cc.utils.swarm_backends;
+import cc.teams.swarm.backends;
 
 export namespace cc::ui::agents::wizard {
 using namespace ftxui;

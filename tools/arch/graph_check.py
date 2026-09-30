@@ -117,6 +117,10 @@ TARGET_RANK = {
     "cc.task_types": 6, "cc.memdir": 6, "cc.tasks": 6,
     "cc.services": 7,
     "cc.plugins": 7,
+    # RFC 0001 Phase D B6 — cc_teams target (teams/swarm modules moved out
+    # of cc_utils). Rank 7 (not 8) so that cc.tools (8) -> cc.teams (7) is
+    # strictly downward.
+    "cc.teams": 7,
     "cc.tools": 8,
     "cc.orchestration": 9,  # planned by RFC 0001 Phase B
     "cc.query": 10,

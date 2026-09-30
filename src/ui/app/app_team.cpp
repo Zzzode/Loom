@@ -50,10 +50,10 @@ module cc.ui.app.app;
 
 import cc.serdes.json;
 import cc.fs.atomic_replace;
-import cc.utils.team_helpers;
-import cc.utils.swarm_helpers;
-import cc.utils.swarm_backends;
-import cc.utils.swarm_pane_observer;
+import cc.teams.team_helpers;
+import cc.teams.swarm.helpers;
+import cc.teams.swarm.backends;
+import cc.teams.swarm.pane_observer;
 import cc.tools.agent_runtime;
 import cc.ui.features.teams.live_teammates;
 import cc.ui.screens.repl_state;

@@ -11,7 +11,7 @@ import std;
 import cc.scm.git.git;
 import cc.platform.env.env_utils;
 import cc.text.parse_int;
-import cc.utils.team_helpers;
+import cc.teams.team_helpers;
 import cc.tools.team;
 import cc.services.api.client;
 

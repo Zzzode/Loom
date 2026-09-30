@@ -63,8 +63,8 @@ cc.orchestration.agent.fork -> cc.tools.todo_write
 cc.orchestration.agent.fork -> cc.process.bash.bash_execution
 cc.orchestration.agent.fork -> cc.platform.env.env_utils
 cc.orchestration.agent.fork -> cc.scm.git.git
-cc.orchestration.agent.fork -> cc.utils.swarm_backends
-cc.orchestration.agent.fork -> cc.utils.team_helpers
+cc.orchestration.agent.fork -> cc.teams.swarm.backends
+cc.orchestration.agent.fork -> cc.teams.team_helpers
 cc.orchestration.agent.fork -> cc.tools.support.tool_helpers
 cc.orchestration.agent.resume -> cc.tools.agent_color_manager
 cc.orchestration.agent.resume -> cc.tools.agent_display
@@ -76,8 +76,8 @@ cc.orchestration.agent.resume -> cc.tools.todo_write
 cc.orchestration.agent.resume -> cc.tools.web_fetch
 cc.orchestration.agent.resume -> cc.platform.env.env_utils
 cc.orchestration.agent.resume -> cc.scm.git.git
-cc.orchestration.agent.resume -> cc.utils.swarm_backends
-cc.orchestration.agent.resume -> cc.utils.team_helpers
+cc.orchestration.agent.resume -> cc.teams.swarm.backends
+cc.orchestration.agent.resume -> cc.teams.team_helpers
 cc.orchestration.agent.resume -> cc.tools.support.tool_helpers
 cc.orchestration.agent.run -> cc.services.mcp.types
 cc.orchestration.agent.run -> cc.tools.agent_color_manager

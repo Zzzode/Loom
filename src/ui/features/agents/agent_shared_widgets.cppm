@@ -12,7 +12,7 @@
 ///
 /// Reuses:
 ///   - cc.tools.agent_color_manager  (AgentColor / hash-color assignment)
-///   - cc.utils.swarm_backends       (AgentColor enum)
+///   - cc.teams.swarm.backends       (AgentColor enum)
 ///   - cc.ui.widgets.spinner_animations  (running spinner glyphs)
 module;
 
@@ -28,7 +28,7 @@ export module cc.ui.features.agents.agent_shared_widgets;
 
 import std;
 
-import cc.utils.swarm_backends;
+import cc.teams.swarm.backends;
 import cc.tools.agent_color_manager;
 import cc.ui.widgets.spinner_animations;
 

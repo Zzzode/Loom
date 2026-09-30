@@ -4,7 +4,6 @@ target_sources(cc_utils
     PUBLIC FILE_SET CXX_MODULES FILES
         utils/diagnostics/activity_manager.cppm
         utils/agent/agent_id.cppm
-        utils/teams/agent_swarms_enabled.cppm
         utils/parsing/argument_substitution.cppm
         utils/containers/array_utils.cppm
         utils/process/async.cppm
@@ -16,7 +15,6 @@ target_sources(cc_utils
         utils/cache/cache_paths.cppm
         utils/containers/circular_buffer.cppm
         utils/git/commit_attribution.cppm
-        utils/teams/control_message_compat.cppm
         utils/crypto/crypto.cppm
         utils/diagnostics/debug.cppm
         utils/diagnostics/debug_filter.cppm
@@ -78,7 +76,6 @@ target_sources(cc_utils
         utils/http/ssrf_guard.cppm
         utils/text/string.cppm
         utils/text/string_utils.cppm
-        utils/teams/team_helpers.cppm
         utils/platform/terminal_helpers.cppm
         utils/parsing/text_highlighting.cppm
         utils/process/timeouts.cppm
@@ -89,9 +86,6 @@ target_sources(cc_utils
         utils/platform/xdg.cppm
         utils/serdes/yaml.cppm
         utils/shell/shell_providers.cppm
-        utils/swarm/swarm_backends.cppm
-        utils/swarm/swarm_helpers.cppm
-        utils/swarm/swarm_pane_observer.cppm
         utils/media/image_store.cppm
         utils/platform/platform_paths.cppm
         utils/tree_sitter/tree_sitter.cppm
@@ -106,15 +100,6 @@ target_sources(cc_utils
         utils/serdes/json_mut_doc.cpp
         utils/serdes/json_iter.cpp
         utils/serdes/json_builders.cpp
-        utils/swarm/swarm_backends_shell.cpp
-        utils/swarm/swarm_backends_detect.cpp
-        utils/swarm/swarm_backends_tmux.cpp
-        utils/swarm/swarm_backends_iterm.cpp
-        utils/swarm/swarm_backends_inprocess.cpp
-        utils/swarm/swarm_backends_executor.cpp
-        utils/swarm/swarm_backends_registry.cpp
-        utils/swarm/swarm_backends_detail.cpp
-        utils/swarm/swarm_helpers_shard.cpp
 )
 target_link_libraries(cc_utils
     PUBLIC

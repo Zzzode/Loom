@@ -1,4 +1,4 @@
-// swarm_backends_iterm.cpp — implementation unit for cc.utils.swarm_backends
+// swarm_backends_iterm.cpp — implementation unit for cc.teams.swarm.backends
 // (RFC 0001 Phase C batch 10). All non-inline ITermBackend members:
 // is_available (the out-of-line key function — its body is strong here;
 // under clang named modules the class vtable/typeinfo is emitted strong in
@@ -8,7 +8,7 @@
 // get_leader_session_id was removed entirely (declaration and definition).
 module;
 
-module cc.utils.swarm_backends;
+module cc.teams.swarm.backends;
 
 import std;
 

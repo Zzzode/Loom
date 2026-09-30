@@ -9,12 +9,12 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.utils.swarm_helpers;
+export module cc.teams.swarm.helpers;
 
 import std;
 
-import cc.utils.swarm_backends;
-import cc.utils.team_helpers;
+import cc.teams.swarm.backends;
+import cc.teams.team_helpers;
 import cc.serdes.json;
 import cc.fs.atomic_replace;
 

@@ -14,8 +14,8 @@ import cc.tasks.in_process_teammate_task;
 import cc.tasks.pill_label;
 import cc.tasks.task;
 import cc.tasks.types;
-import cc.utils.swarm_backends;
-import cc.utils.swarm_pane_observer;
+import cc.teams.swarm.backends;
+import cc.teams.swarm.pane_observer;
 
 namespace fs = std::filesystem;
 

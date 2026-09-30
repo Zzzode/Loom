@@ -12,7 +12,7 @@ module;
 #include <cstddef>
 #endif
 
-export module cc.utils.team_helpers;
+export module cc.teams.team_helpers;
 
 import std;
 

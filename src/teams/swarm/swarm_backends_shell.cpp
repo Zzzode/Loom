@@ -1,4 +1,4 @@
-// swarm_backends_shell.cpp — implementation unit for cc.utils.swarm_backends
+// swarm_backends_shell.cpp — implementation unit for cc.teams.swarm.backends
 // (RFC 0001 Phase C batch 10). The injectable shell seams: the two override
 // accessors (each owning its function-local std::function static, so the
 // whole module — tests, tmux backend, registry — shares one instance),
@@ -15,7 +15,7 @@ module;
 #include <cstdio>
 #include <cstdlib>
 
-module cc.utils.swarm_backends;
+module cc.teams.swarm.backends;
 
 import std;
 

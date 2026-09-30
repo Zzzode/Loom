@@ -1,4 +1,4 @@
-// swarm_backends_detail.cpp — implementation unit for cc.utils.swarm_backends
+// swarm_backends_detail.cpp — implementation unit for cc.teams.swarm.backends
 // (RFC 0001 Phase C batch 10). The exported detail helpers: JSON escaping and
 // timestamps, the shutdown-request envelope, shell quoting, TmuxArgv
 // rendering, the six pure tmux argv builders, the external-swarm re-attach
@@ -8,7 +8,7 @@
 // tokens, CLI flags, env var names) — bodies are byte-identical moves.
 module;
 
-module cc.utils.swarm_backends;
+module cc.teams.swarm.backends;
 
 import std;
 

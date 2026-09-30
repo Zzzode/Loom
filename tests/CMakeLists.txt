@@ -138,6 +138,7 @@ target_link_libraries(test_services
         cc_core
         cc_cli
         cc_utils
+        cc_teams           # cc.teams.team_helpers
         GTest::gtest_main
 )
 gtest_discover_tests(test_services DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -328,7 +329,7 @@ target_link_libraries(test_tasks
         cc_core
         cc_tasks               # cc.tasks.*
         cc_tools               # cc.tools.agent_* / team / spawn_multi_agent
-        cc_utils               # cc.utils.swarm_backends
+        cc_utils               # cc.utils.* helpers (cc.teams.swarm.* arrives via cc_tools)
         GTest::gtest_main
 )
 gtest_discover_tests(test_tasks DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

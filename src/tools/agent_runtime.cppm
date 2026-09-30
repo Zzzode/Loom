@@ -7,7 +7,7 @@ export module cc.tools.agent_runtime;
 import std;
 
 import cc.serdes.json;
-// cc.utils.team_helpers is no longer named by any declaration in this
+// cc.teams.team_helpers is no longer named by any declaration in this
 // interface (its only caller, has_teammate_identity, moved to
 // agent_runtime_builtin_impl.cpp), but removing this import makes
 // src/ui/app/app_team.cpp fail with "call to 'operator new' is ambiguous"
@@ -18,7 +18,7 @@ import cc.serdes.json;
 // team_helpers directly; reordering its own imports does not help).
 // Empirically verified by removing and rebuilding.
 // arch-check: keep-import
-import cc.utils.team_helpers;
+import cc.teams.team_helpers;
 import cc.serdes.yaml;
 
 export namespace cc::tools::agent_runtime {

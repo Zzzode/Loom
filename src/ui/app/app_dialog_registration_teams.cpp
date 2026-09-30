@@ -21,7 +21,7 @@ import cc.ui.dialogs.system;
 import cc.ui.screens.repl_screen;
 import cc.ui.screens.repl_state;
 import cc.ui.features.teams.live_teammates;
-import cc.utils.team_helpers;
+import cc.teams.team_helpers;
 
 using namespace ftxui;
 

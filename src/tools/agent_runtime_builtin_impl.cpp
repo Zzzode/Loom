@@ -2,7 +2,7 @@
 // builders and their constants (builtin_detail), plugin component
 // discovery/qualification, directory/settings/flag/policy agent loading,
 // the get_all/find definition union, and teammate-identity prompt assembly.
-// This is the only unit that imports cc.utils.team_helpers.
+// This is the only unit that imports cc.teams.team_helpers.
 module;
 
 #include <cstdlib>
@@ -12,7 +12,7 @@ module cc.tools.agent_runtime;
 import std;
 
 import cc.serdes.json;
-import cc.utils.team_helpers;
+import cc.teams.team_helpers;
 import cc.serdes.yaml;
 
 namespace cc::tools::agent_runtime {

@@ -7,10 +7,10 @@
 // seams + WIF/FILE GMF), swarm_backends_detect.cpp (environment/mode
 // detection + the 11 static data anchors), swarm_backends_tmux.cpp,
 // swarm_backends_iterm.cpp, swarm_backends_inprocess.cpp (the only unit that
-// imports cc.utils.team_helpers), swarm_backends_executor.cpp (RAII guard +
+// imports cc.teams.team_helpers), swarm_backends_executor.cpp (RAII guard +
 // base vtable anchors), swarm_backends_registry.cpp, and
 // swarm_backends_detail.cpp (argv builders + protocol strings).
-export module cc.utils.swarm_backends;
+export module cc.teams.swarm.backends;
 
 import std;
 
@@ -495,7 +495,7 @@ private:
 /// - Are terminated via abort signaling (not kill-pane)
 ///
 /// Member bodies live in swarm_backends_inprocess.cpp, the only implementation
-/// unit that imports cc.utils.team_helpers (mailbox I/O); spawn is the key
+/// unit that imports cc.teams.team_helpers (mailbox I/O); spawn is the key
 /// function.
 class InProcessBackend : public TeammateExecutor {
 public:

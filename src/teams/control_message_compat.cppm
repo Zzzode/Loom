@@ -1,5 +1,5 @@
 
-export module cc.utils.control_message_compat;
+export module cc.teams.control_message_compat;
 
 import std;
 

@@ -27,11 +27,11 @@ import cc.tools.sleep;
 import cc.tools.web_fetch;
 // RFC-0001 B10 — dead `import cc.skills.skill;` deleted: the file-access
 // hook move unmasked it (zero cc.skills references in this TU).
-import cc.utils.team_helpers;
+import cc.teams.team_helpers;
 import cc.services.api.client;
 import cc.services.api.streaming;
 import cc.services.mcp.types;
-import cc.utils.swarm_backends;
+import cc.teams.swarm.backends;
 import cc.platform.env.env_utils;
 import cc.tools.support.tool_helpers;
 import cc.process.bash.bash_execution;

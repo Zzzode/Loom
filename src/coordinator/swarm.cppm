@@ -2,7 +2,7 @@
 /// @brief Minimal worker identity types shared by the mailbox router and the
 /// task graph. The toy in-process/tmux backends, SwarmManager and permission
 /// cache that previously lived here were unused dead code (the real backends
-/// live in cc.utils.swarm_backends); they were removed in the D-reconn stage.
+/// live in cc.teams.swarm.backends); they were removed in the D-reconn stage.
 module;
 
 #include <cstdint>

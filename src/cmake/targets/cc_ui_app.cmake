@@ -115,6 +115,7 @@ target_link_libraries(cc_ui_app
         cc_types
         cc_utils
         cc_vim
+        cc_teams
         ftxui::screen
         ftxui::dom
         ftxui::component

@@ -9,6 +9,7 @@ target_link_libraries(loom
         cc_core
         cc_daemon
         cc_server
+        cc_teams
 )
 set_target_properties(loom PROPERTIES
     OUTPUT_NAME "loom"

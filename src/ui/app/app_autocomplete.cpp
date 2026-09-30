@@ -53,7 +53,7 @@ import cc.text.parse_references;
 import cc.fs.path;
 import cc.skills.support;
 import cc.session.app_storage;
-import cc.utils.swarm_pane_observer;
+import cc.teams.swarm.pane_observer;
 
 namespace cc::ui {
 namespace agent_runtime = cc::tools::agent_runtime;

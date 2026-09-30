@@ -40,7 +40,7 @@ import cc.tools.runtime_shared_utils;
 import cc.serdes.json;
 import cc.net.http.http;
 import cc.crypto.uuid_utils;
-import cc.utils.team_helpers;
+import cc.teams.team_helpers;
 
 export namespace cc::tools::runtime_message_delivery {
 

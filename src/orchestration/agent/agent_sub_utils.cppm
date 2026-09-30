@@ -12,12 +12,12 @@ import cc.tools.agent_runtime;
 import cc.tools.agent_types;
 import cc.tools.agent_worktree;
 import cc.orchestration.tools.mcp;
-// Team / MemberRole (cc.tools.team), AgentColor (cc.utils.swarm_backends)
+// Team / MemberRole (cc.tools.team), AgentColor (cc.teams.swarm.backends)
 // and SkillDefinition (cc.skills.skill) are named in declarations kept in
 // this interface, so their owner modules must be imported here even though
 // every function body that uses them moved to an implementation unit.
 import cc.tools.team;
-import cc.utils.swarm_backends;
+import cc.teams.swarm.backends;
 import cc.skills.skill;
 import cc.services.api.client;
 

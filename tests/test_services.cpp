@@ -71,7 +71,7 @@ import cc.types.types;
 import cc.utils.error;
 import cc.services.ide_integration;
 import cc.serdes.json;
-import cc.utils.team_helpers;
+import cc.teams.team_helpers;
 import cc.fs.atomic_replace;
 
 namespace fs = std::filesystem;

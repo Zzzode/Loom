@@ -10,14 +10,14 @@ module;
 #include <ctime>
 #include <cstdlib>
 
-export module cc.utils.plugin_marketplace;
+export module cc.plugins.plugin_marketplace;
 
 import std;
 
 import cc.process.exec_sync;
 import cc.serdes.json;
-import cc.utils.plugin_identifier;
-import cc.utils.plugin_marketplace_rules;
+import cc.plugins.plugin_identifier;
+import cc.plugins.plugin_marketplace_rules;
 
 export namespace cc::utils::plugin_marketplace {
 

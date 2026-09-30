@@ -131,11 +131,11 @@ cc.ui.prompt.autocomplete_sources [impl:ui/prompt/autocomplete_sources_impl.cpp]
 cc.ui.prompt.prompt_input_full -> cc.ui.chrome.layout
 cc.ui.prompt.prompt_input_full -> cc.ui.foundation.design_figures
 cc.ui.screens.repl_state -> cc.ui.visual.markdown
-cc.utils.plugin_loader -> cc.utils.plugin_versioning
-cc.utils.plugin_manager -> cc.utils.plugin_identifier
-cc.utils.plugin_manager -> cc.utils.plugin_loader
-cc.utils.plugin_marketplace -> cc.utils.plugin_marketplace_rules
-cc.utils.plugin_validation -> cc.utils.plugin_identifier
+cc.plugins.plugin_loader -> cc.plugins.plugin_versioning
+cc.plugins.plugin_manager -> cc.plugins.plugin_identifier
+cc.plugins.plugin_manager -> cc.plugins.plugin_loader
+cc.plugins.plugin_marketplace -> cc.plugins.plugin_marketplace_rules
+cc.plugins.plugin_validation -> cc.plugins.plugin_identifier
 cc.utils.settings_manager -> cc.utils.settings_merge
 cc.utils.settings_manager -> cc.utils.settings_paths
 cc.utils.settings_manager -> cc.utils.settings_sources

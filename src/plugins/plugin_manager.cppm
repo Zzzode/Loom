@@ -7,12 +7,12 @@
 module;
 
 
-export module cc.utils.plugin_manager;
+export module cc.plugins.plugin_manager;
 
 import std;
 
-import cc.utils.plugin_identifier;
-import cc.utils.plugin_loader;
+import cc.plugins.plugin_identifier;
+import cc.plugins.plugin_loader;
 
 export namespace cc::utils::plugin_manager {
 

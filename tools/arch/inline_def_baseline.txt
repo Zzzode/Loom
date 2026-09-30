@@ -7,7 +7,7 @@ cc.daemon.daemon_server 73
 cc.ui.permissions.rule_list 67
 cc.skills.load_skills_dir 66
 cc.server.server_routes 63
-cc.utils.plugin_loader 60
+cc.plugins.plugin_loader 60
 cc.bridge.core 58
 cc.services.mcp.channel_notification 53
 cc.services.lsp.client 52

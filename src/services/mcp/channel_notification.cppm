@@ -30,7 +30,7 @@ import std;
 import cc.constants.xml;
 import cc.services.mcp.types;
 import cc.serdes.json;
-import cc.utils.plugin_identifier;
+import cc.plugins.plugin_identifier;
 
 export namespace cc::services::mcp {
 

@@ -64,10 +64,6 @@ target_sources(cc_utils
         utils/text/parse_references.cppm
         utils/security/permissions.cppm
         utils/security/permissions_engine.cppm
-        utils/plugin/plugin_dependency_resolver.cppm
-        utils/plugin/plugin_identifier.cppm
-        utils/plugin/plugin_marketplace_rules.cppm
-        utils/plugin/plugin_versioning.cppm
         utils/process/process.cppm
         utils/security/privacy_level.cppm
         utils/prompt/prompt_category.cppm
@@ -101,11 +97,6 @@ target_sources(cc_utils
         utils/crypto/uuid_utils.cppm
         utils/platform/xdg.cppm
         utils/serdes/yaml.cppm
-        utils/plugin/plugin_lifecycle.cppm
-        utils/plugin/plugin_loader.cppm
-        utils/plugin/plugin_manager.cppm
-        utils/plugin/plugin_marketplace.cppm
-        utils/plugin/plugin_validation.cppm
         utils/settings/settings_manager.cppm
         utils/shell/shell_providers.cppm
         utils/swarm/swarm_backends.cppm

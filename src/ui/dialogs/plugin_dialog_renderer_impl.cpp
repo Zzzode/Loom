@@ -27,7 +27,7 @@ import cc.ui.dialogs.plugin_dialog;
 import cc.commands.plugin.manage_plugins;
 import cc.commands.plugin_ui_data;
 import cc.commands.plugin_helpers;
-import cc.utils.plugin_marketplace;
+import cc.plugins.plugin_marketplace;
 
 namespace cc::ui::dialogs::plugin_dialog_renderer {
 

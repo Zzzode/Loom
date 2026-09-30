@@ -7,12 +7,12 @@ module;
 
 #include <cctype>
 
-export module cc.utils.plugin_validation;
+export module cc.plugins.plugin_validation;
 
 import std;
 
 import cc.serdes.json;
-import cc.utils.plugin_identifier;
+import cc.plugins.plugin_identifier;
 
 export namespace cc::utils::plugin_validation {
 

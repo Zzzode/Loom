@@ -1,8 +1,8 @@
-export module cc.utils.plugin_dependency_resolver;
+export module cc.plugins.plugin_dependency_resolver;
 
 import std;
 
-import cc.utils.plugin_identifier;
+import cc.plugins.plugin_identifier;
 
 export namespace cc::utils::plugin_dependency_resolver {
 

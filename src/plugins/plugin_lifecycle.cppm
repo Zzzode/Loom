@@ -9,7 +9,7 @@ module;
 #include <cstdio>
 #include <cstdlib>
 
-export module cc.utils.plugin_lifecycle;
+export module cc.plugins.plugin_lifecycle;
 
 import std;
 import cc.process.bash.bash_execution;

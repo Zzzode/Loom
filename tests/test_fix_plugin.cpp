@@ -16,8 +16,8 @@
 
 import std;
 import cc.serdes.json;
-import cc.utils.plugin_marketplace;
-import cc.utils.plugin_validation;
+import cc.plugins.plugin_marketplace;
+import cc.plugins.plugin_validation;
 
 namespace mp = cc::utils::plugin_marketplace;
 namespace pv = cc::utils::plugin_validation;

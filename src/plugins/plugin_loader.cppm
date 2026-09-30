@@ -14,12 +14,12 @@ module;
 #include <sys/wait.h>
 #endif
 
-export module cc.utils.plugin_loader;
+export module cc.plugins.plugin_loader;
 
 import std;
 
-import cc.utils.plugin_identifier;
-import cc.utils.plugin_versioning;
+import cc.plugins.plugin_identifier;
+import cc.plugins.plugin_versioning;
 import cc.serdes.json;
 import cc.process.bash.bash_execution;
 

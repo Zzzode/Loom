@@ -128,5 +128,9 @@ target_link_libraries(cc_commands
         # RFC-0001 B15: mcp_cmd / mcp.core_settings_loader import the lifted
         # cc.orchestration.tools.mcp; color.cppm imports cc.orchestration.agent.utils.
         cc_orchestration
+        # RFC-0001 Phase D B5c: plugin_cmd / plugin_manage / plugin_helpers
+        # import the cc.plugins.* modules (lifecycle/manager/marketplace/
+        # validation), now homed in cc_plugins.
+        cc_plugins
         cc_vim
 )

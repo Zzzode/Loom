@@ -34,14 +34,14 @@
 ///                             doctor-screen display string, no typed accessor.
 ///   * PluginAutoupdate     -> SLOT fallback. TS subscribes via
 ///                             onPluginsAutoUpdated(); no equivalent event
-///                             bus exists in cc.utils.plugin_lifecycle yet.
+///                             bus exists in cc.plugins.plugin_lifecycle yet.
 ///   * PluginInstallation   -> SLOT fallback. TS reads
 ///                             s.plugins.installationStatus{marketplaces,
 ///                             plugins} from AppState; the C++ installation
 ///                             manager has no failed-install snapshot model.
 ///   * SettingsErrors       -> SLOT fallback. TS calls
 ///                             getSettingsWithAllErrors(); C++ has plugin
-///                             validation errors only (cc.utils.plugin
+///                             validation errors only (cc.plugins.plugin
 ///                             _validation), no settings-schema validator.
 ///   * SubscriptionSwitch   -> SLOT fallback. TS queries
 ///                             isLoomAISubscriber() + OAuth profile

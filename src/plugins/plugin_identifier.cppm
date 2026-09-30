@@ -2,7 +2,7 @@ module;
 
 #include <cctype>
 
-export module cc.utils.plugin_identifier;
+export module cc.plugins.plugin_identifier;
 
 import std;
 

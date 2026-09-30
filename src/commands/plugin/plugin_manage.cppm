@@ -23,8 +23,8 @@ export module cc.commands.plugin_manage;
 import std;
 
 import cc.commands.plugin_helpers;
-import cc.utils.plugin_validation;
-import cc.utils.plugin_manager;
+import cc.plugins.plugin_validation;
+import cc.plugins.plugin_manager;
 
 export namespace cc::commands::plugin_manage {
 
@@ -216,7 +216,7 @@ struct ValidateOutput {
 /// Returns the plugin's repository/source identifier string if found,
 /// nullopt otherwise.
 ///
-/// The full `LoadedPlugin` struct lives in cc.utils.plugin_loader; we return
+/// The full `LoadedPlugin` struct lives in cc.plugins.plugin_loader; we return
 /// only the string identifier here because Phase 4's dialog layer will
 /// re-load the full struct when rendering.
 [[nodiscard]] inline std::optional<std::string> find_options_target(

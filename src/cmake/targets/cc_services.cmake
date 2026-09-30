@@ -69,6 +69,9 @@ target_link_libraries(cc_services
         cc_types
         cc_constants
         cc_config
+        # RFC-0001 Phase D B5c: mcp/channel_notification imports
+        # cc.plugins.plugin_identifier, now homed in cc_plugins.
+        cc_plugins
         CURL::libcurl
         yyjson
         uv_a

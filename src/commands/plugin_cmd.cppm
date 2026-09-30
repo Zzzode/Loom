@@ -33,7 +33,7 @@
 /// list) return that text as the message.
 ///
 /// Heavy plugin work (actual install/uninstall/validation) is delegated to
-/// the `cc.utils.plugin_*` modules.  This layer is only the command I/O.
+/// the `cc.plugins.plugin_*` modules.  This layer is only the command I/O.
 
 module;
 
@@ -51,10 +51,10 @@ import cc.commands.plugin_parse_args;
 import cc.commands.plugin_helpers;
 import cc.commands.plugin_manage;
 import cc.commands.plugin_ui_data;
-import cc.utils.plugin_lifecycle;
-import cc.utils.plugin_validation;
-import cc.utils.plugin_manager;
-import cc.utils.plugin_marketplace;
+import cc.plugins.plugin_lifecycle;
+import cc.plugins.plugin_validation;
+import cc.plugins.plugin_manager;
+import cc.plugins.plugin_marketplace;
 
 export namespace cc::commands {
 
@@ -566,7 +566,7 @@ private:
 
     /// Disk scan of installed plugins (kept for completion / text lists).
     /// The rich "what plugins are loaded and active?" query uses
-    /// cc.utils.plugin_manager; this is a best-effort offline view.
+    /// cc.plugins.plugin_manager; this is a best-effort offline view.
     [[nodiscard]] static std::vector<PluginInfo> load_installed_plugins() {
         namespace fs = std::filesystem;
         std::vector<PluginInfo> plugins;

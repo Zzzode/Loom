@@ -1,4 +1,4 @@
-export module cc.utils.plugin_versioning;
+export module cc.plugins.plugin_versioning;
 
 import std;
 

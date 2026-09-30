@@ -1,60 +1,15 @@
-# ─── cc_ui: Terminal UI ───────────────────────────────────────────────────────
-add_library(cc_ui)
-target_sources(cc_ui
-    PUBLIC FILE_SET CXX_MODULES FILES
-        ui/app/app.cppm
-        ui/app/app_impl.cppm
-        ui/app/app_dialog_registration.cppm
-)
-# Module implementation units for cc.ui.app_dialog_registration — one per
-# dialog-renderer aggregator, so no single TU imports more than one aggregator's
-# closure (importing all four at once crashes Clang codegen). This keeps the
-# ~44 dialog implementations out of app.cppm's BMI (source-location budget).
-# See app_dialog_registration.cppm / *_impl.cpp for the rationale.
-target_sources(cc_ui PRIVATE
-    ui/app/app_autocomplete.cpp
-    ui/app/app_extra_methods.cpp
-    ui/app/app_constructor.cpp
-    ui/app/app_handle_submit.cpp
-    ui/app/app_agent_menu.cpp
-    ui/app/app_prompt_suggestion_wiring.cpp
-    ui/app/app_dialog_registration_default.cpp
-    ui/app/app_dialog_registration_modal.cpp
-    ui/app/app_dialog_registration_bottom.cpp
-    ui/app/app_dialog_registration_all.cpp
-    ui/app/app_dialog_registration_hooks.cpp
-    ui/app/app_dialog_registration_teams.cpp
-    # Module implementation unit for cc.ui.app.app_dialog_registration
-    # (RFC 0002 F2 row 6): the feature-dialog factory registration (agent
-    # wizard, plugin install wizard, plugin trust dialog). The concrete
-    # static_pointer_cast of the erased request lives ONLY here, so the
-    # feature and dialogs modules never name each other's types.
-    ui/app/app_feature_dialog_registration.cpp
-    ui/app/app_message_projection.cpp
-    ui/app/app_store_bridge.cpp
-    ui/app/app_run.cpp
-    ui/app/app_team.cpp
-    ui/app/app_settings.cpp
-    # Module implementation units for cc.ui.app.app (RFC 0001 Phase C
-    # batch 1): env/text/UTF helpers + skills-menu formatting, moved out of
-    # app.cppm for edit isolation. Textual-std (LLVM #184957) — see the
-    # header comment in each file and CMakeLists.txt:283-292.
-    ui/app/app_helpers.cpp
-    ui/app/app_skills_menu.cpp
-    # Module implementation units for cc.ui.app.app (RFC 0001 Phase C
-    # batch 2): animation ticker + render-event post, local-command /
-    # local-JSX rows. Textual-std (LLVM #184957) — see the header comment
-    # in each file and CMakeLists.txt:283-292.
-    ui/app/app_animation.cpp
-    ui/app/app_local_command.cpp
-    # Module implementation unit for cc.ui.app.app (RFC 0002 F3 Finalize):
-    # the 28 AppAdapter *_for_testing seam bodies, moved out of app.cppm so
-    # the inline-def ratchet re-freezes at the single composition body
-    # (set_screen). Textual-std (LLVM #184957) — see the header comment.
-    ui/app/app_testing_seams.cpp
-)
+# ─── cc_ui: Terminal UI (RFC 0002 F4 aggregate) ──────────────────────────────
+# All twelve cc.ui.<area> module areas now live in their own libraries
+# (cc_ui_<area>); cc_ui is a source-less INTERFACE aggregate that links them
+# PUBLIC so the upper layers (loom, cc_server, the tests, …) keep a single
+# cc_ui link edge. The split bounds recompile fan-out: a body edit in one
+# area regenerates only that area's CXX.dd dyndep file and recompiles only
+# that area's objects, not the whole cc_ui closure. Grouped by MODULE-NAME
+# area (export module cc.ui.<area>.*), not by directory — name/path
+# decoupling means the grouping rule is stated, not inferred from the tree.
+add_library(cc_ui INTERFACE)
 target_link_libraries(cc_ui
-    PUBLIC
+    INTERFACE
         # RFC 0002 F4: the cc.ui.foundation.* area now lives in its own
         # library; cc_ui links it PUBLIC so the remaining areas can still
         # import cc.ui.foundation.* during the staged split.
@@ -109,6 +64,11 @@ target_link_libraries(cc_ui
         # lives in its own library; linked PUBLIC so the remaining area
         # (app) can still import cc.ui.screens.* during the staged split.
         cc_ui_screens
+        # RFC 0002 F4: the cc.ui.app.* area (the App composition root, its
+        # :impl partition, the dialog-renderer registration aggregator, and
+        # the cc.ui.app.app impl TUs) now lives in its own library — the
+        # last area split out of cc_ui.
+        cc_ui_app
         cc_utils
         cc_types
         cc_query

@@ -1939,8 +1939,8 @@ promoted to the repository root in the same series of commits, so
   live importers**, and there is no trivial single-call delegation (the real manager holds richer
   state). The body is **kept compiling but is intentionally not wired to a transport**. The real
   lifecycle backends are `cc.plugins.plugin_manager`, `cc.plugins.plugin_marketplace`
-  (the former `cc.utils.plugin_marketplace_lifecycle` was deleted in the Phase D dead-code
-  pass), and `commands/plugin/plugin_manage` — **prefer those**.
+  (the former `cc.utils.plugin_marketplace_lifecycle` was deleted in the Phase B dead-code
+  pass, followup c10-b19), and `commands/plugin/plugin_manage` — **prefer those**.
 
 - **`cpp_migration/src/services/plugins/cli_commands.cppm:71-80`** — This shim is **superseded**; it
   **intentionally does NOT fake a success string** and instead returns an error naming the real entry
@@ -2808,7 +2808,7 @@ promoted to the repository root in the same series of commits, so
   character granularity**. `Deferred(#ui7-word-diff)` tracks consolidating it.
 
 - **`cpp_migration/src/ui/prompt/fuzzy_rank_nucleo.cppm:31-34`** — The scoring constants are
-  **mirrored from the former `cc.utils.file_index` (deleted in the Phase D dead-code pass; the
+  **mirrored from the former `cc.utils.file_index` (deleted in the Phase B dead-code pass, followup c10-b19; the
   constants are now self-contained in this module)** so the two scorers agree **without a hard
   import**. Editing one side alone makes the two disagree.
 

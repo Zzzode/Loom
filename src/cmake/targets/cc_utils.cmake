@@ -82,7 +82,6 @@ target_sources(cc_utils
         utils/http/ssrf_guard.cppm
         utils/text/string.cppm
         utils/text/string_utils.cppm
-        utils/tasks/task_utils.cppm
         utils/teams/team_helpers.cppm
         utils/platform/terminal_helpers.cppm
         utils/parsing/text_highlighting.cppm

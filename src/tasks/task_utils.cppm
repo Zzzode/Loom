@@ -3,7 +3,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.utils.task_utils;
+export module cc.tasks.support;
 
 import std;
 

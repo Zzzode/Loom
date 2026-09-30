@@ -7,6 +7,7 @@ target_sources(cc_tasks
         tasks/pill_label.cppm
         tasks/task.cppm
         tasks/task_graph.cppm
+        tasks/task_utils.cppm
         tasks/types.cppm
 )
 target_link_libraries(cc_tasks PUBLIC cc_utils cc_types cc_state cc_coordinator cc_hooks)

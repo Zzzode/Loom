@@ -121,6 +121,7 @@ target_link_libraries(cc_tools
         cc_utils
         cc_types
         cc_skills_core
+        cc_tasks
         yyjson
         uv_a
 )

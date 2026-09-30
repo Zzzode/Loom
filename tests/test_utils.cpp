@@ -37,7 +37,7 @@ import cc.utils.agent_swarms_enabled;
 import cc.platform.env.env_utils;
 import cc.cache.cache_paths;
 import cc.platform.binary_check;
-import cc.utils.loom_code_hints;
+import cc.skills.hints;
 import cc.scm.git.commit_attribution;
 import cc.crypto.hash;
 import cc.types.tagged_id;

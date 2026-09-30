@@ -9,7 +9,7 @@
 module;
 
 
-export module cc.utils.skill_usage;
+export module cc.skills.support;
 
 import std;
 

@@ -51,7 +51,7 @@ import cc.diagnostics.debug;
 import cc.platform.hyperlink;
 import cc.text.parse_references;
 import cc.fs.path;
-import cc.utils.skill_usage;
+import cc.skills.support;
 import cc.session.app_storage;
 import cc.utils.swarm_pane_observer;
 

@@ -3,7 +3,7 @@ module;
 #include <cctype>
 #include <climits>
 
-export module cc.utils.loom_code_hints;
+export module cc.skills.hints;
 
 import std;
 

@@ -6,7 +6,7 @@ module;
 #include <cmath>
 #include <cstdlib>
 
-module cc.utils.skill_usage;
+module cc.skills.support;
 
 import std;
 

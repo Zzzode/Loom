@@ -15,7 +15,6 @@ target_sources(cc_utils
         utils/platform/binary_check.cppm
         utils/cache/cache_paths.cppm
         utils/containers/circular_buffer.cppm
-        utils/skills/loom_hints.cppm
         utils/git/commit_attribution.cppm
         utils/teams/control_message_compat.cppm
         utils/crypto/crypto.cppm
@@ -48,7 +47,6 @@ target_sources(cc_utils
         utils/http/http_encoding.cppm
         utils/platform/hyperlink.cppm
         utils/serdes/json.cppm
-        utils/skills/skill_usage.cppm
         utils/fs/lockfile.cppm
         utils/diagnostics/log.cppm
         utils/text/markdown_utils.cppm
@@ -114,7 +112,6 @@ target_sources(cc_utils
         utils/serdes/json_mut_doc.cpp
         utils/serdes/json_iter.cpp
         utils/serdes/json_builders.cpp
-        utils/skills/skill_usage_impl.cpp
         utils/swarm/swarm_backends_shell.cpp
         utils/swarm/swarm_backends_detect.cpp
         utils/swarm/swarm_backends_tmux.cpp

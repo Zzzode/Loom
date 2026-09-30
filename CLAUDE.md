@@ -73,8 +73,9 @@ conditional at the top are visible throughout — `add_subdirectory()` would add
 a directory scope and change evaluation order. When adding a target, add its
 file under `src/cmake/targets/` and an `include()` in the same dependency order.
 
-**`cc_ui` was one target; RFC 0002 F4 splits it into ~12 area libraries
-(`cc_ui_foundation` … `cc_ui_app`).** The module graph is a DAG (217 ui
+**`cc_ui` is an INTERFACE aggregate over ~12 area libraries
+(`cc_ui_foundation` … `cc_ui_app`), split out of the former single target
+by RFC 0002 F4.** The module graph is a DAG (217 ui
 modules, zero module-level cycles). At the responsibility-directory level
 (`foundation`, `dialogs`, `messages`, …), nine areas *used to* collapse into
 one strongly-connected component (`foundation ↔ chrome`, `dialogs ↔ widgets`,
@@ -102,7 +103,7 @@ cycle-free. Two caveats from the single-target era still hold:
 | `src/query/wire_*.cppm` | The wire-protocol seam. `wire_protocol.cppm` defines `WireBackend`; `wire_anthropic.cppm` and `wire_openai.cppm` implement it. The engine builds a vendor-neutral `RequestInput` and never serializes a wire format itself. |
 | `src/tools/` | Tool implementations, each with its input schema, permission model, and execution. |
 | `src/commands/` | Slash commands. Registered via `command_registry_init_*.cpp`. |
-| `src/ui/` | FTXUI interface. **Not Ink, not React** — do not port React idioms into it. Cut by responsibility: `foundation/` (tokens, theme, figures, primitives), `chrome/` (layout, renderer, terminal I/O), `widgets/` (reusable controls), `visual/` (markdown/diff rendering), `messages/`, `dialogs/`, `permissions/`, `prompt/`, `screens/`, `features/{agents,teams,tasks,plugins,mcp}/`, `tools/` (tool-UI registry), and `app/` (the top-level app orchestrator shards). One `cc_ui` target — see the build-layout note above. |
+| `src/ui/` | FTXUI interface. **Not Ink, not React** — do not port React idioms into it. Cut by responsibility: `foundation/` (tokens, theme, figures, primitives), `chrome/` (layout, renderer, terminal I/O), `widgets/` (reusable controls), `visual/` (markdown/diff rendering), `messages/`, `dialogs/`, `permissions/`, `prompt/`, `screens/`, `features/{agents,teams,tasks,plugins,mcp}/`, `tools/` (tool-UI registry), and `app/` (the top-level app orchestrator shards). Twelve `cc_ui_<area>` targets aggregated by the `cc_ui` INTERFACE library — see the build-layout note above. |
 | `src/services/` | External integrations: MCP, LSP, API clients, plugins. |
 | `src/state/` | AppState store and reducers. |
 | `src/constants/paths.cppm` | **The single source for config/memory path resolution.** Both cascades live here; delegate to it rather than hardcoding paths. |

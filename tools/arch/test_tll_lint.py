@@ -10,8 +10,10 @@ It asserts the F4 gate contract from docs/rfcs/attachments/
 0002-implementable-gate.md (TLL acyclicity + file->lib grouping):
 
   1. on the LIVE tree the lint passes: 0 TLL SCCs, 0 self-loops, and the
-     grouping rule is vacuous (no cc_ui_<area> targets yet — all ui modules
-     are in the single cc_ui target);
+     grouping rule holds — all twelve cc_ui_<area> area libraries exist
+     (RFC 0002 F4 has landed) and every cc.ui.<area>.* module is homed in
+     exactly its own area library, with cc_ui a source-less INTERFACE
+     aggregate;
   2. a target_link_libraries cycle (a -> b -> a) in a temp cmake tree
      fails with the SCC reported;
   3. a self-loop (a -> a) fails;
@@ -73,23 +75,31 @@ def tll_lint_on_temp_tree(files: dict[str, str]):
 
 
 def main() -> int:
-    print("1. live tree: --tll-lint passes (0 SCCs, grouping vacuous)")
+    print("1. live tree: --tll-lint passes (0 SCCs, 12 area libs, grouping clean)")
     r = gc.run(False, tll_lint=True)
     t = r["tll_lint"]
     check(t["passes"], "TLL lint passes on the live tree")
     check(t["sccs"] == [], f"0 TLL SCCs (got {t['sccs']})")
     check(t["self_loops"] == [], f"0 self-loops (got {t['self_loops']})")
-    check(t["area_targets"] == [],
-          f"no cc_ui_<area> targets yet (got {t['area_targets']})")
+    check(sorted(t["area_targets"]) == [
+        "cc_ui_app", "cc_ui_chrome", "cc_ui_dialogs", "cc_ui_features",
+        "cc_ui_foundation", "cc_ui_messages", "cc_ui_permissions",
+        "cc_ui_prompt", "cc_ui_screens", "cc_ui_tools", "cc_ui_visual",
+        "cc_ui_widgets"],
+        f"12 cc_ui_<area> targets (got {sorted(t['area_targets'])})")
     check(t["grouping"] == [], f"no grouping violations (got {t['grouping']})")
-    # cc_ui links the 12 cc_* libs + 3 ftxui components (the gate's "12
-    # libs" counts only the cc_* ones).
+    # cc_ui is the source-less INTERFACE aggregate: the 12 area libs + the
+    # 12 cc_* deps + 3 ftxui components.
     check(set(t["links"]["cc_ui"]) == {
+        "cc_ui_foundation", "cc_ui_visual", "cc_ui_tools", "cc_ui_chrome",
+        "cc_ui_prompt", "cc_ui_widgets", "cc_ui_permissions",
+        "cc_ui_messages", "cc_ui_features", "cc_ui_dialogs", "cc_ui_screens",
+        "cc_ui_app",
         "cc_utils", "cc_types", "cc_query", "cc_commands", "cc_orchestration",
         "cc_vim", "cc_hooks", "cc_plugins", "cc_session", "cc_history",
         "cc_skills", "cc_services",
         "ftxui::screen", "ftxui::dom", "ftxui::component"},
-          "cc_ui deps parsed (12 cc_* + 3 ftxui)")
+          "cc_ui aggregate deps parsed (12 area + 12 cc_* + 3 ftxui)")
     proc = subprocess.run(
         [sys.executable, str(HERE / "graph_check.py"), "--tll-lint"],
         cwd=ROOT, capture_output=True, text=True)

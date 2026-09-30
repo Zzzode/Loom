@@ -67,7 +67,7 @@ catch, a control-flow misuse of exceptions.
 A 2026-06-17 audit of the remaining ~33 `throw` sites classified them:
 
 - **Legitimate (kept):** the `json_read` parser throws and is wrapped to
-  `std::expected` at the `cc.utils.json` boundary (callers use `parse_json_file`
+  `std::expected` at the `cc.serdes.json` boundary (callers use `parse_json_file`
   which returns `Result`); `stop_task` / `bridge` domain errors are caught by
   their own poll loops; `SanitizedValue::at` mirrors `std::map::at`;
   `words::random_index` throws on a violated precondition.

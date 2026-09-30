@@ -10,7 +10,7 @@ import std;
 
 import cc.utils.error;
 import cc.tools.tool;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.process.bash.bash_execution;
 
 export namespace cc::tools::web_search {

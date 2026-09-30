@@ -576,7 +576,7 @@ auto get_primitive_tools() -> std::vector<PrimitiveTool> {
                 // Parse notebook as JSON, find cells[idx], replace source.
                 // Use a very small hand-rolled parser to avoid importing
                 // extra JSON infrastructure here — the yyjson module is
-                // available via cc.utils.json but callers can fall back
+                // available via cc.serdes.json but callers can fall back
                 // to FileEdit if the cell shape is unusual.
                 //
                 // For robustness we import json and do it properly.

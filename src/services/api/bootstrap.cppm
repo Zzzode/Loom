@@ -8,7 +8,7 @@ import std;
 
 import cc.services.api.client;
 import cc.services.api.models;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.error;
 
 export namespace cc::services::api {

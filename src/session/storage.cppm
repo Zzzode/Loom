@@ -11,7 +11,7 @@ export module cc.session.storage;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::session {
 

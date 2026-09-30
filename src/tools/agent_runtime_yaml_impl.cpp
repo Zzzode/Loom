@@ -11,7 +11,7 @@ module cc.tools.agent_runtime;
 
 import std;
 
-import cc.utils.yaml;
+import cc.serdes.yaml;
 
 namespace cc::tools::agent_runtime {
 

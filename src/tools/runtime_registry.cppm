@@ -33,7 +33,7 @@ import cc.tools.runtime_message_delivery;
 import cc.tools.runtime_team_shared;
 import cc.tools.runtime_shared_utils;
 import cc.tools.runtime_backends.port;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::tools {
 

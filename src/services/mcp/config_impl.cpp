@@ -5,7 +5,7 @@ module cc.services.mcp.config;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace cc::services::mcp {
 

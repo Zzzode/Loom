@@ -12,7 +12,7 @@ import cc.services.api.streaming;
 import cc.services.api.models;
 import cc.services.api.errors;
 import cc.services.auth.provider_selector;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.error;
 
 export namespace cc::services::api {

@@ -17,7 +17,7 @@ import std;
 import cc.server.server_routes;
 import cc.hooks.tool_permissions;
 import cc.session.storage;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::server {
 

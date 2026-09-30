@@ -8,7 +8,7 @@ export module cc.bridge.work_secret;
 import std;
 
 import cc.bridge.jwt_utils;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::bridge {
 

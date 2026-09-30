@@ -49,7 +49,7 @@ import std;
 import cc.platform.env.env;
 import cc.utils.error;
 import cc.net.http.http_encoding;
-import cc.utils.json;
+import cc.serdes.json;
 
 // bash_execution — for AzureCliCredential shell-out.
 import cc.process.bash.bash_execution;

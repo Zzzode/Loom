@@ -61,7 +61,7 @@ target_sources(cc_ui_screens PRIVATE
 # cc.ui.dialogs.* (system / trust_dialog / trust_utils / settings_dialog /
 # cost_threshold_dialog). External deps: cc.config.config,
 # cc.constants.spinner_verbs, cc.session.history, cc.tools.agent_display,
-# cc.types.types, cc.utils.json / terminal_helpers, and FTXUI
+# cc.types.types, cc.serdes.json / terminal_helpers, and FTXUI
 # (component / dom / screen headers). cc_std's `import std;` BMI arrives
 # via the directory-level link_libraries(cc_std). Over-linking is safe
 # (and matches the previous cc_ui.cmake behaviour).

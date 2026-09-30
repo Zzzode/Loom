@@ -15,7 +15,7 @@ export module cc.tools.skill;
 import std;
 import cc.text.parse_int;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::tools::skill {
 

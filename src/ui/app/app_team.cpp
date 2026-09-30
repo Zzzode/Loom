@@ -48,7 +48,7 @@ module;
 
 module cc.ui.app.app;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.fs.atomic_replace;
 import cc.utils.team_helpers;
 import cc.utils.swarm_helpers;

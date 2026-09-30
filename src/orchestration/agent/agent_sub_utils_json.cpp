@@ -8,7 +8,7 @@ module cc.orchestration.agent.utils;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.services.api.client;
 import cc.tools.tool;
 

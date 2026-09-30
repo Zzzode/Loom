@@ -30,7 +30,7 @@
 
 import std;
 import cc.orchestration.tools.lsp;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.services.lsp.types;
 import cc.services.lsp.LSPServerInstance;
 import cc.services.lsp.diagnostic_registry;

@@ -7,7 +7,7 @@ export module cc.services.api.errors;
 import std;
 
 import cc.services.api.models;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::services::api::errors {
 

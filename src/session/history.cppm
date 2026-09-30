@@ -11,7 +11,7 @@ export module cc.session.history;
 import std;
 
 import cc.types.types;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::core {
 

@@ -13,7 +13,7 @@ import cc.hooks.text_input;
 import cc.hooks.typeahead;
 import cc.hooks.virtual_scroll;
 import cc.utils.hooks_execution;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.hooks_registry;
 
 using namespace std::chrono_literals;

@@ -5,7 +5,7 @@ module;
 
 #include <yyjson.h>
 
-module cc.utils.json;
+module cc.serdes.json;
 
 import std;
 

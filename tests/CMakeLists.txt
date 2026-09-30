@@ -353,7 +353,7 @@ target_link_libraries(test_statusline
     PRIVATE
         cc_core
         cc_commands            # cc.commands.statusline
-        cc_utils               # cc.utils.statusline_runner / cc.utils.json
+        cc_utils               # cc.utils.statusline_runner / cc.serdes.json
         GTest::gtest_main
 )
 gtest_discover_tests(test_statusline DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -370,7 +370,7 @@ target_link_libraries(test_bootstrap
         cc_history             # cc.history
         cc_task_types          # cc.task_types
         cc_state               # cc.state.teammate_view_helpers
-        cc_utils               # cc.utils.json
+        cc_utils               # cc.serdes.json
         GTest::gtest_main
 )
 gtest_discover_tests(test_bootstrap DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -384,7 +384,7 @@ target_link_libraries(test_migrations
     PRIVATE
         cc_core
         cc_migrations          # all cc.migrations.* imports
-        cc_utils               # cc.utils.json
+        cc_utils               # cc.serdes.json
         GTest::gtest_main
 )
 gtest_discover_tests(test_migrations DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

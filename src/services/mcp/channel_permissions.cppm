@@ -30,7 +30,7 @@ export module cc.services.mcp.channel_permissions;
 import std;
 
 import cc.services.mcp.types;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::services::mcp {
 

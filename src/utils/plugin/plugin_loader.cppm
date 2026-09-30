@@ -20,7 +20,7 @@ import std;
 
 import cc.utils.plugin_identifier;
 import cc.utils.plugin_versioning;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.process.bash.bash_execution;
 
 export namespace cc::utils::plugin_loader {

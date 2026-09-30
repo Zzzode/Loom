@@ -8,7 +8,7 @@ export module cc.migrations.concrete;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace cc::migrations::concrete {
 

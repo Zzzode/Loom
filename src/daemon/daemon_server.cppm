@@ -25,7 +25,7 @@ import std;
 
 import cc.bridge.api;
 import cc.bridge.work_secret;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::daemon {
 

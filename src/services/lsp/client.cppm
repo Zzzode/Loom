@@ -15,7 +15,7 @@ export module cc.services.lsp.client;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.types.types;
 import cc.process.bash.bash_execution;
 import cc.services.lsp.diagnostic_registry;

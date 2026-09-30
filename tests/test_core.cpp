@@ -12,7 +12,7 @@ import cc.config.feature_flags;
 import cc.constants.constants;
 import cc.coordinator.types;
 import cc.tasks.task_graph;
-import cc.utils.yaml;
+import cc.serdes.yaml;
 import cc.text.parse_int;
 
 TEST(CoreTypes, RoleToStringAndContentVariant) {

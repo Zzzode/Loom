@@ -11,7 +11,7 @@ import std;
 
 import cc.types.types;
 import cc.types.tool_types;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.hooks.tool_permissions;
 import cc.hooks.lifecycle_hooks;
 import cc.utils.hooks_registry;

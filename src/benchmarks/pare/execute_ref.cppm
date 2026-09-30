@@ -14,7 +14,7 @@ import std;
 import cc.benchmarks.pare.schema;
 import cc.benchmarks.pare.evaluator;
 import cc.benchmarks.pare.metrics;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.process.bash.bash_execution;
 
 export namespace cc::benchmarks::pare {

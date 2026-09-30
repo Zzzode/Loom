@@ -19,7 +19,7 @@ export module cc.task_types;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::tasks {
 

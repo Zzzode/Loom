@@ -108,6 +108,7 @@ TARGET_RANK = {
     "cc.net": 2,
     "cc.parsing": 2, "cc.platform": 2, "cc.process": 2, "cc.prompt": 2,
     "cc.scm": 2, "cc.security": 2,
+    "cc.serdes": 2,
     "cc.text": 2,
     "cc.vim": 3,
     "cc.hooks": 4,

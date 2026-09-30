@@ -10,7 +10,7 @@ import std;
 
 import cc.services.lsp.LSPServerManager;
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::tools {
 

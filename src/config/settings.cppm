@@ -7,7 +7,7 @@ module;
 /// Supplements existing config.cppm with settings-specific logic.
 export module cc.config.settings;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.constants.paths;
 
 import std;

@@ -35,8 +35,8 @@ export module cc.skills.load_skills_dir;
 
 import std;
 
-import cc.utils.yaml;
-import cc.utils.frontmatter_parser;
+import cc.serdes.yaml;
+import cc.serdes.frontmatter_parser;
 import cc.scm.git.gitignore;
 import cc.parsing.cli.argument_substitution;
 import cc.model.effort;

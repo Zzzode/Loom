@@ -12,7 +12,7 @@ import std;
 
 import cc.tools.tool;
 import cc.tools.feature_flags;
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace cc::tools::detail {
 

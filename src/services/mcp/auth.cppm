@@ -10,7 +10,7 @@ export module cc.services.mcp.auth;
 import std;
 
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.services.oauth.auth_code_listener;
 import cc.services.oauth.crypto;
 import cc.services.mcp.types;

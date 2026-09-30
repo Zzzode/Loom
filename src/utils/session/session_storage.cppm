@@ -10,7 +10,7 @@ export module cc.utils.session_storage;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.error;
 import cc.crypto.crypto;
 

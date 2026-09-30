@@ -11,7 +11,7 @@ import std;
 
 import cc.types.tool_types;
 import cc.tools.tool;  // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
-import cc.utils.json;
+import cc.serdes.json;
 import cc.tools.team;
 import cc.tools.send_message;
 import cc.tools.agent_runtime;

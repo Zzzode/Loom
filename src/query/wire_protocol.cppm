@@ -30,7 +30,7 @@ import std;
 
 import cc.types.types;
 import cc.tools.tool;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::query::wire {
 

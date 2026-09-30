@@ -13,7 +13,7 @@ export module cc.bootstrap.interactive;
 import std;
 
 import cc.hooks.ide_at_mentioned;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::bootstrap::interactive {
 

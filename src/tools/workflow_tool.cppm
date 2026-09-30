@@ -8,7 +8,7 @@ export module cc.tools.workflow;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.process.bash.bash_execution;
 
 export namespace cc::tools {

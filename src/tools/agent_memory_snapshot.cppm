@@ -17,7 +17,7 @@ export module cc.tools.agent_memory_snapshot;
 import std;
 
 import cc.tools.agent_memory;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::tools::agent_memory_snapshot {
 

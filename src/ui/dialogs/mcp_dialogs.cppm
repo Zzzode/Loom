@@ -230,7 +230,7 @@ struct ElicitationResult {
 struct ElicitationPayload {
     /// Optional JSON schema (opaque — renderer only checks has_value to
     /// decide FORM vs stub mode).  Consumers that need to parse it can
-    /// use cc.utils.json on the serialized string externally.
+    /// use cc.serdes.json on the serialized string externally.
     struct SchemaOpaque { std::string raw_json; };
     std::optional<SchemaOpaque> schema;
 

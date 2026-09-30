@@ -9,7 +9,7 @@ export module cc.utils.hooks_registry;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.process.async;
 
 export namespace cc::utils::hooks_registry {

@@ -32,7 +32,7 @@ import std;
 import cc.crypto.crypto;
 import cc.platform.env.env;
 import cc.net.http.http_encoding;
-import cc.utils.json;
+import cc.serdes.json;
 
 import cc.services.auth.sigv4;
 import cc.services.auth.gcp_adc;

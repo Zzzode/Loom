@@ -6,7 +6,7 @@ export module cc.services.api.streaming;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.error;
 import cc.services.api.errors;
 

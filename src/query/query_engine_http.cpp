@@ -19,7 +19,7 @@ import std;
 
 import cc.types.types;
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace cc::core {
 

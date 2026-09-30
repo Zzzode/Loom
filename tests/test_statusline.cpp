@@ -9,7 +9,7 @@
 import std;
 import cc.commands.statusline;
 import cc.utils.statusline_runner;
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace {
 

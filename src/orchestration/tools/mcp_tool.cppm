@@ -16,7 +16,7 @@ import cc.services.mcp.config;
 import cc.services.mcp.connection_manager;
 import cc.services.mcp.auth;
 import cc.services.mcp.types;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.types.tool_types;
 import cc.tools.mcp_classify;  // migrated: integrate collapse decision
 

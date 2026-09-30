@@ -11,7 +11,7 @@ module cc.tools.agent_runtime;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace cc::tools::agent_runtime {
 

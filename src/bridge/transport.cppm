@@ -16,7 +16,7 @@ export module cc.bridge.transport;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.net.http.http;
 
 

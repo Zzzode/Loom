@@ -6,7 +6,7 @@ export module cc.orchestration.agent.utils;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.tools.tool;
 import cc.tools.agent_runtime;
 import cc.tools.agent_types;

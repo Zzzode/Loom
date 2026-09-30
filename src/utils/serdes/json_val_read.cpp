@@ -1,4 +1,4 @@
-// Implementation unit for cc.utils.json — JsonVal read-only accessors
+// Implementation unit for cc.serdes.json — JsonVal read-only accessors
 // (RFC 0001 Phase C batch 10). The textual <yyjson.h> lives here, not in the
 // module interface.
 module;
@@ -7,7 +7,7 @@ module;
 
 #include <yyjson.h>
 
-module cc.utils.json;
+module cc.serdes.json;
 
 import std;
 

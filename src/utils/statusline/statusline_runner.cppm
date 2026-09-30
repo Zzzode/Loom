@@ -32,7 +32,7 @@ export module cc.utils.statusline_runner;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.hooks_execution;
 
 export namespace cc::utils::statusline {

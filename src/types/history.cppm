@@ -17,7 +17,7 @@ export module cc.history;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::history {
 

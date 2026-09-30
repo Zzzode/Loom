@@ -23,7 +23,7 @@ import std;
 import cc.migrations.concrete;
 import cc.migrations.migration_runner;
 import cc.migrations.schema_versions;
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace fs = std::filesystem;
 namespace concrete = cc::migrations::concrete;

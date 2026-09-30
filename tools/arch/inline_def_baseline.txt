@@ -37,7 +37,7 @@ cc.tools.path_validation 24
 cc.ui.screens.doctor_screen 24
 cc.query.query_engine 23 c1 c2-done
 cc.ui.messages.messages_list 22 c1 c2-done
-cc.utils.json 22 c2-done
+cc.serdes.json 22 c2-done
 cc.utils.swarm_backends 22 c2-done
 cc.orchestration.agent 19
 cc.tools.agent_runtime 18 c1 c2-done

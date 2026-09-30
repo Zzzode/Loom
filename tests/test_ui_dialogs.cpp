@@ -31,7 +31,7 @@ import cc.ui.foundation.theme_provider;
 import cc.ui.foundation.design_tokens;
 import cc.constants.constants;
 import cc.config.config;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.ui.messages.messages;
 import cc.ui.messages.message_pipeline;
 import cc.ui.widgets.components;

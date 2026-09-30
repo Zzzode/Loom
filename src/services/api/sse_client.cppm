@@ -1,5 +1,5 @@
 // Anthropic SSE Streaming Client (Phase 3-E)
-// Lightweight, dependency-minimal SSE client built on libcurl + cc.utils.json.
+// Lightweight, dependency-minimal SSE client built on libcurl + cc.serdes.json.
 // - text-only messages (Phase 3)
 // - dry-run gate when api_key is empty (no network)
 // - abort propagation via should_abort callback
@@ -14,7 +14,7 @@ export module cc.services.api.sse;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 // Note: this module intentionally avoids importing cc.services.api.* so it can
 // be used as an independent SSE primitive.  The full-featured AnthropicClient
@@ -328,7 +328,7 @@ public:
 
 private:
     // -----------------------------------------------------------------
-    // Body builder using cc.utils.json (RAII mutable doc) for zero-copy headers
+    // Body builder using cc.serdes.json (RAII mutable doc) for zero-copy headers
     // -----------------------------------------------------------------
     [[nodiscard]] std::string BuildMessagesBody(
         std::string_view system_prompt,

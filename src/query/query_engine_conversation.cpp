@@ -11,7 +11,7 @@ import std;
 
 import cc.types.types;
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 // ToolRegistry (used by the memory-extraction thread) arrives through the
 // primary interface's retained `import cc.tools.tool` — visible to every
 // impl unit of this module; no direct import needed here.

@@ -18,7 +18,7 @@ import std;
 import cc.types.types;
 import cc.tools.tool;
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.query.wire_protocol;
 import cc.hooks.tool_permissions;
 import cc.hooks.lifecycle_hooks;

@@ -27,7 +27,7 @@ export module cc.services.lsp.diagnostic_registry;
 import std;
 
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::services::lsp {
 

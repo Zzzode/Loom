@@ -14,7 +14,7 @@ import cc.services.mcp.headers_helper;
 import cc.services.mcp.auth;
 import cc.services.mcp.at_mention_handler;
 import cc.services.mcp.channel_notification;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::services::mcp {
 

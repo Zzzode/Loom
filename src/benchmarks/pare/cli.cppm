@@ -11,7 +11,7 @@ import cc.benchmarks.pare.schema;
 import cc.benchmarks.pare.run;
 import cc.benchmarks.pare.case_loader;
 import cc.benchmarks.pare.workspace;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::benchmarks::pare {
 

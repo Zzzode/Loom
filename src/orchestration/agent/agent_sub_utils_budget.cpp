@@ -9,7 +9,7 @@ module cc.orchestration.agent.utils;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 // Genuinely used: tool_result_already_replaced and
 // build_agent_tool_result_replacement reference cc::utils::PERSISTED_OUTPUT_TAG
 // / PERSISTED_OUTPUT_CLOSING_TAG (defined in tool_helpers.cppm); graph_check

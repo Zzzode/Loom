@@ -16,7 +16,7 @@ import std;
 import cc.types.types;
 import cc.process.async;
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.fs.file;
 
 export namespace cc::services::extract_memories {

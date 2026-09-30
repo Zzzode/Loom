@@ -17,7 +17,7 @@ export module cc.services.ide_integration;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.process.async;
 import cc.services.mcp.client;
 import cc.services.mcp.types;

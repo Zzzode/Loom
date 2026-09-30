@@ -42,7 +42,7 @@ export module cc.tools.repl;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::tools::repl {
 

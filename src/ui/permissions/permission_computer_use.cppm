@@ -10,7 +10,7 @@ export module cc.ui.permissions.permission_computer_use;
 import std;
 
 import cc.types.types;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::ui::permissions {
 

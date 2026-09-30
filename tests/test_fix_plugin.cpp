@@ -15,7 +15,7 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.plugin_marketplace;
 import cc.utils.plugin_validation;
 

@@ -18,7 +18,7 @@ export module cc.tools.runtime_team_shared;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.tools.agent_worktree;       // cleanup_agent_worktree
 import cc.tools.agent_runtime;        // NativeAgentRecord / native_agent_store / runtime_state_dir
 import cc.tools.bash;                 // stop_background_tasks_for_agent

@@ -18,7 +18,7 @@ export module cc.config.config;
 import std;
 
 import cc.types.types;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.text.parse_int;
 import cc.constants.paths;
 

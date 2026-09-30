@@ -10,7 +10,7 @@ module cc.tools.runtime_registry;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.text.parse_int;
 import cc.tools.notebook;
 import cc.tools.web_browser;
@@ -20,7 +20,7 @@ namespace cc::tools::detail {
 namespace fs = std::filesystem;
 
 // Ad-hoc JSON field accessors over a raw JSON string. These now delegate to
-// cc.utils.json (parse once, then typed access) instead of hand-written byte
+// cc.serdes.json (parse once, then typed access) instead of hand-written byte
 // scanning — the scanner was obfuscation-prone (it matched the first "\"key\""
 // substring anywhere, including inside string values) and is eliminated as
 // part of the JSON-consolidation work (audit §13 #3). Signatures/semantics are

@@ -5,7 +5,7 @@ module;
 #include <climits>
 #include <cstddef>
 
-export module cc.utils.yaml;
+export module cc.serdes.yaml;
 
 import std;
 

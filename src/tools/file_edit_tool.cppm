@@ -29,7 +29,7 @@ import cc.tools.file_edit_types;
 import cc.tools.file_edit_prompt;
 import cc.fs.file;
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.fs.edit.file_edit;
 import cc.fs.file_read_cache;
 import cc.text.string_utils;

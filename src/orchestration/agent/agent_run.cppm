@@ -13,7 +13,7 @@ import std;
 import cc.utils.error;
 import cc.scm.git.git;
 import cc.tools.tool;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.tools.agent_runtime;
 import cc.tools.agent_constants;
 import cc.tools.agent_memory;

@@ -9,7 +9,7 @@ import std;
 import cc.fs.file;
 import cc.utils.error;
 import cc.tools.tool;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::tools::grep {
 

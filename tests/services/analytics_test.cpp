@@ -5,7 +5,7 @@
 
 import std;
 import cc.services.analytics;
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace fs = std::filesystem;
 

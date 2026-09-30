@@ -20,7 +20,7 @@ export module cc.bridge.bridge_messaging;
 import std;
 
 import cc.bridge.messages;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::bridge {
 

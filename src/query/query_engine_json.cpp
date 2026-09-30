@@ -1,6 +1,6 @@
 // Implementation unit for cc.query.query_engine — Message/ContentBlock to
 // request-JSON serialization (append_message_to_json / content_to_json).
-// cc.utils.json also stays imported by the module interface because the
+// cc.serdes.json also stays imported by the module interface because the
 // surviving declarations of these members name JsonMutVal/JsonMutDoc.
 module;
 
@@ -9,7 +9,7 @@ module cc.query.query_engine;
 import std;
 
 import cc.types.types;
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace cc::core {
 

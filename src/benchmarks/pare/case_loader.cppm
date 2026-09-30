@@ -7,7 +7,7 @@ export module cc.benchmarks.pare.case_loader;
 import std;
 
 import cc.benchmarks.pare.schema;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.crypto.crypto;
 
 export namespace cc::benchmarks::pare {

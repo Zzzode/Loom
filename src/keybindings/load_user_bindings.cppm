@@ -14,7 +14,7 @@ import std;
 
 import cc.keybindings.schema;
 import cc.keybindings.defaults;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::keybindings {
 

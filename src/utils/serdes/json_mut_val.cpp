@@ -1,4 +1,4 @@
-// Implementation unit for cc.utils.json — JsonMutVal accessors and mutators
+// Implementation unit for cc.serdes.json — JsonMutVal accessors and mutators
 // (RFC 0001 Phase C batch 10). The textual <yyjson.h> lives here, not in the
 // module interface.
 module;
@@ -8,7 +8,7 @@ module;
 
 #include <yyjson.h>
 
-module cc.utils.json;
+module cc.serdes.json;
 
 import std;
 

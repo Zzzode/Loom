@@ -9,7 +9,7 @@ export module cc.benchmarks.pare.metrics;
 import std;
 
 import cc.benchmarks.pare.schema;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::benchmarks::pare {
 

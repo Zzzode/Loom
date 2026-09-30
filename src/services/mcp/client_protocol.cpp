@@ -1,6 +1,6 @@
 // Implementation unit for cc.services.mcp.client — McpClient connection/
 // protocol lifecycle and JSON-RPC machinery. This unit (together with
-// client_requests.cpp) is the only one that imports cc.utils.json, so the
+// client_requests.cpp) is the only one that imports cc.serdes.json, so the
 // textual <yyjson.h> closure leaves the interface BMI.
 module;
 
@@ -11,7 +11,7 @@ module cc.services.mcp.client;
 import std;
 
 import cc.services.mcp.types;
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace cc::services::mcp {
 
@@ -20,7 +20,7 @@ using namespace cc::utils::json;
 namespace {
 
 // Demoted from private McpClient members: naming JsonVal in a member
-// declaration pinned cc.utils.json in the producer BMI. They are pure
+// declaration pinned cc.serdes.json in the producer BMI. They are pure
 // functions of their argument (the recursive one additionally takes the
 // client name previously read from config_).
 [[nodiscard]] std::optional<RequestId> parse_request_id(JsonVal id_node) {

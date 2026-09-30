@@ -20,7 +20,7 @@ export module cc.daemon.worker_registry;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::daemon {
 

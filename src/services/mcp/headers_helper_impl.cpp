@@ -12,7 +12,7 @@ module cc.services.mcp.headers_helper;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace cc::services::mcp {
 

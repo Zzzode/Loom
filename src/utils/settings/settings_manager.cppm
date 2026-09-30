@@ -10,7 +10,7 @@ export module cc.utils.settings_manager;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.settings_merge;
 import cc.utils.settings_paths;
 import cc.utils.settings_sources;

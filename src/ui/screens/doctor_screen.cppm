@@ -35,7 +35,7 @@ export module cc.ui.screens.doctor_screen;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 // Design-system tokens (shared with other screens)
 // Palette matches Pane / design-system/Pane.tsx + Doctor severity colors.

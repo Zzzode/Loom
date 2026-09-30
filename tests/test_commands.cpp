@@ -26,7 +26,7 @@ import cc.commands.plugin_cmd;
 import cc.commands.plugin_ui_data;
 import cc.commands.plugin_parse_args;
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.commands.terminal_setup;
 import cc.platform.hyperlink;
 import cc.services.mcp.xaa_idp_login;

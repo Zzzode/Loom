@@ -21,7 +21,7 @@ struct yyjson_doc;
 struct yyjson_mut_val;
 struct yyjson_mut_doc;
 
-export module cc.utils.json;
+export module cc.serdes.json;
 
 import std;
 

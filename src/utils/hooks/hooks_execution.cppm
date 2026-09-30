@@ -25,7 +25,7 @@ export module cc.utils.hooks_execution;
 import std;
 import cc.text.parse_int;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.process.async;
 import cc.utils.hooks_registry;
 import cc.net.http.ssrf_guard;

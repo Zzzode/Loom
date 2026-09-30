@@ -17,7 +17,7 @@ import std;
 export import cc.config.mcp_types;
 
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::services::mcp {
 

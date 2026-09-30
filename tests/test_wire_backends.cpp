@@ -20,7 +20,7 @@ import std;
 import cc.query.wire_protocol;
 import cc.query.wire_openai;
 import cc.query.wire_anthropic;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.types.types;
 import cc.tools.tool;
 

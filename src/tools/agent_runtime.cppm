@@ -6,7 +6,7 @@ export module cc.tools.agent_runtime;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 // cc.utils.team_helpers is no longer named by any declaration in this
 // interface (its only caller, has_teammate_identity, moved to
 // agent_runtime_builtin_impl.cpp), but removing this import makes
@@ -19,7 +19,7 @@ import cc.utils.json;
 // Empirically verified by removing and rebuilding.
 // arch-check: keep-import
 import cc.utils.team_helpers;
-import cc.utils.yaml;
+import cc.serdes.yaml;
 
 export namespace cc::tools::agent_runtime {
 

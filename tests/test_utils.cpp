@@ -10,7 +10,7 @@ import std;
 import cc.text.string;
 import cc.text.string_utils;
 import cc.containers.array_utils;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.error;
 import cc.containers.circular_buffer;
 import cc.model.token_budget;
@@ -2485,7 +2485,7 @@ TEST(TerminalIO, GenerateCSIMultipleParams) {
     EXPECT_EQ(seq, std::string("\033[5;10H"));
 }
 
-// ─── cc.utils.json parser coverage (guards the parse/parse_file/to_string/
+// ─── cc.serdes.json parser coverage (guards the parse/parse_file/to_string/
 // chained-get surface used across services) ──────────────────────────────────
 TEST(JsonCCUtils, ParsesPrimitivesAndCollections) {
     auto doc_null = cc::utils::json::parse("null");

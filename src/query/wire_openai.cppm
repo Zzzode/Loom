@@ -51,7 +51,7 @@ import std;
 
 import cc.types.types;
 import cc.tools.tool;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.query.wire_protocol;
 
 export namespace cc::query::wire {

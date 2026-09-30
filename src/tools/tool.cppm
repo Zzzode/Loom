@@ -12,7 +12,7 @@ import std;
 
 export import cc.types.types;
 export import cc.types.tool_types;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::core {
 
@@ -45,7 +45,7 @@ enum class ToolPermission : std::uint8_t {
 
 // ToolInput / ToolOutputContent / ToolResult live in the rank-1 leaf
 // cc.types.tool_types (re-exported above). has_field stays here: parsing
-// belongs with cc.utils.json, which the leaf DTO module must not import.
+// belongs with cc.serdes.json, which the leaf DTO module must not import.
 
 /// Check if a top-level key exists in the JSON input object
 [[nodiscard]] inline bool has_field(const ToolInput& input, std::string_view key) noexcept {

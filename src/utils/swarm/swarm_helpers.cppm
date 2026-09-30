@@ -15,7 +15,7 @@ import std;
 
 import cc.utils.swarm_backends;
 import cc.utils.team_helpers;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.fs.atomic_replace;
 
 export namespace cc::utils::swarm_helpers {

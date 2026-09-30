@@ -8,7 +8,7 @@ export module cc.services.lsp.LSPServerManager;
 import std;
 
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.services.lsp.types;
 import cc.services.lsp.LSPServerInstance;
 import cc.services.lsp.diagnostic_registry;

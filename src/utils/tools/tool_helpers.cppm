@@ -6,7 +6,7 @@ export module cc.tools.support.tool_helpers;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::utils {
 

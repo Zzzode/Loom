@@ -16,7 +16,7 @@ export module cc.state.teammate_view_helpers;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.task_types;
 
 export namespace cc::state::teammate_view {

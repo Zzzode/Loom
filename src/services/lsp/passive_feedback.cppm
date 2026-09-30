@@ -30,7 +30,7 @@ export module cc.services.lsp.passive_feedback;
 import std;
 
 import cc.utils.error;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.services.lsp.diagnostic_registry;
 import cc.services.lsp.LSPServerManager;
 

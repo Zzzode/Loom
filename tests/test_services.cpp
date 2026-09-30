@@ -70,7 +70,7 @@ import cc.tools.tool;
 import cc.types.types;
 import cc.utils.error;
 import cc.services.ide_integration;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.team_helpers;
 import cc.fs.atomic_replace;
 

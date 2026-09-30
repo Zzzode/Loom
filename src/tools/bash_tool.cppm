@@ -22,7 +22,7 @@ import cc.utils.error;
 import cc.process.async;
 import cc.tools.tool;
 import cc.tools.agent_runtime;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.process.shell.shell_providers;
 import cc.tools.sed_validation;
 // migrated (Agent 8): result formatting + exit-code semantics

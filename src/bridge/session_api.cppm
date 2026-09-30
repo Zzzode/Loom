@@ -11,7 +11,7 @@ import std;
 
 import cc.types.types;
 import cc.net.http.http;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::bridge {
 

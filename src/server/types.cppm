@@ -22,7 +22,7 @@ export module cc.server.types;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::server {
 
@@ -261,7 +261,7 @@ struct DirectQueryStreamChunk {
 // ─────────────────────────────────────────────────────────────────────────────
 // Ser/de helpers
 //
-// These use the yyjson-backed cc.utils.json module.  For each type T we emit
+// These use the yyjson-backed cc.serdes.json module.  For each type T we emit
 //   std::string        T_to_json(const T&);
 //   std::expected<T, std::string> T_from_json(std::string_view);
 // plus a free-function to_json / from_json overload inside the cc::server

@@ -18,7 +18,7 @@ export module cc.state.persistence;
 import std;
 
 import cc.state.app_state;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.utils.error;
 
 export namespace cc::state::persistence {

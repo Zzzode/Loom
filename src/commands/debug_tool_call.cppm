@@ -2,7 +2,7 @@ export module cc.commands.debug_tool_call;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::commands::debug_tool_call {
 struct CommandResponse { bool ok{true}; std::string message; };

@@ -37,7 +37,7 @@ export module cc.services.mcp.stdio;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::services::mcp::stdio {
 
@@ -404,7 +404,7 @@ inline void StdioTransport::ReaderLoop(const StdioServerSpec& /*spec*/) {
         if (line.front() == ':') return;   // SSE-style comment lines
 
         JsonRpcMessage msg;
-        // Parse via the canonical cc.utils.json wrapper (RAII; no manual free).
+        // Parse via the canonical cc.serdes.json wrapper (RAII; no manual free).
         auto parsed = json::parse(line);
         if (!parsed) {
             msg.is_valid = false;

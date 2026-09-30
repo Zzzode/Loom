@@ -13,7 +13,7 @@ module cc.query.query_engine;
 import std;
 
 import cc.types.types;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.security.tool_deny_rules;
 import cc.platform.env.env_utils;
 import cc.query.wire_protocol;

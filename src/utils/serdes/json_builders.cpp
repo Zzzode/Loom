@@ -1,8 +1,8 @@
-// Implementation unit for cc.utils.json — JsonObject / JsonArray / JsonBuilder
+// Implementation unit for cc.serdes.json — JsonObject / JsonArray / JsonBuilder
 // and the free object()/array() factories (RFC 0001 Phase C batch 10). These
 // compose only the JsonMutDoc / JsonMutVal wrappers and make no yyjson calls,
 // so this unit has an empty global module fragment.
-module cc.utils.json;
+module cc.serdes.json;
 
 import std;
 

@@ -12,7 +12,7 @@ import cc.benchmarks.pare.case_loader;
 import cc.benchmarks.pare.execute_ref;
 import cc.benchmarks.pare.metrics;
 import cc.benchmarks.pare.workspace;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.fs.file;
 
 export namespace cc::benchmarks::pare {

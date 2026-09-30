@@ -14,7 +14,7 @@ import cc.types.types;
 import cc.bridge.messages;
 import cc.bridge.config;
 import cc.net.http.http;
-import cc.utils.json;
+import cc.serdes.json;
 
 export namespace cc::bridge {
 

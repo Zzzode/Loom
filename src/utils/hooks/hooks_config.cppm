@@ -10,7 +10,7 @@ export module cc.utils.hooks_config;
 
 import std;
 
-import cc.utils.json;
+import cc.serdes.json;
 import cc.process.async;
 import cc.utils.hooks_registry;
 

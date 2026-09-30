@@ -15,7 +15,7 @@ import cc.skills.bundled;
 import cc.tools.agent_runtime;
 import cc.orchestration.tools.mcp;
 import cc.ui.prompt.fuzzy_rank_nucleo;
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace cc::ui::autocomplete_sources {
 

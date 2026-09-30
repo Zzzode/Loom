@@ -8,7 +8,7 @@ module cc.services.mcp.client;
 import std;
 
 import cc.services.mcp.types;
-import cc.utils.json;
+import cc.serdes.json;
 
 namespace cc::services::mcp {
 

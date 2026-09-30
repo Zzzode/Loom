@@ -37,7 +37,7 @@ import cc.tools.agent_runtime;       // NativeAgentRecord / native_agent_store
 import cc.tools.send_message;        // SendMessageTool / MessagePriority / DeliveryStatus
 import cc.tools.team;                // TeamMember / global_team_store
 import cc.tools.runtime_shared_utils;
-import cc.utils.json;
+import cc.serdes.json;
 import cc.net.http.http;
 import cc.crypto.uuid_utils;
 import cc.utils.team_helpers;

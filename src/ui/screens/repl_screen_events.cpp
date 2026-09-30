@@ -17,6 +17,8 @@ module cc.ui.screens.repl_screen;
 
 import std;
 
+import cc.ui.screens.repl_state;
+import cc.ui.screens.task_view_store;
 import cc.ui.dialogs.cost_threshold_dialog;
 import cc.ui.foundation.design_figures;
 import cc.ui.foundation.theme_provider;

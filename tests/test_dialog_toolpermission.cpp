@@ -32,6 +32,8 @@ import cc.ui.dialogs.system;
 import cc.ui.dialogs.default_renderers;
 import cc.ui.dialogs.triggers;
 import cc.ui.screens.repl_screen;
+import cc.ui.screens.repl_state;
+import cc.ui.screens.permission_store;
 import cc.ui.permissions.single_prompt;
 import cc.ui.permissions.permission_computer_use;
 import cc.ui.permissions.permission_file_edit;

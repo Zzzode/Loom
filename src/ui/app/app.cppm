@@ -20,6 +20,7 @@ import std;
 import cc.types.types;
 import cc.ui.visual.markdown;
 import cc.ui.screens.repl_state;
+import cc.ui.screens.messages_store;   // MessageDisplayEntry (project_message / local_command_messages_)
 import cc.ui.prompt.autocomplete_sources;
 // P0-2: 7-stage message pipeline utilities (dedup / tag filter / tool augment).
 import cc.ui.messages.message_pipeline;
@@ -626,109 +627,59 @@ public:
 
     [[nodiscard]] std::function<bool(std::string_view, std::string_view)> get_permission_callback();
 
-    [[nodiscard]] bool is_query_running_for_testing() const noexcept {        return query_running_.load();
-    }
+    // ── Test seams ──────────────────────────────────────────────────────
+    // Bodies in app_testing_seams.cpp (RFC 0002 F3 Finalize) — the inline
+    // ratchet (inline_def_check.py) re-freezes at the single composition
+    // body (set_screen). Private access holds within member functions.
+    [[nodiscard]] bool is_query_running_for_testing() const noexcept;
 
     // Drive a prompt submission through the full HandleSubmit path (slash /
     // bash / LLM routing) exactly as the Enter key would.
-    void submit_for_testing(const std::string& text) {
-        this->HandleSubmit(text);
-    }
+    void submit_for_testing(const std::string& text);
 
     // True while a local '!' bash command worker is still running.
-    [[nodiscard]] bool is_local_bash_running_for_testing() const noexcept {
-        return bash_running_.load();
-    }
+    [[nodiscard]] bool is_local_bash_running_for_testing() const noexcept;
 
     // Block until the local '!' bash worker finishes, then drain its output
     // into the transcript (mirrors what the render loop does each frame).
-    void wait_for_local_bash_for_testing() {
-        if (bash_thread_.joinable()) bash_thread_.join();
-        this->ConsumePendingResult();
-    }
+    void wait_for_local_bash_for_testing();
 
-    [[nodiscard]] bool is_loading_for_testing() const noexcept {
-        return screen_state_->task_view_store.spinner_mode != repl::SpinnerMode::Hidden;
-    }
+    [[nodiscard]] bool is_loading_for_testing() const noexcept;
 
-    [[nodiscard]] std::uint64_t ui_animation_tick_count_for_testing() const noexcept {
-        return ui_animation_tick_count_.load(std::memory_order_relaxed);
-    }
+    [[nodiscard]] std::uint64_t ui_animation_tick_count_for_testing() const noexcept;
 
-    [[nodiscard]] std::string status_message_for_testing() const {
-        return screen_state_->task_view_store.spinner_tip.value_or(std::string{});
-    }
+    [[nodiscard]] std::string status_message_for_testing() const;
 
-    [[nodiscard]] bool status_line_enabled_for_testing() const noexcept {
-        return screen_state_->status_line_enabled;
-    }
+    [[nodiscard]] bool status_line_enabled_for_testing() const noexcept;
 
-    [[nodiscard]] std::string status_line_command_for_testing() const {
-        return screen_state_->status_line_command;
-    }
+    [[nodiscard]] std::string status_line_command_for_testing() const;
 
-    [[nodiscard]] int status_line_padding_for_testing() const noexcept {
-        return screen_state_->status_line_padding;
-    }
+    [[nodiscard]] int status_line_padding_for_testing() const noexcept;
 
-    [[nodiscard]] std::string status_bar_model_for_testing() const {
-        return screen_state_->chrome_store.status_bar.model_name;
-    }
+    [[nodiscard]] std::string status_bar_model_for_testing() const;
 
-    [[nodiscard]] std::size_t autocomplete_suggestion_count_for_testing() const noexcept {
-        return screen_state_->autocomplete_suggestions.size();
-    }
+    [[nodiscard]] std::size_t autocomplete_suggestion_count_for_testing() const noexcept;
 
-    [[nodiscard]] std::vector<std::string> autocomplete_suggestions_for_testing() const {
-        std::vector<std::string> out;
-        out.reserve(screen_state_->autocomplete_suggestions.size());
-        for (const auto& suggestion : screen_state_->autocomplete_suggestions) {
-            out.push_back(suggestion.display_text);
-        }
-        return out;
-    }
+    [[nodiscard]] std::vector<std::string> autocomplete_suggestions_for_testing() const;
 
-    [[nodiscard]] int autocomplete_index_for_testing() const noexcept {
-        return screen_state_->autocomplete_index;
-    }
+    [[nodiscard]] int autocomplete_index_for_testing() const noexcept;
 
     // Debug/testing: snapshot screen_state_->messages_store.messages as "label:preview" rows
     // to verify transcript ordering (local-command vs user vs assistant).
-    [[nodiscard]] std::vector<std::string> messages_for_testing() const {
-        std::vector<std::string> out;
-        out.reserve(screen_state_->messages_store.messages.size());
-        for (const auto& m : screen_state_->messages_store.messages) {
-            std::string label = m.role;
-            if (m.is_local_command_input) label = "lc-input";
-            else if (m.is_local_command_output) label = "lc-output";
-            else if (m.is_thinking) label = "thinking";
-            std::string pv = m.content_preview.substr(
-                0, std::min<std::size_t>(30, m.content_preview.size()));
-            out.push_back(label + ":" + pv);
-        }
-        return out;
-    }
+    [[nodiscard]] std::vector<std::string> messages_for_testing() const;
 
-    [[nodiscard]] std::string input_text_for_testing() const {
-        return screen_state_->input_text;
-    }
+    [[nodiscard]] std::string input_text_for_testing() const;
 
     /// Number of entries in pasted_contents_ (for testing orphan cleanup).
-    [[nodiscard]] std::size_t pasted_contents_size_for_testing() const noexcept {
-        return pasted_contents_.size();
-    }
+    [[nodiscard]] std::size_t pasted_contents_size_for_testing() const noexcept;
 
     /// Check if a specific paste-id is still in pasted_contents_ (for testing
     /// orphan cleanup after placeholder deletion).
-    [[nodiscard]] bool has_pasted_content_for_testing(int id) const noexcept {
-        return pasted_contents_.contains(id);
-    }
+    [[nodiscard]] bool has_pasted_content_for_testing(int id) const noexcept;
 
     /// Inject a pasted image directly (bypasses clipboard read — for testing
     /// HandleSubmit's referenced-ids filter and empty-text+images guard).
-    void inject_pasted_image_for_testing(int id, ImageBlock ib) {
-        pasted_contents_[id] = std::move(ib);
-    }
+    void inject_pasted_image_for_testing(int id, ImageBlock ib);
 
     /// When true, SpawnPasteWorker injects a tiny fake PNG synchronously into
     /// pending_paste_results_ instead of spawning a detached thread that reads
@@ -736,60 +687,37 @@ public:
     /// submit path without the lifetime hazard of a detached thread outliving
     /// the test's AppAdapter.
     bool no_real_paste_worker_for_testing_ = false;
-    void set_no_real_paste_worker_for_testing(bool v) {
-        no_real_paste_worker_for_testing_ = v;
-    }
+    void set_no_real_paste_worker_for_testing(bool v);
 
     /// Set input_text directly (for testing orphan cleanup and submit guards
     /// without going through the text input component).
-    void set_input_text_for_testing(std::string text) {
-        screen_state_->input_text = std::move(text);
-        screen_state_->input_cursor = screen_state_->input_text.size();
-    }
+    void set_input_text_for_testing(std::string text);
 
     /// Expose HandleSubmit for direct test invocation (the real submit path
     /// goes through the text input component's on_submit callback).
-    void handle_submit_for_testing(std::string text) {
-        this->HandleSubmit(text);
-    }
+    void handle_submit_for_testing(std::string text);
 
     /// Run the orphan-cleanup logic (TS PromptInput.tsx L1185-1200 useEffect)
     /// against the current screen_state_->input_text.  For testing only.
     void trigger_orphan_cleanup_for_testing();
 
-    [[nodiscard]] bool is_agents_view_for_testing() const noexcept {
-        return screen_state_->mode == repl::ReplMode::AgentsView;
-    }
+    [[nodiscard]] bool is_agents_view_for_testing() const noexcept;
 
     [[nodiscard]] bool is_local_jsx_command_for_testing(
-        std::string_view command_name) const noexcept {
-        return screen_state_->active_local_jsx_command &&
-               screen_state_->active_local_jsx_command_name == command_name;
-    }
+        std::string_view command_name) const noexcept;
 
-    [[nodiscard]] int active_agents_selection_position_for_testing() const noexcept {
-        return screen_state_->active_agents_selection_position;
-    }
+    [[nodiscard]] int active_agents_selection_position_for_testing() const noexcept;
 
-    [[nodiscard]] std::size_t agent_card_count_for_testing() const noexcept {
-        return screen_state_->task_view_store.agent_cards.size();
-    }
+    [[nodiscard]] std::size_t agent_card_count_for_testing() const noexcept;
 
-    [[nodiscard]] bool has_pending_dialog_for_testing() const noexcept {
-        return screen_state_->dialog_store.dialog_queue.has_overlay() ||
-               screen_state_->dialog_store.dialog_queue.has_any_bottom() ||
-               screen_state_->dialog_store.dialog_queue.has_modal() ||
-               screen_state_->dialog_store.dialog_queue.has_standalone();
-    }
+    [[nodiscard]] bool has_pending_dialog_for_testing() const noexcept;
 
     // Out-of-line in the :team partition so the live_teammates /
     // dialogs.system closures stay out of this interface.
     void set_live_teammates_for_testing(void* v);
     [[nodiscard]] bool teams_overview_open_for_testing() const;
 
-    [[nodiscard]] int teams_overview_count_for_testing() const {
-        return static_cast<int>(screen_state_->task_view_store.live_teammates.size());
-    }
+    [[nodiscard]] int teams_overview_count_for_testing() const noexcept;
 
     // Enqueue a stage-A permission_request as if the leader inbox poll found
     // it (exercises the ToolPermission dialog + PermissionSync reply path

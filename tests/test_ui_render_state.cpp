@@ -16,6 +16,8 @@
 
 import std;
 import cc.ui.screens.repl_screen;
+import cc.ui.screens.repl_state;
+import cc.ui.screens.messages_store;
 import cc.ui.prompt.prompt_input;
 import cc.ui.prompt.prompt_input_footer;
 import cc.ui.foundation.logo_v2;

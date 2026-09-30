@@ -11,6 +11,8 @@ module cc.ui.screens.repl_screen;
 
 import std;
 
+import cc.ui.screens.repl_state;
+import cc.ui.screens.messages_store;
 import cc.types.types;  // arch-check: keep-import (::cc::core::ImageBlockSource)
 import cc.ui.messages.message_row;
 import cc.ui.messages.message_image;

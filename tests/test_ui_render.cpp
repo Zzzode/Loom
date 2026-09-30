@@ -16,6 +16,8 @@
 
 import std;
 import cc.ui.screens.repl_screen;
+import cc.ui.screens.repl_state;
+import cc.ui.screens.permission_store;
 
 namespace {
 namespace fs = std::filesystem;

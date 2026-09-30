@@ -27,6 +27,7 @@ module;
 module cc.ui.app.app;
 
 import cc.ui.screens.repl_state;
+import cc.ui.screens.task_view_store;
 
 namespace cc::ui {
 

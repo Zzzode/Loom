@@ -13,6 +13,9 @@ module cc.ui.screens.repl_screen;
 
 import std;
 
+import cc.ui.screens.repl_state;
+import cc.ui.screens.task_view_store;
+import cc.ui.screens.chrome_store;
 import cc.constants.spinner_verbs;
 import cc.ui.foundation.design_logo;
 import cc.ui.foundation.logo;

@@ -17,6 +17,8 @@
 import std;
 import cc.ui.app.app;
 import cc.ui.screens.repl_screen;
+import cc.ui.screens.repl_state;
+import cc.ui.screens.messages_store;
 import cc.ui.prompt.prompt_input;
 import cc.ui.foundation.logo_v2;
 import cc.ui.chrome.fullscreen_layout;

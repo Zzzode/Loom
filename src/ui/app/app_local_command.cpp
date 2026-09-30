@@ -30,6 +30,7 @@ module;
 module cc.ui.app.app;
 
 import cc.ui.screens.repl_state;
+import cc.ui.screens.messages_store;
 
 namespace cc::ui {
 

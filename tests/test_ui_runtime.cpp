@@ -17,6 +17,7 @@
 import std;
 import cc.ui.app.app;
 import cc.ui.screens.repl_screen;
+import cc.ui.screens.repl_state;
 import cc.ui.messages.message_image;
 import cc.commands.registry;
 import cc.query.query_engine;

@@ -1,10 +1,19 @@
-// repl_state.cppm — plain-data REPL screen state.
+// repl_state.cppm — plain-data REPL screen state: the thin composition
+// facade that aggregates the RFC 0002 F3 domain stores plus the session-glue
+// fields no single store owns.
 //
 // Split from repl_screen.cppm so importers that only need the state struct
 // (cc.ui.app.app and its impl shards) do not pull the full rendering closure
 // (message/dialog/widget renderers — over a hundred modules) into their BMI.
-// repl_screen.cppm re-exports this module, so every existing importer keeps
-// seeing these names unchanged.
+//
+// RFC 0002 F3 Finalize: the per-store re-export shims are deleted. The seven
+// domain stores (MessagesStore, PromptStore, TaskViewStore, PermissionStore,
+// DialogStore, McpStatusStore, ChromeStore) live in their own
+// cc.ui.screens.*_store modules; this facade imports them (plain, not
+// re-exported) because ReplScreenState holds each by value. Call sites that
+// name a store type import that store module directly — the store-placement
+// lint (graph_check.py --store-lint) enforces that only the app composition
+// root and screens-area modules import a store.
 module;
 
 #include <cstdint>
@@ -19,36 +28,13 @@ import cc.types.types;
 import cc.ui.foundation.ui_types;                 // cc::ui::common::PromptInputMode
 import cc.ui.dialogs.system;                     // DialogQueue / payloads
 import cc.ui.prompt.prompt_input_footer;         // footer::* projection types
-// RFC 0002 F3 shim: re-exports the MessagesStore shard so importers keep
-// seeing MessageDisplayEntry during the per-store migration. Deleted in F3
-// Finalize — importers then import cc.ui.screens.messages_store directly.
-export import cc.ui.screens.messages_store;      // MessagesStore / MessageDisplayEntry
-// RFC 0002 F3 shim: re-exports the PromptStore shard so importers keep
-// seeing StashedPrompt during the per-store migration. Deleted in F3
-// Finalize — importers then import cc.ui.screens.prompt_store directly.
-export import cc.ui.screens.prompt_store;        // PromptStore / StashedPrompt
-// RFC 0002 F3 shim: re-exports the TaskViewStore shard so importers keep
-// seeing SpinnerMode during the per-store migration. Deleted in F3
-// Finalize — importers then import cc.ui.screens.task_view_store directly.
-export import cc.ui.screens.task_view_store;     // TaskViewStore / SpinnerMode
-// RFC 0002 F3 shim: re-exports the PermissionStore shard so importers keep
-// seeing PermissionRequestInfo / PermissionToolKind during the per-store
-// migration. Deleted in F3 Finalize — importers then import
-// cc.ui.screens.permission_store directly.
-export import cc.ui.screens.permission_store;    // PermissionStore / PermissionRequestInfo
-// RFC 0002 F3 shim: re-exports the DialogStore shard so importers keep
-// seeing the dialog component handles / DialogQueue during the per-store
-// migration. Deleted in F3 Finalize — importers then import
-// cc.ui.screens.dialog_store directly.
-export import cc.ui.screens.dialog_store;        // DialogStore / dialog handles
-// RFC 0002 F3 shim: re-exports the McpStatusStore shard so importers keep
-// seeing McpStatusStore during the per-store migration. Deleted in F3
-// Finalize — importers then import cc.ui.screens.mcp_status_store directly.
-export import cc.ui.screens.mcp_status_store;    // McpStatusStore
-// RFC 0002 F3 shim: re-exports the ChromeStore shard so importers keep
-// seeing StatusBarData during the per-store migration. Deleted in F3
-// Finalize — importers then import cc.ui.screens.chrome_store directly.
-export import cc.ui.screens.chrome_store;        // ChromeStore / StatusBarData
+import cc.ui.screens.messages_store;             // MessagesStore / MessageDisplayEntry
+import cc.ui.screens.prompt_store;               // PromptStore / StashedPrompt
+import cc.ui.screens.task_view_store;            // TaskViewStore / SpinnerMode
+import cc.ui.screens.permission_store;           // PermissionStore / PermissionRequestInfo
+import cc.ui.screens.dialog_store;               // DialogStore / dialog handles
+import cc.ui.screens.mcp_status_store;           // McpStatusStore
+import cc.ui.screens.chrome_store;               // ChromeStore / StatusBarData
 import cc.ui.features.agents.agent_cards;        // AgentCardData
 import cc.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
 import cc.ui.visual.markdown;                    // StreamingMarkdown (ptr field)
@@ -115,20 +101,16 @@ using InputMode = cc::ui::common::PromptInputMode;
 // Data structures (lean projections — engine owns full state)
 // =========================================================
 
-/// RFC 0002 F3: StatusBarData (the status-bar projection) moved to
-/// cc.ui.screens.chrome_store (ChromeStore). Visible here through the
-/// re-export shim at the top of this file; the shim is deleted in F3
-/// Finalize.
+/// RFC 0002 F3: StatusBarData (the status-bar projection) lives in
+/// cc.ui.screens.chrome_store (ChromeStore, imported above).
 
 /// Minimal Message projection for orchestration.
-/// RFC 0002 F3: MessageDisplayEntry moved to cc.ui.screens.messages_store
-/// (visible here through the re-export shim above; the shim is deleted in
-/// F3 Finalize).
+/// RFC 0002 F3: MessageDisplayEntry lives in cc.ui.screens.messages_store
+/// (imported above; call sites that name it import that store directly).
 
 /// RFC 0002 F3: PermissionToolKind + PermissionRequestInfo (the permission-
-/// prompt subset, TS ToolUseConfirm) moved to cc.ui.screens.permission_store
-/// (visible here through the re-export shim above; the shim is deleted in
-/// F3 Finalize). The dead nested DialogContext bridge struct (zero type
+/// prompt subset, TS ToolUseConfirm) live in cc.ui.screens.permission_store
+/// (imported above). The dead nested DialogContext bridge struct (zero type
 /// usages anywhere; repl_screen_dialog_queue.cpp notes there are ZERO writes
 /// to it) was deleted rather than moved — project convention prefers
 /// deleting dead code to relocating it.
@@ -139,20 +121,15 @@ using InputMode = cc::ui::common::PromptInputMode;
 struct ReplScreenState {
     ReplMode mode = ReplMode::Normal;
     // RFC 0002 F3: prompt-input state (input mode, stashed prompt,
-    // placeholder cascade inputs, teammate prefix color) sharded into
-    // cc.ui.screens.prompt_store (PromptStore). StashedPrompt stays
-    // visible here through the re-export shim at the top of this file;
-    // the shim is deleted in F3 Finalize.
+    // placeholder cascade inputs, teammate prefix color) lives in
+    // cc.ui.screens.prompt_store (PromptStore).
     PromptStore prompt_store;
     // RFC 0002 F3: task-view state (spinner mode, task notifications,
-    // agent/teammate live state) sharded into cc.ui.screens.task_view_store
-    // (TaskViewStore). SpinnerMode stays visible here through the re-export
-    // shim at the top of this file; the shim is deleted in F3 Finalize.
+    // agent/teammate live state) lives in cc.ui.screens.task_view_store
+    // (TaskViewStore).
     TaskViewStore task_view_store;
-    // RFC 0002 F3: message-list / scroll / transcript-chrome state sharded
-    // into cc.ui.screens.messages_store (MessagesStore). MessageDisplayEntry
-    // stays visible here through the re-export shim at the top of this file;
-    // the shim is deleted in F3 Finalize.
+    // RFC 0002 F3: message-list / scroll / transcript-chrome state lives in
+    // cc.ui.screens.messages_store (MessagesStore).
     MessagesStore messages_store;
     bool active_local_jsx_command = false;
     std::string active_local_jsx_command_name;
@@ -205,10 +182,8 @@ struct ReplScreenState {
     // RFC 0002 F3: chrome / welcome-header / status-bar projection state
     // (app_version, model_display_name, billing_type, git_branch,
     // user_display_name, the feed-content vectors + show_* flags, and the
-    // StatusBarData status_bar projection) sharded into
-    // cc.ui.screens.chrome_store (ChromeStore). StatusBarData stays visible
-    // here through the re-export shim at the top of this file; the shim is
-    // deleted in F3 Finalize.
+    // StatusBarData status_bar projection) lives in
+    // cc.ui.screens.chrome_store (ChromeStore).
     ChromeStore chrome_store;
 
     // ── P1 Footer notifications ──────────────────────────────────────
@@ -295,17 +270,14 @@ struct ReplScreenState {
     // (DrainPendingAtMentionInserts -> ApplyPendingAtMentionInserts).
     // Faithful to TS useIdeAtMentioned.ts -> inputState.insert at cursor.
     // RFC 0002 F3: the staging mutex + queue moved OUT to AppImpl; the
-    // DRAINED queue lives in McpStatusStore (mcp_status_store field below).
-    // McpStatusStore stays visible here through the re-export shim at the
-    // top of this file; the shim is deleted in F3 Finalize.
+    // DRAINED queue lives in McpStatusStore (mcp_status_store field below,
+    // cc.ui.screens.mcp_status_store).
     McpStatusStore mcp_status_store;
     // RFC 0002 F3: the StatusBarData status_bar projection moved to
     // ChromeStore (chrome_store field above).
     // RFC 0002 F3: permission-prompt state (PermissionToolKind + the
-    // ToolUseConfirm subset PermissionRequestInfo) sharded into
-    // cc.ui.screens.permission_store (PermissionStore). PermissionRequestInfo
-    // stays visible here through the re-export shim at the top of this file;
-    // the shim is deleted in F3 Finalize.
+    // ToolUseConfirm subset PermissionRequestInfo) lives in
+    // cc.ui.screens.permission_store (PermissionStore).
     PermissionStore permission_store;
     // Settings-driven UI configuration (mirrors AppState.settings subset
     // that the renderer needs — populated by the engine/app layer).
@@ -362,9 +334,7 @@ struct ReplScreenState {
 
     // RFC 0002 F3: dialog state (overlay dialogs, inline panels, wizard /
     // trust component handles, the M7 dialog queue + renderer registry)
-    // sharded into cc.ui.screens.dialog_store (DialogStore). The component
-    // handles and DialogQueue stay visible here through the re-export shim
-    // at the top of this file; the shim is deleted in F3 Finalize.
+    // lives in cc.ui.screens.dialog_store (DialogStore).
     DialogStore dialog_store;
 };
 

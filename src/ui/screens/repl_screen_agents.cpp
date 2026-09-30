@@ -16,6 +16,7 @@ module cc.ui.screens.repl_screen;
 
 import std;
 
+import cc.ui.screens.repl_state;
 import cc.ui.features.agents.agent_wizard;
 import cc.ui.dialogs.system;
 import cc.ui.features.agents.agent_cards;

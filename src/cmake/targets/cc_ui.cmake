@@ -212,6 +212,11 @@ target_sources(cc_ui PRIVATE
     # in each file and CMakeLists.txt:283-292.
     ui/app/app_animation.cpp
     ui/app/app_local_command.cpp
+    # Module implementation unit for cc.ui.app.app (RFC 0002 F3 Finalize):
+    # the 28 AppAdapter *_for_testing seam bodies, moved out of app.cppm so
+    # the inline-def ratchet re-freezes at the single composition body
+    # (set_screen). Textual-std (LLVM #184957) — see the header comment.
+    ui/app/app_testing_seams.cpp
     ui/dialogs/hooks_dialog_renderer_impl.cpp
     ui/dialogs/plugin_dialog_renderer_impl.cpp
     # Module implementation units for cc.ui.visual.markdown (RFC 0001 Phase C

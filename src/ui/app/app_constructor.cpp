@@ -21,6 +21,7 @@ import std;
 // ── Base imports (only those actually used by constructor) ─────────────
 import cc.ui.prompt.autocomplete_sources;
 import cc.ui.screens.repl_screen;
+import cc.ui.screens.repl_state;
 import cc.utils.session_storage;
 
 // ── Constructor-only imports (moved out of app_autocomplete.cpp) ────────

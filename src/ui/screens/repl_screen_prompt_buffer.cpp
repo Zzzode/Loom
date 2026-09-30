@@ -23,6 +23,8 @@ module;
 
 module cc.ui.screens.repl_screen;
 
+import cc.ui.screens.repl_state;
+import cc.ui.screens.prompt_store;
 import cc.types.types;
 
 namespace cc::ui::repl_screen {

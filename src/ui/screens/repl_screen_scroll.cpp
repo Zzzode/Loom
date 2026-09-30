@@ -21,6 +21,8 @@ module;
 
 module cc.ui.screens.repl_screen;
 
+import cc.ui.screens.repl_state;
+import cc.ui.screens.messages_store;
 import cc.ui.messages.messages_list;
 import cc.ui.messages.virtual_list;
 

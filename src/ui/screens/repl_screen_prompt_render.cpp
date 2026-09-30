@@ -17,6 +17,8 @@ module cc.ui.screens.repl_screen;
 
 import std;
 
+import cc.ui.screens.repl_state;
+import cc.ui.screens.prompt_store;
 import cc.ui.widgets.text_input;
 import cc.ui.foundation.design_figures;
 import cc.ui.foundation.design_tokens;

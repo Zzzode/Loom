@@ -25,6 +25,9 @@ import cc.hooks.lifecycle_hooks;
 
 // ── Base imports (shared with app_autocomplete.cpp) ─────────────────────
 import cc.ui.screens.repl_screen;
+import cc.ui.screens.repl_state;
+import cc.ui.screens.messages_store;
+import cc.ui.screens.task_view_store;
 import cc.utils.session_storage;
 import cc.utils.parse_references;
 import cc.utils.debug;

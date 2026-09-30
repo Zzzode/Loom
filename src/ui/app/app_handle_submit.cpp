@@ -48,6 +48,8 @@ import cc.ui.foundation.declared_cursor;
 import cc.ui.prompt.file_index;
 import cc.ui.prompt.fuzzy_rank_nucleo;
 import cc.ui.screens.repl_screen;
+import cc.ui.screens.repl_state;
+import cc.ui.screens.task_view_store;
 import cc.utils.debug;
 import cc.utils.hyperlink;
 import cc.utils.parse_references;

@@ -17,6 +17,7 @@ import std;
 
 import cc.types.types;
 import cc.ui.screens.repl_screen;
+import cc.ui.screens.messages_store;
 
 namespace cc::ui {
 

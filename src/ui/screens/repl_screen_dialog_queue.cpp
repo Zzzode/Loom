@@ -14,6 +14,8 @@ module cc.ui.screens.repl_screen;
 
 import std;
 
+import cc.ui.screens.repl_state;
+import cc.ui.screens.dialog_store;
 import cc.ui.dialogs.system;
 import cc.ui.chrome.fullscreen_layout;
 

@@ -16,6 +16,8 @@ module cc.ui.screens.repl_screen;
 
 import std;
 
+import cc.ui.screens.repl_state;
+import cc.ui.screens.permission_store;
 import cc.ui.dialogs.settings_dialog;
 import cc.config.config;
 import cc.ui.dialogs.trust_dialog;

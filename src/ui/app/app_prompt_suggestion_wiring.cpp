@@ -28,6 +28,7 @@ import cc.types.types;
 import cc.hooks.lifecycle_hooks;
 import cc.services.prompt_suggestion;
 import cc.ui.screens.repl_screen;
+import cc.ui.screens.repl_state;
 
 namespace cc::ui {
 

@@ -48,7 +48,14 @@ export module cc.ui.screens.repl_screen;
 
 import std;
 
-export import cc.ui.screens.repl_state;
+// RFC 0002 F3 Finalize: repl_state is imported (not re-exported) — call sites
+// that name ReplScreenState / ReplMode / the store types import repl_state or
+// the owning cc.ui.screens.*_store module directly.
+import cc.ui.screens.repl_state;
+// Store types named in this interface's declarations.
+import cc.ui.screens.messages_store;   // MessageDisplayEntry
+import cc.ui.screens.task_view_store;  // SpinnerMode
+import cc.ui.screens.chrome_store;     // StatusBarData
 
 // Core engine types (ImageBlock in the stash signatures; only named
 // globally qualified as ::cc::core::ImageBlock).

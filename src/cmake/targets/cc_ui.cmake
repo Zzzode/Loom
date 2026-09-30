@@ -5,25 +5,12 @@ target_sources(cc_ui
         ui/app/app.cppm
         ui/app/app_impl.cppm
         ui/app/app_dialog_registration.cppm
-        ui/widgets/components.cppm
         ui/features/agents/agent_cards.cppm
         ui/features/agents/agent_shared_widgets.cppm
         ui/features/agents/agent_wizard.cppm
-        ui/widgets/all_components.cppm
-        ui/widgets/custom_select.cppm
-        ui/widgets/dev_bar.cppm
-        ui/widgets/fast_icon.cppm
         ui/features/grove.cppm
         ui/features/plugins/lsp_recommendation_menu.cppm
-        ui/widgets/passes.cppm
         ui/features/plugins/plugin_hint_menu.cppm
-        ui/widgets/pr_badge.cppm
-        ui/widgets/spinner.cppm
-        ui/widgets/stats.cppm
-        ui/widgets/tag_tabs.cppm
-        ui/widgets/text_input.cppm
-        ui/widgets/text_input_widget.cppm
-        ui/widgets/spinner_animations.cppm
         ui/dialogs/dialog_system.cppm
         ui/dialogs/dialog_frame.cppm
         ui/dialogs/dialog_default_renderers.cppm
@@ -175,14 +162,6 @@ target_sources(cc_ui PRIVATE
     ui/messages/messages_list_payload_row.cpp
     ui/messages/messages_list_view.cpp
     ui/messages/messages_list_component.cpp
-    # Module implementation units for cc.ui.widgets.text_input
-    # (RFC 0001 Phase C batch 8): editing/history/paste core, readline
-    # event dispatch + reverse search, vim dispatch/operators, and the
-    # FTXUI renderers + TextInput() factory.
-    ui/widgets/text_input_buffer.cpp
-    ui/widgets/text_input_events.cpp
-    ui/widgets/text_input_vim.cpp
-    ui/widgets/text_input_render.cpp
     # Module implementation units for cc.ui.screens.repl_screen
     # (RFC 0001 Phase C batch 9): message-row projection, unseen-divider /
     # scroll bounds, prompt buffer mutation, welcome/spinner, prompt
@@ -223,6 +202,12 @@ target_link_libraries(cc_ui
         # library; linked PUBLIC so the remaining areas can still import
         # cc.ui.prompt.* during the staged split.
         cc_ui_prompt
+        # RFC 0002 F4: the cc.ui.widgets.* area (reusable FTXUI controls:
+        # spinner, stats, tag tabs, text input, custom select, dev bar,
+        # PR badge, passes, fast icon) now lives in its own library;
+        # linked PUBLIC so the remaining areas can still import
+        # cc.ui.widgets.* during the staged split.
+        cc_ui_widgets
         cc_utils
         cc_types
         cc_query

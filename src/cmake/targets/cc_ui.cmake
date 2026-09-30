@@ -72,16 +72,6 @@ target_sources(cc_ui
         ui/messages/collapse_background_bash.cppm  # P0-2 — collapseBackgroundBashNotifications pass (Messages.tsx:520)
         ui/messages/scroll_keybindings.cppm       # UI22 — ScrollKeybindingHandler (1011 → 752 loc)
         ui/messages/virtual_message_list.cppm     # UI22 — VirtualScroll (1081 → 857 loc)
-        ui/permissions/permission_bash.cppm
-        ui/permissions/permission_computer_use.cppm
-        ui/permissions/permission_file_edit.cppm
-        ui/permissions/permission_file_write.cppm
-        ui/permissions/permission_rules_ui.cppm
-        ui/permissions/permission_shell_helpers.cppm
-        ui/permissions/permissions_components.cppm
-        ui/permissions/permission_scope_editor.cppm
-        ui/permissions/permission_rule_list.cppm        # UI24 — PermissionRuleList
-        ui/permissions/permission_single_prompt.cppm
         ui/features/plugins/plugin_install_flow.cppm
         ui/features/plugins/plugin_manage_panel.cppm
         ui/features/plugins/plugin_marketplace_browse.cppm
@@ -208,6 +198,11 @@ target_link_libraries(cc_ui
         # linked PUBLIC so the remaining areas can still import
         # cc.ui.widgets.* during the staged split.
         cc_ui_widgets
+        # RFC 0002 F4: the cc.ui.permissions.* area (permission prompt
+        # renderers, rule list, scope editor, single-prompt flow) now lives
+        # in its own library; linked PUBLIC so the remaining areas can still
+        # import cc.ui.permissions.* during the staged split.
+        cc_ui_permissions
         cc_utils
         cc_types
         cc_query

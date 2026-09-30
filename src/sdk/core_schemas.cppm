@@ -12,6 +12,9 @@ export module cc.sdk.core_schemas;
 
 import std;
 
+import cc.config.settings;       // SettingsScope (CONVERGE alias)
+import cc.tools.agent_runtime;   // AgentDefinition (CONVERGE alias)
+
 export namespace cc::sdk::core_schemas {
 
 // ============================================================================
@@ -43,12 +46,8 @@ enum class ApiKeySource : std::uint8_t {
     OAuth,
 };
 
-/// Config scope for settings
-enum class ConfigScope : std::uint8_t {
-    Local,
-    User,
-    Project,
-};
+/// Config scope for settings — CONVERGED to cc::config::SettingsScope.
+using ConfigScope = cc::config::SettingsScope;
 
 /// SDK beta version
 inline constexpr auto SDK_BETA = "context-1m-2025-08-07";
@@ -202,21 +201,9 @@ enum class AgentMemoryScope : std::uint8_t {
     Local,
 };
 
-/// Agent definition for custom subagents
-struct AgentDefinition {
-    std::string description;
-    std::optional<std::vector<std::string>> tools;
-    std::optional<std::vector<std::string>> disallowed_tools;
-    std::string prompt;
-    std::optional<std::string> model;
-    std::optional<std::string> critical_system_reminder_experimental;
-    std::optional<std::vector<std::string>> skills;
-    std::optional<std::string> initial_prompt;
-    std::optional<int> max_turns;
-    std::optional<bool> background;
-    std::optional<AgentMemoryScope> memory;
-    std::optional<std::string> effort;  // named level or integer as string
-};
+/// Agent definition for custom subagents — CONVERGED to
+/// cc::tools::agent_runtime::AgentDefinition.
+using AgentDefinition = cc::tools::agent_runtime::AgentDefinition;
 
 /// Fast mode state
 enum class FastModeState : std::uint8_t {
@@ -244,12 +231,9 @@ enum class SDKAssistantMessageError : std::uint8_t {
 // Settings Types
 // ============================================================================
 
-/// Setting source (file-based settings location)
-enum class SettingSource : std::uint8_t {
-    User,
-    Project,
-    Local,
-};
+/// Setting source (file-based settings location) — CONVERGED to
+/// cc::config::SettingsScope.
+using SettingSource = cc::config::SettingsScope;
 
 /// SDK Plugin configuration
 struct SdkPluginConfig {

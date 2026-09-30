@@ -13,8 +13,12 @@ export module cc.sdk.runtime_types;
 import std;
 
 import cc.sdk.core_types;
+import cc.model.effort;  // arch-check: keep-import (EffortLevel CONVERGE alias)
 
 export namespace cc::sdk::runtime {
+
+/// Effort level — CONVERGED to cc::utils::EffortLevel.
+using EffortLevel = cc::utils::EffortLevel;
 
 // ============================================================================
 // Query Options

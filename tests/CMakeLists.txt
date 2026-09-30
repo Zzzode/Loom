@@ -423,6 +423,33 @@ target_link_libraries(test_sdk_control_golden
 gtest_discover_tests(test_sdk_control_golden
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
+# ---------------------------------------------------------------------------
+# cc_sdk phases 2-3 (RFC 0001): round-trip ser/de tests for every moved
+# control DTO (design §4.2). Links cc_sdk + cc_server per the design.
+# ---------------------------------------------------------------------------
+add_executable(test_sdk_serde test_sdk_serde.cpp)
+target_link_libraries(test_sdk_serde
+    PRIVATE
+        cc_sdk
+        cc_server          # cc.server.control_protocol BMIs
+        GTest::gtest_main
+)
+gtest_discover_tests(test_sdk_serde
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# ---------------------------------------------------------------------------
+# cc_sdk phases 2-3 (RFC 0001): compile-time guards that the SDK island's
+# CONVERGE aliases point at the canonical types (design §4.2).
+# ---------------------------------------------------------------------------
+add_executable(test_sdk_convergence test_sdk_convergence.cpp)
+target_link_libraries(test_sdk_convergence
+    PRIVATE
+        cc_sdk
+        GTest::gtest_main
+)
+gtest_discover_tests(test_sdk_convergence
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
 
 add_executable(test_skills test_skills.cpp)
 target_link_libraries(test_skills

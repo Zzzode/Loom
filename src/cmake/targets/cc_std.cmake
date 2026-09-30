@@ -62,7 +62,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${LOOM_STD_CPPM}")
 target_sources(cc_std
     PUBLIC
-    FILE_SET cxx_modules
+    FILE_SET CXX_MODULES
     TYPE CXX_MODULES
     BASE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/cc_std"
     FILES "${_cc_std_staged}")

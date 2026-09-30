@@ -312,52 +312,116 @@ if(CC_BUILD_TESTS)
 endif()
 
 # ─── Install Configuration ────────────────────────────────────────────────────
-# include(GNUInstallDirs)
-# include(CMakePackageConfigHelpers)
-# 
-# # Install the main executable
-# install(TARGETS cc_app
-#     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-# )
-# 
-# # Install library targets for downstream consumption
-# install(TARGETS
-#     cc_core
-#     cc_tools
-#     cc_commands
-#     cc_services
-#     cc_ui
-#     cc_state
-#     cc_bridge
-#     cc_skills
-#     cc_utils
-#     EXPORT LOOMTargets
-#     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-# )
-# 
-# # Generate and install package config
-# install(EXPORT LOOMTargets
-#     FILE LOOMTargets.cmake
-#     NAMESPACE LOOM::
-#     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LOOM
-# )
-# 
-# configure_package_config_file(
-#     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/LOOMConfig.cmake.in"
-#     "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfig.cmake"
-#     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LOOM
-# )
-# 
-# write_basic_package_version_file(
-#     "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfigVersion.cmake"
-#     VERSION ${PROJECT_VERSION}
-#     COMPATIBILITY SameMajorVersion
-# )
-# 
-# install(FILES
-#     "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfig.cmake"
-#     "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfigVersion.cmake"
-#     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LOOM
-# )
+# RFC 0001 cc-sdk phase 3 (§2.6): revive the install/EXPORT for the loom::sdk
+# embeddable surface. The installed set is cc_sdk + every cc_* target in its
+# transitive PUBLIC link closure (computed from the link graph, not
+# hand-maintained) + the FetchContent third-party targets the closure
+# references. C++ module names stay cc.sdk.* (OQ4 deferred); the install
+# namespace is loom::.
+#
+# ABI policy (S5c): source-compatible only, no ABI stability. The harness
+# public surface passes by value cc::core::*/cc::hooks::* types and the
+# polymorphic WireBackend; with a prebuilt static lib + consumer-rebuilt
+# BMIs, the installed package is source-compatible within one toolchain
+# generation (same clang++ major, same C++ stdlib, matched clang-scan-deps).
+# Consumers rebuild the module BMIs from the installed .cppm files; there
+# is no prebuilt .pcm/.mod and no cross-version ABI guarantee. The package
+# is experimental.
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+# Install the loom executable (the "embeddable binary" half — direct-connect
+# HTTP/SSE). Installed separately from the SDK export.
+install(TARGETS loom
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# yyjson's own CMake only sets BUILD_INTERFACE include dirs; add
+# INSTALL_INTERFACE so the LOOMTargets-exported loom::yyjson resolves its
+# header in a consumer project (yyjson self-installs yyjson.h to INCLUDEDIR
+# via its own install rules).
+target_include_directories(yyjson PUBLIC
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+# The embeddable surface is `loom::sdk` (design §2.6): the build-tree target
+# is cc_sdk, but EXPORT_NAME drops the cc_ prefix so the exported target is
+# loom::sdk. The other cc_* targets keep their names (loom::cc_utils, …) —
+# the consumer links only loom::sdk; the rest are transitive.
+set_target_properties(cc_sdk PROPERTIES EXPORT_NAME sdk)
+
+# Install the embeddable SDK surface + its transitive PUBLIC link closure.
+# The cc_* list is the transitive PUBLIC closure of cc_sdk (20 targets,
+# derived by walking target_link_libraries from cc_sdk), plus cc_std: every
+# target links the `import std;` module via the directory-level
+# link_libraries(cc_std) in src/CMakeLists.txt, so CMake's export check
+# requires cc_std in the set even though it is not a target_link_libraries
+# edge. cc_std's FILE_SET installs the toolchain-provided std.cppm (staged
+# into the build tree at configure time); a consumer rebuilding the std BMI
+# needs the same toolchain generation (same clang++/libc++), consistent with
+# the experimental ABI policy above. The FetchContent targets
+# (yyjson/uv_a/httplib/screen) are installed into the same export so the set
+# is self-contained — find_dependency cannot conjure a FetchContent target.
+# Real target names (not aliases — CMake rejects installing ALIAS targets).
+# CURL/OpenSSL stay as find_dependency in LOOMConfig.cmake. ftxui-screen is
+# in the closure via cc_utils (which textually includes
+# <ftxui/screen/color.hpp> in text_highlighting.cppm).
+install(TARGETS
+    cc_sdk
+    cc_utils
+    cc_types
+    cc_config
+    cc_constants
+    cc_std
+    cc_tools
+    cc_skills_core
+    cc_tasks
+    cc_teams
+    cc_hooks
+    cc_state
+    cc_task_types
+    cc_coordinator
+    cc_vim
+    cc_session
+    cc_query
+    cc_orchestration
+    cc_memdir
+    cc_services
+    cc_plugins
+    yyjson
+    uv_a
+    httplib
+    screen
+    EXPORT LOOMTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/loom
+)
+
+# Generate and install the export targets (NAMESPACE loom:: — the consumer
+# does find_package(loom) and links loom::sdk).
+install(EXPORT LOOMTargets
+    FILE LOOMTargets.cmake
+    NAMESPACE loom::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LOOM
+)
+
+# Generate the package config file (drops Boost; keeps CURL, adds OpenSSL).
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/LOOMConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LOOM
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LOOM
+)

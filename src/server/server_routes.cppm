@@ -8,12 +8,27 @@ import std;
 
 import cc.config.config;
 import cc.hooks.tool_permissions;
-import cc.orchestration.runtime_backends;
+import cc.query.assembly;
+// RFC-0001 cc-sdk phase 3 (§2.1): the inline execute_native_query adapter
+// below references cc.query.assembly types (AssemblyHandle PIMPL ->
+// ToolRegistry/QueryEngine/AgentLivePermissionCheckFn). With reduced BMI,
+// server_routes's BMI carries those type references; consumers (main.cpp,
+// test_services, …) get only direct-import BMIs on their compile line, so
+// removing these imports crashes clang 22 (SIGSEGV in ASTReader on a missing
+// typedef chain — LLVM #184957, the same PCM-reachability instance as
+// runtime_registry.cppm's synthetic_output_tool keep-import). No name is
+// textually referenced in this file anymore; the imports are kept for BMI
+// reachability only.
+// arch-check: keep-import
 import cc.query.query_engine;
+// arch-check: keep-import
+import cc.tools.tool;
+// arch-check: keep-import
+import cc.tools.runtime_registry;
+// arch-check: keep-import
+import cc.orchestration.runtime_backends;
 import cc.services.api.session_ingress;
 import cc.session.storage;
-import cc.tools.runtime_registry;
-import cc.tools.tool;
 import cc.types.types;
 import cc.serdes.json;
 
@@ -287,62 +302,10 @@ namespace detail {
         return lines;
     }
 
-    [[nodiscard]] inline std::string json_line_id_or_fallback(
-        cc::utils::json::JsonVal root,
-        std::size_t index
-    ) {
-        auto id = root.get("id");
-        if (id.valid() && id.is_str()) return std::string(id.as_str());
-        return "restored_" + std::to_string(index);
-    }
-
-    [[nodiscard]] inline std::optional<cc::core::Message> session_line_to_message(
-        const std::string& line,
-        std::size_t index
-    ) {
-        auto parsed = cc::utils::json::parse(line);
-        if (!parsed || !parsed->root().is_obj()) return std::nullopt;
-        auto root = parsed->root();
-        auto role_val = root.get("role");
-        auto content_val = root.get("content");
-        if (!role_val.is_str() || !content_val.is_str()) return std::nullopt;
-
-        const auto role = std::string(role_val.as_str());
-        const auto content = std::string(content_val.as_str());
-        const auto id = json_line_id_or_fallback(root, index);
-        const auto timestamp = std::chrono::system_clock::now();
-
-        if (role == "assistant") {
-            cc::core::AssistantMessage msg{};
-            msg.id.value = id;
-            msg.timestamp = timestamp;
-            msg.content.push_back(cc::core::TextBlock{content});
-            auto model = root.get("model");
-            if (model.valid() && model.is_str()) msg.model = std::string(model.as_str());
-            return cc::core::Message{std::move(msg)};
-        }
-
-        if (role == "user" || role == "system") {
-            cc::core::UserMessage msg{};
-            msg.id.value = id;
-            msg.timestamp = timestamp;
-            msg.content.push_back(cc::core::TextBlock{content});
-            return cc::core::Message{std::move(msg)};
-        }
-
-        return std::nullopt;
-    }
-
-    inline void seed_query_engine_from_session(
-        cc::core::QueryEngine& engine,
-        const std::vector<std::string>& prior_message_lines
-    ) {
-        for (std::size_t index = 0; index < prior_message_lines.size(); ++index) {
-            if (auto msg = session_line_to_message(prior_message_lines[index], index)) {
-                engine.append_message_for_testing(std::move(*msg));
-            }
-        }
-    }
+    // Prior-message seeding moved to cc.query.assembly (parse_session_message_value
+    // + restore_conversation, the real resume path) — the server adapter passes
+    // prior_message_lines through AssemblyConfig unchanged (RFC 0001 cc-sdk
+    // phase 3, §2.1 F4).
 
 	    [[nodiscard]] inline std::string assistant_text(const cc::core::AssistantMessage& message) {
 	        std::string text;
@@ -683,63 +646,47 @@ namespace detail {
 		        });
 		    }
 
-    [[nodiscard]] inline cc::tools::AgentLivePermissionCheck check_agent_tool_permission(
-        cc::hooks::ToolPermissionHook& permission_hook,
-        std::string_view tool_name,
-        std::string_view input_json,
-        std::string_view tool_use_id
-    ) {
-        permission_hook.set_current_tool_use_id(tool_use_id);
-        auto response = permission_hook.can_use_response(tool_name, input_json);
-        permission_hook.clear_current_tool_use_id();
-
-        cc::tools::AgentLivePermissionCheck check;
-        check.allowed = response.decision == cc::hooks::PermissionDecision::allow ||
-                        response.decision == cc::hooks::PermissionDecision::allow_once;
-        check.updated_input_json = std::move(response.updated_input_json);
-        check.message = std::move(response.message);
-        return check;
-    }
+    // The AgentLivePermissionCheck <-> ToolPermissionHook bridge moved to
+    // cc.query.assembly (query_assembly.cpp, internal) — assemble() wires it
+    // as the registry's permission_check when the caller supplies an ask_user
+    // callback, so the re-expressed route keeps its current permission
+    // behaviour (RFC 0001 cc-sdk phase 3, §2.1).
 
 			    [[nodiscard]] inline std::expected<DirectQueryResult, std::string> execute_native_query(
 			        const DirectQueryRequest& request
 		    ) {
+        // Test seam: the query_executor_override short-circuit stays in the
+        // adapter (a cc.server-local test seam), AHEAD of assemble(...) —
+        // the assembly itself knows nothing of it (§2.1).
         if (query_executor_override) return (*query_executor_override)(request);
 
         cc::core::ConfigManager manager;
         if (auto loaded = manager.load(); !loaded) {
             return std::unexpected(loaded.error().format());
         }
-
-        cc::core::QueryEngineConfig config;
         const auto& settings = manager.settings();
-        config.api_key = settings.network.api_key.value_or("");
-        if (settings.network.base_url) config.base_url = *settings.network.base_url;
-        config.model_params.model = request.requested_model.value_or(settings.model.default_model);
-        config.model_params.max_tokens = settings.model.max_output_tokens;
-        config.model_params.temperature = settings.model.temperature;
-        config.context_window.max_context_tokens = settings.model.context_window_size;
-        config.retry_policy.max_retries = settings.network.max_retries;
-        config.thinking_config.mode = settings.model.extended_thinking
-            ? cc::core::ThinkingConfig::Mode::Adaptive
-            : cc::core::ThinkingConfig::Mode::Disabled;
-        config.thinking_config.budget_tokens = settings.model.thinking_budget;
-        config.cwd = std::filesystem::current_path().string();
-        // permissions.deny must be enforced on the headless/server engine too,
-        // not only the interactive CLI — otherwise denied tools still reach
-        // the model through this path. Same single source (ConfigManager).
-        config.always_deny_rules = settings.permissions.deny_rules;
 
-        if (config.api_key.empty()) {
+        // Resolve the engine config through the shared resolver (§2.1) — the
+        // recipe's settings->config mapping lives in cc.query.assembly now,
+        // not in this adapter. The server passes only the per-request model
+        // override today. The empty-api_key hard-error stays here (the
+        // resolver does not enforce a key policy, so a loopback/gateway
+        // harness can bypass it with a placeholder key).
+        cc::query::AssemblyOverrides overrides;
+        if (request.requested_model) overrides.requested_model = request.requested_model;
+        auto resolved = cc::query::resolve_engine_config(settings, overrides);
+        if (!resolved) return std::unexpected(resolved.error().format());
+        if (resolved->api_key.empty()) {
             return std::unexpected("ANTHROPIC_API_KEY is required for direct-connect /message");
         }
 
-        auto permission_handler = permission_handler_for_session(request.session_id);
-        cc::hooks::ToolPermissionHook permission_hook;
-        if (permission_handler) {
-            permission_hook.set_auto_approve(false);
-            permission_hook.set_working_dir(std::filesystem::current_path().string());
-            permission_hook.set_ask_user_response_fn(
+        // Permission bridge: the ask_user callback wraps the session-scoped
+        // DirectPermissionHandler with session-state caching (unchanged from
+        // the inline recipe). assemble() wires it to the registry's
+        // permission_check and the engine's permission hook.
+        cc::query::AssemblyCallbacks callbacks;
+        if (auto permission_handler = permission_handler_for_session(request.session_id)) {
+            callbacks.ask_user = cc::hooks::AskUserResponseFn{
                 [handler = *permission_handler, session_id = request.session_id](
                     const cc::hooks::PermissionContext& ctx
                 ) -> cc::hooks::PermissionResponse {
@@ -765,66 +712,26 @@ namespace detail {
                         apply_direct_permission_updates(session_id, *response.updated_permissions_json);
                     }
                     return response;
-                });
+                }};
         }
 
-        // RFC-0001 B11: ensure orchestration runtime backends (image codec
-        // this batch) are installed before this per-session ToolRegistry can
-        // dispatch Read/computer_use. This handler runs on a per-connection
-        // thread, so the installer is std::call_once-guarded: repeat calls
-        // (and the loom main() install in the same process) are no-ops.
-        cc::orchestration::install_runtime_backends();
+        cc::query::AssemblyConfig config;
+        config.engine = std::move(*resolved);
+        config.prior_message_lines = request.prior_message_lines;
+        config.cancel_flag = request.cancel_flag;
 
-        cc::core::ToolRegistry registry;
-        cc::tools::register_runtime_tools(registry, cc::tools::RuntimeToolOptions{
-            .parent_permission_mode = std::nullopt,
-            .permission_check = permission_handler
-                ? cc::tools::AgentLivePermissionCheckFn{[&permission_hook](
-                    std::string_view tool_name,
-                    std::string_view input_json,
-                    std::string_view tool_use_id
-                ) {
-                    return check_agent_tool_permission(permission_hook, tool_name, input_json, tool_use_id);
-                }}
-                : cc::tools::AgentLivePermissionCheckFn{},
-            .permission_hook_valid_for_background = false,
-        });
+        // Assemble-only: build the permission hook, registry (runtime tools +
+        // missing-tool MCP backend + dynamic MCP providers) and engine, wire
+        // the abort/permission hooks, and seed prior messages via the real
+        // resume path (restore_conversation). Does NOT run a turn.
+        auto assembled = cc::query::assemble(config, callbacks);
+        if (!assembled) return std::unexpected(assembled.error().format());
 
-        // TS PARITY FALLBACK: route unregistered tool names (e.g. MCP server
-        // tools like "analyze_image") to connected MCP servers. RFC-0001 B15:
-        // the unified fallback is built by cc.orchestration (byte-identical
-        // iteration/last_error/ToolNotFound text).
-        registry.set_missing_tool_handler(
-            cc::orchestration::make_missing_tool_backend());
-
-        config.tools = registry.get_visible_definitions();
-        // TS PARITY: MCP tools discovered dynamically after server connection.
-        // Provider callback ensures build_request_body() picks up newly
-        // connected MCP servers' tools on every API call.
-        config.dynamic_tools_provider = []() -> std::vector<cc::core::ToolDefinition> {
-            return cc::tools::collect_mcp_tool_definitions();
-        };
-        // Keep MCP servers' verbatim (possibly nested) input schemas.
-        config.mcp_input_schema_provider = [] {
-            return cc::tools::collect_mcp_input_schemas();
-        };
-
-        cc::core::QueryEngine engine(std::move(config), registry);
-        if (request.cancel_flag) {
-            engine.set_external_abort_callback([flag = request.cancel_flag] {
-                return flag->load();
-            });
+        if (request.cancel_flag && request.cancel_flag->load()) {
+            return std::unexpected("Query interrupted");
         }
-        if (permission_handler) {
-            engine.set_permission_hook(&permission_hook);
-        }
-        seed_query_engine_from_session(engine, request.prior_message_lines);
-
-	        if (request.cancel_flag && request.cancel_flag->load()) {
-	            return std::unexpected("Query interrupted");
-	        }
-	        auto response = engine.query(request.content);
-	        if (!response) return std::unexpected(response.error().format());
+        auto response = assembled->engine().query(request.content);
+        if (!response) return std::unexpected(response.error().format());
 
         return DirectQueryResult{
             .assistant_id = response->message.id.value,

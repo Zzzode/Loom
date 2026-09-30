@@ -352,6 +352,18 @@ public:
         permission_hook_ = hook;
     }
 
+    /// Wire backend factory seam (RFC 0001 cc-sdk phase 3, §2.4). When set,
+    /// make_wire_backend() delegates to the factory; when unset, the default
+    /// Anthropic/OpenAI construction runs unchanged. The seam intercepts
+    /// request-body serialization only — make_wire_backend() is called
+    /// solely from build_request_body and only prepare() is used. The
+    /// transport (httplib POST, SSE streaming, response parsing) does NOT
+    /// go through WireBackend, so a factory returning a mock backend does
+    /// not prevent real HTTP calls.
+    using WireBackendFactory =
+        std::function<std::unique_ptr<cc::query::wire::WireBackend>()>;
+    void set_wire_backend_factory(WireBackendFactory factory);
+
     /// Set the lifecycle hook registry for event notifications
     void set_lifecycle_hooks(cc::hooks::LifecycleHookRegistry* hooks) noexcept {
         lifecycle_hooks_ = hooks;
@@ -796,6 +808,9 @@ private:
     cc::query::wire::WireApi wire_api_ = cc::query::wire::WireApi::Anthropic;
     /// When true, emit the vendor-native computer-use tool shape.
     bool native_computer_tool_ = true;
+    /// Optional wire backend factory (§2.4). When set, make_wire_backend()
+    /// delegates to it instead of the default Anthropic/OpenAI construction.
+    WireBackendFactory wire_backend_factory_;
 
     // ── Post-turn LLM memory extraction (TS extractMemories) ────────────────
     // After enough NEW messages accumulate, a background sub-agent reads the

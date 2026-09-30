@@ -32,6 +32,7 @@ import std;
 import cc.types.types;       // cc::core::Result
 import cc.config.config;     // cc::core::Settings
 import cc.query.query_engine; // cc::core::QueryEngineConfig, QueryEngine
+import cc.serdes.json;       // cc::utils::json::JsonVal (parse_session_message_value)
 // ToolRegistry is needed for the register_extra_tools field type; the
 // detector does not harvest the class name past cc.tools.tool's
 // concept/requires blocks (same marker as runtime_message_delivery.cppm).
@@ -117,5 +118,16 @@ private:
 /// sketch literally.
 [[nodiscard]] cc::core::Result<AssemblyHandle> assemble(
     const AssemblyConfig& config, const AssemblyCallbacks& callbacks);
+
+/// Parse one messages.jsonl document into a cc::core::Message. The same
+/// non-lossy reader assemble() uses for prior_message_lines, exported so
+/// cc.sdk.harness::resume() can restore a prior session without
+/// re-implementing the format (RFC 0001 cc-sdk phase 3, §2.3 resume path).
+/// `message_from_json_value` returns cc::services::api::Message (a flat
+/// struct), incompatible with restore_conversation's cc::core::Message
+/// (5-member variant) with no existing converter — see the P3-assembly
+/// deviation note. `index` seeds a fallback id when the document has none.
+[[nodiscard]] std::optional<cc::core::Message> parse_session_message_value(
+    cc::utils::json::JsonVal root, std::size_t index = 0);
 
 } // namespace cc::query

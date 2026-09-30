@@ -450,6 +450,24 @@ target_link_libraries(test_sdk_convergence
 gtest_discover_tests(test_sdk_convergence
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
+# ---------------------------------------------------------------------------
+# cc_sdk phases 2-3 (RFC 0001): first-consumer gate for cc.sdk.harness
+# (design §4.4). Runs a Harness against a loopback HTTP server serving
+# canned Anthropic responses — the real transport with zero external calls.
+# Links cc_sdk (the harness) + cc_query (engine/assembly BMIs the test
+# references directly) + httplib (the loopback server).
+# ---------------------------------------------------------------------------
+add_executable(test_sdk_harness test_sdk_harness.cpp)
+target_link_libraries(test_sdk_harness
+    PRIVATE
+        cc_sdk
+        cc_query
+        httplib::httplib
+        GTest::gtest_main
+)
+gtest_discover_tests(test_sdk_harness
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
 
 add_executable(test_skills test_skills.cpp)
 target_link_libraries(test_skills

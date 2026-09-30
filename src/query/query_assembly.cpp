@@ -49,6 +49,8 @@ namespace fs = std::filesystem;
     return check;
 }
 
+} // namespace
+
 // Rank-10 seed-line parser. The server's prior_message_lines are the
 // session messages.jsonl lines written by message_json()
 // (server_routes.cppm:141): {"id","role","content"(string),"created_at",...}.
@@ -57,13 +59,16 @@ namespace fs = std::filesystem;
 // server helper. The seed is fed to QueryEngine::restore_conversation (the
 // real resume path that rebuilds content-replacement state), not the lossy
 // append_message_for_testing-based server helper.
-[[nodiscard]] std::optional<cc::core::Message> parse_seed_message(
-    const std::string& line,
+//
+// Exported (declared in query_assembly.cppm) so the harness's resume() path
+// can parse session messages without a cc.server import. Defined here in
+// namespace cc::query (NOT the anonymous namespace above) so the exported
+// declaration links.
+[[nodiscard]] std::optional<cc::core::Message> parse_session_message_value(
+    cc::utils::json::JsonVal root,
     std::size_t index
 ) {
-    auto parsed = cc::utils::json::parse(line);
-    if (!parsed || !parsed->root().is_obj()) return std::nullopt;
-    auto root = parsed->root();
+    if (!root.valid() || !root.is_obj()) return std::nullopt;
     auto role_val = root.get("role");
     auto content_val = root.get("content");
     if (!role_val.is_str() || !content_val.is_str()) return std::nullopt;
@@ -99,6 +104,20 @@ namespace fs = std::filesystem;
     }
 
     return std::nullopt;
+}
+
+namespace {
+
+// Internal seed-line wrapper: parse the JSON line, then delegate to the
+// exported parse_session_message_value. Used by assemble()'s
+// prior_message_lines path.
+[[nodiscard]] std::optional<cc::core::Message> parse_seed_message(
+    const std::string& line,
+    std::size_t index
+) {
+    auto parsed = cc::utils::json::parse(line);
+    if (!parsed) return std::nullopt;
+    return parse_session_message_value(parsed->root(), index);
 }
 
 } // namespace

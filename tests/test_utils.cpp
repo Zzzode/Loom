@@ -7,8 +7,8 @@
 #include <httplib.h>
 
 import std;
-import cc.utils.string;
-import cc.utils.string_utils;
+import cc.text.string;
+import cc.text.string_utils;
 import cc.containers.array_utils;
 import cc.utils.json;
 import cc.utils.error;
@@ -24,8 +24,8 @@ import cc.utils.plugin_marketplace_rules;
 import cc.utils.plugin_versioning;
 import cc.utils.plugin_loader;
 import cc.parsing.cli.argument_substitution;
-import cc.utils.semantic_boolean;
-import cc.utils.semantic_number;
+import cc.text.semantic_boolean;
+import cc.text.semantic_number;
 import cc.ui.chrome.terminal_io;
 import cc.commands.review.review_remote;
 import cc.utils.query_guard;
@@ -48,14 +48,14 @@ import cc.utils.timeouts;
 import cc.parsing.cli.slash_command_parsing;
 import cc.utils.collapse_read_search;
 import cc.containers.set_utils;
-import cc.utils.words;
+import cc.text.words;
 import cc.diagnostics.fps_tracker;
 import cc.utils.privacy_level;
 import cc.utils.script_tool_enabled;
 import cc.prompt.support.prompt_category;
 import cc.utils.control_message_compat;
 import cc.utils.sanitization;
-import cc.utils.diff_utils;
+import cc.text.diff_utils;
 import cc.utils.shell_providers;
 import cc.config.settings;
 import cc.utils.git_diff;
@@ -63,7 +63,7 @@ import cc.utils.proxy_utils;
 import cc.utils.github_utils;
 import cc.plugins.marketplace;
 import cc.utils.clipboard;
-import cc.utils.parse_references;
+import cc.text.parse_references;
 import cc.memdir.memdir;
 
 class ScopedEnvVar {

@@ -104,8 +104,8 @@ TARGET_RANK = {
     # RFC 0001 Phase D — cc.utils.* leaf-domain rename targets (rank 2,
     # same as cc.utils today; introduced batch-by-batch in the rename).
     "cc.agent": 2, "cc.cache": 2, "cc.containers": 2, "cc.crypto": 2,
-    "cc.diagnostics": 2, "cc.media": 2, "cc.model": 2, "cc.parsing": 2,
-    "cc.platform": 2, "cc.prompt": 2,
+    "cc.diagnostics": 2, "cc.fs": 2, "cc.media": 2, "cc.model": 2,
+    "cc.parsing": 2, "cc.platform": 2, "cc.prompt": 2, "cc.text": 2,
     "cc.vim": 3,
     "cc.hooks": 4,
     "cc.skills": 5,

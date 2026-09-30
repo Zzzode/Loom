@@ -12,7 +12,7 @@ import std;
 
 import cc.types.types;
 import cc.commands.command;
-import cc.utils.path;
+import cc.fs.path;
 import cc.state.app_state;
 import cc.state.store;
 

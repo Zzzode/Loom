@@ -1,4 +1,4 @@
-export module cc.utils.semantic_boolean;
+export module cc.text.semantic_boolean;
 
 import std;
 

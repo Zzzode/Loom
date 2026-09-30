@@ -21,7 +21,7 @@ export module cc.tools.bash_result_formatting;
 
 import std;
 
-import cc.utils.format;
+import cc.text.format;
 
 export namespace cc::tools::bash {
 

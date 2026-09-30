@@ -4,7 +4,7 @@
 //     (error codes 0..10 + meta field passthrough).
 //   - Integrated cc.tools.file_edit_types: ValidationOutcome /
 //     ValidationErrorCode / FileEditInput / FileEditOutput.
-//   - Integrated cc.utils.file_edit: find_actual_string,
+//   - Integrated cc.fs.edit.file_edit: find_actual_string,
 //     preserve_quote_style, get_patch_for_edit, read_file_for_edit,
 //     normalize_file_edit_input, are_file_edits_inputs_equivalent,
 //     compute_structured_patch.
@@ -27,13 +27,13 @@ import std;
 import cc.tools.tool;
 import cc.tools.file_edit_types;
 import cc.tools.file_edit_prompt;
-import cc.utils.file;
+import cc.fs.file;
 import cc.utils.error;
 import cc.utils.json;
-import cc.utils.file_edit;
-import cc.utils.file_read_cache;
-import cc.utils.string_utils;
-import cc.utils.path;
+import cc.fs.edit.file_edit;
+import cc.fs.file_read_cache;
+import cc.text.string_utils;
+import cc.fs.path;
 import cc.tools.sed_edit_parser;
 import cc.skills.file_access.port;
 

@@ -13,7 +13,7 @@ import cc.benchmarks.pare.execute_ref;
 import cc.benchmarks.pare.metrics;
 import cc.benchmarks.pare.workspace;
 import cc.utils.json;
-import cc.utils.file;
+import cc.fs.file;
 
 export namespace cc::benchmarks::pare {
 

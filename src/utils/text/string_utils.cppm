@@ -3,7 +3,7 @@ module;
 #include <cstdint>
 #include <cstddef>
 
-export module cc.utils.string_utils;
+export module cc.text.string_utils;
 
 import std;
 

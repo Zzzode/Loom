@@ -8,7 +8,7 @@ module;
 export module cc.bridge.api;
 
 import std;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 
 import cc.types.types;
 import cc.bridge.messages;

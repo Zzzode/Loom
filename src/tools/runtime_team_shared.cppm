@@ -25,7 +25,7 @@ import cc.tools.bash;                 // stop_background_tasks_for_agent
 import cc.tools.team;
 import cc.tools.runtime_shared_utils; // safe_runtime_dir_component, path helpers
 import cc.utils.team_helpers;         // team_runtime_dir
-import cc.utils.atomic_replace;       // c16 hardened team-data replaces
+import cc.fs.atomic_replace;       // c16 hardened team-data replaces
 import cc.utils.swarm_backends;       // BackendRegistry
 
 export namespace cc::tools::runtime_team_shared {

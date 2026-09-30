@@ -8,7 +8,7 @@ export module cc.tools.file_read;
 
 import std;
 
-import cc.utils.file;
+import cc.fs.file;
 import cc.utils.error;
 import cc.tools.image_codec.port;
 import cc.tools.tool;

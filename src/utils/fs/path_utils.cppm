@@ -3,7 +3,7 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.utils.path_utils;
+export module cc.fs.path_utils;
 
 import std;
 

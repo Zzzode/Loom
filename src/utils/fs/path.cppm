@@ -10,7 +10,7 @@ module;
 #include <objbase.h>
 #endif
 
-export module cc.utils.path;
+export module cc.fs.path;
 
 import std;
 

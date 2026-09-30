@@ -9,7 +9,7 @@ export module cc.tools.team;
 import std;
 
 import cc.utils.json;
-import cc.utils.atomic_replace;
+import cc.fs.atomic_replace;
 
 export namespace cc::tools {
 

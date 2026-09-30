@@ -10,7 +10,7 @@ import std;
 
 import cc.utils.git;
 import cc.platform.env.env_utils;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 import cc.utils.team_helpers;
 import cc.tools.team;
 import cc.services.api.client;

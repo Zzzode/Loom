@@ -1,7 +1,7 @@
 export module cc.agent.agent_id;
 
 import std;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 
 export namespace cc::utils::agent_id {
 

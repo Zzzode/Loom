@@ -30,7 +30,7 @@ export module cc.services.prompt_suggestion;
 import std;
 
 import cc.types.types;
-import cc.utils.string_utils;
+import cc.text.string_utils;
 
 export namespace cc::services::prompt_suggestion {
 

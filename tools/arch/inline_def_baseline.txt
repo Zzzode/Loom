@@ -29,7 +29,7 @@ cc.ui.foundation.logo_v2 30
 cc.ui.prompt.prompt_input_footer 30
 cc.utils.hooks_execution 29
 cc.ui.widgets.text_input 28 c2-done
-cc.utils.file_edit 27
+cc.fs.edit.file_edit 27
 cc.ui.dialogs.settings_dialog 26
 cc.ui.dialogs.wizard_dialog 25
 cc.ui.screens.resume_screen 25

@@ -5,7 +5,7 @@ module;
 export module cc.services.api.session_ingress;
 
 import std;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 
 import cc.utils.http;
 import cc.utils.json;

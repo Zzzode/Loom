@@ -11,7 +11,7 @@ import cc.tools.agent_types;
 import cc.tools.team;
 import cc.utils.json;
 import cc.utils.error;
-import cc.utils.atomic_replace;
+import cc.fs.atomic_replace;
 
 export namespace cc::tools::team_create {
 

@@ -6,7 +6,7 @@ module;
 export module cc.utils.ssrf_guard;
 
 import std;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 
 export namespace cc::utils::ssrf_guard {
 

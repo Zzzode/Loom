@@ -11,7 +11,7 @@ export module cc.tools.file_edit_prompt;
 import std;
 
 import cc.tools.file_edit_types;
-import cc.utils.string_utils;     // for first_line_of
+import cc.text.string_utils;     // for first_line_of
 
 export namespace cc::tools::file_edit {
 

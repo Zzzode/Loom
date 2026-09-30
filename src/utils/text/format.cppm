@@ -3,7 +3,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.utils.format;
+export module cc.text.format;
 
 import std;
 

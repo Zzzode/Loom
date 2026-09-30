@@ -31,8 +31,8 @@ target_sources(cc_ui_visual PRIVATE
     ui/visual/markdown_api_impl.cpp
     ui/visual/markdown_component_impl.cpp
 )
-# External deps only: cc.types.types (code_highlight), cc.utils.file_edit /
-# cc.utils.string_utils (structured_diff, file_edit_tool_diff), and FTXUI
+# External deps only: cc.types.types (code_highlight), cc.fs.edit.file_edit /
+# cc.text.string_utils (structured_diff, file_edit_tool_diff), and FTXUI
 # (DOM/component headers). cc_std's `import std;` BMI arrives via the
 # directory-level link_libraries(cc_std). Over-linking is safe (and matches
 # the previous cc_ui.cmake behaviour).

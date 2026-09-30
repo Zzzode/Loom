@@ -6,7 +6,7 @@ module;
 #include <cctype>
 #include <cstddef>
 
-export module cc.utils.string;
+export module cc.text.string;
 
 import std;
 

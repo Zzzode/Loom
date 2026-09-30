@@ -13,7 +13,7 @@ import cc.constants.constants;
 import cc.coordinator.types;
 import cc.tasks.task_graph;
 import cc.utils.yaml;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 
 TEST(CoreTypes, RoleToStringAndContentVariant) {
     EXPECT_EQ(cc::core::role_to_string(cc::core::Role::User), "user");

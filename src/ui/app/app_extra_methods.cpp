@@ -51,7 +51,7 @@ import cc.constants.constants;
 import cc.utils.git;
 import cc.crypto.crypto;
 import cc.utils.clipboard;
-import cc.utils.parse_references;
+import cc.text.parse_references;
 import cc.ui.messages.collapse_background_bash;
 import cc.ui.features.agents.agent_shared_widgets;
 import cc.tools.agent_display;

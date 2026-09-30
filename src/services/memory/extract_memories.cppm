@@ -17,7 +17,7 @@ import cc.types.types;
 import cc.utils.async;
 import cc.utils.error;
 import cc.utils.json;
-import cc.utils.file;
+import cc.fs.file;
 
 export namespace cc::services::extract_memories {
 

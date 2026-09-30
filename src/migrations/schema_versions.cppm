@@ -8,8 +8,8 @@ export module cc.migrations.schema_versions;
 
 import std;
 
-import cc.utils.atomic_replace;
-import cc.utils.lockfile;
+import cc.fs.atomic_replace;
+import cc.fs.lockfile;
 
 export namespace cc::migrations {
 

@@ -1,5 +1,5 @@
 
-export module cc.utils.markdown_utils;
+export module cc.text.markdown_utils;
 
 import std;
 

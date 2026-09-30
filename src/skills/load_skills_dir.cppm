@@ -42,10 +42,10 @@ import cc.parsing.cli.argument_substitution;
 import cc.model.effort;
 import cc.platform.env.env_utils;
 import cc.diagnostics.log;
-import cc.utils.markdown_utils;
-import cc.utils.path_utils;
+import cc.text.markdown_utils;
+import cc.fs.path_utils;
 import cc.utils.platform_paths;
-import cc.utils.string_utils;
+import cc.text.string_utils;
 import cc.skills.mcp_skill_builders;
 export import cc.skills.skill;
 

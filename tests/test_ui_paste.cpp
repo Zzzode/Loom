@@ -27,7 +27,7 @@ import cc.commands.registry;
 import cc.query.query_engine;
 import cc.tools.tool;
 import cc.utils.session_storage;
-import cc.utils.parse_references;
+import cc.text.parse_references;
 import cc.ui.foundation.design_tokens;
 import cc.ui.foundation.design_figures;
 import cc.ui.foundation.theme_provider;

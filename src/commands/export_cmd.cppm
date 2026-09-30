@@ -14,7 +14,7 @@ module;
 export module cc.commands.export_cmd;
 
 import std;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 
 import cc.types.types;
 import cc.commands.command;

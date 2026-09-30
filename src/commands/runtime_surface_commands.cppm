@@ -7,7 +7,7 @@ module;
 export module cc.commands.runtime_surface_commands;
 
 import std;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 
 import cc.types.types;
 import cc.commands.command;

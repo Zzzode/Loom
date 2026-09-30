@@ -27,7 +27,7 @@ export module cc.services.mcp.xaa_idp_login;
 
 import std;
 
-import cc.utils.atomic_replace;
+import cc.fs.atomic_replace;
 import cc.crypto.crypto;
 import cc.utils.error;
 import cc.utils.json;

@@ -11,7 +11,7 @@ module cc.tools.runtime_registry;
 import std;
 
 import cc.utils.json;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 import cc.tools.notebook;
 import cc.tools.web_browser;
 

@@ -9,7 +9,7 @@ module;
 
 #include <cstddef>
 
-export module cc.utils.parse_references;
+export module cc.text.parse_references;
 
 import std;
 

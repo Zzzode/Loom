@@ -6,7 +6,7 @@ export module cc.tools.grep;
 
 import std;
 
-import cc.utils.file;
+import cc.fs.file;
 import cc.utils.error;
 import cc.tools.tool;
 import cc.utils.json;

@@ -16,7 +16,7 @@ export module cc.ui.visual.structured_diff;
 
 import std;
 
-import cc.utils.file_edit;
+import cc.fs.edit.file_edit;
 
 export namespace cc::ui::structured_diff {
 using namespace ftxui;

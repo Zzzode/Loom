@@ -2,7 +2,7 @@ module;
 
 #include <cctype>
 
-export module cc.utils.memory_file_detection;
+export module cc.fs.memory_file_detection;
 
 import std;
 

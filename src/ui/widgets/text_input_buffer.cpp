@@ -23,7 +23,7 @@ import std;
 import cc.ui.foundation.design_figures;
 import cc.ui.foundation.ui_types;
 import cc.ui.prompt.prompt_paste_handler;
-import cc.utils.parse_references;
+import cc.text.parse_references;
 
 namespace ui::components {
 
@@ -35,7 +35,7 @@ namespace {
 //
 // RFC 0001 Phase C batch 8: demoted from a private TextInputImpl member (and
 // its TruncatedPasteResult alias) to this file-local free function so the
-// primary interface no longer names cc.utils.parse_references. paste_text is
+// primary interface no longer names cc.text.parse_references. paste_text is
 // its only caller; maybe_apply_input_truncation calls the shared utility
 // directly, as it always did.
 cc::utils::TruncatedPasteResult truncate_paste_result(

@@ -52,8 +52,8 @@ import cc.ui.screens.repl_state;
 import cc.ui.screens.task_view_store;
 import cc.diagnostics.debug;
 import cc.utils.hyperlink;
-import cc.utils.parse_references;
-import cc.utils.path;
+import cc.text.parse_references;
+import cc.fs.path;
 import cc.utils.skill_usage;
 import cc.utils.session_storage;
 

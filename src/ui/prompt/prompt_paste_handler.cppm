@@ -17,7 +17,7 @@ export module cc.ui.prompt.prompt_paste_handler;
 
 import std;
 
-import cc.utils.parse_references;
+import cc.text.parse_references;
 // OS clipboard image read (macOS osascript «class PNGf»).
 // TS REF: src/utils/imagePaste.ts getImageFromClipboard / hasImageInClipboard
 import cc.utils.clipboard;

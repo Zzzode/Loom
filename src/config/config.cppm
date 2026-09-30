@@ -19,7 +19,7 @@ import std;
 
 import cc.types.types;
 import cc.utils.json;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 import cc.constants.paths;
 
 export import cc.config.mcp_types;

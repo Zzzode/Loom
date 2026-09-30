@@ -72,7 +72,7 @@ import cc.utils.error;
 import cc.services.ide_integration;
 import cc.utils.json;
 import cc.utils.team_helpers;
-import cc.utils.atomic_replace;
+import cc.fs.atomic_replace;
 
 namespace fs = std::filesystem;
 

@@ -1,10 +1,10 @@
 module;
 #include <cctype>
 
-export module cc.utils.diff_utils;
+export module cc.text.diff_utils;
 
 import std;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 
 export namespace cc::utils {
 

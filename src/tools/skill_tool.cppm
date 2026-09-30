@@ -13,7 +13,7 @@ module;
 export module cc.tools.skill;
 
 import std;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 
 import cc.utils.json;
 

@@ -1,7 +1,7 @@
 export module cc.commands.mock_limits;
 
 import std;
-import cc.utils.parse_int;
+import cc.text.parse_int;
 
 import cc.services.rate_limit.rate_limit_hook;
 

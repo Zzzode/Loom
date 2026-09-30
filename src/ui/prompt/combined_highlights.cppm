@@ -35,7 +35,7 @@ export module cc.ui.prompt.combined_highlights;
 import std;
 
 import cc.parsing.highlight.text_highlighting;
-import cc.utils.parse_references;
+import cc.text.parse_references;
 
 export namespace cc::ui::prompt {
 

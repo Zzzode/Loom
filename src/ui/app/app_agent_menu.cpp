@@ -29,7 +29,7 @@ import cc.ui.screens.repl_state;
 import cc.ui.screens.messages_store;
 import cc.ui.screens.task_view_store;
 import cc.utils.session_storage;
-import cc.utils.parse_references;
+import cc.text.parse_references;
 import cc.diagnostics.debug;
 import cc.tools.agent_runtime;
 

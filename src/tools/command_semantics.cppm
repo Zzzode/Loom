@@ -18,7 +18,7 @@ export module cc.tools.command_semantics;
 
 import std;
 
-import cc.utils.format;
+import cc.text.format;
 
 export namespace cc::tools {
 

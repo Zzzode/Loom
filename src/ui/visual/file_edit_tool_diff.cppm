@@ -33,8 +33,8 @@ export module cc.ui.visual.file_edit_tool_diff;
 
 import std;
 
-import cc.utils.file_edit;
-import cc.utils.string_utils;
+import cc.fs.edit.file_edit;
+import cc.text.string_utils;
 import cc.ui.visual.structured_diff;
 
 export namespace cc::ui::components::file_edit_tool_diff {

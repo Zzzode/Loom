@@ -28,7 +28,7 @@ import cc.ui.visual.markdown;
 import cc.ui.foundation.design_tokens;
 import cc.ui.foundation.design_figures;
 import cc.constants.constants;
-import cc.utils.parse_references;
+import cc.text.parse_references;
 import cc.ui.widgets.components;
 import cc.ui.widgets.all_components;
 import cc.types.types;

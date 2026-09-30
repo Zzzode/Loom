@@ -15,7 +15,7 @@ module;
 
 #include <cstdint>
 
-export module cc.utils.parse_int;
+export module cc.text.parse_int;
 
 import std;
 

@@ -3,7 +3,7 @@ module;
 #include <cmath>
 #include <cctype>
 
-export module cc.utils.semantic_number;
+export module cc.text.semantic_number;
 
 import std;
 

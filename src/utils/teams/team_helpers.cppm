@@ -17,7 +17,7 @@ export module cc.utils.team_helpers;
 import std;
 
 import cc.utils.json;
-import cc.utils.atomic_replace;
+import cc.fs.atomic_replace;
 
 export namespace cc::utils {
 

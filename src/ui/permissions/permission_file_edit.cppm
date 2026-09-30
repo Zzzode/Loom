@@ -51,7 +51,7 @@ import std;
 
 import cc.ui.visual.file_edit_tool_diff;
 import cc.ui.permissions.components;
-import cc.utils.file_edit;
+import cc.fs.edit.file_edit;
 
 export namespace cc::ui::permissions::file_edit {
 

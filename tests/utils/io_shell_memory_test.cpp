@@ -3,9 +3,9 @@
 
 import std;
 import cc.utils.bash_shell_quoting;
-import cc.utils.memory_file_detection;
+import cc.fs.memory_file_detection;
 import cc.model.model_cost;
-import cc.utils.read_file_in_range;
+import cc.fs.read_file_in_range;
 
 TEST(MemoryFileDetection, DetectsSessionFilesPatternsAndMemoryDirectories) {
     using namespace cc::utils::memory_file_detection;

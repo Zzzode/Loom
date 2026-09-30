@@ -1,4 +1,4 @@
-// taskview_store.cppm — RFC 0002 F3 store: task-view state (spinner mode,
+// task_view_store.cppm — RFC 0002 F3 store: task-view state (spinner mode,
 // task notifications, agent/teammate live state), sharded out of
 // ReplScreenState.
 //

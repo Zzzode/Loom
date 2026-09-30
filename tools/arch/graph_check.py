@@ -287,8 +287,11 @@ STORE_THREAD_RE = re.compile(r"\b(?:mutex|jthread|condition_variable)\b")
 
 def _is_store_path(path) -> bool:
     """True for a file directly under src/ui/screens/ named *_store.cppm."""
+    # Resolve both sides: a symlinked SRC (e.g. macOS /tmp -> /private/tmp
+    # in the negative test's temp tree) must not silently drop a store.
     try:
-        rel = pathlib.Path(path).resolve().relative_to(SRC)
+        rel = pathlib.Path(path).resolve().relative_to(
+            pathlib.Path(SRC).resolve())
     except ValueError:
         return False
     parts = rel.parts

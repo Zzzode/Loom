@@ -2,7 +2,7 @@ module;
 #include <cstddef>
 #include <cstdlib>
 
-export module cc.utils.list_sessions;
+export module cc.session.list_sessions;
 
 import std;
 

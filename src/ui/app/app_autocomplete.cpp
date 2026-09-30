@@ -34,7 +34,7 @@ import std;
 import cc.query.query_engine;
 import cc.commands.registry;
 import cc.commands.command;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 import cc.hooks.lifecycle_hooks;
 
 import cc.commands.registry;
@@ -52,7 +52,7 @@ import cc.platform.hyperlink;
 import cc.text.parse_references;
 import cc.fs.path;
 import cc.utils.skill_usage;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 import cc.utils.swarm_pane_observer;
 
 namespace cc::ui {

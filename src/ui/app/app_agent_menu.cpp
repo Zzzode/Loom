@@ -20,7 +20,7 @@ import std;
 import cc.query.query_engine;
 import cc.commands.registry;
 import cc.commands.command;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 import cc.hooks.lifecycle_hooks;
 
 // ── Base imports (shared with app_autocomplete.cpp) ─────────────────────
@@ -28,7 +28,7 @@ import cc.ui.screens.repl_screen;
 import cc.ui.screens.repl_state;
 import cc.ui.screens.messages_store;
 import cc.ui.screens.task_view_store;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 import cc.text.parse_references;
 import cc.diagnostics.debug;
 import cc.tools.agent_runtime;

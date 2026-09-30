@@ -161,7 +161,7 @@ private:
     // neither impl unit needs AppImpl's layout.
     // Stored type-erased as void* in AppImpl; each impl unit casts back
     // after importing the owning module (cc.query/cc.hooks/cc.commands/
-    // cc.utils.session_storage), keeping those closures out of this BMI.
+    // cc.session.app_storage), keeping those closures out of this BMI.
     void construct_impl(void* engine, void* lifecycle_hooks,
                         void* cmd_registry, void* storage);
     void construct_teammate();

@@ -22,7 +22,7 @@ import std;
 import cc.ui.prompt.autocomplete_sources;
 import cc.ui.screens.repl_screen;
 import cc.ui.screens.repl_state;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 
 // ── Constructor-only imports (moved out of app_autocomplete.cpp) ────────
 import cc.hooks.cost_hook;

@@ -37,7 +37,7 @@ module cc.ui.app.app;
 import cc.query.query_engine;
 import cc.commands.registry;
 import cc.commands.command;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 import cc.hooks.lifecycle_hooks;
 
 // ── Base imports (shared with app_autocomplete.cpp) ─────────────────────
@@ -55,7 +55,7 @@ import cc.platform.hyperlink;
 import cc.text.parse_references;
 import cc.fs.path;
 import cc.utils.skill_usage;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 
 // ── HandleSubmit-only imports (moved out of app_autocomplete.cpp) ───────
 import cc.ui.foundation.design_figures;

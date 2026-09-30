@@ -49,7 +49,6 @@ target_sources(cc_utils
         utils/platform/hyperlink.cppm
         utils/serdes/json.cppm
         utils/skills/skill_usage.cppm
-        utils/session/list_sessions.cppm
         utils/fs/lockfile.cppm
         utils/diagnostics/log.cppm
         utils/text/markdown_utils.cppm
@@ -73,7 +72,6 @@ target_sources(cc_utils
         utils/text/semantic_boolean.cppm
         utils/text/semantic_number.cppm
         utils/security/sanitization.cppm
-        utils/session/session_storage.cppm
         utils/containers/set_utils.cppm
         utils/settings/settings_merge.cppm
         utils/settings/settings_paths.cppm

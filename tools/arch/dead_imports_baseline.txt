@@ -110,10 +110,10 @@ cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.ui.foundation.declared_c
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.diagnostics.debug
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.platform.hyperlink
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.fs.path
-cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.utils.session_storage
+cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.session.app_storage
 cc.ui.app.app [impl:ui/app/app_prompt_suggestion_wiring.cpp] -> cc.commands.command
 cc.ui.app.app [impl:ui/app/app_prompt_suggestion_wiring.cpp] -> cc.commands.registry
-cc.ui.app.app [impl:ui/app/app_prompt_suggestion_wiring.cpp] -> cc.utils.session_storage
+cc.ui.app.app [impl:ui/app/app_prompt_suggestion_wiring.cpp] -> cc.session.app_storage
 cc.ui.app.app [impl:ui/app/app_settings.cpp] -> cc.ui.screens.repl_state
 cc.ui.app.app [impl:ui/app/app_store_bridge.cpp] -> cc.types.command
 cc.ui.dialogs.all_renderers -> cc.ui.dialogs.bottom_renderers

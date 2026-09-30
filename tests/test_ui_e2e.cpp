@@ -20,7 +20,7 @@ import cc.ui.messages.message_image;
 import cc.commands.registry;
 import cc.query.query_engine;
 import cc.tools.tool;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 
 namespace {
 namespace fs = std::filesystem;

@@ -132,5 +132,8 @@ target_link_libraries(cc_commands
         # import the cc.plugins.* modules (lifecycle/manager/marketplace/
         # validation), now homed in cc_plugins.
         cc_plugins
+        # RFC-0001 Phase D B5d: insights.cppm imports cc.session.list_sessions,
+        # now homed in cc_session.
+        cc_session
         cc_vim
 )

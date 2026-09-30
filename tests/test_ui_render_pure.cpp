@@ -22,7 +22,7 @@ import cc.ui.screens.messages_store;
 import cc.commands.registry;
 import cc.query.query_engine;
 import cc.tools.tool;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 import cc.ui.foundation.design_figures;
 import cc.ui.foundation.theme_provider;
 import cc.ui.widgets.all_components;

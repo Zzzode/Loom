@@ -6,7 +6,7 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-export module cc.utils.session_storage;
+export module cc.session.app_storage;
 
 import std;
 

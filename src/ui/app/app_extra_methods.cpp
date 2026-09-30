@@ -41,7 +41,7 @@ module cc.ui.app.app;
 import cc.query.query_engine;
 import cc.commands.registry;
 import cc.commands.command;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 import cc.hooks.lifecycle_hooks;
 
 // ── Imports needed by the 5 methods (not available via the interface) ────

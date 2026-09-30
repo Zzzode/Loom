@@ -42,7 +42,7 @@ import std;
 
 import cc.types.types;
 import cc.commands.command;
-import cc.utils.list_sessions;
+import cc.session.list_sessions;
 import cc.serdes.json;
 import cc.utils.error;
 

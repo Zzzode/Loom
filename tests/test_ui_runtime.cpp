@@ -22,7 +22,7 @@ import cc.ui.messages.message_image;
 import cc.commands.registry;
 import cc.query.query_engine;
 import cc.tools.tool;
-import cc.utils.session_storage;
+import cc.session.app_storage;
 import cc.utils.team_helpers;
 import cc.utils.swarm_helpers;
 import cc.constants.constants;

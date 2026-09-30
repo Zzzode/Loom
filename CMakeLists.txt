@@ -349,23 +349,15 @@ target_include_directories(yyjson PUBLIC
 # the consumer links only loom::sdk; the rest are transitive.
 set_target_properties(cc_sdk PROPERTIES EXPORT_NAME sdk)
 
-# Install the embeddable SDK surface + its transitive PUBLIC link closure.
-# The cc_* list is the transitive PUBLIC closure of cc_sdk (20 targets,
-# derived by walking target_link_libraries from cc_sdk), plus cc_std: every
-# target links the `import std;` module via the directory-level
-# link_libraries(cc_std) in src/CMakeLists.txt, so CMake's export check
-# requires cc_std in the set even though it is not a target_link_libraries
-# edge. cc_std's FILE_SET installs the toolchain-provided std.cppm (staged
-# into the build tree at configure time); a consumer rebuilding the std BMI
-# needs the same toolchain generation (same clang++/libc++), consistent with
-# the experimental ABI policy above. The FetchContent targets
-# (yyjson/uv_a/httplib/screen) are installed into the same export so the set
-# is self-contained — find_dependency cannot conjure a FetchContent target.
-# Real target names (not aliases — CMake rejects installing ALIAS targets).
-# CURL/OpenSSL stay as find_dependency in LOOMConfig.cmake. ftxui-screen is
-# in the closure via cc_utils (which textually includes
-# <ftxui/screen/color.hpp> in text_highlighting.cppm).
-install(TARGETS
+# The exported cc_* targets ship C++23 module interfaces (.cppm). The
+# directory-level CMAKE_CXX_STANDARD (root CMakeLists.txt:137) does NOT
+# travel with the export, so without an explicit compile feature the
+# consumer-generated synth module targets fail CMake's cxx_std_20+ modules
+# check ("found cxx_std_17") and the installed .cppm files cannot be
+# compiled (§4.4 install smoke test). Record cxx_std_23 on every exported
+# cc_* target. (In-tree this is a no-op: the tree already builds C++23 via
+# the directory-level standard, so no compile flag changes.)
+set(LOOM_CC_EXPORT_TARGETS
     cc_sdk
     cc_utils
     cc_types
@@ -387,10 +379,42 @@ install(TARGETS
     cc_memdir
     cc_services
     cc_plugins
+)
+foreach(_loom_cc_target IN LISTS LOOM_CC_EXPORT_TARGETS)
+    target_compile_features(${_loom_cc_target} PUBLIC cxx_std_23)
+endforeach()
+
+# tree-sitter is an optional PUBLIC dep of cc_utils (CC_ENABLE_TREE_SITTER,
+# default OFF). When ON, its targets must be in the export set too or
+# install(EXPORT) fails the closure check. Their headers are installed from
+# src/CMakeLists.txt, where the FetchContent source dirs are in scope.
+set(LOOM_TREESITTER_EXPORT_TARGETS)
+if(CC_ENABLE_TREE_SITTER)
+    list(APPEND LOOM_TREESITTER_EXPORT_TARGETS tree-sitter tree-sitter-bash)
+endif()
+
+# Install the embeddable SDK surface + its transitive PUBLIC link closure.
+# The cc_* list is the transitive PUBLIC closure of cc_sdk (20 targets,
+# derived by walking target_link_libraries from cc_sdk), plus cc_std: every
+# target links the `import std;` module via the directory-level
+# link_libraries(cc_std) in src/CMakeLists.txt, so CMake's export check
+# requires cc_std in the set even though it is not a target_link_libraries
+# edge. cc_std's FILE_SET installs the toolchain-provided std.cppm (staged
+# into the build tree at configure time); a consumer rebuilding the std BMI
+# needs the same toolchain generation (same clang++/libc++), consistent with
+# the experimental ABI policy above. The FetchContent targets
+# (yyjson/uv_a/httplib/screen) are installed into the same export so the set
+# is self-contained — find_dependency cannot conjure a FetchContent target.
+# Real target names (not aliases — CMake rejects installing ALIAS targets).
+# CURL/OpenSSL stay as find_dependency in loomConfig.cmake. ftxui-screen is
+# in the closure via cc_utils's PUBLIC TLL ftxui::screen (cc_utils.cmake:109).
+install(TARGETS
+    ${LOOM_CC_EXPORT_TARGETS}
     yyjson
     uv_a
     httplib
     screen
+    ${LOOM_TREESITTER_EXPORT_TARGETS}
     EXPORT LOOMTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -400,28 +424,42 @@ install(TARGETS
 )
 
 # Generate and install the export targets (NAMESPACE loom:: — the consumer
-# does find_package(loom) and links loom::sdk).
+# does find_package(loom) and links loom::sdk). The config package is
+# `loom` (lowercase): CMake's config-mode search is case-sensitive, so the
+# installed files are loomConfig.cmake / loomConfigVersion.cmake under
+# lib/cmake/loom — find_package(LOOM) would NOT find them (verified with
+# CMake 3.31.2).
 install(EXPORT LOOMTargets
     FILE LOOMTargets.cmake
     NAMESPACE loom::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LOOM
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/loom
 )
 
 # Generate the package config file (drops Boost; keeps CURL, adds OpenSSL).
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/LOOMConfig.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfig.cmake"
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LOOM
+    "${CMAKE_CURRENT_BINARY_DIR}/loomConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/loom
 )
 
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfigVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/loomConfigVersion.cmake"
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
 )
 
 install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/LOOMConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LOOM
+    "${CMAKE_CURRENT_BINARY_DIR}/loomConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/loomConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/loom
+)
+
+# CMake ships no FindBrotli module, but the installed loom::httplib target
+# references Brotli::* (its compression support is enabled by default when
+# the system has the libs). Install httplib's own FindBrotli.cmake next to
+# loomConfig.cmake, which appends this directory to CMAKE_MODULE_PATH before
+# find_dependency(Brotli). httplib_SOURCE_DIR is set at this scope by the
+# FetchContent_MakeAvailable call above (offline cache or network alike).
+install(FILES "${httplib_SOURCE_DIR}/cmake/FindBrotli.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/loom
 )

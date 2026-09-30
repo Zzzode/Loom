@@ -19,6 +19,7 @@ if(CC_ENABLE_TREE_SITTER)
     # FetchContent_Populate; allow it here until the wiring is modernized.
     cmake_policy(SET CMP0169 OLD)
     include(FetchContent)
+    include(GNUInstallDirs)
     FetchContent_Declare(
         tree_sitter
         GIT_REPOSITORY https://github.com/tree-sitter/tree-sitter.git
@@ -54,8 +55,14 @@ if(CC_ENABLE_TREE_SITTER)
         ${tree_sitter_SOURCE_DIR}/lib/src/tree_cursor.c
         ${tree_sitter_SOURCE_DIR}/lib/src/wasm_store.c
     )
+    # BUILD_INTERFACE-only include dirs: a plain build-tree path here would
+    # break install(EXPORT) ("INTERFACE_INCLUDE_DIRECTORIES ... prefixed in
+    # the build directory") when tree-sitter is in the LOOMTargets export
+    # set (root CMakeLists.txt, CC_ENABLE_TREE_SITTER=ON). Consumers get the
+    # install-tree include dir via the install(TARGETS ... INCLUDES
+    # DESTINATION) entry; the header is installed below.
     target_include_directories(tree-sitter PUBLIC
-        ${tree_sitter_SOURCE_DIR}/lib/include
+        $<BUILD_INTERFACE:${tree_sitter_SOURCE_DIR}/lib/include>
     )
     set_target_properties(tree-sitter PROPERTIES
         C_STANDARD 11
@@ -67,14 +74,20 @@ if(CC_ENABLE_TREE_SITTER)
     else()
         target_compile_options(tree-sitter PRIVATE -w)
     endif()
+    install(FILES "${tree_sitter_SOURCE_DIR}/lib/include/tree_sitter/api.h"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/tree_sitter")
 
     # Build tree-sitter-bash language parser as a static library.
     add_library(tree-sitter-bash STATIC
         ${tree_sitter_bash_SOURCE_DIR}/src/parser.c
         ${tree_sitter_bash_SOURCE_DIR}/src/scanner.c
     )
+    # BUILD_INTERFACE-only for the same export-safety reason as tree-sitter
+    # above. No header is installed for tree-sitter-bash: the grammar entry
+    # point is consumed via an extern "C" declaration (tree_sitter.cppm:18),
+    # not by including its src/ header.
     target_include_directories(tree-sitter-bash PUBLIC
-        ${tree_sitter_bash_SOURCE_DIR}/src
+        $<BUILD_INTERFACE:${tree_sitter_bash_SOURCE_DIR}/src>
     )
     target_link_libraries(tree-sitter-bash PUBLIC tree-sitter)
     set_target_properties(tree-sitter-bash PROPERTIES

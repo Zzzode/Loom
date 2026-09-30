@@ -895,7 +895,7 @@ revives it:
   `httplib::httplib` — CMake rejects installing ALIAS targets), so the
   exported set is self-contained. Externally
   provided deps (`CURL::libcurl`, `OpenSSL::SSL/Crypto`) stay as
-  `find_dependency(CURL)` / `find_dependency(OpenSSL)` in `LOOMConfig.cmake`.
+  `find_dependency(CURL)` / `find_dependency(OpenSSL)` in `loomConfig.cmake`.
   (Making the third-party deps `PRIVATE` instead is not viable without proof of
   no interface leakage — `cc_services`'s module interfaces expose their types —
   so installing them is the chosen path.)
@@ -911,7 +911,11 @@ revives it:
   mixing), and a matched `clang-scan-deps`. Consumers rebuild the module BMIs
   from the installed `.cppm` files against their own compiler; there is no
   prebuilt `.pcm`/`.mod` and no cross-version ABI guarantee. This is stated in
-  the installed `LOOMConfig.cmake` and the package is marked experimental.
+  the installed `loomConfig.cmake` and the package is marked experimental.
+  The installed config is `loomConfig.cmake` (lowercase package name) under
+  `lib/cmake/loom` — CMake config-mode search is case-sensitive, so
+  `find_package(loom)` requires exactly that spelling (verified with CMake
+  3.31.2; `find_package(LOOM)` does not find it).
 - **Namespace:** `NAMESPACE loom::` (the c11 design specifies `loom::sdk`; the
   old block said `LOOM::`). The consumer does `find_package(loom)` and links
   `loom::sdk`.
@@ -921,14 +925,25 @@ revives it:
   Compiler-specific `.pcm`/`.mod` files are **not** installed (they are not
   portable across clang versions). The installed package therefore requires the
   consumer to use a compatible `clang++`/`clang-scan-deps` pair — documented in
-  the installed `LOOMConfig.cmake`.
+  the installed `loomConfig.cmake`.
 - **`LOOMConfig.cmake.in`** (`cmake/LOOMConfig.cmake.in`) exists but references
   `Boost` (line 7), which the tree no longer uses. Update it: drop `Boost`,
   keep `find_dependency(CURL)`, and add `find_dependency(OpenSSL)` for the
   externally-provided `OpenSSL::SSL/Crypto`. Do **not** `find_dependency`
   `yyjson`/`uv_a`/`httplib` — those are installed as targets in the
   `LOOMTargets` export (previous bullet), so they resolve from the export set
-  itself.
+  itself. **httplib's transitive system deps (added during the P3-server
+  fix):** the installed `loom::httplib` target references `Threads::Threads`,
+  `ZLIB::ZLIB`, and `Brotli::*` in its `INTERFACE_LINK_LIBRARIES` (httplib's
+  compression/OpenSSL support, on by default when the system has the libs),
+  and its `INTERFACE_COMPILE_DEFINITIONS` propagate
+  `CPPHTTPLIB_BROTLI_SUPPORT`/`CPPHTTPLIB_ZLIB_SUPPORT` — so the `cc_*`
+  objects reference those symbols and a consumer link needs them. The config
+  therefore also `find_dependency`s `Threads`, `ZLIB`, and `Brotli
+  COMPONENTS encoder decoder common`. CMake ships no `FindBrotli`, so
+  httplib's own `cmake/FindBrotli.cmake` is installed next to the config and
+  the config appends its directory to `CMAKE_MODULE_PATH` before the
+  `find_dependency(Brotli)` call.
 - **`loom.sdk` module-name promotion:** deferred. The C++ module names stay
   `cc.sdk.*` (the import string is not CMake-visible). Promoting to `loom.sdk`
   is a one-time public-ABI break that should wait for a real external consumer.
@@ -1394,3 +1409,81 @@ re-expression so a harness problem never blocks the server.
     blocks. The deviation (a `cc::services::api::Message` →
     `cc::core::Message` converter does not exist) is now recorded in §2.3;
     a non-lossy reader is a follow-up.
+- **2026-10-01 — P3-server review (agent: p3-server-review), verdict
+  request-changes; all findings addressed in a fix commit.** The P3-server
+  step (d4b347e) re-expressed the server route through `cc.query.assembly`
+  and revived the install/EXPORT; the review found one install-blocking
+  defect, one package-name defect, and three recorded lows:
+  - *Exported targets carry no cxx_std_23 (high, install-blocking):* the
+    root CMakeLists.txt sets `CMAKE_CXX_STANDARD 23` only at directory
+    scope, and no `cc_*` target calls `target_compile_features`, so the
+    installed `LOOMTargets.cmake` recorded zero `CXX_COMPILE_FEATURES`. A
+    consumer linking `loom::sdk` failed at generate time on every
+    synthesized module target ("has C++ sources that use modules, but does
+    not include cxx_std_20 (or newer) … found cxx_std_17") — the installed
+    `.cppm` files could not be compiled by any downstream project, failing
+    the design's own §4.4 install smoke test. Fixed: a loop over the 21
+    exported `cc_*` targets in the root install block now sets
+    `target_compile_features(<t> PUBLIC cxx_std_23)` (in-tree no-op: the
+    tree already builds C++23 via the directory-level standard). Verified
+    with the §4.4 smoke test: a consumer doing `find_package(loom)` +
+    `target_link_libraries(consumer PRIVATE loom::sdk)` with no
+    workaround now configures, compiles the installed `.cppm` files (348
+    synth-module BMIs), links, and runs.
+  - *Install config not self-contained (high, discovered via the §4.4
+    smoke test):* once the cxx_std_23 gate was cleared, the consumer
+    configure failed on `Threads::Threads` (referenced by the installed
+    `loom::httplib` target's `INTERFACE_LINK_LIBRARIES`). httplib's
+    compression/OpenSSL support is on by default, so its interface also
+    references `ZLIB::ZLIB` and `Brotli::*`, and its
+    `INTERFACE_COMPILE_DEFINITIONS` propagate
+    `CPPHTTPLIB_BROTLI_SUPPORT`/`CPPHTTPLIB_ZLIB_SUPPORT` — the `cc_*`
+    objects were compiled against those symbols, so a consumer link needs
+    them resolved. Fixed: `loomConfig.cmake` now `find_dependency`s
+    `Threads`, `ZLIB`, and `Brotli COMPONENTS encoder decoder common`;
+    CMake ships no `FindBrotli`, so httplib's own `cmake/FindBrotli.cmake`
+    is installed next to the config and the config appends its directory
+    to `CMAKE_MODULE_PATH` first. (The smoke-test consumer also needs the
+    build's libc++ toolchain flags and `CMAKE_CXX_EXTENSIONS OFF` — the
+    §2.6 ABI policy's "same clang++ major + same C++ stdlib" requirement;
+    the std BMI is built with extensions off and a `gnu++23` TU cannot
+    load it.)
+  - *Package-name case mismatch (med):* the design (§2.6, §4.4) documents
+    `find_package(loom)`, but the installed config was `LOOMConfig.cmake`
+    (from `project(LOOM)`), which on a case-sensitive filesystem answers
+    only to `find_package(LOOM)` (verified with CMake 3.31.2). Fixed: the
+    installed files are now `loomConfig.cmake` / `loomConfigVersion.cmake`
+    under `lib/cmake/loom`; §2.6 notes the case-sensitivity. The template
+    keeps its on-disk name `cmake/LOOMConfig.cmake.in`; its
+    `check_required_components` now takes `loom`.
+  - *Tree-sitter install-closure gap (low):* under
+    `CC_ENABLE_TREE_SITTER=ON`, `cc_utils` PUBLIC-links `tree-sitter`/
+    `tree-sitter-bash`, which were not in the install set — and their
+    plain build-tree `INTERFACE_INCLUDE_DIRECTORIES` would themselves
+    break `install(EXPORT)` ("prefixed in the build directory", verified
+    with a scratch CMake 3.31.2 project). Fixed: the targets join the
+    export set conditionally, their include dirs are wrapped in
+    `$<BUILD_INTERFACE:…>`, and `tree_sitter/api.h` is installed (the bash
+    grammar entry point is consumed via an `extern "C"` declaration, so no
+    tree-sitter-bash header is needed). Default is OFF, so the default
+    install path is unchanged and verified; the ON configuration follows
+    the same pattern as the yyjson INSTALL_INTERFACE fix but is not
+    buildable on this host (no network to fetch tree-sitter).
+  - *Commit-granularity deviation (low, recorded):* the commit combined
+    the server re-expression (§4.3 item 1's rewire half, deferred from
+    c56489e by declared deviation) with the install/EXPORT revival
+    (§4.3 item 4), making revert coarser than the design's revertible-
+    commit plan. The split was already declared in c56489e's message;
+    recorded here for the review log. No code action.
+  - *Keep-imports + comment imprecision (low, recorded):* the four
+    keep-imports in `server_routes.cppm` (`cc.query.query_engine`,
+    `cc.tools.tool`, `cc.tools.runtime_registry`,
+    `cc.orchestration.runtime_backends`) are retained purely as
+    BMI-reachability workarounds for the clang 22 SIGSEGV (LLVM #184957),
+    with no textual name references — documented, arch-check-marked, and
+    graph_check-clean (zero new dead imports); fragile but not a blocker.
+    The CMakeLists install-block comment claiming ftxui-screen enters the
+    closure via a textual `<ftxui/screen/color.hpp>` include was imprecise
+    — it enters via `cc_utils`'s PUBLIC TLL `ftxui::screen`
+    (cc_utils.cmake:109); the comment is corrected (the `screen` install
+    entry itself was already right).

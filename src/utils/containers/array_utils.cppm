@@ -1,7 +1,7 @@
 module;
 #include <cstddef>
 
-export module cc.utils.array_utils;
+export module cc.containers.array_utils;
 
 import std;
 

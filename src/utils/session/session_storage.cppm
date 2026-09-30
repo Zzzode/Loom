@@ -12,7 +12,7 @@ import std;
 
 import cc.utils.json;
 import cc.utils.error;
-import cc.utils.crypto;
+import cc.crypto.crypto;
 
 export namespace cc::utils {
 

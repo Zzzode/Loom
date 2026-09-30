@@ -1,5 +1,5 @@
 
-export module cc.utils.effort;
+export module cc.model.effort;
 
 import std;
 

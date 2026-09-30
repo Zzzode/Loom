@@ -34,8 +34,8 @@ export module cc.services.auth.sigv4;
 
 import std;
 
-import cc.utils.crypto;
-import cc.utils.env;
+import cc.crypto.crypto;
+import cc.platform.env.env;
 import cc.utils.error;
 import cc.utils.http_encoding;
 import cc.utils.json;

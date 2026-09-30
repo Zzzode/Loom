@@ -1,7 +1,7 @@
 module;
 #include <cstdlib>
 
-export module cc.utils.model.providers;
+export module cc.model.providers;
 
 import std;
 

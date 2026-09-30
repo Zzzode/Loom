@@ -19,7 +19,6 @@ target_sources(cc_utils
         utils/messages/collapse_read_search.cppm
         utils/messages/collapse_notifications.cppm
         utils/git/commit_attribution.cppm
-        utils/types/content_array.cppm
         utils/teams/control_message_compat.cppm
         utils/crypto/crypto.cppm
         utils/diagnostics/debug.cppm
@@ -96,7 +95,6 @@ target_sources(cc_utils
         utils/text/string.cppm
         utils/text/string_utils.cppm
         utils/tasks/task_utils.cppm
-        utils/types/tagged_id.cppm
         utils/teams/team_helpers.cppm
         utils/platform/terminal_helpers.cppm
         utils/parsing/text_highlighting.cppm

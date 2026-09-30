@@ -3,7 +3,7 @@
 module;
 #include <cstddef>
 
-export module cc.utils.circular_buffer;
+export module cc.containers.circular_buffer;
 
 import std;
 

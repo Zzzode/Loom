@@ -30,7 +30,7 @@ import cc.ui.screens.messages_store;
 import cc.ui.screens.task_view_store;
 import cc.utils.session_storage;
 import cc.utils.parse_references;
-import cc.utils.debug;
+import cc.diagnostics.debug;
 import cc.tools.agent_runtime;
 
 // ── Agent-menu-only imports (moved out of app_autocomplete.cpp) ─────────

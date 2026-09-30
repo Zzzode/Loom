@@ -2,7 +2,7 @@ module;
 
 #include <cstdint>
 
-export module cc.utils.tagged_id;
+export module cc.types.tagged_id;
 
 import std;
 

@@ -45,7 +45,7 @@ cc.state.store -> cc.state.selectors
 cc.orchestration.agent -> cc.tools.agent_color_manager
 cc.orchestration.agent -> cc.tools.agent_memory
 cc.orchestration.agent -> cc.tools.agent_memory_snapshot
-cc.orchestration.agent -> cc.utils.env_utils
+cc.orchestration.agent -> cc.platform.env.env_utils
 cc.orchestration.agent -> cc.utils.git
 cc.orchestration.agent -> cc.utils.tool_helpers
 cc.orchestration.agent.fork -> cc.services.mcp.types
@@ -61,7 +61,7 @@ cc.orchestration.agent.fork -> cc.tools.sleep
 cc.orchestration.agent.fork -> cc.tools.team
 cc.orchestration.agent.fork -> cc.tools.todo_write
 cc.orchestration.agent.fork -> cc.utils.bash_execution
-cc.orchestration.agent.fork -> cc.utils.env_utils
+cc.orchestration.agent.fork -> cc.platform.env.env_utils
 cc.orchestration.agent.fork -> cc.utils.git
 cc.orchestration.agent.fork -> cc.utils.swarm_backends
 cc.orchestration.agent.fork -> cc.utils.team_helpers
@@ -74,7 +74,7 @@ cc.orchestration.agent.resume -> cc.tools.sleep
 cc.orchestration.agent.resume -> cc.tools.team
 cc.orchestration.agent.resume -> cc.tools.todo_write
 cc.orchestration.agent.resume -> cc.tools.web_fetch
-cc.orchestration.agent.resume -> cc.utils.env_utils
+cc.orchestration.agent.resume -> cc.platform.env.env_utils
 cc.orchestration.agent.resume -> cc.utils.git
 cc.orchestration.agent.resume -> cc.utils.swarm_backends
 cc.orchestration.agent.resume -> cc.utils.team_helpers
@@ -84,7 +84,7 @@ cc.orchestration.agent.run -> cc.tools.agent_color_manager
 cc.orchestration.agent.run -> cc.tools.agent_display
 cc.orchestration.agent.run -> cc.tools.agent_memory
 cc.orchestration.agent.run -> cc.tools.agent_memory_snapshot
-cc.orchestration.agent.run -> cc.utils.env_utils
+cc.orchestration.agent.run -> cc.platform.env.env_utils
 cc.orchestration.agent.run -> cc.utils.tool_helpers
 cc.tools.command_semantics -> cc.utils.format
 cc.tools.file_edit -> cc.utils.string_utils
@@ -107,7 +107,7 @@ cc.ui.app.app [impl:ui/app/app_constructor.cpp] -> cc.state.store
 cc.ui.app.app [impl:ui/app/app_extra_methods.cpp] -> cc.commands.registry
 cc.ui.app.app [impl:ui/app/app_extra_methods.cpp] -> cc.hooks.lifecycle_hooks
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.ui.foundation.declared_cursor
-cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.utils.debug
+cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.diagnostics.debug
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.utils.hyperlink
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.utils.path
 cc.ui.app.app [impl:ui/app/app_handle_submit.cpp] -> cc.utils.session_storage

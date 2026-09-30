@@ -2,7 +2,7 @@ module;
 #include <cmath>
 #include <cstddef>
 
-export module cc.utils.fps_tracker;
+export module cc.diagnostics.fps_tracker;
 
 import std;
 

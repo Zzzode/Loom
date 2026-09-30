@@ -16,7 +16,7 @@ export module cc.utils.clipboard;
 
 import std;
 
-import cc.utils.crypto;
+import cc.crypto.crypto;
 
 export namespace cc::utils::clipboard {
 

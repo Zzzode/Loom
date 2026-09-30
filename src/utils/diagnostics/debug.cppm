@@ -2,11 +2,11 @@ module;
 #include <cstdlib>
 #include <ctime>
 
-export module cc.utils.debug;
+export module cc.diagnostics.debug;
 
 import std;
 
-import cc.utils.debug_filter;
+import cc.diagnostics.debug_filter;
 
 export namespace cc::utils {
 

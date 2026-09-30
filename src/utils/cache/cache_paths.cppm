@@ -3,7 +3,7 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-export module cc.utils.cache_paths;
+export module cc.cache.cache_paths;
 
 import std;
 

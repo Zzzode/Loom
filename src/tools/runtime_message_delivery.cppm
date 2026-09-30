@@ -39,7 +39,7 @@ import cc.tools.team;                // TeamMember / global_team_store
 import cc.tools.runtime_shared_utils;
 import cc.utils.json;
 import cc.utils.http;
-import cc.utils.uuid_utils;
+import cc.crypto.uuid_utils;
 import cc.utils.team_helpers;
 
 export namespace cc::tools::runtime_message_delivery {

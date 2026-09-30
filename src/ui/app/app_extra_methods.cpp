@@ -46,10 +46,10 @@ import cc.hooks.lifecycle_hooks;
 
 // ── Imports needed by the 5 methods (not available via the interface) ────
 import cc.utils.bash_execution;
-import cc.utils.model.model;
+import cc.model.model;
 import cc.constants.constants;
 import cc.utils.git;
-import cc.utils.crypto;
+import cc.crypto.crypto;
 import cc.utils.clipboard;
 import cc.utils.parse_references;
 import cc.ui.messages.collapse_background_bash;

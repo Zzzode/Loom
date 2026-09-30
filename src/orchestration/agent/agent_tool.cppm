@@ -35,7 +35,7 @@ import cc.services.api.streaming;
 import cc.services.api.bootstrap;
 import cc.services.mcp.types;
 import cc.utils.swarm_backends;
-import cc.utils.env_utils;
+import cc.platform.env.env_utils;
 import cc.utils.tool_helpers;
 import cc.utils.bash_execution;
 

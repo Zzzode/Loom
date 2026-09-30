@@ -46,7 +46,7 @@ export module cc.services.auth.azure_credential;
 
 import std;
 
-import cc.utils.env;
+import cc.platform.env.env;
 import cc.utils.error;
 import cc.utils.http_encoding;
 import cc.utils.json;

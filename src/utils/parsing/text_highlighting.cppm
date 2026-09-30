@@ -16,7 +16,7 @@ module;
 
 #include <ftxui/screen/color.hpp>
 
-export module cc.utils.text_highlighting;
+export module cc.parsing.highlight.text_highlighting;
 
 import std;
 

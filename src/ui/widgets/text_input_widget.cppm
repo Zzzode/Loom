@@ -22,7 +22,7 @@ export module cc.ui.widgets.text_input_widget;
 
 import std;
 
-import cc.utils.text_highlighting;
+import cc.parsing.highlight.text_highlighting;
 import cc.ui.prompt.combined_highlights;
 import cc.ui.prompt.placeholder_cascade;  // P1: RenderPlaceholder helper
 import cc.ui.foundation.ui_types;  // canonical VimMode

@@ -3,7 +3,7 @@ export module cc.utils.script_tool_enabled;
 
 import std;
 
-import cc.utils.env_utils;
+import cc.platform.env.env_utils;
 
 export namespace cc::utils::script_tool {
 

@@ -1,5 +1,5 @@
 
-export module cc.utils.model.model;
+export module cc.model.model;
 
 import std;
 

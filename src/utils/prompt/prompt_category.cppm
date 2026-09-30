@@ -1,5 +1,5 @@
 
-export module cc.utils.prompt_category;
+export module cc.prompt.support.prompt_category;
 
 import std;
 

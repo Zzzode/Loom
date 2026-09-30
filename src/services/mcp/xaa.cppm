@@ -22,7 +22,7 @@ export module cc.services.mcp.xaa;
 
 import std;
 
-import cc.utils.crypto;
+import cc.crypto.crypto;
 import cc.utils.error;
 import cc.utils.json;
 import cc.services.mcp.xaa_idp_login;

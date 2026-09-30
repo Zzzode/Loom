@@ -17,7 +17,7 @@ export module cc.tools.destructive_command_warning;
 
 import std;
 
-import cc.utils.tree_sitter.bash;
+import cc.parsing.tree_sitter.bash;
 
 export namespace cc::tools::bash_validation {
 

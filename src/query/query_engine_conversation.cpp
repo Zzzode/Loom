@@ -18,7 +18,7 @@ import cc.utils.json;
 import cc.session.storage;
 import cc.memdir.paths;
 import cc.services.extract_memories;
-import cc.utils.debug;
+import cc.diagnostics.debug;
 
 namespace cc::core {
 

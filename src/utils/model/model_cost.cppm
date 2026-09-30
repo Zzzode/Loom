@@ -2,7 +2,7 @@ module;
 
 #include <cmath>
 
-export module cc.utils.model_cost;
+export module cc.model.model_cost;
 
 import std;
 

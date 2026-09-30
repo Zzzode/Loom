@@ -9,7 +9,7 @@ module cc.orchestration.agent.utils;
 import std;
 
 import cc.utils.git;
-import cc.utils.env_utils;
+import cc.platform.env.env_utils;
 import cc.utils.parse_int;
 import cc.utils.team_helpers;
 import cc.tools.team;

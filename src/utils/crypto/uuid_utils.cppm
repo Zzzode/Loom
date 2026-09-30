@@ -4,7 +4,7 @@ module;
 #include <cctype>
 #include <cstddef>
 
-export module cc.utils.uuid_utils;
+export module cc.crypto.uuid_utils;
 
 import std;
 

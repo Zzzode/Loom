@@ -43,10 +43,10 @@ import cc.services.auth.gcp_adc;
 import cc.services.auth.azure_credential;
 import cc.services.api.models;
 
-import cc.utils.env;
+import cc.platform.env.env;
 import cc.utils.error;
 import cc.utils.http_encoding;
-import cc.utils.model.providers;
+import cc.model.providers;
 
 export namespace cc::services::auth::byoc {
 

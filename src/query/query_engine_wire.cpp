@@ -15,7 +15,7 @@ import std;
 import cc.types.types;
 import cc.utils.json;
 import cc.utils.tool_deny_rules;
-import cc.utils.env_utils;
+import cc.platform.env.env_utils;
 import cc.query.wire_protocol;
 import cc.query.wire_anthropic;
 import cc.query.wire_openai;

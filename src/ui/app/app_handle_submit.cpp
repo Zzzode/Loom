@@ -50,7 +50,7 @@ import cc.ui.prompt.fuzzy_rank_nucleo;
 import cc.ui.screens.repl_screen;
 import cc.ui.screens.repl_state;
 import cc.ui.screens.task_view_store;
-import cc.utils.debug;
+import cc.diagnostics.debug;
 import cc.utils.hyperlink;
 import cc.utils.parse_references;
 import cc.utils.path;

@@ -6,7 +6,7 @@ module;
 #include <cstdint>
 #include <cstring>
 
-export module cc.utils.crypto;
+export module cc.crypto.crypto;
 
 import std;
 

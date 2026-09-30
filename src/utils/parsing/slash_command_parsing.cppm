@@ -1,4 +1,4 @@
-export module cc.utils.slash_command_parsing;
+export module cc.parsing.cli.slash_command_parsing;
 
 import std;
 

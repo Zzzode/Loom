@@ -5,7 +5,7 @@ export module cc.services.oauth.crypto;
 
 import std;
 
-import cc.utils.crypto;
+import cc.crypto.crypto;
 
 export namespace cc::services::oauth {
 

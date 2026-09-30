@@ -2,7 +2,7 @@ module;
 #include <cctype>
 #include <cstdlib>
 
-export module cc.utils.env_utils;
+export module cc.platform.env.env_utils;
 
 import std;
 

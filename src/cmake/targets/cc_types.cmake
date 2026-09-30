@@ -5,5 +5,7 @@ target_sources(cc_types
         types/command.cppm
         types/tool_types.cppm
         types/types.cppm
+        utils/types/content_array.cppm
+        utils/types/tagged_id.cppm
 )
 target_link_libraries(cc_types PUBLIC cc_utils)

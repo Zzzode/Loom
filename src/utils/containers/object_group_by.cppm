@@ -2,7 +2,7 @@ module;
 
 #include <cstddef>
 
-export module cc.utils.object_group_by;
+export module cc.containers.object_group_by;
 
 import std;
 

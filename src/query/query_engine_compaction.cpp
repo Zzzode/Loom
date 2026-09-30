@@ -18,7 +18,7 @@ import cc.tools.agent_runtime;
 // TOOL_RESULT_CLEARED_MESSAGE: namespace-scope constexpr string_views the
 // dead-import heuristic does not harvest.
 import cc.utils.tool_helpers;  // arch-check: keep-import
-import cc.utils.env_utils;
+import cc.platform.env.env_utils;
 
 namespace cc::core {
 

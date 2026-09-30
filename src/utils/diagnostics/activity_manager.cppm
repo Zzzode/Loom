@@ -1,4 +1,4 @@
-export module cc.utils.activity_manager;
+export module cc.diagnostics.activity_manager;
 
 import std;
 

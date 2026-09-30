@@ -7,7 +7,7 @@ export module cc.services.compact.api_microcompact;
 
 import std;
 
-import cc.utils.env_utils;
+import cc.platform.env.env_utils;
 
 export namespace cc::services::compact {
 

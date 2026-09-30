@@ -8,7 +8,7 @@ import std;
 
 import cc.benchmarks.pare.schema;
 import cc.utils.json;
-import cc.utils.crypto;
+import cc.crypto.crypto;
 
 export namespace cc::benchmarks::pare {
 

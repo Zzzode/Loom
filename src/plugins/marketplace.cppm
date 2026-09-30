@@ -12,7 +12,7 @@ export module cc.plugins.marketplace;
 
 import std;
 
-import cc.utils.crypto;
+import cc.crypto.crypto;
 
 export namespace cc::plugins {
 

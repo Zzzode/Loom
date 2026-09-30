@@ -2,7 +2,7 @@ export module cc.utils.plugin_versioning;
 
 import std;
 
-import cc.utils.crypto;
+import cc.crypto.crypto;
 
 export namespace cc::utils::plugin_versioning {
 

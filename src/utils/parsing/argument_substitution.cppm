@@ -2,7 +2,7 @@ module;
 
 #include <cctype>
 
-export module cc.utils.argument_substitution;
+export module cc.parsing.cli.argument_substitution;
 
 import std;
 

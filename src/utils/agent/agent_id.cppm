@@ -1,4 +1,4 @@
-export module cc.utils.agent_id;
+export module cc.agent.agent_id;
 
 import std;
 import cc.utils.parse_int;

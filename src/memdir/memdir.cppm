@@ -9,7 +9,7 @@ export module cc.memdir.memdir;
 
 import std;
 
-import cc.utils.env_utils;
+import cc.platform.env.env_utils;
 
 export namespace memdir {
 

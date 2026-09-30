@@ -29,8 +29,8 @@
 #include <httplib.h>
 
 import std;
-import cc.utils.crypto;
-import cc.utils.env;
+import cc.crypto.crypto;
+import cc.platform.env.env;
 import cc.utils.http_encoding;
 import cc.utils.json;
 

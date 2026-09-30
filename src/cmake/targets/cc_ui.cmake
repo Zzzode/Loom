@@ -5,12 +5,6 @@ target_sources(cc_ui
         ui/app/app.cppm
         ui/app/app_impl.cppm
         ui/app/app_dialog_registration.cppm
-        ui/features/agents/agent_cards.cppm
-        ui/features/agents/agent_shared_widgets.cppm
-        ui/features/agents/agent_wizard.cppm
-        ui/features/grove.cppm
-        ui/features/plugins/lsp_recommendation_menu.cppm
-        ui/features/plugins/plugin_hint_menu.cppm
         ui/dialogs/dialog_system.cppm
         ui/dialogs/dialog_frame.cppm
         ui/dialogs/dialog_default_renderers.cppm
@@ -39,12 +33,6 @@ target_sources(cc_ui
         # entire target if any listed source is missing.  Only add module
         # sources that exist AND contain real implementations.  Registration
         # lives in register_default_renderers() in default_renderers.cppm.
-        ui/features/plugins/plugin_install_flow.cppm
-        ui/features/plugins/plugin_manage_panel.cppm
-        ui/features/plugins/plugin_marketplace_browse.cppm
-        ui/features/plugins/plugin_settings_dialog.cppm
-        ui/features/teams/live_teammates.cppm
-        ui/features/hooks_ui.cppm
         ui/screens/doctor_screen.cppm
         ui/screens/doctor_dialog_registration.cppm  # RFC 0002 F2 row 4: doctor renderer registration (screens side; dialogs must not import screens)
         ui/screens/repl_state.cppm
@@ -163,6 +151,11 @@ target_link_libraries(cc_ui
         # library; linked PUBLIC so the remaining areas can still import
         # cc.ui.messages.* during the staged split.
         cc_ui_messages
+        # RFC 0002 F4: the cc.ui.features.* area (agent cards/wizard, grove,
+        # hooks UI, plugin menus/panels, live teammates) now lives in its
+        # own library; linked PUBLIC so the remaining areas can still import
+        # cc.ui.features.* during the staged split.
+        cc_ui_features
         cc_utils
         cc_types
         cc_query

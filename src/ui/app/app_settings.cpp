@@ -1,5 +1,5 @@
 // app_settings.cpp — plain impl unit owning the SettingsState nested PIMPL.
-// Keeps cc.utils.settings_manager out of both app.cppm and the :impl BMI.
+// Keeps cc.config.settings_manager out of both app.cppm and the :impl BMI.
 module;
 
 
@@ -7,7 +7,7 @@ module cc.ui.app.app;
 
 import std;
 
-import cc.utils.settings_manager;
+import cc.config.settings_manager;
 import cc.ui.screens.repl_state;
 
 namespace cc::ui {

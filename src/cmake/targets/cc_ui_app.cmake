@@ -104,6 +104,7 @@ target_link_libraries(cc_ui_app
         cc_ui_dialogs
         cc_ui_screens
         cc_commands
+        cc_config
         cc_constants
         cc_hooks
         cc_query

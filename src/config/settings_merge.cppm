@@ -1,4 +1,4 @@
-export module cc.utils.settings_merge;
+export module cc.config.settings_merge;
 
 import std;
 

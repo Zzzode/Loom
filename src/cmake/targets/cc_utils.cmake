@@ -71,10 +71,6 @@ target_sources(cc_utils
         utils/text/semantic_number.cppm
         utils/security/sanitization.cppm
         utils/containers/set_utils.cppm
-        utils/settings/settings_merge.cppm
-        utils/settings/settings_paths.cppm
-        utils/settings/settings_sources.cppm
-        utils/settings/settings_validation.cppm
         utils/shell/shell.cppm
         utils/shell/shell_parser.cppm
         utils/shell/shell_rule_matching.cppm
@@ -92,7 +88,6 @@ target_sources(cc_utils
         utils/crypto/uuid_utils.cppm
         utils/platform/xdg.cppm
         utils/serdes/yaml.cppm
-        utils/settings/settings_manager.cppm
         utils/shell/shell_providers.cppm
         utils/swarm/swarm_backends.cppm
         utils/swarm/swarm_helpers.cppm

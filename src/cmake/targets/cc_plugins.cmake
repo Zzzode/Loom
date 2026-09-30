@@ -14,4 +14,7 @@ target_sources(cc_plugins
         plugins/plugin_validation.cppm
         plugins/plugin_versioning.cppm
 )
-target_link_libraries(cc_plugins PUBLIC cc_utils cc_types yyjson uv_a)
+# RFC 0001 Phase D B5g: plugin_identifier imports cc.config.settings_sources
+# (moved to cc_config in this batch), so cc_plugins links cc_config. Acyclic:
+# cc_plugins -> cc_config -> cc_utils.
+target_link_libraries(cc_plugins PUBLIC cc_utils cc_types cc_config yyjson uv_a)

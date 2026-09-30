@@ -6,15 +6,15 @@ module;
 #include <cstdlib>
 #include <cstdint>
 
-export module cc.utils.settings_manager;
+export module cc.config.settings_manager;
 
 import std;
 
 import cc.serdes.json;
-import cc.utils.settings_merge;
-import cc.utils.settings_paths;
-import cc.utils.settings_sources;
-import cc.utils.settings_validation;
+import cc.config.settings_merge;
+import cc.config.settings_paths;
+import cc.config.settings_sources;
+import cc.config.settings_validation;
 
 export namespace cc::utils::settings_manager {
 

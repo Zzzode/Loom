@@ -1,4 +1,4 @@
-export module cc.utils.settings_sources;
+export module cc.config.settings_sources;
 
 import std;
 

@@ -50,7 +50,7 @@ struct TeammateStateDeleter {
 };
 
 // Nested PIMPL for settings (disk load + file-watch). Defined in
-// app_settings.cpp; keeps cc.utils.settings_manager out of the :impl BMI.
+// app_settings.cpp; keeps cc.config.settings_manager out of the :impl BMI.
 struct SettingsState;
 struct SettingsStateDeleter {
     void operator()(SettingsState* p) const noexcept;

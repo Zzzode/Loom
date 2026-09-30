@@ -6,7 +6,7 @@ export module cc.plugins.plugin_identifier;
 
 import std;
 
-import cc.utils.settings_sources;
+import cc.config.settings_sources;
 
 export namespace cc::utils::plugin_identifier {
 

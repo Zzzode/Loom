@@ -139,6 +139,14 @@ MODULE_RANK_OVERRIDE = {
     "cc.cli.sse_transport": 2,
     "cc.cli.websocket_transport": 2,
     "cc.cli.update": 2,
+    # RFC 0001 Phase D B5g (D5): the cc.config.settings_* modules import
+    # cc.serdes.json (rank 2); cc.config is rank 1, so without the override
+    # those edges read as rank-1->2 upward edges. Rank them with utils.
+    "cc.config.settings_manager": 2,
+    "cc.config.settings_merge": 2,
+    "cc.config.settings_paths": 2,
+    "cc.config.settings_sources": 2,
+    "cc.config.settings_validation": 2,
 }
 
 CORE8 = ["cc.config", "cc.hooks", "cc.services", "cc.skills",

@@ -1,8 +1,8 @@
-export module cc.utils.settings_paths;
+export module cc.config.settings_paths;
 
 import std;
 
-import cc.utils.settings_sources;
+import cc.config.settings_sources;
 
 export namespace cc::utils::settings_paths {
 

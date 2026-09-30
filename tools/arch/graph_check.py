@@ -153,6 +153,12 @@ MODULE_RANK_OVERRIDE = {
     "cc.config.settings_validation": 2,
 }
 
+# RFC 0001 Phase D B7: cc.utils stays in CORE8 even though the rename track
+# dissolved the area down to one module — cc.utils.error (the D1 frozen
+# exception, 52 importers across the other CORE8 areas). It is a pure leaf
+# (imports only std), so it forms no SCC; keeping it here means the
+# --target-core8 gate still checks its edges. Removing it would silently
+# stop checking the area.
 CORE8 = ["cc.config", "cc.hooks", "cc.services", "cc.skills",
          "cc.state", "cc.task_types", "cc.tools", "cc.utils"]
 TARGET_AREAS = CORE8 + ["cc.orchestration"]

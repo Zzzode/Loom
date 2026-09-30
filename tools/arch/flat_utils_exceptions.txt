@@ -1,4 +1,15 @@
-# RFC 0001 Phase D — frozen exceptions to the "no flat cc.utils.* module" gate.
-# One module name per line. A cc.utils.* interface must otherwise live in a
-# domain subdirectory under src/utils/<area>/ (its module NAME stays stable).
+# RFC 0001 Phase D — frozen exceptions to the "no flat module in src/utils/" gate.
+# One module name per line. An interface placed flat directly in src/utils/
+# must otherwise live in a domain subdirectory under src/utils/<area>/.
+# The gate was generalized from the cc.utils.* name prefix to the path in
+# B7 (Phase D finalize): the rename track moved every module NAME out of
+# cc.utils.*, so a name-prefix gate would no longer catch a flattened file.
+#
+# D1 (frozen, recorded 2026-09-30 B7): cc.utils.error KEEPS the cc.utils.*
+# name — the sole survivor of the 124-module cc.utils dissolution. It lives
+# in src/utils/error/error.cppm (a domain subdirectory, NOT flat), so it
+# needs no active flat-placement exception entry here. 52 importers make a
+# rename high-churn for zero structural gain; the cc.utils area stays in
+# CORE8/TARGET_AREAS because error is a pure leaf (imports only std).
+#
 # Empty by design: the 2026-09-26 relocation grouped every module.

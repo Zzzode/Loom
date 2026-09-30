@@ -48,9 +48,13 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 SRC = ROOT / "src"
 BASELINE = HERE / "inline_def_baseline.txt"
-# RFC 0001 Phase D: cc.utils.* modules live in domain subdirectories under
-# src/utils/<area>/; a module file placed flat directly in src/utils/ fails.
-# One module name per line may be frozen here as an explicit exception.
+# RFC 0001 Phase D: every module interface under src/utils/ must live in a
+# domain subdirectory (src/utils/<area>/); a file placed flat directly in
+# src/utils/ fails. Generalized from the cc.utils.* name prefix to the path
+# in B7 (Phase D finalize): the rename track moved every module NAME out of
+# cc.utils.* (only the frozen cc.utils.error remains, in src/utils/error/),
+# so a name-prefix gate would no longer catch a newly-flattened file. One
+# module name per line may be frozen here as an explicit exception.
 FLAT_UTILS_EXCEPTIONS = HERE / "flat_utils_exceptions.txt"
 
 C2_LIMIT = 100   # no interface above this once graduated
@@ -384,16 +388,19 @@ def run() -> dict:
             continue
         effective = max(0, bodies - keep)
         rel = str(pathlib.Path(path).relative_to(ROOT))
-        # Phase D layout: a cc.utils.* interface must not sit flat directly in
-        # src/utils/ — it belongs in a domain subdirectory (names stay stable).
-        if (module.startswith("cc.utils.")
-                and rel.startswith("src/utils/")
+        # Phase D layout: an interface must not sit flat directly in
+        # src/utils/ — it belongs in a domain subdirectory. Keyed on the
+        # PATH (not the cc.utils.* name prefix) since B7: the rename track
+        # moved every module name out of cc.utils.*, so a name-prefix gate
+        # would be vacuous; the path-based gate still catches a newly
+        # flattened file regardless of its module name.
+        if (rel.startswith("src/utils/")
                 and "/" not in rel[len("src/utils/"):]
                 and module not in flat_exceptions):
             violations.append(
                 f"{module}: flat placement {rel} violates RFC 0001 Phase D "
-                f"(cc.utils.* modules live under src/utils/<area>/; move it or "
-                f"add a frozen exception to {FLAT_UTILS_EXCEPTIONS.name})")
+                f"(modules live under src/utils/<area>/; move it or add a "
+                f"frozen exception to {FLAT_UTILS_EXCEPTIONS.name})")
         row = {'module': module, 'path': rel, 'inline': effective,
                'defaulted': defaulted, 'keep': keep}
         spec = baseline.get(module)

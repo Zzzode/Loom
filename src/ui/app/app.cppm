@@ -534,7 +534,7 @@ public:
     void TriggerStatuslineUpdate();
 
     // Build the statusline JSON payload / execute the user command.
-    // Out-of-line in app_constructor.cpp so cc.utils.statusline_runner,
+    // Out-of-line in app_constructor.cpp so cc.ui.app.statusline_runner,
     // cc.utils.model and cc.constants stay out of this interface's BMI.
     [[nodiscard]] std::string BuildStatuslineInputJson();
     bool ExecuteStatuslineCommand(std::string_view command,

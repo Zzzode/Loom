@@ -45,6 +45,11 @@ target_sources(cc_ui_messages
         ui/messages/messages_list.cppm
         ui/messages/message_pipeline.cppm
         ui/messages/collapse_background_bash.cppm
+        # RFC 0001 Phase D B5a: moved from cc_utils (src/utils/messages/).
+        # Pure leaves (import std only); test-only importers.
+        ui/messages/collapse_notifications.cppm
+        ui/messages/collapse_read_search.cppm
+        ui/messages/message_predicates.cppm
         ui/messages/scroll_keybindings.cppm
         ui/messages/virtual_message_list.cppm
 )

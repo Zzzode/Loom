@@ -1,4 +1,4 @@
-export module cc.utils.collapse_notifications;
+export module cc.ui.messages.collapse_notifications;
 
 import std;
 

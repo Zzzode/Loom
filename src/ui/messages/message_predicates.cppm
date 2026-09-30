@@ -1,4 +1,4 @@
-export module cc.utils.message_predicates;
+export module cc.ui.messages.message_predicates;
 
 import std;
 

@@ -21,6 +21,10 @@ target_sources(cc_ui_app
         ui/app/app.cppm
         ui/app/app_impl.cppm
         ui/app/app_dialog_registration.cppm
+        # RFC 0001 Phase D B5a: moved from cc_utils (src/utils/statusline/).
+        # Imports cc.serdes.json + cc.utils.hooks_execution; cc_ui_app links
+        # cc_utils and cc_hooks PUBLIC, so deps are satisfied.
+        ui/app/statusline_runner.cppm
 )
 # Module implementation units for cc.ui.app.app_dialog_registration — one per
 # dialog-renderer aggregator, so no single TU imports more than one aggregator's

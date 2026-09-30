@@ -36,7 +36,7 @@ import cc.ui.dialogs.triggers;
 import cc.ui.app.app_dialog_registration;
 import cc.ui.tools.init;
 import cc.ui.prompt.prompt_input_footer;
-import cc.utils.statusline_runner;
+import cc.ui.app.statusline_runner;
 import cc.model.model;
 import cc.constants.constants;
 import cc.skills.load_skills_dir;

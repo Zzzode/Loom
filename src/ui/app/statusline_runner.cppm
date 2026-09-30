@@ -21,14 +21,14 @@
 ///   - Empty output → no display
 ///   - Output is trimmed; blank lines are removed
 ///
-/// MODULE:   cc.utils.statusline_runner
+/// MODULE:   cc.ui.app.statusline_runner
 /// LICENCE:  Exported.  Imported by app.cppm (AppAdapter).
 /// =========================================================================
 
 module;
 
 
-export module cc.utils.statusline_runner;
+export module cc.ui.app.statusline_runner;
 
 import std;
 

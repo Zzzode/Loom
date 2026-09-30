@@ -1,7 +1,7 @@
 module;
 #include <cstddef>
 
-export module cc.utils.collapse_read_search;
+export module cc.ui.messages.collapse_read_search;
 
 import std;
 

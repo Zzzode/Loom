@@ -16,8 +16,6 @@ target_sources(cc_utils
         utils/cache/cache_paths.cppm
         utils/containers/circular_buffer.cppm
         utils/skills/loom_hints.cppm
-        utils/messages/collapse_read_search.cppm
-        utils/messages/collapse_notifications.cppm
         utils/git/commit_attribution.cppm
         utils/teams/control_message_compat.cppm
         utils/crypto/crypto.cppm
@@ -59,7 +57,6 @@ target_sources(cc_utils
         utils/model/model.cppm
         utils/model/providers.cppm
         utils/model/model_cost.cppm
-        utils/messages/message_predicates.cppm
         utils/containers/object_group_by.cppm
         utils/fs/path.cppm
         utils/fs/path_utils.cppm
@@ -107,7 +104,6 @@ target_sources(cc_utils
         utils/hooks/hooks_config.cppm
         utils/hooks/hooks_execution.cppm
         utils/hooks/hooks_registry.cppm
-        utils/statusline/statusline_runner.cppm
         utils/plugin/plugin_lifecycle.cppm
         utils/plugin/plugin_loader.cppm
         utils/plugin/plugin_manager.cppm

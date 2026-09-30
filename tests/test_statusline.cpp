@@ -1,14 +1,14 @@
 /// @file test_statusline.cpp
 /// @brief Unit tests for the statusline system:
 ///   - cc.commands.statusline      (shell integration setup command)
-///   - cc.utils.statusline_runner  (statusline command execution + JSON input)
+///   - cc.ui.app.statusline_runner  (statusline command execution + JSON input)
 
 #include <gtest/gtest.h>
 #include <cstdlib>
 
 import std;
 import cc.commands.statusline;
-import cc.utils.statusline_runner;
+import cc.ui.app.statusline_runner;
 import cc.serdes.json;
 
 namespace {
@@ -119,7 +119,7 @@ TEST(StatuslineCommand, NoCustomFormatWhenEmpty) {
 }
 
 // ===========================================================================
-// 2. cc.utils.statusline_runner — JSON serialization (to_json)
+// 2. cc.ui.app.statusline_runner — JSON serialization (to_json)
 // ===========================================================================
 
 using cc::utils::statusline::StatusLineCommandInput;
@@ -507,7 +507,7 @@ TEST(StatuslineJson, EmptyAddedDirsIsValidArray) {
 }
 
 // ===========================================================================
-// 3. cc.utils.statusline_runner — execute_statusline_command
+// 3. cc.ui.app.statusline_runner — execute_statusline_command
 // ===========================================================================
 
 using cc::utils::statusline::execute_statusline_command;

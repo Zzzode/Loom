@@ -353,7 +353,7 @@ target_link_libraries(test_statusline
     PRIVATE
         cc_core
         cc_commands            # cc.commands.statusline
-        cc_utils               # cc.utils.statusline_runner / cc.serdes.json
+        cc_utils               # cc.serdes.json (statusline_runner now in cc_ui_app)
         GTest::gtest_main
 )
 gtest_discover_tests(test_statusline DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

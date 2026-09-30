@@ -53,9 +53,6 @@ target_sources(cc_ui
         # entire target if any listed source is missing.  Only add module
         # sources that exist AND contain real implementations.  Registration
         # lives in register_default_renderers() in default_renderers.cppm.
-        ui/chrome/layout.cppm
-        ui/chrome/fullscreen_layout.cppm
-        ui/chrome/yoga.cppm
         ui/messages/messages.cppm
         ui/messages/assistant_message.cppm
         ui/messages/error_message.cppm
@@ -89,7 +86,6 @@ target_sources(cc_ui
         ui/messages/collapse_background_bash.cppm  # P0-2 — collapseBackgroundBashNotifications pass (Messages.tsx:520)
         ui/messages/scroll_keybindings.cppm       # UI22 — ScrollKeybindingHandler (1011 → 752 loc)
         ui/messages/virtual_message_list.cppm     # UI22 — VirtualScroll (1081 → 857 loc)
-        ui/chrome/panels.cppm
         ui/permissions/permission_bash.cppm
         ui/permissions/permission_computer_use.cppm
         ui/permissions/permission_file_edit.cppm
@@ -116,11 +112,7 @@ target_sources(cc_ui
         ui/features/plugins/plugin_manage_panel.cppm
         ui/features/plugins/plugin_marketplace_browse.cppm
         ui/features/plugins/plugin_settings_dialog.cppm
-        ui/chrome/ink_utils.cppm
-        ui/chrome/text_measure.cppm
         ui/features/teams/live_teammates.cppm
-        ui/chrome/terminal_io.cppm
-        ui/chrome/ansi_render.cppm          # RFC 0002 F1 row 8: ANSI/SGR -> FTXUI leaf (imports only std + terminal_io)
         ui/features/hooks_ui.cppm
         ui/screens/doctor_screen.cppm
         ui/screens/doctor_dialog_registration.cppm  # RFC 0002 F2 row 4: doctor renderer registration (screens side; dialogs must not import screens)
@@ -135,7 +127,6 @@ target_sources(cc_ui
         ui/screens/repl_screen.cppm
         ui/screens/resume_screen.cppm
         ui/screens/log_selector.cppm              # UI23 — LogSelector (1574 → 1730 loc)
-        ui/chrome/terminal.cppm
 )
 # Module implementation units for cc.ui.app_dialog_registration — one per
 # dialog-renderer aggregator, so no single TU imports more than one aggregator's
@@ -222,11 +213,6 @@ target_sources(cc_ui PRIVATE
     ui/screens/repl_screen_agents.cpp
     ui/screens/repl_screen_dialog_panels.cpp
     ui/screens/repl_screen_events.cpp
-    # Module implementation unit for cc.ui.chrome.ansi_render (RFC 0002
-    # phase F1 row 8): the ANSI/SGR -> FTXUI bodies, extracted verbatim
-    # from message_tool_result.cppm. Bodies in the impl unit keep the
-    # declarations-only BMI cheap and give fan-out = 1 on a body edit.
-    ui/chrome/ansi_render.cpp
 )
 target_link_libraries(cc_ui
     PUBLIC
@@ -242,6 +228,11 @@ target_link_libraries(cc_ui
         # now lives in its own library; linked PUBLIC so the remaining
         # areas can still import cc.ui.tools.* during the staged split.
         cc_ui_tools
+        # RFC 0002 F4: the cc.ui.chrome.* area (terminal I/O, layout, ANSI
+        # rendering, text measurement) now lives in its own library; linked
+        # PUBLIC so the remaining areas can still import cc.ui.chrome.*
+        # during the staged split.
+        cc_ui_chrome
         cc_utils
         cc_types
         cc_query

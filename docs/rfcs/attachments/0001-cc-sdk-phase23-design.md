@@ -182,7 +182,7 @@ importers, every type has a live twin or is a drifted subset.
 
 | SDK type | Canonical target | Action |
 |---|---|---|
-| `ModelUsage` | `cc::core::TokenUsage` — types.cppm:252 (token fields); `cost_usd`/`context_window`/`max_output_tokens`/`web_search_requests` have no type-layer twin (live in `BudgetTracker`/`QueryEngineConfig`) | **Whole-struct MOVE to rank 13, all 8 fields retained.** The wire struct moves with the wire family (§1.3) because `SDKResultSuccess`/`SDKResultError` embed `unordered_map<string, ModelUsage>` (core_types.cppm:101,127) and carry every field on the wire — the token fields (`input_tokens`/`output_tokens`/`cache_read_input_tokens`/`cache_creation_input_tokens`) are NOT stripped. The CONVERGE onto `TokenUsage` is a separate concern: it applies to the SDK's standalone token-accounting type `NonNullableUsage` (core_types.cppm:43) and to consumers wanting the canonical type, not to the wire struct's fields. The four no-twin fields (`web_search_requests`/`cost_usd`/`context_window`/`max_output_tokens`) are retained in the moved wire struct as-is. **Prerequisite to the MOVE, not deferred.** |
+| `ModelUsage` | `cc::core::TokenUsage` — types.cppm:252 (token fields); `cost_usd`/`context_window`/`max_output_tokens`/`web_search_requests` have no type-layer twin (live in `BudgetTracker`/`QueryEngineConfig`) | **Whole-struct MOVE to rank 13, all 8 fields retained.** The wire struct moves with the wire family (§1.3) because `SDKResultSuccess`/`SDKResultError` embed `unordered_map<string, ModelUsage>` (core_types.cppm:101,127) and carry every field on the wire — the token fields (`input_tokens`/`output_tokens`/`cache_read_input_tokens`/`cache_creation_input_tokens`) are NOT stripped. The CONVERGE onto `TokenUsage` is a separate concern: it applies to the SDK's standalone token-accounting type `NonNullableUsage` (core_types.cppm:43) and to consumers wanting the canonical type, not to the wire struct's fields. The four no-twin fields (`web_search_requests`/`cost_usd`/`context_window`/`max_output_tokens`) are retained in the moved wire struct as-is. **Prerequisite to the MOVE, not deferred.** **Wire spelling (corrected 2026-10-01):** the result-message field is `modelUsage` (camelCase) and the `ModelUsage` sub-fields are camelCase on the wire (`inputTokens`/`outputTokens`/`cacheReadInputTokens`/`cacheCreationInputTokens`/`webSearchRequests`/`costUSD`/`contextWindow`/`maxOutputTokens`), matching the TS `ModelUsageSchema`/`SDKResultSuccessSchema` and the live emitters (server_main.cppm:596,610; server_routes.cppm:194; bridge_messaging.cppm:669). The C++ field names stay snake_case; only the JSON keys are camelCase. The earlier `model_usage` spelling in this design was the drifted form — see review history. |
 | `ApiKeySource` (5) | (none) | STAYS (SDK-only telemetry; zero consumers — deletion candidate) |
 | `ConfigScope` (3) | `cc::config::SettingsScope` — settings.cppm:181 | CONVERGE (same 3 values) |
 | `SDK_BETA` | (none) | STAYS (protocol constant) |
@@ -243,8 +243,9 @@ The move therefore takes the **whole wire closure** with it:
   alias commit, §4.1) so the moved DTOs reference the canonical
   `cc::tools::AgentDefinition` / `cc::hooks::*` / `cc::core::ErrorCode` types.
 - `ModelUsage` MOVEs as a whole struct with the wire family (see its row
-  above) — all 8 fields are retained because `model_usage` carries them on the
-  wire; the `TokenUsage` CONVERGE applies to the standalone `NonNullableUsage`
+  above) — all 8 fields are retained because `modelUsage` (camelCase on the
+  wire; the C++ field is `model_usage`) carries them on the wire; the
+  `TokenUsage` CONVERGE applies to the standalone `NonNullableUsage`
   type, not to the wire struct's fields.
 
 After this, the moved module is self-contained at rank 13: it imports
@@ -1049,6 +1050,16 @@ canonical type reachable.
   **byte-identical** (or, where field order is semantically irrelevant,
   semantically identical after a canonical parse) output for each fixture. The
   hand-rolled JSON is deleted only after this gate is green.
+- **Golden gate — result messages (added 2026-10-01).** The S6 gate above
+  covers the 21-subtype control protocol; the SDK stdout result-message
+  serializers (`server_main.cppm:572-614`, `server_routes.cppm:180-198`,
+  `bridge_messaging.cppm:647-684`) sat outside its scope, so the
+  `modelUsage`/`model_usage` wire drift went undetected. Four golden fixtures
+  (`server_result_message`, `server_error_result`,
+  `server_result_ingress_event`, `bridge_serialize_result_message`) now freeze
+  the live result-message bytes — the `modelUsage` key (camelCase) and the
+  nested `server_tool_use` object inside `usage` — so a future rewire of the
+  live emitters to the canonical ser/de is verified byte-for-byte.
 - **Existing server regression net (name corrected):** there is no
   `test_server`. The server route is covered in substance by
   `tests/test_services.cpp` `TEST(ServerRoutes, …)` (e.g.
@@ -1153,7 +1164,8 @@ re-expression so a harness problem never blocks the server.
    (core_types.cppm:101,127), so `ModelUsage` must have a rank-≤13 home before
    the MOVE. Resolution: `ModelUsage` moves **whole** to
    `cc.server.control_protocol` as a wire struct, all 8 fields retained — the
-   wire carries them via `model_usage`, so no field is stripped (§1.2 move
+   wire carries them via `modelUsage` (camelCase; §1.2 row), so no field is
+   stripped (§1.2 move
    closure). The `TokenUsage` CONVERGE applies to the standalone
    `NonNullableUsage` type, not to the wire struct. If no consumer needs the
    four no-twin fields after the move, they are dropped in a later cleanup —
@@ -1259,3 +1271,59 @@ re-expression so a harness problem never blocks the server.
   from the re-expressed server route; (4) corrected `httplib::httplib` (an
   ALIAS target, which CMake rejects installing) to the real target name
   `httplib` in the §2.6 install plan.
+- **2026-10-01 — P2-tests review (agent: p2-tests-review), verdict
+  request-changes; all findings addressed in a fix commit.** The P2-tests
+  step (7872e0b) added the ser/de round-trip + convergence tests; the review
+  found two wire-drift defects the round-trip-only gate could not catch, plus
+  process/scope deviations:
+  - *Wire drift (high):* `SDKResultSuccess`/`SDKResultError` ser/de emitted
+    `model_usage` (snake_case) but every live emitter and the TS
+    `SDKResultSuccessSchema` use `modelUsage` (camelCase). Fixed: the ser/de
+    now emits/reads `modelUsage`. The design's own `model_usage` spelling
+    (§1.2 row, §1.2 move closure, §5.3) was the drifted form and is corrected
+    above to `modelUsage`.
+  - *Wire drift (high):* `ModelUsage` ser/de emitted snake_case sub-fields
+    (`input_tokens`, …) but the TS `ModelUsageSchema` uses camelCase
+    (`inputTokens`, `outputTokens`, `cacheReadInputTokens`,
+    `cacheCreationInputTokens`, `webSearchRequests`, `costUSD`, `contextWindow`,
+    `maxOutputTokens`). Fixed: the ser/de now emits/reads camelCase keys (the
+    C++ struct fields stay snake_case).
+  - *Usage map shape (low):* the `usage` field was `unordered_map<string,int>`,
+    which silently dropped the nested `server_tool_use` object the live wire
+    emits. The TS schema is `NonNullableUsagePlaceholder = z.unknown()` (opaque).
+    Fixed: `usage` is now an opaque JSON string (`usage_json`), preserving the
+    full live shape; the dead `int_map_to_json`/`int_map_from_json` helpers and
+    the `NonNullableUsage` alias were removed from the wire module.
+  - *Missing field (low):* `structured_output` (`z.unknown().optional()` in the
+    TS schema) was absent from the DTO. Fixed: added as
+    `optional<string>` (raw JSON) with ser/de.
+  - *Golden gate gap (root cause of the drift going undetected):* the S6 golden
+    gate covered only the 21-subtype control protocol; result messages sat
+    outside its scope. Fixed: four result-message golden fixtures
+    (`server_result_message`, `server_error_result`,
+    `server_result_ingress_event`, `bridge_serialize_result_message`) now
+    freeze the live result-message bytes — the `modelUsage` key and the nested
+    `usage` shape — so a future rewire of the live emitters to the canonical
+    ser/de is verified byte-for-byte. Wire-spelling locks in `test_sdk_serde`
+    assert the camelCase keys directly (a round-trip alone cannot).
+  - *Stale comment (low):* the `test_sdk_serde` header claimed string
+    comparison with single-key maps; the comparison is semantic (`json_eq`)
+    and several tests use multi-key maps. Fixed.
+  - *Sequencing deviation (med, recorded):* the alias-then-delete sequence
+    (§1.1 principle 1, §4.1 step 1) was not followed for four types. The
+    island `EffortLevel` twin was deleted outright in P2-delete (239fe0b) with
+    no alias — the name `cc::sdk::runtime::EffortLevel` did not exist between
+    239fe0b and P2-tests (7872e0b), where the alias was restored — and
+    `ConfigScope`/`SettingSource`/`AgentDefinition` were converged (alias +
+    twin deletion in one shot) only in P2-tests. Zero importers were verified
+    by grep at 7872e0b^ (only `core_types` re-exports), so no breakage
+    occurred; the deviation is recorded here rather than silently left.
+  - *Scope deviation (med, recorded):* the P2-tests commit carried ~1695 lines
+    of production ser/de (required for the round-trip tests the design
+    mandates) plus a production parse-behavior fix (`read_optional_double`,
+    correcting `HookCallbackMatcher` timeout corruption from P2-alias that the
+    golden gate missed because no fixture includes a hook-matcher timeout).
+    The ser/de is defensible (the tests cannot exist without it); the timeout
+    fix is a behavior change landing outside the step that introduced the bug,
+    and is now covered by the `InitializeRequest` round-trip test
+    (`.timeout = 30.0`). Recorded here; no code action needed.

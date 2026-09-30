@@ -3,7 +3,7 @@
 # The ratchet (tools/arch/inline_def_check.py) FAILS on any increase;
 # decreases shrink this file in the same split commit. c1 = must reach <30
 # when that module's batch merges; c2-done = <=100 cap now enforced.
-cc.server.control_protocol 175
+cc.server.control_protocol 173
 cc.daemon.daemon_server 73
 cc.ui.permissions.rule_list 67
 cc.skills.load_skills_dir 66
@@ -37,9 +37,9 @@ cc.ui.screens.resume_screen 25
 cc.tools.path_validation 24
 cc.ui.screens.doctor_screen 24
 cc.query.query_engine 23 c1 c2-done
+cc.teams.swarm.backends 22 c2-done
 cc.ui.messages.messages_list 22 c1 c2-done
 cc.serdes.json 22 c2-done
-cc.teams.swarm.backends 22 c2-done
 cc.orchestration.agent 19
 cc.tools.agent_runtime 18 c1 c2-done
 cc.ui.visual.code_highlight 17

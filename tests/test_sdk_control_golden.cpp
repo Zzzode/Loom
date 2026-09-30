@@ -73,11 +73,16 @@ std::string normalize_pid(std::string json) {
     return std::regex_replace(json, pid_re, R"("pid":0)");
 }
 
-/// Compare actual output against the golden fixture (byte-exact after pid
-/// normalization). With UPDATE_GOLDENS=1 in the environment, rewrite the
-/// fixture instead of comparing.
-void check_golden(const std::string& name, const std::string& actual) {
-    const std::string normalized = normalize_pid(actual);
+/// Result messages carry a non-deterministic uuid (make_id("result") or a
+/// bridge UUID v4). Freeze the shape, normalize the value.
+std::string normalize_result_uuid(std::string json) {
+    static const std::regex uuid_re(R"("uuid":"[^"]*")");
+    return std::regex_replace(json, uuid_re, R"("uuid":"result_uuid")");
+}
+
+/// Compare a (already-normalized) actual string against the golden fixture.
+/// With UPDATE_GOLDENS=1 in the environment, rewrite the fixture instead.
+void check_golden_normalized(const std::string& name, const std::string& normalized) {
     const std::string path = golden_dir() + name + ".json";
     if (std::getenv("UPDATE_GOLDENS") != nullptr) {
         std::ofstream out(path, std::ios::binary);
@@ -94,6 +99,19 @@ void check_golden(const std::string& name, const std::string& actual) {
     EXPECT_EQ(normalized, expected)
         << "golden mismatch for '" << name
         << "' (run UPDATE_GOLDENS=1 to refresh)";
+}
+
+/// Compare actual output against the golden fixture (byte-exact after pid
+/// normalization). With UPDATE_GOLDENS=1 in the environment, rewrite the
+/// fixture instead of comparing.
+void check_golden(const std::string& name, const std::string& actual) {
+    check_golden_normalized(name, normalize_pid(actual));
+}
+
+/// Compare result-message output against the golden fixture (byte-exact after
+/// pid + uuid normalization — result messages carry a non-deterministic uuid).
+void check_golden_result(const std::string& name, const std::string& actual) {
+    check_golden_normalized(name, normalize_result_uuid(normalize_pid(actual)));
 }
 
 /// Read a golden fixture as a wire-input sample for parser tests.
@@ -482,4 +500,51 @@ TEST(SdkControlGolden, BridgeHandlesOutboundOnlyRejectsMutableRequest) {
                  run_handle_request(
                      make_control_request("model_req_002", "set_model"),
                      handlers));
+}
+
+// ===========================================================================
+// Result messages — the SDK stdout wire-message family (server_main.cppm
+// :572-614, server_routes.cppm:180-198, bridge_messaging.cppm:647-684).
+//
+// The golden gate (S6) previously covered only the 21-subtype control
+// protocol; the result serializers sat outside its scope, so the
+// modelUsage/model_usage wire drift went undetected. These fixtures freeze
+// the exact result-message bytes the live code speaks — in particular the
+// "modelUsage" key (camelCase, matching the TS schema) and the nested
+// "server_tool_use" object inside "usage" — so a future rewire of the live
+// emitters to cc.server.control_protocol is verified byte-for-byte.
+// ===========================================================================
+
+TEST(SdkControlGolden, ServerResultMessage) {
+    auto resp = cc::utils::json::parse(
+        R"({"id":"msg_001","response":"done","model":"claude-sonnet-4",)"
+        R"("elapsed_ms":1500,"usage":{"input_tokens":100,"output_tokens":50}})");
+    ASSERT_TRUE(resp.has_value());
+    check_golden_result("server_result_message",
+                        srv::sdk_result_message("sess_001", resp->root()));
+}
+
+TEST(SdkControlGolden, ServerErrorResult) {
+    check_golden_result("server_error_result",
+                        srv::sdk_error_result("sess_001", "boom"));
+}
+
+TEST(SdkControlGolden, ServerResultIngressEvent) {
+    // Deterministic (uuid is "result_" + assistant_message_id) — no uuid
+    // normalization needed.
+    srv::DirectQueryResult qr;
+    qr.content = "done";
+    qr.model = "claude-sonnet-4";
+    qr.input_tokens = 100;
+    qr.output_tokens = 50;
+    qr.tool_rounds = 2;
+    qr.elapsed_ms = 1500;
+    check_golden("server_result_ingress_event",
+                 srv::sdk_result_ingress_event("sess_001", "msg_001", qr));
+}
+
+TEST(SdkControlGolden, BridgeSerializeResultMessage) {
+    check_golden_result("bridge_serialize_result_message",
+                        cc::bridge::serialize_result_message(
+                            cc::bridge::make_result_message("sess_001")));
 }

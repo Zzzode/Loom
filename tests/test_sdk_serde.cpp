@@ -11,9 +11,10 @@
 ///   - The wire-closure types (SlashCommand, ModelInfo, AccountInfo, …)
 ///   - The McpServerConfig variant
 ///
-/// Comparison is on the re-serialized JSON string (not struct equality —
-/// the DTOs have no operator==). unordered_map fields use single-key maps
-/// to keep iteration order deterministic.
+/// Comparison is semantic (json_eq — order-independent for objects), not
+/// string equality: the DTOs have no operator== and unordered_map fields
+/// serialize in non-deterministic key order. Several tests deliberately use
+/// multi-key unordered_maps to exercise the semantic comparison.
 #include <gtest/gtest.h>
 
 #include <string>
@@ -370,7 +371,11 @@ TEST(SdkSerde, SDKResultSuccess) {
     v.result = "Task completed successfully.";
     v.stop_reason = "end_turn";
     v.total_cost_usd = 0.00234;
-    v.usage = {{"input_tokens", 1500}, {"output_tokens", 300}};
+    // Opaque usage JSON — includes the nested server_tool_use object the live
+    // wire emits (a typed int map would drop it).
+    v.usage_json = R"({"input_tokens":1500,"output_tokens":300,)"
+                   R"("cache_creation_input_tokens":0,"cache_read_input_tokens":0,)"
+                   R"("server_tool_use":{"web_search_requests":0}})";
     v.model_usage = {{"claude-sonnet-4-20250514", ModelUsage{
         .input_tokens = 1500,
         .output_tokens = 300,
@@ -386,9 +391,21 @@ TEST(SdkSerde, SDKResultSuccess) {
         .tool_use_id = "toolu_denied",
         .tool_input = {{"command", "rm -rf /"}},
     }};
+    v.structured_output = R"({"answer":42})";
     v.fast_mode_state = FastModeState::Cooldown;
     v.uuid = "msg-uuid-005";
     v.session_id = "sess-001";
+    // Wire-spelling lock: the result message field is "modelUsage" (camelCase,
+    // matching the TS schema and the live emitters) and the ModelUsage
+    // sub-fields are camelCase. A round-trip alone cannot catch this drift.
+    const auto wire = SDKResultSuccess_to_json(v);
+    EXPECT_NE(wire.find("\"modelUsage\""), std::string::npos);
+    EXPECT_EQ(wire.find("\"model_usage\""), std::string::npos);
+    EXPECT_NE(wire.find("\"inputTokens\""), std::string::npos);
+    EXPECT_NE(wire.find("\"cacheReadInputTokens\""), std::string::npos);
+    EXPECT_NE(wire.find("\"costUSD\""), std::string::npos);
+    EXPECT_NE(wire.find("\"structured_output\""), std::string::npos);
+    EXPECT_NE(wire.find("\"server_tool_use\""), std::string::npos);
     ROUND_TRIP_TYPE(SDKResultSuccess, v);
 }
 
@@ -401,7 +418,9 @@ TEST(SdkSerde, SDKResultError) {
     v.num_turns = 100;
     v.stop_reason = "max_turns";
     v.total_cost_usd = 0.05;
-    v.usage = {{"input_tokens", 50000}};
+    v.usage_json = R"({"input_tokens":50000,"output_tokens":10000,)"
+                   R"("cache_creation_input_tokens":0,"cache_read_input_tokens":0,)"
+                   R"("server_tool_use":{"web_search_requests":0}})";
     v.model_usage = {{"claude-sonnet-4-20250514", ModelUsage{
         .input_tokens = 50000,
         .output_tokens = 10000,
@@ -416,6 +435,12 @@ TEST(SdkSerde, SDKResultError) {
     v.fast_mode_state = FastModeState::Off;
     v.uuid = "msg-uuid-006";
     v.session_id = "sess-001";
+    // Wire-spelling lock (see SDKResultSuccess for rationale).
+    const auto wire = SDKResultError_to_json(v);
+    EXPECT_NE(wire.find("\"modelUsage\""), std::string::npos);
+    EXPECT_EQ(wire.find("\"model_usage\""), std::string::npos);
+    EXPECT_NE(wire.find("\"maxOutputTokens\""), std::string::npos);
+    EXPECT_NE(wire.find("\"webSearchRequests\""), std::string::npos);
     ROUND_TRIP_TYPE(SDKResultError, v);
 }
 
@@ -760,6 +785,17 @@ TEST(SdkSerde, ModelUsage) {
         .context_window = 200000,
         .max_output_tokens = 8192,
     };
+    // Wire-spelling lock: sub-fields are camelCase per the TS ModelUsageSchema.
+    const auto wire = ModelUsage_to_json(v);
+    EXPECT_NE(wire.find("\"inputTokens\""), std::string::npos);
+    EXPECT_NE(wire.find("\"outputTokens\""), std::string::npos);
+    EXPECT_NE(wire.find("\"cacheReadInputTokens\""), std::string::npos);
+    EXPECT_NE(wire.find("\"cacheCreationInputTokens\""), std::string::npos);
+    EXPECT_NE(wire.find("\"webSearchRequests\""), std::string::npos);
+    EXPECT_NE(wire.find("\"costUSD\""), std::string::npos);
+    EXPECT_NE(wire.find("\"contextWindow\""), std::string::npos);
+    EXPECT_NE(wire.find("\"maxOutputTokens\""), std::string::npos);
+    EXPECT_EQ(wire.find("\"input_tokens\""), std::string::npos);
     ROUND_TRIP_TYPE(ModelUsage, v);
 }
 

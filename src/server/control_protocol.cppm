@@ -86,7 +86,8 @@ enum class FastModeState : std::uint8_t {
 };
 
 /// Model usage statistics (whole-struct MOVE — all 8 fields retained, §1.2).
-/// Carried by SDKResultSuccess/SDKResultError.model_usage.
+/// Carried by SDKResultSuccess/SDKResultError.modelUsage (camelCase on the
+/// wire, matching the TS schema and the live emitters).
 struct ModelUsage {
     int input_tokens = 0;
     int output_tokens = 0;
@@ -826,11 +827,6 @@ struct SDKControlMcpOAuthCallbackUrlRequest {
 // SDK stdout wire-message family (moved from cc.sdk.core_types)
 // ============================================================================
 
-/// Non-nullable usage (all fields guaranteed present on the wire).
-/// This is a wire shape — the field set differs from cc::core::TokenUsage
-/// (cache_creation_input_tokens vs cache_creation_tokens, plus server_tool_use).
-using NonNullableUsage = std::unordered_map<std::string, int>;
-
 /// SDK user message.
 struct SDKUserMessage {
     std::unordered_map<std::string, std::string> message;
@@ -876,9 +872,13 @@ struct SDKResultSuccess {
     std::string result;
     std::optional<std::string> stop_reason;
     double total_cost_usd = 0.0;
-    NonNullableUsage usage;
+    // Opaque JSON (TS NonNullableUsagePlaceholder = z.unknown()): the live
+    // wire nests objects (e.g. "server_tool_use":{"web_search_requests":0}),
+    // so a typed map would silently drop them on parse.
+    std::string usage_json = "{}";
     std::unordered_map<std::string, ModelUsage> model_usage;
     std::vector<SDKPermissionDenial> permission_denials;
+    std::optional<std::string> structured_output;  // z.unknown() — raw JSON
     std::optional<FastModeState> fast_mode_state;
     std::string uuid;
     std::string session_id;
@@ -893,7 +893,9 @@ struct SDKResultError {
     int num_turns = 0;
     std::optional<std::string> stop_reason;
     double total_cost_usd = 0.0;
-    NonNullableUsage usage;
+    // Opaque JSON (TS NonNullableUsagePlaceholder = z.unknown()) — see
+    // SDKResultSuccess::usage_json.
+    std::string usage_json = "{}";
     std::unordered_map<std::string, ModelUsage> model_usage;
     std::vector<SDKPermissionDenial> permission_denials;
     std::vector<std::string> errors;
@@ -1361,18 +1363,21 @@ inline std::expected<AccountInfo, std::string> from_json(std::string_view raw, A
     return AccountInfo_from_json(raw);
 }
 
+// Wire spellings are camelCase, matching the TS ModelUsageSchema
+// (coreSchemas.ts at b69b59b^) and the live emitters — the C++ field names
+// stay snake_case; only the JSON keys differ.
 [[nodiscard]] inline std::string ModelUsage_to_json(const ModelUsage& v) {
     using namespace cc::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
-    o.add("input_tokens", doc.number(static_cast<int64_t>(v.input_tokens)));
-    o.add("output_tokens", doc.number(static_cast<int64_t>(v.output_tokens)));
-    o.add("cache_read_input_tokens", doc.number(static_cast<int64_t>(v.cache_read_input_tokens)));
-    o.add("cache_creation_input_tokens", doc.number(static_cast<int64_t>(v.cache_creation_input_tokens)));
-    o.add("web_search_requests", doc.number(static_cast<int64_t>(v.web_search_requests)));
-    o.add("cost_usd", doc.number(v.cost_usd));
-    o.add("context_window", doc.number(static_cast<int64_t>(v.context_window)));
-    o.add("max_output_tokens", doc.number(static_cast<int64_t>(v.max_output_tokens)));
+    o.add("inputTokens", doc.number(static_cast<int64_t>(v.input_tokens)));
+    o.add("outputTokens", doc.number(static_cast<int64_t>(v.output_tokens)));
+    o.add("cacheReadInputTokens", doc.number(static_cast<int64_t>(v.cache_read_input_tokens)));
+    o.add("cacheCreationInputTokens", doc.number(static_cast<int64_t>(v.cache_creation_input_tokens)));
+    o.add("webSearchRequests", doc.number(static_cast<int64_t>(v.web_search_requests)));
+    o.add("costUSD", doc.number(v.cost_usd));
+    o.add("contextWindow", doc.number(static_cast<int64_t>(v.context_window)));
+    o.add("maxOutputTokens", doc.number(static_cast<int64_t>(v.max_output_tokens)));
     doc.set_root(std::move(o));
     return doc.to_string();
 }
@@ -1383,14 +1388,14 @@ inline std::expected<AccountInfo, std::string> from_json(std::string_view raw, A
     auto o = parsed->root();
     if (!o.is_obj()) return std::unexpected("expected object");
     ModelUsage v;
-    v.input_tokens = static_cast<int>(o.get("input_tokens").as_int());
-    v.output_tokens = static_cast<int>(o.get("output_tokens").as_int());
-    v.cache_read_input_tokens = static_cast<int>(o.get("cache_read_input_tokens").as_int());
-    v.cache_creation_input_tokens = static_cast<int>(o.get("cache_creation_input_tokens").as_int());
-    v.web_search_requests = static_cast<int>(o.get("web_search_requests").as_int());
-    v.cost_usd = o.get("cost_usd").as_double();
-    v.context_window = static_cast<int>(o.get("context_window").as_int());
-    v.max_output_tokens = static_cast<int>(o.get("max_output_tokens").as_int());
+    v.input_tokens = static_cast<int>(o.get("inputTokens").as_int());
+    v.output_tokens = static_cast<int>(o.get("outputTokens").as_int());
+    v.cache_read_input_tokens = static_cast<int>(o.get("cacheReadInputTokens").as_int());
+    v.cache_creation_input_tokens = static_cast<int>(o.get("cacheCreationInputTokens").as_int());
+    v.web_search_requests = static_cast<int>(o.get("webSearchRequests").as_int());
+    v.cost_usd = o.get("costUSD").as_double();
+    v.context_window = static_cast<int>(o.get("contextWindow").as_int());
+    v.max_output_tokens = static_cast<int>(o.get("maxOutputTokens").as_int());
     return v;
 }
 inline std::string to_json(const ModelUsage& v) { return ModelUsage_to_json(v); }
@@ -2496,32 +2501,6 @@ namespace detail_serde {
     return out;
 }
 
-[[nodiscard]] inline std::string int_map_to_json(
-    const std::unordered_map<std::string, int>& m
-) {
-    using namespace cc::utils::json;
-    JsonMutDoc doc;
-    auto o = doc.object();
-    for (const auto& [k, v] : m)
-        o.add(k.c_str(), doc.number(static_cast<int64_t>(v)));
-    doc.set_root(std::move(o));
-    return doc.to_string();
-}
-
-[[nodiscard]] inline std::unordered_map<std::string, int> int_map_from_json(
-    cc::utils::json::JsonVal o
-) {
-    using namespace cc::utils::json;
-    std::unordered_map<std::string, int> out;
-    if (o.is_obj()) {
-        o.iter_obj([&](JsonVal k, JsonVal v) {
-            if (k.is_str() && v.is_num())
-                out[std::string(k.as_str())] = static_cast<int>(v.as_int());
-        });
-    }
-    return out;
-}
-
 [[nodiscard]] inline std::optional<SDKAssistantMessageError>
 sdk_assistant_message_error_from_str(std::string_view s) {
     if (s == "authentication_failed") return SDKAssistantMessageError::AuthenticationFailed;
@@ -2687,19 +2666,23 @@ SDKAssistantMessage_from_json(std::string_view raw) {
     o.add("is_error", doc.boolean(v.is_error));
     o.add("num_turns", doc.number(static_cast<int64_t>(v.num_turns)));
     o.add("result", doc.string(v.result));
+    // stop_reason is required-nullable in the TS schema — always emit.
     if (v.stop_reason) o.add("stop_reason", doc.string(*v.stop_reason));
+    else o.add("stop_reason", doc.null());
     o.add("total_cost_usd", doc.number(v.total_cost_usd));
-    o.add("usage", doc.raw_json(detail_serde::int_map_to_json(v.usage)));
+    o.add("usage", doc.raw_json(v.usage_json));
     auto mu = doc.object();
     for (const auto& [k, u] : v.model_usage)
         mu.add(k.c_str(), doc.raw_json(ModelUsage_to_json(u)));
-    o.add("model_usage", std::move(mu));
-    if (!v.permission_denials.empty()) {
-        auto pd = doc.array();
-        for (const auto& d : v.permission_denials)
-            pd.append(doc.raw_json(SDKPermissionDenial_to_json(d)));
-        o.add("permission_denials", std::move(pd));
-    }
+    o.add("modelUsage", std::move(mu));
+    // permission_denials is required in the TS schema — always emit, even
+    // empty (the live emitters always emit "permission_denials":[]).
+    auto pd = doc.array();
+    for (const auto& d : v.permission_denials)
+        pd.append(doc.raw_json(SDKPermissionDenial_to_json(d)));
+    o.add("permission_denials", std::move(pd));
+    if (v.structured_output)
+        o.add("structured_output", doc.raw_json(*v.structured_output));
     if (v.fast_mode_state)
         o.add("fast_mode_state",
               doc.string(std::string(detail_serde::fast_mode_state_to_str(*v.fast_mode_state))));
@@ -2719,8 +2702,8 @@ SDKResultSuccess_from_json(cc::utils::json::JsonVal o) {
     v.result = detail_serde::read_string(o, "result");
     v.stop_reason = detail_serde::read_optional_string(o, "stop_reason");
     if (auto c = o.get("total_cost_usd"); c.is_num()) v.total_cost_usd = c.as_double();
-    v.usage = detail_serde::int_map_from_json(o.get("usage"));
-    if (auto mu = o.get("model_usage"); mu.is_obj()) {
+    if (auto u = o.get("usage"); u.valid()) v.usage_json = u.to_string();
+    if (auto mu = o.get("modelUsage"); mu.is_obj()) {
         mu.iter_obj([&](JsonVal k, JsonVal val) {
             if (!k.is_str()) return;
             auto u = ModelUsage_from_json(val.to_string());
@@ -2733,6 +2716,8 @@ SDKResultSuccess_from_json(cc::utils::json::JsonVal o) {
             if (d) v.permission_denials.push_back(std::move(*d));
         });
     }
+    if (auto so = o.get("structured_output"); so.valid())
+        v.structured_output = so.to_string();
     if (auto fms = o.get("fast_mode_state"); fms.is_str()) {
         if (auto s = detail_serde::fast_mode_state_from_str(fms.as_str()))
             v.fast_mode_state = *s;
@@ -2761,24 +2746,24 @@ SDKResultSuccess_from_json(std::string_view raw) {
     o.add("duration_api_ms", doc.number(v.duration_api_ms));
     o.add("is_error", doc.boolean(v.is_error));
     o.add("num_turns", doc.number(static_cast<int64_t>(v.num_turns)));
+    // stop_reason is required-nullable in the TS schema — always emit.
     if (v.stop_reason) o.add("stop_reason", doc.string(*v.stop_reason));
+    else o.add("stop_reason", doc.null());
     o.add("total_cost_usd", doc.number(v.total_cost_usd));
-    o.add("usage", doc.raw_json(detail_serde::int_map_to_json(v.usage)));
+    o.add("usage", doc.raw_json(v.usage_json));
     auto mu = doc.object();
     for (const auto& [k, u] : v.model_usage)
         mu.add(k.c_str(), doc.raw_json(ModelUsage_to_json(u)));
-    o.add("model_usage", std::move(mu));
-    if (!v.permission_denials.empty()) {
-        auto pd = doc.array();
-        for (const auto& d : v.permission_denials)
-            pd.append(doc.raw_json(SDKPermissionDenial_to_json(d)));
-        o.add("permission_denials", std::move(pd));
-    }
-    if (!v.errors.empty()) {
-        auto errs = doc.array();
-        for (const auto& e : v.errors) errs.append(doc.string(e));
-        o.add("errors", std::move(errs));
-    }
+    o.add("modelUsage", std::move(mu));
+    // permission_denials / errors are required in the TS schema — always
+    // emit, even empty (the live emitters always emit them).
+    auto pd = doc.array();
+    for (const auto& d : v.permission_denials)
+        pd.append(doc.raw_json(SDKPermissionDenial_to_json(d)));
+    o.add("permission_denials", std::move(pd));
+    auto errs = doc.array();
+    for (const auto& e : v.errors) errs.append(doc.string(e));
+    o.add("errors", std::move(errs));
     if (v.fast_mode_state)
         o.add("fast_mode_state",
               doc.string(std::string(detail_serde::fast_mode_state_to_str(*v.fast_mode_state))));
@@ -2801,8 +2786,8 @@ SDKResultError_from_json(cc::utils::json::JsonVal o) {
     if (auto n = o.get("num_turns"); n.is_num()) v.num_turns = static_cast<int>(n.as_int());
     v.stop_reason = detail_serde::read_optional_string(o, "stop_reason");
     if (auto c = o.get("total_cost_usd"); c.is_num()) v.total_cost_usd = c.as_double();
-    v.usage = detail_serde::int_map_from_json(o.get("usage"));
-    if (auto mu = o.get("model_usage"); mu.is_obj()) {
+    if (auto u = o.get("usage"); u.valid()) v.usage_json = u.to_string();
+    if (auto mu = o.get("modelUsage"); mu.is_obj()) {
         mu.iter_obj([&](JsonVal k, JsonVal val) {
             if (!k.is_str()) return;
             auto u = ModelUsage_from_json(val.to_string());

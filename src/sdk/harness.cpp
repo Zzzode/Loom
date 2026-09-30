@@ -272,9 +272,12 @@ cc::core::Result<void> Harness::resume(std::string_view session_id) {
     }
 
     // Real engine resume path (§2.3): load_messages (rank 6) ->
-    // parse_session_message_value (the assembly's non-lossy reader) ->
-    // restore_conversation (which also rebuilds content-replacement state).
-    // No cc.server import — OpenSSL::Crypto stays out of the SDK closure.
+    // parse_session_message_value (the assembly's role/content-string
+    // reader — lossy for tool_use/tool_result/image blocks; see §2.3
+    // deviation note) -> restore_conversation (which also rebuilds
+    // content-replacement state). No cc.server import. (OpenSSL DOES
+    // enter the SDK closure via cc_query -> cc_services — the accepted
+    // phase-3 cost; see §3.4.)
     auto docs = cc::session::load_messages(*impl_->sessions_dir_, session_id);
     if (docs.empty()) {
         return std::unexpected(cc::core::Error::make(

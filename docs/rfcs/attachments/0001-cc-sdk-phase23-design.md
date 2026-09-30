@@ -482,14 +482,21 @@ undefined `AssemblyHandle`. Both are fixed above.)
 - *Prior-message parsing.* The recipe's `seed_query_engine_from_session`
   (server_routes.cppm:336) calls `session_line_to_message`, a rank-13 helper,
   to parse JSONL lines into `cc::core::Message`. A rank-10 assembly cannot call
-  it. Resolution: the assembly parses `prior_message_lines` itself using the
-  existing non-lossy `cc::tools::agent::utils::message_from_json_value`
-  (agent_sub_utils_json.cpp:585, rank 9 — importable from rank 10) and seeds via
-  `engine.restore_conversation(messages)` (query_engine.cppm:393) — the real
-  resume path, not the lossy `append_message_for_testing`-based server helper.
-  `seed_query_engine_from_session` and `session_line_to_message` are deleted
-  from `server_routes.cppm` (the server adapter passes `prior_message_lines`
-  through `AssemblyConfig` unchanged).
+  it. Resolution: the assembly parses `prior_message_lines` itself using its
+  own `cc::query::parse_session_message_value` (query_assembly.cpp:67, rank 10)
+  and seeds via `engine.restore_conversation(messages)` (query_engine.cppm:393)
+  — the real resume path, not the lossy `append_message_for_testing`-based
+  server helper. `seed_query_engine_from_session` and `session_line_to_message`
+  are deleted from `server_routes.cppm` (the server adapter passes
+  `prior_message_lines` through `AssemblyConfig` unchanged).
+  *(Deviation from the original sketch, recorded: the sketch named the
+  non-lossy `cc::tools::agent::utils::message_from_json_value`
+  (agent_sub_utils_json.cpp:585), but that returns
+  `cc::services::api::Message`, incompatible with `restore_conversation`'s
+  `cc::core::Message` with no existing converter. `parse_session_message_value`
+  is role/content-string-only and drops `tool_use`/`tool_result`/`image`
+  blocks — a non-lossy `cc::core::Message` reader is a follow-up. See §2.3
+  resume path.)*
 - *Test executor seam.* `execute_native_query` short-circuits through
   `query_executor_override` (server_routes.cppm:707, set via
   `set_query_executor_for_testing`; consumed by tests/test_services.cpp:7889).
@@ -502,18 +509,25 @@ undefined `AssemblyHandle`. Both are fixed above.)
 `install_runtime_backends` (rank 9), `ToolPermissionHook` (rank 4), and session
 storage (rank 6). The lowest rank that can see all of these is 10. Putting it in
 `cc.server` (rank 13) would make `cc.sdk.harness` depend on the HTTP server
-(semantically wrong for an embeddable surface; pulls in httplib/OpenSSL).
-Putting it in `cc.sdk` (rank 16) would make the server import upward to use it
-(illegal). Rank 10 in `cc_query` is the natural home: it is engine assembly, not
-HTTP serving.
+(semantically wrong for an embeddable surface). Putting it in `cc.sdk` (rank 16)
+would make the server import upward to use it (illegal). Rank 10 in `cc_query`
+is the natural home: it is engine assembly, not HTTP serving. (The earlier
+"pulls in httplib/OpenSSL" argument against `cc.server` placement was moot:
+`cc_query` PUBLIC-links `cc_services`, which PUBLIC-links OpenSSL/CURL/httplib —
+so those enter the SDK closure either way. The real distinction is that
+`cc.server` would add the HTTP server *target itself*, not that it would add
+OpenSSL. See §3.4 for the accepted phase-3 closure.)
 
 **Link cost (corrected):** `cc_query` `PUBLIC`-links `cc_tools`, `cc_hooks`,
 `cc_session`, `cc_memdir`, `cc_services` **already** (cc_tools.cmake:126), and
 `cc_config`/`cc_state`/`cc_utils`/`CURL::libcurl` (cc_query.cmake:28). The
 assembly reuses all of these. The **only genuinely new `PUBLIC` dependency is
-`cc_orchestration`** (for `install_runtime_backends`, `make_missing_tool_backend`,
-and `message_from_json_value`). No cycle — `cc.orchestration` does not import
-`cc.query`. The earlier claim that `cc_query` "gains `PUBLIC cc_tools
+`cc_orchestration`** (for `install_runtime_backends` and
+`make_missing_tool_backend`, via `cc.orchestration.runtime_backends`). No cycle
+— `cc.orchestration` does not import `cc.query`. (The original sketch also
+cited `message_from_json_value` as a reason; the assembly instead uses its own
+`parse_session_message_value` — see the F4 deviation above — so that reason is
+dropped.) The earlier claim that `cc_query` "gains `PUBLIC cc_tools
 cc_orchestration cc_hooks cc_session`" overstated the cost by reading only
 `cc_query.cmake` and missing `cc_tools.cmake:126`; see open question 6.
 
@@ -751,17 +765,29 @@ Subsequent `run()`/`stream()` calls reuse `handle.engine()`.
   the real engine resume path, not the server-local lossy helper:
   `cc::session::load_messages(*sessions_dir_, session_id)` (storage.cppm:228,
   rank 6 — returns `vector<JsonDoc>`) → parse each doc with
-  `cc::tools::agent::utils::message_from_json_value` (agent_sub_utils_json.cpp:
-  585, rank 9 — the non-lossy reader `agent_fork` already uses) →
+  `cc::query::parse_session_message_value` (query_assembly.cpp:67, rank 10 —
+  the same reader `assemble()` uses for `prior_message_lines`, exported so
+  the harness needs no `cc.server` import) →
   `handle_.engine().restore_conversation(messages)` (query_engine.cppm:393,
   which also rebuilds content-replacement state). This replaces
   `seed_query_engine_from_session` (server_routes.cppm:336 — lossy: parses only
   role/content strings, drops tool blocks, and uses
-  `append_message_for_testing`). Both `cc.session` (rank 6) and
-  `cc.orchestration.agent` (rank 9) are importable from `cc.sdk` (rank 16)
-  without touching `cc.server` — so `OpenSSL::Crypto` (a `cc_server` dep,
-  cc_server.cmake:19) never enters the SDK link closure, preserving §2.1's
-  embeddable-surface rationale.
+  `append_message_for_testing`).
+
+  **Deviation from the original sketch (recorded):** the sketch specified the
+  non-lossy `cc::tools::agent::utils::message_from_json_value`
+  (agent_sub_utils_json.cpp:585), but that returns
+  `cc::services::api::Message` (a flat struct), incompatible with
+  `restore_conversation`'s `cc::core::Message` (5-member variant) with no
+  existing converter. The harness therefore uses `parse_session_message_value`,
+  which is itself role/content-string-only and drops `tool_use`/`tool_result`/
+  `image` blocks — so a session that used tools cannot be faithfully resumed
+  via this path yet. A non-lossy `cc::core::Message` reader is a follow-up.
+  Both `cc.session` (rank 6) and `cc.query.assembly` (rank 10) are importable
+  from `cc.sdk` (rank 16) without touching `cc.server`. (The original claim
+  that "`OpenSSL::Crypto` never enters the SDK link closure" was false:
+  `cc_query` PUBLIC-links `cc_services`, which PUBLIC-links OpenSSL — see
+  §3.4 for the accepted phase-3 closure.)
 
 ### 2.4 The WireBackend seam — and its limit (S1 redesign)
 
@@ -969,9 +995,9 @@ edge.
 
 | Change | Graph effect |
 |---|---|
-| New `cc.query.assembly` module (rank 10) imports `cc.tools` (8), `cc.orchestration` (9 — incl. `agent_sub_utils` for `message_from_json_value`), `cc.hooks` (4), `cc.session` (6), `cc.config` (1) | All downward from 10. Legal. **Link:** only `cc_orchestration` is a new `PUBLIC` dep of `cc_query` — `cc_tools`/`cc_hooks`/`cc_session` are already linked (cc_tools.cmake:126). |
+| New `cc.query.assembly` module (rank 10) imports `cc.tools` (8), `cc.orchestration` (9 — `runtime_backends` for `install_runtime_backends`/`make_missing_tool_backend`), `cc.hooks` (4), `cc.session` (6), `cc.config` (1) | All downward from 10. Legal. **Link:** only `cc_orchestration` is a new `PUBLIC` dep of `cc_query` — `cc_tools`/`cc_hooks`/`cc_session` are already linked (cc_tools.cmake:126). (The original sketch cited `agent_sub_utils`/`message_from_json_value`; the assembly uses its own `parse_session_message_value` — §2.1 F4 deviation.) |
 | `cc.server.server_routes` imports `cc.query.assembly` | 13 → 10, downward, legal. The `query_executor_override` short-circuit stays in the adapter (a `cc.server`-local test seam), ahead of `assemble(...)`. |
-| New `cc.sdk.harness` module (rank 16) imports `cc.query.assembly` (10), `cc.types` (0), `cc.hooks` (4), `cc.query.wire_protocol` (10), `cc.session` (6), `cc.orchestration.agent` (9 — for `resume()`'s `message_from_json_value`) | All downward from 16. Legal. No `cc.server` import, so `OpenSSL::Crypto` stays out of the SDK closure. |
+| New `cc.sdk.harness` module (rank 16) imports `cc.query.assembly` (10), `cc.types` (0), `cc.hooks` (4), `cc.query.wire_protocol` (10), `cc.session` (6) | All downward from 16. Legal. No `cc.server` import. **Link cost (accepted):** `cc_sdk` PUBLIC-links `cc_query`, which PUBLIC-links `cc_services` (cc_tools.cmake:133) + `CURL::libcurl` (cc_query.cmake:42); `cc_services` PUBLIC-links `OpenSSL::SSL/Crypto`, `CURL::libcurl`, `httplib`, `yyjson`, `uv_a` (cc_services.cmake:66-81). So OpenSSL and libcurl DO enter the SDK closure via `cc_services` — the phase-3 cost of embedding the engine. `cc_services`' module interfaces expose OpenSSL/CURL types (gcp_adc.cppm's `EvpPkeyPtr`, client.cppm's CURL handle), so those links cannot be made PRIVATE to stop propagation. What stays out is the `cc_server` target itself (the HTTP server routes/main). (`resume()` uses `parse_session_message_value`, rank 10 — not `message_from_json_value`; see §2.3 deviation note.) |
 | `QueryEngine::set_wire_backend_factory` added | No graph effect (same module). |
 | Install/EXPORT revival | No graph effect (CMake only). |
 
@@ -1089,7 +1115,12 @@ Phase 3 is also a sequence of revertible commits:
    The server route is the only caller; no SDK change.
 2. **`QueryEngine::set_wire_backend_factory` commit:** add the seam. Rollback:
    `git revert` — the seam is additive; no caller depends on it until the
-   harness lands.
+   harness lands. *(Implementation deviation, recorded: the seam landed in
+   the harness commit `f81cddd` rather than its own commit — the harness is
+   the first and only caller, so a revert of the harness commit also reverts
+   the seam. The seam remains additive and behavior-neutral for existing
+   callers; the deviation is in commit granularity, not in the seam's design
+   or rollback safety.)*
 3. **`cc.sdk.harness` commit:** add the harness module + impl unit +
    `test_sdk_harness`. Rollback: `git revert` — the harness is additive; the
    server route (already on `cc.query.assembly`) is unaffected.
@@ -1120,7 +1151,7 @@ re-expression so a harness problem never blocks the server.
     loopback SSE response).
   - Assert `resume(session_id)` with `sessions_dir` set restores a prior
     conversation: seed a `messages.jsonl` via `cc.session.storage`, then
-    `resume` (which loads via `load_messages` + `message_from_json_value` +
+    `resume` (which loads via `load_messages` + `parse_session_message_value` +
     `restore_conversation`, §2.3) and check `conversation()`.
   - Assert the `PermissionCallback` is invoked for a tool that requires
     permission. Register a mock permission-gated tool via the
@@ -1327,3 +1358,39 @@ re-expression so a harness problem never blocks the server.
     fix is a behavior change landing outside the step that introduced the bug,
     and is now covered by the `InitializeRequest` round-trip test
     (`.timeout = 30.0`). Recorded here; no code action needed.
+- **2026-10-01 — P3-harness review (agent: p3-harness-review), verdict
+  request-changes; all findings addressed in a fix commit.** The P3-harness
+  step (f81cddd) added the `cc.sdk.harness` opaque entrypoint; the review
+  found one false link-closure claim, one non-deterministic test, and two
+  stale doc references:
+  - *False link-closure claim (high):* the cmake comment and §2.3/§3.4
+    claimed "`OpenSSL::Crypto` stays out of the SDK closure" because
+    `cc_sdk` does not link `cc_server`. In fact `cc_query` PUBLIC-links
+    `cc_services` (cc_tools.cmake:133) and `CURL::libcurl`
+    (cc_query.cmake:42), and `cc_services` PUBLIC-links `OpenSSL::SSL/Crypto`,
+    `CURL::libcurl`, `httplib`, `yyjson`, `uv_a` (cc_services.cmake:66-81) —
+    so OpenSSL and libcurl DO enter the SDK closure via `cc_services`. The
+    reviewer's alternative (make `cc_services`' OpenSSL/CURL links PRIVATE)
+    is not viable: `cc_services`' module interfaces expose those types
+    (gcp_adc.cppm's exported `EvpPkeyPtr` over `EVP_PKEY*`; client.cppm's
+    CURL handle). Fixed by correcting the cmake comment, §2.1, §2.3, and
+    §3.4 to state the real closure and explicitly accept it as phase-3 cost
+    (the cost of embedding the engine). What stays true: `cc_sdk` does not
+    link the `cc_server` target itself. (§2.6 already stated this closure for
+    install; the phase-3 sections are now consistent with it.)
+  - *Non-deterministic test (med):* `AbortBeforeRunReturnsErrorOnce` set no
+    `base_url`, so the second `run()` POSTed to the default
+    `api.anthropic.com` — a real external call on a networked machine.
+    Fixed: `config.base_url = "http://127.0.0.1:1"` (closed local port) so
+    the transport failure is deterministic and local (§4.4 zero-external-calls).
+  - *Commit-granularity deviation (low, recorded):* the
+    `set_wire_backend_factory` seam landed in the harness commit (f81cddd),
+    not its own commit as §4.3 item 2 specifies. Defensible (the harness is
+    the first/only caller); recorded in §4.3. No code action.
+  - *Stale resume-path reference (low, recorded):* §2.3/§4.4 specified the
+    non-lossy `message_from_json_value`, but the harness (consistent with
+    the assembly) uses `parse_session_message_value`, which is
+    role/content-string-only and drops `tool_use`/`tool_result`/`image`
+    blocks. The deviation (a `cc::services::api::Message` →
+    `cc::core::Message` converter does not exist) is now recorded in §2.3;
+    a non-lossy reader is a follow-up.

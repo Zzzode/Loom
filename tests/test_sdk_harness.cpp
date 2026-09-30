@@ -162,6 +162,11 @@ TEST(SdkHarness, AbortBeforeRunReturnsErrorOnce) {
     cc::sdk::HarnessConfig config;
     config.model = "loom-test";
     config.api_key_provider = [] { return "sk-test"; };
+    // Point at a closed local port so the second run()'s transport failure
+    // is deterministic and local — NOT a real POST to the default
+    // api.anthropic.com (which on a networked machine would be an external
+    // call, violating §4.4's zero-external-calls gate).
+    config.base_url = "http://127.0.0.1:1";
     cc::sdk::Harness harness(std::move(config));
 
     harness.abort();
@@ -173,9 +178,9 @@ TEST(SdkHarness, AbortBeforeRunReturnsErrorOnce) {
               std::string::npos)
         << aborted.error().format();
 
-    // The flag cleared: a subsequent run() proceeds (and fails at the
-    // transport, since no server listens — proving the abort did not poison
-    // the harness).
+    // The flag cleared: a subsequent run() proceeds past the abort check
+    // (and fails at the transport against the closed local port — proving
+    // the abort did not poison the harness, with no external call).
     auto next = harness.run(options);
     ASSERT_FALSE(next.has_value());
     EXPECT_EQ(next.error().message.find("Query interrupted"),

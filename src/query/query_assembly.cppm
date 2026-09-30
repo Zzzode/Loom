@@ -120,13 +120,17 @@ private:
     const AssemblyConfig& config, const AssemblyCallbacks& callbacks);
 
 /// Parse one messages.jsonl document into a cc::core::Message. The same
-/// non-lossy reader assemble() uses for prior_message_lines, exported so
+/// reader assemble() uses for prior_message_lines, exported so
 /// cc.sdk.harness::resume() can restore a prior session without
 /// re-implementing the format (RFC 0001 cc-sdk phase 3, §2.3 resume path).
-/// `message_from_json_value` returns cc::services::api::Message (a flat
-/// struct), incompatible with restore_conversation's cc::core::Message
-/// (5-member variant) with no existing converter — see the P3-assembly
-/// deviation note. `index` seeds a fallback id when the document has none.
+/// This is a role/content-string-only reader: it drops tool_use/
+/// tool_result/image blocks, so a session that used tools cannot be
+/// faithfully resumed yet (a non-lossy cc::core::Message reader is a
+/// follow-up). `message_from_json_value` returns cc::services::api::Message
+/// (a flat struct), incompatible with restore_conversation's
+/// cc::core::Message (5-member variant) with no existing converter — see
+/// the P3-assembly deviation note. `index` seeds a fallback id when the
+/// document has none.
 [[nodiscard]] std::optional<cc::core::Message> parse_session_message_value(
     cc::utils::json::JsonVal root, std::size_t index = 0);
 

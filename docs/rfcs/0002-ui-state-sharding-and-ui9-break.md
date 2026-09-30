@@ -1,7 +1,7 @@
 ---
 rfc: 2
 title: UI state sharding and breaking the UI9 SCC
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers: ["agent:design-review#1 (SOUND with required changes - numbers regenerated, minimum-cut corrected to 7 dirs/10 edges, row 8 extraction, F3 threading model; all applied 2026-09-26)", "agent:design-review#2/#3/#4 (three adversarial reviews of the implementable gate package, 2026-09-29, request-changes - all required changes applied; see attachments/0002-implementable-gate.md Review history)", "agent:design-verify (independent verification of the revised gate package + body, 2026-09-29, approved)", "agent:prr-review (independent PRR of the implementable gate, 2026-09-29, approve - 30/30 checklist rows)"]
 created: 2026-09-26

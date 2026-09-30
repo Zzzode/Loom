@@ -11,11 +11,9 @@ target_sources(cc_ui
         ui/features/agents/agent_shared_widgets.cppm
         ui/features/agents/agent_wizard.cppm
         ui/widgets/all_components.cppm
-        ui/visual/code_highlight.cppm
         ui/widgets/custom_select.cppm
         ui/widgets/dev_bar.cppm
         ui/widgets/fast_icon.cppm
-        ui/foundation/components_figures.cppm
         ui/features/grove.cppm
         ui/features/plugins/lsp_recommendation_menu.cppm
         ui/widgets/passes.cppm
@@ -23,14 +21,10 @@ target_sources(cc_ui
         ui/widgets/pr_badge.cppm
         ui/widgets/spinner.cppm
         ui/widgets/stats.cppm
-        ui/visual/structured_diff.cppm
-        ui/visual/file_edit_tool_diff.cppm
         ui/widgets/tag_tabs.cppm
         ui/widgets/text_input.cppm
         ui/widgets/text_input_widget.cppm
         ui/widgets/spinner_animations.cppm
-        ui/foundation/ui_types.cppm
-        ui/foundation/declared_cursor.cppm
         ui/dialogs/dialog_system.cppm
         ui/dialogs/dialog_frame.cppm
         ui/dialogs/dialog_default_renderers.cppm
@@ -61,10 +55,7 @@ target_sources(cc_ui
         # lives in register_default_renderers() in default_renderers.cppm.
         ui/chrome/layout.cppm
         ui/chrome/fullscreen_layout.cppm
-        ui/foundation/logo.cppm
-        ui/foundation/logo_v2.cppm          # P0-4: LogoV2 3-mode dispatch + WelcomeV2 + notice stack
         ui/chrome/yoga.cppm
-        ui/visual/markdown.cppm
         ui/messages/messages.cppm
         ui/messages/assistant_message.cppm
         ui/messages/error_message.cppm
@@ -162,12 +153,6 @@ target_sources(cc_ui
         ui/screens/resume_screen.cppm
         ui/screens/log_selector.cppm              # UI23 — LogSelector (1574 → 1730 loc)
         ui/chrome/terminal.cppm
-        ui/foundation/design_tokens.cppm       # UI20 (merged from cc_ui_design to resolve module-import cycle)
-        ui/foundation/design_figures.cppm             # Shared glyph + prompt-mode constants (TS utils/figures.ts + inputModes.ts)
-        ui/foundation/theme_provider.cppm
-        ui/foundation/design_logo.cppm
-        ui/foundation/component_primitives.cppm
-        ui/foundation/feature_dialog_protocol.cppm  # RFC 0002 F2 row 6: neutral feature-dialog vocabulary + erased factory registry (foundation leaf; imports only std + ftxui)
 )
 # Module implementation units for cc.ui.app_dialog_registration — one per
 # dialog-renderer aggregator, so no single TU imports more than one aggregator's
@@ -219,17 +204,6 @@ target_sources(cc_ui PRIVATE
     ui/app/app_testing_seams.cpp
     ui/dialogs/hooks_dialog_renderer_impl.cpp
     ui/dialogs/plugin_dialog_renderer_impl.cpp
-    # Module implementation units for cc.ui.visual.markdown (RFC 0001 Phase C
-    # batch 6): lexer / LRU cache / linkify / code-block (isolates the
-    # cc.ui.visual.code_highlight import closure) / block+inline renderers /
-    # public API + StreamingMarkdown / interactive component vtable anchor.
-    ui/visual/markdown_lexer_impl.cpp
-    ui/visual/markdown_cache_impl.cpp
-    ui/visual/markdown_linkify_impl.cpp
-    ui/visual/markdown_render_code_impl.cpp
-    ui/visual/markdown_render_impl.cpp
-    ui/visual/markdown_api_impl.cpp
-    ui/visual/markdown_component_impl.cpp
     # Module implementation units for cc.ui.messages.messages_list
     # (RFC 0001 Phase C batch 7): filter/brief logic, the ~20-module
     # std::visit search closure (isolated on purpose), row geometry,
@@ -273,6 +247,14 @@ target_sources(cc_ui PRIVATE
 )
 target_link_libraries(cc_ui
     PUBLIC
+        # RFC 0002 F4: the cc.ui.foundation.* area now lives in its own
+        # library; cc_ui links it PUBLIC so the remaining areas can still
+        # import cc.ui.foundation.* during the staged split.
+        cc_ui_foundation
+        # RFC 0002 F4: the cc.ui.visual.* area (markdown, code highlight,
+        # diffs) now lives in its own library; linked PUBLIC so the
+        # remaining areas can still import cc.ui.visual.* during the split.
+        cc_ui_visual
         cc_utils
         cc_types
         cc_query

@@ -220,9 +220,11 @@ void insert_prompt_text(
     const std::shared_ptr<ReplScreenState>& state,
     std::string_view value);
 
-// AT-09: drain inbound IDE at_mentioned tokens staged by the MCP receive
-// thread. MUST be called on the render thread.
-std::size_t DrainPendingAtMentionInserts(
+// AT-09: apply inbound IDE at_mentioned tokens drained from the AppImpl
+// staging queue into mcp_status_store. MUST be called on the render thread
+// (it mutates input_text/cursor). The staging mutex lives in the app
+// composition layer (AppAdapter::DrainPendingAtMentionInserts).
+std::size_t ApplyPendingAtMentionInserts(
     const std::shared_ptr<ReplScreenState>& state);
 
 /// Stash the current input text and cursor position (GAP 2).

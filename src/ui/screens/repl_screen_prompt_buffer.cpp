@@ -14,7 +14,6 @@ module;
 #include <chrono>
 #include <cstddef>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -93,22 +92,25 @@ void insert_prompt_text(
     set_prompt_input_text(state, std::move(state->input_text), cursor + value.size());
 }
 
-// AT-09: drain inbound IDE at_mentioned tokens staged by the MCP receive
-// thread. MUST be called on the render thread (it mutates input_text/cursor).
-// Returns the number of tokens inserted. Empty under the lock fast-path when
-// nothing is pending so per-frame cost is negligible (keeps app.cppm thin).
-std::size_t DrainPendingAtMentionInserts(
+// AT-09: apply inbound IDE at_mentioned tokens that the render thread
+// drained from the AppImpl staging queue into mcp_status_store. MUST be
+// called on the render thread (it mutates input_text/cursor). Returns the
+// number of tokens inserted. The staging mutex lives in the app composition
+// layer (AppAdapter::DrainPendingAtMentionInserts); this function touches
+// only drained, UI-thread-affined store data, so it needs no lock.
+std::size_t ApplyPendingAtMentionInserts(
     const std::shared_ptr<ReplScreenState>& state) {
-    std::vector<std::string> batch;
-    {
-        std::lock_guard<std::mutex> lk(state->pending_at_mention_mutex);
-        if (state->pending_at_mention_inserts.empty()) return 0;
-        batch.swap(state->pending_at_mention_inserts);
+    auto& drained = state->mcp_status_store.pending_at_mention_inserts;
+    if (drained.empty()) return 0;
+    std::size_t applied = 0;
+    for (const auto& token : drained) {
+        if (!token.empty()) {
+            insert_prompt_text(state, token);
+            ++applied;
+        }
     }
-    for (const auto& token : batch) {
-        if (!token.empty()) insert_prompt_text(state, token);
-    }
-    return batch.size();
+    drained.clear();
+    return applied;
 }
 
 // ── Stashed prompt restore (GAP 2) ──────────────────────────────────────

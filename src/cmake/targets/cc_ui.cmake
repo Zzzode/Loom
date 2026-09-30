@@ -156,6 +156,7 @@ target_sources(cc_ui
         ui/screens/task_view_store.cppm       # RFC 0002 F3: TaskViewStore (spinner/task-notifications/agent-teammate live state shard)
         ui/screens/permission_store.cppm      # RFC 0002 F3: PermissionStore (permission-prompt state shard)
         ui/screens/dialog_store.cppm          # RFC 0002 F3: DialogStore (overlay dialogs / inline panels / M7 dialog queue shard)
+        ui/screens/mcp_status_store.cppm      # RFC 0002 F3: McpStatusStore (MCP at-mention drained-queue shard)
         ui/screens/repl_screen.cppm
         ui/screens/resume_screen.cppm
         ui/screens/log_selector.cppm              # UI23 — LogSelector (1574 → 1730 loc)

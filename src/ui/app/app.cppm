@@ -270,6 +270,15 @@ private:
         bool is_error = false;
     };
     std::optional<PendingBashResult> pending_bash_result_;  // bg→UI
+    // AT-09: inbound IDE at_mentioned tokens staged by the MCP receive
+    // thread (bg→UI), drained on the render thread in
+    // DrainPendingAtMentionInserts into screen_state_->mcp_status_store.
+    // Moved here from ReplScreenState in RFC 0002 F3: stores are
+    // UI-thread-affined plain data and hold no mutex, so the staging queue
+    // and its lock live in the composition layer; the store holds only the
+    // drained data.
+    std::mutex at_mention_mutex_;
+    std::vector<std::string> pending_at_mention_inserts_;  // bg→UI
     std::string streaming_text_;
     /// TS REF: Markdown.tsx L186-235 — StreamingMarkdown stable-prefix cache
     /// for the streaming-text tail row.  Reset alongside streaming_text_ so
@@ -403,6 +412,12 @@ private:
     // Phase C batch 2). Private member; callable from member functions in
     // any impl unit (private access holds within member functions).
     void PostRenderEvent();
+
+    // AT-09: drain the MCP at_mentioned staging queue (at_mention_mutex_ /
+    // pending_at_mention_inserts_) into screen_state_->mcp_status_store on
+    // the render thread, then apply it to the prompt. Body in
+    // app_autocomplete.cpp.
+    std::size_t DrainPendingAtMentionInserts();
 
     // ── Teammate inbox worker ───────────────────────────────────────────────
 

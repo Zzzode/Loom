@@ -79,6 +79,7 @@ def main() -> int:
     # Grows as F3 stores land (MessagesStore, PromptStore, ...). The lint
     # itself has no baseline; this list is the live F3 store set.
     check(s["stores"] == ["cc.ui.screens.dialog_store",
+                          "cc.ui.screens.mcp_status_store",
                           "cc.ui.screens.messages_store",
                           "cc.ui.screens.permission_store",
                           "cc.ui.screens.prompt_store",

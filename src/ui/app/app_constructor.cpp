@@ -363,10 +363,8 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                 }
             }
             {
-                std::lock_guard<std::mutex> lk(
-                    screen_state_->pending_at_mention_mutex);
-                screen_state_->pending_at_mention_inserts.push_back(
-                    std::move(token));
+                std::lock_guard<std::mutex> lk(at_mention_mutex_);
+                pending_at_mention_inserts_.push_back(std::move(token));
             }
             PostRenderEvent();
         });

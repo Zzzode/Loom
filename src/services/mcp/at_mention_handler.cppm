@@ -6,7 +6,8 @@
 // it calls dispatch_at_mention() here, which forwards to whichever UI
 // responder has been registered. The responder is set by AppAdapter
 // (ui/app.cppm) and stages an "@<relpath>#L<a>-<b>" token into
-// ReplScreenState::pending_at_mention_inserts.
+// AppAdapter's mutex-guarded pending_at_mention_inserts_ staging queue
+// (drained on the render thread into the MCP status store).
 //
 // Line numbers arrive from the IDE 0-based (per TS useIdeAtMentioned.ts which
 // adds +1). We normalise to 1-based inside dispatch_at_mention so the

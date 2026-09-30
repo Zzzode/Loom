@@ -995,12 +995,30 @@ bool AppAdapter::is_streaming_thinking_visible() const {
     return false;
 }
 
+// AT-09: drain inbound IDE at_mentioned tokens staged by the MCP receive
+// thread into screen_state_->mcp_status_store, then apply them to the
+// prompt. MUST be called on the render thread (the apply mutates
+// input_text/cursor). The staging queue and its mutex live here in the
+// composition layer (RFC 0002 F3: stores hold no locks); the store holds
+// only drained data. Empty-under-the-lock fast path keeps per-frame cost
+// negligible.
+std::size_t AppAdapter::DrainPendingAtMentionInserts() {
+    {
+        std::lock_guard lk(at_mention_mutex_);
+        if (pending_at_mention_inserts_.empty()) return 0;
+        screen_state_->mcp_status_store.pending_at_mention_inserts.swap(
+            pending_at_mention_inserts_);
+    }
+    return repl::ApplyPendingAtMentionInserts(screen_state_);
+}
+
 Element AppAdapter::Render() {
     this->ProjectRuntimeMetadataToScreenState();
     ConsumePendingResult();
     // AT-09: apply any inbound IDE at_mentioned tokens that landed since
-    // the last frame (drained on the render thread for input_text safety).
-    repl::DrainPendingAtMentionInserts(screen_state_);
+    // the last frame (drained from the AppImpl staging queue on the render
+    // thread for input_text safety).
+    DrainPendingAtMentionInserts();
 
     const bool qr = query_running_.load();
     cc::utils::debug("app.render",

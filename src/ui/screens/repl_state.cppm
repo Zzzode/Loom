@@ -41,6 +41,10 @@ export import cc.ui.screens.permission_store;    // PermissionStore / Permission
 // migration. Deleted in F3 Finalize — importers then import
 // cc.ui.screens.dialog_store directly.
 export import cc.ui.screens.dialog_store;        // DialogStore / dialog handles
+// RFC 0002 F3 shim: re-exports the McpStatusStore shard so importers keep
+// seeing McpStatusStore during the per-store migration. Deleted in F3
+// Finalize — importers then import cc.ui.screens.mcp_status_store directly.
+export import cc.ui.screens.mcp_status_store;    // McpStatusStore
 import cc.ui.features.agents.agent_cards;        // AgentCardData
 import cc.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
 import cc.ui.visual.markdown;                    // StreamingMarkdown (ptr field)
@@ -310,11 +314,15 @@ struct ReplScreenState {
     std::size_t history_index = std::string::npos;
     // AT-09: inbound IDE at_mentioned notifications deliver a fully-formed
     // "@<relpath>#L<a>-<b>" token to insert at the prompt cursor. They arrive
-    // on the MCP receive thread, so they are staged here under mutex and
-    // drained on the render thread (DrainPendingAtMentionInserts). Faithful
-    // to TS useIdeAtMentioned.ts -> inputState.insert at cursor.
-    std::mutex pending_at_mention_mutex;
-    std::vector<std::string> pending_at_mention_inserts;
+    // on the MCP receive thread, so they are staged under mutex in the AppImpl
+    // composition layer and drained on the render thread
+    // (DrainPendingAtMentionInserts -> ApplyPendingAtMentionInserts).
+    // Faithful to TS useIdeAtMentioned.ts -> inputState.insert at cursor.
+    // RFC 0002 F3: the staging mutex + queue moved OUT to AppImpl; the
+    // DRAINED queue lives in McpStatusStore (mcp_status_store field below).
+    // McpStatusStore stays visible here through the re-export shim at the
+    // top of this file; the shim is deleted in F3 Finalize.
+    McpStatusStore mcp_status_store;
     // Status / permission / context
     StatusBarData status_bar;
     // RFC 0002 F3: permission-prompt state (PermissionToolKind + the

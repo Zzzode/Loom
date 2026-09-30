@@ -1,0 +1,1 @@
+{"type":"control_request","request_id":"perm_req_001","request":{"subtype":"can_use_tool","tool_name":"Bash","input":{"command":"ls -la","description":"list files"},"tool_use_id":"toolu_001","description":"Allow Bash to run?"}}

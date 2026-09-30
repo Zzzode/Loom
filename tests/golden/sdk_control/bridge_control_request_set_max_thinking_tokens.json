@@ -1,0 +1,1 @@
+{"type":"control_request","request_id":"think_req_001","request":{"subtype":"set_max_thinking_tokens","max_thinking_tokens":1024}}

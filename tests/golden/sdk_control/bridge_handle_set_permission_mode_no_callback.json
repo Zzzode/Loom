@@ -1,0 +1,1 @@
+{"type":"control_response","session_id":"sess_001","response":{"subtype":"error","request_id":"mode_req_003","error":"set_permission_mode is not supported in this context (onSetPermissionMode callback not registered)"}}

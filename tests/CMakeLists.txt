@@ -406,6 +406,24 @@ target_compile_definitions(test_bridge
 gtest_discover_tests(test_bridge DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 
+# ---------------------------------------------------------------------------
+# cc_sdk phases 2-3 (RFC 0001): golden wire-compatibility gate for the
+# hand-rolled control protocol spoken by cc.server.server_main and
+# cc.bridge.bridge_messaging. Freezes the exact JSON for every spoken control
+# subtype under tests/golden/sdk_control/ before the ser/de rewire (design
+# §4.2 S6). UPDATE_GOLDENS=1 rewrites the fixtures.
+# ---------------------------------------------------------------------------
+add_executable(test_sdk_control_golden test_sdk_control_golden.cpp)
+target_link_libraries(test_sdk_control_golden
+    PRIVATE
+        cc_core            # cc.server.server_main + cc.bridge.bridge_messaging BMIs
+        cc_utils           # cc.serdes.json
+        GTest::gtest_main
+)
+gtest_discover_tests(test_sdk_control_golden
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+
 add_executable(test_skills test_skills.cpp)
 target_link_libraries(test_skills
     PRIVATE
@@ -648,6 +666,7 @@ foreach(_cc_test IN ITEMS
     test_bootstrap
     test_migrations
     test_bridge
+    test_sdk_control_golden
     test_skills
     phase3_permission_smoke
     bench_core

@@ -1,0 +1,1 @@
+{"type":"control_request","request_id":"perm_req_002","request":{"subtype":"can_use_tool","tool_name":"Bash","input":{},"tool_use_id":"toolu_002","description":"Allow Bash to run?"}}

@@ -1,0 +1,1 @@
+{"type":"control_response","session_id":"sess_001","response":{"subtype":"error","request_id":"unk_req_001","error":"REPL bridge does not handle control_request subtype: reload_config"}}

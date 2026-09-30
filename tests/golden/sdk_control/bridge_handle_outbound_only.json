@@ -1,0 +1,1 @@
+{"type":"control_response","session_id":"sess_001","response":{"subtype":"error","request_id":"model_req_002","error":"This session is outbound-only. Enable Remote Control locally to allow inbound control."}}

@@ -536,6 +536,21 @@ struct ControlResponseDecision {
     return out.str();
 }
 
+// The control_response the server sends when a client "interrupt"
+// control_request arrives. Named (not inline at the two call sites) so the
+// golden wire-compatibility gate can exercise the live serializer.
+// arch-check: keep-inline — trivial one-line format wrapper; deduplicates the
+// two former inline std::format call sites (no new interface complexity).
+[[nodiscard]] inline std::string interrupt_control_response_json(
+    std::string_view request_id,
+    bool interrupted
+) {
+    return std::format(
+        R"({{"type":"control_response","response":{{"subtype":"success","request_id":"{}","response":{{"interrupted":{}}}}}}})",
+        server_json_escape(request_id),
+        interrupted ? "true" : "false");
+}
+
 [[nodiscard]] inline std::string sdk_assistant_message(
     std::string_view session_id,
     cc::utils::json::JsonVal response
@@ -911,10 +926,7 @@ private:
                     std::lock_guard lock(cancel_mutex_);
                     cancelled_sessions_.insert(session_id);
                 }
-                (void)send_ws_text(std::format(
-                    R"({{"type":"control_response","response":{{"subtype":"success","request_id":"{}","response":{{"interrupted":{}}}}}}})",
-                    detail::server_json_escape(request_id),
-                    interrupted ? "true" : "false"));
+                (void)send_ws_text(detail::interrupt_control_response_json(request_id, interrupted));
                 continue;
             }
             if (record_control_response(frame->payload) ||
@@ -977,10 +989,7 @@ private:
                         std::lock_guard lock(cancel_mutex_);
                         cancelled_sessions_.insert(session_id);
                     }
-                    (void)send_ws_text(std::format(
-                        R"({{"type":"control_response","response":{{"subtype":"success","request_id":"{}","response":{{"interrupted":{}}}}}}})",
-                        detail::server_json_escape(request_id),
-                        interrupted ? "true" : "false"));
+                    (void)send_ws_text(detail::interrupt_control_response_json(request_id, interrupted));
                     continue;
                 }
                 if (record_control_response(pending_frame->payload) ||

@@ -1,0 +1,1 @@
+{"type":"control_response","response":{"subtype":"success","request_id":"perm_req_100","response":{"behavior":"allow","updatedInput":{"command":"ls"},"updatedPermissions":[{"tool_name":"Bash"}],"message":"ok"}}}

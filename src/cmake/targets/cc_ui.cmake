@@ -154,6 +154,7 @@ target_sources(cc_ui
         ui/screens/messages_store.cppm        # RFC 0002 F3: MessagesStore (message-list/scroll/chrome state shard)
         ui/screens/prompt_store.cppm          # RFC 0002 F3: PromptStore (prompt-input state shard)
         ui/screens/task_view_store.cppm       # RFC 0002 F3: TaskViewStore (spinner/task-notifications/agent-teammate live state shard)
+        ui/screens/permission_store.cppm      # RFC 0002 F3: PermissionStore (permission-prompt state shard)
         ui/screens/repl_screen.cppm
         ui/screens/resume_screen.cppm
         ui/screens/log_selector.cppm              # UI23 — LogSelector (1574 → 1730 loc)

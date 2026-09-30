@@ -31,6 +31,11 @@ export import cc.ui.screens.prompt_store;        // PromptStore / StashedPrompt
 // seeing SpinnerMode during the per-store migration. Deleted in F3
 // Finalize — importers then import cc.ui.screens.task_view_store directly.
 export import cc.ui.screens.task_view_store;     // TaskViewStore / SpinnerMode
+// RFC 0002 F3 shim: re-exports the PermissionStore shard so importers keep
+// seeing PermissionRequestInfo / PermissionToolKind during the per-store
+// migration. Deleted in F3 Finalize — importers then import
+// cc.ui.screens.permission_store directly.
+export import cc.ui.screens.permission_store;    // PermissionStore / PermissionRequestInfo
 import cc.ui.features.agents.agent_cards;        // AgentCardData
 import cc.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
 import cc.ui.visual.markdown;                    // StreamingMarkdown (ptr field)
@@ -115,77 +120,14 @@ struct StatusBarData {
 /// (visible here through the re-export shim above; the shim is deleted in
 /// F3 Finalize).
 
-/// Tool kind for permission prompt dispatch.
-/// Determines which faithful permission panel renderer to use.
-enum class PermissionToolKind : std::uint8_t {
-    Generic,        ///< Fallback — old simple dialog
-    Bash,           ///< Bash / shell command
-    FileEdit,       ///< File edit (with diff)
-    FileWrite,      ///< File write / create
-    FileRead,       ///< File read
-    Glob,           ///< Glob search
-    Grep,           ///< Grep search
-    WebFetch,       ///< Web fetch
-    WebSearch,      ///< Web search
-    Skill,          ///< Skill execution
-    PlanMode,       ///< Enter/exit plan mode
-    MCP,            ///< MCP tool
-    LSP,            ///< LSP tool
-    Agent,          ///< Agent spawn
-    NotebookEdit,   ///< Notebook cell edit
-    _COUNT,
-};
+/// RFC 0002 F3: PermissionToolKind + PermissionRequestInfo (the permission-
+/// prompt subset, TS ToolUseConfirm) moved to cc.ui.screens.permission_store
+/// (visible here through the re-export shim above; the shim is deleted in
+/// F3 Finalize). The dead nested DialogContext bridge struct (zero type
+/// usages anywhere; repl_screen_dialog_queue.cpp notes there are ZERO writes
+/// to it) was deleted rather than moved — project convention prefers
+/// deleting dead code to relocating it.
 
-/// Permission prompt subset (TS ToolUseConfirm).  Full shape: UI8/UI9.
-struct PermissionRequestInfo {
-    std::string tool_name, description;
-    std::optional<std::string> file_path;
-    std::vector<std::string> risk_labels;
-    bool can_always_allow = true;
-
-/// Transient dialog payloads for RouteDialog dispatch.
-struct DialogContext {
-    std::optional<std::string> sandbox_host_pattern, sandbox_worker_request_id;
-    std::optional<std::string> elicitation_server_name;
-    std::optional<std::uint64_t> elicitation_request_id;
-    std::optional<double> cost_threshold_usd;
-    std::optional<std::uint32_t> idle_return_minutes;
-    std::optional<std::uint64_t> idle_return_total_tokens;
-    int idle_return_selected_index{0};
-    std::optional<std::string> ide_installation_status, model_switch_alias;
-    std::optional<std::string> plugin_hint_name, plugin_hint_description;
-    std::optional<std::string> lsp_rec_extension, lsp_rec_file_ext;
-    std::optional<std::string> ultraplan_blurb;
-    // UI13: agent wizard — name of agent being edited (empty = create new).
-    std::optional<std::string> agent_wizard_agent_id;
-    // UI8: TrustDialog payload (workspace path + user-facing decision).
-    std::optional<std::string> trust_workspace_path;
-};
-
-    // -- Tool-specific payload (populated only for matching tool_kind) --
-
-    // Bash
-    std::optional<std::string> bash_command;
-    std::optional<std::string> bash_working_dir;
-    bool bash_is_destructive = false;
-    std::string bash_destructive_reason;
-
-    // FileEdit / FileWrite / FileRead (shared path fields)
-    std::optional<std::string> file_old_content;    // edit: old_string / write: old_content
-    std::optional<std::string> file_new_content;    // edit: new_string / write: content
-    bool file_replace_all = false;                  // edit only
-    bool file_exists = false;                       // write only (overwrite vs create)
-    std::optional<std::string> file_language;       // syntax highlight hint
-    std::optional<std::string> file_relative_path;
-    std::optional<std::string> file_filename;       // basename
-
-    // Web
-    std::optional<std::string> web_url;
-
-    // Skill
-    std::optional<std::string> skill_name;
-    std::optional<std::string> skill_source;  // "bundled" / "user" / "plugin"
-};
 ///
 /// Lean orchestration state.  Full app state lives in services/; the
 /// engine writes computed projections into this struct between frames.
@@ -370,7 +312,13 @@ struct ReplScreenState {
     std::vector<std::string> pending_at_mention_inserts;
     // Status / permission / context
     StatusBarData status_bar;
-    std::optional<PermissionRequestInfo> permission_request;    // Settings-driven UI configuration (mirrors AppState.settings subset
+    // RFC 0002 F3: permission-prompt state (PermissionToolKind + the
+    // ToolUseConfirm subset PermissionRequestInfo) sharded into
+    // cc.ui.screens.permission_store (PermissionStore). PermissionRequestInfo
+    // stays visible here through the re-export shim at the top of this file;
+    // the shim is deleted in F3 Finalize.
+    PermissionStore permission_store;
+    // Settings-driven UI configuration (mirrors AppState.settings subset
     // that the renderer needs — populated by the engine/app layer).
     std::string settings_model;             // Configured default model
     std::string settings_agent_name;        // Configured settings.agent (TS getInitialSettings().agent)

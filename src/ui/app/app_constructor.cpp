@@ -204,10 +204,10 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     cbs.on_permission_response = [this](bool allowed, std::optional<bool> always) {
         std::lock_guard lk(permission_mutex_);
         permission_response_ = allowed;
-        if (always && *always && screen_state_->permission_request) {
-            always_allowed_tools_.insert(screen_state_->permission_request->tool_name);
+        if (always && *always && screen_state_->permission_store.permission_request) {
+            always_allowed_tools_.insert(screen_state_->permission_store.permission_request->tool_name);
         }
-        screen_state_->permission_request.reset();
+        screen_state_->permission_store.permission_request.reset();
         screen_state_->mode = repl::ReplMode::Normal;
         permission_cv_.notify_one();
     };

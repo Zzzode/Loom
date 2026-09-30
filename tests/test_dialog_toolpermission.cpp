@@ -797,7 +797,7 @@ TEST(ReplModeRichPermissionPanels, BashReplModeRendersRichPanel) {
     info.bash_command = "cmake --build build -j 8";
     info.risk_labels = {"medium"};
     info.can_always_allow = true;
-    state->permission_request = info;
+    state->permission_store.permission_request = info;
 
     RsDecisionRecorder rec;
     auto comp = rs::ReplScreen(state, rec.callbacks());
@@ -816,7 +816,7 @@ TEST(ReplModeRichPermissionPanels, BashReplModeRendersRichPanel) {
     ASSERT_TRUE(rec.response.has_value());
     EXPECT_EQ(*rec.response, (DecisionPair{true, false}));
     EXPECT_EQ(state->mode, rs::ReplMode::Normal);
-    EXPECT_FALSE(state->permission_request.has_value());
+    EXPECT_FALSE(state->permission_store.permission_request.has_value());
     EXPECT_EQ(state->tool_permission_component, nullptr);
 }
 
@@ -832,7 +832,7 @@ TEST(ReplModeRichPermissionPanels, FileEditReplModeRendersRichPanel) {
     info.file_old_content = "int a;\n";
     info.file_new_content = "int b;\n";
     info.can_always_allow = true;
-    state->permission_request = info;
+    state->permission_store.permission_request = info;
 
     RsDecisionRecorder rec;
     auto comp = rs::ReplScreen(state, rec.callbacks());
@@ -850,7 +850,7 @@ TEST(ReplModeRichPermissionPanels, FileEditReplModeRendersRichPanel) {
     ASSERT_TRUE(rec.response.has_value());
     EXPECT_EQ(*rec.response, (DecisionPair{false, std::nullopt}));
     EXPECT_EQ(state->mode, rs::ReplMode::Normal);
-    EXPECT_FALSE(state->permission_request.has_value());
+    EXPECT_FALSE(state->permission_store.permission_request.has_value());
 }
 
 TEST(ReplModeRichPermissionPanels, FileWriteReplModeCreatesRichPanel) {
@@ -864,7 +864,7 @@ TEST(ReplModeRichPermissionPanels, FileWriteReplModeCreatesRichPanel) {
     info.file_filename = "new.txt";
     info.file_new_content = "hello\n";
     info.file_exists = false;
-    state->permission_request = info;
+    state->permission_store.permission_request = info;
 
     RsDecisionRecorder rec;
     auto comp = rs::ReplScreen(state, rec.callbacks());
@@ -895,7 +895,7 @@ TEST(ReplModeRichPermissionPanels, FileWriteReplModeOverwriteVariant) {
     info.file_new_content = "new\n";
     info.file_old_content = "old\n";
     info.file_exists = true;
-    state->permission_request = info;
+    state->permission_store.permission_request = info;
 
     RsDecisionRecorder rec;
     auto comp = rs::ReplScreen(state, rec.callbacks());
@@ -915,7 +915,7 @@ TEST(ReplModeRichPermissionPanels, GenericReplModeFallsBackToSinglePrompt) {
     info.description = "spawn sub-agent";
     info.risk_labels = {"high"};
     info.can_always_allow = true;
-    state->permission_request = info;
+    state->permission_store.permission_request = info;
 
     RsDecisionRecorder rec;
     auto comp = rs::ReplScreen(state, rec.callbacks());
@@ -932,7 +932,7 @@ TEST(ReplModeRichPermissionPanels, GenericReplModeFallsBackToSinglePrompt) {
     ASSERT_TRUE(rec.response.has_value());
     EXPECT_EQ(*rec.response, (DecisionPair{true, true}));
     EXPECT_EQ(state->mode, rs::ReplMode::Normal);
-    EXPECT_FALSE(state->permission_request.has_value());
+    EXPECT_FALSE(state->permission_store.permission_request.has_value());
 }
 
 TEST(ReplModeRichPermissionPanels, ClassifierUsesExactNamesNotSuffixMatching) {
@@ -945,7 +945,7 @@ TEST(ReplModeRichPermissionPanels, ClassifierUsesExactNamesNotSuffixMatching) {
         rs::PermissionRequestInfo info;
         info.tool_name = tool_name;
         info.description = "request";
-        state->permission_request = info;
+        state->permission_store.permission_request = info;
         RsDecisionRecorder rec;
         auto comp = rs::ReplScreen(state, rec.callbacks());
         return strip_ansi(render_to_ansi(comp->Render(), 120, 40));
@@ -1031,7 +1031,7 @@ TEST(ReplModeRichPermissionPanels, ComponentHandleSurvivesRepaint) {
     info.description = "Run build";
     info.bash_command = "cmake --build build -j 8";
     info.can_always_allow = true;
-    state->permission_request = info;
+    state->permission_store.permission_request = info;
 
     RsDecisionRecorder rec;
     auto comp = rs::ReplScreen(state, rec.callbacks());

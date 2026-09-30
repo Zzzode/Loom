@@ -140,7 +140,7 @@ TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
     repl::PermissionRequestInfo pinfo;
     pinfo.tool_name = "Bash";
     pinfo.description = "rm -rf";
-    pstate->permission_request = pinfo;
+    pstate->permission_store.permission_request = pinfo;
     bool panel_redraw = false;
     repl::ReplScreenCallbacks pcbs;
     pcbs.on_redraw = [&] { panel_redraw = true; };

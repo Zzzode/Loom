@@ -79,7 +79,9 @@ def main() -> int:
     # Grows as F3 stores land (MessagesStore, PromptStore, ...). The lint
     # itself has no baseline; this list is the live F3 store set.
     check(s["stores"] == ["cc.ui.screens.messages_store",
-                          "cc.ui.screens.prompt_store"],
+                          "cc.ui.screens.permission_store",
+                          "cc.ui.screens.prompt_store",
+                          "cc.ui.screens.task_view_store"],
           f"F3 stores found (got {s['stores']})")
     proc = subprocess.run(
         [sys.executable, str(HERE / "graph_check.py"), "--store-lint"],

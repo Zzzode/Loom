@@ -41,7 +41,7 @@ using namespace ftxui;
         // M6: Faithful permission panels — bash / file_edit / file_write.
         // Rendered as a dbox overlay (matching TS overlay slot).
         if (state->mode == ReplMode::ToolPermission &&
-            state->permission_request) {
+            state->permission_store.permission_request) {
             // dlg-permission-legacy: state-owned TS-faithful panel
             // (TS REF: PermissionRequest.tsx:47-82 dispatch by tool
             // identity) replaces the legacy paragraph(...) ANSI string.

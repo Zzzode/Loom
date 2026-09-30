@@ -250,7 +250,7 @@ enum class PermissionPanelKind { Bash, FileEdit, FileWrite, Generic };
 [[nodiscard]] std::shared_ptr<Component> get_tool_permission_component(
     const std::shared_ptr<ReplScreenState>& s,
     const std::shared_ptr<ReplScreenCallbacks>& cb) {
-    const auto& i = *s->permission_request;
+    const auto& i = *s->permission_store.permission_request;
     const std::string leaf = i.bash_command.value_or(i.file_path.value_or(""));
     const std::string key = i.tool_name + "\x1f" + i.description + "\x1f" + leaf;
     if (s->tool_permission_component && key == s->tool_permission_key)
@@ -263,7 +263,7 @@ enum class PermissionPanelKind { Bash, FileEdit, FileWrite, Generic };
         *fired = true;
         if (cb->on_permission_response) cb->on_permission_response(ok, always);
         s->mode = ReplMode::Normal;
-        s->permission_request.reset();
+        s->permission_store.permission_request.reset();
         s->tool_permission_component.reset();
         s->tool_permission_key.clear();
         if (cb->on_mode_change) cb->on_mode_change(ReplMode::Normal);

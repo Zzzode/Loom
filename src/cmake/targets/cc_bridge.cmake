@@ -21,6 +21,7 @@ target_link_libraries(cc_bridge
         cc_utils
         cc_types
         cc_cli
+        cc_server
         OpenSSL::Crypto
         yyjson
         uv_a

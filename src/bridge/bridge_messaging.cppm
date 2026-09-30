@@ -20,6 +20,7 @@ export module cc.bridge.bridge_messaging;
 import std;
 
 import cc.bridge.messages;
+import cc.server.control_protocol;
 import cc.serdes.json;
 
 export namespace cc::bridge {
@@ -217,34 +218,53 @@ struct TitleCandidate {
 // =========================================================================
 
 /// Build an SDKControlRequest from a parsed JSON object.
+/// Delegates to cc.server.control_protocol ser/de; the variant is
+/// flattened back into the bridge's lightweight SDKControlRequest
+/// (only subtype/model/mode/max_thinking_tokens are consumed here).
 [[nodiscard]] inline SDKControlRequest parse_control_request(cc::utils::json::JsonVal root) {
     SDKControlRequest req;
-    req.request_id = root.get_string("request_id");
-    auto inner = root.get("request");
-    if (inner.is_obj()) {
-        req.request.subtype = inner.get_string("subtype");
-        auto model = inner.get("model");
-        if (model.is_str()) req.request.model = std::string(model.as_str());
-        auto mode = inner.get("mode");
-        if (mode.is_str()) req.request.mode = std::string(mode.as_str());
-        auto max_tokens = inner.get("max_thinking_tokens");
-        if (max_tokens.is_num()) req.request.max_thinking_tokens = max_tokens.as_int();
-    }
+    auto parsed = cc::server::control::ControlRequest_from_json(root.to_string());
+    if (!parsed) return req;
+    req.request_id = parsed->request_id;
+    req.request.subtype = cc::server::control::control_request_subtype_str(parsed->request);
+    std::visit(
+        [&req](const auto& alt) {
+            using T = std::decay_t<decltype(alt)>;
+            if constexpr (std::is_same_v<T, cc::server::control::ControlSetModelRequest>) {
+                req.request.model = alt.model;
+            } else if constexpr (std::is_same_v<T, cc::server::control::ControlSetPermissionModeRequest>) {
+                req.request.mode = std::string(
+                    cc::server::control::permission_mode_to_str(alt.mode));
+            } else if constexpr (std::is_same_v<T, cc::server::control::ControlSetMaxThinkingTokensRequest>) {
+                if (alt.max_thinking_tokens)
+                    req.request.max_thinking_tokens = *alt.max_thinking_tokens;
+            }
+        },
+        parsed->request);
     return req;
 }
 
 /// Build an SDKControlResponse from a parsed JSON object.
+/// Delegates to cc.server.control_protocol ser/de; the variant is
+/// flattened back into the bridge's lightweight SDKControlResponse.
 [[nodiscard]] inline SDKControlResponse parse_control_response(cc::utils::json::JsonVal root) {
     SDKControlResponse resp;
-    auto inner = root.get("response");
-    if (inner.is_obj()) {
-        resp.response.subtype = inner.get_string("subtype");
-        resp.response.request_id = inner.get_string("request_id");
-        auto err = inner.get("error");
-        if (err.is_str()) resp.response.error = std::string(err.as_str());
-        auto payload = inner.get("response");
-        if (payload.valid()) resp.response.response_json = payload.to_string();
-    }
+    auto parsed = cc::server::control::ControlResponse_from_json(root.to_string());
+    if (!parsed) return resp;
+    std::visit(
+        [&resp](const auto& alt) {
+            using T = std::decay_t<decltype(alt)>;
+            if constexpr (std::is_same_v<T, cc::server::control::ControlSuccessResponse>) {
+                resp.response.subtype = "success";
+                resp.response.request_id = alt.request_id;
+                resp.response.response_json = alt.response_json.value_or("{}");
+            } else {
+                resp.response.subtype = "error";
+                resp.response.request_id = alt.request_id;
+                resp.response.error = alt.error;
+            }
+        },
+        parsed->response);
     return resp;
 }
 
@@ -407,6 +427,8 @@ inline constexpr std::string_view OUTBOUND_ONLY_ERROR =
     "This session is outbound-only. Enable Remote Control locally to allow inbound control.";
 
 /// Helper: build a control_response JSON event string.
+/// Delegates to cc.server.control_protocol ser/de so the wire format
+/// is defined in exactly one place.
 [[nodiscard]] inline std::string build_control_response_event(
     const std::string& session_id,
     const std::string& request_id,
@@ -414,14 +436,21 @@ inline constexpr std::string_view OUTBOUND_ONLY_ERROR =
     const std::string& response_json, // inner "response" object (may be "{}")
     const std::optional<std::string>& error = std::nullopt
 ) {
+    cc::server::control::ControlResponse envelope;
+    envelope.session_id = session_id;
     if (subtype == "error" && error) {
-        return std::format(
-            R"({{"type":"control_response","session_id":"{}","response":{{"subtype":"error","request_id":"{}","error":"{}"}}}})",
-            session_id, request_id, *error);
+        envelope.response = cc::server::control::ControlErrorResponse{
+            .request_id = request_id,
+            .error = *error,
+            .pending_permission_requests = std::nullopt,
+        };
+    } else {
+        envelope.response = cc::server::control::ControlSuccessResponse{
+            .request_id = request_id,
+            .response_json = response_json,
+        };
     }
-    return std::format(
-        R"({{"type":"control_response","session_id":"{}","response":{{"subtype":"success","request_id":"{}","response":{}}}}})",
-        session_id, request_id, response_json);
+    return cc::server::control::ControlResponse_to_json(envelope);
 }
 
 /// Respond to inbound control_request messages from the server.
@@ -464,10 +493,11 @@ inline void handle_server_control_request(
     if (request.request.subtype == "initialize") {
         // Respond with minimal capabilities — the REPL handles
         // commands, models, and account info itself.
-        auto pid = ::getpid();
-        auto payload = std::format(
-            R"({{"commands":[],"output_style":"normal","available_output_styles":["normal"],"models":[],"account":{{}},"pid":{}}})",
-            pid);
+        cc::server::control::ControlInitializeResponse init_resp;
+        init_resp.output_style = "normal";
+        init_resp.available_output_styles = {"normal"};
+        init_resp.pid = ::getpid();
+        auto payload = cc::server::control::ControlInitializeResponse_to_json(init_resp);
         response_event = build_control_response_event(
             handlers.session_id,
             request.request_id,

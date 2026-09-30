@@ -15,6 +15,7 @@ export module cc.server.server_main;
 import std;
 
 import cc.server.server_routes;
+import cc.server.control_protocol;
 import cc.hooks.tool_permissions;
 import cc.session.storage;
 import cc.serdes.json;
@@ -443,23 +444,15 @@ inline void add_json_value_to_params(
 }
 
 [[nodiscard]] inline std::optional<std::string> control_request_subtype(std::string_view payload) {
-    auto parsed = cc::utils::json::parse(payload);
-    if (!parsed || !parsed->root().is_obj()) return std::nullopt;
-    auto root = parsed->root();
-    auto type = root.get("type");
-    if (!type.is_str() || type.as_str() != std::string_view("control_request")) return std::nullopt;
-    auto request = root.get("request");
-    if (!request.is_obj()) return std::nullopt;
-    auto subtype = request.get("subtype");
-    if (!subtype.is_str()) return std::nullopt;
-    return std::string(subtype.as_str());
+    auto req = control::ControlRequest_from_json(payload);
+    if (!req) return std::nullopt;
+    return control::control_request_subtype_str(req->request);
 }
 
 [[nodiscard]] inline std::string control_request_id(std::string_view payload) {
-    auto parsed = cc::utils::json::parse(payload);
-    if (!parsed || !parsed->root().is_obj()) return make_id("control");
-    auto id = parsed->root().get("request_id");
-    return id.is_str() ? std::string(id.as_str()) : make_id("control");
+    auto req = control::ControlRequest_from_json(payload);
+    if (!req || req->request_id.empty()) return make_id("control");
+    return req->request_id;
 }
 
 struct ControlResponseDecision {
@@ -470,51 +463,51 @@ struct ControlResponseDecision {
 [[nodiscard]] inline std::optional<ControlResponseDecision> control_response_decision(
     std::string_view payload
 ) {
-    auto parsed = cc::utils::json::parse(payload);
-    if (!parsed || !parsed->root().is_obj()) return std::nullopt;
-    auto root = parsed->root();
-    auto type = root.get("type");
-    if (!type.is_str() || type.as_str() != std::string_view("control_response")) return std::nullopt;
-    auto response = root.get("response");
-    if (!response.is_obj()) return std::nullopt;
-    auto request_id = response.get("request_id");
-    if (!request_id.is_str()) return std::nullopt;
-    cc::hooks::PermissionResponse permission_response{};
-    permission_response.decision = cc::hooks::PermissionDecision::deny;
-    auto subtype = response.get("subtype");
-    if (subtype.is_str() && subtype.as_str() == std::string_view("error")) {
-        auto error = response.get("error");
-        if (error.is_str()) {
-            permission_response.message = std::string(error.as_str());
-        }
-        return ControlResponseDecision{
-            .request_id = std::string(request_id.as_str()),
-            .response = std::move(permission_response),
-        };
-    }
-    auto body = response.get("response");
-    if (body.is_obj()) {
-        auto behavior = body.get("behavior");
-        if (behavior.is_str() && behavior.as_str() == std::string_view("allow")) {
-            permission_response.decision = cc::hooks::PermissionDecision::allow;
-        }
-        auto updated_input = body.get("updatedInput");
-        if (updated_input.is_obj()) {
-            permission_response.updated_input_json = updated_input.to_string();
-        }
-        auto updated_permissions = body.get("updatedPermissions");
-        if (updated_permissions.is_arr()) {
-            permission_response.updated_permissions_json = updated_permissions.to_string();
-        }
-        auto message = body.get("message");
-        if (message.is_str()) {
-            permission_response.message = std::string(message.as_str());
-        }
-    }
-    return ControlResponseDecision{
-        .request_id = std::string(request_id.as_str()),
-        .response = std::move(permission_response),
-    };
+    auto resp = control::ControlResponse_from_json(payload);
+    if (!resp) return std::nullopt;
+    return std::visit(
+        [](const auto& inner) -> std::optional<ControlResponseDecision> {
+            using T = std::decay_t<decltype(inner)>;
+            if constexpr (std::is_same_v<T, control::ControlErrorResponse>) {
+                cc::hooks::PermissionResponse permission_response{};
+                permission_response.decision = cc::hooks::PermissionDecision::deny;
+                permission_response.message = inner.error;
+                return ControlResponseDecision{
+                    .request_id = inner.request_id,
+                    .response = std::move(permission_response),
+                };
+            } else {
+                cc::hooks::PermissionResponse permission_response{};
+                permission_response.decision = cc::hooks::PermissionDecision::deny;
+                if (inner.response_json.has_value()) {
+                    auto body = cc::utils::json::parse(*inner.response_json);
+                    if (body && body->root().is_obj()) {
+                        auto b = body->root();
+                        auto behavior = b.get("behavior");
+                        if (behavior.is_str() && behavior.as_str() == std::string_view("allow")) {
+                            permission_response.decision = cc::hooks::PermissionDecision::allow;
+                        }
+                        auto updated_input = b.get("updatedInput");
+                        if (updated_input.is_obj()) {
+                            permission_response.updated_input_json = updated_input.to_string();
+                        }
+                        auto updated_permissions = b.get("updatedPermissions");
+                        if (updated_permissions.is_arr()) {
+                            permission_response.updated_permissions_json = updated_permissions.to_string();
+                        }
+                        auto message = b.get("message");
+                        if (message.is_str()) {
+                            permission_response.message = std::string(message.as_str());
+                        }
+                    }
+                }
+                return ControlResponseDecision{
+                    .request_id = inner.request_id,
+                    .response = std::move(permission_response),
+                };
+            }
+        },
+        resp->response);
 }
 
 [[nodiscard]] inline std::string permission_input_json(std::string_view input_json) {
@@ -526,14 +519,15 @@ struct ControlResponseDecision {
 [[nodiscard]] inline std::string permission_control_request_json(
     const detail::DirectPermissionRequest& request
 ) {
-    std::ostringstream out;
-    out << R"({"type":"control_request","request_id":")" << server_json_escape(request.request_id)
-        << R"(","request":{"subtype":"can_use_tool","tool_name":")" << server_json_escape(request.tool_name)
-        << R"(","input":)" << permission_input_json(request.input_json)
-        << R"(,"tool_use_id":")" << server_json_escape(request.tool_use_id)
-        << R"(","description":"Allow )" << server_json_escape(request.tool_name)
-        << R"( to run?"}})";
-    return out.str();
+    control::ControlPermissionRequest inner;
+    inner.tool_name = request.tool_name;
+    inner.input_json = permission_input_json(request.input_json);
+    inner.tool_use_id = request.tool_use_id;
+    inner.description = "Allow " + request.tool_name + " to run?";
+    control::ControlRequest envelope;
+    envelope.request_id = request.request_id;
+    envelope.request = std::move(inner);
+    return control::ControlRequest_to_json(envelope);
 }
 
 // The control_response the server sends when a client "interrupt"
@@ -545,10 +539,12 @@ struct ControlResponseDecision {
     std::string_view request_id,
     bool interrupted
 ) {
-    return std::format(
-        R"({{"type":"control_response","response":{{"subtype":"success","request_id":"{}","response":{{"interrupted":{}}}}}}})",
-        server_json_escape(request_id),
-        interrupted ? "true" : "false");
+    control::ControlSuccessResponse success;
+    success.request_id = std::string(request_id);
+    success.response_json = interrupted ? R"({"interrupted":true})" : R"({"interrupted":false})";
+    control::ControlResponse envelope;
+    envelope.response = std::move(success);
+    return control::ControlResponse_to_json(envelope);
 }
 
 [[nodiscard]] inline std::string sdk_assistant_message(

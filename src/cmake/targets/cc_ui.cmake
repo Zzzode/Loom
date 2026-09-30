@@ -5,34 +5,6 @@ target_sources(cc_ui
         ui/app/app.cppm
         ui/app/app_impl.cppm
         ui/app/app_dialog_registration.cppm
-        ui/dialogs/dialog_system.cppm
-        ui/dialogs/dialog_frame.cppm
-        ui/dialogs/dialog_default_renderers.cppm
-        ui/dialogs/hooks_dialog_renderer.cppm
-        ui/dialogs/elicitation_dialog.cppm
-        ui/dialogs/mcp_dialogs.cppm
-        ui/dialogs/plugin_dialog.cppm
-        ui/dialogs/plugin_dialog_renderer.cppm
-        ui/dialogs/prompt_dialog.cppm
-        ui/dialogs/quick_open.cppm
-        ui/dialogs/settings_dialog.cppm
-        ui/dialogs/trust_dialog.cppm
-        ui/dialogs/trust_utils.cppm
-        ui/dialogs/wizard_dialog.cppm
-        ui/dialogs/feature_wizard_adapter.cppm  # RFC 0002 F2 row 6: neutral FeatureWizardRequest -> wizard_dialog adapter (dialogs side; imports only the protocol leaf)
-        ui/dialogs/cost_threshold_dialog.cppm
-        ui/dialogs/all_renderers.cppm            # new: DialogRendererRegistry + all renderers
-        ui/dialogs/bottom_renderers.cppm         # new: Bottom-band dialog renderers
-        ui/dialogs/modal_renderers.cppm          # new: Overlay/Modal dialog renderers
-        ui/dialogs/sandbox_permission.cppm       # new: SandboxPermission renderer
-        ui/dialogs/triggers.cppm                 # new: Dialog trigger / invocation routing
-        # M8 note: ManagedSettingsSecurity / FeedbackSurvey / GlobalSearch /
-        # HistorySearch / PluginDialog / DiffDialog — FTXUI chrome not yet ported.
-        # Do NOT add placeholder sources into FILE_SET CXX_MODULES: CMake 4.x
-        # cascades "not scheduled for compilation" diagnostics across the
-        # entire target if any listed source is missing.  Only add module
-        # sources that exist AND contain real implementations.  Registration
-        # lives in register_default_renderers() in default_renderers.cppm.
         ui/screens/doctor_screen.cppm
         ui/screens/doctor_dialog_registration.cppm  # RFC 0002 F2 row 4: doctor renderer registration (screens side; dialogs must not import screens)
         ui/screens/repl_state.cppm
@@ -93,8 +65,6 @@ target_sources(cc_ui PRIVATE
     # the inline-def ratchet re-freezes at the single composition body
     # (set_screen). Textual-std (LLVM #184957) — see the header comment.
     ui/app/app_testing_seams.cpp
-    ui/dialogs/hooks_dialog_renderer_impl.cpp
-    ui/dialogs/plugin_dialog_renderer_impl.cpp
     # Module implementation units for cc.ui.screens.repl_screen
     # (RFC 0001 Phase C batch 9): message-row projection, unseen-divider /
     # scroll bounds, prompt buffer mutation, welcome/spinner, prompt
@@ -156,6 +126,12 @@ target_link_libraries(cc_ui
         # own library; linked PUBLIC so the remaining areas can still import
         # cc.ui.features.* during the staged split.
         cc_ui_features
+        # RFC 0002 F4: the cc.ui.dialogs.* area (dialog system/frame,
+        # renderer registries, per-dialog renderers, trust utils, wizard
+        # adapter, triggers) now lives in its own library; linked PUBLIC so
+        # the remaining areas (screens, app) can still import
+        # cc.ui.dialogs.* during the staged split.
+        cc_ui_dialogs
         cc_utils
         cc_types
         cc_query

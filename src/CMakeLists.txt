@@ -123,6 +123,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_orchestration.cmake")
 # (UI9_RANK ascending, leaves first: visual/tools rank 1, foundation rank 2,
 # …). Each area library must exist before cc_ui links it.
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_visual.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_tools.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_foundation.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_vim.cmake")

@@ -118,23 +118,6 @@ target_sources(cc_ui
         ui/features/plugins/plugin_settings_dialog.cppm
         ui/chrome/ink_utils.cppm
         ui/chrome/text_measure.cppm
-        ui/tools/tool_ui_registry.cppm
-        ui/tools/tool_ui_init.cppm
-        ui/tools/tool_ui_generic.cppm
-        ui/tools/tool_ui_bash.cppm
-        ui/tools/tool_ui_file_edit.cppm
-        ui/tools/tool_ui_file_write.cppm
-        ui/tools/tool_ui_file_read.cppm
-        ui/tools/tool_ui_grep.cppm
-        ui/tools/tool_ui_glob.cppm
-        ui/tools/tool_ui_web_fetch.cppm
-        ui/tools/tool_ui_web_search.cppm
-        ui/tools/tool_ui_skill.cppm
-        ui/tools/tool_ui_agent.cppm
-        ui/tools/tool_ui_task.cppm
-        ui/tools/tool_ui_mcp.cppm
-        ui/tools/tool_ui_lsp.cppm
-        ui/tools/tool_ui_longtail.cppm
         ui/features/teams/live_teammates.cppm
         ui/chrome/terminal_io.cppm
         ui/chrome/ansi_render.cppm          # RFC 0002 F1 row 8: ANSI/SGR -> FTXUI leaf (imports only std + terminal_io)
@@ -255,6 +238,10 @@ target_link_libraries(cc_ui
         # diffs) now lives in its own library; linked PUBLIC so the
         # remaining areas can still import cc.ui.visual.* during the split.
         cc_ui_visual
+        # RFC 0002 F4: the cc.ui.tools.* area (per-tool UI render registry)
+        # now lives in its own library; linked PUBLIC so the remaining
+        # areas can still import cc.ui.tools.* during the staged split.
+        cc_ui_tools
         cc_utils
         cc_types
         cc_query

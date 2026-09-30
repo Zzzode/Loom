@@ -5,7 +5,7 @@ module;
 
 #include <cstdint>
 
-export module cc.utils.hooks_registry;
+export module cc.hooks.registry;
 
 import std;
 

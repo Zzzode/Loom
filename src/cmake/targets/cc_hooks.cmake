@@ -6,6 +6,9 @@ target_sources(cc_hooks
         hooks/context.cppm
         hooks/cost_hook.cppm
         hooks/exit_handler.cppm
+        hooks/hooks_config.cppm
+        hooks/hooks_execution.cppm
+        hooks/hooks_registry.cppm
         hooks/ide_at_mentioned.cppm
         hooks/notifs/remaining_notifs.cppm
         hooks/terminal_size.cppm

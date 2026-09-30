@@ -14,8 +14,8 @@ import cc.types.tool_types;
 import cc.serdes.json;
 import cc.hooks.tool_permissions;
 import cc.hooks.lifecycle_hooks;
-import cc.utils.hooks_registry;
-import cc.utils.hooks_execution;
+import cc.hooks.registry;
+import cc.hooks.execution;
 import cc.tools.agent_runtime;
 
 namespace cc::core {
@@ -163,7 +163,7 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         }
     }
 
-    // User-configured PreToolUse hooks (cc.utils.hooks_execution engine).
+    // User-configured PreToolUse hooks (cc.hooks.execution engine).
     // Mirrors src/services/tools/toolExecution.ts:884-946 where the TS
     // engine runs executePreToolHooks before tool execution and honors
     // BlockToolCall/AbortQuery by denying permission. Guarded so behavior
@@ -309,7 +309,7 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         });
     }
 
-    // User-configured PostToolUse hooks (cc.utils.hooks_execution engine).
+    // User-configured PostToolUse hooks (cc.hooks.execution engine).
     // Mirrors src/services/tools/toolExecution.ts:1567-1577 where the TS
     // engine runs executePostToolHooks after the tool executes. On
     // BlockToolCall/AbortQuery the action reason is surfaced as an error

@@ -61,8 +61,9 @@ target_sources(cc_ui_dialogs PRIVATE
 # / pagination_util / trust_text / ui_data / manage_plugins / plugin_trust),
 # cc.config.config, cc.constants.product, cc.plugins.plugin,
 # cc.services.team_memory.secret_scanner, cc.tools.registry, cc.types.types,
-# cc.utils.* (bash_security / hooks_config / hooks_registry /
-# plugin_marketplace), and FTXUI (component / dom / screen headers).
+# cc.utils.* (bash_security / plugin_marketplace), cc.hooks.config /
+# cc.hooks.registry (hooks dialog config + registry), and FTXUI
+# (component / dom / screen headers).
 # cc_std's `import std;` BMI arrives via the directory-level
 # link_libraries(cc_std). Over-linking is safe (and matches the previous
 # cc_ui.cmake behaviour).
@@ -75,6 +76,7 @@ target_link_libraries(cc_ui_dialogs
         cc_commands
         cc_config
         cc_constants
+        cc_hooks
         cc_plugins
         cc_services
         cc_tools

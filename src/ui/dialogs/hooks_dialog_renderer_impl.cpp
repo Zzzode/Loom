@@ -21,8 +21,8 @@ module cc.ui.dialogs.hooks_renderer;
 import std;
 
 import cc.ui.features.hooks_ui;
-import cc.utils.hooks_config;
-import cc.utils.hooks_registry;
+import cc.hooks.config;
+import cc.hooks.registry;
 import cc.tools.registry;
 
 namespace cc::ui::dialogs::hooks_renderer {

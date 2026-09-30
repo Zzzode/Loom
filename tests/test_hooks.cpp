@@ -12,9 +12,9 @@ import cc.hooks.terminal_size;
 import cc.hooks.text_input;
 import cc.hooks.typeahead;
 import cc.hooks.virtual_scroll;
-import cc.utils.hooks_execution;
+import cc.hooks.execution;
 import cc.serdes.json;
-import cc.utils.hooks_registry;
+import cc.hooks.registry;
 
 using namespace std::chrono_literals;
 

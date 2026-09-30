@@ -1,5 +1,5 @@
 /// @file test_fix_hooks_integration.cpp
-/// @brief Regression coverage for fix B2: confirm cc.utils.hooks_execution
+/// @brief Regression coverage for fix B2: confirm cc.hooks.execution
 ///        (the user-configured-hook engine) is wired into the QueryEngine
 ///        tool-call dispatch path. Mirrors the TS wiring where
 ///        src/services/tools/toolExecution.ts runs executePreToolHooks /
@@ -15,8 +15,8 @@
 import std;
 import cc.query.query_engine;
 import cc.tools.tool;
-import cc.utils.hooks_execution;
-import cc.utils.hooks_registry;
+import cc.hooks.execution;
+import cc.hooks.registry;
 import cc.hooks.lifecycle_hooks;
 import cc.types.types;
 

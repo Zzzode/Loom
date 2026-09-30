@@ -126,7 +126,7 @@ target_link_libraries(test_hooks
     PRIVATE
         cc_core
         cc_hooks           # all cc.hooks.* imports
-        cc_utils           # cc.utils.hooks_*
+        cc_utils           # cc.serdes.json
         GTest::gtest_main
 )
 gtest_discover_tests(test_hooks DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -536,7 +536,7 @@ endif()
 # Migration fix-batch regression suites (test_fix_*)
 # ===========================================================================
 
-# B2: cc.utils.hooks_execution wired into QueryEngine tool-call dispatch
+# B2: cc.hooks.execution wired into QueryEngine tool-call dispatch
 add_executable(test_fix_hooks_integration test_fix_hooks_integration.cpp)
 target_link_libraries(test_fix_hooks_integration
     PRIVATE

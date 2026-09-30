@@ -101,9 +101,6 @@ target_sources(cc_utils
         utils/crypto/uuid_utils.cppm
         utils/platform/xdg.cppm
         utils/serdes/yaml.cppm
-        utils/hooks/hooks_config.cppm
-        utils/hooks/hooks_execution.cppm
-        utils/hooks/hooks_registry.cppm
         utils/plugin/plugin_lifecycle.cppm
         utils/plugin/plugin_loader.cppm
         utils/plugin/plugin_manager.cppm

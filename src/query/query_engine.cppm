@@ -22,8 +22,8 @@ import cc.serdes.json;
 import cc.query.wire_protocol;
 import cc.hooks.tool_permissions;
 import cc.hooks.lifecycle_hooks;
-import cc.utils.hooks_registry;
-import cc.utils.hooks_execution;
+import cc.hooks.registry;
+import cc.hooks.execution;
 import cc.services.compact.api_microcompact;
 
 export namespace cc::core {
@@ -764,7 +764,7 @@ private:
     cc::hooks::ToolPermissionHook* permission_hook_ = nullptr;  // Optional permission policy
     cc::hooks::LifecycleHookRegistry* lifecycle_hooks_ = nullptr; // Optional lifecycle hooks
     // User-configured hook path (PreToolUse/PostToolUse via the
-    // cc.utils.hooks_execution engine). Mirrors src/utils/hooks.ts in TS.
+    // cc.hooks.execution engine). Mirrors src/utils/hooks.ts in TS.
     // When empty/disabled the tool loop is unchanged (parity with TS, which
     // only runs the pipeline when matching hooks exist).
     std::vector<cc::utils::hooks_registry::IndividualHookConfig> user_hooks_;

@@ -6,13 +6,13 @@ module;
 
 #include <cstdint>
 
-export module cc.utils.hooks_config;
+export module cc.hooks.config;
 
 import std;
 
 import cc.serdes.json;
 import cc.process.async;
-import cc.utils.hooks_registry;
+import cc.hooks.registry;
 
 export namespace cc::utils::hooks_config {
 

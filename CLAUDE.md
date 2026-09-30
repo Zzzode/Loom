@@ -73,17 +73,26 @@ conditional at the top are visible throughout — `add_subdirectory()` would add
 a directory scope and change evaluation order. When adding a target, add its
 file under `src/cmake/targets/` and an `include()` in the same dependency order.
 
-**`cc_ui` is intentionally one target — do not split it to "speed up the
-build".** The module graph is a DAG (verified: 217 ui modules, zero module-level
-cycles), but grouped by the responsibility directories (`foundation`, `dialogs`,
-`messages`, …) nine of them collapse into one strongly-connected component
-(e.g. `foundation ↔ chrome`, `dialogs ↔ widgets`, `messages ↔ prompt`), so they
-cannot become separate static libraries without a library-level cycle. More
-importantly it would not help anyway: with named modules the recompile fan-out
-is driven by the BMI/import graph, not the library boundary — touching
-`design_tokens` already forces ~62 module recompiles regardless of how the
-archives are split. The single FILE_SET also lets clang-scan-deps resolve the
-intra-`cc.ui.*` imports both ways.
+**`cc_ui` was one target; RFC 0002 F4 splits it into ~12 area libraries
+(`cc_ui_foundation` … `cc_ui_app`).** The module graph is a DAG (217 ui
+modules, zero module-level cycles). At the responsibility-directory level
+(`foundation`, `dialogs`, `messages`, …), nine areas *used to* collapse into
+one strongly-connected component (`foundation ↔ chrome`, `dialogs ↔ widgets`,
+`messages ↔ prompt`), which blocked a library split — but RFC 0002 F2
+dissolved those SCCs (`graph_check.py --target-ui9` now PASSES with 12
+singleton areas), so the area-level graph is acyclic and the split is
+cycle-free. Two caveats from the single-target era still hold:
+
+- **Interface edits fan out via the BMI graph, not the library boundary.**
+  Touching `design_tokens` (a `.cppm`) still forces ~62 module recompiles
+  regardless of how the archives are split. The split only contains `.cpp`
+  *body*-edit fan-out: each target has its own `CXX.dd` dyndep file, so a
+  body edit recompiles only that area's objects, not the whole closure. Do
+  not split expecting interface-edit speedups.
+- **The single FILE_SET let clang-scan-deps resolve intra-`cc.ui.*` imports
+  both ways.** The split uses per-target FILE_SETs with cross-area BMI
+  propagation via `target_link_libraries`; this must keep clang-scan-deps
+  resolving cross-area imports (verified by the dual-preset build).
 
 ### Layout
 

@@ -621,12 +621,11 @@ struct PromptState {
     // This helper exposes ONE result callback, but the panel underneath fires
     // TWO on a single Esc: `on_abort()` and then `on_decide(Decision::Abort)`
     // (see the Escape branch above).  That double-fire is the panel's documented
-    // contract -- production collapses the pair with its own one-shot guard
-    // (repl_screen.cppm, get_tool_permission_component).  Collapsing it here too
-    // makes the single callback fire exactly once: without the guard, `on_abort`
-    // was left empty and Escape reached `on_result` only via `on_decide`, which
-    // happened to be right -- but only by accident, and it silently broke any
-    // caller that did supply `on_abort`.
+    // contract -- callers must collapse the pair with their own one-shot guard.
+    // Collapsing it here too makes the single callback fire exactly once:
+    // without the guard, `on_abort` was left empty and Escape reached `on_result`
+    // only via `on_decide`, which happened to be right -- but only by accident,
+    // and it silently broke any caller that did supply `on_abort`.
     struct Flight { bool fired = false; };
     auto flight = std::make_shared<Flight>();
 

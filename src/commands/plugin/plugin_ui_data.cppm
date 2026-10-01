@@ -58,7 +58,6 @@ enum class ViewKind : unsigned char {
     ManagePlugins,      // Installed-tab list
     ManageMarketplaces, // Marketplaces-tab list
     AddMarketplace,     // Add-marketplace input
-    MarketplaceMenu,    // Legacy menu for /plugin marketplace (→ Menu)
     MarketplaceList,    // /plugin marketplace list  (textual listing)
     Validate,           // /plugin validate <path>
     Errors,             // Errors tab (auto-routed from header)
@@ -73,7 +72,6 @@ inline constexpr std::string_view view_kind_name(ViewKind k) {
         case ViewKind::ManagePlugins:    return "manage-plugins";
         case ViewKind::ManageMarketplaces: return "manage-marketplaces";
         case ViewKind::AddMarketplace:   return "add-marketplace";
-        case ViewKind::MarketplaceMenu:  return "marketplace-menu";
         case ViewKind::MarketplaceList:  return "marketplace-list";
         case ViewKind::Validate:         return "validate";
         case ViewKind::Errors:           return "errors";
@@ -201,10 +199,10 @@ inline TabId initial_tab_for(ViewKind k) {
                     vs.action             = TargetAction::Update;
                     return vs;
                 case MarketAct::None:
-                    vs.kind = ViewKind::MarketplaceMenu;
+                    vs.kind = ViewKind::DiscoverPlugins;
                     return vs;
             }
-            vs.kind = ViewKind::MarketplaceMenu;
+            vs.kind = ViewKind::DiscoverPlugins;
             return vs;
         }
 

@@ -17,7 +17,6 @@
 import std;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
-import loom.ui.screens.permission_store;
 
 namespace {
 namespace fs = std::filesystem;
@@ -132,24 +131,18 @@ TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
         repl::RenderReplScreen(*state), 120, 30));
     EXPECT_NE(rendered.find("hello"), std::string::npos);
 
-    // Global redraw works even while a tool-permission panel is open
-    // (defaultBindings.ts:42 global context); the panel must not swallow it.
+    // Global redraw works (defaultBindings.ts:42 global context).
     auto pstate = std::make_shared<repl::ReplScreenState>();
     pstate->chrome_store.app_version = "9.9.9-test";
     pstate->chrome_store.model_display_name = "GLM-5.2";
     pstate->cwd = "/tmp/cpp_migration";
-    pstate->mode = repl::ReplMode::ToolPermission;
-    repl::PermissionRequestInfo pinfo;
-    pinfo.tool_name = "Bash";
-    pinfo.description = "rm -rf";
-    pstate->permission_store.permission_request = pinfo;
     bool panel_redraw = false;
     repl::ReplScreenCallbacks pcbs;
     pcbs.on_redraw = [&] { panel_redraw = true; };
     auto pcomp = repl::ReplScreen(pstate, std::move(pcbs));
     EXPECT_TRUE(pcomp->OnEvent(ftxui::Event::Character("\x0C")));
     EXPECT_TRUE(panel_redraw)
-        << "Ctrl+L must redraw even over an open permission panel";
+        << "Ctrl+L must trigger a global redraw";
 }
 
 

@@ -1708,8 +1708,7 @@ TEST(AppCommandRegistry, ConfigSetDoesNotBakeEnvModelIntoProjectFile) {
     {
         EnvironmentUnsetGuard unset_model("LOOM_MODEL");
         EnvironmentUnsetGuard unset_tokens("LOOM_MAX_TOKENS");
-        loom::core::ConfigManager reloaded(work / ".loom" / "config.json",
-                                         project_path);
+        loom::core::ConfigManager reloaded(project_path);
         ASSERT_TRUE(reloaded.load().has_value());
         EXPECT_EQ(reloaded.settings().model.default_model, "file-model-c19");
         EXPECT_NE(reloaded.settings().model.max_output_tokens, 4321u);
@@ -1849,8 +1848,7 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
     // EFFECTIVE runtime value is again the env one even though the file holds
     // the user's X. This is the pre-existing env semantics, unchanged by c19.
     {
-        loom::core::ConfigManager env_reload(project_path.parent_path() / "g.json",
-                                           project_path);
+        loom::core::ConfigManager env_reload(project_path);
         ASSERT_TRUE(env_reload.load().has_value());
         EXPECT_EQ(env_reload.settings().model.default_model, "Y-env-model-c19");
         EXPECT_EQ(env_reload.settings().model.max_output_tokens, 9999u);
@@ -1861,8 +1859,7 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
     {
         EnvironmentUnsetGuard unset_model("LOOM_MODEL");
         EnvironmentUnsetGuard unset_tokens("LOOM_MAX_TOKENS");
-        loom::core::ConfigManager reloaded(project_path.parent_path() / "g.json",
-                                         project_path);
+        loom::core::ConfigManager reloaded(project_path);
         ASSERT_TRUE(reloaded.load().has_value());
         EXPECT_EQ(reloaded.settings().model.default_model, "X-user-model-c19");
         EXPECT_EQ(reloaded.settings().model.max_output_tokens, 2048u);

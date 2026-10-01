@@ -288,23 +288,14 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                 if (!warning->starts_with("Session cost")) return;
 
                 cost_threshold_shown_ = true;
-                const auto& bt = static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker();
                 dtrig::PushCostThreshold(
                     screen_state_->dialog_store.dialog_queue,
-                    bt.max_budget_usd,
                     data.session_cost,
-                    screen_state_->chrome_store.model_display_name,
-                    [this](bool continue_, bool reset) {
-                        if (reset) {
-                            cost_threshold_shown_ = false;
-                        }
-                        if (continue_ || reset) {
-                            screen_state_->dialog_store.dialog_queue.pop_bottom(
-                                /*is_prompt_input_active=*/false);
-                            PostRenderEvent();
-                        } else {
-                            if (on_exit_) on_exit_();
-                        }
+                    std::optional<std::string>{screen_state_->chrome_store.model_display_name},
+                    [this] {
+                        screen_state_->dialog_store.dialog_queue.pop_bottom(
+                            /*is_prompt_input_active=*/false);
+                        PostRenderEvent();
                     });
                 PostRenderEvent();
             });

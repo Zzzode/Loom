@@ -483,7 +483,6 @@ struct PluginDialogComponent : public ComponentBase {
             return Renderer([st = state]() { return RenderHelp(); });
 
         case ViewKind::Menu:
-        case ViewKind::MarketplaceMenu:
         case ViewKind::DiscoverPlugins:
         case ViewKind::BrowseMarketplace:
         case ViewKind::MarketplaceList: {
@@ -763,8 +762,7 @@ struct PluginDialogComponent : public ComponentBase {
     state->active_kind = state->inputs.initial_view.kind;
     // TS reference has no 5-card dashboard — it goes straight to tab navigation.
     // Normalize legacy menu view-kinds to the Discover tab.
-    if (state->active_kind == ViewKind::Menu ||
-        state->active_kind == ViewKind::MarketplaceMenu) {
+    if (state->active_kind == ViewKind::Menu) {
         state->active_kind = ViewKind::DiscoverPlugins;
     }
     state->active_tab  = ui::initial_tab_for(state->active_kind);

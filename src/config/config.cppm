@@ -1,6 +1,6 @@
 /// @file config.cppm
 /// @brief Configuration module for the Loom CLI.
-/// Manages hierarchical settings (global -> project -> CLI flags),
+/// Manages hierarchical settings (project -> CLI flags),
 /// environment variable integration, feature flags, and JSON persistence.
 module;
 
@@ -155,29 +155,15 @@ struct Settings {
 };
 
 // ============================================================
-// Configuration source hierarchy
-// ============================================================
-
-/// Configuration source priority (lower value = higher priority)
-enum class ConfigSource : std::uint8_t {
-    CliFlags = 0,      // Command-line arguments (highest priority)
-    EnvVars = 1,       // Environment variables
-    ProjectConfig = 2, // .loom/config.json in project root
-    GlobalConfig = 3,  // ~/.config/loom/config.json
-    Defaults = 4,      // Built-in defaults (lowest priority)
-};
-
-// ============================================================
 // MCP per-tier storage routing (RFC-0001 B followup c6)
 // ============================================================
 
 /// Physical MCP config file tiers. Same-name resolution, highest first:
-/// Local > Project > User > Global.
+/// Local > Project > User.
 enum class McpStorageScope : std::uint8_t {
-    Global = 0, // Legacy ~/.config/loom/config.json (read tier; written on remove)
-    User   = 1, // $LOOM_CONFIG_DIR/config.json, else ~/.loom/config.json
-    Project= 2, // <project>/.loom/config.json (tracked by VCS)
-    Local  = 3, // <project>/.loom/config.local.json (gitignored)
+    User   = 0, // $LOOM_CONFIG_DIR/config.json, else ~/.loom/config.json
+    Project= 1, // <project>/.loom/config.json (tracked by VCS)
+    Local  = 2, // <project>/.loom/config.local.json (gitignored)
 };
 
 /// Outcome of a best-effort cross-file MCP server removal (D3). The command
@@ -315,21 +301,20 @@ class ConfigManager {
     }
 
     Settings settings_;                     // Resolved effective settings
-    std::filesystem::path global_path_;     // Path to global config file
-    std::filesystem::path user_path_;       // Path to user config file (empty in 2-arg ctor)
+    std::filesystem::path user_path_;       // Path to user config file (empty in 1-arg ctor)
     std::filesystem::path project_path_;    // Path to project config file
     std::filesystem::path local_path_;      // Path to local (gitignored) config file
     bool dirty_ = false;                   // Whether unsaved changes exist
 
     // RFC-0001 B followup c6 per-tier MCP bookkeeping, repopulated by load().
     // Index order matches McpStorageScope.
-    std::array<std::unordered_set<std::string>, 4> mcp_physical_names_;
-    std::array<std::vector<McpServerConfig>, 4> mcp_file_servers_;
+    std::array<std::unordered_set<std::string>, 3> mcp_physical_names_;
+    std::array<std::vector<McpServerConfig>, 3> mcp_file_servers_;
     std::unordered_map<std::string, McpStorageScope> mcp_owner_;
     // True for a user/local tier whose file exists but is not a parseable
     // JSON object (§A): the tier contributed zero entries and must not be
     // patched in place.
-    std::array<bool, 4> mcp_tier_unparseable_{false, false, false, false};
+    std::array<bool, 3> mcp_tier_unparseable_{false, false, false};
     // Whether load() ever populated the per-tier bookkeeping. The legacy
     // /config set path saves without loading (default settings); the §B
     // filter only runs after a real load.
@@ -351,7 +336,7 @@ class ConfigManager {
     // next command does NOT reload (which would re-apply env overlays and
     // break the c19 same-session get-after-set invariant). The content hash
     // catches a same-size rewrite that leaves mtime/size unchanged.
-    std::array<TierSignature, 4> tier_signatures_{};
+    std::array<TierSignature, 3> tier_signatures_{};
 
     // c13b provenance: (section, leaf) scalar leaves seen on disk during the
     // tier merge, and whether the two modeled env overrides are engaged
@@ -381,26 +366,22 @@ class ConfigManager {
 public:
     /// Initialize with default settings
     ConfigManager()
-        : global_path_(default_global_config_path())
-        , user_path_(loom::constants::paths::config_home_write() / "config.json")
+        : user_path_(loom::constants::paths::config_home_write() / "config.json")
         , project_path_(default_project_config_path())
         , local_path_(derive_local_config_path(default_project_config_path())) {}
 
-    /// Initialize with explicit global + project paths (for testing). The
+    /// Initialize with an explicit project path (for testing). The
     /// user tier is absent (empty path, never probed); a local path is
     /// derived next to the project file and read when it exists.
-    explicit ConfigManager(std::filesystem::path global, std::filesystem::path project)
-        : global_path_(std::move(global))
-        , project_path_(std::move(project))
+    explicit ConfigManager(std::filesystem::path project)
+        : project_path_(std::move(project))
         , local_path_(derive_local_config_path(project_path_)) {}
 
-    /// Initialize with explicit paths for all four tiers (hermetic tests).
-    ConfigManager(std::filesystem::path global,
-                  std::filesystem::path user,
+    /// Initialize with explicit paths for all three tiers (hermetic tests).
+    ConfigManager(std::filesystem::path user,
                   std::filesystem::path project,
                   std::filesystem::path local)
-        : global_path_(std::move(global))
-        , user_path_(std::move(user))
+        : user_path_(std::move(user))
         , project_path_(std::move(project))
         , local_path_(std::move(local)) {}
 
@@ -431,14 +412,10 @@ public:
         // c22: per-instance diagnostics are per-load.
         load_diagnostics_.clear();
 
-        // RFC-0001 B followup c6: four physical tiers, lowest to highest.
-        // global/project parse errors stay HARD failures (those files are
+        // RFC-0001 B followup c6: three physical tiers, lowest to highest.
+        // project parse errors stay HARD failures (those files are
         // only ever written as JSON by Loom); user/local parse errors are
         // tolerated per §A.
-        if (auto result = load_tier(global_path_, McpStorageScope::Global, false, quiet);
-            !result && result.error().code != ErrorCode::ConfigNotFound) {
-            return std::unexpected(result.error());
-        }
         if (!user_path_.empty()) {
             if (auto result = load_tier(user_path_, McpStorageScope::User, true, quiet);
                 !result && result.error().code != ErrorCode::ConfigNotFound) {
@@ -478,9 +455,8 @@ public:
     /// refusal, bounded flock, O_EXCL|O_NOFOLLOW tmp, fsync, atomic rename)
     /// with an inode CAS so a competing patched write restarts the
     /// read-modify-write instead of tearing.
-    [[nodiscard]] VoidResult save(ConfigSource target = ConfigSource::ProjectConfig) {
-        const bool is_global = (target == ConfigSource::GlobalConfig);
-        const auto& path = is_global ? global_path_ : project_path_;
+    [[nodiscard]] VoidResult save() {
+        const auto& path = project_path_;
 
         // Fail closed on a symlinked leaf before touching anything.
         if (auto link_error = symlinked_leaf_error(path)) {
@@ -502,7 +478,7 @@ public:
 
         // c21: compute the known-section fragments once. The mutator is
         // replayed per CAS attempt but the in-memory state does not change.
-        const SaveFragments frag = build_save_fragments(target);
+        const SaveFragments frag = build_save_fragments();
         const Error strict_error = Error::make(
             ErrorCode::ConfigParseError,
             std::format("{} is not valid JSON; repair or move it aside before "
@@ -524,13 +500,11 @@ public:
         // recorded signature so the next latched command does not mistake our
         // save for an external edit and reload (which would re-apply env
         // overlays, breaking the c19 same-session get-after-set invariant).
-        refresh_tier_signature(target);
+        refresh_tier_signature();
 
         // The project file itself stays VCS-tracked; only its lock sibling
-        // is ignored. Global/user saves never touch a .gitignore.
-        if (!is_global) {
-            ensure_config_gitignored(McpStorageScope::Project);
-        }
+        // is ignored.
+        ensure_config_gitignored(McpStorageScope::Project);
         return {};
     }
 
@@ -578,11 +552,6 @@ public:
 
     /// Check if there are unsaved changes
     [[nodiscard]] bool is_dirty() const noexcept { return dirty_; }
-
-    /// Get path to the global config file
-    [[nodiscard]] const std::filesystem::path& global_config_path() const noexcept {
-        return global_path_;
-    }
 
     /// Get path to the project config file
     [[nodiscard]] const std::filesystem::path& project_config_path() const noexcept {
@@ -646,8 +615,7 @@ public:
     /// signatures; load() and save() own that, so a transient external change
     /// is not masked.
     [[nodiscard]] bool tier_files_changed() const {
-        return tier_signature(global_path_) != tier_signatures_[scope_index(McpStorageScope::Global)]
-            || (!user_path_.empty()
+        return (!user_path_.empty()
                 && tier_signature(user_path_) != tier_signatures_[scope_index(McpStorageScope::User)])
             || tier_signature(project_path_) != tier_signatures_[scope_index(McpStorageScope::Project)]
             || tier_signature(local_path_) != tier_signatures_[scope_index(McpStorageScope::Local)];
@@ -685,24 +653,21 @@ public:
     // ================================================================
 
     /// Parse a CLI scope label. "local"|"user"|"project" are the user-facing
-    /// labels; "global" is accepted for internal use (scoped remove of the
-    /// legacy tier).
+    /// labels.
     [[nodiscard]] static std::optional<McpStorageScope>
     mcp_scope_from_label(std::string_view label) noexcept {
         if (label == "local")   return McpStorageScope::Local;
         if (label == "user")    return McpStorageScope::User;
         if (label == "project") return McpStorageScope::Project;
-        if (label == "global")  return McpStorageScope::Global;
         return std::nullopt;
     }
 
     /// The configured (scope, path) pairs in lowest-to-highest precedence.
-    /// The user tier is omitted when its path is empty (2-arg ctor); missing
+    /// The user tier is omitted when its path is empty (1-arg ctor); missing
     /// files are included (callers tolerate absence).
     [[nodiscard]] std::vector<std::pair<McpStorageScope, std::filesystem::path>>
     mcp_scope_paths() const {
         std::vector<std::pair<McpStorageScope, std::filesystem::path>> result;
-        result.emplace_back(McpStorageScope::Global, global_path_);
         if (!user_path_.empty()) result.emplace_back(McpStorageScope::User, user_path_);
         result.emplace_back(McpStorageScope::Project, project_path_);
         result.emplace_back(McpStorageScope::Local, local_path_);
@@ -872,7 +837,7 @@ public:
         std::erase_if(settings_.mcp_servers,
             [&](const McpServerConfig& entry) { return entry.name == name; });
 
-        for (int tier = 3; tier >= 0; --tier) {
+        for (int tier = 2; tier >= 0; --tier) {
             auto& retained = mcp_file_servers_[static_cast<std::size_t>(tier)];
             auto it = std::ranges::find(retained, name, &McpServerConfig::name);
             if (it == retained.end()) continue;
@@ -889,13 +854,12 @@ public:
 
     /// Set only the "disabled" flag on the entry, in place, preserving every
     /// sibling and unknown key. With no scope the highest-precedence owner
-    /// file is patched (a global-only entry therefore patches the legacy
-    /// global file, per D5); with a scope, that file alone is patched and an
+    /// file is patched; with a scope, that file alone is patched and an
     /// absent entry there is an error.
     [[nodiscard]] VoidResult
     set_mcp_server_disabled(std::string_view name, bool disabled,
                             std::optional<McpStorageScope> scope = std::nullopt) {
-        McpStorageScope target_scope = McpStorageScope::Global;
+        McpStorageScope target_scope = McpStorageScope::User;
         if (scope) {
             target_scope = *scope;
             if (!mcp_physical_names_[scope_index(target_scope)]
@@ -999,7 +963,7 @@ public:
 private:
     /// Load one physical config tier. Missing files always surface
     /// ConfigNotFound (tolerated by load()). A parse failure / non-object
-    /// root is a hard error for global/project; for user/local (soft_tier)
+    /// root is a hard error for project; for user/local (soft_tier)
     /// the tier contributes zero entries plus one stderr diagnostic and
     /// loading continues (§A).
     [[nodiscard]] VoidResult
@@ -1434,7 +1398,7 @@ private:
     /// base_url / proxy have always been omitted (no credential bytes leave
     /// a save), which this preserves bit for bit.
     [[nodiscard]] SaveFragments
-    build_save_fragments(ConfigSource target) const {
+    build_save_fragments() const {
         SaveFragments frag;
         const bool model_still_env =
             env_model_value_.has_value() &&
@@ -1481,9 +1445,8 @@ private:
 
         frag.features = std::to_string(settings_.features.raw());
 
-        // §B mcpServers secret-boundary filter (project target only; the
-        // global target keeps the legacy full-merged list).
-        for (const McpServerConfig* server : mcp_servers_for_save(target)) {
+        // §B mcpServers secret-boundary filter.
+        for (const McpServerConfig* server : mcp_servers_for_save()) {
             frag.mcp_servers.emplace_back(
                 server->name, serialize_server_object(*server));
         }
@@ -1695,25 +1658,22 @@ private:
         json += "}";
     }
 
-    /// §B (RFC-0001 B followup c6): choose which merged MCP entries a full
-    /// save to `target` may emit.
+    /// §B (RFC-0001 B followup c6): choose which merged MCP entries a
+    /// save may emit.
     ///
-    /// PROJECT save emits a merged entry E iff (a) the name is PHYSICALLY
+    /// A save emits a merged entry E iff (a) the name is PHYSICALLY
     /// present in the project file — in which case THAT FILE'S OWN parsed
     /// value is emitted, never the shadowing higher-tier merged value (a
     /// user/local shadow can carry Authorization headers and must never
-    /// enter the tracked file) — or (b) the name's highest owner is global
-    /// or project (preserves the pre-existing global→project copy-down; it
-    /// is Tier-2 cleanup, not widened). Entries owned solely by user/local
-    /// and absent from the project file are omitted.
-    ///
-    /// GLOBAL save keeps the legacy full-merged behavior (no production
-    /// callers). Without any prior load() the per-tier data does not exist;
-    /// the legacy /config set path lands here and keeps legacy behavior.
+    /// enter the tracked file) — or (b) the name's highest owner is the
+    /// project tier. Entries owned solely by user/local and absent from
+    /// the project file are omitted. Without any prior load() the
+    /// per-tier data does not exist; the legacy /config set path lands
+    /// here and keeps the full-merged behavior.
     [[nodiscard]] std::vector<const McpServerConfig*>
-    mcp_servers_for_save(ConfigSource target) const {
+    mcp_servers_for_save() const {
         std::vector<const McpServerConfig*> result;
-        if (target != ConfigSource::ProjectConfig || !mcp_bookkeeping_loaded_) {
+        if (!mcp_bookkeeping_loaded_) {
             for (const auto& server : settings_.mcp_servers) result.push_back(&server);
             return result;
         }
@@ -1732,8 +1692,7 @@ private:
             }
             auto owner = mcp_owner_.find(server.name);
             if (owner != mcp_owner_.end() &&
-                (owner->second == McpStorageScope::Global ||
-                 owner->second == McpStorageScope::Project)) {
+                owner->second == McpStorageScope::Project) {
                 result.push_back(&server);
             }
             // user/local-only: omitted.
@@ -1832,14 +1791,6 @@ private:
         return std::string(child.as_str());
     }
 
-    /// Get default global config path (~/.config/loom/config.json)
-    [[nodiscard]] static std::filesystem::path default_global_config_path() {
-        if (auto* home = std::getenv("HOME")) {
-            return std::filesystem::path(home) / ".config" / "loom" / "config.json";
-        }
-        return "config.json";  // Fallback
-    }
-
     /// Get default project config path (.loom/config.json in cwd)
     [[nodiscard]] static std::filesystem::path default_project_config_path() {
         return std::filesystem::current_path() / ".loom" / "config.json";
@@ -1860,7 +1811,6 @@ private:
 
     [[nodiscard]] static std::string_view mcp_scope_label(McpStorageScope scope) noexcept {
         switch (scope) {
-            case McpStorageScope::Global:  return "global";
             case McpStorageScope::User:    return "user";
             case McpStorageScope::Project: return "project";
             case McpStorageScope::Local:   return "local";
@@ -1871,7 +1821,6 @@ private:
     [[nodiscard]] const std::filesystem::path*
     path_for_scope(McpStorageScope scope) const noexcept {
         switch (scope) {
-            case McpStorageScope::Global:  return &global_path_;
             case McpStorageScope::User:    return &user_path_;
             case McpStorageScope::Project: return &project_path_;
             case McpStorageScope::Local:   return &local_path_;
@@ -2336,11 +2285,9 @@ private:
         return {true, static_cast<std::uint64_t>(st.st_ino)};
     }
 
-    /// c23: snapshot all four tier signatures after a successful load(), so
+    /// c23: snapshot all three tier signatures after a successful load(), so
     /// tier_files_changed() has a baseline to compare against.
     void record_tier_signatures() {
-        tier_signatures_[scope_index(McpStorageScope::Global)] =
-            tier_signature(global_path_);
         if (!user_path_.empty()) {
             tier_signatures_[scope_index(McpStorageScope::User)] =
                 tier_signature(user_path_);
@@ -2356,12 +2303,9 @@ private:
     /// next latched command would mistake our save for an external edit and
     /// reload, re-applying env overlays (breaking the c19 same-session
     /// get-after-set invariant).
-    void refresh_tier_signature(ConfigSource target) {
-        const bool is_global = (target == ConfigSource::GlobalConfig);
-        const auto scope = is_global ? McpStorageScope::Global
-                                     : McpStorageScope::Project;
-        tier_signatures_[scope_index(scope)] =
-            tier_signature(is_global ? global_path_ : project_path_);
+    void refresh_tier_signature() {
+        tier_signatures_[scope_index(McpStorageScope::Project)] =
+            tier_signature(project_path_);
     }
 
     /// 16 hex chars (64 bits) of tmp-name randomness, so pre-spraying
@@ -2744,7 +2688,7 @@ private:
             target_is_local ? McpStorageScope::Local
             : (path == project_path_) ? McpStorageScope::Project
             : (path == user_path_) ? McpStorageScope::User
-            : McpStorageScope::Global;
+            : McpStorageScope::User;
         // The exact pre-extraction inline parse-failure error: same code and
         // literal, path interpolated here so the C6-pinned refusal text
         // stays byte-identical.
@@ -3021,7 +2965,7 @@ private:
     /// Ensure the data + lock basenames of a written tier are ignored.
     /// The PROJECT data file (.loom/config.json) is intentionally
     /// VCS-TRACKED, so only its `.lock` sibling is ignored; the LOCAL data
-    /// file and lock are both secret-bearing and both ignored. User/global
+    /// file and lock are both secret-bearing and both ignored. User
     /// tiers never touch a .gitignore.
     void ensure_config_gitignored(McpStorageScope scope) const {
         static constexpr std::string_view local[] = {
@@ -3034,7 +2978,6 @@ private:
         case McpStorageScope::Project:
             append_gitignore_basenames(project);
             return;
-        case McpStorageScope::Global:
         case McpStorageScope::User:
             return;
         }

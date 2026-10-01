@@ -308,31 +308,25 @@ private:
 
     /// Check config file existence and validity
     [[nodiscard]] DiagnosticCheck check_config_files() const {
-        auto global = config_manager_.global_config_path();
         auto project = config_manager_.project_config_path();
 
-        bool global_exists = std::filesystem::exists(global);
         bool project_exists = std::filesystem::exists(project);
 
-        if (!global_exists && !project_exists) {
+        if (!project_exists) {
             return DiagnosticCheck{
                 .name = "Config Files",
                 .status = CheckStatus::Warn,
                 .message = "No config files found (using defaults)",
-                .detail = std::format("Expected: {} or {}", global.string(), project.string()),
+                .detail = std::format("Expected: {}", project.string()),
                 .fix_suggestion = "Run /config set to create a config file",
             };
         }
-
-        std::string detail;
-        if (global_exists) detail += std::format("Global: {} (exists)\n", global.string());
-        if (project_exists) detail += std::format("Project: {} (exists)", project.string());
 
         return DiagnosticCheck{
             .name = "Config Files",
             .status = CheckStatus::Pass,
             .message = "Config file(s) found",
-            .detail = detail,
+            .detail = std::format("Project: {} (exists)", project.string()),
         };
     }
 

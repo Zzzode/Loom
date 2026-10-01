@@ -31,7 +31,7 @@ namespace loom::commands {
 
 [[nodiscard]] Result<std::optional<McpStorageScope>>
 McpCommand::extract_scope_arg(std::span<const std::string> args,
-                              std::size_t start, bool allow_global) {
+                              std::size_t start) {
     // LAST occurrence wins, matching the value the add loop keeps and the
     // value echoed in error messages.
     std::optional<McpStorageScope> resolved;
@@ -43,12 +43,11 @@ McpCommand::extract_scope_arg(std::span<const std::string> args,
         }
         const std::string_view label = args[i + 1];
         auto scope = ConfigManager::mcp_scope_from_label(label);
-        if (!scope ||
-            (!allow_global && *scope == McpStorageScope::Global)) {
+        if (!scope) {
             return std::unexpected(Error::make(
                 ErrorCode::InvalidRequest,
-                std::format("Invalid scope '{}'. Use local | user | project{}",
-                            label, allow_global ? " | global" : "")));
+                std::format("Invalid scope '{}'. Use local | user | project",
+                            label)));
         }
         resolved = *scope;
     }
@@ -60,7 +59,7 @@ McpCommand::execute_set_disabled(std::span<const std::string> args,
                                  bool disabled) {
     if (args.size() < 2) {
         return CommandResult::fail(
-            "Usage: /mcp enable|disable <name|all> [--scope local|user|project|global]");
+            "Usage: /mcp enable|disable <name|all> [--scope local|user|project]");
     }
     if (auto loaded = ensure_config_loaded(); !loaded) {
         return std::unexpected(loaded.error());
@@ -68,7 +67,7 @@ McpCommand::execute_set_disabled(std::span<const std::string> args,
 
     const std::string name = args[1];
     const bool all = (name == "all");
-    auto parsed_scope = extract_scope_arg(args, 2, /*allow_global=*/true);
+    auto parsed_scope = extract_scope_arg(args, 2);
     if (!parsed_scope) {
         return std::unexpected(parsed_scope.error());
     }

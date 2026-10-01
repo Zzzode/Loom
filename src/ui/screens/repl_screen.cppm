@@ -493,26 +493,6 @@ bool forward_trust_dialog(
     const std::shared_ptr<ReplScreenCallbacks>& cb,
     Event ev);
 
-// -------------------------------------------------------------------
-// Tool-permission rich panel helpers (dlg-permission-legacy)
-// -------------------------------------------------------------------
-// TS-faithful panels for the dormant ReplMode::ToolPermission branch.
-// The tool-name classifier and its PermissionPanelKind enum are TU-local
-// to repl_screen_dialog_panels.cpp.
-
-/// Lazily build the panel, keyed on request identity.
-[[nodiscard]] std::shared_ptr<Component> get_tool_permission_component(
-    const std::shared_ptr<ReplScreenState>& s,
-    const std::shared_ptr<ReplScreenCallbacks>& cb);
-
-[[nodiscard]] Element render_tool_permission(
-    const std::shared_ptr<ReplScreenState>& s,
-    const std::shared_ptr<ReplScreenCallbacks>& cb);
-
-bool forward_tool_permission(
-    const std::shared_ptr<ReplScreenState>& s,
-    const std::shared_ptr<ReplScreenCallbacks>& cb, Event ev);
-
 }  // namespace dialog_router
 
 // =========================================================

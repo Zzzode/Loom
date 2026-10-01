@@ -54,35 +54,13 @@ inline void install_core_settings_mcp_loader() {
             // RFC-0001 followup c20: the IdP client secret's single store is
             // the hardened ~/.config/loom/xaa/idp_tokens.json (written by
             // `/mcp xaa setup --client-secret`), keyed by the SAME settings
-            // issuer `/mcp xaa setup --issuer` writes. The --xaa runtime path
-            // now consumes it here instead of the dead hand-edited
-            // ~/.loom/xaa-idp.txt `idp_client_secret` line. When the issuer is
+            // issuer `/mcp xaa setup --issuer` writes. When the issuer is
             // empty (XAA not configured) get_idp_client_secret("") misses, so
             // the field stays unset — no special-casing on the read path.
             layer.xaa_idp_client_secret =
                 loom::services::mcp::get_idp_client_secret(
                     config.settings().xaa_idp.issuer);
 
-            // One-time migration of the legacy hand-edited line. GUARDED on a
-            // non-empty settings issuer: with an empty issuer (XAA not
-            // configured, or after `/mcp xaa clear` reset settings.xaaIdp to
-            // {}) save_idp_client_secret would write under the phantom key
-            // mcpXaaIdpConfig."".clientSecret, after which
-            // get_idp_client_secret("") no longer misses and the secret would
-            // resurface on the next XAA auth — silently undoing the clear.
-            // Self-disabling: once migrated, the store has the secret and this
-            // branch is never reached again (reload_from_config() re-runs the
-            // loader but finds the store populated). The legacy file is never
-            // modified or deleted.
-            if (!layer.xaa_idp_client_secret &&
-                !config.settings().xaa_idp.issuer.empty()) {
-                auto legacy = loom::services::mcp::read_legacy_idp_client_secret();
-                if (legacy) {
-                    loom::services::mcp::save_idp_client_secret(
-                        config.settings().xaa_idp.issuer, *legacy);
-                    layer.xaa_idp_client_secret = *legacy;
-                }
-            }
             return layer;
         });
 }

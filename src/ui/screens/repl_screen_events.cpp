@@ -40,22 +40,6 @@ using namespace ftxui;
         // M7.5: All dialogs flow through DialogQueue — no legacy bridge needed.
         // Engine pushes via PushXxx() (app.cppm / query_engine.cppm).
 
-        // M6: Faithful permission panels — bash / file_edit / file_write.
-        // Rendered as a dbox overlay (matching TS overlay slot).
-        if (state->mode == ReplMode::ToolPermission &&
-            state->permission_store.permission_request) {
-            // dlg-permission-legacy: state-owned TS-faithful panel
-            // (TS REF: PermissionRequest.tsx:47-82 dispatch by tool
-            // identity) replaces the legacy paragraph(...) ANSI string.
-            Element base = RenderReplScreen(*state, cb->on_retry, cb->on_clear_session, cb->streaming_md);
-            Element panel = dialog_router::render_tool_permission(state, cb);
-            return dbox({
-                base | dim,
-                vbox({ filler(),
-                       hbox({ filler(), panel | flex_shrink, filler() })
-                           | flex_shrink,
-                       filler() }) | flex });
-        }
         // UI3: SettingsView modal — render the tabbed settings dialog
         // over the dimmed REPL background.
         if (state->mode == ReplMode::SettingsView) {
@@ -133,13 +117,6 @@ using namespace ftxui;
             if (cb->on_redraw) cb->on_redraw();
             return true;
         }
-        // dlg-permission-legacy: the panel owns all its documented keys;
-        // runs BEFORE the Esc switch and legacy y/n/a block (left as
-        // harmless dead fallback).  TS dispatch REF:
-        // PermissionRequest.tsx:47-82.
-        if (state->mode == ReplMode::ToolPermission) {
-            return dialog_router::forward_tool_permission(state, cb, ev);
-        }
         // UI13 agent wizard: forward every event to the wizard component
         // (it manages Esc/Enter/buttons internally).
         if (state->mode == ReplMode::CreateAgent ||
@@ -155,7 +132,6 @@ using namespace ftxui;
             // Critical dialogs defer to y/n/a/c/r/q handlers — EXCEPT
             // CostThreshold where Esc MUST ACKNOWLEDGE (never quit / data-loss).
             switch (state->mode) {
-              case ReplMode::ToolPermission:
               case ReplMode::SandboxPermission:
               case ReplMode::WorkerSandboxPermission:
                 break;
@@ -194,7 +170,6 @@ using namespace ftxui;
         if (ev.is_character()) {
             char c = ev.character()[0];
             const bool is_perm =
-                state->mode==ReplMode::ToolPermission ||
                 state->mode==ReplMode::SandboxPermission ||
                 state->mode==ReplMode::WorkerSandboxPermission ||
                 state->mode==ReplMode::Elicitation ||

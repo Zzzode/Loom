@@ -1528,20 +1528,6 @@ TEST(Figures, BridgeAndGeneralSpinnersAreDistinct) {
               std::string(figs::kSpinnerFramesBraille[0]));
 }
 
-// ─── Legacy glyph backward compat ───────────────────────────────────────
-
-TEST(Figures, LegacyBridgeReadyIndicatorStillCompiles) {
-    // kBridgeReadyIndicatorLegacy preserves the old emoji ✅︎ for one release
-    // so callers that already imported it don't break.
-    EXPECT_EQ(std::string(figs::kBridgeReadyIndicatorLegacy), "\xE2\x9C\x85\xEF\xB8\x8F");  // ✅︎
-}
-
-TEST(Figures, LegacyBridgeReadyDiffersFromTsFaithful) {
-    // The legacy emoji and the TS-faithful middot-check must be different.
-    EXPECT_NE(std::string(figs::kBridgeReadyIndicator),
-              std::string(figs::kBridgeReadyIndicatorLegacy));
-}
-
 // ─── Display width sanity (wcwidth assumptions) ─────────────────────────
 
 TEST(Figures, CoreGlyphsAreSingleDisplayCell) {
@@ -1592,7 +1578,6 @@ TEST(Figures, MultiByteGlyphSizesAreCorrect) {
     // These glyphs span multiple UTF-8 bytes for multi-codepoint sequences.
     EXPECT_EQ(figs::kBridgeReadyIndicator.size(), 10u);  // ·✔︎· (4 code points: U+00B7+U+2714+U+FE0E+U+00B7 = 2+3+3+2=10 bytes)
     EXPECT_EQ(figs::kBridgeFailedIndicator.size(), 2u); // × (U+00D7 = 2 bytes)
-    EXPECT_EQ(figs::kBridgeReadyIndicatorLegacy.size(), 6u); // ✅︎ (2 code points)
     EXPECT_EQ(figs::kQuestionMarkPrefix.size(), 3u);    // (?) = 3 ASCII chars
 }
 

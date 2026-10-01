@@ -270,11 +270,10 @@ private:
     /// implementation unit (inline-def ratchet).
     [[nodiscard]] VoidResult reload_and_sync();
 
-    /// Scan args[start..] for an optional --scope/-s <label>. add accepts
-    /// local|user|project only; remove/enable/disable also accept global.
+    /// Scan args[start..] for an optional --scope/-s <label>. Accepts
+    /// local|user|project.
     [[nodiscard]] static Result<std::optional<McpStorageScope>>
-    extract_scope_arg(std::span<const std::string> args, std::size_t start,
-                      bool allow_global);
+    extract_scope_arg(std::span<const std::string> args, std::size_t start);
 
     /// Parse action string to enum. Recognizes /mcp xaa <sub> by peeking args[1].
     [[nodiscard]] static std::optional<McpAction> parse_action(
@@ -743,14 +742,13 @@ private:
     }
 
     /// Remove an MCP server configuration. With no --scope this is
-    /// best-effort across EVERY tier file physically containing the name
-    /// (including the polluted legacy global file); --scope/-s restricts the
-    /// removal to one tier (local|user|project|global). The outcome has
-    /// three renderings (D3): absent everywhere, >=1 file changed, present
-    /// but zero writes succeeded.
+    /// best-effort across EVERY tier file physically containing the name;
+    /// --scope/-s restricts the removal to one tier (local|user|project).
+    /// The outcome has three renderings (D3): absent everywhere, >=1 file
+    /// changed, present but zero writes succeeded.
     [[nodiscard]] Result<CommandResult> execute_remove(std::span<const std::string> args) {
         if (args.size() < 2) {
-            return CommandResult::fail("Usage: /mcp remove <name> [--scope local|user|project|global]");
+            return CommandResult::fail("Usage: /mcp remove <name> [--scope local|user|project]");
         }
         if (auto loaded = ensure_config_loaded(); !loaded) {
             return std::unexpected(loaded.error());
@@ -758,7 +756,7 @@ private:
 
         const std::string name = args[1];
         std::string scope_label;
-        auto parsed_scope = extract_scope_arg(args, 2, /*allow_global=*/true);
+        auto parsed_scope = extract_scope_arg(args, 2);
         if (!parsed_scope) {
             return std::unexpected(parsed_scope.error());
         }
@@ -924,8 +922,7 @@ private:
     /// Shared worker for enable (disabled=false) and disable (disabled=true).
     /// Patches the "disabled" flag in place on the owner FILE(S) — never a
     /// full save (D5). With no --scope the highest-precedence file owning
-    /// each effective entry is patched (a global-only entry therefore
-    /// patches the legacy global file); with --scope only that file is
+    /// each effective entry is patched; with --scope only that file is
     /// touched. "all" resolves each owner and patches each distinct file
     /// once; file-level failures aggregate. Body lives in the mcp_cmd.cpp
     /// module implementation unit (inline-def ratchet).

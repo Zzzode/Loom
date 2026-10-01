@@ -440,58 +440,6 @@ inline void clear_idp_client_secret(std::string_view idp_issuer) {
     detail::remove_idp_client_secret(idp_issuer);
 }
 
-/// RFC-0001 followup c20 — one-time migration reader for the legacy
-/// hand-edited `~/.loom/xaa-idp.txt` `idp_client_secret=` line. Reads ONLY
-/// that line (the file's other fields are out of scope for this follow-up),
-/// through the hardened read_regular_file() (O_RDONLY|O_NONBLOCK|O_NOFOLLOW,
-/// fstat S_ISREG gate) so a symlinked or FIFO leaf yields "absent" without
-/// blocking or following. The value is returned to the caller (the loader),
-/// never logged. ENOENT and an unreadable/non-regular leaf both map to
-/// nullopt.
-[[nodiscard]] inline std::optional<std::string> read_legacy_idp_client_secret() {
-    const char* home = std::getenv("HOME");
-    if (!home) return std::nullopt;
-    auto read = loom::utils::read_regular_file(
-        fs::path(home) / ".loom" / "xaa-idp.txt");
-    if (!read.present()) return std::nullopt;
-
-    // Parse only the idp_client_secret line; every other key is ignored.
-    // Key normalization matches the legacy parser (xaa.cppm
-    // read_xaa_config_file): split on the first '=', trim whitespace around
-    // key and value, and the LAST occurrence wins. An empty value does not
-    // clobber a prior non-empty one (an empty secret is never useful).
-    std::string_view contents = read.contents;
-    std::optional<std::string> found;
-    std::size_t pos = 0;
-    while (pos <= contents.size()) {
-        auto nl = contents.find('\n', pos);
-        std::string_view line = contents.substr(
-            pos, nl == std::string_view::npos ? std::string_view::npos
-                                              : nl - pos);
-        auto eq = line.find('=');
-        if (eq != std::string_view::npos) {
-            auto key = line.substr(0, eq);
-            auto value = line.substr(eq + 1);
-            auto trim = [](std::string_view& s) {
-                while (!s.empty() && (s.front() == ' ' || s.front() == '\t'))
-                    s.remove_prefix(1);
-                while (!s.empty() && (s.back() == '\r' || s.back() == ' '
-                                      || s.back() == '\t' || s.back() == '\n'))
-                    s.remove_suffix(1);
-            };
-            trim(key);
-            trim(value);
-            constexpr std::string_view kKey = "idp_client_secret";
-            if (key == kKey && !value.empty()) {
-                found = std::string(value);
-            }
-        }
-        if (nl == std::string_view::npos) break;
-        pos = nl + 1;
-    }
-    return found;
-}
-
 // ─── JWT Utilities ────────────────────────────────────────────────────────
 
 /// TS REF: xaaIdpLogin.ts:252-263 jwtExp()

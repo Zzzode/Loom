@@ -1210,8 +1210,8 @@ TEST(DialogTriggers, PushCostThresholdCreatesDialog) {
     namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushCostThreshold(
-        queue, 5.0, 5.2, "claude-sonnet-4.6",
-        [](bool cont, bool reset) { (void)cont; (void)reset; });
+        queue, 5.2, std::optional<std::string>{"claude-sonnet-4.6"},
+        []() {});
 
     EXPECT_TRUE(queue.has_any_bottom());
 }
@@ -1403,8 +1403,8 @@ TEST(DialogTriggers, MultipleDialogsQueueCorrectly) {
 
     // Two bottom dialogs with different bands
     dtrig::PushCostThreshold(
-        queue, 5.0, 5.2, "sonnet",
-        [](bool, bool) {});
+        queue, 5.2, std::optional<std::string>{"sonnet"},
+        []() {});
     dtrig::PushLspRecommendation(
         queue, "clangd", [](bool) {});
 
@@ -1777,7 +1777,7 @@ TEST(DialogTriggers, PushPluginDialogCreatesDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
-    dtrig::PushPluginDialog(queue, [] {});
+    dtrig::PushPluginDialog(queue, 0, "", [] {});
     EXPECT_TRUE(queue.has_modal());
     auto peek = queue.peek_modal();
     ASSERT_TRUE(peek.has_value());

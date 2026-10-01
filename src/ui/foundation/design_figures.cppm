@@ -185,11 +185,7 @@ inline constexpr std::size_t kBridgeSpinnerFrameCount = kBridgeSpinnerFrames.siz
 
 // TS BRIDGE_READY_INDICATOR = '·✔︎·' = '·✔︎·'
 //   (middot U+00B7 + heavy check U+2714 + VS15 U+FE0E + middot U+00B7).
-// NOTE: previous CPP value was wrong — emoji ✅︎ (U+2705 + VS15).  Corrected
-// below to match TS exactly.  kBridgeReadyIndicatorLegacy kept for one release
-// so callers that already imported the old symbol don't break.
 inline constexpr std::string_view kBridgeReadyIndicator = "\xC2\xB7\xE2\x9C\x94\xEF\xB8\x8E\xC2\xB7";  // ·✔︎· (TS-faithful)
-inline constexpr std::string_view kBridgeReadyIndicatorLegacy = "\xE2\x9C\x85\xEF\xB8\x8F";  // ✅︎ (old emoji, deprecated)
 
 // TS BRIDGE_FAILED_INDICATOR = '×' = '×' U+00D7.
 inline constexpr std::string_view kBridgeFailedIndicator = "\xC3\x97";  // × U+00D7

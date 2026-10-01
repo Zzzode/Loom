@@ -48,12 +48,6 @@ struct DialogStore {
     std::shared_ptr<void> wizard_agent;
     // UI8: trust dialog component handle (lazy-created; opaque).
     std::shared_ptr<void> wizard_trust;
-    // dlg-permission-legacy: rich permission panel for the dormant
-    // ReplMode::ToolPermission branch. State-owned (wizard_trust pattern)
-    // so focus/PromptState survive repaint; keyed on request identity.
-    // TS REF: PermissionRequest.tsx:47-82 (tool dispatch).
-    std::shared_ptr<void> tool_permission_component;
-    std::string tool_permission_key;
 
     // ── Inline panel component handles (lazy-created, opaque) ───────────
     // AgentsView panel component handle (lazy-created; opaque). The agent

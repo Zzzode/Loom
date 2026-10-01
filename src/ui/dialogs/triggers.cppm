@@ -99,22 +99,6 @@ inline void PushCostThreshold(dsys::DialogQueue& queue,
     queue.push(std::move(p));
 }
 
-// Legacy 5-arg adapter (threshold_usd, dollars_spent, model_name string,
-// on_response<bool continue_, bool reset>) — kept so old call sites build
-// while being migrated.  Internally wraps on_response(bool,bool) so firing
-// on_done() propagates (continue=true, reset=false).
-inline void PushCostThreshold(dsys::DialogQueue& queue,
-                              double /*threshold_usd*/,
-                              double dollars_spent,
-                              std::string model_name,
-                              std::function<void(bool, bool)> on_response) {
-    PushCostThreshold(queue, dollars_spent,
-                      std::optional<std::string>{std::move(model_name)},
-                      [on_response = std::move(on_response)] {
-                          if (on_response) on_response(true, false);
-                      });
-}
-
 // ---------------------------------------------------------------------------
 // SandboxPermission
 // ---------------------------------------------------------------------------
@@ -368,12 +352,6 @@ inline void PushPluginDialog(dsys::DialogQueue& queue,
     p.menu_selected = menu_selected;
     p.on_close = std::move(on_close);
     queue.push_modal(std::move(p));
-}
-
-// Legacy 2-arg form — defaults to the Discover tab (empty id_suffix).
-inline void PushPluginDialog(dsys::DialogQueue& queue,
-                             std::function<void()> on_close) {
-    PushPluginDialog(queue, 0, "", std::move(on_close));
 }
 
 // ---------------------------------------------------------------------------

@@ -61,7 +61,6 @@ enum class ReplMode : std::uint8_t {
     // Dialogs (overlay via dbox)
     MessageSelector,          // 'message-selector'
     SandboxPermission,        // 'sandbox-permission'
-    ToolPermission,           // 'tool-permission'
     PromptHook,               // 'prompt' (was: HookPrompt)
     WorkerSandboxPermission,  // 'worker-sandbox-permission'
     Elicitation,              // 'elicitation'

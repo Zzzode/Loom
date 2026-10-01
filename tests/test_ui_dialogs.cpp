@@ -211,9 +211,9 @@ TEST(SettingsDialog, SavePreservesUnknownKeys) {
                 "}\n";
     }
 
-    // 2-arg ctor: global + project; user tier absent, local derived next to
+    // 1-arg ctor: project only; user tier absent, local derived next to
     // the project file. Load so the dialog snapshots the seeded values.
-    loom::core::ConfigManager cfg(dir / "global.json", project_path);
+    loom::core::ConfigManager cfg(project_path);
     ASSERT_TRUE(cfg.load().has_value());
 
     settings_dialog::SettingsDialogOptions opts;

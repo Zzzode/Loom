@@ -152,7 +152,7 @@ private:
     /// reload (a reload would re-apply the LOOM_MODEL env overlay over the
     /// in-memory explicit value). ConfigManager::load() tolerates MISSING
     /// tier files (they surface ConfigNotFound and are skipped); hard parse
-    /// errors in the global/project files return an error, while user/local
+    /// errors in the project file return an error, while user/local
     /// parse errors are soft (C6 §A). The guard latches only on success:
     /// after a hard failure the caller sees the error and a later invocation
     /// retries once the file is repaired, rather than being permanently
@@ -257,9 +257,6 @@ private:
     /// Open config file in the user's editor
     [[nodiscard]] Result<CommandResult> execute_open() {
         auto path = config_manager_.project_config_path();
-        if (!std::filesystem::exists(path)) {
-            path = config_manager_.global_config_path();
-        }
         // Return path for the shell to open with $EDITOR
         return CommandResult::success(
             std::format("Opening config file: {}\nRun: $EDITOR {}", path.string(), path.string())
@@ -268,15 +265,12 @@ private:
 
     /// Show config file locations
     [[nodiscard]] Result<CommandResult> execute_path() {
-        auto global = config_manager_.global_config_path();
         auto project = config_manager_.project_config_path();
 
         std::string output = "Configuration file locations:\n\n";
-        output += std::format("  Global:  {} {}\n", global.string(),
-                             std::filesystem::exists(global) ? "(exists)" : "(not found)");
         output += std::format("  Project: {} {}\n", project.string(),
                              std::filesystem::exists(project) ? "(exists)" : "(not found)");
-        output += "\nPriority: CLI flags > env vars > project config > global config > defaults\n";
+        output += "\nPriority: CLI flags > env vars > project config > defaults\n";
 
         return CommandResult::success(std::move(output));
     }

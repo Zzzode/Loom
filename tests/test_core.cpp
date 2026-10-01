@@ -124,7 +124,6 @@ TEST(CoreConfig, SoftTierParseWarningCollectedForDrain) {
     fs::remove_all(root);
     fs::create_directories(root);
 
-    const auto global_path = root / "global.json";
     const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
     const auto local_path = root / "local.json";
@@ -134,7 +133,7 @@ TEST(CoreConfig, SoftTierParseWarningCollectedForDrain) {
     }
 
     {
-        loom::core::ConfigManager manager(global_path, user_path,
+        loom::core::ConfigManager manager(user_path,
                                         project_path, local_path);
         // Quiet load: no stderr print, but the diagnostic is collected for
         // the TUI composition root to drain into a toast.
@@ -161,7 +160,6 @@ TEST(CoreConfig, TierFilesChangedDetectsExternalEdit) {
     const auto root = fs::temp_directory_path() / "loom_core_c23_sig_test";
     fs::remove_all(root);
     fs::create_directories(root);
-    const auto global_path = root / "global.json";
     const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
     const auto local_path = root / "local.json";
@@ -170,7 +168,7 @@ TEST(CoreConfig, TierFilesChangedDetectsExternalEdit) {
         seed << "{\"model\":{\"default_model\":\"v1\"}}";
     }
     {
-        loom::core::ConfigManager manager(global_path, user_path,
+        loom::core::ConfigManager manager(user_path,
                                         project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         EXPECT_FALSE(manager.tier_files_changed())

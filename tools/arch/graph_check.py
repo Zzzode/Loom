@@ -156,6 +156,13 @@ MODULE_RANK_OVERRIDE = {
     # without the override that reads as a rank-1->2 upward edge.
     "loom.fs.atomic_replace": 0,
     "loom.fs.file_persistence": 0,
+    # Pure-leaf serialization primitives. loom.serdes.json wraps yyjson and
+    # imports only std + loom.utils.error (itself a pure leaf); both are used
+    # by loom.config and loom.migrations (rank 1), so without the override
+    # those edges read as rank-1->2 upward edges. 154 importers across all
+    # higher ranks — all become downward edges (fine).
+    "loom.utils.error": 0,
+    "loom.serdes.json": 0,
 }
 
 # RFC 0001 Phase D B7: loom.utils stays in CORE8 even though the rename track

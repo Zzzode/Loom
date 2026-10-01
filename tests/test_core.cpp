@@ -219,7 +219,6 @@ TEST(CoreFeatureFlags, RuntimeManagerCanFindAndToggleFeature) {
 
 TEST(CoreConstants, AppMetadataIsDefined) {
     EXPECT_FALSE(std::string(loom::core::constants::kAppName).empty());
-    EXPECT_FALSE(std::string(loom::core::constants::kVersion).empty());
     EXPECT_GT(loom::core::constants::api_limits::kMaxTokensDefault, 0u);
 }
 

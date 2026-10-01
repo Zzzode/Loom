@@ -7,10 +7,10 @@
 /// create_moved_to_plugin_command, debug_tool_call, exit, extra_usage,
 /// init_verifiers, install_github_app sub-modules, keybindings_cmd,
 /// mock_limits, onboarding, output_style, perf_issue,
-/// pr_comments, privacy_settings, rate_limit_options, release_notes,
+/// pr_comments, privacy_settings, rate_limit_options,
 /// reload_plugins, reset_limits, sandbox_toggle,
-/// security_review, statusline, terminal_setup, thinkback, thinkback_play,
-/// version).  Loading all of those BMIs in a single translation unit would
+/// security_review, statusline, terminal_setup, thinkback, thinkback_play).
+/// Loading all of those BMIs in a single translation unit would
 /// blow past clang's 31-bit SourceLocation budget; keeping them in their
 /// own impl unit bounds the per-TU footprint.
 module loom.commands.registry;
@@ -23,7 +23,6 @@ void register_group_e_commands(CommandRegistry& registry) {
     // Commands whose modules are transitively imported via runtime_surface_commands
     registry.register_command<OutputStyleCommand>();
     registry.register_command<PrivacySettingsCommand>();
-    registry.register_command<ReleaseNotesCommand>();
     registry.register_command<SandboxToggleCommand>();
     registry.register_command<ThinkbackCommand>();
     registry.register_command<AntTraceCommand>();
@@ -46,7 +45,6 @@ void register_group_e_commands(CommandRegistry& registry) {
     registry.register_command<StatuslineCommand>();
     registry.register_command<TerminalSetupCommand>();
     registry.register_command<ThinkbackPlayCommand>();
-    registry.register_command<VersionCommand>();
 }
 
 } // namespace loom::commands

@@ -2,7 +2,6 @@
 /// @brief Group C registration: session/model/plan commands (model, cost, plan, insights, etc.)
 module loom.commands.registry;
 
-import loom.commands.upgrade;
 import loom.commands.ultraplan;
 import loom.commands.review.ultrareview;
 import loom.commands.review.review_remote;
@@ -22,7 +21,6 @@ import loom.commands.vim;
 namespace loom::commands {
 
 void register_group_c_commands(CommandRegistry& registry) {
-    registry.register_command<UpgradeCommand>();
     registry.register_command<UltraplanCommand>();
     registry.register_command<UltraReviewCommand>();
     registry.register_command<ReviewRemoteCommand>();

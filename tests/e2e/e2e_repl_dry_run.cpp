@@ -169,25 +169,7 @@ int main(int /*argc*/, char* argv[]) {
     }
     printf("[E2E-2] binary: %s\n", bin.c_str());
 
-    // --- run 1: --version
-    char* const v_argv[] = {
-        const_cast<char*>(bin.c_str()),
-        const_cast<char*>("--version"),
-        nullptr,
-    };
-    RunResult v = run_and_capture(bin, v_argv);
-    printf("[E2E-2] --version exit=%d stdout='%s'\n", v.exit_code, v.stdout_.c_str());
-    assert(v.exit_code == 0);
-    assert(contains_case(v.stdout_, "loom"));
-    // The native C++ build exposes version suffix "-cpp" for build id purposes.
-    bool has_build_suffix = v.stdout_.find("1.0.0-cpp") != string::npos ||
-                            v.stdout_.find("-cpp") != string::npos;
-    if (!has_build_suffix) {
-        fprintf(stderr, "[E2E-2] --version output missing native build suffix\n");
-        return 3;
-    }
-
-    // --- run 2: --list-runtime-tools (the fast non-interactive banner path)
+    // --- run 1: --list-runtime-tools (the fast non-interactive banner path)
     //
     // NOTE: The previous "--dry-run" concept was agent-built and never wired
     // into the real native entry (src/main.cc parse_args).  Runtime tool

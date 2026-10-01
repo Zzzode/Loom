@@ -77,7 +77,6 @@ target_sources(loom_commands
         commands/pr_comments.cppm
         commands/privacy_settings.cppm
         commands/rate_limit_options.cppm
-        commands/release_notes.cppm
         commands/reload_plugins.cppm
         commands/rename.cppm
         commands/reset_limits.cppm
@@ -104,9 +103,7 @@ target_sources(loom_commands
         commands/thinkback.cppm
         commands/thinkback_play.cppm
         commands/ultraplan.cppm
-        commands/upgrade.cppm
         commands/usage.cppm
-        commands/version.cppm
         commands/vim.cppm
 )
 target_sources(loom_commands PRIVATE

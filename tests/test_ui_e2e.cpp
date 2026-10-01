@@ -223,7 +223,6 @@ TEST(E2E_Gate, StartupScreenHasAllElements) {
     // Critical elements that must always be visible on startup
     auto missing = check_required_strings(rendered, {
         "Loom",   // Logo / app name
-        "v",             // Version string
         "Try ",          // Prompt placeholder hint
     });
 

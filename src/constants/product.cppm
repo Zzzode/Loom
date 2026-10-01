@@ -30,9 +30,6 @@ export namespace loom::constants::product {
     return std::string(base) + std::string(path);
 }
 
-inline constexpr std::string_view LOOM_VERSION = "1.0.0-cpp";
-inline constexpr std::string_view BUILD_DATE = "unknown";
-inline constexpr std::string_view BUILD_TIME = "unknown";
 /// Hosted-product base URLs.
 ///
 /// Empty by default: these were the upstream vendor's hosted endpoints, and

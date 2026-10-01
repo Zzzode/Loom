@@ -173,11 +173,6 @@ public:
     return prev.total_usage.total() != next.total_usage.total();
 }
 
-/// Check if auth version has changed
-[[nodiscard]] inline bool auth_version_changed(const AppState& prev, const AppState& next) noexcept {
-    return has_changed(prev, next, &selectors::get_auth_version);
-}
-
 /// Check if ultraplan mode has changed
 [[nodiscard]] inline bool ultraplan_mode_changed(const AppState& prev, const AppState& next) noexcept {
     return has_changed(prev, next, &selectors::is_ultraplan_mode);
@@ -229,11 +224,6 @@ inline void on_tasks_changed(const AppState&, const AppState&) {
     // Update task list UI, notify task manager, etc.
 }
 
-/// Handler for auth version changes
-inline void on_auth_version_changed(const AppState&, const AppState&) {
-    // Clear caches, re-authenticate if needed, etc.
-}
-
 /// Handler for MCP reconnect key changes
 inline void on_mcp_reconnect_key_changed(const AppState&, const AppState&) {
     // Trigger MCP reconnection
@@ -279,12 +269,6 @@ inline void setup_default_handlers(StateChangeRegistry& registry) {
     registry.register_conditional_callback(
         &tasks_changed,
         &on_tasks_changed
-    );
-
-    // Auth version changes
-    registry.register_conditional_callback(
-        &auth_version_changed,
-        &on_auth_version_changed
     );
 
     // MCP reconnect key changes

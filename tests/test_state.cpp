@@ -369,7 +369,6 @@ TEST(StateStore, DispatchFeatureBucketParityActions) {
     loom::state::AppState::SkillImprovementState::Suggestion suggestion;
     suggestion.skill_name = "state";
     store->dispatch(loom::state::Action{loom::state::ActionType::SetSkillSuggestion, std::optional{suggestion}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::IncrementAuthVersion});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetEffortValue, std::optional<std::string>{"high"}});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetAdvisorModel, std::optional<std::string>{"advisor"}});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetUltraplanLaunching, true});
@@ -390,7 +389,6 @@ TEST(StateStore, DispatchFeatureBucketParityActions) {
     EXPECT_EQ(state.speculation_session_time_saved_ms, 1234LL);
     ASSERT_TRUE(state.skill_improvement.suggestion.has_value());
     EXPECT_EQ(state.skill_improvement.suggestion->skill_name, "state");
-    EXPECT_EQ(state.auth_version, 1u);
     EXPECT_EQ(state.effort_value, std::optional<std::string>{"high"});
     EXPECT_EQ(state.advisor_model, std::optional<std::string>{"advisor"});
     EXPECT_TRUE(state.ultraplan_launching);
@@ -675,7 +673,6 @@ TEST(Persistence, RoundTripsAllPersistedFields) {
     src.view_selection_mode = "viewing-agent";
     src.selected_ip_agent_index = 7;
     src.coordinator_task_index = 3;
-    src.auth_version = 42;
     src.remote_background_task_count = 9;
     src.main_loop_model = "claude-opus-4-8";
     src.advisor_model = "claude-haiku-4-5";
@@ -704,7 +701,6 @@ TEST(Persistence, RoundTripsAllPersistedFields) {
     EXPECT_EQ(dst.view_selection_mode, src.view_selection_mode);
     EXPECT_EQ(dst.selected_ip_agent_index, src.selected_ip_agent_index);
     EXPECT_EQ(dst.coordinator_task_index, src.coordinator_task_index);
-    EXPECT_EQ(dst.auth_version, src.auth_version);
     EXPECT_EQ(dst.remote_background_task_count, src.remote_background_task_count);
     ASSERT_TRUE(dst.main_loop_model.has_value());  EXPECT_EQ(*dst.main_loop_model, *src.main_loop_model);
     ASSERT_TRUE(dst.advisor_model.has_value());    EXPECT_EQ(*dst.advisor_model, *src.advisor_model);
@@ -724,28 +720,6 @@ TEST(Persistence, AbsentOptionalStringsStayDefault) {
     EXPECT_FALSE(parsed->status_line_text.has_value());
 }
 
-TEST(Persistence, LoadsLegacyV1ShapeWithMissingFields) {
-    // Minimal legacy v1 object. thinking_enabled and auth_version were
-    // previously written-but-dropped; this proves they now round-trip, while
-    // fields absent from the legacy blob keep their defaults.
-    std::string legacy = R"({"verbose":true,"thinking_enabled":false,"auth_version":5,"schema_version":1})";
-    auto parsed = loom::state::persistence::deserialize_state(legacy);
-    ASSERT_TRUE(parsed.has_value()) << parsed.error().format();
-    EXPECT_TRUE(parsed->verbose);
-    EXPECT_FALSE(parsed->thinking_enabled);
-    EXPECT_EQ(parsed->auth_version, 5u);
-    EXPECT_EQ(parsed->view_selection_mode, "none");
-    EXPECT_FALSE(parsed->main_loop_model.has_value());
-}
-
-TEST(Persistence, WritesCurrentSchemaVersion) {
-    auto s = loom::state::get_default_app_state();
-    auto serialized = loom::state::persistence::serialize_state(s);
-    ASSERT_TRUE(serialized.has_value());
-    EXPECT_NE(serialized->find("\"schema_version\":2"), std::string::npos);
-    EXPECT_EQ(loom::state::persistence::kCurrentStateSchemaVersion, 2);
-}
-
 TEST(Persistence, ValidateStateAcceptsDefaultsRejectsBadValues) {
     auto good = loom::state::get_default_app_state();
     EXPECT_TRUE(loom::state::persistence::validate_state(good).has_value());
@@ -760,7 +734,7 @@ TEST(Persistence, ValidateStateAcceptsDefaultsRejectsBadValues) {
 }
 
 TEST(Persistence, DeserializeRejectsInvalidIndices) {
-    std::string malformed = R"({"selected_ip_agent_index":-5,"schema_version":2})";
+    std::string malformed = R"({"selected_ip_agent_index":-5})";
     auto parsed = loom::state::persistence::deserialize_state(malformed);
     ASSERT_FALSE(parsed.has_value());
 }

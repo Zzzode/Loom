@@ -10,7 +10,6 @@ import std;
 
 import loom.types.types;
 import loom.commands.command;
-import loom.constants.product;
 
 export namespace loom::commands {
 
@@ -23,7 +22,7 @@ public:
     [[nodiscard]] static CommandDefinition definition() {
         return CommandDefinition{
             .name = "status",
-            .description = "Show Loom status including version, model, account, API connectivity, and tool statuses",
+            .description = "Show Loom status including model, account, API connectivity, and tool statuses",
             .args = {},
             .category = "info",
             .aliases = {},
@@ -38,9 +37,8 @@ public:
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
         return CommandResult::success(
             std::string("Loom Status:\n") +
-            "Version: " + std::string(loom::constants::product::LOOM_VERSION) + "\n" +
             "Model: Not configured\n" +
-            "Status: Offline (C++ Migration Demo)");
+            "Status: Offline");
     }
 
     [[nodiscard]] std::vector<std::string> complete(std::string_view) {

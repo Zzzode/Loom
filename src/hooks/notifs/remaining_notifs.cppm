@@ -1,6 +1,6 @@
 /// @file remaining_notifs.cppm
-/// @brief Eight real notification hooks (subscription, MCP connectivity,
-///        model migrations, npm deprecation, plugin updates/installation,
+/// @brief Seven real notification hooks (subscription, MCP connectivity,
+///        npm deprecation, plugin updates/installation,
 ///        settings errors, teammate shutdown) with observable state slots,
 ///        dismissal tracking, and real return logic.
 ///
@@ -9,7 +9,7 @@
 ///   * exported set_*() / get_*() / clear_*() functions so tests and
 ///     subsystems can inject / read data
 ///   * an acknowledge / dismiss entry that records the notice id
-///   * filtering logic (deadline, current model, dismissal, recency, severity)
+///   * filtering logic (deadline, dismissal, recency, severity)
 ///
 /// Backend wiring status (mirrors TS src/hooks/notifs/*):
 ///   * McpConnectivity      -> SLOT, fed externally by the rank-13
@@ -23,12 +23,6 @@
 ///                             (inject_teammate_shutdowns_from_tasks()).
 ///                             TS: useTeammateLifecycleNotification reads
 ///                             task.status transitions.
-///   * ModelMigration       -> SLOT fallback (intentional). The migration
-///                             writer exists (loom.migrations.concrete_migrations
-///                             writes *MigrationTimestamp keys) but no
-///                             ConfigManager reader exposes arbitrary
-///                             timestamp keys yet, so the slot is the only
-///                             honest source until that reader lands.
 ///   * NpmDeprecation       -> SLOT fallback. TS reads installation type via
 ///                             getCurrentInstallationType(); C++ only has the
 ///                             doctor-screen display string, no typed accessor.
@@ -74,7 +68,6 @@ template <typename Tag, typename T> std::mutex GlobalStateSlot<Tag, T>::mtx{};
 template <typename Tag, typename T> T GlobalStateSlot<Tag, T>::value{};
 
 struct NpmDeprecationTag {};
-struct ModelMigrationTag {};
 struct PluginAutoupdateTag {};
 struct PluginInstallationTag {};
 struct McpConnectivityTag {};
@@ -110,7 +103,6 @@ inline auto now_ms() -> int64_t {
 struct DismissState {
     mutable std::shared_mutex mutex;
     std::unordered_set<std::string> npm_deprecation;           // single notice id
-    std::unordered_set<std::string> model_migrations;          // from+to
     std::unordered_set<std::string> plugin_updates;            // id+version
     std::unordered_set<std::string> plugin_install;            // (reserved)
     std::unordered_set<std::string> settings_errors;           // key_path
@@ -124,7 +116,7 @@ inline auto dismiss_state() -> DismissState& {
 }
 
 /// Record that a given notice has been acknowledged by the user.
-/// hook_id identifies the category (e.g. "npm_deprecation", "model_migration",
+/// hook_id identifies the category (e.g. "npm_deprecation",
 /// "plugin_autoupdate", "settings_errors", "teammate_shutdown", "subscription").
 /// notice_id identifies the specific instance.
 inline void acknowledge_notification(std::string_view hook_id,
@@ -133,7 +125,6 @@ inline void acknowledge_notification(std::string_view hook_id,
     std::unique_lock lock(ds.mutex);
     const std::string k(notice_id);
     if (hook_id == "npm_deprecation")           ds.npm_deprecation.insert(k);
-    else if (hook_id == "model_migration")      ds.model_migrations.insert(k);
     else if (hook_id == "plugin_autoupdate")    ds.plugin_updates.insert(k);
     else if (hook_id == "settings_errors")      ds.settings_errors.insert(k);
     else if (hook_id == "teammate_shutdown")    ds.teammate_shutdowns.insert(k);
@@ -147,7 +138,6 @@ inline auto is_notification_dismissed(std::string_view hook_id,
     std::shared_lock lock(ds.mutex);
     const std::string k(notice_id);
     if (hook_id == "npm_deprecation")        return ds.npm_deprecation.contains(k);
-    if (hook_id == "model_migration")        return ds.model_migrations.contains(k);
     if (hook_id == "plugin_autoupdate")      return ds.plugin_updates.contains(k);
     if (hook_id == "settings_errors")        return ds.settings_errors.contains(k);
     if (hook_id == "teammate_shutdown")      return ds.teammate_shutdowns.contains(k);
@@ -160,7 +150,6 @@ inline void reset_dismissals_for_tests() {
     auto& ds = dismiss_state();
     std::unique_lock lock(ds.mutex);
     ds.npm_deprecation.clear();
-    ds.model_migrations.clear();
     ds.plugin_updates.clear();
     ds.plugin_install.clear();
     ds.settings_errors.clear();
@@ -218,72 +207,7 @@ inline void dismiss_npm_deprecation(std::string_view id = {}) {
 }
 
 // ==========================================================================
-// 2. ModelMigration (useModelMigrationNotifications)
-//
-// SLOT FALLBACK (intentional). The TS hook reads recent(<3s) migration
-// timestamps from getGlobalConfig() (sonnet45To46MigrationTimestamp,
-// legacyOpusMigrationTimestamp, opusProMigrationTimestamp) in src/hooks/notifs/
-// useModelMigrationNotifications.tsx. The C++ migration runner writes those
-// keys (src/migrations/concrete_migrations.cppm) but ConfigManager
-// (src/config/config.cppm) parses into a typed Settings struct with no
-// arbitrary-key reader, so the slot remains the honest injection point until
-// a config timestamp reader lands.
-// ==========================================================================
-
-struct ModelMigrationNotif {
-    std::string from_model;
-    std::string to_model;
-    std::string reason;
-    int64_t deadline_ms{0};         // when migration becomes mandatory
-    bool auto_migrated{false};
-};
-
-DEFINE_STATE_SLOT(ModelMigrationTag, std::vector<ModelMigrationNotif>,
-                  get_all_model_migrations, set_all_model_migrations)
-inline void clear_model_migrations() { set_all_model_migrations({}); }
-
-namespace detail {
-struct CurrentModelTag {};
-using CurrentModelSlot = GlobalStateSlot<CurrentModelTag, std::string>;
-} // namespace detail
-
-/// Get/set the model currently in use (used as the filter predicate).
-inline auto get_current_model() -> std::string {
-    std::lock_guard lock(detail::CurrentModelSlot::mtx);
-    return detail::CurrentModelSlot::value;
-}
-inline void set_current_model(std::string_view model) {
-    std::lock_guard lock(detail::CurrentModelSlot::mtx);
-    detail::CurrentModelSlot::value = std::string(model);
-}
-
-/// Return all migrations whose `from_model` matches the current model and
-/// which have not been individually dismissed.
-inline auto get_pending_model_migrations() -> std::vector<ModelMigrationNotif> {
-    const auto current = get_current_model();
-    auto all = get_all_model_migrations();
-    std::vector<ModelMigrationNotif> out;
-    out.reserve(all.size());
-    for (const auto& m : all) {
-        if (m.from_model != current) continue;
-        const std::string key = m.from_model + "->" + m.to_model;
-        if (is_notification_dismissed("model_migration", key)) continue;
-        out.push_back(m);
-    }
-    return out;
-}
-
-inline void acknowledge_migration(std::string_view from_model,
-                                  std::string_view to_model = "*") {
-    const std::string key = std::string(from_model) + "->" + std::string(to_model);
-    acknowledge_notification("model_migration", key);
-}
-inline void acknowledge_migration(std::string_view from_model) {
-    acknowledge_migration(from_model, "*");
-}
-
-// ==========================================================================
-// 3. PluginAutoupdate (usePluginAutoupdateNotification)
+// 2. PluginAutoupdate (usePluginAutoupdateNotification)
 //
 // SLOT FALLBACK (intentional). The TS hook subscribes via
 // onPluginsAutoUpdated() (src/utils/plugins/pluginAutoupdate.js) in src/hooks/

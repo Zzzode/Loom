@@ -114,7 +114,6 @@ TEST(LogoV2, CondensedModeRendersStripPlusNotices) {
     namespace lv2 = loom::ui::logo_v2;
 
     lv2::LogoV2Options opts;
-    opts.version            = "2024.6";
     opts.cwd                = "/home/alice/dev/loom";
     opts.billing_type       = "Team Seat";
     opts.model_display_name = "Loom Opus 4.8";
@@ -125,7 +124,6 @@ TEST(LogoV2, CondensedModeRendersStripPlusNotices) {
 
     // CondensedLogo triad.
     EXPECT_NE(s.find("Loom"), std::string::npos);
-    EXPECT_NE(s.find("v2024.6"), std::string::npos);
     EXPECT_NE(s.find("Loom Opus 4.8"), std::string::npos);
     EXPECT_NE(s.find("Team Seat"), std::string::npos);
     EXPECT_NE(s.find("/home/alice/dev/loom"), std::string::npos);
@@ -146,7 +144,6 @@ TEST(LogoV2, CompactModeRendersRoundedBorderCard) {
     namespace lv2 = loom::ui::logo_v2;
 
     lv2::LogoV2Options opts;
-    opts.version            = "2024.6";
     opts.cwd                = "/x";
     opts.model_display_name = "Loom Sonnet 4.6";
     opts.is_condensed_mode  = false;    // ← enables card mode
@@ -179,7 +176,6 @@ TEST(LogoV2, HorizontalModeSplitsIntoPanels) {
     namespace lv2 = loom::ui::logo_v2;
 
     lv2::LogoV2Options opts;
-    opts.version            = "2024.6";
     opts.cwd                = "/workspace/repo";
     opts.billing_type       = "API Usage";
     opts.model_display_name = "Loom Opus 4.8";
@@ -220,7 +216,6 @@ TEST(LogoV2, EachNoticeActivatorAppearsWhenToggled) {
     // Baseline — every toggle off → no trace of debug/tmux/org/sandbox/guest/
     // overage/status/emergency strings.
     lv2::LogoV2Options opts;
-    opts.version            = "0.0";
     opts.cwd                = "/t";
     opts.model_display_name = "M";
     opts.is_condensed_mode  = true;
@@ -327,12 +322,11 @@ TEST(LogoV2, LayoutModeThresholdsMatchTSSpec) {
 TEST(LogoV2, WelcomeV2StaticCardMatchesTSSpec) {
     namespace lv2 = loom::ui::logo_v2;
 
-    ftxui::Element card = lv2::RenderWelcomeV2(/*version=*/"2024.6");
+    ftxui::Element card = lv2::RenderWelcomeV2();
     std::string s = strip_ansi(render_to_plain_text(card, 120, 20));
 
-    // Header row — versioned.
+    // Header row.
     EXPECT_NE(s.find("Welcome to Loom"), std::string::npos);
-    EXPECT_NE(s.find("v2024.6"), std::string::npos);
     // Ellipsis ruler (U+2026 repeated). TS WELCOME_V2_WIDTH=58, but the string
     // literal stores 58 × … = 58 × 3 bytes = 174 bytes; look for one '…'.
     EXPECT_NE(s.find("\xE2\x80\xA6"), std::string::npos)
@@ -366,7 +360,6 @@ TEST(LogoV2, ReplScreenDefaultWelcomeHeaderStillCondensed) {
     namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.chrome_store.app_version = "9.9.9-test";
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
@@ -376,7 +369,6 @@ TEST(LogoV2, ReplScreenDefaultWelcomeHeaderStillCondensed) {
     // Condensed baseline (identical expectations to the Phase-2 golden test
     // WelcomeHeaderUsesHomeCard).
     EXPECT_NE(rendered.find("Loom"), std::string::npos);
-    EXPECT_NE(rendered.find("v9.9.9-test"), std::string::npos);
     EXPECT_NE(rendered.find("GLM-5.2"), std::string::npos);
     EXPECT_NE(rendered.find("/tmp/cpp_migration"), std::string::npos);
     EXPECT_NE(rendered.find("Opus now defaults to 1M context"), std::string::npos);
@@ -393,7 +385,6 @@ TEST(LogoV2, ReplScreenForceFullLogoOptsIntoCardMode) {
     namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.chrome_store.app_version = "9.9.9-test";
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
     // New user detection: no display name.
@@ -471,7 +462,6 @@ TEST(LogoV2, Logov2RenderModesMissing_Goldens) {
     // ---- 9a: 60-col compact mode (no feeds, rounded border card) ----
     {
         lv2::LogoV2Options opts;
-        opts.version            = "2024.6";
         opts.cwd                = "/x";
         opts.model_display_name = "Loom Sonnet 4.6";
         opts.is_condensed_mode  = false;
@@ -488,7 +478,6 @@ TEST(LogoV2, Logov2RenderModesMissing_Goldens) {
     // ---- 9b: 100-col horizontal mode with 2 explicit feeds + divider ----
     {
         lv2::LogoV2Options opts;
-        opts.version            = "2024.6";
         opts.cwd                = "/workspace/repo";
         opts.billing_type       = "API Usage";
         opts.model_display_name = "Loom Opus 4.8";

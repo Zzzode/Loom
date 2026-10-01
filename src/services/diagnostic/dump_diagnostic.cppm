@@ -37,7 +37,6 @@ enum class DumpLevel : std::uint8_t {
 struct DiagnosticInfo {
     std::string os_version;
     std::string arch;
-    std::string app_version;
     std::uint64_t memory_usage_bytes{0};
     std::uint64_t total_memory_bytes{0};
     std::uint64_t uptime_seconds{0};
@@ -132,7 +131,6 @@ struct DiagnosticInfo {
     DiagnosticInfo info;
 
     // Always collect basic info
-    info.app_version = "loom 1.0.0-cpp (C++23)";
     info.os_version = get_os_version();
 
 #if defined(__APPLE__) || defined(__linux__)
@@ -176,7 +174,6 @@ struct DiagnosticInfo {
     std::string output;
     output += std::format("Loom Diagnostic Report\n");
     output += std::format("========================\n\n");
-    output += std::format("Version:     {}\n", info.app_version);
     output += std::format("OS:          {}\n", info.os_version);
     output += std::format("Arch:        {}\n", info.arch);
 

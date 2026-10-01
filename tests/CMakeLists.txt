@@ -377,20 +377,6 @@ target_link_libraries(test_bootstrap
 gtest_discover_tests(test_bootstrap DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 
-# ---------------------------------------------------------------------------
-# P0-01 / P2-02: Migrations orchestration + atomicity fixture suite
-# ---------------------------------------------------------------------------
-add_executable(test_migrations test_migrations.cpp)
-target_link_libraries(test_migrations
-    PRIVATE
-        loom_core
-        loom_migrations          # all cc.migrations.* imports
-        loom_utils               # cc.serdes.json
-        GTest::gtest_main
-)
-gtest_discover_tests(test_migrations DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
 add_executable(test_bridge test_bridge.cpp)
 target_link_libraries(test_bridge
     PRIVATE
@@ -709,7 +695,6 @@ foreach(_loom_test IN ITEMS
     test_commands
     test_statusline
     test_bootstrap
-    test_migrations
     test_bridge
     test_sdk_control_golden
     test_skills

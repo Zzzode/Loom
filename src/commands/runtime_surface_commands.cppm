@@ -28,7 +28,6 @@ import loom.commands.perf_issue;
 import loom.commands.pr_comments;
 import loom.commands.privacy_settings;
 import loom.commands.rate_limit_options;
-import loom.commands.release_notes;
 import loom.commands.reload_plugins;
 import loom.commands.reset_limits;
 import loom.commands.sandbox_toggle;
@@ -36,7 +35,6 @@ import loom.commands.statusline;
 import loom.commands.terminal_setup;
 import loom.commands.thinkback;
 import loom.commands.thinkback_play;
-import loom.commands.version;
 
 export namespace loom::commands {
 
@@ -117,7 +115,6 @@ LOOM_RUNTIME_HELPER_COMMAND(ResetLimitsCommand, "reset-limits", "Reset local moc
 LOOM_RUNTIME_HELPER_COMMAND(StatuslineCommand, "statusline", "Configure statusline output", "terminal", statusline::run)
 LOOM_RUNTIME_HELPER_COMMAND(TerminalSetupCommand, "terminal-setup", "Configure terminal integration", "terminal", terminal_setup::run)
 LOOM_RUNTIME_HELPER_COMMAND(ThinkbackPlayCommand, "thinkback-play", "Replay thinking history", "thinking", thinkback_play::run)
-LOOM_RUNTIME_HELPER_COMMAND(VersionCommand, "version", "Show the CLI version", "system", version::run)
 
 #undef LOOM_RUNTIME_HELPER_COMMAND
 
@@ -185,27 +182,6 @@ public:
         }
         set_privacy_settings(settings);
         return CommandResult::success(show_privacy_info());
-    }
-};
-
-class ReleaseNotesCommand final : public detail::BasicCommand {
-public:
-    [[nodiscard]] static CommandDefinition definition() {
-        return CommandDefinition{
-            .name = "release-notes",
-            .description = "Show release notes",
-            .args = {CommandArg{.name = "version", .description = "Optional version or --since version", .type = ArgType::Text, .required = false}},
-            .category = "system",
-        };
-    }
-
-    [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
-        if (ctx.args.size() >= 2 && ctx.args.front() == "--since") {
-            return CommandResult::success(get_changelog_since(ctx.args[1]));
-        }
-        auto notes = get_release_notes(ctx.args.empty() ? std::nullopt : std::optional<std::string>{ctx.args.front()});
-        if (!notes) return CommandResult::fail(notes.error());
-        return CommandResult::success(*notes);
     }
 };
 

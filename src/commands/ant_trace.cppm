@@ -5,8 +5,6 @@ export module loom.commands.ant_trace;
 
 import std;
 
-import loom.constants.product;
-
 export namespace loom::commands::ant_trace {
 namespace fs = std::filesystem;
 
@@ -21,13 +19,11 @@ struct CommandResponse { bool ok{true}; std::string message; };
     return {.ok = true, .message = std::format(
         "ANT trace snapshot\n"
         "Target: {}\n"
-        "Version: {}\n"
         "PID: {}\n"
         "CWD: {}\n"
         "Startup profiling: {}\n"
         "Debug logging: {}",
         target.empty() ? "current-session" : std::string(target),
-        loom::constants::product::LOOM_VERSION,
         static_cast<long>(::getpid()),
         ec ? "<unavailable>" : cwd.string(),
         profile_enabled ? "enabled" : "disabled",

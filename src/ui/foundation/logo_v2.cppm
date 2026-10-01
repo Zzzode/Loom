@@ -81,7 +81,7 @@ inline constexpr int kWelcomeV2FixedWidth = 58;  // TS WELCOME_V2_WIDTH
 // --------------------------------------------------------------------
 // §2  Extended LogoDisplayData (superset of loom::ui::logo::LogoDisplayData)
 // --------------------------------------------------------------------
-// TS LogoV2.tsx L159-173 reads: version / cwd / billingType / agentName
+// TS LogoV2.tsx L159-173 reads: cwd / billingType / agentName
 //   / effortSuffix / modelDisplayName / username / orgName / companyAnnouncement
 //   / hasReleaseNotes / showOnboarding / showSandboxStatus
 //   / debugMode / tmux session / sandboxing / showGuestPasses / showOverageCredit
@@ -93,7 +93,6 @@ inline constexpr int kWelcomeV2FixedWidth = 58;  // TS WELCOME_V2_WIDTH
 // values produce the safe "minimal condensed" look with no side-effects.
 struct LogoV2Options {
   // --- Identity / chrome (same as loom::ui::logo::LogoDisplayData) ---
-  std::string version;
   std::string cwd;
   std::string billing_type;
   std::optional<std::string> agent_name;
@@ -721,22 +720,17 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
 // TS REF: src/components/LogoV2/WelcomeV2.tsx::WelcomeV2
 // TS REF: src/components/LogoV2/WelcomeV2.tsx::AppleTerminalWelcomeV2
 [[nodiscard]] inline auto RenderWelcomeV2(
-    std::string_view version,
     WelcomeV2Theme theme = WelcomeV2Theme::Dark) -> Element {
   using namespace detail;
   using ftxui::bgcolor;
 
-  const std::string v = version.empty() ? "0.0.0" : std::string(version);
   const bool is_light = (theme == WelcomeV2Theme::Light ||
                          theme == WelcomeV2Theme::AppleTerminalLight);
   const bool is_apple = (theme == WelcomeV2Theme::AppleTerminalDark ||
                          theme == WelcomeV2Theme::AppleTerminalLight);
 
   // --- Common header (all themes): TS t0 ---
-  Element header = hbox({
-    text("Welcome to Loom        ") | color(kLoomAccent),
-    text("v" + v + " ") | dim | color(kMuted),
-  });
+  Element header = text("Welcome to Loom        ") | color(kLoomAccent);
 
   Elements art;
   art.reserve(18);
@@ -1031,10 +1025,9 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
 
 // Convenience: render with a TS theme string + Apple Terminal flag.
 [[nodiscard]] inline auto RenderWelcomeV2(
-    std::string_view version,
     std::string_view theme_name,
     bool is_apple_terminal) -> Element {
-  return RenderWelcomeV2(version,
+  return RenderWelcomeV2(
                          ResolveWelcomeV2Theme(theme_name, is_apple_terminal));
 }
 
@@ -1522,13 +1515,11 @@ inline constexpr int kContentPadding  = 2;
   right_width = std::max(right_width, 20);  // safety minimum
 
   // --- borderTitle (TS L251):
-  //   ` ${color("loom", userTheme)("Loom")} ${color("inactive", userTheme)(`v${version}`)} `
+  //   ` ${color("loom", userTheme)("Loom")} `
   //   offset=3 → title starts at column 3 from the left border corner.
-  const std::string v = o.version.empty() ? std::string("0.0.0") : o.version;
   Element border_title = hbox({
       text("   ") | color(kLoomAccent),                // offset=3 leading spaces
       text("Loom") | color(kLoomAccent) | bold,
-      text(" v" + v + " ") | color(kMuted) | dim,  // inactive/muted version
   });
 
   // --- Loom mascot (standard 3 rows, 9 cols) centered. ---
@@ -1741,7 +1732,6 @@ struct LogoV2Result {
   if (o.is_condensed_mode) {
     // --- CONDENSED path (L179-247 TS LogoV2.tsx) ---
     loom::ui::logo::LogoDisplayData inner;
-    inner.version            = o.version;
     inner.cwd                = o.cwd;
     inner.billing_type       = o.billing_type;
     inner.agent_name         = o.agent_name;
@@ -1795,9 +1785,8 @@ struct LogoV2Result {
 /// LogoHeader which sits ABOVE VirtualMessageList and stays visible
 /// even when the welcome card scrolls off due to pin-to-bottom.
 ///
-/// Visual: "◆ Loom  v0.0.0  ·  ModelName"  (left-aligned, dim)
+/// Visual: "◆ Loom  ·  ModelName"  (left-aligned, dim)
 [[nodiscard]] inline Element render_logo_header_bar(
-    std::string_view version,
     std::string_view model_display_name,
     int /*term_cols*/ = 120)
 {
@@ -1805,9 +1794,6 @@ struct LogoV2Result {
     Elements parts;
     parts.push_back(text("\xe2\x97\x86 ") | color(Color::Cyan));  // ◆ diamond
     parts.push_back(text("Loom") | bold);
-    if (!version.empty()) {
-        parts.push_back(text("  v" + std::string(version)) | dim);
-    }
     if (!model_display_name.empty()) {
         parts.push_back(text("  \xc2\xb7 ") | dim);  // · separator
         parts.push_back(text(std::string(model_display_name)) | dim);

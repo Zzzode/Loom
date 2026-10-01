@@ -15,7 +15,6 @@ export module loom.ui.dialogs.triggers;
 
 import std;
 
-import loom.constants.product;
 import loom.ui.dialogs.system;
 import loom.ui.permissions.single_prompt;
 
@@ -222,12 +221,9 @@ inline void PushQuickOpen(dsys::DialogQueue& queue,
 // AboutDialog
 // ---------------------------------------------------------------------------
 inline void PushAboutDialog(dsys::DialogQueue& queue,
-                            std::string version,
                             std::function<void()> on_close) {
     dsys::AboutDialogPayload p;
     p.id = "about-dialog";
-    p.version = std::move(version);
-    p.build_date = std::string(loom::constants::product::BUILD_DATE);
     p.on_close = std::move(on_close);
     queue.push_modal(std::move(p));
 }
@@ -434,7 +430,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
         return true;
     }
     if (metadata == "UI:about") {
-        PushAboutDialog(queue, "dev", [](){});
+        PushAboutDialog(queue, [](){});
         return true;
     }
     if (metadata == "UI:tasks") {

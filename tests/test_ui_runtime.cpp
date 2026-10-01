@@ -41,34 +41,6 @@ namespace fs = std::filesystem;
 
 
 
-TEST(AppRuntime, ProjectsVersionIntoInitialWelcome) {
-    loom::core::ToolRegistry tools;
-    loom::core::QueryEngineConfig config;
-    config.context_window.auto_compact = false;
-    config.cwd = fs::temp_directory_path().string();
-    loom::core::QueryEngine engine(std::move(config), tools);
-
-    loom::commands::AppCommandRegistry commands;
-    const auto storage_root = fs::temp_directory_path() /
-        ("loom_ui_welcome_version_test_" +
-         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
-
-    auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine,
-        nullptr,
-        &commands,
-        &storage,
-        [] {});
-
-    auto rendered = strip_ansi(render_to_plain_text(app->Render(), 120, 32));
-    EXPECT_NE(rendered.find("v" + std::string(loom::core::constants::kVersion)),
-              std::string::npos);
-    EXPECT_EQ(rendered.find("v0.0.0"), std::string::npos);
-
-    fs::remove_all(storage_root);
-}
-
 
 
 TEST(AppRuntime, FreshWelcomeAnimationTicksWithoutInputEvents) {
@@ -1937,7 +1909,6 @@ TEST(LiveTeamsUi, StripRendersNameStatusAndTail) {
     namespace live = loom::ui::teams::live;
 
     repl::ReplScreenState s;
-    s.chrome_store.app_version = "9.9.9";
     s.chrome_store.model_display_name = "M";
     s.cwd = "/tmp/x";
 

@@ -133,7 +133,6 @@ TEST(StatuslineJson, SerializesBaseFields) {
     input.workspace.current_dir = "/home/user/project";
     input.workspace.project_dir = "/home/user/project";
     input.workspace.added_dirs = {"src", "tests"};
-    input.version = "1.2.3";
     input.output_style_name = "default";
 
     auto json_str = to_json(input);
@@ -159,9 +158,6 @@ TEST(StatuslineJson, SerializesBaseFields) {
     EXPECT_EQ(added.size(), 2u);
     EXPECT_EQ(added.at(0).as_str(), "src");
     EXPECT_EQ(added.at(1).as_str(), "tests");
-
-    // version
-    EXPECT_EQ(root.get("version").as_str(), "1.2.3");
 
     // output_style
     auto os = root.get("output_style");
@@ -530,7 +526,6 @@ TEST(StatuslineExecute, SuccessfulCommandReturnsTrimmedOutput) {
 
     StatusLineCommandInput input;
     input.model.id = "test-model";
-    input.version = "0.0.1";
 
     // Command that echoes a simple string
     auto result = execute_statusline_command("echo '  hello statusline  '", input);
@@ -545,7 +540,6 @@ TEST(StatuslineExecute, CommandReadsJsonFromStdin) {
 
     StatusLineCommandInput input;
     input.model.id = "stdin-test-model";
-    input.version = "1.0.0";
 
     // Read from stdin and echo the model.id
     auto result = execute_statusline_command(
@@ -556,7 +550,6 @@ TEST(StatuslineExecute, CommandReadsJsonFromStdin) {
     // Output should contain the JSON with our test data
     EXPECT_NE(result.output.find("stdin-test-model"), std::string::npos)
         << "Output was: " << result.output;
-    EXPECT_NE(result.output.find("version"), std::string::npos);
 }
 
 TEST(StatuslineExecute, NonZeroExitCodeReturnsFailure) {
@@ -646,7 +639,6 @@ TEST(StatuslineExecute, ComplexJsonInputPassedCorrectly) {
     input.workspace.current_dir = "/home/user/work";
     input.workspace.project_dir = "/home/user/work";
     input.workspace.added_dirs = {"src", "include", "tests"};
-    input.version = "2.0.0";
     input.output_style_name = "concise";
     input.cost.total_cost_usd = 1.23;
     input.cost.total_duration_ms = 5000;

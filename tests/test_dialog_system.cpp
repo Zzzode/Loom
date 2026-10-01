@@ -1660,7 +1660,7 @@ TEST(DialogTriggers, PushAboutDialogCreatesDialog) {
     namespace dtrig = loom::ui::dialogs::triggers;
 
     bool closed = false;
-    dtrig::PushAboutDialog(queue, "1.0.0", [&] { closed = true; });
+    dtrig::PushAboutDialog(queue, [&] { closed = true; });
 
     EXPECT_TRUE(queue.has_modal());
     auto peek = queue.peek_modal();
@@ -1669,7 +1669,6 @@ TEST(DialogTriggers, PushAboutDialogCreatesDialog) {
 
     auto* p = std::get_if<dsys::AboutDialogPayload>(&peek->get());
     ASSERT_NE(p, nullptr);
-    EXPECT_EQ(p->version, "1.0.0");
 }
 
 TEST(DialogTriggers, PushTasksViewCreatesDialog) {

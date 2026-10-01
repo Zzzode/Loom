@@ -15,11 +15,7 @@ export namespace loom::core::constants {
 // ============================================================
 
 // ============================================================
-inline constexpr std::string_view kVersion = "1.0.0-cpp";
-inline constexpr std::string_view kBuildDate = "unknown";
-inline constexpr std::string_view kBuildTime = "unknown";
 inline constexpr std::string_view kAppName = "loom";
-inline constexpr std::string_view kUserAgent = "loom/1.0.0-cpp";
 
 // ============================================================
 

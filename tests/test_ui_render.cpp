@@ -74,7 +74,6 @@ TEST(ReplScreen, PastingIndicatorShowsForBatchAndNotSingleKeystroke) {
     // A terminal paste arrives as one multi-char event; a single keystroke
     // (incl. a 3-byte CJK char) must not trigger the hint.
     repl::ReplScreenState state;
-    state.chrome_store.app_version = "9.9.9-test";
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
@@ -101,7 +100,6 @@ TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
     namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->chrome_store.app_version = "9.9.9-test";
     state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
     state->input_text = "hello";
@@ -133,7 +131,6 @@ TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
 
     // Global redraw works (defaultBindings.ts:42 global context).
     auto pstate = std::make_shared<repl::ReplScreenState>();
-    pstate->chrome_store.app_version = "9.9.9-test";
     pstate->chrome_store.model_display_name = "GLM-5.2";
     pstate->cwd = "/tmp/cpp_migration";
     bool panel_redraw = false;
@@ -150,7 +147,6 @@ TEST(ReplScreen, EscapeDoublePressClearsInputAndSavesToHistory) {
     namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->chrome_store.app_version = "9.9.9-test";
     state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
 
@@ -190,7 +186,6 @@ TEST(ReplScreen, EscapeDoublePressExpiresAfterWindowAndRearms) {
     namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->chrome_store.app_version = "9.9.9-test";
     state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
 
@@ -231,7 +226,6 @@ TEST(ReplScreen, BridgeStatusPillReflectsProjectionState) {
     // TS REF: PromptInputFooter.tsx BridgeStatusIndicator +
     // bridgeStatusUtil.ts:124 getBridgeStatus.
     repl::ReplScreenState state;
-    state.chrome_store.app_version = "9.9.9-test";
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
@@ -275,7 +269,6 @@ TEST(ReplScreen, FreshScreenDoesNotRenderLegacyEmptyState) {
     namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.chrome_store.app_version = "9.9.9-test";
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 

@@ -27,7 +27,6 @@ import loom.commands.command;
 import loom.commands.registry;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.constants.product;
 import loom.services.api.session_ingress;
 import loom.session.app_storage;
 import loom.serdes.json;
@@ -52,15 +51,11 @@ extern "C" [[nodiscard]] int loom_ui_run_app_bridge(
     loom::hooks::ToolPermissionHook* permission_hook
 );
 
-// Application version constant
-constexpr std::string_view kVersion = loom::constants::product::LOOM_VERSION;
-
 /**
  * Parsed command-line options
  */
 struct CliOptions {
     std::optional<std::string> model;
-    bool show_version = false;
     bool show_help = false;
     bool debug = false;
     bool use_simple_ui = false;  // Fallback to simple text UI if FTXUI fails
@@ -118,7 +113,6 @@ Usage: loom [options]
 
 Options:
   --model <model>      Set the default model to use
-  --version, -v        Print version and exit
   --help, -h           Show this help message
   --settings <file|json>
                        Load settings from a JSON file path or inline JSON.
@@ -191,9 +185,7 @@ auto parse_args(int argc, const char* argv[]) -> std::expected<CliOptions, std::
     for (int i = 1; i < argc; ++i) {
         std::string_view arg{argv[i]};
 
-        if (arg == "--version" || arg == "-v") {
-            opts.show_version = true;
-        } else if (arg == "--help" || arg == "-h") {
+        if (arg == "--help" || arg == "-h") {
             opts.show_help = true;
         } else if (arg == "--settings") {
             // --settings accepts a path to a JSON file OR an inline JSON object.
@@ -1423,7 +1415,6 @@ loom::daemon::DaemonConfig bridge_daemon_config_from_settings(
         .bridge_environment_id = settings.environment_id,
         .bridge_environment_secret = settings.environment_secret,
         .bridge_access_token = settings.access_token,
-        .bridge_runner_version = std::string(kVersion),
         .trusted_device_token = std::nullopt,
         .session_binary = bridge_session_binary_path(opts),
     };
@@ -1623,7 +1614,7 @@ auto run_simple_ui(
     loom::commands::AppCommandRegistry& cmd_registry
 ) -> int {
     std::println("╭─────────────────────────────────────────╮");
-    std::println("│      LOOM (C++ Migration) v{}        │", kVersion);
+    std::println("│      LOOM (C++23)                       │");
     std::println("│  Type /help for available commands      │");
     std::println("│  Type your query and press Enter        │");
     std::println("╰─────────────────────────────────────────╯");
@@ -1711,7 +1702,7 @@ int main(int argc, const char* argv[]) {
     }
     auto opts = std::move(opts_result.value());
 
-    // Apply --settings EARLY, before --version/--help and every other subsystem.
+    // Apply --settings EARLY, before --help and every other subsystem.
     // This mirrors the TS eagerLoadSettings() flow: a malformed payload is a
     // hard error that surfaces before any other processing, while a valid
     // payload populates the process env (ANTHROPIC_API_KEY / ANTHROPIC_BASE_URL
@@ -1763,10 +1754,6 @@ int main(int argc, const char* argv[]) {
         }
     }
 
-    if (opts.show_version) {
-        std::println("loom {}", kVersion);
-        return 0;
-    }
     if (opts.show_help) {
         print_help();
         return 0;

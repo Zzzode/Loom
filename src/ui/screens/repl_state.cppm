@@ -179,7 +179,7 @@ struct ReplScreenState {
     // projections.
     std::string cwd;
     // RFC 0002 F3: chrome / welcome-header / status-bar projection state
-    // (app_version, model_display_name, billing_type, git_branch,
+    // (model_display_name, billing_type, git_branch,
     // user_display_name, the feed-content vectors + show_* flags, and the
     // StatusBarData status_bar projection) lives in
     // loom.ui.screens.chrome_store (ChromeStore).

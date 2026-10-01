@@ -181,11 +181,6 @@ namespace loom::state::selectors {
     return state.active_overlays.contains(std::string(overlay_name));
 }
 
-/// Get the auth version
-[[nodiscard]] uint32_t get_auth_version(const AppState& state) noexcept {
-    return state.auth_version;
-}
-
 /// Get the effort value
 [[nodiscard]] std::optional<std::string_view> get_effort_value(const AppState& state) noexcept {
     if (state.effort_value) {

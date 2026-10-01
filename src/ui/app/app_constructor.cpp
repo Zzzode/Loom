@@ -38,7 +38,6 @@ import loom.ui.tools.init;
 import loom.ui.prompt.prompt_input_footer;
 import loom.ui.app.statusline_runner;
 import loom.model.model;
-import loom.constants.constants;
 import loom.skills.load_skills_dir;
 import loom.query.query_engine;
 import loom.hooks.lifecycle_hooks;
@@ -474,9 +473,6 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         namespace sl = loom::utils::statusline;
 
         sl::StatusLineCommandInput input;
-
-        // Version
-        input.version = std::string(loom::core::constants::kVersion);
 
         // Model info
         const auto& model = static_cast<loom::core::QueryEngine*>(engine_raw())->model_params().model;

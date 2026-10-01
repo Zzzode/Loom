@@ -202,12 +202,10 @@ using namespace ftxui;
     // still lives inside the scrollable area (first child of yframe).
     {
         namespace lv2 = loom::ui::logo_v2;
-        const std::string version = s.chrome_store.app_version.empty()
-            ? std::string("0.0.0") : s.chrome_store.app_version;
         const std::string model_line = !s.chrome_store.model_display_name.empty()
             ? s.chrome_store.model_display_name
             : s.settings_model;
-        slots.header = lv2::render_logo_header_bar(version, model_line, term_cols);
+        slots.header = lv2::render_logo_header_bar(model_line, term_cols);
     }
 
     if (!s.active_local_jsx_command) {

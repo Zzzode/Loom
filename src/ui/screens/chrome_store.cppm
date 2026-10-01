@@ -46,7 +46,6 @@ struct ChromeStore {
     StatusBarData status_bar;
 
     // ── Welcome-header data (shown when messages is empty) ──────────────
-    std::string app_version = "0.0.0";
     std::string model_display_name;
     // TS LogoV2/CondensedLogo row 2 separator billing_type token (e.g.
     // "API Usage Billing" / "Team Seat" / "Rate Limited").  Empty = row 2

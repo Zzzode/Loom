@@ -450,31 +450,6 @@ TEST(NotifHooks, DeadlineExpiredHidden) {
     EXPECT_FALSE(notif::check_npm_deprecation().has_value());
 }
 
-TEST(NotifHooks, ModelMigrationFiltersByCurrent) {
-    NotifStateReset guard;
-    notif::set_current_model("sonnet45");
-    notif::set_all_model_migrations({
-        {.from_model = "sonnet45", .to_model = "opus", .reason = "performance",
-         .deadline_ms = notif::detail::now_ms() + 86400000, .auto_migrated = false},
-        {.from_model = "sonnet45", .to_model = "sonnet46", .reason = "upgrade",
-         .deadline_ms = notif::detail::now_ms() + 86400000, .auto_migrated = false},
-        {.from_model = "haiku", .to_model = "sonnet45", .reason = "better",
-         .deadline_ms = notif::detail::now_ms() + 86400000, .auto_migrated = false},
-    });
-    auto pending = notif::get_pending_model_migrations();
-    // haiku->sonnet45 does not match the current model "sonnet45" as `from`,
-    // so we expect 2 matches.
-    ASSERT_EQ(pending.size(), 2u);
-    EXPECT_EQ(pending[0].to_model, "opus");
-    EXPECT_EQ(pending[1].to_model, "sonnet46");
-
-    // Dismiss one and verify it's filtered out.
-    notif::acknowledge_migration("sonnet45", "opus");
-    auto again = notif::get_pending_model_migrations();
-    ASSERT_EQ(again.size(), 1u);
-    EXPECT_EQ(again.front().to_model, "sonnet46");
-}
-
 TEST(NotifHooks, PluginAutoupdateEmptyByDefault) {
     NotifStateReset guard;
     EXPECT_TRUE(notif::get_plugin_updates().empty());

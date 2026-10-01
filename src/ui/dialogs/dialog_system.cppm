@@ -532,8 +532,6 @@ struct WorktreeExitPayload {
 /// Payload for AboutDialog — app info & credits.
 struct AboutDialogPayload {
     std::string id;
-    std::string version;
-    std::string build_date;
     std::shared_ptr<void> component;  ///< Opaque component (optional, for high-fidelity mode)
     std::function<void()> on_close;
 };

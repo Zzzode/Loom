@@ -190,9 +190,6 @@ public:
 /// Check if a specific overlay is active
 [[nodiscard]] bool is_overlay_active(const AppState& state, std::string_view overlay_name) noexcept;
 
-/// Get the auth version
-[[nodiscard]] uint32_t get_auth_version(const AppState& state) noexcept;
-
 /// Get the effort value
 [[nodiscard]] std::optional<std::string_view> get_effort_value(const AppState& state) noexcept;
 
@@ -520,17 +517,6 @@ template <typename Value>
 ) {
     return MemoizedSelector<size_t, Value>(
         [](const AppState& s) { return s.tasks.size(); },
-        std::move(compute)
-    );
-}
-
-/// Create a memoized selector using auth version as cache key
-template <typename Value>
-[[nodiscard]] inline auto create_auth_based_selector(
-    std::function<Value(const AppState&)> compute
-) {
-    return MemoizedSelector<uint32_t, Value>(
-        [](const AppState& s) { return s.auth_version; },
         std::move(compute)
     );
 }

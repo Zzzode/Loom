@@ -46,7 +46,6 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
     namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.chrome_store.app_version = "9.9.9-test";
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
@@ -58,7 +57,6 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
     // Phase 2 Faithful: CondensedLogo 3-line strip + Opus1M notice banner
     // (replaces the old ASCII-card + Recent activity / What's new feed).
     EXPECT_NE(rendered.find("Loom"), std::string::npos);
-    EXPECT_NE(rendered.find("v9.9.9-test"), std::string::npos);
     EXPECT_NE(rendered.find("GLM-5.2"), std::string::npos);
     EXPECT_NE(rendered.find("/tmp/cpp_migration"), std::string::npos);
     EXPECT_NE(rendered.find("Opus now defaults to 1M context"),
@@ -87,7 +85,6 @@ TEST(ReplScreen, WelcomeHeaderShowsConfiguredAgentName) {
     // TS REF: logoV2Utils.ts:259 — settings.agent renders as "@<agent> · <cwd>"
     // on the welcome header's cwd line.
     repl::ReplScreenState state;
-    state.chrome_store.app_version = "9.9.9-test";
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
     state.settings_agent_name = "custom-agent";
@@ -101,7 +98,6 @@ TEST(ReplScreen, WelcomeHeaderShowsConfiguredAgentName) {
 
     // With no configured agent the prefix must disappear (plain cwd only).
     repl::ReplScreenState plain;
-    plain.chrome_store.app_version = "9.9.9-test";
     plain.chrome_store.model_display_name = "GLM-5.2";
     plain.cwd = "/tmp/cpp_migration";
     auto rendered_plain = strip_ansi(render_to_plain_text(
@@ -156,7 +152,6 @@ TEST(ReplScreen, WelcomeHeaderWidthAndClaudeColorTrackTerminal) {
     const auto previous_theme = thm::current_theme();
     thm::set_theme(thm::ThemeVariant::Dark);
     repl::ReplScreenState state;
-    state.chrome_store.app_version = "9.9.9-test";
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/Users/example/Develop/Project";
 
@@ -206,7 +201,6 @@ TEST(ReplScreen, WelcomeHeaderAnimatesAsteriskColor) {
     namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
-    state.chrome_store.app_version = "9.9.9-test";
     state.chrome_store.model_display_name = "GLM-5.2";
 
     auto frame0 = render_to_plain_text(

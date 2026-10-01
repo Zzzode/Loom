@@ -12,7 +12,6 @@ import std;
 
 import loom.types.types;
 import loom.commands.command;
-import loom.constants.product;
 
 export namespace loom::commands {
 
@@ -20,7 +19,7 @@ using namespace loom::core;
 
 /// InstallCommand implements the /install slash command.
 /// The C++ build ships as a self-contained native binary; there is no npm
-/// installer to run, so this reports the current build and how to update it.
+/// installer to run, so this reports how to update it.
 class InstallCommand {
 public:
     [[nodiscard]] static CommandDefinition definition() {
@@ -40,8 +39,6 @@ public:
 
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext&) {
         std::string out = "Loom (native C++ build):\n";
-        out += std::format("  Version: {}\n", loom::constants::product::LOOM_VERSION);
-
         out += "\nThe native build has no npm installer. To update:\n";
         out += "  1. Pull the latest source.\n";
         out += "  2. Reconfigure with CMake (cmake --preset debug).\n";

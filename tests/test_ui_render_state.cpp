@@ -141,7 +141,6 @@ TEST(ReplScreen, CtrlNCtrlPNavigateAutocompleteWithWrapping) {
     namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->chrome_store.app_version = "9.9.9-test";
     state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
     state->input_text = "/a";
@@ -192,7 +191,6 @@ TEST(ReplScreen, EscapeDoublePressOnWhitespaceOnlyClearsWithoutHistory) {
     namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->chrome_store.app_version = "9.9.9-test";
     state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
 
@@ -222,7 +220,6 @@ TEST(ReplScreen, EscapeDismissesPopupThenArmsThenClears) {
     namespace pif = loom::ui::prompt::footer;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->chrome_store.app_version = "9.9.9-test";
     state->chrome_store.model_display_name = "GLM-5.2";
     state->cwd = "/tmp/cpp_migration";
     state->input_text = "query";

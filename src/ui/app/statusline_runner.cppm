@@ -128,9 +128,6 @@ struct StatusLineCommandInput {
     // Workspace
     StatusLineWorkspaceInfo workspace;
 
-    // Version
-    std::string version;
-
     // Output style
     std::string output_style_name;
 
@@ -200,9 +197,6 @@ struct StatusLineCommandInput {
         w.add("added_dirs", std::move(added));
         root.add("workspace", std::move(w));
     }
-
-    // version
-    root.add("version", doc.string(input.version));
 
     // output_style
     {

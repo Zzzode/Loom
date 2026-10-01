@@ -140,9 +140,6 @@ enum class ActionType : std::uint16_t {
     // Skill improvement
     SetSkillSuggestion,
 
-    // Auth
-    IncrementAuthVersion,
-
     // Initial message
     SetInitialMessage,
     ClearInitialMessage,
@@ -741,12 +738,8 @@ concept Reducer = std::invocable<F, const State&, const Action&> &&
         }
 
         // ========================================
-        // Auth, initial message, overlays, advisor, Ultraplan
+        // Initial message, overlays, advisor, Ultraplan
         // ========================================
-        case ActionType::IncrementAuthVersion: {
-            ++next.auth_version;
-            break;
-        }
         case ActionType::SetInitialMessage: {
             if (auto message = action.get_payload<AppState::InitialMessage>()) {
                 next.initial_message = std::move(*message);

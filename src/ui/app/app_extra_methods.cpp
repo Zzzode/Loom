@@ -196,8 +196,6 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
 
 // ── ProjectRuntimeMetadataToScreenState (moved out of app.cppm) ─────────
 void AppAdapter::ProjectRuntimeMetadataToScreenState() {
-    screen_state_->chrome_store.app_version = std::string(loom::core::constants::kVersion);
-
     const auto& model_id = static_cast<loom::core::QueryEngine*>(engine_raw())->model_params().model;
     screen_state_->chrome_store.status_bar.model_name = model_id;
     screen_state_->chrome_store.model_display_name =

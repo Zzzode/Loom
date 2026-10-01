@@ -269,13 +269,10 @@ using namespace ftxui;
     const std::string model_line = !s.chrome_store.model_display_name.empty()
         ? s.chrome_store.model_display_name
         : s.settings_model;
-    const std::string version = s.chrome_store.app_version.empty()
-        ? std::string("0.0.0") : s.chrome_store.app_version;
 
     // Build the LogoV2Options. Defaults mirror the TS LogoV2 component's
     // initial props (no onboarding, no release-notes → condensed branch).
     lv2::LogoV2Options opts;
-    opts.version              = version;
     opts.cwd                  = s.cwd;
     opts.billing_type         = s.chrome_store.billing_type;
     // TS REF: logoV2Utils.ts:259 — agentName from getInitialSettings().agent

@@ -29,32 +29,8 @@ using loom::utils::ErrorCode;
 using loom::utils::VoidResult;
 
 // ============================================================
-// Schema versioning, migration & validation
+// Validation
 // ============================================================
-
-/// Current on-disk schema version. Bump when the serialized shape changes and
-/// add a corresponding step in apply_state_migrations().
-inline constexpr int kCurrentStateSchemaVersion = 2;
-
-/// Read the schema_version field from a parsed root, defaulting to 1 for
-/// legacy blobs that predate versioning.
-[[nodiscard]] inline int detected_schema_version(loom::utils::json::JsonVal root) noexcept {
-    auto v = root.get("schema_version");
-    if (v && v.is_num()) return static_cast<int>(v.as_int());
-    return 1;
-}
-
-/// Apply the migration chain to a deserialised AppState, bringing it from
-/// `from_version` up to kCurrentStateSchemaVersion. Returns the version
-/// reached. Each step is a focused, idempotent transform; new steps are added
-/// here whenever the on-disk shape evolves (open/closed: extend, never edit an
-/// existing step).
-inline int apply_state_migrations(AppState& state, int from_version) {
-    (void)state;
-    return from_version;
-}
-
-/// Validate structural invariants on a deserialised AppState. Returns the
 /// state on success or an error describing the first violation.
 [[nodiscard]] inline std::expected<AppState, Error>
 validate_state(const AppState& state) {
@@ -117,13 +93,11 @@ validate_state(const AppState& state) {
         root.add("view_selection_mode", doc.string(state.view_selection_mode));
         root.add("selected_ip_agent_index", doc.number(static_cast<int64_t>(state.selected_ip_agent_index)));
         root.add("coordinator_task_index", doc.number(static_cast<int64_t>(state.coordinator_task_index)));
-        root.add("auth_version", doc.number(static_cast<int64_t>(state.auth_version)));
         root.add("remote_background_task_count", doc.number(static_cast<int64_t>(state.remote_background_task_count)));
         add_opt_str("main_loop_model", state.main_loop_model);
         add_opt_str("advisor_model", state.advisor_model);
         add_opt_str("effort_value", state.effort_value);
         add_opt_str("status_line_text", state.status_line_text);
-        root.add("schema_version", doc.number(static_cast<int64_t>(kCurrentStateSchemaVersion)));
         doc.set_root(root);
         return doc.to_string();
     } catch (const std::exception& e) {
@@ -167,16 +141,13 @@ validate_state(const AppState& state) {
         if (auto v = root.get("view_selection_mode"); v && v.is_str()) state.view_selection_mode = std::string(v.as_str());
         if (auto v = root.get("selected_ip_agent_index"); v && v.is_num()) state.selected_ip_agent_index = static_cast<std::int32_t>(v.as_int());
         if (auto v = root.get("coordinator_task_index"); v && v.is_num()) state.coordinator_task_index = static_cast<std::int32_t>(v.as_int());
-        if (auto v = root.get("auth_version"); v && v.is_num()) state.auth_version = static_cast<std::uint32_t>(v.as_int());
         if (auto v = root.get("remote_background_task_count"); v && v.is_num()) state.remote_background_task_count = static_cast<std::uint32_t>(v.as_int());
         if (auto v = root.get("main_loop_model"); v && v.is_str()) state.main_loop_model = std::string(v.as_str());
         if (auto v = root.get("advisor_model"); v && v.is_str()) state.advisor_model = std::string(v.as_str());
         if (auto v = root.get("effort_value"); v && v.is_str()) state.effort_value = std::string(v.as_str());
         if (auto v = root.get("status_line_text"); v && v.is_str()) state.status_line_text = std::string(v.as_str());
 
-        // Bring the loaded state up to the current schema, then enforce
-        // structural invariants before handing it back to the caller.
-        apply_state_migrations(state, detected_schema_version(root));
+        // Enforce structural invariants before handing it back to the caller.
         auto validated = validate_state(state);
         if (!validated) return std::unexpected(validated.error());
         return *validated;

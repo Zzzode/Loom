@@ -15,7 +15,7 @@ module;
 // Opaque yyjson types — every use in this interface is pointer-only. The
 // canonical definitions (typedef struct yyjson_val yyjson_val; and friends)
 // come from <yyjson.h>, textually included by each implementation unit and
-// by external TUs that need the concrete types (e.g. concrete_migrations.cpp).
+// by external TUs that need the concrete types (e.g. session/storage.cppm).
 struct yyjson_val;
 struct yyjson_doc;
 struct yyjson_mut_val;

@@ -209,7 +209,6 @@ TEST(AppCommandRegistry, DispatchesMigratedRuntimeCommands) {
     EXPECT_TRUE(registry.has_command("commit"));
     EXPECT_TRUE(registry.has_command("mcp"));
     EXPECT_TRUE(registry.has_command("ant-trace"));
-    EXPECT_TRUE(registry.has_command("version"));
     EXPECT_TRUE(registry.has_command("exit"));
 
     auto help = registry.execute("/help", ctx());
@@ -228,12 +227,6 @@ TEST(AppCommandRegistry, DispatchesMigratedRuntimeCommands) {
     EXPECT_TRUE(ant_trace->ok);
     EXPECT_NE(ant_trace->message.find("ANT trace snapshot"), std::string::npos);
     EXPECT_EQ(ant_trace->message.find("No dedicated local action"), std::string::npos);
-
-    auto version = registry.execute("/version detail", ctx());
-    ASSERT_TRUE(version.has_value());
-    EXPECT_TRUE(version->ok);
-    EXPECT_NE(version->message.find("loom 1.0.0-cpp"), std::string::npos);
-    EXPECT_EQ(version->message.find("No dedicated local action"), std::string::npos);
 
     auto exit = registry.execute("/exit", ctx());
     ASSERT_TRUE(exit.has_value());

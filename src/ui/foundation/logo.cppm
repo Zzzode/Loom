@@ -34,44 +34,6 @@ inline constexpr std::array<std::string_view, 5> kGradientColors = {
     return "\033[38;2;" + std::to_string(r) + ";" + std::to_string(g) + ";" + std::to_string(b) + "m";
 }
 
-// --- Animated Loom mascot frames (4 animation frames) ---
-inline constexpr std::array<std::string_view, 4> kLoomMascotFrames = {
-    R"(  /\_/\  
- ( o.o ) 
-  > ^ <  )",
-    R"(  /\_/\  
- ( o.o ) 
-  > v <  )",
-    R"(  /\_/\  
- ( -.- ) 
-  > ^ <  )",
-    R"(  /\_/\  
- ( o.o ) 
-  > ~ <  )"
-};
-
-// --- Props equivalent structs ---
-
-struct LogoProps {
-    bool is_pip;
-};
-
-inline auto make_logo_props() -> LogoProps {
-    return LogoProps{.is_pip = false};
-}
-
-struct AnimatedLoomMascotProps {
-    std::size_t frame;
-};
-
-struct CondensedLogoProps {
-    bool verbose;
-};
-
-inline auto make_condensed_logo_props() -> CondensedLogoProps {
-    return CondensedLogoProps{.verbose = false};
-}
-
 // --- formatWelcomeMessage (faithful port of upstream logo utilities) ---
 // TS rule: empty/null username OR username longer than MAX_USERNAME_LENGTH(20)
 // → "Welcome back!".  Otherwise → "Welcome back {user}!".
@@ -88,7 +50,6 @@ inline constexpr std::size_t k_max_username_length = 20;
 
 // --- Logo display data ---
 struct LogoDisplayData {
-    std::string version;
     std::string cwd;
     std::string billing_type;
     std::optional<std::string> agent_name;
@@ -116,13 +77,6 @@ inline constexpr std::array<std::string_view, 5> kLogoArt = {
 
 // --- Rendering functions ---
 
-// Render a single Loom mascot animation frame
-[[nodiscard]] inline auto render_clawd_frame(const AnimatedLoomMascotProps& props)
-    -> std::string {
-    if (props.frame >= kLoomMascotFrames.size()) return std::string(kLoomMascotFrames[0]);
-    return std::string(kLoomMascotFrames[props.frame]);
-}
-
 // Render the gradient-colored ASCII logo
 [[nodiscard]] inline auto render_logo_art() -> std::string {
     std::string result;
@@ -135,65 +89,11 @@ inline constexpr std::array<std::string_view, 5> kLogoArt = {
     return result;
 }
 
-// Render the full logo with version
-[[nodiscard]] inline auto render_logo(const LogoProps& props,
-                                       std::string_view version)
-    -> std::string {
-    std::string result;
-    if (!props.is_pip) {
-        result += render_logo_art();
-        result += "\n";
-    }
-    result += "\033[1mLOOM\033[0m v" + std::string(version) + "\n";
-    return result;
-}
-
-// Render the condensed logo (compact display for narrow terminals)
-[[nodiscard]] inline auto render_condensed_logo(const CondensedLogoProps&,
-                                                 const LogoDisplayData& data,
-                                                 int terminal_width)
-    -> std::string {
-    std::string result;
-    int text_width = std::max(terminal_width - 15, 20);
-
-    // Title + version
-    result += "\033[1mLOOM\033[0m";
-    auto version_display = data.version;
-    if (static_cast<int>(version_display.size()) > text_width - 13) {
-        version_display = version_display.substr(0, static_cast<std::size_t>(text_width - 13));
-    }
-    result += " \033[2mv" + version_display + "\033[0m\n";
-
-    // Model + billing
-    result += "\033[2m" + data.model_display_name;
-    if (!data.billing_type.empty()) {
-        result += " \xC2\xB7 " + data.billing_type;
-    }
-    result += "\033[0m\n";
-
-    // CWD + agent
-    if (data.agent_name.has_value()) {
-        result += "\033[2m@" + *data.agent_name + " \xC2\xB7 ";
-    } else {
-        result += "\033[2m";
-    }
-    auto cwd_display = data.cwd;
-    int cwd_max = data.agent_name.has_value()
-        ? text_width - 1 - static_cast<int>(data.agent_name->size()) - 3
-        : text_width;
-    if (static_cast<int>(cwd_display.size()) > cwd_max) {
-        cwd_display = "..." + cwd_display.substr(cwd_display.size() - static_cast<std::size_t>(cwd_max - 3));
-    }
-    result += cwd_display + "\033[0m\n";
-
-    return result;
-}
-
 // ============================================================
 // Faithful: TS CondensedLogo (LogoV2/CondensedLogo.tsx + Loom mascot.tsx)
 // Layout: hbox of [9×3 Loom mascot block-art glyph] + [gap=2 cols] + [3-line text column].
 // Text column rows:
-//   1: Loom (bold, text) + v{version} (dim, muted)  — SINGLE line, no break
+//   1: Loom (bold, text)                                        — SINGLE line
 //   2: {model} [· {billing}]                                    — all dimColor
 //   3: [@{agent} · ] {truncatePath(cwd)}                       — all dimColor
 // ============================================================
@@ -237,15 +137,8 @@ inline constexpr std::array<std::string_view, 5> kLogoArt = {
     // (15 = 9 clawd + 2 gap + 4 pad).  Matches TS textWidth formula exactly.
     const int text_width = std::max(term_cols - 15, 20);
 
-    // Row 1: <Text bold>Loom</Text> <Text dimColor>v{version}</Text>
-    // NOTE: TS appends " v" + version literally after "Loom", with a
-    // single space separator; NO line break, NO trailing tag like "-cpp".
-    const std::string ver = data.version.empty()
-        ? std::string("0.0.0") : data.version;
-    Element row1 = hbox({
-        text("Loom") | bold | color(kText),
-        text(" v" + ver) | dim | color(kMuted),
-    });
+    // Row 1: <Text bold>Loom</Text>
+    Element row1 = text("Loom") | bold | color(kText);
 
     // Row 2: model [· billing]
     // TS CondensedLogo: formatModelAndBilling — when model+billing fits on one

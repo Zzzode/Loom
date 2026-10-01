@@ -413,7 +413,6 @@ struct AppState {
         };
         std::optional<Suggestion> suggestion;
     } skill_improvement;
-    std::uint32_t auth_version = 0;
     struct InitialMessage {
         loom::core::UserMessage message;
         bool clear_context = false;

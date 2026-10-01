@@ -283,12 +283,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
     # The one reduced-BMI defect (LLVM #184957, fixed on main by PR #179178,
     # absent from 22.1.x) mis-merges the global aligned operator new when an
     # implementation unit `import std;`-s while its primary's global module
-    # fragment textually pulls libc++ via FTXUI. It has manifested in NINE
-    # cc.ui.app.app impl units (app_extra_methods / app_handle_submit /
-    # app_prompt_suggestion_wiring from Phase A, app_team since follow-up
-    # c16, app_run for C-header reasons, app_helpers / app_skills_menu
-    # since Phase C batch 1, app_animation / app_local_command
-    # since Phase C batch 2); those units opt OUT of `import std;` and keep
+    # fragment textually pulls libc++ via FTXUI. It currently manifests in
+    # THREE loom.ui.app.app impl units (app_autocomplete, app_run,
+    # app_team); those units opt OUT of `import std;` and keep
     # textual std headers in their GMF (a plain impl unit is allowed
     # textual includes even when its interface imports std).
     # Re-evaluate after moving to a clang that contains PR #179178.
@@ -320,11 +317,12 @@ endif()
 # embeddable surface. The installed set is loom_sdk + every loom_* target in its
 # transitive PUBLIC link closure (computed from the link graph, not
 # hand-maintained) + the FetchContent third-party targets the closure
-# references. C++ module names stay cc.sdk.* (OQ4 deferred); the install
+# references. C++ module names are loom.sdk.* (cc→loom rename, 2026-10-01);
+# the install
 # namespace is loom::.
 #
 # ABI policy (S5c): source-compatible only, no ABI stability. The harness
-# public surface passes by value cc::core::*/cc::hooks::* types and the
+# public surface passes by value loom::core::*/loom::hooks::* types and the
 # polymorphic WireBackend; with a prebuilt static lib + consumer-rebuilt
 # BMIs, the installed package is source-compatible within one toolchain
 # generation (same clang++ major, same C++ stdlib, matched clang-scan-deps).

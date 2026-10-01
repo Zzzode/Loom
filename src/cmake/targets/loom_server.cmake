@@ -6,6 +6,8 @@ target_sources(loom_server
         server/server_main.cppm
         server/server_routes.cppm
         server/types.cppm
+    PRIVATE
+        server/control_protocol_serde.cpp
 )
 # RFC-0001 cc-sdk phase 3 (§2.1): loom_query is PUBLIC — server_main.cppm and
 # the test_services TU import cc.server.server_routes, whose module interface

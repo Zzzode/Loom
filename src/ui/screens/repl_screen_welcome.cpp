@@ -21,7 +21,7 @@ import loom.ui.foundation.design_logo;
 import loom.ui.foundation.logo;
 import loom.ui.foundation.logo_v2;
 
-namespace cc::ui::repl_screen {
+namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 // UI1: status bar — delegates to cc.ui.components.status_line.
@@ -71,7 +71,7 @@ using namespace ftxui;
 
     // Pick a random playful verb once "per mount".  We don't track mount
     // state here, so hash the mode + pid and sample the verbs list.
-    using cc::constants::spinner_verbs::SPINNER_VERBS;
+    using loom::constants::spinner_verbs::SPINNER_VERBS;
     static std::mt19937 rng{std::random_device{}()};
     static thread_local std::uniform_int_distribution<std::size_t> dist(
         0, SPINNER_VERBS.size() - 1);
@@ -210,7 +210,7 @@ using namespace ftxui;
                                                     Color muted,
                                                     Color text_color,
                                                     Color bg) {
-    const std::string welcome = cc::ui::logo::format_welcome_message(
+    const std::string welcome = loom::ui::logo::format_welcome_message(
         s.chrome_store.user_display_name);
     const std::string model_line = !s.chrome_store.model_display_name.empty()
         ? s.chrome_store.model_display_name
@@ -233,7 +233,7 @@ using namespace ftxui;
     return vbox({
         text(""),
         hbox({
-            cc::ui::design::logo::welcome_animated_asterisk(spinner_frame),
+            loom::ui::design::logo::welcome_animated_asterisk(spinner_frame),
             text(" "),
             text(welcome) | bold | color(text_color),
         }) | center,
@@ -264,7 +264,7 @@ using namespace ftxui;
                                                  int /*spinner_frame*/,
                                                  int term_cols,
                                                  bool force_full_logo) {
-    namespace lv2 = cc::ui::logo_v2;
+    namespace lv2 = loom::ui::logo_v2;
 
     const std::string model_line = !s.chrome_store.model_display_name.empty()
         ? s.chrome_store.model_display_name
@@ -358,4 +358,4 @@ using namespace ftxui;
     return lv2::render_logo_v2(opts, term_cols, std::move(feeds));
   }
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

@@ -6,7 +6,7 @@ export module loom.ui.messages.assistant_message;
 
 import std;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 // ─── Content block types ─────────────────────────────────────────────
 
@@ -132,4 +132,4 @@ inline std::string render_assistant_message(
     return result;
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

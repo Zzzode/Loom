@@ -19,8 +19,8 @@ import loom.serdes.json;
 import loom.plugins.plugin_marketplace;
 import loom.plugins.plugin_validation;
 
-namespace mp = cc::utils::plugin_marketplace;
-namespace pv = cc::utils::plugin_validation;
+namespace mp = loom::utils::plugin_marketplace;
+namespace pv = loom::utils::plugin_validation;
 
 namespace {
 

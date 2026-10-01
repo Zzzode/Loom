@@ -8,7 +8,7 @@ export module loom.media.image_store;
 
 import std;
 
-export namespace cc::utils::image_store {
+export namespace loom::utils::image_store {
 
 struct StoredImage {
     std::string id;
@@ -198,4 +198,4 @@ inline std::vector<StoredImage> list_images() {
     return result;
 }
 
-} // namespace cc::utils::image_store
+} // namespace loom::utils::image_store

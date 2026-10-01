@@ -13,11 +13,11 @@ import loom.tools.team;
 import loom.tools.runtime_team_shared;
 import loom.serdes.json;
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
 namespace fs = std::filesystem;
 
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 namespace {
 
@@ -88,8 +88,8 @@ void add_unique_artifact_path(std::vector<fs::path>& paths, fs::path path) {
         record.agent_id,
         agent_runtime::native_agent_status_name(record.status),
         record.agent_type.empty() ? "general-purpose" : record.agent_type,
-        cc::tools::detail::native_agent_display_name(record));
-    out += "\noutput_file: " + cc::tools::detail::native_agent_output_file(record);
+        loom::tools::detail::native_agent_display_name(record));
+    out += "\noutput_file: " + loom::tools::detail::native_agent_output_file(record);
     if (record.team_name && !record.team_name->empty()) out += "\nteam: " + *record.team_name;
     if (record.cwd && !record.cwd->empty()) out += "\ncwd: " + *record.cwd;
     if (record.worktree_path && !record.worktree_path->empty()) out += "\nworktree_path: " + *record.worktree_path;
@@ -122,7 +122,7 @@ void add_unique_artifact_path(std::vector<fs::path>& paths, fs::path path) {
     auto status = native_agent_notification_status(record.status);
     if (!status) return std::nullopt;
 
-    const auto description = cc::tools::detail::native_agent_display_name(record);
+    const auto description = loom::tools::detail::native_agent_display_name(record);
     std::string summary;
     if (*status == "completed") {
         summary = std::format("Agent \"{}\" completed", description);
@@ -153,7 +153,7 @@ void add_unique_artifact_path(std::vector<fs::path>& paths, fs::path path) {
         "<summary>{}</summary>{}{}\n"
         "</task_notification>",
         escape_xml_text(record.agent_id),
-        escape_xml_text(cc::tools::detail::native_agent_output_file(record)),
+        escape_xml_text(loom::tools::detail::native_agent_output_file(record)),
         escape_xml_text(*status),
         escape_xml_text(summary),
         result_section,
@@ -175,7 +175,7 @@ void add_unique_artifact_path(std::vector<fs::path>& paths, fs::path path) {
         }
     }
 
-    if (auto notification = cc::tools::detail::format_native_agent_task_notification(record)) {
+    if (auto notification = loom::tools::detail::format_native_agent_task_notification(record)) {
         out += "\n" + *notification;
     }
     return out;
@@ -222,4 +222,4 @@ void add_unique_artifact_path(std::vector<fs::path>& paths, fs::path path) {
     return b.serialize();
 }
 
-} // namespace cc::tools::detail
+} // namespace loom::tools::detail

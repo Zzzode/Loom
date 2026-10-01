@@ -9,13 +9,13 @@ export module loom.ui.dialogs.modal_renderers;
 import std;
 import loom.ui.dialogs.default_renderers;
 
-export namespace cc::ui::dialogs::modal_renderers {
-using cc::ui::dialogs::default_renderers::register_default_renderers;
+export namespace loom::ui::dialogs::modal_renderers {
+using loom::ui::dialogs::default_renderers::register_default_renderers;
 
 /// Named registration entry-point matching the module name.
 template <typename... Args>
 inline void register_modal_renderers(Args&&... args) {
-    cc::ui::dialogs::default_renderers::register_default_renderers(
+    loom::ui::dialogs::default_renderers::register_default_renderers(
         std::forward<Args>(args)...);
 }
-}  // namespace cc::ui::dialogs::modal_renderers
+}  // namespace loom::ui::dialogs::modal_renderers

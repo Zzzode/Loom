@@ -38,7 +38,7 @@ import loom.hooks.tool_permissions; // PermissionContext, PermissionResponse
 // concept/requires blocks (same marker as query_assembly.cppm).
 import loom.tools.tool;  // arch-check: keep-import
 
-export namespace cc::sdk {
+export namespace loom::sdk {
 
 /// Per-turn options. Only fields with a per-turn engine seam are exposed;
 /// construction-time config lives in HarnessConfig (see the field mapping
@@ -50,13 +50,13 @@ struct TurnOptions {
     /// Subset of tools to enable this turn -> QueryOptions::enabled_tools.
     std::optional<std::vector<std::string>> allowed_tools;
     /// @-mention file attachments -> QueryOptions::attachments.
-    std::vector<cc::core::ContentBlock> attachments;
+    std::vector<loom::core::ContentBlock> attachments;
 };
 
-/// One turn's result (maps cc::core::QueryResponse).
+/// One turn's result (maps loom::core::QueryResponse).
 struct TurnResult {
-    cc::core::AssistantMessage message;
-    cc::core::TokenUsage usage;
+    loom::core::AssistantMessage message;
+    loom::core::TokenUsage usage;
     std::uint32_t tool_rounds = 0;
     std::chrono::milliseconds elapsed{0};
     bool budget_exceeded = false;
@@ -67,10 +67,10 @@ struct TurnResult {
 /// Ask-user permission callback (bridges ToolPermissionHook). Invoked when
 /// a tool requires permission and no session rule/auto-approve applies.
 using PermissionCallback =
-    std::function<cc::hooks::PermissionResponse(const cc::hooks::PermissionContext&)>;
+    std::function<loom::hooks::PermissionResponse(const loom::hooks::PermissionContext&)>;
 
 /// Streaming event sink (bridges StreamCallback).
-using EventSink = std::function<void(const cc::core::StreamEvent&)>;
+using EventSink = std::function<void(const loom::core::StreamEvent&)>;
 
 /// Wire backend factory. When unset, the engine builds its default
 /// Anthropic/OpenAI backend from QueryEngineConfig.
@@ -82,7 +82,7 @@ using EventSink = std::function<void(const cc::core::StreamEvent&)>;
 /// backend does not prevent real HTTP calls. For a no-network test, use a
 /// loopback HTTP server, not a mock backend.
 using BackendFactory =
-    std::function<std::unique_ptr<cc::query::wire::WireBackend>()>;
+    std::function<std::unique_ptr<loom::query::wire::WireBackend>()>;
 
 /// API key provider. Called at construction; the key is never stored in the
 /// config struct (so it cannot be serialized by accident).
@@ -117,7 +117,7 @@ struct HarnessConfig {
     /// Test seam: register extra tools (e.g. a mock permission-gated tool)
     /// into the assembly's ToolRegistry before the config.tools snapshot
     /// (maps to AssemblyConfig::register_extra_tools, §2.1/§4.4).
-    std::function<void(cc::core::ToolRegistry&)> register_extra_tools;
+    std::function<void(loom::core::ToolRegistry&)> register_extra_tools;
 };
 
 /// Opaque embedding handle. Move-only; non-copyable.
@@ -133,7 +133,7 @@ public:
     /// Run one turn to completion (blocking). Wraps QueryEngine::query.
     /// A pre-run abort() makes this return an error once ("Query
     /// interrupted"), then the flag clears so the next turn proceeds (§2.3).
-    [[nodiscard]] cc::core::Result<TurnResult> run(const TurnOptions& options);
+    [[nodiscard]] loom::core::Result<TurnResult> run(const TurnOptions& options);
 
     /// Run one turn with streaming events. Wraps QueryEngine::stream_query.
     /// Errors (construction failure, pre-run abort) are delivered to `sink`
@@ -149,17 +149,17 @@ public:
     /// real engine resume path: cc.session::load_messages ->
     /// parse_session_message_value -> QueryEngine::restore_conversation
     /// (§2.3). No cc.server import.
-    [[nodiscard]] cc::core::Result<void> resume(std::string_view session_id);
+    [[nodiscard]] loom::core::Result<void> resume(std::string_view session_id);
 
     /// Current session id (for resume/fork correlation).
     [[nodiscard]] std::string session_id() const;
 
     /// Current conversation (thread-safe copy).
-    [[nodiscard]] std::vector<cc::core::Message> conversation() const;
+    [[nodiscard]] std::vector<loom::core::Message> conversation() const;
 
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };
 
-} // namespace cc::sdk
+} // namespace loom::sdk

@@ -35,7 +35,7 @@ export module loom.process.bash.bash_execution;
 
 import std;
 
-export namespace cc::utils::bash {
+export namespace loom::utils::bash {
 
 /// Exit code type alias
 using ExitCode = std::int32_t;
@@ -872,4 +872,4 @@ inline void add_history_entry(BashHistoryEntry entry) {
     return args;
 }
 
-} // namespace cc::utils::bash
+} // namespace loom::utils::bash

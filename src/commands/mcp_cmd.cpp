@@ -16,7 +16,7 @@ import loom.types.types;
 import loom.commands.command;
 import loom.config.config;
 
-namespace cc::commands {
+namespace loom::commands {
 
 [[nodiscard]] VoidResult McpCommand::reload_and_sync() {
     // c23: drop the latch so the post-mutation reload is unconditional — the
@@ -183,4 +183,4 @@ McpCommand::execute_set_disabled(std::span<const std::string> args,
     return CommandResult::success(std::move(out));
 }
 
-}  // namespace cc::commands
+}  // namespace loom::commands

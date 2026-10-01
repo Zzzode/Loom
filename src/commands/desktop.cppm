@@ -13,13 +13,13 @@ import loom.commands.command;
 import loom.process.exec_sync;
 
 // Module-internal helpers (module linkage; intentionally not exported).
-namespace cc::commands {
+namespace loom::commands {
 
 inline void open_in_browser(std::string_view url) {
 #if defined(__APPLE__)
-    cc::utils::exec_sync_status("open " + std::string(url));
+    loom::utils::exec_sync_status("open " + std::string(url));
 #elif defined(__linux__)
-    cc::utils::exec_sync_status("xdg-open " + std::string(url));
+    loom::utils::exec_sync_status("xdg-open " + std::string(url));
 #else
     (void)url;
 #endif
@@ -33,11 +33,11 @@ inline void open_in_browser(std::string_view url) {
     return "";
 }
 
-} // namespace cc::commands
+} // namespace loom::commands
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 class DesktopCommand {
 public:
@@ -70,4 +70,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

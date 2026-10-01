@@ -19,7 +19,7 @@ import std;
 import loom.skills.skill;
 import loom.skills.load_skills_dir;
 
-export namespace cc::skills::bundled {
+export namespace loom::skills::bundled {
 
 // ============================================================
 // Types
@@ -336,8 +336,8 @@ inline std::expected<LoopResult, std::string> run_loop(
 // ============================================================
 
 /// Get the SkillManifest for directory-based discovery (load_skills_dir)
-[[nodiscard]] inline cc::skills::SkillManifest get_loop_skill_manifest() {
-    return cc::skills::SkillManifest{
+[[nodiscard]] inline loom::skills::SkillManifest get_loop_skill_manifest() {
+    return loom::skills::SkillManifest{
         .name = "loop",
         .description =
             "Run a prompt iteratively until a stop condition, max iterations, "
@@ -423,4 +423,4 @@ Extract:
     };
 }
 
-} // namespace cc::skills::bundled
+} // namespace loom::skills::bundled

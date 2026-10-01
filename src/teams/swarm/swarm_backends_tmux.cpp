@@ -13,7 +13,7 @@ module loom.teams.swarm.backends;
 
 import std;
 
-namespace cc::utils::swarm_backends {
+namespace loom::utils::swarm_backends {
 
 bool TmuxBackend::is_available() const {
     return EnvironmentDetection::is_tmux_available();
@@ -306,4 +306,4 @@ std::string_view TmuxBackend::get_tmux_color(AgentColor color) {
     return "white";
 }
 
-} // namespace cc::utils::swarm_backends
+} // namespace loom::utils::swarm_backends

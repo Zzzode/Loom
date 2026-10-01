@@ -20,8 +20,8 @@ import loom.utils.error;
 
 namespace fs = std::filesystem;
 
-using namespace cc::services::api::sse;
-using namespace cc::services::api::with_retry_simple;
+using namespace loom::services::api::sse;
+using namespace loom::services::api::with_retry_simple;
 
 // =========================================================================
 // Helpers
@@ -152,8 +152,8 @@ BENCHMARK(BM_JsonSerialize);
 // =========================================================================
 
 static void BM_ToolDispatch(benchmark::State& state) {
-    using namespace cc::core;
-    using namespace cc::tools::file_read;
+    using namespace loom::core;
+    using namespace loom::tools::file_read;
 
     // Create a temporary file
     TempFile tmp;

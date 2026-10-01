@@ -14,9 +14,9 @@ import loom.types.types;
 import loom.commands.command;
 import loom.config.config;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// Subcommand for /config
 enum class ConfigAction : std::uint8_t {
@@ -233,7 +233,7 @@ private:
         // user sets the value back to the env value. The (section, leaf) pair
         // comes from the shared spec table, so it cannot drift from the
         // serializer's keys (a non-model key is a no-op inside the marker).
-        if (const auto* spec = cc::core::ConfigManager::find_user_setting(key)) {
+        if (const auto* spec = loom::core::ConfigManager::find_user_setting(key)) {
             config_manager_.clear_env_provenance(spec->section, spec->leaf);
         }
 
@@ -352,4 +352,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

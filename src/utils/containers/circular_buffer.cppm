@@ -7,7 +7,7 @@ export module loom.containers.circular_buffer;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 
 template<typename T, size_t N>
@@ -141,4 +141,4 @@ private:
     }
 };
 
-} // namespace cc::utils
+} // namespace loom::utils

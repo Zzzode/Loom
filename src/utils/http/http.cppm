@@ -10,7 +10,7 @@ export module loom.net.http.http;
 import std;
 
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 
 enum class ProxyType { http, https, socks5 };
@@ -740,4 +740,4 @@ public:
     return std::nullopt;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

@@ -28,7 +28,7 @@ import loom.ui.foundation.declared_cursor;
 import loom.ui.prompt.prompt_stash_notice;
 import loom.ui.prompt.placeholder_cascade;
 
-namespace cc::ui::repl_screen {
+namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 // ─── Placeholder cascade (TS REF: usePromptInputPlaceholder.ts + PromptInput.tsx) ──
@@ -51,7 +51,7 @@ using namespace ftxui;
 
 [[nodiscard]] std::optional<std::string> ComputePlaceholder(
     const ReplScreenState& s) {
-    namespace ph = cc::ui::placeholder;
+    namespace ph = loom::ui::placeholder;
 
     ph::PlaceholderContext ctx;
     ctx.input_text                    = s.input_text;
@@ -108,8 +108,8 @@ using namespace ftxui;
 [[nodiscard]] Element RenderPromptInput(const ReplScreenState& s,
                                                   int term_cols) {
     namespace uic   = ::ui::components;
-    namespace vim   = cc::ui::prompt::vim_input;
-    namespace figs  = cc::ui::design::figures;
+    namespace vim   = loom::ui::prompt::vim_input;
+    namespace figs  = loom::ui::design::figures;
 
     // --- 1. Prompt glyph + accent colour (TS faithfulness, unified) ---------
     //
@@ -151,8 +151,8 @@ using namespace ftxui;
     // equivalent).  This respects ThemeVariant::Dark / Light / Daltonized /
     // Monochrome plus the force_monochrome a11y flag.  theme::current_theme()
     // is a cheap value copy (2 pointers + 3 booleans) with a short mutex grab.
-    namespace thm = cc::ui::design::theme;
-    namespace tok = cc::ui::design::tokens;
+    namespace thm = loom::ui::design::theme;
+    namespace tok = loom::ui::design::tokens;
     const tok::Palette& pal = *thm::current_theme().palette;
     // TS getInputMode(value) equivalent: text-derived when text is present,
     // state-toggle when empty.  See effective_is_bash() for rationale.
@@ -295,7 +295,7 @@ using namespace ftxui;
     //   their typed input was saved and will be restored after the current
     //   request completes.
     if (s.prompt_store.stashed_prompt.has_value()) {
-        namespace psn = cc::ui::prompt;
+        namespace psn = loom::ui::prompt;
         psn::StashNotice notice;
         notice.stashed_text = s.prompt_store.stashed_prompt->text;
         notice.char_count = s.prompt_store.stashed_prompt->text.size();
@@ -342,7 +342,7 @@ using namespace ftxui;
     //
     // NOTE: cursor_display_col() returns width of text up to caret (NOT
     // including prefix), so we add prefix_width manually.
-    namespace dc = cc::ui::common::declared_cursor;
+    namespace dc = loom::ui::common::declared_cursor;
     const int prefix_width = ftxui::string_width(opts.prefix);
     const int caret_col = impl->cursor_display_col();
     const int rel_y = 1 + (vim_badge ? 1 : 0);
@@ -428,7 +428,7 @@ using namespace ftxui;
     const int name_width = std::min(widest + 5, max_name_width);
     const int desc_width = std::max(0, term_cols - name_width - 4);
 
-    namespace thm = cc::ui::design::theme;
+    namespace thm = loom::ui::design::theme;
     const auto& pal = *thm::current_theme().palette;
 
     Elements rows;
@@ -514,4 +514,4 @@ using namespace ftxui;
     return content;
 }
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

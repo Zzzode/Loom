@@ -13,12 +13,12 @@ import std;
 
 import loom.types.types;
 
-export namespace cc::plugins {
+export namespace loom::plugins {
 
-using cc::core::Result;
-using cc::core::Error;
-using cc::core::ErrorCode;
-using cc::core::VoidResult;
+using loom::core::Result;
+using loom::core::Error;
+using loom::core::ErrorCode;
+using loom::core::VoidResult;
 
 // ============================================================
 // Plugin Metadata
@@ -426,4 +426,4 @@ public:
     [[nodiscard]] std::size_t size() const noexcept { return installed_.size(); }
 };
 
-} // namespace cc::plugins
+} // namespace loom::plugins

@@ -4,18 +4,18 @@ import std;
 
 import loom.process.exec_sync;
 
-export namespace cc::commands::commit_push_pr {
+export namespace loom::commands::commit_push_pr {
 struct CommandResponse { bool ok{true}; bool inject{false}; std::string message; };
 [[nodiscard]] inline auto name() -> std::string_view { return "commit_push_pr"; }
 
 [[nodiscard]] inline auto run(std::string_view branch = {}) -> CommandResponse {
-    auto git_root = cc::utils::exec_sync("git rev-parse --show-toplevel");
+    auto git_root = loom::utils::exec_sync("git rev-parse --show-toplevel");
     if (!git_root) return {.ok = false, .message = "commit-push-pr requires a Git repository"};
 
-    auto current_branch = cc::utils::exec_sync("git branch --show-current");
-    auto upstream = cc::utils::exec_sync("git rev-parse --abbrev-ref --symbolic-full-name @{u}");
-    auto status = cc::utils::exec_sync_lines("git status --short");
-    auto gh_status = cc::utils::exec_sync("gh auth status");
+    auto current_branch = loom::utils::exec_sync("git branch --show-current");
+    auto upstream = loom::utils::exec_sync("git rev-parse --abbrev-ref --symbolic-full-name @{u}");
+    auto status = loom::utils::exec_sync_lines("git status --short");
+    auto gh_status = loom::utils::exec_sync("gh auth status");
 
     const auto dirty_count = status ? status->size() : 0;
 

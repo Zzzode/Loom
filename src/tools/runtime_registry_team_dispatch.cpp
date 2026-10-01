@@ -19,20 +19,20 @@ import loom.tools.runtime_team_shared;
 import loom.tools.runtime_message_delivery;
 import loom.tasks.support;
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
-using cc::core::Result;
-using cc::core::ToolInput;
-using cc::core::ToolRegistry;
-using cc::core::ToolResult;
+using loom::core::Result;
+using loom::core::ToolInput;
+using loom::core::ToolRegistry;
+using loom::core::ToolResult;
 
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 [[nodiscard]] Result<ToolResult> execute_team_create_runtime_tool(
     std::string_view json,
     ToolRegistry* registry
 ) {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed || !parsed->root().is_obj()) {
         return ToolResult::error("team_create input must be a JSON object");
     }
@@ -72,18 +72,18 @@ namespace json = cc::utils::json;
         !(*result)->name.empty()) {
         ::setenv("LOOM_TEAM_NAME", (*result)->name.c_str(), 1);
         // task-list resolution also tracks the leader team.
-        cc::utils::set_leader_team_name((*result)->name);
+        loom::utils::set_leader_team_name((*result)->name);
     }
     std::unordered_map<std::string, std::string> member_start_prompts;
     for (const auto& member : (*result)->members) {
         MessageRouter::instance().register_agent(member.agent_id);
-        cc::tools::agent_runtime::NativeAgentRecord record;
+        loom::tools::agent_runtime::NativeAgentRecord record;
         record.agent_id = member.agent_id;
         record.agent_type = std::string(member_role_name(member.role));
         record.team_name = (*result)->name;
         record.background = true;
-        record.status = cc::tools::agent_runtime::NativeAgentStatus::Queued;
-        cc::tools::agent_runtime::native_agent_store().upsert(std::move(record));
+        record.status = loom::tools::agent_runtime::NativeAgentStatus::Queued;
+        loom::tools::agent_runtime::native_agent_store().upsert(std::move(record));
     }
     std::size_t task_assignments_enqueued = 0;
     for (auto& task : tasks) {
@@ -99,11 +99,11 @@ namespace json = cc::utils::json;
                 detail::format_team_task_assignment_message((*result)->name, task_id, task_description);
             member_start_prompts[*assigned_to] = assignment_message;
             if (!start_native_agents) {
-                cc::tools::agent_runtime::native_agent_store().mark_running(*assigned_to);
-                cc::tools::agent_runtime::native_agent_store().append_transcript(
+                loom::tools::agent_runtime::native_agent_store().mark_running(*assigned_to);
+                loom::tools::agent_runtime::native_agent_store().append_transcript(
                     *assigned_to,
                     std::format("team task assigned {}: {}", task_id, task_description));
-                cc::tools::agent_runtime::native_agent_store().enqueue_pending_message(
+                loom::tools::agent_runtime::native_agent_store().enqueue_pending_message(
                     *assigned_to,
                     assignment_message);
             }
@@ -153,7 +153,7 @@ namespace json = cc::utils::json;
                 (void)global_team_store().update_member_status((*created_team)->id, member.agent_id, MemberStatus::Error, error);
                 return ToolResult::error(error);
             }
-            cc::tools::agent_runtime::native_agent_store().append_transcript(
+            loom::tools::agent_runtime::native_agent_store().append_transcript(
                 member.agent_id,
                 std::format("system: started by team_create for team {}", (*created_team)->name));
             ++native_agents_started;
@@ -164,7 +164,7 @@ namespace json = cc::utils::json;
                 (*refreshed_team)->name,
                 std::span<const TeamMember>((*refreshed_team)->members.data(), (*refreshed_team)->members.size()));
             auto runtime_states = detail::team_config_runtime_states_from_native_records(
-                std::span<const cc::tools::agent_runtime::NativeAgentRecord>(
+                std::span<const loom::tools::agent_runtime::NativeAgentRecord>(
                     native_records.data(),
                     native_records.size()));
             artifacts->team_config_written = detail::write_team_config_file(
@@ -238,4 +238,4 @@ namespace json = cc::utils::json;
         cleanup.team_dirs_removed));
 }
 
-} // namespace cc::tools::detail
+} // namespace loom::tools::detail

@@ -25,7 +25,7 @@ export module loom.ui.screens.repl_state;
 import std;
 
 import loom.types.types;
-import loom.ui.foundation.ui_types;                 // cc::ui::common::PromptInputMode
+import loom.ui.foundation.ui_types;                 // loom::ui::common::PromptInputMode
 import loom.ui.dialogs.system;                     // DialogQueue / payloads
 import loom.ui.prompt.prompt_input_footer;         // footer::* projection types
 import loom.ui.screens.messages_store;             // MessagesStore / MessageDisplayEntry
@@ -39,12 +39,12 @@ import loom.ui.features.agents.agent_cards;        // AgentCardData
 import loom.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
 import loom.ui.visual.markdown;                    // StreamingMarkdown (ptr field)
 
-export namespace cc::ui::repl_screen {
+export namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 // M7: pull the dialog framework types up into convenient aliases.
-namespace dsys_fw   = cc::ui::dialogs::system;
-namespace cards     = cc::ui::agents::cards;
+namespace dsys_fw   = loom::ui::dialogs::system;
+namespace cards     = loom::ui::agents::cards;
 using DialogQueue            = dsys_fw::DialogQueue;
 using DialogRendererRegistry = dsys_fw::DialogRendererRegistry;
 using DialogRenderContext    = dsys_fw::DialogRenderContext;
@@ -87,7 +87,7 @@ enum class ReplMode : std::uint8_t {
     TrustDialog,        // 'trust-dialog'
 };
 
-/// Input modes — unified canonical enum from cc::ui::common.
+/// Input modes — unified canonical enum from loom::ui::common.
 /// Previously this file defined a local 10-value InputMode:
 ///   {Prompt, Bash, SlashCommand, HistorySearch, PlanMode,
 ///    VimInsert, VimNormal, VimVisual, OrphanedPermission, TaskNotification}
@@ -95,7 +95,7 @@ enum class ReplMode : std::uint8_t {
 ///   InputMode::Prompt → PromptInputMode::Normal  (TS: 'prompt')
 /// All other values retain their names in the unified enum.
 /// TS REF: src/types/textInputTypes.ts:265 (PromptInputMode type)
-using InputMode = cc::ui::common::PromptInputMode;
+using InputMode = loom::ui::common::PromptInputMode;
 
 // =========================================================
 // Data structures (lean projections — engine owns full state)
@@ -190,8 +190,8 @@ struct ReplScreenState {
     // TS REF: src/components/PromptInput/Notifications.tsx
     // These fields drive the right-column notification area.
     // RenderNotifications() picks the highest-priority active item.
-    cc::ui::prompt::footer::ApiKeyStatus api_key_status =
-        cc::ui::prompt::footer::ApiKeyStatus::Unknown;
+    loom::ui::prompt::footer::ApiKeyStatus api_key_status =
+        loom::ui::prompt::footer::ApiKeyStatus::Unknown;
     bool is_remote_session = false;   // LOOM_REMOTE → changes error text
     bool debug_mode = false;          // "Debug mode" pill
     bool verbose = false;             // show token count when valid + verbose
@@ -206,7 +206,7 @@ struct ReplScreenState {
     // TS REF: src/context/notifications.tsx (useNotifications hook)
     // Items are added via hooks (env-hook, rate-limit warnings, etc.) and
     // rotate through the footer's notification slot on a timeout basis.
-    cc::ui::prompt::footer::NotificationQueue footer_notification_queue;
+    loom::ui::prompt::footer::NotificationQueue footer_notification_queue;
     // Stable per-session welcome-tip index (seeded once from the session id in
     // app.cppm). The renderer mods this by kWelcomeTips.size(). Previously the
     // tip used spinner_frame, which cycled the tip on every mouse-move re-render.
@@ -322,8 +322,8 @@ struct ReplScreenState {
     // field above) in RFC 0002 F3.
 
     // Permission mode (cycled via shift+tab; TS REF: getNextPermissionMode.ts)
-    cc::ui::prompt::footer::PermissionMode permission_mode =
-        cc::ui::prompt::footer::PermissionMode::Default;
+    loom::ui::prompt::footer::PermissionMode permission_mode =
+        loom::ui::prompt::footer::PermissionMode::Default;
     // Dialog-suppression flag (typing -> suppress interrupt dialogs)
     bool is_prompt_input_active = false;
     // M7: True when a JSX tool result is currently rendering an animation in
@@ -365,14 +365,14 @@ struct ReplScreenCallbacks {
     std::function<void(ReplMode, int)> on_dialog_action;
     std::function<void(ReplMode)> on_mode_change;
     std::function<void(const std::string& command)> enqueue_slash_command;
-    std::function<std::optional<cc::ui::agents::cards::AgentCardData>(
+    std::function<std::optional<loom::ui::agents::cards::AgentCardData>(
         std::string_view agent_id)> load_agent_for_wizard;
-    std::function<void(const cc::ui::agents::wizard::WizardDraft& draft)> save_agent_from_wizard;
+    std::function<void(const loom::ui::agents::wizard::WizardDraft& draft)> save_agent_from_wizard;
     std::function<void()> on_local_jsx_cancel;
     std::function<bool(Event)> on_local_jsx_event;
     /// Called when user cycles permission mode (shift+tab).  TS REF:
     /// PromptInput.tsx:1409 handleCycleMode → cyclePermissionMode().
-    std::function<void(cc::ui::prompt::footer::PermissionMode)> on_permission_cycle;
+    std::function<void(loom::ui::prompt::footer::PermissionMode)> on_permission_cycle;
     /// GAP 3: msg-system-api-error-retry — called when user clicks "Retry"
     /// on an API error message.  Re-sends the last user message.
     /// TS REF: src/components/messages/SystemAPIErrorMessage.tsx — the
@@ -387,7 +387,7 @@ struct ReplScreenCallbacks {
     /// StreamingMarkdown instance for the streaming-text tail row.
     /// When non-null, RenderMessages threads it to the messages list
     /// so is_streaming rows use stable-prefix caching.
-    ::cc::ui::StreamingMarkdown* streaming_md = nullptr;
+    ::loom::ui::StreamingMarkdown* streaming_md = nullptr;
 };
 
-}  // namespace cc::ui
+}  // namespace loom::ui

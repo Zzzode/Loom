@@ -26,13 +26,13 @@ import loom.commands.plugin_helpers;
 import loom.commands.plugin_pagination_util;
 import loom.ui.widgets.custom_select;
 
-export namespace cc::ui::plugins::plugin_marketplace_browse {
+export namespace loom::ui::plugins::plugin_marketplace_browse {
 using namespace ftxui;
 
-namespace ui = cc::commands::plugin_ui;
-namespace pf = cc::commands::plugin_helpers;
-namespace pp = cc::commands::plugin;
-namespace cs = cc::ui::custom_select;
+namespace ui = loom::commands::plugin_ui;
+namespace pf = loom::commands::plugin_helpers;
+namespace pp = loom::commands::plugin;
+namespace cs = loom::ui::custom_select;
 
 using ui::MarketplaceInfo;
 using ui::ViewKind;
@@ -449,4 +449,4 @@ struct BrowseState {
     });
 }
 
-} // namespace cc::ui::plugins::plugin_marketplace_browse
+} // namespace loom::ui::plugins::plugin_marketplace_browse

@@ -93,7 +93,7 @@ Element TextInputImpl::Render() {
 ///   to confirm)" + a 200-char snippet of the truncated content.
 Element TextInputImpl::RenderPastePreviewOverlay() const {
     if (!paste_preview_) return ftxui::text("");
-    return cc::ui::prompt::render_paste_preview(*paste_preview_);
+    return loom::ui::prompt::render_paste_preview(*paste_preview_);
 }
 
 /// Render just the input/caret/multiline/selection area (no dropdown).
@@ -142,8 +142,8 @@ Element TextInputImpl::RenderInputArea() {
     // refs from the displayed value so we can invert the chip when the
     // cursor parks at its start (the "selected" state; backspace-delete
     // is visually obvious because the whole chip is highlighted).
-    const auto all_refs = cc::utils::parse_references(text_);
-    std::vector<cc::utils::ReferenceMatch> image_refs;
+    const auto all_refs = loom::utils::parse_references(text_);
+    std::vector<loom::utils::ReferenceMatch> image_refs;
     image_refs.reserve(all_refs.size());
     for (const auto& r : all_refs) {
         if (r.match.starts_with("[Image")) image_refs.push_back(r);
@@ -247,7 +247,7 @@ Element TextInputImpl::RenderInputArea() {
                     // the whole chip is highlighted, not just the first
                     // character.  The cursor_ absolute byte offset is
                     // compared against ref.index (also absolute bytes).
-                    const cc::utils::ReferenceMatch* chip_at_cursor = nullptr;
+                    const loom::utils::ReferenceMatch* chip_at_cursor = nullptr;
                     for (const auto& ref : image_refs) {
                         if (static_cast<int>(ref.index) == cursor_) {
                             chip_at_cursor = &ref;
@@ -337,14 +337,14 @@ Element TextInputImpl::RenderInputArea() {
     }
 
     // --- Placeholder rendering for empty input ---
-    // Delegated to cc::ui::placeholder::RenderPlaceholder which faithfully
+    // Delegated to loom::ui::placeholder::RenderPlaceholder which faithfully
     // ports TS renderPlaceholder.ts + BaseTextInput.tsx lines 91-112:
     //   * cursor+focus+terminalFocus → invert(placeholder[0]) + dim(rest)
     //   * no cursor / no focus     → dim(full placeholder)
     //   * value empty + has text   → showPlaceholder = true
     // Prefix (options_.prefix) is passed through for visual consistency.
     if (lines_elements.size() == 1 && lines[0].empty()) {
-        namespace ph = cc::ui::placeholder;
+        namespace ph = loom::ui::placeholder;
 
         std::optional<std::string_view> placeholder_sv;
         if (!options_.placeholder.empty()) {

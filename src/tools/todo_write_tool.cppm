@@ -11,7 +11,7 @@ import loom.serdes.json;
 import loom.tools.tool;
 
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 // Todo item status
 enum class TodoStatus {
@@ -342,7 +342,7 @@ inline void clear_all_todos_for_testing() {
 
 namespace detail {
 
-using JsonVal = cc::utils::json::JsonVal;
+using JsonVal = loom::utils::json::JsonVal;
 
 [[nodiscard]] std::optional<std::string> json_string(JsonVal obj, std::string_view key) {
     auto value = obj.get(key);
@@ -400,7 +400,7 @@ using JsonVal = cc::utils::json::JsonVal;
 }
 
 [[nodiscard]] std::expected<TodoWriteRequest, std::string> parse_request(std::string_view raw_json) {
-    auto doc = cc::utils::json::parse(raw_json);
+    auto doc = loom::utils::json::parse(raw_json);
     if (!doc) return std::unexpected(doc.error().format());
 
     auto root = doc->root();
@@ -450,14 +450,14 @@ using JsonVal = cc::utils::json::JsonVal;
 } // namespace detail
 
 /// Factory: create TodoWriteTool wrapped as ITool for registry integration
-[[nodiscard]] auto make_todo_write_tool() -> std::unique_ptr<cc::core::ITool> {
-    struct Adapter final : cc::core::ITool {
-        cc::core::ToolDefinition def_{
+[[nodiscard]] auto make_todo_write_tool() -> std::unique_ptr<loom::core::ITool> {
+    struct Adapter final : loom::core::ITool {
+        loom::core::ToolDefinition def_{
             .name = std::string(TodoWriteTool::name),
             .description = std::string(TodoWriteTool::description),
-            .input_schema = cc::core::InputSchema{
+            .input_schema = loom::core::InputSchema{
                 .properties = {
-                    cc::core::SchemaProperty{
+                    loom::core::SchemaProperty{
                         .name = "todos",
                         .type = "array",
                         .description = "Array of todo items with id, content, status, priority",
@@ -465,7 +465,7 @@ using JsonVal = cc::utils::json::JsonVal;
                         .default_value = std::nullopt,
                         .enum_values = std::nullopt
                     },
-                    cc::core::SchemaProperty{
+                    loom::core::SchemaProperty{
                         .name = "merge",
                         .type = "boolean",
                         .description = "Merge with existing list by id (true) or replace all (false)",
@@ -473,7 +473,7 @@ using JsonVal = cc::utils::json::JsonVal;
                         .default_value = "false",
                         .enum_values = std::nullopt
                     },
-                    cc::core::SchemaProperty{
+                    loom::core::SchemaProperty{
                         .name = "agent_id",
                         .type = "string",
                         .description = "Runtime scope id injected for sub-agent todo isolation",
@@ -483,17 +483,17 @@ using JsonVal = cc::utils::json::JsonVal;
                     }
                 }
             },
-            .permission = cc::core::ToolPermission::ReadOnly,
+            .permission = loom::core::ToolPermission::ReadOnly,
             .category = "task_management"
         };
 
-        const cc::core::ToolDefinition& definition() const override { return def_; }
+        const loom::core::ToolDefinition& definition() const override { return def_; }
 
-        std::expected<cc::core::ToolResult, cc::core::Error> execute(const cc::core::ToolInput& input) override {
+        std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
             auto request = detail::parse_request(input.json());
             if (!request) {
-                return std::unexpected(cc::core::Error::make(
-                    cc::core::ErrorCode::InvalidInput,
+                return std::unexpected(loom::core::Error::make(
+                    loom::core::ErrorCode::InvalidInput,
                     request.error()));
             }
 
@@ -501,18 +501,18 @@ using JsonVal = cc::utils::json::JsonVal;
             if (result) {
                 auto msg = std::format("Todo list updated: {} total, {} added, {} updated, {} removed",
                     result->total_items, result->items_added, result->items_updated, result->items_removed);
-                return cc::core::ToolResult::success(std::move(msg));
+                return loom::core::ToolResult::success(std::move(msg));
             }
-            return std::unexpected(cc::core::Error::make(
-                cc::core::ErrorCode::ToolExecutionFailed,
+            return std::unexpected(loom::core::Error::make(
+                loom::core::ErrorCode::ToolExecutionFailed,
                 std::string(format_error(result.error()))));
         }
 
-        bool check_permission(const cc::core::ToolInput&) const override {
+        bool check_permission(const loom::core::ToolInput&) const override {
             return true;
         }
     };
     return std::make_unique<Adapter>();
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

@@ -11,7 +11,7 @@ export module loom.model.token_budget;
 import std;
 
 
-export namespace cc::utils::token_budget {
+export namespace loom::utils::token_budget {
 
 struct TokenBudgetPosition {
     std::size_t start{0};
@@ -296,4 +296,4 @@ private:
     size_t total_used_{0};
 };
 
-} // namespace cc::utils::token_budget
+} // namespace loom::utils::token_budget

@@ -15,7 +15,7 @@ export module loom.ui.messages.attachment_message;
 
 import std;
 
-export namespace cc::ui::messages::attachment_message {
+export namespace loom::ui::messages::attachment_message {
 using namespace ftxui;
 
 // ============================================================
@@ -407,4 +407,4 @@ inline std::vector<std::string> generate_default_thumbnail(
           });
 }
 
-} // namespace cc::ui::messages::attachment_message
+} // namespace loom::ui::messages::attachment_message

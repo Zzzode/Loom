@@ -13,9 +13,9 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// Defined in command_registry_init.cpp (module implementation unit).
 /// Registers all built-in commands into the given registry.
@@ -275,4 +275,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

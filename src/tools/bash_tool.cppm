@@ -36,18 +36,18 @@ import loom.tools.path_validation;
 import loom.tools.readonly_validation;
 import loom.tools.should_use_sandbox;
 
-export namespace cc::tools::bash {
+export namespace loom::tools::bash {
 
-using cc::core::Tool;
-using cc::core::ToolInput;
-using cc::core::ToolResult;
-using cc::core::ToolDefinition;
-using cc::core::ToolPermission;
-using cc::core::InputSchema;
-using cc::core::SchemaProperty;
-using cc::utils::async::EventLoop;
-using cc::utils::async::Task;
-using cc::utils::Result;
+using loom::core::Tool;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
+using loom::core::ToolDefinition;
+using loom::core::ToolPermission;
+using loom::core::InputSchema;
+using loom::core::SchemaProperty;
+using loom::utils::async::EventLoop;
+using loom::utils::async::Task;
+using loom::utils::Result;
 
 // =========================================================================
 // Bash Tool Configuration and Types
@@ -88,7 +88,7 @@ struct BashToolInput {
 
     /// Parse from JSON using yyjson for proper escape handling
     static std::expected<BashToolInput, std::string> from_json(std::string_view json) {
-        using namespace cc::utils::json;
+        using namespace loom::utils::json;
         auto doc = parse(json);
         if (!doc) {
             return std::unexpected("Invalid JSON input");
@@ -277,11 +277,11 @@ struct ShellInvocation {
 }
 
 [[nodiscard]] ShellInvocation build_shell_invocation(const BashToolInput& input) {
-    auto provider = cc::utils::shell_providers::create_default_provider();
+    auto provider = loom::utils::shell_providers::create_default_provider();
     auto id = next_shell_invocation_id();
     const auto use_sandbox = should_use_sandbox(input.command) && !input.dangerously_disable_sandbox;
     auto sandbox_tmp = use_sandbox ? create_sandbox_tmp_dir(id) : std::optional<std::string>{};
-    cc::utils::shell_providers::BuildExecOptions opts{
+    loom::utils::shell_providers::BuildExecOptions opts{
         .id = id,
         .sandbox_tmp_dir = sandbox_tmp,
         .use_sandbox = use_sandbox && sandbox_tmp.has_value(),
@@ -361,7 +361,7 @@ void close_if_open(int& fd) noexcept {
 
 [[nodiscard]] bool agent_cancel_requested(const BashToolInput& input) {
     return input.agent_id &&
-        cc::tools::agent_runtime::native_agent_store().is_cancel_requested(*input.agent_id);
+        loom::tools::agent_runtime::native_agent_store().is_cancel_requested(*input.agent_id);
 }
 
 inline void append_background_output(BackgroundTaskState& state, std::string_view data) {
@@ -855,14 +855,14 @@ inline void drain_all_background_tasks() {
         "echo", "tee", "sed", "awk", "touch", "mkdir", "rmdir", "cp", "mv", "ln"
     };
     if (kWriteCmds.contains(base_cmd)) {
-        if (cc::tools::bash_validation::is_destructive_command(command)) {
+        if (loom::tools::bash_validation::is_destructive_command(command)) {
             return CommandType::Dangerous;
         }
         return CommandType::Write;
     }
 
     // (3) Check for dangerous patterns (uses regex table from Agent 3 module)
-    if (cc::tools::bash_validation::is_destructive_command(command)) {
+    if (loom::tools::bash_validation::is_destructive_command(command)) {
         return CommandType::Dangerous;
     }
 
@@ -1005,10 +1005,10 @@ public:
                 const bool allow_file_writes =
                     (permission_mode_ == PermissionMode::AutoAllow ||
                      permission_mode_ == PermissionMode::YoloMode);
-                auto decision = cc::tools::sed_validation::check_sed_constraints(
+                auto decision = loom::tools::sed_validation::check_sed_constraints(
                     parsed->command, allow_file_writes);
                 if (decision.decision ==
-                    cc::tools::sed_validation::SedSafetyDecision::Ask) {
+                    loom::tools::sed_validation::SedSafetyDecision::Ask) {
                     return permission_mode_ == PermissionMode::YoloMode;
                 }
             }
@@ -1016,15 +1016,15 @@ public:
 
         // Use the bash_permissions engine for the authoritative classification.
         auto perm_mode = to_permission_mode(permission_mode_);
-        auto level = cc::tools::check_bash_permission(parsed->command, perm_mode);
+        auto level = loom::tools::check_bash_permission(parsed->command, perm_mode);
 
         switch (level) {
-            case cc::tools::BashPermissionLevel::Blocked:
+            case loom::tools::BashPermissionLevel::Blocked:
                 return false;
-            case cc::tools::BashPermissionLevel::NeedsApproval:
+            case loom::tools::BashPermissionLevel::NeedsApproval:
                 // In YoloMode we auto-allow even needs-approval commands.
                 return permission_mode_ == PermissionMode::YoloMode;
-            case cc::tools::BashPermissionLevel::Allowed:
+            case loom::tools::BashPermissionLevel::Allowed:
                 return true;
         }
         return false;
@@ -1034,8 +1034,8 @@ public:
     [[nodiscard]] bool requires_confirmation(std::string_view command) const {
         if (permission_mode_ == PermissionMode::YoloMode) return false;
         auto perm_mode = to_permission_mode(permission_mode_);
-        auto level = cc::tools::check_bash_permission(command, perm_mode);
-        return level == cc::tools::BashPermissionLevel::NeedsApproval;
+        auto level = loom::tools::check_bash_permission(command, perm_mode);
+        return level == loom::tools::BashPermissionLevel::NeedsApproval;
     }
     
     /// Validate working directory is within allowed paths
@@ -1051,8 +1051,8 @@ public:
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
         auto parsed_input = BashToolInput::from_json(input.json());
         if (!parsed_input) {
-            return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::invalid_argument,
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::invalid_argument,
                 parsed_input.error()
             ));
         }
@@ -1064,8 +1064,8 @@ public:
     [[nodiscard]] Task<Result<ToolResult>> execute_async(const ToolInput& input) {
         auto parsed_input = BashToolInput::from_json(input.json());
         if (!parsed_input) {
-            co_return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::invalid_argument,
+            co_return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::invalid_argument,
                 parsed_input.error()
             ));
         }
@@ -1079,14 +1079,14 @@ private:
     detail::BashProgressCallback progress_callback_;
 
     /// Convert BashTool::PermissionMode to bash_permissions engine mode.
-    [[nodiscard]] static cc::tools::PermissionMode to_permission_mode(
+    [[nodiscard]] static loom::tools::PermissionMode to_permission_mode(
         PermissionMode mode) noexcept {
         switch (mode) {
-            case PermissionMode::Ask:        return cc::tools::PermissionMode::Strict;
-            case PermissionMode::AutoAllow:  return cc::tools::PermissionMode::Normal;
-            case PermissionMode::YoloMode:   return cc::tools::PermissionMode::Permissive;
+            case PermissionMode::Ask:        return loom::tools::PermissionMode::Strict;
+            case PermissionMode::AutoAllow:  return loom::tools::PermissionMode::Normal;
+            case PermissionMode::YoloMode:   return loom::tools::PermissionMode::Permissive;
         }
-        return cc::tools::PermissionMode::Normal;
+        return loom::tools::PermissionMode::Normal;
     }
     
     /// Internal synchronous execution
@@ -1132,7 +1132,7 @@ private:
             // migrated: interpret exit codes via command_semantics rules.
             // Many tools (grep, find, diff, test, ...) use exit 1 to signal
             // "no match / different / false" rather than a genuine failure.
-            const auto interpreted = cc::tools::interpret_command_result(
+            const auto interpreted = loom::tools::interpret_command_result(
                 input.command, output.exit_code, output.out, output.err);
             if (interpreted.message) {
                 output.return_code_interpretation = *std::move(interpreted.message);
@@ -1172,7 +1172,7 @@ private:
         const auto dur_ms = static_cast<std::uint64_t>(
             std::max<std::int64_t>(0, std::chrono::duration_cast<
                 std::chrono::milliseconds>(output.duration_ms).count()));
-        [[maybe_unused]] const auto info = cc::tools::bash::make_result_info(
+        [[maybe_unused]] const auto info = loom::tools::bash::make_result_info(
             std::string(command),
             output.exit_code,
             dur_ms,
@@ -1230,26 +1230,26 @@ private:
     }
 };
 
-} // namespace cc::tools::bash
+} // namespace loom::tools::bash
 
 // Export main tool class
-export namespace cc::tools {
-    using cc::tools::bash::BashTool;
+export namespace loom::tools {
+    using loom::tools::bash::BashTool;
 
     /// Factory: create BashTool wrapped as ITool (adapts Result types across modules)
-    [[nodiscard]] auto make_bash_tool() -> std::unique_ptr<cc::core::ITool> {
-        struct Adapter final : cc::core::ITool {
+    [[nodiscard]] auto make_bash_tool() -> std::unique_ptr<loom::core::ITool> {
+        struct Adapter final : loom::core::ITool {
             BashTool tool_;
-            cc::core::ToolDefinition def_ = BashTool::definition();
+            loom::core::ToolDefinition def_ = BashTool::definition();
 
-            const cc::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<cc::core::ToolResult, cc::core::Error> execute(const cc::core::ToolInput& input) override {
+            const loom::core::ToolDefinition& definition() const override { return def_; }
+            std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
                 auto result = tool_.execute(input);
                 if (result) return std::move(*result);
-                return std::unexpected(cc::core::Error::make(
-                    cc::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+                return std::unexpected(loom::core::Error::make(
+                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
             }
-            bool check_permission(const cc::core::ToolInput& input) const override {
+            bool check_permission(const loom::core::ToolInput& input) const override {
                 return tool_.check_permission(input);
             }
         };

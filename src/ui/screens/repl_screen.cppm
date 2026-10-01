@@ -58,12 +58,12 @@ import loom.ui.screens.task_view_store;  // SpinnerMode
 import loom.ui.screens.chrome_store;     // StatusBarData
 
 // Core engine types (ImageBlock in the stash signatures; only named
-// globally qualified as ::cc::core::ImageBlock).
+// globally qualified as ::loom::core::ImageBlock).
 import loom.types.types;  // arch-check: keep-import
 // UnseenDivider used by RenderMessages / ComputeUnseenDivider.
 import loom.ui.messages.messages_list;
 // StreamingMarkdown pointer in surviving declarations (only named
-// globally qualified as ::cc::ui::StreamingMarkdown*).
+// globally qualified as ::loom::ui::StreamingMarkdown*).
 import loom.ui.visual.markdown;  // arch-check: keep-import
 // AgentCardData is a member type of AgentMenuOptions.
 import loom.ui.features.agents.agent_cards;
@@ -81,7 +81,7 @@ import loom.ui.features.agents.agent_cards;
 //   cc.ui.{design.dialog,hooks.hooks_ui,permissions.permission_views,
 //          agents.agent_editor,tasks.task_list_ui,markdown,terminal}
 
-export namespace cc::ui::repl_screen {
+export namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 // =========================================================
@@ -124,7 +124,7 @@ namespace unseen_detail {
 }  // namespace unseen_detail
 
 /// Compute the UnseenDivider from state.messages_store.divider_index + messages.
-[[nodiscard]] std::optional<::cc::ui::messages_list::UnseenDivider>
+[[nodiscard]] std::optional<::loom::ui::messages_list::UnseenDivider>
 ComputeUnseenDivider(const ReplScreenState& s);
 
 /// Project state.messages_store.messages, appending the active local-jsx command rows.
@@ -139,7 +139,7 @@ ComputeUnseenDivider(const ReplScreenState& s);
     int sel = -1, int vlines = 40,
     int offs = 0, bool pinned = true,
     int spinner_frame = 0,
-    std::optional<cc::ui::messages_list::UnseenDivider> unseen_divider =
+    std::optional<loom::ui::messages_list::UnseenDivider> unseen_divider =
         std::nullopt,
     Elements leading_elements = {},
     bool is_brief_mode = false,
@@ -154,7 +154,7 @@ ComputeUnseenDivider(const ReplScreenState& s);
     // Clear-session callback for session-expired error cards.
     std::function<void()> on_clear_session = nullptr,
     // StreamingMarkdown stable-prefix cache for the streaming-text tail row.
-    ::cc::ui::StreamingMarkdown* streaming_md = nullptr);
+    ::loom::ui::StreamingMarkdown* streaming_md = nullptr);
 
 /// Count '\n'-separated lines in text (minimum 1).
 [[nodiscard]] int CountTextLines(std::string_view text);
@@ -237,13 +237,13 @@ std::size_t ApplyPendingAtMentionInserts(
 /// Stash the current input text and cursor position (GAP 2).
 bool StashCurrentPrompt(
     const std::shared_ptr<ReplScreenState>& state,
-    std::unordered_map<int, ::cc::core::ImageBlock> pasted_images = {},
+    std::unordered_map<int, ::loom::core::ImageBlock> pasted_images = {},
     std::unordered_map<int, std::string> pasted_texts = {});
 
 /// Restore the stashed prompt; returns pasted maps via out-params.
 bool RestoreStashedPrompt(
     const std::shared_ptr<ReplScreenState>& state,
-    std::unordered_map<int, ::cc::core::ImageBlock>* out_images = nullptr,
+    std::unordered_map<int, ::loom::core::ImageBlock>* out_images = nullptr,
     std::unordered_map<int, std::string>* out_texts = nullptr);
 
 /// True when a stashed prompt exists (for UI notice rendering).
@@ -351,7 +351,7 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
 [[nodiscard]] Element RenderReplScreen(ReplScreenState& s,
     std::function<void()> on_retry = nullptr,
     std::function<void()> on_clear_session = nullptr,
-    ::cc::ui::StreamingMarkdown* streaming_md = nullptr);
+    ::loom::ui::StreamingMarkdown* streaming_md = nullptr);
 
 // =========================================================
 // Dialog routing: agent wizard / agents menu / settings / trust /
@@ -529,4 +529,4 @@ bool forward_tool_permission(
 /// Production: use externally-held shared_ptr<ReplScreenState> overload.
 [[nodiscard]] Component ReplScreen(ReplScreenCallbacks cbs);
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

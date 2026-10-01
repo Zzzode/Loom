@@ -9,7 +9,7 @@ module loom.query.query_engine;
 
 import std;
 
-namespace cc::core {
+namespace loom::core {
 
 [[nodiscard]] std::chrono::milliseconds QueryEngine::add_jitter(std::chrono::milliseconds base) {
     static thread_local std::mt19937 rng{std::random_device{}()};
@@ -31,4 +31,4 @@ namespace cc::core {
     return std::format("session_{}_{}", ms, generate_id().substr(0, 8));
 }
 
-} // namespace cc::core
+} // namespace loom::core

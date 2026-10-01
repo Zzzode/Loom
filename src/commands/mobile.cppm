@@ -14,7 +14,7 @@ import loom.commands.command;
 import loom.process.exec_sync;
 
 // Module-internal helpers (module linkage; intentionally not exported).
-namespace cc::commands {
+namespace loom::commands {
 
 // No first-party mobile app is published for this build, so there is no
 // store listing to open. (These ids belonged to the upstream vendor's apps;
@@ -24,19 +24,19 @@ inline constexpr std::string_view kAndroidUrl = "";
 
 inline void open_in_browser(std::string_view url) {
 #if defined(__APPLE__)
-    cc::utils::exec_sync_status("open " + std::string(url));
+    loom::utils::exec_sync_status("open " + std::string(url));
 #elif defined(__linux__)
-    cc::utils::exec_sync_status("xdg-open " + std::string(url));
+    loom::utils::exec_sync_status("xdg-open " + std::string(url));
 #else
     (void)url;
 #endif
 }
 
-} // namespace cc::commands
+} // namespace loom::commands
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 class MobileCommand {
 public:
@@ -88,4 +88,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

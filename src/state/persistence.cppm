@@ -21,12 +21,12 @@ import loom.state.app_state;
 import loom.serdes.json;
 import loom.utils.error;
 
-export namespace cc::state::persistence {
+export namespace loom::state::persistence {
 
 namespace fs = std::filesystem;
-using cc::utils::Error;
-using cc::utils::ErrorCode;
-using cc::utils::VoidResult;
+using loom::utils::Error;
+using loom::utils::ErrorCode;
+using loom::utils::VoidResult;
 
 // ============================================================
 // Schema versioning, migration & validation
@@ -38,7 +38,7 @@ inline constexpr int kCurrentStateSchemaVersion = 2;
 
 /// Read the schema_version field from a parsed root, defaulting to 1 for
 /// legacy blobs that predate versioning.
-[[nodiscard]] inline int detected_schema_version(cc::utils::json::JsonVal root) noexcept {
+[[nodiscard]] inline int detected_schema_version(loom::utils::json::JsonVal root) noexcept {
     auto v = root.get("schema_version");
     if (v && v.is_num()) return static_cast<int>(v.as_int());
     return 1;
@@ -68,17 +68,17 @@ inline int apply_state_migrations(AppState& state, int from_version) {
 [[nodiscard]] inline std::expected<AppState, Error>
 validate_state(const AppState& state) {
     if (state.selected_ip_agent_index < -1) {
-        return std::unexpected(cc::utils::make_error(
+        return std::unexpected(loom::utils::make_error(
             ErrorCode::invalid_argument,
             std::format("selected_ip_agent_index {} is below -1", state.selected_ip_agent_index)));
     }
     if (state.coordinator_task_index < -1) {
-        return std::unexpected(cc::utils::make_error(
+        return std::unexpected(loom::utils::make_error(
             ErrorCode::invalid_argument,
             std::format("coordinator_task_index {} is below -1", state.coordinator_task_index)));
     }
     if (state.total_cost_usd < 0.0) {
-        return std::unexpected(cc::utils::make_error(
+        return std::unexpected(loom::utils::make_error(
             ErrorCode::invalid_argument,
             std::format("total_cost_usd {} is negative", state.total_cost_usd)));
     }
@@ -94,10 +94,10 @@ validate_state(const AppState& state) {
 /// fall back to defaults; extra keys are ignored). The persisted set covers
 /// the user-preferences class of AppState fields; runtime/transient flags
 /// (is_loading, is_streaming, error_message, pending_*) and conversation
-/// history (covered by cc::session::history) are deliberately not persisted.
+/// history (covered by loom::session::history) are deliberately not persisted.
 [[nodiscard]] inline std::expected<std::string, Error> serialize_state(const AppState& state) {
     try {
-        cc::utils::json::JsonMutDoc doc;
+        loom::utils::json::JsonMutDoc doc;
         auto root = doc.object();
 
         auto add_opt_str = [&doc, &root](const char* key, const std::optional<std::string>& val) {
@@ -136,7 +136,7 @@ validate_state(const AppState& state) {
         doc.set_root(root);
         return doc.to_string();
     } catch (const std::exception& e) {
-        return std::unexpected(cc::utils::make_error(
+        return std::unexpected(loom::utils::make_error(
             ErrorCode::internal_error,
             std::format("Failed to serialize state: {}", e.what())
         ));
@@ -148,7 +148,7 @@ validate_state(const AppState& state) {
 /// absent key falls back to the default from get_default_app_state().
 [[nodiscard]] inline std::expected<AppState, Error> deserialize_state(const std::string& json_str) {
     try {
-        auto json_result = cc::utils::json::parse(json_str);
+        auto json_result = loom::utils::json::parse(json_str);
         if (!json_result) {
             return std::unexpected(json_result.error());
         }
@@ -190,7 +190,7 @@ validate_state(const AppState& state) {
         if (!validated) return std::unexpected(validated.error());
         return *validated;
     } catch (const std::exception& e) {
-        return std::unexpected(cc::utils::make_error(
+        return std::unexpected(loom::utils::make_error(
             ErrorCode::internal_error,
             std::format("Failed to deserialize state: {}", e.what())
         ));
@@ -246,7 +246,7 @@ public:
             // crash that happens between flush and rename.
             const int fd = ::open(temp_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
             if (fd < 0) {
-                return std::unexpected(cc::utils::make_error(
+                return std::unexpected(loom::utils::make_error(
                     ErrorCode::internal_error,
                     std::format("Failed to open state file for writing: {}", temp_path.string())
                 ));
@@ -278,7 +278,7 @@ public:
             if (write_failed) {
                 std::error_code ignore_ec;
                 fs::remove(temp_path, ignore_ec);
-                return std::unexpected(cc::utils::make_error(
+                return std::unexpected(loom::utils::make_error(
                     ErrorCode::internal_error,
                     "Failed to write/fsync state file"
                 ));
@@ -301,7 +301,7 @@ public:
             last_save_time_ = std::chrono::system_clock::now();
             return {};
         } catch (const std::exception& e) {
-            return std::unexpected(cc::utils::make_error(
+            return std::unexpected(loom::utils::make_error(
                 ErrorCode::internal_error,
                 std::format("Failed to save state: {}", e.what())
             ));
@@ -321,7 +321,7 @@ public:
             // Read file
             std::ifstream file(state_file_path_, std::ios::binary);
             if (!file) {
-                return std::unexpected(cc::utils::make_error(
+                return std::unexpected(loom::utils::make_error(
                     ErrorCode::internal_error,
                     std::format("Failed to open state file for reading: {}", state_file_path_.string())
                 ));
@@ -332,7 +332,7 @@ public:
             
             return deserialize_state(json_str);
         } catch (const std::exception& e) {
-            return std::unexpected(cc::utils::make_error(
+            return std::unexpected(loom::utils::make_error(
                 ErrorCode::internal_error,
                 std::format("Failed to load state: {}", e.what())
             ));
@@ -388,7 +388,7 @@ public:
             last_save_time_.reset();
             return {};
         } catch (const std::exception& e) {
-            return std::unexpected(cc::utils::make_error(
+            return std::unexpected(loom::utils::make_error(
                 ErrorCode::internal_error,
                 std::format("Failed to delete state file: {}", e.what())
             ));
@@ -406,4 +406,4 @@ public:
     return home / ".loom" / "state" / "app_state.json";
 }
 
-} // namespace cc::state::persistence
+} // namespace loom::state::persistence

@@ -16,14 +16,14 @@ import std;
 import loom.utils.error;
 import loom.process.async;
 
-export namespace cc::utils::process {
+export namespace loom::utils::process {
 
-using cc::utils::Error;
-using cc::utils::ErrorCode;
-using cc::utils::Result;
-using cc::utils::VoidResult;
-using cc::utils::async::EventLoop;
-using cc::utils::async::Task;
+using loom::utils::Error;
+using loom::utils::ErrorCode;
+using loom::utils::Result;
+using loom::utils::VoidResult;
+using loom::utils::async::EventLoop;
+using loom::utils::async::Task;
 
 
 struct ProcessOptions {
@@ -303,4 +303,4 @@ private:
     std::deque<PendingJob> pending_;
 };
 
-} // namespace cc::utils::process
+} // namespace loom::utils::process

@@ -10,7 +10,7 @@ export module loom.text.string;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 /// Trim whitespace from start of string
 [[nodiscard]] inline std::string LTrim(std::string_view str) {
@@ -167,4 +167,4 @@ namespace string {
 [[nodiscard]] inline std::string truncate(std::string_view str, size_t max_length = 100, std::string_view ellipsis = "...") { return Truncate(str, max_length, ellipsis); }
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

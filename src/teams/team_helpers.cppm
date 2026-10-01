@@ -19,7 +19,7 @@ import std;
 import loom.serdes.json;
 import loom.fs.atomic_replace;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
 
@@ -576,7 +576,7 @@ namespace detail {
 }
 
 [[nodiscard]] inline std::optional<std::string> json_optional_string(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key
 ) {
     auto value = object.get(key);
@@ -766,19 +766,19 @@ inline std::expected<std::vector<TeammateMessage>, std::string> read_inbox(
     // FIFO/socket/device swapped over the leaf never blocks (c16a closes the
     // stat-gate-then-reopen TOCTOU). A missing or non-regular/unreadable
     // file both read as the historical empty inbox.
-    const auto leaf = cc::utils::read_regular_file(inbox_path);
+    const auto leaf = loom::utils::read_regular_file(inbox_path);
     if (!leaf.present()) {
         return std::vector<TeammateMessage>{};
     }
 
-    auto parsed = cc::utils::json::parse(leaf.contents);
+    auto parsed = loom::utils::json::parse(leaf.contents);
     if (!parsed) return std::unexpected(parsed.error().format());
     auto root = parsed->root();
     if (!root.is_arr()) return std::unexpected("teammate inbox must be a JSON array");
 
     std::vector<TeammateMessage> messages;
     messages.reserve(root.size());
-    root.iter([&](cc::utils::json::JsonVal item) {
+    root.iter([&](loom::utils::json::JsonVal item) {
         if (!item.is_obj()) return;
         auto from = item.get("from");
         auto text = item.get("text");
@@ -900,7 +900,7 @@ namespace detail {
 
 /// Parse one members[] row from config.json (camelCase keys from teamHelpers.ts).
 [[nodiscard]] inline std::optional<TeamMemberRecord> parse_team_member(
-    const cc::utils::json::JsonVal& value
+    const loom::utils::json::JsonVal& value
 ) {
     if (!value.is_obj()) return std::nullopt;
     const auto agent_id = value.get("agentId");
@@ -926,7 +926,7 @@ namespace detail {
     member.worktree_path = json_optional_string(value, "worktreePath");
     member.session_id = json_optional_string(value, "sessionId");
     if (const auto subs = value.get("subscriptions"); subs.is_arr()) {
-        subs.iter([&](cc::utils::json::JsonVal item) {
+        subs.iter([&](loom::utils::json::JsonVal item) {
             if (item.is_str()) member.subscriptions.emplace_back(item.as_str());
         });
     }
@@ -955,10 +955,10 @@ inline std::optional<TeamFileRecord> read_team_file(std::string_view team_name) 
     // symlink is never followed and a swapped FIFO never blocks.
     ScopedInboxLock flock(path, LockKind::Shared);
     if (!flock.locked()) return std::nullopt;
-    const auto leaf = cc::utils::read_regular_file(path);
+    const auto leaf = loom::utils::read_regular_file(path);
     if (!leaf.present()) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse(leaf.contents);
+    auto parsed = loom::utils::json::parse(leaf.contents);
     if (!parsed) return std::nullopt;
     const auto root = parsed->root();
     if (!root.is_obj()) return std::nullopt;
@@ -974,12 +974,12 @@ inline std::optional<TeamFileRecord> read_team_file(std::string_view team_name) 
     file.lead_agent_id = std::string(lead.as_str());
     file.lead_session_id = detail::json_optional_string(root, "leadSessionId");
     if (const auto hidden = root.get("hiddenPaneIds"); hidden.is_arr()) {
-        hidden.iter([&](cc::utils::json::JsonVal item) {
+        hidden.iter([&](loom::utils::json::JsonVal item) {
             if (item.is_str()) file.hidden_pane_ids.emplace_back(item.as_str());
         });
     }
     if (const auto members = root.get("members"); members.is_arr()) {
-        members.iter([&](cc::utils::json::JsonVal item) {
+        members.iter([&](loom::utils::json::JsonVal item) {
             if (auto member = detail::parse_team_member(item)) {
                 file.members.push_back(std::move(*member));
             }
@@ -1110,4 +1110,4 @@ inline std::optional<InitialTeamContext> compute_initial_team_context_from_env()
         agent_id ? std::optional<std::string_view>{*agent_id} : std::nullopt);
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

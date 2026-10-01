@@ -17,9 +17,9 @@ import loom.commands.command;
 import loom.skills.skill;
 import loom.skills.load_skills_dir;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================================
 // Data-prep row types (Phase 4 FTXUI table rendering)
@@ -86,7 +86,7 @@ public:
     /// Collect all installed skills as rows, using SkillLoader::discover_all
     /// (from cc.skills.skill) and bundled skills from cc.skills.bundled.
     static void add_context_skill_path(
-        cc::skills::SkillLoader& loader,
+        loom::skills::SkillLoader& loader,
         std::string_view cwd) {
         if (!cwd.empty()) {
             loader.add_search_path(std::filesystem::path(std::string(cwd)) /
@@ -99,7 +99,7 @@ public:
         std::vector<SkillListRow> rows;
 
         // 1. User-discovered skills via SkillLoader
-        cc::skills::SkillLoader loader;
+        loom::skills::SkillLoader loader;
         add_context_skill_path(loader, cwd);
         auto discovered = loader.discover_all();
         if (discovered) {
@@ -121,8 +121,8 @@ public:
         }
 
         // 2. Skills discovered via load_skills_dir (manifest-based discovery)
-        for (const auto& path : cc::skills::get_skills_search_paths()) {
-            auto manifests = cc::skills::load_skills_directory(path);
+        for (const auto& path : loom::skills::get_skills_search_paths()) {
+            auto manifests = loom::skills::load_skills_directory(path);
             for (const auto& m : manifests) {
                 // Avoid duplicates (skill may appear in both paths)
                 if (std::ranges::find_if(rows, [&](const SkillListRow& r) {
@@ -162,7 +162,7 @@ public:
         std::string_view name,
         std::string_view cwd = {}) {
         std::vector<SkillTriggerRow> rows;
-        cc::skills::SkillLoader loader;
+        loom::skills::SkillLoader loader;
         add_context_skill_path(loader, cwd);
         auto discovered = loader.discover_all();
         if (!discovered) return rows;
@@ -177,9 +177,9 @@ public:
     }
 
     /// Return SkillDefinition by name (or nullopt if not found).
-    [[nodiscard]] static std::optional<cc::skills::SkillDefinition>
+    [[nodiscard]] static std::optional<loom::skills::SkillDefinition>
     find_skill_definition(std::string_view name, std::string_view cwd = {}) {
-        cc::skills::SkillLoader loader;
+        loom::skills::SkillLoader loader;
         add_context_skill_path(loader, cwd);
         auto discovered = loader.discover_all();
         if (!discovered) return std::nullopt;
@@ -188,9 +188,9 @@ public:
         if (it != discovered->end()) return *it;
 
         // Fallback to manifest-based search
-        auto manifest = cc::skills::find_skill_by_name(name);
+        auto manifest = loom::skills::find_skill_by_name(name);
         if (manifest) {
-            cc::skills::SkillDefinition def;
+            loom::skills::SkillDefinition def;
             def.name = manifest->name;
             def.description = manifest->description;
             if (manifest->version) def.version = *manifest->version;
@@ -341,11 +341,11 @@ private:
         // Invalidate the unified SkillRegistry cache so subsequent
         // all_skills() / autocomplete queries rebuild from scratch.
         // TS REF: src/commands.ts L538 — clearSkillCaches() called on reload.
-        cc::skills::SkillRegistry::instance().invalidate();
-        cc::skills::clear_skill_caches();
+        loom::skills::SkillRegistry::instance().invalidate();
+        loom::skills::clear_skill_caches();
 
         // Invalidate any caches by re-running discover_all + manifests.
-        cc::skills::SkillLoader loader;
+        loom::skills::SkillLoader loader;
         auto discovered = loader.discover_all();
 
         // Deduplicate estimate: use set of names
@@ -353,8 +353,8 @@ private:
         if (discovered) {
             for (const auto& d : *discovered) names.insert(d.name);
         }
-        for (const auto& path : cc::skills::get_skills_search_paths()) {
-            for (const auto& m : cc::skills::load_skills_directory(path))
+        for (const auto& path : loom::skills::get_skills_search_paths()) {
+            for (const auto& m : loom::skills::load_skills_directory(path))
                 names.insert(m.name);
         }
 
@@ -377,10 +377,10 @@ private:
         }
 
         // 1. Scan the import directory
-        auto manifests = cc::skills::load_skills_directory(fs::path(dir_path));
+        auto manifests = loom::skills::load_skills_directory(fs::path(dir_path));
         if (manifests.empty()) {
             // Try SkillLoader markdown parsing as well
-            cc::skills::SkillLoader loader;
+            loom::skills::SkillLoader loader;
             auto direct = loader.load_from_directory(fs::path(dir_path));
             std::size_t count = direct ? direct->size() : 0;
             if (count == 0) {
@@ -407,4 +407,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

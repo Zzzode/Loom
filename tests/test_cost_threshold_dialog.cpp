@@ -36,7 +36,7 @@ import loom.ui.dialogs.cost_threshold_dialog;
 namespace {
 
 namespace fs = std::filesystem;
-namespace ct = cc::ui::dialogs::cost_threshold;
+namespace ct = loom::ui::dialogs::cost_threshold;
 
 // ============================================================
 // Helpers

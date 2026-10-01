@@ -8,7 +8,7 @@ import std;
 
 import loom.net.http.http;
 
-export namespace cc::cli {
+export namespace loom::cli {
 
 // Session info returned by the CCR client
 struct CcrSessionInfo {
@@ -53,22 +53,22 @@ struct CcrHttpResponse {
 using CcrHttpTransport = std::function<std::expected<CcrHttpResponse, std::string>(const CcrHttpRequest&)>;
 
 inline std::expected<CcrHttpResponse, std::string> default_ccr_http_transport(const CcrHttpRequest& request) {
-    cc::utils::HttpConfig config;
+    loom::utils::HttpConfig config;
     config.timeout_ms = static_cast<uint32_t>(std::max(request.connect_timeout_ms, request.read_timeout_ms));
     config.max_retries = 0;
     if (auto it = request.headers.find("User-Agent"); it != request.headers.end()) {
         config.user_agent = it->second;
     }
 
-    cc::utils::HttpClient client(std::move(config));
-    std::expected<cc::utils::HttpResponse, cc::utils::HttpError> response;
+    loom::utils::HttpClient client(std::move(config));
+    std::expected<loom::utils::HttpResponse, loom::utils::HttpError> response;
     if (request.method == "POST") {
         if (request.stream_callback) {
             auto streamed = client.post_stream_sse(
                 request.url,
                 request.body,
                 request.headers,
-                [&](const cc::utils::SseEvent& event) {
+                [&](const loom::utils::SseEvent& event) {
                     const bool is_final = event.data == "[DONE]";
                     request.stream_callback(event.data, is_final);
                 });
@@ -470,4 +470,4 @@ private:
     CcrHttpTransport http_transport_{default_ccr_http_transport};
 };
 
-} // namespace cc::cli
+} // namespace loom::cli

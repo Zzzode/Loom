@@ -15,7 +15,7 @@ import loom.tools.script_types;
 import loom.tools.tool_display_names;
 import loom.process.bash.bash_execution;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 enum class ScriptError {
     EmptyScript,
@@ -110,7 +110,7 @@ public:
 
         auto cmd = build_sandboxed_command(*interpreter, tmp_path, request.limits);
 
-        FILE* pipe = cc::utils::bash::popen_spawn(cmd.c_str());
+        FILE* pipe = loom::utils::bash::popen_spawn(cmd.c_str());
         if (!pipe) {
             std::filesystem::remove(tmp_path);
             return std::unexpected(ScriptError::InterpreterNotFound);
@@ -122,7 +122,7 @@ public:
             output.append(buffer.data(), bytes);
             if (output.size() > request.limits.max_output_bytes) break;
         }
-        int status = cc::utils::bash::pclose_spawn(pipe);
+        int status = loom::utils::bash::pclose_spawn(pipe);
 
         std::filesystem::remove(tmp_path);
 
@@ -144,13 +144,13 @@ public:
 
             // Pretty-print diagnostics via unified format_diagnostics formatter.
             if (!result.diagnostics.empty()) {
-                ::cc::tools::FormatDiagnosticOptions fopts;
+                ::loom::tools::FormatDiagnosticOptions fopts;
                 fopts.max_display    = 200;
                 fopts.use_colors     = true;
                 fopts.align_messages = true;
                 fopts.show_snippets  = false;
                 if (!result.errors.empty()) result.errors += "\n";
-                result.errors += ::cc::tools::format_diagnostics(result.diagnostics, fopts);
+                result.errors += ::loom::tools::format_diagnostics(result.diagnostics, fopts);
             }
         }
 
@@ -202,7 +202,7 @@ private:
             return diags;
         }
 
-        using namespace cc::tools::script_typecheck;
+        using namespace loom::tools::script_typecheck;
         TypecheckOptions opts;
         opts.code                = std::string(code);
         opts.preamble_line_count = 0;
@@ -230,4 +230,4 @@ private:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

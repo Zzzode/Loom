@@ -54,10 +54,10 @@ import loom.serdes.json;
 // bash_execution — for AzureCliCredential shell-out.
 import loom.process.bash.bash_execution;
 
-export namespace cc::services::auth::azure {
+export namespace loom::services::auth::azure {
 
-using cc::utils::Error;
-using cc::utils::Result;
+using loom::utils::Error;
+using loom::utils::Result;
 using namespace std::chrono;
 using namespace std::string_view_literals;
 
@@ -93,7 +93,7 @@ inline constexpr std::string_view kFoundryScopeForImds = kFoundryDefaultScope;
 // Override via AZURE_AUTHORITY_HOST.
 // ---------------------------------------------------------------------------
 [[nodiscard]] inline std::string authority_host() {
-    using cc::utils::env::get_env;
+    using loom::utils::env::get_env;
     auto host = get_env("AZURE_AUTHORITY_HOST");
     if (host && !host->empty()) {
         // strip trailing slash for consistency
@@ -115,8 +115,8 @@ namespace detail {
     const std::string& tenant_id,
     std::string_view form_body,
     std::chrono::milliseconds timeout_ms = 5s) {
-    using namespace cc::utils::json;
-    using namespace cc::utils::http;
+    using namespace loom::utils::json;
+    using namespace loom::utils::http;
 
     const std::string path = "/" + tenant_id + "/oauth2/v2.0/token";
     // authority is either login.microsoftonline.com or login.microsoftonline.us
@@ -136,16 +136,16 @@ namespace detail {
                          std::string(form_body),
                          "application/x-www-form-urlencoded");
     if (!resp) {
-        return std::unexpected(Error(cc::utils::ErrorCode::network_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::network_error,
             "Azure: no response from " + scheme_host + url_path));
     }
     if (resp->status < 200 || resp->status >= 300) {
-        return std::unexpected(Error(cc::utils::ErrorCode::permission_denied,
+        return std::unexpected(Error(loom::utils::ErrorCode::permission_denied,
             "Azure: token endpoint HTTP " + std::to_string(resp->status)));
     }
     auto parsed = parse(resp->body);
     if (!parsed) {
-        return std::unexpected(Error(cc::utils::ErrorCode::parse_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::parse_error,
                                  "Azure: invalid token JSON"));
     }
     auto root = parsed->root();
@@ -155,7 +155,7 @@ namespace detail {
     if (expires_in <= 0) expires_in = 3600;
     at.expires_on = system_clock::now() + seconds(expires_in);
     if (at.token.empty()) {
-        return std::unexpected(Error(cc::utils::ErrorCode::parse_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::parse_error,
                                  "Azure: response missing access_token"));
     }
     return at;
@@ -170,8 +170,8 @@ namespace detail {
 // ---------------------------------------------------------------------------
 [[nodiscard]] inline std::optional<Result<AccessToken>>
 try_environment_credential(std::string_view scope = kFoundryDefaultScope) {
-    using cc::utils::env::get_env;
-    using namespace cc::utils::http;
+    using loom::utils::env::get_env;
+    using namespace loom::utils::http;
     auto tenant = get_env("AZURE_TENANT_ID");
     auto cid = get_env("AZURE_CLIENT_ID");
     auto secret = get_env("AZURE_CLIENT_SECRET");
@@ -183,7 +183,7 @@ try_environment_credential(std::string_view scope = kFoundryDefaultScope) {
     if (get_env("AZURE_CLIENT_CERTIFICATE_PATH") &&
         !get_env("AZURE_CLIENT_CERTIFICATE_PATH")->empty()) {
         return std::optional<Result<AccessToken>>(std::unexpected(Error(
-            cc::utils::ErrorCode::unimplemented,
+            loom::utils::ErrorCode::unimplemented,
             "Azure: AZURE_CLIENT_CERTIFICATE_PATH is not supported by the C++ "
             "DefaultAzureCredential-lite.  Use client_secret or the azureAuthRefresh "
             "shell setting instead.")));
@@ -191,7 +191,7 @@ try_environment_credential(std::string_view scope = kFoundryDefaultScope) {
     if ((get_env("AZURE_USERNAME") && !get_env("AZURE_USERNAME")->empty()) ||
         (get_env("AZURE_PASSWORD") && !get_env("AZURE_PASSWORD")->empty())) {
         return std::optional<Result<AccessToken>>(std::unexpected(Error(
-            cc::utils::ErrorCode::unimplemented,
+            loom::utils::ErrorCode::unimplemented,
             "Azure: AZURE_USERNAME / AZURE_PASSWORD (ROPC) is not supported.")));
     }
     std::string body;
@@ -212,8 +212,8 @@ try_environment_credential(std::string_view scope = kFoundryDefaultScope) {
 [[nodiscard]] inline std::optional<Result<AccessToken>>
 try_workload_identity_credential(
     std::string_view scope = kFoundryDefaultScope) {
-    using cc::utils::env::get_env;
-    using namespace cc::utils::http;
+    using loom::utils::env::get_env;
+    using namespace loom::utils::http;
     auto tenant = get_env("AZURE_TENANT_ID");
     auto cid = get_env("AZURE_CLIENT_ID");
     auto tok_file = get_env("AZURE_FEDERATED_TOKEN_FILE");
@@ -224,7 +224,7 @@ try_workload_identity_credential(
     std::ifstream f(*tok_file);
     if (!f) {
         return std::optional<Result<AccessToken>>(std::unexpected(Error(
-            cc::utils::ErrorCode::io_error,
+            loom::utils::ErrorCode::io_error,
             "Azure WorkloadIdentity: cannot open AZURE_FEDERATED_TOKEN_FILE '" +
             *tok_file + "'")));
     }
@@ -237,7 +237,7 @@ try_workload_identity_credential(
     }
     if (jwt.empty()) {
         return std::optional<Result<AccessToken>>(std::unexpected(Error(
-            cc::utils::ErrorCode::invalid_argument,
+            loom::utils::ErrorCode::invalid_argument,
             "Azure WorkloadIdentity: token file empty")));
     }
     std::string body;
@@ -258,8 +258,8 @@ try_workload_identity_credential(
 // ---------------------------------------------------------------------------
 [[nodiscard]] inline std::optional<Result<AccessToken>>
 try_azure_cli_credential(std::string_view scope = kFoundryDefaultScope) {
-    using namespace cc::utils::bash;
-    using namespace cc::utils::json;
+    using namespace loom::utils::bash;
+    using namespace loom::utils::json;
 
     std::string cmd = "az account get-access-token --scope '" +
                       std::string(scope) + "' --output json 2>/dev/null";
@@ -270,7 +270,7 @@ try_azure_cli_credential(std::string_view scope = kFoundryDefaultScope) {
     auto parsed = parse(res->output);
     if (!parsed) {
         return std::optional<Result<AccessToken>>(std::unexpected(Error(
-            cc::utils::ErrorCode::parse_error,
+            loom::utils::ErrorCode::parse_error,
             "Azure CLI: invalid JSON from get-access-token: " + res->output)));
     }
     auto root = parsed->root();
@@ -278,7 +278,7 @@ try_azure_cli_credential(std::string_view scope = kFoundryDefaultScope) {
     at.token = root.get_string("accessToken");
     if (at.token.empty()) {
         return std::optional<Result<AccessToken>>(std::unexpected(Error(
-            cc::utils::ErrorCode::parse_error,
+            loom::utils::ErrorCode::parse_error,
             "Azure CLI: response missing accessToken")));
     }
     // expiresOn can be a variety of formats: "2025-01-15 12:34:56.789012",
@@ -330,9 +330,9 @@ try_azure_cli_credential(std::string_view scope = kFoundryDefaultScope) {
 try_managed_identity_credential(
     std::string_view scope = kFoundryScopeForImds,
     std::chrono::milliseconds timeout_ms = 1000ms) {
-    using namespace cc::utils::json;
-    using namespace cc::utils::http;
-    using cc::utils::env::get_env;
+    using namespace loom::utils::json;
+    using namespace loom::utils::http;
+    using loom::utils::env::get_env;
 
     httplib::Client cli("http://169.254.169.254", 80);
     cli.set_connection_timeout(timeout_ms.count() / 1000,
@@ -374,14 +374,14 @@ try_managed_identity_credential(
     }
     if (resp->status < 200 || resp->status >= 300) {
         return std::optional<Result<AccessToken>>(std::unexpected(Error(
-            cc::utils::ErrorCode::permission_denied,
+            loom::utils::ErrorCode::permission_denied,
             "Azure MSI IMDS: HTTP " + std::to_string(resp->status) +
             ": " + resp->body)));
     }
     auto parsed = parse(resp->body);
     if (!parsed) {
         return std::optional<Result<AccessToken>>(std::unexpected(Error(
-            cc::utils::ErrorCode::parse_error,
+            loom::utils::ErrorCode::parse_error,
             "Azure MSI: invalid IMDS JSON")));
     }
     auto root = parsed->root();
@@ -392,7 +392,7 @@ try_managed_identity_credential(
     at.expires_on = system_clock::now() + seconds(expires_in);
     if (at.token.empty()) {
         return std::optional<Result<AccessToken>>(std::unexpected(Error(
-            cc::utils::ErrorCode::parse_error,
+            loom::utils::ErrorCode::parse_error,
             "Azure MSI: response missing access_token")));
     }
     return std::optional<Result<AccessToken>>(at);
@@ -435,10 +435,10 @@ public:
         }
         if (last_error_msg) {
             return std::unexpected(Error(
-                cc::utils::ErrorCode::permission_denied, *last_error_msg));
+                loom::utils::ErrorCode::permission_denied, *last_error_msg));
         }
         return std::unexpected(Error(
-            cc::utils::ErrorCode::internal_error,
+            loom::utils::ErrorCode::internal_error,
             "Azure DefaultAzureCredential: no credential source found. "
             "Configure AZURE_CLIENT_ID/TENANT_ID/CLIENT_SECRET (env), "
             "AKS workload identity, `az login` (CLI), or an Azure VM/app MSI."));
@@ -463,8 +463,8 @@ struct FoundryAuthMode {
 };
 
 [[nodiscard]] inline FoundryAuthMode detect_foundry_mode() {
-    using cc::utils::env::get_env;
-    using cc::utils::env::is_env_truthy;
+    using loom::utils::env::get_env;
+    using loom::utils::env::is_env_truthy;
     FoundryAuthMode m;
     m.use_foundry = is_env_truthy("LOOM_USE_FOUNDRY");
     m.skip_auth  = is_env_truthy("LOOM_SKIP_FOUNDRY_AUTH");
@@ -538,4 +538,4 @@ inline constexpr std::array<DeploymentIdMapEntry, 11> kDefaultFoundryDeployments
     return {};
 }
 
-} // namespace cc::services::auth::azure
+} // namespace loom::services::auth::azure

@@ -7,7 +7,7 @@ export module loom.tools.worktree;
 import std;
 
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 // Single-quote a string for safe interpolation into a POSIX shell command
 // (escapes embedded single quotes via the '"'"' idiom). Local copy matching
@@ -257,4 +257,4 @@ public:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

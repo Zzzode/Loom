@@ -22,7 +22,7 @@ export module loom.hooks.permission_resolver;
 
 import std;
 
-export namespace cc::hooks::permission {
+export namespace loom::hooks::permission {
 
 // =========================================================================
 // Core enums — keep numeric values in sync with Task #58 contract.
@@ -528,4 +528,4 @@ private:
     }
 };
 
-} // namespace cc::hooks::permission
+} // namespace loom::hooks::permission

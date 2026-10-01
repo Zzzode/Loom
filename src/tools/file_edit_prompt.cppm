@@ -13,7 +13,7 @@ import std;
 import loom.tools.file_edit_types;
 import loom.text.string_utils;     // for first_line_of
 
-export namespace cc::tools::file_edit {
+export namespace loom::tools::file_edit {
 
 // ===========================================================================
 // Core prompt — mirrors TS getDefaultEditDescription() exactly.
@@ -238,4 +238,4 @@ inline std::string generate_edit_summary(const EditSummaryInfo& result) {
     return oss.str();
 }
 
-} // namespace cc::tools::file_edit
+} // namespace loom::tools::file_edit

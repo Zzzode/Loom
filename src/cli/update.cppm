@@ -8,7 +8,7 @@ export module loom.cli.update;
 
 import std;
 
-namespace cc::cli::detail {
+namespace loom::cli::detail {
 
 struct ParsedUrl {
     std::string scheme;
@@ -176,9 +176,9 @@ void record_check_time() {
     ofs << std::chrono::system_clock::to_time_t(now);
 }
 
-} // namespace cc::cli::detail
+} // namespace loom::cli::detail
 
-export namespace cc::cli {
+export namespace loom::cli {
 
 // Update information when a new version is available
 struct UpdateInfo {
@@ -475,4 +475,4 @@ inline std::string format_update_notification(const UpdateInfo& info) {
     return msg;
 }
 
-} // namespace cc::cli
+} // namespace loom::cli

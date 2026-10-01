@@ -19,7 +19,7 @@ import loom.ui.app.app;
 import loom.vim.vim_mode;
 import loom.hooks.exit_handler;
 
-namespace cc::ui {
+namespace loom::ui {
 
 struct AppImpl {
     // Type-erased constructor collaborators. Plain pointers need no complete
@@ -34,10 +34,10 @@ struct AppImpl {
 
     // Vim state.
     bool vim_enabled_ = false;
-    cc::vim::VimStateMachine vim_sm_;
+    loom::vim::VimStateMachine vim_sm_;
 
     // Ctrl-C double-press handler (TS useDoublePress, 800ms window).
-    cc::hooks::ExitHandler exit_handler_{cc::hooks::ExitHandlerConfig{
+    loom::hooks::ExitHandler exit_handler_{loom::hooks::ExitHandlerConfig{
         .require_double_press = true,
         .cleanup_timeout_ms = 5000,
         .save_on_exit = true,
@@ -58,12 +58,12 @@ std::optional<std::string> AppAdapter::vim_statusline_label() const {
     if (!impl_ || !impl_->vim_enabled_) return std::nullopt;
     std::string label;
     switch (impl_->vim_sm_.get_mode()) {
-        case cc::vim::VimMode::Normal:     label = "NORMAL"; break;
-        case cc::vim::VimMode::Insert:     label = "INSERT"; break;
-        case cc::vim::VimMode::Visual:     label = "VISUAL"; break;
-        case cc::vim::VimMode::VisualLine: label = "VISUAL LINE"; break;
-        case cc::vim::VimMode::Command:    label = "COMMAND"; break;
-        case cc::vim::VimMode::Replace:    label = "REPLACE"; break;
+        case loom::vim::VimMode::Normal:     label = "NORMAL"; break;
+        case loom::vim::VimMode::Insert:     label = "INSERT"; break;
+        case loom::vim::VimMode::Visual:     label = "VISUAL"; break;
+        case loom::vim::VimMode::VisualLine: label = "VISUAL LINE"; break;
+        case loom::vim::VimMode::Command:    label = "COMMAND"; break;
+        case loom::vim::VimMode::Replace:    label = "REPLACE"; break;
         default:                           label = "INSERT"; break;
     }
     return label;
@@ -80,7 +80,7 @@ void AppAdapter::reset_exit_handler() {
 
 bool AppAdapter::handle_ctrl_c() {
     return impl_ && impl_->exit_handler_.handle_signal(
-                        cc::hooks::ExitReason::ctrl_c);
+                        loom::hooks::ExitReason::ctrl_c);
 }
 
 // ── AppStore accessors (keep AppStore/AppState out of the interface) ────────
@@ -116,4 +116,4 @@ void AppAdapter::construct_impl(void* engine, void* lifecycle_hooks,
     impl_->app_store_ = create_typed_app_store();
 }
 
-}  // namespace cc::ui
+}  // namespace loom::ui

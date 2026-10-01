@@ -21,7 +21,7 @@ import loom.types.types;
 import loom.config.config;
 import loom.ui.widgets.custom_select;
 
-export namespace cc::ui::dialogs::settings_dialog {
+export namespace loom::ui::dialogs::settings_dialog {
 using namespace ftxui;
 
 // Check whether `e` is a Ctrl+<letter> combination.
@@ -33,10 +33,10 @@ inline bool is_ctrl_key(const Event& e, char letter) {
            static_cast<unsigned char>(e.input()[0]) ==
                static_cast<unsigned char>(code);
 }
-using cc::core::ConfigManager;
-using cc::core::Settings;
-using cc::core::FeatureFlag;
-using cc::core::McpServerConfig;
+using loom::core::ConfigManager;
+using loom::core::Settings;
+using loom::core::FeatureFlag;
+using loom::core::McpServerConfig;
 using custom_select::SelectOption;
 
 // ============================================================
@@ -1529,4 +1529,4 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     });
 }
 
-} // namespace cc::ui::dialogs::settings_dialog
+} // namespace loom::ui::dialogs::settings_dialog

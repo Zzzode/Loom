@@ -7,9 +7,9 @@ import std;
 
 import loom.utils.error;
 
-export namespace cc::services::memory {
+export namespace loom::services::memory {
 
-using cc::utils::Result;
+using loom::utils::Result;
 
 // Memory item
 struct MemoryItem {
@@ -64,7 +64,7 @@ Result<MemoryItem> SessionMemoryService::get_memory(const std::string& id) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto it = memories_.find(id);
     if (it == memories_.end()) {
-        return std::unexpected(cc::utils::Error(cc::utils::ErrorCode::not_found, "memory item not found"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::not_found, "memory item not found"));
     }
     return it->second;
 }
@@ -108,4 +108,4 @@ Result<void> SessionMemoryService::clear_all() {
     return {};
 }
 
-} // namespace cc::services::memory
+} // namespace loom::services::memory

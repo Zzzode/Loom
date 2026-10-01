@@ -60,26 +60,26 @@ private:
 
 TEST(LocalAnalytics, WritesOneJsonObjectPerEvent) {
     TempLogDir dir;
-    cc::services::analytics::LocalAnalytics log(dir.log());
+    loom::services::analytics::LocalAnalytics log(dir.log());
     EXPECT_TRUE(log.log_event("session_start"));
     EXPECT_TRUE(log.log_event("tool_use", {{"tool", "Bash"}}));
 
     const auto lines = read_lines(dir.log());
     ASSERT_EQ(lines.size(), 2u);
     for (const auto& line : lines) {
-        auto parsed = cc::utils::json::parse(line);
+        auto parsed = loom::utils::json::parse(line);
         ASSERT_TRUE(parsed) << "every line must be valid JSON: " << line;
     }
 }
 
 TEST(LocalAnalytics, EventCarriesNameTimestampAndProperties) {
     TempLogDir dir;
-    cc::services::analytics::LocalAnalytics log(dir.log());
+    loom::services::analytics::LocalAnalytics log(dir.log());
     ASSERT_TRUE(log.log_event("tool_use", {{"tool", "Read"}, {"ok", "1"}}));
 
     const auto lines = read_lines(dir.log());
     ASSERT_EQ(lines.size(), 1u);
-    auto parsed = cc::utils::json::parse(lines[0]);
+    auto parsed = loom::utils::json::parse(lines[0]);
     ASSERT_TRUE(parsed);
     const auto root = parsed->root();
     EXPECT_EQ(root.get("event").as_str(), std::string_view("tool_use"));
@@ -95,7 +95,7 @@ TEST(LocalAnalytics, EventCarriesNameTimestampAndProperties) {
 // be able to produce a broken line or a second, forged line.
 TEST(LocalAnalytics, QuotesAndNewlinesDoNotBreakTheLine) {
     TempLogDir dir;
-    cc::services::analytics::LocalAnalytics log(dir.log());
+    loom::services::analytics::LocalAnalytics log(dir.log());
     ASSERT_TRUE(log.log_event("prompt",
                               {{"text", "he said \"hi\"\nsecond line\\end"}}));
 
@@ -103,7 +103,7 @@ TEST(LocalAnalytics, QuotesAndNewlinesDoNotBreakTheLine) {
     ASSERT_EQ(lines.size(), 1u)
         << "an embedded newline must not create a second line";
 
-    auto parsed = cc::utils::json::parse(lines[0]);
+    auto parsed = loom::utils::json::parse(lines[0]);
     ASSERT_TRUE(parsed) << "the line must still parse: " << lines[0];
     EXPECT_EQ(parsed->root().get("properties").get("text").as_str(),
               std::string_view("he said \"hi\"\nsecond line\\end"))
@@ -113,19 +113,19 @@ TEST(LocalAnalytics, QuotesAndNewlinesDoNotBreakTheLine) {
 TEST(LocalAnalytics, CreatesMissingParentDirectories) {
     TempLogDir dir;
     const auto nested = dir.root() / "deep" / "nested" / "analytics.ndjson";
-    cc::services::analytics::LocalAnalytics log(nested);
+    loom::services::analytics::LocalAnalytics log(nested);
     EXPECT_TRUE(log.log_event("first_write"));
     EXPECT_TRUE(fs::exists(nested));
 }
 
 TEST(LocalAnalytics, AppendsRatherThanTruncating) {
     TempLogDir dir;
-    cc::services::analytics::LocalAnalytics log(dir.log());
+    loom::services::analytics::LocalAnalytics log(dir.log());
     ASSERT_TRUE(log.log_event("one"));
     ASSERT_TRUE(log.log_event("two"));
 
     // A second instance over the same path must not clobber the first run.
-    cc::services::analytics::LocalAnalytics reopened(dir.log());
+    loom::services::analytics::LocalAnalytics reopened(dir.log());
     ASSERT_TRUE(reopened.log_event("three"));
 
     EXPECT_EQ(read_lines(dir.log()).size(), 3u);
@@ -138,13 +138,13 @@ TEST(LocalAnalytics, UnwritableDestinationReportsFalseInsteadOfThrowing) {
     const auto blocked = dir.root() / "blocked";
     std::ofstream(blocked) << "not a directory\n";
 
-    cc::services::analytics::LocalAnalytics log(blocked / "analytics.ndjson");
+    loom::services::analytics::LocalAnalytics log(blocked / "analytics.ndjson");
     EXPECT_FALSE(log.log_event("should_be_dropped"));
 }
 
 TEST(LocalAnalytics, DisabledSwitchSuppressesWritesEntirely) {
     TempLogDir dir;
-    cc::services::analytics::LocalAnalytics log(dir.log());
+    loom::services::analytics::LocalAnalytics log(dir.log());
     ::setenv("LOOM_ANALYTICS_DISABLED", "1", 1);
     EXPECT_FALSE(log.log_event("suppressed"));
     ::unsetenv("LOOM_ANALYTICS_DISABLED");
@@ -153,7 +153,7 @@ TEST(LocalAnalytics, DisabledSwitchSuppressesWritesEntirely) {
 }
 
 TEST(LocalAnalytics, DisabledSwitchAcceptsTheUsualTruthySpellings) {
-    using cc::services::analytics::analytics_enabled;
+    using loom::services::analytics::analytics_enabled;
     for (const char* truthy : {"1", "true", "TRUE", "yes"}) {
         ::setenv("LOOM_ANALYTICS_DISABLED", truthy, 1);
         EXPECT_FALSE(analytics_enabled()) << "expected disabled for " << truthy;
@@ -171,14 +171,14 @@ TEST(LocalAnalytics, DisabledSwitchAcceptsTheUsualTruthySpellings) {
 // what keeps tests off the real log.
 TEST(LocalAnalytics, DefaultPathIsUnderStateDirAndOverrideWins) {
     ::unsetenv("LOOM_ANALYTICS_PATH");
-    const auto def = cc::services::analytics::analytics_log_path();
+    const auto def = loom::services::analytics::analytics_log_path();
     EXPECT_EQ(def.filename(), "analytics.ndjson");
     EXPECT_EQ(def.parent_path().filename(), "loom")
         << "should live in a loom-named state subdirectory";
 
     TempLogDir dir;
     ::setenv("LOOM_ANALYTICS_PATH", dir.log().c_str(), 1);
-    EXPECT_EQ(cc::services::analytics::analytics_log_path(), dir.log());
+    EXPECT_EQ(loom::services::analytics::analytics_log_path(), dir.log());
     ::unsetenv("LOOM_ANALYTICS_PATH");
 }
 

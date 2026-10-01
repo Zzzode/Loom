@@ -21,7 +21,7 @@ export module loom.ui.foundation.design_tokens;
 
 import std;
 
-export namespace cc::ui::design::tokens {
+export namespace loom::ui::design::tokens {
 
 // ─── Spacing (cells in the TTY grid) ─────────────────────────────────────────
 // Mirrors the 4/8/16/24/32/48 px grid used on the TS side.  Since the terminal
@@ -1293,4 +1293,4 @@ inline const Palette monochrome = {
     return ftxui::Color::RGB(to_u8(r), to_u8(g), to_u8(b));
 }
 
-} // namespace cc::ui::design::tokens
+} // namespace loom::ui::design::tokens

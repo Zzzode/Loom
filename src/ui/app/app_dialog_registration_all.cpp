@@ -7,9 +7,9 @@ module loom.ui.app.app_dialog_registration;
 import loom.ui.dialogs.system;
 import loom.ui.dialogs.all_renderers;
 
-namespace cc::ui::app_dialogs {
+namespace loom::ui::app_dialogs {
 void register_all_dialog_renderers(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry) {
-    cc::ui::dialogs::all_renderers::register_all_renderers(registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry) {
+    loom::ui::dialogs::all_renderers::register_all_renderers(registry);
 }
-}  // namespace cc::ui::app_dialogs
+}  // namespace loom::ui::app_dialogs

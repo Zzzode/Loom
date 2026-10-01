@@ -11,7 +11,7 @@ export module loom.ui.messages.messages;
 
 import std;
 
-export namespace cc::ui {
+export namespace loom::ui {
 
 // Timestamp type alias for message timing
 using Timestamp = std::chrono::system_clock::time_point;
@@ -319,4 +319,4 @@ template<Renderable T>
     return result;
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

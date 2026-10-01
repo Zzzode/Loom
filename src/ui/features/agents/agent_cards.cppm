@@ -37,7 +37,7 @@ import loom.ui.features.agents.agent_shared_widgets;
 import loom.tools.agent_color_manager;
 import loom.ui.widgets.spinner_animations;
 
-export namespace cc::ui::agents::cards {
+export namespace loom::ui::agents::cards {
 using namespace ftxui;
 
 using shared::AgentStatus;
@@ -109,8 +109,8 @@ enum class CardSize {
 
     switch (status) {
         case AgentStatus::Running:
-            glyph = std::string(cc::ui::components::kDotsAnimation[
-                frame % cc::ui::components::kDotsAnimation.size()]);
+            glyph = std::string(loom::ui::components::kDotsAnimation[
+                frame % loom::ui::components::kDotsAnimation.size()]);
             break;
         case AgentStatus::Idle:      glyph = "●"; break;
         case AgentStatus::Scheduled: glyph = "●"; break;
@@ -153,7 +153,7 @@ enum class CardSize {
     // color dot (from agent_type hash)
     Color accent = Color::GrayLight;
     if (!agent.agent_type.empty()) {
-        auto opt = cc::tools::agent_color_manager::get_agent_color(agent.agent_type);
+        auto opt = loom::tools::agent_color_manager::get_agent_color(agent.agent_type);
         if (opt) accent = shared::agent_color_to_ftxui(*opt);
     }
     auto color_dot = text(" ● ") | color(accent);
@@ -250,7 +250,7 @@ enum class CardSize {
 
     // Colorize the border with the agent color if available.
     if (!agent.agent_type.empty()) {
-        auto opt = cc::tools::agent_color_manager::get_agent_color(agent.agent_type);
+        auto opt = loom::tools::agent_color_manager::get_agent_color(agent.agent_type);
         if (opt) box = box | color(shared::agent_color_to_ftxui(*opt));
     }
 
@@ -402,7 +402,7 @@ enum class CardSize {
     if (selected) box = box | bgcolor(Color::RGB(25, 35, 50));
 
     if (!agent.agent_type.empty()) {
-        auto opt = cc::tools::agent_color_manager::get_agent_color(agent.agent_type);
+        auto opt = loom::tools::agent_color_manager::get_agent_color(agent.agent_type);
         if (opt) box = box | color(shared::agent_color_to_ftxui(*opt));
     }
 
@@ -478,4 +478,4 @@ struct AgentCardCallbacks {
     });
 }
 
-} // namespace cc::ui::agents::cards
+} // namespace loom::ui::agents::cards

@@ -9,7 +9,7 @@ export module loom.coordinator.types;
 
 import std;
 
-export namespace cc::coordinator {
+export namespace loom::coordinator {
 
 /// Coordinator mode determines how multi-agent work is orchestrated
 enum class CoordinatorMode : std::uint8_t {
@@ -43,4 +43,4 @@ enum class CoordinatorMode : std::uint8_t {
     return std::nullopt;
 }
 
-} // namespace cc::coordinator
+} // namespace loom::coordinator

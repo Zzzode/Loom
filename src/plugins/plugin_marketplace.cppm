@@ -19,7 +19,7 @@ import loom.serdes.json;
 import loom.plugins.plugin_identifier;
 import loom.plugins.plugin_marketplace_rules;
 
-export namespace cc::utils::plugin_marketplace {
+export namespace loom::utils::plugin_marketplace {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Marketplace Source & Entry Types (from schemas)
@@ -334,7 +334,7 @@ git_clone_shallow(const std::string& url,
         << " clone --depth 1 --recurse-submodules --shallow-submodules";
     if (ref) cmd << " --branch " << *ref;
     cmd << " -- " << url << " " << cache_path.string();
-    int status = cc::utils::exec_sync_status(cmd.str());
+    int status = loom::utils::exec_sync_status(cmd.str());
     if (status != 0) {
         return std::unexpected(
             "Failed to clone marketplace repository (git exit code "
@@ -350,7 +350,7 @@ git_pull(const std::filesystem::path& cache_path) {
     cmd << "git -C " << cache_path.string()
         << " -c core.sshCommand='ssh -o BatchMode=yes -o StrictHostKeyChecking=yes'"
         << " pull --ff-only";
-    int status = cc::utils::exec_sync_status(cmd.str());
+    int status = loom::utils::exec_sync_status(cmd.str());
     if (status != 0) {
         return std::unexpected(
             "git pull failed (exit code " + std::to_string(status) + ")");
@@ -365,7 +365,7 @@ download_url(const std::string& url) {
     std::ostringstream cmd;
     cmd << "curl -fsSL --max-time 30 -H 'User-Agent: Loom-Code-Plugin-Manager' "
         << url;
-    auto out = cc::utils::exec_sync(cmd.str());
+    auto out = loom::utils::exec_sync(cmd.str());
     if (!out) return std::unexpected("Failed to download marketplace from " + url
                                      + ": " + out.error());
     return *out;
@@ -374,14 +374,14 @@ download_url(const std::string& url) {
 // Read + schema-light parse a marketplace.json from disk; returns the parsed
 // JsonDoc for callers to map into PluginMarketplace. Mirrors
 // parseFileWithSchema(PluginMarketplaceSchema()).
-inline std::expected<cc::utils::json::JsonDoc, std::string>
+inline std::expected<loom::utils::json::JsonDoc, std::string>
 read_marketplace_json(const std::filesystem::path& p) {
     std::error_code ec;
     auto contents = read_file_str(p, ec);
     if (ec) {
         return std::unexpected("Marketplace file not found: " + p.string());
     }
-    auto parsed = cc::utils::json::parse(contents);
+    auto parsed = loom::utils::json::parse(contents);
     if (!parsed) {
         return std::unexpected("Invalid marketplace JSON (" + p.string()
                                + "): " + parsed.error().message());
@@ -415,7 +415,7 @@ resolve_manifest_path(const std::filesystem::path& install_location,
 
 // Map a parsed marketplace.json object into the PluginMarketplace C++ struct.
 inline std::expected<PluginMarketplace, std::string>
-to_marketplace(const cc::utils::json::JsonDoc& doc) {
+to_marketplace(const loom::utils::json::JsonDoc& doc) {
     auto root = doc.root();
     PluginMarketplace m;
     if (auto name = root.get("name"); name.valid() && name.is_str()) {
@@ -437,7 +437,7 @@ to_marketplace(const cc::utils::json::JsonDoc& doc) {
     }
     auto plugins = root.get("plugins");
     if (plugins.valid() && plugins.is_arr()) {
-        plugins.iter([&](cc::utils::json::JsonVal entry) {
+        plugins.iter([&](loom::utils::json::JsonVal entry) {
             if (!entry.valid() || !entry.is_obj()) return;
             PluginMarketplaceEntry pe;
             if (auto n = entry.get("name"); n.valid() && n.is_str()) {
@@ -478,7 +478,7 @@ load_known_marketplaces_config() {
         return std::unexpected("Failed to read marketplace configuration: "
                                + cfg.string());
     }
-    auto parsed = cc::utils::json::parse(contents);
+    auto parsed = loom::utils::json::parse(contents);
     if (!parsed) {
         return std::unexpected("Marketplace configuration file is corrupted: "
                                + parsed.error().message());
@@ -486,8 +486,8 @@ load_known_marketplaces_config() {
     auto root = parsed->root();
     KnownMarketplacesFile out;
     if (root.valid() && root.is_obj()) {
-        root.iter_obj([&](cc::utils::json::JsonVal key,
-                          cc::utils::json::JsonVal val) {
+        root.iter_obj([&](loom::utils::json::JsonVal key,
+                          loom::utils::json::JsonVal val) {
             if (!val.is_obj()) return;
             KnownMarketplace km;
             auto src = val.get("source");
@@ -553,7 +553,7 @@ save_known_marketplaces_config(const KnownMarketplacesFile& config) {
     std::error_code ec;
     std::filesystem::create_directories(cfg.parent_path(), ec);
 
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     for (const auto& [name, km] : config) {
         auto entry = doc.object();
@@ -637,7 +637,7 @@ fetch_marketplace(std::string_view name) {
     if (auto u = std::get_if<UrlMarketplaceSource>(&source)) {
         auto body = detail::download_url(u->url);
         if (!body) return std::unexpected(body.error());
-        auto parsed = cc::utils::json::parse(*body);
+        auto parsed = loom::utils::json::parse(*body);
         if (!parsed) return std::unexpected("Invalid marketplace JSON: "
                                             + parsed.error().message());
         std::filesystem::path cache_path =
@@ -762,4 +762,4 @@ get_marketplace_cache_only(std::string_view name) {
     return m ? std::make_optional(*m) : std::nullopt;
 }
 
-} // namespace cc::utils::plugin_marketplace
+} // namespace loom::utils::plugin_marketplace

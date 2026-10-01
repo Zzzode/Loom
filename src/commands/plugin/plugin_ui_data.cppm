@@ -37,12 +37,12 @@ import loom.commands.plugin_parse_args;
 import loom.commands.plugin_helpers;
 import loom.commands.plugin_manage;
 
-export namespace cc::commands::plugin_ui {
+export namespace loom::commands::plugin_ui {
 
-using ParsedArgs = cc::commands::plugin::ParsedSubcommand;
-using SubType    = cc::commands::plugin::SubcommandType;
-using MarketAct  = cc::commands::plugin::MarketplaceAction;
-using namespace  cc::commands::plugin_helpers;
+using ParsedArgs = loom::commands::plugin::ParsedSubcommand;
+using SubType    = loom::commands::plugin::SubcommandType;
+using MarketAct  = loom::commands::plugin::MarketplaceAction;
+using namespace  loom::commands::plugin_helpers;
 
 // ═════════════════════════════════════════════════════════════════════════════
 // 1.  ViewState & routing  (from PluginSettings.tsx)
@@ -585,4 +585,4 @@ enum class BrowseView : unsigned char {
     return ViewKind::Menu;
 }
 
-} // namespace cc::commands::plugin_ui
+} // namespace loom::commands::plugin_ui

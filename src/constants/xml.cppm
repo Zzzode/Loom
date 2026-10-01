@@ -8,7 +8,7 @@ export module loom.constants.xml;
 
 import std;
 
-export namespace cc::constants::xml {
+export namespace loom::constants::xml {
 
 // Skill/command metadata tags
 inline constexpr std::string_view COMMAND_NAME_TAG = "command-name";
@@ -66,4 +66,4 @@ inline constexpr std::array<std::string_view, 13> COMMON_INFO_ARGS = {
     "describe", "print", "version", "about", "status", "?",
 };
 
-} // namespace cc::constants::xml
+} // namespace loom::constants::xml

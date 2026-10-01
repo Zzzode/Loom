@@ -20,7 +20,7 @@ import loom.memdir.paths;
 import loom.services.extract_memories;
 import loom.diagnostics.debug;
 
-namespace cc::core {
+namespace loom::core {
 
 std::vector<Message> QueryEngine::get_conversation() const {
     std::lock_guard lock(conversation_mutex_);
@@ -40,7 +40,7 @@ void QueryEngine::clear_conversation() {
     build_and_add_system_prompt();
 }
 
-[[nodiscard]] cc::utils::VoidResult QueryEngine::compact_conversation(std::string_view trigger) {
+[[nodiscard]] loom::utils::VoidResult QueryEngine::compact_conversation(std::string_view trigger) {
     std::lock_guard lock(conversation_mutex_);
     if (conversation_.size() <= 4) {
         return {};  // Nothing to compact
@@ -102,7 +102,7 @@ void QueryEngine::clear_conversation() {
 
 void QueryEngine::set_session_storage(std::filesystem::path sessions_dir) {
     sessions_dir_ = std::move(sessions_dir);
-    cc::session::SessionMetadata meta{
+    loom::session::SessionMetadata meta{
         .session_id = session_id_.str(),
         .model = config_.model_params.model,
         .cwd = std::filesystem::current_path(),
@@ -112,7 +112,7 @@ void QueryEngine::set_session_storage(std::filesystem::path sessions_dir) {
         .title = std::nullopt,
         .is_archived = false,
     };
-    (void)cc::session::save_session_metadata(*sessions_dir_, meta);
+    (void)loom::session::save_session_metadata(*sessions_dir_, meta);
 }
 
 void QueryEngine::set_dump_prompts_dir(std::filesystem::path dump_dir) {
@@ -132,7 +132,7 @@ void QueryEngine::flush_session() {
             if (!std::holds_alternative<SystemMessage>(m)) ++count;
         }
     }
-    cc::session::SessionMetadata meta{
+    loom::session::SessionMetadata meta{
         .session_id = session_id_.str(),
         .model = config_.model_params.model,
         .cwd = std::filesystem::current_path(),
@@ -142,11 +142,11 @@ void QueryEngine::flush_session() {
         .title = std::nullopt,
         .is_archived = false,
     };
-    (void)cc::session::save_session_metadata(*sessions_dir_, meta);
+    (void)loom::session::save_session_metadata(*sessions_dir_, meta);
 }
 
 [[nodiscard]] std::string QueryEngine::message_to_jsonl_(const Message& msg) const {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto arr = doc.array();
     append_message_to_json(msg, arr, doc);
     doc.set_root(arr);
@@ -181,7 +181,7 @@ void QueryEngine::append_message(Message msg) {
     // not part of the engine critical section). SystemMessage serializes
     // empty and is skipped.
     if (do_persist) {
-        (void)cc::session::append_message(
+        (void)loom::session::append_message(
             *sessions_dir_, session_id_.str(), persist_json);
     }
     // Lock released — safe to call compact which re-acquires
@@ -204,7 +204,7 @@ void QueryEngine::append_message(Message msg) {
 }
 
 [[nodiscard]] std::string QueryEngine::read_session_summary(std::string_view cwd) const {
-    const auto path = cc::memdir::get_session_memory_path(
+    const auto path = loom::memdir::get_session_memory_path(
         std::filesystem::path(cwd), session_id_.str());
     std::error_code ec;
     if (!std::filesystem::exists(path, ec)) return {};
@@ -216,7 +216,7 @@ void QueryEngine::append_message(Message msg) {
 
 void QueryEngine::append_session_summary(std::string_view cwd,
                                          std::string_view summary) const {
-    const auto dir = cc::memdir::get_session_memory_dir(
+    const auto dir = loom::memdir::get_session_memory_dir(
         std::filesystem::path(cwd), session_id_.str());
     std::error_code ec;
     std::filesystem::create_directories(dir, ec);
@@ -256,7 +256,7 @@ void QueryEngine::append_session_summary(std::string_view cwd,
 }
 
 void QueryEngine::maybe_run_memory_extraction() {
-    namespace em = cc::services::extract_memories;
+    namespace em = loom::services::extract_memories;
     if (!memory_extraction_enabled_) return;
     if (messages_since_last_extraction_ < em::kExtractionMinNewMessages * 2)
         return;
@@ -268,7 +268,7 @@ void QueryEngine::maybe_run_memory_extraction() {
 
     const auto cwd = config_.cwd.value_or(
         std::filesystem::current_path().string());
-    auto mem_dir_opt = cc::memdir::get_auto_mem_path(std::filesystem::path(cwd));
+    auto mem_dir_opt = loom::memdir::get_auto_mem_path(std::filesystem::path(cwd));
     if (!mem_dir_opt) {
         memory_extraction_inflight_.store(false);
         return;
@@ -308,14 +308,14 @@ void QueryEngine::maybe_run_memory_extraction() {
             sub.memory_extraction_enabled_ = false;  // no recursion
             auto res = sub.query(prompt);
             if (!res) {
-                cc::utils::debug("memory.extract",
+                loom::utils::debug("memory.extract",
                     "extraction sub-agent failed: {}", res.error().message);
             }
         } catch (const std::exception& e) {
-            cc::utils::debug("memory.extract",
+            loom::utils::debug("memory.extract",
                 "extraction sub-agent threw: {}", e.what());
         }
     });
 }
 
-} // namespace cc::core
+} // namespace loom::core

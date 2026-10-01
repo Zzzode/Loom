@@ -26,10 +26,10 @@ import loom.commands.plugin_helpers;
 import loom.plugins.plugin_validation;
 import loom.plugins.plugin_manager;
 
-export namespace cc::commands::plugin_manage {
+export namespace loom::commands::plugin_manage {
 
 namespace fs = std::filesystem;
-using namespace cc::commands::plugin_helpers;
+using namespace loom::commands::plugin_helpers;
 
 // ═════════════════════════════════════════════════════════════════════════════
 // 1.  Installed-plugin list helpers  (pure data transforms from TS ManagePlugins)
@@ -50,8 +50,8 @@ struct InstalledPluginRow {
 };
 
 /// Return the human-readable scope label.
-[[nodiscard]] inline std::string scope_label(cc::utils::plugin_manager::PluginScope s) {
-    using S = cc::utils::plugin_manager::PluginScope;
+[[nodiscard]] inline std::string scope_label(loom::utils::plugin_manager::PluginScope s) {
+    using S = loom::utils::plugin_manager::PluginScope;
     switch (s) {
         case S::User:    return "user";
         case S::Project: return "project";
@@ -130,13 +130,13 @@ struct ValidateOutput {
 };
 
 [[nodiscard]] inline ValidateOutput format_validation_result(
-    const cc::utils::plugin_validation::ValidationResult& r
+    const loom::utils::plugin_validation::ValidationResult& r
 ) {
     ValidateOutput out;
     std::ostringstream os;
 
     const char* type_label = "plugin";
-    using T = cc::utils::plugin_validation::ValidatedFileType;
+    using T = loom::utils::plugin_validation::ValidatedFileType;
     switch (r.file_type) {
         case T::Plugin:      type_label = "plugin";      break;
         case T::Marketplace: type_label = "marketplace"; break;
@@ -188,7 +188,7 @@ struct ValidateOutput {
 /// Callers translate the returned `exit_code` to their environment
 /// (process exit or a reply status); this function never throws.
 [[nodiscard]] inline ValidateOutput run_validation(const std::string& path) {
-    namespace pv = cc::utils::plugin_validation;
+    namespace pv = loom::utils::plugin_validation;
     try {
         const auto result = pv::validate_file(fs::path{path});
         return format_validation_result(result);
@@ -333,4 +333,4 @@ struct MarketplaceAddPlan {
     return p;
 }
 
-} // namespace cc::commands::plugin_manage
+} // namespace loom::commands::plugin_manage

@@ -6,9 +6,9 @@ module loom.ui.app.app_dialog_registration;
 import loom.ui.dialogs.system;
 import loom.ui.dialogs.bottom_renderers;
 
-namespace cc::ui::app_dialogs {
+namespace loom::ui::app_dialogs {
 void register_bottom_dialog_renderers(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry) {
-    cc::ui::dialogs::bottom_renderers::register_bottom_renderers(registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry) {
+    loom::ui::dialogs::bottom_renderers::register_bottom_renderers(registry);
 }
-}  // namespace cc::ui::app_dialogs
+}  // namespace loom::ui::app_dialogs

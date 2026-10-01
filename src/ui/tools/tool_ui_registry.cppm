@@ -28,7 +28,7 @@ export module loom.ui.tools.registry;
 
 import std;
 
-export namespace cc::ui::tools {
+export namespace loom::ui::tools {
 
 // ============================================================
 // ToolUIFunctions — per-tool UI render function bundle
@@ -147,4 +147,4 @@ class ToolUIRegistry {
     return registry;
 }
 
-}  // namespace cc::ui::tools
+}  // namespace loom::ui::tools

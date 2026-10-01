@@ -8,7 +8,7 @@ import std;
 
 import loom.diagnostics.debug_filter;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace debug_detail {
 
@@ -60,4 +60,4 @@ inline void debug(std::string_view ns, std::format_string<Args...> fmt, Args&&..
               << '\n';
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

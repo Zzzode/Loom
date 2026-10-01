@@ -13,7 +13,7 @@ export module loom.commands.plugin_trust_text;
 
 import std;
 
-export namespace cc::commands::plugin {
+export namespace loom::commands::plugin {
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -89,4 +89,4 @@ constexpr std::string_view kTrustDisclaimerPrefix = " ";
                        marketplace_domain.empty() ? std::string_view{"unknown domain"} : marketplace_domain);
 }
 
-} // namespace cc::commands::plugin
+} // namespace loom::commands::plugin

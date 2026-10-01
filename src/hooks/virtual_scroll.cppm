@@ -12,7 +12,7 @@ export module loom.hooks.virtual_scroll;
 import std;
 
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 // ============================================================
 // Scroll event types
@@ -293,4 +293,4 @@ private:
     }
 };
 
-} // namespace cc::hooks
+} // namespace loom::hooks

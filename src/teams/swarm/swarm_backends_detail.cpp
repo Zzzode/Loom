@@ -12,7 +12,7 @@ module loom.teams.swarm.backends;
 
 import std;
 
-namespace cc::utils::swarm_backends::detail {
+namespace loom::utils::swarm_backends::detail {
 
 std::string json_escape(std::string_view value) {
     std::string out;
@@ -204,4 +204,4 @@ std::optional<TeammateMode> forced_mode_from_env() {
     return std::nullopt;
 }
 
-} // namespace cc::utils::swarm_backends::detail
+} // namespace loom::utils::swarm_backends::detail

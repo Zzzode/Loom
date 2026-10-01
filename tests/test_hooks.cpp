@@ -19,19 +19,19 @@ import loom.hooks.registry;
 using namespace std::chrono_literals;
 
 // Convenience alias for the 8 notification-hook smoke tests below.
-namespace notif = cc::hooks::notifs;
+namespace notif = loom::hooks::notifs;
 
 // The P0-03 hooks-engine tests below use the unqualified names exported from
-// cc::utils::hooks_execution (evaluate_hook_condition, CommandHookRunner,
+// loom::utils::hooks_execution (evaluate_hook_condition, CommandHookRunner,
 // HttpHookRunner, PromptHookRunner, HookExecutionContext, ...).
-using cc::utils::hooks_execution::CommandHookRunner;
-using cc::utils::hooks_execution::HookExecutionContext;
-using cc::utils::hooks_execution::HttpHookRunner;
-using cc::utils::hooks_execution::PromptHookRunner;
-using cc::utils::hooks_execution::evaluate_hook_condition;
-using cc::utils::hooks_execution::AgentHookRunner;
-using cc::utils::hooks_execution::HookResponseAction;
-using namespace cc::utils::hooks_registry;  // IndividualHookConfig / CommandHookConfig / HookEventType / HookSource
+using loom::utils::hooks_execution::CommandHookRunner;
+using loom::utils::hooks_execution::HookExecutionContext;
+using loom::utils::hooks_execution::HttpHookRunner;
+using loom::utils::hooks_execution::PromptHookRunner;
+using loom::utils::hooks_execution::evaluate_hook_condition;
+using loom::utils::hooks_execution::AgentHookRunner;
+using loom::utils::hooks_execution::HookResponseAction;
+using namespace loom::utils::hooks_registry;  // IndividualHookConfig / CommandHookConfig / HookEventType / HookSource
 
 // Build a HookExecutionContext with the given dotted-path -> string context
 // vars. The hooks engine resolves "tool.name" by walking nested objects
@@ -69,14 +69,14 @@ using namespace cc::utils::hooks_registry;  // IndividualHookConfig / CommandHoo
         for (std::size_t i = 1; i < parts.size(); ++i) json += "}";
     }
     json += "}";
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (parsed) {
         // Store the doc so JsonVal views remain valid for ctx lifetime.
         ctx.set_payload_doc(std::move(*parsed));
         // Now copy top-level fields from the payload into context_vars.
         // (We re-read from ctx.hook_payload which points to the owned doc.)
         if (ctx.hook_payload && ctx.hook_payload->is_obj()) {
-            ctx.hook_payload->iter_obj([&](cc::utils::json::JsonVal kk, cc::utils::json::JsonVal vv) {
+            ctx.hook_payload->iter_obj([&](loom::utils::json::JsonVal kk, loom::utils::json::JsonVal vv) {
                 ctx.context_vars[std::string(kk.as_str())] = vv;
             });
         }
@@ -92,18 +92,18 @@ using namespace cc::utils::hooks_registry;  // IndividualHookConfig / CommandHoo
 // are independent regardless of execution order.
 struct NotifStateReset {
     NotifStateReset() = default;
-    ~NotifStateReset() { cc::hooks::notifs::reset_dismissals_for_tests(); }
+    ~NotifStateReset() { loom::hooks::notifs::reset_dismissals_for_tests(); }
     NotifStateReset(const NotifStateReset&) = delete;
     NotifStateReset& operator=(const NotifStateReset&) = delete;
 };
 
 TEST(TypeaheadHook, ComputesAndAcceptsProviderSuggestions) {
-    cc::hooks::TypeaheadHook hook(/*debounce_ms=*/0, /*max_suggestions=*/3);
-    hook.add_source(cc::hooks::CompletionSource::Commands, [](std::string_view) {
-        return std::vector<cc::hooks::CompletionItem>{
-            {.label = "/help", .detail = "show help", .insert_text = "/help", .score = 0.0f, .source = cc::hooks::CompletionSource::Commands, .icon = std::nullopt},
-            {.label = "/hooks", .detail = "list hooks", .insert_text = "/hooks", .score = 0.0f, .source = cc::hooks::CompletionSource::Commands, .icon = std::nullopt},
-            {.label = "/model", .detail = "switch model", .insert_text = "/model", .score = 0.0f, .source = cc::hooks::CompletionSource::Commands, .icon = std::nullopt},
+    loom::hooks::TypeaheadHook hook(/*debounce_ms=*/0, /*max_suggestions=*/3);
+    hook.add_source(loom::hooks::CompletionSource::Commands, [](std::string_view) {
+        return std::vector<loom::hooks::CompletionItem>{
+            {.label = "/help", .detail = "show help", .insert_text = "/help", .score = 0.0f, .source = loom::hooks::CompletionSource::Commands, .icon = std::nullopt},
+            {.label = "/hooks", .detail = "list hooks", .insert_text = "/hooks", .score = 0.0f, .source = loom::hooks::CompletionSource::Commands, .icon = std::nullopt},
+            {.label = "/model", .detail = "switch model", .insert_text = "/model", .score = 0.0f, .source = loom::hooks::CompletionSource::Commands, .icon = std::nullopt},
         };
     });
 
@@ -120,11 +120,11 @@ TEST(TypeaheadHook, ComputesAndAcceptsProviderSuggestions) {
 }
 
 TEST(TypeaheadHook, CyclesSelectionAndExposesGhostText) {
-    cc::hooks::TypeaheadHook hook(0);
-    hook.add_source(cc::hooks::CompletionSource::Custom, [](std::string_view) {
-        return std::vector<cc::hooks::CompletionItem>{
-            {.label = "commit", .detail = "git commit", .insert_text = "commit", .score = 0.0f, .source = cc::hooks::CompletionSource::Custom, .icon = std::nullopt},
-            {.label = "compact", .detail = "compact context", .insert_text = "compact", .score = 0.0f, .source = cc::hooks::CompletionSource::Custom, .icon = std::nullopt},
+    loom::hooks::TypeaheadHook hook(0);
+    hook.add_source(loom::hooks::CompletionSource::Custom, [](std::string_view) {
+        return std::vector<loom::hooks::CompletionItem>{
+            {.label = "commit", .detail = "git commit", .insert_text = "commit", .score = 0.0f, .source = loom::hooks::CompletionSource::Custom, .icon = std::nullopt},
+            {.label = "compact", .detail = "compact context", .insert_text = "compact", .score = 0.0f, .source = loom::hooks::CompletionSource::Custom, .icon = std::nullopt},
         };
     });
 
@@ -143,30 +143,30 @@ TEST(TypeaheadHook, CyclesSelectionAndExposesGhostText) {
 }
 
 TEST(TextInputHook, HandlesInsertionCursorMovementAndBackspace) {
-    cc::hooks::TextInputHook input;
-    EXPECT_TRUE(input.handle_key(cc::hooks::KeyEvent{.key = "H"}));
-    EXPECT_TRUE(input.handle_key(cc::hooks::KeyEvent{.key = "i"}));
+    loom::hooks::TextInputHook input;
+    EXPECT_TRUE(input.handle_key(loom::hooks::KeyEvent{.key = "H"}));
+    EXPECT_TRUE(input.handle_key(loom::hooks::KeyEvent{.key = "i"}));
     EXPECT_EQ(input.text(), "Hi");
     EXPECT_EQ(input.cursor().col, 2u);
 
-    EXPECT_TRUE(input.handle_key(cc::hooks::KeyEvent{.key = "Left"}));
+    EXPECT_TRUE(input.handle_key(loom::hooks::KeyEvent{.key = "Left"}));
     EXPECT_EQ(input.cursor().col, 1u);
 
-    EXPECT_TRUE(input.handle_key(cc::hooks::KeyEvent{.key = "Backspace"}));
+    EXPECT_TRUE(input.handle_key(loom::hooks::KeyEvent{.key = "Backspace"}));
     EXPECT_EQ(input.text(), "i");
     EXPECT_EQ(input.cursor().col, 0u);
 }
 
 TEST(TextInputHook, SupportsUndoRedoAndSelection) {
-    cc::hooks::TextInputHook input;
-    EXPECT_TRUE(input.handle_key(cc::hooks::KeyEvent{.key = "a"}));
-    EXPECT_TRUE(input.handle_key(cc::hooks::KeyEvent{.key = "b"}));
+    loom::hooks::TextInputHook input;
+    EXPECT_TRUE(input.handle_key(loom::hooks::KeyEvent{.key = "a"}));
+    EXPECT_TRUE(input.handle_key(loom::hooks::KeyEvent{.key = "b"}));
     EXPECT_EQ(input.text(), "ab");
 
-    EXPECT_TRUE(input.handle_key(cc::hooks::KeyEvent{.key = "z", .ctrl = true}));
+    EXPECT_TRUE(input.handle_key(loom::hooks::KeyEvent{.key = "z", .ctrl = true}));
     EXPECT_EQ(input.text(), "a");
 
-    EXPECT_TRUE(input.handle_key(cc::hooks::KeyEvent{.key = "y", .ctrl = true}));
+    EXPECT_TRUE(input.handle_key(loom::hooks::KeyEvent{.key = "y", .ctrl = true}));
     EXPECT_EQ(input.text(), "ab");
 
     input.select_all();
@@ -175,18 +175,18 @@ TEST(TextInputHook, SupportsUndoRedoAndSelection) {
 }
 
 TEST(CommandQueue, ProcessesCommandsByPriorityAndReportsCompletion) {
-    cc::hooks::CommandQueue queue;
+    loom::hooks::CommandQueue queue;
     std::vector<std::string> completed;
-    queue.on_command_complete([&completed](const cc::hooks::CommandCompleteEvent& event) {
+    queue.on_command_complete([&completed](const loom::hooks::CommandCompleteEvent& event) {
         if (event.success) completed.push_back(event.id);
     });
 
-    auto low = queue.enqueue("low", cc::hooks::QueuePriority::low);
-    auto high = queue.enqueue("high", cc::hooks::QueuePriority::high);
+    auto low = queue.enqueue("low", loom::hooks::QueuePriority::low);
+    auto high = queue.enqueue("high", loom::hooks::QueuePriority::high);
     ASSERT_EQ(queue.get_pending_count(), 2u);
 
     std::string first_processed;
-    auto result = queue.process_next([&first_processed](const cc::hooks::QueuedCommand& cmd) {
+    auto result = queue.process_next([&first_processed](const loom::hooks::QueuedCommand& cmd) {
         first_processed = cmd.command_text;
         return std::expected<void, std::string>{};
     });
@@ -200,7 +200,7 @@ TEST(CommandQueue, ProcessesCommandsByPriorityAndReportsCompletion) {
 }
 
 TEST(CommandQueue, DeduplicatesAndCancelsPendingCommands) {
-    cc::hooks::CommandQueue queue;
+    loom::hooks::CommandQueue queue;
     queue.set_dedup_window(std::chrono::seconds(5));
     auto first = queue.enqueue("same");
     auto duplicate = queue.enqueue("same");
@@ -213,7 +213,7 @@ TEST(CommandQueue, DeduplicatesAndCancelsPendingCommands) {
 }
 
 TEST(VirtualScrollHook, ComputesVisibleRangeAndBottomState) {
-    cc::hooks::VirtualScrollHook scroll(/*viewport_height=*/5);
+    loom::hooks::VirtualScrollHook scroll(/*viewport_height=*/5);
     scroll.set_overscan(0);
     scroll.add_items(10, 1);
 
@@ -230,7 +230,7 @@ TEST(VirtualScrollHook, ComputesVisibleRangeAndBottomState) {
 }
 
 TEST(VirtualScrollHook, TracksDynamicItemHeightsAndScrollbar) {
-    cc::hooks::VirtualScrollHook scroll(4);
+    loom::hooks::VirtualScrollHook scroll(4);
     scroll.set_overscan(0);
     scroll.add_items(3, 1);
     scroll.update_item_height(1, 5);
@@ -238,13 +238,13 @@ TEST(VirtualScrollHook, TracksDynamicItemHeightsAndScrollbar) {
     EXPECT_EQ(scroll.total_content_height(), 7u);
     EXPECT_LT(scroll.scrollbar_thumb_size(), 1.0f);
 
-    auto consumed = scroll.handle_scroll_event(cc::hooks::ScrollEvent{.type = cc::hooks::ScrollEvent::Type::Home, .delta = 0, .thumb_pos = std::nullopt});
+    auto consumed = scroll.handle_scroll_event(loom::hooks::ScrollEvent{.type = loom::hooks::ScrollEvent::Type::Home, .delta = 0, .thumb_pos = std::nullopt});
     EXPECT_TRUE(consumed);
     EXPECT_EQ(scroll.scrollbar_position(), 0.0f);
 }
 
 TEST(TerminalSizeHook, ReportsDefaultSizeAndMonitoringState) {
-    cc::hooks::TerminalSizeHook hook;
+    loom::hooks::TerminalSizeHook hook;
     auto dims = hook.get_size();
     EXPECT_EQ(dims.cols, 80u);
     EXPECT_EQ(dims.rows, 24u);
@@ -258,7 +258,7 @@ TEST(TerminalSizeHook, ReportsDefaultSizeAndMonitoringState) {
 }
 
 TEST(ContextBudget, ComputesAvailableTokensCompressionAndUtilization) {
-    cc::hooks::ContextBudget budget{
+    loom::hooks::ContextBudget budget{
         .max_tokens = 1000,
         .reserved_for_output = 100,
         .system_prompt_tokens = 400,
@@ -303,7 +303,7 @@ struct TempWorkspace {
 } // namespace
 
 TEST(AtMentionParse, ClassifiesFilesAndSymbols) {
-    auto mentions = cc::hooks::parse_at_mentions("look at @src/foo.cpp and @Bar please");
+    auto mentions = loom::hooks::parse_at_mentions("look at @src/foo.cpp and @Bar please");
     ASSERT_EQ(mentions.size(), 2u);
     EXPECT_EQ(mentions[0].type, "file");
     EXPECT_EQ(mentions[0].value, "src/foo.cpp");
@@ -315,14 +315,14 @@ TEST(AtMentionParse, ClassifiesFilesAndSymbols) {
 }
 
 TEST(AtMentionParse, ExtractsLineAnchorSingleAndRange) {
-    auto single = cc::hooks::parse_at_mentions("@a/b.cpp#L12");
+    auto single = loom::hooks::parse_at_mentions("@a/b.cpp#L12");
     ASSERT_EQ(single.size(), 1u);
     EXPECT_EQ(single[0].value, "a/b.cpp");
     ASSERT_TRUE(single[0].line_start.has_value());
     EXPECT_EQ(*single[0].line_start, 12);
     EXPECT_FALSE(single[0].line_end.has_value());
 
-    auto range = cc::hooks::parse_at_mentions("@a/b.cpp#L12-30");
+    auto range = loom::hooks::parse_at_mentions("@a/b.cpp#L12-30");
     ASSERT_EQ(range.size(), 1u);
     EXPECT_EQ(range[0].value, "a/b.cpp");
     ASSERT_TRUE(range[0].line_start.has_value());
@@ -333,7 +333,7 @@ TEST(AtMentionParse, ExtractsLineAnchorSingleAndRange) {
 
 TEST(AtMentionParse, IgnoresAnchorWithoutDigits) {
     // A "#" that is not a valid "#L<num>" anchor is kept inside the value.
-    auto weird = cc::hooks::parse_at_mentions("@a/b.cpp#fragment");
+    auto weird = loom::hooks::parse_at_mentions("@a/b.cpp#fragment");
     ASSERT_EQ(weird.size(), 1u);
     EXPECT_EQ(weird[0].value, "a/b.cpp#fragment");
     EXPECT_FALSE(weird[0].line_start.has_value());
@@ -341,9 +341,9 @@ TEST(AtMentionParse, IgnoresAnchorWithoutDigits) {
 
 TEST(AtMentionResolve, ResolvesRelativeFileAgainstWorkspaceRoot) {
     TempWorkspace ws;
-    auto mentions = cc::hooks::parse_at_mentions("@src/sample.cpp");
+    auto mentions = loom::hooks::parse_at_mentions("@src/sample.cpp");
     ASSERT_EQ(mentions.size(), 1u);
-    auto resolved = cc::hooks::resolve_at_mention(mentions[0], ws.root.string());
+    auto resolved = loom::hooks::resolve_at_mention(mentions[0], ws.root.string());
     ASSERT_TRUE(resolved.has_value()) << resolved.error();
     std::error_code ec;
     auto canonical = std::filesystem::weakly_canonical(ws.file, ec);
@@ -352,9 +352,9 @@ TEST(AtMentionResolve, ResolvesRelativeFileAgainstWorkspaceRoot) {
 
 TEST(AtMentionResolve, ResolvesAbsolutePath) {
     TempWorkspace ws;
-    auto mentions = cc::hooks::parse_at_mentions("@" + ws.file.string());
+    auto mentions = loom::hooks::parse_at_mentions("@" + ws.file.string());
     ASSERT_EQ(mentions.size(), 1u);
-    auto resolved = cc::hooks::resolve_at_mention(mentions[0], "/some/other/root");
+    auto resolved = loom::hooks::resolve_at_mention(mentions[0], "/some/other/root");
     ASSERT_TRUE(resolved.has_value()) << resolved.error();
     std::error_code ec;
     auto canonical = std::filesystem::weakly_canonical(ws.file, ec);
@@ -365,23 +365,23 @@ TEST(AtMentionResolve, NormalisesDotDot) {
     TempWorkspace ws;
     // "../src/sample.cpp" relative to ws.root/src resolves back to ws.file.
     auto rel = (ws.root / "src" / ".." / "src" / "sample.cpp").string();
-    auto mentions = cc::hooks::parse_at_mentions("@" + rel);
+    auto mentions = loom::hooks::parse_at_mentions("@" + rel);
     ASSERT_EQ(mentions.size(), 1u);
-    auto resolved = cc::hooks::resolve_at_mention(mentions[0], ws.root.string());
+    auto resolved = loom::hooks::resolve_at_mention(mentions[0], ws.root.string());
     ASSERT_TRUE(resolved.has_value()) << resolved.error();
     EXPECT_EQ(*resolved, std::filesystem::weakly_canonical(ws.file).string());
 }
 
 TEST(AtMentionResolve, FailsOnMissingFile) {
-    auto mentions = cc::hooks::parse_at_mentions("@nope/missing.cpp");
+    auto mentions = loom::hooks::parse_at_mentions("@nope/missing.cpp");
     ASSERT_EQ(mentions.size(), 1u);
-    auto resolved = cc::hooks::resolve_at_mention(mentions[0], "/tmp");
+    auto resolved = loom::hooks::resolve_at_mention(mentions[0], "/tmp");
     ASSERT_FALSE(resolved.has_value());
     EXPECT_NE(resolved.error().find("does not exist"), std::string::npos);
 }
 
 TEST(AtMentionResolve, FailsOnSymbolMention) {
-    cc::hooks::AtMention sym{
+    loom::hooks::AtMention sym{
         .type = "symbol",
         .value = "Foo",
         .start = 0,
@@ -389,16 +389,16 @@ TEST(AtMentionResolve, FailsOnSymbolMention) {
         .line_start = std::nullopt,
         .line_end = std::nullopt,
     };
-    auto resolved = cc::hooks::resolve_at_mention(sym, "/tmp");
+    auto resolved = loom::hooks::resolve_at_mention(sym, "/tmp");
     ASSERT_FALSE(resolved.has_value());
     EXPECT_NE(resolved.error().find("Symbol resolution"), std::string::npos);
 }
 
 TEST(AtMentionResolve, FailsOnRelativeWithoutWorkspaceRoot) {
     TempWorkspace ws;
-    auto mentions = cc::hooks::parse_at_mentions("@src/sample.cpp");
+    auto mentions = loom::hooks::parse_at_mentions("@src/sample.cpp");
     ASSERT_EQ(mentions.size(), 1u);
-    auto resolved = cc::hooks::resolve_at_mention(mentions[0], "");
+    auto resolved = loom::hooks::resolve_at_mention(mentions[0], "");
     ASSERT_FALSE(resolved.has_value());
     EXPECT_NE(resolved.error().find("workspace root"), std::string::npos);
 }

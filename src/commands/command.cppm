@@ -11,7 +11,7 @@ import std;
 
 import loom.types.types;
 
-export namespace cc::core {
+export namespace loom::core {
 
 // ============================================================
 // Command Context
@@ -81,7 +81,7 @@ struct CommandContext {
     RuntimeCompactApplier compact_applier = nullptr;
 
     // AppState access bridge (set by app.cppm)
-    void* app_store = nullptr;  // opaque: cc::state::AppStore*
+    void* app_store = nullptr;  // opaque: loom::state::AppStore*
     using StateDispatchFn = void(*)(void* store, int action_type, const void* payload);
     StateDispatchFn dispatch_fn = nullptr;
     using StateGetFn = const void*(*)(void* store);
@@ -457,4 +457,4 @@ CommandRegistry create_default_registry() {
     return registry;
 }
 
-} // namespace cc::core
+} // namespace loom::core

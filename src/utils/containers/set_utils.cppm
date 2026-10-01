@@ -3,7 +3,7 @@ export module loom.containers.set_utils;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 // Set union.
 template <typename T>
@@ -74,4 +74,4 @@ template <typename T>
     return result;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

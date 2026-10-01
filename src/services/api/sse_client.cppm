@@ -20,9 +20,9 @@ import loom.serdes.json;
 // be used as an independent SSE primitive.  The full-featured AnthropicClient
 // in cc.services.api.client builds on top of this module.
 
-export namespace cc::services::api::sse {
+export namespace loom::services::api::sse {
 
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 // =========================================================================
 // Text-only message model
@@ -527,7 +527,7 @@ private:
 // =========================================================================
 
 /// 7 SSE event types required by the dispatch layer (lives in its own namespace
-/// to avoid ambiguity with cc::services::api::sse::SseEventType which includes
+/// to avoid ambiguity with loom::services::api::sse::SseEventType which includes
 /// ContentBlockStart / Unknown extensions).
 enum class SseEvent {
     MessageStart,
@@ -629,4 +629,4 @@ inline int PostMessagesStream(
     return client.PostMessagesStream(system_prompt, converted, std::move(internal));
 }
 
-}  // namespace cc::services::api::sse
+}  // namespace loom::services::api::sse

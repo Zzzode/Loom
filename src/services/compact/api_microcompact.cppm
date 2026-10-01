@@ -9,7 +9,7 @@ import std;
 
 import loom.platform.env.env_utils;
 
-export namespace cc::services::compact {
+export namespace loom::services::compact {
 
 struct ContextEditStrategy {
     std::string type;
@@ -39,7 +39,7 @@ inline constexpr std::uint32_t k_default_max_input_tokens = 180'000;
 inline constexpr std::uint32_t k_default_target_input_tokens = 40'000;
 
 [[nodiscard]] inline bool env_truthy(const char* name) {
-    return cc::utils::is_env_truthy(std::getenv(name));
+    return loom::utils::is_env_truthy(std::getenv(name));
 }
 
 [[nodiscard]] inline std::uint32_t env_uint_or_default(

@@ -39,7 +39,7 @@ import loom.serdes.json;
 
 // Design-system tokens (shared with other screens)
 // Palette matches Pane / design-system/Pane.tsx + Doctor severity colors.
-namespace cc::ui::doctor_screen::ds {
+namespace loom::ui::doctor_screen::ds {
 using namespace ftxui;
 const Color BG_DARK       = Color::Grey23;
 const Color SURFACE       = Color::Grey27;
@@ -51,9 +51,9 @@ const Color TEXT_MUTED    = Color::Grey70;
 const Color SPARQL_OK     = Color::Green;
 const Color SPARQL_WARN   = Color::Yellow;
 const Color SPARQL_ERR    = Color::Red;
-} // namespace cc::ui::doctor_screen::ds
+} // namespace loom::ui::doctor_screen::ds
 
-export namespace cc::ui::doctor_screen {
+export namespace loom::ui::doctor_screen {
 using namespace ftxui;
 using namespace ds;
 
@@ -615,7 +615,7 @@ struct DoctorContext {
             fs::path alt = ctx.home / ".loom.json";
             if (fs::exists(alt, ec)) cfg = alt;
         }
-        auto parsed = cc::utils::json::parse_file(cfg.string());
+        auto parsed = loom::utils::json::parse_file(cfg.string());
         if (!parsed.has_value()) {
             r.severity = DiagnosticSeverity::Info;
             r.message = "No MCP server configuration found.";
@@ -1367,4 +1367,4 @@ namespace detail {
     });
 }
 
-} // namespace cc::ui::doctor_screen
+} // namespace loom::ui::doctor_screen

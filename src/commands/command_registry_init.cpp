@@ -16,7 +16,7 @@
 
 module loom.commands.registry;
 
-namespace cc::commands {
+namespace loom::commands {
 
 void register_default_commands(CommandRegistry& registry) {
     register_group_a_commands(registry);
@@ -26,4 +26,4 @@ void register_default_commands(CommandRegistry& registry) {
     register_group_e_commands(registry);
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

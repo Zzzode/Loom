@@ -2,7 +2,7 @@
 // (RFC 0001 Phase C batch 10). Message/conversation selectors: counts,
 // loading/streaming/error state, total token usage + cost, working and
 // allowed directories, and the composite is_ui_busy. This is the ONLY impl
-// unit that imports cc.types.types (cc::core::TokenUsage in get_total_usage).
+// unit that imports cc.types.types (loom::core::TokenUsage in get_total_usage).
 module;
 
 #include <cstddef>
@@ -14,7 +14,7 @@ import std;
 import loom.types.types;
 import loom.state.app_state;
 
-namespace cc::state::selectors {
+namespace loom::state::selectors {
 
 // ============================================================
 // Message & Conversation Selectors
@@ -54,7 +54,7 @@ namespace cc::state::selectors {
 }
 
 /// Get the total token usage
-[[nodiscard]] const cc::core::TokenUsage& get_total_usage(const AppState& state) noexcept {
+[[nodiscard]] const loom::core::TokenUsage& get_total_usage(const AppState& state) noexcept {
     return state.total_usage;
 }
 
@@ -82,4 +82,4 @@ namespace cc::state::selectors {
     return state.is_loading || state.is_streaming || state.error_message.has_value();
 }
 
-} // namespace cc::state::selectors
+} // namespace loom::state::selectors

@@ -10,7 +10,7 @@ export module loom.hooks.exit_handler;
 import std;
 
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 
 enum class ExitReason {
@@ -184,4 +184,4 @@ private:
     });
 }
 
-} // namespace cc::hooks
+} // namespace loom::hooks

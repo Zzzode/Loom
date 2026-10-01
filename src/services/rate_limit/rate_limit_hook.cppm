@@ -10,7 +10,7 @@ export module loom.services.rate_limit.rate_limit_hook;
 
 import std;
 
-export namespace cc::services::rate_limit {
+export namespace loom::services::rate_limit {
 
 /// Rate limit hook state — tracks current limiting status
 struct RateLimitHookState {
@@ -240,4 +240,4 @@ inline void clear_rate_limit_state() {
     detail::global_hook.reset();
 }
 
-} // namespace cc::services::rate_limit
+} // namespace loom::services::rate_limit

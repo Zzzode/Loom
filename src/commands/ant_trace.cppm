@@ -7,7 +7,7 @@ import std;
 
 import loom.constants.product;
 
-export namespace cc::commands::ant_trace {
+export namespace loom::commands::ant_trace {
 namespace fs = std::filesystem;
 
 struct CommandResponse { bool ok{true}; std::string message; };
@@ -27,7 +27,7 @@ struct CommandResponse { bool ok{true}; std::string message; };
         "Startup profiling: {}\n"
         "Debug logging: {}",
         target.empty() ? "current-session" : std::string(target),
-        cc::constants::product::LOOM_VERSION,
+        loom::constants::product::LOOM_VERSION,
         static_cast<long>(::getpid()),
         ec ? "<unavailable>" : cwd.string(),
         profile_enabled ? "enabled" : "disabled",

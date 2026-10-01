@@ -48,10 +48,10 @@ import loom.utils.error;
 import loom.net.http.http_encoding;
 import loom.model.providers;
 
-export namespace cc::services::auth::byoc {
+export namespace loom::services::auth::byoc {
 
-using cc::utils::Error;
-using cc::utils::Result;
+using loom::utils::Error;
+using loom::utils::Result;
 using namespace std::string_view_literals;
 
 // ---------------------------------------------------------------------------
@@ -72,8 +72,8 @@ enum class EnterpriseProvider {
 // as TS upstream).
 // ---------------------------------------------------------------------------
 [[nodiscard]] inline EnterpriseProvider detect_active_provider() {
-    using cc::utils::env::is_env_truthy;
-    using cc::utils::env::get_env;
+    using loom::utils::env::is_env_truthy;
+    using loom::utils::env::get_env;
     auto bedrock = is_env_truthy("LOOM_USE_BEDROCK");
     auto vertex  = is_env_truthy("LOOM_USE_VERTEX");
     auto foundry = is_env_truthy("LOOM_USE_FOUNDRY");
@@ -121,7 +121,7 @@ struct ResolvedAuth {
 // Custom base_url (ANTHROPIC_BEDROCK_BASE_URL) overrides host.
 // ---------------------------------------------------------------------------
 [[nodiscard]] inline std::string bedrock_base_url(std::string_view region) {
-    using cc::utils::env::get_env;
+    using loom::utils::env::get_env;
     if (auto u = get_env("ANTHROPIC_BEDROCK_BASE_URL"); u && !u->empty()) {
         auto r = *u;
         while (!r.empty() && r.back() == '/') r.pop_back();
@@ -133,7 +133,7 @@ struct ResolvedAuth {
 
 [[nodiscard]] inline std::string bedrock_path_for_model(
     std::string_view provider_model_id, bool streaming) {
-    using namespace cc::utils::http;
+    using namespace loom::utils::http;
     // The model identifier itself is URL-encoded for the path (it may contain
     // '/' characters in cross-region inference ARNs, so we encode it safely).
     return std::string("/model/") + uri_encode(std::string(provider_model_id)) +
@@ -204,7 +204,7 @@ public:
             return resolve_foundry(canonical_first_party_id, std::move(out));
         }
         return std::unexpected(Error(
-            cc::utils::ErrorCode::internal_error,
+            loom::utils::ErrorCode::internal_error,
             "Unknown enterprise provider"));
     }
 
@@ -236,9 +236,9 @@ private:
     // -----------------------------------------------------------------------
     Result<ResolvedAuth> resolve_first_party(
         std::string_view canonical_id, ResolvedAuth out) {
-        using cc::utils::env::get_env;
-        using cc::utils::Provider;
-        using cc::utils::get_api_base_url;
+        using loom::utils::env::get_env;
+        using loom::utils::Provider;
+        using loom::utils::get_api_base_url;
         out.base_url = get_api_base_url(Provider::Anthropic);
         out.model_id = std::string(canonical_id);
         out.endpoint_host = extract_host_from_url(out.base_url);
@@ -273,7 +273,7 @@ private:
         }
         if (!cached_aws_creds_ || !cached_aws_creds_->valid()) {
             return std::unexpected(Error(
-                cc::utils::ErrorCode::permission_denied,
+                loom::utils::ErrorCode::permission_denied,
                 "AWS Bedrock: no valid credentials after the full chain. "
                 "Set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY, configure "
                 "~/.aws/credentials, attach an IAM role to the EC2 instance, "
@@ -307,7 +307,7 @@ private:
             if (auto _ = gcp_provider_->last_project_id(); !_.empty()) project_id = _;
         }
         if (project_id.empty()) {
-            using cc::utils::env::get_env;
+            using loom::utils::env::get_env;
             if (auto p = get_env("GOOGLE_CLOUD_PROJECT"); p && !p->empty()) project_id = *p;
             else if (auto p = get_env("GCLOUD_PROJECT"); p && !p->empty()) project_id = *p;
             else if (auto p = get_env("google_cloud_project"); p && !p->empty()) project_id = *p;
@@ -323,7 +323,7 @@ private:
         }
         if (project_id.empty()) {
             return std::unexpected(Error(
-                cc::utils::ErrorCode::internal_error,
+                loom::utils::ErrorCode::internal_error,
                 "GCP Vertex: no project_id resolved.  Set GOOGLE_CLOUD_PROJECT, "
                 "GCLOUD_PROJECT, or ANTHROPIC_VERTEX_PROJECT_ID, attach a GKE "
                 "Workload Identity, or set `gcpAuthRefresh` in settings."));
@@ -355,7 +355,7 @@ private:
 
         if (foundry_base_url_.empty()) {
             return std::unexpected(Error(
-                cc::utils::ErrorCode::internal_error,
+                loom::utils::ErrorCode::internal_error,
                 "Azure Foundry: no endpoint.  Set ANTHROPIC_FOUNDRY_BASE_URL "
                 "or ANTHROPIC_FOUNDRY_RESOURCE."));
         }
@@ -371,7 +371,7 @@ private:
         if (foundry_mode_.skip_auth) return out;
         if (!azure_cred_) {
             return std::unexpected(Error(
-                cc::utils::ErrorCode::internal_error,
+                loom::utils::ErrorCode::internal_error,
                 "Azure Foundry: credential provider not initialized."));
         }
         auto tok = azure_cred_->get_token(kFoundryDefaultScope);
@@ -448,4 +448,4 @@ private:
     }
 };
 
-} // namespace cc::services::auth::byoc
+} // namespace loom::services::auth::byoc

@@ -10,11 +10,11 @@ import loom.serdes.json;
 import loom.utils.error;
 import loom.services.api.errors;
 
-export namespace cc::services::api {
+export namespace loom::services::api {
 
-using cc::services::api::errors::ApiErrorDetails;
-using cc::services::api::errors::ErrorFactory;
-using cc::utils::Result;
+using loom::services::api::errors::ApiErrorDetails;
+using loom::services::api::errors::ErrorFactory;
+using loom::utils::Result;
 
 // =========================================================================
 // Stream Event Types
@@ -218,7 +218,7 @@ private:
     [[nodiscard]] static Result<StreamEvent> parse_message_start(const std::string& data,
                                                                  StreamEvent& event) {
         event.type = StreamEventType::MessageStart;
-        auto doc_result = cc::utils::json::parse(data);
+        auto doc_result = loom::utils::json::parse(data);
         if (!doc_result) {
             return std::unexpected(doc_result.error());
         }
@@ -236,7 +236,7 @@ private:
     [[nodiscard]] static Result<StreamEvent> parse_content_block_start(const std::string& data,
                                                                        StreamEvent& event) {
         event.type = StreamEventType::ContentBlockStart;
-        auto doc_result = cc::utils::json::parse(data);
+        auto doc_result = loom::utils::json::parse(data);
         if (!doc_result) {
             return std::unexpected(doc_result.error());
         }
@@ -265,7 +265,7 @@ private:
     [[nodiscard]] static Result<StreamEvent> parse_content_block_delta(const std::string& data,
                                                                        StreamEvent& event) {
         event.type = StreamEventType::ContentBlockDelta;
-        auto doc_result = cc::utils::json::parse(data);
+        auto doc_result = loom::utils::json::parse(data);
         if (!doc_result) {
             return std::unexpected(doc_result.error());
         }
@@ -293,7 +293,7 @@ private:
     [[nodiscard]] static Result<StreamEvent> parse_content_block_stop(const std::string& data,
                                                                       StreamEvent& event) {
         event.type = StreamEventType::ContentBlockStop;
-        auto doc_result = cc::utils::json::parse(data);
+        auto doc_result = loom::utils::json::parse(data);
         if (!doc_result) {
             return std::unexpected(doc_result.error());
         }
@@ -307,7 +307,7 @@ private:
     [[nodiscard]] static Result<StreamEvent> parse_message_delta(const std::string& data,
                                                                  StreamEvent& event) {
         event.type = StreamEventType::MessageDelta;
-        auto doc_result = cc::utils::json::parse(data);
+        auto doc_result = loom::utils::json::parse(data);
         if (!doc_result) {
             return std::unexpected(doc_result.error());
         }
@@ -337,7 +337,7 @@ private:
     [[nodiscard]] static Result<StreamEvent> parse_error(const std::string& data,
                                                          StreamEvent& event) {
         event.type = StreamEventType::Error;
-        auto doc_result = cc::utils::json::parse(data);
+        auto doc_result = loom::utils::json::parse(data);
         if (!doc_result) {
             return std::unexpected(doc_result.error());
         }
@@ -689,4 +689,4 @@ private:
     return "unknown";
 }
 
-} // namespace cc::services::api
+} // namespace loom::services::api

@@ -27,7 +27,7 @@ import loom.ui.tools.mcp;
 import loom.ui.tools.lsp;
 import loom.ui.tools.longtail;
 
-export namespace cc::ui::tools {
+export namespace loom::ui::tools {
 
 /// Register all built-in tool UIs in the global registry.
 /// Safe to call multiple times (idempotent — checks for existing entries).
@@ -66,4 +66,4 @@ inline void register_builtin_tool_uis() {
     longtail_ui::register_longtail_tool_uis();
 }
 
-}  // namespace cc::ui::tools
+}  // namespace loom::ui::tools

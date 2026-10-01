@@ -8,7 +8,7 @@ import std;
 
 import loom.skills.skill;
 
-export namespace cc::skills::keybindings {
+export namespace loom::skills::keybindings {
 
 /// Keybindings skill definition
 [[nodiscard]] inline SkillDefinition make_keybindings_skill() {
@@ -55,4 +55,4 @@ export namespace cc::skills::keybindings {
     };
 }
 
-} // namespace cc::skills::keybindings
+} // namespace loom::skills::keybindings

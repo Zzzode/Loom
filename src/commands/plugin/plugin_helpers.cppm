@@ -18,7 +18,7 @@ export module loom.commands.plugin_helpers;
 
 import std;
 
-export namespace cc::commands::plugin_helpers {
+export namespace loom::commands::plugin_helpers {
 
 // ═════════════════════════════════════════════════════════════════════════════
 // 1.  Plugin Error Formatting  (from PluginErrors.tsx)
@@ -465,4 +465,4 @@ inline bool is_transient_error(ErrorKind k) {
     return transient.contains(k);
 }
 
-} // namespace cc::commands::plugin_helpers
+} // namespace loom::commands::plugin_helpers

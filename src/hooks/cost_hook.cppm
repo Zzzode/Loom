@@ -3,7 +3,7 @@ export module loom.hooks.cost_hook;
 
 import std;
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 struct CostUpdate {
     double session_cost;
@@ -76,4 +76,4 @@ inline void set_cost_budget(double max_usd) {
     detail::cost_budget_limit() = max_usd;
 }
 
-} // namespace cc::hooks
+} // namespace loom::hooks

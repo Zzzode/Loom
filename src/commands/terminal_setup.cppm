@@ -23,7 +23,7 @@ import std;
 
 import loom.platform.hyperlink;
 
-export namespace cc::commands::terminal_setup {
+export namespace loom::commands::terminal_setup {
 
 // ============================================================
 // Public types
@@ -188,14 +188,14 @@ namespace detail {
 /// TS REF: src/commands/terminalSetup/terminalSetup.tsx L54-72 formatPathLink().
 /// Returns an OSC 8 file:// hyperlink wrapping the plain path, or the bare
 /// path when the terminal does not advertise hyperlink support. The gate
-/// lives inside cc::utils::make_hyperlink(), matching the TS early return.
+/// lives inside loom::utils::make_hyperlink(), matching the TS early return.
 /// Unlike TS (BEL ST), the helper emits ST as ESC-backslash; both are
 /// legal OSC 8 terminators. The display text is the untouched path so it
 /// stays human-readable inside the escape sequence.
 [[nodiscard]] inline std::string format_path_link(std::string_view file_path) {
     const std::string url =
-        cc::utils::path_to_file_url(std::filesystem::path{std::string{file_path}});
-    return cc::utils::make_hyperlink(url, file_path);
+        loom::utils::path_to_file_url(std::filesystem::path{std::string{file_path}});
+    return loom::utils::make_hyperlink(url, file_path);
 }
 
 } // namespace detail
@@ -567,4 +567,4 @@ struct ApplyResult {
     return {true, oss.str()};
 }
 
-} // namespace cc::commands::terminal_setup
+} // namespace loom::commands::terminal_setup

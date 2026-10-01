@@ -17,7 +17,7 @@ import std;
 
 import loom.ui.messages.message_components;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -155,4 +155,4 @@ class RateLimitMessageComponent : public ComponentBase {
         std::move(info), std::move(on_retry), std::move(on_options));
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

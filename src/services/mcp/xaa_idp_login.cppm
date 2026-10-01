@@ -34,15 +34,15 @@ import loom.serdes.json;
 import loom.platform.hyperlink;
 import loom.services.mcp.oauth_port;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
-using cc::utils::Error;
-using cc::utils::ErrorCode;
-using cc::utils::Result;
-using cc::utils::open_browser;
-using cc::utils::json::JsonDoc;
-using cc::utils::json::JsonMutDoc;
-using cc::utils::json::JsonVal;
+using loom::utils::Error;
+using loom::utils::ErrorCode;
+using loom::utils::Result;
+using loom::utils::open_browser;
+using loom::utils::json::JsonDoc;
+using loom::utils::json::JsonMutDoc;
+using loom::utils::json::JsonVal;
 namespace fs = std::filesystem;
 
 // Forward declaration — defined later in this file, used by save_idp_id_token_from_jwt
@@ -207,7 +207,7 @@ struct CachedIdpToken {
     auto path = idp_token_storage_path();
     if (!fs::exists(path)) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse_file(path);
+    auto parsed = loom::utils::json::parse_file(path);
     if (!parsed) return std::nullopt;
 
     auto root = parsed->root();
@@ -259,7 +259,7 @@ inline void write_cached_idp_token(
     // c17a client-secret forwarding reachable.)
     doc.set_root(root);
 
-    auto existing = cc::utils::json::parse_file(path);
+    auto existing = loom::utils::json::parse_file(path);
     if (existing && existing->root().is_obj()) {
         root = doc.copy_val(existing->root());
         doc.set_root(root);
@@ -280,8 +280,8 @@ inline void write_cached_idp_token(
     // rename) instead of a truncating std::ofstream that applied the umask
     // (0644) and followed symlinks. Best-effort like before: a store write
     // failure does not fail the login that produced the token.
-    (void)cc::utils::atomic_replace_file(path, doc.to_string(),
-                                         cc::utils::AtomicMode::OwnerOnly);
+    (void)loom::utils::atomic_replace_file(path, doc.to_string(),
+                                         loom::utils::AtomicMode::OwnerOnly);
 }
 
 /// TS REF: xaaIdpLogin.ts:143-150 clearIdpIdToken()
@@ -289,7 +289,7 @@ inline void remove_cached_idp_token(std::string_view idp_issuer) {
     auto path = idp_token_storage_path();
     if (!fs::exists(path)) return;
 
-    auto existing = cc::utils::json::parse_file(path);
+    auto existing = loom::utils::json::parse_file(path);
     if (!existing || !existing->root().is_obj()) return;
 
     JsonMutDoc doc;
@@ -303,8 +303,8 @@ inline void remove_cached_idp_token(std::string_view idp_issuer) {
     (void)mcp_xaa.remove(key);
 
     // c17a: owner-only atomic write (see write_cached_idp_token).
-    (void)cc::utils::atomic_replace_file(path, doc.to_string(),
-                                         cc::utils::AtomicMode::OwnerOnly);
+    (void)loom::utils::atomic_replace_file(path, doc.to_string(),
+                                         loom::utils::AtomicMode::OwnerOnly);
 }
 
 /// TS REF: xaaIdpLogin.ts:159-172 saveIdpClientSecret() / 177-181 getIdpClientSecret()
@@ -325,7 +325,7 @@ inline void write_idp_client_secret(
     // reachable.)
     doc.set_root(root);
 
-    auto existing = cc::utils::json::parse_file(path);
+    auto existing = loom::utils::json::parse_file(path);
     if (existing && existing->root().is_obj()) {
         root = doc.copy_val(existing->root());
         doc.set_root(root);
@@ -339,8 +339,8 @@ inline void write_idp_client_secret(
 
     // c17a: owner-only atomic write (see write_cached_idp_token). The secret
     // store must never be world-readable.
-    (void)cc::utils::atomic_replace_file(path, doc.to_string(),
-                                         cc::utils::AtomicMode::OwnerOnly);
+    (void)loom::utils::atomic_replace_file(path, doc.to_string(),
+                                         loom::utils::AtomicMode::OwnerOnly);
 }
 
 [[nodiscard]] inline std::optional<std::string> read_idp_client_secret(
@@ -348,7 +348,7 @@ inline void write_idp_client_secret(
     auto path = idp_token_storage_path();
     if (!fs::exists(path)) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse_file(path);
+    auto parsed = loom::utils::json::parse_file(path);
     if (!parsed) return std::nullopt;
 
     auto root = parsed->root();
@@ -371,7 +371,7 @@ inline void remove_idp_client_secret(std::string_view idp_issuer) {
     auto path = idp_token_storage_path();
     if (!fs::exists(path)) return;
 
-    auto existing = cc::utils::json::parse_file(path);
+    auto existing = loom::utils::json::parse_file(path);
     if (!existing || !existing->root().is_obj()) return;
 
     JsonMutDoc doc;
@@ -385,8 +385,8 @@ inline void remove_idp_client_secret(std::string_view idp_issuer) {
     (void)config.remove(key);
 
     // c17a: owner-only atomic write (see write_cached_idp_token).
-    (void)cc::utils::atomic_replace_file(path, doc.to_string(),
-                                         cc::utils::AtomicMode::OwnerOnly);
+    (void)loom::utils::atomic_replace_file(path, doc.to_string(),
+                                         loom::utils::AtomicMode::OwnerOnly);
 }
 
 } // namespace detail
@@ -451,7 +451,7 @@ inline void clear_idp_client_secret(std::string_view idp_issuer) {
 [[nodiscard]] inline std::optional<std::string> read_legacy_idp_client_secret() {
     const char* home = std::getenv("HOME");
     if (!home) return std::nullopt;
-    auto read = cc::utils::read_regular_file(
+    auto read = loom::utils::read_regular_file(
         fs::path(home) / ".loom" / "xaa-idp.txt");
     if (!read.present()) return std::nullopt;
 
@@ -508,11 +508,11 @@ inline void clear_idp_client_secret(std::string_view idp_issuer) {
 
     // base64url decode the payload
     // The crypto base64_decode handles both standard and URL-safe chars
-    auto decoded = cc::utils::crypto::base64_decode(payload_b64);
+    auto decoded = loom::utils::crypto::base64_decode(payload_b64);
     if (!decoded) return std::nullopt;
 
     std::string payload_str(decoded->begin(), decoded->end());
-    auto parsed = cc::utils::json::parse(payload_str);
+    auto parsed = loom::utils::json::parse(payload_str);
     if (!parsed) return std::nullopt;
 
     auto exp_val = parsed->root().get("exp");
@@ -593,7 +593,7 @@ struct ParsedUrl {
     }
 
     // Captive portals and proxy auth pages return 200 with HTML.
-    auto body_parsed = cc::utils::json::parse(response->body);
+    auto body_parsed = loom::utils::json::parse(response->body);
     if (!body_parsed) {
         return std::unexpected(Error(ErrorCode::parse_error,
             "XAA IdP: OIDC discovery returned non-JSON at " + discovery_url
@@ -660,8 +660,8 @@ namespace detail {
 
 /// Generate a random state string for CSRF protection.
 [[nodiscard]] inline std::string generate_state() {
-    auto bytes = cc::utils::crypto::random_bytes(32);
-    return cc::utils::crypto::base64_encode(bytes);
+    auto bytes = loom::utils::crypto::random_bytes(32);
+    return loom::utils::crypto::base64_encode(bytes);
 }
 
 } // namespace detail
@@ -925,8 +925,8 @@ private:
     std::string redirect_uri = "http://localhost:" + std::to_string(port) + "/callback";
 
     // 4. Generate PKCE parameters and state
-    auto code_verifier = cc::utils::crypto::generate_code_verifier();
-    auto code_challenge = cc::utils::crypto::generate_code_challenge(code_verifier);
+    auto code_verifier = loom::utils::crypto::generate_code_verifier();
+    auto code_challenge = loom::utils::crypto::generate_code_challenge(code_verifier);
     auto state = detail::generate_state();
 
     // 5. Build authorization URL
@@ -993,7 +993,7 @@ private:
             auto basic_payload = detail::url_encode(opts.idp_client_id)
                 + ":" + detail::url_encode(*opts.idp_client_secret);
             headers.emplace("Authorization",
-                "Basic " + cc::utils::crypto::base64_encode(basic_payload));
+                "Basic " + loom::utils::crypto::base64_encode(basic_payload));
         } else if (supports_post) {
             body += "&client_secret=" + detail::url_encode(*opts.idp_client_secret);
         }
@@ -1028,7 +1028,7 @@ private:
                 std::string_view(token_response->body).substr(0, 200))));
     }
 
-    auto token_parsed = cc::utils::json::parse(token_response->body);
+    auto token_parsed = loom::utils::json::parse(token_response->body);
     if (!token_parsed) {
         return std::unexpected(Error(ErrorCode::parse_error,
             "XAA IdP: token exchange returned non-JSON"));
@@ -1169,4 +1169,4 @@ private:
     return result;
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

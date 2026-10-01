@@ -47,12 +47,12 @@ namespace fs = std::filesystem;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(PromptInput, InputBufferInsertMoveAndDelete) {
-    cc::ui::InputBuffer buffer;
+    loom::ui::InputBuffer buffer;
     buffer.insert("Hello");
     EXPECT_EQ(buffer.content(), "Hello");
     EXPECT_EQ(buffer.cursor().col, 5u);
 
-    buffer.move_cursor(cc::ui::VimMotion::Left);
+    buffer.move_cursor(loom::ui::VimMotion::Left);
     EXPECT_EQ(buffer.cursor().col, 4u);
     buffer.delete_char();
     EXPECT_EQ(buffer.content(), "Hell");
@@ -60,7 +60,7 @@ TEST(PromptInput, InputBufferInsertMoveAndDelete) {
 
 
 TEST(PromptInput, InputBufferBackspaceDeletesWholeUtf8Codepoint) {
-    cc::ui::InputBuffer buffer;
+    loom::ui::InputBuffer buffer;
     buffer.insert("你a");
 
     buffer.backspace();
@@ -71,7 +71,7 @@ TEST(PromptInput, InputBufferBackspaceDeletesWholeUtf8Codepoint) {
 
 
 TEST(PromptInput, InputBufferSupportsMultiLineSelections) {
-    cc::ui::InputBuffer buffer;
+    loom::ui::InputBuffer buffer;
     buffer.insert("one\ntwo");
 
     auto text = buffer.get_selection_text({.start = {.line = 0, .col = 1}, .end = {.line = 1, .col = 2}});
@@ -80,7 +80,7 @@ TEST(PromptInput, InputBufferSupportsMultiLineSelections) {
 
 
 TEST(PromptInput, HistoryManagerNavigatesAndSearches) {
-    cc::ui::HistoryManager history;
+    loom::ui::HistoryManager history;
     history.push("first command");
     history.push("second command");
 
@@ -95,7 +95,7 @@ TEST(PromptInput, HistoryManagerNavigatesAndSearches) {
 
 
 TEST(PromptInput, TypeaheadSuggestsSlashCommandsAndSelection) {
-    cc::ui::Typeahead typeahead;
+    loom::ui::Typeahead typeahead;
     typeahead.set_commands({
         {.text = "commit", .description = "Create commit", .category = "command"},
         {.text = "config", .description = "Edit config", .category = "command"},
@@ -111,7 +111,7 @@ TEST(PromptInput, TypeaheadSuggestsSlashCommandsAndSelection) {
 
 
 TEST(LogoV2, CondensedModeRendersStripPlusNotices) {
-    namespace lv2 = cc::ui::logo_v2;
+    namespace lv2 = loom::ui::logo_v2;
 
     lv2::LogoV2Options opts;
     opts.version            = "2024.6";
@@ -143,7 +143,7 @@ TEST(LogoV2, CondensedModeRendersStripPlusNotices) {
 //     banner + "Welcome to Loom [, {user}]" heading inside a rounded
 //     border, and reports LogoLayoutMode::Compact.
 TEST(LogoV2, CompactModeRendersRoundedBorderCard) {
-    namespace lv2 = cc::ui::logo_v2;
+    namespace lv2 = loom::ui::logo_v2;
 
     lv2::LogoV2Options opts;
     opts.version            = "2024.6";
@@ -176,7 +176,7 @@ TEST(LogoV2, CompactModeRendersRoundedBorderCard) {
 //     feed column, split inside a single rounded border.  Also the welcome
 //     greeting personalises for returning users with a display name set.
 TEST(LogoV2, HorizontalModeSplitsIntoPanels) {
-    namespace lv2 = cc::ui::logo_v2;
+    namespace lv2 = loom::ui::logo_v2;
 
     lv2::LogoV2Options opts;
     opts.version            = "2024.6";
@@ -215,7 +215,7 @@ TEST(LogoV2, HorizontalModeSplitsIntoPanels) {
 //     remain invisible when the toggle is false (default). Validates the full
 //     10-deep × 6-status-notices activation tree.
 TEST(LogoV2, EachNoticeActivatorAppearsWhenToggled) {
-    namespace lv2 = cc::ui::logo_v2;
+    namespace lv2 = loom::ui::logo_v2;
 
     // Baseline — every toggle off → no trace of debug/tmux/org/sandbox/guest/
     // overage/status/emergency strings.
@@ -294,7 +294,7 @@ TEST(LogoV2, EachNoticeActivatorAppearsWhenToggled) {
 //     *only* when is_condensed_mode=false; when true always → Condensed
 //     regardless of width.
 TEST(LogoV2, LayoutModeThresholdsMatchTSSpec) {
-    namespace lv2 = cc::ui::logo_v2;
+    namespace lv2 = loom::ui::logo_v2;
 
     lv2::LogoV2Options opts;
     opts.cwd                = "/t";
@@ -325,7 +325,7 @@ TEST(LogoV2, LayoutModeThresholdsMatchTSSpec) {
 //     4 scattered '*' glyphs (asterisk dust baked into the art), and a paws
 //     footer row with "█ █   █ █" clawd feet + ░/▒ planets.
 TEST(LogoV2, WelcomeV2StaticCardMatchesTSSpec) {
-    namespace lv2 = cc::ui::logo_v2;
+    namespace lv2 = loom::ui::logo_v2;
 
     ftxui::Element card = lv2::RenderWelcomeV2(/*version=*/"2024.6");
     std::string s = strip_ansi(render_to_plain_text(card, 120, 20));
@@ -363,7 +363,7 @@ TEST(LogoV2, WelcomeV2StaticCardMatchesTSSpec) {
 //     condensed strip (no force_full_logo = unchanged behaviour for empty
 //     sessions). Tests regression against the Phase-2 WelcomeHeader contract.
 TEST(LogoV2, ReplScreenDefaultWelcomeHeaderStillCondensed) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.chrome_store.app_version = "9.9.9-test";
@@ -390,7 +390,7 @@ TEST(LogoV2, ReplScreenDefaultWelcomeHeaderStillCondensed) {
 // T8: force_full_logo=true drives LogoV2's card layout path from the
 //     ReplScreen-level wrapper, regardless of ReplScreenState contents.
 TEST(LogoV2, ReplScreenForceFullLogoOptsIntoCardMode) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.chrome_store.app_version = "9.9.9-test";
@@ -464,7 +464,7 @@ TEST(LogoV2, ReplScreenForceFullLogoOptsIntoCardMode) {
 //       TS LogoV2.tsx  L331-428  (horizontal + FeedColumn)
 //       TS Feed.tsx    full file (FeedConfig + FeedLine rendering)
 TEST(LogoV2, Logov2RenderModesMissing_Goldens) {
-    namespace lv2 = cc::ui::logo_v2;
+    namespace lv2 = loom::ui::logo_v2;
     using sticky_prompt_test::check_golden;
     using sticky_prompt_test::render_ansi;
 
@@ -546,9 +546,9 @@ namespace sticky_prompt_test {
 // defined EARLIER in this file (see pre-LogoV2 sticky_prompt_test block)
 // so that both LogoV2 and FullscreenLayout tests share one definition.
 
-using fl = cc::ui::layout::fullscreen::FullscreenLayoutSlots;
-using Sp = cc::ui::layout::fullscreen::StickyPrompt;
-namespace fl_ns = cc::ui::layout::fullscreen;
+using fl = loom::ui::layout::fullscreen::FullscreenLayoutSlots;
+using Sp = loom::ui::layout::fullscreen::StickyPrompt;
+namespace fl_ns = loom::ui::layout::fullscreen;
 
 /// Helper: build a minimum slots object with scrollable, bottom, term size
 /// so ComposeFullscreen doesn't collapse to zero-height flex regions.
@@ -838,19 +838,19 @@ TEST(FullscreenLayout, DISABLED_NewMessagesPillClickCallback) {
             if (!slots_->pill_visible || !slots_->on_pill_click ||
                 (slots_->overlay && *slots_->overlay)) return false;
             // Build a PillComponent mirroring NewMessagesPill (same logic).
-            using Role = cc::ui::design::tokens::Role;
-            (void)sizeof(cc::ui::design::tokens::Palette); // import-use anchor
-            const auto& pal = *cc::ui::design::theme::current_theme().palette;
-            ftxui::Color bg_n = cc::ui::design::tokens::token_by_role(
+            using Role = loom::ui::design::tokens::Role;
+            (void)sizeof(loom::ui::design::tokens::Palette); // import-use anchor
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
+            ftxui::Color bg_n = loom::ui::design::tokens::token_by_role(
                 pal, Role::UserMessageBackground);
-            ftxui::Color bg_h = cc::ui::design::tokens::token_by_role(
+            ftxui::Color bg_h = loom::ui::design::tokens::token_by_role(
                 pal, Role::UserMessageBackgroundHover);
-            ftxui::Color fg = cc::ui::design::tokens::token_by_role(
+            ftxui::Color fg = loom::ui::design::tokens::token_by_role(
                 pal, Role::Subtle);
             std::string label =
                 std::to_string(slots_->new_message_count) + " new message"
                 + (slots_->new_message_count == 1 ? "" : "s")
-                + " " + std::string(cc::ui::design::figures::kArrowDown);
+                + " " + std::string(loom::ui::design::figures::kArrowDown);
             auto cb = slots_->on_pill_click;
             class Inner : public ftxui::ComponentBase {
              public:
@@ -927,16 +927,16 @@ TEST(FullscreenLayout, DISABLED_NewMessagesPillClickCallback) {
 // =============================================================================
 
 namespace image_paste_test {
-using namespace cc::core;
-using cc::ui::project_message;
-using cc::ui::project_messages;
-using cc::ui::repl_screen::MessageDisplayEntry;
-using cc::ui::repl_screen::RenderMessages;
+using namespace loom::core;
+using loom::ui::project_message;
+using loom::ui::project_messages;
+using loom::ui::repl_screen::MessageDisplayEntry;
+using loom::ui::repl_screen::RenderMessages;
 
 /// Build a synthetic UserMessage with TextBlock + 2 ImageBlocks.
-cc::core::UserMessage make_mixed_user_message() {
-    using cc::core::ContentBlock;
-    cc::core::UserMessage m;
+loom::core::UserMessage make_mixed_user_message() {
+    using loom::core::ContentBlock;
+    loom::core::UserMessage m;
     ImageBlock img1;
     img1.media_type = "image/png";
     img1.data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
@@ -1013,7 +1013,7 @@ TEST(ImagePaste, MixedTextAndImage_SplitsIntoMultipleRows_OrderPreserved) {
 /// exactly ONE image row (not empty text).
 TEST(ImagePaste, ImageOnly_NoEmptyTextRow) {
     using namespace image_paste_test;
-    cc::core::UserMessage u;
+    loom::core::UserMessage u;
     ImageBlock img_only;
     img_only.media_type = "image/png";
     img_only.data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
@@ -1022,7 +1022,7 @@ TEST(ImagePaste, ImageOnly_NoEmptyTextRow) {
     img_only.size_bytes = 68;
     img_only.file_name = "only.png";
     img_only.source = ImageBlockSource::Clipboard;
-    u.content = std::vector<cc::core::ContentBlock>{std::move(img_only)};
+    u.content = std::vector<loom::core::ContentBlock>{std::move(img_only)};
     Message msg = u;
     auto rows = project_messages(msg);
     ASSERT_EQ(rows.size(), 1u);
@@ -1044,7 +1044,7 @@ TEST(ImagePaste, ImageOnly_NoEmptyTextRow) {
 /// transcript (verifies both M3 and M4 are correctly wired).
 TEST(ImagePaste, ClipboardImageCard_RendersClipboardIconAndFilename) {
     using namespace image_paste_test;
-    using namespace cc::ui::repl_screen;
+    using namespace loom::ui::repl_screen;
     using namespace sticky_prompt_test;  // strip_ansi, render_ansi
 
     Message msg = make_mixed_user_message();
@@ -1097,7 +1097,7 @@ TEST(ImagePaste, ClipboardImageCard_RendersClipboardIconAndFilename) {
 /// message_image directly; snapshot pins exact layout (thumbnail, icon,
 /// filename, dimensions, size).
 TEST(ImagePaste, ClipboardCard_GoldenSnapshot) {
-    using namespace cc::ui::messages::image;
+    using namespace loom::ui::messages::image;
     using namespace sticky_prompt_test;
     ImageMessageData d;
     d.source_type = ImageSource::Clipboard;
@@ -1120,28 +1120,28 @@ namespace {
 
 /// Helper: create a minimal AppAdapter for paste-behavior tests.
 struct PasteTestHarness {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
-    std::unique_ptr<cc::core::QueryEngine> engine;
-    cc::commands::AppCommandRegistry commands;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    std::unique_ptr<loom::core::QueryEngine> engine;
+    loom::commands::AppCommandRegistry commands;
     std::filesystem::path storage_root;
-    std::unique_ptr<cc::utils::SessionStorage> storage;
-    ftxui::Component app;  // actually cc::ui::AppAdapter*
+    std::unique_ptr<loom::utils::SessionStorage> storage;
+    ftxui::Component app;  // actually loom::ui::AppAdapter*
 
-    cc::ui::AppAdapter* adapter() {
-        return dynamic_cast<cc::ui::AppAdapter*>(app.get());
+    loom::ui::AppAdapter* adapter() {
+        return dynamic_cast<loom::ui::AppAdapter*>(app.get());
     }
 
     PasteTestHarness() {
         config.context_window.auto_compact = false;
         config.cwd = std::filesystem::temp_directory_path().string();
-        engine = std::make_unique<cc::core::QueryEngine>(
+        engine = std::make_unique<loom::core::QueryEngine>(
             std::move(config), tools);
         storage_root = std::filesystem::temp_directory_path() /
             ("loom_paste_test_" +
              std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-        storage = std::make_unique<cc::utils::SessionStorage>(storage_root);
-        app = ftxui::Make<cc::ui::AppAdapter>(
+        storage = std::make_unique<loom::utils::SessionStorage>(storage_root);
+        app = ftxui::Make<loom::ui::AppAdapter>(
             engine.get(), nullptr, &commands, storage.get(), [] {});
         adapter()->SyncState();
     }
@@ -1151,13 +1151,13 @@ struct PasteTestHarness {
     }
 
     /// Make a minimal ImageBlock for injection.
-    static cc::core::ImageBlock make_test_image(int seed = 1) {
-        cc::core::ImageBlock ib;
+    static loom::core::ImageBlock make_test_image(int seed = 1) {
+        loom::core::ImageBlock ib;
         ib.media_type = "image/png";
         ib.data = "iVBORw0KGgo=" + std::to_string(seed);  // fake base64
         ib.size_bytes = 1024 * seed;
         ib.file_name = "test_" + std::to_string(seed) + ".png";
-        ib.source = cc::core::ImageBlockSource::Clipboard;
+        ib.source = loom::core::ImageBlockSource::Clipboard;
         return ib;
     }
 };
@@ -1190,7 +1190,7 @@ TEST(ImagePasteSubmit, TextWithImageRef_HasImagesTrue) {
 
     // Simulate what HandleSubmit does: parse refs from text and check overlap.
     const std::string text = "[Image #1]";
-    auto refs = cc::utils::parse_references(text);
+    auto refs = loom::utils::parse_references(text);
     ASSERT_EQ(refs.size(), 1u);
     EXPECT_EQ(refs[0].id, 1);
 
@@ -1217,7 +1217,7 @@ TEST(ImagePasteSubmit, ReferencedIdsFilter_OnlyAttachedRefdImages) {
 
     // Submit text only references [Image #1]; [Image #2] is orphaned.
     const std::string text = "explain [Image #1]";
-    auto refs = cc::utils::parse_references(text);
+    auto refs = loom::utils::parse_references(text);
     std::set<int> referenced_ids;
     for (const auto& r : refs) {
         if (a->has_pasted_content_for_testing(r.id)) referenced_ids.insert(r.id);
@@ -1304,7 +1304,7 @@ TEST(ImagePasteSubmit, OrphanedImageNotInReferencedSet) {
 
     // Now compute referenced-ids from the submit text (same as HandleSubmit).
     const std::string text = "[Image #1]";
-    auto refs = cc::utils::parse_references(text);
+    auto refs = loom::utils::parse_references(text);
     std::set<int> attached_ids;
     for (const auto& r : refs) {
         if (a->has_pasted_content_for_testing(r.id)) attached_ids.insert(r.id);
@@ -1320,15 +1320,15 @@ TEST(ImagePasteSubmit, OrphanedImageNotInReferencedSet) {
 /// helper produces the exact placeholder string that gets inserted.
 TEST(ImagePasteFormat, FormatImageRefMatchesTS) {
     // TS: formatImageRef(1) → "[Image #1]"
-    EXPECT_EQ(cc::utils::format_image_ref(1), "[Image #1]");
-    EXPECT_EQ(cc::utils::format_image_ref(99), "[Image #99]");
+    EXPECT_EQ(loom::utils::format_image_ref(1), "[Image #1]");
+    EXPECT_EQ(loom::utils::format_image_ref(99), "[Image #99]");
 }
 
 
 /// TS REF: history.ts L62-75 — parse_references correctly extracts image refs
 /// from mixed text (integration check that the regex works in the UI context).
 TEST(ImagePasteFormat, ParseReferencesFromPromptText) {
-    auto refs = cc::utils::parse_references(
+    auto refs = loom::utils::parse_references(
         "explain this screenshot [Image #1] and also [Image #2] thanks");
     ASSERT_EQ(refs.size(), 2u);
     EXPECT_EQ(refs[0].id, 1);
@@ -1443,7 +1443,7 @@ TEST(ImagePasteCtrlV, EventSpecial16EqualsEventCharacter16) {
 /// ABOVE the image card — NOT the other way around (which would leave a blank
 /// gap above the text where an empty image card slot sits).
 TEST(ImagePasteCtrlV, ProjectionOrder_TextAboveImage) {
-    using namespace cc::core;
+    using namespace loom::core;
     UserMessage um;
     um.content.push_back(TextBlock{"[Image #1] describe this"});
     ImageBlock ib;
@@ -1455,7 +1455,7 @@ TEST(ImagePasteCtrlV, ProjectionOrder_TextAboveImage) {
     um.content.push_back(ib);
     Message msg{std::move(um)};
 
-    auto entries = cc::ui::project_messages(msg);
+    auto entries = loom::ui::project_messages(msg);
     ASSERT_EQ(entries.size(), 2u)
         << "text + 1 image should project to exactly 2 rows";
     EXPECT_FALSE(entries[0].is_image)
@@ -1470,7 +1470,7 @@ TEST(ImagePasteCtrlV, ProjectionOrder_TextAboveImage) {
 /// now routes UserImage through this same image::render (faithful path), so a
 /// non-empty card here means the transcript row will be non-empty too.
 TEST(ImagePasteCtrlV, MessageImageRender_CardNotEmpty) {
-    using namespace cc::ui::messages::image;
+    using namespace loom::ui::messages::image;
     using namespace sticky_prompt_test;  // strip_ansi, render_ansi
 
     ImageMessageData d;

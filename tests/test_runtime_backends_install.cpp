@@ -1,6 +1,6 @@
 // RFC-0001 B15: pre-main global installation of the orchestration runtime
 // backends for the test_tools binary. Production calls
-// cc::orchestration::install_runtime_backends() once at the top of main()
+// loom::orchestration::install_runtime_backends() once at the top of main()
 // (and again, call_once-noop, per server session); gtest_main gives tests no
 // such hook, so this namespace-scope initializer performs the same one-shot
 // slot assignment before any TEST body runs. This is what makes the lifted
@@ -17,7 +17,7 @@ namespace {
 
 struct RuntimeBackendsPreMainInstall {
     RuntimeBackendsPreMainInstall() {
-        cc::orchestration::install_runtime_backends();
+        loom::orchestration::install_runtime_backends();
     }
 };
 

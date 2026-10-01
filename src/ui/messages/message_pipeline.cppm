@@ -52,10 +52,10 @@ import std;
 
 import loom.ui.foundation.design_figures;
 
-export namespace cc::ui::messages::pipeline {
+export namespace loom::ui::messages::pipeline {
 
 using namespace ftxui;
-namespace figs = cc::ui::design::figures;
+namespace figs = loom::ui::design::figures;
 
 // ─── Forward declarations for downstream render sites ──────────────────────
 // We don't import heavy render modules here (would create BMI circular deps),
@@ -659,4 +659,4 @@ template <typename FilterFn>
     return {first, count};
 }
 
-}  // namespace cc::ui::messages::pipeline
+}  // namespace loom::ui::messages::pipeline

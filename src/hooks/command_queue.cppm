@@ -9,7 +9,7 @@ export module loom.hooks.command_queue;
 import std;
 
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 
 enum class QueuePriority {
@@ -274,4 +274,4 @@ private:
     }
 };
 
-} // namespace cc::hooks
+} // namespace loom::hooks

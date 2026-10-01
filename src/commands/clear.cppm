@@ -15,24 +15,24 @@ import loom.types.types;
 import loom.commands.command;
 import loom.state.app_state;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================
-// Action type ordinals (keep in sync with cc::state::ActionType
+// Action type ordinals (keep in sync with loom::state::ActionType
 // enum ordering in store.cppm)
 // ============================================================
 
-/// Ordinal of ActionType::ClearMessages in cc::state::ActionType.
+/// Ordinal of ActionType::ClearMessages in loom::state::ActionType.
 /// Clears the messages vector in AppState.
 constexpr int ACTION_CLEAR_MESSAGES = 1;
 
-/// Ordinal of ActionType::ResetSession in cc::state::ActionType.
+/// Ordinal of ActionType::ResetSession in loom::state::ActionType.
 /// Resets AppState to defaults, preserving model/config fields.
 constexpr int ACTION_RESET_SESSION = 29;
 
-/// Ordinal of ActionType::AddNotification in cc::state::ActionType.
+/// Ordinal of ActionType::AddNotification in loom::state::ActionType.
 /// Pushes a notification string into the notifications list.
 constexpr int ACTION_ADD_NOTIFICATION = 18;
 
@@ -279,4 +279,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

@@ -8,7 +8,7 @@ export module loom.fs.lockfile;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
 
@@ -145,4 +145,4 @@ bool break_stale_lock(fs::path lock_path, std::chrono::seconds max_age) {
     return false;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

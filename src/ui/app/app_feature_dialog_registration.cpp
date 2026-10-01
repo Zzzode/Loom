@@ -35,11 +35,11 @@ import loom.ui.foundation.feature_dialog_protocol;
 import loom.ui.dialogs.feature_wizard_adapter;
 import loom.ui.dialogs.trust_dialog;
 
-namespace cc::ui::app_dialogs {
+namespace loom::ui::app_dialogs {
 
-namespace fdp = cc::ui::feature_dialog_protocol;
-namespace fwa = cc::ui::feature_wizard_adapter;
-namespace td = cc::ui::trust_dialog;
+namespace fdp = loom::ui::feature_dialog_protocol;
+namespace fwa = loom::ui::feature_wizard_adapter;
+namespace td = loom::ui::trust_dialog;
 
 namespace {
 
@@ -98,4 +98,4 @@ void register_feature_dialog_factories() {
                                  make_trust_factory());
 }
 
-}  // namespace cc::ui::app_dialogs
+}  // namespace loom::ui::app_dialogs

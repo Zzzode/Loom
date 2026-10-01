@@ -22,12 +22,12 @@ import loom.ui.foundation.component_primitives;
 import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
 
-export namespace cc::ui::components::grove {
+export namespace loom::ui::components::grove {
 
 using namespace ftxui;
-using namespace cc::ui::design::primitives;
-using namespace cc::ui::design::tokens;
-using namespace cc::ui::design::theme;
+using namespace loom::ui::design::primitives;
+using namespace loom::ui::design::tokens;
+using namespace loom::ui::design::theme;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -377,4 +377,4 @@ private:
     return ftxui::Make<GroveTreeBase>(s, std::move(on_select), theme);
 }
 
-} // namespace cc::ui::components::grove
+} // namespace loom::ui::components::grove

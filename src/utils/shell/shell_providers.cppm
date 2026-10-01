@@ -14,7 +14,7 @@ import std;
 import loom.process.shell.shell;
 import loom.process.bash.bash_execution;
 
-export namespace cc::utils::shell_providers {
+export namespace loom::utils::shell_providers {
 
 namespace fs = std::filesystem;
 
@@ -388,14 +388,14 @@ private:
         #else
         std::string cmd = "which " + std::string(name) + " 2>/dev/null";
         #endif
-        FILE* pipe = cc::utils::bash::popen_spawn(cmd.c_str());
+        FILE* pipe = loom::utils::bash::popen_spawn(cmd.c_str());
         if (!pipe) return std::nullopt;
         char buffer[512]{};
         std::string result;
         while (std::fgets(buffer, sizeof(buffer), pipe) != nullptr) {
             result += buffer;
         }
-        cc::utils::bash::pclose_spawn(pipe);
+        loom::utils::bash::pclose_spawn(pipe);
         // Trim trailing whitespace/newlines
         while (!result.empty() && (result.back() == '\n' || result.back() == '\r' || result.back() == ' ')) {
             result.pop_back();
@@ -465,4 +465,4 @@ private:
     return create_provider(resolve_default_shell());
 }
 
-} // namespace cc::utils::shell_providers
+} // namespace loom::utils::shell_providers

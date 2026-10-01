@@ -18,7 +18,7 @@ import std;
 import loom.ui.foundation.ui_types;  // TS REF: canonical VimMode lives here
 import loom.vim.vim_controller;  // unified VimController state
 
-export namespace cc::ui::prompt::vim_input {
+export namespace loom::ui::prompt::vim_input {
 using namespace ftxui;
 
 // ============================================================
@@ -32,7 +32,7 @@ using namespace ftxui;
 //   2. Legacy standalone usage in screens that do not use TextInputImpl.
 //
 // The CANONICAL vim editing implementation lives in:
-//   cc::ui::components::TextInputImpl  (text_input.cppm)
+//   loom::ui::components::TextInputImpl  (text_input.cppm)
 // which uses `std::optional<VimMode> vim_mode` in TextInputOptions and has
 // the full HandleVimEvent() state machine matching TS useVimInput.ts.
 //
@@ -43,11 +43,11 @@ using namespace ftxui;
 // Types
 // ============================================================
 
-// Canonical VimMode — imported from cc::ui::common (ui_types.cppm).
+// Canonical VimMode — imported from loom::ui::common (ui_types.cppm).
 // TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
 //          src/hooks/useVimInput.ts:36 (internal state machine tracks more)
 // This replaces the previous local 6-value enum that was missing VisualBlock.
-using cc::ui::common::VimMode;
+using loom::ui::common::VimMode;
 
 /// Vim register for yank/paste
 struct VimRegister {
@@ -66,7 +66,7 @@ enum class CursorShape : std::uint8_t {
 /// Vim-specific state (mode, registers, pending operators) lives in the
 /// VimController field; text buffer state (text, cursor, undo) lives here.
 struct VimState {
-    cc::vim::VimController vim;          ///< Mode, registers, pending ops.
+    loom::vim::VimController vim;          ///< Mode, registers, pending ops.
     std::string text;
     int cursor_pos = 0;
     int visual_start = -1;               ///< Start of visual selection (-1 = none).
@@ -619,4 +619,4 @@ struct VimInputOptions {
     });
 }
 
-} // namespace cc::ui::prompt::vim_input
+} // namespace loom::ui::prompt::vim_input

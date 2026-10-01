@@ -12,7 +12,7 @@ import std;
 
 import loom.types.types;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
 /// Content block types
 enum class ContentBlockType {
@@ -189,4 +189,4 @@ public:
     void clear_buffer() { buffer_.clear(); }
 };
 
-} // namespace cc::bridge
+} // namespace loom::bridge

@@ -18,10 +18,10 @@ import std;
 import loom.types.types;  // arch-check: keep-import
 
 
-export namespace cc::ui::prompt::at_attachments {
+export namespace loom::ui::prompt::at_attachments {
 
 namespace fs = std::filesystem;
-namespace core = cc::core;
+namespace core = loom::core;
 
 /// Maximum bytes of a single text file to inline as an attachment. Larger
 /// files are referenced-but-not-inlined (TS uses a token budget; a byte guard
@@ -153,4 +153,4 @@ struct MaterializeResult {
     return result;
 }
 
-}  // namespace cc::ui::prompt::at_attachments
+}  // namespace loom::ui::prompt::at_attachments

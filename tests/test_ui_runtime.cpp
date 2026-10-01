@@ -42,19 +42,19 @@ namespace fs = std::filesystem;
 
 
 TEST(AppRuntime, ProjectsVersionIntoInitialWelcome) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_welcome_version_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -62,7 +62,7 @@ TEST(AppRuntime, ProjectsVersionIntoInitialWelcome) {
         [] {});
 
     auto rendered = strip_ansi(render_to_plain_text(app->Render(), 120, 32));
-    EXPECT_NE(rendered.find("v" + std::string(cc::core::constants::kVersion)),
+    EXPECT_NE(rendered.find("v" + std::string(loom::core::constants::kVersion)),
               std::string::npos);
     EXPECT_EQ(rendered.find("v0.0.0"), std::string::npos);
 
@@ -72,19 +72,19 @@ TEST(AppRuntime, ProjectsVersionIntoInitialWelcome) {
 
 
 TEST(AppRuntime, FreshWelcomeAnimationTicksWithoutInputEvents) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_welcome_animation_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -103,19 +103,19 @@ TEST(AppRuntime, FreshWelcomeAnimationTicksWithoutInputEvents) {
 
 
 TEST(AppRuntime, FreshWelcomeAnimationKeepsTickingAfterStartupWindow) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_welcome_animation_long_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -137,20 +137,20 @@ TEST(AppRuntime, FreshWelcomeAnimationKeepsTickingAfterStartupWindow) {
 
 
 TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_app_runtime_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
     bool exited = false;
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -194,19 +194,19 @@ TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
 
 
 TEST(AppRuntime, SlashInputShowsRegistrySuggestions) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_slash_suggestions_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -245,18 +245,18 @@ TEST(AppRuntime, SlashInputShowsRegistrySuggestions) {
 
 
 TEST(AppRuntime, SkillsDialogDismissOrderDebug) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
-    cc::commands::AppCommandRegistry commands;
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_skills_order_dbg_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('/')));
@@ -306,19 +306,19 @@ TEST(AppRuntime, SkillsDialogDismissOrderDebug) {
 
 
 TEST(AppRuntime, CommandResultMessagesRenderInTranscript) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_command_result_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -348,19 +348,19 @@ TEST(AppRuntime, CommandResultMessagesRenderInTranscript) {
 // LLM (no Bash tool-use card, no assistant summary).  This is the fix for the
 // reported bug where `!ls -la` rendered as an LLM Bash tool call.
 TEST(AppRuntime, BangCommandRunsLocallyNotThroughLLM) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_bang_local_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     // Type "!" (enters bash mode) then the command, then Enter.
@@ -430,19 +430,19 @@ TEST(AppRuntime, SkillsCommandRendersInlineOutputAndRejectsListSubcommand) {
             << std::string(4000, 'x') << "\n";
     }
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = cwd_root.string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_skills_menu_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -507,19 +507,19 @@ TEST(AppRuntime, SkillsCommandInlineOutputScrollsWithTranscript) {
             << "Use this skill for scroll regression fixture " << i << ".\n";
     }
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = cwd_root.string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_skills_scroll_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -570,19 +570,19 @@ TEST(AppRuntime, ReturnSubmitsAgentSlashSubcommandsWhenCompletionIsVisible) {
             << "Review C++ UI migration changes.\n";
     }
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = cwd_root.string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_slash_subcommand_return_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -626,19 +626,19 @@ TEST(AppRuntime, DynamicPromptSuggestionsCoverSkillsFilesAndCursorEditing) {
         out << "int main() { return 0; }\n";
     }
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = cwd_root.string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_dynamic_suggestions_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -703,19 +703,19 @@ TEST(AppRuntime, ReturnOnSelectedSlashSuggestionOpensAgentsLocalJsx) {
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(cwd_root);
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = cwd_root.string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_slash_agents_accept_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -784,19 +784,19 @@ TEST(AppRuntime, AgentsLocalJsxArrowKeysSelectProjectAgentAndReturnActs) {
             << "Review C++ UI migration changes.\n";
     }
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = cwd_root.string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_agents_nav_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -849,19 +849,19 @@ TEST(AppRuntime, StatusLineRuntimeSettingsOverrideDiskSettings) {
     enabled_guard.set("1");
     padding_guard.set("2");
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_statusline_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -886,24 +886,24 @@ TEST(AppRuntime, CtrlCIdleRequiresDoublePressWithinWindow) {
     // only the second press inside 800ms exits.
 
     auto make_app = [](std::function<void()> on_exit) {
-        cc::core::ToolRegistry tools;
-        cc::core::QueryEngineConfig config;
+        loom::core::ToolRegistry tools;
+        loom::core::QueryEngineConfig config;
         config.context_window.auto_compact = false;
         config.cwd = fs::temp_directory_path().string();
         auto engine =
-            std::make_unique<cc::core::QueryEngine>(std::move(config), tools);
+            std::make_unique<loom::core::QueryEngine>(std::move(config), tools);
         auto commands =
-            std::make_unique<cc::commands::AppCommandRegistry>();
+            std::make_unique<loom::commands::AppCommandRegistry>();
         const auto storage_root = fs::temp_directory_path() /
             ("loom_ui_interrupt_test_" +
              std::to_string(std::chrono::steady_clock::now()
                                 .time_since_epoch().count()));
         auto storage =
-            std::make_unique<cc::utils::SessionStorage>(storage_root);
-        cc::core::QueryEngine* engine_ptr = engine.get();
-        cc::commands::AppCommandRegistry* commands_ptr = commands.get();
-        cc::utils::SessionStorage* storage_ptr = storage.get();
-        auto app = ftxui::Make<cc::ui::AppAdapter>(
+            std::make_unique<loom::utils::SessionStorage>(storage_root);
+        loom::core::QueryEngine* engine_ptr = engine.get();
+        loom::commands::AppCommandRegistry* commands_ptr = commands.get();
+        loom::utils::SessionStorage* storage_ptr = storage.get();
+        auto app = ftxui::Make<loom::ui::AppAdapter>(
             engine_ptr, nullptr, commands_ptr, storage_ptr,
             std::move(on_exit));
         return std::tuple(std::move(app), std::move(engine),
@@ -965,21 +965,21 @@ TEST(AppRuntime, StreamFallbackErrorIsRendered) {
     LocalErrorAnthropicStreamServer server;
     ASSERT_TRUE(server.valid());
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_stream_error_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -1007,22 +1007,22 @@ TEST(AppRuntime, CtrlCWhileStreamingQueryCancelsWithoutExiting) {
     LocalChunkedAnthropicStreamServer server;
     ASSERT_TRUE(server.valid());
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_stream_cancel_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
     bool exited = false;
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -1068,21 +1068,21 @@ TEST(AppRuntime, StreamingToolUseShowsSpinnerAndLoadingState) {
     LocalToolUseAnthropicStreamServer server;
     ASSERT_TRUE(server.valid());
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_stream_tool_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -1130,21 +1130,21 @@ TEST(AppRuntime, StreamingThinkingShowsSpinnerAndFinalContent) {
     LocalThinkingAnthropicStreamServer server;
     ASSERT_TRUE(server.valid());
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_stream_thinking_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -1186,19 +1186,19 @@ TEST(AppRuntime, StreamingThinkingShowsSpinnerAndFinalContent) {
 
 
 TEST(AppRuntime, PermissionCallbackRendersAndResolvesUserChoices) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_permission_dialog_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
@@ -1290,8 +1290,8 @@ TEST(AppRuntime, PermissionCallbackRendersAndResolvesUserChoices) {
 
 
 TEST(AppRuntime, RenderMessageHidesCompletedThinkingWhenUnselected) {
-    cc::core::AssistantMessage assistant;
-    assistant.content.push_back(cc::core::ThinkingBlock{
+    loom::core::AssistantMessage assistant;
+    assistant.content.push_back(loom::core::ThinkingBlock{
         .thinking = "private reasoning preview",
         .signature = "sig-1",
     });
@@ -1303,7 +1303,7 @@ TEST(AppRuntime, RenderMessageHidesCompletedThinkingWhenUnselected) {
     // The inline thinking content is also absent (it never leaked out in
     // collapsed mode anyway).
     auto rendered = render_to_plain_text(
-        cc::ui::RenderMessage(cc::core::Message{std::move(assistant)}), 140, 24);
+        loom::ui::RenderMessage(loom::core::Message{std::move(assistant)}), 140, 24);
 
     EXPECT_EQ(rendered.find("Thinking"), std::string::npos);
     EXPECT_EQ(rendered.find("private reasoning preview"), std::string::npos);
@@ -1314,8 +1314,8 @@ TEST(AppRuntime, RenderMessageHidesCompletedThinkingWhenUnselected) {
 TEST(AppRuntime, RenderMessageShowsCompletedThinkingWhenExpanded) {
     // Regression safety: transcript mode / explicit expand still renders
     // the collapsed label + no content preview leakage.
-    cc::core::AssistantMessage assistant;
-    assistant.content.push_back(cc::core::ThinkingBlock{
+    loom::core::AssistantMessage assistant;
+    assistant.content.push_back(loom::core::ThinkingBlock{
         .thinking = "some chain-of-thought here",
         .signature = "sig-2",
     });
@@ -1325,10 +1325,10 @@ TEST(AppRuntime, RenderMessageShowsCompletedThinkingWhenExpanded) {
     // render_payload_row() Thinking guard.  RenderMessage() hardcodes
     // selected_row_idx=-1, so to cover the selected branch we build the
     // visible list manually via repl_screen::RenderMessages with selected=0.
-    auto input = cc::ui::project_messages(
-        cc::core::Message{std::move(assistant)});
+    auto input = loom::ui::project_messages(
+        loom::core::Message{std::move(assistant)});
     auto rendered_selected = render_to_plain_text(
-        cc::ui::repl_screen::RenderMessages(input, /*selected=*/0, 40),
+        loom::ui::repl_screen::RenderMessages(input, /*selected=*/0, 40),
         140, 24);
 
     // Selected (expanded or at least eligible for label) thinking row
@@ -1342,15 +1342,15 @@ TEST(AppRuntime, RenderMessageShowsCompletedThinkingWhenExpanded) {
 
 
 TEST(AppRuntime, RenderMessageShowsToolUseContent) {
-    cc::core::AssistantMessage assistant;
-    assistant.content.push_back(cc::core::ToolUseBlock{
-        .id = cc::core::ToolUseId{"tool-ui-1"},
+    loom::core::AssistantMessage assistant;
+    assistant.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"tool-ui-1"},
         .name = "Bash",
         .input_json = R"({"command":"npm test"})",
     });
 
     auto rendered = render_to_plain_text(
-        cc::ui::RenderMessage(cc::core::Message{std::move(assistant)}), 140, 24);
+        loom::ui::RenderMessage(loom::core::Message{std::move(assistant)}), 140, 24);
 
     EXPECT_NE(rendered.find("Bash"), std::string::npos);
 }
@@ -1358,11 +1358,11 @@ TEST(AppRuntime, RenderMessageShowsToolUseContent) {
 
 
 TEST(AppRuntime, RenderMessageShowsAssistantText) {
-    cc::core::AssistantMessage assistant;
-    assistant.content.push_back(cc::core::TextBlock{"visible assistant answer"});
+    loom::core::AssistantMessage assistant;
+    assistant.content.push_back(loom::core::TextBlock{"visible assistant answer"});
 
     auto rendered = render_to_plain_text(
-        cc::ui::RenderMessage(cc::core::Message{std::move(assistant)}), 140, 24);
+        loom::ui::RenderMessage(loom::core::Message{std::move(assistant)}), 140, 24);
 
     EXPECT_NE(rendered.find("visible assistant answer"), std::string::npos);
 }
@@ -1370,11 +1370,11 @@ TEST(AppRuntime, RenderMessageShowsAssistantText) {
 
 
 TEST(AppRuntime, RenderMessageShowsUserMessage) {
-    cc::core::UserMessage user;
-    user.content.push_back(cc::core::TextBlock{"hello world"});
+    loom::core::UserMessage user;
+    user.content.push_back(loom::core::TextBlock{"hello world"});
 
     auto rendered = render_to_plain_text(
-        cc::ui::RenderMessage(cc::core::Message{std::move(user)}), 140, 24);
+        loom::ui::RenderMessage(loom::core::Message{std::move(user)}), 140, 24);
 
     EXPECT_NE(rendered.find("hello world"), std::string::npos);
 }
@@ -1383,34 +1383,34 @@ TEST(AppRuntime, RenderMessageShowsUserMessage) {
 
 
 TEST(AppRuntime, CollapseBackgroundBashWiredIntoLiveTranscript) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_collapse_wire_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
     // Append 3 consecutive completed background-bash notifications (CPP wire
     // format: underscored tags) directly to the engine conversation.
     auto make_bash_notif = [](std::string_view name) {
-        cc::core::UserMessage m{};
+        loom::core::UserMessage m{};
         std::string text =
             "<task_notification><status>completed</status><summary>"
             "Background command " + std::string(name) + " completed"
             "</summary></task_notification>";
-        m.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(m)};
+        m.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(m)};
     };
     engine.append_message_for_testing(make_bash_notif("\"a\""));
     engine.append_message_for_testing(make_bash_notif("\"b\""));
     engine.append_message_for_testing(make_bash_notif("\"c\""));
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
     app->SyncState();
 
@@ -1431,42 +1431,42 @@ TEST(AppRuntime, CollapseBackgroundBashWiredIntoLiveTranscript) {
 
 // Diagnostic: verify exactly 1 blank line between tool_result and assistant text
 TEST(AppRuntime, ToolResultToAssistantTextSpacingIsOneLine) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
     // Match the real flow: user → assistant(thinking+tool) → result → assistant(thinking+text)
-    cc::core::UserMessage u;
-    u.content.push_back(cc::core::TextBlock{"what day is it"});
-    engine.append_message_for_testing(cc::core::Message{std::move(u)});
+    loom::core::UserMessage u;
+    u.content.push_back(loom::core::TextBlock{"what day is it"});
+    engine.append_message_for_testing(loom::core::Message{std::move(u)});
 
-    cc::core::AssistantMessage a1;
-    a1.content.push_back(cc::core::ThinkingBlock{.thinking = "let me check", .signature = ""});
-    a1.content.push_back(cc::core::ToolUseBlock{
-        .id = cc::core::ToolUseId{"tu1"}, .name = "Bash",
+    loom::core::AssistantMessage a1;
+    a1.content.push_back(loom::core::ThinkingBlock{.thinking = "let me check", .signature = ""});
+    a1.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"tu1"}, .name = "Bash",
         .input_json = R"({"command":"date"})"});
-    engine.append_message_for_testing(cc::core::Message{std::move(a1)});
+    engine.append_message_for_testing(loom::core::Message{std::move(a1)});
 
-    cc::core::ToolResultMessage tr;
-    tr.tool_use_id = cc::core::ToolUseId{"tu1"};
+    loom::core::ToolResultMessage tr;
+    tr.tool_use_id = loom::core::ToolUseId{"tu1"};
     tr.tool_name = "Bash";
-    tr.content.push_back(cc::core::TextBlock{"2026-07-08 Wednesday\n"});
-    engine.append_message_for_testing(cc::core::Message{std::move(tr)});
+    tr.content.push_back(loom::core::TextBlock{"2026-07-08 Wednesday\n"});
+    engine.append_message_for_testing(loom::core::Message{std::move(tr)});
 
-    cc::core::AssistantMessage a2;
-    a2.content.push_back(cc::core::ThinkingBlock{.thinking = "got the date", .signature = ""});
-    a2.content.push_back(cc::core::TextBlock{"Today is Wednesday."});
-    engine.append_message_for_testing(cc::core::Message{std::move(a2)});
+    loom::core::AssistantMessage a2;
+    a2.content.push_back(loom::core::ThinkingBlock{.thinking = "got the date", .signature = ""});
+    a2.content.push_back(loom::core::TextBlock{"Today is Wednesday."});
+    engine.append_message_for_testing(loom::core::Message{std::move(a2)});
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root2 = fs::temp_directory_path() /
         ("cc_spacing_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root2);
+    loom::utils::SessionStorage storage(storage_root2);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
     app->SyncState();
 
@@ -1515,7 +1515,7 @@ TEST(AppRuntime, ToolResultToAssistantTextSpacingIsOneLine) {
 // @agent + @history autocomplete sources
 // ============================================================
 
-namespace acsrc = cc::ui::autocomplete_sources;
+namespace acsrc = loom::ui::autocomplete_sources;
 
 /// Round-trip: append_prompt_history writes a JSONL line, then
 /// collect_history_suggestions reads it back (newest-first) and matches
@@ -1659,18 +1659,18 @@ TEST(AppRuntime, AtHistoryShowsPersistedPrompts) {
     acsrc::append_prompt_history("deploy to production", "sess-1", "/proj");
     acsrc::append_prompt_history("review the pull request", "sess-2", "/proj");
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
-    cc::commands::AppCommandRegistry commands;
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_app_hist_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     // Type "@history " — should trigger history suggestions.
@@ -1709,18 +1709,18 @@ TEST(AppRuntime, AtHistoryWithQueryFiltersResults) {
     acsrc::append_prompt_history("deploy to production", "sess-1", "/proj");
     acsrc::append_prompt_history("review the pull request", "sess-2", "/proj");
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
-    cc::commands::AppCommandRegistry commands;
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_app_hist_filter_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     // Type "@history review" — should only show "review the pull request".
@@ -1750,18 +1750,18 @@ TEST(AppRuntime, AtHistoryWithQueryFiltersResults) {
 /// Ctrl+R (\\x12) injects "@history " into the input, triggering history
 /// search mode.  The input text should start with "@history ".
 TEST(AppRuntime, CtrlREntersHistorySearchMode) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
-    cc::commands::AppCommandRegistry commands;
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_app_ctrlr_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     // Ctrl+R should inject "@history " into the input.
@@ -1799,18 +1799,18 @@ TEST(AppRuntime, SubmitPersistsPromptToHistory) {
     ScopedEnvVar env("LOOM_HISTORY_FILE");
     env.set(hist_path.string());
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
-    cc::commands::AppCommandRegistry commands;
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_app_submit_hist_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     // Type a unique prompt and submit.
@@ -1844,18 +1844,18 @@ TEST(AppRuntime, SubmitPersistsPromptToHistory) {
 /// Typing "@" followed by agent name characters should show agent
 /// suggestions.  At minimum "@cl" should match the "loom" agent.
 TEST(AppRuntime, AtAgentShowsAgentSuggestions) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
-    cc::commands::AppCommandRegistry commands;
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_app_at_agent_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     // Type "@lo" — should show agent suggestions matching "lo".
@@ -1877,7 +1877,7 @@ TEST(AppRuntime, AtAgentShowsAgentSuggestions) {
 // (wrapped in the teammate_message XML tag) to the prompt queue, filters
 // control messages, and dedupes across repeated polls.
 TEST(AppRuntime, TeammateInboxPollDeliversTasksAndFiltersControl) {
-    namespace tu = cc::utils;
+    namespace tu = loom::utils;
 
     const auto runtime_dir = fs::temp_directory_path() /
         ("loom_teammate_inbox_" +
@@ -1888,17 +1888,17 @@ TEST(AppRuntime, TeammateInboxPollDeliversTasksAndFiltersControl) {
     ScopedEnvVar team_guard("LOOM_TEAM_NAME");
     team_guard.set("alpha");
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    auto engine = std::make_unique<cc::core::QueryEngine>(std::move(config), tools);
-    auto commands = std::make_unique<cc::commands::AppCommandRegistry>();
+    auto engine = std::make_unique<loom::core::QueryEngine>(std::move(config), tools);
+    auto commands = std::make_unique<loom::commands::AppCommandRegistry>();
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ti_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    auto storage = std::make_unique<cc::utils::SessionStorage>(storage_root);
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto storage = std::make_unique<loom::utils::SessionStorage>(storage_root);
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         engine.get(), nullptr, commands.get(), storage.get(), [] {});
 
     app->configure_teammate_for_testing("worker-a", "alpha");
@@ -1933,8 +1933,8 @@ TEST(AppRuntime, TeammateInboxPollDeliversTasksAndFiltersControl) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 TEST(LiveTeamsUi, StripRendersNameStatusAndTail) {
-    namespace repl = cc::ui::repl_screen;
-    namespace live = cc::ui::teams::live;
+    namespace repl = loom::ui::repl_screen;
+    namespace live = loom::ui::teams::live;
 
     repl::ReplScreenState s;
     s.chrome_store.app_version = "9.9.9";
@@ -1981,21 +1981,21 @@ TEST(LiveTeamsUi, StripRendersNameStatusAndTail) {
 
 
 TEST(LiveTeamsUi, SlashTeamsOpensOverviewModal) {
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
-    cc::commands::AppCommandRegistry commands;
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("loom_teams_modal_" +
          std::to_string(std::chrono::steady_clock::now()
                             .time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    loom::utils::SessionStorage storage(storage_root);
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
-    namespace live = cc::ui::teams::live;
+    namespace live = loom::ui::teams::live;
     live::LiveTeammate a;
     a.agent_id = "a1";
     a.name = "alice";
@@ -2032,7 +2032,7 @@ TEST(LiveTeamsUi, SlashTeamsOpensOverviewModal) {
 // existing ToolPermission overlay; approving replies via PermissionSync into
 // the worker mailbox (no second dialog path).
 TEST(LiveTeamsUi, TeammatePermissionRequestRoutesThroughToolPermission) {
-    namespace sh = cc::utils::swarm_helpers;
+    namespace sh = loom::utils::swarm_helpers;
 
     const auto runtime_dir = fs::temp_directory_path() /
         ("loom_teams_perm_" +
@@ -2046,18 +2046,18 @@ TEST(LiveTeamsUi, TeammatePermissionRequestRoutesThroughToolPermission) {
     ScopedEnvVar agent_guard("LOOM_AGENT_NAME");
     agent_guard.unset();  // this process is the LEADER, not a pane teammate
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    auto engine = std::make_unique<cc::core::QueryEngine>(std::move(config), tools);
-    auto commands = std::make_unique<cc::commands::AppCommandRegistry>();
+    auto engine = std::make_unique<loom::core::QueryEngine>(std::move(config), tools);
+    auto commands = std::make_unique<loom::commands::AppCommandRegistry>();
     const auto storage_root = fs::temp_directory_path() /
         ("loom_teams_perm_storage_" +
          std::to_string(std::chrono::steady_clock::now()
                             .time_since_epoch().count()));
-    auto storage = std::make_unique<cc::utils::SessionStorage>(storage_root);
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto storage = std::make_unique<loom::utils::SessionStorage>(storage_root);
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         engine.get(), nullptr, commands.get(), storage.get(), [] {});
 
     sh::SwarmPermissionRequestMessage request;
@@ -2087,7 +2087,7 @@ TEST(LiveTeamsUi, TeammatePermissionRequestRoutesThroughToolPermission) {
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('y')));
     EXPECT_EQ(app->pending_teammate_permission_count_for_testing(), 0u);
 
-    auto worker_inbox = cc::utils::read_inbox(
+    auto worker_inbox = loom::utils::read_inbox(
         "worker-a", std::optional<std::string_view>{"alpha"});
     ASSERT_TRUE(worker_inbox.has_value()) << worker_inbox.error();
     ASSERT_EQ(worker_inbox->size(), 1u);

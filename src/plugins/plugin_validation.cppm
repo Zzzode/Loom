@@ -14,7 +14,7 @@ import std;
 import loom.serdes.json;
 import loom.plugins.plugin_identifier;
 
-export namespace cc::utils::plugin_validation {
+export namespace loom::utils::plugin_validation {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Validation Result Types (from validatePlugin)
@@ -210,8 +210,8 @@ inline constexpr std::array MARKETPLACE_ONLY_MANIFEST_FIELDS = {
 // ─────────────────────────────────────────────────────────────────────────────
 namespace detail {
 
-using cc::utils::json::JsonDoc;
-using cc::utils::json::JsonVal;
+using loom::utils::json::JsonDoc;
+using loom::utils::json::JsonVal;
 
 // Read a file into a string; distinguish ENOENT/EISDIR/other (TS parity).
 inline std::expected<std::string, std::string>
@@ -290,7 +290,7 @@ inline void scan_string_array_for_traversal(JsonVal obj,
 
 } // namespace detail
 
-using cc::utils::json::JsonVal;
+using loom::utils::json::JsonVal;
 
 // Validate a plugin.json manifest against the TS PluginManifestSchema subset
 // (name required + string-typed; path-traversal scan on commands/agents/skills;
@@ -315,7 +315,7 @@ inline ValidationResult validate_plugin_manifest(const std::filesystem::path& pa
         return r;
     }
 
-    auto parsed = cc::utils::json::parse(*contents);
+    auto parsed = loom::utils::json::parse(*contents);
     if (!parsed) {
         ValidationError e; e.path = "json";
         e.message = std::format("Invalid JSON syntax: {}", parsed.error().message());
@@ -419,7 +419,7 @@ inline ValidationResult validate_marketplace_manifest(const std::filesystem::pat
         return r;
     }
 
-    auto parsed = cc::utils::json::parse(*contents);
+    auto parsed = loom::utils::json::parse(*contents);
     if (!parsed) {
         ValidationError e; e.path = "json";
         e.message = std::format("Invalid JSON syntax: {}", parsed.error().message());
@@ -541,7 +541,7 @@ inline ValidationResult validate_file(const std::filesystem::path& path) {
         r.errors.push_back(std::move(e));
         return r;
     }
-    auto parsed = cc::utils::json::parse(*contents);
+    auto parsed = loom::utils::json::parse(*contents);
     if (!parsed) {
         ValidationResult r;
         r.file_path = path;
@@ -561,4 +561,4 @@ inline ValidationResult validate_file(const std::filesystem::path& path) {
     return validate_plugin_manifest(path);
 }
 
-} // namespace cc::utils::plugin_validation
+} // namespace loom::utils::plugin_validation

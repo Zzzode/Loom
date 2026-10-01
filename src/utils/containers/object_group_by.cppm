@@ -6,7 +6,7 @@ export module loom.containers.object_group_by;
 
 import std;
 
-export namespace cc::utils::object_group_by {
+export namespace loom::utils::object_group_by {
 
 template <typename T, typename K, typename Selector>
 [[nodiscard]] inline std::map<K, std::vector<T>> object_group_by(const std::vector<T>& items, Selector key_selector) {
@@ -18,4 +18,4 @@ template <typename T, typename K, typename Selector>
     return result;
 }
 
-} // namespace cc::utils::object_group_by
+} // namespace loom::utils::object_group_by

@@ -5,7 +5,7 @@
 // textually includes <httplib.h>; keeping it here lets the third-party
 // header leave the module interface BMI. Raw httplib types are NOT exported
 // by cc.net.http.http (it includes the same header in its own global module
-// fragment and only exports cc::utils::HttpClient wrappers), so this TU
+// fragment and only exports loom::utils::HttpClient wrappers), so this TU
 // textually includes <httplib.h> exactly like src/services/auth/*.cppm.
 module;
 
@@ -21,7 +21,7 @@ import loom.types.types;
 import loom.utils.error;
 import loom.serdes.json;
 
-namespace cc::core {
+namespace loom::core {
 
 namespace {
 
@@ -203,7 +203,7 @@ void add_beta_headers(httplib::Headers& headers,
 }
 
 [[nodiscard]] Result<QueryEngine::ApiCallResult> QueryEngine::parse_api_response(std::string_view response_body) {
-    auto doc_result = cc::utils::json::parse(response_body);
+    auto doc_result = loom::utils::json::parse(response_body);
     if (!doc_result) {
         return std::unexpected(Error::make(
             ErrorCode::InvalidRequest,
@@ -228,7 +228,7 @@ void add_beta_headers(httplib::Headers& headers,
     // Parse content
     auto content = root.get("content");
     if (content.valid() && content.is_arr()) {
-        content.iter([&](cc::utils::json::JsonVal block) {
+        content.iter([&](loom::utils::json::JsonVal block) {
             parse_content_block(block, result.message.content);
         });
     }
@@ -251,7 +251,7 @@ void add_beta_headers(httplib::Headers& headers,
     return result;
 }
 
-void QueryEngine::parse_content_block(cc::utils::json::JsonVal block,
+void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
                                       std::vector<ContentBlock>& content) const {
     auto type = block.get("type").as_str();
 
@@ -264,7 +264,7 @@ void QueryEngine::parse_content_block(cc::utils::json::JsonVal block,
         tub.id.value = std::string(block.get("id").as_str());
         tub.name = std::string(block.get("name").as_str());
         auto input = block.get("input");
-        tub.input_json = input.valid() ? cc::utils::json::to_string(input) : "{}";
+        tub.input_json = input.valid() ? loom::utils::json::to_string(input) : "{}";
         content.push_back(std::move(tub));
     } else if (type == "thinking") {
         ThinkingBlock tb;
@@ -359,7 +359,7 @@ void QueryEngine::parse_content_block(cc::utils::json::JsonVal block,
                                 const std::string& data) {
         if (data.empty() || data == "[DONE]") return;
 
-        auto doc_result = cc::utils::json::parse(data);
+        auto doc_result = loom::utils::json::parse(data);
         if (!doc_result) return;
         auto root = doc_result->root();
 
@@ -606,4 +606,4 @@ void QueryEngine::parse_content_block(cc::utils::json::JsonVal block,
     return result;
 }
 
-} // namespace cc::core
+} // namespace loom::core

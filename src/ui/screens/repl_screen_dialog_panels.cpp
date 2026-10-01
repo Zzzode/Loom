@@ -27,7 +27,7 @@ import loom.ui.permissions.permission_file_write;
 import loom.ui.permissions.single_prompt;
 import loom.ui.prompt.prompt_input_footer;  // c22: footer notification queue
 
-namespace cc::ui::repl_screen {
+namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 namespace dialog_router {
@@ -36,7 +36,7 @@ namespace dialog_router {
 // Settings dialog helpers (UI3)
 // -------------------------------------------------------------------
 
-namespace settings_ns = cc::ui::dialogs::settings_dialog;
+namespace settings_ns = loom::ui::dialogs::settings_dialog;
 
 using settings_ns::CommandResultDisplay;
 using settings_ns::SettingsDialogOptions;
@@ -51,9 +51,9 @@ using settings_ns::MakeSettingsDialog;
     const std::shared_ptr<ReplScreenCallbacks>& cb) {
     if (!s->dialog_store.settings_component) {
         // Use the supplied config manager, otherwise manufacture a default.
-        static thread_local cc::core::ConfigManager fallback_config;
-        cc::core::ConfigManager* cfg = s->dialog_store.settings_config
-                                            ? static_cast<cc::core::ConfigManager*>(
+        static thread_local loom::core::ConfigManager fallback_config;
+        loom::core::ConfigManager* cfg = s->dialog_store.settings_config
+                                            ? static_cast<loom::core::ConfigManager*>(
                                                   s->dialog_store.settings_config)
                                             : &fallback_config;
         if (cfg == &fallback_config) {
@@ -62,11 +62,11 @@ using settings_ns::MakeSettingsDialog;
             // Reload before each dialog open — load() is idempotent and
             // tolerates missing tiers. Quiet so a soft-tier parse warning
             // reaches the toast sink below instead of stderr.
-            (void)fallback_config.load(cc::core::LoadOptions{.quiet = true});
+            (void)fallback_config.load(loom::core::LoadOptions{.quiet = true});
             // c22: surface soft-tier (user/local) parse warnings as toasts.
             // QueueAddNotification dedups by key, so a repeated open does
             // not stack duplicates.
-            namespace pif = cc::ui::prompt::footer;
+            namespace pif = loom::ui::prompt::footer;
             for (auto& diag : fallback_config.drain_load_diagnostics()) {
                 pif::NotificationItem item;
                 item.key = "config-tier-warning:" + diag.path;
@@ -125,7 +125,7 @@ bool forward_settings(
 // MakeWorkspaceTrustDialog() and stored as an opaque handle so
 // ReplScreenState doesn't need to import the trust_dialog types.
 
-namespace trust_ns = cc::ui::trust_dialog;
+namespace trust_ns = loom::ui::trust_dialog;
 using trust_ns::TrustChoice;
 using trust_ns::WorkspaceTrustProps;
 using trust_ns::SecuritySources;
@@ -189,10 +189,10 @@ bool forward_trust_dialog(
 // TS-faithful panels for the dormant ReplMode::ToolPermission branch.
 // TS REF: PermissionRequest.tsx:47-82 dispatches on tool identity.
 // wizard_trust ownership keeps Component/PromptState alive across frames.
-namespace tperm_bash  = cc::ui::permissions::bash_prompt;
-namespace tperm_edit  = cc::ui::permissions::file_edit;
-namespace tperm_write = cc::ui::permissions::file_write;
-namespace tperm_one   = cc::ui::permissions::single_prompt;
+namespace tperm_bash  = loom::ui::permissions::bash_prompt;
+namespace tperm_edit  = loom::ui::permissions::file_edit;
+namespace tperm_write = loom::ui::permissions::file_write;
+namespace tperm_one   = loom::ui::permissions::single_prompt;
 
 namespace {
 
@@ -382,4 +382,4 @@ bool forward_tool_permission(
 
 }  // namespace dialog_router
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

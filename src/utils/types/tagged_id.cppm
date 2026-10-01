@@ -6,7 +6,7 @@ export module loom.types.tagged_id;
 
 import std;
 
-export namespace cc::utils::tagged_id {
+export namespace loom::utils::tagged_id {
 
 namespace detail {
     constexpr std::string_view base58_chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -73,4 +73,4 @@ namespace detail {
     return out;
 }
 
-} // namespace cc::utils::tagged_id
+} // namespace loom::utils::tagged_id

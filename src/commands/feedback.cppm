@@ -12,9 +12,9 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// FeedbackCommand implements the /feedback slash command.
 /// Submits feedback about Loom.
@@ -91,4 +91,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

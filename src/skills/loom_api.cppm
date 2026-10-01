@@ -8,7 +8,7 @@ import std;
 
 import loom.skills.skill;
 
-export namespace cc::skills::loom_api {
+export namespace loom::skills::loom_api {
 
 /// Loom API interaction skill definition
 [[nodiscard]] inline SkillDefinition make_loom_api_skill() {
@@ -47,4 +47,4 @@ export namespace cc::skills::loom_api {
     };
 }
 
-} // namespace cc::skills::loom_api
+} // namespace loom::skills::loom_api

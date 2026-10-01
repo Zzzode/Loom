@@ -16,12 +16,12 @@ import loom.bridge.config;
 import loom.net.http.http;
 import loom.serdes.json;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
-using cc::core::Error;
-using cc::core::ErrorCode;
-using cc::core::Result;
-using cc::core::VoidResult;
+using loom::core::Error;
+using loom::core::ErrorCode;
+using loom::core::Result;
+using loom::core::VoidResult;
 
 /// Bridge API configuration
 struct BridgeApiConfig {
@@ -92,7 +92,7 @@ class BridgeApiClient {
     BridgeApiConfig config_;
     std::function<void(const std::string&)> debug_logger_;
     int consecutive_empty_polls_ = 0;
-    cc::utils::HttpClient http_{};
+    loom::utils::HttpClient http_{};
     static constexpr int EMPTY_POLL_LOG_INTERVAL = 100;
 
 public:
@@ -231,7 +231,7 @@ public:
         if (!is_safe_bridge_id(session_id)) {
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "Invalid session ID"));
         }
-        auto event = cc::utils::json::parse(event_json);
+        auto event = loom::utils::json::parse(event_json);
         if (!event || !event->root().is_obj()) {
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "Bridge session event must be a JSON object"));
         }
@@ -254,7 +254,7 @@ public:
         }
         if (event.subtype == "success") {
             auto response_payload = event.response_json.empty() ? std::string("{}") : event.response_json;
-            auto response = cc::utils::json::parse(response_payload);
+            auto response = loom::utils::json::parse(response_payload);
             if (!response) {
                 return std::unexpected(Error::make(ErrorCode::InvalidInput, "permission response payload must be valid JSON"));
             }
@@ -348,7 +348,7 @@ private:
         return base + std::string(path);
     }
 
-    [[nodiscard]] auto get(std::string_view path, const std::string& token) -> Result<cc::utils::HttpResponse> {
+    [[nodiscard]] auto get(std::string_view path, const std::string& token) -> Result<loom::utils::HttpResponse> {
         auto response = http_.get(endpoint(path), get_headers(token));
         if (!response) {
             return std::unexpected(Error::make(ErrorCode::ConnectionFailed, response.error().message));
@@ -359,7 +359,7 @@ private:
         return *response;
     }
 
-    [[nodiscard]] auto delete_request(std::string_view path, const std::string& token) -> Result<cc::utils::HttpResponse> {
+    [[nodiscard]] auto delete_request(std::string_view path, const std::string& token) -> Result<loom::utils::HttpResponse> {
         auto response = http_.delete_request(endpoint(path), get_headers(token));
         if (!response) {
             return std::unexpected(Error::make(ErrorCode::ConnectionFailed, response.error().message));
@@ -371,7 +371,7 @@ private:
     }
 
     [[nodiscard]] static std::optional<std::string> string_field(
-        cc::utils::json::JsonVal root,
+        loom::utils::json::JsonVal root,
         std::initializer_list<std::string_view> keys
     ) {
         for (auto key : keys) {
@@ -382,7 +382,7 @@ private:
     }
 
     [[nodiscard]] static std::optional<int> int_field(
-        cc::utils::json::JsonVal root,
+        loom::utils::json::JsonVal root,
         std::initializer_list<std::string_view> keys
     ) {
         for (auto key : keys) {
@@ -393,7 +393,7 @@ private:
     }
 
     [[nodiscard]] static std::optional<int64_t> int64_field(
-        cc::utils::json::JsonVal root,
+        loom::utils::json::JsonVal root,
         std::initializer_list<std::string_view> keys
     ) {
         for (auto key : keys) {
@@ -404,7 +404,7 @@ private:
                 auto text = value.as_str();
                 auto* first = text.data();
                 auto* last = text.data() + text.size();
-                auto result = cc::utils::from_chars(first, last, parsed);
+                auto result = loom::utils::from_chars(first, last, parsed);
                 if (result.ec == std::errc{} && result.ptr == last) return parsed;
             }
         }
@@ -412,7 +412,7 @@ private:
     }
 
     [[nodiscard]] static std::optional<bool> bool_field(
-        cc::utils::json::JsonVal root,
+        loom::utils::json::JsonVal root,
         std::initializer_list<std::string_view> keys
     ) {
         for (auto key : keys) {
@@ -423,7 +423,7 @@ private:
     }
 
     [[nodiscard]] static Result<EnvironmentRegistration> parse_environment_registration(std::string_view body) {
-        auto parsed = cc::utils::json::parse(body);
+        auto parsed = loom::utils::json::parse(body);
         if (!parsed || !parsed->root().is_obj()) {
             return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Bridge registration response is not valid JSON"));
         }
@@ -449,7 +449,7 @@ private:
         trimmed.erase(trimmed.begin(), first);
         if (trimmed.empty() || trimmed == "null") return std::optional<WorkResponse>{};
 
-        auto parsed = cc::utils::json::parse(trimmed);
+        auto parsed = loom::utils::json::parse(trimmed);
         if (!parsed || !parsed->root().is_obj()) {
             return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Bridge poll response is not valid work JSON"));
         }
@@ -479,7 +479,7 @@ private:
     }
 
     [[nodiscard]] static Result<HeartbeatResponse> parse_heartbeat_response(std::string_view body) {
-        auto parsed = cc::utils::json::parse(body);
+        auto parsed = loom::utils::json::parse(body);
         if (!parsed || !parsed->root().is_obj()) {
             return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Bridge heartbeat response is not valid JSON"));
         }
@@ -500,7 +500,7 @@ private:
     }
 
     [[nodiscard]] static Result<WorkerRegistration> parse_worker_registration(std::string_view body) {
-        auto parsed = cc::utils::json::parse(body);
+        auto parsed = loom::utils::json::parse(body);
         if (!parsed || !parsed->root().is_obj()) {
             return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Bridge worker registration response is not valid JSON"));
         }
@@ -514,7 +514,7 @@ private:
         return WorkerRegistration{.worker_epoch = *worker_epoch};
     }
 
-    [[nodiscard]] auto post(std::string_view path, std::string_view body, const std::string& token) -> Result<cc::utils::HttpResponse> {
+    [[nodiscard]] auto post(std::string_view path, std::string_view body, const std::string& token) -> Result<loom::utils::HttpResponse> {
         auto response = http_.post(endpoint(path), body, get_headers(token));
         if (!response) {
             return std::unexpected(Error::make(ErrorCode::ConnectionFailed, response.error().message));
@@ -596,4 +596,4 @@ private:
     }
 };
 
-} // namespace cc::bridge
+} // namespace loom::bridge

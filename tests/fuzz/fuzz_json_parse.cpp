@@ -7,7 +7,7 @@ import loom.serdes.json;
 #include <cstddef>
 #include <cstdint>
 
-using namespace cc::utils::json;
+using namespace loom::utils::json;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     std::string_view input(reinterpret_cast<const char*>(data), size);

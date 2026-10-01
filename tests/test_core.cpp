@@ -16,26 +16,26 @@ import loom.serdes.yaml;
 import loom.text.parse_int;
 
 TEST(CoreTypes, RoleToStringAndContentVariant) {
-    EXPECT_EQ(cc::core::role_to_string(cc::core::Role::User), "user");
+    EXPECT_EQ(loom::core::role_to_string(loom::core::Role::User), "user");
 
-    cc::core::ContentBlock block = cc::core::TextBlock{"hello"};
-    ASSERT_TRUE(std::holds_alternative<cc::core::TextBlock>(block));
-    EXPECT_EQ(std::get<cc::core::TextBlock>(block).text, "hello");
+    loom::core::ContentBlock block = loom::core::TextBlock{"hello"};
+    ASSERT_TRUE(std::holds_alternative<loom::core::TextBlock>(block));
+    EXPECT_EQ(std::get<loom::core::TextBlock>(block).text, "hello");
 }
 
 TEST(CoreConfig, FeatureFlagsToggleRuntimeBits) {
-    cc::core::FeatureFlags flags;
-    EXPECT_FALSE(flags.is_enabled(cc::core::FeatureFlag::MultiAgent));
+    loom::core::FeatureFlags flags;
+    EXPECT_FALSE(flags.is_enabled(loom::core::FeatureFlag::MultiAgent));
 
-    flags.enable(cc::core::FeatureFlag::MultiAgent);
-    EXPECT_TRUE(flags.is_enabled(cc::core::FeatureFlag::MultiAgent));
+    flags.enable(loom::core::FeatureFlag::MultiAgent);
+    EXPECT_TRUE(flags.is_enabled(loom::core::FeatureFlag::MultiAgent));
 
-    flags.disable(cc::core::FeatureFlag::MultiAgent);
-    EXPECT_FALSE(flags.is_enabled(cc::core::FeatureFlag::MultiAgent));
+    flags.disable(loom::core::FeatureFlag::MultiAgent);
+    EXPECT_FALSE(flags.is_enabled(loom::core::FeatureFlag::MultiAgent));
 }
 
 TEST(UtilsYaml, ScalarsParseStrictlyWithoutFromChars) {
-    namespace uy = cc::utils;
+    namespace uy = loom::utils;
     // Integers parse as int64 (the portable strict parser).
     auto pos = uy::parse_yaml("v: 42");
     ASSERT_TRUE(std::holds_alternative<uy::YamlMap>(pos.data));
@@ -69,7 +69,7 @@ TEST(UtilsYaml, ScalarsParseStrictlyWithoutFromChars) {
 
 TEST(UtilsParseInt, StrictFromCharsSemantics) {
     auto parse = [](std::string_view s, std::int64_t& out) {
-        return cc::utils::from_chars(s.data(), s.data() + s.size(), out);
+        return loom::utils::from_chars(s.data(), s.data() + s.size(), out);
     };
 
     std::int64_t v = 0;
@@ -97,7 +97,7 @@ TEST(UtilsParseInt, StrictFromCharsSemantics) {
 
     // unsigned (uint16_t, used by port parsing)
     auto parse_u16 = [](std::string_view s, std::uint16_t& out) {
-        return cc::utils::from_chars(s.data(), s.data() + s.size(), out);
+        return loom::utils::from_chars(s.data(), s.data() + s.size(), out);
     };
     std::uint16_t port = 0;
     EXPECT_EQ(parse_u16("8080", port).ec, std::errc{});
@@ -106,7 +106,7 @@ TEST(UtilsParseInt, StrictFromCharsSemantics) {
 }
 
 TEST(CoreConfig, ConfigManagerExposesDefaultSettings) {
-    cc::core::ConfigManager manager;
+    loom::core::ConfigManager manager;
     EXPECT_FALSE(manager.settings().model.default_model.empty());
     EXPECT_GT(manager.settings().model.max_output_tokens, 0u);
 }
@@ -134,11 +134,11 @@ TEST(CoreConfig, SoftTierParseWarningCollectedForDrain) {
     }
 
     {
-        cc::core::ConfigManager manager(global_path, user_path,
+        loom::core::ConfigManager manager(global_path, user_path,
                                         project_path, local_path);
         // Quiet load: no stderr print, but the diagnostic is collected for
         // the TUI composition root to drain into a toast.
-        ASSERT_TRUE(manager.load(cc::core::LoadOptions{.quiet = true}).has_value());
+        ASSERT_TRUE(manager.load(loom::core::LoadOptions{.quiet = true}).has_value());
 
         auto diags = manager.drain_load_diagnostics();
         ASSERT_EQ(diags.size(), 1u);
@@ -170,7 +170,7 @@ TEST(CoreConfig, TierFilesChangedDetectsExternalEdit) {
         seed << "{\"model\":{\"default_model\":\"v1\"}}";
     }
     {
-        cc::core::ConfigManager manager(global_path, user_path,
+        loom::core::ConfigManager manager(global_path, user_path,
                                         project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         EXPECT_FALSE(manager.tier_files_changed())
@@ -210,29 +210,29 @@ TEST(CoreConfig, TierFilesChangedDetectsExternalEdit) {
 }
 
 TEST(CoreFeatureFlags, RuntimeManagerCanFindAndToggleFeature) {
-    auto feature = cc::core::flags::FeatureFlagManager::find_by_name("PROACTIVE");
+    auto feature = loom::core::flags::FeatureFlagManager::find_by_name("PROACTIVE");
     ASSERT_TRUE(feature.has_value());
 
-    cc::core::flags::FeatureFlagManager manager;
+    loom::core::flags::FeatureFlagManager manager;
     manager.enable(*feature);
     EXPECT_TRUE(manager.is_enabled(*feature));
     EXPECT_NE(manager.enabled_summary().find("PROACTIVE"), std::string::npos);
 }
 
 TEST(CoreConstants, AppMetadataIsDefined) {
-    EXPECT_FALSE(std::string(cc::core::constants::kAppName).empty());
-    EXPECT_FALSE(std::string(cc::core::constants::kVersion).empty());
-    EXPECT_GT(cc::core::constants::api_limits::kMaxTokensDefault, 0u);
+    EXPECT_FALSE(std::string(loom::core::constants::kAppName).empty());
+    EXPECT_FALSE(std::string(loom::core::constants::kVersion).empty());
+    EXPECT_GT(loom::core::constants::api_limits::kMaxTokensDefault, 0u);
 }
 
 TEST(CoreCoordinator, CoordinatorModeParseRoundTrip) {
-    auto parsed = cc::coordinator::parse_coordinator_mode("parallel");
+    auto parsed = loom::coordinator::parse_coordinator_mode("parallel");
     ASSERT_TRUE(parsed.has_value());
-    EXPECT_EQ(cc::coordinator::coordinator_mode_to_string(*parsed), "parallel");
+    EXPECT_EQ(loom::coordinator::coordinator_mode_to_string(*parsed), "parallel");
 }
 
 TEST(CoreTasks, TaskSchedulerTracksSubmittedTask) {
-    cc::core::TaskScheduler scheduler;
+    loom::core::TaskScheduler scheduler;
     auto id = scheduler.submit("test task");
     ASSERT_TRUE(id.has_value());
 

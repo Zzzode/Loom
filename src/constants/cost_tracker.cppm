@@ -12,7 +12,7 @@ import std;
 import loom.types.types;  // arch-check: keep-import
 
 
-export namespace cc::core {
+export namespace loom::core {
 
 // ============================================================
 // Model Pricing
@@ -195,4 +195,4 @@ public:
     return instance;
 }
 
-} // namespace cc::core
+} // namespace loom::core

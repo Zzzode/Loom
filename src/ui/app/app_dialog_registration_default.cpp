@@ -17,14 +17,14 @@ import loom.ui.dialogs.default_renderers;
 import loom.ui.dialogs.plugin_dialog_renderer;
 import loom.ui.screens.doctor_dialog_registration;
 
-namespace cc::ui::app_dialogs {
+namespace loom::ui::app_dialogs {
 void register_default_dialog_renderers(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry) {
-    cc::ui::dialogs::default_renderers::register_default_renderers(registry);
-    cc::ui::dialogs::plugin_dialog_renderer::register_plugin_dialog_renderer(
+    loom::ui::dialogs::system::DialogRendererRegistry& registry) {
+    loom::ui::dialogs::default_renderers::register_default_renderers(registry);
+    loom::ui::dialogs::plugin_dialog_renderer::register_plugin_dialog_renderer(
         registry);
     // Doctor renderer — registered from the screens side (RFC 0002 F2 row 4).
-    cc::ui::screens::doctor_dialog_registration::register_doctor_renderer(
+    loom::ui::screens::doctor_dialog_registration::register_doctor_renderer(
         registry);
 }
-}  // namespace cc::ui::app_dialogs
+}  // namespace loom::ui::app_dialogs

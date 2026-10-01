@@ -23,7 +23,7 @@ import loom.commands.plugin_ui_data;
 import loom.commands.plugin_pagination_util;
 import loom.ui.widgets.custom_select;
 
-export namespace cc::ui::plugins::plugin_manage_panel {
+export namespace loom::ui::plugins::plugin_manage_panel {
 using namespace ftxui;
 
 // CSS-style padding decorator: padding(top, right, bottom, left).
@@ -47,9 +47,9 @@ inline Decorator padding(int top, int right, int bottom, int left) {
 }
 inline Decorator padding(int all) { return padding(all, all, all, all); }
 
-namespace ui = cc::commands::plugin_ui;
-namespace pp = cc::commands::plugin;
-namespace cs = cc::ui::custom_select;
+namespace ui = loom::commands::plugin_ui;
+namespace pp = loom::commands::plugin;
+namespace cs = loom::ui::custom_select;
 
 using ui::InstalledCellData;
 using ui::TargetAction;
@@ -571,4 +571,4 @@ inline void RecomputeFiltered(ManageState& s) {
     });
 }
 
-} // namespace cc::ui::plugins::plugin_manage_panel
+} // namespace loom::ui::plugins::plugin_manage_panel

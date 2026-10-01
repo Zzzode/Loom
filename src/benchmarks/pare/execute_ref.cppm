@@ -17,9 +17,9 @@ import loom.benchmarks.pare.metrics;
 import loom.serdes.json;
 import loom.process.bash.bash_execution;
 
-export namespace cc::benchmarks::pare {
+export namespace loom::benchmarks::pare {
 
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 struct LocalExecResult {
     int exit_code = 0;
@@ -57,7 +57,7 @@ inline LocalExecResult execute_sync(
 
     LocalExecResult result;
     std::array<char, 4096> buffer{};
-    FILE* pipe = cc::utils::bash::popen_spawn(shell_command.c_str());
+    FILE* pipe = loom::utils::bash::popen_spawn(shell_command.c_str());
     if (!pipe) {
         result.exit_code = 127;
         result.stderr_output = "failed to launch command";
@@ -66,7 +66,7 @@ inline LocalExecResult execute_sync(
     while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
         result.stdout_output += buffer.data();
     }
-    int status = cc::utils::bash::pclose_spawn(pipe);
+    int status = loom::utils::bash::pclose_spawn(pipe);
     if (WIFEXITED(status)) {
         result.exit_code = WEXITSTATUS(status);
     } else {
@@ -295,4 +295,4 @@ inline VariantRun execute_variant(const ExecuteVariantParams& params) {
     return run;
 }
 
-} // namespace cc::benchmarks::pare
+} // namespace loom::benchmarks::pare

@@ -54,7 +54,7 @@ namespace fs = std::filesystem;
 
 
 TEST(ReplScreen, SubmitsUtf8PromptOnReturn) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     std::optional<std::string> submitted;
@@ -79,7 +79,7 @@ TEST(ReplScreen, SubmitsUtf8PromptOnReturn) {
 
 
 TEST(ReplScreen, TabAcceptsSelectedSlashSuggestion) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->input_text = "/a";
@@ -104,7 +104,7 @@ TEST(ReplScreen, TabAcceptsSelectedSlashSuggestion) {
 
 
 TEST(ReplScreen, ReturnSubmitsSelectedSlashSuggestion) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->input_text = "/a";
@@ -138,7 +138,7 @@ TEST(ReplScreen, ReturnSubmitsSelectedSlashSuggestion) {
 
 
 TEST(ReplScreen, CtrlNCtrlPNavigateAutocompleteWithWrapping) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->chrome_store.app_version = "9.9.9-test";
@@ -189,7 +189,7 @@ TEST(ReplScreen, CtrlNCtrlPNavigateAutocompleteWithWrapping) {
 
 
 TEST(ReplScreen, EscapeDoublePressOnWhitespaceOnlyClearsWithoutHistory) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->chrome_store.app_version = "9.9.9-test";
@@ -218,8 +218,8 @@ TEST(ReplScreen, EscapeDoublePressOnWhitespaceOnlyClearsWithoutHistory) {
 
 
 TEST(ReplScreen, EscapeDismissesPopupThenArmsThenClears) {
-    namespace repl = cc::ui::repl_screen;
-    namespace pif = cc::ui::prompt::footer;
+    namespace repl = loom::ui::repl_screen;
+    namespace pif = loom::ui::prompt::footer;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->chrome_store.app_version = "9.9.9-test";
@@ -271,7 +271,7 @@ TEST(ReplScreen, EscapeDismissesPopupThenArmsThenClears) {
 //   `if (cursorOffset === 0 && (key.escape || key.backspace || key.delete ||
 //        (key.ctrl && char === 'u'))) { onModeChange('prompt'); }`
 TEST(ReplScreen, BashModeExitsOnBackspaceAtStart) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
@@ -289,7 +289,7 @@ TEST(ReplScreen, BashModeExitsOnBackspaceAtStart) {
 
 
 TEST(ReplScreen, BashModeExitsOnEscapeAndDeleteAndCtrlUAtStart) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     // Escape exits bash mode.
     {
@@ -323,7 +323,7 @@ TEST(ReplScreen, BashModeExitsOnEscapeAndDeleteAndCtrlUAtStart) {
 
 
 TEST(ReplScreen, BashModeBackspaceMidTextDoesNotExitMode) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
@@ -344,7 +344,7 @@ TEST(ReplScreen, BashModeBackspaceMidTextDoesNotExitMode) {
 
 
 TEST(ReplScreen, MouseWheelScrollsTranscript) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->messages_store.viewport_height_lines = 8;

@@ -24,9 +24,9 @@ import loom.commands.command;
 import loom.process.exec_sync;
 import loom.services.team_memory.secret_scanner;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================
 // Finding types
@@ -105,17 +105,17 @@ inline constexpr std::array<std::string_view, 8> SENSITIVE_OP_PATTERNS = {
     const std::string ref = base_ref.empty() ? "origin/HEAD" : std::string(base_ref);
 
     // 1) status
-    auto status = cc::utils::exec_sync("git status -sb");
+    auto status = loom::utils::exec_sync("git status -sb");
     // 2) files
-    auto files = cc::utils::exec_sync(std::format("git diff --name-only {}...HEAD", ref));
+    auto files = loom::utils::exec_sync(std::format("git diff --name-only {}...HEAD", ref));
     // 3) log
-    auto log = cc::utils::exec_sync(std::format("git log --no-decorate {}...HEAD", ref));
+    auto log = loom::utils::exec_sync(std::format("git log --no-decorate {}...HEAD", ref));
     // 4) diff
-    auto diff = cc::utils::exec_sync(std::format("git diff {}...HEAD", ref));
+    auto diff = loom::utils::exec_sync(std::format("git diff {}...HEAD", ref));
 
     if (!diff) {
         // Fall back to local-only (no origin)
-        auto fall = cc::utils::exec_sync("git diff HEAD");
+        auto fall = loom::utils::exec_sync("git diff HEAD");
         if (!fall) return std::unexpected(Error::make(
             ErrorCode::ToolExecutionFailed,
             std::format("Cannot collect branch diff: {}", fall.error())
@@ -157,7 +157,7 @@ inline constexpr std::array<std::string_view, 8> SENSITIVE_OP_PATTERNS = {
 ) {
     std::vector<SecurityFinding> findings;
 
-    auto matches = cc::services::team_memory::scan_for_secrets(diff_content);
+    auto matches = loom::services::team_memory::scan_for_secrets(diff_content);
     if (matches.empty()) return findings;
 
     // Convert each SecretMatch into a SecurityFinding.
@@ -434,4 +434,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

@@ -16,7 +16,7 @@ export module loom.ui.messages.api_error_message;
 
 import std;
 
-export namespace cc::ui::messages::api_error_message {
+export namespace loom::ui::messages::api_error_message {
 using namespace ftxui;
 
 // ============================================================
@@ -339,4 +339,4 @@ struct ErrorPalette {
           });
 }
 
-} // namespace cc::ui::messages::api_error_message
+} // namespace loom::ui::messages::api_error_message

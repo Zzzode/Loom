@@ -9,7 +9,7 @@ import std;
 
 import loom.tools.script_diagnostics;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 enum class ScriptLanguage {
     TypeScript,
@@ -85,4 +85,4 @@ inline auto script_language_to_string(ScriptLanguage lang) -> std::string_view {
     return "Unknown";
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

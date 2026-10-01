@@ -14,12 +14,12 @@ import loom.types.types;
 import loom.commands.command;
 import loom.state.app_state;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ---------------------------------------------------------------------------
-// Action type ordinals (from cc::state::ActionType in store.cppm).
+// Action type ordinals (from loom::state::ActionType in store.cppm).
 // Kept as explicit constants so the command module doesn't require the
 // full store header at every call site; the values are verified against
 // the enum via static_assert in the test suite.
@@ -156,7 +156,7 @@ private:
     /// Get the current model ID string, preferring AppState.
     [[nodiscard]] static std::string get_current_model_id(const CommandContext& ctx) {
         if (const void* raw = ctx.get_app_state()) {
-            const auto* state = static_cast<const cc::state::AppState*>(raw);
+            const auto* state = static_cast<const loom::state::AppState*>(raw);
             if (!state->current_model.model_id.empty()) {
                 return state->current_model.model_id;
             }
@@ -167,7 +167,7 @@ private:
     /// Get available models from AppState, or fallback to hardcoded list.
     [[nodiscard]] static std::vector<FallbackModel> get_available_models(const CommandContext& ctx) {
         if (const void* raw = ctx.get_app_state()) {
-            const auto* state = static_cast<const cc::state::AppState*>(raw);
+            const auto* state = static_cast<const loom::state::AppState*>(raw);
             if (!state->available_models.empty()) {
                 std::vector<FallbackModel> result;
                 result.reserve(state->available_models.size());
@@ -188,8 +188,8 @@ private:
 
     /// Try to find a model by ID in AppState's available_models.
     /// Returns the matching ModelConfig if found, nullopt otherwise.
-    [[nodiscard]] static std::optional<cc::state::ModelConfig> find_model_config(
-            const cc::state::AppState& state, std::string_view model_id) {
+    [[nodiscard]] static std::optional<loom::state::ModelConfig> find_model_config(
+            const loom::state::AppState& state, std::string_view model_id) {
         auto it = std::ranges::find_if(state.available_models,
             [&](const auto& m) { return m.model_id == model_id; });
         if (it != state.available_models.end()) {
@@ -230,7 +230,7 @@ private:
             const std::string& model_id, const CommandContext& ctx) {
         // Try AppState first for richer info
         if (const void* raw = ctx.get_app_state()) {
-            const auto* state = static_cast<const cc::state::AppState*>(raw);
+            const auto* state = static_cast<const loom::state::AppState*>(raw);
             if (auto cfg = find_model_config(*state, model_id); cfg.has_value()) {
                 auto info = std::format(
                     "Model: {}\nDisplay: {}\nContext: {}K tokens\n"
@@ -272,11 +272,11 @@ private:
         auto previous_id = get_current_model_id(ctx);
 
         // --- Build ModelConfig for SwitchModel action ---
-        cc::state::ModelConfig model_cfg;
+        loom::state::ModelConfig model_cfg;
         bool found_in_state = false;
 
         if (const void* raw = ctx.get_app_state()) {
-            const auto* state = static_cast<const cc::state::AppState*>(raw);
+            const auto* state = static_cast<const loom::state::AppState*>(raw);
             if (auto cfg = find_model_config(*state, model_id); cfg.has_value()) {
                 model_cfg = *cfg;
                 found_in_state = true;
@@ -326,4 +326,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

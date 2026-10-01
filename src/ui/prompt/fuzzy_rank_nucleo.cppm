@@ -25,7 +25,7 @@ export module loom.ui.prompt.fuzzy_rank_nucleo;
 
 import std;
 
-export namespace cc::ui::prompt::fuzzy_rank_nucleo {
+export namespace loom::ui::prompt::fuzzy_rank_nucleo {
 
 // =========================================================================
 // Scoring constants (fzf-v2 / nucleo compatible; mirroring the file-index
@@ -179,4 +179,4 @@ struct NucleoScore {
     return nucleo_score(lowercase_ascii(candidate), lowercase_ascii(query)).matched;
 }
 
-}  // namespace cc::ui::prompt::fuzzy_rank_nucleo
+}  // namespace loom::ui::prompt::fuzzy_rank_nucleo

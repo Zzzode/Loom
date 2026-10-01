@@ -29,13 +29,13 @@ import loom.commands.plugin_ui_data;
 import loom.commands.plugin_helpers;
 import loom.plugins.plugin_marketplace;
 
-namespace cc::ui::dialogs::plugin_dialog_renderer {
+namespace loom::ui::dialogs::plugin_dialog_renderer {
 
-namespace dsys = cc::ui::dialogs::system;
-namespace ui   = cc::commands::plugin_ui;
-namespace pf   = cc::commands::plugin_helpers;
-namespace pm   = cc::utils::plugin_marketplace;
-namespace pd   = cc::ui::dialogs::plugin_dialog;
+namespace dsys = loom::ui::dialogs::system;
+namespace ui   = loom::commands::plugin_ui;
+namespace pf   = loom::commands::plugin_helpers;
+namespace pm   = loom::utils::plugin_marketplace;
+namespace pd   = loom::ui::dialogs::plugin_dialog;
 
 using namespace ftxui;
 
@@ -125,7 +125,7 @@ struct PluginDialogHolder : public ComponentBase {
 
 /// Convert an installed plugin (manifest-derived) into a display-ready cell.
 [[nodiscard]] ui::InstalledCellData to_installed_cell(
-    const cc::commands::InstalledPlugin& p) {
+    const loom::commands::InstalledPlugin& p) {
     ui::InstalledCellData cell;
     // id may be "name@marketplace"; split for display.
     auto at = p.id.find('@');
@@ -200,7 +200,7 @@ struct PluginDialogHolder : public ComponentBase {
     inputs.initial_view = std::move(initial);
 
     // ── Installed plugins ──────────────────────────────────────────────────
-    auto installed = cc::commands::get_installed_plugins();
+    auto installed = loom::commands::get_installed_plugins();
     inputs.installed_plugins.reserve(installed.size());
     for (const auto& p : installed) {
         inputs.installed_plugins.push_back(to_installed_cell(p));
@@ -336,4 +336,4 @@ void register_plugin_dialog_renderer(dsys::DialogRendererRegistry& registry) {
     );
 }
 
-} // namespace cc::ui::dialogs::plugin_dialog_renderer
+} // namespace loom::ui::dialogs::plugin_dialog_renderer

@@ -13,9 +13,9 @@ import std;
 import loom.services.mcp.types;
 import loom.serdes.json;
 
-namespace cc::services::mcp {
+namespace loom::services::mcp {
 
-using namespace cc::utils::json;
+using namespace loom::utils::json;
 
 namespace {
 
@@ -546,4 +546,4 @@ void McpClient::check_pending_timeouts() {
     }
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

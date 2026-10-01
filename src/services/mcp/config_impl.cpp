@@ -7,10 +7,10 @@ import std;
 
 import loom.serdes.json;
 
-namespace cc::services::mcp {
+namespace loom::services::mcp {
 
-using cc::utils::json::JsonVal;
-using cc::utils::json::parse;
+using loom::utils::json::JsonVal;
+using loom::utils::json::parse;
 
 namespace {
 
@@ -251,4 +251,4 @@ std::expected<McpConfig, ConfigError> ConfigLoader::load_scope(ConfigScope scope
     return config;
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

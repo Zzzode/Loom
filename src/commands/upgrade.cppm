@@ -16,23 +16,23 @@ import loom.constants.product;
 import loom.process.exec_sync;
 
 // Module-internal helpers (module linkage; intentionally not exported).
-namespace cc::commands {
+namespace loom::commands {
 
 inline void open_in_browser(std::string_view url) {
 #if defined(__APPLE__)
-    cc::utils::exec_sync_status("open " + std::string(url));
+    loom::utils::exec_sync_status("open " + std::string(url));
 #elif defined(__linux__)
-    cc::utils::exec_sync_status("xdg-open " + std::string(url));
+    loom::utils::exec_sync_status("xdg-open " + std::string(url));
 #else
     (void)url;
 #endif
 }
 
-} // namespace cc::commands
+} // namespace loom::commands
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// UpgradeCommand implements the /upgrade slash command.
 class UpgradeCommand {
@@ -55,7 +55,7 @@ public:
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext&) {
         // No upgrade backend is reachable from this build.
         std::string out = "Loom upgrade:\n";
-        out += std::format("  Current version: {}\n", cc::constants::product::LOOM_VERSION);
+        out += std::format("  Current version: {}\n", loom::constants::product::LOOM_VERSION);
         out += "  No upgrade backend is configured for this build.\n\n";
         out += "Complete the upgrade in your browser, then re-authenticate with /login.";
         return CommandResult::success(std::move(out));
@@ -66,4 +66,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

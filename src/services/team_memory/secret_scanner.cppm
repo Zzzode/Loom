@@ -18,7 +18,7 @@ module;
 export module loom.services.team_memory.secret_scanner;
 
 import std;
-export namespace cc::services::team_memory {
+export namespace loom::services::team_memory {
 
 /// A detected secret. Matches SecretMatch in TS: only the gitleaks rule id and
 /// a human-readable label are exposed — the matched text is intentionally NOT
@@ -212,4 +212,4 @@ inline std::string title_case(std::string_view s) {
     return detail::rule_id_to_label(rule_id);
 }
 
-} // namespace cc::services::team_memory
+} // namespace loom::services::team_memory

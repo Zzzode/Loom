@@ -4,7 +4,7 @@
 ///        from_json) so routes can ser/de request/response bodies uniformly.
 ///
 /// Note on server_routes.cppm overlap:
-///   cc::server::detail already contains DirectQueryRequest / DirectQueryResult /
+///   loom::server::detail already contains DirectQueryRequest / DirectQueryResult /
 ///   DirectPermissionRequest / DirectPermissionRule / DirectPermissionDirectory /
 ///   DirectPermissionSessionState as route-local helpers.  Those structs are
 ///   intentionally kept internal to cc.server.server_routes (detail namespace,
@@ -24,7 +24,7 @@ import std;
 
 import loom.serdes.json;
 
-export namespace cc::server {
+export namespace loom::server {
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
 
@@ -264,7 +264,7 @@ struct DirectQueryStreamChunk {
 // These use the yyjson-backed cc.serdes.json module.  For each type T we emit
 //   std::string        T_to_json(const T&);
 //   std::expected<T, std::string> T_from_json(std::string_view);
-// plus a free-function to_json / from_json overload inside the cc::server
+// plus a free-function to_json / from_json overload inside the loom::server
 // namespace so ADL callers can say `to_json(x)` uniformly.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -334,12 +334,12 @@ inline auto chunk_kind_from_str(std::string_view s) -> std::optional<StreamChunk
 /// Populate a string-vector JSON array from a JSON value, into v.  Returns false
 /// if `val` exists but is not an array; a missing key returns true without touching
 /// v (preserves default values of the struct).
-inline bool read_string_vec(cc::utils::json::JsonVal obj, std::string_view key,
+inline bool read_string_vec(loom::utils::json::JsonVal obj, std::string_view key,
                             std::vector<std::string>& out) {
-    cc::utils::json::JsonVal arr = obj.get(key);
+    loom::utils::json::JsonVal arr = obj.get(key);
     if (!arr.valid() || arr.is_null()) return true;
     if (!arr.is_arr()) return false;
-    arr.iter([&](cc::utils::json::JsonVal el) {
+    arr.iter([&](loom::utils::json::JsonVal el) {
         if (el.is_str()) out.emplace_back(el.as_str());
     });
     return true;
@@ -350,7 +350,7 @@ inline bool read_string_vec(cc::utils::json::JsonVal obj, std::string_view key,
 // ─── ServerSession ───────────────────────────────────────────────────────────
 
 [[nodiscard]] inline auto ServerSession_to_json(const ServerSession& s) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto obj = doc.object();
     obj.add("id", doc.string(s.id));
@@ -372,7 +372,7 @@ inline bool read_string_vec(cc::utils::json::JsonVal obj, std::string_view key,
 }
 [[nodiscard]] inline auto ServerSession_from_json(std::string_view raw)
     -> std::expected<ServerSession, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal o = parsed->root();
@@ -403,7 +403,7 @@ inline auto from_json(std::string_view v, ServerSession*)
 // ─── DirectConnectRequest / Response ─────────────────────────────────────────
 
 [[nodiscard]] inline auto DirectConnectRequest_to_json(const DirectConnectRequest& r) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("session_id", doc.string(r.session_id));
@@ -421,7 +421,7 @@ inline auto from_json(std::string_view v, ServerSession*)
 }
 [[nodiscard]] inline auto DirectConnectRequest_from_json(std::string_view raw)
     -> std::expected<DirectConnectRequest, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal o = parsed->root();
@@ -448,7 +448,7 @@ inline auto from_json(std::string_view v, DirectConnectRequest*)
 }
 
 [[nodiscard]] inline auto DirectConnectResponse_to_json(const DirectConnectResponse& r) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("ok", doc.boolean(r.ok));
@@ -462,7 +462,7 @@ inline auto from_json(std::string_view v, DirectConnectRequest*)
 }
 [[nodiscard]] inline auto DirectConnectResponse_from_json(std::string_view raw)
     -> std::expected<DirectConnectResponse, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal o = parsed->root();
@@ -485,7 +485,7 @@ inline auto from_json(std::string_view v, DirectConnectResponse*)
 // ─── DirectQueryRequest / Result ─────────────────────────────────────────────
 
 [[nodiscard]] inline auto DirectQueryRequest_to_json(const DirectQueryRequest& r) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("session_id", doc.string(r.session_id));
@@ -504,7 +504,7 @@ inline auto from_json(std::string_view v, DirectConnectResponse*)
 }
 [[nodiscard]] inline auto DirectQueryRequest_from_json(std::string_view raw)
     -> std::expected<DirectQueryRequest, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal o = parsed->root();
@@ -530,7 +530,7 @@ inline auto from_json(std::string_view v, DirectQueryRequest*)
 }
 
 [[nodiscard]] inline auto DirectQueryResult_to_json(const DirectQueryResult& r) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("ok", doc.boolean(r.ok));
@@ -547,7 +547,7 @@ inline auto from_json(std::string_view v, DirectQueryRequest*)
 }
 [[nodiscard]] inline auto DirectQueryResult_from_json(std::string_view raw)
     -> std::expected<DirectQueryResult, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal o = parsed->root();
@@ -573,7 +573,7 @@ inline auto from_json(std::string_view v, DirectQueryResult*)
 // ─── DirectPermissionRequest ─────────────────────────────────────────────────
 
 [[nodiscard]] inline auto DirectPermissionRequest_to_json(const DirectPermissionRequest& r) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("session_id", doc.string(r.session_id));
@@ -589,7 +589,7 @@ inline auto from_json(std::string_view v, DirectQueryResult*)
 }
 [[nodiscard]] inline auto DirectPermissionRequest_from_json(std::string_view raw)
     -> std::expected<DirectPermissionRequest, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal o = parsed->root();
@@ -614,7 +614,7 @@ inline auto from_json(std::string_view v, DirectPermissionRequest*)
 // ─── DirectPermissionRule ────────────────────────────────────────────────────
 
 [[nodiscard]] inline auto DirectPermissionRule_to_json(const DirectPermissionRule& r) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("id", doc.string(r.id));
@@ -629,7 +629,7 @@ inline auto from_json(std::string_view v, DirectPermissionRequest*)
 }
 [[nodiscard]] inline auto DirectPermissionRule_from_json(std::string_view raw)
     -> std::expected<DirectPermissionRule, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal o = parsed->root();
@@ -653,7 +653,7 @@ inline auto from_json(std::string_view v, DirectPermissionRule*)
 // ─── DirectPermissionDirectory ───────────────────────────────────────────────
 
 [[nodiscard]] inline auto DirectPermissionDirectory_to_json(const DirectPermissionDirectory& d) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto arr = doc.array();
     for (const auto& r : d.rules) {
@@ -669,7 +669,7 @@ inline auto from_json(std::string_view v, DirectPermissionRule*)
 }
 [[nodiscard]] inline auto DirectPermissionDirectory_from_json(std::string_view raw)
     -> std::expected<DirectPermissionDirectory, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal o = parsed->root();
@@ -700,7 +700,7 @@ inline auto from_json(std::string_view v, DirectPermissionDirectory*)
 // ─── DirectPermissionSessionState ────────────────────────────────────────────
 
 [[nodiscard]] inline auto DirectPermissionSessionState_to_json(const DirectPermissionSessionState& s) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("session_id", doc.string(s.session_id));
@@ -720,7 +720,7 @@ inline auto from_json(std::string_view v, DirectPermissionDirectory*)
 }
 [[nodiscard]] inline auto DirectPermissionSessionState_from_json(std::string_view raw)
     -> std::expected<DirectPermissionSessionState, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal o = parsed->root();
@@ -763,7 +763,7 @@ inline auto from_json(std::string_view v, DirectPermissionSessionState*)
 // ─── DirectQueryStreamChunk ──────────────────────────────────────────────────
 
 [[nodiscard]] inline auto DirectQueryStreamChunk_to_json(const DirectQueryStreamChunk& c) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("conversation_id", doc.string(c.conversation_id));
@@ -780,7 +780,7 @@ inline auto from_json(std::string_view v, DirectPermissionSessionState*)
 }
 [[nodiscard]] inline auto DirectQueryStreamChunk_from_json(std::string_view raw)
     -> std::expected<DirectQueryStreamChunk, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal o = parsed->root();
@@ -803,4 +803,4 @@ inline auto from_json(std::string_view v, DirectQueryStreamChunk*)
     return DirectQueryStreamChunk_from_json(v);
 }
 
-}  // namespace cc::server
+}  // namespace loom::server

@@ -14,7 +14,7 @@ export module loom.process.shell.shell;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
 using namespace std::chrono;
@@ -271,4 +271,4 @@ private:
     bool running_ = false;
 };
 
-} // namespace cc::utils
+} // namespace loom::utils

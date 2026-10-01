@@ -46,9 +46,9 @@ import loom.session.list_sessions;
 import loom.serdes.json;
 import loom.utils.error;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 namespace fs = std::filesystem;
 
 // ============================================================================
@@ -152,7 +152,7 @@ struct SessionFacets {
 /// Validity predicate mirroring TS isValidSessionFacets: the four required
 /// string fields must be strings and the three map fields must be objects.
 /// (We accept any object here; type is already enforced by our JSON reader.)
-[[nodiscard]] inline bool is_valid_facets(const cc::utils::json::JsonVal& o) {
+[[nodiscard]] inline bool is_valid_facets(const loom::utils::json::JsonVal& o) {
     if (!o.is_obj()) return false;
     if (!o.get("underlying_goal").is_str()) return false;
     if (!o.get("outcome").is_str()) return false;
@@ -181,10 +181,10 @@ struct AggregatedFacets {
 /// skipping non-positive counts (matches the TS `count > 0` filter for the
 /// *_counts maps).
 [[nodiscard]] inline std::map<std::string, std::size_t>
-read_count_map(const cc::utils::json::JsonVal& obj) {
+read_count_map(const loom::utils::json::JsonVal& obj) {
     std::map<std::string, std::size_t> out;
     if (!obj.is_obj()) return out;
-    obj.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal val) {
+    obj.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal val) {
         if (key.is_str() && val.is_num() && val.as_int() > 0) {
             out[std::string(key.as_str())] =
                 static_cast<std::size_t>(val.as_int());
@@ -197,7 +197,7 @@ read_count_map(const cc::utils::json::JsonVal& obj) {
 /// `session_id` is supplied by the caller (cache filename), matching the TS
 /// `{ ...parsed, session_id }` merge.
 [[nodiscard]] inline SessionFacets
-facets_from_json(const cc::utils::json::JsonVal& o, std::string session_id) {
+facets_from_json(const loom::utils::json::JsonVal& o, std::string session_id) {
     SessionFacets f;
     f.session_id = std::move(session_id);
     f.underlying_goal = o.get_string("underlying_goal");
@@ -271,7 +271,7 @@ inline fs::path facet_path(std::string_view session_id) {
 /// Render a SessionFacets to a pretty JSON string. Round-trips through
 /// facets_from_json so the written form is the canonical aggregate input.
 [[nodiscard]] inline std::string facets_to_json(const SessionFacets& f) {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     doc.set_root(root);
 
@@ -303,7 +303,7 @@ inline fs::path facet_path(std::string_view session_id) {
 /// Returns an error if the write fails (mirrors TS writeFile). The directory
 /// is created with default permissions; the file is written 0600 on POSIX
 /// (std::ofstream has no portable mode knob, so we chmod after the fact).
-[[nodiscard]] inline cc::utils::Result<void>
+[[nodiscard]] inline loom::utils::Result<void>
 save_facets(const SessionFacets& f) {
     std::error_code ec;
     fs::create_directories(detail::facets_dir(), ec);
@@ -311,16 +311,16 @@ save_facets(const SessionFacets& f) {
     auto path = detail::facet_path(f.session_id);
     std::ofstream out(path, std::ios::binary | std::ios::trunc);
     if (!out) {
-        return std::unexpected(cc::utils::Error(
-            cc::utils::ErrorCode::internal_error,
+        return std::unexpected(loom::utils::Error(
+            loom::utils::ErrorCode::internal_error,
             std::format("Failed to open facet cache for write: {}",
                         path.string())));
     }
     out << facets_to_json(f);
     out.close();
     if (!out) {
-        return std::unexpected(cc::utils::Error(
-            cc::utils::ErrorCode::internal_error,
+        return std::unexpected(loom::utils::Error(
+            loom::utils::ErrorCode::internal_error,
             std::format("Failed to write facet cache: {}", path.string())));
     }
     fs::permissions(path, fs::perms::owner_read | fs::perms::owner_write,
@@ -342,7 +342,7 @@ load_facets(std::string_view session_id) {
     if (!in) return std::nullopt;
     std::string content((std::istreambuf_iterator<char>(in)),
                         std::istreambuf_iterator<char>());
-    auto parsed = cc::utils::json::parse(content);
+    auto parsed = loom::utils::json::parse(content);
     if (!parsed) return std::nullopt;
     auto root = parsed->root();
     if (!is_valid_facets(root)) return std::nullopt;
@@ -558,7 +558,7 @@ extract_facets_with_seam(const LlmExtractFn& seam,
     }
     auto blob = text->substr(first, last - first + 1);
 
-    auto parsed = cc::utils::json::parse(blob);
+    auto parsed = loom::utils::json::parse(blob);
     if (!parsed) return std::nullopt;
     auto root = parsed->root();
     if (!is_valid_facets(root)) return std::nullopt;
@@ -598,7 +598,7 @@ public:
     }
 
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext& ctx) {
-        auto sessions = cc::utils::list_sessions(std::nullopt);
+        auto sessions = loom::utils::list_sessions(std::nullopt);
 
         if (sessions.empty()) {
             return CommandResult::success(
@@ -827,4 +827,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

@@ -8,7 +8,7 @@ import std;
 
 import loom.crypto.crypto;
 
-export namespace cc::utils::hash {
+export namespace loom::utils::hash {
 
 namespace detail {
     [[nodiscard]] inline std::vector<std::uint32_t> utf16_code_units(std::string_view utf8) {
@@ -61,7 +61,7 @@ namespace detail {
 }
 
 [[nodiscard]] inline std::string hash_content(std::string_view content) {
-    return cc::utils::crypto::sha256(content);
+    return loom::utils::crypto::sha256(content);
 }
 
 [[nodiscard]] inline std::string hash_pair(std::string_view a, std::string_view b) {
@@ -70,7 +70,7 @@ namespace detail {
     combined.append(a);
     combined.push_back('\0');
     combined.append(b);
-    return cc::utils::crypto::sha256(combined);
+    return loom::utils::crypto::sha256(combined);
 }
 
-} // namespace cc::utils::hash
+} // namespace loom::utils::hash

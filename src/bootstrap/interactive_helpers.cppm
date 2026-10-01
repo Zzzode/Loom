@@ -15,7 +15,7 @@ import std;
 import loom.hooks.ide_at_mentioned;
 import loom.serdes.json;
 
-export namespace cc::bootstrap::interactive {
+export namespace loom::bootstrap::interactive {
 
 // ---------------------------------------------------------------------------
 // Types
@@ -218,7 +218,7 @@ inline std::pair<bool, ParsedCommand::PasteKind> detect_paste_kind(std::string_v
         // *concatenated* JSON (e.g. repeated log lines {"a":1}{"b":2}) still
         // classifies as Json — a strict whole-document parse would reject the
         // trailing objects.
-        if (cc::utils::json::parse_first(text)) {
+        if (loom::utils::json::parse_first(text)) {
             return {true, ParsedCommand::PasteKind::Json};
         }
     }
@@ -491,7 +491,7 @@ private:
         auto make_route = [](std::string name) {
             return [n = std::move(name)](const std::vector<std::string>& args,
                                          const InteractiveContext& /*ctx*/) {
-                cc::utils::json::JsonArray arr;
+                loom::utils::json::JsonArray arr;
                 for (const auto& a : args) arr.push(a);
                 DispatchOutcome o;
                 o.action = DispatchOutcome::Action::RouteToCommand;
@@ -519,7 +519,7 @@ private:
 namespace detail {
 
 inline std::string string_vec_json(const std::vector<std::string>& v) {
-    cc::utils::json::JsonArray arr;
+    loom::utils::json::JsonArray arr;
     for (const auto& a : v) arr.push(a);
     return arr.serialize();
 }
@@ -590,7 +590,7 @@ dispatch_parsed(const ParsedCommand& cmd, const InteractiveContext& ctx) {
                 case ParsedCommand::PasteKind::Diff: kind_str = "diff"; break;
                 default: kind_str = "unknown"; break;
             }
-            cc::utils::json::JsonBuilder b;
+            loom::utils::json::JsonBuilder b;
             b.str("content", sanitized)
              .boolean("paste", true)
              .str("paste_kind", kind_str);
@@ -600,7 +600,7 @@ dispatch_parsed(const ParsedCommand& cmd, const InteractiveContext& ctx) {
         }
 
         case CommandKind::TextPrompt: {
-            cc::utils::json::JsonBuilder b;
+            loom::utils::json::JsonBuilder b;
             b.str("content", cmd.normalized);
             auto& doc = b.doc();
             auto root = b.root();
@@ -627,4 +627,4 @@ process_complete(std::string_view raw, const InteractiveContext& ctx) {
     return dispatch_parsed(*parsed, ctx);
 }
 
-} // namespace cc::bootstrap::interactive
+} // namespace loom::bootstrap::interactive

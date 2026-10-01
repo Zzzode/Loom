@@ -6,7 +6,7 @@ export module loom.diagnostics.debug_filter;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 
 class DebugFilter {
@@ -122,4 +122,4 @@ private:
     }
 };
 
-} // namespace cc::utils
+} // namespace loom::utils

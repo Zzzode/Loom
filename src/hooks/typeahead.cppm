@@ -10,7 +10,7 @@ export module loom.hooks.typeahead;
 import std;
 
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 
 enum class CompletionSource {
@@ -296,4 +296,4 @@ private:
     }
 };
 
-} // namespace cc::hooks
+} // namespace loom::hooks

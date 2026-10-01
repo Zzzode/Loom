@@ -41,7 +41,7 @@ import std;
 // source rather than speculatively porting the full 2578-line engine.
 // ---------------------------------------------------------------------------
 
-export namespace cc::ui::layout {
+export namespace loom::ui::layout {
 
 // Flex layout direction (no reverse — see module header)
 enum class FlexDirection { Row, Column };
@@ -224,4 +224,4 @@ inline auto compute_layout(LayoutNode& root,
     return results;
 }
 
-} // namespace cc::ui::layout
+} // namespace loom::ui::layout

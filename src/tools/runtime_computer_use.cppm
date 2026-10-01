@@ -4,7 +4,7 @@
 ///
 /// These are pure functions that build the JSON payload describing a
 /// computer-use action (mouse/keyboard). They depend only on the
-/// cc::core::computer_use action types — no runtime_registry internals.
+/// loom::core::computer_use action types — no runtime_registry internals.
 module;
 
 #include <cstdint>
@@ -15,9 +15,9 @@ import std;
 
 import loom.tools.computer_use;
 
-export namespace cc::tools::runtime_computer_use {
+export namespace loom::tools::runtime_computer_use {
 
-using cc::core::computer_use::ActionType;
+using loom::core::computer_use::ActionType;
 
 /// Map a computer-use ActionType to its wire string.
 [[nodiscard]] inline std::string_view action_name(ActionType action) {
@@ -78,7 +78,7 @@ inline void append_int(std::string& out, std::string_view key, std::int64_t valu
 } // namespace detail
 
 /// Build the JSON payload describing a computer-use action.
-[[nodiscard]] inline std::string command_request_json(const cc::core::computer_use::ComputerAction& action) {
+[[nodiscard]] inline std::string command_request_json(const loom::core::computer_use::ComputerAction& action) {
     std::string out = "{";
     bool first = true;
     detail::append_string(out, "action", action_name(action.type), first);
@@ -131,4 +131,4 @@ inline void replace_all(std::string& text, std::string_view needle, std::string_
     }
 }
 
-} // namespace cc::tools::runtime_computer_use
+} // namespace loom::tools::runtime_computer_use

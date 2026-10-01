@@ -5,7 +5,7 @@ export module loom.commands.release_notes;
 
 import std;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
 auto release_notes_cache_path() -> std::filesystem::path {
     if (const char* home = std::getenv("HOME")) return std::filesystem::path{home} / ".loom" / "release-notes.txt";
@@ -50,4 +50,4 @@ auto has_unread_release_notes() -> bool {
     return std::filesystem::exists(release_notes_cache_path());
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

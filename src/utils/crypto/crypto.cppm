@@ -12,11 +12,11 @@ import std;
 
 import loom.utils.error;
 
-export namespace cc::utils::crypto {
+export namespace loom::utils::crypto {
 
-using cc::utils::Error;
-using cc::utils::ErrorCode;
-using cc::utils::Result;
+using loom::utils::Error;
+using loom::utils::ErrorCode;
+using loom::utils::Result;
 
 // =========================================================================
 
@@ -384,4 +384,4 @@ inline std::array<uint8_t, 32> hmac_sha256_raw(
     return sha256_bytes_to_hex(raw);
 }
 
-} // namespace cc::utils::crypto
+} // namespace loom::utils::crypto

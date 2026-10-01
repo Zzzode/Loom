@@ -38,12 +38,12 @@ import loom.ui.messages.message_timestamp;
 import loom.media.image_store;
 import loom.platform.hyperlink;
 
-export namespace cc::ui::messages::image {
+export namespace loom::ui::messages::image {
 
 using namespace ftxui;
 namespace fs = std::filesystem;
-using cc::utils::image_store::StoredImage;
-using cc::utils::supports_hyperlinks;
+using loom::utils::image_store::StoredImage;
+using loom::utils::supports_hyperlinks;
 
 // ============================================================
 // Types
@@ -102,7 +102,7 @@ struct ImageMessageData {
 inline void resolve_from_store(ImageMessageData& data) {
     if (data.source_type != ImageSource::StoreId) return;
 
-    auto img = cc::utils::image_store::get_image(data.source);
+    auto img = loom::utils::image_store::get_image(data.source);
     if (!img) return;
 
     const StoredImage& s = *img;
@@ -322,4 +322,4 @@ class ImageMessageComponent : public ComponentBase {
     return render(d) | borderLight | color(Color::Blue);
 }
 
-} // namespace cc::ui::messages::image
+} // namespace loom::ui::messages::image

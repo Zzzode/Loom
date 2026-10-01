@@ -14,7 +14,7 @@ import std;
 import loom.hooks.permission_resolver;
 import loom.hooks.tool_permission_gate;
 
-using namespace cc::hooks::permission;
+using namespace loom::hooks::permission;
 
 namespace {
 

@@ -49,13 +49,13 @@ struct ScopedEnvVar {
 // ===========================================================================
 
 TEST(StatuslineCommand, NameIsStatusline) {
-    EXPECT_EQ(cc::commands::statusline::name(), "statusline");
+    EXPECT_EQ(loom::commands::statusline::name(), "statusline");
 }
 
 TEST(StatuslineCommand, RunReturnsOkResponse) {
     ScopedEnvVar shell("SHELL");
     shell.set("/bin/zsh");
-    auto result = cc::commands::statusline::run();
+    auto result = loom::commands::statusline::run();
     EXPECT_TRUE(result.ok);
     EXPECT_FALSE(result.message.empty());
 }
@@ -63,7 +63,7 @@ TEST(StatuslineCommand, RunReturnsOkResponse) {
 TEST(StatuslineCommand, DetectsZshShell) {
     ScopedEnvVar shell("SHELL");
     shell.set("/bin/zsh");
-    auto result = cc::commands::statusline::run();
+    auto result = loom::commands::statusline::run();
     EXPECT_NE(result.message.find("Detected shell: zsh"), std::string::npos);
     EXPECT_NE(result.message.find(".zshrc"), std::string::npos);
     EXPECT_NE(result.message.find("RPROMPT"), std::string::npos);
@@ -73,7 +73,7 @@ TEST(StatuslineCommand, DetectsZshShell) {
 TEST(StatuslineCommand, DetectsBashShell) {
     ScopedEnvVar shell("SHELL");
     shell.set("/bin/bash");
-    auto result = cc::commands::statusline::run();
+    auto result = loom::commands::statusline::run();
     EXPECT_NE(result.message.find("Detected shell: bash"), std::string::npos);
     EXPECT_NE(result.message.find(".bashrc"), std::string::npos);
     EXPECT_NE(result.message.find("PROMPT_COMMAND"), std::string::npos);
@@ -83,7 +83,7 @@ TEST(StatuslineCommand, DetectsBashShell) {
 TEST(StatuslineCommand, DetectsFishShell) {
     ScopedEnvVar shell("SHELL");
     shell.set("/usr/local/bin/fish");
-    auto result = cc::commands::statusline::run();
+    auto result = loom::commands::statusline::run();
     EXPECT_NE(result.message.find("Detected shell: fish"), std::string::npos);
     EXPECT_NE(result.message.find("fish_right_prompt"), std::string::npos);
     EXPECT_NE(result.message.find("loom --status-json"), std::string::npos);
@@ -92,7 +92,7 @@ TEST(StatuslineCommand, DetectsFishShell) {
 TEST(StatuslineCommand, UnknownShellWhenEnvMissing) {
     ScopedEnvVar shell("SHELL");
     shell.unset();
-    auto result = cc::commands::statusline::run();
+    auto result = loom::commands::statusline::run();
     EXPECT_NE(result.message.find("Detected shell: unknown"), std::string::npos);
     EXPECT_NE(result.message.find("Could not detect shell type"), std::string::npos);
 }
@@ -100,21 +100,21 @@ TEST(StatuslineCommand, UnknownShellWhenEnvMissing) {
 TEST(StatuslineCommand, EmptyShellVarTreatedAsUnknown) {
     ScopedEnvVar shell("SHELL");
     shell.set("");
-    auto result = cc::commands::statusline::run();
+    auto result = loom::commands::statusline::run();
     EXPECT_NE(result.message.find("Detected shell: unknown"), std::string::npos);
 }
 
 TEST(StatuslineCommand, CustomFormatAppendedWhenProvided) {
     ScopedEnvVar shell("SHELL");
     shell.set("/bin/zsh");
-    auto result = cc::commands::statusline::run("%model %cost");
+    auto result = loom::commands::statusline::run("%model %cost");
     EXPECT_NE(result.message.find("Custom format: %model %cost"), std::string::npos);
 }
 
 TEST(StatuslineCommand, NoCustomFormatWhenEmpty) {
     ScopedEnvVar shell("SHELL");
     shell.set("/bin/zsh");
-    auto result = cc::commands::statusline::run("");
+    auto result = loom::commands::statusline::run("");
     EXPECT_EQ(result.message.find("Custom format:"), std::string::npos);
 }
 
@@ -122,9 +122,9 @@ TEST(StatuslineCommand, NoCustomFormatWhenEmpty) {
 // 2. cc.ui.app.statusline_runner — JSON serialization (to_json)
 // ===========================================================================
 
-using cc::utils::statusline::StatusLineCommandInput;
-using cc::utils::statusline::to_json;
-using cc::utils::json::parse;
+using loom::utils::statusline::StatusLineCommandInput;
+using loom::utils::statusline::to_json;
+using loom::utils::json::parse;
 
 TEST(StatuslineJson, SerializesBaseFields) {
     StatusLineCommandInput input;
@@ -195,7 +195,7 @@ TEST(StatuslineJson, SerializesContextWindowInfo) {
     input.context_window.total_input_tokens = 10000;
     input.context_window.total_output_tokens = 2000;
     input.context_window.context_window_size = 200000;
-    input.context_window.current_usage = cc::utils::statusline::StatusLineCurrentUsageInfo{
+    input.context_window.current_usage = loom::utils::statusline::StatusLineCurrentUsageInfo{
         .input_tokens = 11000,
         .output_tokens = 2000,
         .cache_creation_input_tokens = 500,
@@ -304,7 +304,7 @@ TEST(StatuslineJson, OmitsVimWhenNotSet) {
 
 TEST(StatuslineJson, OmitsVimWhenModeEmpty) {
     StatusLineCommandInput input;
-    input.vim = cc::utils::statusline::StatusLineVimInfo{.mode = ""};
+    input.vim = loom::utils::statusline::StatusLineVimInfo{.mode = ""};
 
     auto json_str = to_json(input);
     auto doc = parse(json_str);
@@ -314,7 +314,7 @@ TEST(StatuslineJson, OmitsVimWhenModeEmpty) {
 
 TEST(StatuslineJson, IncludesVimWhenPopulated) {
     StatusLineCommandInput input;
-    input.vim = cc::utils::statusline::StatusLineVimInfo{.mode = "INSERT"};
+    input.vim = loom::utils::statusline::StatusLineVimInfo{.mode = "INSERT"};
 
     auto json_str = to_json(input);
     auto doc = parse(json_str);
@@ -336,7 +336,7 @@ TEST(StatuslineJson, OmitsAgentWhenNotSet) {
 
 TEST(StatuslineJson, IncludesAgentWhenPopulated) {
     StatusLineCommandInput input;
-    input.agent = cc::utils::statusline::StatusLineAgentInfo{.name = "reviewer"};
+    input.agent = loom::utils::statusline::StatusLineAgentInfo{.name = "reviewer"};
 
     auto json_str = to_json(input);
     auto doc = parse(json_str);
@@ -348,7 +348,7 @@ TEST(StatuslineJson, IncludesAgentWhenPopulated) {
 
 TEST(StatuslineJson, OmitsAgentWhenNameEmpty) {
     StatusLineCommandInput input;
-    input.agent = cc::utils::statusline::StatusLineAgentInfo{.name = ""};
+    input.agent = loom::utils::statusline::StatusLineAgentInfo{.name = ""};
 
     auto json_str = to_json(input);
     auto doc = parse(json_str);
@@ -368,7 +368,7 @@ TEST(StatuslineJson, OmitsRemoteWhenNotSet) {
 
 TEST(StatuslineJson, IncludesRemoteWhenPopulated) {
     StatusLineCommandInput input;
-    input.remote = cc::utils::statusline::StatusLineRemoteInfo{.session_id = "sess-abc123"};
+    input.remote = loom::utils::statusline::StatusLineRemoteInfo{.session_id = "sess-abc123"};
 
     auto json_str = to_json(input);
     auto doc = parse(json_str);
@@ -390,7 +390,7 @@ TEST(StatuslineJson, OmitsWorktreeWhenNotSet) {
 
 TEST(StatuslineJson, IncludesWorktreeWhenPopulated) {
     StatusLineCommandInput input;
-    input.worktree = cc::utils::statusline::StatusLineWorktreeInfo{
+    input.worktree = loom::utils::statusline::StatusLineWorktreeInfo{
         .name = "feature-branch",
         .path = "/tmp/worktrees/feature",
         .branch = "feature/xyz",
@@ -412,7 +412,7 @@ TEST(StatuslineJson, IncludesWorktreeWhenPopulated) {
 
 TEST(StatuslineJson, OmitsWorktreeWhenNameEmpty) {
     StatusLineCommandInput input;
-    input.worktree = cc::utils::statusline::StatusLineWorktreeInfo{
+    input.worktree = loom::utils::statusline::StatusLineWorktreeInfo{
         .name = "",
         .path = "/some/path",
         .branch = "main",
@@ -438,7 +438,7 @@ TEST(StatuslineJson, OmitsRateLimitsWhenNullopt) {
 
 TEST(StatuslineJson, OmitsRateLimitsWhenBothSubBucketsNullopt) {
     StatusLineCommandInput input;
-    input.rate_limits = cc::utils::statusline::StatusLineRateLimits{
+    input.rate_limits = loom::utils::statusline::StatusLineRateLimits{
         .five_hour = std::nullopt,
         .seven_day = std::nullopt,
     };
@@ -451,8 +451,8 @@ TEST(StatuslineJson, OmitsRateLimitsWhenBothSubBucketsNullopt) {
 
 TEST(StatuslineJson, IncludesRateLimitsFiveHourOnly) {
     StatusLineCommandInput input;
-    input.rate_limits = cc::utils::statusline::StatusLineRateLimits{
-        .five_hour = cc::utils::statusline::StatusLineRateLimitBucket{
+    input.rate_limits = loom::utils::statusline::StatusLineRateLimits{
+        .five_hour = loom::utils::statusline::StatusLineRateLimitBucket{
             .used_percentage = 45.5,
             .resets_at = 1700000000000LL,
         },
@@ -474,12 +474,12 @@ TEST(StatuslineJson, IncludesRateLimitsFiveHourOnly) {
 
 TEST(StatuslineJson, IncludesRateLimitsBothBuckets) {
     StatusLineCommandInput input;
-    input.rate_limits = cc::utils::statusline::StatusLineRateLimits{
-        .five_hour = cc::utils::statusline::StatusLineRateLimitBucket{
+    input.rate_limits = loom::utils::statusline::StatusLineRateLimits{
+        .five_hour = loom::utils::statusline::StatusLineRateLimitBucket{
             .used_percentage = 30.0,
             .resets_at = 1000,
         },
-        .seven_day = cc::utils::statusline::StatusLineRateLimitBucket{
+        .seven_day = loom::utils::statusline::StatusLineRateLimitBucket{
             .used_percentage = 60.0,
             .resets_at = 99999,
         },
@@ -510,8 +510,8 @@ TEST(StatuslineJson, EmptyAddedDirsIsValidArray) {
 // 3. cc.ui.app.statusline_runner — execute_statusline_command
 // ===========================================================================
 
-using cc::utils::statusline::execute_statusline_command;
-using cc::utils::statusline::StatusLineResult;
+using loom::utils::statusline::execute_statusline_command;
+using loom::utils::statusline::StatusLineResult;
 
 bool has_bash() {
     return std::system("command -v bash >/dev/null 2>&1") == 0;
@@ -653,16 +653,16 @@ TEST(StatuslineExecute, ComplexJsonInputPassedCorrectly) {
     input.context_window.total_input_tokens = 50000;
     input.context_window.total_output_tokens = 10000;
     input.context_window.context_window_size = 200000;
-    input.context_window.current_usage = cc::utils::statusline::StatusLineCurrentUsageInfo{
+    input.context_window.current_usage = loom::utils::statusline::StatusLineCurrentUsageInfo{
         .input_tokens = 50000,
         .output_tokens = 10000,
         .cache_creation_input_tokens = 1000,
         .cache_read_input_tokens = 2000,
     };
     input.exceeds_200k_tokens = false;
-    input.vim = cc::utils::statusline::StatusLineVimInfo{.mode = "NORMAL"};
-    input.rate_limits = cc::utils::statusline::StatusLineRateLimits{
-        .five_hour = cc::utils::statusline::StatusLineRateLimitBucket{
+    input.vim = loom::utils::statusline::StatusLineVimInfo{.mode = "NORMAL"};
+    input.rate_limits = loom::utils::statusline::StatusLineRateLimits{
+        .five_hour = loom::utils::statusline::StatusLineRateLimitBucket{
             .used_percentage = 50.0, .resets_at = 1234567890LL},
         .seven_day = std::nullopt,
     };

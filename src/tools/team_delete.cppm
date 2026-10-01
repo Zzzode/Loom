@@ -13,15 +13,15 @@ import loom.tools.team;
 import loom.serdes.json;
 import loom.utils.error;
 
-export namespace cc::tools::team_delete {
+export namespace loom::tools::team_delete {
 
-using cc::core::Tool;
-using cc::core::ToolInput;
-using cc::core::ToolResult;
-using cc::core::ToolDefinition;
-using cc::core::ToolPermission;
-using cc::core::InputSchema;
-using cc::core::SchemaProperty;
+using loom::core::Tool;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
+using loom::core::ToolDefinition;
+using loom::core::ToolPermission;
+using loom::core::InputSchema;
+using loom::core::SchemaProperty;
 
 /// Input parameters for TeamDeleteTool (empty - operates on current team)
 struct TeamDeleteInput {
@@ -76,7 +76,7 @@ public:
         };
     }
 
-    [[nodiscard]] auto execute(const ToolInput& input) -> cc::utils::Result<ToolResult>;
+    [[nodiscard]] auto execute(const ToolInput& input) -> loom::utils::Result<ToolResult>;
 
     /// Check if agent swarms feature is enabled
     [[nodiscard]] static auto is_enabled() -> bool;
@@ -105,7 +105,7 @@ public:
 namespace detail {
 
 [[nodiscard]] std::optional<std::string> json_string_field(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key
 ) {
     auto value = object.get(key);
@@ -122,10 +122,10 @@ namespace detail {
 
 [[nodiscard]] std::string delete_input_json_for_target(const TeamDeleteInput& input) {
     if (input.team_id && !input.team_id->empty()) {
-        return std::format(R"({{"team_id":"{}"}})", cc::tools::team_json_escape(*input.team_id));
+        return std::format(R"({{"team_id":"{}"}})", loom::tools::team_json_escape(*input.team_id));
     }
     if (input.team_name && !input.team_name->empty()) {
-        return std::format(R"({{"team_name":"{}"}})", cc::tools::team_json_escape(*input.team_name));
+        return std::format(R"({{"team_name":"{}"}})", loom::tools::team_json_escape(*input.team_name));
     }
     return "{}";
 }
@@ -134,7 +134,7 @@ namespace detail {
 
 std::expected<TeamDeleteInput, std::string> TeamDeleteInput::from_json(std::string_view json) {
     TeamDeleteInput input;
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (parsed && parsed->root().is_obj()) {
         auto root = parsed->root();
         input.team_id = detail::json_string_field(root, "team_id")
@@ -149,21 +149,21 @@ std::expected<TeamDeleteInput, std::string> TeamDeleteInput::from_json(std::stri
     return input;
 }
 
-cc::utils::Result<ToolResult> TeamDeleteTool::execute(const ToolInput& input) {
+loom::utils::Result<ToolResult> TeamDeleteTool::execute(const ToolInput& input) {
     auto parsed = TeamDeleteInput::from_json(input.json());
     if (!parsed) return ToolResult::error(parsed.error());
 
-    cc::core::ToolRegistry registry;
+    loom::core::ToolRegistry registry;
     // Internal delegation reuses the runtime team_delete implementation. This
     // local registry is an implementation detail of the standalone tool — the
     // outer TeamDeleteTool is already permission-gated by its caller — so the
     // inner delegation uses an allow-all checker rather than fail-closed
     // denial for the Write-level "team_delete" runtime tool.
-    cc::tools::register_runtime_tools(registry, cc::tools::RuntimeToolOptions{
+    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
         .parent_permission_mode = std::nullopt,
-        .permission_check = cc::tools::agent::AgentLivePermissionCheckFn{[](
+        .permission_check = loom::tools::agent::AgentLivePermissionCheckFn{[](
             std::string_view, std::string_view, std::string_view) {
-            return cc::tools::agent::AgentLivePermissionCheck{
+            return loom::tools::agent::AgentLivePermissionCheck{
                 .allowed = true,
                 .updated_input_json = std::nullopt,
                 .message = std::nullopt,
@@ -190,13 +190,13 @@ std::optional<std::string> TeamDeleteTool::validate_can_delete() {
 
 std::vector<std::string> TeamDeleteTool::get_active_members(const std::string& team_name) {
     std::vector<std::string> active;
-    auto team = cc::tools::global_team_store().get_by_id_or_name(team_name);
+    auto team = loom::tools::global_team_store().get_by_id_or_name(team_name);
     if (!team) return active;
     for (const auto& member : (*team)->members) {
-        if (member.role == cc::tools::MemberRole::Leader) continue;
-        if (member.status == cc::tools::MemberStatus::Idle ||
-            member.status == cc::tools::MemberStatus::Done ||
-            member.status == cc::tools::MemberStatus::Error) {
+        if (member.role == loom::tools::MemberRole::Leader) continue;
+        if (member.status == loom::tools::MemberStatus::Idle ||
+            member.status == loom::tools::MemberStatus::Done ||
+            member.status == loom::tools::MemberStatus::Error) {
             continue;
         }
         active.push_back(member.agent_id);
@@ -207,10 +207,10 @@ std::vector<std::string> TeamDeleteTool::get_active_members(const std::string& t
 std::expected<void, std::string> TeamDeleteTool::cleanup_team_directories(const std::string& team_name) {
     namespace fs = std::filesystem;
     std::error_code ec;
-    auto root = cc::tools::team_runtime_dir();
-    fs::remove_all(root / cc::tools::safe_team_filename(team_name), ec);
+    auto root = loom::tools::team_runtime_dir();
+    fs::remove_all(root / loom::tools::safe_team_filename(team_name), ec);
     if (ec) return std::unexpected(ec.message());
-    fs::remove(root / (cc::tools::safe_team_filename(team_name) + ".json"), ec);
+    fs::remove(root / (loom::tools::safe_team_filename(team_name) + ".json"), ec);
     if (ec) return std::unexpected(ec.message());
     return {};
 }
@@ -224,9 +224,9 @@ void TeamDeleteTool::unregister_from_cleanup(const std::string&) {}
 
 void TeamDeleteTool::clear_teammate_colors() {}
 
-} // namespace cc::tools::team_delete
+} // namespace loom::tools::team_delete
 
-export namespace cc::tools {
-    using cc::tools::team_delete::TeamDeleteInput;
-    using cc::tools::team_delete::TeamDeleteOutput;
+export namespace loom::tools {
+    using loom::tools::team_delete::TeamDeleteInput;
+    using loom::tools::team_delete::TeamDeleteOutput;
 }

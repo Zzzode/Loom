@@ -24,7 +24,7 @@ import std;
 
 import loom.types.types;
 
-export namespace cc::ui::code_highlight {
+export namespace loom::ui::code_highlight {
 using namespace ftxui;
 
 // ============================================================
@@ -1110,4 +1110,4 @@ struct RenderCodeBlockOptions {
     });
 }
 
-} // namespace cc::ui::code_highlight
+} // namespace loom::ui::code_highlight

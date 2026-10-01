@@ -16,7 +16,7 @@ import loom.utils.error;
 import loom.tools.tool;
 import loom.serdes.json;
 
-export namespace cc::tools::web_fetch {
+export namespace loom::tools::web_fetch {
 
 namespace detail {
 struct CurlRunResult {
@@ -126,7 +126,7 @@ struct CurlRunResult {
 }
 
 [[nodiscard]] inline auto parse_url(std::string_view json) -> std::expected<std::string, std::string> {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed || !parsed->root().is_obj()) {
         return std::unexpected("Invalid JSON input");
     }
@@ -140,14 +140,14 @@ struct CurlRunResult {
 }
 }
 
-using cc::core::Tool;
-using cc::core::ToolInput;
-using cc::core::ToolResult;
-using cc::core::ToolDefinition;
-using cc::core::ToolPermission;
-using cc::core::InputSchema;
-using cc::core::SchemaProperty;
-using cc::utils::Result;
+using loom::core::Tool;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
+using loom::core::ToolDefinition;
+using loom::core::ToolPermission;
+using loom::core::InputSchema;
+using loom::core::SchemaProperty;
+using loom::utils::Result;
 
 // =========================================================================
 // WebFetchTool Implementation
@@ -203,26 +203,26 @@ public:
     }
 };
 
-} // namespace cc::tools::web_fetch
+} // namespace loom::tools::web_fetch
 
 // Export main tool class
-export namespace cc::tools {
-    using cc::tools::web_fetch::WebFetchTool;
+export namespace loom::tools {
+    using loom::tools::web_fetch::WebFetchTool;
 
     /// Factory: create WebFetchTool wrapped as ITool (adapts Result types across modules)
-    [[nodiscard]] auto make_web_fetch_tool() -> std::unique_ptr<cc::core::ITool> {
-        struct Adapter final : cc::core::ITool {
+    [[nodiscard]] auto make_web_fetch_tool() -> std::unique_ptr<loom::core::ITool> {
+        struct Adapter final : loom::core::ITool {
             WebFetchTool tool_;
-            cc::core::ToolDefinition def_ = WebFetchTool::definition();
+            loom::core::ToolDefinition def_ = WebFetchTool::definition();
 
-            const cc::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<cc::core::ToolResult, cc::core::Error> execute(const cc::core::ToolInput& input) override {
+            const loom::core::ToolDefinition& definition() const override { return def_; }
+            std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
                 auto result = tool_.execute(input);
                 if (result) return std::move(*result);
-                return std::unexpected(cc::core::Error::make(
-                    cc::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+                return std::unexpected(loom::core::Error::make(
+                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
             }
-            bool check_permission(const cc::core::ToolInput& input) const override {
+            bool check_permission(const loom::core::ToolInput& input) const override {
                 return tool_.check_permission(input);
             }
         };

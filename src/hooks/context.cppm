@@ -20,13 +20,13 @@ import loom.constants.paths;
 
 namespace fs = std::filesystem;
 
-export namespace cc::core {
+export namespace loom::core {
 struct Config {
     [[nodiscard]] std::optional<std::size_t> context_window_size() const { return std::nullopt; }
 };
 }
 
-export namespace cc::tools {
+export namespace loom::tools {
 struct ToolInfo {
     [[nodiscard]] std::string name() const { return {}; }
     [[nodiscard]] std::string description() const { return {}; }
@@ -37,14 +37,14 @@ struct Registry {
 };
 }
 
-export namespace cc::skills {
+export namespace loom::skills {
 struct SkillInfo {
     std::string name;
     std::string description;
 };
 }
 
-export namespace cc::services {
+export namespace loom::services {
 struct McpToolDescription {
     std::string name;
     std::string server_name;
@@ -56,7 +56,7 @@ struct McpManager {
 };
 }
 
-namespace cc::utils {
+namespace loom::utils {
 [[nodiscard]] inline std::optional<std::string> read_file_to_string(const std::filesystem::path& path) {
     std::ifstream file(path);
     if (!file) return std::nullopt;
@@ -66,7 +66,7 @@ namespace cc::utils {
 }
 }
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 /**
  * Token budget tracking for the context window.
@@ -124,10 +124,10 @@ struct EnvironmentContext {
  * Initialization parameters for ContextManager (aggregate init).
  */
 struct ContextManagerInit {
-    const cc::core::Config& config;
-    const cc::tools::Registry& tool_registry;
-    const std::vector<cc::skills::SkillInfo>& skills;
-    const cc::services::McpManager* mcp_manager;  // nullable if no MCP configured
+    const loom::core::Config& config;
+    const loom::tools::Registry& tool_registry;
+    const std::vector<loom::skills::SkillInfo>& skills;
+    const loom::services::McpManager* mcp_manager;  // nullable if no MCP configured
 };
 
 /**
@@ -255,10 +255,10 @@ public:
     auto budget() const -> const ContextBudget& { return budget_; }
 
 private:
-    const cc::core::Config& config_;
-    const cc::tools::Registry& tool_registry_;
-    const std::vector<cc::skills::SkillInfo>& skills_;
-    const cc::services::McpManager* mcp_manager_;
+    const loom::core::Config& config_;
+    const loom::tools::Registry& tool_registry_;
+    const std::vector<loom::skills::SkillInfo>& skills_;
+    const loom::services::McpManager* mcp_manager_;
     mutable ContextBudget budget_;
 
     /**
@@ -279,9 +279,9 @@ private:
      */
     [[nodiscard]]
     auto load_project_context() const -> std::optional<std::string> {
-        auto found = cc::constants::paths::find_memory_file(fs::current_path());
+        auto found = loom::constants::paths::find_memory_file(fs::current_path());
         if (!found) return std::nullopt;
-        auto content = cc::utils::read_file_to_string(*found);
+        auto content = loom::utils::read_file_to_string(*found);
         if (content.has_value() && !content->empty()) {
             return content;
         }
@@ -355,7 +355,7 @@ private:
         // Read branch from HEAD (avoids spawning git subprocess)
         auto head_path = fs::path{".git"} / "HEAD";
         if (fs::exists(head_path)) {
-            auto content = cc::utils::read_file_to_string(head_path);
+            auto content = loom::utils::read_file_to_string(head_path);
             if (content.has_value()) {
                 constexpr std::string_view ref_prefix = "ref: refs/heads/";
                 if (content->starts_with(ref_prefix)) {
@@ -436,4 +436,4 @@ private:
     }
 };
 
-} // namespace cc::hooks
+} // namespace loom::hooks

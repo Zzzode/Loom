@@ -10,7 +10,7 @@ export module loom.constants.constants;
 
 import std;
 
-export namespace cc::core::constants {
+export namespace loom::core::constants {
 
 // ============================================================
 
@@ -418,4 +418,4 @@ namespace error_ids {
 
 // ============================================================
 
-} // namespace cc::core::constants
+} // namespace loom::core::constants

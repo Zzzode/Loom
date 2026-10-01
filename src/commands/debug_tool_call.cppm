@@ -4,7 +4,7 @@ import std;
 
 import loom.serdes.json;
 
-export namespace cc::commands::debug_tool_call {
+export namespace loom::commands::debug_tool_call {
 struct CommandResponse { bool ok{true}; std::string message; };
 [[nodiscard]] inline auto name() -> std::string_view { return "debug_tool_call"; }
 
@@ -13,7 +13,7 @@ struct CommandResponse { bool ok{true}; std::string message; };
         return {.ok = false, .message = "debug-tool-call requires a JSON tool-call payload"};
     }
 
-    auto parsed = cc::utils::json::parse(payload);
+    auto parsed = loom::utils::json::parse(payload);
     if (!parsed) {
         return {.ok = false, .message = "Invalid JSON payload: " + parsed.error().message()};
     }
@@ -24,7 +24,7 @@ struct CommandResponse { bool ok{true}; std::string message; };
     }
 
     std::vector<std::string> keys;
-    root.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal) {
+    root.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal) {
         if (key.is_str()) keys.emplace_back(key.as_str());
     });
 

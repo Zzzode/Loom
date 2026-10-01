@@ -1,7 +1,7 @@
 /// @file wire_openai.cppm
 /// @brief OpenAI-compatible wire backend: POST {base}/v1/chat/completions.
 ///
-/// Implements the `cc::query::wire::WireBackend` seam so the engine's agent
+/// Implements the `loom::query::wire::WireBackend` seam so the engine's agent
 /// loop can drive any OpenAI-compatible endpoint (llama.cpp server, vLLM,
 /// Ollama, OpenRouter, LM Studio, ...) with the same tool execution,
 /// permission and UI paths it uses for Anthropic.
@@ -54,27 +54,27 @@ import loom.tools.tool;
 import loom.serdes.json;
 import loom.query.wire_protocol;
 
-export namespace cc::query::wire {
+export namespace loom::query::wire {
 
-using cc::core::AssistantMessage;
-using cc::core::ContentBlock;
-using cc::core::DocumentBlock;
-using cc::core::ImageBlock;
-using cc::core::Message;
-using cc::core::TextBlock;
-using cc::core::ThinkingBlock;
-using cc::core::TokenUsage;
-using cc::core::ToolDefinition;
-using cc::core::ToolResultBlock;
-using cc::core::ToolResultContentItem;
-using cc::core::ToolResultMessage;
-using cc::core::ToolUseBlock;
-using cc::core::ToolUseMessage;
-using cc::core::UserMessage;
+using loom::core::AssistantMessage;
+using loom::core::ContentBlock;
+using loom::core::DocumentBlock;
+using loom::core::ImageBlock;
+using loom::core::Message;
+using loom::core::TextBlock;
+using loom::core::ThinkingBlock;
+using loom::core::TokenUsage;
+using loom::core::ToolDefinition;
+using loom::core::ToolResultBlock;
+using loom::core::ToolResultContentItem;
+using loom::core::ToolResultMessage;
+using loom::core::ToolUseBlock;
+using loom::core::ToolUseMessage;
+using loom::core::UserMessage;
 
 namespace detail {
 
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 /// Placeholder text emitted for a DocumentBlock: the OpenAI chat-completions
 /// format has no `document` content part (only `text` and `image_url`), so
@@ -175,7 +175,7 @@ inline constexpr std::string_view kEmptyObjectSchema =
 }
 
 /// Flatten a ToolResultBlock's content to the single string the OpenAI tool
-/// role expects. Mirrors cc::core::tool_result_content_text() but keeps the
+/// role expects. Mirrors loom::core::tool_result_content_text() but keeps the
 /// media type visible in the image placeholder instead of a bare "[Image]".
 [[nodiscard]] inline std::string tool_result_text(const ToolResultBlock& trb) {
     if (const auto* plain = std::get_if<std::string>(&trb.content)) {
@@ -396,7 +396,7 @@ inline void append_message(json::JsonMutDoc& doc, const Message& msg,
                 for (auto& tool_msg : parts.tool_messages) {
                     out.append(tool_msg);
                 }
-            } else if constexpr (std::is_same_v<T, cc::core::SystemMessage>) {
+            } else if constexpr (std::is_same_v<T, loom::core::SystemMessage>) {
                 // Skipped: the engine already hoists the system prompt into
                 // RequestInput::system_prompt, which becomes messages[0].
             }
@@ -824,4 +824,4 @@ private:
     std::vector<std::pair<std::string, std::string>> extra_headers_;
 };
 
-} // namespace cc::query::wire
+} // namespace loom::query::wire

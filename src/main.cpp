@@ -45,15 +45,15 @@ import loom.config.settings;
 namespace fs = std::filesystem;
 
 extern "C" [[nodiscard]] int cc_ui_run_app_bridge(
-    cc::core::QueryEngine* engine,
-    cc::hooks::LifecycleHookRegistry* lifecycle_hooks,
-    cc::commands::AppCommandRegistry* cmd_registry,
-    cc::utils::SessionStorage* storage,
-    cc::hooks::ToolPermissionHook* permission_hook
+    loom::core::QueryEngine* engine,
+    loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
+    loom::commands::AppCommandRegistry* cmd_registry,
+    loom::utils::SessionStorage* storage,
+    loom::hooks::ToolPermissionHook* permission_hook
 );
 
 // Application version constant
-constexpr std::string_view kVersion = cc::constants::product::LOOM_VERSION;
+constexpr std::string_view kVersion = loom::constants::product::LOOM_VERSION;
 
 /**
  * Parsed command-line options
@@ -482,7 +482,7 @@ void set_env_bool_pair(const char* primary, const char* compatible, bool value) 
     set_env_value(compatible, value ? "1" : "0");
 }
 
-void apply_flag_status_line_environment(const cc::config::FlagStatusLineSettings& status_line) {
+void apply_flag_status_line_environment(const loom::config::FlagStatusLineSettings& status_line) {
     const bool has_command = status_line.command && !status_line.command->empty();
     const bool type_allows_command = !status_line.type || *status_line.type == "command";
     const bool enabled = status_line.enabled.value_or(has_command && type_allows_command) &&
@@ -507,9 +507,9 @@ void apply_flag_status_line_environment(const cc::config::FlagStatusLineSettings
 ///   - Otherwise, treat it as a file path and read it.
 /// On invalid JSON or unreadable file, prints the TS-faithful error and exits.
 /// Returns the parsed result so the caller can override model/apiKey.
-std::optional<cc::config::FlagSettingsResult> load_flag_settings(
+std::optional<loom::config::FlagSettingsResult> load_flag_settings(
     const std::string& settings_arg,
-    const cc::config::EnvSetter& env_setter,
+    const loom::config::EnvSetter& env_setter,
     std::optional<std::string>& out_model_override,
     std::optional<std::string>& out_api_key_override
 ) {
@@ -539,14 +539,14 @@ std::optional<cc::config::FlagSettingsResult> load_flag_settings(
         json_text.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
     }
 
-    auto parsed = cc::utils::json::parse(json_text);
+    auto parsed = loom::utils::json::parse(json_text);
     if (!parsed || !parsed->root().is_obj()) {
         // Faithful C++ equivalent of the TS error message.
         std::println(stderr, "Error: Invalid JSON provided to --settings");
         return std::nullopt;
     }
 
-    auto result = cc::config::apply_flag_settings(parsed->root(), env_setter);
+    auto result = loom::config::apply_flag_settings(parsed->root(), env_setter);
     if (result.model) out_model_override = result.model;
     if (result.api_key) out_api_key_override = result.api_key;
     return result;
@@ -574,7 +574,7 @@ std::optional<std::string> parent_permission_mode_from_options(const CliOptions&
     return std::nullopt;
 }
 
-std::string tool_result_text(const cc::core::ToolResult& result) {
+std::string tool_result_text(const loom::core::ToolResult& result) {
     std::string out;
     for (const auto& content : result.content) {
         if (!out.empty()) out += '\n';
@@ -583,8 +583,8 @@ std::string tool_result_text(const cc::core::ToolResult& result) {
     return out;
 }
 
-cc::tools::AgentLivePermissionCheck check_agent_tool_permission(
-    cc::hooks::ToolPermissionHook& permission_hook,
+loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
+    loom::hooks::ToolPermissionHook& permission_hook,
     std::string_view tool_name,
     std::string_view input_json,
     std::string_view tool_use_id
@@ -602,12 +602,12 @@ cc::tools::AgentLivePermissionCheck check_agent_tool_permission(
         (w_agent && *w_agent) && (w_team && *w_team);
 
     if (is_worker_teammate) {
-        namespace sh = cc::utils::swarm_helpers;
+        namespace sh = loom::utils::swarm_helpers;
         // Honor a previously-persisted "Always allow" grant without a
         // mailbox round-trip (whole-tool rules only; see WorkerPermissionGrants).
         sh::WorkerPermissionGrants grants(w_team, w_agent);
         if (grants.allows(tool_name)) {
-            cc::tools::AgentLivePermissionCheck check;
+            loom::tools::AgentLivePermissionCheck check;
             check.allowed = true;
             return check;
         }
@@ -623,7 +623,7 @@ cc::tools::AgentLivePermissionCheck check_agent_tool_permission(
 
         auto response = sh::PermissionSync::request_and_await(
             req, std::string_view(w_team));
-        cc::tools::AgentLivePermissionCheck check;
+        loom::tools::AgentLivePermissionCheck check;
         if (!response || response->subtype != "success") {
             check.allowed = false;
             check.message = response && response->error
@@ -648,9 +648,9 @@ cc::tools::AgentLivePermissionCheck check_agent_tool_permission(
     auto response = permission_hook.can_use_response(tool_name, input_json);
     permission_hook.clear_current_tool_use_id();
 
-    cc::tools::AgentLivePermissionCheck check;
-    check.allowed = response.decision == cc::hooks::PermissionDecision::allow ||
-                    response.decision == cc::hooks::PermissionDecision::allow_once;
+    loom::tools::AgentLivePermissionCheck check;
+    check.allowed = response.decision == loom::hooks::PermissionDecision::allow ||
+                    response.decision == loom::hooks::PermissionDecision::allow_once;
     check.updated_input_json = std::move(response.updated_input_json);
     check.message = std::move(response.message);
     return check;
@@ -661,8 +661,8 @@ int run_runtime_tool_once(const CliOptions& opts) {
         std::println(stderr, "--run-runtime-tool requires a tool name");
         return 1;
     }
-    auto tool_registry = cc::core::ToolRegistry{};
-    cc::tools::register_runtime_tools(tool_registry, cc::tools::RuntimeToolOptions{
+    auto tool_registry = loom::core::ToolRegistry{};
+    loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
         .parent_permission_mode = parent_permission_mode_from_options(opts),
     });
     // TS PARITY FALLBACK: route unregistered tool names to MCP servers.
@@ -670,10 +670,10 @@ int run_runtime_tool_once(const CliOptions& opts) {
     // exact ToolNotFound text) is built directly from cc.orchestration;
     // main binds it onto this registry itself, there is no seam slot.
     tool_registry.set_missing_tool_handler(
-        cc::orchestration::make_missing_tool_backend());
+        loom::orchestration::make_missing_tool_backend());
     auto result = tool_registry.execute(
         *opts.runtime_tool_name,
-        cc::core::ToolInput::from_json(opts.runtime_tool_input_json.value_or("{}")));
+        loom::core::ToolInput::from_json(opts.runtime_tool_input_json.value_or("{}")));
     if (!result) {
         std::println(stderr, "{}", result.error().message);
         return 1;
@@ -695,8 +695,8 @@ int run_runtime_tool_once(const CliOptions& opts) {
 /**
  * Load engine configuration from environment and defaults
  */
-auto load_config() -> cc::core::QueryEngineConfig {
-    cc::core::QueryEngineConfig config;
+auto load_config() -> loom::core::QueryEngineConfig {
+    loom::core::QueryEngineConfig config;
 
     // API key from environment (required for operation)
     if (const char* key = std::getenv("ANTHROPIC_API_KEY")) {
@@ -716,7 +716,7 @@ auto load_config() -> cc::core::QueryEngineConfig {
         config.base_url = url;
     }
 
-    config.model_params.model = cc::config::resolve_default_model_from_environment(
+    config.model_params.model = loom::config::resolve_default_model_from_environment(
         [](std::string_view name) -> std::optional<std::string> {
             const auto key = std::string(name);
             if (const char* value = std::getenv(key.c_str()); value && *value) {
@@ -734,29 +734,29 @@ auto load_config() -> cc::core::QueryEngineConfig {
     return config;
 }
 
-std::vector<cc::core::Message> compact_runtime_messages(void* state) {
-    auto* engine = static_cast<cc::core::QueryEngine*>(state);
-    return engine ? engine->get_conversation() : std::vector<cc::core::Message>{};
+std::vector<loom::core::Message> compact_runtime_messages(void* state) {
+    auto* engine = static_cast<loom::core::QueryEngine*>(state);
+    return engine ? engine->get_conversation() : std::vector<loom::core::Message>{};
 }
 
-cc::core::VoidResult compact_runtime_apply(void* state) {
-    auto* engine = static_cast<cc::core::QueryEngine*>(state);
+loom::core::VoidResult compact_runtime_apply(void* state) {
+    auto* engine = static_cast<loom::core::QueryEngine*>(state);
     if (!engine) {
-        return std::unexpected(cc::core::Error::make(
-            cc::core::ErrorCode::InternalError,
+        return std::unexpected(loom::core::Error::make(
+            loom::core::ErrorCode::InternalError,
             "No active query engine is available for compaction"));
     }
     auto compacted = engine->compact_conversation();
     if (!compacted) {
-        return std::unexpected(cc::core::Error::make(
-            cc::core::ErrorCode::InternalError,
+        return std::unexpected(loom::core::Error::make(
+            loom::core::ErrorCode::InternalError,
             compacted.error().format()));
     }
-    return cc::core::VoidResult{};
+    return loom::core::VoidResult{};
 }
 
-cc::core::CommandContext command_context_for_engine(cc::core::QueryEngine* engine) {
-    return cc::core::CommandContext{
+loom::core::CommandContext command_context_for_engine(loom::core::QueryEngine* engine) {
+    return loom::core::CommandContext{
         .args = {},
         .raw_input = {},
         .cwd = engine ? engine->working_directory() : fs::current_path().string(),
@@ -794,8 +794,8 @@ struct SessionIngressLifecycleGuard {
 
     ~SessionIngressLifecycleGuard() {
         if (!active) return;
-        (void)cc::services::api::send_ingress_lifecycle_event("stopped", optional_view(bridge_work_id));
-        cc::services::api::close_ingress();
+        (void)loom::services::api::send_ingress_lifecycle_event("stopped", optional_view(bridge_work_id));
+        loom::services::api::close_ingress();
     }
 };
 
@@ -824,10 +824,10 @@ std::string make_headless_message_id() {
     return std::format("msg_{}_{}", now, counter.fetch_add(1));
 }
 
-std::string text_from_assistant_message(const cc::core::AssistantMessage& message) {
+std::string text_from_assistant_message(const loom::core::AssistantMessage& message) {
     std::string text;
     for (const auto& block : message.content) {
-        if (const auto* tb = std::get_if<cc::core::TextBlock>(&block)) {
+        if (const auto* tb = std::get_if<loom::core::TextBlock>(&block)) {
             if (!text.empty()) text += '\n';
             text += tb->text;
         }
@@ -847,7 +847,7 @@ std::string headless_session_id(const CliOptions& opts) {
 
 std::string headless_session_id(
     const CliOptions& opts,
-    cc::core::ConversationStore* conversation_store
+    loom::core::ConversationStore* conversation_store
 ) {
     if (opts.continue_session && conversation_store) {
         if (auto active = conversation_store->active_conversation_id(); active && !active->empty()) {
@@ -869,12 +869,12 @@ fs::path conversation_store_path(const CliOptions& opts) {
     return fs::current_path() / ".loom" / "cpp-conversations.json";
 }
 
-std::string title_from_messages(const std::vector<cc::core::Message>& messages) {
+std::string title_from_messages(const std::vector<loom::core::Message>& messages) {
     for (const auto& message : messages) {
-        const auto* user = std::get_if<cc::core::UserMessage>(&message);
+        const auto* user = std::get_if<loom::core::UserMessage>(&message);
         if (!user) continue;
         for (const auto& block : user->content) {
-            const auto* text = std::get_if<cc::core::TextBlock>(&block);
+            const auto* text = std::get_if<loom::core::TextBlock>(&block);
             if (!text || text->text.empty()) continue;
             auto title = text->text.substr(0, 50);
             if (text->text.size() > 50) title += "...";
@@ -884,9 +884,9 @@ std::string title_from_messages(const std::vector<cc::core::Message>& messages) 
     return "Headless Session";
 }
 
-cc::core::VoidResult save_engine_conversation(
-    cc::core::QueryEngine& engine,
-    cc::core::ConversationStore& store,
+loom::core::VoidResult save_engine_conversation(
+    loom::core::QueryEngine& engine,
+    loom::core::ConversationStore& store,
     std::string_view conversation_id
 ) {
     auto messages = engine.get_conversation();
@@ -899,9 +899,9 @@ cc::core::VoidResult save_engine_conversation(
     return store.save_all();
 }
 
-cc::core::VoidResult restore_engine_conversation(
-    cc::core::QueryEngine& engine,
-    cc::core::ConversationStore& store,
+loom::core::VoidResult restore_engine_conversation(
+    loom::core::QueryEngine& engine,
+    loom::core::ConversationStore& store,
     const CliOptions& opts
 ) {
     if (!opts.continue_session && !opts.resume_session_id) return {};
@@ -909,8 +909,8 @@ cc::core::VoidResult restore_engine_conversation(
     auto loaded = store.load_all();
     if (!loaded) return std::unexpected(loaded.error());
     if (opts.resume_session_id && !store.switch_conversation(*opts.resume_session_id)) {
-        return std::unexpected(cc::core::Error::make(
-            cc::core::ErrorCode::SessionNotFound,
+        return std::unexpected(loom::core::Error::make(
+            loom::core::ErrorCode::SessionNotFound,
             std::format("Persisted conversation not found: {}", *opts.resume_session_id)));
     }
 
@@ -952,7 +952,7 @@ std::string sdk_result_event(
     std::string_view assistant_id,
     std::string_view content,
     std::string_view model,
-    const cc::core::QueryResponse& response
+    const loom::core::QueryResponse& response
 ) {
     std::ostringstream out;
     out << R"({"type":"result","subtype":"success","duration_ms":)" << response.elapsed.count()
@@ -991,17 +991,17 @@ std::string sdk_error_result_event(
 void write_headless_event(std::string_view event_json) {
     std::cout << event_json << '\n';
     std::cout.flush();
-    if (cc::services::api::is_ingress_active()) {
-        (void)cc::services::api::send_ingress_message(event_json);
+    if (loom::services::api::is_ingress_active()) {
+        (void)loom::services::api::send_ingress_message(event_json);
     }
 }
 
-std::optional<std::string> text_from_sdk_content(cc::utils::json::JsonVal content) {
+std::optional<std::string> text_from_sdk_content(loom::utils::json::JsonVal content) {
     if (content.is_str()) return std::string(content.as_str());
     if (!content.is_arr()) return std::nullopt;
 
     std::string text;
-    content.iter([&](cc::utils::json::JsonVal item) {
+    content.iter([&](loom::utils::json::JsonVal item) {
         if (item.is_str()) {
             if (!text.empty()) text += '\n';
             text += item.as_str();
@@ -1020,7 +1020,7 @@ std::optional<std::string> text_from_sdk_content(cc::utils::json::JsonVal conten
 }
 
 std::optional<std::string> extract_headless_user_text(std::string_view line) {
-    auto parsed = cc::utils::json::parse(line);
+    auto parsed = loom::utils::json::parse(line);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
     auto type = root.get("type");
@@ -1032,7 +1032,7 @@ std::optional<std::string> extract_headless_user_text(std::string_view line) {
     if (type_text == "update_environment_variables") {
         auto variables = root.get("variables");
         if (variables.is_obj()) {
-            variables.iter_obj([](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+            variables.iter_obj([](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
                 if (!key.is_str() || !value.is_str()) return;
                 set_env_value(std::string(key.as_str()).c_str(), std::string(value.as_str()));
             });
@@ -1049,11 +1049,11 @@ std::optional<std::string> extract_headless_user_text(std::string_view line) {
 }
 
 bool process_headless_stream_json_line(
-    cc::core::QueryEngine& engine,
+    loom::core::QueryEngine& engine,
     const CliOptions& opts,
     std::string_view session_id,
     std::string_view line,
-    cc::core::ConversationStore* conversation_store = nullptr
+    loom::core::ConversationStore* conversation_store = nullptr
 ) {
     if (line.empty()) return false;
 
@@ -1120,8 +1120,8 @@ struct HeadlessSsePayload {
     std::optional<std::string> event_id;
 };
 
-std::optional<HeadlessSsePayload> payload_from_headless_sse_event(const cc::utils::SseEvent& event) {
-    auto parsed = cc::utils::json::parse(event.data);
+std::optional<HeadlessSsePayload> payload_from_headless_sse_event(const loom::utils::SseEvent& event) {
+    auto parsed = loom::utils::json::parse(event.data);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
     std::optional<std::string> event_id;
@@ -1165,10 +1165,10 @@ bool is_headless_remote_auth_failure(std::string_view message) {
 }
 
 int run_headless_stream_json_sse(
-    cc::core::QueryEngine& engine,
+    loom::core::QueryEngine& engine,
     const CliOptions& opts,
     std::string_view session_id,
-    cc::core::ConversationStore* conversation_store
+    loom::core::ConversationStore* conversation_store
 ) {
     auto sse_url = headless_sse_url_from_sdk_url(*opts.sdk_url);
     if (!sse_url) {
@@ -1187,14 +1187,14 @@ int run_headless_stream_json_sse(
         headers["x-environment-runner-version"] = *version;
     }
 
-    if (cc::services::api::is_worker_lifecycle_active()) {
-        (void)cc::services::api::send_worker_state("idle", true);
-        (void)cc::services::api::send_worker_heartbeat();
+    if (loom::services::api::is_worker_lifecycle_active()) {
+        (void)loom::services::api::send_worker_state("idle", true);
+        (void)loom::services::api::send_worker_heartbeat();
     }
 
-    cc::utils::HttpConfig http_config;
+    loom::utils::HttpConfig http_config;
     http_config.timeout_ms = 1'000;
-    cc::utils::HttpClient http(http_config);
+    loom::utils::HttpClient http(http_config);
     auto last_worker_heartbeat = std::chrono::steady_clock::now();
     std::optional<std::string> last_sse_event_id;
     while (!g_should_exit.load()) {
@@ -1206,25 +1206,25 @@ int run_headless_stream_json_sse(
         auto streamed = http.stream_sse(
             *sse_url,
             headers,
-            [&](const cc::utils::SseEvent& event) {
+            [&](const loom::utils::SseEvent& event) {
                 if (!event.id.empty()) {
                     last_sse_event_id = event.id;
                 }
                 auto payload = payload_from_headless_sse_event(event);
                 if (!payload) return;
                 if (payload->event_id) {
-                    (void)cc::services::api::send_worker_delivery(*payload->event_id, "received");
+                    (void)loom::services::api::send_worker_delivery(*payload->event_id, "received");
                 }
-                (void)cc::services::api::send_worker_state("running");
+                (void)loom::services::api::send_worker_state("running");
                 (void)process_headless_stream_json_line(
                     engine,
                     opts,
                     session_id,
                     payload->payload_json,
                     conversation_store);
-                (void)cc::services::api::send_worker_state("idle");
+                (void)loom::services::api::send_worker_state("idle");
                 if (payload->event_id) {
-                    (void)cc::services::api::send_worker_delivery(*payload->event_id, "processed");
+                    (void)loom::services::api::send_worker_delivery(*payload->event_id, "processed");
                 }
             });
         if (!streamed) {
@@ -1237,9 +1237,9 @@ int run_headless_stream_json_sse(
             }
         }
         auto now = std::chrono::steady_clock::now();
-        if (cc::services::api::is_worker_lifecycle_active() &&
+        if (loom::services::api::is_worker_lifecycle_active() &&
             now - last_worker_heartbeat >= std::chrono::seconds{20}) {
-            (void)cc::services::api::send_worker_heartbeat();
+            (void)loom::services::api::send_worker_heartbeat();
             last_worker_heartbeat = now;
         }
         if (!g_should_exit.load()) {
@@ -1250,17 +1250,17 @@ int run_headless_stream_json_sse(
 }
 
 int run_headless_stream_json_websocket(
-    cc::core::QueryEngine& engine,
+    loom::core::QueryEngine& engine,
     const CliOptions& opts,
     std::string_view session_id,
-    cc::core::ConversationStore* conversation_store
+    loom::core::ConversationStore* conversation_store
 ) {
     auto token = env_string("LOOM_SESSION_ACCESS_TOKEN");
     std::optional<std::string_view> bearer_token;
     if (token && !token->empty()) bearer_token = std::string_view(*token);
 
     while (!g_should_exit.load()) {
-        cc::cli::WebSocketTransport transport;
+        loom::cli::WebSocketTransport transport;
         transport.on_message([&](std::string_view message) {
             (void)process_headless_stream_json_line(engine, opts, session_id, message, conversation_store);
         });
@@ -1292,9 +1292,9 @@ int run_headless_stream_json_websocket(
 }
 
 int run_headless_stream_json(
-    cc::core::QueryEngine& engine,
+    loom::core::QueryEngine& engine,
     const CliOptions& opts,
-    cc::core::ConversationStore* conversation_store
+    loom::core::ConversationStore* conversation_store
 ) {
     const auto session_id = headless_session_id(opts, conversation_store);
     if (opts.sdk_url && !opts.sdk_url->empty()) {
@@ -1319,8 +1319,8 @@ int run_direct_connect_server(const CliOptions& opts) {
         }
     }
 
-    auto server = cc::server::HttpServer{};
-    auto started = server.start(cc::server::ServerConfig{
+    auto server = loom::server::HttpServer{};
+    auto started = server.start(loom::server::ServerConfig{
         .port = opts.server_port,
         .host = opts.server_host,
         .cors = true,
@@ -1410,11 +1410,11 @@ std::expected<BridgeDaemonSettings, std::string> bridge_daemon_settings_from_opt
     };
 }
 
-cc::daemon::DaemonConfig bridge_daemon_config_from_settings(
+loom::daemon::DaemonConfig bridge_daemon_config_from_settings(
     const CliOptions& opts,
     const BridgeDaemonSettings& settings
 ) {
-    return cc::daemon::DaemonConfig{
+    return loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = {},
         .port_file = {},
@@ -1432,7 +1432,7 @@ cc::daemon::DaemonConfig bridge_daemon_config_from_settings(
 }
 
 bool daemon_session_has_result(
-    cc::daemon::DaemonServer& daemon,
+    loom::daemon::DaemonServer& daemon,
     std::string_view session_id
 ) {
     for (const auto& line : daemon.session_stdout_lines(session_id)) {
@@ -1441,8 +1441,8 @@ bool daemon_session_has_result(
     return false;
 }
 
-std::optional<cc::daemon::DaemonSession> daemon_session_by_id(
-    cc::daemon::DaemonServer& daemon,
+std::optional<loom::daemon::DaemonSession> daemon_session_by_id(
+    loom::daemon::DaemonServer& daemon,
     std::string_view session_id
 ) {
     auto sessions = daemon.sessions();
@@ -1454,7 +1454,7 @@ std::optional<cc::daemon::DaemonSession> daemon_session_by_id(
 }
 
 void request_daemon_child_shutdown(
-    cc::daemon::DaemonServer& daemon,
+    loom::daemon::DaemonServer& daemon,
     std::string_view session_id
 ) {
 #ifndef _WIN32
@@ -1468,7 +1468,7 @@ void request_daemon_child_shutdown(
 #endif
 }
 
-std::size_t running_daemon_session_count(cc::daemon::DaemonServer& daemon) {
+std::size_t running_daemon_session_count(loom::daemon::DaemonServer& daemon) {
     std::size_t running = 0;
     for (const auto& session : daemon.sessions()) {
         if (session.status == "running") ++running;
@@ -1476,7 +1476,7 @@ std::size_t running_daemon_session_count(cc::daemon::DaemonServer& daemon) {
     return running;
 }
 
-void request_all_daemon_children_shutdown(cc::daemon::DaemonServer& daemon) {
+void request_all_daemon_children_shutdown(loom::daemon::DaemonServer& daemon) {
     for (const auto& session : daemon.sessions()) {
         if (session.status == "running") {
             request_daemon_child_shutdown(daemon, session.id);
@@ -1485,7 +1485,7 @@ void request_all_daemon_children_shutdown(cc::daemon::DaemonServer& daemon) {
 }
 
 void wait_for_daemon_children_to_finish(
-    cc::daemon::DaemonServer& daemon,
+    loom::daemon::DaemonServer& daemon,
     std::chrono::milliseconds timeout
 ) {
     const auto deadline = std::chrono::steady_clock::now() + timeout;
@@ -1503,7 +1503,7 @@ int run_bridge_daemon_once(const CliOptions& opts) {
         return 1;
     }
 
-    cc::daemon::DaemonServer daemon(bridge_daemon_config_from_settings(opts, *settings));
+    loom::daemon::DaemonServer daemon(bridge_daemon_config_from_settings(opts, *settings));
 
     auto spawned = daemon.poll_for_work_once();
     if (!spawned) {
@@ -1578,7 +1578,7 @@ int run_bridge_daemon(const CliOptions& opts) {
     std::signal(SIGINT, handle_signal);
     std::signal(SIGTERM, handle_signal);
 
-    cc::daemon::DaemonServer daemon(bridge_daemon_config_from_settings(opts, *settings));
+    loom::daemon::DaemonServer daemon(bridge_daemon_config_from_settings(opts, *settings));
     auto started = daemon.start();
     if (!started) {
         std::println(stderr, "Failed to start bridge daemon: {}", started.error());
@@ -1621,8 +1621,8 @@ int run_bridge_daemon(const CliOptions& opts) {
  * Simple fallback UI if FTXUI fails
  */
 auto run_simple_ui(
-    cc::core::QueryEngine* engine,
-    cc::commands::AppCommandRegistry& cmd_registry
+    loom::core::QueryEngine* engine,
+    loom::commands::AppCommandRegistry& cmd_registry
 ) -> int {
     std::println("╭─────────────────────────────────────────╮");
     std::println("│      LOOM (C++ Migration) v{}        │", kVersion);
@@ -1644,7 +1644,7 @@ auto run_simple_ui(
                 continue;
             }
 
-            if (result->status == cc::core::CommandStatus::Failed) {
+            if (result->status == loom::core::CommandStatus::Failed) {
                 std::println("Error: {}", result->message);
             } else {
                 std::println("{}", result->message);
@@ -1682,7 +1682,7 @@ auto run_simple_ui(
         // Print response
         std::println("🤖 Assistant:");
         for (const auto& block : response.message.content) {
-            if (const auto* text = std::get_if<cc::core::TextBlock>(&block)) {
+            if (const auto* text = std::get_if<loom::core::TextBlock>(&block)) {
                 std::println("{}", text->text);
             }
         }
@@ -1701,7 +1701,7 @@ int main(int argc, const char* argv[]) {
     // decisions depend on whether the leader is itself inside tmux; without
     // this every team creation wrongly takes the external-session path.
     // TS REF: utils/swarm/backends/detection.ts module-load capture.
-    cc::utils::swarm_backends::EnvironmentDetection::capture_env(
+    loom::utils::swarm_backends::EnvironmentDetection::capture_env(
         std::getenv("TMUX") ? std::getenv("TMUX") : "",
         std::getenv("TMUX_PANE") ? std::getenv("TMUX_PANE") : "");
 
@@ -1783,11 +1783,11 @@ int main(int argc, const char* argv[]) {
     }
     apply_teammate_environment(opts);
 
-    // RFC-0001 B4: install the core-settings (cc::core::ConfigManager) MCP
+    // RFC-0001 B4: install the core-settings (loom::core::ConfigManager) MCP
     // loader sink before any path can reach NativeMcpRuntime config loading
     // (runtime-tool fallback, dynamic tool/input-schema providers, and the
     // in-process server routes all run in this one binary).
-    cc::commands::install_core_settings_mcp_loader();
+    loom::commands::install_core_settings_mcp_loader();
 
     // RFC-0001 B15: ONE orchestration install binds every runtime backend —
     // image codec, skill executor, the six lifted tool backends, the Agent
@@ -1798,20 +1798,20 @@ int main(int argc, const char* argv[]) {
     // every register / all_statuses path below (--run-runtime-tool,
     // --list-runtime-tools, the two register sites, and the in-process
     // server routes).
-    cc::orchestration::install_runtime_backends();
+    loom::orchestration::install_runtime_backends();
 
     // Resolve leader/teammate identity from the environment just exported by
     // apply_teammate_environment and the canonical <team>/config.json (see
     // src/utils/swarm/reconnection.ts computeInitialTeamContext).
-    if (auto initial_team = cc::utils::compute_initial_team_context_from_env()) {
+    if (auto initial_team = loom::utils::compute_initial_team_context_from_env()) {
         if (!initial_team->is_leader) {
             // Persist into the dynamic-context slot so teammate paths and
             // mailbox/inbox pollers see one identity source.
-            cc::utils::DynamicTeamContext dyn{};
+            loom::utils::DynamicTeamContext dyn{};
             dyn.team_name = initial_team->team_name;
             dyn.agent_name = initial_team->self_agent_name;
             dyn.agent_id = initial_team->self_agent_id.value_or("");
-            cc::utils::set_dynamic_team_context(std::move(dyn));
+            loom::utils::set_dynamic_team_context(std::move(dyn));
         }
         // Leader case: no dynamic worker context; the first teammate spawn
         // re-attaches to the existing loom-swarm/swarm-view from live tmux
@@ -1819,7 +1819,7 @@ int main(int argc, const char* argv[]) {
     }
 
     if (opts.list_runtime_commands) {
-        auto cmd_registry = cc::commands::AppCommandRegistry{};
+        auto cmd_registry = loom::commands::AppCommandRegistry{};
         auto names = cmd_registry.command_names();
         std::ranges::sort(names);
         for (const auto& name : names) {
@@ -1828,12 +1828,12 @@ int main(int argc, const char* argv[]) {
         return 0;
     }
 
-    // (cc::orchestration::install_runtime_backends() already ran above —
+    // (loom::orchestration::install_runtime_backends() already ran above —
     // single call_once point for the whole binary.)
 
     if (opts.list_runtime_tools) {
-        auto tool_registry = cc::core::ToolRegistry{};
-        cc::tools::register_runtime_tools(tool_registry, cc::tools::RuntimeToolOptions{
+        auto tool_registry = loom::core::ToolRegistry{};
+        loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
             .parent_permission_mode = parent_permission_mode_from_options(opts),
         });
         std::vector<std::string> names;
@@ -1875,19 +1875,19 @@ int main(int argc, const char* argv[]) {
         config.model_params.model = *settings_model_override;
     }
     if (opts.task_budget) {
-        config.task_budget = cc::core::QueryEngineConfig::TaskBudget{
+        config.task_budget = loom::core::QueryEngineConfig::TaskBudget{
             .total = *opts.task_budget,
             .remaining = std::nullopt,
         };
     }
-    config.append_system_prompt = cc::tools::agent_runtime::build_teammate_append_system_prompt(
+    config.append_system_prompt = loom::tools::agent_runtime::build_teammate_append_system_prompt(
         std::move(config.append_system_prompt),
         config.cwd ? std::optional<fs::path>{fs::path{*config.cwd}} : std::nullopt);
 
     // Validate API key is present for model queries. Local slash commands in
     // simple UI mode do not need API access.
     if (config.api_key.empty() && config.auth_token.empty() && opts.use_simple_ui) {
-        auto cmd_registry = cc::commands::AppCommandRegistry{};
+        auto cmd_registry = loom::commands::AppCommandRegistry{};
         return run_simple_ui(nullptr, cmd_registry);
     }
     if (config.api_key.empty() && config.auth_token.empty()) {
@@ -1902,22 +1902,22 @@ int main(int argc, const char* argv[]) {
     }
 
     SessionIngressLifecycleGuard ingress_guard;
-    if (auto ingress = cc::services::api::create_ingress_from_environment(); ingress && *ingress) {
+    if (auto ingress = loom::services::api::create_ingress_from_environment(); ingress && *ingress) {
         ingress_guard.active = true;
         ingress_guard.bridge_work_id = bridge_work_id_from_environment();
-        (void)cc::services::api::send_ingress_lifecycle_event("started", optional_view(ingress_guard.bridge_work_id));
+        (void)loom::services::api::send_ingress_lifecycle_event("started", optional_view(ingress_guard.bridge_work_id));
     } else if (!ingress && opts.debug) {
         std::println(stderr, "Session ingress initialization skipped: {}", ingress.error());
     }
 
     // Initialize permission hook before tools so Agent can reuse the live policy.
-    auto permission_hook = cc::hooks::ToolPermissionHook{};
+    auto permission_hook = loom::hooks::ToolPermissionHook{};
     permission_hook.set_auto_approve(!opts.permissions);
     permission_hook.set_working_dir(config.cwd.value_or(fs::current_path().string()));
 
     // Initialize tool registry and register all built-in tools
-    auto tool_registry = cc::core::ToolRegistry{};
-    cc::tools::register_runtime_tools(tool_registry, cc::tools::RuntimeToolOptions{
+    auto tool_registry = loom::core::ToolRegistry{};
+    loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
         .parent_permission_mode = parent_permission_mode_from_options(opts),
         .permission_check = [&permission_hook](
             std::string_view tool_name,
@@ -1949,28 +1949,28 @@ int main(int argc, const char* argv[]) {
     // std::string{input.json()}, exact ToolNotFound text) is built by
     // cc.orchestration; the per-site lambdas are gone.
     tool_registry.set_missing_tool_handler(
-        cc::orchestration::make_missing_tool_backend());
+        loom::orchestration::make_missing_tool_backend());
 
     // Populate config.tools with definitions for the API request body
     config.tools = tool_registry.get_visible_definitions();
     // TS PARITY: MCP tools are discovered dynamically (after server
     // connection).  Set a provider callback so build_request_body()
     // picks up newly-connected MCP servers' tools on every API call.
-    config.dynamic_tools_provider = []() -> std::vector<cc::core::ToolDefinition> {
-        return cc::tools::collect_mcp_tool_definitions();
+    config.dynamic_tools_provider = []() -> std::vector<loom::core::ToolDefinition> {
+        return loom::tools::collect_mcp_tool_definitions();
     };
     // Surface connected MCP servers' verbatim input schemas so the request
     // keeps nested parameter shapes the simplified schema cannot represent.
     config.mcp_input_schema_provider = [] {
-        return cc::tools::collect_mcp_input_schemas();
+        return loom::tools::collect_mcp_input_schemas();
     };
 
     // Initialize command registry with all migrated commands
-    auto cmd_registry = cc::commands::AppCommandRegistry{};
+    auto cmd_registry = loom::commands::AppCommandRegistry{};
 
     // Initialize session storage
-    auto storage = cc::utils::SessionStorage{};
-    auto conversation_store = cc::core::ConversationStore(conversation_store_path(opts).string());
+    auto storage = loom::utils::SessionStorage{};
+    auto conversation_store = loom::core::ConversationStore(conversation_store_path(opts).string());
 
     // A resumed/continued session keeps its id so its persisted
     // session-memory/summary.md (compaction summaries) is re-injected.
@@ -1984,10 +1984,10 @@ int main(int argc, const char* argv[]) {
     }
 
     // Initialize lifecycle hooks for pre/post tool execution events
-    auto lifecycle_hooks = cc::hooks::LifecycleHookRegistry{};
+    auto lifecycle_hooks = loom::hooks::LifecycleHookRegistry{};
 
     // Initialize query engine
-    auto engine = cc::core::QueryEngine{std::move(config), tool_registry};
+    auto engine = loom::core::QueryEngine{std::move(config), tool_registry};
     engine.set_permission_hook(&permission_hook);
     engine.set_lifecycle_hooks(&lifecycle_hooks);
 

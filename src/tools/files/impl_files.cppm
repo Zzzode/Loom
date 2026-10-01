@@ -28,7 +28,7 @@ export module loom.tools.files.impl;
 
 import std;
 
-export namespace cc::tools::files::impl {
+export namespace loom::tools::files::impl {
 
 namespace fs = std::filesystem;
 
@@ -547,4 +547,4 @@ inline void scan_text(std::string_view text,
     return r;
 }
 
-} // namespace cc::tools::files::impl
+} // namespace loom::tools::files::impl

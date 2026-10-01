@@ -13,33 +13,33 @@ import std;
 
 import loom.serdes.yaml;
 
-namespace cc::tools::agent_runtime {
+namespace loom::tools::agent_runtime {
 
-[[nodiscard]] std::optional<std::string> yaml_scalar_to_string(const cc::utils::YamlValue& value) {
+[[nodiscard]] std::optional<std::string> yaml_scalar_to_string(const loom::utils::YamlValue& value) {
     if (const auto* text = std::get_if<std::string>(&value.data)) return *text;
     if (const auto* flag = std::get_if<bool>(&value.data)) return *flag ? "true" : "false";
     if (const auto* number = std::get_if<int64_t>(&value.data)) return std::to_string(*number);
     if (const auto* number = std::get_if<double>(&value.data)) return std::format("{}", *number);
     return std::nullopt;
 }
-[[nodiscard]] const cc::utils::YamlValue* yaml_field(
-    const cc::utils::YamlMap& fields,
+[[nodiscard]] const loom::utils::YamlValue* yaml_field(
+    const loom::utils::YamlMap& fields,
     std::string_view key
 ) {
     auto it = fields.find(std::string(key));
     return it == fields.end() ? nullptr : &it->second;
 }
 [[nodiscard]] std::optional<std::string> yaml_string_field(
-    const cc::utils::YamlMap& fields,
+    const loom::utils::YamlMap& fields,
     std::string_view key
 ) {
     const auto* value = yaml_field(fields, key);
     if (!value) return std::nullopt;
     return yaml_scalar_to_string(*value);
 }
-[[nodiscard]] std::vector<std::string> yaml_string_list(const cc::utils::YamlValue& value) {
+[[nodiscard]] std::vector<std::string> yaml_string_list(const loom::utils::YamlValue& value) {
     std::vector<std::string> values;
-    if (const auto* array = std::get_if<cc::utils::YamlArray>(&value.data)) {
+    if (const auto* array = std::get_if<loom::utils::YamlArray>(&value.data)) {
         for (const auto& item : *array) {
             if (auto scalar = yaml_scalar_to_string(item); scalar && !scalar->empty()) {
                 values.push_back(std::move(*scalar));
@@ -54,17 +54,17 @@ namespace cc::tools::agent_runtime {
     return values;
 }
 [[nodiscard]] std::vector<std::string> yaml_string_list_field(
-    const cc::utils::YamlMap& fields,
+    const loom::utils::YamlMap& fields,
     std::string_view key
 ) {
     const auto* value = yaml_field(fields, key);
     return value ? yaml_string_list(*value) : std::vector<std::string>{};
 }
 void append_yaml_string_map(
-    const cc::utils::YamlValue& value,
+    const loom::utils::YamlValue& value,
     std::unordered_map<std::string, std::string>& out
 ) {
-    const auto* map = std::get_if<cc::utils::YamlMap>(&value.data);
+    const auto* map = std::get_if<loom::utils::YamlMap>(&value.data);
     if (!map) return;
     for (const auto& [key, item] : *map) {
         if (auto scalar = yaml_scalar_to_string(item)) out[key] = std::move(*scalar);
@@ -72,9 +72,9 @@ void append_yaml_string_map(
 }
 [[nodiscard]] std::optional<AgentInlineMcpServerConfig> parse_inline_mcp_server_config(
     std::string name,
-    const cc::utils::YamlValue& value
+    const loom::utils::YamlValue& value
 ) {
-    const auto* map = std::get_if<cc::utils::YamlMap>(&value.data);
+    const auto* map = std::get_if<loom::utils::YamlMap>(&value.data);
     if (!map || name.empty()) return std::nullopt;
 
     AgentInlineMcpServerConfig config;
@@ -94,16 +94,16 @@ void append_yaml_string_map(
     }
     return config;
 }
-[[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(const cc::utils::YamlValue& value) {
+[[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(const loom::utils::YamlValue& value) {
     ParsedAgentMcpServers parsed;
-    if (const auto* array = std::get_if<cc::utils::YamlArray>(&value.data)) {
+    if (const auto* array = std::get_if<loom::utils::YamlArray>(&value.data)) {
         for (const auto& item : *array) {
             if (auto scalar = yaml_scalar_to_string(item); scalar && !scalar->empty()) {
                 parsed.references.push_back(std::move(*scalar));
                 continue;
             }
 
-            const auto* map = std::get_if<cc::utils::YamlMap>(&item.data);
+            const auto* map = std::get_if<loom::utils::YamlMap>(&item.data);
             if (!map) continue;
             for (const auto& [server_name, config] : *map) {
                 if (auto inline_config = parse_inline_mcp_server_config(server_name, config)) {
@@ -114,7 +114,7 @@ void append_yaml_string_map(
         return parsed;
     }
 
-    if (const auto* map = std::get_if<cc::utils::YamlMap>(&value.data)) {
+    if (const auto* map = std::get_if<loom::utils::YamlMap>(&value.data)) {
         for (const auto& [server_name, config] : *map) {
             if (auto inline_config = parse_inline_mcp_server_config(server_name, config)) {
                 parsed.inline_configs.push_back(std::move(*inline_config));
@@ -128,7 +128,7 @@ void append_yaml_string_map(
     }
     return parsed;
 }
-[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(const cc::utils::YamlValue& value) {
+[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(const loom::utils::YamlValue& value) {
     AgentHookCommand command;
     if (auto scalar = yaml_scalar_to_string(value)) {
         if (scalar->empty()) return std::nullopt;
@@ -136,7 +136,7 @@ void append_yaml_string_map(
         return command;
     }
 
-    const auto* map = std::get_if<cc::utils::YamlMap>(&value.data);
+    const auto* map = std::get_if<loom::utils::YamlMap>(&value.data);
     if (!map) return std::nullopt;
 
     auto type = yaml_string_field(*map, "type").value_or("command");
@@ -155,16 +155,16 @@ void append_yaml_string_map(
     }
     return command;
 }
-[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(const cc::utils::YamlValue& value) {
+[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(const loom::utils::YamlValue& value) {
     std::vector<AgentHookCommand> commands;
-    if (const auto* array = std::get_if<cc::utils::YamlArray>(&value.data)) {
+    if (const auto* array = std::get_if<loom::utils::YamlArray>(&value.data)) {
         for (const auto& item : *array) {
             if (auto command = parse_agent_hook_command(item)) commands.push_back(std::move(*command));
         }
         return commands;
     }
 
-    if (const auto* map = std::get_if<cc::utils::YamlMap>(&value.data)) {
+    if (const auto* map = std::get_if<loom::utils::YamlMap>(&value.data)) {
         if (const auto* hooks = yaml_field(*map, "hooks")) {
             return parse_agent_hook_commands(*hooks);
         }
@@ -173,9 +173,9 @@ void append_yaml_string_map(
     if (auto command = parse_agent_hook_command(value)) commands.push_back(std::move(*command));
     return commands;
 }
-[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(const cc::utils::YamlValue& value) {
+[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(const loom::utils::YamlValue& value) {
     AgentHookMatcher matcher;
-    if (const auto* map = std::get_if<cc::utils::YamlMap>(&value.data)) {
+    if (const auto* map = std::get_if<loom::utils::YamlMap>(&value.data)) {
         if (auto match = yaml_string_field(*map, "matcher"); match && !match->empty()) {
             matcher.matcher = std::move(*match);
         }
@@ -191,16 +191,16 @@ void append_yaml_string_map(
     if (matcher.hooks.empty()) return std::nullopt;
     return matcher;
 }
-[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(const cc::utils::YamlValue& value) {
+[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(const loom::utils::YamlValue& value) {
     std::vector<AgentHookMatcher> matchers;
-    if (const auto* array = std::get_if<cc::utils::YamlArray>(&value.data)) {
+    if (const auto* array = std::get_if<loom::utils::YamlArray>(&value.data)) {
         for (const auto& item : *array) {
             if (auto matcher = parse_agent_hook_matcher(item)) matchers.push_back(std::move(*matcher));
         }
         return matchers;
     }
 
-    if (const auto* map = std::get_if<cc::utils::YamlMap>(&value.data)) {
+    if (const auto* map = std::get_if<loom::utils::YamlMap>(&value.data)) {
         if (map->contains("hooks") || map->contains("command") || map->contains("cmd")) {
             if (auto matcher = parse_agent_hook_matcher(value)) matchers.push_back(std::move(*matcher));
             return matchers;
@@ -220,9 +220,9 @@ void append_yaml_string_map(
     if (auto matcher = parse_agent_hook_matcher(value)) matchers.push_back(std::move(*matcher));
     return matchers;
 }
-[[nodiscard]] AgentHooksByEvent parse_agent_hooks(const cc::utils::YamlValue& value) {
+[[nodiscard]] AgentHooksByEvent parse_agent_hooks(const loom::utils::YamlValue& value) {
     AgentHooksByEvent hooks;
-    if (const auto* map = std::get_if<cc::utils::YamlMap>(&value.data)) {
+    if (const auto* map = std::get_if<loom::utils::YamlMap>(&value.data)) {
         for (const auto& [event, event_hooks] : *map) {
             auto matchers = parse_agent_hook_matchers(event_hooks);
             if (!matchers.empty()) {
@@ -234,7 +234,7 @@ void append_yaml_string_map(
         return hooks;
     }
 
-    if (const auto* array = std::get_if<cc::utils::YamlArray>(&value.data)) {
+    if (const auto* array = std::get_if<loom::utils::YamlArray>(&value.data)) {
         for (const auto& item : *array) {
             if (auto event = yaml_scalar_to_string(item); event && !event->empty()) {
                 hooks.try_emplace(canonical_hook_event_name(*event), std::vector<AgentHookMatcher>{});
@@ -266,8 +266,8 @@ void append_yaml_string_map(
         first_newline + 1,
         frontmatter_end - first_newline - 1
     );
-    auto parsed_frontmatter = cc::utils::parse_yaml(frontmatter_text);
-    const auto* fields = std::get_if<cc::utils::YamlMap>(&parsed_frontmatter.data);
+    auto parsed_frontmatter = loom::utils::parse_yaml(frontmatter_text);
+    const auto* fields = std::get_if<loom::utils::YamlMap>(&parsed_frontmatter.data);
     if (!fields) return std::nullopt;
 
     auto name = yaml_string_field(*fields, "name");
@@ -382,7 +382,7 @@ void append_yaml_string_map(
     return definition;
 }
 [[nodiscard]] std::string get_parse_error(
-    const cc::utils::YamlMap& fields,
+    const loom::utils::YamlMap& fields,
     std::string_view fallback
 ) {
     const auto name = yaml_string_field(fields, "name");
@@ -395,4 +395,4 @@ void append_yaml_string_map(
     }
     return std::string(fallback);
 }
-} // namespace cc::tools::agent_runtime
+} // namespace loom::tools::agent_runtime

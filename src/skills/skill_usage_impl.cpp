@@ -10,7 +10,7 @@ module loom.skills.support;
 
 import std;
 
-namespace cc::utils::skill_usage {
+namespace loom::utils::skill_usage {
 
 namespace fs = std::filesystem;
 
@@ -104,4 +104,4 @@ void record_skill_usage(std::string_view skill_name) {
     write_locked(c);
 }
 
-}  // namespace cc::utils::skill_usage
+}  // namespace loom::utils::skill_usage

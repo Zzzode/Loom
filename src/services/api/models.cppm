@@ -6,7 +6,7 @@ export module loom.services.api.models;
 import std;
 
 
-export namespace cc::services::api {
+export namespace loom::services::api {
 
 // API provider backends
 enum class Provider {
@@ -331,4 +331,4 @@ struct CostCalculator {
     return model_id;
 }
 
-} // namespace cc::services::api
+} // namespace loom::services::api

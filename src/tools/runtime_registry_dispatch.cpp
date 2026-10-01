@@ -23,12 +23,12 @@ import loom.tools.tungsten_tool;
 import loom.tools.workflow;
 import loom.tools.agent_runtime;
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
-using cc::core::Result;
-using cc::core::ToolInput;
-using cc::core::ToolRegistry;
-using cc::core::ToolResult;
+using loom::core::Result;
+using loom::core::ToolInput;
+using loom::core::ToolRegistry;
+using loom::core::ToolResult;
 
 [[nodiscard]] Result<ToolResult> execute_simple_runtime_tool(
     std::string_view name,
@@ -42,7 +42,7 @@ using cc::core::ToolResult;
 
         // Use the global UI responder if set (e.g. dialog-based prompt).
         // Falls back to stdio for headless / non-interactive builds.
-        auto& responder = cc::tools::get_global_ask_user_responder();
+        auto& responder = loom::tools::get_global_ask_user_responder();
         if (responder) {
             auto result = responder(question, default_answer);
             if (result.has_value()) {
@@ -208,7 +208,7 @@ using cc::core::ToolResult;
         // expands templates, cascades context modifiers, and returns a
         // structured JSON response. Falls back to the original loader on
         // error (so tools that pass "name" only still work).
-        auto simple = cc::tools::skill::execute_skill_tool_simple(input.json());
+        auto simple = loom::tools::skill::execute_skill_tool_simple(input.json());
         if (simple) return ToolResult::success(*simple);
         // RFC-0001 B12: the concrete SkillLoader discovery (HOME roots,
         // cwd/skills, plugin components) is an orchestration-installed
@@ -355,4 +355,4 @@ using cc::core::ToolResult;
     return ToolResult::error(std::format("Runtime tool '{}' has no runtime handler", name));
 }
 
-} // namespace cc::tools::detail
+} // namespace loom::tools::detail

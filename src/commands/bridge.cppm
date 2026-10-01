@@ -4,12 +4,12 @@ import std;
 
 import loom.services.ide_integration;
 
-export namespace cc::commands::bridge {
+export namespace loom::commands::bridge {
 struct CommandResponse { bool ok{true}; std::string message; };
 [[nodiscard]] inline auto name() -> std::string_view { return "bridge"; }
 
 [[nodiscard]] inline auto run(std::string_view action = {}) -> CommandResponse {
-    cc::utils::ide::IdeLockfileScanner scanner;
+    loom::utils::ide::IdeLockfileScanner scanner;
     auto lockfiles = scanner.scan();
 
     if (action.empty() || action == "status") {

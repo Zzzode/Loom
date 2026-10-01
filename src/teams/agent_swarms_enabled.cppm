@@ -6,7 +6,7 @@ export module loom.teams.agent_swarms_enabled;
 
 import std;
 
-export namespace cc::utils::agent_swarms_enabled {
+export namespace loom::utils::agent_swarms_enabled {
 
 struct AgentSwarmsGateInput {
     std::string user_type;
@@ -31,4 +31,4 @@ struct AgentSwarmsGateInput {
     return true;
 }
 
-} // namespace cc::utils::agent_swarms_enabled
+} // namespace loom::utils::agent_swarms_enabled

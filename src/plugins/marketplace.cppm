@@ -14,7 +14,7 @@ import std;
 
 import loom.crypto.crypto;
 
-export namespace cc::plugins {
+export namespace loom::plugins {
 
 enum class PluginStatus { available, installed, enabled, disabled, update_available, broken };
 
@@ -162,7 +162,7 @@ inline HttpResponse http_get(std::string_view host, uint16_t port, std::string_v
 
 // SHA-256 for archive integrity verification
 inline std::string sha256_hex(const std::string& data) {
-    return cc::utils::crypto::sha256(data);
+    return loom::utils::crypto::sha256(data);
 }
 
 // Extract a simple tar-like archive (plugin bundle is just directory listing in JSON + files)
@@ -572,4 +572,4 @@ private:
     }
 };
 
-} // namespace cc::plugins
+} // namespace loom::plugins

@@ -2,7 +2,7 @@
 /// @brief RFC-0001 B7/B8 MCP-connectivity bridge.
 ///
 /// Consumes the B6 NativeMcpRuntime snapshot sink
-/// (cc::tools::set_mcp_snapshots_sink) and projects every emitted snapshot
+/// (loom::tools::set_mcp_snapshots_sink) and projects every emitted snapshot
 /// vector into the EXISTING cc.hooks.remaining_notifs MCP connectivity slot
 /// via set_raw_mcp_connectivity, so the current get_mcp_connectivity_status()
 /// / has_mcp_connectivity_issues() readers see the data unchanged.
@@ -25,9 +25,9 @@ module;
 export module loom.orchestration.mcp_connectivity;
 
 // graph_check parser hazard: qualify cc.tools symbols WITHOUT a leading "::"
-// (write cc::tools::set_mcp_snapshots_sink, never ::cc::tools::...). A
+// (write loom::tools::set_mcp_snapshots_sink, never ::loom::tools::...). A
 // leading-colon chain defeats the namespace-path evidence heuristic and
-// makes this import look like a NEW dead import. Un-prefixed cc:: qualifiers
+// makes this import look like a NEW dead import. Un-prefixed loom:: qualifiers
 // are used consistently throughout this file.
 import std;
 
@@ -36,21 +36,21 @@ import loom.services.mcp.types;
 import loom.services.mcp.connection_manager;
 import loom.orchestration.tools.mcp;
 
-export namespace cc::orchestration::mcp_connectivity {
+export namespace loom::orchestration::mcp_connectivity {
 
 // The 5-arm ConnectionStatus -> McpServerStatus mapping. The hook-local
 // copy (to_mcp_server_status) was deleted with the B8 cut; this is the only
 // mapping.
-inline auto to_hook_status(cc::services::mcp::ConnectionStatus s)
-    -> cc::hooks::notifs::McpServerStatus {
-    using CS = cc::services::mcp::ConnectionStatus;
+inline auto to_hook_status(loom::services::mcp::ConnectionStatus s)
+    -> loom::hooks::notifs::McpServerStatus {
+    using CS = loom::services::mcp::ConnectionStatus;
     switch (s) {
-        case CS::Connected:    return cc::hooks::notifs::McpServerStatus::Connected;
-        case CS::Connecting:   return cc::hooks::notifs::McpServerStatus::Connecting;
-        case CS::NeedsAuth:    return cc::hooks::notifs::McpServerStatus::Error;   // surfaced for auth nudge
-        case CS::Error:        return cc::hooks::notifs::McpServerStatus::Error;
+        case CS::Connected:    return loom::hooks::notifs::McpServerStatus::Connected;
+        case CS::Connecting:   return loom::hooks::notifs::McpServerStatus::Connecting;
+        case CS::NeedsAuth:    return loom::hooks::notifs::McpServerStatus::Error;   // surfaced for auth nudge
+        case CS::Error:        return loom::hooks::notifs::McpServerStatus::Error;
         case CS::Disconnected:
-        default:               return cc::hooks::notifs::McpServerStatus::Disconnected;
+        default:               return loom::hooks::notifs::McpServerStatus::Disconnected;
     }
 }
 
@@ -58,13 +58,13 @@ inline auto to_hook_status(cc::services::mcp::ConnectionStatus s)
 // row shares one now-ms stamp. The clock is the hook module's OWN exported
 // detail::now_ms(), the same clock the deleted direct leg used to read.
 inline auto project_connectivity(
-    std::vector<cc::services::mcp::McpServerSnapshot> snapshots
-) -> std::vector<cc::hooks::notifs::McpConnectivityInfo> {
-    std::vector<cc::hooks::notifs::McpConnectivityInfo> infos;
+    std::vector<loom::services::mcp::McpServerSnapshot> snapshots
+) -> std::vector<loom::hooks::notifs::McpConnectivityInfo> {
+    std::vector<loom::hooks::notifs::McpConnectivityInfo> infos;
     infos.reserve(snapshots.size());
-    const int64_t now = cc::hooks::notifs::detail::now_ms();
+    const int64_t now = loom::hooks::notifs::detail::now_ms();
     for (const auto& snap : snapshots) {
-        cc::hooks::notifs::McpConnectivityInfo info;
+        loom::hooks::notifs::McpConnectivityInfo info;
         info.server_id    = snap.name;
         info.display_name = snap.name;
         info.state        = to_hook_status(snap.status);
@@ -80,11 +80,11 @@ inline auto project_connectivity(
 // read path, after NativeMcpRuntime::mutex_ has been released). Idempotent
 // setter; call exactly once at the composition root before any status read.
 inline void wire_mcp_connectivity() {
-    cc::tools::set_mcp_snapshots_sink(
-        [](std::vector<cc::services::mcp::McpServerSnapshot> snaps) {
-            cc::hooks::notifs::set_raw_mcp_connectivity(
+    loom::tools::set_mcp_snapshots_sink(
+        [](std::vector<loom::services::mcp::McpServerSnapshot> snaps) {
+            loom::hooks::notifs::set_raw_mcp_connectivity(
                 project_connectivity(std::move(snaps)));
         });
 }
 
-} // export namespace cc::orchestration::mcp_connectivity
+} // export namespace loom::orchestration::mcp_connectivity

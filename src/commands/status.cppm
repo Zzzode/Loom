@@ -12,9 +12,9 @@ import loom.types.types;
 import loom.commands.command;
 import loom.constants.product;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// StatusCommand implements the /status slash command.
 /// Shows Loom status.
@@ -38,7 +38,7 @@ public:
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
         return CommandResult::success(
             std::string("Loom Status:\n") +
-            "Version: " + std::string(cc::constants::product::LOOM_VERSION) + "\n" +
+            "Version: " + std::string(loom::constants::product::LOOM_VERSION) + "\n" +
             "Model: Not configured\n" +
             "Status: Offline (C++ Migration Demo)");
     }
@@ -48,4 +48,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

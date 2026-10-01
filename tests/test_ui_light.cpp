@@ -42,8 +42,8 @@ namespace fs = std::filesystem;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Terminal, ColorThemesAreConstructible) {
-    auto dark = cc::ui::ColorTheme::dark();
-    auto light = cc::ui::ColorTheme::light();
+    auto dark = loom::ui::ColorTheme::dark();
+    auto light = loom::ui::ColorTheme::light();
 
     (void)dark;
     (void)light;
@@ -51,37 +51,37 @@ TEST(Terminal, ColorThemesAreConstructible) {
 }
 
 TEST(Terminal, DefaultKeyBindingsContainCoreActions) {
-    auto bindings = cc::ui::default_key_bindings();
+    auto bindings = loom::ui::default_key_bindings();
 
     EXPECT_FALSE(bindings.empty());
     EXPECT_TRUE(std::any_of(bindings.begin(), bindings.end(), [](const auto& binding) {
-        return binding.action == cc::ui::KeyAction::Submit;
+        return binding.action == loom::ui::KeyAction::Submit;
     }));
     EXPECT_TRUE(std::any_of(bindings.begin(), bindings.end(), [](const auto& binding) {
-        return binding.action == cc::ui::KeyAction::Interrupt;
+        return binding.action == loom::ui::KeyAction::Interrupt;
     }));
 }
 
 TEST(Terminal, SpinnerRendersWhenActive) {
-    cc::ui::Spinner spinner("Working");
+    loom::ui::Spinner spinner("Working");
     EXPECT_FALSE(spinner.is_active());
 
     spinner.start();
     EXPECT_TRUE(spinner.is_active());
-    expect_element(spinner.render(cc::ui::ColorTheme::dark()));
+    expect_element(spinner.render(loom::ui::ColorTheme::dark()));
 
     spinner.stop();
     EXPECT_FALSE(spinner.is_active());
 }
 
 TEST(Terminal, TerminalUIExposesControlAPI) {
-    cc::ui::TerminalUI ui;
+    loom::ui::TerminalUI ui;
     bool submitted = false;
     bool interrupted = false;
 
     ui.set_on_submit([&](std::string) { submitted = true; });
     ui.set_on_interrupt([&] { interrupted = true; });
-    ui.update_status(cc::ui::StatusBarData{.model_name = "test-model", .input_tokens = 1, .output_tokens = 2, .cost_usd = 0.0, .session_id = std::nullopt});
+    ui.update_status(loom::ui::StatusBarData{.model_name = "test-model", .input_tokens = 1, .output_tokens = 2, .cost_usd = 0.0, .session_id = std::nullopt});
     ui.show_spinner("Testing");
     ui.hide_spinner();
 
@@ -90,7 +90,7 @@ TEST(Terminal, TerminalUIExposesControlAPI) {
 }
 
 TEST(Terminal, StatusBarRendersTokensAndCost) {
-    cc::ui::StatusBarData data{
+    loom::ui::StatusBarData data{
         .model_name = "loom-test",
         .input_tokens = 123,
         .output_tokens = 45,
@@ -98,7 +98,7 @@ TEST(Terminal, StatusBarRendersTokensAndCost) {
         .session_id = std::optional<std::string>{"session-1"},
     };
 
-    auto rendered = render_to_plain_text(cc::ui::render_status_bar(data, cc::ui::ColorTheme::dark()), 90, 5);
+    auto rendered = render_to_plain_text(loom::ui::render_status_bar(data, loom::ui::ColorTheme::dark()), 90, 5);
 
     EXPECT_NE(rendered.find("loom-test"), std::string::npos);
     EXPECT_NE(rendered.find("123"), std::string::npos);
@@ -111,7 +111,7 @@ TEST(Terminal, StatusBarRendersTokensAndCost) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Components, RenderToolUseReturnsElement) {
-    cc::ui::ToolUseDisplayData data{
+    loom::ui::ToolUseDisplayData data{
         .tool_name = "bash",
         .input_summary = "ls -la",
         .output_preview = "ok",
@@ -120,7 +120,7 @@ TEST(Components, RenderToolUseReturnsElement) {
         .duration = std::chrono::milliseconds(12),
     };
 
-    auto rendered = render_to_plain_text(cc::ui::render_tool_use(data), 80, 8);
+    auto rendered = render_to_plain_text(loom::ui::render_tool_use(data), 80, 8);
 
     EXPECT_NE(rendered.find("bash"), std::string::npos);
     EXPECT_NE(rendered.find("ls -la"), std::string::npos);
@@ -129,14 +129,14 @@ TEST(Components, RenderToolUseReturnsElement) {
 }
 
 TEST(Components, RenderPermissionPromptReturnsElement) {
-    cc::ui::PermissionPromptData data{
+    loom::ui::PermissionPromptData data{
         .tool_name = "Edit",
         .description = "Modify a file",
         .input_preview = "src/main.cpp",
         .affected_paths = {"src/main.cpp"},
     };
 
-    auto rendered = render_to_plain_text(cc::ui::render_permission_prompt(data), 90, 10);
+    auto rendered = render_to_plain_text(loom::ui::render_permission_prompt(data), 90, 10);
 
     EXPECT_NE(rendered.find("Permission Required"), std::string::npos);
     EXPECT_NE(rendered.find("Edit"), std::string::npos);
@@ -146,19 +146,19 @@ TEST(Components, RenderPermissionPromptReturnsElement) {
 }
 
 TEST(Components, RenderSearchBoxReturnsElement) {
-    std::vector<cc::ui::SearchResult> results = {
+    std::vector<loom::ui::SearchResult> results = {
         {.label = "commit", .detail = "Create a commit", .icon = "/"},
         {.label = "config", .detail = "Edit config", .icon = "/"},
     };
 
-    expect_element(cc::ui::render_search_box("co", results, 0));
+    expect_element(loom::ui::render_search_box("co", results, 0));
 }
 
 TEST(Components, TextInputRendersPlaceholderWithoutExtraCursorSpace) {
-    cc::ui::components::TextInputOptions options;
+    loom::ui::components::TextInputOptions options;
     options.prefix = "▶ ";
     options.placeholder = "Type";
-    auto component = cc::ui::components::TextInput(options);
+    auto component = loom::ui::components::TextInput(options);
 
     auto rendered = strip_ansi(render_to_plain_text(component->Render(), 20, 3));
 
@@ -167,11 +167,11 @@ TEST(Components, TextInputRendersPlaceholderWithoutExtraCursorSpace) {
 }
 
 TEST(Components, TextInputRendersPlaceholderCaretWithoutNativeCursor) {
-    cc::ui::components::TextInputOptions options;
+    loom::ui::components::TextInputOptions options;
     options.prefix = "";
     options.placeholder = "Type";
     options.cursor_blink_ms = 0;
-    auto component = cc::ui::components::TextInput(options);
+    auto component = loom::ui::components::TextInput(options);
 
     auto screen = ftxui::Screen::Create(
         ftxui::Dimension::Fixed(20),
@@ -184,10 +184,10 @@ TEST(Components, TextInputRendersPlaceholderCaretWithoutNativeCursor) {
 }
 
 TEST(Components, TextInputHidesPlaceholderAfterTyping) {
-    cc::ui::components::TextInputOptions options;
+    loom::ui::components::TextInputOptions options;
     options.prefix = "▶ ";
     options.placeholder = "Type";
-    auto component = cc::ui::components::TextInput(options);
+    auto component = loom::ui::components::TextInput(options);
 
     ASSERT_TRUE(component->OnEvent(ftxui::Event::Character("a")));
     auto rendered = strip_ansi(render_to_plain_text(component->Render(), 20, 3));
@@ -197,16 +197,16 @@ TEST(Components, TextInputHidesPlaceholderAfterTyping) {
 }
 
 TEST(Components, TextInputTabAfterEmptyHistorySearchDoesNotCrash) {
-    auto component = cc::ui::components::TextInput({});
+    auto component = loom::ui::components::TextInput({});
 
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Character("\x12")));
     EXPECT_FALSE(component->OnEvent(ftxui::Event::Tab));
 }
 
 TEST(Components, TextInputMultilineInsertNewline) {
-    cc::ui::components::TextInputOptions opts;
+    loom::ui::components::TextInputOptions opts;
     opts.multiline = true;
-    auto impl = cc::ui::components::MakeTextInputCore(opts);
+    auto impl = loom::ui::components::MakeTextInputCore(opts);
 
     // Pre-populate two lines so Enter inserts newline (not submit).
     // In multiline mode, Enter submits when there is only 1 line;
@@ -222,8 +222,8 @@ TEST(Components, TextInputMultilineInsertNewline) {
 }
 
 TEST(Components, TextInputBackspace) {
-    cc::ui::components::TextInputOptions opts;
-    auto component = cc::ui::components::TextInput(opts);
+    loom::ui::components::TextInputOptions opts;
+    auto component = loom::ui::components::TextInput(opts);
 
     component->OnEvent(ftxui::Event::Character("a"));
     component->OnEvent(ftxui::Event::Character("b"));
@@ -235,8 +235,8 @@ TEST(Components, TextInputBackspace) {
 }
 
 TEST(Components, TextInputSelectAll) {
-    cc::ui::components::TextInputOptions opts;
-    auto component = cc::ui::components::TextInput(opts);
+    loom::ui::components::TextInputOptions opts;
+    auto component = loom::ui::components::TextInput(opts);
 
     component->OnEvent(ftxui::Event::Character("h"));
     component->OnEvent(ftxui::Event::Character("e"));
@@ -254,8 +254,8 @@ TEST(Components, TextInputSelectAll) {
 }
 
 TEST(Components, TextInputUndoRedo) {
-    cc::ui::components::TextInputOptions opts;
-    auto component = cc::ui::components::TextInput(opts);
+    loom::ui::components::TextInputOptions opts;
+    auto component = loom::ui::components::TextInput(opts);
 
     component->OnEvent(ftxui::Event::Character("a"));
     component->OnEvent(ftxui::Event::Character("b"));
@@ -278,10 +278,10 @@ TEST(Components, TextInputUndoRedo) {
 }
 
 TEST(Components, TextInputMaskInput) {
-    cc::ui::components::TextInputOptions opts;
+    loom::ui::components::TextInputOptions opts;
     opts.mask_input = true;
     opts.mask_char = '*';
-    auto component = cc::ui::components::TextInput(opts);
+    auto component = loom::ui::components::TextInput(opts);
 
     component->OnEvent(ftxui::Event::Character("s"));
     component->OnEvent(ftxui::Event::Character("e"));
@@ -297,9 +297,9 @@ TEST(Components, TextInputMaskInput) {
 }
 
 TEST(Components, TextInputInputFilter) {
-    cc::ui::components::TextInputOptions opts;
+    loom::ui::components::TextInputOptions opts;
     opts.input_filter = [](char c) { return std::isdigit(static_cast<unsigned char>(c)) != 0; };
-    auto component = cc::ui::components::TextInput(opts);
+    auto component = loom::ui::components::TextInput(opts);
 
     // Digits should be accepted
     component->OnEvent(ftxui::Event::Character("1"));
@@ -314,17 +314,17 @@ TEST(Components, TextInputInputFilter) {
 }
 
 TEST(Components, TextInputSuggestionsDropdown) {
-    cc::ui::components::TextInputOptions opts;
-    opts.get_suggestions = [](const std::string& input, int, const cc::ui::components::PromptContext&) -> std::vector<cc::ui::components::Suggestion> {
+    loom::ui::components::TextInputOptions opts;
+    opts.get_suggestions = [](const std::string& input, int, const loom::ui::components::PromptContext&) -> std::vector<loom::ui::components::Suggestion> {
         if (input.starts_with('/')) {
             return {
-                {"/help", "/help", "Show help", cc::ui::components::SuggestionCategory::Command, std::nullopt, std::nullopt, std::nullopt},
-                {"/clear", "/clear", "Clear screen", cc::ui::components::SuggestionCategory::Command, std::nullopt, std::nullopt, std::nullopt},
+                {"/help", "/help", "Show help", loom::ui::components::SuggestionCategory::Command, std::nullopt, std::nullopt, std::nullopt},
+                {"/clear", "/clear", "Clear screen", loom::ui::components::SuggestionCategory::Command, std::nullopt, std::nullopt, std::nullopt},
             };
         }
         return {};
     };
-    auto component = cc::ui::components::TextInput(opts);
+    auto component = loom::ui::components::TextInput(opts);
 
     component->OnEvent(ftxui::Event::Character("/"));
     auto rendered = render_to_plain_text(component->Render(), 60, 10);
@@ -336,11 +336,11 @@ TEST(Components, TextInputSuggestionsDropdown) {
 
 TEST(Components, TextInputSuggestionAccept) {
     std::string accepted_text;
-    cc::ui::components::TextInputOptions opts;
-    opts.get_suggestions = [](const std::string& input, int, const cc::ui::components::PromptContext&) -> std::vector<cc::ui::components::Suggestion> {
+    loom::ui::components::TextInputOptions opts;
+    opts.get_suggestions = [](const std::string& input, int, const loom::ui::components::PromptContext&) -> std::vector<loom::ui::components::Suggestion> {
         if (input.starts_with('/')) {
             return {
-                {"/help", "/help", "Show help", cc::ui::components::SuggestionCategory::Command, std::nullopt, std::nullopt, std::nullopt},
+                {"/help", "/help", "Show help", loom::ui::components::SuggestionCategory::Command, std::nullopt, std::nullopt, std::nullopt},
             };
         }
         return {};
@@ -348,7 +348,7 @@ TEST(Components, TextInputSuggestionAccept) {
     opts.on_change = [&](const std::string& text, const auto&) {
         accepted_text = text;
     };
-    auto component = cc::ui::components::TextInput(opts);
+    auto component = loom::ui::components::TextInput(opts);
 
     component->OnEvent(ftxui::Event::Character("/"));
     // Tab to select (next suggestion, only 1 so stays on 0)
@@ -361,9 +361,9 @@ TEST(Components, TextInputSuggestionAccept) {
 }
 
 TEST(Components, TextInputHistorySearch) {
-    cc::ui::components::TextInputOptions opts;
+    loom::ui::components::TextInputOptions opts;
     opts.show_history = true;
-    auto component = cc::ui::components::TextInput(opts);
+    auto component = loom::ui::components::TextInput(opts);
 
     // Add some history by typing and submitting
     component->OnEvent(ftxui::Event::Character("hello world"));
@@ -387,13 +387,13 @@ TEST(Components, TextInputHistorySearch) {
 }
 
 TEST(Components, TextInputHistorySearchAccept) {
-    cc::ui::components::TextInputOptions opts;
+    loom::ui::components::TextInputOptions opts;
     opts.show_history = true;
     std::string result_text;
     opts.on_submit = [&](const std::string& text, const auto&) {
         result_text = text;
     };
-    auto component = cc::ui::components::TextInput(opts);
+    auto component = loom::ui::components::TextInput(opts);
 
     // Add some history
     component->OnEvent(ftxui::Event::Character("apple banana"));
@@ -418,7 +418,7 @@ TEST(Components, TextInputHistorySearchAccept) {
 }
 
 TEST(Components, TextInputArrowNavigation) {
-    auto impl = cc::ui::components::MakeTextInputCore({});
+    auto impl = loom::ui::components::MakeTextInputCore({});
 
     impl->insert_char('a');
     impl->insert_char('b');
@@ -441,7 +441,7 @@ TEST(Components, TextInputArrowNavigation) {
 }
 
 TEST(Components, TextInputHomeEnd) {
-    auto impl = cc::ui::components::MakeTextInputCore({});
+    auto impl = loom::ui::components::MakeTextInputCore({});
 
     impl->insert_char('h');
     impl->insert_char('e');
@@ -472,12 +472,12 @@ TEST(Components, TextInputHomeEnd) {
 
 TEST(Components, TextInputSubmitCallback) {
     std::string submitted_text;
-    cc::ui::components::TextInputOptions opts;
+    loom::ui::components::TextInputOptions opts;
     opts.multiline = false;
     opts.on_submit = [&](const std::string& text, const auto&) {
         submitted_text = text;
     };
-    auto component = cc::ui::components::TextInput(opts);
+    auto component = loom::ui::components::TextInput(opts);
 
     component->OnEvent(ftxui::Event::Character("h"));
     component->OnEvent(ftxui::Event::Character("i"));
@@ -488,19 +488,19 @@ TEST(Components, TextInputSubmitCallback) {
 
 TEST(Components, TextInputEscapeCallback) {
     bool escape_called = false;
-    cc::ui::components::TextInputOptions opts;
+    loom::ui::components::TextInputOptions opts;
     opts.on_escape = [&]() { escape_called = true; };
-    auto component = cc::ui::components::TextInput(opts);
+    auto component = loom::ui::components::TextInput(opts);
 
     component->OnEvent(ftxui::Event::Escape);
     EXPECT_TRUE(escape_called);
 }
 
 TEST(Components, TextInputLineNumbers) {
-    cc::ui::components::TextInputOptions opts;
+    loom::ui::components::TextInputOptions opts;
     opts.multiline = true;
     opts.show_line_numbers = true;
-    auto impl = cc::ui::components::MakeTextInputCore(opts);
+    auto impl = loom::ui::components::MakeTextInputCore(opts);
 
     // Two lines so show_line_numbers actually renders (guard: total_lines > 1)
     impl->PasteText("line 1\nline 2");
@@ -513,9 +513,9 @@ TEST(Components, TextInputLineNumbers) {
 }
 
 TEST(Components, TextInputPasteText) {
-    cc::ui::components::TextInputOptions opts;
-    std::shared_ptr<cc::ui::components::TextInputImpl> impl;
-    auto component = cc::ui::components::TextInput(opts, &impl);
+    loom::ui::components::TextInputOptions opts;
+    std::shared_ptr<loom::ui::components::TextInputImpl> impl;
+    auto component = loom::ui::components::TextInput(opts, &impl);
 
     ASSERT_NE(impl, nullptr);
     impl->PasteText("pasted text");
@@ -529,7 +529,7 @@ TEST(Components, TextInputPasteText) {
 // + tail 500 (PREVIEW_LENGTH=1000).  Guards the fullscreen layout pass against
 // huge pastes.
 TEST(Components, TextInputPasteTruncatesOver10k) {
-    auto impl = cc::ui::components::MakeTextInputCore({});
+    auto impl = loom::ui::components::MakeTextInputCore({});
 
     // Short paste (<= 10 000) is stored verbatim.
     impl->PasteText(std::string(9000, 'a'));
@@ -538,7 +538,7 @@ TEST(Components, TextInputPasteTruncatesOver10k) {
 
     // Large single-line paste (> 10 000) goes to paste-preview first;
     // confirming inserts the truncated head + placeholder + tail.
-    auto impl2 = cc::ui::components::MakeTextInputCore({});
+    auto impl2 = loom::ui::components::MakeTextInputCore({});
     impl2->PasteText(std::string(25000, 'x'));
     EXPECT_TRUE(impl2->HasPastePreview()) << "large paste must trigger preview confirmation";
     impl2->ConfirmPaste();
@@ -556,7 +556,7 @@ TEST(Components, TextInputPasteTruncatesOver10k) {
 }
 
 TEST(Components, TextInputPasteTruncationCountsElidedLines) {
-    auto impl = cc::ui::components::MakeTextInputCore({});
+    auto impl = loom::ui::components::MakeTextInputCore({});
     // Build a >10k multi-line paste: 700 lines of 20 chars each (~14 700 chars).
     std::string big;
     for (int i = 0; i < 700; ++i) big += std::string(19, 'y') + "\n";
@@ -575,7 +575,7 @@ TEST(Components, TextInputPasteTruncationCountsElidedLines) {
 }
 
 TEST(Components, TextInputDeleteChar) {
-    auto impl = cc::ui::components::MakeTextInputCore({});
+    auto impl = loom::ui::components::MakeTextInputCore({});
 
     impl->insert_char('a');
     impl->insert_char('b');
@@ -606,9 +606,9 @@ TEST(Components, TextInputDeleteChar) {
 }
 
 TEST(Components, TextInputHistoryUpDown) {
-    cc::ui::components::TextInputOptions opts;
+    loom::ui::components::TextInputOptions opts;
     opts.multiline = false;
-    auto component = cc::ui::components::TextInput(opts);
+    auto component = loom::ui::components::TextInput(opts);
 
     // Add some history by submitting
     component->OnEvent(ftxui::Event::Character("first"));
@@ -643,7 +643,7 @@ TEST(StatusLine, AppliesGlobalDimAndStripsOuterBgcolor) {
     // (RGB 20,20,22) so any external SGR 48/49 pill doesn't bleed a colored
     // box into the prompt footer (reported in IMG#18 as "folder pill has a
     // deep blue background").
-    namespace pif = cc::ui::prompt::footer;
+    namespace pif = loom::ui::prompt::footer;
 
     auto rendered = render_to_plain_text(
         pif::RenderStatusLine(pif::StatusLineOptions{
@@ -663,7 +663,7 @@ TEST(StatusLine, AppliesGlobalDimAndStripsOuterBgcolor) {
 // statusLine configured).  Provides folder/git/model/token info for
 // standalone CPP mode.
 TEST(StatusLine, BuiltinShowsFolderGitModelTokens) {
-    namespace pif = cc::ui::prompt::footer;
+    namespace pif = loom::ui::prompt::footer;
 
     pif::BuiltinStatusLineData data;
     data.cwd = "/Users/dev/LOOM/cpp_migration";
@@ -702,7 +702,7 @@ TEST(StatusLine, BuiltinShowsFolderGitModelTokens) {
 }
 
 TEST(StatusLine, BuiltinNoGitBranchOmitsBranch) {
-    namespace pif = cc::ui::prompt::footer;
+    namespace pif = loom::ui::prompt::footer;
 
     pif::BuiltinStatusLineData data;
     data.cwd = "/tmp/some_project";
@@ -730,7 +730,7 @@ TEST(StatusLine, BuiltinNoGitBranchOmitsBranch) {
 }
 
 TEST(StatusLine, UserContentTakesPriorityOverBuiltin) {
-    namespace pif = cc::ui::prompt::footer;
+    namespace pif = loom::ui::prompt::footer;
 
     pif::BuiltinStatusLineData data;
     data.cwd = "/tmp/proj";
@@ -752,7 +752,7 @@ TEST(StatusLine, UserContentTakesPriorityOverBuiltin) {
 }
 
 TEST(StatusLine, BuiltinShowsWithoutConfiguredCommand) {
-    namespace pif = cc::ui::prompt::footer;
+    namespace pif = loom::ui::prompt::footer;
 
     pif::BuiltinStatusLineData data;
     data.cwd = "/home/user/myrepo";
@@ -776,7 +776,7 @@ TEST(StatusLine, BuiltinShowsWithoutConfiguredCommand) {
 }
 
 TEST(PromptInputFooter, AlignsRightColumnWithStatusLineRow) {
-    namespace pif = cc::ui::prompt::footer;
+    namespace pif = loom::ui::prompt::footer;
 
     pif::FooterOptions opts;
     opts.status_line = pif::StatusLineOptions{
@@ -804,12 +804,12 @@ TEST(PromptInputFooter, AlignsRightColumnWithStatusLineRow) {
 }
 
 TEST(Panels, PanelTypeNamesAreStable) {
-    EXPECT_EQ(cc::ui::panel_name(cc::ui::PanelType::Settings), "Settings");
-    EXPECT_EQ(cc::ui::panel_name(cc::ui::PanelType::Permissions), "Permissions");
+    EXPECT_EQ(loom::ui::panel_name(loom::ui::PanelType::Settings), "Settings");
+    EXPECT_EQ(loom::ui::panel_name(loom::ui::PanelType::Permissions), "Permissions");
 }
 
 TEST(Panels, SettingsPanelFiltersAndUpdatesEntries) {
-    cc::ui::SettingsPanel panel;
+    loom::ui::SettingsPanel panel;
     panel.load({
         {.key = "model", .value = "sonnet", .description = "Model", .category = "core", .is_readonly = false, .allowed_values = {}},
         {.key = "theme", .value = "dark", .description = "Theme", .category = "ui", .is_readonly = false, .allowed_values = {"dark", "light"}},
@@ -827,20 +827,20 @@ TEST(Panels, SettingsPanelFiltersAndUpdatesEntries) {
 }
 
 TEST(Panels, McpPanelComputesStatusSummary) {
-    cc::ui::McpPanel panel;
+    loom::ui::McpPanel panel;
     auto now = std::chrono::steady_clock::now();
     panel.set_servers({
-        {.name = "one", .uri = "stdio://one", .status = cc::ui::McpStatus::Connected, .capabilities = {}, .error_message = std::nullopt, .tool_count = 0, .last_heartbeat = now},
-        {.name = "two", .uri = "stdio://two", .status = cc::ui::McpStatus::Disconnected, .capabilities = {}, .error_message = std::nullopt, .tool_count = 0, .last_heartbeat = now},
+        {.name = "one", .uri = "stdio://one", .status = loom::ui::McpStatus::Connected, .capabilities = {}, .error_message = std::nullopt, .tool_count = 0, .last_heartbeat = now},
+        {.name = "two", .uri = "stdio://two", .status = loom::ui::McpStatus::Disconnected, .capabilities = {}, .error_message = std::nullopt, .tool_count = 0, .last_heartbeat = now},
     });
 
     EXPECT_EQ(panel.status_summary(), "1/2 connected");
-    EXPECT_EQ(cc::ui::McpPanel::status_icon(cc::ui::McpStatus::Error), "✗");
+    EXPECT_EQ(loom::ui::McpPanel::status_icon(loom::ui::McpStatus::Error), "✗");
 }
 
 TEST(Panels, TasksPanelTracksTaskLifecycle) {
-    cc::ui::TasksPanel panel;
-    panel.add_task({.id = "task-1", .description = "Run tests", .status = cc::ui::TaskStatus::Running, .progress = 0.0, .error = std::nullopt, .created_at = std::chrono::system_clock::now(), .completed_at = std::nullopt});
+    loom::ui::TasksPanel panel;
+    panel.add_task({.id = "task-1", .description = "Run tests", .status = loom::ui::TaskStatus::Running, .progress = 0.0, .error = std::nullopt, .created_at = std::chrono::system_clock::now(), .completed_at = std::nullopt});
     EXPECT_EQ(panel.active_count(), 1u);
 
     panel.update_progress("task-1", 0.5);
@@ -849,7 +849,7 @@ TEST(Panels, TasksPanelTracksTaskLifecycle) {
 }
 
 TEST(Panels, DiffPanelAggregatesStats) {
-    cc::ui::DiffPanel panel;
+    loom::ui::DiffPanel panel;
     panel.set_diffs({{.file_path = "main.cpp", .hunks = {}, .additions = 3, .deletions = 1, .is_binary = false, .is_new_file = false, .is_deleted = false}});
 
     auto [additions, deletions] = panel.total_stats();
@@ -862,7 +862,7 @@ TEST(Panels, DiffPanelAggregatesStats) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Markdown, OrderedListSupportsMultiDigitNumbers) {
-    auto rendered = render_to_plain_text(cc::ui::render_markdown("10. tenth"));
+    auto rendered = render_to_plain_text(loom::ui::render_markdown("10. tenth"));
 
     EXPECT_NE(rendered.find("10."), std::string::npos);
     EXPECT_NE(rendered.find("tenth"), std::string::npos);
@@ -870,7 +870,7 @@ TEST(Markdown, OrderedListSupportsMultiDigitNumbers) {
 }
 
 TEST(Markdown, CodeBlockDoesNotInjectLineNumbers) {
-    auto rendered = render_to_plain_text(cc::ui::render_markdown("```txt\nfoo\nbar\n```"));
+    auto rendered = render_to_plain_text(loom::ui::render_markdown("```txt\nfoo\nbar\n```"));
 
     EXPECT_NE(rendered.find("foo"), std::string::npos);
     EXPECT_NE(rendered.find("bar"), std::string::npos);
@@ -879,7 +879,7 @@ TEST(Markdown, CodeBlockDoesNotInjectLineNumbers) {
 }
 
 TEST(Markdown, ParsesGfmTablesWithoutRenderingSeparatorAsParagraph) {
-    auto rendered = render_to_plain_text(cc::ui::render_markdown("| A | B |\n|---|---|\n| 1 | 2 |"));
+    auto rendered = render_to_plain_text(loom::ui::render_markdown("| A | B |\n|---|---|\n| 1 | 2 |"));
 
     EXPECT_NE(rendered.find("A"), std::string::npos);
     EXPECT_NE(rendered.find("B"), std::string::npos);
@@ -893,21 +893,21 @@ TEST(Markdown, ParsesGfmTablesWithoutRenderingSeparatorAsParagraph) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 TEST(Components, PassesFormatTokensSmallNumbers) {
-    using namespace cc::ui::components::passes;
+    using namespace loom::ui::components::passes;
     EXPECT_EQ(format_tokens(0), "0");
     EXPECT_EQ(format_tokens(42), "42");
     EXPECT_EQ(format_tokens(999), "999");
 }
 
 TEST(Components, PassesFormatTokensThousands) {
-    using namespace cc::ui::components::passes;
+    using namespace loom::ui::components::passes;
     EXPECT_EQ(format_tokens(1000), "1,000");
     EXPECT_EQ(format_tokens(12345), "12,345");
     EXPECT_EQ(format_tokens(1234567), "1,234,567");
 }
 
 TEST(Components, PassesClipHistoryUnderLimit) {
-    using namespace cc::ui::components::passes;
+    using namespace loom::ui::components::passes;
     std::vector<std::string> hist{"p1", "p2", "p3"};
     auto clipped = clip_history(hist, 10);
     EXPECT_EQ(clipped.size(), 3u);
@@ -915,7 +915,7 @@ TEST(Components, PassesClipHistoryUnderLimit) {
 }
 
 TEST(Components, PassesClipHistoryOverLimit) {
-    using namespace cc::ui::components::passes;
+    using namespace loom::ui::components::passes;
     std::vector<std::string> hist;
     for (int i = 0; i < 20; ++i) hist.push_back("p" + std::to_string(i));
     auto clipped = clip_history(hist, 5);
@@ -925,7 +925,7 @@ TEST(Components, PassesClipHistoryOverLimit) {
 }
 
 TEST(Components, PassesProgressPctZeroTotal) {
-    using namespace cc::ui::components::passes;
+    using namespace loom::ui::components::passes;
     PassesViewState s{};
     s.total_passes = 0;
     s.current_pass = 0;
@@ -933,7 +933,7 @@ TEST(Components, PassesProgressPctZeroTotal) {
 }
 
 TEST(Components, PassesProgressPctHalfway) {
-    using namespace cc::ui::components::passes;
+    using namespace loom::ui::components::passes;
     PassesViewState s{};
     s.total_passes = 10;
     s.current_pass = 5;
@@ -941,7 +941,7 @@ TEST(Components, PassesProgressPctHalfway) {
 }
 
 TEST(Components, PassesProgressPctClamped) {
-    using namespace cc::ui::components::passes;
+    using namespace loom::ui::components::passes;
     PassesViewState s{};
     s.total_passes = 5;
     s.current_pass = 10;  // above total
@@ -949,21 +949,21 @@ TEST(Components, PassesProgressPctClamped) {
 }
 
 TEST(Components, PassesThinkingPrefixIdle) {
-    using namespace cc::ui::components::passes;
-    cc::ui::design::theme::Theme theme;
+    using namespace loom::ui::components::passes;
+    loom::ui::design::theme::Theme theme;
     auto el = thinking_prefix(false, theme, 0);
     expect_element(el);
 }
 
 TEST(Components, PassesThinkingPrefixActive) {
-    using namespace cc::ui::components::passes;
-    cc::ui::design::theme::Theme theme;
+    using namespace loom::ui::components::passes;
+    loom::ui::design::theme::Theme theme;
     auto el = thinking_prefix(true, theme, 0);
     expect_element(el);
 }
 
 TEST(Components, BuildPassesPanelReturnsComponent) {
-    using namespace cc::ui::components::passes;
+    using namespace loom::ui::components::passes;
     PassesViewState s{};
     s.total_passes = 3;
     s.current_pass = 1;
@@ -982,7 +982,7 @@ TEST(Components, BuildPassesPanelReturnsComponent) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Components, GroveKindLabelAllValues) {
-    using namespace cc::ui::components::grove;
+    using namespace loom::ui::components::grove;
     EXPECT_FALSE(std::string(kind_label(GroveKind::File)).empty());
     EXPECT_FALSE(std::string(kind_label(GroveKind::Symbol)).empty());
     EXPECT_FALSE(std::string(kind_label(GroveKind::Concept)).empty());
@@ -991,13 +991,13 @@ TEST(Components, GroveKindLabelAllValues) {
 }
 
 TEST(Components, GroveCountNodesEmpty) {
-    using namespace cc::ui::components::grove;
+    using namespace loom::ui::components::grove;
     std::vector<GroveNode> roots;
     EXPECT_EQ(count_nodes(roots, true), 0);
 }
 
 TEST(Components, GroveCountNodesWithChildren) {
-    using namespace cc::ui::components::grove;
+    using namespace loom::ui::components::grove;
     std::vector<GroveNode> roots;
     roots.push_back({"id-1", "root", "", "", 0, 0, 0.0, GroveKind::File, {}});
     roots[0].children.push_back({"id-2", "child1", "", "", 0, 0, 0.0, GroveKind::Symbol, {}});
@@ -1006,29 +1006,29 @@ TEST(Components, GroveCountNodesWithChildren) {
 }
 
 TEST(Components, GroveTruncateShort) {
-    std::string result = cc::ui::components::grove::truncate(
+    std::string result = loom::ui::components::grove::truncate(
         std::string_view{"hello"}, 20);
     EXPECT_EQ(result, "hello");
 }
 
 TEST(Components, GroveTruncateLong) {
-    using namespace cc::ui::components::grove;
+    using namespace loom::ui::components::grove;
     std::string s(100, 'x');
-    auto result = cc::ui::components::grove::truncate(s, 10);
+    auto result = loom::ui::components::grove::truncate(s, 10);
     // truncate appends "…" (U+2026, 3 bytes in UTF-8)
     EXPECT_LE(result.size(), 10u + 3u);
     EXPECT_NE(result.find("…"), std::string::npos);
 }
 
 TEST(Components, GroveFlattenEmpty) {
-    using namespace cc::ui::components::grove;
+    using namespace loom::ui::components::grove;
     std::vector<GroveNode> roots;
     auto flat = flatten(roots, true);
     EXPECT_TRUE(flat.empty());
 }
 
 TEST(Components, GroveFlattenHasDepth) {
-    using namespace cc::ui::components::grove;
+    using namespace loom::ui::components::grove;
     std::vector<GroveNode> roots;
     roots.push_back({"id-1", "root", "", "", 0, 0, 0.0, GroveKind::File, {}});
     roots[0].children.push_back({"id-2", "child", "", "", 0, 0, 0.0, GroveKind::Symbol, {}});
@@ -1039,7 +1039,7 @@ TEST(Components, GroveFlattenHasDepth) {
 }
 
 TEST(Components, GroveBuildTreeReturnsComponent) {
-    using namespace cc::ui::components::grove;
+    using namespace loom::ui::components::grove;
     GroveViewState state;
     state.roots.push_back({"id-1", "src/main.cpp", "", "src/main.cpp", 1, 20, 0.8, GroveKind::File, {}});
     state.roots[0].children.push_back({"id-2", "main()", "", "src/main.cpp", 5, 15, 0.5, GroveKind::Symbol, {}});
@@ -1055,36 +1055,36 @@ TEST(Components, GroveBuildTreeReturnsComponent) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Components, LspRecRatingStarsZero) {
-    using namespace cc::ui::components::lsp_rec_menu;
+    using namespace loom::ui::components::lsp_rec_menu;
     auto stars = rating_stars(0.0);
     EXPECT_EQ(stars, "☆☆☆☆☆");
 }
 
 TEST(Components, LspRecRatingStarsFive) {
-    using namespace cc::ui::components::lsp_rec_menu;
+    using namespace loom::ui::components::lsp_rec_menu;
     auto stars = rating_stars(5.0);
     EXPECT_EQ(stars, "★★★★★");
 }
 
 TEST(Components, LspRecFormatInstallsSmall) {
-    using namespace cc::ui::components::lsp_rec_menu;
+    using namespace loom::ui::components::lsp_rec_menu;
     EXPECT_EQ(format_installs(42), "42");
 }
 
 TEST(Components, LspRecFormatInstallsThousands) {
-    using namespace cc::ui::components::lsp_rec_menu;
+    using namespace loom::ui::components::lsp_rec_menu;
     EXPECT_EQ(format_installs(1500), "1.5k");
 }
 
 TEST(Components, LspRecUniqueLanguagesEmpty) {
-    using namespace cc::ui::components::lsp_rec_menu;
+    using namespace loom::ui::components::lsp_rec_menu;
     std::vector<LspPluginRecommendation> recs;
     auto langs = unique_languages(recs);
     EXPECT_TRUE(langs.empty());
 }
 
 TEST(Components, LspRecUniqueLanguagesDedupes) {
-    using namespace cc::ui::components::lsp_rec_menu;
+    using namespace loom::ui::components::lsp_rec_menu;
     LspPluginRecommendation a{}, b{};
     a.language_ids = {"python"};
     b.language_ids = {"python"};
@@ -1095,7 +1095,7 @@ TEST(Components, LspRecUniqueLanguagesDedupes) {
 }
 
 TEST(Components, BuildLspRecommendationMenuReturnsComponent) {
-    using namespace cc::ui::components::lsp_rec_menu;
+    using namespace loom::ui::components::lsp_rec_menu;
     LspRecMenuState state;
     LspPluginRecommendation rec;
     rec.plugin_id = "pylsp";
@@ -1123,7 +1123,7 @@ TEST(Components, BuildLspRecommendationMenuReturnsComponent) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Components, PluginHintDefaultConstructs) {
-    using namespace cc::ui::components::plugin_hint_menu;
+    using namespace loom::ui::components::plugin_hint_menu;
     PluginHint hint{};
     EXPECT_TRUE(hint.plugin_id.empty());
     EXPECT_TRUE(hint.display_name.empty());
@@ -1131,7 +1131,7 @@ TEST(Components, PluginHintDefaultConstructs) {
 }
 
 TEST(Components, BuildPluginHintMenuEmptyState) {
-    using namespace cc::ui::components::plugin_hint_menu;
+    using namespace loom::ui::components::plugin_hint_menu;
     PluginHintMenuState state;
     auto on_install = [](int) {};
     auto on_dismiss = [](int) {};
@@ -1141,7 +1141,7 @@ TEST(Components, BuildPluginHintMenuEmptyState) {
 }
 
 TEST(Components, BuildPluginHintMenuWithHints) {
-    using namespace cc::ui::components::plugin_hint_menu;
+    using namespace loom::ui::components::plugin_hint_menu;
     PluginHintMenuState state;
     PluginHint h1;
     h1.plugin_id = "python-plugin";
@@ -1165,7 +1165,7 @@ TEST(Components, BuildPluginHintMenuWithHints) {
 }
 
 TEST(Components, PluginHintMenuUpdateState) {
-    using namespace cc::ui::components::plugin_hint_menu;
+    using namespace loom::ui::components::plugin_hint_menu;
     PluginHintMenuState state;
     auto on_install = [](int) {};
     auto on_dismiss = [](int) {};
@@ -1192,7 +1192,7 @@ TEST(Components, PluginHintMenuUpdateState) {
 // of truth for glyph correctness.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-namespace figs = cc::ui::design::figures;
+namespace figs = loom::ui::design::figures;
 
 // ─── npm::figures glyphs (mainSymbols set) ──────────────────────────────
 
@@ -1600,7 +1600,7 @@ TEST(Figures, MultiByteGlyphSizesAreCorrect) {
 // Placeholder Cascade (TS REF: usePromptInputPlaceholder.ts + renderPlaceholder.ts)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-namespace ph = cc::ui::placeholder;
+namespace ph = loom::ui::placeholder;
 
 TEST(PlaceholderCascade, InputNonEmpty_ReturnsNullopt) {
     ph::PlaceholderContext ctx;
@@ -1723,7 +1723,7 @@ TEST(PlaceholderCascade, AiSuggestion_OverridesCascade) {
     ctx.input_text = "";
     ctx.submit_count = 0;
     ctx.prompt_suggestion_enabled = true;
-    ctx.input_mode = cc::ui::common::PromptInputMode::Normal;
+    ctx.input_mode = loom::ui::common::PromptInputMode::Normal;
     ctx.next_action_suggestion = "Check the failing test";
     ctx.autocomplete_suggestions_empty = true;
     auto result = ph::ComputePlaceholder(ctx);
@@ -1736,7 +1736,7 @@ TEST(PlaceholderCascade, AiSuggestionSlash_Suppressed) {
     ctx.input_text = "";
     ctx.submit_count = 0;
     ctx.prompt_suggestion_enabled = true;
-    ctx.input_mode = cc::ui::common::PromptInputMode::Normal;
+    ctx.input_mode = loom::ui::common::PromptInputMode::Normal;
     ctx.next_action_suggestion = "/review";
     ctx.autocomplete_suggestions_empty = true;
     // Should fall through to example (submit_count < 1)
@@ -1750,7 +1750,7 @@ TEST(PlaceholderCascade, AiSuggestionBashMode_Suppressed) {
     ctx.input_text = "";
     ctx.submit_count = 0;
     ctx.prompt_suggestion_enabled = true;
-    ctx.input_mode = cc::ui::common::PromptInputMode::Bash;
+    ctx.input_mode = loom::ui::common::PromptInputMode::Bash;
     ctx.next_action_suggestion = "Check the failing test";
     ctx.autocomplete_suggestions_empty = true;
     // Should fall through to example (submit_count < 1) since AI only
@@ -1764,7 +1764,7 @@ TEST(PlaceholderCascade, AiSuggestionWithAutocomplete_Suppressed) {
     ph::PlaceholderContext ctx;
     ctx.input_text = "";
     ctx.submit_count = 5;
-    ctx.input_mode = cc::ui::common::PromptInputMode::Normal;
+    ctx.input_mode = loom::ui::common::PromptInputMode::Normal;
     ctx.next_action_suggestion = "Check the failing test";
     ctx.autocomplete_suggestions_empty = false;
     // Should be suppressed because autocomplete is showing.
@@ -1776,7 +1776,7 @@ TEST(PlaceholderCascade, AiSuggestionViewingAgent_Suppressed) {
     ph::PlaceholderContext ctx;
     ctx.input_text = "";
     ctx.submit_count = 5;
-    ctx.input_mode = cc::ui::common::PromptInputMode::Normal;
+    ctx.input_mode = loom::ui::common::PromptInputMode::Normal;
     ctx.next_action_suggestion = "Check the failing test";
     ctx.viewing_agent_name = "researcher";
     ctx.autocomplete_suggestions_empty = true;
@@ -1946,48 +1946,48 @@ TEST(RenderPlaceholder, ScreenRender_NoCursor_ShowsDimPlaceholder) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(BashModePrefix, GetModeFromInput_BangPrefix) {
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
     EXPECT_EQ(figs::get_mode_from_input("!ls"), figs::PromptMode::kBash);
     EXPECT_EQ(figs::get_mode_from_input("!"), figs::PromptMode::kBash);
     EXPECT_EQ(figs::get_mode_from_input("! gcloud auth"), figs::PromptMode::kBash);
 }
 
 TEST(BashModePrefix, GetModeFromInput_NoPrefix) {
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
     EXPECT_EQ(figs::get_mode_from_input("hello"), figs::PromptMode::kPrompt);
     EXPECT_EQ(figs::get_mode_from_input(""), figs::PromptMode::kPrompt);
     EXPECT_EQ(figs::get_mode_from_input("a!b"), figs::PromptMode::kPrompt);
 }
 
 TEST(BashModePrefix, StripModePrefix_Bash) {
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
     EXPECT_EQ(figs::strip_mode_prefix("!ls"), "ls");
     EXPECT_EQ(figs::strip_mode_prefix("! gcloud"), " gcloud");
     EXPECT_EQ(figs::strip_mode_prefix("!"), "");
 }
 
 TEST(BashModePrefix, StripModePrefix_NoPrefix) {
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
     // Non-bash input passes through unchanged.
     EXPECT_EQ(figs::strip_mode_prefix("hello"), "hello");
     EXPECT_EQ(figs::strip_mode_prefix(""), "");
 }
 
 TEST(BashModePrefix, PrependModeChar_Bash) {
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
     // TS REF: inputModes.ts:4-14 — prependModeCharacterToInput
     auto result = figs::prepend_mode_char("ls", figs::PromptMode::kBash);
     EXPECT_EQ(result, "!ls");
 }
 
 TEST(BashModePrefix, PrependModeChar_Prompt) {
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
     auto result = figs::prepend_mode_char("hello", figs::PromptMode::kPrompt);
     EXPECT_EQ(result, "hello");
 }
 
 TEST(BashModePrefix, IsModeCharacter) {
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
     EXPECT_TRUE(figs::is_mode_character("!"));
     EXPECT_FALSE(figs::is_mode_character("a"));
     EXPECT_FALSE(figs::is_mode_character("!cmd"));  // multi-char, not a single mode char
@@ -1999,7 +1999,7 @@ TEST(BashModePrefix, HistoryRoundTrip_BashToggle) {
     // input_text = "cmd" (no '!'), input_mode = Bash.
     // History entry should carry '!' for round-trip detection.
     // TS REF: REPL.tsx:3318 — prependModeCharacterToInput(input, inputMode)
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
 
     const std::string input_text = "cmd";       // clean text (no '!')
     const bool is_bash = true;                   // user toggled via bare '!'
@@ -2024,7 +2024,7 @@ TEST(BashModePrefix, HistoryRoundTrip_DirectBangCmd) {
     // e.g. IME composition or bracketed paste).  input_text = "!cmd", mode
     // detection happens via effective_is_bash().  History should NOT double-
     // prepend '!' because the text already carries it.
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
 
     const std::string input_text = "!cmd";      // already has '!' prefix
     const bool is_bash = true;
@@ -2043,7 +2043,7 @@ TEST(BashModePrefix, HistoryRoundTrip_DirectBangCmd) {
 
 TEST(BashModePrefix, HistoryRoundTrip_NormalMode) {
     // Normal mode: no '!' prepended
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
 
     const std::string input_text = "hello world";
     const bool is_bash = false;
@@ -2062,7 +2062,7 @@ TEST(BashModePrefix, HistoryRoundTrip_NormalMode) {
 TEST(BashModePrefix, MultiCharBangCmd_StripLogic) {
     // TS REF: PromptInput.tsx:878-886 — multi-char "!cmd" insertion at
     // cursor-0 into empty input: strip '!', enter bash mode, store clean text.
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
 
     const std::string ch = "!ls -la";  // multi-char event (IME/bracketed paste)
     const bool input_empty = true;
@@ -2085,7 +2085,7 @@ TEST(BashModePrefix, MultiCharBangCmd_StripLogic) {
 TEST(BashModePrefix, SubmitStripsPrefix) {
     // TS REF: inputModes.ts:23-29 (getValueFromInput) + REPL.tsx submit flow.
     // Submit always strips the '!' prefix before passing text to engine.
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
 
     // Bare '!' toggle path: input_text = "cmd", mode = Bash.
     // strip_mode_prefix on "cmd" returns "cmd" (no change needed since
@@ -2105,7 +2105,7 @@ TEST(BashModePrefix, ModeResetAfterSubmit) {
     // This verifies the expected enum value for the "reset to normal" state.
     // The actual reset happens in app.cppm HandleSubmit; this test asserts
     // the semantic: after any submit (bash or prompt), mode should be Normal.
-    using cc::ui::common::PromptInputMode;
+    using loom::ui::common::PromptInputMode;
 
     // Simulate: user was in Bash mode, submitted "!ls".
     // After submit, mode resets.

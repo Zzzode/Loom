@@ -21,18 +21,18 @@ import loom.teams.swarm.backends;
 import loom.skills.skill;
 import loom.services.api.client;
 
-export namespace cc::tools::agent::utils {
+export namespace loom::tools::agent::utils {
 
 namespace fs = std::filesystem;
 
-using cc::core::ToolInput;
-using cc::core::ToolResult;
-using cc::core::ToolDefinition;
-using cc::core::SchemaProperty;
-using cc::services::api::CreateMessageRequest;
-using cc::services::api::Message;
-using cc::services::api::ContentBlock;
-using cc::services::api::ContentBlockType;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
+using loom::core::ToolDefinition;
+using loom::core::SchemaProperty;
+using loom::services::api::CreateMessageRequest;
+using loom::services::api::Message;
+using loom::services::api::ContentBlock;
+using loom::services::api::ContentBlockType;
 
 // Agent Configuration
 // =========================================================================
@@ -41,9 +41,9 @@ using cc::services::api::ContentBlockType;
 // the agent::utils spelling so the agent subtree keeps resolving without
 // touching its using-declarations.
 
-using cc::tools::AgentConfig;
-using cc::tools::AgentLivePermissionCheck;
-using cc::tools::AgentLivePermissionCheckFn;
+using loom::tools::AgentConfig;
+using loom::tools::AgentLivePermissionCheck;
+using loom::tools::AgentLivePermissionCheckFn;
 
 [[nodiscard]] std::string json_escape_string(std::string_view value);
 
@@ -92,7 +92,7 @@ struct AgentShellTaskCleanupGuard {
 
 struct AgentInlineMcpServerRuntimeState {
     std::string name;
-    std::optional<cc::tools::NativeMcpConfiguredServer> previous_config;
+    std::optional<loom::tools::NativeMcpConfiguredServer> previous_config;
 };
 
 struct AgentMcpCleanupGuard {
@@ -186,7 +186,7 @@ struct AgentExecutionPlan {
     std::optional<std::string> worktree_branch;
     std::optional<std::string> worktree_base_commit;
     std::optional<std::string> worktree_git_root;
-    cc::tools::agent_runtime::AgentHooksByEvent frontmatter_hooks;
+    loom::tools::agent_runtime::AgentHooksByEvent frontmatter_hooks;
     std::optional<std::string> effort;
     std::optional<std::string> memory;
     std::optional<std::string> color;
@@ -221,23 +221,23 @@ void add_agent_memory_tools(std::vector<std::string>& tools);
 [[nodiscard]] std::string trim_ascii_copy(std::string_view value);
 
 [[nodiscard]] std::optional<std::string> json_string(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 );
 
 [[nodiscard]] bool json_bool(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key,
     bool fallback = false
 );
 
 [[nodiscard]] std::optional<int> json_int(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 );
 
 [[nodiscard]] bool has_non_empty_string(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 );
 
@@ -251,21 +251,21 @@ void add_agent_memory_tools(std::vector<std::string>& tools);
     const std::unordered_map<std::string, std::string>& overrides
 );
 
-[[nodiscard]] std::vector<std::string> json_string_array(cc::utils::json::JsonVal value);
+[[nodiscard]] std::vector<std::string> json_string_array(loom::utils::json::JsonVal value);
 
 [[nodiscard]] std::vector<std::string> json_string_array_field(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 );
 
-[[nodiscard]] bool json_array_looks_like_content_blocks(cc::utils::json::JsonVal value);
+[[nodiscard]] bool json_array_looks_like_content_blocks(loom::utils::json::JsonVal value);
 
 [[nodiscard]] std::string assistant_content_array_json_to_message_json(std::string_view content_json);
 
-[[nodiscard]] std::vector<std::string> json_message_entries(cc::utils::json::JsonVal value);
+[[nodiscard]] std::vector<std::string> json_message_entries(loom::utils::json::JsonVal value);
 
 [[nodiscard]] std::vector<std::string> json_message_entries_field(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 );
 
@@ -281,7 +281,7 @@ void add_agent_memory_tools(std::vector<std::string>& tools);
 
 [[nodiscard]] std::string unique_teammate_agent_name(
     std::string base_name,
-    const cc::tools::Team& team
+    const loom::tools::Team& team
 );
 
 [[nodiscard]] std::string format_teammate_agent_id(std::string_view agent_name, std::string_view team_name);
@@ -418,8 +418,8 @@ void apply_agent_effort_to_request(
 
 [[nodiscard]] std::optional<std::string> resolve_agent_skill_name(
     std::string_view skill_name,
-    const std::vector<cc::skills::SkillDefinition>& skills,
-    const cc::tools::agent_runtime::AgentDefinition& agent_definition
+    const std::vector<loom::skills::SkillDefinition>& skills,
+    const loom::tools::agent_runtime::AgentDefinition& agent_definition
 );
 
 [[nodiscard]] std::string format_preloaded_skill_message(
@@ -428,7 +428,7 @@ void apply_agent_effort_to_request(
 );
 
 [[nodiscard]] std::vector<std::string> load_preloaded_skill_messages(
-    const cc::tools::agent_runtime::AgentDefinition& definition
+    const loom::tools::agent_runtime::AgentDefinition& definition
 );
 
 [[nodiscard]] std::string format_agent_mcp_context_message(
@@ -439,8 +439,8 @@ void apply_agent_effort_to_request(
     const std::vector<std::string>& server_names
 );
 
-[[nodiscard]] cc::tools::NativeMcpConfiguredServer to_native_agent_mcp_server(
-    const cc::tools::agent_runtime::AgentInlineMcpServerConfig& config
+[[nodiscard]] loom::tools::NativeMcpConfiguredServer to_native_agent_mcp_server(
+    const loom::tools::agent_runtime::AgentInlineMcpServerConfig& config
 );
 
 void append_unique_agent_mcp_server(
@@ -450,7 +450,7 @@ void append_unique_agent_mcp_server(
 
 [[nodiscard]] std::expected<std::vector<AgentInlineMcpServerRuntimeState>, std::string>
 prepare_agent_inline_mcp_servers(
-    const std::vector<cc::tools::agent_runtime::AgentInlineMcpServerConfig>& configs
+    const std::vector<loom::tools::agent_runtime::AgentInlineMcpServerConfig>& configs
 );
 
 [[nodiscard]] std::string format_agent_runtime_context(
@@ -474,7 +474,7 @@ struct AgentWorktreeInfo {
     const AgentExecutionPlan& plan
 );
 
-[[nodiscard]] bool hook_condition_allows(const cc::tools::agent_runtime::AgentHookCommand& hook);
+[[nodiscard]] bool hook_condition_allows(const loom::tools::agent_runtime::AgentHookCommand& hook);
 
 [[nodiscard]] bool hook_pattern_matches_one(std::string_view pattern, std::string_view value);
 
@@ -497,7 +497,7 @@ struct AgentToolHookContext {
 };
 
 [[nodiscard]] AgentHookRunResult run_agent_command_hook(
-    const cc::tools::agent_runtime::AgentHookCommand& hook,
+    const loom::tools::agent_runtime::AgentHookCommand& hook,
     const AgentExecutionPlan& plan,
     std::string_view event,
     std::string_view last_assistant_message,
@@ -582,14 +582,14 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan);
 // cc.tools.agent_worktree (RFC-0001 B14); re-export under the utils spelling
 // so the agent subtree and the cc.orchestration.agent facade keep resolving with no
 // call-site churn.
-using cc::tools::agent::AgentWorktreeCleanupResult;
-using cc::tools::agent::cleanup_agent_worktree;
+using loom::tools::agent::AgentWorktreeCleanupResult;
+using loom::tools::agent::cleanup_agent_worktree;
 
 [[nodiscard]] std::string agent_output_file_path(std::string_view agent_id);
 
-[[nodiscard]] cc::tools::MemberRole teammate_role_for_agent_type(std::string_view agent_type);
+[[nodiscard]] loom::tools::MemberRole teammate_role_for_agent_type(std::string_view agent_type);
 
-[[nodiscard]] std::optional<cc::utils::swarm_backends::AgentColor> teammate_agent_color(
+[[nodiscard]] std::optional<loom::utils::swarm_backends::AgentColor> teammate_agent_color(
     const std::optional<std::string>& color
 );
 
@@ -610,15 +610,15 @@ void update_teammate_completion_status(
 [[nodiscard]] std::string message_content_sidechain_json(const Message& message);
 
 [[nodiscard]] std::string json_string_member(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key
 );
 
-[[nodiscard]] std::string text_from_json_content(cc::utils::json::JsonVal content);
+[[nodiscard]] std::string text_from_json_content(loom::utils::json::JsonVal content);
 
-[[nodiscard]] ContentBlock content_block_from_json(cc::utils::json::JsonVal block);
+[[nodiscard]] ContentBlock content_block_from_json(loom::utils::json::JsonVal block);
 
-[[nodiscard]] std::optional<Message> message_from_json_value(cc::utils::json::JsonVal root);
+[[nodiscard]] std::optional<Message> message_from_json_value(loom::utils::json::JsonVal root);
 
 [[nodiscard]] std::vector<Message> fork_context_messages_from_entries(
     const std::vector<std::string>& entries
@@ -695,7 +695,7 @@ inline constexpr std::string_view AGENT_PER_MESSAGE_BUDGET_OVERRIDE_FLAG = "teng
 [[nodiscard]] bool agent_growthbook_env_overrides_enabled();
 
 [[nodiscard]] std::optional<std::size_t> json_positive_size_t(
-    cc::utils::json::JsonVal value
+    loom::utils::json::JsonVal value
 );
 
 template <typename Fn>
@@ -703,7 +703,7 @@ inline void with_agent_growthbook_env_overrides(Fn&& fn) {
     if (!agent_growthbook_env_overrides_enabled()) return;
     const char* raw = std::getenv("LOOM_INTERNAL_FC_OVERRIDES");
     if (!raw || !*raw) return;
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed || !parsed->root().is_obj()) return;
     fn(parsed->root());
 }
@@ -785,4 +785,4 @@ AgentToolResultBudgetOutcome apply_agent_tool_result_budget(
 
 void append_agent_sidechain_message(std::string_view agent_id, const Message& message);
 
-} // namespace cc::tools::agent::utils
+} // namespace loom::tools::agent::utils

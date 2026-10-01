@@ -13,7 +13,7 @@ export module loom.cli.websocket_transport;
 
 import std;
 
-export namespace cc::cli {
+export namespace loom::cli {
 
 // WebSocket transport for bidirectional communication
 class WebSocketTransport {
@@ -538,4 +538,4 @@ private:
     std::jthread reader_thread_;
 };
 
-} // namespace cc::cli
+} // namespace loom::cli

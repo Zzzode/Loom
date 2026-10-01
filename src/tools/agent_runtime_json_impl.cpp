@@ -13,9 +13,9 @@ import std;
 
 import loom.serdes.json;
 
-namespace cc::tools::agent_runtime {
+namespace loom::tools::agent_runtime {
 
-[[nodiscard]] std::optional<std::string> json_scalar_to_string(cc::utils::json::JsonVal value) {
+[[nodiscard]] std::optional<std::string> json_scalar_to_string(loom::utils::json::JsonVal value) {
     if (!value.valid()) return std::nullopt;
     if (value.is_str()) return std::string(value.as_str());
     if (value.is_bool()) return value.as_bool()
@@ -25,17 +25,17 @@ namespace cc::tools::agent_runtime {
     return std::nullopt;
 }
 [[nodiscard]] std::optional<std::string> json_string_field(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key
 ) {
     if (!object.valid() || !object.is_obj()) return std::nullopt;
     return json_scalar_to_string(object.get(key));
 }
-[[nodiscard]] std::vector<std::string> json_string_list(cc::utils::json::JsonVal value) {
+[[nodiscard]] std::vector<std::string> json_string_list(loom::utils::json::JsonVal value) {
     std::vector<std::string> values;
     if (!value.valid()) return values;
     if (value.is_arr()) {
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             if (auto scalar = json_scalar_to_string(item); scalar && !scalar->empty()) {
                 values.push_back(std::move(*scalar));
             }
@@ -49,18 +49,18 @@ namespace cc::tools::agent_runtime {
     return values;
 }
 [[nodiscard]] std::vector<std::string> json_string_list_field(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key
 ) {
     if (!object.valid() || !object.is_obj()) return {};
     return json_string_list(object.get(key));
 }
 void append_json_string_map(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::unordered_map<std::string, std::string>& out
 ) {
     if (!value.valid() || !value.is_obj()) return;
-    value.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal item) {
+    value.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal item) {
         if (!key.is_str()) return;
         if (auto scalar = json_scalar_to_string(item)) {
             out[std::string(key.as_str())] = std::move(*scalar);
@@ -69,7 +69,7 @@ void append_json_string_map(
 }
 [[nodiscard]] std::optional<AgentInlineMcpServerConfig> parse_inline_mcp_server_config(
     std::string name,
-    cc::utils::json::JsonVal value
+    loom::utils::json::JsonVal value
 ) {
     if (!value.valid() || !value.is_obj() || name.empty()) return std::nullopt;
 
@@ -90,19 +90,19 @@ void append_json_string_map(
     }
     return config;
 }
-[[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(cc::utils::json::JsonVal value) {
+[[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(loom::utils::json::JsonVal value) {
     ParsedAgentMcpServers parsed;
     if (!value.valid()) return parsed;
 
     if (value.is_arr()) {
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             if (auto scalar = json_scalar_to_string(item); scalar && !scalar->empty()) {
                 parsed.references.push_back(std::move(*scalar));
                 return;
             }
 
             if (!item.is_obj()) return;
-            item.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal config) {
+            item.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal config) {
                 if (!key.is_str()) return;
                 if (auto inline_config = parse_inline_mcp_server_config(std::string(key.as_str()), config)) {
                     parsed.inline_configs.push_back(std::move(*inline_config));
@@ -113,7 +113,7 @@ void append_json_string_map(
     }
 
     if (value.is_obj()) {
-        value.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal config) {
+        value.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal config) {
             if (!key.is_str()) return;
             if (auto inline_config = parse_inline_mcp_server_config(std::string(key.as_str()), config)) {
                 parsed.inline_configs.push_back(std::move(*inline_config));
@@ -128,7 +128,7 @@ void append_json_string_map(
     return parsed;
 }
 [[nodiscard]] std::optional<int> json_positive_int_field(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key
 ) {
     if (!object.valid() || !object.is_obj()) return std::nullopt;
@@ -143,7 +143,7 @@ void append_json_string_map(
     return std::nullopt;
 }
 [[nodiscard]] std::optional<bool> json_bool_field(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key
 ) {
     if (!object.valid() || !object.is_obj()) return std::nullopt;
@@ -153,7 +153,7 @@ void append_json_string_map(
     if (auto scalar = json_scalar_to_string(value)) return parse_bool_field(*scalar);
     return std::nullopt;
 }
-[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(cc::utils::json::JsonVal value) {
+[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(loom::utils::json::JsonVal value) {
     AgentHookCommand command;
     if (auto scalar = json_scalar_to_string(value)) {
         if (scalar->empty()) return std::nullopt;
@@ -181,12 +181,12 @@ void append_json_string_map(
     }
     return command;
 }
-[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(cc::utils::json::JsonVal value) {
+[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(loom::utils::json::JsonVal value) {
     std::vector<AgentHookCommand> commands;
     if (!value.valid()) return commands;
 
     if (value.is_arr()) {
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             if (auto command = parse_agent_hook_command(item)) commands.push_back(std::move(*command));
         });
         return commands;
@@ -201,7 +201,7 @@ void append_json_string_map(
     if (auto command = parse_agent_hook_command(value)) commands.push_back(std::move(*command));
     return commands;
 }
-[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(cc::utils::json::JsonVal value) {
+[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(loom::utils::json::JsonVal value) {
     AgentHookMatcher matcher;
     if (value.valid() && value.is_obj()) {
         if (auto match = json_string_field(value, "matcher"); match && !match->empty()) {
@@ -219,12 +219,12 @@ void append_json_string_map(
     if (matcher.hooks.empty()) return std::nullopt;
     return matcher;
 }
-[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(cc::utils::json::JsonVal value) {
+[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(loom::utils::json::JsonVal value) {
     std::vector<AgentHookMatcher> matchers;
     if (!value.valid()) return matchers;
 
     if (value.is_arr()) {
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             if (auto matcher = parse_agent_hook_matcher(item)) matchers.push_back(std::move(*matcher));
         });
         return matchers;
@@ -235,7 +235,7 @@ void append_json_string_map(
             if (auto matcher = parse_agent_hook_matcher(value)) matchers.push_back(std::move(*matcher));
             return matchers;
         }
-        value.iter_obj([&](cc::utils::json::JsonVal matcher_name, cc::utils::json::JsonVal hooks) {
+        value.iter_obj([&](loom::utils::json::JsonVal matcher_name, loom::utils::json::JsonVal hooks) {
             if (!matcher_name.is_str()) return;
             auto commands = parse_agent_hook_commands(hooks);
             if (!commands.empty()) {
@@ -251,12 +251,12 @@ void append_json_string_map(
     if (auto matcher = parse_agent_hook_matcher(value)) matchers.push_back(std::move(*matcher));
     return matchers;
 }
-[[nodiscard]] AgentHooksByEvent parse_agent_hooks(cc::utils::json::JsonVal value) {
+[[nodiscard]] AgentHooksByEvent parse_agent_hooks(loom::utils::json::JsonVal value) {
     AgentHooksByEvent hooks;
     if (!value.valid()) return hooks;
 
     if (value.is_obj()) {
-        value.iter_obj([&](cc::utils::json::JsonVal event, cc::utils::json::JsonVal event_hooks) {
+        value.iter_obj([&](loom::utils::json::JsonVal event, loom::utils::json::JsonVal event_hooks) {
             if (!event.is_str()) return;
             auto matchers = parse_agent_hook_matchers(event_hooks);
             if (!matchers.empty()) {
@@ -268,7 +268,7 @@ void append_json_string_map(
     }
 
     if (value.is_arr()) {
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             if (auto event = json_scalar_to_string(item); event && !event->empty()) {
                 hooks.try_emplace(canonical_hook_event_name(*event), std::vector<AgentHookMatcher>{});
             }
@@ -280,7 +280,7 @@ void append_json_string_map(
 }
 [[nodiscard]] std::optional<AgentDefinition> parse_agent_json_definition(
     std::string name,
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     const fs::path& path,
     std::string source
 ) {
@@ -368,10 +368,10 @@ void append_json_string_map(
     std::string source
 ) {
     std::vector<AgentDefinition> agents;
-    auto parsed = cc::utils::json::parse_file(path);
+    auto parsed = loom::utils::json::parse_file(path);
     if (!parsed || !parsed->root().is_obj()) return agents;
 
-    parsed->root().iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    parsed->root().iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
         if (auto agent = parse_agent_json_definition(std::string(key.as_str()), value, path, source)) {
             agents.push_back(std::move(*agent));
@@ -385,10 +385,10 @@ void append_json_string_map(
     const fs::path& virtual_path
 ) {
     std::vector<AgentDefinition> agents;
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed || !parsed->root().is_obj()) return agents;
 
-    parsed->root().iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    parsed->root().iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
         if (auto agent = parse_agent_json_definition(std::string(key.as_str()), value, virtual_path, source)) {
             agents.push_back(std::move(*agent));
@@ -404,12 +404,12 @@ void append_json_string_map(
     std::error_code ec;
     if (!fs::exists(path, ec) || !fs::is_regular_file(path, ec)) return agents;
 
-    auto parsed = cc::utils::json::parse_file(path);
+    auto parsed = loom::utils::json::parse_file(path);
     if (!parsed || !parsed->root().is_obj()) return agents;
     auto node = parsed->root().get("agents");
     if (!node.valid() || !node.is_obj()) return agents;
 
-    node.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    node.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
         if (auto agent = parse_agent_json_definition(std::string(key.as_str()), value, path, source)) {
             agents.push_back(std::move(*agent));
@@ -429,7 +429,7 @@ void append_json_string_map(
     return load_agent_definitions_from_settings_file(fs::path{path}, "policySettings");
 }
 [[nodiscard]] std::string json_string_field(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::initializer_list<std::string_view> keys
 ) {
     if (!value.valid() || !value.is_obj()) return {};
@@ -439,12 +439,12 @@ void append_json_string_map(
     }
     return {};
 }
-[[nodiscard]] std::string json_text_from_content(cc::utils::json::JsonVal content) {
+[[nodiscard]] std::string json_text_from_content(loom::utils::json::JsonVal content) {
     if (content.is_str()) return std::string(content.as_str());
     if (!content.is_arr()) return {};
 
     std::string out;
-    content.iter([&](cc::utils::json::JsonVal block) {
+    content.iter([&](loom::utils::json::JsonVal block) {
         if (block.is_str()) {
             if (!out.empty()) out += '\n';
             out += block.as_str();
@@ -460,12 +460,12 @@ void append_json_string_map(
     });
     return out;
 }
-[[nodiscard]] std::vector<std::string> json_string_array(cc::utils::json::JsonVal value) {
+[[nodiscard]] std::vector<std::string> json_string_array(loom::utils::json::JsonVal value) {
     std::vector<std::string> out;
     if (!value.is_arr()) return out;
-    value.iter([&](cc::utils::json::JsonVal item) {
+    value.iter([&](loom::utils::json::JsonVal item) {
         if (item.is_str()) out.push_back(std::string(item.as_str()));
     });
     return out;
 }
-} // namespace cc::tools::agent_runtime
+} // namespace loom::tools::agent_runtime

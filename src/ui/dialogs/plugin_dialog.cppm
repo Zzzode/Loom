@@ -43,7 +43,7 @@ import loom.ui.features.plugins.plugin_manage_panel;
 import loom.ui.features.plugins.plugin_marketplace_browse;
 import loom.ui.features.plugins.plugin_settings_dialog;
 
-export namespace cc::ui::dialogs::plugin_dialog {
+export namespace loom::ui::dialogs::plugin_dialog {
 using namespace ftxui;
 
 // CSS-style padding decorator: padding(top, right, bottom, left).
@@ -68,16 +68,16 @@ inline Decorator padding(int top, int right, int bottom, int left) {
 }
 inline Decorator padding(int all) { return padding(all, all, all, all); }
 
-namespace ui = cc::commands::plugin_ui;
-namespace pf = cc::commands::plugin_helpers;
-namespace pe = cc::commands::plugin;
-namespace pd = cc::commands::plugin;
-namespace pp = cc::commands::plugin;
-namespace pt = cc::commands::plugin;
-namespace plugin_install = cc::ui::plugins::plugin_install_flow;
-namespace plugin_manage = cc::ui::plugins::plugin_manage_panel;
-namespace plugin_browse = cc::ui::plugins::plugin_marketplace_browse;
-namespace plugin_settings = cc::ui::plugins::plugin_settings_dialog;
+namespace ui = loom::commands::plugin_ui;
+namespace pf = loom::commands::plugin_helpers;
+namespace pe = loom::commands::plugin;
+namespace pd = loom::commands::plugin;
+namespace pp = loom::commands::plugin;
+namespace pt = loom::commands::plugin;
+namespace plugin_install = loom::ui::plugins::plugin_install_flow;
+namespace plugin_manage = loom::ui::plugins::plugin_manage_panel;
+namespace plugin_browse = loom::ui::plugins::plugin_marketplace_browse;
+namespace plugin_settings = loom::ui::plugins::plugin_settings_dialog;
 
 using ui::ViewKind;
 using ui::ViewState;
@@ -756,7 +756,7 @@ struct PluginDialogComponent : public ComponentBase {
 
 /// Build the top-level plugin dialog component.
 /// Sub-views (Manage / Browse / Install / Settings) are produced by sibling
-/// factory functions in cc::ui::plugins:: — this router composes them.
+/// factory functions in loom::ui::plugins:: — this router composes them.
 [[nodiscard]] inline Component MakePluginDialog(PluginDialogInputs inputs) {
     auto state = std::make_shared<PluginDialogState>();
     state->inputs = std::move(inputs);
@@ -777,4 +777,4 @@ struct PluginDialogComponent : public ComponentBase {
     return std::make_shared<PluginDialogComponent>(std::move(state));
 }
 
-} // namespace cc::ui::dialogs::plugin_dialog
+} // namespace loom::ui::dialogs::plugin_dialog

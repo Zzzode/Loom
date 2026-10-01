@@ -13,7 +13,7 @@ import std;
 
 import loom.state.app_state;
 
-namespace cc::state::selectors {
+namespace loom::state::selectors {
 
 // ============================================================
 // UI State Selectors
@@ -138,4 +138,4 @@ namespace cc::state::selectors {
            state.view_selection_mode == "viewing-agent";
 }
 
-} // namespace cc::state::selectors
+} // namespace loom::state::selectors

@@ -2,7 +2,7 @@ export module loom.ui.messages.message_predicates;
 
 import std;
 
-export namespace cc::utils::message_predicates {
+export namespace loom::utils::message_predicates {
 
 struct MessageLike {
     std::string type;
@@ -14,4 +14,4 @@ struct MessageLike {
     return message.type == "user" && !message.is_meta && !message.has_tool_use_result;
 }
 
-} // namespace cc::utils::message_predicates
+} // namespace loom::utils::message_predicates

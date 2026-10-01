@@ -12,7 +12,7 @@ import loom.services.mcp.types;
 import loom.tools.agent_runtime;
 import loom.skills.skill;
 
-namespace cc::tools::agent::utils {
+namespace loom::tools::agent::utils {
 
 namespace fs = std::filesystem;
 
@@ -252,7 +252,7 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] std::vector<std::string> available_mcp_servers_with_tools() {
     std::vector<std::string> names;
-    for (const auto& status : cc::tools::native_mcp_statuses()) {
+    for (const auto& status : loom::tools::native_mcp_statuses()) {
         if (status.status == "ready" && !status.tools.empty()) {
             names.push_back(status.name);
         }
@@ -280,8 +280,8 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] std::optional<std::string> resolve_agent_skill_name(
     std::string_view skill_name,
-    const std::vector<cc::skills::SkillDefinition>& skills,
-    const cc::tools::agent_runtime::AgentDefinition& agent_definition
+    const std::vector<loom::skills::SkillDefinition>& skills,
+    const loom::tools::agent_runtime::AgentDefinition& agent_definition
 ) {
     for (const auto& skill : skills) {
         if (skill.name == skill_name) return skill.name;
@@ -311,14 +311,14 @@ namespace fs = std::filesystem;
 }
 
 [[nodiscard]] std::vector<std::string> load_preloaded_skill_messages(
-    const cc::tools::agent_runtime::AgentDefinition& definition
+    const loom::tools::agent_runtime::AgentDefinition& definition
 ) {
     std::vector<std::string> messages;
     if (definition.skills.empty()) return messages;
 
-    cc::skills::SkillLoader loader;
+    loom::skills::SkillLoader loader;
     std::vector<std::pair<std::string, fs::path>> plugin_skill_paths;
-    for (const auto& plugin : cc::tools::agent_runtime::discover_plugin_component_paths()) {
+    for (const auto& plugin : loom::tools::agent_runtime::discover_plugin_component_paths()) {
         for (const auto& path : plugin.skills_paths) {
             plugin_skill_paths.emplace_back(plugin.plugin_name, path);
         }
@@ -361,7 +361,7 @@ namespace fs = std::filesystem;
     for (const auto& server_name : server_names) {
         if (server_name.empty()) continue;
 
-        auto status = cc::tools::restart_native_mcp_server(server_name);
+        auto status = loom::tools::restart_native_mcp_server(server_name);
         if (!status || status->status != "ready") continue;
 
         for (const auto& tool : status->tools) {
@@ -375,10 +375,10 @@ namespace fs = std::filesystem;
     return tools;
 }
 
-[[nodiscard]] cc::tools::NativeMcpConfiguredServer to_native_agent_mcp_server(
-    const cc::tools::agent_runtime::AgentInlineMcpServerConfig& config
+[[nodiscard]] loom::tools::NativeMcpConfiguredServer to_native_agent_mcp_server(
+    const loom::tools::agent_runtime::AgentInlineMcpServerConfig& config
 ) {
-    cc::tools::NativeMcpConfiguredServer server;
+    loom::tools::NativeMcpConfiguredServer server;
     server.name = config.name;
     server.command = config.command;
     server.args = config.args;
@@ -389,12 +389,12 @@ namespace fs = std::filesystem;
 
     const auto transport = lowercase_copy(config.transport);
     if (transport == "sse") {
-        server.transport = cc::services::mcp::TransportType::Sse;
+        server.transport = loom::services::mcp::TransportType::Sse;
     } else if (transport == "http" || transport == "streamable-http" || transport == "streamablehttp" ||
                (!server.url.empty() && server.command.empty())) {
-        server.transport = cc::services::mcp::TransportType::StreamableHttp;
+        server.transport = loom::services::mcp::TransportType::StreamableHttp;
     } else {
-        server.transport = cc::services::mcp::TransportType::Stdio;
+        server.transport = loom::services::mcp::TransportType::Stdio;
     }
     return server;
 }
@@ -412,12 +412,12 @@ void append_unique_agent_mcp_server(
 
 [[nodiscard]] std::expected<std::vector<AgentInlineMcpServerRuntimeState>, std::string>
 prepare_agent_inline_mcp_servers(
-    const std::vector<cc::tools::agent_runtime::AgentInlineMcpServerConfig>& configs
+    const std::vector<loom::tools::agent_runtime::AgentInlineMcpServerConfig>& configs
 ) {
     std::vector<AgentInlineMcpServerRuntimeState> states;
     if (configs.empty()) return states;
 
-    std::vector<cc::tools::NativeMcpConfiguredServer> servers;
+    std::vector<loom::tools::NativeMcpConfiguredServer> servers;
     servers.reserve(configs.size());
     for (const auto& config : configs) {
         if (config.name.empty()) continue;
@@ -427,16 +427,16 @@ prepare_agent_inline_mcp_servers(
         if (!already_tracked) {
             states.push_back(AgentInlineMcpServerRuntimeState{
                 .name = config.name,
-                .previous_config = cc::tools::native_mcp_configured_server(config.name),
+                .previous_config = loom::tools::native_mcp_configured_server(config.name),
             });
         }
         servers.push_back(to_native_agent_mcp_server(config));
     }
     if (servers.empty()) return states;
-    if (auto upserted = cc::tools::upsert_native_mcp_servers(std::move(servers)); !upserted) {
+    if (auto upserted = loom::tools::upsert_native_mcp_servers(std::move(servers)); !upserted) {
         return std::unexpected(upserted.error());
     }
     return states;
 }
 
-} // namespace cc::tools::agent::utils
+} // namespace loom::tools::agent::utils

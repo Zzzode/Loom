@@ -27,14 +27,14 @@ import loom.utils.error;
 import loom.serdes.json;
 import loom.services.mcp.xaa_idp_login;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
-using cc::utils::Error;
-using cc::utils::ErrorCode;
-using cc::utils::Result;
-using cc::utils::json::JsonDoc;
-using cc::utils::json::JsonMutDoc;
-using cc::utils::json::JsonVal;
+using loom::utils::Error;
+using loom::utils::ErrorCode;
+using loom::utils::Result;
+using loom::utils::json::JsonDoc;
+using loom::utils::json::JsonMutDoc;
+using loom::utils::json::JsonVal;
 namespace fs = std::filesystem;
 
 // ─── Constants ────────────────────────────────────────────────────────────
@@ -301,7 +301,7 @@ struct FormPostResult {
             + " at " + discovery_url));
     }
 
-    auto parsed = cc::utils::json::parse(response->body);
+    auto parsed = loom::utils::json::parse(response->body);
     if (!parsed) {
         return std::unexpected(Error(ErrorCode::parse_error,
             "XAA: PRM discovery returned non-JSON at " + discovery_url));
@@ -395,7 +395,7 @@ struct FormPostResult {
         response = std::move(*fallback);
     }
 
-    auto parsed = cc::utils::json::parse(response->body);
+    auto parsed = loom::utils::json::parse(response->body);
     if (!parsed) {
         return std::unexpected(Error(ErrorCode::parse_error,
             "XAA: AS metadata discovery returned non-JSON"));
@@ -485,7 +485,7 @@ struct FormPostResult {
             should_clear);
     }
 
-    auto parsed = cc::utils::json::parse(response->body);
+    auto parsed = loom::utils::json::parse(response->body);
     if (!parsed) {
         // Transient network condition (captive portal, proxy) — don't clear id_token.
         throw XaaTokenExchangeError(
@@ -559,7 +559,7 @@ struct FormPostResult {
         auto basic_payload = detail::url_encode(client_id)
             + ":" + detail::url_encode(client_secret);
         headers.emplace("Authorization",
-            "Basic " + cc::utils::crypto::base64_encode(basic_payload));
+            "Basic " + loom::utils::crypto::base64_encode(basic_payload));
     } else {
         body += "&client_id=" + detail::url_encode(client_id);
         body += "&client_secret=" + detail::url_encode(client_secret);
@@ -576,7 +576,7 @@ struct FormPostResult {
             + std::to_string(response->status) + ": " + redacted));
     }
 
-    auto parsed = cc::utils::json::parse(response->body);
+    auto parsed = loom::utils::json::parse(response->body);
     if (!parsed) {
         return std::unexpected(Error(ErrorCode::parse_error,
             "XAA: jwt-bearer grant returned non-JSON (captive portal?) at "
@@ -981,4 +981,4 @@ inline void logout_xaa(std::string_view idp_issuer,
     }
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

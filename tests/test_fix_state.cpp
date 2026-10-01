@@ -32,11 +32,11 @@ import loom.state.app_state;
 import loom.state.store;
 import loom.state.persistence;
 
-using cc::state::Action;
-using cc::state::ActionType;
-using cc::state::AppState;
-using cc::state::AppStore;
-using cc::state::persistence::StatePersistence;
+using loom::state::Action;
+using loom::state::ActionType;
+using loom::state::AppState;
+using loom::state::AppStore;
+using loom::state::persistence::StatePersistence;
 
 namespace {
 
@@ -44,7 +44,7 @@ namespace {
 // (persistence_ defaults to nullptr so notify() skips the auto-save branch).
 auto make_undo_store() -> std::unique_ptr<AppStore> {
     auto store = std::make_unique<AppStore>(
-        cc::state::get_default_app_state(), &cc::state::app_reducer);
+        loom::state::get_default_app_state(), &loom::state::app_reducer);
     store->enable_undo();
     return store;
 }
@@ -189,7 +189,7 @@ TEST(StatePersistence, SaveLoadRoundTripPreservesFields) {
 
     StatePersistence persist(tmp);
 
-    AppState src = cc::state::get_default_app_state();
+    AppState src = loom::state::get_default_app_state();
     src.verbose = true;
     src.compact_mode = true;
     src.fast_mode = true;
@@ -223,7 +223,7 @@ TEST(StatePersistence, AtomicWriteLeavesNoTempFile) {
     std::filesystem::remove(std::string(tmp.string()) + ".tmp");
 
     StatePersistence persist(tmp);
-    AppState src = cc::state::get_default_app_state();
+    AppState src = loom::state::get_default_app_state();
     auto saved = persist.save_state(src);
     ASSERT_TRUE(saved.has_value()) << saved.error().format();
     EXPECT_TRUE(std::filesystem::exists(tmp));

@@ -12,7 +12,7 @@ import std;
 import loom.types.types;
 import loom.serdes.json;
 
-export namespace cc::ui::permissions {
+export namespace loom::ui::permissions {
 
 using namespace ftxui;
 
@@ -73,7 +73,7 @@ struct ComputerUsePermissionOptions {
 /// callers can fall back to the generic panel instead of mislabeling.
 [[nodiscard]] inline std::optional<ComputerUsePermissionOptions>
 options_from_tool_input(std::string_view input_json) {
-    auto parsed = cc::utils::json::parse(std::string(input_json));
+    auto parsed = loom::utils::json::parse(std::string(input_json));
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     const auto root = parsed->root();
 
@@ -147,4 +147,4 @@ options_from_tool_input(std::string_view input_json) {
     });
 }
 
-} // namespace cc::ui::permissions
+} // namespace loom::ui::permissions

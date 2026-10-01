@@ -13,17 +13,17 @@ import loom.types.types;
 import loom.commands.command;
 import loom.vim.vim_types;  // canonical VimMode (cc_vim target)
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
-// Canonical VimMode — imported from cc::vim (vim/vim_types.cppm).
+// Canonical VimMode — imported from loom::vim (vim/vim_types.cppm).
 // Lives in cc_vim to avoid circular deps.
 // TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
 // This replaces the previous local VimModeState enum { Normal, Insert, Visual,
 // Command } that conflicted with other implementations.
 // "Disabled" is tracked by the separate enabled_ bool below.
-using cc::vim::VimMode;
+using loom::vim::VimMode;
 
 /// VimCommand implements the /vim slash command.
 /// Toggles vim-style keybindings for the input line editor.
@@ -131,4 +131,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

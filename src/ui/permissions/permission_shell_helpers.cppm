@@ -8,7 +8,7 @@ export module loom.ui.permissions.permission_shell_helpers;
 
 import std;
 
-export namespace cc::ui::permissions {
+export namespace loom::ui::permissions {
 
 using namespace ftxui;
 
@@ -55,4 +55,4 @@ inline constexpr std::size_t kMaxCommandPreview = 120;
     return vbox(elements);
 }
 
-} // namespace cc::ui::permissions
+} // namespace loom::ui::permissions

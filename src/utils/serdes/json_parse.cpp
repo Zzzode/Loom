@@ -13,7 +13,7 @@ import std;
 
 import loom.utils.error;
 
-namespace cc::utils::json {
+namespace loom::utils::json {
 
 JsonDoc::~JsonDoc() { if (doc_) yyjson_doc_free(doc_); }
 
@@ -90,4 +90,4 @@ Result<JsonDoc> parse_file(const char* path) {
     return parse_file_string(std::string(path));
 }
 
-} // namespace cc::utils::json
+} // namespace loom::utils::json

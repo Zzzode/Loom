@@ -1,7 +1,7 @@
 export module loom.commands.create_moved_to_plugin_command;
 
 import std;
-export namespace cc::commands::create_moved_to_plugin_command {
+export namespace loom::commands::create_moved_to_plugin_command {
 namespace fs = std::filesystem;
 
 struct CommandResponse { bool ok{true}; std::string message; };

@@ -16,13 +16,13 @@ import std;
 import loom.services.api.with_retry;
 import loom.services.api.with_retry_simple;
 
-// Do not use "using namespace cc::services::api" — it contains another RetryConfig
+// Do not use "using namespace loom::services::api" — it contains another RetryConfig
 // (Phase 2 full version) which conflicts with with_retry_simple::RetryConfig.
-using namespace cc::services::api::with_retry_simple;
+using namespace loom::services::api::with_retry_simple;
 
-// Dispatch-required interface lives under cc::services::api (WithRetry / RetryConfigLite); explicit alias.
-namespace api = cc::services::api;
-using RetryConfigLite  = cc::services::api::RetryConfigLite;
+// Dispatch-required interface lives under loom::services::api (WithRetry / RetryConfigLite); explicit alias.
+namespace api = loom::services::api;
+using RetryConfigLite  = loom::services::api::RetryConfigLite;
 template <typename F>
 auto WithRetryLite(const RetryConfigLite& cfg, F&& fn) {
     return api::WithRetry(cfg, std::forward<F>(fn));

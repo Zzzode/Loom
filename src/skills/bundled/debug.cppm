@@ -21,7 +21,7 @@ import std;
 import loom.skills.skill;
 import loom.skills.load_skills_dir;
 
-export namespace cc::skills::bundled {
+export namespace loom::skills::bundled {
 
 // ============================================================
 // Failure Type Classification
@@ -599,17 +599,17 @@ struct DebugLoopResult {
     return r;
 }
 
-} // namespace cc::skills::bundled
+} // namespace loom::skills::bundled
 
 // ============================================================
 // Skill Manifest + SkillDefinition
 // ============================================================
 
-export namespace cc::skills::bundled {
+export namespace loom::skills::bundled {
 
 /// SkillManifest for load_skills_dir discovery
-[[nodiscard]] inline cc::skills::SkillManifest get_debug_skill_manifest() {
-    return cc::skills::SkillManifest{
+[[nodiscard]] inline loom::skills::SkillManifest get_debug_skill_manifest() {
+    return loom::skills::SkillManifest{
         .name = "debug",
         .description =
             "Systematic failure diagnosis: classify (5 types), extract errors "
@@ -722,4 +722,4 @@ For each hypothesis (highest likelihood first):
     };
 }
 
-} // namespace cc::skills::bundled
+} // namespace loom::skills::bundled

@@ -21,9 +21,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::file_write_ui {
+export namespace loom::ui::tools::file_write_ui {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 namespace detail {
 
@@ -129,4 +129,4 @@ inline void register_file_write_ui() {
         "FileWrite", make_file_write_ui());
 }
 
-}  // namespace cc::ui::tools::file_write_ui
+}  // namespace loom::ui::tools::file_write_ui

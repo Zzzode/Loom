@@ -4,7 +4,7 @@ module;
 export module loom.commands.thinkback_play;
 
 import std;
-export namespace cc::commands::thinkback_play {
+export namespace loom::commands::thinkback_play {
 
 namespace fs = std::filesystem;
 

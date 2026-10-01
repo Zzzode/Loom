@@ -29,13 +29,13 @@ import loom.serdes.json;
 
 namespace {
 
-using namespace cc::server::control;
+using namespace loom::server::control;
 
 // Recursive semantic JSON comparison (order-independent for objects).
 // unordered_map fields serialize in non-deterministic key order, so string
 // comparison is unreliable; comparing the parsed values is stable.
-bool json_val_eq(cc::utils::json::JsonVal a, cc::utils::json::JsonVal b) {
-    using namespace cc::utils::json;
+bool json_val_eq(loom::utils::json::JsonVal a, loom::utils::json::JsonVal b) {
+    using namespace loom::utils::json;
     if (a.is_null() && b.is_null()) return true;
     if (a.is_bool() && b.is_bool()) return a.as_bool() == b.as_bool();
     if (a.is_num() && b.is_num()) return a.as_double() == b.as_double();
@@ -69,9 +69,9 @@ bool json_val_eq(cc::utils::json::JsonVal a, cc::utils::json::JsonVal b) {
 
 // Parse two JSON strings and compare semantically.
 ::testing::AssertionResult json_eq(const std::string& a, const std::string& b) {
-    auto pa = cc::utils::json::parse(a);
+    auto pa = loom::utils::json::parse(a);
     if (!pa) return ::testing::AssertionFailure() << "left parse error: " << pa.error().message();
-    auto pb = cc::utils::json::parse(b);
+    auto pb = loom::utils::json::parse(b);
     if (!pb) return ::testing::AssertionFailure() << "right parse error: " << pb.error().message();
     if (json_val_eq(pa->root(), pb->root())) return ::testing::AssertionSuccess();
     return ::testing::AssertionFailure() << "\n  left:  " << a << "\n  right: " << b;

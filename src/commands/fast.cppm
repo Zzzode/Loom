@@ -12,11 +12,11 @@ import loom.types.types;
 import loom.commands.command;
 import loom.state.app_state;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
-/// Action type ordinal for SetFastMode (from cc::state::ActionType in store.cppm).
+/// Action type ordinal for SetFastMode (from loom::state::ActionType in store.cppm).
 inline constexpr int ACTION_SET_FAST_MODE = 42;
 
 /// FastCommand implements the /fast slash command.
@@ -50,7 +50,7 @@ public:
         bool current = fallback_fast_mode;
         std::optional<std::string> current_model_id;
         if (const void* raw = ctx.get_app_state()) {
-            const auto* state = static_cast<const cc::state::AppState*>(raw);
+            const auto* state = static_cast<const loom::state::AppState*>(raw);
             current = state->fast_mode;
             if (!state->current_model.model_id.empty()) {
                 current_model_id = state->current_model.model_id;
@@ -106,4 +106,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

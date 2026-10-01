@@ -4,7 +4,7 @@ module;
 export module loom.commands.break_cache;
 
 import std;
-export namespace cc::commands::break_cache {
+export namespace loom::commands::break_cache {
 namespace fs = std::filesystem;
 
 struct CommandResponse { bool ok{true}; std::string message; };

@@ -9,7 +9,7 @@ import std;
 import loom.process.process;
 import loom.scm.git.git;
 
-export namespace cc::benchmarks::pare {
+export namespace loom::benchmarks::pare {
 
 namespace fs = std::filesystem;
 
@@ -45,13 +45,13 @@ inline std::optional<BenchmarkWorkspace> create_isolated_workspace(
     fs::path repo_dir = temp_root / "repo";
     
     if (mode == WorkspaceMode::TmpGit) {
-        auto result = cc::utils::git::clone_local(source_cwd, repo_dir.string());
+        auto result = loom::utils::git::clone_local(source_cwd, repo_dir.string());
         if (!result.success) {
             fs::remove_all(temp_root);
             return std::nullopt;
         }
         
-        result = cc::utils::git::checkout(repo_dir.string(), "HEAD");
+        result = loom::utils::git::checkout(repo_dir.string(), "HEAD");
         if (!result.success) {
             fs::remove_all(temp_root);
             return std::nullopt;
@@ -67,7 +67,7 @@ inline std::optional<BenchmarkWorkspace> create_isolated_workspace(
         };
     }
     
-    auto result = cc::utils::git::worktree_add(source_cwd, repo_dir.string(), "HEAD");
+    auto result = loom::utils::git::worktree_add(source_cwd, repo_dir.string(), "HEAD");
     if (!result.success) {
         fs::remove_all(temp_root);
         return std::nullopt;
@@ -77,7 +77,7 @@ inline std::optional<BenchmarkWorkspace> create_isolated_workspace(
         .dir = repo_dir.string(),
         .cleanup = [temp_root, source_cwd, repo_dir]() {
             try {
-                (void)cc::utils::git::worktree_remove(source_cwd, repo_dir.string());
+                (void)loom::utils::git::worktree_remove(source_cwd, repo_dir.string());
             } catch (...) {}
             try {
                 fs::remove_all(temp_root);
@@ -86,4 +86,4 @@ inline std::optional<BenchmarkWorkspace> create_isolated_workspace(
     };
 }
 
-} // namespace cc::benchmarks::pare
+} // namespace loom::benchmarks::pare

@@ -13,11 +13,11 @@ import std;
 
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
-import loom.types.types;  // arch-check: keep-import (::cc::core::ImageBlockSource)
+import loom.types.types;  // arch-check: keep-import (::loom::core::ImageBlockSource)
 import loom.ui.messages.message_row;
 import loom.ui.messages.message_image;
 import loom.ui.messages.messages_list;
-import loom.ui.visual.markdown;  // arch-check: keep-import (::cc::ui::StreamingMarkdown)
+import loom.ui.visual.markdown;  // arch-check: keep-import (::loom::ui::StreamingMarkdown)
 import loom.ui.messages.user_text_message;
 import loom.ui.messages.assistant_text_message;
 import loom.ui.messages.system_text_message;
@@ -27,7 +27,7 @@ import loom.ui.messages.message_tool_result;
 import loom.ui.messages.local_command_output_message;
 import loom.ui.messages.api_error_message;
 
-namespace cc::ui::repl_screen {
+namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 // UI4/UI5: message list.  Delegates to messages_list.cppm (UI21).
@@ -40,7 +40,7 @@ using namespace ftxui;
     int sel, int vlines,
     int offs, bool pinned,
     int spinner_frame,
-    std::optional<cc::ui::messages_list::UnseenDivider> unseen_divider,
+    std::optional<loom::ui::messages_list::UnseenDivider> unseen_divider,
     Elements leading_elements,
     bool is_brief_mode,
     const std::unordered_set<std::string>& expanded_keys,
@@ -64,14 +64,14 @@ using namespace ftxui;
     // stable-prefix cache for the streaming-text tail row.  When non-null,
     // RenderAssistantTextMessageFaithful uses update() instead of full
     // render_markdown() for is_streaming rows.
-    ::cc::ui::StreamingMarkdown* streaming_md) {
+    ::loom::ui::StreamingMarkdown* streaming_md) {
     // NOTE: We no longer early-return on empty entries.  The leading_element
     // (welcome/logo card) must always be rendered inside the yframe so it
     // scrolls with messages.  The messages_list handles empty rows gracefully
     // via its own visible.empty() path which prepends leading elements.
 
-    namespace ml = cc::ui::messages_list;
-    namespace image = cc::ui::messages::image;
+    namespace ml = loom::ui::messages_list;
+    namespace image = loom::ui::messages::image;
     ml::MessagesListInput input;
     input.rows.reserve(entries.size());
     input.shapes.reserve(entries.size());
@@ -147,7 +147,7 @@ using namespace ftxui;
                 if (ib.height)           d.height = *ib.height;
                 if (ib.size_bytes)       d.file_size = *ib.size_bytes;
                 switch (ib.source) {
-                    using IS = ::cc::core::ImageBlockSource;
+                    using IS = ::loom::core::ImageBlockSource;
                     case IS::Clipboard: d.source_type = ImageSource::Clipboard; break;
                     case IS::File:      d.source_type = ImageSource::File; break;
                     case IS::Base64:    d.source_type = ImageSource::Base64; break;
@@ -236,7 +236,7 @@ using namespace ftxui;
             // instead of the plain SystemText glyph.  The Retry button calls
             // on_retry to re-send the last user message.
             // TS REF: SystemAPIErrorMessage.tsx — rich error card with retry.
-            namespace aem = cc::ui::messages::api_error_message;
+            namespace aem = loom::ui::messages::api_error_message;
             aem::APIErrorData err_data;
             err_data.message = m.content_preview;
             err_data.provider = "API";
@@ -346,7 +346,7 @@ using namespace ftxui;
     // shared StreamingMarkdown instance so the streaming-text tail row uses
     // stable-prefix caching instead of full re-parse per token.
     input.streaming_md = streaming_md;
-    namespace ml = cc::ui::messages_list;
+    namespace ml = loom::ui::messages_list;
     // TS REF: FullscreenLayout <Box flexGrow={1} /> at the bottom of the
     // message list — absorbs remaining viewport space so short content stays
     // compact at the top (logo + messages adjacent, no blank gap between).
@@ -363,4 +363,4 @@ using namespace ftxui;
         std::move(leading_elements)) | flex;
 }
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

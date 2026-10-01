@@ -26,35 +26,35 @@ import loom.tools.tool;
 
 namespace {
 
-namespace wire = cc::query::wire;
+namespace wire = loom::query::wire;
 using wire::StreamDelta;
 using wire::WireApi;
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
-cc::core::ToolDefinition make_tool(std::string name, std::string description) {
-    cc::core::ToolDefinition def;
+loom::core::ToolDefinition make_tool(std::string name, std::string description) {
+    loom::core::ToolDefinition def;
     def.name = std::move(name);
     def.description = std::move(description);
-    def.input_schema = cc::core::InputSchema{};
-    def.permission = cc::core::ToolPermission::ReadOnly;
+    def.input_schema = loom::core::InputSchema{};
+    def.permission = loom::core::ToolPermission::ReadOnly;
     return def;
 }
 
-cc::core::UserMessage make_user(std::string text) {
-    cc::core::UserMessage msg{};
+loom::core::UserMessage make_user(std::string text) {
+    loom::core::UserMessage msg{};
     msg.id.value = "u1";
     msg.timestamp = std::chrono::system_clock::now();
-    msg.content.push_back(cc::core::TextBlock{std::move(text)});
+    msg.content.push_back(loom::core::TextBlock{std::move(text)});
     return msg;
 }
 
-cc::core::AssistantMessage make_assistant_with_tool_use(
+loom::core::AssistantMessage make_assistant_with_tool_use(
     std::string tool_id, std::string tool_name, std::string input_json) {
-    cc::core::AssistantMessage msg{};
+    loom::core::AssistantMessage msg{};
     msg.id.value = "a1";
     msg.timestamp = std::chrono::system_clock::now();
-    cc::core::ToolUseBlock tub;
+    loom::core::ToolUseBlock tub;
     tub.id.value = std::move(tool_id);
     tub.name = std::move(tool_name);
     tub.input_json = std::move(input_json);
@@ -63,10 +63,10 @@ cc::core::AssistantMessage make_assistant_with_tool_use(
 }
 
 /// Parse a string into a JSON document, failing the test on malformed input.
-cc::utils::json::JsonDoc parse_or_fail(const std::string& text) {
-    auto doc = cc::utils::json::parse(text);
+loom::utils::json::JsonDoc parse_or_fail(const std::string& text) {
+    auto doc = loom::utils::json::parse(text);
     EXPECT_TRUE(doc.has_value()) << "not valid JSON: " << text;
-    return doc.has_value() ? std::move(*doc) : cc::utils::json::JsonDoc{};
+    return doc.has_value() ? std::move(*doc) : loom::utils::json::JsonDoc{};
 }
 
 }  // namespace
@@ -112,7 +112,7 @@ TEST(OpenAiWireBackend, BuildsChatCompletionsRequest) {
     input.max_tokens = 1234;
     input.stream = true;
     input.system_prompt = "You are a helpful agent.";
-    input.messages.push_back(cc::core::Message{make_user("hello")});
+    input.messages.push_back(loom::core::Message{make_user("hello")});
 
     auto prepared = backend.prepare(input);
     ASSERT_TRUE(prepared.has_value()) << prepared.error();
@@ -144,7 +144,7 @@ TEST(OpenAiWireBackend, TrailingSlashBaseUrlIsNormalized) {
     wire::OpenAiWireBackend backend("http://localhost:8080/");
     wire::RequestInput input;
     input.model = "m";
-    input.messages.push_back(cc::core::Message{make_user("hi")});
+    input.messages.push_back(loom::core::Message{make_user("hi")});
     auto prepared = backend.prepare(input);
     ASSERT_TRUE(prepared.has_value());
     EXPECT_EQ(prepared->url, "http://localhost:8080/v1/chat/completions");
@@ -162,7 +162,7 @@ TEST(OpenAiWireBackend, ToolsUseFunctionShapeWithVerbatimSchema) {
     wire::OpenAiWireBackend backend("http://h");
     wire::RequestInput input;
     input.model = "m";
-    input.messages.push_back(cc::core::Message{make_user("hi")});
+    input.messages.push_back(loom::core::Message{make_user("hi")});
     input.tools.push_back(make_tool("Read", "Read a file"));
     // A verbatim MCP schema must win over the simplified one.
     input.tool_schemas.emplace_back(
@@ -191,7 +191,7 @@ TEST(OpenAiWireBackend, ComputerUseStaysAnOrdinaryFunctionTool) {
     wire::OpenAiWireBackend backend("http://h");
     wire::RequestInput input;
     input.model = "m";
-    input.messages.push_back(cc::core::Message{make_user("hi")});
+    input.messages.push_back(loom::core::Message{make_user("hi")});
     input.native_computer_tool = true;  // must be ignored by this backend
     input.tools.push_back(make_tool("computer_use", "Control the computer"));
 
@@ -212,17 +212,17 @@ TEST(OpenAiWireBackend, ToolResultsBecomeRoleToolMessages) {
     wire::OpenAiWireBackend backend("http://h");
     wire::RequestInput input;
     input.model = "m";
-    input.messages.push_back(cc::core::Message{
+    input.messages.push_back(loom::core::Message{
         make_assistant_with_tool_use("toolu_1", "Read", R"({"file_path":"/x"})")});
 
-    cc::core::UserMessage tool_msg{};
+    loom::core::UserMessage tool_msg{};
     tool_msg.id.value = "u2";
     tool_msg.timestamp = std::chrono::system_clock::now();
-    cc::core::ToolResultBlock trb;
+    loom::core::ToolResultBlock trb;
     trb.tool_use_id.value = "toolu_1";
     // content is a variant<string, vector<ToolResultContentItem>>.
-    trb.content = std::vector<cc::core::ToolResultContentItem>{
-        cc::core::ToolResultContentItem{
+    trb.content = std::vector<loom::core::ToolResultContentItem>{
+        loom::core::ToolResultContentItem{
             .type = "text",
             .text = "file body",
             .media_type = {},
@@ -230,7 +230,7 @@ TEST(OpenAiWireBackend, ToolResultsBecomeRoleToolMessages) {
         },
     };
     tool_msg.content.push_back(std::move(trb));
-    input.messages.push_back(cc::core::Message{std::move(tool_msg)});
+    input.messages.push_back(loom::core::Message{std::move(tool_msg)});
 
     auto prepared = backend.prepare(input);
     ASSERT_TRUE(prepared.has_value());
@@ -287,8 +287,8 @@ TEST(OpenAiWireBackend, ParsesChatCompletionWithToolCalls) {
 
     bool saw_text = false, saw_tool = false;
     for (const auto& block : parsed->message.content) {
-        if (std::get_if<cc::core::TextBlock>(&block)) saw_text = true;
-        if (auto* tu = std::get_if<cc::core::ToolUseBlock>(&block)) {
+        if (std::get_if<loom::core::TextBlock>(&block)) saw_text = true;
+        if (auto* tu = std::get_if<loom::core::ToolUseBlock>(&block)) {
             saw_tool = true;
             EXPECT_EQ(tu->id.value, "call_1");
             EXPECT_EQ(tu->name, "Read");
@@ -417,7 +417,7 @@ TEST(AnthropicWireBackend, BuildsMessagesRequest) {
     input.max_tokens = 2048;
     input.stream = false;
     input.system_prompt = "You are an agent.";
-    input.messages.push_back(cc::core::Message{make_user("hello")});
+    input.messages.push_back(loom::core::Message{make_user("hello")});
 
     auto prepared = backend.prepare(input);
     ASSERT_TRUE(prepared.has_value()) << prepared.error();
@@ -438,7 +438,7 @@ TEST(AnthropicWireBackend, SendsAnthropicVersionHeader) {
     wire::AnthropicWireBackend backend("https://api.anthropic.com");
     wire::RequestInput input;
     input.model = "m";
-    input.messages.push_back(cc::core::Message{make_user("hi")});
+    input.messages.push_back(loom::core::Message{make_user("hi")});
 
     auto prepared = backend.prepare(input);
     ASSERT_TRUE(prepared.has_value());
@@ -453,7 +453,7 @@ TEST(AnthropicWireBackend, NativeComputerToolUsesComputer20241022) {
     wire::AnthropicWireBackend backend("https://api.anthropic.com");
     wire::RequestInput input;
     input.model = "m";
-    input.messages.push_back(cc::core::Message{make_user("hi")});
+    input.messages.push_back(loom::core::Message{make_user("hi")});
     input.native_computer_tool = true;
     input.computer_display_width = 1920;
     input.computer_display_height = 1080;
@@ -501,8 +501,8 @@ TEST(AnthropicWireBackend, ParsesMessageResponse) {
 
     bool saw_text = false, saw_tool = false;
     for (const auto& block : parsed->message.content) {
-        if (std::get_if<cc::core::TextBlock>(&block)) saw_text = true;
-        if (auto* tu = std::get_if<cc::core::ToolUseBlock>(&block)) {
+        if (std::get_if<loom::core::TextBlock>(&block)) saw_text = true;
+        if (auto* tu = std::get_if<loom::core::ToolUseBlock>(&block)) {
             saw_tool = true;
             EXPECT_EQ(tu->id.value, "toolu_1");
             EXPECT_EQ(tu->name, "Read");

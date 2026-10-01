@@ -26,7 +26,7 @@ import loom.hooks.registry;
 import loom.hooks.execution;
 import loom.services.compact.api_microcompact;
 
-export namespace cc::core {
+export namespace loom::core {
 
 // ============================================================
 // SSE (Server-Sent Events) stream decoding
@@ -226,7 +226,7 @@ struct QueryEngineConfig {
     // TS PARITY: context.alwaysDenyRules flattened over all sources
     // (user/project/local/flag/policy/cliArg/command/session — see
     // permissions.ts:109-114,213-221); matched via
-    // cc::utils::tool_deny_rules before the tools array is serialized.
+    // loom::utils::tool_deny_rules before the tools array is serialized.
     std::vector<std::string> always_deny_rules;
     std::vector<std::string> agent_definitions;     // Agent definitions
     std::vector<std::string> fallback_models;       // Fallback models for capacity errors
@@ -348,7 +348,7 @@ public:
     }
 
     /// Set the permission hook for tool execution policy
-    void set_permission_hook(cc::hooks::ToolPermissionHook* hook) noexcept {
+    void set_permission_hook(loom::hooks::ToolPermissionHook* hook) noexcept {
         permission_hook_ = hook;
     }
 
@@ -361,11 +361,11 @@ public:
     /// go through WireBackend, so a factory returning a mock backend does
     /// not prevent real HTTP calls.
     using WireBackendFactory =
-        std::function<std::unique_ptr<cc::query::wire::WireBackend>()>;
+        std::function<std::unique_ptr<loom::query::wire::WireBackend>()>;
     void set_wire_backend_factory(WireBackendFactory factory);
 
     /// Set the lifecycle hook registry for event notifications
-    void set_lifecycle_hooks(cc::hooks::LifecycleHookRegistry* hooks) noexcept {
+    void set_lifecycle_hooks(loom::hooks::LifecycleHookRegistry* hooks) noexcept {
         lifecycle_hooks_ = hooks;
     }
 
@@ -376,8 +376,8 @@ public:
     /// (session/conversation ids); per-call context (tool name, payload) is
     /// merged at dispatch time in execute_single_tool.
     void set_user_hooks(
-        std::vector<cc::utils::hooks_registry::IndividualHookConfig> registry,
-        cc::utils::hooks_execution::HookExecutionContext ctx_template) {
+        std::vector<loom::utils::hooks_registry::IndividualHookConfig> registry,
+        loom::utils::hooks_execution::HookExecutionContext ctx_template) {
         user_hooks_ = std::move(registry);
         user_hooks_ctx_template_ = std::move(ctx_template);
         user_hooks_configured_ = true;
@@ -409,7 +409,7 @@ public:
 
     /// Compact conversation history to fit within context window.
     /// Preserves system prompt and recent messages, summarizes middle.
-    [[nodiscard]] cc::utils::VoidResult compact_conversation(std::string_view trigger = "manual");
+    [[nodiscard]] loom::utils::VoidResult compact_conversation(std::string_view trigger = "manual");
 
     void append_message_for_testing(Message msg) {
         append_message(std::move(msg));
@@ -482,7 +482,7 @@ public:
     /// Enable transcript persistence. After this call, every appended message
     /// is also appended (JSONL) to <sessions_dir>/<session_id>/messages.jsonl,
     /// and session metadata is written so the session is discoverable by
-    /// cc::session::list_recent_sessions. Call once at startup.
+    /// loom::session::list_recent_sessions. Call once at startup.
     void set_session_storage(std::filesystem::path sessions_dir);
 
     // TS REF: src/services/api/dumpPrompts.ts
@@ -636,14 +636,14 @@ private:
         std::string_view tool_name,
         const QueryOptions& options);
 
-    [[nodiscard]] std::optional<cc::services::compact::ContextManagementConfig>
+    [[nodiscard]] std::optional<loom::services::compact::ContextManagementConfig>
     api_context_management() const;
 
     [[nodiscard]] bool thinking_enabled_for_request() const;
 
     void add_output_config_to_json(
-        cc::utils::json::JsonMutVal& root,
-        cc::utils::json::JsonMutDoc& doc
+        loom::utils::json::JsonMutVal& root,
+        loom::utils::json::JsonMutDoc& doc
     ) const;
 
 public:
@@ -666,14 +666,14 @@ private:
 
     /// Construct the wire backend selected by `wire_api_`. Called per request
     /// (cheap) so a config change cannot leave a stale backend behind.
-    [[nodiscard]] std::unique_ptr<cc::query::wire::WireBackend>
+    [[nodiscard]] std::unique_ptr<loom::query::wire::WireBackend>
     make_wire_backend() const;
 
     /// Collect everything a backend needs for one request. This is where the
     /// engine's conversation walk (system-prompt hoisting, snip filtering,
     /// compact-boundary skipping) and tool pruning live — the backends stay
     /// ignorant of the engine's message model.
-    [[nodiscard]] cc::query::wire::RequestInput build_wire_input(
+    [[nodiscard]] loom::query::wire::RequestInput build_wire_input(
         const QueryOptions& options,
         bool stream) const;
 
@@ -685,13 +685,13 @@ private:
 
     /// Append a Message variant to JSON array
     void append_message_to_json(const Message& msg,
-                                cc::utils::json::JsonMutVal& arr,
-                                cc::utils::json::JsonMutDoc& doc) const;
+                                loom::utils::json::JsonMutVal& arr,
+                                loom::utils::json::JsonMutDoc& doc) const;
 
     /// Convert content blocks to JSON
-    [[nodiscard]] cc::utils::json::JsonMutVal content_to_json(
+    [[nodiscard]] loom::utils::json::JsonMutVal content_to_json(
         const std::vector<ContentBlock>& content,
-        cc::utils::json::JsonMutDoc& doc) const;
+        loom::utils::json::JsonMutDoc& doc) const;
 
     /// Low-level API request using httplib
     [[nodiscard]] Result<ApiCallResult> send_request(
@@ -705,7 +705,7 @@ private:
     [[nodiscard]] Result<ApiCallResult> parse_api_response(std::string_view response_body);
 
     /// Parse a single content block from JSON
-    void parse_content_block(cc::utils::json::JsonVal block,
+    void parse_content_block(loom::utils::json::JsonVal block,
                             std::vector<ContentBlock>& content) const;
 
     /// Single streaming API call result
@@ -773,14 +773,14 @@ private:
 
     QueryEngineConfig config_;
     ToolRegistry* tool_registry_;              // Non-owning reference to tools
-    cc::hooks::ToolPermissionHook* permission_hook_ = nullptr;  // Optional permission policy
-    cc::hooks::LifecycleHookRegistry* lifecycle_hooks_ = nullptr; // Optional lifecycle hooks
+    loom::hooks::ToolPermissionHook* permission_hook_ = nullptr;  // Optional permission policy
+    loom::hooks::LifecycleHookRegistry* lifecycle_hooks_ = nullptr; // Optional lifecycle hooks
     // User-configured hook path (PreToolUse/PostToolUse via the
     // cc.hooks.execution engine). Mirrors src/utils/hooks.ts in TS.
     // When empty/disabled the tool loop is unchanged (parity with TS, which
     // only runs the pipeline when matching hooks exist).
-    std::vector<cc::utils::hooks_registry::IndividualHookConfig> user_hooks_;
-    cc::utils::hooks_execution::HookExecutionContext user_hooks_ctx_template_;
+    std::vector<loom::utils::hooks_registry::IndividualHookConfig> user_hooks_;
+    loom::utils::hooks_execution::HookExecutionContext user_hooks_ctx_template_;
     bool user_hooks_configured_ = false;
     std::vector<Message> conversation_;        // Full conversation history
     TokenUsage cumulative_usage_;              // Session-wide token tracking
@@ -805,7 +805,7 @@ private:
     ApiClientConfig api_config_;
     /// Selected wire protocol. Set in setup_api_client(); read when
     /// serializing requests and parsing responses.
-    cc::query::wire::WireApi wire_api_ = cc::query::wire::WireApi::Anthropic;
+    loom::query::wire::WireApi wire_api_ = loom::query::wire::WireApi::Anthropic;
     /// When true, emit the vendor-native computer-use tool shape.
     bool native_computer_tool_ = true;
     /// Optional wire backend factory (§2.4). When set, make_wire_backend()
@@ -836,4 +836,4 @@ private:
         }();
 };
 
-} // namespace cc::core
+} // namespace loom::core

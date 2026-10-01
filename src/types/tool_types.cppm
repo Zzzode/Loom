@@ -7,7 +7,7 @@ export module loom.types.tool_types;
 
 import std;
 
-export namespace cc::core {
+export namespace loom::core {
 
 // ============================================================
 // Tool Input / Output types
@@ -101,4 +101,4 @@ struct ToolResult {
     }
 };
 
-} // namespace cc::core
+} // namespace loom::core

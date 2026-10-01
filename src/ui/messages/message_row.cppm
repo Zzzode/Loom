@@ -134,7 +134,7 @@ import loom.ui.messages.api_error_message;
 import loom.ui.messages.collapsed_content_message;
 import loom.ui.messages.local_command_output_message;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -629,4 +629,4 @@ struct MessageRowCallbacks {
     });
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

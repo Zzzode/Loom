@@ -31,7 +31,7 @@ export module loom.ui.foundation.feature_dialog_protocol;
 
 import std;
 
-export namespace cc::ui::feature_dialog_protocol {
+export namespace loom::ui::feature_dialog_protocol {
 
 using ftxui::Component;
 
@@ -114,4 +114,4 @@ inline void register_dialog_factory(ViewKind kind, DialogFactory factory) {
     return it != detail::registry().end() ? it->second : nullptr;
 }
 
-}  // namespace cc::ui::feature_dialog_protocol
+}  // namespace loom::ui::feature_dialog_protocol

@@ -55,18 +55,18 @@ import loom.ui.features.agents.agent_cards;
 import loom.tools.agent_color_manager;
 import loom.teams.swarm.backends;
 
-export namespace cc::ui::agents::wizard {
+export namespace loom::ui::agents::wizard {
 using namespace ftxui;
 
-namespace fdp = cc::ui::feature_dialog_protocol;
+namespace fdp = loom::ui::feature_dialog_protocol;
 
-using cc::ui::custom_select::MakeMultiSelect;
-using cc::ui::custom_select::MakeSingleSelect;
-using cc::ui::custom_select::MakeCustomSelect;
-using cc::ui::custom_select::SelectOption;
-using cc::ui::custom_select::SelectMode;
-using cc::ui::custom_select::CustomSelectOptions;
-using cc::ui::custom_select::CustomSelectHandle;
+using loom::ui::custom_select::MakeMultiSelect;
+using loom::ui::custom_select::MakeSingleSelect;
+using loom::ui::custom_select::MakeCustomSelect;
+using loom::ui::custom_select::SelectOption;
+using loom::ui::custom_select::SelectMode;
+using loom::ui::custom_select::CustomSelectOptions;
+using loom::ui::custom_select::CustomSelectHandle;
 
 using cards::AgentCardData;
 using shared::AgentAvatar;
@@ -74,9 +74,9 @@ using shared::AvatarOptions;
 using shared::RoleTags;
 using shared::status_color;
 using shared::agent_color_to_ftxui;
-using cc::utils::swarm_backends::AgentColor;
-using cc::tools::agent_color_manager::parse_color_name;
-using cc::tools::agent_color_manager::assign_cycle_color;
+using loom::utils::swarm_backends::AgentColor;
+using loom::tools::agent_color_manager::parse_color_name;
+using loom::tools::agent_color_manager::assign_cycle_color;
 
 // ============================================================
 // Wizard State — the mutable draft gathered across all 4 steps.
@@ -287,7 +287,7 @@ inline std::vector<SelectOption> canonical_role_options() {
             av.size_cells = 4;
             // Override color if user picked one.
             if (draft->avatar_color) {
-                cc::tools::agent_color_manager::set_agent_color(
+                loom::tools::agent_color_manager::set_agent_color(
                     av.agent_type, *draft->avatar_color);
             }
             auto preview = hbox({
@@ -761,7 +761,7 @@ struct AgentWizardOptions {
             else                    draft->default_permission = PermissionMode::Ask;
         }
         if (!e.agent_type.empty()) {
-            auto c = cc::tools::agent_color_manager::get_agent_color(e.agent_type);
+            auto c = loom::tools::agent_color_manager::get_agent_color(e.agent_type);
             if (c) draft->avatar_color = c;
         }
     }
@@ -807,4 +807,4 @@ struct AgentWizardOptions {
                : Component();
 }
 
-} // namespace cc::ui::agents::wizard
+} // namespace loom::ui::agents::wizard

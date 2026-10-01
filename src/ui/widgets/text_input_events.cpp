@@ -48,7 +48,7 @@ bool TextInputImpl::HandleEvent(Event event) {
         return true;  // Swallow all other keys during preview
     }
 
-    // --- Vim mode dispatch (canonical VimMode from cc::ui::common) ---
+    // --- Vim mode dispatch (canonical VimMode from loom::ui::common) ---
     // TS REF: src/hooks/useVimInput.ts:175 — handleVimInput dispatches
     //   keys based on current vim mode before base textInput handler.
     // TS REF: src/types/textInputTypes.ts:222 — VimMode = 'INSERT'|'NORMAL'

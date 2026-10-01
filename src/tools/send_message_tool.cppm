@@ -7,7 +7,7 @@ export module loom.tools.send_message;
 import std;
 
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 // Error types for send message operations
 enum class SendMessageError {
@@ -281,4 +281,4 @@ private:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

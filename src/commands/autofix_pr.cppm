@@ -4,7 +4,7 @@ import std;
 
 import loom.process.exec_sync;
 
-export namespace cc::commands::autofix_pr {
+export namespace loom::commands::autofix_pr {
 struct CommandResponse { bool ok{true}; std::string message; };
 [[nodiscard]] inline auto name() -> std::string_view { return "autofix_pr"; }
 
@@ -19,27 +19,27 @@ struct CommandResponse { bool ok{true}; std::string message; };
 }
 
 [[nodiscard]] inline auto run(std::string_view pr = {}) -> CommandResponse {
-    auto git_root = cc::utils::exec_sync("git rev-parse --show-toplevel");
+    auto git_root = loom::utils::exec_sync("git rev-parse --show-toplevel");
     if (!git_root) return {.ok = false, .message = "autofix-pr requires a Git repository"};
     if (!is_safe_pr_ref(pr)) {
         return {.ok = false, .message = "autofix-pr PR reference contains unsupported characters"};
     }
 
-    auto gh_status = cc::utils::exec_sync("gh auth status");
+    auto gh_status = loom::utils::exec_sync("gh auth status");
     if (!gh_status) {
         return {.ok = false, .message = "autofix-pr requires GitHub CLI authentication"};
     }
 
     auto pr_view = pr.empty()
-        ? cc::utils::exec_sync("gh pr view --json number,url,reviewDecision")
-        : cc::utils::exec_sync("gh pr view " + std::string(pr) + " --json number,url,reviewDecision");
+        ? loom::utils::exec_sync("gh pr view --json number,url,reviewDecision")
+        : loom::utils::exec_sync("gh pr view " + std::string(pr) + " --json number,url,reviewDecision");
     if (!pr_view) {
         return {.ok = false, .message = "No pull request context found for autofix-pr"};
     }
 
     auto comments = pr.empty()
-        ? cc::utils::exec_sync("gh pr view --json comments,reviews")
-        : cc::utils::exec_sync("gh pr view " + std::string(pr) + " --json comments,reviews");
+        ? loom::utils::exec_sync("gh pr view --json comments,reviews")
+        : loom::utils::exec_sync("gh pr view " + std::string(pr) + " --json comments,reviews");
 
     return {.ok = true, .message = std::format(
         "Autofix PR preflight complete\n"

@@ -6,7 +6,7 @@ export module loom.bridge.debug_utils;
 
 import std;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
 namespace detail {
     inline std::mutex& get_debug_mutex() {
@@ -105,4 +105,4 @@ bool is_bridge_debug_enabled() {
     return detail::get_debug_enabled_ref();
 }
 
-} // namespace cc::bridge
+} // namespace loom::bridge

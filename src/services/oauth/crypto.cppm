@@ -7,7 +7,7 @@ import std;
 
 import loom.crypto.crypto;
 
-export namespace cc::services::oauth {
+export namespace loom::services::oauth {
 
 namespace detail {
 
@@ -103,7 +103,7 @@ auto generate_code_verifier() -> std::string {
 
 // Generate PKCE code challenge (S256 method)
 auto generate_code_challenge(std::string_view verifier) -> std::string {
-    return cc::utils::crypto::generate_code_challenge(verifier);
+    return loom::utils::crypto::generate_code_challenge(verifier);
 }
 
 // Generate random state parameter for CSRF protection
@@ -113,4 +113,4 @@ auto generate_state() -> std::string {
     return base64url_encode(random_bytes);
 }
 
-} // namespace cc::services::oauth
+} // namespace loom::services::oauth

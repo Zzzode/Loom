@@ -7,7 +7,7 @@ export module loom.tasks.support;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 // ─── Task Status & Schema ────────────────────────────────────────────────────
 
@@ -163,4 +163,4 @@ std::expected<void, std::string> with_retry_void(
     std::function<std::expected<void, std::string>()> fn,
     const RetryConfig& config);
 
-} // namespace cc::utils
+} // namespace loom::utils

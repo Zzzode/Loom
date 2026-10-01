@@ -7,7 +7,7 @@ export module loom.net.http.proxy_utils;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 // Proxy configuration resolved from environment
 struct ProxyConfig {
@@ -190,4 +190,4 @@ inline std::optional<std::string> get_proxy_for_url(std::string_view url) {
     return config->url;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

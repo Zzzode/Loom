@@ -17,10 +17,10 @@ import loom.types.types;
 import loom.commands.command;
 import loom.security.permissions_engine;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
-namespace perm = cc::utils::permissions;
+using namespace loom::core;
+namespace perm = loom::utils::permissions;
 
 // ============================================================
 // Formatting helpers (pure)
@@ -144,7 +144,7 @@ namespace perm = cc::utils::permissions;
 // ============================================================
 
 /// PermissionsCommand implements the /permissions slash command.
-/// All state is held in cc::utils::permissions_engine (global singleton) —
+/// All state is held in loom::utils::permissions_engine (global singleton) —
 /// this class is a thin command-layer dispatch that formats rows suitable
 /// for both plain-text output and Phase 4 FTXUI tables.
 class PermissionsCommand {
@@ -435,4 +435,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

@@ -7,7 +7,7 @@ export module loom.text.string_utils;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 [[nodiscard]] inline std::string trim(std::string_view sv) {
     auto start = sv.find_first_not_of(" \t\n\r\f\v");
@@ -253,4 +253,4 @@ export namespace cc::utils {
     return result;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

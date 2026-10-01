@@ -8,7 +8,7 @@ import std;
 
 import loom.skills.skill;
 
-export namespace cc::skills::remember {
+export namespace loom::skills::remember {
 
 /// Remember skill for persistent context recall
 [[nodiscard]] inline SkillDefinition make_remember_skill() {
@@ -54,4 +54,4 @@ Memories are stored in ~/.loom/memories.json and LOOM.md.
     };
 }
 
-} // namespace cc::skills::remember
+} // namespace loom::skills::remember

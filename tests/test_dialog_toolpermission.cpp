@@ -42,12 +42,12 @@ import loom.ui.permissions.permission_file_write;
 namespace {
 
 namespace fs   = std::filesystem;
-namespace dsys = cc::ui::dialogs::system;
-namespace dtrig = cc::ui::dialogs::triggers;
-namespace dr   = cc::ui::dialogs::default_renderers;
-namespace rs   = cc::ui::repl_screen;
-namespace sp   = cc::ui::permissions::single_prompt;
-namespace cperm = cc::ui::permissions;
+namespace dsys = loom::ui::dialogs::system;
+namespace dtrig = loom::ui::dialogs::triggers;
+namespace dr   = loom::ui::dialogs::default_renderers;
+namespace rs   = loom::ui::repl_screen;
+namespace sp   = loom::ui::permissions::single_prompt;
+namespace cperm = loom::ui::permissions;
 
 using Element = ftxui::Element;
 
@@ -520,7 +520,7 @@ TEST(KeyboardEvents, EscapeFallsBackToDenyWhenNoAbortCb) {
 // exactly once with false -- if the move-bug returns, it is called zero times.
 
 TEST(FilePermissionPrompt, EscapeAbortsThroughTheSingleResultCallback) {
-    namespace fedit = cc::ui::permissions::file_edit;
+    namespace fedit = loom::ui::permissions::file_edit;
 
     int calls = 0;
     bool last_value = true;
@@ -542,7 +542,7 @@ TEST(FilePermissionPrompt, EscapeAbortsThroughTheSingleResultCallback) {
 }
 
 TEST(FilePermissionPrompt, DecideStillWorksAfterTheAbortWiring) {
-    namespace fedit = cc::ui::permissions::file_edit;
+    namespace fedit = loom::ui::permissions::file_edit;
 
     int calls = 0;
     bool last_value = false;
@@ -560,7 +560,7 @@ TEST(FilePermissionPrompt, DecideStillWorksAfterTheAbortWiring) {
 }
 
 TEST(FilePermissionPrompt, WriteEscapeAlsoReportsExactlyOnce) {
-    namespace fwrite = cc::ui::permissions::file_write;
+    namespace fwrite = loom::ui::permissions::file_write;
 
     int calls = 0;
     bool last_value = true;

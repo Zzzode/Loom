@@ -73,7 +73,7 @@ enum class PermissionMode : std::uint8_t {
 };
 
 /// Canonical prompt input mode — unified definition lives in
-/// cc::ui::common::PromptInputMode (ui_types.cppm).  Previously this
+/// loom::ui::common::PromptInputMode (ui_types.cppm).  Previously this
 /// file defined its own PromptMode enum with 7 values; the unified
 /// enum covers all 16 values across the codebase.  Old→new mapping:
 ///   PromptMode::Normal  → PromptInputMode::Normal
@@ -83,7 +83,7 @@ enum class PermissionMode : std::uint8_t {
 ///   PromptMode::Agent   → PromptInputMode::Agent
 ///   PromptMode::Search  → PromptInputMode::Search
 ///   PromptMode::BgRun   → PromptInputMode::BgRun
-using cc::ui::common::PromptInputMode;
+using loom::ui::common::PromptInputMode;
 
 /// Data passed down to the footer & suggestion layer
 struct PromptContext {
@@ -122,7 +122,7 @@ struct TextInputOptions {
     // the default prompt prefix is `figures.pointer` ('❯' U+276F) + space, NOT
     // the CPP-only "▶ " (U+25B6) invention.  See the glyph-unification note at
     // the render site (~line 1033) and the shared constant
-    // cc::ui::design::figures::kPointerPrefix.  The faithful REPL path in
+    // loom::ui::design::figures::kPointerPrefix.  The faithful REPL path in
     // repl_screen.cppm overrides this per-mode, but standalone TextInputImpl
     // callers (dialogs, widgets) inherit this default, so it MUST match TS.
     std::string prefix = "❯ ";
@@ -133,7 +133,7 @@ struct TextInputOptions {
     /// TS REF: src/types/textInputTypes.ts:222 — VimMode = 'INSERT'|'NORMAL'.
     /// TS REF: src/hooks/useVimInput.ts:36 — mode starts at 'INSERT' when enabled.
     /// Replaces the previous bool enable_vim flag.
-    std::optional<cc::ui::common::VimMode> vim_mode;
+    std::optional<loom::ui::common::VimMode> vim_mode;
     bool show_history = true;
     bool enable_undo_redo = true;
     /// Interval between cursor blink toggles in milliseconds. 0 = no blink.
@@ -317,11 +317,11 @@ public:
     //   mode + setMode for external mode indicator display.
     // ------------------------------------------------------------
     /// Current vim mode (only meaningful when options_.vim_mode is set).
-    [[nodiscard]] cc::ui::common::VimMode vim_mode() const {
+    [[nodiscard]] loom::ui::common::VimMode vim_mode() const {
         return vim_.mode;
     }
     /// Explicitly set the vim mode (e.g. from /vim command).
-    void set_vim_mode(cc::ui::common::VimMode m) {
+    void set_vim_mode(loom::ui::common::VimMode m) {
         vim_.mode = m;
         vim_.pending_operator.clear();
     }
@@ -329,7 +329,7 @@ public:
     /// (Normal, Visual, VisualLine, VisualBlock, Command).
     [[nodiscard]] bool vim_is_navigation() const {
         return options_.vim_mode.has_value() &&
-               cc::ui::common::is_navigation_mode(vim_.mode);
+               loom::ui::common::is_navigation_mode(vim_.mode);
     }
     /// Returns the yank register content (for status display / debugging).
     [[nodiscard]] const std::string& vim_register() const {
@@ -590,13 +590,13 @@ private:
     //   chars, show a confirmation overlay instead of inserting directly.
     //   Enter confirms (insert truncated), Esc cancels.
     // ============================================================
-    std::optional<cc::ui::prompt::PastePreview> paste_preview_;
+    std::optional<loom::ui::prompt::PastePreview> paste_preview_;
 
     // ============================================================
     // Vim mode state (unified VimController from cc.vim.vim_controller)
     // TS REF: src/hooks/useVimInput.ts — vim state machine wrapping text input
     // ============================================================
-    cc::vim::VimController vim_;
+    loom::vim::VimController vim_;
 };
 
 // ============================================================

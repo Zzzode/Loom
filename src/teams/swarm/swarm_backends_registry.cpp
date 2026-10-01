@@ -8,7 +8,7 @@ module loom.teams.swarm.backends;
 
 import std;
 
-namespace cc::utils::swarm_backends {
+namespace loom::utils::swarm_backends {
 
 // ── Static data (6) ─────────────────────────────────────────────────────────
 
@@ -107,4 +107,4 @@ std::string BackendRegistry::get_tmux_install_instructions() {
     return "Install tmux or set LOOM_TEAMMATE_BACKEND=in-process to use in-process teammates.";
 }
 
-} // namespace cc::utils::swarm_backends
+} // namespace loom::utils::swarm_backends

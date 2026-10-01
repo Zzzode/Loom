@@ -16,9 +16,9 @@ import loom.services.mcp.at_mention_handler;
 import loom.services.mcp.channel_notification;
 import loom.serdes.json;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
-using namespace cc::utils::json;
+using namespace loom::utils::json;
 
 // Helper: convert McpClientError to string
 [[nodiscard]] inline std::string error_to_string(McpClientError err) {
@@ -768,4 +768,4 @@ private:
     ToolsUpdatedCallback tools_updated_callback_;
 };
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

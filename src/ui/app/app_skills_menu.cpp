@@ -32,9 +32,9 @@ module loom.ui.app.app;
 import loom.ui.prompt.autocomplete_sources;
 import loom.ui.screens.repl_state;
 
-namespace cc::ui {
+namespace loom::ui {
 
-namespace acsrc = cc::ui::autocomplete_sources;
+namespace acsrc = loom::ui::autocomplete_sources;
 
 // ============================================================
 // Skills-menu helpers (AppAdapter static members)
@@ -156,4 +156,4 @@ void AppAdapter::OpenSkillsMenu() {
     PostRenderEvent();
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

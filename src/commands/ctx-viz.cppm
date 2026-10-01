@@ -11,9 +11,9 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// CtxVizCommand implements the /ctx-viz slash command.
 /// Context visualization command for inspecting context-window state.
@@ -56,4 +56,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

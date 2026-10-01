@@ -14,7 +14,7 @@ import loom.utils.error;
 import loom.hooks.lifecycle_hooks;
 import loom.constants.cost_tracker;
 
-namespace cc::core {
+namespace loom::core {
 
 [[nodiscard]] Result<QueryResponse> QueryEngine::query(
     std::string_view user_message,
@@ -87,7 +87,7 @@ void QueryEngine::stream_query(
 
     // Emit query start hook
     if (lifecycle_hooks_) {
-        lifecycle_hooks_->emit_query_start(cc::hooks::QueryStartEvent{
+        lifecycle_hooks_->emit_query_start(loom::hooks::QueryStartEvent{
             .query_text = std::string(user_message),
             .model = config_.model_params.model,
             .timestamp = std::chrono::system_clock::now()
@@ -189,7 +189,7 @@ void QueryEngine::stream_query(
     if (lifecycle_hooks_) {
         auto query_duration = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - query_start_time);
-        lifecycle_hooks_->emit_query_end(cc::hooks::QueryEndEvent{
+        lifecycle_hooks_->emit_query_end(loom::hooks::QueryEndEvent{
             .success = !budget_tracker_.budget_exceeded,
             .rounds = round,
             .tools_executed = round,  // Approximate
@@ -328,4 +328,4 @@ void QueryEngine::stream_query(
         "Retry logic exhausted"));
 }
 
-} // namespace cc::core
+} // namespace loom::core

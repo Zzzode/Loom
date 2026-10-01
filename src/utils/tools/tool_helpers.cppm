@@ -8,9 +8,9 @@ import std;
 
 import loom.serdes.json;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
-using cc::utils::json::JsonVal;
+using loom::utils::json::JsonVal;
 
 // ─── Tool Error Formatting ───────────────────────────────────────────────────
 
@@ -140,4 +140,4 @@ bool has_embedded_search_tools();
 /// Path to the binary that contains the embedded search tools
 std::string embedded_search_tools_binary_path();
 
-} // namespace cc::utils
+} // namespace loom::utils

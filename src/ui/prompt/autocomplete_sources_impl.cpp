@@ -17,15 +17,15 @@ import loom.orchestration.tools.mcp;
 import loom.ui.prompt.fuzzy_rank_nucleo;
 import loom.serdes.json;
 
-namespace cc::ui::autocomplete_sources {
+namespace loom::ui::autocomplete_sources {
 
 namespace fs = std::filesystem;
-namespace agent_runtime = cc::tools::agent_runtime;
+namespace agent_runtime = loom::tools::agent_runtime;
 
 inline void add_unique_skill(
     std::vector<SkillSuggestionData>& rows,
     std::unordered_set<std::string>& seen,
-    const cc::skills::SkillDefinition& def,
+    const loom::skills::SkillDefinition& def,
     std::string source,
     std::string source_detail = {}) {
     if (def.name.empty() || seen.contains(def.name)) return;
@@ -56,7 +56,7 @@ std::vector<SkillSuggestionData> collect_skill_suggestions(std::string_view cwd)
     // discovered skills from get_skill_dir_commands() + get_dynamic_skills().
     // TS REF: src/ui/components/Autocomplete.tsx uses getSkillDirCommands()
     //          + bundled skills for the unified skill picker.
-    auto& registry = cc::skills::SkillRegistry::instance();
+    auto& registry = loom::skills::SkillRegistry::instance();
     auto all_skills = registry.all_skills(fs::path(std::string(cwd)));
 
     // Determine source label per skill
@@ -76,7 +76,7 @@ std::vector<SkillSuggestionData> collect_skill_suggestions(std::string_view cwd)
 
     // Also load plugin skills with prefix (SkillRegistry doesn't yet
     // handle plugin-prefixed skills, so we keep the direct loader path).
-    cc::skills::SkillLoader loader;
+    loom::skills::SkillLoader loader;
     for (const auto& plugin : agent_runtime::discover_plugin_component_paths()) {
         for (const auto& path : plugin.skills_paths) {
             if (auto plugin_skills =
@@ -173,7 +173,7 @@ std::vector<PluginCommandSuggestionData> collect_plugin_commands(std::string_vie
             if (!input) continue;
             std::stringstream buffer;
             buffer << input.rdbuf();
-            auto parsed = cc::utils::json::parse(buffer.str());
+            auto parsed = loom::utils::json::parse(buffer.str());
             if (!parsed) continue;
 
             auto root_node = parsed->root();
@@ -185,7 +185,7 @@ std::vector<PluginCommandSuggestionData> collect_plugin_commands(std::string_vie
             if (!caps.valid() || !caps.is_obj()) continue;
             auto commands = caps.get("commands");
             if (!commands.valid() || !commands.is_arr()) continue;
-            commands.iter([&](cc::utils::json::JsonVal item) {
+            commands.iter([&](loom::utils::json::JsonVal item) {
                 if (!item.is_str()) return;
                 std::string command(item.as_str());
                 if (command.starts_with('/')) command.erase(command.begin());
@@ -219,7 +219,7 @@ std::vector<McpResourceSuggestionData> collect_mcp_resource_suggestions() {
     }
 
     std::vector<McpResourceSuggestionData> out;
-    auto resources = cc::tools::list_native_mcp_resources(std::nullopt);
+    auto resources = loom::tools::list_native_mcp_resources(std::nullopt);
     if (!resources) return out;
 
     for (const auto& resource : *resources) {
@@ -363,7 +363,7 @@ struct PromptHistoryEntry {
 // Parse a single JSONL line into a PromptHistoryEntry.
 // Returns nullopt on parse failure.
 [[nodiscard]] std::optional<PromptHistoryEntry> parse_history_line(std::string_view line) {
-    auto parsed = cc::utils::json::parse(line);
+    auto parsed = loom::utils::json::parse(line);
     if (!parsed) return std::nullopt;
     auto root = parsed->root();
     if (!root.is_obj()) return std::nullopt;
@@ -632,7 +632,7 @@ std::vector<FormattedSuggestion> build_agent_suggestions(
     std::size_t token_start,
     std::size_t token_end)
 {
-    namespace frn = cc::ui::prompt::fuzzy_rank_nucleo;
+    namespace frn = loom::ui::prompt::fuzzy_rank_nucleo;
 
     auto agents = collect_agent_suggestions(cwd);
     std::vector<FormattedSuggestion> result;
@@ -660,4 +660,4 @@ std::vector<FormattedSuggestion> build_agent_suggestions(
     return result;
 }
 
-} // namespace cc::ui::autocomplete_sources
+} // namespace loom::ui::autocomplete_sources

@@ -27,33 +27,33 @@ import loom.ui.prompt.combined_highlights;
 import loom.ui.prompt.placeholder_cascade;  // P1: RenderPlaceholder helper
 import loom.ui.foundation.ui_types;  // canonical VimMode
 
-export namespace cc::ui::text_input_widget {
+export namespace loom::ui::text_input_widget {
 using namespace ftxui;
 
 // Re-export the canonical TextHighlight type from the highlighting module.
 // TS REF: src/utils/textHighlighting.ts:11-19
-using cc::utils::TextHighlight;
-using cc::utils::TextSegment;
-using cc::utils::segment_text_by_highlights;
-using cc::utils::filter_highlights_at_cursor;
-using cc::utils::adjust_highlights_for_viewport;
-using namespace cc::utils::highlight_priority;
+using loom::utils::TextHighlight;
+using loom::utils::TextSegment;
+using loom::utils::segment_text_by_highlights;
+using loom::utils::filter_highlights_at_cursor;
+using loom::utils::adjust_highlights_for_viewport;
+using namespace loom::utils::highlight_priority;
 
 // Re-export the combined highlights context and builder from the new module.
 // TS REF: src/components/PromptInput/PromptInput.tsx:601-741
-using cc::ui::prompt::CombinedHighlightContext;
-using cc::ui::prompt::build_combined_highlights;
+using loom::ui::prompt::CombinedHighlightContext;
+using loom::ui::prompt::build_combined_highlights;
 
 // ============================================================
 // Types
 // ============================================================
 
-// Canonical VimMode — imported from cc::ui::common (ui_types.cppm).
+// Canonical VimMode — imported from loom::ui::common (ui_types.cppm).
 // TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
 // This replaces the previous local 5-value enum { Disabled, Normal, Insert,
 // Visual, Command } that conflicted with other implementations.
 // "Disabled" is now expressed as std::optional<VimMode>{nullopt}.
-using cc::ui::common::VimMode;
+using loom::ui::common::VimMode;
 
 /// Cursor position in a multi-line buffer
 struct CursorPos {
@@ -409,7 +409,7 @@ struct LinePart {
     Elements all_lines;
 
     if (buffer.empty()) {
-        namespace ph = cc::ui::placeholder;
+        namespace ph = loom::ui::placeholder;
 
         std::optional<std::string_view> placeholder_sv;
         if (!opts.placeholder.empty()) {
@@ -1067,4 +1067,4 @@ struct LinePart {
     return TextInputWidget(std::move(opts));
 }
 
-} // namespace cc::ui::text_input_widget
+} // namespace loom::ui::text_input_widget

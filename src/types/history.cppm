@@ -19,7 +19,7 @@ import std;
 
 import loom.serdes.json;
 
-export namespace cc::history {
+export namespace loom::history {
 
 // ---------------------------------------------------------------------------
 // Types
@@ -131,7 +131,7 @@ inline Role role_from_str(std::string_view s) {
 } // namespace detail
 
 inline std::string to_json(const SessionHistory& h) {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     doc.set_root(root);
 
@@ -145,7 +145,7 @@ inline std::string to_json(const SessionHistory& h) {
         obj.add("id", doc.number(static_cast<int64_t>(m.id)));
         obj.add("role", doc.string(detail::role_to_str(m.role)));
         // content_json: embed parsed JSON if valid, otherwise store as string.
-        auto parsed_content = cc::utils::json::parse(m.content_json);
+        auto parsed_content = loom::utils::json::parse(m.content_json);
         if (parsed_content) {
             obj.add("content_json", doc.copy_val(parsed_content->root()));
         } else {
@@ -162,7 +162,7 @@ inline std::string to_json(const SessionHistory& h) {
 }
 
 inline std::expected<SessionHistory, std::string> history_from_json(std::string_view json_s) {
-    auto parsed = cc::utils::json::parse(json_s);
+    auto parsed = loom::utils::json::parse(json_s);
     if (!parsed) return std::unexpected("failed to parse session history JSON");
     auto root = parsed->root();
     if (!root.is_obj()) return std::unexpected("session history JSON root not object");
@@ -174,7 +174,7 @@ inline std::expected<SessionHistory, std::string> history_from_json(std::string_
 
     auto msgs = root.get("messages");
     if (msgs.is_arr()) {
-        msgs.iter([&](cc::utils::json::JsonVal v) {
+        msgs.iter([&](loom::utils::json::JsonVal v) {
             HistoryMessage m;
             m.id = static_cast<uint64_t>(v.get_int("id"));
             m.role = detail::role_from_str(v.get_string("role"));
@@ -238,13 +238,13 @@ public:
         std::string serialized;
         {
             std::shared_lock lk(mu_);
-            cc::utils::json::JsonMutDoc doc;
+            loom::utils::json::JsonMutDoc doc;
             auto root = doc.object();
             doc.set_root(root);
             auto arr = doc.array();
             for (const auto& kv : sessions_) {
                 auto session_json = to_json(kv.second);
-                auto parsed = cc::utils::json::parse(session_json);
+                auto parsed = loom::utils::json::parse(session_json);
                 if (!parsed) continue;
                 arr.append(doc.copy_val(parsed->root()));
             }
@@ -276,7 +276,7 @@ public:
     }
 
     std::expected<void, std::string> load_all(const std::filesystem::path& file) {
-        auto parsed = cc::utils::json::parse_file(file);
+        auto parsed = loom::utils::json::parse_file(file);
         if (!parsed) return std::unexpected("failed to read history file");
         auto root = parsed->root();
         auto sessions_arr = root.get("sessions");
@@ -285,7 +285,7 @@ public:
         std::unordered_map<std::string, SessionHistory> loaded;
         bool ok = true;
         std::string first_err;
-        sessions_arr.iter([&](cc::utils::json::JsonVal v) {
+        sessions_arr.iter([&](loom::utils::json::JsonVal v) {
             if (!ok) return;
             auto sh = history_from_json(v.to_string());
             if (!sh) { ok = false; first_err = sh.error(); return; }
@@ -306,4 +306,4 @@ private:
     std::unordered_map<std::string, SessionHistory> sessions_;
 };
 
-} // namespace cc::history
+} // namespace loom::history

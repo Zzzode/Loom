@@ -11,7 +11,7 @@ import loom.serdes.json;
 import loom.services.api.client;
 import loom.tools.agent_runtime;
 
-namespace cc::tools::agent::utils {
+namespace loom::tools::agent::utils {
 
 [[nodiscard]] std::string trim_ascii_copy(std::string_view value) {
     while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front()))) {
@@ -41,7 +41,7 @@ namespace cc::tools::agent::utils {
 ) {
     std::vector<Message> messages;
     for (const auto& entry : entries) {
-        auto parsed = cc::utils::json::parse(entry);
+        auto parsed = loom::utils::json::parse(entry);
         if (!parsed) continue;
         if (auto message = message_from_json_value(parsed->root())) {
             messages.push_back(std::move(*message));
@@ -226,14 +226,14 @@ void append_merged_user_message(std::vector<Message>& messages, Message message)
 ) {
     std::unordered_map<std::string, std::string> replacements;
     for (const auto& entry : entries) {
-        auto parsed = cc::utils::json::parse(entry);
+        auto parsed = loom::utils::json::parse(entry);
         if (!parsed || !parsed->root().is_obj()) continue;
         auto root = parsed->root();
         if (json_string_member(root, "type") != "content-replacement") continue;
 
         auto replacement_entries = root.get("replacements");
         if (!replacement_entries.is_arr()) continue;
-        replacement_entries.iter([&](cc::utils::json::JsonVal item) {
+        replacement_entries.iter([&](loom::utils::json::JsonVal item) {
             if (!item.is_obj()) return;
             auto kind = json_string_member(item, "kind");
             if (!kind.empty() && kind != "tool-result") return;
@@ -281,11 +281,11 @@ void apply_resume_content_replacements(
 }
 
 void append_agent_sidechain_message(std::string_view agent_id, const Message& message) {
-    cc::tools::agent_runtime::native_agent_store().append_sidechain_message(
+    loom::tools::agent_runtime::native_agent_store().append_sidechain_message(
         agent_id,
         message.role,
         message_content_sidechain_json(message),
         message_content_text(message));
 }
 
-} // namespace cc::tools::agent::utils
+} // namespace loom::tools::agent::utils

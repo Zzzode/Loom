@@ -21,10 +21,10 @@ import std;
 import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
 
-export namespace cc::ui::design::logo {
+export namespace loom::ui::design::logo {
 
-using namespace cc::ui::design::tokens;
-using namespace cc::ui::design::theme;
+using namespace loom::ui::design::tokens;
+using namespace loom::ui::design::theme;
 
 // ─── Static logo marks ───────────────────────────────────────────────────────
 // Loom mascot (Loom's icon) drawn as 9×3 unicode blocks.  The TS side uses
@@ -374,10 +374,10 @@ constexpr std::string_view k_row_tail_post =
 //  * OSC-11 driven auto-theme for the logo's background tint.
 //  * Per-letter typewriter reveal of the banner (requires async char stream).
 
-} // namespace cc::ui::design::logo
+} // namespace loom::ui::design::logo
 
 #ifdef CC_DESIGN_SYSTEM_DEMO
-export namespace cc::ui::design::logo::demo {
+export namespace loom::ui::design::logo::demo {
 inline int demo_static_row_count() { return 3; }
 inline std::string demo_wordmark() {
     return std::string(k_seed_wordmark) + std::string(k_seed_full_suffix);

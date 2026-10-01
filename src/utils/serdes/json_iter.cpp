@@ -10,7 +10,7 @@ module;
 
 module loom.serdes.json;
 
-namespace cc::utils::json {
+namespace loom::utils::json {
 
 void JsonVal::iter_impl(IterCb cb, void* ctx) const {
     if (!is_arr()) return;
@@ -54,4 +54,4 @@ void JsonMutVal::iter_obj_impl(IterObjCb cb, void* ctx) const {
     }
 }
 
-} // namespace cc::utils::json
+} // namespace loom::utils::json

@@ -13,7 +13,7 @@
 
 import loom.ui.chrome.yoga;
 
-using namespace cc::ui::layout;
+using namespace loom::ui::layout;
 
 namespace {
 

@@ -23,7 +23,7 @@ import loom.ui.features.agents.agent_cards;
 import loom.tools.agent_display;
 import loom.ui.foundation.theme_provider;
 
-namespace cc::ui::repl_screen {
+namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 namespace dialog_router {
@@ -32,7 +32,7 @@ namespace dialog_router {
 // Agent wizard helpers
 // -------------------------------------------------------------------
 
-namespace wizard_ns = cc::ui::agents::wizard;
+namespace wizard_ns = loom::ui::agents::wizard;
 
 using wizard_ns::AgentWizardOptions;
 using wizard_ns::WizardDraft;
@@ -46,7 +46,7 @@ using wizard_ns::WizardDraft;
         AgentWizardOptions opts;
         // M7: Read agent_id from the Standalone-slot EditAgentWizardPayload
         // in dialog_queue (instead of legacy DialogContext bridge struct).
-        namespace dsys_gw = cc::ui::dialogs::system;
+        namespace dsys_gw = loom::ui::dialogs::system;
         auto& q_gw = s->dialog_store.dialog_queue;
         if (cb->load_agent_for_wizard &&
             q_gw.contains_type(dsys_gw::DialogType::EditAgentWizard)) {
@@ -104,8 +104,8 @@ void reset_agent_wizard(const std::shared_ptr<ReplScreenState>& s) {
 
 namespace agents_menu {
 
-namespace cards = cc::ui::agents::cards;
-namespace agent_display = cc::tools::agent_display;
+namespace cards = loom::ui::agents::cards;
+namespace agent_display = loom::tools::agent_display;
 
 [[nodiscard]] bool is_built_in(const cards::AgentCardData& agent) {
     return agent.source == "built-in";
@@ -140,7 +140,7 @@ Element AgentMenuListBase::Render() {
             selected_position_ = 0;
         }
 
-        const auto theme = cc::ui::design::theme::current_theme();
+        const auto theme = loom::ui::design::theme::current_theme();
         const auto accent = theme.palette->primary;
         const auto muted = theme.palette->muted;
         const auto suggestion = theme.palette->suggestion;
@@ -319,7 +319,7 @@ void close_agents_menu(
     const std::shared_ptr<ReplScreenCallbacks>& cb) {
     auto comp = get_agents_component(s, cb);
     Element footer = text("  Press ↑↓ to navigate · Enter to select · Esc to go back")
-        | color(cc::ui::design::theme::current_theme().palette->muted)
+        | color(loom::ui::design::theme::current_theme().palette->muted)
         | dim;
     return comp ? vbox({(*comp)->Render(), std::move(footer)}) | flex : text("");
 }
@@ -339,4 +339,4 @@ bool forward_agents_menu(
 
 }  // namespace dialog_router
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

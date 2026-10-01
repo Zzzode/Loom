@@ -21,7 +21,7 @@ import loom.serdes.json;
 import loom.teams.team_helpers;
 import loom.serdes.yaml;
 
-export namespace cc::tools::agent_runtime {
+export namespace loom::tools::agent_runtime {
 
 namespace fs = std::filesystem;
 
@@ -223,43 +223,43 @@ struct PluginComponentPaths {
 [[nodiscard]] std::string valid_agent_isolation_options();
 
 
-[[nodiscard]] std::optional<std::string> yaml_scalar_to_string(const cc::utils::YamlValue& value);
-[[nodiscard]] const cc::utils::YamlValue* yaml_field(
-    const cc::utils::YamlMap& fields,
+[[nodiscard]] std::optional<std::string> yaml_scalar_to_string(const loom::utils::YamlValue& value);
+[[nodiscard]] const loom::utils::YamlValue* yaml_field(
+    const loom::utils::YamlMap& fields,
     std::string_view key);
 [[nodiscard]] std::optional<std::string> yaml_string_field(
-    const cc::utils::YamlMap& fields,
+    const loom::utils::YamlMap& fields,
     std::string_view key);
-[[nodiscard]] std::vector<std::string> yaml_string_list(const cc::utils::YamlValue& value);
+[[nodiscard]] std::vector<std::string> yaml_string_list(const loom::utils::YamlValue& value);
 [[nodiscard]] std::vector<std::string> yaml_string_list_field(
-    const cc::utils::YamlMap& fields,
+    const loom::utils::YamlMap& fields,
     std::string_view key);
 void append_yaml_string_map(
-    const cc::utils::YamlValue& value,
+    const loom::utils::YamlValue& value,
     std::unordered_map<std::string, std::string>& out);
 
 
-[[nodiscard]] std::optional<std::string> json_scalar_to_string(cc::utils::json::JsonVal value);
+[[nodiscard]] std::optional<std::string> json_scalar_to_string(loom::utils::json::JsonVal value);
 [[nodiscard]] std::optional<std::string> json_string_field(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key);
-[[nodiscard]] std::vector<std::string> json_string_list(cc::utils::json::JsonVal value);
+[[nodiscard]] std::vector<std::string> json_string_list(loom::utils::json::JsonVal value);
 [[nodiscard]] std::vector<std::string> json_string_list_field(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key);
 void append_json_string_map(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::unordered_map<std::string, std::string>& out);
 
 
 [[nodiscard]] std::optional<AgentInlineMcpServerConfig> parse_inline_mcp_server_config(
     std::string name,
-    const cc::utils::YamlValue& value);
+    const loom::utils::YamlValue& value);
 
 
 [[nodiscard]] std::optional<AgentInlineMcpServerConfig> parse_inline_mcp_server_config(
     std::string name,
-    cc::utils::json::JsonVal value);
+    loom::utils::json::JsonVal value);
 
 struct ParsedAgentMcpServers {
     std::vector<std::string> references;
@@ -267,20 +267,20 @@ struct ParsedAgentMcpServers {
 };
 
 
-[[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(const cc::utils::YamlValue& value);
+[[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(const loom::utils::YamlValue& value);
 
 
-[[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(cc::utils::json::JsonVal value);
+[[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(loom::utils::json::JsonVal value);
 
 
 [[nodiscard]] std::string canonical_hook_event_name(std::string_view event);
 
 
-[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(const cc::utils::YamlValue& value);
-[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(const cc::utils::YamlValue& value);
-[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(const cc::utils::YamlValue& value);
-[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(const cc::utils::YamlValue& value);
-[[nodiscard]] AgentHooksByEvent parse_agent_hooks(const cc::utils::YamlValue& value);
+[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(const loom::utils::YamlValue& value);
+[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(const loom::utils::YamlValue& value);
+[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(const loom::utils::YamlValue& value);
+[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(const loom::utils::YamlValue& value);
+[[nodiscard]] AgentHooksByEvent parse_agent_hooks(const loom::utils::YamlValue& value);
 
 
 [[nodiscard]] std::vector<std::string> agent_alias_candidates(std::string_view requested_type);
@@ -354,7 +354,7 @@ enum class ResolutionError {
 
 
 void append_existing_plugin_component_path(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     const fs::path& plugin_dir,
     std::vector<fs::path>& out);
 [[nodiscard]] std::optional<PluginComponentPaths> read_plugin_component_paths(
@@ -368,23 +368,23 @@ void append_existing_plugin_component_path(
 
 
 [[nodiscard]] std::optional<int> json_positive_int_field(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key);
 [[nodiscard]] std::optional<bool> json_bool_field(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key);
 
 
-[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(cc::utils::json::JsonVal value);
-[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(cc::utils::json::JsonVal value);
-[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(cc::utils::json::JsonVal value);
-[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(cc::utils::json::JsonVal value);
-[[nodiscard]] AgentHooksByEvent parse_agent_hooks(cc::utils::json::JsonVal value);
+[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(loom::utils::json::JsonVal value);
+[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(loom::utils::json::JsonVal value);
+[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(loom::utils::json::JsonVal value);
+[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(loom::utils::json::JsonVal value);
+[[nodiscard]] AgentHooksByEvent parse_agent_hooks(loom::utils::json::JsonVal value);
 
 
 [[nodiscard]] std::optional<AgentDefinition> parse_agent_json_definition(
     std::string name,
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     const fs::path& path,
     std::string source);
 [[nodiscard]] std::vector<AgentDefinition> parse_agents_json_file(
@@ -409,7 +409,7 @@ struct FailedAgentFile {
 // frontmatter `name:` field failed to parse as a valid agent definition.
 
 [[nodiscard]] std::string get_parse_error(
-    const cc::utils::YamlMap& fields,
+    const loom::utils::YamlMap& fields,
     std::string_view fallback = "Unknown parsing error");
 
 struct LoadAgentDefinitionsResult {
@@ -590,11 +590,11 @@ AgentLifecycle get_agent_lifecycle(std::string_view agent_id);
 }
 
 [[nodiscard]] std::string json_string_field(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::initializer_list<std::string_view> keys);
 
 
-[[nodiscard]] std::string json_text_from_content(cc::utils::json::JsonVal content);
+[[nodiscard]] std::string json_text_from_content(loom::utils::json::JsonVal content);
 
 
 [[nodiscard]] std::string xml_escape(std::string_view text);
@@ -652,7 +652,7 @@ void refresh_native_agent_output_symlink(
     const NativeAgentRecord& parent,
     std::string_view child_agent_id);
 void collect_sidechain_tool_use_state(
-    cc::utils::json::JsonVal content,
+    loom::utils::json::JsonVal content,
     std::vector<std::string>& tool_use_ids,
     std::unordered_set<std::string>& seen_tool_use_ids,
     std::unordered_set<std::string>& tool_result_ids);
@@ -670,8 +670,8 @@ bool write_sidechain_jsonl(
     const fs::path& sidechain_path);
 bool persist_native_agent_record(const NativeAgentRecord& record);
 [[nodiscard]] std::vector<std::string> read_transcript_lines(const fs::path& path);
-[[nodiscard]] std::string transcript_text_from_content(cc::utils::json::JsonVal content);
-[[nodiscard]] std::optional<std::string> transcript_entry_from_ts_jsonl(cc::utils::json::JsonVal root);
+[[nodiscard]] std::string transcript_text_from_content(loom::utils::json::JsonVal content);
+[[nodiscard]] std::optional<std::string> transcript_entry_from_ts_jsonl(loom::utils::json::JsonVal root);
 [[nodiscard]] std::optional<std::string> transcript_entry_from_sidechain_jsonl_line(std::string_view line);
 [[nodiscard]] std::vector<std::string> transcript_lines_from_sidechain_entries(
     const std::vector<std::string>& entries);
@@ -679,7 +679,7 @@ bool persist_native_agent_record(const NativeAgentRecord& record);
 [[nodiscard]] std::vector<std::string> read_sidechain_jsonl_entries(const fs::path& path);
 
 
-[[nodiscard]] std::vector<std::string> json_string_array(cc::utils::json::JsonVal value);
+[[nodiscard]] std::vector<std::string> json_string_array(loom::utils::json::JsonVal value);
 
 
 [[nodiscard]] std::optional<NativeAgentRecord> load_native_agent_record_from_path(const fs::path& path);
@@ -783,4 +783,4 @@ NativeAgentStore& native_agent_store();
 
 [[nodiscard]] std::string runtime_agent_id(const AgentRuntimeConfig& config);
 
-} // namespace cc::tools::agent_runtime
+} // namespace loom::tools::agent_runtime

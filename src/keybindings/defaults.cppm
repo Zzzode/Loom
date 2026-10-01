@@ -12,7 +12,7 @@ import std;
 
 import loom.keybindings.schema;
 
-export namespace cc::keybindings {
+export namespace loom::keybindings {
 
 [[nodiscard]] inline Keybinding default_binding(
     std::string_view id,
@@ -75,4 +75,4 @@ export namespace cc::keybindings {
     return reserved_shortcuts().contains(lower);
 }
 
-} // namespace cc::keybindings
+} // namespace loom::keybindings

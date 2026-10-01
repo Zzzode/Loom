@@ -34,10 +34,10 @@ import std;
 import loom.ui.foundation.theme_provider;
 import loom.ui.permissions.single_prompt;
 
-export namespace cc::ui::dialogs::system {
+export namespace loom::ui::dialogs::system {
 
 using namespace ftxui;
-using Theme = cc::ui::design::theme::Theme;
+using Theme = loom::ui::design::theme::Theme;
 
 // ============================================================
 // DialogType — type tag enum (1:1 with TS dialog types)
@@ -311,18 +311,18 @@ enum class DialogPriority : std::uint8_t {
 
 /// Payload for ToolPermission dialog (overlay slot, band 3).
 struct ToolPermissionPayload {
-    using Decision = cc::ui::permissions::single_prompt::Decision;
+    using Decision = loom::ui::permissions::single_prompt::Decision;
 
     std::string id;                          ///< unique instance id
     std::string tool_name;                   ///< e.g. "BashTool"
-    cc::ui::permissions::single_prompt::ActionKind action_kind
-        = cc::ui::permissions::single_prompt::ActionKind::Other;
-    cc::ui::permissions::single_prompt::RiskLevel risk_level
-        = cc::ui::permissions::single_prompt::RiskLevel::Medium;
+    loom::ui::permissions::single_prompt::ActionKind action_kind
+        = loom::ui::permissions::single_prompt::ActionKind::Other;
+    loom::ui::permissions::single_prompt::RiskLevel risk_level
+        = loom::ui::permissions::single_prompt::RiskLevel::Medium;
     std::string description;
     std::vector<std::string> affected_paths;
     std::optional<std::string> workspace_root;
-    cc::ui::permissions::single_prompt::ToolDetail detail;
+    loom::ui::permissions::single_prompt::ToolDetail detail;
     std::string rule_match_explanation;
     bool can_always_allow = true;
     bool initial_sandbox_toggle = false;
@@ -673,7 +673,7 @@ struct HistorySearchPayload {
     std::function<void(std::string_view conversation_id)> on_select;
 };
 
-/// Feedback survey state (mirrors cc::ui::feedback_survey::SurveyState)
+/// Feedback survey state (mirrors loom::ui::feedback_survey::SurveyState)
 enum class FeedbackSurveyState {
     Closed,
     Open,
@@ -1415,4 +1415,4 @@ private:
     return true;
 }
 
-} // namespace cc::ui::dialogs::system
+} // namespace loom::ui::dialogs::system

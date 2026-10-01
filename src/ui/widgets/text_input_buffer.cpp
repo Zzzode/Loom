@@ -30,7 +30,7 @@ namespace ui::components {
 namespace {
 
 // TS REF: inputPaste.ts TRUNCATION_THRESHOLD=10000, PREVIEW_LENGTH=1000.
-// Delegates to cc::utils::maybe_truncate_paste for the actual truncation
+// Delegates to loom::utils::maybe_truncate_paste for the actual truncation
 // logic (shared with app.cppm's ProcessCompletedPastes text-paste path).
 //
 // RFC 0001 Phase C batch 8: demoted from a private TextInputImpl member (and
@@ -38,9 +38,9 @@ namespace {
 // primary interface no longer names cc.text.parse_references. paste_text is
 // its only caller; maybe_apply_input_truncation calls the shared utility
 // directly, as it always did.
-cc::utils::TruncatedPasteResult truncate_paste_result(
+loom::utils::TruncatedPasteResult truncate_paste_result(
     std::string_view text, int paste_id) {
-    return cc::utils::maybe_truncate_paste(text, paste_id);
+    return loom::utils::maybe_truncate_paste(text, paste_id);
 }
 
 }  // namespace
@@ -75,7 +75,7 @@ TextInputImpl::TextInputImpl(const TextInputOptions& options)
       search_mode_(false),
       search_selected_(0),
       paste_burst_in_progress_(false) {
-    vim_.mode = options.vim_mode.value_or(cc::ui::common::VimMode::Insert);
+    vim_.mode = options.vim_mode.value_or(loom::ui::common::VimMode::Insert);
 }
 
 // ------------------------------------------------------------
@@ -107,7 +107,7 @@ void TextInputImpl::add_to_history(const std::string& entry) {
         // Without guard (b), recalling "!cmd" would prepend again →
         // "!!cmd" and the second recall would show "!!cmd".
         std::string hist_entry = entry;
-        namespace figs = cc::ui::design::figures;
+        namespace figs = loom::ui::design::figures;
         // TS REF: src/components/PromptInput/inputModes.ts:4-14
         //   (prependModeCharacterToInput)
         // Only prepend '!' when (a) prompt_mode says the user intended
@@ -453,7 +453,7 @@ void TextInputImpl::paste_text(const std::string& paste) {
         const int paste_id = next_paste_id_++;
         const auto result = truncate_paste_result(normalized, paste_id);
 
-        paste_preview_ = cc::ui::prompt::PastePreview{
+        paste_preview_ = loom::ui::prompt::PastePreview{
             .content             = result.truncated_text,
             .line_count          = line_count,
             .is_large            = true,
@@ -502,7 +502,7 @@ void TextInputImpl::submit_internal(bool hard) {
     // Strip the mode-prefix char ('!' for bash) from the value passed
     // to on_submit / on_soft_submit so the engine receives clean text.
     // The raw text_ is preserved for history (add_to_history above).
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
     std::string submit_val{figs::strip_mode_prefix(text_)};
     if (hard) {
         if (options_.on_submit) options_.on_submit(submit_val, options_.context);
@@ -594,7 +594,7 @@ bool TextInputImpl::maybe_apply_input_truncation() {
 
     // Use the shared truncation utility (same logic as paste_text path)
     const int paste_id = next_paste_id_++;
-    const auto result = cc::utils::maybe_truncate_paste(text_, paste_id);
+    const auto result = loom::utils::maybe_truncate_paste(text_, paste_id);
     if (result.placeholder_content.empty()) return false;  // no truncation
 
     // Replace text with the truncated version (head 500 + ref + tail 500)
@@ -655,7 +655,7 @@ void TextInputImpl::recompute_derived() {
     // (repl_screen via effective_is_bash + figures::kBashGlyph), NOT
     // by hiding text_[0] here.
     if (!text_.empty()) {
-        namespace figs = cc::ui::design::figures;
+        namespace figs = loom::ui::design::figures;
         // TS REF: src/components/PromptInput/inputModes.ts:16-21 (getModeFromInput)
         // Use canonical figures::get_mode_from_input for bash detection (the
         // only mode that changes the prompt-prefix glyph per TS).  All other

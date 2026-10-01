@@ -19,7 +19,7 @@ export module loom.text.parse_int;
 
 import std;
 
-namespace cc::utils::parse_int_detail {
+namespace loom::utils::parse_int_detail {
 
 template <typename T>
 struct ParseResult {
@@ -87,9 +87,9 @@ template <typename T>
     return {last, std::errc{}};
 }
 
-} // namespace cc::utils::parse_int_detail
+} // namespace loom::utils::parse_int_detail
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 /// Portable integer from_chars replacement. Accepts any integral T.
 /// Returns {ptr, errc} with std::from_chars semantics.
@@ -100,4 +100,4 @@ template <typename T>
     return parse_int_detail::from_chars_int(first, last, value);
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

@@ -10,7 +10,7 @@ import std;
 
 import loom.fs.path;
 
-export namespace cc::utils::file {
+export namespace loom::utils::file {
 
 namespace fs = std::filesystem;
 using path::expand_path;
@@ -339,4 +339,4 @@ using path::expand_path;
     }
 }
 
-} // namespace cc::utils::file
+} // namespace loom::utils::file

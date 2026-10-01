@@ -14,13 +14,13 @@ import std;
 
 import loom.types.types;
 import loom.tools.agent_runtime;
-// Genuinely used for cc::utils::PERSISTED_OUTPUT_TAG / ..._CLOSING_TAG /
+// Genuinely used for loom::utils::PERSISTED_OUTPUT_TAG / ..._CLOSING_TAG /
 // TOOL_RESULT_CLEARED_MESSAGE: namespace-scope constexpr string_views the
 // dead-import heuristic does not harvest.
 import loom.tools.support.tool_helpers;  // arch-check: keep-import
 import loom.platform.env.env_utils;
 
-namespace cc::core {
+namespace loom::core {
 
 [[nodiscard]] std::string QueryEngine::lowercase_ascii(std::string_view value) {
     std::string out;
@@ -36,12 +36,12 @@ namespace cc::core {
 }
 
 [[nodiscard]] bool QueryEngine::tool_result_already_replaced(std::string_view text) {
-    return text.starts_with(cc::utils::PERSISTED_OUTPUT_TAG);
+    return text.starts_with(loom::utils::PERSISTED_OUTPUT_TAG);
 }
 
 [[nodiscard]] bool QueryEngine::env_truthy_any(std::initializer_list<const char*> names) {
     for (const char* name : names) {
-        if (cc::utils::is_env_truthy(std::getenv(name))) return true;
+        if (loom::utils::is_env_truthy(std::getenv(name))) return true;
     }
     return false;
 }
@@ -255,11 +255,11 @@ void QueryEngine::apply_time_based_microcompact() {
         auto* result = std::get_if<ToolResultMessage>(&message);
         if (!result || !clear_ids.contains(result->tool_use_id.value)) continue;
         auto existing_text = tool_result_plain_text_content(*result);
-        if (existing_text && *existing_text == cc::utils::TOOL_RESULT_CLEARED_MESSAGE) {
+        if (existing_text && *existing_text == loom::utils::TOOL_RESULT_CLEARED_MESSAGE) {
             continue;
         }
         result->content.clear();
-        result->content.push_back(TextBlock{std::string(cc::utils::TOOL_RESULT_CLEARED_MESSAGE)});
+        result->content.push_back(TextBlock{std::string(loom::utils::TOOL_RESULT_CLEARED_MESSAGE)});
         changed = true;
     }
 
@@ -269,10 +269,10 @@ void QueryEngine::apply_time_based_microcompact() {
 }
 
 [[nodiscard]] std::filesystem::path QueryEngine::query_tool_result_path(std::string_view tool_use_id) const {
-    return cc::tools::agent_runtime::runtime_state_dir() /
+    return loom::tools::agent_runtime::runtime_state_dir() /
         "tool-results" /
-        (cc::tools::agent_runtime::safe_agent_filename(session_id_.str()) + "-" +
-            cc::tools::agent_runtime::safe_agent_filename(tool_use_id) + ".txt");
+        (loom::tools::agent_runtime::safe_agent_filename(session_id_.str()) + "-" +
+            loom::tools::agent_runtime::safe_agent_filename(tool_use_id) + ".txt");
 }
 
 [[nodiscard]] std::optional<std::string> QueryEngine::build_query_tool_result_replacement(
@@ -293,7 +293,7 @@ void QueryEngine::apply_time_based_microcompact() {
     const auto preview_len = std::min(preview_size, content.size());
     std::string replacement;
     replacement.reserve(preview_len + path.string().size() + 192);
-    replacement += cc::utils::PERSISTED_OUTPUT_TAG;
+    replacement += loom::utils::PERSISTED_OUTPUT_TAG;
     replacement += "\n";
     replacement += std::format(
         "Output too large ({} bytes). Full output saved to: {}\n\n",
@@ -302,7 +302,7 @@ void QueryEngine::apply_time_based_microcompact() {
     replacement += std::format("Preview (first {} bytes):\n", preview_len);
     replacement += content.substr(0, preview_len);
     replacement += content.size() > preview_len ? "\n...\n" : "\n";
-    replacement += cc::utils::PERSISTED_OUTPUT_CLOSING_TAG;
+    replacement += loom::utils::PERSISTED_OUTPUT_CLOSING_TAG;
     return replacement;
 }
 
@@ -553,4 +553,4 @@ void QueryEngine::replay_snip_boundaries() {
     return total_chars / 4;
 }
 
-} // namespace cc::core
+} // namespace loom::core

@@ -10,7 +10,7 @@ module loom.tools.runtime_backends.port;
 import std;
 
 // arch-check: keep-import (all four) — this impl unit uses the imported
-// types only UNQUALIFIED inside namespace cc::tools (RuntimeToolExecutor,
+// types only UNQUALIFIED inside namespace loom::tools (RuntimeToolExecutor,
 // SkillLoaderExecutor, ITool, AgentConfig, ...), which graph_check's textual
 // evidence heuristic cannot attribute; the imports are required for the
 // std::function slot definitions.
@@ -19,7 +19,7 @@ import loom.types.tool_types;         // arch-check: keep-import
 import loom.tools.tool;               // arch-check: keep-import
 import loom.tools.agent_types;        // arch-check: keep-import
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
 struct RuntimeBackendSlots {
     // B12 SkillLoader discovery (std::nullopt = manual SKILL.md walk runs).
@@ -44,9 +44,9 @@ RuntimeBackendSlots& runtime_backend_slots() {
     return slots;
 }
 
-} // namespace cc::tools::detail
+} // namespace loom::tools::detail
 
-namespace cc::tools {
+namespace loom::tools {
 
 // ── SkillLoader executor ──────────────────────────────────────────────────
 void set_skill_loader_executor(SkillLoaderExecutor executor) {
@@ -126,4 +126,4 @@ AgentToolFactory& agent_tool_factory() {
     return detail::runtime_backend_slots().agent_tool_factory;
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

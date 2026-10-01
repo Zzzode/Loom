@@ -14,7 +14,7 @@ export module loom.ui.features.hooks_ui;
 
 import std;
 
-export namespace cc::ui::hooks_ui {
+export namespace loom::ui::hooks_ui {
 using namespace ftxui;
 
 // ============================================================
@@ -377,4 +377,4 @@ struct HooksUIOptions {
     });
 }
 
-} // namespace cc::ui::hooks_ui
+} // namespace loom::ui::hooks_ui

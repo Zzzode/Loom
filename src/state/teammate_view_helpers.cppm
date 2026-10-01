@@ -19,9 +19,9 @@ import std;
 import loom.serdes.json;
 import loom.task_types;
 
-export namespace cc::state::teammate_view {
+export namespace loom::state::teammate_view {
 
-using TaskSortKey = cc::tasks::TaskSortKey;
+using TaskSortKey = loom::tasks::TaskSortKey;
 
 struct TeammateStateView {
     std::string agent_id;
@@ -192,7 +192,7 @@ inline TaskSortKey sort_from(std::string_view s) {
 } // namespace detail
 
 inline std::string teammate_view_state_to_json(const TeammateViewState& v) {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     root.add("collapsed", doc.boolean(v.collapsed));
     root.add("filter_text", doc.string(v.filter_text));
@@ -207,7 +207,7 @@ inline std::string teammate_view_state_to_json(const TeammateViewState& v) {
 
 inline std::expected<TeammateViewState, std::string>
 teammate_view_state_from_json(std::string_view s) {
-    auto parsed = cc::utils::json::parse(s);
+    auto parsed = loom::utils::json::parse(s);
     if (!parsed) return std::unexpected("invalid JSON for TeammateViewState");
     auto root = parsed->root();
     if (!root.is_obj()) return std::unexpected("root not object");
@@ -219,11 +219,11 @@ teammate_view_state_from_json(std::string_view s) {
     v.show_offline = !root.has("show_offline") || root.get("show_offline").as_bool();
     auto pins = root.get("pinned_ids");
     if (pins.is_arr()) {
-        pins.iter([&](cc::utils::json::JsonVal e) {
+        pins.iter([&](loom::utils::json::JsonVal e) {
             if (e.is_str()) v.pinned_ids.emplace(e.as_str());
         });
     }
     return v;
 }
 
-} // namespace cc::state::teammate_view
+} // namespace loom::state::teammate_view

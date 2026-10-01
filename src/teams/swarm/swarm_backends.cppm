@@ -14,7 +14,7 @@ export module loom.teams.swarm.backends;
 
 import std;
 
-export namespace cc::utils::swarm_backends {
+export namespace loom::utils::swarm_backends {
 
 // ============================================================================
 // Types & Enums (from types.ts)
@@ -964,4 +964,4 @@ struct ShellOutput {
 
 } // namespace detail
 
-} // namespace cc::utils::swarm_backends
+} // namespace loom::utils::swarm_backends

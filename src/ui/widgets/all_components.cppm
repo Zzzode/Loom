@@ -19,9 +19,9 @@ export import loom.ui.widgets.text_input;
 // Unified canonical PromptInputMode enum — all modules import this from here.
 export import loom.ui.foundation.ui_types;
 
-export namespace cc::ui::components {
+export namespace loom::ui::components {
 
-// Re-export all types and functions from ui::components into cc::ui::components
+// Re-export all types and functions from ui::components into loom::ui::components
 // for consistency with the existing codebase
 using ::ui::components::FastIconOptions;
 using ::ui::components::FastIcon;
@@ -46,10 +46,10 @@ using ::ui::components::StatsData;
 using ::ui::components::StatsOptions;
 using ::ui::components::Stats;
 
-using cc::ui::components::Tab;
-using cc::ui::components::TagTabsOptions;
-using cc::ui::components::TagTabs;
-using cc::ui::components::TagTabsComponent;
+using loom::ui::components::Tab;
+using loom::ui::components::TagTabsOptions;
+using loom::ui::components::TagTabs;
+using loom::ui::components::TagTabsComponent;
 
 using ::ui::components::Suggestion;
 using ::ui::components::SuggestionCategory;
@@ -61,4 +61,4 @@ using ::ui::components::TextInput;
 using ::ui::components::TextInputImpl;
 using ::ui::components::MakeTextInputCore;
 
-} // namespace cc::ui::components
+} // namespace loom::ui::components

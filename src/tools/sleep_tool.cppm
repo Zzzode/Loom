@@ -6,7 +6,7 @@ export module loom.tools.sleep;
 import std;
 
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 
 enum class SleepError {
@@ -165,4 +165,4 @@ private:
     std::shared_ptr<AbortSignal> abort_signal_;
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

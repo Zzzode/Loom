@@ -32,9 +32,9 @@ module loom.ui.app.app;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
 
-namespace cc::ui {
+namespace loom::ui {
 
-namespace repl = cc::ui::repl_screen;
+namespace repl = loom::ui::repl_screen;
 
 void AppAdapter::AppendLocalMessagesToScreenState() {
     // Ensure local-command entries have a synthetic 24-char uuids so the
@@ -101,4 +101,4 @@ void AppAdapter::DismissLocalJsxCommand(std::string result_message) {
     AppendLocalCommandMessage(std::move(result_message), false);
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

@@ -6,7 +6,7 @@ export module loom.process.bash.bash_shell_quoting;
 
 import std;
 
-export namespace cc::utils::bash_shell_quoting {
+export namespace loom::utils::bash_shell_quoting {
 
 namespace detail {
     [[nodiscard]] inline bool is_shell_safe(char c) {
@@ -226,5 +226,5 @@ namespace detail {
     return collapsed;
 }
 
-} // namespace cc::utils::bash_shell_quoting
+} // namespace loom::utils::bash_shell_quoting
 

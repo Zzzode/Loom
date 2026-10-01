@@ -19,9 +19,9 @@ import loom.tasks.task;        // TaskType / TaskStatus / task_type_to_string
 import loom.tasks.task_graph;
 import loom.tasks.types;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================================
 // Data-prep row types (Phase 4 FTXUI table rendering)
@@ -425,4 +425,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

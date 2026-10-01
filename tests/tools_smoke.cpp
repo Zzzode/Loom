@@ -12,8 +12,8 @@ import std;
 import loom.tools.bash.impl;
 import loom.tools.files.impl;
 
-using namespace cc::tools::bash::impl;
-using namespace cc::tools::files::impl;
+using namespace loom::tools::bash::impl;
+using namespace loom::tools::files::impl;
 
 static int g_failed = 0;
 #define CHECK(expr, ...) do { \

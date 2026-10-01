@@ -25,7 +25,7 @@ import loom.tools.path_validation;
 import loom.tools.readonly_validation;
 import loom.tools.should_use_sandbox;
 
-export namespace cc::tools::bash_validation {
+export namespace loom::tools::bash_validation {
 
 // ── Re-exported types ──────────────────────────────────────────────────────
 
@@ -121,7 +121,7 @@ inline EnvelopeResult validate_read_only(std::string_view command) {
 }
 
 // ── Destructive-command detection (delegates to destructive_command_warning
-//    module which exports the same functions into cc::tools::bash_validation) ──
+//    module which exports the same functions into loom::tools::bash_validation) ──
 
 // ── sed validation (kept as a passthrough — TS version lives in separate
 //    sedValidation.ts which Agent 3 is NOT migrating per task scope) ─────────
@@ -136,4 +136,4 @@ inline EnvelopeResult validate_sed_command(std::string_view sed_expr) {
     return {true, std::nullopt};
 }
 
-} // namespace cc::tools::bash_validation
+} // namespace loom::tools::bash_validation

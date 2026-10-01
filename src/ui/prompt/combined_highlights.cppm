@@ -37,13 +37,13 @@ import std;
 import loom.parsing.highlight.text_highlighting;
 import loom.text.parse_references;
 
-export namespace cc::ui::prompt {
+export namespace loom::ui::prompt {
 
 using ftxui::Color;
-using cc::utils::TextHighlight;
-namespace highlight_priority = cc::utils::highlight_priority;
-using cc::utils::ReferenceMatch;
-using cc::utils::parse_references;
+using loom::utils::TextHighlight;
+namespace highlight_priority = loom::utils::highlight_priority;
+using loom::utils::ReferenceMatch;
+using loom::utils::parse_references;
 
 // ============================================================
 // Context struct — carries all inputs needed by the builder
@@ -550,4 +550,4 @@ inline void add_rainbow_shimmer_highlights(
     return highlights;
 }
 
-} // namespace cc::ui::prompt
+} // namespace loom::ui::prompt

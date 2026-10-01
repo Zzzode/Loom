@@ -66,20 +66,20 @@ import loom.commands.command;
 import loom.ui.dialogs.triggers;
 import loom.vim.vim_mode;
 
-namespace cc::ui {
+namespace loom::ui {
 // Defined in app_store_bridge.cpp (impl unit of this module).
-CommandContext command_context_for_engine(cc::core::QueryEngine* engine,
+CommandContext command_context_for_engine(loom::core::QueryEngine* engine,
                                           void* app_store, std::string cwd);
 
-namespace repl = cc::ui::repl_screen;
-namespace agent_runtime = cc::tools::agent_runtime;
-namespace acsrc = cc::ui::autocomplete_sources;
-namespace frn = cc::ui::prompt::fuzzy_rank_nucleo;
-namespace fidx = cc::ui::prompt::file_index;
-namespace atatt = cc::ui::prompt::at_attachments;
-namespace figs = cc::ui::design::figures;
-namespace pl = cc::ui::messages::pipeline;
-namespace dtrig = cc::ui::dialogs::triggers;
+namespace repl = loom::ui::repl_screen;
+namespace agent_runtime = loom::tools::agent_runtime;
+namespace acsrc = loom::ui::autocomplete_sources;
+namespace frn = loom::ui::prompt::fuzzy_rank_nucleo;
+namespace fidx = loom::ui::prompt::file_index;
+namespace atatt = loom::ui::prompt::at_attachments;
+namespace figs = loom::ui::design::figures;
+namespace pl = loom::ui::messages::pipeline;
+namespace dtrig = loom::ui::dialogs::triggers;
 
 // ── HandleSubmit (moved out of app_autocomplete.cpp to reduce import closure) ──
 void AppAdapter::HandleSubmit(const std::string& text,
@@ -88,7 +88,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
     this->WaitForInFlightPastes(text);
 
     // TS REF: PromptInput.tsx L1066-1068
-    const auto refs = cc::utils::parse_references(text);
+    const auto refs = loom::utils::parse_references(text);
     std::unordered_set<int> referenced_ids;
     int n_images = 0;
     for (const auto& r : refs) {
@@ -151,7 +151,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
     pasted_contents_.clear();
 
     // TS REF: history.ts L81 expandPastedTextRefs
-    std::string expanded_text = cc::utils::expand_pasted_text_refs(
+    std::string expanded_text = loom::utils::expand_pasted_text_refs(
         text, [this](int id) -> std::optional<std::string> {
             auto it = pasted_text_contents_.find(id);
             if (it != pasted_text_contents_.end()) return it->second;
@@ -287,7 +287,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
             opts.attachments.push_back(std::move(b));
         }
 
-        static_cast<cc::core::QueryEngine*>(engine_raw())->stream_query(materialized.text, opts);
+        static_cast<loom::core::QueryEngine*>(engine_raw())->stream_query(materialized.text, opts);
 
         query_running_.store(false);
         PostRenderEvent();
@@ -305,7 +305,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
         return;
     }
     if (normalized == "/clear") {
-        static_cast<cc::core::QueryEngine*>(engine_raw())->clear_conversation();
+        static_cast<loom::core::QueryEngine*>(engine_raw())->clear_conversation();
         local_command_messages_.clear();
         screen_state_->messages_store.divider_index.reset();
         screen_state_->messages_store.unseen_divider.reset();
@@ -323,7 +323,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
         //   operations that would otherwise lose it (compact, tool-use).
         const auto& input = screen_state_->input_text;
         if (!input.empty()) {
-            const auto refs = cc::utils::parse_references(input);
+            const auto refs = loom::utils::parse_references(input);
             std::unordered_map<int, ImageBlock> ref_images;
             std::unordered_map<int, std::string> ref_texts;
             for (const auto& r : refs) {
@@ -340,7 +340,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                 std::move(ref_images), std::move(ref_texts));
             repl::set_prompt_input_text(screen_state_, {}, 0);
         }
-        auto result = static_cast<cc::core::QueryEngine*>(engine_raw())->compact_conversation();
+        auto result = static_cast<loom::core::QueryEngine*>(engine_raw())->compact_conversation();
         if (result) {
             this->SyncState();
             // Restore stash after compact completes (TS: restore after
@@ -356,22 +356,22 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
         return;
     }
     if (normalized == "/cost") {
-        auto usage = static_cast<cc::core::QueryEngine*>(engine_raw())->get_usage();
-        auto cost = static_cast<cc::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd;
+        auto usage = static_cast<loom::core::QueryEngine*>(engine_raw())->get_usage();
+        auto cost = static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd;
         screen_state_->task_view_store.spinner_tip = std::format(
             "Cost: ${:.4f} | In: {} | Out: {} | Ctx: {:.0f}%",
             cost, usage.input_tokens, usage.output_tokens,
-            static_cast<cc::core::QueryEngine*>(engine_raw())->context_utilization() * 100.0);
+            static_cast<loom::core::QueryEngine*>(engine_raw())->context_utilization() * 100.0);
         return;
     }
     if (normalized.starts_with("/model")) {
         auto args_start = normalized.find(' ');
         if (args_start != std::string_view::npos) {
             auto new_model = normalized.substr(args_start + 1);
-            auto params = static_cast<cc::core::QueryEngine*>(engine_raw())->model_params();
+            auto params = static_cast<loom::core::QueryEngine*>(engine_raw())->model_params();
             std::string old_model = params.model;
             params.model = std::string(new_model);
-            static_cast<cc::core::QueryEngine*>(engine_raw())->set_model_params(std::move(params));
+            static_cast<loom::core::QueryEngine*>(engine_raw())->set_model_params(std::move(params));
 
             // M7.5: Show model switch confirmation banner
             dtrig::PushModelSwitch(
@@ -396,8 +396,8 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
             auto arg = normalized.substr(args_start + 1);
             set_vim_enabled(arg == "on" || arg == "1");
         }
-        if (vim_enabled()) cc::vim::enable_vim_mode();
-        else cc::vim::disable_vim_mode();
+        if (vim_enabled()) loom::vim::enable_vim_mode();
+        else loom::vim::disable_vim_mode();
         this->TriggerStatuslineUpdate();
         return;
     }
@@ -423,9 +423,9 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
         return;
     }
 
-    if (auto parsed = cc::core::CommandRegistry::parse(normalized)) {
+    if (auto parsed = loom::core::CommandRegistry::parse(normalized)) {
         const bool known_command =
-            static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw()) && static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())->has_command(parsed->name);
+            static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw()) && static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->has_command(parsed->name);
         if (!known_command) {
             if (auto skill =
                     acsrc::find_skill_suggestion(screen_state_->cwd, parsed->name)) {
@@ -444,7 +444,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                 if (args_start != std::string_view::npos) {
                     user_text = trim_ascii_copy(normalized.substr(args_start + 1));
                 }
-                cc::utils::skill_usage::record_skill_usage(skill->name);  // SL-04
+                loom::utils::skill_usage::record_skill_usage(skill->name);  // SL-04
                 this->HandleSubmit(acsrc::skill_invocation_prompt(*skill, user_text));
                 return;
             }
@@ -473,10 +473,10 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
         }
     }
 
-    if (static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())) {
-        auto result = static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())->execute(
+    if (static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
+        auto result = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->execute(
             command,
-            command_context_for_engine(static_cast<cc::core::QueryEngine*>(engine_raw()), app_store_raw(), screen_state_->cwd));
+            command_context_for_engine(static_cast<loom::core::QueryEngine*>(engine_raw()), app_store_raw(), screen_state_->cwd));
         if (result) {
             if (result->status == CommandStatus::Injected) {
                 this->HandleSubmit(result->message);
@@ -521,4 +521,4 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
     }
 }
 
-}  // namespace cc::ui
+}  // namespace loom::ui

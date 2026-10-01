@@ -9,7 +9,7 @@ export module loom.bridge.security;
 
 import std;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
 namespace detail {
 [[nodiscard]] std::string base64url_decode(std::string_view input) {
@@ -395,4 +395,4 @@ public:
     void clear() { log_.clear(); }
 };
 
-} // namespace cc::bridge
+} // namespace loom::bridge

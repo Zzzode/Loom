@@ -5,7 +5,7 @@ export module loom.containers.array_utils;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 
 template <typename T>
@@ -112,4 +112,4 @@ template <typename T>
     return std::vector<T>(s.begin() + static_cast<ptrdiff_t>(n), s.end());
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

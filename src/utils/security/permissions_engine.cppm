@@ -11,7 +11,7 @@ export module loom.security.permissions_engine;
 
 import std;
 
-export namespace cc::utils::permissions {
+export namespace loom::utils::permissions {
 
 // --- Enums ---
 
@@ -419,4 +419,4 @@ inline void invalidate_cache() {
     engine().invalidate_cache();
 }
 
-} // namespace cc::utils::permissions
+} // namespace loom::utils::permissions

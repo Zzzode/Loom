@@ -12,7 +12,7 @@ import std;
 
 import loom.types.types;
 
-export namespace cc::state {
+export namespace loom::state {
 
 // ============================================================
 // Permission State
@@ -89,7 +89,7 @@ struct CompletionBoundary {
 
 /// Speculation state
 struct SpeculationResult {
-    std::vector<cc::core::Message> messages;
+    std::vector<loom::core::Message> messages;
     std::optional<CompletionBoundary> boundary;
     std::int64_t time_saved_ms = 0;
 };
@@ -104,7 +104,7 @@ struct SpeculationState {
     std::string id;
     std::optional<std::function<void()>> abort;
     std::chrono::system_clock::time_point start_time;
-    std::vector<cc::core::Message> messages;
+    std::vector<loom::core::Message> messages;
     std::set<std::string> written_paths;
     std::optional<CompletionBoundary> boundary;
     std::size_t suggestion_length = 0;
@@ -235,7 +235,7 @@ struct TaskState {
     std::string id;
     std::string title;
     std::string status;
-    std::vector<cc::core::Message> messages;
+    std::vector<loom::core::Message> messages;
     std::chrono::system_clock::time_point created_at;
     // Add more fields as needed...
 };
@@ -316,9 +316,9 @@ struct AppState {
     // ========================================
     // Conversation & Messages
     // ========================================
-    std::vector<cc::core::Message> messages;
-    cc::core::SessionId session_id;
-    cc::core::ConversationId conversation_id;
+    std::vector<loom::core::Message> messages;
+    loom::core::SessionId session_id;
+    loom::core::ConversationId conversation_id;
 
     // ========================================
     // Model Configuration
@@ -336,7 +336,7 @@ struct AppState {
     // ========================================
     // Token & Cost Tracking
     // ========================================
-    cc::core::TokenUsage total_usage;
+    loom::core::TokenUsage total_usage;
     double total_cost_usd = 0.0;
 
     // ========================================
@@ -415,7 +415,7 @@ struct AppState {
     } skill_improvement;
     std::uint32_t auth_version = 0;
     struct InitialMessage {
-        cc::core::UserMessage message;
+        loom::core::UserMessage message;
         bool clear_context = false;
         std::optional<PermissionMode> mode;
         std::vector<std::string> allowed_prompts;
@@ -457,7 +457,7 @@ struct AppState {
 // ============================================================
 
 /// Create a new state with an appended message
-[[nodiscard]] inline AppState with_message(const AppState& state, cc::core::Message msg) {
+[[nodiscard]] inline AppState with_message(const AppState& state, loom::core::Message msg) {
     auto next = state;
     next.messages.push_back(std::move(msg));
     next.last_activity = std::chrono::system_clock::now();
@@ -473,7 +473,7 @@ struct AppState {
 }
 
 /// Create a new state with updated token usage
-[[nodiscard]] inline AppState with_usage(const AppState& state, cc::core::TokenUsage usage) {
+[[nodiscard]] inline AppState with_usage(const AppState& state, loom::core::TokenUsage usage) {
     auto next = state;
     next.total_usage += usage;
     double input_cost = static_cast<double>(usage.input_tokens) * state.current_model.input_cost_per_mtok / 1'000'000.0;
@@ -609,4 +609,4 @@ private:
     }
 };
 
-} // namespace cc::state
+} // namespace loom::state

@@ -13,7 +13,7 @@ import std;
 import loom.skills.load_skills_dir;
 import loom.process.bash.bash_execution;
 
-export namespace cc::skills::bundled {
+export namespace loom::skills::bundled {
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -118,7 +118,7 @@ namespace detail {
 
 /// Execute a command and capture stdout (shared with other bundled skills)
 inline std::expected<std::string, std::string> exec_command(const std::string& cmd) {
-    FILE* pipe = cc::utils::bash::popen_spawn(cmd.c_str());
+    FILE* pipe = loom::utils::bash::popen_spawn(cmd.c_str());
     if (!pipe) return std::unexpected("Failed to execute: " + cmd);
 
     std::string output;
@@ -127,7 +127,7 @@ inline std::expected<std::string, std::string> exec_command(const std::string& c
         output.append(buffer.data(), bytes);
     }
 
-    int status = cc::utils::bash::pclose_spawn(pipe);
+    int status = loom::utils::bash::pclose_spawn(pipe);
     if (status != 0 && output.empty()) {
         return std::unexpected("Command failed with exit code " +
             std::to_string(status) + ": " + cmd);
@@ -284,8 +284,8 @@ inline std::string build_loom_in_chrome_prompt(
 /// The `triggers` list contains keyword patterns (English + Chinese) that should
 /// cause the skill to be injected.  Additional regex triggers are defined in
 /// bundled.cppm:make_loom_in_chrome_skill().
-cc::skills::SkillManifest get_loom_in_chrome_skill_manifest() {
-    return cc::skills::SkillManifest{
+loom::skills::SkillManifest get_loom_in_chrome_skill_manifest() {
+    return loom::skills::SkillManifest{
         .name = "loom-in-chrome",
         .description =
             "Automates your Chrome browser to interact with web pages - clicking elements, "
@@ -310,4 +310,4 @@ cc::skills::SkillManifest get_loom_in_chrome_skill_manifest() {
     };
 }
 
-} // namespace cc::skills::bundled
+} // namespace loom::skills::bundled

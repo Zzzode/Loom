@@ -24,17 +24,17 @@ import loom.tools.web_browser;
 import loom.process.bash.bash_execution;
 import loom.serdes.json;
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
-using cc::core::Result;
-using cc::core::ToolInput;
-using cc::core::ToolOutputContent;
-using cc::core::ToolResult;
+using loom::core::Result;
+using loom::core::ToolInput;
+using loom::core::ToolOutputContent;
+using loom::core::ToolResult;
 
 namespace fs = std::filesystem;
 
 [[nodiscard]] Result<ToolResult> run_command(std::string command, std::size_t max_bytes) {
-    auto cap = cc::utils::bash::exec_capture(command);
+    auto cap = loom::utils::bash::exec_capture(command);
     if (!cap) {
         return ToolResult::error("Failed to start command");
     }
@@ -280,7 +280,7 @@ namespace fs = std::filesystem;
         return ToolResult::error(std::format("Unsupported browser action: {}", action_text));
     }
 
-    cc::tools::BrowserRequest request{
+    loom::tools::BrowserRequest request{
         .action = *action,
         .url = json_string(json, "url"),
         .selector = json_string(json, "selector"),
@@ -289,10 +289,10 @@ namespace fs = std::filesystem;
         .extract_selector = json_string(json, "extract_selector"),
     };
 
-    static cc::tools::WebBrowserTool tool;
+    static loom::tools::WebBrowserTool tool;
     auto result = tool.execute(std::move(request));
     if (!result) {
-        return ToolResult::error(std::string(cc::tools::format_error(result.error())));
+        return ToolResult::error(std::string(loom::tools::format_error(result.error())));
     }
 
     if (result->screenshot_base64) {
@@ -344,7 +344,7 @@ namespace fs = std::filesystem;
 }
 
 [[nodiscard]] Result<ToolResult> execute_notebook_edit(const ToolInput& input) {
-    auto parsed = cc::utils::json::parse(input.json());
+    auto parsed = loom::utils::json::parse(input.json());
     if (!parsed || !parsed->root().is_obj()) {
         return ToolResult::error("notebook_edit input must be a JSON object");
     }
@@ -429,4 +429,4 @@ namespace fs = std::filesystem;
     return ToolResult::success(result->message);
 }
 
-} // namespace cc::tools::detail
+} // namespace loom::tools::detail

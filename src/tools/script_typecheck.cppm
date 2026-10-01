@@ -17,14 +17,14 @@ import loom.tools.script_diagnostics;
 import loom.serdes.json;
 import loom.process.bash.bash_execution;
 
-export namespace cc::tools::script_typecheck {
+export namespace loom::tools::script_typecheck {
 
 namespace fs = std::filesystem;
-using cc::utils::bash::ExecutionResult;
-using cc::utils::bash::ShellSessionConfig;
-using cc::utils::bash::execute_command;
-using cc::utils::json::JsonVal;
-using cc::utils::json::parse;
+using loom::utils::bash::ExecutionResult;
+using loom::utils::bash::ShellSessionConfig;
+using loom::utils::bash::execute_command;
+using loom::utils::json::JsonVal;
+using loom::utils::json::parse;
 
 // ---------------------------------------------------------------------------
 // Public types (mirror ScriptTypeDiagnostic / ScriptTypeCheckResult from TS)
@@ -643,4 +643,4 @@ auto filter_errors(const TypecheckResult& r) -> std::vector<ScriptTypeDiagnostic
     return out;
 }
 
-} // namespace cc::tools::script_typecheck
+} // namespace loom::tools::script_typecheck

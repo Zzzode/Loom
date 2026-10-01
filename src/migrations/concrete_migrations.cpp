@@ -30,12 +30,12 @@ import std;
 
 import loom.serdes.json;
 
-namespace cc::migrations::concrete {
+namespace loom::migrations::concrete {
 
-using cc::utils::json::JsonDoc;
-using cc::utils::json::JsonMutDoc;
-using cc::utils::json::JsonMutVal;
-using cc::utils::json::JsonVal;
+using loom::utils::json::JsonDoc;
+using loom::utils::json::JsonMutDoc;
+using loom::utils::json::JsonMutVal;
+using loom::utils::json::JsonVal;
 
 // ============================================================
 // Timestamp helper
@@ -837,4 +837,4 @@ inline void apply_migrations(ConfigCtx& ctx,
     return ids;
 }
 
-}  // namespace cc::migrations::concrete
+}  // namespace loom::migrations::concrete

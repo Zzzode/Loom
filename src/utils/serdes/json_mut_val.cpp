@@ -12,7 +12,7 @@ module loom.serdes.json;
 
 import std;
 
-namespace cc::utils::json {
+namespace loom::utils::json {
 
 bool JsonMutVal::is_null() const noexcept { return val_ && yyjson_mut_is_null(val_); }
 bool JsonMutVal::is_bool() const noexcept { return val_ && yyjson_mut_is_bool(val_); }
@@ -96,4 +96,4 @@ JsonMutVal JsonMutVal::ensure_array(std::string_view key) {
     return child;
 }
 
-} // namespace cc::utils::json
+} // namespace loom::utils::json

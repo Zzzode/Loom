@@ -7,7 +7,7 @@ export module loom.services.mcp.headers_helper;
 
 import std;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
 /// HTTP header pair
 using HeaderMap = std::map<std::string, std::string>;
@@ -126,4 +126,4 @@ HeaderMap get_mcp_server_headers(
     std::chrono::milliseconds timeout = std::chrono::milliseconds(10000)
 );
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

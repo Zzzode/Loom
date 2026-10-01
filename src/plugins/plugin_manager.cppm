@@ -14,7 +14,7 @@ import std;
 import loom.plugins.plugin_identifier;
 import loom.plugins.plugin_loader;
 
-export namespace cc::utils::plugin_manager {
+export namespace loom::utils::plugin_manager {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Plugin Scope & Installation Types
@@ -286,4 +286,4 @@ inline std::optional<InstalledPlugin> remove_installed_plugin(std::string_view) 
     return std::nullopt;
 }
 
-} // namespace cc::utils::plugin_manager
+} // namespace loom::utils::plugin_manager

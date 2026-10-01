@@ -13,7 +13,7 @@ import std;
 
 import loom.ui.visual.code_highlight;
 
-namespace cc::ui {
+namespace loom::ui {
 namespace detail {
 
 [[nodiscard]] Element render_code_block(const BlockToken& tok,
@@ -78,4 +78,4 @@ namespace detail {
     return vbox(std::move(out));
 }
 } // namespace detail
-} // namespace cc::ui
+} // namespace loom::ui

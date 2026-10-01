@@ -13,7 +13,7 @@ import std;
 
 import loom.state.app_state;
 
-namespace cc::state::selectors {
+namespace loom::state::selectors {
 
 // ============================================================
 // Companion (Buddy) Selectors
@@ -112,4 +112,4 @@ namespace cc::state::selectors {
     return state.plugins.needs_refresh;
 }
 
-} // namespace cc::state::selectors
+} // namespace loom::state::selectors

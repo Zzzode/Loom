@@ -19,7 +19,7 @@ import loom.ui.screens.dialog_store;
 import loom.ui.dialogs.system;
 import loom.ui.chrome.fullscreen_layout;
 
-namespace cc::ui::repl_screen {
+namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 // =========================================================
@@ -92,7 +92,7 @@ namespace dsys = dsys_fw;
         // MODAL_TRANSCRIPT_PEEK = 2 (fullscreen_layout.cppm kModalTranscriptPeek)
         // The -1 accounts for the ▔ divider row.
         constexpr int kModalTranscriptPeek =
-            cc::ui::layout::fullscreen::kModalTranscriptPeek;
+            loom::ui::layout::fullscreen::kModalTranscriptPeek;
         c.modal_available_cols = std::max(10, term_w - 4);
         c.modal_available_rows = std::max(4, term_h - kModalTranscriptPeek - 1);
     }
@@ -293,4 +293,4 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
 
 } // namespace dialog_queue_render
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

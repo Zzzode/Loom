@@ -15,7 +15,7 @@ import loom.ui.messages.message_row;
 import loom.ui.messages.message_timestamp;
 import loom.ui.foundation.design_figures;
 
-namespace cc::ui::messages_list {
+namespace loom::ui::messages_list {
 
 namespace detail {
 
@@ -164,10 +164,10 @@ auto accent_top_color(const RenderEnvelopeOptions& o) -> Color {
 /// Spinner glyph — canonical 10-frame braille spinner.
 /// TS REF: SpinnerGlyph.tsx (GAP 4: fig-spinner-frame-inconsistency)
 ///   Previously used 10 asterisk-based frames; now unified to the canonical
-///   braille set from cc::ui::design::figures::kSpinnerFrames so all spinners
+///   braille set from loom::ui::design::figures::kSpinnerFrames so all spinners
 ///   in the app animate consistently.
 auto spinner_glyph(std::size_t frame) -> const char* {
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
     // spinner_frame_glyph returns a string_view pointing into the inline
     // constexpr kSpinnerFrames array (static storage duration), so .data()
     // is safe to return as a raw const char*.
@@ -494,4 +494,4 @@ auto render_empty_state(const std::string& search_query) -> Element {
 
 } // namespace detail
 
-} // namespace cc::ui::messages_list
+} // namespace loom::ui::messages_list

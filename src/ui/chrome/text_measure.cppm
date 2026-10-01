@@ -12,7 +12,7 @@ export module loom.ui.chrome.text_measure;
 
 import std;
 
-export namespace cc::ui::text_measure {
+export namespace loom::ui::text_measure {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -527,4 +527,4 @@ private:
     size_t max_capacity_ = 4096;
 };
 
-} // namespace cc::ui::text_measure
+} // namespace loom::ui::text_measure

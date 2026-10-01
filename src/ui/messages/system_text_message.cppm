@@ -28,7 +28,7 @@ import loom.ui.messages.message_components;
 import loom.ui.messages.message_timestamp;
 import loom.ui.foundation.design_figures;  // kReferenceMark, kTeardropAsterisk, kBlackCircle (single source of truth)
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -237,7 +237,7 @@ class SystemTextMessageComponent : public ComponentBase {
 // NOTE: TS filters out the LLM system prompt upstream (isMeta / filtering);
 // these renderers handle only the app-event subtypes that survive.
 
-/// Glyphs used by TS system subtypes — now imported from cc::ui::design::figures
+/// Glyphs used by TS system subtypes — now imported from loom::ui::design::figures
 /// (single source of truth).  Historical names mapped as:
 ///   kReferenceMark     → figures::kReferenceMark     (※ U+203B)
 ///   kTeardropAsterisk  → figures::kTeardropAsterisk  (✻ U+273B)
@@ -264,7 +264,7 @@ class SystemTextMessageComponent : public ComponentBase {
 /// away_summary subtype:  `※ <content>` dimColor.
 [[nodiscard]] inline Element RenderSystemAwaySummary(
     const SystemTextMessageData& data, bool add_margin = true) {
-    auto glyph = hbox({text(std::string(cc::ui::design::figures::kReferenceMark)),
+    auto glyph = hbox({text(std::string(loom::ui::design::figures::kReferenceMark)),
                        text(" ")}) | dim | size(WIDTH, EQUAL, 2);
     auto content = text(data.summary.empty() ? data.detail : data.summary) | dim;
     return RenderSystemEventRow(std::move(glyph), std::move(content), add_margin);
@@ -273,7 +273,7 @@ class SystemTextMessageComponent : public ComponentBase {
 /// scheduled_task_fire / permission_retry subtype:  `✻ <content>` dimColor.
 [[nodiscard]] inline Element RenderSystemTeardropEvent(
     const SystemTextMessageData& data, bool add_margin = true) {
-    auto glyph = hbox({text(std::string(cc::ui::design::figures::kTeardropAsterisk)),
+    auto glyph = hbox({text(std::string(loom::ui::design::figures::kTeardropAsterisk)),
                        text(" ")}) | dim | size(WIDTH, EQUAL, 2);
     auto content = text(data.summary.empty() ? data.detail : data.summary) | dim;
     return RenderSystemEventRow(std::move(glyph), std::move(content), add_margin);
@@ -282,7 +282,7 @@ class SystemTextMessageComponent : public ComponentBase {
 /// agents_killed subtype:  `⏺ All background agents stopped` (dot in error,
 /// text dim).
 [[nodiscard]] inline Element RenderSystemAgentsKilled(bool add_margin = true) {
-    auto glyph = hbox({text(std::string(cc::ui::design::figures::kBlackCircle)),
+    auto glyph = hbox({text(std::string(loom::ui::design::figures::kBlackCircle)),
                        text(" ")}) | color(Color::Red) | size(WIDTH, EQUAL, 2);
     auto content = text("All background agents stopped") | dim;
     return RenderSystemEventRow(std::move(glyph), std::move(content), add_margin);
@@ -296,7 +296,7 @@ class SystemTextMessageComponent : public ComponentBase {
     int columns = 80) {
     const bool is_warning = false;  // info path by default
     const bool is_info = true;
-    auto glyph = hbox({text(std::string(cc::ui::design::figures::kBlackCircle)),
+    auto glyph = hbox({text(std::string(loom::ui::design::figures::kBlackCircle)),
                        text(" ")}) | dim | size(WIDTH, EQUAL, 2);
     std::string content = data.summary.empty() ? data.detail : data.summary;
     // trim leading/trailing whitespace (TS content.trim())
@@ -334,4 +334,4 @@ class SystemTextMessageComponent : public ComponentBase {
     }
 }
 
-}  // namespace cc::ui::messages
+}  // namespace loom::ui::messages

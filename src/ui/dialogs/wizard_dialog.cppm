@@ -37,7 +37,7 @@ export module loom.ui.dialogs.wizard_dialog;
 
 import std;
 
-export namespace cc::ui::wizard_dialog {
+export namespace loom::ui::wizard_dialog {
 using namespace ftxui;
 
 // ============================================================
@@ -1251,4 +1251,4 @@ inline std::vector<std::string> split_lines(std::string_view s) {
     return MakeWizard(std::move(config), std::move(builder));
 }
 
-} // namespace cc::ui::wizard_dialog
+} // namespace loom::ui::wizard_dialog

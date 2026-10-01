@@ -8,7 +8,7 @@ import std;
 
 import loom.plugins.plugin_identifier;
 
-export namespace cc::utils::plugin_marketplace_rules {
+export namespace loom::utils::plugin_marketplace_rules {
 
 enum class MarketplaceSourceType : unsigned char {
     Github,
@@ -33,7 +33,7 @@ struct MarketplaceSource {
 [[nodiscard]] inline bool is_marketplace_auto_update(std::string_view marketplace_name, std::optional<bool> configured_auto_update = std::nullopt) {
     if (configured_auto_update.has_value()) return *configured_auto_update;
     const auto normalized = lower_copy(marketplace_name);
-    return cc::utils::plugin_identifier::is_official_marketplace_name(normalized) && normalized != "knowledge-work-plugins";
+    return loom::utils::plugin_identifier::is_official_marketplace_name(normalized) && normalized != "knowledge-work-plugins";
 }
 
 [[nodiscard]] inline bool contains_non_ascii(std::string_view value) noexcept {
@@ -57,7 +57,7 @@ struct MarketplaceSource {
 
 [[nodiscard]] inline bool is_blocked_official_name(std::string_view name) {
     const auto normalized = lower_copy(name);
-    if (cc::utils::plugin_identifier::is_official_marketplace_name(normalized)) return false;
+    if (loom::utils::plugin_identifier::is_official_marketplace_name(normalized)) return false;
     if (contains_non_ascii(name)) return true;
     if (has_separator_between(normalized, "official", "anthropic") || has_separator_between(normalized, "official", "loom")) return true;
     if (has_separator_between(normalized, "anthropic", "official") || has_separator_between(normalized, "loom", "official")) return true;
@@ -73,7 +73,7 @@ struct MarketplaceSource {
 
 [[nodiscard]] inline std::optional<std::string> validate_official_name_source(std::string_view name, const MarketplaceSource& source) {
     const auto normalized = lower_copy(name);
-    if (!cc::utils::plugin_identifier::is_official_marketplace_name(normalized)) return std::nullopt;
+    if (!loom::utils::plugin_identifier::is_official_marketplace_name(normalized)) return std::nullopt;
     constexpr std::string_view official_org = "anthropics";
     const auto message = "The name '" + std::string(name) + "' is reserved for official Anthropic marketplaces. Only repositories from 'github.com/anthropics/' can use this name.";
     if (source.type == MarketplaceSourceType::Github) {
@@ -89,4 +89,4 @@ struct MarketplaceSource {
     return message;
 }
 
-} // namespace cc::utils::plugin_marketplace_rules
+} // namespace loom::utils::plugin_marketplace_rules

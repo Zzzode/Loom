@@ -18,7 +18,7 @@ import std;
 
 import loom.scm.git.git;
 
-export namespace cc::tools::agent_memory {
+export namespace loom::tools::agent_memory {
 
 namespace fs = std::filesystem;
 
@@ -101,7 +101,7 @@ enum class Scope {
             return cwd / ".loom" / "agent-memory" / dir_name;
         case Scope::Local: {
             if (const char* remote = std::getenv("LOOM_REMOTE_MEMORY_DIR"); remote && *remote) {
-                const auto git_root = cc::utils::git::find_git_root(cwd).value_or(cwd);
+                const auto git_root = loom::utils::git::find_git_root(cwd).value_or(cwd);
                 const auto project_component = sanitize_agent_type_for_path(git_root.string());
                 return fs::path{remote} / "projects" / project_component / "agent-memory-local" / dir_name;
             }
@@ -191,4 +191,4 @@ enum class Scope {
     return "None";
 }
 
-} // namespace cc::tools::agent_memory
+} // namespace loom::tools::agent_memory

@@ -2,7 +2,7 @@ export module loom.scm.git.git_diff;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
 
@@ -233,4 +233,4 @@ inline DiffStats get_diff_stats(const std::vector<FileDiff>& diffs) {
     return stats;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

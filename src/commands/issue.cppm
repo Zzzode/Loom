@@ -11,9 +11,9 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// IssueCommand implements the /issue slash command.
 /// Issue management command for tracker workflows.
@@ -45,4 +45,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

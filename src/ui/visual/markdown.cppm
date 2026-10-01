@@ -25,7 +25,7 @@ export module loom.ui.visual.markdown;
 
 import std;
 
-export namespace cc::ui {
+export namespace loom::ui {
 
 using namespace ftxui;
 
@@ -525,4 +525,4 @@ void clear_markdown_cache();
 /// Get maximum cache size
 [[nodiscard]] std::size_t markdown_cache_max_size();
 
-} // namespace cc::ui
+} // namespace loom::ui

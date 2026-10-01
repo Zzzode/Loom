@@ -24,7 +24,7 @@ export module loom.vim.vim_types;
 
 import std;
 
-export namespace cc::vim {
+export namespace loom::vim {
 
 /// Canonical vim editing mode.
 enum class VimMode : std::uint8_t {
@@ -80,4 +80,4 @@ enum class VimMode : std::uint8_t {
     return "UNKNOWN";
 }
 
-} // namespace cc::vim
+} // namespace loom::vim

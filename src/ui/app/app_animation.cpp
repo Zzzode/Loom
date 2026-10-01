@@ -29,9 +29,9 @@ module loom.ui.app.app;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.task_view_store;
 
-namespace cc::ui {
+namespace loom::ui {
 
-namespace repl = cc::ui::repl_screen;
+namespace repl = loom::ui::repl_screen;
 
 void AppAdapter::StartUiAnimationTicker() {
     spinner_thread_ = std::jthread([this](std::stop_token st) {
@@ -88,4 +88,4 @@ void AppAdapter::PostRenderEvent() {
     }
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

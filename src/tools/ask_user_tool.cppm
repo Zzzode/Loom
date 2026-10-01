@@ -7,7 +7,7 @@ export module loom.tools.ask_user;
 import std;
 
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 // Error types for ask user operations
 enum class AskUserError {
@@ -228,4 +228,4 @@ inline AskUserResponder& get_global_ask_user_responder() {
     return s_responder;
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

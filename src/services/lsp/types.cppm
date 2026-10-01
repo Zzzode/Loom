@@ -7,9 +7,9 @@ import std;
 
 import loom.utils.error;
 
-export namespace cc::services::lsp {
+export namespace loom::services::lsp {
 
-using cc::utils::Result;
+using loom::utils::Result;
 
 // Scoped LSP server config
 struct ScopedLspServerConfig {
@@ -27,4 +27,4 @@ struct LspClientConfig {
     ScopedLspServerConfig config;
 };
 
-} // namespace cc::services::lsp
+} // namespace loom::services::lsp

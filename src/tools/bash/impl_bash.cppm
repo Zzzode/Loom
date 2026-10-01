@@ -43,7 +43,7 @@ export module loom.tools.bash.impl;
 
 import std;
 
-export namespace cc::tools::bash::impl {
+export namespace loom::tools::bash::impl {
 
 // --------------------------------------------------------------------------
 // Types
@@ -434,4 +434,4 @@ inline void nonblock(int fd) {
     return ExecuteBash(std::move(o));
 }
 
-} // namespace cc::tools::bash::impl
+} // namespace loom::tools::bash::impl

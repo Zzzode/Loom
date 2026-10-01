@@ -7,7 +7,7 @@ export module loom.commands.sandbox_toggle;
 
 import std;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
 namespace detail {
     inline bool sandbox_enabled = false;
@@ -41,4 +41,4 @@ auto show_sandbox_info() -> std::string {
     return info;
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

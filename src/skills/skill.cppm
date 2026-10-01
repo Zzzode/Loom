@@ -15,15 +15,15 @@ import loom.types.types;
 
 // RFC-0001 B10 — file-access hook lives in the skills-owned port leaf;
 // re-exported here so load_skills_dir's registrar and all importers keep
-// resolving cc::skills::set_file_access_hook / notify_file_access.
+// resolving loom::skills::set_file_access_hook / notify_file_access.
 export import loom.skills.file_access.port;
 
-export namespace cc::skills {
+export namespace loom::skills {
 
-using cc::core::Result;
-using cc::core::Error;
-using cc::core::ErrorCode;
-using cc::core::VoidResult;
+using loom::core::Result;
+using loom::core::Error;
+using loom::core::ErrorCode;
+using loom::core::VoidResult;
 
 // ============================================================
 // Skill Definition
@@ -370,4 +370,4 @@ public:
     }
 };
 
-} // namespace cc::skills
+} // namespace loom::skills

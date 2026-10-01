@@ -12,7 +12,7 @@ import std;
 import loom.skills.skill;
 import loom.skills.load_skills_dir;
 
-export namespace cc::skills::bundled {
+export namespace loom::skills::bundled {
 
 // ============================================================
 // Skillify Prompt - mirrors TS bundled/skillify.ts
@@ -213,4 +213,4 @@ is complete and we can proceed.
     return all;
 }
 
-} // namespace cc::skills::bundled
+} // namespace loom::skills::bundled

@@ -31,10 +31,10 @@ import std;
 import loom.security.permissions_engine;
 import loom.ui.permissions.components;
 
-export namespace cc::ui::permissions::scope_editor {
+export namespace loom::ui::permissions::scope_editor {
 using namespace ftxui;
-namespace pc = cc::ui::permissions::components;
-namespace eng = cc::utils::permissions;
+namespace pc = loom::ui::permissions::components;
+namespace eng = loom::utils::permissions;
 
 using eng::MatchStrategy;
 using eng::PermissionAction;
@@ -904,4 +904,4 @@ inline bool HandleDangerousEvents(EditorState& st, Event event) {
     });
 }
 
-} // namespace cc::ui::permissions::scope_editor
+} // namespace loom::ui::permissions::scope_editor

@@ -10,7 +10,7 @@ export module loom.keybindings.validate;
 
 import std;
 
-export namespace cc::keybindings::validate {
+export namespace loom::keybindings::validate {
 
 // ============================================================
 // Types
@@ -216,4 +216,4 @@ struct ValidationResult {
     return std::nullopt;
 }
 
-} // namespace cc::keybindings::validate
+} // namespace loom::keybindings::validate

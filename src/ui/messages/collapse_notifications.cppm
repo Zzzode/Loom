@@ -2,7 +2,7 @@ export module loom.ui.messages.collapse_notifications;
 
 import std;
 
-export namespace cc::utils::collapse_notifications {
+export namespace loom::utils::collapse_notifications {
 
 struct HookSummaryMessage {
     std::optional<std::string> hook_label;
@@ -156,4 +156,4 @@ struct TeammateShutdownMessage {
     return result;
 }
 
-} // namespace cc::utils::collapse_notifications
+} // namespace loom::utils::collapse_notifications

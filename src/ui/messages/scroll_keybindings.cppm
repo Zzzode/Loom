@@ -50,7 +50,7 @@ export module loom.ui.messages.scroll_keys;
 
 import std;
 
-export namespace cc::ui::messages::scroll_keys {
+export namespace loom::ui::messages::scroll_keys {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 // Frame counter → ms approximations (at FTXUI's 60fps nominal rate).
@@ -575,14 +575,14 @@ struct ScrollHandlerBundle {
   return {};
 }
 
-} // namespace cc::ui::messages::scroll_keys
+} // namespace loom::ui::messages::scroll_keys
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TEST FIXTURES  (activated via -DCC_VLIST_TEST at build time)
 // ═══════════════════════════════════════════════════════════════════════════
 #ifdef CC_VLIST_TEST
 
-export namespace cc::ui::messages::scroll_keys::test {
+export namespace loom::ui::messages::scroll_keys::test {
 
 /// Result type for step-based test helpers.  Returns "OK" or a short
 /// failure diagnostic.  Pure — never invokes GoogleTest.
@@ -749,6 +749,6 @@ struct FakeScrollCallbacks {
   return out;
 }
 
-} // namespace cc::ui::messages::scroll_keys::test
+} // namespace loom::ui::messages::scroll_keys::test
 
 #endif // CC_VLIST_TEST

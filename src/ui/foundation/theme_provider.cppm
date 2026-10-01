@@ -22,9 +22,9 @@ import std;
 
 import loom.ui.foundation.design_tokens;
 
-export namespace cc::ui::design::theme {
+export namespace loom::ui::design::theme {
 
-using namespace cc::ui::design::tokens;
+using namespace loom::ui::design::tokens;
 
 // ─── Theme variants ──────────────────────────────────────────────────────────
 enum class ThemeVariant : std::uint8_t {
@@ -414,11 +414,11 @@ inline void set_theme(Theme t) noexcept {
     return inner;
 }
 
-} // namespace cc::ui::design::theme
+} // namespace loom::ui::design::theme
 
 // ─── Demo stub (compile-time only under CC_DESIGN_SYSTEM_DEMO) ───────────────
 #ifdef CC_DESIGN_SYSTEM_DEMO
-export namespace cc::ui::design::theme::demo {
+export namespace loom::ui::design::theme::demo {
 inline std::string demo_theme_names() {
     std::string out;
     auto add = [&](ThemeVariant v) {

@@ -10,7 +10,7 @@ import loom.text.parse_int;
 import loom.net.http.http;
 import loom.serdes.json;
 
-export namespace cc::services::api {
+export namespace loom::services::api {
 
 // Configuration for session ingress connection
 struct IngressConfig {
@@ -57,7 +57,7 @@ namespace detail {
         int64_t parsed = 0;
         auto* first = value->data();
         auto* last = value->data() + value->size();
-        auto result = cc::utils::from_chars(first, last, parsed);
+        auto result = loom::utils::from_chars(first, last, parsed);
         if (result.ec != std::errc{} || result.ptr != last) return std::nullopt;
         return parsed;
     }
@@ -249,12 +249,12 @@ auto send_ingress_message(std::string_view message) -> std::expected<void, std::
     if (message.empty()) {
         return std::unexpected("Cannot send empty message");
     }
-    auto parsed = cc::utils::json::parse(message);
+    auto parsed = loom::utils::json::parse(message);
     if (!parsed || !parsed->root().is_obj()) {
         return std::unexpected("Ingress message must be a JSON object");
     }
 
-    cc::utils::HttpClient http;
+    loom::utils::HttpClient http;
     const bool use_worker_events = detail::worker_active(detail::active_config);
     auto response = http.post(
         use_worker_events
@@ -280,7 +280,7 @@ auto send_worker_state(std::string_view status, bool clear_metadata = false) -> 
     if (!detail::worker_active(detail::active_config)) return {};
     if (status.empty()) return std::unexpected("Worker status is required");
 
-    cc::utils::HttpClient http;
+    loom::utils::HttpClient http;
     auto response = http.put(
         detail::worker_url(detail::active_config),
         detail::worker_state_body(detail::active_config, status, clear_metadata),
@@ -296,9 +296,9 @@ auto send_worker_heartbeat() -> std::expected<void, std::string> {
     if (!detail::ingress_active) return std::unexpected("No active ingress connection");
     if (!detail::worker_active(detail::active_config)) return {};
 
-    cc::utils::HttpConfig http_config;
+    loom::utils::HttpConfig http_config;
     http_config.timeout_ms = 5'000;
-    cc::utils::HttpClient http(http_config);
+    loom::utils::HttpClient http(http_config);
     auto response = http.post(
         detail::worker_heartbeat_url(detail::active_config),
         detail::worker_heartbeat_body(detail::active_config),
@@ -316,7 +316,7 @@ auto send_worker_delivery(std::string_view event_id, std::string_view status) ->
     if (event_id.empty()) return std::unexpected("Delivery event_id is required");
     if (status.empty()) return std::unexpected("Delivery status is required");
 
-    cc::utils::HttpClient http;
+    loom::utils::HttpClient http;
     auto response = http.post(
         detail::worker_delivery_url(detail::active_config),
         detail::worker_delivery_body(detail::active_config, event_id, status),
@@ -355,4 +355,4 @@ auto close_ingress() -> void {
     detail::active_config = IngressConfig{};
 }
 
-} // namespace cc::services::api
+} // namespace loom::services::api

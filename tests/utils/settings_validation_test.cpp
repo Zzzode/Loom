@@ -6,7 +6,7 @@ import std;
 import loom.config.settings_validation;
 
 TEST(SettingsValidationConfig, ClassifiesPatternToolsAndCustomWebValidators) {
-    using namespace cc::utils::settings_validation;
+    using namespace loom::utils::settings_validation;
 
     EXPECT_TRUE(is_file_pattern_tool("Read"));
     EXPECT_TRUE(is_file_pattern_tool("NotebookEdit"));
@@ -29,7 +29,7 @@ TEST(SettingsValidationConfig, ClassifiesPatternToolsAndCustomWebValidators) {
 }
 
 TEST(SettingsPermissionValidation, ValidatesRulesAndReportsHelpfulErrors) {
-    using namespace cc::utils::settings_validation;
+    using namespace loom::utils::settings_validation;
 
     EXPECT_TRUE(validate_permission_rule("Bash(npm run *)").valid);
     EXPECT_TRUE(validate_permission_rule("Read(src/**)").valid);
@@ -66,7 +66,7 @@ TEST(SettingsPermissionValidation, ValidatesRulesAndReportsHelpfulErrors) {
 }
 
 TEST(SettingsValidationTips, MirrorsTypeScriptTipPriorityAndDocFallbacks) {
-    using namespace cc::utils::settings_validation;
+    using namespace loom::utils::settings_validation;
 
     auto mode = get_validation_tip({
         .path = "permissions.defaultMode",
@@ -124,7 +124,7 @@ TEST(SettingsValidationTips, MirrorsTypeScriptTipPriorityAndDocFallbacks) {
 // halves so neither a silent empty-string link nor a hard-coded vendor URL can
 // come back.
 TEST(SettingsValidationConfig, DocLinksAppearOnlyWhenADocsBaseIsConfigured) {
-    using namespace cc::utils::settings_validation;
+    using namespace loom::utils::settings_validation;
 
     const auto context = TipContext{
         .path = "permissions.defaultMode",

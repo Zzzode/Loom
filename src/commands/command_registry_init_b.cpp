@@ -21,7 +21,7 @@ import loom.commands.status;
 import loom.commands.summary;
 import loom.commands.tag;
 
-namespace cc::commands {
+namespace loom::commands {
 
 void register_group_b_commands(CommandRegistry& registry) {
     registry.register_command<EffortCommand>();
@@ -44,4 +44,4 @@ void register_group_b_commands(CommandRegistry& registry) {
     registry.register_command<TagCommand>();
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

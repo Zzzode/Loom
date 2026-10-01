@@ -19,9 +19,9 @@ import std;
 
 import loom.tools.agent_runtime;
 
-export namespace cc::tools::agent_display {
+export namespace loom::tools::agent_display {
 
-using cc::tools::agent_runtime::AgentDefinition;
+using loom::tools::agent_runtime::AgentDefinition;
 
 // ============================================================================
 // Source groups (ordered list used by both CLI and interactive UI)
@@ -224,7 +224,7 @@ inline std::string format_agent_label(
 
 /// Walk the runtime agent store to capture a memory snapshot for a given agent.
 inline AgentMemorySnapshot capture_memory_snapshot(std::string_view agent_id) {
-    auto record = cc::tools::agent_runtime::native_agent_store().get(agent_id);
+    auto record = loom::tools::agent_runtime::native_agent_store().get(agent_id);
     if (!record) {
         return AgentMemorySnapshot{std::string(agent_id), 0, 0, std::chrono::system_clock::now()};
     }
@@ -256,21 +256,21 @@ inline AgentMemorySnapshot capture_memory_snapshot(std::string_view agent_id) {
 /// Query the runtime agent store for all agents with Running or Queued status.
 inline std::vector<AgentDisplayInfo> get_active_agents() {
     std::vector<AgentDisplayInfo> result;
-    auto all_records = cc::tools::agent_runtime::native_agent_store().list();
+    auto all_records = loom::tools::agent_runtime::native_agent_store().list();
     for (const auto& record : all_records) {
-        if (record.status == cc::tools::agent_runtime::NativeAgentStatus::Running ||
-            record.status == cc::tools::agent_runtime::NativeAgentStatus::Queued) {
+        if (record.status == loom::tools::agent_runtime::NativeAgentStatus::Running ||
+            record.status == loom::tools::agent_runtime::NativeAgentStatus::Queued) {
             std::string label = record.name.value_or(
                 record.description.value_or(record.agent_id));
             result.push_back(AgentDisplayInfo{
                 .agent_id = record.agent_id,
                 .label = std::move(label),
                 .color = get_agent_color_rgb(record.agent_id),
-                .is_active = (record.status == cc::tools::agent_runtime::NativeAgentStatus::Running),
+                .is_active = (record.status == loom::tools::agent_runtime::NativeAgentStatus::Running),
             });
         }
     }
     return result;
 }
 
-} // namespace cc::tools::agent_display
+} // namespace loom::tools::agent_display

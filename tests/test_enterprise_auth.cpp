@@ -47,16 +47,16 @@ namespace {
 class ScopedEnv {
 public:
     ScopedEnv(std::string_view key, std::string_view value)
-        : key_(key), prev_(cc::utils::env::get_env(key)) {
-        cc::utils::env::set_env(key, value);
+        : key_(key), prev_(loom::utils::env::get_env(key)) {
+        loom::utils::env::set_env(key, value);
     }
     ScopedEnv(std::string_view key, std::nullptr_t)
-        : key_(key), prev_(cc::utils::env::get_env(key)) {
-        cc::utils::env::unset_env(key);
+        : key_(key), prev_(loom::utils::env::get_env(key)) {
+        loom::utils::env::unset_env(key);
     }
     ~ScopedEnv() {
-        if (prev_) cc::utils::env::set_env(key_, *prev_);
-        else cc::utils::env::unset_env(key_);
+        if (prev_) loom::utils::env::set_env(key_, *prev_);
+        else loom::utils::env::unset_env(key_);
     }
     ScopedEnv(const ScopedEnv&) = delete;
     ScopedEnv& operator=(const ScopedEnv&) = delete;
@@ -88,8 +88,8 @@ TEST(EnterpriseAuth_Crypto, HmacSha256_Rfc4231_TestCase2) {
     // RFC 4231 §4.2 — 32-byte key, 28-byte input, 32-byte expected output.
     std::string key(32, '\x0b');
     std::string data = "Hi There";
-    auto digest = cc::utils::crypto::hmac_sha256(key, data);
-    std::string hex = cc::utils::crypto::sha256_bytes_to_hex(digest);
+    auto digest = loom::utils::crypto::hmac_sha256(key, data);
+    std::string hex = loom::utils::crypto::sha256_bytes_to_hex(digest);
     // RFC 4231 §4.2 — 32-byte key, 28-byte input, 32-byte expected output.
     EXPECT_EQ(hex,
         "198a607eb44bfbc69903a0f1cf2bbdc5ba0aa3f3d9ae3c1c7a3b1696a0b68cf7");
@@ -97,7 +97,7 @@ TEST(EnterpriseAuth_Crypto, HmacSha256_Rfc4231_TestCase2) {
 
 TEST(EnterpriseAuth_Crypto, HmacSha256_Rfc4231_TestCase3) {
     // Key = "Jefe" (4 bytes), data = "what do ya want for nothing?" (28 bytes)
-    auto hex = cc::utils::crypto::hmac_sha256_hex("Jefe",
+    auto hex = loom::utils::crypto::hmac_sha256_hex("Jefe",
         "what do ya want for nothing?");
     EXPECT_EQ(hex,
         "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843");
@@ -106,7 +106,7 @@ TEST(EnterpriseAuth_Crypto, HmacSha256_Rfc4231_TestCase3) {
 TEST(EnterpriseAuth_Crypto, HmacSha256_EmptyData) {
     // HMAC of empty data with empty key — must match reference from echo -n ''
     // | openssl dgst -sha256 -hmac ''
-    auto hex = cc::utils::crypto::hmac_sha256_hex("", "");
+    auto hex = loom::utils::crypto::hmac_sha256_hex("", "");
     EXPECT_EQ(hex,
         "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad");
 }
@@ -115,50 +115,50 @@ TEST(EnterpriseAuth_Encoding, UriEncode_UnreservedPassthrough) {
     // RFC 3986 unreserved chars are never encoded.
     std::string s = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
                     "0123456789-_.~";
-    EXPECT_EQ(cc::utils::http::uri_encode(s), s);
+    EXPECT_EQ(loom::utils::http::uri_encode(s), s);
 }
 
 TEST(EnterpriseAuth_Encoding, UriEncode_ReservedPercentEncoded) {
-    EXPECT_EQ(cc::utils::http::uri_encode("hello world"), "hello%20world");
-    EXPECT_EQ(cc::utils::http::uri_encode("a/b"), "a%2Fb");
-    EXPECT_EQ(cc::utils::http::uri_encode("日本"),
+    EXPECT_EQ(loom::utils::http::uri_encode("hello world"), "hello%20world");
+    EXPECT_EQ(loom::utils::http::uri_encode("a/b"), "a%2Fb");
+    EXPECT_EQ(loom::utils::http::uri_encode("日本"),
               "%E6%97%A5%E6%9C%AC");  // U+65E5 U+672C
     // Uppercase hex digits (AWS SigV4 requirement).
-    EXPECT_EQ(cc::utils::http::uri_encode("?"), "%3F");
-    EXPECT_EQ(cc::utils::http::uri_encode("#"), "%23");
-    EXPECT_EQ(cc::utils::http::uri_encode("="), "%3D");
-    EXPECT_EQ(cc::utils::http::uri_encode("&"), "%26");
+    EXPECT_EQ(loom::utils::http::uri_encode("?"), "%3F");
+    EXPECT_EQ(loom::utils::http::uri_encode("#"), "%23");
+    EXPECT_EQ(loom::utils::http::uri_encode("="), "%3D");
+    EXPECT_EQ(loom::utils::http::uri_encode("&"), "%26");
 }
 
 TEST(EnterpriseAuth_Encoding, UriEncodePath_KeepsForwardSlash) {
-    EXPECT_EQ(cc::utils::http::uri_encode_path(
+    EXPECT_EQ(loom::utils::http::uri_encode_path(
         "/model/anthropic.claude-sonnet-4-20250514-v1:0/invoke-with-response-stream"),
         "/model/anthropic.claude-sonnet-4-20250514-v1%3A0/invoke-with-response-stream");
     // Colons are NOT unreserved — they MUST be percent-encoded even in paths.
 }
 
 TEST(EnterpriseAuth_Encoding, FormEncode_SpaceBecomesPlus) {
-    EXPECT_EQ(cc::utils::http::form_encode("hello world"), "hello+world");
-    EXPECT_EQ(cc::utils::http::form_encode("a=b&c"), "a%3Db%26c");
+    EXPECT_EQ(loom::utils::http::form_encode("hello world"), "hello+world");
+    EXPECT_EQ(loom::utils::http::form_encode("a=b&c"), "a%3Db%26c");
 }
 
 TEST(EnterpriseAuth_Encoding, UrlDecode_RoundTrip) {
     std::vector<std::string> cases = {"hello world", "key=val&x=日本語",
         "unreserved-._~09AZ", "a+b=c"};
     for (const auto& c : cases) {
-        EXPECT_EQ(cc::utils::http::url_decode(cc::utils::http::form_encode(c),
+        EXPECT_EQ(loom::utils::http::url_decode(loom::utils::http::form_encode(c),
                                               /*plus_is_space=*/true), c);
     }
     // Strict %2F vs slash decode.
-    EXPECT_EQ(cc::utils::http::url_decode("a%2Fb"), "a/b");
+    EXPECT_EQ(loom::utils::http::url_decode("a%2Fb"), "a/b");
 }
 
 TEST(EnterpriseAuth_Encoding, ConstantTimeCompare) {
-    EXPECT_TRUE(cc::utils::crypto::constant_time_compare("abc", "abc"));
-    EXPECT_FALSE(cc::utils::crypto::constant_time_compare("abc", "abd"));
-    EXPECT_FALSE(cc::utils::crypto::constant_time_compare("abc", "abcd"));
-    EXPECT_FALSE(cc::utils::crypto::constant_time_compare("", "x"));
-    EXPECT_TRUE(cc::utils::crypto::constant_time_compare("", ""));
+    EXPECT_TRUE(loom::utils::crypto::constant_time_compare("abc", "abc"));
+    EXPECT_FALSE(loom::utils::crypto::constant_time_compare("abc", "abd"));
+    EXPECT_FALSE(loom::utils::crypto::constant_time_compare("abc", "abcd"));
+    EXPECT_FALSE(loom::utils::crypto::constant_time_compare("", "x"));
+    EXPECT_TRUE(loom::utils::crypto::constant_time_compare("", ""));
 }
 
 // ===========================================================================
@@ -175,16 +175,16 @@ TEST(EnterpriseAuth_SigV4, DeriveSigningKey_KnownVector) {
     const std::string date   = "20150830";
     const std::string region = "us-east-1";
     const std::string service = "service";
-    auto kSigning = cc::services::auth::aws::derive_signing_key(
+    auto kSigning = loom::services::auth::aws::derive_signing_key(
         secret, date, region, service);
     // Known-good kSigning hex for this input (from Python HMAC-SHA256).
-    std::string hex = cc::utils::crypto::sha256_bytes_to_hex(kSigning);
+    std::string hex = loom::utils::crypto::sha256_bytes_to_hex(kSigning);
     EXPECT_EQ(hex,
         "938127b5336810ddb6a5d6af445fcac9e371f9ed418ed386b022aed82901be75");
 }
 
 TEST(EnterpriseAuth_SigV4, CanonicalHeaders_OrderAndLowercase) {
-    using namespace cc::services::auth::aws;
+    using namespace loom::services::auth::aws;
     auto canon = canonicalize_headers({
         {"Content-Type", "application/json"},
         {"Host", "example.amazonaws.com"},
@@ -207,7 +207,7 @@ TEST(EnterpriseAuth_SigV4, CanonicalHeaders_OrderAndLowercase) {
 }
 
 TEST(EnterpriseAuth_SigV4, CanonicalQueryString_SortedByKeyThenValue) {
-    using namespace cc::services::auth::aws;
+    using namespace loom::services::auth::aws;
     auto q = canonical_query_string({
         {"MaxKeys", "10"},
         {"X-Amz-Algorithm", "AWS4-HMAC-SHA256"},
@@ -222,11 +222,11 @@ TEST(EnterpriseAuth_SigV4, CanonicalQueryString_SortedByKeyThenValue) {
 
 TEST(EnterpriseAuth_SigV4, SignRequest_BedrockPost_PayloadHash) {
     // Full sign_request flow with fixed time → deterministic signature.
-    using namespace cc::services::auth::aws;
+    using namespace loom::services::auth::aws;
     EnvRollback env;
     env.unset("AWS_ACCESS_KEY_ID");
     env.unset("AWS_SECRET_ACCESS_KEY");
-    cc::services::auth::aws::AwsCredentials creds{
+    loom::services::auth::aws::AwsCredentials creds{
         "AKIAIOSFODNN7EXAMPLE",
         "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
         ""};
@@ -265,7 +265,7 @@ TEST(EnterpriseAuth_SigV4, SignRequest_BedrockPost_PayloadHash) {
 }
 
 TEST(EnterpriseAuth_SigV4, SignRequest_IncludesSessionToken) {
-    using namespace cc::services::auth::aws;
+    using namespace loom::services::auth::aws;
     AwsCredentials creds{"AKIAX", "SK", "SESSION_TOK_123"};
     const auto tp = std::chrono::system_clock::from_time_t(1717243200);
     auto signed_r = sign_request(
@@ -281,7 +281,7 @@ TEST(EnterpriseAuth_SigV4, SignRequest_IncludesSessionToken) {
 }
 
 TEST(EnterpriseAuth_SigV4, CredentialsFromEnv_HonorsAwsVars) {
-    using namespace cc::services::auth::aws;
+    using namespace loom::services::auth::aws;
     EnvRollback env;
     env.set("AWS_ACCESS_KEY_ID", "ENV_AKID");
     env.set("AWS_SECRET_ACCESS_KEY", "ENV_SAK");
@@ -294,7 +294,7 @@ TEST(EnterpriseAuth_SigV4, CredentialsFromEnv_HonorsAwsVars) {
 }
 
 TEST(EnterpriseAuth_SigV4, CredentialsFromIni_ParseSimple) {
-    using namespace cc::services::auth::aws;
+    using namespace loom::services::auth::aws;
     // Write a temp credentials file.
     char tmp_path[] = "/tmp/cc_sigv4_ini_XXXXXX";
     int fd = mkstemp(tmp_path);
@@ -331,7 +331,7 @@ aws_session_token = TEAM_TOK
 }
 
 TEST(EnterpriseAuth_SigV4, ResolveRegion_DefaultChain) {
-    using namespace cc::services::auth::aws;
+    using namespace loom::services::auth::aws;
     EnvRollback env;
     env.unset("AWS_REGION");
     env.unset("AWS_DEFAULT_REGION");
@@ -346,7 +346,7 @@ TEST(EnterpriseAuth_SigV4, ResolveRegion_DefaultChain) {
 // SECTION 3: GCP ADC (static JSON parsing + endpoint URL).
 // ===========================================================================
 TEST(EnterpriseAuth_Gcp, ParseAdcJson_ServiceAccount) {
-    using namespace cc::services::auth::gcp;
+    using namespace loom::services::auth::gcp;
     static constexpr std::string_view kSaJson = R"({
   "type": "service_account",
   "project_id": "my-gcp-project-123",
@@ -367,7 +367,7 @@ TEST(EnterpriseAuth_Gcp, ParseAdcJson_ServiceAccount) {
 }
 
 TEST(EnterpriseAuth_Gcp, ParseAdcJson_AuthorizedUser) {
-    using namespace cc::services::auth::gcp;
+    using namespace loom::services::auth::gcp;
     static constexpr std::string_view kGcloudJson = R"({
   "type": "authorized_user",
   "client_id": "abc.apps.googleusercontent.com",
@@ -383,7 +383,7 @@ TEST(EnterpriseAuth_Gcp, ParseAdcJson_AuthorizedUser) {
 }
 
 TEST(EnterpriseAuth_Gcp, ParseAdcJson_UnknownType) {
-    using namespace cc::services::auth::gcp;
+    using namespace loom::services::auth::gcp;
     EXPECT_EQ(parse_adc_json("{}", "x.json").type, AdcType::Unknown);
     EXPECT_EQ(parse_adc_json("not json at all", "x.json").type,
               AdcType::Unknown);
@@ -392,7 +392,7 @@ TEST(EnterpriseAuth_Gcp, ParseAdcJson_UnknownType) {
 }
 
 TEST(EnterpriseAuth_Gcp, VertexRegion_PerModelAndGlobal) {
-    using namespace cc::services::auth::gcp;
+    using namespace loom::services::auth::gcp;
     EnvRollback env;
     env.unset("CLOUD_ML_REGION");
     // Clear all 12 per-model vars.
@@ -414,7 +414,7 @@ TEST(EnterpriseAuth_Gcp, VertexRegion_PerModelAndGlobal) {
 }
 
 TEST(EnterpriseAuth_Gcp, MakeVertexBaseUrl_Format) {
-    using namespace cc::services::auth::gcp;
+    using namespace loom::services::auth::gcp;
     EXPECT_EQ(make_vertex_base_url("us-central1", "my-project"),
         "https://us-central1-aiplatform.googleapis.com"
         "/v1/projects/my-project/locations/us-central1");
@@ -427,7 +427,7 @@ TEST(EnterpriseAuth_Gcp, MakeVertexBaseUrl_Format) {
 // SECTION 4: Azure Foundry — deployment lookup + endpoint resolution.
 // ===========================================================================
 TEST(EnterpriseAuth_Azure, FoundryDeployment_ExactAndPrefix) {
-    using namespace cc::services::auth::azure;
+    using namespace loom::services::auth::azure;
     EXPECT_EQ(lookup_default_deployment("claude-opus-4-6-v1"), "claude-opus-4-6");
     // Prefix fuzzy match for pre-release IDs.
     EXPECT_EQ(lookup_default_deployment("claude-sonnet-4-6-rc1"),
@@ -437,7 +437,7 @@ TEST(EnterpriseAuth_Azure, FoundryDeployment_ExactAndPrefix) {
 }
 
 TEST(EnterpriseAuth_Azure, ResolveFoundryBaseUrl_Resource) {
-    using namespace cc::services::auth::azure;
+    using namespace loom::services::auth::azure;
     FoundryAuthMode m;
     m.resource = "my-company-eastus";
     EXPECT_EQ(resolve_foundry_base_url(m),
@@ -454,7 +454,7 @@ TEST(EnterpriseAuth_Azure, ResolveFoundryBaseUrl_Resource) {
 
 TEST(EnterpriseAuth_Azure, FormEncode_UsedInTokenBodyChars) {
     // Side-check: client_secret values often contain '/' / '+' — must be encoded.
-    EXPECT_EQ(cc::utils::http::form_encode("GOCSPX+abc/def="),
+    EXPECT_EQ(loom::utils::http::form_encode("GOCSPX+abc/def="),
               "GOCSPX%2Babc%2Fdef%3D");
 }
 
@@ -462,7 +462,7 @@ TEST(EnterpriseAuth_Azure, FormEncode_UsedInTokenBodyChars) {
 // SECTION 5: Provider selector dispatch priority + env detection.
 // ===========================================================================
 TEST(EnterpriseAuth_ProviderSelector, Priority_BedrockBeatsVertexAndFoundry) {
-    using namespace cc::services::auth::byoc;
+    using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.set("LOOM_USE_BEDROCK", "1");
     env.set("LOOM_USE_VERTEX",  "true");
@@ -471,7 +471,7 @@ TEST(EnterpriseAuth_ProviderSelector, Priority_BedrockBeatsVertexAndFoundry) {
 }
 
 TEST(EnterpriseAuth_ProviderSelector, Priority_VertexBeatsFoundry) {
-    using namespace cc::services::auth::byoc;
+    using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.unset("LOOM_USE_BEDROCK");
     env.set("LOOM_USE_VERTEX",  "1");
@@ -480,7 +480,7 @@ TEST(EnterpriseAuth_ProviderSelector, Priority_VertexBeatsFoundry) {
 }
 
 TEST(EnterpriseAuth_ProviderSelector, Default_FirstPartyWhenNoneSet) {
-    using namespace cc::services::auth::byoc;
+    using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.unset("LOOM_USE_BEDROCK");
     env.unset("LOOM_USE_VERTEX");
@@ -489,7 +489,7 @@ TEST(EnterpriseAuth_ProviderSelector, Default_FirstPartyWhenNoneSet) {
 }
 
 TEST(EnterpriseAuth_ProviderSelector, Foundry_ExplicitEnv) {
-    using namespace cc::services::auth::byoc;
+    using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.unset("LOOM_USE_BEDROCK");
     env.unset("LOOM_USE_VERTEX");
@@ -498,7 +498,7 @@ TEST(EnterpriseAuth_ProviderSelector, Foundry_ExplicitEnv) {
 }
 
 TEST(EnterpriseAuth_ProviderSelector, FirstParty_BaseUrlDefault) {
-    using namespace cc::services::auth::byoc;
+    using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.unset("LOOM_USE_BEDROCK");
     env.unset("LOOM_USE_VERTEX");
@@ -515,7 +515,7 @@ TEST(EnterpriseAuth_ProviderSelector, FirstParty_BaseUrlDefault) {
 }
 
 TEST(EnterpriseAuth_ProviderSelector, Bedrock_BaseUrlAndPath) {
-    using namespace cc::services::auth::byoc;
+    using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.set("LOOM_USE_BEDROCK", "1");
     env.set("LOOM_SKIP_BEDROCK_AUTH", "1");
@@ -543,7 +543,7 @@ TEST(EnterpriseAuth_ProviderSelector, Bedrock_BaseUrlAndPath) {
 }
 
 TEST(EnterpriseAuth_ProviderSelector, Vertex_SkipAuthFillsBaseUrlFromFallback) {
-    using namespace cc::services::auth::byoc;
+    using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.set("LOOM_USE_VERTEX", "1");
     env.set("LOOM_SKIP_VERTEX_AUTH", "1");
@@ -564,7 +564,7 @@ TEST(EnterpriseAuth_ProviderSelector, Vertex_SkipAuthFillsBaseUrlFromFallback) {
 }
 
 TEST(EnterpriseAuth_ProviderSelector, Bedrock_BearerTokenModeSkipsSigning) {
-    using namespace cc::services::auth::byoc;
+    using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.set("LOOM_USE_BEDROCK", "1");
     env.set("AWS_BEARER_TOKEN_BEDROCK", "iam-identity-center-bearer-token-xyz");
@@ -594,7 +594,7 @@ TEST(EnterpriseAuth_ProviderSelector, Bedrock_BearerTokenModeSkipsSigning) {
 // get identical Authorization header.  (Flaky-result guard.)
 // ===========================================================================
 TEST(EnterpriseAuth_SigV4, SignRequest_Deterministic) {
-    using namespace cc::services::auth::aws;
+    using namespace loom::services::auth::aws;
     AwsCredentials creds{"AK", "SK", ""};
     auto tp = std::chrono::system_clock::from_time_t(1717243200);
     const std::string body = R"({"prompt":"hello"})";

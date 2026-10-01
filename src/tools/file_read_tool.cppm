@@ -16,17 +16,17 @@ import loom.tools.notebook;
 import loom.serdes.json;
 import loom.skills.file_access.port;
 
-export namespace cc::tools::file_read {
+export namespace loom::tools::file_read {
 
-using cc::core::Tool;
-using cc::core::ToolInput;
-using cc::core::ToolOutputContent;
-using cc::core::ToolResult;
-using cc::core::ToolDefinition;
-using cc::core::ToolPermission;
-using cc::core::InputSchema;
-using cc::core::SchemaProperty;
-using cc::utils::Result;
+using loom::core::Tool;
+using loom::core::ToolInput;
+using loom::core::ToolOutputContent;
+using loom::core::ToolResult;
+using loom::core::ToolDefinition;
+using loom::core::ToolPermission;
+using loom::core::InputSchema;
+using loom::core::SchemaProperty;
+using loom::utils::Result;
 
 namespace fs = std::filesystem;
 
@@ -67,7 +67,7 @@ struct FileReadInput {
 
     /// Parse from JSON using yyjson for proper escape handling
     static std::expected<FileReadInput, std::string> from_json(std::string_view json) {
-        using namespace cc::utils::json;
+        using namespace loom::utils::json;
         auto doc = parse(json);
         if (!doc) {
             return std::unexpected("Invalid JSON input");
@@ -358,8 +358,8 @@ public:
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
         auto parsed_input = FileReadInput::from_json(input.json());
         if (!parsed_input) {
-            return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::invalid_argument,
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::invalid_argument,
                 parsed_input.error()
             ));
         }
@@ -415,7 +415,7 @@ private:
                 std::error_code ec;
                 auto cwd = fs::current_path(ec);
                 if (ec) cwd = input.file_path.parent_path();
-                cc::skills::notify_file_access(input.file_path, cwd);
+                loom::skills::notify_file_access(input.file_path, cwd);
             };
 
             // Check file type
@@ -504,11 +504,11 @@ private:
     
     /// Read image file
     Result<ToolResult> read_image(const FileReadInput& input) {
-        // RFC-0001 B11: the concrete cc::services::image codec lives behind
+        // RFC-0001 B11: the concrete loom::services::image codec lives behind
         // the orchestration-installed port. Binaries that never install one
         // (hermetic tests) fail closed here instead of reaching a concrete
         // service the tools layer can no longer link.
-        const auto& codec = cc::tools::image_codec::codec();
+        const auto& codec = loom::tools::image_codec::codec();
         if (!codec) {
             return ToolResult::error("Image support is not configured");
         }
@@ -541,7 +541,7 @@ private:
     Result<ToolResult> read_pdf(const FileReadInput& input) {
         // PDF bodies are emitted as base64 document blocks through the same
         // orchestration-installed image codec.
-        const auto& codec = cc::tools::image_codec::codec();
+        const auto& codec = loom::tools::image_codec::codec();
         if (!codec) {
             return ToolResult::error("Image support is not configured");
         }
@@ -592,26 +592,26 @@ private:
     }
 };
 
-} // namespace cc::tools::file_read
+} // namespace loom::tools::file_read
 
 // Export main tool class
-export namespace cc::tools {
-    using cc::tools::file_read::FileReadTool;
+export namespace loom::tools {
+    using loom::tools::file_read::FileReadTool;
 
     /// Factory: create FileReadTool wrapped as ITool (adapts Result types across modules)
-    [[nodiscard]] auto make_file_read_tool() -> std::unique_ptr<cc::core::ITool> {
-        struct Adapter final : cc::core::ITool {
+    [[nodiscard]] auto make_file_read_tool() -> std::unique_ptr<loom::core::ITool> {
+        struct Adapter final : loom::core::ITool {
             FileReadTool tool_;
-            cc::core::ToolDefinition def_ = FileReadTool::definition();
+            loom::core::ToolDefinition def_ = FileReadTool::definition();
 
-            const cc::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<cc::core::ToolResult, cc::core::Error> execute(const cc::core::ToolInput& input) override {
+            const loom::core::ToolDefinition& definition() const override { return def_; }
+            std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
                 auto result = tool_.execute(input);
                 if (result) return std::move(*result);
-                return std::unexpected(cc::core::Error::make(
-                    cc::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+                return std::unexpected(loom::core::Error::make(
+                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
             }
-            bool check_permission(const cc::core::ToolInput& input) const override {
+            bool check_permission(const loom::core::ToolInput& input) const override {
                 return tool_.check_permission(input);
             }
         };

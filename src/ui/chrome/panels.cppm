@@ -14,7 +14,7 @@ namespace ftxui {
     class Node;
 }
 
-export namespace cc::ui {
+export namespace loom::ui {
 
 // Panel type discriminator
 enum class PanelType { Settings, Mcp, Tasks, Diff, Help, Permissions };
@@ -359,4 +359,4 @@ using PanelState = std::variant<
 // Render panel with title bar and close button
 [[nodiscard]] auto render_panel_frame(PanelType type, const PanelState& state) -> ftxui::Element;
 
-} // namespace cc::ui
+} // namespace loom::ui

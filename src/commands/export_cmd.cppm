@@ -20,9 +20,9 @@ import loom.types.types;
 import loom.commands.command;
 import loom.process.bash.bash_execution;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================
 // Export formats
@@ -356,7 +356,7 @@ struct ExportOptions {
     return false;
 #endif
     if (!cmd) return false;
-    auto wr = cc::utils::bash::exec_write(cmd, content);
+    auto wr = loom::utils::bash::exec_write(cmd, content);
     return wr && *wr == 0;
 }
 
@@ -477,7 +477,7 @@ private:
 
     [[nodiscard]] static std::size_t parse_uint(std::string_view s, std::size_t fallback) {
         std::size_t v = 0;
-        auto [ptr, ec] = cc::utils::from_chars(s.data(), s.data() + s.size(), v);
+        auto [ptr, ec] = loom::utils::from_chars(s.data(), s.data() + s.size(), v);
         if (ec != std::errc{} || ptr != s.data() + s.size()) return fallback;
         return v;
     }
@@ -539,4 +539,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

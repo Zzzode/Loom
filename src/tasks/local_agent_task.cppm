@@ -11,7 +11,7 @@ import std;
 import loom.tasks.task;
 import loom.tasks.types;
 
-export namespace cc::tasks {
+export namespace loom::tasks {
 
 // ============================================================
 // Constants
@@ -145,12 +145,12 @@ inline void kill_async_agent(
 ) {
     bool killed = false;
     update_task(task_id, [&](LocalAgentTaskState& task) {
-        if (task.status != cc::core::TaskStatus::Running) return;
+        if (task.status != loom::core::TaskStatus::Running) return;
         
         killed = true;
         abort_fn();  // Abort the agent's execution
         
-        task.status = cc::core::TaskStatus::Killed;
+        task.status = loom::core::TaskStatus::Killed;
         task.end_time = std::chrono::system_clock::now();
         task.evict_after = task.retain 
             ? std::nullopt 
@@ -168,7 +168,7 @@ inline void kill_all_running_agent_tasks(
 ) {
     auto tasks = get_tasks();
     for (const auto& [task_id, task] : tasks) {
-        if (task.status == cc::core::TaskStatus::Running) {
+        if (task.status == loom::core::TaskStatus::Running) {
             kill_async_agent(task_id, update_task, [&]() { abort_fn(task_id); });
         }
     }
@@ -191,7 +191,7 @@ inline void update_agent_progress(
     UpdateAgentTaskFn update_task
 ) {
     update_task(task_id, [&](LocalAgentTaskState& task) {
-        if (task.status != cc::core::TaskStatus::Running) return;
+        if (task.status != loom::core::TaskStatus::Running) return;
         
         // Preserve existing summary
         auto existing_summary = task.progress ? task.progress->summary : std::nullopt;
@@ -209,7 +209,7 @@ inline void update_agent_summary(
     UpdateAgentTaskFn update_task
 ) {
     update_task(task_id, [&](LocalAgentTaskState& task) {
-        if (task.status != cc::core::TaskStatus::Running) return;
+        if (task.status != loom::core::TaskStatus::Running) return;
         
         if (!task.progress) {
             task.progress = AgentProgress{};
@@ -224,9 +224,9 @@ inline void complete_agent_task(
     UpdateAgentTaskFn update_task
 ) {
     update_task(result.agent_id, [&](LocalAgentTaskState& task) {
-        if (task.status != cc::core::TaskStatus::Running) return;
+        if (task.status != loom::core::TaskStatus::Running) return;
         
-        task.status = cc::core::TaskStatus::Completed;
+        task.status = loom::core::TaskStatus::Completed;
         task.result = result;
         task.end_time = std::chrono::system_clock::now();
         task.evict_after = task.retain
@@ -243,9 +243,9 @@ inline void fail_agent_task(
     UpdateAgentTaskFn update_task
 ) {
     update_task(task_id, [&](LocalAgentTaskState& task) {
-        if (task.status != cc::core::TaskStatus::Running) return;
+        if (task.status != loom::core::TaskStatus::Running) return;
         
-        task.status = cc::core::TaskStatus::Failed;
+        task.status = loom::core::TaskStatus::Failed;
         task.error = error;
         task.end_time = std::chrono::system_clock::now();
         task.evict_after = task.retain
@@ -264,9 +264,9 @@ inline void fail_agent_task(
     std::optional<std::string> tool_use_id = std::nullopt
 ) {
     LocalAgentTaskState state{};
-    state.id = cc::core::TaskId{agent_id};
-    state.type = cc::core::TaskType::LocalAgent;
-    state.status = cc::core::TaskStatus::Running;
+    state.id = loom::core::TaskId{agent_id};
+    state.type = loom::core::TaskType::LocalAgent;
+    state.status = loom::core::TaskStatus::Running;
     state.description = description;
     state.tool_use_id = tool_use_id;
     state.start_time = std::chrono::system_clock::now();
@@ -435,4 +435,4 @@ inline void queue_pending_message(
     );
 }
 
-} // namespace cc::tasks
+} // namespace loom::tasks

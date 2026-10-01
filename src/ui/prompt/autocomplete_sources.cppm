@@ -9,7 +9,7 @@ export module loom.ui.prompt.autocomplete_sources;
 
 import std;
 
-export namespace cc::ui::autocomplete_sources {
+export namespace loom::ui::autocomplete_sources {
 
 struct SkillSuggestionData {
     std::string name;
@@ -141,4 +141,4 @@ struct FormattedSuggestion {
     std::size_t token_start,
     std::size_t token_end);
 
-} // namespace cc::ui::autocomplete_sources
+} // namespace loom::ui::autocomplete_sources

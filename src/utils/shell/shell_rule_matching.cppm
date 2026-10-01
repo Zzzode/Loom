@@ -6,7 +6,7 @@ export module loom.process.shell.shell_rule_matching;
 
 import std;
 
-export namespace cc::utils::shell_rule_matching {
+export namespace loom::utils::shell_rule_matching {
 
 enum class ShellPermissionRuleType : unsigned char {
     Exact,
@@ -218,4 +218,4 @@ struct PatternToken {
     };
 }
 
-} // namespace cc::utils::shell_rule_matching
+} // namespace loom::utils::shell_rule_matching

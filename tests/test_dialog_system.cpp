@@ -37,10 +37,10 @@ import loom.constants.product;
 
 namespace {
 
-namespace dsys = cc::ui::dialogs::system;
-namespace dframe = cc::ui::dialogs::frame;
-namespace drender = cc::ui::dialogs::default_renderers;
-using Theme = cc::ui::design::theme::Theme;
+namespace dsys = loom::ui::dialogs::system;
+namespace dframe = loom::ui::dialogs::frame;
+namespace drender = loom::ui::dialogs::default_renderers;
+using Theme = loom::ui::design::theme::Theme;
 
 // ============================================================
 // Golden snapshot helpers (verbatim copy from tests/test_ui.cpp)
@@ -99,10 +99,10 @@ std::string render_to_ansi(ftxui::Element element, int width, int height) {
 /// Deterministic LightTheme for golden snapshots.  Mirrors the theme
 /// construction used in test_ui.cpp visual-snapshot tests.
 [[nodiscard]] inline Theme get_light_theme() {
-    using ThemeVariant = cc::ui::design::theme::ThemeVariant;
+    using ThemeVariant = loom::ui::design::theme::ThemeVariant;
     return Theme{
         ThemeVariant::Light,
-        &cc::ui::design::tokens::palette::light,
+        &loom::ui::design::tokens::palette::light,
     };
 }
 
@@ -896,10 +896,10 @@ TEST(FullDialogRegistry, AllDialogTypesRenderable) {
     // after registering all renderer modules.  This validates M7.4 + M7.5
     // wiring: every dialog type has a renderer and an event handler.
     dsys::DialogRendererRegistry registry;
-    cc::ui::dialogs::default_renderers::register_default_renderers(registry);
-    cc::ui::dialogs::modal_renderers::register_modal_renderers(registry);
-    cc::ui::dialogs::bottom_renderers::register_bottom_renderers(registry);
-    cc::ui::dialogs::all_renderers::register_all_renderers(registry);
+    loom::ui::dialogs::default_renderers::register_default_renderers(registry);
+    loom::ui::dialogs::modal_renderers::register_modal_renderers(registry);
+    loom::ui::dialogs::bottom_renderers::register_bottom_renderers(registry);
+    loom::ui::dialogs::all_renderers::register_all_renderers(registry);
 
     Theme theme;
     dsys::DialogRenderContext ctx;
@@ -1175,7 +1175,7 @@ TEST(FullDialogRegistry, DialogTypeCountMatches) {
 
 TEST(DialogTriggers, PushToolPermissionCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool responded = false;
     dtrig::PushToolPermission(
@@ -1194,7 +1194,7 @@ TEST(DialogTriggers, PushToolPermissionCreatesDialog) {
 
 TEST(DialogTriggers, PushMessageSelectorCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushMessageSelector(
         queue, {"opt1", "opt2", "opt3"}, "Choose...",
@@ -1207,7 +1207,7 @@ TEST(DialogTriggers, PushMessageSelectorCreatesDialog) {
 
 TEST(DialogTriggers, PushCostThresholdCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushCostThreshold(
         queue, 5.0, 5.2, "claude-sonnet-4.6",
@@ -1218,7 +1218,7 @@ TEST(DialogTriggers, PushCostThresholdCreatesDialog) {
 
 TEST(DialogTriggers, PushSandboxPermissionCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushSandboxPermission(
         queue, "*.example.com",
@@ -1229,7 +1229,7 @@ TEST(DialogTriggers, PushSandboxPermissionCreatesDialog) {
 
 TEST(DialogTriggers, PushSettingsPanelCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushSettingsPanel(queue, "general", []() {});
 
@@ -1238,7 +1238,7 @@ TEST(DialogTriggers, PushSettingsPanelCreatesDialog) {
 
 TEST(DialogTriggers, PushHelpViewCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushHelpView(queue, "commands", []() {});
 
@@ -1247,7 +1247,7 @@ TEST(DialogTriggers, PushHelpViewCreatesDialog) {
 
 TEST(DialogTriggers, CommandMetadataCreateAgent) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "CREATE_AGENT");
     EXPECT_TRUE(pushed);
@@ -1258,7 +1258,7 @@ TEST(DialogTriggers, CommandMetadataCreateAgent) {
 
 TEST(DialogTriggers, CommandMetadataEditAgent) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "EDIT_AGENT|my-agent");
     EXPECT_TRUE(pushed);
@@ -1269,7 +1269,7 @@ TEST(DialogTriggers, CommandMetadataEditAgent) {
 
 TEST(DialogTriggers, CommandMetadataPluginDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(
         queue, "UI:plugins:manage-plugins");
@@ -1279,7 +1279,7 @@ TEST(DialogTriggers, CommandMetadataPluginDialog) {
 
 TEST(DialogTriggers, CommandMetadataUnknownReturnsFalse) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "SOME_RANDOM_TAG");
     EXPECT_FALSE(pushed);
@@ -1288,7 +1288,7 @@ TEST(DialogTriggers, CommandMetadataUnknownReturnsFalse) {
 
 TEST(DialogTriggers, CommandMetadataSettingsPanel) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:settings");
     EXPECT_TRUE(pushed);
@@ -1299,7 +1299,7 @@ TEST(DialogTriggers, CommandMetadataSettingsPanel) {
 
 TEST(DialogTriggers, CommandMetadataHelpView) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:help");
     EXPECT_TRUE(pushed);
@@ -1310,7 +1310,7 @@ TEST(DialogTriggers, CommandMetadataHelpView) {
 
 TEST(DialogTriggers, CommandMetadataConfigDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:config");
     EXPECT_TRUE(pushed);
@@ -1321,7 +1321,7 @@ TEST(DialogTriggers, CommandMetadataConfigDialog) {
 
 TEST(DialogTriggers, CommandMetadataMCPDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:mcp");
     EXPECT_TRUE(pushed);
@@ -1332,7 +1332,7 @@ TEST(DialogTriggers, CommandMetadataMCPDialog) {
 
 TEST(DialogTriggers, CommandMetadataUndercoverCallout) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:undercover|1");
     EXPECT_TRUE(pushed);
@@ -1341,7 +1341,7 @@ TEST(DialogTriggers, CommandMetadataUndercoverCallout) {
 
 TEST(DialogTriggers, CommandMetadataEffortCallout) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:effort|high");
     EXPECT_TRUE(pushed);
@@ -1350,7 +1350,7 @@ TEST(DialogTriggers, CommandMetadataEffortCallout) {
 
 TEST(DialogTriggers, CommandMetadataRemoteCallout) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:remote|ssh-host");
     EXPECT_TRUE(pushed);
@@ -1359,7 +1359,7 @@ TEST(DialogTriggers, CommandMetadataRemoteCallout) {
 
 TEST(DialogTriggers, CommandMetadataLspRecommendation) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:lsp-rec|clangd");
     EXPECT_TRUE(pushed);
@@ -1368,7 +1368,7 @@ TEST(DialogTriggers, CommandMetadataLspRecommendation) {
 
 TEST(DialogTriggers, CommandMetadataPluginHint) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:plugin-hint|python-dev");
     EXPECT_TRUE(pushed);
@@ -1377,7 +1377,7 @@ TEST(DialogTriggers, CommandMetadataPluginHint) {
 
 TEST(DialogTriggers, PushLspRecommendationCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushLspRecommendation(
         queue, "clangd",
@@ -1388,7 +1388,7 @@ TEST(DialogTriggers, PushLspRecommendationCreatesDialog) {
 
 TEST(DialogTriggers, PushModelSwitchCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushModelSwitch(
         queue, "sonnet", "opus",
@@ -1399,7 +1399,7 @@ TEST(DialogTriggers, PushModelSwitchCreatesDialog) {
 
 TEST(DialogTriggers, MultipleDialogsQueueCorrectly) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     // Two bottom dialogs with different bands
     dtrig::PushCostThreshold(
@@ -1429,11 +1429,11 @@ TEST(DialogTriggers, MultipleDialogsQueueCorrectly) {
 // ============================================================
 
 // NOTE: Temporarily disabled.  These tests assume a
-// `namespace cc::ui::dialogs::quick_open` containing RenderQuickOpen +
+// `namespace loom::ui::dialogs::quick_open` containing RenderQuickOpen +
 // HandleQuickOpenEvent + filter_items, but the production quick_open.cppm
 // module exports:
 //   * render_quick_open() -> std::string (5-arg ANSI output)
-//   * filter_items() — in the flat cc::ui::dialogs namespace.
+//   * filter_items() — in the flat loom::ui::dialogs namespace.
 // The RenderQuickOpen + HandleQuickOpenEvent wrappers are now implemented in
 // the all-renderers aggregator as internal inline functions (they call the
 // actual helpers and match the registry signatures).  The standalone quick_open
@@ -1441,7 +1441,7 @@ TEST(DialogTriggers, MultipleDialogsQueueCorrectly) {
 #if 0
 
 TEST(QuickOpen, FuzzyFilterMatchesLabel) {
-    namespace qo = cc::ui::dialogs::quick_open;
+    namespace qo = loom::ui::dialogs::quick_open;
 
     std::vector<dsys::QuickOpenItem> items = {
         {"Settings", "Open settings panel", "", "Commands"},
@@ -1455,7 +1455,7 @@ TEST(QuickOpen, FuzzyFilterMatchesLabel) {
 }
 
 TEST(QuickOpen, FuzzyFilterMatchesDescription) {
-    namespace qo = cc::ui::dialogs::quick_open;
+    namespace qo = loom::ui::dialogs::quick_open;
 
     std::vector<dsys::QuickOpenItem> items = {
         {"Settings", "Open settings panel", "", "Commands"},
@@ -1468,7 +1468,7 @@ TEST(QuickOpen, FuzzyFilterMatchesDescription) {
 }
 
 TEST(QuickOpen, FuzzyFilterCaseInsensitive) {
-    namespace qo = cc::ui::dialogs::quick_open;
+    namespace qo = loom::ui::dialogs::quick_open;
 
     std::vector<dsys::QuickOpenItem> items = {
         {"Settings", "Open settings", "", "Commands"},
@@ -1480,7 +1480,7 @@ TEST(QuickOpen, FuzzyFilterCaseInsensitive) {
 }
 
 TEST(QuickOpen, EmptyQueryReturnsAll) {
-    namespace qo = cc::ui::dialogs::quick_open;
+    namespace qo = loom::ui::dialogs::quick_open;
 
     std::vector<dsys::QuickOpenItem> items = {
         {"A", "desc a", "", "Cat1"},
@@ -1492,7 +1492,7 @@ TEST(QuickOpen, EmptyQueryReturnsAll) {
 }
 
 TEST(QuickOpen, EventNavigation) {
-    namespace qo = cc::ui::dialogs::quick_open;
+    namespace qo = loom::ui::dialogs::quick_open;
 
     dsys::QuickOpenPayload p;
     p.items = {
@@ -1522,7 +1522,7 @@ TEST(QuickOpen, EventNavigation) {
 }
 
 TEST(QuickOpen, EventCharacterAddsToQuery) {
-    namespace qo = cc::ui::dialogs::quick_open;
+    namespace qo = loom::ui::dialogs::quick_open;
 
     dsys::QuickOpenPayload p;
     p.query = "";
@@ -1535,7 +1535,7 @@ TEST(QuickOpen, EventCharacterAddsToQuery) {
 }
 
 TEST(QuickOpen, EventBackspaceRemovesChar) {
-    namespace qo = cc::ui::dialogs::quick_open;
+    namespace qo = loom::ui::dialogs::quick_open;
 
     dsys::QuickOpenPayload p;
     p.query = "hello";
@@ -1545,7 +1545,7 @@ TEST(QuickOpen, EventBackspaceRemovesChar) {
 }
 
 TEST(QuickOpen, EventReturnInvokesCallback) {
-    namespace qo = cc::ui::dialogs::quick_open;
+    namespace qo = loom::ui::dialogs::quick_open;
 
     dsys::QuickOpenPayload p;
     p.items = {{"Item", "desc", "", "Cat"}};
@@ -1567,7 +1567,7 @@ TEST(QuickOpen, EventReturnInvokesCallback) {
 }
 
 TEST(QuickOpen, EventEscapeCancels) {
-    namespace qo = cc::ui::dialogs::quick_open;
+    namespace qo = loom::ui::dialogs::quick_open;
 
     dsys::QuickOpenPayload p;
     bool called = false;
@@ -1582,7 +1582,7 @@ TEST(QuickOpen, EventEscapeCancels) {
 }
 
 TEST(QuickOpen, RenderProducesOutput) {
-    namespace qo = cc::ui::dialogs::quick_open;
+    namespace qo = loom::ui::dialogs::quick_open;
 
     dsys::QuickOpenPayload p;
     p.id = "test-qo";
@@ -1618,7 +1618,7 @@ TEST(QuickOpen, RenderProducesOutput) {
 
 TEST(DialogTriggers, CommandMetadataQuickOpen) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:quick-open");
     EXPECT_TRUE(pushed);
@@ -1631,7 +1631,7 @@ TEST(DialogTriggers, CommandMetadataQuickOpen) {
 
 TEST(DialogTriggers, PushQuickOpenCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     std::vector<dsys::QuickOpenItem> items = {
         {"Test", "test item", "", "Test"},
@@ -1657,7 +1657,7 @@ TEST(DialogTriggers, PushQuickOpenCreatesDialog) {
 
 TEST(DialogTriggers, PushAboutDialogCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool closed = false;
     dtrig::PushAboutDialog(queue, "1.0.0", [&] { closed = true; });
@@ -1674,7 +1674,7 @@ TEST(DialogTriggers, PushAboutDialogCreatesDialog) {
 
 TEST(DialogTriggers, PushTasksViewCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushTasksView(queue, [] {});
     EXPECT_TRUE(queue.has_modal());
@@ -1685,7 +1685,7 @@ TEST(DialogTriggers, PushTasksViewCreatesDialog) {
 
 TEST(DialogTriggers, PushTeamsViewCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushTeamsView(queue, [] {});
     EXPECT_TRUE(queue.has_modal());
@@ -1696,7 +1696,7 @@ TEST(DialogTriggers, PushTeamsViewCreatesDialog) {
 
 TEST(DialogTriggers, PushExportDialogCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     bool responded = false;
     dtrig::PushExportDialog(queue, "markdown",
@@ -1714,7 +1714,7 @@ TEST(DialogTriggers, PushExportDialogCreatesDialog) {
 
 TEST(DialogTriggers, PushDiffDialogCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushDiffDialog(queue, "Changes", "old", "new",
         [](bool) {});
@@ -1726,7 +1726,7 @@ TEST(DialogTriggers, PushDiffDialogCreatesDialog) {
 
 TEST(DialogTriggers, PushGlobalSearchCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushGlobalSearch(queue, "test", [] {});
     EXPECT_TRUE(queue.has_modal());
@@ -1741,7 +1741,7 @@ TEST(DialogTriggers, PushGlobalSearchCreatesDialog) {
 
 TEST(DialogTriggers, PushHistorySearchCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushHistorySearch(queue, "project",
         [](std::string_view) {});
@@ -1753,7 +1753,7 @@ TEST(DialogTriggers, PushHistorySearchCreatesDialog) {
 
 TEST(DialogTriggers, PushFeedbackSurveyCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushFeedbackSurvey(queue, [] {});
     EXPECT_TRUE(queue.has_modal());
@@ -1764,7 +1764,7 @@ TEST(DialogTriggers, PushFeedbackSurveyCreatesDialog) {
 
 TEST(DialogTriggers, PushManagedSecurityCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushManagedSettingsSecurity(queue, [] {});
     EXPECT_TRUE(queue.has_modal());
@@ -1775,7 +1775,7 @@ TEST(DialogTriggers, PushManagedSecurityCreatesDialog) {
 
 TEST(DialogTriggers, PushPluginDialogCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushPluginDialog(queue, [] {});
     EXPECT_TRUE(queue.has_modal());
@@ -1786,7 +1786,7 @@ TEST(DialogTriggers, PushPluginDialogCreatesDialog) {
 
 TEST(DialogTriggers, PushTrustDialogCreatesDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushTrustDialog(queue, "example.com",
         [](bool) {});
@@ -1804,7 +1804,7 @@ TEST(DialogTriggers, PushTrustDialogCreatesDialog) {
 
 TEST(DialogTriggers, MetadataAboutDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     EXPECT_TRUE(dtrig::PushFromCommandMetadata(queue, "UI:about"));
     EXPECT_TRUE(queue.has_modal());
@@ -1813,7 +1813,7 @@ TEST(DialogTriggers, MetadataAboutDialog) {
 
 TEST(DialogTriggers, MetadataTasksView) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     EXPECT_TRUE(dtrig::PushFromCommandMetadata(queue, "UI:tasks"));
     EXPECT_TRUE(queue.has_modal());
@@ -1822,7 +1822,7 @@ TEST(DialogTriggers, MetadataTasksView) {
 
 TEST(DialogTriggers, MetadataTeamsView) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     EXPECT_TRUE(dtrig::PushFromCommandMetadata(queue, "UI:teams"));
     EXPECT_TRUE(queue.has_modal());
@@ -1831,7 +1831,7 @@ TEST(DialogTriggers, MetadataTeamsView) {
 
 TEST(DialogTriggers, MetadataExportDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     EXPECT_TRUE(dtrig::PushFromCommandMetadata(queue, "UI:export"));
     EXPECT_TRUE(queue.has_modal());
@@ -1840,7 +1840,7 @@ TEST(DialogTriggers, MetadataExportDialog) {
 
 TEST(DialogTriggers, MetadataDiffDialog) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     EXPECT_TRUE(dtrig::PushFromCommandMetadata(queue, "DIFF_DIALOG"));
     EXPECT_TRUE(queue.has_modal());
@@ -1849,7 +1849,7 @@ TEST(DialogTriggers, MetadataDiffDialog) {
 
 TEST(DialogTriggers, MetadataFeedbackSurvey) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     EXPECT_TRUE(dtrig::PushFromCommandMetadata(queue, "UI:feedback"));
     EXPECT_TRUE(queue.has_modal());
@@ -1858,7 +1858,7 @@ TEST(DialogTriggers, MetadataFeedbackSurvey) {
 
 TEST(DialogTriggers, MetadataGlobalSearch) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     EXPECT_TRUE(dtrig::PushFromCommandMetadata(queue, "GLOBAL_SEARCH"));
     EXPECT_TRUE(queue.has_modal());
@@ -1867,7 +1867,7 @@ TEST(DialogTriggers, MetadataGlobalSearch) {
 
 TEST(DialogTriggers, MetadataHistorySearch) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     EXPECT_TRUE(dtrig::PushFromCommandMetadata(queue, "HISTORY_SEARCH"));
     EXPECT_TRUE(queue.has_modal());
@@ -1876,7 +1876,7 @@ TEST(DialogTriggers, MetadataHistorySearch) {
 
 TEST(DialogTriggers, MetadataManagedSecurity) {
     dsys::DialogQueue queue;
-    namespace dtrig = cc::ui::dialogs::triggers;
+    namespace dtrig = loom::ui::dialogs::triggers;
 
     EXPECT_TRUE(dtrig::PushFromCommandMetadata(queue, "MANAGED_SETTINGS_SECURITY"));
     EXPECT_TRUE(queue.has_modal());
@@ -2145,7 +2145,7 @@ TEST(DialogRenderers, Golden_SandboxPermission) {
     // FAITHFUL PORT: uses cc.ui.dialogs.sandbox_permission (1:1 TS layout)
     // rather than the pre-existing stub renderer.
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     auto theme = dialog_test_golden::get_light_theme();
 
@@ -2198,7 +2198,7 @@ TEST(DialogRenderers, Golden_SandboxPermission) {
 
 TEST(SandboxPermissionEvents, KeyY_AllowsOnce) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     p.host_pattern = "*.example.com";
@@ -2214,7 +2214,7 @@ TEST(SandboxPermissionEvents, KeyY_AllowsOnce) {
 
 TEST(SandboxPermissionEvents, KeyY_CaseInsensitive) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     int fired = 0;
@@ -2229,7 +2229,7 @@ TEST(SandboxPermissionEvents, KeyY_CaseInsensitive) {
 
 TEST(SandboxPermissionEvents, Enter_AllowsOnce) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     int fired = 0;
@@ -2244,7 +2244,7 @@ TEST(SandboxPermissionEvents, Enter_AllowsOnce) {
 
 TEST(SandboxPermissionEvents, KeyA_AlwaysAllow) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     p.managed_domains_only = false;
@@ -2260,7 +2260,7 @@ TEST(SandboxPermissionEvents, KeyA_AlwaysAllow) {
 
 TEST(SandboxPermissionEvents, KeyA_SuppressedWhenManagedDomainsOnly) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     p.managed_domains_only = true;
@@ -2278,7 +2278,7 @@ TEST(SandboxPermissionEvents, KeyA_SuppressedWhenManagedDomainsOnly) {
 
 TEST(SandboxPermissionEvents, KeyN_Denies) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     int fired = 0;
@@ -2297,7 +2297,7 @@ TEST(SandboxPermissionEvents, KeyN_Denies) {
 TEST(SandboxPermissionEvents, Escape_DeniesLikeOnCancel) {
     // TS: onCancel → onUserResponse({allow:false, persistToSettings:false})
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     int fired = 0;
@@ -2312,7 +2312,7 @@ TEST(SandboxPermissionEvents, Escape_DeniesLikeOnCancel) {
 
 TEST(SandboxPermissionEvents, ArrowDown_WrapsFocusThroughAllOptions) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     p.managed_domains_only = false;  // 3 options: 0=Yes, 1=YesAlways, 2=No
@@ -2332,7 +2332,7 @@ TEST(SandboxPermissionEvents, ArrowDown_WrapsFocusThroughAllOptions) {
 
 TEST(SandboxPermissionEvents, ArrowUp_WrapsFocusBackwards) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     p.managed_domains_only = false;
@@ -2348,7 +2348,7 @@ TEST(SandboxPermissionEvents, ArrowUp_WrapsFocusBackwards) {
 
 TEST(SandboxPermissionEvents, VimJK_MoveFocus) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     p.managed_domains_only = false;
@@ -2363,7 +2363,7 @@ TEST(SandboxPermissionEvents, VimJK_MoveFocus) {
 
 TEST(SandboxPermissionEvents, ManagedDomainsOnly_TwoOptionsWrapCorrectly) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     p.managed_domains_only = true;  // 2 options: 0=Yes, 1=No
@@ -2382,7 +2382,7 @@ TEST(SandboxPermissionEvents, ManagedDomainsOnly_TwoOptionsWrapCorrectly) {
 
 TEST(SandboxPermissionEvents, UnrelatedKeys_NotConsumed) {
 
-    namespace sbp = cc::ui::dialogs::sandbox_permission;
+    namespace sbp = loom::ui::dialogs::sandbox_permission;
 
     dsys::SandboxPermissionPayload p;
     int fired = 0;
@@ -2579,11 +2579,11 @@ TEST(DialogRenderers, Golden_CostThreshold) {
 // future change from either baking in a vendor URL or dropping the feature.
 TEST(DialogRenderers, CostThresholdDocsLinkFollowsConfiguredBase) {
     ::unsetenv("LOOM_DOCS_BASE");
-    EXPECT_EQ(cc::constants::product::doc_url("/docs/en/costs"), "")
+    EXPECT_EQ(loom::constants::product::doc_url("/docs/en/costs"), "")
         << "no base configured => no link";
 
     ::setenv("LOOM_DOCS_BASE", "https://docs.example.test", 1);
-    const auto configured = cc::constants::product::doc_url("/docs/en/costs");
+    const auto configured = loom::constants::product::doc_url("/docs/en/costs");
     ::unsetenv("LOOM_DOCS_BASE");
     EXPECT_EQ(configured, "https://docs.example.test/docs/en/costs");
 }

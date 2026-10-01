@@ -10,7 +10,7 @@ export module loom.keybindings.schema;
 
 import std;
 
-export namespace cc::keybindings {
+export namespace loom::keybindings {
 
 /// Modifier keys
 struct Modifiers {
@@ -71,4 +71,4 @@ struct Keybinding {
     return binding.key == event.key && binding.modifiers == event.modifiers;
 }
 
-} // namespace cc::keybindings
+} // namespace loom::keybindings

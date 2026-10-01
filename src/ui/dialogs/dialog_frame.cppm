@@ -41,13 +41,13 @@ import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.component_primitives;
 import loom.ui.permissions.components;
 
-export namespace cc::ui::dialogs::frame {
+export namespace loom::ui::dialogs::frame {
 
 using namespace ftxui;
-using Theme = cc::ui::design::theme::Theme;
-using Role = cc::ui::design::tokens::Role;
-namespace primitives = cc::ui::design::primitives;
-namespace pc = cc::ui::permissions::components;
+using Theme = loom::ui::design::theme::Theme;
+using Role = loom::ui::design::tokens::Role;
+namespace primitives = loom::ui::design::primitives;
+namespace pc = loom::ui::permissions::components;
 
 // ============================================================
 // DialogFrameStyle — visual variant
@@ -378,4 +378,4 @@ struct DialogFrameProps {
     });
 }
 
-} // namespace cc::ui::dialogs::frame
+} // namespace loom::ui::dialogs::frame

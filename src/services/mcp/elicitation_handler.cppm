@@ -2,7 +2,7 @@ export module loom.services.mcp.elicitation_handler;
 
 import std;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
 // Elicitation request from an MCP server
 struct ElicitationRequest {
@@ -68,4 +68,4 @@ auto handle_elicitation(ElicitationRequest request)
     return active_responder(request);
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

@@ -8,7 +8,7 @@ export module loom.diagnostics.log;
 
 import std;
 
-export namespace cc::utils::log {
+export namespace loom::utils::log {
 
 
 enum class LogLevel {
@@ -184,4 +184,4 @@ inline void warning(const std::string& message) {
     console_log(LogLevel::Warning, message);
 }
 
-} // namespace cc::utils::log
+} // namespace loom::utils::log

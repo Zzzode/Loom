@@ -109,7 +109,7 @@ constexpr bool FEATURE_TOOL_SEARCH = true;
 // Enabled in CPP — script tool has a sandboxed implementation.
 constexpr bool FEATURE_SCRIPT_TOOL_ENABLED = true;
 
-export namespace cc::tools::features {
+export namespace loom::tools::features {
 
 // Re-export the flags under a readable namespace for call sites.
 // TS REF: src/tools.ts:16-158, 195-256
@@ -193,4 +193,4 @@ inline constexpr bool kToolSearch = FEATURE_TOOL_SEARCH;
 /// ScriptTool.  TS REF: src/tools.ts:252-254
 inline constexpr bool kScriptToolEnabled = FEATURE_SCRIPT_TOOL_ENABLED;
 
-} // namespace cc::tools::features
+} // namespace loom::tools::features

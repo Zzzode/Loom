@@ -13,7 +13,7 @@ export module loom.text.parse_references;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 /// A single placeholder match, 1:1 with TS `{id, match, index}`.  `index` is a
 /// UTF-8 byte offset (same semantics as String.prototype.matchAll index on a
@@ -175,4 +175,4 @@ template <typename Fn>
     return expanded;
 }
 
-}  // namespace cc::utils
+}  // namespace loom::utils

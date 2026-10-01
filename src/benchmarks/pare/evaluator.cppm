@@ -8,7 +8,7 @@ import std;
 
 import loom.benchmarks.pare.schema;
 
-export namespace cc::benchmarks::pare {
+export namespace loom::benchmarks::pare {
 
 inline std::string normalize(std::string value, const std::vector<NormalizeMode>& modes) {
     for (const auto& mode : modes) {
@@ -93,4 +93,4 @@ inline std::pair<bool, std::optional<std::string>> evaluate_assertion(
     return {false, "unknown assertion type"};
 }
 
-} // namespace cc::benchmarks::pare
+} // namespace loom::benchmarks::pare

@@ -4,7 +4,7 @@ module;
 export module loom.commands.statusline;
 
 import std;
-export namespace cc::commands::statusline {
+export namespace loom::commands::statusline {
 
 struct CommandResponse { bool ok{true}; std::string message; };
 

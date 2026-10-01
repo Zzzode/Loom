@@ -16,9 +16,9 @@ import loom.fs.path;
 import loom.state.app_state;
 import loom.state.store;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 namespace fs = std::filesystem;
 
 struct AddDirOptions {
@@ -64,7 +64,7 @@ public:
 
         // ---- Step 1: Expand ~/ to home directory ----
         fs::path input_path(*opts.path);
-        fs::path expanded = cc::utils::path::expand_tilde(input_path);
+        fs::path expanded = loom::utils::path::expand_tilde(input_path);
 
         // ---- Step 2: Resolve to absolute path ----
         std::error_code ec;
@@ -104,7 +104,7 @@ public:
         // ---- Step 4: Check for duplicates ----
         const std::string resolved_str = resolved.string();
         bool already_allowed = false;
-        if (const auto* state = static_cast<const cc::state::AppState*>(ctx.get_app_state())) {
+        if (const auto* state = static_cast<const loom::state::AppState*>(ctx.get_app_state())) {
             for (const auto& d : state->allowed_directories) {
                 if (d == resolved_str) {
                     already_allowed = true;
@@ -121,11 +121,11 @@ public:
         }
 
         // ---- Step 5: Store in AppState ----
-        using cc::state::ActionType;
+        using loom::state::ActionType;
         ctx.dispatch_action(static_cast<int>(ActionType::AddAllowedDirectory), &resolved_str);
 
         // ---- Build detailed success message ----
-        std::string display_path = cc::utils::path::get_display_path(resolved);
+        std::string display_path = loom::utils::path::get_display_path(resolved);
         std::string message = std::format(
             "Added allowed directory\n"
             "  Resolved path: {}\n"
@@ -163,7 +163,7 @@ private:
     }
 
     [[nodiscard]] static std::string format_current_status(const CommandContext& ctx) {
-        const auto* state = static_cast<const cc::state::AppState*>(ctx.get_app_state());
+        const auto* state = static_cast<const loom::state::AppState*>(ctx.get_app_state());
         std::string out = "Allowed directories:\n";
         if (state && !state->allowed_directories.empty()) {
             for (const auto& d : state->allowed_directories) {
@@ -179,4 +179,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

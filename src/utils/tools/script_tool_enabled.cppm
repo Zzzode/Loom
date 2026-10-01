@@ -5,7 +5,7 @@ import std;
 
 import loom.platform.env.env_utils;
 
-export namespace cc::utils::script_tool {
+export namespace loom::utils::script_tool {
 
 using EnvLike = std::map<std::string, std::string>;
 
@@ -19,11 +19,11 @@ namespace detail {
 } // namespace detail
 
 [[nodiscard]] inline bool is_script_tool_enabled(const EnvLike& env) {
-    return cc::utils::is_env_truthy(detail::get_env_value(env, "ENABLE_SCRIPT_TOOL"));
+    return loom::utils::is_env_truthy(detail::get_env_value(env, "ENABLE_SCRIPT_TOOL"));
 }
 
 [[nodiscard]] inline bool is_bash_tool_disabled(const EnvLike& env) {
-    return cc::utils::is_env_truthy(detail::get_env_value(env, "DISABLE_BASH_TOOL")) || is_script_tool_enabled(env);
+    return loom::utils::is_env_truthy(detail::get_env_value(env, "DISABLE_BASH_TOOL")) || is_script_tool_enabled(env);
 }
 
-} // namespace cc::utils::script_tool
+} // namespace loom::utils::script_tool

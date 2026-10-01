@@ -30,7 +30,7 @@ import loom.services.prompt_suggestion;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
 
-namespace cc::ui {
+namespace loom::ui {
 
 // SL-11: register a QueryEnd hook that reads the engine conversation, runs the
 // deterministic PromptSuggestionService ranker (no LLM / speculation — those
@@ -38,29 +38,29 @@ namespace cc::ui {
 // ReplScreenState::next_action_suggestion for the empty-prompt renderer.
 void wire_prompt_suggestion_hook(void* hooks_v, void* engine_v,
                                  std::shared_ptr<repl_screen::ReplScreenState> state) {
-    auto& hooks = *static_cast<cc::hooks::LifecycleHookRegistry*>(hooks_v);
+    auto& hooks = *static_cast<loom::hooks::LifecycleHookRegistry*>(hooks_v);
     auto* engine = static_cast<core::QueryEngine*>(engine_v);
-    hooks.on_query_end([engine, state](const cc::hooks::QueryEndEvent& ev) {
+    hooks.on_query_end([engine, state](const loom::hooks::QueryEndEvent& ev) {
         if (!ev.success) {
             state->next_action_suggestion.reset();
             return;
         }
         try {
-            cc::services::prompt_suggestion::SuggestionRequest req;
+            loom::services::prompt_suggestion::SuggestionRequest req;
             for (const auto& msg : engine->get_conversation()) {
                 std::visit([&](const auto& m) {
                     using M = std::remove_cvref_t<decltype(m)>;
                     std::string role;
-                    if constexpr (std::is_same_v<M, cc::core::UserMessage>)
+                    if constexpr (std::is_same_v<M, loom::core::UserMessage>)
                         role = "user";
-                    else if constexpr (std::is_same_v<M, cc::core::AssistantMessage> ||
-                                       std::is_same_v<M, cc::core::ToolUseMessage>)
+                    else if constexpr (std::is_same_v<M, loom::core::AssistantMessage> ||
+                                       std::is_same_v<M, loom::core::ToolUseMessage>)
                         role = "assistant";
                     else
                         return;  // System / ToolResult skipped
                     std::string body;
                     for (const auto& blk : m.content) {
-                        if (auto* tb = std::get_if<cc::core::TextBlock>(&blk)) {
+                        if (auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
                             if (!body.empty()) body.push_back('\n');
                             body += tb->text;
                         }
@@ -73,7 +73,7 @@ void wire_prompt_suggestion_hook(void* hooks_v, void* engine_v,
             req.max_suggestions = 1;
             req.include_speculative = true;
             const auto ranked =
-                cc::services::prompt_suggestion::PromptSuggestionService{}.suggest(req);
+                loom::services::prompt_suggestion::PromptSuggestionService{}.suggest(req);
             if (ranked && !ranked->empty() && !(*ranked)[0].text.empty()) {
                 state->next_action_suggestion = (*ranked)[0].text;
             } else {
@@ -85,4 +85,4 @@ void wire_prompt_suggestion_hook(void* hooks_v, void* engine_v,
     });
 }
 
-}  // namespace cc::ui
+}  // namespace loom::ui

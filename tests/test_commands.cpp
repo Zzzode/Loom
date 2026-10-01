@@ -126,8 +126,8 @@ struct EnvironmentUnsetGuard {
     }
 };
 
-cc::core::CommandContext ctx(std::vector<std::string> args = {}, std::string raw = {}) {
-    return cc::core::CommandContext{
+loom::core::CommandContext ctx(std::vector<std::string> args = {}, std::string raw = {}) {
+    return loom::core::CommandContext{
         .args = std::move(args),
         .raw_input = std::move(raw),
         .cwd = {},
@@ -141,31 +141,31 @@ cc::core::CommandContext ctx(std::vector<std::string> args = {}, std::string raw
                        std::istreambuf_iterator<char>());
 }
 
-std::vector<cc::core::Message> compact_runtime_messages(void* state) {
-    auto* engine = static_cast<cc::core::QueryEngine*>(state);
-    return engine ? engine->get_conversation() : std::vector<cc::core::Message>{};
+std::vector<loom::core::Message> compact_runtime_messages(void* state) {
+    auto* engine = static_cast<loom::core::QueryEngine*>(state);
+    return engine ? engine->get_conversation() : std::vector<loom::core::Message>{};
 }
 
-cc::core::VoidResult compact_runtime_apply(void* state) {
-    auto* engine = static_cast<cc::core::QueryEngine*>(state);
+loom::core::VoidResult compact_runtime_apply(void* state) {
+    auto* engine = static_cast<loom::core::QueryEngine*>(state);
     if (!engine) {
-        return std::unexpected(cc::core::Error::make(
-            cc::core::ErrorCode::InternalError,
+        return std::unexpected(loom::core::Error::make(
+            loom::core::ErrorCode::InternalError,
             "No active query engine is available for compaction"));
     }
     auto compacted = engine->compact_conversation();
     if (!compacted) {
-        return std::unexpected(cc::core::Error::make(
-            cc::core::ErrorCode::InternalError,
+        return std::unexpected(loom::core::Error::make(
+            loom::core::ErrorCode::InternalError,
             compacted.error().format()));
     }
-    return cc::core::VoidResult{};
+    return loom::core::VoidResult{};
 }
 
 } // namespace
 
 TEST(CommandRegistry, ParsesSlashCommandsAndArguments) {
-    auto parsed = cc::core::CommandRegistry::parse("/config get model.default_model");
+    auto parsed = loom::core::CommandRegistry::parse("/config get model.default_model");
 
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->name, "config");
@@ -174,17 +174,17 @@ TEST(CommandRegistry, ParsesSlashCommandsAndArguments) {
     EXPECT_EQ(parsed->args[1], "model.default_model");
     EXPECT_EQ(parsed->raw, "/config get model.default_model");
 
-    EXPECT_FALSE(cc::core::CommandRegistry::parse("not a command").has_value());
+    EXPECT_FALSE(loom::core::CommandRegistry::parse("not a command").has_value());
 }
 
 TEST(CommandRegistry, ExecutesLegacyCommandsAndAliases) {
-    cc::core::CommandRegistry registry;
-    registry.register_command(cc::core::CommandRegistration{
+    loom::core::CommandRegistry registry;
+    registry.register_command(loom::core::CommandRegistration{
         .name = "echo",
         .description = "Echo input",
         .usage = "/echo <text>",
-        .handler = [](const cc::core::CommandContext& command_ctx) {
-            return cc::core::CommandResult::success(command_ctx.args.empty() ? "" : command_ctx.args.front());
+        .handler = [](const loom::core::CommandContext& command_ctx) {
+            return loom::core::CommandResult::success(command_ctx.args.empty() ? "" : command_ctx.args.front());
         },
         .aliases = {"say"},
         .hidden = false,
@@ -204,9 +204,9 @@ TEST(CommandRegistry, ExecutesLegacyCommandsAndAliases) {
 }
 
 TEST(CommandRegistry, RegistersTypedCommandsAndCompletesNames) {
-    cc::core::CommandRegistry registry;
-    registry.register_command<cc::commands::HelpCommand>();
-    registry.register_command<cc::commands::ClearCommand>();
+    loom::core::CommandRegistry registry;
+    registry.register_command<loom::commands::HelpCommand>();
+    registry.register_command<loom::commands::ClearCommand>();
 
     EXPECT_EQ(registry.size(), 2u);
     EXPECT_NE(registry.get("help"), nullptr);
@@ -223,13 +223,13 @@ TEST(CommandRegistry, RegistersTypedCommandsAndCompletesNames) {
 }
 
 TEST(AppCommandRegistry, ReportsCommandPermissionLevels) {
-    EXPECT_EQ(cc::commands::command_permission("help"), cc::commands::CommandPermission::ReadOnly);
-    EXPECT_EQ(cc::commands::command_permission("clear"), cc::commands::CommandPermission::ReadWrite);
-    EXPECT_EQ(cc::commands::command_permission("unknown"), cc::commands::CommandPermission::None);
+    EXPECT_EQ(loom::commands::command_permission("help"), loom::commands::CommandPermission::ReadOnly);
+    EXPECT_EQ(loom::commands::command_permission("clear"), loom::commands::CommandPermission::ReadWrite);
+    EXPECT_EQ(loom::commands::command_permission("unknown"), loom::commands::CommandPermission::None);
 }
 
 TEST(AppCommandRegistry, DispatchesMigratedRuntimeCommands) {
-    cc::commands::AppCommandRegistry registry;
+    loom::commands::AppCommandRegistry registry;
 
     EXPECT_GT(registry.command_count(), 0u);
     EXPECT_TRUE(registry.has_command("commit"));
@@ -297,7 +297,7 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
     {
         // Construct AFTER env/cwd are set: the command's default
         // ConfigManager binds its paths in its constructor.
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
 
         // stdio scoped add: the scope value must not become a phantom arg.
         auto scoped = registry.execute(
@@ -305,7 +305,7 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
         ASSERT_TRUE(scoped.has_value());
         ASSERT_TRUE(scoped->ok) << scoped->message;
 
-        auto project = cc::utils::json::parse_file(work / ".loom" / "config.json");
+        auto project = loom::utils::json::parse_file(work / ".loom" / "config.json");
         ASSERT_TRUE(project.has_value());
         const auto s1 = project->root().get("mcpServers").get("s1");
         ASSERT_TRUE(s1.is_obj());
@@ -325,7 +325,7 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
         ASSERT_TRUE(remote->ok) << remote->message;
 
         // Default scope is local: header must land in the local tier file.
-        auto local = cc::utils::json::parse_file(work / ".loom" / "config.local.json");
+        auto local = loom::utils::json::parse_file(work / ".loom" / "config.local.json");
         ASSERT_TRUE(local.has_value());
         const auto r1 = local->root().get("mcpServers").get("r1");
         ASSERT_TRUE(r1.is_obj());
@@ -341,7 +341,7 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
         ASSERT_TRUE(two_scopes.has_value());
         ASSERT_TRUE(two_scopes->ok) << two_scopes->message;
 
-        auto user = cc::utils::json::parse_file(cfg / "config.json");
+        auto user = loom::utils::json::parse_file(cfg / "config.json");
         ASSERT_TRUE(user.has_value());
         EXPECT_TRUE(user->root().get("mcpServers").has("s2"));
         EXPECT_FALSE(project->root().get("mcpServers").has("s2"));
@@ -392,7 +392,7 @@ TEST(AppCommandRegistry, ConfigListGetReflectLoadedConfig) {
 
         // Construct AFTER env/cwd are set: the command's default
         // ConfigManager binds its paths in its constructor.
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
 
         auto list = registry.execute("/config list", ctx());
         ASSERT_TRUE(list.has_value());
@@ -491,13 +491,13 @@ TEST(AppCommandRegistry, ConfigSetPreservesExistingSections) {
         }
         const std::string user_bytes_before = read_file(user_path);
 
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
         auto set = registry.execute("/config set display.theme light", ctx());
         ASSERT_TRUE(set.has_value());
         ASSERT_TRUE(set->ok) << set->message;
         EXPECT_EQ(set->message, "Set display.theme = light");
 
-        auto project = cc::utils::json::parse_file(project_path);
+        auto project = loom::utils::json::parse_file(project_path);
         ASSERT_TRUE(project.has_value());
         const auto root_node = project->root();
         EXPECT_EQ(root_node.get("model").get("default_model").as_str(),
@@ -570,12 +570,12 @@ TEST(AppCommandRegistry, ConfigSetPreservesUnknownKeys) {
     }
 
     {
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
         auto set = registry.execute("/config set display.theme light", ctx());
         ASSERT_TRUE(set.has_value());
         ASSERT_TRUE(set->ok) << set->message;
 
-        auto project = cc::utils::json::parse_file(project_path);
+        auto project = loom::utils::json::parse_file(project_path);
         ASSERT_TRUE(project.has_value());
         const auto root_node = project->root();
         // The unknown top-level key survives with its value intact.
@@ -632,7 +632,7 @@ TEST(AppCommandRegistry, ConfigGetReflectsExternalEdit) {
     }
 
     {
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
 
         auto get1 = registry.execute("/config get model.default_model", ctx());
         ASSERT_TRUE(get1.has_value());
@@ -694,7 +694,7 @@ TEST(AppCommandRegistry, McpSuggestionsReflectExternalConfigEdit) {
     {
         // Construct AFTER env/cwd are set: the command's default ConfigManager
         // binds its paths in its constructor.
-        cc::commands::McpCommand mcp;
+        loom::commands::McpCommand mcp;
 
         auto sug1 = mcp.complete("alpha");
         EXPECT_TRUE(std::ranges::find(sug1, "alpha") != sug1.end());
@@ -756,7 +756,7 @@ TEST(AppCommandRegistry, ConfigSetFailsOnUnreadableProjectConfig) {
         };
         const std::string bytes_before = read_file(project_path);
 
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
         auto set = registry.execute("/config set display.theme dark", ctx());
         ASSERT_TRUE(set.has_value());
         EXPECT_FALSE(set->ok);
@@ -774,7 +774,7 @@ TEST(AppCommandRegistry, ConfigSetFailsOnUnreadableProjectConfig) {
 }
 
 TEST(AppCommandRegistry, RuntimeSurfaceCommandsExecuteLocalLogic) {
-    cc::commands::AppCommandRegistry registry;
+    loom::commands::AppCommandRegistry registry;
 
     auto debug = registry.execute(R"(/debug-tool-call {"name":"Bash","input":{"command":"pwd"}})", ctx());
     ASSERT_TRUE(debug.has_value());
@@ -806,7 +806,7 @@ TEST(AppCommandRegistry, RuntimeSurfaceCommandsExecuteLocalLogic) {
 
 TEST(AgentsCommand, ListsRealAgentDefinitions) {
     EnvironmentGuard explore_enabled("LOOM_ENABLE_EXPLORE_PLAN_AGENTS", "1");
-    cc::commands::AgentsCommand agents;
+    loom::commands::AgentsCommand agents;
 
     auto list = agents.execute(ctx({"list"}));
     ASSERT_TRUE(list.has_value());
@@ -828,8 +828,8 @@ TEST(AgentsCommand, ListsRealAgentDefinitions) {
 }
 
 TEST(HelpCommand, FormatsDefaultShortcutsExamplesAndSpecificHelp) {
-    auto help_def = cc::commands::HelpCommand::definition();
-    cc::commands::HelpCommand help;
+    auto help_def = loom::commands::HelpCommand::definition();
+    loom::commands::HelpCommand help;
     help.set_command_definitions({&help_def});
 
     auto all = help.execute(ctx());
@@ -851,11 +851,11 @@ TEST(HelpCommand, FormatsDefaultShortcutsExamplesAndSpecificHelp) {
 }
 
 TEST(ClearCommand, InvokesCallbacksForAllScope) {
-    cc::commands::ClearCommand clear;
+    loom::commands::ClearCommand clear;
     bool screen_cleared = false;
     bool conversation_reset = false;
     clear.set_screen_clear_fn([&] { screen_cleared = true; });
-    clear.set_conversation_reset_fn([&]() -> cc::core::VoidResult {
+    clear.set_conversation_reset_fn([&]() -> loom::core::VoidResult {
         conversation_reset = true;
         return {};
     });
@@ -871,18 +871,18 @@ TEST(ClearCommand, InvokesCallbacksForAllScope) {
 }
 
 TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
-    cc::core::ToolRegistry tool_registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tool_registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = std::filesystem::current_path().string();
-    cc::core::QueryEngine engine(std::move(config), tool_registry);
+    loom::core::QueryEngine engine(std::move(config), tool_registry);
 
     auto make_user = [](std::string text, int index) {
-        cc::core::UserMessage msg{};
+        loom::core::UserMessage msg{};
         msg.id.value = "compact-user-" + std::to_string(index);
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
 
     for (int i = 0; i < 10; ++i) {
@@ -895,7 +895,7 @@ TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
     auto before = engine.get_conversation();
     ASSERT_GT(before.size(), 8u);
 
-    cc::commands::AppCommandRegistry registry;
+    loom::commands::AppCommandRegistry registry;
     auto command_ctx = ctx();
     command_ctx.runtime_state = &engine;
     command_ctx.compact_message_provider = compact_runtime_messages;
@@ -904,7 +904,7 @@ TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
 
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result->ok);
-    EXPECT_EQ(result->status, cc::core::CommandStatus::Succeeded);
+    EXPECT_EQ(result->status, loom::core::CommandStatus::Succeeded);
     EXPECT_NE(result->message.find("Compaction complete"), std::string::npos);
     EXPECT_EQ(result->message.find("Summarize the following conversation segments"), std::string::npos);
 
@@ -913,9 +913,9 @@ TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
     ASSERT_GT(after.size(), 1u);
     bool found_summary_marker = false;
     for (const auto& message : after) {
-        const auto* marker = std::get_if<cc::core::UserMessage>(&message);
+        const auto* marker = std::get_if<loom::core::UserMessage>(&message);
         if (!marker || marker->content.empty()) continue;
-        const auto* text = std::get_if<cc::core::TextBlock>(&marker->content.front());
+        const auto* text = std::get_if<loom::core::TextBlock>(&marker->content.front());
         if (text && text->text.find("Preserve these details") != std::string::npos) {
             found_summary_marker = true;
             break;
@@ -925,7 +925,7 @@ TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
 }
 
 TEST(ConfigCommand, ValidatesRequiredArgumentsAndListsConfig) {
-    cc::commands::ConfigCommand config;
+    loom::commands::ConfigCommand config;
 
     EXPECT_TRUE(config.validate(ctx({"list"})).has_value());
     EXPECT_FALSE(config.validate(ctx({"get"})).has_value());
@@ -941,7 +941,7 @@ TEST(ConfigCommand, ValidatesRequiredArgumentsAndListsConfig) {
 }
 
 TEST(ModelCommand, ListsSwitchesAndCompletesModels) {
-    cc::commands::ModelCommand model;
+    loom::commands::ModelCommand model;
 
     auto list = model.execute(ctx({"list"}));
     ASSERT_TRUE(list.has_value());
@@ -959,8 +959,8 @@ TEST(ModelCommand, ListsSwitchesAndCompletesModels) {
 }
 
 TEST(MigratedCommandMetadata, HooksAndRewindExposeTypeScriptCompatibleMetadata) {
-    auto hooks_def = cc::commands::HooksCommand::definition();
-    auto rewind_def = cc::commands::RewindCommand::definition();
+    auto hooks_def = loom::commands::HooksCommand::definition();
+    auto rewind_def = loom::commands::RewindCommand::definition();
 
     EXPECT_EQ(hooks_def.name, "hooks");
     EXPECT_EQ(hooks_def.description, "View hook configurations for tool events");
@@ -971,12 +971,12 @@ TEST(MigratedCommandMetadata, HooksAndRewindExposeTypeScriptCompatibleMetadata) 
 }
 
 TEST(MigratedCommands, ExecuteActionableMessagesAndCompletions) {
-    cc::commands::HooksCommand hooks;
+    loom::commands::HooksCommand hooks;
     auto hooks_result = hooks.execute(ctx({"list"}));
     ASSERT_TRUE(hooks_result.has_value());
     EXPECT_NE(hooks_result->message.find("PreToolUse"), std::string::npos);
 
-    cc::commands::RewindCommand rewind;
+    loom::commands::RewindCommand rewind;
     auto rewind_result = rewind.execute(ctx({"code"}));
     ASSERT_TRUE(rewind_result.has_value());
     EXPECT_NE(rewind_result->message.find("code"), std::string::npos);
@@ -993,7 +993,7 @@ TEST(MigratedCommands, ExecuteActionableMessagesAndCompletions) {
 
 namespace {
 
-namespace insights = cc::commands;
+namespace insights = loom::commands;
 namespace fs = std::filesystem;
 
 // Scoped HOME override so facet cache tests never touch the real user store.
@@ -1183,8 +1183,8 @@ TEST(Insights, ExtractFacetsSeamParsesValidJson) {
     // The seam receives a fully-formed prompt+transcript (the live caller
     // prepends facet_extraction_prompt()). Assert it is forwarded intact.
     const std::string transcript =
-        cc::commands::facet_extraction_prompt() + "user: please fix the bug";
-    cc::commands::LlmExtractFn stub = [&transcript](
+        loom::commands::facet_extraction_prompt() + "user: please fix the bug";
+    loom::commands::LlmExtractFn stub = [&transcript](
                                           const std::string& received) {
         EXPECT_EQ(received, transcript);
         return std::optional<std::string>(
@@ -1195,7 +1195,7 @@ TEST(Insights, ExtractFacetsSeamParsesValidJson) {
             R"("friction_counts":{"buggy_code":1},"friction_detail":"",)"
             R"("primary_success":"none","brief_summary":"b"}) done.)");
     };
-    auto f = cc::commands::extract_facets_with_seam(stub, transcript, "sid");
+    auto f = loom::commands::extract_facets_with_seam(stub, transcript, "sid");
     ASSERT_TRUE(f.has_value());
     EXPECT_EQ(f->session_id, "sid");
     EXPECT_EQ(f->underlying_goal, "g");
@@ -1204,38 +1204,38 @@ TEST(Insights, ExtractFacetsSeamParsesValidJson) {
 }
 
 TEST(Insights, ExtractFacetsSeamRejectsInvalidSchema) {
-    cc::commands::LlmExtractFn stub = [](const std::string&) {
+    loom::commands::LlmExtractFn stub = [](const std::string&) {
         // Object present but missing required fields.
         return std::optional<std::string>(std::string(R"({"foo":1})"));
     };
-    auto f = cc::commands::extract_facets_with_seam(stub, "t", "sid");
+    auto f = loom::commands::extract_facets_with_seam(stub, "t", "sid");
     EXPECT_FALSE(f.has_value());
 }
 
 TEST(Insights, ExtractFacetsSeamRejectsNoJson) {
-    cc::commands::LlmExtractFn stub = [](const std::string&) {
+    loom::commands::LlmExtractFn stub = [](const std::string&) {
         return std::optional<std::string>(std::string("no json here at all"));
     };
-    auto f = cc::commands::extract_facets_with_seam(stub, "t", "sid");
+    auto f = loom::commands::extract_facets_with_seam(stub, "t", "sid");
     EXPECT_FALSE(f.has_value());
 }
 
 TEST(Insights, ExtractFacetsSeamHandlesNullFn) {
-    cc::commands::LlmExtractFn stub;  // empty
-    auto f = cc::commands::extract_facets_with_seam(stub, "t", "sid");
+    loom::commands::LlmExtractFn stub;  // empty
+    auto f = loom::commands::extract_facets_with_seam(stub, "t", "sid");
     EXPECT_FALSE(f.has_value());
 }
 
 TEST(Insights, ExtractFacetsSeamHandlesEmptyResponse) {
-    cc::commands::LlmExtractFn stub = [](const std::string&) {
+    loom::commands::LlmExtractFn stub = [](const std::string&) {
         return std::optional<std::string>(std::string(""));
     };
-    auto f = cc::commands::extract_facets_with_seam(stub, "t", "sid");
+    auto f = loom::commands::extract_facets_with_seam(stub, "t", "sid");
     EXPECT_FALSE(f.has_value());
 }
 
 TEST(Insights, FacetExtractionPromptContainsGuidelines) {
-    const auto& p = cc::commands::facet_extraction_prompt();
+    const auto& p = loom::commands::facet_extraction_prompt();
     // The prompt must mention the key contract elements from the TS source.
     EXPECT_NE(p.find("goal_categories"), std::string::npos);
     EXPECT_NE(p.find("user_satisfaction_counts"), std::string::npos);
@@ -1245,18 +1245,18 @@ TEST(Insights, FacetExtractionPromptContainsGuidelines) {
 }
 
 TEST(Insights, CommandDefinitionAndModel) {
-    auto def = cc::commands::InsightsCommand::definition();
+    auto def = loom::commands::InsightsCommand::definition();
     EXPECT_EQ(def.name, "insights");
     EXPECT_FALSE(def.hidden);
-    EXPECT_EQ(cc::commands::InsightsCommand::default_analysis_model(),
+    EXPECT_EQ(loom::commands::InsightsCommand::default_analysis_model(),
               "claude-opus-4-20250514");
 }
 
 TEST(Insights, CommandExecuteWithNoSessionsIsGraceful) {
     HomeGuard guard;
     // Point HOME at an empty dir with no sessions subdir -> list_sessions empty.
-    cc::commands::InsightsCommand cmd;
-    cc::core::CommandContext cctx{};
+    loom::commands::InsightsCommand cmd;
+    loom::core::CommandContext cctx{};
     auto res = cmd.execute(cctx);
     ASSERT_TRUE(res.has_value());
     EXPECT_TRUE(res->ok);
@@ -1271,7 +1271,7 @@ TEST(Insights, CommandExecuteWithNoSessionsIsGraceful) {
 // ============================================================================
 
 TEST(PluginCommand, DefinitionExposesNameAliasesAndCategory) {
-    auto def = cc::commands::PluginCommand::definition();
+    auto def = loom::commands::PluginCommand::definition();
     EXPECT_EQ(def.name, "plugin");
     EXPECT_EQ(def.category, "tools");
     ASSERT_EQ(def.aliases.size(), 2u);
@@ -1281,7 +1281,7 @@ TEST(PluginCommand, DefinitionExposesNameAliasesAndCategory) {
 }
 
 TEST(PluginCommand, ValidateAcceptsKnownSubcommandsAndRejectsUnknown) {
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     EXPECT_TRUE(cmd.validate(ctx({})).has_value());
     EXPECT_TRUE(cmd.validate(ctx({"help"})).has_value());
     EXPECT_TRUE(cmd.validate(ctx({"install"})).has_value());
@@ -1293,7 +1293,7 @@ TEST(PluginCommand, ValidateAcceptsKnownSubcommandsAndRejectsUnknown) {
 
 TEST(PluginCommand, NoArgsOpensDiscoverTabWithNoIntermediateText) {
     HomeGuard guard;
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     auto r = cmd.execute(ctx({}));
     ASSERT_TRUE(r.has_value());
     EXPECT_TRUE(r->ok);
@@ -1305,7 +1305,7 @@ TEST(PluginCommand, NoArgsOpensDiscoverTabWithNoIntermediateText) {
 
 TEST(PluginCommand, UnknownSubcommandRoutesToDiscoverTab) {
     HomeGuard guard;
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     auto r = cmd.execute(ctx({"nope"}));
     ASSERT_TRUE(r.has_value());
     EXPECT_TRUE(r->message.empty());
@@ -1314,7 +1314,7 @@ TEST(PluginCommand, UnknownSubcommandRoutesToDiscoverTab) {
 }
 
 TEST(PluginCommand, HelpUsesHyphensNotEmDashesLikeTypeScript) {
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     auto r = cmd.execute(ctx({"help"}));
     ASSERT_TRUE(r.has_value());
     EXPECT_NE(r->message.find("Plugin Command Usage"), std::string::npos);
@@ -1324,7 +1324,7 @@ TEST(PluginCommand, HelpUsesHyphensNotEmDashesLikeTypeScript) {
 }
 
 TEST(PluginCommand, HelpHelpAliasAndFlagsAllRenderHelp) {
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     for (const auto& tok : {"help", "--help", "-h"}) {
         auto r = cmd.execute(ctx({tok}));
         ASSERT_TRUE(r.has_value());
@@ -1334,7 +1334,7 @@ TEST(PluginCommand, HelpHelpAliasAndFlagsAllRenderHelp) {
 
 TEST(PluginCommand, ManageOpensInstalledTabWithNoTextList) {
     HomeGuard guard;
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     auto r = cmd.execute(ctx({"manage"}));
     ASSERT_TRUE(r.has_value());
     EXPECT_TRUE(r->ok);
@@ -1346,7 +1346,7 @@ TEST(PluginCommand, ManageOpensInstalledTabWithNoTextList) {
 
 TEST(PluginCommand, BareInstallOpensDiscoverTab) {
     HomeGuard guard;
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     auto r = cmd.execute(ctx({"install"}));
     ASSERT_TRUE(r.has_value());
     EXPECT_TRUE(r->ok);
@@ -1357,7 +1357,7 @@ TEST(PluginCommand, BareInstallOpensDiscoverTab) {
 
 TEST(PluginCommand, InstallMarketplaceOpensBrowseScopedToMarketplace) {
     HomeGuard guard;
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     // classify_marketplace_input takes the last URL path component as the
     // normalized marketplace name.
     auto r = cmd.execute(ctx({"install", "https://example.com/acme-marketplace"}));
@@ -1374,7 +1374,7 @@ TEST(PluginCommand, InstallPluginNameIsParsedAsPluginNotMarketplace) {
     // pre-selected — mirroring TS getInitialViewState('install', plugin).
     // We verify the routing contract via the install-with-marketplace branch
     // below; here we only assert the parser distinguishes plugin vs marketplace.
-    namespace pp = cc::commands::plugin;
+    namespace pp = loom::commands::plugin;
     auto parsed = pp::parse_plugin_args("install my-cool-plugin");
     EXPECT_EQ(parsed.type, pp::SubcommandType::Install);
     EXPECT_TRUE(parsed.plugin_name.has_value());
@@ -1383,7 +1383,7 @@ TEST(PluginCommand, InstallPluginNameIsParsedAsPluginNotMarketplace) {
 }
 
 TEST(PluginCommand, ValidateWithNoPathPrintsUsage) {
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     auto r = cmd.execute(ctx({"validate"}));
     ASSERT_TRUE(r.has_value());
     EXPECT_NE(r->message.find("Usage: /plugin validate <path>"), std::string::npos);
@@ -1391,7 +1391,7 @@ TEST(PluginCommand, ValidateWithNoPathPrintsUsage) {
 
 TEST(PluginCommand, MarketplaceNoActionOpensMarketplacesTab) {
     HomeGuard guard;
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     auto r = cmd.execute(ctx({"marketplace"}));
     ASSERT_TRUE(r.has_value());
     EXPECT_TRUE(r->ok);
@@ -1402,7 +1402,7 @@ TEST(PluginCommand, MarketplaceNoActionOpensMarketplacesTab) {
 
 TEST(PluginCommand, EnableDisableUninstallWithoutTargetRouteToInstalledTab) {
     HomeGuard guard;
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     for (const auto& tok : {"enable", "disable", "uninstall"}) {
         auto r = cmd.execute(ctx({tok}));
         ASSERT_TRUE(r.has_value());
@@ -1412,7 +1412,7 @@ TEST(PluginCommand, EnableDisableUninstallWithoutTargetRouteToInstalledTab) {
 }
 
 TEST(PluginCommand, CompletionSuggestsSubcommands) {
-    cc::commands::PluginCommand cmd;
+    loom::commands::PluginCommand cmd;
     auto c = cmd.complete("in");
     EXPECT_NE(std::find(c.begin(), c.end(), "install"), c.end());
 }
@@ -1460,7 +1460,7 @@ TEST(TerminalSetupCommand, PreviewAndApplyWrapDisplayPathsInOsc8Links) {
     EnvironmentUnsetGuard wt_session("WT_SESSION");
     EnvironmentUnsetGuard vte_version("VTE_VERSION");
 
-    namespace ts = cc::commands::terminal_setup;
+    namespace ts = loom::commands::terminal_setup;
     const std::string rc = (home.tmp / ".zshrc").string();
 
     // 1) Preview mode: header path is hyperlinked but plain text still present.
@@ -1509,7 +1509,7 @@ TEST(TerminalSetupCommand, PreviewAndApplyWrapDisplayPathsInOsc8Links) {
 TEST(TerminalSetupCommand, HyperlinkGateMatchesTsTerminalMatrix) {
     // TS REF: src/ink/supports-hyperlinks.ts — the ADDITIONAL whitelist via
     // TERM_PROGRAM and LC_TERMINAL, plus TERM containing "kitty".
-    namespace cu = cc::utils;
+    namespace cu = loom::utils;
     auto with_env = [](std::initializer_list<std::pair<const char*, const char*>> set,
                        std::initializer_list<const char*> unset) {
         std::vector<std::unique_ptr<EnvironmentGuard>> guards;
@@ -1552,9 +1552,9 @@ TEST(TerminalSetupCommand, UnsupportedTerminalEmitsBarePathsWithoutEscapes) {
     EnvironmentUnsetGuard vte_version("VTE_VERSION");
 
     // Guard sanity: with every recognized variable cleared the gate is false.
-    EXPECT_FALSE(cc::utils::supports_hyperlinks());
+    EXPECT_FALSE(loom::utils::supports_hyperlinks());
 
-    namespace ts = cc::commands::terminal_setup;
+    namespace ts = loom::commands::terminal_setup;
     auto r = ts::run("--apply --shell=bash");
     ASSERT_TRUE(r.ok);
     EXPECT_EQ(r.message.find("\x1b]8;;"), std::string::npos);
@@ -1566,7 +1566,7 @@ TEST(TerminalSetupCommand, UnsupportedTerminalEmitsBarePathsWithoutEscapes) {
 }
 
 TEST(TerminalSetupCommand, PathToFileUrlEncodingAndHyperlinkGate) {
-    namespace cu = cc::utils;
+    namespace cu = loom::utils;
     // TS REF: Node url.pathToFileURL — '/' and the Node safe set pass through;
     // every other byte is uppercased percent-encoded (UTF-8 bytes for non-ASCII).
     // Safe set verified empirically against Node v22: '[' ']' ARE encoded
@@ -1635,7 +1635,7 @@ TEST(AppCommandRegistry, XaaSetupCallbackPortReachesLoginSeam) {
     };
 
     {
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
 
         auto setup = registry.execute(
             "/mcp xaa setup --issuer https://idp.example.com "
@@ -1646,7 +1646,7 @@ TEST(AppCommandRegistry, XaaSetupCallbackPortReachesLoginSeam) {
 
         // The value landed in the SUPPORTED store (config.json / xaaIdp), not
         // in a separate file. Default save target is the project tier.
-        auto project = cc::utils::json::parse_file(work / ".loom" / "config.json");
+        auto project = loom::utils::json::parse_file(work / ".loom" / "config.json");
         ASSERT_TRUE(project.has_value());
         const auto xaa = project->root().get("xaaIdp");
         ASSERT_TRUE(xaa.is_obj());
@@ -1657,10 +1657,10 @@ TEST(AppCommandRegistry, XaaSetupCallbackPortReachesLoginSeam) {
 
         // The port reaches the login seam that acquire_idp_id_token() binds
         // from: the resolved port is the configured one, not a random port.
-        auto opts = cc::services::mcp::build_login_options(
+        auto opts = loom::services::mcp::build_login_options(
             "https://idp.example.com", "loom-cli",
             std::optional<int>{static_cast<int>(xaa.get("callbackPort").as_int())});
-        auto resolved = cc::services::mcp::resolve_login_callback_port(opts);
+        auto resolved = loom::services::mcp::resolve_login_callback_port(opts);
         ASSERT_TRUE(resolved.has_value()) << resolved.error().message();
         ASSERT_TRUE(resolved->has_value());
         EXPECT_EQ(**resolved, 19485u);
@@ -1710,7 +1710,7 @@ TEST(AppCommandRegistry, ConfigSetDoesNotBakeEnvModelIntoProjectFile) {
 
         // Construct AFTER env + cwd: the command's manager binds paths in its
         // ctor and reads the env on load().
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
         auto set = registry.execute("/config set display.theme dark", ctx());
         ASSERT_TRUE(set.has_value());
         ASSERT_TRUE(set->ok) << set->message;
@@ -1723,7 +1723,7 @@ TEST(AppCommandRegistry, ConfigSetDoesNotBakeEnvModelIntoProjectFile) {
             << bytes;
         EXPECT_EQ(bytes.find("4321"), std::string::npos) << bytes;
         // The file's OWN model value is preserved (not dropped, not env).
-        auto project = cc::utils::json::parse_file(project_path);
+        auto project = loom::utils::json::parse_file(project_path);
         ASSERT_TRUE(project.has_value());
         EXPECT_EQ(project->root().get("model").get("default_model").as_str(),
                   std::string_view("file-model-c19"));
@@ -1734,7 +1734,7 @@ TEST(AppCommandRegistry, ConfigSetDoesNotBakeEnvModelIntoProjectFile) {
     {
         EnvironmentUnsetGuard unset_model("LOOM_MODEL");
         EnvironmentUnsetGuard unset_tokens("LOOM_MAX_TOKENS");
-        cc::core::ConfigManager reloaded(work / ".loom" / "config.json",
+        loom::core::ConfigManager reloaded(work / ".loom" / "config.json",
                                          project_path);
         ASSERT_TRUE(reloaded.load().has_value());
         EXPECT_EQ(reloaded.settings().model.default_model, "file-model-c19");
@@ -1781,7 +1781,7 @@ TEST(AppCommandRegistry, ConfigSetNeverWritesEnvCredentialsToFile) {
     }
 
     {
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
         auto set = registry.execute("/config set display.theme dark", ctx());
         ASSERT_TRUE(set.has_value());
         ASSERT_TRUE(set->ok) << set->message;
@@ -1833,7 +1833,7 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
     }
 
     {
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
 
         // Explicit user intent while LOOM_MODEL=Y: X wins on disk.
         auto set_model = registry.execute(
@@ -1844,7 +1844,7 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
             const std::string bytes = cmd_read_file(project_path);
             EXPECT_NE(bytes.find("X-user-model-c19"), std::string::npos) << bytes;
             EXPECT_EQ(bytes.find("Y-env-model-c19"), std::string::npos) << bytes;
-            auto project = cc::utils::json::parse_file(project_path);
+            auto project = loom::utils::json::parse_file(project_path);
             ASSERT_TRUE(project.has_value());
             EXPECT_EQ(project->root().get("model").get("default_model").as_str(),
                       std::string_view("X-user-model-c19"));
@@ -1875,7 +1875,7 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
     // EFFECTIVE runtime value is again the env one even though the file holds
     // the user's X. This is the pre-existing env semantics, unchanged by c19.
     {
-        cc::core::ConfigManager env_reload(project_path.parent_path() / "g.json",
+        loom::core::ConfigManager env_reload(project_path.parent_path() / "g.json",
                                            project_path);
         ASSERT_TRUE(env_reload.load().has_value());
         EXPECT_EQ(env_reload.settings().model.default_model, "Y-env-model-c19");
@@ -1887,7 +1887,7 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
     {
         EnvironmentUnsetGuard unset_model("LOOM_MODEL");
         EnvironmentUnsetGuard unset_tokens("LOOM_MAX_TOKENS");
-        cc::core::ConfigManager reloaded(project_path.parent_path() / "g.json",
+        loom::core::ConfigManager reloaded(project_path.parent_path() / "g.json",
                                          project_path);
         ASSERT_TRUE(reloaded.load().has_value());
         EXPECT_EQ(reloaded.settings().model.default_model, "X-user-model-c19");
@@ -1926,7 +1926,7 @@ TEST(AppCommandRegistry, XaaShowPresenceOnlyDoesNotEchoSecret) {
     };
 
     {
-        cc::commands::AppCommandRegistry registry;
+        loom::commands::AppCommandRegistry registry;
 
         // Store a secret the supported way: /mcp xaa setup --client-secret
         // reads MCP_XAA_IDP_CLIENT_SECRET and writes it to the hardened

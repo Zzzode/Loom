@@ -10,10 +10,10 @@ import loom.benchmarks.pare.schema;
 import loom.serdes.json;
 import loom.crypto.crypto;
 
-export namespace cc::benchmarks::pare {
+export namespace loom::benchmarks::pare {
 
 namespace fs = std::filesystem;
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 struct LoadedCaseSet {
     PareCaseSet case_set;
@@ -282,7 +282,7 @@ inline std::optional<LoadedCaseSet> load_case_set(const std::string& cases_path)
     
     std::string sorted_json = build_canonical_case_set_json(*case_set_opt);
     
-    std::string hash = "sha256:" + cc::utils::crypto::sha256(sorted_json);
+    std::string hash = "sha256:" + loom::utils::crypto::sha256(sorted_json);
     
     return LoadedCaseSet{
         .case_set = *case_set_opt,
@@ -291,4 +291,4 @@ inline std::optional<LoadedCaseSet> load_case_set(const std::string& cases_path)
     };
 }
 
-} // namespace cc::benchmarks::pare
+} // namespace loom::benchmarks::pare

@@ -6,7 +6,7 @@ export module loom.migrations.migration_runner;
 
 import std;
 
-export namespace cc::migrations {
+export namespace loom::migrations {
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -673,4 +673,4 @@ private:
     int current_version_ = 0;
 };
 
-} // namespace cc::migrations
+} // namespace loom::migrations

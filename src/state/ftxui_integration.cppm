@@ -17,7 +17,7 @@ import loom.state.app_state;
 import loom.state.store;
 import loom.state.selectors;
 
-export namespace cc::state::ftxui {
+export namespace loom::state::ftxui {
 
 // ============================================================
 // Reactive Component Wrapper
@@ -267,4 +267,4 @@ template <typename SelectorResult>
     return std::make_shared<ReactiveScreenManager>(std::move(store));
 }
 
-} // namespace cc::state::ftxui
+} // namespace loom::state::ftxui

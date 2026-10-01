@@ -38,22 +38,22 @@ import loom.services.lsp.passive_feedback;
 import loom.services.lsp.LSPServerManager;
 import loom.services.lsp.client;
 
-using cc::services::lsp::ScopedLspServerConfig;
-using cc::services::lsp::create_lsp_server_instance;
-using cc::services::lsp::DiagnosticRegistry;
-using cc::services::lsp::DiagnosticSeverity;
-using cc::services::lsp::format_diagnostics_for_attachment;
-using cc::services::lsp::create_lsp_server_manager;
-using cc::services::lsp::PassiveFeedbackCollector;
-using cc::services::lsp::PassiveFeedbackType;
-using cc::services::lsp::register_lsp_notification_handlers;
-using cc::services::lsp::LspClient;
+using loom::services::lsp::ScopedLspServerConfig;
+using loom::services::lsp::create_lsp_server_instance;
+using loom::services::lsp::DiagnosticRegistry;
+using loom::services::lsp::DiagnosticSeverity;
+using loom::services::lsp::format_diagnostics_for_attachment;
+using loom::services::lsp::create_lsp_server_manager;
+using loom::services::lsp::PassiveFeedbackCollector;
+using loom::services::lsp::PassiveFeedbackType;
+using loom::services::lsp::register_lsp_notification_handlers;
+using loom::services::lsp::LspClient;
 
-using cc::tools::LspAction;
-using cc::tools::LspRequest;
-using cc::tools::LspResult;
-using cc::tools::LspTool;
-using cc::tools::lsp_action_name;
+using loom::tools::LspAction;
+using loom::tools::LspRequest;
+using loom::tools::LspResult;
+using loom::tools::LspTool;
+using loom::tools::lsp_action_name;
 
 // ---------------------------------------------------------------------------
 // M4: action enum parity with TS src/tools/LSPTool/schemas.ts:180-190.
@@ -116,7 +116,7 @@ TEST(LspToolFixM4, ValidateRejectsMissingPositionForNewActions) {
         LspRequest req{.action = action, .file_path = file, .position = std::nullopt};
         auto valid = tool.validate(req);
         ASSERT_FALSE(valid.has_value());
-        EXPECT_EQ(valid.error(), cc::tools::LspToolError::InvalidAction)
+        EXPECT_EQ(valid.error(), loom::tools::LspToolError::InvalidAction)
             << "action should require position: " << lsp_action_name(action);
     }
 }
@@ -155,7 +155,7 @@ TEST(LspToolFixM4, ParseCallItemsResultShapesCallHierarchyItems) {
             "data": {"x": 42}
         }
     ])lspjson";
-    auto result = cc::tools::detail::parse_call_items_result(payload);
+    auto result = loom::tools::detail::parse_call_items_result(payload);
     ASSERT_TRUE(result.has_value());
     ASSERT_EQ(result->call_items.size(), 1u);
     const auto& item = result->call_items.front();
@@ -174,8 +174,8 @@ TEST(LspToolFixM4, ParseCallItemsResultShapesCallHierarchyItems) {
 }
 
 TEST(LspToolFixM4, ParseCallItemsResultHandlesEmptyOrNull) {
-    EXPECT_TRUE(cc::tools::detail::parse_call_items_result("[]")->call_items.empty());
-    EXPECT_TRUE(cc::tools::detail::parse_call_items_result("null")->call_items.empty());
+    EXPECT_TRUE(loom::tools::detail::parse_call_items_result("[]")->call_items.empty());
+    EXPECT_TRUE(loom::tools::detail::parse_call_items_result("null")->call_items.empty());
 }
 
 // ---------------------------------------------------------------------------
@@ -195,7 +195,7 @@ TEST(LspToolFixM4, ParseIncomingCallsEdges) {
             ]
         }
     ])lspjson";
-    auto result = cc::tools::detail::parse_call_edges_result(payload, /*incoming=*/true);
+    auto result = loom::tools::detail::parse_call_edges_result(payload, /*incoming=*/true);
     ASSERT_TRUE(result.has_value());
     ASSERT_EQ(result->call_edges.size(), 1u);
     const auto& edge = result->call_edges.front();
@@ -219,7 +219,7 @@ TEST(LspToolFixM4, ParseOutgoingCallsEdges) {
             ]
         }
     ])lspjson";
-    auto result = cc::tools::detail::parse_call_edges_result(payload, /*incoming=*/false);
+    auto result = loom::tools::detail::parse_call_edges_result(payload, /*incoming=*/false);
     ASSERT_TRUE(result.has_value());
     ASSERT_EQ(result->call_edges.size(), 1u);
     const auto& edge = result->call_edges.front();
@@ -315,7 +315,7 @@ TEST(LspDiagnosticsWiring, PublishReachesRegistryWithAttachmentShape) {
     // The registry, not the legacy raw-map, is the source of truth: clobbering
     // the legacy entry must not change what diagnostics_json_for_uri returns.
     instance->diagnostics_by_uri["file:///a.ts"] = "[]";
-    auto parsed = cc::utils::json::parse(instance->diagnostics_json_for_uri("file:///a.ts"));
+    auto parsed = loom::utils::json::parse(instance->diagnostics_json_for_uri("file:///a.ts"));
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->root().size(), 2u);
 }
@@ -329,7 +329,7 @@ TEST(LspDiagnosticsWiring, FormatAttachmentSeverityAndCodeMapping) {
         R"({"range":{"start":{"line":3,"character":0},"end":{"line":3,"character":1}},"severity":4,"message":"d"},)"
         R"({"range":{"start":{"line":4,"character":0},"end":{"line":4,"character":1}},"code":null,"message":"e"}]})";
 
-    auto parsed = cc::utils::json::parse(params);
+    auto parsed = loom::utils::json::parse(params);
     ASSERT_TRUE(parsed.has_value());
 
     auto files = format_diagnostics_for_attachment(parsed->root());
@@ -401,7 +401,7 @@ TEST(LspDiagnosticsWiring, DiagnosticsSerializesToNumericSeverityJsonArray) {
     EXPECT_NE(j.find("boom"), std::string::npos);
     EXPECT_NE(j.find("\"code\":\"2345\""), std::string::npos);
 
-    auto parsed = cc::utils::json::parse(j);
+    auto parsed = loom::utils::json::parse(j);
     ASSERT_TRUE(parsed.has_value());
     EXPECT_TRUE(parsed->root().is_arr());
     EXPECT_EQ(parsed->root().size(), 2u);
@@ -411,7 +411,7 @@ TEST(LspDiagnosticsWiring, DiagnosticsSerializesToNumericSeverityJsonArray) {
         R"({"jsonrpc":"2.0","method":"textDocument/publishDiagnostics",)"
         R"("params":{"uri":"file:///a.ts","diagnostics":[]}})";
     instance->deliver_notification(std::string{clear_msg});
-    auto empty = cc::utils::json::parse(instance->diagnostics_json_for_uri(uri));
+    auto empty = loom::utils::json::parse(instance->diagnostics_json_for_uri(uri));
     ASSERT_TRUE(empty.has_value());
     EXPECT_TRUE(empty->root().is_arr());
     EXPECT_EQ(empty->root().size(), 0u);

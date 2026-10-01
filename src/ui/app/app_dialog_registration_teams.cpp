@@ -25,11 +25,11 @@ import loom.teams.team_helpers;
 
 using namespace ftxui;
 
-namespace cc::ui::app_dialogs {
+namespace loom::ui::app_dialogs {
 
 void register_teams_dialog_renderer(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry) {
-    namespace dsys = cc::ui::dialogs::system;
+    loom::ui::dialogs::system::DialogRendererRegistry& registry) {
+    namespace dsys = loom::ui::dialogs::system;
 
     registry.register_dialog(
         dsys::DialogType::TeamsView,
@@ -39,11 +39,11 @@ void register_teams_dialog_renderer(
             auto* p = std::get_if<dsys::TeamsViewPayload>(&payload);
             if (!p) return text("");
             const auto* s = static_cast<
-                const cc::ui::repl_screen::ReplScreenState*>(ctx.repl_state);
+                const loom::ui::repl_screen::ReplScreenState*>(ctx.repl_state);
             if (!s) return text("");
             const std::string team =
-                cc::utils::get_team_name().value_or("default");
-            return cc::ui::teams::live::RenderTeamsOverview(
+                loom::utils::get_team_name().value_or("default");
+            return loom::ui::teams::live::RenderTeamsOverview(
                 team, s->task_view_store.live_teammates, p->selected_index,
                 ctx.term_cols, ctx.term_rows);
         },
@@ -73,4 +73,4 @@ void register_teams_dialog_renderer(
         });
 }
 
-}  // namespace cc::ui::app_dialogs
+}  // namespace loom::ui::app_dialogs

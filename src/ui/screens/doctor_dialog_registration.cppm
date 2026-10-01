@@ -26,9 +26,9 @@ import std;
 import loom.ui.dialogs.system;
 import loom.ui.screens.doctor_screen;
 
-export namespace cc::ui::screens::doctor_dialog_registration {
+export namespace loom::ui::screens::doctor_dialog_registration {
 
-namespace dsys = cc::ui::dialogs::system;
+namespace dsys = loom::ui::dialogs::system;
 
 namespace doctor_detail {
 /// Holder component that wraps a DoctorScreen so the dialog system can
@@ -68,7 +68,7 @@ void register_doctor_renderer(dsys::DialogRendererRegistry& registry) {
 
             // Lazily create the DoctorScreen component on first render.
             if (!p->component) {
-                using namespace cc::ui::doctor_screen;
+                using namespace loom::ui::doctor_screen;
 
                 DoctorDataModel model;
                 // Populate version info from the live environment.
@@ -107,4 +107,4 @@ void register_doctor_renderer(dsys::DialogRendererRegistry& registry) {
     );
 }
 
-} // namespace cc::ui::screens::doctor_dialog_registration
+} // namespace loom::ui::screens::doctor_dialog_registration

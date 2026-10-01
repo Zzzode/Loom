@@ -23,7 +23,7 @@ import std;
 
 import loom.text.format;
 
-export namespace cc::tools::bash {
+export namespace loom::tools::bash {
 
 using std::operator""sv;
 
@@ -161,13 +161,13 @@ inline auto extract_all_stderr_meta(std::string_view stderr_sv) -> ExtractedStde
 /// migrated: implicit per the TS OutputLine colouring, lifted to an explicit fn
 inline auto format_exit_code(int code, bool interrupted = false) -> std::string {
     if (interrupted) {
-        return cc::utils::ansi::yellow("interrupted");
+        return loom::utils::ansi::yellow("interrupted");
     }
     if (code == 0) {
-        return std::string("exit 0  ") + cc::utils::ansi::green("OK");
+        return std::string("exit 0  ") + loom::utils::ansi::green("OK");
     }
     return std::string("exit ") + std::to_string(code) + "  " +
-           cc::utils::ansi::red("FAILED");
+           loom::utils::ansi::red("FAILED");
 }
 
 /// Format a millisecond duration into short human-readable form:
@@ -189,7 +189,7 @@ inline auto format_duration_ms(std::uint64_t ms) -> std::string {
     }
     // Delegate to the existing seconds-granularity formatter for long runs.
     auto secs = std::chrono::seconds(static_cast<long long>(ms / 1000));
-    return cc::utils::format_duration(secs);
+    return loom::utils::format_duration(secs);
 }
 
 /// Count newlines; a non-empty string with no trailing newline still has one
@@ -291,11 +291,11 @@ inline auto build_result_header(const BashResultInfo& info) -> std::vector<std::
     {
         std::ostringstream oss;
         if (info.background) {
-            oss << cc::utils::ansi::cyan("[background]") << " ";
+            oss << loom::utils::ansi::cyan("[background]") << " ";
         }
         // Prefer sanitized (no secrets) command display. Caller can override by
         // pre-sanitizing info.command; we do a best-effort simple trim here.
-        oss << cc::utils::ansi::bold(info.command.empty()
+        oss << loom::utils::ansi::bold(info.command.empty()
                     ? std::string("<empty command>")
                     : info.command);
         lines.push_back(oss.str());
@@ -306,18 +306,18 @@ inline auto build_result_header(const BashResultInfo& info) -> std::vector<std::
         std::ostringstream oss;
         oss << format_exit_code(info.exit_code, info.interrupted);
         if (info.duration_ms > 0) {
-            oss << "  " << cc::utils::ansi::dim(format_duration_ms(info.duration_ms));
+            oss << "  " << loom::utils::ansi::dim(format_duration_ms(info.duration_ms));
         }
 
         // Output-size summary (useful for collapsed cards)
-        const auto fmt_bytes = [](std::uint64_t n) { return cc::utils::format_bytes(n); };
-        oss << "  " << cc::utils::ansi::dim(
+        const auto fmt_bytes = [](std::uint64_t n) { return loom::utils::format_bytes(n); };
+        oss << "  " << loom::utils::ansi::dim(
             std::format("stdout {} ({} line{})",
                         fmt_bytes(info.stdout_bytes),
                         info.stdout_lines,
                         info.stdout_lines == 1 ? "" : "s"));
         if (info.stderr_bytes > 0) {
-            oss << "  " << cc::utils::ansi::red(cc::utils::ansi::dim(
+            oss << "  " << loom::utils::ansi::red(loom::utils::ansi::dim(
                 std::format("stderr {} ({} line{})",
                             fmt_bytes(info.stderr_bytes),
                             info.stderr_lines,
@@ -329,13 +329,13 @@ inline auto build_result_header(const BashResultInfo& info) -> std::vector<std::
 
     // Line 3: interrupted reason, if any
     if (info.interrupted && info.interrupted_reason) {
-        lines.push_back(cc::utils::ansi::yellow(
+        lines.push_back(loom::utils::ansi::yellow(
             std::format("note: {}", *info.interrupted_reason)));
     }
 
     // Line 4: return-code interpretation / semantic message
     if (info.return_code_interpretation) {
-        lines.push_back(cc::utils::ansi::dim(
+        lines.push_back(loom::utils::ansi::dim(
             std::format("note: {}", *info.return_code_interpretation)));
     }
 
@@ -387,4 +387,4 @@ inline auto make_result_info(
     return info;
 }
 
-} // namespace cc::tools::bash
+} // namespace loom::tools::bash

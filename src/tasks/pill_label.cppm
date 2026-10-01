@@ -11,7 +11,7 @@ import std;
 import loom.tasks.task;
 import loom.tasks.types;
 
-export namespace cc::tasks {
+export namespace loom::tasks {
 
 // ============================================================
 // Unicode Figures
@@ -36,7 +36,7 @@ template<typename Container, typename Pred>
 /// Produces the compact footer-pill label for a set of background tasks.
 /// Used by both the footer pill and the turn-duration transcript line.
 [[nodiscard]] inline std::string get_pill_label(
-    const std::vector<cc::core::TaskStateBase*>& tasks
+    const std::vector<loom::core::TaskStateBase*>& tasks
 ) {
     if (tasks.empty()) return "";
     
@@ -47,7 +47,7 @@ template<typename Container, typename Pred>
     
     if (all_same_type) {
         switch (first_type) {
-            case cc::core::TaskType::LocalBash: {
+            case loom::core::TaskType::LocalBash: {
                 std::size_t monitors = 0;
                 for (const auto* t : tasks) {
                     const auto* shell = static_cast<const LocalShellTaskState*>(t);
@@ -68,7 +68,7 @@ template<typename Container, typename Pred>
                 return result;
             }
             
-            case cc::core::TaskType::InProcessTeammate: {
+            case loom::core::TaskType::InProcessTeammate: {
                 std::set<std::string> teams;
                 for (const auto* t : tasks) {
                     const auto* teammate = static_cast<const InProcessTeammateTaskState*>(t);
@@ -78,10 +78,10 @@ template<typename Container, typename Pred>
                 return (team_count == 1) ? "1 team" : std::format("{} teams", team_count);
             }
             
-            case cc::core::TaskType::LocalAgent:
+            case loom::core::TaskType::LocalAgent:
                 return (n == 1) ? "1 local agent" : std::format("{} local agents", n);
             
-            case cc::core::TaskType::RemoteAgent: {
+            case loom::core::TaskType::RemoteAgent: {
                 if (n == 1) {
                     const auto* remote = static_cast<const RemoteAgentTaskState*>(tasks[0]);
                     if (remote->is_ultraplan) {
@@ -98,25 +98,25 @@ template<typename Container, typename Pred>
                 return std::format("{} {} cloud sessions", DIAMOND_OPEN, n);
             }
             
-            case cc::core::TaskType::LocalWorkflow:
+            case loom::core::TaskType::LocalWorkflow:
                 return (n == 1) ? "1 background workflow" : std::format("{} background workflows", n);
             
-            case cc::core::TaskType::MonitorMcp:
+            case loom::core::TaskType::MonitorMcp:
                 return (n == 1) ? "1 monitor" : std::format("{} monitors", n);
             
-            case cc::core::TaskType::Dream:
+            case loom::core::TaskType::Dream:
                 return "dreaming";
 
-            case cc::core::TaskType::Search:
+            case loom::core::TaskType::Search:
                 return (n == 1) ? "1 search" : std::format("{} searches", n);
 
-            case cc::core::TaskType::GeneralPurpose:
+            case loom::core::TaskType::GeneralPurpose:
                 return (n == 1) ? "1 background task" : std::format("{} background tasks", n);
 
-            case cc::core::TaskType::Shell:
+            case loom::core::TaskType::Shell:
                 return (n == 1) ? "1 shell" : std::format("{} shells", n);
 
-            case cc::core::TaskType::Agent:
+            case loom::core::TaskType::Agent:
                 return (n == 1) ? "1 agent" : std::format("{} agents", n);
         }
     }
@@ -130,12 +130,12 @@ template<typename Container, typename Pred>
 /// True when the pill should show the dimmed " · ↓ to view" call-to-action.
 /// Only ultraplan attention states (needs_input, plan_ready) surface the CTA.
 [[nodiscard]] inline bool pill_needs_cta(
-    const std::vector<cc::core::TaskStateBase*>& tasks
+    const std::vector<loom::core::TaskStateBase*>& tasks
 ) {
     if (tasks.size() != 1) return false;
-    if (tasks[0]->type != cc::core::TaskType::RemoteAgent) return false;
+    if (tasks[0]->type != loom::core::TaskType::RemoteAgent) return false;
     const auto* remote = static_cast<const RemoteAgentTaskState*>(tasks[0]);
     return remote->is_ultraplan && remote->ultraplan_phase.has_value();
 }
 
-} // namespace cc::tasks
+} // namespace loom::tasks

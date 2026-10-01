@@ -5,7 +5,7 @@ export module loom.ui.messages.message_timestamp;
 
 import std;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 // Render an absolute timestamp (HH:MM:SS format)
 inline auto render_timestamp(std::chrono::system_clock::time_point ts) -> std::string {
@@ -63,4 +63,4 @@ inline auto render_duration_badge(std::chrono::milliseconds duration) -> std::st
     return out.str();
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

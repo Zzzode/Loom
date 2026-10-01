@@ -10,7 +10,7 @@ export module loom.constants.prompts;
 
 import std;
 
-export namespace cc::constants::prompts {
+export namespace loom::constants::prompts {
 
 // No bundled documentation site is shipped, so no docs-map URL is
 // advertised to the model. (This was an Anthropic docs URL; renaming its
@@ -299,4 +299,4 @@ struct SystemPromptOptions {
     return sections;
 }
 
-} // namespace cc::constants::prompts
+} // namespace loom::constants::prompts

@@ -13,7 +13,7 @@ export module loom.net.http.http_encoding;
 
 import std;
 
-export namespace cc::utils::http {
+export namespace loom::utils::http {
 
 // RFC 3986 unreserved charset: ALPHA / DIGIT / "-" / "." / "_" / "~"
 [[nodiscard]] constexpr bool is_unreserved(unsigned char c) noexcept {
@@ -95,4 +95,4 @@ export namespace cc::utils::http {
     return out;
 }
 
-} // namespace cc::utils::http
+} // namespace loom::utils::http

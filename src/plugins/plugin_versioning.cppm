@@ -4,7 +4,7 @@ import std;
 
 import loom.crypto.crypto;
 
-export namespace cc::utils::plugin_versioning {
+export namespace loom::utils::plugin_versioning {
 
 [[nodiscard]] inline std::vector<std::string_view> split_non_empty(std::string_view value, char delim) {
     std::vector<std::string_view> out;
@@ -56,11 +56,11 @@ export namespace cc::utils::plugin_versioning {
         if (source_type == "git-subdir") {
             const auto normalized = normalize_git_subdir_path(source_path);
             short_sha.push_back('-');
-            short_sha.append(cc::utils::crypto::sha256(normalized).substr(0, 8));
+            short_sha.append(loom::utils::crypto::sha256(normalized).substr(0, 8));
         }
         return short_sha;
     }
     return "unknown";
 }
 
-} // namespace cc::utils::plugin_versioning
+} // namespace loom::utils::plugin_versioning

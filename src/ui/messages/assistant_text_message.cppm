@@ -45,7 +45,7 @@ import loom.ui.foundation.design_figures;
 // the TS stripPromptXMLTags helper (utils/messages.ts), which uses the regex
 //   /<(commit_analysis|context|function_analysis|pr_analysis)>.*?<\/\1>\n?/gs
 // Implemented here as a manual scan (no <regex> needed, and faster).
-namespace cc::ui::messages::detail {
+namespace loom::ui::messages::detail {
 
 constexpr std::string_view kStrippedPromptTags[] = {
     "commit_analysis",
@@ -122,7 +122,7 @@ constexpr std::string_view kStrippedPromptTags[] = {
     return result.substr(b, e - b + 1);
 }
 
-} // namespace cc::ui::messages::detail
+} // namespace loom::ui::messages::detail
 
 // ─── Literal \n unescape (module-internal) ─────────────────────────────
 // Some models (e.g. GLM-5.2 / ByteDance) emit text with JSON-escaped
@@ -150,7 +150,7 @@ constexpr std::string_view kStrippedPromptTags[] = {
 // JSON escapes (\" \\ \t \/) handle cases where the model returns text
 // with JSON-encoded string content that wasn't fully decoded by the
 // transport layer.
-namespace cc::ui::messages::detail {
+namespace loom::ui::messages::detail {
 
 [[nodiscard]] inline std::string unescape_literal_newlines(std::string_view s) {
     std::string out;
@@ -194,9 +194,9 @@ namespace cc::ui::messages::detail {
     return out;
 }
 
-} // namespace cc::ui::messages::detail
+} // namespace loom::ui::messages::detail
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -375,7 +375,7 @@ class AssistantTextMessageComponent : public ComponentBase {
                 }
             }
 
-            out.push_back(::cc::ui::render_markdown(content));
+            out.push_back(::loom::ui::render_markdown(content));
             if (truncated) {
                 out.push_back(text("... (press E to expand)")
                                   | dim | color(Color::GrayDark));
@@ -455,7 +455,7 @@ class AssistantTextMessageComponent : public ComponentBase {
             text(" Assistant  "),
             text(render_timestamp(data.timestamp)) | dim,
         }),
-        ::cc::ui::render_markdown(cleaned),
+        ::loom::ui::render_markdown(cleaned),
     });
 }
 
@@ -490,8 +490,8 @@ class AssistantTextMessageComponent : public ComponentBase {
     bool is_selected = false) {
     // R7: use palette tokens (not inline RGB) so theme variants (light/daltonized
     // resolve correctly (TS dark default).
-    namespace thm = cc::ui::design::theme;
-    namespace figs = cc::ui::design::figures;
+    namespace thm = loom::ui::design::theme;
+    namespace figs = loom::ui::design::figures;
     const auto& pal = *thm::current_theme().palette;
     const Color dot_color = is_selected ? pal.suggestion : pal.text;
     Elements row;
@@ -528,7 +528,7 @@ class AssistantTextMessageComponent : public ComponentBase {
 }
 
 /// Convenience overload: body defaults to the markdown-rendered (XML-stripped)
-/// content.  M5 made cc::ui::render_markdown itself TS-faithful (GFM parity
+/// content.  M5 made loom::ui::render_markdown itself TS-faithful (GFM parity
 /// with src/utils/markdown.ts), so this path now renders faithful markdown
 /// in the running app (no separate renderer swap needed).
 ///
@@ -541,7 +541,7 @@ class AssistantTextMessageComponent : public ComponentBase {
     const AssistantTextMessageData& data,
     bool add_margin = true,
     bool is_selected = false,
-    ::cc::ui::StreamingMarkdown* streaming_md = nullptr) {
+    ::loom::ui::StreamingMarkdown* streaming_md = nullptr) {
     // Unescape literal "\n" before markdown rendering — same fix as BuildBody().
     // Without this, models that emit JSON-escaped newlines produce one long
     // clipped line and markdown line-boundary patterns (* list, headings) fail.
@@ -552,8 +552,8 @@ class AssistantTextMessageComponent : public ComponentBase {
     // re-parsing the entire growing document on every token delta.
     Element body = (data.is_streaming && streaming_md)
         ? streaming_md->update(cleaned)
-        : ::cc::ui::render_markdown(cleaned);
+        : ::loom::ui::render_markdown(cleaned);
     return RenderAssistantTextMessageFaithful(data, std::move(body), add_margin, is_selected);
 }
 
-}  // namespace cc::ui::messages
+}  // namespace loom::ui::messages

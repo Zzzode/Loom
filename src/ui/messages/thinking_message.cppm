@@ -23,7 +23,7 @@ import std;
 import loom.types.types;
 import loom.ui.foundation.design_figures;  // kSpinnerFrames canonical set (GAP 4)
 
-export namespace cc::ui::messages::thinking_message {
+export namespace loom::ui::messages::thinking_message {
 using namespace ftxui;
 
 // ============================================================
@@ -265,10 +265,10 @@ inline std::size_t count_lines(const std::string& s) {
 
 /// Spinner frames for active thinking.
 /// TS REF: SpinnerGlyph.tsx — canonical 10-frame braille spinner from
-///   cc::ui::design::figures::kSpinnerFrames (GAP 4: fig-spinner-frame-inconsistency).
+///   loom::ui::design::figures::kSpinnerFrames (GAP 4: fig-spinner-frame-inconsistency).
 ///   Previously this had only 8 frames (dropping '⠇⠏'), now unified to 10.
 [[nodiscard]] inline std::string thinking_spinner(int frame) {
-    return std::string(cc::ui::design::figures::spinner_frame_glyph(frame));
+    return std::string(loom::ui::design::figures::spinner_frame_glyph(frame));
 }
 
 /// Byte formatting
@@ -716,4 +716,4 @@ inline constexpr std::string_view kCtrlOHint = " (ctrl+o to expand)";
     });
 }
 
-} // namespace cc::ui::messages::thinking_message
+} // namespace loom::ui::messages::thinking_message

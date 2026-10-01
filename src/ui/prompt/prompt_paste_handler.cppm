@@ -22,7 +22,7 @@ import loom.text.parse_references;
 // TS REF: src/utils/imagePaste.ts getImageFromClipboard / hasImageInClipboard
 import loom.platform.clipboard;
 
-export namespace cc::ui::prompt {
+export namespace loom::ui::prompt {
 using namespace ftxui;
 
 // ── Text paste preview ──────────────────────────────────────────────────
@@ -78,7 +78,7 @@ struct ImageChipInfo {
 ///     [displayedValue]);
 [[nodiscard]] inline std::vector<ImageChipInfo> collect_image_chips(
     std::string_view text) {
-    const auto refs = cc::utils::parse_references(text);
+    const auto refs = loom::utils::parse_references(text);
     std::vector<ImageChipInfo> chips;
     chips.reserve(refs.size());
     for (const auto& r : refs) {
@@ -263,7 +263,7 @@ detect_image_magic_bytes(std::string_view buffer) {
 // ── Clipboard image read helpers ────────────────────────────────────────
 
 /// Read PNG image bytes from the system clipboard (macOS only).
-/// Thin wrapper around cc::utils::clipboard::read_image_png().  Returns
+/// Thin wrapper around loom::utils::clipboard::read_image_png().  Returns
 /// nullopt off-macOS or on failure.
 ///
 /// Implementation (TS REF: imagePaste.ts getImageFromClipboard L124-242):
@@ -275,7 +275,7 @@ detect_image_magic_bytes(std::string_view buffer) {
 ///   - Non-PNG HTML-embedded images are converted via `sips -s format png`.
 [[nodiscard]] inline std::optional<std::vector<std::uint8_t>>
 read_clipboard_image_png() {
-    return cc::utils::clipboard::read_image_png();
+    return loom::utils::clipboard::read_image_png();
 }
 
 /// Read JPEG image bytes from the system clipboard.
@@ -293,7 +293,7 @@ read_clipboard_image_png() {
 /// (Linux xclip can return image/jpeg directly).
 [[nodiscard]] inline std::optional<std::vector<std::uint8_t>>
 read_clipboard_image_jpeg() {
-    auto bytes = cc::utils::clipboard::read_image_png();
+    auto bytes = loom::utils::clipboard::read_image_png();
     if (!bytes || bytes->size() < 3) return std::nullopt;
     // Inspect magic bytes: FF D8 FF = JPEG.
     const auto& b = *bytes;
@@ -310,7 +310,7 @@ read_clipboard_image_jpeg() {
 /// Render a "Image in clipboard · Ctrl+V to paste" footer hint.
 ///
 /// Shown when the terminal regains focus and the system clipboard holds
-/// an image (detected via cc::utils::clipboard::has_image()).  The hint
+/// an image (detected via loom::utils::clipboard::has_image()).  The hint
 /// tells the user they can press the paste keybinding to attach the
 /// image as an [Image #N] reference.
 ///
@@ -349,4 +349,4 @@ struct ImagePasteInFlight {
     std::string error;       ///< Error message if failed
 };
 
-} // namespace cc::ui::prompt
+} // namespace loom::ui::prompt

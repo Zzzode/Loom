@@ -6,7 +6,7 @@ export module loom.tools.mcp_classify;
 
 import std;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 enum class McpOutputType {
     Text,
@@ -794,4 +794,4 @@ inline auto classify_mcp_tool_for_collapse(
     };
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

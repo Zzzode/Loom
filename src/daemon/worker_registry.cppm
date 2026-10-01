@@ -22,7 +22,7 @@ import std;
 
 import loom.serdes.json;
 
-export namespace cc::daemon {
+export namespace loom::daemon {
 
 using namespace std::chrono_literals;
 
@@ -483,8 +483,8 @@ auto health_from_str(std::string_view s) -> std::optional<WorkerHealth> {
     return std::nullopt;
 }
 
-auto worker_info_to_json(const WorkerInfo& w, cc::utils::json::JsonMutDoc& doc) {
-    using namespace cc::utils::json;
+auto worker_info_to_json(const WorkerInfo& w, loom::utils::json::JsonMutDoc& doc) {
+    using namespace loom::utils::json;
     auto obj = doc.object();
     obj.add("id", doc.string(w.id));
     obj.add("kind", doc.string(std::string{kind_to_str(w.kind)}));
@@ -511,7 +511,7 @@ auto worker_info_to_json(const WorkerInfo& w, cc::utils::json::JsonMutDoc& doc) 
 using namespace worker_detail;  // namespace
 
 inline auto WorkerRegistry::to_json(const std::vector<WorkerInfo>& workers) -> std::string {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto arr = doc.array();
     for (const auto& w : workers) {
@@ -523,7 +523,7 @@ inline auto WorkerRegistry::to_json(const std::vector<WorkerInfo>& workers) -> s
 
 inline auto WorkerRegistry::from_json(std::string_view raw)
     -> std::expected<std::vector<WorkerInfo>, std::string> {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected<std::string>(parsed.error().message());
     JsonVal root = parsed->root();
@@ -569,4 +569,4 @@ inline auto WorkerRegistry::from_json(std::string_view raw)
     return out;
 }
 
-}  // namespace cc::daemon
+}  // namespace loom::daemon

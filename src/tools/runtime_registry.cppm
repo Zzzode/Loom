@@ -35,26 +35,26 @@ import loom.tools.runtime_shared_utils;
 import loom.tools.runtime_backends.port;
 import loom.serdes.json;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 namespace fs = std::filesystem;
 
 namespace detail {
 
-using cc::core::Error;
-using cc::core::ErrorCode;
-using cc::core::InputSchema;
-using cc::core::ITool;
-using cc::core::Result;
-using cc::core::SchemaProperty;
-using cc::core::ToolDefinition;
-using cc::core::ToolInput;
-using cc::core::ToolOutputContent;
-using cc::core::ToolPermission;
-using cc::core::ToolRegistry;
-using cc::core::ToolResult;
+using loom::core::Error;
+using loom::core::ErrorCode;
+using loom::core::InputSchema;
+using loom::core::ITool;
+using loom::core::Result;
+using loom::core::SchemaProperty;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolOutputContent;
+using loom::core::ToolPermission;
+using loom::core::ToolRegistry;
+using loom::core::ToolResult;
 
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 using RuntimeExecutor = std::function<Result<ToolResult>(const ToolInput&)>;
 
@@ -63,7 +63,7 @@ public:
     RuntimeFunctionTool(
         ToolDefinition definition,
         RuntimeExecutor executor,
-        cc::tools::agent::AgentLivePermissionCheckFn permission_check = {})
+        loom::tools::agent::AgentLivePermissionCheckFn permission_check = {})
         : definition_(std::move(definition)),
           executor_(std::move(executor)),
           permission_check_(std::move(permission_check)) {}
@@ -82,7 +82,7 @@ public:
 private:
     ToolDefinition definition_;
     RuntimeExecutor executor_;
-    cc::tools::agent::AgentLivePermissionCheckFn permission_check_;
+    loom::tools::agent::AgentLivePermissionCheckFn permission_check_;
 };
 
 [[nodiscard]] ToolDefinition define_tool(
@@ -100,7 +100,7 @@ private:
     std::vector<SchemaProperty> properties,
     RuntimeExecutor executor,
     std::string category = "runtime",
-    cc::tools::agent::AgentLivePermissionCheckFn permission_check = {}
+    loom::tools::agent::AgentLivePermissionCheckFn permission_check = {}
 );
 
 // Ad-hoc JSON field accessors over a raw JSON string; definitions in
@@ -112,18 +112,18 @@ private:
 
 [[nodiscard]] bool json_bool(std::string_view json, std::string_view key, bool fallback = false);
 
-[[nodiscard]] std::optional<std::string> runtime_json_string(cc::utils::json::JsonVal obj, std::string_view key);
+[[nodiscard]] std::optional<std::string> runtime_json_string(loom::utils::json::JsonVal obj, std::string_view key);
 
-[[nodiscard]] std::optional<int> runtime_json_int(cc::utils::json::JsonVal obj, std::string_view key);
+[[nodiscard]] std::optional<int> runtime_json_int(loom::utils::json::JsonVal obj, std::string_view key);
 
-[[nodiscard]] std::optional<bool> runtime_json_bool(cc::utils::json::JsonVal obj, std::string_view key);
+[[nodiscard]] std::optional<bool> runtime_json_bool(loom::utils::json::JsonVal obj, std::string_view key);
 
 [[nodiscard]] std::optional<bool> runtime_json_semantic_bool(
-    cc::utils::json::JsonVal obj,
+    loom::utils::json::JsonVal obj,
     std::string_view key
 );
 
-[[nodiscard]] std::vector<std::string> runtime_json_event_array(cc::utils::json::JsonVal obj, std::string_view key);
+[[nodiscard]] std::vector<std::string> runtime_json_event_array(loom::utils::json::JsonVal obj, std::string_view key);
 
 [[nodiscard]] std::vector<std::string> json_string_array(std::string_view json, std::string_view key);
 
@@ -261,9 +261,9 @@ constexpr auto collect_team_native_agents = &runtime_team_shared::collect_team_n
 
 [[nodiscard]] Result<ToolResult> execute_tool_search(const ToolInput& input);
 
-[[nodiscard]] std::optional<cc::tools::BrowserAction> parse_browser_action(std::string_view action);
+[[nodiscard]] std::optional<loom::tools::BrowserAction> parse_browser_action(std::string_view action);
 
-[[nodiscard]] std::vector<cc::tools::FormField> json_form_fields(std::string_view json);
+[[nodiscard]] std::vector<loom::tools::FormField> json_form_fields(std::string_view json);
 
 [[nodiscard]] Result<ToolResult> execute_web_browser(const ToolInput& input);
 
@@ -274,17 +274,17 @@ constexpr auto collect_team_native_agents = &runtime_team_shared::collect_team_n
 // two mutable inline overrides stay here: they are named by the inline test
 // setters below and by the moved orchestration implementation unit (which
 // imports this module for them and for the json_* helpers).
-inline std::optional<cc::core::computer_use::CaptureProvider> computer_use_capture_provider_override;
-inline std::optional<cc::core::computer_use::InputProvider> computer_use_input_provider_override;
+inline std::optional<loom::core::computer_use::CaptureProvider> computer_use_capture_provider_override;
+inline std::optional<loom::core::computer_use::InputProvider> computer_use_input_provider_override;
 
-} // namespace cc::tools::detail
+} // namespace loom::tools::detail
 
 // RFC-0001 B15: the four computer-use test setters keep their strong symbols
 // IN cc_tools. Their trivial bodies are inline in this interface and assign
 // the exported inline override variables above; the production computer-use
 // implementation unit (now in cc_orchestration) reads those same variables.
 inline void set_runtime_computer_use_capture_provider_for_testing(
-    cc::core::computer_use::CaptureProvider provider) {
+    loom::core::computer_use::CaptureProvider provider) {
     detail::computer_use_capture_provider_override = std::move(provider);
 }
 
@@ -293,7 +293,7 @@ inline void clear_runtime_computer_use_capture_provider_for_testing() {
 }
 
 inline void set_runtime_computer_use_input_provider_for_testing(
-    cc::core::computer_use::InputProvider provider) {
+    loom::core::computer_use::InputProvider provider) {
     detail::computer_use_input_provider_override = std::move(provider);
 }
 
@@ -365,10 +365,10 @@ constexpr auto try_start_native_agent_resume = &runtime_message_delivery::try_st
 
 } // namespace detail
 
-using cc::core::SchemaProperty;
-using cc::core::ToolPermission;
-using cc::tools::AgentLivePermissionCheck;
-using cc::tools::AgentLivePermissionCheckFn;
+using loom::core::SchemaProperty;
+using loom::core::ToolPermission;
+using loom::tools::AgentLivePermissionCheck;
+using loom::tools::AgentLivePermissionCheckFn;
 
 struct RuntimeToolOptions {
     std::optional<std::string> parent_permission_mode;
@@ -377,7 +377,7 @@ struct RuntimeToolOptions {
     // Agent tool factory for tests and embedders. Empty by default (DMI
     // suppresses -Wmissing-designated-field-initializers at the ~80
     // RuntimeToolOptions{...} sites); register_runtime_tools falls back to
-    // the process slot cc::tools::agent_tool_factory().
+    // the process slot loom::tools::agent_tool_factory().
     AgentToolFactory agent_tool_factory = {};
 };
 
@@ -388,13 +388,13 @@ get_built_in_agent_definitions();
 
 [[nodiscard]] bool are_explore_plan_agents_enabled();
 
-void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions options);
+void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptions options);
 
-void register_runtime_tools(cc::core::ToolRegistry& registry);
+void register_runtime_tools(loom::core::ToolRegistry& registry);
 
 // RFC-0001 B15: collect_mcp_tool_definitions / collect_mcp_input_schemas
-// moved to cc.orchestration.runtime_backends (exported in cc::tools there);
+// moved to cc.orchestration.runtime_backends (exported in loom::tools there);
 // their data comes from the lifted NativeMcpRuntime and reaches main/server
 // via the orchestration module, not this rank-8 registry.
 
-} // namespace cc::tools
+} // namespace loom::tools

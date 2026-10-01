@@ -23,7 +23,7 @@ import std;
 
 import loom.tools.mode_validation;  // for PermissionResult / PermissionBehavior
 
-export namespace cc::tools::path_validation {
+export namespace loom::tools::path_validation {
 
 using PermissionBehavior = mode_validation::PermissionBehavior;
 using PermissionResult   = mode_validation::PermissionResult;
@@ -1339,4 +1339,4 @@ inline auto stripWrappersFromArgv(std::span<const std::string> a) {
     return strip_wrappers_from_argv(a);
 }
 
-} // namespace cc::tools::path_validation
+} // namespace loom::tools::path_validation

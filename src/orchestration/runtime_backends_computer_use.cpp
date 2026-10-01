@@ -23,7 +23,7 @@ import loom.serdes.json;
 import loom.process.bash.bash_execution;
 import loom.tools.image_codec.port;
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
 namespace {
 
@@ -44,7 +44,7 @@ struct ComputerUseCommandBackendResult {
 };
 
 [[nodiscard]] std::optional<std::string> computer_json_optional_string(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 ) {
     auto value = root.get(key);
@@ -52,9 +52,9 @@ struct ComputerUseCommandBackendResult {
     return std::string(value.as_str());
 }
 
-[[nodiscard]] std::optional<cc::core::computer_use::ActionType> parse_computer_action(
+[[nodiscard]] std::optional<loom::core::computer_use::ActionType> parse_computer_action(
     std::string_view action) {
-    using cc::core::computer_use::ActionType;
+    using loom::core::computer_use::ActionType;
     if (action == "screenshot" || action == "cursor_position") return ActionType::Screenshot;
     if (action == "move" || action == "mouse_move") return ActionType::MouseMove;
     // Anthropic computer_20241022 wire names plus local aliases.
@@ -71,7 +71,7 @@ struct ComputerUseCommandBackendResult {
 }
 
 [[nodiscard]] std::expected<std::string, std::string> run_computer_use_command_backend(
-    const cc::core::computer_use::ComputerAction& action
+    const loom::core::computer_use::ComputerAction& action
 ) {
     auto* command_env = std::getenv("LOOM_COMPUTER_USE_CMD");
     if (!command_env || std::string_view(command_env).empty()) {
@@ -88,7 +88,7 @@ struct ComputerUseCommandBackendResult {
         command += quoted_payload;
     }
 
-    auto cap = cc::utils::bash::exec_capture(command);
+    auto cap = loom::utils::bash::exec_capture(command);
     if (!cap) return std::unexpected("Failed to start computer-use command backend");
     std::string output = std::move(cap->output);
     if (output.size() > 1024 * 512) {
@@ -106,7 +106,7 @@ struct ComputerUseCommandBackendResult {
 [[nodiscard]] std::expected<ComputerUseCommandBackendResult, std::string> parse_computer_command_result(
     std::string_view output
 ) {
-    auto parsed = cc::utils::json::parse(output);
+    auto parsed = loom::utils::json::parse(output);
     if (!parsed || !parsed->root().is_obj()) {
         return std::unexpected("Computer-use command backend returned invalid JSON");
     }
@@ -130,13 +130,13 @@ struct ComputerUseCommandBackendResult {
     return result;
 }
 
-[[nodiscard]] std::optional<cc::core::computer_use::CaptureProvider> computer_use_command_capture_provider() {
+[[nodiscard]] std::optional<loom::core::computer_use::CaptureProvider> computer_use_command_capture_provider() {
     auto* command_env = std::getenv("LOOM_COMPUTER_USE_CMD");
     if (!command_env || std::string_view(command_env).empty()) return std::nullopt;
-    return [](std::optional<cc::core::computer_use::Rect> region)
-        -> std::expected<cc::core::computer_use::ImageData, std::string> {
-        cc::core::computer_use::ComputerAction action{
-            .type = cc::core::computer_use::ActionType::Screenshot,
+    return [](std::optional<loom::core::computer_use::Rect> region)
+        -> std::expected<loom::core::computer_use::ImageData, std::string> {
+        loom::core::computer_use::ComputerAction action{
+            .type = loom::core::computer_use::ActionType::Screenshot,
             .position = std::nullopt,
             .drag_end = std::nullopt,
             .text = std::nullopt,
@@ -151,7 +151,7 @@ struct ComputerUseCommandBackendResult {
         if (!root->screenshot_base64) return std::unexpected("Computer-use command backend did not return screenshot_base64");
         // RFC-0001 B11: base64 decoding goes through the orchestration-
         // installed image codec port.
-        const auto& codec = cc::tools::image_codec::codec();
+        const auto& codec = loom::tools::image_codec::codec();
         if (!codec) {
             return std::unexpected("Computer-use image codec is not configured");
         }
@@ -161,7 +161,7 @@ struct ComputerUseCommandBackendResult {
         if (!root->width || !root->height || *root->width <= 0 || *root->height <= 0) {
             return std::unexpected("Computer-use command backend screenshot requires positive width and height");
         }
-        return cc::core::computer_use::ImageData{
+        return loom::core::computer_use::ImageData{
             .pixels = std::move(*decoded),
             .width = static_cast<std::uint32_t>(*root->width),
             .height = static_cast<std::uint32_t>(*root->height),
@@ -170,10 +170,10 @@ struct ComputerUseCommandBackendResult {
     };
 }
 
-[[nodiscard]] std::optional<cc::core::computer_use::InputProvider> computer_use_command_input_provider() {
+[[nodiscard]] std::optional<loom::core::computer_use::InputProvider> computer_use_command_input_provider() {
     auto* command_env = std::getenv("LOOM_COMPUTER_USE_CMD");
     if (!command_env || std::string_view(command_env).empty()) return std::nullopt;
-    return [](const cc::core::computer_use::ComputerAction& action) -> std::expected<void, std::string> {
+    return [](const loom::core::computer_use::ComputerAction& action) -> std::expected<void, std::string> {
         auto output = run_computer_use_command_backend(action);
         if (!output) return std::unexpected(output.error());
         auto root = parse_computer_command_result(*output);
@@ -236,15 +236,15 @@ connected_computer_use_mcp_server() {
         return ToolResult::error(std::format("Unsupported computer-use action: {}", action_text));
     }
 
-    auto point_from_xy = [&] -> std::optional<cc::core::computer_use::Point> {
+    auto point_from_xy = [&] -> std::optional<loom::core::computer_use::Point> {
         auto x = json_int(json, "x");
         auto y = json_int(json, "y");
         // Native computer_20241022 sends "coordinate":[x,y].
         if ((!x || !y)) {
-            if (auto parsed = cc::utils::json::parse(json); parsed) {
+            if (auto parsed = loom::utils::json::parse(json); parsed) {
                 auto coord = parsed->root().get("coordinate");
                 if (coord.is_arr() && coord.size() >= 2) {
-                    return cc::core::computer_use::Point{
+                    return loom::core::computer_use::Point{
                         .x = static_cast<int32_t>(coord.at(0).as_int()),
                         .y = static_cast<int32_t>(coord.at(1).as_int()),
                     };
@@ -252,10 +252,10 @@ connected_computer_use_mcp_server() {
             }
         }
         if (!x || !y) return std::nullopt;
-        return cc::core::computer_use::Point{.x = *x, .y = *y};
+        return loom::core::computer_use::Point{.x = *x, .y = *y};
     };
 
-    cc::core::computer_use::ComputerAction request{
+    loom::core::computer_use::ComputerAction request{
         .type = *action,
         .position = point_from_xy(),
         .drag_end = std::nullopt,
@@ -263,16 +263,16 @@ connected_computer_use_mcp_server() {
         .region = std::nullopt,
         .keys = json_string_array(json, "keys"),
     };
-    if (request.keys.empty() && *action == cc::core::computer_use::ActionType::KeyHotkey) {
+    if (request.keys.empty() && *action == loom::core::computer_use::ActionType::KeyHotkey) {
         request.keys = json_string_array(json, "key");
         if (request.keys.empty()) request.keys = json_string_array(json, "text");
     }
 
     if (auto end_x = json_int(json, "to_x"), end_y = json_int(json, "to_y"); end_x && end_y) {
-        request.drag_end = cc::core::computer_use::Point{.x = *end_x, .y = *end_y};
+        request.drag_end = loom::core::computer_use::Point{.x = *end_x, .y = *end_y};
     }
     if (auto w = json_int(json, "width"), h = json_int(json, "height"); w && h && *w > 0 && *h > 0) {
-        request.region = cc::core::computer_use::Rect{
+        request.region = loom::core::computer_use::Rect{
             .x = json_int(json, "x").value_or(0),
             .y = json_int(json, "y").value_or(0),
             .width = static_cast<std::uint32_t>(*w),
@@ -282,17 +282,17 @@ connected_computer_use_mcp_server() {
 
     auto command_capture_provider = computer_use_command_capture_provider();
     auto command_input_provider = computer_use_command_input_provider();
-    cc::core::computer_use::ComputerUseManager manager{
+    loom::core::computer_use::ComputerUseManager manager{
         computer_use_capture_provider_override
-            ? cc::core::computer_use::ScreenCapture{*computer_use_capture_provider_override}
+            ? loom::core::computer_use::ScreenCapture{*computer_use_capture_provider_override}
             : (command_capture_provider
-                ? cc::core::computer_use::ScreenCapture{*command_capture_provider}
-                : cc::core::computer_use::ScreenCapture{}),
+                ? loom::core::computer_use::ScreenCapture{*command_capture_provider}
+                : loom::core::computer_use::ScreenCapture{}),
         computer_use_input_provider_override
             ? *computer_use_input_provider_override
             : (command_input_provider
                 ? *command_input_provider
-                : cc::core::computer_use::make_native_input_provider())
+                : loom::core::computer_use::make_native_input_provider())
     };
     auto result = manager.execute_action(request);
     if (!result.success) {
@@ -301,7 +301,7 @@ connected_computer_use_mcp_server() {
     if (result.screenshot) {
         // RFC-0001 B11: screenshot encoding goes through the
         // orchestration-installed image codec port.
-        const auto& codec = cc::tools::image_codec::codec();
+        const auto& codec = loom::tools::image_codec::codec();
         if (!codec) {
             return ToolResult::error("Computer-use image codec is not configured");
         }
@@ -330,4 +330,4 @@ connected_computer_use_mcp_server() {
     return ToolResult::success(std::format("Computer-use action completed: {}", action_text));
 }
 
-} // namespace cc::tools::detail
+} // namespace loom::tools::detail

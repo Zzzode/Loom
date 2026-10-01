@@ -37,28 +37,28 @@ import loom.tools.support.tool_helpers;
 import loom.process.bash.bash_execution;
 import loom.orchestration.agent.utils;
 
-export namespace cc::tools::agent::resume_ {
+export namespace loom::tools::agent::resume_ {
 
 namespace fs = std::filesystem;
 
-using cc::core::Tool;
-using cc::core::ToolInput;
-using cc::core::ToolResult;
-using cc::core::ToolDefinition;
-using cc::services::api::Message;
-using cc::services::api::ContentBlock;
-using cc::services::api::ContentBlockType;
-using cc::tools::agent::utils::AgentExecutionPlan;
-using cc::tools::agent::utils::filter_incomplete_tool_calls;
-using cc::tools::agent::utils::filter_resume_unresolved_tool_use_messages;
-using cc::tools::agent::utils::filter_resume_orphaned_thinking_messages;
-using cc::tools::agent::utils::filter_resume_whitespace_assistant_messages;
-using cc::tools::agent::utils::resume_content_replacements_from_entries;
-using cc::tools::agent::utils::apply_resume_content_replacements;
-using cc::tools::agent::utils::fork_context_messages_from_entries;
+using loom::core::Tool;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
+using loom::core::ToolDefinition;
+using loom::services::api::Message;
+using loom::services::api::ContentBlock;
+using loom::services::api::ContentBlockType;
+using loom::tools::agent::utils::AgentExecutionPlan;
+using loom::tools::agent::utils::filter_incomplete_tool_calls;
+using loom::tools::agent::utils::filter_resume_unresolved_tool_use_messages;
+using loom::tools::agent::utils::filter_resume_orphaned_thinking_messages;
+using loom::tools::agent::utils::filter_resume_whitespace_assistant_messages;
+using loom::tools::agent::utils::resume_content_replacements_from_entries;
+using loom::tools::agent::utils::apply_resume_content_replacements;
+using loom::tools::agent::utils::fork_context_messages_from_entries;
 
 [[nodiscard]] inline std::string format_resumed_agent_context(
-    const cc::tools::agent_runtime::NativeAgentRecord& record
+    const loom::tools::agent_runtime::NativeAgentRecord& record
 ) {
     constexpr std::size_t max_lines = 80;
     constexpr std::size_t max_chars = 24000;
@@ -66,7 +66,7 @@ using cc::tools::agent::utils::fork_context_messages_from_entries;
     std::string context;
     context += "<resumed_agent_context>\n";
     context += std::format("<agent_id>{}</agent_id>\n", record.agent_id);
-    context += std::format("<status>{}</status>\n", cc::tools::agent_runtime::native_agent_status_name(record.status));
+    context += std::format("<status>{}</status>\n", loom::tools::agent_runtime::native_agent_status_name(record.status));
     if (record.description && !record.description->empty()) {
         context += std::format("<description>{}</description>\n", *record.description);
     }
@@ -97,7 +97,7 @@ using cc::tools::agent::utils::fork_context_messages_from_entries;
 
 inline void hydrate_resume_plan_from_existing_record(AgentExecutionPlan& plan) {
     if (!plan.resume_existing) return;
-    auto existing = cc::tools::agent_runtime::native_agent_store().get(plan.agent_id);
+    auto existing = loom::tools::agent_runtime::native_agent_store().get(plan.agent_id);
     if (!existing) return;
 
     plan.parent_agent_id = plan.parent_agent_id.or_else([&] { return existing->parent_agent_id; });
@@ -120,4 +120,4 @@ inline void hydrate_resume_plan_from_existing_record(AgentExecutionPlan& plan) {
     plan.parent_session_id = plan.parent_session_id.or_else([&] { return existing->parent_session_id; });
 }
 
-} // namespace cc::tools::agent::resume_
+} // namespace loom::tools::agent::resume_

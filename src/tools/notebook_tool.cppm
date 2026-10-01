@@ -9,9 +9,9 @@ import std;
 
 import loom.serdes.json;
 
-namespace cc::tools::notebook_detail {
+namespace loom::tools::notebook_detail {
 
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 [[nodiscard]] auto read_file(const std::filesystem::path& path) -> std::expected<std::string, std::string> {
     std::ifstream file(path);
@@ -40,10 +40,10 @@ void replace_obj_value(json::JsonMutVal obj, std::string_view key, json::JsonMut
     obj.add(key, value);
 }
 
-} // namespace cc::tools::notebook_detail
+} // namespace loom::tools::notebook_detail
 
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 // Cell types in a Jupyter notebook
 enum class CellType {
@@ -496,4 +496,4 @@ public:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

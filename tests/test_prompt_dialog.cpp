@@ -34,9 +34,9 @@ inline bool response_called_global = false;
 
 namespace fs = std::filesystem;
 using namespace ftxui;
-using cc::ui::dialogs::prompt_dialog::MakePromptDialog;
-using cc::ui::dialogs::prompt_dialog::PromptDialogPayload;
-using cc::ui::dialogs::prompt_dialog::PromptOption;
+using loom::ui::dialogs::prompt_dialog::MakePromptDialog;
+using loom::ui::dialogs::prompt_dialog::PromptDialogPayload;
+using loom::ui::dialogs::prompt_dialog::PromptOption;
 
 // ---------------------------------------------------------------------------
 // Test harness helpers

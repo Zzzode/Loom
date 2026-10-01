@@ -21,7 +21,7 @@ namespace {
 } // namespace
 
 TEST(SkillDefinition, SerializesMetadata) {
-    cc::skills::SkillDefinition skill{
+    loom::skills::SkillDefinition skill{
         .name = "test-skill",
         .description = "A test skill",
         .trigger_patterns = {"test"},
@@ -37,8 +37,8 @@ TEST(SkillDefinition, SerializesMetadata) {
 }
 
 TEST(SkillExecutor, MatchesRegisteredSkillPattern) {
-    cc::skills::SkillExecutor executor;
-    executor.register_skill(cc::skills::SkillDefinition{
+    loom::skills::SkillExecutor executor;
+    executor.register_skill(loom::skills::SkillDefinition{
         .name = "debug",
         .description = "Debug problems",
         .trigger_patterns = {"debug|diagnose"},
@@ -54,15 +54,15 @@ TEST(SkillExecutor, MatchesRegisteredSkillPattern) {
 }
 
 TEST(BundledSkills, ProvidesBuiltInSkills) {
-    cc::skills::BundledSkills bundled;
+    loom::skills::BundledSkills bundled;
     EXPECT_GT(bundled.size(), 0u);
     EXPECT_FALSE(bundled.all().empty());
     EXPECT_NE(bundled.find("debug"), nullptr);
 }
 
 TEST(BundledSkills, RegistersIntoExecutor) {
-    cc::skills::BundledSkills bundled;
-    cc::skills::SkillExecutor executor;
+    loom::skills::BundledSkills bundled;
+    loom::skills::SkillExecutor executor;
     bundled.register_all(executor);
     EXPECT_EQ(executor.size(), bundled.size());
 }
@@ -79,7 +79,7 @@ Read the diff and report concrete risks.
 )MD";
     }
 
-    cc::skills::SkillLoader loader;
+    loom::skills::SkillLoader loader;
     auto result = loader.load_from_directory(root);
 
     fs::remove_all(root);

@@ -9,9 +9,9 @@ import std;
 import loom.services.api.models;
 import loom.serdes.json;
 
-export namespace cc::services::api::errors {
+export namespace loom::services::api::errors {
 
-using cc::services::api::Provider;
+using loom::services::api::Provider;
 
 // =========================================================================
 // API Error Categories
@@ -288,7 +288,7 @@ private:
 
     static void parse_json_error(std::string_view json_body,
                                 ApiErrorDetails& error) {
-        auto parsed = cc::utils::json::parse(json_body);
+        auto parsed = loom::utils::json::parse(json_body);
         if (!parsed) {
             error.error_message = std::string(json_body);
             error.error_type = "api_error";
@@ -434,4 +434,4 @@ public:
     }
 };
 
-} // namespace cc::services::api::errors
+} // namespace loom::services::api::errors

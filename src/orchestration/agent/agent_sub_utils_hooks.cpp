@@ -28,21 +28,21 @@ import loom.orchestration.tools.mcp;
 import loom.tools.agent_runtime;
 import loom.services.api.client;
 
-namespace cc::tools::agent::utils {
+namespace loom::tools::agent::utils {
 
 namespace fs = std::filesystem;
 
 AgentTodoCleanupGuard::~AgentTodoCleanupGuard() {
     if (!agent_id.empty()) {
-        (void)cc::tools::clear_todos_for_agent(agent_id);
+        (void)loom::tools::clear_todos_for_agent(agent_id);
     }
 }
 
 AgentShellTaskCleanupGuard::~AgentShellTaskCleanupGuard() {
     if (agent_id.empty()) return;
-    auto stopped = cc::tools::bash::stop_background_tasks_for_agent(agent_id);
+    auto stopped = loom::tools::bash::stop_background_tasks_for_agent(agent_id);
     if (!stopped.empty()) {
-        cc::tools::agent_runtime::native_agent_store().append_transcript(
+        loom::tools::agent_runtime::native_agent_store().append_transcript(
             agent_id,
             std::format("system: stopped {} background shell task(s) owned by agent on exit", stopped.size()));
     }
@@ -52,7 +52,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     if (inline_servers.empty()) return;
 
     std::vector<std::string> remove_names;
-    std::vector<cc::tools::NativeMcpConfiguredServer> restore_servers;
+    std::vector<loom::tools::NativeMcpConfiguredServer> restore_servers;
     for (const auto& server : inline_servers) {
         if (server.name.empty()) continue;
         if (server.previous_config) {
@@ -64,17 +64,17 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
 
     bool cleaned = false;
     if (!remove_names.empty()) {
-        if (auto removed = cc::tools::remove_native_mcp_servers(std::move(remove_names)); removed) {
+        if (auto removed = loom::tools::remove_native_mcp_servers(std::move(remove_names)); removed) {
             cleaned = true;
         }
     }
     if (!restore_servers.empty()) {
-        if (auto restored = cc::tools::upsert_native_mcp_servers(std::move(restore_servers)); restored) {
+        if (auto restored = loom::tools::upsert_native_mcp_servers(std::move(restore_servers)); restored) {
             cleaned = true;
         }
     }
     if (cleaned && !agent_id.empty()) {
-        cc::tools::agent_runtime::native_agent_store().append_transcript(
+        loom::tools::agent_runtime::native_agent_store().append_transcript(
             agent_id,
             "system: cleaned agent-specific MCP server configuration");
     }
@@ -128,14 +128,14 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
 }
 
 [[nodiscard]] std::string default_agent_transcript_path(std::string_view agent_id) {
-    return cc::tools::agent_runtime::agent_transcript_path(agent_id).string();
+    return loom::tools::agent_runtime::agent_transcript_path(agent_id).string();
 }
 
 [[nodiscard]] std::expected<AgentWorktreeInfo, std::string> create_agent_worktree(
     const AgentExecutionPlan& plan
 ) {
     auto base_cwd = plan.working_dir ? fs::path{*plan.working_dir} : fs::current_path();
-    auto git_root = cc::utils::git::find_git_root(base_cwd);
+    auto git_root = loom::utils::git::find_git_root(base_cwd);
     if (!git_root) {
         return std::unexpected(
             "Cannot create agent worktree: not in a git repository. Use cwd inside a git repository or omit isolation=worktree.");
@@ -150,10 +150,10 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     fs::create_directories(worktree_path.parent_path(), ec);
     if (ec) return std::unexpected("Cannot create worktree parent directory: " + ec.message());
 
-    auto head = cc::utils::git::run_git_command("rev-parse HEAD", *git_root);
+    auto head = loom::utils::git::run_git_command("rev-parse HEAD", *git_root);
     if (!head.success) return std::unexpected("Cannot resolve git HEAD for agent worktree: " + head.output);
 
-    auto created = cc::utils::git::run_git_command(
+    auto created = loom::utils::git::run_git_command(
         std::format("worktree add -B \"{}\" \"{}\" HEAD", branch, worktree_path.string()),
         *git_root);
     if (!created.success) {
@@ -168,7 +168,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     };
 }
 
-[[nodiscard]] bool hook_condition_allows(const cc::tools::agent_runtime::AgentHookCommand& hook) {
+[[nodiscard]] bool hook_condition_allows(const loom::tools::agent_runtime::AgentHookCommand& hook) {
     if (!hook.condition || hook.condition->empty()) return true;
     const auto condition = lowercase_copy(*hook.condition);
     return condition == "true" || condition == "1" || condition == "yes";
@@ -201,7 +201,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
 }
 
 [[nodiscard]] AgentHookRunResult run_agent_command_hook(
-    const cc::tools::agent_runtime::AgentHookCommand& hook,
+    const loom::tools::agent_runtime::AgentHookCommand& hook,
     const AgentExecutionPlan& plan,
     std::string_view event,
     std::string_view last_assistant_message,
@@ -234,7 +234,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     command += shell_quote(shell) + " -c " + shell_quote(hook.command) + " 2>&1";
 
     AgentHookRunResult result;
-    FILE* pipe = cc::utils::bash::popen_spawn(command.c_str());
+    FILE* pipe = loom::utils::bash::popen_spawn(command.c_str());
     if (!pipe) {
         result.exit_code = 127;
         result.output = "failed to start hook command";
@@ -249,7 +249,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
             break;
         }
     }
-    const auto status = cc::utils::bash::pclose_spawn(pipe);
+    const auto status = loom::utils::bash::pclose_spawn(pipe);
     if (status == -1) {
         result.exit_code = 127;
     } else if (WIFEXITED(status)) {
@@ -273,7 +273,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     output = trim_tool_rule(output);
     if (output.empty() || !output.starts_with('{')) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse(output);
+    auto parsed = loom::utils::json::parse(output);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
     auto should_continue = root.get("continue");
@@ -293,7 +293,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     output = trim_tool_rule(output);
     if (output.empty()) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse(output);
+    auto parsed = loom::utils::json::parse(output);
     if (!parsed) return std::nullopt;
     auto specific = parsed->root().get("hookSpecificOutput");
     if (!specific.valid() || !specific.is_obj()) return std::nullopt;
@@ -312,7 +312,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     output = trim_tool_rule(output);
     if (output.empty() || !output.starts_with('{')) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse(output);
+    auto parsed = loom::utils::json::parse(output);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
     if (auto decision = json_string(root, "decision"); decision && *decision == "block") {
@@ -334,7 +334,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     output = trim_tool_rule(output);
     if (output.empty() || !output.starts_with('{')) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse(output);
+    auto parsed = loom::utils::json::parse(output);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto specific = parsed->root().get("hookSpecificOutput");
     if (!specific.valid() || !specific.is_obj()) return std::nullopt;
@@ -342,7 +342,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     if (event.valid() && event.is_str() && event.as_str() != "PreToolUse") return std::nullopt;
     auto updated = specific.get("updatedInput");
     if (!updated.valid() || !updated.is_obj()) return std::nullopt;
-    auto serialized = cc::utils::json::to_string(updated);
+    auto serialized = loom::utils::json::to_string(updated);
     if (serialized.empty()) return std::nullopt;
     return serialized;
 }
@@ -351,7 +351,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     output = trim_tool_rule(output);
     if (output.empty() || !output.starts_with('{')) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse(output);
+    auto parsed = loom::utils::json::parse(output);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto specific = parsed->root().get("hookSpecificOutput");
     if (!specific.valid() || !specific.is_obj()) return std::nullopt;
@@ -360,7 +360,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     auto updated = specific.get("updatedMCPToolOutput");
     if (!updated.valid()) return std::nullopt;
     if (updated.is_str()) return std::string(updated.as_str());
-    auto serialized = cc::utils::json::to_string(updated);
+    auto serialized = loom::utils::json::to_string(updated);
     if (serialized.empty()) return std::nullopt;
     return serialized;
 }
@@ -372,7 +372,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     output = trim_tool_rule(output);
     if (output.empty() || !output.starts_with('{')) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse(output);
+    auto parsed = loom::utils::json::parse(output);
     if (!parsed) return std::nullopt;
     auto specific = parsed->root().get("hookSpecificOutput");
     if (!specific.valid() || !specific.is_obj()) return std::nullopt;
@@ -548,7 +548,7 @@ void append_hook_additional_context_messages(
 }
 
 void upsert_agent_record_for_plan(const AgentExecutionPlan& plan) {
-    cc::tools::agent_runtime::NativeAgentRecord record{
+    loom::tools::agent_runtime::NativeAgentRecord record{
         .agent_id = plan.agent_id,
         .agent_type = plan.agent_type,
         .parent_agent_id = plan.parent_agent_id,
@@ -559,9 +559,9 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan) {
         .isolation = plan.isolation,
         .mode = plan.mode,
         .background = plan.background,
-        .status = cc::tools::agent_runtime::NativeAgentStatus::Queued,
+        .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
         .transcript_path = default_agent_transcript_path(plan.agent_id),
-        .output_file_path = cc::tools::agent_runtime::agent_output_file_path(plan.agent_id).string(),
+        .output_file_path = loom::tools::agent_runtime::agent_output_file_path(plan.agent_id).string(),
         .worktree_path = plan.worktree_path,
         .worktree_branch = plan.worktree_branch,
         .worktree_base_commit = plan.worktree_base_commit,
@@ -579,7 +579,7 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan) {
     }
 
     if (plan.resume_existing) {
-        if (auto existing = cc::tools::agent_runtime::native_agent_store().get(plan.agent_id)) {
+        if (auto existing = loom::tools::agent_runtime::native_agent_store().get(plan.agent_id)) {
             record.parent_agent_id = record.parent_agent_id.or_else([&] { return existing->parent_agent_id; });
             record.description = record.description.or_else([&] { return existing->description; });
             record.name = record.name.or_else([&] { return existing->name; });
@@ -590,7 +590,7 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan) {
             record.transcript_path = existing->transcript_path.value_or(default_agent_transcript_path(plan.agent_id));
             record.sidechain_jsonl_path = existing->sidechain_jsonl_path;
             record.output_file_path = existing->output_file_path.value_or(
-                cc::tools::agent_runtime::agent_output_file_path(plan.agent_id).string());
+                loom::tools::agent_runtime::agent_output_file_path(plan.agent_id).string());
             for (const auto& capability : existing->capabilities) {
                 if (!std::ranges::contains(record.capabilities, capability)) {
                     record.capabilities.push_back(capability);
@@ -615,11 +615,11 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan) {
         }
     }
 
-    cc::tools::agent_runtime::native_agent_store().upsert(std::move(record));
+    loom::tools::agent_runtime::native_agent_store().upsert(std::move(record));
 }
 
 [[nodiscard]] std::string agent_output_file_path(std::string_view agent_id) {
-    return cc::tools::agent_runtime::agent_output_file_path(agent_id).string();
+    return loom::tools::agent_runtime::agent_output_file_path(agent_id).string();
 }
 
-} // namespace cc::tools::agent::utils
+} // namespace loom::tools::agent::utils

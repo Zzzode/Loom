@@ -20,7 +20,7 @@ import std;
 
 import loom.ui.messages.message_components;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -185,4 +185,4 @@ class AdvisorMessageComponent : public ComponentBase {
         std::move(msg), std::move(on_dismiss), std::move(on_action));
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

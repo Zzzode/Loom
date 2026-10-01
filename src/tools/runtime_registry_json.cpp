@@ -15,7 +15,7 @@ import loom.text.parse_int;
 import loom.tools.notebook;
 import loom.tools.web_browser;
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
 namespace fs = std::filesystem;
 
@@ -27,7 +27,7 @@ namespace fs = std::filesystem;
 // preserved so the ~40 call sites are unchanged.
 
 [[nodiscard]] std::optional<std::string> json_string(std::string_view json, std::string_view key) {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed) return std::nullopt;
     auto val = parsed->root().get(key);
     if (!val.is_str()) return std::nullopt;
@@ -35,7 +35,7 @@ namespace fs = std::filesystem;
 }
 
 [[nodiscard]] std::optional<int> json_int(std::string_view json, std::string_view key) {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed) return std::nullopt;
     auto val = parsed->root().get(key);
     if (!val.is_num()) return std::nullopt;
@@ -43,33 +43,33 @@ namespace fs = std::filesystem;
 }
 
 [[nodiscard]] bool json_bool(std::string_view json, std::string_view key, bool fallback) {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed) return fallback;
     auto val = parsed->root().get(key);
     if (!val.is_bool()) return fallback;
     return val.as_bool();
 }
 
-[[nodiscard]] std::optional<std::string> runtime_json_string(cc::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] std::optional<std::string> runtime_json_string(loom::utils::json::JsonVal obj, std::string_view key) {
     auto val = obj.get(key);
     if (!val.is_str()) return std::nullopt;
     return std::string(val.as_str());
 }
 
-[[nodiscard]] std::optional<int> runtime_json_int(cc::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] std::optional<int> runtime_json_int(loom::utils::json::JsonVal obj, std::string_view key) {
     auto val = obj.get(key);
     if (!val.is_num()) return std::nullopt;
     return static_cast<int>(val.as_int());
 }
 
-[[nodiscard]] std::optional<bool> runtime_json_bool(cc::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] std::optional<bool> runtime_json_bool(loom::utils::json::JsonVal obj, std::string_view key) {
     auto val = obj.get(key);
     if (!val.is_bool()) return std::nullopt;
     return val.as_bool();
 }
 
 [[nodiscard]] std::optional<bool> runtime_json_semantic_bool(
-    cc::utils::json::JsonVal obj,
+    loom::utils::json::JsonVal obj,
     std::string_view key
 ) {
     auto val = obj.get(key);
@@ -91,15 +91,15 @@ namespace fs = std::filesystem;
     return std::nullopt;
 }
 
-[[nodiscard]] std::vector<std::string> runtime_json_event_array(cc::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] std::vector<std::string> runtime_json_event_array(loom::utils::json::JsonVal obj, std::string_view key) {
     std::vector<std::string> values;
     auto node = obj.get(key);
     if (!node.is_arr()) return values;
-    node.iter([&](cc::utils::json::JsonVal item) {
+    node.iter([&](loom::utils::json::JsonVal item) {
         if (item.is_str()) {
             values.emplace_back(item.as_str());
         } else if (item.valid()) {
-            values.push_back(cc::utils::json::to_string(item));
+            values.push_back(loom::utils::json::to_string(item));
         }
     });
     return values;
@@ -107,11 +107,11 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] std::vector<std::string> json_string_array(std::string_view json, std::string_view key) {
     std::vector<std::string> values;
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed || !parsed->root().is_obj()) return values;
     auto node = parsed->root().get(key);
     if (node.is_arr()) {
-        node.iter([&](cc::utils::json::JsonVal item) {
+        node.iter([&](loom::utils::json::JsonVal item) {
             if (item.is_str()) values.emplace_back(item.as_str());
         });
         return values;
@@ -194,7 +194,7 @@ namespace fs = std::filesystem;
     std::size_t value = 0;
     const auto* begin = text.data();
     const auto* end = begin + text.size();
-    auto [ptr, ec] = cc::utils::from_chars(begin, end, value);
+    auto [ptr, ec] = loom::utils::from_chars(begin, end, value);
     if (ec != std::errc{} || ptr != end) return std::nullopt;
     return value;
 }
@@ -262,8 +262,8 @@ namespace fs = std::filesystem;
     return std::ranges::find(exts, ext) != exts.end();
 }
 
-[[nodiscard]] std::optional<cc::tools::BrowserAction> parse_browser_action(std::string_view action) {
-    using cc::tools::BrowserAction;
+[[nodiscard]] std::optional<loom::tools::BrowserAction> parse_browser_action(std::string_view action) {
+    using loom::tools::BrowserAction;
     if (action == "navigate") return BrowserAction::Navigate;
     if (action == "click") return BrowserAction::Click;
     if (action == "extract") return BrowserAction::Extract;
@@ -273,9 +273,9 @@ namespace fs = std::filesystem;
     return std::nullopt;
 }
 
-[[nodiscard]] std::vector<cc::tools::FormField> json_form_fields(std::string_view json) {
-    std::vector<cc::tools::FormField> fields;
-    auto parsed = cc::utils::json::parse(json);
+[[nodiscard]] std::vector<loom::tools::FormField> json_form_fields(std::string_view json) {
+    std::vector<loom::tools::FormField> fields;
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed || !parsed->root().is_obj()) return fields;
 
     auto node = parsed->root().get("form_fields");
@@ -284,12 +284,12 @@ namespace fs = std::filesystem;
     }
     if (!node.valid() || !node.is_arr()) return fields;
 
-    node.iter([&](cc::utils::json::JsonVal item) {
+    node.iter([&](loom::utils::json::JsonVal item) {
         if (!item.is_obj()) return;
         auto selector = runtime_json_string(item, "selector");
         auto value = runtime_json_string(item, "value");
         if (!selector || selector->empty() || !value) return;
-        fields.push_back(cc::tools::FormField{
+        fields.push_back(loom::tools::FormField{
             .selector = std::move(*selector),
             .value = std::move(*value),
         });
@@ -297,4 +297,4 @@ namespace fs = std::filesystem;
     return fields;
 }
 
-} // namespace cc::tools::detail
+} // namespace loom::tools::detail

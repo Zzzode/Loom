@@ -70,20 +70,20 @@ TEST(PathsConfigHome, PrefersDotLoomWhenPresent) {
     home.make_config_dir(".loom");
     home.make_config_dir(".agents");
     home.make_config_dir(".claude");
-    EXPECT_EQ(cc::constants::paths::config_home_read(), home.at(".loom"));
+    EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".loom"));
 }
 
 TEST(PathsConfigHome, FallsToDotAgentsWhenDotLoomAbsent) {
     TempHome home;
     home.make_config_dir(".agents");
     home.make_config_dir(".claude");
-    EXPECT_EQ(cc::constants::paths::config_home_read(), home.at(".agents"));
+    EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".agents"));
 }
 
 TEST(PathsConfigHome, FallsToDotClaudeAsTheOldestRung) {
     TempHome home;
     home.make_config_dir(".claude");
-    EXPECT_EQ(cc::constants::paths::config_home_read(), home.at(".claude"));
+    EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".claude"));
 }
 
 // When nothing exists we name the preferred directory rather than inheriting
@@ -91,7 +91,7 @@ TEST(PathsConfigHome, FallsToDotClaudeAsTheOldestRung) {
 // product obey a config it did not create.
 TEST(PathsConfigHome, NamesThePreferredDirWhenNothingExists) {
     TempHome home;
-    EXPECT_EQ(cc::constants::paths::config_home_read(), home.at(".loom"));
+    EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".loom"));
 }
 
 TEST(PathsConfigHome, ExplicitEnvOverrideWinsOverEveryCandidate) {
@@ -100,7 +100,7 @@ TEST(PathsConfigHome, ExplicitEnvOverrideWinsOverEveryCandidate) {
     home.make_config_dir(".claude");
     auto elsewhere = home.at("somewhere-else");
     ::setenv("LOOM_CONFIG_DIR", elsewhere.c_str(), 1);
-    EXPECT_EQ(cc::constants::paths::config_home_read(), elsewhere);
+    EXPECT_EQ(loom::constants::paths::config_home_read(), elsewhere);
 }
 
 // existing_config_homes() returns ALL present dirs, unlike config_home()
@@ -109,7 +109,7 @@ TEST(PathsConfigHome, ExistingHomesReturnsEveryCandidateInPriorityOrder) {
     TempHome home;
     home.make_config_dir(".claude");
     home.make_config_dir(".loom");
-    const auto found = cc::constants::paths::existing_config_homes();
+    const auto found = loom::constants::paths::existing_config_homes();
     ASSERT_EQ(found.size(), 2u);
     EXPECT_EQ(found[0], home.at(".loom"));
     EXPECT_EQ(found[1], home.at(".claude"));
@@ -121,7 +121,7 @@ TEST(PathsConfigHome, ExistingHomesRespectsTheExplicitOverrideAlone) {
     auto elsewhere = home.at("pinned");
     fs::create_directories(elsewhere);
     ::setenv("LOOM_CONFIG_DIR", elsewhere.c_str(), 1);
-    const auto found = cc::constants::paths::existing_config_homes();
+    const auto found = loom::constants::paths::existing_config_homes();
     ASSERT_EQ(found.size(), 1u) << "an explicit override means exactly one home";
     EXPECT_EQ(found[0], elsewhere);
 }
@@ -137,7 +137,7 @@ TEST(PathsMemoryFile, MemoryFileInPrefersLoomMd) {
     std::ofstream(dir / "AGENTS.md") << "agents";
     std::ofstream(dir / "CLAUDE.md") << "claude";
     std::ofstream(dir / "LOOM.md") << "loom";
-    auto found = cc::constants::paths::memory_file_in(dir);
+    auto found = loom::constants::paths::memory_file_in(dir);
     ASSERT_TRUE(found.has_value());
     EXPECT_EQ(found->filename(), "LOOM.md")
         << "all three exist, so the highest-priority name wins";
@@ -149,18 +149,18 @@ TEST(PathsMemoryFile, MemoryFileInFallsThroughToAgentsThenClaude) {
     fs::create_directories(dir);
 
     std::ofstream(dir / "CLAUDE.md") << "claude";
-    auto found = cc::constants::paths::memory_file_in(dir);
+    auto found = loom::constants::paths::memory_file_in(dir);
     ASSERT_TRUE(found.has_value());
     EXPECT_EQ(found->filename(), "CLAUDE.md");
 
     std::ofstream(dir / "AGENTS.md") << "agents";
-    found = cc::constants::paths::memory_file_in(dir);
+    found = loom::constants::paths::memory_file_in(dir);
     ASSERT_TRUE(found.has_value());
     EXPECT_EQ(found->filename(), "AGENTS.md")
         << "AGENTS.md outranks CLAUDE.md once it appears";
 
     std::ofstream(dir / "LOOM.md") << "loom";
-    found = cc::constants::paths::memory_file_in(dir);
+    found = loom::constants::paths::memory_file_in(dir);
     ASSERT_TRUE(found.has_value());
     EXPECT_EQ(found->filename(), "LOOM.md");
 }
@@ -169,7 +169,7 @@ TEST(PathsMemoryFile, MemoryFileInReturnsNulloptForADirectoryWithNone) {
     TempHome home;
     auto dir = home.at("empty");
     fs::create_directories(dir);
-    EXPECT_FALSE(cc::constants::paths::memory_file_in(dir).has_value());
+    EXPECT_FALSE(loom::constants::paths::memory_file_in(dir).has_value());
 }
 
 // The load-bearing semantic: the cascade is applied PER DIRECTORY while
@@ -185,7 +185,7 @@ TEST(PathsMemoryFile, NearestDirectoryWinsEvenOnAWeakerFileName) {
     std::ofstream(root / "LOOM.md") << "far but preferred";
     std::ofstream(root / "src" / "deep" / "CLAUDE.md") << "near but last-resort";
 
-    auto found = cc::constants::paths::find_memory_file(nested);
+    auto found = loom::constants::paths::find_memory_file(nested);
     ASSERT_TRUE(found.has_value());
     EXPECT_EQ(*found, nested / "CLAUDE.md")
         << "proximity must beat name priority";
@@ -198,7 +198,7 @@ TEST(PathsMemoryFile, WalksUpUntilItFindsAnyMemoryFile) {
     fs::create_directories(nested);
     std::ofstream(root / "AGENTS.md") << "at the root";
 
-    auto found = cc::constants::paths::find_memory_file(nested);
+    auto found = loom::constants::paths::find_memory_file(nested);
     ASSERT_TRUE(found.has_value());
     EXPECT_EQ(*found, root / "AGENTS.md");
 }
@@ -207,7 +207,7 @@ TEST(PathsMemoryFile, FindReturnsNulloptWhenTheWholeTreeHasNone) {
     TempHome home;
     auto nested = home.at("bare") / "x";
     fs::create_directories(nested);
-    EXPECT_FALSE(cc::constants::paths::find_memory_file(nested).has_value());
+    EXPECT_FALSE(loom::constants::paths::find_memory_file(nested).has_value());
 }
 
 // project_memory_path reports where memory WOULD go, so it must name the
@@ -217,7 +217,7 @@ TEST(PathsMemoryFile, ProjectPathNamesThePreferredFileWhenNoneExists) {
     TempHome home;
     auto proj = home.at("fresh");
     fs::create_directories(proj);
-    EXPECT_EQ(cc::constants::paths::project_memory_path(proj),
+    EXPECT_EQ(loom::constants::paths::project_memory_path(proj),
               proj / "LOOM.md");
 }
 
@@ -226,14 +226,14 @@ TEST(PathsMemoryFile, ProjectPathReportsTheExistingFileWhenOneDoes) {
     auto proj = home.at("legacy");
     fs::create_directories(proj);
     std::ofstream(proj / "CLAUDE.md") << "existing";
-    EXPECT_EQ(cc::constants::paths::project_memory_path(proj),
+    EXPECT_EQ(loom::constants::paths::project_memory_path(proj),
               proj / "CLAUDE.md");
 }
 
 TEST(PathsMemoryFile, UserMemoryPathFindsALegacyMemoryInDotClaude) {
     TempHome home;
     home.make_config_dir(".claude", "CLAUDE.md");
-    EXPECT_EQ(cc::constants::paths::user_memory_path(),
+    EXPECT_EQ(loom::constants::paths::user_memory_path(),
               home.at(".claude") / "CLAUDE.md")
         << "a user's pre-rename memory must still be found";
 }
@@ -242,7 +242,7 @@ TEST(PathsMemoryFile, UserMemoryPathFindsTheNewMemoryInDotLoom) {
     TempHome home;
     home.make_config_dir(".loom", "LOOM.md");
     home.make_config_dir(".claude", "CLAUDE.md");
-    EXPECT_EQ(cc::constants::paths::user_memory_path(),
+    EXPECT_EQ(loom::constants::paths::user_memory_path(),
               home.at(".loom") / "LOOM.md")
         << ".loom is the higher rung, so its memory wins";
 }
@@ -250,12 +250,12 @@ TEST(PathsMemoryFile, UserMemoryPathFindsTheNewMemoryInDotLoom) {
 TEST(PathsMemoryFile, UserMemoryPathNamesThePreferredFileWhenNoneExists) {
     TempHome home;
     home.make_config_dir(".loom");
-    EXPECT_EQ(cc::constants::paths::user_memory_path(),
+    EXPECT_EQ(loom::constants::paths::user_memory_path(),
               home.at(".loom") / "LOOM.md");
 }
 
 TEST(PathsMemoryFile, RecognisesOnlyTheThreeCascadeNames) {
-    using cc::constants::paths::is_memory_file_name;
+    using loom::constants::paths::is_memory_file_name;
     EXPECT_TRUE(is_memory_file_name("LOOM.md"));
     EXPECT_TRUE(is_memory_file_name("AGENTS.md"));
     EXPECT_TRUE(is_memory_file_name("CLAUDE.md"));
@@ -266,7 +266,7 @@ TEST(PathsMemoryFile, RecognisesOnlyTheThreeCascadeNames) {
 // Guards the ordering intent itself: if someone reorders the candidate
 // arrays, this fails rather than silently changing which file is read.
 TEST(PathsCascadeOrder, ConfidenceTheDocumentedOrderIsTheImplementedOne) {
-    using namespace cc::constants::paths;
+    using namespace loom::constants::paths;
     ASSERT_EQ(kConfigDirCandidates.size(), 3u);
     EXPECT_EQ(kConfigDirCandidates[0], ".loom");
     EXPECT_EQ(kConfigDirCandidates[1], ".agents");
@@ -289,23 +289,23 @@ TEST(PathsCascadeOrder, ConfidenceTheDocumentedOrderIsTheImplementedOne) {
 TEST(PathsReadWriteSplit, WriteStaysInDotLoomEvenWhenDotClaudeExists) {
     TempHome home;
     home.make_config_dir(".claude");
-    EXPECT_EQ(cc::constants::paths::config_home_read(), home.at(".claude"))
+    EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".claude"))
         << "read follows the cascade to the legacy dir";
-    EXPECT_EQ(cc::constants::paths::config_home_write(), home.at(".loom"))
+    EXPECT_EQ(loom::constants::paths::config_home_write(), home.at(".loom"))
         << "write must NOT follow it into another tool's directory";
 }
 
 TEST(PathsReadWriteSplit, WriteIgnoresDotAgentsToo) {
     TempHome home;
     home.make_config_dir(".agents");
-    EXPECT_EQ(cc::constants::paths::config_home_read(), home.at(".agents"));
-    EXPECT_EQ(cc::constants::paths::config_home_write(), home.at(".loom"));
+    EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".agents"));
+    EXPECT_EQ(loom::constants::paths::config_home_write(), home.at(".loom"));
 }
 
 TEST(PathsReadWriteSplit, WriteUsesDotLoomWhenItExists) {
     TempHome home;
     home.make_config_dir(".loom");
-    EXPECT_EQ(cc::constants::paths::config_home_write(), home.at(".loom"));
+    EXPECT_EQ(loom::constants::paths::config_home_write(), home.at(".loom"));
 }
 
 TEST(PathsReadWriteSplit, ExplicitOverrideDirectsBothReadAndWrite) {
@@ -313,8 +313,8 @@ TEST(PathsReadWriteSplit, ExplicitOverrideDirectsBothReadAndWrite) {
     home.make_config_dir(".claude");
     auto pinned = home.at("pinned");
     ::setenv("LOOM_CONFIG_DIR", pinned.c_str(), 1);
-    EXPECT_EQ(cc::constants::paths::config_home_read(), pinned);
-    EXPECT_EQ(cc::constants::paths::config_home_write(), pinned)
+    EXPECT_EQ(loom::constants::paths::config_home_read(), pinned);
+    EXPECT_EQ(loom::constants::paths::config_home_write(), pinned)
         << "an explicit override is a deliberate choice, so it wins for both";
 }
 
@@ -324,13 +324,13 @@ TEST(PathsReadWriteSplit, ExplicitOverrideDirectsBothReadAndWrite) {
 TEST(PathsReadWriteSplit, UserMemoryPathPrefersLegacyButSeedsOurOwnDir) {
     TempHome home;
     home.make_config_dir(".claude", "CLAUDE.md");
-    EXPECT_EQ(cc::constants::paths::user_memory_path(),
+    EXPECT_EQ(loom::constants::paths::user_memory_path(),
               home.at(".claude") / "CLAUDE.md")
         << "an existing legacy memory is read";
 
     TempHome empty;
     empty.make_config_dir(".claude");  // exists, but holds no memory file
-    EXPECT_EQ(cc::constants::paths::user_memory_path(),
+    EXPECT_EQ(loom::constants::paths::user_memory_path(),
               empty.at(".loom") / "LOOM.md")
         << "with no memory anywhere, name the file under our own dir";
 }

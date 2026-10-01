@@ -7,7 +7,7 @@ import loom.services.api.sse;
 #include <cstddef>
 #include <cstdint>
 
-using namespace cc::services::api::sse;
+using namespace loom::services::api::sse;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     // Create a minimal SseClient with dry-run config (no network).

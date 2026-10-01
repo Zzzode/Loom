@@ -17,9 +17,9 @@ import loom.types.types;
 import loom.commands.command;
 import loom.process.bash.bash_execution;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================
 // Pure helpers (formatting / data prep)
@@ -318,7 +318,7 @@ private:
 
     [[nodiscard]] static std::size_t parse_size(std::string_view s, std::size_t fallback) {
         std::size_t value = 0;
-        auto [ptr, ec] = cc::utils::from_chars(s.data(), s.data() + s.size(), value);
+        auto [ptr, ec] = loom::utils::from_chars(s.data(), s.data() + s.size(), value);
         if (ec != std::errc{} || ptr != s.data() + s.size()) return fallback;
         return value;
     }
@@ -428,7 +428,7 @@ private:
         return std::unexpected(Error::make(
             ErrorCode::InternalError, "Clipboard not supported on this platform"));
 #endif
-        auto wr = cc::utils::bash::exec_write(cmd, content);
+        auto wr = loom::utils::bash::exec_write(cmd, content);
         if (!wr) {
             return std::unexpected(Error::make(
                 ErrorCode::InternalError,
@@ -481,4 +481,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

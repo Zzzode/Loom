@@ -10,8 +10,8 @@ export module loom.ui.dialogs.bottom_renderers;
 import std;
 import loom.ui.dialogs.default_renderers;
 
-export namespace cc::ui::dialogs::bottom_renderers {
-using cc::ui::dialogs::default_renderers::register_default_renderers;
+export namespace loom::ui::dialogs::bottom_renderers {
+using loom::ui::dialogs::default_renderers::register_default_renderers;
 
 /// Named registration entry-point matching the module name.
 ///
@@ -20,7 +20,7 @@ using cc::ui::dialogs::default_renderers::register_default_renderers;
 /// dual `using` + template keeps both calling conventions valid.
 template <typename... Args>
 inline void register_bottom_renderers(Args&&... args) {
-    cc::ui::dialogs::default_renderers::register_default_renderers(
+    loom::ui::dialogs::default_renderers::register_default_renderers(
         std::forward<Args>(args)...);
 }
-}  // namespace cc::ui::dialogs::bottom_renderers
+}  // namespace loom::ui::dialogs::bottom_renderers

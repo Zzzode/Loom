@@ -114,7 +114,7 @@ import loom.ui.visual.markdown;   // arch-check: keep-import — StreamingMarkdo
 // Each lookup returns an ftxui::Color.  Kept in a single namespace so the
 // grep-replace for real tokens is mechanical.
 
-namespace cc::ui::messages_list::palette {
+namespace loom::ui::messages_list::palette {
 
 using ftxui::Color;
 
@@ -142,18 +142,18 @@ inline auto muted_fg()            -> Color { return Color::RGB(156, 163, 175); }
 inline auto empty_state_fg()      -> Color { return Color::RGB(107, 114, 128); }  // gray-500
 inline auto streaming_fg()        -> Color { return Color::RGB(34, 211, 238); }  // cyan-400
 
-} // namespace cc::ui::messages_list::palette
+} // namespace loom::ui::messages_list::palette
 
 // =========================================================================
-export namespace cc::ui::messages_list {
+export namespace loom::ui::messages_list {
 
 using namespace ftxui;
 using namespace messages;  // UI4: MessageShape, MessageRowPayload, …
 
-using ::cc::ui::messages::MessageShape;
-using ::cc::ui::messages::MessageRowPayload;
-using ::cc::ui::messages::MessageRowCallbacks;
-using ::cc::ui::messages::RenderMessageRowByType;
+using ::loom::ui::messages::MessageShape;
+using ::loom::ui::messages::MessageRowPayload;
+using ::loom::ui::messages::MessageRowCallbacks;
+using ::loom::ui::messages::RenderMessageRowByType;
 
 // =========================================================================
 // 1)  Input types
@@ -324,7 +324,7 @@ struct MessagesListInput {
     /// render_payload_row passes this to RenderAssistantTextMessageFaithful
     /// so the body uses stable-prefix caching instead of full re-parse.
     /// Nullptr = not streaming / use plain render_markdown.
-    ::cc::ui::StreamingMarkdown*    streaming_md = nullptr;
+    ::loom::ui::StreamingMarkdown*    streaming_md = nullptr;
 
     /// TS REF: Messages.tsx expandedKeys (L563) + expandKey (L725-727).
     /// Set of "expand keys" that the user has clicked/pressed-Enter on to
@@ -574,7 +574,7 @@ namespace detail {
     const std::vector<VisibleRow>& visible,
     const MessagesListInput& input,
     int term_cols = 80)
-    -> std::vector<cc::ui::messages::virtual_list::VisibleRow>;
+    -> std::vector<loom::ui::messages::virtual_list::VisibleRow>;
 
 /// Decode the backend_index set by `visible_rows_to_virtual` back into a
 /// messages_list::VisibleRow.  `out` is filled in place; returns true if
@@ -851,7 +851,7 @@ class MessagesListComponent final : public ComponentBase {
     MessagesListInput input,
     MessagesListCallbacks callbacks = {}) -> Component;
 
-} // namespace cc::ui::messages_list
+} // namespace loom::ui::messages_list
 
 // =========================================================================
 // REPL integration note:
@@ -859,9 +859,9 @@ class MessagesListComponent final : public ComponentBase {
 //   uses this shape/payload API once the engine owns the parallel vectors:
 //
 //     import cc.ui.messages.messages_list;
-//     using cc::ui::messages_list::MakeMessagesList;
-//     using cc::ui::messages_list::MessagesListInput;
-//     using cc::ui::messages_list::MessagesListCallbacks;
+//     using loom::ui::messages_list::MakeMessagesList;
+//     using loom::ui::messages_list::MessagesListInput;
+//     using loom::ui::messages_list::MessagesListCallbacks;
 //
 //     MessagesListInput in;
 //     in.rows   = engine.message_payloads();   // vector<MessageRowPayload>
@@ -887,5 +887,5 @@ class MessagesListComponent final : public ComponentBase {
 //     auto list = MakeMessagesList(std::move(in), std::move(cb));
 //
 //   Use Render() in the non-interactive path:
-//     auto elm = cc::ui::messages_list::render_messages_list_view(in, n, 80);
+//     auto elm = loom::ui::messages_list::render_messages_list_view(in, n, 80);
 // =========================================================================

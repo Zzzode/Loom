@@ -14,11 +14,11 @@ import loom.tools.tool;
 import loom.tools.feature_flags;
 import loom.serdes.json;
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
-using cc::core::Result;
-using cc::core::ToolInput;
-using cc::core::ToolResult;
+using loom::core::Result;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
 
 namespace fs = std::filesystem;
 
@@ -48,7 +48,7 @@ namespace fs = std::filesystem;
 }
 
 [[nodiscard]] std::vector<std::string> runtime_tool_names_impl() {
-    namespace features = cc::tools::features;
+    namespace features = loom::tools::features;
 
     std::vector<std::string> names = {
         "Agent",
@@ -175,12 +175,12 @@ namespace fs = std::filesystem;
     return ToolResult::success(out);
 }
 
-} // namespace cc::tools::detail
+} // namespace loom::tools::detail
 
-namespace cc::tools {
+namespace loom::tools {
 
 [[nodiscard]] std::vector<std::string> runtime_tool_names() {
     return detail::runtime_tool_names_impl();
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

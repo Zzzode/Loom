@@ -3,7 +3,7 @@ export module loom.model.effort;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 enum class EffortLevel {
     Low,
@@ -40,4 +40,4 @@ float effort_to_budget_multiplier(EffortLevel level) {
     return 1.0f;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

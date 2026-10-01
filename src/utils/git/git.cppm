@@ -14,11 +14,11 @@ import std;
 import loom.utils.error;
 import loom.process.bash.bash_execution;
 
-export namespace cc::utils::git {
+export namespace loom::utils::git {
 
-using cc::utils::Error;
-using cc::utils::ErrorCode;
-using cc::utils::Result;
+using loom::utils::Error;
+using loom::utils::ErrorCode;
+using loom::utils::Result;
 namespace fs = std::filesystem;
 
 struct FileStatus {
@@ -63,7 +63,7 @@ inline Result<std::string> exec_git(
     }
     cmd += " " + args + " 2>/dev/null";
 
-    FILE* pipe = cc::utils::bash::popen_spawn(cmd.c_str());
+    FILE* pipe = loom::utils::bash::popen_spawn(cmd.c_str());
     if (!pipe) {
         return std::unexpected(Error(ErrorCode::io_error,
             std::format("Failed to execute: {}", cmd)));
@@ -75,7 +75,7 @@ inline Result<std::string> exec_git(
         output.append(buffer.data(), bytes);
     }
 
-    int status = cc::utils::bash::pclose_spawn(pipe);
+    int status = loom::utils::bash::pclose_spawn(pipe);
     if (status != 0) {
         return std::unexpected(Error(ErrorCode::internal_error,
             std::format("Git command failed (exit {}): {}", status, cmd)));
@@ -376,4 +376,4 @@ inline std::vector<std::string> split_lines(std::string_view str) {
     return state;
 }
 
-} // namespace cc::utils::git
+} // namespace loom::utils::git

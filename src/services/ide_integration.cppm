@@ -22,10 +22,10 @@ import loom.process.async;
 import loom.services.mcp.client;
 import loom.services.mcp.types;
 
-export namespace cc::utils::ide {
+export namespace loom::utils::ide {
 
 namespace fs = std::filesystem;
-using namespace cc::utils::json;
+using namespace loom::utils::json;
 
 // =========================================================================
 // IDEType - Supported IDE identifiers
@@ -388,21 +388,21 @@ public:
             next_id_++, json_escape(tool_name), params_json);
         outbound_requests_.push_back(std::move(request));
 
-        cc::services::mcp::McpClient::Config config;
+        loom::services::mcp::McpClient::Config config;
         config.name = "ide";
         config.request_timeout = std::chrono::milliseconds{5000};
         config.init_timeout = std::chrono::milliseconds{5000};
         config.client_info.name = "loom-native";
         config.client_info.version = "1.0.0";
 
-        cc::services::mcp::McpClient client(std::move(config));
+        loom::services::mcp::McpClient client(std::move(config));
         const auto connected = client.connect_sse(lockfile_->mcp_url(), {});
         if (!connected) {
             return ide_rpc_failure(
                 std::format("Failed to connect to IDE MCP server: {}", mcp_error_to_string(connected.error())));
         }
 
-        cc::services::mcp::ToolCallRequest tool_request{
+        loom::services::mcp::ToolCallRequest tool_request{
             .name = std::string(tool_name),
             .arguments_json = std::string(params_json),
         };
@@ -476,8 +476,8 @@ private:
     std::vector<std::string> outbound_requests_;
     std::optional<IdeLockfile> lockfile_;
 
-    [[nodiscard]] static std::string mcp_error_to_string(cc::services::mcp::McpClientError error) {
-        using enum cc::services::mcp::McpClientError;
+    [[nodiscard]] static std::string mcp_error_to_string(loom::services::mcp::McpClientError error) {
+        using enum loom::services::mcp::McpClientError;
         switch (error) {
             case ConnectionFailed: return "connection failed";
             case NotConnected: return "not connected";
@@ -495,7 +495,7 @@ private:
         return "unknown error";
     }
 
-    [[nodiscard]] static std::string serialize_content(const std::vector<cc::services::mcp::ContentItem>& content) {
+    [[nodiscard]] static std::string serialize_content(const std::vector<loom::services::mcp::ContentItem>& content) {
         std::string json = "[";
         bool first = true;
         for (const auto& item : content) {
@@ -1038,4 +1038,4 @@ get_jetbrains_command(IDEType type) {
     }
 }
 
-} // namespace cc::utils::ide
+} // namespace loom::utils::ide

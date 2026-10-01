@@ -33,9 +33,9 @@ import std;
 import loom.types.types;
 import loom.ui.messages.message_pipeline;  // reuse faithful extract_tag()
 
-export namespace cc::ui::messages::collapse {
+export namespace loom::ui::messages::collapse {
 
-namespace pipeline = cc::ui::messages::pipeline;
+namespace pipeline = loom::ui::messages::pipeline;
 
 // TS REF: constants/xml.ts TASK_NOTIFICATION_TAG / STATUS_TAG / SUMMARY_TAG.
 // CPP wire format is underscored (see file header TAG-FORMAT NOTE).
@@ -45,7 +45,7 @@ inline constexpr std::string_view kSummaryTag          = "summary";
 
 // TS REF: src/tasks/LocalShellTask/LocalShellTask.tsx:23
 //   `export const BACKGROUND_BASH_SUMMARY_PREFIX = 'Background command '`
-// Mirrored locally (must equal cc::tasks::BACKGROUND_BASH_SUMMARY_PREFIX in
+// Mirrored locally (must equal loom::tasks::BACKGROUND_BASH_SUMMARY_PREFIX in
 // tasks/local_shell_task.cppm:31) rather than imported, so the UI-messages
 // layer stays free of the cc.tasks.* / bash-execution module graph.  If the
 // task-layer constant ever changes, update this mirror in lock-step.
@@ -54,11 +54,11 @@ inline constexpr std::string_view kBackgroundBashSummaryPrefix = "Background com
 /// Read the first text content block of a message, if any.
 /// TS: `msg.message.content[0]` where `content[0]?.type === 'text'`.
 [[nodiscard]] inline std::optional<std::string_view> first_text_block(
-    const cc::core::Message& msg) noexcept {
-    const auto* user = std::get_if<cc::core::UserMessage>(&msg);
+    const loom::core::Message& msg) noexcept {
+    const auto* user = std::get_if<loom::core::UserMessage>(&msg);
     if (user == nullptr) return std::nullopt;          // TS: msg.type !== 'user'
     if (user->content.empty()) return std::nullopt;    // TS: content[0] undefined
-    const auto* text = std::get_if<cc::core::TextBlock>(&user->content.front());
+    const auto* text = std::get_if<loom::core::TextBlock>(&user->content.front());
     if (text == nullptr) return std::nullopt;          // TS: content[0].type !== 'text'
     return std::string_view(text->text);
 }
@@ -68,7 +68,7 @@ inline constexpr std::string_view kBackgroundBashSummaryPrefix = "Background com
 /// <summary> beginning with BACKGROUND_BASH_SUMMARY_PREFIX (i.e. a bash-kind
 /// LocalShellTask completion, not an agent/workflow/monitor notification).
 [[nodiscard]] inline bool is_completed_background_bash(
-    const cc::core::Message& msg) {
+    const loom::core::Message& msg) {
     const auto text = first_text_block(msg);
     if (!text.has_value()) return false;
     // TS: content.text.includes(`<${TASK_NOTIFICATION_TAG}`)  (no '>' — an
@@ -104,9 +104,9 @@ inline constexpr std::string_view kBackgroundBashSummaryPrefix = "Background com
 /// `fullscreen` mirrors TS `isFullscreenEnvEnabled()` — the collapse only runs
 /// in the fullscreen transcript (the classic scrollback shows each completion).
 /// `verbose` is the ctrl+O pass-through: when true, every completion is shown.
-[[nodiscard]] inline std::vector<cc::core::Message>
+[[nodiscard]] inline std::vector<loom::core::Message>
 collapse_background_bash_notifications(
-    const std::vector<cc::core::Message>& messages,
+    const std::vector<loom::core::Message>& messages,
     bool fullscreen,
     bool verbose) {
     // TS: `if (!isFullscreenEnvEnabled()) return messages;`
@@ -114,7 +114,7 @@ collapse_background_bash_notifications(
     // TS: `if (verbose) return messages;`
     if (verbose) return messages;
 
-    std::vector<cc::core::Message> result;
+    std::vector<loom::core::Message> result;
     result.reserve(messages.size());
 
     std::size_t i = 0;
@@ -135,10 +135,10 @@ collapse_background_bash_notifications(
                 // UserAgentNotificationMessage renderer already understands —
                 // no new renderer needed (TS parity).  Preserve the first
                 // message's id/timestamp; replace only its text content.
-                auto synthetic = std::get<cc::core::UserMessage>(messages[run_start]);
+                auto synthetic = std::get<loom::core::UserMessage>(messages[run_start]);
                 synthetic.content.clear();
                 synthetic.content.push_back(
-                    cc::core::TextBlock{make_collapsed_notification_text(count)});
+                    loom::core::TextBlock{make_collapsed_notification_text(count)});
                 result.emplace_back(std::move(synthetic));
             }
         } else {
@@ -150,4 +150,4 @@ collapse_background_bash_notifications(
     return result;
 }
 
-} // namespace cc::ui::messages::collapse
+} // namespace loom::ui::messages::collapse

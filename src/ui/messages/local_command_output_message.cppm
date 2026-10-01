@@ -16,7 +16,7 @@ export module loom.ui.messages.local_command_output_message;
 
 import std;
 
-export namespace cc::ui::messages::local_cmd {
+export namespace loom::ui::messages::local_cmd {
 using namespace ftxui;
 
 // ============================================================
@@ -475,4 +475,4 @@ struct LocalCommandOptions {
           });
 }
 
-} // namespace cc::ui::messages::local_cmd
+} // namespace loom::ui::messages::local_cmd

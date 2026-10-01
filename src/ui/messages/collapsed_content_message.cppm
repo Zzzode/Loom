@@ -17,9 +17,9 @@ import std;
 
 import loom.ui.visual.code_highlight;
 
-export namespace cc::ui::messages::collapsed_content {
+export namespace loom::ui::messages::collapsed_content {
 using namespace ftxui;
-namespace ch = cc::ui::code_highlight;
+namespace ch = loom::ui::code_highlight;
 
 // ============================================================
 // Types
@@ -374,4 +374,4 @@ struct Aggregates {
           });
 }
 
-} // namespace cc::ui::messages::collapsed_content
+} // namespace loom::ui::messages::collapsed_content

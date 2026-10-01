@@ -2,7 +2,7 @@ export module loom.services.api.usage;
 
 import std;
 
-export namespace cc::services::api {
+export namespace loom::services::api {
 
 // Token usage tracking data
 struct UsageData {
@@ -37,4 +37,4 @@ auto reset_usage() -> void {
     detail::current_usage = UsageData{};
 }
 
-} // namespace cc::services::api
+} // namespace loom::services::api

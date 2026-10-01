@@ -11,7 +11,7 @@ export module loom.sdk.sandbox_types;
 
 import std;
 
-export namespace cc::sdk::sandbox {
+export namespace loom::sdk::sandbox {
 
 // ============================================================================
 // Network Configuration
@@ -155,4 +155,4 @@ using SandboxIgnoreViolations = std::unordered_map<std::string, std::vector<std:
     return true;
 }
 
-} // namespace cc::sdk::sandbox
+} // namespace loom::sdk::sandbox

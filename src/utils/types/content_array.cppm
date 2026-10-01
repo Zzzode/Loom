@@ -2,7 +2,7 @@ export module loom.types.wire.content_array;
 
 import std;
 
-export namespace cc::utils::content_array {
+export namespace loom::utils::content_array {
 
 struct ContentBlock {
     std::string type;
@@ -29,4 +29,4 @@ inline void insert_block_after_tool_results(std::vector<ContentBlock>& content, 
     }
 }
 
-} // namespace cc::utils::content_array
+} // namespace loom::utils::content_array

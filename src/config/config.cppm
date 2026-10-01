@@ -24,7 +24,7 @@ import loom.constants.paths;
 
 export import loom.config.mcp_types;
 
-export namespace cc::core {
+export namespace loom::core {
 
 // ============================================================
 // Feature Flags
@@ -383,7 +383,7 @@ public:
     /// Initialize with default settings
     ConfigManager()
         : global_path_(default_global_config_path())
-        , user_path_(cc::constants::paths::config_home_write() / "config.json")
+        , user_path_(loom::constants::paths::config_home_write() / "config.json")
         , project_path_(default_project_config_path())
         , local_path_(derive_local_config_path(default_project_config_path())) {}
 
@@ -510,8 +510,8 @@ public:
                         "saving configuration", path.string()));
         SalvageResult salvage_out = SalvageResult::Untouched;
         auto patched = patch_object_file(path,
-            [&](cc::utils::json::JsonMutVal& root,
-                cc::utils::json::JsonMutDoc& doc) -> VoidResult {
+            [&](loom::utils::json::JsonMutVal& root,
+                loom::utils::json::JsonMutDoc& doc) -> VoidResult {
                 return apply_save_fragments(root, doc, frag);
             },
             /*owner_only=*/false,
@@ -679,7 +679,7 @@ public:
     /// post-write reload still returns success with `reload_warning`.
     [[nodiscard]] Result<UserSettingSetOutcome>
     set_user_setting(std::string_view dotted,
-                     const cc::utils::json::JsonVal& value);
+                     const loom::utils::json::JsonVal& value);
 
     // ================================================================
     // MCP per-tier routing (RFC-0001 B followup c6)
@@ -738,8 +738,8 @@ public:
         const std::string fragment = serialize_server_object(server);
         const std::string name = server.name;
         auto patched = patch_mcp_file(*path,
-            [&](cc::utils::json::JsonMutVal& servers,
-                cc::utils::json::JsonMutDoc& doc) -> VoidResult {
+            [&](loom::utils::json::JsonMutVal& servers,
+                loom::utils::json::JsonMutDoc& doc) -> VoidResult {
                 // raw_json strict-parses and deep-copies the fragment into
                 // the patch document.
                 auto fragment_val = doc.raw_json(fragment);
@@ -801,8 +801,8 @@ public:
                 continue;
             }
             auto patched = patch_mcp_file(path,
-                [&](cc::utils::json::JsonMutVal& servers,
-                    cc::utils::json::JsonMutDoc&) -> VoidResult {
+                [&](loom::utils::json::JsonMutVal& servers,
+                    loom::utils::json::JsonMutDoc&) -> VoidResult {
                     (void)servers.remove(name);
                     return {};
                 });
@@ -840,7 +840,7 @@ public:
         if (!file.is_open()) return false;
         std::string content((std::istreambuf_iterator<char>(file)),
                             std::istreambuf_iterator<char>());
-        auto parsed = cc::utils::json::parse(content);
+        auto parsed = loom::utils::json::parse(content);
         if (!parsed) return false;
         auto root = parsed->root();
         if (!root.is_obj()) return false;
@@ -945,8 +945,8 @@ public:
                             mcp_scope_label(scope))));
         }
         auto patched = patch_mcp_file(*path,
-            [&](cc::utils::json::JsonMutVal& servers,
-                cc::utils::json::JsonMutDoc&) -> VoidResult {
+            [&](loom::utils::json::JsonMutVal& servers,
+                loom::utils::json::JsonMutDoc&) -> VoidResult {
                 for (const auto& name : names) {
                     auto entry = servers.get(name);
                     if (!entry.is_obj()) {
@@ -1026,7 +1026,7 @@ private:
                             std::istreambuf_iterator<char>());
 
         const std::string_view json_text = strip_leading_bom(content);
-        auto doc_result = cc::utils::json::parse(json_text);
+        auto doc_result = loom::utils::json::parse(json_text);
         if (!doc_result || !doc_result->root().is_obj()) {
             // A zero-length / all-whitespace user/local file is treated as
             // MISSING: the tier contributes nothing, emits no warning, and a
@@ -1075,9 +1075,9 @@ private:
     }
 
     /// Parse JSON content and merge into current settings.
-    /// Uses yyjson via cc::utils::json to deserialize fields.
+    /// Uses yyjson via loom::utils::json to deserialize fields.
     [[nodiscard]] VoidResult
-    merge_parsed(cc::utils::json::JsonVal root, McpStorageScope scope) {
+    merge_parsed(loom::utils::json::JsonVal root, McpStorageScope scope) {
         // c13b: every successfully-applied projected leaf is recorded so
         // source classification can distinguish a file value from a value
         // that merely equals the built-in default.
@@ -1530,10 +1530,10 @@ private:
     /// entries are removed); optional sections are removed when unset,
     /// matching the old serializer's omit-when-unset rule.
     static VoidResult
-    apply_save_fragments(cc::utils::json::JsonMutVal& root,
-                         cc::utils::json::JsonMutDoc& doc,
+    apply_save_fragments(loom::utils::json::JsonMutVal& root,
+                         loom::utils::json::JsonMutDoc& doc,
                          const SaveFragments& frag) {
-        auto patch_leaf = [&](cc::utils::json::JsonMutVal& section,
+        auto patch_leaf = [&](loom::utils::json::JsonMutVal& section,
                               std::string_view leaf,
                               const std::string& token) -> VoidResult {
             auto val = doc.raw_json(token);
@@ -1590,8 +1590,8 @@ private:
             emit_names.insert(name);
         }
         std::vector<std::string> to_remove;
-        servers.iter_obj([&](cc::utils::json::JsonMutVal k,
-                             cc::utils::json::JsonMutVal) {
+        servers.iter_obj([&](loom::utils::json::JsonMutVal k,
+                             loom::utils::json::JsonMutVal) {
             std::string name(k.as_str());
             if (!emit_names.contains(name)) {
                 to_remove.push_back(std::move(name));
@@ -1825,7 +1825,7 @@ private:
     }
 
     [[nodiscard]] static std::optional<std::string> json_string(
-        cc::utils::json::JsonVal value,
+        loom::utils::json::JsonVal value,
         std::string_view key
     ) {
         auto child = value.get(key);
@@ -1884,7 +1884,7 @@ private:
     /// owning mutable document (needed to embed raw_json fragments). A
     /// returned error aborts the write; the file bytes stay untouched.
     using McpPatchFn = std::function<VoidResult(
-        cc::utils::json::JsonMutVal&, cc::utils::json::JsonMutDoc&)>;
+        loom::utils::json::JsonMutVal&, loom::utils::json::JsonMutDoc&)>;
 
     // ================================================================
     // c13b user-setting private machinery
@@ -1936,7 +1936,7 @@ private:
         const auto* begin = text.data();
         // Portable shim: std::from_chars(int) is macOS-26-gated in libc++.
         const auto [ptr, ec] =
-            cc::utils::from_chars(begin, begin + text.size(), value);
+            loom::utils::from_chars(begin, begin + text.size(), value);
         if (ec != std::errc{} || ptr != begin + text.size()) {
             return std::unexpected(Error::make(
                 ErrorCode::InvalidInput, "integer value is out of range"));
@@ -2008,7 +2008,7 @@ private:
         const auto* begin = text.data();
         // Portable shim: std::from_chars(int) is macOS-26-gated in libc++.
         const auto [ptr, ec] =
-            cc::utils::from_chars(begin, begin + text.size(), value);
+            loom::utils::from_chars(begin, begin + text.size(), value);
         if (ec != std::errc{} || ptr != begin + text.size()) {
             return std::nullopt;
         }
@@ -2025,7 +2025,7 @@ private:
     /// Fractional, negative, and > uint32-max doubles are rejected so
     /// 4096.0 is accepted but 4096.5 / 4294967296.0 are not (D7).
     [[nodiscard]] static Result<std::int64_t>
-    integral_json_number(const cc::utils::json::JsonVal& value,
+    integral_json_number(const loom::utils::json::JsonVal& value,
                          std::string_view key) {
         if (value.is_int()) return value.as_int();
         if (value.is_num()) {
@@ -2046,7 +2046,7 @@ private:
     /// thinking_budget >=1024/0-clear) are applied by set_user_setting.
     [[nodiscard]] static Result<CoercedUserValue>
     coerce_user_value(const UserSettingSpec& spec,
-                      const cc::utils::json::JsonVal& value) {
+                      const loom::utils::json::JsonVal& value) {
         CoercedUserValue out;
         switch (spec.kind) {
         case UserSettingKind::String: {
@@ -2061,7 +2061,7 @@ private:
                     ErrorCode::InvalidInput,
                     std::format("'{}' must not be empty", spec.key)));
             }
-            cc::utils::json::JsonMutDoc doc;
+            loom::utils::json::JsonMutDoc doc;
             doc.set_root(doc.string(trimmed));
             out.token = doc.to_string();
             return out;
@@ -2134,7 +2134,7 @@ private:
                     ErrorCode::InvalidInput,
                     std::format("'{}' must be a number or null", spec.key)));
             }
-            cc::utils::json::JsonMutDoc doc;
+            loom::utils::json::JsonMutDoc doc;
             doc.set_root(doc.number(parsed));
             out.token = doc.to_string();
             return out;
@@ -2160,7 +2160,7 @@ private:
                     ErrorCode::InvalidInput,
                     std::format("'{}' must be one of: {}", spec.key, allowed)));
             }
-            cc::utils::json::JsonMutDoc doc;
+            loom::utils::json::JsonMutDoc doc;
             doc.set_root(doc.string(text));
             out.token = doc.to_string();
             return out;
@@ -2173,7 +2173,7 @@ private:
     /// thinking_budget-specific coercion: null or 0 clears, otherwise a
     /// uint >= 1024 (the Anthropic minimum).
     [[nodiscard]] static Result<CoercedUserValue>
-    coerce_thinking_budget(const cc::utils::json::JsonVal& value) {
+    coerce_thinking_budget(const loom::utils::json::JsonVal& value) {
         constexpr std::string_view key = "model.thinking_budget";
         if (value.is_null()) {
             return CoercedUserValue{"null", true};
@@ -2226,7 +2226,7 @@ private:
 
     /// Append the effective value token for `spec` onto the projection
     /// object (optional leaves emit null when unset).
-    void append_effective_value(cc::utils::json::JsonMutVal& token,
+    void append_effective_value(loom::utils::json::JsonMutVal& token,
                                 const UserSettingSpec& spec) const {
         const auto& m = settings_.model;
         const auto& d = settings_.display;
@@ -2266,7 +2266,7 @@ private:
     /// Build the single-key projection object as compact JSON.
     [[nodiscard]] std::string
     build_setting_token(const UserSettingSpec& spec) const {
-        cc::utils::json::JsonMutDoc doc;
+        loom::utils::json::JsonMutDoc doc;
         auto token = doc.object();
         token.set("key", spec.key);
         token.set("type", spec.type);
@@ -2603,8 +2603,8 @@ private:
     [[nodiscard]] static VoidResult
     patch_object_file(const std::filesystem::path& path,
                       const std::function<VoidResult(
-                          cc::utils::json::JsonMutVal& root,
-                          cc::utils::json::JsonMutDoc& doc)>& mutate,
+                          loom::utils::json::JsonMutVal& root,
+                          loom::utils::json::JsonMutDoc& doc)>& mutate,
                       bool owner_only,
                       SalvageMode salvage,
                       const Error& strict_error,
@@ -2624,8 +2624,8 @@ private:
         constexpr int kMaxCasAttempts = 32;
         std::unique_ptr<ConfigFileLock> file_lock;
         for (int attempt = 0; attempt < kMaxCasAttempts; ++attempt) {
-            cc::utils::json::JsonMutDoc doc;
-            cc::utils::json::JsonMutVal root;
+            loom::utils::json::JsonMutDoc doc;
+            loom::utils::json::JsonMutVal root;
             salvage_out = SalvageResult::Untouched;
             bool file_present = false;
             bool blank = false;
@@ -2662,7 +2662,7 @@ private:
                 const std::string_view json_text = strip_leading_bom(content);
                 blank = json_text.find_first_not_of(" \t\r\n") == std::string::npos;
                 if (!blank) {
-                    auto parsed = cc::utils::json::parse(json_text);
+                    auto parsed = loom::utils::json::parse(json_text);
                     if (parsed && parsed->root().is_obj()) {
                         root = doc.copy_val(parsed->root());
                         doc.set_root(root);
@@ -2674,7 +2674,7 @@ private:
                         // SalvageTrailing: preserve a complete leading OBJECT
                         // and drop only the trailing bytes. With no
                         // recoverable OBJECT the whole file is replaced.
-                        auto first = cc::utils::json::parse_first(json_text);
+                        auto first = loom::utils::json::parse_first(json_text);
                         if (first && first->root().is_obj()) {
                             root = doc.copy_val(first->root());
                             doc.set_root(root);
@@ -2760,8 +2760,8 @@ private:
         // the c13b salvage caller, so discard it here.
         SalvageResult salvage_out = SalvageResult::Untouched;
         auto patched = patch_object_file(path,
-            [&](cc::utils::json::JsonMutVal& root,
-                cc::utils::json::JsonMutDoc& doc) -> VoidResult {
+            [&](loom::utils::json::JsonMutVal& root,
+                loom::utils::json::JsonMutDoc& doc) -> VoidResult {
                 auto servers = root.ensure_object("mcpServers");
                 if (auto mutated = mutator(servers, doc); !mutated) {
                     return std::unexpected(mutated.error());
@@ -3158,7 +3158,7 @@ ConfigManager::blocked_setting_message(std::string_view dotted) noexcept {
 
 [[nodiscard]] inline std::string
 ConfigManager::serialize_user_setting_specs_json() {
-    namespace json = cc::utils::json;
+    namespace json = loom::utils::json;
     json::JsonMutDoc doc;
     auto root = doc.object();
 
@@ -3207,7 +3207,7 @@ ConfigManager::serialize_user_setting_specs_json() {
 
 [[nodiscard]] inline std::string
 ConfigManager::serialize_agent_settings_json() const {
-    namespace json = cc::utils::json;
+    namespace json = loom::utils::json;
     json::JsonMutDoc doc;
     auto root = doc.object();
     // Fixed section order; each projected section is always present.
@@ -3262,7 +3262,7 @@ ConfigManager::agent_secret_presence_json(std::string_view dotted) const {
         source = "file";
     }
 
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto presence = doc.object();
     presence.set("key", dotted);
     presence.set("set", source != "none");
@@ -3273,7 +3273,7 @@ ConfigManager::agent_secret_presence_json(std::string_view dotted) const {
 
 [[nodiscard]] inline Result<UserSettingSetOutcome>
 ConfigManager::set_user_setting(std::string_view dotted,
-                                const cc::utils::json::JsonVal& value) {
+                                const loom::utils::json::JsonVal& value) {
     // Classification is against the writable spec set ONLY: blocked keys
     // get owner-surface guidance, projected keys get the terminal
     // not-writable error, everything else is an unknown-key error.
@@ -3313,7 +3313,7 @@ ConfigManager::set_user_setting(std::string_view dotted,
         if (!generic) return std::unexpected(generic.error());
         coerced = *generic;
         if (dotted == "model.temperature" && !coerced.null_clear) {
-            auto reparsed = cc::utils::json::parse(coerced.token);
+            auto reparsed = loom::utils::json::parse(coerced.token);
             const double temperature =
                 reparsed ? reparsed->root().as_double() : 0.0;
             if (temperature < 0.0 || temperature > 1.0) {
@@ -3356,8 +3356,8 @@ ConfigManager::set_user_setting(std::string_view dotted,
     SalvageResult salvage_out = SalvageResult::Untouched;
     auto patched = patch_object_file(
         user_path_,
-        [&](cc::utils::json::JsonMutVal& root,
-            cc::utils::json::JsonMutDoc& doc) -> VoidResult {
+        [&](loom::utils::json::JsonMutVal& root,
+            loom::utils::json::JsonMutDoc& doc) -> VoidResult {
             auto section_obj = root.ensure_object(section);
             // raw_json("null") yields a valid JSON-null value that
             // yyjson_mut_obj_put KEEPS (only a null pointer deletes), so
@@ -3397,4 +3397,4 @@ ConfigManager::set_user_setting(std::string_view dotted,
     return outcome;
 }
 
-} // namespace cc::core
+} // namespace loom::core

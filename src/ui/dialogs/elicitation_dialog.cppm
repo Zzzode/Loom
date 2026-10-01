@@ -60,12 +60,12 @@ import loom.ui.dialogs.system;
 import loom.ui.dialogs.frame;
 import loom.ui.foundation.theme_provider;
 
-export namespace cc::ui::dialogs::elicitation {
+export namespace loom::ui::dialogs::elicitation {
 
 using namespace ftxui;
-namespace dsys = cc::ui::dialogs::system;
-namespace dframe = cc::ui::dialogs::frame;
-using Theme = cc::ui::design::theme::Theme;
+namespace dsys = loom::ui::dialogs::system;
+namespace dframe = loom::ui::dialogs::frame;
+using Theme = loom::ui::design::theme::Theme;
 
 // ============================================================
 // Renderer
@@ -218,4 +218,4 @@ inline void RegisterElicitationDialog(dsys::DialogRendererRegistry& registry)
     );
 }
 
-} // namespace cc::ui::dialogs::elicitation
+} // namespace loom::ui::dialogs::elicitation

@@ -4,7 +4,7 @@ import std;
 
 import loom.plugins.plugin_identifier;
 
-export namespace cc::utils::plugin_dependency_resolver {
+export namespace loom::utils::plugin_dependency_resolver {
 
 inline constexpr std::string_view inline_marketplace = "inline";
 
@@ -50,8 +50,8 @@ struct DemotionResult {
 };
 
 [[nodiscard]] inline std::string qualify_dependency(std::string_view dep, std::string_view declaring_plugin_id) {
-    if (cc::utils::plugin_identifier::parse_plugin_identifier(dep).marketplace) return std::string(dep);
-    const auto declaring = cc::utils::plugin_identifier::parse_plugin_identifier(declaring_plugin_id);
+    if (loom::utils::plugin_identifier::parse_plugin_identifier(dep).marketplace) return std::string(dep);
+    const auto declaring = loom::utils::plugin_identifier::parse_plugin_identifier(declaring_plugin_id);
     if (!declaring.marketplace || *declaring.marketplace == inline_marketplace) return std::string(dep);
     std::string out(dep);
     out.push_back('@');
@@ -77,7 +77,7 @@ using LookupFn = std::function<std::optional<DependencyLookupResult>(const std::
 ) {
     if (id != root_id && already_enabled.contains(id)) return std::nullopt;
 
-    const auto parsed = cc::utils::plugin_identifier::parse_plugin_identifier(id);
+    const auto parsed = loom::utils::plugin_identifier::parse_plugin_identifier(id);
     if (parsed.marketplace != root_marketplace && !(parsed.marketplace && allowed_cross_marketplaces.contains(*parsed.marketplace))) {
         ResolutionResult result;
         result.reason = ResolutionFailure::CrossMarketplace;
@@ -129,7 +129,7 @@ using LookupFn = std::function<std::optional<DependencyLookupResult>(const std::
     std::vector<std::string> closure;
     std::unordered_set<std::string> visited;
     std::vector<std::string> stack;
-    const auto root_marketplace = cc::utils::plugin_identifier::parse_plugin_identifier(root_id).marketplace;
+    const auto root_marketplace = loom::utils::plugin_identifier::parse_plugin_identifier(root_id).marketplace;
     if (auto err = detail::walk(root_id, root_id, root_id, root_marketplace, lookup, already_enabled, allowed_cross_marketplaces, closure, visited, stack)) return *err;
     ResolutionResult result;
     result.ok = true;
@@ -144,7 +144,7 @@ using LookupFn = std::function<std::optional<DependencyLookupResult>(const std::
     std::unordered_map<std::string, int> enabled_by_name;
     for (const auto& p : plugins) {
         known.insert(p.source);
-        known_by_name.insert(cc::utils::plugin_identifier::parse_plugin_identifier(p.source).name);
+        known_by_name.insert(loom::utils::plugin_identifier::parse_plugin_identifier(p.source).name);
         if (p.enabled) {
             enabled.insert(p.source);
             enabled_by_name[p.name]++;
@@ -159,7 +159,7 @@ using LookupFn = std::function<std::optional<DependencyLookupResult>(const std::
             if (!enabled.contains(p.source)) continue;
             for (const auto& raw_dep : p.dependencies) {
                 const auto dep = qualify_dependency(raw_dep, p.source);
-                const bool is_bare = !cc::utils::plugin_identifier::parse_plugin_identifier(dep).marketplace.has_value();
+                const bool is_bare = !loom::utils::plugin_identifier::parse_plugin_identifier(dep).marketplace.has_value();
                 const bool satisfied = is_bare ? ((enabled_by_name[dep]) > 0) : enabled.contains(dep);
                 if (!satisfied) {
                     enabled.erase(p.source);
@@ -188,12 +188,12 @@ using LookupFn = std::function<std::optional<DependencyLookupResult>(const std::
 
 [[nodiscard]] inline std::vector<std::string> find_reverse_dependents(const std::string& plugin_id, const std::vector<LoadedPlugin>& plugins) {
     std::vector<std::string> out;
-    const auto target_name = cc::utils::plugin_identifier::parse_plugin_identifier(plugin_id).name;
+    const auto target_name = loom::utils::plugin_identifier::parse_plugin_identifier(plugin_id).name;
     for (const auto& p : plugins) {
         if (!p.enabled || p.source == plugin_id) continue;
         for (const auto& raw_dep : p.dependencies) {
             const auto qualified = qualify_dependency(raw_dep, p.source);
-            const auto parsed = cc::utils::plugin_identifier::parse_plugin_identifier(qualified);
+            const auto parsed = loom::utils::plugin_identifier::parse_plugin_identifier(qualified);
             if ((parsed.marketplace && qualified == plugin_id) || (!parsed.marketplace && qualified == target_name)) {
                 out.push_back(p.name);
                 break;
@@ -219,4 +219,4 @@ using LookupFn = std::function<std::optional<DependencyLookupResult>(const std::
     return out;
 }
 
-} // namespace cc::utils::plugin_dependency_resolver
+} // namespace loom::utils::plugin_dependency_resolver

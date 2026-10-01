@@ -7,7 +7,7 @@ export module loom.text.format;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace ansi {
     inline auto bold(std::string_view text) -> std::string { return "\033[1m" + std::string(text) + "\033[22m"; }
@@ -125,4 +125,4 @@ namespace ansi {
     return std::string(text.substr(0, max_width - 3)) + "...";
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

@@ -4,7 +4,7 @@ export module loom.fs.read_file_in_range;
 
 import std;
 
-export namespace cc::utils::read_file_in_range {
+export namespace loom::utils::read_file_in_range {
 
 struct ReadFileRangeResult {
     std::string content;
@@ -269,4 +269,4 @@ namespace detail {
     return detail::read_fast(buffer.str(), mtime_ms, offset, max_lines, truncate_on_byte_limit ? max_bytes : std::nullopt);
 }
 
-} // namespace cc::utils::read_file_in_range
+} // namespace loom::utils::read_file_in_range

@@ -4,13 +4,13 @@ import std;
 
 import loom.services.diagnostic.dump_diagnostic;
 
-export namespace cc::commands::perf_issue {
+export namespace loom::commands::perf_issue {
 struct CommandResponse { bool ok{true}; std::string message; };
 [[nodiscard]] inline auto name() -> std::string_view { return "perf_issue"; }
 
 [[nodiscard]] inline auto run(std::string_view target = {}) -> CommandResponse {
-    const auto info = cc::services::diagnostic::collect_diagnostics(
-        cc::services::diagnostic::DumpLevel::Verbose);
+    const auto info = loom::services::diagnostic::collect_diagnostics(
+        loom::services::diagnostic::DumpLevel::Verbose);
     return {.ok = true, .message = std::format(
         "Performance issue snapshot\n"
         "Target: {}\n"

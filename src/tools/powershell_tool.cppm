@@ -10,7 +10,7 @@ import std;
 import loom.process.bash.bash_execution;
 
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 
 enum class PowerShellError {
@@ -316,7 +316,7 @@ public:
         const auto ps_cmd = build_powershell_process_command(config, default_cwd_);
 
 
-        auto pipe_cap = cc::utils::bash::exec_capture(ps_cmd.c_str());
+        auto pipe_cap = loom::utils::bash::exec_capture(ps_cmd.c_str());
     if (!pipe_cap) return std::unexpected(PowerShellError::ExecutionFailed);
     std::string output = std::move(pipe_cap->output);
     auto status = pipe_cap->status;
@@ -353,4 +353,4 @@ private:
     std::filesystem::path default_cwd_;
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

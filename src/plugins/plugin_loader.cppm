@@ -23,7 +23,7 @@ import loom.plugins.plugin_versioning;
 import loom.serdes.json;
 import loom.process.bash.bash_execution;
 
-export namespace cc::utils::plugin_loader {
+export namespace loom::utils::plugin_loader {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Plugin Source Types
@@ -391,12 +391,12 @@ struct CommandResult {
 
     std::array<char, 4096> buffer{};
     std::string output;
-    FILE* pipe = cc::utils::bash::popen_spawn(command.c_str());
+    FILE* pipe = loom::utils::bash::popen_spawn(command.c_str());
     if (!pipe) return CommandResult{.exit_code = 127, .output = "Failed to spawn command"};
     while (auto bytes = std::fread(buffer.data(), 1, buffer.size(), pipe)) {
         output.append(buffer.data(), bytes);
     }
-    const int status = cc::utils::bash::pclose_spawn(pipe);
+    const int status = loom::utils::bash::pclose_spawn(pipe);
     return CommandResult{.exit_code = decode_exit_status(status), .output = std::move(output)};
 }
 
@@ -538,7 +538,7 @@ inline void remove_git_metadata(const fs::path& path) {
 [[nodiscard]] inline std::optional<std::string> package_json_name(const fs::path& package_root) {
     const auto package_json = package_root / "package.json";
     if (!fs::exists(package_json)) return std::nullopt;
-    auto parsed = cc::utils::json::parse(read_text_file(package_json));
+    auto parsed = loom::utils::json::parse(read_text_file(package_json));
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto name = parsed->root().get("name");
     if (!name.is_str()) return std::nullopt;
@@ -587,14 +587,14 @@ inline void remove_git_metadata(const fs::path& path) {
     return value;
 }
 
-[[nodiscard]] inline std::optional<std::string> json_string(cc::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] inline std::optional<std::string> json_string(loom::utils::json::JsonVal obj, std::string_view key) {
     auto value = obj.get(key);
     if (!value.is_str()) return std::nullopt;
     return std::string(value.as_str());
 }
 
 [[nodiscard]] inline std::optional<std::vector<std::string>> json_string_array(
-    cc::utils::json::JsonVal obj,
+    loom::utils::json::JsonVal obj,
     std::string_view key
 ) {
     auto value = obj.get(key);
@@ -603,13 +603,13 @@ inline void remove_git_metadata(const fs::path& path) {
         return std::nullopt;
     }
     std::vector<std::string> out;
-    value.iter([&](cc::utils::json::JsonVal item) {
+    value.iter([&](loom::utils::json::JsonVal item) {
         if (item.is_str()) out.emplace_back(item.as_str());
     });
     return out;
 }
 
-[[nodiscard]] inline std::optional<PluginAuthor> json_author(cc::utils::json::JsonVal obj) {
+[[nodiscard]] inline std::optional<PluginAuthor> json_author(loom::utils::json::JsonVal obj) {
     auto value = obj.get("author");
     if (value.is_str()) return PluginAuthor{.name = std::string(value.as_str())};
     if (!value.is_obj()) return std::nullopt;
@@ -744,7 +744,7 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     std::string_view plugin_id,
     std::string_view version
 ) {
-    auto parsed = cc::utils::plugin_identifier::parse_plugin_identifier(plugin_id);
+    auto parsed = loom::utils::plugin_identifier::parse_plugin_identifier(plugin_id);
     const auto marketplace = parsed.marketplace.value_or("unknown");
     const auto version_text = version.empty() ? std::string("unknown") : std::string(version);
     return base_dir / "cache" /
@@ -773,7 +773,7 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
         auto versioned = get_versioned_cache_path(plugin_id, *version);
         if (std::filesystem::exists(versioned)) return versioned;
     }
-    auto parsed = cc::utils::plugin_identifier::parse_plugin_identifier(plugin_id);
+    auto parsed = loom::utils::plugin_identifier::parse_plugin_identifier(plugin_id);
     auto legacy = get_legacy_cache_path(parsed.name.empty() ? std::string(plugin_id) : parsed.name);
     if (std::filesystem::exists(legacy)) return legacy;
     return std::unexpected("Plugin cache path not found: " + std::string(plugin_id));
@@ -1122,7 +1122,7 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
         };
     }
 
-    auto parsed = cc::utils::json::parse(detail::read_text_file(manifest_path));
+    auto parsed = loom::utils::json::parse(detail::read_text_file(manifest_path));
     if (!parsed || !parsed->root().is_obj()) {
         return std::unexpected("Plugin manifest is invalid JSON: " + manifest_path.string());
     }
@@ -1348,4 +1348,4 @@ void clear_plugin_hook_cache() {}
     return styles;
 }
 
-} // namespace cc::utils::plugin_loader
+} // namespace loom::utils::plugin_loader

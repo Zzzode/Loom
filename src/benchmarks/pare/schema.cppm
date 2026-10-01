@@ -6,7 +6,7 @@ export module loom.benchmarks.pare.schema;
 
 import std;
 
-export namespace cc::benchmarks::pare {
+export namespace loom::benchmarks::pare {
 
 using NormalizeMode = std::string;
 
@@ -194,4 +194,4 @@ struct ComparisonResult {
     std::vector<PerCaseComparison> per_case;
 };
 
-} // namespace cc::benchmarks::pare
+} // namespace loom::benchmarks::pare

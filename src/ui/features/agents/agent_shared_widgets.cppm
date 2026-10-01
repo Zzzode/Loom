@@ -32,14 +32,14 @@ import loom.teams.swarm.backends;
 import loom.tools.agent_color_manager;
 import loom.ui.widgets.spinner_animations;
 
-export namespace cc::ui::agents::shared {
+export namespace loom::ui::agents::shared {
 using namespace ftxui;
 
-using cc::utils::swarm_backends::AgentColor;
-using cc::tools::agent_color_manager::get_agent_color;
-using cc::tools::agent_color_manager::agent_color_name;
-using cc::tools::agent_color_manager::assign_cycle_color;
-using cc::tools::agent_color_manager::parse_color_name;
+using loom::utils::swarm_backends::AgentColor;
+using loom::tools::agent_color_manager::get_agent_color;
+using loom::tools::agent_color_manager::agent_color_name;
+using loom::tools::agent_color_manager::assign_cycle_color;
+using loom::tools::agent_color_manager::parse_color_name;
 
 // ============================================================
 // Common Types (re-declared lightweight so widgets are self-contained;
@@ -185,8 +185,8 @@ struct StatusDotOptions {
 
     switch (opts.status) {
         case AgentStatus::Running: {
-            glyph = std::string(cc::ui::components::kDotsAnimation[
-                opts.spinner_frame % cc::ui::components::kDotsAnimation.size()]);
+            glyph = std::string(loom::ui::components::kDotsAnimation[
+                opts.spinner_frame % loom::ui::components::kDotsAnimation.size()]);
             break;
         }
         case AgentStatus::Idle:      glyph = "●"; break;
@@ -476,4 +476,4 @@ struct SharedAnimState {
     void tick() { ++frame; }
 };
 
-} // namespace cc::ui::agents::shared
+} // namespace loom::ui::agents::shared

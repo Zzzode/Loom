@@ -27,16 +27,16 @@ import loom.tools.script_diagnostics;
 import loom.tools.script_typecheck;
 import loom.process.bash.bash_execution;
 
-export namespace cc::tools::script_primitives {
+export namespace loom::tools::script_primitives {
 
 namespace fs = std::filesystem;
-using cc::utils::bash::execute_command;
-using cc::utils::bash::ShellSessionConfig;
-using cc::utils::bash::ExecutionResult;
-using cc::tools::script_typecheck::TypecheckOptions;
-using cc::tools::script_typecheck::TypecheckResult;
-using cc::tools::script_typecheck::run_script_typecheck;
-using cc::tools::script_typecheck::typecheck_files;
+using loom::utils::bash::execute_command;
+using loom::utils::bash::ShellSessionConfig;
+using loom::utils::bash::ExecutionResult;
+using loom::tools::script_typecheck::TypecheckOptions;
+using loom::tools::script_typecheck::TypecheckResult;
+using loom::tools::script_typecheck::run_script_typecheck;
+using loom::tools::script_typecheck::typecheck_files;
 
 // ---------------------------------------------------------------------------
 // PrimitiveResult — unified result structure used by every helper function
@@ -650,4 +650,4 @@ auto execute_primitive(std::string_view tool_name,
         "execute_primitive: unknown tool '{}'", tool_name));
 }
 
-} // namespace cc::tools::script_primitives
+} // namespace loom::tools::script_primitives

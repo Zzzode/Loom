@@ -79,7 +79,7 @@ private:
     std::atomic<std::size_t> request_count_{0};
 };
 
-std::string make_harness_config(cc::sdk::HarnessConfig& config,
+std::string make_harness_config(loom::sdk::HarnessConfig& config,
                                 const std::string& base_url) {
     config.model = "loom-test";
     config.base_url = base_url;
@@ -129,11 +129,11 @@ TEST(SdkHarness, RunAgainstLoopback) {
                           "application/json"};
     ASSERT_TRUE(server.ready());
 
-    cc::sdk::HarnessConfig config;
+    loom::sdk::HarnessConfig config;
     make_harness_config(config, server.base_url());
-    cc::sdk::Harness harness(std::move(config));
+    loom::sdk::Harness harness(std::move(config));
 
-    cc::sdk::TurnOptions options;
+    loom::sdk::TurnOptions options;
     options.prompt = "Hello";
     auto result = harness.run(options);
     ASSERT_TRUE(result.has_value()) << result.error().format();
@@ -145,7 +145,7 @@ TEST(SdkHarness, RunAgainstLoopback) {
     // The assistant message carries the canned text block.
     bool found_text = false;
     for (const auto& block : result->message.content) {
-        if (const auto* tb = std::get_if<cc::core::TextBlock>(&block)) {
+        if (const auto* tb = std::get_if<loom::core::TextBlock>(&block)) {
             if (tb->text == "ok") found_text = true;
         }
     }
@@ -159,7 +159,7 @@ TEST(SdkHarness, RunAgainstLoopback) {
 // (the engine's aborted_ is auto-reset at query() entry).
 TEST(SdkHarness, AbortBeforeRunReturnsErrorOnce) {
     // No server needed: the abort check is at run() entry, before any HTTP.
-    cc::sdk::HarnessConfig config;
+    loom::sdk::HarnessConfig config;
     config.model = "loom-test";
     config.api_key_provider = [] { return "sk-test"; };
     // Point at a closed local port so the second run()'s transport failure
@@ -167,10 +167,10 @@ TEST(SdkHarness, AbortBeforeRunReturnsErrorOnce) {
     // api.anthropic.com (which on a networked machine would be an external
     // call, violating §4.4's zero-external-calls gate).
     config.base_url = "http://127.0.0.1:1";
-    cc::sdk::Harness harness(std::move(config));
+    loom::sdk::Harness harness(std::move(config));
 
     harness.abort();
-    cc::sdk::TurnOptions options;
+    loom::sdk::TurnOptions options;
     options.prompt = "Hello";
     auto aborted = harness.run(options);
     ASSERT_FALSE(aborted.has_value());
@@ -195,9 +195,9 @@ TEST(SdkHarness, StreamDeliversEvents) {
                           "text/event-stream"};
     ASSERT_TRUE(server.ready());
 
-    cc::sdk::HarnessConfig config;
+    loom::sdk::HarnessConfig config;
     make_harness_config(config, server.base_url());
-    cc::sdk::Harness harness(std::move(config));
+    loom::sdk::Harness harness(std::move(config));
 
     std::atomic<int> text_deltas{0};
     std::atomic<bool> saw_stream_start{false};
@@ -205,19 +205,19 @@ TEST(SdkHarness, StreamDeliversEvents) {
     std::string accumulated_text;
     std::mutex text_mutex;
 
-    cc::sdk::TurnOptions options;
+    loom::sdk::TurnOptions options;
     options.prompt = "Hello";
-    harness.stream(options, [&](const cc::core::StreamEvent& ev) {
+    harness.stream(options, [&](const loom::core::StreamEvent& ev) {
         std::visit(
             [&](const auto& e) {
                 using T = std::decay_t<decltype(e)>;
-                if constexpr (std::is_same_v<T, cc::core::StreamStart>) {
+                if constexpr (std::is_same_v<T, loom::core::StreamStart>) {
                     saw_stream_start.store(true);
-                } else if constexpr (std::is_same_v<T, cc::core::ContentBlockDelta>) {
+                } else if constexpr (std::is_same_v<T, loom::core::ContentBlockDelta>) {
                     text_deltas.fetch_add(1);
                     std::lock_guard lock(text_mutex);
                     accumulated_text += e.delta_text;
-                } else if constexpr (std::is_same_v<T, cc::core::StreamEnd>) {
+                } else if constexpr (std::is_same_v<T, loom::core::StreamEnd>) {
                     saw_stream_end.store(true);
                 }
             },
@@ -240,26 +240,26 @@ TEST(SdkHarness, ResumeRestoresConversation) {
 
     // Seed a messages.jsonl via cc.session.storage (the same writer the
     // engine's session persistence uses).
-    ASSERT_TRUE(cc::session::append_message(
+    ASSERT_TRUE(loom::session::append_message(
         sessions_dir, session_id,
         R"({"id":"msg_1","role":"user","content":"Hello"})"));
-    ASSERT_TRUE(cc::session::append_message(
+    ASSERT_TRUE(loom::session::append_message(
         sessions_dir, session_id,
         R"({"id":"msg_2","role":"assistant","content":"Hi there","model":"loom-test"})"));
 
-    cc::sdk::HarnessConfig config;
+    loom::sdk::HarnessConfig config;
     config.model = "loom-test";
     config.api_key_provider = [] { return "sk-test"; };
     config.sessions_dir = sessions_dir;
-    cc::sdk::Harness harness(std::move(config));
+    loom::sdk::Harness harness(std::move(config));
 
     auto resumed = harness.resume(session_id);
     ASSERT_TRUE(resumed.has_value()) << resumed.error().format();
 
     auto conv = harness.conversation();
     ASSERT_EQ(conv.size(), 2u);
-    EXPECT_TRUE(std::holds_alternative<cc::core::UserMessage>(conv[0]));
-    EXPECT_TRUE(std::holds_alternative<cc::core::AssistantMessage>(conv[1]));
+    EXPECT_TRUE(std::holds_alternative<loom::core::UserMessage>(conv[0]));
+    EXPECT_TRUE(std::holds_alternative<loom::core::AssistantMessage>(conv[1]));
 
     fs::remove_all(sessions_dir);
 }
@@ -276,35 +276,35 @@ TEST(SdkHarness, PermissionCallbackInvoked) {
     ASSERT_TRUE(server.ready());
 
     std::atomic<int> permission_asks{0};
-    cc::sdk::HarnessConfig config;
+    loom::sdk::HarnessConfig config;
     make_harness_config(config, server.base_url());
     config.permission_callback =
-        [&](const cc::hooks::PermissionContext& ctx)
-            -> cc::hooks::PermissionResponse {
+        [&](const loom::hooks::PermissionContext& ctx)
+            -> loom::hooks::PermissionResponse {
             EXPECT_EQ(ctx.tool_name, "mock_perm_tool");
             permission_asks.fetch_add(1);
-            return cc::hooks::PermissionResponse{
-                .decision = cc::hooks::PermissionDecision::allow,
+            return loom::hooks::PermissionResponse{
+                .decision = loom::hooks::PermissionDecision::allow,
                 .updated_input_json = {},
                 .updated_permissions_json = {},
                 .message = {}};
         };
     // Register a mock tool that requires permission (the hook's
     // can_use_response reaches the ask_user callback when no rule matches).
-    config.register_extra_tools = [](cc::core::ToolRegistry& registry) {
-        registry.register_tool(cc::tools::detail::make_runtime_tool(
+    config.register_extra_tools = [](loom::core::ToolRegistry& registry) {
+        registry.register_tool(loom::tools::detail::make_runtime_tool(
             "mock_perm_tool", "A mock tool that requires permission",
-            cc::core::ToolPermission::Write,
+            loom::core::ToolPermission::Write,
             {}, /* no properties */
-            [](const cc::core::ToolInput&)
-                -> cc::core::Result<cc::core::ToolResult> {
-                return cc::core::ToolResult::success("mock result");
+            [](const loom::core::ToolInput&)
+                -> loom::core::Result<loom::core::ToolResult> {
+                return loom::core::ToolResult::success("mock result");
             }));
     };
 
-    cc::sdk::Harness harness(std::move(config));
+    loom::sdk::Harness harness(std::move(config));
 
-    cc::sdk::TurnOptions options;
+    loom::sdk::TurnOptions options;
     options.prompt = "Use the mock tool";
     auto result = harness.run(options);
     ASSERT_TRUE(result.has_value()) << result.error().format();

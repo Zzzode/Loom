@@ -7,7 +7,7 @@ import std;
 
 import loom.services.assistant_session_history;
 
-export namespace cc::commands::backfill_sessions {
+export namespace loom::commands::backfill_sessions {
 namespace fs = std::filesystem;
 
 struct CommandResponse { bool ok{true}; std::string message; };
@@ -87,7 +87,7 @@ struct LocalSessionMeta {
     }
 
     auto sessions = load_local_sessions(limit);
-    auto history = cc::services::assistant::load_session_history("");
+    auto history = loom::services::assistant::load_session_history("");
     std::unordered_set<std::string> known_ids;
     known_ids.reserve(history.size());
     for (const auto& entry : history) {
@@ -97,14 +97,14 @@ struct LocalSessionMeta {
     std::size_t added = 0;
     for (const auto& session : sessions) {
         if (known_ids.contains(session.id)) continue;
-        cc::services::assistant::SessionHistoryEntry entry{
+        loom::services::assistant::SessionHistoryEntry entry{
             .session_id = session.id,
             .title = session.title.empty() ? session.id : session.title,
             .timestamp = std::to_string(session.updated_at_epoch),
             .message_count = static_cast<std::uint64_t>(session.message_count),
             .project_path = session.cwd.empty() ? std::nullopt : std::optional<std::string>{session.cwd},
         };
-        if (cc::services::assistant::save_session_entry(entry, "")) {
+        if (loom::services::assistant::save_session_entry(entry, "")) {
             ++added;
             known_ids.insert(session.id);
         }
@@ -112,6 +112,6 @@ struct LocalSessionMeta {
 
     return {.ok = true, .message = std::format(
         "Session history backfill complete: scanned {}, added {}, history path {}",
-        sessions.size(), added, cc::services::assistant::default_history_path().string())};
+        sessions.size(), added, loom::services::assistant::default_history_path().string())};
 }
 }

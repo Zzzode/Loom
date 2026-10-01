@@ -24,7 +24,7 @@ import loom.ui.messages.message_image;
 import loom.ui.tools.registry;
 import loom.ui.tools.generic;
 
-namespace cc::ui::messages_list {
+namespace loom::ui::messages_list {
 
 namespace detail {
 
@@ -275,7 +275,7 @@ auto render_payload_row(const MessagesListInput& input,
             // functions (matching TS tool-class UI methods).
             //
             // Falls back to the generic renderer for unregistered tools.
-            using namespace cc::ui::tools;
+            using namespace loom::ui::tools;
             const bool is_registered_builtin =
                 global_tool_ui_registry().find(opts->call.tool_name) != nullptr;
             const ToolUIFunctions& ui =
@@ -410,4 +410,4 @@ auto render_payload_row(const MessagesListInput& input,
 
 } // namespace detail
 
-} // namespace cc::ui::messages_list
+} // namespace loom::ui::messages_list

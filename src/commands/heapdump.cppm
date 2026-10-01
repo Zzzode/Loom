@@ -15,7 +15,7 @@ import loom.types.types;
 import loom.commands.command;
 
 // Module-internal helpers (module linkage; intentionally not exported).
-namespace cc::commands {
+namespace loom::commands {
 
 /// Format a kilobyte count into a human-readable string.
 [[nodiscard]] inline std::string format_kb(long kb) {
@@ -24,11 +24,11 @@ namespace cc::commands {
     return std::format("{:.2f} MB ({} KB)", kb / 1024.0, kb);
 }
 
-} // namespace cc::commands
+} // namespace loom::commands
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// HeapdumpCommand implements the /heapdump slash command.
 /// The native C++ runtime has no V8 heap; instead it reports process memory
@@ -82,4 +82,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

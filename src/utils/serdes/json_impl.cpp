@@ -9,7 +9,7 @@ module loom.serdes.json;
 
 import std;
 
-namespace cc::utils::json {
+namespace loom::utils::json {
 
 std::string JsonVal::to_string() const {
     if (!val_) return {};
@@ -56,4 +56,4 @@ std::string to_string(JsonVal val) {
     return val.to_string();
 }
 
-} // namespace cc::utils::json
+} // namespace loom::utils::json

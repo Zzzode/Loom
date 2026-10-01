@@ -8,7 +8,7 @@ export module loom.hooks.lifecycle_hooks;
 
 import std;
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 // ============================================================
 // Hook Event Types
@@ -254,4 +254,4 @@ private:
     std::vector<StopHookChecker> stop_hooks_;
 };
 
-} // namespace cc::hooks
+} // namespace loom::hooks

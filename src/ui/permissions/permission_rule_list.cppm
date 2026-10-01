@@ -30,14 +30,14 @@ import loom.ui.foundation.design_tokens;
 import loom.ui.widgets.custom_select;
 import loom.ui.visual.structured_diff;
 
-export namespace cc::ui::permissions::rule_list {
+export namespace loom::ui::permissions::rule_list {
 using namespace ftxui;
-namespace dt     = cc::ui::design::tokens;
-namespace se     = cc::ui::permissions::scope_editor;
-namespace pc     = cc::ui::permissions::components;
-namespace eng    = cc::utils::permissions;
-namespace cs     = cc::ui::custom_select;
-namespace sd     = cc::ui::structured_diff;
+namespace dt     = loom::ui::design::tokens;
+namespace se     = loom::ui::permissions::scope_editor;
+namespace pc     = loom::ui::permissions::components;
+namespace eng    = loom::utils::permissions;
+namespace cs     = loom::ui::custom_select;
+namespace sd     = loom::ui::structured_diff;
 
 using eng::MatchStrategy;
 using eng::PermissionAction;
@@ -1558,24 +1558,24 @@ inline bool HandleDiffModal(RuleListState& st, Event e) {
     });
 }
 
-} // namespace cc::ui::permissions::rule_list
+} // namespace loom::ui::permissions::rule_list
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NEW CONTENT FOR P2-04: Permissions rules UI tabs
-// 7 additional functions + cc::utils::permissions_engine singleton state.
+// 7 additional functions + loom::utils::permissions_engine singleton state.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // =========================================================================
-// cc::utils::permissions_engine – NEW namespace: denial + workspace state
+// loom::utils::permissions_engine – NEW namespace: denial + workspace state
 // =========================================================================
 // This namespace is declared locally because the existing cc.security.permissions_engine
-// module exports into cc::utils::permissions.  We follow the task spec and
+// module exports into loom::utils::permissions.  We follow the task spec and
 // use a distinct namespace so that callers can write
-//   cc::utils::permissions_engine::recent_denials(50)
+//   loom::utils::permissions_engine::recent_denials(50)
 // per the P2-04 contract.
 // =========================================================================
 
-export namespace cc::utils::permissions_engine {
+export namespace loom::utils::permissions_engine {
 
 using namespace ftxui;
 namespace fs = std::filesystem;
@@ -1603,7 +1603,7 @@ struct WorkspaceEntry {
 
 // --- Singleton storage (GlobalStateSlot pattern) ------------------------
 // Uses an unnamed namespace with a mutex + vector, matching how
-// cc::utils::permissions::PermissionEngine stores rules in permissions_engine.cppm.
+// loom::utils::permissions::PermissionEngine stores rules in permissions_engine.cppm.
 
 namespace rl_anon_0 {
 
@@ -1747,20 +1747,20 @@ inline auto __test_reset_workspaces() -> void {
     s.workspaces.clear();
 }
 
-} // namespace cc::utils::permissions_engine
+} // namespace loom::utils::permissions_engine
 
 // =========================================================================
-// Now extend cc::ui::permissions::rule_list with the 7 builder functions.
+// Now extend loom::ui::permissions::rule_list with the 7 builder functions.
 // =========================================================================
 
-export namespace cc::ui::permissions::rule_list {
+export namespace loom::ui::permissions::rule_list {
 
 using namespace ftxui;
 namespace fs = std::filesystem;
-namespace peng = cc::utils::permissions_engine;
-namespace pc   = cc::ui::permissions::components;
-namespace dt   = cc::ui::design::tokens;
-namespace eng  = cc::utils::permissions;
+namespace peng = loom::utils::permissions_engine;
+namespace pc   = loom::ui::permissions::components;
+namespace dt   = loom::ui::design::tokens;
+namespace eng  = loom::utils::permissions;
 
 // =========================================================================
 // Shared helpers used by multiple builders
@@ -1926,19 +1926,19 @@ class ComponentHolderNode : public Node {
 // =========================================================================
 
 /// View-model for the Recent Denials tab.  If `denials` is empty the builder
-/// falls back to cc::utils::permissions_engine::recent_denials().
+/// falls back to loom::utils::permissions_engine::recent_denials().
 struct RecentDenialsState {
     std::optional<std::vector<peng::DenialEntry>> denials;
 };
 
 /// View-model for the Workspaces tab.  Falls back to
-/// cc::utils::permissions_engine::workspace_directories() when empty.
+/// loom::utils::permissions_engine::workspace_directories() when empty.
 struct WorkspaceState {
     std::optional<std::vector<peng::WorkspaceEntry>> entries;
 };
 
 /// Application-facing model for the 4-tab permissions panel.  Mirrors the
-/// `cc::ui::permissions::PermissionsPanelModel` declared in
+/// `loom::ui::permissions::PermissionsPanelModel` declared in
 /// `permission_rules_ui.cppm` (same field layout so the wrapper there can
 /// forward a copy without touching its own struct definition).
 struct PermissionsPanelModel {
@@ -1948,7 +1948,7 @@ struct PermissionsPanelModel {
 };
 
 /// Callback bundle for the 4-tab permissions panel.  Same shape as
-/// `cc::ui::permissions::PermissionsPanelCallbacks`.
+/// `loom::ui::permissions::PermissionsPanelCallbacks`.
 struct PermissionsPanelCallbacks {
     std::function<void(const RuleEntry&)>                 on_add_rule;
     std::function<void(std::string_view, const RuleEntry&)> on_update_rule;
@@ -1966,7 +1966,7 @@ struct PermissionsTabsState {
 };
 
 /// Active-tab selector for the 4-tab permissions panel.  Values must match
-/// `cc::ui::permissions::PermTab` declared in `permission_rules_ui.cppm`
+/// `loom::ui::permissions::PermTab` declared in `permission_rules_ui.cppm`
 /// (used by the wrapper that owns the tab bar UI).  Keeping the enum here lets
 /// BuildPermissionsTabs route renders/events without cross-module imports.
 enum class PermTab : std::uint8_t {
@@ -2991,11 +2991,11 @@ using namespace rl_anon_2; // unnamed
     });
 }
 
-} // namespace cc::ui::permissions::rule_list
+} // namespace loom::ui::permissions::rule_list
 
 // Expose namespace alias so callers can spell
 // `peng::recent_denials()` against either the import module's namespace OR
 // the namespace declared above.
-namespace cc::utils::permissions {
-    namespace engine_engine_alias = cc::utils::permissions_engine;
+namespace loom::utils::permissions {
+    namespace engine_engine_alias = loom::utils::permissions_engine;
 }

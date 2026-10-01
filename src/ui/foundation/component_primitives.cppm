@@ -23,10 +23,10 @@ import std;
 import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
 
-export namespace cc::ui::design::primitives {
+export namespace loom::ui::design::primitives {
 
-using namespace cc::ui::design::tokens;
-using namespace cc::ui::design::theme;
+using namespace loom::ui::design::tokens;
+using namespace loom::ui::design::theme;
 
 // ─── heading / subheading / caption ──────────────────────────────────────────
 /// Large heading.  On a TTY "size" maps to bold/dim + separator decoration,
@@ -289,12 +289,12 @@ private:
     return hbox(std::move(parts));
 }
 
-} // namespace cc::ui::design::primitives
+} // namespace loom::ui::design::primitives
 
 #ifdef CC_DESIGN_SYSTEM_DEMO
-export namespace cc::ui::design::primitives::demo {
+export namespace loom::ui::design::primitives::demo {
 inline int demo_spinner_frame_count() {
-    return static_cast<int>(cc::ui::design::primitives::k_spinner_frames.size());
+    return static_cast<int>(loom::ui::design::primitives::k_spinner_frames.size());
 }
 inline std::string demo_status_lookup() {
     // quick sanity list of supported status names

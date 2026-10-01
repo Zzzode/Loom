@@ -16,13 +16,13 @@ import loom.types.types;
 import loom.memdir.paths;
 // Genuinely used via global-namespace calls (::memdir::build_memory_lines,
 // ::memdir::join_lines, ::memdir::truncate_entrypoint_content); the
-// dead-import heuristic only attributes deep cc::-namespace paths, so the
+// dead-import heuristic only attributes deep loom::-namespace paths, so the
 // global ::memdir:: qualification is invisible to it.
 import loom.memdir.memdir;  // arch-check: keep-import
 import loom.constants.paths;
 import loom.process.bash.bash_execution;
 
-namespace cc::core {
+namespace loom::core {
 
 [[nodiscard]] std::string SystemPromptBuilder::build(
     std::optional<std::string_view> custom_prompt,
@@ -92,7 +92,7 @@ void QueryEngine::build_and_add_system_prompt() {
     // was actually read rather than a fixed "LOOM.md", so a legacy
     // CLAUDE.md is not mislabelled to the model as something it is not.
     if (auto memory_file =
-            cc::constants::paths::find_memory_file(std::filesystem::path(cwd))) {
+            loom::constants::paths::find_memory_file(std::filesystem::path(cwd))) {
         std::ifstream mem_ifs(*memory_file);
         if (mem_ifs) {
             std::string loom_md((std::istreambuf_iterator<char>(mem_ifs)), {});
@@ -108,7 +108,7 @@ void QueryEngine::build_and_add_system_prompt() {
     // P1-13b: Load user-level memory via the memdir module so global user
     // preferences are injected alongside project memory. Tree/ancestor
     // memory is already covered by the walk above.
-    auto user_mem = cc::memdir::get_user_memory_path();
+    auto user_mem = loom::memdir::get_user_memory_path();
     if (std::filesystem::exists(user_mem)) {
         std::ifstream um_ifs(user_mem);
         if (um_ifs) {
@@ -127,7 +127,7 @@ void QueryEngine::build_and_add_system_prompt() {
     // TS REF: src/memdir/memdir.ts loadMemoryPrompt() (buildMemoryLines)
     // — it returns guidance only; MEMORY.md content is appended below.
     if (auto auto_mem_dir =
-            cc::memdir::get_auto_mem_path(std::filesystem::path(cwd))) {
+            loom::memdir::get_auto_mem_path(std::filesystem::path(cwd))) {
         std::error_code mkdir_ec;
         std::filesystem::create_directories(*auto_mem_dir, mkdir_ec);
 
@@ -199,7 +199,7 @@ void QueryEngine::build_and_add_system_prompt() {
 void QueryEngine::populate_git_context(UserContext& ctx, const std::string& cwd) {
     auto run_git_cmd = [&](const char* cmd) -> std::string {
         auto full_cmd = std::format("cd \"{}\" && ( {} ) 2>/dev/null", cwd, cmd);
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(cc::utils::bash::popen_spawn(full_cmd.c_str()), pclose);
+        std::unique_ptr<FILE, decltype(&pclose)> pipe(loom::utils::bash::popen_spawn(full_cmd.c_str()), pclose);
         if (!pipe) return {};
         std::string result;
         char buf[256];
@@ -228,4 +228,4 @@ void QueryEngine::populate_git_context(UserContext& ctx, const std::string& cwd)
     }
 }
 
-} // namespace cc::core
+} // namespace loom::core

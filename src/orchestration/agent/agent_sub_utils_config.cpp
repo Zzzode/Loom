@@ -15,16 +15,16 @@ import loom.teams.team_helpers;
 import loom.tools.team;
 import loom.services.api.client;
 
-namespace cc::tools::agent::utils {
+namespace loom::tools::agent::utils {
 
 namespace fs = std::filesystem;
 
 [[nodiscard]] bool is_auto_memory_enabled() {
     const char* disable = std::getenv("LOOM_DISABLE_AUTO_MEMORY");
-    if (cc::utils::is_env_truthy(disable)) return false;
-    if (cc::utils::is_env_defined_falsy(disable)) return true;
-    if (cc::utils::is_env_truthy(std::getenv("LOOM_SIMPLE"))) return false;
-    if (cc::utils::is_env_truthy(std::getenv("LOOM_REMOTE")) &&
+    if (loom::utils::is_env_truthy(disable)) return false;
+    if (loom::utils::is_env_defined_falsy(disable)) return true;
+    if (loom::utils::is_env_truthy(std::getenv("LOOM_SIMPLE"))) return false;
+    if (loom::utils::is_env_truthy(std::getenv("LOOM_REMOTE")) &&
         (!std::getenv("LOOM_REMOTE_MEMORY_DIR") || !*std::getenv("CLAUDE_CODE_REMOTE_MEMORY_DIR"))) {
         return false;
     }
@@ -69,7 +69,7 @@ namespace fs = std::filesystem;
     }
     if (scope == "local") {
         if (const char* remote = std::getenv("LOOM_REMOTE_MEMORY_DIR"); remote && *remote) {
-            const auto git_root = cc::utils::git::find_git_root(cwd).value_or(cwd);
+            const auto git_root = loom::utils::git::find_git_root(cwd).value_or(cwd);
             const auto project_component = sanitize_agent_memory_component(git_root.string());
             return ((fs::path{remote} / "projects" / project_component / "agent-memory-local" / dir_name).string() +
                 fs::path::preferred_separator);
@@ -166,7 +166,7 @@ void add_agent_memory_tools(std::vector<std::string>& tools) {
 
 [[nodiscard]] std::string unique_teammate_agent_name(
     std::string base_name,
-    const cc::tools::Team& team
+    const loom::tools::Team& team
 ) {
     if (base_name.empty()) base_name = "agent";
 
@@ -190,9 +190,9 @@ void add_agent_memory_tools(std::vector<std::string>& tools) {
 }
 
 [[nodiscard]] bool current_session_is_teammate() {
-    if (cc::utils::is_in_process_teammate()) return true;
-    auto agent_id = cc::utils::get_agent_id();
-    auto team_name = cc::utils::get_team_name();
+    if (loom::utils::is_in_process_teammate()) return true;
+    auto agent_id = loom::utils::get_agent_id();
+    auto team_name = loom::utils::get_team_name();
     return agent_id && !agent_id->empty() && team_name && !team_name->empty();
 }
 
@@ -358,7 +358,7 @@ Guidelines:
     int parsed = 0;
     const auto* begin = value.data();
     const auto* end = value.data() + value.size();
-    const auto [ptr, ec] = cc::utils::from_chars(begin, end, parsed);
+    const auto [ptr, ec] = loom::utils::from_chars(begin, end, parsed);
     if (ec != std::errc{} || ptr != end) return std::nullopt;
     return parsed;
 }
@@ -407,4 +407,4 @@ void apply_agent_effort_to_request(
     return std::format("<critical_system_reminder>\n{}\n</critical_system_reminder>", reminder);
 }
 
-} // namespace cc::tools::agent::utils
+} // namespace loom::tools::agent::utils

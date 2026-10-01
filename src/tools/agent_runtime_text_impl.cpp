@@ -12,7 +12,7 @@ module loom.tools.agent_runtime;
 
 import std;
 
-namespace cc::tools::agent_runtime {
+namespace loom::tools::agent_runtime {
 
 namespace {
 
@@ -345,4 +345,4 @@ Output format (plain text labels, not markdown headers):
     if (role == "user" || role == "assistant" || role == "system") return std::string(role);
     return "system";
 }
-} // namespace cc::tools::agent_runtime
+} // namespace loom::tools::agent_runtime

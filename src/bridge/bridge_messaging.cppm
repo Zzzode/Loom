@@ -23,7 +23,7 @@ import loom.bridge.messages;
 import loom.server.control_protocol;
 import loom.serdes.json;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
 // =========================================================================
 // BoundedUUIDSet — FIFO-bounded set for echo dedup
@@ -113,14 +113,14 @@ using ParsedMessage = std::variant<
 
 /// True when the JSON value looks like an SDKMessage (has a string
 /// "type" field). Callers narrow further via the discriminated union.
-[[nodiscard]] inline bool is_sdk_message(cc::utils::json::JsonVal root) {
+[[nodiscard]] inline bool is_sdk_message(loom::utils::json::JsonVal root) {
     if (!root.valid() || !root.is_obj()) return false;
     auto type_val = root.get("type");
     return type_val.is_str();
 }
 
 /// True when the JSON value is a control_response.
-[[nodiscard]] inline bool is_sdk_control_response(cc::utils::json::JsonVal root) {
+[[nodiscard]] inline bool is_sdk_control_response(loom::utils::json::JsonVal root) {
     if (!root.valid() || !root.is_obj()) return false;
     auto type_val = root.get("type");
     if (!type_val.is_str()) return false;
@@ -129,7 +129,7 @@ using ParsedMessage = std::variant<
 }
 
 /// True when the JSON value is a control_request.
-[[nodiscard]] inline bool is_sdk_control_request(cc::utils::json::JsonVal root) {
+[[nodiscard]] inline bool is_sdk_control_request(loom::utils::json::JsonVal root) {
     if (!root.valid() || !root.is_obj()) return false;
     auto type_val = root.get("type");
     if (!type_val.is_str()) return false;
@@ -221,21 +221,21 @@ struct TitleCandidate {
 /// Delegates to cc.server.control_protocol ser/de; the variant is
 /// flattened back into the bridge's lightweight SDKControlRequest
 /// (only subtype/model/mode/max_thinking_tokens are consumed here).
-[[nodiscard]] inline SDKControlRequest parse_control_request(cc::utils::json::JsonVal root) {
+[[nodiscard]] inline SDKControlRequest parse_control_request(loom::utils::json::JsonVal root) {
     SDKControlRequest req;
-    auto parsed = cc::server::control::ControlRequest_from_json(root.to_string());
+    auto parsed = loom::server::control::ControlRequest_from_json(root.to_string());
     if (!parsed) return req;
     req.request_id = parsed->request_id;
-    req.request.subtype = cc::server::control::control_request_subtype_str(parsed->request);
+    req.request.subtype = loom::server::control::control_request_subtype_str(parsed->request);
     std::visit(
         [&req](const auto& alt) {
             using T = std::decay_t<decltype(alt)>;
-            if constexpr (std::is_same_v<T, cc::server::control::ControlSetModelRequest>) {
+            if constexpr (std::is_same_v<T, loom::server::control::ControlSetModelRequest>) {
                 req.request.model = alt.model;
-            } else if constexpr (std::is_same_v<T, cc::server::control::ControlSetPermissionModeRequest>) {
+            } else if constexpr (std::is_same_v<T, loom::server::control::ControlSetPermissionModeRequest>) {
                 req.request.mode = std::string(
-                    cc::server::control::permission_mode_to_str(alt.mode));
-            } else if constexpr (std::is_same_v<T, cc::server::control::ControlSetMaxThinkingTokensRequest>) {
+                    loom::server::control::permission_mode_to_str(alt.mode));
+            } else if constexpr (std::is_same_v<T, loom::server::control::ControlSetMaxThinkingTokensRequest>) {
                 if (alt.max_thinking_tokens)
                     req.request.max_thinking_tokens = *alt.max_thinking_tokens;
             }
@@ -247,14 +247,14 @@ struct TitleCandidate {
 /// Build an SDKControlResponse from a parsed JSON object.
 /// Delegates to cc.server.control_protocol ser/de; the variant is
 /// flattened back into the bridge's lightweight SDKControlResponse.
-[[nodiscard]] inline SDKControlResponse parse_control_response(cc::utils::json::JsonVal root) {
+[[nodiscard]] inline SDKControlResponse parse_control_response(loom::utils::json::JsonVal root) {
     SDKControlResponse resp;
-    auto parsed = cc::server::control::ControlResponse_from_json(root.to_string());
+    auto parsed = loom::server::control::ControlResponse_from_json(root.to_string());
     if (!parsed) return resp;
     std::visit(
         [&resp](const auto& alt) {
             using T = std::decay_t<decltype(alt)>;
-            if constexpr (std::is_same_v<T, cc::server::control::ControlSuccessResponse>) {
+            if constexpr (std::is_same_v<T, loom::server::control::ControlSuccessResponse>) {
                 resp.response.subtype = "success";
                 resp.response.request_id = alt.request_id;
                 resp.response.response_json = alt.response_json.value_or("{}");
@@ -269,7 +269,7 @@ struct TitleCandidate {
 }
 
 /// Build an SDKMessage from a parsed JSON object.
-[[nodiscard]] inline SDKMessage parse_sdk_message(cc::utils::json::JsonVal root) {
+[[nodiscard]] inline SDKMessage parse_sdk_message(loom::utils::json::JsonVal root) {
     SDKMessage msg;
     msg.type = root.get_string("type");
     auto uuid_val = root.get("uuid");
@@ -280,7 +280,7 @@ struct TitleCandidate {
         msg.message.content = std::string(content_val.as_str());
     } else if (content_val.is_arr()) {
         std::vector<ContentBlock> blocks;
-        content_val.iter([&blocks](cc::utils::json::JsonVal item) {
+        content_val.iter([&blocks](loom::utils::json::JsonVal item) {
             auto btype = item.get("type");
             if (btype.is_str() && btype.as_str() == std::string_view("text")) {
                 TextBlock tb;
@@ -332,7 +332,7 @@ inline void handle_ingress_message(
     };
 
     try {
-        auto parsed = cc::utils::json::parse(data);
+        auto parsed = loom::utils::json::parse(data);
         if (!parsed || !parsed->root().is_obj()) return;
         auto root = parsed->root();
 
@@ -436,21 +436,21 @@ inline constexpr std::string_view OUTBOUND_ONLY_ERROR =
     const std::string& response_json, // inner "response" object (may be "{}")
     const std::optional<std::string>& error = std::nullopt
 ) {
-    cc::server::control::ControlResponse envelope;
+    loom::server::control::ControlResponse envelope;
     envelope.session_id = session_id;
     if (subtype == "error" && error) {
-        envelope.response = cc::server::control::ControlErrorResponse{
+        envelope.response = loom::server::control::ControlErrorResponse{
             .request_id = request_id,
             .error = *error,
             .pending_permission_requests = std::nullopt,
         };
     } else {
-        envelope.response = cc::server::control::ControlSuccessResponse{
+        envelope.response = loom::server::control::ControlSuccessResponse{
             .request_id = request_id,
             .response_json = response_json,
         };
     }
-    return cc::server::control::ControlResponse_to_json(envelope);
+    return loom::server::control::ControlResponse_to_json(envelope);
 }
 
 /// Respond to inbound control_request messages from the server.
@@ -493,11 +493,11 @@ inline void handle_server_control_request(
     if (request.request.subtype == "initialize") {
         // Respond with minimal capabilities — the REPL handles
         // commands, models, and account info itself.
-        cc::server::control::ControlInitializeResponse init_resp;
+        loom::server::control::ControlInitializeResponse init_resp;
         init_resp.output_style = "normal";
         init_resp.available_output_styles = {"normal"};
         init_resp.pid = ::getpid();
-        auto payload = cc::server::control::ControlInitializeResponse_to_json(init_resp);
+        auto payload = loom::server::control::ControlInitializeResponse_to_json(init_resp);
         response_event = build_control_response_event(
             handlers.session_id,
             request.request_id,
@@ -683,4 +683,4 @@ struct SDKResultSuccess {
         msg.uuid);
 }
 
-} // namespace cc::bridge
+} // namespace loom::bridge

@@ -8,7 +8,7 @@ export module loom.platform.hyperlink;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
 
@@ -19,7 +19,7 @@ namespace detail {
 
 /// Quote a string for safe use as a single shell argument.
 /// Uses POSIX single-quote wrapping with '\'' replacement for
-/// embedded single quotes.  Mirrors cc::utils::bash::escape_shell_arg
+/// embedded single quotes.  Mirrors loom::utils::bash::escape_shell_arg
 /// but kept here self-contained so the hyperlink module has no
 /// internal dependency on the bash execution module.
 [[nodiscard]] inline std::string shell_quote(std::string_view arg) {
@@ -343,4 +343,4 @@ std::string make_file_link(fs::path file, std::optional<int> line) {
     return make_hyperlink(url, display);
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

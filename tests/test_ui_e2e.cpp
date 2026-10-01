@@ -202,19 +202,19 @@ std::vector<std::string> check_required_strings(
 TEST(E2E_Gate, StartupScreenHasAllElements) {
     using namespace e2e_gate;
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("cc_e2e_gate_startup_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     // Render at a realistic terminal size
@@ -250,21 +250,21 @@ TEST(E2E_Gate, StatuslineVisibleAfterSubmit) {
     McpToolFlowServer server;
     ASSERT_TRUE(server.valid());
 
-    cc::core::ToolRegistry tools;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("cc_e2e_gate_statusline_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     // Submit a message (triggers query)
@@ -306,31 +306,31 @@ TEST(E2E_Gate, McpToolUseBlockRendersWithNameAndInput) {
 
     // Register a dummy "mcp" tool and set up missing-tool handler so the
     // engine can "execute" analyze_image.
-    cc::core::ToolRegistry tools;
+    loom::core::ToolRegistry tools;
     tools.set_missing_tool_handler(
         [](std::string_view /*name*/,
-           const cc::core::ToolInput&) -> cc::core::Result<cc::core::ToolResult> {
+           const loom::core::ToolInput&) -> loom::core::Result<loom::core::ToolResult> {
             // Simulate MCP tool returning a result
-            std::vector<cc::core::ToolOutputContent> contents;
-            contents.push_back(cc::core::ToolOutputContent::text_output(
+            std::vector<loom::core::ToolOutputContent> contents;
+            contents.push_back(loom::core::ToolOutputContent::text_output(
                 "The image shows a dark-themed terminal interface."));
-            return cc::core::ToolResult{.content = std::move(contents), .is_error = false};
+            return loom::core::ToolResult{.content = std::move(contents), .is_error = false};
         });
 
-    cc::core::QueryEngineConfig config;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("cc_e2e_gate_tooluse_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     app->HandleSubmit("describe this image");
@@ -386,29 +386,29 @@ TEST(E2E_Gate, McpToolResultRendersAsSeparateCard) {
         "[{\"text\": \"The image is a solid black square with no visible "
         "content, text, UI elements, or distinct visual features.\"}]";
 
-    cc::core::ToolRegistry tools;
+    loom::core::ToolRegistry tools;
     tools.set_missing_tool_handler(
         [](std::string_view /*name*/,
-           const cc::core::ToolInput&) -> cc::core::Result<cc::core::ToolResult> {
-            std::vector<cc::core::ToolOutputContent> contents;
-            contents.push_back(cc::core::ToolOutputContent::text_output(kMcpResult));
-            return cc::core::ToolResult{.content = std::move(contents), .is_error = false};
+           const loom::core::ToolInput&) -> loom::core::Result<loom::core::ToolResult> {
+            std::vector<loom::core::ToolOutputContent> contents;
+            contents.push_back(loom::core::ToolOutputContent::text_output(kMcpResult));
+            return loom::core::ToolResult{.content = std::move(contents), .is_error = false};
         });
 
-    cc::core::QueryEngineConfig config;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("cc_e2e_gate_toolresult_separate_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     app->HandleSubmit("what is this image?");
@@ -483,29 +483,29 @@ TEST(E2E_Gate, McpResultSummaryFormatShownRaw) {
         "analyze_image_result_summary: "
         "[{\"text\": \"The image shows a dark terminal.\"}]";
 
-    cc::core::ToolRegistry tools;
+    loom::core::ToolRegistry tools;
     tools.set_missing_tool_handler(
         [](std::string_view /*name*/,
-           const cc::core::ToolInput&) -> cc::core::Result<cc::core::ToolResult> {
-            std::vector<cc::core::ToolOutputContent> contents;
-            contents.push_back(cc::core::ToolOutputContent::text_output(kMcpResult));
-            return cc::core::ToolResult{.content = std::move(contents), .is_error = false};
+           const loom::core::ToolInput&) -> loom::core::Result<loom::core::ToolResult> {
+            std::vector<loom::core::ToolOutputContent> contents;
+            contents.push_back(loom::core::ToolOutputContent::text_output(kMcpResult));
+            return loom::core::ToolResult{.content = std::move(contents), .is_error = false};
         });
 
-    cc::core::QueryEngineConfig config;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("cc_e2e_gate_result_raw_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     app->HandleSubmit("what is this?");
@@ -567,29 +567,29 @@ TEST(E2E_Gate, McpToolResultSuppressedInToolUseCardDuringStreaming) {
         "[{\"text\": \"The image is a completely black square with no visible "
         "content, text, diagrams, UI elements, or any other visual details.\"}]";
 
-    cc::core::ToolRegistry tools;
+    loom::core::ToolRegistry tools;
     tools.set_missing_tool_handler(
         [](std::string_view,
-           const cc::core::ToolInput&) -> cc::core::Result<cc::core::ToolResult> {
-            std::vector<cc::core::ToolOutputContent> contents;
-            contents.push_back(cc::core::ToolOutputContent::text_output(kMcpResult));
-            return cc::core::ToolResult{.content = std::move(contents), .is_error = false};
+           const loom::core::ToolInput&) -> loom::core::Result<loom::core::ToolResult> {
+            std::vector<loom::core::ToolOutputContent> contents;
+            contents.push_back(loom::core::ToolOutputContent::text_output(kMcpResult));
+            return loom::core::ToolResult{.content = std::move(contents), .is_error = false};
         });
 
-    cc::core::QueryEngineConfig config;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("cc_e2e_gate_no_output_in_tooluse_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     app->HandleSubmit("what is this image?");
@@ -668,43 +668,43 @@ TEST(E2E_Gate, McpToolsIncludedInApiRequestBody) {
     McpToolFlowServer server;
     ASSERT_TRUE(server.valid());
 
-    cc::core::ToolRegistry tools;
+    loom::core::ToolRegistry tools;
     // Register built-in tools so the request has something
     tools.set_missing_tool_handler(
         [](std::string_view tool_name,
-           const cc::core::ToolInput&) -> cc::core::Result<cc::core::ToolResult> {
-            return std::unexpected(cc::core::Error::make(
-                cc::core::ErrorCode::ToolNotFound,
+           const loom::core::ToolInput&) -> loom::core::Result<loom::core::ToolResult> {
+            return std::unexpected(loom::core::Error::make(
+                loom::core::ErrorCode::ToolNotFound,
                 std::format("Tool '{}' not found", tool_name)));
         });
 
-    cc::core::QueryEngineConfig config;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
 
     // Add a dynamic tools provider (simulating MCP tool discovery)
-    config.dynamic_tools_provider = []() -> std::vector<cc::core::ToolDefinition> {
-        std::vector<cc::core::ToolDefinition> defs;
-        cc::core::ToolDefinition d;
+    config.dynamic_tools_provider = []() -> std::vector<loom::core::ToolDefinition> {
+        std::vector<loom::core::ToolDefinition> defs;
+        loom::core::ToolDefinition d;
         d.name = "analyze_image";
         d.description = "Analyze an image and return a detailed description";
-        d.permission = cc::core::ToolPermission::Network;
+        d.permission = loom::core::ToolPermission::Network;
         d.category = "mcp:zai-builtin";
         defs.push_back(d);
         return defs;
     };
 
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("cc_e2e_gate_apibody_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     app->HandleSubmit("test");
@@ -730,7 +730,7 @@ TEST(E2E_Gate, McpToolsIncludedInApiRequestBody) {
 /// E2E Gate #5: Image placeholder must show [Image #N] format, not just [Image].
 /// Regression guard for "image ID missing" bug.
 TEST(E2E_Gate, ImagePlaceholderShowsNumberedId) {
-    using namespace cc::ui::messages::image;
+    using namespace loom::ui::messages::image;
 
     ImageMessageData d;
     d.media_type = "image/png";
@@ -807,30 +807,30 @@ TEST(E2E_Gate, FullConversationGoldenSnapshot) {
     McpToolFlowServer server;
     ASSERT_TRUE(server.valid());
 
-    cc::core::ToolRegistry tools;
+    loom::core::ToolRegistry tools;
     tools.set_missing_tool_handler(
         [](std::string_view /*name*/,
-           const cc::core::ToolInput&) -> cc::core::Result<cc::core::ToolResult> {
-            std::vector<cc::core::ToolOutputContent> contents;
-            contents.push_back(cc::core::ToolOutputContent::text_output(
+           const loom::core::ToolInput&) -> loom::core::Result<loom::core::ToolResult> {
+            std::vector<loom::core::ToolOutputContent> contents;
+            contents.push_back(loom::core::ToolOutputContent::text_output(
                 "The image shows a dark-themed terminal interface."));
-            return cc::core::ToolResult{.content = std::move(contents), .is_error = false};
+            return loom::core::ToolResult{.content = std::move(contents), .is_error = false};
         });
 
-    cc::core::QueryEngineConfig config;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), tools);
+    loom::core::QueryEngine engine(std::move(config), tools);
 
-    cc::commands::AppCommandRegistry commands;
+    loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
         ("cc_e2e_gate_golden_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    cc::utils::SessionStorage storage(storage_root);
+    loom::utils::SessionStorage storage(storage_root);
 
-    auto app = ftxui::Make<cc::ui::AppAdapter>(
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
     app->HandleSubmit("describe this image");

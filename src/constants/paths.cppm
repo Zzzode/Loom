@@ -34,7 +34,7 @@ export module loom.constants.paths;
 
 import std;
 
-export namespace cc::constants::paths {
+export namespace loom::constants::paths {
 
 /// The product's own config directory, as a dot-directory under $HOME.
 inline constexpr std::string_view kConfigDirName = ".loom";
@@ -189,4 +189,4 @@ inline constexpr std::array<std::string_view, 3> kMemoryFileCandidates = {
     return config_home_write() / std::string{kMemoryFileCandidates.front()};
 }
 
-}  // namespace cc::constants::paths
+}  // namespace loom::constants::paths

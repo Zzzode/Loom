@@ -3,7 +3,7 @@ export module loom.model.model;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace detail {
     // Module-level state for current model
@@ -55,4 +55,4 @@ std::string get_model_display_name(std::string_view model_id) {
     return std::string(model_id);
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

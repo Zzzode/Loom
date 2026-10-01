@@ -17,7 +17,7 @@ import loom.commands.tasks_cmd;
 import loom.commands.skills_cmd;
 import loom.commands.keybindings_cmd;
 
-namespace cc::commands {
+namespace loom::commands {
 
 void register_group_d_commands(CommandRegistry& registry) {
     registry.register_command<PermissionsCommand>();
@@ -36,4 +36,4 @@ void register_group_d_commands(CommandRegistry& registry) {
     registry.register_command<SkillsCommand>();
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

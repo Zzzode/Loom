@@ -25,9 +25,9 @@ import loom.keybindings.template_;
 import loom.keybindings.shortcut_format;
 import loom.keybindings.validate;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================================
 // Data-prep row types (Phase 4 FTXUI table rendering)
@@ -110,7 +110,7 @@ public:
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         // Feature gate — matches TS is_keybinding_customization_enabled()
-        if (!cc::keybindings::is_keybinding_customization_enabled()) {
+        if (!loom::keybindings::is_keybinding_customization_enabled()) {
             return CommandResult::success(
                 "Keybinding customization is not enabled. "
                 "This feature is currently in preview. "
@@ -145,7 +145,7 @@ public:
                 suggestions.emplace_back(s);
         }
         // Also suggest known action IDs from defaults
-        auto defaults = cc::keybindings::get_default_bindings();
+        auto defaults = loom::keybindings::get_default_bindings();
         std::unordered_set<std::string> seen;
         for (const auto& b : defaults) {
             if (seen.insert(b.command).second &&
@@ -163,7 +163,7 @@ public:
     /// Collect all keybindings as display rows.
     /// Uses KeybindingLoader to get merged (defaults + user) bindings.
     [[nodiscard]] static std::vector<KeybindingListRow> list_binding_rows() {
-        auto& loader = cc::keybindings::get_loader();
+        auto& loader = loom::keybindings::get_loader();
         auto result = loader.load_sync();
 
         std::vector<KeybindingListRow> rows;
@@ -238,23 +238,23 @@ private:
     // ---- Helpers: key formatting, source detection ------------------------
 
     [[nodiscard]] static bool is_default_id(std::string_view id) {
-        auto defaults = cc::keybindings::get_default_bindings();
+        auto defaults = loom::keybindings::get_default_bindings();
         return std::ranges::any_of(defaults,
             [id](const auto& b) { return b.id == id; });
     }
 
-    [[nodiscard]] static bool is_chord_reserved(const cc::keybindings::KeyChord& chord) {
+    [[nodiscard]] static bool is_chord_reserved(const loom::keybindings::KeyChord& chord) {
         std::string repr;
         if (chord.modifiers.ctrl)  repr += "ctrl+";
         if (chord.modifiers.alt)   repr += "alt+";
         if (chord.modifiers.shift) repr += "shift+";
         if (chord.modifiers.meta)  repr += "meta+";
         repr += chord.key;
-        return cc::keybindings::is_reserved(repr);
+        return loom::keybindings::is_reserved(repr);
     }
 
     [[nodiscard]] static std::string format_keys_for_display(
-        const std::vector<cc::keybindings::KeyChord>& keys) {
+        const std::vector<loom::keybindings::KeyChord>& keys) {
         if (keys.empty()) return "(unbound)";
         // For most keybindings there's just one chord; format it nicely.
         std::string out;
@@ -266,7 +266,7 @@ private:
     }
 
     [[nodiscard]] static std::string format_single_chord(
-        const cc::keybindings::KeyChord& chord) {
+        const loom::keybindings::KeyChord& chord) {
         std::string out;
         if (chord.modifiers.ctrl)  out += "Ctrl+";
         if (chord.modifiers.alt)   out += "Alt+";
@@ -292,7 +292,7 @@ private:
     ///  4. open in editor (text fallback if editor unavailable)
     [[nodiscard]] static Result<CommandResult> execute_default_open_editor() {
         namespace fs = std::filesystem;
-        auto path = cc::keybindings::get_keybindings_path();
+        auto path = loom::keybindings::get_keybindings_path();
 
         // Ensure parent directory exists
         std::error_code ec;
@@ -319,7 +319,7 @@ private:
                     return std::unexpected(Error::make(ErrorCode::InternalError,
                         std::format("Cannot write {}", path.string())));
                 }
-                create << cc::keybindings::generate_keybindings_template();
+                create << loom::keybindings::generate_keybindings_template();
             }
         }
 
@@ -391,7 +391,7 @@ private:
 
     [[nodiscard]] static Result<CommandResult> execute_reset() {
         namespace fs = std::filesystem;
-        auto path = cc::keybindings::get_keybindings_path();
+        auto path = loom::keybindings::get_keybindings_path();
         std::error_code ec;
         bool existed = fs::exists(path, ec);
         fs::remove(path, ec);
@@ -401,7 +401,7 @@ private:
                     path.string(), ec.message())));
         }
         // Invalidate loader cache
-        cc::keybindings::get_loader().reset_for_testing();
+        loom::keybindings::get_loader().reset_for_testing();
 
         if (existed) {
             return CommandResult::success(std::format(
@@ -414,14 +414,14 @@ private:
 
     [[nodiscard]] static Result<CommandResult> execute_export() {
         auto rows = list_binding_rows();
-        auto path = cc::keybindings::get_keybindings_path();
+        auto path = loom::keybindings::get_keybindings_path();
 
         // Build a JSON export (matches TS export behavior)
         std::ostringstream out;
         out << "{\n";
         out << std::format(
             "  \"$schema\": \"{}\",\n",
-            cc::keybindings::keybindings_schema_url);
+            loom::keybindings::keybindings_schema_url);
         out << std::format(
             "  \"$source\": \"exported from {}\",\n", path.string());
         out << "  \"bindings\": [\n";
@@ -452,7 +452,7 @@ private:
         std::string action_id,
         std::optional<std::string> when_clause) {
         // 1. Parse the key chord
-        auto chord = cc::keybindings::parse_key_chord(key_chord_str);
+        auto chord = loom::keybindings::parse_key_chord(key_chord_str);
         if (chord.key.empty()) {
             return CommandResult::fail(
                 std::format("Invalid key chord: '{}'", key_chord_str));
@@ -468,7 +468,7 @@ private:
 
         // 3. Read current user keybindings.json
         namespace fs = std::filesystem;
-        auto path = cc::keybindings::get_keybindings_path();
+        auto path = loom::keybindings::get_keybindings_path();
         std::error_code ec;
 
         // Build a new user bindings JSON (only user-level entries — not the
@@ -506,7 +506,7 @@ private:
         }
 
         // Invalidate loader cache so the new binding is picked up
-        cc::keybindings::get_loader().reset_for_testing();
+        loom::keybindings::get_loader().reset_for_testing();
 
         return CommandResult::success(std::format(
             "Keybinding set: {} → {}{} (written to {}).",
@@ -533,4 +533,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

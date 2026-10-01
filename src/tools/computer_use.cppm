@@ -13,7 +13,7 @@ export module loom.tools.computer_use;
 
 import std;
 
-export namespace cc::core::computer_use {
+export namespace loom::core::computer_use {
 
 
 struct ImageData {
@@ -854,4 +854,4 @@ private:
     InputProvider input_;
 };
 
-} // namespace cc::core::computer_use
+} // namespace loom::core::computer_use

@@ -5,7 +5,7 @@ export module loom.commands.exit;
 
 import std;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
 auto exit_state_path() -> std::filesystem::path {
     if (const char* home = std::getenv("HOME")) return std::filesystem::path{home} / ".loom" / "last-exit.txt";
@@ -45,4 +45,4 @@ auto save_state_before_exit() -> void {
     output << "status=exited\n";
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

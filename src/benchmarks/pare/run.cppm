@@ -15,10 +15,10 @@ import loom.benchmarks.pare.workspace;
 import loom.serdes.json;
 import loom.fs.file;
 
-export namespace cc::benchmarks::pare {
+export namespace loom::benchmarks::pare {
 
 namespace fs = std::filesystem;
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 inline auto case_result_jsonl(const CaseRunResult& r) -> std::string {
     json::JsonMutDoc doc;
@@ -343,4 +343,4 @@ inline std::optional<RunBenchmarkResult> run_benchmark(const RunBenchmarkParams&
     };
 }
 
-} // namespace cc::benchmarks::pare
+} // namespace loom::benchmarks::pare

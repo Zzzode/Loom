@@ -5,5 +5,5 @@ import std;
 import loom.benchmarks.pare.cli;
 
 int main(int argc, const char* argv[]) {
-    return cc::benchmarks::pare::cli_main(argc, argv);
+    return loom::benchmarks::pare::cli_main(argc, argv);
 }

@@ -16,7 +16,7 @@ import std;
 
 import loom.skills.load_skills_dir;
 
-export namespace cc::skills::bundled {
+export namespace loom::skills::bundled {
 
 // ---------------------------------------------------------------------------
 // Static reference data (kept in sync with TS keybindings/schema.ts +
@@ -447,8 +447,8 @@ inline bool is_keybinding_customization_enabled() {
 /// NOTE: skill name is `"keybindings-help"` (NOT `"keybindings"`).
 /// The root-level `cc.skills.keybindings` module provides a simple shortcut
 /// reference sheet under name `"keybindings"`.
-cc::skills::SkillManifest get_keybindings_help_skill_manifest() {
-    return cc::skills::SkillManifest{
+loom::skills::SkillManifest get_keybindings_help_skill_manifest() {
+    return loom::skills::SkillManifest{
         .name = "keybindings-help",
         .description =
             "Use when the user wants to customize keyboard shortcuts, rebind keys, add "
@@ -473,4 +473,4 @@ cc::skills::SkillManifest get_keybindings_help_skill_manifest() {
     };
 }
 
-} // namespace cc::skills::bundled
+} // namespace loom::skills::bundled

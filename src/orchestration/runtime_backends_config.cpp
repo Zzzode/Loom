@@ -15,15 +15,15 @@ import loom.types.tool_types;
 import loom.tools.runtime_registry;
 import loom.serdes.json;
 
-namespace cc::orchestration::detail {
+namespace loom::orchestration::detail {
 
-using cc::core::ConfigManager;
-using cc::core::LoadOptions;
-using cc::core::Result;
-using cc::core::ToolInput;
-using cc::core::ToolResult;
+using loom::core::ConfigManager;
+using loom::core::LoadOptions;
+using loom::core::Result;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
 
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 namespace {
 
@@ -50,8 +50,8 @@ namespace {
     }
     const auto root = parsed->root();
     const std::string action =
-        cc::tools::detail::runtime_json_string(root, "action").value_or("get");
-    const auto key = cc::tools::detail::runtime_json_string(root, "key");
+        loom::tools::detail::runtime_json_string(root, "action").value_or("get");
+    const auto key = loom::tools::detail::runtime_json_string(root, "key");
 
     // Per-call manager: the user path and env engagement are resolved now.
     ConfigManager manager;
@@ -134,4 +134,4 @@ namespace {
         "Unknown config action '{}' (expected get, set, or list)", action));
 }
 
-} // namespace cc::orchestration::detail
+} // namespace loom::orchestration::detail

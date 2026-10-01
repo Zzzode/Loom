@@ -6,7 +6,7 @@ export module loom.scm.git.commit_attribution;
 
 import std;
 
-export namespace cc::utils::commit_attribution {
+export namespace loom::utils::commit_attribution {
 
 struct FileAttributionState {
     std::string content_hash;
@@ -283,4 +283,4 @@ namespace detail {
     return state;
 }
 
-} // namespace cc::utils::commit_attribution
+} // namespace loom::utils::commit_attribution

@@ -22,7 +22,7 @@ import std;
 
 import loom.ui.messages.message_components;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -239,4 +239,4 @@ class HookProgressComponent : public ComponentBase {
     return Make<HookProgressComponent>(std::move(hooks), std::move(on_dismiss));
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

@@ -8,7 +8,7 @@ import std;
 
 import loom.skills.skill;
 
-export namespace cc::skills::simplify {
+export namespace loom::skills::simplify {
 
 /// Simplify skill definition
 [[nodiscard]] inline SkillDefinition make_simplify_skill() {
@@ -63,4 +63,4 @@ export namespace cc::skills::simplify {
     };
 }
 
-} // namespace cc::skills::simplify
+} // namespace loom::skills::simplify

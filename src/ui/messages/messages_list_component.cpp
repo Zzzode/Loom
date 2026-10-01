@@ -19,7 +19,7 @@ import std;
 import loom.ui.messages.message_row;
 import loom.ui.messages.virtual_list;
 
-namespace cc::ui::messages_list {
+namespace loom::ui::messages_list {
 
 MessagesListComponent::MessagesListComponent(
     MessagesListInput input,
@@ -322,7 +322,7 @@ Element MessagesListComponent::Render() {
             // ── P0-3 VIRTUAL PATH ──────────────────────────────────
             // Build virtual rows from cached visible_rows_.  Use
             // viewport_rows from input (default 40) as the window height.
-            namespace vl = cc::ui::messages::virtual_list;
+            namespace vl = loom::ui::messages::virtual_list;
             const int term_cols_est = 120;
             auto virt_rows = visible_rows_to_virtual(
                 visible_rows_, input_, term_cols_est);
@@ -648,4 +648,4 @@ Component MakeMessagesList(
     return Make<MessagesListComponent>(std::move(input), std::move(callbacks));
 }
 
-} // namespace cc::ui::messages_list
+} // namespace loom::ui::messages_list

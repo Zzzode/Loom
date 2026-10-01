@@ -38,12 +38,12 @@ import loom.ui.app.app_dialog_registration;
 
 namespace {
 
-namespace dsys = cc::ui::dialogs::system;
-namespace drender = cc::ui::dialogs::default_renderers;
-namespace ddoc = cc::ui::screens::doctor_dialog_registration;
-namespace fdp = cc::ui::feature_dialog_protocol;
-namespace fwa = cc::ui::feature_wizard_adapter;
-namespace app_dlg = cc::ui::app_dialogs;
+namespace dsys = loom::ui::dialogs::system;
+namespace drender = loom::ui::dialogs::default_renderers;
+namespace ddoc = loom::ui::screens::doctor_dialog_registration;
+namespace fdp = loom::ui::feature_dialog_protocol;
+namespace fwa = loom::ui::feature_wizard_adapter;
+namespace app_dlg = loom::ui::app_dialogs;
 
 /// Render an FTXUI Element to a fixed-size screen and return the text with
 /// ANSI escape sequences stripped (for content assertions).

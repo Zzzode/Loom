@@ -9,7 +9,7 @@ export module loom.process.exec_sync;
 import std;
 import loom.process.bash.bash_execution;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 // Execute a command synchronously and return stdout
 inline std::expected<std::string, std::string>
@@ -18,7 +18,7 @@ exec_sync(std::string_view command) {
     // Redirect stderr to /dev/null for clean stdout capture
     cmd += " 2>/dev/null";
 
-    auto pipe_cap = cc::utils::bash::exec_capture(cmd.c_str());
+    auto pipe_cap = loom::utils::bash::exec_capture(cmd.c_str());
     if (!pipe_cap) {
         return std::unexpected("Failed to execute command: " + std::string(command));
     }
@@ -61,4 +61,4 @@ exec_sync_lines(std::string_view command) {
     return lines;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

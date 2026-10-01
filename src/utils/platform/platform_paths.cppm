@@ -2,7 +2,7 @@ export module loom.platform.platform_paths;
 
 import std;
 
-export namespace cc::utils::platform_paths {
+export namespace loom::utils::platform_paths {
 
 struct PlatformPaths {
     std::string home;
@@ -36,4 +36,4 @@ inline bool is_wsl_environment() {
     return false;
 }
 
-} // namespace cc::utils::platform_paths
+} // namespace loom::utils::platform_paths

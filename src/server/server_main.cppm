@@ -20,7 +20,7 @@ import loom.hooks.tool_permissions;
 import loom.session.storage;
 import loom.serdes.json;
 
-export namespace cc::server {
+export namespace loom::server {
 
 struct ServerConfig {
     uint16_t port = 3000;
@@ -208,7 +208,7 @@ struct WsFrame {
 inline void add_json_value_to_params(
     std::map<std::string, std::string>& params,
     std::string key,
-    cc::utils::json::JsonVal value
+    loom::utils::json::JsonVal value
 ) {
     if (value.is_str()) {
         params[std::move(key)] = std::string(value.as_str());
@@ -223,9 +223,9 @@ inline void add_json_value_to_params(
     auto params = request.query;
     if (request.body.empty()) return params;
 
-    auto parsed = cc::utils::json::parse(request.body);
+    auto parsed = loom::utils::json::parse(request.body);
     if (!parsed || !parsed->root().is_obj()) return params;
-    parsed->root().iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    parsed->root().iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
         add_json_value_to_params(params, std::string(key.as_str()), value);
     });
@@ -390,7 +390,7 @@ inline void add_json_value_to_params(
     }
 
     const auto now = std::chrono::system_clock::now();
-    cc::session::SessionMetadata metadata{
+    loom::session::SessionMetadata metadata{
         .session_id = make_id("server"),
         .model = params.contains("model") ? params.at("model") : std::string("default"),
         .cwd = cwd,
@@ -401,7 +401,7 @@ inline void add_json_value_to_params(
         .is_archived = false,
     };
     const auto sessions_dir = std::filesystem::path{default_sessions_dir_string()};
-    if (!cc::session::save_session_metadata(sessions_dir, metadata)) {
+    if (!loom::session::save_session_metadata(sessions_dir, metadata)) {
         return R"({"error":"failed to save session metadata"})";
     }
 
@@ -414,7 +414,7 @@ inline void add_json_value_to_params(
 }
 
 [[nodiscard]] inline std::optional<std::string> extract_user_content(std::string_view payload) {
-    auto parsed = cc::utils::json::parse(payload);
+    auto parsed = loom::utils::json::parse(payload);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
     auto type = root.get("type");
@@ -426,7 +426,7 @@ inline void add_json_value_to_params(
     if (content.is_str()) return std::string(content.as_str());
     if (content.is_arr()) {
         std::string out;
-        content.iter([&](cc::utils::json::JsonVal item) {
+        content.iter([&](loom::utils::json::JsonVal item) {
             if (item.is_str()) {
                 if (!out.empty()) out += "\n";
                 out += std::string(item.as_str());
@@ -457,7 +457,7 @@ inline void add_json_value_to_params(
 
 struct ControlResponseDecision {
     std::string request_id;
-    cc::hooks::PermissionResponse response;
+    loom::hooks::PermissionResponse response;
 };
 
 [[nodiscard]] inline std::optional<ControlResponseDecision> control_response_decision(
@@ -469,23 +469,23 @@ struct ControlResponseDecision {
         [](const auto& inner) -> std::optional<ControlResponseDecision> {
             using T = std::decay_t<decltype(inner)>;
             if constexpr (std::is_same_v<T, control::ControlErrorResponse>) {
-                cc::hooks::PermissionResponse permission_response{};
-                permission_response.decision = cc::hooks::PermissionDecision::deny;
+                loom::hooks::PermissionResponse permission_response{};
+                permission_response.decision = loom::hooks::PermissionDecision::deny;
                 permission_response.message = inner.error;
                 return ControlResponseDecision{
                     .request_id = inner.request_id,
                     .response = std::move(permission_response),
                 };
             } else {
-                cc::hooks::PermissionResponse permission_response{};
-                permission_response.decision = cc::hooks::PermissionDecision::deny;
+                loom::hooks::PermissionResponse permission_response{};
+                permission_response.decision = loom::hooks::PermissionDecision::deny;
                 if (inner.response_json.has_value()) {
-                    auto body = cc::utils::json::parse(*inner.response_json);
+                    auto body = loom::utils::json::parse(*inner.response_json);
                     if (body && body->root().is_obj()) {
                         auto b = body->root();
                         auto behavior = b.get("behavior");
                         if (behavior.is_str() && behavior.as_str() == std::string_view("allow")) {
-                            permission_response.decision = cc::hooks::PermissionDecision::allow;
+                            permission_response.decision = loom::hooks::PermissionDecision::allow;
                         }
                         auto updated_input = b.get("updatedInput");
                         if (updated_input.is_obj()) {
@@ -511,9 +511,9 @@ struct ControlResponseDecision {
 }
 
 [[nodiscard]] inline std::string permission_input_json(std::string_view input_json) {
-    auto parsed = cc::utils::json::parse(input_json);
+    auto parsed = loom::utils::json::parse(input_json);
     if (!parsed || !parsed->root().is_obj()) return "{}";
-    return cc::utils::json::to_string(parsed->root());
+    return loom::utils::json::to_string(parsed->root());
 }
 
 [[nodiscard]] inline std::string permission_control_request_json(
@@ -549,7 +549,7 @@ struct ControlResponseDecision {
 
 [[nodiscard]] inline std::string sdk_assistant_message(
     std::string_view session_id,
-    cc::utils::json::JsonVal response
+    loom::utils::json::JsonVal response
 ) {
     const auto uuid = response.get("id").is_str()
         ? std::string(response.get("id").as_str())
@@ -571,7 +571,7 @@ struct ControlResponseDecision {
 
 [[nodiscard]] inline std::string sdk_result_message(
     std::string_view session_id,
-    cc::utils::json::JsonVal response
+    loom::utils::json::JsonVal response
 ) {
     const auto uuid = make_id("result");
     const auto text = response.get("response").is_str()
@@ -833,7 +833,7 @@ private:
 
         std::mutex permission_mutex;
         std::condition_variable permission_cv;
-        std::unordered_map<std::string, std::optional<cc::hooks::PermissionResponse>> pending_permissions;
+        std::unordered_map<std::string, std::optional<loom::hooks::PermissionResponse>> pending_permissions;
         bool closing_permissions = false;
 
         auto record_control_response = [&](std::string_view payload) {
@@ -849,12 +849,12 @@ private:
 
         register_direct_permission_handler(
             session_id,
-            [&](const detail::DirectPermissionRequest& request) -> cc::hooks::PermissionResponse {
+            [&](const detail::DirectPermissionRequest& request) -> loom::hooks::PermissionResponse {
                 {
                     std::lock_guard lock(permission_mutex);
                     if (closing_permissions) {
-                        cc::hooks::PermissionResponse response{};
-                        response.decision = cc::hooks::PermissionDecision::deny;
+                        loom::hooks::PermissionResponse response{};
+                        response.decision = loom::hooks::PermissionDecision::deny;
                         response.message = "Permission request closed";
                         return response;
                     }
@@ -864,8 +864,8 @@ private:
                 if (!send_ws_text(detail::permission_control_request_json(request))) {
                     std::lock_guard lock(permission_mutex);
                     pending_permissions.erase(request.request_id);
-                    cc::hooks::PermissionResponse response{};
-                    response.decision = cc::hooks::PermissionDecision::deny;
+                    loom::hooks::PermissionResponse response{};
+                    response.decision = loom::hooks::PermissionDecision::deny;
                     response.message = "Failed to send permission request";
                     return response;
                 }
@@ -877,8 +877,8 @@ private:
                            (it != pending_permissions.end() && it->second.has_value());
                 });
                 auto it = pending_permissions.find(request.request_id);
-                cc::hooks::PermissionResponse result{};
-                result.decision = cc::hooks::PermissionDecision::deny;
+                loom::hooks::PermissionResponse result{};
+                result.decision = loom::hooks::PermissionDecision::deny;
                 result.message = "Permission request timed out";
                 if (resolved && it != pending_permissions.end() && it->second) {
                     result = std::move(*(it->second));
@@ -998,7 +998,7 @@ private:
                 return;
             }
             auto response_text = response_future.get();
-            auto parsed = cc::utils::json::parse(response_text);
+            auto parsed = loom::utils::json::parse(response_text);
             if (!parsed || !parsed->root().is_obj()) {
                 (void)send_ws_text(detail::sdk_error_result(session_id, response_text));
                 continue;
@@ -1024,4 +1024,4 @@ private:
     std::unordered_set<std::string> cancelled_sessions_;
 };
 
-} // namespace cc::server
+} // namespace loom::server

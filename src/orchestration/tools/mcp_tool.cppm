@@ -9,7 +9,7 @@ import std;
 
 // RFC-0001 B4: only the rank-1 contract leaf is imported here; the core
 // ConfigManager layer reaches the runtime through the loader sink below
-// (cc::tools::set_core_settings_mcp_loader), installed by the production
+// (loom::tools::set_core_settings_mcp_loader), installed by the production
 // composition root in cc.commands.mcp.core_settings_loader.
 import loom.config.mcp_types;
 import loom.services.mcp.config;
@@ -20,10 +20,10 @@ import loom.serdes.json;
 import loom.types.tool_types;
 import loom.tools.mcp_classify;  // migrated: integrate collapse decision
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 namespace fs = std::filesystem;
-namespace svc_mcp = cc::services::mcp;
+namespace svc_mcp = loom::services::mcp;
 
 enum class McpError {
     ServerNotFound,
@@ -72,7 +72,7 @@ struct McpToolRequest {
 
 struct McpToolResult {
     std::string content;                          ///< flattened text (backward compat)
-    std::vector<cc::services::mcp::ContentItem> content_items;  ///< structured content (TS parity)
+    std::vector<loom::services::mcp::ContentItem> content_items;  ///< structured content (TS parity)
     std::string content_type;  // "text", "image", "resource"
     bool is_error{false};
     // migrated: integrate collapse decision
@@ -247,7 +247,7 @@ struct NativeMcpServerStatus {
 }
 
 [[nodiscard]] inline NativeMcpConfiguredServer to_native_mcp_server(
-    const cc::core::McpServerConfig& server
+    const loom::core::McpServerConfig& server
 ) {
     NativeMcpConfiguredServer native;
     native.name = server.name;
@@ -262,7 +262,7 @@ struct NativeMcpServerStatus {
     native.headers = server.headers;
     native.headers_helper = server.headers_helper.value_or(std::string{});
     // RFC-0001 B3: svc_mcp::McpOAuthConfig is now an alias of the canonical
-    // cc::core type, so the optional is the same type — direct assignment
+    // loom::core type, so the optional is the same type — direct assignment
     // (issuer now propagates instead of being dropped by a field-wise copy).
     native.oauth = server.oauth;
     return native;
@@ -296,7 +296,7 @@ struct NativeMcpServerStatus {
 }
 
 [[nodiscard]] inline std::optional<std::string> json_string(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::string_view key
 ) {
     auto child = value.get(key);
@@ -305,21 +305,21 @@ struct NativeMcpServerStatus {
 }
 
 inline void append_json_string_array(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::vector<std::string>& out
 ) {
     if (!value.is_arr()) return;
-    value.iter([&](cc::utils::json::JsonVal item) {
+    value.iter([&](loom::utils::json::JsonVal item) {
         if (item.is_str()) out.emplace_back(item.as_str());
     });
 }
 
 inline void append_json_string_map(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::unordered_map<std::string, std::string>& out
 ) {
     if (!value.is_obj()) return;
-    value.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal item) {
+    value.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal item) {
         if (key.is_str() && item.is_str()) {
             out[std::string(key.as_str())] = std::string(item.as_str());
         }
@@ -327,7 +327,7 @@ inline void append_json_string_map(
 }
 
 [[nodiscard]] inline svc_mcp::TransportType parse_native_mcp_transport(
-    cc::utils::json::JsonVal config
+    loom::utils::json::JsonVal config
 ) {
     const auto type = json_string(config, "type").or_else([&] {
         return json_string(config, "transport");
@@ -342,7 +342,7 @@ inline void append_json_string_map(
 
 [[nodiscard]] inline std::optional<NativeMcpConfiguredServer> parse_native_mcp_server(
     std::string name,
-    cc::utils::json::JsonVal config
+    loom::utils::json::JsonVal config
 ) {
     if (!config.is_obj()) return std::nullopt;
 
@@ -438,7 +438,7 @@ inline void replace_all(std::string& value, std::string_view needle, std::string
 }
 
 [[nodiscard]] inline std::optional<std::string> json_user_config_value_to_string(
-    cc::utils::json::JsonVal value
+    loom::utils::json::JsonVal value
 ) {
     if (value.is_str()) return std::string(value.as_str());
     if (value.is_bool()) return value.as_bool() ? "true" : "false";
@@ -450,7 +450,7 @@ inline void replace_all(std::string& value, std::string_view needle, std::string
     }
     if (value.is_arr()) {
         std::string joined;
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             auto scalar = json_user_config_value_to_string(item);
             if (!scalar) return;
             if (!joined.empty()) joined += ",";
@@ -462,11 +462,11 @@ inline void replace_all(std::string& value, std::string_view needle, std::string
 }
 
 inline void merge_user_config_values(
-    cc::utils::json::JsonVal values,
+    loom::utils::json::JsonVal values,
     std::unordered_map<std::string, std::string>& out
 ) {
     if (!values.is_obj()) return;
-    values.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    values.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
         auto parsed = json_user_config_value_to_string(value);
         if (parsed) out[std::string(key.as_str())] = std::move(*parsed);
@@ -479,7 +479,7 @@ inline void merge_plugin_mcp_user_config_from_settings(
     std::string_view server_name,
     std::unordered_map<std::string, std::string>& out
 ) {
-    auto parsed = cc::utils::json::parse_file(settings_path);
+    auto parsed = loom::utils::json::parse_file(settings_path);
     if (!parsed) return;
     auto plugin_config = parsed->root().get("pluginConfigs").get(plugin_name);
     if (!plugin_config.is_obj()) return;
@@ -618,7 +618,7 @@ inline void merge_native_mcp_servers(
 }
 
 [[nodiscard]] inline std::vector<NativeMcpConfiguredServer> parse_native_mcp_server_map(
-    cc::utils::json::JsonVal servers,
+    loom::utils::json::JsonVal servers,
     std::string_view name_prefix,
     const fs::path& plugin_dir,
     std::string_view plugin_name
@@ -626,7 +626,7 @@ inline void merge_native_mcp_servers(
     std::vector<NativeMcpConfiguredServer> parsed;
     if (!servers.is_obj()) return parsed;
 
-    servers.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    servers.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str() || !value.is_obj()) return;
         const std::string server_name{key.as_str()};
         auto name = std::format("{}{}", name_prefix, server_name);
@@ -689,7 +689,7 @@ inline void merge_native_mcp_servers(
     if (!input) return {};
     std::stringstream buffer;
     buffer << input.rdbuf();
-    auto doc = cc::utils::json::parse(buffer.str());
+    auto doc = loom::utils::json::parse(buffer.str());
     if (!doc) return {};
 
     auto root = doc->root();
@@ -738,7 +738,7 @@ inline void merge_native_mcp_servers(
 
     std::stringstream buffer;
     buffer << input.rdbuf();
-    auto doc = cc::utils::json::parse(buffer.str());
+    auto doc = loom::utils::json::parse(buffer.str());
     if (!doc) return {};
 
     auto root = doc->root();
@@ -755,7 +755,7 @@ inline void merge_native_mcp_servers(
 [[nodiscard]] inline std::vector<NativeMcpConfiguredServer> load_plugin_mcp_servers_from_manifest_spec(
     const fs::path& plugin_dir,
     std::string_view plugin_name,
-    cc::utils::json::JsonVal spec
+    loom::utils::json::JsonVal spec
 ) {
     std::vector<NativeMcpConfiguredServer> servers;
     if (spec.is_str()) {
@@ -764,7 +764,7 @@ inline void merge_native_mcp_servers(
             load_plugin_mcp_servers_from_file(plugin_dir, spec.as_str(), plugin_name)
         );
     } else if (spec.is_arr()) {
-        spec.iter([&](cc::utils::json::JsonVal item) {
+        spec.iter([&](loom::utils::json::JsonVal item) {
             if (item.is_str()) {
                 merge_native_mcp_servers(
                     servers,
@@ -795,7 +795,7 @@ inline void merge_native_mcp_servers(
 
     std::stringstream buffer;
     buffer << input.rdbuf();
-    auto doc = cc::utils::json::parse(buffer.str());
+    auto doc = loom::utils::json::parse(buffer.str());
     if (!doc) return {};
 
     auto root = doc->root();
@@ -839,7 +839,7 @@ inline void merge_native_mcp_servers(
 }
 
 // RFC-0001 B4: sink that lets the production composition root feed the
-// cc::core::ConfigManager ("core settings") MCP layer into the native runtime
+// loom::core::ConfigManager ("core settings") MCP layer into the native runtime
 // without cc.orchestration.tools.mcp importing cc.config.config. The loader returns the
 // mapped native servers (or the ConfigManager load error verbatim). When no
 // loader is installed (test binaries), the core settings layer is skipped and
@@ -977,7 +977,7 @@ public:
 	std::lock_guard lock(mutex_);
 	if (loaded_) return {};
 
-        // RFC-0001 B4: the core cc::core::ConfigManager layer is injected via
+        // RFC-0001 B4: the core loom::core::ConfigManager layer is injected via
         // the loader sink. No loader installed (test binaries) => the core
         // settings layer is skipped (hermetic); the services ConfigLoader and
         // plugin discovery layers below still run unchanged.
@@ -1447,23 +1447,23 @@ inline std::vector<NativeMcpServerStatus> native_mcp_statuses() {
 /// computer-use MCP servers. Anthropic requires a screenshot after every
 /// computer action, so dropping images here would break the computer-use
 /// loop. Falls back to the flattened text when no text/image items exist.
-[[nodiscard]] inline cc::core::ToolResult mcp_result_to_tool_result(
+[[nodiscard]] inline loom::core::ToolResult mcp_result_to_tool_result(
     const McpToolResult& result) {
-    std::vector<cc::core::ToolOutputContent> items;
+    std::vector<loom::core::ToolOutputContent> items;
     for (const auto& ci : result.content_items) {
         if (ci.type == "text") {
-            items.push_back(cc::core::ToolOutputContent::text_output(ci.text));
+            items.push_back(loom::core::ToolOutputContent::text_output(ci.text));
         } else if (ci.type == "image") {
-            items.push_back(cc::core::ToolOutputContent::image_output(
+            items.push_back(loom::core::ToolOutputContent::image_output(
                 ci.media_type.value_or("image/png"),
                 ci.data.value_or("")));
         }
     }
     if (items.empty()) {
         items.push_back(
-            cc::core::ToolOutputContent::text_output(result.content));
+            loom::core::ToolOutputContent::text_output(result.content));
     }
-    return cc::core::ToolResult{
+    return loom::core::ToolResult{
         .content = std::move(items),
         .is_error = result.is_error,
     };
@@ -1801,4 +1801,4 @@ public:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

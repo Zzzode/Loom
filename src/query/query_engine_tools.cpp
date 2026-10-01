@@ -18,7 +18,7 @@ import loom.hooks.registry;
 import loom.hooks.execution;
 import loom.tools.agent_runtime;
 
-namespace cc::core {
+namespace loom::core {
 
 std::vector<std::string> QueryEngine::discovered_skills() const {
     std::lock_guard lock(state_mutex_);
@@ -31,7 +31,7 @@ std::vector<PermissionDenial> QueryEngine::get_permission_denials() const {
 }
 
 void QueryEngine::append_pending_native_agent_notifications() {
-    for (auto& notification : cc::tools::agent_runtime::native_agent_store().take_pending_task_notifications()) {
+    for (auto& notification : loom::tools::agent_runtime::native_agent_store().take_pending_task_notifications()) {
         auto msg = make_user_message(notification);
         append_message(Message{std::move(msg)});
     }
@@ -142,7 +142,7 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     }
 
     if (lifecycle_hooks_) {
-        auto block_reason = lifecycle_hooks_->check_and_emit_pre_tool_use(cc::hooks::PreToolUseEvent{
+        auto block_reason = lifecycle_hooks_->check_and_emit_pre_tool_use(loom::hooks::PreToolUseEvent{
             .tool_name = tool_use.name,
             .tool_input_json = effective_input_json,
             .tool_use_id = tool_use.id.value,
@@ -169,22 +169,22 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     // BlockToolCall/AbortQuery by denying permission. Guarded so behavior
     // is unchanged when no user hooks are configured.
     if (user_hooks_configured_ && !user_hooks_.empty()) {
-        namespace he = cc::utils::hooks_execution;
+        namespace he = loom::utils::hooks_execution;
         he::HookExecutionContext ctx = user_hooks_ctx_template_;
         // Matcher needs ctx["tool"]["name"]; materialise an owned doc.
         std::string tool_doc = std::string("{\"name\": \"") +
             he::json_escape(tool_use.name) + "\"}";
-        if (auto td = cc::utils::json::parse(tool_doc)) {
+        if (auto td = loom::utils::json::parse(tool_doc)) {
             ctx.set_context_doc("tool", std::move(*td));
         }
         // Payload mirrors TS `toolInput`/processedInput passthrough.
-        if (auto pd = cc::utils::json::parse(effective_input_json)) {
+        if (auto pd = loom::utils::json::parse(effective_input_json)) {
             ctx.set_payload_doc(std::move(*pd));
         }
 
         auto [modified_payload, action] = he::run_api_query_hooks(
             user_hooks_,
-            cc::utils::hooks_registry::HookEventType::PreToolUse,
+            loom::utils::hooks_registry::HookEventType::PreToolUse,
             ctx,
             effective_input_json);
 
@@ -230,7 +230,7 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         // The actual skill content load happens in execute_skill_tool; this
         // populates the previously-dead discovered_skills_ set.
         if (tool_use.name == "skill") {
-            if (auto parsed = cc::utils::json::parse(effective_input_json)) {
+            if (auto parsed = loom::utils::json::parse(effective_input_json)) {
                 auto name_val = parsed->root().get("name");
                 if (!name_val.is_str()) name_val = parsed->root().get("skill");
                 if (name_val.is_str()) {
@@ -299,7 +299,7 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     if (lifecycle_hooks_) {
         auto exec_end = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(exec_end - exec_start);
-        lifecycle_hooks_->emit_post_tool_use(cc::hooks::PostToolUseEvent{
+        lifecycle_hooks_->emit_post_tool_use(loom::hooks::PostToolUseEvent{
             .tool_name = tool_use.name,
             .tool_use_id = tool_use.id.value,
             .is_error = result_msg.is_error,
@@ -316,11 +316,11 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     // on the result (TS runPostToolUseHooks blockingError,
     // toolHooks.ts:105-115).
     if (user_hooks_configured_ && !user_hooks_.empty()) {
-        namespace he = cc::utils::hooks_execution;
+        namespace he = loom::utils::hooks_execution;
         he::HookExecutionContext ctx = user_hooks_ctx_template_;
         std::string tool_doc = std::string("{\"name\": \"") +
             he::json_escape(tool_use.name) + "\"}";
-        if (auto td = cc::utils::json::parse(tool_doc)) {
+        if (auto td = loom::utils::json::parse(tool_doc)) {
             ctx.set_context_doc("tool", std::move(*td));
         }
         auto act = he::execute_post_tool_hooks(
@@ -358,8 +358,8 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     permission_hook_->set_current_tool_use_id(tool_use_id);
     auto response = permission_hook_->can_use_response(tool_name, input_json);
     permission_hook_->clear_current_tool_use_id();
-    const bool allowed = response.decision == cc::hooks::PermissionDecision::allow ||
-                         response.decision == cc::hooks::PermissionDecision::allow_once;
+    const bool allowed = response.decision == loom::hooks::PermissionDecision::allow ||
+                         response.decision == loom::hooks::PermissionDecision::allow_once;
     return ToolPermissionCheck{
         .allowed = allowed,
         .updated_input_json = std::move(response.updated_input_json),
@@ -367,4 +367,4 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     };
 }
 
-} // namespace cc::core
+} // namespace loom::core

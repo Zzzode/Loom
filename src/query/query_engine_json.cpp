@@ -11,11 +11,11 @@ import std;
 import loom.types.types;
 import loom.serdes.json;
 
-namespace cc::core {
+namespace loom::core {
 
 void QueryEngine::append_message_to_json(const Message& msg,
-                                         cc::utils::json::JsonMutVal& arr,
-                                         cc::utils::json::JsonMutDoc& doc) const {
+                                         loom::utils::json::JsonMutVal& arr,
+                                         loom::utils::json::JsonMutDoc& doc) const {
     std::visit([&](const auto& m) {
         using T = std::decay_t<decltype(m)>;
         auto msg_obj = doc.object();
@@ -91,9 +91,9 @@ void QueryEngine::append_message_to_json(const Message& msg,
     }, msg);
 }
 
-[[nodiscard]] cc::utils::json::JsonMutVal QueryEngine::content_to_json(
+[[nodiscard]] loom::utils::json::JsonMutVal QueryEngine::content_to_json(
         const std::vector<ContentBlock>& content,
-        cc::utils::json::JsonMutDoc& doc) const {
+        loom::utils::json::JsonMutDoc& doc) const {
     if (content.size() == 1) {
         if (const auto* text = std::get_if<TextBlock>(&content[0])) {
             return doc.string(text->text);
@@ -115,7 +115,7 @@ void QueryEngine::append_message_to_json(const Message& msg,
                 obj.add("id", doc.string(b.id.value));
                 obj.add("name", doc.string(b.name));
                 // Input must be a JSON object, not a string
-                auto input_doc = cc::utils::json::parse(b.input_json);
+                auto input_doc = loom::utils::json::parse(b.input_json);
                 if (input_doc) {
                     obj.add("input", doc.copy_val(input_doc->root()));
                 } else {
@@ -152,4 +152,4 @@ void QueryEngine::append_message_to_json(const Message& msg,
     return arr;
 }
 
-} // namespace cc::core
+} // namespace loom::core

@@ -31,7 +31,7 @@ export module loom.ui.foundation.design_figures;
 
 import std;
 
-export namespace cc::ui::design::figures {
+export namespace loom::ui::design::figures {
 
 using namespace std::string_view_literals;
 
@@ -203,7 +203,7 @@ inline constexpr std::string_view kConnector = "\xE2\x8C\x90";    // ⌐ (1 cell
 // TS src/utils/figures.ts: BRIDGE_SPINNER_FRAMES (8 braille dots sweeping
 // from top-left to bottom-right).  Used for:
 //   - Bridge + MCP connection-establishment indicator
-//   - cc::ui::components::Spinner (the compact teardrop braille animator)
+//   - loom::ui::components::Spinner (the compact teardrop braille animator)
 //
 // WARNING: tool_use_loader / thinking_message both had truncated 8-frame
 // variants dropping frames [7,8] ('⠇⠏').  Standardize on the 10-frame
@@ -387,7 +387,7 @@ namespace fallback {
 // between main (Unicode) and fallback (ASCII) sets via is_unicode_supported().
 //
 // Usage:
-//   const auto& fig = cc::ui::design::figures::figures();
+//   const auto& fig = loom::ui::design::figures::figures();
 //   render(fig.pointer);   // '❯' on Unicode terminals, '>' on fallback
 //   render(fig.tick);      // '✔' on Unicode, '√' on fallback
 //
@@ -565,4 +565,4 @@ namespace detail {
     return result;
 }
 
-}  // namespace cc::ui::design::figures
+}  // namespace loom::ui::design::figures

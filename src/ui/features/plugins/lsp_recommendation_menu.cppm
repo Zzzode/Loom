@@ -25,12 +25,12 @@ import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
 import loom.types.types;
 
-export namespace cc::ui::components::lsp_rec_menu {
+export namespace loom::ui::components::lsp_rec_menu {
 
 using namespace ftxui;
-using namespace cc::ui::design::primitives;
-using namespace cc::ui::design::tokens;
-using namespace cc::ui::design::theme;
+using namespace loom::ui::design::primitives;
+using namespace loom::ui::design::tokens;
+using namespace loom::ui::design::theme;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -524,4 +524,4 @@ private:
                                        std::move(on_skip), theme);
 }
 
-} // namespace cc::ui::components::lsp_rec_menu
+} // namespace loom::ui::components::lsp_rec_menu

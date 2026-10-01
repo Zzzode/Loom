@@ -16,7 +16,7 @@ module loom.ui.visual.markdown;
 
 import std;
 
-namespace cc::ui {
+namespace loom::ui {
 
 MarkdownComponentBase::MarkdownComponentBase(MarkdownComponentOptions opts)
     : opts_(std::move(opts)), scroll_offset_(0) {}
@@ -68,4 +68,4 @@ bool MarkdownComponentBase::OnEvent(Event event) {
     return Make<MarkdownComponentBase>(std::move(opts));
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

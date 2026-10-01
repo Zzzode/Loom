@@ -8,7 +8,7 @@ export module loom.platform.find_executable;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
 
@@ -71,4 +71,4 @@ inline std::vector<fs::path> find_all_executables(std::string_view name) {
     return results;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

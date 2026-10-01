@@ -30,7 +30,7 @@ import std;
 
 import loom.ui.foundation.ui_types;  // PromptInputMode
 
-export namespace cc::ui::placeholder {
+export namespace loom::ui::placeholder {
 
 using namespace ftxui;
 
@@ -68,8 +68,8 @@ struct PlaceholderContext {
 
     /// Current input mode (Normal / Bash / VimInsert / etc).
     /// AI suggestion override (L0) only applies in Normal mode.
-    cc::ui::common::PromptInputMode input_mode =
-        cc::ui::common::PromptInputMode::Normal;
+    loom::ui::common::PromptInputMode input_mode =
+        loom::ui::common::PromptInputMode::Normal;
 
     /// Viewing agent/teammate name.  When set and input is empty,
     /// placeholder becomes "Message @{name}..." (L2).
@@ -137,7 +137,7 @@ struct PlaceholderContext {
     //   && promptSuggestion && !viewingAgentTaskId
     // NOTE: next_action_suggestion starting with '/' is a slash-command
     // suggestion handled by autocomplete separately — don't use as placeholder.
-    if (ctx.input_mode == cc::ui::common::PromptInputMode::Normal &&
+    if (ctx.input_mode == loom::ui::common::PromptInputMode::Normal &&
         ctx.next_action_suggestion.has_value() &&
         !ctx.next_action_suggestion->empty() &&
         ctx.next_action_suggestion->front() != '/' &&
@@ -277,4 +277,4 @@ struct RenderedPlaceholder {
     return {hbox(ph_parts), show_placeholder};
 }
 
-}  // namespace cc::ui::placeholder
+}  // namespace loom::ui::placeholder

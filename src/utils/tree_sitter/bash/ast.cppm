@@ -29,7 +29,7 @@ import std;
 
 import loom.parsing.tree_sitter.base;
 
-export namespace cc::utils::tree_sitter::bash {
+export namespace loom::utils::tree_sitter::bash {
 
 /// Severity assigned to matched dangerous patterns.  Higher ordinal = worse.
 enum class Severity : uint8_t {
@@ -471,4 +471,4 @@ using namespace bash_detail;
     return out;
 }
 
-}  // namespace cc::utils::tree_sitter::bash
+}  // namespace loom::utils::tree_sitter::bash

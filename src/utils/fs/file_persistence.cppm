@@ -11,7 +11,7 @@ import std;
 
 namespace fs = std::filesystem;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace detail {
 
@@ -57,4 +57,4 @@ inline auto fsync_fd(int fd) -> std::string {
 
 }  // namespace detail
 
-} // namespace cc::utils
+} // namespace loom::utils

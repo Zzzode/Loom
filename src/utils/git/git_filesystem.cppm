@@ -7,7 +7,7 @@ export module loom.scm.git.git_filesystem;
 import std;
 import loom.process.bash.bash_execution;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
 
@@ -81,7 +81,7 @@ inline std::optional<std::string> get_current_branch() {
 // Get the commit hash for a given ref (default HEAD)
 inline std::optional<std::string> get_commit_hash(std::string_view ref = "HEAD") {
     std::string cmd = "git rev-parse " + std::string(ref) + " 2>/dev/null";
-    FILE* pipe = cc::utils::bash::popen_spawn(cmd.c_str());
+    FILE* pipe = loom::utils::bash::popen_spawn(cmd.c_str());
     if (!pipe) return std::nullopt;
 
     std::array<char, 64> buffer{};
@@ -89,7 +89,7 @@ inline std::optional<std::string> get_commit_hash(std::string_view ref = "HEAD")
     if (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
         hash = buffer.data();
     }
-    int status = cc::utils::bash::pclose_spawn(pipe);
+    int status = loom::utils::bash::pclose_spawn(pipe);
     if (status != 0 || hash.empty()) return std::nullopt;
 
     // Trim newline
@@ -102,7 +102,7 @@ inline std::optional<std::string> get_commit_hash(std::string_view ref = "HEAD")
 // Check if the current directory is inside a git work tree
 inline bool is_inside_work_tree() {
     std::string cmd = "git rev-parse --is-inside-work-tree 2>/dev/null";
-    auto pipe_cap = cc::utils::bash::exec_capture(cmd.c_str());
+    auto pipe_cap = loom::utils::bash::exec_capture(cmd.c_str());
     if (!pipe_cap) return false;
     std::string result = std::move(pipe_cap->output);
     return result.starts_with("true");
@@ -111,10 +111,10 @@ inline bool is_inside_work_tree() {
 // Check if the repository is a bare repository
 inline bool is_bare_repo() {
     std::string cmd = "git rev-parse --is-bare-repository 2>/dev/null";
-    auto pipe_cap = cc::utils::bash::exec_capture(cmd.c_str());
+    auto pipe_cap = loom::utils::bash::exec_capture(cmd.c_str());
     if (!pipe_cap) return false;
     std::string result = std::move(pipe_cap->output);
     return result.starts_with("true");
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

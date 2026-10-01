@@ -29,10 +29,10 @@ import loom.services.team_memory.secret_scanner;
 import loom.services.mcp.in_process_transport;
 import loom.services.oauth.crypto;
 
-namespace oauth_port = cc::services::mcp;
-namespace secret = cc::services::team_memory;
-namespace transport = cc::services::mcp;
-namespace oauth = cc::services::oauth;
+namespace oauth_port = loom::services::mcp;
+namespace secret = loom::services::team_memory;
+namespace transport = loom::services::mcp;
+namespace oauth = loom::services::oauth;
 
 // ---------------------------------------------------------------------------
 // oauth_port — env override wins; an open port in the ephemeral range is

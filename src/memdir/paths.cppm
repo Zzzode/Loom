@@ -13,7 +13,7 @@ import std;
 
 import loom.constants.paths;
 
-export namespace cc::memdir {
+export namespace loom::memdir {
 
 /// Memory file types
 enum class MemoryType : std::uint8_t {
@@ -34,7 +34,7 @@ struct MemoryPath {
 /// (LOOM.md -> AGENTS.md -> CLAUDE.md), so a user's pre-rename
 /// `~/.claude/CLAUDE.md` is still found.
 [[nodiscard]] inline std::filesystem::path get_user_memory_path() {
-    return cc::constants::paths::user_memory_path();
+    return loom::constants::paths::user_memory_path();
 }
 
 /// Get the project-level memory file path. Prefers whichever cascade name
@@ -43,7 +43,7 @@ struct MemoryPath {
 [[nodiscard]] inline std::filesystem::path get_project_memory_path(
     const std::filesystem::path& project_root
 ) {
-    return cc::constants::paths::project_memory_path(project_root);
+    return loom::constants::paths::project_memory_path(project_root);
 }
 
 /// Get all ancestor memory file paths between cwd and filesystem root.
@@ -57,7 +57,7 @@ struct MemoryPath {
     auto current = cwd;
 
     while (current != project_root && current.has_parent_path() && current != current.parent_path()) {
-        if (auto memory_file = cc::constants::paths::memory_file_in(current)) {
+        if (auto memory_file = loom::constants::paths::memory_file_in(current)) {
             paths.push_back(MemoryPath{
                 .path = *memory_file,
                 .type = MemoryType::TreeMemory,
@@ -159,9 +159,9 @@ struct MemoryPath {
 /// session-memory, `projects/`). Uses the WRITE resolution on purpose: these
 /// are directories we create and manage, so they belong under our own name
 /// even when a legacy `~/.claude` exists and is readable. Reading is a
-/// separate question -- see cc::constants::paths::config_home_read().
+/// separate question -- see loom::constants::paths::config_home_read().
 [[nodiscard]] inline std::filesystem::path loom_config_home() {
-    return cc::constants::paths::config_home_write();
+    return loom::constants::paths::config_home_write();
 }
 
 /// Whether auto-memory is enabled. TS enablement chain:
@@ -239,4 +239,4 @@ get_auto_mem_entrypoint(const std::filesystem::path& project_root) {
     return get_session_memory_dir(cwd, session_id) / "summary.md";
 }
 
-} // namespace cc::memdir
+} // namespace loom::memdir

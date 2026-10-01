@@ -8,7 +8,7 @@ export module loom.tools.agent_constants;
 
 import std;
 
-export namespace cc::tools::agent {
+export namespace loom::tools::agent {
 
 /// Official tool name used by the top-level agent delegation tool.
 inline constexpr std::string_view AGENT_TOOL_NAME = "Agent";
@@ -29,4 +29,4 @@ inline constexpr std::string_view VERIFICATION_AGENT_TYPE = "verification";
     return oneshot.contains(agent_type);
 }
 
-} // namespace cc::tools::agent
+} // namespace loom::tools::agent

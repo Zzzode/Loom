@@ -4,7 +4,7 @@ import std;
 
 import loom.constants.product;
 
-export namespace cc::commands::version {
+export namespace loom::commands::version {
 
 struct CommandResponse { bool ok{true}; std::string message; };
 
@@ -12,9 +12,9 @@ struct CommandResponse { bool ok{true}; std::string message; };
 
 [[nodiscard]] inline auto run(std::string_view detail = {}) -> CommandResponse {
     std::string msg = "loom ";
-    msg += cc::constants::product::LOOM_VERSION;
+    msg += loom::constants::product::LOOM_VERSION;
     msg += " (C++23, built ";
-    msg += cc::constants::product::BUILD_DATE;
+    msg += loom::constants::product::BUILD_DATE;
     msg += ")";
     if (!detail.empty()) {
         msg += " [";
@@ -24,4 +24,4 @@ struct CommandResponse { bool ok{true}; std::string message; };
     return {.ok = true, .message = std::move(msg)};
 }
 
-} // namespace cc::commands::version
+} // namespace loom::commands::version

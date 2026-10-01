@@ -17,7 +17,7 @@ import std;
 
 import loom.state.app_state;
 
-export namespace cc::ui {
+export namespace loom::ui {
 
 // ============================================================
 // Color Theme
@@ -246,7 +246,7 @@ public:
 
     /// Build the main component tree and run the interactive loop.
     /// This blocks until the user exits.
-    void run(const cc::state::AppState&) {
+    void run(const loom::state::AppState&) {
         std::string input_content;
 
         // Input component with multiline support
@@ -317,4 +317,4 @@ private:
     }
 };
 
-} // namespace cc::ui
+} // namespace loom::ui

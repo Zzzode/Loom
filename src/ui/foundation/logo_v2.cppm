@@ -33,7 +33,7 @@ import std;
 import loom.ui.foundation.logo;  // LogoDisplayData + RenderCondensedLogoElement +
                      // RenderOpus1MNotice + RenderBrandChip helpers
 
-export namespace cc::ui::logo_v2 {
+export namespace loom::ui::logo_v2 {
 
 using ftxui::bold;
 using ftxui::bgcolor;
@@ -79,7 +79,7 @@ inline constexpr int kWelcomeV2FixedWidth = 58;  // TS WELCOME_V2_WIDTH
 }
 
 // --------------------------------------------------------------------
-// §2  Extended LogoDisplayData (superset of cc::ui::logo::LogoDisplayData)
+// §2  Extended LogoDisplayData (superset of loom::ui::logo::LogoDisplayData)
 // --------------------------------------------------------------------
 // TS LogoV2.tsx L159-173 reads: version / cwd / billingType / agentName
 //   / effortSuffix / modelDisplayName / username / orgName / companyAnnouncement
@@ -92,7 +92,7 @@ inline constexpr int kWelcomeV2FixedWidth = 58;  // TS WELCOME_V2_WIDTH
 // expected to populate these fields from their config source; default
 // values produce the safe "minimal condensed" look with no side-effects.
 struct LogoV2Options {
-  // --- Identity / chrome (same as cc::ui::logo::LogoDisplayData) ---
+  // --- Identity / chrome (same as loom::ui::logo::LogoDisplayData) ---
   std::string version;
   std::string cwd;
   std::string billing_type;
@@ -157,10 +157,10 @@ inline const Color kMuted       (153, 153, 153);   // theme.inactive / dimColor 
 
 } // namespace detail
 
-// --- 3b. Opus 1M notice — delegated to cc::ui::logo::RenderOpus1MNotice
+// --- 3b. Opus 1M notice — delegated to loom::ui::logo::RenderOpus1MNotice
 //     (already a faithful TS port).  Re-exported here for the flat stack.
 [[nodiscard]] inline auto RenderOpus1MNotice() -> Element {
-  return cc::ui::logo::RenderOpus1MNotice();
+  return loom::ui::logo::RenderOpus1MNotice();
 }
 
 // --- 3c. ChannelsNotice — TS feature() gating (KAIROS || KAIROS_CHANNELS).
@@ -1283,7 +1283,7 @@ inline constexpr int kContentPadding  = 2;
                                                int /*is_new_user_unused*/ = 0)
     -> Element {
   using namespace detail;
-  namespace logo = cc::ui::logo;
+  namespace logo = loom::ui::logo;
   using ftxui::window;
 
   const std::string welcome = format_welcome_message(o.username);
@@ -1740,14 +1740,14 @@ struct LogoV2Result {
     -> LogoV2Result {
   if (o.is_condensed_mode) {
     // --- CONDENSED path (L179-247 TS LogoV2.tsx) ---
-    cc::ui::logo::LogoDisplayData inner;
+    loom::ui::logo::LogoDisplayData inner;
     inner.version            = o.version;
     inner.cwd                = o.cwd;
     inner.billing_type       = o.billing_type;
     inner.agent_name         = o.agent_name;
     inner.model_display_name = o.model_display_name;
 
-    Element header = cc::ui::logo::RenderCondensedLogoElement(inner, term_cols);
+    Element header = loom::ui::logo::RenderCondensedLogoElement(inner, term_cols);
     Elements notices = RenderNoticeStackAggregated(o);
 
     Elements combined;
@@ -1815,4 +1815,4 @@ struct LogoV2Result {
     return hbox(std::move(parts)) | size(HEIGHT, EQUAL, 1);
 }
 
-} // namespace cc::ui::logo_v2
+} // namespace loom::ui::logo_v2

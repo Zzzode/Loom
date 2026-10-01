@@ -20,7 +20,7 @@ export module loom.parsing.highlight.text_highlighting;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 using ftxui::Color;
 
@@ -300,4 +300,4 @@ std::size_t count_matches(std::string_view text, std::string_view query) {
     return count;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

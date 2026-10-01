@@ -31,7 +31,7 @@ module;
 
 module loom.ui.app.app;
 
-namespace cc::ui {
+namespace loom::ui {
 
 // ============================================================
 // Env / config helpers (free functions)
@@ -183,4 +183,4 @@ namespace cc::ui {
         std::llround(static_cast<double>(utf16_code_unit_count(value)) / 4.0));
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

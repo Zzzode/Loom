@@ -42,9 +42,9 @@ import loom.ui.permissions.single_prompt;
 import loom.ui.permissions.permission_computer_use;
 import loom.hooks.cost_hook;
 
-namespace cc::ui {
-namespace agent_runtime = cc::tools::agent_runtime;
-namespace agent_cards = cc::ui::agents::cards;
+namespace loom::ui {
+namespace agent_runtime = loom::tools::agent_runtime;
+namespace agent_cards = loom::ui::agents::cards;
 // Defined in app_extra_methods.cpp (same module); redeclared for module linkage.
 agent_cards::AgentCardData project_agent_definition_card(
     const agent_runtime::AgentDefinition& agent);
@@ -98,7 +98,7 @@ void AppAdapter::OpenAgentsMenu() {
 void AppAdapter::OpenTeamsOverview() {
         ProjectLiveTeammatesToScreenState();
         screen_state_->task_view_store.teams_overview_selected_index = 0;
-        cc::ui::dialogs::triggers::PushTeamsView(
+        loom::ui::dialogs::triggers::PushTeamsView(
             screen_state_->dialog_store.dialog_queue,
             [this] {
                 screen_state_->dialog_store.dialog_queue.pop_modal();
@@ -157,11 +157,11 @@ bool AppAdapter::HandleLocalJsxEvent(const Event& ev) {
         return false;
     }
 
-namespace repl = cc::ui::repl_screen;
-namespace agent_display = cc::tools::agent_display;
-namespace dtrig = cc::ui::dialogs::triggers;
-namespace dsys = cc::ui::dialogs::system;
-namespace cperm = cc::ui::permissions;
+namespace repl = loom::ui::repl_screen;
+namespace agent_display = loom::tools::agent_display;
+namespace dtrig = loom::ui::dialogs::triggers;
+namespace dsys = loom::ui::dialogs::system;
+namespace cperm = loom::ui::permissions;
 
 // ── FormatAgentsMenuOutput (moved out to remove agent_display import) ────
 std::string FormatAgentsMenuOutput(
@@ -274,7 +274,7 @@ void AppAdapter::LoadAgentCardsForMenu() {
 
 // ── SyncState (moved out to remove debug import) ─────────────────────────
 void AppAdapter::SyncState() {
-    auto messages = static_cast<cc::core::QueryEngine*>(engine_raw())->get_conversation();
+    auto messages = static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
 
     // Bridge / remote-control footer projection (TS PromptInputFooter
     // reads replBridge* from AppState).
@@ -289,7 +289,7 @@ void AppAdapter::SyncState() {
 
     // TS Messages.tsx:520 collapse chain (background-bash so far).
     messages = ApplyMessageCollapsePipeline(std::move(messages));
-    cc::utils::debug("app.sync",
+    loom::utils::debug("app.sync",
         "SyncState: engine has {} messages", messages.size());
     screen_state_->messages_store.messages.clear();
     screen_state_->messages_store.messages.reserve(messages.size());
@@ -305,13 +305,13 @@ void AppAdapter::SyncState() {
     };
     std::uint64_t msg_idx = 0;
     for (const auto& msg : messages) {
-        if (std::holds_alternative<cc::core::SystemMessage>(msg)) continue;
+        if (std::holds_alternative<loom::core::SystemMessage>(msg)) continue;
         auto projected = project_messages(msg);
         std::string seed_preview;
         std::visit([&](const auto& m) {
             if constexpr (requires{ m.content; }) {
                 for (const auto& blk : m.content) {
-                    if (const auto* tb = std::get_if<cc::core::TextBlock>(&blk)) {
+                    if (const auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
                         seed_preview += tb->text.substr(0, 64);
                         break;
                     }
@@ -345,7 +345,7 @@ void AppAdapter::SyncState() {
             }
             else if (e.role == "system") ++n_sys;
         }
-        cc::utils::debug("app.sync",
+        loom::utils::debug("app.sync",
             "SyncState done: {} projected entries "
             "(user={}, asst={}, tool_use={}, sys={})",
             screen_state_->messages_store.messages.size(),
@@ -353,7 +353,7 @@ void AppAdapter::SyncState() {
         for (std::size_t i = 0; i < screen_state_->messages_store.messages.size(); ++i) {
             const auto& e = screen_state_->messages_store.messages[i];
             if (e.role == "assistant" && !e.is_tool_use && !e.is_thinking) {
-                cc::utils::debug("app.sync",
+                loom::utils::debug("app.sync",
                     "  msg[{}] assistant text: len={}, streaming={}, preview='{}'",
                     i, e.content_preview.size(), e.is_streaming,
                     e.content_preview.substr(0, 80));
@@ -369,8 +369,8 @@ void AppAdapter::SyncState() {
     this->ProjectLiveTeammatesToScreenState();
 
     // Notify cost hook subscribers (drives CostThreshold dialog, etc.).
-    cc::hooks::update_cost(cc::hooks::CostUpdate{
-        .session_cost = static_cast<cc::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd,
+    loom::hooks::update_cost(loom::hooks::CostUpdate{
+        .session_cost = static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd,
         .monthly_cost = 0.0,
         .input_tokens = screen_state_->chrome_store.status_bar.input_tokens,
         .output_tokens = screen_state_->chrome_store.status_bar.output_tokens,
@@ -398,7 +398,7 @@ void AppAdapter::ConsumePendingResult() {
     if (query_running_.load()) return;
     if (screen_state_->task_view_store.spinner_mode == repl::SpinnerMode::Hidden) return;
 
-    cc::utils::debug("app.consume",
+    loom::utils::debug("app.consume",
         "ConsumePendingResult firing — spinner_mode={}, calling SyncState",
         static_cast<int>(screen_state_->task_view_store.spinner_mode));
 
@@ -434,23 +434,23 @@ void AppAdapter::ConsumePendingResult() {
     streaming_markdown_.reset();
     streaming_tools_.clear();
 
-    if (static_cast<cc::utils::SessionStorage*>(storage_raw())) {
-        std::vector<cc::utils::Message> storage_msgs;
-        for (const auto& msg : static_cast<cc::core::QueryEngine*>(engine_raw())->get_conversation()) {
+    if (static_cast<loom::utils::SessionStorage*>(storage_raw())) {
+        std::vector<loom::utils::Message> storage_msgs;
+        for (const auto& msg : static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation()) {
             std::visit([&storage_msgs](const auto& m) {
                 using T = std::decay_t<decltype(m)>;
                 std::string text;
                 for (const auto& block : m.content) {
-                    if (const auto* tb = std::get_if<cc::core::TextBlock>(&block))
+                    if (const auto* tb = std::get_if<loom::core::TextBlock>(&block))
                         text += tb->text;
                 }
-                if constexpr (std::is_same_v<T, cc::core::UserMessage>)
-                    storage_msgs.push_back(cc::utils::UserMessage{{cc::utils::TextBlock{text}}});
-                else if constexpr (std::is_same_v<T, cc::core::AssistantMessage>)
-                    storage_msgs.push_back(cc::utils::AssistantMessage{{cc::utils::TextBlock{text}}});
+                if constexpr (std::is_same_v<T, loom::core::UserMessage>)
+                    storage_msgs.push_back(loom::utils::UserMessage{{loom::utils::TextBlock{text}}});
+                else if constexpr (std::is_same_v<T, loom::core::AssistantMessage>)
+                    storage_msgs.push_back(loom::utils::AssistantMessage{{loom::utils::TextBlock{text}}});
             }, msg);
         }
-        (void)static_cast<cc::utils::SessionStorage*>(storage_raw())->save_session(current_session_id_, "Session", storage_msgs);
+        (void)static_cast<loom::utils::SessionStorage*>(storage_raw())->save_session(current_session_id_, "Session", storage_msgs);
     }
 
     this->TriggerStatuslineUpdate();
@@ -458,7 +458,7 @@ void AppAdapter::ConsumePendingResult() {
 
 // ── WaitForInFlightPastes (moved out to remove parse_references import) ──
 void AppAdapter::WaitForInFlightPastes(const std::string& text) {
-    const auto refs = cc::utils::parse_references(text);
+    const auto refs = loom::utils::parse_references(text);
     if (refs.empty()) return;
     std::unordered_set<int> needed;
     for (const auto& r : refs) needed.insert(r.id);
@@ -516,7 +516,7 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
 
             if (auto cu_options =
                     cperm::options_from_tool_input(tool_args)) {
-                namespace sp = cc::ui::permissions::single_prompt;
+                namespace sp = loom::ui::permissions::single_prompt;
                 sp::DetailComputerUse detail;
                 detail.action_label =
                     std::string(cperm::action_description(cu_options->action));
@@ -587,7 +587,7 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
 // ── trigger_orphan_cleanup_for_testing (moved out for parse_references) ──
 void AppAdapter::trigger_orphan_cleanup_for_testing() {
     if (pasted_contents_.empty()) return;
-    const auto refs = cc::utils::parse_references(screen_state_->input_text);
+    const auto refs = loom::utils::parse_references(screen_state_->input_text);
     std::unordered_set<int> referenced_ids;
     for (const auto& r : refs) referenced_ids.insert(r.id);
     for (auto it = pasted_contents_.begin(); it != pasted_contents_.end(); ) {
@@ -599,4 +599,4 @@ void AppAdapter::trigger_orphan_cleanup_for_testing() {
     }
 }
 
-}  // namespace cc::ui
+}  // namespace loom::ui

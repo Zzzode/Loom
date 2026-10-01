@@ -12,9 +12,9 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// Codebase-analysis prompt injected into the conversation so the assistant
 /// generates (or updates) a LOOM.md for the current repository. Mirrors the
@@ -70,4 +70,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

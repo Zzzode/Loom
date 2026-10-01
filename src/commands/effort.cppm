@@ -13,13 +13,13 @@ import loom.commands.command;
 import loom.state.app_state;
 import loom.state.store;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
-/// Action type ordinal for SetEffortValue (from cc::state::ActionType in store.cppm).
+/// Action type ordinal for SetEffortValue (from loom::state::ActionType in store.cppm).
 inline constexpr int ACTION_SET_EFFORT_VALUE =
-    static_cast<int>(cc::state::ActionType::SetEffortValue);
+    static_cast<int>(loom::state::ActionType::SetEffortValue);
 
 /// EffortCommand implements the /effort slash command.
 /// Sets the effort level for the model.
@@ -101,7 +101,7 @@ private:
     }
 
     [[nodiscard]] static Result<CommandResult> show_current_effort(const CommandContext& ctx) {
-        using cc::state::AppState;
+        using loom::state::AppState;
         const auto* state = static_cast<const AppState*>(ctx.get_app_state());
 
         if (state && state->effort_value.has_value()) {
@@ -128,4 +128,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

@@ -38,14 +38,14 @@ import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.component_primitives;
 import loom.ui.dialogs.cost_threshold_dialog;
 
-export namespace cc::ui::dialogs::default_renderers {
+export namespace loom::ui::dialogs::default_renderers {
 
 using namespace ftxui;
-namespace dsys = cc::ui::dialogs::system;
-namespace dframe = cc::ui::dialogs::frame;
-namespace pc = cc::ui::permissions::components;
-namespace sp = cc::ui::permissions::single_prompt;
-using Theme = cc::ui::design::theme::Theme;
+namespace dsys = loom::ui::dialogs::system;
+namespace dframe = loom::ui::dialogs::frame;
+namespace pc = loom::ui::permissions::components;
+namespace sp = loom::ui::permissions::single_prompt;
+using Theme = loom::ui::design::theme::Theme;
 
 // ============================================================
 // ToolPermission renderer + event handler
@@ -253,7 +253,7 @@ inline bool HandleToolPermissionEvent(
 {
     // Delegate to the faithful renderer port in cc.ui.dialogs.sandbox_permission
     // (see sandbox_permission.cppm for the 1:1 TS layout).
-    return cc::ui::dialogs::sandbox_permission::RenderDefault(p, ctx);
+    return loom::ui::dialogs::sandbox_permission::RenderDefault(p, ctx);
 }
 
 inline bool HandleSandboxPermissionEvent(
@@ -261,7 +261,7 @@ inline bool HandleSandboxPermissionEvent(
     const Event& event)
 {
     // Delegate to the faithful event handler (y/a/n/Esc/Enter + arrow nav).
-    return cc::ui::dialogs::sandbox_permission::HandleSandboxPermissionEvent(
+    return loom::ui::dialogs::sandbox_permission::HandleSandboxPermissionEvent(
         p, event);
 }
 
@@ -279,7 +279,7 @@ inline bool HandleSandboxPermissionEvent(
     const dsys::CostThresholdPayload& p,
     const dsys::DialogRenderContext& /*ctx*/)
 {
-    namespace ct = cc::ui::dialogs::cost_threshold;
+    namespace ct = loom::ui::dialogs::cost_threshold;
     ct::CostThresholdState st;
     st.dollars_spent = p.dollars_spent;
     st.model_name    = p.model_name;
@@ -291,7 +291,7 @@ inline bool HandleCostThresholdEvent(
     dsys::CostThresholdPayload& p,
     const Event& event)
 {
-    namespace ct = cc::ui::dialogs::cost_threshold;
+    namespace ct = loom::ui::dialogs::cost_threshold;
     ct::CostThresholdState st;
     st.dollars_spent = p.dollars_spent;
     st.model_name    = p.model_name;
@@ -624,4 +624,4 @@ void register_default_renderers(dsys::DialogRendererRegistry& registry) {
 
 }
 
-} // namespace cc::ui::dialogs::default_renderers
+} // namespace loom::ui::dialogs::default_renderers

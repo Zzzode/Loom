@@ -21,7 +21,7 @@ import std;
 import loom.ui.features.agents.agent_cards;        // AgentCardData
 import loom.ui.features.teams.live_teammates;      // LiveTeammate
 
-export namespace cc::ui::repl_screen {
+export namespace loom::ui::repl_screen {
 
 /// Spinner modes.  TS SpinnerMode (SpinnerAnimationRow.tsx switch cases +
 /// SpinnerWithVerb usage in REPL.tsx): requesting/thinking/responding/
@@ -55,7 +55,7 @@ struct TaskViewStore {
     // TeamsDialog.tsx (roster) + CoordinatorAgentStatus.tsx AgentLine
     // (per-teammate live status + output tail). Projected by AppAdapter from
     // (a) agent_runtime::native_agent_store() for in-process teammates and
-    // (b) cc::utils::swarm_pane_observer for tmux pane teammates.
+    // (b) loom::utils::swarm_pane_observer for tmux pane teammates.
     // Event-driven: the observer posts a refresh when pane content changes;
     // there is no render ticker (see app_team_projection.cpp).
     std::vector<teams::live::LiveTeammate> live_teammates;
@@ -66,7 +66,7 @@ struct TaskViewStore {
     // ── Agent cards (AgentsView / agent menu) ───────────────────────────
     // Projected agent-definition cards for the AgentsView modal and the
     // agent menu. Populated by AppAdapter from the agent definitions.
-    std::vector<cc::ui::agents::cards::AgentCardData> agent_cards;
+    std::vector<loom::ui::agents::cards::AgentCardData> agent_cards;
 };
 
-}  // namespace cc::ui
+}  // namespace loom::ui

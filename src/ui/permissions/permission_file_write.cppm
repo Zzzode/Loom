@@ -55,11 +55,11 @@ import std;
 import loom.ui.visual.code_highlight;
 import loom.ui.permissions.components;
 
-export namespace cc::ui::permissions::file_write {
+export namespace loom::ui::permissions::file_write {
 
 using namespace ftxui;
-namespace pc = cc::ui::permissions::components;
-namespace ch = cc::ui::code_highlight;
+namespace pc = loom::ui::permissions::components;
+namespace ch = loom::ui::code_highlight;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -884,4 +884,4 @@ struct PromptState {
     return MakeFileWritePermissionPrompt(std::move(props));
 }
 
-} // namespace cc::ui::permissions::file_write
+} // namespace loom::ui::permissions::file_write

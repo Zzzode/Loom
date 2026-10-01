@@ -17,15 +17,15 @@ import loom.session.app_storage;
 import loom.hooks.tool_permissions;
 import loom.hooks.lifecycle_hooks;
 
-namespace cc::ui {
+namespace loom::ui {
 
 namespace {
 [[nodiscard]] int RunApp(
     core::QueryEngine& engine,
-    cc::commands::AppCommandRegistry& cmd_registry,
+    loom::commands::AppCommandRegistry& cmd_registry,
     utils::SessionStorage& storage,
-    cc::hooks::ToolPermissionHook* permission_hook,
-    cc::hooks::LifecycleHookRegistry* lifecycle_hooks
+    loom::hooks::ToolPermissionHook* permission_hook,
+    loom::hooks::LifecycleHookRegistry* lifecycle_hooks
 ) {
     // Use the alternate-screen fullscreen like TS (AlternateScreen) - the REPL owns the terminal.
     auto screen = ScreenInteractive::Fullscreen();
@@ -79,10 +79,10 @@ namespace {
     if (permission_hook && !permission_hook->is_auto_approve_mode()) {
         auto ui_callback = app->get_permission_callback();
         permission_hook->set_ask_user_fn(
-            [ui_callback](const cc::hooks::PermissionContext& ctx) -> cc::hooks::PermissionDecision {
+            [ui_callback](const loom::hooks::PermissionContext& ctx) -> loom::hooks::PermissionDecision {
                 bool allowed = ui_callback(ctx.tool_name, ctx.args);
-                return allowed ? cc::hooks::PermissionDecision::allow
-                               : cc::hooks::PermissionDecision::deny;
+                return allowed ? loom::hooks::PermissionDecision::allow
+                               : loom::hooks::PermissionDecision::deny;
             }
         );
     }
@@ -106,13 +106,13 @@ namespace {
 }  // namespace
 
 extern "C" int cc_ui_run_app_bridge(
-    cc::core::QueryEngine* engine,
-    cc::hooks::LifecycleHookRegistry* lifecycle_hooks,
-    cc::commands::AppCommandRegistry* cmd_registry,
-    cc::utils::SessionStorage* storage,
-    cc::hooks::ToolPermissionHook* permission_hook
+    loom::core::QueryEngine* engine,
+    loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
+    loom::commands::AppCommandRegistry* cmd_registry,
+    loom::utils::SessionStorage* storage,
+    loom::hooks::ToolPermissionHook* permission_hook
 ) {
-    return cc::ui::RunApp(*engine, *cmd_registry, *storage, permission_hook, lifecycle_hooks);
+    return loom::ui::RunApp(*engine, *cmd_registry, *storage, permission_hook, lifecycle_hooks);
 }
 
-}  // namespace cc::ui
+}  // namespace loom::ui

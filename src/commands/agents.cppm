@@ -12,9 +12,9 @@ import loom.types.types;
 import loom.commands.command;
 import loom.tools.agent_runtime;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 struct AgentsOptions {
     std::optional<std::string> subcommand;
@@ -56,7 +56,7 @@ public:
             return CommandResult::success("Available commands:\n  /agents list - List available agents\n  /agents use <agent> - Select an agent\n  /agents configure <agent> - Configure an agent\n  /agents create - Create a new agent (wizard)\n  /agents edit <agent> - Edit an agent (wizard)");
         }
 
-        auto agents = cc::tools::agent_runtime::get_all_agent_definitions(
+        auto agents = loom::tools::agent_runtime::get_all_agent_definitions(
             ctx.cwd.empty()
                 ? std::nullopt
                 : std::optional<std::filesystem::path>{ctx.cwd});
@@ -125,7 +125,7 @@ public:
                 suggestions.emplace_back(cmd);
             }
         }
-        for (const auto& agent : cc::tools::agent_runtime::get_all_agent_definitions()) {
+        for (const auto& agent : loom::tools::agent_runtime::get_all_agent_definitions()) {
             if (std::string_view(agent.agent_type).starts_with(partial)) {
                 suggestions.push_back(agent.agent_type);
             }
@@ -134,8 +134,8 @@ public:
     }
 
 private:
-    [[nodiscard]] static const cc::tools::agent_runtime::AgentDefinition* find_agent(
-        const std::vector<cc::tools::agent_runtime::AgentDefinition>& agents,
+    [[nodiscard]] static const loom::tools::agent_runtime::AgentDefinition* find_agent(
+        const std::vector<loom::tools::agent_runtime::AgentDefinition>& agents,
         std::string_view agent_name
     ) {
         for (const auto& agent : agents) {
@@ -145,7 +145,7 @@ private:
     }
 
     [[nodiscard]] static std::string format_agent_list(
-        const std::vector<cc::tools::agent_runtime::AgentDefinition>& agents
+        const std::vector<loom::tools::agent_runtime::AgentDefinition>& agents
     ) {
         if (agents.empty()) return "No agents available.";
 
@@ -157,7 +157,7 @@ private:
     }
 
     [[nodiscard]] static std::string format_agent_details(
-        const cc::tools::agent_runtime::AgentDefinition& agent
+        const loom::tools::agent_runtime::AgentDefinition& agent
     ) {
         std::ostringstream out;
         out << "Agent: " << agent.agent_type << "\n";
@@ -194,4 +194,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

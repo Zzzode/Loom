@@ -6,7 +6,7 @@ module;
 export module loom.ui.widgets.spinner_animations;
 
 import std;
-export namespace cc::ui::components {
+export namespace loom::ui::components {
 using namespace ftxui;
 inline constexpr std::array<std::string_view, 10> kDotsAnimation = {"⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"};
 inline constexpr std::array<std::string_view, 4> kLineAnimation = {"-","\\","|","/"};

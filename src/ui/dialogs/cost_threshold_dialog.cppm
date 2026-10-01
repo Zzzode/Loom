@@ -39,7 +39,7 @@ import std;
 
 import loom.constants.product;
 
-export namespace cc::ui::dialogs::cost_threshold {
+export namespace loom::ui::dialogs::cost_threshold {
 
 using namespace ftxui;
 
@@ -50,7 +50,7 @@ using namespace ftxui;
 /// External link rendered below the body paragraph.  Kept as a named
 /// constant so tests can assert the exact reference URL without touching
 /// the compiled output.
-inline const std::string kDocsUrl = cc::constants::product::doc_url("/docs/en/costs");
+inline const std::string kDocsUrl = loom::constants::product::doc_url("/docs/en/costs");
 
 /// Body paragraph immediately above the external link.
 inline constexpr std::string_view kBodyParagraph =
@@ -244,4 +244,4 @@ inline bool HandleCostThresholdEvent(CostThresholdState& st,
     return false;
 }
 
-} // namespace cc::ui::dialogs::cost_threshold
+} // namespace loom::ui::dialogs::cost_threshold

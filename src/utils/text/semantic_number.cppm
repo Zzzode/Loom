@@ -7,7 +7,7 @@ export module loom.text.semantic_number;
 
 import std;
 
-export namespace cc::utils::semantic_number {
+export namespace loom::utils::semantic_number {
 
 [[nodiscard]] inline bool is_decimal_number_literal(std::string_view value) noexcept {
     if (value.empty()) return false;
@@ -47,4 +47,4 @@ export namespace cc::utils::semantic_number {
     return std::nullopt;
 }
 
-} // namespace cc::utils::semantic_number
+} // namespace loom::utils::semantic_number

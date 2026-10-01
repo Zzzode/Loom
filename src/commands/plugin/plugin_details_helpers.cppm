@@ -13,7 +13,7 @@ export module loom.commands.plugin_details_helpers;
 
 import std;
 
-export namespace cc::commands::plugin {
+export namespace loom::commands::plugin {
 
 // ---------------------------------------------------------------------------
 // Forward-declared minimal marketplace entry shape.
@@ -110,4 +110,4 @@ build_plugin_details_menu_options(
     return options;
 }
 
-} // namespace cc::commands::plugin
+} // namespace loom::commands::plugin

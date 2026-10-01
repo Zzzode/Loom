@@ -22,10 +22,10 @@ import std;
 import loom.types.types;
 import loom.commands.plugin_ui_data;
 
-export namespace cc::ui::plugins::plugin_settings_dialog {
+export namespace loom::ui::plugins::plugin_settings_dialog {
 using namespace ftxui;
 
-namespace ui = cc::commands::plugin_ui;
+namespace ui = loom::commands::plugin_ui;
 
 using ui::InstalledCellData;
 using ui::ConfigStep;
@@ -734,4 +734,4 @@ struct SettingsState {
     });
 }
 
-} // namespace cc::ui::plugins::plugin_settings_dialog
+} // namespace loom::ui::plugins::plugin_settings_dialog

@@ -14,13 +14,13 @@ import loom.serdes.json;
 import loom.utils.error;
 import loom.crypto.crypto;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
-using cc::utils::Result;
-using cc::utils::VoidResult;
-using cc::utils::Error;
-using cc::utils::ErrorCode;
+using loom::utils::Result;
+using loom::utils::VoidResult;
+using loom::utils::Error;
+using loom::utils::ErrorCode;
 
 // Lightweight conversation message types used by the storage layer.
 struct TextBlock {
@@ -289,7 +289,7 @@ public:
     [[nodiscard]] static std::string generate_session_id() {
         // TS parity: randomUUID() (v4 UUID, e.g. "a1b2c3d4-e5f6-...").
         // User statusline scripts take the first 6 hex chars as a #hashtag.
-        return cc::utils::crypto::generate_uuid();
+        return loom::utils::crypto::generate_uuid();
     }
 
 private:
@@ -496,4 +496,4 @@ private:
     }
 };
 
-} // namespace cc::utils
+} // namespace loom::utils

@@ -21,7 +21,7 @@ export module loom.services.diagnostic.dump_diagnostic;
 
 import std;
 
-export namespace cc::services::diagnostic {
+export namespace loom::services::diagnostic {
 
 namespace fs = std::filesystem;
 
@@ -267,4 +267,4 @@ struct DiagnosticInfo {
     return std::nullopt;
 }
 
-} // namespace cc::services::diagnostic
+} // namespace loom::services::diagnostic

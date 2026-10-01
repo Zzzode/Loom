@@ -19,7 +19,7 @@ module;
 export module loom.services.mcp.oauth_port;
 
 import std;
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
 // Final fallback when random probing fails. Kept as a named constant so the
 // behavior is discoverable even though the happy path no longer uses it.
@@ -111,4 +111,4 @@ namespace detail {
     return std::unexpected(std::string{"No available ports for OAuth redirect"});
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

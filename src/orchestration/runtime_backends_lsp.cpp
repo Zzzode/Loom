@@ -14,33 +14,33 @@ import loom.types.tool_types;
 import loom.orchestration.tools.lsp;
 import loom.tools.runtime_registry;
 
-namespace cc::orchestration::detail {
+namespace loom::orchestration::detail {
 
-using cc::core::Result;
-using cc::core::ToolInput;
-using cc::core::ToolResult;
+using loom::core::Result;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
 
 namespace fs = std::filesystem;
 
-[[nodiscard]] cc::tools::LspAction parse_lsp_action(std::string_view action) {
+[[nodiscard]] loom::tools::LspAction parse_lsp_action(std::string_view action) {
     // Canonical action strings mirror lsp_action_name() in lsp_tool.cppm.
     // Without these mappings the runtime registry's lsp backend would
     // silently fall through to LspAction::Symbols for the newer actions.
-    if (action == "diagnostics") return cc::tools::LspAction::Diagnostics;
-    if (action == "definition") return cc::tools::LspAction::Definition;
-    if (action == "references") return cc::tools::LspAction::References;
-    if (action == "completion") return cc::tools::LspAction::Completion;
-    if (action == "hover") return cc::tools::LspAction::Hover;
-    if (action == "symbols") return cc::tools::LspAction::Symbols;
-    if (action == "implementation") return cc::tools::LspAction::Implementation;
-    if (action == "workspaceSymbol") return cc::tools::LspAction::WorkspaceSymbol;
-    if (action == "prepareCallHierarchy") return cc::tools::LspAction::PrepareCallHierarchy;
-    if (action == "incomingCalls") return cc::tools::LspAction::IncomingCalls;
-    if (action == "outgoingCalls") return cc::tools::LspAction::OutgoingCalls;
-    return cc::tools::LspAction::Symbols;
+    if (action == "diagnostics") return loom::tools::LspAction::Diagnostics;
+    if (action == "definition") return loom::tools::LspAction::Definition;
+    if (action == "references") return loom::tools::LspAction::References;
+    if (action == "completion") return loom::tools::LspAction::Completion;
+    if (action == "hover") return loom::tools::LspAction::Hover;
+    if (action == "symbols") return loom::tools::LspAction::Symbols;
+    if (action == "implementation") return loom::tools::LspAction::Implementation;
+    if (action == "workspaceSymbol") return loom::tools::LspAction::WorkspaceSymbol;
+    if (action == "prepareCallHierarchy") return loom::tools::LspAction::PrepareCallHierarchy;
+    if (action == "incomingCalls") return loom::tools::LspAction::IncomingCalls;
+    if (action == "outgoingCalls") return loom::tools::LspAction::OutgoingCalls;
+    return loom::tools::LspAction::Symbols;
 }
 
-[[nodiscard]] std::string format_lsp_result(const cc::tools::LspResult& result, std::string_view action) {
+[[nodiscard]] std::string format_lsp_result(const loom::tools::LspResult& result, std::string_view action) {
     if (result.empty()) return std::format("No LSP results for action '{}'.", action);
     std::string out;
     for (const auto& diagnostic : result.diagnostics) {
@@ -62,9 +62,9 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] Result<ToolResult> lsp_backend(const ToolInput& input) {
     auto json = input.json();
-    auto file_text = cc::tools::detail::json_string(json, "file_path")
-        .or_else([&] { return cc::tools::detail::json_string(json, "path"); });
-    auto action = cc::tools::detail::json_string(json, "action").value_or("symbols");
+    auto file_text = loom::tools::detail::json_string(json, "file_path")
+        .or_else([&] { return loom::tools::detail::json_string(json, "path"); });
+    auto action = loom::tools::detail::json_string(json, "action").value_or("symbols");
     if (!file_text || file_text->empty()) {
         return ToolResult::error("lsp requires file_path");
     }
@@ -73,19 +73,19 @@ namespace fs = std::filesystem;
         return ToolResult::error(std::format("File not found: {}", file.string()));
     }
 
-    cc::tools::LspTool tool;
+    loom::tools::LspTool tool;
     tool.set_connected(true);
-    cc::tools::LspRequest request{
+    loom::tools::LspRequest request{
         .action = parse_lsp_action(action),
         .file_path = file,
-        .position = cc::tools::LspPosition{
-            .line = cc::tools::detail::json_int(json, "line").value_or(0),
-            .character = cc::tools::detail::json_int(json, "character").value_or(0)},
-        .query = cc::tools::detail::json_string(json, "query"),
+        .position = loom::tools::LspPosition{
+            .line = loom::tools::detail::json_int(json, "line").value_or(0),
+            .character = loom::tools::detail::json_int(json, "character").value_or(0)},
+        .query = loom::tools::detail::json_string(json, "query"),
     };
     auto result = tool.execute(std::move(request));
-    if (!result) return ToolResult::error(std::string(cc::tools::format_error(result.error())));
+    if (!result) return ToolResult::error(std::string(loom::tools::format_error(result.error())));
     return ToolResult::success(format_lsp_result(*result, action));
 }
 
-} // namespace cc::orchestration::detail
+} // namespace loom::orchestration::detail

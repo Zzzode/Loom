@@ -15,20 +15,20 @@ import loom.commands.command;
 import loom.state.app_state;
 import loom.state.store;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================
-// Action type ordinals (keep in sync with cc::state::ActionType
+// Action type ordinals (keep in sync with loom::state::ActionType
 // enum ordering in store.cppm)
 // ============================================================
 
-/// Ordinal of ActionType::AddNotification in cc::state::ActionType.
+/// Ordinal of ActionType::AddNotification in loom::state::ActionType.
 /// Pushes a notification string into the notifications list.
 constexpr int ACTION_ADD_NOTIFICATION = 18;
 
-/// Ordinal of ActionType::UpdateUsage in cc::state::ActionType.
+/// Ordinal of ActionType::UpdateUsage in loom::state::ActionType.
 /// Updates total_usage in AppState.
 constexpr int ACTION_UPDATE_USAGE = 7;
 
@@ -123,7 +123,7 @@ public:
         // QueryEngine's AddMessage dispatches. If the provider callback is
         // unavailable or returns empty but the UI has messages, use those.
         if (active_messages.empty()) {
-            if (const auto* state = static_cast<const cc::state::AppState*>(ctx.get_app_state())) {
+            if (const auto* state = static_cast<const loom::state::AppState*>(ctx.get_app_state())) {
                 if (!state->messages.empty()) {
                     active_messages = state->messages;
                 }
@@ -167,7 +167,7 @@ public:
 
             // Also refresh from AppState if the provider returned nothing
             if (after_messages.empty()) {
-                if (const auto* state = static_cast<const cc::state::AppState*>(ctx.get_app_state())) {
+                if (const auto* state = static_cast<const loom::state::AppState*>(ctx.get_app_state())) {
                     after_messages = state->messages;
                 }
             }
@@ -417,4 +417,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

@@ -13,7 +13,7 @@ import std;
 import loom.query.wire_protocol;
 import loom.services.analytics;
 
-namespace cc::core {
+namespace loom::core {
 
 QueryEngine::QueryEngine(QueryEngineConfig config, ToolRegistry& registry)
     : config_(std::move(config)), tool_registry_(&registry),
@@ -42,9 +42,9 @@ QueryEngine::QueryEngine(QueryEngineConfig config, ToolRegistry& registry)
     // through, so emitting here means the log is actually populated rather
     // than being a writer nobody calls -- which is how the previous
     // analytics module ended up dead.
-    cc::services::analytics::local_analytics().log_event(
+    loom::services::analytics::local_analytics().log_event(
         "session_start",
-        {{"wire_api", std::string(cc::query::wire::wire_api_name(wire_api_))}});
+        {{"wire_api", std::string(loom::query::wire::wire_api_name(wire_api_))}});
 }
 
 void QueryEngine::setup_api_client() {
@@ -58,9 +58,9 @@ void QueryEngine::setup_api_client() {
 
     // Select the wire protocol. Unset keeps the historical behaviour
     // (Anthropic /v1/messages). See cc.query.wire_protocol for the seam.
-    wire_api_ = cc::query::wire::WireApi::Anthropic;
+    wire_api_ = loom::query::wire::WireApi::Anthropic;
     if (config_.wire_api && !config_.wire_api->empty()) {
-        if (auto parsed = cc::query::wire::wire_api_from_string(*config_.wire_api)) {
+        if (auto parsed = loom::query::wire::wire_api_from_string(*config_.wire_api)) {
             wire_api_ = *parsed;
         }
     } else {
@@ -71,13 +71,13 @@ void QueryEngine::setup_api_client() {
         const char* env = std::getenv("LOOM_WIRE_API");
         if (!env || !*env) env = std::getenv("CC_REPL_WIRE_API");
         if (env && *env) {
-            if (auto parsed = cc::query::wire::wire_api_from_string(env)) {
+            if (auto parsed = loom::query::wire::wire_api_from_string(env)) {
                 wire_api_ = *parsed;
             }
         }
     }
     native_computer_tool_ =
-        config_.native_computer_tool.value_or(wire_api_ == cc::query::wire::WireApi::Anthropic);
+        config_.native_computer_tool.value_or(wire_api_ == loom::query::wire::WireApi::Anthropic);
 }
 
-} // namespace cc::core
+} // namespace loom::core

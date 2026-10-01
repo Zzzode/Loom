@@ -27,7 +27,7 @@ import std;
 import loom.fs.file_read_cache;
 import loom.text.string_utils;
 
-export namespace cc::utils::file_edit {
+export namespace loom::utils::file_edit {
 
 // ===========================================================================
 // Quote normalization constants
@@ -841,8 +841,8 @@ inline std::vector<FileEdit> get_edits_for_patch(
             }
         }
         result.push_back(FileEdit{
-            .old_string  = cc::utils::join(old_v, "\n"),
-            .new_string  = cc::utils::join(new_v, "\n"),
+            .old_string  = loom::utils::join(old_v, "\n"),
+            .new_string  = loom::utils::join(new_v, "\n"),
             .replace_all = false,
         });
     }
@@ -894,7 +894,7 @@ inline DesanitizeResult desanitize_match_string(std::string_view match) {
     DesanitizeResult r{std::string(match), {}};
     for (const auto& [from, to] : kDesanitizations) {
         std::string before = r.result;
-        r.result = cc::utils::replace_all(std::move(r.result), from, to);
+        r.result = loom::utils::replace_all(std::move(r.result), from, to);
         if (r.result != before) {
             r.applied.push_back({from, to});
         }
@@ -971,7 +971,7 @@ inline NormalizedFileEditInput normalize_file_edit_input(
                 file_content->find(de.result) != std::string::npos) {
                 std::string de_new = new_s;
                 for (const auto& rep : de.applied) {
-                    de_new = cc::utils::replace_all(std::move(de_new), rep.from, rep.to);
+                    de_new = loom::utils::replace_all(std::move(de_new), rep.from, rep.to);
                 }
                 out.edits.push_back(FileEdit{
                     .old_string  = std::move(de.result),
@@ -1126,4 +1126,4 @@ inline ReadForEditResult read_file_for_edit(const std::filesystem::path& p) {
     }
 }
 
-} // namespace cc::utils::file_edit
+} // namespace loom::utils::file_edit

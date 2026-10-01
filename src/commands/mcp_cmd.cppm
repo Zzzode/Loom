@@ -26,13 +26,13 @@ import loom.services.mcp.config;
 // Alias NativeMcpStatus to the runtime type defined in cc.orchestration.tools.mcp so the
 // data-prep row builders below can use a short name without pulling in all
 // of the connection-manager snapshot machinery.
-namespace cc::tools {
+namespace loom::tools {
 using NativeMcpStatus = NativeMcpServerStatus;
 }
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================================
 // Data-prep row types (for Phase 4 FTXUI table rendering)
@@ -250,11 +250,11 @@ private:
 
     [[nodiscard]] VoidResult sync_native_runtime() {
         if (auto loaded = ensure_config_loaded(); !loaded) return loaded;
-        std::vector<cc::tools::NativeMcpConfiguredServer> servers;
+        std::vector<loom::tools::NativeMcpConfiguredServer> servers;
         for (const auto& server : config_manager_.settings().mcp_servers) {
-            servers.push_back(cc::tools::to_native_mcp_server(server));
+            servers.push_back(loom::tools::to_native_mcp_server(server));
         }
-        auto synced = cc::tools::sync_native_mcp_servers(std::move(servers));
+        auto synced = loom::tools::sync_native_mcp_servers(std::move(servers));
         if (!synced) {
             return std::unexpected(Error::make(
                 ErrorCode::InternalError, synced.error()));
@@ -383,7 +383,7 @@ private:
             McpServerListRow row;
             row.name = cfg.name;
             row.type = cfg.transport.empty() ? std::string("stdio") : cfg.transport;
-            if (auto st = cc::tools::native_mcp_status(cfg.name)) {
+            if (auto st = loom::tools::native_mcp_status(cfg.name)) {
                 row.status = st->status;
                 row.tools = st->tools.size();
                 row.resources = st->resources.size();
@@ -399,7 +399,7 @@ private:
 
     /// Collect rows for the tools table of a single server.
     [[nodiscard]] static std::vector<McpToolRow> list_tool_rows(
-        const cc::tools::NativeMcpStatus& status) {
+        const loom::tools::NativeMcpStatus& status) {
         std::vector<McpToolRow> rows;
         rows.reserve(status.tools.size());
         for (const auto& t : status.tools) {
@@ -410,7 +410,7 @@ private:
 
     /// Collect rows for the resources table of a single server.
     [[nodiscard]] static std::vector<McpResourceRow> list_resource_rows(
-        const cc::tools::NativeMcpStatus& status) {
+        const loom::tools::NativeMcpStatus& status) {
         std::vector<McpResourceRow> rows;
         rows.reserve(status.resources.size());
         for (const auto& r : status.resources) {
@@ -422,7 +422,7 @@ private:
 
     /// Collect rows for the prompts table of a single server.
     [[nodiscard]] static std::vector<McpPromptRow> list_prompt_rows(
-        const cc::tools::NativeMcpStatus& status) {
+        const loom::tools::NativeMcpStatus& status) {
         std::vector<McpPromptRow> rows;
         rows.reserve(status.prompts.size());
         for (const auto& p : status.prompts) {
@@ -445,13 +445,13 @@ private:
         s.client_id = xaa.client_id;
         s.callback_port = xaa.callback_port;
         // Read client_secret from file-based secure storage (~/.config/loom/xaa/idp_tokens.json)
-        auto secret = cc::services::mcp::get_idp_client_secret(xaa.issuer);
+        auto secret = loom::services::mcp::get_idp_client_secret(xaa.issuer);
         s.has_client_secret = secret.has_value();
         // Read cached id_token from file-based secure storage
-        auto token = cc::services::mcp::get_cached_idp_id_token(xaa.issuer);
+        auto token = loom::services::mcp::get_cached_idp_id_token(xaa.issuer);
         if (token && !token->empty()) {
             s.has_id_token = true;
-            auto exp = cc::services::mcp::jwt_exp(*token);
+            auto exp = loom::services::mcp::jwt_exp(*token);
             if (exp) s.id_token_expires_epoch = static_cast<std::uint64_t>(*exp);
         }
         return s;
@@ -696,7 +696,7 @@ private:
                     // Use the XAA IdP issuer as the storage key
                     auto xaa_cfg = read_xaa_idp_status();
                     if (xaa_cfg.configured) {
-                        cc::services::mcp::save_idp_client_secret(
+                        loom::services::mcp::save_idp_client_secret(
                             xaa_cfg.issuer, secret_env);
                     }
                 }
@@ -826,7 +826,7 @@ private:
         }
         const auto& cfg = *cfg_it;
         std::string out = std::format("MCP Server: {}\n", cfg.name);
-        auto status = cc::tools::native_mcp_status(name);
+        auto status = loom::tools::native_mcp_status(name);
         out += std::format("Status: {}\n",
             status ? status->status : std::string("not started"));
         out += std::format("Type: {}\n",
@@ -910,7 +910,7 @@ private:
             return CommandResult::fail(
                 std::format("MCP server '{}' not configured", name));
         }
-        auto restarted = cc::tools::restart_native_mcp_server(name);
+        auto restarted = loom::tools::restart_native_mcp_server(name);
         if (!restarted) return CommandResult::fail(restarted.error());
         return CommandResult::success(std::format(
             "MCP server '{}' restarted: {} (tools={}, resources={}, prompts={})",
@@ -955,7 +955,7 @@ private:
             return CommandResult::fail(
                 std::format("MCP server '{}' not configured", name));
         }
-        auto r = cc::tools::restart_native_mcp_server(name);
+        auto r = loom::tools::restart_native_mcp_server(name);
         if (!r) return CommandResult::fail(r.error());
         return CommandResult::success(std::format(
             "MCP server '{}' reconnected: {} (tools={})",
@@ -1052,7 +1052,7 @@ private:
 
         // If the issuer is changing, clear cached tokens for the old issuer
         if (!old_issuer.empty() && old_issuer != *issuer) {
-            cc::services::mcp::clear_idp_id_token(old_issuer);
+            loom::services::mcp::clear_idp_id_token(old_issuer);
         }
 
         auto& xaa = config_manager_.settings_mut().xaa_idp;
@@ -1067,7 +1067,7 @@ private:
 
         if (secret) {
             // Save client_secret to file-based secure storage
-            cc::services::mcp::save_idp_client_secret(*issuer, *secret);
+            loom::services::mcp::save_idp_client_secret(*issuer, *secret);
         }
         return CommandResult::success(
             std::format("XAA IdP connection configured for {}", *issuer));
@@ -1100,7 +1100,7 @@ private:
         if (inject_token) {
             // Cache the injected id_token to file-based secure storage.
             // save_idp_id_token_from_jwt parses the JWT exp claim for real TTL.
-            auto expires_at_ms = cc::services::mcp::save_idp_id_token_from_jwt(
+            auto expires_at_ms = loom::services::mcp::save_idp_id_token_from_jwt(
                 status.issuer, *inject_token);
             cached_xaa_status_.reset();
             std::uint64_t approx_exp = static_cast<std::uint64_t>(
@@ -1112,7 +1112,7 @@ private:
 
         if (force) {
             // Clear cached id_token so the login flow re-acquires from the IdP
-            cc::services::mcp::clear_idp_id_token(status.issuer);
+            loom::services::mcp::clear_idp_id_token(status.issuer);
             cached_xaa_status_.reset();
         }
 
@@ -1128,7 +1128,7 @@ private:
         // does the int -> uint16_t narrowing through validated_callback_port()
         // and IGNORES an out-of-range value (random port as today) rather than
         // wrapping it (65536 -> 0, 70000 -> 4464 are wrong ports, not errors).
-        auto result = cc::services::mcp::perform_xaa_login(
+        auto result = loom::services::mcp::perform_xaa_login(
             status.issuer, status.client_id, std::nullopt, status.callback_port);
         if (!result) {
             return CommandResult::fail(
@@ -1168,8 +1168,8 @@ private:
 
         // Clear cached id_token and client_secret for the old issuer
         if (!old_issuer.empty()) {
-            cc::services::mcp::clear_idp_id_token(old_issuer);
-            cc::services::mcp::clear_idp_client_secret(old_issuer);
+            loom::services::mcp::clear_idp_id_token(old_issuer);
+            loom::services::mcp::clear_idp_client_secret(old_issuer);
         }
 
         auto& xaa = config_manager_.settings_mut().xaa_idp;
@@ -1184,4 +1184,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

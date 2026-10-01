@@ -27,7 +27,7 @@ import loom.ui.screens.repl_state;
 import loom.ui.screens.prompt_store;
 import loom.types.types;
 
-namespace cc::ui::repl_screen {
+namespace loom::ui::repl_screen {
 
 [[nodiscard]] bool is_utf8_continuation_byte(unsigned char c) {
     return (c & 0xC0) == 0x80;
@@ -138,7 +138,7 @@ std::size_t ApplyPendingAtMentionInserts(
 /// pasted contents were provided).
 bool StashCurrentPrompt(
     const std::shared_ptr<ReplScreenState>& state,
-    std::unordered_map<int, ::cc::core::ImageBlock> pasted_images,
+    std::unordered_map<int, ::loom::core::ImageBlock> pasted_images,
     std::unordered_map<int, std::string> pasted_texts) {
     if (state->input_text.empty() && pasted_images.empty() && pasted_texts.empty())
         return false;
@@ -158,7 +158,7 @@ bool StashCurrentPrompt(
 /// Returns true if a stash was restored.
 bool RestoreStashedPrompt(
     const std::shared_ptr<ReplScreenState>& state,
-    std::unordered_map<int, ::cc::core::ImageBlock>* out_images,
+    std::unordered_map<int, ::loom::core::ImageBlock>* out_images,
     std::unordered_map<int, std::string>* out_texts) {
     if (!state->prompt_store.stashed_prompt.has_value()) return false;
     auto stash = std::move(*state->prompt_store.stashed_prompt);
@@ -287,4 +287,4 @@ void move_prompt_cursor_right(const std::shared_ptr<ReplScreenState>& state) {
     return state->input_text;
 }
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

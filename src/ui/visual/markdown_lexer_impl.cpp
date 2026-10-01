@@ -10,7 +10,7 @@ module loom.ui.visual.markdown;
 
 import std;
 
-namespace cc::ui {
+namespace loom::ui {
 namespace detail {
 
 [[nodiscard]] std::vector<InlineToken> tokenize_inline(std::string_view text) {
@@ -528,4 +528,4 @@ parse_ordered_list(std::string_view line) {
     return tokens;
 }
 } // namespace detail
-} // namespace cc::ui
+} // namespace loom::ui

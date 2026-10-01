@@ -6,7 +6,7 @@ export module loom.process.timeouts;
 
 import std;
 
-export namespace cc::utils::timeouts {
+export namespace loom::utils::timeouts {
 
 constexpr int default_timeout_ms = 120000;
 constexpr int max_timeout_ms = 600000;
@@ -57,4 +57,4 @@ namespace detail {
     return max_timeout_ms > def ? max_timeout_ms : def;
 }
 
-} // namespace cc::utils::timeouts
+} // namespace loom::utils::timeouts

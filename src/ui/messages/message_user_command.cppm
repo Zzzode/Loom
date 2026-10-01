@@ -18,7 +18,7 @@ export module loom.ui.messages.message_user_command;
 
 import std;
 
-export namespace cc::ui::messages::user_command {
+export namespace loom::ui::messages::user_command {
 using namespace ftxui;
 
 /// Data for a user command message
@@ -202,4 +202,4 @@ class UserCommandMessageComponent : public ComponentBase {
     return Make<UserCommandMessageComponent>(std::move(data), std::move(on_copy));
 }
 
-} // namespace cc::ui::messages::user_command
+} // namespace loom::ui::messages::user_command

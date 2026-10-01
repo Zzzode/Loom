@@ -22,7 +22,7 @@ export module loom.parsing.tree_sitter.base;
 
 import std;
 
-export namespace cc::utils::tree_sitter {
+export namespace loom::utils::tree_sitter {
 
 #if CC_HAS_TREE_SITTER
 
@@ -269,4 +269,4 @@ private:
 
 #endif  // CC_HAS_TREE_SITTER
 
-}  // namespace cc::utils::tree_sitter
+}  // namespace loom::utils::tree_sitter

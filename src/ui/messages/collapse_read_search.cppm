@@ -5,7 +5,7 @@ export module loom.ui.messages.collapse_read_search;
 
 import std;
 
-export namespace cc::utils::collapse_read_search {
+export namespace loom::utils::collapse_read_search {
 
 struct MemoryCounts {
     std::size_t memory_search_count = 0;
@@ -183,4 +183,4 @@ inline void append_phrase(
     return std::nullopt;
 }
 
-} // namespace cc::utils::collapse_read_search
+} // namespace loom::utils::collapse_read_search

@@ -14,7 +14,7 @@ export module loom.ui.dialogs.sandbox_permission;
 
 import std;
 
-export namespace cc::ui::dialogs::sandbox_permission {
+export namespace loom::ui::dialogs::sandbox_permission {
 
 using namespace ftxui;
 
@@ -224,4 +224,4 @@ requires (!requires (PayloadT& x) { x.on_response; })
     return false;
 }
 
-} // namespace cc::ui::dialogs::sandbox_permission
+} // namespace loom::ui::dialogs::sandbox_permission

@@ -2,7 +2,7 @@ export module loom.config.settings_merge;
 
 import std;
 
-export namespace cc::utils::settings_merge {
+export namespace loom::utils::settings_merge {
 
 [[nodiscard]] inline std::vector<std::string> merge_arrays_unique(
     const std::vector<std::string>& target,
@@ -20,4 +20,4 @@ export namespace cc::utils::settings_merge {
     return result;
 }
 
-} // namespace cc::utils::settings_merge
+} // namespace loom::utils::settings_merge

@@ -7,7 +7,7 @@ export module loom.serdes.frontmatter_parser;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 struct Frontmatter {
     std::map<std::string, std::string> metadata;
@@ -121,4 +121,4 @@ namespace fm_detail {
     return sv.substr(content_start);
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

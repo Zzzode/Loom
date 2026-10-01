@@ -16,7 +16,7 @@ export module loom.commands.plugin_pagination_util;
 
 import std;
 
-export namespace cc::commands::plugin {
+export namespace loom::commands::plugin {
 
 /// Default number of items visible in the scroll window.
 constexpr std::size_t DEFAULT_MAX_VISIBLE = 5;
@@ -204,4 +204,4 @@ private:
     }
 };
 
-} // namespace cc::commands::plugin
+} // namespace loom::commands::plugin

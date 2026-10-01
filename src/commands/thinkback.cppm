@@ -6,7 +6,7 @@ export module loom.commands.thinkback;
 
 import std;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
 using time_point = std::chrono::system_clock::time_point;
 
@@ -72,4 +72,4 @@ auto clear_thinking_history() -> void {
     std::filesystem::remove(thinking_history_path());
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

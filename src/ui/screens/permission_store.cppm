@@ -18,7 +18,7 @@ export module loom.ui.screens.permission_store;
 
 import std;
 
-export namespace cc::ui::repl_screen {
+export namespace loom::ui::repl_screen {
 
 /// Tool kind for permission prompt dispatch.
 /// Determines which faithful permission panel renderer to use.
@@ -87,4 +87,4 @@ struct PermissionStore {
     std::optional<PermissionRequestInfo> permission_request;
 };
 
-}  // namespace cc::ui
+}  // namespace loom::ui

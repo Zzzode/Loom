@@ -11,7 +11,7 @@ module loom.ui.visual.markdown;
 
 import std;
 
-namespace cc::ui {
+namespace loom::ui {
 namespace detail {
 
 [[nodiscard]] Elements linkify_issue_references(
@@ -177,4 +177,4 @@ namespace detail {
     return result;
 }
 } // namespace detail
-} // namespace cc::ui
+} // namespace loom::ui

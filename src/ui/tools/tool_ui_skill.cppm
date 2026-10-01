@@ -18,9 +18,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::skill_ui {
+export namespace loom::ui::tools::skill_ui {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 namespace detail {
 
@@ -120,4 +120,4 @@ inline void register_skill_ui() {
     global_tool_ui_registry().register_tool_ui("SkillTool", make_skill_ui());
 }
 
-}  // namespace cc::ui::tools::skill_ui
+}  // namespace loom::ui::tools::skill_ui

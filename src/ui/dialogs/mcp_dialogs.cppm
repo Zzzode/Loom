@@ -36,7 +36,7 @@ export module loom.ui.dialogs.mcp_dialogs;
 
 import std;
 
-export namespace cc::ui::mcp_dialogs {
+export namespace loom::ui::mcp_dialogs {
 using namespace ftxui;
 
 // ============================================================
@@ -1359,4 +1359,4 @@ struct ElicitationInteractiveState {
     return ElicitationDialogComponent(std::move(p));
 }
 
-} // namespace cc::ui::mcp_dialogs
+} // namespace loom::ui::mcp_dialogs

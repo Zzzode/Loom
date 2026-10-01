@@ -8,7 +8,7 @@ export module loom.ui.foundation.logo;
 
 import std;
 
-export namespace cc::ui::logo {
+export namespace loom::ui::logo {
 
 // --- Gradient colors for ASCII art rendering ---
 inline constexpr std::array<std::string_view, 5> kGradientColors = {
@@ -390,4 +390,4 @@ inline auto make_logo_component_options() -> LogoComponentOptions {
 [[nodiscard]] auto make_logo_component(const LogoComponentOptions& options,
                                         const LogoDisplayData& data) -> ftxui::Component;
 
-} // namespace cc::ui::logo
+} // namespace loom::ui::logo

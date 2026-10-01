@@ -1,6 +1,6 @@
 /// @file wire_anthropic.cppm
 /// @brief Anthropic /v1/messages wire backend: the first implementation of
-///        the cc::query::wire::WireBackend seam.
+///        the loom::query::wire::WireBackend seam.
 ///
 /// This is a pure extraction of the serialization/parsing QueryEngine used to
 /// do inline (build_request_body / append_message_to_json / content_to_json /
@@ -35,21 +35,21 @@ import loom.tools.tool;
 import loom.serdes.json;
 import loom.query.wire_protocol;
 
-export namespace cc::query::wire {
+export namespace loom::query::wire {
 
-using cc::core::AssistantMessage;
-using cc::core::ContentBlock;
-using cc::core::DocumentBlock;
-using cc::core::ImageBlock;
-using cc::core::Message;
-using cc::core::SystemMessage;
-using cc::core::TextBlock;
-using cc::core::ThinkingBlock;
-using cc::core::TokenUsage;
-using cc::core::ToolDefinition;
-using cc::core::ToolResultMessage;
-using cc::core::ToolUseBlock;
-using cc::core::UserMessage;
+using loom::core::AssistantMessage;
+using loom::core::ContentBlock;
+using loom::core::DocumentBlock;
+using loom::core::ImageBlock;
+using loom::core::Message;
+using loom::core::SystemMessage;
+using loom::core::TextBlock;
+using loom::core::ThinkingBlock;
+using loom::core::TokenUsage;
+using loom::core::ToolDefinition;
+using loom::core::ToolResultMessage;
+using loom::core::ToolUseBlock;
+using loom::core::UserMessage;
 
 // =========================================================================
 // Request-side helper types the engine used to hold in QueryOptions
@@ -57,7 +57,7 @@ using cc::core::UserMessage;
 
 /// One API-side context edit (context_management.edits[]).
 ///
-/// Structurally identical to cc::services::compact::ContextEditStrategy; it is
+/// Structurally identical to loom::services::compact::ContextEditStrategy; it is
 /// spelled out here so this module does not have to import the compaction
 /// service. The engine computes the edits (they depend on env / thinking mode)
 /// and hands them over.
@@ -74,7 +74,7 @@ struct ContextEdit {
 };
 
 /// API-side output_config.task_budget (the task-budgets beta).
-/// Mirrors QueryOptions::TaskBudget (and cc::services::api::TaskBudget).
+/// Mirrors QueryOptions::TaskBudget (and loom::services::api::TaskBudget).
 struct TaskBudget {
     std::uint32_t total{0};
     std::optional<std::uint32_t> remaining;
@@ -236,7 +236,7 @@ public:
     /// Parse a complete (non-streaming) /v1/messages response body.
     [[nodiscard]] std::expected<ParsedResponse, std::string>
     parse_response(std::string_view body) const override {
-        auto doc_result = cc::utils::json::parse(body);
+        auto doc_result = loom::utils::json::parse(body);
         if (!doc_result) {
             return std::unexpected("Failed to parse API response");
         }
@@ -259,7 +259,7 @@ public:
         // Parse content
         auto content = root.get("content");
         if (content.valid() && content.is_arr()) {
-            content.iter([&](cc::utils::json::JsonVal block) {
+            content.iter([&](loom::utils::json::JsonVal block) {
                 parse_content_block(block, result.message.content);
             });
         }
@@ -305,7 +305,7 @@ public:
         std::vector<StreamDelta> out;
         if (data.empty() || data == "[DONE]") return out;
 
-        auto doc_result = cc::utils::json::parse(data);
+        auto doc_result = loom::utils::json::parse(data);
         if (!doc_result) return out;
         auto root = doc_result->root();
 
@@ -457,7 +457,7 @@ public:
     /// Serialize one request body. Field order and values match the engine's
     /// build_request_body() exactly.
     [[nodiscard]] std::string build_request_body(const RequestInput& input) const {
-        cc::utils::json::JsonMutDoc doc;
+        loom::utils::json::JsonMutDoc doc;
         auto root = doc.object();
 
         root.add("model", doc.string(input.model));
@@ -522,7 +522,7 @@ public:
                             break;
                         }
                     }
-                    auto schema_doc = cc::utils::json::parse(schema_json);
+                    auto schema_doc = loom::utils::json::parse(schema_json);
                     if (schema_doc) {
                         tool_obj.add("input_schema", doc.copy_val(schema_doc->root()));
                     } else {
@@ -579,8 +579,8 @@ private:
     /// Append a Message variant to the JSON array. System messages have no wire
     /// representation (their text was hoisted into `system` by the engine).
     void append_message_to_json(const Message& msg,
-                                cc::utils::json::JsonMutVal& arr,
-                                cc::utils::json::JsonMutDoc& doc) const {
+                                loom::utils::json::JsonMutVal& arr,
+                                loom::utils::json::JsonMutDoc& doc) const {
         std::visit([&](const auto& m) {
             using T = std::decay_t<decltype(m)>;
             auto msg_obj = doc.object();
@@ -661,9 +661,9 @@ private:
 
     /// Convert content blocks to JSON. A lone text block collapses to a plain
     /// string, matching what the API accepts and what the engine sent.
-    [[nodiscard]] cc::utils::json::JsonMutVal content_to_json(
+    [[nodiscard]] loom::utils::json::JsonMutVal content_to_json(
         const std::vector<ContentBlock>& content,
-        cc::utils::json::JsonMutDoc& doc) const {
+        loom::utils::json::JsonMutDoc& doc) const {
         if (content.size() == 1) {
             if (const auto* text = std::get_if<TextBlock>(&content[0])) {
                 return doc.string(text->text);
@@ -685,7 +685,7 @@ private:
                     obj.add("id", doc.string(b.id.value));
                     obj.add("name", doc.string(b.name));
                     // Input must be a JSON object, not a string
-                    auto input_doc = cc::utils::json::parse(b.input_json);
+                    auto input_doc = loom::utils::json::parse(b.input_json);
                     if (input_doc) {
                         obj.add("input", doc.copy_val(input_doc->root()));
                     } else {
@@ -724,7 +724,7 @@ private:
 
     /// Parse a single content block from JSON. Types the engine does not read
     /// (tool_result, image, ...) are skipped, as before.
-    void parse_content_block(cc::utils::json::JsonVal block,
+    void parse_content_block(loom::utils::json::JsonVal block,
                             std::vector<ContentBlock>& content) const {
         auto type = block.get("type").as_str();
 
@@ -737,7 +737,7 @@ private:
             tub.id.value = std::string(block.get("id").as_str());
             tub.name = std::string(block.get("name").as_str());
             auto input = block.get("input");
-            tub.input_json = input.valid() ? cc::utils::json::to_string(input) : "{}";
+            tub.input_json = input.valid() ? loom::utils::json::to_string(input) : "{}";
             content.push_back(std::move(tub));
         } else if (type == "thinking") {
             ThinkingBlock tb;
@@ -751,8 +751,8 @@ private:
     }
 
     void add_input_tokens_object(
-        cc::utils::json::JsonMutVal& parent,
-        cc::utils::json::JsonMutDoc& doc,
+        loom::utils::json::JsonMutVal& parent,
+        loom::utils::json::JsonMutDoc& doc,
         std::string_view key,
         std::uint32_t value
     ) const {
@@ -763,8 +763,8 @@ private:
     }
 
     void add_string_array(
-        cc::utils::json::JsonMutVal& parent,
-        cc::utils::json::JsonMutDoc& doc,
+        loom::utils::json::JsonMutVal& parent,
+        loom::utils::json::JsonMutDoc& doc,
         std::string_view key,
         const std::vector<std::string>& values
     ) const {
@@ -776,8 +776,8 @@ private:
     }
 
     void add_context_management_to_json(
-        cc::utils::json::JsonMutVal& root,
-        cc::utils::json::JsonMutDoc& doc,
+        loom::utils::json::JsonMutVal& root,
+        loom::utils::json::JsonMutDoc& doc,
         const std::vector<ContextEdit>& edits_config
     ) const {
         auto context_management = doc.object();
@@ -823,8 +823,8 @@ private:
     }
 
     void add_output_config_to_json(
-        cc::utils::json::JsonMutVal& root,
-        cc::utils::json::JsonMutDoc& doc
+        loom::utils::json::JsonMutVal& root,
+        loom::utils::json::JsonMutDoc& doc
     ) const {
         const bool has_budget = options_.task_budget.has_value();
         const bool has_schema = options_.response_schema.has_value();
@@ -862,4 +862,4 @@ private:
     AnthropicWireOptions options_;
 };
 
-} // namespace cc::query::wire
+} // namespace loom::query::wire

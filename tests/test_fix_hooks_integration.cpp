@@ -21,13 +21,13 @@ import loom.hooks.lifecycle_hooks;
 import loom.types.types;
 
 namespace fs = std::filesystem;
-namespace he = cc::utils::hooks_execution;
-namespace hr = cc::utils::hooks_registry;
-using cc::core::QueryEngine;
-using cc::core::QueryEngineConfig;
-using cc::core::ToolDefinition;
-using cc::core::ToolRegistry;
-using cc::core::ToolUseBlock;
+namespace he = loom::utils::hooks_execution;
+namespace hr = loom::utils::hooks_registry;
+using loom::core::QueryEngine;
+using loom::core::QueryEngineConfig;
+using loom::core::ToolDefinition;
+using loom::core::ToolRegistry;
+using loom::core::ToolUseBlock;
 using hr::CommandHookConfig;
 using hr::HookEventType;
 using hr::HookSource;
@@ -70,8 +70,8 @@ protected:
             ToolDefinition{
                 .name = "Echo",
                 .description = "Echo back input",
-                .input_schema = cc::core::InputSchema{},
-                .permission = cc::core::ToolPermission::ReadOnly,
+                .input_schema = loom::core::InputSchema{},
+                .permission = loom::core::ToolPermission::ReadOnly,
                 .is_hidden = false,
                 .category = std::nullopt,
                 .max_result_size_chars = 100'000,
@@ -151,7 +151,7 @@ TEST_F(HooksIntegrationTest, PreToolUseHookNonMatchingDoesNotBlock) {
     EXPECT_TRUE(denials.empty());
     // The error (if any) must not be the hook-block message.
     if (result.is_error && !result.content.empty()) {
-        const auto* tb = std::get_if<cc::core::TextBlock>(&result.content[0]);
+        const auto* tb = std::get_if<loom::core::TextBlock>(&result.content[0]);
         if (tb) {
             EXPECT_EQ(tb->text.find("user PreToolUse hook blocked the tool call"),
                       std::string::npos);
@@ -170,7 +170,7 @@ TEST_F(HooksIntegrationTest, NoUserHooksLeavesBehaviorUnchanged) {
     EXPECT_TRUE(denials.empty());
     // And the result must not be a user-hook block message.
     if (result.is_error && !result.content.empty()) {
-        const auto* tb = std::get_if<cc::core::TextBlock>(&result.content[0]);
+        const auto* tb = std::get_if<loom::core::TextBlock>(&result.content[0]);
         if (tb) {
             EXPECT_EQ(tb->text.find("user PreToolUse hook blocked the tool call"),
                       std::string::npos);

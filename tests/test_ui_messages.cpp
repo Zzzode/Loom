@@ -43,21 +43,21 @@ namespace fs = std::filesystem;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Messages, ParseMarkdownRecognizesHeadingListAndCodeBlock) {
-    auto blocks = cc::ui::parse_markdown("# Title\n- item\n```cpp\nint main() {}\n```");
+    auto blocks = loom::ui::parse_markdown("# Title\n- item\n```cpp\nint main() {}\n```");
 
     ASSERT_EQ(blocks.size(), 3u);
-    EXPECT_EQ(blocks[0].type, cc::ui::BlockType::Heading);
-    EXPECT_EQ(blocks[1].type, cc::ui::BlockType::List);
-    EXPECT_EQ(blocks[2].type, cc::ui::BlockType::CodeBlock);
+    EXPECT_EQ(blocks[0].type, loom::ui::BlockType::Heading);
+    EXPECT_EQ(blocks[1].type, loom::ui::BlockType::List);
+    EXPECT_EQ(blocks[2].type, loom::ui::BlockType::CodeBlock);
     EXPECT_EQ(blocks[2].language, "cpp");
 }
 
 TEST(Messages, ToolUseViewFormatsStatusAndDuration) {
-    cc::ui::ToolUseView view{
+    loom::ui::ToolUseView view{
         .tool_name = "bash",
         .tool_input = "{}",
         .tool_output = "done",
-        .status = cc::ui::ToolStatus::Success,
+        .status = loom::ui::ToolStatus::Success,
         .started_at = std::chrono::system_clock::now(),
         .completed_at = std::nullopt,
         .expanded = false,
@@ -71,7 +71,7 @@ TEST(Messages, ToolUseViewFormatsStatusAndDuration) {
 }
 
 TEST(Messages, ErrorViewFormatsErrorCode) {
-    cc::ui::ErrorView error{
+    loom::ui::ErrorView error{
         .message = "failed",
         .error_code = "E_TEST",
         .timestamp = std::chrono::system_clock::now(),
@@ -83,7 +83,7 @@ TEST(Messages, ErrorViewFormatsErrorCode) {
 }
 
 TEST(Messages, ThinkingViewCanToggleCollapse) {
-    cc::ui::ThinkingView view{
+    loom::ui::ThinkingView view{
         .content = "first line\nsecond line",
         .timestamp = std::chrono::system_clock::now(),
         .collapsed = true,
@@ -99,7 +99,7 @@ TEST(Messages, ThinkingViewCanToggleCollapse) {
 // cc.ui.prompt.prompt_input: prompt buffer, history, typeahead, vim behavior
 // ═══════════════════════════════════════════════════════════════════════════════
 
-namespace pl = cc::ui::messages::pipeline;
+namespace pl = loom::ui::messages::pipeline;
 
 TEST(MessagePipeline, DedupStartDeltaStopSmoke) {
     pl::DedupTracker t;
@@ -293,7 +293,7 @@ TEST(MessagePipeline, ToolAugment_PreviewTruncatesTo200Codepoints) {
     auto a = pl::augment_tool_result(big, false);
     // kMaxCompactPreviewChars = 200 → preview capped at that plus ellipsis
     EXPECT_LE(a.preview.size(), 200u + 10u);
-    EXPECT_NE(a.preview.find(cc::ui::design::figures::kEllipsis), std::string::npos)
+    EXPECT_NE(a.preview.find(loom::ui::design::figures::kEllipsis), std::string::npos)
         << "long preview should end with … ellipsis";
 }
 
@@ -400,47 +400,47 @@ TEST(MessagePipeline, VisibleIndex_ClampViewport) {
 // TS REF: src/utils/collapseBackgroundBashNotifications.ts
 // ═══════════════════════════════════════════════════════════════════════════
 
-namespace cbb = cc::ui::messages::collapse;
+namespace cbb = loom::ui::messages::collapse;
 
 namespace {
 /// Build a user Message carrying a task-notification with the given status
 /// and summary, matching the CPP wire format (underscored tags).
-inline cc::core::Message make_notification(std::string_view status,
+inline loom::core::Message make_notification(std::string_view status,
                                            std::string_view summary) {
-    cc::core::UserMessage m{};
+    loom::core::UserMessage m{};
     std::string text = "<task_notification><status>";
     text += status;
     text += "</status><summary>";
     text += summary;
     text += "</summary></task_notification>";
-    m.content.push_back(cc::core::TextBlock{std::move(text)});
+    m.content.push_back(loom::core::TextBlock{std::move(text)});
     return m;
 }
 
 /// A completed background-bash notification (collapsible).
-inline cc::core::Message make_completed_bash(std::string_view name = "\"foo\"") {
+inline loom::core::Message make_completed_bash(std::string_view name = "\"foo\"") {
     return make_notification("completed",
                              std::string("Background command ") + std::string(name) + " completed");
 }
 
 /// Plain user text (never collapses).
-inline cc::core::Message make_plain_user(std::string text) {
-    cc::core::UserMessage m{};
-    m.content.push_back(cc::core::TextBlock{std::move(text)});
+inline loom::core::Message make_plain_user(std::string text) {
+    loom::core::UserMessage m{};
+    m.content.push_back(loom::core::TextBlock{std::move(text)});
     return m;
 }
 
 /// Read the first text block of a message (test helper).
-inline std::string first_text(const cc::core::Message& msg) {
-    const auto* u = std::get_if<cc::core::UserMessage>(&msg);
+inline std::string first_text(const loom::core::Message& msg) {
+    const auto* u = std::get_if<loom::core::UserMessage>(&msg);
     if (!u || u->content.empty()) return {};
-    const auto* t = std::get_if<cc::core::TextBlock>(&u->content.front());
+    const auto* t = std::get_if<loom::core::TextBlock>(&u->content.front());
     return t ? t->text : std::string{};
 }
 }  // namespace
 
 TEST(CollapseBackgroundBash, SingleCompletionLeftUnchanged) {
-    std::vector<cc::core::Message> in;
+    std::vector<loom::core::Message> in;
     in.push_back(make_completed_bash());
     auto out = cbb::collapse_background_bash_notifications(in, /*fullscreen=*/true, /*verbose=*/false);
     ASSERT_EQ(out.size(), 1u);
@@ -450,7 +450,7 @@ TEST(CollapseBackgroundBash, SingleCompletionLeftUnchanged) {
 }
 
 TEST(CollapseBackgroundBash, MultipleConsecutiveCollapseIntoSynthetic) {
-    std::vector<cc::core::Message> in;
+    std::vector<loom::core::Message> in;
     in.push_back(make_completed_bash("\"a\""));
     in.push_back(make_completed_bash("\"b\""));
     in.push_back(make_completed_bash("\"c\""));
@@ -462,7 +462,7 @@ TEST(CollapseBackgroundBash, MultipleConsecutiveCollapseIntoSynthetic) {
 }
 
 TEST(CollapseBackgroundBash, FailedAndKilledStayVisible) {
-    std::vector<cc::core::Message> in;
+    std::vector<loom::core::Message> in;
     in.push_back(make_notification("failed",  "Background command \"x\" failed with exit code 1"));
     in.push_back(make_notification("killed",  "Background command \"y\" was stopped"));
     auto out = cbb::collapse_background_bash_notifications(in, true, false);
@@ -473,7 +473,7 @@ TEST(CollapseBackgroundBash, FailedAndKilledStayVisible) {
 TEST(CollapseBackgroundBash, NonBashSummaryNotCollapsed) {
     // Same 'completed' status but a summary that does NOT start with the
     // BACKGROUND_BASH_SUMMARY_PREFIX (e.g. an agent/workflow notification).
-    std::vector<cc::core::Message> in;
+    std::vector<loom::core::Message> in;
     in.push_back(make_notification("completed", "Agent \"planner\" finished"));
     in.push_back(make_notification("completed", "Agent \"builder\" finished"));
     auto out = cbb::collapse_background_bash_notifications(in, true, false);
@@ -481,7 +481,7 @@ TEST(CollapseBackgroundBash, NonBashSummaryNotCollapsed) {
 }
 
 TEST(CollapseBackgroundBash, InterleavedRunsPreserveOrderAndCollapseOnlyRuns) {
-    std::vector<cc::core::Message> in;
+    std::vector<loom::core::Message> in;
     in.push_back(make_plain_user("hello"));
     in.push_back(make_completed_bash("\"a\""));   // run of 2 → collapses
     in.push_back(make_completed_bash("\"b\""));
@@ -496,7 +496,7 @@ TEST(CollapseBackgroundBash, InterleavedRunsPreserveOrderAndCollapseOnlyRuns) {
 }
 
 TEST(CollapseBackgroundBash, VerbosePassThrough) {
-    std::vector<cc::core::Message> in;
+    std::vector<loom::core::Message> in;
     in.push_back(make_completed_bash("\"a\""));
     in.push_back(make_completed_bash("\"b\""));
     // TS: `if (verbose) return messages;`
@@ -505,7 +505,7 @@ TEST(CollapseBackgroundBash, VerbosePassThrough) {
 }
 
 TEST(CollapseBackgroundBash, NonFullscreenPassThrough) {
-    std::vector<cc::core::Message> in;
+    std::vector<loom::core::Message> in;
     in.push_back(make_completed_bash("\"a\""));
     in.push_back(make_completed_bash("\"b\""));
     // TS: `if (!isFullscreenEnvEnabled()) return messages;`
@@ -520,8 +520,8 @@ TEST(CollapseBackgroundBash, NonFullscreenPassThrough) {
 // single collapsed row instead of 3.
 
 // P0-3 VirtualMessageList helpers
-namespace vl = cc::ui::messages::virtual_list;
-using ::cc::ui::messages::VisibleRow;
+namespace vl = loom::ui::messages::virtual_list;
+using ::loom::ui::messages::VisibleRow;
 
 namespace {
 /// Build N virtual rows of cycling heights [1,3,7,11] (same as internal
@@ -1129,10 +1129,10 @@ TEST(VirtualList, HandleSearchApiParity) {
 
 namespace unseen_divider_test {
 
-using namespace cc::ui::messages_list;
-using cc::ui::messages::MessageShape;
-using cc::ui::messages::UserTextMessageData;
-using cc::ui::messages::AssistantTextMessageData;
+using namespace loom::ui::messages_list;
+using loom::ui::messages::MessageShape;
+using loom::ui::messages::UserTextMessageData;
+using loom::ui::messages::AssistantTextMessageData;
 
 /// Helper: build a minimal MessagesListInput with N alternating rows, each
 /// with a 24-char uuid of the form `<prefix>_<i>{pad}`.  Row i is user if
@@ -1192,45 +1192,45 @@ TEST(MessagesList, UnseenDivider_PrefixMatchFindsTargetRow) {
         .first_unseen_uuid_prefix = "old0000000000000000000003",
         .count = 1,
     };
-    EXPECT_EQ(cc::ui::messages_list::detail::find_divider_before_visible_index(in, visible), 3u);
+    EXPECT_EQ(loom::ui::messages_list::detail::find_divider_before_visible_index(in, visible), 3u);
 
     // Case B: point at row 0 (first message) → divider_before = 0
     in.unseen_divider->first_unseen_uuid_prefix = "old0000000000000000000000";
-    EXPECT_EQ(cc::ui::messages_list::detail::find_divider_before_visible_index(in, visible), 0u);
+    EXPECT_EQ(loom::ui::messages_list::detail::find_divider_before_visible_index(in, visible), 0u);
 
     // Case C: prefix match — TS's deriveUUID preserves 24-char prefix across
     // derived sub-blocks.  We match on prefix even if the divider's stored
     // value is a longer full uuid (36 chars) — only first 24 count.
     in.unseen_divider->first_unseen_uuid_prefix =
         std::string("old0000000000000000000002") + "-EXTRA-SUFFIX-IGNORED";
-    EXPECT_EQ(cc::ui::messages_list::detail::find_divider_before_visible_index(in, visible), 2u);
+    EXPECT_EQ(loom::ui::messages_list::detail::find_divider_before_visible_index(in, visible), 2u);
 
     // Case D: no match → return visible.size() (sentinel)
     in.unseen_divider->first_unseen_uuid_prefix = "ZZZZZZZZZZZZZZZZZZZZZZZZ00";
-    EXPECT_EQ(cc::ui::messages_list::detail::find_divider_before_visible_index(in, visible),
+    EXPECT_EQ(loom::ui::messages_list::detail::find_divider_before_visible_index(in, visible),
               visible.size());
 
     // Case E: unseen_divider = nullopt → sentinel (no divider)
     in.unseen_divider.reset();
-    EXPECT_EQ(cc::ui::messages_list::detail::find_divider_before_visible_index(in, visible),
+    EXPECT_EQ(loom::ui::messages_list::detail::find_divider_before_visible_index(in, visible),
               visible.size());
 }
 
 /// Unit test: count pluralisation in divider title.  TS: count === 1 → "message",
 /// else → "messages".
 TEST(MessagesList, UnseenDivider_TitlePluralisation) {
-    using namespace cc::ui::messages_list;
+    using namespace loom::ui::messages_list;
     using namespace sticky_prompt_test;
 
     // count=1 → title reads "1 new message"
-    auto div1 = cc::ui::messages_list::detail::render_unseen_divider(1);
+    auto div1 = loom::ui::messages_list::detail::render_unseen_divider(1);
     auto snap1 = strip_ansi(render_ansi(std::move(div1), 80, 4));
     EXPECT_NE(snap1.find("1 new message"), std::string::npos);
     // Singular must NOT contain "1 new messages" (note trailing 's')
     EXPECT_EQ(snap1.find("1 new messages"), std::string::npos);
 
     // count=3 → "3 new messages"
-    auto divN = cc::ui::messages_list::detail::render_unseen_divider(3);
+    auto divN = loom::ui::messages_list::detail::render_unseen_divider(3);
     auto snapN = strip_ansi(render_ansi(std::move(divN), 80, 4));
     EXPECT_NE(snapN.find("3 new messages"), std::string::npos);
 }
@@ -1335,7 +1335,7 @@ TEST(MessagesList, UnseenDivider_AnchorWithEmptyUuidEntries_NoCrash) {
     };
     auto visible = build_visible_rows(in);
     // find_divider_before_visible_index must not UB; must return 3.
-    EXPECT_EQ(cc::ui::messages_list::detail::find_divider_before_visible_index(in, visible), 3u);
+    EXPECT_EQ(loom::ui::messages_list::detail::find_divider_before_visible_index(in, visible), 3u);
 
     // Rendering path must not crash (empty uuid on row 2 is legal input).
     auto in_render = make_synthetic_input(5, "edge00000000000000000000");

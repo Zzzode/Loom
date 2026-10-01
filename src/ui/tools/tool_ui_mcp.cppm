@@ -18,9 +18,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::mcp_ui {
+export namespace loom::ui::tools::mcp_ui {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 namespace detail {
 
@@ -150,4 +150,4 @@ inline void register_mcp_ui() {
     global_tool_ui_registry().register_tool_ui("mcp_call", make_mcp_ui());
 }
 
-}  // namespace cc::ui::tools::mcp_ui
+}  // namespace loom::ui::tools::mcp_ui

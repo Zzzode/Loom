@@ -15,7 +15,7 @@ export module loom.tools.script_diagnostics;
 
 import std;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 // =========================================================================
 // Diagnostic data structure
@@ -597,4 +597,4 @@ inline auto group_by_file(std::span<const Diagnostic> diagnostics)
     return grouped;
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

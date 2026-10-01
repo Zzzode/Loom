@@ -23,7 +23,7 @@ import std;
 
 import loom.skills.skill;
 
-export namespace cc::skills::verify_content {
+export namespace loom::skills::verify_content {
 
 // ============================================================
 // Pure helpers (ported from the TS skill body). These have no side-effects
@@ -350,4 +350,4 @@ constexpr std::string_view EVIDENCE_RULES = R"raw(
     };
 }
 
-} // namespace cc::skills::verify_content
+} // namespace loom::skills::verify_content

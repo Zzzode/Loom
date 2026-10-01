@@ -1,6 +1,6 @@
 /// @file core_settings_loader.cppm
 /// @brief RFC-0001 B4 composition root: bridges the core settings layer
-/// (cc::core::ConfigManager) into the native MCP runtime through the loader
+/// (loom::core::ConfigManager) into the native MCP runtime through the loader
 /// sink declared in cc.orchestration.tools.mcp. This module is the ONLY place allowed to
 /// know both cc.config.config and cc.orchestration.tools.mcp, which deletes the
 /// cc.orchestration.tools.mcp -> cc.config.config upward edge (tools rank 8 -> config rank 1).
@@ -20,7 +20,7 @@ import loom.config.config;
 import loom.orchestration.tools.mcp;
 import loom.services.mcp.xaa_idp_login;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
 /// Install the production core-settings MCP loader into the cc.orchestration.tools.mcp
 /// sink. Idempotent: installing again simply replaces the previous loader.
@@ -34,15 +34,15 @@ export namespace cc::commands {
 /// store is read into the runtime — the XAA `--xaa` login path then forwards it
 /// to authenticate_xaa() without either layer importing the other.
 inline void install_core_settings_mcp_loader() {
-    cc::tools::set_core_settings_mcp_loader(
-        []() -> std::expected<cc::tools::CoreSettingsMcpLayer, std::string> {
-            cc::core::ConfigManager config;
+    loom::tools::set_core_settings_mcp_loader(
+        []() -> std::expected<loom::tools::CoreSettingsMcpLayer, std::string> {
+            loom::core::ConfigManager config;
             auto loaded = config.load();
             if (!loaded) return std::unexpected(loaded.error().message);
 
-            cc::tools::CoreSettingsMcpLayer layer;
+            loom::tools::CoreSettingsMcpLayer layer;
             for (const auto& server : config.settings().mcp_servers) {
-                layer.servers.push_back(cc::tools::to_native_mcp_server(server));
+                layer.servers.push_back(loom::tools::to_native_mcp_server(server));
             }
             // settings.xaaIdp is the SINGLE store for this port: `/mcp xaa
             // setup --callback-port` writes it and `/mcp xaa login` already
@@ -60,7 +60,7 @@ inline void install_core_settings_mcp_loader() {
             // empty (XAA not configured) get_idp_client_secret("") misses, so
             // the field stays unset — no special-casing on the read path.
             layer.xaa_idp_client_secret =
-                cc::services::mcp::get_idp_client_secret(
+                loom::services::mcp::get_idp_client_secret(
                     config.settings().xaa_idp.issuer);
 
             // One-time migration of the legacy hand-edited line. GUARDED on a
@@ -76,9 +76,9 @@ inline void install_core_settings_mcp_loader() {
             // modified or deleted.
             if (!layer.xaa_idp_client_secret &&
                 !config.settings().xaa_idp.issuer.empty()) {
-                auto legacy = cc::services::mcp::read_legacy_idp_client_secret();
+                auto legacy = loom::services::mcp::read_legacy_idp_client_secret();
                 if (legacy) {
-                    cc::services::mcp::save_idp_client_secret(
+                    loom::services::mcp::save_idp_client_secret(
                         config.settings().xaa_idp.issuer, *legacy);
                     layer.xaa_idp_client_secret = *legacy;
                 }
@@ -87,4 +87,4 @@ inline void install_core_settings_mcp_loader() {
         });
 }
 
-}  // namespace cc::commands
+}  // namespace loom::commands

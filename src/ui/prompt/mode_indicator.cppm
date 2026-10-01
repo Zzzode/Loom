@@ -39,11 +39,11 @@ import std;
 import loom.ui.foundation.design_figures;
 import loom.ui.foundation.ui_types;
 
-export namespace cc::ui::prompt::mode_indicator {
+export namespace loom::ui::prompt::mode_indicator {
 
 using namespace ftxui;
-namespace figs = cc::ui::design::figures;
-using PromptInputMode = cc::ui::common::PromptInputMode;
+namespace figs = loom::ui::design::figures;
+using PromptInputMode = loom::ui::common::PromptInputMode;
 
 // ─── Agent color → ANSI mapping (TS REF: agentColorManager.ts) ───────────
 // TS AGENT_COLORS = ['red', 'orange', 'yellow', 'green', 'cyan',
@@ -216,4 +216,4 @@ inline constexpr const char* kAnsiReset = "\033[0m";
     return result;
 }
 
-} // namespace cc::ui::prompt::mode_indicator
+} // namespace loom::ui::prompt::mode_indicator

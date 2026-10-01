@@ -16,7 +16,7 @@ import std;
 
 import loom.ui.foundation.design_figures;  // kPointerSmall (figures.pointerSmall '›')
 
-export namespace cc::ui::prompt {
+export namespace loom::ui::prompt {
 using namespace ftxui;
 
 /// Data for the stash notice (rendered above the prompt input).
@@ -36,7 +36,7 @@ struct StashNotice {
 [[nodiscard]] inline Element render_stash_notice(const StashNotice& notice) {
     if (notice.stashed_text.empty()) return text("");
 
-    namespace figs = cc::ui::design::figures;
+    namespace figs = loom::ui::design::figures;
     // TS REF: figures.pointerSmall = '›' U+203A (kPointerSmall)
     return hbox({
         text("  ") | dim,  // paddingLeft={2}
@@ -45,4 +45,4 @@ struct StashNotice {
     });
 }
 
-} // namespace cc::ui::prompt
+} // namespace loom::ui::prompt

@@ -20,7 +20,7 @@ import std;
 import loom.services.mcp.types;
 import loom.net.http.http;
 
-namespace cc::services::mcp {
+namespace loom::services::mcp {
 
 StreamableHttpTransport::StreamableHttpTransport(
     std::string url, std::map<std::string, std::string> headers)
@@ -184,18 +184,18 @@ StreamableHttpTransport::send_post_request_with_http_client(const std::string& b
         request_headers[key] = value;
     }
 
-    cc::utils::HttpConfig config;
+    loom::utils::HttpConfig config;
     config.max_retries = 0;
-    cc::utils::HttpClient client(std::move(config));
+    loom::utils::HttpClient client(std::move(config));
     auto response = client.post(url_, body, request_headers);
     if (!response) {
         switch (response.error().code) {
-            case cc::utils::HttpError::timeout:
+            case loom::utils::HttpError::timeout:
                 return std::unexpected(McpClientError::Timeout);
-            case cc::utils::HttpError::ssl_error:
-            case cc::utils::HttpError::dns_error:
-            case cc::utils::HttpError::connection_failed:
-            case cc::utils::HttpError::cancelled:
+            case loom::utils::HttpError::ssl_error:
+            case loom::utils::HttpError::dns_error:
+            case loom::utils::HttpError::connection_failed:
+            case loom::utils::HttpError::cancelled:
                 return std::unexpected(McpClientError::ConnectionFailed);
         }
         return std::unexpected(McpClientError::ConnectionFailed);
@@ -361,4 +361,4 @@ void StreamableHttpTransport::enqueue_message(std::string message) {
     recv_cv_.notify_one();
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

@@ -9,7 +9,7 @@ export module loom.constants.product;
 
 import std;
 
-export namespace cc::constants::product {
+export namespace loom::constants::product {
 
 /// Public documentation site, if the user has one. Empty by default: this
 /// project ships no site, and the upstream vendor's URLs must not be
@@ -90,4 +90,4 @@ inline constexpr std::string_view BUILD_TIME = "unknown";
     return base + "/code/" + std::string(session_id);
 }
 
-} // namespace cc::constants::product
+} // namespace loom::constants::product

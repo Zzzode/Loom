@@ -47,12 +47,12 @@ import loom.ui.dialogs.trust_utils;
 import loom.plugins.plugin;
 import loom.commands.plugin.plugin_trust;
 
-export namespace cc::ui::trust_dialog {
+export namespace loom::ui::trust_dialog {
 
 using namespace ftxui;
-namespace tu = cc::ui::trust_utils;
-using cc::plugins::PluginCapabilities;
-using cc::plugins::PluginDefinition;
+namespace tu = loom::ui::trust_utils;
+using loom::plugins::PluginCapabilities;
+using loom::plugins::PluginDefinition;
 
 // =========================================================================
 // Re-exported types (callers only need to import trust_dialog)
@@ -762,8 +762,8 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
     bool is_update = false,
     bool has_signature = true)
 {
-    using cc::commands::TrustLevel;
-    using cc::commands::get_trust_level;
+    using loom::commands::TrustLevel;
+    using loom::commands::get_trust_level;
 
     // Short-circuit via the existing plugin-trust model (DO NOT re-implement
     // the trust model).
@@ -853,4 +853,4 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
     return MakeTrustDialogComponent(std::move(generic));
 }
 
-} // namespace cc::ui::trust_dialog
+} // namespace loom::ui::trust_dialog

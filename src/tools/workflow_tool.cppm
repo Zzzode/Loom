@@ -11,7 +11,7 @@ import std;
 import loom.serdes.json;
 import loom.process.bash.bash_execution;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 enum class WorkflowError {
     DefinitionEmpty,
@@ -139,7 +139,7 @@ private:
 }
 
 [[nodiscard]] inline std::optional<std::string> workflow_json_string(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 ) {
     auto value = root.get(key);
@@ -158,7 +158,7 @@ private:
 [[nodiscard]] inline std::expected<WorkflowDefinition, WorkflowError> parse_workflow_definition_json(
     std::string_view text
 ) {
-    auto parsed = cc::utils::json::parse(text);
+    auto parsed = loom::utils::json::parse(text);
     if (!parsed || !parsed->root().is_obj()) {
         return std::unexpected(WorkflowError::InvalidStep);
     }
@@ -170,7 +170,7 @@ private:
     auto variables = root.get("variables");
     if (!variables.is_obj()) variables = root.get("initial_vars");
     if (variables.is_obj()) {
-        variables.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+        variables.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
             if (!key.is_str()) return;
             if (value.is_str()) definition.initial_vars[std::string(key.as_str())] = std::string(value.as_str());
             else if (value.is_num()) definition.initial_vars[std::string(key.as_str())] = std::to_string(value.as_int());
@@ -181,7 +181,7 @@ private:
     auto steps = root.get("steps");
     if (!steps.is_arr()) return std::unexpected(WorkflowError::DefinitionEmpty);
     std::size_t index = 0;
-    steps.iter([&](cc::utils::json::JsonVal item) {
+    steps.iter([&](loom::utils::json::JsonVal item) {
         if (!item.is_obj()) return;
         WorkflowStep step;
         step.id = workflow_json_string(item, "id").value_or(std::format("step-{}", index + 1));
@@ -200,7 +200,7 @@ private:
         auto on_error = item.get("on_error");
         if (!on_error.is_arr()) on_error = item.get("onError");
         if (on_error.is_arr()) {
-            on_error.iter([&](cc::utils::json::JsonVal entry) {
+            on_error.iter([&](loom::utils::json::JsonVal entry) {
                 if (entry.is_str()) step.on_error.push_back(std::string(entry.as_str()));
             });
         }
@@ -318,13 +318,13 @@ private:
         switch (step.type) {
             case StepType::Command: {
 
-                FILE* pipe = cc::utils::bash::popen_spawn(action->c_str());
+                FILE* pipe = loom::utils::bash::popen_spawn(action->c_str());
                 if (!pipe) return std::unexpected(WorkflowError::StepFailed);
                 std::array<char, 2048> buffer{};
                 while (auto n = ::fread(buffer.data(), 1, buffer.size(), pipe)) {
                     output.append(buffer.data(), n);
                 }
-                int status = cc::utils::bash::pclose_spawn(pipe);
+                int status = loom::utils::bash::pclose_spawn(pipe);
                 if (status != 0) {
                     ctx.set(step.id + ".exit_code", std::to_string(status));
                     ctx.set(step.id + ".output", output);
@@ -345,13 +345,13 @@ private:
                     ctx.set(step.id + ".index", std::to_string(i));
                     auto loop_action = ctx.interpolate(step.action);
                     if (!loop_action) return std::unexpected(loop_action.error());
-                    FILE* pipe = cc::utils::bash::popen_spawn(loop_action->c_str());
+                    FILE* pipe = loom::utils::bash::popen_spawn(loop_action->c_str());
                     if (!pipe) return std::unexpected(WorkflowError::StepFailed);
                     std::array<char, 2048> buffer{};
                     while (auto n = ::fread(buffer.data(), 1, buffer.size(), pipe)) {
                         combined.write(buffer.data(), static_cast<std::streamsize>(n));
                     }
-                    int status = cc::utils::bash::pclose_spawn(pipe);
+                    int status = loom::utils::bash::pclose_spawn(pipe);
                     if (status != 0) {
                         output = combined.str();
                         ctx.set(step.id + ".exit_code", std::to_string(status));
@@ -396,4 +396,4 @@ private:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

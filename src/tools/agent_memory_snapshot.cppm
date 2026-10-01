@@ -19,12 +19,12 @@ import std;
 import loom.tools.agent_memory;
 import loom.serdes.json;
 
-export namespace cc::tools::agent_memory_snapshot {
+export namespace loom::tools::agent_memory_snapshot {
 
 namespace fs = std::filesystem;
-using cc::tools::agent_memory::Scope;
-using cc::tools::agent_memory::agent_memory_dir;
-using cc::tools::agent_memory::sanitize_agent_type_for_path;
+using loom::tools::agent_memory::Scope;
+using loom::tools::agent_memory::agent_memory_dir;
+using loom::tools::agent_memory::sanitize_agent_type_for_path;
 
 // ---------------------------------------------------------------------------
 // Filenames / directory layout
@@ -264,4 +264,4 @@ inline void mark_snapshot_synced(
     save_synced_meta(agent_type, scope, snapshot_timestamp, working_dir);
 }
 
-} // namespace cc::tools::agent_memory_snapshot
+} // namespace loom::tools::agent_memory_snapshot

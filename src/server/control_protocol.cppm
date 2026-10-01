@@ -24,7 +24,7 @@ import loom.serdes.json;
 import loom.tools.agent_runtime;
 import loom.model.effort;  // arch-check: keep-import (EffortLevel alias, line 39)
 
-export namespace cc::server::control {
+export namespace loom::server::control {
 
 // ============================================================================
 // Converged type aliases (canonical types — §1.2 move closure)
@@ -32,10 +32,10 @@ export namespace cc::server::control {
 
 /// The engine's agent shape (cc.tools.agent_runtime). The SDK island twin is
 /// converged to this alias so the moved DTOs reference the canonical type.
-using AgentDefinition = cc::tools::agent_runtime::AgentDefinition;
+using AgentDefinition = loom::tools::agent_runtime::AgentDefinition;
 
 /// Identical 4-value effort enum (cc.model.effort, in cc_utils).
-using EffortLevel = cc::utils::EffortLevel;
+using EffortLevel = loom::utils::EffortLevel;
 
 // ============================================================================
 // Wire-closure types (moved from cc.sdk.core_schemas — §1.2)
@@ -113,7 +113,7 @@ enum class PermissionMode : std::uint8_t {
     DontAsk,
 };
 
-/// Assistant message error types (7 wire values; cc::core::ErrorCode is
+/// Assistant message error types (7 wire values; loom::core::ErrorCode is
 /// engine-internal with different numeric values — kept as a wire type).
 enum class SDKAssistantMessageError : std::uint8_t {
     AuthenticationFailed,
@@ -1158,14 +1158,14 @@ namespace detail_serde {
 }
 
 /// Read a string field; returns empty string when missing or wrong type.
-[[nodiscard]] inline std::string read_string(cc::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] inline std::string read_string(loom::utils::json::JsonVal obj, std::string_view key) {
     auto v = obj.get(key);
     return v.is_str() ? std::string(v.as_str()) : std::string{};
 }
 
 /// Read an optional string field.
 [[nodiscard]] inline std::optional<std::string> read_optional_string(
-    cc::utils::json::JsonVal obj, std::string_view key
+    loom::utils::json::JsonVal obj, std::string_view key
 ) {
     auto v = obj.get(key);
     if (v.is_str()) return std::string(v.as_str());
@@ -1174,7 +1174,7 @@ namespace detail_serde {
 
 /// Read an optional int field.
 [[nodiscard]] inline std::optional<int64_t> read_optional_int(
-    cc::utils::json::JsonVal obj, std::string_view key
+    loom::utils::json::JsonVal obj, std::string_view key
 ) {
     auto v = obj.get(key);
     if (v.is_num()) return v.as_int();
@@ -1184,7 +1184,7 @@ namespace detail_serde {
 /// Read an optional double field (yyjson stores 30.0 as a real, not an int;
 /// read_optional_int would return 0 for it).
 [[nodiscard]] inline std::optional<double> read_optional_double(
-    cc::utils::json::JsonVal obj, std::string_view key
+    loom::utils::json::JsonVal obj, std::string_view key
 ) {
     auto v = obj.get(key);
     if (v.is_num()) return v.as_double();
@@ -1193,7 +1193,7 @@ namespace detail_serde {
 
 /// Read an optional bool field.
 [[nodiscard]] inline std::optional<bool> read_optional_bool(
-    cc::utils::json::JsonVal obj, std::string_view key
+    loom::utils::json::JsonVal obj, std::string_view key
 ) {
     auto v = obj.get(key);
     if (v.is_bool()) return v.as_bool();
@@ -1202,12 +1202,12 @@ namespace detail_serde {
 
 /// Read a string vector field.
 [[nodiscard]] inline std::vector<std::string> read_string_vec(
-    cc::utils::json::JsonVal obj, std::string_view key
+    loom::utils::json::JsonVal obj, std::string_view key
 ) {
     std::vector<std::string> out;
     auto arr = obj.get(key);
     if (arr.is_arr()) {
-        arr.iter([&](cc::utils::json::JsonVal el) {
+        arr.iter([&](loom::utils::json::JsonVal el) {
             if (el.is_str()) out.emplace_back(el.as_str());
         });
     }
@@ -1227,7 +1227,7 @@ namespace detail_serde {
 // ============================================================================
 
 [[nodiscard]] inline std::string SlashCommand_to_json(const SlashCommand& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("name", doc.string(v.name));
@@ -1237,7 +1237,7 @@ namespace detail_serde {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SlashCommand, std::string> SlashCommand_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto o = parsed->root();
@@ -1254,7 +1254,7 @@ inline std::expected<SlashCommand, std::string> from_json(std::string_view raw, 
 }
 
 [[nodiscard]] inline std::string AgentInfo_to_json(const AgentInfo& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("name", doc.string(v.name));
@@ -1264,7 +1264,7 @@ inline std::expected<SlashCommand, std::string> from_json(std::string_view raw, 
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<AgentInfo, std::string> AgentInfo_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto o = parsed->root();
@@ -1281,7 +1281,7 @@ inline std::expected<AgentInfo, std::string> from_json(std::string_view raw, Age
 }
 
 [[nodiscard]] inline std::string ModelInfo_to_json(const ModelInfo& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("value", doc.string(v.value));
@@ -1303,7 +1303,7 @@ inline std::expected<AgentInfo, std::string> from_json(std::string_view raw, Age
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ModelInfo, std::string> ModelInfo_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto o = parsed->root();
@@ -1331,7 +1331,7 @@ inline std::expected<ModelInfo, std::string> from_json(std::string_view raw, Mod
 }
 
 [[nodiscard]] inline std::string AccountInfo_to_json(const AccountInfo& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     if (v.email.has_value()) o.add("email", doc.string(*v.email));
@@ -1344,7 +1344,7 @@ inline std::expected<ModelInfo, std::string> from_json(std::string_view raw, Mod
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<AccountInfo, std::string> AccountInfo_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto o = parsed->root();
@@ -1367,7 +1367,7 @@ inline std::expected<AccountInfo, std::string> from_json(std::string_view raw, A
 // (coreSchemas.ts at b69b59b^) and the live emitters — the C++ field names
 // stay snake_case; only the JSON keys differ.
 [[nodiscard]] inline std::string ModelUsage_to_json(const ModelUsage& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("inputTokens", doc.number(static_cast<int64_t>(v.input_tokens)));
@@ -1382,7 +1382,7 @@ inline std::expected<AccountInfo, std::string> from_json(std::string_view raw, A
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ModelUsage, std::string> ModelUsage_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto o = parsed->root();
@@ -1410,7 +1410,7 @@ inline std::expected<ModelUsage, std::string> from_json(std::string_view raw, Mo
 // ── ControlInitializeRequest ────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string ControlInitializeRequest_to_json(const ControlInitializeRequest& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("initialize"));
@@ -1450,7 +1450,7 @@ inline std::expected<ModelUsage, std::string> from_json(std::string_view raw, Mo
 // ── ControlInterruptRequest ─────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string ControlInterruptRequest_to_json(const ControlInterruptRequest&) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("interrupt"));
@@ -1461,7 +1461,7 @@ inline std::expected<ModelUsage, std::string> from_json(std::string_view raw, Mo
 // ── ControlPermissionRequest (golden-gate) ──────────────────────────────────
 
 [[nodiscard]] inline std::string ControlPermissionRequest_to_json(const ControlPermissionRequest& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("can_use_tool"));
@@ -1479,8 +1479,8 @@ inline std::expected<ModelUsage, std::string> from_json(std::string_view raw, Mo
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlPermissionRequest, std::string>
-ControlPermissionRequest_from_json(cc::utils::json::JsonVal inner) {
-    using namespace cc::utils::json;
+ControlPermissionRequest_from_json(loom::utils::json::JsonVal inner) {
+    using namespace loom::utils::json;
     ControlPermissionRequest v;
     v.tool_name = detail_serde::read_string(inner, "tool_name");
     auto input = inner.get("input");
@@ -1500,7 +1500,7 @@ ControlPermissionRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlSetPermissionModeRequest_to_json(
     const ControlSetPermissionModeRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("set_permission_mode"));
@@ -1510,7 +1510,7 @@ ControlPermissionRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlSetPermissionModeRequest, std::string>
-ControlSetPermissionModeRequest_from_json(cc::utils::json::JsonVal inner) {
+ControlSetPermissionModeRequest_from_json(loom::utils::json::JsonVal inner) {
     ControlSetPermissionModeRequest v;
     auto mode_str = detail_serde::read_string(inner, "mode");
     if (auto m = detail_serde::permission_mode_from_str(mode_str)) {
@@ -1523,7 +1523,7 @@ ControlSetPermissionModeRequest_from_json(cc::utils::json::JsonVal inner) {
 // ── ControlSetModelRequest (golden-gate) ────────────────────────────────────
 
 [[nodiscard]] inline std::string ControlSetModelRequest_to_json(const ControlSetModelRequest& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("set_model"));
@@ -1532,7 +1532,7 @@ ControlSetPermissionModeRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlSetModelRequest, std::string>
-ControlSetModelRequest_from_json(cc::utils::json::JsonVal inner) {
+ControlSetModelRequest_from_json(loom::utils::json::JsonVal inner) {
     ControlSetModelRequest v;
     v.model = detail_serde::read_optional_string(inner, "model");
     return v;
@@ -1543,7 +1543,7 @@ ControlSetModelRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlSetMaxThinkingTokensRequest_to_json(
     const ControlSetMaxThinkingTokensRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("set_max_thinking_tokens"));
@@ -1553,7 +1553,7 @@ ControlSetModelRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlSetMaxThinkingTokensRequest, std::string>
-ControlSetMaxThinkingTokensRequest_from_json(cc::utils::json::JsonVal inner) {
+ControlSetMaxThinkingTokensRequest_from_json(loom::utils::json::JsonVal inner) {
     ControlSetMaxThinkingTokensRequest v;
     if (auto t = detail_serde::read_optional_int(inner, "max_thinking_tokens")) {
         v.max_thinking_tokens = static_cast<int>(*t);
@@ -1571,7 +1571,7 @@ ControlSetMaxThinkingTokensRequest_from_json(cc::utils::json::JsonVal inner) {
 // ── McpServerConfig variant ─────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string McpStdioServerConfig_to_json(const McpStdioServerConfig& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("stdio"));
@@ -1590,8 +1590,8 @@ ControlSetMaxThinkingTokensRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<McpStdioServerConfig, std::string>
-McpStdioServerConfig_from_json(cc::utils::json::JsonVal o) {
-    using namespace cc::utils::json;
+McpStdioServerConfig_from_json(loom::utils::json::JsonVal o) {
+    using namespace loom::utils::json;
     McpStdioServerConfig v;
     v.command = detail_serde::read_string(o, "command");
     if (auto arr = o.get("args"); arr.is_arr()) {
@@ -1611,7 +1611,7 @@ McpStdioServerConfig_from_json(cc::utils::json::JsonVal o) {
 }
 
 [[nodiscard]] inline std::string McpSSEServerConfig_to_json(const McpSSEServerConfig& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("sse"));
@@ -1625,8 +1625,8 @@ McpStdioServerConfig_from_json(cc::utils::json::JsonVal o) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<McpSSEServerConfig, std::string>
-McpSSEServerConfig_from_json(cc::utils::json::JsonVal o) {
-    using namespace cc::utils::json;
+McpSSEServerConfig_from_json(loom::utils::json::JsonVal o) {
+    using namespace loom::utils::json;
     McpSSEServerConfig v;
     v.url = detail_serde::read_string(o, "url");
     if (auto m = o.get("headers"); m.is_obj()) {
@@ -1641,7 +1641,7 @@ McpSSEServerConfig_from_json(cc::utils::json::JsonVal o) {
 }
 
 [[nodiscard]] inline std::string McpHttpServerConfig_to_json(const McpHttpServerConfig& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("http"));
@@ -1655,8 +1655,8 @@ McpSSEServerConfig_from_json(cc::utils::json::JsonVal o) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<McpHttpServerConfig, std::string>
-McpHttpServerConfig_from_json(cc::utils::json::JsonVal o) {
-    using namespace cc::utils::json;
+McpHttpServerConfig_from_json(loom::utils::json::JsonVal o) {
+    using namespace loom::utils::json;
     McpHttpServerConfig v;
     v.url = detail_serde::read_string(o, "url");
     if (auto m = o.get("headers"); m.is_obj()) {
@@ -1671,7 +1671,7 @@ McpHttpServerConfig_from_json(cc::utils::json::JsonVal o) {
 }
 
 [[nodiscard]] inline std::string McpSdkServerConfig_to_json(const McpSdkServerConfig& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("sdk"));
@@ -1680,7 +1680,7 @@ McpHttpServerConfig_from_json(cc::utils::json::JsonVal o) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<McpSdkServerConfig, std::string>
-McpSdkServerConfig_from_json(cc::utils::json::JsonVal o) {
+McpSdkServerConfig_from_json(loom::utils::json::JsonVal o) {
     McpSdkServerConfig v;
     v.name = detail_serde::read_string(o, "name");
     return v;
@@ -1701,8 +1701,8 @@ McpSdkServerConfig_from_json(cc::utils::json::JsonVal o) {
         v);
 }
 [[nodiscard]] inline std::expected<McpServerConfig, std::string>
-McpServerConfig_from_json(cc::utils::json::JsonVal o) {
-    using namespace cc::utils::json;
+McpServerConfig_from_json(loom::utils::json::JsonVal o) {
+    using namespace loom::utils::json;
     if (!o.is_obj()) return std::unexpected("McpServerConfig: expected object");
     const auto type = detail_serde::read_string(o, "type");
     if (type == "stdio") {
@@ -1729,7 +1729,7 @@ McpServerConfig_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<McpServerConfig, std::string>
 McpServerConfig_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return McpServerConfig_from_json(parsed->root());
 }
@@ -1737,8 +1737,8 @@ McpServerConfig_from_json(std::string_view raw) {
 // ── ControlInitializeRequest (full parse) ───────────────────────────────────
 
 [[nodiscard]] inline std::expected<ControlInitializeRequest, std::string>
-ControlInitializeRequest_from_json(cc::utils::json::JsonVal inner) {
-    using namespace cc::utils::json;
+ControlInitializeRequest_from_json(loom::utils::json::JsonVal inner) {
+    using namespace loom::utils::json;
     ControlInitializeRequest v;
     if (auto hooks = inner.get("hooks"); hooks.is_obj()) {
         std::unordered_map<std::string, std::vector<HookCallbackMatcher>> out;
@@ -1788,7 +1788,7 @@ ControlInitializeRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlRewindFilesRequest_to_json(
     const ControlRewindFilesRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("rewind_files"));
@@ -1798,7 +1798,7 @@ ControlInitializeRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlRewindFilesRequest, std::string>
-ControlRewindFilesRequest_from_json(cc::utils::json::JsonVal inner) {
+ControlRewindFilesRequest_from_json(loom::utils::json::JsonVal inner) {
     ControlRewindFilesRequest v;
     v.user_message_id = detail_serde::read_string(inner, "user_message_id");
     v.dry_run = detail_serde::read_optional_bool(inner, "dry_run");
@@ -1808,7 +1808,7 @@ ControlRewindFilesRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlCancelAsyncMessageRequest_to_json(
     const ControlCancelAsyncMessageRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("cancel_async_message"));
@@ -1817,7 +1817,7 @@ ControlRewindFilesRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlCancelAsyncMessageRequest, std::string>
-ControlCancelAsyncMessageRequest_from_json(cc::utils::json::JsonVal inner) {
+ControlCancelAsyncMessageRequest_from_json(loom::utils::json::JsonVal inner) {
     ControlCancelAsyncMessageRequest v;
     v.message_uuid = detail_serde::read_string(inner, "message_uuid");
     return v;
@@ -1826,7 +1826,7 @@ ControlCancelAsyncMessageRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlSeedReadStateRequest_to_json(
     const ControlSeedReadStateRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("seed_read_state"));
@@ -1836,7 +1836,7 @@ ControlCancelAsyncMessageRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlSeedReadStateRequest, std::string>
-ControlSeedReadStateRequest_from_json(cc::utils::json::JsonVal inner) {
+ControlSeedReadStateRequest_from_json(loom::utils::json::JsonVal inner) {
     ControlSeedReadStateRequest v;
     v.path = detail_serde::read_string(inner, "path");
     if (auto m = inner.get("mtime"); m.is_num()) v.mtime = m.as_double();
@@ -1844,7 +1844,7 @@ ControlSeedReadStateRequest_from_json(cc::utils::json::JsonVal inner) {
 }
 
 [[nodiscard]] inline std::string HookCallbackRequest_to_json(const HookCallbackRequest& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("hook_callback"));
@@ -1857,8 +1857,8 @@ ControlSeedReadStateRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<HookCallbackRequest, std::string>
-HookCallbackRequest_from_json(cc::utils::json::JsonVal inner) {
-    using namespace cc::utils::json;
+HookCallbackRequest_from_json(loom::utils::json::JsonVal inner) {
+    using namespace loom::utils::json;
     HookCallbackRequest v;
     v.callback_id = detail_serde::read_string(inner, "callback_id");
     v.tool_use_id = detail_serde::read_string(inner, "tool_use_id");
@@ -1874,7 +1874,7 @@ HookCallbackRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlMcpMessageRequest_to_json(
     const ControlMcpMessageRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("mcp_message"));
@@ -1884,7 +1884,7 @@ HookCallbackRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlMcpMessageRequest, std::string>
-ControlMcpMessageRequest_from_json(cc::utils::json::JsonVal inner) {
+ControlMcpMessageRequest_from_json(loom::utils::json::JsonVal inner) {
     ControlMcpMessageRequest v;
     v.server_name = detail_serde::read_string(inner, "server_name");
     v.message = detail_serde::read_string(inner, "message");
@@ -1894,7 +1894,7 @@ ControlMcpMessageRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlMcpSetServersRequest_to_json(
     const ControlMcpSetServersRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("mcp_set_servers"));
@@ -1906,8 +1906,8 @@ ControlMcpMessageRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlMcpSetServersRequest, std::string>
-ControlMcpSetServersRequest_from_json(cc::utils::json::JsonVal inner) {
-    using namespace cc::utils::json;
+ControlMcpSetServersRequest_from_json(loom::utils::json::JsonVal inner) {
+    using namespace loom::utils::json;
     ControlMcpSetServersRequest v;
     if (auto m = inner.get("servers"); m.is_obj()) {
         m.iter_obj([&](JsonVal k, JsonVal val) {
@@ -1928,7 +1928,7 @@ ControlMcpSetServersRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlMcpReconnectRequest_to_json(
     const ControlMcpReconnectRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("mcp_reconnect"));
@@ -1937,7 +1937,7 @@ ControlMcpSetServersRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlMcpReconnectRequest, std::string>
-ControlMcpReconnectRequest_from_json(cc::utils::json::JsonVal inner) {
+ControlMcpReconnectRequest_from_json(loom::utils::json::JsonVal inner) {
     ControlMcpReconnectRequest v;
     v.server_name = detail_serde::read_string(inner, "server_name");
     return v;
@@ -1946,7 +1946,7 @@ ControlMcpReconnectRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlMcpToggleRequest_to_json(
     const ControlMcpToggleRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("mcp_toggle"));
@@ -1956,7 +1956,7 @@ ControlMcpReconnectRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlMcpToggleRequest, std::string>
-ControlMcpToggleRequest_from_json(cc::utils::json::JsonVal inner) {
+ControlMcpToggleRequest_from_json(loom::utils::json::JsonVal inner) {
     ControlMcpToggleRequest v;
     v.server_name = detail_serde::read_string(inner, "server_name");
     if (auto e = inner.get("enabled"); e.is_bool()) v.enabled = e.as_bool();
@@ -1966,7 +1966,7 @@ ControlMcpToggleRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlStopTaskRequest_to_json(
     const ControlStopTaskRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("stop_task"));
@@ -1975,7 +1975,7 @@ ControlMcpToggleRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlStopTaskRequest, std::string>
-ControlStopTaskRequest_from_json(cc::utils::json::JsonVal inner) {
+ControlStopTaskRequest_from_json(loom::utils::json::JsonVal inner) {
     ControlStopTaskRequest v;
     v.task_id = detail_serde::read_string(inner, "task_id");
     return v;
@@ -1984,7 +1984,7 @@ ControlStopTaskRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlApplyFlagSettingsRequest_to_json(
     const ControlApplyFlagSettingsRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("apply_flag_settings"));
@@ -1995,8 +1995,8 @@ ControlStopTaskRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlApplyFlagSettingsRequest, std::string>
-ControlApplyFlagSettingsRequest_from_json(cc::utils::json::JsonVal inner) {
-    using namespace cc::utils::json;
+ControlApplyFlagSettingsRequest_from_json(loom::utils::json::JsonVal inner) {
+    using namespace loom::utils::json;
     ControlApplyFlagSettingsRequest v;
     if (auto m = inner.get("settings"); m.is_obj()) {
         m.iter_obj([&](JsonVal k, JsonVal val) {
@@ -2016,7 +2016,7 @@ ControlApplyFlagSettingsRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlElicitationRequest_to_json(
     const ControlElicitationRequest& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("elicitation"));
@@ -2034,8 +2034,8 @@ ControlApplyFlagSettingsRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlElicitationRequest, std::string>
-ControlElicitationRequest_from_json(cc::utils::json::JsonVal inner) {
-    using namespace cc::utils::json;
+ControlElicitationRequest_from_json(loom::utils::json::JsonVal inner) {
+    using namespace loom::utils::json;
     ControlElicitationRequest v;
     v.mcp_server_name = detail_serde::read_string(inner, "mcp_server_name");
     v.message = detail_serde::read_string(inner, "message");
@@ -2122,7 +2122,7 @@ ControlElicitationRequest_from_json(cc::utils::json::JsonVal inner) {
 /// Unknown subtypes produce a ControlRawRequest (never a parse failure).
 [[nodiscard]] inline ControlRequestInner parse_control_request_inner(
     std::string_view subtype,
-    cc::utils::json::JsonVal inner
+    loom::utils::json::JsonVal inner
 ) {
     if (subtype == "initialize") {
         auto r = ControlInitializeRequest_from_json(inner);
@@ -2222,7 +2222,7 @@ ControlElicitationRequest_from_json(cc::utils::json::JsonVal inner) {
 [[nodiscard]] inline std::string ControlInitializeResponse_to_json(
     const ControlInitializeResponse& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     // commands: always emitted (even when empty)
@@ -2254,8 +2254,8 @@ ControlElicitationRequest_from_json(cc::utils::json::JsonVal inner) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlInitializeResponse, std::string>
-ControlInitializeResponse_from_json(cc::utils::json::JsonVal inner) {
-    using namespace cc::utils::json;
+ControlInitializeResponse_from_json(loom::utils::json::JsonVal inner) {
+    using namespace loom::utils::json;
     ControlInitializeResponse v;
     v.commands = [&] {
         std::vector<SlashCommand> out;
@@ -2301,7 +2301,7 @@ ControlInitializeResponse_from_json(cc::utils::json::JsonVal inner) {
 }
 [[nodiscard]] inline std::expected<ControlInitializeResponse, std::string>
 ControlInitializeResponse_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return ControlInitializeResponse_from_json(parsed->root());
 }
@@ -2313,7 +2313,7 @@ ControlInitializeResponse_from_json(std::string_view raw) {
 // ── ControlSuccessResponse ──────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string ControlSuccessResponse_to_json(const ControlSuccessResponse& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("success"));
@@ -2324,7 +2324,7 @@ ControlInitializeResponse_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlSuccessResponse, std::string>
-ControlSuccessResponse_from_json(cc::utils::json::JsonVal inner) {
+ControlSuccessResponse_from_json(loom::utils::json::JsonVal inner) {
     ControlSuccessResponse v;
     v.request_id = detail_serde::read_string(inner, "request_id");
     auto resp = inner.get("response");
@@ -2335,7 +2335,7 @@ ControlSuccessResponse_from_json(cc::utils::json::JsonVal inner) {
 }
 [[nodiscard]] inline std::expected<ControlSuccessResponse, std::string>
 ControlSuccessResponse_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return ControlSuccessResponse_from_json(parsed->root());
 }
@@ -2343,7 +2343,7 @@ ControlSuccessResponse_from_json(std::string_view raw) {
 // ── ControlErrorResponse ────────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string ControlErrorResponse_to_json(const ControlErrorResponse& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("error"));
@@ -2353,7 +2353,7 @@ ControlSuccessResponse_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<ControlErrorResponse, std::string>
-ControlErrorResponse_from_json(cc::utils::json::JsonVal inner) {
+ControlErrorResponse_from_json(loom::utils::json::JsonVal inner) {
     ControlErrorResponse v;
     v.request_id = detail_serde::read_string(inner, "request_id");
     v.error = detail_serde::read_string(inner, "error");
@@ -2361,7 +2361,7 @@ ControlErrorResponse_from_json(cc::utils::json::JsonVal inner) {
 }
 [[nodiscard]] inline std::expected<ControlErrorResponse, std::string>
 ControlErrorResponse_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return ControlErrorResponse_from_json(parsed->root());
 }
@@ -2369,7 +2369,7 @@ ControlErrorResponse_from_json(std::string_view raw) {
 // ── ControlRequest envelope ─────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string ControlRequest_to_json(const ControlRequest& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("control_request"));
@@ -2381,7 +2381,7 @@ ControlErrorResponse_from_json(std::string_view raw) {
 [[nodiscard]] inline std::expected<ControlRequest, std::string> ControlRequest_from_json(
     std::string_view raw
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto root = parsed->root();
@@ -2424,7 +2424,7 @@ namespace detail_serde {
 } // namespace detail_serde
 
 [[nodiscard]] inline std::string ControlResponse_to_json(const ControlResponse& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("control_response"));
@@ -2439,7 +2439,7 @@ namespace detail_serde {
 [[nodiscard]] inline std::expected<ControlResponse, std::string> ControlResponse_from_json(
     std::string_view raw
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto root = parsed->root();
@@ -2479,7 +2479,7 @@ namespace detail_serde {
 [[nodiscard]] inline std::string string_map_to_json(
     const std::unordered_map<std::string, std::string>& m
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     for (const auto& [k, v] : m) o.add(k.c_str(), doc.string(v));
@@ -2488,9 +2488,9 @@ namespace detail_serde {
 }
 
 [[nodiscard]] inline std::unordered_map<std::string, std::string> string_map_from_json(
-    cc::utils::json::JsonVal o
+    loom::utils::json::JsonVal o
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     std::unordered_map<std::string, std::string> out;
     if (o.is_obj()) {
         o.iter_obj([&](JsonVal k, JsonVal v) {
@@ -2528,7 +2528,7 @@ result_error_subtype_from_str(std::string_view s) {
 // ── SDKPermissionDenial ─────────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string SDKPermissionDenial_to_json(const SDKPermissionDenial& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("tool_name", doc.string(v.tool_name));
@@ -2538,7 +2538,7 @@ result_error_subtype_from_str(std::string_view s) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKPermissionDenial, std::string>
-SDKPermissionDenial_from_json(cc::utils::json::JsonVal o) {
+SDKPermissionDenial_from_json(loom::utils::json::JsonVal o) {
     SDKPermissionDenial v;
     v.tool_name = detail_serde::read_string(o, "tool_name");
     v.tool_use_id = detail_serde::read_string(o, "tool_use_id");
@@ -2549,7 +2549,7 @@ SDKPermissionDenial_from_json(cc::utils::json::JsonVal o) {
 // ── SDKUserMessage ──────────────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string SDKUserMessage_to_json(const SDKUserMessage& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("user"));
@@ -2565,7 +2565,7 @@ SDKPermissionDenial_from_json(cc::utils::json::JsonVal o) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKUserMessage, std::string>
-SDKUserMessage_from_json(cc::utils::json::JsonVal o) {
+SDKUserMessage_from_json(loom::utils::json::JsonVal o) {
     SDKUserMessage v;
     v.message = detail_serde::string_map_from_json(o.get("message"));
     v.parent_tool_use_id = detail_serde::read_optional_string(o, "parent_tool_use_id");
@@ -2578,7 +2578,7 @@ SDKUserMessage_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKUserMessage, std::string>
 SDKUserMessage_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKUserMessage_from_json(parsed->root());
 }
@@ -2586,7 +2586,7 @@ SDKUserMessage_from_json(std::string_view raw) {
 // ── SDKUserMessageReplay ────────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string SDKUserMessageReplay_to_json(const SDKUserMessageReplay& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("user"));
@@ -2601,7 +2601,7 @@ SDKUserMessage_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKUserMessageReplay, std::string>
-SDKUserMessageReplay_from_json(cc::utils::json::JsonVal o) {
+SDKUserMessageReplay_from_json(loom::utils::json::JsonVal o) {
     SDKUserMessageReplay v;
     v.message = detail_serde::string_map_from_json(o.get("message"));
     v.parent_tool_use_id = detail_serde::read_optional_string(o, "parent_tool_use_id");
@@ -2612,7 +2612,7 @@ SDKUserMessageReplay_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKUserMessageReplay, std::string>
 SDKUserMessageReplay_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKUserMessageReplay_from_json(parsed->root());
 }
@@ -2620,7 +2620,7 @@ SDKUserMessageReplay_from_json(std::string_view raw) {
 // ── SDKAssistantMessage ─────────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string SDKAssistantMessage_to_json(const SDKAssistantMessage& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("assistant"));
@@ -2636,7 +2636,7 @@ SDKUserMessageReplay_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKAssistantMessage, std::string>
-SDKAssistantMessage_from_json(cc::utils::json::JsonVal o) {
+SDKAssistantMessage_from_json(loom::utils::json::JsonVal o) {
     SDKAssistantMessage v;
     v.message = detail_serde::string_map_from_json(o.get("message"));
     v.parent_tool_use_id = detail_serde::read_optional_string(o, "parent_tool_use_id");
@@ -2648,7 +2648,7 @@ SDKAssistantMessage_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKAssistantMessage, std::string>
 SDKAssistantMessage_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKAssistantMessage_from_json(parsed->root());
 }
@@ -2656,7 +2656,7 @@ SDKAssistantMessage_from_json(std::string_view raw) {
 // ── SDKResultSuccess ────────────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string SDKResultSuccess_to_json(const SDKResultSuccess& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("result"));
@@ -2692,8 +2692,8 @@ SDKAssistantMessage_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKResultSuccess, std::string>
-SDKResultSuccess_from_json(cc::utils::json::JsonVal o) {
-    using namespace cc::utils::json;
+SDKResultSuccess_from_json(loom::utils::json::JsonVal o) {
+    using namespace loom::utils::json;
     SDKResultSuccess v;
     if (auto d = o.get("duration_ms"); d.is_num()) v.duration_ms = d.as_double();
     if (auto d = o.get("duration_api_ms"); d.is_num()) v.duration_api_ms = d.as_double();
@@ -2728,7 +2728,7 @@ SDKResultSuccess_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKResultSuccess, std::string>
 SDKResultSuccess_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKResultSuccess_from_json(parsed->root());
 }
@@ -2736,7 +2736,7 @@ SDKResultSuccess_from_json(std::string_view raw) {
 // ── SDKResultError ──────────────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string SDKResultError_to_json(const SDKResultError& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("result"));
@@ -2773,8 +2773,8 @@ SDKResultSuccess_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKResultError, std::string>
-SDKResultError_from_json(cc::utils::json::JsonVal o) {
-    using namespace cc::utils::json;
+SDKResultError_from_json(loom::utils::json::JsonVal o) {
+    using namespace loom::utils::json;
     SDKResultError v;
     if (auto st = o.get("subtype"); st.is_str()) {
         if (auto s = detail_serde::result_error_subtype_from_str(st.as_str()))
@@ -2815,7 +2815,7 @@ SDKResultError_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKResultError, std::string>
 SDKResultError_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKResultError_from_json(parsed->root());
 }
@@ -2823,7 +2823,7 @@ SDKResultError_from_json(std::string_view raw) {
 // ── SDKSystemMessage ────────────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string SDKSystemMessage_to_json(const SDKSystemMessage& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("system"));
@@ -2850,7 +2850,7 @@ SDKResultError_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKSystemMessage, std::string>
-SDKSystemMessage_from_json(cc::utils::json::JsonVal o) {
+SDKSystemMessage_from_json(loom::utils::json::JsonVal o) {
     SDKSystemMessage v;
     v.subtype = detail_serde::read_string(o, "subtype");
     v.uuid = detail_serde::read_string(o, "uuid");
@@ -2864,7 +2864,7 @@ SDKSystemMessage_from_json(cc::utils::json::JsonVal o) {
         auto arr = o.get("tools");
         if (!arr.is_arr()) return std::nullopt;
         std::vector<std::string> out;
-        arr.iter([&](cc::utils::json::JsonVal el) {
+        arr.iter([&](loom::utils::json::JsonVal el) {
             if (el.is_str()) out.emplace_back(el.as_str());
         });
         return out;
@@ -2873,7 +2873,7 @@ SDKSystemMessage_from_json(cc::utils::json::JsonVal o) {
         auto arr = o.get("agents");
         if (!arr.is_arr()) return std::nullopt;
         std::vector<std::string> out;
-        arr.iter([&](cc::utils::json::JsonVal el) {
+        arr.iter([&](loom::utils::json::JsonVal el) {
             if (el.is_str()) out.emplace_back(el.as_str());
         });
         return out;
@@ -2884,7 +2884,7 @@ SDKSystemMessage_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKSystemMessage, std::string>
 SDKSystemMessage_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKSystemMessage_from_json(parsed->root());
 }
@@ -2894,7 +2894,7 @@ SDKSystemMessage_from_json(std::string_view raw) {
 [[nodiscard]] inline std::string SDKPartialAssistantMessage_to_json(
     const SDKPartialAssistantMessage& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("stream_event"));
@@ -2907,7 +2907,7 @@ SDKSystemMessage_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKPartialAssistantMessage, std::string>
-SDKPartialAssistantMessage_from_json(cc::utils::json::JsonVal o) {
+SDKPartialAssistantMessage_from_json(loom::utils::json::JsonVal o) {
     SDKPartialAssistantMessage v;
     if (auto e = o.get("event"); e.valid()) v.event_json = e.to_string();
     v.parent_tool_use_id = detail_serde::read_optional_string(o, "parent_tool_use_id");
@@ -2917,7 +2917,7 @@ SDKPartialAssistantMessage_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKPartialAssistantMessage, std::string>
 SDKPartialAssistantMessage_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKPartialAssistantMessage_from_json(parsed->root());
 }
@@ -2927,7 +2927,7 @@ SDKPartialAssistantMessage_from_json(std::string_view raw) {
 [[nodiscard]] inline std::string SDKCompactBoundaryMessage_to_json(
     const SDKCompactBoundaryMessage& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("system"));
@@ -2947,7 +2947,7 @@ SDKPartialAssistantMessage_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKCompactBoundaryMessage, std::string>
-SDKCompactBoundaryMessage_from_json(cc::utils::json::JsonVal o) {
+SDKCompactBoundaryMessage_from_json(loom::utils::json::JsonVal o) {
     SDKCompactBoundaryMessage v;
     v.trigger = detail_serde::read_string(o, "trigger");
     if (auto pt = o.get("pre_tokens"); pt.is_num())
@@ -2965,7 +2965,7 @@ SDKCompactBoundaryMessage_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKCompactBoundaryMessage, std::string>
 SDKCompactBoundaryMessage_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKCompactBoundaryMessage_from_json(parsed->root());
 }
@@ -2973,7 +2973,7 @@ SDKCompactBoundaryMessage_from_json(std::string_view raw) {
 // ── SDKStatusMessage ────────────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string SDKStatusMessage_to_json(const SDKStatusMessage& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("system"));
@@ -2988,7 +2988,7 @@ SDKCompactBoundaryMessage_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKStatusMessage, std::string>
-SDKStatusMessage_from_json(cc::utils::json::JsonVal o) {
+SDKStatusMessage_from_json(loom::utils::json::JsonVal o) {
     SDKStatusMessage v;
     v.status = detail_serde::read_optional_string(o, "status");
     if (auto pm = detail_serde::read_optional_string(o, "permission_mode")) {
@@ -3001,7 +3001,7 @@ SDKStatusMessage_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKStatusMessage, std::string>
 SDKStatusMessage_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKStatusMessage_from_json(parsed->root());
 }
@@ -3011,7 +3011,7 @@ SDKStatusMessage_from_json(std::string_view raw) {
 [[nodiscard]] inline std::string SDKToolProgressMessage_to_json(
     const SDKToolProgressMessage& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("tool_progress"));
@@ -3027,7 +3027,7 @@ SDKStatusMessage_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKToolProgressMessage, std::string>
-SDKToolProgressMessage_from_json(cc::utils::json::JsonVal o) {
+SDKToolProgressMessage_from_json(loom::utils::json::JsonVal o) {
     SDKToolProgressMessage v;
     v.tool_use_id = detail_serde::read_string(o, "tool_use_id");
     v.tool_name = detail_serde::read_string(o, "tool_name");
@@ -3041,7 +3041,7 @@ SDKToolProgressMessage_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKToolProgressMessage, std::string>
 SDKToolProgressMessage_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKToolProgressMessage_from_json(parsed->root());
 }
@@ -3051,7 +3051,7 @@ SDKToolProgressMessage_from_json(std::string_view raw) {
 [[nodiscard]] inline std::string SDKPostTurnSummaryMessage_to_json(
     const SDKPostTurnSummaryMessage& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("system"));
@@ -3075,7 +3075,7 @@ SDKToolProgressMessage_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKPostTurnSummaryMessage, std::string>
-SDKPostTurnSummaryMessage_from_json(cc::utils::json::JsonVal o) {
+SDKPostTurnSummaryMessage_from_json(loom::utils::json::JsonVal o) {
     SDKPostTurnSummaryMessage v;
     v.summarizes_uuid = detail_serde::read_string(o, "summarizes_uuid");
     v.status_category = detail_serde::read_string(o, "status_category");
@@ -3086,7 +3086,7 @@ SDKPostTurnSummaryMessage_from_json(cc::utils::json::JsonVal o) {
     v.recent_action = detail_serde::read_string(o, "recent_action");
     v.needs_action = detail_serde::read_string(o, "needs_action");
     if (auto arr = o.get("artifact_urls"); arr.is_arr()) {
-        arr.iter([&](cc::utils::json::JsonVal el) {
+        arr.iter([&](loom::utils::json::JsonVal el) {
             if (el.is_str()) v.artifact_urls.emplace_back(el.as_str());
         });
     }
@@ -3096,7 +3096,7 @@ SDKPostTurnSummaryMessage_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKPostTurnSummaryMessage, std::string>
 SDKPostTurnSummaryMessage_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKPostTurnSummaryMessage_from_json(parsed->root());
 }
@@ -3106,7 +3106,7 @@ SDKPostTurnSummaryMessage_from_json(std::string_view raw) {
 [[nodiscard]] inline std::string SDKStreamlinedTextMessage_to_json(
     const SDKStreamlinedTextMessage& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("streamlined_text"));
@@ -3117,7 +3117,7 @@ SDKPostTurnSummaryMessage_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKStreamlinedTextMessage, std::string>
-SDKStreamlinedTextMessage_from_json(cc::utils::json::JsonVal o) {
+SDKStreamlinedTextMessage_from_json(loom::utils::json::JsonVal o) {
     SDKStreamlinedTextMessage v;
     v.text = detail_serde::read_string(o, "text");
     v.session_id = detail_serde::read_string(o, "session_id");
@@ -3126,7 +3126,7 @@ SDKStreamlinedTextMessage_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKStreamlinedTextMessage, std::string>
 SDKStreamlinedTextMessage_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKStreamlinedTextMessage_from_json(parsed->root());
 }
@@ -3136,7 +3136,7 @@ SDKStreamlinedTextMessage_from_json(std::string_view raw) {
 [[nodiscard]] inline std::string SDKStreamlinedToolUseSummaryMessage_to_json(
     const SDKStreamlinedToolUseSummaryMessage& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("streamlined_tool_use_summary"));
@@ -3147,7 +3147,7 @@ SDKStreamlinedTextMessage_from_json(std::string_view raw) {
     return doc.to_string();
 }
 [[nodiscard]] inline std::expected<SDKStreamlinedToolUseSummaryMessage, std::string>
-SDKStreamlinedToolUseSummaryMessage_from_json(cc::utils::json::JsonVal o) {
+SDKStreamlinedToolUseSummaryMessage_from_json(loom::utils::json::JsonVal o) {
     SDKStreamlinedToolUseSummaryMessage v;
     v.tool_summary = detail_serde::read_string(o, "tool_summary");
     v.session_id = detail_serde::read_string(o, "session_id");
@@ -3156,7 +3156,7 @@ SDKStreamlinedToolUseSummaryMessage_from_json(cc::utils::json::JsonVal o) {
 }
 [[nodiscard]] inline std::expected<SDKStreamlinedToolUseSummaryMessage, std::string>
 SDKStreamlinedToolUseSummaryMessage_from_json(std::string_view raw) {
-    auto parsed = cc::utils::json::parse(raw);
+    auto parsed = loom::utils::json::parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     return SDKStreamlinedToolUseSummaryMessage_from_json(parsed->root());
 }
@@ -3192,7 +3192,7 @@ SDKStreamlinedToolUseSummaryMessage_from_json(std::string_view raw) {
 
 [[nodiscard]] inline std::expected<SDKMessage, std::string>
 SDKMessage_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto root = parsed->root();
@@ -3264,7 +3264,7 @@ SDKMessage_from_json(std::string_view raw) {
 // ── ControlCancelRequest ────────────────────────────────────────────────────
 
 [[nodiscard]] inline std::string ControlCancelRequest_to_json(const ControlCancelRequest& v) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("control_cancel"));
@@ -3274,7 +3274,7 @@ SDKMessage_from_json(std::string_view raw) {
 }
 [[nodiscard]] inline std::expected<ControlCancelRequest, std::string>
 ControlCancelRequest_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto root = parsed->root();
@@ -3299,7 +3299,7 @@ inline std::expected<ControlCancelRequest, std::string> from_json(
 }
 [[nodiscard]] inline std::expected<KeepAliveMessage, std::string>
 KeepAliveMessage_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     if (!parsed->root().is_obj()) return std::unexpected("expected object");
@@ -3319,7 +3319,7 @@ inline std::expected<KeepAliveMessage, std::string> from_json(
 [[nodiscard]] inline std::string UpdateEnvironmentVariablesMessage_to_json(
     const UpdateEnvironmentVariablesMessage& v
 ) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("update_environment_variables"));
@@ -3329,7 +3329,7 @@ inline std::expected<KeepAliveMessage, std::string> from_json(
 }
 [[nodiscard]] inline std::expected<UpdateEnvironmentVariablesMessage, std::string>
 UpdateEnvironmentVariablesMessage_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto root = parsed->root();
@@ -3374,7 +3374,7 @@ inline std::expected<UpdateEnvironmentVariablesMessage, std::string> from_json(
 
 [[nodiscard]] inline std::expected<StdoutMessage, std::string>
 StdoutMessage_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto root = parsed->root();
@@ -3448,7 +3448,7 @@ StdoutMessage_from_json(std::string_view raw) {
 
 [[nodiscard]] inline std::expected<StdinMessage, std::string>
 StdinMessage_from_json(std::string_view raw) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
     auto root = parsed->root();
@@ -3482,4 +3482,4 @@ StdinMessage_from_json(std::string_view raw) {
     return std::unexpected("StdinMessage: unknown type: " + t);
 }
 
-} // namespace cc::server::control
+} // namespace loom::server::control

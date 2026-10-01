@@ -25,9 +25,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::file_edit_ui {
+export namespace loom::ui::tools::file_edit_ui {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 namespace detail {
 
@@ -198,4 +198,4 @@ inline void register_file_edit_ui() {
         "FileEdit", make_file_edit_ui());
 }
 
-}  // namespace cc::ui::tools::file_edit_ui
+}  // namespace loom::ui::tools::file_edit_ui

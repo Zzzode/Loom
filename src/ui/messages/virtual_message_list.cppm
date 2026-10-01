@@ -80,7 +80,7 @@ import loom.ui.foundation.design_tokens;
 //       conversion function.  This is the same decoupling as TS:
 //       `useVirtualScroll` knows nothing about MessageShape — it just
 //       consumes an opaque item array + measure().
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
   /// Opaque row descriptor consumed by VirtualMessageList.
   /// Each row has: a stable key (row_id), a height estimate (lines),
   /// optional search text, and a type hint for the caller's renderer.
@@ -104,13 +104,13 @@ export namespace cc::ui::messages {
     /// so the render_row callback can round-trip the original VisibleRow.
     std::uint64_t  backend_index           = 0;
   };
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages
 
-export namespace cc::ui::messages::virtual_list {
+export namespace loom::ui::messages::virtual_list {
 
 // Re-export VisibleRow at the virtual_list namespace level too, so callers
 // don't have to reach into the parent namespace.
-using ::cc::ui::messages::VisibleRow;
+using ::loom::ui::messages::VisibleRow;
 
 // ── Scroll-key helpers (public re-exports) ──────────────────────────────────
 using scroll_keys::FocusDomain;
@@ -1139,7 +1139,7 @@ struct [[nodiscard]] VirtualListComponentBase : ftxui::ComponentBase {
 // ═══════════════════════════════════════════════════════════════════════════
 #ifdef CC_VLIST_TEST
 
-export namespace cc::ui::messages::virtual_list::test {
+export namespace loom::ui::messages::virtual_list::test {
 
 using TestResult = std::pair<bool, std::string>;
 [[nodiscard]] inline TestResult ok()     { return {true,  "OK"}; }
@@ -1237,8 +1237,8 @@ using TestResult = std::pair<bool, std::string>;
   return out;
 }
 
-} // namespace cc::ui::messages::virtual_list::test
+} // namespace loom::ui::messages::virtual_list::test
 
 #endif // CC_VLIST_TEST
 
-} // namespace cc::ui::messages::virtual_list
+} // namespace loom::ui::messages::virtual_list

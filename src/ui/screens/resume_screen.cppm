@@ -12,7 +12,7 @@
 ///   4. Edit-title dialog    – inline title editor.
 ///   5. Delete confirmation  – delegates to UI8 TrustDialog (Medium risk).
 ///
-/// Data flows in 100% from cc::core::ConversationStore (session/history.cppm);
+/// Data flows in 100% from loom::core::ConversationStore (session/history.cppm);
 /// no duplicate reads.  Colour tokens / spacing are aligned with Doctor
 /// (UI18) and use the design tokens defined in that screen.
 module;
@@ -39,21 +39,21 @@ import loom.types.types;
 import loom.ui.dialogs.trust_dialog;
 import loom.ui.dialogs.trust_utils;
 
-export namespace cc::ui::resume_screen {
+export namespace loom::ui::resume_screen {
 using namespace ftxui;
 
 // Re-use data from session history — keep naming consistent.
-using ConversationStore = cc::core::ConversationStore;
-using Conversation      = cc::core::Conversation;
-using Message           = cc::core::Message;
-using Role              = cc::core::Role;
+using ConversationStore = loom::core::ConversationStore;
+using Conversation      = loom::core::Conversation;
+using Message           = loom::core::Message;
+using Role              = loom::core::Role;
 
 // Re-use trust dialog primitives for delete confirmation.
-namespace tu = cc::ui::trust_utils;
+namespace tu = loom::ui::trust_utils;
 using tu::RiskLevel;
 using tu::TrustChoice;
-using cc::ui::trust_dialog::TrustDialogProps;
-using cc::ui::trust_dialog::MakeTrustDialogComponent;
+using loom::ui::trust_dialog::TrustDialogProps;
+using loom::ui::trust_dialog::MakeTrustDialogComponent;
 
 // ===========================================================================
 // Forward declarations
@@ -137,7 +137,7 @@ enum class ScreenView : std::uint8_t {
 // ===========================================================================
 
 /// Compact metadata row about one persisted Conversation.
-/// Populated from cc::core::Conversation / ConversationStore — we only read
+/// Populated from loom::core::Conversation / ConversationStore — we only read
 /// the preview (last N messages) *on demand* when a session is selected for
 /// DetailsPreview, so idle memory stays small.
 struct SessionMetaRow {
@@ -232,13 +232,13 @@ inline Decorator padding(int all) { return padding(all, all, all, all); }
     const auto all = conv.get_messages();
     // Walk backwards, skip tool/system.
     for (auto it = all.rbegin(); it != all.rend(); ++it) {
-        const Role r = cc::core::get_role(*it);
+        const Role r = loom::core::get_role(*it);
         if (r != Role::User && r != Role::Assistant) continue;
 
         std::string text;
         std::visit([&](const auto& m) {
             for (const auto& blk : m.content) {
-                if (auto* tb = std::get_if<cc::core::TextBlock>(&blk)) {
+                if (auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
                     if (!text.empty()) text += " ";
                     text += tb->text;
                 }
@@ -269,7 +269,7 @@ inline Decorator padding(int all) { return padding(all, all, all, all); }
 {
     const auto all = conv.get_messages();
     for (auto it = all.rbegin(); it != all.rend(); ++it) {
-        if (auto* am = std::get_if<cc::core::AssistantMessage>(&*it)) {
+        if (auto* am = std::get_if<loom::core::AssistantMessage>(&*it)) {
             if (am->model && !am->model->empty()) return am->model;
         }
     }
@@ -775,24 +775,24 @@ struct RoleBadge {
 [[nodiscard]] inline Element RenderPreviewMessage(const Message& msg,
                                                   std::size_t max_chars = 120)
 {
-    const Role r = cc::core::get_role(msg);
+    const Role r = loom::core::get_role(msg);
     const auto badge = role_badge(r);
 
     std::string content;
     std::visit([&](const auto& m) {
         for (const auto& blk : m.content) {
-            if (auto* tb = std::get_if<cc::core::TextBlock>(&blk)) {
+            if (auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
                 if (!content.empty()) content += " ";
                 content += tb->text;
-            } else if (auto* tu = std::get_if<cc::core::ToolUseBlock>(&blk)) {
+            } else if (auto* tu = std::get_if<loom::core::ToolUseBlock>(&blk)) {
                 content += std::format("<tool:{}>", tu->name);
-            } else if (auto* tr = std::get_if<cc::core::ToolResultBlock>(&blk)) {
+            } else if (auto* tr = std::get_if<loom::core::ToolResultBlock>(&blk)) {
                 content += std::format("<result:{}>", tr->is_error ? "error" : "ok");
-            } else if (auto* im = std::get_if<cc::core::ImageBlock>(&blk)) {
+            } else if (auto* im = std::get_if<loom::core::ImageBlock>(&blk)) {
                 content += std::format("<image:{}>", im->media_type);
-            } else if (auto* dc = std::get_if<cc::core::DocumentBlock>(&blk)) {
+            } else if (auto* dc = std::get_if<loom::core::DocumentBlock>(&blk)) {
                 content += std::format("<doc:{}>", dc->media_type);
-            } else if (auto* th = std::get_if<cc::core::ThinkingBlock>(&blk)) {
+            } else if (auto* th = std::get_if<loom::core::ThinkingBlock>(&blk)) {
                 content += std::format("<thinking {}b>", th->thinking.size());
             }
         }
@@ -1768,4 +1768,4 @@ inline void ensure_preview_loaded(ResumeScreenState& s) {
     return MakeTrustDialogComponent(MakeDeleteSessionTrustProps(row, std::move(on_done)));
 }
 
-} // namespace cc::ui::resume_screen
+} // namespace loom::ui::resume_screen

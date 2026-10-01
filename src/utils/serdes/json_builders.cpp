@@ -6,7 +6,7 @@ module loom.serdes.json;
 
 import std;
 
-namespace cc::utils::json {
+namespace loom::utils::json {
 
 JsonObject::JsonObject() : root_(doc_.object()) { doc_.set_root(root_); }
 
@@ -69,4 +69,4 @@ std::string JsonBuilder::serialize() {
     return doc_.to_string();
 }
 
-} // namespace cc::utils::json
+} // namespace loom::utils::json

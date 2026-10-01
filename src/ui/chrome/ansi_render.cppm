@@ -8,7 +8,7 @@
 /// Phase-C recipe) so a body edit recompiles exactly one object (fan-out
 /// = 1) and this declarations-only BMI stays cheap for importers.
 ///
-/// The functions stay in namespace cc::ui::messages (NOT chrome) so the
+/// The functions stay in namespace loom::ui::messages (NOT chrome) so the
 /// existing call sites compile unchanged: unqualified calls inside
 /// message_tool_result.cppm and `msgs::ansi_to_ftxui_elements` in
 /// prompt_input_footer.cppm. Namespace and module are decoupled in C++23;
@@ -39,11 +39,11 @@ import std;
 
 import loom.ui.chrome.terminal_io;  // SgrAttr
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 /// Apply one SGR parameter run onto running SgrAttr state (see
 /// ansi_render.cpp for the full VT-faithful merge semantics).
-void apply_sgr_run(std::string_view params, cc::ui::termio::SgrAttr& attr);
+void apply_sgr_run(std::string_view params, loom::ui::termio::SgrAttr& attr);
 
 /// Split an ANSI-decorated string into per-line ftxui Elements that honor
 /// SGR color and basic attributes (see ansi_render.cpp for the full
@@ -57,4 +57,4 @@ void apply_sgr_run(std::string_view params, cc::ui::termio::SgrAttr& attr);
 /// never empty — an escape-only / empty input yields one blank text line.
 [[nodiscard]] std::shared_ptr<void> ansi_to_ftxui_elements(std::string_view input);
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

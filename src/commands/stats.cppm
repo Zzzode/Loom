@@ -13,9 +13,9 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// Session statistics snapshot (populated by the session manager before command execution)
 struct SessionStats {
@@ -92,4 +92,4 @@ private:
     SessionStats stats_;
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

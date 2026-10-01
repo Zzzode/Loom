@@ -39,10 +39,10 @@ import std;
 
 import loom.serdes.json;
 
-export namespace cc::services::mcp::stdio {
+export namespace loom::services::mcp::stdio {
 
 // Alias to keep the call sites concise and the diff small.
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -653,4 +653,4 @@ inline StdioServerSpec MockEchoSpec() {
     return s;
 }
 
-} // namespace cc::services::mcp::stdio
+} // namespace loom::services::mcp::stdio

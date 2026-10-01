@@ -15,16 +15,16 @@ import std;
 
 import loom.hooks.permission_resolver;
 
-export namespace cc::hooks::permission {
+export namespace loom::hooks::permission {
 
 // ────────────────────────────────────────────────────────────────────────────
 // Re-exports so downstream consumers get the resolver types with one import.
 // ────────────────────────────────────────────────────────────────────────────
-using ::cc::hooks::permission::Decision;
-using ::cc::hooks::permission::ActionKind;
-using ::cc::hooks::permission::RiskLevel;
-using ::cc::hooks::permission::PermissionRequest;
-using ::cc::hooks::permission::PermissionResolver;
+using ::loom::hooks::permission::Decision;
+using ::loom::hooks::permission::ActionKind;
+using ::loom::hooks::permission::RiskLevel;
+using ::loom::hooks::permission::PermissionRequest;
+using ::loom::hooks::permission::PermissionResolver;
 
 /// Callback signature for the interactive prompt hook.
 /// When the resolver cannot auto-approve, the gate invokes this callback
@@ -107,4 +107,4 @@ private:
     }
 };
 
-}  // namespace cc::hooks::permission
+}  // namespace loom::hooks::permission

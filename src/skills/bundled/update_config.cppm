@@ -16,7 +16,7 @@ import loom.config.config;
 import loom.config.feature_flags;
 import loom.config.settings;
 
-export namespace cc::skills::bundled {
+export namespace loom::skills::bundled {
 
 // ============================================================
 // Settings Examples Documentation (mirrors TS SETTINGS_EXAMPLES_DOCS)
@@ -495,28 +495,28 @@ If a hook isn't running:
 
 /// Get the correct settings path for a scope. Delegate to settings.cppm.
 [[nodiscard]] inline std::filesystem::path resolve_settings_path(
-    cc::config::SettingsScope scope,
+    loom::config::SettingsScope scope,
     const std::filesystem::path& home_dir,
     const std::filesystem::path& project_root
 ) {
-    return cc::config::get_settings_path(scope, home_dir, project_root);
+    return loom::config::get_settings_path(scope, home_dir, project_root);
 }
 
 /// Set a feature flag by name. Delegate to feature_flags.cppm.
 /// Returns true if the flag name was recognized and set.
 inline bool set_feature_flag(std::string_view name, bool enabled) {
-    return cc::core::flags::global_flags().set_by_name(name, enabled);
+    return loom::core::flags::global_flags().set_by_name(name, enabled);
 }
 
 /// Check if a feature flag is enabled.
 [[nodiscard]] inline bool is_feature_flag_enabled(std::string_view name) {
-    auto feature = cc::core::flags::FeatureFlagManager::find_by_name(name);
-    return feature.has_value() && cc::core::flags::is_enabled(*feature);
+    auto feature = loom::core::flags::FeatureFlagManager::find_by_name(name);
+    return feature.has_value() && loom::core::flags::is_enabled(*feature);
 }
 
 /// Get a summary of all enabled features for display.
 [[nodiscard]] inline std::string enabled_features_summary() {
-    return cc::core::flags::global_flags().enabled_summary();
+    return loom::core::flags::global_flags().enabled_summary();
 }
 
-} // namespace cc::skills::bundled
+} // namespace loom::skills::bundled

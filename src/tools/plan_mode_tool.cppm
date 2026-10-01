@@ -7,7 +7,7 @@ export module loom.tools.plan_mode;
 import std;
 
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 // Error types for plan mode operations
 enum class PlanModeError {
@@ -186,4 +186,4 @@ public:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

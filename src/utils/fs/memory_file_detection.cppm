@@ -6,7 +6,7 @@ export module loom.fs.memory_file_detection;
 
 import std;
 
-export namespace cc::utils::memory_file_detection {
+export namespace loom::utils::memory_file_detection {
 
 enum class SessionFileType {
     SessionMemory,
@@ -206,4 +206,4 @@ namespace detail {
            (normalized.find("agent-memory/") != std::string::npos || normalized.find("agent-memory-local/") != std::string::npos);
 }
 
-} // namespace cc::utils::memory_file_detection
+} // namespace loom::utils::memory_file_detection

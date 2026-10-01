@@ -29,18 +29,18 @@ export module loom.query.assembly;
 
 import std;
 
-import loom.types.types;       // cc::core::Result
-import loom.config.config;     // cc::core::Settings
-import loom.query.query_engine; // cc::core::QueryEngineConfig, QueryEngine
-import loom.serdes.json;       // cc::utils::json::JsonVal (parse_session_message_value)
+import loom.types.types;       // loom::core::Result
+import loom.config.config;     // loom::core::Settings
+import loom.query.query_engine; // loom::core::QueryEngineConfig, QueryEngine
+import loom.serdes.json;       // loom::utils::json::JsonVal (parse_session_message_value)
 // ToolRegistry is needed for the register_extra_tools field type; the
 // detector does not harvest the class name past cc.tools.tool's
 // concept/requires blocks (same marker as runtime_message_delivery.cppm).
 import loom.tools.tool;  // arch-check: keep-import
-import loom.hooks.tool_permissions; // cc::hooks::AskUserResponseFn
-import loom.tools.agent_types; // cc::tools::AgentLivePermissionCheckFn
+import loom.hooks.tool_permissions; // loom::hooks::AskUserResponseFn
+import loom.tools.agent_types; // loom::tools::AgentLivePermissionCheckFn
 
-export namespace cc::query {
+export namespace loom::query {
 
 /// Per-caller overrides layered on top of ConfigManager settings when
 /// resolving the engine config. The server adapter fills these from the
@@ -61,23 +61,23 @@ struct AssemblyOverrides {
 /// direct-connect Anthropic path (server_routes.cppm:733-735); a harness
 /// with a loopback/gateway base_url supplies a placeholder key and bypasses
 /// the check. This is the single resolution path for both callers.
-[[nodiscard]] cc::core::Result<cc::core::QueryEngineConfig> resolve_engine_config(
-    const cc::core::Settings& settings, const AssemblyOverrides& overrides);
+[[nodiscard]] loom::core::Result<loom::core::QueryEngineConfig> resolve_engine_config(
+    const loom::core::Settings& settings, const AssemblyOverrides& overrides);
 
 struct AssemblyConfig {
-    cc::core::QueryEngineConfig engine;        // resolved via resolve_engine_config
+    loom::core::QueryEngineConfig engine;        // resolved via resolve_engine_config
     std::optional<std::filesystem::path> sessions_dir;     // enable session storage
     std::optional<std::filesystem::path> dump_prompts_dir;
     std::vector<std::string> prior_message_lines;          // resume seed (parsed at rank 10)
     std::shared_ptr<std::atomic_bool> cancel_flag;          // external abort
     /// Test seam: register extra tools (e.g. a mock permission-gated tool)
     /// into the registry before the config.tools snapshot is taken.
-    std::function<void(cc::core::ToolRegistry&)> register_extra_tools;
+    std::function<void(loom::core::ToolRegistry&)> register_extra_tools;
 };
 
 struct AssemblyCallbacks {
-    std::optional<cc::hooks::AskUserResponseFn> ask_user;  // permission bridge
-    std::optional<cc::tools::AgentLivePermissionCheckFn> permission_check;
+    std::optional<loom::hooks::AskUserResponseFn> ask_user;  // permission bridge
+    std::optional<loom::tools::AgentLivePermissionCheckFn> permission_check;
 };
 
 /// Reusable assembly result. Move-only PIMPL owning ToolPermissionHook +
@@ -93,7 +93,7 @@ public:
 
     /// The assembled engine. Valid for the handle's lifetime. Callers run
     /// query()/stream_query()/abort()/restore_conversation() on it.
-    [[nodiscard]] cc::core::QueryEngine& engine() noexcept;
+    [[nodiscard]] loom::core::QueryEngine& engine() noexcept;
 
 private:
     struct Impl;
@@ -101,7 +101,7 @@ private:
 
     explicit AssemblyHandle(std::unique_ptr<Impl> impl) noexcept;
 
-    friend cc::core::Result<AssemblyHandle> assemble(
+    friend loom::core::Result<AssemblyHandle> assemble(
         const AssemblyConfig& config, const AssemblyCallbacks& callbacks);
 };
 
@@ -112,26 +112,26 @@ private:
 /// the ConfigManager is a local, discarded after settings are read, not an
 /// owned member.) assemble() also performs the recipe's step 8 internally:
 /// it sets config.dynamic_tools_provider / config.mcp_input_schema_provider
-/// to cc::tools::collect_mcp_tool_definitions / collect_mcp_input_schemas
+/// to loom::tools::collect_mcp_tool_definitions / collect_mcp_input_schemas
 /// (server_routes.cppm:804-810), so MCP tool discovery is preserved in the
 /// re-expressed server route and not dropped by an implementer reading this
 /// sketch literally.
-[[nodiscard]] cc::core::Result<AssemblyHandle> assemble(
+[[nodiscard]] loom::core::Result<AssemblyHandle> assemble(
     const AssemblyConfig& config, const AssemblyCallbacks& callbacks);
 
-/// Parse one messages.jsonl document into a cc::core::Message. The same
+/// Parse one messages.jsonl document into a loom::core::Message. The same
 /// reader assemble() uses for prior_message_lines, exported so
 /// cc.sdk.harness::resume() can restore a prior session without
 /// re-implementing the format (RFC 0001 cc-sdk phase 3, §2.3 resume path).
 /// This is a role/content-string-only reader: it drops tool_use/
 /// tool_result/image blocks, so a session that used tools cannot be
-/// faithfully resumed yet (a non-lossy cc::core::Message reader is a
-/// follow-up). `message_from_json_value` returns cc::services::api::Message
+/// faithfully resumed yet (a non-lossy loom::core::Message reader is a
+/// follow-up). `message_from_json_value` returns loom::services::api::Message
 /// (a flat struct), incompatible with restore_conversation's
-/// cc::core::Message (5-member variant) with no existing converter — see
+/// loom::core::Message (5-member variant) with no existing converter — see
 /// the P3-assembly deviation note. `index` seeds a fallback id when the
 /// document has none.
-[[nodiscard]] std::optional<cc::core::Message> parse_session_message_value(
-    cc::utils::json::JsonVal root, std::size_t index = 0);
+[[nodiscard]] std::optional<loom::core::Message> parse_session_message_value(
+    loom::utils::json::JsonVal root, std::size_t index = 0);
 
-} // namespace cc::query
+} // namespace loom::query

@@ -13,9 +13,9 @@ import loom.commands.command;
 import loom.state.app_state;
 import loom.state.store;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// AdvisorCommand implements the /advisor slash command.
 /// Configures the advisor model for enhanced assistance.
@@ -80,7 +80,7 @@ public:
 
 private:
     [[nodiscard]] static Result<CommandResult> show_current_status(const CommandContext& ctx) {
-        using cc::state::AppState;
+        using loom::state::AppState;
         const auto* state = static_cast<const AppState*>(ctx.get_app_state());
 
         if (state && state->advisor_model.has_value()) {
@@ -92,7 +92,7 @@ private:
     }
 
     [[nodiscard]] static Result<CommandResult> disable_advisor(const CommandContext& ctx) {
-        using cc::state::ActionType;
+        using loom::state::ActionType;
         ctx.dispatch_action(static_cast<int>(ActionType::SetAdvisorModel), nullptr);
         return CommandResult::success("Advisor disabled.");
     }
@@ -103,7 +103,7 @@ private:
             return CommandResult::fail("Invalid model name");
         }
 
-        using cc::state::ActionType;
+        using loom::state::ActionType;
         std::string model_str{model};
         ctx.dispatch_action(static_cast<int>(ActionType::SetAdvisorModel), &model_str);
         return CommandResult::success(
@@ -111,4 +111,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

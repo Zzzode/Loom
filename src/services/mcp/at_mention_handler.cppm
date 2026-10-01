@@ -20,7 +20,7 @@ import std;
 
 import loom.serdes.json;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
 // Parsed at_mentioned payload (line numbers are 1-based after normalisation,
 // matching TS IDEAtMentioned.lineStart/lineEnd).
@@ -46,7 +46,7 @@ inline AtMentionResponder responder;
 inline auto get_string_field(const std::string& params_json,
                              std::string_view key) -> std::optional<std::string> {
     if (params_json.empty()) return std::nullopt;
-    auto parsed = cc::utils::json::parse(params_json);
+    auto parsed = loom::utils::json::parse(params_json);
     if (!parsed) return std::nullopt;
     auto root = parsed->root();
     if (!root.is_obj()) return std::nullopt;
@@ -59,7 +59,7 @@ inline auto get_string_field(const std::string& params_json,
 inline auto get_int_field(const std::string& params_json,
                           std::string_view key) -> std::optional<int> {
     if (params_json.empty()) return std::nullopt;
-    auto parsed = cc::utils::json::parse(params_json);
+    auto parsed = loom::utils::json::parse(params_json);
     if (!parsed) return std::nullopt;
     auto root = parsed->root();
     if (!root.is_obj()) return std::nullopt;
@@ -115,4 +115,4 @@ auto dispatch_at_mention(const std::string& server_name,
     }
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

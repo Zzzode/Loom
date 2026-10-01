@@ -44,7 +44,7 @@ import std;
 
 import loom.serdes.json;
 
-export namespace cc::tools::repl {
+export namespace loom::tools::repl {
 
 // --------------------------------------------------------------------------
 // Constants
@@ -487,7 +487,7 @@ inline auto list_sessions() -> std::vector<std::pair<std::string, std::string>> 
 
 [[nodiscard]] inline auto execute_repl_tool(std::string_view input_json)
     -> std::expected<std::string, std::string> {
-    namespace json = cc::utils::json;
+    namespace json = loom::utils::json;
 
     auto doc = json::parse(input_json);
     if (!doc) return std::unexpected("REPL tool: invalid JSON input: " + doc.error().message());
@@ -577,4 +577,4 @@ inline auto list_sessions() -> std::vector<std::pair<std::string, std::string>> 
     return std::unexpected("REPL tool: unknown action: " + action);
 }
 
-} // namespace cc::tools::repl
+} // namespace loom::tools::repl

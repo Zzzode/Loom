@@ -9,7 +9,7 @@ import std;
 // TS REF: src/components/messages/UserPromptMessage.tsx lines 28-70.
 import loom.ui.messages.user_text_message;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 // ─── Attachment types ────────────────────────────────────────────────
 
@@ -91,4 +91,4 @@ inline bool is_image_attachment(const MessageAttachment& attachment) {
     return attachment.type == AttachmentType::Image;
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

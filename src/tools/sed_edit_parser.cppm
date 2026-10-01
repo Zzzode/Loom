@@ -21,7 +21,7 @@ import std;
 import loom.parsing.cli.argument_substitution;
 import loom.process.bash.bash_shell_quoting;
 
-export namespace cc::tools::sed_edit_parser {
+export namespace loom::tools::sed_edit_parser {
 
 // ---------------------------------------------------------------------------
 // Error type
@@ -219,7 +219,7 @@ namespace detail {
 /// Try to split a command string into shell tokens using the existing
 /// argument-substitution helper.  Glob-like tokens are detected and rejected.
 [[nodiscard]] inline SedResult<std::vector<std::string>> tokenize_args(std::string_view text) {
-    auto parsed = cc::utils::argument_substitution::parse_shell_like_arguments(text);
+    auto parsed = loom::utils::argument_substitution::parse_shell_like_arguments(text);
     if (!parsed.has_value()) {
         return std::unexpected(SedParseError::MalformedShellTokens);
     }
@@ -678,4 +678,4 @@ apply_sed_substitution(std::string_view content, const SedCommand& cmd) {
     return apply_sed_substitution(content, info);
 }
 
-} // namespace cc::tools::sed_edit_parser
+} // namespace loom::tools::sed_edit_parser

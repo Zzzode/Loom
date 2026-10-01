@@ -15,7 +15,7 @@ import std;
 import loom.config.settings;       // SettingsScope (CONVERGE alias)
 import loom.tools.agent_runtime;   // AgentDefinition (CONVERGE alias)
 
-export namespace cc::sdk::core_schemas {
+export namespace loom::sdk::core_schemas {
 
 // ============================================================================
 // Usage & Model Types
@@ -46,8 +46,8 @@ enum class ApiKeySource : std::uint8_t {
     OAuth,
 };
 
-/// Config scope for settings — CONVERGED to cc::config::SettingsScope.
-using ConfigScope = cc::config::SettingsScope;
+/// Config scope for settings — CONVERGED to loom::config::SettingsScope.
+using ConfigScope = loom::config::SettingsScope;
 
 /// SDK beta version
 inline constexpr auto SDK_BETA = "context-1m-2025-08-07";
@@ -202,8 +202,8 @@ enum class AgentMemoryScope : std::uint8_t {
 };
 
 /// Agent definition for custom subagents — CONVERGED to
-/// cc::tools::agent_runtime::AgentDefinition.
-using AgentDefinition = cc::tools::agent_runtime::AgentDefinition;
+/// loom::tools::agent_runtime::AgentDefinition.
+using AgentDefinition = loom::tools::agent_runtime::AgentDefinition;
 
 /// Fast mode state
 enum class FastModeState : std::uint8_t {
@@ -232,8 +232,8 @@ enum class SDKAssistantMessageError : std::uint8_t {
 // ============================================================================
 
 /// Setting source (file-based settings location) — CONVERGED to
-/// cc::config::SettingsScope.
-using SettingSource = cc::config::SettingsScope;
+/// loom::config::SettingsScope.
+using SettingSource = loom::config::SettingsScope;
 
 /// SDK Plugin configuration
 struct SdkPluginConfig {
@@ -250,4 +250,4 @@ struct RewindFilesResult {
     std::optional<int> deletions;
 };
 
-} // namespace cc::sdk::core_schemas
+} // namespace loom::sdk::core_schemas

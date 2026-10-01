@@ -13,7 +13,7 @@ module loom.teams.swarm.backends;
 
 import std;
 
-namespace cc::utils::swarm_backends {
+namespace loom::utils::swarm_backends {
 
 // ── Base anchors ────────────────────────────────────────────────────────────
 
@@ -139,4 +139,4 @@ PaneBackendExecutor::spawned_panes() const {
     return spawned_teammates_;
 }
 
-} // namespace cc::utils::swarm_backends
+} // namespace loom::utils::swarm_backends

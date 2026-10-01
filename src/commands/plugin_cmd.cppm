@@ -56,13 +56,13 @@ import loom.plugins.plugin_validation;
 import loom.plugins.plugin_manager;
 import loom.plugins.plugin_marketplace;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
-using namespace cc::commands::plugin;
-using namespace cc::commands::plugin_helpers;
-using namespace cc::commands::plugin_manage;
-using namespace cc::commands::plugin_ui;
+using namespace loom::core;
+using namespace loom::commands::plugin;
+using namespace loom::commands::plugin_helpers;
+using namespace loom::commands::plugin_manage;
+using namespace loom::commands::plugin_ui;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Lightweight local PluginInfo (kept — used for the text "list" output
@@ -283,9 +283,9 @@ private:
                 : std::string{*cmd.plugin_name};
 
         try {
-            cc::utils::plugins::PluginInstallOptions opts;
+            loom::utils::plugins::PluginInstallOptions opts;
             // Don't force unless we know it's already installed (handled below).
-            auto r = cc::utils::plugins::install_plugin(plugin_id, opts);
+            auto r = loom::utils::plugins::install_plugin(plugin_id, opts);
             if (!r) {
                 return CommandResult::fail(
                     "Install failed for '" + plugin_id + "': " + r.error()
@@ -319,7 +319,7 @@ private:
                 CommandStatus::Succeeded,
             };
         }
-        auto r = cc::utils::plugin_manager::remove_installed_plugin(*cmd.target_plugin);
+        auto r = loom::utils::plugin_manager::remove_installed_plugin(*cmd.target_plugin);
         if (!r) {
             return CommandResult::fail(
                 "Plugin '" + *cmd.target_plugin + "' is not installed."
@@ -346,7 +346,7 @@ private:
         // Delegate to plugin_manager.  The manager module owns the
         // enabled/disabled storage semantics.
         const std::string& id = *cmd.target_plugin;
-        namespace pm = cc::utils::plugin_manager;
+        namespace pm = loom::utils::plugin_manager;
         if (!pm::is_plugin_installed(id)) {
             return CommandResult::fail("Plugin '" + id + "' is not installed.");
         }
@@ -356,7 +356,7 @@ private:
             // The enabled state lives in the installed plugin metadata;
             // plugin_loader / plugin_manager expose this via the plugin
             // lifecycle layer.  We use plugin_lifecycle for this op.
-            auto r = cc::utils::plugins::set_plugin_enabled(id, enable);
+            auto r = loom::utils::plugins::set_plugin_enabled(id, enable);
             if (!r) {
                 return CommandResult::fail(
                     std::string{enable ? "Enable" : "Disable"}
@@ -392,7 +392,7 @@ private:
 
     // ── marketplace (add/remove/update/list) ─────────────────────────────
     [[nodiscard]] Result<CommandResult> cmd_marketplace(const ParsedArgs& cmd) const {
-        namespace pm = cc::utils::plugin_marketplace;
+        namespace pm = loom::utils::plugin_marketplace;
 
         switch (cmd.market_action) {
             case MarketplaceAction::None:
@@ -606,4 +606,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

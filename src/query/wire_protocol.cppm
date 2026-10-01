@@ -32,13 +32,13 @@ import loom.types.types;
 import loom.tools.tool;
 import loom.serdes.json;
 
-export namespace cc::query::wire {
+export namespace loom::query::wire {
 
-using cc::core::AssistantMessage;
-using cc::core::ContentBlock;
-using cc::core::Message;
-using cc::core::TokenUsage;
-using cc::core::ToolDefinition;
+using loom::core::AssistantMessage;
+using loom::core::ContentBlock;
+using loom::core::Message;
+using loom::core::TokenUsage;
+using loom::core::ToolDefinition;
 
 // =========================================================================
 // Backend identity
@@ -198,4 +198,4 @@ public:
         std::string_view stop_reason) const = 0;
 };
 
-} // namespace cc::query::wire
+} // namespace loom::query::wire

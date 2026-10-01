@@ -19,7 +19,7 @@ import loom.query.query_engine;
 import loom.state.store;
 import loom.state.app_state;
 
-namespace cc::ui {
+namespace loom::ui {
 
 [[nodiscard]] std::vector<Message> compact_runtime_messages(void* state) {
     auto* engine = static_cast<core::QueryEngine*>(state);
@@ -52,12 +52,12 @@ namespace cc::ui {
 /// unrecognised falls back to a payload-less dispatch.
 void app_store_dispatch(void* store_ptr, int action_type_int,
                         const void* payload) {
-    using cc::state::ActionType;
-    auto* store = static_cast<cc::state::AppStore*>(store_ptr);
+    using loom::state::ActionType;
+    auto* store = static_cast<loom::state::AppStore*>(store_ptr);
     if (!store) return;
     const auto at = static_cast<ActionType>(action_type_int);
 
-    using cc::state::Action;
+    using loom::state::Action;
     switch (at) {
         // ── Bool-payload actions ──────────────────────────────────
         case ActionType::SetLoading:
@@ -112,9 +112,9 @@ void app_store_dispatch(void* store_ptr, int action_type_int,
         case ActionType::SetExpandedView:
             if (payload) {
                 store->dispatch(Action{at,
-                    *static_cast<const cc::state::ExpandedView*>(payload)});
+                    *static_cast<const loom::state::ExpandedView*>(payload)});
             } else {
-                store->dispatch(Action{at, cc::state::ExpandedView::None});
+                store->dispatch(Action{at, loom::state::ExpandedView::None});
             }
             break;
 
@@ -122,9 +122,9 @@ void app_store_dispatch(void* store_ptr, int action_type_int,
         case ActionType::SetPermissionMode:
             if (payload) {
                 store->dispatch(Action{at,
-                    *static_cast<const cc::state::PermissionMode*>(payload)});
+                    *static_cast<const loom::state::PermissionMode*>(payload)});
             } else {
-                store->dispatch(Action{at, cc::state::PermissionMode::Default});
+                store->dispatch(Action{at, loom::state::PermissionMode::Default});
             }
             break;
 
@@ -144,9 +144,9 @@ void app_store_dispatch(void* store_ptr, int action_type_int,
 /// get_state_fn implementation: returns a thread-local snapshot of AppState
 /// so the returned pointer stays valid until the next call on this thread.
 const void* app_store_get_state(void* store_ptr) {
-    auto* store = static_cast<cc::state::AppStore*>(store_ptr);
+    auto* store = static_cast<loom::state::AppStore*>(store_ptr);
     if (!store) return nullptr;
-    thread_local static cc::state::AppState snapshot;
+    thread_local static loom::state::AppState snapshot;
     snapshot = store->get_state();
     return &snapshot;
 }
@@ -174,13 +174,13 @@ const void* app_store_get_state(void* store_ptr) {
 [[nodiscard]] std::shared_ptr<void> create_typed_app_store() {
     // Adopt the unique_ptr's raw pointer: shared_ptr<void> type-erases the
     // deleter at this construction site, so :impl need never name AppStore.
-    return std::shared_ptr<void>(cc::state::create_app_store().release());
+    return std::shared_ptr<void>(loom::state::create_app_store().release());
 }
 
 BridgeState AppAdapter::bridge_state() const {
     BridgeState b{false, false, false, false, false};
     if (auto* raw = app_store_raw()) {
-        const auto st = static_cast<cc::state::AppStore*>(raw)->get_state();
+        const auto st = static_cast<loom::state::AppStore*>(raw)->get_state();
         b.enabled        = st.repl_bridge_enabled;
         b.explicit_remote = st.repl_bridge_explicit;
         b.connected      = st.repl_bridge_connected;
@@ -191,4 +191,4 @@ BridgeState AppAdapter::bridge_state() const {
 }
 
 
-}  // namespace cc::ui
+}  // namespace loom::ui

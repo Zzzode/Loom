@@ -5,7 +5,7 @@
 //   AppAdapter::ProjectLiveTeammatesToScreenState()
 //     roster (<root>/<sanitized team>/config.json, camelCase)
 //     + in-process native agent store
-//     + cc::utils::pane_observer tmux/iTerm pane snapshots
+//     + loom::utils::pane_observer tmux/iTerm pane snapshots
 //   AppAdapter::drain_one_teammate_permission()
 //     stage-A permission_request envelopes -> the existing
 //     ToolPermission dialog (Band3 overlay) -> PermissionSync reply
@@ -60,12 +60,12 @@ import loom.ui.screens.repl_state;
 import loom.ui.dialogs.system;
 import loom.ui.dialogs.triggers;
 
-namespace cc::ui {
+namespace loom::ui {
 
 struct TeammateState {
     // Leader-side teammate permission requests (drained into the dialog).
     struct PendingTeammatePermission {
-        cc::utils::swarm_helpers::SwarmPermissionRequestMessage request;
+        loom::utils::swarm_helpers::SwarmPermissionRequestMessage request;
         std::string team;
     };
     std::mutex teammate_permission_mutex_;
@@ -90,13 +90,13 @@ void AppAdapter::construct_teammate() {
 }
 
 
-namespace repl = cc::ui::repl_screen;
-namespace live = cc::ui::teams::live;
-namespace sh = cc::utils::swarm_helpers;
-namespace sw = cc::utils::swarm_backends;
-namespace po = cc::utils::pane_observer;
-namespace dtrig = cc::ui::dialogs::triggers;
-namespace dsys = cc::ui::dialogs::system;
+namespace repl = loom::ui::repl_screen;
+namespace live = loom::ui::teams::live;
+namespace sh = loom::utils::swarm_helpers;
+namespace sw = loom::utils::swarm_backends;
+namespace po = loom::utils::pane_observer;
+namespace dtrig = loom::ui::dialogs::triggers;
+namespace dsys = loom::ui::dialogs::system;
 
 // ── Teammate inbox worker (moved out of app.cppm to keep TeammateMessage ──
 //    and the file-inbox closure out of the interface BMI).
@@ -110,7 +110,7 @@ std::string env_first(std::initializer_list<const char*> names) {
 
     // Stable per-message key so repeated polls don't redeliver. The inbox
     // entry has no id; from+timestamp+text is unique enough.
-std::string teammate_message_key(const cc::utils::TeammateMessage& m) {
+std::string teammate_message_key(const loom::utils::TeammateMessage& m) {
         return m.from + "|" + m.timestamp + "|" + m.text;
     }
 
@@ -185,7 +185,7 @@ void AppAdapter::start_teammate_inbox_worker() {
     // enqueue task prompts (control messages skipped), mark read.
 void AppAdapter::poll_teammate_inbox_once(const std::string& agent,
                                           const std::string& team) {
-        auto msgs = cc::utils::read_inbox(agent, team);
+        auto msgs = loom::utils::read_inbox(agent, team);
         if (!msgs) return;
 
         std::vector<std::string> to_submit;
@@ -207,7 +207,7 @@ void AppAdapter::poll_teammate_inbox_once(const std::string& agent,
 
         // Mark everything we read as processed (file inbox).
         if (!to_submit.empty() || !msgs->empty()) {
-            (void)cc::utils::mark_all_read(agent, team);
+            (void)loom::utils::mark_all_read(agent, team);
         }
         for (auto& p : to_submit) {
             enqueue_teammate_prompt(std::move(p));
@@ -322,7 +322,7 @@ std::shared_ptr<po::PaneObserver> ensure_observer_for_cached_backend() {
 void AppAdapter::ProjectLiveTeammatesToScreenState() {
     std::vector<live::LiveTeammate> out;
 
-    const auto team_name_opt = cc::utils::get_team_name();
+    const auto team_name_opt = loom::utils::get_team_name();
     if (!team_name_opt || team_name_opt->empty()) return;  // not a leader
     const std::string team = *team_name_opt;
 
@@ -363,23 +363,23 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
         std::error_code ec;
         if (fs::exists(config_path, ec)) {
             // c16: LOCK_SH on the same sibling write_team_config_file and
-            // cc::utils::write_team_file take LOCK_EX on — a roster poll
+            // loom::utils::write_team_file take LOCK_EX on — a roster poll
             // never parses a half-written/renaming config. If the lock
             // cannot be acquired within the bounded wait, parse failure
             // semantics below apply (roster starts empty).
-            cc::utils::ScopedInboxLock roster_lock(
-                config_path, cc::utils::LockKind::Shared);
+            loom::utils::ScopedInboxLock roster_lock(
+                config_path, loom::utils::LockKind::Shared);
             if (roster_lock.locked()) {
                 // c16a: open the leaf ONCE (O_NOFOLLOW|O_NONBLOCK) and
                 // parse the buffer — a FIFO/symlink swap between the exists
                 // probe and the read can neither block nor be followed.
-                const auto leaf = cc::utils::read_regular_file(config_path);
+                const auto leaf = loom::utils::read_regular_file(config_path);
                 if (leaf.present()) {
-                    auto doc = cc::utils::json::parse(leaf.contents);
+                    auto doc = loom::utils::json::parse(leaf.contents);
                     if (doc) {
                         const auto members = doc->root().get("members");
                         if (members.is_arr()) {
-                            members.iter([&](cc::utils::json::JsonVal member) {
+                            members.iter([&](loom::utils::json::JsonVal member) {
                                 if (!member.is_obj()) return;
                                 const std::string name = member.get_string("name");
                                 // TS getTeammateStatuses filter (teamDiscovery.ts):
@@ -409,7 +409,7 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
     }
 
     // ── (2) In-process teammates from the native agent store ──────────────
-    for (const auto& record : cc::tools::agent_runtime::native_agent_store()
+    for (const auto& record : loom::tools::agent_runtime::native_agent_store()
                                   .list()) {
         if (!record.team_name || *record.team_name != team) continue;
         const std::size_t idx = upsert_index(record.agent_id);
@@ -425,7 +425,7 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
             t.pane_id = *record.teammate_pane_id;
         }
 
-        using NativeStatus = cc::tools::agent_runtime::NativeAgentStatus;
+        using NativeStatus = loom::tools::agent_runtime::NativeAgentStatus;
         switch (record.status) {
             case NativeStatus::Queued:
             case NativeStatus::Running:
@@ -617,7 +617,7 @@ bool AppAdapter::drain_one_teammate_permission() {
 void AppAdapter::start_leader_inbox_worker() {
     // The leader has a team identity but no teammate agent identity. A pane
     // teammate process has both and uses the other inbox worker.
-    const auto team_opt = cc::utils::get_team_name();
+    const auto team_opt = loom::utils::get_team_name();
     if (!team_opt || team_opt->empty()) return;
     if (running_as_pane_teammate()) return;
     const std::string team = *team_opt;
@@ -630,7 +630,7 @@ void AppAdapter::start_leader_inbox_worker() {
                 if (stop.stop_requested()) break;
 
                 auto messages =
-                    cc::utils::read_inbox(std::string{sh::TEAM_LEAD_NAME}, team);
+                    loom::utils::read_inbox(std::string{sh::TEAM_LEAD_NAME}, team);
                 if (!messages) continue;
 
                 std::vector<TeammateState::PendingTeammatePermission> fresh;
@@ -710,7 +710,7 @@ std::string AppAdapter::pop_teammate_prompt_for_testing() {
 
 void AppAdapter::enqueue_teammate_permission_for_testing(void* request,
                                                          std::string team) {
-    auto* req = static_cast<cc::utils::swarm_helpers::SwarmPermissionRequestMessage*>(request);
+    auto* req = static_cast<loom::utils::swarm_helpers::SwarmPermissionRequestMessage*>(request);
     {
         std::lock_guard lock(teammate_->teammate_permission_mutex_);
         teammate_->teammate_pending_permissions_.push_back(
@@ -727,7 +727,7 @@ std::size_t AppAdapter::pending_teammate_permission_count_for_testing() {
 
 void AppAdapter::set_live_teammates_for_testing(void* v) {
     auto& teammates =
-        *static_cast<std::vector<cc::ui::teams::live::LiveTeammate>*>(v);
+        *static_cast<std::vector<loom::ui::teams::live::LiveTeammate>*>(v);
     screen_state_->task_view_store.live_teammates = std::move(teammates);
     screen_state_->task_view_store.teammate_count =
         static_cast<int>(screen_state_->task_view_store.live_teammates.size());
@@ -737,7 +737,7 @@ bool AppAdapter::teams_overview_open_for_testing() const {
     auto peek = screen_state_->dialog_store.dialog_queue.peek_modal();
     return peek.has_value() &&
            std::holds_alternative<
-               cc::ui::dialogs::system::TeamsViewPayload>(peek->get());
+               loom::ui::dialogs::system::TeamsViewPayload>(peek->get());
 }
 
-}  // namespace cc::ui
+}  // namespace loom::ui

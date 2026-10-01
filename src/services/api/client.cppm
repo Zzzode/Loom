@@ -15,18 +15,18 @@ import loom.services.auth.provider_selector;
 import loom.serdes.json;
 import loom.utils.error;
 
-export namespace cc::services::api {
+export namespace loom::services::api {
 
-using cc::services::api::errors::ApiErrorDetails;
-using cc::services::api::errors::ErrorClassifier;
-using cc::services::api::errors::ErrorFactory;
-using cc::services::api::errors::RetryContext;
-using cc::services::api::errors::RetryDecision;
-using cc::utils::Result;
-using cc::utils::json::JsonDoc;
-using cc::utils::json::JsonMutDoc;
-using cc::utils::json::JsonMutVal;
-using cc::utils::json::JsonVal;
+using loom::services::api::errors::ApiErrorDetails;
+using loom::services::api::errors::ErrorClassifier;
+using loom::services::api::errors::ErrorFactory;
+using loom::services::api::errors::RetryContext;
+using loom::services::api::errors::RetryDecision;
+using loom::utils::Result;
+using loom::utils::json::JsonDoc;
+using loom::utils::json::JsonMutDoc;
+using loom::utils::json::JsonMutVal;
+using loom::utils::json::JsonVal;
 
 // =========================================================================
 // Content Block Types
@@ -175,8 +175,8 @@ public:
     [[nodiscard]] static Result<CurlHandle> create() {
         void* h = curl_easy_init();
         if (!h) {
-            return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::internal_error,
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::internal_error,
                 "Failed to initialize CURL"));
         }
         CurlHandle handle;
@@ -344,7 +344,7 @@ public:
                 tool_obj.add("description", doc.string(tool.description));
 
                 // Parse input schema JSON
-                auto schema_result = cc::utils::json::parse(tool.input_schema_json);
+                auto schema_result = loom::utils::json::parse(tool.input_schema_json);
                 if (schema_result) {
                     tool_obj.add("input_schema", doc.copy_val(schema_result->root()));
                 } else {
@@ -413,7 +413,7 @@ private:
                     obj.add("id", doc.string(block.tool_use_id));
                     obj.add("name", doc.string(block.tool_name));
                     if (!block.tool_input_json.empty()) {
-                        auto input_doc = cc::utils::json::parse(block.tool_input_json);
+                        auto input_doc = loom::utils::json::parse(block.tool_input_json);
                         obj.add("input", input_doc ? doc.copy_val(input_doc->root()) : doc.object());
                     } else {
                         obj.add("input", doc.object());
@@ -458,7 +458,7 @@ private:
 class ResponseParser {
 public:
     [[nodiscard]] static Result<CreateMessageResponse> parse(std::string_view json_str) {
-        auto doc_result = cc::utils::json::parse(json_str);
+        auto doc_result = loom::utils::json::parse(json_str);
         if (!doc_result) {
             return std::unexpected(doc_result.error());
         }
@@ -504,7 +504,7 @@ private:
             result.tool_use_id = std::string(block.get("id").as_str());
             result.tool_name = std::string(block.get("name").as_str());
             auto input = block.get("input");
-            result.tool_input_json = input.valid() ? cc::utils::json::to_string(input) : "{}";
+            result.tool_input_json = input.valid() ? loom::utils::json::to_string(input) : "{}";
         } else if (type == "thinking") {
             result.type = ContentBlockType::Thinking;
             result.thinking = std::string(block.get("thinking").as_str());
@@ -577,12 +577,12 @@ public:
 
         if (res != CURLE_OK) {
             if (res == CURLE_OPERATION_TIMEDOUT) {
-                return std::unexpected(cc::utils::Error(
-                    cc::utils::ErrorCode::timeout,
+                return std::unexpected(loom::utils::Error(
+                    loom::utils::ErrorCode::timeout,
                     std::format("Request timed out after {}ms", timeout.count())));
             }
-            return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::network_error,
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::network_error,
                 std::format("CURL error: {}", curl_easy_strerror(res))));
         }
 
@@ -636,34 +636,34 @@ public:
     explicit AnthropicClient(Config config)
         : config_(std::move(config))
         , rate_limiter_(60)
-        , auth_ctx_(std::make_unique<cc::services::auth::byoc::EnterpriseAuthContext>()) {}
+        , auth_ctx_(std::make_unique<loom::services::auth::byoc::EnterpriseAuthContext>()) {}
 
-    [[nodiscard]] static cc::utils::Error error_from_http_response(
+    [[nodiscard]] static loom::utils::Error error_from_http_response(
         int status_code,
         std::string_view body,
         std::optional<std::string> request_id = std::nullopt) {
         const auto details = ErrorFactory::from_json(status_code, body, std::move(request_id));
-        auto code = cc::utils::ErrorCode::internal_error;
+        auto code = loom::utils::ErrorCode::internal_error;
         switch (details.category) {
             case errors::ApiErrorCategory::Authentication:
-                code = cc::utils::ErrorCode::permission_denied;
+                code = loom::utils::ErrorCode::permission_denied;
                 break;
             case errors::ApiErrorCategory::InvalidRequest:
-                code = cc::utils::ErrorCode::invalid_argument;
+                code = loom::utils::ErrorCode::invalid_argument;
                 break;
             case errors::ApiErrorCategory::RateLimited:
-                code = cc::utils::ErrorCode::resource_exhausted;
+                code = loom::utils::ErrorCode::resource_exhausted;
                 break;
             case errors::ApiErrorCategory::NetworkError:
-                code = cc::utils::ErrorCode::network_error;
+                code = loom::utils::ErrorCode::network_error;
                 break;
             case errors::ApiErrorCategory::Overloaded:
             case errors::ApiErrorCategory::ServerError:
-                code = cc::utils::ErrorCode::unavailable;
+                code = loom::utils::ErrorCode::unavailable;
                 break;
             case errors::ApiErrorCategory::Unknown:
             default:
-                code = cc::utils::ErrorCode::internal_error;
+                code = loom::utils::ErrorCode::internal_error;
                 break;
         }
 
@@ -677,29 +677,29 @@ public:
         if (details.retry_after_seconds) {
             message += " (retry after: " + std::to_string(*details.retry_after_seconds) + "s)";
         }
-        return cc::utils::Error(code, std::move(message));
+        return loom::utils::Error(code, std::move(message));
     }
 
-    [[nodiscard]] static ApiErrorDetails error_details_from_error(const cc::utils::Error& error) {
+    [[nodiscard]] static ApiErrorDetails error_details_from_error(const loom::utils::Error& error) {
         ApiErrorDetails details;
         details.error_message = error.message();
         details.error_type = "api_error";
 
         switch (error.code()) {
-            case cc::utils::ErrorCode::permission_denied:
+            case loom::utils::ErrorCode::permission_denied:
                 details.category = errors::ApiErrorCategory::Authentication;
                 break;
-            case cc::utils::ErrorCode::invalid_argument:
+            case loom::utils::ErrorCode::invalid_argument:
                 details.category = errors::ApiErrorCategory::InvalidRequest;
                 break;
-            case cc::utils::ErrorCode::resource_exhausted:
+            case loom::utils::ErrorCode::resource_exhausted:
                 details.category = errors::ApiErrorCategory::RateLimited;
                 break;
-            case cc::utils::ErrorCode::network_error:
-            case cc::utils::ErrorCode::timeout:
+            case loom::utils::ErrorCode::network_error:
+            case loom::utils::ErrorCode::timeout:
                 details.category = errors::ApiErrorCategory::NetworkError;
                 break;
-            case cc::utils::ErrorCode::unavailable:
+            case loom::utils::ErrorCode::unavailable:
                 details.category = errors::ApiErrorCategory::ServerError;
                 break;
             default:
@@ -959,7 +959,7 @@ private:
     [[nodiscard]] static std::string override_model_in_json(
         std::string json_body,
         std::string_view new_model) {
-        using namespace cc::utils::json;
+        using namespace loom::utils::json;
         auto parsed = parse(json_body);
         if (!parsed) return json_body;
         auto old_model = parsed->root().get_string("model");
@@ -1008,7 +1008,7 @@ private:
         std::vector<std::string> headers;
     };
 
-    using EProv = cc::services::auth::byoc::EnterpriseProvider;
+    using EProv = loom::services::auth::byoc::EnterpriseProvider;
 
     [[nodiscard]] Result<PreparedRequest> prepare_request(
         const CreateMessageRequest& request,
@@ -1022,8 +1022,8 @@ private:
             canonical_id, "POST", json_body, streaming,
             /*extra_agnostic_headers=*/{});
         if (!resolved) {
-            return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::invalid_argument,
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::invalid_argument,
                 std::format("enterprise auth resolve: {}",
                             resolved.error().message())));
         }
@@ -1108,13 +1108,13 @@ private:
         return headers;
     }
 
-    [[nodiscard]] ApiErrorDetails extract_error_details(const cc::utils::Error& error) {
+    [[nodiscard]] ApiErrorDetails extract_error_details(const loom::utils::Error& error) {
         return error_details_from_error(error);
     }
 
     Config config_;
     RateLimiter rate_limiter_;
-    std::unique_ptr<cc::services::auth::byoc::EnterpriseAuthContext> auth_ctx_;
+    std::unique_ptr<loom::services::auth::byoc::EnterpriseAuthContext> auth_ctx_;
 };
 
-} // namespace cc::services::api
+} // namespace loom::services::api

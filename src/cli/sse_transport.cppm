@@ -21,7 +21,7 @@ export module loom.cli.sse_transport;
 
 import std;
 
-export namespace cc::cli {
+export namespace loom::cli {
 
 using namespace std::chrono_literals;
 
@@ -724,4 +724,4 @@ private:
     ErrorCallback error_cb_;
 };
 
-} // namespace cc::cli
+} // namespace loom::cli

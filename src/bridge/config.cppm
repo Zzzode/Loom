@@ -10,7 +10,7 @@ export module loom.bridge.config;
 import std;
 
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
 namespace detail {
 
@@ -239,4 +239,4 @@ public:
     return {};
 }
 
-} // namespace cc::bridge
+} // namespace loom::bridge

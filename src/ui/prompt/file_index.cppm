@@ -18,10 +18,10 @@ import std;
 
 import loom.process.bash.bash_execution;
 
-export namespace cc::ui::prompt::file_index {
+export namespace loom::ui::prompt::file_index {
 
 namespace fs = std::filesystem;
-namespace bash = cc::utils::bash;
+namespace bash = loom::utils::bash;
 
 namespace detail {
 
@@ -151,4 +151,4 @@ struct CacheEntry {
     return merged;
 }
 
-}  // namespace cc::ui::prompt::file_index
+}  // namespace loom::ui::prompt::file_index

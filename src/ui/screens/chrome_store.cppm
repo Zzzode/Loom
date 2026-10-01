@@ -18,7 +18,7 @@ export module loom.ui.screens.chrome_store;
 
 import std;
 
-export namespace cc::ui::repl_screen {
+export namespace loom::ui::repl_screen {
 
 /// Status bar projection.  Mirrors TS REPL top status line.
 /// Moved here from repl_state.cppm in RFC 0002 F3 (ChromeStore shard).
@@ -54,7 +54,7 @@ struct ChromeStore {
     std::string billing_type;
     // P0-6 builtin statusline: detected git branch for cwd (empty = not a git
     // repo or detection failed).  Populated by AppAdapter from
-    // cc::utils::git::get_branch(), cached per-cwd-change to avoid spawning
+    // loom::utils::git::get_branch(), cached per-cwd-change to avoid spawning
     // `git` on every render tick.
     std::string git_branch;
     // M2: oauthAccount.displayName analogue — drives formatWelcomeMessage
@@ -81,4 +81,4 @@ struct ChromeStore {
     bool show_overage_credit_upsell = false;
 };
 
-}  // namespace cc::ui
+}  // namespace loom::ui

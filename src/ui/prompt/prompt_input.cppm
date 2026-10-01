@@ -12,13 +12,13 @@ import std;
 
 import loom.ui.foundation.ui_types;  // canonical VimMode
 
-export namespace cc::ui {
+export namespace loom::ui {
 
-// Canonical VimMode — imported from cc::ui::common (ui_types.cppm).
+// Canonical VimMode — imported from loom::ui::common (ui_types.cppm).
 // TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
 // This replaces the previous local 3-value enum { Normal, Insert, Visual }
 // that conflicted with the 6-value version in vim_input.cppm.
-using cc::ui::common::VimMode;
+using loom::ui::common::VimMode;
 
 // Vim motion types
 enum class VimMotion { Left, Right, Up, Down, WordForward, WordBack, LineStart, LineEnd };
@@ -433,9 +433,9 @@ private:
 };
 
 // NOTE: VimHandler removed — vim mode handling is now consolidated in
-//   - cc::ui::common::VimMode (canonical enum, ui_types.cppm)
-//   - cc::ui::prompt::vim_input (standalone VimInput component)
+//   - loom::ui::common::VimMode (canonical enum, ui_types.cppm)
+//   - loom::ui::prompt::vim_input (standalone VimInput component)
 //   - ui::components::TextInputImpl with optional<VimMode> (text_input.cppm)
 // TS REF: src/hooks/useVimInput.ts — single vim state machine wrapping text input.
 
-} // namespace cc::ui
+} // namespace loom::ui

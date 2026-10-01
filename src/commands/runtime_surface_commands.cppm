@@ -41,9 +41,9 @@ import loom.commands.thinkback;
 import loom.commands.thinkback_play;
 import loom.commands.version;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 namespace detail {
 
@@ -60,7 +60,7 @@ namespace detail {
     std::uint16_t value = 0;
     auto begin = text.data();
     auto end = text.data() + text.size();
-    auto [ptr, ec] = cc::utils::from_chars(begin, end, value);
+    auto [ptr, ec] = loom::utils::from_chars(begin, end, value);
     if (ec != std::errc{} || ptr != end || value == 0) return fallback;
     return value;
 }
@@ -263,4 +263,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

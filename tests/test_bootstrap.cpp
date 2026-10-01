@@ -16,10 +16,10 @@ import loom.serdes.json;
 
 using namespace std::literals;
 
-namespace bi = cc::bootstrap::interactive;
-namespace h  = cc::history;
-namespace t  = cc::tasks;
-namespace tv = cc::state::teammate_view;
+namespace bi = loom::bootstrap::interactive;
+namespace h  = loom::history;
+namespace t  = loom::tasks;
+namespace tv = loom::state::teammate_view;
 
 static std::filesystem::path make_tmp_path(std::string_view suffix) {
     auto base = std::filesystem::temp_directory_path();
@@ -154,7 +154,7 @@ TEST(Interactive, DispatchUnknownSlash) {
     ASSERT_TRUE(outcome);
     EXPECT_EQ(outcome->action, bi::DispatchOutcome::Action::RouteToCommand);
     EXPECT_EQ(outcome->target, "foobar");
-    auto parsed = cc::utils::json::parse(outcome->payload_json);
+    auto parsed = loom::utils::json::parse(outcome->payload_json);
     ASSERT_TRUE(parsed);
     EXPECT_TRUE(parsed->root().is_arr());
     EXPECT_EQ(parsed->root().size(), 1u);

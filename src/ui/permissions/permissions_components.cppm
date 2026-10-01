@@ -26,10 +26,10 @@ import std;
 
 import loom.security.permissions_engine;
 
-export namespace cc::ui::permissions::components {
+export namespace loom::ui::permissions::components {
 using namespace ftxui;
-using Rule = cc::utils::permissions::PermissionRule;
-using MatchStrategy = cc::utils::permissions::MatchStrategy;
+using Rule = loom::utils::permissions::PermissionRule;
+using MatchStrategy = loom::utils::permissions::MatchStrategy;
 
 // ============================================================
 // ToolIcon — icon for a tool by canonical name
@@ -441,7 +441,7 @@ struct CheckboxState {
 // ============================================================
 
 [[nodiscard]] inline std::string_view MatchStrategyLabel(MatchStrategy s) {
-    using cc::utils::permissions::MatchStrategy;
+    using loom::utils::permissions::MatchStrategy;
     switch (s) {
         case MatchStrategy::Exact:  return "exact";
         case MatchStrategy::Prefix: return "prefix";
@@ -526,4 +526,4 @@ struct CheckboxState {
     }) | borderStyled(Color::Yellow) | bgcolor(Color::RGB(40, 30, 0));
 }
 
-} // namespace cc::ui::permissions::components
+} // namespace loom::ui::permissions::components

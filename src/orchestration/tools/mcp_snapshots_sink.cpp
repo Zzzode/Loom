@@ -9,19 +9,19 @@ module loom.orchestration.tools.mcp;
 
 import std;
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
 McpSnapshotsSink& mcp_snapshots_sink() {
     static McpSnapshotsSink sink;
     return sink;
 }
 
-}  // namespace cc::tools::detail
+}  // namespace loom::tools::detail
 
-namespace cc::tools {
+namespace loom::tools {
 
 void set_mcp_snapshots_sink(McpSnapshotsSink sink) {
     detail::mcp_snapshots_sink() = std::move(sink);
 }
 
-}  // namespace cc::tools
+}  // namespace loom::tools

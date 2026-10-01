@@ -6,7 +6,7 @@ export module loom.scm.git.gitignore;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
 
@@ -171,4 +171,4 @@ private:
     std::vector<PatternEntry> entries_;
 };
 
-} // namespace cc::utils
+} // namespace loom::utils

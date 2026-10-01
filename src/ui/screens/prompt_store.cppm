@@ -21,13 +21,13 @@ export module loom.ui.screens.prompt_store;
 import std;
 
 // Genuinely used (ImageBlock fields in StashedPrompt below), but only via
-// leading-`::` qualified names `::cc::core::ImageBlock`, which the
+// leading-`::` qualified names `::loom::core::ImageBlock`, which the
 // dead-import detector's prefix-chain cannot resolve — same blind spot as
 // messages_store.cppm's identical import, hence the keep-import marker.
 import loom.types.types;                  // arch-check: keep-import
-import loom.ui.foundation.ui_types;       // cc::ui::common::PromptInputMode
+import loom.ui.foundation.ui_types;       // loom::ui::common::PromptInputMode
 
-export namespace cc::ui::repl_screen {
+export namespace loom::ui::repl_screen {
 
 // GAP 2: stashed-prompt-restore-logic-missing
 // TS REF: src/screens/REPL.tsx L1373-1377 — stashedPrompt state:
@@ -50,7 +50,7 @@ struct StashedPrompt {
     std::string text;
     std::size_t cursor_offset = std::string::npos;
     // TS REF: pastedContents: Record<number, PastedContent> — image pastes.
-    std::unordered_map<int, ::cc::core::ImageBlock> pasted_images;
+    std::unordered_map<int, ::loom::core::ImageBlock> pasted_images;
     // TS REF: pastedContents also holds text-type entries for truncated
     // text pastes (inputPaste.ts maybeTruncateInput → type:'text').
     std::unordered_map<int, std::string> pasted_texts;
@@ -66,8 +66,8 @@ struct PromptStore {
     /// Unified canonical input mode (TS PromptInputMode). The vim modes
     /// (VimInsert/VimNormal/VimVisual) are values of this unified enum, so
     /// the old per-mode vim state folded into this single field.
-    cc::ui::common::PromptInputMode input_mode =
-        cc::ui::common::PromptInputMode::Normal;
+    loom::ui::common::PromptInputMode input_mode =
+        loom::ui::common::PromptInputMode::Normal;
 
     // GAP 2: stashed-prompt-restore-logic-missing — see StashedPrompt above.
     std::optional<StashedPrompt> stashed_prompt;
@@ -108,4 +108,4 @@ struct PromptStore {
     std::optional<ftxui::Color> teammate_prefix_color;
 };
 
-}  // namespace cc::ui
+}  // namespace loom::ui

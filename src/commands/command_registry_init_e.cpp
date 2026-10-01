@@ -17,7 +17,7 @@ module loom.commands.registry;
 
 import loom.commands.runtime_surface_commands;
 
-namespace cc::commands {
+namespace loom::commands {
 
 void register_group_e_commands(CommandRegistry& registry) {
     // Commands whose modules are transitively imported via runtime_surface_commands
@@ -49,4 +49,4 @@ void register_group_e_commands(CommandRegistry& registry) {
     registry.register_command<VersionCommand>();
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

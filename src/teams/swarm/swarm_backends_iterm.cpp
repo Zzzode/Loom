@@ -12,7 +12,7 @@ module loom.teams.swarm.backends;
 
 import std;
 
-namespace cc::utils::swarm_backends {
+namespace loom::utils::swarm_backends {
 
 bool ITermBackend::is_available() const {
     return EnvironmentDetection::is_in_iterm2() && EnvironmentDetection::is_it2_cli_available();
@@ -74,4 +74,4 @@ std::string ITermBackend::parse_split_output(std::string_view output) {
     return text;
 }
 
-} // namespace cc::utils::swarm_backends
+} // namespace loom::utils::swarm_backends

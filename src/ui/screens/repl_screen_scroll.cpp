@@ -26,7 +26,7 @@ import loom.ui.screens.messages_store;
 import loom.ui.messages.messages_list;
 import loom.ui.messages.virtual_list;
 
-namespace cc::ui::repl_screen {
+namespace loom::ui::repl_screen {
 
 // ── UnseenDivider helpers ──────────────────────────────────────────────
 // TS REF: FullscreenLayout.tsx countUnseenAssistantTurns (L200-216) +
@@ -81,7 +81,7 @@ namespace unseen_detail {
 /// Returns nullopt when divider_index is unset, out of range, or no
 /// messages have arrived past the divider.  TS REF: computeUnseenDivider
 /// (FullscreenLayout.tsx L239-256).
-[[nodiscard]] std::optional<::cc::ui::messages_list::UnseenDivider>
+[[nodiscard]] std::optional<::loom::ui::messages_list::UnseenDivider>
 ComputeUnseenDivider(const ReplScreenState& s) {
     if (!s.messages_store.divider_index.has_value()) return std::nullopt;
     const auto idx = *s.messages_store.divider_index;
@@ -101,7 +101,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
         std::size_t{1},
         unseen_detail::count_unseen_assistant_turns(s.messages_store.messages, idx));
 
-    ::cc::ui::messages_list::UnseenDivider ud;
+    ::loom::ui::messages_list::UnseenDivider ud;
     ud.first_unseen_uuid_prefix = anchor.id;
     ud.count = count;
     return ud;
@@ -204,7 +204,7 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
     // its JumpHandle (prefix-sum table of exact visual lines) for O(log N)
     // scroll bounds instead of the crude EstimateTranscriptRows heuristic.
     if (state->messages_store.virtual_list_active) {
-        namespace vl = cc::ui::messages::virtual_list;
+        namespace vl = loom::ui::messages::virtual_list;
         const vl::JumpHandle& jh = state->messages_store.virtual_jh;
         const int total_lines = jh.total();
         if (total_lines <= viewport_rows) return false;
@@ -275,4 +275,4 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
     return true;
 }
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

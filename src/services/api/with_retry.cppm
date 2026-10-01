@@ -9,13 +9,13 @@ import loom.services.api.errors;
 import loom.services.api.models;
 import loom.utils.error;
 
-export namespace cc::services::api {
+export namespace loom::services::api {
 
-using cc::services::api::errors::ApiErrorDetails;
-using cc::services::api::errors::ErrorClassifier;
-using cc::services::api::errors::RetryContext;
-using cc::services::api::errors::RetryDecision;
-using cc::utils::Result;
+using loom::services::api::errors::ApiErrorDetails;
+using loom::services::api::errors::ErrorClassifier;
+using loom::services::api::errors::RetryContext;
+using loom::services::api::errors::RetryDecision;
+using loom::utils::Result;
 
 // =========================================================================
 // Retry Configuration
@@ -80,8 +80,8 @@ public:
         while (true) {
             // Check if we've exceeded max attempts (for non-persistent mode)
             if (!config_.enable_persistent_retry && context.attempt >= config_.max_retries) {
-                return std::unexpected(cc::utils::Error(
-                    cc::utils::ErrorCode::internal_error,
+                return std::unexpected(loom::utils::Error(
+                    loom::utils::ErrorCode::internal_error,
                     "Max retry attempts exceeded"));
             }
 
@@ -149,33 +149,33 @@ public:
                 }
             } catch (const std::exception& e) {
                 // Handle unexpected exceptions
-                return std::unexpected(cc::utils::Error(
-                    cc::utils::ErrorCode::internal_error,
+                return std::unexpected(loom::utils::Error(
+                    loom::utils::ErrorCode::internal_error,
                     std::format("Unexpected exception during retry: {}", e.what())));
             }
         }
     }
 
 private:
-    [[nodiscard]] ApiErrorDetails extract_error_details(const cc::utils::Error& error) {
+    [[nodiscard]] ApiErrorDetails extract_error_details(const loom::utils::Error& error) {
         ApiErrorDetails details;
         details.error_message = error.message();
         switch (error.code()) {
-            case cc::utils::ErrorCode::network_error:
-            case cc::utils::ErrorCode::unavailable:
-                details.category = cc::services::api::errors::ApiErrorCategory::NetworkError;
+            case loom::utils::ErrorCode::network_error:
+            case loom::utils::ErrorCode::unavailable:
+                details.category = loom::services::api::errors::ApiErrorCategory::NetworkError;
                 details.error_type = "network_error";
                 break;
-            case cc::utils::ErrorCode::timeout:
-                details.category = cc::services::api::errors::ApiErrorCategory::NetworkError;
+            case loom::utils::ErrorCode::timeout:
+                details.category = loom::services::api::errors::ApiErrorCategory::NetworkError;
                 details.error_type = "timeout";
                 break;
-            case cc::utils::ErrorCode::permission_denied:
-                details.category = cc::services::api::errors::ApiErrorCategory::Authentication;
+            case loom::utils::ErrorCode::permission_denied:
+                details.category = loom::services::api::errors::ApiErrorCategory::Authentication;
                 details.error_type = "authentication_error";
                 break;
             default:
-                details.category = cc::services::api::errors::ApiErrorCategory::Unknown;
+                details.category = loom::services::api::errors::ApiErrorCategory::Unknown;
                 details.error_type = "api_error";
                 break;
         }
@@ -345,4 +345,4 @@ template <typename F>
     return std::unexpected(std::move(last_err));
 }
 
-} // namespace cc::services::api
+} // namespace loom::services::api

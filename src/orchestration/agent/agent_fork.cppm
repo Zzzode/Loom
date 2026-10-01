@@ -38,22 +38,22 @@ import loom.tools.support.tool_helpers;
 import loom.process.bash.bash_execution;
 import loom.orchestration.agent.utils;
 
-export namespace cc::tools::agent::fork_ {
+export namespace loom::tools::agent::fork_ {
 
 namespace fs = std::filesystem;
 
-using cc::core::Tool;
-using cc::core::ToolInput;
-using cc::core::ToolResult;
-using cc::core::ToolDefinition;
-using cc::services::api::Message;
-using cc::services::api::ContentBlock;
-using cc::services::api::ContentBlockType;
-using cc::tools::agent::utils::AgentExecutionPlan;
-using cc::tools::agent::utils::message_from_json_value;
-using cc::tools::agent::utils::text_contains_fork_boilerplate;
-using cc::tools::agent::utils::message_json_object;
-using cc::tools::agent::utils::agent_tool_input_omits_agent_type;
+using loom::core::Tool;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
+using loom::core::ToolDefinition;
+using loom::services::api::Message;
+using loom::services::api::ContentBlock;
+using loom::services::api::ContentBlockType;
+using loom::tools::agent::utils::AgentExecutionPlan;
+using loom::tools::agent::utils::message_from_json_value;
+using loom::tools::agent::utils::text_contains_fork_boilerplate;
+using loom::tools::agent::utils::message_json_object;
+using loom::tools::agent::utils::agent_tool_input_omits_agent_type;
 
 [[nodiscard]] inline std::vector<Message> forked_messages_from_parent_assistant(
     std::string_view directive,
@@ -68,7 +68,7 @@ using cc::tools::agent::utils::agent_tool_input_omits_agent_type;
         }
     }
 
-    const auto directive_message = cc::tools::agent_runtime::build_fork_child_message(directive);
+    const auto directive_message = loom::tools::agent_runtime::build_fork_child_message(directive);
     if (tool_uses.empty()) {
         return {Message::from_text("user", directive_message)};
     }
@@ -95,7 +95,7 @@ using cc::tools::agent::utils::agent_tool_input_omits_agent_type;
     const std::vector<std::string>& entries
 ) {
     for (const auto& entry : entries) {
-        auto parsed = cc::utils::json::parse(entry);
+        auto parsed = loom::utils::json::parse(entry);
         if (!parsed) continue;
         if (auto message = message_from_json_value(parsed->root())) {
             return forked_messages_from_parent_assistant(directive, std::move(*message));
@@ -158,7 +158,7 @@ using cc::tools::agent::utils::agent_tool_input_omits_agent_type;
 }
 
 [[nodiscard]] inline std::vector<std::string> exact_tool_names_from_api_tools(
-    const std::vector<cc::services::api::ToolDefinition>& tools
+    const std::vector<loom::services::api::ToolDefinition>& tools
 ) {
     std::vector<std::string> names;
     names.reserve(tools.size());
@@ -173,14 +173,14 @@ using cc::tools::agent::utils::agent_tool_input_omits_agent_type;
     std::string_view raw_json,
     const AgentExecutionPlan& parent_plan,
     const Message& parent_assistant_message,
-    const std::vector<cc::services::api::ToolDefinition>& parent_tools
+    const std::vector<loom::services::api::ToolDefinition>& parent_tools
 ) {
-    auto parsed = cc::utils::json::parse(raw_json);
+    auto parsed = loom::utils::json::parse(raw_json);
     if (!parsed || !parsed->root().is_obj()) return std::string(raw_json);
 
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
-    parsed->root().iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    parsed->root().iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
         auto key_text = key.as_str();
         if (implicit_fork_injection_replaces_key(key_text)) return;
@@ -210,4 +210,4 @@ using cc::tools::agent::utils::agent_tool_input_omits_agent_type;
     return doc.to_string();
 }
 
-} // namespace cc::tools::agent::fork_
+} // namespace loom::tools::agent::fork_

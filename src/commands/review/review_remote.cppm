@@ -22,9 +22,9 @@ import loom.process.shell.shell;
 import loom.platform.find_executable;
 import loom.scm.git.detect_repository;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================
 // Data types
@@ -72,7 +72,7 @@ struct ReviewComment {
     // 1) Bare number: "123"
     if (std::ranges::all_of(trimmed, [](unsigned char c) { return std::isdigit(c); })) {
         // Try to detect the current repo context
-        if (auto repo_root = cc::utils::detect_repo_root()) {
+        if (auto repo_root = loom::utils::detect_repo_root()) {
             const auto name = repo_root->filename().string();
             const auto parent = repo_root->parent_path().filename().string();
             result.owner = parent.empty() ? "local" : parent;
@@ -120,12 +120,12 @@ struct ReviewComment {
 /// Returns the unified diff string or an error.
 [[nodiscard]] inline Result<std::string> fetch_pr_diff(const ParsedPR& pr) {
     // --- Primary: gh CLI ---
-    if (cc::utils::find_executable("gh")) {
+    if (loom::utils::find_executable("gh")) {
         std::string cmd = std::format(
             "gh pr diff {} --repo {}/{}",
             pr.number, pr.owner, pr.repo
         );
-        auto out = cc::utils::exec_sync(cmd);
+        auto out = loom::utils::exec_sync(cmd);
         if (out && !out->empty()) {
             return *out;
         }
@@ -136,7 +136,7 @@ struct ReviewComment {
         "https://patch-diff.githubusercontent.com/raw/{}/{}/pull/{}.diff",
         pr.owner, pr.repo, pr.number
     );
-    auto curl = cc::utils::exec_sync(std::format(
+    auto curl = loom::utils::exec_sync(std::format(
         "curl -sSL --max-time 30 {}", fallback_url
     ));
     if (curl && !curl->empty() && !curl->starts_with("Not Found")) {
@@ -295,4 +295,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

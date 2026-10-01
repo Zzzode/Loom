@@ -12,7 +12,7 @@ import std;
 
 import loom.state.app_state;
 
-namespace cc::state::selectors {
+namespace loom::state::selectors {
 
 // ============================================================
 // Prompt Suggestion Selectors
@@ -143,4 +143,4 @@ namespace cc::state::selectors {
     return state.pending_sandbox_request.has_value();
 }
 
-} // namespace cc::state::selectors
+} // namespace loom::state::selectors

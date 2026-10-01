@@ -55,10 +55,10 @@ import std;
 import loom.ui.permissions.components;
 import loom.ui.permissions.permission_shell_helpers;
 
-export namespace cc::ui::permissions::bash_prompt {
+export namespace loom::ui::permissions::bash_prompt {
 
 using namespace ftxui;
-namespace pc = cc::ui::permissions::components;
+namespace pc = loom::ui::permissions::components;
 
 // ============================================================
 // Types
@@ -752,4 +752,4 @@ struct PromptState {
     return RenderBashPrompt(state);
 }
 
-} // namespace cc::ui::permissions::bash_prompt
+} // namespace loom::ui::permissions::bash_prompt

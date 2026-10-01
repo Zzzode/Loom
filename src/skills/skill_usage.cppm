@@ -13,7 +13,7 @@ export module loom.skills.support;
 
 import std;
 
-export namespace cc::utils::skill_usage {
+export namespace loom::utils::skill_usage {
 
 /// Recency-weighted usage score (higher = more recent + more frequent).
 /// Mirrors TS getSkillUsageScore (skillUsageTracking.ts:44-55):
@@ -27,4 +27,4 @@ export namespace cc::utils::skill_usage {
 /// double-count. Lazy-loads + writes-through the sidecar so usage survives restarts.
 void record_skill_usage(std::string_view skill_name);
 
-}  // namespace cc::utils::skill_usage
+}  // namespace loom::utils::skill_usage

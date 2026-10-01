@@ -3,7 +3,7 @@ export module loom.agent.agent_id;
 import std;
 import loom.text.parse_int;
 
-export namespace cc::utils::agent_id {
+export namespace loom::utils::agent_id {
 
 struct ParsedAgentId {
     std::string agent_name;
@@ -42,9 +42,9 @@ struct ParsedRequestId {
     long long timestamp = 0;
     const auto* begin = timestamp_text.data();
     const auto* end = timestamp_text.data() + timestamp_text.size();
-    auto [ptr, ec] = cc::utils::from_chars(begin, end, timestamp);
+    auto [ptr, ec] = loom::utils::from_chars(begin, end, timestamp);
     if (ec != std::errc{} || ptr != end) return std::nullopt;
     return ParsedRequestId{.request_type = std::string(type), .timestamp = timestamp, .agent_id = std::string(agent)};
 }
 
-} // namespace cc::utils::agent_id
+} // namespace loom::utils::agent_id

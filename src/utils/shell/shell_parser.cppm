@@ -10,7 +10,7 @@ export module loom.process.shell.shell_parser;
 import std;
 
 
-export namespace cc::utils::shell_parser {
+export namespace loom::utils::shell_parser {
 
 
 enum class TokenType : uint8_t {
@@ -336,4 +336,4 @@ struct Warning {
     return !has_write_redirect;
 }
 
-} // namespace cc::utils::shell_parser
+} // namespace loom::utils::shell_parser

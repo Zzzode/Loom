@@ -8,7 +8,7 @@ import std;
 
 namespace fs = std::filesystem;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 
 
@@ -62,4 +62,4 @@ inline std::optional<fs::path> xdg_runtime_dir() {
     return std::nullopt;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

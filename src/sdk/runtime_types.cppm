@@ -15,10 +15,10 @@ import std;
 import loom.sdk.core_types;
 import loom.model.effort;  // arch-check: keep-import (EffortLevel CONVERGE alias)
 
-export namespace cc::sdk::runtime {
+export namespace loom::sdk::runtime {
 
-/// Effort level — CONVERGED to cc::utils::EffortLevel.
-using EffortLevel = cc::utils::EffortLevel;
+/// Effort level — CONVERGED to loom::utils::EffortLevel.
+using EffortLevel = loom::utils::EffortLevel;
 
 // ============================================================================
 // Query Options
@@ -163,4 +163,4 @@ struct McpSdkServerConfigWithInstance {
     std::shared_ptr<void> server;
 };
 
-} // namespace cc::sdk::runtime
+} // namespace loom::sdk::runtime

@@ -27,9 +27,9 @@ import loom.commands.command;
 import loom.config.config;
 import loom.process.bash.bash_execution;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// Status of a single diagnostic check
 enum class CheckStatus : std::uint8_t {
@@ -469,7 +469,7 @@ private:
     [[nodiscard]] static std::string run_command(std::string_view cmd) {
         if (cmd.empty()) return {};
         std::string result;
-        auto pipe_cap = cc::utils::bash::exec_capture(std::string(cmd).c_str());
+        auto pipe_cap = loom::utils::bash::exec_capture(std::string(cmd).c_str());
         if (!pipe_cap) return {};
         result = std::move(pipe_cap->output);
         // Trim trailing newline
@@ -480,4 +480,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

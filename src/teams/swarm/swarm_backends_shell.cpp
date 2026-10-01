@@ -3,7 +3,7 @@
 // accessors (each owning its function-local std::function static, so the
 // whole module — tests, tmux backend, registry — shares one instance),
 // test install/reset, run_shell/command_available over std::system, and
-// read_shell_output[_with_status] over cc::utils::bash popen_spawn.
+// read_shell_output[_with_status] over loom::utils::bash popen_spawn.
 //
 // <sys/wait.h> is a global-module-fragment header because WIFEXITED /
 // WEXITSTATUS are preprocessor macros that cannot arrive through
@@ -21,7 +21,7 @@ import std;
 
 import loom.process.bash.bash_execution;
 
-namespace cc::utils::swarm_backends::detail {
+namespace loom::utils::swarm_backends::detail {
 
 ShellRunnerFn& shell_runner_override() {
     static ShellRunnerFn runner;
@@ -55,29 +55,29 @@ bool command_available(std::string_view command) {
 
 std::string read_shell_output(std::string_view command) {
     if (const auto& capture = shell_capture_override()) return capture(command);
-    FILE* pipe = cc::utils::bash::popen_spawn(std::string(command).c_str());
+    FILE* pipe = loom::utils::bash::popen_spawn(std::string(command).c_str());
     if (!pipe) return {};
     std::array<char, 4096> buffer{};
     std::string output;
     while (std::fgets(buffer.data(), static_cast<int>(buffer.size()), pipe)) {
         output += buffer.data();
     }
-    (void)cc::utils::bash::pclose_spawn(pipe);
+    (void)loom::utils::bash::pclose_spawn(pipe);
     while (!output.empty() && (output.back() == '\n' || output.back() == '\r')) output.pop_back();
     return output;
 }
 
 ShellOutput read_shell_output_with_status(std::string_view command) {
-    FILE* pipe = cc::utils::bash::popen_spawn(std::string(command).c_str());
+    FILE* pipe = loom::utils::bash::popen_spawn(std::string(command).c_str());
     if (!pipe) return {};
     std::array<char, 4096> buffer{};
     std::string output;
     while (std::fgets(buffer.data(), static_cast<int>(buffer.size()), pipe)) {
         output += buffer.data();
     }
-    const int raw = cc::utils::bash::pclose_spawn(pipe);
+    const int raw = loom::utils::bash::pclose_spawn(pipe);
     while (!output.empty() && (output.back() == '\n' || output.back() == '\r')) output.pop_back();
     return ShellOutput{std::move(output), WIFEXITED(raw) ? WEXITSTATUS(raw) : -1};
 }
 
-} // namespace cc::utils::swarm_backends::detail
+} // namespace loom::utils::swarm_backends::detail

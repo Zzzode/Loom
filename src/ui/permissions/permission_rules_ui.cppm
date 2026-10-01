@@ -1,7 +1,7 @@
 /// @file permission_rules_ui.cppm
 /// @brief Top-level permissions panel: 4-tab container (All Rules / Recent
 ///        Denials / Workspaces / Create Rule).  Each tab delegates to the
-///        matching builder in cc::ui::permissions::rule_list.
+///        matching builder in loom::ui::permissions::rule_list.
 module;
 
 #include <cstddef>
@@ -21,13 +21,13 @@ import loom.ui.permissions.rule_list;
 import loom.ui.foundation.design_tokens;
 import loom.ui.permissions.components;
 
-export namespace cc::ui::permissions {
+export namespace loom::ui::permissions {
 
 using namespace ftxui;
-namespace rl   = cc::ui::permissions::rule_list;
-namespace dt   = cc::ui::design::tokens;
-namespace pc   = cc::ui::permissions::components;
-namespace peng = cc::utils::permissions_engine;
+namespace rl   = loom::ui::permissions::rule_list;
+namespace dt   = loom::ui::design::tokens;
+namespace pc   = loom::ui::permissions::components;
+namespace peng = loom::utils::permissions_engine;
 
 // Panel model/callbacks and PermTab are owned by cc.ui.permissions.rule_list
 // (exported) so BuildPermissionsTabs can consume them without a circular
@@ -169,4 +169,4 @@ namespace detail {
     });
 }
 
-} // namespace cc::ui::permissions
+} // namespace loom::ui::permissions

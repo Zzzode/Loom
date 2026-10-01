@@ -9,7 +9,7 @@ export module loom.services.mcp.types;
 
 import std;
 
-// Re-export (not plain import): the cc::core::X RHS of the using-aliases below
+// Re-export (not plain import): the loom::core::X RHS of the using-aliases below
 // is a one-'::'-segment qualified name that graph_check's dead-import parser
 // cannot attribute; the re-export is both exempt from that check and propagates
 // the complete types to auth/connection_manager/config, which import this
@@ -19,12 +19,12 @@ export import loom.config.mcp_types;
 import loom.utils.error;
 import loom.serdes.json;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
-using cc::utils::Result;
-using cc::utils::json::JsonDoc;
-using cc::utils::json::JsonMutDoc;
-using cc::utils::json::JsonVal;
+using loom::utils::Result;
+using loom::utils::json::JsonDoc;
+using loom::utils::json::JsonMutDoc;
+using loom::utils::json::JsonVal;
 
 // =========================================================================
 // MCP Client Error types
@@ -316,7 +316,7 @@ struct InitializeResult {
 
 // Parse initialize result from JSON response
 inline std::optional<InitializeResult> parse_initialize_result(const std::string& json_str) {
-    auto doc = cc::utils::json::parse(json_str);
+    auto doc = loom::utils::json::parse(json_str);
     if (!doc) return std::nullopt;
     
     auto root = doc->root();
@@ -354,7 +354,7 @@ inline std::optional<InitializeResult> parse_initialize_result(const std::string
         // Parse experimental capabilities map — presence = opt-in.
         auto exp_node = caps_node.get("experimental");
         if (exp_node.is_obj()) {
-            exp_node.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal val) {
+            exp_node.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal val) {
                 auto key_str = std::string(key.as_str());
                 auto val_str = val.is_str() ? std::string(val.as_str()) : "true";
                 result.capabilities.experimental[key_str] = val_str;
@@ -367,7 +367,7 @@ inline std::optional<InitializeResult> parse_initialize_result(const std::string
 
 // Parse list tools result from JSON response
 inline std::optional<ListToolsResult> parse_list_tools_result(const std::string& json_str) {
-    auto doc = cc::utils::json::parse(json_str);
+    auto doc = loom::utils::json::parse(json_str);
     if (!doc) return std::nullopt;
     
     auto root = doc->root();
@@ -399,7 +399,7 @@ inline std::optional<ListToolsResult> parse_list_tools_result(const std::string&
 
 // Parse tool call result from JSON response
 inline std::optional<ToolCallResult> parse_tool_call_result(const std::string& json_str) {
-    auto doc = cc::utils::json::parse(json_str);
+    auto doc = loom::utils::json::parse(json_str);
     if (!doc) return std::nullopt;
     
     auto root = doc->root();
@@ -452,11 +452,11 @@ inline std::optional<ToolCallResult> parse_tool_call_result(const std::string& j
 // Server configuration types
 // =========================================================================
 
-// Services MCP config is the canonical cc::core model (RFC-0001 B3). The
-// aliases preserve the cc::services::mcp:: spelling for existing consumers;
-// field semantics follow cc::core (transport / optional url / 11 fields).
-using McpOAuthConfig = cc::core::McpOAuthConfig;
-using McpServerConfig = cc::core::McpServerConfig;
+// Services MCP config is the canonical loom::core model (RFC-0001 B3). The
+// aliases preserve the loom::services::mcp:: spelling for existing consumers;
+// field semantics follow loom::core (transport / optional url / 11 fields).
+using McpOAuthConfig = loom::core::McpOAuthConfig;
+using McpServerConfig = loom::core::McpServerConfig;
 
 // Common types for MCP protocol (legacy aliases)
 struct Tool {
@@ -504,4 +504,4 @@ int find_available_port() {
     return static_cast<int>(port);
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

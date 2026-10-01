@@ -12,7 +12,7 @@ export module loom.hooks.terminal_size;
 
 import std;
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 struct TerminalDimensions {
     std::uint16_t cols{80};
@@ -174,4 +174,4 @@ private:
     }
 };
 
-} // namespace cc::hooks
+} // namespace loom::hooks

@@ -8,7 +8,7 @@ import loom.model.model_cost;
 import loom.fs.read_file_in_range;
 
 TEST(MemoryFileDetection, DetectsSessionFilesPatternsAndMemoryDirectories) {
-    using namespace cc::utils::memory_file_detection;
+    using namespace loom::utils::memory_file_detection;
 
     const MemoryDetectionConfig config{
         .config_home_dir = "/Users/me/.loom",
@@ -46,7 +46,7 @@ TEST(MemoryFileDetection, DetectsSessionFilesPatternsAndMemoryDirectories) {
 }
 
 TEST(ModelCost, CalculatesTokenCostsAndFormatsPricingStrings) {
-    using namespace cc::utils::model_cost;
+    using namespace loom::utils::model_cost;
 
     Usage usage{
         .input_tokens = 1'000'000,
@@ -76,7 +76,7 @@ TEST(ReadFileInRange, ReadsLineRangesStripsBomCrAndTruncatesByBytes) {
         out << "\xEF\xBB\xBF" "first\r\nsecond\r\nthird\n";
     }
 
-    auto selected = cc::utils::read_file_in_range::read_file_in_range(path.string(), 1, 2);
+    auto selected = loom::utils::read_file_in_range::read_file_in_range(path.string(), 1, 2);
     ASSERT_TRUE(selected.has_value()) << selected.error().message;
     EXPECT_EQ(selected->content, "second\nthird");
     EXPECT_EQ(selected->line_count, 2u);
@@ -84,21 +84,21 @@ TEST(ReadFileInRange, ReadsLineRangesStripsBomCrAndTruncatesByBytes) {
     EXPECT_EQ(selected->read_bytes, 12u);
     EXPECT_GT(selected->mtime_ms, 0.0);
 
-    auto truncated = cc::utils::read_file_in_range::read_file_in_range(
+    auto truncated = loom::utils::read_file_in_range::read_file_in_range(
         path.string(), 0, std::nullopt, 11, true);
     ASSERT_TRUE(truncated.has_value()) << truncated.error().message;
     EXPECT_EQ(truncated->content, "first");
     EXPECT_TRUE(truncated->truncated_by_bytes);
 
-    auto too_large = cc::utils::read_file_in_range::read_file_in_range(path.string(), 0, std::nullopt, 5, false);
+    auto too_large = loom::utils::read_file_in_range::read_file_in_range(path.string(), 0, std::nullopt, 5, false);
     ASSERT_FALSE(too_large.has_value());
-    EXPECT_EQ(too_large.error().kind, cc::utils::read_file_in_range::ReadFileRangeErrorKind::FileTooLarge);
+    EXPECT_EQ(too_large.error().kind, loom::utils::read_file_in_range::ReadFileRangeErrorKind::FileTooLarge);
 
     std::filesystem::remove(path);
 }
 
 TEST(BashShellQuoting, QuotesCommandsDetectsRedirectsAndRewritesWindowsNull) {
-    using namespace cc::utils::bash_shell_quoting;
+    using namespace loom::utils::bash_shell_quoting;
 
     EXPECT_TRUE(has_shell_quote_single_quote_bug(R"(git ls-remote 'safe\' '--upload-pack=evil' 'repo')"));
     EXPECT_FALSE(has_shell_quote_single_quote_bug(R"(echo 'safe\\')"));
@@ -114,7 +114,7 @@ TEST(BashShellQuoting, QuotesCommandsDetectsRedirectsAndRewritesWindowsNull) {
 }
 
 TEST(BashPrefix, CollapsesCompoundPrefixesByWordAlignedRoot) {
-    using namespace cc::utils::bash_shell_quoting;
+    using namespace loom::utils::bash_shell_quoting;
 
     EXPECT_EQ(longest_common_prefix({"git fetch origin", "git worktree list"}), "git");
     EXPECT_EQ(longest_common_prefix({"npm run test", "npm run lint"}), "npm run");

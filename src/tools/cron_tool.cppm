@@ -9,7 +9,7 @@ export module loom.tools.cron;
 import std;
 
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 // Cron task actions
 enum class CronAction {
@@ -349,4 +349,4 @@ public:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

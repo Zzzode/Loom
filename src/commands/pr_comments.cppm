@@ -3,7 +3,7 @@ module;
 export module loom.commands.pr_comments;
 
 import std;
-export namespace cc::commands::pr_comments {
+export namespace loom::commands::pr_comments {
 
 struct CommandResponse { bool ok{true}; bool inject{false}; std::string message; };
 

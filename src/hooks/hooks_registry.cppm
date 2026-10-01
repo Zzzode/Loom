@@ -12,7 +12,7 @@ import std;
 import loom.serdes.json;
 import loom.process.async;
 
-export namespace cc::utils::hooks_registry {
+export namespace loom::utils::hooks_registry {
 
 // =========================================================================
 // Hook Event Types (from hookEvents.ts)
@@ -430,7 +430,7 @@ struct PendingAsyncHook {
 /// Result from checking async hook responses
 struct AsyncHookResponse {
     std::string process_id;
-    cc::utils::json::JsonVal response; // Parsed JSON response
+    loom::utils::json::JsonVal response; // Parsed JSON response
     std::string hook_name;
     std::string hook_event;
     std::optional<std::string> tool_name;
@@ -496,4 +496,4 @@ struct HookResponseOutput {
 [[nodiscard]] std::expected<HookResponseOutput, std::string> parse_hook_response(
     std::string_view json_text);
 
-} // namespace cc::utils::hooks_registry
+} // namespace loom::utils::hooks_registry

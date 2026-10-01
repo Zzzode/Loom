@@ -60,12 +60,12 @@ import loom.tools.agent_display;
 import loom.tools.agent_runtime;
 import loom.ui.features.agents.agent_cards;
 
-namespace cc::ui {
+namespace loom::ui {
 
-namespace agent_runtime = cc::tools::agent_runtime;
-namespace agent_cards = cc::ui::agents::cards;
-namespace agent_shared = cc::ui::agents::shared;
-namespace agent_display = cc::tools::agent_display;
+namespace agent_runtime = loom::tools::agent_runtime;
+namespace agent_cards = loom::ui::agents::cards;
+namespace agent_shared = loom::ui::agents::shared;
+namespace agent_display = loom::tools::agent_display;
 
 // ── project_agent_definition_card (moved out of app.cppm) ───────────────
 // TS REF: src/hooks/unifiedSuggestions.ts:77-108 (agent defs with color +
@@ -120,7 +120,7 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
     if (bash_thread_.joinable()) bash_thread_.join();
 
     bash_running_.store(true);
-    const std::string cwd = static_cast<cc::core::QueryEngine*>(engine_raw()) ? static_cast<cc::core::QueryEngine*>(engine_raw())->working_directory() : std::string{};
+    const std::string cwd = static_cast<loom::core::QueryEngine*>(engine_raw()) ? static_cast<loom::core::QueryEngine*>(engine_raw())->working_directory() : std::string{};
     bash_thread_ = std::jthread(
         [this, command, cwd](std::stop_token st) {
             // POSIX single-quote helper for paths with spaces/quotes.
@@ -152,14 +152,14 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
 
             std::string output;
             bool is_error = false;
-            if (FILE* pipe = cc::utils::bash::popen_spawn(full)) {
+            if (FILE* pipe = loom::utils::bash::popen_spawn(full)) {
                 std::array<char, 4096> buf{};
                 while (!st.stop_requested() &&
                        std::fgets(buf.data(), static_cast<int>(buf.size()), pipe)
                                != nullptr) {
                     output += buf.data();
                 }
-                const int status = cc::utils::bash::pclose_spawn(pipe);
+                const int status = loom::utils::bash::pclose_spawn(pipe);
                 is_error = status != 0;
             } else {
                 output = "Command failed: could not spawn /bin/sh";
@@ -195,7 +195,7 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
                 std::filesystem::current_path(new_cwd, ec);
                 if (!ec) {
                     screen_state_->cwd = new_cwd;
-                    if (static_cast<cc::core::QueryEngine*>(engine_raw())) static_cast<cc::core::QueryEngine*>(engine_raw())->set_working_directory(new_cwd);
+                    if (static_cast<loom::core::QueryEngine*>(engine_raw())) static_cast<loom::core::QueryEngine*>(engine_raw())->set_working_directory(new_cwd);
                 }
             }
             {
@@ -210,24 +210,24 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
 
 // ── ProjectRuntimeMetadataToScreenState (moved out of app.cppm) ─────────
 void AppAdapter::ProjectRuntimeMetadataToScreenState() {
-    screen_state_->chrome_store.app_version = std::string(cc::core::constants::kVersion);
+    screen_state_->chrome_store.app_version = std::string(loom::core::constants::kVersion);
 
-    const auto& model_id = static_cast<cc::core::QueryEngine*>(engine_raw())->model_params().model;
+    const auto& model_id = static_cast<loom::core::QueryEngine*>(engine_raw())->model_params().model;
     screen_state_->chrome_store.status_bar.model_name = model_id;
     screen_state_->chrome_store.model_display_name =
-        cc::utils::get_model_display_name(model_id);
+        loom::utils::get_model_display_name(model_id);
 
-    auto usage = static_cast<cc::core::QueryEngine*>(engine_raw())->get_usage();
+    auto usage = static_cast<loom::core::QueryEngine*>(engine_raw())->get_usage();
     screen_state_->chrome_store.status_bar.input_tokens =
         static_cast<int>(usage.input_tokens);
     screen_state_->chrome_store.status_bar.output_tokens =
         static_cast<int>(usage.output_tokens);
     screen_state_->chrome_store.status_bar.cost_usd =
-        static_cast<cc::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd;
+        static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd;
     screen_state_->chrome_store.status_bar.context_token_count =
         static_cast<int>(usage.input_tokens + usage.output_tokens);
 
-    screen_state_->cwd = static_cast<cc::core::QueryEngine*>(engine_raw())->working_directory();
+    screen_state_->cwd = static_cast<loom::core::QueryEngine*>(engine_raw())->working_directory();
     screen_state_->chrome_store.status_bar.current_path = screen_state_->cwd;
 
     // P0-6 builtin statusline: detect git branch for the current cwd.
@@ -236,7 +236,7 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
     // every render event).
     if (screen_state_->cwd != last_branch_cwd_) {
         last_branch_cwd_ = screen_state_->cwd;
-        cached_git_branch_ = cc::utils::git::get_branch(
+        cached_git_branch_ = loom::utils::git::get_branch(
             last_branch_cwd_.empty() ? "." : last_branch_cwd_);
     }
     screen_state_->chrome_store.git_branch = cached_git_branch_;
@@ -263,7 +263,7 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
 // the default collapsed presentation (TS shows each item only in verbose).
 std::vector<Message> AppAdapter::ApplyMessageCollapsePipeline(
     std::vector<Message> messages) const {
-    namespace collapse = cc::ui::messages::collapse;
+    namespace collapse = loom::ui::messages::collapse;
     messages = collapse::collapse_background_bash_notifications(
         messages, /*fullscreen=*/true, /*verbose=*/false);
     return messages;
@@ -312,12 +312,12 @@ void AppAdapter::SpawnPasteWorker(int id) {
         // Just try read_image_png() directly; it returns nullopt if
         // there's no image in the clipboard.  This cuts total paste
         // latency from ~1.3s (2 osascript calls) to ~650ms (1 call).
-        auto png = cc::utils::clipboard::read_image_png();
+        auto png = loom::utils::clipboard::read_image_png();
         if (!png || png->empty()) {
             // No image in clipboard — try reading plain text instead.
             // TS REF: PromptInput.tsx onPaste — when the clipboard has
             // text (not an image), it's inserted as text content.
-            std::string clip_text = cc::utils::clipboard::read_text();
+            std::string clip_text = loom::utils::clipboard::read_text();
             if (!clip_text.empty()) {
                 std::lock_guard lk(this->paste_mutex_);
                 this->pending_paste_text_results_[id] = std::move(clip_text);
@@ -342,7 +342,7 @@ void AppAdapter::SpawnPasteWorker(int id) {
                       "clipboard %Y%m%d-%H%M%S.png", &tm_buf);
         ImageBlock ib;
         ib.media_type = "image/png";
-        ib.data = cc::utils::crypto::base64_encode(
+        ib.data = loom::utils::crypto::base64_encode(
             png->data(), png->size());
         ib.size_bytes = raw_bytes;
         ib.file_name  = std::string(fname);
@@ -387,7 +387,7 @@ void AppAdapter::ProcessCompletedPastes() {
     // expansion.
     // TS REF: inputPaste.ts maybeTruncateInput
     for (auto& [id, raw_text] : text_results) {
-        const std::string placeholder = cc::utils::format_image_ref(id);
+        const std::string placeholder = loom::utils::format_image_ref(id);
         auto& input = screen_state_->input_text;
         auto pos = input.find(placeholder);
         if (pos == std::string::npos) {
@@ -401,7 +401,7 @@ void AppAdapter::ProcessCompletedPastes() {
         constexpr std::size_t kTruncationThreshold = 10000;
         if (raw_text.size() > kTruncationThreshold) {
             // TS REF: inputPaste.ts L20-55 maybeTruncateMessageForInput
-            const auto trunc_result = cc::utils::maybe_truncate_paste(raw_text, id);
+            const auto trunc_result = loom::utils::maybe_truncate_paste(raw_text, id);
             replacement = trunc_result.truncated_text;
             placeholder_content = trunc_result.placeholder_content;
         } else {
@@ -444,7 +444,7 @@ void AppAdapter::ProcessCompletedPastes() {
     // added by the insert logic).
     if (!failures.empty()) {
         for (int id : failures) {
-            const std::string placeholder = cc::utils::format_image_ref(id);
+            const std::string placeholder = loom::utils::format_image_ref(id);
             auto& input = screen_state_->input_text;
             auto pos = input.find(placeholder);
             if (pos != std::string::npos) {
@@ -472,4 +472,4 @@ void AppAdapter::ProcessCompletedPastes() {
     }
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

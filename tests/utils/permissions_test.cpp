@@ -7,7 +7,7 @@ import loom.process.shell.shell_parser;
 import loom.security.permissions;
 
 TEST(ShellRuleMatching, ExtractsLegacyPrefixAndDetectsOnlyUnescapedWildcards) {
-    using namespace cc::utils::shell_rule_matching;
+    using namespace loom::utils::shell_rule_matching;
 
     EXPECT_EQ(permission_rule_extract_prefix("npm:*"), std::optional<std::string>{"npm"});
     EXPECT_EQ(permission_rule_extract_prefix("npm run:*"), std::optional<std::string>{"npm run"});
@@ -20,7 +20,7 @@ TEST(ShellRuleMatching, ExtractsLegacyPrefixAndDetectsOnlyUnescapedWildcards) {
 }
 
 TEST(ShellRuleMatching, MatchesWildcardPatternsWithEscapesOptionalTrailingArgsAndCaseMode) {
-    using namespace cc::utils::shell_rule_matching;
+    using namespace loom::utils::shell_rule_matching;
 
     EXPECT_TRUE(match_wildcard_pattern("git *", "git"));
     EXPECT_TRUE(match_wildcard_pattern("git *", "git status"));
@@ -35,7 +35,7 @@ TEST(ShellRuleMatching, MatchesWildcardPatternsWithEscapesOptionalTrailingArgsAn
 }
 
 TEST(ShellRuleMatching, ParsesRulesAndBuildsPermissionSuggestions) {
-    using namespace cc::utils::shell_rule_matching;
+    using namespace loom::utils::shell_rule_matching;
 
     auto prefix = parse_permission_rule("npm:*");
     EXPECT_EQ(prefix.type, ShellPermissionRuleType::Prefix);
@@ -64,17 +64,17 @@ TEST(ShellRuleMatching, ParsesRulesAndBuildsPermissionSuggestions) {
 }
 
 TEST(ShellParser, TokenizeSimpleCommand) {
-    auto tokens = cc::utils::shell_parser::tokenize("ls -la /tmp");
+    auto tokens = loom::utils::shell_parser::tokenize("ls -la /tmp");
     ASSERT_EQ(tokens.size(), 3u);
-    EXPECT_EQ(tokens[0].type, cc::utils::shell_parser::TokenType::Command);
+    EXPECT_EQ(tokens[0].type, loom::utils::shell_parser::TokenType::Command);
     EXPECT_EQ(tokens[0].value, "ls");
-    EXPECT_EQ(tokens[1].type, cc::utils::shell_parser::TokenType::Arg);
+    EXPECT_EQ(tokens[1].type, loom::utils::shell_parser::TokenType::Arg);
     EXPECT_EQ(tokens[1].value, "-la");
     EXPECT_EQ(tokens[2].value, "/tmp");
 }
 
 TEST(ShellParser, HandleQuotedStrings) {
-    auto tokens = cc::utils::shell_parser::tokenize(R"(echo "hello world" 'single')");
+    auto tokens = loom::utils::shell_parser::tokenize(R"(echo "hello world" 'single')");
     ASSERT_EQ(tokens.size(), 3u);
     EXPECT_EQ(tokens[0].value, "echo");
     EXPECT_EQ(tokens[1].value, "hello world");
@@ -82,8 +82,8 @@ TEST(ShellParser, HandleQuotedStrings) {
 }
 
 TEST(ShellParser, ParsePipelineStages) {
-    auto tokens = cc::utils::shell_parser::tokenize("cat file | grep pattern");
-    auto pipeline = cc::utils::shell_parser::parse_pipeline(tokens);
+    auto tokens = loom::utils::shell_parser::tokenize("cat file | grep pattern");
+    auto pipeline = loom::utils::shell_parser::parse_pipeline(tokens);
 
     ASSERT_EQ(pipeline.stage_count(), 2u);
     EXPECT_FALSE(pipeline.is_simple());
@@ -96,15 +96,15 @@ TEST(ShellParser, ParsePipelineStages) {
 }
 
 TEST(ShellParser, DetectPipeAndRedirect) {
-    auto tokens = cc::utils::shell_parser::tokenize("cat file | grep pattern > output.txt");
+    auto tokens = loom::utils::shell_parser::tokenize("cat file | grep pattern > output.txt");
     EXPECT_TRUE(tokens.size() >= 5u);
-    EXPECT_EQ(tokens[2].type, cc::utils::shell_parser::TokenType::Pipe);
-    EXPECT_EQ(tokens[5].type, cc::utils::shell_parser::TokenType::Redirect);
+    EXPECT_EQ(tokens[2].type, loom::utils::shell_parser::TokenType::Pipe);
+    EXPECT_EQ(tokens[5].type, loom::utils::shell_parser::TokenType::Redirect);
 }
 
 TEST(ShellParser, ParsesBackgroundOperatorWithoutHanging) {
-    auto tokens = cc::utils::shell_parser::tokenize("sleep 1 &");
-    auto pipeline = cc::utils::shell_parser::parse_pipeline(tokens);
+    auto tokens = loom::utils::shell_parser::tokenize("sleep 1 &");
+    auto pipeline = loom::utils::shell_parser::parse_pipeline(tokens);
 
     ASSERT_EQ(pipeline.stage_count(), 1u);
     EXPECT_TRUE(pipeline.background);
@@ -114,8 +114,8 @@ TEST(ShellParser, ParsesBackgroundOperatorWithoutHanging) {
 }
 
 TEST(ShellParser, RedirectTargetIsConsumedIntoCommandMetadata) {
-    auto tokens = cc::utils::shell_parser::tokenize("cat file > output.txt");
-    auto pipeline = cc::utils::shell_parser::parse_pipeline(tokens);
+    auto tokens = loom::utils::shell_parser::tokenize("cat file > output.txt");
+    auto pipeline = loom::utils::shell_parser::parse_pipeline(tokens);
 
     ASSERT_EQ(pipeline.stage_count(), 1u);
     EXPECT_EQ(pipeline.commands[0].command, "cat");
@@ -126,19 +126,19 @@ TEST(ShellParser, RedirectTargetIsConsumedIntoCommandMetadata) {
 }
 
 TEST(Permissions, ExactPathMatch) {
-    cc::utils::permissions::PathMatcher matcher({"/home/user/project*"});
+    loom::utils::permissions::PathMatcher matcher({"/home/user/project*"});
     EXPECT_TRUE(matcher.matches("/home/user/project/file.txt"));
     EXPECT_FALSE(matcher.matches("/etc/passwd"));
 }
 
 TEST(Permissions, GlobPatternMatch) {
-    cc::utils::permissions::PathMatcher matcher({"/home/user/*.cpp"});
+    loom::utils::permissions::PathMatcher matcher({"/home/user/*.cpp"});
     EXPECT_TRUE(matcher.matches("/home/user/src/main.cpp"));
     EXPECT_FALSE(matcher.matches("/home/user/src/main.py"));
 }
 
 TEST(Permissions, ShellRuleMatcherClassifiesDangerousAndReadonlyCommands) {
-    cc::utils::permissions::ShellRuleMatcher matcher;
+    loom::utils::permissions::ShellRuleMatcher matcher;
 
     EXPECT_TRUE(matcher.is_dangerous("rm -rf /"));
     EXPECT_TRUE(matcher.is_dangerous("dd if=/dev/zero of=/dev/sda"));
@@ -155,17 +155,17 @@ TEST(Permissions, ShellRuleMatcherClassifiesDangerousAndReadonlyCommands) {
 }
 
 TEST(Permissions, DangerousPatternClassifierReportsRiskLevel) {
-    cc::utils::permissions::DangerousPatternClassifier classifier;
+    loom::utils::permissions::DangerousPatternClassifier classifier;
 
-    EXPECT_EQ(classifier.classify("ls -la"), cc::utils::permissions::RiskLevel::Safe);
-    EXPECT_EQ(classifier.classify("mkdir build"), cc::utils::permissions::RiskLevel::Moderate);
-    EXPECT_EQ(classifier.classify("rm -rf /tmp/cache"), cc::utils::permissions::RiskLevel::Dangerous);
-    EXPECT_EQ(classifier.classify(":(){:|:&};:"), cc::utils::permissions::RiskLevel::Dangerous);
+    EXPECT_EQ(classifier.classify("ls -la"), loom::utils::permissions::RiskLevel::Safe);
+    EXPECT_EQ(classifier.classify("mkdir build"), loom::utils::permissions::RiskLevel::Moderate);
+    EXPECT_EQ(classifier.classify("rm -rf /tmp/cache"), loom::utils::permissions::RiskLevel::Dangerous);
+    EXPECT_EQ(classifier.classify(":(){:|:&};:"), loom::utils::permissions::RiskLevel::Dangerous);
     EXPECT_NE(classifier.describe_risk("rm -rf /tmp/cache").find("DANGEROUS"), std::string::npos);
 }
 
 TEST(Permissions, YoloModeApprovesOnlyWhenEnabled) {
-    cc::utils::permissions::YoloMode yolo;
+    loom::utils::permissions::YoloMode yolo;
     EXPECT_FALSE(yolo.should_approve("rm -rf /"));
     yolo.enable();
     EXPECT_TRUE(yolo.should_approve("rm -rf /"));
@@ -174,17 +174,17 @@ TEST(Permissions, YoloModeApprovesOnlyWhenEnabled) {
 }
 
 TEST(Permissions, RuleSetYoloModeOverridesDangerousCommandChecks) {
-    cc::utils::permissions::RuleSet rules;
+    loom::utils::permissions::RuleSet rules;
 
-    EXPECT_EQ(rules.evaluate_command("rm -rf /"), cc::utils::permissions::Action::Deny);
+    EXPECT_EQ(rules.evaluate_command("rm -rf /"), loom::utils::permissions::Action::Deny);
     rules.set_yolo_mode(true);
-    EXPECT_EQ(rules.evaluate_command("rm -rf /"), cc::utils::permissions::Action::Allow);
+    EXPECT_EQ(rules.evaluate_command("rm -rf /"), loom::utils::permissions::Action::Allow);
 }
 
 TEST(Permissions, RuleSetPathRulesUseGlobPatterns) {
-    cc::utils::permissions::RuleSet rules;
-    rules.add_rule({.pattern = "/home/user/*.cpp", .action = cc::utils::permissions::Action::Allow, .scope = cc::utils::permissions::Scope::Path, .priority = 10});
+    loom::utils::permissions::RuleSet rules;
+    rules.add_rule({.pattern = "/home/user/*.cpp", .action = loom::utils::permissions::Action::Allow, .scope = loom::utils::permissions::Scope::Path, .priority = 10});
 
-    EXPECT_EQ(rules.evaluate_path("/home/user/src/main.cpp"), cc::utils::permissions::Action::Allow);
-    EXPECT_EQ(rules.evaluate_path("/home/user/src/main.py"), cc::utils::permissions::Action::Deny);
+    EXPECT_EQ(rules.evaluate_path("/home/user/src/main.cpp"), loom::utils::permissions::Action::Allow);
+    EXPECT_EQ(rules.evaluate_path("/home/user/src/main.py"), loom::utils::permissions::Action::Deny);
 }

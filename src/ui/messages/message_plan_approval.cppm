@@ -24,7 +24,7 @@ import std;
 
 import loom.types.types;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -275,4 +275,4 @@ class PlanApprovalComponent : public ComponentBase {
         std::move(on_approve), std::move(on_modify), std::move(on_reject));
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

@@ -8,7 +8,7 @@ export module loom.ui.messages.message_task_assignment;
 
 import std;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -52,4 +52,4 @@ struct TaskAssignmentOptions {
     });
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

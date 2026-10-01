@@ -2,7 +2,7 @@ export module loom.security.auto_mode_denials;
 
 import std;
 
-export namespace cc::utils::auto_mode_denials {
+export namespace loom::utils::auto_mode_denials {
 
 struct AutoModeDenial {
     std::string tool_name;
@@ -33,4 +33,4 @@ private:
     std::vector<AutoModeDenial> denials_;
 };
 
-} // namespace cc::utils::auto_mode_denials
+} // namespace loom::utils::auto_mode_denials

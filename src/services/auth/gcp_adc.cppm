@@ -49,10 +49,10 @@ import loom.utils.error;
 import loom.net.http.http_encoding;
 import loom.serdes.json;
 
-export namespace cc::services::auth::gcp {
+export namespace loom::services::auth::gcp {
 
-using cc::utils::Error;
-using cc::utils::Result;
+using loom::utils::Error;
+using loom::utils::Result;
 using namespace std::chrono;
 using namespace std::string_view_literals;
 
@@ -108,7 +108,7 @@ struct AdcCredentials {
 
 [[nodiscard]] inline AdcCredentials parse_adc_json(std::string_view json_text,
                                                     std::string_view source_path) {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     AdcCredentials out;
     out.source_path = std::string(source_path);
     auto parsed = parse(json_text);
@@ -174,7 +174,7 @@ using EvpPkeyPtr = std::unique_ptr<EVP_PKEY, PemKeyDeleter>;
 // Returns base64url (no padding) of a raw byte span.  Reuses crypto base64
 // encoder by encoding then swapping +→- /→_ and trimming padding '='.
 [[nodiscard]] inline std::string b64url_nopad(std::span<const uint8_t> bytes) {
-    auto b64 = cc::utils::crypto::base64_encode(bytes);
+    auto b64 = loom::utils::crypto::base64_encode(bytes);
     std::string out;
     out.reserve(b64.size());
     for (char c : b64) {
@@ -194,31 +194,31 @@ using EvpPkeyPtr = std::unique_ptr<EVP_PKEY, PemKeyDeleter>;
 [[nodiscard]] inline Result<std::vector<uint8_t>> rsa_sha256_sign(
     EVP_PKEY* key, std::string_view data) {
     if (!key) {
-        return std::unexpected(Error(cc::utils::ErrorCode::invalid_argument,
+        return std::unexpected(Error(loom::utils::ErrorCode::invalid_argument,
                                      "GCP RSA: no private key loaded"));
     }
     std::unique_ptr<EVP_MD_CTX, void(*)(EVP_MD_CTX*)> ctx(
         EVP_MD_CTX_new(), EVP_MD_CTX_free);
     if (!ctx) {
-        return std::unexpected(Error(cc::utils::ErrorCode::internal_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::internal_error,
                                      "GCP RSA: EVP_MD_CTX_new failed"));
     }
     if (EVP_DigestSignInit(ctx.get(), nullptr, EVP_sha256(), nullptr, key) != 1) {
-        return std::unexpected(Error(cc::utils::ErrorCode::internal_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::internal_error,
                                      "GCP RSA: DigestSignInit failed"));
     }
     if (EVP_DigestSignUpdate(ctx.get(), data.data(), data.size()) != 1) {
-        return std::unexpected(Error(cc::utils::ErrorCode::internal_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::internal_error,
                                      "GCP RSA: DigestSignUpdate failed"));
     }
     std::size_t sig_len = 0;
     if (EVP_DigestSignFinal(ctx.get(), nullptr, &sig_len) != 1) {
-        return std::unexpected(Error(cc::utils::ErrorCode::internal_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::internal_error,
                                      "GCP RSA: DigestSignFinal size failed"));
     }
     std::vector<uint8_t> sig(sig_len);
     if (EVP_DigestSignFinal(ctx.get(), sig.data(), &sig_len) != 1) {
-        return std::unexpected(Error(cc::utils::ErrorCode::internal_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::internal_error,
                                      "GCP RSA: DigestSignFinal failed"));
     }
     sig.resize(sig_len);
@@ -232,19 +232,19 @@ using EvpPkeyPtr = std::unique_ptr<EVP_PKEY, PemKeyDeleter>;
 exchange_service_account_token(
     const AdcCredentials& creds,
     std::string_view scope = "https://www.googleapis.com/auth/cloud-platform") {
-    using namespace cc::utils::json;
-    using namespace cc::utils::http;
+    using namespace loom::utils::json;
+    using namespace loom::utils::http;
     if (creds.type != AdcType::ServiceAccount) {
-        return std::unexpected(Error(cc::utils::ErrorCode::invalid_argument,
+        return std::unexpected(Error(loom::utils::ErrorCode::invalid_argument,
                                      "GCP: not a service_account ADC"));
     }
     auto key = detail::load_private_key_pem(creds.private_key_pem);
     if (!key) {
-        return std::unexpected(Error(cc::utils::ErrorCode::invalid_argument,
+        return std::unexpected(Error(loom::utils::ErrorCode::invalid_argument,
             "GCP: failed to load service-account private key PEM"));
     }
     // Build JWT header + payload using JsonObject.
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     JsonObject hdr_obj;
     hdr_obj.set("alg", "RS256");
     hdr_obj.set("typ", "JWT");
@@ -279,17 +279,17 @@ exchange_service_account_token(
     hdrs.emplace("Content-Type", "application/x-www-form-urlencoded");
     auto resp = cli.Post("/token", hdrs, body_str, "application/x-www-form-urlencoded");
     if (!resp) {
-        return std::unexpected(Error(cc::utils::ErrorCode::network_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::network_error,
             "GCP: no response from oauth2.googleapis.com/token"));
     }
     if (resp->status < 200 || resp->status >= 300) {
-        return std::unexpected(Error(cc::utils::ErrorCode::permission_denied,
+        return std::unexpected(Error(loom::utils::ErrorCode::permission_denied,
             "GCP: service-account token exchange failed (HTTP " +
                 std::to_string(resp->status) + "): " + resp->body));
     }
     auto parsed = parse(resp->body);
     if (!parsed) {
-        return std::unexpected(Error(cc::utils::ErrorCode::parse_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::parse_error,
                                      "GCP: invalid token response JSON"));
     }
     auto root = parsed->root();
@@ -303,7 +303,7 @@ exchange_service_account_token(
     at.scope = std::string(scope);
     at.project_id = creds.project_id;
     if (at.token.empty()) {
-        return std::unexpected(Error(cc::utils::ErrorCode::parse_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::parse_error,
                                      "GCP: token response missing access_token"));
     }
     return at;
@@ -312,10 +312,10 @@ exchange_service_account_token(
 // authorized_user refresh-token exchange.
 [[nodiscard]] inline Result<AccessToken>
 exchange_authorized_user_token(const AdcCredentials& creds) {
-    using namespace cc::utils::json;
-    using namespace cc::utils::http;
+    using namespace loom::utils::json;
+    using namespace loom::utils::http;
     if (creds.type != AdcType::AuthorizedUser) {
-        return std::unexpected(Error(cc::utils::ErrorCode::invalid_argument,
+        return std::unexpected(Error(loom::utils::ErrorCode::invalid_argument,
                                      "GCP: not an authorized_user ADC"));
     }
     std::string body_str;
@@ -329,17 +329,17 @@ exchange_authorized_user_token(const AdcCredentials& creds) {
     auto resp = cli.Post("/token", body_str,
                          "application/x-www-form-urlencoded");
     if (!resp) {
-        return std::unexpected(Error(cc::utils::ErrorCode::network_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::network_error,
             "GCP: no response from oauth2.googleapis.com/token (authorized_user)"));
     }
     if (resp->status < 200 || resp->status >= 300) {
-        return std::unexpected(Error(cc::utils::ErrorCode::permission_denied,
+        return std::unexpected(Error(loom::utils::ErrorCode::permission_denied,
             "GCP: authorized_user token exchange failed (HTTP " +
                 std::to_string(resp->status) + "): " + resp->body));
     }
     auto parsed = parse(resp->body);
     if (!parsed) {
-        return std::unexpected(Error(cc::utils::ErrorCode::parse_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::parse_error,
                                      "GCP: invalid authorized_user JSON"));
     }
     auto root = parsed->root();
@@ -354,7 +354,7 @@ exchange_authorized_user_token(const AdcCredentials& creds) {
     at.quota_project = creds.quota_project_id;
     at.quota_from_adc = !at.quota_project.empty();
     if (at.token.empty()) {
-        return std::unexpected(Error(cc::utils::ErrorCode::parse_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::parse_error,
                                      "GCP: authorized_user response missing access_token"));
     }
     return at;
@@ -366,7 +366,7 @@ exchange_authorized_user_token(const AdcCredentials& creds) {
 fetch_metadata_token(std::chrono::milliseconds timeout_ms = 1500ms,
                      std::string_view sa_name = "default",
                      std::string_view scope = "https://www.googleapis.com/auth/cloud-platform") {
-    using namespace cc::utils::json;
+    using namespace loom::utils::json;
     httplib::Client cli("http://metadata.google.internal", 80);
     cli.set_connection_timeout(timeout_ms.count() / 1000,
                                (timeout_ms.count() % 1000) * 1000);
@@ -379,20 +379,20 @@ fetch_metadata_token(std::chrono::milliseconds timeout_ms = 1500ms,
                       std::string(scope);
     auto resp = cli.Get(url.c_str(), hdrs);
     if (!resp) {
-        return std::unexpected(Error(cc::utils::ErrorCode::network_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::network_error,
                                  "GCP: metadata server unreachable"));
     }
     if (resp->status == 404) {
-        return std::unexpected(Error(cc::utils::ErrorCode::internal_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::internal_error,
                                  "GCP: no service account attached"));
     }
     if (resp->status < 200 || resp->status >= 300) {
-        return std::unexpected(Error(cc::utils::ErrorCode::permission_denied,
+        return std::unexpected(Error(loom::utils::ErrorCode::permission_denied,
             "GCP: metadata token fetch HTTP " + std::to_string(resp->status)));
     }
     auto parsed = parse(resp->body);
     if (!parsed) {
-        return std::unexpected(Error(cc::utils::ErrorCode::parse_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::parse_error,
                                  "GCP: metadata response JSON parse failed"));
     }
     auto root = parsed->root();
@@ -416,7 +416,7 @@ fetch_metadata_token(std::chrono::milliseconds timeout_ms = 1500ms,
         }
     }
     if (at.token.empty()) {
-        return std::unexpected(Error(cc::utils::ErrorCode::parse_error,
+        return std::unexpected(Error(loom::utils::ErrorCode::parse_error,
                                  "GCP: metadata response missing access_token"));
     }
     return at;
@@ -438,7 +438,7 @@ public:
             return cached_;
         }
         // Step 1: GOOGLE_APPLICATION_CREDENTIALS file.
-        using cc::utils::env::get_env;
+        using loom::utils::env::get_env;
         std::optional<AdcCredentials> adc;
         if (auto f = get_env("GOOGLE_APPLICATION_CREDENTIALS"); f && !f->empty()) {
             adc = load_adc_from_file(*f);
@@ -455,7 +455,7 @@ public:
 
         if (adc) {
             Result<AccessToken> tok = std::unexpected(
-                Error(cc::utils::ErrorCode::internal_error,
+                Error(loom::utils::ErrorCode::internal_error,
                       "GCP ADC chain: no token resolved"));
             switch (adc->type) {
             case AdcType::ServiceAccount:
@@ -467,7 +467,7 @@ public:
                 break;
             default:
                 return std::unexpected(Error(
-                    cc::utils::ErrorCode::unimplemented,
+                    loom::utils::ErrorCode::unimplemented,
                     "GCP: unsupported ADC type '" + std::string(
                         adc->type == AdcType::ExternalAccount ? "external_account" : "unknown") +
                     "' — see 'gcpAuthRefresh' setting for custom shell refresh scripts."));
@@ -511,8 +511,8 @@ struct VertexAuthMode {
     std::optional<std::string> fallback_project_id;
 };
 [[nodiscard]] inline VertexAuthMode detect_vertex_mode() {
-    using cc::utils::env::get_env;
-    using cc::utils::env::is_env_truthy;
+    using loom::utils::env::get_env;
+    using loom::utils::env::is_env_truthy;
     VertexAuthMode m;
     m.use_vertex  = is_env_truthy("LOOM_USE_VERTEX");
     m.skip_auth   = is_env_truthy("LOOM_SKIP_VERTEX_AUTH");
@@ -544,7 +544,7 @@ struct VertexAuthMode {
 // callers that know the model short key can pass the canonical firstPartyId.
 [[nodiscard]] inline std::string resolve_vertex_region(
     std::string_view model_id_hint = {}) {
-    using cc::utils::env::get_env;
+    using loom::utils::env::get_env;
     // Build known env var names per TS VERTEX_REGION_OVERRIDES.
     static const std::pair<std::string_view, std::string_view> kOverrides[] = {
         {"claude-3-5-sonnet", "VERTEX_REGION_LOOM_3_5_SONNET"},
@@ -585,4 +585,4 @@ struct VertexAuthMode {
     return base;
 }
 
-} // namespace cc::services::auth::gcp
+} // namespace loom::services::auth::gcp

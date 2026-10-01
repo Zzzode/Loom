@@ -9,7 +9,7 @@ export module loom.process.bash.bash_security;
 
 import std;
 
-export namespace cc::utils::bash {
+export namespace loom::utils::bash {
 
 /// How dangerous a command is assessed to be
 enum class DangerLevel {
@@ -575,4 +575,4 @@ inline bool involves_system(std::string_view command) {
     return "Unknown";
 }
 
-} // namespace cc::utils::bash
+} // namespace loom::utils::bash

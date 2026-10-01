@@ -16,7 +16,7 @@ export module loom.security.tool_deny_rules;
 
 import std;
 
-export namespace cc::utils::tool_deny_rules {
+export namespace loom::utils::tool_deny_rules {
 
 // ============================================================
 // MCP name normalization
@@ -287,4 +287,4 @@ struct DenyToolView {
     return false;
 }
 
-}  // namespace cc::utils::tool_deny_rules
+}  // namespace loom::utils::tool_deny_rules

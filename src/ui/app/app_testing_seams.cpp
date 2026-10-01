@@ -30,9 +30,9 @@ import loom.ui.screens.messages_store;
 import loom.ui.screens.dialog_store;
 import loom.ui.screens.chrome_store;
 
-namespace cc::ui {
+namespace loom::ui {
 
-namespace repl = cc::ui::repl_screen;
+namespace repl = loom::ui::repl_screen;
 
 bool AppAdapter::is_query_running_for_testing() const noexcept {
     return query_running_.load();
@@ -169,4 +169,4 @@ int AppAdapter::teams_overview_count_for_testing() const noexcept {
     return static_cast<int>(screen_state_->task_view_store.live_teammates.size());
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

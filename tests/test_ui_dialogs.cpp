@@ -120,7 +120,7 @@ struct TempCwdGuard {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(WizardDialog, RendersStepFactoryContent) {
-    using namespace cc::ui::wizard_dialog;
+    using namespace loom::ui::wizard_dialog;
 
     bool factory_called = false;
     WizardConfig cfg;
@@ -153,10 +153,10 @@ TEST(WizardDialog, RendersStepFactoryContent) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(SettingsDialog, ApiKeyRowDoesNotWritePlaceholderSecret) {
-    namespace settings_dialog = cc::ui::dialogs::settings_dialog;
+    namespace settings_dialog = loom::ui::dialogs::settings_dialog;
 
     TempCwdGuard cwd_guard;
-    cc::core::ConfigManager cfg;
+    loom::core::ConfigManager cfg;
     settings_dialog::SettingsDialogOptions opts;
     opts.initial_tab = settings_dialog::SettingsTabId::API;
     auto dialog = settings_dialog::MakeSettingsDialog(
@@ -171,10 +171,10 @@ TEST(SettingsDialog, ApiKeyRowDoesNotWritePlaceholderSecret) {
 }
 
 TEST(SettingsDialog, McpAddKeyDoesNotCreatePlaceholderServer) {
-    namespace settings_dialog = cc::ui::dialogs::settings_dialog;
+    namespace settings_dialog = loom::ui::dialogs::settings_dialog;
 
     TempCwdGuard cwd_guard;
-    cc::core::ConfigManager cfg;
+    loom::core::ConfigManager cfg;
     settings_dialog::SettingsDialogOptions opts;
     opts.initial_tab = settings_dialog::SettingsTabId::MCP;
     auto dialog = settings_dialog::MakeSettingsDialog(
@@ -192,7 +192,7 @@ TEST(SettingsDialog, McpAddKeyDoesNotCreatePlaceholderServer) {
 // unknown keys inside a known section (e.g. a custom "model" leaf) survive.
 // Drives the real dialog component + ConfigManager save path.
 TEST(SettingsDialog, SavePreservesUnknownKeys) {
-    namespace settings_dialog = cc::ui::dialogs::settings_dialog;
+    namespace settings_dialog = loom::ui::dialogs::settings_dialog;
     namespace fs = std::filesystem;
 
     TempCwdGuard cwd_guard;
@@ -213,7 +213,7 @@ TEST(SettingsDialog, SavePreservesUnknownKeys) {
 
     // 2-arg ctor: global + project; user tier absent, local derived next to
     // the project file. Load so the dialog snapshots the seeded values.
-    cc::core::ConfigManager cfg(dir / "global.json", project_path);
+    loom::core::ConfigManager cfg(dir / "global.json", project_path);
     ASSERT_TRUE(cfg.load().has_value());
 
     settings_dialog::SettingsDialogOptions opts;
@@ -222,7 +222,7 @@ TEST(SettingsDialog, SavePreservesUnknownKeys) {
     // Ctrl+S: apply_to(working) + cfg->save().
     ASSERT_TRUE(dialog->OnEvent(ftxui::Event::Character('\x13')));
 
-    auto project = cc::utils::json::parse_file(project_path);
+    auto project = loom::utils::json::parse_file(project_path);
     ASSERT_TRUE(project.has_value());
     const auto root_node = project->root();
     // The unknown top-level key survives with its value intact.
@@ -246,15 +246,15 @@ namespace {
 /// Build a synthetic fake-rules RuleListInput so Tab 0 ("All Rules") renders
 /// with known keywords we can search for.
 auto make_fake_rule_input() {
-    using namespace cc::ui::permissions::rule_list;
+    using namespace loom::ui::permissions::rule_list;
 
     RuleListInput in;
     in.rules.push_back(RuleEntry{
         .id = "rule-fake-1",
         .tool_pattern = "BashTool",
-        .strategy     = cc::utils::permissions::MatchStrategy::Glob,
-        .action       = cc::utils::permissions::PermissionAction::Allow,
-        .scope        = cc::utils::permissions::PermissionScope::Session,
+        .strategy     = loom::utils::permissions::MatchStrategy::Glob,
+        .action       = loom::utils::permissions::PermissionAction::Allow,
+        .scope        = loom::utils::permissions::PermissionScope::Session,
         .path_pattern = "/tmp/**",
         .priority     = 50,
         .group_id     = "g2",
@@ -265,9 +265,9 @@ auto make_fake_rule_input() {
     in.rules.push_back(RuleEntry{
         .id = "rule-fake-2",
         .tool_pattern = "FileWriteTool",
-        .strategy     = cc::utils::permissions::MatchStrategy::Glob,
-        .action       = cc::utils::permissions::PermissionAction::Deny,
-        .scope        = cc::utils::permissions::PermissionScope::Global,
+        .strategy     = loom::utils::permissions::MatchStrategy::Glob,
+        .action       = loom::utils::permissions::PermissionAction::Deny,
+        .scope        = loom::utils::permissions::PermissionScope::Global,
         .path_pattern = "/etc/**",
         .priority     = 900,
         .group_id     = "g4",
@@ -280,20 +280,20 @@ auto make_fake_rule_input() {
 }
 
 auto make_fake_panel() {
-    using namespace cc::ui::permissions;
-    using namespace cc::ui::permissions::rule_list;
+    using namespace loom::ui::permissions;
+    using namespace loom::ui::permissions::rule_list;
 
     // Seed a couple of fake denial entries so Tab 1 (Recent Denials) renders
     // with actual content lines.
-    cc::utils::permissions_engine::__test_reset_denials();
-    cc::utils::permissions_engine::__test_reset_workspaces();
-    cc::utils::permissions_engine::push_denial({
+    loom::utils::permissions_engine::__test_reset_denials();
+    loom::utils::permissions_engine::__test_reset_workspaces();
+    loom::utils::permissions_engine::push_denial({
         .tool_name = "BashTool",
         .action    = "Run rm -rf /",
         .path      = "/",
         .deny_reason = "auto-mode blocked destructive command",
     });
-    cc::utils::permissions_engine::seed_default_workspace(
+    loom::utils::permissions_engine::seed_default_workspace(
         std::filesystem::temp_directory_path());
 
     PermissionsPanelModel model;
@@ -306,7 +306,7 @@ auto make_fake_panel() {
 } // namespace
 
 TEST(Permissions, TabSwitching) {
-    using namespace cc::ui::permissions;
+    using namespace loom::ui::permissions;
 
     auto panel = make_fake_panel();
     ASSERT_NE(panel, nullptr);
@@ -374,16 +374,16 @@ TEST(Permissions, TabSwitching) {
 }
 
 TEST(Permissions, RuleCRUD) {
-    using namespace cc::ui::permissions;
-    using namespace cc::ui::permissions::rule_list;
+    using namespace loom::ui::permissions;
+    using namespace loom::ui::permissions::rule_list;
 
     // --- Build a BuildPermissionRuleInputForm with blank rule + callbacks ---
     RuleEntry blank;
     blank.id         = "crud-test-rule";
     blank.tool_pattern = "*";
-    blank.strategy   = cc::utils::permissions::MatchStrategy::Glob;
-    blank.action     = cc::utils::permissions::PermissionAction::Ask;
-    blank.scope      = cc::utils::permissions::PermissionScope::Session;
+    blank.strategy   = loom::utils::permissions::MatchStrategy::Glob;
+    blank.action     = loom::utils::permissions::PermissionAction::Ask;
+    blank.scope      = loom::utils::permissions::PermissionScope::Session;
     blank.enabled    = true;
     blank.priority   = 50;
     blank.group_id   = "g6";
@@ -424,7 +424,7 @@ TEST(Permissions, RuleCRUD) {
     EXPECT_EQ(submitted_decision, FormDecision::AlwaysAllow)
         << "default decision index 1 maps to AlwaysAllow";
     EXPECT_EQ(submitted_rule.action,
-              cc::utils::permissions::PermissionAction::Allow)
+              loom::utils::permissions::PermissionAction::Allow)
         << "AlwaysAllow decision maps to engine PermissionAction::Allow";
     EXPECT_EQ(submitted_rule.tool_pattern, std::string{"*"})
         << "original tool pattern (*) must be preserved through submit";
@@ -491,7 +491,7 @@ TEST(Permissions, RuleCRUD) {
 // MCP Elicitation 2.0 — payload contract + form renderer + keyboard events
 // ═══════════════════════════════════════════════════════════════════════════════
 
-namespace mcp = cc::ui::mcp_dialogs;
+namespace mcp = loom::ui::mcp_dialogs;
 
 static mcp::ElicitFieldSchema mk_text(std::string name, std::string title,
                                        bool required = false,
@@ -921,7 +921,7 @@ TEST(ToolPermission, EscOneshotSingleFire) {
     // TS contract: onCancel is ONE-SHOT. Priority 1) on_abort if set,
     // 2) else on_decide(Abort). NEVER both. Also verify a second Esc does
     // not re-fire any callback.
-    using namespace cc::ui::permissions::single_prompt;
+    using namespace loom::ui::permissions::single_prompt;
 
     std::atomic<int> abort_count{0};
     std::atomic<int> decide_count{0};
@@ -930,8 +930,8 @@ TEST(ToolPermission, EscOneshotSingleFire) {
 
     SinglePromptProps props;
     props.tool_name = "BashTool";
-    props.action_kind = cc::ui::permissions::components::ActionKind::Execute;
-    props.risk_level = cc::ui::permissions::components::RiskLevel::Medium;
+    props.action_kind = loom::ui::permissions::components::ActionKind::Execute;
+    props.risk_level = loom::ui::permissions::components::RiskLevel::Medium;
     props.description = "Run rm -rf /";
     props.detail = DetailBash{.command = "rm -rf /"};
     props.on_abort = [&] { ++abort_count; };
@@ -971,8 +971,8 @@ TEST(ToolPermission, EscOneshotSingleFire) {
 
     SinglePromptProps props2;
     props2.tool_name = "FileEditTool";
-    props2.action_kind = cc::ui::permissions::components::ActionKind::Write;
-    props2.risk_level = cc::ui::permissions::components::RiskLevel::Low;
+    props2.action_kind = loom::ui::permissions::components::ActionKind::Write;
+    props2.risk_level = loom::ui::permissions::components::RiskLevel::Low;
     props2.description = "Edit a file";
     props2.detail = DetailFileEdit{.file_path = "src/main.cpp",
                                    .old_snippet = "a",
@@ -1003,6 +1003,6 @@ TEST(ToolPermission, EscOneshotSingleFire) {
 // Faithful to TS messagesSlice dedup / filter / augment / hide / visible.
 // ──────────────────────────────────────────────────────────────────────────
 
-namespace pl = cc::ui::messages::pipeline;
+namespace pl = loom::ui::messages::pipeline;
 
 // ── Stage 1 DEDUP ──────────────────────────────────────────────────────────

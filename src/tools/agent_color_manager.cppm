@@ -19,11 +19,11 @@ import std;
 import loom.teams.swarm.backends;
 import loom.teams.swarm.helpers;
 
-export namespace cc::tools::agent_color_manager {
+export namespace loom::tools::agent_color_manager {
 
-using cc::utils::swarm_backends::AgentColor;
-using cc::utils::swarm_backends::agent_color_name;
-using cc::utils::swarm_helpers::TeammateLayoutManager;
+using loom::utils::swarm_backends::AgentColor;
+using loom::utils::swarm_backends::agent_color_name;
+using loom::utils::swarm_helpers::TeammateLayoutManager;
 
 /// The 8 named agent colors (same order as the TS `AGENT_COLORS` array).
 inline constexpr AgentColor AGENT_COLOR_PALETTE[] = {
@@ -132,4 +132,4 @@ inline void set_agent_color(
     return "default_FOR_SUBAGENTS_ONLY";
 }
 
-} // namespace cc::tools::agent_color_manager
+} // namespace loom::tools::agent_color_manager

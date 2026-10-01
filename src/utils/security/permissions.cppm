@@ -11,7 +11,7 @@ import std;
 
 import loom.process.shell.shell_parser;
 
-export namespace cc::utils::permissions {
+export namespace loom::utils::permissions {
 
 
 enum class Action : uint8_t {
@@ -119,7 +119,7 @@ public:
             return command.find(pattern) != std::string_view::npos;
         })) return true;
 
-        auto tokens = cc::utils::shell_parser::tokenize(command);
+        auto tokens = loom::utils::shell_parser::tokenize(command);
         for (std::size_t i = 0; i < tokens.size(); ++i) {
             const auto& tok = tokens[i];
             if (tok.value == "rm") {
@@ -140,7 +140,7 @@ public:
             }
             if ((tok.value == "curl" || tok.value == "wget") && i + 1 < tokens.size()) {
                 for (std::size_t j = i + 1; j + 1 < tokens.size(); ++j) {
-                    if (tokens[j].type == cc::utils::shell_parser::TokenType::Pipe &&
+                    if (tokens[j].type == loom::utils::shell_parser::TokenType::Pipe &&
                         (tokens[j + 1].value == "sh" || tokens[j + 1].value == "bash")) {
                         return true;
                     }
@@ -161,11 +161,11 @@ public:
             "ls", "cat", "head", "tail", "grep", "find",
             "wc", "du", "df", "file", "stat", "which", "echo"
         };
-        auto tokens = cc::utils::shell_parser::tokenize(command);
+        auto tokens = loom::utils::shell_parser::tokenize(command);
         if (tokens.empty()) return true;
 
         bool has_write_redirect = std::ranges::any_of(tokens, [](const auto& token) {
-            return token.type == cc::utils::shell_parser::TokenType::Redirect &&
+            return token.type == loom::utils::shell_parser::TokenType::Redirect &&
                    (token.value == ">" || token.value == ">>");
         });
         if (has_write_redirect) return false;
@@ -349,4 +349,4 @@ private:
     YoloMode yolo_;
 };
 
-} // namespace cc::utils::permissions
+} // namespace loom::utils::permissions

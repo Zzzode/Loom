@@ -19,9 +19,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::task_ui {
+export namespace loom::ui::tools::task_ui {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 namespace detail {
 
@@ -227,4 +227,4 @@ inline void register_task_update_ui() {
         "TaskUpdateTool", make_task_update_ui());
 }
 
-}  // namespace cc::ui::tools::task_ui
+}  // namespace loom::ui::tools::task_ui

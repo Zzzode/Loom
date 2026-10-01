@@ -552,13 +552,13 @@ public:
 
 // Team memory paths
 inline bool is_team_memory_enabled() {
-    if (cc::utils::is_env_truthy(std::getenv("LOOM_DISABLE_AUTO_MEMORY"))) {
+    if (loom::utils::is_env_truthy(std::getenv("LOOM_DISABLE_AUTO_MEMORY"))) {
         return false;
     }
-    if (cc::utils::is_env_defined_falsy(std::getenv("LOOM_ENABLE_TEAM_MEMORY"))) {
+    if (loom::utils::is_env_defined_falsy(std::getenv("LOOM_ENABLE_TEAM_MEMORY"))) {
         return false;
     }
-    if (cc::utils::is_env_truthy(std::getenv("LOOM_ENABLE_TEAM_MEMORY"))) {
+    if (loom::utils::is_env_truthy(std::getenv("LOOM_ENABLE_TEAM_MEMORY"))) {
         return true;
     }
     return std::getenv("CC_TEAM_MEMORY_SYNC_URL") != nullptr ||

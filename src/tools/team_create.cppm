@@ -13,15 +13,15 @@ import loom.serdes.json;
 import loom.utils.error;
 import loom.fs.atomic_replace;
 
-export namespace cc::tools::team_create {
+export namespace loom::tools::team_create {
 
-using cc::core::Tool;
-using cc::core::ToolInput;
-using cc::core::ToolResult;
-using cc::core::ToolDefinition;
-using cc::core::ToolPermission;
-using cc::core::InputSchema;
-using cc::core::SchemaProperty;
+using loom::core::Tool;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
+using loom::core::ToolDefinition;
+using loom::core::ToolPermission;
+using loom::core::InputSchema;
+using loom::core::SchemaProperty;
 
 /// Team member information at creation time
 struct TeamMemberInfo {
@@ -106,7 +106,7 @@ public:
         };
     }
 
-    [[nodiscard]] auto execute(const ToolInput& input) -> cc::utils::Result<ToolResult>;
+    [[nodiscard]] auto execute(const ToolInput& input) -> loom::utils::Result<ToolResult>;
 
     /// Check if agent swarms feature is enabled
     [[nodiscard]] static auto is_enabled() -> bool;
@@ -128,7 +128,7 @@ public:
 namespace detail {
 
 [[nodiscard]] std::optional<std::string> json_string_field(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key
 ) {
     auto value = object.get(key);
@@ -140,7 +140,7 @@ namespace detail {
 } // namespace detail
 
 std::expected<TeamCreateInput, std::string> TeamCreateInput::from_json(std::string_view json) {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed || !parsed->root().is_obj()) return std::unexpected("team_create input must be a JSON object");
 
     auto root = parsed->root();
@@ -155,22 +155,22 @@ std::expected<TeamCreateInput, std::string> TeamCreateInput::from_json(std::stri
     return input;
 }
 
-cc::utils::Result<ToolResult> TeamCreateTool::execute(const ToolInput& input) {
+loom::utils::Result<ToolResult> TeamCreateTool::execute(const ToolInput& input) {
     auto parsed = TeamCreateInput::from_json(input.json());
     if (!parsed) return ToolResult::error(parsed.error());
     if (auto error = validate_input(*parsed)) return ToolResult::error(*error);
 
-    cc::core::ToolRegistry registry;
+    loom::core::ToolRegistry registry;
     // Internal delegation reuses the runtime team_create implementation. This
     // local registry is an implementation detail of the standalone tool — the
     // outer TeamCreateTool is already permission-gated by its caller — so the
     // inner delegation uses an allow-all checker rather than fail-closed
     // denial for the Write-level "team_create" runtime tool.
-    cc::tools::register_runtime_tools(registry, cc::tools::RuntimeToolOptions{
+    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
         .parent_permission_mode = std::nullopt,
-        .permission_check = cc::tools::agent::AgentLivePermissionCheckFn{[](
+        .permission_check = loom::tools::agent::AgentLivePermissionCheckFn{[](
             std::string_view, std::string_view, std::string_view) {
-            return cc::tools::agent::AgentLivePermissionCheck{
+            return loom::tools::agent::AgentLivePermissionCheck{
                 .allowed = true,
                 .updated_input_json = std::nullopt,
                 .message = std::nullopt,
@@ -195,11 +195,11 @@ std::optional<std::string> TeamCreateTool::validate_input(const TeamCreateInput&
 
 std::string TeamCreateTool::generate_unique_team_name(const std::string& provided_name) {
     auto base = provided_name.empty() ? std::string{"team"} : provided_name;
-    if (!cc::tools::global_team_store().get_by_id_or_name(base)) return base;
+    if (!loom::tools::global_team_store().get_by_id_or_name(base)) return base;
 
     for (int suffix = 2; suffix < 10'000; ++suffix) {
         auto candidate = std::format("{}-{}", base, suffix);
-        if (!cc::tools::global_team_store().get_by_id_or_name(candidate)) return candidate;
+        if (!loom::tools::global_team_store().get_by_id_or_name(candidate)) return candidate;
     }
     return std::format("{}-{}", base, std::chrono::steady_clock::now().time_since_epoch().count());
 }
@@ -210,32 +210,32 @@ std::expected<std::string, std::string> TeamCreateTool::write_team_file(
 ) {
     namespace fs = std::filesystem;
     std::error_code ec;
-    auto path = cc::tools::team_runtime_dir() / (cc::tools::safe_team_filename(team_name) + ".json");
+    auto path = loom::tools::team_runtime_dir() / (loom::tools::safe_team_filename(team_name) + ".json");
     fs::create_directories(path.parent_path(), ec);
     if (ec) return std::unexpected(std::format("failed to create team directory: {}", ec.message()));
 
     // c16: identical bytes to the old truncating ofstream, landed through
     // the atomic symlink/FIFO-safe replace (this flat <name>.json record is
-    // the team_create wrapper's own shape; cc::utils::write_team_file is
+    // the team_create wrapper's own shape; loom::utils::write_team_file is
     // the separate <team>/config.json canonical writer).
     std::ostringstream out;
-    out << R"({"name":")" << cc::tools::team_json_escape(file.name)
-        << R"(","lead_agent_id":")" << cc::tools::team_json_escape(file.lead_agent_id)
-        << R"(","lead_session_id":")" << cc::tools::team_json_escape(file.lead_session_id)
+    out << R"({"name":")" << loom::tools::team_json_escape(file.name)
+        << R"(","lead_agent_id":")" << loom::tools::team_json_escape(file.lead_agent_id)
+        << R"(","lead_session_id":")" << loom::tools::team_json_escape(file.lead_session_id)
         << R"(","members":[)";
     for (std::size_t i = 0; i < file.members.size(); ++i) {
         const auto& member = file.members[i];
         if (i != 0) out << ',';
-        out << R"({"agent_id":")" << cc::tools::team_json_escape(member.agent_id)
-            << R"(","name":")" << cc::tools::team_json_escape(member.name)
-            << R"(","agent_type":")" << cc::tools::team_json_escape(member.agent_type)
-            << R"(","model":")" << cc::tools::team_json_escape(member.model)
-            << R"(","tmux_pane_id":")" << cc::tools::team_json_escape(member.tmux_pane_id)
-            << R"(","cwd":")" << cc::tools::team_json_escape(member.cwd)
+        out << R"({"agent_id":")" << loom::tools::team_json_escape(member.agent_id)
+            << R"(","name":")" << loom::tools::team_json_escape(member.name)
+            << R"(","agent_type":")" << loom::tools::team_json_escape(member.agent_type)
+            << R"(","model":")" << loom::tools::team_json_escape(member.model)
+            << R"(","tmux_pane_id":")" << loom::tools::team_json_escape(member.tmux_pane_id)
+            << R"(","cwd":")" << loom::tools::team_json_escape(member.cwd)
             << R"("})";
     }
     out << "]}";
-    auto replaced = cc::utils::atomic_replace_file(path, out.str());
+    auto replaced = loom::utils::atomic_replace_file(path, out.str());
     if (!replaced) {
         return std::unexpected(std::format("failed to write team file: {}: {}",
                                            path.string(), replaced.error()));
@@ -245,11 +245,11 @@ std::expected<std::string, std::string> TeamCreateTool::write_team_file(
 
 void TeamCreateTool::register_for_cleanup(const std::string&) {}
 
-} // namespace cc::tools::team_create
+} // namespace loom::tools::team_create
 
-export namespace cc::tools {
-    using cc::tools::team_create::TeamCreateInput;
-    using cc::tools::team_create::TeamCreateOutput;
-    using cc::tools::team_create::TeamFile;
-    using cc::tools::team_create::TeamMemberInfo;
+export namespace loom::tools {
+    using loom::tools::team_create::TeamCreateInput;
+    using loom::tools::team_create::TeamCreateOutput;
+    using loom::tools::team_create::TeamFile;
+    using loom::tools::team_create::TeamMemberInfo;
 }

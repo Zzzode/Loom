@@ -19,7 +19,7 @@ import loom.hooks.tool_permissions;  // AskUserResponseFn
 import loom.session.storage;    // load_messages (resume path)
 import loom.serdes.json;        // JsonVal (parse_session_message_value)
 
-namespace cc::sdk {
+namespace loom::sdk {
 
 namespace {
 
@@ -47,7 +47,7 @@ struct Harness::Impl {
     // inside AssemblyHandle::Impl). optional because assemble() can fail —
     // the error is stored in construction_error_ and surfaced by run()/
     // stream()/resume().
-    std::optional<cc::query::AssemblyHandle> handle_;
+    std::optional<loom::query::AssemblyHandle> handle_;
 
     // (3) The abort flag, shared with the engine's external abort callback
     // (AssemblyConfig::cancel_flag). abort() stores true; run()/stream()
@@ -56,7 +56,7 @@ struct Harness::Impl {
 
     // Construction-path state (no lifetime concerns).
     std::optional<fs::path> sessions_dir_;
-    std::optional<cc::core::Error> construction_error_;
+    std::optional<loom::core::Error> construction_error_;
 };
 
 // ============================================================
@@ -75,7 +75,7 @@ Harness::Harness(HarnessConfig config) : impl_(std::make_unique<Impl>()) {
     // Load ConfigManager as a construction-path local (§2.3): load ->
     // settings() -> resolve_engine_config -> discard. It is unused after
     // the config is resolved, so it is NOT an owned member.
-    cc::core::ConfigManager manager;
+    loom::core::ConfigManager manager;
     if (auto loaded = manager.load(); !loaded) {
         impl_->construction_error_ = loaded.error();
         return;
@@ -98,14 +98,14 @@ Harness::Harness(HarnessConfig config) : impl_(std::make_unique<Impl>()) {
 
     // Build AssemblyOverrides from HarnessConfig — the shared resolver, not
     // a second settings->config implementation (§2.2).
-    cc::query::AssemblyOverrides overrides;
+    loom::query::AssemblyOverrides overrides;
     if (!config.model.empty()) overrides.requested_model = config.model;
     overrides.api_key = api_key;
     overrides.base_url = config.base_url;
     overrides.wire_api = config.wire_api;
     if (!config.cwd.empty()) overrides.cwd = config.cwd.string();
 
-    auto resolved = cc::query::resolve_engine_config(settings, overrides);
+    auto resolved = loom::query::resolve_engine_config(settings, overrides);
     if (!resolved) {
         impl_->construction_error_ = resolved.error();
         return;
@@ -125,7 +125,7 @@ Harness::Harness(HarnessConfig config) : impl_(std::make_unique<Impl>()) {
     }
 
     // Build AssemblyConfig.
-    cc::query::AssemblyConfig ac;
+    loom::query::AssemblyConfig ac;
     ac.engine = std::move(engine_config);
     ac.sessions_dir = config.sessions_dir;
     ac.dump_prompts_dir = config.dump_prompts_dir;
@@ -136,12 +136,12 @@ Harness::Harness(HarnessConfig config) : impl_(std::make_unique<Impl>()) {
     // as the hook's ask_user response fn (the assembly wires the hook ->
     // registry permission_check bridge and engine.set_permission_hook when
     // ask_user is present).
-    cc::query::AssemblyCallbacks callbacks;
+    loom::query::AssemblyCallbacks callbacks;
     if (impl_->permission_callback_) {
-        callbacks.ask_user = cc::hooks::AskUserResponseFn{impl_->permission_callback_};
+        callbacks.ask_user = loom::hooks::AskUserResponseFn{impl_->permission_callback_};
     }
 
-    auto assembled = cc::query::assemble(ac, callbacks);
+    auto assembled = loom::query::assemble(ac, callbacks);
     if (!assembled) {
         impl_->construction_error_ = assembled.error();
         return;
@@ -164,7 +164,7 @@ Harness& Harness::operator=(Harness&&) noexcept = default;
 // run / stream
 // ============================================================
 
-cc::core::Result<TurnResult> Harness::run(const TurnOptions& options) {
+loom::core::Result<TurnResult> Harness::run(const TurnOptions& options) {
     if (impl_->construction_error_) {
         return std::unexpected(*impl_->construction_error_);
     }
@@ -173,8 +173,8 @@ cc::core::Result<TurnResult> Harness::run(const TurnOptions& options) {
     // engine's own aborted_ flag is auto-reset at query() entry, so this
     // harness-level flag is what makes "abort before run" observable.
     if (impl_->abort_requested_->exchange(false)) {
-        return std::unexpected(cc::core::Error::make(
-            cc::core::ErrorCode::InternalError, "Query interrupted"));
+        return std::unexpected(loom::core::Error::make(
+            loom::core::ErrorCode::InternalError, "Query interrupted"));
     }
 
     auto& engine = impl_->handle_->engine();
@@ -186,7 +186,7 @@ cc::core::Result<TurnResult> Harness::run(const TurnOptions& options) {
         engine.set_model_params(params);
     }
 
-    cc::core::QueryOptions qo;
+    loom::core::QueryOptions qo;
     if (options.allowed_tools) qo.enabled_tools = *options.allowed_tools;
     qo.attachments = options.attachments;
     if (impl_->event_sink_) {
@@ -210,12 +210,12 @@ cc::core::Result<TurnResult> Harness::run(const TurnOptions& options) {
 }
 
 void Harness::stream(const TurnOptions& options, const EventSink& sink) {
-    auto report_error = [&](const cc::core::Error& err) {
+    auto report_error = [&](const loom::core::Error& err) {
         if (sink) {
-            cc::core::StreamError ev;
+            loom::core::StreamError ev;
             ev.error_type = "harness_error";
             ev.message = err.format();
-            sink(cc::core::StreamEvent{std::move(ev)});
+            sink(loom::core::StreamEvent{std::move(ev)});
         }
     };
 
@@ -226,10 +226,10 @@ void Harness::stream(const TurnOptions& options, const EventSink& sink) {
     // Same exchange-at-entry semantics as run() (§2.3).
     if (impl_->abort_requested_->exchange(false)) {
         if (sink) {
-            cc::core::StreamError ev;
+            loom::core::StreamError ev;
             ev.error_type = "harness_error";
             ev.message = "Query interrupted";
-            sink(cc::core::StreamEvent{std::move(ev)});
+            sink(loom::core::StreamEvent{std::move(ev)});
         }
         return;
     }
@@ -242,7 +242,7 @@ void Harness::stream(const TurnOptions& options, const EventSink& sink) {
         engine.set_model_params(params);
     }
 
-    cc::core::QueryOptions qo;
+    loom::core::QueryOptions qo;
     if (options.allowed_tools) qo.enabled_tools = *options.allowed_tools;
     qo.attachments = options.attachments;
     qo.on_event = sink;
@@ -261,13 +261,13 @@ void Harness::abort() noexcept {
     }
 }
 
-cc::core::Result<void> Harness::resume(std::string_view session_id) {
+loom::core::Result<void> Harness::resume(std::string_view session_id) {
     if (impl_->construction_error_) {
         return std::unexpected(*impl_->construction_error_);
     }
     if (!impl_->sessions_dir_) {
-        return std::unexpected(cc::core::Error::make(
-            cc::core::ErrorCode::InvalidInput,
+        return std::unexpected(loom::core::Error::make(
+            loom::core::ErrorCode::InvalidInput,
             "resume() requires sessions_dir in HarnessConfig"));
     }
 
@@ -278,23 +278,23 @@ cc::core::Result<void> Harness::resume(std::string_view session_id) {
     // content-replacement state). No cc.server import. (OpenSSL DOES
     // enter the SDK closure via cc_query -> cc_services — the accepted
     // phase-3 cost; see §3.4.)
-    auto docs = cc::session::load_messages(*impl_->sessions_dir_, session_id);
+    auto docs = loom::session::load_messages(*impl_->sessions_dir_, session_id);
     if (docs.empty()) {
-        return std::unexpected(cc::core::Error::make(
-            cc::core::ErrorCode::SessionNotFound,
+        return std::unexpected(loom::core::Error::make(
+            loom::core::ErrorCode::SessionNotFound,
             std::format("No messages found for session {}", session_id)));
     }
 
-    std::vector<cc::core::Message> messages;
+    std::vector<loom::core::Message> messages;
     messages.reserve(docs.size());
     for (std::size_t i = 0; i < docs.size(); ++i) {
-        if (auto msg = cc::query::parse_session_message_value(docs[i].root(), i)) {
+        if (auto msg = loom::query::parse_session_message_value(docs[i].root(), i)) {
             messages.push_back(std::move(*msg));
         }
     }
     if (messages.empty()) {
-        return std::unexpected(cc::core::Error::make(
-            cc::core::ErrorCode::SessionCorrupted,
+        return std::unexpected(loom::core::Error::make(
+            loom::core::ErrorCode::SessionCorrupted,
             std::format("No parseable messages for session {}", session_id)));
     }
 
@@ -307,9 +307,9 @@ std::string Harness::session_id() const {
     return impl_->handle_->engine().session_id().str();
 }
 
-std::vector<cc::core::Message> Harness::conversation() const {
+std::vector<loom::core::Message> Harness::conversation() const {
     if (!impl_->handle_) return {};
     return impl_->handle_->engine().get_conversation();
 }
 
-} // namespace cc::sdk
+} // namespace loom::sdk

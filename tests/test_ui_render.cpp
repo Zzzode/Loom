@@ -30,7 +30,7 @@ namespace fs = std::filesystem;
 
 
 TEST(ReplScreen, CustomStatusLineSuppressesDefaultHintAndNativeStatusBar) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.status_line_enabled = true;
@@ -52,7 +52,7 @@ TEST(ReplScreen, CustomStatusLineSuppressesDefaultHintAndNativeStatusBar) {
 
 
 TEST(ReplScreen, CustomStatusLineOnlyRendersInPromptMode) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.prompt_store.input_mode = repl::InputMode::SlashCommand;
@@ -70,7 +70,7 @@ TEST(ReplScreen, CustomStatusLineOnlyRendersInPromptMode) {
 
 
 TEST(ReplScreen, PastingIndicatorShowsForBatchAndNotSingleKeystroke) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     // A terminal paste arrives as one multi-char event; a single keystroke
     // (incl. a 3-byte CJK char) must not trigger the hint.
@@ -99,7 +99,7 @@ TEST(ReplScreen, PastingIndicatorShowsForBatchAndNotSingleKeystroke) {
 
 
 TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->chrome_store.app_version = "9.9.9-test";
@@ -154,7 +154,7 @@ TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
 
 
 TEST(ReplScreen, EscapeDoublePressClearsInputAndSavesToHistory) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->chrome_store.app_version = "9.9.9-test";
@@ -194,7 +194,7 @@ TEST(ReplScreen, EscapeDoublePressClearsInputAndSavesToHistory) {
 
 
 TEST(ReplScreen, EscapeDoublePressExpiresAfterWindowAndRearms) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->chrome_store.app_version = "9.9.9-test";
@@ -233,7 +233,7 @@ TEST(ReplScreen, EscapeDoublePressExpiresAfterWindowAndRearms) {
 
 
 TEST(ReplScreen, BridgeStatusPillReflectsProjectionState) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     // TS REF: PromptInputFooter.tsx BridgeStatusIndicator +
     // bridgeStatusUtil.ts:124 getBridgeStatus.
@@ -279,7 +279,7 @@ TEST(ReplScreen, BridgeStatusPillReflectsProjectionState) {
 
 
 TEST(ReplScreen, FreshScreenDoesNotRenderLegacyEmptyState) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.chrome_store.app_version = "9.9.9-test";

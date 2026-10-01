@@ -22,7 +22,7 @@ export module loom.ui.screens.mcp_status_store;
 
 import std;
 
-export namespace cc::ui::repl_screen {
+export namespace loom::ui::repl_screen {
 
 /// RFC 0002 F3 store — MCP integration status, sharded out of
 /// ReplScreenState. Homed in cc.ui.screens (rank 10): the field type is a
@@ -41,4 +41,4 @@ struct McpStatusStore {
     std::vector<std::string> pending_at_mention_inserts;
 };
 
-}  // namespace cc::ui
+}  // namespace loom::ui

@@ -3,7 +3,7 @@ export module loom.security.privacy_level;
 
 import std;
 
-export namespace cc::utils::privacy {
+export namespace loom::utils::privacy {
 
 enum class PrivacyLevel {
     Default,
@@ -47,4 +47,4 @@ namespace detail {
     return std::nullopt;
 }
 
-} // namespace cc::utils::privacy
+} // namespace loom::utils::privacy

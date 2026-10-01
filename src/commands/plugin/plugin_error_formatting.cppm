@@ -14,7 +14,7 @@ export module loom.commands.plugin_error_formatting;
 
 import std;
 
-export namespace cc::commands::plugin {
+export namespace loom::commands::plugin {
 
 // ---------------------------------------------------------------------------
 // Plugin error type enumeration
@@ -293,4 +293,4 @@ struct PluginErrorDetail {
     return std::nullopt;
 }
 
-} // namespace cc::commands::plugin
+} // namespace loom::commands::plugin

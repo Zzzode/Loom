@@ -10,7 +10,7 @@ import std;
 
 import loom.serdes.json;
 
-namespace cc::tools::agent_runtime {
+namespace loom::tools::agent_runtime {
 
 namespace {
 
@@ -103,7 +103,7 @@ void refresh_native_agent_output_symlink(
 ) {
     auto content = trim(content_json);
     if (content.empty()) return fallback_sidechain_content_json(fallback_text);
-    auto parsed = cc::utils::json::parse(content);
+    auto parsed = loom::utils::json::parse(content);
     if (!parsed) return fallback_sidechain_content_json(fallback_text);
     auto root = parsed->root();
     if (!root.valid() || (!root.is_arr() && !root.is_obj() && !root.is_str())) {
@@ -151,13 +151,13 @@ void refresh_native_agent_output_symlink(
     std::string_view agent_id,
     std::size_t index
 ) {
-    auto parsed = cc::utils::json::parse(entry);
+    auto parsed = loom::utils::json::parse(entry);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
 
     auto root = parsed->root();
     auto message = root.get("message");
     std::string role = json_string_field(root, {"type"});
-    cc::utils::json::JsonVal content = root.get("content");
+    loom::utils::json::JsonVal content = root.get("content");
 
     if (message.is_obj()) {
         auto message_role = json_string_field(message, {"role"});
@@ -183,7 +183,7 @@ void refresh_native_agent_output_symlink(
     std::string_view entry,
     std::string_view agent_id
 ) {
-    auto parsed = cc::utils::json::parse(entry);
+    auto parsed = loom::utils::json::parse(entry);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
     if (json_string_field(root, {"type"}) != "content-replacement") return std::nullopt;
@@ -248,7 +248,7 @@ void refresh_native_agent_output_symlink(
     return entries;
 }
 void collect_sidechain_tool_use_state(
-    cc::utils::json::JsonVal content,
+    loom::utils::json::JsonVal content,
     std::vector<std::string>& tool_use_ids,
     std::unordered_set<std::string>& seen_tool_use_ids,
     std::unordered_set<std::string>& tool_result_ids
@@ -256,7 +256,7 @@ void collect_sidechain_tool_use_state(
     if (!content.valid()) return;
 
     if (content.is_arr()) {
-        content.iter([&](cc::utils::json::JsonVal block) {
+        content.iter([&](loom::utils::json::JsonVal block) {
             collect_sidechain_tool_use_state(block, tool_use_ids, seen_tool_use_ids, tool_result_ids);
         });
         return;
@@ -288,7 +288,7 @@ void collect_sidechain_tool_use_state(
     std::unordered_set<std::string> tool_result_ids;
 
     for (const auto& entry : entries) {
-        auto parsed = cc::utils::json::parse(entry);
+        auto parsed = loom::utils::json::parse(entry);
         if (!parsed || !parsed->root().is_obj()) continue;
         auto root = parsed->root();
         auto message = root.get("message");
@@ -488,7 +488,7 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     }
     return lines;
 }
-[[nodiscard]] std::string transcript_text_from_content(cc::utils::json::JsonVal content) {
+[[nodiscard]] std::string transcript_text_from_content(loom::utils::json::JsonVal content) {
     if (!content.valid()) return {};
     if (content.is_str()) return std::string(content.as_str());
 
@@ -507,7 +507,7 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
         out += std::move(text);
     };
 
-    content.iter([&](cc::utils::json::JsonVal block) {
+    content.iter([&](loom::utils::json::JsonVal block) {
         if (block.is_str()) {
             append(std::string(block.as_str()));
             return;
@@ -533,14 +533,14 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     });
     return out;
 }
-[[nodiscard]] std::optional<std::string> transcript_entry_from_ts_jsonl(cc::utils::json::JsonVal root) {
+[[nodiscard]] std::optional<std::string> transcript_entry_from_ts_jsonl(loom::utils::json::JsonVal root) {
     if (!root.valid() || !root.is_obj()) return std::nullopt;
 
     auto type = json_string_field(root, {"type"});
     if (type != "user" && type != "assistant" && type != "system") return std::nullopt;
 
     std::string role = type;
-    cc::utils::json::JsonVal content = root.get("content");
+    loom::utils::json::JsonVal content = root.get("content");
     auto message = root.get("message");
     if (message.is_obj()) {
         auto message_role = json_string_field(message, {"role"});
@@ -553,7 +553,7 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     return std::format("{}: {}", role, text);
 }
 [[nodiscard]] std::optional<std::string> transcript_entry_from_sidechain_jsonl_line(std::string_view line) {
-    auto parsed = cc::utils::json::parse(line);
+    auto parsed = loom::utils::json::parse(line);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
     auto raw = root.get("raw");
@@ -602,7 +602,7 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     return entries;
 }
 [[nodiscard]] std::optional<NativeAgentRecord> load_native_agent_record_from_path(const fs::path& path) {
-    auto parsed = cc::utils::json::parse_file(path);
+    auto parsed = loom::utils::json::parse_file(path);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
     auto agent_id = root.get_string("agent_id");
@@ -680,4 +680,4 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     }
     return records;
 }
-} // namespace cc::tools::agent_runtime
+} // namespace loom::tools::agent_runtime

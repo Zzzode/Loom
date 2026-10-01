@@ -6,7 +6,7 @@ export module loom.text.diff_utils;
 import std;
 import loom.text.parse_int;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 // Generate an inline diff with +/- markers
 std::string generate_inline_diff(std::string_view old_text, std::string_view new_text) {
@@ -142,13 +142,13 @@ parse_range(std::string_view value) {
     auto count_view = comma == std::string_view::npos ? std::string_view{"1"} : value.substr(comma + 1);
 
     std::size_t start = 0;
-    auto [start_ptr, start_ec] = cc::utils::from_chars(start_view.data(), start_view.data() + start_view.size(), start);
+    auto [start_ptr, start_ec] = loom::utils::from_chars(start_view.data(), start_view.data() + start_view.size(), start);
     if (start_ec != std::errc{} || start_ptr != start_view.data() + start_view.size()) {
         return std::nullopt;
     }
 
     std::size_t count = 0;
-    auto [count_ptr, count_ec] = cc::utils::from_chars(count_view.data(), count_view.data() + count_view.size(), count);
+    auto [count_ptr, count_ec] = loom::utils::from_chars(count_view.data(), count_view.data() + count_view.size(), count);
     if (count_ec != std::errc{} || count_ptr != count_view.data() + count_view.size()) {
         return std::nullopt;
     }
@@ -312,4 +312,4 @@ std::expected<std::string, std::string> apply_patch(std::string_view content, st
     return result;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

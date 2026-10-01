@@ -6,7 +6,7 @@ export module loom.model.model_cost;
 
 import std;
 
-export namespace cc::utils::model_cost {
+export namespace loom::utils::model_cost {
 
 struct ModelCosts {
     double input_tokens = 0;
@@ -140,4 +140,4 @@ inline constexpr ModelCosts COST_HAIKU_45{1, 5, 1.25, 0.1, 0.01};
     return format_model_pricing(it->second);
 }
 
-} // namespace cc::utils::model_cost
+} // namespace loom::utils::model_cost

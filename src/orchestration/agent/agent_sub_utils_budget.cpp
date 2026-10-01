@@ -11,16 +11,16 @@ import std;
 
 import loom.serdes.json;
 // Genuinely used: tool_result_already_replaced and
-// build_agent_tool_result_replacement reference cc::utils::PERSISTED_OUTPUT_TAG
+// build_agent_tool_result_replacement reference loom::utils::PERSISTED_OUTPUT_TAG
 // / PERSISTED_OUTPUT_CLOSING_TAG (defined in tool_helpers.cppm); graph_check
-// cannot see qualified cc::utils::NAME evidence because cc::utils is a
+// cannot see qualified loom::utils::NAME evidence because loom::utils is a
 // shallow (<3 segment) namespace path.
 import loom.tools.support.tool_helpers;  // arch-check: keep-import
 import loom.tools.tool;
 import loom.tools.agent_runtime;
 import loom.services.api.client;
 
-namespace cc::tools::agent::utils {
+namespace loom::tools::agent::utils {
 
 namespace fs = std::filesystem;
 
@@ -30,7 +30,7 @@ namespace fs = std::filesystem;
 }
 
 [[nodiscard]] std::optional<std::size_t> json_positive_size_t(
-    cc::utils::json::JsonVal value
+    loom::utils::json::JsonVal value
 ) {
     if (!value.valid() || !value.is_num()) return std::nullopt;
     const auto numeric = value.as_double();
@@ -43,7 +43,7 @@ namespace fs = std::filesystem;
     std::string_view tool_name
 ) {
     std::optional<std::size_t> override;
-    with_agent_growthbook_env_overrides([&](cc::utils::json::JsonVal root) {
+    with_agent_growthbook_env_overrides([&](loom::utils::json::JsonVal root) {
         auto overrides = root.get(AGENT_PERSIST_THRESHOLD_OVERRIDE_FLAG);
         if (!overrides.valid() || !overrides.is_obj()) return;
 
@@ -62,7 +62,7 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] std::size_t agent_per_message_budget_limit() {
     std::optional<std::size_t> override;
-    with_agent_growthbook_env_overrides([&](cc::utils::json::JsonVal root) {
+    with_agent_growthbook_env_overrides([&](loom::utils::json::JsonVal root) {
         override = json_positive_size_t(root.get(AGENT_PER_MESSAGE_BUDGET_OVERRIDE_FLAG));
     });
     return override.value_or(AGENT_MAX_TOOL_RESULTS_PER_MESSAGE_CHARS);
@@ -92,7 +92,7 @@ void mark_seen_tool_result_ids(
 }
 
 [[nodiscard]] bool tool_result_already_replaced(std::string_view text) {
-    return text.starts_with(cc::utils::PERSISTED_OUTPUT_TAG);
+    return text.starts_with(loom::utils::PERSISTED_OUTPUT_TAG);
 }
 
 [[nodiscard]] std::unordered_set<std::string> unbounded_tool_result_budget_names(
@@ -194,10 +194,10 @@ void mark_seen_tool_result_ids(
     std::string_view agent_id,
     std::string_view tool_use_id
 ) {
-    return cc::tools::agent_runtime::runtime_state_dir() /
+    return loom::tools::agent_runtime::runtime_state_dir() /
         "tool-results" /
-        (cc::tools::agent_runtime::safe_agent_filename(agent_id) + "-" +
-            cc::tools::agent_runtime::safe_agent_filename(tool_use_id) + ".txt");
+        (loom::tools::agent_runtime::safe_agent_filename(agent_id) + "-" +
+            loom::tools::agent_runtime::safe_agent_filename(tool_use_id) + ".txt");
 }
 
 [[nodiscard]] std::optional<std::string> build_agent_tool_result_replacement(
@@ -223,7 +223,7 @@ void mark_seen_tool_result_ids(
 
     std::string replacement;
     replacement.reserve(preview.size() + path.string().size() + 192);
-    replacement += cc::utils::PERSISTED_OUTPUT_TAG;
+    replacement += loom::utils::PERSISTED_OUTPUT_TAG;
     replacement += "\n";
     replacement += std::format(
         "Output too large ({} bytes). Full output saved to: {}\n\n",
@@ -232,7 +232,7 @@ void mark_seen_tool_result_ids(
     replacement += std::format("Preview (first {} bytes):\n", preview_len);
     replacement += preview;
     replacement += has_more ? "\n...\n" : "\n";
-    replacement += cc::utils::PERSISTED_OUTPUT_CLOSING_TAG;
+    replacement += loom::utils::PERSISTED_OUTPUT_CLOSING_TAG;
     return replacement;
 }
 
@@ -339,11 +339,11 @@ AgentToolResultBudgetOutcome apply_agent_tool_result_budget(
     }
 
     if (!newly_replaced.empty()) {
-        cc::tools::agent_runtime::native_agent_store().append_sidechain_entry(
+        loom::tools::agent_runtime::native_agent_store().append_sidechain_entry(
             agent_id,
             agent_content_replacement_entry_json(agent_id, newly_replaced));
     }
     return outcome;
 }
 
-} // namespace cc::tools::agent::utils
+} // namespace loom::tools::agent::utils

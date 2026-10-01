@@ -10,7 +10,7 @@ import std;
 
 import loom.tasks.task;
 
-export namespace cc::tasks {
+export namespace loom::tasks {
 
 // Forward declarations of all task state types (defined in their respective modules)
 // We use variant-based dispatch for type-safe task state handling.
@@ -26,7 +26,7 @@ enum class BashTaskKind : std::uint8_t {
 };
 
 /// State for a local shell (bash) task
-struct LocalShellTaskState : cc::core::TaskStateBase {
+struct LocalShellTaskState : loom::core::TaskStateBase {
     std::string command;
     struct Result {
         int code = 0;
@@ -42,8 +42,8 @@ struct LocalShellTaskState : cc::core::TaskStateBase {
 };
 
 /// Type guard for LocalShellTaskState
-[[nodiscard]] inline bool is_local_shell_task(const cc::core::TaskStateBase& task) noexcept {
-    return task.type == cc::core::TaskType::LocalBash;
+[[nodiscard]] inline bool is_local_shell_task(const loom::core::TaskStateBase& task) noexcept {
+    return task.type == loom::core::TaskType::LocalBash;
 }
 
 // ============================================================
@@ -103,7 +103,7 @@ struct AgentToolResult {
 };
 
 /// State for a local agent task
-struct LocalAgentTaskState : cc::core::TaskStateBase {
+struct LocalAgentTaskState : loom::core::TaskStateBase {
     std::string agent_id;
     std::string prompt;
     std::optional<AgentDefinition> selected_agent;
@@ -125,8 +125,8 @@ struct LocalAgentTaskState : cc::core::TaskStateBase {
 };
 
 /// Type guard for LocalAgentTaskState
-[[nodiscard]] inline bool is_local_agent_task(const cc::core::TaskStateBase& task) noexcept {
-    return task.type == cc::core::TaskType::LocalAgent;
+[[nodiscard]] inline bool is_local_agent_task(const loom::core::TaskStateBase& task) noexcept {
+    return task.type == loom::core::TaskType::LocalAgent;
 }
 
 /// Check if an agent task is a panel agent (not main-session)
@@ -181,7 +181,7 @@ struct AutofixPrMetadata {
 };
 
 /// State for a remote agent task
-struct RemoteAgentTaskState : cc::core::TaskStateBase {
+struct RemoteAgentTaskState : loom::core::TaskStateBase {
     RemoteTaskType remote_task_type = RemoteTaskType::RemoteAgent;
     std::optional<AutofixPrMetadata> remote_task_metadata;
     std::string session_id;
@@ -197,8 +197,8 @@ struct RemoteAgentTaskState : cc::core::TaskStateBase {
 };
 
 /// Type guard for RemoteAgentTaskState
-[[nodiscard]] inline bool is_remote_agent_task(const cc::core::TaskStateBase& task) noexcept {
-    return task.type == cc::core::TaskType::RemoteAgent;
+[[nodiscard]] inline bool is_remote_agent_task(const loom::core::TaskStateBase& task) noexcept {
+    return task.type == loom::core::TaskType::RemoteAgent;
 }
 
 // ============================================================
@@ -223,7 +223,7 @@ enum class PermissionMode : std::uint8_t {
 };
 
 /// State for an in-process teammate task
-struct InProcessTeammateTaskState : cc::core::TaskStateBase {
+struct InProcessTeammateTaskState : loom::core::TaskStateBase {
     TeammateIdentity identity;
     std::string prompt;
     std::optional<std::string> model;
@@ -245,8 +245,8 @@ struct InProcessTeammateTaskState : cc::core::TaskStateBase {
 };
 
 /// Type guard
-[[nodiscard]] inline bool is_in_process_teammate_task(const cc::core::TaskStateBase& task) noexcept {
-    return task.type == cc::core::TaskType::InProcessTeammate;
+[[nodiscard]] inline bool is_in_process_teammate_task(const loom::core::TaskStateBase& task) noexcept {
+    return task.type == loom::core::TaskType::InProcessTeammate;
 }
 
 /// Cap on messages kept in task state for UI display
@@ -285,7 +285,7 @@ struct DreamTurn {
 };
 
 /// State for a dream (memory consolidation) task
-struct DreamTaskState : cc::core::TaskStateBase {
+struct DreamTaskState : loom::core::TaskStateBase {
     DreamPhase phase = DreamPhase::Starting;
     int sessions_reviewing = 0;
     std::vector<std::string> files_touched;
@@ -296,8 +296,8 @@ struct DreamTaskState : cc::core::TaskStateBase {
 };
 
 /// Type guard
-[[nodiscard]] inline bool is_dream_task(const cc::core::TaskStateBase& task) noexcept {
-    return task.type == cc::core::TaskType::Dream;
+[[nodiscard]] inline bool is_dream_task(const loom::core::TaskStateBase& task) noexcept {
+    return task.type == loom::core::TaskType::Dream;
 }
 
 /// Max turns kept for live display
@@ -308,13 +308,13 @@ inline constexpr std::size_t MAX_DREAM_TURNS = 30;
 // ============================================================
 
 /// State for a local workflow task
-struct LocalWorkflowTaskState : cc::core::TaskStateBase {
+struct LocalWorkflowTaskState : loom::core::TaskStateBase {
     std::string workflow_name;
     std::string workflow_id;
 };
 
 /// State for a monitor MCP task
-struct MonitorMcpTaskState : cc::core::TaskStateBase {
+struct MonitorMcpTaskState : loom::core::TaskStateBase {
     std::string server_name;
     std::string tool_name;
 };
@@ -341,10 +341,10 @@ using BackgroundTaskState = TaskState;
 /// A task is considered a background task if:
 /// 1. It is running or pending
 /// 2. It has been explicitly backgrounded (not a foreground task)
-[[nodiscard]] inline bool is_background_task(const cc::core::TaskStateBase& task) noexcept {
+[[nodiscard]] inline bool is_background_task(const loom::core::TaskStateBase& task) noexcept {
     // Must be running or pending
-    if (task.status != cc::core::TaskStatus::Running &&
-        task.status != cc::core::TaskStatus::Pending) {
+    if (task.status != loom::core::TaskStatus::Running &&
+        task.status != loom::core::TaskStatus::Pending) {
         return false;
     }
     return true;
@@ -352,8 +352,8 @@ using BackgroundTaskState = TaskState;
 
 /// Overload that also checks isBackgrounded field for shell/agent tasks
 [[nodiscard]] inline bool is_background_task(const LocalShellTaskState& task) noexcept {
-    if (task.status != cc::core::TaskStatus::Running &&
-        task.status != cc::core::TaskStatus::Pending) {
+    if (task.status != loom::core::TaskStatus::Running &&
+        task.status != loom::core::TaskStatus::Pending) {
         return false;
     }
     // Foreground tasks are not "background tasks"
@@ -364,8 +364,8 @@ using BackgroundTaskState = TaskState;
 }
 
 [[nodiscard]] inline bool is_background_task(const LocalAgentTaskState& task) noexcept {
-    if (task.status != cc::core::TaskStatus::Running &&
-        task.status != cc::core::TaskStatus::Pending) {
+    if (task.status != loom::core::TaskStatus::Running &&
+        task.status != loom::core::TaskStatus::Pending) {
         return false;
     }
     if (!task.is_backgrounded) {
@@ -384,4 +384,4 @@ using BackgroundTaskState = TaskState;
     return task.agent_type == "main-session";
 }
 
-} // namespace cc::tasks
+} // namespace loom::tasks

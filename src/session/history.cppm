@@ -13,7 +13,7 @@ import std;
 import loom.types.types;
 import loom.serdes.json;
 
-export namespace cc::core {
+export namespace loom::core {
 
 // ============================================================
 // Conversation
@@ -218,7 +218,7 @@ public:
                 std::filesystem::create_directories(path.parent_path());
             }
 
-            cc::utils::json::JsonMutDoc doc;
+            loom::utils::json::JsonMutDoc doc;
             auto root = doc.object();
             root.add("version", doc.number(static_cast<int64_t>(1)));
             if (active_conversation_id_) {
@@ -262,7 +262,7 @@ public:
             return {};
         }
 
-        auto parsed = cc::utils::json::parse_file(storage_path_);
+        auto parsed = loom::utils::json::parse_file(storage_path_);
         if (!parsed) {
             return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
                 parsed.error().message()));
@@ -287,7 +287,7 @@ public:
         }
 
         std::optional<Error> parse_error;
-        conversations_value.iter([&](cc::utils::json::JsonVal item) {
+        conversations_value.iter([&](loom::utils::json::JsonVal item) {
             if (parse_error) return;
             auto parsed_conversation = parse_conversation(item);
             if (!parsed_conversation) {
@@ -333,8 +333,8 @@ private:
         return std::chrono::system_clock::time_point{std::chrono::milliseconds(ms)};
     }
 
-    [[nodiscard]] static cc::utils::json::JsonMutVal serialize_content_block(
-        cc::utils::json::JsonMutDoc& doc,
+    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_content_block(
+        loom::utils::json::JsonMutDoc& doc,
         const ContentBlock& block) {
         auto obj = doc.object();
         std::visit([&](const auto& value) {
@@ -387,8 +387,8 @@ private:
         return obj;
     }
 
-    [[nodiscard]] static cc::utils::json::JsonMutVal serialize_content_blocks(
-        cc::utils::json::JsonMutDoc& doc,
+    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_content_blocks(
+        loom::utils::json::JsonMutDoc& doc,
         const std::vector<ContentBlock>& blocks) {
         auto arr = doc.array();
         for (const auto& block : blocks) {
@@ -397,8 +397,8 @@ private:
         return arr;
     }
 
-    [[nodiscard]] static cc::utils::json::JsonMutVal serialize_compact_metadata(
-        cc::utils::json::JsonMutDoc& doc,
+    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_compact_metadata(
+        loom::utils::json::JsonMutDoc& doc,
         const CompactMetadata& metadata) {
         auto obj = doc.object();
         obj.add("trigger", doc.string(metadata.trigger));
@@ -413,8 +413,8 @@ private:
         return obj;
     }
 
-    [[nodiscard]] static cc::utils::json::JsonMutVal serialize_snip_metadata(
-        cc::utils::json::JsonMutDoc& doc,
+    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_snip_metadata(
+        loom::utils::json::JsonMutDoc& doc,
         const SnipMetadata& metadata) {
         auto obj = doc.object();
         auto removed = doc.array();
@@ -425,8 +425,8 @@ private:
         return obj;
     }
 
-    [[nodiscard]] static cc::utils::json::JsonMutVal serialize_message(
-        cc::utils::json::JsonMutDoc& doc,
+    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_message(
+        loom::utils::json::JsonMutDoc& doc,
         const Message& message) {
         auto obj = doc.object();
         obj.add("role", doc.string(std::string(role_to_string(get_role(message)))));
@@ -460,8 +460,8 @@ private:
         return obj;
     }
 
-    [[nodiscard]] static cc::utils::json::JsonMutVal serialize_conversation(
-        cc::utils::json::JsonMutDoc& doc,
+    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_conversation(
+        loom::utils::json::JsonMutDoc& doc,
         const std::string& id,
         const Conversation& conversation) {
         auto obj = doc.object();
@@ -478,7 +478,7 @@ private:
         return obj;
     }
 
-    [[nodiscard]] static Result<ContentBlock> parse_content_block(cc::utils::json::JsonVal block) {
+    [[nodiscard]] static Result<ContentBlock> parse_content_block(loom::utils::json::JsonVal block) {
         if (!block.is_obj()) {
             return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
                 "Conversation content block must be an object"));
@@ -503,7 +503,7 @@ private:
                 trb.content = std::string(content_val.as_str());
             } else if (content_val.is_arr()) {
                 std::vector<ToolResultContentItem> items;
-                content_val.iter([&items](cc::utils::json::JsonVal elem) {
+                content_val.iter([&items](loom::utils::json::JsonVal elem) {
                     if (!elem.is_obj()) return;
                     ToolResultContentItem ci;
                     if (auto t = elem.get("type"); t.is_str()) ci.type = t.as_str();
@@ -537,14 +537,14 @@ private:
     }
 
     [[nodiscard]] static Result<std::vector<ContentBlock>> parse_content_blocks(
-        cc::utils::json::JsonVal content) {
+        loom::utils::json::JsonVal content) {
         std::vector<ContentBlock> blocks;
         if (!content.valid() || !content.is_arr()) {
             return blocks;
         }
 
         std::optional<Error> parse_error;
-        content.iter([&](cc::utils::json::JsonVal item) {
+        content.iter([&](loom::utils::json::JsonVal item) {
             if (parse_error) return;
             auto parsed = parse_content_block(item);
             if (!parsed) {
@@ -560,7 +560,7 @@ private:
     }
 
     [[nodiscard]] static std::optional<CompactMetadata> parse_compact_metadata(
-        cc::utils::json::JsonVal value) {
+        loom::utils::json::JsonVal value) {
         if (!value.valid() || !value.is_obj()) return std::nullopt;
         CompactMetadata metadata;
         metadata.trigger = value.get_string("trigger");
@@ -580,13 +580,13 @@ private:
     }
 
     [[nodiscard]] static std::optional<SnipMetadata> parse_snip_metadata(
-        cc::utils::json::JsonVal value) {
+        loom::utils::json::JsonVal value) {
         if (!value.valid() || !value.is_obj()) return std::nullopt;
         auto removed = value.get("removed_uuids");
         if (!removed.is_arr()) return std::nullopt;
 
         SnipMetadata metadata;
-        removed.iter([&](cc::utils::json::JsonVal item) {
+        removed.iter([&](loom::utils::json::JsonVal item) {
             if (item.is_str()) {
                 metadata.removed_uuids.emplace_back(item.as_str());
             }
@@ -595,7 +595,7 @@ private:
         return metadata;
     }
 
-    [[nodiscard]] static Result<Message> parse_message(cc::utils::json::JsonVal value) {
+    [[nodiscard]] static Result<Message> parse_message(loom::utils::json::JsonVal value) {
         if (!value.is_obj()) {
             return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
                 "Conversation message must be an object"));
@@ -652,7 +652,7 @@ private:
     }
 
     [[nodiscard]] static Result<std::pair<std::string, std::unique_ptr<Conversation>>> parse_conversation(
-        cc::utils::json::JsonVal value) {
+        loom::utils::json::JsonVal value) {
         if (!value.is_obj()) {
             return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
                 "Conversation entry must be an object"));
@@ -670,7 +670,7 @@ private:
         std::optional<Error> parse_error;
         auto messages = value.get("messages");
         if (messages.valid() && messages.is_arr()) {
-            messages.iter([&](cc::utils::json::JsonVal item) {
+            messages.iter([&](loom::utils::json::JsonVal item) {
                 if (parse_error) return;
                 auto parsed = parse_message(item);
                 if (!parsed) {
@@ -688,4 +688,4 @@ private:
     }
 };
 
-} // namespace cc::core
+} // namespace loom::core

@@ -8,7 +8,7 @@ import std;
 
 namespace fs = std::filesystem;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 class FileReadCache {
 public:
@@ -122,4 +122,4 @@ inline FileReadCache& get_global_cache() {
     return instance;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

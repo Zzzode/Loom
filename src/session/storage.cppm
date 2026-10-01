@@ -13,7 +13,7 @@ import std;
 
 import loom.serdes.json;
 
-export namespace cc::session {
+export namespace loom::session {
 
 [[nodiscard]] inline std::chrono::system_clock::time_point file_time_to_system_time(
     std::filesystem::file_time_type file_time
@@ -57,7 +57,7 @@ struct SessionMetadata {
         meta.last_active = file_time_to_system_time(std::filesystem::last_write_time(metadata_path));
 
         // Parse JSON metadata
-        auto doc_result = cc::utils::json::parse_file(metadata_path);
+        auto doc_result = loom::utils::json::parse_file(metadata_path);
         if (doc_result) {
             auto root = doc_result->root();
             if (root.valid() && root.is_obj()) {
@@ -129,7 +129,7 @@ struct SessionMetadata {
     auto metadata_path = dir / "metadata.json";
     if (!std::filesystem::exists(metadata_path)) return std::nullopt;
 
-    auto doc_result = cc::utils::json::parse_file(metadata_path);
+    auto doc_result = loom::utils::json::parse_file(metadata_path);
     if (!doc_result) return std::nullopt;
 
     auto root = doc_result->root();
@@ -176,7 +176,7 @@ inline bool save_session_metadata(
     auto dir = get_session_dir(sessions_dir, meta.session_id);
     std::filesystem::create_directories(dir);
 
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
 
     root.add("session_id", doc.string(meta.session_id));
@@ -225,11 +225,11 @@ inline bool append_message(
 }
 
 /// Load all messages from a session's JSONL file
-[[nodiscard]] inline std::vector<cc::utils::json::JsonDoc> load_messages(
+[[nodiscard]] inline std::vector<loom::utils::json::JsonDoc> load_messages(
     const std::filesystem::path& sessions_dir,
     std::string_view session_id
 ) {
-    std::vector<cc::utils::json::JsonDoc> messages;
+    std::vector<loom::utils::json::JsonDoc> messages;
     auto path = get_messages_path(sessions_dir, session_id);
 
     if (!std::filesystem::exists(path)) return messages;
@@ -238,7 +238,7 @@ inline bool append_message(
     std::string line;
     while (std::getline(ifs, line)) {
         if (line.empty()) continue;
-        auto doc_result = cc::utils::json::parse(line);
+        auto doc_result = loom::utils::json::parse(line);
         if (doc_result) {
             messages.push_back(std::move(*doc_result));
         }
@@ -246,4 +246,4 @@ inline bool append_message(
     return messages;
 }
 
-} // namespace cc::session
+} // namespace loom::session

@@ -10,7 +10,7 @@ module loom.teams.swarm.helpers;
 
 import std;
 
-namespace cc::utils::swarm_helpers {
+namespace loom::utils::swarm_helpers {
 
 std::size_t WorkerPermissionGrants::shard_index_for(
     std::string_view canonical_path) {
@@ -24,4 +24,4 @@ std::size_t WorkerPermissionGrants::shard_index_for(
     return static_cast<std::size_t>(hash % kShardCount);
 }
 
-}  // namespace cc::utils::swarm_helpers
+}  // namespace loom::utils::swarm_helpers

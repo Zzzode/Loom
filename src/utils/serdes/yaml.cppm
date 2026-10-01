@@ -9,7 +9,7 @@ export module loom.serdes.yaml;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 
 struct YamlValue;
@@ -285,4 +285,4 @@ namespace yaml_detail {
     return result;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

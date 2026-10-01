@@ -8,7 +8,7 @@ export module loom.skills.file_access.port;
 
 import std;
 
-export namespace cc::skills {
+export namespace loom::skills {
 
 // ============================================================
 // File Access Hook - cross-module skill discovery trigger
@@ -63,4 +63,4 @@ inline void notify_file_access(
     }
 }
 
-} // namespace cc::skills
+} // namespace loom::skills

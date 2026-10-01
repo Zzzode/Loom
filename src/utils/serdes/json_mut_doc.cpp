@@ -11,7 +11,7 @@ module loom.serdes.json;
 
 import std;
 
-namespace cc::utils::json {
+namespace loom::utils::json {
 
 JsonMutDoc::JsonMutDoc() : doc_(yyjson_mut_doc_new(nullptr)) {}
 JsonMutDoc::~JsonMutDoc() { if (doc_) yyjson_mut_doc_free(doc_); }
@@ -53,4 +53,4 @@ JsonMutVal JsonMutDoc::root_mut() noexcept { return {yyjson_mut_doc_get_root(doc
 
 yyjson_mut_doc* JsonMutDoc::raw() const noexcept { return doc_; }
 
-} // namespace cc::utils::json
+} // namespace loom::utils::json

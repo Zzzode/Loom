@@ -36,7 +36,7 @@ export module loom.ui.dialogs.prompt_dialog;
 
 import std;
 
-export namespace cc::ui::dialogs::prompt_dialog {
+export namespace loom::ui::dialogs::prompt_dialog {
 
 using namespace ftxui;
 
@@ -394,4 +394,4 @@ namespace detail {
     });
 }
 
-} // namespace cc::ui::dialogs::prompt_dialog
+} // namespace loom::ui::dialogs::prompt_dialog

@@ -11,7 +11,7 @@ export module loom.services.assistant_session_history;
 
 import std;
 
-export namespace cc::services::assistant {
+export namespace loom::services::assistant {
 
 namespace fs = std::filesystem;
 
@@ -268,4 +268,4 @@ struct SessionHistoryConfig {
     return true;
 }
 
-} // namespace cc::services::assistant
+} // namespace loom::services::assistant

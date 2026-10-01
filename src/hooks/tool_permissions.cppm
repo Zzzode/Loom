@@ -8,7 +8,7 @@ export module loom.hooks.tool_permissions;
 
 import std;
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 enum class PermissionDecision {
     allow,
@@ -294,4 +294,4 @@ private:
     }
 };
 
-} // namespace cc::hooks
+} // namespace loom::hooks

@@ -28,12 +28,12 @@ import loom.services.team_memory.secret_scanner;
 import loom.commands.plugin_trust_text;
 import loom.plugins.plugin;
 
-export namespace cc::ui::trust_utils {
+export namespace loom::ui::trust_utils {
 
-using namespace cc::services::team_memory;
-using cc::commands::plugin::is_trusted_marketplace_domain;
-using cc::plugins::PluginCapabilities;
-using cc::plugins::PluginDefinition;
+using namespace loom::services::team_memory;
+using loom::commands::plugin::is_trusted_marketplace_domain;
+using loom::plugins::PluginCapabilities;
+using loom::plugins::PluginDefinition;
 
 // =========================================================================
 // Enums & core types
@@ -295,12 +295,12 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 
 /// Map the bash_security DangerLevel to the 4-tier RiskLevel scale.
 /// Safe → Low, Caution → Medium, Dangerous → High, Forbidden → Critical.
-[[nodiscard]] constexpr RiskLevel from_danger_level(cc::utils::bash::DangerLevel dl) noexcept {
+[[nodiscard]] constexpr RiskLevel from_danger_level(loom::utils::bash::DangerLevel dl) noexcept {
     switch (dl) {
-        case cc::utils::bash::DangerLevel::Safe:      return RiskLevel::Low;
-        case cc::utils::bash::DangerLevel::Caution:   return RiskLevel::Medium;
-        case cc::utils::bash::DangerLevel::Dangerous: return RiskLevel::High;
-        case cc::utils::bash::DangerLevel::Forbidden: return RiskLevel::Critical;
+        case loom::utils::bash::DangerLevel::Safe:      return RiskLevel::Low;
+        case loom::utils::bash::DangerLevel::Caution:   return RiskLevel::Medium;
+        case loom::utils::bash::DangerLevel::Dangerous: return RiskLevel::High;
+        case loom::utils::bash::DangerLevel::Forbidden: return RiskLevel::Critical;
     }
     return RiskLevel::Low;
 }
@@ -583,4 +583,4 @@ inline constexpr int kHighTierCountdownSeconds = 5;
 /// The exact confirmation word the user must type for Critical-tier.
 inline constexpr std::string_view kCriticalConfirmWord = "YES";
 
-} // namespace cc::ui::trust_utils
+} // namespace loom::ui::trust_utils

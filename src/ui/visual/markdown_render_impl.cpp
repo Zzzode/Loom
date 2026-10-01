@@ -2,7 +2,7 @@
 // Phase C batch 6). Holds the FTXUI block/inline renderers: render_inlines,
 // render_heading, the depth numbering helpers (number_to_letter,
 // number_to_roman, get_list_number - in the pre-existing nested
-// cc::ui::detail::detail namespace), render_ulist/olist/blockquote/table/hr.
+// loom::ui::detail::detail namespace), render_ulist/olist/blockquote/table/hr.
 // render_code_block lives in markdown_render_code_impl.cpp (it pulls in
 // cc.ui.visual.code_highlight).
 module;
@@ -13,7 +13,7 @@ module loom.ui.visual.markdown;
 
 import std;
 
-namespace cc::ui {
+namespace loom::ui {
 namespace detail {
 
 [[nodiscard]] Element render_inlines(
@@ -62,7 +62,7 @@ namespace detail {
                 // render them as clickable → openBrowser/openPath.
                 //
                 // We use FTXUI's `hyperlink(url)` decorator instead of raw
-                // OSC 8 text (cc::utils::make_hyperlink).  The decorator:
+                // OSC 8 text (loom::utils::make_hyperlink).  The decorator:
                 //   1. Registers the URL with the Screen via
                 //      RegisterHyperlink(), storing it in hyperlinks_[].
                 //   2. Sets pixel.hyperlink = id for every pixel the link
@@ -76,7 +76,7 @@ namespace detail {
                 // When fullscreen mouse tracking IS active (the common case
                 // for loom), AppAdapter::OnEvent detects left-button
                 // releases at pixels with hyperlink != 0 and calls
-                // cc::utils::try_open_hyperlink(url) — mirroring TS Ink's
+                // loom::utils::try_open_hyperlink(url) — mirroring TS Ink's
                 // ink.onHyperlinkClick callback.
                 Element el = text(tok.text) | hyperlink(tok.url) | underlined;
                 if (opts.dim_color) el = el | dim;
@@ -376,4 +376,4 @@ namespace detail {
 }
 
 } // namespace detail
-} // namespace cc::ui
+} // namespace loom::ui

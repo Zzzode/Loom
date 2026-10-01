@@ -37,11 +37,11 @@ import loom.fs.edit.file_edit;
 import loom.text.string_utils;
 import loom.ui.visual.structured_diff;
 
-export namespace cc::ui::components::file_edit_tool_diff {
+export namespace loom::ui::components::file_edit_tool_diff {
 
 using namespace ftxui;
-namespace sd = ::cc::ui::structured_diff;
-namespace fe = ::cc::utils::file_edit;
+namespace sd = ::loom::ui::structured_diff;
+namespace fe = ::loom::utils::file_edit;
 
 // ─── Props / types ───────────────────────────────────────────────────────────
 
@@ -220,7 +220,7 @@ const Color kSubtleColor = Color::GrayLight;
     // First line for language detection (shebang, etc.)
     std::optional<std::string> first_line;
     if (!file_content.empty()) {
-        first_line = std::string(cc::utils::first_line_of(file_content));
+        first_line = std::string(loom::utils::first_line_of(file_content));
     }
 
     return DiffData{
@@ -279,4 +279,4 @@ const Color kSubtleColor = Color::GrayLight;
     return diff_frame(std::move(body));
 }
 
-} // namespace cc::ui::components::file_edit_tool_diff
+} // namespace loom::ui::components::file_edit_tool_diff

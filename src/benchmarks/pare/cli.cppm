@@ -13,10 +13,10 @@ import loom.benchmarks.pare.case_loader;
 import loom.benchmarks.pare.workspace;
 import loom.serdes.json;
 
-export namespace cc::benchmarks::pare {
+export namespace loom::benchmarks::pare {
 
 namespace fs = std::filesystem;
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 struct ParsedArgs {
     std::optional<std::string> config_path;
@@ -397,4 +397,4 @@ inline int cli_main(int argc, const char* argv[]) {
     return 0;
 }
 
-} // namespace cc::benchmarks::pare
+} // namespace loom::benchmarks::pare

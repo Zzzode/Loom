@@ -19,10 +19,10 @@ import std;
 
 import loom.parsing.tree_sitter.bash;
 
-export namespace cc::tools::bash_validation {
+export namespace loom::tools::bash_validation {
 
 /// Severity of a detected dangerous pattern.
-/// Mirrors cc::utils::tree_sitter::bash::Severity for call-site convenience.
+/// Mirrors loom::utils::tree_sitter::bash::Severity for call-site convenience.
 enum class DangerSeverity {
     None = 0,
     Low,
@@ -198,7 +198,7 @@ struct DangerClassification {
 
 #if CC_HAS_TREE_SITTER
     // Attempt AST-based classification for higher precision.
-    auto ast_result = cc::utils::tree_sitter::bash::classify_dangerous(
+    auto ast_result = loom::utils::tree_sitter::bash::classify_dangerous(
         std::filesystem::path{}, command);
     if (!ast_result.parse_error) {
         out.used_ast = true;
@@ -206,13 +206,13 @@ struct DangerClassification {
         if (ast_result.is_dangerous) {
             out.is_dangerous = true;
             switch (ast_result.severity) {
-                case cc::utils::tree_sitter::bash::Severity::Critical:
+                case loom::utils::tree_sitter::bash::Severity::Critical:
                     out.severity = DangerSeverity::Critical; break;
-                case cc::utils::tree_sitter::bash::Severity::High:
+                case loom::utils::tree_sitter::bash::Severity::High:
                     out.severity = DangerSeverity::High; break;
-                case cc::utils::tree_sitter::bash::Severity::Medium:
+                case loom::utils::tree_sitter::bash::Severity::Medium:
                     out.severity = DangerSeverity::Medium; break;
-                case cc::utils::tree_sitter::bash::Severity::Low:
+                case loom::utils::tree_sitter::bash::Severity::Low:
                     out.severity = DangerSeverity::Low; break;
                 default:
                     out.severity = DangerSeverity::None; break;
@@ -282,4 +282,4 @@ getDestructiveCommandWarning(std::string_view command) {
     return get_destructive_command_warning(command).has_value();
 }
 
-} // namespace cc::tools::bash_validation
+} // namespace loom::tools::bash_validation

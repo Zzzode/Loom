@@ -3,7 +3,7 @@ export module loom.skills.mcp_skill_builders;
 
 import std;
 
-export namespace cc::skills {
+export namespace loom::skills {
 
 // An MCP-backed skill wraps an MCP server tool as a reusable skill
 struct McpSkill {
@@ -74,4 +74,4 @@ std::expected<std::string, std::string> invoke_mcp_skill(McpSkill skill, std::ma
     return invoker(skill, merged_params);
 }
 
-} // namespace cc::skills
+} // namespace loom::skills

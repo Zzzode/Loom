@@ -13,10 +13,10 @@ import std;
 
 import loom.types.types;
 
-export namespace cc::core {
+export namespace loom::core {
 
 /// Strong ID for worker agents
 struct WorkerIdTag {};
 using WorkerId = StrongId<WorkerIdTag>;
 
-} // namespace cc::core
+} // namespace loom::core

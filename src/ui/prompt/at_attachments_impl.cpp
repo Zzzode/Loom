@@ -15,11 +15,11 @@ import loom.types.types;  // arch-check: keep-import
 import loom.tools.agent_runtime;
 import loom.orchestration.tools.mcp;
 
-namespace cc::ui::prompt::at_attachments {
+namespace loom::ui::prompt::at_attachments {
 
-namespace core = cc::core;
-namespace agent_runtime = cc::tools::agent_runtime;
-namespace mcp = cc::tools;
+namespace core = loom::core;
+namespace agent_runtime = loom::tools::agent_runtime;
+namespace mcp = loom::tools;
 namespace fs = std::filesystem;
 
 // AT-10: agent mention — load agent definitions, attach when_to_use on match.
@@ -55,4 +55,4 @@ std::optional<core::ContentBlock> try_attach_mcp_resource(
                     sname, suri, read->content)}};
 }
 
-}  // namespace cc::ui::prompt::at_attachments
+}  // namespace loom::ui::prompt::at_attachments

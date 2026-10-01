@@ -27,11 +27,11 @@ import std;
 
 import loom.utils.error;
 
-export namespace cc::utils::json {
+export namespace loom::utils::json {
 
-using cc::utils::Error;
-using cc::utils::ErrorCode;
-using cc::utils::Result;
+using loom::utils::Error;
+using loom::utils::ErrorCode;
+using loom::utils::Result;
 
 
 class JsonVal;
@@ -394,4 +394,4 @@ template <typename Path>
 
 [[nodiscard]] std::string to_string(JsonVal val);
 
-} // namespace cc::utils::json
+} // namespace loom::utils::json

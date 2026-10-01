@@ -40,13 +40,13 @@ import loom.utils.error;
 import loom.net.http.http_encoding;
 import loom.serdes.json;
 
-export namespace cc::services::auth::aws {
+export namespace loom::services::auth::aws {
 
-using cc::utils::Error;
-using cc::utils::Result;
+using loom::utils::Error;
+using loom::utils::Result;
 using namespace std::chrono;
 using namespace std::string_view_literals;
-namespace http = cc::utils::http;
+namespace http = loom::utils::http;
 
 // ---------------------------------------------------------------------------
 // Credentials
@@ -256,7 +256,7 @@ using QueryParams = std::vector<std::pair<std::string, std::string>>;
     std::string_view date_ymd,
     std::string_view region,
     std::string_view service) {
-    using cc::utils::crypto::hmac_sha256;
+    using loom::utils::crypto::hmac_sha256;
     std::string k_secret = std::string("AWS4") + std::string(secret_access_key);
     auto k_date = hmac_sha256(
         std::string_view(k_secret).substr(0, k_secret.size()),
@@ -278,7 +278,7 @@ using QueryParams = std::vector<std::pair<std::string, std::string>>;
 [[nodiscard]] inline std::array<uint8_t, 32> hmac_bytes(
     const std::array<uint8_t, 32>& key_bytes,
     std::string_view msg_chars) {
-    return cc::utils::crypto::hmac_sha256(
+    return loom::utils::crypto::hmac_sha256(
         std::span<const uint8_t>(key_bytes.data(), key_bytes.size()),
         std::span<const uint8_t>(
             reinterpret_cast<const uint8_t*>(msg_chars.data()),
@@ -294,7 +294,7 @@ using QueryParams = std::vector<std::pair<std::string, std::string>>;
     std::string_view region,
     std::string_view service,
     std::string_view canonical_request_str) {
-    using cc::utils::crypto::sha256;
+    using loom::utils::crypto::sha256;
     std::string scope;
     scope.reserve(ymd.size() + 1 + region.size() + 1 + service.size() +
                   1 + 12);
@@ -360,12 +360,12 @@ struct SignedRequest {
     std::string_view region,
     std::string_view service,
     std::optional<system_clock::time_point> tp = std::nullopt) {
-    using cc::utils::crypto::sha256;
-    using cc::utils::crypto::sha256_bytes_to_hex;
+    using loom::utils::crypto::sha256;
+    using loom::utils::crypto::sha256_bytes_to_hex;
 
     if (!creds.valid()) {
         return std::unexpected(Error(
-            cc::utils::ErrorCode::invalid_argument,
+            loom::utils::ErrorCode::invalid_argument,
             "AWS SigV4: missing AccessKeyId / SecretAccessKey"));
     }
     auto ts = make_timestamps(tp.value_or(system_clock::now()));
@@ -459,7 +459,7 @@ struct SignedRequest {
 // after any user scripts have already run).
 [[nodiscard]] inline std::optional<AwsCredentials>
 credentials_from_env() {
-    using cc::utils::env::get_env;
+    using loom::utils::env::get_env;
     auto akid = get_env("AWS_ACCESS_KEY_ID");
     auto sk = get_env("AWS_SECRET_ACCESS_KEY");
     if (!akid || !sk || akid->empty() || sk->empty()) return std::nullopt;
@@ -520,7 +520,7 @@ using IniSections = std::unordered_map<std::string, std::unordered_map<std::stri
 // "profile " prefix variant.
 [[nodiscard]] inline std::optional<AwsCredentials>
 credentials_from_ini() {
-    using cc::utils::env::get_env;
+    using loom::utils::env::get_env;
     auto profile = get_env("AWS_PROFILE").value_or("default");
     const char* home_env = std::getenv("HOME");
     std::string home = home_env ? home_env : "";
@@ -609,7 +609,7 @@ credentials_from_imds_v2(std::chrono::milliseconds timeout_ms = 1500ms) {
         if (!creds_r || creds_r->status != 200) return std::nullopt;
 
         // Parse JSON.
-        using namespace cc::utils::json;
+        using namespace loom::utils::json;
         auto parsed = parse(creds_r->body);
         if (!parsed) return std::nullopt;
         auto root = parsed->root();
@@ -667,7 +667,7 @@ resolve_default_credentials() {
 //   ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION (per-model, handled by caller)
 //     > AWS_REGION > AWS_DEFAULT_REGION > "us-east-1"
 [[nodiscard]] inline std::string resolve_region() {
-    using cc::utils::env::get_env;
+    using loom::utils::env::get_env;
     if (auto r = get_env("AWS_REGION"); r && !r->empty()) return *r;
     if (auto r = get_env("AWS_DEFAULT_REGION"); r && !r->empty()) return *r;
     return "us-east-1";
@@ -683,8 +683,8 @@ struct BedrockAuthMode {
     std::optional<std::string> bearer_token; // non-empty overrides everything
 };
 [[nodiscard]] inline BedrockAuthMode detect_bedrock_mode() {
-    using cc::utils::env::get_env;
-    using cc::utils::env::is_env_truthy;
+    using loom::utils::env::get_env;
+    using loom::utils::env::is_env_truthy;
     BedrockAuthMode m;
     m.use_bedrock = is_env_truthy("LOOM_USE_BEDROCK");
     m.skip_auth   = is_env_truthy("LOOM_SKIP_BEDROCK_AUTH");
@@ -695,4 +695,4 @@ struct BedrockAuthMode {
     return m;
 }
 
-} // namespace cc::services::auth::aws
+} // namespace loom::services::auth::aws

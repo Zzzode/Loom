@@ -37,11 +37,11 @@ import loom.bridge.messages;
 import loom.cli.sse_transport;
 import loom.cli.ccr_client;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
-using cc::core::Error;
-using cc::core::ErrorCode;
-using cc::core::Result;
+using loom::core::Error;
+using loom::core::ErrorCode;
+using loom::core::Result;
 
 // =========================================================================
 // Core bridge value types
@@ -402,20 +402,20 @@ private:
 };
 
 // =========================================================================
-// SseConnection — HTTP SSE (EventSource) wrapper (delegates to cc::cli::SSETransport)
+// SseConnection — HTTP SSE (EventSource) wrapper (delegates to loom::cli::SSETransport)
 // =========================================================================
 
 /// Wraps an HTTP EventSource connection for Server-Sent Events.
 /// The v2 transport uses SSE for the read stream (server -> REPL).
 ///
-/// Delegates to the real cc::cli::SSETransport implementation (W3C SSE parsing,
+/// Delegates to the real loom::cli::SSETransport implementation (W3C SSE parsing,
 /// reconnect with exponential backoff, Last-Event-ID resume). The public API
 /// (connect / disconnect / is_connected / on_event / on_error) is preserved so
 /// callers (ReplV2Transport) are unaffected.
 class SseConnection {
     std::string url_;
     std::string token_;
-    std::unique_ptr<cc::cli::SSETransport> transport_;
+    std::unique_ptr<loom::cli::SSETransport> transport_;
     std::jthread dispatch_thread_;
     std::atomic<bool> dispatch_running_{false};
 
@@ -441,10 +441,10 @@ public:
         url_ = url;
         token_ = token;
 
-        transport_ = std::make_unique<cc::cli::SSETransport>();
+        transport_ = std::make_unique<loom::cli::SSETransport>();
 
         // Wire transport callbacks into our (event_type, data) callback shape.
-        transport_->on_event([this](const cc::cli::SSEEvent& event) {
+        transport_->on_event([this](const loom::cli::SSEEvent& event) {
             if (on_event) on_event(event.event, event.data);
         });
         transport_->on_error([this](std::string_view error) {
@@ -510,13 +510,13 @@ public:
 };
 
 // =========================================================================
-// CcrV2Client — v2 worker connection (delegates to cc::cli::CcrClient)
+// CcrV2Client — v2 worker connection (delegates to loom::cli::CcrClient)
 // =========================================================================
 
 /// CCR v2 client for worker connections.
 /// Handles /worker/register (session handshake), heartbeats, and event posting.
 ///
-/// Delegates the real HTTP write path to cc::cli::CcrClient, which performs
+/// Delegates the real HTTP write path to loom::cli::CcrClient, which performs
 /// authenticated POSTs to ${session_url}/sessions/{id}/messages with reconnect
 /// support. The public API (register_worker / start_session / report_state /
 /// write / write_batch / close) is preserved so callers (ReplV2Transport) are
@@ -531,7 +531,7 @@ class CcrV2Client {
     /// refresh scheduler's timer thread while request threads read it.
     std::mutex token_mutex_;
     std::atomic<bool> registered_{false};
-    std::unique_ptr<cc::cli::CcrClient> client_;
+    std::unique_ptr<loom::cli::CcrClient> client_;
     std::string last_state_{"idle"};
 
 public:
@@ -578,11 +578,11 @@ public:
         }
         // Build the real client. CcrConnectionOptions mirror the heartbeat/
         // reconnect defaults from Params.
-        cc::cli::CcrConnectionOptions opts;
+        loom::cli::CcrConnectionOptions opts;
         opts.auto_reconnect = true;
         opts.user_agent = "loom/bridge-v2";
 
-        client_ = std::make_unique<cc::cli::CcrClient>(std::move(opts));
+        client_ = std::make_unique<loom::cli::CcrClient>(std::move(opts));
 
         // The ingress_token is the worker JWT issued by /bridge. CcrClient
         // treats its token parameter as a Bearer credential.
@@ -1490,4 +1490,4 @@ std::unique_ptr<ReplBridgeHandle> init_env_less_bridge_core(EnvLessBridgeParams 
     );
 }
 
-} // namespace cc::bridge
+} // namespace loom::bridge

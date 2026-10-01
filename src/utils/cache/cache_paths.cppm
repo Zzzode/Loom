@@ -7,7 +7,7 @@ export module loom.cache.cache_paths;
 
 import std;
 
-export namespace cc::utils::cache_paths {
+export namespace loom::utils::cache_paths {
 
 constexpr std::size_t max_sanitized_length = 200;
 
@@ -72,4 +72,4 @@ struct CachePathSet {
     };
 }
 
-} // namespace cc::utils::cache_paths
+} // namespace loom::utils::cache_paths

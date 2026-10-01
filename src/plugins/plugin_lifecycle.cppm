@@ -14,7 +14,7 @@ export module loom.plugins.plugin_lifecycle;
 import std;
 import loom.process.bash.bash_execution;
 
-export namespace cc::utils::plugins {
+export namespace loom::utils::plugins {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Plugin State (from pluginLoader, pluginRunner)
@@ -113,12 +113,12 @@ inline auto get_plugin_dir(std::string_view plugin_id) -> std::filesystem::path 
 inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::string> {
     std::array<char, 4096> buffer{};
     std::string result;
-    FILE* pipe = cc::utils::bash::popen_spawn(cmd.c_str());
+    FILE* pipe = loom::utils::bash::popen_spawn(cmd.c_str());
     if (!pipe) return std::unexpected("Failed to execute: " + cmd);
     while (std::fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
         result += buffer.data();
     }
-    int status = cc::utils::bash::pclose_spawn(pipe);
+    int status = loom::utils::bash::pclose_spawn(pipe);
     if (status != 0) return std::unexpected("Command failed with status " + std::to_string(status));
     return result;
 }
@@ -530,4 +530,4 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
     return {};
 }
 
-} // namespace cc::utils::plugins
+} // namespace loom::utils::plugins

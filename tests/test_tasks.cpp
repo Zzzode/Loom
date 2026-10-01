@@ -56,18 +56,18 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
     EnvironmentGuard agent_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
     EnvironmentGuard backend_guard("LOOM_TEAMMATE_BACKEND", "in-process");
     EnvironmentGuard verification_guard("LOOM_ENABLE_VERIFICATION_AGENT", "1");
-    cc::utils::swarm_backends::BackendRegistry::reset();
-    cc::tools::global_team_store().clear_for_testing();
-    cc::tools::agent_runtime::native_agent_store().clear_for_testing();
+    loom::utils::swarm_backends::BackendRegistry::reset();
+    loom::tools::global_team_store().clear_for_testing();
+    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    auto created = cc::tools::global_team_store().create(
+    auto created = loom::tools::global_team_store().create(
         "migration-team",
         "migration-team",
-        std::vector<cc::tools::TeamMember>{
-            cc::tools::TeamMember{
+        std::vector<loom::tools::TeamMember>{
+            loom::tools::TeamMember{
                 .agent_id = "reviewer-two@migration-team",
-                .role = cc::tools::MemberRole::Reviewer,
-                .status = cc::tools::MemberStatus::Working,
+                .role = loom::tools::MemberRole::Reviewer,
+                .status = loom::tools::MemberStatus::Working,
                 .current_task = std::nullopt,
                 .last_result = std::nullopt,
             }
@@ -75,10 +75,10 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
     );
     ASSERT_TRUE(created);
 
-    cc::tools::MultiAgentConfig config{
+    loom::tools::MultiAgentConfig config{
         .agents = {
-            cc::tools::MultiAgentAgentConfig{
-                .type = cc::tools::AgentType::Verify,
+            loom::tools::MultiAgentAgentConfig{
+                .type = loom::tools::AgentType::Verify,
                 .name = "reviewer-two",
                 .model = "haiku",
                 .system_prompt = "Review migration parity",
@@ -93,9 +93,9 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
         .prefer_in_process = true,
     };
 
-    auto futures = cc::tools::spawn_agents(config);
-    auto results = cc::tools::wait_all(
-        std::span<std::future<cc::tools::MultiAgentResult>>(futures.data(), futures.size())
+    auto futures = loom::tools::spawn_agents(config);
+    auto results = loom::tools::wait_all(
+        std::span<std::future<loom::tools::MultiAgentResult>>(futures.data(), futures.size())
     );
 
     ASSERT_EQ(results.size(), 1u);
@@ -106,9 +106,9 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
     EXPECT_NE(results[0].output.find("status: teammate_spawned"), std::string::npos) << results[0].output;
     EXPECT_EQ(results[0].output.find("Agent 'reviewer-two'"), std::string::npos);
 
-    auto record = cc::tools::agent_runtime::native_agent_store().get("reviewer-two-2@migration-team");
+    auto record = loom::tools::agent_runtime::native_agent_store().get("reviewer-two-2@migration-team");
     ASSERT_TRUE(record);
-    EXPECT_EQ(record->status, cc::tools::agent_runtime::NativeAgentStatus::Queued);
+    EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Queued);
     EXPECT_TRUE(record->background);
     ASSERT_TRUE(record->teammate_backend);
     EXPECT_EQ(*record->teammate_backend, "in-process");
@@ -123,19 +123,19 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
     ASSERT_GE(record->transcript.size(), 1u);
     EXPECT_EQ(record->transcript[0], "user: Review the team migration");
 
-    auto team = cc::tools::global_team_store().get_by_id_or_name("migration-team");
+    auto team = loom::tools::global_team_store().get_by_id_or_name("migration-team");
     ASSERT_TRUE(team);
     ASSERT_EQ((*team)->members.size(), 2u);
     auto member = std::ranges::find_if((*team)->members, [](const auto& candidate) {
         return candidate.agent_id == "reviewer-two-2@migration-team";
     });
     ASSERT_NE(member, (*team)->members.end());
-    EXPECT_EQ(member->role, cc::tools::MemberRole::Reviewer);
-    EXPECT_EQ(member->status, cc::tools::MemberStatus::Working);
+    EXPECT_EQ(member->role, loom::tools::MemberRole::Reviewer);
+    EXPECT_EQ(member->status, loom::tools::MemberStatus::Working);
 
-    cc::tools::agent_runtime::native_agent_store().clear_for_testing();
-    cc::tools::global_team_store().clear_for_testing();
-    cc::utils::swarm_backends::BackendRegistry::reset();
+    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
+    loom::tools::global_team_store().clear_for_testing();
+    loom::utils::swarm_backends::BackendRegistry::reset();
     std::error_code ec;
     fs::remove_all(root, ec);
 }
@@ -144,12 +144,12 @@ TEST(SpawnMultiAgent, NonTeamAgentsUseAgentToolBackgroundPath) {
     const auto root = unique_test_dir("loom-spawn-multi-agent-local-");
     fs::create_directories(root);
     EnvironmentGuard agent_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
-    cc::tools::agent_runtime::native_agent_store().clear_for_testing();
+    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    cc::tools::MultiAgentConfig config{
+    loom::tools::MultiAgentConfig config{
         .agents = {
-            cc::tools::MultiAgentAgentConfig{
-                .type = cc::tools::AgentType::GeneralPurpose,
+            loom::tools::MultiAgentAgentConfig{
+                .type = loom::tools::AgentType::GeneralPurpose,
                 .name = "local-worker",
                 .model = "haiku",
                 .system_prompt = "Review migration parity",
@@ -164,9 +164,9 @@ TEST(SpawnMultiAgent, NonTeamAgentsUseAgentToolBackgroundPath) {
         .prefer_in_process = true,
     };
 
-    auto futures = cc::tools::spawn_agents(config);
-    auto results = cc::tools::wait_all(
-        std::span<std::future<cc::tools::MultiAgentResult>>(futures.data(), futures.size())
+    auto futures = loom::tools::spawn_agents(config);
+    auto results = loom::tools::wait_all(
+        std::span<std::future<loom::tools::MultiAgentResult>>(futures.data(), futures.size())
     );
 
     ASSERT_EQ(results.size(), 1u);
@@ -174,23 +174,23 @@ TEST(SpawnMultiAgent, NonTeamAgentsUseAgentToolBackgroundPath) {
     EXPECT_NE(results[0].output.find("Queued background agent local-worker"), std::string::npos) << results[0].output;
     EXPECT_EQ(results[0].output.find("Agent 'local-worker'"), std::string::npos);
 
-    auto record = cc::tools::agent_runtime::native_agent_store().get("local-worker");
+    auto record = loom::tools::agent_runtime::native_agent_store().get("local-worker");
     ASSERT_TRUE(record);
     EXPECT_TRUE(record->background);
-    EXPECT_EQ(record->status, cc::tools::agent_runtime::NativeAgentStatus::Queued);
+    EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Queued);
     EXPECT_EQ(record->agent_type, "general-purpose");
     ASSERT_TRUE(record->cwd);
     EXPECT_EQ(*record->cwd, fs::weakly_canonical(root).string());
     ASSERT_FALSE(record->transcript.empty());
     EXPECT_NE(record->transcript.front().find("Inspect the non-team migration path"), std::string::npos);
 
-    cc::tools::agent_runtime::native_agent_store().clear_for_testing();
+    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     std::error_code ec;
     fs::remove_all(root, ec);
 }
 
 TEST(LocalAgentTask, NotificationLeavesOutputFileEmptyWhenNoPathIsKnown) {
-    auto xml = cc::tasks::generate_agent_notification(
+    auto xml = loom::tasks::generate_agent_notification(
         "task_123",
         "Review code",
         "completed"
@@ -202,7 +202,7 @@ TEST(LocalAgentTask, NotificationLeavesOutputFileEmptyWhenNoPathIsKnown) {
 }
 
 TEST(LocalAgentTask, NotificationUsesExplicitOutputFileWhenProvided) {
-    auto xml = cc::tasks::generate_agent_notification(
+    auto xml = loom::tasks::generate_agent_notification(
         "task_123",
         "Review code",
         "completed",
@@ -218,7 +218,7 @@ TEST(LocalAgentTask, NotificationUsesExplicitOutputFileWhenProvided) {
 }
 
 TEST(LocalAgentTask, NotificationEscapesXmlTextNodes) {
-    auto xml = cc::tasks::generate_agent_notification(
+    auto xml = loom::tasks::generate_agent_notification(
         "task_<1>&",
         "Review <code>&docs",
         "failed",
@@ -241,7 +241,7 @@ TEST(LocalAgentTask, NotificationEscapesXmlTextNodes) {
 }
 
 TEST(LocalAgentTask, StoppedNotificationUsesStoppedStatusAndSummary) {
-    auto xml = cc::tasks::generate_agent_notification(
+    auto xml = loom::tasks::generate_agent_notification(
         "task_123",
         "Review code",
         "stopped"
@@ -253,11 +253,11 @@ TEST(LocalAgentTask, StoppedNotificationUsesStoppedStatusAndSummary) {
 }
 
 TEST(InProcessTeammateTask, AppendMessageStoresUiVisiblePendingMessage) {
-    cc::tasks::InProcessTeammateTaskState state{};
-    state.type = cc::core::TaskType::InProcessTeammate;
-    state.status = cc::core::TaskStatus::Running;
+    loom::tasks::InProcessTeammateTaskState state{};
+    state.type = loom::core::TaskType::InProcessTeammate;
+    state.status = loom::core::TaskStatus::Running;
 
-    cc::tasks::append_teammate_message("tm_1", "hello", [&](const std::string&, std::function<void(cc::tasks::InProcessTeammateTaskState&)> mutate) {
+    loom::tasks::append_teammate_message("tm_1", "hello", [&](const std::string&, std::function<void(loom::tasks::InProcessTeammateTaskState&)> mutate) {
         mutate(state);
     });
 
@@ -266,90 +266,90 @@ TEST(InProcessTeammateTask, AppendMessageStoresUiVisiblePendingMessage) {
 }
 
 TEST(InProcessTeammateTask, FiltersTaskRegistryToTeammateStates) {
-    cc::tasks::InProcessTeammateTaskState teammate{};
-    teammate.type = cc::core::TaskType::InProcessTeammate;
-    teammate.status = cc::core::TaskStatus::Running;
+    loom::tasks::InProcessTeammateTaskState teammate{};
+    teammate.type = loom::core::TaskType::InProcessTeammate;
+    teammate.status = loom::core::TaskStatus::Running;
     teammate.identity.agent_id = "researcher@team";
     teammate.identity.agent_name = "researcher";
 
-    cc::tasks::LocalAgentTaskState local_agent{};
-    local_agent.type = cc::core::TaskType::LocalAgent;
-    local_agent.status = cc::core::TaskStatus::Running;
+    loom::tasks::LocalAgentTaskState local_agent{};
+    local_agent.type = loom::core::TaskType::LocalAgent;
+    local_agent.status = loom::core::TaskStatus::Running;
 
-    std::vector<cc::core::TaskStateBase*> registry = {&teammate, &local_agent};
-    auto result = cc::tasks::get_all_in_process_teammate_tasks(registry);
+    std::vector<loom::core::TaskStateBase*> registry = {&teammate, &local_agent};
+    auto result = loom::tasks::get_all_in_process_teammate_tasks(registry);
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].identity.agent_id, "researcher@team");
 }
 
 TEST(PillLabel, CountsShellsAndMonitorsSeparately) {
-    cc::tasks::LocalShellTaskState shell{};
-    shell.type = cc::core::TaskType::LocalBash;
-    shell.kind = cc::tasks::BashTaskKind::Bash;
+    loom::tasks::LocalShellTaskState shell{};
+    shell.type = loom::core::TaskType::LocalBash;
+    shell.kind = loom::tasks::BashTaskKind::Bash;
 
-    cc::tasks::LocalShellTaskState monitor{};
-    monitor.type = cc::core::TaskType::LocalBash;
-    monitor.kind = cc::tasks::BashTaskKind::Monitor;
+    loom::tasks::LocalShellTaskState monitor{};
+    monitor.type = loom::core::TaskType::LocalBash;
+    monitor.kind = loom::tasks::BashTaskKind::Monitor;
 
-    std::vector<cc::core::TaskStateBase*> tasks = {&shell, &monitor};
+    std::vector<loom::core::TaskStateBase*> tasks = {&shell, &monitor};
 
-    EXPECT_EQ(cc::tasks::get_pill_label(tasks), "1 shell, 1 monitor");
+    EXPECT_EQ(loom::tasks::get_pill_label(tasks), "1 shell, 1 monitor");
 }
 
 TEST(PillLabel, CountsUniqueTeammateTeams) {
-    cc::tasks::InProcessTeammateTaskState researcher{};
-    researcher.type = cc::core::TaskType::InProcessTeammate;
+    loom::tasks::InProcessTeammateTaskState researcher{};
+    researcher.type = loom::core::TaskType::InProcessTeammate;
     researcher.identity.team_name = "alpha";
 
-    cc::tasks::InProcessTeammateTaskState reviewer{};
-    reviewer.type = cc::core::TaskType::InProcessTeammate;
+    loom::tasks::InProcessTeammateTaskState reviewer{};
+    reviewer.type = loom::core::TaskType::InProcessTeammate;
     reviewer.identity.team_name = "alpha";
 
-    cc::tasks::InProcessTeammateTaskState implementer{};
-    implementer.type = cc::core::TaskType::InProcessTeammate;
+    loom::tasks::InProcessTeammateTaskState implementer{};
+    implementer.type = loom::core::TaskType::InProcessTeammate;
     implementer.identity.team_name = "beta";
 
-    std::vector<cc::core::TaskStateBase*> tasks = {&researcher, &reviewer, &implementer};
+    std::vector<loom::core::TaskStateBase*> tasks = {&researcher, &reviewer, &implementer};
 
-    EXPECT_EQ(cc::tasks::get_pill_label(tasks), "2 teams");
+    EXPECT_EQ(loom::tasks::get_pill_label(tasks), "2 teams");
 }
 
 TEST(PillLabel, ShowsUltraplanAttentionStatesAndCta) {
-    cc::tasks::RemoteAgentTaskState remote{};
-    remote.type = cc::core::TaskType::RemoteAgent;
+    loom::tasks::RemoteAgentTaskState remote{};
+    remote.type = loom::core::TaskType::RemoteAgent;
     remote.is_ultraplan = true;
 
-    std::vector<cc::core::TaskStateBase*> tasks = {&remote};
+    std::vector<loom::core::TaskStateBase*> tasks = {&remote};
 
     EXPECT_EQ(
-        cc::tasks::get_pill_label(tasks),
-        std::string(cc::tasks::DIAMOND_OPEN) + " ultraplan");
-    EXPECT_FALSE(cc::tasks::pill_needs_cta(tasks));
+        loom::tasks::get_pill_label(tasks),
+        std::string(loom::tasks::DIAMOND_OPEN) + " ultraplan");
+    EXPECT_FALSE(loom::tasks::pill_needs_cta(tasks));
 
-    remote.ultraplan_phase = cc::tasks::UltraplanPhase::NeedsInput;
+    remote.ultraplan_phase = loom::tasks::UltraplanPhase::NeedsInput;
     EXPECT_EQ(
-        cc::tasks::get_pill_label(tasks),
-        std::string(cc::tasks::DIAMOND_OPEN) + " ultraplan needs your input");
-    EXPECT_TRUE(cc::tasks::pill_needs_cta(tasks));
+        loom::tasks::get_pill_label(tasks),
+        std::string(loom::tasks::DIAMOND_OPEN) + " ultraplan needs your input");
+    EXPECT_TRUE(loom::tasks::pill_needs_cta(tasks));
 
-    remote.ultraplan_phase = cc::tasks::UltraplanPhase::PlanReady;
+    remote.ultraplan_phase = loom::tasks::UltraplanPhase::PlanReady;
     EXPECT_EQ(
-        cc::tasks::get_pill_label(tasks),
-        std::string(cc::tasks::DIAMOND_FILLED) + " ultraplan ready");
-    EXPECT_TRUE(cc::tasks::pill_needs_cta(tasks));
+        loom::tasks::get_pill_label(tasks),
+        std::string(loom::tasks::DIAMOND_FILLED) + " ultraplan ready");
+    EXPECT_TRUE(loom::tasks::pill_needs_cta(tasks));
 }
 
 TEST(PillLabel, ShowsRemoteCloudSessionLabelForNonUltraplanTasks) {
-    cc::tasks::RemoteAgentTaskState remote{};
-    remote.type = cc::core::TaskType::RemoteAgent;
+    loom::tasks::RemoteAgentTaskState remote{};
+    remote.type = loom::core::TaskType::RemoteAgent;
 
-    std::vector<cc::core::TaskStateBase*> tasks = {&remote};
+    std::vector<loom::core::TaskStateBase*> tasks = {&remote};
 
     EXPECT_EQ(
-        cc::tasks::get_pill_label(tasks),
-        std::string(cc::tasks::DIAMOND_OPEN) + " 1 cloud session");
-    EXPECT_FALSE(cc::tasks::pill_needs_cta(tasks));
+        loom::tasks::get_pill_label(tasks),
+        std::string(loom::tasks::DIAMOND_OPEN) + " 1 cloud session");
+    EXPECT_FALSE(loom::tasks::pill_needs_cta(tasks));
 }
 
 // ============================================================================
@@ -358,8 +358,8 @@ TEST(PillLabel, ShowsRemoteCloudSessionLabelForNonUltraplanTasks) {
 
 namespace loom_pane_observer_test {
 
-namespace sw = cc::utils::swarm_backends;
-namespace po = cc::utils::pane_observer;
+namespace sw = loom::utils::swarm_backends;
+namespace po = loom::utils::pane_observer;
 
 // In-memory pane backend that scripts a queue of capture results per pane,
 // so observer polling/done-detection can be driven without tmux.

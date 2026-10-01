@@ -4,7 +4,7 @@ import std;
 
 import loom.services.rate_limit.rate_limit_hook;
 
-export namespace cc::commands::reset_limits {
+export namespace loom::commands::reset_limits {
 struct CommandResponse { bool ok{true}; std::string message; };
 [[nodiscard]] inline auto name() -> std::string_view { return "reset_limits"; }
 
@@ -12,8 +12,8 @@ struct CommandResponse { bool ok{true}; std::string message; };
     if (!scope.empty() && scope != "rate-limit" && scope != "all") {
         return {.ok = false, .message = "reset-limits supports: rate-limit, all"};
     }
-    cc::services::rate_limit::clear_rate_limit_state();
-    const auto state = cc::services::rate_limit::check_rate_limit_state();
+    loom::services::rate_limit::clear_rate_limit_state();
+    const auto state = loom::services::rate_limit::check_rate_limit_state();
     return {.ok = true, .message = std::format(
         "Rate limit state reset: active={}, total_retries={}",
         state.is_rate_limited ? "true" : "false", state.total_retries)};

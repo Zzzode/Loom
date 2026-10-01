@@ -21,7 +21,7 @@ import std;
 
 import loom.ui.dialogs.system;                     // DialogQueue / DialogRendererRegistry
 
-export namespace cc::ui::repl_screen {
+export namespace loom::ui::repl_screen {
 
 /// RFC 0002 F3 store — dialog state (overlay dialogs, inline panels,
 /// wizard/trust component handles, the M7 dialog queue + renderer
@@ -38,8 +38,8 @@ struct DialogStore {
     // engine pushes payloads into dialog_queue between frames; ReplScreen
     // dispatches render + events through dialog_renderers at priority
     // Standalone > Modal > Overlay > Bottom.
-    cc::ui::dialogs::system::DialogQueue dialog_queue;
-    cc::ui::dialogs::system::DialogRendererRegistry dialog_renderers;
+    loom::ui::dialogs::system::DialogQueue dialog_queue;
+    loom::ui::dialogs::system::DialogRendererRegistry dialog_renderers;
 
     // ── Overlay dialog component handles (lazy-created, opaque) ─────────
     // UI13: agent wizard component handle (lazily created by
@@ -73,4 +73,4 @@ struct DialogStore {
     int settings_initial_tab = 0;  // matches SettingsTabId::General = 0
 };
 
-}  // namespace cc::ui
+}  // namespace loom::ui

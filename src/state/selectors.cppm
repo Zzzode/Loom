@@ -9,7 +9,7 @@
 /// selectors_ui_tasks.cpp (UI state + tasks/agents + the task-view/multi-agent
 /// composites), selectors_companion_mcp.cpp (companion buddy + MCP/plugins),
 /// selectors_conversation.cpp (message/conversation + is_ui_busy; the only
-/// impl unit that imports cc.types.types for cc::core::TokenUsage), and
+/// impl unit that imports cc.types.types for loom::core::TokenUsage), and
 /// selectors_features.cpp (prompt suggestion, speculation, skill improvement,
 /// inbox, worker sandbox).  This primary keeps the MemoizedSelector class
 /// template and the five create_*_based_selector factory templates inline
@@ -26,7 +26,7 @@ import std;
 import loom.types.types;
 import loom.state.app_state;
 
-export namespace cc::state::selectors {
+export namespace loom::state::selectors {
 
 // ============================================================
 // Memoization Infrastructure
@@ -377,7 +377,7 @@ public:
 [[nodiscard]] bool has_error(const AppState& state) noexcept;
 
 /// Get the total token usage
-[[nodiscard]] const cc::core::TokenUsage& get_total_usage(const AppState& state) noexcept;
+[[nodiscard]] const loom::core::TokenUsage& get_total_usage(const AppState& state) noexcept;
 
 /// Get the total cost in USD
 [[nodiscard]] double get_total_cost_usd(const AppState& state) noexcept;
@@ -546,4 +546,4 @@ template <typename Value>
     );
 }
 
-} // namespace cc::state::selectors
+} // namespace loom::state::selectors

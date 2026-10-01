@@ -14,11 +14,11 @@ import loom.serdes.json;
 import loom.process.async;
 import loom.hooks.registry;
 
-export namespace cc::utils::hooks_config {
+export namespace loom::utils::hooks_config {
 
-using namespace cc::utils::hooks_registry;
-using cc::utils::async::Task;
-using cc::utils::json::JsonVal;
+using namespace loom::utils::hooks_registry;
+using loom::utils::async::Task;
+using loom::utils::json::JsonVal;
 namespace fs = std::filesystem;
 
 // =========================================================================
@@ -352,4 +352,4 @@ private:
     std::vector<SkillHookOutcomeRecord> outcomes_;
 };
 
-} // namespace cc::utils::hooks_config
+} // namespace loom::utils::hooks_config

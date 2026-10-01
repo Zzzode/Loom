@@ -14,7 +14,7 @@ export import loom.types.types;
 export import loom.types.tool_types;
 import loom.serdes.json;
 
-export namespace cc::core {
+export namespace loom::core {
 
 // ============================================================
 // Tool Permission Model
@@ -50,7 +50,7 @@ enum class ToolPermission : std::uint8_t {
 /// Check if a top-level key exists in the JSON input object
 [[nodiscard]] inline bool has_field(const ToolInput& input, std::string_view key) noexcept {
     if (key.empty()) return false;
-    auto parsed = cc::utils::json::parse(input.raw_json);
+    auto parsed = loom::utils::json::parse(input.raw_json);
     if (!parsed) return false;
     return parsed->root().has(key);
 }
@@ -298,4 +298,4 @@ private:
     MissingToolHandler missing_tool_handler_;
 };
 
-} // namespace cc::core
+} // namespace loom::core

@@ -5,7 +5,7 @@ export module loom.text.words;
 
 import std;
 
-export namespace cc::utils::words {
+export namespace loom::utils::words {
 
 inline constexpr std::array<std::string_view, 219> adjectives = {
     "abundant", "ancient", "bright", "calm",
@@ -270,4 +270,4 @@ template <std::size_t N>
         detail::random_index(nouns.size()));
 }
 
-} // namespace cc::utils::words
+} // namespace loom::utils::words

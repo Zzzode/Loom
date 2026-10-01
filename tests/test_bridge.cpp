@@ -45,7 +45,7 @@ private:
 };
 
 std::filesystem::path unique_temp_file(std::string_view suffix) {
-    return std::filesystem::temp_directory_path() / (cc::bridge::generate_session_id() + std::string(suffix));
+    return std::filesystem::temp_directory_path() / (loom::bridge::generate_session_id() + std::string(suffix));
 }
 
 std::string extract_json_string_field(std::string_view json, std::string_view key) {
@@ -689,31 +689,31 @@ private:
 } // namespace
 
 TEST(BridgeMessages, DetectsAndNormalizesMalformedBase64Images) {
-    cc::bridge::ContentBlock malformed = cc::bridge::ImageBlock{
-        .type = cc::bridge::ContentBlockType::Image,
+    loom::bridge::ContentBlock malformed = loom::bridge::ImageBlock{
+        .type = loom::bridge::ContentBlockType::Image,
         .source = {.media_type = "", .data = "iVBORw0KGgo="},
     };
 
-    EXPECT_TRUE(cc::bridge::is_malformed_base64_image(malformed));
-    EXPECT_EQ(cc::bridge::detect_image_format_from_base64("iVBORw0KGgo="), "image/png");
+    EXPECT_TRUE(loom::bridge::is_malformed_base64_image(malformed));
+    EXPECT_EQ(loom::bridge::detect_image_format_from_base64("iVBORw0KGgo="), "image/png");
 
-    auto normalized = cc::bridge::normalize_image_blocks({malformed});
+    auto normalized = loom::bridge::normalize_image_blocks({malformed});
     ASSERT_EQ(normalized.size(), 1u);
-    ASSERT_TRUE(std::holds_alternative<cc::bridge::ImageBlock>(normalized.front()));
-    EXPECT_EQ(std::get<cc::bridge::ImageBlock>(normalized.front()).source.media_type, "image/png");
+    ASSERT_TRUE(std::holds_alternative<loom::bridge::ImageBlock>(normalized.front()));
+    EXPECT_EQ(std::get<loom::bridge::ImageBlock>(normalized.front()).source.media_type, "image/png");
 }
 
 TEST(BridgeMessages, ExtractsOnlyUserMessagesWithContent) {
-    cc::bridge::SDKMessage ignored;
+    loom::bridge::SDKMessage ignored;
     ignored.type = "assistant";
-    EXPECT_FALSE(cc::bridge::extract_inbound_message_fields(ignored).has_value());
+    EXPECT_FALSE(loom::bridge::extract_inbound_message_fields(ignored).has_value());
 
-    cc::bridge::SDKMessage user;
+    loom::bridge::SDKMessage user;
     user.type = "user";
     user.message.content = std::string("hello bridge");
     user.uuid = "uuid-1";
 
-    auto extracted = cc::bridge::extract_inbound_message_fields(user);
+    auto extracted = loom::bridge::extract_inbound_message_fields(user);
     ASSERT_TRUE(extracted.has_value());
     ASSERT_TRUE(std::holds_alternative<std::string>(extracted->content));
     EXPECT_EQ(std::get<std::string>(extracted->content), "hello bridge");
@@ -723,11 +723,11 @@ TEST(BridgeMessages, ExtractsOnlyUserMessagesWithContent) {
 
 TEST(BridgeMessages, FlushGateBuffersUntilOpened) {
     std::vector<std::string> handled;
-    cc::bridge::MessageFlushGate gate([&handled](const cc::bridge::SDKMessage& msg) {
+    loom::bridge::MessageFlushGate gate([&handled](const loom::bridge::SDKMessage& msg) {
         handled.push_back(msg.type);
     });
 
-    cc::bridge::SDKMessage message;
+    loom::bridge::SDKMessage message;
     message.type = "user";
     gate.enqueue(message);
     EXPECT_EQ(gate.buffer().size(), 1u);
@@ -745,12 +745,12 @@ TEST(BridgeConfig, LoadsDefaultsEnvironmentAndJsonFile) {
     ScopedEnvVar clear_host("CC_BRIDGE_HOST");
     ScopedEnvVar clear_token("CC_BRIDGE_TOKEN");
 
-    cc::bridge::BridgeConfigLoader loader;
+    loom::bridge::BridgeConfigLoader loader;
     auto defaults = loader.load();
     ASSERT_TRUE(defaults.has_value());
     EXPECT_EQ(defaults->host, "localhost");
     EXPECT_EQ(defaults->port, 7860u);
-    EXPECT_EQ(defaults->transport, cc::bridge::TransportType::websocket);
+    EXPECT_EQ(defaults->transport, loom::bridge::TransportType::websocket);
 
     auto path = unique_temp_file("_bridge_config.json");
     {
@@ -761,7 +761,7 @@ TEST(BridgeConfig, LoadsDefaultsEnvironmentAndJsonFile) {
     auto loaded = loader.load_from_file(path.string());
     std::filesystem::remove(path);
     ASSERT_TRUE(loaded.has_value());
-    EXPECT_EQ(loaded->transport, cc::bridge::TransportType::http_polling);
+    EXPECT_EQ(loaded->transport, loom::bridge::TransportType::http_polling);
     EXPECT_EQ(loaded->host, "127.0.0.1");
     EXPECT_EQ(loaded->port, 9000u);
     EXPECT_EQ(loaded->path, "/x");
@@ -772,7 +772,7 @@ TEST(BridgeConfig, LoadsDefaultsEnvironmentAndJsonFile) {
 }
 
 TEST(BridgeConfig, RejectsMissingOrInvalidConfigFiles) {
-    cc::bridge::BridgeConfigLoader loader;
+    loom::bridge::BridgeConfigLoader loader;
     EXPECT_FALSE(loader.load_from_file("/definitely/not/present/bridge.json").has_value());
 
     auto path = unique_temp_file("_bridge_config_invalid.json");
@@ -790,15 +790,15 @@ TEST(BridgeTransport, WebSocketConnectSendsAndDisconnects) {
     LocalBridgeWebSocketServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::bridge::WebSocketTransport transport;
-    std::vector<cc::bridge::TransportState> transitions;
+    loom::bridge::WebSocketTransport transport;
+    std::vector<loom::bridge::TransportState> transitions;
     std::vector<std::string> received;
     std::mutex received_mutex;
     std::condition_variable received_cv;
-    transport.on_state_change([&transitions](cc::bridge::TransportState, cc::bridge::TransportState next) {
+    transport.on_state_change([&transitions](loom::bridge::TransportState, loom::bridge::TransportState next) {
         transitions.push_back(next);
     });
-    transport.on_message([&](cc::bridge::BridgeMessage msg) {
+    transport.on_message([&](loom::bridge::BridgeMessage msg) {
         {
             std::lock_guard lock(received_mutex);
             received.push_back(msg.id);
@@ -810,12 +810,12 @@ TEST(BridgeTransport, WebSocketConnectSendsAndDisconnects) {
     ASSERT_TRUE(transport.connect(url, std::nullopt).has_value());
     EXPECT_TRUE(transport.is_connected());
 
-    cc::bridge::BridgeMessage message{
+    loom::bridge::BridgeMessage message{
         .id = "msg-1",
         .type = "request",
         .method = "ping",
         .payload = R"({"ok":true})",
-        .priority = cc::bridge::MessagePriority::high,
+        .priority = loom::bridge::MessagePriority::high,
         .timestamp = std::chrono::system_clock::now(),
         .correlation_id = "corr-1",
     };
@@ -841,16 +841,16 @@ TEST(BridgeTransport, WebSocketConnectSendsAndDisconnects) {
     transport.disconnect();
     EXPECT_FALSE(transport.is_connected());
     ASSERT_FALSE(transitions.empty());
-    EXPECT_EQ(transitions.back(), cc::bridge::TransportState::disconnected);
+    EXPECT_EQ(transitions.back(), loom::bridge::TransportState::disconnected);
 }
 
 TEST(BridgeTransport, FlushGateQueuesUntilOpened) {
-    cc::bridge::TransportFlushGate gate;
+    loom::bridge::TransportFlushGate gate;
     std::vector<std::string> sent;
-    gate.set_sender([&sent](cc::bridge::BridgeMessage msg) { sent.push_back(msg.id); });
+    gate.set_sender([&sent](loom::bridge::BridgeMessage msg) { sent.push_back(msg.id); });
 
     gate.close();
-    cc::bridge::BridgeMessage queued;
+    loom::bridge::BridgeMessage queued;
     queued.id = "queued";
     queued.type = "event";
     gate.enqueue(queued);
@@ -864,7 +864,7 @@ TEST(BridgeTransport, FlushGateQueuesUntilOpened) {
 }
 
 TEST(BridgeTransport, CapacityWakeInvokesCallbackOnReleaseBelowCapacity) {
-    cc::bridge::CapacityWake capacity;
+    loom::bridge::CapacityWake capacity;
     bool notified = false;
     capacity.set_capacity(2);
     capacity.on_available([&] { notified = true; });
@@ -881,11 +881,11 @@ TEST(BridgeTransport, HttpPollingPostsMessagesAndPollsInboundEvents) {
     LocalBridgeApiHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::bridge::HttpPollingTransport transport;
-    std::vector<cc::bridge::BridgeMessage> received;
+    loom::bridge::HttpPollingTransport transport;
+    std::vector<loom::bridge::BridgeMessage> received;
     std::mutex received_mutex;
     std::condition_variable received_cv;
-    transport.on_message([&](cc::bridge::BridgeMessage msg) {
+    transport.on_message([&](loom::bridge::BridgeMessage msg) {
         {
             std::lock_guard lock(received_mutex);
             received.push_back(std::move(msg));
@@ -896,12 +896,12 @@ TEST(BridgeTransport, HttpPollingPostsMessagesAndPollsInboundEvents) {
     ASSERT_TRUE(transport.connect(server.base_url() + "/bridge", "poll-token").has_value());
     ASSERT_TRUE(transport.is_connected());
 
-    cc::bridge::BridgeMessage outbound{
+    loom::bridge::BridgeMessage outbound{
         .id = "client-1",
         .type = "event",
         .method = "client/ping",
         .payload = R"({"hello":true})",
-        .priority = cc::bridge::MessagePriority::normal,
+        .priority = loom::bridge::MessagePriority::normal,
         .timestamp = std::chrono::system_clock::now(),
         .correlation_id = std::nullopt,
     };
@@ -935,7 +935,7 @@ TEST(BridgeTransport, HttpPollingPostsMessagesAndPollsInboundEvents) {
     ASSERT_FALSE(received.empty());
     EXPECT_EQ(received.front().id, "poll-1");
     EXPECT_EQ(received.front().method, "server/poll");
-    EXPECT_EQ(received.front().priority, cc::bridge::MessagePriority::high);
+    EXPECT_EQ(received.front().priority, loom::bridge::MessagePriority::high);
     ASSERT_TRUE(received.front().correlation_id.has_value());
     EXPECT_EQ(*received.front().correlation_id, "corr-1");
     for (const auto& message : received) {
@@ -947,20 +947,20 @@ TEST(BridgeTransport, HttpPollingPostsMessagesAndPollsInboundEvents) {
 }
 
 TEST(BridgeApi, ValidatesSafeIdsAndNormalizesSessionIds) {
-    EXPECT_TRUE(cc::bridge::is_safe_bridge_id("env_abc-123"));
-    EXPECT_FALSE(cc::bridge::is_safe_bridge_id("env/abc"));
+    EXPECT_TRUE(loom::bridge::is_safe_bridge_id("env_abc-123"));
+    EXPECT_FALSE(loom::bridge::is_safe_bridge_id("env/abc"));
 
     const std::string legacy = "A1B2C3D4-E5F6-7890-ABCD-EF1234567890";
-    EXPECT_TRUE(cc::bridge::is_legacy_session_id("a1b2c3d4-e5f6-7890-abcd-ef1234567890"));
-    EXPECT_EQ(cc::bridge::normalize_session_id(legacy), "ses_a1b2c3d4e5f67890abcdef1234567890");
+    EXPECT_TRUE(loom::bridge::is_legacy_session_id("a1b2c3d4-e5f6-7890-abcd-ef1234567890"));
+    EXPECT_EQ(loom::bridge::normalize_session_id(legacy), "ses_a1b2c3d4e5f67890abcdef1234567890");
 
-    auto generated = cc::bridge::generate_session_id();
+    auto generated = loom::bridge::generate_session_id();
     EXPECT_EQ(generated.size(), 36u);
     EXPECT_EQ(generated.rfind("ses_", 0), 0u);
 }
 
 TEST(BridgeApi, RejectsUnsafeIdsBeforeNetworkCalls) {
-    cc::bridge::BridgeApiClient client(cc::bridge::BridgeApiConfig{
+    loom::bridge::BridgeApiClient client(loom::bridge::BridgeApiConfig{
         .base_url = "https://bridge.example.test",
         .access_token = "token",
         .runner_version = "test",
@@ -973,7 +973,7 @@ TEST(BridgeApi, RejectsUnsafeIdsBeforeNetworkCalls) {
 }
 
 TEST(BridgeWorkSecret, DecodesExtendedRemotePayload) {
-    auto decoded = cc::bridge::decode_work_secret(bridge_test_encoded_work_secret());
+    auto decoded = loom::bridge::decode_work_secret(bridge_test_encoded_work_secret());
     ASSERT_TRUE(decoded.has_value()) << decoded.error();
     EXPECT_EQ(decoded->version, 1);
     EXPECT_EQ(decoded->session_ingress_token, "session-token-from-secret");
@@ -1002,15 +1002,15 @@ TEST(BridgeApi, ParsesRegistrationPollAndLifecycleResponsesFromServer) {
     LocalBridgeApiHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::bridge::BridgeApiClient client(cc::bridge::BridgeApiConfig{
+    loom::bridge::BridgeApiClient client(loom::bridge::BridgeApiConfig{
         .base_url = server.base_url(),
         .access_token = "oauth_token",
         .runner_version = "test-runner",
         .trusted_device_token = "trusted_device",
     });
 
-    auto registration = client.register_environment(cc::bridge::BridgeConfig{
-        .transport = cc::bridge::TransportType::websocket,
+    auto registration = client.register_environment(loom::bridge::BridgeConfig{
+        .transport = loom::bridge::TransportType::websocket,
         .host = "127.0.0.1",
         .port = 7777,
         .path = "/bridge",
@@ -1050,7 +1050,7 @@ TEST(BridgeApi, ParsesRegistrationPollAndLifecycleResponsesFromServer) {
 
     auto permission_response = client.send_permission_response_event(
         "session_1",
-        cc::bridge::PermissionResponseEvent{
+        loom::bridge::PermissionResponseEvent{
             .request_id = "permission-1",
             .response_json = R"({"behavior":"allow","updatedInput":{"cmd":"ls"}})",
             .subtype = "success",
@@ -1117,7 +1117,7 @@ TEST(BridgeDaemon, PollsWorkAcknowledgesAndSpawnsSession) {
     LocalBridgeApiHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon.pid"),
         .port_file = unique_temp_file("_daemon.port"),
@@ -1214,7 +1214,7 @@ TEST(BridgeDaemon, HeartbeatsRunningRemoteWorkSessions) {
     LocalBridgeApiHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_heartbeat.pid"),
         .port_file = unique_temp_file("_daemon_heartbeat.port"),
@@ -1269,7 +1269,7 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionAndReportsCompletion) {
     LocalBridgeApiHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_process.pid"),
         .port_file = unique_temp_file("_daemon_process.port"),
@@ -1289,7 +1289,7 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionAndReportsCompletion) {
     ASSERT_TRUE(spawned.has_value()) << spawned.error();
     ASSERT_TRUE(spawned->has_value());
 
-    std::vector<cc::daemon::DaemonSession> sessions;
+    std::vector<loom::daemon::DaemonSession> sessions;
     for (int i = 0; i < 500; ++i) {
         daemon.reap_sessions();
         sessions = daemon.sessions();
@@ -1337,7 +1337,7 @@ TEST(BridgeDaemon, ForkExecsNativeHeadlessSessionThroughRemoteLifecycle) {
     ScopedEnvVar xdg_config("XDG_CONFIG_HOME", env_root.string());
     ScopedEnvVar home("HOME", env_root.string());
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_native_process.pid"),
         .port_file = unique_temp_file("_daemon_native_process.port"),
@@ -1460,16 +1460,16 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionWithCcrSdkUrl) {
             std::filesystem::perms::owner_exec,
         std::filesystem::perm_options::replace);
 
-    auto secret = cc::bridge::decode_work_secret(bridge_test_encoded_work_secret());
+    auto secret = loom::bridge::decode_work_secret(bridge_test_encoded_work_secret());
     ASSERT_TRUE(secret.has_value()) << secret.error();
-    cc::bridge::WorkResponse work{
+    loom::bridge::WorkResponse work{
         .id = "work_1",
         .data_type = std::string("session"),
         .data_id = std::string("session_1"),
         .secret = bridge_test_encoded_work_secret(),
     };
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_sdk_url.pid"),
         .port_file = unique_temp_file("_daemon_sdk_url.port"),
@@ -1529,16 +1529,16 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionWithV1SessionIngressSdkUrl) {
             std::filesystem::perms::owner_exec,
         std::filesystem::perm_options::replace);
 
-    auto secret = cc::bridge::decode_work_secret(bridge_test_encoded_v1_work_secret());
+    auto secret = loom::bridge::decode_work_secret(bridge_test_encoded_v1_work_secret());
     ASSERT_TRUE(secret.has_value()) << secret.error();
-    cc::bridge::WorkResponse work{
+    loom::bridge::WorkResponse work{
         .id = "work_1",
         .data_type = std::string("session"),
         .data_id = std::string("session_1"),
         .secret = bridge_test_encoded_v1_work_secret(),
     };
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_v1_sdk_url.pid"),
         .port_file = unique_temp_file("_daemon_v1_sdk_url.port"),
@@ -1607,16 +1607,16 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionWithCcrWorkerEpochEnvironment) {
             std::filesystem::perms::owner_exec,
         std::filesystem::perm_options::replace);
 
-    auto secret = cc::bridge::decode_work_secret(bridge_test_encoded_work_secret());
+    auto secret = loom::bridge::decode_work_secret(bridge_test_encoded_work_secret());
     ASSERT_TRUE(secret.has_value()) << secret.error();
-    cc::bridge::WorkResponse work{
+    loom::bridge::WorkResponse work{
         .id = "work_1",
         .data_type = std::string("session"),
         .data_id = std::string("session_1"),
         .secret = bridge_test_encoded_work_secret(),
     };
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_ccr_env.pid"),
         .port_file = unique_temp_file("_daemon_ccr_env.port"),
@@ -1695,7 +1695,7 @@ TEST(BridgeDaemon, PipesHeadlessChildStdinAndCapturesStdout) {
             std::filesystem::perms::owner_exec,
         std::filesystem::perm_options::replace);
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_stdio.pid"),
         .port_file = unique_temp_file("_daemon_stdio.port"),
@@ -1718,7 +1718,7 @@ TEST(BridgeDaemon, PipesHeadlessChildStdinAndCapturesStdout) {
     ASSERT_TRUE(daemon.close_session_stdin(*spawned).has_value());
 
     std::vector<std::string> lines;
-    std::vector<cc::daemon::DaemonSession> sessions;
+    std::vector<loom::daemon::DaemonSession> sessions;
     for (int i = 0; i < 500; ++i) {
         lines = daemon.session_stdout_lines(*spawned);
         sessions = daemon.sessions();
@@ -1757,7 +1757,7 @@ TEST(BridgeDaemon, RpcStdinRoutesRemoteInputToHeadlessChild) {
             std::filesystem::perms::owner_exec,
         std::filesystem::perm_options::replace);
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_rpc_stdio.pid"),
         .port_file = unique_temp_file("_daemon_rpc_stdio.port"),
@@ -1776,7 +1776,7 @@ TEST(BridgeDaemon, RpcStdinRoutesRemoteInputToHeadlessChild) {
     auto started = daemon.start();
     ASSERT_TRUE(started.has_value()) << started.error();
 
-    cc::daemon::DaemonClient client;
+    loom::daemon::DaemonClient client;
     ASSERT_TRUE(client.connect(*started).has_value());
     auto spawned = client.spawn("rpc-stdio-work");
     ASSERT_TRUE(spawned.has_value()) << spawned.error();
@@ -1833,7 +1833,7 @@ TEST(BridgeDaemon, RpcEventRoutesRemotePayloadToHeadlessChildStdin) {
             std::filesystem::perms::owner_exec,
         std::filesystem::perm_options::replace);
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_rpc_event.pid"),
         .port_file = unique_temp_file("_daemon_rpc_event.port"),
@@ -1852,7 +1852,7 @@ TEST(BridgeDaemon, RpcEventRoutesRemotePayloadToHeadlessChildStdin) {
     auto started = daemon.start();
     ASSERT_TRUE(started.has_value()) << started.error();
 
-    cc::daemon::DaemonClient client;
+    loom::daemon::DaemonClient client;
     ASSERT_TRUE(client.connect(*started).has_value());
     auto spawned = client.spawn("rpc-event-work");
     ASSERT_TRUE(spawned.has_value()) << spawned.error();
@@ -1904,7 +1904,7 @@ TEST(BridgeDaemon, PollAuthFailureUpdatesBackoffAndResetsAfterSuccess) {
     ASSERT_TRUE(server.ready());
     server.fail_next_work_polls(1, 401, "Unauthorized", R"({"error":"unauthorized"})");
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_auth.pid"),
         .port_file = unique_temp_file("_daemon_auth.port"),
@@ -1964,7 +1964,7 @@ TEST(BridgeDaemon, ConsecutivePollFailuresUseExponentialBackoffCappedAtFiveMinut
     LocalBridgeApiHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_backoff.pid"),
         .port_file = unique_temp_file("_daemon_backoff.port"),
@@ -2021,7 +2021,7 @@ TEST(BridgeDaemon, HeartbeatFailureRecordsErrorAndResetsAfterSuccess) {
     LocalBridgeApiHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::daemon::DaemonServer daemon(cc::daemon::DaemonConfig{
+    loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = unique_temp_file("_daemon_heartbeat_failure.pid"),
         .port_file = unique_temp_file("_daemon_heartbeat_failure.port"),

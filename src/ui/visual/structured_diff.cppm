@@ -18,7 +18,7 @@ import std;
 
 import loom.fs.edit.file_edit;
 
-export namespace cc::ui::structured_diff {
+export namespace loom::ui::structured_diff {
 using namespace ftxui;
 
 // ============================================================
@@ -253,11 +253,11 @@ struct SemanticBlock {
 /// Per-block LCS line-level diff. Returns vector<StructuredPatchHunk>
 /// aggregated across all blocks. Uses Myers from utils/file_edit_utils
 /// (no duplicate algorithm — per task constraints).
-[[nodiscard]] inline std::vector<cc::utils::file_edit::PatchHunk>
+[[nodiscard]] inline std::vector<loom::utils::file_edit::PatchHunk>
 compute_block_lcs_diff(std::string_view old_src,
                        std::string_view new_src,
                        int context = 3) {
-    return cc::utils::file_edit::compute_structured_patch(old_src, new_src, context);
+    return loom::utils::file_edit::compute_structured_patch(old_src, new_src, context);
 }
 /// Block-level tint status for rendering
 struct BlockDiffStatus {
@@ -754,7 +754,7 @@ struct RenderStructuredDiffInput {
 
 /// Build hunks + summary, render the full widget.
 [[nodiscard]] inline Element RenderStructuredDiff(const RenderStructuredDiffInput& in) {
-    auto phunks = cc::utils::file_edit::compute_structured_patch(
+    auto phunks = loom::utils::file_edit::compute_structured_patch(
         in.old_content, in.new_content, in.context_lines);
 
     DiffDetailViewProps props;
@@ -818,4 +818,4 @@ struct RenderStructuredDiffInput {
     }) | flex;
 }
 
-} // namespace cc::ui::structured_diff
+} // namespace loom::ui::structured_diff

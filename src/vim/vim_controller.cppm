@@ -20,9 +20,9 @@ import std;
 
 import loom.vim.vim_types;
 
-export namespace cc::vim {
+export namespace loom::vim {
 
-using cc::vim::VimMode;
+using loom::vim::VimMode;
 
 /// Bundled vim editing state.  One instance per input widget.
 struct VimController {
@@ -44,12 +44,12 @@ struct VimController {
     // ── Helper accessors ────────────────────────────────────────────
     /// True when in a navigation mode (Normal, Visual*, Command).
     [[nodiscard]] bool is_navigation() const noexcept {
-        return cc::vim::is_navigation_mode(mode);
+        return loom::vim::is_navigation_mode(mode);
     }
 
     /// True when in an editing mode (Insert, Replace).
     [[nodiscard]] bool is_editing() const noexcept {
-        return cc::vim::is_editing_mode(mode);
+        return loom::vim::is_editing_mode(mode);
     }
 
     /// True when in any visual mode (Visual, VisualLine, VisualBlock).
@@ -82,4 +82,4 @@ struct VimController {
     }
 };
 
-} // namespace cc::vim
+} // namespace loom::vim

@@ -12,7 +12,7 @@ import loom.constants.paths;
 
 import std;
 
-export namespace cc::config {
+export namespace loom::config {
 
 /// Result of applying a --settings flag payload.
 /// Tracks which top-level keys were applied and which were deferred so the
@@ -64,7 +64,7 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
     return model.value_or(std::string(fallback));
 }
 
-[[nodiscard]] inline std::optional<bool> parse_flag_bool(const cc::utils::json::JsonVal& value) {
+[[nodiscard]] inline std::optional<bool> parse_flag_bool(const loom::utils::json::JsonVal& value) {
     if (value.is_bool()) return value.as_bool();
     if (!value.is_str()) return std::nullopt;
     const auto s = std::string(value.as_str());
@@ -73,7 +73,7 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
     return std::nullopt;
 }
 
-[[nodiscard]] inline std::optional<int> parse_flag_int(const cc::utils::json::JsonVal& value) {
+[[nodiscard]] inline std::optional<int> parse_flag_int(const loom::utils::json::JsonVal& value) {
     if (value.is_num()) return static_cast<int>(value.as_int());
     if (!value.is_str()) return std::nullopt;
     try {
@@ -98,7 +98,7 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
 /// managed/MDM settings, etc.) are recorded in `deferred_keys` for honest
 /// feedback rather than silently dropped.
 [[nodiscard]] inline FlagSettingsResult apply_flag_settings(
-    const cc::utils::json::JsonVal& root,
+    const loom::utils::json::JsonVal& root,
     const EnvSetter& env_setter
 ) {
     FlagSettingsResult out;
@@ -203,13 +203,13 @@ struct SettingsEntry {
 ) {
     switch (scope) {
         case SettingsScope::User:
-            return cc::constants::paths::config_home_read_under(home_dir) /
+            return loom::constants::paths::config_home_read_under(home_dir) /
                    "settings.json";
         case SettingsScope::Project:
-            return project_root / std::string{cc::constants::paths::kConfigDirName} /
+            return project_root / std::string{loom::constants::paths::kConfigDirName} /
                    "settings.json";
         case SettingsScope::Local:
-            return project_root / std::string{cc::constants::paths::kConfigDirName} /
+            return project_root / std::string{loom::constants::paths::kConfigDirName} /
                    "settings.local.json";
     }
     return {};
@@ -228,4 +228,4 @@ namespace keys {
     inline constexpr std::string_view PREFERRED_NOT_EMPTY_RESPONSES = "preferNotEmptyResponses";
 } // namespace keys
 
-} // namespace cc::config
+} // namespace loom::config

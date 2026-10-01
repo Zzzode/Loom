@@ -6,7 +6,7 @@ export module loom.config.mcp_types;
 
 import std;
 
-export namespace cc::core {
+export namespace loom::core {
 
 /// MCP (Model Context Protocol) server configuration
 struct McpOAuthConfig {
@@ -31,4 +31,4 @@ struct McpServerConfig {
     std::string config_scope{"project"};               // Where this config is stored: local/user/project
 };
 
-} // namespace cc::core
+} // namespace loom::core

@@ -13,7 +13,7 @@
 /// migrations(path)` orchestrator and a `JsonMutDoc` builder API that do not
 /// exist in the codebase.  This version targets the APIs that actually
 /// compile, exercising the same migration logic through
-/// `cc::migrations::concrete`.
+/// `loom::migrations::concrete`.
 
 #include <cstdint>
 
@@ -26,8 +26,8 @@ import loom.migrations.schema_versions;
 import loom.serdes.json;
 
 namespace fs = std::filesystem;
-namespace concrete = cc::migrations::concrete;
-namespace json = cc::utils::json;
+namespace concrete = loom::migrations::concrete;
+namespace json = loom::utils::json;
 
 namespace {
 
@@ -83,7 +83,7 @@ TEST(Migrations, RegistryExposesConfigMigrations) {
 }
 
 TEST(Migrations, SchemaVersionConstantIsSane) {
-    EXPECT_GT(cc::migrations::CURRENT_SCHEMA_VERSION, 0);
+    EXPECT_GT(loom::migrations::CURRENT_SCHEMA_VERSION, 0);
 }
 
 // ===========================================================================

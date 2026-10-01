@@ -13,9 +13,9 @@ import loom.types.types;
 import loom.commands.command;
 import loom.services.ide_integration;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// IdeCommand implements the /ide slash command.
 /// Scans the IDE lockfile directory for live editors and reports each one's
@@ -38,7 +38,7 @@ public:
     }
 
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext&) {
-        cc::utils::ide::IdeLockfileScanner scanner;
+        loom::utils::ide::IdeLockfileScanner scanner;
         auto lockfiles = scanner.scan();
 
         if (lockfiles.empty()) {
@@ -72,4 +72,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

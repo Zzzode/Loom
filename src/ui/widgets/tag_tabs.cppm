@@ -9,7 +9,7 @@ export module loom.ui.widgets.tag_tabs;
 
 import std;
 
-export namespace cc::ui::components {
+export namespace loom::ui::components {
 
 struct Tab {
     std::string label;

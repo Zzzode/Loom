@@ -16,7 +16,7 @@ import std;
 import loom.keybindings.schema;
 import loom.keybindings.defaults;
 
-export namespace cc::keybindings {
+export namespace loom::keybindings {
 
 /// Callback type for analytics/telemetry logging
 using LogEventCallback = std::function<void(
@@ -117,4 +117,4 @@ public:
     return *resolved;
 }
 
-} // namespace cc::keybindings
+} // namespace loom::keybindings

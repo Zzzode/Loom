@@ -10,7 +10,7 @@ module loom.ui.visual.markdown;
 
 import std;
 
-namespace cc::ui {
+namespace loom::ui {
 namespace detail {
 
 TokenCache::TokenCache(std::size_t max_size) : max_size_(max_size) {}
@@ -51,4 +51,4 @@ TokenCache& global_token_cache() {
 }
 
 } // namespace detail
-} // namespace cc::ui
+} // namespace loom::ui

@@ -16,7 +16,7 @@ import loom.state.selectors;
 import loom.state.persistence;
 import loom.state.on_change;
 
-export namespace cc::state {
+export namespace loom::state {
 
 // ============================================================
 // Action System
@@ -237,7 +237,7 @@ concept Reducer = std::invocable<F, const State&, const Action&> &&
         // Message actions
         // ========================================
         case ActionType::AddMessage: {
-            if (auto msg = action.get_payload<cc::core::Message>()) {
+            if (auto msg = action.get_payload<loom::core::Message>()) {
                 return with_message(state, std::move(*msg));
             }
             break;
@@ -247,7 +247,7 @@ concept Reducer = std::invocable<F, const State&, const Action&> &&
             break;
         }
         case ActionType::UpdateLastMessage: {
-            if (auto msg = action.get_payload<cc::core::Message>(); msg && !next.messages.empty()) {
+            if (auto msg = action.get_payload<loom::core::Message>(); msg && !next.messages.empty()) {
                 next.messages.back() = std::move(*msg);
                 next.last_activity = std::chrono::system_clock::now();
             }
@@ -287,7 +287,7 @@ concept Reducer = std::invocable<F, const State&, const Action&> &&
         // Token usage
         // ========================================
         case ActionType::UpdateUsage: {
-            if (auto usage = action.get_payload<cc::core::TokenUsage>()) {
+            if (auto usage = action.get_payload<loom::core::TokenUsage>()) {
                 return with_usage(state, *usage);
             }
             break;
@@ -1140,28 +1140,28 @@ public:
     }
 
     /// Manually save the current state
-    [[nodiscard]] cc::core::VoidResult save_state() {
+    [[nodiscard]] loom::core::VoidResult save_state() {
         if (!persistence_) {
             return {}; // No persistence configured
         }
         auto saved = persistence_->save_state(get_state());
         if (!saved) {
-            return std::unexpected(cc::core::Error::make(
-                cc::core::ErrorCode::InternalError,
+            return std::unexpected(loom::core::Error::make(
+                loom::core::ErrorCode::InternalError,
                 saved.error().format()));
         }
         return {};
     }
 
     /// Load state from persistence
-    [[nodiscard]] std::expected<bool, cc::core::Error> load_state() {
+    [[nodiscard]] std::expected<bool, loom::core::Error> load_state() {
         if (!persistence_) {
             return false; // No persistence configured
         }
         auto loaded = persistence_->load_state();
         if (!loaded) {
-            return std::unexpected(cc::core::Error::make(
-                cc::core::ErrorCode::InternalError,
+            return std::unexpected(loom::core::Error::make(
+                loom::core::ErrorCode::InternalError,
                 loaded.error().format()));
         }
         // Update state with loaded value
@@ -1286,4 +1286,4 @@ using AppStore = Store<AppState, decltype(&app_reducer)>;
     return store;
 }
 
-} // namespace cc::state
+} // namespace loom::state

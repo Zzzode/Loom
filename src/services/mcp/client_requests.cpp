@@ -10,9 +10,9 @@ import std;
 import loom.services.mcp.types;
 import loom.serdes.json;
 
-namespace cc::services::mcp {
+namespace loom::services::mcp {
 
-using namespace cc::utils::json;
+using namespace loom::utils::json;
 
 // List available tools from the server
 McpResult<ListToolsResult> McpClient::list_tools() {
@@ -195,4 +195,4 @@ McpResult<ListPromptsResult> McpClient::list_prompts() {
     return result;
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

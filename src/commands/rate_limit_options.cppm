@@ -5,7 +5,7 @@ export module loom.commands.rate_limit_options;
 
 import std;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
 
 struct RateLimits {
@@ -62,4 +62,4 @@ auto suggest_rate_limit_optimization() -> std::string {
     return suggestion;
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

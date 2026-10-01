@@ -19,9 +19,9 @@ import loom.constants.product;
 import loom.ui.dialogs.system;
 import loom.ui.permissions.single_prompt;
 
-export namespace cc::ui::dialogs::triggers {
+export namespace loom::ui::dialogs::triggers {
 
-namespace dsys = cc::ui::dialogs::system;
+namespace dsys = loom::ui::dialogs::system;
 
 // ---------------------------------------------------------------------------
 // ToolPermission (overlay slot, queue.push auto-routes it)
@@ -65,8 +65,8 @@ inline void PushToolPermissionDetailed(
     dsys::DialogQueue& queue,
     std::string tool_name,
     std::string description,
-    cc::ui::permissions::single_prompt::ActionKind action_kind,
-    cc::ui::permissions::single_prompt::ToolDetail detail,
+    loom::ui::permissions::single_prompt::ActionKind action_kind,
+    loom::ui::permissions::single_prompt::ToolDetail detail,
     std::function<void(typename dsys::ToolPermissionPayload::Decision, bool)> on_response,
     std::function<void()> on_abort,
     bool can_always_allow) {
@@ -243,7 +243,7 @@ inline void PushAboutDialog(dsys::DialogQueue& queue,
     dsys::AboutDialogPayload p;
     p.id = "about-dialog";
     p.version = std::move(version);
-    p.build_date = std::string(cc::constants::product::BUILD_DATE);
+    p.build_date = std::string(loom::constants::product::BUILD_DATE);
     p.on_close = std::move(on_close);
     queue.push_modal(std::move(p));
 }
@@ -670,4 +670,4 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
     return matched;
 }
 
-} // namespace cc::ui::dialogs::triggers
+} // namespace loom::ui::dialogs::triggers

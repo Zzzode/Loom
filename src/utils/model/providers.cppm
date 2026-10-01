@@ -5,7 +5,7 @@ export module loom.model.providers;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 enum class Provider {
     Anthropic,
@@ -90,4 +90,4 @@ bool is_provider_configured(Provider provider) {
     return false;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

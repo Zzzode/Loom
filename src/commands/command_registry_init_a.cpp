@@ -21,7 +21,7 @@ import loom.commands.brief;
 import loom.commands.color;
 import loom.commands.ctx_viz;
 
-namespace cc::commands {
+namespace loom::commands {
 
 void register_group_a_commands(CommandRegistry& registry) {
     registry.register_command<CommitCommand>();
@@ -44,4 +44,4 @@ void register_group_a_commands(CommandRegistry& registry) {
     registry.register_command<DiffCommand>();
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

@@ -15,7 +15,7 @@ export module loom.ui.chrome.terminal_io;
 
 import std;
 
-export namespace cc::ui::termio {
+export namespace loom::ui::termio {
 
 // ============================================================================
 // Enums
@@ -765,4 +765,4 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
     return "\033[?1049l";
 }
 
-} // namespace cc::ui::termio
+} // namespace loom::ui::termio

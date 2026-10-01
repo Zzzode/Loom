@@ -13,7 +13,7 @@ import loom.process.bash.bash_execution;
 import loom.serdes.json;
 
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 
 enum class BrowserAction {
@@ -330,7 +330,7 @@ private:
     }
 
     [[nodiscard]] static std::optional<std::string> json_optional_string(
-        cc::utils::json::JsonVal root,
+        loom::utils::json::JsonVal root,
         std::string_view key
     ) {
         auto value = root.get(key);
@@ -341,7 +341,7 @@ private:
     [[nodiscard]] static std::expected<BrowserResult, BrowserError> parse_backend_result(
         std::string_view output
     ) {
-        auto parsed = cc::utils::json::parse(output);
+        auto parsed = loom::utils::json::parse(output);
         if (!parsed || !parsed->root().is_obj()) {
             return std::unexpected(BrowserError::ExtractionFailed);
         }
@@ -380,7 +380,7 @@ private:
             command += quoted_payload;
         }
 
-        auto cap = cc::utils::bash::exec_capture(command);
+        auto cap = loom::utils::bash::exec_capture(command);
         if (!cap) return std::unexpected(BrowserError::BrowserNotAvailable);
         std::string output = std::move(cap->output);
         auto status = cap->status;
@@ -442,7 +442,7 @@ private:
             command += quoted_url;
         }
 
-        auto cap = cc::utils::bash::exec_capture(command);
+        auto cap = loom::utils::bash::exec_capture(command);
         if (!cap) return std::unexpected(BrowserError::BrowserNotAvailable);
         std::string output = std::move(cap->output);
         auto status = cap->status;
@@ -460,7 +460,7 @@ private:
     {
         auto cmd = std::format("curl -sL --max-time {} {}", timeout.count(), shell_quote(url));
 
-        auto cap = cc::utils::bash::exec_capture(cmd);
+        auto cap = loom::utils::bash::exec_capture(cmd);
         if (!cap) return std::unexpected(BrowserError::NavigationFailed);
         std::string output = std::move(cap->output);
         int status = cap->status;
@@ -486,4 +486,4 @@ private:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

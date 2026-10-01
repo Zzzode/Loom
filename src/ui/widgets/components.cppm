@@ -16,7 +16,7 @@ import std;
 import loom.types.types;
 import loom.ui.visual.markdown;
 
-export namespace cc::ui {
+export namespace loom::ui {
 
 // ============================================================
 // MessageRow - displays a single conversation message
@@ -31,12 +31,12 @@ struct MessageStyle {
 
 /// Render a single message with role prefix and markdown content
 [[nodiscard]] inline ftxui::Element render_message_row(
-    const cc::core::Message& msg, const MessageStyle& style) {
+    const loom::core::Message& msg, const MessageStyle& style) {
     // Extract text content from the message variant
     auto text_content = std::visit([](const auto& m) -> std::string {
         std::string result;
         for (const auto& block : m.content) {
-            if (auto* tb = std::get_if<cc::core::TextBlock>(&block)) {
+            if (auto* tb = std::get_if<loom::core::TextBlock>(&block)) {
                 if (!result.empty()) result += '\n';
                 result += tb->text;
             }
@@ -52,15 +52,15 @@ struct MessageStyle {
 }
 
 /// Create the appropriate message style based on role
-[[nodiscard]] inline MessageStyle style_for_role(cc::core::Role role) {
+[[nodiscard]] inline MessageStyle style_for_role(loom::core::Role role) {
     switch (role) {
-        case cc::core::Role::User:
+        case loom::core::Role::User:
             return {ftxui::Color::Green, "You:", false};
-        case cc::core::Role::Assistant:
+        case loom::core::Role::Assistant:
             return {ftxui::Color::Cyan, "Loom:", false};
-        case cc::core::Role::System:
+        case loom::core::Role::System:
             return {ftxui::Color::Yellow, "System:", false};
-        case cc::core::Role::Tool:
+        case loom::core::Role::Tool:
             return {ftxui::Color::Magenta, "Tool:", false};
     }
     return {ftxui::Color::White, "???:", false};
@@ -336,4 +336,4 @@ struct NotificationData {
     return title_el | ftxui::borderLight | ftxui::color(border_color);
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

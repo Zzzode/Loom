@@ -13,7 +13,7 @@ import std;
 
 import loom.sdk.core_schemas;
 
-export namespace cc::sdk::core_types {
+export namespace loom::sdk::core_types {
 
 // Re-export fundamental types from core_schemas
 using ModelUsage = core_schemas::ModelUsage;
@@ -258,4 +258,4 @@ inline constexpr std::array EXIT_REASONS = {
     "other", "bypass_permissions_disabled",
 };
 
-} // namespace cc::sdk::core_types
+} // namespace loom::sdk::core_types

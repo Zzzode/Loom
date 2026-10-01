@@ -63,13 +63,13 @@ import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.design_figures;
 
-export namespace cc::ui::layout::fullscreen {
+export namespace loom::ui::layout::fullscreen {
 
 using namespace ftxui;
-using Theme   = cc::ui::design::theme::Theme;
-using Palette = cc::ui::design::tokens::Palette;
-using Role    = cc::ui::design::tokens::Role;
-namespace figures_ns = cc::ui::design::figures;
+using Theme   = loom::ui::design::theme::Theme;
+using Palette = loom::ui::design::tokens::Palette;
+using Role    = loom::ui::design::tokens::Role;
+namespace figures_ns = loom::ui::design::figures;
 
 // ─── Constants (1:1 with TS FullscreenLayout.tsx) ───────────────────────────
 
@@ -238,7 +238,7 @@ struct FullscreenLayoutSlots {
 
 /// Resolve the active palette via ThemeProvider current_theme() fallback.
 [[nodiscard]] inline const Palette& active_palette() noexcept {
-    return *cc::ui::design::theme::current_theme().palette;
+    return *loom::ui::design::theme::current_theme().palette;
 }
 
 /// Sticky prompt header — interactive Component that mirrors TS
@@ -265,9 +265,9 @@ class StickyPromptHeaderComponent : public ComponentBase {
     Element Render() override {
         const auto& pal = active_palette();
         const Color bg = hovered_
-            ? cc::ui::design::tokens::token_by_role(pal, Role::UserMessageBackgroundHover)
-            : cc::ui::design::tokens::token_by_role(pal, Role::UserMessageBackground);
-        const Color fg = cc::ui::design::tokens::token_by_role(pal, Role::Subtle);
+            ? loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackgroundHover)
+            : loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackground);
+        const Color fg = loom::ui::design::tokens::token_by_role(pal, Role::Subtle);
         // TS REF: line 572 — `figures.pointer` prefix (▶ U+25B6).
         // NOTE: figures_ns::kPointer is constexpr string_view; std::string
         // ctor requires explicit materialization.
@@ -356,11 +356,11 @@ class StickyPromptHeaderComponent : public ComponentBase {
     label += " " + std::string(figures_ns::kArrowDown);
 
     const auto& pal = active_palette();
-    const Color bg_normal = cc::ui::design::tokens::token_by_role(
+    const Color bg_normal = loom::ui::design::tokens::token_by_role(
         pal, Role::UserMessageBackground);
-    const Color bg_hover = cc::ui::design::tokens::token_by_role(
+    const Color bg_hover = loom::ui::design::tokens::token_by_role(
         pal, Role::UserMessageBackgroundHover);
-    const Color fg = cc::ui::design::tokens::token_by_role(pal, Role::Subtle);
+    const Color fg = loom::ui::design::tokens::token_by_role(pal, Role::Subtle);
 
     // If a click callback is supplied, render as an interactive Component
     // (Button pattern via a small OnEvent wrapper) so mouse events fire.
@@ -433,7 +433,7 @@ class StickyPromptHeaderComponent : public ComponentBase {
     for (int i = 0; i < n; ++i) divider.append(kPeekDiv);
     // TS REF: line 426 — color="permission" for the divider.
     const auto& pal = active_palette();
-    const Color perm = cc::ui::design::tokens::token_by_role(pal, Role::Permission);
+    const Color perm = loom::ui::design::tokens::token_by_role(pal, Role::Permission);
     return vbox({
         text(divider) | color(perm),
         // Body kept at natural height — the outer size(LESS_THAN, max_h)
@@ -623,4 +623,4 @@ class StickyPromptHeaderComponent : public ComponentBase {
     return base;
 }
 
-} // namespace cc::ui::layout::fullscreen
+} // namespace loom::ui::layout::fullscreen

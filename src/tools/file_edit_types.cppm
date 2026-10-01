@@ -8,7 +8,7 @@ export module loom.tools.file_edit_types;
 
 import std;
 
-export namespace cc::tools::file_edit {
+export namespace loom::tools::file_edit {
 
 // ===========================================================================
 // Constants from constants.ts
@@ -214,4 +214,4 @@ inline auto edit_error_to_string(EditError error) -> std::string_view {
     return "Unknown error";
 }
 
-} // namespace cc::tools::file_edit
+} // namespace loom::tools::file_edit

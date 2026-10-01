@@ -15,7 +15,7 @@ import loom.serdes.json;
 import loom.teams.team_helpers;
 import loom.serdes.yaml;
 
-namespace cc::tools::agent_runtime {
+namespace loom::tools::agent_runtime {
 
 // --- built-in agent system prompt and configuration constants -------------
 // Migrated from src/tools/AgentTool/built-in/*.ts (Agent 1 migration).
@@ -23,7 +23,7 @@ namespace cc::tools::agent_runtime {
 // Inline implementations live here (rather than in built_in_agents.cppm) to
 // avoid a circular module import: built_in_agents.cppm already imports
 // agent_runtime for the AgentDefinition type. Callers outside agent_runtime
-// should use cc::tools::built_in_agents::get_built_in_agents() which returns
+// should use loom::tools::built_in_agents::get_built_in_agents() which returns
 // equivalent definitions.
 
 
@@ -681,7 +681,7 @@ inline constexpr std::string_view kGuideWhen =
     return agents;
 }
 void append_existing_plugin_component_path(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     const fs::path& plugin_dir,
     std::vector<fs::path>& out
 ) {
@@ -696,7 +696,7 @@ void append_existing_plugin_component_path(
     if (value.is_str()) {
         append_one(value.as_str());
     } else if (value.is_arr()) {
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             if (item.is_str()) append_one(item.as_str());
         });
     }
@@ -710,7 +710,7 @@ void append_existing_plugin_component_path(
 
     std::stringstream buffer;
     buffer << input.rdbuf();
-    auto doc = cc::utils::json::parse(buffer.str());
+    auto doc = loom::utils::json::parse(buffer.str());
     if (!doc) return std::nullopt;
 
     auto root = doc->root();
@@ -795,9 +795,9 @@ void append_existing_plugin_component_path(
                         auto fm_end = sv.find("\n---", first_nl + 1);
                         if (fm_end != std::string_view::npos) {
                             auto fm_sv = sv.substr(first_nl + 1, fm_end - first_nl - 1);
-                            auto fm = cc::utils::parse_yaml(fm_sv);
+                            auto fm = loom::utils::parse_yaml(fm_sv);
                             if (const auto* fields =
-                                    std::get_if<cc::utils::YamlMap>(&fm.data);
+                                    std::get_if<loom::utils::YamlMap>(&fm.data);
                                 fields) {
                                 const auto name = yaml_string_field(*fields, "name");
                                 if (name && !name->empty()) {
@@ -823,7 +823,7 @@ void append_existing_plugin_component_path(
                 if (probe) {
                     std::stringstream buf;
                     buf << probe.rdbuf();
-                    auto doc = cc::utils::json::parse(buf.str());
+                    auto doc = loom::utils::json::parse(buf.str());
                     if (!doc || !doc->root().is_obj()) {
                         result.failed.push_back(FailedAgentFile{
                             .path = entry.path().string(),
@@ -1000,9 +1000,9 @@ void load_plugin_agents_from_path(
     return std::nullopt;
 }
 [[nodiscard]] bool has_teammate_identity() {
-    auto agent_id = cc::utils::get_agent_id();
-    auto agent_name = cc::utils::get_agent_name();
-    auto team_name = cc::utils::get_team_name();
+    auto agent_id = loom::utils::get_agent_id();
+    auto agent_name = loom::utils::get_agent_name();
+    auto team_name = loom::utils::get_team_name();
     return agent_id && !agent_id->empty() &&
         agent_name && !agent_name->empty() &&
         team_name && !team_name->empty();
@@ -1016,7 +1016,7 @@ void load_plugin_agents_from_path(
     std::string append_prompt = existing_append_prompt.value_or("");
     append_prompt_section(append_prompt, teammate_system_prompt_addendum);
 
-    if (auto agent_type = cc::utils::get_agent_type(); agent_type && !agent_type->empty()) {
+    if (auto agent_type = loom::utils::get_agent_type(); agent_type && !agent_type->empty()) {
         auto agent = find_agent_definition(*agent_type, std::move(cwd));
         if (agent && agent->source != "built-in" && !agent->system_prompt.empty()) {
             append_prompt_section(
@@ -1041,4 +1041,4 @@ std::expected<std::vector<std::string>, std::string> load_agents_from_dir(std::s
 ) {
     return load_agent_definitions_from_dir_ex(dir, std::string(source));
 }
-} // namespace cc::tools::agent_runtime
+} // namespace loom::tools::agent_runtime

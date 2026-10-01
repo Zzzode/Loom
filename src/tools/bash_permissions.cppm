@@ -7,7 +7,7 @@ import std;
 import loom.tools.command_semantics;  // migrated: shared classifiers
 import loom.tools.tool;  // ToolPermission for default_bash_level_for bridge
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 enum class BashPermissionLevel {
     Blocked,
@@ -23,13 +23,13 @@ enum class BashPermissionLevel {
 // weighs in. Read-only -> Allowed; anything that mutates state or reaches the
 // network -> NeedsApproval.
 [[nodiscard]] constexpr BashPermissionLevel default_bash_level_for(
-    cc::core::ToolPermission perm) noexcept {
+    loom::core::ToolPermission perm) noexcept {
     switch (perm) {
-        case cc::core::ToolPermission::ReadOnly:
+        case loom::core::ToolPermission::ReadOnly:
             return BashPermissionLevel::Allowed;
-        case cc::core::ToolPermission::Network:
-        case cc::core::ToolPermission::Write:
-        case cc::core::ToolPermission::Execute:
+        case loom::core::ToolPermission::Network:
+        case loom::core::ToolPermission::Write:
+        case loom::core::ToolPermission::Execute:
             return BashPermissionLevel::NeedsApproval;
     }
     return BashPermissionLevel::NeedsApproval;
@@ -199,4 +199,4 @@ inline auto check_bash_permission(
     return BashPermissionLevel::Allowed;
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

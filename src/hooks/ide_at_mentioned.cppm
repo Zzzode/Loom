@@ -3,7 +3,7 @@ export module loom.hooks.ide_at_mentioned;
 
 import std;
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 struct AtMention {
     std::string type;                 // "file" | "symbol"
@@ -169,4 +169,4 @@ inline std::vector<std::string> get_at_mention_completions(std::string_view pref
     return completions;
 }
 
-} // namespace cc::hooks
+} // namespace loom::hooks

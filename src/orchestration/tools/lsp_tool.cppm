@@ -12,7 +12,7 @@ import loom.services.lsp.LSPServerManager;
 import loom.utils.error;
 import loom.serdes.json;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 // LSP action types. The action set mirrors the TS LSP tool operation union
 // (src/tools/LSPTool/schemas.ts:180-190): goToDefinition, findReferences,
@@ -183,26 +183,26 @@ namespace detail {
     return buffer.str();
 }
 
-[[nodiscard]] inline auto number_field(cc::utils::json::JsonVal value, std::string_view key, int fallback = 0) -> int {
+[[nodiscard]] inline auto number_field(loom::utils::json::JsonVal value, std::string_view key, int fallback = 0) -> int {
     if (!value.is_obj()) return fallback;
     auto child = value.get(key);
     return child.is_num() ? static_cast<int>(child.as_int()) : fallback;
 }
 
-[[nodiscard]] inline auto string_field(cc::utils::json::JsonVal value, std::string_view key) -> std::string {
+[[nodiscard]] inline auto string_field(loom::utils::json::JsonVal value, std::string_view key) -> std::string {
     if (!value.is_obj()) return {};
     auto child = value.get(key);
     return child.is_str() ? std::string(child.as_str()) : std::string{};
 }
 
-[[nodiscard]] inline auto parse_position(cc::utils::json::JsonVal value) -> LspPosition {
+[[nodiscard]] inline auto parse_position(loom::utils::json::JsonVal value) -> LspPosition {
     return LspPosition{
         .line = number_field(value, "line"),
         .character = number_field(value, "character"),
     };
 }
 
-[[nodiscard]] inline auto parse_range(cc::utils::json::JsonVal value) -> LspRange {
+[[nodiscard]] inline auto parse_range(loom::utils::json::JsonVal value) -> LspRange {
     if (!value.is_obj()) return {};
     return LspRange{
         .start = parse_position(value.get("start")),
@@ -244,7 +244,7 @@ namespace detail {
     return std::to_string(kind);
 }
 
-[[nodiscard]] inline auto parse_location(cc::utils::json::JsonVal value) -> std::optional<LspLocation> {
+[[nodiscard]] inline auto parse_location(loom::utils::json::JsonVal value) -> std::optional<LspLocation> {
     if (!value.is_obj()) return std::nullopt;
     auto uri = value.get("uri");
     auto range = value.get("range");
@@ -260,22 +260,22 @@ namespace detail {
     };
 }
 
-inline void append_locations(cc::utils::json::JsonVal value, std::vector<LspLocation>& out) {
+inline void append_locations(loom::utils::json::JsonVal value, std::vector<LspLocation>& out) {
     if (auto location = parse_location(value)) {
         out.push_back(std::move(*location));
         return;
     }
     if (!value.is_arr()) return;
-    value.iter([&](cc::utils::json::JsonVal item) {
+    value.iter([&](loom::utils::json::JsonVal item) {
         if (auto location = parse_location(item)) out.push_back(std::move(*location));
     });
 }
 
-[[nodiscard]] inline auto contents_to_text(cc::utils::json::JsonVal value) -> std::string {
+[[nodiscard]] inline auto contents_to_text(loom::utils::json::JsonVal value) -> std::string {
     if (value.is_str()) return std::string(value.as_str());
     if (value.is_arr()) {
         std::string out;
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             auto text = contents_to_text(item);
             if (text.empty()) return;
             if (!out.empty()) out += "\n";
@@ -293,7 +293,7 @@ inline void append_locations(cc::utils::json::JsonVal value, std::vector<LspLoca
 }
 
 inline void append_symbol(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::vector<LspSymbol>& out,
     const std::optional<std::string>& query,
     std::optional<std::string> container = std::nullopt)
@@ -321,19 +321,19 @@ inline void append_symbol(
 
     auto children = value.get("children");
     if (children.is_arr()) {
-        children.iter([&](cc::utils::json::JsonVal child) {
+        children.iter([&](loom::utils::json::JsonVal child) {
             append_symbol(child, out, query, name.empty() ? container : std::optional<std::string>{name});
         });
     }
 }
 
 [[nodiscard]] inline auto parse_diagnostics(std::string_view json) -> std::expected<LspResult, LspToolError> {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed) return std::unexpected(LspToolError::ParseError);
     LspResult result;
     auto root = parsed->root();
     if (!root.is_arr()) return result;
-    root.iter([&](cc::utils::json::JsonVal item) {
+    root.iter([&](loom::utils::json::JsonVal item) {
         LspDiagnostic diagnostic;
         diagnostic.range = parse_range(item.get("range"));
         diagnostic.severity = severity_name(number_field(item, "severity", 3));
@@ -348,7 +348,7 @@ inline void append_symbol(
 }
 
 [[nodiscard]] inline auto parse_locations_result(std::string_view json) -> std::expected<LspResult, LspToolError> {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed) return std::unexpected(LspToolError::ParseError);
     LspResult result;
     append_locations(parsed->root(), result.locations);
@@ -356,13 +356,13 @@ inline void append_symbol(
 }
 
 [[nodiscard]] inline auto parse_completion_result(std::string_view json) -> std::expected<LspResult, LspToolError> {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed) return std::unexpected(LspToolError::ParseError);
     LspResult result;
     auto root = parsed->root();
     auto items = root.is_arr() ? root : root.get("items");
     if (!items.is_arr()) return result;
-    items.iter([&](cc::utils::json::JsonVal item) {
+    items.iter([&](loom::utils::json::JsonVal item) {
         LspCompletionItem completion;
         completion.label = string_field(item, "label");
         completion.kind = completion_kind_name(number_field(item, "kind"));
@@ -377,7 +377,7 @@ inline void append_symbol(
 }
 
 [[nodiscard]] inline auto parse_hover_result(std::string_view json) -> std::expected<LspResult, LspToolError> {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed) return std::unexpected(LspToolError::ParseError);
     LspResult result;
     auto root = parsed->root();
@@ -397,12 +397,12 @@ inline void append_symbol(
 [[nodiscard]] inline auto parse_symbols_result(std::string_view json, const std::optional<std::string>& query)
     -> std::expected<LspResult, LspToolError>
 {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed) return std::unexpected(LspToolError::ParseError);
     LspResult result;
     auto root = parsed->root();
     if (root.is_arr()) {
-        root.iter([&](cc::utils::json::JsonVal item) {
+        root.iter([&](loom::utils::json::JsonVal item) {
             append_symbol(item, result.symbols, query);
         });
     } else {
@@ -412,7 +412,7 @@ inline void append_symbol(
 }
 
 // Parse a single CallHierarchyItem (LSP 3.16 shape).
-[[nodiscard]] inline auto parse_call_item(cc::utils::json::JsonVal value) -> std::optional<LspCallItem> {
+[[nodiscard]] inline auto parse_call_item(loom::utils::json::JsonVal value) -> std::optional<LspCallItem> {
     if (!value.is_obj()) return std::nullopt;
     auto uri = value.get("uri");
     if (!uri.is_str()) return std::nullopt;
@@ -432,7 +432,7 @@ inline void append_symbol(
 
 // Parse the CallHierarchyItem[] result of textDocument/prepareCallHierarchy.
 [[nodiscard]] inline auto parse_call_items_result(std::string_view json) -> std::expected<LspResult, LspToolError> {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed) return std::unexpected(LspToolError::ParseError);
     LspResult result;
     auto root = parsed->root();
@@ -441,7 +441,7 @@ inline void append_symbol(
         if (auto single = parse_call_item(root)) result.call_items.push_back(std::move(*single));
         return result;
     }
-    root.iter([&](cc::utils::json::JsonVal item) {
+    root.iter([&](loom::utils::json::JsonVal item) {
         if (auto parsed_item = parse_call_item(item)) result.call_items.push_back(std::move(*parsed_item));
     });
     return result;
@@ -454,7 +454,7 @@ inline void append_symbol(
 [[nodiscard]] inline auto parse_call_edges_result(std::string_view json, bool incoming)
     -> std::expected<LspResult, LspToolError>
 {
-    auto parsed = cc::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(json);
     if (!parsed) return std::unexpected(LspToolError::ParseError);
     LspResult result;
     auto root = parsed->root();
@@ -465,19 +465,19 @@ inline void append_symbol(
             LspCallEdge edge;
             if (auto peer = parse_call_item(root.get(peer_key))) edge.peer = std::move(*peer);
             auto ranges = root.get(ranges_key);
-            ranges.iter([&](cc::utils::json::JsonVal r) {
+            ranges.iter([&](loom::utils::json::JsonVal r) {
                 edge.ranges.push_back(parse_range(r));
             });
             result.call_edges.push_back(std::move(edge));
         }
         return result;
     }
-    root.iter([&](cc::utils::json::JsonVal item) {
+    root.iter([&](loom::utils::json::JsonVal item) {
         if (!item.is_obj()) return;
         LspCallEdge edge;
         if (auto peer = parse_call_item(item.get(peer_key))) edge.peer = std::move(*peer);
         auto ranges = item.get(ranges_key);
-        ranges.iter([&](cc::utils::json::JsonVal r) {
+        ranges.iter([&](loom::utils::json::JsonVal r) {
             edge.ranges.push_back(parse_range(r));
         });
         result.call_edges.push_back(std::move(edge));
@@ -486,7 +486,7 @@ inline void append_symbol(
 }
 
 [[nodiscard]] inline auto build_text_document_params(std::string_view uri) -> std::string {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     auto text_document = doc.object();
     text_document.add("uri", doc.string(uri));
@@ -496,7 +496,7 @@ inline void append_symbol(
 }
 
 [[nodiscard]] inline auto build_position_params(std::string_view uri, LspPosition position) -> std::string {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     auto text_document = doc.object();
     text_document.add("uri", doc.string(uri));
@@ -510,7 +510,7 @@ inline void append_symbol(
 }
 
 [[nodiscard]] inline auto build_references_params(std::string_view uri, LspPosition position) -> std::string {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     auto text_document = doc.object();
     text_document.add("uri", doc.string(uri));
@@ -529,7 +529,7 @@ inline void append_symbol(
 // workspace/symbol uses an empty query to return all symbols (mirrors TS
 // LSPTool.ts:471-477: `params: { query: '' }`).
 [[nodiscard]] inline auto build_workspace_symbol_params() -> std::string {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     root.add("query", doc.string(""));
     doc.set_root(root);
@@ -541,7 +541,7 @@ inline void append_symbol(
 // the previously-returned item JSON verbatim so server-supplied fields like
 // `data` survive the round-trip.
 [[nodiscard]] inline auto build_call_hierarchy_request_params(const std::string& item_json) -> std::string {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     auto item = doc.raw_json(item_json.empty() ? "null" : item_json);
     root.add("item", item.valid() ? item : doc.null());
@@ -557,9 +557,9 @@ public:
     static constexpr std::string_view name = "lsp";
     static constexpr std::string_view description = "Query language server for code intelligence";
 
-    LspTool() : manager_(cc::services::lsp::create_lsp_server_manager()) {}
+    LspTool() : manager_(loom::services::lsp::create_lsp_server_manager()) {}
 
-    explicit LspTool(std::unique_ptr<cc::services::lsp::LSPServerManager> manager)
+    explicit LspTool(std::unique_ptr<loom::services::lsp::LSPServerManager> manager)
         : manager_(std::move(manager)) {}
 
     // Validate request before execution
@@ -588,7 +588,7 @@ public:
 
     // Convert file path to URI format
     static auto path_to_uri(const std::filesystem::path& path) -> std::string {
-        return cc::services::lsp::LSPServerManager::file_uri_for_path(path.string());
+        return loom::services::lsp::LSPServerManager::file_uri_for_path(path.string());
     }
 
     // Execute LSP request (delegates to appropriate handler)
@@ -662,10 +662,10 @@ public:
 
 private:
     bool connected_{true};
-    std::unique_ptr<cc::services::lsp::LSPServerManager> manager_;
+    std::unique_ptr<loom::services::lsp::LSPServerManager> manager_;
 
-    [[nodiscard]] static auto map_error(const cc::utils::Error& error) -> LspToolError {
-        using cc::utils::ErrorCode;
+    [[nodiscard]] static auto map_error(const loom::utils::Error& error) -> LspToolError {
+        using loom::utils::ErrorCode;
         switch (error.code()) {
             case ErrorCode::timeout: return LspToolError::Timeout;
             case ErrorCode::parse_error: return LspToolError::ParseError;
@@ -794,7 +794,7 @@ private:
 
     // Render a LspCallItem back to JSON for the { item: ... } request payload.
     [[nodiscard]] static auto build_call_item_json(const LspCallItem& item) -> std::string {
-        cc::utils::json::JsonMutDoc doc;
+        loom::utils::json::JsonMutDoc doc;
         auto root = doc.object();
         root.add("name", doc.string(item.name));
         root.add("kind", doc.number(static_cast<int64_t>(parse_symbol_kind_value(item.kind))));
@@ -810,8 +810,8 @@ private:
         return doc.to_string();
     }
 
-    [[nodiscard]] static auto build_range_json(cc::utils::json::JsonMutDoc& doc, const LspRange& range)
-        -> cc::utils::json::JsonMutVal
+    [[nodiscard]] static auto build_range_json(loom::utils::json::JsonMutDoc& doc, const LspRange& range)
+        -> loom::utils::json::JsonMutVal
     {
         auto obj = doc.object();
         auto start = doc.object();
@@ -841,4 +841,4 @@ private:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

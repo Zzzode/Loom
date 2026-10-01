@@ -12,9 +12,9 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// Summary of a resumable session
 struct SessionSummary {
@@ -137,4 +137,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

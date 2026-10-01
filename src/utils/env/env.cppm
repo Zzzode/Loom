@@ -9,7 +9,7 @@ export module loom.platform.env.env;
 
 import std;
 
-export namespace cc::utils::env {
+export namespace loom::utils::env {
 
 
 [[nodiscard]] inline std::optional<std::string> get_env(std::string_view name) {
@@ -177,4 +177,4 @@ inline bool unset_env(std::string_view name) {
     return paths;
 }
 
-} // namespace cc::utils::env
+} // namespace loom::utils::env

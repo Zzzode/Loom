@@ -4,7 +4,7 @@
 /// runtime_registry.cppm as part of audit §13 #1.
 ///
 /// Everything in this module is "about a team": it parses team JSON payloads
-/// into the `cc::tools::team` value types, writes team runtime artifacts
+/// into the `loom::tools::team` value types, writes team runtime artifacts
 /// (inboxes, task snapshots, config.json) to the filesystem, and performs
 /// book-keeping operations (native-agent record collection, runtime cleanup)
 /// tied to team lifecycle. No tool dispatchers, no registry calls — those
@@ -28,11 +28,11 @@ import loom.teams.team_helpers;         // team_runtime_dir
 import loom.fs.atomic_replace;       // c16 hardened team-data replaces
 import loom.teams.swarm.backends;       // BackendRegistry
 
-export namespace cc::tools::runtime_team_shared {
+export namespace loom::tools::runtime_team_shared {
 
 namespace fs = std::filesystem;
-namespace json = cc::utils::json;
-using cc::tools::agent_runtime::NativeAgentRecord;
+namespace json = loom::utils::json;
+using loom::tools::agent_runtime::NativeAgentRecord;
 
 // ---------------------------------------------------------------------------
 //  2. Convenience predicates and S2 aggregate types
@@ -42,8 +42,8 @@ using cc::tools::agent_runtime::NativeAgentRecord;
 /// hard-coded in `runtime_registry::native_agent_status_is_terminal`. Tests
 /// and wrappers can use this as a fallback when no caller-defined predicate
 /// is supplied.
-[[nodiscard]] inline bool is_terminal_default(cc::tools::agent_runtime::NativeAgentStatus status) {
-    using S = cc::tools::agent_runtime::NativeAgentStatus;
+[[nodiscard]] inline bool is_terminal_default(loom::tools::agent_runtime::NativeAgentStatus status) {
+    using S = loom::tools::agent_runtime::NativeAgentStatus;
     return status == S::Completed || status == S::Failed || status == S::Cancelled;
 }
 
@@ -267,7 +267,7 @@ inline bool write_empty_inbox_if_missing(const fs::path& inbox_path) {
     if (ec) return false;
     if (fs::exists(inbox_path, ec)) return true;
     // c16: atomic, symlink/FIFO-safe creation of the "[]" seed.
-    return cc::utils::atomic_replace_file(inbox_path, "[]").has_value();
+    return loom::utils::atomic_replace_file(inbox_path, "[]").has_value();
 }
 
 /// Serialise the current shared task list to `tasks.json` via `JsonMutDoc`
@@ -293,7 +293,7 @@ inline bool write_team_task_snapshot(
         arr.append(obj);
     }
     doc.set_root(arr);
-    return cc::utils::atomic_replace_file(task_path, doc.to_string())
+    return loom::utils::atomic_replace_file(task_path, doc.to_string())
         .has_value();
 }
 
@@ -436,12 +436,12 @@ inline bool write_team_config_file(
     root.add("members", members);
     doc.set_root(root);
     // c16: LOCK_EX on the same "<path>.lock" sibling the canonical
-    // cc::utils::write_team_file and the LOCK_SH roster readers use, so the
+    // loom::utils::write_team_file and the LOCK_SH roster readers use, so the
     // byte-identical payload lands atomically and readers cannot order
     // between concurrent config rewrites.
-    cc::utils::ScopedFileLock flock(config_path);
+    loom::utils::ScopedFileLock flock(config_path);
     if (!flock.locked()) return false;
-    return cc::utils::atomic_replace_file(config_path, doc.to_string())
+    return loom::utils::atomic_replace_file(config_path, doc.to_string())
         .has_value();
 }
 
@@ -457,7 +457,7 @@ inline bool write_team_config_file(
 [[nodiscard]] inline std::unordered_map<std::string, TeamConfigMemberRuntimeState>
 team_config_runtime_states_from_native_records(
     std::span<const NativeAgentRecord> records,
-    bool (*is_terminal)(cc::tools::agent_runtime::NativeAgentStatus)
+    bool (*is_terminal)(loom::tools::agent_runtime::NativeAgentStatus)
 ) {
     std::unordered_map<std::string, TeamConfigMemberRuntimeState> states;
     for (const auto& record : records) {
@@ -527,11 +527,11 @@ team_config_runtime_states_from_native_records(
     std::string_view team_id,
     std::string_view team_name,
     std::span<const NativeAgentRecord> records,
-    bool (*is_terminal)(cc::tools::agent_runtime::NativeAgentStatus),
+    bool (*is_terminal)(loom::tools::agent_runtime::NativeAgentStatus),
     std::size_t (*cleanup_transcript)(const NativeAgentRecord&)
 ) {
-    namespace swarm = cc::utils::swarm_backends;
-    namespace bash_ns = cc::tools::bash;
+    namespace swarm = loom::utils::swarm_backends;
+    namespace bash_ns = loom::tools::bash;
 
     TeamDeletionCleanupSummary summary{.native_agents_seen = records.size()};
     for (const auto& record : records) {
@@ -549,7 +549,7 @@ team_config_runtime_states_from_native_records(
         auto stopped_shell_tasks = bash_ns::stop_background_tasks_for_agent(record.agent_id);
         summary.background_shell_tasks_stopped += stopped_shell_tasks.size();
 
-        auto cleanup = cc::tools::agent::cleanup_agent_worktree(record.agent_id);
+        auto cleanup = loom::tools::agent::cleanup_agent_worktree(record.agent_id);
         if (cleanup.attempted) {
             ++summary.worktree_cleanup_attempts;
             if (cleanup.removed) ++summary.worktrees_removed;
@@ -623,4 +623,4 @@ ensure_team_runtime_artifacts(
     return summary;
 }
 
-} // namespace cc::tools::runtime_team_shared
+} // namespace loom::tools::runtime_team_shared

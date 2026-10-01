@@ -19,7 +19,7 @@ import loom.types.types;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.messages_store;
 
-namespace cc::ui {
+namespace loom::ui {
 
 // ============================================================
 // Projection: Engine state -> ReplScreenState
@@ -120,11 +120,11 @@ namespace cc::ui {
             // TS PARITY (2026-07-04): collect structured content items so the
             // faithful renderer can iterate them (text + image separately),
             // matching TS renderToolResultMessage's Array.isArray branch.
-            std::vector<cc::core::ToolResultContentItem> content_items;
+            std::vector<loom::core::ToolResultContentItem> content_items;
             for (const auto& block : m.content) {
                 if (const auto* tb = std::get_if<TextBlock>(&block)) {
                     e.content_preview += tb->text;
-                    content_items.push_back(cc::core::ToolResultContentItem{
+                    content_items.push_back(loom::core::ToolResultContentItem{
                         .type = "text", .text = tb->text, .media_type = {}, .data = {}});
                 } else if (const auto* ib = std::get_if<ImageBlock>(&block)) {
                     // Tool results may return images (e.g. analyze_image).
@@ -133,7 +133,7 @@ namespace cc::ui {
                     e.content_preview += "[Image]";
                     e.is_image = true;
                     e.image_block = *ib;
-                    content_items.push_back(cc::core::ToolResultContentItem{
+                    content_items.push_back(loom::core::ToolResultContentItem{
                         .type = "image", .text = {}, .media_type = ib->media_type, .data = ib->data});
                 } else if (const auto* db = std::get_if<DocumentBlock>(&block)) {
                     if (!e.content_preview.empty()) e.content_preview += '\n';
@@ -331,8 +331,8 @@ project_messages(const Message& msg) {
                     if (std::holds_alternative<std::string>(trb->content)) {
                         tr.content_preview = std::get<std::string>(trb->content);
                     } else {
-                        const auto& items = std::get<std::vector<cc::core::ToolResultContentItem>>(trb->content);
-                        std::vector<cc::core::ToolResultContentItem> ci_copy;
+                        const auto& items = std::get<std::vector<loom::core::ToolResultContentItem>>(trb->content);
+                        std::vector<loom::core::ToolResultContentItem> ci_copy;
                         for (const auto& item : items) {
                             if (item.type == "text") {
                                 if (!tr.content_preview.empty()) tr.content_preview += '\n';
@@ -379,4 +379,4 @@ project_messages(const Message& msg) {
     return repl::RenderMessages(project_messages(msg), -1, 40);
 }
 
-}  // namespace cc::ui
+}  // namespace loom::ui

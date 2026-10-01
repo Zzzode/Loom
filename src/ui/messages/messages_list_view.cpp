@@ -13,7 +13,7 @@ import std;
 import loom.ui.messages.message_row;
 import loom.ui.messages.virtual_list;
 
-namespace cc::ui::messages_list {
+namespace loom::ui::messages_list {
 
 [[nodiscard]] auto render_messages_list_virtual(
     const MessagesListInput& input_const,
@@ -21,7 +21,7 @@ namespace cc::ui::messages_list {
     int viewport_rows,
     int scroll_top_lines) -> Element
 {
-    namespace vl = cc::ui::messages::virtual_list;
+    namespace vl = loom::ui::messages::virtual_list;
 
     MessagesListInput input = input_const;
     auto visible = build_visible_rows(input);
@@ -459,4 +459,4 @@ namespace cc::ui::messages_list {
     return std::move(list) | yframe | vscroll_indicator | flex;
 }
 
-} // namespace cc::ui::messages_list
+} // namespace loom::ui::messages_list

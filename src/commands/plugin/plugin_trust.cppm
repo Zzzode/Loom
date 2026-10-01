@@ -5,7 +5,7 @@ export module loom.commands.plugin.plugin_trust;
 
 import std;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
 
 enum class TrustLevel {
@@ -105,4 +105,4 @@ auto write_trust_config(const std::map<std::string, TrustLevel>& config) -> void
     for (const auto& [id, level] : config) output << id << '=' << trust_to_string(level) << '\n';
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

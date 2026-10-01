@@ -14,12 +14,12 @@ import std;
 
 import loom.types.types;
 
-export namespace cc::services::image {
+export namespace loom::services::image {
 
-using cc::core::Error;
-using cc::core::ErrorCode;
-using cc::core::Result;
-using cc::core::VoidResult;
+using loom::core::Error;
+using loom::core::ErrorCode;
+using loom::core::Result;
+using loom::core::VoidResult;
 
 // ============================================================
 // Image format and metadata types
@@ -447,4 +447,4 @@ private:
     Config config_{};
 };
 
-} // namespace cc::services::image
+} // namespace loom::services::image

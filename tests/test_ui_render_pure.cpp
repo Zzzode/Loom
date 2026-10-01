@@ -43,7 +43,7 @@ namespace fs = std::filesystem;
 
 
 TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.chrome_store.app_version = "9.9.9-test";
@@ -82,7 +82,7 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
 
 
 TEST(ReplScreen, WelcomeHeaderShowsConfiguredAgentName) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     // TS REF: logoV2Utils.ts:259 — settings.agent renders as "@<agent> · <cwd>"
     // on the welcome header's cwd line.
@@ -116,19 +116,19 @@ TEST(ReplScreen, ShiftReturnInsertsNewlineForBothTerminalEncodings) {
     // Shift+Enter must insert a newline (not submit). Terminals emit either
     // CSI-u (ESC [ 13 ; 2 u) or kitty protocol (ESC [ 27 ; 2 ; 13 ~).
     for (const auto* seq : {"\x1b[13;2u", "\x1b[27;2;13~"}) {
-        cc::core::ToolRegistry tools;
-        cc::core::QueryEngineConfig config;
+        loom::core::ToolRegistry tools;
+        loom::core::QueryEngineConfig config;
         config.context_window.auto_compact = false;
         config.cwd = fs::temp_directory_path().string();
-        cc::core::QueryEngine engine(std::move(config), tools);
-        cc::commands::AppCommandRegistry commands;
+        loom::core::QueryEngine engine(std::move(config), tools);
+        loom::commands::AppCommandRegistry commands;
         const auto storage_root = fs::temp_directory_path() /
             ("loom_shift_ret_" +
              std::to_string(std::chrono::steady_clock::now()
                                 .time_since_epoch().count()) +
              (seq[3] == '1' ? "_csiu" : "_kitty"));
-        cc::utils::SessionStorage storage(storage_root);
-        auto app = ftxui::Make<cc::ui::AppAdapter>(
+        loom::utils::SessionStorage storage(storage_root);
+        auto app = ftxui::Make<loom::ui::AppAdapter>(
             &engine, nullptr, &commands, &storage, [] {});
 
         app->OnEvent(ftxui::Event::Character('a'));
@@ -150,8 +150,8 @@ TEST(ReplScreen, ShiftReturnInsertsNewlineForBothTerminalEncodings) {
 
 
 TEST(ReplScreen, WelcomeHeaderWidthAndClaudeColorTrackTerminal) {
-    namespace repl = cc::ui::repl_screen;
-    namespace thm = cc::ui::design::theme;
+    namespace repl = loom::ui::repl_screen;
+    namespace thm = loom::ui::design::theme;
 
     const auto previous_theme = thm::current_theme();
     thm::set_theme(thm::ThemeVariant::Dark);
@@ -203,7 +203,7 @@ TEST(ReplScreen, WelcomeHeaderWidthAndClaudeColorTrackTerminal) {
 
 
 TEST(ReplScreen, WelcomeHeaderAnimatesAsteriskColor) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.chrome_store.app_version = "9.9.9-test";
@@ -247,7 +247,7 @@ TEST(ReplScreen, PromptInputRendersTopAndBottomBorders) {
     // CPP emulates borderText by composing a hbox: mode-label (or "❯" in Prompt
     // mode) + separator fill.  This gives visual separation without the bare
     // "白条" of a plain separator().
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "/";
@@ -284,8 +284,8 @@ TEST(ReplScreen, PromptInputRendersTopAndBottomBorders) {
 // live render site AND at the shared TextInputOptions default (which used to
 // carry a CPP-only "▶ " invention that contradicted its own doc comment).
 TEST(ReplScreen, PromptPrefixGlyphIsTsFaithfulPointerOrBang) {
-    namespace repl = cc::ui::repl_screen;
-    namespace figs = cc::ui::design::figures;
+    namespace repl = loom::ui::repl_screen;
+    namespace figs = loom::ui::design::figures;
 
     // Sanity: the shared figures constants are the single source of truth.
     EXPECT_EQ(std::string(figs::kPointer), "\xE2\x9D\xAF");  // ❯ U+276F
@@ -319,7 +319,7 @@ TEST(ReplScreen, PromptPrefixGlyphIsTsFaithfulPointerOrBang) {
     // The standalone TextInputOptions default prefix must be '❯ ' (TS
     // figures.pointer), guarding against regression to the '▶ ' invention.
     {
-        cc::ui::components::TextInputOptions opts;
+        loom::ui::components::TextInputOptions opts;
         EXPECT_EQ(opts.prefix, "\xE2\x9D\xAF ");  // "❯ "
     }
 }
@@ -327,7 +327,7 @@ TEST(ReplScreen, PromptPrefixGlyphIsTsFaithfulPointerOrBang) {
 
 
 TEST(ReplScreen, TranscriptScrollOffsetMovesLongLocalCommandOutput) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.messages_store.viewport_height_lines = 8;
@@ -368,8 +368,8 @@ TEST(ReplScreen, TranscriptScrollOffsetMovesLongLocalCommandOutput) {
 
 
 TEST(ReplScreen, PromptInputParksHiddenNativeCursorAtCaret) {
-    namespace repl = cc::ui::repl_screen;
-    namespace dc = cc::ui::common::declared_cursor;
+    namespace repl = loom::ui::repl_screen;
+    namespace dc = loom::ui::common::declared_cursor;
 
     repl::ReplScreenState state;
     state.input_text = "hello";
@@ -390,7 +390,7 @@ TEST(ReplScreen, PromptInputParksHiddenNativeCursorAtCaret) {
 
 
 TEST(ReplScreen, CursorResetParksHiddenCursorAwayFromTopLeft) {
-    namespace dc = cc::ui::common::declared_cursor;
+    namespace dc = loom::ui::common::declared_cursor;
 
     auto screen = ftxui::Screen::Create(
         ftxui::Dimension::Fixed(20),
@@ -408,7 +408,7 @@ TEST(ReplScreen, CursorResetParksHiddenCursorAwayFromTopLeft) {
 // ─── Placeholder cascade tests (TS REF: usePromptInputPlaceholder.ts) ──────
 
 TEST(ReplScreen, PlaceholderEmptyInputShowsExampleOnFirstSubmit) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -425,7 +425,7 @@ TEST(ReplScreen, PlaceholderEmptyInputShowsExampleOnFirstSubmit) {
 
 
 TEST(ReplScreen, PlaceholderNonEmptyInputReturnsNullopt) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "hello";
@@ -438,7 +438,7 @@ TEST(ReplScreen, PlaceholderNonEmptyInputReturnsNullopt) {
 
 
 TEST(ReplScreen, PlaceholderAfterSubmitNoExample) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -454,7 +454,7 @@ TEST(ReplScreen, PlaceholderAfterSubmitNoExample) {
 
 
 TEST(ReplScreen, PlaceholderViewingAgentShowsMessageHint) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -469,7 +469,7 @@ TEST(ReplScreen, PlaceholderViewingAgentShowsMessageHint) {
 
 
 TEST(ReplScreen, PlaceholderViewingAgentLongNameTruncated) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -488,7 +488,7 @@ TEST(ReplScreen, PlaceholderViewingAgentLongNameTruncated) {
 
 
 TEST(ReplScreen, PlaceholderQueuedCommandsHint) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -504,7 +504,7 @@ TEST(ReplScreen, PlaceholderQueuedCommandsHint) {
 
 
 TEST(ReplScreen, PlaceholderQueuedCommandsHintCappedAt3) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -520,7 +520,7 @@ TEST(ReplScreen, PlaceholderQueuedCommandsHintCappedAt3) {
 
 
 TEST(ReplScreen, PlaceholderAiSuggestionOverridesExample) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -538,7 +538,7 @@ TEST(ReplScreen, PlaceholderAiSuggestionOverridesExample) {
 
 
 TEST(ReplScreen, PlaceholderAiSuggestionIgnoredInBashMode) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -557,7 +557,7 @@ TEST(ReplScreen, PlaceholderAiSuggestionIgnoredInBashMode) {
 
 
 TEST(ReplScreen, PlaceholderAiSuggestionIgnoredWhenViewingAgent) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -575,7 +575,7 @@ TEST(ReplScreen, PlaceholderAiSuggestionIgnoredWhenViewingAgent) {
 
 
 TEST(ReplScreen, PlaceholderAiSuggestionIgnoredWhenSlashCommand) {
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -600,7 +600,7 @@ TEST(ReplScreen, PlaceholderPriorityOrder) {
     // Priority when viewing agent:
     //   viewing agent hint > queue hint > example > none  (AI suggestion is
     //     suppressed by !viewingAgentTaskId in TS showPromptSuggestion)
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -652,7 +652,7 @@ TEST(ReplScreen, PlaceholderPriorityOrder) {
 TEST(ReplScreen, PlaceholderRenderedInPromptInput) {
     // End-to-end: verify the computed placeholder actually appears in the
     // rendered prompt input element.
-    namespace repl = cc::ui::repl_screen;
+    namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
     state.input_text = "";
@@ -677,7 +677,7 @@ TEST(ReplScreen, PlaceholderRenderedInPromptInput) {
 
 TEST(ReplScreen, UserPromptTruncationShortTextUnchanged) {
     // Messages <= 10_000 chars pass through unmodified.
-    namespace msgs = cc::ui::messages;
+    namespace msgs = loom::ui::messages;
     std::string short_text = "hello world";
     auto result = msgs::TruncateUserPromptText(short_text);
     EXPECT_EQ(result, short_text);
@@ -687,7 +687,7 @@ TEST(ReplScreen, UserPromptTruncationShortTextUnchanged) {
 
 TEST(ReplScreen, UserPromptTruncationExactLimitUnchanged) {
     // Exactly at the 10_000 char limit — no truncation.
-    namespace msgs = cc::ui::messages;
+    namespace msgs = loom::ui::messages;
     std::string exact(10'000, 'x');
     auto result = msgs::TruncateUserPromptText(exact);
     EXPECT_EQ(result.size(), 10'000u);
@@ -698,7 +698,7 @@ TEST(ReplScreen, UserPromptTruncationExactLimitUnchanged) {
 
 TEST(ReplScreen, UserPromptTruncationLongTextHeadTailSplit) {
     // > 10_000 chars: head 2500 + separator + tail 2500.
-    namespace msgs = cc::ui::messages;
+    namespace msgs = loom::ui::messages;
     std::string long_text(15'000, 'a');
     // Mark head and tail boundaries for verification.
     long_text.replace(0, 5, "HEAD!");
@@ -719,7 +719,7 @@ TEST(ReplScreen, UserPromptTruncationLongTextHeadTailSplit) {
 
 TEST(ReplScreen, UserPromptTruncationHiddenLineCount) {
     // Verify hidden line count in the separator.
-    namespace msgs = cc::ui::messages;
+    namespace msgs = loom::ui::messages;
     // Build text: 2500 chars of "head\n" repeated (to get many newlines
     // in the hidden region), then filler.
     std::string text;
@@ -746,7 +746,7 @@ TEST(ReplScreen, UserPromptTruncationHiddenLineCount) {
 
 TEST(ReplScreen, UserPromptTruncationNoNewlinesShowsZero) {
     // Single long line with no newlines — hidden count = 0.
-    namespace msgs = cc::ui::messages;
+    namespace msgs = loom::ui::messages;
     std::string long_line(12'000, 'z');
     auto result = msgs::TruncateUserPromptText(long_line);
     EXPECT_NE(result.find("+0 lines"), std::string::npos);
@@ -756,7 +756,7 @@ TEST(ReplScreen, UserPromptTruncationNoNewlinesShowsZero) {
 
 TEST(ReplScreen, UserPromptTruncationRenderedInMessage) {
     // End-to-end: RenderUserPromptMessage uses truncated text.
-    namespace msgs = cc::ui::messages;
+    namespace msgs = loom::ui::messages;
     msgs::UserTextMessageData data;
     data.content = std::string(11'000, 'q');
     data.content.replace(0, 8, "MARKER_H");

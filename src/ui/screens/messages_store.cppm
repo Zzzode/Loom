@@ -19,7 +19,7 @@ export module loom.ui.screens.messages_store;
 import std;
 
 // Genuinely used (ImageBlock / ToolResultContentItem fields below), but only
-// via leading-`::` qualified names `::cc::core::ImageBlock`, which the
+// via leading-`::` qualified names `::loom::core::ImageBlock`, which the
 // dead-import detector's prefix-chain cannot resolve — same blind spot as
 // repl_screen.cppm's identical import, hence the keep-import marker.
 import loom.types.types;                  // arch-check: keep-import
@@ -27,7 +27,7 @@ import loom.ui.messages.messages_list;    // UnseenDivider
 import loom.ui.messages.virtual_list;     // JumpHandle / VirtualListState
 import loom.ui.chrome.fullscreen_layout;  // StickyPrompt
 
-export namespace cc::ui::repl_screen {
+export namespace loom::ui::repl_screen {
 
 /// Minimal Message projection for orchestration.
 /// Per-row rendering delegated to message_row.cppm (UI4/UI5).
@@ -51,7 +51,7 @@ struct MessageDisplayEntry {
     /// UserMessage with mixed text+image content into multiple sibling
     /// display rows (TS parity: each <UserImageMessage/> is its own row).
     bool is_image = false;
-    std::optional<::cc::core::ImageBlock> image_block;
+    std::optional<::loom::core::ImageBlock> image_block;
     /// Display ID for user-attached images (shown as "[Image #N]").
     /// Populated by project_messages when splitting a UserMessage with
     /// image content blocks into individual display rows (TS parity:
@@ -72,7 +72,7 @@ struct MessageDisplayEntry {
     /// (e.g. MCP tools returning mixed text+image).  When present, the
     /// faithful tool-result renderer iterates these instead of the
     /// flattened content_preview string.
-    std::optional<std::vector<::cc::core::ToolResultContentItem>> tool_result_content_items;
+    std::optional<std::vector<::loom::core::ToolResultContentItem>> tool_result_content_items;
     std::optional<std::string> agent_display_name, agent_color_name;
     std::chrono::system_clock::time_point timestamp;
     int estimated_height_lines = 3;
@@ -128,8 +128,8 @@ struct MessagesStore {
     // ScrollTranscript uses JumpToVisualLine() which runs O(log N) binary
     // search against the JumpHandle instead of the crude EstimateTranscriptRows.
     bool virtual_list_active = false;
-    cc::ui::messages::virtual_list::JumpHandle virtual_jh;
-    std::shared_ptr<cc::ui::messages::virtual_list::VirtualListState>
+    loom::ui::messages::virtual_list::JumpHandle virtual_jh;
+    std::shared_ptr<loom::ui::messages::virtual_list::VirtualListState>
         virtual_list_state;
 
     // M1 (FullscreenLayout slot-system chrome): scroll-derived chrome state.
@@ -155,7 +155,7 @@ struct MessagesStore {
     //     engine wires real scroll-observe state.
     // TS REF: FullscreenLayout.tsx lines 293 (useState) + 339-351 (3-state
     //        discriminant + padCollapsed logic).
-    std::optional<::cc::ui::layout::fullscreen::StickyPrompt> sticky_prompt;
+    std::optional<::loom::ui::layout::fullscreen::StickyPrompt> sticky_prompt;
     bool sticky_prompt_clicked = false;
     int unseen_message_count = 0;
     bool pill_visible = false;
@@ -167,7 +167,7 @@ struct MessagesStore {
     // uuid) of messages[dividerIndex] after skipping progress + null-rendering
     // attachments (CC-724).  `count` is Math.max(1, countUnseenAssistantTurns(…)).
     // nullopt = no divider (pinned to bottom, dividerIndex=null, empty session).
-    std::optional<::cc::ui::messages_list::UnseenDivider> unseen_divider;
+    std::optional<::loom::ui::messages_list::UnseenDivider> unseen_divider;
 };
 
-}  // namespace cc::ui
+}  // namespace loom::ui

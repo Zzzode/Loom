@@ -29,13 +29,13 @@ import loom.commands.plugin_details_helpers;
 import loom.commands.plugin_trust_text;
 import loom.ui.foundation.feature_dialog_protocol;
 
-export namespace cc::ui::plugins::plugin_install_flow {
+export namespace loom::ui::plugins::plugin_install_flow {
 using namespace ftxui;
 
-namespace ui = cc::commands::plugin_ui;
-namespace pd = cc::commands::plugin;
-namespace pt = cc::commands::plugin;
-namespace fdp = cc::ui::feature_dialog_protocol;
+namespace ui = loom::commands::plugin_ui;
+namespace pd = loom::commands::plugin;
+namespace pt = loom::commands::plugin;
+namespace fdp = loom::ui::feature_dialog_protocol;
 
 // =========================================================================
 // Step 1 — plugin source selection
@@ -740,4 +740,4 @@ struct InstallFlowState {
     });
 }
 
-} // namespace cc::ui::plugins::plugin_install_flow
+} // namespace loom::ui::plugins::plugin_install_flow

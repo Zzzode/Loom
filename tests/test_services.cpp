@@ -214,26 +214,26 @@ struct EnvironmentUnsetGuard {
     }
 };
 
-class DefinitionOnlyTool final : public cc::core::ITool {
+class DefinitionOnlyTool final : public loom::core::ITool {
 public:
-    explicit DefinitionOnlyTool(cc::core::ToolDefinition definition)
+    explicit DefinitionOnlyTool(loom::core::ToolDefinition definition)
         : definition_(std::move(definition)) {}
 
-    [[nodiscard]] const cc::core::ToolDefinition& definition() const override {
+    [[nodiscard]] const loom::core::ToolDefinition& definition() const override {
         return definition_;
     }
 
-    [[nodiscard]] cc::core::Result<cc::core::ToolResult> execute(
-        const cc::core::ToolInput& /*input*/) override {
-        return cc::core::ToolResult::success("unused");
+    [[nodiscard]] loom::core::Result<loom::core::ToolResult> execute(
+        const loom::core::ToolInput& /*input*/) override {
+        return loom::core::ToolResult::success("unused");
     }
 
-    [[nodiscard]] bool check_permission(const cc::core::ToolInput& /*input*/) const override {
+    [[nodiscard]] bool check_permission(const loom::core::ToolInput& /*input*/) const override {
         return true;
     }
 
 private:
-    cc::core::ToolDefinition definition_;
+    loom::core::ToolDefinition definition_;
 };
 
 bool send_all(int fd, std::string_view data) {
@@ -246,7 +246,7 @@ bool send_all(int fd, std::string_view data) {
     return true;
 }
 
-std::string json_id_literal(cc::utils::json::JsonVal id) {
+std::string json_id_literal(loom::utils::json::JsonVal id) {
     if (id.is_num()) return std::to_string(id.as_int());
     if (id.is_str()) return "\"" + std::string(id.as_str()) + "\"";
     return "null";
@@ -877,7 +877,7 @@ private:
                 requests_.push_back(frame->payload);
             }
 
-            auto doc = cc::utils::json::parse(frame->payload);
+            auto doc = loom::utils::json::parse(frame->payload);
             if (!doc) continue;
             auto root = doc->root();
             const auto method = std::string(root.get("method").as_str());
@@ -1076,7 +1076,7 @@ private:
         send_all(fd, "HTTP/1.1 202 Accepted\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
         ::close(fd);
 
-        auto parsed = cc::utils::json::parse(body);
+        auto parsed = loom::utils::json::parse(body);
         if (!parsed) return;
         auto root = parsed->root();
         const auto method = std::string(root.get("method").as_str());
@@ -1553,7 +1553,7 @@ private:
             post_bodies_.push_back(body);
         }
 
-        auto parsed = cc::utils::json::parse(body);
+        auto parsed = loom::utils::json::parse(body);
         if (!parsed) {
             send_empty(fd, "400 Bad Request");
             return;
@@ -1786,7 +1786,7 @@ public:
                 return;
             }
 
-            auto parsed = cc::utils::json::parse(req.body);
+            auto parsed = loom::utils::json::parse(req.body);
             if (!parsed) {
                 res.status = 400;
                 res.set_content("", "text/plain");
@@ -2272,7 +2272,7 @@ process.stdin.resume();
 
     {
         CurrentPathGuard cwd(root);
-        auto servers = cc::services::lsp::discover_plugin_lsp_servers();
+        auto servers = loom::services::lsp::discover_plugin_lsp_servers();
         auto it = std::ranges::find_if(servers, [](const auto& server) {
             return server.name == "plugin:lsp-fixture:fixture";
         });
@@ -2296,7 +2296,7 @@ process.stdin.resume();
         EXPECT_NE(it->config.initialization_options_json.find("\"feature\":true"), std::string::npos);
         EXPECT_EQ(it->config.extension_to_language.at("foo"), "foo-plugin");
 
-        auto manager = cc::services::lsp::create_lsp_server_manager();
+        auto manager = loom::services::lsp::create_lsp_server_manager();
         auto initialized = manager->initialize();
         ASSERT_TRUE(initialized.has_value()) << initialized.error().message();
         auto* routed = manager->get_server_for_file((root / "sample.foo").string());
@@ -2346,7 +2346,7 @@ TEST(CcrClient, UsesDefaultHttpTransportForRemoteSessionLifecycle) {
     LocalCcrHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::cli::CcrClient client;
+    loom::cli::CcrClient client;
     auto connected = client.connect(server.base_url() + "/api", "ccr-token");
     ASSERT_TRUE(connected.has_value()) << connected.error();
 
@@ -2386,7 +2386,7 @@ TEST(SessionIngress, PostsSessionEventsWithBearerAuth) {
     LocalCcrHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    auto created = cc::services::api::create_ingress(cc::services::api::IngressConfig{
+    auto created = loom::services::api::create_ingress(loom::services::api::IngressConfig{
         .endpoint = server.base_url(),
         .session_id = "session_1",
         .auth_token = "session-jwt-token",
@@ -2394,7 +2394,7 @@ TEST(SessionIngress, PostsSessionEventsWithBearerAuth) {
     });
     ASSERT_TRUE(created.has_value()) << created.error();
 
-    auto sent = cc::services::api::send_ingress_message(
+    auto sent = loom::services::api::send_ingress_message(
         R"({"type":"control_response","response":{"request_id":"permission-1","subtype":"success"}})");
     ASSERT_TRUE(sent.has_value()) << sent.error();
 
@@ -2408,14 +2408,14 @@ TEST(SessionIngress, PostsSessionEventsWithBearerAuth) {
     EXPECT_NE((*requests)[0].body.find(R"("type":"control_response")"), std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("request_id":"permission-1")"), std::string::npos);
 
-    cc::services::api::close_ingress();
+    loom::services::api::close_ingress();
 }
 
 TEST(SessionIngress, PostsSessionEventsWithSessionCookieAuth) {
     LocalCcrHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    auto created = cc::services::api::create_ingress(cc::services::api::IngressConfig{
+    auto created = loom::services::api::create_ingress(loom::services::api::IngressConfig{
         .endpoint = server.base_url(),
         .session_id = "session_1",
         .auth_token = "sk-ant-sid01-test",
@@ -2423,7 +2423,7 @@ TEST(SessionIngress, PostsSessionEventsWithSessionCookieAuth) {
     });
     ASSERT_TRUE(created.has_value()) << created.error();
 
-    auto sent = cc::services::api::send_ingress_message(R"({"type":"progress","value":0.5})");
+    auto sent = loom::services::api::send_ingress_message(R"({"type":"progress","value":0.5})");
     ASSERT_TRUE(sent.has_value()) << sent.error();
 
     auto requests = server.wait_for_requests(1);
@@ -2436,7 +2436,7 @@ TEST(SessionIngress, PostsSessionEventsWithSessionCookieAuth) {
     EXPECT_EQ((*requests)[0].headers.find("Authorization:"), std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("type":"progress")"), std::string::npos);
 
-    cc::services::api::close_ingress();
+    loom::services::api::close_ingress();
 }
 
 TEST(SessionIngress, CreatesIngressFromDaemonEnvironmentAndSendsLifecycleEvent) {
@@ -2452,13 +2452,13 @@ TEST(SessionIngress, CreatesIngressFromDaemonEnvironmentAndSendsLifecycleEvent) 
     ASSERT_TRUE(server.ready());
     setenv("LOOM_REMOTE_API_BASE_URL", server.base_url().c_str(), 1);
 
-    cc::services::api::close_ingress();
-    auto created = cc::services::api::create_ingress_from_environment();
+    loom::services::api::close_ingress();
+    auto created = loom::services::api::create_ingress_from_environment();
     ASSERT_TRUE(created.has_value()) << created.error();
     EXPECT_TRUE(*created);
-    EXPECT_TRUE(cc::services::api::is_ingress_active());
+    EXPECT_TRUE(loom::services::api::is_ingress_active());
 
-    auto sent = cc::services::api::send_ingress_lifecycle_event("started", std::string_view{"work_1"});
+    auto sent = loom::services::api::send_ingress_lifecycle_event("started", std::string_view{"work_1"});
     ASSERT_TRUE(sent.has_value()) << sent.error();
 
     auto requests = server.wait_for_requests(1);
@@ -2471,13 +2471,13 @@ TEST(SessionIngress, CreatesIngressFromDaemonEnvironmentAndSendsLifecycleEvent) 
     EXPECT_NE((*requests)[0].body.find(R"("status":"started")"), std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("bridge_work_id":"work_1")"), std::string::npos);
 
-    cc::services::api::close_ingress();
+    loom::services::api::close_ingress();
 }
 TEST(CcrClient, StreamsMessagesThroughDefaultHttpTransport) {
     LocalCcrHttpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::cli::CcrClient client;
+    loom::cli::CcrClient client;
     auto connected = client.connect(server.base_url() + "/api", "ccr-token");
     ASSERT_TRUE(connected.has_value()) << connected.error();
 
@@ -2518,9 +2518,9 @@ TEST(CcrClient, StreamsMessagesThroughDefaultHttpTransport) {
 }
 
 TEST(CcrClient, DoesNotInventSessionWhenRemoteHandshakeFails) {
-    cc::cli::CcrClient client;
-    client.set_http_transport([](const cc::cli::CcrHttpRequest&)
-        -> std::expected<cc::cli::CcrHttpResponse, std::string> {
+    loom::cli::CcrClient client;
+    client.set_http_transport([](const loom::cli::CcrHttpRequest&)
+        -> std::expected<loom::cli::CcrHttpResponse, std::string> {
         return std::unexpected("network down");
     });
 
@@ -2531,8 +2531,8 @@ TEST(CcrClient, DoesNotInventSessionWhenRemoteHandshakeFails) {
 }
 
 TEST(ApiErrors, ClassifiesHttpStatusCodes) {
-    using cc::services::api::errors::ApiErrorCategory;
-    using cc::services::api::errors::ErrorClassifier;
+    using loom::services::api::errors::ApiErrorCategory;
+    using loom::services::api::errors::ErrorClassifier;
 
     EXPECT_EQ(ErrorClassifier::classify_status(401), ApiErrorCategory::Authentication);
     EXPECT_EQ(ErrorClassifier::classify_status(429), ApiErrorCategory::RateLimited);
@@ -2542,9 +2542,9 @@ TEST(ApiErrors, ClassifiesHttpStatusCodes) {
 }
 
 TEST(ApiErrors, RetryDecisionUsesRetryableCategories) {
-    using cc::services::api::errors::ApiErrorCategory;
-    using cc::services::api::errors::ApiErrorDetails;
-    using cc::services::api::errors::ErrorClassifier;
+    using loom::services::api::errors::ApiErrorCategory;
+    using loom::services::api::errors::ApiErrorDetails;
+    using loom::services::api::errors::ErrorClassifier;
 
     ApiErrorDetails rate_limited{};
     rate_limited.category = ApiErrorCategory::RateLimited;
@@ -2558,44 +2558,44 @@ TEST(ApiErrors, RetryDecisionUsesRetryableCategories) {
 }
 
 TEST(ApiErrors, ClientMapsJsonHttpErrorsToStructuredMessages) {
-    auto error = cc::services::api::AnthropicClient::error_from_http_response(
+    auto error = loom::services::api::AnthropicClient::error_from_http_response(
         400,
         R"({"type":"error","error":{"type":"invalid_request_error","message":"prompt is too long"}})",
         std::optional<std::string>{"req_123"});
 
-    EXPECT_EQ(error.code(), cc::utils::ErrorCode::invalid_argument);
+    EXPECT_EQ(error.code(), loom::utils::ErrorCode::invalid_argument);
     EXPECT_NE(error.message().find("HTTP 400 invalid_request_error: prompt is too long"), std::string::npos);
     EXPECT_NE(error.message().find("req_123"), std::string::npos);
 }
 
 TEST(ApiErrors, ClientPreservesRetryAfterFromJsonHttpErrors) {
-    auto error = cc::services::api::AnthropicClient::error_from_http_response(
+    auto error = loom::services::api::AnthropicClient::error_from_http_response(
         429,
         R"({"error":{"type":"rate_limit_error","message":"too many requests","retry_after_seconds":7}})");
 
-    EXPECT_EQ(error.code(), cc::utils::ErrorCode::resource_exhausted);
+    EXPECT_EQ(error.code(), loom::utils::ErrorCode::resource_exhausted);
     EXPECT_NE(error.message().find("rate_limit_error: too many requests"), std::string::npos);
     EXPECT_NE(error.message().find("retry after: 7s"), std::string::npos);
 }
 
 TEST(ApiErrors, ClientErrorDetailsDriveRetryClassification) {
-    using cc::services::api::errors::ApiErrorCategory;
-    using cc::services::api::errors::ErrorClassifier;
+    using loom::services::api::errors::ApiErrorCategory;
+    using loom::services::api::errors::ErrorClassifier;
 
-    auto invalid_error = cc::services::api::AnthropicClient::error_from_http_response(
+    auto invalid_error = loom::services::api::AnthropicClient::error_from_http_response(
         400,
         R"({"error":{"type":"invalid_request_error","message":"bad tool schema"}})");
-    auto invalid_details = cc::services::api::AnthropicClient::error_details_from_error(invalid_error);
+    auto invalid_details = loom::services::api::AnthropicClient::error_details_from_error(invalid_error);
 
     EXPECT_EQ(invalid_details.category, ApiErrorCategory::InvalidRequest);
     EXPECT_EQ(invalid_details.http_status, 400);
     EXPECT_EQ(invalid_details.error_type, "invalid_request_error");
     EXPECT_FALSE(ErrorClassifier::is_retryable(invalid_details));
 
-    auto rate_limit_error = cc::services::api::AnthropicClient::error_from_http_response(
+    auto rate_limit_error = loom::services::api::AnthropicClient::error_from_http_response(
         429,
         R"({"error":{"type":"rate_limit_error","message":"too many requests","retry_after_seconds":7}})");
-    auto rate_limit_details = cc::services::api::AnthropicClient::error_details_from_error(rate_limit_error);
+    auto rate_limit_details = loom::services::api::AnthropicClient::error_details_from_error(rate_limit_error);
 
     EXPECT_EQ(rate_limit_details.category, ApiErrorCategory::RateLimited);
     EXPECT_EQ(rate_limit_details.retry_after_seconds, std::optional<int>{7});
@@ -2610,20 +2610,20 @@ TEST(QueryEngine, AppliesPerQueryEnabledToolsToAnthropicRequest) {
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.cwd = root.string();
     config.retry_policy.max_retries = 0;
-    config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Disabled;
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
     config.tools = {
-        cc::core::ToolDefinition{
+        loom::core::ToolDefinition{
             .name = "Read",
             .description = "Read a file",
-            .input_schema = cc::core::InputSchema{
+            .input_schema = loom::core::InputSchema{
                 .properties = {
-                    cc::core::SchemaProperty{
+                    loom::core::SchemaProperty{
                         .name = "file_path",
                         .type = "string",
                         .description = "File path",
@@ -2631,14 +2631,14 @@ TEST(QueryEngine, AppliesPerQueryEnabledToolsToAnthropicRequest) {
                     },
                 },
             },
-            .permission = cc::core::ToolPermission::ReadOnly,
+            .permission = loom::core::ToolPermission::ReadOnly,
         },
-        cc::core::ToolDefinition{
+        loom::core::ToolDefinition{
             .name = "Write",
             .description = "Write a file",
-            .input_schema = cc::core::InputSchema{
+            .input_schema = loom::core::InputSchema{
                 .properties = {
-                    cc::core::SchemaProperty{
+                    loom::core::SchemaProperty{
                         .name = "file_path",
                         .type = "string",
                         .description = "File path",
@@ -2646,12 +2646,12 @@ TEST(QueryEngine, AppliesPerQueryEnabledToolsToAnthropicRequest) {
                     },
                 },
             },
-            .permission = cc::core::ToolPermission::Write,
+            .permission = loom::core::ToolPermission::Write,
         },
     };
 
-    cc::core::QueryEngine engine(std::move(config), registry);
-    cc::core::QueryOptions options;
+    loom::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryOptions options;
     options.enabled_tools = {"Read"};
 
     auto response = engine.query("hello", options);
@@ -2660,7 +2660,7 @@ TEST(QueryEngine, AppliesPerQueryEnabledToolsToAnthropicRequest) {
 
     auto request_body = server.wait_for_body();
     ASSERT_TRUE(request_body.has_value());
-    auto parsed = cc::utils::json::parse(*request_body);
+    auto parsed = loom::utils::json::parse(*request_body);
     ASSERT_TRUE(parsed.has_value()) << parsed.error().message();
 
     auto tools = parsed->root().get("tools");
@@ -2668,7 +2668,7 @@ TEST(QueryEngine, AppliesPerQueryEnabledToolsToAnthropicRequest) {
     ASSERT_TRUE(tools.is_arr());
 
     std::vector<std::string> tool_names;
-    tools.iter([&](cc::utils::json::JsonVal tool) {
+    tools.iter([&](loom::utils::json::JsonVal tool) {
         tool_names.emplace_back(tool.get("name").as_str());
     });
 
@@ -2687,42 +2687,42 @@ TEST(QueryEngine, SnipMetadataProjectsRemovedMessagesFromAnthropicRequest) {
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.cwd = root.string();
     config.retry_policy.max_retries = 0;
-    config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Disabled;
-    cc::core::QueryEngine engine(std::move(config), registry);
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
+    loom::core::QueryEngine engine(std::move(config), registry);
 
-    cc::core::UserMessage old_user{};
+    loom::core::UserMessage old_user{};
     old_user.id.value = "snipped-user-id";
     old_user.timestamp = std::chrono::system_clock::now();
-    old_user.content.push_back(cc::core::TextBlock{"SNIPPED_USER_PAYLOAD_DO_NOT_SEND"});
-    engine.append_message_for_testing(cc::core::Message{std::move(old_user)});
+    old_user.content.push_back(loom::core::TextBlock{"SNIPPED_USER_PAYLOAD_DO_NOT_SEND"});
+    engine.append_message_for_testing(loom::core::Message{std::move(old_user)});
 
-    cc::core::AssistantMessage old_assistant{};
+    loom::core::AssistantMessage old_assistant{};
     old_assistant.id.value = "snipped-assistant-id";
     old_assistant.timestamp = std::chrono::system_clock::now();
-    old_assistant.content.push_back(cc::core::TextBlock{"SNIPPED_ASSISTANT_PAYLOAD_DO_NOT_SEND"});
-    engine.append_message_for_testing(cc::core::Message{std::move(old_assistant)});
+    old_assistant.content.push_back(loom::core::TextBlock{"SNIPPED_ASSISTANT_PAYLOAD_DO_NOT_SEND"});
+    engine.append_message_for_testing(loom::core::Message{std::move(old_assistant)});
 
-    cc::core::SystemMessage snip_boundary{};
+    loom::core::SystemMessage snip_boundary{};
     snip_boundary.id.value = "snip-boundary-id";
     snip_boundary.timestamp = std::chrono::system_clock::now();
     snip_boundary.subtype = "snip_boundary";
-    snip_boundary.content.push_back(cc::core::TextBlock{"Conversation snipped."});
-    snip_boundary.snip_metadata = cc::core::SnipMetadata{
+    snip_boundary.content.push_back(loom::core::TextBlock{"Conversation snipped."});
+    snip_boundary.snip_metadata = loom::core::SnipMetadata{
         .removed_uuids = {"snipped-user-id", "snipped-assistant-id"},
     };
-    engine.append_message_for_testing(cc::core::Message{std::move(snip_boundary)});
+    engine.append_message_for_testing(loom::core::Message{std::move(snip_boundary)});
 
-    cc::core::UserMessage survivor{};
+    loom::core::UserMessage survivor{};
     survivor.id.value = "survivor-user-id";
     survivor.timestamp = std::chrono::system_clock::now();
-    survivor.content.push_back(cc::core::TextBlock{"SURVIVOR_PAYLOAD_SHOULD_SEND"});
-    engine.append_message_for_testing(cc::core::Message{std::move(survivor)});
+    survivor.content.push_back(loom::core::TextBlock{"SURVIVOR_PAYLOAD_SHOULD_SEND"});
+    engine.append_message_for_testing(loom::core::Message{std::move(survivor)});
 
     auto response = engine.query("fresh prompt after snip");
     ASSERT_TRUE(response.has_value()) << response.error().message;
@@ -2742,7 +2742,7 @@ TEST(QueryEngine, SnipMetadataProjectsRemovedMessagesFromAnthropicRequest) {
 
     auto conversation = engine.get_conversation();
     auto contains_message_id = [&](std::string_view id) {
-        return std::ranges::any_of(conversation, [&](const cc::core::Message& msg) {
+        return std::ranges::any_of(conversation, [&](const loom::core::Message& msg) {
             return std::visit([&](const auto& value) {
                 return value.id.value == id;
             }, msg);
@@ -2763,7 +2763,7 @@ TEST(ApiMicrocompact, BuildsThinkingAndToolContextManagementStrategies) {
     EnvironmentGuard max_tokens_guard("API_MAX_INPUT_TOKENS", "1000");
     EnvironmentGuard target_tokens_guard("API_TARGET_INPUT_TOKENS", "250");
 
-    auto context = cc::services::compact::get_api_context_management({
+    auto context = loom::services::compact::get_api_context_management({
         .has_thinking = true,
         .is_redact_thinking_active = false,
         .clear_all_thinking = true,
@@ -2806,25 +2806,25 @@ TEST(QueryEngine, SerializesTaskBudgetAndApiContextManagementRequestConfig) {
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.cwd = root.string();
     config.retry_policy.max_retries = 0;
-    config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Adaptive;
-    config.task_budget = cc::core::QueryEngineConfig::TaskBudget{
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Adaptive;
+    config.task_budget = loom::core::QueryEngineConfig::TaskBudget{
         .total = 12'000,
         .remaining = 6'000,
     };
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
     auto response = engine.query("hello");
     ASSERT_TRUE(response.has_value()) << response.error().message;
 
     auto request_body = server.wait_for_body();
     ASSERT_TRUE(request_body.has_value());
-    auto parsed = cc::utils::json::parse(*request_body);
+    auto parsed = loom::utils::json::parse(*request_body);
     ASSERT_TRUE(parsed.has_value()) << parsed.error().message();
 
     auto output_config = parsed->root().get("output_config");
@@ -2869,21 +2869,21 @@ TEST(QueryEngine, DisableThinkingEnvSuppressesThinkingAndClearThinkingContextMan
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.cwd = root.string();
     config.retry_policy.max_retries = 0;
-    config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Adaptive;
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Adaptive;
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
     auto response = engine.query("hello");
     ASSERT_TRUE(response.has_value()) << response.error().message;
 
     auto request_body = server.wait_for_body();
     ASSERT_TRUE(request_body.has_value());
-    auto parsed = cc::utils::json::parse(*request_body);
+    auto parsed = loom::utils::json::parse(*request_body);
     ASSERT_TRUE(parsed.has_value()) << parsed.error().message();
     EXPECT_FALSE(parsed->root().get("thinking").valid()) << *request_body;
     EXPECT_FALSE(parsed->root().get("context_management").valid()) << *request_body;
@@ -2904,49 +2904,49 @@ TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    cc::tools::agent_runtime::native_agent_store().clear_for_testing();
+    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    cc::tools::agent_runtime::native_agent_store().upsert(cc::tools::agent_runtime::NativeAgentRecord{
+    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
         .agent_id = "query-notify-agent",
         .agent_type = "general-purpose",
         .description = "Query notify agent",
         .background = true,
-        .status = cc::tools::agent_runtime::NativeAgentStatus::Completed,
+        .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
         .output = std::string("native agent completed with useful context"),
     });
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.cwd = root.string();
     config.retry_policy.max_retries = 0;
-    config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Disabled;
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
     auto first_response = engine.query("hello");
     ASSERT_TRUE(first_response.has_value()) << first_response.error().message;
 
     auto first_body = server.wait_for_body();
     ASSERT_TRUE(first_body.has_value());
-    auto first_json = cc::utils::json::parse(*first_body);
+    auto first_json = loom::utils::json::parse(*first_body);
     ASSERT_TRUE(first_json.has_value()) << first_json.error().message();
 
-    auto message_text = [](cc::utils::json::JsonVal message) {
+    auto message_text = [](loom::utils::json::JsonVal message) {
         auto content = message.get("content");
         if (content.is_str()) return std::string(content.as_str());
         std::string text;
         if (content.is_arr()) {
-            content.iter([&](cc::utils::json::JsonVal block) {
+            content.iter([&](loom::utils::json::JsonVal block) {
                 auto block_text = block.get("text");
                 if (block_text.is_str()) text += block_text.as_str();
             });
         }
         return text;
     };
-    auto notification_count = [&](cc::utils::json::JsonVal messages) {
+    auto notification_count = [&](loom::utils::json::JsonVal messages) {
         std::size_t count = 0;
-        messages.iter([&](cc::utils::json::JsonVal message) {
+        messages.iter([&](loom::utils::json::JsonVal message) {
             if (message_text(message).find("<task_notification>") != std::string::npos) {
                 ++count;
             }
@@ -2959,7 +2959,7 @@ TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
     ASSERT_EQ(notification_count(first_messages), 1u) << *first_body;
 
     bool saw_user_notification = false;
-    first_messages.iter([&](cc::utils::json::JsonVal message) {
+    first_messages.iter([&](loom::utils::json::JsonVal message) {
         const auto text = message_text(message);
         if (text.find("<task_notification>") == std::string::npos) return;
         EXPECT_EQ(std::string(message.get("role").as_str()), "user");
@@ -2970,10 +2970,10 @@ TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
     });
     EXPECT_TRUE(saw_user_notification);
 
-    auto delivered_record = cc::tools::agent_runtime::native_agent_store().get("query-notify-agent");
+    auto delivered_record = loom::tools::agent_runtime::native_agent_store().get("query-notify-agent");
     ASSERT_TRUE(delivered_record.has_value());
     EXPECT_TRUE(delivered_record->notification_delivered);
-    EXPECT_TRUE(cc::tools::agent_runtime::native_agent_store().take_pending_task_notifications().empty());
+    EXPECT_TRUE(loom::tools::agent_runtime::native_agent_store().take_pending_task_notifications().empty());
 
     auto second_response = engine.query("follow up");
     ASSERT_TRUE(second_response.has_value()) << second_response.error().message;
@@ -2981,13 +2981,13 @@ TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
     ASSERT_TRUE(request_bodies.has_value());
     ASSERT_EQ(request_bodies->size(), 2u);
 
-    auto second_json = cc::utils::json::parse(request_bodies->back());
+    auto second_json = loom::utils::json::parse(request_bodies->back());
     ASSERT_TRUE(second_json.has_value()) << second_json.error().message();
     auto second_messages = second_json->root().get("messages");
     ASSERT_TRUE(second_messages.is_arr()) << request_bodies->back();
     EXPECT_EQ(notification_count(second_messages), 1u) << request_bodies->back();
 
-    cc::tools::agent_runtime::native_agent_store().clear_for_testing();
+    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
 }
 
@@ -2996,23 +2996,23 @@ TEST(QueryEngine, PersistsTranscriptToSessionStorage) {
     fs::remove_all(dir);
     fs::create_directories(dir);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
     config.model_params.model = "test-model";
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
     engine.set_session_storage(dir);
 
     auto make_user = [](std::string text) {
-        cc::core::UserMessage msg{};
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        loom::core::UserMessage msg{};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
     auto make_assistant = [](std::string text) {
-        cc::core::AssistantMessage msg{};
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        loom::core::AssistantMessage msg{};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
 
     engine.append_message_for_testing(make_user("hello world"));
@@ -3035,14 +3035,14 @@ TEST(QueryEngine, PersistsTranscriptToSessionStorage) {
     EXPECT_NE(lines[1].find("assistant"), std::string::npos);
 
     // Metadata discoverable via list_recent_sessions.
-    auto sessions = cc::session::list_recent_sessions(dir);
+    auto sessions = loom::session::list_recent_sessions(dir);
     EXPECT_EQ(sessions.size(), 1u);
     EXPECT_EQ(sessions.front().session_id, engine.session_id().str());
     EXPECT_EQ(sessions.front().model, "test-model");
 
     // flush_session refreshes metadata message_count.
     engine.flush_session();
-    auto sessions2 = cc::session::list_recent_sessions(dir);
+    auto sessions2 = loom::session::list_recent_sessions(dir);
     ASSERT_EQ(sessions2.size(), 1u);
     EXPECT_EQ(sessions2.front().message_count, 2);
 
@@ -3050,14 +3050,14 @@ TEST(QueryEngine, PersistsTranscriptToSessionStorage) {
 }
 
 TEST(QueryEngine, StructuredOutputInjectsResponseSchema) {
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
-    config.response_schema = cc::core::QueryEngineConfig::ResponseSchema{
+    config.response_schema = loom::core::QueryEngineConfig::ResponseSchema{
         .name = "result",
         .schema_json = R"({"type":"object","properties":{"answer":{"type":"string"}},"required":["answer"]})",
     };
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     const auto out = engine.build_output_config_json_for_testing();
     EXPECT_NE(out.find("output_config"), std::string::npos);
@@ -3066,37 +3066,37 @@ TEST(QueryEngine, StructuredOutputInjectsResponseSchema) {
     EXPECT_NE(out.find("answer"), std::string::npos);
 
     // Without a schema and without a budget, output_config is omitted.
-    cc::core::QueryEngineConfig bare;
+    loom::core::QueryEngineConfig bare;
     bare.context_window.auto_compact = false;
-    cc::core::QueryEngine bare_engine(std::move(bare), registry);
+    loom::core::QueryEngine bare_engine(std::move(bare), registry);
     EXPECT_EQ(bare_engine.build_output_config_json_for_testing(), "{}");
 }
 
 TEST(QueryEngine, TracksInvokedSkillsInLoop) {
     // In-loop skill dispatch: when the skill tool is invoked, the engine
     // records the skill name in discovered_skills_ (previously a dead field).
-    struct StubSkillTool final : cc::core::ITool {
-        cc::core::ToolDefinition definition_{};
+    struct StubSkillTool final : loom::core::ITool {
+        loom::core::ToolDefinition definition_{};
         StubSkillTool() {
             definition_.name = "skill";
-            definition_.permission = cc::core::ToolPermission::ReadOnly;
+            definition_.permission = loom::core::ToolPermission::ReadOnly;
         }
-        [[nodiscard]] const cc::core::ToolDefinition& definition() const override { return definition_; }
-        [[nodiscard]] cc::core::Result<cc::core::ToolResult> execute(const cc::core::ToolInput&) override {
-            return cc::core::ToolResult::success("ok");
+        [[nodiscard]] const loom::core::ToolDefinition& definition() const override { return definition_; }
+        [[nodiscard]] loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+            return loom::core::ToolResult::success("ok");
         }
-        [[nodiscard]] bool check_permission(const cc::core::ToolInput&) const override { return true; }
+        [[nodiscard]] bool check_permission(const loom::core::ToolInput&) const override { return true; }
     };
 
-    cc::core::ToolRegistry registry;
+    loom::core::ToolRegistry registry;
     registry.register_tool(std::make_unique<StubSkillTool>());
-    cc::core::QueryEngineConfig config;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
-    cc::core::ToolUseBlock tu{
-        .id = cc::core::ToolUseId{.value = "tu-1"},
+    loom::core::ToolUseBlock tu{
+        .id = loom::core::ToolUseId{.value = "tu-1"},
         .name = "skill",
         .input_json = R"({"name":"my-test-skill"})",
     };
@@ -3114,31 +3114,31 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
     fs::create_directories(root);
     EnvironmentGuard home_guard("HOME", root.string());
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = (root / "work").string();
     config.session_id_override = "resume-session-id";
     fs::create_directories(root / "work");
 
-    const auto summary_path = cc::memdir::get_session_memory_path(
+    const auto summary_path = loom::memdir::get_session_memory_path(
         root / "work", "resume-session-id");
 
     {
-        cc::core::QueryEngine engine(config, registry);
+        loom::core::QueryEngine engine(config, registry);
         auto make_user = [](std::string text) {
-            cc::core::UserMessage msg{};
+            loom::core::UserMessage msg{};
             msg.id.value = "user-" + text;
             msg.timestamp = std::chrono::system_clock::now();
-            msg.content.push_back(cc::core::TextBlock{std::move(text)});
-            return cc::core::Message{std::move(msg)};
+            msg.content.push_back(loom::core::TextBlock{std::move(text)});
+            return loom::core::Message{std::move(msg)};
         };
         auto make_assistant = [](std::string text) {
-            cc::core::AssistantMessage msg{};
+            loom::core::AssistantMessage msg{};
             msg.id.value = "assistant-" + text;
             msg.timestamp = std::chrono::system_clock::now();
-            msg.content.push_back(cc::core::TextBlock{std::move(text)});
-            return cc::core::Message{std::move(msg)};
+            msg.content.push_back(loom::core::TextBlock{std::move(text)});
+            return loom::core::Message{std::move(msg)};
         };
         // > keep_recent(6) + system messages so compaction actually runs.
         engine.append_message_for_testing(make_user("legacy requirement alpha"));
@@ -3163,7 +3163,7 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
 
     // A fresh engine with the same session id injects the persisted summary
     // into its system prompt (resumed session does not start blind).
-    cc::core::QueryEngine resumed(config, registry);
+    loom::core::QueryEngine resumed(config, registry);
     const std::string body = resumed.build_request_body_for_testing();
     EXPECT_NE(body.find("session-memory"), std::string::npos) << body;
     EXPECT_NE(body.find("legacy requirement alpha"), std::string::npos) << body;
@@ -3172,26 +3172,26 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
 }
 
 TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     auto make_user = [](std::string text) {
-        cc::core::UserMessage msg{};
+        loom::core::UserMessage msg{};
         msg.id.value = "user-" + text;
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
     auto make_assistant = [](std::string text) {
-        cc::core::AssistantMessage msg{};
+        loom::core::AssistantMessage msg{};
         msg.id.value = "assistant-" + text;
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
 
     engine.append_message_for_testing(make_user("legacy requirement alpha"));
@@ -3211,7 +3211,7 @@ TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
     auto conversation = engine.get_conversation();
     ASSERT_EQ(conversation.size(), 9u);
 
-    const auto* boundary = std::get_if<cc::core::SystemMessage>(&conversation[1]);
+    const auto* boundary = std::get_if<loom::core::SystemMessage>(&conversation[1]);
     ASSERT_NE(boundary, nullptr);
     ASSERT_TRUE(boundary->subtype.has_value());
     EXPECT_EQ(*boundary->subtype, "compact_boundary");
@@ -3222,10 +3222,10 @@ TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
     EXPECT_EQ(boundary->compact_metadata->preserved_segment->head_uuid, "user-recent one");
     EXPECT_EQ(boundary->compact_metadata->preserved_segment->tail_uuid, "assistant-recent six");
 
-    const auto* marker = std::get_if<cc::core::UserMessage>(&conversation[2]);
+    const auto* marker = std::get_if<loom::core::UserMessage>(&conversation[2]);
     ASSERT_NE(marker, nullptr);
     ASSERT_EQ(marker->content.size(), 1u);
-    const auto* summary = std::get_if<cc::core::TextBlock>(&marker->content.front());
+    const auto* summary = std::get_if<loom::core::TextBlock>(&marker->content.front());
     ASSERT_NE(summary, nullptr);
     EXPECT_EQ(boundary->compact_metadata->preserved_segment->anchor_uuid, marker->id.value);
 
@@ -3233,9 +3233,9 @@ TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
     EXPECT_NE(summary->text.find("assistant decision beta"), std::string::npos);
     EXPECT_NE(summary->text.find("Preserve these details"), std::string::npos);
 
-    const auto* last = std::get_if<cc::core::AssistantMessage>(&conversation.back());
+    const auto* last = std::get_if<loom::core::AssistantMessage>(&conversation.back());
     ASSERT_NE(last, nullptr);
-    const auto* last_text = std::get_if<cc::core::TextBlock>(&last->content.front());
+    const auto* last_text = std::get_if<loom::core::TextBlock>(&last->content.front());
     ASSERT_NE(last_text, nullptr);
     EXPECT_EQ(last_text->text, "recent six");
 }
@@ -3248,34 +3248,34 @@ TEST(QueryEngine, CompactConversationCarriesTaskBudgetRemainingIntoNextRequest) 
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = root.string();
     config.retry_policy.max_retries = 0;
-    config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Disabled;
-    config.task_budget = cc::core::QueryEngineConfig::TaskBudget{
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
+    config.task_budget = loom::core::QueryEngineConfig::TaskBudget{
         .total = 10'000,
         .remaining = std::nullopt,
     };
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     auto make_user = [](std::string text) {
-        cc::core::UserMessage msg{};
+        loom::core::UserMessage msg{};
         msg.id.value = "user-" + text.substr(0, 12);
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
     auto make_assistant = [](std::string text) {
-        cc::core::AssistantMessage msg{};
+        loom::core::AssistantMessage msg{};
         msg.id.value = "assistant-" + text.substr(0, 12);
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
 
     for (int i = 0; i < 5; ++i) {
@@ -3287,12 +3287,12 @@ TEST(QueryEngine, CompactConversationCarriesTaskBudgetRemainingIntoNextRequest) 
     ASSERT_TRUE(compacted.has_value());
 
     auto conversation = engine.get_conversation();
-    auto boundary_it = std::ranges::find_if(conversation, [](const cc::core::Message& message) {
-        const auto* system = std::get_if<cc::core::SystemMessage>(&message);
+    auto boundary_it = std::ranges::find_if(conversation, [](const loom::core::Message& message) {
+        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
         return system && system->subtype && *system->subtype == "compact_boundary";
     });
     ASSERT_NE(boundary_it, conversation.end());
-    const auto* boundary = std::get_if<cc::core::SystemMessage>(&*boundary_it);
+    const auto* boundary = std::get_if<loom::core::SystemMessage>(&*boundary_it);
     ASSERT_NE(boundary, nullptr);
     ASSERT_TRUE(boundary->compact_metadata.has_value());
     const auto pre_tokens = boundary->compact_metadata->pre_tokens;
@@ -3304,7 +3304,7 @@ TEST(QueryEngine, CompactConversationCarriesTaskBudgetRemainingIntoNextRequest) 
 
     auto request_body = server.wait_for_body();
     ASSERT_TRUE(request_body.has_value());
-    auto parsed = cc::utils::json::parse(*request_body);
+    auto parsed = loom::utils::json::parse(*request_body);
     ASSERT_TRUE(parsed.has_value()) << parsed.error().message();
     auto task_budget = parsed->root().get("output_config").get("task_budget");
     ASSERT_TRUE(task_budget.is_obj()) << *request_body;
@@ -3319,31 +3319,31 @@ TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBounda
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = root.string();
-    config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Disabled;
-    config.task_budget = cc::core::QueryEngineConfig::TaskBudget{
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
+    config.task_budget = loom::core::QueryEngineConfig::TaskBudget{
         .total = 10'000,
         .remaining = std::nullopt,
     };
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     auto make_user = [](std::string text) {
-        cc::core::UserMessage msg{};
+        loom::core::UserMessage msg{};
         msg.id.value = "restore-user-" + text.substr(0, 12);
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
     auto make_assistant = [](std::string text) {
-        cc::core::AssistantMessage msg{};
+        loom::core::AssistantMessage msg{};
         msg.id.value = "restore-assistant-" + text.substr(0, 12);
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
 
     for (int i = 0; i < 5; ++i) {
@@ -3355,12 +3355,12 @@ TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBounda
     ASSERT_TRUE(compacted.has_value());
 
     auto restored_messages = engine.get_conversation();
-    auto boundary_it = std::ranges::find_if(restored_messages, [](const cc::core::Message& message) {
-        const auto* system = std::get_if<cc::core::SystemMessage>(&message);
+    auto boundary_it = std::ranges::find_if(restored_messages, [](const loom::core::Message& message) {
+        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
         return system && system->subtype && *system->subtype == "compact_boundary";
     });
     ASSERT_NE(boundary_it, restored_messages.end());
-    const auto* boundary = std::get_if<cc::core::SystemMessage>(&*boundary_it);
+    const auto* boundary = std::get_if<loom::core::SystemMessage>(&*boundary_it);
     ASSERT_NE(boundary, nullptr);
     ASSERT_TRUE(boundary->compact_metadata.has_value());
     const auto pre_tokens = boundary->compact_metadata->pre_tokens;
@@ -3369,20 +3369,20 @@ TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBounda
 
     LocalAnthropicMessagesServer resumed_server;
     ASSERT_NE(resumed_server.port(), 0);
-    cc::core::ToolRegistry restored_registry;
-    cc::core::QueryEngineConfig restored_config;
+    loom::core::ToolRegistry restored_registry;
+    loom::core::QueryEngineConfig restored_config;
     restored_config.api_key = "test-key";
     restored_config.base_url = resumed_server.base_url();
     restored_config.context_window.auto_compact = false;
     restored_config.cwd = root.string();
     restored_config.retry_policy.max_retries = 0;
-    restored_config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Disabled;
-    restored_config.task_budget = cc::core::QueryEngineConfig::TaskBudget{
+    restored_config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
+    restored_config.task_budget = loom::core::QueryEngineConfig::TaskBudget{
         .total = 10'000,
         .remaining = std::nullopt,
     };
 
-    cc::core::QueryEngine restored_engine(std::move(restored_config), restored_registry);
+    loom::core::QueryEngine restored_engine(std::move(restored_config), restored_registry);
     restored_engine.restore_conversation(std::move(restored_messages));
 
     auto response = restored_engine.query("continue after restore");
@@ -3390,7 +3390,7 @@ TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBounda
 
     auto request_body = resumed_server.wait_for_body();
     ASSERT_TRUE(request_body.has_value());
-    auto parsed = cc::utils::json::parse(*request_body);
+    auto parsed = loom::utils::json::parse(*request_body);
     ASSERT_TRUE(parsed.has_value()) << parsed.error().message();
     auto task_budget = parsed->root().get("output_config").get("task_budget");
     ASSERT_TRUE(task_budget.is_obj()) << *request_body;
@@ -3401,26 +3401,26 @@ TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBounda
 }
 
 TEST(QueryEngine, RepeatedCompactDoesNotSummarizePriorCompactBoundaries) {
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     auto make_user = [](std::string text) {
-        cc::core::UserMessage msg{};
+        loom::core::UserMessage msg{};
         msg.id.value = "repeat-user-" + text;
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
     auto make_assistant = [](std::string text) {
-        cc::core::AssistantMessage msg{};
+        loom::core::AssistantMessage msg{};
         msg.id.value = "repeat-assistant-" + text;
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{std::move(text)});
-        return cc::core::Message{std::move(msg)};
+        msg.content.push_back(loom::core::TextBlock{std::move(text)});
+        return loom::core::Message{std::move(msg)};
     };
 
     for (int i = 0; i < 10; ++i) {
@@ -3442,25 +3442,25 @@ TEST(QueryEngine, RepeatedCompactDoesNotSummarizePriorCompactBoundaries) {
     ASSERT_TRUE(second.has_value());
 
     auto conversation = engine.get_conversation();
-    auto boundary_count = std::ranges::count_if(conversation, [](const cc::core::Message& message) {
-        const auto* system = std::get_if<cc::core::SystemMessage>(&message);
+    auto boundary_count = std::ranges::count_if(conversation, [](const loom::core::Message& message) {
+        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
         return system && system->subtype && *system->subtype == "compact_boundary";
     });
     EXPECT_EQ(boundary_count, 1);
 
-    const auto* marker = std::get_if<cc::core::UserMessage>(&conversation.at(2));
+    const auto* marker = std::get_if<loom::core::UserMessage>(&conversation.at(2));
     ASSERT_NE(marker, nullptr);
     ASSERT_EQ(marker->content.size(), 1u);
-    const auto* summary = std::get_if<cc::core::TextBlock>(&marker->content.front());
+    const auto* summary = std::get_if<loom::core::TextBlock>(&marker->content.front());
     ASSERT_NE(summary, nullptr);
     EXPECT_EQ(summary->text.find("Conversation compacted by manual compact."), std::string::npos);
     EXPECT_NE(summary->text.find("initial 0"), std::string::npos);
 
     bool kept_second_wave = false;
     for (const auto& message : conversation) {
-        const auto* user = std::get_if<cc::core::UserMessage>(&message);
+        const auto* user = std::get_if<loom::core::UserMessage>(&message);
         if (!user || user->content.empty()) continue;
-        const auto* text = std::get_if<cc::core::TextBlock>(&user->content.front());
+        const auto* text = std::get_if<loom::core::TextBlock>(&user->content.front());
         if (text && text->text == "second wave 0") {
             kept_second_wave = true;
             break;
@@ -3470,22 +3470,22 @@ TEST(QueryEngine, RepeatedCompactDoesNotSummarizePriorCompactBoundaries) {
 }
 
 TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = true;
     config.context_window.max_context_tokens = 2000;
     config.context_window.compaction_threshold = 0.05;
     config.cwd = fs::temp_directory_path().string();
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     auto make_user = [](int index) {
-        cc::core::UserMessage msg{};
+        loom::core::UserMessage msg{};
         msg.id.value = "auto-user-" + std::to_string(index);
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{
+        msg.content.push_back(loom::core::TextBlock{
             "auto compact payload " + std::to_string(index) + " " + std::string(900, 'x')});
-        return cc::core::Message{std::move(msg)};
+        return loom::core::Message{std::move(msg)};
     };
 
     for (int i = 0; i < 12; ++i) {
@@ -3493,21 +3493,21 @@ TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
     }
 
     auto conversation = engine.get_conversation();
-    auto boundary_count = std::ranges::count_if(conversation, [](const cc::core::Message& message) {
-        const auto* system = std::get_if<cc::core::SystemMessage>(&message);
+    auto boundary_count = std::ranges::count_if(conversation, [](const loom::core::Message& message) {
+        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
         return system && system->subtype && *system->subtype == "compact_boundary";
     });
     ASSERT_EQ(boundary_count, 1);
     ASSERT_LE(conversation.size(), 9u);
 
-    auto boundary_it = std::ranges::find_if(conversation, [](const cc::core::Message& message) {
-        const auto* system = std::get_if<cc::core::SystemMessage>(&message);
+    auto boundary_it = std::ranges::find_if(conversation, [](const loom::core::Message& message) {
+        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
         return system && system->subtype && *system->subtype == "compact_boundary";
     });
     ASSERT_NE(boundary_it, conversation.end());
     const auto boundary_index = static_cast<std::size_t>(std::distance(conversation.begin(), boundary_it));
 
-    const auto* boundary = std::get_if<cc::core::SystemMessage>(&*boundary_it);
+    const auto* boundary = std::get_if<loom::core::SystemMessage>(&*boundary_it);
     ASSERT_NE(boundary, nullptr);
     ASSERT_TRUE(boundary->compact_metadata.has_value());
     EXPECT_EQ(boundary->compact_metadata->trigger, "auto");
@@ -3515,7 +3515,7 @@ TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
     ASSERT_TRUE(boundary->compact_metadata->preserved_segment.has_value());
 
     ASSERT_LT(boundary_index + 1, conversation.size());
-    const auto* marker = std::get_if<cc::core::UserMessage>(&conversation[boundary_index + 1]);
+    const auto* marker = std::get_if<loom::core::UserMessage>(&conversation[boundary_index + 1]);
     ASSERT_NE(marker, nullptr);
     EXPECT_EQ(boundary->compact_metadata->preserved_segment->anchor_uuid, marker->id.value);
 
@@ -3523,7 +3523,7 @@ TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
     EXPECT_EQ(boundary->compact_metadata->preserved_segment->tail_uuid, last_id);
 
     ASSERT_EQ(marker->content.size(), 1u);
-    const auto* summary = std::get_if<cc::core::TextBlock>(&marker->content.front());
+    const auto* summary = std::get_if<loom::core::TextBlock>(&marker->content.front());
     ASSERT_NE(summary, nullptr);
     EXPECT_NE(summary->text.find("Preserve these details"), std::string::npos);
     EXPECT_NE(summary->text.find("auto compact payload"), std::string::npos);
@@ -3538,30 +3538,30 @@ TEST(QueryEngine, ReactiveCompactRetriesPromptTooLongAfterWritingBoundary) {
         {413, 200});
     ASSERT_NE(server.port(), 0);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
     config.retry_policy.max_retries = 0;
-    config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Disabled;
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     for (int i = 0; i < 10; ++i) {
-        cc::core::UserMessage msg{};
+        loom::core::UserMessage msg{};
         msg.id.value = "reactive-user-" + std::to_string(i);
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(cc::core::TextBlock{
+        msg.content.push_back(loom::core::TextBlock{
             "reactive legacy " + std::to_string(i) + " " + std::string(600, 'r')});
-        engine.append_message_for_testing(cc::core::Message{std::move(msg)});
+        engine.append_message_for_testing(loom::core::Message{std::move(msg)});
     }
 
     auto response = engine.query("trigger reactive compact");
     ASSERT_TRUE(response.has_value()) << response.error().message;
     ASSERT_FALSE(response->message.content.empty());
-    const auto* response_text = std::get_if<cc::core::TextBlock>(&response->message.content.front());
+    const auto* response_text = std::get_if<loom::core::TextBlock>(&response->message.content.front());
     ASSERT_NE(response_text, nullptr);
     EXPECT_EQ(response_text->text, "reactive-ok");
 
@@ -3570,12 +3570,12 @@ TEST(QueryEngine, ReactiveCompactRetriesPromptTooLongAfterWritingBoundary) {
     ASSERT_EQ(request_bodies->size(), 2u);
 
     auto count_messages = [](std::string_view body) {
-        auto parsed = cc::utils::json::parse(body);
+        auto parsed = loom::utils::json::parse(body);
         if (!parsed) return std::size_t{0};
         std::size_t count = 0;
         auto messages = parsed->root().get("messages");
         if (messages.is_arr()) {
-            messages.iter([&](cc::utils::json::JsonVal) { ++count; });
+            messages.iter([&](loom::utils::json::JsonVal) { ++count; });
         }
         return count;
     };
@@ -3587,12 +3587,12 @@ TEST(QueryEngine, ReactiveCompactRetriesPromptTooLongAfterWritingBoundary) {
     EXPECT_EQ(request_bodies->back().find("compact_boundary"), std::string::npos);
 
     auto conversation = engine.get_conversation();
-    auto boundary_it = std::ranges::find_if(conversation, [](const cc::core::Message& message) {
-        const auto* system = std::get_if<cc::core::SystemMessage>(&message);
+    auto boundary_it = std::ranges::find_if(conversation, [](const loom::core::Message& message) {
+        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
         return system && system->subtype && *system->subtype == "compact_boundary";
     });
     ASSERT_NE(boundary_it, conversation.end());
-    const auto* boundary = std::get_if<cc::core::SystemMessage>(&*boundary_it);
+    const auto* boundary = std::get_if<loom::core::SystemMessage>(&*boundary_it);
     ASSERT_NE(boundary, nullptr);
     ASSERT_TRUE(boundary->compact_metadata.has_value());
     EXPECT_EQ(boundary->compact_metadata->trigger, "reactive");
@@ -3607,60 +3607,60 @@ TEST(QueryEngine, AppliesMainThreadToolResultBudgetBeforeModelRequest) {
     fs::create_directories(root);
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
 
-    cc::core::ToolRegistry registry;
-    registry.register_tool(std::make_unique<DefinitionOnlyTool>(cc::core::ToolDefinition{
+    loom::core::ToolRegistry registry;
+    registry.register_tool(std::make_unique<DefinitionOnlyTool>(loom::core::ToolDefinition{
         .name = "Bash",
         .description = "Execute shell",
         .input_schema = {},
-        .permission = cc::core::ToolPermission::Execute,
+        .permission = loom::core::ToolPermission::Execute,
         .max_result_size_chars = 30'000,
     }));
-    registry.register_tool(std::make_unique<DefinitionOnlyTool>(cc::core::ToolDefinition{
+    registry.register_tool(std::make_unique<DefinitionOnlyTool>(loom::core::ToolDefinition{
         .name = "Read",
         .description = "Read file",
         .input_schema = {},
-        .permission = cc::core::ToolPermission::ReadOnly,
+        .permission = loom::core::ToolPermission::ReadOnly,
         .max_result_size_chars = 0,
         .max_result_size_unbounded = true,
     }));
 
-    cc::core::QueryEngineConfig config;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = root.string();
     config.retry_policy.max_retries = 0;
-    config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Disabled;
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
-    cc::core::AssistantMessage assistant{};
+    loom::core::AssistantMessage assistant{};
     assistant.id.value = "assistant-tool-uses";
     assistant.timestamp = std::chrono::system_clock::now();
-    assistant.content.push_back(cc::core::ToolUseBlock{
-        .id = cc::core::ToolUseId{"bash-large-1"},
+    assistant.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"bash-large-1"},
         .name = "Bash",
         .input_json = R"({"command":"one"})",
     });
-    assistant.content.push_back(cc::core::ToolUseBlock{
-        .id = cc::core::ToolUseId{"bash-large-2"},
+    assistant.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"bash-large-2"},
         .name = "Bash",
         .input_json = R"({"command":"two"})",
     });
-    assistant.content.push_back(cc::core::ToolUseBlock{
-        .id = cc::core::ToolUseId{"read-unbounded"},
+    assistant.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"read-unbounded"},
         .name = "Read",
         .input_json = R"({"file_path":"huge.txt"})",
     });
-    engine.append_message_for_testing(cc::core::Message{std::move(assistant)});
+    engine.append_message_for_testing(loom::core::Message{std::move(assistant)});
 
     auto append_tool_result = [&](std::string id, std::string text) {
-        cc::core::ToolResultMessage result{};
+        loom::core::ToolResultMessage result{};
         result.id.value = "result-" + id;
         result.timestamp = std::chrono::system_clock::now();
-        result.tool_use_id = cc::core::ToolUseId{std::move(id)};
-        result.content.push_back(cc::core::TextBlock{std::move(text)});
-        engine.append_message_for_testing(cc::core::Message{std::move(result)});
+        result.tool_use_id = loom::core::ToolUseId{std::move(id)};
+        result.content.push_back(loom::core::TextBlock{std::move(text)});
+        engine.append_message_for_testing(loom::core::Message{std::move(result)});
     };
 
     append_tool_result("bash-large-1", std::string(170'000, 'b'));
@@ -3691,12 +3691,12 @@ TEST(QueryEngine, AppliesMainThreadToolResultBudgetBeforeModelRequest) {
     EXPECT_TRUE(saw_persisted_file);
 
     const auto conversation = engine.get_conversation();
-    auto replacement_for = [](const std::vector<cc::core::Message>& messages, std::string_view tool_use_id) {
+    auto replacement_for = [](const std::vector<loom::core::Message>& messages, std::string_view tool_use_id) {
         for (const auto& message : messages) {
-            const auto* tool_result = std::get_if<cc::core::ToolResultMessage>(&message);
+            const auto* tool_result = std::get_if<loom::core::ToolResultMessage>(&message);
             if (!tool_result || tool_result->tool_use_id.value != tool_use_id) continue;
             if (tool_result->content.empty()) return std::optional<std::string>{};
-            const auto* text = std::get_if<cc::core::TextBlock>(&tool_result->content.front());
+            const auto* text = std::get_if<loom::core::TextBlock>(&tool_result->content.front());
             if (!text) return std::optional<std::string>{};
             return std::optional<std::string>{text->text};
         }
@@ -3708,7 +3708,7 @@ TEST(QueryEngine, AppliesMainThreadToolResultBudgetBeforeModelRequest) {
 
     auto storage_path = root / "history.json";
     {
-        cc::core::ConversationStore store(storage_path.string());
+        loom::core::ConversationStore store(storage_path.string());
         auto* stored = store.create_conversation();
         for (const auto& message : conversation) {
             stored->add_message(message);
@@ -3716,7 +3716,7 @@ TEST(QueryEngine, AppliesMainThreadToolResultBudgetBeforeModelRequest) {
         ASSERT_TRUE(store.save_all().has_value());
     }
 
-    cc::core::ConversationStore loaded(storage_path.string());
+    loom::core::ConversationStore loaded(storage_path.string());
     ASSERT_TRUE(loaded.load_all().has_value());
     auto restored_messages = loaded.get_active_conversation()->get_messages();
     auto restored_replacement = replacement_for(restored_messages, "bash-large-1");
@@ -3725,32 +3725,32 @@ TEST(QueryEngine, AppliesMainThreadToolResultBudgetBeforeModelRequest) {
 
     LocalAnthropicMessagesServer resumed_server;
     ASSERT_NE(resumed_server.port(), 0);
-    cc::core::ToolRegistry restored_registry;
-    restored_registry.register_tool(std::make_unique<DefinitionOnlyTool>(cc::core::ToolDefinition{
+    loom::core::ToolRegistry restored_registry;
+    restored_registry.register_tool(std::make_unique<DefinitionOnlyTool>(loom::core::ToolDefinition{
         .name = "Bash",
         .description = "Execute shell",
         .input_schema = {},
-        .permission = cc::core::ToolPermission::Execute,
+        .permission = loom::core::ToolPermission::Execute,
         .max_result_size_chars = 30'000,
     }));
-    restored_registry.register_tool(std::make_unique<DefinitionOnlyTool>(cc::core::ToolDefinition{
+    restored_registry.register_tool(std::make_unique<DefinitionOnlyTool>(loom::core::ToolDefinition{
         .name = "Read",
         .description = "Read file",
         .input_schema = {},
-        .permission = cc::core::ToolPermission::ReadOnly,
+        .permission = loom::core::ToolPermission::ReadOnly,
         .max_result_size_chars = 0,
         .max_result_size_unbounded = true,
     }));
 
-    cc::core::QueryEngineConfig restored_config;
+    loom::core::QueryEngineConfig restored_config;
     restored_config.api_key = "test-key";
     restored_config.base_url = resumed_server.base_url();
     restored_config.context_window.auto_compact = false;
     restored_config.cwd = root.string();
     restored_config.retry_policy.max_retries = 0;
-    restored_config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Disabled;
+    restored_config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
 
-    cc::core::QueryEngine restored_engine(std::move(restored_config), restored_registry);
+    loom::core::QueryEngine restored_engine(std::move(restored_config), restored_registry);
     restored_engine.restore_conversation(std::move(restored_messages));
     auto resumed_response = restored_engine.query("after resume");
     ASSERT_TRUE(resumed_response.has_value()) << resumed_response.error().message;
@@ -3778,50 +3778,50 @@ TEST(QueryEngine, TimeBasedMicrocompactClearsOldCompactableToolResultsBeforeRequ
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.context_window.auto_compact = false;
     config.cwd = root.string();
     config.retry_policy.max_retries = 0;
-    config.thinking_config.mode = cc::core::ThinkingConfig::Mode::Disabled;
+    config.thinking_config.mode = loom::core::ThinkingConfig::Mode::Disabled;
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     const auto old_time = std::chrono::system_clock::now() - std::chrono::hours(2);
-    cc::core::AssistantMessage assistant{};
+    loom::core::AssistantMessage assistant{};
     assistant.id.value = "assistant-old-tool-uses";
     assistant.timestamp = old_time;
-    assistant.content.push_back(cc::core::ToolUseBlock{
-        .id = cc::core::ToolUseId{"read-old"},
+    assistant.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"read-old"},
         .name = "Read",
         .input_json = R"({"file_path":"old.txt"})",
     });
-    assistant.content.push_back(cc::core::ToolUseBlock{
-        .id = cc::core::ToolUseId{"bash-old"},
+    assistant.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"bash-old"},
         .name = "Bash",
         .input_json = R"({"command":"old"})",
     });
-    assistant.content.push_back(cc::core::ToolUseBlock{
-        .id = cc::core::ToolUseId{"task-noncompact"},
+    assistant.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"task-noncompact"},
         .name = "Task",
         .input_json = R"({"description":"noncompact"})",
     });
-    assistant.content.push_back(cc::core::ToolUseBlock{
-        .id = cc::core::ToolUseId{"edit-recent"},
+    assistant.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"edit-recent"},
         .name = "Edit",
         .input_json = R"({"file_path":"recent.txt"})",
     });
-    engine.append_message_for_testing(cc::core::Message{std::move(assistant)});
+    engine.append_message_for_testing(loom::core::Message{std::move(assistant)});
 
     auto append_tool_result = [&](std::string id, std::string text) {
-        cc::core::ToolResultMessage result{};
+        loom::core::ToolResultMessage result{};
         result.id.value = "result-" + id;
         result.timestamp = old_time;
-        result.tool_use_id = cc::core::ToolUseId{std::move(id)};
-        result.content.push_back(cc::core::TextBlock{std::move(text)});
-        engine.append_message_for_testing(cc::core::Message{std::move(result)});
+        result.tool_use_id = loom::core::ToolUseId{std::move(id)};
+        result.content.push_back(loom::core::TextBlock{std::move(text)});
+        engine.append_message_for_testing(loom::core::Message{std::move(result)});
     };
 
     append_tool_result("read-old", "OLD_READ_RESULT_SHOULD_CLEAR");
@@ -3848,10 +3848,10 @@ TEST(QueryEngine, TimeBasedMicrocompactClearsOldCompactableToolResultsBeforeRequ
     auto conversation = engine.get_conversation();
     auto tool_result_text = [&](std::string_view tool_use_id) -> std::optional<std::string> {
         for (const auto& message : conversation) {
-            const auto* result = std::get_if<cc::core::ToolResultMessage>(&message);
+            const auto* result = std::get_if<loom::core::ToolResultMessage>(&message);
             if (!result || result->tool_use_id.value != tool_use_id) continue;
             if (result->content.empty()) return std::nullopt;
-            const auto* text = std::get_if<cc::core::TextBlock>(&result->content.front());
+            const auto* text = std::get_if<loom::core::TextBlock>(&result->content.front());
             if (!text) return std::nullopt;
             return text->text;
         }
@@ -3866,22 +3866,22 @@ TEST(QueryEngine, TimeBasedMicrocompactClearsOldCompactableToolResultsBeforeRequ
 }
 
 TEST(ApiClient, MessageFromTextCreatesSingleTextBlock) {
-    auto message = cc::services::api::Message::from_text("user", "hello");
+    auto message = loom::services::api::Message::from_text("user", "hello");
 
     ASSERT_EQ(message.role, "user");
     ASSERT_EQ(message.content.size(), 1u);
-    EXPECT_EQ(message.content.front().type, cc::services::api::ContentBlockType::Text);
+    EXPECT_EQ(message.content.front().type, loom::services::api::ContentBlockType::Text);
     EXPECT_EQ(message.content.front().text, "hello");
 }
 
 TEST(ApiClient, ResponseCombinesTextContentAndTokenUsage) {
-    cc::services::api::CreateMessageResponse response;
-    cc::services::api::ContentBlock first;
-    first.type = cc::services::api::ContentBlockType::Text;
+    loom::services::api::CreateMessageResponse response;
+    loom::services::api::ContentBlock first;
+    first.type = loom::services::api::ContentBlockType::Text;
     first.text = "hello ";
     response.content.push_back(first);
-    cc::services::api::ContentBlock second;
-    second.type = cc::services::api::ContentBlockType::Text;
+    loom::services::api::ContentBlock second;
+    second.type = loom::services::api::ContentBlockType::Text;
     second.text = "world";
     response.content.push_back(second);
     response.usage.input_tokens = 3;
@@ -3895,17 +3895,17 @@ TEST(ApiClient, ResponseCombinesTextContentAndTokenUsage) {
 }
 
 TEST(ApiClient, RequestSerializerPreservesToolUseInputJson) {
-    cc::services::api::CreateMessageRequest request;
+    loom::services::api::CreateMessageRequest request;
     request.model = "loom-test";
-    request.messages.push_back(cc::services::api::Message{
+    request.messages.push_back(loom::services::api::Message{
         .role = "assistant",
         .content = {
-            cc::services::api::ContentBlock{
-                .type = cc::services::api::ContentBlockType::Text,
+            loom::services::api::ContentBlock{
+                .type = loom::services::api::ContentBlockType::Text,
                 .text = "I will read a file."
             },
-            cc::services::api::ContentBlock{
-                .type = cc::services::api::ContentBlockType::ToolUse,
+            loom::services::api::ContentBlock{
+                .type = loom::services::api::ContentBlockType::ToolUse,
                 .tool_use_id = "toolu_1",
                 .tool_name = "Read",
                 .tool_input_json = R"({"file_path":"README.md","limit":20})"
@@ -3913,8 +3913,8 @@ TEST(ApiClient, RequestSerializerPreservesToolUseInputJson) {
         }
     });
 
-    auto serialized = cc::services::api::RequestSerializer::serialize(request);
-    auto parsed = cc::utils::json::parse(serialized);
+    auto serialized = loom::services::api::RequestSerializer::serialize(request);
+    auto parsed = loom::utils::json::parse(serialized);
 
     ASSERT_TRUE(parsed.has_value()) << parsed.error().message();
     auto content = parsed->root().get("messages").at(0).get("content");
@@ -3930,26 +3930,26 @@ TEST(ApiClient, RequestSerializerPreservesToolUseInputJson) {
 }
 
 TEST(ApiClient, RequestSerializerPreservesImageAndDocumentBlocks) {
-    cc::services::api::CreateMessageRequest request;
+    loom::services::api::CreateMessageRequest request;
     request.model = "loom-test";
-    request.messages.push_back(cc::services::api::Message{
+    request.messages.push_back(loom::services::api::Message{
         .role = "user",
         .content = {
-            cc::services::api::ContentBlock{
-                .type = cc::services::api::ContentBlockType::Image,
+            loom::services::api::ContentBlock{
+                .type = loom::services::api::ContentBlockType::Image,
                 .media_type = "image/png",
                 .image_data = "iVBORw0KGgo="
             },
-            cc::services::api::ContentBlock{
-                .type = cc::services::api::ContentBlockType::Document,
+            loom::services::api::ContentBlock{
+                .type = loom::services::api::ContentBlockType::Document,
                 .media_type = "application/pdf",
                 .image_data = "JVBERi0xLjQ="
             }
         }
     });
 
-    auto serialized = cc::services::api::RequestSerializer::serialize(request);
-    auto parsed = cc::utils::json::parse(serialized);
+    auto serialized = loom::services::api::RequestSerializer::serialize(request);
+    auto parsed = loom::utils::json::parse(serialized);
 
     ASSERT_TRUE(parsed.has_value()) << parsed.error().message();
     auto content = parsed->root().get("messages").at(0).get("content");
@@ -3969,18 +3969,18 @@ TEST(ApiClient, RequestSerializerPreservesImageAndDocumentBlocks) {
 }
 
 TEST(ApiClient, RequestSerializerSerializesEffortConfig) {
-    cc::services::api::CreateMessageRequest request;
+    loom::services::api::CreateMessageRequest request;
     request.model = "loom-test";
-    request.messages.push_back(cc::services::api::Message::from_text("user", "hello"));
+    request.messages.push_back(loom::services::api::Message::from_text("user", "hello"));
     request.output_effort = "high";
-    request.task_budget = cc::services::api::TaskBudget{
+    request.task_budget = loom::services::api::TaskBudget{
         .total = 12000,
         .remaining = 3456,
     };
     request.internal_effort_override = 77;
 
-    auto serialized = cc::services::api::RequestSerializer::serialize(request);
-    auto parsed = cc::utils::json::parse(serialized);
+    auto serialized = loom::services::api::RequestSerializer::serialize(request);
+    auto parsed = loom::utils::json::parse(serialized);
 
     ASSERT_TRUE(parsed.has_value()) << parsed.error().message();
     auto output_config = parsed->root().get("output_config");
@@ -3997,7 +3997,7 @@ TEST(ApiClient, RequestSerializerSerializesEffortConfig) {
 }
 
 TEST(ApiClient, ResponseParserPreservesToolUseInputJson) {
-    const auto response = cc::services::api::ResponseParser::parse(R"({
+    const auto response = loom::services::api::ResponseParser::parse(R"({
       "id": "msg_1",
       "model": "loom-test",
       "role": "assistant",
@@ -4016,18 +4016,18 @@ TEST(ApiClient, ResponseParserPreservesToolUseInputJson) {
     ASSERT_TRUE(response.has_value()) << response.error().message();
     ASSERT_EQ(response->content.size(), 1u);
     const auto& block = response->content.front();
-    EXPECT_EQ(block.type, cc::services::api::ContentBlockType::ToolUse);
+    EXPECT_EQ(block.type, loom::services::api::ContentBlockType::ToolUse);
     EXPECT_EQ(block.tool_use_id, "toolu_1");
     EXPECT_EQ(block.tool_name, "Bash");
 
-    auto input = cc::utils::json::parse(block.tool_input_json);
+    auto input = loom::utils::json::parse(block.tool_input_json);
     ASSERT_TRUE(input.has_value()) << input.error().message();
     EXPECT_EQ(input->root().get("command").as_str(), "pwd");
     EXPECT_EQ(input->root().get("timeout").as_int(), 1000);
 }
 
 TEST(ApiStreaming, SseBufferExtractsCompleteEvents) {
-    cc::services::api::SseBuffer buffer;
+    loom::services::api::SseBuffer buffer;
     buffer.append("event: ping\ndata: {}\n\n");
     auto event = buffer.next_event();
     ASSERT_TRUE(event.has_value());
@@ -4036,7 +4036,7 @@ TEST(ApiStreaming, SseBufferExtractsCompleteEvents) {
 }
 
 TEST(ApiStreaming, StreamParserAccumulatesTextDeltas) {
-    cc::services::api::StreamParser parser;
+    loom::services::api::StreamParser parser;
     parser.start();
     parser.feed("event: content_block_delta\n");
     parser.feed("data: {\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"hi\"}}\n\n");
@@ -4044,16 +4044,16 @@ TEST(ApiStreaming, StreamParserAccumulatesTextDeltas) {
     auto event = parser.next_event();
     ASSERT_TRUE(event.has_value());
     ASSERT_TRUE(event->has_value());
-    EXPECT_EQ((*event)->type, cc::services::api::StreamEventType::ContentBlockDelta);
+    EXPECT_EQ((*event)->type, loom::services::api::StreamEventType::ContentBlockDelta);
     EXPECT_EQ(parser.full_text(), "hi");
     EXPECT_EQ(parser.statistics().total_events, 1);
 }
 
 TEST(McpElicitationHandler, UsesRegisteredResponderAndPolicy) {
-    cc::services::mcp::clear_elicitation_policy();
-    cc::services::mcp::clear_elicitation_responder();
+    loom::services::mcp::clear_elicitation_policy();
+    loom::services::mcp::clear_elicitation_responder();
 
-    auto missing = cc::services::mcp::handle_elicitation(cc::services::mcp::ElicitationRequest{
+    auto missing = loom::services::mcp::handle_elicitation(loom::services::mcp::ElicitationRequest{
         .server_name = "linear",
         .message = "Pick a workspace",
         .schema = {{"workspace", "string"}},
@@ -4061,14 +4061,14 @@ TEST(McpElicitationHandler, UsesRegisteredResponderAndPolicy) {
     ASSERT_FALSE(missing.has_value());
     EXPECT_NE(missing.error().find("No MCP elicitation responder"), std::string::npos);
 
-    std::optional<cc::services::mcp::ElicitationRequest> captured;
-    cc::services::mcp::set_elicitation_responder([&](const cc::services::mcp::ElicitationRequest& request)
+    std::optional<loom::services::mcp::ElicitationRequest> captured;
+    loom::services::mcp::set_elicitation_responder([&](const loom::services::mcp::ElicitationRequest& request)
         -> std::expected<std::map<std::string, std::string>, std::string> {
         captured = request;
         return std::map<std::string, std::string>{{"workspace", "eng"}};
     });
 
-    auto response = cc::services::mcp::handle_elicitation(cc::services::mcp::ElicitationRequest{
+    auto response = loom::services::mcp::handle_elicitation(loom::services::mcp::ElicitationRequest{
         .server_name = "linear",
         .message = "Pick a workspace",
         .schema = {{"workspace", "string"}},
@@ -4080,8 +4080,8 @@ TEST(McpElicitationHandler, UsesRegisteredResponderAndPolicy) {
     EXPECT_EQ(captured->message, "Pick a workspace");
     EXPECT_EQ(captured->schema.at("workspace"), "string");
 
-    cc::services::mcp::set_elicitation_allowed("linear", false);
-    auto denied = cc::services::mcp::handle_elicitation(cc::services::mcp::ElicitationRequest{
+    loom::services::mcp::set_elicitation_allowed("linear", false);
+    auto denied = loom::services::mcp::handle_elicitation(loom::services::mcp::ElicitationRequest{
         .server_name = "linear",
         .message = "Pick a workspace",
         .schema = {},
@@ -4089,12 +4089,12 @@ TEST(McpElicitationHandler, UsesRegisteredResponderAndPolicy) {
     ASSERT_FALSE(denied.has_value());
     EXPECT_NE(denied.error().find("not allowed"), std::string::npos);
 
-    cc::services::mcp::clear_elicitation_policy();
-    cc::services::mcp::clear_elicitation_responder();
+    loom::services::mcp::clear_elicitation_policy();
+    loom::services::mcp::clear_elicitation_responder();
 }
 
 TEST(McpConfigParser, ParsesJsonFieldsAndExplicitTransports) {
-    const auto parsed = cc::services::mcp::ConfigParser::parse_json(R"JSON({
+    const auto parsed = loom::services::mcp::ConfigParser::parse_json(R"JSON({
       "mcpServers": {
         "stdio_fixture": {
           "type": "stdio",
@@ -4135,13 +4135,13 @@ TEST(McpConfigParser, ParsesJsonFieldsAndExplicitTransports) {
           "args": ["missing-command"]
         }
       }
-    })JSON", cc::services::mcp::ConfigScope::Project);
+    })JSON", loom::services::mcp::ConfigScope::Project);
 
     ASSERT_TRUE(parsed.has_value()) << static_cast<int>(parsed.error());
     ASSERT_EQ(parsed->size(), 4u);
 
     const auto& stdio = parsed->at("stdio_fixture");
-    EXPECT_EQ(stdio.transport, cc::services::mcp::TransportType::Stdio);
+    EXPECT_EQ(stdio.transport, loom::services::mcp::TransportType::Stdio);
     EXPECT_EQ(stdio.command, "node");
     ASSERT_EQ(stdio.args.size(), 2u);
     EXPECT_EQ(stdio.args[0], "server.js");
@@ -4150,10 +4150,10 @@ TEST(McpConfigParser, ParsesJsonFieldsAndExplicitTransports) {
     EXPECT_EQ(stdio.timeout, std::chrono::milliseconds{1234});
     EXPECT_FALSE(stdio.auto_start);
     EXPECT_FALSE(stdio.enabled);
-    EXPECT_EQ(stdio.scope, cc::services::mcp::ConfigScope::Project);
+    EXPECT_EQ(stdio.scope, loom::services::mcp::ConfigScope::Project);
 
 	const auto& sse = parsed->at("sse_fixture");
-	EXPECT_EQ(sse.transport, cc::services::mcp::TransportType::Sse);
+	EXPECT_EQ(sse.transport, loom::services::mcp::TransportType::Sse);
 	EXPECT_EQ(sse.url, "http://127.0.0.1:8123/events");
 	EXPECT_EQ(sse.headers.at("Authorization"), "Bearer token");
 	EXPECT_EQ(sse.headers_helper, "node helper.js");
@@ -4167,44 +4167,44 @@ TEST(McpConfigParser, ParsesJsonFieldsAndExplicitTransports) {
 	EXPECT_TRUE(sse.oauth->xaa);
 
     const auto& http = parsed->at("http_fixture");
-    EXPECT_EQ(http.transport, cc::services::mcp::TransportType::StreamableHttp);
+    EXPECT_EQ(http.transport, loom::services::mcp::TransportType::StreamableHttp);
     EXPECT_EQ(http.url, "http://127.0.0.1:8124/mcp");
     EXPECT_EQ(http.headers.at("X-Test"), "present");
     EXPECT_FALSE(http.enabled);
 
     const auto& inferred = parsed->at("inferred_http");
-    EXPECT_EQ(inferred.transport, cc::services::mcp::TransportType::StreamableHttp);
+    EXPECT_EQ(inferred.transport, loom::services::mcp::TransportType::StreamableHttp);
     EXPECT_EQ(inferred.url, "http://127.0.0.1:8125/mcp");
     EXPECT_FALSE(parsed->contains("unsupported_ws"));
     EXPECT_FALSE(parsed->contains("invalid_stdio"));
 }
 
 TEST(McpConfigParser, SupportsServersAliasAndRejectsInvalidJson) {
-    const auto parsed = cc::services::mcp::ConfigParser::parse_json(R"JSON({
+    const auto parsed = loom::services::mcp::ConfigParser::parse_json(R"JSON({
       "servers": {
         "alias_fixture": {
           "transport": "streamable-http",
           "url": "http://127.0.0.1:8127/mcp"
         }
       }
-    })JSON", cc::services::mcp::ConfigScope::User);
+    })JSON", loom::services::mcp::ConfigScope::User);
 
     ASSERT_TRUE(parsed.has_value()) << static_cast<int>(parsed.error());
     ASSERT_EQ(parsed->size(), 1u);
     const auto& alias = parsed->at("alias_fixture");
-    EXPECT_EQ(alias.transport, cc::services::mcp::TransportType::StreamableHttp);
-    EXPECT_EQ(alias.scope, cc::services::mcp::ConfigScope::User);
+    EXPECT_EQ(alias.transport, loom::services::mcp::TransportType::StreamableHttp);
+    EXPECT_EQ(alias.scope, loom::services::mcp::ConfigScope::User);
 
-    const auto invalid = cc::services::mcp::ConfigParser::parse_json(
+    const auto invalid = loom::services::mcp::ConfigParser::parse_json(
         "{",
-        cc::services::mcp::ConfigScope::User
+        loom::services::mcp::ConfigScope::User
     );
     ASSERT_FALSE(invalid.has_value());
-    EXPECT_EQ(invalid.error(), cc::services::mcp::ConfigError::ParseError);
+    EXPECT_EQ(invalid.error(), loom::services::mcp::ConfigError::ParseError);
 }
 
 TEST(McpHeadersHelper, ParsesAndMergesDynamicHeaders) {
-    const auto parsed = cc::services::mcp::parse_header_helper_json(R"JSON({
+    const auto parsed = loom::services::mcp::parse_header_helper_json(R"JSON({
       "Authorization": "Bearer dynamic",
       "X-Helper": "present"
     })JSON");
@@ -4213,12 +4213,12 @@ TEST(McpHeadersHelper, ParsesAndMergesDynamicHeaders) {
     EXPECT_EQ(parsed->at("Authorization"), "Bearer dynamic");
     EXPECT_EQ(parsed->at("X-Helper"), "present");
 
-    const auto invalid = cc::services::mcp::parse_header_helper_json(R"JSON({
+    const auto invalid = loom::services::mcp::parse_header_helper_json(R"JSON({
       "X-Bad": 7
     })JSON");
     EXPECT_FALSE(invalid.has_value());
 
-    const auto merged = cc::services::mcp::get_mcp_server_headers(
+    const auto merged = loom::services::mcp::get_mcp_server_headers(
         "server",
         {
             {"Authorization", "Bearer static"},
@@ -4232,21 +4232,21 @@ TEST(McpHeadersHelper, ParsesAndMergesDynamicHeaders) {
 }
 
 TEST(McpTypes, JsonRpcSerializationIncludesParams) {
-    auto request = cc::services::mcp::make_request(
+    auto request = loom::services::mcp::make_request(
         int64_t{7},
         "tools/call",
         std::optional<std::string>{R"({"name":"echo","arguments":{"value":"hello"}})"});
 
-    const auto serialized = cc::services::mcp::serialize_request(request);
+    const auto serialized = loom::services::mcp::serialize_request(request);
 
     EXPECT_NE(serialized.find(R"("method":"tools/call")"), std::string::npos);
     EXPECT_NE(serialized.find(R"("params":{"name":"echo","arguments":{"value":"hello"}})"), std::string::npos);
 
-    auto notification = cc::services::mcp::make_notification(
+    auto notification = loom::services::mcp::make_notification(
         "notifications/initialized",
         std::optional<std::string>{R"({"ready":true})"});
 
-    const auto serialized_notification = cc::services::mcp::serialize_notification(notification);
+    const auto serialized_notification = loom::services::mcp::serialize_notification(notification);
     EXPECT_NE(serialized_notification.find(R"("params":{"ready":true})"), std::string::npos);
 }
 
@@ -4254,12 +4254,12 @@ TEST(McpClient, SendsSseRequestsViaDiscoveredPostEndpoint) {
     LocalSseMcpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::services::mcp::McpClient::Config config;
+    loom::services::mcp::McpClient::Config config;
     config.name = "sse-fixture";
     config.request_timeout = std::chrono::milliseconds{2000};
     config.init_timeout = std::chrono::milliseconds{2000};
 
-    cc::services::mcp::McpClient client(std::move(config));
+    loom::services::mcp::McpClient client(std::move(config));
     auto connected = client.connect_sse(server.url(), {{"X-Test-Header", "present"}});
     ASSERT_TRUE(connected.has_value());
 
@@ -4298,7 +4298,7 @@ TEST(IdeIntegration, ReadsLockfileAndCallsIdeMcpTool) {
             static_cast<int>(::getpid()));
     }
 
-    cc::utils::ide::IdeLockfileScanner scanner;
+    loom::utils::ide::IdeLockfileScanner scanner;
     auto lockfiles = scanner.scan();
     ASSERT_EQ(lockfiles.size(), 1u);
     EXPECT_EQ(lockfiles.front().port, server.port());
@@ -4306,7 +4306,7 @@ TEST(IdeIntegration, ReadsLockfileAndCallsIdeMcpTool) {
     ASSERT_EQ(lockfiles.front().workspace_folders.size(), 1u);
     EXPECT_EQ(lockfiles.front().workspace_folders.front(), fs::current_path());
 
-    auto response = cc::utils::ide::callIdeRpc(
+    auto response = loom::utils::ide::callIdeRpc(
         "openFile",
         R"({"filePath":"/tmp/example.ts","preview":false})");
     EXPECT_TRUE(response.success) << response.error.value_or(response.result);
@@ -4341,7 +4341,7 @@ TEST(IdeIntegration, CallsIdeWebSocketMcpToolFromLockfile) {
             static_cast<int>(::getpid()));
     }
 
-    auto response = cc::utils::ide::callIdeRpc(
+    auto response = loom::utils::ide::callIdeRpc(
         "openFile",
         R"({"filePath":"/tmp/example.ts","preview":false})");
     EXPECT_TRUE(response.success) << response.error.value_or(response.result);
@@ -4394,7 +4394,7 @@ TEST(IdeIntegration, DiscoversVSCodeWorkspaceMcpServersFromObjectConfig) {
 })JSON";
     }
 
-    auto servers = cc::services::mcp::discover_vscode_mcp_servers(workspace.string());
+    auto servers = loom::services::mcp::discover_vscode_mcp_servers(workspace.string());
     auto find_server = [&servers](std::string_view name) {
         return std::find_if(servers.begin(), servers.end(), [name](const auto& server) {
             return server.name == name;
@@ -4405,13 +4405,13 @@ TEST(IdeIntegration, DiscoversVSCodeWorkspaceMcpServersFromObjectConfig) {
     ASSERT_NE(stdio, servers.end());
     EXPECT_EQ(stdio->transport_type, "stdio");
     EXPECT_EQ(stdio->connection_string, "node");
-    EXPECT_TRUE(cc::services::mcp::connect_vscode_mcp(*stdio));
+    EXPECT_TRUE(loom::services::mcp::connect_vscode_mcp(*stdio));
 
     auto sse = find_server("workspace-sse");
     ASSERT_NE(sse, servers.end());
     EXPECT_EQ(sse->transport_type, "sse");
     EXPECT_EQ(sse->connection_string, "http://127.0.0.1:9012/sse");
-    EXPECT_TRUE(cc::services::mcp::connect_vscode_mcp(*sse));
+    EXPECT_TRUE(loom::services::mcp::connect_vscode_mcp(*sse));
 
     auto legacy = find_server("legacy-stdio");
     ASSERT_NE(legacy, servers.end());
@@ -4450,7 +4450,7 @@ TEST(IdeIntegration, DiscoversVSCodeExtensionContributedMcpServers) {
 })JSON";
     }
 
-    auto servers = cc::services::mcp::discover_vscode_mcp_servers(workspace.string());
+    auto servers = loom::services::mcp::discover_vscode_mcp_servers(workspace.string());
     auto find_server = [&servers](std::string_view name) {
         return std::find_if(servers.begin(), servers.end(), [name](const auto& server) {
             return server.name == name;
@@ -4461,13 +4461,13 @@ TEST(IdeIntegration, DiscoversVSCodeExtensionContributedMcpServers) {
     ASSERT_NE(stdio, servers.end());
     EXPECT_EQ(stdio->transport_type, "stdio");
     EXPECT_EQ(stdio->connection_string, "node");
-    EXPECT_TRUE(cc::services::mcp::connect_vscode_mcp(*stdio));
+    EXPECT_TRUE(loom::services::mcp::connect_vscode_mcp(*stdio));
 
     auto ws = find_server("extension-ws");
     ASSERT_NE(ws, servers.end());
     EXPECT_EQ(ws->transport_type, "ws");
     EXPECT_EQ(ws->connection_string, "ws://127.0.0.1:8020/mcp");
-    EXPECT_TRUE(cc::services::mcp::connect_vscode_mcp(*ws));
+    EXPECT_TRUE(loom::services::mcp::connect_vscode_mcp(*ws));
 
     fs::remove_all(root);
 }
@@ -4476,15 +4476,15 @@ TEST(McpClient, MapsSseUnauthorizedToUnauthorizedError) {
     LocalUnauthorizedStreamableHttpMcpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::services::mcp::McpClient::Config config;
+    loom::services::mcp::McpClient::Config config;
     config.name = "sse-auth-fixture";
     config.request_timeout = std::chrono::milliseconds{500};
     config.init_timeout = std::chrono::milliseconds{500};
 
-    cc::services::mcp::McpClient client(std::move(config));
+    loom::services::mcp::McpClient client(std::move(config));
     auto connected = client.connect_sse(server.url());
     ASSERT_FALSE(connected.has_value());
-    EXPECT_EQ(connected.error(), cc::services::mcp::McpClientError::Unauthorized);
+    EXPECT_EQ(connected.error(), loom::services::mcp::McpClientError::Unauthorized);
 
     const auto requests = server.requests();
     ASSERT_FALSE(requests.empty());
@@ -4497,7 +4497,7 @@ TEST(McpClient, SseReconnectResumesWithLastEventId) {
     LocalReconnectSseStreamServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::services::mcp::SseTransport::ReconnectPolicy policy{
+    loom::services::mcp::SseTransport::ReconnectPolicy policy{
         .initial_delay = std::chrono::milliseconds{10},
         .max_delay = std::chrono::milliseconds{20},
         .backoff_multiplier = 2.0,
@@ -4505,7 +4505,7 @@ TEST(McpClient, SseReconnectResumesWithLastEventId) {
         .max_retries = 5,
         .liveness_timeout = std::chrono::seconds{1},
     };
-    cc::services::mcp::SseTransport transport(server.url(), {}, policy);
+    loom::services::mcp::SseTransport transport(server.url(), {}, policy);
 
     auto started = transport.start();
     ASSERT_TRUE(started.has_value()) << static_cast<int>(started.error());
@@ -4522,22 +4522,22 @@ TEST(McpConnectionManager, ConnectsStreamableHttpServerWithDirectPostTransport) 
     LocalStreamableHttpMcpServer server;
     ASSERT_TRUE(server.ready());
 
-    cc::services::mcp::ConnectionManagerConfig manager_config;
+    loom::services::mcp::ConnectionManagerConfig manager_config;
     manager_config.config_directory = fs::temp_directory_path() / "loom_streamable_http_mcp_config";
     manager_config.connection_timeout = std::chrono::milliseconds{2000};
     manager_config.auto_connect_on_start = false;
 
-    cc::services::mcp::McpConnectionManager manager(std::move(manager_config));
+    loom::services::mcp::McpConnectionManager manager(std::move(manager_config));
 
-    cc::services::mcp::ServerConfig server_config;
+    loom::services::mcp::ServerConfig server_config;
     server_config.name = "http-fixture";
-    server_config.transport = cc::services::mcp::TransportType::StreamableHttp;
+    server_config.transport = loom::services::mcp::TransportType::StreamableHttp;
     server_config.url = server.url();
     server_config.headers = {{"X-Test-Header", "present"}};
     server_config.enabled = true;
     server_config.auto_start = true;
 
-    cc::services::mcp::McpConfig mcp_config;
+    loom::services::mcp::McpConfig mcp_config;
     mcp_config.servers.emplace(server_config.name, std::move(server_config));
     manager.set_configuration(std::move(mcp_config));
 
@@ -4546,7 +4546,7 @@ TEST(McpConnectionManager, ConnectsStreamableHttpServerWithDirectPostTransport) 
 
     auto snapshot = manager.snapshot_server("http-fixture");
     ASSERT_TRUE(snapshot.has_value());
-    EXPECT_EQ(snapshot->status, cc::services::mcp::ConnectionStatus::Connected);
+    EXPECT_EQ(snapshot->status, loom::services::mcp::ConnectionStatus::Connected);
     ASSERT_EQ(snapshot->tools.size(), 1u);
     EXPECT_EQ(snapshot->tools.front().name, "http_lookup");
     EXPECT_EQ(snapshot->tools.front().description, "Lookup through HTTP");
@@ -4573,31 +4573,31 @@ TEST(McpConnectionManager, MarksRemoteHttpUnauthorizedAsNeedsAuth) {
     ASSERT_TRUE(server.ready());
 
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    cc::services::mcp::ConnectionManagerConfig manager_config;
+    loom::services::mcp::ConnectionManagerConfig manager_config;
     manager_config.config_directory = fs::temp_directory_path() / ("loom_mcp_unauthorized_" + std::to_string(suffix));
     manager_config.connection_timeout = std::chrono::milliseconds{2000};
     manager_config.auto_connect_on_start = false;
 
-    cc::services::mcp::McpConnectionManager manager(std::move(manager_config));
+    loom::services::mcp::McpConnectionManager manager(std::move(manager_config));
 
-    cc::services::mcp::ServerConfig server_config;
+    loom::services::mcp::ServerConfig server_config;
     server_config.name = "auth-fixture";
-    server_config.transport = cc::services::mcp::TransportType::StreamableHttp;
+    server_config.transport = loom::services::mcp::TransportType::StreamableHttp;
     server_config.url = server.url();
     server_config.enabled = true;
     server_config.auto_start = true;
 
-    cc::services::mcp::McpConfig mcp_config;
+    loom::services::mcp::McpConfig mcp_config;
     mcp_config.servers.emplace(server_config.name, std::move(server_config));
     manager.set_configuration(std::move(mcp_config));
 
     auto connected = manager.connect_server("auth-fixture");
     ASSERT_FALSE(connected.has_value());
-    EXPECT_EQ(connected.error(), cc::services::mcp::McpClientError::Unauthorized);
+    EXPECT_EQ(connected.error(), loom::services::mcp::McpClientError::Unauthorized);
 
     auto snapshot = manager.snapshot_server("auth-fixture");
     ASSERT_TRUE(snapshot.has_value());
-    EXPECT_EQ(snapshot->status, cc::services::mcp::ConnectionStatus::NeedsAuth);
+    EXPECT_EQ(snapshot->status, loom::services::mcp::ConnectionStatus::NeedsAuth);
     ASSERT_TRUE(snapshot->last_error.has_value());
     EXPECT_EQ(*snapshot->last_error, "authentication required");
 
@@ -4623,16 +4623,16 @@ printf '{"X-Test-Header":"dynamic","X-Helper-Server":"%s","X-Helper-Url":"%s"}\n
 )SH";
     }
 
-    cc::services::mcp::ConnectionManagerConfig manager_config;
+    loom::services::mcp::ConnectionManagerConfig manager_config;
     manager_config.config_directory = root;
     manager_config.connection_timeout = std::chrono::milliseconds{2000};
     manager_config.auto_connect_on_start = false;
 
-    cc::services::mcp::McpConnectionManager manager(std::move(manager_config));
+    loom::services::mcp::McpConnectionManager manager(std::move(manager_config));
 
-    cc::services::mcp::ServerConfig server_config;
+    loom::services::mcp::ServerConfig server_config;
     server_config.name = "helper-fixture";
-    server_config.transport = cc::services::mcp::TransportType::StreamableHttp;
+    server_config.transport = loom::services::mcp::TransportType::StreamableHttp;
     server_config.url = server.url();
     server_config.headers = {
         {"X-Test-Header", "static"},
@@ -4640,7 +4640,7 @@ printf '{"X-Test-Header":"dynamic","X-Helper-Server":"%s","X-Helper-Url":"%s"}\n
     };
     server_config.headers_helper = "sh '" + helper_path.string() + "'";
 
-    cc::services::mcp::McpConfig mcp_config;
+    loom::services::mcp::McpConfig mcp_config;
     mcp_config.servers.emplace(server_config.name, std::move(server_config));
     manager.set_configuration(std::move(mcp_config));
 
@@ -4670,22 +4670,22 @@ TEST(McpConnectionManager, RefreshesExpiredOAuthTokenBeforeRemoteConnection) {
     fs::create_directories(root);
     EnvironmentGuard xdg_config_guard("XDG_CONFIG_HOME", root.string());
 
-    cc::services::mcp::ServerConfig server_config;
+    loom::services::mcp::ServerConfig server_config;
     server_config.name = "refresh-fixture";
-    server_config.transport = cc::services::mcp::TransportType::StreamableHttp;
+    server_config.transport = loom::services::mcp::TransportType::StreamableHttp;
     server_config.url = server.mcp_url();
     server_config.enabled = true;
     server_config.auto_start = true;
-    server_config.oauth = cc::services::mcp::McpOAuthConfig{
+    server_config.oauth = loom::services::mcp::McpOAuthConfig{
         .auth_server_metadata_url = server.metadata_url(),
         .client_id = "client-1",
     };
 
-    cc::services::mcp::McpServerConfig auth_config;
+    loom::services::mcp::McpServerConfig auth_config;
     auth_config.transport = "http";
     auth_config.url = server_config.url;
     auth_config.oauth = server_config.oauth;
-    const auto server_key = cc::services::mcp::get_server_key(server_config.name, auth_config);
+    const auto server_key = loom::services::mcp::get_server_key(server_config.name, auth_config);
     auto sanitize_key = [](std::string_view key) {
         std::string sanitized;
         sanitized.reserve(key.size());
@@ -4713,14 +4713,14 @@ TEST(McpConnectionManager, RefreshesExpiredOAuthTokenBeforeRemoteConnection) {
         }})", server.mcp_url(), expired_at);
     }
 
-    cc::services::mcp::ConnectionManagerConfig manager_config;
+    loom::services::mcp::ConnectionManagerConfig manager_config;
     manager_config.config_directory = root;
     manager_config.connection_timeout = std::chrono::milliseconds{2000};
     manager_config.auto_connect_on_start = false;
 
-    cc::services::mcp::McpConnectionManager manager(std::move(manager_config));
+    loom::services::mcp::McpConnectionManager manager(std::move(manager_config));
 
-    cc::services::mcp::McpConfig mcp_config;
+    loom::services::mcp::McpConfig mcp_config;
     mcp_config.servers.emplace(server_config.name, std::move(server_config));
     manager.set_configuration(std::move(mcp_config));
 
@@ -4732,7 +4732,7 @@ TEST(McpConnectionManager, RefreshesExpiredOAuthTokenBeforeRemoteConnection) {
 
     auto snapshot = manager.snapshot_server("refresh-fixture");
     ASSERT_TRUE(snapshot.has_value());
-    EXPECT_EQ(snapshot->status, cc::services::mcp::ConnectionStatus::Connected);
+    EXPECT_EQ(snapshot->status, loom::services::mcp::ConnectionStatus::Connected);
     ASSERT_EQ(snapshot->tools.size(), 1u);
     EXPECT_EQ(snapshot->tools.front().name, "refresh_lookup");
 
@@ -4742,7 +4742,7 @@ TEST(McpConnectionManager, RefreshesExpiredOAuthTokenBeforeRemoteConnection) {
         return header == "Bearer fresh-access";
     }));
 
-    auto persisted = cc::utils::json::parse_file(token_path);
+    auto persisted = loom::utils::json::parse_file(token_path);
     ASSERT_TRUE(persisted.has_value());
     EXPECT_EQ(persisted->root().get_string("access_token"), "fresh-access");
     EXPECT_EQ(persisted->root().get_string("refresh_token"), "fresh-refresh");
@@ -4761,22 +4761,22 @@ TEST(McpConnectionManager, MarksRefreshFailureAsNeedsAuthWithoutRemoteConnect) {
     fs::create_directories(root);
     EnvironmentGuard xdg_config_guard("XDG_CONFIG_HOME", root.string());
 
-    cc::services::mcp::ServerConfig server_config;
+    loom::services::mcp::ServerConfig server_config;
     server_config.name = "refresh-failure-fixture";
-    server_config.transport = cc::services::mcp::TransportType::StreamableHttp;
+    server_config.transport = loom::services::mcp::TransportType::StreamableHttp;
     server_config.url = server.mcp_url();
     server_config.enabled = true;
     server_config.auto_start = true;
-    server_config.oauth = cc::services::mcp::McpOAuthConfig{
+    server_config.oauth = loom::services::mcp::McpOAuthConfig{
         .auth_server_metadata_url = server.metadata_url(),
         .client_id = "client-1",
     };
 
-    cc::services::mcp::McpServerConfig auth_config;
+    loom::services::mcp::McpServerConfig auth_config;
     auth_config.transport = "http";
     auth_config.url = server_config.url;
     auth_config.oauth = server_config.oauth;
-    const auto server_key = cc::services::mcp::get_server_key(server_config.name, auth_config);
+    const auto server_key = loom::services::mcp::get_server_key(server_config.name, auth_config);
     auto sanitize_key = [](std::string_view key) {
         std::string sanitized;
         sanitized.reserve(key.size());
@@ -4804,32 +4804,32 @@ TEST(McpConnectionManager, MarksRefreshFailureAsNeedsAuthWithoutRemoteConnect) {
         }})", server.mcp_url(), expired_at);
     }
 
-    cc::services::mcp::ConnectionManagerConfig manager_config;
+    loom::services::mcp::ConnectionManagerConfig manager_config;
     manager_config.config_directory = root;
     manager_config.connection_timeout = std::chrono::milliseconds{2000};
     manager_config.auto_connect_on_start = false;
 
-    cc::services::mcp::McpConnectionManager manager(std::move(manager_config));
+    loom::services::mcp::McpConnectionManager manager(std::move(manager_config));
 
-    cc::services::mcp::McpConfig mcp_config;
+    loom::services::mcp::McpConfig mcp_config;
     mcp_config.servers.emplace(server_config.name, std::move(server_config));
     manager.set_configuration(std::move(mcp_config));
 
     auto connected = manager.connect_server("refresh-failure-fixture");
     ASSERT_FALSE(connected.has_value());
-    EXPECT_EQ(connected.error(), cc::services::mcp::McpClientError::Unauthorized);
+    EXPECT_EQ(connected.error(), loom::services::mcp::McpClientError::Unauthorized);
     ASSERT_TRUE(server.wait_for_token_request());
     EXPECT_NE(server.token_request_body().find("grant_type=refresh_token"), std::string::npos);
     EXPECT_NE(server.token_request_body().find("refresh_token=old-refresh"), std::string::npos);
 
     auto snapshot = manager.snapshot_server("refresh-failure-fixture");
     ASSERT_TRUE(snapshot.has_value());
-    EXPECT_EQ(snapshot->status, cc::services::mcp::ConnectionStatus::NeedsAuth);
+    EXPECT_EQ(snapshot->status, loom::services::mcp::ConnectionStatus::NeedsAuth);
     ASSERT_TRUE(snapshot->last_error.has_value());
     EXPECT_NE(snapshot->last_error->find("OAuth token refresh failed"), std::string::npos);
     EXPECT_TRUE(server.mcp_authorization_headers().empty());
 
-    auto persisted = cc::utils::json::parse_file(token_path);
+    auto persisted = loom::utils::json::parse_file(token_path);
     ASSERT_TRUE(persisted.has_value());
     EXPECT_EQ(persisted->root().get_string("access_token"), "old-access");
     EXPECT_EQ(persisted->root().get_string("refresh_token"), "old-refresh");
@@ -4848,22 +4848,22 @@ TEST(McpConnectionManager, MarksDiscoveryServerWithoutTokenAsNeedsAuthThenReconn
     fs::create_directories(root);
     EnvironmentGuard xdg_config_guard("XDG_CONFIG_HOME", root.string());
 
-    cc::services::mcp::ServerConfig server_config;
+    loom::services::mcp::ServerConfig server_config;
     server_config.name = "auth-needed-fixture";
-    server_config.transport = cc::services::mcp::TransportType::StreamableHttp;
+    server_config.transport = loom::services::mcp::TransportType::StreamableHttp;
     server_config.url = server.mcp_url();
     server_config.enabled = true;
     server_config.auto_start = true;
-    server_config.oauth = cc::services::mcp::McpOAuthConfig{
+    server_config.oauth = loom::services::mcp::McpOAuthConfig{
         .auth_server_metadata_url = server.metadata_url(),
         .client_id = "client-1",
     };
 
-    cc::services::mcp::McpServerConfig auth_config;
+    loom::services::mcp::McpServerConfig auth_config;
     auth_config.transport = "http";
     auth_config.url = server_config.url;
     auth_config.oauth = server_config.oauth;
-    const auto server_key = cc::services::mcp::get_server_key(server_config.name, auth_config);
+    const auto server_key = loom::services::mcp::get_server_key(server_config.name, auth_config);
     auto sanitize_key = [](std::string_view key) {
         std::string sanitized;
         sanitized.reserve(key.size());
@@ -4874,26 +4874,26 @@ TEST(McpConnectionManager, MarksDiscoveryServerWithoutTokenAsNeedsAuthThenReconn
     };
     const auto token_path = root / "loom" / "mcp" / (sanitize_key(server_key) + ".json");
 
-    cc::services::mcp::ConnectionManagerConfig manager_config;
+    loom::services::mcp::ConnectionManagerConfig manager_config;
     manager_config.config_directory = root;
     manager_config.connection_timeout = std::chrono::milliseconds{2000};
     manager_config.auto_connect_on_start = false;
 
-    cc::services::mcp::McpConnectionManager manager(std::move(manager_config));
+    loom::services::mcp::McpConnectionManager manager(std::move(manager_config));
 
-    cc::services::mcp::McpConfig mcp_config;
+    loom::services::mcp::McpConfig mcp_config;
     mcp_config.servers.emplace(server_config.name, std::move(server_config));
     manager.set_configuration(std::move(mcp_config));
 
     auto auth_needed = manager.connect_server("auth-needed-fixture");
     ASSERT_FALSE(auth_needed.has_value());
-    EXPECT_EQ(auth_needed.error(), cc::services::mcp::McpClientError::Unauthorized);
+    EXPECT_EQ(auth_needed.error(), loom::services::mcp::McpClientError::Unauthorized);
     EXPECT_TRUE(server.mcp_authorization_headers().empty());
     EXPECT_TRUE(server.token_request_body().empty());
 
     auto snapshot = manager.snapshot_server("auth-needed-fixture");
     ASSERT_TRUE(snapshot.has_value());
-    EXPECT_EQ(snapshot->status, cc::services::mcp::ConnectionStatus::NeedsAuth);
+    EXPECT_EQ(snapshot->status, loom::services::mcp::ConnectionStatus::NeedsAuth);
     ASSERT_TRUE(snapshot->last_error.has_value());
     EXPECT_NE(snapshot->last_error->find("MCP OAuth authentication required"), std::string::npos);
 
@@ -4920,7 +4920,7 @@ TEST(McpConnectionManager, MarksDiscoveryServerWithoutTokenAsNeedsAuthThenReconn
 
     snapshot = manager.snapshot_server("auth-needed-fixture");
     ASSERT_TRUE(snapshot.has_value());
-    EXPECT_EQ(snapshot->status, cc::services::mcp::ConnectionStatus::Connected);
+    EXPECT_EQ(snapshot->status, loom::services::mcp::ConnectionStatus::Connected);
     ASSERT_EQ(snapshot->tools.size(), 1u);
     EXPECT_EQ(snapshot->tools.front().name, "refresh_lookup");
 
@@ -4944,14 +4944,14 @@ TEST(McpAuth, RevokesOAuthTokensViaMetadataEndpointAndClearsLocalStorage) {
     fs::create_directories(root);
     EnvironmentGuard xdg_config_guard("XDG_CONFIG_HOME", root.string());
 
-    cc::services::mcp::McpServerConfig auth_config;
+    loom::services::mcp::McpServerConfig auth_config;
     auth_config.transport = "http";
     auth_config.url = "https://mcp.example.test/mcp";
-    auth_config.oauth = cc::services::mcp::McpOAuthConfig{
+    auth_config.oauth = loom::services::mcp::McpOAuthConfig{
         .auth_server_metadata_url = server.metadata_url(),
         .client_id = "client-1",
     };
-    const auto server_key = cc::services::mcp::get_server_key("revoke-fixture", auth_config);
+    const auto server_key = loom::services::mcp::get_server_key("revoke-fixture", auth_config);
     auto sanitize_key = [](std::string_view key) {
         std::string sanitized;
         sanitized.reserve(key.size());
@@ -4979,7 +4979,7 @@ TEST(McpAuth, RevokesOAuthTokensViaMetadataEndpointAndClearsLocalStorage) {
         }})", *auth_config.url, expires_at);
     }
 
-    auto revoked = cc::services::mcp::revoke_server_tokens("revoke-fixture", auth_config);
+    auto revoked = loom::services::mcp::revoke_server_tokens("revoke-fixture", auth_config);
     ASSERT_TRUE(revoked.has_value()) << revoked.error().message();
     ASSERT_TRUE(server.wait_for_revoke_requests(2));
 
@@ -5011,10 +5011,10 @@ TEST(McpAuth, CompletesOAuthBrowserCallbackFlowAndStoresTokens) {
     fs::create_directories(root);
     EnvironmentGuard xdg_config_guard("XDG_CONFIG_HOME", root.string());
 
-    cc::services::mcp::McpServerConfig auth_config;
+    loom::services::mcp::McpServerConfig auth_config;
     auth_config.transport = "http";
     auth_config.url = "https://mcp.example.test/mcp";
-    auth_config.oauth = cc::services::mcp::McpOAuthConfig{
+    auth_config.oauth = loom::services::mcp::McpOAuthConfig{
         .auth_server_metadata_url = server.metadata_url(),
         .client_id = "client-1",
     };
@@ -5025,7 +5025,7 @@ TEST(McpAuth, CompletesOAuthBrowserCallbackFlowAndStoresTokens) {
     std::optional<std::string> flow_error;
     bool flow_done = false;
     std::jthread flow_thread([&](std::stop_token) {
-        auto result = cc::services::mcp::perform_mcp_oauth_flow(
+        auto result = loom::services::mcp::perform_mcp_oauth_flow(
             "callback-fixture",
             auth_config,
             [&](const std::string& url) {
@@ -5084,7 +5084,7 @@ TEST(McpAuth, CompletesOAuthBrowserCallbackFlowAndStoresTokens) {
     EXPECT_NE(token_body.find("client_id=client-1"), std::string::npos) << token_body;
     EXPECT_NE(token_body.find("code_verifier="), std::string::npos) << token_body;
 
-    const auto server_key = cc::services::mcp::get_server_key("callback-fixture", auth_config);
+    const auto server_key = loom::services::mcp::get_server_key("callback-fixture", auth_config);
     auto sanitize_key = [](std::string_view key) {
         std::string sanitized;
         sanitized.reserve(key.size());
@@ -5094,7 +5094,7 @@ TEST(McpAuth, CompletesOAuthBrowserCallbackFlowAndStoresTokens) {
         return sanitized;
     };
     const auto token_path = root / "loom" / "mcp" / (sanitize_key(server_key) + ".json");
-    auto persisted = cc::utils::json::parse_file(token_path);
+    auto persisted = loom::utils::json::parse_file(token_path);
     ASSERT_TRUE(persisted.has_value());
     EXPECT_EQ(persisted->root().get_string("server_name"), "callback-fixture");
     EXPECT_EQ(persisted->root().get_string("server_url"), *auth_config.url);
@@ -5129,17 +5129,17 @@ TEST(McpAuth, PerformsXaaIdpLoginAndStoresTokens) {
         idp_config << "scope=openid profile mcp\n";
     }
 
-    cc::services::mcp::McpServerConfig auth_config;
+    loom::services::mcp::McpServerConfig auth_config;
     auth_config.transport = "http";
     // Point to mock server so PRM discovery succeeds
     auth_config.url = server.base_url() + "/mcp";
-    auth_config.oauth = cc::services::mcp::McpOAuthConfig{
+    auth_config.oauth = loom::services::mcp::McpOAuthConfig{
         .client_id = "as-client-1",
         .xaa = true,
     };
 
     bool authorization_url_called = false;
-    auto result = cc::services::mcp::perform_mcp_oauth_flow(
+    auto result = loom::services::mcp::perform_mcp_oauth_flow(
         "xaa-fixture",
         auth_config,
         [&](const std::string&) {
@@ -5176,7 +5176,7 @@ TEST(McpAuth, PerformsXaaIdpLoginAndStoresTokens) {
     EXPECT_NE(auth_header.find("Basic "), std::string::npos) << auth_header;
 
     // Verify token persistence
-    const auto server_key = cc::services::mcp::get_server_key("xaa-fixture", auth_config);
+    const auto server_key = loom::services::mcp::get_server_key("xaa-fixture", auth_config);
     auto sanitize_key = [](std::string_view key) {
         std::string sanitized;
         sanitized.reserve(key.size());
@@ -5186,7 +5186,7 @@ TEST(McpAuth, PerformsXaaIdpLoginAndStoresTokens) {
         return sanitized;
     };
     const auto token_path = root / "loom" / "mcp" / (sanitize_key(server_key) + ".json");
-    auto persisted = cc::utils::json::parse_file(token_path);
+    auto persisted = loom::utils::json::parse_file(token_path);
     ASSERT_TRUE(persisted.has_value());
     EXPECT_EQ(persisted->root().get_string("server_name"), "xaa-fixture");
     EXPECT_EQ(persisted->root().get_string("server_url"), *auth_config.url);
@@ -5207,15 +5207,15 @@ TEST(McpAuth, XaaEnabledServerRequiresConfiguredIdpConnection) {
     EnvironmentGuard xdg_config_guard("XDG_CONFIG_HOME", root.string());
     EnvironmentGuard xaa_enabled_guard("LOOM_ENABLE_XAA", "1");
 
-    cc::services::mcp::McpServerConfig auth_config;
+    loom::services::mcp::McpServerConfig auth_config;
     auth_config.transport = "http";
     auth_config.url = "https://mcp.example.test/mcp";
-    auth_config.oauth = cc::services::mcp::McpOAuthConfig{
+    auth_config.oauth = loom::services::mcp::McpOAuthConfig{
         .client_id = "as-client-1",
         .xaa = true,
     };
 
-    auto result = cc::services::mcp::perform_mcp_oauth_flow(
+    auto result = loom::services::mcp::perform_mcp_oauth_flow(
         "xaa-missing-idp",
         auth_config,
         [](const std::string&) {},
@@ -5311,20 +5311,20 @@ rl.on('line', line => {
 )JS";
     }
 
-    cc::services::mcp::ConnectionManagerConfig manager_config;
+    loom::services::mcp::ConnectionManagerConfig manager_config;
     manager_config.config_directory = root;
     manager_config.connection_timeout = std::chrono::milliseconds{2000};
     manager_config.auto_connect_on_start = false;
 
-    cc::services::mcp::McpConnectionManager manager(std::move(manager_config));
+    loom::services::mcp::McpConnectionManager manager(std::move(manager_config));
 
-    cc::services::mcp::ServerConfig server_config;
+    loom::services::mcp::ServerConfig server_config;
     server_config.name = "list-changed-fixture";
-    server_config.transport = cc::services::mcp::TransportType::Stdio;
+    server_config.transport = loom::services::mcp::TransportType::Stdio;
     server_config.command = "node";
     server_config.args = {server_path.string()};
 
-    cc::services::mcp::McpConfig mcp_config;
+    loom::services::mcp::McpConfig mcp_config;
     mcp_config.servers.emplace(server_config.name, std::move(server_config));
     manager.set_configuration(std::move(mcp_config));
 
@@ -5421,15 +5421,15 @@ rl.on('line', line => {
 )JS";
     }
 
-    cc::services::mcp::McpClient::Config config;
+    loom::services::mcp::McpClient::Config config;
     config.name = "roots-fixture";
     config.request_timeout = std::chrono::milliseconds{2000};
     config.init_timeout = std::chrono::milliseconds{2000};
 
-    cc::services::mcp::McpClient client(std::move(config));
+    loom::services::mcp::McpClient client(std::move(config));
     client.set_roots_handler([] {
-        return std::vector<cc::services::mcp::Root>{
-            cc::services::mcp::Root{
+        return std::vector<loom::services::mcp::Root>{
+            loom::services::mcp::Root{
                 .uri = "file:///workspace",
                 .name = std::string{"workspace"},
             },
@@ -5437,8 +5437,8 @@ rl.on('line', line => {
     });
 
     std::mutex notification_mutex;
-    std::optional<cc::services::mcp::JsonRpcNotification> notification;
-    client.set_notification_callback([&](const cc::services::mcp::JsonRpcNotification& value) {
+    std::optional<loom::services::mcp::JsonRpcNotification> notification;
+    client.set_notification_callback([&](const loom::services::mcp::JsonRpcNotification& value) {
         std::lock_guard lock(notification_mutex);
         notification = value;
     });
@@ -5476,7 +5476,7 @@ rl.on('line', line => {
     EXPECT_NE(log.find("\"id\":\"roots-1\""), std::string::npos) << log;
     EXPECT_NE(log.find("\"roots\":[{\"uri\":\"file:///workspace\",\"name\":\"workspace\"}]"), std::string::npos) << log;
 
-    std::optional<cc::services::mcp::JsonRpcNotification> captured;
+    std::optional<loom::services::mcp::JsonRpcNotification> captured;
     {
         std::lock_guard lock(notification_mutex);
         captured = notification;
@@ -5484,7 +5484,7 @@ rl.on('line', line => {
     ASSERT_TRUE(captured.has_value());
     EXPECT_EQ(captured->method, "notifications/progress");
     ASSERT_TRUE(captured->params_json.has_value());
-    auto params = cc::utils::json::parse(*captured->params_json);
+    auto params = loom::utils::json::parse(*captured->params_json);
     ASSERT_TRUE(params.has_value()) << params.error().message();
     EXPECT_EQ(params->root().get("progressToken").as_str(), "tok");
     EXPECT_EQ(params->root().get("progress").as_double(), 0.5);
@@ -5577,12 +5577,12 @@ rl.on('line', line => {
 )JS";
     }
 
-    cc::services::mcp::McpClient::Config config;
+    loom::services::mcp::McpClient::Config config;
     config.name = "prompt-fixture";
     config.request_timeout = std::chrono::milliseconds{2000};
     config.init_timeout = std::chrono::milliseconds{2000};
 
-    cc::services::mcp::McpClient client(std::move(config));
+    loom::services::mcp::McpClient client(std::move(config));
     auto connected = client.connect_stdio("node", {server_path.string()}, {});
     ASSERT_TRUE(connected.has_value());
 
@@ -5597,9 +5597,9 @@ rl.on('line', line => {
     auto prompt = client.get_prompt("review", {{"topic", "migration"}});
     ASSERT_TRUE(prompt.has_value());
     ASSERT_EQ(prompt->messages.size(), 4u);
-    EXPECT_EQ(prompt->messages[0].role, cc::services::mcp::PromptRole::User);
+    EXPECT_EQ(prompt->messages[0].role, loom::services::mcp::PromptRole::User);
     EXPECT_EQ(prompt->messages[0].content, "Review migration");
-    EXPECT_EQ(prompt->messages[1].role, cc::services::mcp::PromptRole::Assistant);
+    EXPECT_EQ(prompt->messages[1].role, loom::services::mcp::PromptRole::Assistant);
     EXPECT_EQ(prompt->messages[1].content, "[Resource from prompt-fixture at file:///notes.md] notes body");
     EXPECT_EQ(prompt->messages[2].content, "[Resource link: notes] file:///notes.md (Reference notes)");
     EXPECT_NE(prompt->messages[3].content.find("[Image from prompt-fixture] Binary content (image/png"), std::string::npos);
@@ -5613,18 +5613,18 @@ TEST(ConfigManager, PersistsMcpServerSettings) {
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
 
-    cc::core::ConfigManager manager(root / "global.json", root / "project.json");
+    loom::core::ConfigManager manager(root / "global.json", root / "project.json");
     auto& settings = manager.settings_mut();
-    settings.mcp_servers.push_back(cc::core::McpServerConfig{
+    settings.mcp_servers.push_back(loom::core::McpServerConfig{
         .name = "echo",
         .command = "node",
         .args = {"server.js", "--flag"},
         .env = {{"FOO", "bar"}},
     });
 
-    ASSERT_TRUE(manager.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    ASSERT_TRUE(manager.save(loom::core::ConfigSource::ProjectConfig).has_value());
 
-    cc::core::ConfigManager loaded(root / "global.json", root / "project.json");
+    loom::core::ConfigManager loaded(root / "global.json", root / "project.json");
     ASSERT_TRUE(loaded.load().has_value());
     ASSERT_EQ(loaded.settings().mcp_servers.size(), 1u);
     EXPECT_EQ(loaded.settings().mcp_servers.front().name, "echo");
@@ -5642,9 +5642,9 @@ TEST(ConfigManager, PreservesRemoteMcpServerAuthSettings) {
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
 
-    cc::core::ConfigManager manager(root / "global.json", root / "project.json");
+    loom::core::ConfigManager manager(root / "global.json", root / "project.json");
     auto& settings = manager.settings_mut();
-    settings.mcp_servers.push_back(cc::core::McpServerConfig{
+    settings.mcp_servers.push_back(loom::core::McpServerConfig{
         .name = "remote",
         .command = {},
         .args = {},
@@ -5653,7 +5653,7 @@ TEST(ConfigManager, PreservesRemoteMcpServerAuthSettings) {
         .url = "https://mcp.example.com/mcp",
         .headers = {{"X-Test", "present"}},
         .headers_helper = "node headers.js",
-        .oauth = cc::core::McpOAuthConfig{
+        .oauth = loom::core::McpOAuthConfig{
             .auth_server_metadata_url = "https://auth.example.com/.well-known/oauth-authorization-server",
             .callback_port = 19485,
             .client_id = "client-1",
@@ -5661,9 +5661,9 @@ TEST(ConfigManager, PreservesRemoteMcpServerAuthSettings) {
         },
     });
 
-    ASSERT_TRUE(manager.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    ASSERT_TRUE(manager.save(loom::core::ConfigSource::ProjectConfig).has_value());
 
-    cc::core::ConfigManager loaded(root / "global.json", root / "project.json");
+    loom::core::ConfigManager loaded(root / "global.json", root / "project.json");
     ASSERT_TRUE(loaded.load().has_value());
     ASSERT_EQ(loaded.settings().mcp_servers.size(), 1u);
     const auto& server = loaded.settings().mcp_servers.front();
@@ -5722,7 +5722,7 @@ TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
 })JSON";
     }
 
-    auto assert_legacy_fields = [](const cc::core::ConfigManager& manager) {
+    auto assert_legacy_fields = [](const loom::core::ConfigManager& manager) {
         ASSERT_EQ(manager.settings().mcp_servers.size(), 1u);
         const auto& server = manager.settings().mcp_servers.front();
         EXPECT_EQ(server.name, "legacy");
@@ -5754,13 +5754,13 @@ TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
     };
 
     {
-        cc::core::ConfigManager loaded(global_path, project_path);
+        loom::core::ConfigManager loaded(global_path, project_path);
         ASSERT_TRUE(loaded.load().has_value());
         assert_legacy_fields(loaded);
 
         // Re-save: the serializer must rewrite every READ field in canonical
         // camelCase with zero loss.
-        ASSERT_TRUE(loaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(loaded.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
 
     std::string rewritten;
@@ -5788,7 +5788,7 @@ TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
     EXPECT_EQ(rewritten.find("config_scope"), std::string::npos);
 
     {
-        cc::core::ConfigManager reloaded(global_path, project_path);
+        loom::core::ConfigManager reloaded(global_path, project_path);
         ASSERT_TRUE(reloaded.load().has_value());
         assert_legacy_fields(reloaded);
     }
@@ -5824,7 +5824,7 @@ TEST(McpTypes, DisabledAndOauthIssuerSurviveConfigRewrite) {
     }
 
     {
-        cc::core::ConfigManager loaded(global_path, project_path);
+        loom::core::ConfigManager loaded(global_path, project_path);
         ASSERT_TRUE(loaded.load().has_value());
         ASSERT_EQ(loaded.settings().mcp_servers.size(), 1u);
         const auto& server = loaded.settings().mcp_servers.front();
@@ -5835,7 +5835,7 @@ TEST(McpTypes, DisabledAndOauthIssuerSurviveConfigRewrite) {
         ASSERT_TRUE(server.oauth->issuer.has_value());
         EXPECT_EQ(*server.oauth->issuer, "https://issuer.example.com");
 
-        ASSERT_TRUE(loaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(loaded.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
 
     std::string rewritten;
@@ -5850,7 +5850,7 @@ TEST(McpTypes, DisabledAndOauthIssuerSurviveConfigRewrite) {
     EXPECT_NE(rewritten.find("\"configScope\": \"user\""), std::string::npos);
     EXPECT_EQ(rewritten.find("config_scope"), std::string::npos);
 
-    cc::core::ConfigManager reloaded(global_path, project_path);
+    loom::core::ConfigManager reloaded(global_path, project_path);
     ASSERT_TRUE(reloaded.load().has_value());
     ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
     const auto& server = reloaded.settings().mcp_servers.front();
@@ -5899,7 +5899,7 @@ TEST(McpTypes, ConfigScopeRoundTripsInCanonicalCamelCase) {
     }
 
     {
-        cc::core::ConfigManager loaded(global_path, project_path);
+        loom::core::ConfigManager loaded(global_path, project_path);
         ASSERT_TRUE(loaded.load().has_value());
         ASSERT_EQ(loaded.settings().mcp_servers.size(), 3u);
         EXPECT_EQ(loaded.settings().mcp_servers[0].config_scope, "user");
@@ -5908,7 +5908,7 @@ TEST(McpTypes, ConfigScopeRoundTripsInCanonicalCamelCase) {
         // (json_string(...).or_else(...) short-circuits on the first hit).
         EXPECT_EQ(loaded.settings().mcp_servers[2].config_scope, "local");
 
-        ASSERT_TRUE(loaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(loaded.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
 
     std::string rewritten;
@@ -5922,7 +5922,7 @@ TEST(McpTypes, ConfigScopeRoundTripsInCanonicalCamelCase) {
     EXPECT_NE(rewritten.find("\"configScope\": \"local\""), std::string::npos);
     EXPECT_EQ(rewritten.find("config_scope"), std::string::npos);
 
-    cc::core::ConfigManager reloaded(global_path, project_path);
+    loom::core::ConfigManager reloaded(global_path, project_path);
     ASSERT_TRUE(reloaded.load().has_value());
     ASSERT_EQ(reloaded.settings().mcp_servers.size(), 3u);
     EXPECT_EQ(reloaded.settings().mcp_servers[0].config_scope, "user");
@@ -5954,7 +5954,7 @@ TEST(McpTypes, AbsentDisabledAndIssuerKeysStayUnset) {
     }
 
     {
-        cc::core::ConfigManager loaded(global_path, project_path);
+        loom::core::ConfigManager loaded(global_path, project_path);
         ASSERT_TRUE(loaded.load().has_value());
         ASSERT_EQ(loaded.settings().mcp_servers.size(), 1u);
         const auto& server = loaded.settings().mcp_servers.front();
@@ -5962,7 +5962,7 @@ TEST(McpTypes, AbsentDisabledAndIssuerKeysStayUnset) {
         EXPECT_FALSE(server.oauth.has_value());
         EXPECT_EQ(server.config_scope, "project");
 
-        ASSERT_TRUE(loaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(loaded.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
 
     std::string rewritten;
@@ -5976,7 +5976,7 @@ TEST(McpTypes, AbsentDisabledAndIssuerKeysStayUnset) {
     EXPECT_EQ(rewritten.find("issuer"), std::string::npos);
     EXPECT_NE(rewritten.find("\"configScope\": \"project\""), std::string::npos);
 
-    cc::core::ConfigManager reloaded(global_path, project_path);
+    loom::core::ConfigManager reloaded(global_path, project_path);
     ASSERT_TRUE(reloaded.load().has_value());
     ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
     const auto& server = reloaded.settings().mcp_servers.front();
@@ -6021,7 +6021,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
     }
 
     {
-        cc::core::ConfigManager loaded(global_path, project_path);
+        loom::core::ConfigManager loaded(global_path, project_path);
         ASSERT_TRUE(loaded.load().has_value());
         const auto& xaa = loaded.settings().xaa_idp;
         EXPECT_EQ(xaa.issuer, "https://idp.example.com");
@@ -6034,7 +6034,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
 
         // Mutate something unrelated (display theme), then full-save.
         loaded.settings_mut().display.theme = "dark";
-        ASSERT_TRUE(loaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(loaded.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
 
     // Byte-semantic check of the rewritten document.
@@ -6045,7 +6045,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
         buffer << file.rdbuf();
         rewritten = buffer.str();
     }
-    auto doc = cc::utils::json::parse(rewritten);
+    auto doc = loom::utils::json::parse(rewritten);
     ASSERT_TRUE(doc.has_value());
     const auto xaa_obj = doc->root().get("xaaIdp");
     ASSERT_TRUE(xaa_obj.is_obj());
@@ -6067,7 +6067,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
     EXPECT_EQ(std::string(doc->root().get("display").get("theme").as_str()), "dark");
 
     // Reload: all three XAA values survive.
-    cc::core::ConfigManager reloaded(global_path, project_path);
+    loom::core::ConfigManager reloaded(global_path, project_path);
     ASSERT_TRUE(reloaded.load().has_value());
     const auto& xaa = reloaded.settings().xaa_idp;
     EXPECT_EQ(xaa.issuer, "https://idp.example.com");
@@ -6097,7 +6097,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
   }
 })JSON";
     }
-    cc::core::ConfigManager bad(bad_global, bad_project);
+    loom::core::ConfigManager bad(bad_global, bad_project);
     ASSERT_TRUE(bad.load().has_value());
     const auto& bad_xaa = bad.settings().xaa_idp;
     EXPECT_TRUE(bad_xaa.issuer.empty());
@@ -6119,12 +6119,12 @@ TEST(McpTypes, XaaIdpOmittedWhenUnset) {
 
     std::string first;
     {
-        cc::core::ConfigManager fresh(global_path, project_path);
+        loom::core::ConfigManager fresh(global_path, project_path);
         ASSERT_TRUE(fresh.load().has_value());
         EXPECT_TRUE(fresh.settings().xaa_idp.issuer.empty());
         EXPECT_TRUE(fresh.settings().xaa_idp.client_id.empty());
         EXPECT_FALSE(fresh.settings().xaa_idp.callback_port.has_value());
-        ASSERT_TRUE(fresh.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(fresh.save(loom::core::ConfigSource::ProjectConfig).has_value());
 
         std::ifstream file(project_path);
         std::stringstream buffer;
@@ -6134,11 +6134,11 @@ TEST(McpTypes, XaaIdpOmittedWhenUnset) {
     EXPECT_EQ(first.find("xaaIdp"), std::string::npos);
 
     {
-        cc::core::ConfigManager reloaded(global_path, project_path);
+        loom::core::ConfigManager reloaded(global_path, project_path);
         ASSERT_TRUE(reloaded.load().has_value());
         EXPECT_TRUE(reloaded.settings().xaa_idp.issuer.empty());
         EXPECT_FALSE(reloaded.settings().xaa_idp.callback_port.has_value());
-        ASSERT_TRUE(reloaded.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(reloaded.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
     std::string second;
     {
@@ -6182,7 +6182,7 @@ TEST(McpTypes, ProjectMcpServersOverlayGlobal) {
 })JSON";
     }
 
-    cc::core::ConfigManager manager(global_path, project_path);
+    loom::core::ConfigManager manager(global_path, project_path);
     ASSERT_TRUE(manager.load().has_value());
     // Overlay: same-named g1 is replaced in place at the project tier, so the
     // effective order is g2, g1(project), p1.
@@ -6193,8 +6193,8 @@ TEST(McpTypes, ProjectMcpServersOverlayGlobal) {
     EXPECT_EQ(servers[1].args, (std::vector<std::string>{"p-g1.js"}));
     EXPECT_EQ(servers[2].name, "p1");
     ASSERT_TRUE(manager.mcp_server_owner("g1").has_value());
-    EXPECT_EQ(*manager.mcp_server_owner("g1"), cc::core::McpStorageScope::Project);
-    EXPECT_EQ(*manager.mcp_server_owner("g2"), cc::core::McpStorageScope::Global);
+    EXPECT_EQ(*manager.mcp_server_owner("g1"), loom::core::McpStorageScope::Project);
+    EXPECT_EQ(*manager.mcp_server_owner("g2"), loom::core::McpStorageScope::Global);
 
     // An empty project mcpServers object overrides NOTHING: globals survive.
     {
@@ -6203,7 +6203,7 @@ TEST(McpTypes, ProjectMcpServersOverlayGlobal) {
   "mcpServers": {}
 })JSON";
     }
-    cc::core::ConfigManager empty_object_manager(global_path, project_path);
+    loom::core::ConfigManager empty_object_manager(global_path, project_path);
     ASSERT_TRUE(empty_object_manager.load().has_value());
     ASSERT_EQ(empty_object_manager.settings().mcp_servers.size(), 2u);
     EXPECT_EQ(empty_object_manager.settings().mcp_servers[0].name, "g1");
@@ -6234,14 +6234,14 @@ TEST(McpTypes, ProjectWithoutMcpServersKeepsGlobal) {
 })JSON";
     }
 
-    cc::core::ConfigManager manager(global_path, project_path);
+    loom::core::ConfigManager manager(global_path, project_path);
     ASSERT_TRUE(manager.load().has_value());
     ASSERT_EQ(manager.settings().mcp_servers.size(), 2u);
     EXPECT_EQ(manager.settings().mcp_servers[0].name, "g1");
     EXPECT_EQ(manager.settings().mcp_servers[1].name, "g2");
 
     // A missing global file is ConfigNotFound and tolerated.
-    cc::core::ConfigManager missing_global(root / "does-not-exist.json", project_path);
+    loom::core::ConfigManager missing_global(root / "does-not-exist.json", project_path);
     ASSERT_TRUE(missing_global.load().has_value());
     EXPECT_TRUE(missing_global.settings().mcp_servers.empty());
 
@@ -6272,7 +6272,7 @@ TEST(McpTypes, EnvironmentLayerLeavesMcpServersUntouched) {
 })JSON";
     }
 
-    cc::core::ConfigManager manager(global_path, project_path);
+    loom::core::ConfigManager manager(global_path, project_path);
     ASSERT_TRUE(manager.load().has_value());
 
     // The environment layer demonstrably ran...
@@ -6326,7 +6326,7 @@ void c6_write_file(const fs::path& path, std::string_view content) {
 }
 
 [[nodiscard]] std::vector<std::string>
-c6_json_keys(cc::utils::json::JsonVal object) {
+c6_json_keys(loom::utils::json::JsonVal object) {
     std::vector<std::string> keys;
     object.iter_obj([&](auto key, auto) {
         if (key.is_str()) keys.emplace_back(key.as_str());
@@ -6372,16 +6372,16 @@ TEST(McpTypes, McpStorageFourFilePrecedence) {
   }
 })JSON");
 
-    cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+    loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
     const auto paths = manager.mcp_scope_paths();
     ASSERT_EQ(paths.size(), 4u);
-    EXPECT_EQ(paths[0].first, cc::core::McpStorageScope::Global);
-    EXPECT_EQ(paths[1].first, cc::core::McpStorageScope::User);
-    EXPECT_EQ(paths[2].first, cc::core::McpStorageScope::Project);
-    EXPECT_EQ(paths[3].first, cc::core::McpStorageScope::Local);
+    EXPECT_EQ(paths[0].first, loom::core::McpStorageScope::Global);
+    EXPECT_EQ(paths[1].first, loom::core::McpStorageScope::User);
+    EXPECT_EQ(paths[2].first, loom::core::McpStorageScope::Project);
+    EXPECT_EQ(paths[3].first, loom::core::McpStorageScope::Local);
 
     ASSERT_TRUE(manager.load().has_value());
-    std::map<std::string, cc::core::McpServerConfig> by_name;
+    std::map<std::string, loom::core::McpServerConfig> by_name;
     for (const auto& server : manager.settings().mcp_servers) {
         by_name[server.name] = server;
     }
@@ -6392,15 +6392,15 @@ TEST(McpTypes, McpStorageFourFilePrecedence) {
     EXPECT_EQ(by_name.at("onlyp").args, (std::vector<std::string>{"p.js"}));
     EXPECT_EQ(by_name.at("onlyl").args, (std::vector<std::string>{"l.js"}));
 
-    EXPECT_EQ(*manager.mcp_server_owner("shared"), cc::core::McpStorageScope::Local);
-    EXPECT_EQ(*manager.mcp_server_owner("onlyg"),  cc::core::McpStorageScope::Global);
-    EXPECT_EQ(*manager.mcp_server_owner("onlyu"),  cc::core::McpStorageScope::User);
-    EXPECT_EQ(*manager.mcp_server_owner("onlyp"),  cc::core::McpStorageScope::Project);
-    EXPECT_EQ(*manager.mcp_server_owner("onlyl"),  cc::core::McpStorageScope::Local);
+    EXPECT_EQ(*manager.mcp_server_owner("shared"), loom::core::McpStorageScope::Local);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyg"),  loom::core::McpStorageScope::Global);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyu"),  loom::core::McpStorageScope::User);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyp"),  loom::core::McpStorageScope::Project);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyl"),  loom::core::McpStorageScope::Local);
 
     const auto shared_files = manager.find_mcp_server_files("shared");
     ASSERT_EQ(shared_files.size(), 4u);
-    EXPECT_EQ(shared_files.back().first, cc::core::McpStorageScope::Local);
+    EXPECT_EQ(shared_files.back().first, loom::core::McpStorageScope::Local);
     EXPECT_TRUE(manager.find_mcp_server_files("onlyg").size() == 1u);
 
     fs::remove_all(root);
@@ -6418,7 +6418,7 @@ TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
     const auto project_path = root / "project.json";
     const auto local_path   = root / "project.local.json";
 
-    cc::core::McpServerConfig cfg;
+    loom::core::McpServerConfig cfg;
     cfg.name = "srv";
     cfg.transport = "http";
     cfg.args = {"a1", "a2"};
@@ -6428,7 +6428,7 @@ TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
     cfg.headers_helper = "node h.js";
     cfg.disabled = false;
     cfg.config_scope = "user";
-    cc::core::McpOAuthConfig oauth;
+    loom::core::McpOAuthConfig oauth;
     oauth.auth_server_metadata_url = "https://auth.example.com/meta";
     oauth.callback_port = 19485;
     oauth.client_id = "client-1";
@@ -6437,9 +6437,9 @@ TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
     cfg.oauth = oauth;
 
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        auto upserted = manager.upsert_mcp_server(cc::core::McpStorageScope::User, cfg);
+        auto upserted = manager.upsert_mcp_server(loom::core::McpStorageScope::User, cfg);
         ASSERT_TRUE(upserted.has_value()) << upserted.error().message;
     }
 
@@ -6448,7 +6448,7 @@ TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
     EXPECT_FALSE(fs::exists(project_path));
     EXPECT_FALSE(fs::exists(local_path));
 
-    auto parsed = cc::utils::json::parse_file(user_path);
+    auto parsed = loom::utils::json::parse_file(user_path);
     ASSERT_TRUE(parsed.has_value());
     // The file contains exactly one top-level section: mcpServers.
     const auto root_keys = c6_json_keys(parsed->root());
@@ -6486,7 +6486,7 @@ TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
 
     // Reload picks the user entry up.
     {
-        cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(reloaded.load().has_value());
         ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
         EXPECT_EQ(reloaded.settings().mcp_servers[0].name, "srv");
@@ -6494,10 +6494,10 @@ TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
 
         // Same-name upsert replaces, never duplicates.
         cfg.url = "https://mcp.example.com/v2";
-        ASSERT_TRUE(reloaded.upsert_mcp_server(cc::core::McpStorageScope::User, cfg)
+        ASSERT_TRUE(reloaded.upsert_mcp_server(loom::core::McpStorageScope::User, cfg)
                         .has_value());
     }
-    auto reparsed = cc::utils::json::parse_file(user_path);
+    auto reparsed = loom::utils::json::parse_file(user_path);
     ASSERT_TRUE(reparsed.has_value());
     EXPECT_EQ(reparsed->root().get("mcpServers").size(), 1u);
     EXPECT_EQ(reparsed->root().get("mcpServers").get("srv").get("url").as_str(),
@@ -6518,7 +6518,7 @@ TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
     const auto project_path = root / "project.json";
     const auto local_path   = root / "project.local.json";
 
-    cc::core::McpServerConfig cfg;
+    loom::core::McpServerConfig cfg;
     cfg.name = "runner";
     cfg.transport = "stdio";
     cfg.command = "node";
@@ -6528,16 +6528,16 @@ TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
     cfg.config_scope = "project";
 
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Project, cfg)
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project, cfg)
                         .has_value());
     }
 
     const std::string text = c6_read_file(project_path);
     // Pretty reformat: the inline args array is now multiline.
     EXPECT_NE(text.find("\"args\": [\n"), std::string::npos);
-    auto parsed = cc::utils::json::parse_file(project_path);
+    auto parsed = loom::utils::json::parse_file(project_path);
     ASSERT_TRUE(parsed.has_value());
     const auto entry = parsed->root().get("mcpServers").get("runner");
     ASSERT_TRUE(entry.is_obj());
@@ -6549,7 +6549,7 @@ TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
     EXPECT_EQ(entry.get("args").size(), 3u);
     EXPECT_TRUE(entry.get("disabled").as_bool());
 
-    cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+    loom::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
     ASSERT_TRUE(reloaded.load().has_value());
     ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
     const auto& back = reloaded.settings().mcp_servers[0];
@@ -6586,7 +6586,7 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     const auto local_path   = root / ".loom" / "config.local.json";
 
     auto make_stdio = [](std::string name) {
-        cc::core::McpServerConfig cfg;
+        loom::core::McpServerConfig cfg;
         cfg.name = std::move(name);
         cfg.transport = "stdio";
         cfg.command = "node";
@@ -6596,9 +6596,9 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     };
 
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Local,
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local,
                                               make_stdio("l1")).has_value());
     }
     EXPECT_TRUE(fs::exists(local_path));
@@ -6623,9 +6623,9 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     }
 
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Local,
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local,
                                               make_stdio("l2")).has_value());
     }
     const std::string gitignore = c6_read_file(root / ".gitignore");
@@ -6633,7 +6633,7 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     // a substring, so count whole lines).
     EXPECT_EQ(c6_count_occurrences(gitignore, "config.local.json\n"), 1u);
     EXPECT_EQ(c6_count_occurrences(gitignore, "config.local.json.lock\n"), 1u);
-    auto parsed = cc::utils::json::parse_file(local_path);
+    auto parsed = loom::utils::json::parse_file(local_path);
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->root().get("mcpServers").size(), 2u);
 
@@ -6650,9 +6650,9 @@ TEST(McpTypes, McpLocalUpsertDoesNotDuplicateGlobal) {
     EnvironmentGuard home_guard("HOME", root.string());
 
     // Services-layer files (mcp_servers.json names) must stay untouched.
-    const auto svc_global = cc::services::mcp::ConfigPaths::global_config();
-    const auto svc_user   = cc::services::mcp::ConfigPaths::user_config();
-    const auto svc_local  = cc::services::mcp::ConfigPaths::local_config(root);
+    const auto svc_global = loom::services::mcp::ConfigPaths::global_config();
+    const auto svc_user   = loom::services::mcp::ConfigPaths::user_config();
+    const auto svc_local  = loom::services::mcp::ConfigPaths::local_config(root);
     c6_write_file(svc_global, "{\"serviceGlobal\": true}\n");
     c6_write_file(svc_user,   "{\"serviceUser\": true}\n");
     c6_write_file(svc_local,  "{\"serviceLocal\": true}\n");
@@ -6669,7 +6669,7 @@ TEST(McpTypes, McpLocalUpsertDoesNotDuplicateGlobal) {
 })JSON");
     const std::string global_before = c6_read_file(global_path);
 
-    cc::core::McpServerConfig local_cfg;
+    loom::core::McpServerConfig local_cfg;
     local_cfg.name = "l1";
     local_cfg.transport = "stdio";
     local_cfg.command = "node";
@@ -6678,11 +6678,11 @@ TEST(McpTypes, McpLocalUpsertDoesNotDuplicateGlobal) {
 
     {
         // 2-arg ctor: local path is derived as project.local.json.
-        cc::core::ConfigManager manager(global_path, project_path);
+        loom::core::ConfigManager manager(global_path, project_path);
         ASSERT_EQ(manager.mcp_scope_paths().size(), 3u);  // user tier absent
         ASSERT_TRUE(manager.load().has_value());
         ASSERT_EQ(manager.settings().mcp_servers.size(), 1u);
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Local,
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local,
                                               local_cfg).has_value());
     }
 
@@ -6690,9 +6690,9 @@ TEST(McpTypes, McpLocalUpsertDoesNotDuplicateGlobal) {
     EXPECT_FALSE(fs::exists(project_path));
     EXPECT_TRUE(fs::exists(root / ".loom" / "config.local.json"));
 
-    cc::core::ConfigManager reloaded(global_path, project_path);
+    loom::core::ConfigManager reloaded(global_path, project_path);
     ASSERT_TRUE(reloaded.load().has_value());
-    std::map<std::string, cc::core::McpServerConfig> by_name;
+    std::map<std::string, loom::core::McpServerConfig> by_name;
     for (const auto& server : reloaded.settings().mcp_servers) by_name[server.name] = server;
     EXPECT_EQ(by_name.size(), 2u);
     EXPECT_EQ(by_name.at("g1").args, (std::vector<std::string>{"g1.js"}));
@@ -6732,7 +6732,7 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
   }
 })JSON");
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         auto outcome = manager.remove_mcp_server("dup");
         ASSERT_TRUE(outcome.has_value());
@@ -6746,7 +6746,7 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
         EXPECT_TRUE(again->failed.empty());
     }
     {
-        cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(reloaded.load().has_value());
         std::set<std::string> names;
         for (const auto& server : reloaded.settings().mcp_servers) names.insert(server.name);
@@ -6757,25 +6757,25 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
     c6_write_file(global_path, R"JSON({"mcpServers": {"s": {"command": "node"}}})JSON");
     c6_write_file(project_path, R"JSON({"mcpServers": {"s": {"command": "node"}}})JSON");
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         auto outcome = manager.remove_mcp_server(
-            "s", cc::core::McpStorageScope::Project);
+            "s", loom::core::McpStorageScope::Project);
         ASSERT_TRUE(outcome.has_value());
         EXPECT_EQ(outcome->touched.size(), 1u);
         EXPECT_EQ(outcome->touched[0], project_path);
     }
     {
-        cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(reloaded.load().has_value());
         ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
         EXPECT_EQ(reloaded.settings().mcp_servers[0].name, "s");  // survives in global
     }
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         auto outcome = manager.remove_mcp_server(
-            "s", cc::core::McpStorageScope::Global);
+            "s", loom::core::McpStorageScope::Global);
         ASSERT_TRUE(outcome.has_value());
         EXPECT_EQ(outcome->touched.size(), 1u);
         EXPECT_EQ(outcome->touched[0], global_path);
@@ -6783,10 +6783,10 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
 
     // Unknown names: empty outcome both unscoped and scoped.
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         EXPECT_TRUE(manager.remove_mcp_server("ghost")->touched.empty());
-        auto scoped = manager.remove_mcp_server("ghost", cc::core::McpStorageScope::Local);
+        auto scoped = manager.remove_mcp_server("ghost", loom::core::McpStorageScope::Local);
         ASSERT_TRUE(scoped.has_value());
         EXPECT_TRUE(scoped->touched.empty());
     }
@@ -6797,11 +6797,11 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
   "mcpServers": {"last": {"command": "node"}}
 })JSON");
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         ASSERT_TRUE(manager.remove_mcp_server(
-            "last", cc::core::McpStorageScope::Global).has_value());
-        auto parsed = cc::utils::json::parse_file(global_path);
+            "last", loom::core::McpStorageScope::Global).has_value());
+        auto parsed = loom::utils::json::parse_file(global_path);
         ASSERT_TRUE(parsed.has_value());
         EXPECT_FALSE(parsed->root().has("mcpServers"));
         EXPECT_EQ(parsed->root().get("systemPrompt").as_str(), std::string_view("keep"));
@@ -6840,19 +6840,19 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFilesAndGlobal) {
     const std::string local_before = c6_read_file(local_path);
 
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
 
         // Highest-precedence owner is global; enabling flips only that file.
         ASSERT_TRUE(manager.set_mcp_server_disabled("goff", false).has_value());
-        auto global_doc = cc::utils::json::parse_file(global_path);
+        auto global_doc = loom::utils::json::parse_file(global_path);
         ASSERT_TRUE(global_doc.has_value());
         EXPECT_FALSE(global_doc->root().get("mcpServers").get("goff").get("disabled").as_bool());
 
         // Unknown sibling key survives a disable/enable round trip.
         ASSERT_TRUE(manager.set_mcp_server_disabled("gx", true).has_value());
         ASSERT_TRUE(manager.set_mcp_server_disabled("gx", false).has_value());
-        global_doc = cc::utils::json::parse_file(global_path);
+        global_doc = loom::utils::json::parse_file(global_path);
         ASSERT_TRUE(global_doc.has_value());
         const auto gx = global_doc->root().get("mcpServers").get("gx");
         EXPECT_EQ(gx.get("weird").as_int(), 123);
@@ -6866,7 +6866,7 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFilesAndGlobal) {
         // Unknown name and wrong-scope name are errors.
         EXPECT_FALSE(manager.set_mcp_server_disabled("zzz", true).has_value());
         EXPECT_FALSE(manager.set_mcp_server_disabled(
-            "pon", true, cc::core::McpStorageScope::Local).has_value());
+            "pon", true, loom::core::McpStorageScope::Local).has_value());
     }
     EXPECT_NE(c6_read_file(project_path), project_before);
 
@@ -6880,10 +6880,10 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFilesAndGlobal) {
         const auto p2 = root2 / "project.json";
         const auto l2 = root2 / "project.local.json";
         c6_write_file(g2, R"JSON({"mcpServers": {"solo": {"command": "node"}}})JSON");
-        cc::core::ConfigManager manager(g2, u2, p2, l2);
+        loom::core::ConfigManager manager(g2, u2, p2, l2);
         ASSERT_TRUE(manager.load().has_value());
         ASSERT_TRUE(manager.set_mcp_server_disabled("solo", true).has_value());
-        EXPECT_TRUE(cc::utils::json::parse_file(g2)->root()
+        EXPECT_TRUE(loom::utils::json::parse_file(g2)->root()
                         .get("mcpServers").get("solo").get("disabled").as_bool());
         EXPECT_FALSE(fs::exists(p2));
         EXPECT_FALSE(fs::exists(l2));
@@ -6892,22 +6892,22 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFilesAndGlobal) {
 
     // "all" shape: one batch call per distinct owner file.
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         const std::vector<std::string> global_names{"goff", "gx"};
         const std::vector<std::string> project_names{"pon"};
         const std::vector<std::string> local_names{"lon"};
         EXPECT_TRUE(manager.set_mcp_servers_disabled_in(
-            cc::core::McpStorageScope::Global, global_names, true).has_value());
+            loom::core::McpStorageScope::Global, global_names, true).has_value());
         EXPECT_TRUE(manager.set_mcp_servers_disabled_in(
-            cc::core::McpStorageScope::Project, project_names, true).has_value());
+            loom::core::McpStorageScope::Project, project_names, true).has_value());
         EXPECT_TRUE(manager.set_mcp_servers_disabled_in(
-            cc::core::McpStorageScope::Local, local_names, true).has_value());
+            loom::core::McpStorageScope::Local, local_names, true).has_value());
         for (const auto& [path, names] : {
                  std::pair{global_path, std::vector<std::string>{"goff", "gx"}},
                  std::pair{project_path, std::vector<std::string>{"pon"}},
                  std::pair{local_path, std::vector<std::string>{"lon"}}}) {
-            auto doc = cc::utils::json::parse_file(path);
+            auto doc = loom::utils::json::parse_file(path);
             ASSERT_TRUE(doc.has_value()) << path.string();
             for (const auto& name : names) {
                 EXPECT_TRUE(doc->root().get("mcpServers").get(name)
@@ -6940,33 +6940,33 @@ TEST(McpTypes, McpGarbageUserLocalFilesSkippedAndUpsertRejected) {
     const std::string user_before = c6_read_file(user_path);
     const std::string local_before = c6_read_file(local_path);
 
-    cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+    loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
     ASSERT_TRUE(manager.load().has_value());
     std::set<std::string> names;
     for (const auto& server : manager.settings().mcp_servers) names.insert(server.name);
     EXPECT_EQ(names, (std::set<std::string>{"g1", "p1"}));
 
-    cc::core::McpServerConfig cfg;
+    loom::core::McpServerConfig cfg;
     cfg.name = "newu";
     cfg.transport = "stdio";
     cfg.command = "node";
     cfg.config_scope = "user";
-    auto user_upsert = manager.upsert_mcp_server(cc::core::McpStorageScope::User, cfg);
+    auto user_upsert = manager.upsert_mcp_server(loom::core::McpStorageScope::User, cfg);
     ASSERT_FALSE(user_upsert.has_value());
     EXPECT_NE(user_upsert.error().message.find(user_path.string()), std::string::npos);
     EXPECT_NE(user_upsert.error().message.find("not valid JSON"), std::string::npos);
     EXPECT_EQ(c6_read_file(user_path), user_before);
 
     cfg.name = "newl";
-    auto local_upsert = manager.upsert_mcp_server(cc::core::McpStorageScope::Local, cfg);
+    auto local_upsert = manager.upsert_mcp_server(loom::core::McpStorageScope::Local, cfg);
     ASSERT_FALSE(local_upsert.has_value());
     EXPECT_EQ(c6_read_file(local_path), local_before);
 
     // Other tiers remain patchable.
     cfg.name = "newp";
-    ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Project, cfg)
+    ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project, cfg)
                     .has_value());
-    cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+    loom::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
     ASSERT_TRUE(reloaded.load().has_value());
     names.clear();
     for (const auto& server : reloaded.settings().mcp_servers) names.insert(server.name);
@@ -6992,25 +6992,25 @@ TEST(McpTypes, McpUserScopeHonorsConfigDirEnv) {
     EnvironmentGuard dir_guard("LOOM_CONFIG_DIR", config_dir.string());
     CurrentPathGuard cwd_guard(work);
 
-    EXPECT_EQ(cc::constants::paths::config_home_write(), config_dir);
+    EXPECT_EQ(loom::constants::paths::config_home_write(), config_dir);
 
-    cc::core::McpServerConfig cfg;
+    loom::core::McpServerConfig cfg;
     cfg.name = "u1";
     cfg.transport = "stdio";
     cfg.command = "node";
     cfg.config_scope = "user";
 
     {
-        cc::core::ConfigManager manager;
+        loom::core::ConfigManager manager;
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::User, cfg)
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::User, cfg)
                         .has_value());
     }
     EXPECT_TRUE(fs::exists(config_dir / "config.json"));
     EXPECT_FALSE(fs::exists(fake_home / ".loom" / "config.json"));
 
     {
-        cc::core::ConfigManager reloaded;
+        loom::core::ConfigManager reloaded;
         ASSERT_TRUE(reloaded.load().has_value());
         ASSERT_EQ(reloaded.settings().mcp_servers.size(), 1u);
         EXPECT_EQ(reloaded.settings().mcp_servers[0].name, "u1");
@@ -7040,7 +7040,7 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
 
         fs::permissions(ro, fs::perms::owner_read | fs::perms::owner_exec,
                         fs::perm_options::replace);
-        cc::core::ConfigManager manager(global_path, project_path);
+        loom::core::ConfigManager manager(global_path, project_path);
         ASSERT_TRUE(manager.load().has_value());
         auto outcome = manager.remove_mcp_server("dup");
         ASSERT_TRUE(outcome.has_value());
@@ -7063,7 +7063,7 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
 
         fs::permissions(ro2, fs::perms::owner_read | fs::perms::owner_exec,
                         fs::perm_options::replace);
-        cc::core::ConfigManager manager(global_path, project_path);
+        loom::core::ConfigManager manager(global_path, project_path);
         ASSERT_TRUE(manager.load().has_value());
         auto outcome = manager.remove_mcp_server("dup");
         ASSERT_TRUE(outcome.has_value());
@@ -7127,14 +7127,14 @@ TEST(McpTypes, McpProjectSaveDoesNotLeakUserLocalSecrets) {
 })JSON");
 
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         // The overlay carries the secret-bearing user/local entries.
-        ASSERT_TRUE(manager.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(manager.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
 
     const std::string rewritten = c6_read_file(project_path);
-    auto doc = cc::utils::json::parse(rewritten);
+    auto doc = loom::utils::json::parse(rewritten);
     ASSERT_TRUE(doc.has_value());
     const auto servers = doc->root().get("mcpServers");
     ASSERT_TRUE(servers.is_obj());
@@ -7182,23 +7182,23 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
 })JSON");
 
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         ASSERT_EQ(manager.settings().mcp_servers.size(), 3u);
 
         // Remove a PROJECT entry and immediately full-save on the SAME
         // instance (the old bug rewrote the stale merged entry back).
         auto removed = manager.remove_mcp_server(
-            "p1", cc::core::McpStorageScope::Project);
+            "p1", loom::core::McpStorageScope::Project);
         ASSERT_TRUE(removed.has_value());
         EXPECT_EQ(removed->touched.size(), 1u);
         EXPECT_TRUE(std::ranges::none_of(manager.settings().mcp_servers,
             [](const auto& s) { return s.name == "p1"; }));
-        ASSERT_TRUE(manager.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(manager.save(loom::core::ConfigSource::ProjectConfig).has_value());
 
         const std::string text = c6_read_file(project_path);
         EXPECT_EQ(text.find("p1"), std::string::npos);
-        auto reparsed = cc::utils::json::parse(text);
+        auto reparsed = loom::utils::json::parse(text);
         ASSERT_TRUE(reparsed.has_value());
         const auto servers = reparsed->root().get("mcpServers");
         EXPECT_FALSE(servers.has("p1"));
@@ -7208,7 +7208,7 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
 
     // A FRESH instance sees the same state.
     {
-        cc::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager reloaded(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(reloaded.load().has_value());
         std::set<std::string> names;
         for (const auto& s : reloaded.settings().mcp_servers) names.insert(s.name);
@@ -7219,34 +7219,34 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
     // copied down into the project file by the subsequent save (§B uses the
     // updated bookkeeping), and a project upsert round-trips.
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
 
-        cc::core::McpServerConfig local_cfg;
+        loom::core::McpServerConfig local_cfg;
         local_cfg.name = "l1";
         local_cfg.transport = "stdio";
         local_cfg.command = "node";
         local_cfg.args = {"l.js"};
         local_cfg.config_scope = "local";
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Local, local_cfg)
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local, local_cfg)
                         .has_value());
         ASSERT_EQ(manager.settings().mcp_servers.size(), 3u);  // g1, p2, l1
         ASSERT_TRUE(manager.mcp_server_owner("l1").has_value());
-        EXPECT_EQ(*manager.mcp_server_owner("l1"), cc::core::McpStorageScope::Local);
+        EXPECT_EQ(*manager.mcp_server_owner("l1"), loom::core::McpStorageScope::Local);
 
-        cc::core::McpServerConfig project_cfg;
+        loom::core::McpServerConfig project_cfg;
         project_cfg.name = "p3";
         project_cfg.transport = "stdio";
         project_cfg.command = "node";
         project_cfg.args = {"p3.js"};
         project_cfg.config_scope = "project";
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Project, project_cfg)
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project, project_cfg)
                         .has_value());
 
-        ASSERT_TRUE(manager.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(manager.save(loom::core::ConfigSource::ProjectConfig).has_value());
         const std::string text = c6_read_file(project_path);
         EXPECT_EQ(text.find("l1"), std::string::npos);  // not copied down
-        auto reparsed = cc::utils::json::parse(text);
+        auto reparsed = loom::utils::json::parse(text);
         ASSERT_TRUE(reparsed.has_value());
         const auto servers = reparsed->root().get("mcpServers");
         EXPECT_TRUE(servers.has("p2"));
@@ -7254,19 +7254,19 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
 
         // A lower-tier upsert while a higher tier shadows the name keeps the
         // higher value effective and the higher owner.
-        cc::core::McpServerConfig shadow;
+        loom::core::McpServerConfig shadow;
         shadow.name = "l1";
         shadow.transport = "stdio";
         shadow.command = "node";
         shadow.args = {"project-shadow.js"};
         shadow.config_scope = "project";
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Project, shadow)
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project, shadow)
                         .has_value());
         auto effective = std::ranges::find(manager.settings().mcp_servers, "l1",
                                           [](const auto& s) { return s.name; });
         ASSERT_NE(effective, manager.settings().mcp_servers.end());
         EXPECT_EQ(effective->args, (std::vector<std::string>{"l.js"}));  // local wins
-        EXPECT_EQ(*manager.mcp_server_owner("l1"), cc::core::McpStorageScope::Local);
+        EXPECT_EQ(*manager.mcp_server_owner("l1"), loom::core::McpStorageScope::Local);
     }
 
     fs::remove_all(root);
@@ -7288,25 +7288,25 @@ TEST(McpTypes, McpBlankUserLocalFilesTreatedAsMissing) {
     // garbage; only user/local get the soft policy. -----------------------
     { std::ofstream(global_path) << ""; }
     {
-        cc::core::ConfigManager m(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager m(global_path, user_path, project_path, local_path);
         EXPECT_FALSE(m.load().has_value());
     }
     { std::ofstream(global_path) << "FOO=bar\n"; }  // non-JSON garbage
     {
-        cc::core::ConfigManager m(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager m(global_path, user_path, project_path, local_path);
         EXPECT_FALSE(m.load().has_value());
     }
 
     fs::remove(global_path);
     { std::ofstream(project_path) << "   \n"; }  // blank project file
     {
-        cc::core::ConfigManager m(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager m(global_path, user_path, project_path, local_path);
         EXPECT_FALSE(m.load().has_value());
     }
     c6_write_file(global_path, R"JSON({"mcpServers": {"g1": {"command": "node"}}})JSON");
     { std::ofstream(project_path) << "[1, 2]\n"; }  // valid JSON, wrong root
     {
-        cc::core::ConfigManager m(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager m(global_path, user_path, project_path, local_path);
         EXPECT_FALSE(m.load().has_value());
     }
 
@@ -7317,20 +7317,20 @@ TEST(McpTypes, McpBlankUserLocalFilesTreatedAsMissing) {
     { std::ofstream(local_path) << "  \n\t \n"; }
     {
         testing::internal::CaptureStderr();
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         const std::string warnings = testing::internal::GetCapturedStderr();
         EXPECT_EQ(warnings.find("not valid JSON"), std::string::npos);
         ASSERT_EQ(manager.settings().mcp_servers.size(), 1u);
         EXPECT_EQ(manager.settings().mcp_servers[0].name, "g1");
 
-        cc::core::McpServerConfig cfg;
+        loom::core::McpServerConfig cfg;
         cfg.name = "u1";
         cfg.transport = "stdio";
         cfg.command = "node";
         cfg.config_scope = "user";
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::User, cfg).has_value());
-        auto user_doc = cc::utils::json::parse_file(user_path);
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::User, cfg).has_value());
+        auto user_doc = loom::utils::json::parse_file(user_path);
         ASSERT_TRUE(user_doc.has_value());
         EXPECT_TRUE(user_doc->root().get("mcpServers").has("u1"));
     }
@@ -7343,7 +7343,7 @@ TEST(McpTypes, McpBlankUserLocalFilesTreatedAsMissing) {
     { std::ofstream(local_path) << "[1, 2]\n"; }
     {
         testing::internal::CaptureStderr();
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
         const std::string warnings = testing::internal::GetCapturedStderr();
         EXPECT_NE(warnings.find(user_path.string()), std::string::npos);
@@ -7379,7 +7379,7 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     const auto local_path   = root / ".loom" / "config.local.json";
 
     auto make_cfg = [](std::string name) {
-        cc::core::McpServerConfig cfg;
+        loom::core::McpServerConfig cfg;
         cfg.name = std::move(name);
         cfg.transport = "stdio";
         cfg.command = "node";
@@ -7398,14 +7398,14 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     fs::permissions(project_path, fs::perms::owner_read | fs::perms::owner_write,
                     fs::perm_options::replace);
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Project,
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project,
                                               make_cfg("p2")).has_value());
         EXPECT_EQ(mode_of(project_path),
                   fs::perms::owner_read | fs::perms::owner_write);
         ASSERT_TRUE(manager.set_mcp_server_disabled(
-            "p1", true, cc::core::McpStorageScope::Project).has_value());
+            "p1", true, loom::core::McpStorageScope::Project).has_value());
         EXPECT_EQ(mode_of(project_path),
                   fs::perms::owner_read | fs::perms::owner_write);
     }
@@ -7418,9 +7418,9 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
                     fs::perms::owner_read | fs::perms::owner_write | fs::perms::group_read,
                     fs::perm_options::replace);
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::User,
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::User,
                                               make_cfg("u2")).has_value());
         EXPECT_EQ(mode_of(user_path),
                   fs::perms::owner_read | fs::perms::owner_write | fs::perms::group_read);
@@ -7442,9 +7442,9 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
         EXPECT_NE(prior.find("config.json.lock"), std::string::npos);
     }
     {
-        cc::core::ConfigManager manager(global_path, user_path, project_path, local_path);
+        loom::core::ConfigManager manager(global_path, user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(cc::core::McpStorageScope::Local,
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local,
                                               make_cfg("l2")).has_value());
     }
     ASSERT_TRUE(fs::exists(root / ".gitignore"));
@@ -7455,7 +7455,7 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     EXPECT_EQ(mode_of(local_path),
               fs::perms::owner_read | fs::perms::owner_write);
     // Both entries survive (pre-existing local content is not overwritten).
-    auto local_doc = cc::utils::json::parse_file(local_path);
+    auto local_doc = loom::utils::json::parse_file(local_path);
     ASSERT_TRUE(local_doc.has_value());
     EXPECT_TRUE(local_doc->root().get("mcpServers").has("l1"));
     EXPECT_TRUE(local_doc->root().get("mcpServers").has("l2"));
@@ -7477,10 +7477,10 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     EnvironmentGuard model_guard("LOOM_MODEL", "direct-route-test-model");
     CurrentPathGuard cwd_guard(root);
 
-    cc::server::reset_route_state_for_testing();
-    cc::server::set_sessions_dir_for_testing(sessions_dir);
-    auto routes = cc::server::get_default_routes();
-    auto find_route = [&](std::string_view method, std::string_view path) -> const cc::server::Route* {
+    loom::server::reset_route_state_for_testing();
+    loom::server::set_sessions_dir_for_testing(sessions_dir);
+    auto routes = loom::server::get_default_routes();
+    auto find_route = [&](std::string_view method, std::string_view path) -> const loom::server::Route* {
         auto it = std::ranges::find_if(routes, [&](const auto& route) {
             return route.method == method && route.path == path;
         });
@@ -7495,7 +7495,7 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     ASSERT_NE(compact_route, nullptr);
 
     auto first_response = message_route->handler({{"content", "hello server route"}, {"model", "test-model"}});
-    auto first_json = cc::utils::json::parse(first_response);
+    auto first_json = loom::utils::json::parse(first_response);
     ASSERT_TRUE(first_json.has_value()) << first_response;
     auto session_id_value = first_json->root().get("session_id");
     ASSERT_TRUE(session_id_value.is_str());
@@ -7509,7 +7509,7 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
             {"session_id", session_id},
             {"content", "follow up " + std::to_string(i)}
         });
-        auto parsed = cc::utils::json::parse(response);
+        auto parsed = loom::utils::json::parse(response);
         ASSERT_TRUE(parsed.has_value()) << response;
         EXPECT_EQ(parsed->root().get_string("session_id"), session_id);
         EXPECT_EQ(parsed->root().get_string("response"), "ok");
@@ -7517,18 +7517,18 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
 
     auto request_bodies = server.wait_for_bodies(5);
     ASSERT_TRUE(request_bodies.has_value());
-    auto last_request_json = cc::utils::json::parse(request_bodies->back());
+    auto last_request_json = loom::utils::json::parse(request_bodies->back());
     ASSERT_TRUE(last_request_json.has_value()) << request_bodies->back();
     auto request_messages = last_request_json->root().get("messages");
     ASSERT_TRUE(request_messages.is_arr()) << request_bodies->back();
     ASSERT_EQ(request_messages.size(), 9u) << request_bodies->back();
     std::string request_history_text;
-    request_messages.iter([&](cc::utils::json::JsonVal message) {
+    request_messages.iter([&](loom::utils::json::JsonVal message) {
         auto content = message.get("content");
         if (content.is_str()) {
             request_history_text += std::string(content.as_str()) + "\n";
         } else if (content.is_arr()) {
-            content.iter([&](cc::utils::json::JsonVal block) {
+            content.iter([&](loom::utils::json::JsonVal block) {
                 auto text = block.get("text");
                 if (text.valid() && text.is_str()) {
                     request_history_text += std::string(text.as_str()) + "\n";
@@ -7542,7 +7542,7 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     EXPECT_NE(request_history_text.find("ok"), std::string::npos);
 
     auto sessions_response = sessions_route->handler({{"limit", "5"}});
-    auto sessions_json = cc::utils::json::parse(sessions_response);
+    auto sessions_json = loom::utils::json::parse(sessions_response);
     ASSERT_TRUE(sessions_json.has_value()) << sessions_response;
     EXPECT_EQ(sessions_json->root().get("total").as_int(), 1);
     auto sessions = sessions_json->root().get("sessions");
@@ -7552,7 +7552,7 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     EXPECT_EQ(sessions.at(0).get("message_count").as_int(), 10);
 
     auto compact_response = compact_route->handler({{"session_id", session_id}});
-    auto compact_json = cc::utils::json::parse(compact_response);
+    auto compact_json = loom::utils::json::parse(compact_response);
     ASSERT_TRUE(compact_json.has_value()) << compact_response;
     EXPECT_EQ(compact_json->root().get_string("status"), "compacted");
     EXPECT_EQ(compact_json->root().get("messages_before").as_int(), 10);
@@ -7561,11 +7561,11 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     EXPECT_EQ(compact_json->root().get("messages_summarized").as_int(), 4);
     ASSERT_TRUE(compact_json->root().get("compact_boundary_id").is_str());
 
-    auto metadata = cc::session::load_session_metadata(sessions_dir, session_id);
+    auto metadata = loom::session::load_session_metadata(sessions_dir, session_id);
     ASSERT_TRUE(metadata.has_value());
     EXPECT_EQ(metadata->message_count, 7);
 
-    std::ifstream messages_file(cc::session::get_messages_path(sessions_dir, session_id));
+    std::ifstream messages_file(loom::session::get_messages_path(sessions_dir, session_id));
     ASSERT_TRUE(messages_file.is_open());
     std::vector<std::string> compacted_lines;
     std::string line;
@@ -7573,7 +7573,7 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
         if (!line.empty()) compacted_lines.push_back(line);
     }
     ASSERT_EQ(compacted_lines.size(), 7u);
-    auto boundary_json = cc::utils::json::parse(compacted_lines.front());
+    auto boundary_json = loom::utils::json::parse(compacted_lines.front());
     ASSERT_TRUE(boundary_json.has_value()) << compacted_lines.front();
     EXPECT_EQ(boundary_json->root().get_string("role"), "system");
     EXPECT_EQ(boundary_json->root().get_string("subtype"), "compact_boundary");
@@ -7592,7 +7592,7 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     EXPECT_NE(boundary_content.find("follow up 0"), std::string::npos);
     EXPECT_NE(boundary_content.find("Preserve these details"), std::string::npos);
 
-	cc::server::reset_route_state_for_testing();
+	loom::server::reset_route_state_for_testing();
 	fs::remove_all(root);
 }
 
@@ -7614,9 +7614,9 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
     CurrentPathGuard cwd_guard(root);
 
     const auto now = std::chrono::system_clock::now();
-    ASSERT_TRUE(cc::session::save_session_metadata(
+    ASSERT_TRUE(loom::session::save_session_metadata(
         sessions_dir,
-        cc::session::SessionMetadata{
+        loom::session::SessionMetadata{
             .session_id = "session_1",
             .model = "direct-ingress-test-model",
             .cwd = root,
@@ -7627,8 +7627,8 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
             .is_archived = false,
         }));
 
-    cc::services::api::close_ingress();
-    auto created = cc::services::api::create_ingress(cc::services::api::IngressConfig{
+    loom::services::api::close_ingress();
+    auto created = loom::services::api::create_ingress(loom::services::api::IngressConfig{
         .endpoint = ccr.base_url(),
         .session_id = "session_1",
         .auth_token = "session-route-token",
@@ -7636,9 +7636,9 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
     });
     ASSERT_TRUE(created.has_value()) << created.error();
 
-    cc::server::reset_route_state_for_testing();
-    cc::server::set_sessions_dir_for_testing(sessions_dir);
-    auto routes = cc::server::get_default_routes();
+    loom::server::reset_route_state_for_testing();
+    loom::server::set_sessions_dir_for_testing(sessions_dir);
+    auto routes = loom::server::get_default_routes();
     auto it = std::ranges::find_if(routes, [](const auto& route) {
         return route.method == "POST" && route.path == "/message";
     });
@@ -7648,7 +7648,7 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
         {"session_id", "session_1"},
         {"content", "hello ingress route"}
     });
-    auto parsed = cc::utils::json::parse(response);
+    auto parsed = loom::utils::json::parse(response);
     ASSERT_TRUE(parsed.has_value()) << response;
     EXPECT_EQ(parsed->root().get_string("status"), "completed");
     EXPECT_EQ(parsed->root().get_string("session_id"), "session_1");
@@ -7674,11 +7674,11 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
     EXPECT_NE((*requests)[1].body.find(R"("result":"ok")"), std::string::npos);
     EXPECT_NE((*requests)[1].body.find(R"("session_id":"session_1")"), std::string::npos);
 
-    auto metadata = cc::session::load_session_metadata(sessions_dir, "session_1");
+    auto metadata = loom::session::load_session_metadata(sessions_dir, "session_1");
     ASSERT_TRUE(metadata.has_value());
     EXPECT_EQ(metadata->message_count, 2);
 
-    std::ifstream messages_file(cc::session::get_messages_path(sessions_dir, "session_1"));
+    std::ifstream messages_file(loom::session::get_messages_path(sessions_dir, "session_1"));
     ASSERT_TRUE(messages_file.is_open());
     std::vector<std::string> lines;
     std::string line;
@@ -7689,8 +7689,8 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
     EXPECT_NE(lines[0].find(R"("role":"user")"), std::string::npos);
     EXPECT_NE(lines[1].find(R"("role":"assistant")"), std::string::npos);
 
-    cc::services::api::close_ingress();
-    cc::server::reset_route_state_for_testing();
+    loom::services::api::close_ingress();
+    loom::server::reset_route_state_for_testing();
     fs::remove_all(root);
 }
 
@@ -7708,10 +7708,10 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     EnvironmentGuard model_guard("LOOM_MODEL", "direct-server-test-model");
     EnvironmentGuard sessions_guard("LOOM_SERVER_SESSIONS_DIR", sessions_dir.string());
     CurrentPathGuard cwd_guard(root);
-    cc::server::reset_route_state_for_testing();
+    loom::server::reset_route_state_for_testing();
 
-    cc::server::HttpServer direct_server;
-    auto started = direct_server.start(cc::server::ServerConfig{
+    loom::server::HttpServer direct_server;
+    auto started = direct_server.start(loom::server::ServerConfig{
         .port = 0,
         .host = "127.0.0.1",
         .cors = false,
@@ -7725,7 +7725,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     auto create_response = direct_connect_http_request(server_port, "POST", "/sessions", create_body);
     ASSERT_TRUE(create_response.has_value());
     ASSERT_EQ(create_response->status, 200) << create_response->body;
-    auto create_json = cc::utils::json::parse(create_response->body);
+    auto create_json = loom::utils::json::parse(create_response->body);
     ASSERT_TRUE(create_json.has_value()) << create_response->body;
     const auto session_id = std::string(create_json->root().get_string("session_id"));
     ASSERT_FALSE(session_id.empty());
@@ -7736,7 +7736,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
         std::string(create_json->root().get_string("work_dir")),
         fs::weakly_canonical(root).string());
 
-    auto initial_metadata = cc::session::load_session_metadata(sessions_dir, session_id);
+    auto initial_metadata = loom::session::load_session_metadata(sessions_dir, session_id);
     ASSERT_TRUE(initial_metadata.has_value());
     EXPECT_EQ(initial_metadata->message_count, 0);
 
@@ -7759,7 +7759,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
         auto assistant_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(assistant_frame.has_value());
         ASSERT_EQ(assistant_frame->opcode, 0x1);
-        auto assistant_json = cc::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
+        auto assistant_json = loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
         ASSERT_TRUE(assistant_json.has_value()) << assistant_frame->payload;
         EXPECT_EQ(assistant_json->root().get_string("type"), "assistant");
         EXPECT_EQ(assistant_json->root().get_string("session_id"), session_id);
@@ -7771,7 +7771,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
         auto result_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(result_frame.has_value());
         ASSERT_EQ(result_frame->opcode, 0x1);
-        auto result_json = cc::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
+        auto result_json = loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
         ASSERT_TRUE(result_json.has_value()) << result_frame->payload;
         EXPECT_EQ(result_json->root().get_string("type"), "result");
         EXPECT_EQ(result_json->root().get_string("subtype"), "success");
@@ -7784,7 +7784,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     ASSERT_TRUE(direct_connect_send_client_text_frame(*ws_fd, interrupt_payload));
     auto control_frame = direct_connect_read_ws_frame(*ws_fd);
     ASSERT_TRUE(control_frame.has_value());
-    auto control_json = cc::utils::json::parse(direct_connect_trim_json_line(control_frame->payload));
+    auto control_json = loom::utils::json::parse(direct_connect_trim_json_line(control_frame->payload));
     ASSERT_TRUE(control_json.has_value()) << control_frame->payload;
     EXPECT_EQ(control_json->root().get_string("type"), "control_response");
     auto control_response = control_json->root().get("response");
@@ -7796,7 +7796,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
 
     auto request_bodies = anthropic.wait_for_bodies(prompts.size());
     ASSERT_TRUE(request_bodies.has_value());
-    auto request_json = cc::utils::json::parse(request_bodies->back());
+    auto request_json = loom::utils::json::parse(request_bodies->back());
     ASSERT_TRUE(request_json.has_value()) << request_bodies->back();
     auto request_messages = request_json->root().get("messages");
     ASSERT_TRUE(request_messages.is_arr()) << request_bodies->back();
@@ -7811,7 +7811,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     auto sessions_response = direct_connect_http_request(server_port, "GET", "/sessions?limit=5");
     ASSERT_TRUE(sessions_response.has_value());
     ASSERT_EQ(sessions_response->status, 200) << sessions_response->body;
-    auto sessions_json = cc::utils::json::parse(sessions_response->body);
+    auto sessions_json = loom::utils::json::parse(sessions_response->body);
     ASSERT_TRUE(sessions_json.has_value()) << sessions_response->body;
     EXPECT_EQ(sessions_json->root().get("total").as_int(), 1);
     auto sessions = sessions_json->root().get("sessions");
@@ -7824,7 +7824,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     auto compact_response = direct_connect_http_request(server_port, "POST", "/compact", compact_body);
     ASSERT_TRUE(compact_response.has_value());
     ASSERT_EQ(compact_response->status, 200) << compact_response->body;
-    auto compact_json = cc::utils::json::parse(compact_response->body);
+    auto compact_json = loom::utils::json::parse(compact_response->body);
     ASSERT_TRUE(compact_json.has_value()) << compact_response->body;
     EXPECT_EQ(compact_json->root().get_string("status"), "compacted");
     EXPECT_EQ(compact_json->root().get_string("session_id"), session_id);
@@ -7834,11 +7834,11 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     EXPECT_EQ(compact_json->root().get("messages_summarized").as_int(), 4);
     ASSERT_TRUE(compact_json->root().get("compact_boundary_id").is_str());
 
-    auto metadata = cc::session::load_session_metadata(sessions_dir, session_id);
+    auto metadata = loom::session::load_session_metadata(sessions_dir, session_id);
     ASSERT_TRUE(metadata.has_value());
     EXPECT_EQ(metadata->message_count, 7);
 
-    std::ifstream messages_file(cc::session::get_messages_path(sessions_dir, session_id));
+    std::ifstream messages_file(loom::session::get_messages_path(sessions_dir, session_id));
     ASSERT_TRUE(messages_file.is_open());
     std::vector<std::string> lines;
     std::string line;
@@ -7846,7 +7846,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
         if (!line.empty()) lines.push_back(line);
     }
     ASSERT_EQ(lines.size(), 7u);
-    auto boundary_json = cc::utils::json::parse(lines.front());
+    auto boundary_json = loom::utils::json::parse(lines.front());
     ASSERT_TRUE(boundary_json.has_value()) << lines.front();
     EXPECT_EQ(boundary_json->root().get_string("role"), "system");
     EXPECT_EQ(boundary_json->root().get_string("subtype"), "compact_boundary");
@@ -7867,7 +7867,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     EXPECT_NE(lines.back().find("ok"), std::string::npos);
 
     direct_server.stop();
-	cc::server::reset_route_state_for_testing();
+	loom::server::reset_route_state_for_testing();
 	fs::remove_all(root);
 }
 
@@ -7880,15 +7880,15 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
 
     EnvironmentGuard sessions_guard("LOOM_SERVER_SESSIONS_DIR", sessions_dir.string());
     CurrentPathGuard cwd_guard(root);
-    cc::server::reset_route_state_for_testing();
+    loom::server::reset_route_state_for_testing();
 
     std::mutex executor_mutex;
     std::condition_variable executor_cv;
     bool executor_started = false;
     std::atomic<bool> executor_saw_cancel{false};
-    cc::server::set_query_executor_for_testing(
-        [&](const cc::server::detail::DirectQueryRequest& request)
-            -> std::expected<cc::server::detail::DirectQueryResult, std::string> {
+    loom::server::set_query_executor_for_testing(
+        [&](const loom::server::detail::DirectQueryRequest& request)
+            -> std::expected<loom::server::detail::DirectQueryResult, std::string> {
             {
                 std::lock_guard lock(executor_mutex);
                 executor_started = true;
@@ -7903,7 +7903,7 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
-            return cc::server::detail::DirectQueryResult{
+            return loom::server::detail::DirectQueryResult{
                 .assistant_id = "msg_not_cancelled",
                 .content = "not cancelled",
                 .model = "test-model",
@@ -7914,8 +7914,8 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
             };
         });
 
-    cc::server::HttpServer direct_server;
-    auto started = direct_server.start(cc::server::ServerConfig{
+    loom::server::HttpServer direct_server;
+    auto started = direct_server.start(loom::server::ServerConfig{
         .port = 0,
         .host = "127.0.0.1",
         .cors = false,
@@ -7929,7 +7929,7 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
     auto create_response = direct_connect_http_request(server_port, "POST", "/sessions", create_body);
     ASSERT_TRUE(create_response.has_value());
     ASSERT_EQ(create_response->status, 200) << create_response->body;
-    auto create_json = cc::utils::json::parse(create_response->body);
+    auto create_json = loom::utils::json::parse(create_response->body);
     ASSERT_TRUE(create_json.has_value()) << create_response->body;
     const auto session_id = std::string(create_json->root().get_string("session_id"));
     ASSERT_FALSE(session_id.empty());
@@ -7952,7 +7952,7 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
 
     auto control_frame = direct_connect_read_ws_frame(*ws_fd);
     ASSERT_TRUE(control_frame.has_value());
-    auto control_json = cc::utils::json::parse(direct_connect_trim_json_line(control_frame->payload));
+    auto control_json = loom::utils::json::parse(direct_connect_trim_json_line(control_frame->payload));
     ASSERT_TRUE(control_json.has_value()) << control_frame->payload;
     EXPECT_EQ(control_json->root().get_string("type"), "control_response");
     auto control_response = control_json->root().get("response");
@@ -7962,7 +7962,7 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
 
     auto error_frame = direct_connect_read_ws_frame(*ws_fd);
     ASSERT_TRUE(error_frame.has_value());
-    auto error_json = cc::utils::json::parse(direct_connect_trim_json_line(error_frame->payload));
+    auto error_json = loom::utils::json::parse(direct_connect_trim_json_line(error_frame->payload));
     ASSERT_TRUE(error_json.has_value()) << error_frame->payload;
     EXPECT_EQ(error_json->root().get_string("type"), "result");
     EXPECT_EQ(error_json->root().get_string("subtype"), "error_during_execution");
@@ -7976,7 +7976,7 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
     ::shutdown(*ws_fd, SHUT_RDWR);
     ::close(*ws_fd);
     direct_server.stop();
-	cc::server::reset_route_state_for_testing();
+	loom::server::reset_route_state_for_testing();
 	fs::remove_all(root);
 }
 
@@ -8051,10 +8051,10 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
     EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", anthropic.base_url());
     EnvironmentGuard sessions_guard("LOOM_SERVER_SESSIONS_DIR", sessions_dir.string());
     CurrentPathGuard cwd_guard(root);
-    cc::server::reset_route_state_for_testing();
+    loom::server::reset_route_state_for_testing();
 
-    cc::server::HttpServer direct_server;
-    auto started = direct_server.start(cc::server::ServerConfig{
+    loom::server::HttpServer direct_server;
+    auto started = direct_server.start(loom::server::ServerConfig{
         .port = 0,
         .host = "127.0.0.1",
         .cors = false,
@@ -8068,7 +8068,7 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
     auto create_response = direct_connect_http_request(server_port, "POST", "/sessions", create_body);
     ASSERT_TRUE(create_response.has_value());
     ASSERT_EQ(create_response->status, 200) << create_response->body;
-    auto create_json = cc::utils::json::parse(create_response->body);
+    auto create_json = loom::utils::json::parse(create_response->body);
     ASSERT_TRUE(create_json.has_value()) << create_response->body;
     const auto session_id = std::string(create_json->root().get_string("session_id"));
     ASSERT_FALSE(session_id.empty());
@@ -8087,11 +8087,11 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
             prompt);
         ASSERT_TRUE(direct_connect_send_client_text_frame(*ws_fd, user_payload));
 
-        std::optional<cc::utils::json::JsonDoc> permission_json;
+        std::optional<loom::utils::json::JsonDoc> permission_json;
         for (int attempt = 0; attempt < 4; ++attempt) {
             auto permission_frame = direct_connect_read_ws_frame(*ws_fd);
             ASSERT_TRUE(permission_frame.has_value());
-            auto parsed = cc::utils::json::parse(direct_connect_trim_json_line(permission_frame->payload));
+            auto parsed = loom::utils::json::parse(direct_connect_trim_json_line(permission_frame->payload));
             ASSERT_TRUE(parsed.has_value()) << permission_frame->payload;
             if (parsed->root().get_string("type") == "control_request") {
                 permission_json.emplace(std::move(*parsed));
@@ -8123,7 +8123,7 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
 
         auto assistant_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(assistant_frame.has_value());
-        auto assistant_json = cc::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
+        auto assistant_json = loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
         ASSERT_TRUE(assistant_json.has_value()) << assistant_frame->payload;
         EXPECT_EQ(assistant_json->root().get_string("type"), "assistant");
         auto assistant_content = assistant_json->root().get("message").get("content");
@@ -8133,7 +8133,7 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
 
         auto result_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(result_frame.has_value());
-        auto result_json = cc::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
+        auto result_json = loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
         ASSERT_TRUE(result_json.has_value()) << result_frame->payload;
         EXPECT_EQ(result_json->root().get_string("type"), "result");
         EXPECT_EQ(result_json->root().get_string("subtype"), "success");
@@ -8149,7 +8149,7 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
 
         auto assistant_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(assistant_frame.has_value());
-        auto assistant_json = cc::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
+        auto assistant_json = loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
         ASSERT_TRUE(assistant_json.has_value()) << assistant_frame->payload;
         EXPECT_EQ(assistant_json->root().get_string("type"), "assistant");
         auto assistant_content = assistant_json->root().get("message").get("content");
@@ -8159,7 +8159,7 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
 
         auto result_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(result_frame.has_value());
-        auto result_json = cc::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
+        auto result_json = loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
         ASSERT_TRUE(result_json.has_value()) << result_frame->payload;
         EXPECT_EQ(result_json->root().get_string("type"), "result");
         EXPECT_EQ(result_json->root().get_string("subtype"), "success");
@@ -8216,7 +8216,7 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
     ::shutdown(*ws_fd, SHUT_RDWR);
     ::close(*ws_fd);
     direct_server.stop();
-    cc::server::reset_route_state_for_testing();
+    loom::server::reset_route_state_for_testing();
     fs::remove_all(root);
 }
 
@@ -8241,12 +8241,12 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
     EnvironmentGuard agent_runtime_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
     CurrentPathGuard cwd_guard(root);
-    cc::server::reset_route_state_for_testing();
-    cc::tools::global_team_store().clear_for_testing();
-    cc::tools::agent_runtime::native_agent_store().clear_for_testing();
+    loom::server::reset_route_state_for_testing();
+    loom::tools::global_team_store().clear_for_testing();
+    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    cc::server::HttpServer direct_server;
-    auto started = direct_server.start(cc::server::ServerConfig{
+    loom::server::HttpServer direct_server;
+    auto started = direct_server.start(loom::server::ServerConfig{
         .port = 0,
         .host = "127.0.0.1",
         .cors = false,
@@ -8260,7 +8260,7 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     auto create_response = direct_connect_http_request(server_port, "POST", "/sessions", create_body);
     ASSERT_TRUE(create_response.has_value());
     ASSERT_EQ(create_response->status, 200) << create_response->body;
-    auto create_json = cc::utils::json::parse(create_response->body);
+    auto create_json = loom::utils::json::parse(create_response->body);
     ASSERT_TRUE(create_json.has_value()) << create_response->body;
     const auto session_id = std::string(create_json->root().get_string("session_id"));
     ASSERT_FALSE(session_id.empty());
@@ -8272,7 +8272,7 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
         while (true) {
             auto frame = direct_connect_read_ws_frame(*ws_fd);
             if (!frame) return std::nullopt;
-            auto parsed = cc::utils::json::parse(direct_connect_trim_json_line(frame->payload));
+            auto parsed = loom::utils::json::parse(direct_connect_trim_json_line(frame->payload));
             if (!parsed || !parsed->root().is_obj()) return frame;
             if (parsed->root().get_string("type") == "control_request") {
                 auto request_id_value = parsed->root().get("request_id");
@@ -8299,7 +8299,7 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
 
         auto assistant_frame = read_non_permission_frame();
         ASSERT_TRUE(assistant_frame.has_value());
-        auto assistant_json = cc::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
+        auto assistant_json = loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
         ASSERT_TRUE(assistant_json.has_value()) << assistant_frame->payload;
         EXPECT_EQ(assistant_json->root().get_string("type"), "assistant");
         EXPECT_EQ(assistant_json->root().get_string("session_id"), session_id);
@@ -8310,7 +8310,7 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
 
         auto result_frame = read_non_permission_frame();
         ASSERT_TRUE(result_frame.has_value());
-        auto result_json = cc::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
+        auto result_json = loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
         ASSERT_TRUE(result_json.has_value()) << result_frame->payload;
         EXPECT_EQ(result_json->root().get_string("type"), "result");
         EXPECT_EQ(result_json->root().get_string("subtype"), "success");
@@ -8326,13 +8326,13 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     auto request_bodies = anthropic.wait_for_bodies(4);
     ASSERT_TRUE(request_bodies.has_value());
     ASSERT_EQ(request_bodies->size(), 4u);
-    auto first_request = cc::utils::json::parse(request_bodies->front());
+    auto first_request = loom::utils::json::parse(request_bodies->front());
     ASSERT_TRUE(first_request.has_value()) << request_bodies->front();
     auto tools = first_request->root().get("tools");
     ASSERT_TRUE(tools.is_arr()) << request_bodies->front();
     bool exposed_team_create = false;
     bool exposed_send_message = false;
-    tools.iter([&](cc::utils::json::JsonVal tool) {
+    tools.iter([&](loom::utils::json::JsonVal tool) {
         const auto name = std::string(tool.get_string("name"));
         if (name == "team_create") exposed_team_create = true;
         if (name == "send_message") exposed_send_message = true;
@@ -8340,8 +8340,8 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     EXPECT_TRUE(exposed_team_create);
     EXPECT_TRUE(exposed_send_message);
 
-    auto team = cc::tools::global_team_store().get("direct-team-id");
-    ASSERT_TRUE(team.has_value()) << std::string(cc::tools::format_error(team.error()));
+    auto team = loom::tools::global_team_store().get("direct-team-id");
+    ASSERT_TRUE(team.has_value()) << std::string(loom::tools::format_error(team.error()));
     EXPECT_EQ((*team)->name, "Direct Team");
     ASSERT_EQ((*team)->members.size(), 2u);
     ASSERT_EQ((*team)->task_list.size(), 1u);
@@ -8355,7 +8355,7 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     EXPECT_TRUE(fs::exists(team_dir / "tasks.json"));
     EXPECT_TRUE(fs::exists(team_dir / "inboxes" / "reviewer-one.json"));
 
-    auto reviewer_record = cc::tools::agent_runtime::native_agent_store().get("reviewer-one");
+    auto reviewer_record = loom::tools::agent_runtime::native_agent_store().get("reviewer-one");
     ASSERT_TRUE(reviewer_record.has_value());
     ASSERT_TRUE(reviewer_record->team_name.has_value());
     EXPECT_EQ(*reviewer_record->team_name, "Direct Team");
@@ -8363,7 +8363,7 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     EXPECT_NE(reviewer_record->pending_messages.front().find("Inspect direct connect team migration"), std::string::npos);
     EXPECT_NE(reviewer_record->pending_messages.back().find("Please review direct connect team output"), std::string::npos);
 
-    auto inbox = cc::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"Direct Team"});
+    auto inbox = loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"Direct Team"});
     ASSERT_TRUE(inbox.has_value()) << inbox.error();
     ASSERT_EQ(inbox->size(), 1u);
     EXPECT_EQ(inbox->front().from, "team-lead");
@@ -8371,19 +8371,19 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     ASSERT_TRUE(inbox->front().summary.has_value());
     EXPECT_EQ(*inbox->front().summary, "direct team follow-up");
 
-    auto metadata = cc::session::load_session_metadata(sessions_dir, session_id);
+    auto metadata = loom::session::load_session_metadata(sessions_dir, session_id);
     ASSERT_TRUE(metadata.has_value());
     EXPECT_EQ(metadata->message_count, 4);
 
     direct_server.stop();
-    cc::server::reset_route_state_for_testing();
-    cc::tools::global_team_store().clear_for_testing();
-    cc::tools::agent_runtime::native_agent_store().clear_for_testing();
+    loom::server::reset_route_state_for_testing();
+    loom::tools::global_team_store().clear_for_testing();
+    loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
 }
 
 TEST(RateLimitManager, UpdatesStateFromHeadersAndWarnsNearLimits) {
-    cc::services::RateLimitManager manager;
+    loom::services::RateLimitManager manager;
     manager.update_from_headers({
         {"x-ratelimit-remaining-requests", "3"},
         {"x-ratelimit-remaining-tokens", "9000"},
@@ -8398,7 +8398,7 @@ TEST(RateLimitManager, UpdatesStateFromHeadersAndWarnsNearLimits) {
 }
 
 TEST(RateLimitManager, MockRateLimitControlsLimitedState) {
-    cc::services::RateLimitManager manager;
+    loom::services::RateLimitManager manager;
     manager.mock_rate_limit({.simulate_429 = true});
     EXPECT_TRUE(manager.is_rate_limited());
 
@@ -8407,9 +8407,9 @@ TEST(RateLimitManager, MockRateLimitControlsLimitedState) {
 }
 
 TEST(SessionMemoryService, StoresSearchesAndDeletesMemoryItems) {
-    cc::services::memory::SessionMemoryService service;
+    loom::services::memory::SessionMemoryService service;
     const auto now = std::chrono::system_clock::now();
-    cc::services::memory::MemoryItem item{
+    loom::services::memory::MemoryItem item{
         .id = "mem-1",
         .content = "remember project migration details",
         .type = "note",
@@ -8434,8 +8434,8 @@ TEST(SessionMemoryService, StoresSearchesAndDeletesMemoryItems) {
 }
 
 TEST(TokenEstimator, EstimatesTextImagesToolsAndModelLimits) {
-    using cc::services::ImageDetail;
-    using cc::services::TokenEstimator;
+    using loom::services::ImageDetail;
+    using loom::services::TokenEstimator;
 
     EXPECT_GT(TokenEstimator::estimate_text("Hello world"), 0u);
     EXPECT_EQ(TokenEstimator::estimate_text(""), 1u);
@@ -8450,8 +8450,8 @@ TEST(TokenEstimator, EstimatesTextImagesToolsAndModelLimits) {
 // ---------------------------------------------------------------------------
 
 namespace {
-cc::services::lsp::LspClient make_lsp_for_parsing() {
-    return cc::services::lsp::LspClient(cc::services::lsp::LspClient::Config{});
+loom::services::lsp::LspClient make_lsp_for_parsing() {
+    return loom::services::lsp::LspClient(loom::services::lsp::LspClient::Config{});
 }
 } // namespace
 
@@ -8545,11 +8545,11 @@ import loom.server.types;
 namespace {
 
 TEST(WorkerRegistry, ExpiresStale) {
-    auto& r = cc::daemon::WorkerRegistry::instance();
+    auto& r = loom::daemon::WorkerRegistry::instance();
     r.clear();
 
-    cc::daemon::WorkerInfo w;
-    w.kind = cc::daemon::WorkerKind::InProcess;
+    loom::daemon::WorkerInfo w;
+    w.kind = loom::daemon::WorkerKind::InProcess;
     w.hostname = "localhost";
     w.capabilities = {"query"};
     w.max_concurrent_tasks = 1;
@@ -8558,7 +8558,7 @@ TEST(WorkerRegistry, ExpiresStale) {
     const std::string id = *id_r;
 
     // Advance heartbeat to a known timestamp then manually expire it.
-    (void)r.heartbeat(id, 0.0, 0, 0, cc::daemon::WorkerHealth::Healthy);
+    (void)r.heartbeat(id, 0.0, 0, 0, loom::daemon::WorkerHealth::Healthy);
     // Use a very short TTL (1ms) + a 20ms sleep so the worker is older than TTL.
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
     const size_t expired = r.expire_stale(std::chrono::milliseconds(1));
@@ -8567,13 +8567,13 @@ TEST(WorkerRegistry, ExpiresStale) {
 }
 
 TEST(WorkerRegistry, PickBest) {
-    auto& r = cc::daemon::WorkerRegistry::instance();
+    auto& r = loom::daemon::WorkerRegistry::instance();
     r.clear();
 
     auto mk = [&](int cur, int max, uint64_t mem_used, uint64_t mem_limit,
                   std::string suffix) -> std::string {
-        cc::daemon::WorkerInfo w;
-        w.kind = cc::daemon::WorkerKind::Subprocess;
+        loom::daemon::WorkerInfo w;
+        w.kind = loom::daemon::WorkerKind::Subprocess;
         w.hostname = "host" + suffix;
         w.capabilities = {"query"};
         w.current_tasks = cur;
@@ -8588,7 +8588,7 @@ TEST(WorkerRegistry, PickBest) {
     const std::string id_c = mk(7, 8, 50,  1000, "C");   // ratio 0.875
     (void)id_c;
 
-    cc::daemon::WorkerQueryFilters f;
+    loom::daemon::WorkerQueryFilters f;
     f.capability_required = "query";
     f.min_free_tasks = 0;          // do not filter on free slots here
     f.require_heartbeat_within_ms = 0;
@@ -8599,17 +8599,17 @@ TEST(WorkerRegistry, PickBest) {
 }
 
 TEST(WorkerRegistry, Cordon) {
-    auto& r = cc::daemon::WorkerRegistry::instance();
+    auto& r = loom::daemon::WorkerRegistry::instance();
     r.clear();
 
-    cc::daemon::WorkerInfo w;
-    w.kind = cc::daemon::WorkerKind::InProcess;
+    loom::daemon::WorkerInfo w;
+    w.kind = loom::daemon::WorkerKind::InProcess;
     w.hostname = "cordon";
     w.capabilities = {"query"};
     w.max_concurrent_tasks = 2;
     const std::string id = *r.register_worker(std::move(w));
 
-    cc::daemon::WorkerQueryFilters f;
+    loom::daemon::WorkerQueryFilters f;
     f.capability_required = "query";
     f.min_free_tasks = 0;
     f.require_heartbeat_within_ms = 0;
@@ -8626,10 +8626,10 @@ TEST(WorkerRegistry, Cordon) {
 }
 
 TEST(ServerTypes, RoundtripSerde) {
-    cc::server::ServerSession s;
+    loom::server::ServerSession s;
     s.id = "session-1";
     s.token = "tok-abcdef";
-    s.role = cc::server::Role::Admin;
+    s.role = loom::server::Role::Admin;
     s.user_id = "u-42";
     s.user_agent = "test-agent/1.0";
     s.client_ip = "127.0.0.1";
@@ -8640,8 +8640,8 @@ TEST(ServerTypes, RoundtripSerde) {
     s.request_count = 17;
     s.revoked = false;
 
-    const std::string json = cc::server::to_json(s);
-    auto parsed = cc::server::ServerSession_from_json(json);
+    const std::string json = loom::server::to_json(s);
+    auto parsed = loom::server::ServerSession_from_json(json);
     ASSERT_TRUE(parsed.has_value()) << "parse error: " << (parsed.has_value() ? std::string{} : parsed.error());
     const auto& p = *parsed;
     EXPECT_EQ(p.id, s.id);
@@ -8659,8 +8659,8 @@ TEST(ServerTypes, RoundtripSerde) {
 }
 
 TEST(ServerTypes, RolesScopes) {
-    cc::server::ServerSession s;
-    s.role = cc::server::Role::Admin;
+    loom::server::ServerSession s;
+    s.role = loom::server::Role::Admin;
     s.scopes = {"read", "write"};
     s.expires_ms = 0;   // never expires
     s.revoked = false;
@@ -8685,14 +8685,14 @@ TEST(ServerTypes, RolesScopes) {
 // These tests pin the ranker's contract without a live LLM.
 
 TEST(SpeculationSuggestion, EmptyTurnsReturnsNothing) {
-    using cc::services::prompt_suggestion::rank_candidate_suggestions;
-    using cc::services::prompt_suggestion::SuggestionRequest;
+    using loom::services::prompt_suggestion::rank_candidate_suggestions;
+    using loom::services::prompt_suggestion::SuggestionRequest;
     SuggestionRequest req;
     EXPECT_TRUE(rank_candidate_suggestions(req).empty());
 }
 
 TEST(SpeculationSuggestion, NoAssistantTurnReturnsNothing) {
-    using namespace cc::services::prompt_suggestion;
+    using namespace loom::services::prompt_suggestion;
     SuggestionRequest req;
     req.recent_turns.push_back({.role = "user", .content = "implement the login flow"});
     // Early gate: needs >= 1 assistant turn before suggesting.
@@ -8700,7 +8700,7 @@ TEST(SpeculationSuggestion, NoAssistantTurnReturnsNothing) {
 }
 
 TEST(SpeculationSuggestion, AssistantTurnYieldsRankedCandidates) {
-    using namespace cc::services::prompt_suggestion;
+    using namespace loom::services::prompt_suggestion;
     SuggestionRequest req;
     req.recent_turns.push_back({.role = "user", .content = "implement the login flow"});
     req.recent_turns.push_back({.role = "assistant", .content = "I implemented the login flow with tests."});
@@ -8714,7 +8714,7 @@ TEST(SpeculationSuggestion, AssistantTurnYieldsRankedCandidates) {
 }
 
 TEST(SpeculationSuggestion, ResultsSortedByConfidenceDesc) {
-    using namespace cc::services::prompt_suggestion;
+    using namespace loom::services::prompt_suggestion;
     SuggestionRequest req;
     req.recent_turns.push_back({.role = "user", .content = "refactor the module"});
     req.recent_turns.push_back({.role = "assistant", .content = "I refactored it and added tests."});
@@ -8725,7 +8725,7 @@ TEST(SpeculationSuggestion, ResultsSortedByConfidenceDesc) {
 }
 
 TEST(SpeculationSuggestion, RespectsMaxSuggestions) {
-    using namespace cc::services::prompt_suggestion;
+    using namespace loom::services::prompt_suggestion;
     SuggestionRequest req;
     req.max_suggestions = 2;
     req.recent_turns.push_back({.role = "user", .content = "ship the feature"});
@@ -8735,7 +8735,7 @@ TEST(SpeculationSuggestion, RespectsMaxSuggestions) {
 }
 
 TEST(SpeculationSuggestion, QualityFilterRejectsEmpty) {
-    using cc::services::prompt_suggestion::should_filter_suggestion;
+    using loom::services::prompt_suggestion::should_filter_suggestion;
     EXPECT_TRUE(should_filter_suggestion(""));
     EXPECT_TRUE(should_filter_suggestion("   "));
 }
@@ -8746,7 +8746,7 @@ TEST(SpeculationSuggestion, QualityFilterRejectsEmpty) {
 // TS REF: src/services/mcp/channelPermissions.ts:140-152
 
 TEST(ChannelPermission, ShortRequestIdIsFiveLetters) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto id = short_request_id("toolu_01ABC123def456GHI789jkl");
     EXPECT_EQ(id.size(), 5u);
     for (char c : id) {
@@ -8757,21 +8757,21 @@ TEST(ChannelPermission, ShortRequestIdIsFiveLetters) {
 }
 
 TEST(ChannelPermission, ShortRequestIdIsDeterministic) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto id1 = short_request_id("toolu_01ABC123def456GHI789jkl");
     auto id2 = short_request_id("toolu_01ABC123def456GHI789jkl");
     EXPECT_EQ(id1, id2);
 }
 
 TEST(ChannelPermission, ShortRequestIdDifferentInputsDiffer) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto id1 = short_request_id("toolu_01ABC123def456GHI789jkl");
     auto id2 = short_request_id("toolu_99XYZ999xyz999ABC999mno");
     EXPECT_NE(id1, id2);
 }
 
 TEST(ChannelPermission, ShortRequestIdAvoidsBlockedSubstrings) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     // The re-hash with salt should avoid producing IDs containing
     // blocklisted substrings. We test a few inputs that might hash to
     // problematic outputs.
@@ -8798,13 +8798,13 @@ TEST(ChannelPermission, ShortRequestIdAvoidsBlockedSubstrings) {
 // TS REF: src/services/mcp/channelPermissions.ts:160-167
 
 TEST(ChannelPermission, TruncateForPreviewShort) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto result = truncate_for_preview(R"({"cmd":"ls"})");
     EXPECT_EQ(result, R"({"cmd":"ls"})");
 }
 
 TEST(ChannelPermission, TruncateForPreviewLong) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     std::string long_str(300, 'x');
     auto result = truncate_for_preview(long_str);
     EXPECT_EQ(result.size(), 203u);  // 200 chars + "…" (3 UTF-8 bytes: E2 80 A6)
@@ -8812,7 +8812,7 @@ TEST(ChannelPermission, TruncateForPreviewLong) {
 }
 
 TEST(ChannelPermission, TruncateForPreviewEmpty) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto result = truncate_for_preview("");
     EXPECT_EQ(result, "(unserializable)");
 }
@@ -8823,7 +8823,7 @@ TEST(ChannelPermission, TruncateForPreviewEmpty) {
 // TS REF: src/services/mcp/channelPermissions.ts:75
 
 TEST(ChannelPermission, ParseReplyYesLowercase) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto parsed = parse_permission_reply("yes tbxkq");
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->request_id, "tbxkq");
@@ -8831,7 +8831,7 @@ TEST(ChannelPermission, ParseReplyYesLowercase) {
 }
 
 TEST(ChannelPermission, ParseReplyNoLowercase) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto parsed = parse_permission_reply("no tbxkq");
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->request_id, "tbxkq");
@@ -8839,21 +8839,21 @@ TEST(ChannelPermission, ParseReplyNoLowercase) {
 }
 
 TEST(ChannelPermission, ParseReplyYShortForm) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto parsed = parse_permission_reply("y tbxkq");
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->behavior, ChannelPermissionBehavior::Allow);
 }
 
 TEST(ChannelPermission, ParseReplyNShortForm) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto parsed = parse_permission_reply("n tbxkq");
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->behavior, ChannelPermissionBehavior::Deny);
 }
 
 TEST(ChannelPermission, ParseReplyCaseInsensitive) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto parsed = parse_permission_reply("YES TBXKQ");
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->request_id, "tbxkq");  // lowercased
@@ -8861,30 +8861,30 @@ TEST(ChannelPermission, ParseReplyCaseInsensitive) {
 }
 
 TEST(ChannelPermission, ParseReplyWithWhitespacePadding) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto parsed = parse_permission_reply("  yes   tbxkq  ");
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->request_id, "tbxkq");
 }
 
 TEST(ChannelPermission, ParseReplyRejectsBareYes) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     EXPECT_FALSE(parse_permission_reply("yes").has_value());
 }
 
 TEST(ChannelPermission, ParseReplyRejectsIdWithL) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     // 'l' is excluded from the alphabet (looks like 1/I)
     EXPECT_FALSE(parse_permission_reply("yes tblkq").has_value());
 }
 
 TEST(ChannelPermission, ParseReplyRejectsExtraText) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     EXPECT_FALSE(parse_permission_reply("yes tbxkq please").has_value());
 }
 
 TEST(ChannelPermission, ParseReplyRejectsWrongIdLength) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     EXPECT_FALSE(parse_permission_reply("yes tbxk").has_value());   // 4 chars
     EXPECT_FALSE(parse_permission_reply("yes tbxkqq").has_value()); // 6 chars
 }
@@ -8895,7 +8895,7 @@ TEST(ChannelPermission, ParseReplyRejectsWrongIdLength) {
 // TS REF: src/services/mcp/channelPermissions.ts:46-61, 209-240
 
 TEST(ChannelPermission, CallbacksResolveAllow) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     bool called = false;
     ChannelPermissionBehavior received_behavior{};
@@ -8915,7 +8915,7 @@ TEST(ChannelPermission, CallbacksResolveAllow) {
 }
 
 TEST(ChannelPermission, CallbacksResolveDeny) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     ChannelPermissionBehavior received{};
     cbs->on_response("abcde", [&](const ChannelPermissionResponse& resp) {
@@ -8926,13 +8926,13 @@ TEST(ChannelPermission, CallbacksResolveDeny) {
 }
 
 TEST(ChannelPermission, CallbacksResolveReturnsFalseForUnknown) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     EXPECT_FALSE(cbs->resolve("zzzzz", ChannelPermissionBehavior::Allow, "test"));
 }
 
 TEST(ChannelPermission, CallbacksUnsubscribePreventsResolve) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     bool called = false;
     auto unsub = cbs->on_response("tbxkq", [&](const ChannelPermissionResponse&) {
@@ -8944,7 +8944,7 @@ TEST(ChannelPermission, CallbacksUnsubscribePreventsResolve) {
 }
 
 TEST(ChannelPermission, CallbacksCaseInsensitiveMatching) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     bool called = false;
     cbs->on_response("TBXKQ", [&](const ChannelPermissionResponse&) {
@@ -8956,7 +8956,7 @@ TEST(ChannelPermission, CallbacksCaseInsensitiveMatching) {
 }
 
 TEST(ChannelPermission, CallbacksResolveDeletesBeforeCalling) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     int call_count = 0;
     cbs->on_response("tbxkq", [&](const ChannelPermissionResponse&) {
@@ -8970,7 +8970,7 @@ TEST(ChannelPermission, CallbacksResolveDeletesBeforeCalling) {
 }
 
 TEST(ChannelPermission, CallbacksPendingCount) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     EXPECT_EQ(cbs->pending_count(), 0u);
     auto u1 = cbs->on_response("aaaaa", [](auto){});
@@ -8991,13 +8991,13 @@ TEST(ChannelPermission, CallbacksPendingCount) {
 namespace {
 struct TestMcpClient {
     std::string name;
-    cc::services::mcp::ServerState state = cc::services::mcp::ServerState::Ready;
-    cc::services::mcp::ServerCapabilities capabilities;
+    loom::services::mcp::ServerState state = loom::services::mcp::ServerState::Ready;
+    loom::services::mcp::ServerCapabilities capabilities;
 };
 } // anonymous namespace
 
 TEST(ChannelPermission, FilterRelayRequiresConnected) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     std::vector<TestMcpClient> clients = {
         {"telegram", ServerState::Ready, {}},
         {"discord", ServerState::Error, {}},
@@ -9014,7 +9014,7 @@ TEST(ChannelPermission, FilterRelayRequiresConnected) {
 }
 
 TEST(ChannelPermission, FilterRelayRequiresAllowlist) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     std::vector<TestMcpClient> clients = {
         {"telegram", ServerState::Ready, {}},
         {"discord", ServerState::Ready, {}},
@@ -9031,7 +9031,7 @@ TEST(ChannelPermission, FilterRelayRequiresAllowlist) {
 }
 
 TEST(ChannelPermission, FilterRelayRequiresBothCapabilities) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     std::vector<TestMcpClient> clients = {
         {"both", ServerState::Ready, {}},
         {"channel_only", ServerState::Ready, {}},
@@ -9050,7 +9050,7 @@ TEST(ChannelPermission, FilterRelayRequiresBothCapabilities) {
 }
 
 TEST(ChannelPermission, FilterRelayEmptyInput) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     std::vector<TestMcpClient> clients;
     auto filtered = filter_permission_relay_clients<TestMcpClient>(
         clients, [](auto) { return true; });
@@ -9063,7 +9063,7 @@ TEST(ChannelPermission, FilterRelayEmptyInput) {
 // TS REF: conceptual extension (persistent permission rules)
 
 TEST(ChannelPermission, StoreDefaultIsPrompt) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     ChannelPermissionStore store;
     // No rules loaded → default to Prompt
     EXPECT_EQ(store.check_permission("any_server", "any_tool"),
@@ -9071,7 +9071,7 @@ TEST(ChannelPermission, StoreDefaultIsPrompt) {
 }
 
 TEST(ChannelPermission, StoreGlobalRuleApplies) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     ChannelPermissionStore store;
     store.set_permission(ChannelPermissionStore::make_global_rule(
         ChannelPermission::Allowed));
@@ -9082,7 +9082,7 @@ TEST(ChannelPermission, StoreGlobalRuleApplies) {
 }
 
 TEST(ChannelPermission, StoreServerRuleOverridesGlobal) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     ChannelPermissionStore store;
     store.set_permission(ChannelPermissionStore::make_global_rule(
         ChannelPermission::Prompt));
@@ -9095,7 +9095,7 @@ TEST(ChannelPermission, StoreServerRuleOverridesGlobal) {
 }
 
 TEST(ChannelPermission, StoreToolRuleOverridesServer) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     ChannelPermissionStore store;
     store.set_permission(ChannelPermissionStore::make_server_rule(
         "my_server", ChannelPermission::Allowed));
@@ -9108,7 +9108,7 @@ TEST(ChannelPermission, StoreToolRuleOverridesServer) {
 }
 
 TEST(ChannelPermission, StoreMostSpecificWins) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     ChannelPermissionStore store;
     store.set_permission(ChannelPermissionStore::make_global_rule(
         ChannelPermission::Prompt));
@@ -9122,7 +9122,7 @@ TEST(ChannelPermission, StoreMostSpecificWins) {
 }
 
 TEST(ChannelPermission, StoreRemoveRule) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     ChannelPermissionStore store;
     store.set_permission(ChannelPermissionStore::make_server_rule(
         "srv", ChannelPermission::Allowed));
@@ -9135,13 +9135,13 @@ TEST(ChannelPermission, StoreRemoveRule) {
 }
 
 TEST(ChannelPermission, StoreRemoveNonexistentReturnsFalse) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     ChannelPermissionStore store;
     EXPECT_FALSE(store.remove_rule(ChannelPermissionScope::Server, "nope", ""));
 }
 
 TEST(ChannelPermission, StoreUpsertSameIdentity) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     ChannelPermissionStore store;
     store.set_permission(ChannelPermissionStore::make_server_rule(
         "srv", ChannelPermission::Allowed));
@@ -9154,7 +9154,7 @@ TEST(ChannelPermission, StoreUpsertSameIdentity) {
 }
 
 TEST(ChannelPermission, StoreGetAllRules) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     ChannelPermissionStore store;
     store.set_permission(ChannelPermissionStore::make_global_rule(
         ChannelPermission::Prompt));
@@ -9165,7 +9165,7 @@ TEST(ChannelPermission, StoreGetAllRules) {
 }
 
 TEST(ChannelPermission, StorePersistenceRoundtrip) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     // Isolate to a unique temp file: the store defaults to a shared
     // ~/.loom path, which races with sibling tests under parallel ctest
     // (and must never touch the real user file).
@@ -9200,7 +9200,7 @@ TEST(ChannelPermission, StorePersistenceRoundtrip) {
 }
 
 TEST(ChannelPermission, StoreFactoryCreatesLoaded) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     const auto tmp_file =
         fs::temp_directory_path() /
         ("loom_chanperm_factory_" +
@@ -9225,14 +9225,14 @@ TEST(ChannelPermission, StoreFactoryCreatesLoaded) {
 // ============================================================================
 
 TEST(ChannelPermission, PermissionToString) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     EXPECT_EQ(channel_permission_to_string(ChannelPermission::Allowed), "Allowed");
     EXPECT_EQ(channel_permission_to_string(ChannelPermission::Denied), "Denied");
     EXPECT_EQ(channel_permission_to_string(ChannelPermission::Prompt), "Prompt");
 }
 
 TEST(ChannelPermission, ScopeToString) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     EXPECT_EQ(channel_permission_scope_to_string(ChannelPermissionScope::Global), "Global");
     EXPECT_EQ(channel_permission_scope_to_string(ChannelPermissionScope::Server), "Server");
     EXPECT_EQ(channel_permission_scope_to_string(ChannelPermissionScope::Tool), "Tool");
@@ -9243,7 +9243,7 @@ TEST(ChannelPermission, ScopeToString) {
 // ============================================================================
 
 TEST(ChannelPermission, FeatureGateDefaultsToFalse) {
-    using namespace cc::services::mcp;
+    using namespace loom::services::mcp;
     // Stub returns false until GrowthBook integration exists
     EXPECT_FALSE(is_channel_permission_relay_enabled());
 }
@@ -9251,7 +9251,7 @@ TEST(ChannelPermission, FeatureGateDefaultsToFalse) {
 }  // namespace
 
 TEST(MemoryExtraction, LlmPromptContainsDirInstructionsAndTranscript) {
-    namespace em = cc::services::extract_memories;
+    namespace em = loom::services::extract_memories;
     const std::string prompt = em::build_llm_extraction_prompt(
         "/tmp/x/memory",
         "user: always write tests in English\nassistant: got it",
@@ -9271,7 +9271,7 @@ TEST(MemoryExtraction, LlmPromptContainsDirInstructionsAndTranscript) {
 }
 
 TEST(MemoryExtraction, MinNewMessagesConstantIsPositive) {
-    namespace em = cc::services::extract_memories;
+    namespace em = loom::services::extract_memories;
     EXPECT_GE(em::kExtractionMinNewMessages, 1u);
 }
 
@@ -9282,8 +9282,8 @@ TEST(MemoryExtraction, MinNewMessagesConstantIsPositive) {
 // ===========================================================================
 namespace {
 
-cc::bridge::TokenRefreshScheduler::Params fast_refresh_params() {
-    cc::bridge::TokenRefreshScheduler::Params p;
+loom::bridge::TokenRefreshScheduler::Params fast_refresh_params() {
+    loom::bridge::TokenRefreshScheduler::Params p;
     // expires_in=1s with a 0 buffer → 5s floor in the scheduler; keep the
     // test bounded by driving expires_in near zero.
     p.refresh_buffer_ms = std::chrono::milliseconds{0};
@@ -9311,7 +9311,7 @@ TEST(BridgeTokenRefresh, RefreshDeliversFetchedTokenToCallback) {
         cv.notify_one();
     };
 
-    cc::bridge::TokenRefreshScheduler scheduler(std::move(params));
+    loom::bridge::TokenRefreshScheduler scheduler(std::move(params));
     scheduler.schedule_from_expires_in("ses_test", /*expires_in_s=*/1);
     EXPECT_TRUE(scheduler.is_scheduled());
 
@@ -9340,7 +9340,7 @@ TEST(BridgeTokenRefresh, EmptyTokenTriggersBoundedRetriesNotASilentStop) {
         refresh_calls.fetch_add(1);
     };
 
-    cc::bridge::TokenRefreshScheduler scheduler(std::move(params));
+    loom::bridge::TokenRefreshScheduler scheduler(std::move(params));
     scheduler.schedule_from_expires_in("ses_retry", /*expires_in_s=*/1);
 
     // First attempt happens ~5s in; retries are 60s apart, so within a short
@@ -9364,7 +9364,7 @@ TEST(BridgeTokenRefresh, CancelAllStopsScheduledRefresh) {
         refresh_calls.fetch_add(1);
     };
 
-    cc::bridge::TokenRefreshScheduler scheduler(std::move(params));
+    loom::bridge::TokenRefreshScheduler scheduler(std::move(params));
     scheduler.schedule_from_expires_in("ses_cancel", /*expires_in_s=*/30);
     EXPECT_TRUE(scheduler.is_scheduled());
 
@@ -9417,8 +9417,8 @@ struct C13Paths {
     }
     ~C13Paths() { std::error_code ec; fs::remove_all(root, ec); }
 
-    [[nodiscard]] cc::core::ConfigManager manager() const {
-        return cc::core::ConfigManager(global_path, user_path,
+    [[nodiscard]] loom::core::ConfigManager manager() const {
+        return loom::core::ConfigManager(global_path, user_path,
                                        project_path, local_path);
     }
 };
@@ -9431,16 +9431,16 @@ void c13_write_file(const fs::path& path, std::string_view content) {
 // Owns the parsed document alongside its root view: the JsonVal points
 // into the JsonDoc's storage, so both must live for the same scope.
 struct C13Json {
-    cc::utils::json::JsonDoc doc;
-    cc::utils::json::JsonVal root;
+    loom::utils::json::JsonDoc doc;
+    loom::utils::json::JsonVal root;
 
     explicit C13Json(std::string_view text) {
-        if (auto parsed = cc::utils::json::parse(text)) {
+        if (auto parsed = loom::utils::json::parse(text)) {
             doc = std::move(*parsed);
             root = doc.root();
         }
     }
-    operator const cc::utils::json::JsonVal&() const noexcept { return root; }
+    operator const loom::utils::json::JsonVal&() const noexcept { return root; }
 };
 
 [[nodiscard]] C13Json c13_parse(std::string_view text) {
@@ -9661,7 +9661,7 @@ TEST(ConfigManagerUserSettings, ReadOnlyProjectionAndListShape) {
     EXPECT_EQ(settings.root.get("network").get("timeout_seconds").get("value").as_int(), 45);
     EXPECT_EQ(settings.root.get("permissions").get("allow_network").get("value").as_bool(), false);
 
-    auto list = c13_parse(cc::core::ConfigManager::serialize_user_setting_specs_json());
+    auto list = c13_parse(loom::core::ConfigManager::serialize_user_setting_specs_json());
     EXPECT_EQ(list.root.get("writable").size(), 7u);
     EXPECT_EQ(list.root.get("read_only").size(), 9u);
     EXPECT_GE(list.root.get("blocked").size(), 9u);
@@ -9699,7 +9699,7 @@ TEST(ConfigManagerUserSettings, SiblingUnknownAndMcpPreserved) {
     ASSERT_TRUE(m.set_user_setting("network.max_retries", c13_parse("7"))
                     .has_value());
 
-    auto doc = cc::utils::json::parse_file(p.user_path);
+    auto doc = loom::utils::json::parse_file(p.user_path);
     ASSERT_TRUE(doc.has_value());
     const auto root = doc->root();
     EXPECT_EQ(root.get("model").get("default_model").as_str(),
@@ -9872,7 +9872,7 @@ TEST(ConfigManagerUserSettings, ConfigDirRoutingOnlyUserTouched) {
     CurrentPathGuard cwd_guard(work);
 
     {
-        cc::core::ConfigManager m;
+        loom::core::ConfigManager m;
         ASSERT_TRUE(m.load().has_value());
         auto out = m.set_user_setting("network.max_retries", c13_parse("4"));
         ASSERT_TRUE(out.has_value());
@@ -10025,7 +10025,7 @@ TEST(ConfigManagerUserSettings, SilentLoadSalvageClearsFlagAndReloadWarning) {
     {
         auto m = p.manager();
         testing::internal::CaptureStderr();
-        ASSERT_TRUE(m.load(cc::core::LoadOptions{.quiet = true}).has_value());
+        ASSERT_TRUE(m.load(loom::core::LoadOptions{.quiet = true}).has_value());
         const std::string captured = testing::internal::GetCapturedStderr();
         EXPECT_TRUE(captured.empty()) << captured;
         EXPECT_TRUE(m.user_tier_unparseable());
@@ -10054,7 +10054,7 @@ TEST(ConfigManagerUserSettings, SilentLoadSalvageClearsFlagAndReloadWarning) {
     {
         auto m = p.manager();
         // Pre-write load hard-fails on the project tier, as designed.
-        EXPECT_FALSE(m.load(cc::core::LoadOptions{.quiet = true}).has_value());
+        EXPECT_FALSE(m.load(loom::core::LoadOptions{.quiet = true}).has_value());
         auto out = m.set_user_setting("network.max_retries", c13_parse("8"));
         ASSERT_TRUE(out.has_value()) << out.error().message;
         ASSERT_TRUE(out->reload_warning.has_value());
@@ -10070,7 +10070,7 @@ TEST(ConfigManagerUserSettings, SilentLoadSalvageClearsFlagAndReloadWarning) {
 // The spec table is closed: exactly 16 projected keys, 7 writable, with
 // coherent section/leaf/dotted tokens.
 TEST(ConfigManagerUserSettings, SpecTableIsClosed) {
-    const auto specs = cc::core::ConfigManager::user_setting_specs();
+    const auto specs = loom::core::ConfigManager::user_setting_specs();
     EXPECT_EQ(specs.size(), 16u);
     int writable = 0;
     for (const auto& spec : specs) {
@@ -10080,13 +10080,13 @@ TEST(ConfigManagerUserSettings, SpecTableIsClosed) {
         if (spec.writable) ++writable;
     }
     EXPECT_EQ(writable, 7);
-    EXPECT_NE(cc::core::ConfigManager::find_user_setting("model.temperature"),
+    EXPECT_NE(loom::core::ConfigManager::find_user_setting("model.temperature"),
               nullptr);
-    EXPECT_EQ(cc::core::ConfigManager::find_user_setting("nope.nope"),
+    EXPECT_EQ(loom::core::ConfigManager::find_user_setting("nope.nope"),
               nullptr);
-    EXPECT_TRUE(cc::core::ConfigManager::blocked_setting_message("xaaIdp")
+    EXPECT_TRUE(loom::core::ConfigManager::blocked_setting_message("xaaIdp")
                     .has_value());
-    EXPECT_FALSE(cc::core::ConfigManager::blocked_setting_message("model.temperature")
+    EXPECT_FALSE(loom::core::ConfigManager::blocked_setting_message("model.temperature")
                      .has_value());
 }
 
@@ -10224,7 +10224,7 @@ TEST(ConfigManagerUserSettings, ConcurrentSetProcessesNoCollisions) {
     // tmp names — expected zero failures).
     EXPECT_EQ(clean_failures, 0);
 
-    auto doc = cc::utils::json::parse_file(p.user_path);
+    auto doc = loom::utils::json::parse_file(p.user_path);
     ASSERT_TRUE(doc.has_value());
     const auto root = doc->root();
     ASSERT_TRUE(root.is_obj());
@@ -10410,7 +10410,7 @@ TEST(ConfigManagerC19, SavePreservesFileValueUnderEnvOverlay) {
         EXPECT_EQ(m.settings().model.max_output_tokens, 4321u);
 
         m.settings_mut().display.theme = "dark";
-        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
 
     const std::string bytes = [&] {
@@ -10421,7 +10421,7 @@ TEST(ConfigManagerC19, SavePreservesFileValueUnderEnvOverlay) {
     EXPECT_EQ(bytes.find("env-ephemeral-c19"), std::string::npos) << bytes;
     EXPECT_EQ(bytes.find("4321"), std::string::npos) << bytes;
     {
-        auto doc = cc::utils::json::parse_file(p.project_path);
+        auto doc = loom::utils::json::parse_file(p.project_path);
         ASSERT_TRUE(doc.has_value());
         EXPECT_EQ(doc->root().get("model").get("default_model").as_str(),
                   std::string_view("file-model-c19"));
@@ -10439,8 +10439,8 @@ TEST(ConfigManagerC19, SavePreservesFileValueUnderEnvOverlay) {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
         m.settings_mut().display.show_thinking = false;
-        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
-        auto doc = cc::utils::json::parse_file(p.project_path);
+        ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
+        auto doc = loom::utils::json::parse_file(p.project_path);
         ASSERT_TRUE(doc.has_value());
         EXPECT_EQ(doc->root().get("model").get("default_model").as_str(),
                   std::string_view("file-model-c19"));
@@ -10459,14 +10459,14 @@ TEST(ConfigManagerC19, SavePreservesFileValueUnderEnvOverlay) {
         auto m = q.manager();
         ASSERT_TRUE(m.load().has_value());
         m.settings_mut().display.theme = "light";
-        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
     {
         std::ifstream f(q.project_path);
         const std::string qbytes((std::istreambuf_iterator<char>(f)),
                                  std::istreambuf_iterator<char>());
         EXPECT_EQ(qbytes.find("env-only-c19"), std::string::npos) << qbytes;
-        auto doc = cc::utils::json::parse_file(q.project_path);
+        auto doc = loom::utils::json::parse_file(q.project_path);
         ASSERT_TRUE(doc.has_value());
         EXPECT_EQ(doc->root().get("model").get("default_model").as_str(),
                   std::string_view("claude-sonnet-4-20250514"));
@@ -10505,7 +10505,7 @@ TEST(ConfigManagerC19, ExplicitSetSurvivesPostReloadThenUnrelatedSave) {
         // (loaded from the just-patched user tier over the env overlay), not
         // the pre-write seed and not the env value.
         m.settings_mut().display.theme = "dark";
-        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
     {
         std::ifstream f(p.project_path);
@@ -10539,7 +10539,7 @@ TEST(ConfigManagerC19, ExplicitSetToEnvValueStillPersists) {
         // The env value is what the (absent) file would lose; the user sets
         // the SAME string explicitly.
         m.clear_env_provenance("model", "default_model");
-        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
     {
         std::ifstream f(p.project_path);
@@ -10570,7 +10570,7 @@ TEST(ConfigManagerUserSettings, BomStrippedOnLoadAndPatch) {
         ASSERT_TRUE(out.has_value());
         ASSERT_TRUE(out->repaired.has_value());
         EXPECT_EQ(*out->repaired, "trailing_junk_dropped");
-        auto repaired = cc::utils::json::parse_file(p.user_path);
+        auto repaired = loom::utils::json::parse_file(p.user_path);
         ASSERT_TRUE(repaired.has_value());
         const auto root = repaired->root();
         EXPECT_EQ(root.get("network").get("max_retries").as_int(), 5);
@@ -10653,8 +10653,8 @@ struct C13GitRepo {
                            std::istreambuf_iterator<char>());
     }
 
-    [[nodiscard]] cc::core::ConfigManager manager() const {
-        return cc::core::ConfigManager(outside / "global.json",
+    [[nodiscard]] loom::core::ConfigManager manager() const {
+        return loom::core::ConfigManager(outside / "global.json",
                                        outside / "user.json",
                                        loom / "config.json",
                                        loom / "config.local.json");
@@ -10673,14 +10673,14 @@ TEST(ConfigManagerC13d, LocalWriteIgnoresDataAndLockTracksGitignore) {
     C13GitRepo repo("local");
     ASSERT_TRUE(repo.available);
 
-    cc::core::McpServerConfig cfg;
+    loom::core::McpServerConfig cfg;
     cfg.name = "srv";
     cfg.transport = "stdio";
     cfg.command = "node";
     {
         auto m = repo.manager();
         ASSERT_TRUE(m.load().has_value());
-        ASSERT_TRUE(m.upsert_mcp_server(cc::core::McpStorageScope::Local, cfg)
+        ASSERT_TRUE(m.upsert_mcp_server(loom::core::McpStorageScope::Local, cfg)
                         .has_value());
     }
     EXPECT_TRUE(fs::exists(repo.loom / "config.local.json"));
@@ -10703,7 +10703,7 @@ TEST(ConfigManagerC13d, ProjectSaveTracksDataIgnoresLock) {
     {
         auto m = repo.manager();
         ASSERT_TRUE(m.load().has_value());
-        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
     EXPECT_TRUE(fs::exists(repo.loom / "config.json"));
     EXPECT_TRUE(fs::exists(repo.loom / "config.json.lock"));
@@ -10727,7 +10727,7 @@ TEST(ConfigManagerC13d, GitignoreLinesAreIdempotent) {
     C13GitRepo repo("idem");
     ASSERT_TRUE(repo.available);
 
-    cc::core::McpServerConfig cfg;
+    loom::core::McpServerConfig cfg;
     cfg.name = "srv";
     cfg.transport = "stdio";
     cfg.command = "node";
@@ -10735,11 +10735,11 @@ TEST(ConfigManagerC13d, GitignoreLinesAreIdempotent) {
     ASSERT_TRUE(m.load().has_value());
     for (int i = 0; i < 3; ++i) {
         cfg.name = std::string("srv") + std::to_string(i);
-        ASSERT_TRUE(m.upsert_mcp_server(cc::core::McpStorageScope::Local, cfg)
+        ASSERT_TRUE(m.upsert_mcp_server(loom::core::McpStorageScope::Local, cfg)
                         .has_value());
     }
-    ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
-    ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
+    ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
 
     const std::string text = [] {
         std::ifstream f(fs::current_path() / ".gitignore");
@@ -10911,7 +10911,7 @@ TEST(ConfigManagerC13d, BoundedLockWaitSuccessThenTimeout) {
         reaper.release();  // holder killed and reaped
 
         // File unmodified; no tmp debris of any kind.
-        auto doc = cc::utils::json::parse_file(p.user_path);
+        auto doc = loom::utils::json::parse_file(p.user_path);
         ASSERT_TRUE(doc.has_value());
         EXPECT_EQ(doc->root().get("network").get("max_retries").as_int(), 9);
         for (const auto& entry : fs::directory_iterator(p.root)) {
@@ -10962,7 +10962,7 @@ struct C14TeamEnv {
 [[nodiscard]] fs::path c14_inbox_path(
     std::string_view agent = "worker",
     std::string_view team = "c14team") {
-    return fs::path{cc::utils::get_inbox_path(
+    return fs::path{loom::utils::get_inbox_path(
         agent, std::optional<std::string_view>{team})};
 }
 
@@ -11074,7 +11074,7 @@ TEST(ScopedInboxLockC14, BoundedWaitSucceedsAfterHolderReleases) {
     c14_await_ready(h.read_fd);
 
     const auto start = std::chrono::steady_clock::now();
-    cc::utils::ScopedInboxLock lock(inbox);
+    loom::utils::ScopedInboxLock lock(inbox);
     const auto elapsed = c14_elapsed_ms(start);
     ASSERT_TRUE(lock.locked());
     EXPECT_GE(elapsed, 1000) << "acquisition should wait on the holder";
@@ -11114,15 +11114,15 @@ TEST(ScopedInboxLockC14, BoundedWaitTimesOutAndMailboxWriteFailsClosed) {
     } direct;
     std::thread contender([&] {
         const auto t0 = std::chrono::steady_clock::now();
-        cc::utils::ScopedInboxLock lock(inbox);
+        loom::utils::ScopedInboxLock lock(inbox);
         direct.elapsed_ms = c14_elapsed_ms(t0);
         direct.locked = lock.locked();
     });
 
     const auto write_start = std::chrono::steady_clock::now();
-    auto written = cc::utils::write_to_mailbox(
+    auto written = loom::utils::write_to_mailbox(
         "worker",
-        cc::utils::TeammateMessage{
+        loom::utils::TeammateMessage{
             .from = "lead",
             .text = "must-not-land",
             .timestamp = "2",
@@ -11184,7 +11184,7 @@ TEST(ScopedInboxLockC14, SymlinkedLockNameRejectedAndTargetUntouched) {
     ASSERT_TRUE(fs::is_symlink(lock_path));
 
     {
-        cc::utils::ScopedInboxLock lock(inbox);
+        loom::utils::ScopedInboxLock lock(inbox);
         EXPECT_FALSE(lock.locked());
     }
     EXPECT_TRUE(fs::is_symlink(lock_path))
@@ -11193,9 +11193,9 @@ TEST(ScopedInboxLockC14, SymlinkedLockNameRejectedAndTargetUntouched) {
 
     // The production guarded writer fails closed on the same lock name,
     // without a deadline wait and without creating the inbox.
-    auto written = cc::utils::write_to_mailbox(
+    auto written = loom::utils::write_to_mailbox(
         "worker",
-        cc::utils::TeammateMessage{
+        loom::utils::TeammateMessage{
             .from = "lead",
             .text = "must-not-land",
             .timestamp = "2",
@@ -11229,7 +11229,7 @@ TEST(ScopedInboxLockC15, FifoLockNameRejectedWithoutBlocking) {
     const auto direct_start = std::chrono::steady_clock::now();
     bool direct_locked = true;
     {
-        cc::utils::ScopedInboxLock lock(inbox);
+        loom::utils::ScopedInboxLock lock(inbox);
         direct_locked = lock.locked();
     }
     const auto direct_elapsed = c14_elapsed_ms(direct_start);
@@ -11238,9 +11238,9 @@ TEST(ScopedInboxLockC15, FifoLockNameRejectedWithoutBlocking) {
         << "non-regular lock name must fail fast, never await the deadline";
 
     const auto write_start = std::chrono::steady_clock::now();
-    auto written = cc::utils::write_to_mailbox(
+    auto written = loom::utils::write_to_mailbox(
         "worker",
-        cc::utils::TeammateMessage{
+        loom::utils::TeammateMessage{
             .from = "lead",
             .text = "must-not-land",
             .timestamp = "2",
@@ -11381,7 +11381,7 @@ TEST(ConfigManagerC13d, FullSaveTmpSymlinkNeverFollowed) {
 
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
-    ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
 
     {
         std::ifstream f(victim);
@@ -11392,7 +11392,7 @@ TEST(ConfigManagerC13d, FullSaveTmpSymlinkNeverFollowed) {
     std::error_code ec;
     EXPECT_EQ(fs::symlink_status(p.project_path, ec).type(),
               fs::file_type::regular);
-    auto doc = cc::utils::json::parse_file(p.project_path);
+    auto doc = loom::utils::json::parse_file(p.project_path);
     ASSERT_TRUE(doc.has_value());
     EXPECT_TRUE(doc->root().is_obj());
     EXPECT_FALSE(fs::exists(p.project_path.string() + ".tmp"));
@@ -11409,7 +11409,7 @@ TEST(ConfigManagerC13d, FullSavePreservesMode) {
                     fs::perm_options::replace);
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
-    ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+    ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
     const auto mode = fs::status(p.project_path).permissions() & fs::perms::mask;
     EXPECT_EQ(mode, fs::perms::owner_read | fs::perms::owner_write);
 }
@@ -11424,7 +11424,7 @@ TEST(ConfigManagerC13d, FullSaveSymlinkedLeafRefused) {
     auto m = p.manager();
     // No load(): a symlinked project leaf already hard-fails the tier read;
     // here we verify save() itself fails closed when reached directly.
-    auto out = m.save(cc::core::ConfigSource::ProjectConfig);
+    auto out = m.save(loom::core::ConfigSource::ProjectConfig);
     ASSERT_FALSE(out.has_value());
     EXPECT_NE(out.error().message.find("symlinked configuration file"),
               std::string::npos);
@@ -11447,7 +11447,7 @@ TEST(ConfigManagerC13d, ConcurrentSaveAndPatchersAlwaysParseable) {
             auto m = p.manager();
             (void)m.load();
             if (i == kChildren - 1) {
-                _exit(m.save(cc::core::ConfigSource::ProjectConfig)
+                _exit(m.save(loom::core::ConfigSource::ProjectConfig)
                           ? 0 : 2);
             }
             const char* keys[] = {"network.max_retries",
@@ -11472,7 +11472,7 @@ TEST(ConfigManagerC13d, ConcurrentSaveAndPatchersAlwaysParseable) {
 
     // User file: every patcher landed distinct keys (project save targets
     // a different path, so it cannot clobber the user file).
-    auto doc = cc::utils::json::parse_file(p.user_path);
+    auto doc = loom::utils::json::parse_file(p.user_path);
     ASSERT_TRUE(doc.has_value());
     ASSERT_TRUE(doc->root().is_obj());
     EXPECT_EQ(doc->root().get("model").get("max_output_tokens").as_int(),
@@ -11480,7 +11480,7 @@ TEST(ConfigManagerC13d, ConcurrentSaveAndPatchersAlwaysParseable) {
     EXPECT_EQ(doc->root().get("model").get("extended_thinking").as_bool(),
               true);
     // Project save produced a parseable full document.
-    auto project_doc = cc::utils::json::parse_file(p.project_path);
+    auto project_doc = loom::utils::json::parse_file(p.project_path);
     ASSERT_TRUE(project_doc.has_value());
     EXPECT_TRUE(project_doc->root().is_obj());
     for (const auto& entry : fs::directory_iterator(p.root)) {
@@ -11551,22 +11551,22 @@ TEST(ConfigManagerC13e, PlainDirectoryWritesNoGitignore) {
     // post-write assertion is immune to a dirty shared temp base.
     const auto ignores_before = c13_gitignores_on_chain(root, *base);
 
-    cc::core::McpServerConfig local;
+    loom::core::McpServerConfig local;
     local.name = "ls";
     local.transport = "stdio";
     local.command = "node";
-    cc::core::McpServerConfig project = local;
+    loom::core::McpServerConfig project = local;
     project.name = "ps";
 
     {
-        cc::core::ConfigManager m(global_path, user_path,
+        loom::core::ConfigManager m(global_path, user_path,
                                   project_path, local_path);
         ASSERT_TRUE(m.load().has_value());
-        ASSERT_TRUE(m.upsert_mcp_server(cc::core::McpStorageScope::Local, local)
+        ASSERT_TRUE(m.upsert_mcp_server(loom::core::McpStorageScope::Local, local)
                         .has_value());
-        ASSERT_TRUE(m.upsert_mcp_server(cc::core::McpStorageScope::Project,
+        ASSERT_TRUE(m.upsert_mcp_server(loom::core::McpStorageScope::Project,
                                         project).has_value());
-        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
     }
     EXPECT_TRUE(fs::exists(local_path));
     EXPECT_TRUE(fs::exists(project_path));
@@ -11578,7 +11578,7 @@ TEST(ConfigManagerC13e, PlainDirectoryWritesNoGitignore) {
     }
     EXPECT_FALSE(fs::exists(root / ".gitignore"));
     // Data files are still correct.
-    auto ldoc = cc::utils::json::parse_file(local_path);
+    auto ldoc = loom::utils::json::parse_file(local_path);
     ASSERT_TRUE(ldoc.has_value());
     EXPECT_TRUE(ldoc->root().get("mcpServers").has("ls"));
 
@@ -11613,16 +11613,16 @@ TEST(ConfigManagerC13e, NestedCwdAppendsAtRepoRoot) {
 
     {
         CurrentPathGuard cwd_guard(nested);
-        cc::core::ConfigManager m(global_path, user_path,
+        loom::core::ConfigManager m(global_path, user_path,
                                   project_path, local_path);
         ASSERT_TRUE(m.load().has_value());
-        cc::core::McpServerConfig cfg;
+        loom::core::McpServerConfig cfg;
         cfg.name = "deep-srv";
         cfg.transport = "stdio";
         cfg.command = "node";
-        ASSERT_TRUE(m.upsert_mcp_server(cc::core::McpStorageScope::Local, cfg)
+        ASSERT_TRUE(m.upsert_mcp_server(loom::core::McpStorageScope::Local, cfg)
                         .has_value());
-        ASSERT_TRUE(m.save(cc::core::ConfigSource::ProjectConfig).has_value());
+        ASSERT_TRUE(m.save(loom::core::ConfigSource::ProjectConfig).has_value());
 
         // Nothing written at the nested cwd level.
         EXPECT_FALSE(fs::exists(nested / ".gitignore"));
@@ -11669,7 +11669,7 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
     // save(ProjectConfig) writes project_path_; set_user_setting writes
     // user_path_ — point both at one path.
     auto make_aligned = [&] {
-        return cc::core::ConfigManager(p.global_path, p.project_path,
+        return loom::core::ConfigManager(p.global_path, p.project_path,
                                        p.project_path,
                                        p.project_path.string() + ".local");
     };
@@ -11689,7 +11689,7 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
             // the SAME file the patchers update.
             m.settings_mut().network.max_retries =
                 static_cast<std::uint32_t>(1000 + s);
-            _exit(m.save(cc::core::ConfigSource::ProjectConfig) ? 0 : 2);
+            _exit(m.save(loom::core::ConfigSource::ProjectConfig) ? 0 : 2);
         }
         pids[static_cast<std::size_t>(idx++)] = pid;
     }
@@ -11729,7 +11729,7 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
     }
 
     // Final file is a parseable object.
-    auto doc = cc::utils::json::parse_file(p.project_path);
+    auto doc = loom::utils::json::parse_file(p.project_path);
     ASSERT_TRUE(doc.has_value());
     EXPECT_TRUE(doc->root().is_obj());
     // No torn tmp leftovers; no stray local file (that path is never
@@ -11819,7 +11819,7 @@ void c16_raw_array_reader(const fs::path& path,
                           std::uint64_t max_attempts) {
     while (!stop->load(std::memory_order_relaxed) &&
            counters.attempts.load(std::memory_order_relaxed) < max_attempts) {
-        auto parsed = cc::utils::json::parse_file(path);
+        auto parsed = loom::utils::json::parse_file(path);
         counters.attempts.fetch_add(1, std::memory_order_relaxed);
         if (!parsed || !parsed->root().is_arr()) {
             counters.torn.fetch_add(1, std::memory_order_relaxed);
@@ -11836,18 +11836,18 @@ void c16_storm_writer_child(std::string teams_root,
                             int duration_ms) {
     ::setenv("LOOM_TEAM_RUNTIME_DIR", teams_root.c_str(), 1);
     const auto inbox =
-        fs::path{cc::utils::get_inbox_path(agent,
+        fs::path{loom::utils::get_inbox_path(agent,
                     std::optional<std::string_view>{team})};
     const auto deadline = std::chrono::steady_clock::now() +
                           std::chrono::milliseconds(duration_ms);
     std::uint64_t seq = 0;
     while (std::chrono::steady_clock::now() < deadline) {
         {
-            cc::utils::ScopedInboxLock flock(inbox);
+            loom::utils::ScopedInboxLock flock(inbox);
             if (!flock.locked()) _exit(30);
-            std::vector<cc::utils::TeammateMessage> messages;
+            std::vector<loom::utils::TeammateMessage> messages;
             for (int m = 0; m < 3; ++m) {
-                messages.push_back(cc::utils::TeammateMessage{
+                messages.push_back(loom::utils::TeammateMessage{
                     .from = std::format("w{}", m),
                     .text = std::format("seq-{}-msg-{}", seq, m),
                     .timestamp = std::to_string(seq),
@@ -11856,17 +11856,17 @@ void c16_storm_writer_child(std::string teams_root,
                     .summary = std::nullopt,
                 });
             }
-            if (!cc::utils::detail::write_messages(inbox, messages)) {
+            if (!loom::utils::detail::write_messages(inbox, messages)) {
                 _exit(31);
             }
         }
         {
-            cc::utils::TeamFileRecord record;
+            loom::utils::TeamFileRecord record;
             record.name = team;
             record.lead_agent_id = "team-lead@" + team;
             record.created_at = static_cast<std::int64_t>(seq);
             for (int m = 0; m < 2; ++m) {
-                cc::utils::TeamMemberRecord member;
+                loom::utils::TeamMemberRecord member;
                 member.agent_id = std::format("w{}@{}", m, team);
                 member.name = std::format("w{}", m);
                 member.tmux_pane_id = std::to_string((seq + m) % 7);
@@ -11874,7 +11874,7 @@ void c16_storm_writer_child(std::string teams_root,
                 member.joined_at = static_cast<std::int64_t>(seq);
                 record.members.push_back(std::move(member));
             }
-            if (!cc::utils::write_team_file(team, record)) _exit(32);
+            if (!loom::utils::write_team_file(team, record)) _exit(32);
         }
         ++seq;
     }
@@ -11891,26 +11891,26 @@ TEST(AtomicReplaceC16, ModePolicyBytesAndNoDebris) {
     C14TeamEnv env;
     const auto path = env.root / "data.json";
 
-    ASSERT_TRUE(cc::utils::atomic_replace_file(path, "[]").has_value());
+    ASSERT_TRUE(loom::utils::atomic_replace_file(path, "[]").has_value());
     EXPECT_EQ(c14_read_file(path), "[]");
     EXPECT_EQ(c16_mode_bits(path), 0644u);
 
-    ASSERT_TRUE(cc::utils::atomic_replace_file(path, "[1]").has_value());
+    ASSERT_TRUE(loom::utils::atomic_replace_file(path, "[1]").has_value());
     EXPECT_EQ(c14_read_file(path), "[1]");
     EXPECT_EQ(c16_mode_bits(path), 0644u);
 
     ASSERT_EQ(::chmod(path.string().c_str(), 0600), 0);
-    ASSERT_TRUE(cc::utils::atomic_replace_file(path, "[2]").has_value());
+    ASSERT_TRUE(loom::utils::atomic_replace_file(path, "[2]").has_value());
     EXPECT_EQ(c16_mode_bits(path), 0600u)
         << "PreserveOrUmask must keep a pre-existing 0600 mode";
 
     ASSERT_EQ(::chmod(path.string().c_str(), 0640), 0);
-    ASSERT_TRUE(cc::utils::atomic_replace_file(path, "[3]").has_value());
+    ASSERT_TRUE(loom::utils::atomic_replace_file(path, "[3]").has_value());
     EXPECT_EQ(c16_mode_bits(path), 0640u)
         << "PreserveOrUmask must keep a pre-existing 0640 mode";
 
-    ASSERT_TRUE(cc::utils::atomic_replace_file(
-        path, "[4]", cc::utils::AtomicMode::OwnerOnly).has_value());
+    ASSERT_TRUE(loom::utils::atomic_replace_file(
+        path, "[4]", loom::utils::AtomicMode::OwnerOnly).has_value());
     EXPECT_EQ(c16_mode_bits(path), 0600u)
         << "OwnerOnly must force 0600 regardless of the prior mode";
     EXPECT_EQ(c14_read_file(path), "[4]");
@@ -11929,7 +11929,7 @@ TEST(AtomicReplaceC16, SymlinkDanglingAndFifoLeavesRefusedFast) {
     // Symlink to a real victim.
     fs::create_symlink(canary, path);
     auto t0 = std::chrono::steady_clock::now();
-    auto result = cc::utils::atomic_replace_file(path, "[]");
+    auto result = loom::utils::atomic_replace_file(path, "[]");
     auto elapsed = c14_elapsed_ms(t0);
     ASSERT_FALSE(result.has_value());
     EXPECT_NE(result.error().find("symbolic link"), std::string::npos)
@@ -11942,7 +11942,7 @@ TEST(AtomicReplaceC16, SymlinkDanglingAndFifoLeavesRefusedFast) {
     std::error_code ec;
     fs::remove(path, ec);
     fs::create_symlink(env.root / "missing", path);
-    result = cc::utils::atomic_replace_file(path, "[]");
+    result = loom::utils::atomic_replace_file(path, "[]");
     ASSERT_FALSE(result.has_value());
     EXPECT_NE(result.error().find("symbolic link"), std::string::npos)
         << result.error();
@@ -11954,7 +11954,7 @@ TEST(AtomicReplaceC16, SymlinkDanglingAndFifoLeavesRefusedFast) {
     fs::remove(path, ec);
     ASSERT_EQ(::mkfifo(path.string().c_str(), 0600), 0);
     t0 = std::chrono::steady_clock::now();
-    result = cc::utils::atomic_replace_file(path, "[]");
+    result = loom::utils::atomic_replace_file(path, "[]");
     elapsed = c14_elapsed_ms(t0);
     ASSERT_FALSE(result.has_value());
     EXPECT_NE(result.error().find("not a regular file"), std::string::npos)
@@ -12037,13 +12037,13 @@ TEST(TeamDataC16, StormReadersMeasureZeroTornAcrossInboxAndTeamFile) {
     const auto inbox = c14_inbox_path("worker", team);
     // Seed both files so a read never legitimately returns empty/absent.
     {
-        cc::utils::TeammateMessage seed{
+        loom::utils::TeammateMessage seed{
             .from = "lead", .text = "seed", .timestamp = "0", .read = false, .color = std::nullopt, .summary = std::nullopt};
-        ASSERT_TRUE(cc::utils::detail::write_messages(inbox, {seed}));
-        cc::utils::TeamFileRecord record;
+        ASSERT_TRUE(loom::utils::detail::write_messages(inbox, {seed}));
+        loom::utils::TeamFileRecord record;
         record.name = team;
         record.lead_agent_id = "team-lead@" + team;
-        ASSERT_TRUE(cc::utils::write_team_file(team, record));
+        ASSERT_TRUE(loom::utils::write_team_file(team, record));
     }
 
     constexpr int kStormMs = 6000;
@@ -12065,7 +12065,7 @@ TEST(TeamDataC16, StormReadersMeasureZeroTornAcrossInboxAndTeamFile) {
     for (int r = 0; r < 4; ++r) {
         readers.emplace_back([&] {
             while (!stop.load(std::memory_order_relaxed)) {
-                auto msgs = cc::utils::read_inbox(
+                auto msgs = loom::utils::read_inbox(
                     "worker", std::optional<std::string_view>{team});
                 inbox_counts.attempts.fetch_add(1, std::memory_order_relaxed);
                 if (!msgs || msgs->empty()) {
@@ -12082,7 +12082,7 @@ TEST(TeamDataC16, StormReadersMeasureZeroTornAcrossInboxAndTeamFile) {
     for (int r = 0; r < 4; ++r) {
         readers.emplace_back([&] {
             while (!stop.load(std::memory_order_relaxed)) {
-                auto file = cc::utils::read_team_file(team);
+                auto file = loom::utils::read_team_file(team);
                 team_counts.attempts.fetch_add(1, std::memory_order_relaxed);
                 if (!file) team_counts.torn.fetch_add(1,
                     std::memory_order_relaxed);
@@ -12128,17 +12128,17 @@ TEST(TeamDataC16, StormReadersMeasureZeroTornAcrossInboxAndTeamFile) {
     EXPECT_EQ(team_counts.torn.load(), 0u);
 
     // Final content is valid.
-    auto final_inbox = cc::utils::read_inbox(
+    auto final_inbox = loom::utils::read_inbox(
         "worker", std::optional<std::string_view>{team});
     ASSERT_TRUE(final_inbox.has_value());
     EXPECT_FALSE(final_inbox->empty());
-    auto final_team = cc::utils::read_team_file(team);
+    auto final_team = loom::utils::read_team_file(team);
     ASSERT_TRUE(final_team.has_value());
     EXPECT_EQ(final_team->name, team);
     EXPECT_EQ(final_team->members.size(), 2u);
     EXPECT_TRUE(c16_no_tmp_debris(inbox.parent_path()));
     EXPECT_TRUE(c16_no_tmp_debris(
-        fs::path{cc::utils::team_file_path(team)}.parent_path()));
+        fs::path{loom::utils::team_file_path(team)}.parent_path()));
 }
 
 // Data-leaf attacks on the live inbox RMW path: a symlink (dangling or to
@@ -12165,9 +12165,9 @@ TEST(TeamDataC16, InboxLeafAttacksFailCleanFastWithoutFollowing) {
         }
 
         const auto t0 = std::chrono::steady_clock::now();
-        auto written = cc::utils::write_to_mailbox(
+        auto written = loom::utils::write_to_mailbox(
             "worker",
-            cc::utils::TeammateMessage{
+            loom::utils::TeammateMessage{
                 .from = "lead",
                 .text = "must-not-land",
                 .timestamp = "9",
@@ -12191,7 +12191,7 @@ TEST(TeamDataC16, InboxLeafAttacksFailCleanFastWithoutFollowing) {
             EXPECT_TRUE(fs::is_fifo(inbox, ec)) << tc.name;
         }
         // The unlocked/locked reads also fail safe (empty) and never block.
-        auto msgs = cc::utils::read_inbox(
+        auto msgs = loom::utils::read_inbox(
             "worker", std::optional<std::string_view>{"c16attack"});
         ASSERT_TRUE(msgs.has_value()) << tc.name;
         EXPECT_TRUE(msgs->empty()) << tc.name;
@@ -12202,19 +12202,19 @@ TEST(TeamDataC16, InboxLeafAttacksFailCleanFastWithoutFollowing) {
 // The same leaf gate for the canonical team config.json writer.
 TEST(TeamDataC16, TeamFileLeafAttacksFailCleanFast) {
     C14TeamEnv env;
-    const fs::path path{cc::utils::team_file_path("c16tattack")};
+    const fs::path path{loom::utils::team_file_path("c16tattack")};
     fs::create_directories(path.parent_path());
     const auto canary = env.root / "canary.txt";
     constexpr std::string_view kCanary = "c16-team-canary-6204";
 
-    cc::utils::TeamFileRecord record;
+    loom::utils::TeamFileRecord record;
     record.name = "c16tattack";
     record.lead_agent_id = "team-lead@c16tattack";
 
     { std::ofstream out(canary, std::ios::binary); out << kCanary; }
     fs::create_symlink(canary, path);
     auto t0 = std::chrono::steady_clock::now();
-    EXPECT_FALSE(cc::utils::write_team_file("c16tattack", record));
+    EXPECT_FALSE(loom::utils::write_team_file("c16tattack", record));
     EXPECT_LT(c14_elapsed_ms(t0), 3000);
     EXPECT_TRUE(fs::is_symlink(path));
     EXPECT_EQ(c14_read_file(canary), std::string(kCanary));
@@ -12223,7 +12223,7 @@ TEST(TeamDataC16, TeamFileLeafAttacksFailCleanFast) {
     fs::remove(path, ec);
     ASSERT_EQ(::mkfifo(path.string().c_str(), 0600), 0);
     t0 = std::chrono::steady_clock::now();
-    EXPECT_FALSE(cc::utils::write_team_file("c16tattack", record));
+    EXPECT_FALSE(loom::utils::write_team_file("c16tattack", record));
     EXPECT_LT(c14_elapsed_ms(t0), 3000)
         << "a FIFO config leaf must never block the writer";
     EXPECT_TRUE(fs::is_fifo(path, ec));
@@ -12236,16 +12236,16 @@ TEST(TeamDataC16, InboxAndTeamFileModesPreservedAcrossRewrites) {
     C14TeamEnv env;
     const auto inbox = c14_inbox_path("worker", "c16mode");
 
-    cc::utils::TeammateMessage m{
+    loom::utils::TeammateMessage m{
         .from = "lead", .text = "one", .timestamp = "1", .read = false, .color = std::nullopt, .summary = std::nullopt};
-    ASSERT_TRUE(cc::utils::write_to_mailbox(
+    ASSERT_TRUE(loom::utils::write_to_mailbox(
         "worker", m, std::optional<std::string_view>{"c16mode"}).has_value());
     EXPECT_EQ(c16_mode_bits(inbox), 0644u);
 
     ASSERT_EQ(::chmod(inbox.string().c_str(), 0600), 0);
     m.text = "two";
     m.timestamp = "2";
-    ASSERT_TRUE(cc::utils::write_to_mailbox(
+    ASSERT_TRUE(loom::utils::write_to_mailbox(
         "worker", m, std::optional<std::string_view>{"c16mode"}).has_value());
     EXPECT_EQ(c16_mode_bits(inbox), 0600u)
         << "inbox rewrite must preserve a pre-existing 0600 mode";
@@ -12253,20 +12253,20 @@ TEST(TeamDataC16, InboxAndTeamFileModesPreservedAcrossRewrites) {
     ASSERT_EQ(::chmod(inbox.string().c_str(), 0640), 0);
     m.text = "three";
     m.timestamp = "3";
-    ASSERT_TRUE(cc::utils::write_to_mailbox(
+    ASSERT_TRUE(loom::utils::write_to_mailbox(
         "worker", m, std::optional<std::string_view>{"c16mode"}).has_value());
     EXPECT_EQ(c16_mode_bits(inbox), 0640u)
         << "inbox rewrite must preserve a pre-existing 0640 mode";
 
-    const fs::path config{cc::utils::team_file_path("c16mode")};
-    cc::utils::TeamFileRecord record;
+    const fs::path config{loom::utils::team_file_path("c16mode")};
+    loom::utils::TeamFileRecord record;
     record.name = "c16mode";
     record.lead_agent_id = "team-lead@c16mode";
-    ASSERT_TRUE(cc::utils::write_team_file("c16mode", record));
+    ASSERT_TRUE(loom::utils::write_team_file("c16mode", record));
     EXPECT_EQ(c16_mode_bits(config), 0644u);
     ASSERT_EQ(::chmod(config.string().c_str(), 0600), 0);
     record.created_at = 7;
-    ASSERT_TRUE(cc::utils::write_team_file("c16mode", record));
+    ASSERT_TRUE(loom::utils::write_team_file("c16mode", record));
     EXPECT_EQ(c16_mode_bits(config), 0600u)
         << "team config rewrite must preserve a pre-existing 0600 mode";
 }
@@ -12297,7 +12297,7 @@ TEST(ScopedInboxLockC16, SharedReaderFailsClosedAndSharedReadersConcur) {
     ReadResult reader;
     std::thread contended([&] {
         const auto t0 = std::chrono::steady_clock::now();
-        auto msgs = cc::utils::read_inbox(
+        auto msgs = loom::utils::read_inbox(
             "worker", std::optional<std::string_view>{"c16sh"});
         reader.elapsed_ms = c14_elapsed_ms(t0);
         reader.has_value = msgs.has_value();
@@ -12310,16 +12310,16 @@ TEST(ScopedInboxLockC16, SharedReaderFailsClosedAndSharedReadersConcur) {
     const auto other = c14_inbox_path("worker", "c16sh-other");
     fs::create_directories(other.parent_path());
     {
-        cc::utils::TeammateMessage seed{
+        loom::utils::TeammateMessage seed{
             .from = "lead", .text = "hi", .timestamp = "1", .read = false, .color = std::nullopt, .summary = std::nullopt};
-        ASSERT_TRUE(cc::utils::detail::write_messages(other, {seed}));
+        ASSERT_TRUE(loom::utils::detail::write_messages(other, {seed}));
     }
     std::atomic<int> shared_ok{0};
     std::vector<std::thread> shared_readers;
     for (int i = 0; i < 8; ++i) {
         shared_readers.emplace_back([&] {
-            cc::utils::ScopedInboxLock lock(
-                other, cc::utils::LockKind::Shared);
+            loom::utils::ScopedInboxLock lock(
+                other, loom::utils::LockKind::Shared);
             if (lock.locked()) shared_ok.fetch_add(1);
         });
     }
@@ -12372,15 +12372,15 @@ TEST(ReadRegularFileC16a, ShapesPresentAbsentFifoSymlinkDirectory) {
         "{\"team\":\"\xc3\xa9\",\"n\":7}\n";  // UTF-8 + trailing newline
     { std::ofstream out(regular, std::ios::binary); out << kBytes; }
     {
-        const auto r = cc::utils::read_regular_file(regular);
-        EXPECT_EQ(r.status, cc::utils::RegularReadStatus::Present);
+        const auto r = loom::utils::read_regular_file(regular);
+        EXPECT_EQ(r.status, loom::utils::RegularReadStatus::Present);
         EXPECT_EQ(r.contents, std::string(kBytes));
     }
 
     // Absent.
     {
-        const auto r = cc::utils::read_regular_file(env.root / "missing.json");
-        EXPECT_EQ(r.status, cc::utils::RegularReadStatus::Absent);
+        const auto r = loom::utils::read_regular_file(env.root / "missing.json");
+        EXPECT_EQ(r.status, loom::utils::RegularReadStatus::Absent);
         EXPECT_TRUE(r.contents.empty());
     }
 
@@ -12390,9 +12390,9 @@ TEST(ReadRegularFileC16a, ShapesPresentAbsentFifoSymlinkDirectory) {
     ASSERT_EQ(::mkfifo(fifo.string().c_str(), 0600), 0);
     {
         const auto t0 = std::chrono::steady_clock::now();
-        const auto r = cc::utils::read_regular_file(fifo);
+        const auto r = loom::utils::read_regular_file(fifo);
         const auto elapsed = c16a_elapsed_ms(t0);
-        EXPECT_EQ(r.status, cc::utils::RegularReadStatus::Unreadable);
+        EXPECT_EQ(r.status, loom::utils::RegularReadStatus::Unreadable);
         EXPECT_LT(elapsed, 100) << "FIFO leaf must be rejected instantly";
         std::error_code ec;
         EXPECT_TRUE(fs::is_fifo(fifo, ec));
@@ -12405,8 +12405,8 @@ TEST(ReadRegularFileC16a, ShapesPresentAbsentFifoSymlinkDirectory) {
     const auto link = env.root / "link.json";
     fs::create_symlink(canary, link);
     {
-        const auto r = cc::utils::read_regular_file(link);
-        EXPECT_EQ(r.status, cc::utils::RegularReadStatus::Unreadable);
+        const auto r = loom::utils::read_regular_file(link);
+        EXPECT_EQ(r.status, loom::utils::RegularReadStatus::Unreadable);
         EXPECT_TRUE(r.contents.empty());
         EXPECT_EQ(c14_read_file(canary), std::string(kCanary))
             << "symlink target must never be opened";
@@ -12418,8 +12418,8 @@ TEST(ReadRegularFileC16a, ShapesPresentAbsentFifoSymlinkDirectory) {
     const auto dir = env.root / "adir";
     fs::create_directories(dir);
     {
-        const auto r = cc::utils::read_regular_file(dir);
-        EXPECT_EQ(r.status, cc::utils::RegularReadStatus::Unreadable);
+        const auto r = loom::utils::read_regular_file(dir);
+        EXPECT_EQ(r.status, loom::utils::RegularReadStatus::Unreadable);
     }
 }
 
@@ -12433,7 +12433,7 @@ TEST(TeamDataC16a, InboxReaderSwapLeavesFailFastAndRegularParses) {
 
     // Absent: historical empty inbox.
     {
-        auto msgs = cc::utils::read_inbox(
+        auto msgs = loom::utils::read_inbox(
             "worker", std::optional<std::string_view>{"c16ainbox"});
         ASSERT_TRUE(msgs.has_value());
         EXPECT_TRUE(msgs->empty());
@@ -12443,7 +12443,7 @@ TEST(TeamDataC16a, InboxReaderSwapLeavesFailFastAndRegularParses) {
     ASSERT_EQ(::mkfifo(inbox.string().c_str(), 0600), 0);
     {
         const auto t0 = std::chrono::steady_clock::now();
-        auto msgs = cc::utils::read_inbox(
+        auto msgs = loom::utils::read_inbox(
             "worker", std::optional<std::string_view>{"c16ainbox"});
         const auto elapsed = c16a_elapsed_ms(t0);
         ASSERT_TRUE(msgs.has_value());
@@ -12464,7 +12464,7 @@ TEST(TeamDataC16a, InboxReaderSwapLeavesFailFastAndRegularParses) {
     }
     fs::create_symlink(canary, inbox);
     {
-        auto msgs = cc::utils::read_inbox(
+        auto msgs = loom::utils::read_inbox(
             "worker", std::optional<std::string_view>{"c16ainbox"});
         ASSERT_TRUE(msgs.has_value());
         EXPECT_TRUE(msgs->empty());
@@ -12475,9 +12475,9 @@ TEST(TeamDataC16a, InboxReaderSwapLeavesFailFastAndRegularParses) {
     {
         std::error_code ec;
         fs::remove(inbox, ec);
-        ASSERT_TRUE(cc::utils::write_to_mailbox(
+        ASSERT_TRUE(loom::utils::write_to_mailbox(
             "worker",
-            cc::utils::TeammateMessage{
+            loom::utils::TeammateMessage{
                 .from = "lead",
                 .text = "hello-c16a",
                 .timestamp = "42",
@@ -12487,7 +12487,7 @@ TEST(TeamDataC16a, InboxReaderSwapLeavesFailFastAndRegularParses) {
             },
             std::optional<std::string_view>{"c16ainbox"})
                         .has_value());
-        auto msgs = cc::utils::read_inbox(
+        auto msgs = loom::utils::read_inbox(
             "worker", std::optional<std::string_view>{"c16ainbox"});
         ASSERT_TRUE(msgs.has_value());
         ASSERT_EQ(msgs->size(), 1u);
@@ -12503,17 +12503,17 @@ TEST(TeamDataC16a, InboxReaderSwapLeavesFailFastAndRegularParses) {
 // The canonical team config.json reader: the same four shapes.
 TEST(TeamDataC16a, TeamFileReaderSwapLeavesFailFastAndRegularParses) {
     C14TeamEnv env;
-    const fs::path path{cc::utils::team_file_path("c16ateam")};
+    const fs::path path{loom::utils::team_file_path("c16ateam")};
     fs::create_directories(path.parent_path());
 
     // Absent: nullopt.
-    EXPECT_FALSE(cc::utils::read_team_file("c16ateam").has_value());
+    EXPECT_FALSE(loom::utils::read_team_file("c16ateam").has_value());
 
     // FIFO: nullopt instantly.
     ASSERT_EQ(::mkfifo(path.string().c_str(), 0600), 0);
     {
         const auto t0 = std::chrono::steady_clock::now();
-        auto rec = cc::utils::read_team_file("c16ateam");
+        auto rec = loom::utils::read_team_file("c16ateam");
         const auto elapsed = c16a_elapsed_ms(t0);
         EXPECT_FALSE(rec.has_value());
         EXPECT_LT(elapsed, 100) << "FIFO team file must never block";
@@ -12532,7 +12532,7 @@ TEST(TeamDataC16a, TeamFileReaderSwapLeavesFailFastAndRegularParses) {
     }
     fs::create_symlink(canary, path);
     {
-        auto rec = cc::utils::read_team_file("c16ateam");
+        auto rec = loom::utils::read_team_file("c16ateam");
         EXPECT_FALSE(rec.has_value());
         EXPECT_EQ(c14_read_file(canary), std::string(kCanary));
     }
@@ -12541,13 +12541,13 @@ TEST(TeamDataC16a, TeamFileReaderSwapLeavesFailFastAndRegularParses) {
     {
         std::error_code ec;
         fs::remove(path, ec);
-        cc::utils::TeamFileRecord record;
+        loom::utils::TeamFileRecord record;
         record.name = "c16ateam";
         record.description = std::optional<std::string>{"the c16a team"};
         record.created_at = 123;
         record.lead_agent_id = "team-lead@c16ateam";
-        ASSERT_TRUE(cc::utils::write_team_file("c16ateam", record));
-        auto rec = cc::utils::read_team_file("c16ateam");
+        ASSERT_TRUE(loom::utils::write_team_file("c16ateam", record));
+        auto rec = loom::utils::read_team_file("c16ateam");
         ASSERT_TRUE(rec.has_value());
         EXPECT_EQ(rec->name, "c16ateam");
         EXPECT_EQ(rec->lead_agent_id, "team-lead@c16ateam");
@@ -12573,7 +12573,7 @@ TEST(TeamDataC16a, TeamFileReaderSwapLeavesFailFastAndRegularParses) {
 // values acquire_idp_id_token() uses to bind detail::CallbackServer.
 // ===========================================================================
 
-namespace xaa_login = cc::services::mcp;
+namespace xaa_login = loom::services::mcp;
 
 namespace {
 
@@ -12784,9 +12784,9 @@ TEST(XaaConfigC17a, XaaIdpFileCallbackPortLineIsIgnored) {
     // carries no port: the port can only come from settings.xaaIdp now. The
     // concept must be dependent, so a missing member is false rather than a
     // hard error in a non-template context.
-    auto cfg = cc::services::mcp::get_xaa_config("any");
+    auto cfg = loom::services::mcp::get_xaa_config("any");
     ASSERT_TRUE(cfg.has_value());
-    static_assert(!HasCallbackPort<cc::services::mcp::XaaConfig>,
+    static_assert(!HasCallbackPort<loom::services::mcp::XaaConfig>,
         "XaaConfig::callback_port must be removed; the port is injected from "
         "settings.xaaIdp.callbackPort by the composition layer");
 
@@ -12931,20 +12931,20 @@ TEST(XaaIdpLoginC17a, FreshStoreWritesSecretAndToken) {
 // 4-argument call shape (on_auth_url + skip_browser, no port) must keep
 // compiling.
 TEST(XaaIdpLoginC17a, AuthenticateXaaAcceptsInjectedCallbackPort) {
-    using AuthFn = cc::services::mcp::Result<cc::services::mcp::XaaResult> (*)(
-        const cc::services::mcp::XaaConfig&, std::string_view,
+    using AuthFn = loom::services::mcp::Result<loom::services::mcp::XaaResult> (*)(
+        const loom::services::mcp::XaaConfig&, std::string_view,
         std::function<void(const std::string&)>, bool, std::optional<int>);
     static_assert(std::is_same_v<AuthFn,
-        decltype(&cc::services::mcp::authenticate_xaa)>);
+        decltype(&loom::services::mcp::authenticate_xaa)>);
 
-    const auto four_arg_call = [](const cc::services::mcp::XaaConfig& c,
+    const auto four_arg_call = [](const loom::services::mcp::XaaConfig& c,
                                   std::string_view url,
                                   std::function<void(const std::string&)> cb,
                                   bool skip) {
-        return cc::services::mcp::authenticate_xaa(c, url, std::move(cb), skip);
+        return loom::services::mcp::authenticate_xaa(c, url, std::move(cb), skip);
     };
     static_assert(std::is_invocable_v<decltype(four_arg_call),
-        const cc::services::mcp::XaaConfig&, std::string_view,
+        const loom::services::mcp::XaaConfig&, std::string_view,
         std::function<void(const std::string&)>, bool>);
     SUCCEED();
 }
@@ -12995,8 +12995,8 @@ TEST(XaaIdpLoginC17a, ProductionLoaderPropagatesXaaCallbackPort) {
         // singleton) drops BOTH the configured servers and any captured XAA
         // callback port — a plain sync({}) marks the runtime loaded and would
         // leave a stale port behind for the next test.
-        cc::tools::set_core_settings_mcp_loader(nullptr);
-        (void)cc::tools::reload_native_mcp_servers_from_config();
+        loom::tools::set_core_settings_mcp_loader(nullptr);
+        (void)loom::tools::reload_native_mcp_servers_from_config();
     };
     reset();
 
@@ -13009,10 +13009,10 @@ TEST(XaaIdpLoginC17a, ProductionLoaderPropagatesXaaCallbackPort) {
     }
 
     // Install the REAL composition-root loader and force a fresh load.
-    cc::commands::install_core_settings_mcp_loader();
-    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+    loom::commands::install_core_settings_mcp_loader();
+    ASSERT_TRUE(loom::tools::reload_native_mcp_servers_from_config().has_value());
 
-    auto port = cc::tools::native_mcp_xaa_callback_port();
+    auto port = loom::tools::native_mcp_xaa_callback_port();
     ASSERT_TRUE(port.has_value());
     EXPECT_EQ(*port, 19485);
 
@@ -13047,8 +13047,8 @@ TEST(XaaIdpLoginC17a, PortSurvivesSyncBeforeReadProductionOrdering) {
     fs2::current_path(work);
 
     auto reset = [&] {
-        cc::tools::set_core_settings_mcp_loader(nullptr);
-        (void)cc::tools::reload_native_mcp_servers_from_config();
+        loom::tools::set_core_settings_mcp_loader(nullptr);
+        (void)loom::tools::reload_native_mcp_servers_from_config();
     };
     reset();
 
@@ -13059,19 +13059,19 @@ TEST(XaaIdpLoginC17a, PortSurvivesSyncBeforeReadProductionOrdering) {
 })JSON";
     }
 
-    cc::commands::install_core_settings_mcp_loader();
+    loom::commands::install_core_settings_mcp_loader();
 
     // Production ordering: sync() FIRST (this sets loaded_ = true and never
     // ran the loader), THEN read the port.
-    ASSERT_TRUE(cc::tools::sync_native_mcp_servers({}).has_value());
-    auto port = cc::tools::native_mcp_xaa_callback_port();
+    ASSERT_TRUE(loom::tools::sync_native_mcp_servers({}).has_value());
+    auto port = loom::tools::native_mcp_xaa_callback_port();
     ASSERT_TRUE(port.has_value())
         << "sync() before the read left the port unset (the c17 random-port bug)";
     EXPECT_EQ(*port, 19485);
 
     // A subsequent explicit reload keeps it (and is still correct).
-    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
-    ASSERT_TRUE(cc::tools::native_mcp_xaa_callback_port().has_value());
+    ASSERT_TRUE(loom::tools::reload_native_mcp_servers_from_config().has_value());
+    ASSERT_TRUE(loom::tools::native_mcp_xaa_callback_port().has_value());
 
     reset();
     std::error_code ec;
@@ -13110,7 +13110,7 @@ TEST(XaaIdpLoginC17a, StoreIsOwnerOnlyOnFreshWrite) {
     C17IdpTokenCacheGuard guard(root);
     UmaskGuard022 umask_guard;
 
-    cc::services::mcp::save_idp_client_secret("https://idp.example.com", "owner-only");
+    loom::services::mcp::save_idp_client_secret("https://idp.example.com", "owner-only");
     const auto store = root / ".config" / "loom" / "xaa" / "idp_tokens.json";
     ASSERT_TRUE(fs::exists(store));
     EXPECT_EQ(mode_bits(store), static_cast<mode_t>(0600u)) << "file must be owner-only";
@@ -13118,7 +13118,7 @@ TEST(XaaIdpLoginC17a, StoreIsOwnerOnlyOnFreshWrite) {
         << "store dir must be owner-only";
 
     // The secret still round-trips (0600 must not break the read path).
-    auto secret = cc::services::mcp::get_idp_client_secret("https://idp.example.com");
+    auto secret = loom::services::mcp::get_idp_client_secret("https://idp.example.com");
     ASSERT_TRUE(secret.has_value());
     EXPECT_EQ(*secret, "owner-only");
 
@@ -13144,12 +13144,12 @@ TEST(XaaIdpLoginC17a, ExistingWideStoreTightenedToOwnerOnly) {
     ASSERT_EQ(::chmod(store.c_str(), 0644), 0);
     ASSERT_EQ(mode_bits(store), static_cast<mode_t>(0644u));
 
-    cc::services::mcp::save_idp_client_secret("https://idp.example.com", "new-secret");
+    loom::services::mcp::save_idp_client_secret("https://idp.example.com", "new-secret");
     EXPECT_EQ(mode_bits(store), static_cast<mode_t>(0600u)) << "mode must be corrected";
 
     // Both the pre-existing and the new entry survive the rewrite.
-    EXPECT_TRUE(cc::services::mcp::get_idp_client_secret("https://existing.invalid").has_value());
-    EXPECT_TRUE(cc::services::mcp::get_idp_client_secret("https://idp.example.com").has_value());
+    EXPECT_TRUE(loom::services::mcp::get_idp_client_secret("https://existing.invalid").has_value());
+    EXPECT_TRUE(loom::services::mcp::get_idp_client_secret("https://idp.example.com").has_value());
 
     fs::remove_all(root);
 }
@@ -13170,13 +13170,13 @@ TEST(XaaIdpLoginC17a, StricterExistingModeNotLoosened) {
     }
     ASSERT_EQ(::chmod(store.c_str(), 0400), 0);
 
-    cc::services::mcp::save_idp_client_secret("https://idp.example.com", "strict");
+    loom::services::mcp::save_idp_client_secret("https://idp.example.com", "strict");
     const auto bits = mode_bits(store);
     EXPECT_EQ(bits, static_cast<mode_t>(0600u))
         << "replace sets exactly 0600 (owner rw); never wider";
     EXPECT_EQ(bits & static_cast<mode_t>(0077u), static_cast<mode_t>(0u))
         << "no group/other bit may survive";
-    EXPECT_TRUE(cc::services::mcp::get_idp_client_secret("https://idp.example.com").has_value());
+    EXPECT_TRUE(loom::services::mcp::get_idp_client_secret("https://idp.example.com").has_value());
 
     fs::remove_all(root);
 }
@@ -13199,7 +13199,7 @@ TEST(XaaIdpLoginC17a, SymlinkedStoreLeafRefused) {
     ASSERT_EQ(::symlink(victim.c_str(), store.c_str()), 0);
     ASSERT_TRUE(fs::is_symlink(store));
 
-    cc::services::mcp::save_idp_client_secret("https://idp.example.com", "must-not-land");
+    loom::services::mcp::save_idp_client_secret("https://idp.example.com", "must-not-land");
 
     // The victim is byte-unchanged and the leaf is still a symlink (the write
     // was refused, not followed and not turned into a regular file).
@@ -13218,20 +13218,20 @@ TEST(XaaIdpLoginC17a, SymlinkedStoreLeafRefused) {
 // no loader, no configured server needed.
 TEST(XaaIdpLoginC17a, CallbackPortForwardedOnlyForXaaServers) {
     // The positive case: an XAA server gets the configured port.
-    EXPECT_EQ(cc::tools::xaa_login_callback_port_for(true, std::optional<int>{19485}),
+    EXPECT_EQ(loom::tools::xaa_login_callback_port_for(true, std::optional<int>{19485}),
               std::optional<int>{19485});
     // The negative case: a NON-XAA OAuth server must NOT be pinned to it, even
     // when a port is configured — otherwise a plain OAuth login would bind the
     // IdP port.
-    EXPECT_FALSE(cc::tools::xaa_login_callback_port_for(false, std::optional<int>{19485})
+    EXPECT_FALSE(loom::tools::xaa_login_callback_port_for(false, std::optional<int>{19485})
                      .has_value());
     // No configured port -> nullopt either way (random port preserved).
-    EXPECT_FALSE(cc::tools::xaa_login_callback_port_for(true, std::nullopt).has_value());
-    EXPECT_FALSE(cc::tools::xaa_login_callback_port_for(false, std::nullopt).has_value());
+    EXPECT_FALSE(loom::tools::xaa_login_callback_port_for(true, std::nullopt).has_value());
+    EXPECT_FALSE(loom::tools::xaa_login_callback_port_for(false, std::nullopt).has_value());
 
     // And the runtime helper the gate reads is independently observable.
-    cc::tools::set_core_settings_mcp_loader(nullptr);
-    EXPECT_FALSE(cc::tools::native_mcp_xaa_callback_port().has_value());
+    loom::tools::set_core_settings_mcp_loader(nullptr);
+    EXPECT_FALSE(loom::tools::native_mcp_xaa_callback_port().has_value());
 }
 
 // ===========================================================================
@@ -13392,7 +13392,7 @@ TEST(XaaConfigC20, XaaIdpFileClientSecretLineIsIgnored) {
         f << "idp_client_secret=legacy-secret\n";
     }
 
-    auto cfg = cc::services::mcp::get_xaa_config("any");
+    auto cfg = loom::services::mcp::get_xaa_config("any");
     ASSERT_TRUE(cfg.has_value());
     EXPECT_FALSE(cfg->idp_client_secret.has_value())
         << "the dead idp_client_secret= file line must not be parsed";
@@ -13400,7 +13400,7 @@ TEST(XaaConfigC20, XaaIdpFileClientSecretLineIsIgnored) {
     // The field still EXISTS on XaaConfig (the inverse of the c17a
     // !HasCallbackPort check): it is consumed on both legs and is populated
     // from the hardened store by the composition seam.
-    static_assert(HasIdpClientSecret<cc::services::mcp::XaaConfig>,
+    static_assert(HasIdpClientSecret<loom::services::mcp::XaaConfig>,
         "XaaConfig::idp_client_secret must exist; it is populated from the "
         "hardened store by the composition seam");
 
@@ -13413,23 +13413,23 @@ TEST(XaaConfigC20, XaaIdpFileClientSecretLineIsIgnored) {
 // gate fails this test. Hermetic: no network, no loader, no filesystem.
 TEST(XaaIdpLoginC20, SecretForwardedOnlyForXaaServers) {
     // Positive: an XAA server gets both the port and the secret.
-    auto [port, secret] = cc::tools::xaa_login_secrets_for(
+    auto [port, secret] = loom::tools::xaa_login_secrets_for(
         true, std::optional<int>{19485}, std::optional<std::string>{"s3cr3t"});
     EXPECT_EQ(port, std::optional<int>{19485});
     ASSERT_TRUE(secret.has_value());
     EXPECT_EQ(*secret, "s3cr3t");
 
     // Negative: a NON-XAA OAuth server must NOT receive the secret.
-    auto [no_port, no_secret] = cc::tools::xaa_login_secrets_for(
+    auto [no_port, no_secret] = loom::tools::xaa_login_secrets_for(
         false, std::optional<int>{19485}, std::optional<std::string>{"s3cr3t"});
     EXPECT_FALSE(no_port.has_value());
     EXPECT_FALSE(no_secret.has_value());
 
     // No configured values -> nullopt either way.
-    auto [p2, s2] = cc::tools::xaa_login_secrets_for(true, std::nullopt, std::nullopt);
+    auto [p2, s2] = loom::tools::xaa_login_secrets_for(true, std::nullopt, std::nullopt);
     EXPECT_FALSE(p2.has_value());
     EXPECT_FALSE(s2.has_value());
-    auto [p3, s3] = cc::tools::xaa_login_secrets_for(false, std::nullopt, std::nullopt);
+    auto [p3, s3] = loom::tools::xaa_login_secrets_for(false, std::nullopt, std::nullopt);
     EXPECT_FALSE(p3.has_value());
     EXPECT_FALSE(s3.has_value());
 }
@@ -13453,8 +13453,8 @@ TEST(XaaIdpLoginC20, LegacyXaaIdpFileSecretMigratedToStore) {
     fs2::current_path(work);
 
     auto reset = [&] {
-        cc::tools::set_core_settings_mcp_loader(nullptr);
-        (void)cc::tools::reload_native_mcp_servers_from_config();
+        loom::tools::set_core_settings_mcp_loader(nullptr);
+        (void)loom::tools::reload_native_mcp_servers_from_config();
     };
     reset();
 
@@ -13479,11 +13479,11 @@ TEST(XaaIdpLoginC20, LegacyXaaIdpFileSecretMigratedToStore) {
 
     // Install the REAL loader and force a fresh load. The migration runs
     // inside the loader (on ensure_loaded_from_config).
-    cc::commands::install_core_settings_mcp_loader();
-    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+    loom::commands::install_core_settings_mcp_loader();
+    ASSERT_TRUE(loom::tools::reload_native_mcp_servers_from_config().has_value());
 
     // (a) The secret was migrated to the hardened store.
-    auto migrated = cc::services::mcp::get_idp_client_secret("https://idp.example.com");
+    auto migrated = loom::services::mcp::get_idp_client_secret("https://idp.example.com");
     ASSERT_TRUE(migrated.has_value());
     EXPECT_EQ(*migrated, "legacy-only-secret");
 
@@ -13496,8 +13496,8 @@ TEST(XaaIdpLoginC20, LegacyXaaIdpFileSecretMigratedToStore) {
     // assert the second loader call still yields the secret (a re-read would
     // fail on the missing file).
     fs2::remove(home / ".loom" / "xaa-idp.txt");
-    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
-    auto still = cc::services::mcp::get_idp_client_secret("https://idp.example.com");
+    ASSERT_TRUE(loom::tools::reload_native_mcp_servers_from_config().has_value());
+    auto still = loom::services::mcp::get_idp_client_secret("https://idp.example.com");
     ASSERT_TRUE(still.has_value());
     EXPECT_EQ(*still, "legacy-only-secret");
 
@@ -13528,8 +13528,8 @@ TEST(XaaIdpLoginC20, LegacyMigrationSkippedWhenIssuerEmpty) {
     fs2::current_path(work);
 
     auto reset = [&] {
-        cc::tools::set_core_settings_mcp_loader(nullptr);
-        (void)cc::tools::reload_native_mcp_servers_from_config();
+        loom::tools::set_core_settings_mcp_loader(nullptr);
+        (void)loom::tools::reload_native_mcp_servers_from_config();
     };
     reset();
 
@@ -13546,13 +13546,13 @@ TEST(XaaIdpLoginC20, LegacyMigrationSkippedWhenIssuerEmpty) {
         f << "idp_client_secret=must-not-migrate\n";
     }
 
-    cc::commands::install_core_settings_mcp_loader();
-    ASSERT_TRUE(cc::tools::reload_native_mcp_servers_from_config().has_value());
+    loom::commands::install_core_settings_mcp_loader();
+    ASSERT_TRUE(loom::tools::reload_native_mcp_servers_from_config().has_value());
 
     // No phantom "" key: get_idp_client_secret("") misses.
-    EXPECT_FALSE(cc::services::mcp::get_idp_client_secret("").has_value());
+    EXPECT_FALSE(loom::services::mcp::get_idp_client_secret("").has_value());
     // The loader yields no secret.
-    EXPECT_FALSE(cc::tools::native_mcp_xaa_idp_client_secret().has_value());
+    EXPECT_FALSE(loom::tools::native_mcp_xaa_idp_client_secret().has_value());
     // The store file was never created.
     EXPECT_FALSE(fs2::exists(home / ".config" / "loom" / "xaa" / "idp_tokens.json"));
 
@@ -13573,12 +13573,12 @@ TEST(XaaIdpLoginC20, LegacyXaaIdpFileSymlinkDoesNotBlock) {
     // Symlink to /dev/null: O_NOFOLLOW rejects with ELOOP — no follow, no block.
     const auto legacy = root / ".loom" / "xaa-idp.txt";
     fs::create_symlink("/dev/null", legacy);
-    EXPECT_FALSE(cc::services::mcp::read_legacy_idp_client_secret().has_value());
+    EXPECT_FALSE(loom::services::mcp::read_legacy_idp_client_secret().has_value());
 
     // FIFO: O_NONBLOCK open succeeds but fstat S_ISREG fails — no block.
     fs::remove(legacy);
     ASSERT_EQ(::mkfifo(legacy.c_str(), 0600), 0);
-    EXPECT_FALSE(cc::services::mcp::read_legacy_idp_client_secret().has_value());
+    EXPECT_FALSE(loom::services::mcp::read_legacy_idp_client_secret().has_value());
 
     fs::remove_all(root);
 }
@@ -13597,7 +13597,7 @@ TEST(XaaIdpLoginC20, LegacyXaaIdpFileReaderAcceptsLegacyKeyFormats) {
         f << body;
     };
     auto read_secret = [&] {
-        return cc::services::mcp::read_legacy_idp_client_secret();
+        return loom::services::mcp::read_legacy_idp_client_secret();
     };
 
     // Leading whitespace before the key.
@@ -13736,21 +13736,21 @@ TEST(McpAuth, XaaRuntimePathUsesHardenedStoreSecret) {
 
     const std::string secret = "e2e-hardened-secret";
     // Store the secret the way `/mcp xaa setup --client-secret` does.
-    cc::services::mcp::save_idp_client_secret(server.base_url(), secret);
+    loom::services::mcp::save_idp_client_secret(server.base_url(), secret);
     // The loader reads it from the same store; simulate that read here.
-    auto stored = cc::services::mcp::get_idp_client_secret(server.base_url());
+    auto stored = loom::services::mcp::get_idp_client_secret(server.base_url());
     ASSERT_TRUE(stored.has_value());
     EXPECT_EQ(*stored, secret);
 
-    cc::services::mcp::McpServerConfig auth_config;
+    loom::services::mcp::McpServerConfig auth_config;
     auth_config.transport = "http";
     auth_config.url = server.base_url() + "/mcp";
-    auth_config.oauth = cc::services::mcp::McpOAuthConfig{
+    auth_config.oauth = loom::services::mcp::McpOAuthConfig{
         .client_id = "as-client-1",
         .xaa = true,
     };
 
-    auto result = cc::services::mcp::perform_mcp_oauth_flow(
+    auto result = loom::services::mcp::perform_mcp_oauth_flow(
         "xaa-c20-e2e",
         auth_config,
         [](const std::string&) {},

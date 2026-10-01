@@ -3,7 +3,7 @@ export module loom.teams.control_message_compat;
 
 import std;
 
-export namespace cc::utils::control_message_compat {
+export namespace loom::utils::control_message_compat {
 
 struct ControlMessageLike {
     std::map<std::string, std::string> fields;
@@ -31,4 +31,4 @@ inline ControlMessageLike& normalize_control_message_keys(ControlMessageLike& me
     return message;
 }
 
-} // namespace cc::utils::control_message_compat
+} // namespace loom::utils::control_message_compat

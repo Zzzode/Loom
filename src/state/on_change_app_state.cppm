@@ -14,7 +14,7 @@ import loom.state.app_state;
 import loom.state.selectors;
 import loom.state.persistence;
 
-export namespace cc::state::on_change {
+export namespace loom::state::on_change {
 
 // ============================================================
 // Change Detection Helpers
@@ -311,4 +311,4 @@ inline void initialize_global_registry() {
     setup_default_handlers(registry);
 }
 
-} // namespace cc::state::on_change
+} // namespace loom::state::on_change

@@ -6,7 +6,7 @@ export module loom.bridge.jwt_utils;
 
 import std;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
 // JWT payload structure (decoded claims)
 struct JwtPayload {
@@ -170,4 +170,4 @@ std::optional<std::string> get_jwt_claim(std::string_view token, std::string_vie
     return std::nullopt;
 }
 
-} // namespace cc::bridge
+} // namespace loom::bridge

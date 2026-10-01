@@ -12,7 +12,7 @@ export module loom.commands.plugin_parse_args;
 
 import std;
 
-export namespace cc::commands::plugin {
+export namespace loom::commands::plugin {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Subcommand variant types
@@ -225,4 +225,4 @@ inline bool looks_like_marketplace(std::string_view target) {
     return out;
 }
 
-} // namespace cc::commands::plugin
+} // namespace loom::commands::plugin

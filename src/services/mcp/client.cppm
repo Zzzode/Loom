@@ -19,7 +19,7 @@ import std;
 
 import loom.services.mcp.types;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
 // Callback types
 using RequestCallback = std::function<void(const std::string& response, std::optional<McpClientError> error)>;
@@ -353,4 +353,4 @@ private:
     NotificationCallback notification_callback_;
 };
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

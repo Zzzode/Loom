@@ -26,7 +26,7 @@
 ///     content_receiver. There is no exported seam to feed it synthetic
 ///     chunks, so exercising it would require either exporting the parser or
 ///     a full httplib content_receiver mock — out of scope for a tests-only
-///     change. The independent cc::services::api::SseBuffer/StreamParser used
+///     change. The independent loom::services::api::SseBuffer/StreamParser used
 ///     by the SDK path ARE already covered by test_sse_mock.cpp /
 ///     test_services.cpp.
 ///
@@ -268,11 +268,11 @@ private:
 };
 
 /// Extract the text of the first system message in a conversation, if any.
-std::optional<std::string> first_system_prompt_text(const std::vector<cc::core::Message>& conv) {
+std::optional<std::string> first_system_prompt_text(const std::vector<loom::core::Message>& conv) {
     for (const auto& msg : conv) {
-        if (const auto* sys = std::get_if<cc::core::SystemMessage>(&msg)) {
+        if (const auto* sys = std::get_if<loom::core::SystemMessage>(&msg)) {
             for (const auto& block : sys->content) {
-                if (const auto* text = std::get_if<cc::core::TextBlock>(&block)) {
+                if (const auto* text = std::get_if<loom::core::TextBlock>(&block)) {
                     return text->text;
                 }
             }
@@ -288,19 +288,19 @@ std::optional<std::string> first_system_prompt_text(const std::vector<cc::core::
 // ===========================================================================
 
 TEST(QueryEngineFix, OutputConfigInjectsResponseSchemaAndTaskBudget) {
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    config.response_schema = cc::core::QueryEngineConfig::ResponseSchema{
+    config.response_schema = loom::core::QueryEngineConfig::ResponseSchema{
         .name = "result",
         .schema_json = R"({"type":"object","properties":{"answer":{"type":"string"}},"required":["answer"]})",
     };
-    config.task_budget = cc::core::QueryEngineConfig::TaskBudget{
+    config.task_budget = loom::core::QueryEngineConfig::TaskBudget{
         .total = 5'000,
         .remaining = 2'500,
     };
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     const auto out = engine.build_output_config_json_for_testing();
     // response_schema → format.json_schema{ name, schema }
@@ -316,11 +316,11 @@ TEST(QueryEngineFix, OutputConfigInjectsResponseSchemaAndTaskBudget) {
 }
 
 TEST(QueryEngineFix, OutputConfigOmittedWhenNeitherBudgetNorSchema) {
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     // Matches the contract documented on build_output_config_json_for_testing.
     EXPECT_EQ(engine.build_output_config_json_for_testing(), "{}");
@@ -331,32 +331,32 @@ TEST(QueryEngineFix, OutputConfigOmittedWhenNeitherBudgetNorSchema) {
 // ===========================================================================
 
 TEST(QueryEngineFix, DiscoveredSkillsTracksSkillToolInvocations) {
-    struct StubSkillTool final : cc::core::ITool {
-        cc::core::ToolDefinition definition_{};
+    struct StubSkillTool final : loom::core::ITool {
+        loom::core::ToolDefinition definition_{};
         StubSkillTool() {
             definition_.name = "skill";
-            definition_.permission = cc::core::ToolPermission::ReadOnly;
+            definition_.permission = loom::core::ToolPermission::ReadOnly;
         }
-        [[nodiscard]] const cc::core::ToolDefinition& definition() const override { return definition_; }
-        [[nodiscard]] cc::core::Result<cc::core::ToolResult> execute(const cc::core::ToolInput&) override {
-            return cc::core::ToolResult::success("ok");
+        [[nodiscard]] const loom::core::ToolDefinition& definition() const override { return definition_; }
+        [[nodiscard]] loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+            return loom::core::ToolResult::success("ok");
         }
-        [[nodiscard]] bool check_permission(const cc::core::ToolInput&) const override { return true; }
+        [[nodiscard]] bool check_permission(const loom::core::ToolInput&) const override { return true; }
     };
 
-    cc::core::ToolRegistry registry;
+    loom::core::ToolRegistry registry;
     registry.register_tool(std::make_unique<StubSkillTool>());
-    cc::core::QueryEngineConfig config;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     // Initially empty.
     EXPECT_TRUE(engine.discovered_skills().empty());
 
     // First skill invocation → recorded.
-    cc::core::ToolUseBlock first{
-        .id = cc::core::ToolUseId{.value = "tu-1"},
+    loom::core::ToolUseBlock first{
+        .id = loom::core::ToolUseId{.value = "tu-1"},
         .name = "skill",
         .input_json = R"({"name":"alpha-skill"})",
     };
@@ -365,8 +365,8 @@ TEST(QueryEngineFix, DiscoveredSkillsTracksSkillToolInvocations) {
     EXPECT_NE(std::find(after_first.begin(), after_first.end(), "alpha-skill"), after_first.end());
 
     // Second, distinct skill → appended (de-dup set semantics).
-    cc::core::ToolUseBlock second{
-        .id = cc::core::ToolUseId{.value = "tu-2"},
+    loom::core::ToolUseBlock second{
+        .id = loom::core::ToolUseId{.value = "tu-2"},
         .name = "skill",
         .input_json = R"({"name":"beta-skill"})",
     };
@@ -379,26 +379,26 @@ TEST(QueryEngineFix, DiscoveredSkillsTracksSkillToolInvocations) {
     EXPECT_EQ(alpha_count, 1);
 
     // A non-skill tool must NOT contribute to discovered_skills_.
-    struct StubReadTool final : cc::core::ITool {
-        cc::core::ToolDefinition definition_{};
+    struct StubReadTool final : loom::core::ITool {
+        loom::core::ToolDefinition definition_{};
         StubReadTool() {
             definition_.name = "Read";
-            definition_.permission = cc::core::ToolPermission::ReadOnly;
+            definition_.permission = loom::core::ToolPermission::ReadOnly;
         }
-        [[nodiscard]] const cc::core::ToolDefinition& definition() const override { return definition_; }
-        [[nodiscard]] cc::core::Result<cc::core::ToolResult> execute(const cc::core::ToolInput&) override {
-            return cc::core::ToolResult::success("data");
+        [[nodiscard]] const loom::core::ToolDefinition& definition() const override { return definition_; }
+        [[nodiscard]] loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+            return loom::core::ToolResult::success("data");
         }
-        [[nodiscard]] bool check_permission(const cc::core::ToolInput&) const override { return true; }
+        [[nodiscard]] bool check_permission(const loom::core::ToolInput&) const override { return true; }
     };
-    cc::core::ToolRegistry registry2;
+    loom::core::ToolRegistry registry2;
     registry2.register_tool(std::make_unique<StubReadTool>());
-    cc::core::QueryEngineConfig config2;
+    loom::core::QueryEngineConfig config2;
     config2.context_window.auto_compact = false;
     config2.cwd = fs::temp_directory_path().string();
-    cc::core::QueryEngine engine2(std::move(config2), registry2);
-    cc::core::ToolUseBlock read_call{
-        .id = cc::core::ToolUseId{.value = "tu-r"},
+    loom::core::QueryEngine engine2(std::move(config2), registry2);
+    loom::core::ToolUseBlock read_call{
+        .id = loom::core::ToolUseId{.value = "tu-r"},
         .name = "Read",
         .input_json = R"({"file_path":"/tmp/x"})",
     };
@@ -432,11 +432,11 @@ TEST(QueryEngineFix, LoadsProjectLoomMdAndUserMemoryIntoSystemPrompt) {
         user_md << "Global user preference: respond concisely.";
     }
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = root.string();
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     const auto prompt = first_system_prompt_text(engine.get_conversation());
     ASSERT_TRUE(prompt.has_value()) << "system prompt not present in conversation";
@@ -461,11 +461,11 @@ TEST(QueryEngineFix, OmitsMemoryContextsWhenFilesAbsent) {
     // Ensure no user memory exists.
     fs::remove(root / ".loom" / "LOOM.md");
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = root.string();
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     const auto prompt = first_system_prompt_text(engine.get_conversation());
     ASSERT_TRUE(prompt.has_value());
@@ -500,8 +500,8 @@ TEST(QueryEngineFix, FallsBackToSecondaryModelOnOverloadedError) {
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.cwd = root.string();
@@ -512,7 +512,7 @@ TEST(QueryEngineFix, FallsBackToSecondaryModelOnOverloadedError) {
     // Auto-compact off so a 529 body can't accidentally trip compaction paths.
     config.context_window.auto_compact = false;
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
     auto response = engine.query("ping");
     ASSERT_TRUE(response.has_value()) << response.error().message;
 
@@ -526,7 +526,7 @@ TEST(QueryEngineFix, FallsBackToSecondaryModelOnOverloadedError) {
     ASSERT_EQ(bodies->size(), 2u);
 
     // The second request should carry the fallback model in its JSON body.
-    auto parsed = cc::utils::json::parse((*bodies)[1]);
+    auto parsed = loom::utils::json::parse((*bodies)[1]);
     ASSERT_TRUE(parsed.has_value()) << parsed.error().message();
     EXPECT_EQ(parsed->root().get("model").as_str(), "fallback-model")
         << "fallback retry request should use the fallback model";
@@ -544,8 +544,8 @@ TEST(QueryEngineFix, PreservesPathPrefixInAnthropicBaseUrl) {
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url() + "/api/anthropic";
     config.cwd = root.string();
@@ -553,7 +553,7 @@ TEST(QueryEngineFix, PreservesPathPrefixInAnthropicBaseUrl) {
     config.model_params.model = "primary-model";
     config.context_window.auto_compact = false;
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
     auto response = engine.query("ping");
     ASSERT_TRUE(response.has_value()) << response.error().message;
 
@@ -577,8 +577,8 @@ TEST(QueryEngineFix, FallsBackToSecondaryModelOnRateLimited) {
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.cwd = root.string();
@@ -588,7 +588,7 @@ TEST(QueryEngineFix, FallsBackToSecondaryModelOnRateLimited) {
     config.fallback_models = {"fallback-model"};
     config.context_window.auto_compact = false;
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
     auto response = engine.query("ping");
     ASSERT_TRUE(response.has_value()) << response.error().message;
 
@@ -610,8 +610,8 @@ TEST(QueryEngineFix, DoesNotFallBackWhenNoFallbackModelsConfigured) {
     fs::remove_all(root);
     fs::create_directories(root);
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.cwd = root.string();
@@ -622,7 +622,7 @@ TEST(QueryEngineFix, DoesNotFallBackWhenNoFallbackModelsConfigured) {
     // fallback_models intentionally left empty.
     config.context_window.auto_compact = false;
 
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
     auto response = engine.query("ping");
     ASSERT_FALSE(response.has_value())
         << "query should fail when overloaded with no fallback models";
@@ -641,7 +641,7 @@ TEST(QueryEngineFix, DoesNotFallBackWhenNoFallbackModelsConfigured) {
 // ===========================================================================
 
 TEST(SseEventDecoder, DecodesSingleCompleteEvent) {
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     auto events = dec.feed("event: message_start\n"
                            "data: {\"type\":\"message_start\"}\n\n");
     ASSERT_EQ(events.size(), 1u);
@@ -650,7 +650,7 @@ TEST(SseEventDecoder, DecodesSingleCompleteEvent) {
 }
 
 TEST(SseEventDecoder, DecodesAllEventTypesInOneStream) {
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     std::string stream =
         "event: message_start\ndata: {\"a\":1}\n\n"
         "event: content_block_start\ndata: {\"b\":2}\n\n"
@@ -672,7 +672,7 @@ TEST(SseEventDecoder, DecodesAllEventTypesInOneStream) {
 }
 
 TEST(SseEventDecoder, EventCompletesOnlyOnBlankLine) {
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     // A single trailing newline is not a terminator.
     EXPECT_TRUE(dec.feed("event: x\ndata: y\n").empty());
     // The second newline completes the \n\n terminator.
@@ -683,9 +683,9 @@ TEST(SseEventDecoder, EventCompletesOnlyOnBlankLine) {
 }
 
 TEST(SseEventDecoder, ByteByByteFeedYieldsEventOnlyAtTerminator) {
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     const std::string full = "event: content_block_delta\ndata: {\"delta\":1}\n\n";
-    std::vector<cc::core::SseEvent> all;
+    std::vector<loom::core::SseEvent> all;
     for (std::size_t i = 0; i < full.size(); ++i) {
         auto ev = dec.feed(full.substr(i, 1));
         if (i + 1 < full.size()) {
@@ -699,7 +699,7 @@ TEST(SseEventDecoder, ByteByByteFeedYieldsEventOnlyAtTerminator) {
 }
 
 TEST(SseEventDecoder, EventTypePersistsAcrossBlocksWithoutEventLine) {
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     // Block 1 sets the type; block 2 carries no `event:` line -> inherits.
     auto events = dec.feed(
         "event: content_block_delta\ndata: {\"i\":1}\n\n"
@@ -711,7 +711,7 @@ TEST(SseEventDecoder, EventTypePersistsAcrossBlocksWithoutEventLine) {
 }
 
 TEST(SseEventDecoder, MultiLineDataIsJoinedWithNewline) {
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     auto events = dec.feed("event: x\ndata: line1\ndata: line2\ndata: line3\n\n");
     ASSERT_EQ(events.size(), 1u);
     EXPECT_EQ(events[0].data, "line1\nline2\nline3");
@@ -720,14 +720,14 @@ TEST(SseEventDecoder, MultiLineDataIsJoinedWithNewline) {
 TEST(SseEventDecoder, EmptyDataLinePreservedAsGap) {
     // "data:" with no value still contributes a (joined) empty segment,
     // matching the original inline parser exactly.
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     auto events = dec.feed("event: x\ndata: a\ndata:\ndata: b\n\n");
     ASSERT_EQ(events.size(), 1u);
     EXPECT_EQ(events[0].data, "a\n\nb");
 }
 
 TEST(SseEventDecoder, BlockWithNoDataLineYieldsNoEvent) {
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     auto events = dec.feed("event: ping\n\n");
     EXPECT_TRUE(events.empty());
 }
@@ -735,14 +735,14 @@ TEST(SseEventDecoder, BlockWithNoDataLineYieldsNoEvent) {
 TEST(SseEventDecoder, EmitsDoneMarkerForDispatcherToFilter) {
     // The decoder intentionally does NOT filter [DONE]; parse_sse_event does.
     // The decoder must surface it so the dispatcher can ignore it.
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     auto events = dec.feed("event: message_stop\ndata: [DONE]\n\n");
     ASSERT_EQ(events.size(), 1u);
     EXPECT_EQ(events[0].data, "[DONE]");
 }
 
 TEST(SseEventDecoder, TrailingPartialBufferHeldAcrossFeeds) {
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     EXPECT_TRUE(dec.feed("event: x\ndata: partial").empty());  // no terminator yet
     auto events = dec.feed("_continued\n\n");                   // completes the event
     ASSERT_EQ(events.size(), 1u);
@@ -750,7 +750,7 @@ TEST(SseEventDecoder, TrailingPartialBufferHeldAcrossFeeds) {
 }
 
 TEST(SseEventDecoder, MultipleEventsAcrossFeedsWithPartialTail) {
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     auto e1 = dec.feed("event: a\ndata: 1\n\nevent: b\ndata: 2\n\nevent: c\ndata: 3");
     ASSERT_EQ(e1.size(), 2u);  // a and b complete; c's payload is partial
     EXPECT_EQ(e1[0].type, "a");
@@ -762,7 +762,7 @@ TEST(SseEventDecoder, MultipleEventsAcrossFeedsWithPartialTail) {
 }
 
 TEST(SseEventDecoder, RealisticAnthropicStreamFramesCorrectly) {
-    cc::core::SseEventDecoder dec;
+    loom::core::SseEventDecoder dec;
     std::string stream =
         "event: message_start\n"
         "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"loom-x\"}}\n\n"
@@ -811,11 +811,11 @@ TEST(QueryEngineFix, InjectsAutoMemoryGuidanceAndMemoryIndex) {
         idx << "- [User role](user_role.md) — user is a platform engineer\n";
     }
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = root.string();
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     const auto prompt = first_system_prompt_text(engine.get_conversation());
     ASSERT_TRUE(prompt.has_value());
@@ -844,11 +844,11 @@ TEST(QueryEngineFix, AutoMemoryDisabledOmitsGuidance) {
     EnvironmentGuard disable_guard(
         "LOOM_DISABLE_AUTO_MEMORY", "1");
 
-    cc::core::ToolRegistry registry;
-    cc::core::QueryEngineConfig config;
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
     config.cwd = root.string();
-    cc::core::QueryEngine engine(std::move(config), registry);
+    loom::core::QueryEngine engine(std::move(config), registry);
 
     const auto prompt = first_system_prompt_text(engine.get_conversation());
     ASSERT_TRUE(prompt.has_value());
@@ -871,22 +871,22 @@ TEST(QueryEngineFix, AutoMemPathResolvesCanonicalLayoutAndOverride) {
 
     const auto project = root / "my project";
     fs::create_directories(project);
-    auto p = cc::memdir::get_auto_mem_path(project);
+    auto p = loom::memdir::get_auto_mem_path(project);
     ASSERT_TRUE(p.has_value());
     const std::string key =
-        cc::memdir::sanitize_memory_key(fs::weakly_canonical(project).string());
+        loom::memdir::sanitize_memory_key(fs::weakly_canonical(project).string());
     EXPECT_EQ(p->string(), (root / "cfg" / "projects" / key / "memory").string());
     EXPECT_EQ(key.find(' '), std::string::npos); // spaces sanitized to '-'
-    EXPECT_EQ(*cc::memdir::get_auto_mem_entrypoint(project), *p / "MEMORY.md");
+    EXPECT_EQ(*loom::memdir::get_auto_mem_entrypoint(project), *p / "MEMORY.md");
 
     EnvironmentGuard ov_set(
         "LOOM_COWORK_MEMORY_PATH_OVERRIDE", (root / "ov").string());
-    auto po = cc::memdir::get_auto_mem_path(project);
+    auto po = loom::memdir::get_auto_mem_path(project);
     ASSERT_TRUE(po.has_value());
     EXPECT_EQ(po->string(), (root / "ov").string());
 
     EnvironmentGuard dis("LOOM_DISABLE_AUTO_MEMORY", "1");
-    EXPECT_FALSE(cc::memdir::get_auto_mem_path(project).has_value());
+    EXPECT_FALSE(loom::memdir::get_auto_mem_path(project).has_value());
 
     fs::remove_all(root);
 }

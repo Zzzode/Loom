@@ -18,10 +18,10 @@ import loom.teams.team_helpers;
 import loom.serdes.json;
 import loom.fs.atomic_replace;
 
-export namespace cc::utils::swarm_helpers {
+export namespace loom::utils::swarm_helpers {
 
 namespace fs = std::filesystem;
-using namespace cc::utils::swarm_backends;
+using namespace loom::utils::swarm_backends;
 
 // ============================================================================
 // Constants (from constants.ts)
@@ -764,7 +764,7 @@ namespace permission_detail {
 /// Rewrite an inbox with one exact-text message removed (TS legacy
 /// removeWorkerResponse semantics: the blocking waiter deletes the response it
 /// consumed so a slow later poll can never redeliver it). Mirrors the
-/// read/rewrite pattern of cc::utils::mark_all_read; the envelope serializer
+/// read/rewrite pattern of loom::utils::mark_all_read; the envelope serializer
 /// is replicated here because team_helpers' detail::write_messages is not
 /// exported from that module.
 inline bool remove_mailbox_message_by_text(
@@ -774,19 +774,19 @@ inline bool remove_mailbox_message_by_text(
 ) {
     // Share the inbox RMW lock with write_to_mailbox/mark_all_read so the
     // worker's response consumption cannot race the poller's mark-all-read.
-    std::lock_guard<std::mutex> lock(cc::utils::teammate_inbox_mutex());
+    std::lock_guard<std::mutex> lock(loom::utils::teammate_inbox_mutex());
     const auto inbox_path =
-        fs::path{cc::utils::get_inbox_path(worker_name, team_name)};
+        fs::path{loom::utils::get_inbox_path(worker_name, team_name)};
     // Serialize against the leader and other pane PROCESSES as well.
-    cc::utils::ScopedInboxLock flock(inbox_path);
+    loom::utils::ScopedInboxLock flock(inbox_path);
     if (!flock.locked()) return false;
     // Unlocked read: we already hold LOCK_EX; a nested LOCK_SH on another
     // open file description would be denied by our own lock.
-    auto messages = cc::utils::read_inbox(worker_name, team_name,
+    auto messages = loom::utils::read_inbox(worker_name, team_name,
                                           /*already_holds_exclusive_lock=*/true);
     if (!messages) return false;
     const auto before = messages->size();
-    std::erase_if(*messages, [&](const cc::utils::TeammateMessage& message) {
+    std::erase_if(*messages, [&](const loom::utils::TeammateMessage& message) {
         return message.text == exact_text;
     });
     if (messages->size() == before) return false;
@@ -819,7 +819,7 @@ inline bool remove_mailbox_message_by_text(
         out += '}';
     }
     out.push_back(']');
-    return cc::utils::atomic_replace_file(inbox_path, out).has_value();
+    return loom::utils::atomic_replace_file(inbox_path, out).has_value();
 }
 } // namespace permission_detail
 // ============================================================================
@@ -866,7 +866,7 @@ struct WorkerAllowRule {
     std::string_view /*tool_name*/,
     std::string_view input_json,
     std::size_t max_chars = 2000) {
-    auto parsed = cc::utils::json::parse(std::string(input_json));
+    auto parsed = loom::utils::json::parse(std::string(input_json));
     std::string rendered;
     if (parsed && parsed->root().is_obj()) {
         const auto root = parsed->root();
@@ -903,7 +903,7 @@ struct WorkerAllowRule {
                 rendered += '\n';
             }
         } else {
-            rendered = cc::utils::json::to_pretty_string(*parsed);
+            rendered = loom::utils::json::to_pretty_string(*parsed);
         }
     } else {
         rendered = std::string(input_json);
@@ -945,7 +945,7 @@ public:
     /// in the bounded wait fails closed (no rules).
     [[nodiscard]] bool allows(std::string_view tool_name) {
         const auto path = grants_path();
-        cc::utils::ScopedFileLock flock(path, cc::utils::LockKind::Shared);
+        loom::utils::ScopedFileLock flock(path, loom::utils::LockKind::Shared);
         if (!flock.locked()) return false;
         for (const auto& rule : load_rules_at(path)) {
             if (rule.rule_content.empty() && rule.tool_name == tool_name) {
@@ -959,7 +959,7 @@ public:
     /// JSON array. Unknown/non-allow update shapes are ignored (the worker
     /// has no settings destinations other than its own grant file).
     void apply_updates(std::string_view updates_json) {
-        auto parsed = cc::utils::json::parse(std::string(updates_json));
+        auto parsed = loom::utils::json::parse(std::string(updates_json));
         if (!parsed) return;
         const auto root = parsed->root();
         if (!root.is_arr()) return;
@@ -977,7 +977,7 @@ public:
         const auto path = grants_path();
         std::lock_guard<std::mutex> proc_lock(
             shard_mutexes[shard_index_for(path.string())]);
-        cc::utils::ScopedFileLock flock(path);
+        loom::utils::ScopedFileLock flock(path);
         if (!flock.locked()) {
             // Fail closed: drop this update rather than persist against an
             // unlocked file. The grant was already enforced for THIS call;
@@ -988,13 +988,13 @@ public:
 
         std::vector<WorkerAllowRule> rules = load_rules_at(path);
         std::size_t added = 0;
-        root.iter([&](cc::utils::json::JsonVal update) {
+        root.iter([&](loom::utils::json::JsonVal update) {
             if (!update.is_obj()) return;
             if (update.get_string("type") != "addRules") return;
             if (update.get_string("behavior") != "allow") return;
             const auto rules_node = update.get("rules");
             if (!rules_node.is_arr()) return;
-            rules_node.iter([&](cc::utils::json::JsonVal rule) {
+            rules_node.iter([&](loom::utils::json::JsonVal rule) {
                 if (!rule.is_obj()) return;
                 const auto name = rule.get("toolName");
                 if (!name.is_str() || name.as_str().empty()) return;
@@ -1022,10 +1022,10 @@ public:
 
 private:
     [[nodiscard]] fs::path grants_path() const {
-        const auto team = cc::utils::team_dir(team_name_);
+        const auto team = loom::utils::team_dir(team_name_);
         return fs::path{team} / "permissions" /
                ("worker-allow-" +
-                cc::utils::detail::sanitize_path_component(agent_name_, "agent") +
+                loom::utils::detail::sanitize_path_component(agent_name_, "agent") +
                 ".json");
     }
 
@@ -1039,13 +1039,13 @@ private:
         // returned buffer — a FIFO swapped over the leaf cannot block and a
         // symlink cannot reach its target. A missing/non-regular/corrupt
         // file yields an empty rule set.
-        const auto leaf = cc::utils::read_regular_file(path);
+        const auto leaf = loom::utils::read_regular_file(path);
         if (!leaf.present()) return rules;
-        auto parsed = cc::utils::json::parse(leaf.contents);
+        auto parsed = loom::utils::json::parse(leaf.contents);
         if (!parsed) return rules;
         const auto list = parsed->root().get("rules");
         if (!list.is_arr()) return rules;
-        list.iter([&](cc::utils::json::JsonVal rule) {
+        list.iter([&](loom::utils::json::JsonVal rule) {
             if (!rule.is_obj()) return;
             const auto name = rule.get("tool_name");
             if (!name.is_str()) return;
@@ -1077,7 +1077,7 @@ private:
             out += "\"}";
         }
         out += "]}";
-        (void)cc::utils::atomic_replace_file(path, out);
+        (void)loom::utils::atomic_replace_file(path, out);
     }
 
     std::string team_name_;
@@ -1157,7 +1157,7 @@ inline std::string PermissionSync::build_response_text(
 inline std::optional<SwarmPermissionRequestMessage> PermissionSync::parse_request(
     std::string_view text
 ) {
-    auto parsed = cc::utils::json::parse(text);
+    auto parsed = loom::utils::json::parse(text);
     if (!parsed.has_value()) return std::nullopt;
     const auto root = parsed->root();
     if (!root.is_obj() || root.get_string("type") != "permission_request") {
@@ -1181,7 +1181,7 @@ inline std::optional<SwarmPermissionRequestMessage> PermissionSync::parse_reques
 inline std::optional<SwarmPermissionResponseMessage> PermissionSync::parse_response(
     std::string_view text
 ) {
-    auto parsed = cc::utils::json::parse(text);
+    auto parsed = loom::utils::json::parse(text);
     if (!parsed.has_value()) return std::nullopt;
     const auto root = parsed->root();
     if (!root.is_obj() || root.get_string("type") != "permission_response") {
@@ -1218,11 +1218,11 @@ inline bool PermissionSync::send_request_to_leader(
     const SwarmPermissionRequestMessage& request,
     std::string_view team_name
 ) {
-    cc::utils::TeammateMessage message;
+    loom::utils::TeammateMessage message;
     message.from = request.agent_id;
     message.text = build_request_text(request);
     message.timestamp = permission_detail::unix_millis_now();
-    return cc::utils::write_to_mailbox(
+    return loom::utils::write_to_mailbox(
         TEAM_LEAD_NAME, std::move(message), team_name).has_value();
 }
 
@@ -1231,11 +1231,11 @@ inline bool PermissionSync::send_response_to_worker(
     const SwarmPermissionResponseMessage& response,
     std::string_view team_name
 ) {
-    cc::utils::TeammateMessage message;
+    loom::utils::TeammateMessage message;
     message.from = std::string(TEAM_LEAD_NAME);
     message.text = build_response_text(response);
     message.timestamp = permission_detail::unix_millis_now();
-    return cc::utils::write_to_mailbox(
+    return loom::utils::write_to_mailbox(
         worker_name, std::move(message), team_name).has_value();
 }
 
@@ -1244,7 +1244,7 @@ inline std::optional<SwarmPermissionResponseMessage> PermissionSync::poll_respon
     std::string_view team_name,
     std::string_view request_id
 ) {
-    auto messages = cc::utils::read_inbox(worker_name, team_name);
+    auto messages = loom::utils::read_inbox(worker_name, team_name);
     if (!messages) return std::nullopt;
 
     // Process-local consumed registry; keyed by team so request ids never
@@ -1311,4 +1311,4 @@ inline std::chrono::milliseconds PermissionSync::default_timeout() {
     return std::chrono::milliseconds(300000);
 }
 
-} // namespace cc::utils::swarm_helpers
+} // namespace loom::utils::swarm_helpers

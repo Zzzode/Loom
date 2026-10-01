@@ -1,7 +1,7 @@
 export module loom.commands.onboarding;
 
 import std;
-export namespace cc::commands::onboarding {
+export namespace loom::commands::onboarding {
 namespace fs = std::filesystem;
 
 struct CommandResponse { bool ok{true}; std::string message; };

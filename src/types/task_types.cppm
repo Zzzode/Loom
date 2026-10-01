@@ -21,7 +21,7 @@ import std;
 
 import loom.serdes.json;
 
-export namespace cc::tasks {
+export namespace loom::tasks {
 
 // ---------------------------------------------------------------------------
 // Enums + core types
@@ -140,7 +140,7 @@ inline TaskPriority priority_from(std::string_view s) {
 } // namespace detail
 
 inline std::string task_to_json(const Task& t) {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
 
     root.add("id", doc.string(t.id));
@@ -175,7 +175,7 @@ inline std::string task_to_json(const Task& t) {
 }
 
 inline std::expected<Task, std::string> task_from_json(std::string_view s) {
-    auto parsed = cc::utils::json::parse(s);
+    auto parsed = loom::utils::json::parse(s);
     if (!parsed) return std::unexpected("invalid task JSON");
     auto v = parsed->root();
     if (!v.is_obj()) return std::unexpected("task JSON root is not object");
@@ -191,7 +191,7 @@ inline std::expected<Task, std::string> task_from_json(std::string_view s) {
 
     auto subs = v.get("subtask_ids");
     if (subs.is_arr()) {
-        subs.iter([&](cc::utils::json::JsonVal e) {
+        subs.iter([&](loom::utils::json::JsonVal e) {
             if (e.is_str()) t.subtask_ids.emplace_back(e.as_str());
         });
     }
@@ -202,7 +202,7 @@ inline std::expected<Task, std::string> task_from_json(std::string_view s) {
 
     auto meta = v.get("metadata");
     if (meta.is_obj()) {
-        meta.iter_obj([&](cc::utils::json::JsonVal k, cc::utils::json::JsonVal val) {
+        meta.iter_obj([&](loom::utils::json::JsonVal k, loom::utils::json::JsonVal val) {
             if (k.is_str() && val.is_str()) {
                 t.metadata.emplace(std::string(k.as_str()), std::string(val.as_str()));
             }
@@ -277,4 +277,4 @@ inline std::string generate_task_id() {
     return out;
 }
 
-} // namespace cc::tasks
+} // namespace loom::tasks

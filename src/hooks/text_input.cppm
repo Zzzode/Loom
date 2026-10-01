@@ -11,7 +11,7 @@ export module loom.hooks.text_input;
 
 import std;
 
-export namespace cc::hooks {
+export namespace loom::hooks {
 
 // ============================================================
 // Direction and movement types
@@ -460,4 +460,4 @@ private:
     }
 };
 
-} // namespace cc::hooks
+} // namespace loom::hooks

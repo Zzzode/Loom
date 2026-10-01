@@ -15,20 +15,20 @@ export module loom.ui.app.app_dialog_registration;
 
 import loom.ui.dialogs.system;
 
-export namespace cc::ui::app_dialogs {
+export namespace loom::ui::app_dialogs {
 
 void register_default_dialog_renderers(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry);
 void register_modal_dialog_renderers(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry);
 void register_bottom_dialog_renderers(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry);
 void register_all_dialog_renderers(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry);
 void register_hooks_dialog_renderer(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry);
 void register_teams_dialog_renderer(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry);
 
 /// RFC 0002 F2 row 6: register the feature-dialog factories (agent wizard,
 /// plugin install wizard, plugin trust dialog) into the
@@ -38,4 +38,4 @@ void register_teams_dialog_renderer(
 /// module. Called once at app startup, alongside the dialog renderers.
 void register_feature_dialog_factories();
 
-}  // namespace cc::ui::app_dialogs
+}  // namespace loom::ui::app_dialogs

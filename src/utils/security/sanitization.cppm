@@ -9,7 +9,7 @@ export module loom.security.sanitization;
 
 import std;
 
-export namespace cc::utils::sanitization {
+export namespace loom::utils::sanitization {
 
 namespace detail {
 
@@ -352,4 +352,4 @@ struct SanitizedValue {
     }, value.value);
 }
 
-} // namespace cc::utils::sanitization
+} // namespace loom::utils::sanitization

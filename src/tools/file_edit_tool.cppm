@@ -37,15 +37,15 @@ import loom.fs.path;
 import loom.tools.sed_edit_parser;
 import loom.skills.file_access.port;
 
-export namespace cc::tools::file_edit {
+export namespace loom::tools::file_edit {
 
-using cc::core::ToolInput;
-using cc::core::ToolResult;
-using cc::core::ToolDefinition;
-using cc::core::ToolPermission;
-using cc::core::InputSchema;
-using cc::core::SchemaProperty;
-using cc::utils::Result;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
+using loom::core::ToolDefinition;
+using loom::core::ToolPermission;
+using loom::core::InputSchema;
+using loom::core::SchemaProperty;
+using loom::utils::Result;
 
 namespace fs = std::filesystem;
 
@@ -70,7 +70,7 @@ struct ParsedInput {
     bool replace_all = false;
 
     static std::expected<ParsedInput, std::string> from_json(std::string_view json_sv) {
-        using namespace cc::utils::json;
+        using namespace loom::utils::json;
         auto doc = parse(json_sv);
         if (!doc) return std::unexpected("Invalid JSON input");
         auto root = doc->root();
@@ -137,13 +137,13 @@ private:
 /// Enables the Edit UI / permission pipeline to handle BashTool-style
 /// in-place edits transparently.
 ///
-/// Parses the command via cc::tools::sed_edit_parser::parse_sed_edit_command
+/// Parses the command via loom::tools::sed_edit_parser::parse_sed_edit_command
 /// and converts the result into a ParsedInput suitable for FileEditTool.
 /// Returns std::nullopt if the command is not a valid sed in-place edit
 /// (e.g. not a sed command, missing -i flag, multiple files, etc.).
 [[nodiscard]] inline std::optional<ParsedInput>
 try_parse_sed_in_place(std::string_view sed_command) {
-    auto result = cc::tools::sed_edit_parser::parse_sed_edit_command(sed_command);
+    auto result = loom::tools::sed_edit_parser::parse_sed_edit_command(sed_command);
     if (!result) return std::nullopt;
 
     const auto& info = *result;
@@ -255,11 +255,11 @@ public:
         auto a = ParsedInput::from_json(json_a);
         auto b = ParsedInput::from_json(json_b);
         if (!a || !b) return false;
-        cc::utils::file_edit::NormalizedFileEditInput na{
-            a->file_path, { cc::utils::file_edit::FileEdit{
+        loom::utils::file_edit::NormalizedFileEditInput na{
+            a->file_path, { loom::utils::file_edit::FileEdit{
                 a->old_string, a->new_string, a->replace_all } }};
-        cc::utils::file_edit::NormalizedFileEditInput nb{
-            b->file_path, { cc::utils::file_edit::FileEdit{
+        loom::utils::file_edit::NormalizedFileEditInput nb{
+            b->file_path, { loom::utils::file_edit::FileEdit{
                 b->old_string, b->new_string, b->replace_all } }};
         return are_file_edits_inputs_equivalent(na, nb, cache_);
     }
@@ -409,7 +409,7 @@ public:
         }
 
         // migrated: findActualString — handles curly-quote normalisation
-        auto actual_old = cc::utils::file_edit::find_actual_string(
+        auto actual_old = loom::utils::file_edit::find_actual_string(
             *file_content, old_s);
 
         // migrated: errorCode=8 — old_string not found
@@ -498,7 +498,7 @@ public:
         // --- 3. critical section: read + staleness check + write ----------
         // (Async yields between read and write would break atomicity, so
         //  this section deliberately uses only synchronous std::filesystem.)
-        auto read = cc::utils::file_edit::read_file_for_edit(abs_path);
+        auto read = loom::utils::file_edit::read_file_for_edit(abs_path);
         if (read.file_exists) {
             auto last_write = get_file_mtime(abs_path);
             auto last_read = read_state_.get(abs_path);
@@ -517,21 +517,21 @@ public:
 
         // --- 4. actual-match + quote-style preservation -------------------
         std::string actual_old =
-            cc::utils::file_edit::find_actual_string(read.content, old_s)
+            loom::utils::file_edit::find_actual_string(read.content, old_s)
                 .value_or(old_s);
         std::string actual_new =
-            cc::utils::file_edit::preserve_quote_style(
+            loom::utils::file_edit::preserve_quote_style(
                 old_s, actual_old, new_s);
 
         // --- 5. generate patch + apply edit ---
-        auto patch = cc::utils::file_edit::get_patch_for_edit(
+        auto patch = loom::utils::file_edit::get_patch_for_edit(
             abs_path.string(), read.content,
             actual_old, actual_new, replace_all);
         if (!patch) {
             cr.error_what = patch.error();
             return cr;
         }
-        cc::utils::file_edit::PatchForEditsResult patch_result = std::move(*patch);
+        loom::utils::file_edit::PatchForEditsResult patch_result = std::move(*patch);
 
         // --- 6. atomic write with encoding + line-ending restoration ------
         auto write_ec = write_text_content(abs_path, patch_result.updated_file,
@@ -595,7 +595,7 @@ public:
             std::error_code ec;
             auto cwd = fs::current_path(ec);
             if (ec) cwd = abs_path.parent_path();
-            cc::skills::notify_file_access(abs_path, cwd);
+            loom::skills::notify_file_access(abs_path, cwd);
         }
 
         return cr;
@@ -609,8 +609,8 @@ public:
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
         auto parsed = ParsedInput::from_json(input.json());
         if (!parsed) {
-            return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::invalid_argument, parsed.error()));
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::invalid_argument, parsed.error()));
         }
         auto v = validate_input(*parsed);
         if (!v.passed) {
@@ -641,7 +641,7 @@ private:
 
     static std::string expand_path(std::string_view p) {
         try {
-            return cc::utils::path::expand_path(fs::path{std::string(p)}).string();
+            return loom::utils::path::expand_path(fs::path{std::string(p)}).string();
         } catch (...) {
             std::error_code ec;
             return fs::absolute(std::string(p), ec).string();
@@ -670,14 +670,14 @@ private:
         const fs::path& p,
         std::string_view content,
         std::string_view /*encoding*/,
-        cc::utils::file_edit::LineEndingType le)
+        loom::utils::file_edit::LineEndingType le)
     {
         std::string to_write;
-        if (le == cc::utils::file_edit::LineEndingType::LF) {
+        if (le == loom::utils::file_edit::LineEndingType::LF) {
             to_write = std::string(content);
         } else {
             const std::string_view target =
-                (le == cc::utils::file_edit::LineEndingType::CRLF) ? "\r\n" : "\r";
+                (le == loom::utils::file_edit::LineEndingType::CRLF) ? "\r\n" : "\r";
             to_write.reserve(content.size());
             for (size_t i = 0; i < content.size(); ++i) {
                 if (content[i] == '\n') to_write += target;
@@ -715,35 +715,35 @@ private:
     GitDiffFn         git_diff_hook_;
 };
 
-} // namespace cc::tools::file_edit
+} // namespace loom::tools::file_edit
 
 // =========================================================================
 // Public exports + ITool adapter
 // =========================================================================
 
-export namespace cc::tools {
-    using cc::tools::file_edit::FileEditTool;
-    using cc::tools::file_edit::ParsedInput;
-    using cc::tools::file_edit::ReadTimestamp;
-    using cc::tools::file_edit::ReadFileState;
+export namespace loom::tools {
+    using loom::tools::file_edit::FileEditTool;
+    using loom::tools::file_edit::ParsedInput;
+    using loom::tools::file_edit::ReadTimestamp;
+    using loom::tools::file_edit::ReadFileState;
 
     /// Factory: wrap FileEditTool as an ITool.
-    [[nodiscard]] auto make_file_edit_tool() -> std::unique_ptr<cc::core::ITool> {
-        struct Adapter final : cc::core::ITool {
+    [[nodiscard]] auto make_file_edit_tool() -> std::unique_ptr<loom::core::ITool> {
+        struct Adapter final : loom::core::ITool {
             FileEditTool tool_;
-            cc::core::ToolDefinition def_ = FileEditTool::definition();
+            loom::core::ToolDefinition def_ = FileEditTool::definition();
 
-            const cc::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<cc::core::ToolResult, cc::core::Error> execute(
-                const cc::core::ToolInput& input) override
+            const loom::core::ToolDefinition& definition() const override { return def_; }
+            std::expected<loom::core::ToolResult, loom::core::Error> execute(
+                const loom::core::ToolInput& input) override
             {
                 auto result = tool_.execute(input);
                 if (result) return std::move(*result);
-                return std::unexpected(cc::core::Error::make(
-                    cc::core::ErrorCode::ToolExecutionFailed,
+                return std::unexpected(loom::core::Error::make(
+                    loom::core::ErrorCode::ToolExecutionFailed,
                     result.error().format()));
             }
-            bool check_permission(const cc::core::ToolInput& input) const override {
+            bool check_permission(const loom::core::ToolInput& input) const override {
                 return tool_.check_permission(input);
             }
         };
@@ -751,9 +751,9 @@ export namespace cc::tools {
     }
 
     /// Public wrapper for the sed-in-place parser. Delegates to
-    /// cc::tools::sed_edit_parser::parse_sed_edit_command and converts
+    /// loom::tools::sed_edit_parser::parse_sed_edit_command and converts
     /// the result into a ParsedInput for FileEditTool consumption.
     [[nodiscard]] inline auto try_parse_sed_in_place(std::string_view cmd) {
-        return cc::tools::file_edit::try_parse_sed_in_place(cmd);
+        return loom::tools::file_edit::try_parse_sed_in_place(cmd);
     }
 }

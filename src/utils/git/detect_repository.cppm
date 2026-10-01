@@ -8,7 +8,7 @@ import std;
 
 import loom.process.bash.bash_execution;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
 
@@ -60,7 +60,7 @@ inline std::optional<RepoInfo> get_repo_info(fs::path start = fs::current_path()
 
             // Get current branch
             auto cmd_branch = "git -C " + current.string() + " branch --show-current 2>/dev/null";
-            auto branch_cap = cc::utils::bash::exec_capture(cmd_branch);
+            auto branch_cap = loom::utils::bash::exec_capture(cmd_branch);
             if (branch_cap && !branch_cap->output.empty()) {
                 std::string branch(std::move(branch_cap->output));
                 while (!branch.empty() && (branch.back() == '\n' || branch.back() == '\r'))
@@ -70,7 +70,7 @@ inline std::optional<RepoInfo> get_repo_info(fs::path start = fs::current_path()
 
             // Get remote URL
             auto cmd_remote = "git -C " + current.string() + " remote get-url origin 2>/dev/null";
-            auto remote_cap = cc::utils::bash::exec_capture(cmd_remote);
+            auto remote_cap = loom::utils::bash::exec_capture(cmd_remote);
             if (remote_cap && !remote_cap->output.empty()) {
                 std::string url(std::move(remote_cap->output));
                 while (!url.empty() && (url.back() == '\n' || url.back() == '\r'))
@@ -103,4 +103,4 @@ inline std::optional<RepoInfo> get_repo_info(fs::path start = fs::current_path()
     return std::nullopt;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

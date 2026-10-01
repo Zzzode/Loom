@@ -29,7 +29,7 @@ import std;
 
 import loom.tools.bash_security;
 
-export namespace cc::tools::sandbox {
+export namespace loom::tools::sandbox {
 
 // ---------------------------------------------------------------------------
 // Types
@@ -442,4 +442,4 @@ inline bool matchWildcardPattern(std::string_view p, std::string_view c) {
     return match_wildcard_pattern(p, c);
 }
 
-} // namespace cc::tools::sandbox
+} // namespace loom::tools::sandbox

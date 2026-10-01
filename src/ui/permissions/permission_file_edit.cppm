@@ -53,12 +53,12 @@ import loom.ui.visual.file_edit_tool_diff;
 import loom.ui.permissions.components;
 import loom.fs.edit.file_edit;
 
-export namespace cc::ui::permissions::file_edit {
+export namespace loom::ui::permissions::file_edit {
 
 using namespace ftxui;
-namespace pc = cc::ui::permissions::components;
-namespace fed = cc::ui::components::file_edit_tool_diff;
-namespace fe = cc::utils::file_edit;
+namespace pc = loom::ui::permissions::components;
+namespace fed = loom::ui::components::file_edit_tool_diff;
+namespace fe = loom::utils::file_edit;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -683,4 +683,4 @@ struct PromptState {
     return RenderFileEditPrompt(state);
 }
 
-} // namespace cc::ui::permissions::file_edit
+} // namespace loom::ui::permissions::file_edit

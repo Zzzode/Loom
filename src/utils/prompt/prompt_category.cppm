@@ -3,7 +3,7 @@ export module loom.prompt.support.prompt_category;
 
 import std;
 
-export namespace cc::utils::prompt_category {
+export namespace loom::utils::prompt_category {
 
 inline constexpr std::string_view default_output_style_name = "default";
 
@@ -48,4 +48,4 @@ inline constexpr std::string_view default_output_style_name = "default";
     return "repl_main_thread:outputStyle:custom";
 }
 
-} // namespace cc::utils::prompt_category
+} // namespace loom::utils::prompt_category

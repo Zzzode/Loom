@@ -11,7 +11,7 @@ export module loom.services.api.with_retry_simple;
 
 import std;
 
-export namespace cc::services::api::with_retry_simple {
+export namespace loom::services::api::with_retry_simple {
 
 // =========================================================================
 // RetryConfig
@@ -83,4 +83,4 @@ inline int RunWithRetry(const RetryConfig& cfg,
     return last_rc;
 }
 
-}  // namespace cc::services::api::with_retry_simple
+}  // namespace loom::services::api::with_retry_simple

@@ -12,11 +12,11 @@ import loom.types.types;
 import loom.commands.command;
 import loom.state.app_state;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
-/// Ordinal of ActionType::SetBriefOnly in the cc::state::ActionType enum.
+/// Ordinal of ActionType::SetBriefOnly in the loom::state::ActionType enum.
 /// Keep in sync with store.cppm enum ordering.
 constexpr int ACTION_SET_BRIEF_ONLY = 24;
 
@@ -42,7 +42,7 @@ public:
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         // Try the AppState bridge first (set by app.cppm).
         if (const void* raw_state = ctx.get_app_state(); raw_state != nullptr) {
-            const auto* state = static_cast<const cc::state::AppState*>(raw_state);
+            const auto* state = static_cast<const loom::state::AppState*>(raw_state);
             bool current = state->is_brief_only;
 
             // Determine new value: explicit arg wins, otherwise toggle.
@@ -96,4 +96,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

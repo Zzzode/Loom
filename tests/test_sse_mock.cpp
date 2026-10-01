@@ -9,7 +9,7 @@ import std;
 import loom.services.api.sse;
 import loom.cli.sse_transport;
 
-using namespace cc::services::api::sse;
+using namespace loom::services::api::sse;
 
 namespace {
 
@@ -352,10 +352,10 @@ TEST(SseTransportTls, HttpsEndpointCompletesHandshakeAndStreamsEvents) {
     // Trust the fixture CA for this test only.
     CaBundleGuard ca_guard(cert);
 
-    cc::cli::SSETransport transport;
-    std::vector<cc::cli::SSEEvent> received;
+    loom::cli::SSETransport transport;
+    std::vector<loom::cli::SSEEvent> received;
     std::vector<std::string> errors;
-    transport.on_event([&](const cc::cli::SSEEvent& e) { received.push_back(e); });
+    transport.on_event([&](const loom::cli::SSEEvent& e) { received.push_back(e); });
     transport.on_error([&](std::string_view e) { errors.push_back(std::string(e)); });
 
     const std::string url =
@@ -412,7 +412,7 @@ TEST(SseTransportTls, HttpsWithUntrustedCertificateIsRejected) {
     CaBundleGuard ca_guard("/etc/ssl/certs/ca-certificates.crt");
     unsetenv("SSL_CERT_FILE");
 
-    cc::cli::SSETransport transport(cc::cli::SSEReconnectPolicy{
+    loom::cli::SSETransport transport(loom::cli::SSEReconnectPolicy{
         .initial_delay = std::chrono::milliseconds(10),
         .max_delay = std::chrono::milliseconds(20),
         .backoff_multiplier = 1.0,
@@ -420,9 +420,9 @@ TEST(SseTransportTls, HttpsWithUntrustedCertificateIsRejected) {
         .max_retries = 1,
         .liveness_timeout = std::chrono::seconds(2),
     });
-    std::vector<cc::cli::SSEEvent> received;
+    std::vector<loom::cli::SSEEvent> received;
     std::vector<std::string> errors;
-    transport.on_event([&](const cc::cli::SSEEvent& e) { received.push_back(e); });
+    transport.on_event([&](const loom::cli::SSEEvent& e) { received.push_back(e); });
     transport.on_error([&](std::string_view e) { errors.push_back(std::string(e)); });
 
     const std::string url =

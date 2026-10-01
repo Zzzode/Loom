@@ -13,9 +13,9 @@ import loom.types.types;
 import loom.commands.command;
 import loom.process.bash.bash_execution;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// Information about a git branch
 struct BranchInfo {
@@ -97,7 +97,7 @@ private:
     std::vector<BranchInfo> branches_;
 
     [[nodiscard]] static Result<CommandResult> git_command(std::string_view command, std::string_view success) {
-        auto result = cc::utils::bash::execute_command(command);
+        auto result = loom::utils::bash::execute_command(command);
         if (!result) {
             return std::unexpected(Error::make(ErrorCode::InternalError, result.error()));
         }
@@ -111,7 +111,7 @@ private:
 
     [[nodiscard]] static std::vector<BranchInfo> read_git_branches() {
         std::vector<BranchInfo> branches;
-        auto result = cc::utils::bash::execute_command(
+        auto result = loom::utils::bash::execute_command(
             "git branch --format='%(HEAD)%09%(refname:short)%09%(upstream:short)%09%(subject)'");
         if (!result || result->exit_code != 0) return branches;
 
@@ -162,7 +162,7 @@ private:
             return std::unexpected(Error::make(ErrorCode::InvalidRequest,
                 std::format("Branch '{}' already exists.", name)));
         }
-        auto quoted = cc::utils::bash::escape_shell_arg(name);
+        auto quoted = loom::utils::bash::escape_shell_arg(name);
         auto command = std::format("git checkout -b {}", quoted);
         auto result = git_command(command, std::format("Created and switched to branch: {}", name));
         if (result) branches_ = read_git_branches();
@@ -170,7 +170,7 @@ private:
     }
 
     [[nodiscard]] Result<CommandResult> switch_branch(const std::string& name) {
-        auto quoted = cc::utils::bash::escape_shell_arg(name);
+        auto quoted = loom::utils::bash::escape_shell_arg(name);
         auto result = git_command(
             std::format("git checkout {}", quoted),
             std::format("Switched to branch: {}", name));
@@ -179,7 +179,7 @@ private:
     }
 
     [[nodiscard]] Result<CommandResult> delete_branch(const std::string& name) {
-        auto quoted = cc::utils::bash::escape_shell_arg(name);
+        auto quoted = loom::utils::bash::escape_shell_arg(name);
         auto result = git_command(
             std::format("git branch -d {}", quoted),
             std::format("Deleted branch: {}", name));
@@ -188,4 +188,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

@@ -10,7 +10,7 @@ module loom.tools.agent_runtime;
 
 import std;
 
-namespace cc::tools::agent_runtime {
+namespace loom::tools::agent_runtime {
 
 namespace fs = std::filesystem;
 
@@ -365,7 +365,7 @@ std::expected<AgentExecutionResult, std::string> run_agent(const AgentRuntimeCon
     }
 
     // NOTE: the actual LLM streaming loop is intentionally NOT here — it lives
-    // in cc::tools::agent::AgentWorker::run_agent_loop (agent_tool.cppm),
+    // in loom::tools::agent::AgentWorker::run_agent_loop (agent_tool.cppm),
     // which owns the Anthropic client, tool dispatch, and streaming state
     // machine. This function is the *runtime lifecycle bookkeeping* entrypoint
     // used by background/coordinator workers, tests, and RPC callers that only
@@ -586,4 +586,4 @@ AgentLifecycle get_agent_lifecycle(std::string_view agent_id) {
     }
     return AgentLifecycle::Failed;
 }
-} // namespace cc::tools::agent_runtime
+} // namespace loom::tools::agent_runtime

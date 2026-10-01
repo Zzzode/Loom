@@ -12,7 +12,7 @@ import loom.tasks.task;
 import loom.tasks.types;
 import loom.hooks.remaining_notifs;  // W7: feed TeammateShutdown slot from live tasks
 
-export namespace cc::tasks {
+export namespace loom::tasks {
 
 // ============================================================
 // Teammate Task Lifecycle
@@ -27,7 +27,7 @@ inline void request_teammate_shutdown(
     UpdateTeammateTaskFn update_task
 ) {
     update_task(task_id, [](InProcessTeammateTaskState& task) {
-        if (task.status != cc::core::TaskStatus::Running || task.shutdown_requested) {
+        if (task.status != loom::core::TaskStatus::Running || task.shutdown_requested) {
             return;
         }
         task.shutdown_requested = true;
@@ -41,7 +41,7 @@ inline void append_teammate_message(
     UpdateTeammateTaskFn update_task
 ) {
     update_task(task_id, [&](InProcessTeammateTaskState& task) {
-        if (task.status != cc::core::TaskStatus::Running) return;
+        if (task.status != loom::core::TaskStatus::Running) return;
         // Keep a lightweight in-state copy for UI zoom/drain consumers until a
         // dedicated message store is attached to the task registry.
         task.pending_user_messages.push_back(message);
@@ -56,7 +56,7 @@ inline void inject_user_message_to_teammate(
 ) {
     update_task(task_id, [&](InProcessTeammateTaskState& task) {
         // Only reject if teammate is in a terminal state
-        if (cc::core::is_terminal_status(task.status)) {
+        if (loom::core::is_terminal_status(task.status)) {
             return;
         }
         task.pending_user_messages.push_back(message);
@@ -73,7 +73,7 @@ inline void inject_user_message_to_teammate(
     for (const auto& task : all_tasks) {
         if (task.identity.agent_id == agent_id) {
             // Prefer running tasks
-            if (task.status == cc::core::TaskStatus::Running) {
+            if (task.status == loom::core::TaskStatus::Running) {
                 return task;
             }
             if (!fallback) {
@@ -86,7 +86,7 @@ inline void inject_user_message_to_teammate(
 
 /// Get all in-process teammate tasks
 [[nodiscard]] inline std::vector<InProcessTeammateTaskState> get_all_in_process_teammate_tasks(
-    const std::vector<cc::core::TaskStateBase*>& all_tasks
+    const std::vector<loom::core::TaskStateBase*>& all_tasks
 ) {
     std::vector<InProcessTeammateTaskState> result;
     for (const auto* task : all_tasks) {
@@ -97,15 +97,15 @@ inline void inject_user_message_to_teammate(
     // list this reader returns. Mirrors TS useTeammateLifecycleNotification
     // scanning the AppState task map for terminal teammates. Idempotent (the
     // bridge dedups by agent_id) and runs only on full reads, not per turn.
-    cc::hooks::notifs::inject_teammate_shutdowns_from_tasks(
+    loom::hooks::notifs::inject_teammate_shutdowns_from_tasks(
         result,
         [](const InProcessTeammateTaskState& t) {
-            return cc::core::is_terminal_status(t.status);
+            return loom::core::is_terminal_status(t.status);
         },
         [](const InProcessTeammateTaskState& t)
-            -> cc::hooks::notifs::TeammateShutdownCause {
-            using TS = cc::core::TaskStatus;
-            using C = cc::hooks::notifs::TeammateShutdownCause;
+            -> loom::hooks::notifs::TeammateShutdownCause {
+            using TS = loom::core::TaskStatus;
+            using C = loom::hooks::notifs::TeammateShutdownCause;
             switch (t.status) {
                 case TS::Completed: return C::Finished;
                 case TS::Failed:    return C::Failed;
@@ -124,7 +124,7 @@ inline void inject_user_message_to_teammate(
 ) {
     std::vector<InProcessTeammateTaskState> running;
     for (const auto& t : all_tasks) {
-        if (t.status == cc::core::TaskStatus::Running) {
+        if (t.status == loom::core::TaskStatus::Running) {
             running.push_back(t);
         }
     }
@@ -153,4 +153,4 @@ inline void inject_user_message_to_teammate(
     return drained;
 }
 
-} // namespace cc::tasks
+} // namespace loom::tasks

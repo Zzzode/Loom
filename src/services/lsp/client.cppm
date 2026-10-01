@@ -20,10 +20,10 @@ import loom.types.types;
 import loom.process.bash.bash_execution;
 import loom.services.lsp.diagnostic_registry;
 
-export namespace cc::services::lsp {
+export namespace loom::services::lsp {
 
-using namespace cc::utils::json;
-using namespace cc::core;
+using namespace loom::utils::json;
+using namespace loom::core;
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 
@@ -100,7 +100,7 @@ struct LocationLink {
 
 // Local LSP diagnostic transport struct. Renamed from `Diagnostic` to avoid
 // colliding with cc.services.lsp.diagnostic_registry's exported
-// cc::services::lsp::Diagnostic (both modules export into the same namespace).
+// loom::services::lsp::Diagnostic (both modules export into the same namespace).
 // TS REF: vscode-languageserver-protocol Diagnostic (raw client-side shape)
 struct LspClientDiagnostic {
     Range range;
@@ -503,7 +503,7 @@ public:
         }
 
         // Open bidirectional pipe
-        pipe_handle_ = cc::utils::bash::popen_spawn_duplex(full_cmd);
+        pipe_handle_ = loom::utils::bash::popen_spawn_duplex(full_cmd);
         if (!pipe_handle_) {
             return std::unexpected(LspClientError::ConnectionFailed);
         }
@@ -608,7 +608,7 @@ public:
     
     void close() override {
         if (pipe_handle_) {
-            cc::utils::bash::pclose_spawn(pipe_handle_);
+            loom::utils::bash::pclose_spawn(pipe_handle_);
             pipe_handle_ = nullptr;
         }
         connected_ = false;
@@ -1595,7 +1595,7 @@ public:
         handle_incoming_message(std::move(message));
     }
 
-    // --- Low-level JSON helpers (operate on a cc::utils::json::JsonVal) ---
+    // --- Low-level JSON helpers (operate on a loom::utils::json::JsonVal) ---
 
     [[nodiscard]] static Position parse_position(JsonVal node) {
         Position p;
@@ -1911,4 +1911,4 @@ private:
     std::shared_ptr<DiagnosticRegistry> diagnostic_registry_;
 };
 
-} // namespace cc::services::lsp
+} // namespace loom::services::lsp

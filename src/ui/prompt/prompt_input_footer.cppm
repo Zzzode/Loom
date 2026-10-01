@@ -50,7 +50,7 @@ import std;
 // ANSI → FTXUI element converter (used by StatusLine for colored command output).
 // RFC 0002 F1 row 8: lives in the chrome leaf cc.ui.chrome.ansi_render (the
 // prompt -> messages back edge through message_tool_result is severed; the
-// function stays in cc::ui::messages namespace, reached via the msgs alias).
+// function stays in loom::ui::messages namespace, reached via the msgs alias).
 import loom.ui.chrome.ansi_render;
 // P0-1: palette tokens (bash_border / prompt_border color resolution).
 import loom.ui.foundation.design_tokens;
@@ -59,7 +59,7 @@ import loom.ui.foundation.theme_provider;
 // Unified canonical PromptInputMode enum (replaces local 5-value definition).
 import loom.ui.foundation.ui_types;
 
-export namespace cc::ui::prompt::footer {
+export namespace loom::ui::prompt::footer {
 
 using namespace ftxui;
 
@@ -67,7 +67,7 @@ using namespace ftxui;
 // Enums (1:1 with TS types)
 // ============================================================
 
-/// Prompt input mode — unified canonical enum from cc::ui::common.
+/// Prompt input mode — unified canonical enum from loom::ui::common.
 /// Previously this file defined a local 5-value PromptInputMode:
 ///   {Prompt, Bash, SlashCommand, HistorySearch, PlanMode}
 /// Old→new mapping:
@@ -75,18 +75,18 @@ using namespace ftxui;
 /// All other values (Bash, SlashCommand, HistorySearch, PlanMode)
 /// are identical in the unified definition.
 /// TS REF: src/types/textInputTypes.ts:265 (PromptInputMode type)
-using cc::ui::common::PromptInputMode;
+using loom::ui::common::PromptInputMode;
 
-/// Vim mode — canonical enum from cc::ui::common (ui_types.cppm).
+/// Vim mode — canonical enum from loom::ui::common (ui_types.cppm).
 /// Previously this file defined a local 4-value enum { Normal, Insert, Visual, None }.
 /// "None" (vim disabled) is now expressed as std::optional<VimMode>{nullopt}.
 /// TS REF: src/types/textInputTypes.ts:222 (public VimMode = 'INSERT'|'NORMAL')
 ///          src/hooks/useVimInput.ts (internal state machine with Visual/Replace/etc.)
-using cc::ui::common::VimMode;
+using loom::ui::common::VimMode;
 
 /// Permission mode.  Mirrors TS ToolPermissionContext.mode (Tool.ts).
-/// Canonical definition lives in cc::ui::common (ui_types.cppm).
-using cc::ui::common::PermissionMode;
+/// Canonical definition lives in loom::ui::common (ui_types.cppm).
+using loom::ui::common::PermissionMode;
 
 // ============================================================
 // Permission mode helpers (from TS PermissionMode.ts)
@@ -192,7 +192,7 @@ struct ModeIndicatorOptions {
     // bashBorder token for consistency with prompt prefix + transcript
     // user-bash-input bubble — fixes BUG-3: 3-sites bash-border divergence).
     if (opts.mode == PromptInputMode::Bash) {
-        using namespace cc::ui::design;
+        using namespace loom::ui::design;
         const auto& pal = *theme::current_theme().palette;
         return hbox({ text("! for bash mode") | color(pal.bash_border) })
              | size(HEIGHT, EQUAL, 1);
@@ -264,7 +264,7 @@ struct ModeIndicatorOptions {
     // ── Transcript mode pill (TS REF: Messages.tsx isTranscriptMode L459)
     //    Shown when user pressed Ctrl+O to enter detailed transcript view.
     if (opts.is_transcript_mode) {
-        using namespace cc::ui::design;
+        using namespace loom::ui::design;
         const auto& pal = *theme::current_theme().palette;
         Element pill = hbox({
             text("TRANSCRIPT") | color(pal.info) | bold,
@@ -275,7 +275,7 @@ struct ModeIndicatorOptions {
     // ── Brief mode pill (TS REF: Messages.tsx isBriefOnly L236)
     //    Shown when user enabled brief-only filter (e.g. via /brief).
     if (opts.is_brief_mode) {
-        using namespace cc::ui::design;
+        using namespace loom::ui::design;
         const auto& pal = *theme::current_theme().palette;
         Element pill = hbox({
             text("BRIEF") | color(pal.brief_label) | bold,
@@ -486,7 +486,7 @@ struct StatusLineOptions {
     //       which bleeds through and clashes with our terminal chrome.  We
     //       force a neutral userMessageBackground RGB(20,20,22) as the row bg
     //       so the content stays subdued and in-theme.
-    namespace msgs = cc::ui::messages;
+    namespace msgs = loom::ui::messages;
     // ansi_to_ftxui_elements returns its per-line vector type-erased as
     // shared_ptr<void> (see ansi_render.cppm); cast it back and compose.
     auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
@@ -576,7 +576,7 @@ struct StatusLineOptions {
 
     // Resolve colors from active theme palette.
     // Uses real Palette fields (see design_system/design_tokens.cppm).
-    namespace theme_ns = cc::ui::design::theme;
+    namespace theme_ns = loom::ui::design::theme;
     auto theme = theme_ns::current_theme();
     const auto& pal = *theme.palette;
 
@@ -975,7 +975,7 @@ namespace detail {
 /// to an FTXUI Color, using the active theme palette where possible.
 /// TS REF: src/components/design-system/ThemedText.tsx (resolveColor)
 [[nodiscard]] inline Color ResolveSemanticColor(std::string_view color_name) {
-    using namespace cc::ui::design;
+    using namespace loom::ui::design;
     const auto& pal = *theme::current_theme().palette;
     if (color_name == "error")   return pal.danger;
     if (color_name == "warning") return pal.warning;
@@ -1005,7 +1005,7 @@ namespace detail {
     using ftxui::dim;
     using ftxui::hbox;
 
-    using namespace cc::ui::design;
+    using namespace loom::ui::design;
     const auto& pal = *theme::current_theme().palette;
 
     const auto& pill = item.pill;
@@ -1837,4 +1837,4 @@ struct FooterOptions {
     });
 }
 
-} // namespace cc::ui::prompt::footer
+} // namespace loom::ui::prompt::footer

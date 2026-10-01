@@ -13,9 +13,9 @@ import loom.services.lsp.types;
 import loom.services.lsp.LSPServerInstance;
 import loom.services.lsp.diagnostic_registry;
 
-export namespace cc::services::lsp {
+export namespace loom::services::lsp {
 
-using cc::utils::Result;
+using loom::utils::Result;
 namespace fs = std::filesystem;
 
 struct PluginLspServerDefinition {
@@ -26,7 +26,7 @@ struct PluginLspServerDefinition {
 namespace detail {
 
 [[nodiscard]] std::optional<std::string> json_string(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::string_view key
 ) {
     auto child = value.get(key);
@@ -35,21 +35,21 @@ namespace detail {
 }
 
 inline void append_json_string_array(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::vector<std::string>& out
 ) {
     if (!value.is_arr()) return;
-    value.iter([&](cc::utils::json::JsonVal item) {
+    value.iter([&](loom::utils::json::JsonVal item) {
         if (item.is_str()) out.emplace_back(item.as_str());
     });
 }
 
 inline void append_json_string_map(
-    cc::utils::json::JsonVal value,
+    loom::utils::json::JsonVal value,
     std::unordered_map<std::string, std::string>& out
 ) {
     if (!value.is_obj()) return;
-    value.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal item) {
+    value.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal item) {
         if (key.is_str() && item.is_str()) {
             out[std::string(key.as_str())] = std::string(item.as_str());
         }
@@ -62,11 +62,11 @@ inline void append_json_string_map(
 }
 
 [[nodiscard]] std::unordered_map<std::string, std::string> parse_extension_to_language(
-    cc::utils::json::JsonVal value
+    loom::utils::json::JsonVal value
 ) {
     std::unordered_map<std::string, std::string> out;
     if (!value.is_obj()) return out;
-    value.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal item) {
+    value.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal item) {
         if (!key.is_str() || !item.is_str()) return;
         auto extension = normalize_lsp_extension(key.as_str());
         if (!extension.empty()) out[std::move(extension)] = std::string(item.as_str());
@@ -112,7 +112,7 @@ inline void replace_all(std::string& value, std::string_view needle, std::string
 }
 
 [[nodiscard]] std::optional<std::string> json_user_config_value_to_string(
-    cc::utils::json::JsonVal value
+    loom::utils::json::JsonVal value
 ) {
     if (value.is_str()) return std::string(value.as_str());
     if (value.is_bool()) return value.as_bool() ? "true" : "false";
@@ -124,7 +124,7 @@ inline void replace_all(std::string& value, std::string_view needle, std::string
     }
     if (value.is_arr()) {
         std::string joined;
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             auto scalar = json_user_config_value_to_string(item);
             if (!scalar) return;
             if (!joined.empty()) joined += ",";
@@ -136,11 +136,11 @@ inline void replace_all(std::string& value, std::string_view needle, std::string
 }
 
 inline void merge_user_config_values(
-    cc::utils::json::JsonVal values,
+    loom::utils::json::JsonVal values,
     std::unordered_map<std::string, std::string>& out
 ) {
     if (!values.is_obj()) return;
-    values.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    values.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
         auto parsed = json_user_config_value_to_string(value);
         if (parsed) out[std::string(key.as_str())] = std::move(*parsed);
@@ -152,7 +152,7 @@ inline void merge_plugin_lsp_user_config_from_settings(
     std::string_view plugin_name,
     std::unordered_map<std::string, std::string>& out
 ) {
-    auto parsed = cc::utils::json::parse_file(settings_path);
+    auto parsed = loom::utils::json::parse_file(settings_path);
     if (!parsed) return;
     auto plugin_config = parsed->root().get("pluginConfigs").get(plugin_name);
     if (!plugin_config.is_obj()) return;
@@ -235,7 +235,7 @@ inline void merge_plugin_lsp_user_config_from_settings(
 }
 
 [[nodiscard]] std::optional<ScopedLspServerConfig> parse_plugin_lsp_server(
-    cc::utils::json::JsonVal config
+    loom::utils::json::JsonVal config
 ) {
     if (!config.is_obj()) return std::nullopt;
     if (auto transport = json_string(config, "transport"); transport && *transport != "stdio") {
@@ -303,13 +303,13 @@ inline void merge_plugin_lsp_servers(
 }
 
 [[nodiscard]] std::vector<PluginLspServerDefinition> parse_plugin_lsp_server_map(
-    cc::utils::json::JsonVal servers,
+    loom::utils::json::JsonVal servers,
     std::string_view plugin_name,
     const fs::path& plugin_dir
 ) {
     std::vector<PluginLspServerDefinition> parsed;
     if (!servers.is_obj()) return parsed;
-    servers.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    servers.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str() || !value.is_obj()) return;
         if (auto server = parse_plugin_lsp_server(value)) {
             if (auto resolved = resolve_plugin_lsp_server_environment(
@@ -352,7 +352,7 @@ inline void merge_plugin_lsp_servers(
     if (!input) return {};
     std::stringstream buffer;
     buffer << input.rdbuf();
-    auto doc = cc::utils::json::parse(buffer.str());
+    auto doc = loom::utils::json::parse(buffer.str());
     if (!doc) return {};
 
     auto root = doc->root();
@@ -363,7 +363,7 @@ inline void merge_plugin_lsp_servers(
 [[nodiscard]] std::vector<PluginLspServerDefinition> load_plugin_lsp_servers_from_manifest_spec(
     const fs::path& plugin_dir,
     std::string_view plugin_name,
-    cc::utils::json::JsonVal spec
+    loom::utils::json::JsonVal spec
 ) {
     std::vector<PluginLspServerDefinition> servers;
     if (spec.is_str()) {
@@ -372,7 +372,7 @@ inline void merge_plugin_lsp_servers(
             load_plugin_lsp_servers_from_file(plugin_dir, spec.as_str(), plugin_name)
         );
     } else if (spec.is_arr()) {
-        spec.iter([&](cc::utils::json::JsonVal item) {
+        spec.iter([&](loom::utils::json::JsonVal item) {
             if (item.is_str()) {
                 merge_plugin_lsp_servers(
                     servers,
@@ -403,7 +403,7 @@ inline void merge_plugin_lsp_servers(
 
     std::stringstream buffer;
     buffer << input.rdbuf();
-    auto doc = cc::utils::json::parse(buffer.str());
+    auto doc = loom::utils::json::parse(buffer.str());
     if (!doc) return {};
 
     auto root = doc->root();
@@ -642,7 +642,7 @@ Result<T> LSPServerManager::send_request(const std::string& file_path, const std
     
     auto server = *server_result;
     if (!server) {
-        return std::unexpected(cc::utils::Error(cc::utils::ErrorCode::not_found, "No LSP server for file type"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::not_found, "No LSP server for file type"));
     }
     
     return server->send_request<T>(method, params);
@@ -826,7 +826,7 @@ void LSPServerManager::register_server_config(
         (*instance)->on_notification(
             "textDocument/publishDiagnostics",
             [](std::string_view, std::string_view params_json) {
-                auto parsed = cc::utils::json::parse(params_json);
+                auto parsed = loom::utils::json::parse(params_json);
                 if (!parsed) return;
                 if (!parsed->root().is_obj()) return;
                 // Validated enough to prove the frame is well-formed.
@@ -852,7 +852,7 @@ std::string LSPServerManager::build_did_open_params(
     const std::string& file_path,
     const std::string& content,
     int64_t version) const {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     auto text_document = doc.object();
     text_document.add("uri", doc.string(path_to_file_uri(file_path)));
@@ -868,7 +868,7 @@ std::string LSPServerManager::build_did_change_params(
     const std::string& file_path,
     const std::string& content,
     int64_t version) const {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     auto text_document = doc.object();
     text_document.add("uri", doc.string(path_to_file_uri(file_path)));
@@ -884,7 +884,7 @@ std::string LSPServerManager::build_did_change_params(
 }
 
 std::string LSPServerManager::build_text_document_params(const std::string& file_path) const {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     auto text_document = doc.object();
     text_document.add("uri", doc.string(path_to_file_uri(file_path)));
@@ -893,4 +893,4 @@ std::string LSPServerManager::build_text_document_params(const std::string& file
     return doc.to_string();
 }
 
-} // namespace cc::services::lsp
+} // namespace loom::services::lsp

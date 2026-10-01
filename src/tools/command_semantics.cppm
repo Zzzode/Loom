@@ -20,7 +20,7 @@ import std;
 
 import loom.text.format;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 // ---------------------------------------------------------------------------
 // 1. Command-type classification (previously the only thing in this module).
@@ -223,7 +223,7 @@ using CommandSemanticFn = auto(*)(int, std::string_view, std::string_view) -> In
 // members are module-private by default; we use a named `detail` namespace
 // instead of an anonymous namespace to avoid Clang's strict diagnostic
 // ("anonymous namespaces cannot be exported") when this file lives inside
-// an outer `export namespace cc::tools {}` block.
+// an outer `export namespace loom::tools {}` block.
 namespace detail {
     // migrated: grep family — 0 = match, 1 = no match, 2+ = real error
     inline auto grep_semantic(int code, std::string_view, std::string_view) -> InterpretedResult {
@@ -464,4 +464,4 @@ inline auto estimate_duration(std::string_view command) -> std::chrono::seconds 
     return std::chrono::seconds{10};
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

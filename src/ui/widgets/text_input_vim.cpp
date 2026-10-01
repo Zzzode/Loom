@@ -16,7 +16,7 @@ module loom.ui.widgets.text_input;
 
 import std;
 
-import loom.ui.foundation.ui_types;  // cc::ui::common::VimMode canonical enum
+import loom.ui.foundation.ui_types;  // loom::ui::common::VimMode canonical enum
 
 namespace ui::components {
 
@@ -30,7 +30,7 @@ namespace ui::components {
     // ------------------------------------------------------------
     bool TextInputImpl::HandleVimEvent(Event event) {
         using namespace ftxui;
-        using cc::ui::common::VimMode;
+        using loom::ui::common::VimMode;
         bool changed = false;
 
         const bool is_visual = (vim_.mode == VimMode::Visual ||

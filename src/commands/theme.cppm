@@ -12,9 +12,9 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// Color scheme mode
 enum class ThemeMode : std::uint8_t {
@@ -182,4 +182,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

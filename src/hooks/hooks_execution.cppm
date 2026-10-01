@@ -30,15 +30,15 @@ import loom.process.async;
 import loom.hooks.registry;
 import loom.net.http.ssrf_guard;
 
-export namespace cc::utils::hooks_execution {
+export namespace loom::utils::hooks_execution {
 
-using namespace cc::utils::hooks_registry;
-using cc::utils::async::Task;
-using cc::utils::json::JsonVal;
-using cc::utils::json::JsonMutDoc;
-using cc::utils::json::parse;
-using cc::utils::json::to_string;
-namespace json_ns = cc::utils::json;
+using namespace loom::utils::hooks_registry;
+using loom::utils::async::Task;
+using loom::utils::json::JsonVal;
+using loom::utils::json::JsonMutDoc;
+using loom::utils::json::parse;
+using loom::utils::json::to_string;
+namespace json_ns = loom::utils::json;
 
 namespace chr = std::chrono;
 namespace fs = std::filesystem;
@@ -730,7 +730,7 @@ struct HttpHookRunner {
         auto parsed = parse_url(url);
         if (!parsed.valid) { result.error = "invalid HTTP url"; return result; }
 
-        using cc::utils::ssrf_guard::is_blocked_address;
+        using loom::utils::ssrf_guard::is_blocked_address;
         if (!parsed.host.empty() && is_blocked_address(parsed.host)) {
             result.error = "SSRF blocked: host resolves to private/reserved address";
             return result;
@@ -767,7 +767,7 @@ struct HttpHookRunner {
                 result.err += "[http_status=" + code + "]";
                 if (!code.empty()) {
                     int v = 0;
-                    auto [ptr, ec] = cc::utils::from_chars(code.data(), code.data() + code.size(), v);
+                    auto [ptr, ec] = loom::utils::from_chars(code.data(), code.data() + code.size(), v);
                     if (ec == std::errc{} && ptr == code.data() + code.size() && (v < 200 || v >= 300)) {
                         if (result.exit_code == 0) result.exit_code = 1;
                     }
@@ -1171,4 +1171,4 @@ using HookConfig = HookPolicyConfig;
     return out;
 }
 
-} // namespace cc::utils::hooks_execution
+} // namespace loom::utils::hooks_execution

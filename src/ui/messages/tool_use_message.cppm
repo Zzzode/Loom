@@ -26,7 +26,7 @@ import loom.ui.widgets.spinner;
 // Output: section to decode JSON-escaped newlines and render ANSI SGR codes.
 import loom.ui.messages.message_tool_result;
 
-export namespace cc::ui::messages::tool_use_message {
+export namespace loom::ui::messages::tool_use_message {
 using namespace ftxui;
 
 // Bring spinner types into a convenient local alias.
@@ -264,14 +264,14 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     Elements body = {hbox(summary_row)};
 
     if (!collapsed && !oversized) {
-        cc::ui::code_highlight::CodeHighlightOptions opts;
+        loom::ui::code_highlight::CodeHighlightOptions opts;
         opts.source = call.raw_parameters;
         opts.language = call.parameters_language.empty() ? "json" : call.parameters_language;
         opts.show_line_numbers = true;
         opts.visible_lines = 30;
-        auto highlighted = cc::ui::code_highlight::highlight_source(opts.source, opts.language);
+        auto highlighted = loom::ui::code_highlight::highlight_source(opts.source, opts.language);
         // indent + 2-space inner border
-        auto code_block = cc::ui::code_highlight::RenderCodeHighlight(opts, highlighted);
+        auto code_block = loom::ui::code_highlight::RenderCodeHighlight(opts, highlighted);
         body.push_back(hbox({text("    "), code_block}));
     }
 
@@ -868,4 +868,4 @@ struct FaithfulToolUseData {
     return outer;
 }
 
-} // namespace cc::ui::messages::tool_use_message
+} // namespace loom::ui::messages::tool_use_message

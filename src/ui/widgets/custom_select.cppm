@@ -35,7 +35,7 @@ export module loom.ui.widgets.custom_select;
 import std;
 
 
-export namespace cc::ui::custom_select {
+export namespace loom::ui::custom_select {
 using namespace ftxui;
 
 // ============================================================
@@ -1106,4 +1106,4 @@ MakeMultiSelect(
     return MakeCustomSelect(std::move(opts));
 }
 
-} // namespace cc::ui::custom_select
+} // namespace loom::ui::custom_select

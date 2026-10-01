@@ -3,7 +3,7 @@ module;
 export module loom.commands.reload_plugins;
 
 import std;
-export namespace cc::commands::reload_plugins {
+export namespace loom::commands::reload_plugins {
 
 struct CommandResponse { bool ok{true}; std::string message; };
 

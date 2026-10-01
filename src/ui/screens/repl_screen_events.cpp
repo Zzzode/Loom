@@ -24,7 +24,7 @@ import loom.ui.foundation.design_figures;
 import loom.ui.foundation.theme_provider;
 import loom.ui.prompt.prompt_input_footer;
 
-namespace cc::ui::repl_screen {
+namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 /// Build the REPL screen as an FTXUI Component.
@@ -72,7 +72,7 @@ using namespace ftxui;
             Element agents_content = dialog_router::render_agents_menu(state, cb);
             return vbox({ filler(),
                           separator() |
-                              color(cc::ui::design::theme::current_theme().palette->muted),
+                              color(loom::ui::design::theme::current_theme().palette->muted),
                           hbox({ text("  "),
                                  agents_content | flex,
                                  text("  ") }) | flex_shrink }) | flex;
@@ -160,7 +160,7 @@ using namespace ftxui;
               case ReplMode::WorkerSandboxPermission:
                 break;
               case ReplMode::CostThreshold: {
-                namespace ct = cc::ui::dialogs::cost_threshold;
+                namespace ct = loom::ui::dialogs::cost_threshold;
                 ct::CostThresholdState st;
                 st.on_done = [&state, cb] {
                     state->mode = ReplMode::Normal;
@@ -179,7 +179,7 @@ using namespace ftxui;
         if (state->mode == ReplMode::CostThreshold) {
             if (ev == Event::Return ||
                 (ev.is_character() && ev.character() == " ")) {
-                namespace ct = cc::ui::dialogs::cost_threshold;
+                namespace ct = loom::ui::dialogs::cost_threshold;
                 ct::CostThresholdState st;
                 st.on_done = [&state, cb] {
                     state->mode = ReplMode::Normal;
@@ -220,7 +220,7 @@ using namespace ftxui;
             // handler.  Shortcuts (g/y/o/k) will fire on_done(); any other
             // character is silently consumed to prevent prompt-injection.
             if (state->mode == ReplMode::CostThreshold) {
-                namespace ct = cc::ui::dialogs::cost_threshold;
+                namespace ct = loom::ui::dialogs::cost_threshold;
                 ct::CostThresholdState st;
                 st.on_done = [&state, cb] {
                     state->mode = ReplMode::Normal;
@@ -392,7 +392,7 @@ using namespace ftxui;
                 // TS REF: src/components/PromptInput/inputModes.ts:23-29
                 //   (getValueFromInput)
                 // Strip '!' mode prefix from accepted value before engine.
-                namespace figs = cc::ui::design::figures;
+                namespace figs = loom::ui::design::figures;
                 std::string submit_text =
                     std::string(figs::strip_mode_prefix(*accepted));
                 cb->on_submit(submit_text, state->prompt_store.input_mode);
@@ -404,7 +404,7 @@ using namespace ftxui;
                 // text already carries '!' (direct "!cmd" typing), keep
                 // it as-is to avoid double-prefix.
                 {
-                    namespace figs = cc::ui::design::figures;
+                    namespace figs = loom::ui::design::figures;
                     const bool text_has_prefix =
                         !accepted->empty() &&
                         (*accepted)[0] == figs::kBashModeChar;
@@ -435,7 +435,7 @@ using namespace ftxui;
             // Strip the '!' mode prefix before passing to engine.
             // History keeps the prefix for round-tripping
             // (prependModeCharacterToInput semantics in inputModes.ts:4-14).
-            namespace figs = cc::ui::design::figures;
+            namespace figs = loom::ui::design::figures;
             std::string submit_text =
                 std::string(figs::strip_mode_prefix(state->input_text));
             if (cb->on_submit) cb->on_submit(submit_text, state->prompt_store.input_mode);
@@ -447,7 +447,7 @@ using namespace ftxui;
             // If the text already carries '!' (direct "!cmd" typing),
             // keep it as-is to avoid double-prefix.
             {
-                namespace figs = cc::ui::design::figures;
+                namespace figs = loom::ui::design::figures;
                 const bool text_has_prefix =
                     !state->input_text.empty() &&
                     state->input_text[0] == figs::kBashModeChar;
@@ -525,7 +525,7 @@ using namespace ftxui;
         // → cyclePermissionMode().  The footer renders "(shift+tab to cycle)"
         // when a non-default permission mode is active; this makes it actually work.
         if ((ev.input() == "\x1B[Z" || ev == Event::TabReverse) && asn == 0) {
-            namespace pif = cc::ui::prompt::footer;
+            namespace pif = loom::ui::prompt::footer;
             state->permission_mode = pif::GetNextPermissionMode(state->permission_mode);
             if (cb->on_permission_cycle) {
                 cb->on_permission_cycle(state->permission_mode);
@@ -568,7 +568,7 @@ using namespace ftxui;
             // Sync input_mode from the recalled entry's leading char so that
             // the prefix glyph stays correct after the user clears the text.
             {
-                namespace figs = cc::ui::design::figures;
+                namespace figs = loom::ui::design::figures;
                 state->prompt_store.input_mode =
                     (figs::get_mode_from_input(state->input_text) ==
                      figs::PromptMode::kBash)
@@ -589,7 +589,7 @@ using namespace ftxui;
                 // TS REF: inputModes.ts:16-21 (getModeFromInput) — sync mode
                 // from the recalled entry's leading prefix character.
                 {
-                    namespace figs = cc::ui::design::figures;
+                    namespace figs = loom::ui::design::figures;
                     state->prompt_store.input_mode =
                         (figs::get_mode_from_input(state->input_text) ==
                          figs::PromptMode::kBash)
@@ -622,7 +622,7 @@ using namespace ftxui;
             // popup is open the first Esc dismisses instead of arming, so
             // clearing takes Esc (dismiss) + Esc (arm) + Esc (clear).
             if (!state->input_text.empty()) {
-                namespace pif = cc::ui::prompt::footer;
+                namespace pif = loom::ui::prompt::footer;
                 const auto now_dp = std::chrono::steady_clock::now();
                 constexpr auto kDoublePressWindow =
                     std::chrono::milliseconds(800);
@@ -729,7 +729,7 @@ using namespace ftxui;
                 const bool is_printable =
                     (first >= 0x20 && first < 0x7F) || first >= 0xC0;
                 if (is_printable) {
-                    namespace figs = cc::ui::design::figures;
+                    namespace figs = loom::ui::design::figures;
 
                     // Footer "Pasting text…" feedback (TS usePasteHandler.ts):
                     // terminals deliver a paste as one multi-char batch, while
@@ -823,4 +823,4 @@ using namespace ftxui;
     return ReplScreen(std::make_shared<ReplScreenState>(), std::move(cbs));
 }
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

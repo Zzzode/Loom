@@ -102,14 +102,14 @@ import loom.skills.bundled.skillify;
 //                hook verification flow (config I/O → cc.config modules)
 import loom.skills.bundled.update_config;
 
-export namespace cc::skills {
+export namespace loom::skills {
 
 // ============================================================
 // Individual Bundled Skill Factories
 //
 // S4 (debug, loop, skillify, update-config):
 //   The SkillDefinitions below delegate to their respective bundled submodule
-//   factories (cc::skills::bundled::make_bundled_*_skill).  The submodules
+//   factories (loom::skills::bundled::make_bundled_*_skill).  The submodules
 //   also expose EXECUTION APIs:
 //     - debug: run_debug_loop(), FailureType classifier, extract_errors(),
 //              generate() hypotheses, ToolDelegates for Bash/Script/FileEdit
@@ -127,7 +127,7 @@ export namespace cc::skills {
 /// NEVER calls popen/subprocess; all execution delegates to BashTool /
 /// ScriptTool / FileEditTool through the ToolDelegates callback bundle.
 [[nodiscard]] inline SkillDefinition make_debug_skill() {
-    return cc::skills::bundled::make_bundled_debug_skill();
+    return loom::skills::bundled::make_bundled_debug_skill();
 }
 
 // --- Loop (S4: upgraded from Phase 0 stub) ----------------------------------
@@ -138,7 +138,7 @@ export namespace cc::skills {
 /// IterationExecutor callback (query_engine integration).  NEVER calls
 /// popen/subprocess directly.
 [[nodiscard]] inline SkillDefinition make_loop_skill() {
-    return cc::skills::bundled::make_bundled_loop_skill();
+    return loom::skills::bundled::make_bundled_loop_skill();
 }
 
 // --- Skillify (S4: bundled version supersedes root stub) -------------------
@@ -155,7 +155,7 @@ export namespace cc::skills {
 /// (no root-level stub exists upstream). The C++ root-level stub was removed
 /// as dead code; the BUNDLED registry uses the full TS-parity version below.
 [[nodiscard]] inline SkillDefinition make_skillify_skill() {
-    return cc::skills::bundled::make_bundled_skillify_skill();
+    return loom::skills::bundled::make_bundled_skillify_skill();
 }
 
 // --- Update-Config (S4: bundled version supersedes root stub) --------------
@@ -174,7 +174,7 @@ export namespace cc::skills {
 /// was removed as dead code; the BUNDLED registry uses the full TS-parity
 /// version below.
 [[nodiscard]] inline SkillDefinition make_update_config_skill() {
-    return cc::skills::bundled::make_bundled_update_config_skill();
+    return loom::skills::bundled::make_bundled_update_config_skill();
 }
 
 /// Verification before completion skill
@@ -258,7 +258,7 @@ export namespace cc::skills {
 ///
 /// NOTE: This used to be registered as "stuck" (v1.0).  The /stuck slash
 /// command in TS is about DIAGNOSING OTHER CLAUDE CODE SESSIONS on the
-/// same machine (see cc::skills::bundled::make_stuck_skill imported from
+/// same machine (see loom::skills::bundled::make_stuck_skill imported from
 /// cc.skills.bundled.stuck).  We keep the generic self-unstuck advice
 /// under a separate discoverable name so neither behaviour is lost.
 [[nodiscard]] inline SkillDefinition make_self_unstuck_skill() {
@@ -308,7 +308,7 @@ export namespace cc::skills {
 /// /stuck skill - diagnose other sessions + get alternative approaches.
 /// Wraps runtime functions from cc.skills.bundled.stuck into a SkillDefinition.
 [[nodiscard]] inline SkillDefinition make_stuck_skill() {
-    auto manifest = cc::skills::bundled::get_stuck_skill_manifest();
+    auto manifest = loom::skills::bundled::get_stuck_skill_manifest();
     std::vector<std::string> triggers;
     triggers.reserve(manifest.triggers.size());
     for (const auto& t : manifest.triggers) triggers.push_back(t);
@@ -333,8 +333,8 @@ When stuck, evaluate whether:
 - Import/module issues -> verify installed, check paths, clear cache
 - Generic -> break into smaller steps, verify assumptions, search codebase
 
-For full runtime detection call cc::skills::bundled::detect_stuck_pattern()
-and cc::skills::bundled::suggest_unstuck_action(context).
+For full runtime detection call loom::skills::bundled::detect_stuck_pattern()
+and loom::skills::bundled::suggest_unstuck_action(context).
 )",
         .is_builtin = true,
         .author = manifest.version,
@@ -373,9 +373,9 @@ and cc::skills::bundled::suggest_unstuck_action(context).
             R"(sidebar)",
             R"(extension.*not.responding)",
         },
-        .content = cc::skills::bundled::build_loom_in_chrome_prompt()
+        .content = loom::skills::bundled::build_loom_in_chrome_prompt()
             + "\n\n## Troubleshooting\n\n"
-            + cc::skills::bundled::build_troubleshooting_checklist(),
+            + loom::skills::bundled::build_troubleshooting_checklist(),
         .is_builtin = true,
         .author = std::nullopt,
         .version = "1.0.0",
@@ -411,7 +411,7 @@ and cc::skills::bundled::suggest_unstuck_action(context).
             R"(change.*shortcut)",
             R"(rebind)",
         },
-        .content = cc::skills::bundled::build_keybindings_help_prompt(),
+        .content = loom::skills::bundled::build_keybindings_help_prompt(),
         .is_builtin = true,
         .author = std::nullopt,
         .version = "1.0.0",
@@ -438,21 +438,21 @@ public:
 
         // 2. Reference / helpers
         // root keybindings (simple cheat sheet, separate from help)
-        skills_.push_back(cc::skills::keybindings::make_keybindings_skill());
+        skills_.push_back(loom::skills::keybindings::make_keybindings_skill());
         // bundled keybindings-help (full customization guide)
         skills_.push_back(make_keybindings_help_skill());
-        skills_.push_back(cc::skills::lorem_ipsum::make_lorem_ipsum_skill());
-        skills_.push_back(cc::skills::remember::make_remember_skill());
+        skills_.push_back(loom::skills::lorem_ipsum::make_lorem_ipsum_skill());
+        skills_.push_back(loom::skills::remember::make_remember_skill());
 
         // 3. Validation
         skills_.push_back(make_verify_skill());
-        skills_.push_back(cc::skills::verify_content::make_verify_content_skill());
+        skills_.push_back(loom::skills::verify_content::make_verify_content_skill());
 
         // 4. Workflow skills
         // S4 debug: 5-type classifier + regex extractor + hypothesis loop,
         // delegates all execution to ToolDelegates (Bash/Script/FileEdit).
         skills_.push_back(make_debug_skill());
-        skills_.push_back(cc::skills::simplify::make_simplify_skill());
+        skills_.push_back(loom::skills::simplify::make_simplify_skill());
         // S4 skillify: full TS-parity 4-phase meta-skill creator.
         // Skill file discovery delegates to cc.skills.load_skills_dir.
         skills_.push_back(make_skillify_skill());
@@ -467,8 +467,8 @@ public:
         // 5. Agent orchestration
 
         // 6. Integration (API + browser)
-        skills_.push_back(cc::skills::loom_api::make_loom_api_skill());
-        skills_.push_back(cc::skills::loom_api_content::make_loom_api_content_skill());
+        skills_.push_back(loom::skills::loom_api::make_loom_api_skill());
+        skills_.push_back(loom::skills::loom_api_content::make_loom_api_content_skill());
         skills_.push_back(make_loom_in_chrome_skill());
 
         // Deferred(feature-flag): Register the following only when feature flags become
@@ -569,4 +569,4 @@ inline BundledSkillRegistrar g_bundled_registrar;
 
 } // namespace detail
 
-} // namespace cc::skills
+} // namespace loom::skills

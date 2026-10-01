@@ -10,7 +10,7 @@ export module loom.services.oauth.auth_code_listener;
 
 import std;
 
-export namespace cc::services::oauth {
+export namespace loom::services::oauth {
 
 struct AuthCodeCallback {
     std::string code;
@@ -198,4 +198,4 @@ private:
     bool running_{false};
 };
 
-} // namespace cc::services::oauth
+} // namespace loom::services::oauth

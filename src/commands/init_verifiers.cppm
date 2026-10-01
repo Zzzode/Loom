@@ -32,9 +32,9 @@ import loom.process.exec_sync;
 import loom.scm.git.git_filesystem;
 import loom.scm.git.detect_repository;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 namespace fs = std::filesystem;
 
 // ============================================================
@@ -108,7 +108,7 @@ struct RepoContext {
     else ctx.project_name = "project";
 
     // Default branch: git symbolic-ref HEAD origin or fallback to "main"
-    if (auto br = cc::utils::exec_sync("git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null")) {
+    if (auto br = loom::utils::exec_sync("git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null")) {
         auto slash = br->rfind('/');
         ctx.default_branch = (slash != std::string::npos) ? br->substr(slash + 1) : *br;
         // Trim trailing newline already done by exec_sync
@@ -116,7 +116,7 @@ struct RepoContext {
     if (ctx.default_branch.empty()) ctx.default_branch = "main";
 
     // repo_full — via git remote (approximation: detect_repo_root + remote parse)
-    if (auto repo_root = cc::utils::detect_repo_root()) {
+    if (auto repo_root = loom::utils::detect_repo_root()) {
         // Fallback: use folder names as owner/name
         const auto name = repo_root->filename().string();
         const auto parent = repo_root->parent_path().filename().string();
@@ -643,7 +643,7 @@ public:
         }
 
         // --- Detect repo root and context ---
-        auto root_res = cc::utils::exec_sync("git rev-parse --show-toplevel");
+        auto root_res = loom::utils::exec_sync("git rev-parse --show-toplevel");
         fs::path repo_root;
         if (root_res && !root_res->empty()) repo_root = *root_res;
         else repo_root = fs::current_path();
@@ -736,4 +736,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

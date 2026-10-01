@@ -18,7 +18,7 @@ import std;
 
 import loom.crypto.crypto;
 
-export namespace cc::utils::clipboard {
+export namespace loom::utils::clipboard {
 
 // ── osascript invocation gotcha (macOS) ─────────────────────────────────
 // loom runs the terminal in raw mode (FTXUI termios: ICANON/ECHO off).
@@ -177,7 +177,7 @@ extract_png_from_html_clipboard() {
     std::string_view b64_str = html.substr(data_start, data_end - data_start);
 
     // ── Step 4: decode base64 ───────────────────────────────────────────
-    auto decoded = cc::utils::crypto::base64_decode(b64_str);
+    auto decoded = loom::utils::crypto::base64_decode(b64_str);
     if (!decoded.has_value() || decoded->empty()) return std::nullopt;
 
     // ── Step 5: if already PNG, return directly ─────────────────────────
@@ -314,4 +314,4 @@ extract_png_from_html_clipboard() {
 #endif
 }
 
-}  // namespace cc::utils::clipboard
+}  // namespace loom::utils::clipboard

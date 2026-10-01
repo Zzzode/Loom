@@ -11,7 +11,7 @@ export module loom.types.types;
 
 import std;
 
-export namespace cc::core {
+export namespace loom::core {
 
 // ============================================================
 // Strong type wrapper for domain-specific identifiers
@@ -443,4 +443,4 @@ concept JsonDeserializable = requires(std::string_view json) {
     { T::from_json(json) } -> std::same_as<Result<T>>;
 };
 
-} // namespace cc::core
+} // namespace loom::core

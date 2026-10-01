@@ -5,14 +5,14 @@ import std;
 
 import loom.vim.vim_types;  // canonical VimMode (lives in cc_vim to avoid circular deps)
 
-export namespace cc::vim {
+export namespace loom::vim {
 
-// Canonical VimMode — defined in cc.vim.vim_types (same cc::vim namespace).
+// Canonical VimMode — defined in cc.vim.vim_types (same loom::vim namespace).
 // TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
 //          src/hooks/useVimInput.ts (internal state machine tracks more)
 // This replaces the previous local 6-value enum { Normal,Insert,Visual,
 // VisualLine,Command,Replace } that was missing VisualBlock.
-using cc::vim::VimMode;  // re-export for external consumers
+using loom::vim::VimMode;  // re-export for external consumers
 
 // State machine for vim mode transitions and key processing
 class VimStateMachine {
@@ -206,4 +206,4 @@ inline auto disable_vim_mode() -> void {
     detail::vim_enabled = false;
 }
 
-} // namespace cc::vim
+} // namespace loom::vim

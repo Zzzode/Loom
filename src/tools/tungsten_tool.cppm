@@ -2,7 +2,7 @@ export module loom.tools.tungsten_tool;
 
 import std;
 
-export namespace cc::tools::tungsten {
+export namespace loom::tools::tungsten {
 
 struct TungstenRequest {
     std::string operation;
@@ -25,4 +25,4 @@ struct TungstenResult {
     return {"analyze", "transform", "verify"};
 }
 
-} // namespace cc::tools::tungsten
+} // namespace loom::tools::tungsten

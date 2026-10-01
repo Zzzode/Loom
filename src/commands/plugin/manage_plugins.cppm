@@ -5,7 +5,7 @@ export module loom.commands.plugin.manage_plugins;
 
 import std;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
 using std::filesystem::path;
 
@@ -108,4 +108,4 @@ auto set_plugin_enabled(std::string_view id, bool enabled) -> std::expected<void
     return std::unexpected("Plugin not found: " + std::string(id));
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

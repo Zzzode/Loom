@@ -57,7 +57,7 @@ export module loom.hooks.remaining_notifs;
 
 import std;
 
-export namespace cc::hooks::notifs {
+export namespace loom::hooks::notifs {
 
 // --------------------------------------------------------------------------
 // Shared infrastructure: GlobalStateSlot<Tag, T>
@@ -92,8 +92,8 @@ inline auto now_ms() -> int64_t {
 } // namespace detail
 
 #define DEFINE_STATE_SLOT(Tag, TTypeName, GetFn, SetFn)                           \
-    using _##Tag##Slot = ::cc::hooks::notifs::detail::GlobalStateSlot<             \
-        ::cc::hooks::notifs::detail::Tag, TTypeName>;                              \
+    using _##Tag##Slot = ::loom::hooks::notifs::detail::GlobalStateSlot<             \
+        ::loom::hooks::notifs::detail::Tag, TTypeName>;                              \
     inline auto GetFn() -> TTypeName {                                             \
         std::lock_guard lock(_##Tag##Slot::mtx);                                   \
         return _##Tag##Slot::value;                                                \
@@ -636,4 +636,4 @@ inline void acknowledge_subscription_switch(std::string_view offer_tier) {
 
 #undef DEFINE_STATE_SLOT
 
-} // namespace cc::hooks::notifs
+} // namespace loom::hooks::notifs

@@ -6,7 +6,7 @@ export module loom.security.query_guard;
 
 import std;
 
-export namespace cc::utils::query_guard {
+export namespace loom::utils::query_guard {
 
 enum class QueryStatus : unsigned char {
     Idle,
@@ -93,4 +93,4 @@ private:
     std::map<std::uint64_t, Listener> listeners_;
 };
 
-} // namespace cc::utils::query_guard
+} // namespace loom::utils::query_guard

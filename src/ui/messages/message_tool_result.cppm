@@ -20,7 +20,7 @@ import loom.ui.chrome.ansi_render;
 import loom.ui.messages.message_components;  // for padding() Decorator
 import loom.ui.visual.markdown;                     // render_markdown() for natural-language tool results
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -278,7 +278,7 @@ struct ToolResultOptions {
     /// TS PARITY (2026-07-04): structured content items from MCP results.
     /// When present, the faithful renderer iterates these instead of the
     /// flattened `output` string.
-    std::optional<std::vector<cc::core::ToolResultContentItem>> content_items;
+    std::optional<std::vector<loom::core::ToolResultContentItem>> content_items;
 };
 
 /// Render tool result message
@@ -369,7 +369,7 @@ struct ToolResultFaithfulData {
     /// TS PARITY (2026-07-04): structured content items from MCP results.
     /// When present, the Success renderer iterates these instead of using
     /// the flattened `content` string.  Each item may be "text" or "image".
-    std::optional<std::vector<cc::core::ToolResultContentItem>> content_items;
+    std::optional<std::vector<loom::core::ToolResultContentItem>> content_items;
 
     // --- Flags ---
     bool verbose{false};
@@ -787,4 +787,4 @@ constexpr int kMaxRenderedLines = 10;
     return result;
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

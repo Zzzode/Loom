@@ -8,7 +8,7 @@ import std;
 
 import loom.config.settings_sources;
 
-export namespace cc::utils::plugin_identifier {
+export namespace loom::utils::plugin_identifier {
 
 struct ParsedPluginIdentifier {
     std::string name;
@@ -64,8 +64,8 @@ enum class PluginScope : unsigned char {
     return std::find(allowed.begin(), allowed.end(), normalized) != allowed.end();
 }
 
-[[nodiscard]] inline std::expected<cc::utils::settings_sources::SettingSource, std::string> scope_to_setting_source(PluginScope scope) {
-    using cc::utils::settings_sources::SettingSource;
+[[nodiscard]] inline std::expected<loom::utils::settings_sources::SettingSource, std::string> scope_to_setting_source(PluginScope scope) {
+    using loom::utils::settings_sources::SettingSource;
     switch (scope) {
         case PluginScope::User: return SettingSource::UserSettings;
         case PluginScope::Project: return SettingSource::ProjectSettings;
@@ -75,8 +75,8 @@ enum class PluginScope : unsigned char {
     return std::unexpected("Unknown plugin scope");
 }
 
-[[nodiscard]] inline PluginScope setting_source_to_scope(cc::utils::settings_sources::SettingSource source) {
-    using cc::utils::settings_sources::SettingSource;
+[[nodiscard]] inline PluginScope setting_source_to_scope(loom::utils::settings_sources::SettingSource source) {
+    using loom::utils::settings_sources::SettingSource;
     switch (source) {
         case SettingSource::UserSettings: return PluginScope::User;
         case SettingSource::ProjectSettings: return PluginScope::Project;
@@ -87,4 +87,4 @@ enum class PluginScope : unsigned char {
     return PluginScope::User;
 }
 
-} // namespace cc::utils::plugin_identifier
+} // namespace loom::utils::plugin_identifier

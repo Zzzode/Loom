@@ -32,7 +32,7 @@ import std;
 import loom.services.mcp.types;
 import loom.serdes.json;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
 // ============================================================================
 // Constants
@@ -963,4 +963,4 @@ inline auto create_channel_permission_store()
     return "Unknown";
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

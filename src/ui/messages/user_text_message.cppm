@@ -30,7 +30,7 @@ import loom.ui.messages.message_timestamp;
 // prompt prefix's UTF-8 byte sequence in CPP Round 1-6.
 import loom.ui.foundation.design_figures;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -289,7 +289,7 @@ class UserTextMessageComponent : public ComponentBase {
 //
 // NOTE: The glyph itself lives in cc.ui.foundation.design_figures::kPointer — the
 // authoritative source used by the prompt prefix, user messages, and plugin
-// manager.  Use `namespace figs = cc::ui::design::figures;` below.
+// manager.  Use `namespace figs = loom::ui::design::figures;` below.
 
 /// Faithful render of a user prompt message (UserPromptMessage.tsx ->
 /// HighlightedThinkingText non-brief path).  Full-width, left-aligned, with a
@@ -365,7 +365,7 @@ class UserTextMessageComponent : public ComponentBase {
         for (auto& wline : wrapped) {
             Elements row;
             if (first_line) {
-                row.push_back(text(std::string(cc::ui::design::figures::kPointer))
+                row.push_back(text(std::string(loom::ui::design::figures::kPointer))
                               | prefix_style);
                 row.push_back(text(" ") | prefix_style);
             } else {
@@ -443,7 +443,7 @@ class UserTextMessageComponent : public ComponentBase {
     // TS: paddingRight=1 only — no flex, so the chip collapses to content
     // width instead of stretching to terminal width (F8 compact chip).
     Element row = hbox({
-        text(std::string(cc::ui::design::figures::kPointer)) | color(prefix_color),
+        text(std::string(loom::ui::design::figures::kPointer)) | color(prefix_color),
         text(" ") | color(prefix_color),
         text(body) | color(kText),
         text(" ") | color(kText),  // paddingRight=1
@@ -459,4 +459,4 @@ class UserTextMessageComponent : public ComponentBase {
     return content;
 }
 
-}  // namespace cc::ui::messages
+}  // namespace loom::ui::messages

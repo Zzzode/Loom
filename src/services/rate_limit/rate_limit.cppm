@@ -8,7 +8,7 @@ export module loom.services.rate_limit;
 import std;
 
 
-export namespace cc::services {
+export namespace loom::services {
 
 
 enum class RateLimitTier { free, pro, team, enterprise };
@@ -125,4 +125,4 @@ public:
     [[nodiscard]] auto get_state() const -> const RateLimitState& { return state_; }
 };
 
-} // namespace cc::services
+} // namespace loom::services

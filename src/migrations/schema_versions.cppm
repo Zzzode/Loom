@@ -11,10 +11,10 @@ import std;
 import loom.fs.atomic_replace;
 import loom.fs.lockfile;
 
-export namespace cc::migrations {
+export namespace loom::migrations {
 
 namespace fs = std::filesystem;
-using cc::utils::LockFile;
+using loom::utils::LockFile;
 
 // The target schema version for the current application build.
 //
@@ -132,7 +132,7 @@ inline auto ensure_config_dir() -> bool {
 //   2. Acquire an advisory cross-process lock so concurrent callers do not
 //      interleave the backup/temp/rename dance.
 //   3. Write the new payload to a random temp file in the same directory,
-//      fsync it (cc::utils::atomic_replace_file handles this), then rotate:
+//      fsync it (loom::utils::atomic_replace_file handles this), then rotate:
 //        a. If a primary exists, copy (rename) it INTO the .bak slot *only after
 //           the temp is already on disk (so a torn rename cannot destroy the
 //           only good copy).
@@ -192,8 +192,8 @@ inline auto ensure_config_dir() -> bool {
     // hold the lock so it's ours.
     fs::remove(precommit, ec);  // ignore
 
-    auto wrote = cc::utils::atomic_replace_file(
-        precommit, payload, cc::utils::AtomicMode::PreserveOrUmask);
+    auto wrote = loom::utils::atomic_replace_file(
+        precommit, payload, loom::utils::AtomicMode::PreserveOrUmask);
     if (!wrote.has_value()) {
         return std::unexpected("Failed to stage schema_version precommit: " +
                                wrote.error());
@@ -279,4 +279,4 @@ template <typename Fn>
     return std::forward<Fn>(fn)(detail::recover_and_read());
 }
 
-} // namespace cc::migrations
+} // namespace loom::migrations

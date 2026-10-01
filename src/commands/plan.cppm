@@ -13,11 +13,11 @@ import loom.types.types;
 import loom.commands.command;
 import loom.state.app_state;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
-/// Ordinal of ActionType::SetPermissionMode in the cc::state::ActionType enum.
+/// Ordinal of ActionType::SetPermissionMode in the loom::state::ActionType enum.
 /// Keep in sync with store.cppm enum ordering.
 constexpr int ACTION_SET_PERMISSION_MODE = 12;
 
@@ -61,7 +61,7 @@ public:
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         // Try the AppState bridge first (set by app.cppm).
         if (const void* raw_state = ctx.get_app_state(); raw_state != nullptr) {
-            const auto* state = static_cast<const cc::state::AppState*>(raw_state);
+            const auto* state = static_cast<const loom::state::AppState*>(raw_state);
 
             if (ctx.args.empty()) {
                 // No arg: read current mode from AppState
@@ -71,7 +71,7 @@ public:
             auto action = std::string(ctx.args[0]);
 
             if (action == "on" || action == "plan") {
-                auto mode = cc::state::PermissionMode::Plan;
+                auto mode = loom::state::PermissionMode::Plan;
                 ctx.dispatch_action(ACTION_SET_PERMISSION_MODE, &mode);
                 auto result = CommandResult::success(
                     "Plan mode activated. The model will generate plans without executing tools.\n"
@@ -80,13 +80,13 @@ public:
                 return result;
             }
             if (action == "off") {
-                auto mode = cc::state::PermissionMode::Default;
+                auto mode = loom::state::PermissionMode::Default;
                 ctx.dispatch_action(ACTION_SET_PERMISSION_MODE, &mode);
                 return CommandResult::success(
                     "Plan mode deactivated. You can now execute normally.");
             }
             if (action == "auto") {
-                auto mode = cc::state::PermissionMode::Auto;
+                auto mode = loom::state::PermissionMode::Auto;
                 ctx.dispatch_action(ACTION_SET_PERMISSION_MODE, &mode);
                 return CommandResult::success("Auto mode activated. Tools will run automatically.");
             }
@@ -132,16 +132,16 @@ private:
     std::chrono::system_clock::time_point started_at_;
 
     [[nodiscard]] Result<CommandResult> format_status_from_state(
-        const cc::state::AppState& state) const {
+        const loom::state::AppState& state) const {
         auto mode = state.tool_permission_context.mode;
-        auto mode_str = cc::state::permission_mode_to_string(mode);
+        auto mode_str = loom::state::permission_mode_to_string(mode);
 
         std::string out = std::format("Permission mode: {}\n", mode_str);
 
-        if (mode == cc::state::PermissionMode::Plan) {
+        if (mode == loom::state::PermissionMode::Plan) {
             out += "Plan mode is active. The model generates plans without executing tools.\n";
             out += "Use /plan off to exit and execute the plan.";
-        } else if (mode == cc::state::PermissionMode::Auto) {
+        } else if (mode == loom::state::PermissionMode::Auto) {
             out += "Auto mode is active. Tools run automatically without prompting.";
         } else {
             out += "Use /plan on to enter read-only planning mode.";
@@ -153,7 +153,7 @@ private:
         }
 
         auto result = CommandResult::success(std::move(out));
-        if (mode == cc::state::PermissionMode::Plan) {
+        if (mode == loom::state::PermissionMode::Plan) {
             result.metadata = "UI:plan";
         }
         return result;
@@ -234,4 +234,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

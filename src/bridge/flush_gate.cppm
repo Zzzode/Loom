@@ -7,7 +7,7 @@ export module loom.bridge.flush_gate;
 
 import std;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
 // FlushGate provides a backpressure mechanism for message flow control.
 // When closed, producers must wait until the gate opens before sending more data.
@@ -52,4 +52,4 @@ private:
     std::condition_variable cv_;
 };
 
-} // namespace cc::bridge
+} // namespace loom::bridge

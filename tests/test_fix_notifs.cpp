@@ -19,9 +19,9 @@ import loom.services.mcp.types;
 import loom.orchestration.mcp_connectivity;
 import loom.orchestration.tools.mcp;
 
-namespace notif = cc::hooks::notifs;
-namespace svc_mcp = cc::services::mcp;
-namespace bridge = cc::orchestration::mcp_connectivity;
+namespace notif = loom::hooks::notifs;
+namespace svc_mcp = loom::services::mcp;
+namespace bridge = loom::orchestration::mcp_connectivity;
 
 using namespace std::chrono_literals;
 
@@ -54,8 +54,8 @@ struct NotifStateReset {
 // clear the hook slot) so later cases never see the bridge lambda.
 struct BridgeWireGuard {
     ~BridgeWireGuard() {
-        cc::tools::set_mcp_snapshots_sink(nullptr);
-        (void)cc::tools::sync_native_mcp_servers({});
+        loom::tools::set_mcp_snapshots_sink(nullptr);
+        (void)loom::tools::sync_native_mcp_servers({});
         notif::clear_mcp_connectivity();
     }
 };
@@ -173,9 +173,9 @@ TEST(FixNotifs, WireSinkRefreshesSlot) {
     ASSERT_EQ(notif::get_mcp_connectivity_status().size(), 1u);
 
     bridge::wire_mcp_connectivity();
-    ASSERT_TRUE(cc::tools::sync_native_mcp_servers({}).has_value());
+    ASSERT_TRUE(loom::tools::sync_native_mcp_servers({}).has_value());
 
-    auto statuses = cc::tools::native_mcp_statuses();
+    auto statuses = loom::tools::native_mcp_statuses();
     EXPECT_TRUE(statuses.empty());
     EXPECT_TRUE(notif::get_mcp_connectivity_status().empty());
 }

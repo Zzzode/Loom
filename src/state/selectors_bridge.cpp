@@ -9,7 +9,7 @@ import std;
 
 import loom.state.app_state;
 
-namespace cc::state::selectors {
+namespace loom::state::selectors {
 
 // ============================================================
 // Bridge State Selectors
@@ -91,4 +91,4 @@ namespace cc::state::selectors {
            state.repl_bridge_reconnecting;
 }
 
-} // namespace cc::state::selectors
+} // namespace loom::state::selectors

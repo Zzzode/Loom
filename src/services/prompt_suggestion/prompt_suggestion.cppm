@@ -32,15 +32,15 @@ import std;
 import loom.types.types;
 import loom.text.string_utils;
 
-export namespace cc::services::prompt_suggestion {
+export namespace loom::services::prompt_suggestion {
 
-using cc::core::Error;
-using cc::core::ErrorCode;
-using cc::core::TokenUsage;
-using cc::utils::to_lower;
-using cc::utils::trim;
-using cc::utils::starts_with_ignore_case;
-using cc::utils::contains_ignore_case;
+using loom::core::Error;
+using loom::core::ErrorCode;
+using loom::core::TokenUsage;
+using loom::utils::to_lower;
+using loom::utils::trim;
+using loom::utils::starts_with_ignore_case;
+using loom::utils::contains_ignore_case;
 
 // ============================================================
 // Static tool sets (mirror speculation.ts WRITE_TOOLS / SAFE_READ_ONLY_TOOLS)
@@ -989,4 +989,4 @@ private:
     }
 };
 
-} // namespace cc::services::prompt_suggestion
+} // namespace loom::services::prompt_suggestion

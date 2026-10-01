@@ -27,7 +27,7 @@ import loom.bridge.api;
 import loom.bridge.work_secret;
 import loom.serdes.json;
 
-export namespace cc::daemon {
+export namespace loom::daemon {
 
 // ============================================================
 // Daemon configuration
@@ -329,7 +329,7 @@ public:
         if (session_id.empty()) return std::unexpected("Session ID is required");
         if (event_json.empty()) return std::unexpected("Remote event JSON is required");
 
-        auto parsed = cc::utils::json::parse(event_json);
+        auto parsed = loom::utils::json::parse(event_json);
         if (!parsed || !parsed->root().is_obj()) {
             record_remote_event_failure(session_id, "Remote event must be a JSON object");
             return std::unexpected("Remote event must be a JSON object");
@@ -390,8 +390,8 @@ public:
 
     auto spawn_session_with_bridge_context(
         std::string_view task_id,
-        const cc::bridge::WorkResponse* work,
-        const cc::bridge::DecodedWorkSecret* secret
+        const loom::bridge::WorkResponse* work,
+        const loom::bridge::DecodedWorkSecret* secret
     ) -> std::expected<std::string, std::string> {
         std::lock_guard lock(sessions_mutex_);
 
@@ -836,7 +836,7 @@ private:
     }
 
     RpcResponse handle_stdin_request(const RpcRequest& req) {
-        auto params = cc::utils::json::parse(req.params);
+        auto params = loom::utils::json::parse(req.params);
         if (!params || !params->root().is_obj()) return RpcResponse{req.id, "", "Invalid params"};
         auto root = params->root();
         auto session_id = root.get("session_id");
@@ -850,7 +850,7 @@ private:
     }
 
     RpcResponse handle_event_request(const RpcRequest& req) {
-        auto params = cc::utils::json::parse(req.params);
+        auto params = loom::utils::json::parse(req.params);
         if (!params || !params->root().is_obj()) return RpcResponse{req.id, "", "Invalid params"};
         auto root = params->root();
         auto session_id = root.get("session_id");
@@ -874,7 +874,7 @@ private:
     }
 
     RpcResponse handle_close_stdin_request(const RpcRequest& req) {
-        auto params = cc::utils::json::parse(req.params);
+        auto params = loom::utils::json::parse(req.params);
         if (!params || !params->root().is_obj()) return RpcResponse{req.id, "", "Invalid params"};
         auto session_id = params->root().get("session_id");
         if (!session_id.is_str()) {
@@ -886,7 +886,7 @@ private:
     }
 
     RpcResponse handle_stdout_request(const RpcRequest& req) {
-        auto params = cc::utils::json::parse(req.params);
+        auto params = loom::utils::json::parse(req.params);
         if (!params || !params->root().is_obj()) return RpcResponse{req.id, "", "Invalid params"};
         auto session_id = params->root().get("session_id");
         if (!session_id.is_str()) {
@@ -957,7 +957,7 @@ private:
             return std::optional<std::string>{};
         }
 
-        cc::bridge::BridgeApiClient client(cc::bridge::BridgeApiConfig{
+        loom::bridge::BridgeApiClient client(loom::bridge::BridgeApiConfig{
             .base_url = config_.work_api_url,
             .access_token = config_.bridge_access_token,
             .runner_version = config_.bridge_runner_version,
@@ -974,7 +974,7 @@ private:
             if (claimed_work_ids_.contains(item.id)) return std::optional<std::string>{};
         }
 
-        auto decoded_secret = cc::bridge::decode_work_secret(item.secret);
+        auto decoded_secret = loom::bridge::decode_work_secret(item.secret);
         if (!decoded_secret) {
             auto stopped = client.stop_work(config_.bridge_environment_id, item.id, false);
             (void)stopped;
@@ -1033,7 +1033,7 @@ private:
 
         if (targets.empty()) return std::size_t{0};
 
-        cc::bridge::BridgeApiClient client(cc::bridge::BridgeApiConfig{
+        loom::bridge::BridgeApiClient client(loom::bridge::BridgeApiConfig{
             .base_url = config_.work_api_url,
             .access_token = config_.bridge_access_token,
             .runner_version = config_.bridge_runner_version,
@@ -1063,7 +1063,7 @@ private:
 
     void update_session_heartbeat_success(
         std::string_view session_id,
-        const cc::bridge::HeartbeatResponse& heartbeat
+        const loom::bridge::HeartbeatResponse& heartbeat
     ) {
         std::lock_guard lock(sessions_mutex_);
         auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
@@ -1120,8 +1120,8 @@ private:
     }
 
     auto spawn_session_for_work(
-        const cc::bridge::WorkResponse& work,
-        const cc::bridge::DecodedWorkSecret& secret
+        const loom::bridge::WorkResponse& work,
+        const loom::bridge::DecodedWorkSecret& secret
     ) -> std::expected<std::string, std::string> {
         if (!session_spawner_) return spawn_session_with_bridge_context(work.id, &work, &secret);
 
@@ -1171,8 +1171,8 @@ private:
 
     static void apply_bridge_work_metadata(
         DaemonSession& session,
-        const cc::bridge::WorkResponse& work,
-        const cc::bridge::DecodedWorkSecret& secret,
+        const loom::bridge::WorkResponse& work,
+        const loom::bridge::DecodedWorkSecret& secret,
         const std::optional<int64_t>& worker_epoch = std::nullopt
     ) {
         session.remote_session_id = work.data_id;
@@ -1211,7 +1211,7 @@ private:
     }
 
     static std::optional<std::string> bridge_child_sdk_url(
-        const cc::bridge::DecodedWorkSecret& secret,
+        const loom::bridge::DecodedWorkSecret& secret,
         const std::optional<std::string>& remote_session_id,
         std::string_view api_base_url
     ) {
@@ -1232,7 +1232,7 @@ private:
             *remote_session_id);
     }
 
-    std::string bridge_child_api_base_url(const cc::bridge::DecodedWorkSecret& secret) const {
+    std::string bridge_child_api_base_url(const loom::bridge::DecodedWorkSecret& secret) const {
         if (secret.use_code_sessions.value_or(false) && !config_.work_api_url.empty()) {
             return strip_trailing_slashes(config_.work_api_url);
         }
@@ -1240,14 +1240,14 @@ private:
     }
 
     auto register_bridge_worker_if_needed(
-        const cc::bridge::DecodedWorkSecret& secret,
+        const loom::bridge::DecodedWorkSecret& secret,
         const std::optional<std::string>& sdk_url
     ) -> std::expected<std::optional<int64_t>, std::string> {
         if (!secret.use_code_sessions.value_or(false)) return std::optional<int64_t>{};
         if (!sdk_url || sdk_url->empty()) return std::optional<int64_t>{};
         if (config_.work_api_url.empty()) return std::optional<int64_t>{};
 
-        cc::bridge::BridgeApiClient client(cc::bridge::BridgeApiConfig{
+        loom::bridge::BridgeApiClient client(loom::bridge::BridgeApiConfig{
             .base_url = config_.work_api_url,
             .access_token = config_.bridge_access_token,
             .runner_version = config_.bridge_runner_version,
@@ -1270,7 +1270,7 @@ private:
     }
 
     static auto build_child_environment(
-        const cc::bridge::DecodedWorkSecret& secret,
+        const loom::bridge::DecodedWorkSecret& secret,
         const std::optional<std::string>& remote_session_id,
         std::string_view work_id,
         std::string_view api_base_url,
@@ -1336,7 +1336,7 @@ private:
         }
         if (session.status == "interrupted") return;
 
-        cc::bridge::BridgeApiClient client(cc::bridge::BridgeApiConfig{
+        loom::bridge::BridgeApiClient client(loom::bridge::BridgeApiConfig{
             .base_url = config_.work_api_url,
             .access_token = config_.bridge_access_token,
             .runner_version = config_.bridge_runner_version,
@@ -1538,4 +1538,4 @@ private:
     std::function<std::expected<std::string, std::string>(std::string_view)> session_spawner_;
 };
 
-} // namespace cc::daemon
+} // namespace loom::daemon

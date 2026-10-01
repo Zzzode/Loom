@@ -13,9 +13,9 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// Keyboard shortcut definition
 struct KeyboardShortcut {
@@ -262,4 +262,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

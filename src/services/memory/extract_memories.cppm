@@ -19,12 +19,12 @@ import loom.utils.error;
 import loom.serdes.json;
 import loom.fs.file;
 
-export namespace cc::services::extract_memories {
+export namespace loom::services::extract_memories {
 
-using cc::utils::Error;
-using cc::utils::ErrorCode;
-using cc::utils::Result;
-using cc::utils::async::Task;
+using loom::utils::Error;
+using loom::utils::ErrorCode;
+using loom::utils::Result;
+using loom::utils::async::Task;
 using Clock = std::chrono::system_clock;
 using TimePoint = Clock::time_point;
 
@@ -493,4 +493,4 @@ constexpr std::size_t kExtractionMinNewMessages = 1;
     return p;
 }
 
-} // namespace cc::services::extract_memories
+} // namespace loom::services::extract_memories

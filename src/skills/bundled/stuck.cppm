@@ -33,7 +33,7 @@ import std;
 import loom.skills.skill;
 import loom.skills.load_skills_dir;
 
-export namespace cc::skills::bundled {
+export namespace loom::skills::bundled {
 
 // ============================================================
 // kStuckPrompt — verbatim port of TS `STUCK_PROMPT` (line-for-line parity).
@@ -330,8 +330,8 @@ std::vector<std::string> get_alternative_approaches(
 // SkillManifest (retained; mirrors get_stuck_skill_manifest from prior pass
 // but updated to describe the *TS-aligned* behaviour).
 // ============================================================
-cc::skills::SkillManifest get_stuck_skill_manifest() {
-    return cc::skills::SkillManifest{
+loom::skills::SkillManifest get_stuck_skill_manifest() {
+    return loom::skills::SkillManifest{
         .name = "stuck",
         .description =
             "[ANT-ONLY] Investigate frozen/stuck/slow Loom sessions "
@@ -350,8 +350,8 @@ cc::skills::SkillManifest get_stuck_skill_manifest() {
 // ============================================================
 // SkillDefinition factory (TS-parity registration target).
 // ============================================================
-[[nodiscard]] inline cc::skills::SkillDefinition make_stuck_skill() {
-    return cc::skills::SkillDefinition{
+[[nodiscard]] inline loom::skills::SkillDefinition make_stuck_skill() {
+    return loom::skills::SkillDefinition{
         .name = "stuck",
         .description =
             "[ANT-ONLY] Investigate frozen/stuck/slow Loom sessions "
@@ -392,4 +392,4 @@ tip immediately without shelling out.)",
     };
 }
 
-} // namespace cc::skills::bundled
+} // namespace loom::skills::bundled

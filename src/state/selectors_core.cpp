@@ -12,7 +12,7 @@ import std;
 
 import loom.state.app_state;
 
-namespace cc::state::selectors {
+namespace loom::state::selectors {
 
 // ============================================================
 // Basic Selectors
@@ -215,4 +215,4 @@ namespace cc::state::selectors {
     return state.speculation_session_time_saved_ms;
 }
 
-} // namespace cc::state::selectors
+} // namespace loom::state::selectors

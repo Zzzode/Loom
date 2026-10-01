@@ -2,7 +2,7 @@ export module loom.parsing.cli.slash_command_parsing;
 
 import std;
 
-export namespace cc::utils::slash_command_parsing {
+export namespace loom::utils::slash_command_parsing {
 
 struct ParsedSlashCommand {
     std::string command_name;
@@ -62,4 +62,4 @@ namespace detail {
     return parsed;
 }
 
-} // namespace cc::utils::slash_command_parsing
+} // namespace loom::utils::slash_command_parsing

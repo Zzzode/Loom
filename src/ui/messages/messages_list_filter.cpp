@@ -32,7 +32,7 @@ import loom.ui.messages.message_tool_result;
 import loom.ui.messages.thinking_message;
 import loom.ui.messages.tool_use_message;
 
-namespace cc::ui::messages_list {
+namespace loom::ui::messages_list {
 
 namespace brief_detail {
 
@@ -54,13 +54,13 @@ namespace brief_detail {
 /// Extract tool_name from a MessageRowPayload if it is a tool_use or
 /// tool_result variant.  Returns empty string otherwise.
 [[nodiscard]] std::string_view extract_tool_name(const MessageRowPayload& p) {
-    if (auto* opts = std::get_if<::cc::ui::messages::tool_use_message::ToolUseRenderOptions>(&p)) {
+    if (auto* opts = std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(&p)) {
         return opts->call.tool_name;
     }
-    if (auto* grp = std::get_if<::cc::ui::messages::tool_use_message::GroupedToolsOptions>(&p)) {
+    if (auto* grp = std::get_if<::loom::ui::messages::tool_use_message::GroupedToolsOptions>(&p)) {
         if (!grp->calls.empty()) return grp->calls[0].tool_name;
     }
-    if (auto* tro = std::get_if<::cc::ui::messages::ToolResultOptions>(&p)) {
+    if (auto* tro = std::get_if<::loom::ui::messages::ToolResultOptions>(&p)) {
         return tro->tool_name;
     }
     return {};
@@ -235,7 +235,7 @@ auto passes_brief_filter(
 
     // Tool results: clickable if the result is marked truncated
     if (shape == S::UserToolResult) {
-        if (auto* opts = std::get_if<::cc::ui::messages::ToolResultOptions>(&payload)) {
+        if (auto* opts = std::get_if<::loom::ui::messages::ToolResultOptions>(&payload)) {
             return opts->is_truncated;
         }
     }
@@ -243,7 +243,7 @@ auto passes_brief_filter(
     // Tool uses: clickable if they have a result preview (means they have content
     // that could be expanded)
     if (shape == S::AssistantToolUse) {
-        if (auto* opts = std::get_if<::cc::ui::messages::tool_use_message::ToolUseRenderOptions>(&payload)) {
+        if (auto* opts = std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(&payload)) {
             return opts->call.result_preview.has_value() &&
                    !opts->call.result_preview->empty();
         }
@@ -583,4 +583,4 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
     return out;
 }
 
-} // namespace cc::ui::messages_list
+} // namespace loom::ui::messages_list

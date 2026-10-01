@@ -2,7 +2,7 @@ export module loom.platform.binary_check;
 
 import std;
 
-export namespace cc::utils::binary_check {
+export namespace loom::utils::binary_check {
 
 [[nodiscard]] inline std::string trim_command(std::string_view command) {
     const auto start = command.find_first_not_of(" \t\n\r\f\v");
@@ -36,4 +36,4 @@ private:
     std::unordered_map<std::string, bool> cache_;
 };
 
-} // namespace cc::utils::binary_check
+} // namespace loom::utils::binary_check

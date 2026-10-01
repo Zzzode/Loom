@@ -26,7 +26,7 @@ import loom.ui.prompt.autocomplete_sources;
 import loom.ui.messages.message_pipeline;
 import loom.ui.dialogs.system;
 
-export namespace cc::ui {
+export namespace loom::ui {
 
 // PIMPL backing type, defined in the internal partition cc.ui.app.app:impl.
 // Forward-declared here so the interface can hold a unique_ptr without
@@ -74,13 +74,13 @@ struct BridgeState {
 // heavy cc.services.prompt_suggestion import out of this thin module (clang
 // 2GB source-location budget).
 void wire_prompt_suggestion_hook(void* hooks, void* engine,
-                                 std::shared_ptr<cc::ui::repl_screen::ReplScreenState> state);
+                                 std::shared_ptr<loom::ui::repl_screen::ReplScreenState> state);
 
 using namespace ftxui;
-using namespace cc::core;
+using namespace loom::core;
 
-namespace repl = cc::ui::repl_screen;
-namespace acsrc = cc::ui::autocomplete_sources;
+namespace repl = loom::ui::repl_screen;
+namespace acsrc = loom::ui::autocomplete_sources;
 
 // Env/config + text/UTF free helpers — bodies in app_helpers.cpp
 // (RFC 0001 Phase C batch 1). Plain declarations here (inline dropped;
@@ -113,7 +113,7 @@ struct AutocompleteToken {
     std::size_t cursor);
 
 // AT-12: fuzzy_match_ascii / fuzzy_rank_ascii removed — all autocomplete
-// ranking now delegates to cc::ui::prompt::fuzzy_rank_nucleo (frn::), which
+// ranking now delegates to loom::ui::prompt::fuzzy_rank_nucleo (frn::), which
 // ports the nucleo/fzf-v2 scorer (boundary/camel/consecutive/gap/path bonuses)
 // while preserving the exact {0..3} base range so the tier offsets (alias +1,
 // skill +4, plugin +6) and the rank-ascending sort stay unchanged. See
@@ -285,7 +285,7 @@ private:
     /// for the streaming-text tail row.  Reset alongside streaming_text_ so
     /// each new model response starts with a fresh stable prefix.  Used by
     /// RenderAssistantTextMessageFaithful via MessagesListInput.streaming_md.
-    ::cc::ui::StreamingMarkdown streaming_markdown_;
+    ::loom::ui::StreamingMarkdown streaming_markdown_;
     struct StreamingToolPreview {
         std::string tool_name;
         std::string tool_use_id;  ///< M6: matches ToolExecution* events
@@ -322,7 +322,7 @@ private:
     bool is_streaming_thinking_visible() const;
     // P0-2 Stage 1: per-turn dedup tracker for ContentBlock index transitions.
     // One per App (one instantiation per repl lifetime; cleared on each turn start.
-    cc::ui::messages::pipeline::DedupTracker event_dedup_;
+    loom::ui::messages::pipeline::DedupTracker event_dedup_;
     std::atomic<ScreenInteractive*> screen_{nullptr};
 
     // Permission confirmation
@@ -730,4 +730,4 @@ public:
 // Main Application Runner
 // ============================================================
 
-} // namespace cc::ui
+} // namespace loom::ui

@@ -51,17 +51,17 @@ import loom.ui.dialogs.trust_dialog;
 import loom.ui.dialogs.trust_utils;
 import loom.ui.foundation.design_tokens;
 
-export namespace cc::ui::screens::log_selector {
+export namespace loom::ui::screens::log_selector {
 
 using namespace ftxui;
 
 // ─── Cross-module imports (tokens / UI8 trust primitives) ────────────────────
-namespace dt = cc::ui::design::tokens;
-namespace tu = cc::ui::trust_utils;
+namespace dt = loom::ui::design::tokens;
+namespace tu = loom::ui::trust_utils;
 using tu::RiskLevel;
 using tu::TrustChoice;
-using cc::ui::trust_dialog::TrustDialogProps;
-using cc::ui::trust_dialog::MakeTrustDialogComponent;
+using loom::ui::trust_dialog::TrustDialogProps;
+using loom::ui::trust_dialog::MakeTrustDialogComponent;
 
 // =========================================================================
 // 1. Enums
@@ -1742,4 +1742,4 @@ inline bool HandleEvents(SelectorState& s, Event event) {
     });
 }
 
-} // namespace cc::ui::screens::log_selector
+} // namespace loom::ui::screens::log_selector

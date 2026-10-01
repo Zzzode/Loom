@@ -20,7 +20,7 @@ import loom.serdes.json;
 import loom.net.http.http;
 
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
 
 enum class MessagePriority { low, normal, high, system };
@@ -216,7 +216,7 @@ protected:
         return json.str();
     }
 
-    [[nodiscard]] static auto parse_message_value(cc::utils::json::JsonVal root) -> std::optional<BridgeMessage> {
+    [[nodiscard]] static auto parse_message_value(loom::utils::json::JsonVal root) -> std::optional<BridgeMessage> {
         if (!root.valid() || !root.is_obj()) return std::nullopt;
 
         auto payload_value = root.get("payload");
@@ -236,7 +236,7 @@ protected:
     }
 
     [[nodiscard]] static auto parse_inbound_message(std::string_view payload) -> std::optional<BridgeMessage> {
-        auto parsed = cc::utils::json::parse(payload);
+        auto parsed = loom::utils::json::parse(payload);
         if (!parsed || !parsed->root().is_obj()) return std::nullopt;
         return parse_message_value(parsed->root());
     }
@@ -647,7 +647,7 @@ class HttpPollingTransport : public BridgeTransport {
     std::chrono::milliseconds poll_interval_{1000};
     std::vector<std::string> posted_messages_;
     std::atomic<bool> connected_{false};
-    cc::utils::HttpClient http_{};
+    loom::utils::HttpClient http_{};
     std::jthread poll_thread_;
 
 public:
@@ -656,7 +656,7 @@ public:
     auto connect(std::string_view url, std::optional<std::string_view> token)
         -> std::expected<void, TransportError> override {
         set_state(TransportState::connecting);
-        auto parsed = cc::utils::parse_url(url);
+        auto parsed = loom::utils::parse_url(url);
         if (!parsed) {
             auto error = TransportError{
                 TransportError::protocol_error,
@@ -733,15 +733,15 @@ private:
         return result;
     }
 
-    [[nodiscard]] static auto map_http_error(const cc::utils::HttpError& error) -> TransportError {
+    [[nodiscard]] static auto map_http_error(const loom::utils::HttpError& error) -> TransportError {
         switch (error.code) {
-            case cc::utils::HttpError::timeout:
+            case loom::utils::HttpError::timeout:
                 return {TransportError::timeout, error.message, true};
-            case cc::utils::HttpError::cancelled:
+            case loom::utils::HttpError::cancelled:
                 return {TransportError::closed_by_peer, error.message, true};
-            case cc::utils::HttpError::ssl_error:
-            case cc::utils::HttpError::dns_error:
-            case cc::utils::HttpError::connection_failed:
+            case loom::utils::HttpError::ssl_error:
+            case loom::utils::HttpError::dns_error:
+            case loom::utils::HttpError::connection_failed:
                 return {TransportError::connection_refused, error.message, true};
         }
         return {TransportError::connection_refused, error.message, true};
@@ -774,12 +774,12 @@ private:
         body = trim_body(body);
         if (body.empty() || body == "null") return messages;
 
-        auto parsed = cc::utils::json::parse(body);
+        auto parsed = loom::utils::json::parse(body);
         if (!parsed) return messages;
         auto root = parsed->root();
-        auto collect_array = [&messages](cc::utils::json::JsonVal array) {
+        auto collect_array = [&messages](loom::utils::json::JsonVal array) {
             if (!array.valid() || !array.is_arr()) return;
-            array.iter([&messages](cc::utils::json::JsonVal item) {
+            array.iter([&messages](loom::utils::json::JsonVal item) {
                 if (auto message = parse_message_value(item)) {
                     messages.push_back(std::move(*message));
                 }
@@ -869,4 +869,4 @@ public:
     }
 };
 
-} // namespace cc::bridge
+} // namespace loom::bridge

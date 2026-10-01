@@ -18,7 +18,7 @@ export module loom.daemon.daemon_client;
 
 import std;
 
-export namespace cc::daemon {
+export namespace loom::daemon {
 
 // ============================================================
 // Daemon discovery
@@ -286,4 +286,4 @@ private:
     uint64_t request_counter_ = 0;
 };
 
-} // namespace cc::daemon
+} // namespace loom::daemon

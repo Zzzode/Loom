@@ -9,9 +9,9 @@ module loom.ui.app.app_dialog_registration;
 import loom.ui.dialogs.system;
 import loom.ui.dialogs.hooks_renderer;
 
-namespace cc::ui::app_dialogs {
+namespace loom::ui::app_dialogs {
 void register_hooks_dialog_renderer(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry) {
-    cc::ui::dialogs::hooks_renderer::register_hooks_renderer(registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry) {
+    loom::ui::dialogs::hooks_renderer::register_hooks_renderer(registry);
 }
-}  // namespace cc::ui::app_dialogs
+}  // namespace loom::ui::app_dialogs

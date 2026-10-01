@@ -49,15 +49,15 @@ import loom.text.string_utils;
 import loom.skills.mcp_skill_builders;
 export import loom.skills.skill;
 
-export namespace cc::skills {
+export namespace loom::skills {
 
 namespace fs = std::filesystem;
-using cc::utils::YamlValue;
-using cc::utils::YamlMap;
-using cc::utils::YamlArray;
-using cc::utils::log::debug;
-using cc::utils::log::warning;
-using cc::utils::log::log_error;
+using loom::utils::YamlValue;
+using loom::utils::YamlMap;
+using loom::utils::YamlArray;
+using loom::utils::log::debug;
+using loom::utils::log::warning;
+using loom::utils::log::log_error;
 
 // =========================================================================
 // LoadedFrom enum
@@ -150,7 +150,7 @@ struct ParsedSkillFrontmatterFields {
     std::optional<std::string> hooks_json;   // Serialized hooks settings (simplified)
     std::optional<std::string> execution_context; // 'fork' or undefined
     std::optional<std::string> agent;
-    std::optional<cc::utils::EffortLevel> effort;
+    std::optional<loom::utils::EffortLevel> effort;
     std::optional<FrontmatterShell> shell;
 };
 
@@ -176,7 +176,7 @@ struct SkillCommand {
     bool user_invocable = true;
     std::optional<std::string> context;      // 'inline' or 'fork'
     std::optional<std::string> agent;
-    std::optional<cc::utils::EffortLevel> effort;
+    std::optional<loom::utils::EffortLevel> effort;
     std::optional<std::vector<std::string>> paths; // Conditional activation paths
     std::size_t content_length = 0;
     bool is_hidden = false;
@@ -219,7 +219,7 @@ struct SkillCommand {
         const auto& arg_names_vec = arg_names.value_or(
             std::vector<std::string>{});
         if (args.has_value()) {
-            final_content = cc::utils::argument_substitution::substitute_arguments(
+            final_content = loom::utils::argument_substitution::substitute_arguments(
                 final_content, *args, true, arg_names_vec);
         }
 
@@ -336,13 +336,13 @@ std::vector<std::string> get_additional_directories_for_loom_md() {
 bool is_setting_source_enabled(SettingSource source) {
     switch (source) {
         case SettingSource::PolicySettings:
-            return !cc::utils::is_env_truthy(
+            return !loom::utils::is_env_truthy(
                 std::getenv("LOOM_DISABLE_POLICY_SKILLS"));
         case SettingSource::UserSettings:
-            return !cc::utils::is_env_truthy(
+            return !loom::utils::is_env_truthy(
                 std::getenv("LOOM_DISABLE_USER_SKILLS"));
         case SettingSource::ProjectSettings:
-            return !cc::utils::is_env_truthy(
+            return !loom::utils::is_env_truthy(
                 std::getenv("LOOM_DISABLE_PROJECT_SKILLS"));
         default:
             return true;
@@ -357,7 +357,7 @@ bool is_setting_source_enabled(SettingSource source) {
 /// Check if a surface is restricted to plugin-only skills
 bool is_restricted_to_plugin_only(std::string_view /*surface*/) {
     // TS REF: checks pluginOnlyPolicy setting. For CPP, we check an env var.
-    return cc::utils::is_env_truthy(
+    return loom::utils::is_env_truthy(
         std::getenv("LOOM_PLUGIN_ONLY_SKILLS"));
 }
 
@@ -545,7 +545,7 @@ std::optional<FrontmatterShell> parse_shell_frontmatter(
 // =========================================================================
 
 /// Parse an effort value from frontmatter ('low','medium','high','max' or int)
-std::optional<cc::utils::EffortLevel> parse_effort_value(
+std::optional<loom::utils::EffortLevel> parse_effort_value(
     const std::optional<std::string>& value)
 {
     if (!value.has_value()) return std::nullopt;
@@ -561,18 +561,18 @@ std::optional<cc::utils::EffortLevel> parse_effort_value(
     auto e = v.find_last_not_of(" \t");
     if (e != std::string::npos) v = v.substr(0, e + 1);
 
-    if (v == "low") return cc::utils::EffortLevel::Low;
-    if (v == "medium") return cc::utils::EffortLevel::Medium;
-    if (v == "high") return cc::utils::EffortLevel::High;
-    if (v == "max") return cc::utils::EffortLevel::Max;
+    if (v == "low") return loom::utils::EffortLevel::Low;
+    if (v == "medium") return loom::utils::EffortLevel::Medium;
+    if (v == "high") return loom::utils::EffortLevel::High;
+    if (v == "max") return loom::utils::EffortLevel::Max;
 
     // Try integer effort
     try {
         int int_val = std::stoi(v);
-        if (int_val <= 1) return cc::utils::EffortLevel::Low;
-        if (int_val <= 3) return cc::utils::EffortLevel::Medium;
-        if (int_val <= 6) return cc::utils::EffortLevel::High;
-        return cc::utils::EffortLevel::Max;
+        if (int_val <= 1) return loom::utils::EffortLevel::Low;
+        if (int_val <= 3) return loom::utils::EffortLevel::Medium;
+        if (int_val <= 6) return loom::utils::EffortLevel::High;
+        return loom::utils::EffortLevel::Max;
     } catch (...) {
         return std::nullopt;
     }
@@ -734,11 +734,11 @@ std::vector<std::string> parse_argument_names_from_frontmatter(
                 result.push_back(std::get<std::string>(item.data));
             }
         }
-        return cc::utils::argument_substitution::parse_argument_names(result);
+        return loom::utils::argument_substitution::parse_argument_names(result);
     }
 
     if (!args_str.has_value()) return {};
-    return cc::utils::argument_substitution::parse_argument_names(
+    return loom::utils::argument_substitution::parse_argument_names(
         std::optional<std::string>(*args_str));
 }
 
@@ -789,7 +789,7 @@ FrontmatterData parse_frontmatter_rich(std::string_view content) {
     FrontmatterData data;
 
     // First, check if frontmatter exists
-    if (!cc::utils::has_frontmatter(content)) {
+    if (!loom::utils::has_frontmatter(content)) {
         return data;
     }
 
@@ -812,10 +812,10 @@ FrontmatterData parse_frontmatter_rich(std::string_view content) {
     // Parse the YAML
     YamlValue parsed;
     try {
-        parsed = cc::utils::parse_yaml(yaml_section);
+        parsed = loom::utils::parse_yaml(yaml_section);
     } catch (...) {
         // YAML parsing failed - fall back to simple key:value parsing
-        auto simple = cc::utils::parse_frontmatter(content);
+        auto simple = loom::utils::parse_frontmatter(content);
         // Copy simple metadata into FrontmatterData
         for (const auto& [key, value] : simple.metadata) {
             if (key == "description") data.description = value;
@@ -911,7 +911,7 @@ std::optional<std::string> parse_hooks_from_frontmatter(
     // Simplified: serialize the hooks YAML to a string for later use.
     // Full validation would require HooksSchema equivalent.
     try {
-        return cc::utils::yaml_to_string(*fm.hooks_yaml);
+        return loom::utils::yaml_to_string(*fm.hooks_yaml);
     } catch (...) {
         warning("[skills] Invalid hooks in skill '" + std::string(skill_name) + "'");
         return std::nullopt;
@@ -1147,7 +1147,7 @@ std::vector<detail::SkillWithPath> load_skills_from_skills_dir(
             auto fm_data = parse_frontmatter_rich(content);
 
             // Get content without frontmatter
-            auto stripped = cc::utils::strip_frontmatter(content);
+            auto stripped = loom::utils::strip_frontmatter(content);
             std::string markdown_content(stripped);
 
             // Use directory name as skill name
@@ -1328,7 +1328,7 @@ std::vector<detail::SkillWithPath> load_skills_from_commands_dir(
 
                     // Parse frontmatter
                     auto fm_data = parse_frontmatter_rich(content);
-                    auto stripped = cc::utils::strip_frontmatter(content);
+                    auto stripped = loom::utils::strip_frontmatter(content);
                     std::string md_content(stripped);
 
                     auto parsed = parse_skill_frontmatter_fields(
@@ -1400,7 +1400,7 @@ inline SkillDirCache& skill_dir_cache() {
 /// Uses the existing GitignoreFilter utility.
 bool is_path_gitignored(const fs::path& path, const fs::path& repo_root) {
     try {
-        cc::utils::GitignoreFilter filter(repo_root);
+        loom::utils::GitignoreFilter filter(repo_root);
         return filter.is_ignored(path);
     } catch (...) {
         return false; // Fail open
@@ -1458,7 +1458,7 @@ std::vector<SkillCommand> get_skill_dir_commands_locked(const fs::path& cwd) {
 
     // --bare mode: skip auto-discovery
     const char* bare_env = std::getenv("LOOM_SIMPLE");
-    bool is_bare = cc::utils::is_env_truthy(bare_env);
+    bool is_bare = loom::utils::is_env_truthy(bare_env);
     if (is_bare) {
         if (additional_dirs.empty() || !project_settings_enabled) {
             debug("[bare] Skipping skill dir discovery (" +
@@ -1493,7 +1493,7 @@ std::vector<SkillCommand> get_skill_dir_commands_locked(const fs::path& cwd) {
 
     // 1. Managed skills (policy)
     if (is_setting_source_enabled(SettingSource::PolicySettings) &&
-        !cc::utils::is_env_truthy(std::getenv("LOOM_DISABLE_POLICY_SKILLS")) &&
+        !loom::utils::is_env_truthy(std::getenv("LOOM_DISABLE_POLICY_SKILLS")) &&
         !managed_skills_dir.empty()) {
         auto managed = load_skills_from_skills_dir(
             managed_skills_dir, SettingSource::PolicySettings);
@@ -2288,7 +2288,7 @@ namespace detail {
 /// RAII registrar that sets the file-access hook on construction.
 struct FileAccessHookRegistrar {
     FileAccessHookRegistrar() {
-        cc::skills::set_file_access_hook(
+        loom::skills::set_file_access_hook(
             [](const fs::path& file_path, const fs::path& cwd) {
                 SkillRegistry::instance().discover_for_paths(
                     {file_path}, cwd);
@@ -2302,4 +2302,4 @@ inline const FileAccessHookRegistrar g_file_access_hook_registrar{};
 
 } // namespace detail
 
-} // namespace cc::skills
+} // namespace loom::skills

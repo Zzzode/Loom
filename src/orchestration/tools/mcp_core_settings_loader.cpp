@@ -9,19 +9,19 @@ module loom.orchestration.tools.mcp;
 
 import std;
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
 CoreSettingsMcpServersLoader& core_settings_mcp_loader_slot() {
     static CoreSettingsMcpServersLoader loader;
     return loader;
 }
 
-}  // namespace cc::tools::detail
+}  // namespace loom::tools::detail
 
-namespace cc::tools {
+namespace loom::tools {
 
 void set_core_settings_mcp_loader(CoreSettingsMcpServersLoader loader) {
     detail::core_settings_mcp_loader_slot() = std::move(loader);
 }
 
-}  // namespace cc::tools
+}  // namespace loom::tools

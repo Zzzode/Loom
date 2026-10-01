@@ -8,7 +8,7 @@ export module loom.utils.error;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 enum class ErrorCode : uint32_t {
     unknown = 0,
@@ -179,4 +179,4 @@ namespace error {
 template<typename T>
 concept ErrorLike = true;
 
-} // namespace cc::utils
+} // namespace loom::utils

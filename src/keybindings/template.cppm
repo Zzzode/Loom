@@ -16,7 +16,7 @@ import std;
 import loom.keybindings.schema;
 import loom.keybindings.defaults;
 
-export namespace cc::keybindings {
+export namespace loom::keybindings {
 
 /// Schema URL for keybindings.json validation
 inline constexpr std::string_view keybindings_schema_url =
@@ -137,4 +137,4 @@ inline constexpr std::string_view keybindings_docs_url =
     return out.str();
 }
 
-} // namespace cc::keybindings
+} // namespace loom::keybindings

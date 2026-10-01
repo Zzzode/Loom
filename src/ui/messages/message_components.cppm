@@ -11,7 +11,7 @@ import std;
 import loom.ui.chrome.layout;
 import loom.ui.foundation.design_figures;  // kBlackCircleFallback (● U+25CF) — single source of truth
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 // --- Error constants ---
 inline constexpr std::string_view kApiErrorPrefix = "API Error: ";
@@ -25,7 +25,7 @@ inline constexpr std::string_view kUserAbortError = "[interrupted by user]";
 inline constexpr std::string_view kNoResponseRequested = "[no response requested]";
 inline constexpr int kMaxApiErrorChars = 1000;
 // kBlackCircle (● U+25CF) — formerly defined locally, now imported from
-// cc::ui::design::figures::kBlackCircleFallback.  See figures.cppm for the
+// loom::ui::design::figures::kBlackCircleFallback.  See figures.cppm for the
 // Darwin-correct kBlackCircle (⏺ U+23FA) and platform fallback rationale.
 
 // --- Message block types ---
@@ -252,7 +252,7 @@ enum class MessageRenderError {
     // Check for empty message
     if (is_empty_message_text(text)) {
         if (props.should_show_dot) {
-            return std::string(cc::ui::design::figures::kBlackCircleFallback);
+            return std::string(loom::ui::design::figures::kBlackCircleFallback);
         }
         return std::string{};
     }
@@ -303,4 +303,4 @@ enum class MessageRenderError {
     const RateLimitInfo& info,
     std::function<void()> on_retry) -> ftxui::Component;
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

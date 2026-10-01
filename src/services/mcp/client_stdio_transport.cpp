@@ -14,7 +14,7 @@ import std;
 
 import loom.services.mcp.types;
 
-namespace cc::services::mcp {
+namespace loom::services::mcp {
 
 StdioTransport::StdioTransport(std::string command, std::vector<std::string> args,
                                std::map<std::string, std::string> env)
@@ -154,4 +154,4 @@ void StdioTransport::close() {
     connected_ = false;
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

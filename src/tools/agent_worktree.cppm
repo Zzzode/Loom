@@ -13,7 +13,7 @@ export module loom.tools.agent_worktree;
 
 import std;
 
-export namespace cc::tools::agent {
+export namespace loom::tools::agent {
 
 struct AgentWorktreeCleanupResult {
     bool attempted = false;
@@ -24,4 +24,4 @@ struct AgentWorktreeCleanupResult {
 
 [[nodiscard]] AgentWorktreeCleanupResult cleanup_agent_worktree(std::string_view agent_id);
 
-} // namespace cc::tools::agent
+} // namespace loom::tools::agent

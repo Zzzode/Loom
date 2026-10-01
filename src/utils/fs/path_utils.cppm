@@ -9,7 +9,7 @@ import std;
 
 namespace fs = std::filesystem;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 
 inline fs::path normalize_path(const fs::path& p) {
@@ -127,4 +127,4 @@ inline std::string ensure_trailing_slash(std::string path_str) {
     return path_str;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

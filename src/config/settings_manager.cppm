@@ -16,7 +16,7 @@ import loom.config.settings_paths;
 import loom.config.settings_sources;
 import loom.config.settings_validation;
 
-export namespace cc::utils::settings_manager {
+export namespace loom::utils::settings_manager {
 
 namespace fs = std::filesystem;
 using namespace std::chrono;
@@ -115,7 +115,7 @@ struct UpdateResult {
     return SettingSource::UserSettings;
 }
 
-[[nodiscard]] inline std::optional<SettingsValue> settings_value_from_json(cc::utils::json::JsonVal value) {
+[[nodiscard]] inline std::optional<SettingsValue> settings_value_from_json(loom::utils::json::JsonVal value) {
     if (!value.valid() || value.is_null()) return SettingsValue{std::monostate{}};
     if (value.is_bool()) return SettingsValue{value.as_bool()};
     if (value.is_num()) {
@@ -128,14 +128,14 @@ struct UpdateResult {
     if (value.is_str()) return SettingsValue{std::string(value.as_str())};
     if (value.is_arr()) {
         std::vector<std::string> values;
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             if (item.valid() && item.is_str()) values.emplace_back(item.as_str());
         });
         return SettingsValue{std::move(values)};
     }
     if (value.is_obj()) {
         std::map<std::string, std::string> values;
-        value.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal item) {
+        value.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal item) {
             if (key.valid() && key.is_str() && item.valid() && item.is_str()) {
                 values[std::string(key.as_str())] = std::string(item.as_str());
             }
@@ -145,10 +145,10 @@ struct UpdateResult {
     return std::nullopt;
 }
 
-[[nodiscard]] inline SettingsJson parse_settings_json(cc::utils::json::JsonVal root) {
+[[nodiscard]] inline SettingsJson parse_settings_json(loom::utils::json::JsonVal root) {
     SettingsJson settings;
     if (!root.valid() || !root.is_obj()) return settings;
-    root.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    root.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.valid() || !key.is_str()) return;
         auto parsed = settings_value_from_json(value);
         if (parsed) settings[std::string(key.as_str())] = std::move(*parsed);
@@ -158,14 +158,14 @@ struct UpdateResult {
 
 [[nodiscard]] inline SettingsJson read_settings_file(const fs::path& path) {
     if (path.empty() || !fs::exists(path)) return {};
-    auto parsed = cc::utils::json::parse_file(path);
+    auto parsed = loom::utils::json::parse_file(path);
     if (!parsed) return {};
     return parse_settings_json(parsed->root());
 }
 
 inline void add_settings_value(
-    cc::utils::json::JsonMutDoc& doc,
-    cc::utils::json::JsonMutVal& root,
+    loom::utils::json::JsonMutDoc& doc,
+    loom::utils::json::JsonMutVal& root,
     std::string_view key,
     const SettingsValue& value) {
     std::visit([&](const auto& typed) {
@@ -195,7 +195,7 @@ inline void add_settings_value(
 }
 
 [[nodiscard]] inline std::string serialize_settings_json(const SettingsJson& settings) {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     for (const auto& [key, value] : settings) {
         add_settings_value(doc, root, key, value);
@@ -757,4 +757,4 @@ private:
     SettingsApplier applier_;
 };
 
-} // namespace cc::utils::settings_manager
+} // namespace loom::utils::settings_manager

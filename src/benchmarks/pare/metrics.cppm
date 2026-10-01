@@ -11,9 +11,9 @@ import std;
 import loom.benchmarks.pare.schema;
 import loom.serdes.json;
 
-export namespace cc::benchmarks::pare {
+export namespace loom::benchmarks::pare {
 
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 inline int64_t to_number(const std::string& s) {
     try {
@@ -125,4 +125,4 @@ inline NormalizedUsage median_usage(const std::vector<CaseRunResult>& runs) {
     return result;
 }
 
-} // namespace cc::benchmarks::pare
+} // namespace loom::benchmarks::pare

@@ -5,7 +5,7 @@ export module loom.commands.privacy_settings;
 
 import std;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
 auto privacy_settings_path() -> std::filesystem::path {
     if (const char* home = std::getenv("HOME")) return std::filesystem::path{home} / ".loom" / "privacy.txt";
@@ -77,4 +77,4 @@ auto show_privacy_info() -> std::string {
     return info;
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

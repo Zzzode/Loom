@@ -14,9 +14,9 @@ import std;
 
 import loom.teams.swarm.backends;
 
-export namespace cc::utils::pane_observer {
+export namespace loom::utils::pane_observer {
 
-namespace sw = cc::utils::swarm_backends;
+namespace sw = loom::utils::swarm_backends;
 
 // ── Event-driven change subscription ──────────────────────────────────────
 // The poller jthread is allowed (background tmux capture), but FTXUI must not
@@ -305,12 +305,12 @@ private:
 /// Stop the global observer's poller and drop the singleton.
 void shutdown_global_pane_observer();
 
-} // namespace cc::utils::pane_observer
+} // namespace loom::utils::pane_observer
 
 // --- process-wide singleton storage -------------------------------------
 // Header-only module: all three accessors must share ONE function-local
 // state, so route them through a single module-local holder().
-namespace cc::utils::pane_observer::pane_observer_detail {
+namespace loom::utils::pane_observer::pane_observer_detail {
 
 struct GlobalObserverState {
     std::mutex mtx;
@@ -323,9 +323,9 @@ struct GlobalObserverState {
     return state;
 }
 
-} // namespace cc::utils::pane_observer::pane_observer_detail
+} // namespace loom::utils::pane_observer::pane_observer_detail
 
-namespace cc::utils::pane_observer {
+namespace loom::utils::pane_observer {
 
 [[nodiscard]] inline std::shared_ptr<PaneObserver> global_pane_observer() {
     auto& state = pane_observer_detail::holder();
@@ -361,4 +361,4 @@ inline void shutdown_global_pane_observer() {
     if (previous) previous->stop();
 }
 
-} // namespace cc::utils::pane_observer
+} // namespace loom::utils::pane_observer

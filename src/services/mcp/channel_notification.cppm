@@ -32,12 +32,12 @@ import loom.services.mcp.types;
 import loom.serdes.json;
 import loom.plugins.plugin_identifier;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
 using namespace std::string_view_literals;
-using cc::utils::json::JsonVal;
-using cc::utils::plugin_identifier::ParsedPluginIdentifier;
-using cc::utils::plugin_identifier::parse_plugin_identifier;
+using loom::utils::json::JsonVal;
+using loom::utils::plugin_identifier::ParsedPluginIdentifier;
+using loom::utils::plugin_identifier::parse_plugin_identifier;
 
 // =========================================================================
 // JSON-RPC method constants
@@ -239,7 +239,7 @@ struct ChannelGateResult {
     std::string_view content,
     const std::optional<std::map<std::string, std::string>>& meta = std::nullopt
 ) -> std::string {
-    using cc::constants::xml::CHANNEL_TAG;
+    using loom::constants::xml::CHANNEL_TAG;
 
     std::string attrs;
     if (meta) {
@@ -498,7 +498,7 @@ struct ChannelGateResult {
 [[nodiscard]] inline auto parse_channel_message_params(
     const std::string& params_json
 ) -> std::optional<ChannelMessageParams> {
-    auto doc = cc::utils::json::parse(params_json);
+    auto doc = loom::utils::json::parse(params_json);
     if (!doc) return std::nullopt;
 
     auto root = doc->root();
@@ -529,7 +529,7 @@ struct ChannelGateResult {
 [[nodiscard]] inline auto parse_channel_permission_params(
     const std::string& params_json
 ) -> std::optional<ChannelPermissionParams> {
-    auto doc = cc::utils::json::parse(params_json);
+    auto doc = loom::utils::json::parse(params_json);
     if (!doc) return std::nullopt;
 
     auto root = doc->root();
@@ -554,7 +554,7 @@ struct ChannelGateResult {
 [[nodiscard]] inline auto serialize_permission_request_params(
     const ChannelPermissionRequestParams& params
 ) -> std::string {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     root.add("request_id", doc.string(params.request_id));
     root.add("tool_name", doc.string(params.tool_name));
@@ -898,7 +898,7 @@ inline auto emit_channel_message(
     auto wrapped = wrap_channel_message(server_name, content, meta);
 
     // Build JSON payload: { content, wrapped, meta? }
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     root.add("content", doc.string(content));
     root.add("wrapped", doc.string(wrapped));
@@ -930,7 +930,7 @@ inline auto emit_channel_permission(
     std::string_view request_id,
     std::string_view behavior
 ) -> void {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     root.add("request_id", doc.string(request_id));
     root.add("behavior", doc.string(behavior));
@@ -1369,4 +1369,4 @@ auto wire_channel_bus_to_manager(
     );
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

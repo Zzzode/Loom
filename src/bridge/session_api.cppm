@@ -13,11 +13,11 @@ import loom.types.types;
 import loom.net.http.http;
 import loom.serdes.json;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
-using cc::core::Error;
-using cc::core::ErrorCode;
-using cc::core::Result;
+using loom::core::Error;
+using loom::core::ErrorCode;
+using loom::core::Result;
 
 constexpr std::string_view ANTHROPIC_VERSION = "2023-06-01";
 constexpr std::string_view SESSION_API_PATH = "/v1/sessions";
@@ -47,7 +47,7 @@ struct BridgeSession {
     /// Parse a BridgeSession from a JSON response body.
     /// Returns std::nullopt if required fields are missing.
     [[nodiscard]] static auto from_json(std::string_view body) -> std::optional<BridgeSession> {
-        auto parsed = cc::utils::json::parse(body);
+        auto parsed = loom::utils::json::parse(body);
         if (!parsed) return std::nullopt;
         auto root = parsed->root();
         if (!root.is_obj()) return std::nullopt;
@@ -161,7 +161,7 @@ namespace detail {
     std::string_view body
 ) -> Error {
     std::string detail;
-    auto parsed = cc::utils::json::parse(body);
+    auto parsed = loom::utils::json::parse(body);
     if (parsed) {
         auto root = parsed->root();
         if (root.is_obj()) {
@@ -182,20 +182,20 @@ namespace detail {
 }
 
 /// Convert a transport-level HttpError into a domain Error.
-[[nodiscard]] auto map_transport_error(const cc::utils::HttpError& http_err) -> Error {
+[[nodiscard]] auto map_transport_error(const loom::utils::HttpError& http_err) -> Error {
     ErrorCode code = ErrorCode::ConnectionFailed;
     switch (http_err.code) {
-        case cc::utils::HttpError::timeout:
+        case loom::utils::HttpError::timeout:
             code = ErrorCode::NetworkTimeout;
             break;
-        case cc::utils::HttpError::ssl_error:
+        case loom::utils::HttpError::ssl_error:
             code = ErrorCode::SSLError;
             break;
-        case cc::utils::HttpError::dns_error:
-        case cc::utils::HttpError::connection_failed:
+        case loom::utils::HttpError::dns_error:
+        case loom::utils::HttpError::connection_failed:
             code = ErrorCode::ConnectionFailed;
             break;
-        case cc::utils::HttpError::cancelled:
+        case loom::utils::HttpError::cancelled:
             code = ErrorCode::NetworkTimeout;
             break;
     }
@@ -217,7 +217,7 @@ auto create_code_session(
     std::string_view base_url,
     std::string_view access_token,
     std::string_view org_uuid,
-    cc::utils::HttpClient& http_client,
+    loom::utils::HttpClient& http_client,
     std::chrono::milliseconds timeout = std::chrono::seconds{30}
 ) -> Result<BridgeSession> {
     (void)timeout;
@@ -257,7 +257,7 @@ auto get_bridge_session(
     std::string_view base_url,
     std::string_view access_token,
     std::string_view org_uuid,
-    cc::utils::HttpClient& http_client,
+    loom::utils::HttpClient& http_client,
     std::chrono::milliseconds timeout = std::chrono::seconds{10}
 ) -> Result<BridgeSession> {
     (void)timeout;
@@ -301,7 +301,7 @@ auto archive_bridge_session(
     std::string_view base_url,
     std::string_view access_token,
     std::string_view org_uuid,
-    cc::utils::HttpClient& http_client,
+    loom::utils::HttpClient& http_client,
     std::chrono::milliseconds timeout = std::chrono::seconds{10}
 ) -> Result<void> {
     (void)timeout;
@@ -342,7 +342,7 @@ auto update_bridge_session_title(
     std::string_view base_url,
     std::string_view access_token,
     std::string_view org_uuid,
-    cc::utils::HttpClient& http_client,
+    loom::utils::HttpClient& http_client,
     std::chrono::milliseconds timeout = std::chrono::seconds{10}
 ) -> Result<void> {
     (void)timeout;
@@ -431,4 +431,4 @@ Result<std::string> create_local_session(const CreateLocalSessionOptions& opts) 
     return std::format("local_{}", std::hash<std::string>{}(seed));
 }
 
-} // namespace cc::bridge
+} // namespace loom::bridge

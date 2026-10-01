@@ -22,9 +22,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::bash_ui {
+export namespace loom::ui::tools::bash_ui {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 namespace detail {
 
@@ -203,4 +203,4 @@ inline void register_bash_ui() {
     global_tool_ui_registry().register_tool_ui("Bash", make_bash_ui());
 }
 
-}  // namespace cc::ui::tools::bash_ui
+}  // namespace loom::ui::tools::bash_ui

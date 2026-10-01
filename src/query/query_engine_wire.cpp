@@ -21,7 +21,7 @@ import loom.query.wire_anthropic;
 import loom.query.wire_openai;
 import loom.services.compact.api_microcompact;
 
-namespace cc::core {
+namespace loom::core {
 
 double QueryEngine::context_utilization() const noexcept {
     auto estimated = estimate_conversation_tokens();
@@ -32,9 +32,9 @@ std::string QueryEngine::working_directory() const {
     return config_.cwd.value_or(std::filesystem::current_path().string());
 }
 
-[[nodiscard]] std::optional<cc::services::compact::ContextManagementConfig>
+[[nodiscard]] std::optional<loom::services::compact::ContextManagementConfig>
 QueryEngine::api_context_management() const {
-    return cc::services::compact::get_api_context_management({
+    return loom::services::compact::get_api_context_management({
         .has_thinking = thinking_enabled_for_request(),
         .is_redact_thinking_active = false,
         .clear_all_thinking = false,
@@ -43,12 +43,12 @@ QueryEngine::api_context_management() const {
 
 [[nodiscard]] bool QueryEngine::thinking_enabled_for_request() const {
     return config_.thinking_config.mode != ThinkingConfig::Mode::Disabled &&
-        !cc::utils::is_env_truthy(std::getenv("LOOM_DISABLE_THINKING"));
+        !loom::utils::is_env_truthy(std::getenv("LOOM_DISABLE_THINKING"));
 }
 
 void QueryEngine::add_output_config_to_json(
-    cc::utils::json::JsonMutVal& root,
-    cc::utils::json::JsonMutDoc& doc
+    loom::utils::json::JsonMutVal& root,
+    loom::utils::json::JsonMutDoc& doc
 ) const {
     const bool has_budget = config_.task_budget.has_value();
     const bool has_schema = config_.response_schema.has_value();
@@ -84,7 +84,7 @@ void QueryEngine::add_output_config_to_json(
 }
 
 [[nodiscard]] std::string QueryEngine::build_output_config_json_for_testing() const {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     add_output_config_to_json(root, doc);
     doc.set_root(root);
@@ -125,7 +125,7 @@ void QueryEngine::set_wire_backend_factory(WireBackendFactory factory) {
     wire_backend_factory_ = std::move(factory);
 }
 
-[[nodiscard]] std::unique_ptr<cc::query::wire::WireBackend>
+[[nodiscard]] std::unique_ptr<loom::query::wire::WireBackend>
 QueryEngine::make_wire_backend() const {
     // §2.4 seam: when a factory was injected (e.g. by cc.sdk.harness),
     // delegate request-body serialization to it. The transport is NOT
@@ -133,7 +133,7 @@ QueryEngine::make_wire_backend() const {
     if (wire_backend_factory_) {
         return wire_backend_factory_();
     }
-    using cc::query::wire::WireApi;
+    using loom::query::wire::WireApi;
     if (wire_api_ == WireApi::OpenAi) {
         std::vector<std::pair<std::string, std::string>> auth;
         if (!api_config_.auth_token.empty()) {
@@ -143,15 +143,15 @@ QueryEngine::make_wire_backend() const {
             auth.emplace_back("Authorization",
                               std::format("Bearer {}", api_config_.api_key));
         }
-        return std::make_unique<cc::query::wire::OpenAiWireBackend>(
+        return std::make_unique<loom::query::wire::OpenAiWireBackend>(
             api_config_.base_url, std::move(auth));
     }
     // Anthropic (default): credential precedence matches the historical
     // engine behaviour — bearer token wins over x-api-key.
     std::vector<std::pair<std::string, std::string>> auth;
-    auth.push_back(cc::query::wire::anthropic_credential_header(
+    auth.push_back(loom::query::wire::anthropic_credential_header(
         api_config_.api_key, api_config_.auth_token));
-    cc::query::wire::AnthropicWireOptions opts;
+    loom::query::wire::AnthropicWireOptions opts;
     opts.base_url = api_config_.base_url;
     opts.api_version = api_config_.api_version;
     opts.extra_headers = std::move(auth);
@@ -159,7 +159,7 @@ QueryEngine::make_wire_backend() const {
     // options struct because they are not part of the neutral input.
     if (auto cm = api_context_management()) {
         for (const auto& edit : cm->edits) {
-            cc::query::wire::ContextEdit ce;
+            loom::query::wire::ContextEdit ce;
             ce.type = edit.type;
             ce.trigger_input_tokens = edit.trigger_input_tokens;
             ce.clear_at_least_input_tokens = edit.clear_at_least_input_tokens;
@@ -173,25 +173,25 @@ QueryEngine::make_wire_backend() const {
         }
     }
     if (config_.task_budget) {
-        cc::query::wire::TaskBudget tb;
+        loom::query::wire::TaskBudget tb;
         tb.total = config_.task_budget->total;
         tb.remaining = config_.task_budget->remaining;
         opts.task_budget = std::move(tb);
     }
     if (config_.response_schema) {
-        cc::query::wire::ResponseSchema rs;
+        loom::query::wire::ResponseSchema rs;
         rs.name = config_.response_schema->name;
         rs.schema_json = config_.response_schema->schema_json;
         opts.response_schema = std::move(rs);
     }
-    return std::make_unique<cc::query::wire::AnthropicWireBackend>(
+    return std::make_unique<loom::query::wire::AnthropicWireBackend>(
         std::move(opts));
 }
 
-[[nodiscard]] cc::query::wire::RequestInput QueryEngine::build_wire_input(
+[[nodiscard]] loom::query::wire::RequestInput QueryEngine::build_wire_input(
     const QueryOptions& options,
     bool stream) const {
-    cc::query::wire::RequestInput input;
+    loom::query::wire::RequestInput input;
     input.model = config_.model_params.model;
     input.max_tokens = config_.model_params.max_tokens;
     input.stream = stream;
@@ -262,13 +262,13 @@ QueryEngine::make_wire_backend() const {
     // Tool pruning: deny rules, dedup (built-ins win), enabled filter.
     std::unordered_set<std::string> seen_names;
     auto add_tool = [&](const ToolDefinition& tool) {
-        cc::utils::tool_deny_rules::DenyToolView deny_view;
+        loom::utils::tool_deny_rules::DenyToolView deny_view;
         deny_view.name = tool.name;
         if (tool.category && tool.category->starts_with("mcp:")) {
             deny_view.mcp_server = tool.category->substr(4);
             deny_view.mcp_tool = tool.name;
         }
-        if (cc::utils::tool_deny_rules::is_tool_denied(
+        if (loom::utils::tool_deny_rules::is_tool_denied(
                 config_.always_deny_rules, deny_view)) {
             return;
         }
@@ -299,4 +299,4 @@ QueryEngine::make_wire_backend() const {
     return prepared->body;
 }
 
-} // namespace cc::core
+} // namespace loom::core

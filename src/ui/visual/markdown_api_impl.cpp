@@ -11,7 +11,7 @@ module loom.ui.visual.markdown;
 
 import std;
 
-namespace cc::ui {
+namespace loom::ui {
 
 [[nodiscard]] Element render_markdown(std::string_view source,
                                       const MarkdownOptions& opts) {
@@ -179,4 +179,4 @@ void clear_markdown_cache() {
     return detail::global_token_cache().max_size();
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

@@ -8,7 +8,7 @@ export module loom.crypto.uuid_utils;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace detail {
 
@@ -137,4 +137,4 @@ inline std::string generate_short_id(size_t length = 8) {
     return result;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

@@ -16,7 +16,7 @@ export module loom.ui.messages.message_shutdown;
 
 import std;
 
-export namespace cc::ui::messages::shutdown {
+export namespace loom::ui::messages::shutdown {
 using namespace ftxui;
 
 /// Reason for shutdown
@@ -191,4 +191,4 @@ class ShutdownMessageComponent : public ComponentBase {
         std::move(data), std::move(on_resume), std::move(on_new));
 }
 
-} // namespace cc::ui::messages::shutdown
+} // namespace loom::ui::messages::shutdown

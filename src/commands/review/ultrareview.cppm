@@ -6,7 +6,7 @@
 /// enforces cross-file consistency checks.
 ///
 /// This implementation provides:
-///   1. A local feature-flag gate (`cc::core::flags::Feature::UltraReview`,
+///   1. A local feature-flag gate (`loom::core::flags::Feature::UltraReview`,
 ///      overridable with CC_ULTRAREVIEW=1).
 ///   2. `generate_ultrareview_plan(diff_files) -> ReviewPlan` — pure logic that
 ///      partitions the diff into N rounds with per-round focus files and
@@ -36,9 +36,9 @@ import loom.process.exec_sync;
 import loom.scm.git.git_filesystem;
 import loom.scm.git.detect_repository;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 // ============================================================
 // Overage / plan-limit pure logic (no UI)
@@ -246,7 +246,7 @@ struct ReviewPlan {
 ///   b) GrowthBook runtime flag `tengu_review_bughunter_config.enabled`
 [[nodiscard]] inline bool is_ultrareview_enabled() {
     // Runtime feature flag
-    if (cc::core::flags::is_enabled(cc::core::flags::Feature::UltraReview)) return true;
+    if (loom::core::flags::is_enabled(loom::core::flags::Feature::UltraReview)) return true;
 
     // GrowthBook check via the shared GrowthBookClient singleton interface
     // (the get_feature_value method looks up tengu_review_bughunter_config.enabled)
@@ -278,10 +278,10 @@ struct ReviewPlan {
         cmd = std::format("git diff --numstat {}...HEAD", base_ref_or_pr);
     }
 
-    auto out = cc::utils::exec_sync(cmd);
+    auto out = loom::utils::exec_sync(cmd);
     if (!out) {
         // Try a fallback: plain git diff HEAD for local-only changes
-        out = cc::utils::exec_sync("git diff --numstat HEAD");
+        out = loom::utils::exec_sync("git diff --numstat HEAD");
         if (!out) {
             return std::unexpected(Error::make(
                 ErrorCode::ToolExecutionFailed,
@@ -441,4 +441,4 @@ public:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

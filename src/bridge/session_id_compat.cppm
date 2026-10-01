@@ -7,7 +7,7 @@ export module loom.bridge.session_id_compat;
 
 import std;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
 // Check if a session ID uses the legacy UUID format.
 bool is_legacy_session_id(std::string_view id);
@@ -87,4 +87,4 @@ std::string generate_session_id() {
     return oss.str();
 }
 
-} // namespace cc::bridge
+} // namespace loom::bridge

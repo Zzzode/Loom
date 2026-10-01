@@ -7,7 +7,7 @@ export module loom.tools.synthetic_output_tool;
 
 import std;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 struct SyntheticOutput {
     std::string content;
@@ -94,4 +94,4 @@ inline auto generate_synthetic_output(
     };
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

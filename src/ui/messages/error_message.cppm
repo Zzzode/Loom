@@ -2,7 +2,7 @@ export module loom.ui.messages.error_message;
 
 import std;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 // ─── Error types ─────────────────────────────────────────────────────
 
@@ -159,4 +159,4 @@ inline std::string render_rate_limit_message(int retry_after_seconds) {
     return result;
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

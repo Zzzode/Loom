@@ -29,7 +29,7 @@ import std;
 import loom.serdes.json;
 import loom.platform.xdg;
 
-export namespace cc::services::analytics {
+export namespace loom::services::analytics {
 
 /// One recorded event.
 struct AnalyticsEvent {
@@ -45,7 +45,7 @@ struct AnalyticsEvent {
     if (const char* env = std::getenv("LOOM_ANALYTICS_PATH"); env && *env) {
         return std::filesystem::path{env};
     }
-    return cc::utils::xdg_state_home() / "loom" / "analytics.ndjson";
+    return loom::utils::xdg_state_home() / "loom" / "analytics.ndjson";
 }
 
 /// Whether local analytics are enabled. Off when LOOM_ANALYTICS_DISABLED is
@@ -100,7 +100,7 @@ private:
         std::string_view name,
         std::chrono::system_clock::time_point timestamp,
         const std::vector<std::pair<std::string, std::string>>& properties) {
-        cc::utils::json::JsonBuilder builder;
+        loom::utils::json::JsonBuilder builder;
         const auto seconds = std::chrono::duration_cast<std::chrono::milliseconds>(
                                  timestamp.time_since_epoch())
                                  .count();
@@ -125,4 +125,4 @@ private:
     return instance;
 }
 
-}  // namespace cc::services::analytics
+}  // namespace loom::services::analytics

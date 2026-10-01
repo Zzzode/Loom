@@ -10,7 +10,7 @@ import std;
 import loom.bridge.jwt_utils;
 import loom.serdes.json;
 
-export namespace cc::bridge {
+export namespace loom::bridge {
 
 // Internal: get the path to the secret file
 inline std::string get_secret_path();
@@ -30,7 +30,7 @@ struct DecodedWorkSecret {
 };
 
 [[nodiscard]] inline std::optional<std::string> work_secret_string_field(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::initializer_list<std::string_view> keys
 ) {
     if (!root.valid() || !root.is_obj()) return std::nullopt;
@@ -42,7 +42,7 @@ struct DecodedWorkSecret {
 }
 
 [[nodiscard]] inline std::optional<bool> work_secret_bool_field(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::initializer_list<std::string_view> keys
 ) {
     if (!root.valid() || !root.is_obj()) return std::nullopt;
@@ -54,7 +54,7 @@ struct DecodedWorkSecret {
 }
 
 [[nodiscard]] inline std::optional<std::string> work_secret_json_field(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::initializer_list<std::string_view> keys
 ) {
     if (!root.valid() || !root.is_obj()) return std::nullopt;
@@ -65,7 +65,7 @@ struct DecodedWorkSecret {
     return std::nullopt;
 }
 
-[[nodiscard]] inline std::string work_secret_value_as_env_string(cc::utils::json::JsonVal value) {
+[[nodiscard]] inline std::string work_secret_value_as_env_string(loom::utils::json::JsonVal value) {
     if (value.is_str()) return std::string(value.as_str());
     if (value.is_bool()) return value.as_bool() ? "true" : "false";
     if (value.is_num()) return value.to_string();
@@ -73,7 +73,7 @@ struct DecodedWorkSecret {
 }
 
 [[nodiscard]] inline std::unordered_map<std::string, std::string> work_secret_env_vars(
-    cc::utils::json::JsonVal root
+    loom::utils::json::JsonVal root
 ) {
     std::unordered_map<std::string, std::string> env;
     if (!root.valid() || !root.is_obj()) return env;
@@ -84,7 +84,7 @@ struct DecodedWorkSecret {
     if (!env_node.valid()) env_node = root.get("environment");
     if (!env_node.is_obj()) return env;
 
-    env_node.iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    env_node.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
         auto text = work_secret_value_as_env_string(value);
         if (!text.empty()) env.emplace(std::string(key.as_str()), std::move(text));
@@ -92,7 +92,7 @@ struct DecodedWorkSecret {
     return env;
 }
 
-[[nodiscard]] inline std::vector<std::string> work_secret_sources(cc::utils::json::JsonVal root) {
+[[nodiscard]] inline std::vector<std::string> work_secret_sources(loom::utils::json::JsonVal root) {
     std::vector<std::string> sources;
     if (!root.valid() || !root.is_obj()) return sources;
 
@@ -101,7 +101,7 @@ struct DecodedWorkSecret {
 
     auto sources_node = root.get("sources");
     if (sources_node.is_arr()) {
-        sources_node.iter([&](cc::utils::json::JsonVal item) {
+        sources_node.iter([&](loom::utils::json::JsonVal item) {
             if (item.valid() && !item.is_null()) sources.push_back(item.to_string());
         });
     } else if (sources_node.valid() && !sources_node.is_null()) {
@@ -116,7 +116,7 @@ std::expected<DecodedWorkSecret, std::string> decode_work_secret(std::string_vie
         return std::unexpected("Failed to decode work secret: " + decoded.error());
     }
 
-    auto parsed = cc::utils::json::parse(*decoded);
+    auto parsed = loom::utils::json::parse(*decoded);
     if (!parsed || !parsed->root().is_obj()) {
         return std::unexpected("Invalid work secret: not a JSON object");
     }
@@ -248,4 +248,4 @@ inline std::string get_secret_path() {
     return "/tmp/loom-bridge-work-secret";
 }
 
-} // namespace cc::bridge
+} // namespace loom::bridge

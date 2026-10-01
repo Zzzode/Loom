@@ -55,17 +55,17 @@ import loom.skills.support;
 import loom.session.app_storage;
 import loom.teams.swarm.pane_observer;
 
-namespace cc::ui {
-namespace agent_runtime = cc::tools::agent_runtime;
-namespace agent_cards = cc::ui::agents::cards;
+namespace loom::ui {
+namespace agent_runtime = loom::tools::agent_runtime;
+namespace agent_cards = loom::ui::agents::cards;
 // Defined in app_extra_methods.cpp (same module); redeclared for module linkage.
 agent_cards::AgentCardData project_agent_definition_card(
     const agent_runtime::AgentDefinition& agent);
 
-namespace repl = cc::ui::repl_screen;
-namespace acsrc = cc::ui::autocomplete_sources;
-namespace frn = cc::ui::prompt::fuzzy_rank_nucleo;
-namespace fidx = cc::ui::prompt::file_index;
+namespace repl = loom::ui::repl_screen;
+namespace acsrc = loom::ui::autocomplete_sources;
+namespace frn = loom::ui::prompt::fuzzy_rank_nucleo;
+namespace fidx = loom::ui::prompt::file_index;
 
 // RFC 0001 Phase C batch 2: folded from app.cppm — sole caller is
 // RefreshAutocompleteSuggestions below. Plain (non-inline) definition;
@@ -199,11 +199,11 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     // TextInputImpl after the prompt). Faithful to TS useTypeahead's
     // commandArgumentHint (src/hooks/useTypeahead.tsx:729-770).
     screen_state_->pending_argument_hint.clear();
-    if (input.starts_with('/') && static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())) {
+    if (input.starts_with('/') && static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
         const auto sp = input.find(' ');
         if (sp != std::string::npos && sp > 1) {
             const std::string cmd_name = input.substr(1, sp - 1);
-            if (const auto* def = static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())->find_definition(cmd_name)) {
+            if (const auto* def = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->find_definition(cmd_name)) {
                 if (!def->argument_hint.empty()) {
                     screen_state_->pending_argument_hint = def->argument_hint;
                 }
@@ -217,11 +217,11 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     // + getBestCommandMatch (src/utils/commandSuggestions.ts:114-195).
     screen_state_->pending_ghost_text.clear();
     if (!input.starts_with('/') && token.text.starts_with('/') &&
-        static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())) {
+        static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
         const std::string partial = token.text.substr(1);
         if (!(partial.empty() || partial.find(' ') != std::string::npos)) {
             const CommandDefinition* best = nullptr;
-            for (const auto* def : static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())->visible_commands()) {
+            for (const auto* def : static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->visible_commands()) {
                 if (def->name.size() >= partial.size() &&
                     def->name.compare(0, partial.size(), partial) == 0) {
                     if (!best || def->name.size() < best->name.size()) best = def;
@@ -280,8 +280,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     };
 
     auto add_session_suggestions = [&](std::string_view partial) {
-        if (!static_cast<cc::utils::SessionStorage*>(storage_raw())) return;
-        auto sessions = static_cast<cc::utils::SessionStorage*>(storage_raw())->list_sessions(50);
+        if (!static_cast<loom::utils::SessionStorage*>(storage_raw())) return;
+        auto sessions = static_cast<loom::utils::SessionStorage*>(storage_raw())->list_sessions(50);
         if (!sessions) return;
         for (const auto& session : *sessions) {
             const auto& id = session.metadata.id;
@@ -343,8 +343,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     if (input.starts_with('/') &&
         cursor <= input.size() &&
         before_cursor.find_first_of(" \t\n") != std::string::npos &&
-        static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())) {
-        auto completions = static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())->complete(before_cursor);
+        static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
+        auto completions = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->complete(before_cursor);
         for (auto& completion : completions) {
             const bool whole_command = completion.starts_with('/');
             add_suggestion(
@@ -373,8 +373,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         };
         std::vector<SlashCandidate> candidates;
 
-        if (static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())) {
-            for (const auto* def : static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())->visible_commands()) {
+        if (static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
+            for (const auto* def : static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->visible_commands()) {
                 if (!def) continue;
                 // SL-02: multi-key match — name (exact/prefix/substring/subseq)
                 // outranks a description-word match, so commands are still
@@ -454,7 +454,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             // on non-empty queries; on empty '/' all skills tie on fuzzy rank
             // so recency dominates, surfacing recent skills first.
             const int recency_bonus = static_cast<int>(
-                std::min(cc::utils::skill_usage::get_skill_usage_score(skill.name), 3.0));
+                std::min(loom::utils::skill_usage::get_skill_usage_score(skill.name), 3.0));
             candidates.push_back(SlashCandidate{
                 .display = "/" + skill.name,
                 .description = (skill.kind == "workflow")
@@ -491,7 +491,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // the full name of a hidden command, surface it at the top (TS
         // commandSuggestions.ts:391-401 hiddenExact). visible_commands()
         // otherwise hides them entirely.
-        if (auto* hidden = static_cast<cc::commands::AppCommandRegistry*>(cmd_registry_raw())->hidden_command_if_exact(query)) {
+        if (auto* hidden = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->hidden_command_if_exact(query)) {
             candidates.push_back(SlashCandidate{
                 .display = "/" + hidden->name,
                 .description = hidden->description,
@@ -577,7 +577,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // The display prefix keeps the original unexpanded form so the user
         // sees @~/Documents not @/home/user/Documents.
         std::filesystem::path raw_path(raw_query_text);
-        std::filesystem::path expanded_path = cc::utils::path::expand_tilde(raw_path);
+        std::filesystem::path expanded_path = loom::utils::path::expand_tilde(raw_path);
 
         // Compute the display prefix (unexpanded, e.g. "~/src/")
         const auto prefix = raw_path.has_parent_path()
@@ -771,8 +771,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // (src/utils/sessionStorage.ts:3066-3107) exposed as an @-mention
         // source alongside files/agents/MCP. Sessions are sorted by
         // recency (newest first) per SessionStorage::list_sessions.
-        if (static_cast<cc::utils::SessionStorage*>(storage_raw())) {
-            auto sessions = static_cast<cc::utils::SessionStorage*>(storage_raw())->list_sessions(30);
+        if (static_cast<loom::utils::SessionStorage*>(storage_raw())) {
+            auto sessions = static_cast<loom::utils::SessionStorage*>(storage_raw())->list_sessions(30);
             if (sessions) {
                 for (const auto& session : *sessions) {
                     const auto& id = session.metadata.id;
@@ -943,14 +943,14 @@ AppAdapter::~AppAdapter() {
     // Unsubscribe from the pane observer before other teardown so a late
     // capture-pass callback cannot flag/post on a torn-down adapter.
     if (pane_observer_token_ != 0) {
-        cc::utils::pane_observer::unsubscribe_changed(pane_observer_token_);
+        loom::utils::pane_observer::unsubscribe_changed(pane_observer_token_);
         pane_observer_token_ = 0;
     }
     if (leader_inbox_thread_.joinable()) {
         leader_inbox_thread_.request_stop();
     }
-    if (query_running_.load() && static_cast<cc::core::QueryEngine*>(engine_raw())) {
-        static_cast<cc::core::QueryEngine*>(engine_raw())->abort();
+    if (query_running_.load() && static_cast<loom::core::QueryEngine*>(engine_raw())) {
+        static_cast<loom::core::QueryEngine*>(engine_raw())->abort();
     }
     if (query_thread_.joinable()) query_thread_.request_stop();
     if (spinner_thread_.joinable()) spinner_thread_.request_stop();
@@ -1023,7 +1023,7 @@ Element AppAdapter::Render() {
     DrainPendingAtMentionInserts();
 
     const bool qr = query_running_.load();
-    cc::utils::debug("app.render",
+    loom::utils::debug("app.render",
         "Render: query_running={}, messages={}, spinner_mode={}",
         qr, screen_state_->messages_store.messages.size(),
         static_cast<int>(screen_state_->task_view_store.spinner_mode));
@@ -1032,7 +1032,7 @@ Element AppAdapter::Render() {
         std::lock_guard lk(result_mutex_);
 
         const auto now = std::chrono::system_clock::now();
-        auto messages = static_cast<cc::core::QueryEngine*>(engine_raw())->get_conversation();
+        auto messages = static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
         // TS Messages.tsx:520 collapse chain (background-bash so far).
         messages = ApplyMessageCollapsePipeline(std::move(messages));
         screen_state_->messages_store.messages.clear();
@@ -1132,7 +1132,7 @@ Element AppAdapter::Render() {
             if (all_tools_complete && !thinking_visible) has_in_flight = false;
         }
 
-        cc::utils::debug("app.render",
+        loom::utils::debug("app.render",
             "  streaming-path: committed_msgs={}, in_flight={} "
             "(text_len={}, tools={}, thinking={})",
             screen_state_->messages_store.messages.size(), has_in_flight,
@@ -1267,7 +1267,7 @@ Element AppAdapter::Render() {
     // override this with a physical cursor anchor at the declared position.
     // This enables IME preedit text to appear inline at the insertion
     // point and lets screen readers / magnifiers follow the input.
-    namespace dc = cc::ui::common::declared_cursor;
+    namespace dc = loom::ui::common::declared_cursor;
     // Drain background paste results on every render frame so the user
     // doesn't need to press another key to see the image data filled in.
     this->ProcessCompletedPastes();
@@ -1330,7 +1330,7 @@ bool AppAdapter::OnEvent(Event event) {
         const int id = next_paste_id_++;
 
         // Insert " [Image #N]" at cursor IMMEDIATELY (instant feedback).
-        const std::string placeholder = cc::utils::format_image_ref(id);
+        const std::string placeholder = loom::utils::format_image_ref(id);
         const auto cursor = repl::input_cursor_or_end(*screen_state_);
         std::string to_insert;
         if (cursor > 0 && cursor <= screen_state_->input_text.size() &&
@@ -1353,7 +1353,7 @@ bool AppAdapter::OnEvent(Event event) {
     //   This lets users temporarily put aside a long prompt to run a
     //   quick command, then restore it.
     if (event == Event::Character('\x13') && !query_running_.load()) {
-        namespace repl = cc::ui::repl_screen;
+        namespace repl = loom::ui::repl_screen;
         const auto& input = screen_state_->input_text;
 
         // Trim check: TS does `input.trim() === ''` to decide pop-vs-push.
@@ -1367,7 +1367,7 @@ bool AppAdapter::OnEvent(Event event) {
 
         if (!input_has_content && repl::HasStashedPrompt(screen_state_)) {
             // Pop stash: restore stashed text + pasted contents.
-            std::unordered_map<int, ::cc::core::ImageBlock> restored_images;
+            std::unordered_map<int, ::loom::core::ImageBlock> restored_images;
             std::unordered_map<int, std::string> restored_texts;
             repl::RestoreStashedPrompt(screen_state_, &restored_images, &restored_texts);
             // Merge restored pasted contents back into engine maps.
@@ -1383,8 +1383,8 @@ bool AppAdapter::OnEvent(Event event) {
         if (input_has_content) {
             // Push stash: save current input + referenced pasted contents,
             // then clear input.
-            const auto refs = cc::utils::parse_references(input);
-            std::unordered_map<int, ::cc::core::ImageBlock> ref_images;
+            const auto refs = loom::utils::parse_references(input);
+            std::unordered_map<int, ::loom::core::ImageBlock> ref_images;
             std::unordered_map<int, std::string> ref_texts;
             for (const auto& r : refs) {
                 if (auto it = pasted_contents_.find(r.id);
@@ -1427,7 +1427,7 @@ bool AppAdapter::OnEvent(Event event) {
     // The Screen stores hyperlink URLs in hyperlinks_[], indexed by
     // the uint8_t ID written to Pixel.hyperlink during Render().  We
     // look up the URL via screen.Hyperlink(id) and route it through
-    // cc::utils::try_open_hyperlink() (file: → open_file_path,
+    // loom::utils::try_open_hyperlink() (file: → open_file_path,
     // http(s): → open_browser).
     if (event.is_mouse()) {
         const auto& mouse = event.mouse();
@@ -1452,7 +1452,7 @@ bool AppAdapter::OnEvent(Event event) {
                             // system call (open / xdg-open) returns
                             // quickly; we don't block on browser
                             // launch completion.
-                            (void)cc::utils::try_open_hyperlink(url);
+                            (void)loom::utils::try_open_hyperlink(url);
                             return true;  // event consumed
                         }
                     }
@@ -1479,7 +1479,7 @@ bool AppAdapter::OnEvent(Event event) {
         // Also prune pasted_text_contents_ entries whose [...Truncated text #N]
         // ref is no longer in the input (same orphan scenarios for text pastes).
         if (!pasted_contents_.empty() || !pasted_text_contents_.empty()) {
-            const auto refs = cc::utils::parse_references(screen_state_->input_text);
+            const auto refs = loom::utils::parse_references(screen_state_->input_text);
             std::unordered_set<int> referenced_ids;
             for (const auto& r : refs) referenced_ids.insert(r.id);
             for (auto it = pasted_contents_.begin(); it != pasted_contents_.end(); ) {
@@ -1505,4 +1505,4 @@ Component AppAdapter::ActiveChild() {
     return repl_component_;
 }
 
-}  // namespace cc::ui
+}  // namespace loom::ui

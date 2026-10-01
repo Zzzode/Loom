@@ -19,7 +19,7 @@ import loom.commands.plan;
 import loom.commands.theme;
 import loom.commands.vim;
 
-namespace cc::commands {
+namespace loom::commands {
 
 void register_group_c_commands(CommandRegistry& registry) {
     registry.register_command<UpgradeCommand>();
@@ -40,4 +40,4 @@ void register_group_c_commands(CommandRegistry& registry) {
     registry.register_command<VimCommand>();
 }
 
-} // namespace cc::commands
+} // namespace loom::commands

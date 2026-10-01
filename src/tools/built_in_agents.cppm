@@ -8,9 +8,9 @@ import std;
 
 import loom.tools.agent_runtime;
 
-export namespace cc::tools::built_in_agents {
+export namespace loom::tools::built_in_agents {
 
-using cc::tools::agent_runtime::AgentDefinition;
+using loom::tools::agent_runtime::AgentDefinition;
 
 // ---------------------------------------------------------------------------
 // Prompt constants — migrated verbatim from TS source.
@@ -797,7 +797,7 @@ inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
 // Bedrock/Vertex. Ant-native builds opt-in via explicit GrowthBook flag port.
 [[nodiscard]] inline bool are_explore_plan_agents_enabled() {
 #if defined(ANT_NATIVE_BUILD)
-    const auto& env_truthy = cc::tools::agent_runtime::env_truthy;
+    const auto& env_truthy = loom::tools::agent_runtime::env_truthy;
     // Ant-native: default off; enable only via GrowthBook flag (tengu_amber_stoat)
     // when that layer is ported. For now, explicit env override wins.
     return env_truthy("LOOM_ENABLE_EXPLORE_PLAN_AGENTS") ||
@@ -814,12 +814,12 @@ inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
 // TS: feature('VERIFICATION_AGENT') + GrowthBook tengu_hive_evidence=false.
 // C++: opt-in via env, default off (matches TS default of false for A/B).
 [[nodiscard]] inline bool is_verification_agent_enabled() {
-    return cc::tools::agent_runtime::env_truthy("LOOM_ENABLE_VERIFICATION_AGENT") ||
-           cc::tools::agent_runtime::env_truthy("VERIFICATION_AGENT");
+    return loom::tools::agent_runtime::env_truthy("LOOM_ENABLE_VERIFICATION_AGENT") ||
+           loom::tools::agent_runtime::env_truthy("VERIFICATION_AGENT");
 }
 
 // TS: is_sdk_entrypoint — sdk-ts / sdk-py / sdk-cli disable loom-guide.
-using cc::tools::agent_runtime::is_sdk_entrypoint;
+using loom::tools::agent_runtime::is_sdk_entrypoint;
 
 // ---------------------------------------------------------------------------
 // Coordinator mode: worker agent definition.
@@ -908,7 +908,7 @@ inline constexpr std::string_view kCoordinatorWorkerWhenToUse =
 [[nodiscard]] inline std::vector<AgentDefinition> get_built_in_agents() {
     // Allow disabling all built-in agents via env var (SDK users who want a blank slate).
     // Only applies in SDK/API entrypoints (mirrors TS: noninteractive + env).
-    if (cc::tools::agent_runtime::env_truthy("LOOM_AGENT_SDK_DISABLE_BUILTIN_AGENTS") &&
+    if (loom::tools::agent_runtime::env_truthy("LOOM_AGENT_SDK_DISABLE_BUILTIN_AGENTS") &&
         is_sdk_entrypoint()) {
         return {};
     }
@@ -916,7 +916,7 @@ inline constexpr std::string_view kCoordinatorWorkerWhenToUse =
     // COORDINATOR_MODE: when coordinator mode is active, return the
     // coordinator-worker agent definition instead of the normal agent set.
 #if defined(COORDINATOR_MODE_BUILD)
-    if (cc::tools::agent_runtime::env_truthy("LOOM_COORDINATOR_MODE")) {
+    if (loom::tools::agent_runtime::env_truthy("LOOM_COORDINATOR_MODE")) {
         return get_coordinator_agents();
     }
 #endif
@@ -944,4 +944,4 @@ inline constexpr std::string_view kCoordinatorWorkerWhenToUse =
     return agents;
 }
 
-} // namespace cc::tools::built_in_agents
+} // namespace loom::tools::built_in_agents

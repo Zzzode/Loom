@@ -14,7 +14,7 @@ export module loom.fs.path;
 
 import std;
 
-export namespace cc::utils::path {
+export namespace loom::utils::path {
 
 namespace fs = std::filesystem;
 
@@ -152,4 +152,4 @@ namespace fs = std::filesystem;
     return normalize_path_for_comparison(p1) == normalize_path_for_comparison(p2);
 }
 
-} // namespace cc::utils::path
+} // namespace loom::utils::path

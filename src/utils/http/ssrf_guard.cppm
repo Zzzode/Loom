@@ -8,7 +8,7 @@ export module loom.net.http.ssrf_guard;
 import std;
 import loom.text.parse_int;
 
-export namespace cc::utils::ssrf_guard {
+export namespace loom::utils::ssrf_guard {
 
 [[nodiscard]] inline std::optional<std::array<int, 4>> parse_ipv4(std::string_view address) {
     std::array<int, 4> parts{};
@@ -20,7 +20,7 @@ export namespace cc::utils::ssrf_guard {
         int value = 0;
         const auto* first = address.data() + start;
         const auto* last = address.data() + end;
-        auto [ptr, ec] = cc::utils::from_chars(first, last, value);
+        auto [ptr, ec] = loom::utils::from_chars(first, last, value);
         if (ec != std::errc{} || ptr != last || value < 0 || value > 255) return std::nullopt;
         parts[i] = value;
         if (i < 3) {
@@ -162,4 +162,4 @@ export namespace cc::utils::ssrf_guard {
     return false;
 }
 
-} // namespace cc::utils::ssrf_guard
+} // namespace loom::utils::ssrf_guard

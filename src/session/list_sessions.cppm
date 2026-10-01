@@ -6,7 +6,7 @@ export module loom.session.list_sessions;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 namespace fs = std::filesystem;
 
@@ -137,4 +137,4 @@ std::size_t get_session_count() {
     return count;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

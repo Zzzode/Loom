@@ -27,10 +27,10 @@ import loom.parsing.cli.argument_substitution;
 import loom.process.bash.bash_shell_quoting;
 import loom.tools.sed_edit_parser;
 
-export namespace cc::tools::sed_validation {
+export namespace loom::tools::sed_validation {
 
-using cc::tools::bash_validation::EnvelopeResult;
-using cc::tools::bash_validation::PathValidationContext;
+using loom::tools::bash_validation::EnvelopeResult;
+using loom::tools::bash_validation::PathValidationContext;
 using ValidationResult = EnvelopeResult;
 
 // ---------------------------------------------------------------------------
@@ -53,7 +53,7 @@ namespace detail {
 /// Parse shell-style tokens; returns std::nullopt on unbalanced quotes.
 [[nodiscard]] inline std::optional<std::vector<std::string>>
 tokenize(std::string_view text) {
-    return cc::utils::argument_substitution::parse_shell_like_arguments(text);
+    return loom::utils::argument_substitution::parse_shell_like_arguments(text);
 }
 
 } // namespace detail
@@ -693,7 +693,7 @@ struct SedSafetyResult {
 check_sed_constraints(std::string_view command, bool allow_file_writes) {
     // Split on shell-level separators (handled via bash_shell_quoting helper
     // — that helper is quoted-token-aware).
-    using cc::utils::bash_shell_quoting::detail::split_compound;
+    using loom::utils::bash_shell_quoting::detail::split_compound;
     const auto parts = split_compound(command);
 
     for (const auto& raw_part : parts) {
@@ -736,16 +736,16 @@ is_sed_safe(std::string_view sed_cmd, const PathValidationContext& ctx) {
     }
 
     // 2. Path scope check via bash_validation (existing logic, not duplicated).
-    auto pr = cc::tools::bash_validation::validate_paths(sed_cmd, ctx);
+    auto pr = loom::tools::bash_validation::validate_paths(sed_cmd, ctx);
     if (!pr.valid) return pr;
 
     // 3. Destructive operation check via bash_security.
-    if (cc::tools::bash_validation::is_destructive_command(sed_cmd)) {
-        auto reason = cc::tools::bash_validation::get_destructive_command_warning(sed_cmd);
+    if (loom::tools::bash_validation::is_destructive_command(sed_cmd)) {
+        auto reason = loom::tools::bash_validation::get_destructive_command_warning(sed_cmd);
         return {false, reason.value_or("sed command triggers destructive-operation warning")};
     }
 
     return {true, std::nullopt};
 }
 
-} // namespace cc::tools::sed_validation
+} // namespace loom::tools::sed_validation

@@ -22,9 +22,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::file_read_ui {
+export namespace loom::ui::tools::file_read_ui {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 namespace detail {
 
@@ -192,4 +192,4 @@ inline void register_file_read_ui() {
         "FileRead", make_file_read_ui());
 }
 
-}  // namespace cc::ui::tools::file_read_ui
+}  // namespace loom::ui::tools::file_read_ui

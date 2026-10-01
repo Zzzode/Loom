@@ -8,7 +8,7 @@ import std;
 
 import loom.services.mcp.types;
 
-export namespace cc::services::mcp {
+export namespace loom::services::mcp {
 
 // Error types for configuration operations
 enum class ConfigError {
@@ -116,4 +116,4 @@ private:
     std::filesystem::path project_root_;
 };
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

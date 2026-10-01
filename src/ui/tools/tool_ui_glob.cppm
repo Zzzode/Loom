@@ -18,9 +18,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::glob_ui {
+export namespace loom::ui::tools::glob_ui {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 namespace detail {
 
@@ -134,4 +134,4 @@ inline void register_glob_ui() {
     global_tool_ui_registry().register_tool_ui("GlobTool", make_glob_ui());
 }
 
-}  // namespace cc::ui::tools::glob_ui
+}  // namespace loom::ui::tools::glob_ui

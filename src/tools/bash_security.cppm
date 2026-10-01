@@ -6,7 +6,7 @@ export module loom.tools.bash_security;
 
 import std;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 struct SecurityCheck {
     bool passed;
@@ -174,4 +174,4 @@ inline auto check_command_security(std::string_view command) -> SecurityCheck {
     return SecurityCheck{true, "Command passed security checks", std::nullopt};
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

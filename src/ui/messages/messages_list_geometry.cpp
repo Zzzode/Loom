@@ -33,7 +33,7 @@ import loom.ui.messages.message_tool_result;
 import loom.ui.messages.local_command_output_message;
 import loom.ui.messages.thinking_message;
 
-namespace cc::ui::messages_list {
+namespace loom::ui::messages_list {
 
 namespace detail {
 
@@ -234,9 +234,9 @@ namespace detail {
     const std::vector<VisibleRow>& visible,
     const MessagesListInput& input,
     int term_cols)
-    -> std::vector<cc::ui::messages::virtual_list::VisibleRow>
+    -> std::vector<loom::ui::messages::virtual_list::VisibleRow>
 {
-    namespace vl = cc::ui::messages::virtual_list;
+    namespace vl = loom::ui::messages::virtual_list;
     std::vector<vl::VisibleRow> out;
     out.reserve(visible.size());
     for (std::size_t i = 0; i < visible.size(); ++i) {
@@ -319,4 +319,4 @@ namespace detail {
     return true;
 }
 
-} // namespace cc::ui::messages_list
+} // namespace loom::ui::messages_list

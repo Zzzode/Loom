@@ -35,11 +35,11 @@ import std;
 import loom.serdes.json;
 import loom.hooks.execution;
 
-export namespace cc::utils::statusline {
+export namespace loom::utils::statusline {
 
 using namespace std::chrono;
-namespace hooks_ns = cc::utils::hooks_execution;
-namespace json_ns  = cc::utils::json;
+namespace hooks_ns = loom::utils::hooks_execution;
+namespace json_ns  = loom::utils::json;
 
 // =========================================================================
 // StatusLineCommandInput (mirrors TS type)
@@ -429,4 +429,4 @@ struct StatusLineResult {
         command, to_json(input), timeout_ms);
 }
 
-} // namespace cc::utils::statusline
+} // namespace loom::utils::statusline

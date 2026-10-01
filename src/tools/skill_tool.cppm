@@ -17,10 +17,10 @@ import loom.text.parse_int;
 
 import loom.serdes.json;
 
-export namespace cc::tools::skill {
+export namespace loom::tools::skill {
 
 namespace fs = std::filesystem;
-namespace json = cc::utils::json;
+namespace json = loom::utils::json;
 
 // ==========================================================================
 // Constants
@@ -128,7 +128,7 @@ namespace skill_detail {
     int value = 0;
     const auto* first = t.data();
     const auto* last = t.data() + t.size();
-    auto [ptr, ec] = cc::utils::from_chars(first, last, value);
+    auto [ptr, ec] = loom::utils::from_chars(first, last, value);
     if (ec != std::errc{} || ptr != last) return std::nullopt;
     return value;
 }
@@ -883,4 +883,4 @@ execute_skill_tool_simple(std::string_view input_json)
     return doc.to_string();
 }
 
-} // namespace cc::tools::skill
+} // namespace loom::tools::skill

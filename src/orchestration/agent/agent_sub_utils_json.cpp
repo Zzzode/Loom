@@ -12,7 +12,7 @@ import loom.serdes.json;
 import loom.services.api.client;
 import loom.tools.tool;
 
-namespace cc::tools::agent::utils {
+namespace loom::tools::agent::utils {
 
 namespace fs = std::filesystem;
 
@@ -46,7 +46,7 @@ std::string inject_agent_id_into_tool_input(
 ) {
     if (agent_id.empty()) return std::string(raw_json);
 
-    auto doc = cc::utils::json::parse(raw_json);
+    auto doc = loom::utils::json::parse(raw_json);
     if (!doc) return std::string(raw_json);
     auto root = doc->root();
     if (!root.valid() || !root.is_obj()) return std::string(raw_json);
@@ -127,7 +127,7 @@ void append_json_optional_string_field(
 }
 
 [[nodiscard]] std::optional<std::string> json_string(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 ) {
     auto value = root.get(key);
@@ -136,7 +136,7 @@ void append_json_optional_string_field(
 }
 
 [[nodiscard]] bool json_bool(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key,
     bool fallback
 ) {
@@ -145,7 +145,7 @@ void append_json_optional_string_field(
 }
 
 [[nodiscard]] std::optional<int> json_int(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 ) {
     auto value = root.get(key);
@@ -154,7 +154,7 @@ void append_json_optional_string_field(
 }
 
 [[nodiscard]] bool has_non_empty_string(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 ) {
     auto value = root.get(key);
@@ -176,13 +176,13 @@ void append_json_optional_string_field(
     const std::unordered_map<std::string, std::string>& overrides
 ) {
     if (overrides.empty()) return std::string(raw_json);
-    auto parsed = cc::utils::json::parse(raw_json);
+    auto parsed = loom::utils::json::parse(raw_json);
     if (!parsed || !parsed->root().is_obj()) return std::string(raw_json);
 
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     std::unordered_set<std::string> written;
-    parsed->root().iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    parsed->root().iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
         auto key_text = std::string(key.as_str());
         if (auto override = overrides.find(key_text); override != overrides.end()) {
@@ -199,11 +199,11 @@ void append_json_optional_string_field(
     return doc.to_string();
 }
 
-[[nodiscard]] std::vector<std::string> json_string_array(cc::utils::json::JsonVal value) {
+[[nodiscard]] std::vector<std::string> json_string_array(loom::utils::json::JsonVal value) {
     std::vector<std::string> out;
     if (!value.valid()) return out;
     if (value.is_arr()) {
-        value.iter([&](cc::utils::json::JsonVal item) {
+        value.iter([&](loom::utils::json::JsonVal item) {
             if (item.is_str()) {
                 out.emplace_back(item.as_str());
             } else if (item.valid()) {
@@ -217,17 +217,17 @@ void append_json_optional_string_field(
 }
 
 [[nodiscard]] std::vector<std::string> json_string_array_field(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 ) {
     return json_string_array(root.get(key));
 }
 
-[[nodiscard]] bool json_array_looks_like_content_blocks(cc::utils::json::JsonVal value) {
+[[nodiscard]] bool json_array_looks_like_content_blocks(loom::utils::json::JsonVal value) {
     if (!value.valid() || !value.is_arr() || value.size() == 0) return false;
     bool saw_content_block = false;
     bool saw_message = false;
-    value.iter([&](cc::utils::json::JsonVal item) {
+    value.iter([&](loom::utils::json::JsonVal item) {
         if (item.is_str()) {
             saw_content_block = true;
             return;
@@ -249,7 +249,7 @@ void append_json_optional_string_field(
     return out;
 }
 
-[[nodiscard]] std::vector<std::string> json_message_entries(cc::utils::json::JsonVal value) {
+[[nodiscard]] std::vector<std::string> json_message_entries(loom::utils::json::JsonVal value) {
     std::vector<std::string> entries;
     if (!value.valid()) return entries;
     if (value.is_str()) {
@@ -267,7 +267,7 @@ void append_json_optional_string_field(
         return entries;
     }
 
-    value.iter([&](cc::utils::json::JsonVal item) {
+    value.iter([&](loom::utils::json::JsonVal item) {
         if (item.is_str()) {
             entries.emplace_back(item.as_str());
         } else if (item.valid()) {
@@ -278,14 +278,14 @@ void append_json_optional_string_field(
 }
 
 [[nodiscard]] std::vector<std::string> json_message_entries_field(
-    cc::utils::json::JsonVal root,
+    loom::utils::json::JsonVal root,
     std::string_view key
 ) {
     return json_message_entries(root.get(key));
 }
 
 [[nodiscard]] bool agent_tool_input_omits_agent_type(std::string_view raw_json) {
-    auto doc = cc::utils::json::parse(raw_json);
+    auto doc = loom::utils::json::parse(raw_json);
     if (!doc) return true;
     auto root = doc->root();
     if (!root.valid() || !root.is_obj()) return true;
@@ -297,7 +297,7 @@ void append_json_optional_string_field(
 [[nodiscard]] std::expected<AgentToolRequest, std::string> parse_agent_tool_request(
     const ToolInput& input
 ) {
-    auto doc = cc::utils::json::parse(input.json());
+    auto doc = loom::utils::json::parse(input.json());
     if (!doc) return std::unexpected(std::string(doc.error().format()));
 
     auto root = doc->root();
@@ -380,7 +380,7 @@ void append_json_optional_string_field(
         : std::string(raw_json);
     if (!plan.working_dir || plan.working_dir->empty()) return scoped_json;
 
-    auto parsed = cc::utils::json::parse(scoped_json);
+    auto parsed = loom::utils::json::parse(scoped_json);
     if (!parsed || !parsed->root().is_obj()) return scoped_json;
     auto root = parsed->root();
     std::unordered_map<std::string, std::string> overrides;
@@ -423,9 +423,9 @@ void append_json_optional_string_field(
 
 [[nodiscard]] std::string normalized_tool_input_json(std::string_view raw_json) {
     if (raw_json.empty()) return "{}";
-    auto parsed = cc::utils::json::parse(raw_json);
+    auto parsed = loom::utils::json::parse(raw_json);
     if (!parsed || !parsed->root().valid()) return "{}";
-    return cc::utils::json::to_string(parsed->root());
+    return loom::utils::json::to_string(parsed->root());
 }
 
 [[nodiscard]] std::string message_content_sidechain_json(const Message& message) {
@@ -503,7 +503,7 @@ void append_json_optional_string_field(
 }
 
 [[nodiscard]] std::string json_string_member(
-    cc::utils::json::JsonVal object,
+    loom::utils::json::JsonVal object,
     std::string_view key
 ) {
     if (!object.valid() || !object.is_obj()) return {};
@@ -511,13 +511,13 @@ void append_json_optional_string_field(
     return value.is_str() ? std::string(value.as_str()) : std::string{};
 }
 
-[[nodiscard]] std::string text_from_json_content(cc::utils::json::JsonVal content) {
+[[nodiscard]] std::string text_from_json_content(loom::utils::json::JsonVal content) {
     if (!content.valid()) return {};
     if (content.is_str()) return std::string(content.as_str());
     if (!content.is_arr()) return {};
 
     std::string out;
-    content.iter([&](cc::utils::json::JsonVal block) {
+    content.iter([&](loom::utils::json::JsonVal block) {
         std::string text;
         if (block.is_str()) {
             text = std::string(block.as_str());
@@ -536,7 +536,7 @@ void append_json_optional_string_field(
     return out;
 }
 
-[[nodiscard]] ContentBlock content_block_from_json(cc::utils::json::JsonVal block) {
+[[nodiscard]] ContentBlock content_block_from_json(loom::utils::json::JsonVal block) {
     if (block.is_str()) {
         return ContentBlock{.type = ContentBlockType::Text, .text = std::string(block.as_str())};
     }
@@ -582,7 +582,7 @@ void append_json_optional_string_field(
     return ContentBlock{.type = ContentBlockType::Text, .text = std::move(text)};
 }
 
-[[nodiscard]] std::optional<Message> message_from_json_value(cc::utils::json::JsonVal root) {
+[[nodiscard]] std::optional<Message> message_from_json_value(loom::utils::json::JsonVal root) {
     if (!root.valid() || !root.is_obj()) return std::nullopt;
 
     auto message_obj = root.get("message");
@@ -599,7 +599,7 @@ void append_json_optional_string_field(
     Message message;
     message.role = std::move(role);
     if (content.is_arr()) {
-        content.iter([&](cc::utils::json::JsonVal block) {
+        content.iter([&](loom::utils::json::JsonVal block) {
             auto parsed = content_block_from_json(block);
             if (parsed.type == ContentBlockType::Text && parsed.text.empty()) return;
             message.content.push_back(std::move(parsed));
@@ -625,4 +625,4 @@ void append_json_optional_string_field(
     return out;
 }
 
-} // namespace cc::tools::agent::utils
+} // namespace loom::tools::agent::utils

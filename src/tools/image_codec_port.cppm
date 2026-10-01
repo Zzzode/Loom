@@ -2,10 +2,10 @@
 /// @brief Image codec port — orchestration-owned callback leaf.
 ///
 /// File/image tools need image metadata and base64 codec services that are
-/// implemented in cc_services (cc::services::image::ImageService) and wired by
+/// implemented in cc_services (loom::services::image::ImageService) and wired by
 /// cc_orchestration, but cc_tools cannot depend on cc_orchestration (rank 8 ->
 /// rank 9 would be an upward edge). The concrete backend is installed once at
-/// process startup via cc::orchestration::install_runtime_backends(); tool
+/// process startup via loom::orchestration::install_runtime_backends(); tool
 /// code acquires it through codec() and fails closed when no deployment
 /// installed one (hermetic test binaries).
 module;
@@ -17,10 +17,10 @@ export module loom.tools.image_codec.port;
 
 import std;
 
-export namespace cc::tools::image_codec {
+export namespace loom::tools::image_codec {
 
 /// Image metadata returned by the installed codec. Mirrors the fields of
-/// cc::services::image::ImageInfo that callers consume, with the format
+/// loom::services::image::ImageInfo that callers consume, with the format
 /// already resolved to a MIME type.
 struct ImageInfo {
     std::uint32_t width = 0;
@@ -80,4 +80,4 @@ inline void clear_codec() {
     return detail::image_codec_storage();
 }
 
-} // namespace cc::tools::image_codec
+} // namespace loom::tools::image_codec

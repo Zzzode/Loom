@@ -11,7 +11,7 @@ module loom.serdes.json;
 
 import std;
 
-namespace cc::utils::json {
+namespace loom::utils::json {
 
 bool JsonVal::is_null() const noexcept { return yyjson_is_null(val_); }
 bool JsonVal::is_bool() const noexcept { return yyjson_is_bool(val_); }
@@ -69,4 +69,4 @@ std::optional<JsonVal> JsonVal::get_object(std::string_view key) const noexcept 
     return child;
 }
 
-} // namespace cc::utils::json
+} // namespace loom::utils::json

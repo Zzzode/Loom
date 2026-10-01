@@ -31,12 +31,12 @@ import loom.ui.dialogs.frame;
 import loom.ui.foundation.theme_provider;
 import loom.ui.permissions.components;
 
-export namespace cc::ui::dialogs::quick_open {
+export namespace loom::ui::dialogs::quick_open {
 
 using namespace ftxui;
-namespace dsys = cc::ui::dialogs::system;
-namespace dframe = cc::ui::dialogs::frame;
-using Theme = cc::ui::design::theme::Theme;
+namespace dsys = loom::ui::dialogs::system;
+namespace dframe = loom::ui::dialogs::frame;
+using Theme = loom::ui::design::theme::Theme;
 using QuickOpenItem = dsys::QuickOpenItem;
 
 // ============================================================
@@ -123,7 +123,7 @@ using QuickOpenItem = dsys::QuickOpenItem;
     // ---- Build item list ----
     Elements list_els;
     std::string current_category;
-    namespace pc = cc::ui::permissions::components;
+    namespace pc = loom::ui::permissions::components;
 
     if (filtered.empty()) {
         list_els.push_back(
@@ -380,4 +380,4 @@ inline bool HandleQuickOpenEvent(
     return items;
 }
 
-} // namespace cc::ui::dialogs::quick_open
+} // namespace loom::ui::dialogs::quick_open

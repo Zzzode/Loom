@@ -264,101 +264,101 @@ private:
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(StringUtils, TrimRemovesWhitespace) {
-    EXPECT_EQ(cc::utils::string::trim("  hello  "), "hello");
-    EXPECT_EQ(cc::utils::string::trim("\t\n text \r\n"), "text");
-    EXPECT_EQ(cc::utils::string::trim("no_change"), "no_change");
-    EXPECT_EQ(cc::utils::string::trim(""), "");
+    EXPECT_EQ(loom::utils::string::trim("  hello  "), "hello");
+    EXPECT_EQ(loom::utils::string::trim("\t\n text \r\n"), "text");
+    EXPECT_EQ(loom::utils::string::trim("no_change"), "no_change");
+    EXPECT_EQ(loom::utils::string::trim(""), "");
 }
 
 TEST(StringUtils, SplitByDelimiter) {
-    auto parts = cc::utils::string::split("a,b,c", ',');
+    auto parts = loom::utils::string::split("a,b,c", ',');
     ASSERT_EQ(parts.size(), 3u);
     EXPECT_EQ(parts[0], "a");
     EXPECT_EQ(parts[1], "b");
     EXPECT_EQ(parts[2], "c");
 
 
-    auto empty = cc::utils::string::split("", ',');
+    auto empty = loom::utils::string::split("", ',');
     ASSERT_EQ(empty.size(), 1u);
     EXPECT_EQ(empty[0], "");
 }
 
 TEST(StringUtils, SplitHandlesConsecutiveDelimiters) {
-    auto parts = cc::utils::string::split("a,,b", ',');
+    auto parts = loom::utils::string::split("a,,b", ',');
     ASSERT_EQ(parts.size(), 3u);
     EXPECT_EQ(parts[1], "");
 }
 
 TEST(StringUtils, JoinCombinesStrings) {
     std::vector<std::string> items = {"hello", "world", "test"};
-    EXPECT_EQ(cc::utils::string::join(items, " "), "hello world test");
-    EXPECT_EQ(cc::utils::string::join(items, ", "), "hello, world, test");
+    EXPECT_EQ(loom::utils::string::join(items, " "), "hello world test");
+    EXPECT_EQ(loom::utils::string::join(items, ", "), "hello, world, test");
 
 
     std::vector<std::string> empty_vec;
-    EXPECT_EQ(cc::utils::string::join(empty_vec, ","), "");
+    EXPECT_EQ(loom::utils::string::join(empty_vec, ","), "");
 }
 
 TEST(StringUtils, CaseConversion) {
-    EXPECT_EQ(cc::utils::string::to_lower("Hello World"), "hello world");
-    EXPECT_EQ(cc::utils::string::to_upper("Hello World"), "HELLO WORLD");
-    EXPECT_EQ(cc::utils::string::to_lower("ALREADY"), "already");
-    EXPECT_EQ(cc::utils::string::to_upper("already"), "ALREADY");
+    EXPECT_EQ(loom::utils::string::to_lower("Hello World"), "hello world");
+    EXPECT_EQ(loom::utils::string::to_upper("Hello World"), "HELLO WORLD");
+    EXPECT_EQ(loom::utils::string::to_lower("ALREADY"), "already");
+    EXPECT_EQ(loom::utils::string::to_upper("already"), "ALREADY");
 }
 
 TEST(StringUtils, StartsWithAndEndsWith) {
-    EXPECT_TRUE(cc::utils::string::starts_with("hello world", "hello"));
-    EXPECT_FALSE(cc::utils::string::starts_with("hello world", "world"));
-    EXPECT_TRUE(cc::utils::string::ends_with("hello world", "world"));
-    EXPECT_FALSE(cc::utils::string::ends_with("hello world", "hello"));
+    EXPECT_TRUE(loom::utils::string::starts_with("hello world", "hello"));
+    EXPECT_FALSE(loom::utils::string::starts_with("hello world", "world"));
+    EXPECT_TRUE(loom::utils::string::ends_with("hello world", "world"));
+    EXPECT_FALSE(loom::utils::string::ends_with("hello world", "hello"));
 
 
-    EXPECT_TRUE(cc::utils::string::starts_with("anything", ""));
-    EXPECT_TRUE(cc::utils::string::ends_with("anything", ""));
+    EXPECT_TRUE(loom::utils::string::starts_with("anything", ""));
+    EXPECT_TRUE(loom::utils::string::ends_with("anything", ""));
 }
 
 TEST(StringUtils, ReplaceAllTreatsEmptyNeedleAsNoop) {
-    EXPECT_EQ(cc::utils::string::replace_all("abc", "", "x"), "abc");
-    EXPECT_EQ(cc::utils::string::replace_all("a-b-a", "a", "z"), "z-b-z");
+    EXPECT_EQ(loom::utils::string::replace_all("abc", "", "x"), "abc");
+    EXPECT_EQ(loom::utils::string::replace_all("a-b-a", "a", "z"), "z-b-z");
 }
 
 TEST(StringUtils, TruncateDoesNotUnderflowWhenEllipsisIsLongerThanLimit) {
-    EXPECT_EQ(cc::utils::string::truncate("abcdef", 2, "..."), "..");
-    EXPECT_EQ(cc::utils::string::truncate("abcdef", 5, "..."), "ab...");
+    EXPECT_EQ(loom::utils::string::truncate("abcdef", 2, "..."), "..");
+    EXPECT_EQ(loom::utils::string::truncate("abcdef", 5, "..."), "ab...");
 }
 
 TEST(StringUtilsCompat, EscapeRegexEscapesSpecialCharacters) {
-    EXPECT_EQ(cc::utils::escape_regex(R"(a.b*c+$^?{}()|[]\)"), R"(a\.b\*c\+\$\^\?\{\}\(\)\|\[\]\\)");
-    EXPECT_EQ(cc::utils::escape_regex("plain"), "plain");
+    EXPECT_EQ(loom::utils::escape_regex(R"(a.b*c+$^?{}()|[]\)"), R"(a\.b\*c\+\$\^\?\{\}\(\)\|\[\]\\)");
+    EXPECT_EQ(loom::utils::escape_regex("plain"), "plain");
 }
 
 TEST(StringUtilsCompat, CapitalizePreservesRestOfString) {
-    EXPECT_EQ(cc::utils::capitalize("fooBar"), "FooBar");
-    EXPECT_EQ(cc::utils::capitalize("hELLO"), "HELLO");
-    EXPECT_EQ(cc::utils::capitalize(""), "");
+    EXPECT_EQ(loom::utils::capitalize("fooBar"), "FooBar");
+    EXPECT_EQ(loom::utils::capitalize("hELLO"), "HELLO");
+    EXPECT_EQ(loom::utils::capitalize(""), "");
 }
 
 TEST(StringUtilsCompat, PluralSupportsRegularAndIrregularForms) {
-    EXPECT_EQ(cc::utils::plural(1, "file"), "file");
-    EXPECT_EQ(cc::utils::plural(2, "file"), "files");
-    EXPECT_EQ(cc::utils::plural(2, "entry", "entries"), "entries");
+    EXPECT_EQ(loom::utils::plural(1, "file"), "file");
+    EXPECT_EQ(loom::utils::plural(2, "file"), "files");
+    EXPECT_EQ(loom::utils::plural(2, "entry", "entries"), "entries");
 }
 
 TEST(StringUtilsCompat, FirstLineAndCountCharMatchTypeScriptHelpers) {
-    EXPECT_EQ(cc::utils::first_line_of("#!/bin/sh\necho ok"), "#!/bin/sh");
-    EXPECT_EQ(cc::utils::first_line_of("single"), "single");
-    EXPECT_EQ(cc::utils::count_char_in_string("a,b,c,d", ',', 2), 2u);
+    EXPECT_EQ(loom::utils::first_line_of("#!/bin/sh\necho ok"), "#!/bin/sh");
+    EXPECT_EQ(loom::utils::first_line_of("single"), "single");
+    EXPECT_EQ(loom::utils::count_char_in_string("a,b,c,d", ',', 2), 2u);
 }
 
 TEST(StringUtilsCompat, NormalizesFullWidthDigitsAndSpace) {
-    EXPECT_EQ(cc::utils::normalize_full_width_digits("０１２３ abc ９"), "0123 abc 9");
-    EXPECT_EQ(cc::utils::normalize_full_width_space("foo　bar　baz"), "foo bar baz");
+    EXPECT_EQ(loom::utils::normalize_full_width_digits("０１２３ abc ９"), "0123 abc 9");
+    EXPECT_EQ(loom::utils::normalize_full_width_space("foo　bar　baz"), "foo bar baz");
 }
 
 TEST(StringUtilsCompat, SafeJoinLinesTruncatesLikeTypeScriptHelper) {
     std::vector<std::string> lines = {"abc", "def", "ghi"};
-    EXPECT_EQ(cc::utils::safe_join_lines(lines, ",", 10), "abc,def...[truncated]");
-    EXPECT_EQ(cc::utils::safe_join_lines(lines, ",", 20), "abc,def,ghi");
+    EXPECT_EQ(loom::utils::safe_join_lines(lines, ",", 10), "abc,def...[truncated]");
+    EXPECT_EQ(loom::utils::safe_join_lines(lines, ",", 20), "abc,def,ghi");
 }
 
 // Retargeted from the deleted `core.screens` module (a dead parallel model of
@@ -372,7 +372,7 @@ TEST(StringUtilsCompat, SafeJoinLinesTruncatesLikeTypeScriptHelper) {
 // surrounding text, while still requiring an owner/repo/pull path. The
 // rejections below are the properties that genuinely hold.
 TEST(ReviewRemote, ParsePrInputAcceptsGithubPullReferenceForms) {
-    namespace rv = cc::commands;
+    namespace rv = loom::commands;
 
     auto url = rv::parse_pr_input("  https://github.com/org/repo/pull/123/files?diff=split  ");
     ASSERT_TRUE(url.has_value());
@@ -394,7 +394,7 @@ TEST(ReviewRemote, ParsePrInputAcceptsGithubPullReferenceForms) {
 }
 
 TEST(ReviewRemote, ParsePrInputRejectsNonPullReferences) {
-    namespace rv = cc::commands;
+    namespace rv = loom::commands;
 
     // An issue URL is not a pull request.
     EXPECT_FALSE(rv::parse_pr_input("https://github.com/org/repo/issues/123").has_value());
@@ -409,11 +409,11 @@ TEST(ReviewRemote, ParsePrInputRejectsNonPullReferences) {
 
 TEST(ArrayUtilsCompat, CountUniqAndIntersperseMatchTypeScriptHelpers) {
     std::vector<int> nums = {1, 2, 2, 3, 4};
-    EXPECT_EQ(cc::utils::count(nums, [](int value) { return value % 2 == 0; }), 3u);
-    EXPECT_EQ(cc::utils::uniq(nums), (std::vector<int>{1, 2, 3, 4}));
+    EXPECT_EQ(loom::utils::count(nums, [](int value) { return value % 2 == 0; }), 3u);
+    EXPECT_EQ(loom::utils::uniq(nums), (std::vector<int>{1, 2, 3, 4}));
 
     std::vector<std::string> labels = {"a", "b", "c"};
-    auto interspersed = cc::utils::intersperse(labels, [](std::size_t index) {
+    auto interspersed = loom::utils::intersperse(labels, [](std::size_t index) {
         return std::string("|") + std::to_string(index);
     });
     EXPECT_EQ(interspersed, (std::vector<std::string>{"a", "|1", "b", "|2", "c"}));
@@ -423,38 +423,38 @@ TEST(SetUtilsCompat, DifferenceIntersectsEveryAndUnionMatchTypeScriptHelpers) {
     const std::set<std::string> a = {"alpha", "beta", "gamma"};
     const std::set<std::string> b = {"beta", "delta"};
 
-    EXPECT_EQ(cc::utils::difference(a, b), (std::set<std::string>{"alpha", "gamma"}));
-    EXPECT_TRUE(cc::utils::intersects(a, b));
-    EXPECT_FALSE(cc::utils::intersects(std::set<std::string>{}, b));
-    EXPECT_TRUE(cc::utils::every(std::set<std::string>{"alpha", "gamma"}, a));
-    EXPECT_FALSE(cc::utils::every(a, b));
-    EXPECT_EQ(cc::utils::union_sets(a, b), (std::set<std::string>{"alpha", "beta", "delta", "gamma"}));
+    EXPECT_EQ(loom::utils::difference(a, b), (std::set<std::string>{"alpha", "gamma"}));
+    EXPECT_TRUE(loom::utils::intersects(a, b));
+    EXPECT_FALSE(loom::utils::intersects(std::set<std::string>{}, b));
+    EXPECT_TRUE(loom::utils::every(std::set<std::string>{"alpha", "gamma"}, a));
+    EXPECT_FALSE(loom::utils::every(a, b));
+    EXPECT_EQ(loom::utils::union_sets(a, b), (std::set<std::string>{"alpha", "beta", "delta", "gamma"}));
 }
 
 TEST(CollapseReadSearchSummary, BuildsActiveAndCompletedSummaryText) {
     EXPECT_EQ(
-        cc::utils::collapse_read_search::get_search_read_summary_text(3, 2, true, 1),
+        loom::utils::collapse_read_search::get_search_read_summary_text(3, 2, true, 1),
         "Searching for 3 patterns, reading 2 files, REPL'ing 1 time…");
     EXPECT_EQ(
-        cc::utils::collapse_read_search::get_search_read_summary_text(1, 1, false, 2),
+        loom::utils::collapse_read_search::get_search_read_summary_text(1, 1, false, 2),
         "Searched for 1 pattern, read 1 file, REPL'd 2 times");
 }
 
 TEST(CollapseReadSearchSummary, PutsMemoryAndListOperationsInTypeScriptOrder) {
-    cc::utils::collapse_read_search::MemoryCounts memory_counts{
+    loom::utils::collapse_read_search::MemoryCounts memory_counts{
         .memory_search_count = 1,
         .memory_read_count = 2,
         .memory_write_count = 1,
     };
 
     EXPECT_EQ(
-        cc::utils::collapse_read_search::get_search_read_summary_text(
+        loom::utils::collapse_read_search::get_search_read_summary_text(
             1, 0, true, 0, memory_counts, 2),
         "Recalling 2 memories, searching memories, writing 1 memory, searching for 1 pattern, listing 2 directories…");
 }
 
 TEST(CollapseReadSearchSummary, IncludesTeamMemorySummaryPartsInTypeScriptOrder) {
-    cc::utils::collapse_read_search::MemoryCounts memory_counts{
+    loom::utils::collapse_read_search::MemoryCounts memory_counts{
         .memory_search_count = 1,
         .memory_read_count = 1,
         .memory_write_count = 0,
@@ -464,7 +464,7 @@ TEST(CollapseReadSearchSummary, IncludesTeamMemorySummaryPartsInTypeScriptOrder)
     };
 
     EXPECT_EQ(
-        cc::utils::collapse_read_search::get_search_read_summary_text(
+        loom::utils::collapse_read_search::get_search_read_summary_text(
             0, 1, false, 0, memory_counts),
         "Recalled 1 memory, searched memories, recalled 2 team memories, searched team memories, wrote 1 team memory, read 1 file");
 }
@@ -501,7 +501,7 @@ TEST(Memdir, TeamMemoryCanBeEnabledAtRuntime) {
 }
 
 TEST(CollapseReadSearchSummary, SummarizesTrailingSearchReadActivities) {
-    using cc::utils::collapse_read_search::RecentActivity;
+    using loom::utils::collapse_read_search::RecentActivity;
     const std::vector<RecentActivity> activities = {
         {.activity_description = "Edited file"},
         {.activity_description = "Grep", .is_search = true},
@@ -510,16 +510,16 @@ TEST(CollapseReadSearchSummary, SummarizesTrailingSearchReadActivities) {
     };
 
     EXPECT_EQ(
-        cc::utils::collapse_read_search::summarize_recent_activities(activities),
+        loom::utils::collapse_read_search::summarize_recent_activities(activities),
         "Searching for 2 patterns, reading 1 file…");
 }
 
 TEST(CollapseReadSearchSummary, FallsBackToMostRecentDescription) {
-    using cc::utils::collapse_read_search::RecentActivity;
+    using loom::utils::collapse_read_search::RecentActivity;
 
-    EXPECT_EQ(cc::utils::collapse_read_search::summarize_recent_activities({}), std::nullopt);
+    EXPECT_EQ(loom::utils::collapse_read_search::summarize_recent_activities({}), std::nullopt);
     EXPECT_EQ(
-        cc::utils::collapse_read_search::summarize_recent_activities({
+        loom::utils::collapse_read_search::summarize_recent_activities({
             RecentActivity{.activity_description = "Ran command"},
             RecentActivity{},
         }),
@@ -527,35 +527,35 @@ TEST(CollapseReadSearchSummary, FallsBackToMostRecentDescription) {
 }
 
 TEST(WordsSlug, ExposesTypeScriptWordTablesAndDeterministicSlugAssembly) {
-    EXPECT_TRUE(cc::utils::words::is_adjective("abundant"));
-    EXPECT_TRUE(cc::utils::words::is_adjective("virtual"));
-    EXPECT_TRUE(cc::utils::words::is_noun("aurora"));
-    EXPECT_TRUE(cc::utils::words::is_noun("yao"));
-    EXPECT_TRUE(cc::utils::words::is_verb("baking"));
-    EXPECT_TRUE(cc::utils::words::is_verb("zooming"));
-    EXPECT_FALSE(cc::utils::words::is_noun("not-in-table"));
+    EXPECT_TRUE(loom::utils::words::is_adjective("abundant"));
+    EXPECT_TRUE(loom::utils::words::is_adjective("virtual"));
+    EXPECT_TRUE(loom::utils::words::is_noun("aurora"));
+    EXPECT_TRUE(loom::utils::words::is_noun("yao"));
+    EXPECT_TRUE(loom::utils::words::is_verb("baking"));
+    EXPECT_TRUE(loom::utils::words::is_verb("zooming"));
+    EXPECT_FALSE(loom::utils::words::is_noun("not-in-table"));
 
-    EXPECT_EQ(cc::utils::words::word_slug_from_indices(0, 4, 0), "abundant-brewing-aurora");
-    EXPECT_EQ(cc::utils::words::short_word_slug_from_indices(0, 0), "abundant-aurora");
+    EXPECT_EQ(loom::utils::words::word_slug_from_indices(0, 4, 0), "abundant-brewing-aurora");
+    EXPECT_EQ(loom::utils::words::short_word_slug_from_indices(0, 0), "abundant-aurora");
 }
 
 TEST(WordsSlug, GeneratesRandomSlugsWithExpectedShapeAndKnownWords) {
-    const auto slug = cc::utils::words::generate_word_slug();
-    const auto parts = cc::utils::string::split(slug, '-');
+    const auto slug = loom::utils::words::generate_word_slug();
+    const auto parts = loom::utils::string::split(slug, '-');
     ASSERT_EQ(parts.size(), 3u);
-    EXPECT_TRUE(cc::utils::words::is_adjective(parts[0]));
-    EXPECT_TRUE(cc::utils::words::is_verb(parts[1]));
-    EXPECT_TRUE(cc::utils::words::is_noun(parts[2]));
+    EXPECT_TRUE(loom::utils::words::is_adjective(parts[0]));
+    EXPECT_TRUE(loom::utils::words::is_verb(parts[1]));
+    EXPECT_TRUE(loom::utils::words::is_noun(parts[2]));
 
-    const auto short_slug = cc::utils::words::generate_short_word_slug();
-    const auto short_parts = cc::utils::string::split(short_slug, '-');
+    const auto short_slug = loom::utils::words::generate_short_word_slug();
+    const auto short_parts = loom::utils::string::split(short_slug, '-');
     ASSERT_EQ(short_parts.size(), 2u);
-    EXPECT_TRUE(cc::utils::words::is_adjective(short_parts[0]));
-    EXPECT_TRUE(cc::utils::words::is_noun(short_parts[1]));
+    EXPECT_TRUE(loom::utils::words::is_adjective(short_parts[0]));
+    EXPECT_TRUE(loom::utils::words::is_noun(short_parts[1]));
 }
 
 TEST(FpsTracker, ReturnsNulloptBeforeFramesOrWithoutElapsedTime) {
-    cc::utils::fps::FpsTracker tracker;
+    loom::utils::fps::FpsTracker tracker;
     EXPECT_EQ(tracker.get_metrics(), std::nullopt);
 
     tracker.record(16.0, 1000.0);
@@ -563,7 +563,7 @@ TEST(FpsTracker, ReturnsNulloptBeforeFramesOrWithoutElapsedTime) {
 }
 
 TEST(FpsTracker, ComputesRoundedAverageAndLowOnePercentFps) {
-    cc::utils::fps::FpsTracker tracker;
+    loom::utils::fps::FpsTracker tracker;
     tracker.record(10.0, 1000.0);
     tracker.record(20.0, 1100.0);
     tracker.record(50.0, 1250.0);
@@ -575,25 +575,25 @@ TEST(FpsTracker, ComputesRoundedAverageAndLowOnePercentFps) {
 }
 
 TEST(PrivacyLevel, ResolvesMostRestrictiveTrafficAndTelemetrySignals) {
-    using cc::utils::privacy::EnvLike;
-    EXPECT_EQ(cc::utils::privacy::get_privacy_level(EnvLike{}), cc::utils::privacy::PrivacyLevel::Default);
-    EXPECT_EQ(cc::utils::privacy::get_privacy_level({{"DISABLE_TELEMETRY", "1"}}), cc::utils::privacy::PrivacyLevel::NoTelemetry);
-    EXPECT_EQ(cc::utils::privacy::get_privacy_level({{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "0"}}), cc::utils::privacy::PrivacyLevel::EssentialTraffic);
-    EXPECT_TRUE(cc::utils::privacy::is_telemetry_disabled({{"DISABLE_TELEMETRY", "true"}}));
-    EXPECT_TRUE(cc::utils::privacy::is_essential_traffic_only({{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "true"}}));
+    using loom::utils::privacy::EnvLike;
+    EXPECT_EQ(loom::utils::privacy::get_privacy_level(EnvLike{}), loom::utils::privacy::PrivacyLevel::Default);
+    EXPECT_EQ(loom::utils::privacy::get_privacy_level({{"DISABLE_TELEMETRY", "1"}}), loom::utils::privacy::PrivacyLevel::NoTelemetry);
+    EXPECT_EQ(loom::utils::privacy::get_privacy_level({{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "0"}}), loom::utils::privacy::PrivacyLevel::EssentialTraffic);
+    EXPECT_TRUE(loom::utils::privacy::is_telemetry_disabled({{"DISABLE_TELEMETRY", "true"}}));
+    EXPECT_TRUE(loom::utils::privacy::is_essential_traffic_only({{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "true"}}));
     EXPECT_EQ(
-        cc::utils::privacy::get_essential_traffic_only_reason({{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "true"}}),
+        loom::utils::privacy::get_essential_traffic_only_reason({{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "true"}}),
         std::optional<std::string>{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC"});
 }
 
 TEST(ScriptToolEnabled, MirrorsScriptAndBashToolEnvironmentChecks) {
-    using cc::utils::script_tool::EnvLike;
-    EXPECT_FALSE(cc::utils::script_tool::is_script_tool_enabled(EnvLike{}));
-    EXPECT_TRUE(cc::utils::script_tool::is_script_tool_enabled({{"ENABLE_SCRIPT_TOOL", "yes"}}));
-    EXPECT_FALSE(cc::utils::script_tool::is_script_tool_enabled({{"ENABLE_SCRIPT_TOOL", "0"}}));
-    EXPECT_TRUE(cc::utils::script_tool::is_bash_tool_disabled({{"DISABLE_BASH_TOOL", "on"}}));
-    EXPECT_TRUE(cc::utils::script_tool::is_bash_tool_disabled({{"ENABLE_SCRIPT_TOOL", "true"}}));
-    EXPECT_FALSE(cc::utils::script_tool::is_bash_tool_disabled({{"DISABLE_BASH_TOOL", "false"}}));
+    using loom::utils::script_tool::EnvLike;
+    EXPECT_FALSE(loom::utils::script_tool::is_script_tool_enabled(EnvLike{}));
+    EXPECT_TRUE(loom::utils::script_tool::is_script_tool_enabled({{"ENABLE_SCRIPT_TOOL", "yes"}}));
+    EXPECT_FALSE(loom::utils::script_tool::is_script_tool_enabled({{"ENABLE_SCRIPT_TOOL", "0"}}));
+    EXPECT_TRUE(loom::utils::script_tool::is_bash_tool_disabled({{"DISABLE_BASH_TOOL", "on"}}));
+    EXPECT_TRUE(loom::utils::script_tool::is_bash_tool_disabled({{"ENABLE_SCRIPT_TOOL", "true"}}));
+    EXPECT_FALSE(loom::utils::script_tool::is_bash_tool_disabled({{"DISABLE_BASH_TOOL", "false"}}));
 }
 
 TEST(ProxyUtils, MirrorsTypeScriptEnvironmentPriorityAndNoProxyRules) {
@@ -621,42 +621,42 @@ TEST(ProxyUtils, MirrorsTypeScriptEnvironmentPriorityAndNoProxyRules) {
     no_proxy_upper.set("*");
     no_proxy_lower.set("localhost, .example.com api.local:8443 127.0.0.1");
 
-    auto resolved = cc::utils::resolve_proxy();
+    auto resolved = loom::utils::resolve_proxy();
     ASSERT_TRUE(resolved.has_value());
     EXPECT_EQ(resolved->url, "http://lower-proxy:8080");
     ASSERT_EQ(resolved->no_proxy.size(), 4u);
 
-    EXPECT_FALSE(cc::utils::should_use_proxy("http://localhost:3000"));
-    EXPECT_FALSE(cc::utils::should_use_proxy("https://127.0.0.1/status"));
-    EXPECT_FALSE(cc::utils::should_use_proxy("https://example.com/path"));
-    EXPECT_FALSE(cc::utils::should_use_proxy("https://sub.example.com/path"));
-    EXPECT_TRUE(cc::utils::should_use_proxy("https://notexample.com/path"));
-    EXPECT_FALSE(cc::utils::should_use_proxy("https://api.local:8443/path"));
-    EXPECT_TRUE(cc::utils::should_use_proxy("https://api.local:443/path"));
+    EXPECT_FALSE(loom::utils::should_use_proxy("http://localhost:3000"));
+    EXPECT_FALSE(loom::utils::should_use_proxy("https://127.0.0.1/status"));
+    EXPECT_FALSE(loom::utils::should_use_proxy("https://example.com/path"));
+    EXPECT_FALSE(loom::utils::should_use_proxy("https://sub.example.com/path"));
+    EXPECT_TRUE(loom::utils::should_use_proxy("https://notexample.com/path"));
+    EXPECT_FALSE(loom::utils::should_use_proxy("https://api.local:8443/path"));
+    EXPECT_TRUE(loom::utils::should_use_proxy("https://api.local:443/path"));
 
-    auto proxy = cc::utils::get_proxy_for_url("http://service.test/path");
+    auto proxy = loom::utils::get_proxy_for_url("http://service.test/path");
     ASSERT_TRUE(proxy.has_value());
     EXPECT_EQ(*proxy, "http://lower-proxy:8080");
 
     no_proxy_lower.set("*");
-    EXPECT_FALSE(cc::utils::should_use_proxy("https://service.test/path"));
-    EXPECT_FALSE(cc::utils::get_proxy_for_url("https://service.test/path").has_value());
+    EXPECT_FALSE(loom::utils::should_use_proxy("https://service.test/path"));
+    EXPECT_FALSE(loom::utils::get_proxy_for_url("https://service.test/path").has_value());
 }
 
 TEST(GitHubUtils, ParsesCommonGitHubRemoteUrlForms) {
     EXPECT_EQ(
-        cc::utils::github_detail::parse_repo_full_name("git@github.com:openai/codex.git"),
+        loom::utils::github_detail::parse_repo_full_name("git@github.com:openai/codex.git"),
         std::optional<std::string>{"openai/codex"}
     );
     EXPECT_EQ(
-        cc::utils::github_detail::parse_repo_full_name("https://github.com/openai/codex.git\n"),
+        loom::utils::github_detail::parse_repo_full_name("https://github.com/openai/codex.git\n"),
         std::optional<std::string>{"openai/codex"}
     );
     EXPECT_EQ(
-        cc::utils::github_detail::parse_repo_full_name("ssh://git@github.com/openai/codex"),
+        loom::utils::github_detail::parse_repo_full_name("ssh://git@github.com/openai/codex"),
         std::optional<std::string>{"openai/codex"}
     );
-    EXPECT_FALSE(cc::utils::github_detail::parse_repo_full_name("https://gitlab.com/openai/codex.git").has_value());
+    EXPECT_FALSE(loom::utils::github_detail::parse_repo_full_name("https://gitlab.com/openai/codex.git").has_value());
 }
 
 TEST(GitHubUtils, FetchesAuthenticatedUserFromGitHubApi) {
@@ -672,14 +672,14 @@ TEST(GitHubUtils, FetchesAuthenticatedUserFromGitHubApi) {
     github_user.unset();
     github_api_base.set(server.base_url().c_str());
 
-    cc::utils::GitHubUtils missing;
-    EXPECT_EQ(missing.check_auth(), cc::utils::GitHubAuthStatus::not_configured);
+    loom::utils::GitHubUtils missing;
+    EXPECT_EQ(missing.check_auth(), loom::utils::GitHubAuthStatus::not_configured);
     EXPECT_FALSE(missing.is_authenticated());
     EXPECT_FALSE(missing.get_current_user().has_value());
 
     github_token.set("github-token-for-test");
-    cc::utils::GitHubUtils configured;
-    EXPECT_EQ(configured.check_auth(), cc::utils::GitHubAuthStatus::authenticated);
+    loom::utils::GitHubUtils configured;
+    EXPECT_EQ(configured.check_auth(), loom::utils::GitHubAuthStatus::authenticated);
     EXPECT_TRUE(configured.is_authenticated());
     auto current = configured.get_current_user();
     ASSERT_TRUE(current.has_value());
@@ -691,8 +691,8 @@ TEST(GitHubUtils, FetchesAuthenticatedUserFromGitHubApi) {
     EXPECT_EQ(server.accept(), "application/vnd.github+json");
 
     gh_token.set("gh-token-for-test");
-    cc::utils::GitHubUtils gh_configured;
-    EXPECT_EQ(gh_configured.check_auth(), cc::utils::GitHubAuthStatus::authenticated);
+    loom::utils::GitHubUtils gh_configured;
+    EXPECT_EQ(gh_configured.check_auth(), loom::utils::GitHubAuthStatus::authenticated);
     EXPECT_TRUE(gh_configured.is_authenticated());
     auto gh_current = gh_configured.get_current_user();
     ASSERT_TRUE(gh_current.has_value());
@@ -711,21 +711,21 @@ TEST(GitHubUtils, MapsApiAuthFailuresToAuthStatus) {
     github_api_base.set(server.base_url().c_str());
 
     server.user_status.store(401);
-    cc::utils::GitHubUtils expired;
+    loom::utils::GitHubUtils expired;
     EXPECT_FALSE(expired.get_current_user().has_value());
-    EXPECT_EQ(expired.auth_status(), cc::utils::GitHubAuthStatus::token_expired);
+    EXPECT_EQ(expired.auth_status(), loom::utils::GitHubAuthStatus::token_expired);
     EXPECT_FALSE(expired.is_authenticated());
 
     server.user_status.store(403);
-    cc::utils::GitHubUtils forbidden;
+    loom::utils::GitHubUtils forbidden;
     EXPECT_FALSE(forbidden.get_current_user().has_value());
-    EXPECT_EQ(forbidden.auth_status(), cc::utils::GitHubAuthStatus::rate_limited);
+    EXPECT_EQ(forbidden.auth_status(), loom::utils::GitHubAuthStatus::rate_limited);
     EXPECT_FALSE(forbidden.is_authenticated());
 
     server.user_status.store(429);
-    cc::utils::GitHubUtils rate_limited;
+    loom::utils::GitHubUtils rate_limited;
     EXPECT_FALSE(rate_limited.get_current_user().has_value());
-    EXPECT_EQ(rate_limited.auth_status(), cc::utils::GitHubAuthStatus::rate_limited);
+    EXPECT_EQ(rate_limited.auth_status(), loom::utils::GitHubAuthStatus::rate_limited);
     EXPECT_FALSE(rate_limited.is_authenticated());
 }
 
@@ -740,7 +740,7 @@ TEST(GitHubUtils, DetectRepoReadsLocalGitHubRemoteAndDefaultBranch) {
         ASSERT_EQ(std::system("git remote add origin git@github.com:openai/codex.git"), 0);
         ASSERT_EQ(std::system("git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/trunk"), 0);
 
-        auto repo = cc::utils::GitHubUtils::detect_repo();
+        auto repo = loom::utils::GitHubUtils::detect_repo();
         ASSERT_TRUE(repo.has_value());
         EXPECT_EQ(repo->full_name, "openai/codex");
         EXPECT_EQ(repo->default_branch, "trunk");
@@ -769,8 +769,8 @@ TEST(GitHubUtils, FetchesIssueAndReviewCommentsForDetectedRepo) {
         ASSERT_EQ(std::system("git init -q"), 0);
         ASSERT_EQ(std::system("git remote add origin https://github.com/openai/codex.git"), 0);
 
-        cc::utils::GitHubUtils github;
-        ASSERT_EQ(github.check_auth(), cc::utils::GitHubAuthStatus::authenticated);
+        loom::utils::GitHubUtils github;
+        ASSERT_EQ(github.check_auth(), loom::utils::GitHubAuthStatus::authenticated);
         auto comments = github.get_pr_comments(123);
         ASSERT_EQ(comments.size(), 2u);
         EXPECT_EQ(comments[0].id, 101);
@@ -810,7 +810,7 @@ TEST(GitHubUtils, PaginatesIssueAndReviewCommentsForDetectedRepo) {
         ASSERT_EQ(std::system("git init -q"), 0);
         ASSERT_EQ(std::system("git remote add origin https://github.com/openai/codex.git"), 0);
 
-        cc::utils::GitHubUtils github;
+        loom::utils::GitHubUtils github;
         auto comments = github.get_pr_comments(456);
         ASSERT_EQ(comments.size(), 4u);
         EXPECT_EQ(comments[0].id, 101);
@@ -827,23 +827,23 @@ TEST(GitHubUtils, PaginatesIssueAndReviewCommentsForDetectedRepo) {
 }
 
 TEST(PromptCategory, BuildsAgentAndReplQuerySources) {
-    EXPECT_EQ(cc::utils::prompt_category::get_query_source_for_agent("reviewer", true), "agent:builtin:reviewer");
-    EXPECT_EQ(cc::utils::prompt_category::get_query_source_for_agent(std::nullopt, true), "agent:default");
-    EXPECT_EQ(cc::utils::prompt_category::get_query_source_for_agent("anything", false), "agent:custom");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_agent("reviewer", true), "agent:builtin:reviewer");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_agent(std::nullopt, true), "agent:default");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_agent("anything", false), "agent:custom");
 
     const std::set<std::string> builtin_styles = {"default", "explanatory", "learning"};
-    EXPECT_EQ(cc::utils::prompt_category::get_query_source_for_repl("default", builtin_styles), "repl_main_thread");
-    EXPECT_EQ(cc::utils::prompt_category::get_query_source_for_repl("learning", builtin_styles), "repl_main_thread:outputStyle:learning");
-    EXPECT_EQ(cc::utils::prompt_category::get_query_source_for_repl("my-style", builtin_styles), "repl_main_thread:outputStyle:custom");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_repl("default", builtin_styles), "repl_main_thread");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_repl("learning", builtin_styles), "repl_main_thread:outputStyle:learning");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_repl("my-style", builtin_styles), "repl_main_thread:outputStyle:custom");
 }
 
 TEST(ControlMessageCompat, NormalizesRequestIdKeysWithSnakeCasePrecedence) {
-    cc::utils::control_message_compat::ControlMessageLike message;
+    loom::utils::control_message_compat::ControlMessageLike message;
     message.fields["requestId"] = "camel-root";
     message.has_response = true;
     message.response["requestId"] = "camel-response";
 
-    cc::utils::control_message_compat::normalize_control_message_keys(message);
+    loom::utils::control_message_compat::normalize_control_message_keys(message);
     EXPECT_FALSE(message.fields.contains("requestId"));
     EXPECT_EQ(message.fields.at("request_id"), "camel-root");
     EXPECT_FALSE(message.response.contains("requestId"));
@@ -851,33 +851,33 @@ TEST(ControlMessageCompat, NormalizesRequestIdKeysWithSnakeCasePrecedence) {
 
     message.fields["requestId"] = "ignored";
     message.fields["request_id"] = "snake-wins";
-    cc::utils::control_message_compat::normalize_control_message_keys(message);
+    loom::utils::control_message_compat::normalize_control_message_keys(message);
     EXPECT_EQ(message.fields.at("request_id"), "snake-wins");
     EXPECT_TRUE(message.fields.contains("requestId"));
 }
 
 TEST(Sanitization, RemovesDangerousHiddenUnicodeRanges) {
     EXPECT_EQ(
-        cc::utils::sanitization::partially_sanitize_unicode("safe\xE2\x80\x8Bhidden\xEF\xBB\xBFtext"),
+        loom::utils::sanitization::partially_sanitize_unicode("safe\xE2\x80\x8Bhidden\xEF\xBB\xBFtext"),
         "safehiddentext");
     EXPECT_EQ(
-        cc::utils::sanitization::partially_sanitize_unicode("left\xE2\x80\xAEright"),
+        loom::utils::sanitization::partially_sanitize_unicode("left\xE2\x80\xAEright"),
         "leftright");
     EXPECT_EQ(
-        cc::utils::sanitization::partially_sanitize_unicode("private\xEE\x80\x80use"),
+        loom::utils::sanitization::partially_sanitize_unicode("private\xEE\x80\x80use"),
         "privateuse");
 }
 
 TEST(Sanitization, AppliesCompatibilityNormalizationBeforeFiltering) {
     EXPECT_EQ(
-        cc::utils::sanitization::partially_sanitize_unicode("\xEF\xBC\xA8\xEF\xBD\x85\xEF\xBD\x8C\xEF\xBD\x8C\xEF\xBD\x8F\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93"),
+        loom::utils::sanitization::partially_sanitize_unicode("\xEF\xBC\xA8\xEF\xBD\x85\xEF\xBD\x8C\xEF\xBD\x8C\xEF\xBD\x8F\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93"),
         "Hello123");
-    EXPECT_EQ(cc::utils::sanitization::partially_sanitize_unicode(std::string("o") + "\xEF\xAC\x83" + "ce"), "office");
-    EXPECT_EQ(cc::utils::sanitization::partially_sanitize_unicode("\xE2\x91\xA0\xE2\x85\xA0\xC2\xB2\xE3\x8E\x8F"), "1I2kg");
+    EXPECT_EQ(loom::utils::sanitization::partially_sanitize_unicode(std::string("o") + "\xEF\xAC\x83" + "ce"), "office");
+    EXPECT_EQ(loom::utils::sanitization::partially_sanitize_unicode("\xE2\x91\xA0\xE2\x85\xA0\xC2\xB2\xE3\x8E\x8F"), "1I2kg");
 }
 
 TEST(Sanitization, RecursivelySanitizesStringsArraysObjectsAndKeys) {
-    using cc::utils::sanitization::SanitizedValue;
+    using loom::utils::sanitization::SanitizedValue;
 
     SanitizedValue input = SanitizedValue::object({
         {"safe\xE2\x80\x8Bkey", SanitizedValue("value\xEF\xBB\xBFtext")},
@@ -887,7 +887,7 @@ TEST(Sanitization, RecursivelySanitizesStringsArraysObjectsAndKeys) {
         })},
     });
 
-    auto sanitized = cc::utils::sanitization::recursively_sanitize_unicode(input);
+    auto sanitized = loom::utils::sanitization::recursively_sanitize_unicode(input);
     const auto& obj = sanitized.as_object();
     ASSERT_TRUE(obj.contains("safekey"));
     EXPECT_EQ(obj.at("safekey").as_string(), "valuetext");
@@ -898,14 +898,14 @@ TEST(Sanitization, RecursivelySanitizesStringsArraysObjectsAndKeys) {
 }
 
 TEST(Sanitization, RecursivelySanitizedObjectKeysUseLastWriteWinsOnCollisions) {
-    using cc::utils::sanitization::SanitizedValue;
+    using loom::utils::sanitization::SanitizedValue;
 
     SanitizedValue input = SanitizedValue::object({
         {"safekey", SanitizedValue("plain")},
         {"safe\xE2\x80\x8Bkey", SanitizedValue("hidden")},
     });
 
-    auto sanitized = cc::utils::sanitization::recursively_sanitize_unicode(input);
+    auto sanitized = loom::utils::sanitization::recursively_sanitize_unicode(input);
     const auto& obj = sanitized.as_object();
     ASSERT_TRUE(obj.contains("safekey"));
     EXPECT_EQ(obj.at("safekey").as_string(), "hidden");
@@ -916,26 +916,26 @@ TEST(Sanitization, RecursivelySanitizedObjectKeysUseLastWriteWinsOnCollisions) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(JsonUtils, ParseValidJson) {
-    auto doc = cc::utils::json::parse(R"({"name":"test","value":42})");
+    auto doc = loom::utils::json::parse(R"({"name":"test","value":42})");
     ASSERT_TRUE(doc.has_value());
     EXPECT_EQ(doc->get_string("name"), "test");
     EXPECT_EQ(doc->get_int("value"), 42);
 }
 
 TEST(JsonUtils, AsDoubleReadsIntegerAndRealNumbers) {
-    auto doc = cc::utils::json::parse(R"({"whole":1,"fractional":0.5})");
+    auto doc = loom::utils::json::parse(R"({"whole":1,"fractional":0.5})");
     ASSERT_TRUE(doc.has_value());
     EXPECT_DOUBLE_EQ(doc->root().get("whole").as_double(), 1.0);
     EXPECT_DOUBLE_EQ(doc->root().get("fractional").as_double(), 0.5);
 }
 
 TEST(JsonUtils, ParseInvalidJsonReturnsError) {
-    auto doc = cc::utils::json::parse("{invalid json}");
+    auto doc = loom::utils::json::parse("{invalid json}");
     EXPECT_FALSE(doc.has_value());
 }
 
 TEST(JsonUtils, SerializeToString) {
-    auto obj = cc::utils::json::object();
+    auto obj = loom::utils::json::object();
     obj.set("key", "value");
     obj.set("num", 123);
 
@@ -946,7 +946,7 @@ TEST(JsonUtils, SerializeToString) {
 }
 
 TEST(JsonUtils, ArrayOperations) {
-    auto arr = cc::utils::json::array();
+    auto arr = loom::utils::json::array();
     arr.push(1);
     arr.push(2);
     arr.push(3);
@@ -957,7 +957,7 @@ TEST(JsonUtils, ArrayOperations) {
 }
 
 TEST(JsonUtils, NestedObjectAccess) {
-    auto doc = cc::utils::json::parse(R"({"outer":{"inner":"deep"}})");
+    auto doc = loom::utils::json::parse(R"({"outer":{"inner":"deep"}})");
     ASSERT_TRUE(doc.has_value());
     auto inner = doc->get_object("outer");
     ASSERT_TRUE(inner.has_value());
@@ -965,7 +965,7 @@ TEST(JsonUtils, NestedObjectAccess) {
 }
 
 TEST(JsonUtils, NullAndMissingFields) {
-    auto doc = cc::utils::json::parse(R"({"key":null})");
+    auto doc = loom::utils::json::parse(R"({"key":null})");
     ASSERT_TRUE(doc.has_value());
     EXPECT_TRUE(doc->is_null("key"));
     EXPECT_FALSE(doc->has("nonexistent"));
@@ -976,14 +976,14 @@ TEST(JsonUtils, NullAndMissingFields) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(ErrorUtils, CreateBasicError) {
-    auto err = cc::utils::error::make("something went wrong");
+    auto err = loom::utils::error::make("something went wrong");
     EXPECT_EQ(err.message(), "something went wrong");
     EXPECT_FALSE(err.has_cause());
 }
 
 TEST(ErrorUtils, ErrorChaining) {
-    auto root = cc::utils::error::make("root cause");
-    auto wrapped = cc::utils::error::wrap(root, "higher level failure");
+    auto root = loom::utils::error::make("root cause");
+    auto wrapped = loom::utils::error::wrap(root, "higher level failure");
 
     EXPECT_EQ(wrapped.message(), "higher level failure");
     EXPECT_TRUE(wrapped.has_cause());
@@ -991,14 +991,14 @@ TEST(ErrorUtils, ErrorChaining) {
 }
 
 TEST(ErrorUtils, ExpectedWithValue) {
-    auto result = cc::utils::error::expected<int>(42);
+    auto result = loom::utils::error::expected<int>(42);
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value(), 42);
 }
 
 TEST(ErrorUtils, ExpectedWithError) {
-    auto result = cc::utils::error::expected<int>(
-        cc::utils::error::make("computation failed"));
+    auto result = loom::utils::error::expected<int>(
+        loom::utils::error::make("computation failed"));
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error().message(), "computation failed");
 }
@@ -1008,7 +1008,7 @@ TEST(ErrorUtils, ExpectedWithError) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(CircularBuffer, PushAndPop) {
-    cc::utils::CircularBuffer<int, 4> buf;
+    loom::utils::CircularBuffer<int, 4> buf;
 
     buf.push_back(1);
     buf.push_back(2);
@@ -1025,7 +1025,7 @@ TEST(CircularBuffer, PushAndPop) {
 }
 
 TEST(CircularBuffer, FullStateOverwrites) {
-    cc::utils::CircularBuffer<int, 3> buf;
+    loom::utils::CircularBuffer<int, 3> buf;
 
     buf.push_back(1);
     buf.push_back(2);
@@ -1040,14 +1040,14 @@ TEST(CircularBuffer, FullStateOverwrites) {
 }
 
 TEST(CircularBuffer, EmptyState) {
-    cc::utils::CircularBuffer<int, 4> buf;
+    loom::utils::CircularBuffer<int, 4> buf;
     EXPECT_TRUE(buf.empty());
     EXPECT_EQ(buf.size(), 0u);
     EXPECT_EQ(buf.capacity(), 4u);
 }
 
 TEST(CircularBuffer, Iteration) {
-    cc::utils::CircularBuffer<int, 8> buf;
+    loom::utils::CircularBuffer<int, 8> buf;
     for (int i = 0; i < 5; ++i) buf.push_back(i);
 
     std::vector<int> collected;
@@ -1060,7 +1060,7 @@ TEST(CircularBuffer, Iteration) {
 }
 
 TEST(CircularBuffer, TypeScriptCompatibleRecentAndArrayViews) {
-    cc::utils::CircularBuffer<int, 3> buf;
+    loom::utils::CircularBuffer<int, 3> buf;
     buf.add_all({1, 2, 3, 4});
 
     EXPECT_EQ(buf.length(), 3u);
@@ -1078,23 +1078,23 @@ TEST(CircularBuffer, TypeScriptCompatibleRecentAndArrayViews) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(TokenBudget, BasicAllocation) {
-    cc::utils::token_budget::TokenBudget config{
+    loom::utils::token_budget::TokenBudget config{
         .max_context = 1000,
         .max_output = 100,
         .reserved_for_tools = 100,
         .reserved_for_system = 100,
     };
-    cc::utils::token_budget::BudgetManager budget(config);
+    loom::utils::token_budget::BudgetManager budget(config);
 
     auto remaining_in_category = budget.allocate(
-        cc::utils::token_budget::BudgetCategory::SystemPrompt, 80);
+        loom::utils::token_budget::BudgetCategory::SystemPrompt, 80);
     EXPECT_EQ(remaining_in_category, 20u);
     EXPECT_TRUE(budget.can_fit(200));
     EXPECT_EQ(budget.remaining(), 920u);
 }
 
 TEST(TokenBudget, AvailableForMessagesAccountsForReservedTokens) {
-    cc::utils::token_budget::TokenBudget budget{
+    loom::utils::token_budget::TokenBudget budget{
         .max_context = 1000,
         .max_output = 100,
         .reserved_for_tools = 200,
@@ -1105,52 +1105,52 @@ TEST(TokenBudget, AvailableForMessagesAccountsForReservedTokens) {
 }
 
 TEST(TokenBudget, OverflowHandling) {
-    cc::utils::token_budget::TokenBudget config{
+    loom::utils::token_budget::TokenBudget config{
         .max_context = 100,
         .max_output = 0,
         .reserved_for_tools = 0,
         .reserved_for_system = 100,
     };
-    cc::utils::token_budget::BudgetManager budget(config);
+    loom::utils::token_budget::BudgetManager budget(config);
 
-    EXPECT_EQ(budget.allocate(cc::utils::token_budget::BudgetCategory::SystemPrompt, 80), 20u);
+    EXPECT_EQ(budget.allocate(loom::utils::token_budget::BudgetCategory::SystemPrompt, 80), 20u);
 
 
-    EXPECT_EQ(budget.allocate(cc::utils::token_budget::BudgetCategory::SystemPrompt, 50), 0u);
+    EXPECT_EQ(budget.allocate(loom::utils::token_budget::BudgetCategory::SystemPrompt, 50), 0u);
     EXPECT_FALSE(budget.can_fit(1));
     EXPECT_EQ(budget.remaining(), 0u);
     EXPECT_TRUE(budget.should_compact());
 }
 
 TEST(TokenBudget, ResetBudget) {
-    cc::utils::token_budget::TokenBudget config{
+    loom::utils::token_budget::TokenBudget config{
         .max_context = 500,
         .max_output = 50,
         .reserved_for_tools = 50,
         .reserved_for_system = 50,
     };
-    cc::utils::token_budget::BudgetManager budget(config);
-    (void)budget.allocate(cc::utils::token_budget::BudgetCategory::UserMessages, 300);
+    loom::utils::token_budget::BudgetManager budget(config);
+    (void)budget.allocate(loom::utils::token_budget::BudgetCategory::UserMessages, 300);
     budget.reset();
     EXPECT_EQ(budget.remaining(), 500u);
 }
 
 TEST(TokenBudget, EstimatesTextTokens) {
-    cc::utils::token_budget::TokenEstimator estimator;
+    loom::utils::token_budget::TokenEstimator estimator;
     EXPECT_GT(estimator.estimate_tokens("hello world"), 0u);
     EXPECT_GT(estimator.estimate_message_tokens("user", "hello world"),
               estimator.estimate_tokens("hello world"));
 }
 
 TEST(TokenBudget, ParsesOriginalTokenBudgetSyntax) {
-    EXPECT_EQ(cc::utils::token_budget::parse_token_budget("+500k"), 500000u);
-    EXPECT_EQ(cc::utils::token_budget::parse_token_budget("please use 2M tokens"), 2000000u);
-    EXPECT_EQ(cc::utils::token_budget::parse_token_budget("finish with +1.5m."), 1500000u);
-    EXPECT_FALSE(cc::utils::token_budget::parse_token_budget("budget 500k in the middle").has_value());
+    EXPECT_EQ(loom::utils::token_budget::parse_token_budget("+500k"), 500000u);
+    EXPECT_EQ(loom::utils::token_budget::parse_token_budget("please use 2M tokens"), 2000000u);
+    EXPECT_EQ(loom::utils::token_budget::parse_token_budget("finish with +1.5m."), 1500000u);
+    EXPECT_FALSE(loom::utils::token_budget::parse_token_budget("budget 500k in the middle").has_value());
 }
 
 TEST(TokenBudget, FindsBudgetPositionsAndFormatsContinuationMessage) {
-    auto positions = cc::utils::token_budget::find_token_budget_positions(" +1.5m and use 2k tokens");
+    auto positions = loom::utils::token_budget::find_token_budget_positions(" +1.5m and use 2k tokens");
 
     ASSERT_EQ(positions.size(), 2u);
     EXPECT_EQ(positions[0].start, 1u);
@@ -1159,7 +1159,7 @@ TEST(TokenBudget, FindsBudgetPositionsAndFormatsContinuationMessage) {
     EXPECT_EQ(positions[1].end, 24u);
 
     EXPECT_EQ(
-        cc::utils::token_budget::get_budget_continuation_message(80, 1200, 1500),
+        loom::utils::token_budget::get_budget_continuation_message(80, 1200, 1500),
         "Stopped at 80% of token target (1,200 / 1,500). Keep working — do not summarize.");
 }
 
@@ -1168,9 +1168,9 @@ TEST(TokenBudget, FindsBudgetPositionsAndFormatsContinuationMessage) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(SettingsSources, ParsesCliFlagAndFormatsDisplayNames) {
-    using cc::utils::settings_sources::SettingSource;
+    using loom::utils::settings_sources::SettingSource;
 
-    auto parsed = cc::utils::settings_sources::parse_setting_sources_flag("user, project,local");
+    auto parsed = loom::utils::settings_sources::parse_setting_sources_flag("user, project,local");
     ASSERT_TRUE(parsed.has_value()) << parsed.error();
     EXPECT_EQ(parsed.value(), (std::vector<SettingSource>{
         SettingSource::UserSettings,
@@ -1178,60 +1178,60 @@ TEST(SettingsSources, ParsesCliFlagAndFormatsDisplayNames) {
         SettingSource::LocalSettings,
     }));
 
-    EXPECT_TRUE(cc::utils::settings_sources::parse_setting_sources_flag("")->empty());
-    EXPECT_FALSE(cc::utils::settings_sources::parse_setting_sources_flag("user,managed").has_value());
-    EXPECT_EQ(cc::utils::settings_sources::get_setting_source_name(SettingSource::LocalSettings), "project, gitignored");
-    EXPECT_EQ(cc::utils::settings_sources::get_source_display_name(SettingSource::PolicySettings), "Managed");
-    EXPECT_EQ(cc::utils::settings_sources::get_display_name_lowercase("cliArg"), "CLI argument");
-    EXPECT_EQ(cc::utils::settings_sources::get_display_name_capitalized("session"), "Current session");
+    EXPECT_TRUE(loom::utils::settings_sources::parse_setting_sources_flag("")->empty());
+    EXPECT_FALSE(loom::utils::settings_sources::parse_setting_sources_flag("user,managed").has_value());
+    EXPECT_EQ(loom::utils::settings_sources::get_setting_source_name(SettingSource::LocalSettings), "project, gitignored");
+    EXPECT_EQ(loom::utils::settings_sources::get_source_display_name(SettingSource::PolicySettings), "Managed");
+    EXPECT_EQ(loom::utils::settings_sources::get_display_name_lowercase("cliArg"), "CLI argument");
+    EXPECT_EQ(loom::utils::settings_sources::get_display_name_capitalized("session"), "Current session");
 }
 
 TEST(SsrfGuard, BlocksPrivateLinkLocalAndMappedAddressesButAllowsLoopback) {
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("0.1.2.3"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("10.0.0.1"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("100.64.0.0"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("100.127.255.255"));
-    EXPECT_FALSE(cc::utils::ssrf_guard::is_blocked_address("100.128.0.1"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("169.254.169.254"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("172.16.0.1"));
-    EXPECT_FALSE(cc::utils::ssrf_guard::is_blocked_address("172.32.0.1"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("192.168.1.1"));
-    EXPECT_FALSE(cc::utils::ssrf_guard::is_blocked_address("127.0.0.1"));
-    EXPECT_FALSE(cc::utils::ssrf_guard::is_blocked_address("8.8.8.8"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("0.1.2.3"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("10.0.0.1"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("100.64.0.0"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("100.127.255.255"));
+    EXPECT_FALSE(loom::utils::ssrf_guard::is_blocked_address("100.128.0.1"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("169.254.169.254"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("172.16.0.1"));
+    EXPECT_FALSE(loom::utils::ssrf_guard::is_blocked_address("172.32.0.1"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("192.168.1.1"));
+    EXPECT_FALSE(loom::utils::ssrf_guard::is_blocked_address("127.0.0.1"));
+    EXPECT_FALSE(loom::utils::ssrf_guard::is_blocked_address("8.8.8.8"));
 
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("::"));
-    EXPECT_FALSE(cc::utils::ssrf_guard::is_blocked_address("::1"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("fc00::1"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("fdff::1"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("fe80::1"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("febf::1"));
-    EXPECT_FALSE(cc::utils::ssrf_guard::is_blocked_address("fec0::1"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("::ffff:169.254.169.254"));
-    EXPECT_TRUE(cc::utils::ssrf_guard::is_blocked_address("::ffff:a9fe:a9fe"));
-    EXPECT_FALSE(cc::utils::ssrf_guard::is_blocked_address("example.com"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("::"));
+    EXPECT_FALSE(loom::utils::ssrf_guard::is_blocked_address("::1"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("fc00::1"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("fdff::1"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("fe80::1"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("febf::1"));
+    EXPECT_FALSE(loom::utils::ssrf_guard::is_blocked_address("fec0::1"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("::ffff:169.254.169.254"));
+    EXPECT_TRUE(loom::utils::ssrf_guard::is_blocked_address("::ffff:a9fe:a9fe"));
+    EXPECT_FALSE(loom::utils::ssrf_guard::is_blocked_address("example.com"));
 }
 
 TEST(PluginIdentifier, ParsesBuildsAndMapsScopes) {
-    auto parsed = cc::utils::plugin_identifier::parse_plugin_identifier("plugin@market@ignored");
+    auto parsed = loom::utils::plugin_identifier::parse_plugin_identifier("plugin@market@ignored");
     EXPECT_EQ(parsed.name, "plugin");
     ASSERT_TRUE(parsed.marketplace.has_value());
     EXPECT_EQ(*parsed.marketplace, "market");
 
-    auto bare = cc::utils::plugin_identifier::parse_plugin_identifier("local-plugin");
+    auto bare = loom::utils::plugin_identifier::parse_plugin_identifier("local-plugin");
     EXPECT_EQ(bare.name, "local-plugin");
     EXPECT_FALSE(bare.marketplace.has_value());
 
-    EXPECT_EQ(cc::utils::plugin_identifier::build_plugin_id("a", "b"), "a@b");
-    EXPECT_EQ(cc::utils::plugin_identifier::build_plugin_id("a", std::nullopt), "a");
-    EXPECT_TRUE(cc::utils::plugin_identifier::is_official_marketplace_name("anthropic-marketplace"));
-    EXPECT_TRUE(cc::utils::plugin_identifier::is_official_marketplace_name("ANTHROPIC-MARKETPLACE"));
-    EXPECT_FALSE(cc::utils::plugin_identifier::is_official_marketplace_name("third-party"));
+    EXPECT_EQ(loom::utils::plugin_identifier::build_plugin_id("a", "b"), "a@b");
+    EXPECT_EQ(loom::utils::plugin_identifier::build_plugin_id("a", std::nullopt), "a");
+    EXPECT_TRUE(loom::utils::plugin_identifier::is_official_marketplace_name("anthropic-marketplace"));
+    EXPECT_TRUE(loom::utils::plugin_identifier::is_official_marketplace_name("ANTHROPIC-MARKETPLACE"));
+    EXPECT_FALSE(loom::utils::plugin_identifier::is_official_marketplace_name("third-party"));
 
-    auto source = cc::utils::plugin_identifier::scope_to_setting_source(cc::utils::plugin_identifier::PluginScope::Project);
+    auto source = loom::utils::plugin_identifier::scope_to_setting_source(loom::utils::plugin_identifier::PluginScope::Project);
     ASSERT_TRUE(source.has_value()) << source.error();
-    EXPECT_EQ(source.value(), cc::utils::settings_sources::SettingSource::ProjectSettings);
-    EXPECT_FALSE(cc::utils::plugin_identifier::scope_to_setting_source(cc::utils::plugin_identifier::PluginScope::Managed).has_value());
-    EXPECT_EQ(cc::utils::plugin_identifier::setting_source_to_scope(cc::utils::settings_sources::SettingSource::LocalSettings), cc::utils::plugin_identifier::PluginScope::Local);
+    EXPECT_EQ(source.value(), loom::utils::settings_sources::SettingSource::ProjectSettings);
+    EXPECT_FALSE(loom::utils::plugin_identifier::scope_to_setting_source(loom::utils::plugin_identifier::PluginScope::Managed).has_value());
+    EXPECT_EQ(loom::utils::plugin_identifier::setting_source_to_scope(loom::utils::settings_sources::SettingSource::LocalSettings), loom::utils::plugin_identifier::PluginScope::Local);
 }
 
 TEST(PluginLoader, CreatePluginFromPathLoadsManifestAndComponentPaths) {
@@ -1268,7 +1268,7 @@ TEST(PluginLoader, CreatePluginFromPathLoadsManifestAndComponentPaths) {
         style << "Be concise\n";
     }
 
-    auto loaded = cc::utils::plugin_loader::create_plugin_from_path(
+    auto loaded = loom::utils::plugin_loader::create_plugin_from_path(
         root,
         "fixture-plugin@inline",
         true,
@@ -1327,7 +1327,7 @@ TEST(PluginLoader, CacheOnlyLoadsMarkdownCommandsAgentsAndOutputStyles) {
         style << "---\ndescription: Concise style\n---\nAnswer briefly\n";
     }
 
-    auto loaded = cc::utils::plugin_loader::load_all_plugins_cache_only();
+    auto loaded = loom::utils::plugin_loader::load_all_plugins_cache_only();
     ASSERT_EQ(loaded.plugins.size(), 1u);
     EXPECT_TRUE(loaded.errors.empty());
     EXPECT_EQ(loaded.plugins.front().name, "cache-plugin");
@@ -1336,23 +1336,23 @@ TEST(PluginLoader, CacheOnlyLoadsMarkdownCommandsAgentsAndOutputStyles) {
     ASSERT_TRUE(loaded.plugins.front().agents_path.has_value());
     ASSERT_TRUE(loaded.plugins.front().output_styles_path.has_value());
 
-    auto markdown = cc::utils::plugin_loader::walk_plugin_markdown(plugin_root / "commands");
+    auto markdown = loom::utils::plugin_loader::walk_plugin_markdown(plugin_root / "commands");
     ASSERT_EQ(markdown.size(), 1u);
     EXPECT_EQ(markdown.front().name, "build");
     EXPECT_EQ(markdown.front().frontmatter.at("description"), "Build fixture");
     EXPECT_EQ(markdown.front().content, "Build the fixture\n");
 
-    auto commands = cc::utils::plugin_loader::load_plugin_commands();
+    auto commands = loom::utils::plugin_loader::load_plugin_commands();
     ASSERT_EQ(commands.size(), 1u);
     EXPECT_EQ(commands.front().name, "cache-plugin:build");
     EXPECT_EQ(commands.front().content, "Build the fixture\n");
 
-    auto agents = cc::utils::plugin_loader::load_plugin_agents();
+    auto agents = loom::utils::plugin_loader::load_plugin_agents();
     ASSERT_EQ(agents.size(), 1u);
     EXPECT_EQ(agents.front().name, "cache-plugin:reviewer");
     EXPECT_EQ(agents.front().content, "Review the fixture\n");
 
-    auto styles = cc::utils::plugin_loader::load_plugin_output_styles();
+    auto styles = loom::utils::plugin_loader::load_plugin_output_styles();
     ASSERT_EQ(styles.size(), 1u);
     EXPECT_EQ(styles.front().name, "cache-plugin:concise");
     EXPECT_EQ(styles.front().content, "Answer briefly\n");
@@ -1388,9 +1388,9 @@ TEST(PluginLoader, CachePluginClonesGitUrlAndLoadsManifest) {
     run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " add .");
     run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " commit --no-verify -m init >/dev/null");
 
-    cc::utils::plugin_loader::PluginSource source =
-        cc::utils::plugin_loader::GitUrlSource{.url = "file://" + repo.string()};
-    auto cached = cc::utils::plugin_loader::cache_plugin(source);
+    loom::utils::plugin_loader::PluginSource source =
+        loom::utils::plugin_loader::GitUrlSource{.url = "file://" + repo.string()};
+    auto cached = loom::utils::plugin_loader::cache_plugin(source);
 
     ASSERT_TRUE(cached.has_value()) << cached.error();
     EXPECT_EQ(cached->manifest.name, "git-cache-plugin");
@@ -1398,7 +1398,7 @@ TEST(PluginLoader, CachePluginClonesGitUrlAndLoadsManifest) {
     EXPECT_TRUE(fs::exists(cached->path / ".claude-plugin" / "plugin.json"));
     EXPECT_TRUE(fs::exists(cached->path / "commands" / "run.md"));
 
-    auto loaded = cc::utils::plugin_loader::create_plugin_from_path(cached->path, "git-cache-plugin@test", true, "fallback");
+    auto loaded = loom::utils::plugin_loader::create_plugin_from_path(cached->path, "git-cache-plugin@test", true, "fallback");
     ASSERT_TRUE(loaded.has_value()) << loaded.error();
     EXPECT_EQ(loaded->first.name, "git-cache-plugin");
     ASSERT_TRUE(loaded->first.commands_paths.has_value());
@@ -1436,12 +1436,12 @@ TEST(PluginLoader, CachePluginExtractsGitSubdirAndRecordsSha) {
     run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " add .");
     run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " commit --no-verify -m init >/dev/null");
 
-    cc::utils::plugin_loader::PluginSource source =
-        cc::utils::plugin_loader::GitSubdirSource{
+    loom::utils::plugin_loader::PluginSource source =
+        loom::utils::plugin_loader::GitSubdirSource{
             .url = "file://" + repo.string(),
             .path = "packages/plugin",
         };
-    auto cached = cc::utils::plugin_loader::cache_plugin(source);
+    auto cached = loom::utils::plugin_loader::cache_plugin(source);
 
     ASSERT_TRUE(cached.has_value()) << cached.error();
     EXPECT_EQ(cached->manifest.name, "subdir-cache-plugin");
@@ -1481,15 +1481,15 @@ TEST(PluginLoader, CachePluginInstallsNpmPackageFromLocalSpec) {
         command << "Run from npm\n";
     }
 
-    cc::utils::plugin_loader::PluginSource source =
-        cc::utils::plugin_loader::NpmSource{.package_name = package_dir.string()};
-    auto cached = cc::utils::plugin_loader::cache_plugin(source);
+    loom::utils::plugin_loader::PluginSource source =
+        loom::utils::plugin_loader::NpmSource{.package_name = package_dir.string()};
+    auto cached = loom::utils::plugin_loader::cache_plugin(source);
 
     ASSERT_TRUE(cached.has_value()) << cached.error();
     EXPECT_EQ(cached->manifest.name, "npm-cache-plugin");
     EXPECT_TRUE(fs::exists(cached->path / "commands" / "npm.md"));
 
-    auto loaded = cc::utils::plugin_loader::load_all_plugins_cache_only();
+    auto loaded = loom::utils::plugin_loader::load_all_plugins_cache_only();
     ASSERT_EQ(loaded.plugins.size(), 1u);
     EXPECT_EQ(loaded.plugins.front().name, "npm-cache-plugin");
 
@@ -1504,7 +1504,7 @@ TEST(PluginLoader, ProbesSeedCacheExactAndAnyVersion) {
     ScopedEnvVar seed_env("LOOM_PLUGIN_SEED_DIR");
     seed_env.set(seed.string().c_str());
 
-    const auto seeded_path = cc::utils::plugin_loader::get_versioned_cache_path_in(
+    const auto seeded_path = loom::utils::plugin_loader::get_versioned_cache_path_in(
         seed,
         "seed-plugin@market",
         "1.2.3"
@@ -1515,15 +1515,15 @@ TEST(PluginLoader, ProbesSeedCacheExactAndAnyVersion) {
         marker << "seeded\n";
     }
 
-    auto exact = cc::utils::plugin_loader::probe_seed_cache("seed-plugin@market", "1.2.3");
+    auto exact = loom::utils::plugin_loader::probe_seed_cache("seed-plugin@market", "1.2.3");
     ASSERT_TRUE(exact.has_value());
     EXPECT_EQ(*exact, seeded_path);
 
-    auto any = cc::utils::plugin_loader::probe_seed_cache_any_version("seed-plugin@market");
+    auto any = loom::utils::plugin_loader::probe_seed_cache_any_version("seed-plugin@market");
     ASSERT_TRUE(any.has_value());
     EXPECT_EQ(*any, seeded_path);
 
-    auto copied = cc::utils::plugin_loader::copy_plugin_to_versioned_cache(root, "seed-plugin@market", "1.2.3");
+    auto copied = loom::utils::plugin_loader::copy_plugin_to_versioned_cache(root, "seed-plugin@market", "1.2.3");
     ASSERT_TRUE(copied.has_value()) << copied.error();
     EXPECT_EQ(*copied, seeded_path);
 
@@ -1531,8 +1531,8 @@ TEST(PluginLoader, ProbesSeedCacheExactAndAnyVersion) {
 }
 
 TEST(PluginDependencyResolver, ResolvesClosureAndReportsDependencyErrors) {
-    using cc::utils::plugin_dependency_resolver::DependencyLookupResult;
-    using cc::utils::plugin_dependency_resolver::LoadedPlugin;
+    using loom::utils::plugin_dependency_resolver::DependencyLookupResult;
+    using loom::utils::plugin_dependency_resolver::LoadedPlugin;
 
     const std::map<std::string, DependencyLookupResult> graph = {
         {"app@main", DependencyLookupResult{{"core", "theme@main"}}},
@@ -1541,7 +1541,7 @@ TEST(PluginDependencyResolver, ResolvesClosureAndReportsDependencyErrors) {
         {"shared@main", DependencyLookupResult{{}}},
     };
 
-    auto result = cc::utils::plugin_dependency_resolver::resolve_dependency_closure(
+    auto result = loom::utils::plugin_dependency_resolver::resolve_dependency_closure(
         "app@main",
         [&](const std::string& id) -> std::optional<DependencyLookupResult> {
             auto it = graph.find(id);
@@ -1554,7 +1554,7 @@ TEST(PluginDependencyResolver, ResolvesClosureAndReportsDependencyErrors) {
     ASSERT_TRUE(result.ok) << result.message;
     EXPECT_EQ(result.closure, (std::vector<std::string>{"shared@main", "core@main", "app@main"}));
 
-    auto cross = cc::utils::plugin_dependency_resolver::resolve_dependency_closure(
+    auto cross = loom::utils::plugin_dependency_resolver::resolve_dependency_closure(
         "app@main",
         [&](const std::string& id) -> std::optional<DependencyLookupResult> {
             if (id == "app@main") return DependencyLookupResult{{"dep@other"}};
@@ -1563,9 +1563,9 @@ TEST(PluginDependencyResolver, ResolvesClosureAndReportsDependencyErrors) {
         }
     );
     EXPECT_FALSE(cross.ok);
-    EXPECT_EQ(cross.reason, cc::utils::plugin_dependency_resolver::ResolutionFailure::CrossMarketplace);
+    EXPECT_EQ(cross.reason, loom::utils::plugin_dependency_resolver::ResolutionFailure::CrossMarketplace);
 
-    auto cycle = cc::utils::plugin_dependency_resolver::resolve_dependency_closure(
+    auto cycle = loom::utils::plugin_dependency_resolver::resolve_dependency_closure(
         "a@main",
         [&](const std::string& id) -> std::optional<DependencyLookupResult> {
             if (id == "a@main") return DependencyLookupResult{{"b"}};
@@ -1574,60 +1574,60 @@ TEST(PluginDependencyResolver, ResolvesClosureAndReportsDependencyErrors) {
         }
     );
     EXPECT_FALSE(cycle.ok);
-    EXPECT_EQ(cycle.reason, cc::utils::plugin_dependency_resolver::ResolutionFailure::Cycle);
+    EXPECT_EQ(cycle.reason, loom::utils::plugin_dependency_resolver::ResolutionFailure::Cycle);
 
     std::vector<LoadedPlugin> plugins = {
         {.name = "a", .source = "a@main", .enabled = true, .dependencies = {"b@main"}},
         {.name = "b", .source = "b@main", .enabled = false, .dependencies = {}},
         {.name = "c", .source = "c@main", .enabled = true, .dependencies = {"a@main"}},
     };
-    auto demotion = cc::utils::plugin_dependency_resolver::verify_and_demote(plugins);
+    auto demotion = loom::utils::plugin_dependency_resolver::verify_and_demote(plugins);
     EXPECT_EQ(demotion.demoted, (std::set<std::string>{"a@main", "c@main"}));
     ASSERT_EQ(demotion.errors.size(), 2u);
     EXPECT_EQ(demotion.errors[0].dependency, "b@main");
     EXPECT_EQ(demotion.errors[0].reason, "not-enabled");
-    EXPECT_EQ(cc::utils::plugin_dependency_resolver::find_reverse_dependents("a@main", plugins), (std::vector<std::string>{"c"}));
-    EXPECT_EQ(cc::utils::plugin_dependency_resolver::format_dependency_count_suffix({"a"}), " (+ 1 dependency)");
-    EXPECT_EQ(cc::utils::plugin_dependency_resolver::format_dependency_count_suffix({"a", "b"}), " (+ 2 dependencies)");
-    EXPECT_EQ(cc::utils::plugin_dependency_resolver::format_reverse_dependents_suffix({"a", "b"}), " — warning: required by a, b");
+    EXPECT_EQ(loom::utils::plugin_dependency_resolver::find_reverse_dependents("a@main", plugins), (std::vector<std::string>{"c"}));
+    EXPECT_EQ(loom::utils::plugin_dependency_resolver::format_dependency_count_suffix({"a"}), " (+ 1 dependency)");
+    EXPECT_EQ(loom::utils::plugin_dependency_resolver::format_dependency_count_suffix({"a", "b"}), " (+ 2 dependencies)");
+    EXPECT_EQ(loom::utils::plugin_dependency_resolver::format_reverse_dependents_suffix({"a", "b"}), " — warning: required by a, b");
 }
 
 TEST(SettingsPathsAndMerge, ComputesManagedAndRelativePathsAndDedupesArrays) {
-    using cc::utils::settings_sources::SettingSource;
+    using loom::utils::settings_sources::SettingSource;
 
-    EXPECT_EQ(cc::utils::settings_paths::managed_file_path(cc::utils::settings_paths::Platform::MacOS), "/Library/Application Support/Loom");
-    EXPECT_EQ(cc::utils::settings_paths::managed_file_path(cc::utils::settings_paths::Platform::Windows), "C:\\Program Files\\Loom");
-    EXPECT_EQ(cc::utils::settings_paths::managed_file_path(cc::utils::settings_paths::Platform::Linux), "/etc/loom");
-    EXPECT_EQ(cc::utils::settings_paths::managed_file_path(cc::utils::settings_paths::Platform::Linux, "ant", "/tmp/managed"), "/tmp/managed");
-    EXPECT_EQ(cc::utils::settings_paths::managed_settings_drop_in_dir("/etc/loom"), "/etc/loom/managed-settings.d");
-    EXPECT_EQ(cc::utils::settings_paths::relative_settings_file_path_for_source(SettingSource::ProjectSettings), ".loom/settings.json");
-    EXPECT_EQ(cc::utils::settings_paths::relative_settings_file_path_for_source(SettingSource::LocalSettings), ".loom/settings.local.json");
+    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::MacOS), "/Library/Application Support/Loom");
+    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::Windows), "C:\\Program Files\\Loom");
+    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::Linux), "/etc/loom");
+    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::Linux, "ant", "/tmp/managed"), "/tmp/managed");
+    EXPECT_EQ(loom::utils::settings_paths::managed_settings_drop_in_dir("/etc/loom"), "/etc/loom/managed-settings.d");
+    EXPECT_EQ(loom::utils::settings_paths::relative_settings_file_path_for_source(SettingSource::ProjectSettings), ".loom/settings.json");
+    EXPECT_EQ(loom::utils::settings_paths::relative_settings_file_path_for_source(SettingSource::LocalSettings), ".loom/settings.local.json");
 
     EXPECT_EQ(
-        cc::utils::settings_merge::merge_arrays_unique({"Bash(ls:*)", "Read(*)"}, {"Read(*)", "Edit(src:*)"}),
+        loom::utils::settings_merge::merge_arrays_unique({"Bash(ls:*)", "Read(*)"}, {"Read(*)", "Edit(src:*)"}),
         (std::vector<std::string>{"Bash(ls:*)", "Read(*)", "Edit(src:*)"})
     );
 }
 
 TEST(PluginMarketplaceRules, AppliesOfficialNameAndAutoUpdateRules) {
-    using cc::utils::plugin_marketplace_rules::MarketplaceSource;
-    using cc::utils::plugin_marketplace_rules::MarketplaceSourceType;
+    using loom::utils::plugin_marketplace_rules::MarketplaceSource;
+    using loom::utils::plugin_marketplace_rules::MarketplaceSourceType;
 
-    EXPECT_TRUE(cc::utils::plugin_marketplace_rules::is_marketplace_auto_update("anthropic-marketplace", std::nullopt));
-    EXPECT_FALSE(cc::utils::plugin_marketplace_rules::is_marketplace_auto_update("knowledge-work-plugins", std::nullopt));
-    EXPECT_TRUE(cc::utils::plugin_marketplace_rules::is_marketplace_auto_update("third-party", true));
-    EXPECT_FALSE(cc::utils::plugin_marketplace_rules::is_marketplace_auto_update("anthropic-marketplace", false));
+    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("anthropic-marketplace", std::nullopt));
+    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("knowledge-work-plugins", std::nullopt));
+    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("third-party", true));
+    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("anthropic-marketplace", false));
 
-    EXPECT_FALSE(cc::utils::plugin_marketplace_rules::is_blocked_official_name("anthropic-marketplace"));
-    EXPECT_TRUE(cc::utils::plugin_marketplace_rules::is_blocked_official_name("loom-official"));
-    EXPECT_TRUE(cc::utils::plugin_marketplace_rules::is_blocked_official_name("anthropic-marketplace-new"));
-    EXPECT_TRUE(cc::utils::plugin_marketplace_rules::is_blocked_official_name("clаude")); // contains Cyrillic a
+    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("anthropic-marketplace"));
+    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("loom-official"));
+    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("anthropic-marketplace-new"));
+    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("clаude")); // contains Cyrillic a
 
-    EXPECT_FALSE(cc::utils::plugin_marketplace_rules::validate_official_name_source(
+    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::validate_official_name_source(
         "anthropic-marketplace",
         MarketplaceSource{.type = MarketplaceSourceType::Github, .repo = "anthropics/plugins", .url = ""}
     ).has_value());
-    auto invalid = cc::utils::plugin_marketplace_rules::validate_official_name_source(
+    auto invalid = loom::utils::plugin_marketplace_rules::validate_official_name_source(
         "anthropic-marketplace",
         MarketplaceSource{.type = MarketplaceSourceType::Git, .repo = "", .url = "https://github.com/other/plugins.git"}
     );
@@ -1636,9 +1636,9 @@ TEST(PluginMarketplaceRules, AppliesOfficialNameAndAutoUpdateRules) {
 }
 
 TEST(PluginMarketplace, ComputesRealSha256Checksums) {
-    EXPECT_EQ(cc::plugins::detail::sha256_hex("hello"),
+    EXPECT_EQ(loom::plugins::detail::sha256_hex("hello"),
               "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
-    EXPECT_EQ(cc::plugins::detail::sha256_hex(""),
+    EXPECT_EQ(loom::plugins::detail::sha256_hex(""),
               "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
 }
 
@@ -1646,10 +1646,10 @@ TEST(ShellProviders, BashEvalCommandEscapesSingleQuotes) {
     ScopedEnvVar prefix("LOOM_SHELL_PREFIX");
     prefix.unset();
 
-    auto provider = cc::utils::shell_providers::create_provider("/bin/bash", true);
+    auto provider = loom::utils::shell_providers::create_provider("/bin/bash", true);
     auto result = provider->build_exec_command(
         "printf '%s\\n' \"it's ok\"",
-        cc::utils::shell_providers::BuildExecOptions{
+        loom::utils::shell_providers::BuildExecOptions{
             .id = "quote-test",
             .sandbox_tmp_dir = std::nullopt,
             .use_sandbox = false});
@@ -1667,10 +1667,10 @@ TEST(ShellProviders, BashProviderSourcesSnapshotAndInjectsSandboxTmpdir) {
     std::filesystem::remove_all(sandbox);
     std::filesystem::create_directories(sandbox);
 
-    auto provider = cc::utils::shell_providers::create_provider("/bin/bash", false);
+    auto provider = loom::utils::shell_providers::create_provider("/bin/bash", false);
     auto result = provider->build_exec_command(
         "printf '%s' \"$TMPDIR\"",
-        cc::utils::shell_providers::BuildExecOptions{
+        loom::utils::shell_providers::BuildExecOptions{
             .id = "snapshot-test",
             .sandbox_tmp_dir = sandbox.string(),
             .use_sandbox = true});
@@ -1694,10 +1694,10 @@ TEST(ShellProviders, BashProviderSourcesSnapshotAndInjectsSandboxTmpdir) {
 }
 
 TEST(ShellProviders, PowershellProviderTracksCwdInSandboxAndQuotesPath) {
-    auto provider = cc::utils::shell_providers::create_provider("pwsh", true);
+    auto provider = loom::utils::shell_providers::create_provider("pwsh", true);
     auto result = provider->build_exec_command(
         "Write-Output ok",
-        cc::utils::shell_providers::BuildExecOptions{
+        loom::utils::shell_providers::BuildExecOptions{
             .id = "ps-test",
             .sandbox_tmp_dir = "/tmp/cc repl's sandbox",
             .use_sandbox = true});
@@ -1716,23 +1716,23 @@ TEST(ShellProviders, PowershellProviderTracksCwdInSandboxAndQuotesPath) {
 }
 
 TEST(PluginVersioning, ExtractsVersionedPathsAndDerivesPureVersions) {
-    EXPECT_EQ(cc::utils::plugin_versioning::get_version_from_path("/Users/me/.loom/plugins/cache/main/plugin/1.2.3"), "1.2.3");
-    EXPECT_FALSE(cc::utils::plugin_versioning::get_version_from_path("/Users/me/.loom/plugins/main/plugin").has_value());
-    EXPECT_TRUE(cc::utils::plugin_versioning::is_versioned_path("/plugins/cache/main/plugin/v1"));
-    EXPECT_FALSE(cc::utils::plugin_versioning::is_versioned_path("/plugins/main/plugin/v1"));
+    EXPECT_EQ(loom::utils::plugin_versioning::get_version_from_path("/Users/me/.loom/plugins/cache/main/plugin/1.2.3"), "1.2.3");
+    EXPECT_FALSE(loom::utils::plugin_versioning::get_version_from_path("/Users/me/.loom/plugins/main/plugin").has_value());
+    EXPECT_TRUE(loom::utils::plugin_versioning::is_versioned_path("/plugins/cache/main/plugin/v1"));
+    EXPECT_FALSE(loom::utils::plugin_versioning::is_versioned_path("/plugins/main/plugin/v1"));
 
-    EXPECT_EQ(cc::utils::plugin_versioning::derive_plugin_version("1.0.0", "2.0.0", "abcdef1234567890"), "1.0.0");
-    EXPECT_EQ(cc::utils::plugin_versioning::derive_plugin_version(std::nullopt, "2.0.0", "abcdef1234567890"), "2.0.0");
-    EXPECT_EQ(cc::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt, "abcdef1234567890"), "abcdef123456");
+    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version("1.0.0", "2.0.0", "abcdef1234567890"), "1.0.0");
+    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, "2.0.0", "abcdef1234567890"), "2.0.0");
+    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt, "abcdef1234567890"), "abcdef123456");
     EXPECT_EQ(
-        cc::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt, "abcdef1234567890", "git-subdir", R"(.\a\)"),
+        loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt, "abcdef1234567890", "git-subdir", R"(.\a\)"),
         "abcdef123456-ca978112"
     );
-    EXPECT_EQ(cc::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt, std::nullopt), "unknown");
+    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt, std::nullopt), "unknown");
 }
 
 TEST(ArgumentSubstitution, ParsesNamesHintsAndSubstitutesPlaceholders) {
-    using namespace cc::utils::argument_substitution;
+    using namespace loom::utils::argument_substitution;
 
     EXPECT_TRUE(parse_arguments("  \t ").empty());
     EXPECT_EQ(parse_arguments(R"(foo "hello world" 'again there' $FOO)"), (std::vector<std::string>{"foo", "hello world", "again there", "$FOO"}));
@@ -1753,8 +1753,8 @@ TEST(ArgumentSubstitution, ParsesNamesHintsAndSubstitutesPlaceholders) {
 }
 
 TEST(SemanticInputCoercion, CoercesOnlyExplicitBooleanAndDecimalStringLiterals) {
-    using cc::utils::semantic_boolean::coerce_semantic_boolean;
-    using cc::utils::semantic_number::coerce_semantic_number;
+    using loom::utils::semantic_boolean::coerce_semantic_boolean;
+    using loom::utils::semantic_number::coerce_semantic_number;
 
     EXPECT_EQ(coerce_semantic_boolean("true"), true);
     EXPECT_EQ(coerce_semantic_boolean("false"), false);
@@ -1772,7 +1772,7 @@ TEST(SemanticInputCoercion, CoercesOnlyExplicitBooleanAndDecimalStringLiterals) 
 }
 
 TEST(QueryGuard, EnforcesDispatchingRunningGenerationTransitions) {
-    cc::utils::query_guard::QueryGuard guard;
+    loom::utils::query_guard::QueryGuard guard;
     int notifications = 0;
     auto unsubscribe = guard.subscribe([&] { ++notifications; });
 
@@ -1806,7 +1806,7 @@ TEST(QueryGuard, EnforcesDispatchingRunningGenerationTransitions) {
 }
 
 TEST(CollapseNotifications, MergesAdjacentHookSummariesByLabel) {
-    using namespace cc::utils::collapse_notifications;
+    using namespace loom::utils::collapse_notifications;
 
     std::vector<HookSummaryMessage> messages = {
         {.hook_label = "PostToolUse", .hook_count = 1, .hook_infos = {"a"}, .hook_errors = {}, .prevented_continuation = false, .has_output = false, .total_duration_ms = 10},
@@ -1827,7 +1827,7 @@ TEST(CollapseNotifications, MergesAdjacentHookSummariesByLabel) {
 }
 
 TEST(CollapseNotifications, MergesTeammateShutdownRunsAndBackgroundBashCompletions) {
-    using namespace cc::utils::collapse_notifications;
+    using namespace loom::utils::collapse_notifications;
 
     std::vector<TeammateShutdownMessage> teammate_messages = {
         {.uuid = "u1", .timestamp_ms = 100, .is_shutdown = true},
@@ -1855,7 +1855,7 @@ TEST(CollapseNotifications, MergesTeammateShutdownRunsAndBackgroundBashCompletio
 }
 
 TEST(AgentId, FormatsAndParsesAgentAndRequestIds) {
-    using namespace cc::utils::agent_id;
+    using namespace loom::utils::agent_id;
 
     EXPECT_EQ(format_agent_id("researcher", "my-project"), "researcher@my-project");
     auto parsed = parse_agent_id("researcher@my-project@nested");
@@ -1875,7 +1875,7 @@ TEST(AgentId, FormatsAndParsesAgentAndRequestIds) {
 }
 
 TEST(AutoModeDenials, RespectsFeatureFlagAndKeepsMostRecentTwenty) {
-    using namespace cc::utils::auto_mode_denials;
+    using namespace loom::utils::auto_mode_denials;
 
     AutoModeDenialStore disabled;
     disabled.record({.tool_name = "Bash", .display = "rm -rf /", .reason = "danger", .timestamp = 1}, false);
@@ -1892,7 +1892,7 @@ TEST(AutoModeDenials, RespectsFeatureFlagAndKeepsMostRecentTwenty) {
 }
 
 TEST(ActivityManager, DeduplicatesCliActivityAndRecordsUserWithinTimeout) {
-    using namespace cc::utils::activity_manager;
+    using namespace loom::utils::activity_manager;
 
     long long now = 1000;
     std::vector<ActiveTimeRecord> records;
@@ -1932,7 +1932,7 @@ TEST(ActivityManager, DeduplicatesCliActivityAndRecordsUserWithinTimeout) {
 }
 
 TEST(AgentSwarmsEnabled, AppliesAntOverrideOptInAndKillswitch) {
-    using namespace cc::utils::agent_swarms_enabled;
+    using namespace loom::utils::agent_swarms_enabled;
 
     EXPECT_TRUE(is_agent_swarms_enabled({.user_type = "ant", .env_opt_in = false, .flag_set = false, .growthbook_enabled = false}));
     EXPECT_FALSE(is_agent_swarms_enabled({.user_type = "external", .env_opt_in = false, .flag_set = false, .growthbook_enabled = true}));
@@ -1944,34 +1944,34 @@ TEST(AgentSwarmsEnabled, AppliesAntOverrideOptInAndKillswitch) {
 }
 
 TEST(EnvUtilsCompat, ParsesTruthyFalsyOptionsAndEnvVars) {
-    EXPECT_TRUE(cc::utils::is_env_truthy(" on "));
-    EXPECT_TRUE(cc::utils::is_env_truthy("TRUE"));
-    EXPECT_FALSE(cc::utils::is_env_truthy("0"));
-    EXPECT_TRUE(cc::utils::is_env_defined_falsy(" no "));
-    EXPECT_TRUE(cc::utils::is_env_defined_falsy(false));
-    EXPECT_FALSE(cc::utils::is_env_defined_falsy(std::nullopt));
+    EXPECT_TRUE(loom::utils::is_env_truthy(" on "));
+    EXPECT_TRUE(loom::utils::is_env_truthy("TRUE"));
+    EXPECT_FALSE(loom::utils::is_env_truthy("0"));
+    EXPECT_TRUE(loom::utils::is_env_defined_falsy(" no "));
+    EXPECT_TRUE(loom::utils::is_env_defined_falsy(false));
+    EXPECT_FALSE(loom::utils::is_env_defined_falsy(std::nullopt));
 
-    EXPECT_TRUE(cc::utils::has_node_option("--max-old-space-size=4096 --trace-warnings", "--trace-warnings"));
-    EXPECT_FALSE(cc::utils::has_node_option("--trace-warnings-extra", "--trace-warnings"));
-    EXPECT_TRUE(cc::utils::is_bare_mode("0", {"cc", "--bare"}));
-    EXPECT_TRUE(cc::utils::is_bare_mode("true", {"cc"}));
-    EXPECT_FALSE(cc::utils::is_bare_mode("", {"cc"}));
+    EXPECT_TRUE(loom::utils::has_node_option("--max-old-space-size=4096 --trace-warnings", "--trace-warnings"));
+    EXPECT_FALSE(loom::utils::has_node_option("--trace-warnings-extra", "--trace-warnings"));
+    EXPECT_TRUE(loom::utils::is_bare_mode("0", {"cc", "--bare"}));
+    EXPECT_TRUE(loom::utils::is_bare_mode("true", {"cc"}));
+    EXPECT_FALSE(loom::utils::is_bare_mode("", {"cc"}));
 
-    auto parsed = cc::utils::parse_env_vars({"A=1", "B=two=parts"});
+    auto parsed = loom::utils::parse_env_vars({"A=1", "B=two=parts"});
     ASSERT_TRUE(parsed.has_value()) << parsed.error();
     EXPECT_EQ(parsed->at("A"), "1");
     EXPECT_EQ(parsed->at("B"), "two=parts");
-    EXPECT_FALSE(cc::utils::parse_env_vars({"NO_EQUALS"}).has_value());
+    EXPECT_FALSE(loom::utils::parse_env_vars({"NO_EQUALS"}).has_value());
 
-    EXPECT_EQ(cc::utils::resolve_aws_region("eu-west-1", "us-west-2"), "eu-west-1");
-    EXPECT_EQ(cc::utils::resolve_aws_region(std::nullopt, "us-west-2"), "us-west-2");
-    EXPECT_EQ(cc::utils::resolve_aws_region(std::nullopt, std::nullopt), "us-east-1");
-    EXPECT_EQ(cc::utils::resolve_default_vertex_region(std::nullopt), "us-east5");
-    EXPECT_EQ(cc::utils::resolve_default_vertex_region("asia-northeast1"), "asia-northeast1");
+    EXPECT_EQ(loom::utils::resolve_aws_region("eu-west-1", "us-west-2"), "eu-west-1");
+    EXPECT_EQ(loom::utils::resolve_aws_region(std::nullopt, "us-west-2"), "us-west-2");
+    EXPECT_EQ(loom::utils::resolve_aws_region(std::nullopt, std::nullopt), "us-east-1");
+    EXPECT_EQ(loom::utils::resolve_default_vertex_region(std::nullopt), "us-east5");
+    EXPECT_EQ(loom::utils::resolve_default_vertex_region("asia-northeast1"), "asia-northeast1");
 }
 
 TEST(CachePaths, SanitizesStableProjectAndMcpLogPaths) {
-    using namespace cc::utils::cache_paths;
+    using namespace loom::utils::cache_paths;
 
     EXPECT_EQ(sanitize_path("/Users/me/project:alpha"), "-Users-me-project-alpha");
     EXPECT_EQ(project_dir("/tmp/work repo"), "-tmp-work-repo");
@@ -1989,7 +1989,7 @@ TEST(CachePaths, SanitizesStableProjectAndMcpLogPaths) {
 }
 
 TEST(BinaryCheck, TrimsCommandsCachesResultsAndClearsCache) {
-    cc::utils::binary_check::BinaryChecker checker;
+    loom::utils::binary_check::BinaryChecker checker;
     int calls = 0;
     auto resolver = [&](std::string_view command) {
         ++calls;
@@ -2010,7 +2010,7 @@ TEST(BinaryCheck, TrimsCommandsCachesResultsAndClearsCache) {
 }
 
 TEST(LoomHints, ExtractsWholeLineHintsStripsThemAndKeepsSourceCommand) {
-    using namespace cc::utils::loom_hints;
+    using namespace loom::utils::loom_hints;
 
     const std::string output =
         "before\n"
@@ -2040,7 +2040,7 @@ TEST(LoomHints, ExtractsWholeLineHintsStripsThemAndKeepsSourceCommand) {
 }
 
 TEST(LoomHints, PendingHintStoreIsSingleSlotAndOncePerSession) {
-    using namespace cc::utils::loom_hints;
+    using namespace loom::utils::loom_hints;
 
     PendingHintStore store;
     int notifications = 0;
@@ -2063,7 +2063,7 @@ TEST(LoomHints, PendingHintStoreIsSingleSlotAndOncePerSession) {
 }
 
 TEST(CommitAttribution, SanitizesInternalModelNamesAndSurfaceKeys) {
-    using namespace cc::utils::commit_attribution;
+    using namespace loom::utils::commit_attribution;
 
     EXPECT_EQ(sanitize_model_name("claude-opus-4-6-fast"), "claude-opus-4-6");
     EXPECT_EQ(sanitize_model_name("internal-sonnet-4-5-thinking"), "claude-sonnet-4-5");
@@ -2074,7 +2074,7 @@ TEST(CommitAttribution, SanitizesInternalModelNamesAndSurfaceKeys) {
 }
 
 TEST(CommitAttribution, TracksChangedRegionCreationDeletionAndBulkChanges) {
-    using namespace cc::utils::commit_attribution;
+    using namespace loom::utils::commit_attribution;
 
     auto state = create_empty_attribution_state("cli/claude-sonnet-4-5");
     EXPECT_EQ(state.surface, "cli/claude-sonnet-4-5");
@@ -2109,7 +2109,7 @@ TEST(CommitAttribution, TracksChangedRegionCreationDeletionAndBulkChanges) {
 }
 
 TEST(HashUtils, MatchesTypeScriptDjb2Sha256AndPairHashing) {
-    using namespace cc::utils::hash;
+    using namespace loom::utils::hash;
 
     EXPECT_EQ(djb2_hash(""), 0);
     EXPECT_EQ(djb2_hash("hello"), 99162322);
@@ -2123,7 +2123,7 @@ TEST(HashUtils, MatchesTypeScriptDjb2Sha256AndPairHashing) {
 }
 
 TEST(TaggedId, EncodesUuidAsApiCompatibleBase58TaggedId) {
-    using namespace cc::utils::tagged_id;
+    using namespace loom::utils::tagged_id;
 
     auto zero = to_tagged_id("user", "00000000-0000-0000-0000-000000000000");
     ASSERT_TRUE(zero.has_value()) << zero.error();
@@ -2157,7 +2157,7 @@ TEST(DiffUtils, ApplyPatchHandlesUnifiedDiffHunks) {
  four
 )PATCH";
 
-    auto result = cc::utils::apply_patch(content, patch);
+    auto result = loom::utils::apply_patch(content, patch);
 
     ASSERT_TRUE(result.has_value()) << result.error();
     EXPECT_EQ(*result, "one\nTWO\nthree\nadded\nfour\n");
@@ -2176,7 +2176,7 @@ TEST(DiffUtils, ApplyPatchHandlesMultipleHunks) {
 +f
 )PATCH";
 
-    auto result = cc::utils::apply_patch(content, patch);
+    auto result = loom::utils::apply_patch(content, patch);
 
     ASSERT_TRUE(result.has_value()) << result.error();
     EXPECT_EQ(*result, "a\nB\nc\nd\ne\nf\n");
@@ -2192,14 +2192,14 @@ TEST(DiffUtils, ApplyPatchRejectsMismatchedContext) {
 +delta
 )PATCH";
 
-    auto result = cc::utils::apply_patch(content, patch);
+    auto result = loom::utils::apply_patch(content, patch);
 
     ASSERT_FALSE(result.has_value());
     EXPECT_NE(result.error().find("Patch context mismatch"), std::string::npos);
 }
 
 TEST(GitDiff, GenerateUnifiedDiffPreservesContextAndRoundTripsToStats) {
-    auto patch = cc::utils::generate_unified_diff(
+    auto patch = loom::utils::generate_unified_diff(
         "alpha\nbeta\ngamma\n",
         "alpha\ndelta\ngamma\n",
         "notes.txt");
@@ -2210,11 +2210,11 @@ TEST(GitDiff, GenerateUnifiedDiffPreservesContextAndRoundTripsToStats) {
     EXPECT_NE(patch.find("+delta\n"), std::string::npos);
     EXPECT_NE(patch.find(" gamma\n"), std::string::npos);
 
-    auto parsed = cc::utils::parse_unified_diff(patch);
+    auto parsed = loom::utils::parse_unified_diff(patch);
     ASSERT_EQ(parsed.size(), 1u);
     ASSERT_EQ(parsed[0].hunks.size(), 1u);
 
-    auto stats = cc::utils::get_diff_stats(parsed);
+    auto stats = loom::utils::get_diff_stats(parsed);
     EXPECT_EQ(stats.files_changed, 1);
     EXPECT_EQ(stats.additions, 1);
     EXPECT_EQ(stats.deletions, 1);
@@ -2222,12 +2222,12 @@ TEST(GitDiff, GenerateUnifiedDiffPreservesContextAndRoundTripsToStats) {
 
 TEST(GitDiff, GenerateUnifiedDiffReturnsEmptyStringForIdenticalContent) {
     EXPECT_EQ(
-        cc::utils::generate_unified_diff("same\ncontent\n", "same\ncontent\n", "same.txt"),
+        loom::utils::generate_unified_diff("same\ncontent\n", "same\ncontent\n", "same.txt"),
         "");
 }
 
 TEST(MessagePredicates, HumanTurnsExcludeMetaAndToolResults) {
-    using namespace cc::utils::message_predicates;
+    using namespace loom::utils::message_predicates;
 
     EXPECT_TRUE(is_human_turn({.type = "user", .is_meta = false, .has_tool_use_result = false}));
     EXPECT_FALSE(is_human_turn({.type = "assistant", .is_meta = false, .has_tool_use_result = false}));
@@ -2236,7 +2236,7 @@ TEST(MessagePredicates, HumanTurnsExcludeMetaAndToolResults) {
 }
 
 TEST(ContentArray, InsertsBlockAfterToolResultsOrBeforeLastBlock) {
-    using namespace cc::utils::content_array;
+    using namespace loom::utils::content_array;
 
     std::vector<ContentBlock> with_results = {
         {.type = "text", .text = "start"},
@@ -2267,7 +2267,7 @@ TEST(ContentArray, InsertsBlockAfterToolResultsOrBeforeLastBlock) {
 }
 
 TEST(ObjectGroupBy, GroupsItemsBySelectorAndPassesIndex) {
-    using namespace cc::utils::object_group_by;
+    using namespace loom::utils::object_group_by;
 
     std::vector<std::string> items = {"apple", "ape", "banana", "berry"};
     auto grouped = object_group_by<std::string, std::string>(items, [](const std::string& item, std::size_t index) {
@@ -2281,7 +2281,7 @@ TEST(ObjectGroupBy, GroupsItemsBySelectorAndPassesIndex) {
 }
 
 TEST(Timeouts, ParsesDefaultAndMaxBashTimeoutsLikeTypeScript) {
-    using namespace cc::utils::timeouts;
+    using namespace loom::utils::timeouts;
 
     EXPECT_EQ(get_default_bash_timeout_ms({}), 120000);
     EXPECT_EQ(get_default_bash_timeout_ms({{"BASH_DEFAULT_TIMEOUT_MS", "3000"}}), 3000);
@@ -2297,7 +2297,7 @@ TEST(Timeouts, ParsesDefaultAndMaxBashTimeoutsLikeTypeScript) {
 }
 
 TEST(SlashCommandParsing, ParsesRegularAndMcpSlashCommands) {
-    using namespace cc::utils::slash_command_parsing;
+    using namespace loom::utils::slash_command_parsing;
 
     auto regular = parse_slash_command("  /search foo bar  ");
     ASSERT_TRUE(regular.has_value());
@@ -2323,7 +2323,7 @@ TEST(SlashCommandParsing, ParsesRegularAndMcpSlashCommands) {
 // These parser entry points (parse_sgr, strip_ansi, parse_csi, tokenize_ansi)
 // had no direct test coverage; the suite below pins their contract.
 // ===========================================================================
-namespace tio = cc::ui::termio;
+namespace tio = loom::ui::termio;
 
 TEST(TerminalIO, StripAnsiLeavesPlainText) {
     EXPECT_EQ(tio::strip_ansi("hello world"), "hello world");
@@ -2488,29 +2488,29 @@ TEST(TerminalIO, GenerateCSIMultipleParams) {
 // ─── cc.serdes.json parser coverage (guards the parse/parse_file/to_string/
 // chained-get surface used across services) ──────────────────────────────────
 TEST(JsonCCUtils, ParsesPrimitivesAndCollections) {
-    auto doc_null = cc::utils::json::parse("null");
+    auto doc_null = loom::utils::json::parse("null");
     ASSERT_TRUE(doc_null.has_value());
     EXPECT_TRUE(doc_null->root().is_null());
 
-    auto doc_b = cc::utils::json::parse("true");
+    auto doc_b = loom::utils::json::parse("true");
     ASSERT_TRUE(doc_b.has_value());
     EXPECT_TRUE(doc_b->root().is_bool());
     EXPECT_EQ(doc_b->root().as_bool(), true);
 
-    auto doc_i = cc::utils::json::parse("42");
+    auto doc_i = loom::utils::json::parse("42");
     ASSERT_TRUE(doc_i.has_value());
     EXPECT_EQ(doc_i->root().as_int(), 42);
 
-    auto doc_s = cc::utils::json::parse("\"hello\"");
+    auto doc_s = loom::utils::json::parse("\"hello\"");
     ASSERT_TRUE(doc_s.has_value());
     EXPECT_EQ(doc_s->root().as_str(), "hello");
 
-    auto doc_arr = cc::utils::json::parse("[1, 2, 3]");
+    auto doc_arr = loom::utils::json::parse("[1, 2, 3]");
     ASSERT_TRUE(doc_arr.has_value());
     EXPECT_TRUE(doc_arr->root().is_arr());
     EXPECT_EQ(doc_arr->root().size(), 3u);
 
-    auto doc_obj = cc::utils::json::parse(R"({"a": 1, "b": "x"})");
+    auto doc_obj = loom::utils::json::parse(R"({"a": 1, "b": "x"})");
     ASSERT_TRUE(doc_obj.has_value());
     auto root = doc_obj->root();
     EXPECT_TRUE(root.is_obj());
@@ -2519,7 +2519,7 @@ TEST(JsonCCUtils, ParsesPrimitivesAndCollections) {
 }
 
 TEST(JsonCCUtils, ParsesNestedStructures) {
-    auto r = cc::utils::json::parse(R"({"list": [1, {"k": true}], "n": null})");
+    auto r = loom::utils::json::parse(R"({"list": [1, {"k": true}], "n": null})");
     ASSERT_TRUE(r.has_value());
     auto root = r->root();
     EXPECT_TRUE(root.is_obj());
@@ -2531,14 +2531,14 @@ TEST(JsonCCUtils, ParsesNestedStructures) {
 }
 
 TEST(JsonCCUtils, ParseFileReturnsErrorOnMissingFile) {
-    auto r = cc::utils::json::parse_file("/nonexistent/cc-json-read-test.json");
+    auto r = loom::utils::json::parse_file("/nonexistent/cc-json-read-test.json");
     EXPECT_FALSE(r.has_value());
 }
 
 TEST(JsonCCUtils, ParseFileReturnsErrorOnInvalidJson) {
     auto tmp = std::filesystem::temp_directory_path() / "cc-json-read-test.json";
     { std::ofstream f(tmp); f << "{invalid}"; }
-    auto r = cc::utils::json::parse_file(tmp);
+    auto r = loom::utils::json::parse_file(tmp);
     EXPECT_FALSE(r.has_value());
     std::error_code ec;
     std::filesystem::remove(tmp, ec);
@@ -2547,7 +2547,7 @@ TEST(JsonCCUtils, ParseFileReturnsErrorOnInvalidJson) {
 TEST(JsonCCUtils, ParseFileRoundTripsValidJson) {
     auto tmp = std::filesystem::temp_directory_path() / "cc-json-read-rt.json";
     { std::ofstream f(tmp); f << R"({"key": "value", "n": 5})"; }
-    auto r = cc::utils::json::parse_file(tmp);
+    auto r = loom::utils::json::parse_file(tmp);
     ASSERT_TRUE(r.has_value());
     EXPECT_EQ(r->root().get("key").as_str(), "value");
     EXPECT_EQ(r->root().get("n").as_int(), 5);
@@ -2556,17 +2556,17 @@ TEST(JsonCCUtils, ParseFileRoundTripsValidJson) {
 }
 
 TEST(JsonCCUtils, RoundTripsThroughJsonToString) {
-    auto r = cc::utils::json::parse(R"({"key": "value", "n": 5})");
+    auto r = loom::utils::json::parse(R"({"key": "value", "n": 5})");
     ASSERT_TRUE(r.has_value());
-    std::string s = cc::utils::json::to_string(*r);
-    auto r2 = cc::utils::json::parse(s);
+    std::string s = loom::utils::json::to_string(*r);
+    auto r2 = loom::utils::json::parse(s);
     ASSERT_TRUE(r2.has_value());
     EXPECT_EQ(r2->root().get("key").as_str(), "value");
     EXPECT_EQ(r2->root().get("n").as_int(), 5);
 }
 
 TEST(JsonCCUtils, JsonGetPathAccess) {
-    auto r = cc::utils::json::parse(R"({"a": {"b": "deep"}})");
+    auto r = loom::utils::json::parse(R"({"a": {"b": "deep"}})");
     ASSERT_TRUE(r.has_value());
     auto root = r->root();
     EXPECT_EQ(root.get("a").get("b").as_str(), "deep");
@@ -2575,7 +2575,7 @@ TEST(JsonCCUtils, JsonGetPathAccess) {
 }
 
 // ---------------------------------------------------------------------------
-// --settings flag application (cc::config::apply_flag_settings)
+// --settings flag application (loom::config::apply_flag_settings)
 //
 // Mirrors the TS `loadSettingsFromFlag` priority subset: `env` is applied via
 // an injectable setter, `apiKey`/`model` are reported back, and unhandled keys
@@ -2584,12 +2584,12 @@ TEST(JsonCCUtils, JsonGetPathAccess) {
 // ---------------------------------------------------------------------------
 
 TEST(FlagSettings, AppliesEnvBlockAndModelAndApiKey) {
-    auto parsed = cc::utils::json::parse(
+    auto parsed = loom::utils::json::parse(
         R"({"env":{"ANTHROPIC_API_KEY":"sk-test","ANTHROPIC_BASE_URL":"https://glm.example"},"model":"glm-4.6","apiKey":"sk-from-apikey"})");
     ASSERT_TRUE(parsed.has_value());
 
     std::unordered_map<std::string, std::string> recorded;
-    auto result = cc::config::apply_flag_settings(
+    auto result = loom::config::apply_flag_settings(
         parsed->root(),
         [&](std::string_view name, std::string_view value) {
             recorded[std::string(name)] = std::string(value);
@@ -2607,11 +2607,11 @@ TEST(FlagSettings, AppliesEnvBlockAndModelAndApiKey) {
 }
 
 TEST(FlagSettings, AppliesStatusLineCommandSettings) {
-    auto parsed = cc::utils::json::parse(
+    auto parsed = loom::utils::json::parse(
         R"({"statusLine":{"type":"command","command":"~/.loom/statusline.sh","padding":2}})");
     ASSERT_TRUE(parsed.has_value());
 
-    auto result = cc::config::apply_flag_settings(parsed->root(), [](auto, auto) {});
+    auto result = loom::config::apply_flag_settings(parsed->root(), [](auto, auto) {});
 
     ASSERT_TRUE(result.status_line.has_value());
     ASSERT_TRUE(result.status_line->type.has_value());
@@ -2634,26 +2634,26 @@ TEST(FlagSettings, ResolvesDefaultModelFromEnvironmentPriority) {
     };
 
     EXPECT_EQ(
-        cc::config::resolve_default_model_from_environment(getter),
+        loom::config::resolve_default_model_from_environment(getter),
         "glm-sonnet-default");
 
     env["ANTHROPIC_MODEL"] = "anthropic-model";
     EXPECT_EQ(
-        cc::config::resolve_default_model_from_environment(getter),
+        loom::config::resolve_default_model_from_environment(getter),
         "anthropic-model");
 
     env["LOOM_MODEL"] = "loom-model";
     EXPECT_EQ(
-        cc::config::resolve_default_model_from_environment(getter),
+        loom::config::resolve_default_model_from_environment(getter),
         "loom-model");
 }
 
 TEST(FlagSettings, RecordsDeferredKeys) {
-    auto parsed = cc::utils::json::parse(
+    auto parsed = loom::utils::json::parse(
         R"({"model":"m","permissions":{"allow":["Bash"]},"hooks":{},"mcpServers":{"x":{}}})");
     ASSERT_TRUE(parsed.has_value());
 
-    auto result = cc::config::apply_flag_settings(parsed->root(), [](auto, auto) {});
+    auto result = loom::config::apply_flag_settings(parsed->root(), [](auto, auto) {});
 
     ASSERT_TRUE(result.model.has_value());
     EXPECT_EQ(*result.model, "m");
@@ -2666,11 +2666,11 @@ TEST(FlagSettings, RecordsDeferredKeys) {
 }
 
 TEST(FlagSettings, ParsesPermissionsDenyRules) {
-    auto parsed = cc::utils::json::parse(
+    auto parsed = loom::utils::json::parse(
         R"JSON({"permissions":{"deny":["Bash","mcp__linear","Bash(npm install)"]}})JSON");
     ASSERT_TRUE(parsed.has_value());
 
-    auto result = cc::config::apply_flag_settings(parsed->root(), [](auto, auto) {});
+    auto result = loom::config::apply_flag_settings(parsed->root(), [](auto, auto) {});
 
     // TS key is exactly "deny"; strings surface verbatim for engine matching.
     ASSERT_EQ(result.deny_rules.size(), 3u);
@@ -2680,35 +2680,35 @@ TEST(FlagSettings, ParsesPermissionsDenyRules) {
     EXPECT_TRUE(result.deferred_keys.empty());
 
     // Non-array deny / non-object permissions are ignored without crashing.
-    auto bad = cc::utils::json::parse(
+    auto bad = loom::utils::json::parse(
         R"({"permissions":{"deny":"Bash"}})");
     ASSERT_TRUE(bad.has_value());
     auto bad_result =
-        cc::config::apply_flag_settings(bad->root(), [](auto, auto) {});
+        loom::config::apply_flag_settings(bad->root(), [](auto, auto) {});
     EXPECT_TRUE(bad_result.deny_rules.empty());
 
     // Non-string elements inside the deny array are skipped defensively,
     // and a non-object permissions value is ignored without crashing.
-    auto mixed = cc::utils::json::parse(
+    auto mixed = loom::utils::json::parse(
         R"({"permissions":{"deny":["Bash",1,null,"Read"]}})");
     ASSERT_TRUE(mixed.has_value());
     auto mixed_result =
-        cc::config::apply_flag_settings(mixed->root(), [](auto, auto) {});
+        loom::config::apply_flag_settings(mixed->root(), [](auto, auto) {});
     ASSERT_EQ(mixed_result.deny_rules.size(), 2u);
     EXPECT_EQ(mixed_result.deny_rules[0], "Bash");
     EXPECT_EQ(mixed_result.deny_rules[1], "Read");
 
-    auto perm_scalar = cc::utils::json::parse(R"({"permissions":123})");
+    auto perm_scalar = loom::utils::json::parse(R"({"permissions":123})");
     ASSERT_TRUE(perm_scalar.has_value());
-    auto perm_scalar_result = cc::config::apply_flag_settings(
+    auto perm_scalar_result = loom::config::apply_flag_settings(
         perm_scalar->root(), [](auto, auto) {});
     EXPECT_TRUE(perm_scalar_result.deny_rules.empty());
 }
 
 TEST(FlagSettings, NonObjectRootReportsDeferred) {
-    auto parsed = cc::utils::json::parse(R"(["not","an","object"])");
+    auto parsed = loom::utils::json::parse(R"(["not","an","object"])");
     ASSERT_TRUE(parsed.has_value());
-    auto result = cc::config::apply_flag_settings(parsed->root(), [](auto, auto) {});
+    auto result = loom::config::apply_flag_settings(parsed->root(), [](auto, auto) {});
     ASSERT_EQ(result.deferred_keys.size(), 1u);
     EXPECT_EQ(result.deferred_keys.front(), "<root-not-object>");
 }
@@ -2765,7 +2765,7 @@ TEST(ClipboardImage, OsascriptScriptsAreSyntacticallyValidOnMacOS) {
     // script that exit()s 0 or 1 cleanly (never throws or aborts). The call is always safe on all
     // platforms; we only the boolean outcome varies with the live clipboard state.
     EXPECT_NO_THROW({
-      (void)cc::utils::clipboard::has_image();
+      (void)loom::utils::clipboard::has_image();
     });
 
     // read_image_png() returns nullopt when no image is present (the 99.9%
@@ -2778,7 +2778,7 @@ TEST(ClipboardImage, OsascriptScriptsAreSyntacticallyValidOnMacOS) {
     // former means "no image"; so read_image_png() returns nullopt in both paths
     // and neither path throws. Just verify no crash / abort.
     EXPECT_NO_THROW({
-      auto png = cc::utils::clipboard::read_image_png();
+      auto png = loom::utils::clipboard::read_image_png();
       // If (by luck) a developer happens to have an image in their clipboard
       // while this test runs, we additionally verify the bytes look like PNG.
       if (png.has_value()) {
@@ -2939,17 +2939,17 @@ TEST(ClipboardImage, HtmlClipboardDataUrlFallback_SourceGuard) {
 // ── parse_references (TS history.ts L62-75 parity) ──────────────────────────
 
 TEST(ParseReferences, EmptyInput_ReturnsEmpty) {
-    auto refs = cc::utils::parse_references("");
+    auto refs = loom::utils::parse_references("");
     EXPECT_TRUE(refs.empty());
 }
 
 TEST(ParseReferences, NoPlaceholders_ReturnsEmpty) {
-    auto refs = cc::utils::parse_references("hello world this is a prompt");
+    auto refs = loom::utils::parse_references("hello world this is a prompt");
     EXPECT_TRUE(refs.empty());
 }
 
 TEST(ParseReferences, SingleImageRef) {
-    auto refs = cc::utils::parse_references("look at this [Image #1] please");
+    auto refs = loom::utils::parse_references("look at this [Image #1] please");
     ASSERT_EQ(refs.size(), 1u);
     EXPECT_EQ(refs[0].id, 1);
     EXPECT_EQ(refs[0].match, "[Image #1]");
@@ -2957,7 +2957,7 @@ TEST(ParseReferences, SingleImageRef) {
 }
 
 TEST(ParseReferences, MultipleImageRefs) {
-    auto refs = cc::utils::parse_references("[Image #1] and [Image #2] here");
+    auto refs = loom::utils::parse_references("[Image #1] and [Image #2] here");
     ASSERT_EQ(refs.size(), 2u);
     EXPECT_EQ(refs[0].id, 1);
     EXPECT_EQ(refs[0].index, 0u);
@@ -2966,21 +2966,21 @@ TEST(ParseReferences, MultipleImageRefs) {
 }
 
 TEST(ParseReferences, PastedTextRef) {
-    auto refs = cc::utils::parse_references("see [Pasted text #5] for details");
+    auto refs = loom::utils::parse_references("see [Pasted text #5] for details");
     ASSERT_EQ(refs.size(), 1u);
     EXPECT_EQ(refs[0].id, 5);
     EXPECT_EQ(refs[0].match, "[Pasted text #5]");
 }
 
 TEST(ParseReferences, PastedTextRefWithLineCount) {
-    auto refs = cc::utils::parse_references("[Pasted text #3 +10 lines]");
+    auto refs = loom::utils::parse_references("[Pasted text #3 +10 lines]");
     ASSERT_EQ(refs.size(), 1u);
     EXPECT_EQ(refs[0].id, 3);
     EXPECT_EQ(refs[0].match, "[Pasted text #3 +10 lines]");
 }
 
 TEST(ParseReferences, TruncatedTextRef) {
-    auto refs = cc::utils::parse_references("[...Truncated text #7]");
+    auto refs = loom::utils::parse_references("[...Truncated text #7]");
     ASSERT_EQ(refs.size(), 1u);
     EXPECT_EQ(refs[0].id, 7);
     EXPECT_EQ(refs[0].match, "[...Truncated text #7]");
@@ -2988,12 +2988,12 @@ TEST(ParseReferences, TruncatedTextRef) {
 
 TEST(ParseReferences, ZeroIdFilteredOut) {
     // TS L74: filter(match => match.id > 0)
-    auto refs = cc::utils::parse_references("[Image #0]");
+    auto refs = loom::utils::parse_references("[Image #0]");
     EXPECT_TRUE(refs.empty());
 }
 
 TEST(ParseReferences, MixedRefTypes) {
-    auto refs = cc::utils::parse_references(
+    auto refs = loom::utils::parse_references(
         "[Image #1] then [Pasted text #2 +5 lines] and [...Truncated text #3]");
     ASSERT_EQ(refs.size(), 3u);
     EXPECT_EQ(refs[0].id, 1);
@@ -3005,22 +3005,22 @@ TEST(ParseReferences, MixedRefTypes) {
 }
 
 TEST(ParseReferences, FormatImageRef) {
-    EXPECT_EQ(cc::utils::format_image_ref(1), "[Image #1]");
-    EXPECT_EQ(cc::utils::format_image_ref(42), "[Image #42]");
+    EXPECT_EQ(loom::utils::format_image_ref(1), "[Image #1]");
+    EXPECT_EQ(loom::utils::format_image_ref(42), "[Image #42]");
 }
 
 TEST(ParseReferences, FormatPastedTextRef_NoLines) {
-    EXPECT_EQ(cc::utils::format_pasted_text_ref(3, 0), "[Pasted text #3]");
+    EXPECT_EQ(loom::utils::format_pasted_text_ref(3, 0), "[Pasted text #3]");
 }
 
 TEST(ParseReferences, FormatPastedTextRef_WithLines) {
-    EXPECT_EQ(cc::utils::format_pasted_text_ref(7, 12), "[Pasted text #7 +12 lines]");
+    EXPECT_EQ(loom::utils::format_pasted_text_ref(7, 12), "[Pasted text #7 +12 lines]");
 }
 
 TEST(ParseReferences, ExpandPastedTextRefs_ReplacesTextRefs) {
     // Simulate pasted_contents lookup: id=1 → "hello world", id=2 → no text (image)
     std::string input = "before [Pasted text #1] after [Image #2]";
-    auto expanded = cc::utils::expand_pasted_text_refs(
+    auto expanded = loom::utils::expand_pasted_text_refs(
         input,
         [](int id) -> std::optional<std::string> {
             if (id == 1) return "hello world";
@@ -3032,7 +3032,7 @@ TEST(ParseReferences, ExpandPastedTextRefs_ReplacesTextRefs) {
 
 TEST(ParseReferences, ExpandPastedTextRefs_NoRefs) {
     std::string input = "just normal text";
-    auto expanded = cc::utils::expand_pasted_text_refs(
+    auto expanded = loom::utils::expand_pasted_text_refs(
         input, [](int) -> std::optional<std::string> { return std::nullopt; });
     EXPECT_EQ(expanded, input);
 }
@@ -3040,7 +3040,7 @@ TEST(ParseReferences, ExpandPastedTextRefs_NoRefs) {
 TEST(ParseReferences, ExpandPastedTextRefs_MultipleRefsReverseOrder) {
     // Verify reverse-order splicing keeps offsets correct
     std::string input = "[Pasted text #1] middle [Pasted text #2]";
-    auto expanded = cc::utils::expand_pasted_text_refs(
+    auto expanded = loom::utils::expand_pasted_text_refs(
         input,
         [](int id) -> std::optional<std::string> {
             if (id == 1) return "AAA";
@@ -3054,45 +3054,45 @@ TEST(ParseReferences, ExpandPastedTextRefs_MultipleRefsReverseOrder) {
 
 TEST(ParseReferences, FormatTruncatedTextRef) {
     // TS REF: inputPaste.ts L57 formatTruncatedTextRef
-    EXPECT_EQ(cc::utils::format_truncated_text_ref(1, 0),
+    EXPECT_EQ(loom::utils::format_truncated_text_ref(1, 0),
               "[...Truncated text #1 +0 lines...]");
-    EXPECT_EQ(cc::utils::format_truncated_text_ref(3, 42),
+    EXPECT_EQ(loom::utils::format_truncated_text_ref(3, 42),
               "[...Truncated text #3 +42 lines...]");
-    EXPECT_EQ(cc::utils::format_truncated_text_ref(7, 100),
+    EXPECT_EQ(loom::utils::format_truncated_text_ref(7, 100),
               "[...Truncated text #7 +100 lines...]");
 }
 
 TEST(ParseReferences, GetPastedTextRefNumLines_NoNewlines) {
     // TS REF: history.ts L47 getPastedTextRefNumLines — "abc" → 0
-    EXPECT_EQ(cc::utils::get_pasted_text_ref_num_lines(""), 0);
-    EXPECT_EQ(cc::utils::get_pasted_text_ref_num_lines("hello world"), 0);
-    EXPECT_EQ(cc::utils::get_pasted_text_ref_num_lines(std::string(1000, 'x')), 0);
+    EXPECT_EQ(loom::utils::get_pasted_text_ref_num_lines(""), 0);
+    EXPECT_EQ(loom::utils::get_pasted_text_ref_num_lines("hello world"), 0);
+    EXPECT_EQ(loom::utils::get_pasted_text_ref_num_lines(std::string(1000, 'x')), 0);
 }
 
 TEST(ParseReferences, GetPastedTextRefNumLines_LF) {
     // "a\nb\nc" → 2 (TS: newline match count, NOT line count)
-    EXPECT_EQ(cc::utils::get_pasted_text_ref_num_lines("a\nb\nc"), 2);
-    EXPECT_EQ(cc::utils::get_pasted_text_ref_num_lines("\n"), 1);
-    EXPECT_EQ(cc::utils::get_pasted_text_ref_num_lines("line1\nline2"), 1);
+    EXPECT_EQ(loom::utils::get_pasted_text_ref_num_lines("a\nb\nc"), 2);
+    EXPECT_EQ(loom::utils::get_pasted_text_ref_num_lines("\n"), 1);
+    EXPECT_EQ(loom::utils::get_pasted_text_ref_num_lines("line1\nline2"), 1);
 }
 
 TEST(ParseReferences, GetPastedTextRefNumLines_CRLF) {
     // "a\r\nb" → 1 (CRLF counted as one break)
-    EXPECT_EQ(cc::utils::get_pasted_text_ref_num_lines("a\r\nb"), 1);
+    EXPECT_EQ(loom::utils::get_pasted_text_ref_num_lines("a\r\nb"), 1);
     // "a\r\nb\r\nc" → 2
-    EXPECT_EQ(cc::utils::get_pasted_text_ref_num_lines("a\r\nb\r\nc"), 2);
+    EXPECT_EQ(loom::utils::get_pasted_text_ref_num_lines("a\r\nb\r\nc"), 2);
 }
 
 TEST(ParseReferences, GetPastedTextRefNumLines_CR) {
     // "a\rb" → 1 (standalone CR)
-    EXPECT_EQ(cc::utils::get_pasted_text_ref_num_lines("a\rb"), 1);
+    EXPECT_EQ(loom::utils::get_pasted_text_ref_num_lines("a\rb"), 1);
     // Mixed: "a\nb\rc\r\nd" → LF + CR + CRLF = 3
-    EXPECT_EQ(cc::utils::get_pasted_text_ref_num_lines("a\nb\rc\r\nd"), 3);
+    EXPECT_EQ(loom::utils::get_pasted_text_ref_num_lines("a\nb\rc\r\nd"), 3);
 }
 
 TEST(ParseReferences, MaybeTruncatePaste_ShortText) {
     // TS REF: inputPaste.ts L25 — text <= 10000 chars → returned as-is
-    auto result = cc::utils::maybe_truncate_paste("hello world", 1);
+    auto result = loom::utils::maybe_truncate_paste("hello world", 1);
     EXPECT_EQ(result.truncated_text, "hello world");
     EXPECT_TRUE(result.placeholder_content.empty());
 }
@@ -3100,7 +3100,7 @@ TEST(ParseReferences, MaybeTruncatePaste_ShortText) {
 TEST(ParseReferences, MaybeTruncatePaste_AtThreshold) {
     // Exactly 10000 chars → no truncation
     std::string text(10000, 'a');
-    auto result = cc::utils::maybe_truncate_paste(text, 5);
+    auto result = loom::utils::maybe_truncate_paste(text, 5);
     EXPECT_EQ(result.truncated_text.size(), 10000u);
     EXPECT_TRUE(result.placeholder_content.empty());
 }
@@ -3108,7 +3108,7 @@ TEST(ParseReferences, MaybeTruncatePaste_AtThreshold) {
 TEST(ParseReferences, MaybeTruncatePaste_OverThreshold_SingleLine) {
     // >10000 chars single-line → head(500) + ref + tail(500)
     std::string text(25000, 'x');
-    auto result = cc::utils::maybe_truncate_paste(text, 3);
+    auto result = loom::utils::maybe_truncate_paste(text, 3);
     // Should be much shorter than original
     EXPECT_LT(result.truncated_text.size(), 1200u);
     // Should contain the truncated text ref with paste id
@@ -3129,7 +3129,7 @@ TEST(ParseReferences, MaybeTruncatePaste_OverThreshold_MultiLine) {
     std::string big;
     for (int i = 0; i < 700; ++i) big += std::string(19, 'y') + "\n";
     ASSERT_GT(big.size(), 10000u);
-    auto result = cc::utils::maybe_truncate_paste(big, 1);
+    auto result = loom::utils::maybe_truncate_paste(big, 1);
     EXPECT_NE(result.truncated_text.find("[...Truncated text #1 +"),
               std::string::npos);
     // Should NOT report "+0 lines..." (multi-line paste has many newlines)
@@ -3143,7 +3143,7 @@ TEST(ParseReferences, MaybeTruncatePaste_OverThreshold_MultiLine) {
 TEST(ParseReferences, ExpandPastedTextRefs_TruncatedTextRefs) {
     // [...Truncated text #N] refs should also be expanded
     std::string input = "head [...Truncated text #1 +42 lines...] tail";
-    auto expanded = cc::utils::expand_pasted_text_refs(
+    auto expanded = loom::utils::expand_pasted_text_refs(
         input,
         [](int id) -> std::optional<std::string> {
             if (id == 1) return "MIDDLE_CONTENT";
@@ -3155,7 +3155,7 @@ TEST(ParseReferences, ExpandPastedTextRefs_TruncatedTextRefs) {
 TEST(ParseReferences, ExpandPastedTextRefs_MixedPastedAndTruncated) {
     // Mix of [Pasted text #N] and [...Truncated text #N] refs
     std::string input = "[Pasted text #1] and [...Truncated text #2 +5 lines...]";
-    auto expanded = cc::utils::expand_pasted_text_refs(
+    auto expanded = loom::utils::expand_pasted_text_refs(
         input,
         [](int id) -> std::optional<std::string> {
             if (id == 1) return "FIRST";
@@ -3168,7 +3168,7 @@ TEST(ParseReferences, ExpandPastedTextRefs_MixedPastedAndTruncated) {
 TEST(ParseReferences, ExpandPastedTextRefs_ImageLeftAlone) {
     // [Image #N] refs should NOT be expanded
     std::string input = "[Image #1] [...Truncated text #2 +3 lines...]";
-    auto expanded = cc::utils::expand_pasted_text_refs(
+    auto expanded = loom::utils::expand_pasted_text_refs(
         input,
         [](int id) -> std::optional<std::string> {
             if (id == 2) return "EXPANDED";

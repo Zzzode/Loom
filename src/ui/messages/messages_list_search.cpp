@@ -32,7 +32,7 @@ import loom.ui.messages.message_advisor;
 import loom.ui.tools.registry;
 import loom.ui.tools.generic;
 
-namespace cc::ui::messages_list {
+namespace loom::ui::messages_list {
 
 namespace detail {
 
@@ -253,7 +253,7 @@ namespace search_detail {
     // TS: if msg.type === 'user' && msg.toolUseResult, look up tool by name
     // and call tool.extractSearchText(out).  Prefer that over the heuristic.
     if (shape == S::UserToolResult) {
-        if (auto* opts = std::get_if<::cc::ui::messages::ToolResultOptions>(&p)) {
+        if (auto* opts = std::get_if<::loom::ui::messages::ToolResultOptions>(&p)) {
             // Build the rich output text from ToolResultOptions fields.
             std::string rich_output;
             if (opts->content_items && !opts->content_items->empty()) {
@@ -277,7 +277,7 @@ namespace search_detail {
 
             // Tier 2: try tool-owned extractSearchText from registry.
             // TS REF: Messages.tsx L660-666  findRenderableToolByName + extractSearchText
-            const auto& reg = cc::ui::tools::global_tool_ui_registry();
+            const auto& reg = loom::ui::tools::global_tool_ui_registry();
             const auto* ui = reg.find(opts->tool_name);
             if (ui && ui->extract_search_text) {
                 auto extracted = ui->extract_search_text(rich_output, error_text);
@@ -305,7 +305,7 @@ namespace search_detail {
     // TS: toolUseSearchText(b.input) — extracts command/pattern/path from
     // the tool's input JSON so users can search for "grep" or "file_path".
     if (shape == S::AssistantToolUse) {
-        if (auto* opts = std::get_if<::cc::ui::messages::tool_use_message::ToolUseRenderOptions>(&p)) {
+        if (auto* opts = std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(&p)) {
             std::string result = search_detail::tool_use_search_text(
                 opts->call.raw_parameters);
             // Also include result_preview if available (partial output during streaming).
@@ -318,7 +318,7 @@ namespace search_detail {
         return payload_preview(p);
     }
     if (shape == S::AssistantGroupedTools) {
-        if (auto* grp = std::get_if<::cc::ui::messages::tool_use_message::GroupedToolsOptions>(&p)) {
+        if (auto* grp = std::get_if<::loom::ui::messages::tool_use_message::GroupedToolsOptions>(&p)) {
             std::string result;
             for (const auto& call : grp->calls) {
                 auto t = search_detail::tool_use_search_text(call.raw_parameters);
@@ -389,4 +389,4 @@ namespace search_detail {
 
 } // namespace detail
 
-} // namespace cc::ui::messages_list
+} // namespace loom::ui::messages_list

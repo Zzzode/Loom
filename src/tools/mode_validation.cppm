@@ -13,7 +13,7 @@ import std;
 
 import loom.tools.bash_security;
 
-export namespace cc::tools::mode_validation {
+export namespace loom::tools::mode_validation {
 
 // ---------------------------------------------------------------------------
 // ToolPermissionContext (sufficient subset for mode-based checks)
@@ -254,4 +254,4 @@ getAutoAllowedCommands(PermissionMode m) {
     return get_auto_allowed_commands(m);
 }
 
-} // namespace cc::tools::mode_validation
+} // namespace loom::tools::mode_validation

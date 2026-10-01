@@ -30,7 +30,7 @@ import std;
 import loom.tools.mode_validation;   // PermissionBehavior / PermissionResult / PermissionMode
 import loom.tools.path_validation;   // FileOperationType / split_compound_command / simple_shell_tokenize
 
-export namespace cc::tools::readonly_validation {
+export namespace loom::tools::readonly_validation {
 
 using PermissionBehavior = mode_validation::PermissionBehavior;
 using PermissionResult   = mode_validation::PermissionResult;
@@ -1070,4 +1070,4 @@ inline void populate_shared_tables(
                               "--get-url"}, {"--upload-pack"});
 }
 
-} // namespace cc::tools::readonly_validation
+} // namespace loom::tools::readonly_validation

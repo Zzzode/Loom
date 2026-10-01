@@ -14,7 +14,7 @@
 import std;
 import loom.services.mcp.stdio;
 
-using namespace cc::services::mcp::stdio;
+using namespace loom::services::mcp::stdio;
 using namespace std::chrono_literals;
 
 namespace {
@@ -67,7 +67,7 @@ TEST(McpStdio, EchoServerRoundTrip) {
     EXPECT_GT(t.ChildPid(), 0);
 
     // Build a minimal JSON-RPC request.
-    const std::string body = cc::services::mcp::stdio::BuildInitializeRequest(
+    const std::string body = loom::services::mcp::stdio::BuildInitializeRequest(
         42, "loom-cpp", "1.0.0");
     ASSERT_TRUE(t.SendJsonRpc(body));
 

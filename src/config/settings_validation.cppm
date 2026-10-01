@@ -7,7 +7,7 @@ export module loom.config.settings_validation;
 
 import std;
 
-export namespace cc::utils::settings_validation {
+export namespace loom::utils::settings_validation {
 
 struct ValidationOutcome {
     bool valid = true;
@@ -346,4 +346,4 @@ namespace detail {
     return tip;
 }
 
-} // namespace cc::utils::settings_validation
+} // namespace loom::utils::settings_validation

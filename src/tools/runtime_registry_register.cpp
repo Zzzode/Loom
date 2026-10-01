@@ -25,14 +25,14 @@ import loom.tools.todo_write;
 import loom.tools.web_fetch;
 import loom.tools.web_search;
 
-namespace cc::tools::detail {
+namespace loom::tools::detail {
 
-using cc::core::InputSchema;
-using cc::core::ITool;
-using cc::core::SchemaProperty;
-using cc::core::ToolDefinition;
-using cc::core::ToolInput;
-using cc::core::ToolPermission;
+using loom::core::InputSchema;
+using loom::core::ITool;
+using loom::core::SchemaProperty;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolPermission;
 
 [[nodiscard]] ToolDefinition define_tool(
     std::string name,
@@ -58,7 +58,7 @@ using cc::core::ToolPermission;
     std::vector<SchemaProperty> properties,
     RuntimeExecutor executor,
     std::string category,
-    cc::tools::agent::AgentLivePermissionCheckFn permission_check
+    loom::tools::agent::AgentLivePermissionCheckFn permission_check
 ) {
     return std::make_unique<RuntimeFunctionTool>(
         define_tool(std::move(name), std::move(description), permission, std::move(properties), std::move(category)),
@@ -80,12 +80,12 @@ using cc::core::ToolPermission;
     return definition_.permission == ToolPermission::ReadOnly;
 }
 
-} // namespace cc::tools::detail
+} // namespace loom::tools::detail
 
-namespace cc::tools {
+namespace loom::tools {
 
-using cc::core::SchemaProperty;
-using cc::core::ToolPermission;
+using loom::core::SchemaProperty;
+using loom::core::ToolPermission;
 
 // ---------------------------------------------------------------------------
 // Built-in agent registry access.
@@ -96,24 +96,24 @@ using cc::core::ToolPermission;
 // use inside the agent_runtime module (avoiding a circular module import).
 //
 // External consumers should use the accessors below, which forward to
-// cc::tools::built_in_agents::get_built_in_agents().
+// loom::tools::built_in_agents::get_built_in_agents().
 // ---------------------------------------------------------------------------
 
 [[nodiscard]] std::vector<agent_runtime::AgentDefinition>
 get_built_in_agent_definitions() {
-    return cc::tools::built_in_agents::get_built_in_agents();
+    return loom::tools::built_in_agents::get_built_in_agents();
 }
 
 [[nodiscard]] bool are_explore_plan_agents_enabled() {
-    return cc::tools::built_in_agents::are_explore_plan_agents_enabled();
+    return loom::tools::built_in_agents::are_explore_plan_agents_enabled();
 }
 
-void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions options) {
-    namespace features = cc::tools::features;
+void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptions options) {
+    namespace features = loom::tools::features;
 
     // RFC-0001 B15: AgentTool lives in cc_orchestration now. The factory
     // arrives via the per-call option (tests: 7 bind sites) or the process
-    // slot installed once by cc::orchestration::install_runtime_backends().
+    // slot installed once by loom::orchestration::install_runtime_backends().
     // Resolve and invoke it BEFORE the permission checker is moved, passing
     // a COPY — the simple() lambda below keeps reusing the checker.
     const auto& slot_factory = agent_tool_factory();
@@ -139,32 +139,32 @@ void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions
     }
     // Wire Edit + Read tools to share ReadFileState so that a successful Read
     // through the registry satisfies Edit's "file must be read first" check.
-    auto shared_read_state = std::make_shared<cc::tools::file_edit::ReadFileState>();
+    auto shared_read_state = std::make_shared<loom::tools::file_edit::ReadFileState>();
     {
-        struct EditAdapter final : cc::core::ITool {
-            cc::tools::file_edit::FileEditTool tool_;
-            cc::core::ToolDefinition def_ = cc::tools::file_edit::FileEditTool::definition();
-            std::shared_ptr<cc::tools::file_edit::ReadFileState> shared_state_;
+        struct EditAdapter final : loom::core::ITool {
+            loom::tools::file_edit::FileEditTool tool_;
+            loom::core::ToolDefinition def_ = loom::tools::file_edit::FileEditTool::definition();
+            std::shared_ptr<loom::tools::file_edit::ReadFileState> shared_state_;
 
-            explicit EditAdapter(std::shared_ptr<cc::tools::file_edit::ReadFileState> s)
+            explicit EditAdapter(std::shared_ptr<loom::tools::file_edit::ReadFileState> s)
                 : shared_state_(std::move(s)) {}
 
-            const cc::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<cc::core::ToolResult, cc::core::Error> execute(
-                const cc::core::ToolInput& input) override
+            const loom::core::ToolDefinition& definition() const override { return def_; }
+            std::expected<loom::core::ToolResult, loom::core::Error> execute(
+                const loom::core::ToolInput& input) override
             {
                 // Sync shared state into tool before execution
                 tool_.read_file_state() = *shared_state_;
                 // Auto-read: if the file hasn't been read yet, implicitly read it
                 // so agents can Edit without a prior explicit Read (matches TS behavior).
-                auto parsed_edit = cc::tools::file_edit::ParsedInput::from_json(input.json());
+                auto parsed_edit = loom::tools::file_edit::ParsedInput::from_json(input.json());
                 if (parsed_edit) {
                     auto abs_path = fs::absolute(parsed_edit->file_path);
                     auto existing = tool_.read_file_state().get(abs_path);
                     if (!existing || existing->is_partial_view) {
                         std::error_code ec;
                         if (fs::exists(abs_path, ec)) {
-                            tool_.read_file_state().set(abs_path, cc::tools::file_edit::ReadTimestamp{
+                            tool_.read_file_state().set(abs_path, loom::tools::file_edit::ReadTimestamp{
                                 .timestamp = std::chrono::system_clock::now(),
                                 .offset = std::nullopt,
                                 .limit = std::nullopt,
@@ -178,36 +178,36 @@ void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions
                 // Sync back (edit updates read state after success)
                 *shared_state_ = tool_.read_file_state();
                 if (result) return std::move(*result);
-                return std::unexpected(cc::core::Error::make(
-                    cc::core::ErrorCode::ToolExecutionFailed,
+                return std::unexpected(loom::core::Error::make(
+                    loom::core::ErrorCode::ToolExecutionFailed,
                     result.error().format()));
             }
-            bool check_permission(const cc::core::ToolInput& input) const override {
+            bool check_permission(const loom::core::ToolInput& input) const override {
                 return tool_.check_permission(input);
             }
         };
         registry.register_tool(std::make_unique<EditAdapter>(shared_read_state));
     }
     {
-        struct ReadAdapter final : cc::core::ITool {
-            cc::tools::file_read::FileReadTool tool_;
-            cc::core::ToolDefinition def_ = cc::tools::file_read::FileReadTool::definition();
-            std::shared_ptr<cc::tools::file_edit::ReadFileState> shared_state_;
+        struct ReadAdapter final : loom::core::ITool {
+            loom::tools::file_read::FileReadTool tool_;
+            loom::core::ToolDefinition def_ = loom::tools::file_read::FileReadTool::definition();
+            std::shared_ptr<loom::tools::file_edit::ReadFileState> shared_state_;
 
-            explicit ReadAdapter(std::shared_ptr<cc::tools::file_edit::ReadFileState> s)
+            explicit ReadAdapter(std::shared_ptr<loom::tools::file_edit::ReadFileState> s)
                 : shared_state_(std::move(s)) {}
 
-            const cc::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<cc::core::ToolResult, cc::core::Error> execute(
-                const cc::core::ToolInput& input) override
+            const loom::core::ToolDefinition& definition() const override { return def_; }
+            std::expected<loom::core::ToolResult, loom::core::Error> execute(
+                const loom::core::ToolInput& input) override
             {
                 auto result = tool_.execute(input);
                 if (result) {
                     // On success, record the read in shared state so Edit sees it
-                    auto parsed = cc::tools::file_read::FileReadInput::from_json(input.json());
+                    auto parsed = loom::tools::file_read::FileReadInput::from_json(input.json());
                     if (parsed) {
                         auto abs_path = fs::absolute(parsed->file_path);
-                        shared_state_->set(abs_path, cc::tools::file_edit::ReadTimestamp{
+                        shared_state_->set(abs_path, loom::tools::file_edit::ReadTimestamp{
                             .timestamp = std::chrono::system_clock::now(),
                             .offset = parsed->offset,
                             .limit = parsed->limit,
@@ -217,10 +217,10 @@ void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions
                     }
                     return std::move(*result);
                 }
-                return std::unexpected(cc::core::Error::make(
-                    cc::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+                return std::unexpected(loom::core::Error::make(
+                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
             }
-            bool check_permission(const cc::core::ToolInput& input) const override {
+            bool check_permission(const loom::core::ToolInput& input) const override {
                 return tool_.check_permission(input);
             }
         };
@@ -241,7 +241,7 @@ void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions
                                                       std::vector<SchemaProperty> properties = {}, std::string category = "runtime") {
         auto name_copy = name;
         return detail::make_runtime_tool(std::move(name), std::move(description), permission, std::move(properties),
-            [name_copy, &registry](const cc::core::ToolInput& input) {
+            [name_copy, &registry](const loom::core::ToolInput& input) {
                 return detail::execute_simple_runtime_tool(name_copy, input, &registry);
             },
             std::move(category),
@@ -533,8 +533,8 @@ void register_runtime_tools(cc::core::ToolRegistry& registry, RuntimeToolOptions
     (void)built_in_agents::are_explore_plan_agents_enabled();
 }
 
-void register_runtime_tools(cc::core::ToolRegistry& registry) {
+void register_runtime_tools(loom::core::ToolRegistry& registry) {
     register_runtime_tools(registry, RuntimeToolOptions{});
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

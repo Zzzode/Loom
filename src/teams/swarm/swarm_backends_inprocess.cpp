@@ -13,7 +13,7 @@ import std;
 
 import loom.teams.team_helpers;
 
-namespace cc::utils::swarm_backends {
+namespace loom::utils::swarm_backends {
 
 TeammateSpawnResult InProcessBackend::spawn(const TeammateSpawnConfig& config) {
     if (config.name.empty() || config.team_name.empty()) {
@@ -79,7 +79,7 @@ bool write_backend_message_to_mailbox(
     auto parsed = parse_agent_id(agent_id);
     if (!parsed) return false;
 
-    cc::utils::TeammateMessage mailbox_message{
+    loom::utils::TeammateMessage mailbox_message{
         .from = message.from.empty() ? std::string("team-lead") : message.from,
         .text = message.text,
         .timestamp = message.timestamp.value_or(std::string{}),
@@ -87,7 +87,7 @@ bool write_backend_message_to_mailbox(
         .color = message.color,
         .summary = message.summary,
     };
-    auto delivered = cc::utils::write_to_mailbox(
+    auto delivered = loom::utils::write_to_mailbox(
         parsed->agent_name,
         std::move(mailbox_message),
         std::optional<std::string_view>{parsed->team_name});
@@ -96,4 +96,4 @@ bool write_backend_message_to_mailbox(
 
 } // namespace detail
 
-} // namespace cc::utils::swarm_backends
+} // namespace loom::utils::swarm_backends

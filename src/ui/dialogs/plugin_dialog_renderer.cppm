@@ -16,11 +16,11 @@ import std;
 
 import loom.ui.dialogs.system;
 
-export namespace cc::ui::dialogs::plugin_dialog_renderer {
+export namespace loom::ui::dialogs::plugin_dialog_renderer {
 
 /// Register the PluginDialog dialog renderer into a registry.
 /// Implementation lives in plugin_dialog_renderer_impl.cpp.
 void register_plugin_dialog_renderer(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry);
 
-} // namespace cc::ui::dialogs::plugin_dialog_renderer
+} // namespace loom::ui::dialogs::plugin_dialog_renderer

@@ -3,7 +3,7 @@ export module loom.text.markdown_utils;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 struct CodeBlock {
     std::string language;
@@ -164,4 +164,4 @@ std::string wrap_in_code_block(std::string_view content, std::string_view lang) 
     return result;
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

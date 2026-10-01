@@ -7,7 +7,7 @@ export module loom.skills.hints;
 
 import std;
 
-export namespace cc::utils::loom_hints {
+export namespace loom::utils::loom_hints {
 
 struct LoomHint {
     int v{};
@@ -228,4 +228,4 @@ private:
     std::vector<std::pair<std::size_t, Callback>> subscribers_;
 };
 
-} // namespace cc::utils::loom_hints
+} // namespace loom::utils::loom_hints

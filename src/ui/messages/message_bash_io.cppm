@@ -8,7 +8,7 @@ export module loom.ui.messages.message_bash_io;
 
 import std;
 
-export namespace cc::ui::messages {
+export namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -57,4 +57,4 @@ struct BashIOEntry {
     return vbox(elements);
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

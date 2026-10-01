@@ -8,7 +8,7 @@ module loom.teams.swarm.backends;
 
 import std;
 
-namespace cc::utils::swarm_backends {
+namespace loom::utils::swarm_backends {
 
 // ── EnvironmentDetection static data (7) ────────────────────────────────────
 
@@ -136,4 +136,4 @@ void TeammateModeSnapshot::capture_unlocked() {
     captured_ = true;
 }
 
-} // namespace cc::utils::swarm_backends
+} // namespace loom::utils::swarm_backends

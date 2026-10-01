@@ -18,7 +18,7 @@ import std;
 
 import loom.services.mcp.types;
 
-namespace cc::services::mcp {
+namespace loom::services::mcp {
 
 SseTransport::ReconnectPolicy SseTransport::default_policy() {
     return ReconnectPolicy{
@@ -418,4 +418,4 @@ void SseTransport::sleep_with_backoff(std::stop_token& stop, std::chrono::millis
     }
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

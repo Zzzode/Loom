@@ -21,9 +21,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::longtail_ui {
+export namespace loom::ui::tools::longtail_ui {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 namespace detail {
 
@@ -684,4 +684,4 @@ inline void register_longtail_tool_uis() {
     reg.register_tool_ui("RemoteTrigger", make_remote_trigger_ui());
 }
 
-} // namespace cc::ui::tools::longtail_ui
+} // namespace loom::ui::tools::longtail_ui

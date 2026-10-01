@@ -16,11 +16,11 @@ import std;
 
 import loom.ui.dialogs.system;
 
-export namespace cc::ui::dialogs::hooks_renderer {
+export namespace loom::ui::dialogs::hooks_renderer {
 
 /// Register the HooksConfig dialog renderer into a registry.
 /// Implementation lives in hooks_dialog_renderer_impl.cpp.
 void register_hooks_renderer(
-    cc::ui::dialogs::system::DialogRendererRegistry& registry);
+    loom::ui::dialogs::system::DialogRendererRegistry& registry);
 
-} // namespace cc::ui::dialogs::hooks_renderer
+} // namespace loom::ui::dialogs::hooks_renderer

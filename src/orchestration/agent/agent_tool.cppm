@@ -45,27 +45,27 @@ import loom.orchestration.agent.run;
 import loom.orchestration.agent.fork;
 import loom.orchestration.agent.resume;
 
-export namespace cc::tools::agent {
+export namespace loom::tools::agent {
 
 namespace fs = std::filesystem;
 
-using cc::core::Tool;
-using cc::core::ToolInput;
-using cc::core::ToolResult;
-using cc::core::ToolDefinition;
-using cc::core::ToolPermission;
-using cc::core::InputSchema;
-using cc::core::SchemaProperty;
-using cc::utils::Result;
-using cc::services::api::AnthropicClient;
-using cc::services::api::CreateMessageRequest;
-using cc::services::api::Message;
-using cc::services::api::ContentBlock;
-using cc::services::api::ContentBlockType;
-using cc::services::api::StreamParser;
-using cc::services::api::StreamEventType;
-using cc::services::api::StreamContentBlockType;
-using cc::services::api::get_default_client;
+using loom::core::Tool;
+using loom::core::ToolInput;
+using loom::core::ToolResult;
+using loom::core::ToolDefinition;
+using loom::core::ToolPermission;
+using loom::core::InputSchema;
+using loom::core::SchemaProperty;
+using loom::utils::Result;
+using loom::services::api::AnthropicClient;
+using loom::services::api::CreateMessageRequest;
+using loom::services::api::Message;
+using loom::services::api::ContentBlock;
+using loom::services::api::ContentBlockType;
+using loom::services::api::StreamParser;
+using loom::services::api::StreamEventType;
+using loom::services::api::StreamContentBlockType;
+using loom::services::api::get_default_client;
 
 // =========================================================================
 // Re-import helpers from sub-modules (P1-04 split)
@@ -185,7 +185,7 @@ using fork_::should_reject_fork_child_agent_call;
 using fork_::exact_tools_allow_tool;
 using fork_::exact_tool_names_from_api_tools;
 using fork_::build_implicit_fork_agent_input_json;
-using cc::tools::agent::utils::agent_hook_output_preview;
+using loom::tools::agent::utils::agent_hook_output_preview;
 
 using resume_::format_resumed_agent_context;
 using resume_::hydrate_resume_plan_from_existing_record;
@@ -236,7 +236,7 @@ public:
     }
     
     explicit AgentTool(AgentConfig config = {}, int current_depth = 0,
-                       cc::core::ToolRegistry* registry = nullptr,
+                       loom::core::ToolRegistry* registry = nullptr,
                        AgentLivePermissionCheckFn permission_check = {},
                        bool permission_hook_valid_for_background = false)
         : config_(config),
@@ -314,7 +314,7 @@ public:
         if (!plan) return ToolResult::error(plan.error());
 
         if (!plan->team_name) {
-            if (auto current_team = cc::utils::get_team_name(); current_team && !current_team->empty()) {
+            if (auto current_team = loom::utils::get_team_name(); current_team && !current_team->empty()) {
                 plan->team_name = std::move(*current_team);
             }
         }
@@ -325,7 +325,7 @@ public:
                 "To spawn a subagent instead, omit the name parameter.");
         }
 
-        if (cc::utils::is_in_process_teammate() && plan->team_name && plan->background) {
+        if (loom::utils::is_in_process_teammate() && plan->team_name && plan->background) {
             return ToolResult::error(
                 "In-process teammates cannot spawn background agents. "
                 "Use run_in_background=false for synchronous subagents.");
@@ -368,7 +368,7 @@ public:
                 if (plan->fork_context_includes_prompt) {
                     plan->fork_context_messages.push_back(Message::from_text(
                         "user",
-                        cc::tools::agent_runtime::build_worktree_fork_notice(
+                        loom::tools::agent_runtime::build_worktree_fork_notice(
                             parent_working_dir,
                             worktree->path.string())));
                 } else {
@@ -404,7 +404,7 @@ private:
             return ToolResult::error("teammate spawn requires team_name and name");
         }
 
-        auto team = cc::tools::global_team_store().get_by_id_or_name(*plan.team_name);
+        auto team = loom::tools::global_team_store().get_by_id_or_name(*plan.team_name);
         if (!team) {
             return ToolResult::error(std::format(
                 "Team '{}' not found. Call team_create before spawning teammates.",
@@ -424,14 +424,14 @@ private:
         plan.team_name = normalized_team_name;
         plan.background = true;
 
-        auto added = cc::tools::global_team_store().add_member(team_id, cc::tools::TeamMember{
+        auto added = loom::tools::global_team_store().add_member(team_id, loom::tools::TeamMember{
             .agent_id = teammate_id,
             .role = teammate_role_for_agent_type(plan.agent_type),
-            .status = cc::tools::MemberStatus::Working,
+            .status = loom::tools::MemberStatus::Working,
         });
-        if (!added) return ToolResult::error(std::string(cc::tools::format_error(added.error())));
+        if (!added) return ToolResult::error(std::string(loom::tools::format_error(added.error())));
 
-        cc::utils::swarm_backends::TeammateSpawnConfig spawn_config{
+        loom::utils::swarm_backends::TeammateSpawnConfig spawn_config{
             .name = teammate_name,
             .team_name = normalized_team_name,
             .color = teammate_agent_color(plan.color),
@@ -448,24 +448,24 @@ private:
             .parent_session_id = teammate_parent_session_id(),
             .permissions = plan.allowed_tools,
         };
-        auto executor = cc::utils::swarm_backends::BackendRegistry::get_teammate_executor(
+        auto executor = loom::utils::swarm_backends::BackendRegistry::get_teammate_executor(
             config_.prefer_in_process_teammate);
         auto spawned = executor->spawn(spawn_config);
         if (!spawned.success) {
             auto error = spawned.error.value_or("failed to spawn teammate backend");
-            (void)cc::tools::global_team_store().update_member_status(
+            (void)loom::tools::global_team_store().update_member_status(
                 team_id,
                 teammate_id,
-                cc::tools::MemberStatus::Error,
+                loom::tools::MemberStatus::Error,
                 error);
             return ToolResult::error(error);
         }
 
-        auto backend = std::string(cc::utils::swarm_backends::backend_type_name(executor->type()));
+        auto backend = std::string(loom::utils::swarm_backends::backend_type_name(executor->type()));
         auto task_id = std::move(spawned.task_id);
         auto pane_id = std::move(spawned.pane_id);
         auto color = spawn_config.color
-            ? std::optional<std::string>{std::string(cc::utils::swarm_backends::agent_color_name(*spawn_config.color))}
+            ? std::optional<std::string>{std::string(loom::utils::swarm_backends::agent_color_name(*spawn_config.color))}
             : std::nullopt;
         auto parent_session_id = std::move(spawn_config.parent_session_id);
 
@@ -475,15 +475,15 @@ private:
         plan.teammate_color = color;
         plan.parent_session_id = parent_session_id;
 
-        const bool runs_in_process = executor->type() == cc::utils::swarm_backends::BackendType::InProcess;
+        const bool runs_in_process = executor->type() == loom::utils::swarm_backends::BackendType::InProcess;
         if (runs_in_process) {
             auto started = start_background_agent(std::move(plan));
             if (!started) return started;
             if (started->is_error) return started;
         } else {
-            auto mailbox = cc::utils::write_to_mailbox(
+            auto mailbox = loom::utils::write_to_mailbox(
                 teammate_name,
-                cc::utils::TeammateMessage{
+                loom::utils::TeammateMessage{
                     .from = "team-lead",
                     .text = plan.prompt,
                     .timestamp = {},
@@ -493,21 +493,21 @@ private:
                 },
                 std::optional<std::string_view>{std::string_view(normalized_team_name)});
             if (!mailbox) {
-                (void)cc::tools::global_team_store().update_member_status(
+                (void)loom::tools::global_team_store().update_member_status(
                     team_id,
                     teammate_id,
-                    cc::tools::MemberStatus::Error,
+                    loom::tools::MemberStatus::Error,
                     mailbox.error());
                 return ToolResult::error("failed to write teammate mailbox: " + mailbox.error());
             }
 
-            cc::tools::MessageRouter::instance().register_agent(plan.agent_id);
+            loom::tools::MessageRouter::instance().register_agent(plan.agent_id);
             upsert_agent_record_for_plan(plan);
-            cc::tools::agent_runtime::native_agent_store().mark_running(plan.agent_id);
-            cc::tools::agent_runtime::native_agent_store().append_transcript(
+            loom::tools::agent_runtime::native_agent_store().mark_running(plan.agent_id);
+            loom::tools::agent_runtime::native_agent_store().append_transcript(
                 plan.agent_id,
                 std::format("system: spawned teammate via {} backend", backend));
-            cc::tools::agent_runtime::native_agent_store().append_transcript(
+            loom::tools::agent_runtime::native_agent_store().append_transcript(
                 plan.agent_id,
                 "mailbox initial prompt: " + plan.prompt);
         }
@@ -546,17 +546,17 @@ private:
     }
 
     [[nodiscard]] Result<ToolResult> start_background_agent(AgentExecutionPlan plan) {
-        cc::tools::MessageRouter::instance().register_agent(plan.agent_id);
+        loom::tools::MessageRouter::instance().register_agent(plan.agent_id);
         upsert_agent_record_for_plan(plan);
 
         auto start_hooks = execute_agent_frontmatter_hooks(plan, "SubagentStart");
         if (!start_hooks.ok()) {
-            cc::tools::agent_runtime::native_agent_store().mark_failed(plan.agent_id, *start_hooks.error);
+            loom::tools::agent_runtime::native_agent_store().mark_failed(plan.agent_id, *start_hooks.error);
             update_teammate_completion_status(plan, false, *start_hooks.error);
             return ToolResult::error(*start_hooks.error);
         }
         if (!start_hooks.output.empty()) {
-            cc::tools::agent_runtime::native_agent_store().append_transcript(
+            loom::tools::agent_runtime::native_agent_store().append_transcript(
                 plan.agent_id,
                 "hook SubagentStart: " + start_hooks.output);
         }
@@ -564,7 +564,7 @@ private:
 
         if (!registry_) {
             if (!plan.fork_context_includes_prompt) {
-                cc::tools::agent_runtime::native_agent_store().append_transcript(plan.agent_id, "user: " + plan.prompt);
+                loom::tools::agent_runtime::native_agent_store().append_transcript(plan.agent_id, "user: " + plan.prompt);
             }
             return ToolResult::success(std::format(
                 "Queued background agent {} ({}) but execution is deferred because no tool registry is attached.\nagentId: {}\noutputFile: {}",
@@ -591,7 +591,7 @@ private:
             permission_hook_valid_for_background,
             agent_id
         ]() mutable {
-            cc::tools::agent_runtime::native_agent_store().mark_running(agent_id);
+            loom::tools::agent_runtime::native_agent_store().mark_running(agent_id);
             AgentTool worker(
                 std::move(config),
                 depth,
@@ -602,25 +602,25 @@ private:
             (void)cleanup_agent_worktree(agent_id);
             if (result && !result->is_error) {
                 auto output = tool_result_content_text(*result);
-                cc::tools::agent_runtime::native_agent_store().mark_completed(agent_id, std::move(output));
+                loom::tools::agent_runtime::native_agent_store().mark_completed(agent_id, std::move(output));
                 update_teammate_completion_status(plan, true, tool_result_content_text(*result));
             } else if (result) {
                 auto error_text = tool_result_content_text(*result);
-                if (auto current = cc::tools::agent_runtime::native_agent_store().get(agent_id);
-                    current && current->status == cc::tools::agent_runtime::NativeAgentStatus::Cancelled) {
+                if (auto current = loom::tools::agent_runtime::native_agent_store().get(agent_id);
+                    current && current->status == loom::tools::agent_runtime::NativeAgentStatus::Cancelled) {
                     update_teammate_completion_status(plan, false, current->error.value_or(error_text));
                     return;
                 }
-                cc::tools::agent_runtime::native_agent_store().mark_failed(agent_id, error_text);
+                loom::tools::agent_runtime::native_agent_store().mark_failed(agent_id, error_text);
                 update_teammate_completion_status(plan, false, error_text);
             } else {
                 auto error_text = result.error().format();
-                if (auto current = cc::tools::agent_runtime::native_agent_store().get(agent_id);
-                    current && current->status == cc::tools::agent_runtime::NativeAgentStatus::Cancelled) {
+                if (auto current = loom::tools::agent_runtime::native_agent_store().get(agent_id);
+                    current && current->status == loom::tools::agent_runtime::NativeAgentStatus::Cancelled) {
                     update_teammate_completion_status(plan, false, current->error.value_or(error_text));
                     return;
                 }
-                cc::tools::agent_runtime::native_agent_store().mark_failed(agent_id, error_text);
+                loom::tools::agent_runtime::native_agent_store().mark_failed(agent_id, error_text);
                 update_teammate_completion_status(plan, false, error_text);
             }
         }).detach();
@@ -649,7 +649,7 @@ private:
         const bool in_process_teammate =
             plan.team_name && plan.teammate_backend &&
             normalized_tool_name_is(*plan.teammate_backend, "in-process");
-        return cc::tools::agent::agent_base_filter_allows_tool(
+        return loom::tools::agent::agent_base_filter_allows_tool(
             tool_name,
             plan.is_built_in,
             plan.background,
@@ -676,7 +676,7 @@ private:
     ) const {
         if (plan.agent_mcp_servers.empty()) return std::nullopt;
 
-        auto doc = cc::utils::json::parse(input.json());
+        auto doc = loom::utils::json::parse(input.json());
         if (!doc || !doc->root().is_obj()) {
             return "MCP input must be a JSON object in this sub-agent context";
         }
@@ -696,10 +696,10 @@ private:
             join_fields(plan.agent_mcp_servers));
     }
 
-    [[nodiscard]] std::vector<cc::services::api::ToolDefinition> api_tools_for_plan(
+    [[nodiscard]] std::vector<loom::services::api::ToolDefinition> api_tools_for_plan(
         const AgentExecutionPlan& plan
     ) const {
-        std::vector<cc::services::api::ToolDefinition> tools;
+        std::vector<loom::services::api::ToolDefinition> tools;
         if (!registry_) return tools;
 
         for (const auto& definition : registry_->get_visible_definitions()) {
@@ -708,7 +708,7 @@ private:
             } else if (!is_tool_allowed_for_plan(definition.name, plan)) {
                 continue;
             }
-            tools.push_back(cc::services::api::ToolDefinition{
+            tools.push_back(loom::services::api::ToolDefinition{
                 .name = definition.name,
                 .description = definition.description,
                 .input_schema_json = definition.input_schema.to_json(),
@@ -722,7 +722,7 @@ private:
         const AgentExecutionPlan& plan,
         std::vector<Message>& messages
     ) const {
-        for (auto& pending_message : cc::tools::agent_runtime::native_agent_store().take_pending_messages(plan.agent_id)) {
+        for (auto& pending_message : loom::tools::agent_runtime::native_agent_store().take_pending_messages(plan.agent_id)) {
             auto queued_message = Message::from_text("user", pending_message);
             append_agent_sidechain_message(plan.agent_id, queued_message);
             messages.push_back(std::move(queued_message));
@@ -744,8 +744,8 @@ private:
     /// Run the sub-agent's recursive API loop
     [[nodiscard]] Result<ToolResult> run_agent_loop(const AgentExecutionPlan& plan) {
         auto resumed_record = plan.resume_existing
-            ? cc::tools::agent_runtime::native_agent_store().get(plan.agent_id)
-            : std::optional<cc::tools::agent_runtime::NativeAgentRecord>{};
+            ? loom::tools::agent_runtime::native_agent_store().get(plan.agent_id)
+            : std::optional<loom::tools::agent_runtime::NativeAgentRecord>{};
         AgentTodoCleanupGuard todo_cleanup{plan.agent_id};
         AgentShellTaskCleanupGuard shell_task_cleanup{plan.agent_id};
         AgentMcpCleanupGuard mcp_cleanup{
@@ -763,12 +763,12 @@ private:
             stop_hooks_executed = true;
             auto stop_hooks = execute_agent_frontmatter_hooks(plan, "SubagentStop", last_assistant_message);
             if (!stop_hooks.output.empty()) {
-                cc::tools::agent_runtime::native_agent_store().append_transcript(
+                loom::tools::agent_runtime::native_agent_store().append_transcript(
                     plan.agent_id,
                     "hook SubagentStop: " + stop_hooks.output);
             }
             if (!stop_hooks.ok()) {
-                cc::tools::agent_runtime::native_agent_store().append_transcript(
+                loom::tools::agent_runtime::native_agent_store().append_transcript(
                     plan.agent_id,
                     "hook SubagentStop failed: " + *stop_hooks.error);
                 return *stop_hooks.error;
@@ -780,20 +780,20 @@ private:
             if (auto hook_error = run_stop_hooks_once(error)) {
                 error += "\nSubagentStop hook failed: " + *hook_error;
             }
-            cc::tools::agent_runtime::native_agent_store().mark_failed(plan.agent_id, error);
+            loom::tools::agent_runtime::native_agent_store().mark_failed(plan.agent_id, error);
             return ToolResult::error(std::move(error));
         };
 
-        cc::tools::agent_runtime::native_agent_store().mark_running(plan.agent_id);
+        loom::tools::agent_runtime::native_agent_store().mark_running(plan.agent_id);
         if (!plan.fork_context_includes_prompt) {
-            cc::tools::agent_runtime::native_agent_store().append_transcript(plan.agent_id, "user: " + plan.prompt);
+            loom::tools::agent_runtime::native_agent_store().append_transcript(plan.agent_id, "user: " + plan.prompt);
         }
         auto hook_additional_contexts = plan.hook_additional_contexts;
         if (!plan.background) {
             auto start_hooks = execute_agent_frontmatter_hooks(plan, "SubagentStart");
             if (!start_hooks.ok()) return fail_agent(*start_hooks.error);
             if (!start_hooks.output.empty()) {
-                cc::tools::agent_runtime::native_agent_store().append_transcript(
+                loom::tools::agent_runtime::native_agent_store().append_transcript(
                     plan.agent_id,
                     "hook SubagentStart: " + start_hooks.output);
             }
@@ -865,18 +865,18 @@ private:
             : std::unordered_map<std::string, std::size_t>{};
 
         auto cancel_if_requested = [&](std::string_view phase) -> std::optional<std::string> {
-            if (!cc::tools::agent_runtime::native_agent_store().is_cancel_requested(plan.agent_id)) {
+            if (!loom::tools::agent_runtime::native_agent_store().is_cancel_requested(plan.agent_id)) {
                 return std::nullopt;
             }
             const auto reason = std::format("Agent {} cancelled {}", plan.agent_id, phase);
             (void)run_stop_hooks_once(reason);
-            cc::tools::agent_runtime::native_agent_store().mark_cancelled(plan.agent_id, reason);
+            loom::tools::agent_runtime::native_agent_store().mark_cancelled(plan.agent_id, reason);
             return reason;
         };
         auto update_turn_progress = [&](int turn, double phase) {
             const auto denominator = static_cast<double>(std::max(plan.max_turns, 1));
             const auto progress = std::min(0.99, (static_cast<double>(turn) + phase) / denominator);
-            cc::tools::agent_runtime::native_agent_store().update_progress(plan.agent_id, progress);
+            loom::tools::agent_runtime::native_agent_store().update_progress(plan.agent_id, progress);
         };
         
         for (int turn = 0; turn < plan.max_turns; ++turn) {
@@ -1010,7 +1010,7 @@ private:
                 if (!text_content.empty()) {
                     auto assistant_message = Message::from_text("assistant", text_content);
                     append_agent_sidechain_message(plan.agent_id, assistant_message);
-                    cc::tools::agent_runtime::native_agent_store().append_transcript(
+                    loom::tools::agent_runtime::native_agent_store().append_transcript(
                         plan.agent_id,
                         "assistant: " + text_content);
                 }
@@ -1029,7 +1029,7 @@ private:
             for (auto& tu : tool_uses) {
                 assistant_msg.content.push_back(tu);
             }
-            cc::tools::agent_runtime::native_agent_store().append_transcript(
+            loom::tools::agent_runtime::native_agent_store().append_transcript(
                 plan.agent_id,
                 "assistant: " + message_content_text(assistant_msg));
             append_agent_sidechain_message(plan.agent_id, assistant_msg);
@@ -1115,7 +1115,7 @@ private:
                         tool_input_json,
                         tu.tool_use_id);
                     if (!pre_hooks.output.empty()) {
-                        cc::tools::agent_runtime::native_agent_store().append_transcript(
+                        loom::tools::agent_runtime::native_agent_store().append_transcript(
                             plan.agent_id,
                             std::format("hook PreToolUse:{}: {}", tu.tool_name, pre_hooks.output));
                     }
@@ -1135,7 +1135,7 @@ private:
                                 tu.tool_name,
                                 tool_input_json,
                                 plan);
-                            cc::tools::agent_runtime::native_agent_store().append_transcript(
+                            loom::tools::agent_runtime::native_agent_store().append_transcript(
                                 plan.agent_id,
                                 std::format("hook PreToolUse:{} updated input: {}", tu.tool_name, tool_input_json));
                         }
@@ -1159,7 +1159,7 @@ private:
                                 tu.tool_name,
                                 tool_input_json,
                                 plan);
-                            cc::tools::agent_runtime::native_agent_store().append_transcript(
+                            loom::tools::agent_runtime::native_agent_store().append_transcript(
                                 plan.agent_id,
                                 std::format(
                                     "permission hook {} updated input: {}",
@@ -1263,7 +1263,7 @@ private:
                         output_preview,
                         error_preview);
                     if (!post_hooks.output.empty()) {
-                        cc::tools::agent_runtime::native_agent_store().append_transcript(
+                        loom::tools::agent_runtime::native_agent_store().append_transcript(
                             plan.agent_id,
                             std::format("hook {}:{}: {}", hook_event, tu.tool_name, post_hooks.output));
                     }
@@ -1277,7 +1277,7 @@ private:
                             is_mcp_tool_name(tu.tool_name) &&
                             post_hooks.updated_mcp_tool_output_text) {
                             result_block.text = *post_hooks.updated_mcp_tool_output_text;
-                            cc::tools::agent_runtime::native_agent_store().append_transcript(
+                            loom::tools::agent_runtime::native_agent_store().append_transcript(
                                 plan.agent_id,
                                 std::format(
                                     "hook PostToolUse:{} updated MCP output: {}",
@@ -1304,7 +1304,7 @@ private:
                 }
                 update_turn_progress(turn, 0.85);
             }
-            cc::tools::agent_runtime::native_agent_store().append_transcript(
+            loom::tools::agent_runtime::native_agent_store().append_transcript(
                 plan.agent_id,
                 "user: " + message_content_text(tool_result_msg));
             if (plan.critical_system_reminder) {
@@ -1325,7 +1325,7 @@ private:
                 const auto stop_text = agent_hook_stop_reason.value_or("Execution stopped by hook");
                 if (!final_output.empty() && !final_output.ends_with('\n')) final_output += "\n";
                 final_output += stop_text;
-                cc::tools::agent_runtime::native_agent_store().append_transcript(
+                loom::tools::agent_runtime::native_agent_store().append_transcript(
                     plan.agent_id,
                     "hook stopped continuation: " + stop_text);
                 break;
@@ -1337,54 +1337,54 @@ private:
         }
 
         if (auto hook_error = run_stop_hooks_once(final_output)) return fail_agent(*hook_error);
-        cc::tools::agent_runtime::native_agent_store().mark_completed(plan.agent_id, final_output);
+        loom::tools::agent_runtime::native_agent_store().mark_completed(plan.agent_id, final_output);
         
         return ToolResult::success(final_output);
     }
     
     AgentConfig config_;
     int current_depth_ = 0;
-    cc::core::ToolRegistry* registry_ = nullptr;
+    loom::core::ToolRegistry* registry_ = nullptr;
     AgentLivePermissionCheckFn permission_check_;
     bool permission_hook_valid_for_background_ = false;
 };
 
-} // namespace cc::tools::agent
+} // namespace loom::tools::agent
 
 // Export main tool class
-export namespace cc::tools {
-    using cc::tools::agent::AgentTool;
-    using cc::tools::agent::AgentConfig;
-    using cc::tools::agent::AgentLivePermissionCheck;
-    using cc::tools::agent::AgentLivePermissionCheckFn;
+export namespace loom::tools {
+    using loom::tools::agent::AgentTool;
+    using loom::tools::agent::AgentConfig;
+    using loom::tools::agent::AgentLivePermissionCheck;
+    using loom::tools::agent::AgentLivePermissionCheckFn;
 
     /// Factory: create AgentTool wrapped as ITool (adapts Result types across modules)
     [[nodiscard]] auto make_agent_tool(AgentConfig config = {},
                                         int depth = 0,
-                                        cc::core::ToolRegistry* registry = nullptr,
+                                        loom::core::ToolRegistry* registry = nullptr,
                                         AgentLivePermissionCheckFn permission_check = {},
                                         bool permission_hook_valid_for_background = false)
-        -> std::unique_ptr<cc::core::ITool> {
-        struct Adapter final : cc::core::ITool {
+        -> std::unique_ptr<loom::core::ITool> {
+        struct Adapter final : loom::core::ITool {
             AgentTool tool_;
-            cc::core::ToolDefinition def_ = AgentTool::definition();
+            loom::core::ToolDefinition def_ = AgentTool::definition();
 
             explicit Adapter(
                 AgentConfig cfg,
                 int d,
-                cc::core::ToolRegistry* reg,
+                loom::core::ToolRegistry* reg,
                 AgentLivePermissionCheckFn permission_check,
                 bool hook_valid_for_background
             ) : tool_(std::move(cfg), d, reg, std::move(permission_check), hook_valid_for_background) {}
 
-            const cc::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<cc::core::ToolResult, cc::core::Error> execute(const cc::core::ToolInput& input) override {
+            const loom::core::ToolDefinition& definition() const override { return def_; }
+            std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
                 auto result = tool_.execute(input);
                 if (result) return std::move(*result);
-                return std::unexpected(cc::core::Error::make(
-                    cc::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+                return std::unexpected(loom::core::Error::make(
+                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
             }
-            bool check_permission(const cc::core::ToolInput& input) const override {
+            bool check_permission(const loom::core::ToolInput& input) const override {
                 return tool_.check_permission(input);
             }
         };

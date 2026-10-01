@@ -13,7 +13,7 @@ import std;
 import loom.types.types;
 import loom.process.bash.bash_execution;
 
-export namespace cc::core {
+export namespace loom::core {
 
 // ============================================================
 // Task Types
@@ -226,13 +226,13 @@ public:
         }
 
         worker_ = std::jthread([this](std::stop_token stop) {
-            cc::utils::bash::ShellSessionConfig config;
+            loom::utils::bash::ShellSessionConfig config;
             if (input_.timeout) {
                 const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(*input_.timeout);
                 config.timeout = seconds > std::chrono::seconds::zero() ? seconds : std::chrono::seconds{1};
             }
 
-            auto execution = cc::utils::bash::execute_command(input_.command, config);
+            auto execution = loom::utils::bash::execute_command(input_.command, config);
             TaskResult task_result;
 
             if (stop.stop_requested() || killed_.load()) {
@@ -403,4 +403,4 @@ public:
     }
 };
 
-} // namespace cc::core
+} // namespace loom::core

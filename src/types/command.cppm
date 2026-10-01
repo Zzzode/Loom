@@ -9,7 +9,7 @@ export module loom.types.command;
 
 import std;
 
-export namespace cc::types {
+export namespace loom::types {
 
 /// Slash command argument type
 enum class ArgType : std::uint8_t {
@@ -89,4 +89,4 @@ struct ParsedCommand {
     return result;
 }
 
-} // namespace cc::types
+} // namespace loom::types

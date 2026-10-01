@@ -18,9 +18,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::grep_ui {
+export namespace loom::ui::tools::grep_ui {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 namespace detail {
 
@@ -146,4 +146,4 @@ inline void register_grep_ui() {
     global_tool_ui_registry().register_tool_ui("Grep", make_grep_ui());
 }
 
-}  // namespace cc::ui::tools::grep_ui
+}  // namespace loom::ui::tools::grep_ui

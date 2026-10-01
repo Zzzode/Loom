@@ -2,7 +2,7 @@ export module loom.diagnostics.activity_manager;
 
 import std;
 
-export namespace cc::utils::activity_manager {
+export namespace loom::utils::activity_manager {
 
 enum class ActivityType : unsigned char {
     User,
@@ -84,4 +84,4 @@ private:
     bool is_cli_active_ = false;
 };
 
-} // namespace cc::utils::activity_manager
+} // namespace loom::utils::activity_manager

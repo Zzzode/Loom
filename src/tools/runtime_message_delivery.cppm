@@ -42,17 +42,17 @@ import loom.net.http.http;
 import loom.crypto.uuid_utils;
 import loom.teams.team_helpers;
 
-export namespace cc::tools::runtime_message_delivery {
+export namespace loom::tools::runtime_message_delivery {
 
 namespace fs = std::filesystem;
-namespace json = cc::utils::json;
-using cc::core::ErrorCode;
-using cc::core::Result;
-using cc::core::ToolInput;
-using cc::core::ToolRegistry;
-using cc::core::ToolResult;
-using cc::tools::agent_runtime::NativeAgentRecord;
-using cc::tools::agent_runtime::NativeAgentStatus;
+namespace json = loom::utils::json;
+using loom::core::ErrorCode;
+using loom::core::Result;
+using loom::core::ToolInput;
+using loom::core::ToolRegistry;
+using loom::core::ToolResult;
+using loom::tools::agent_runtime::NativeAgentRecord;
+using loom::tools::agent_runtime::NativeAgentStatus;
 
 // ---------------------------------------------------------------------------
 //  1. Types
@@ -200,7 +200,7 @@ struct RuntimePeerAddress {
     std::string_view message
 ) {
     const auto prompt = build_cross_session_prompt(source_session_id, message);
-    const auto uuid = cc::utils::generate_uuid_v4();
+    const auto uuid = loom::utils::generate_uuid_v4();
     json::JsonMutDoc doc;
     auto root = doc.object();
     root.add("type", doc.string("user"));
@@ -262,7 +262,7 @@ struct RuntimePeerAddress {
         strip_runtime_trailing_slashes(*endpoint),
         target_session_id);
 
-    cc::utils::HttpClient http;
+    loom::utils::HttpClient http;
     auto response = http.post(url, body, headers);
     if (!response) return std::unexpected(response.error().message);
     if (!response->is_ok()) {
@@ -558,10 +558,10 @@ struct DeliveryOutcome {
 
     auto from_agent = runtime_json_string(root, "from_agent")
         .or_else([&] { return runtime_json_string(root, "from"); })
-        .or_else([&] { return cc::utils::get_agent_name(); })
+        .or_else([&] { return loom::utils::get_agent_name(); })
         .value_or("team-lead");
     auto team_name = runtime_json_string(root, "team_name")
-        .or_else([&] { return cc::utils::get_team_name(); });
+        .or_else([&] { return loom::utils::get_team_name(); });
     auto summary = runtime_json_string(root, "summary");
 
     auto message_node = root.get("message");
@@ -616,7 +616,7 @@ struct DeliveryOutcome {
 
     auto find_team_member = [&](std::string_view target) -> std::optional<MailboxTarget> {
         if (!team_name || team_name->empty()) return std::nullopt;
-        auto team = cc::tools::global_team_store().get_by_id_or_name(*team_name);
+        auto team = loom::tools::global_team_store().get_by_id_or_name(*team_name);
         if (!team) return std::nullopt;
         const auto target_lower = lower_ascii(target);
         for (const auto& member : (*team)->members) {
@@ -637,9 +637,9 @@ struct DeliveryOutcome {
         auto mailbox_target = find_team_member(target_agent);
         if (mailbox_target) target_agent = mailbox_target->agent_id;
 
-        auto recipient_record = cc::tools::agent_runtime::native_agent_store().get(target_agent);
+        auto recipient_record = loom::tools::agent_runtime::native_agent_store().get(target_agent);
         if (!recipient_record) {
-            for (const auto& candidate : cc::tools::agent_runtime::native_agent_store().list()) {
+            for (const auto& candidate : loom::tools::agent_runtime::native_agent_store().list()) {
                 const auto candidate_name = candidate.name.value_or(team_agent_name_from_id(candidate.agent_id));
                 if (candidate_name != target_agent && candidate.agent_id != target_agent) continue;
                 if (team_name && (!candidate.team_name || *candidate.team_name != *team_name)) continue;
@@ -670,15 +670,15 @@ struct DeliveryOutcome {
                 return std::unexpected(std::string(format_error(valid.error())));
             }
             outcome.resumed_terminal_agent = status_is_terminal(recipient_record->status);
-            cc::tools::agent_runtime::native_agent_store().enqueue_resume_message(
+            loom::tools::agent_runtime::native_agent_store().enqueue_resume_message(
                 target_agent,
                 runtime_shared_utils::format_agent_pending_user_message(from_agent, priority, *message));
             if (outcome.resumed_terminal_agent) {
-                auto queued_record = cc::tools::agent_runtime::native_agent_store().get(target_agent)
+                auto queued_record = loom::tools::agent_runtime::native_agent_store().get(target_agent)
                     .value_or(*recipient_record);
                 outcome.resume_status_note = try_start_native_agent_resume(queued_record, registry);
             }
-            cc::tools::agent_runtime::native_agent_store().append_transcript(
+            loom::tools::agent_runtime::native_agent_store().append_transcript(
                 target_agent,
                 std::format(
                     "message {} from {} [{}]: {}",
@@ -702,14 +702,14 @@ struct DeliveryOutcome {
         }
 
         if (mailbox_target) {
-            auto mailbox = cc::utils::write_to_mailbox(
+            auto mailbox = loom::utils::write_to_mailbox(
                 mailbox_target->recipient_name,
-                cc::utils::TeammateMessage{
+                loom::utils::TeammateMessage{
                     .from = from_agent,
                     .text = *message,
                     .timestamp = {},
                     .read = false,
-                    .color = cc::utils::get_teammate_color(),
+                    .color = loom::utils::get_teammate_color(),
                     .summary = summary,
                 },
                 std::optional<std::string_view>{std::string_view(mailbox_target->team_name)});
@@ -725,7 +725,7 @@ struct DeliveryOutcome {
         if (!team_name || team_name->empty()) {
             return ToolResult::error("send_message broadcast requires team_name or active team context");
         }
-        auto team = cc::tools::global_team_store().get_by_id_or_name(*team_name);
+        auto team = loom::tools::global_team_store().get_by_id_or_name(*team_name);
         if (!team) return ToolResult::error("Team not found: " + *team_name);
 
         std::vector<std::string> recipients;
@@ -774,4 +774,4 @@ struct DeliveryOutcome {
         status_note));
 }
 
-} // namespace cc::tools::runtime_message_delivery
+} // namespace loom::tools::runtime_message_delivery

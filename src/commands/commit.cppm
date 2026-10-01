@@ -15,9 +15,9 @@ import loom.types.types;
 import loom.commands.command;
 import loom.process.bash.bash_execution;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
 /// Conventional Commit type categories
 enum class CommitType : std::uint8_t {
@@ -267,14 +267,14 @@ private:
     /// Execute a git command and return stdout via popen.
     [[nodiscard]] static auto run_git_command(const std::string& cmd) -> std::string {
         std::string full_cmd = "git " + cmd + " 2>&1";
-        FILE* pipe = cc::utils::bash::popen_spawn(full_cmd.c_str());
+        FILE* pipe = loom::utils::bash::popen_spawn(full_cmd.c_str());
         if (!pipe) return {};
         std::string result;
         char buf[4096];
         while (fgets(buf, sizeof(buf), pipe)) {
             result += buf;
         }
-        cc::utils::bash::pclose_spawn(pipe);
+        loom::utils::bash::pclose_spawn(pipe);
         // Trim trailing newline
         while (!result.empty() && result.back() == '\n') {
             result.pop_back();
@@ -283,4 +283,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

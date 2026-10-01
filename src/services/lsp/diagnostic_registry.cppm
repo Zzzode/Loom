@@ -29,10 +29,10 @@ import std;
 import loom.utils.error;
 import loom.serdes.json;
 
-export namespace cc::services::lsp {
+export namespace loom::services::lsp {
 
 namespace fs = std::filesystem;
-using cc::utils::Result;
+using loom::utils::Result;
 
 // ============================================================================
 // Diagnostic Severity
@@ -588,7 +588,7 @@ private:
 /// Handles both file:// URIs and plain paths.
 /// TS REF: src/services/lsp/passiveFeedback.ts:43-100 (formatDiagnosticsForAttachment)
 [[nodiscard]] inline std::vector<DiagnosticFile> format_diagnostics_for_attachment(
-    cc::utils::json::JsonVal params_root
+    loom::utils::json::JsonVal params_root
 ) {
     std::vector<DiagnosticFile> result;
 
@@ -609,7 +609,7 @@ private:
     DiagnosticFile df;
     df.uri = uri;
 
-    diagnostics_node.iter([&df](cc::utils::json::JsonVal diag_node) {
+    diagnostics_node.iter([&df](loom::utils::json::JsonVal diag_node) {
         Diagnostic diag;
         diag.uri = df.uri;
 
@@ -669,7 +669,7 @@ private:
 [[nodiscard]] inline std::string diagnostics_to_json_array(
     const std::vector<Diagnostic>& diags
 ) {
-    cc::utils::json::JsonMutDoc doc;
+    loom::utils::json::JsonMutDoc doc;
     auto root = doc.array();
     for (const auto& d : diags) {
         auto element = doc.object();
@@ -703,4 +703,4 @@ private:
     return doc.to_string();
 }
 
-} // namespace cc::services::lsp
+} // namespace loom::services::lsp

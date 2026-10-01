@@ -4,7 +4,7 @@ import std;
 
 import loom.config.settings_sources;
 
-export namespace cc::utils::settings_paths {
+export namespace loom::utils::settings_paths {
 
 enum class Platform : unsigned char {
     MacOS,
@@ -41,8 +41,8 @@ enum class Platform : unsigned char {
     return join_path(managed_file_path_value, "managed-settings.d");
 }
 
-[[nodiscard]] inline std::string relative_settings_file_path_for_source(cc::utils::settings_sources::SettingSource source) {
-    using cc::utils::settings_sources::SettingSource;
+[[nodiscard]] inline std::string relative_settings_file_path_for_source(loom::utils::settings_sources::SettingSource source) {
+    using loom::utils::settings_sources::SettingSource;
     switch (source) {
         case SettingSource::ProjectSettings: return ".loom/settings.json";
         case SettingSource::LocalSettings: return ".loom/settings.local.json";
@@ -50,4 +50,4 @@ enum class Platform : unsigned char {
     }
 }
 
-} // namespace cc::utils::settings_paths
+} // namespace loom::utils::settings_paths

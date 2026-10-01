@@ -28,10 +28,10 @@ import std;
 import loom.ui.foundation.feature_dialog_protocol;
 import loom.ui.dialogs.wizard_dialog;
 
-export namespace cc::ui::feature_wizard_adapter {
+export namespace loom::ui::feature_wizard_adapter {
 
-namespace fdp = cc::ui::feature_dialog_protocol;
-namespace wd = cc::ui::wizard_dialog;
+namespace fdp = loom::ui::feature_dialog_protocol;
+namespace wd = loom::ui::wizard_dialog;
 
 /// Build a wizard component from a neutral feature wizard request.
 /// Generic — works for any ViewKind whose erased request is a
@@ -55,4 +55,4 @@ namespace wd = cc::ui::wizard_dialog;
     return wd::WizardComponent(std::move(props));
 }
 
-}  // namespace cc::ui::feature_wizard_adapter
+}  // namespace loom::ui::feature_wizard_adapter

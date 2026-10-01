@@ -2,7 +2,7 @@ export module loom.config.settings_sources;
 
 import std;
 
-export namespace cc::utils::settings_sources {
+export namespace loom::utils::settings_sources {
 
 enum class SettingSource : unsigned char {
     UserSettings,
@@ -117,4 +117,4 @@ inline constexpr std::array<SettingSource, 5> setting_sources = {
     return result;
 }
 
-} // namespace cc::utils::settings_sources
+} // namespace loom::utils::settings_sources

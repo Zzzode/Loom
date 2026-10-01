@@ -8,7 +8,7 @@ export module loom.constants.spinner_verbs;
 
 import std;
 
-export namespace cc::constants::spinner_verbs {
+export namespace loom::constants::spinner_verbs {
 
 /// Default spinner verbs (sorted alphabetically in original)
 inline constexpr std::array SPINNER_VERBS = {
@@ -43,4 +43,4 @@ inline constexpr std::array SPINNER_VERBS = {
     return std::vector<std::string_view>(SPINNER_VERBS.begin(), SPINNER_VERBS.end());
 }
 
-} // namespace cc::constants::spinner_verbs
+} // namespace loom::constants::spinner_verbs

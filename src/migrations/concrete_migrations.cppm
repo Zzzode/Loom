@@ -10,12 +10,12 @@ import std;
 
 import loom.serdes.json;
 
-namespace cc::migrations::concrete {
+namespace loom::migrations::concrete {
 
-using cc::utils::json::JsonDoc;
-using cc::utils::json::JsonMutDoc;
-using cc::utils::json::JsonMutVal;
-using cc::utils::json::JsonVal;
+using loom::utils::json::JsonDoc;
+using loom::utils::json::JsonMutDoc;
+using loom::utils::json::JsonMutVal;
+using loom::utils::json::JsonVal;
 
 /// Read-only view into the three input config trees.
 export struct DetectCtx {
@@ -52,4 +52,4 @@ export [[nodiscard]] std::vector<std::string> run_all_migrations(
     const JsonDoc* user_src,
     const JsonDoc* local_src);
 
-}  // namespace cc::migrations::concrete
+}  // namespace loom::migrations::concrete

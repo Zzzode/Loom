@@ -30,7 +30,7 @@ export module loom.ui.foundation.declared_cursor;
 
 import std;
 
-export namespace cc::ui::common::declared_cursor {
+export namespace loom::ui::common::declared_cursor {
 using namespace ftxui;
 
 namespace detail {
@@ -172,4 +172,4 @@ private:
     };
 }
 
-}  // namespace cc::ui::common::declared_cursor
+}  // namespace loom::ui::common::declared_cursor

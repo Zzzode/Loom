@@ -15,7 +15,7 @@ import loom.coordinator.swarm;
 import loom.process.bash.bash_execution;
 import loom.tasks.task;   // canonical TaskType / TaskStatus / TaskResult / task_type_to_string
 
-export namespace cc::core {
+export namespace loom::core {
 
 // ============================================================
 // Task types and status (canonical definitions live in cc.tasks.task;
@@ -37,7 +37,7 @@ export namespace cc::core {
     return "unknown";
 }
 
-/// Background task ID (alias of canonical cc::core::TaskId from cc.tasks.task).
+/// Background task ID (alias of canonical loom::core::TaskId from cc.tasks.task).
 using BackgroundTaskId = TaskId;
 
 /// Fetch the task id as a printable short string.
@@ -170,7 +170,7 @@ public:
         }
 
         if (!execution && task.type == TaskType::Shell) {
-            auto shell_result = cc::utils::bash::execute_command(task.description);
+            auto shell_result = loom::utils::bash::execute_command(task.description);
             if (shell_result) {
                 execution = TaskResult{
                     .success = shell_result->exit_code == 0,
@@ -414,4 +414,4 @@ private:
     }
 };
 
-} // namespace cc::core
+} // namespace loom::core

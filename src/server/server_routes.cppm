@@ -32,7 +32,7 @@ import loom.session.storage;
 import loom.types.types;
 import loom.serdes.json;
 
-export namespace cc::server {
+export namespace loom::server {
 
 // A route handler definition
 struct Route {
@@ -68,7 +68,7 @@ namespace detail {
 	    struct DirectPermissionRule {
 	        std::string tool_name;
 	        std::optional<std::string> rule_content;
-	        cc::hooks::PermissionDecision decision{cc::hooks::PermissionDecision::ask_user};
+	        loom::hooks::PermissionDecision decision{loom::hooks::PermissionDecision::ask_user};
 	        std::string destination;
 	    };
 
@@ -94,7 +94,7 @@ namespace detail {
     };
 
 		    using DirectQueryExecutor = std::function<std::expected<DirectQueryResult, std::string>(const DirectQueryRequest&)>;
-		    using DirectPermissionHandler = std::function<cc::hooks::PermissionResponse(const DirectPermissionRequest&)>;
+		    using DirectPermissionHandler = std::function<loom::hooks::PermissionResponse(const DirectPermissionRequest&)>;
 		    inline std::optional<DirectQueryExecutor> query_executor_override;
 		    inline std::unordered_map<std::string, std::shared_ptr<std::atomic_bool>> active_query_cancels;
 		    inline std::unordered_map<std::string, DirectPermissionHandler> direct_permission_handlers;
@@ -217,10 +217,10 @@ namespace detail {
         std::string_view assistant_message_id,
         const DirectQueryResult& query_result
     ) {
-        if (!cc::services::api::is_ingress_active()) return;
-        (void)cc::services::api::send_ingress_message(
+        if (!loom::services::api::is_ingress_active()) return;
+        (void)loom::services::api::send_ingress_message(
             sdk_assistant_ingress_event(session_id, assistant_message_id, query_result));
-        (void)cc::services::api::send_ingress_message(
+        (void)loom::services::api::send_ingress_message(
             sdk_result_ingress_event(session_id, assistant_message_id, query_result));
     }
 
@@ -228,7 +228,7 @@ namespace detail {
         std::string_view line,
         std::string_view key
     ) {
-        auto parsed = cc::utils::json::parse(line);
+        auto parsed = loom::utils::json::parse(line);
         if (!parsed || !parsed->root().is_obj()) return std::nullopt;
         auto value = parsed->root().get(key);
         if (!value.is_str()) return std::nullopt;
@@ -293,7 +293,7 @@ namespace detail {
         std::string_view session_id
     ) {
         std::vector<std::string> lines;
-        auto path = cc::session::get_messages_path(sessions_dir, session_id);
+        auto path = loom::session::get_messages_path(sessions_dir, session_id);
         std::ifstream input(path);
         std::string line;
         while (std::getline(input, line)) {
@@ -307,10 +307,10 @@ namespace detail {
     // prior_message_lines through AssemblyConfig unchanged (RFC 0001 cc-sdk
     // phase 3, §2.1 F4).
 
-	    [[nodiscard]] inline std::string assistant_text(const cc::core::AssistantMessage& message) {
+	    [[nodiscard]] inline std::string assistant_text(const loom::core::AssistantMessage& message) {
 	        std::string text;
 	        for (const auto& block : message.content) {
-	            if (const auto* text_block = std::get_if<cc::core::TextBlock>(&block)) {
+	            if (const auto* text_block = std::get_if<loom::core::TextBlock>(&block)) {
 	                text += text_block->text;
 	            }
 	        }
@@ -323,17 +323,17 @@ namespace detail {
 		        std::string_view session_id
 		    );
 
-	    [[nodiscard]] inline cc::hooks::PermissionDecision direct_permission_decision_from_behavior(
+	    [[nodiscard]] inline loom::hooks::PermissionDecision direct_permission_decision_from_behavior(
 	        std::string_view behavior
 	    ) {
-	        if (behavior == "allow") return cc::hooks::PermissionDecision::allow;
-	        if (behavior == "deny") return cc::hooks::PermissionDecision::deny;
-	        return cc::hooks::PermissionDecision::ask_user;
+	        if (behavior == "allow") return loom::hooks::PermissionDecision::allow;
+	        if (behavior == "deny") return loom::hooks::PermissionDecision::deny;
+	        return loom::hooks::PermissionDecision::ask_user;
 	    }
 
 	    inline void append_direct_permission_input_field(
 	        std::vector<std::string>& values,
-	        cc::utils::json::JsonVal root,
+	        loom::utils::json::JsonVal root,
 	        std::string_view key
 	    ) {
 	        auto value = root.get(key);
@@ -344,7 +344,7 @@ namespace detail {
 	        std::string_view input_json
 	    ) {
 	        std::vector<std::string> values;
-	        auto parsed = cc::utils::json::parse(input_json);
+	        auto parsed = loom::utils::json::parse(input_json);
 	        if (!parsed || !parsed->root().is_obj()) return values;
 	        auto root = parsed->root();
 	        append_direct_permission_input_field(values, root, "file_path");
@@ -360,7 +360,7 @@ namespace detail {
 	        std::string_view input_json
 	    ) {
 	        std::vector<std::string> values;
-	        auto parsed = cc::utils::json::parse(input_json);
+	        auto parsed = loom::utils::json::parse(input_json);
 	        if (!parsed || !parsed->root().is_obj()) return values;
 	        auto root = parsed->root();
 	        append_direct_permission_input_field(values, root, "file_path");
@@ -456,7 +456,7 @@ namespace detail {
 	        return mode == "dontAsk" || mode == "plan";
 	    }
 
-	    [[nodiscard]] inline std::optional<cc::hooks::PermissionResponse> direct_permission_response_for_session(
+	    [[nodiscard]] inline std::optional<loom::hooks::PermissionResponse> direct_permission_response_for_session(
 	        std::string_view session_id,
 	        const DirectPermissionRequest& request
 	    ) {
@@ -465,30 +465,30 @@ namespace detail {
 	        if (state_it == direct_permission_states.end()) return std::nullopt;
 	        const auto& state = state_it->second;
 	        if (state.mode && direct_permission_mode_allows_tool(*state.mode, request.tool_name)) {
-	            cc::hooks::PermissionResponse response{};
-	            response.decision = cc::hooks::PermissionDecision::allow;
+	            loom::hooks::PermissionResponse response{};
+	            response.decision = loom::hooks::PermissionDecision::allow;
 	            return response;
 	        }
 	        if (state.mode && direct_permission_mode_denies_tool(*state.mode)) {
-	            cc::hooks::PermissionResponse response{};
-	            response.decision = cc::hooks::PermissionDecision::deny;
+	            loom::hooks::PermissionResponse response{};
+	            response.decision = loom::hooks::PermissionDecision::deny;
 	            response.message = "Permission denied by session permission mode";
 	            return response;
 	        }
 
 	        if (direct_permission_directory_allows_request(state, request)) {
-	            cc::hooks::PermissionResponse response{};
-	            response.decision = cc::hooks::PermissionDecision::allow;
+	            loom::hooks::PermissionResponse response{};
+	            response.decision = loom::hooks::PermissionDecision::allow;
 	            return response;
 	        }
 
 	        auto input_values = direct_permission_input_values(request.input_json);
 	        for (auto it = state.rules.rbegin(); it != state.rules.rend(); ++it) {
 	            if (!direct_permission_rule_matches(*it, request, input_values)) continue;
-	            if (it->decision == cc::hooks::PermissionDecision::ask_user) return std::nullopt;
-	            cc::hooks::PermissionResponse response{};
+	            if (it->decision == loom::hooks::PermissionDecision::ask_user) return std::nullopt;
+	            loom::hooks::PermissionResponse response{};
 	            response.decision = it->decision;
-	            if (it->decision == cc::hooks::PermissionDecision::deny) {
+	            if (it->decision == loom::hooks::PermissionDecision::deny) {
 	                response.message = "Permission denied by session permission rule";
 	            }
 	            return response;
@@ -498,13 +498,13 @@ namespace detail {
 
 	    inline void append_direct_permission_rules_from_update(
 	        DirectPermissionSessionState& state,
-	        cc::utils::json::JsonVal update,
-	        cc::hooks::PermissionDecision decision,
+	        loom::utils::json::JsonVal update,
+	        loom::hooks::PermissionDecision decision,
 	        std::string_view destination
 	    ) {
 	        auto rules = update.get("rules");
 	        if (!rules.is_arr()) return;
-	        rules.iter([&](cc::utils::json::JsonVal rule) {
+	        rules.iter([&](loom::utils::json::JsonVal rule) {
 	            if (!rule.is_obj()) return;
 	            auto tool_name = rule.get("toolName");
 	            if (!tool_name.is_str() || tool_name.as_str().empty()) return;
@@ -520,14 +520,14 @@ namespace detail {
 
 	    inline void remove_direct_permission_rules_from_update(
 	        DirectPermissionSessionState& state,
-	        cc::utils::json::JsonVal update,
-	        cc::hooks::PermissionDecision decision,
+	        loom::utils::json::JsonVal update,
+	        loom::hooks::PermissionDecision decision,
 	        std::string_view destination
 	    ) {
 	        auto rules = update.get("rules");
 	        if (!rules.is_arr()) return;
 	        std::vector<DirectPermissionRule> removals;
-	        rules.iter([&](cc::utils::json::JsonVal rule) {
+	        rules.iter([&](loom::utils::json::JsonVal rule) {
 	            if (!rule.is_obj()) return;
 	            auto tool_name = rule.get("toolName");
 	            if (!tool_name.is_str() || tool_name.as_str().empty()) return;
@@ -556,8 +556,8 @@ namespace detail {
 
 	    inline void replace_direct_permission_rules_from_update(
 	        DirectPermissionSessionState& state,
-	        cc::utils::json::JsonVal update,
-	        cc::hooks::PermissionDecision decision,
+	        loom::utils::json::JsonVal update,
+	        loom::hooks::PermissionDecision decision,
 	        std::string_view destination
 	    ) {
 	        state.rules.erase(
@@ -570,12 +570,12 @@ namespace detail {
 
 	    inline void add_direct_permission_directories_from_update(
 	        DirectPermissionSessionState& state,
-	        cc::utils::json::JsonVal update,
+	        loom::utils::json::JsonVal update,
 	        std::string_view destination
 	    ) {
 	        auto directories = update.get("directories");
 	        if (!directories.is_arr()) return;
-	        directories.iter([&](cc::utils::json::JsonVal directory) {
+	        directories.iter([&](loom::utils::json::JsonVal directory) {
 	            if (!directory.is_str() || directory.as_str().empty()) return;
 	            DirectPermissionDirectory stored_directory{};
 	            stored_directory.path = std::string(directory.as_str());
@@ -586,12 +586,12 @@ namespace detail {
 
 	    inline void remove_direct_permission_directories_from_update(
 	        DirectPermissionSessionState& state,
-	        cc::utils::json::JsonVal update
+	        loom::utils::json::JsonVal update
 	    ) {
 	        auto directories = update.get("directories");
 	        if (!directories.is_arr()) return;
 	        std::vector<std::string> removals;
-	        directories.iter([&](cc::utils::json::JsonVal directory) {
+	        directories.iter([&](loom::utils::json::JsonVal directory) {
 	            if (directory.is_str() && !directory.as_str().empty()) {
 	                removals.emplace_back(directory.as_str());
 	            }
@@ -616,11 +616,11 @@ namespace detail {
 		        std::string_view session_id,
 		        std::string_view updated_permissions_json
 	    ) {
-	        auto parsed = cc::utils::json::parse(updated_permissions_json);
+	        auto parsed = loom::utils::json::parse(updated_permissions_json);
 	        if (!parsed || !parsed->root().is_arr()) return;
 	        std::lock_guard lock(state_mutex);
 	        auto& state = direct_permission_states[std::string(session_id)];
-	        parsed->root().iter([&](cc::utils::json::JsonVal update) {
+	        parsed->root().iter([&](loom::utils::json::JsonVal update) {
 	            if (!update.is_obj()) return;
 	            const auto type = update.get_string("type");
 	            const auto destination = update.get_string("destination").empty()
@@ -660,7 +660,7 @@ namespace detail {
         // the assembly itself knows nothing of it (§2.1).
         if (query_executor_override) return (*query_executor_override)(request);
 
-        cc::core::ConfigManager manager;
+        loom::core::ConfigManager manager;
         if (auto loaded = manager.load(); !loaded) {
             return std::unexpected(loaded.error().format());
         }
@@ -672,9 +672,9 @@ namespace detail {
         // override today. The empty-api_key hard-error stays here (the
         // resolver does not enforce a key policy, so a loopback/gateway
         // harness can bypass it with a placeholder key).
-        cc::query::AssemblyOverrides overrides;
+        loom::query::AssemblyOverrides overrides;
         if (request.requested_model) overrides.requested_model = request.requested_model;
-        auto resolved = cc::query::resolve_engine_config(settings, overrides);
+        auto resolved = loom::query::resolve_engine_config(settings, overrides);
         if (!resolved) return std::unexpected(resolved.error().format());
         if (resolved->api_key.empty()) {
             return std::unexpected("ANTHROPIC_API_KEY is required for direct-connect /message");
@@ -684,12 +684,12 @@ namespace detail {
         // DirectPermissionHandler with session-state caching (unchanged from
         // the inline recipe). assemble() wires it to the registry's
         // permission_check and the engine's permission hook.
-        cc::query::AssemblyCallbacks callbacks;
+        loom::query::AssemblyCallbacks callbacks;
         if (auto permission_handler = permission_handler_for_session(request.session_id)) {
-            callbacks.ask_user = cc::hooks::AskUserResponseFn{
+            callbacks.ask_user = loom::hooks::AskUserResponseFn{
                 [handler = *permission_handler, session_id = request.session_id](
-                    const cc::hooks::PermissionContext& ctx
-                ) -> cc::hooks::PermissionResponse {
+                    const loom::hooks::PermissionContext& ctx
+                ) -> loom::hooks::PermissionResponse {
                     auto cached_request = DirectPermissionRequest{
                         .request_id = {},
                         .session_id = session_id,
@@ -707,7 +707,7 @@ namespace detail {
                         cached_request.tool_use_id = cached_request.request_id;
                     }
                     auto response = handler(cached_request);
-                    if (response.decision == cc::hooks::PermissionDecision::allow &&
+                    if (response.decision == loom::hooks::PermissionDecision::allow &&
                         response.updated_permissions_json) {
                         apply_direct_permission_updates(session_id, *response.updated_permissions_json);
                     }
@@ -715,7 +715,7 @@ namespace detail {
                 }};
         }
 
-        cc::query::AssemblyConfig config;
+        loom::query::AssemblyConfig config;
         config.engine = std::move(*resolved);
         config.prior_message_lines = request.prior_message_lines;
         config.cancel_flag = request.cancel_flag;
@@ -724,7 +724,7 @@ namespace detail {
         // missing-tool MCP backend + dynamic MCP providers) and engine, wire
         // the abort/permission hooks, and seed prior messages via the real
         // resume path (restore_conversation). Does NOT run a turn.
-        auto assembled = cc::query::assemble(config, callbacks);
+        auto assembled = loom::query::assemble(config, callbacks);
         if (!assembled) return std::unexpected(assembled.error().format());
 
         if (request.cancel_flag && request.cancel_flag->load()) {
@@ -749,7 +749,7 @@ namespace detail {
         std::string_view session_id,
         const std::vector<std::string>& lines
     ) {
-        auto path = cc::session::get_messages_path(sessions_dir, session_id);
+        auto path = loom::session::get_messages_path(sessions_dir, session_id);
         std::filesystem::create_directories(path.parent_path());
         std::ofstream output(path, std::ios::trunc);
         if (!output.is_open()) return false;
@@ -759,18 +759,18 @@ namespace detail {
 
     inline void save_active_session_metadata(
         const std::filesystem::path& sessions_dir,
-        cc::session::SessionMetadata& metadata
+        loom::session::SessionMetadata& metadata
     ) {
         metadata.last_active = std::chrono::system_clock::now();
-        (void)cc::session::save_session_metadata(sessions_dir, metadata);
+        (void)loom::session::save_session_metadata(sessions_dir, metadata);
     }
 
-    [[nodiscard]] inline cc::session::SessionMetadata create_metadata(
+    [[nodiscard]] inline loom::session::SessionMetadata create_metadata(
         std::string_view content,
         std::string_view model
     ) {
         const auto now = std::chrono::system_clock::now();
-        return cc::session::SessionMetadata{
+        return loom::session::SessionMetadata{
             .session_id = make_session_id(),
             .model = model.empty() ? std::string("default") : std::string(model),
             .cwd = std::filesystem::current_path(),
@@ -857,7 +857,7 @@ namespace detail {
         if (content.empty()) return R"({"error":"content is required"})";
 
         std::filesystem::path sessions_dir;
-        cc::session::SessionMetadata metadata;
+        loom::session::SessionMetadata metadata;
         std::vector<std::string> prior_lines;
         std::string user_message_id;
         {
@@ -866,8 +866,8 @@ namespace detail {
             auto requested_session = get_param(params, "session_id");
             if (requested_session.empty() && active_session_id) requested_session = *active_session_id;
             auto loaded_metadata = requested_session.empty()
-                ? std::optional<cc::session::SessionMetadata>{}
-                : cc::session::load_session_metadata(sessions_dir, requested_session);
+                ? std::optional<loom::session::SessionMetadata>{}
+                : loom::session::load_session_metadata(sessions_dir, requested_session);
             if (!loaded_metadata) {
                 loaded_metadata = create_metadata(content, get_param(params, "model"));
             }
@@ -903,13 +903,13 @@ namespace detail {
             assistant_message_id = make_message_id();
         }
 
-        if (!cc::session::append_message(
+        if (!loom::session::append_message(
                 sessions_dir,
                 metadata.session_id,
                 message_json(user_message_id, "user", content))) {
             return R"({"error":"failed to append user message"})";
         }
-        if (!cc::session::append_message(
+        if (!loom::session::append_message(
                 sessions_dir,
                 metadata.session_id,
                 message_json(
@@ -952,7 +952,7 @@ namespace detail {
     [[nodiscard]] inline std::string handle_sessions(std::map<std::string, std::string> params) {
         std::lock_guard lock(state_mutex);
         const auto sessions_dir = default_sessions_dir();
-        auto sessions = cc::session::list_recent_sessions(sessions_dir, parse_limit(params, 20));
+        auto sessions = loom::session::list_recent_sessions(sessions_dir, parse_limit(params, 20));
 
         std::ostringstream response;
         response << R"({"sessions":[)";
@@ -982,7 +982,7 @@ namespace detail {
         if (session_id.empty() && active_session_id) session_id = *active_session_id;
         if (session_id.empty()) return R"({"error":"session_id is required"})";
 
-        auto metadata = cc::session::load_session_metadata(sessions_dir, session_id);
+        auto metadata = loom::session::load_session_metadata(sessions_dir, session_id);
         if (!metadata) return R"({"error":"session not found"})";
 
         auto lines = load_message_lines(sessions_dir, session_id);
@@ -1140,4 +1140,4 @@ inline auto find_route(std::string_view method, std::string_view path)
     return nullptr;
 }
 
-} // namespace cc::server
+} // namespace loom::server

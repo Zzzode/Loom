@@ -23,7 +23,7 @@ import loom.fs.file_persistence;  // detail::open_for_fsync / fsync_fd
 
 namespace fs = std::filesystem;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 /// Permission policy for atomic_replace_file().
 enum class AtomicMode {
@@ -78,7 +78,7 @@ namespace atomic_replace_detail {
 ///
 /// ADVISORY LOCKING IS ORTHOGONAL. This function takes no flock: callers
 /// that do read-modify-write serialize themselves with LOCK_EX on a
-/// "<path>.lock" SIBLING (cc::utils::ScopedFileLock), and readers take
+/// "<path>.lock" SIBLING (loom::utils::ScopedFileLock), and readers take
 /// LOCK_SH on the same sibling. rename(2) replaces the DATA inode but the
 /// lock lives on the sibling inode, which is never renamed, so SH/EX keep
 /// serializing across arbitrarily many data-inode replacements.
@@ -343,4 +343,4 @@ inline RegularFileRead read_regular_file(const fs::path& path) {
     return result;
 }
 
-}  // namespace cc::utils
+}  // namespace loom::utils

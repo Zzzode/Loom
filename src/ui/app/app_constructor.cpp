@@ -46,12 +46,12 @@ import loom.query.query_engine;
 import loom.hooks.lifecycle_hooks;
 import loom.commands.command;
 
-namespace cc::ui {
+namespace loom::ui {
 
-namespace repl = cc::ui::repl_screen;
-namespace acsrc = cc::ui::autocomplete_sources;
-namespace dtrig = cc::ui::dialogs::triggers;
-namespace dsys = cc::ui::dialogs::system;
+namespace repl = loom::ui::repl_screen;
+namespace acsrc = loom::ui::autocomplete_sources;
+namespace dtrig = loom::ui::dialogs::triggers;
+namespace dsys = loom::ui::dialogs::system;
 
 // ── Constructor (moved out of app_autocomplete.cpp to reduce import closure) ──
 AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
@@ -63,13 +63,13 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     construct_impl(engine, lifecycle_hooks, cmd_registry, storage);
     construct_teammate();
     construct_settings();
-    auto* engine_ = static_cast<cc::core::QueryEngine*>(engine);
+    auto* engine_ = static_cast<loom::core::QueryEngine*>(engine);
     auto* lifecycle_hooks_ =
-        static_cast<cc::hooks::LifecycleHookRegistry*>(lifecycle_hooks);
-    auto* storage_ = static_cast<cc::utils::SessionStorage*>(storage);
+        static_cast<loom::hooks::LifecycleHookRegistry*>(lifecycle_hooks);
+    auto* storage_ = static_cast<loom::utils::SessionStorage*>(storage);
 
     // ── M7: Register default dialog renderers in the registry ────
-    cc::ui::dialogs::default_renderers::register_default_renderers(
+    loom::ui::dialogs::default_renderers::register_default_renderers(
         screen_state_->dialog_store.dialog_renderers);
 
     // ── SL-11: deterministic next-action suggestion on QueryEnd ──
@@ -90,30 +90,30 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     }
 
     // Register all built-in tool UI renderers in the global registry.
-    cc::ui::tools::register_builtin_tool_uis();
+    loom::ui::tools::register_builtin_tool_uis();
 
     // Register every built-in dialog renderer into the dialog registry.
-    cc::ui::app_dialogs::register_default_dialog_renderers(
+    loom::ui::app_dialogs::register_default_dialog_renderers(
         screen_state_->dialog_store.dialog_renderers);
-    cc::ui::app_dialogs::register_modal_dialog_renderers(
+    loom::ui::app_dialogs::register_modal_dialog_renderers(
         screen_state_->dialog_store.dialog_renderers);
-    cc::ui::app_dialogs::register_bottom_dialog_renderers(
+    loom::ui::app_dialogs::register_bottom_dialog_renderers(
         screen_state_->dialog_store.dialog_renderers);
-    cc::ui::app_dialogs::register_all_dialog_renderers(
+    loom::ui::app_dialogs::register_all_dialog_renderers(
         screen_state_->dialog_store.dialog_renderers);
-    cc::ui::app_dialogs::register_hooks_dialog_renderer(
+    loom::ui::app_dialogs::register_hooks_dialog_renderer(
         screen_state_->dialog_store.dialog_renderers);
-    cc::ui::app_dialogs::register_teams_dialog_renderer(
+    loom::ui::app_dialogs::register_teams_dialog_renderer(
         screen_state_->dialog_store.dialog_renderers);
     // RFC 0002 F2 row 6: register the feature-dialog factories (agent
     // wizard, plugin install wizard, plugin trust dialog) into the
     // feature_dialog_protocol erased-factory registry, so the features area
     // resolves its dialogs by ViewKind without importing the dialogs area.
-    cc::ui::app_dialogs::register_feature_dialog_factories();
+    loom::ui::app_dialogs::register_feature_dialog_factories();
     // The faithful MCP elicitation dialog (y/n shortcuts, Esc -> on_cancel)
     // overrides the minimal inline renderer in default_renderers. Registered
     // last so it wins the by-index slot.
-    cc::ui::dialogs::elicitation::RegisterElicitationDialog(
+    loom::ui::dialogs::elicitation::RegisterElicitationDialog(
         screen_state_->dialog_store.dialog_renderers);
 
     // Seed a stable per-session welcome-tip index.
@@ -132,7 +132,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     cached_plugin_commands_ = acsrc::collect_plugin_commands(screen_state_->cwd);
 
     // Dynamic skill discovery.
-    skills_changed_unsubscribe_ = cc::skills::SkillRegistry::instance().on_skills_changed(
+    skills_changed_unsubscribe_ = loom::skills::SkillRegistry::instance().on_skills_changed(
         [this]() {
             cached_skills_ = acsrc::collect_skill_suggestions(screen_state_->cwd);
             PostRenderEvent();
@@ -157,7 +157,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
             // A running query aborts immediately (TS app:interrupt owned by
             // useCancelRequest) — never arms the exit double-press and never
             // leaves a stale footer from a previous idle press.
-            static_cast<cc::core::QueryEngine*>(engine_raw())->abort();
+            static_cast<loom::core::QueryEngine*>(engine_raw())->abort();
             if (query_thread_.joinable())
                 query_thread_.request_stop();
             screen_state_->task_view_store.spinner_tip = "Cancelling...";
@@ -241,7 +241,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     cbs.on_local_jsx_event = [this](const Event& ev) {
         return this->HandleLocalJsxEvent(ev);
     };
-    cbs.on_permission_cycle = [](cc::ui::prompt::footer::PermissionMode mode) {
+    cbs.on_permission_cycle = [](loom::ui::prompt::footer::PermissionMode mode) {
         (void)mode;
     };
 
@@ -254,7 +254,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // P2 gap api-error-retry: Clear-session button.
     cbs.on_clear_session = [this]() {
-        static_cast<cc::core::QueryEngine*>(engine_raw())->clear_conversation();
+        static_cast<loom::core::QueryEngine*>(engine_raw())->clear_conversation();
         local_command_messages_.clear();
         screen_state_->messages_store.divider_index.reset();
         screen_state_->messages_store.unseen_divider.reset();
@@ -279,18 +279,18 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // ── Cost threshold hook wiring (M7.5) ────────────────────────────
     {
-        const auto& bt = static_cast<cc::core::QueryEngine*>(engine_raw())->budget_tracker();
-        cc::hooks::set_cost_budget(bt.max_budget_usd);
+        const auto& bt = static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker();
+        loom::hooks::set_cost_budget(bt.max_budget_usd);
 
-        cost_listener_id_ = cc::hooks::on_cost_update(
-            [this](cc::hooks::CostUpdate data) {
+        cost_listener_id_ = loom::hooks::on_cost_update(
+            [this](loom::hooks::CostUpdate data) {
                 if (cost_threshold_shown_) return;
-                auto warning = cc::hooks::check_cost_threshold();
+                auto warning = loom::hooks::check_cost_threshold();
                 if (!warning.has_value()) return;
                 if (!warning->starts_with("Session cost")) return;
 
                 cost_threshold_shown_ = true;
-                const auto& bt = static_cast<cc::core::QueryEngine*>(engine_raw())->budget_tracker();
+                const auto& bt = static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker();
                 dtrig::PushCostThreshold(
                     screen_state_->dialog_store.dialog_queue,
                     bt.max_budget_usd,
@@ -313,8 +313,8 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     }
 
     // ── MCP elicitation responder (M7.5) ────────────────────────────
-    cc::services::mcp::set_elicitation_responder(
-        [this](const cc::services::mcp::ElicitationRequest& req)
+    loom::services::mcp::set_elicitation_responder(
+        [this](const loom::services::mcp::ElicitationRequest& req)
             -> std::expected<std::map<std::string, std::string>, std::string>
         {
             {
@@ -351,8 +351,8 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         });
 
     // ── IDE at_mentioned responder (AT-09) ───────────────────────────
-    cc::services::mcp::set_at_mention_responder(
-        [this](const cc::services::mcp::AtMentionNotification& n)
+    loom::services::mcp::set_at_mention_responder(
+        [this](const loom::services::mcp::AtMentionNotification& n)
             -> void
         {
             if (n.file_path.empty()) return;
@@ -371,7 +371,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         });
 
     // ── Ask-user tool → PromptDialog (M7.5) ────────────────────────
-    cc::tools::set_global_ask_user_responder(
+    loom::tools::set_global_ask_user_responder(
         [this](std::string_view question,
                std::optional<std::string> default_answer)
             -> std::optional<std::string>
@@ -482,20 +482,20 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 // Faithful to TS buildStatusLineCommandInput(); kept out of the
 // app.cppm BMI along with the statusline_runner/model/constants imports.
 [[nodiscard]] std::string AppAdapter::BuildStatuslineInputJson() {
-        namespace sl = cc::utils::statusline;
+        namespace sl = loom::utils::statusline;
 
         sl::StatusLineCommandInput input;
 
         // Version
-        input.version = std::string(cc::core::constants::kVersion);
+        input.version = std::string(loom::core::constants::kVersion);
 
         // Model info
-        const auto& model = static_cast<cc::core::QueryEngine*>(engine_raw())->model_params().model;
+        const auto& model = static_cast<loom::core::QueryEngine*>(engine_raw())->model_params().model;
         input.model.id = model;
-        input.model.display_name = cc::utils::get_model_display_name(model);
+        input.model.display_name = loom::utils::get_model_display_name(model);
 
         // Workspace
-        const auto cwd = static_cast<cc::core::QueryEngine*>(engine_raw())->working_directory();
+        const auto cwd = static_cast<loom::core::QueryEngine*>(engine_raw())->working_directory();
         input.workspace.current_dir = cwd;
         input.workspace.project_dir = cwd;
         // added_dirs: not easily accessible at the app level; populated by
@@ -507,8 +507,8 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         input.output_style_name = output_style_setting();
 
         // Cost / usage
-        const auto& usage = static_cast<cc::core::QueryEngine*>(engine_raw())->get_usage();
-        const auto& budget = static_cast<cc::core::QueryEngine*>(engine_raw())->budget_tracker();
+        const auto& usage = static_cast<loom::core::QueryEngine*>(engine_raw())->get_usage();
+        const auto& budget = static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker();
         input.cost.total_cost_usd = budget.current_spend_usd;
         // Session duration: time since AppAdapter construction
         auto session_dur = std::chrono::steady_clock::now() - session_start_time_;
@@ -526,7 +526,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         input.context_window.total_input_tokens = usage.input_tokens;
         input.context_window.total_output_tokens = usage.output_tokens;
         input.context_window.context_window_size =
-            static_cast<std::int64_t>(static_cast<cc::core::QueryEngine*>(engine_raw())->max_context_tokens());
+            static_cast<std::int64_t>(static_cast<loom::core::QueryEngine*>(engine_raw())->max_context_tokens());
         const bool has_usage = usage.input_tokens > 0 || usage.output_tokens > 0 ||
             usage.cache_creation_tokens > 0 || usage.cache_read_tokens > 0;
         if (has_usage) {
@@ -578,7 +578,7 @@ bool AppAdapter::ExecuteStatuslineCommand(std::string_view command,
                                        std::string json_input,
                                        int timeout_ms,
                                        std::string& output) {
-    namespace sl = cc::utils::statusline;
+    namespace sl = loom::utils::statusline;
     if (command.empty()) return false;
     auto result = sl::execute_statusline_command_json(
         command, std::move(json_input), timeout_ms);
@@ -595,4 +595,4 @@ void AppAdapter::TriggerStatuslineUpdate() {
     statusline_cv_.notify_one();
 }
 
-}  // namespace cc::ui
+}  // namespace loom::ui

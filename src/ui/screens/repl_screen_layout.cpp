@@ -24,7 +24,7 @@ import loom.ui.prompt.prompt_input_footer;
 import loom.ui.messages.virtual_list;
 import loom.ui.visual.markdown;
 
-namespace cc::ui::repl_screen {
+namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 /// Top-level dialog router: ReplMode -> overlay Element.
@@ -83,9 +83,9 @@ using namespace ftxui;
     std::function<void()> on_clear_session,
     // TS REF: Messages.tsx L703-712 + Markdown.tsx L186-235 — shared
     // StreamingMarkdown instance for the streaming-text tail row.
-    ::cc::ui::StreamingMarkdown* streaming_md) {
+    ::loom::ui::StreamingMarkdown* streaming_md) {
     // Probe terminal size once per frame for adaptive layout (fix #11).
-    auto [term_cols, term_rows] = cc::ui::ink_utils::query_terminal_size();
+    auto [term_cols, term_rows] = loom::ui::ink_utils::query_terminal_size();
     if (term_cols <= 0) term_cols = 80;
     if (term_rows <= 0) term_rows = 24;
     s.messages_store.viewport_height_lines = std::max(1, term_rows - 5);
@@ -111,7 +111,7 @@ using namespace ftxui;
         s.messages_store.unseen_divider.reset();
     }
 
-    namespace fl = cc::ui::layout::fullscreen;
+    namespace fl = loom::ui::layout::fullscreen;
     fl::FullscreenLayoutSlots slots;
     slots.term_cols = term_cols;
     slots.term_rows = term_rows;
@@ -201,7 +201,7 @@ using namespace ftxui;
     // always visible at the top of the terminal.  The full welcome card
     // still lives inside the scrollable area (first child of yframe).
     {
-        namespace lv2 = cc::ui::logo_v2;
+        namespace lv2 = loom::ui::logo_v2;
         const std::string version = s.chrome_store.app_version.empty()
             ? std::string("0.0.0") : s.chrome_store.app_version;
         const std::string model_line = !s.chrome_store.model_display_name.empty()
@@ -225,7 +225,7 @@ using namespace ftxui;
         // STABLE HEIGHT: The LeftSide row is always exactly 1 row so scroll
         // content never shifts when hints change.  StatusLine adds a row when
         // present but is conditionally shown only in prompt mode + not short.
-        namespace pif = cc::ui::prompt::footer;
+        namespace pif = loom::ui::prompt::footer;
 
         // Build StatusLine options (user-configurable command-driven status).
         //
@@ -235,7 +235,7 @@ using namespace ftxui;
         //   - content comes from executing the user's shell command
         //   - In fullscreen, reserves a row even while loading (stable height)
         //   - Text may contain ANSI escape codes for coloring
-        const bool is_fullscreen = cc::utils::is_fullscreen_enabled();
+        const bool is_fullscreen = loom::utils::is_fullscreen_enabled();
         const bool is_short = is_fullscreen && term_rows < 24;
         const bool status_line_configured =
             s.status_line_enabled && !s.status_line_command.empty();
@@ -279,7 +279,7 @@ using namespace ftxui;
         // precedence over state-toggle (TS getInputMode semantics — see
         // effective_is_bash()).
         // NOTE: Both InputMode and pif::PromptInputMode are now the same
-        // unified type (cc::ui::common::PromptInputMode), so this is a
+        // unified type (loom::ui::common::PromptInputMode), so this is a
         // direct assignment with bash-detection override.
         pif::PromptInputMode footer_mode =
             static_cast<pif::PromptInputMode>(s.prompt_store.input_mode);
@@ -370,7 +370,7 @@ using namespace ftxui;
         // Bridge status pill (TS REF: PromptInputFooter.tsx BridgeStatusIndicator
         // + bridgeStatusUtil.ts:124 getBridgeStatus).
         if (s.bridge_enabled) {
-            namespace bs = cc::ui::prompt::footer;
+            namespace bs = loom::ui::prompt::footer;
             bs::BridgeOptions bopt;
             // Priority: reconnecting > connected(session) > connected,
             // mirroring getBridgeStatus (failed is surfaced via notification).
@@ -406,7 +406,7 @@ using namespace ftxui;
             // timer-based rotation through queued items.  Called here
             // (event-driven, on each render) rather than a constant ticker.
             // TS REF: src/context/notifications.tsx processQueue()
-            namespace pif = cc::ui::prompt::footer;
+            namespace pif = loom::ui::prompt::footer;
             (void)pif::QueueAdvance(s.footer_notification_queue);
             nd.queue = s.footer_notification_queue;
         }
@@ -480,7 +480,7 @@ using namespace ftxui;
             int viewport = std::max(1, s.messages_store.viewport_height_lines);
             int total;
             if (s.messages_store.virtual_list_active) {
-                namespace vl = cc::ui::messages::virtual_list;
+                namespace vl = loom::ui::messages::virtual_list;
                 total = s.messages_store.virtual_jh.total();
             } else {
                 const auto vm = BuildVisibleMessages(s);
@@ -493,7 +493,7 @@ using namespace ftxui;
                 s.messages_store.scroll_offset = target;
                 s.messages_store.scroll_pinned_to_bottom = (target >= max_top);
                 if (s.messages_store.virtual_list_state) {
-                    namespace vl = cc::ui::messages::virtual_list;
+                    namespace vl = loom::ui::messages::virtual_list;
                     s.messages_store.virtual_list_state->scroll_top = target;
                     vl::update_sticky_after_scroll(*s.messages_store.virtual_list_state,
                                                     old_top);
@@ -514,7 +514,7 @@ using namespace ftxui;
         int viewport = std::max(1, s.messages_store.viewport_height_lines);
         int total;
         if (s.messages_store.virtual_list_active) {
-            namespace vl = cc::ui::messages::virtual_list;
+            namespace vl = loom::ui::messages::virtual_list;
             total = s.messages_store.virtual_jh.total();
         } else {
             const auto vm = BuildVisibleMessages(s);
@@ -526,7 +526,7 @@ using namespace ftxui;
             s.messages_store.scroll_offset = max_top;
             s.messages_store.scroll_pinned_to_bottom = true;
             if (s.messages_store.virtual_list_state) {
-                namespace vl = cc::ui::messages::virtual_list;
+                namespace vl = loom::ui::messages::virtual_list;
                 s.messages_store.virtual_list_state->scroll_top = max_top;
                 vl::update_sticky_after_scroll(*s.messages_store.virtual_list_state, old_top);
             }
@@ -559,4 +559,4 @@ using namespace ftxui;
         /*allow_dialogs_with_animation=*/!tool_animating, term_cols, term_rows);
 }
 
-}  // namespace cc::ui::repl_screen
+}  // namespace loom::ui::repl_screen

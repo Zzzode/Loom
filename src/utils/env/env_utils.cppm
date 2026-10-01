@@ -6,7 +6,7 @@ export module loom.platform.env.env_utils;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 [[nodiscard]] inline std::string trim_env_value(std::string_view value) {
     auto not_space = [](unsigned char ch) { return !std::isspace(ch); };
@@ -157,4 +157,4 @@ std::expected<std::string, std::string> require_env(std::string_view key) {
     return std::string(val);
 }
 
-} // namespace cc::utils
+} // namespace loom::utils

@@ -29,7 +29,7 @@ import std;
 
 import loom.skills.skill;
 
-export namespace cc::skills::lorem_ipsum {
+export namespace loom::skills::lorem_ipsum {
 
 // ============================================================
 // ONE_TOKEN_WORDS — 1-token vocabulary (verified via API token counting).
@@ -543,4 +543,4 @@ Ant-only.  Requires `USER_TYPE=ant` in the environment.
     };
 }
 
-} // namespace cc::skills::lorem_ipsum
+} // namespace loom::skills::lorem_ipsum

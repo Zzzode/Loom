@@ -20,9 +20,9 @@ import std;
 
 import loom.ui.tools.registry;
 
-export namespace cc::ui::tools::generic_tool {
+export namespace loom::ui::tools::generic_tool {
 
-using namespace cc::ui::tools;
+using namespace loom::ui::tools;
 
 // ============================================================
 // Helpers
@@ -132,13 +132,13 @@ namespace detail {
     return fns;
 }
 
-}  // namespace cc::ui::tools::generic_tool
+}  // namespace loom::ui::tools::generic_tool
 
 // ============================================================
 // Registry: get_tool_ui_or_generic convenience
 // ============================================================
 
-export namespace cc::ui::tools {
+export namespace loom::ui::tools {
 
 /// Convenience: look up in the global registry with generic fallback.
 /// Returns a copy — registered tools are copied, and unregistered tools
@@ -152,4 +152,4 @@ export namespace cc::ui::tools {
     return generic_tool::make_generic_ui(std::string{name});
 }
 
-}  // namespace cc::ui::tools
+}  // namespace loom::ui::tools

@@ -11,7 +11,7 @@ export module loom.tools.tool_display_names;
 
 import std;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 /// Return a human-readable label for `tool_id`, falling back to the id
 /// itself when no mapping is registered. The returned string_view is
@@ -197,4 +197,4 @@ inline constexpr std::string_view SCRIPT_TOOL_NAME = "Script";
     return false;
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

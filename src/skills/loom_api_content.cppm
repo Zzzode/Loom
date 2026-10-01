@@ -19,7 +19,7 @@ import std;
 
 import loom.skills.skill;
 
-export namespace cc::skills::loom_api_content {
+export namespace loom::skills::loom_api_content {
 
 // ============================================================
 // Model identifiers — these substitute into {{OPUS_ID}} style placeholders
@@ -419,4 +419,4 @@ directly or via the official SDKs.
     };
 }
 
-} // namespace cc::skills::loom_api_content
+} // namespace loom::skills::loom_api_content

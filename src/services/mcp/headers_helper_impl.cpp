@@ -14,7 +14,7 @@ import std;
 
 import loom.serdes.json;
 
-namespace cc::services::mcp {
+namespace loom::services::mcp {
 
 std::string trim_header_helper_output(std::string_view value) {
     while (!value.empty()) {
@@ -34,12 +34,12 @@ std::optional<HeaderMap> parse_header_helper_json(std::string_view output) {
     const auto trimmed = trim_header_helper_output(output);
     if (trimmed.empty()) return std::nullopt;
 
-    auto parsed = cc::utils::json::parse(trimmed);
+    auto parsed = loom::utils::json::parse(trimmed);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
 
     HeaderMap headers;
     bool valid = true;
-    parsed->root().iter_obj([&](cc::utils::json::JsonVal key, cc::utils::json::JsonVal value) {
+    parsed->root().iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str() || !value.is_str()) {
             valid = false;
             return;
@@ -176,4 +176,4 @@ HeaderMap get_mcp_server_headers(
     return result;
 }
 
-} // namespace cc::services::mcp
+} // namespace loom::services::mcp

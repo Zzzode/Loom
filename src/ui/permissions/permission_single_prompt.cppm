@@ -34,10 +34,10 @@ import std;
 import loom.security.permissions_engine;
 import loom.ui.permissions.components;
 
-export namespace cc::ui::permissions::single_prompt {
+export namespace loom::ui::permissions::single_prompt {
 using namespace ftxui;
-namespace pc = cc::ui::permissions::components;
-namespace eng = cc::utils::permissions;
+namespace pc = loom::ui::permissions::components;
+namespace eng = loom::utils::permissions;
 
 // ============================================================
 // Types
@@ -646,4 +646,4 @@ struct PromptState {
     return MakeSinglePromptDialog(std::move(p));
 }
 
-} // namespace cc::ui::permissions::single_prompt
+} // namespace loom::ui::permissions::single_prompt

@@ -26,7 +26,7 @@ import std;
 
 import loom.ui.chrome.text_measure;
 
-export namespace cc::ui::ink_utils {
+export namespace loom::ui::ink_utils {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -607,4 +607,4 @@ inline auto supports_unicode() -> bool {
     return false;
 }
 
-} // namespace cc::ui::ink_utils
+} // namespace loom::ui::ink_utils

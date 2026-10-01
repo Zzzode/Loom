@@ -34,10 +34,10 @@ import loom.serdes.json;
 import loom.services.lsp.diagnostic_registry;
 import loom.services.lsp.LSPServerManager;
 
-export namespace cc::services::lsp {
+export namespace loom::services::lsp {
 
 namespace fs = std::filesystem;
-using cc::utils::Result;
+using loom::utils::Result;
 
 // ============================================================================
 // LSP Health Metrics (kept from original stub API)
@@ -296,7 +296,7 @@ public:
         // Ignore directory creation errors; write may still succeed
 
         // Build JSON document
-        cc::utils::json::JsonMutDoc doc;
+        loom::utils::json::JsonMutDoc doc;
         auto root = doc.object();
 
         auto items_array = doc.array();
@@ -318,15 +318,15 @@ public:
         // Write to file
         std::ofstream ofs(path);
         if (!ofs) {
-            return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::io_error,
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::io_error,
                 "Failed to open feedback file for writing: " + path.string()
             ));
         }
         ofs << doc.to_pretty_string();
         if (!ofs) {
-            return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::io_error,
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::io_error,
                 "Failed to write feedback file: " + path.string()
             ));
         }
@@ -344,7 +344,7 @@ public:
 
     /// Import feedback from a specific path.
     Result<void> import_feedback(const fs::path& path) {
-        auto parsed = cc::utils::json::parse_file(path);
+        auto parsed = loom::utils::json::parse_file(path);
         if (!parsed) {
             return std::unexpected(parsed.error());
         }
@@ -354,7 +354,7 @@ public:
         if (!items_node.is_arr()) return {};  // empty or missing = no-op
 
         std::lock_guard lock(mutex_);
-        items_node.iter([this](cc::utils::json::JsonVal item_node) {
+        items_node.iter([this](loom::utils::json::JsonVal item_node) {
             PassiveFeedbackItem item;
 
             auto server = item_node.get("serverName");
@@ -467,7 +467,7 @@ inline DiagnosticHandlerRegistrationResult register_lsp_notification_handlers(
             "textDocument/publishDiagnostics",
             [server_name](std::string_view /*method*/, std::string_view params_json) {
                 try {
-                    auto parsed = cc::utils::json::parse(params_json);
+                    auto parsed = loom::utils::json::parse(params_json);
                     if (!parsed) return;
                     auto root = parsed->root();
                     if (!root.is_obj()) return;
@@ -488,4 +488,4 @@ inline DiagnosticHandlerRegistrationResult register_lsp_notification_handlers(
     return result;
 }
 
-} // namespace cc::services::lsp
+} // namespace loom::services::lsp

@@ -21,12 +21,12 @@ import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
 import loom.types.types;
 
-export namespace cc::ui::components::passes {
+export namespace loom::ui::components::passes {
 
 using namespace ftxui;
-using namespace cc::ui::design::primitives;
-using namespace cc::ui::design::tokens;
-using namespace cc::ui::design::theme;
+using namespace loom::ui::design::primitives;
+using namespace loom::ui::design::tokens;
+using namespace loom::ui::design::theme;
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -247,4 +247,4 @@ private:
     return ftxui::Make<PassesPanelBase>(s, theme);
 }
 
-} // namespace cc::ui::components::passes
+} // namespace loom::ui::components::passes

@@ -6,7 +6,7 @@ export module loom.parsing.cli.argument_substitution;
 
 import std;
 
-export namespace cc::utils::argument_substitution {
+export namespace loom::utils::argument_substitution {
 
 [[nodiscard]] inline bool is_blank(std::string_view value) noexcept {
     for (unsigned char ch : value) {
@@ -269,4 +269,4 @@ inline void replace_all(std::string& content, std::string_view needle, std::stri
     return substitute_arguments_impl(content, std::optional<std::string_view>{args}, append_if_no_placeholder, argument_names);
 }
 
-} // namespace cc::utils::argument_substitution
+} // namespace loom::utils::argument_substitution

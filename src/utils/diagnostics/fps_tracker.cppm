@@ -6,7 +6,7 @@ export module loom.diagnostics.fps_tracker;
 
 import std;
 
-export namespace cc::utils::fps {
+export namespace loom::utils::fps {
 
 struct FpsMetrics {
     double average_fps = 0.0;
@@ -73,4 +73,4 @@ private:
     std::optional<double> last_render_time_ = std::nullopt;
 };
 
-} // namespace cc::utils::fps
+} // namespace loom::utils::fps

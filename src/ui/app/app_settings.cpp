@@ -10,9 +10,9 @@ import std;
 import loom.config.settings_manager;
 import loom.ui.screens.repl_state;
 
-namespace cc::ui {
+namespace loom::ui {
 
-namespace settings_nm = cc::utils::settings_manager;
+namespace settings_nm = loom::utils::settings_manager;
 
 struct SettingsState {
     std::unique_ptr<settings_nm::SettingsManager> manager;
@@ -123,4 +123,4 @@ void AppAdapter::ProjectSettingsToScreenState() {
 }
 
 
-}  // namespace cc::ui
+}  // namespace loom::ui

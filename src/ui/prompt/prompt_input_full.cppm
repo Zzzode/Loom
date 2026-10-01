@@ -13,7 +13,7 @@ import loom.ui.foundation.design_figures;
 import loom.ui.foundation.ui_types;  // unified PromptInputMode canonical enum
 import loom.ui.prompt.mode_indicator;  // TS REF: PromptInputModeIndicator.tsx — 3-way prefix glyph
 
-export namespace cc::ui::prompt {
+export namespace loom::ui::prompt {
 
 // --- Context indicators (file attachments, IDE selections, etc.) ---
 
@@ -52,8 +52,8 @@ using ContextAttachment = std::variant<
 // Previously this file defined a local 8-value PromptInputMode:
 //   {Normal, HistorySearch, SlashCommand, PlanMode, FastMode,
 //    VimNormal, VimInsert, VimVisual}
-// All values are now in cc::ui::common::PromptInputMode.
-using cc::ui::common::PromptInputMode;
+// All values are now in loom::ui::common::PromptInputMode.
+using loom::ui::common::PromptInputMode;
 
 // --- Model selector state ---
 struct ModelSelectorState {
@@ -94,9 +94,9 @@ struct NotificationState {
 };
 
 // --- Permission mode & Effort level ---
-// Canonical definitions live in cc::ui::common (ui_types.cppm).
-using cc::ui::common::PermissionMode;
-using cc::ui::common::EffortLevel;
+// Canonical definitions live in loom::ui::common (ui_types.cppm).
+using loom::ui::common::PermissionMode;
+using loom::ui::common::EffortLevel;
 
 // --- Prompt suggestion state ---
 struct PromptSuggestion {
@@ -121,13 +121,13 @@ struct AgentInfo {
 // --- Full prompt input props ---
 struct PromptInputFullProps {
     // Input state
-    cc::ui::InputBuffer* buffer;
-    cc::ui::HistoryManager* history;
-    cc::ui::Typeahead* typeahead;
-    // Canonical vim mode (replaces cc::ui::VimHandler* pointer).
+    loom::ui::InputBuffer* buffer;
+    loom::ui::HistoryManager* history;
+    loom::ui::Typeahead* typeahead;
+    // Canonical vim mode (replaces loom::ui::VimHandler* pointer).
     // TS REF: src/types/textInputTypes.ts:222 — VimMode type.
     // vim_mode = Insert is the default (matches TS useVimInput initial state).
-    cc::ui::common::VimMode vim_mode = cc::ui::common::VimMode::Insert;
+    loom::ui::common::VimMode vim_mode = loom::ui::common::VimMode::Insert;
 
     // Context
     std::vector<ContextAttachment> context_items;
@@ -206,7 +206,7 @@ struct PromptInputFullProps {
 //   lock emoji).  It is NOT the prompt PREFIX glyph — TS's
 //   PromptInputModeIndicator only ever emits '❯' or '!' at the prefix
 //   position (the prefix glyph is rendered by repl_screen using
-//   cc::ui::design::figures::kPointerPrefix / kBashPrefix).
+//   loom::ui::design::figures::kPointerPrefix / kBashPrefix).
 //   These badges are supplementary chrome retained for the interactive UX;
 //   they must never be used as a replacement for the '❯'/'!' prefix.
 [[nodiscard]] inline auto render_mode_badges(PromptInputMode mode,
@@ -411,7 +411,7 @@ struct PromptInputFullProps {
 
 // Create an autocomplete overlay component
 [[nodiscard]] auto make_autocomplete_overlay_component(
-    cc::ui::Typeahead* typeahead,
+    loom::ui::Typeahead* typeahead,
     std::function<void(std::string_view)> on_accept) -> ftxui::Component;
 
-} // namespace cc::ui::prompt
+} // namespace loom::ui::prompt

@@ -16,7 +16,7 @@ import loom.keybindings.schema;
 import loom.keybindings.defaults;
 import loom.serdes.json;
 
-export namespace cc::keybindings {
+export namespace loom::keybindings {
 
 /// Severity level for keybinding warnings
 enum class WarningSeverity {
@@ -221,7 +221,7 @@ private:
             }}};
         }
 
-        auto doc_result = cc::utils::json::parse(content);
+        auto doc_result = loom::utils::json::parse(content);
         if (!doc_result) {
             return {defaults, {{
                 WarningType::parse_error,
@@ -249,7 +249,7 @@ private:
             seen_ids.insert(binding.id);
         }
 
-        bindings_val.iter([&](cc::utils::json::JsonVal item) {
+        bindings_val.iter([&](loom::utils::json::JsonVal item) {
             if (!item.is_obj()) {
                 warnings.push_back({WarningType::validation_error, WarningSeverity::warning,
                     "Ignored non-object keybinding entry", std::nullopt});
@@ -269,7 +269,7 @@ private:
             Keybinding binding;
             binding.id = std::string(id_val.as_str());
             binding.command = std::string(command_val.as_str());
-            keys_val.iter([&](cc::utils::json::JsonVal key_val) {
+            keys_val.iter([&](loom::utils::json::JsonVal key_val) {
                 if (key_val.is_str()) {
                     binding.keys.push_back(parse_key_chord(key_val.as_str()));
                 }
@@ -345,4 +345,4 @@ inline void dispose_keybinding_watcher() {
     get_loader().dispose();
 }
 
-} // namespace cc::keybindings
+} // namespace loom::keybindings

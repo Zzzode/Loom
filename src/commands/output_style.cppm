@@ -3,7 +3,7 @@ module;
 export module loom.commands.output_style;
 
 import std;
-export namespace cc::commands::output_style {
+export namespace loom::commands::output_style {
 
 struct CommandResponse { bool ok{true}; std::string message; };
 

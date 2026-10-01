@@ -14,11 +14,11 @@ import std;
 
 import loom.utils.error;
 
-export namespace cc::utils::async {
+export namespace loom::utils::async {
 
-using cc::utils::Error;
-using cc::utils::ErrorCode;
-using cc::utils::Result;
+using loom::utils::Error;
+using loom::utils::ErrorCode;
+using loom::utils::Result;
 
 // =========================================================================
 
@@ -448,4 +448,4 @@ Task<WhenAnyResult<T>> when_any(std::vector<Task<T>> tasks) {
     co_return WhenAnyResult<T>{0, std::move(result)};
 }
 
-} // namespace cc::utils::async
+} // namespace loom::utils::async

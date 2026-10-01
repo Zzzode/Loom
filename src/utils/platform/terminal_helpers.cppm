@@ -8,7 +8,7 @@ export module loom.platform.terminal_helpers;
 
 import std;
 
-export namespace cc::utils {
+export namespace loom::utils {
 
 // ─── Terminal Panel ──────────────────────────────────────────────────────────
 
@@ -216,4 +216,4 @@ HorizontalScrollWindow calculate_horizontal_scroll_window(
     int arrow_width,
     size_t selected_idx);
 
-} // namespace cc::utils
+} // namespace loom::utils

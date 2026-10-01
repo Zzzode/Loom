@@ -11,7 +11,7 @@ import std;
 import loom.serdes.json;
 import loom.fs.atomic_replace;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 namespace fs = std::filesystem;
 
@@ -195,16 +195,16 @@ inline bool persist_team_record(const Team& team) {
         out << '}';
     }
     out << "]}";
-    return cc::utils::atomic_replace_file(team_record_path(team.id),
+    return loom::utils::atomic_replace_file(team_record_path(team.id),
                                           out.str()).has_value();
 }
 
 [[nodiscard]] inline std::optional<Team> load_team_record_from_path(const fs::path& path) {
     // c16a: open the record ONCE (O_NOFOLLOW|O_NONBLOCK) and parse the
     // buffer — a swapped FIFO cannot block and a symlink cannot be followed.
-    const auto leaf = cc::utils::read_regular_file(path);
+    const auto leaf = loom::utils::read_regular_file(path);
     if (!leaf.present()) return std::nullopt;
-    auto parsed = cc::utils::json::parse(leaf.contents);
+    auto parsed = loom::utils::json::parse(leaf.contents);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
     auto id = root.get_string("id");
@@ -220,7 +220,7 @@ inline bool persist_team_record(const Team& team) {
     };
     auto members = root.get("members");
     if (members.is_arr()) {
-        members.iter([&](cc::utils::json::JsonVal item) {
+        members.iter([&](loom::utils::json::JsonVal item) {
             if (!item.is_obj()) return;
             auto agent_id = item.get_string("agent_id");
             if (agent_id.empty()) return;
@@ -240,7 +240,7 @@ inline bool persist_team_record(const Team& team) {
     }
     auto tasks = root.get("task_list");
     if (tasks.is_arr()) {
-        tasks.iter([&](cc::utils::json::JsonVal item) {
+        tasks.iter([&](loom::utils::json::JsonVal item) {
             if (!item.is_obj()) return;
             auto id = item.get_string("id");
             auto description = item.get_string("description");
@@ -557,4 +557,4 @@ public:
     }
 };
 
-} // namespace cc::tools
+} // namespace loom::tools

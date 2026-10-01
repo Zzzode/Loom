@@ -3,7 +3,7 @@ export module loom.tools.agent_types;
 
 import std;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 enum class AgentType {
     Explore,
@@ -75,14 +75,14 @@ using AgentLivePermissionCheckFn = std::function<AgentLivePermissionCheck(
     std::string_view tool_use_id
 )>;
 
-} // namespace cc::tools
+} // namespace loom::tools
 
 // Re-export the DTOs under the agent namespace spelling so importers that
-// name them cc::tools::agent::X can depend on this zero-service leaf alone.
-export namespace cc::tools::agent {
+// name them loom::tools::agent::X can depend on this zero-service leaf alone.
+export namespace loom::tools::agent {
 
-using cc::tools::AgentConfig;
-using cc::tools::AgentLivePermissionCheck;
-using cc::tools::AgentLivePermissionCheckFn;
+using loom::tools::AgentConfig;
+using loom::tools::AgentLivePermissionCheck;
+using loom::tools::AgentLivePermissionCheckFn;
 
-} // namespace cc::tools::agent
+} // namespace loom::tools::agent

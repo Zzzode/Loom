@@ -8,7 +8,7 @@ export module loom.services.token_estimation;
 import std;
 
 
-export namespace cc::services {
+export namespace loom::services {
 
 
 struct TokenEstimate {
@@ -97,4 +97,4 @@ public:
     }
 };
 
-} // namespace cc::services
+} // namespace loom::services

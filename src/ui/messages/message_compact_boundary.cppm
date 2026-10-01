@@ -9,7 +9,7 @@ export module loom.ui.messages.message_compact_boundary;
 
 import std;
 
-export namespace cc::ui::messages::compact_boundary {
+export namespace loom::ui::messages::compact_boundary {
 using namespace ftxui;
 
 /// Data for a compaction boundary marker
@@ -60,4 +60,4 @@ struct CompactBoundaryData {
     return header;
 }
 
-} // namespace cc::ui::messages::compact_boundary
+} // namespace loom::ui::messages::compact_boundary

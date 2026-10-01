@@ -14,11 +14,11 @@ import loom.commands.command;
 import loom.state.app_state;
 import loom.constants.cost_tracker;
 
-export namespace cc::commands {
+export namespace loom::commands {
 
-using namespace cc::core;
+using namespace loom::core;
 
-/// Ordinal of ActionType::UpdateUsage in the cc::state::ActionType enum.
+/// Ordinal of ActionType::UpdateUsage in the loom::state::ActionType enum.
 /// Keep in sync with store.cppm enum ordering.
 constexpr int ACTION_UPDATE_USAGE = 7;
 
@@ -66,7 +66,7 @@ public:
         // Try AppState bridge first (set by app.cppm) — authoritative data
         // populated by QueryEngine via UpdateUsage dispatches.
         if (const void* raw_state = ctx.get_app_state(); raw_state != nullptr) {
-            const auto* state = static_cast<const cc::state::AppState*>(raw_state);
+            const auto* state = static_cast<const loom::state::AppState*>(raw_state);
             if (view == "summary") {
                 return CommandResult::success(format_summary_from_app_state(*state));
             }
@@ -181,7 +181,7 @@ private:
     // ----------------------------------------------------------
 
     [[nodiscard]] std::string format_summary_from_app_state(
-        const cc::state::AppState& state) const {
+        const loom::state::AppState& state) const {
 
         const auto& usage = state.total_usage;
         double cost = state.total_cost_usd;
@@ -212,7 +212,7 @@ private:
     }
 
     [[nodiscard]] std::string format_per_message_from_app_state(
-        const cc::state::AppState& state) const {
+        const loom::state::AppState& state) const {
 
         if (entries_.empty()) {
             // No per-message records — show aggregate from AppState.
@@ -319,4 +319,4 @@ private:
     }
 };
 
-} // namespace cc::commands
+} // namespace loom::commands

@@ -29,7 +29,7 @@ import std;
 
 import loom.tools.send_message;   // MessagePriority / message_priority_name
 
-export namespace cc::tools::runtime_shared_utils {
+export namespace loom::tools::runtime_shared_utils {
 
 namespace fs = std::filesystem;
 
@@ -134,4 +134,4 @@ namespace fs = std::filesystem;
         message);
 }
 
-} // namespace cc::tools::runtime_shared_utils
+} // namespace loom::tools::runtime_shared_utils

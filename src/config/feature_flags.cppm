@@ -12,7 +12,7 @@ export module loom.config.feature_flags;
 
 import std;
 
-export namespace cc::core::flags {
+export namespace loom::core::flags {
 
 // ============================================================
 // Feature enumeration - all known feature flags
@@ -268,4 +268,4 @@ inline auto if_feature_else(FnEnabled&& fn_enabled, FnDisabled&& fn_disabled) {
     }
 }
 
-} // namespace cc::core::flags
+} // namespace loom::core::flags

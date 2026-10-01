@@ -24,7 +24,7 @@ import std;
 
 import loom.ui.chrome.terminal_io;  // SgrAttr / ColorValue / Color16/256/TrueColor
 
-namespace cc::ui::messages {
+namespace loom::ui::messages {
 
 using namespace ftxui;
 
@@ -43,8 +43,8 @@ using namespace ftxui;
 // (state tracked) but produces no visual change.  Non-SGR escapes (other CSI,
 // OSC, plain ESC) are dropped, matching Ink's Text-node behavior.
 [[nodiscard]] Color sgr_color_value_to_ftxui(
-    const cc::ui::termio::ColorValue& cv) {
-    using namespace cc::ui::termio;
+    const loom::ui::termio::ColorValue& cv) {
+    using namespace loom::ui::termio;
     return std::visit(
         [&](auto&& v) -> Color {
             using T = std::decay_t<decltype(v)>;
@@ -67,8 +67,8 @@ using namespace ftxui;
 /// default-color codes 39/49 clear fg/bg, and every other code touches only
 /// its own field (so e.g. "\x1b[31m" does not clear a prior bold).  This is
 /// the correct way to merge state across consecutive SGR runs.
-void apply_sgr_run(std::string_view params, cc::ui::termio::SgrAttr& attr) {
-    using namespace cc::ui::termio;
+void apply_sgr_run(std::string_view params, loom::ui::termio::SgrAttr& attr) {
+    using namespace loom::ui::termio;
     std::size_t i = 0;
     auto next_int = [&]() -> int {
         int val = 0;
@@ -151,7 +151,7 @@ void apply_sgr_run(std::string_view params, cc::ui::termio::SgrAttr& attr) {
 /// (actually std::shared_ptr<std::vector<Element>>) so the module interface
 /// names no ftxui type; callers cast it back (see ansi_render.cppm).
 [[nodiscard]] std::shared_ptr<void> ansi_to_ftxui_elements(std::string_view input) {
-    using namespace cc::ui::termio;
+    using namespace loom::ui::termio;
 
     SgrAttr attr{};          // running SGR state, mutated by each SGR run
     std::vector<Element> lines;
@@ -233,4 +233,4 @@ void apply_sgr_run(std::string_view params, cc::ui::termio::SgrAttr& attr) {
     return std::make_shared<std::vector<Element>>(std::move(lines));
 }
 
-} // namespace cc::ui::messages
+} // namespace loom::ui::messages

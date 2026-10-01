@@ -11,7 +11,7 @@ import loom.orchestration.agent;
 import loom.tools.agent_types;
 import loom.types.tool_types;
 
-export namespace cc::tools {
+export namespace loom::tools {
 
 namespace detail {
 [[nodiscard]] inline std::string json_escape(std::string_view value) {
@@ -53,7 +53,7 @@ namespace detail {
     return "Run the assigned multi-agent task as '" + agent_config.name + "'.";
 }
 
-[[nodiscard]] inline std::string tool_result_text(const cc::core::ToolResult& result) {
+[[nodiscard]] inline std::string tool_result_text(const loom::core::ToolResult& result) {
     std::string text;
     for (const auto& block : result.content) {
         if (!text.empty()) text += "\n";
@@ -72,7 +72,7 @@ namespace detail {
     std::string prompt,
     std::string working_dir
 ) -> MultiAgentResult {
-    cc::tools::agent::AgentConfig runtime_config{};
+    loom::tools::agent::AgentConfig runtime_config{};
     runtime_config.max_turns = agent_config.max_turns.value_or(runtime_config.max_turns);
     if (!agent_config.model.empty()) runtime_config.default_model = agent_config.model;
     runtime_config.allowed_tools = agent_config.allowed_tools;
@@ -81,7 +81,7 @@ namespace detail {
         runtime_config.allowed_tools.push_back("Agent(" + subagent_type + ")");
     }
 
-    cc::tools::agent::AgentTool tool(runtime_config);
+    loom::tools::agent::AgentTool tool(runtime_config);
     std::ostringstream input;
     input << R"({"prompt":")" << json_escape(prompt)
         << R"(","subagent_type":")" << json_escape(subagent_type)
@@ -97,7 +97,7 @@ namespace detail {
     }
     input << '}';
 
-    auto result = tool.execute(cc::core::ToolInput::from_json(input.str()));
+    auto result = tool.execute(loom::core::ToolInput::from_json(input.str()));
     if (!result) {
         auto error = result.error().format();
         return failed_agent_result(std::move(error));
@@ -142,7 +142,7 @@ namespace detail {
         return failed_agent_result("Team name is required for teammate spawn.");
     }
 
-    cc::tools::agent::AgentConfig runtime_config{};
+    loom::tools::agent::AgentConfig runtime_config{};
     runtime_config.max_turns = agent_config.max_turns.value_or(runtime_config.max_turns);
     if (!agent_config.model.empty()) runtime_config.default_model = agent_config.model;
     runtime_config.allowed_tools = agent_config.allowed_tools;
@@ -152,7 +152,7 @@ namespace detail {
         runtime_config.allowed_tools.push_back("Agent(" + subagent_type + ")");
     }
 
-    cc::tools::agent::AgentTool tool(runtime_config);
+    loom::tools::agent::AgentTool tool(runtime_config);
     std::ostringstream input;
     input << R"({"prompt":")" << json_escape(prompt)
         << R"(","subagent_type":")" << json_escape(subagent_type)
@@ -171,7 +171,7 @@ namespace detail {
     }
     input << '}';
 
-    auto result = tool.execute(cc::core::ToolInput::from_json(input.str()));
+    auto result = tool.execute(loom::core::ToolInput::from_json(input.str()));
     if (!result) {
         auto error = result.error().format();
         return failed_agent_result(std::move(error));
@@ -301,4 +301,4 @@ inline auto merge_agent_results(std::span<const MultiAgentResult> results) -> st
     return oss.str();
 }
 
-} // namespace cc::tools
+} // namespace loom::tools

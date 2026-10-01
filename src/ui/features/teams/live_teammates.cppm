@@ -29,7 +29,7 @@ import loom.ui.foundation.theme_provider;
 import loom.ui.features.agents.agent_shared_widgets;
 import loom.tools.agent_color_manager;
 
-export namespace cc::ui::teams::live {
+export namespace loom::ui::teams::live {
 
 using namespace ftxui;
 
@@ -46,7 +46,7 @@ struct LiveTeammate {
 
 namespace live_detail {
 
-namespace thm = cc::ui::design::theme;
+namespace thm = loom::ui::design::theme;
 
 /// Palette-only status token: running => success, idle => muted, anything
 /// else (unknown / a future awaiting-approval token) => warning.
@@ -70,9 +70,9 @@ namespace thm = cc::ui::design::theme;
 /// resolver (same path agent_cards.cppm uses); unparseable names fall back to
 /// the palette text token.
 [[nodiscard]] inline Color identity_color(const LiveTeammate& t) {
-    auto parsed = cc::tools::agent_color_manager::parse_color_name(t.color);
-    if (parsed) return cc::ui::agents::shared::agent_color_to_ftxui(*parsed);
-    return cc::ui::design::theme::current_theme().palette->text;
+    auto parsed = loom::tools::agent_color_manager::parse_color_name(t.color);
+    if (parsed) return loom::ui::agents::shared::agent_color_to_ftxui(*parsed);
+    return loom::ui::design::theme::current_theme().palette->text;
 }
 
 /// Collapse pane/transcript text to one trimmed line and hard-truncate to
@@ -115,7 +115,7 @@ namespace thm = cc::ui::design::theme;
 /// Pure render of state-owned data.
 [[nodiscard]] inline Element RenderLiveTeammateRow(
     const LiveTeammate& t, int avail_cols) {
-    const auto& pal = *cc::ui::design::theme::current_theme().palette;
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const int tail_cols =
         std::max(8, avail_cols - static_cast<int>(t.name.size()) - 10);
     return hbox({
@@ -151,7 +151,7 @@ namespace thm = cc::ui::design::theme;
     int selected_index,
     int term_cols = 120,
     int term_rows = 40) {
-    const auto& pal = *cc::ui::design::theme::current_theme().palette;
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     Elements body;
     if (ts.empty()) {
@@ -207,4 +207,4 @@ namespace thm = cc::ui::design::theme;
         | size(HEIGHT, LESS_THAN, std::max(6, term_rows - 4));
 }
 
-}  // namespace cc::ui::teams::live
+}  // namespace loom::ui::teams::live

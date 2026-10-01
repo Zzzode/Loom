@@ -12,7 +12,7 @@ import std;
 
 import loom.ui.chrome.panels;
 
-export namespace cc::ui {
+export namespace loom::ui {
 
 // Layout arrangement modes
 enum class LayoutMode {
@@ -307,4 +307,4 @@ private:
     return layout;
 }
 
-} // namespace cc::ui
+} // namespace loom::ui

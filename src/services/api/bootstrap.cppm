@@ -11,12 +11,12 @@ import loom.services.api.models;
 import loom.serdes.json;
 import loom.utils.error;
 
-export namespace cc::services::api {
+export namespace loom::services::api {
 
-using cc::utils::Result;
-using cc::utils::json::JsonDoc;
-using cc::utils::json::JsonMutDoc;
-using cc::utils::json::JsonVal;
+using loom::utils::Result;
+using loom::utils::json::JsonDoc;
+using loom::utils::json::JsonMutDoc;
+using loom::utils::json::JsonVal;
 
 // =========================================================================
 // Bootstrap Response
@@ -116,7 +116,7 @@ public:
     [[nodiscard]] static std::optional<BootstrapResponse> get_cached() {
         auto path = cache_path();
         if (!std::filesystem::exists(path)) return std::nullopt;
-        auto parsed = cc::utils::json::parse_file(path);
+        auto parsed = loom::utils::json::parse_file(path);
         if (!parsed) return std::nullopt;
         return parse_response(parsed->root());
     }
@@ -190,14 +190,14 @@ private:
         std::error_code ec;
         std::filesystem::create_directories(path.parent_path(), ec);
         if (ec) {
-            return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::io_error,
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::io_error,
                 std::format("Failed to create bootstrap cache directory: {}", ec.message())));
         }
         std::ofstream file(path, std::ios::trunc);
         if (!file.is_open()) {
-            return std::unexpected(cc::utils::Error(
-                cc::utils::ErrorCode::io_error,
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::io_error,
                 std::format("Failed to open bootstrap cache '{}'", path.string())));
         }
         file << serialize_response(response);
@@ -311,4 +311,4 @@ inline void bootstrap_async(const BootstrapConfig& config) {
     return create_client();
 }
 
-} // namespace cc::services::api
+} // namespace loom::services::api

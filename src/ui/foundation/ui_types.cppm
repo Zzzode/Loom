@@ -21,7 +21,7 @@ import std;
 // deps: cc_hooks needs VimMode but cc_ui depends on cc_hooks.
 import loom.vim.vim_types;
 
-export namespace cc::ui::common {
+export namespace loom::ui::common {
 
 // ============================================================
 // From: src/components/Spinner/teammateSelectHint.ts
@@ -110,7 +110,7 @@ enum class PromptInputMode {
 };
 
 // NOTE: inputModes.ts helpers (prependModeCharacterToInput, getModeFromInput,
-// getValueFromInput, isInputModeCharacter) live in cc::ui::design::figures —
+// getValueFromInput, isInputModeCharacter) live in loom::ui::design::figures —
 // that module is the single source of truth for prompt-prefix glyphs and
 // mode-detection utilities.  See figures.cppm PromptMode enum + 4 functions.
 
@@ -228,10 +228,10 @@ enum class EffortLevel {
 //   'INSERT' | 'NORMAL'.  Internal state machine tracks richer modes.
 // TS REF: src/hooks/useVimInput.ts:36 — mode starts at 'INSERT'.
 // ============================================================
-using cc::vim::VimMode;
-using cc::vim::is_editing_mode;
-using cc::vim::is_navigation_mode;
-using cc::vim::vim_mode_label;
-using cc::vim::vim_mode_short_label;
+using loom::vim::VimMode;
+using loom::vim::is_editing_mode;
+using loom::vim::is_navigation_mode;
+using loom::vim::vim_mode_label;
+using loom::vim::vim_mode_short_label;
 
-} // namespace cc::ui::common
+} // namespace loom::ui::common

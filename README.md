@@ -282,13 +282,13 @@ and `wire_openai.cppm` implement it. The engine builds a vendor-neutral
 
 For contributors — build details, conventions, the cross-module coupling
 hazards this code is unusually prone to, and the debug-trace locations — see
-`CLAUDE.md`. Design intent inherited from the original TypeScript
+`AGENTS.md`. Design intent inherited from the original TypeScript
 implementation is recorded in `docs/decisions/design-decisions.md`.
 
 ## Documentation
 
-- [`CLAUDE.md`](CLAUDE.md) — contributor guide: build, architecture,
-  conventions, hazards.
+- [`AGENTS.md`](AGENTS.md) — contributor guide: build, architecture,
+  conventions, hazards. (`CLAUDE.md` is a symlink to it.)
 - [`docs/README.md`](docs/README.md) — docs index: what is current, what is
   historical.
 - [`docs/decisions/design-decisions.md`](docs/decisions/design-decisions.md) —

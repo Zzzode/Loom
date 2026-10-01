@@ -109,6 +109,9 @@ endif()
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_std.cmake")
 # Make the `import std;` BMI available to every module target defined below.
 link_libraries(loom_std)
+# RFC 0001 OQ-1 — FTXUI header-unit pilot. Must exist before loom_utils (its
+# pilot consumer) is included; no-ops on Clang < 23 (FTXUI stays textual).
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ftxui_headers.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_utils.cmake")
 # RFC 0001 Phase D B6 — loom_teams: teams/swarm modules moved out of loom_utils.
 # Included after loom_utils (its sole link dependency) and before loom_tools

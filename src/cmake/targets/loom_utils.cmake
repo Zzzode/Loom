@@ -107,6 +107,30 @@ target_link_libraries(loom_utils
         httplib::httplib
         ftxui::screen
 )
+# RFC 0001 OQ-1 pilot: consume ftxui/screen/color.hpp as a header unit in
+# text_highlighting.cppm. LOOM_FTXUI_HU_ENABLED / LOOM_FTXUI_HU_BMI are set by
+# loom_ftxui_headers.cmake (included just before this file in
+# src/CMakeLists.txt); both are unset on Clang < 23, where the source keeps
+# its textual GMF include and nothing below applies.
+#
+# PRIVATE properties, not a target_link_libraries: loom_utils is in the
+# install(EXPORT) LOOMTargets set, and any linked target must be in that set.
+# The -fmodule-file path is build-tree-only, so it must not enter the export.
+if(LOOM_FTXUI_HU_ENABLED)
+    # clang-scan-deps emits no p1689 edge for the HU import, so this target
+    # dependency is the only BMI-before-consumer ordering guarantee.
+    add_dependencies(loom_utils loom_ftxui_headers_bmi)
+    target_compile_definitions(loom_utils PRIVATE
+        LOOM_FTXUI_COLOR_HEADER_UNIT=1)
+    # CMake 4.x builds module BMIs via a synthesized target@synth precompile
+    # rule that does NOT inherit target PRIVATE compile options (same hazard
+    # documented in loom_std.cmake). Per-source COMPILE_FLAGS reach every
+    # compile of this source — including its BMI — on both the scanned-object
+    # and synth rules, so the -fmodule-file mapping is present wherever the
+    # HU import is parsed.
+    set_source_files_properties(utils/parsing/text_highlighting.cppm PROPERTIES
+        COMPILE_FLAGS "-fmodule-file=${LOOM_FTXUI_HU_BMI} -Wno-experimental-header-units")
+endif()
 if(LOOM_ENABLE_TREE_SITTER)
     target_link_libraries(loom_utils PUBLIC tree-sitter tree-sitter-bash)
     target_compile_definitions(loom_utils PUBLIC LOOM_HAS_TREE_SITTER=1)

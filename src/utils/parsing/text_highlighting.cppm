@@ -14,11 +14,20 @@ module;
 #include <cstddef>
 #include <cstdint>
 
+// RFC 0001 OQ-1 pilot: on Clang >= 23 (LOOM_FTXUI_COLOR_HEADER_UNIT defined
+// by the loom_ftxui_headers interface library) color.hpp is consumed as a
+// C++20 header unit via a purview import below; older toolchains keep the
+// textual include.
+#ifndef LOOM_FTXUI_COLOR_HEADER_UNIT
 #include <ftxui/screen/color.hpp>
+#endif
 
 export module loom.parsing.highlight.text_highlighting;
 
 import std;
+#ifdef LOOM_FTXUI_COLOR_HEADER_UNIT
+import <ftxui/screen/color.hpp>;
+#endif
 
 export namespace loom::utils {
 

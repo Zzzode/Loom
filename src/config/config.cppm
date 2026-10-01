@@ -19,7 +19,6 @@ import std;
 
 import loom.types.types;
 import loom.serdes.json;
-import loom.text.parse_int;
 import loom.constants.paths;
 
 export import loom.config.mcp_types;
@@ -1933,13 +1932,12 @@ private:
                 ErrorCode::InvalidInput, "must be a non-negative integer"));
         }
         std::int64_t value = 0;
-        const auto* begin = text.data();
-        // Portable shim: std::from_chars(int) is macOS-26-gated in libc++.
-        const auto [ptr, ec] =
-            loom::utils::from_chars(begin, begin + text.size(), value);
-        if (ec != std::errc{} || ptr != begin + text.size()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidInput, "integer value is out of range"));
+        for (char c : text) {
+            if (value > (std::numeric_limits<std::int64_t>::max() - (c - '0')) / 10) {
+                return std::unexpected(Error::make(
+                    ErrorCode::InvalidInput, "integer value is out of range"));
+            }
+            value = value * 10 + (c - '0');
         }
         return value;
     }
@@ -2005,12 +2003,11 @@ private:
             return std::nullopt;
         }
         std::int64_t value = 0;
-        const auto* begin = text.data();
-        // Portable shim: std::from_chars(int) is macOS-26-gated in libc++.
-        const auto [ptr, ec] =
-            loom::utils::from_chars(begin, begin + text.size(), value);
-        if (ec != std::errc{} || ptr != begin + text.size()) {
-            return std::nullopt;
+        for (char c : text) {
+            if (value > (std::numeric_limits<std::int64_t>::max() - (c - '0')) / 10) {
+                return std::nullopt;
+            }
+            value = value * 10 + (c - '0');
         }
         if (value < 1 ||
             static_cast<std::uint64_t>(value) >

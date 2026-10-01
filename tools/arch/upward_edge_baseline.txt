@@ -8,13 +8,11 @@
 #
 # --- Core8 Phase B backlog ---
 loom.config.config -> loom.serdes.json
-loom.config.config -> loom.text.parse_int
 loom.config.settings -> loom.serdes.json
 #
-# loom.text.parse_int is the portable std::from_chars(integer) shim
-# (macOS-26-gated in Apple libc++) used for config token/LOOM_MAX_TOKENS
-# parsing; same config-layer text-helper class as the json edge above, and
-# loom_config already links loom_utils PUBLIC.
+# 2026-10-01: loom.config.config -> loom.text.parse_int removed — the two
+# call sites were pre-validated digit strings, replaced with inline
+# overflow-checked loops (no need for the portable from_chars shim).
 # --- pre-RFC backlog (not scheduled by RFC 0001) ---
 # Config migration code sits in the config layer and uses utils json/file
 # helpers — same class as loom.config.config -> loom.serdes.json above.

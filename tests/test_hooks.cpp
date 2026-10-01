@@ -408,16 +408,16 @@ TEST(NotifHooks, NpmDeprecationReturnsWhenSet) {
     NotifStateReset guard;
     const int64_t future = notif::detail::now_ms() + 60 * 60 * 1000;
     notif::set_npm_deprecation_data(notif::NpmDeprecationInfo{
-        .id = "npm-cc-core-2026",
-        .message = "cc-core@1.2 is deprecated, upgrade to 2.0",
+        .id = "npm-loom-core-2026",
+        .message = "loom-core@1.2 is deprecated, upgrade to 2.0",
         .deadline_ms = future,
-        .package_name = "cc-core",
+        .package_name = "loom-core",
         .deprecated_version = "1.2.0",
         .recommended_version = "2.0.0",
     });
     auto got = notif::check_npm_deprecation();
     ASSERT_TRUE(got.has_value());
-    EXPECT_EQ(got->id, "npm-cc-core-2026");
+    EXPECT_EQ(got->id, "npm-loom-core-2026");
     EXPECT_EQ(got->recommended_version, "2.0.0");
 }
 

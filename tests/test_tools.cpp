@@ -6967,7 +6967,7 @@ TEST(Tools, AgentToolCreatesWorktreeForIsolatedBackgroundAgent) {
     ASSERT_TRUE(record->worktree_path.has_value());
     EXPECT_EQ(*record->worktree_path, worktree_path.string());
     ASSERT_TRUE(record->worktree_branch.has_value());
-    EXPECT_EQ(*record->worktree_branch, "cc-agent-isolated-agent");
+    EXPECT_EQ(*record->worktree_branch, "loom-agent-isolated-agent");
     ASSERT_TRUE(record->worktree_base_commit.has_value());
     ASSERT_TRUE(record->worktree_git_root.has_value());
     EXPECT_EQ(*record->worktree_git_root, fs::weakly_canonical(root).string());
@@ -6984,7 +6984,7 @@ TEST(Tools, AgentToolCreatesWorktreeForIsolatedBackgroundAgent) {
     EXPECT_FALSE(cleaned->cwd.has_value());
 
     EXPECT_NE(std::system(std::format(
-        "git -C \"{}\" rev-parse --verify cc-agent-isolated-agent >/dev/null 2>&1",
+        "git -C \"{}\" rev-parse --verify loom-agent-isolated-agent >/dev/null 2>&1",
         root.string()).c_str()), 0);
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
@@ -7052,11 +7052,11 @@ TEST(Tools, AgentToolPreservesChangedWorktreeAndReportsPath) {
     ASSERT_EQ(notifications.size(), 1u);
     EXPECT_NE(notifications.front().find("<worktree_path>"), std::string::npos);
     EXPECT_NE(notifications.front().find(worktree_path.string()), std::string::npos);
-    EXPECT_NE(notifications.front().find("<worktree_branch>cc-agent-dirty-agent</worktree_branch>"), std::string::npos);
+    EXPECT_NE(notifications.front().find("<worktree_branch>loom-agent-dirty-agent</worktree_branch>"), std::string::npos);
 
     (void)std::system(std::format("git -C \"{}\" worktree remove --force \"{}\" >/dev/null 2>&1",
         root.string(), worktree_path.string()).c_str());
-    (void)std::system(std::format("git -C \"{}\" branch -D cc-agent-dirty-agent >/dev/null 2>&1",
+    (void)std::system(std::format("git -C \"{}\" branch -D loom-agent-dirty-agent >/dev/null 2>&1",
         root.string()).c_str());
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
@@ -7555,7 +7555,7 @@ TEST(Tools, RuntimeTaskOutputIncludesNativeAgentCompletionNotification) {
         .background = true,
         .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
         .worktree_path = (root / "agent-worktree").string(),
-        .worktree_branch = "cc-agent-completed-agent",
+        .worktree_branch = "loom-agent-completed-agent",
         .transcript = {"user: work", "assistant: done"},
     });
     loom::tools::agent_runtime::native_agent_store().mark_completed("completed-agent", "done");
@@ -7575,9 +7575,9 @@ TEST(Tools, RuntimeTaskOutputIncludesNativeAgentCompletionNotification) {
     EXPECT_NE(output->content.front().text.find("<status>completed</status>"), std::string::npos);
     EXPECT_NE(output->content.front().text.find("<result>done</result>"), std::string::npos);
     EXPECT_NE(output->content.front().text.find("worktree_path: " + (root / "agent-worktree").string()), std::string::npos);
-    EXPECT_NE(output->content.front().text.find("worktree_branch: cc-agent-completed-agent"), std::string::npos);
+    EXPECT_NE(output->content.front().text.find("worktree_branch: loom-agent-completed-agent"), std::string::npos);
     EXPECT_NE(output->content.front().text.find("<worktree_path>" + (root / "agent-worktree").string()), std::string::npos);
-    EXPECT_NE(output->content.front().text.find("<worktree_branch>cc-agent-completed-agent</worktree_branch>"), std::string::npos);
+    EXPECT_NE(output->content.front().text.find("<worktree_branch>loom-agent-completed-agent</worktree_branch>"), std::string::npos);
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
@@ -7693,7 +7693,7 @@ TEST(Tools, NativeAgentRecordPersistsWorktreeMetadata) {
         .background = true,
         .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
         .worktree_path = (root / "worktree").string(),
-        .worktree_branch = "cc-agent-metadata-agent",
+        .worktree_branch = "loom-agent-metadata-agent",
         .worktree_base_commit = "abc123",
         .worktree_git_root = root.string(),
     });
@@ -7704,7 +7704,7 @@ TEST(Tools, NativeAgentRecordPersistsWorktreeMetadata) {
     ASSERT_TRUE(restored->worktree_path.has_value());
     EXPECT_EQ(*restored->worktree_path, (root / "worktree").string());
     ASSERT_TRUE(restored->worktree_branch.has_value());
-    EXPECT_EQ(*restored->worktree_branch, "cc-agent-metadata-agent");
+    EXPECT_EQ(*restored->worktree_branch, "loom-agent-metadata-agent");
     ASSERT_TRUE(restored->worktree_base_commit.has_value());
     EXPECT_EQ(*restored->worktree_base_commit, "abc123");
     ASSERT_TRUE(restored->worktree_git_root.has_value());
@@ -8335,7 +8335,7 @@ TEST(Tools, AgentRuntimeForkAddsDirectiveWorktreeNoticeAndMetadata) {
         .working_dir = (root / "worktree").string(),
         .capabilities = {"Read"},
         .worktree_path = (root / "worktree").string(),
-        .worktree_branch = "cc-agent-fork-child",
+        .worktree_branch = "loom-agent-fork-child",
         .worktree_base_commit = "base-commit",
         .worktree_git_root = root.string(),
         .fork_directive = "Inspect only the parser migration",
@@ -8351,7 +8351,7 @@ TEST(Tools, AgentRuntimeForkAddsDirectiveWorktreeNoticeAndMetadata) {
     ASSERT_TRUE(child_record->worktree_path.has_value());
     EXPECT_EQ(*child_record->worktree_path, (root / "worktree").string());
     ASSERT_TRUE(child_record->worktree_branch.has_value());
-    EXPECT_EQ(*child_record->worktree_branch, "cc-agent-fork-child");
+    EXPECT_EQ(*child_record->worktree_branch, "loom-agent-fork-child");
     ASSERT_FALSE(child_record->transcript.empty());
     EXPECT_TRUE(std::ranges::any_of(child_record->transcript, [](const auto& line) {
         return line.find("<fork-boilerplate>") != std::string::npos &&
@@ -8493,7 +8493,7 @@ TEST(Tools, AgentRuntimeResumeTouchesExistingWorktreeAndFallsBackWhenMissing) {
         .isolation = "worktree",
         .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
         .worktree_path = (root / "existing-worktree").string(),
-        .worktree_branch = "cc-agent-resume-existing",
+        .worktree_branch = "loom-agent-resume-existing",
         .transcript = {"user: existing worktree"},
     });
     auto resumed_existing = loom::tools::agent_runtime::resume_agent("resume-existing");
@@ -8512,7 +8512,7 @@ TEST(Tools, AgentRuntimeResumeTouchesExistingWorktreeAndFallsBackWhenMissing) {
         .isolation = "worktree",
         .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
         .worktree_path = missing.string(),
-        .worktree_branch = "cc-agent-resume-missing",
+        .worktree_branch = "loom-agent-resume-missing",
         .transcript = {"user: missing worktree"},
     });
     auto resumed_missing = loom::tools::agent_runtime::resume_agent("resume-missing");
@@ -9440,7 +9440,7 @@ TEST(Tools, RuntimeTeamDeleteCancelsNativeTeammatesAndCleansArtifacts) {
     loom::tools::agent_runtime::native_agent_store().set_worktree_metadata(
         "reviewer@cleanup-team",
         (root / "missing-worktree").string(),
-        "cc-agent-reviewer",
+        "loom-agent-reviewer",
         "base",
         root.string());
     auto artifact_record = loom::tools::agent_runtime::native_agent_store().get("reviewer@cleanup-team");

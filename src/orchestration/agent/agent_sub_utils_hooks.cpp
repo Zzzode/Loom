@@ -143,7 +143,7 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
 
     auto slug = sanitized_agent_file_part(plan.agent_id);
     if (slug.size() > 40) slug.resize(40);
-    auto branch = "cc-agent-" + slug;
+    auto branch = "loom-agent-" + slug;
     auto worktree_path = *git_root / ".loom" / "worktrees" / slug;
 
     std::error_code ec;

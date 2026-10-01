@@ -245,7 +245,7 @@ jobs:
 
       - name: Run e2e verifier skills
         run: |
-          echo "Run: cc verify --all"
+          echo "Run: loom verify --all"
           echo "Verifier output goes here. The Verify agent discovers skills"
           echo "by scanning .loom/skills/*verifier*/ directories."
 )raw";
@@ -338,7 +338,7 @@ verify:
   script:
     - echo "Running CC verifier skills"
     - echo "Discover and execute .loom/skills/*verifier*/ skill files"
-    - echo "cc verify --all (stub — integrate with Verify agent here)"
+    - echo "loom verify --all (stub — integrate with Verify agent here)"
 )raw";
 }
 
@@ -501,7 +501,7 @@ if [ "$E2E" = "1" ]; then
     echo "[info] No verifier skills yet. Run /init-verifiers in CC REPL to generate them."
   else
     echo "Found $SKILL_COUNT verifier skills."
-    echo "Execute via: cc verify --all"
+    echo "Execute via: loom verify --all"
   fi
 fi
 

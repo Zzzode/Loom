@@ -62,28 +62,20 @@ private:
 }  // namespace
 
 // ---------------------------------------------------------------------------
-// Config-directory cascade: .loom > .agents > .claude
+// Config-directory cascade: .loom > .agents
 // ---------------------------------------------------------------------------
 
 TEST(PathsConfigHome, PrefersDotLoomWhenPresent) {
     TempHome home;
     home.make_config_dir(".loom");
     home.make_config_dir(".agents");
-    home.make_config_dir(".claude");
     EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".loom"));
 }
 
 TEST(PathsConfigHome, FallsToDotAgentsWhenDotLoomAbsent) {
     TempHome home;
     home.make_config_dir(".agents");
-    home.make_config_dir(".claude");
     EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".agents"));
-}
-
-TEST(PathsConfigHome, FallsToDotClaudeAsTheOldestRung) {
-    TempHome home;
-    home.make_config_dir(".claude");
-    EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".claude"));
 }
 
 // When nothing exists we name the preferred directory rather than inheriting
@@ -97,7 +89,6 @@ TEST(PathsConfigHome, NamesThePreferredDirWhenNothingExists) {
 TEST(PathsConfigHome, ExplicitEnvOverrideWinsOverEveryCandidate) {
     TempHome home;
     home.make_config_dir(".loom");
-    home.make_config_dir(".claude");
     auto elsewhere = home.at("somewhere-else");
     ::setenv("LOOM_CONFIG_DIR", elsewhere.c_str(), 1);
     EXPECT_EQ(loom::constants::paths::config_home_read(), elsewhere);
@@ -107,12 +98,12 @@ TEST(PathsConfigHome, ExplicitEnvOverrideWinsOverEveryCandidate) {
 // which picks one -- skill discovery reads from every location.
 TEST(PathsConfigHome, ExistingHomesReturnsEveryCandidateInPriorityOrder) {
     TempHome home;
-    home.make_config_dir(".claude");
+    home.make_config_dir(".agents");
     home.make_config_dir(".loom");
     const auto found = loom::constants::paths::existing_config_homes();
     ASSERT_EQ(found.size(), 2u);
     EXPECT_EQ(found[0], home.at(".loom"));
-    EXPECT_EQ(found[1], home.at(".claude"));
+    EXPECT_EQ(found[1], home.at(".agents"));
 }
 
 TEST(PathsConfigHome, ExistingHomesRespectsTheExplicitOverrideAlone) {
@@ -230,18 +221,9 @@ TEST(PathsMemoryFile, ProjectPathReportsTheExistingFileWhenOneDoes) {
               proj / "CLAUDE.md");
 }
 
-TEST(PathsMemoryFile, UserMemoryPathFindsALegacyMemoryInDotClaude) {
-    TempHome home;
-    home.make_config_dir(".claude", "CLAUDE.md");
-    EXPECT_EQ(loom::constants::paths::user_memory_path(),
-              home.at(".claude") / "CLAUDE.md")
-        << "a user's pre-rename memory must still be found";
-}
-
 TEST(PathsMemoryFile, UserMemoryPathFindsTheNewMemoryInDotLoom) {
     TempHome home;
     home.make_config_dir(".loom", "LOOM.md");
-    home.make_config_dir(".claude", "CLAUDE.md");
     EXPECT_EQ(loom::constants::paths::user_memory_path(),
               home.at(".loom") / "LOOM.md")
         << ".loom is the higher rung, so its memory wins";
@@ -267,10 +249,9 @@ TEST(PathsMemoryFile, RecognisesOnlyTheThreeCascadeNames) {
 // arrays, this fails rather than silently changing which file is read.
 TEST(PathsCascadeOrder, ConfidenceTheDocumentedOrderIsTheImplementedOne) {
     using namespace loom::constants::paths;
-    ASSERT_EQ(kConfigDirCandidates.size(), 3u);
+    ASSERT_EQ(kConfigDirCandidates.size(), 2u);
     EXPECT_EQ(kConfigDirCandidates[0], ".loom");
     EXPECT_EQ(kConfigDirCandidates[1], ".agents");
-    EXPECT_EQ(kConfigDirCandidates[2], ".claude");
 
     ASSERT_EQ(kMemoryFileCandidates.size(), 3u);
     EXPECT_EQ(kMemoryFileCandidates[0], "LOOM.md");
@@ -283,14 +264,14 @@ TEST(PathsCascadeOrder, ConfidenceTheDocumentedOrderIsTheImplementedOne) {
 // ---------------------------------------------------------------------------
 
 // The dangerous mistake this guards against: if the write path followed the
-// read cascade, a user who has only ~/.claude would get our sessions/,
+// read cascade, a user who has only ~/.agents would get our sessions/,
 // plugins/ and state written into another tool's directory. Reading their
 // config is intended; writing into their home is not.
-TEST(PathsReadWriteSplit, WriteStaysInDotLoomEvenWhenDotClaudeExists) {
+TEST(PathsReadWriteSplit, WriteStaysInDotLoomEvenWhenDotAgentsExists) {
     TempHome home;
-    home.make_config_dir(".claude");
-    EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".claude"))
-        << "read follows the cascade to the legacy dir";
+    home.make_config_dir(".agents");
+    EXPECT_EQ(loom::constants::paths::config_home_read(), home.at(".agents"))
+        << "read follows the cascade to the interop dir";
     EXPECT_EQ(loom::constants::paths::config_home_write(), home.at(".loom"))
         << "write must NOT follow it into another tool's directory";
 }
@@ -310,7 +291,7 @@ TEST(PathsReadWriteSplit, WriteUsesDotLoomWhenItExists) {
 
 TEST(PathsReadWriteSplit, ExplicitOverrideDirectsBothReadAndWrite) {
     TempHome home;
-    home.make_config_dir(".claude");
+    home.make_config_dir(".agents");
     auto pinned = home.at("pinned");
     ::setenv("LOOM_CONFIG_DIR", pinned.c_str(), 1);
     EXPECT_EQ(loom::constants::paths::config_home_read(), pinned);
@@ -318,18 +299,18 @@ TEST(PathsReadWriteSplit, ExplicitOverrideDirectsBothReadAndWrite) {
         << "an explicit override is a deliberate choice, so it wins for both";
 }
 
-// user_memory_path reads across the cascade (finding a legacy memory) but
+// user_memory_path reads across the cascade (finding an interop memory) but
 // must fall back to the WRITE dir when nothing exists, so we do not seed a
-// new memory file inside ~/.claude.
-TEST(PathsReadWriteSplit, UserMemoryPathPrefersLegacyButSeedsOurOwnDir) {
+// new memory file inside ~/.agents.
+TEST(PathsReadWriteSplit, UserMemoryPathPrefersInteropButSeedsOurOwnDir) {
     TempHome home;
-    home.make_config_dir(".claude", "CLAUDE.md");
+    home.make_config_dir(".agents", "AGENTS.md");
     EXPECT_EQ(loom::constants::paths::user_memory_path(),
-              home.at(".claude") / "CLAUDE.md")
-        << "an existing legacy memory is read";
+              home.at(".agents") / "AGENTS.md")
+        << "an existing interop memory is read";
 
     TempHome empty;
-    empty.make_config_dir(".claude");  // exists, but holds no memory file
+    empty.make_config_dir(".agents");  // exists, but holds no memory file
     EXPECT_EQ(loom::constants::paths::user_memory_path(),
               empty.at(".loom") / "LOOM.md")
         << "with no memory anywhere, name the file under our own dir";

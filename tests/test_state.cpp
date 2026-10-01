@@ -746,18 +746,6 @@ TEST(Persistence, WritesCurrentSchemaVersion) {
     EXPECT_EQ(loom::state::persistence::kCurrentStateSchemaVersion, 2);
 }
 
-TEST(Persistence, MigratesV1EmptyViewModeToNone) {
-    std::string v1 = R"({"schema_version":1,"view_selection_mode":""})";
-    auto parsed = loom::state::persistence::deserialize_state(v1);
-    ASSERT_TRUE(parsed.has_value());
-    EXPECT_EQ(parsed->view_selection_mode, "none"); // v1->v2 migration normalised the empty sentinel
-    // An explicit v1 value is preserved through migration.
-    std::string v1_named = R"({"schema_version":1,"view_selection_mode":"viewing-agent"})";
-    auto named = loom::state::persistence::deserialize_state(v1_named);
-    ASSERT_TRUE(named.has_value());
-    EXPECT_EQ(named->view_selection_mode, "viewing-agent");
-}
-
 TEST(Persistence, ValidateStateAcceptsDefaultsRejectsBadValues) {
     auto good = loom::state::get_default_app_state();
     EXPECT_TRUE(loom::state::persistence::validate_state(good).has_value());

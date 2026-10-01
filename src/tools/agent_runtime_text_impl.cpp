@@ -120,14 +120,6 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
     if (canonical == "elicitationresult" || canonical == "elicitation-result") return "ElicitationResult";
     return std::string(event);
 }
-[[nodiscard]] std::vector<std::string> agent_alias_candidates(std::string_view requested_type) {
-    const auto canonical = canonicalize_agent_type(requested_type);
-    if (canonical == "explore") return {"explore", "code-explorer"};
-    if (canonical == "explorer") return {"explore", "code-explorer", "explorer"};
-    if (canonical == "plan") return {"plan"};
-    if (canonical == "planner") return {"plan"};
-    return {canonical};
-}
 [[nodiscard]] std::optional<std::string> find_canonical_agent_type_match(
     std::string_view requested_type,
     const std::vector<AgentDefinition>& agents
@@ -158,26 +150,6 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
         return canonical;
     }
 
-    // migrated edge case: legacy alias table (explore/explorer/plan/planner)
-    for (const auto& alias : agent_alias_candidates(requested)) {
-        if (auto alias_match = find_canonical_agent_type_match(alias, agents)) {
-            return alias_match;
-        }
-    }
-
-    // migrated edge case: suffix match `:alias` requires exactly one candidate
-    for (const auto& alias : agent_alias_candidates(requested)) {
-        const auto suffix = ":" + alias;
-        std::vector<std::string> matches;
-        for (const auto& agent : agents) {
-            const auto canonical = canonicalize_agent_type(agent.agent_type);
-            if (canonical.ends_with(suffix)) matches.push_back(agent.agent_type);
-        }
-        // migrated edge case: ambiguous suffix match (e.g. two code-explorer
-        // variants under different namespaces) returns nullopt instead of first
-        if (matches.size() == 1) return matches.front();
-    }
-
     // migrated edge case: no compatible match returns nullopt (caller surfaces error)
     return std::nullopt;
 }
@@ -190,24 +162,6 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
 
     auto resolved = resolve_requested_agent_type(requested, agents);
     if (!resolved) {
-        const auto canonical = canonicalize_agent_type(requested);
-        const bool is_legacy_alias =
-            canonical == "explore" || canonical == "explorer" ||
-            canonical == "plan" || canonical == "planner";
-        if (is_legacy_alias) {
-            bool ambiguous = false;
-            for (const auto& alias : agent_alias_candidates(requested)) {
-                const auto suffix = ":" + alias;
-                std::size_t count = 0;
-                for (const auto& agent : agents) {
-                    if (canonicalize_agent_type(agent.agent_type).ends_with(suffix)) ++count;
-                }
-                if (count > 1) { ambiguous = true; break; }
-            }
-            return std::unexpected(ambiguous
-                ? ResolutionError::LegacyAliasAmbiguous
-                : ResolutionError::LegacyAliasNoMatch);
-        }
         return std::unexpected(ResolutionError::NoCompatibleMatch);
     }
 
@@ -233,8 +187,8 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
 }
 [[nodiscard]] bool is_fork_subagent_enabled() {
     if (env_truthy("FORK_SUBAGENT")) {
-        if (env_truthy("LOOM_COORDINATOR_MODE") || env_truthy("CC_COORDINATOR_MODE")) return false;
-        if (env_truthy("LOOM_NON_INTERACTIVE") || env_truthy("CC_NON_INTERACTIVE")) return false;
+        if (env_truthy("LOOM_COORDINATOR_MODE")) return false;
+        if (env_truthy("LOOM_NON_INTERACTIVE")) return false;
         return true;
     }
     return false;

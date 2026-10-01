@@ -98,19 +98,11 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
         normalized_cwd->has_value() ? std::optional<fs::path>{fs::path{**normalized_cwd}} : std::nullopt);
 
     // migrated edge case: use resolve_agent_type (std::expected wrapper) so
-    // callers get a richer error category. Legacy alias ambiguity and other
-    // failure modes are translated to descriptive strings; previous code used
-    // the simpler "not found" surface.
+    // callers get a richer error category. Failure modes are translated to
+    // descriptive strings; previous code used the simpler "not found" surface.
     auto resolved_definition = loom::tools::agent_runtime::resolve_agent_type(request.subagent_type, agents);
     if (!resolved_definition) {
         const auto error_kind = loom::tools::agent_runtime::resolution_error_name(resolved_definition.error());
-        if (resolved_definition.error() == loom::tools::agent_runtime::ResolutionError::LegacyAliasAmbiguous) {
-            return std::unexpected(std::format(
-                "Agent type '{}' matched multiple namespaced variants; "
-                "specify the fully-qualified agent type explicitly. Available agents: {}",
-                request.subagent_type,
-                loom::tools::agent_runtime::format_agent_type_list(agents)));
-        }
         return std::unexpected(std::format(
             "Agent type '{}' not found ({}). Available agents: {}",
             request.subagent_type,

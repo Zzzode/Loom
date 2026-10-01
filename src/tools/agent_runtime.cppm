@@ -283,13 +283,9 @@ struct ParsedAgentMcpServers {
 [[nodiscard]] AgentHooksByEvent parse_agent_hooks(const loom::utils::YamlValue& value);
 
 
-[[nodiscard]] std::vector<std::string> agent_alias_candidates(std::string_view requested_type);
-
 enum class ResolutionError {
     EmptyRequestedType,
     ExactOrCanonicalMatchNotFound,
-    LegacyAliasAmbiguous,
-    LegacyAliasNoMatch,
     SuffixMatchAmbiguous,
     NoCompatibleMatch,
 };
@@ -298,8 +294,6 @@ enum class ResolutionError {
     switch (err) {
         case ResolutionError::EmptyRequestedType:        return "empty_requested_type";
         case ResolutionError::ExactOrCanonicalMatchNotFound: return "exact_or_canonical_match_not_found";
-        case ResolutionError::LegacyAliasAmbiguous:      return "legacy_alias_ambiguous";
-        case ResolutionError::LegacyAliasNoMatch:        return "legacy_alias_no_match";
         case ResolutionError::SuffixMatchAmbiguous:      return "suffix_match_ambiguous";
         case ResolutionError::NoCompatibleMatch:         return "no_compatible_match";
     }
@@ -317,11 +311,7 @@ enum class ResolutionError {
 //      // Test case: exact match when present  →  Plan → "Plan" (preserves casing)
 //   2. Case- and separator-insensitive canonical match
 //      // Test case: case-insensitive + space/dash variants  →  "General Purpose" → "general-purpose"
-//   3. Legacy alias expansion (explore/explorer/plan/planner) with canonical match
-//      // Test case: legacy Explore → namespaced code-explorer  →  "Explore" → "feature-dev:code-explorer"
-//   4. Legacy alias expansion with `:alias` suffix filter (single match only)
-//      // Test case: ambiguous legacy suffix → undefined  →  "Explore" with two ":code-explorer" agents → nullopt
-//   5. Otherwise nullopt
+//   3. Otherwise nullopt
 //      // Test case: no compatible match  →  "non-existent-agent" → undefined
 
 [[nodiscard]] std::optional<std::string> resolve_requested_agent_type(
@@ -511,8 +501,8 @@ std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view a
 // In C++ all three are encoded as environment gating so the semantics stay
 // close to the TS feature-flag surface without pulling in GrowthBook SDK:
 //   - FORK_SUBAGENT=0            → disabled
-//   - CC_COORDINATOR_MODE=1      → disabled  (TS isCoordinatorMode)
-//   - CC_NON_INTERACTIVE=1       → disabled  (TS getIsNonInteractiveSession)
+//   - LOOM_COORDINATOR_MODE=1    → disabled
+//   - LOOM_NON_INTERACTIVE=1     → disabled
 
 [[nodiscard]] bool is_fork_subagent_enabled();
 

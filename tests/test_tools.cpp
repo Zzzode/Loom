@@ -3255,13 +3255,13 @@ TEST(Tools, AgentRuntimeResolvesLooseAgentTypeInputs) {
     ASSERT_TRUE(general.has_value());
     EXPECT_EQ(*general, "general-purpose");
 
-    auto planner = loom::tools::agent_runtime::resolve_requested_agent_type("planner", agents);
-    ASSERT_TRUE(planner.has_value());
-    EXPECT_EQ(*planner, "Plan");
+    auto plan = loom::tools::agent_runtime::resolve_requested_agent_type("Plan", agents);
+    ASSERT_TRUE(plan.has_value());
+    EXPECT_EQ(*plan, "Plan");
 
-    auto explorer = loom::tools::agent_runtime::resolve_requested_agent_type("explorer", agents);
-    ASSERT_TRUE(explorer.has_value());
-    EXPECT_EQ(*explorer, "Explore");
+    auto explore = loom::tools::agent_runtime::resolve_requested_agent_type("Explore", agents);
+    ASSERT_TRUE(explore.has_value());
+    EXPECT_EQ(*explore, "Explore");
 
     EXPECT_FALSE(loom::tools::agent_runtime::resolve_requested_agent_type("missing-agent-type", agents).has_value());
 }
@@ -3275,7 +3275,7 @@ TEST(Tools, AgentToolAcceptsTypeScriptInputShape) {
     auto result = tool.execute(loom::core::ToolInput::from_json(R"({
       "description": "Inspect plan",
       "prompt": "Inspect the migration plan",
-      "subagent_type": "planner",
+      "subagent_type": "Plan",
       "model": "haiku"
     })"));
 

@@ -950,10 +950,6 @@ TEST(BridgeApi, ValidatesSafeIdsAndNormalizesSessionIds) {
     EXPECT_TRUE(loom::bridge::is_safe_bridge_id("env_abc-123"));
     EXPECT_FALSE(loom::bridge::is_safe_bridge_id("env/abc"));
 
-    const std::string legacy = "A1B2C3D4-E5F6-7890-ABCD-EF1234567890";
-    EXPECT_TRUE(loom::bridge::is_legacy_session_id("a1b2c3d4-e5f6-7890-abcd-ef1234567890"));
-    EXPECT_EQ(loom::bridge::normalize_session_id(legacy), "ses_a1b2c3d4e5f67890abcdef1234567890");
-
     auto generated = loom::bridge::generate_session_id();
     EXPECT_EQ(generated.size(), 36u);
     EXPECT_EQ(generated.rfind("ses_", 0), 0u);

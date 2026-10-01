@@ -219,13 +219,7 @@ using namespace skill_detail;
 [[nodiscard]] std::vector<fs::path> skill_root_dirs() {
     std::vector<fs::path> roots;
     if (const char* home = std::getenv("HOME")) {
-        // Two distinct install locations that must both keep working: the
-        // app's own config dir, and the legacy one users already have skills
-        // in. (Historically ".claude" and ".cc-repl" -- the rename collapsed
-        // them into one entry, which made the same directory get scanned twice
-        // and every skill counted double.)
         roots.emplace_back(fs::path(home) / ".loom" / "skills");
-        roots.emplace_back(fs::path(home) / ".cc-repl" / "skills");
         roots.emplace_back(fs::path(home) / ".codex" / "skills");
         roots.emplace_back(fs::path(home) / ".agents" / "skills");
     }

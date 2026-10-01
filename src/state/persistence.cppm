@@ -50,17 +50,8 @@ inline constexpr int kCurrentStateSchemaVersion = 2;
 /// here whenever the on-disk shape evolves (open/closed: extend, never edit an
 /// existing step).
 inline int apply_state_migrations(AppState& state, int from_version) {
-    int version = from_version;
-    // v1 -> v2: normalise the legacy view_selection_mode sentinel. Early
-    // builds could persist an empty string here; v2 canonicalises to "none".
-    if (version < 2) {
-        if (state.view_selection_mode.empty()) {
-            state.view_selection_mode = "none";
-        }
-        version = 2;
-    }
     (void)state;
-    return version;
+    return from_version;
 }
 
 /// Validate structural invariants on a deserialised AppState. Returns the

@@ -13,7 +13,6 @@
 ///   $LOOM_CONFIG_DIR  (explicit override, wins outright)
 ///   $HOME/.loom       (current name)
 ///   $HOME/.agents     (interop: the AGENTS.md ecosystem's convention)
-///   $HOME/.claude     (the pre-rename name, so existing data keeps working)
 ///   $HOME/.loom       (fallback when none exists: we create rather than
 ///                      inherit a directory we did not choose)
 ///
@@ -41,10 +40,9 @@ inline constexpr std::string_view kConfigDirName = ".loom";
 
 /// Config-directory candidates, highest priority first. All are dot-dirs
 /// under $HOME. Order is load-bearing: see the file comment.
-inline constexpr std::array<std::string_view, 3> kConfigDirCandidates = {
+inline constexpr std::array<std::string_view, 2> kConfigDirCandidates = {
     ".loom",
     ".agents",
-    ".claude",
 };
 
 /// Memory file names, highest priority first. Order is load-bearing: see the
@@ -99,12 +97,11 @@ inline constexpr std::array<std::string_view, 3> kMemoryFileCandidates = {
 
 /// The config directory to WRITE into: $LOOM_CONFIG_DIR, else `~/.loom`.
 ///
-/// Deliberately narrower than the read cascade. Reading a legacy `~/.claude`
-/// is safe and is the point of the cascade; writing there is not the same
-/// act. If a user has only `~/.claude`, writing our `sessions/`, `plugins/`
-/// and `settings.json` into it would interleave our state with another
-/// tool's, in a directory the user did not choose for us -- and `~/.claude`
-/// already has its own `sessions/` for the other tool to collide with. So we
+/// Deliberately narrower than the read cascade. Reading an interop directory
+/// like `~/.agents` is safe and is the point of the cascade; writing there is
+/// not the same act. If a user has only `~/.agents`, writing our `sessions/`,
+/// `plugins/` and `settings.json` into it would interleave our state with
+/// another tool's, in a directory the user did not choose for us. So we
 /// create our own directory instead, and leave theirs alone.
 [[nodiscard]] inline std::filesystem::path config_home_write() {
     if (const char* env = std::getenv("LOOM_CONFIG_DIR"); env && *env) {
@@ -179,9 +176,9 @@ inline constexpr std::array<std::string_view, 3> kMemoryFileCandidates = {
 }
 
 /// The user-level memory file path: the config dir's memory file. Prefers an
-/// existing file across the whole READ cascade so a user's
-/// `~/.claude/CLAUDE.md` is still found after the rename. Falls back to the
-/// WRITE directory, since that is where a new memory file would be created.
+/// existing file across the whole READ cascade so a user's existing memory
+/// file is still found. Falls back to the WRITE directory, since that is
+/// where a new memory file would be created.
 [[nodiscard]] inline std::filesystem::path user_memory_path() {
     if (auto found = find_memory_file(config_home_read())) {
         return *found;

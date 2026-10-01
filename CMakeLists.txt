@@ -280,15 +280,13 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
     # producers with reduced consumers SIGSEGVs clang — so a per-target
     # -fno-modules-reduced-bmi override is NOT viable either.
     #
-    # The one reduced-BMI defect (LLVM #184957, fixed on main by PR #179178,
-    # absent from 22.1.x) mis-merges the global aligned operator new when an
-    # implementation unit `import std;`-s while its primary's global module
-    # fragment textually pulls libc++ via FTXUI. It currently manifests in
-    # THREE loom.ui.app.app impl units (app_autocomplete, app_run,
-    # app_team); those units opt OUT of `import std;` and keep
-    # textual std headers in their GMF (a plain impl unit is allowed
-    # textual includes even when its interface imports std).
-    # Re-evaluate after moving to a clang that contains PR #179178.
+    # The one reduced-BMI defect (LLVM #184957, fixed by PR #179178,
+    # shipped in clang 23.1.2) mis-merged the global aligned operator new
+    # when an implementation unit `import std;`-ed while its primary's
+    # global module fragment textually pulled libc++ via FTXUI.  On
+    # clang 22 (which lacks the fix) 13 impl units kept textual std
+    # headers in their GMF as a workaround; all were converted to
+    # `import std;` after the clang 23 upgrade verified the fix.
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         add_compile_options(-fmodules-reduced-bmi)
     endif()

@@ -17,14 +17,12 @@
 // std headers in the global module fragment (see CMakeLists.txt:283-292).
 module;
 
-#include <atomic>
-#include <chrono>
-#include <thread>
-
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 
 module loom.ui.app.app;
+
+import std;
 
 import loom.ui.screens.repl_state;
 import loom.ui.screens.task_view_store;

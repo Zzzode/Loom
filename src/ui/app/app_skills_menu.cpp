@@ -17,17 +17,12 @@
 // std headers in the global module fragment (see CMakeLists.txt:283-290).
 module;
 
-#include <algorithm>
 #include <cmath>
 #include <cstdlib>
-#include <format>
-#include <ranges>
-#include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
 
 module loom.ui.app.app;
+
+import std;
 
 import loom.ui.prompt.autocomplete_sources;
 import loom.ui.screens.repl_state;

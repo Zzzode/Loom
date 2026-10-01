@@ -11,6 +11,8 @@ module;
 
 module loom.ui.app.app;
 
+import std;
+
 import loom.query.query_engine;
 import loom.commands.registry;
 import loom.session.app_storage;

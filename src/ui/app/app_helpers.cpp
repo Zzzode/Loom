@@ -24,12 +24,10 @@ module;
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
-#include <initializer_list>
-#include <optional>
-#include <string>
-#include <string_view>
 
 module loom.ui.app.app;
+
+import std;
 
 namespace loom::ui {
 

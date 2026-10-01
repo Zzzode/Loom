@@ -11,12 +11,9 @@
 // causing "operator new is ambiguous". Re-evaluate after the toolchain upgrade.
 module;
 
-#include <memory>
-#include <optional>
-#include <string>
-#include <variant>
-
 module loom.ui.app.app;
+
+import std;
 
 import loom.query.query_engine;
 import loom.hooks.lifecycle_hooks;

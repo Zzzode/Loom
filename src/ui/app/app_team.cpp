@@ -24,29 +24,14 @@
 // app_extra_methods.cpp / app_run.cpp (see CMakeLists.txt:283-290).
 module;
 
-#include <algorithm>
-#include <atomic>
 #include <cctype>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <deque>
-#include <filesystem>
-#include <functional>
-#include <initializer_list>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <ranges>
-#include <string>
-#include <string_view>
-#include <thread>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
 module loom.ui.app.app;
+
+import std;
 
 import loom.serdes.json;
 import loom.fs.atomic_replace;

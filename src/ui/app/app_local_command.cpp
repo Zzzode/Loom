@@ -21,13 +21,12 @@
 // std headers in the global module fragment (see CMakeLists.txt:283-292).
 module;
 
-#include <chrono>
 #include <cstdint>
 #include <cstdio>
-#include <string>
-#include <utility>
 
 module loom.ui.app.app;
+
+import std;
 
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;

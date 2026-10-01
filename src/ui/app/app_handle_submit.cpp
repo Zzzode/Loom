@@ -15,24 +15,12 @@
 // causing "operator new is ambiguous". Re-evaluate after the toolchain upgrade.
 module;
 
-#include <algorithm>
-#include <chrono>
 #include <cstdio>
 #include <cstdlib>
-#include <filesystem>
-#include <format>
-#include <mutex>
-#include <optional>
-#include <ranges>
-#include <string>
-#include <string_view>
-#include <thread>
-#include <unordered_map>
-#include <unordered_set>
-#include <variant>
-#include <vector>
 
 module loom.ui.app.app;
+
+import std;
 
 import loom.query.query_engine;
 import loom.commands.registry;

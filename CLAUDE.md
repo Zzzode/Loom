@@ -34,19 +34,27 @@ If they fail, re-run them in isolation — they pass alone.
 ### Building on this Linux dev box
 
 The committed presets target the macOS CI runner and will not configure here.
-Use the machine-local preset (gitignored, because it holds absolute paths):
+Use the machine-local presets (gitignored, because they hold absolute paths):
 
 ```bash
-cmake --preset local-linux            # debug
-cmake --preset local-linux-release    # release
-cmake --build --preset local-linux -j8
-ctest --preset local-linux -j$(nproc)
+cmake --preset local-linux-clang23            # debug (LLVM 23)
+cmake --preset local-linux-clang23-release    # release (LLVM 23, -O2)
+cmake --build --preset local-linux-clang23 -j8
+ctest --preset local-linux-clang23 -j$(nproc)
 ```
 
-It pins Homebrew LLVM 22, points at the offline dependency cache, uses system
-(not brew) OpenSSL/curl headers, and links against brew's glibc 2.38. Release
-forces `-O0 -DNDEBUG` with LTO off, because the Homebrew LLVM 22 optimizer
-crashes on this tree.
+The `local-linux` / `local-linux-release` presets pin Homebrew LLVM 22 and are
+kept for reference; `local-linux-clang23*` use Homebrew LLVM 23.1.2, which
+fixes two LLVM 22 defects:
+
+- **LLVM #184957** (operator new ambiguity with textual libc++ + `import std;`)
+  — fixed by PR #179178. All 13 impl units that kept textual std headers as a
+  workaround now use `import std;`.
+- **Optimizer SIGSEGV** — the LLVM 22 optimizer crashed on this tree at `-O2`,
+  forcing `-O0 -DNDEBUG` for release. LLVM 23 builds and tests clean at `-O2`.
+
+Both presets point at the offline dependency cache, use system (not brew)
+OpenSSL/curl headers, and link against brew's glibc 2.38.
 
 **If configuration fails with a FetchContent download error**, `.deps-cache/`
 is missing or incomplete. It holds the six pinned dependency archives; this box

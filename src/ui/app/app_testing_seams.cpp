@@ -14,14 +14,12 @@
 // std headers in the global module fragment (see CMakeLists.txt:283-292).
 module;
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <string>
-#include <utility>
-#include <vector>
 
 module loom.ui.app.app;
+
+import std;
 
 import loom.types.types;
 import loom.ui.screens.repl_state;

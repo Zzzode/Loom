@@ -12,20 +12,12 @@
 // app_extra_methods.cpp fallback applies.
 module;
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
-#include <optional>
-#include <set>
-#include <string>
-#include <string_view>
-#include <unordered_set>
-#include <utility>
-#include <variant>
-#include <vector>
 
 module loom.ui.messages.messages_list;
+
+import std;
 
 import loom.ui.messages.message_row;
 import loom.ui.messages.message_tool_result;

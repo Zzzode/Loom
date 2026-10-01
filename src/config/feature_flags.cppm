@@ -124,27 +124,6 @@ public:
         if (idx < FEATURE_COUNT) flags_[idx] = false;
     }
 
-    /// Read feature flags from environment variables.
-    /// Looks for LOOM_FEATURE_<NAME>=1|0|true|false (or legacy CC_FEATURE_<NAME>).
-    void set_from_env() {
-        for (const auto& info : FEATURE_REGISTRY) {
-            auto env_name = std::format("LOOM_FEATURE_{}", info.name);
-            if (const char* val = std::getenv(env_name.c_str())) {
-                std::string_view sv(val);
-                bool enabled = (sv == "1" || sv == "true" || sv == "yes");
-                flags_[static_cast<std::size_t>(info.feature)] = enabled;
-                continue;
-            }
-            // Backwards compat: CC_FEATURE_<NAME>
-            auto legacy_name = std::format("CC_FEATURE_{}", info.name);
-            if (const char* val = std::getenv(legacy_name.c_str())) {
-                std::string_view sv(val);
-                bool enabled = (sv == "1" || sv == "true" || sv == "yes");
-                flags_[static_cast<std::size_t>(info.feature)] = enabled;
-            }
-        }
-    }
-
     /// Set flags from a JSON-like key-value configuration.
     /// Accepts a vector of (feature_name, enabled) pairs.
     void set_from_config(const std::vector<std::pair<std::string_view, bool>>& config) {

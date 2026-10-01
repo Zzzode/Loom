@@ -561,9 +561,7 @@ inline bool is_team_memory_enabled() {
     if (loom::utils::is_env_truthy(std::getenv("LOOM_ENABLE_TEAM_MEMORY"))) {
         return true;
     }
-    return std::getenv("LOOM_TEAM_MEMORY_SYNC_URL") != nullptr ||
-           std::getenv("CC_TEAM_MEMORY_SYNC_URL") != nullptr || // backwards compat
-           std::getenv("TEAM_MEMORY_SYNC_URL") != nullptr;
+    return std::getenv("LOOM_TEAM_MEMORY_SYNC_URL") != nullptr;
 }
 
 inline std::string get_team_mem_path(const std::string& auto_mem_path) {

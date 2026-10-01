@@ -372,25 +372,6 @@ using namespace hooks_detail;
     return {false};
 }
 
-// Legacy 3-arg bridge for callers that don't build a full context.
-[[nodiscard]] std::expected<bool, std::string> evaluate_hook_condition(
-    std::string_view condition,
-    std::string_view tool_name,
-    std::string_view input_json)
-{
-    HookExecutionContext ctx;
-    if (!tool_name.empty()) {
-        std::string json_str = std::string("{\"name\": \"") + json_escape(tool_name) + "\"}";
-        auto tool_doc = parse(json_str);
-        if (tool_doc) ctx.set_context_doc("tool", std::move(*tool_doc));
-    }
-    if (!input_json.empty()) {
-        auto payload = parse(input_json);
-        if (payload) ctx.set_payload_doc(std::move(*payload));
-    }
-    return evaluate_hook_condition(condition, ctx);
-}
-
 // ==========================================================================
 // filter_hooks_by_matcher
 // ==========================================================================

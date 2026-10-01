@@ -138,79 +138,6 @@ export namespace loom::ui::messages {
 using namespace ftxui;
 
 // =========================================================================
-// 1) Message row configuration (legacy ANSI string renderer preserved)
-// =========================================================================
-
-// Configuration for rendering a single message row (plain text fallback)
-struct MessageRowConfig {
-    std::string role;
-    std::string content;
-    std::optional<std::chrono::system_clock::time_point> timestamp;
-    std::optional<std::string> model;
-    bool is_streaming = false;
-};
-
-// Render a role badge (colored label for the message author)
-inline auto render_role_badge(std::string_view role) -> std::string {
-    std::ostringstream out;
-
-    if (role == "user" || role == "human") {
-        out << "\033[34m⦿ You\033[0m";
-    } else if (role == "assistant") {
-        out << "\033[35m◈ Assistant\033[0m";
-    } else if (role == "system") {
-        out << "\033[33m⚙ System\033[0m";
-    } else if (role == "tool") {
-        out << "\033[36m⚡ Tool\033[0m";
-    } else {
-        out << "\033[2m○ " << role << "\033[0m";
-    }
-
-    return out.str();
-}
-
-// Render a complete message row with role, content, and metadata (legacy API)
-inline auto render_message_row(MessageRowConfig config, int width) -> std::string {
-    std::ostringstream out;
-
-    // Header line: role badge + optional model + optional timestamp
-    out << render_role_badge(config.role);
-
-    if (config.model.has_value()) {
-        out << " \033[2m(" << config.model.value() << ")\033[0m";
-    }
-
-    if (config.timestamp.has_value()) {
-        auto time_t_val = std::chrono::system_clock::to_time_t(config.timestamp.value());
-        std::tm tm_buf{};
-        localtime_r(&time_t_val, &tm_buf);
-        out << " \033[2m" << std::put_time(&tm_buf, "%H:%M") << "\033[0m";
-    }
-
-    // Streaming indicator
-    if (config.is_streaming) {
-        out << " \033[36m▍\033[0m";
-    }
-
-    out << "\n";
-
-    // Content body with left margin
-    const std::string indent = "  ";
-    std::istringstream content_stream(config.content);
-    std::string line;
-    while (std::getline(content_stream, line)) {
-        // Simple word-wrap for long lines
-        while (static_cast<int>(line.size()) > width - 2) {
-            out << indent << line.substr(0, width - 2) << "\n";
-            line = line.substr(width - 2);
-        }
-        out << indent << line << "\n";
-    }
-
-    return out.str();
-}
-
-// =========================================================================
 // 2) Dispatch enum (role × type)
 // =========================================================================
 
@@ -476,10 +403,6 @@ struct MessageRowCallbacks {
         return thinking_message::ThinkingMessage(*data);
     }
     if (shape == S::AssistantRedactedThinking) {
-        // Redacted thinking is mode ThinkingMode::Redacted inside the same
-        // module — callers still pass a ThinkingMessageOptions with
-        // data.mode = Redacted.  If callers used the legacy
-        // RedactedThinkingData struct we fall back gracefully.
         auto data = std::get_if<thinking_message::ThinkingMessageOptions>(&payload);
         if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for RedactedThinking"); });
         return thinking_message::ThinkingMessage(*data);
@@ -553,47 +476,9 @@ struct MessageRowCallbacks {
     }
 
     if (shape == S::SystemAPIError) {
-        // Try the rich UI5 card first; fall back to legacy ErrorMessageData.
-        if (auto rich = std::get_if<api_error_message::APIErrorOptions>(&payload)) {
-            return api_error_message::APIErrorMessage(*rich);
-        }
-        auto data = std::get_if<ErrorMessageData>(&payload);
+        auto data = std::get_if<api_error_message::APIErrorOptions>(&payload);
         if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for API error"); });
-        // Core rendering lives in error_message.cppm (FTXUI upgrade → UI5)
-        // TS REF: SystemAPIErrorMessage.tsx — Retry / Clear session / Dismiss
-        //          action buttons.  This fallback path passes on_retry +
-        //          on_clear_session to render_error_message() so the plain
-        //          string includes "[r] Retry" / "[c] Clear session" hints,
-        //          and wraps the card in CatchEvent to dispatch keyboard
-        //          shortcuts when the callbacks are available.
-        auto d = *data;
-        auto retry_cb = callbacks.on_retry;
-        auto clear_cb = callbacks.on_clear_session;
-        auto base = ftxui::Renderer([d, retry_cb, clear_cb] {
-            return vbox({
-                hbox({ text("❌ ") | color(Color::Red),
-                       text("API Error") | bold | color(Color::Red) }),
-                text(render_error_message(d,
-                    retry_cb ? std::optional<std::function<void()>>{retry_cb}
-                             : std::nullopt,
-                    clear_cb ? std::optional<std::function<void()>>{clear_cb}
-                             : std::nullopt)),
-                text("(styled view → use api_error_message::APIErrorOptions for full card)") | dim,
-            });
-        });
-        // Wrap in CatchEvent so 'r' / 'c' dispatch retry / clear when set.
-        if (retry_cb || clear_cb) {
-            return base | CatchEvent([retry_cb, clear_cb](Event event) -> bool {
-                if (event == Event::Character('r') || event == Event::Character('R')) {
-                    if (retry_cb) { retry_cb(); return true; }
-                }
-                if (event == Event::Character('c') || event == Event::Character('C')) {
-                    if (clear_cb) { clear_cb(); return true; }
-                }
-                return false;
-            });
-        }
-        return base;
+        return api_error_message::APIErrorMessage(*data);
     }
 
     if (shape == S::SystemCollapsedContent) {

@@ -2441,12 +2441,11 @@ TEST(SessionIngress, PostsSessionEventsWithSessionCookieAuth) {
 
 TEST(SessionIngress, CreatesIngressFromDaemonEnvironmentAndSendsLifecycleEvent) {
     EnvironmentGuard endpoint("LOOM_REMOTE_API_BASE_URL", "placeholder");
-    EnvironmentGuard session("CC_REMOTE_SESSION_ID", "session_1");
+    EnvironmentGuard session("LOOM_REMOTE_SESSION_ID", "session_1");
     EnvironmentGuard token("LOOM_SESSION_ACCESS_TOKEN", "env-session-token");
     EnvironmentUnsetGuard compat_endpoint("LOOM_REMOTE_API_BASE_URL");
     EnvironmentUnsetGuard ingress_endpoint("LOOM_SESSION_INGRESS_URL");
     EnvironmentUnsetGuard compat_ingress_endpoint("LOOM_SESSION_INGRESS_URL");
-    EnvironmentUnsetGuard compat_session("LOOM_REMOTE_SESSION_ID");
 
     LocalCcrHttpServer server;
     ASSERT_TRUE(server.ready());

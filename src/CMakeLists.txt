@@ -13,10 +13,6 @@
 
 # ─── Optional tree-sitter dependency for bash AST danger classifier ───────────
 option(LOOM_ENABLE_TREE_SITTER "Enable tree-sitter bash parsing for AST danger classifier" OFF)
-# Backwards-compat: CC_ENABLE_TREE_SITTER was the old name.
-if(DEFINED CC_ENABLE_TREE_SITTER AND NOT DEFINED LOOM_ENABLE_TREE_SITTER)
-    set(LOOM_ENABLE_TREE_SITTER "${CC_ENABLE_TREE_SITTER}" CACHE BOOL "Enable tree-sitter bash parsing for AST danger classifier" FORCE)
-endif()
 if(LOOM_ENABLE_TREE_SITTER)
     # tree-sitter is wired with the deprecated FetchContent_Populate + manual
     # library target pattern. CMake 4.x sets CMP0169 to NEW which forbids

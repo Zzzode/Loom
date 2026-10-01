@@ -64,12 +64,7 @@ void QueryEngine::setup_api_client() {
             wire_api_ = *parsed;
         }
     } else {
-        // LOOM_WIRE_API is the documented name; the CC_REPL_WIRE_API
-        // spelling is honoured as a fallback so a config written before the
-        // rename keeps working. Neither spelling is a vendor name, so both
-        // are safe to accept.
         const char* env = std::getenv("LOOM_WIRE_API");
-        if (!env || !*env) env = std::getenv("CC_REPL_WIRE_API");
         if (env && *env) {
             if (auto parsed = loom::query::wire::wire_api_from_string(env)) {
                 wire_api_ = *parsed;

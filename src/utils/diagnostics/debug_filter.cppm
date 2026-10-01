@@ -31,7 +31,6 @@ public:
     [[nodiscard]] static DebugFilter from_env() {
         DebugFilter filter;
         const char* env = std::getenv("LOOM_DEBUG");
-        if (!env || !*env) env = std::getenv("CC_DEBUG"); // backwards compat
         if (env && *env) {
             filter.set_patterns(env);
         }

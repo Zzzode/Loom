@@ -22,50 +22,6 @@ export namespace loom::ui {
 // MessageRow - displays a single conversation message
 // ============================================================
 
-/// Visual style for a message row
-struct MessageStyle {
-    ftxui::Color prefix_color;
-    std::string prefix_label;
-    bool show_timestamp = false;
-};
-
-/// Render a single message with role prefix and markdown content
-[[nodiscard]] inline ftxui::Element render_message_row(
-    const loom::core::Message& msg, const MessageStyle& style) {
-    // Extract text content from the message variant
-    auto text_content = std::visit([](const auto& m) -> std::string {
-        std::string result;
-        for (const auto& block : m.content) {
-            if (auto* tb = std::get_if<loom::core::TextBlock>(&block)) {
-                if (!result.empty()) result += '\n';
-                result += tb->text;
-            }
-        }
-        return result;
-    }, msg);
-
-    auto prefix = ftxui::text(style.prefix_label + " ")
-                  | ftxui::color(style.prefix_color) | ftxui::bold;
-    auto body = render_markdown(text_content);
-
-    return ftxui::hbox({prefix, body}) | ftxui::xflex;
-}
-
-/// Create the appropriate message style based on role
-[[nodiscard]] inline MessageStyle style_for_role(loom::core::Role role) {
-    switch (role) {
-        case loom::core::Role::User:
-            return {ftxui::Color::Green, "You:", false};
-        case loom::core::Role::Assistant:
-            return {ftxui::Color::Cyan, "Loom:", false};
-        case loom::core::Role::System:
-            return {ftxui::Color::Yellow, "System:", false};
-        case loom::core::Role::Tool:
-            return {ftxui::Color::Magenta, "Tool:", false};
-    }
-    return {ftxui::Color::White, "???:", false};
-}
-
 // ============================================================
 // ToolUseDisplay - shows tool invocation and results
 // ============================================================

@@ -173,15 +173,6 @@ struct PluginLoadResult {
     std::string_view version
 );
 
-/// Get legacy (non-versioned) cache path for backward compatibility
-[[nodiscard]] std::filesystem::path get_legacy_cache_path(std::string_view plugin_name);
-
-/// Resolve plugin path with fallback to legacy location
-[[nodiscard]] std::expected<std::filesystem::path, std::string> resolve_plugin_path(
-    std::string_view plugin_id,
-    std::optional<std::string_view> version = std::nullopt
-);
-
 /// Probe seed directories for a populated cache at this plugin version
 [[nodiscard]] std::optional<std::filesystem::path> probe_seed_cache(
     std::string_view plugin_id,
@@ -758,24 +749,6 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
 ) {
     auto path = get_versioned_cache_path(plugin_id, version);
     return std::filesystem::path(path.string() + ".zip");
-}
-
-[[nodiscard]] std::filesystem::path get_legacy_cache_path(std::string_view plugin_name) {
-    return get_plugin_cache_path() / detail::sanitize_cache_component(plugin_name);
-}
-
-[[nodiscard]] std::expected<std::filesystem::path, std::string> resolve_plugin_path(
-    std::string_view plugin_id,
-    std::optional<std::string_view> version
-) {
-    if (version) {
-        auto versioned = get_versioned_cache_path(plugin_id, *version);
-        if (std::filesystem::exists(versioned)) return versioned;
-    }
-    auto parsed = loom::utils::plugin_identifier::parse_plugin_identifier(plugin_id);
-    auto legacy = get_legacy_cache_path(parsed.name.empty() ? std::string(plugin_id) : parsed.name);
-    if (std::filesystem::exists(legacy)) return legacy;
-    return std::unexpected("Plugin cache path not found: " + std::string(plugin_id));
 }
 
 [[nodiscard]] std::optional<std::filesystem::path> probe_seed_cache(

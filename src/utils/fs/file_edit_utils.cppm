@@ -7,8 +7,6 @@
 //   - Added: desanitize_match_string + DESANITIZATIONS table.
 //   - Added: normalize_file_edit_input (cached read + desanitize + strip WS).
 //   - Added: are_file_edits_equivalent + are_file_edits_inputs_equivalent.
-//   - Added: get_snippet_for_two_file_diff (8KB cap on attachments).
-//   - Added: get_snippet (simple edit-based snippet).
 //   - Added: get_edits_for_patch (hunks -> FileEdit[]).
 //   - Fixed: trailing-newline handling in apply_edit() now matches TS order
 //            (strip-newline check BEFORE the replace, not after).
@@ -696,126 +694,6 @@ struct AddLineNumbersParam {
 };
 inline std::string add_line_numbers(const AddLineNumbersParam& p) {
     return add_line_numbers(p.content, p.start_line);
-}
-
-// ===========================================================================
-// Snippet helpers — 3 variants from TS utils.ts + UI.tsx
-// ===========================================================================
-
-inline constexpr std::size_t kDiffSnippetMaxBytes = 8192; // 8 KiB cap
-inline constexpr int kDefaultContextLines = 4;
-
-/// getSnippetForTwoFileDiff() — used for edited-text-file attachments.
-/// 8 KB cap, `... [N lines truncated] ...` marker.
-inline std::string get_snippet_for_two_file_diff(
-    std::string_view a, std::string_view b)
-{
-    auto hunks = compute_structured_patch(a, b, /*context=*/8);
-    if (hunks.empty()) return "";
-
-    // Simpler approach — follow TS exactly:
-    //   for each hunk: filter OUT lines starting with '-' or '\', drop the
-    //   leading tag char, then addLineNumbers, join with '\n...\n'.
-    std::string full;
-    bool first_hunk = true;
-    for (const auto& hunk : hunks) {
-        std::vector<std::string> content_lines;
-        for (const auto& ln : hunk.lines) {
-            if (ln.empty()) { content_lines.push_back(""); continue; }
-            if (ln[0] == '-' || (ln.size() >= 2 && ln[0] == '\\')) continue;
-            content_lines.push_back(ln.size() > 1 ? ln.substr(1) : "");
-        }
-        std::ostringstream joined;
-        for (size_t i = 0; i < content_lines.size(); ++i) {
-            if (i) joined << '\n';
-            joined << content_lines[i];
-        }
-        auto numbered = add_line_numbers({
-            .content = joined.str(),
-            .start_line = hunk.new_start
-        });
-        if (!first_hunk) full += "\n...\n";
-        full += numbered;
-        first_hunk = false;
-    }
-
-    if (full.size() <= kDiffSnippetMaxBytes) return full;
-
-    // Truncate at last '\n' that fits within the cap.
-    const auto cutoff = full.rfind('\n', kDiffSnippetMaxBytes);
-    std::string kept = (cutoff != std::string::npos && cutoff > 0)
-        ? full.substr(0, cutoff)
-        : full.substr(0, kDiffSnippetMaxBytes);
-    auto remaining = count_char_in_string(full, '\n', kept.size()) + 1;
-    return kept + "\n\n... [" + std::to_string(remaining) + " lines truncated] ...";
-}
-
-struct SnippetResult {
-    std::string formatted_snippet;
-    int start_line = 0;
-};
-
-/// getSnippetForPatch() — show new-file context around patch hunks.
-inline SnippetResult get_snippet_for_patch(
-    const std::vector<PatchHunk>& patches,
-    std::string_view new_file,
-    int context_lines = kDefaultContextLines)
-{
-    if (patches.empty()) return {"", 1};
-
-    int min_line = std::numeric_limits<int>::max();
-    int max_line = std::numeric_limits<int>::min();
-    for (const auto& h : patches) {
-        if (h.old_start < min_line) min_line = h.old_start;
-        int end = h.old_start + std::max(0, h.new_lines) - 1;
-        if (end > max_line) max_line = end;
-    }
-    int start_line = std::max(1, min_line - context_lines);
-    int end_line   = max_line + context_lines;
-
-    auto lines = patch_detail::split_lines(new_file);
-    std::ostringstream oss;
-    for (int i = start_line - 1; i < end_line && i < static_cast<int>(lines.size()); ++i) {
-        if (i >= start_line) oss << '\n';
-        if (i >= 0) oss << lines[i];
-    }
-    auto formatted = add_line_numbers(oss.str(), start_line);
-    return {std::move(formatted), start_line};
-}
-
-/// getSnippet() — simple, old-string-based snippet (UI.tsx legacy helper).
-struct SimpleSnippet {
-    std::string snippet;
-    int start_line = 1;
-};
-inline SimpleSnippet get_snippet(
-    std::string_view original_file,
-    std::string_view old_string,
-    std::string_view new_string,
-    int context_lines = kDefaultContextLines)
-{
-    auto before_pos = original_file.find(old_string);
-    std::string before = (before_pos == std::string_view::npos)
-        ? std::string(original_file)
-        : std::string(original_file.substr(0, before_pos));
-
-    int replacement_line = 0;
-    for (char c : before) if (c == '\n') ++replacement_line;
-
-    auto new_file_lines = patch_detail::split_lines(
-        apply_edit(original_file, old_string, new_string));
-    auto new_lines = patch_detail::split_lines(new_string);
-
-    int start_line = std::max(0, replacement_line - context_lines);
-    int end_line   = replacement_line + context_lines +
-                     static_cast<int>(new_lines.size());
-
-    std::ostringstream oss;
-    for (int i = start_line; i < end_line && i < static_cast<int>(new_file_lines.size()); ++i) {
-        if (i > start_line) oss << '\n';
-        oss << new_file_lines[i];
-    }
-    return {oss.str(), start_line + 1};
 }
 
 // ===========================================================================

@@ -58,9 +58,6 @@ struct InstalledPlugin {
 /// Clear the installed plugins cache (forces reload from disk)
 void clear_installed_plugins_cache();
 
-/// Migrate legacy plugin registries into the single plugin file format.
-void migrate_to_single_plugin_file();
-
 /// Load installed plugins in the current registry format.
 [[nodiscard]] InstalledPluginsFile load_installed_plugins_registry();
 

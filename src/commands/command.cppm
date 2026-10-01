@@ -125,12 +125,6 @@ struct CommandResult {
     }
 };
 
-// ============================================================
-// Command Handler
-// ============================================================
-
-using CommandHandler = std::function<CommandResult(const CommandContext&)>;
-
 /// Polymorphic command interface used by the registry.
 class ICommand {
 public:
@@ -153,23 +147,12 @@ public:
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) override { return command_.complete(partial); }
 };
 
-/// Registered command information
-struct CommandRegistration {
-    std::string name;
-    std::string description;
-    std::string usage;
-    CommandHandler handler;
-    std::vector<std::string> aliases;
-    bool hidden = false;
-};
-
 // ============================================================
 // Command Registry
 // ============================================================
 
 /// Registry for slash commands
 class CommandRegistry {
-    std::unordered_map<std::string, CommandRegistration> legacy_commands_;
     std::unordered_map<std::string, std::unique_ptr<ICommand>> commands_;
     std::unordered_map<std::string, std::string> alias_map_;
 
@@ -182,14 +165,6 @@ public:
     CommandRegistry& operator=(CommandRegistry&&) noexcept = default;
 
     /// Register a command
-    void register_command(CommandRegistration cmd) {
-        auto name = cmd.name;
-        legacy_commands_[name] = std::move(cmd);
-        for (const auto& alias : legacy_commands_[name].aliases) {
-            alias_map_[alias] = name;
-        }
-    }
-
     template <typename Command>
     void register_command() {
         auto command = std::make_unique<CommandModel<Command>>();
@@ -207,22 +182,9 @@ public:
 
     [[nodiscard]] bool contains(std::string_view name) const {
         auto key = std::string(name);
-        if (commands_.contains(key) || legacy_commands_.contains(key)) return true;
+        if (commands_.contains(key)) return true;
         auto alias = alias_map_.find(key);
-        return alias != alias_map_.end() && (commands_.contains(alias->second) || legacy_commands_.contains(alias->second));
-    }
-
-    /// Get command by name or alias
-    [[nodiscard]] const CommandRegistration* get_command(const std::string& name) const {
-        auto it = legacy_commands_.find(name);
-        if (it != legacy_commands_.end()) {
-            return &it->second;
-        }
-        auto alias_it = alias_map_.find(name);
-        if (alias_it != alias_map_.end()) {
-            return get_command(alias_it->second);
-        }
-        return nullptr;
+        return alias != alias_map_.end() && commands_.contains(alias->second);
     }
 
     [[nodiscard]] ICommand* get(std::string_view name) const {
@@ -282,30 +244,12 @@ public:
             return *result;
         }
 
-        const CommandRegistration* cmd = get_command(cmd_name);
-        if (!cmd) {
-            return CommandResult{false, std::format("Unknown command: /{}", cmd_name), std::nullopt};
-        }
-
-        ctx.args = std::move(args);
-        ctx.raw_input = input;
-        return cmd->handler(ctx);
+        return CommandResult{false, std::format("Unknown command: /{}", cmd_name), std::nullopt};
     }
 
     /// Execute a command from input without runtime context.
     [[nodiscard]] std::optional<CommandResult> execute(const std::string& input) const {
         return execute(input, CommandContext{});
-    }
-
-    /// Get all visible commands
-    [[nodiscard]] std::vector<CommandRegistration> get_visible_commands() const {
-        std::vector<CommandRegistration> result;
-        for (const auto& [name, cmd] : legacy_commands_) {
-            if (!cmd.hidden) {
-                result.push_back(cmd);
-            }
-        }
-        return result;
     }
 
     /// Generate help text
@@ -318,19 +262,6 @@ public:
             help += std::format("/{} - {}\n", name, def.description);
             seen.push_back(name);
         }
-        for (const auto& [name, cmd] : legacy_commands_) {
-            if (cmd.hidden || std::ranges::find(seen, name) != seen.end()) continue;
-            help += std::format("/{} - {}\n", name, cmd.description);
-            help += std::format("  Usage: {}\n", cmd.usage);
-            if (!cmd.aliases.empty()) {
-                help += std::format("  Aliases: {}\n", 
-                    std::accumulate(cmd.aliases.begin(), cmd.aliases.end(), std::string(),
-                        [](const std::string& a, const std::string& b) {
-                            return a.empty() ? b : a + ", " + b;
-                        }));
-            }
-            help += "\n";
-        }
         return help;
     }
 
@@ -339,9 +270,6 @@ public:
         auto prefix = std::string(partial_input);
         if (!prefix.empty() && prefix.front() == '/') prefix.erase(prefix.begin());
         for (const auto& [name, _] : commands_) {
-            if (name.starts_with(prefix)) result.push_back('/' + name);
-        }
-        for (const auto& [name, _] : legacy_commands_) {
             if (name.starts_with(prefix)) result.push_back('/' + name);
         }
         return result;
@@ -369,12 +297,9 @@ public:
 
     [[nodiscard]] std::vector<std::string> command_names() const {
         std::vector<std::string> names;
-        names.reserve(commands_.size() + legacy_commands_.size());
+        names.reserve(commands_.size());
         for (const auto& [name, cmd] : commands_) {
             if (!cmd->definition().hidden) names.push_back(name);
-        }
-        for (const auto& [name, cmd] : legacy_commands_) {
-            if (!cmd.hidden) names.push_back(name);
         }
         std::ranges::sort(names);
         names.erase(std::ranges::unique(names).begin(), names.end());
@@ -382,79 +307,8 @@ public:
     }
 
     [[nodiscard]] std::size_t size() const noexcept {
-        return commands_.size() + legacy_commands_.size();
+        return commands_.size();
     }
 };
-
-/// Create a default command registry with built-in commands
-CommandRegistry create_default_registry() {
-    CommandRegistry registry;
-
-    // /help command
-    registry.register_command(CommandRegistration{
-        "help",
-        "Show this help message",
-        "/help",
-        [](const CommandContext&) -> CommandResult {
-            return {true, "Available commands: /help, /clear, /exit, /config, /cost", std::nullopt};
-        },
-        {"?"},
-        false
-    });
-
-    // /clear command
-    registry.register_command(CommandRegistration{
-        "clear",
-        "Clear the current conversation",
-        "/clear",
-        [](const CommandContext&) -> CommandResult {
-            return {true, "Conversation cleared", std::nullopt};
-        },
-        {"cls"},
-        false
-    });
-
-    // /exit command
-    registry.register_command(CommandRegistration{
-        "exit",
-        "Exit the application",
-        "/exit",
-        [](const CommandContext&) -> CommandResult {
-            return {true, "Goodbye!", "EXIT"};
-        },
-        {"quit", "q"},
-        false
-    });
-
-    // /config command
-    registry.register_command(CommandRegistration{
-        "config",
-        "Show or modify configuration",
-        "/config [key] [value]",
-        [](const CommandContext& ctx) -> CommandResult {
-            if (ctx.args.empty()) {
-                return {true, "Current configuration: use /config <key> <value> to update settings", std::nullopt};
-            }
-            return {true, std::format("Config set: {} = {}", ctx.args[0], 
-                ctx.args.size() > 1 ? ctx.args[1] : ""), std::nullopt};
-        },
-        {"set"},
-        false
-    });
-
-    // /cost command
-    registry.register_command(CommandRegistration{
-        "cost",
-        "Show session cost and usage",
-        "/cost",
-        [](const CommandContext&) -> CommandResult {
-            return {true, "Session cost and usage: local counters are tracked by the cost command module", std::nullopt};
-        },
-        {},
-        false
-    });
-
-    return registry;
-}
 
 } // namespace loom::core

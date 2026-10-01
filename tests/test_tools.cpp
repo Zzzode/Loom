@@ -12098,28 +12098,11 @@ TEST(WireSeam, EnvVarSelectsTheWireWhenConfigDoesNot) {
 // The pre-rename spelling is honoured so a config written before the rename
 // keeps working. Both names are ours (neither is a vendor name), so accepting
 // both costs nothing and avoids silently retargeting an existing setup.
-TEST(WireSeam, LegacyEnvVarNameStillSelectsTheWire) {
-    auto config = base_config();
-    config.custom_system_prompt = "be terse";
-    const EnvironmentUnsetGuard no_new_name("LOOM_WIRE_API");
-    const EnvironmentGuard legacy_env("CC_REPL_WIRE_API", "openai");
-    ToolRegistry registry;
-    QueryEngine engine(std::move(config), registry);
-    const auto doc = parse(engine.build_request_body_for_testing());
-    ASSERT_TRUE(doc.has_value());
-    ASSERT_TRUE(doc->root().get("messages").is_arr());
-    EXPECT_EQ(std::string(doc->root().get("messages").at(0).get("role").as_str()),
-              "system")
-        << "CC_REPL_WIRE_API should still select the OpenAI backend";
-}
-
-// The documented name wins when both are set, so a user migrating can leave
-// the old one in place while the new one takes effect.
-TEST(WireSeam, NewEnvVarNameWinsOverTheLegacyOne) {
+// The documented name selects the wire backend.
+TEST(WireSeam, EnvVarNameSelectsTheWire) {
     auto config = base_config();
     config.custom_system_prompt = "be terse";
     const EnvironmentGuard new_env("LOOM_WIRE_API", "openai");
-    const EnvironmentGuard legacy_env("CC_REPL_WIRE_API", "anthropic");
     ToolRegistry registry;
     QueryEngine engine(std::move(config), registry);
     const auto doc = parse(engine.build_request_body_for_testing());
@@ -12127,7 +12110,7 @@ TEST(WireSeam, NewEnvVarNameWinsOverTheLegacyOne) {
     ASSERT_TRUE(doc->root().get("messages").is_arr());
     EXPECT_EQ(std::string(doc->root().get("messages").at(0).get("role").as_str()),
               "system")
-        << "LOOM_WIRE_API should win over the legacy spelling";
+        << "LOOM_WIRE_API should select the OpenAI backend";
 }
 
 TEST(WireSeam, UnknownWireApiFallsBackToAnthropic) {

@@ -744,9 +744,6 @@ TEST(BridgeConfig, LoadsDefaultsEnvironmentAndJsonFile) {
     ScopedEnvVar clear_port("LOOM_BRIDGE_PORT");
     ScopedEnvVar clear_host("LOOM_BRIDGE_HOST");
     ScopedEnvVar clear_token("LOOM_BRIDGE_TOKEN");
-    ScopedEnvVar clear_cc_port("CC_BRIDGE_PORT");
-    ScopedEnvVar clear_cc_host("CC_BRIDGE_HOST");
-    ScopedEnvVar clear_cc_token("CC_BRIDGE_TOKEN");
 
     loom::bridge::BridgeConfigLoader loader;
     auto defaults = loader.load();

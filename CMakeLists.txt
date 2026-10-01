@@ -301,10 +301,6 @@ add_subdirectory(src)
 
 # ─── Unit Tests (GoogleTest) ──────────────────────────────────────────────────
 option(LOOM_BUILD_TESTS "Build unit tests" ON)
-# Backwards-compat: CC_BUILD_TESTS was the old name.
-if(DEFINED CC_BUILD_TESTS AND NOT DEFINED LOOM_BUILD_TESTS)
-    set(LOOM_BUILD_TESTS "${CC_BUILD_TESTS}" CACHE BOOL "Build unit tests" FORCE)
-endif()
 if(LOOM_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)

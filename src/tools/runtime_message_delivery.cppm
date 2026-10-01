@@ -231,7 +231,6 @@ struct RuntimePeerAddress {
     });
     auto source_session_id = first_runtime_env({
         "LOOM_REMOTE_SESSION_ID",
-        "CC_REMOTE_SESSION_ID", // backwards compat
     });
     auto auth_token = runtime_env_value("LOOM_SESSION_ACCESS_TOKEN");
     if (!endpoint || !source_session_id || !auth_token) {

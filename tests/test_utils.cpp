@@ -473,14 +473,10 @@ TEST(Memdir, TeamMemoryCanBeEnabledAtRuntime) {
     ScopedEnvVar disable_auto("LOOM_DISABLE_AUTO_MEMORY");
     ScopedEnvVar enable_team("LOOM_ENABLE_TEAM_MEMORY");
     ScopedEnvVar loom_sync_url("LOOM_TEAM_MEMORY_SYNC_URL");
-    ScopedEnvVar cc_sync_url("CC_TEAM_MEMORY_SYNC_URL");
-    ScopedEnvVar ts_sync_url("TEAM_MEMORY_SYNC_URL");
 
     disable_auto.unset();
     enable_team.unset();
     loom_sync_url.unset();
-    cc_sync_url.unset();
-    ts_sync_url.unset();
     EXPECT_FALSE(memdir::is_team_memory_enabled());
 
     enable_team.set("true");
@@ -491,19 +487,14 @@ TEST(Memdir, TeamMemoryCanBeEnabledAtRuntime) {
 
     disable_auto.unset();
     enable_team.set("false");
-    cc_sync_url.set("https://team-memory.example");
+    loom_sync_url.set("https://team-memory.example");
     EXPECT_FALSE(memdir::is_team_memory_enabled());
 
     enable_team.unset();
     EXPECT_TRUE(memdir::is_team_memory_enabled());
 
-    cc_sync_url.unset();
-    loom_sync_url.set("https://team-memory.example");
-    EXPECT_TRUE(memdir::is_team_memory_enabled());
-
     loom_sync_url.unset();
-    ts_sync_url.set("https://team-memory.example");
-    EXPECT_TRUE(memdir::is_team_memory_enabled());
+    EXPECT_FALSE(memdir::is_team_memory_enabled());
 }
 
 TEST(CollapseReadSearchSummary, SummarizesTrailingSearchReadActivities) {

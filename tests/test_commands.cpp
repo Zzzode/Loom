@@ -177,32 +177,6 @@ TEST(CommandRegistry, ParsesSlashCommandsAndArguments) {
     EXPECT_FALSE(loom::core::CommandRegistry::parse("not a command").has_value());
 }
 
-TEST(CommandRegistry, ExecutesLegacyCommandsAndAliases) {
-    loom::core::CommandRegistry registry;
-    registry.register_command(loom::core::CommandRegistration{
-        .name = "echo",
-        .description = "Echo input",
-        .usage = "/echo <text>",
-        .handler = [](const loom::core::CommandContext& command_ctx) {
-            return loom::core::CommandResult::success(command_ctx.args.empty() ? "" : command_ctx.args.front());
-        },
-        .aliases = {"say"},
-        .hidden = false,
-    });
-
-    EXPECT_TRUE(registry.contains("echo"));
-    EXPECT_TRUE(registry.contains("say"));
-
-    auto result = registry.execute("/say hello");
-    ASSERT_TRUE(result.has_value());
-    EXPECT_TRUE(result->ok);
-    EXPECT_EQ(result->message, "hello");
-
-    auto missing = registry.execute("/missing");
-    ASSERT_TRUE(missing.has_value());
-    EXPECT_FALSE(missing->ok);
-}
-
 TEST(CommandRegistry, RegistersTypedCommandsAndCompletesNames) {
     loom::core::CommandRegistry registry;
     registry.register_command<loom::commands::HelpCommand>();

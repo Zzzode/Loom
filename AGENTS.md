@@ -121,8 +121,8 @@ cycle-free. Two caveats from the single-target era still hold:
 
 ### Configuration and data paths
 
-    config dir   $LOOM_CONFIG_DIR > ~/.loom > ~/.agents > ~/.claude   (read)
-                 $LOOM_CONFIG_DIR > ~/.loom                          (write)
+    config dir   $LOOM_CONFIG_DIR > ~/.loom > ~/.agents   (read)
+                 $LOOM_CONFIG_DIR > ~/.loom                (write)
     memory file  LOOM.md > AGENTS.md > CLAUDE.md   (per directory, walking up)
 
 Read follows the cascade; **write never does.** Writing into another tool's
@@ -130,14 +130,13 @@ config directory would interleave two tools' state. Both cascades are
 implemented in `src/constants/paths.cppm` — eight call sites previously
 reimplemented the lookup and silently drifted.
 
-MCP server config (`loom mcp add/remove/enable/disable`) lives in FOUR
+MCP server config (`loom mcp add/remove/enable/disable`) lives in THREE
 physical JSON files, highest precedence first; same-named entries overlay
 per entry across the files, and `--scope` patches exactly one file in place:
 
     local    <project>/.loom/config.local.json  (gitignored; derived next to the project file)
     project  <project>/.loom/config.json         (VCS-tracked)
     user     $LOOM_CONFIG_DIR/config.json, else ~/.loom/config.json
-    global   ~/.config/loom/config.json          (legacy READ tier; written only to remove pollution)
 
 A non-JSON/key=value user/local file is tolerated (zero entries + one
 warning); a full save to the project file never copies user/local-only

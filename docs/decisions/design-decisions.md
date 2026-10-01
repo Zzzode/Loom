@@ -533,8 +533,9 @@ promoted to the repository root in the same series of commits, so
 - **`cpp_migration/src/ui/design_system/figures.cppm:187-193`** — **The previous C++ value was
   wrong**: `kBridgeReadyIndicator` used the emoji `✅︎` (U+2705 + VS15) when TS uses `·✔︎·`
   (middot U+00B7 + heavy check U+2714 + VS15 U+FE0E + middot). Corrected to match TS exactly.
-  `kBridgeReadyIndicatorLegacy` is kept for one release so callers that already imported the old
-  symbol do not break — and is marked deprecated.
+  ~~`kBridgeReadyIndicatorLegacy` is kept for one release so callers that already imported the old
+  symbol do not break — and is marked deprecated.~~ **Removed in the legacy-code purge** (2026-10-01):
+  the one-release compatibility window expired and the constant had zero production callers.
 
 - **`cpp_migration/src/ui/design_system/figures.cppm:44-51`** — Two symbols exist for the prompt
   pointer on purpose: `kPointer` is the glyph alone **and ** `kPointerPrefix` is glyph + ASCII space
@@ -709,9 +710,10 @@ promoted to the repository root in the same series of commits, so
   command handler dispatching `SwitchModel` through the AppState action system.
 
 - **`cpp_migration/src/ui/dialogs/plugin_dialog.cppm:770-775`** — TS has **no 5-card dashboard** — it
-  goes straight to tab navigation. Legacy menu view-kinds (`ViewKind::Menu`,
+  goes straight to tab navigation. ~~Legacy menu view-kinds (`ViewKind::Menu`,
   `ViewKind::MarketplaceMenu`) are therefore **normalized to the Discover tab** rather than rendered
-  as cards.
+  as cards.~~ **`MarketplaceMenu` was removed in the legacy-code purge** (2026-10-01); routing now
+  produces `DiscoverPlugins` directly.
 
 - **`cpp_migration/src/ui/dialogs/dialog_default_renderers.cppm:635-646`** — Six dialog types
   (`ManagedSettingsSecurity`, `FeedbackSurvey`, `GlobalSearch`, `HistorySearch`, `PluginDialog`,
@@ -1737,12 +1739,13 @@ promoted to the repository root in the same series of commits, so
   with its own hardcoded filename**. A change to any of them **silently applied to one code path and
   not the others**; keeping the order in one exported constant is what makes that impossible. The
   cascade is: `$LOOM_CONFIG_DIR` (explicit override, wins outright) → `$HOME/.loom` (current name) →
-  `$HOME/.agents` (interop with the AGENTS.md ecosystem) → `$HOME/.claude` (the pre-rename name, so
-  existing data keeps working).
+  `$HOME/.agents` (interop with the AGENTS.md ecosystem). ~~`$HOME/.claude` (the pre-rename name, so
+  existing data keeps working).~~ **The `.claude` tier was removed in the legacy-code purge**
+  (2026-10-01).
 
 - **`cpp_migration/src/constants/paths.cppm:104-112`** — The **write** config directory is
-  **deliberately narrower than the read cascade**: `$LOOM_CONFIG_DIR`, else `~/.loom`. Reading a legacy
-  `~/.claude` is safe and is the point of the cascade; **writing there is not the same act**. If a user
+  **deliberately narrower than the read cascade**: `$LOOM_CONFIG_DIR`, else `~/.loom`. ~~Reading a legacy
+  `~/.claude` is safe and is the point of the cascade;~~ **writing there is not the same act**. If a user
   has only `~/.claude`, writing our `sessions/`, `plugins/` and `settings.json` into it would
   **interleave our state with another tool's, in a directory the user did not choose for us** — and
   `~/.claude` already has its own `sessions/` for the other tool to collide with. So we create our own
@@ -1750,26 +1753,25 @@ promoted to the repository root in the same series of commits, so
 
 - **`cpp_migration/src/config/settings.cppm:200-204`** — The **user** scope resolves through the shared
   read cascade, so a user's existing settings are found after the rename. **Project** scopes use the
-  project's own cascade directory name — **reading a legacy `~/.claude` must not make new projects
-  write into `./.claude/`**.
+  project's own cascade directory name.
 
-- **`src/config/config.cppm` (RFC-0001 B followup c6)** — Core MCP server config is stored in **four
-  physical files** — legacy `~/.config/loom/config.json` (global, read tier),
-  `$LOOM_CONFIG_DIR/config.json` else `~/.loom/config.json` (user), `<project>/.loom/config.json`
-  (project, VCS-tracked), and `<project>/.loom/config.local.json` (local, gitignored) — merged by
-  **per-entry name overlay** (a project file no longer replaces the whole global `mcpServers` block,
-  and `{}` overrides nothing). `mcp add/remove/enable/disable --scope` patch one file in place
-  (atomic tmp+rename, whole-file yyjson-pretty reformat) instead of full-saving the merged vector.
-  Two compatibility policies bracket the merge: a **non-JSON user/local file** (the registered
-  `config` tool appends `key=value` lines to `~/.loom/config.json`) contributes zero entries plus a
-  single warning and must not be overwritten by an upsert, while a **full save to the project file**
-  re-emits only entries physically present in that file (using that file's own parsed value) or owned
-  by global/project — a user/local shadow carrying `Authorization` headers must never enter VCS.
+- **`src/config/config.cppm` (RFC-0001 B followup c6)** — Core MCP server config is stored in **three
+  physical files** — ~~legacy `~/.config/loom/config.json` (global, read tier),~~ **(the global tier was
+  removed in the legacy-code purge, 2026-10-01)** — `$LOOM_CONFIG_DIR/config.json` else
+  `~/.loom/config.json` (user), `<project>/.loom/config.json` (project, VCS-tracked), and
+  `<project>/.loom/config.local.json` (local, gitignored) — merged by **per-entry name overlay** (a
+  project file no longer replaces the whole global `mcpServers` block, and `{}` overrides nothing).
+  `mcp add/remove/enable/disable --scope` patch one file in place (atomic tmp+rename, whole-file
+  yyjson-pretty reformat) instead of full-saving the merged vector. Two compatibility policies bracket
+  the merge: a **non-JSON user/local file** (the registered `config` tool appends `key=value` lines to
+  `~/.loom/config.json`) contributes zero entries plus a single warning and must not be overwritten by
+  an upsert, while a **full save to the project file** re-emits only entries physically present in that
+  file (using that file's own parsed value) or owned by project — a user/local shadow carrying
+  `Authorization` headers must never enter VCS.
 
 - **`cpp_migration/src/memdir/paths.cppm:161-165`** — `loom_config_home()` uses the **WRITE** resolution
   **on purpose**: these are directories we create and manage (auto-memory, session-memory, `projects/`),
-  so they belong under our own name even when a legacy `~/.claude` exists and is readable. Reading is a
-  separate question.
+  so they belong under our own name.
 
 - **`cpp_migration/src/memdir/paths.cppm:208-216`** — Session memory lives at
   `<config_home>/projects/<sanitized-cwd>/<sessionId>/session-memory/summary.md`. Unlike the long-term
@@ -1777,7 +1779,7 @@ promoted to the repository root in the same series of commits, so
   compaction** so resumed/continuation runs **do not start blind after old messages are dropped**.
 
 - **`cpp_migration/src/hooks/shell_hooks.cppm:546-551`** — User-scope hooks resolve through the
-  **READ** cascade so a user's pre-rename `~/.claude/settings.json` hooks still load. The stated reason:
+  **READ** cascade so a user's existing settings hooks still load. The stated reason:
   **hooks are the surface where silently dropping them changes behaviour the user explicitly
   configured**, so this one must follow the cascade rather than only look at `~/.loom`.
 
@@ -2783,9 +2785,10 @@ promoted to the repository root in the same series of commits, so
 - **`cpp_migration/src/ui/design_system/figures.cppm:5-9`** — The single-source-of-truth rule for glyphs
   across 10+ `.cppm` render sites.
 
-- **`cpp_migration/src/ui/design_system/figures.cppm:187-193`** — The legacy-symbol retention
+- **`cpp_migration/src/ui/design_system/figures.cppm:187-193`** — ~~The legacy-symbol retention
   (`kBridgeReadyIndicatorLegacy`) is an explicit one-release compatibility window — **it must be
-  removed after that release**.
+  removed after that release**.~~ **Removed in the legacy-code purge** (2026-10-01): the compatibility
+  window expired and the constant had zero production callers.
 
 - **`cpp_migration/src/ui/design_system/theme_provider.cppm:344-346`** — The color-name lookup accepts
   **both camelCase and snake_case** spellings of every TS theme field, so both TS-derived and

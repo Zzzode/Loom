@@ -150,8 +150,8 @@ no account system and no login.
 ### Config and memory paths
 
 ```
-config dir   $LOOM_CONFIG_DIR > ~/.loom > ~/.agents > ~/.claude   (read)
-             $LOOM_CONFIG_DIR > ~/.loom                          (write)
+config dir   $LOOM_CONFIG_DIR > ~/.loom > ~/.agents   (read)
+             $LOOM_CONFIG_DIR > ~/.loom                (write)
 memory file  LOOM.md > AGENTS.md > CLAUDE.md   (per directory, walking up)
 ```
 
@@ -170,13 +170,12 @@ is the highest-priority source and supports `env` (process env vars, e.g.
 ### MCP server configuration
 
 MCP servers are configured with `loom mcp add/remove/enable/disable` and live
-in four physical JSON files, highest precedence first:
+in three physical JSON files, highest precedence first:
 
 ```
 local    <project>/.loom/config.local.json  (gitignored)
 project  <project>/.loom/config.json         (VCS-tracked)
 user     $LOOM_CONFIG_DIR/config.json, else ~/.loom/config.json
-global   ~/.config/loom/config.json          (legacy READ tier)
 ```
 
 Same-named entries overlay per entry across the files; `--scope` patches

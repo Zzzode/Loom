@@ -9,10 +9,8 @@ script is run manually:
 It asserts the F0 gate contract from docs/rfcs/attachments/
 0002-implementable-gate.md:
 
-  1. on the LIVE tree, `graph_check.py --target-ui9` exits 1 and prints the
-     2 SCCs (7-area + chrome<->foundation) — the gate fails today and passes
-     after the F1/F2 cuts land (this assertion is the F0-state snapshot;
-     update it when F2 dissolves the last SCC);
+  1. on the LIVE tree, `graph_check.py --target-ui9` exits 0 — F2 dissolved
+     all SCCs, so the gate passes (this assertion is the post-F2 snapshot);
   2. a synthetic 20th SCC-internal direction in a temp tree fails check (a)
      (the SCC-shape ratchet) — a tools<->visual SCC: equal rank 1, so the
      new directions are NOT back edges and check (b) stays silent, isolating
@@ -69,19 +67,14 @@ def ui9_on_temp_tree(files: dict[str, str]):
 
 
 def main() -> int:
-    print("1. live tree: --target-ui9 exits 1 and prints the 2 SCCs")
+    print("1. live tree: --target-ui9 exits 0 (F2 dissolved all SCCs)")
     proc = subprocess.run(
         [sys.executable, str(HERE / "graph_check.py"), "--target-ui9"],
         cwd=ROOT, capture_output=True, text=True)
-    check(proc.returncode == 1, f"exit code 1 (got {proc.returncode})")
+    check(proc.returncode == 0, f"exit code 0 (got {proc.returncode})")
     out = proc.stdout
-    check("TARGET UI9 SCC: loom.ui.chrome, loom.ui.foundation" in out,
-          "prints the 2-area chrome<->foundation SCC")
-    check("TARGET UI9 SCC: loom.ui.dialogs, loom.ui.features, loom.ui.messages, "
-          "loom.ui.permissions, loom.ui.prompt, loom.ui.screens, loom.ui.widgets"
-          in out, "prints the 7-area SCC")
-    check("RFC 0002 F0 target (12 singleton loom.ui areas): FAIL" in out,
-          "prints the FAIL verdict line")
+    check("RFC 0002 F0 target (12 singleton loom.ui areas): PASS" in out,
+          "prints the PASS verdict line")
 
     print("2. temp tree: tools<->visual SCC fails check (a) only")
     u = ui9_on_temp_tree({

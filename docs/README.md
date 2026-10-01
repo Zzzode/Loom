@@ -1,4 +1,4 @@
-# cpp_migration docs — reading note
+# Loom docs — reading note
 
 **The TypeScript reference tree at `src/` was deleted on 2026-09-21.** The C++
 tree under `cpp_migration/` was promoted to the repository root in the same
@@ -17,7 +17,7 @@ current documentation.
 
 | File | Status |
 |---|---|
-| [`rfcs/0001-module-architecture-target.md`](rfcs/0001-module-architecture-target.md) | **Implemented.** Target module architecture for Loom: declaration-only interfaces, `import std;` + single FTXUI wrapper module, breaking the UI9/Core8 directory SCCs, dissolving the `loom.utils` junk drawer, and (last) UI state sharding. All phases A–F complete; status flipped 2026-10-01. OQ-1 (FTXUI header units) is the only deferred item — clang ≥23 + CMake 4 prerequisite now met on the Linux dev box. |
+| [`rfcs/0001-module-architecture-target.md`](rfcs/0001-module-architecture-target.md) | **Implemented.** Target module architecture for Loom: declaration-only interfaces, `import std;` + single FTXUI wrapper module, breaking the UI9/Core8 directory SCCs, dissolving the `loom.utils` junk drawer, and (last) UI state sharding. All phases A–F complete; status flipped 2026-10-01. OQ-1 (FTXUI header units): one-leaf pilot succeeded on clang 23.1.2; full rollout attempted and reverted (transitive BMI leakage — see the Implementation History). |
 | [`rfcs/0002-ui-state-sharding-and-ui9-break.md`](rfcs/0002-ui-state-sharding-and-ui9-break.md) | **Implemented.** RFC 0001 Phase F follow-up: sever the measured 9-area UI SCC (219 modules, 32 area back edges) via type sinks, registry inversion and `ReplScreenState` sharding, then split `loom_ui` into ~12 acyclic libraries. F2 (SCC dissolution) and F4 (library split) are done; `graph_check.py --target-ui9` passes with 12 singleton areas. Edge inventory in `rfcs/attachments/0002-ui9-edge-inventory.md`. |
 
 | File | Status |

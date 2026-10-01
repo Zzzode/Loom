@@ -6,11 +6,11 @@
 
 ## Canonical pattern
 
-Use **`std::expected<T, cc::utils::Error>`** (aliased as `cc::utils::Result<T>`)
+Use **`std::expected<T, loom::utils::Error>`** (aliased as `loom::utils::Result<T>`)
 for any fallible operation that can fail in a recoverable, expected way.
 
 ```cpp
-[[nodiscard]] cc::utils::Result<AppState> load_state();        // success or Error
+[[nodiscard]] loom::utils::Result<AppState> load_state();        // success or Error
 [[nodiscard]] std::expected<void, OAuthError> store(...);      // domain-specific error enum is fine
 ```
 
@@ -19,8 +19,8 @@ for any fallible operation that can fail in a recoverable, expected way.
 - Propagate with `return std::unexpected(err);` / `co_await`-style chaining
   (`if (!r) return std::unexpected(r.error());`).
 - Prefer a domain-specific error enum (`OAuthError`, `LspClientError`,
-  `cc::utils::ErrorCode`) over raw strings where callers can meaningfully
-  branch on the cause. `cc::utils::Error` carries `ErrorCode` + message and is
+  `loom::utils::ErrorCode`) over raw strings where callers can meaningfully
+  branch on the cause. `loom::utils::Error` carries `ErrorCode` + message and is
   the lingua-franca for cross-module boundaries.
 
 ## Where each style belongs
@@ -67,7 +67,7 @@ catch, a control-flow misuse of exceptions.
 A 2026-06-17 audit of the remaining ~33 `throw` sites classified them:
 
 - **Legitimate (kept):** the `json_read` parser throws and is wrapped to
-  `std::expected` at the `cc.serdes.json` boundary (callers use `parse_json_file`
+  `std::expected` at the `loom.serdes.json` boundary (callers use `parse_json_file`
   which returns `Result`); `stop_task` / `bridge` domain errors are caught by
   their own poll loops; `SanitizedValue::at` mirrors `std::map::at`;
   `words::random_index` throws on a violated precondition.

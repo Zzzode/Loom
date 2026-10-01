@@ -7,11 +7,11 @@
   },
   "configurePresets": [
     {
-      "name": "local-linux",
-      "displayName": "Local Linux dev box (Homebrew LLVM + brew glibc)",
-      "description": "Machine-local preset \u2014 NOT for CI. The committed presets target GitHub's macos-14 runner. On Linux you need an explicit LLVM toolchain, system (not Homebrew) OpenSSL/curl headers, and a link line against Homebrew's glibc. Replace <LLVM_PREFIX> and <BREW_PREFIX> with your own paths. If you are not on a Homebrew layout, start from the committed 'debug' preset instead and add only what your toolchain needs.",
+      "name": "local-linux-clang23",
+      "displayName": "Local Linux dev box (Homebrew LLVM 23 + brew glibc)",
+      "description": "Machine-local preset — NOT for CI. The committed presets target GitHub's macos-14 runner. On Linux you need an explicit LLVM 23 toolchain, system (not Homebrew) OpenSSL/curl headers, and a link line against Homebrew's glibc. Replace <LLVM_PREFIX> and <BREW_PREFIX> with your own paths. LLVM 23 is required: LLVM 22 has an operator-new ambiguity bug (LLVM #184957) and an optimizer SIGSEGV that block this tree.",
       "inherits": "debug",
-      "binaryDir": "${sourceDir}/build/debug",
+      "binaryDir": "${sourceDir}/build/clang23-debug",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "<LLVM_PREFIX>/bin/clang",
         "CMAKE_CXX_COMPILER": "<LLVM_PREFIX>/bin/clang++",
@@ -25,40 +25,40 @@
       }
     },
     {
-      "name": "local-linux-release",
-      "displayName": "Local Linux dev box \u2014 Release",
-      "description": "As local-linux, but Release. Forcing -O0 with LTO off is a workaround for an optimizer crash in one specific LLVM build; drop those two lines for a normal Release configuration.",
-      "inherits": "local-linux",
-      "binaryDir": "${sourceDir}/build/release",
+      "name": "local-linux-clang23-release",
+      "displayName": "Local Linux dev box — LLVM 23 Release",
+      "description": "As local-linux-clang23, but Release with -O2. LLVM 23 fixed the optimizer crash that forced -O0 on LLVM 22.",
+      "inherits": "local-linux-clang23",
+      "binaryDir": "${sourceDir}/build/clang23-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_C_FLAGS_RELEASE": "-O0 -DNDEBUG",
-        "CMAKE_CXX_FLAGS_RELEASE": "-O0 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O2 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O2 -DNDEBUG",
         "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "OFF"
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "local-linux",
-      "configurePreset": "local-linux"
+      "name": "local-linux-clang23",
+      "configurePreset": "local-linux-clang23"
     },
     {
-      "name": "local-linux-release",
-      "configurePreset": "local-linux-release"
+      "name": "local-linux-clang23-release",
+      "configurePreset": "local-linux-clang23-release"
     }
   ],
   "testPresets": [
     {
-      "name": "local-linux",
-      "configurePreset": "local-linux",
+      "name": "local-linux-clang23",
+      "configurePreset": "local-linux-clang23",
       "output": {
         "outputOnFailure": true
       }
     },
     {
-      "name": "local-linux-release",
-      "configurePreset": "local-linux-release",
+      "name": "local-linux-clang23-release",
+      "configurePreset": "local-linux-clang23-release",
       "output": {
         "outputOnFailure": true
       }

@@ -180,7 +180,7 @@ target_link_libraries(cc_query
     cc_hooks_engine    # Permission / at-mention hooks
     cc_state_store     # AppState Store + persistence
     cc_tools_registry  # Tool registry + runtime dispatch
-    cc_utils_json      # Canonical JSON codec
+    loom_utils_json      # Canonical JSON codec
 )
 target_compile_features(cc_query PRIVATE cxx_std_20)
 
@@ -204,14 +204,14 @@ add_test(NAME TestQuery COMMAND test_query)
 ```cpp
 // query/query_engine.h
 import <memory>;
-import cc.api.client;
-import cc.mcp.client;
-import cc.oauth.client;
-import cc.hooks.engine;
-import cc.state.store;
-import cc.tools.registry;
+import loom.api.client;
+import loom.mcp.client;
+import loom.oauth.client;
+import loom.hooks.engine;
+import loom.state.store;
+import loom.tools.registry;
 
-namespace cc::query {
+namespace loom::query {
 
 class QueryEngine {
 public:
@@ -235,7 +235,7 @@ private:
   tools::Registry& tools_;
 };
 
-}  // namespace cc::query
+}  // namespace loom::query
 ```
 
 ```cpp

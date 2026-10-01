@@ -14,7 +14,7 @@ intent that used to live there.
 ```bash
 cmake --preset debug      # configure (also: release, asan)
 cmake --build --preset debug -j8
-ctest --preset debug -j1
+ctest --preset debug -j$(nproc)
 
 # or, the whole loop at once:
 cmake --workflow --preset dev     # configure + build debug
@@ -27,8 +27,9 @@ Configuring without a preset (or an explicit `CMAKE_TOOLCHAIN_FILE`) is a
 `clang-scan-deps` pair, and a silent fallback would be hard to diagnose.
 AppleClang is rejected outright — it ships no `clang-scan-deps`.
 
-**Run tests serially (`-j1`).** There are pre-existing timing-sensitive flakes
-under `ctest -j$(nproc)`; `-j1` is deterministic and is the signal that counts.
+Known timing-sensitive flakes: `ServerMain.DirectConnect*` (tests 706/708) use
+real TCP sockets with 3-second timeouts and can fail under high parallel load.
+If they fail, re-run them in isolation — they pass alone.
 
 ### Building on this Linux dev box
 
@@ -39,7 +40,7 @@ Use the machine-local preset (gitignored, because it holds absolute paths):
 cmake --preset local-linux            # debug
 cmake --preset local-linux-release    # release
 cmake --build --preset local-linux -j8
-ctest --preset local-linux -j1
+ctest --preset local-linux -j$(nproc)
 ```
 
 It pins Homebrew LLVM 22, points at the offline dependency cache, uses system

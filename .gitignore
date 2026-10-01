@@ -28,3 +28,6 @@ build-clang-coverage/
 CMakeUserPresets.json
 __pycache__/
 *.pyc
+
+# Loom project-local runtime state (agent-runtime, teams, etc.)
+.loom/

@@ -464,8 +464,8 @@ relocated). All of AppImpl's threads (`query_thread_`, `spinner_thread_`,
 `bash_thread_`, `leader_inbox_thread_`, `statusline_thread_`) and mutex/CV
 pairs stay in AppImpl.
 
-**Shard inventory** (source: `repl_state.cppm`, 691 LOC, 11 cc imports at
-`:19-29`):
+**Shard inventory (source: `repl_state.cppm`, 691 LOC, 11 cc imports at
+`:19-29`):**
 
 | Store | Fields (by section comment) | Cross-area type dependency (classification — live types re-verified 2026-09-29) |
 |---|---|---|
@@ -553,10 +553,10 @@ TUs — `AppendLocalMessagesToScreenState`, `AppendLocalCommandInputMessage`,
 `set_no_real_paste_worker_for_testing`, `set_input_text_for_testing`,
 `handle_submit_for_testing`);
 (d) **event/render dispatch** (moves to impl TUs or the repl screen).
-The F3-start inventory enumerates all 58 bodies by name into (a)–(d); the
-ratchet is re-frozen at the measured count of (a) bodies (expected ≤ 15). If
-the inventory counts more than 15 genuine composition bodies, the target is
-the measured count, recorded in the F3 Implementation History row.
+The F3-start inventory enumerates all 58 bodies by name into (a)–(d);
+the ratchet is re-frozen at the measured count of (a) bodies (expected ≤ 15).
+If the inventory counts more than 15 genuine composition bodies, the target
+is the measured count, recorded in the F3 Implementation History row.
 
 ### F4 — cc_ui library split (RFC F5)
 

@@ -6,7 +6,6 @@ export module loom.benchmarks.pare.workspace;
 
 import std;
 
-import loom.process.process;
 import loom.scm.git.git;
 
 export namespace loom::benchmarks::pare {

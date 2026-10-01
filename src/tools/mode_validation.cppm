@@ -11,7 +11,6 @@ export module loom.tools.mode_validation;
 
 import std;
 
-import loom.tools.bash_security;
 
 export namespace loom::tools::mode_validation {
 

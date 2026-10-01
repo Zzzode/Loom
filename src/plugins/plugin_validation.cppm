@@ -12,7 +12,6 @@ export module loom.plugins.plugin_validation;
 import std;
 
 import loom.serdes.json;
-import loom.plugins.plugin_identifier;
 
 export namespace loom::utils::plugin_validation {
 

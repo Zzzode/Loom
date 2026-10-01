@@ -68,7 +68,6 @@ export module loom.ui.messages.virtual_list;
 import std;
 
 import loom.ui.messages.scroll_keys;
-import loom.ui.foundation.design_tokens;
 
 // NOTE: The VirtualList module intentionally keeps its own VisibleRow struct.
 //       `loom.ui.messages.messages_list` is a separate, larger module that

@@ -12,7 +12,6 @@ import std;
 
 import loom.state.app_state;
 import loom.state.selectors;
-import loom.state.persistence;
 
 export namespace loom::state::on_change {
 

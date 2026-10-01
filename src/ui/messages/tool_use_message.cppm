@@ -21,7 +21,7 @@ import loom.types.types;
 import loom.ui.visual.code_highlight;
 // Import the shared spinner via its module-interface name.  The file exports
 // `ui::components` so we alias at the bottom of this file for convenience.
-import loom.ui.widgets.spinner;
+import loom.ui.widgets.spinner;  // arch-check: keep-import (spinner_ns alias)
 // For unescape_literal_newlines() + ansi_to_ftxui_elements() used by the
 // Output: section to decode JSON-escaped newlines and render ANSI SGR codes.
 import loom.ui.messages.message_tool_result;

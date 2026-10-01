@@ -34,7 +34,6 @@ import loom.ui.visual.markdown;
 // R7: BLACK_CIRCLE selection recoloring uses palette.suggestion +
 // message_actions_background tokens (not inline RGB) so light/daltonized
 // variants stay faithful.  Figures provides kBullet (U+25CF = TS BLACK_CIRCLE).
-import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_figures;
 

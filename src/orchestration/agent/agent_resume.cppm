@@ -10,30 +10,17 @@ export module loom.orchestration.agent.resume;
 
 import std;
 
-import loom.scm.git.git;
 import loom.tools.tool;
 import loom.tools.agent_runtime;
 import loom.tools.agent_constants;
-import loom.tools.agent_memory;
-import loom.tools.agent_memory_snapshot;
-import loom.tools.agent_color_manager;
-import loom.tools.agent_display;
 import loom.tools.bash;
-import loom.tools.todo_write;
 import loom.tools.send_message;
-import loom.tools.team;
 import loom.orchestration.tools.mcp;
-import loom.tools.sleep;
-import loom.tools.web_fetch;
 // RFC-0001 B10 — dead `import loom.skills.skill;` deleted: the file-access
 // hook move unmasked it (zero loom.skills references in this TU).
-import loom.teams.team_helpers;
 import loom.services.api.client;
 import loom.services.api.streaming;
 import loom.services.mcp.types;
-import loom.teams.swarm.backends;
-import loom.platform.env.env_utils;
-import loom.tools.support.tool_helpers;
 import loom.process.bash.bash_execution;
 import loom.orchestration.agent.utils;
 

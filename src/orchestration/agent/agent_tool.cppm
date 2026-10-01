@@ -12,14 +12,10 @@ export module loom.orchestration.agent;
 import std;
 
 import loom.utils.error;
-import loom.scm.git.git;
 import loom.tools.tool;
 import loom.serdes.json;
 import loom.tools.agent_runtime;
 import loom.tools.agent_constants;
-import loom.tools.agent_memory;
-import loom.tools.agent_memory_snapshot;
-import loom.tools.agent_color_manager;
 import loom.tools.agent_display;
 import loom.tools.bash;
 import loom.tools.todo_write;
@@ -35,8 +31,6 @@ import loom.services.api.streaming;
 import loom.services.api.bootstrap;
 import loom.services.mcp.types;
 import loom.teams.swarm.backends;
-import loom.platform.env.env_utils;
-import loom.tools.support.tool_helpers;
 import loom.process.bash.bash_execution;
 
 // Sub-modules created during P1-04 split

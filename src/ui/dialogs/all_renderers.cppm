@@ -15,8 +15,6 @@ export module loom.ui.dialogs.all_renderers;
 import std;
 
 import loom.ui.dialogs.default_renderers;
-import loom.ui.dialogs.bottom_renderers;
-import loom.ui.dialogs.modal_renderers;
 import loom.ui.dialogs.cost_threshold_dialog;
 import loom.ui.dialogs.sandbox_permission;
 import loom.ui.dialogs.quick_open;

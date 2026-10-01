@@ -14,7 +14,6 @@ export module loom.keybindings.shortcut_format;
 import std;
 
 import loom.keybindings.schema;
-import loom.keybindings.defaults;
 
 export namespace loom::keybindings {
 

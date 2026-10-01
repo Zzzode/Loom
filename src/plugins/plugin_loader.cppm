@@ -19,7 +19,6 @@ export module loom.plugins.plugin_loader;
 import std;
 
 import loom.plugins.plugin_identifier;
-import loom.plugins.plugin_versioning;
 import loom.serdes.json;
 import loom.process.bash.bash_execution;
 

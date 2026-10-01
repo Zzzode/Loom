@@ -11,8 +11,6 @@ export module loom.plugins.plugin_manager;
 
 import std;
 
-import loom.plugins.plugin_identifier;
-import loom.plugins.plugin_loader;
 
 export namespace loom::utils::plugin_manager {
 

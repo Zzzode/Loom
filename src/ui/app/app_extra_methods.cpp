@@ -39,10 +39,8 @@ module;
 module loom.ui.app.app;
 
 import loom.query.query_engine;
-import loom.commands.registry;
 import loom.commands.command;
 import loom.session.app_storage;
-import loom.hooks.lifecycle_hooks;
 
 // ── Imports needed by the 5 methods (not available via the interface) ────
 import loom.process.bash.bash_execution;

@@ -31,7 +31,6 @@ export module loom.skills.bundled.stuck;
 import std;
 
 import loom.skills.skill;
-import loom.skills.load_skills_dir;
 
 export namespace loom::skills::bundled {
 

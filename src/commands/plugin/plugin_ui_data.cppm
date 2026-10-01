@@ -35,7 +35,6 @@ import std;
 
 import loom.commands.plugin_parse_args;
 import loom.commands.plugin_helpers;
-import loom.commands.plugin_manage;
 
 export namespace loom::commands::plugin_ui {
 

@@ -13,7 +13,6 @@ import std;
 
 import loom.types.types;
 import loom.commands.command;
-import loom.state.app_state;
 
 export namespace loom::commands {
 

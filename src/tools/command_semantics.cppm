@@ -18,7 +18,6 @@ export module loom.tools.command_semantics;
 
 import std;
 
-import loom.text.format;
 
 export namespace loom::tools {
 

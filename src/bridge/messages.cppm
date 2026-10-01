@@ -10,7 +10,6 @@ export module loom.bridge.messages;
 
 import std;
 
-import loom.types.types;
 
 export namespace loom::bridge {
 

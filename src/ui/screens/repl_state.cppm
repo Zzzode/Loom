@@ -37,7 +37,7 @@ import loom.ui.screens.mcp_status_store;           // McpStatusStore
 import loom.ui.screens.chrome_store;               // ChromeStore / StatusBarData
 import loom.ui.features.agents.agent_cards;        // AgentCardData
 import loom.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
-import loom.ui.visual.markdown;                    // StreamingMarkdown (ptr field)
+import loom.ui.visual.markdown;                    // arch-check: keep-import (StreamingMarkdown ptr field)
 
 export namespace loom::ui::repl_screen {
 using namespace ftxui;

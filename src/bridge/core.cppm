@@ -25,14 +25,12 @@ export module loom.bridge.core;
 import std;
 
 import loom.types.types;
-import loom.bridge.config;
 import loom.bridge.transport;
-import loom.bridge.security;
 import loom.bridge.bridge_messaging;
 import loom.bridge.session_api;
 import loom.bridge.session_id_compat;
 import loom.bridge.debug_utils;
-import loom.bridge.flush_gate;
+import loom.bridge.flush_gate;  // arch-check: keep-import (FlushGate field)
 import loom.bridge.messages;
 import loom.cli.sse_transport;
 import loom.cli.ccr_client;

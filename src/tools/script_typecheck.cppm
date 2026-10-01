@@ -12,8 +12,6 @@ export module loom.tools.script_typecheck;
 
 import std;
 
-import loom.tools.script_types;
-import loom.tools.script_diagnostics;
 import loom.serdes.json;
 import loom.process.bash.bash_execution;
 

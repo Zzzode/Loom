@@ -6,7 +6,6 @@ export module loom.tools.glob;
 
 import std;
 
-import loom.fs.file;
 import loom.utils.error;
 import loom.tools.tool;
 import loom.serdes.json;

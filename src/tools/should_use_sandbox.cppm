@@ -27,7 +27,6 @@ export module loom.tools.should_use_sandbox;
 
 import std;
 
-import loom.tools.bash_security;
 
 export namespace loom::tools::sandbox {
 

@@ -18,7 +18,6 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 import loom.process.exec_sync;
-import loom.process.shell.shell;
 import loom.platform.find_executable;
 import loom.scm.git.detect_repository;
 

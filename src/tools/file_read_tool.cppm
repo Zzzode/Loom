@@ -8,7 +8,6 @@ export module loom.tools.file_read;
 
 import std;
 
-import loom.fs.file;
 import loom.utils.error;
 import loom.tools.image_codec.port;
 import loom.tools.tool;

@@ -29,7 +29,6 @@ import std;
 import loom.types.types;
 import loom.commands.command;
 import loom.process.exec_sync;
-import loom.scm.git.git_filesystem;
 import loom.scm.git.detect_repository;
 
 export namespace loom::commands {

@@ -10,8 +10,8 @@ export module loom.bridge.session_api;
 import std;
 
 import loom.types.types;
-import loom.net.http.http;
 import loom.serdes.json;
+import loom.net.http.http;  // arch-check: keep-import (HttpError, HttpClient)
 
 export namespace loom::bridge {
 

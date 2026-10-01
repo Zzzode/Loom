@@ -18,7 +18,7 @@ export module loom.ui.app.app;
 import std;
 
 import loom.types.types;
-import loom.ui.visual.markdown;
+import loom.ui.visual.markdown;  // arch-check: keep-import (StreamingMarkdown field)
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;   // MessageDisplayEntry (project_message / local_command_messages_)
 import loom.ui.prompt.autocomplete_sources;

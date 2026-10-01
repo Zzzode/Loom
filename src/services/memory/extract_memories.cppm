@@ -17,7 +17,6 @@ import loom.types.types;
 import loom.process.async;
 import loom.utils.error;
 import loom.serdes.json;
-import loom.fs.file;
 
 export namespace loom::services::extract_memories {
 

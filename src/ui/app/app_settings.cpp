@@ -8,7 +8,6 @@ module loom.ui.app.app;
 import std;
 
 import loom.config.settings_manager;
-import loom.ui.screens.repl_state;
 
 namespace loom::ui {
 

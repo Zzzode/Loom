@@ -37,25 +37,19 @@ module loom.ui.app.app;
 import loom.query.query_engine;
 import loom.commands.registry;
 import loom.commands.command;
-import loom.session.app_storage;
 import loom.hooks.lifecycle_hooks;
 
 // ── Base imports (shared with app_autocomplete.cpp) ─────────────────────
 import loom.commands.registry;
 import loom.tools.agent_runtime;
 import loom.ui.prompt.autocomplete_sources;
-import loom.ui.foundation.declared_cursor;
 import loom.ui.prompt.file_index;
 import loom.ui.prompt.fuzzy_rank_nucleo;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.task_view_store;
-import loom.diagnostics.debug;
-import loom.platform.hyperlink;
 import loom.text.parse_references;
-import loom.fs.path;
 import loom.skills.support;
-import loom.session.app_storage;
 
 // ── HandleSubmit-only imports (moved out of app_autocomplete.cpp) ───────
 import loom.ui.foundation.design_figures;

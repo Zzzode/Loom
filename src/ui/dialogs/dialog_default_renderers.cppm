@@ -35,7 +35,6 @@ import loom.ui.dialogs.sandbox_permission;
 import loom.ui.permissions.single_prompt;
 import loom.ui.permissions.components;
 import loom.ui.foundation.theme_provider;
-import loom.ui.foundation.component_primitives;
 import loom.ui.dialogs.cost_threshold_dialog;
 
 export namespace loom::ui::dialogs::default_renderers {

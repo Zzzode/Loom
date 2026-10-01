@@ -40,8 +40,6 @@ import loom.ui.app.statusline_runner;
 import loom.model.model;
 import loom.constants.constants;
 import loom.skills.load_skills_dir;
-import loom.state.app_state;
-import loom.state.store;
 import loom.query.query_engine;
 import loom.hooks.lifecycle_hooks;
 import loom.commands.command;

@@ -8,11 +8,10 @@ export module loom.tools.script;
 import std;
 
 // migrated: integrate collapse decision + script primitives + typecheck
-import loom.tools.script_primitives;
 import loom.tools.script_typecheck;
 import loom.tools.script_diagnostics;
 import loom.tools.script_types;
-import loom.tools.tool_display_names;
+import loom.tools.tool_display_names;  // arch-check: keep-import (SCRIPT_TOOL_NAME)
 import loom.process.bash.bash_execution;
 
 export namespace loom::tools {

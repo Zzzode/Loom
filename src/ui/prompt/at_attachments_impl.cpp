@@ -13,7 +13,7 @@ import std;
 import loom.types.types;  // arch-check: keep-import
 
 import loom.tools.agent_runtime;
-import loom.orchestration.tools.mcp;
+import loom.orchestration.tools.mcp;  // arch-check: keep-import (list_native_mcp_resources, read_native_mcp_resource)
 
 namespace loom::ui::prompt::at_attachments {
 

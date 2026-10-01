@@ -11,7 +11,6 @@ import std;
 import loom.text.parse_int;
 
 import loom.types.types;
-import loom.bridge.messages;
 import loom.bridge.config;
 import loom.net.http.http;
 import loom.serdes.json;

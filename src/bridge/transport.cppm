@@ -17,7 +17,7 @@ export module loom.bridge.transport;
 import std;
 
 import loom.serdes.json;
-import loom.net.http.http;
+import loom.net.http.http;  // arch-check: keep-import (HttpClient, HttpError)
 
 
 export namespace loom::bridge {

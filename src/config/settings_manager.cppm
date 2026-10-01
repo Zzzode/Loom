@@ -11,10 +11,6 @@ export module loom.config.settings_manager;
 import std;
 
 import loom.serdes.json;
-import loom.config.settings_merge;
-import loom.config.settings_paths;
-import loom.config.settings_sources;
-import loom.config.settings_validation;
 
 export namespace loom::utils::settings_manager {
 

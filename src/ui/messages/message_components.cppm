@@ -8,7 +8,6 @@ export module loom.ui.messages.message_components;
 
 import std;
 
-import loom.ui.chrome.layout;
 import loom.ui.foundation.design_figures;  // kBlackCircleFallback (● U+25CF) — single source of truth
 
 export namespace loom::ui::messages {

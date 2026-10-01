@@ -35,7 +35,6 @@ import loom.query.query_engine;
 import loom.commands.registry;
 import loom.commands.command;
 import loom.session.app_storage;
-import loom.hooks.lifecycle_hooks;
 
 import loom.commands.registry;
 import loom.tools.agent_runtime;

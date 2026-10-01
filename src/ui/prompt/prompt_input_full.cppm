@@ -7,9 +7,7 @@ export module loom.ui.prompt.prompt_input_full;
 
 import std;
 
-import loom.ui.chrome.layout;
 import loom.ui.prompt.prompt_input;
-import loom.ui.foundation.design_figures;
 import loom.ui.foundation.ui_types;  // unified PromptInputMode canonical enum
 import loom.ui.prompt.mode_indicator;  // TS REF: PromptInputModeIndicator.tsx — 3-way prefix glyph
 

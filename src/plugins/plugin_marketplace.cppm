@@ -17,7 +17,6 @@ import std;
 import loom.process.exec_sync;
 import loom.serdes.json;
 import loom.plugins.plugin_identifier;
-import loom.plugins.plugin_marketplace_rules;
 
 export namespace loom::utils::plugin_marketplace {
 

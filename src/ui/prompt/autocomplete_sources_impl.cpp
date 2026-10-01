@@ -11,7 +11,6 @@ import std;
 
 import loom.skills.skill;
 import loom.skills.load_skills_dir;
-import loom.skills.bundled;
 import loom.tools.agent_runtime;
 import loom.orchestration.tools.mcp;
 import loom.ui.prompt.fuzzy_rank_nucleo;

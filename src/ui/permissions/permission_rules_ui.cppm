@@ -16,7 +16,6 @@ export module loom.ui.permissions.permission_rules_ui;
 
 import std;
 
-import loom.types.types;
 import loom.ui.permissions.rule_list;
 import loom.ui.foundation.design_tokens;
 import loom.ui.permissions.components;

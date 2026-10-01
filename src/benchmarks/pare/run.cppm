@@ -13,7 +13,6 @@ import loom.benchmarks.pare.execute_ref;
 import loom.benchmarks.pare.metrics;
 import loom.benchmarks.pare.workspace;
 import loom.serdes.json;
-import loom.fs.file;
 
 export namespace loom::benchmarks::pare {
 

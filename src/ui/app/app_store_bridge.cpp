@@ -13,7 +13,6 @@ module loom.ui.app.app;
 import std;
 
 import loom.types.types;
-import loom.types.command;
 import loom.commands.command;
 import loom.query.query_engine;
 import loom.state.store;

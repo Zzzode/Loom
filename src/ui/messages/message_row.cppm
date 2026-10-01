@@ -109,7 +109,6 @@ import loom.ui.messages.message_advisor;
 // Flavours + shared modules:
 import loom.ui.messages.message_bash_io;
 import loom.ui.messages.message_channel;
-import loom.ui.messages.message_compact_boundary;
 import loom.ui.messages.message_image;
 import loom.ui.messages.message_task_assignment;
 import loom.ui.messages.message_tool_result;   // exports ToolResultOptions

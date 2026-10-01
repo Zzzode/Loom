@@ -11,14 +11,14 @@ It asserts the F3 gate contract from docs/rfcs/attachments/
 
   1. on the LIVE tree the lint passes with the F3 stores landed so far
      (MessagesStore, PromptStore, ... — the list grows as stores land);
-  2. a store importing cc.ui.app.* fails the out-of-store rule (a store
+  2. a store importing loom.ui.app.* fails the out-of-store rule (a store
      must not import the composition root or any area ranked >= screens);
   3. a features-area module importing a store fails the into-store rule
      (only app-area / screens-area modules may import a store);
   4. a store containing a mutex/jthread/condition_variable token fails the
      threading rule (stores are UI-thread-affined plain data);
   5. a store file whose declared module name is not
-     cc.ui.screens.<name>_store fails the naming rule;
+     loom.ui.screens.<name>_store fails the naming rule;
   6. a well-formed store (below-screens imports only, imported only by the
      app composition root and a screens-area shim) passes — positive
      control isolating the rules above.
@@ -78,13 +78,13 @@ def main() -> int:
     check(s["passes"], "store lint passes on the live tree")
     # Grows as F3 stores land (MessagesStore, PromptStore, ...). The lint
     # itself has no baseline; this list is the live F3 store set.
-    check(s["stores"] == ["cc.ui.screens.chrome_store",
-                          "cc.ui.screens.dialog_store",
-                          "cc.ui.screens.mcp_status_store",
-                          "cc.ui.screens.messages_store",
-                          "cc.ui.screens.permission_store",
-                          "cc.ui.screens.prompt_store",
-                          "cc.ui.screens.task_view_store"],
+    check(s["stores"] == ["loom.ui.screens.chrome_store",
+                          "loom.ui.screens.dialog_store",
+                          "loom.ui.screens.mcp_status_store",
+                          "loom.ui.screens.messages_store",
+                          "loom.ui.screens.permission_store",
+                          "loom.ui.screens.prompt_store",
+                          "loom.ui.screens.task_view_store"],
           f"F3 stores found (got {s['stores']})")
     proc = subprocess.run(
         [sys.executable, str(HERE / "graph_check.py"), "--store-lint"],
@@ -94,17 +94,17 @@ def main() -> int:
     check("RFC 0002 F3 store placement lint: PASS" in proc.stdout,
           "prints the PASS verdict line")
 
-    print("2. temp tree: store importing cc.ui.app.* fails out-of-store")
+    print("2. temp tree: store importing loom.ui.app.* fails out-of-store")
     s = store_lint_on_temp_tree({
         "src/ui/screens/messages_store.cppm":
-            "export module cc.ui.screens.messages_store;\n"
-            "import cc.ui.app.app;\n",
+            "export module loom.ui.screens.messages_store;\n"
+            "import loom.ui.app.app;\n",
         "src/ui/app/app.cppm":
-            "export module cc.ui.app.app;\n",
+            "export module loom.ui.app.app;\n",
     })
     check(not s["passes"], "gate fails")
-    check(s["out_of_store"] == [["cc.ui.screens.messages_store",
-                                 "cc.ui.app.app", "cc.ui.app"]],
+    check(s["out_of_store"] == [["loom.ui.screens.messages_store",
+                                 "loom.ui.app.app", "loom.ui.app"]],
           f"out-of-store violation (got {s['out_of_store']})")
     check(s["into_store"] == [], f"no into-store violation "
                                  f"(got {s['into_store']})")
@@ -115,14 +115,14 @@ def main() -> int:
           "into-store")
     s = store_lint_on_temp_tree({
         "src/ui/screens/messages_store.cppm":
-            "export module cc.ui.screens.messages_store;\n",
+            "export module loom.ui.screens.messages_store;\n",
         "src/ui/features/agents/agent_cards.cppm":
-            "export module cc.ui.features.agents.agent_cards;\n"
-            "import cc.ui.screens.messages_store;\n",
+            "export module loom.ui.features.agents.agent_cards;\n"
+            "import loom.ui.screens.messages_store;\n",
     })
     check(not s["passes"], "gate fails")
-    check(s["into_store"] == [["cc.ui.features.agents.agent_cards",
-                               "cc.ui.screens.messages_store"]],
+    check(s["into_store"] == [["loom.ui.features.agents.agent_cards",
+                               "loom.ui.screens.messages_store"]],
           f"into-store violation (got {s['into_store']})")
     check(s["out_of_store"] == [], f"no out-of-store violation "
                                    f"(got {s['out_of_store']})")
@@ -130,46 +130,46 @@ def main() -> int:
     print("4. temp tree: store with a mutex token fails threading")
     s = store_lint_on_temp_tree({
         "src/ui/screens/prompt_store.cppm":
-            "export module cc.ui.screens.prompt_store;\n"
+            "export module loom.ui.screens.prompt_store;\n"
             "import std;\n"
             "struct PromptStore {\n"
             "    std::mutex pending_at_mention_mutex;\n"
             "};\n",
     })
     check(not s["passes"], "gate fails")
-    check(s["threading"] == [["cc.ui.screens.prompt_store", "mutex"]],
+    check(s["threading"] == [["loom.ui.screens.prompt_store", "mutex"]],
           f"threading violation (got {s['threading']})")
     check(s["naming"] == [], f"no naming violation (got {s['naming']})")
 
     print("5. temp tree: wrong declared module name fails naming")
     s = store_lint_on_temp_tree({
         "src/ui/screens/dialog_store.cppm":
-            "export module cc.ui.screens.dialog;\n",
+            "export module loom.ui.screens.dialog;\n",
     })
     check(not s["passes"], "gate fails")
-    check(len(s["naming"]) == 1 and "expected cc.ui.screens.dialog_store"
+    check(len(s["naming"]) == 1 and "expected loom.ui.screens.dialog_store"
           in s["naming"][0],
           f"naming violation (got {s['naming']})")
 
     print("6. temp tree: well-formed store passes (positive control)")
     s = store_lint_on_temp_tree({
         "src/ui/screens/messages_store.cppm":
-            "export module cc.ui.screens.messages_store;\n"
-            "import cc.ui.foundation.ui_types;\n",
+            "export module loom.ui.screens.messages_store;\n"
+            "import loom.ui.foundation.ui_types;\n",
         "src/ui/foundation/ui_types.cppm":
-            "export module cc.ui.foundation.ui_types;\n",
+            "export module loom.ui.foundation.ui_types;\n",
         # app composition root importing the store — allowed.
         "src/ui/app/app.cppm":
-            "export module cc.ui.app.app;\n"
-            "import cc.ui.screens.messages_store;\n",
+            "export module loom.ui.app.app;\n"
+            "import loom.ui.screens.messages_store;\n",
         # screens-area re-export shim importing the store — allowed
         # (same-area; the F3 shim pattern).
         "src/ui/screens/repl_state.cppm":
-            "export module cc.ui.screens.repl_state;\n"
-            "import cc.ui.screens.messages_store;\n",
+            "export module loom.ui.screens.repl_state;\n"
+            "import loom.ui.screens.messages_store;\n",
     })
     check(s["passes"], f"gate passes (violations: {s['violations']})")
-    check(s["stores"] == ["cc.ui.screens.messages_store"],
+    check(s["stores"] == ["loom.ui.screens.messages_store"],
           f"store discovered (got {s['stores']})")
     check(s["out_of_store"] == [], f"no out-of-store violation "
                                    f"(got {s['out_of_store']})")

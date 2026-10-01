@@ -3,53 +3,53 @@
 # The ratchet (tools/arch/inline_def_check.py) FAILS on any increase;
 # decreases shrink this file in the same split commit. c1 = must reach <30
 # when that module's batch merges; c2-done = <=100 cap now enforced.
-cc.server.control_protocol 173
-cc.daemon.daemon_server 73
-cc.ui.permissions.rule_list 67
-cc.skills.load_skills_dir 66
-cc.server.server_routes 63
-cc.plugins.plugin_loader 60
-cc.bridge.core 58
-cc.services.mcp.channel_notification 53
-cc.services.lsp.client 52
-cc.teams.team_helpers 48
-cc.ui.messages.virtual_list 47
-cc.server.server_main 46
-cc.services.ide_integration 44
-cc.teams.swarm.helpers 42
-cc.tools.bash 41
-cc.ui.dialogs.system 41
-cc.services.api.client 39
-cc.ui.widgets.custom_select 39
-cc.ui.screens.log_selector 38
-cc.services.prompt_suggestion 37
-cc.ui.dialogs.mcp_dialogs 37
-cc.commands.mcp_cmd 33
-cc.ui.widgets.text_input_widget 32
-cc.ui.foundation.logo_v2 30
-cc.ui.prompt.prompt_input_footer 30
-cc.hooks.execution 29
-cc.ui.widgets.text_input 28 c2-done
-cc.fs.edit.file_edit 27
-cc.ui.dialogs.settings_dialog 26
-cc.ui.dialogs.wizard_dialog 25
-cc.ui.screens.resume_screen 25
-cc.tools.path_validation 24
-cc.ui.screens.doctor_screen 24
-cc.query.query_engine 23 c1 c2-done
-cc.teams.swarm.backends 22 c2-done
-cc.ui.messages.messages_list 22 c1 c2-done
-cc.serdes.json 22 c2-done
-cc.orchestration.agent 19
-cc.tools.agent_runtime 18 c1 c2-done
-cc.ui.visual.code_highlight 17
-cc.services.mcp.client 12 c2-done
-cc.tools.readonly_validation 12
-cc.tools.runtime_registry 9 c1 c2-done  # B15: 4 computer-use test setters inlined (bodies moved out of the moved TU)
-cc.state.store 8
-cc.ui.visual.markdown 7 c2-done
-cc.orchestration.agent.utils 6 c1 c2-done
-cc.ui.foundation.design_tokens 6
-cc.state.selectors 5 c2-done
-cc.ui.app.app 1 c2-done
-cc.ui.screens.repl_screen 0 c1 c2-done
+loom.server.control_protocol 173
+loom.daemon.daemon_server 73
+loom.ui.permissions.rule_list 67
+loom.skills.load_skills_dir 66
+loom.server.server_routes 63
+loom.plugins.plugin_loader 60
+loom.bridge.core 58
+loom.services.mcp.channel_notification 53
+loom.services.lsp.client 52
+loom.teams.team_helpers 48
+loom.ui.messages.virtual_list 47
+loom.server.server_main 46
+loom.services.ide_integration 44
+loom.teams.swarm.helpers 42
+loom.tools.bash 41
+loom.ui.dialogs.system 41
+loom.services.api.client 39
+loom.ui.widgets.custom_select 39
+loom.ui.screens.log_selector 38
+loom.services.prompt_suggestion 37
+loom.ui.dialogs.mcp_dialogs 37
+loom.commands.mcp_cmd 33
+loom.ui.widgets.text_input_widget 32
+loom.ui.foundation.logo_v2 30
+loom.ui.prompt.prompt_input_footer 30
+loom.hooks.execution 29
+loom.ui.widgets.text_input 28 c2-done
+loom.fs.edit.file_edit 27
+loom.ui.dialogs.settings_dialog 26
+loom.ui.dialogs.wizard_dialog 25
+loom.ui.screens.resume_screen 25
+loom.tools.path_validation 24
+loom.ui.screens.doctor_screen 24
+loom.query.query_engine 23 c1 c2-done
+loom.teams.swarm.backends 22 c2-done
+loom.ui.messages.messages_list 22 c1 c2-done
+loom.serdes.json 22 c2-done
+loom.orchestration.agent 19
+loom.tools.agent_runtime 18 c1 c2-done
+loom.ui.visual.code_highlight 17
+loom.services.mcp.client 12 c2-done
+loom.tools.readonly_validation 12
+loom.tools.runtime_registry 9 c1 c2-done  # B15: 4 computer-use test setters inlined (bodies moved out of the moved TU)
+loom.state.store 8
+loom.ui.visual.markdown 7 c2-done
+loom.orchestration.agent.utils 6 c1 c2-done
+loom.ui.foundation.design_tokens 6
+loom.state.selectors 5 c2-done
+loom.ui.app.app 1 c2-done
+loom.ui.screens.repl_screen 0 c1 c2-done

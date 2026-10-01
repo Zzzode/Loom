@@ -7,17 +7,17 @@
 # Format: <importer module> -> <imported module>
 #
 # --- Core8 Phase B backlog ---
-cc.config.config -> cc.serdes.json
-cc.config.config -> cc.text.parse_int
-cc.config.settings -> cc.serdes.json
+loom.config.config -> loom.serdes.json
+loom.config.config -> loom.text.parse_int
+loom.config.settings -> loom.serdes.json
 #
-# cc.text.parse_int is the portable std::from_chars(integer) shim
+# loom.text.parse_int is the portable std::from_chars(integer) shim
 # (macOS-26-gated in Apple libc++) used for config token/LOOM_MAX_TOKENS
 # parsing; same config-layer text-helper class as the json edge above, and
-# cc_config already links cc_utils PUBLIC.
+# loom_config already links loom_utils PUBLIC.
 # --- pre-RFC backlog (not scheduled by RFC 0001) ---
 # Config migration code sits in the config layer and uses utils json/file
-# helpers — same class as cc.config.config -> cc.serdes.json above.
-cc.migrations.concrete -> cc.serdes.json
-cc.migrations.schema_versions -> cc.fs.atomic_replace
-cc.migrations.schema_versions -> cc.fs.lockfile
+# helpers — same class as loom.config.config -> loom.serdes.json above.
+loom.migrations.concrete -> loom.serdes.json
+loom.migrations.schema_versions -> loom.fs.atomic_replace
+loom.migrations.schema_versions -> loom.fs.lockfile

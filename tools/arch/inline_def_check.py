@@ -50,9 +50,9 @@ SRC = ROOT / "src"
 BASELINE = HERE / "inline_def_baseline.txt"
 # RFC 0001 Phase D: every module interface under src/utils/ must live in a
 # domain subdirectory (src/utils/<area>/); a file placed flat directly in
-# src/utils/ fails. Generalized from the cc.utils.* name prefix to the path
+# src/utils/ fails. Generalized from the loom.utils.* name prefix to the path
 # in B7 (Phase D finalize): the rename track moved every module NAME out of
-# cc.utils.* (only the frozen cc.utils.error remains, in src/utils/error/),
+# loom.utils.* (only the frozen loom.utils.error remains, in src/utils/error/),
 # so a name-prefix gate would no longer catch a newly-flattened file. One
 # module name per line may be frozen here as an explicit exception.
 FLAT_UTILS_EXCEPTIONS = HERE / "flat_utils_exceptions.txt"
@@ -390,8 +390,8 @@ def run() -> dict:
         rel = str(pathlib.Path(path).relative_to(ROOT))
         # Phase D layout: an interface must not sit flat directly in
         # src/utils/ — it belongs in a domain subdirectory. Keyed on the
-        # PATH (not the cc.utils.* name prefix) since B7: the rename track
-        # moved every module name out of cc.utils.*, so a name-prefix gate
+        # PATH (not the loom.utils.* name prefix) since B7: the rename track
+        # moved every module name out of loom.utils.*, so a name-prefix gate
         # would be vacuous; the path-based gate still catches a newly
         # flattened file regardless of its module name.
         if (rel.startswith("src/utils/")

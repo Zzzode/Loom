@@ -8,7 +8,7 @@ that configuration: a golden test TU took >500s vs ~28s with import std).
 
   * removes `#include <H>` for pure C++ library headers (the std module set);
   * KEEPS C / POSIX / third-party (gtest, ftxui, ...) includes textually;
-  * inserts `import std;` before the first `import cc...;` (else at EOF).
+  * inserts `import std;` before the first `import loom...;` (else at EOF).
 
 Idempotent. Applies only to files with NO module declaration.
 """
@@ -33,7 +33,7 @@ typeindex type_traits typeinfo unordered_map unordered_set utility valarray
 variant vector version""".split())
 
 INC = re.compile(r'^([ \t]*#[ \t]*include[ \t]*<)([^>]+)>([^\n]*)$', re.M)
-CC_IMPORT = re.compile(r"^\s*import\s+cc\.", re.M)
+CC_IMPORT = re.compile(r"^\s*import\s+loom\.", re.M)
 MODULE_DECL = re.compile(r'^\s*(?:export\s+)?module\s+[A-Za-z]')
 
 
@@ -54,7 +54,7 @@ def convert(path: pathlib.Path) -> bool:
         out.append(l)
     if not removed:
         return False
-    # insert before the first `import cc...;` in the filtered list
+    # insert before the first `import loom...;` in the filtered list
     idx = next((i for i, l in enumerate(out) if CC_IMPORT.match(l)), len(out))
     out.insert(idx, "import std;\n")
     path.write_text("".join(out))

@@ -4,7 +4,7 @@ graph_check.load_units(), applies each execution batch as explicit module
 graph edits, and after every batch runs:
   1. Tarjan on the full module graph (must stay a DAG);
   2. non-contract upward-edge diff vs the frozen live baseline (no NEW);
-  3. Tarjan over the 9 TARGET_AREAS (CORE8 + cc.orchestration).
+  3. Tarjan over the 9 TARGET_AREAS (CORE8 + loom.orchestration).
 Also builds the modeled CMake target link graph before/after and checks
 for library-level link cycles.
 """
@@ -69,130 +69,130 @@ print("=== LIVE ===")
 gate_state("live")
 
 # ---- B1: F9 delete four zero-importer dead modules + dead services helper
-for m in ["cc.commands.mcp.add_command", "cc.cli.handlers.mcp_handler",
-          "cc.entrypoints.mcp_entrypoint",
-          "cc.ui.features.mcp.mcp_settings_panel"]:
+for m in ["loom.commands.mcp.add_command", "loom.cli.handlers.mcp_handler",
+          "loom.entrypoints.mcp_entrypoint",
+          "loom.ui.features.mcp.mcp_settings_panel"]:
     kill(m)
 gate_state("B1 F9-dead-modules")
 
-# ---- B2: F9 cc.config.mcp_types leaf + config re-export
-newmod("cc.config.mcp_types")
-add("cc.config.config", "cc.config.mcp_types")
+# ---- B2: F9 loom.config.mcp_types leaf + config re-export
+newmod("loom.config.mcp_types")
+add("loom.config.config", "loom.config.mcp_types")
 gate_state("B2 F9-config-leaf")
 
 # ---- B3: F9 services alias via `export import` + field adaptations
-add("cc.services.mcp.types", "cc.config.mcp_types")
+add("loom.services.mcp.types", "loom.config.mcp_types")
 gate_state("B3 F9-services-alias")
 
-# ---- B4: F9 loader seam cuts mcp -> cc.config.config
-drop("cc.tools.mcp", "cc.config.config")
-add("cc.tools.mcp", "cc.config.mcp_types")
-newmod("cc.commands.mcp.core_settings_loader",
-       {"cc.config.config", "cc.tools.mcp"})
+# ---- B4: F9 loader seam cuts mcp -> loom.config.config
+drop("loom.tools.mcp", "loom.config.config")
+add("loom.tools.mcp", "loom.config.mcp_types")
+newmod("loom.commands.mcp.core_settings_loader",
+       {"loom.config.config", "loom.tools.mcp"})
 gate_state("B4 F9-loader-seam")
 
-# ---- B5: F4 cc.types.tool_types atomic cut (8 created / 3 deleted)
-newmod("cc.types.tool_types")
-for m in ["cc.services.streaming_executor", "cc.query.query_engine",
-          "cc.tools.agent.utils", "cc.tools.mcp",
-          "cc.tools.runtime_message_delivery", "cc.tools.runtime_registry",
-          "cc.tools.spawn_multi_agent", "cc.tools.tool"]:
-    add(m, "cc.types.tool_types")
-for m in ["cc.services.streaming_executor", "cc.tools.mcp",
-          "cc.tools.spawn_multi_agent"]:
-    drop(m, "cc.tools.tool")
+# ---- B5: F4 loom.types.tool_types atomic cut (8 created / 3 deleted)
+newmod("loom.types.tool_types")
+for m in ["loom.services.streaming_executor", "loom.query.query_engine",
+          "loom.tools.agent.utils", "loom.tools.mcp",
+          "loom.tools.runtime_message_delivery", "loom.tools.runtime_registry",
+          "loom.tools.spawn_multi_agent", "loom.tools.tool"]:
+    add(m, "loom.types.tool_types")
+for m in ["loom.services.streaming_executor", "loom.tools.mcp",
+          "loom.tools.spawn_multi_agent"]:
+    drop(m, "loom.tools.tool")
 gate_state("B5 F4-tool-types")
 
 # ---- B6: F3/F8 additive snapshot sink in mcp_tool (no edge change)
 gate_state("B6 F38-sink-additive")
 
-# ---- B7: interim bridge in cc.bootstrap (outside the 9 target areas)
-newmod("cc.bootstrap.mcp_connectivity", {
-    "cc.hooks.remaining_notifs", "cc.services.mcp.types",
-    "cc.services.mcp.connection_manager", "cc.tools.mcp"})
+# ---- B7: interim bridge in loom.bootstrap (outside the 9 target areas)
+newmod("loom.bootstrap.mcp_connectivity", {
+    "loom.hooks.remaining_notifs", "loom.services.mcp.types",
+    "loom.services.mcp.connection_manager", "loom.tools.mcp"})
 gate_state("B7 F38-bridge-add")
 
 # ---- B8: atomic cut of hooks<->tools MCP legs
-kill_edges = [("cc.hooks.remaining_notifs", "cc.services.mcp.types"),
-              ("cc.hooks.remaining_notifs", "cc.services.mcp.connection_manager"),
-              ("cc.tools.mcp", "cc.hooks.remaining_notifs")]
+kill_edges = [("loom.hooks.remaining_notifs", "loom.services.mcp.types"),
+              ("loom.hooks.remaining_notifs", "loom.services.mcp.connection_manager"),
+              ("loom.tools.mcp", "loom.hooks.remaining_notifs")]
 for a, b in kill_edges: drop(a, b)
 gate_state("B8 F38-atomic-cut")
 
 # ---- B9: CMake link hygiene (no module-graph effect)
 gate_state("B9 link-hygiene")
 
-# ---- B10: F10-A cc.skills.file_access.port + agent_resume dead import
-newmod("cc.skills.file_access.port")
-for m in ["cc.tools.file_read", "cc.tools.file_edit", "cc.tools.file_write"]:
-    drop(m, "cc.skills.skill"); add(m, "cc.skills.file_access.port")
-add("cc.skills.skill", "cc.skills.file_access.port")
-drop("cc.tools.agent.resume", "cc.skills.skill")  # textually dead, deleted
+# ---- B10: F10-A loom.skills.file_access.port + agent_resume dead import
+newmod("loom.skills.file_access.port")
+for m in ["loom.tools.file_read", "loom.tools.file_edit", "loom.tools.file_write"]:
+    drop(m, "loom.skills.skill"); add(m, "loom.skills.file_access.port")
+add("loom.skills.skill", "loom.skills.file_access.port")
+drop("loom.tools.agent.resume", "loom.skills.skill")  # textually dead, deleted
 gate_state("B10 F10-file-port")
 
-# ---- B11: F10-B image codec port + cc_orchestration target appears
-newmod("cc.tools.image_codec.port")
-drop("cc.tools.file_read", "cc.services.image")
-add("cc.tools.file_read", "cc.tools.image_codec.port")
-drop("cc.tools.runtime_registry", "cc.services.image")  # computer_use TU (will move B15)
-add("cc.tools.runtime_registry", "cc.tools.image_codec.port")
-newmod("cc.orchestration.runtime_backends", {
-    "cc.services.image", "cc.tools.image_codec.port"})
+# ---- B11: F10-B image codec port + loom_orchestration target appears
+newmod("loom.tools.image_codec.port")
+drop("loom.tools.file_read", "loom.services.image")
+add("loom.tools.file_read", "loom.tools.image_codec.port")
+drop("loom.tools.runtime_registry", "loom.services.image")  # computer_use TU (will move B15)
+add("loom.tools.runtime_registry", "loom.tools.image_codec.port")
+newmod("loom.orchestration.runtime_backends", {
+    "loom.services.image", "loom.tools.image_codec.port"})
 gate_state("B11 F10-codec-orch-born")
 
 # ---- B12: F11-C skill loader executor seam
-drop("cc.tools.runtime_registry", "cc.skills.skill")
-newmod("cc.tools.runtime_backends.port")  # registry seam leaf (std + tool_types)
-add("cc.tools.runtime_registry", "cc.tools.runtime_backends.port")
-for i in ["cc.skills.skill", "cc.tools.agent_runtime",
-          "cc.tools.runtime_registry", "cc.tools.tool", "cc.utils.json",
-          "cc.tools.image_codec.port"]:
-    add("cc.orchestration.runtime_backends", i)
+drop("loom.tools.runtime_registry", "loom.skills.skill")
+newmod("loom.tools.runtime_backends.port")  # registry seam leaf (std + tool_types)
+add("loom.tools.runtime_registry", "loom.tools.runtime_backends.port")
+for i in ["loom.skills.skill", "loom.tools.agent_runtime",
+          "loom.tools.runtime_registry", "loom.tools.tool", "loom.utils.json",
+          "loom.tools.image_codec.port"]:
+    add("loom.orchestration.runtime_backends", i)
 gate_state("B12 F11-skill-seam")
 
 # ---- B13: F14 Alpha1 — agent permission types sink
-for m in ["cc.tools.runtime_registry", "cc.tools.team_create",
-          "cc.tools.team_delete"]:
-    drop(m, "cc.tools.agent"); add(m, "cc.tools.agent_types")
-add("cc.tools.agent.utils", "cc.tools.agent_types")
+for m in ["loom.tools.runtime_registry", "loom.tools.team_create",
+          "loom.tools.team_delete"]:
+    drop(m, "loom.tools.agent"); add(m, "loom.tools.agent_types")
+add("loom.tools.agent.utils", "loom.tools.agent_types")
 gate_state("B13 F14a-agent-types")
 
 # ---- B14: F14 Alpha2/3 — agent_worktree leaf, runtime_team_shared rewire
-newmod("cc.tools.agent_worktree", {
-    "cc.tools.agent_runtime", "cc.tools.runtime_shared_utils", "cc.utils.git"})
-drop("cc.tools.runtime_team_shared", "cc.tools.agent")
-add("cc.tools.runtime_team_shared", "cc.tools.agent_worktree")
-add("cc.tools.agent.utils", "cc.tools.agent_worktree")  # facade re-export alias
+newmod("loom.tools.agent_worktree", {
+    "loom.tools.agent_runtime", "loom.tools.runtime_shared_utils", "loom.utils.git"})
+drop("loom.tools.runtime_team_shared", "loom.tools.agent")
+add("loom.tools.runtime_team_shared", "loom.tools.agent_worktree")
+add("loom.tools.agent.utils", "loom.tools.agent_worktree")  # facade re-export alias
 gate_state("B14 F14a-worktree")
 
 # ---- B15: B11 ATOMIC flip (F12+F13+F14-Beta + bridge rehome) ----
-# (a) computer_use impl TU leaves cc.tools.runtime_registry for orch
-drop("cc.tools.runtime_registry", "cc.tools.image_codec.port")
-for m in ["cc.tools.mcp", "cc.tools.lsp", "cc.tools.agent"]:
-    drop("cc.tools.runtime_registry", m)
+# (a) computer_use impl TU leaves loom.tools.runtime_registry for orch
+drop("loom.tools.runtime_registry", "loom.tools.image_codec.port")
+for m in ["loom.tools.mcp", "loom.tools.lsp", "loom.tools.agent"]:
+    drop("loom.tools.runtime_registry", m)
 # (b) blanket module renames (surviving importers rewritten automatically)
-rename("cc.tools.agent", "cc.orchestration.agent")
-rename("cc.tools.agent.run", "cc.orchestration.agent.run")
-rename("cc.tools.agent.resume", "cc.orchestration.agent.resume")
-rename("cc.tools.agent.fork", "cc.orchestration.agent.fork")
-rename("cc.tools.agent.utils", "cc.orchestration.agent.utils")
-rename("cc.tools.mcp", "cc.orchestration.tools.mcp")
-rename("cc.tools.lsp", "cc.orchestration.tools.lsp")
-rename("cc.tools.spawn_multi_agent", "cc.orchestration.agent.spawn_multi_agent")
+rename("loom.tools.agent", "loom.orchestration.agent")
+rename("loom.tools.agent.run", "loom.orchestration.agent.run")
+rename("loom.tools.agent.resume", "loom.orchestration.agent.resume")
+rename("loom.tools.agent.fork", "loom.orchestration.agent.fork")
+rename("loom.tools.agent.utils", "loom.orchestration.agent.utils")
+rename("loom.tools.mcp", "loom.orchestration.tools.mcp")
+rename("loom.tools.lsp", "loom.orchestration.tools.lsp")
+rename("loom.tools.spawn_multi_agent", "loom.orchestration.agent.spawn_multi_agent")
 # (c) bridge re-home: bootstrap module becomes orchestration module
-kill("cc.bootstrap.mcp_connectivity")
-newmod("cc.orchestration.mcp_connectivity", {
-    "cc.hooks.remaining_notifs", "cc.services.mcp.types",
-    "cc.services.mcp.connection_manager", "cc.orchestration.tools.mcp"})
+kill("loom.bootstrap.mcp_connectivity")
+newmod("loom.orchestration.mcp_connectivity", {
+    "loom.hooks.remaining_notifs", "loom.services.mcp.types",
+    "loom.services.mcp.connection_manager", "loom.orchestration.tools.mcp"})
 # (d) orch runtime_backends gains lsp/mcp/computer_use backend bodies
-for i in ["cc.orchestration.tools.mcp", "cc.orchestration.tools.lsp",
-          "cc.orchestration.agent", "cc.services.image"]:
-    add("cc.orchestration.runtime_backends", i)
+for i in ["loom.orchestration.tools.mcp", "loom.orchestration.tools.lsp",
+          "loom.orchestration.agent", "loom.services.image"]:
+    add("loom.orchestration.runtime_backends", i)
 # moved computer_use TU: services.image now reached from orch (already added),
 # registry seam + mcp renamed intra-orch
-add("cc.orchestration.runtime_backends", "cc.tools.agent_types")
+add("loom.orchestration.runtime_backends", "loom.tools.agent_types")
 # (e) seam leaf importer of tool_types (executor signatures) — rank down
-add("cc.tools.runtime_backends.port", "cc.types.tool_types")
+add("loom.tools.runtime_backends.port", "loom.types.tool_types")
 ok = gate_state("B15 B11-ATOMIC")
 
 # ---- final area adjacency dump
@@ -213,7 +213,7 @@ def parse_links():
                              txt, re.S):
             tgt, body = m.group(1), m.group(2)
             for tok in re.findall(r"[A-Za-z0-9_:]+", body):
-                if tok.startswith("cc_"):
+                if tok.startswith("loom_"):
                     edges.setdefault(tgt, set()).add(tok)
     # loom.cmake form
     return edges
@@ -224,21 +224,21 @@ print("\nLIVE cmake target link cycles:", cyc0 if cyc0 else "none")
 
 # Modeled post-B15 link edits
 cy = copy.deepcopy(cc)
-cy["cc_orchestration"] = {"cc_tools", "cc_services", "cc_skills_core",
-                          "cc_hooks", "cc_config", "cc_utils", "cc_types"}
-cy["cc_tools"] = {"cc_utils", "cc_types", "cc_skills_core", "yyjson", "uv_a"}
-cy["cc_bootstrap"] = {"cc_utils", "cc_state", "cc_config", "cc_services",
-                      "cc_hooks"}
-for t in ["cc_commands", "cc_server", "cc_ui"]:
-    cy.setdefault(t, set()).add("cc_orchestration")
-cy["cc_server"].discard  # noop
-cy["cc_core"] = set(cy.get("cc_core", ())) | {"cc_orchestration"}
-cy["cc_skills"].discard("cc_tools")
-# only cc_* nodes matter
-ccn = {t: {x for x in s if x.startswith("cc_")} for t, s in cy.items()}
+cy["loom_orchestration"] = {"loom_tools", "loom_services", "loom_skills_core",
+                          "loom_hooks", "loom_config", "loom_utils", "loom_types"}
+cy["loom_tools"] = {"loom_utils", "loom_types", "loom_skills_core", "yyjson", "uv_a"}
+cy["loom_bootstrap"] = {"loom_utils", "loom_state", "loom_config", "loom_services",
+                      "loom_hooks"}
+for t in ["loom_commands", "loom_server", "loom_ui"]:
+    cy.setdefault(t, set()).add("loom_orchestration")
+cy["loom_server"].discard  # noop
+cy["loom_core"] = set(cy.get("loom_core", ())) | {"loom_orchestration"}
+cy["loom_skills"].discard("loom_tools")
+# only loom_* nodes matter
+ccn = {t: {x for x in s if x.startswith("loom_")} for t, s in cy.items()}
 cyc1 = [sorted(c) for c in gc.tarjan_scc(ccn) if len(c) > 1]
 print("POST-B15 cmake target link cycles:", cyc1 if cyc1 else "none")
 print("orchestration linkers:",
-      sorted(t for t, s in ccn.items() if "cc_orchestration" in s))
+      sorted(t for t, s in ccn.items() if "loom_orchestration" in s))
 
 sys.exit(0 if ok and not cyc0 and not cyc1 else 1)

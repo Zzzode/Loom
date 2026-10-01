@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Precompile impl_bash/impl_files modules and build the two standalone binaries (tools_smoke, tools_e2e)
-# without going through cc_tools (which transitively pulls cc_services which can
+# without going through loom_tools (which transitively pulls loom_services which can
 # have independently broken module scans in partial builds).
 #
 # Usage:
@@ -17,10 +17,10 @@ PCM_DIR="${BUILD}/tools_smoke_pcms"
 CXX="${CXX:-/opt/homebrew/opt/llvm/bin/clang++}"
 
 # The standalone units `import std;`. Point clang at the std module BMI that
-# the project's cc_std target produced in the build tree.
-STD_PCM="${STD_PCM:-${BUILD}/src/CMakeFiles/cc_std.dir/std.pcm}"
+# the project's loom_std target produced in the build tree.
+STD_PCM="${STD_PCM:-${BUILD}/src/CMakeFiles/loom_std.dir/std.pcm}"
 if [[ ! -f "${STD_PCM}" ]]; then
-  echo "error: std module BMI not found at ${STD_PCM} (build cc_std first)" >&2
+  echo "error: std module BMI not found at ${STD_PCM} (build loom_std first)" >&2
   exit 1
 fi
 
@@ -66,13 +66,13 @@ precompile_modules() {
   echo "--- Precompiling impl_bash.cppm ---"
   "${CXX}" "${COMMON[@]}" \
     --precompile "${SRC}/tools/bash/impl_bash.cppm" \
-    -o "${PCM_DIR}/cc.tools.bash.impl.pcm"
+    -o "${PCM_DIR}/loom.tools.bash.impl.pcm"
 
   echo "--- Precompiling impl_files.cppm ---"
   "${CXX}" "${COMMON[@]}" \
     -fprebuilt-module-path="${PCM_DIR}" \
     --precompile "${SRC}/tools/files/impl_files.cppm" \
-    -o "${PCM_DIR}/cc.tools.files.impl.pcm"
+    -o "${PCM_DIR}/loom.tools.files.impl.pcm"
 }
 
 build_target() {
@@ -82,8 +82,8 @@ build_target() {
   echo "--- Building ${name} ---"
   "${CXX}" "${COMMON[@]}" \
     -fprebuilt-module-path="${PCM_DIR}" \
-    "${PCM_DIR}/cc.tools.bash.impl.pcm" \
-    "${PCM_DIR}/cc.tools.files.impl.pcm" \
+    "${PCM_DIR}/loom.tools.bash.impl.pcm" \
+    "${PCM_DIR}/loom.tools.files.impl.pcm" \
     "${src}" \
     -o "${bin}"
   echo "Built: ${bin} ($(wc -c <"${bin}" | tr -d ' ') bytes)"

@@ -3,9 +3,9 @@
 # Two frozen sets, two checks (gate package docs/rfcs/attachments/
 # 0002-implementable-gate.md, section F0):
 #
-# [scc-internal] — the live SCC-internal cc.ui area-directions. A new entry
+# [scc-internal] — the live SCC-internal loom.ui area-directions. A new entry
 #     fails; removals shrink this file. This is the SOLE guard for
-#     cc.ui-internal edges — the default rank gate is blind to them (cc.ui
+#     loom.ui-internal edges — the default rank gate is blind to them (loom.ui
 #     is one rank-12 area in TARGET_RANK).
 #
 # [back] — the back directions under the declared 12-area total order
@@ -18,11 +18,11 @@
 # Re-frozen 2026-09-30 from the live tree after RFC 0002 phase F2 cut 6
 # (row 6 registry inversion): the feature modules (agent_wizard,
 # plugin_install_flow) dropped their dialogs imports and now build neutral
-# requests resolved through the cc.ui.foundation.feature_dialog_protocol
+# requests resolved through the loom.ui.foundation.feature_dialog_protocol
 # erased-factory registry; the composition root
 # (src/ui/app/app_feature_dialog_registration.cpp) registers the concrete
 # factories and holds the only static_pointer_cast of the erased requests.
-# This severed features -> dialogs, the last back direction. All 12 cc.ui
+# This severed features -> dialogs, the last back direction. All 12 loom.ui
 # areas are now singleton SCCs (0 SCCs > 1, 0 SCC-internal directions,
 # 0 back directions) — --target-ui9 PASSES.
 # Format: <from area> -> <to area>

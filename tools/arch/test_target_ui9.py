@@ -75,39 +75,39 @@ def main() -> int:
         cwd=ROOT, capture_output=True, text=True)
     check(proc.returncode == 1, f"exit code 1 (got {proc.returncode})")
     out = proc.stdout
-    check("TARGET UI9 SCC: cc.ui.chrome, cc.ui.foundation" in out,
+    check("TARGET UI9 SCC: loom.ui.chrome, loom.ui.foundation" in out,
           "prints the 2-area chrome<->foundation SCC")
-    check("TARGET UI9 SCC: cc.ui.dialogs, cc.ui.features, cc.ui.messages, "
-          "cc.ui.permissions, cc.ui.prompt, cc.ui.screens, cc.ui.widgets"
+    check("TARGET UI9 SCC: loom.ui.dialogs, loom.ui.features, loom.ui.messages, "
+          "loom.ui.permissions, loom.ui.prompt, loom.ui.screens, loom.ui.widgets"
           in out, "prints the 7-area SCC")
-    check("RFC 0002 F0 target (12 singleton cc.ui areas): FAIL" in out,
+    check("RFC 0002 F0 target (12 singleton loom.ui areas): FAIL" in out,
           "prints the FAIL verdict line")
 
     print("2. temp tree: tools<->visual SCC fails check (a) only")
     u = ui9_on_temp_tree({
         "src/ui/tools/t.cppm":
-            "export module cc.ui.tools.t;\nimport cc.ui.visual.v;\n",
+            "export module loom.ui.tools.t;\nimport loom.ui.visual.v;\n",
         "src/ui/visual/v.cppm":
-            "export module cc.ui.visual.v;\nimport cc.ui.tools.t;\n",
+            "export module loom.ui.visual.v;\nimport loom.ui.tools.t;\n",
     })
     check(not u["passes"], "gate fails")
-    check(len(u["new_scc_internal"]) == 2,
-          f"2 new SCC-internal directions (got {u['new_scc_internal']})")
+    check(len(u["new_sloom_internal"]) == 2,
+          f"2 new SCC-internal directions (got {u['new_sloom_internal']})")
     check(u["new_back"] == [],
           f"no new back direction (got {u['new_back']})")
 
     print("3. temp tree: visual -> foundation fails check (b) only")
     u = ui9_on_temp_tree({
         "src/ui/visual/v.cppm":
-            "export module cc.ui.visual.v;\nimport cc.ui.foundation.f;\n",
+            "export module loom.ui.visual.v;\nimport loom.ui.foundation.f;\n",
         "src/ui/foundation/f.cppm":
-            "export module cc.ui.foundation.f;\n",
+            "export module loom.ui.foundation.f;\n",
     })
     check(not u["passes"], "gate fails")
-    check(u["new_back"] == [("cc.ui.visual", "cc.ui.foundation")],
+    check(u["new_back"] == [("loom.ui.visual", "loom.ui.foundation")],
           f"new back direction visual -> foundation (got {u['new_back']})")
-    check(u["new_scc_internal"] == [],
-          f"no new SCC-internal direction (got {u['new_scc_internal']})")
+    check(u["new_sloom_internal"] == [],
+          f"no new SCC-internal direction (got {u['new_sloom_internal']})")
     check(u["area_sccs"] == [], "no SCC forms (visual stays a singleton)")
 
     print("4. live tree: default gate (no flag) stays green")

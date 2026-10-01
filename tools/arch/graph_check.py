@@ -19,18 +19,18 @@ Builds the named-module import graph from src/ and enforces:
     14 families land.
 
   FUTURE gate (--target-ui9, RFC 0002 phase F0):
-    the 12 cc.ui.<area> areas are pairwise acyclic — every one a singleton
+    the 12 loom.ui.<area> areas are pairwise acyclic — every one a singleton
     SCC — and no NEW back direction appears under the declared 12-area
     total order (ui_back_edge_baseline.txt). Fails today (2 SCCs: a
     7-area SCC + chrome<->foundation); passes after the RFC 0002 F1/F2
-    cuts land. The default rank gate is blind to cc.ui-internal edges
-    (cc.ui is one rank-12 area in TARGET_RANK), so this is their sole
+    cuts land. The default rank gate is blind to loom.ui-internal edges
+    (loom.ui is one rank-12 area in TARGET_RANK), so this is their sole
     guard.
 
   STORE gate (--store-lint, RFC 0002 phase F3):
-    the F3 state stores are homed in cc.ui.screens.* (rank 10). Four rules
+    the F3 state stores are homed in loom.ui.screens.* (rank 10). Four rules
     over src/ui/screens/*_store.cppm: (1) naming — a store file declares
-    cc.ui.screens.<name>_store; (2) out-of-store — a store's cc.ui.*
+    loom.ui.screens.<name>_store; (2) out-of-store — a store's loom.ui.*
     imports target only areas ranked BELOW screens (no store imports the
     composition root); (3) into-store — only app-area (composition root)
     or screens-area modules import a store; (4) threading — 0
@@ -42,12 +42,12 @@ Builds the named-module import graph from src/ and enforces:
     the target_link_libraries graph parsed from src/cmake/targets/*.cmake
     (the include()-per-target discipline) must be acyclic — 0 non-trivial
     SCCs and no self-loops. External libs (ftxui::*, OpenSSL::*, yyjson,
-    ...) are leaf nodes. Once the cc_ui_<area> libraries land, the lint
+    ...) are leaf nodes. Once the loom_ui_<area> libraries land, the lint
     also enforces the file->lib grouping: every src/ui/**/*.cppm declaring
-    cc.ui.<area>.* must be listed in the CXX_MODULES FILE_SET of
-    cc_ui_<area> and in no other cc_ui_* target (nor cc_ui). Vacuous
+    loom.ui.<area>.* must be listed in the CXX_MODULES FILE_SET of
+    loom_ui_<area> and in no other loom_ui_* target (nor loom_ui). Vacuous
     until the first area library appears (today all ui modules are in the
-    single cc_ui target).
+    single loom_ui target).
 
 Zero third-party dependencies.
 """
@@ -70,8 +70,8 @@ DEAD_BASELINE = HERE / "dead_imports_baseline.txt"
 UI9_BASELINE = HERE / "ui_back_edge_baseline.txt"
 
 # Whole-text (multiline) forms applied AFTER comment/string stripping and
-# backslash-newline joining, so legal spellings — `import\n cc.foo;`,
-# `import /*c*/ cc.foo;`, `export /*c*/ import cc.foo;`, line splices —
+# backslash-newline joining, so legal spellings — `import\n loom.foo;`,
+# `import /*c*/ loom.foo;`, `export /*c*/ import loom.foo;`, line splices —
 # cannot hide an edge or an entire TU from the graph.
 MODULE_DECL_RE = re.compile(
     r"\b(?:(export)\s+)?module\s+([A-Za-z0-9_.:]+)\s*;")
@@ -94,111 +94,111 @@ CPP_KEYWORDS = {
 # Target layer rank (RFC 0001 REV 3). Every live area must appear here so
 # that no edge is silently skipped.
 TARGET_RANK = {
-    "cc.types": 0, "cc.constants": 0,
-    "cc.wire": 0, "cc.core": 0,
+    "loom.types": 0, "loom.constants": 0,
+    "loom.wire": 0, "loom.core": 0,
     # coordinator types are pure-data leaves today.
-    "cc.coordinator": 0,
-    "cc.config": 1,
-    "cc.migrations": 1,
-    "cc.utils": 2,
-    # RFC 0001 Phase D — cc.utils.* leaf-domain rename targets (rank 2,
-    # same as cc.utils today; introduced batch-by-batch in the rename).
-    "cc.agent": 2, "cc.cache": 2, "cc.containers": 2, "cc.crypto": 2,
-    "cc.diagnostics": 2, "cc.fs": 2, "cc.media": 2, "cc.model": 2,
-    "cc.net": 2,
-    "cc.parsing": 2, "cc.platform": 2, "cc.process": 2, "cc.prompt": 2,
-    "cc.scm": 2, "cc.security": 2,
-    "cc.serdes": 2,
-    "cc.text": 2,
-    "cc.vim": 3,
-    "cc.hooks": 4,
-    "cc.skills": 5,
-    "cc.state": 6, "cc.session": 6, "cc.history": 6,
-    "cc.task_types": 6, "cc.memdir": 6, "cc.tasks": 6,
-    "cc.services": 7,
-    "cc.plugins": 7,
-    # RFC 0001 Phase D B6 — cc_teams target (teams/swarm modules moved out
-    # of cc_utils). Rank 7 (not 8) so that cc.tools (8) -> cc.teams (7) is
+    "loom.coordinator": 0,
+    "loom.config": 1,
+    "loom.migrations": 1,
+    "loom.utils": 2,
+    # RFC 0001 Phase D — loom.utils.* leaf-domain rename targets (rank 2,
+    # same as loom.utils today; introduced batch-by-batch in the rename).
+    "loom.agent": 2, "loom.cache": 2, "loom.containers": 2, "loom.crypto": 2,
+    "loom.diagnostics": 2, "loom.fs": 2, "loom.media": 2, "loom.model": 2,
+    "loom.net": 2,
+    "loom.parsing": 2, "loom.platform": 2, "loom.process": 2, "loom.prompt": 2,
+    "loom.scm": 2, "loom.security": 2,
+    "loom.serdes": 2,
+    "loom.text": 2,
+    "loom.vim": 3,
+    "loom.hooks": 4,
+    "loom.skills": 5,
+    "loom.state": 6, "loom.session": 6, "loom.history": 6,
+    "loom.task_types": 6, "loom.memdir": 6, "loom.tasks": 6,
+    "loom.services": 7,
+    "loom.plugins": 7,
+    # RFC 0001 Phase D B6 — loom_teams target (teams/swarm modules moved out
+    # of loom_utils). Rank 7 (not 8) so that loom.tools (8) -> loom.teams (7) is
     # strictly downward.
-    "cc.teams": 7,
-    "cc.tools": 8,
-    "cc.orchestration": 9,  # planned by RFC 0001 Phase B
-    "cc.query": 10,
-    "cc.commands": 11,
-    "cc.keybindings": 11,
-    "cc.ui": 12,
-    "cc.server": 13, "cc.daemon": 13,
-    "cc.bridge": 13,
-    "cc.bootstrap": 13,
-    "cc.cli": 14,
-    "cc.sdk": 16,
-    "cc.benchmarks": 15,
+    "loom.teams": 7,
+    "loom.tools": 8,
+    "loom.orchestration": 9,  # planned by RFC 0001 Phase B
+    "loom.query": 10,
+    "loom.commands": 11,
+    "loom.keybindings": 11,
+    "loom.ui": 12,
+    "loom.server": 13, "loom.daemon": 13,
+    "loom.bridge": 13,
+    "loom.bootstrap": 13,
+    "loom.cli": 14,
+    "loom.sdk": 16,
+    "loom.benchmarks": 15,
 }
 
 # Leaf modules physically located inside a higher-ranked area directory.
 # They are standalone transport/util modules with no upward deps; rank them
 # with utils so their importers do not acquire artificial upward edges.
 MODULE_RANK_OVERRIDE = {
-    "cc.cli.ccr_client": 2,
-    "cc.cli.sse_transport": 2,
-    "cc.cli.websocket_transport": 2,
-    "cc.cli.update": 2,
-    # RFC 0001 Phase D B5g (D5): the cc.config.settings_* modules import
-    # cc.serdes.json (rank 2); cc.config is rank 1, so without the override
+    "loom.cli.ccr_client": 2,
+    "loom.cli.sse_transport": 2,
+    "loom.cli.websocket_transport": 2,
+    "loom.cli.update": 2,
+    # RFC 0001 Phase D B5g (D5): the loom.config.settings_* modules import
+    # loom.serdes.json (rank 2); loom.config is rank 1, so without the override
     # those edges read as rank-1->2 upward edges. Rank them with utils.
-    "cc.config.settings_manager": 2,
-    "cc.config.settings_merge": 2,
-    "cc.config.settings_paths": 2,
-    "cc.config.settings_sources": 2,
-    "cc.config.settings_validation": 2,
+    "loom.config.settings_manager": 2,
+    "loom.config.settings_merge": 2,
+    "loom.config.settings_paths": 2,
+    "loom.config.settings_sources": 2,
+    "loom.config.settings_validation": 2,
 }
 
-# RFC 0001 Phase D B7: cc.utils stays in CORE8 even though the rename track
-# dissolved the area down to one module — cc.utils.error (the D1 frozen
+# RFC 0001 Phase D B7: loom.utils stays in CORE8 even though the rename track
+# dissolved the area down to one module — loom.utils.error (the D1 frozen
 # exception, 52 importers across the other CORE8 areas). It is a pure leaf
 # (imports only std), so it forms no SCC; keeping it here means the
 # --target-core8 gate still checks its edges. Removing it would silently
 # stop checking the area.
-CORE8 = ["cc.config", "cc.hooks", "cc.services", "cc.skills",
-         "cc.state", "cc.task_types", "cc.tools", "cc.utils"]
-TARGET_AREAS = CORE8 + ["cc.orchestration"]
+CORE8 = ["loom.config", "loom.hooks", "loom.services", "loom.skills",
+         "loom.state", "loom.task_types", "loom.tools", "loom.utils"]
+TARGET_AREAS = CORE8 + ["loom.orchestration"]
 
-# RFC 0002 phase F0 — declared total order over the 12 cc.ui.<area> areas.
+# RFC 0002 phase F0 — declared total order over the 12 loom.ui.<area> areas.
 # "Back edge" is operational against this table: an area-direction A -> B is
 # a back edge iff UI9_RANK[A] < UI9_RANK[B] (A imports a higher-ranked area).
 # The order is the minimum-FAS order on the live graph (exhaustive 7! search
 # over the 7-area SCC; gate package §0). visual/tools are pure leaves (zero
-# cc.ui imports), so they rank below every importer; their mutual rank is
+# loom.ui imports), so they rank below every importer; their mutual rank is
 # irrelevant. After F2 severs all 5 back directions this table machine-
 # enforces the declared order (0 upward edges allowed).
 UI9_RANK = {
-    "cc.ui.app": 11,
-    "cc.ui.screens": 10,
-    "cc.ui.dialogs": 9,
-    "cc.ui.features": 8,
-    "cc.ui.messages": 7,
-    "cc.ui.permissions": 6,
-    "cc.ui.widgets": 5,
-    "cc.ui.prompt": 4,
-    "cc.ui.chrome": 3,
-    "cc.ui.foundation": 2,
-    "cc.ui.visual": 1,
-    "cc.ui.tools": 1,
+    "loom.ui.app": 11,
+    "loom.ui.screens": 10,
+    "loom.ui.dialogs": 9,
+    "loom.ui.features": 8,
+    "loom.ui.messages": 7,
+    "loom.ui.permissions": 6,
+    "loom.ui.widgets": 5,
+    "loom.ui.prompt": 4,
+    "loom.ui.chrome": 3,
+    "loom.ui.foundation": 2,
+    "loom.ui.visual": 1,
+    "loom.ui.tools": 1,
 }
 
 
 def ui9_area_of(module: str):
-    """The cc.ui.<area> second-level area (first 3 dot-segments), or None
-    for modules outside cc.ui.*. Matches the attachment methodology: the
+    """The loom.ui.<area> second-level area (first 3 dot-segments), or None
+    for modules outside loom.ui.*. Matches the attachment methodology: the
     core graph uses area_of() ([:2]); the UI9 flag uses [:3]."""
     parts = module.split(".")
-    if len(parts) >= 3 and parts[0] == "cc" and parts[1] == "ui":
+    if len(parts) >= 3 and parts[0] == "loom" and parts[1] == "ui":
         return ".".join(parts[:3])
     return None
 
 
 def load_ui9_baseline(path):
-    """Parse ui_back_edge_baseline.txt into (scc_internal, back) pair sets.
+    """Parse ui_back_edge_baseline.txt into (sloom_internal, back) pair sets.
 
     The file holds two frozen sets in two comment-marked sections:
       `# [scc-internal]` — the frozen SCC-internal area-directions;
@@ -231,11 +231,11 @@ def load_ui9_baseline(path):
 def ui9_check(deps):
     """RFC 0002 phase F0 — the --target-ui9 future-state gate.
 
-    Two frozen sets, two checks over the 12-area cc.ui subgraph:
+    Two frozen sets, two checks over the 12-area loom.ui subgraph:
       (a) Tarjan + subset freeze — the SCC-internal area-directions are
           frozen at the baseline (19 today); a 20th fails. This is the
-          sole guard for cc.ui-internal edges: the default rank gate is
-          blind to them (cc.ui is one rank-12 area in TARGET_RANK).
+          sole guard for loom.ui-internal edges: the default rank gate is
+          blind to them (loom.ui is one rank-12 area in TARGET_RANK).
       (b) Rank-based order conformance — under UI9_RANK, a direction
           A -> B with rank(A) < rank(B) is a back edge; any back direction
           not in the baseline (5 today) fails, including a NON-SCC-forming
@@ -248,7 +248,7 @@ def ui9_check(deps):
     fine and shrink the snapshot."""
     base_internal, base_back = load_ui9_baseline(UI9_BASELINE)
 
-    # Fail closed: every cc.ui.<area> present in the graph must be ranked,
+    # Fail closed: every loom.ui.<area> present in the graph must be ranked,
     # so no edge is silently skipped (same discipline as TARGET_RANK).
     unranked = sorted({
         a for m in deps if (a := ui9_area_of(m)) is not None
@@ -288,9 +288,9 @@ def ui9_check(deps):
     return {
         "area_sccs": sccs,
         "unranked_areas": unranked,
-        "scc_internal": sorted(internal),
-        "new_scc_internal": new_internal,
-        "removed_scc_internal": removed_internal,
+        "sloom_internal": sorted(internal),
+        "new_sloom_internal": new_internal,
+        "removed_sloom_internal": removed_internal,
         "back": sorted(back),
         "new_back": new_back,
         "removed_back": removed_back,
@@ -301,12 +301,12 @@ def ui9_check(deps):
 
 
 # RFC 0002 phase F3 — store placement invariant. The F3 state stores are
-# homed in cc.ui.screens.* (rank 10): screens -> features/dialogs/prompt is
+# homed in loom.ui.screens.* (rank 10): screens -> features/dialogs/prompt is
 # downward-legal, so by-value concrete state fields (AgentCardData/
 # LiveTeammate vectors, DialogQueue, ...) recreate no up-edge. Four rules:
 #   naming   a src/ui/screens/*_store.cppm file declares
-#            cc.ui.screens.<name>_store;
-#   out      a store's cc.ui.* imports target only areas ranked BELOW screens
+#            loom.ui.screens.<name>_store;
+#   out      a store's loom.ui.* imports target only areas ranked BELOW screens
 #            (UI9_RANK < 10) — no store imports the composition root (app)
 #            or a same/higher area (a store importing another store is also
 #            banned: cross-store reads go through selectors, never a direct
@@ -342,7 +342,7 @@ def store_lint_check(units, deps):
 
     Returns a dict with the four rule results and a flat `violations` list;
     `passes` is True iff every rule is clean. Fail-closed: a store importing
-    an unranked cc.ui area, or a non-cc.ui module importing a store, is a
+    an unranked loom.ui area, or a non-loom.ui module importing a store, is a
     violation rather than a silently skipped edge."""
     naming: list[str] = []
     out_of_store: list[tuple[str, str, str]] = []
@@ -352,11 +352,11 @@ def store_lint_check(units, deps):
     store_units = [u for u in units if _is_store_path(u.path)]
     store_modules: set[str] = {u.module for u in store_units}
     for u in store_units:
-        expected = "cc.ui.screens." + pathlib.Path(u.path).stem
+        expected = "loom.ui.screens." + pathlib.Path(u.path).stem
         if u.module != expected:
             naming.append(
                 f"{u.path}: declares {u.module}, expected {expected} "
-                f"(a store file declares cc.ui.screens.<name>_store)")
+                f"(a store file declares loom.ui.screens.<name>_store)")
         cleaned = _strip_comments_strings(u.text)
         for tok in sorted(set(STORE_THREAD_RE.findall(cleaned))):
             threading.append((u.module, tok))
@@ -364,7 +364,7 @@ def store_lint_check(units, deps):
     for m, imps in deps.items():
         if m in store_modules:
             for i in sorted(imps):
-                if not i.startswith("cc.ui."):
+                if not i.startswith("loom.ui."):
                     continue
                 area = ui9_area_of(i)
                 if area is None or UI9_RANK.get(area, 99) >= 10:
@@ -372,13 +372,13 @@ def store_lint_check(units, deps):
         for i in sorted(imps):
             if i in store_modules:
                 area = ui9_area_of(m)
-                if area not in ("cc.ui.app", "cc.ui.screens"):
+                if area not in ("loom.ui.app", "loom.ui.screens"):
                     into_store.append((m, i))
 
     violations = (
         [f"naming: {v}" for v in naming]
         + [f"store {m} imports rank>=screens area '{area}' via {i} "
-           f"(store cc.ui.* imports must rank below screens)"
+           f"(store loom.ui.* imports must rank below screens)"
            for m, i, area in sorted(out_of_store)]
         + [f"{m} imports store {i} (only app-area or screens-area modules "
            f"may import a store)"
@@ -398,24 +398,24 @@ def store_lint_check(units, deps):
 
 
 # RFC 0002 phase F4 — target_link_libraries (TLL) graph lint. The F4 split
-# turns the single cc_ui target into ~12 cc_ui_<area> libraries; the TLL
+# turns the single loom_ui target into ~12 loom_ui_<area> libraries; the TLL
 # graph must stay acyclic across the split. Two rules:
 #   acyc   every target_link_libraries call in src/cmake/targets/*.cmake
 #          contributes edges target -> dep; Tarjan must find 0 non-trivial
 #          SCCs (and no self-loops). External libs (ftxui::screen,
 #          OpenSSL::Crypto, yyjson, ...) are leaves with no outgoing edges.
-#   group  once a cc_ui_<area> target exists, every src/ui/**/*.cppm
-#          declaring cc.ui.<area>.* must be listed in that target's
-#          CXX_MODULES FILE_SET and in no other cc_ui_* target (nor cc_ui);
-#          symmetrically, a cc_ui_<area> FILE_SET must not list a .cppm
+#   group  once a loom_ui_<area> target exists, every src/ui/**/*.cppm
+#          declaring loom.ui.<area>.* must be listed in that target's
+#          CXX_MODULES FILE_SET and in no other loom_ui_* target (nor loom_ui);
+#          symmetrically, a loom_ui_<area> FILE_SET must not list a .cppm
 #          declaring another area. Vacuous until the first area library
-#          lands (today all ui modules are in the single cc_ui target).
+#          lands (today all ui modules are in the single loom_ui target).
 TLL_SCOPE_KEYWORDS = {
     "PUBLIC", "PRIVATE", "INTERFACE",
     "LINK_PUBLIC", "LINK_PRIVATE",
     "debug", "optimized", "general",
 }
-UI_AREA_TARGET_PREFIX = "cc_ui_"
+UI_AREA_TARGET_PREFIX = "loom_ui_"
 
 
 def _strip_cmake_comments(text: str) -> str:
@@ -570,7 +570,7 @@ def tll_lint_check(units):
     Returns a dict with the graph, the SCC/self-loop findings, and the
     file->lib grouping violations; `passes` is True iff both rules are
     clean. The grouping rule activates per-area: a constraint fires only
-    for areas whose cc_ui_<area> target exists, so the lint is vacuous
+    for areas whose loom_ui_<area> target exists, so the lint is vacuous
     until the first area library lands."""
     targets_dir = SRC / "cmake" / "targets"
     graph: dict[str, set[str]] = {}
@@ -608,10 +608,10 @@ def tll_lint_check(units):
 
     grouping: list[str] = []
     if area_targets:
-        # Which cc_ui/cc_ui_* target lists each ui file.
+        # Which loom_ui/loom_ui_* target lists each ui file.
         ownership: dict[str, set[str]] = {}
         for t, fs in norm_filesets.items():
-            if t == "cc_ui" or t.startswith(UI_AREA_TARGET_PREFIX):
+            if t == "loom_ui" or t.startswith(UI_AREA_TARGET_PREFIX):
                 for f in fs:
                     ownership.setdefault(f, set()).add(t)
         # File-side: a split-area module must be homed in its area library.
@@ -628,18 +628,18 @@ def tll_lint_check(units):
                 continue
             expected = UI_AREA_TARGET_PREFIX + area.split(".")[2]
             if expected not in norm_filesets:
-                continue  # area not split yet — the file stays in cc_ui
+                continue  # area not split yet — the file stays in loom_ui
             owners = ownership.get(rel, set())
             if expected not in owners:
                 grouping.append(
                     f"{rel} ({u.module}) must be in {expected}'s "
                     f"CXX_MODULES FILE_SET (found in: "
-                    f"{sorted(owners) if owners else 'no cc_ui* target'})")
+                    f"{sorted(owners) if owners else 'no loom_ui* target'})")
             for t in sorted(owners - {expected}):
                 grouping.append(
                     f"{rel} ({u.module}) is listed in {t}'s FILE_SET but "
                     f"its area is {area} (only {expected} may own it)")
-        # Target-side: a cc_ui_<area> FILE_SET must not list another area's
+        # Target-side: a loom_ui_<area> FILE_SET must not list another area's
         # module (catches a not-yet-split area's file misplaced into a
         # split library, which the file-side check cannot see).
         module_by_path: dict[str, str] = {}
@@ -658,11 +658,11 @@ def tll_lint_check(units):
                 if mod is None:
                     continue
                 fa = ui9_area_of(mod)
-                if fa is not None and fa != "cc.ui." + area:
+                if fa is not None and fa != "loom.ui." + area:
                     grouping.append(
                         f"{t} lists {f} which declares {mod} (area {fa}); "
-                        f"a cc_ui_<area> FILE_SET may list only "
-                        f"cc.ui.{area}.* modules")
+                        f"a loom_ui_<area> FILE_SET may list only "
+                        f"loom.ui.{area}.* modules")
 
     passes = not sccs and not self_loops and not grouping
     return {
@@ -695,7 +695,7 @@ def is_contract(module: str, allow: set[str]) -> bool:
         return True
     if leaf.endswith("_types"):
         return True
-    if module == "cc.types" or module.startswith("cc.types."):
+    if module == "loom.types" or module.startswith("loom.types."):
         return True
     if module in allow:
         return True
@@ -777,7 +777,7 @@ def load_units():
         unit = Unit(name, kind, raw_text, path)
         for sm in IMPORT_STMT_RE.finditer(text):
             imp = sm.group(2).split(":")[0]
-            if imp.startswith("cc."):
+            if imp.startswith("loom."):
                 unit.imports.add(imp)
                 if sm.group(1):
                     unit.reexports.add(imp)
@@ -1284,21 +1284,21 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--target-core8", action="store_true")
     ap.add_argument("--target-ui9", action="store_true",
-                    help="RFC 0002 F0 future-state gate: the 12 cc.ui.<area> "
+                    help="RFC 0002 F0 future-state gate: the 12 loom.ui.<area> "
                          "areas must be singleton SCCs and no NEW back "
                          "direction may appear under the declared 12-area "
                          "total order")
     ap.add_argument("--store-lint", action="store_true",
                     help="RFC 0002 F3 store placement gate: stores homed in "
-                         "cc.ui.screens.*, imports only from below-screens "
+                         "loom.ui.screens.*, imports only from below-screens "
                          "areas, importers only app/screens, no threading "
                          "primitives")
     ap.add_argument("--tll-lint", action="store_true",
                     help="RFC 0002 F4 TLL graph gate: the "
                          "target_link_libraries graph from "
                          "src/cmake/targets/*.cmake must be acyclic (0 "
-                         "SCCs, no self-loops); once cc_ui_<area> libraries "
-                         "exist, every cc.ui.<area>.* module must be homed "
+                         "SCCs, no self-loops); once loom_ui_<area> libraries "
+                         "exist, every loom.ui.<area>.* module must be homed "
                          "in its area library's CXX_MODULES FILE_SET")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--allow-dead-imports", action="store_true",
@@ -1347,23 +1347,23 @@ def main():
             print("  TARGET SCC:", ", ".join(c))
     if args.target_ui9:
         u = r["ui9"]
-        print("RFC 0002 F0 target (12 singleton cc.ui areas):",
+        print("RFC 0002 F0 target (12 singleton loom.ui areas):",
               "PASS" if u["passes"] else "FAIL")
         for c in u["area_sccs"]:
             print("  TARGET UI9 SCC:", ", ".join(c))
         if u["unranked_areas"]:
-            print("  UNRANKED cc.ui AREAS (add them to UI9_RANK) — FAIL:")
+            print("  UNRANKED loom.ui AREAS (add them to UI9_RANK) — FAIL:")
             for a in u["unranked_areas"]:
                 print(f"    {a}")
-        print(f"  SCC-internal directions: {len(u['scc_internal'])} "
-              f"(frozen baseline; {len(u['removed_scc_internal'])} removed)")
-        if u["new_scc_internal"]:
+        print(f"  SCC-internal directions: {len(u['sloom_internal'])} "
+              f"(frozen baseline; {len(u['removed_sloom_internal'])} removed)")
+        if u["new_sloom_internal"]:
             print("  NEW SCC-internal direction (not in baseline) — FAIL:")
-            for a, b in u["new_scc_internal"]:
+            for a, b in u["new_sloom_internal"]:
                 print(f"    {a} -> {b}")
-        if u["removed_scc_internal"]:
+        if u["removed_sloom_internal"]:
             print("  removed since baseline (good):")
-            for a, b in u["removed_scc_internal"]:
+            for a, b in u["removed_sloom_internal"]:
                 print(f"    {a} -> {b}")
         print(f"  back directions under rank table: {len(u['back'])} "
               f"(frozen baseline; {len(u['removed_back'])} removed)")

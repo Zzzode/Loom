@@ -85,7 +85,7 @@ public:
 
 } // namespace detail
 
-#define CC_RUNTIME_HELPER_COMMAND(TYPE_NAME, COMMAND_NAME, DESCRIPTION, CATEGORY, QUALIFIED_RUN) \
+#define LOOM_RUNTIME_HELPER_COMMAND(TYPE_NAME, COMMAND_NAME, DESCRIPTION, CATEGORY, QUALIFIED_RUN) \
 class TYPE_NAME final : public detail::BasicCommand { \
 public: \
     [[nodiscard]] static CommandDefinition definition() { \
@@ -101,28 +101,28 @@ public: \
     } \
 };
 
-CC_RUNTIME_HELPER_COMMAND(AntTraceCommand, "ant-trace", "Inspect internal trace diagnostics", "diagnostics", ant_trace::run)
-CC_RUNTIME_HELPER_COMMAND(AutofixPrCommand, "autofix-pr", "Generate fixes for pull request feedback", "git", autofix_pr::run)
-CC_RUNTIME_HELPER_COMMAND(BackfillSessionsCommand, "backfill-sessions", "Backfill local session metadata", "session", backfill_sessions::run)
-CC_RUNTIME_HELPER_COMMAND(BreakCacheCommand, "break-cache", "Clear internal caches", "diagnostics", break_cache::run)
-CC_RUNTIME_HELPER_COMMAND(BridgeCommand, "bridge", "Manage IDE bridge state", "bridge", bridge::run)
-CC_RUNTIME_HELPER_COMMAND(BughunterCommand, "bughunter", "Run bug hunting diagnostics", "diagnostics", bughunter::run)
-CC_RUNTIME_HELPER_COMMAND(CommitPushPrCommand, "commit-push-pr", "Commit, push, and prepare a pull request", "git", commit_push_pr::run)
-CC_RUNTIME_HELPER_COMMAND(CreateMovedToPluginCommand, "create-moved-to-plugin-command", "Create a moved-to-plugin command shim", "plugins", create_moved_to_plugin_command::run)
-CC_RUNTIME_HELPER_COMMAND(DebugToolCallCommand, "debug-tool-call", "Debug a tool call payload", "diagnostics", debug_tool_call::run)
-CC_RUNTIME_HELPER_COMMAND(MockLimitsCommand, "mock-limits", "Configure mock rate limits", "usage", mock_limits::run)
-CC_RUNTIME_HELPER_COMMAND(OnboardingCommand, "onboarding", "Run onboarding checks", "setup", onboarding::run)
-CC_RUNTIME_HELPER_COMMAND(OutputStyleCommand, "output-style", "Manage output style", "config", output_style::run)
-CC_RUNTIME_HELPER_COMMAND(PerfIssueCommand, "perf-issue", "Collect performance issue diagnostics", "diagnostics", perf_issue::run)
-CC_RUNTIME_HELPER_COMMAND(PrCommentsCommand, "pr-comments", "Inspect pull request comments", "git", pr_comments::run)
-CC_RUNTIME_HELPER_COMMAND(ReloadPluginsCommand, "reload-plugins", "Reload installed plugins", "plugins", reload_plugins::run)
-CC_RUNTIME_HELPER_COMMAND(ResetLimitsCommand, "reset-limits", "Reset local mock limits", "usage", reset_limits::run)
-CC_RUNTIME_HELPER_COMMAND(StatuslineCommand, "statusline", "Configure statusline output", "terminal", statusline::run)
-CC_RUNTIME_HELPER_COMMAND(TerminalSetupCommand, "terminal-setup", "Configure terminal integration", "terminal", terminal_setup::run)
-CC_RUNTIME_HELPER_COMMAND(ThinkbackPlayCommand, "thinkback-play", "Replay thinking history", "thinking", thinkback_play::run)
-CC_RUNTIME_HELPER_COMMAND(VersionCommand, "version", "Show the CLI version", "system", version::run)
+LOOM_RUNTIME_HELPER_COMMAND(AntTraceCommand, "ant-trace", "Inspect internal trace diagnostics", "diagnostics", ant_trace::run)
+LOOM_RUNTIME_HELPER_COMMAND(AutofixPrCommand, "autofix-pr", "Generate fixes for pull request feedback", "git", autofix_pr::run)
+LOOM_RUNTIME_HELPER_COMMAND(BackfillSessionsCommand, "backfill-sessions", "Backfill local session metadata", "session", backfill_sessions::run)
+LOOM_RUNTIME_HELPER_COMMAND(BreakCacheCommand, "break-cache", "Clear internal caches", "diagnostics", break_cache::run)
+LOOM_RUNTIME_HELPER_COMMAND(BridgeCommand, "bridge", "Manage IDE bridge state", "bridge", bridge::run)
+LOOM_RUNTIME_HELPER_COMMAND(BughunterCommand, "bughunter", "Run bug hunting diagnostics", "diagnostics", bughunter::run)
+LOOM_RUNTIME_HELPER_COMMAND(CommitPushPrCommand, "commit-push-pr", "Commit, push, and prepare a pull request", "git", commit_push_pr::run)
+LOOM_RUNTIME_HELPER_COMMAND(CreateMovedToPluginCommand, "create-moved-to-plugin-command", "Create a moved-to-plugin command shim", "plugins", create_moved_to_plugin_command::run)
+LOOM_RUNTIME_HELPER_COMMAND(DebugToolCallCommand, "debug-tool-call", "Debug a tool call payload", "diagnostics", debug_tool_call::run)
+LOOM_RUNTIME_HELPER_COMMAND(MockLimitsCommand, "mock-limits", "Configure mock rate limits", "usage", mock_limits::run)
+LOOM_RUNTIME_HELPER_COMMAND(OnboardingCommand, "onboarding", "Run onboarding checks", "setup", onboarding::run)
+LOOM_RUNTIME_HELPER_COMMAND(OutputStyleCommand, "output-style", "Manage output style", "config", output_style::run)
+LOOM_RUNTIME_HELPER_COMMAND(PerfIssueCommand, "perf-issue", "Collect performance issue diagnostics", "diagnostics", perf_issue::run)
+LOOM_RUNTIME_HELPER_COMMAND(PrCommentsCommand, "pr-comments", "Inspect pull request comments", "git", pr_comments::run)
+LOOM_RUNTIME_HELPER_COMMAND(ReloadPluginsCommand, "reload-plugins", "Reload installed plugins", "plugins", reload_plugins::run)
+LOOM_RUNTIME_HELPER_COMMAND(ResetLimitsCommand, "reset-limits", "Reset local mock limits", "usage", reset_limits::run)
+LOOM_RUNTIME_HELPER_COMMAND(StatuslineCommand, "statusline", "Configure statusline output", "terminal", statusline::run)
+LOOM_RUNTIME_HELPER_COMMAND(TerminalSetupCommand, "terminal-setup", "Configure terminal integration", "terminal", terminal_setup::run)
+LOOM_RUNTIME_HELPER_COMMAND(ThinkbackPlayCommand, "thinkback-play", "Replay thinking history", "thinking", thinkback_play::run)
+LOOM_RUNTIME_HELPER_COMMAND(VersionCommand, "version", "Show the CLI version", "system", version::run)
 
-#undef CC_RUNTIME_HELPER_COMMAND
+#undef LOOM_RUNTIME_HELPER_COMMAND
 
 class ExitCommand final : public detail::BasicCommand {
 public:

@@ -376,7 +376,7 @@ constexpr std::string_view k_row_tail_post =
 
 } // namespace loom::ui::design::logo
 
-#ifdef CC_DESIGN_SYSTEM_DEMO
+#ifdef LOOM_DESIGN_SYSTEM_DEMO
 export namespace loom::ui::design::logo::demo {
 inline int demo_static_row_count() { return 3; }
 inline std::string demo_wordmark() {

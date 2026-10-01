@@ -291,7 +291,7 @@ private:
 
 } // namespace loom::ui::design::primitives
 
-#ifdef CC_DESIGN_SYSTEM_DEMO
+#ifdef LOOM_DESIGN_SYSTEM_DEMO
 export namespace loom::ui::design::primitives::demo {
 inline int demo_spinner_frame_count() {
     return static_cast<int>(loom::ui::design::primitives::k_spinner_frames.size());

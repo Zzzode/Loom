@@ -5,7 +5,7 @@
 /// recursive rm on root paths, curl|sh pipes, sudo usage, eval'd code, fork bombs,
 /// heredoc-destructive streams, and similar patterns.
 ///
-/// When CC_HAS_TREE_SITTER=0 the same 10 detections are performed via regex scan and
+/// When LOOM_HAS_TREE_SITTER=0 the same 10 detections are performed via regex scan and
 /// parse_error is set to true so callers can treat the result as a conservative
 /// fallback (requires manual approval).
 
@@ -16,7 +16,7 @@ module;
 #include <cstdint>
 #include <cstring>
 
-#if CC_HAS_TREE_SITTER
+#if LOOM_HAS_TREE_SITTER
 extern "C" {
 #include <tree_sitter/api.h>
 #include <cstddef>
@@ -199,7 +199,7 @@ auto compile_catalogue(const void* lang) -> const CompiledCatalogue& {
         cache.entries.reserve(kAllQueries.size());
         bool ok = true;
         for (const QueryDef& def : kAllQueries) {
-#if CC_HAS_TREE_SITTER
+#if LOOM_HAS_TREE_SITTER
             Query q(static_cast<const TSLanguage*>(lang), def.pattern);
 #else
             Query q(lang, def.pattern);
@@ -305,7 +305,7 @@ auto severity_label(Severity s) -> std::string_view {
     return "Unknown";
 }
 
-// ─── Regex fallback (used when !CC_HAS_TREE_SITTER or parse error) ───────────
+// ─── Regex fallback (used when !LOOM_HAS_TREE_SITTER or parse error) ───────────
 void regex_scan(BashClassifierResult& out, std::string_view script) {
     // We compile the regexes lazily on first call; they are pure stateless objects so
     // a function-local static is safe (C++11 guarantees thread-safe init of function
@@ -360,7 +360,7 @@ using namespace bash_detail;
                                       std::string_view script) -> BashClassifierResult {
     BashClassifierResult out;
 
-#if CC_HAS_TREE_SITTER
+#if LOOM_HAS_TREE_SITTER
     const TSLanguage* lang = tree_sitter_bash_lang();
 #else
     const void* lang = nullptr;
@@ -368,7 +368,7 @@ using namespace bash_detail;
 
     const CompiledCatalogue& cat = compile_catalogue(lang);
 
-#if CC_HAS_TREE_SITTER
+#if LOOM_HAS_TREE_SITTER
     Parser parser;
     if (!parser.set_language(lang)) {
         // Parser could not bind bash language. Treat as parse error and fall back.

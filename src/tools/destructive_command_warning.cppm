@@ -6,7 +6,7 @@
 // auto-approval behaviour. Ported from src/tools/BashTool/destructiveCommandWarning.ts
 //
 // Two-tier detection:
-//   1. AST-based (preferred): uses tree-sitter bash parser when CC_HAS_TREE_SITTER=1
+//   1. AST-based (preferred): uses tree-sitter bash parser when LOOM_HAS_TREE_SITTER=1
 //      for precise structural detection with fewer false positives.
 //   2. Regex fallback (always available): pattern-matching on the raw command
 //      string. Used when tree-sitter is disabled or parsing fails.
@@ -189,14 +189,14 @@ struct DangerClassification {
 
 /// Classify a bash command's dangerousness with full detail.
 ///
-/// When CC_HAS_TREE_SITTER=1 and the command parses cleanly, AST-based
+/// When LOOM_HAS_TREE_SITTER=1 and the command parses cleanly, AST-based
 /// detection is used first for higher precision.  If parsing fails or
 /// tree-sitter is disabled, regex-based detection is used as a fallback.
 [[nodiscard]] inline auto classify_dangerous_command(std::string_view command)
     -> DangerClassification {
     DangerClassification out;
 
-#if CC_HAS_TREE_SITTER
+#if LOOM_HAS_TREE_SITTER
     // Attempt AST-based classification for higher precision.
     auto ast_result = loom::utils::tree_sitter::bash::classify_dangerous(
         std::filesystem::path{}, command);
@@ -256,7 +256,7 @@ struct DangerClassification {
 /// Returns a human-readable warning string, or std::nullopt if no destructive
 /// pattern is detected.
 ///
-/// When CC_HAS_TREE_SITTER=1, AST-based detection is attempted first for
+/// When LOOM_HAS_TREE_SITTER=1, AST-based detection is attempted first for
 /// higher precision; regex patterns are used as a fallback.
 ///
 /// @param command The raw command string (may be a compound command with

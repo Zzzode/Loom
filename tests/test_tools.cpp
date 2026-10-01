@@ -11178,10 +11178,10 @@ static bool danger_has_pattern(const loom::tools::bash_validation::DangerClassif
 // that are ONLY emitted by the tree-sitter AST classifier.  The regex
 // fallback path (loom.tools.destructive_command_warning's pattern catalogue)
 // covers git/rm/DROP/kubectl/terraform but none of the AST-only patterns,
-// so these tests cannot meaningfully run when CC_HAS_TREE_SITTER is off.
+// so these tests cannot meaningfully run when LOOM_HAS_TREE_SITTER is off.
 // Guard them so the suite stays GREEN in both builds without weakening any
 // assertion (every check still runs verbatim when tree-sitter is compiled in).
-#if !CC_HAS_TREE_SITTER
+#if !LOOM_HAS_TREE_SITTER
 #define CC_SKIP_UNLESS_TREE_SITTER()                                        \
     do {                                                                    \
         GTEST_SKIP() << "BashDanger AST-only pattern; tree-sitter disabled";\
@@ -11194,7 +11194,7 @@ static bool danger_has_pattern(const loom::tools::bash_validation::DangerClassif
 TEST(BashDanger, SimpleEchoIsNotDangerous) {
     auto r = loom::tools::bash_validation::classify_dangerous_command("echo hello");
     EXPECT_FALSE(r.is_dangerous);
-#if CC_HAS_TREE_SITTER
+#if LOOM_HAS_TREE_SITTER
     EXPECT_TRUE(r.used_ast);
     EXPECT_FALSE(r.parse_error);
 #else
@@ -11358,7 +11358,7 @@ TEST(BashDanger, SyntaxErrorFallsBackGracefully) {
 TEST(BashDanger, EmptyCommandIsSafe) {
     auto r = loom::tools::bash_validation::classify_dangerous_command("");
     EXPECT_FALSE(r.is_dangerous);
-#if CC_HAS_TREE_SITTER
+#if LOOM_HAS_TREE_SITTER
     EXPECT_TRUE(r.used_ast);
 #else
     // tree-sitter disabled: AST path is unavailable, so used_ast stays false

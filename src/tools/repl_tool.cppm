@@ -32,10 +32,10 @@ module;
 #ifdef __APPLE__
 #include <crt_externs.h>
 #include <cstddef>
-#define CC_ENVIRON (*_NSGetEnviron())
+#define LOOM_ENVIRON (*_NSGetEnviron())
 #else
 extern char** environ;
-#define CC_ENVIRON environ
+#define LOOM_ENVIRON environ
 #endif
 
 export module loom.tools.repl;
@@ -271,7 +271,7 @@ public:
 
         pid_t pid = 0;
         int rc = ::posix_spawnp(&pid, argv_vec[0].c_str(), &fa, nullptr,
-                                argv_c.data(), CC_ENVIRON);
+                                argv_c.data(), LOOM_ENVIRON);
         ::posix_spawn_file_actions_destroy(&fa);
 
         detail::safe_close(stdin_pipe[0]);

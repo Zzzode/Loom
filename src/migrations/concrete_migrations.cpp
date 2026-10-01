@@ -248,7 +248,7 @@ inline void merge_str_array(yyjson_mut_doc* doc, yyjson_mut_val* parent,
 
 // --- convenience: operate on JsonMutVal& instead of raw pointers ------------
 
-#define CC_MUT_R_(name)                                                        \
+#define LOOM_MUT_R_(name)                                                        \
     template <typename... Args>                                                \
     inline auto name(JsonMutVal& obj, Args&&... args) noexcept(                \
         noexcept(name(obj.raw(), std::forward<Args>(args)...)))                \
@@ -256,12 +256,12 @@ inline void merge_str_array(yyjson_mut_doc* doc, yyjson_mut_val* parent,
         return name(obj.raw(), std::forward<Args>(args)...);                   \
     }
 
-CC_MUT_R_(obj_getn)
-CC_MUT_R_(has)
-CC_MUT_R_(remove)
-#undef CC_MUT_R_
+LOOM_MUT_R_(obj_getn)
+LOOM_MUT_R_(has)
+LOOM_MUT_R_(remove)
+#undef LOOM_MUT_R_
 
-#define CC_MUT_R_DOC_(name)                                                    \
+#define LOOM_MUT_R_DOC_(name)                                                    \
     template <typename... Args>                                                \
     inline auto name(JsonMutDoc& doc, JsonMutVal& obj, Args&&... args)         \
         -> decltype(name(doc.raw(), obj.raw(),                                 \
@@ -269,12 +269,12 @@ CC_MUT_R_(remove)
         return name(doc.raw(), obj.raw(), std::forward<Args>(args)...);        \
     }
 
-CC_MUT_R_DOC_(ensure_obj)
-CC_MUT_R_DOC_(put_str)
-CC_MUT_R_DOC_(put_bool)
-CC_MUT_R_DOC_(put_sint)
-CC_MUT_R_DOC_(merge_str_array)
-#undef CC_MUT_R_DOC_
+LOOM_MUT_R_DOC_(ensure_obj)
+LOOM_MUT_R_DOC_(put_str)
+LOOM_MUT_R_DOC_(put_bool)
+LOOM_MUT_R_DOC_(put_sint)
+LOOM_MUT_R_DOC_(merge_str_array)
+#undef LOOM_MUT_R_DOC_
 
 }  // namespace mut
 }  // namespace

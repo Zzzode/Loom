@@ -491,7 +491,7 @@ struct ApplyResult {
 }
 
 // ============================================================
-// Main entry point (invoked via CC_RUNTIME_HELPER_COMMAND macro)
+// Main entry point (invoked via LOOM_RUNTIME_HELPER_COMMAND macro)
 // ============================================================
 
 [[nodiscard]] inline constexpr auto name() -> std::string_view { return "terminal-setup"; }

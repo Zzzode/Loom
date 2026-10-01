@@ -416,8 +416,8 @@ inline void set_theme(Theme t) noexcept {
 
 } // namespace loom::ui::design::theme
 
-// ─── Demo stub (compile-time only under CC_DESIGN_SYSTEM_DEMO) ───────────────
-#ifdef CC_DESIGN_SYSTEM_DEMO
+// ─── Demo stub (compile-time only under LOOM_DESIGN_SYSTEM_DEMO) ───────────────
+#ifdef LOOM_DESIGN_SYSTEM_DEMO
 export namespace loom::ui::design::theme::demo {
 inline std::string demo_theme_names() {
     std::string out;

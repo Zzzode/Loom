@@ -24,10 +24,10 @@ module;
 #ifdef __APPLE__
 #include <crt_externs.h>
 #include <cstddef>
-#define CC_ENVIRON (*_NSGetEnviron())
+#define LOOM_ENVIRON (*_NSGetEnviron())
 #else
 extern char** environ;
-#define CC_ENVIRON environ
+#define LOOM_ENVIRON environ
 #endif
 #endif
 
@@ -200,7 +200,7 @@ exec_capture(const std::string& cmd) {
         nullptr,
     };
     pid_t pid = 0;
-    int rc = ::posix_spawnp(&pid, "/bin/sh", &actions, nullptr, argv.data(), CC_ENVIRON);
+    int rc = ::posix_spawnp(&pid, "/bin/sh", &actions, nullptr, argv.data(), LOOM_ENVIRON);
     ::posix_spawn_file_actions_destroy(&actions);
     ::close(pipefd[1]);
     if (rc != 0) {
@@ -253,7 +253,7 @@ exec_stream(const std::string& cmd, const std::function<void(std::string_view)>&
         nullptr,
     };
     pid_t pid = 0;
-    int rc = ::posix_spawnp(&pid, "/bin/sh", &actions, nullptr, argv.data(), CC_ENVIRON);
+    int rc = ::posix_spawnp(&pid, "/bin/sh", &actions, nullptr, argv.data(), LOOM_ENVIRON);
     ::posix_spawn_file_actions_destroy(&actions);
     ::close(pipefd[1]);
     if (rc != 0) { ::close(pipefd[0]); return std::unexpected(std::string{"posix_spawn failed"}); }
@@ -300,7 +300,7 @@ exec_write(const std::string& cmd, std::string_view input) {
         nullptr,
     };
     pid_t pid = 0;
-    int rc = ::posix_spawnp(&pid, "/bin/sh", &actions, nullptr, argv.data(), CC_ENVIRON);
+    int rc = ::posix_spawnp(&pid, "/bin/sh", &actions, nullptr, argv.data(), LOOM_ENVIRON);
     ::posix_spawn_file_actions_destroy(&actions);
     ::close(pipefd[0]);  // child owns the read end
     if (rc != 0) {
@@ -363,7 +363,7 @@ inline std::unordered_map<FILE*, pid_t>& popen_spawn_pids() {
         nullptr,
     };
     pid_t pid = 0;
-    int rc = ::posix_spawnp(&pid, "/bin/sh", &fa, nullptr, argv.data(), CC_ENVIRON);
+    int rc = ::posix_spawnp(&pid, "/bin/sh", &fa, nullptr, argv.data(), LOOM_ENVIRON);
     ::posix_spawn_file_actions_destroy(&fa);
     ::close(pipefd[1]);
     if (rc != 0) {
@@ -430,7 +430,7 @@ inline int pclose_spawn(FILE* f) {
     static const std::string dash_c = "-c";
     std::vector<char*> argv = { const_cast<char*>(sh.data()), const_cast<char*>(dash_c.data()), const_cast<char*>(cmd.c_str()), nullptr };
     pid_t pid = 0;
-    int rc = ::posix_spawnp(&pid, "/bin/sh", &fa, nullptr, argv.data(), CC_ENVIRON);
+    int rc = ::posix_spawnp(&pid, "/bin/sh", &fa, nullptr, argv.data(), LOOM_ENVIRON);
     ::posix_spawn_file_actions_destroy(&fa);
     ::close(sv[1]);
     if (rc != 0) { ::close(sv[0]); return nullptr; }

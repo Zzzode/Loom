@@ -3,15 +3,15 @@
 ///
 /// Exports typed RAII handles for TSParser / TSTree / TSQuery / TSQueryCursor
 /// plus a Query helper that compiles a pattern and streams capture results.
-/// All tree-sitter usage is guarded by CC_HAS_TREE_SITTER. When the dependency is
-/// disabled (CC_HAS_TREE_SITTER=0), Parser::parse returns nullptr and Query
+/// All tree-sitter usage is guarded by LOOM_HAS_TREE_SITTER. When the dependency is
+/// disabled (LOOM_HAS_TREE_SITTER=0), Parser::parse returns nullptr and Query
 /// reports a compilation error so higher layers can fall back conservatively.
 
 module;
 
 #include <cstdint>
 
-#if CC_HAS_TREE_SITTER
+#if LOOM_HAS_TREE_SITTER
 extern "C" {
 #include <tree_sitter/api.h>
 }
@@ -24,7 +24,7 @@ import std;
 
 export namespace loom::utils::tree_sitter {
 
-#if CC_HAS_TREE_SITTER
+#if LOOM_HAS_TREE_SITTER
 
 // ─── RAII deleters for tree-sitter opaque pointers ────────────────────────────────
 struct TSLanguageDeleter {
@@ -204,7 +204,7 @@ private:
     return tree_sitter_bash();
 }
 
-#else   // !CC_HAS_TREE_SITTER
+#else   // !LOOM_HAS_TREE_SITTER
 
 // ─── Disabled stubs ────────────────────────────────────────────────────────
 // When tree-sitter is not linked we provide zero-dependency stub types so
@@ -247,7 +247,7 @@ public:
     };
 
     Query(const void* /*lang*/, std::string_view /*pattern*/) {
-        error_msg_ = "tree-sitter disabled at build time (CC_HAS_TREE_SITTER=0)";
+        error_msg_ = "tree-sitter disabled at build time (LOOM_HAS_TREE_SITTER=0)";
     }
 
     [[nodiscard]] bool ok() const noexcept { return false; }
@@ -267,6 +267,6 @@ private:
     return nullptr;
 }
 
-#endif  // CC_HAS_TREE_SITTER
+#endif  // LOOM_HAS_TREE_SITTER
 
 }  // namespace loom::utils::tree_sitter

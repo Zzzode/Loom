@@ -1,0 +1,91 @@
+# ─── loom_services: Services Layer ──────────────────────────────────────────────
+add_library(loom_services)
+target_sources(loom_services
+    PUBLIC FILE_SET CXX_MODULES FILES
+        services/analytics.cppm
+        services/api/bootstrap.cppm
+        services/api/client.cppm
+        services/api/errors.cppm
+        services/api/models.cppm
+        services/api/session_ingress.cppm
+        services/api/streaming.cppm
+        services/api/usage.cppm
+        services/api/with_retry.cppm
+        services/api/with_retry_simple.cppm
+        services/auth/sigv4.cppm
+        services/auth/gcp_adc.cppm
+        services/auth/azure_credential.cppm
+        services/auth/provider_selector.cppm
+        services/compact/api_microcompact.cppm
+        services/image/image.cppm
+        services/lsp/LSPServerInstance.cppm
+        services/lsp/LSPServerManager.cppm
+        services/lsp/client.cppm
+        services/lsp/diagnostic_registry.cppm
+        services/lsp/passive_feedback.cppm
+        services/lsp/types.cppm
+        services/mcp/at_mention_handler.cppm
+        services/mcp/auth.cppm
+        services/mcp/channel_notification.cppm
+        services/mcp/channel_permissions.cppm
+        services/mcp/client.cppm
+        services/mcp/config.cppm
+        services/mcp/connection_manager.cppm
+        services/mcp/elicitation_handler.cppm
+        services/mcp/types.cppm
+        services/mcp/xaa.cppm
+        services/memory/extract_memories.cppm
+        services/memory/sessionMemory.cppm
+        services/oauth/auth_code_listener.cppm
+        services/oauth/crypto.cppm
+        services/prompt_suggestion/prompt_suggestion.cppm
+        services/rate_limit/rate_limit.cppm
+        services/token/estimation.cppm
+        services/assistant/session_history.cppm
+        services/mcp/headers_helper.cppm
+        services/ide_integration.cppm
+        services/mcp/vscode_sdk_mcp.cppm
+        services/mcp/in_process_transport.cppm
+        services/mcp/oauth_port.cppm
+        services/mcp/xaa_idp_login.cppm
+        services/mcp/transport_stdio.cppm
+        services/diagnostic/dump_diagnostic.cppm
+        services/rate_limit/rate_limit_hook.cppm
+        services/team_memory/secret_scanner.cppm
+)
+target_sources(loom_services
+    PRIVATE
+        services/mcp/config_impl.cpp
+        services/mcp/headers_helper_impl.cpp
+        services/mcp/client_stdio_transport.cpp
+        services/mcp/client_sse_transport.cpp
+        services/mcp/client_http_transport.cpp
+        services/mcp/client_protocol.cpp
+        services/mcp/client_requests.cpp
+)
+target_link_libraries(loom_services
+    PUBLIC
+        loom_utils
+        loom_types
+        loom_constants
+        loom_config
+        # RFC-0001 Phase D B5c: mcp/channel_notification imports
+        # cc.plugins.plugin_identifier, now homed in loom_plugins.
+        loom_plugins
+        CURL::libcurl
+        yyjson
+        uv_a
+        httplib::httplib
+        OpenSSL::SSL
+        OpenSSL::Crypto
+)
+target_link_libraries(loom_commands
+    PUBLIC
+        loom_services
+        loom_constants
+        loom_keybindings
+        loom_skills_core
+        loom_skills
+        loom_tasks
+        loom_vim
+)

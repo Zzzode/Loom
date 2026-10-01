@@ -13,10 +13,10 @@ target_compile_options(bench_core PRIVATE
 
 target_link_libraries(bench_core
     PRIVATE
-        cc_core              # full module BMI propagation (defense-in-depth)
-        cc_services          # cc.services.api.sse
-        cc_tools
-        cc_utils
+        loom_core              # full module BMI propagation (defense-in-depth)
+        loom_services          # cc.services.api.sse
+        loom_tools
+        loom_utils
         benchmark::benchmark
         benchmark::benchmark_main
 )

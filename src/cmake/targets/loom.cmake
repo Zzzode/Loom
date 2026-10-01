@@ -6,10 +6,10 @@ target_sources(loom
 )
 target_link_libraries(loom
     PRIVATE
-        cc_core
-        cc_daemon
-        cc_server
-        cc_teams
+        loom_core
+        loom_daemon
+        loom_server
+        loom_teams
 )
 set_target_properties(loom PROPERTIES
     OUTPUT_NAME "loom"
@@ -24,7 +24,7 @@ target_sources(pare_benchmark
 )
 target_link_libraries(pare_benchmark
     PRIVATE
-        cc_benchmarks
+        loom_benchmarks
 )
 set_target_properties(pare_benchmark PROPERTIES
     OUTPUT_NAME "pare-benchmark"

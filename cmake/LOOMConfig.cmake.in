@@ -7,7 +7,7 @@ include(CMakeFindDependencyMacro)
 # Brotli::* in its INTERFACE_LINK_LIBRARIES — httplib's compression and
 # OpenSSL support, enabled by default when the system has the libs. Its
 # INTERFACE_COMPILE_DEFINITIONS propagate CPPHTTPLIB_BROTLI_SUPPORT /
-# CPPHTTPLIB_ZLIB_SUPPORT, so the cc_* objects were compiled against those
+# CPPHTTPLIB_ZLIB_SUPPORT, so the loom_* objects were compiled against those
 # symbols and a consumer link needs them resolved. Re-find all three so the
 # export is self-contained. CMake ships no FindBrotli module, so httplib's
 # own cmake/FindBrotli.cmake is installed next to this file; append this

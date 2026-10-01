@@ -305,15 +305,19 @@ set(CMAKE_COMPILE_WARNING_AS_ERROR ${LOOM_WARNINGS_AS_ERRORS})
 add_subdirectory(src)
 
 # ─── Unit Tests (GoogleTest) ──────────────────────────────────────────────────
-option(CC_BUILD_TESTS "Build unit tests" ON)
-if(CC_BUILD_TESTS)
+option(LOOM_BUILD_TESTS "Build unit tests" ON)
+# Backwards-compat: CC_BUILD_TESTS was the old name.
+if(DEFINED CC_BUILD_TESTS AND NOT DEFINED LOOM_BUILD_TESTS)
+    set(LOOM_BUILD_TESTS "${CC_BUILD_TESTS}" CACHE BOOL "Build unit tests" FORCE)
+endif()
+if(LOOM_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
 # ─── Install Configuration ────────────────────────────────────────────────────
 # RFC 0001 cc-sdk phase 3 (§2.6): revive the install/EXPORT for the loom::sdk
-# embeddable surface. The installed set is cc_sdk + every cc_* target in its
+# embeddable surface. The installed set is loom_sdk + every loom_* target in its
 # transitive PUBLIC link closure (computed from the link graph, not
 # hand-maintained) + the FetchContent third-party targets the closure
 # references. C++ module names stay cc.sdk.* (OQ4 deferred); the install
@@ -344,62 +348,69 @@ target_include_directories(yyjson PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 # The embeddable surface is `loom::sdk` (design §2.6): the build-tree target
-# is cc_sdk, but EXPORT_NAME drops the cc_ prefix so the exported target is
-# loom::sdk. The other cc_* targets keep their names (loom::cc_utils, …) —
+# is loom_sdk, but EXPORT_NAME drops the loom_ prefix so the exported target is
+# loom::sdk. The other loom_* targets keep their names (loom::loom_utils, …) —
 # the consumer links only loom::sdk; the rest are transitive.
-set_target_properties(cc_sdk PROPERTIES EXPORT_NAME sdk)
+set_target_properties(loom_sdk PROPERTIES EXPORT_NAME sdk)
 
-# The exported cc_* targets ship C++23 module interfaces (.cppm). The
+# The exported loom_* targets ship C++23 module interfaces (.cppm). The
 # directory-level CMAKE_CXX_STANDARD (root CMakeLists.txt:137) does NOT
 # travel with the export, so without an explicit compile feature the
 # consumer-generated synth module targets fail CMake's cxx_std_20+ modules
 # check ("found cxx_std_17") and the installed .cppm files cannot be
 # compiled (§4.4 install smoke test). Record cxx_std_23 on every exported
-# cc_* target. (In-tree this is a no-op: the tree already builds C++23 via
+# loom_* target. (In-tree this is a no-op: the tree already builds C++23 via
 # the directory-level standard, so no compile flag changes.)
-set(LOOM_CC_EXPORT_TARGETS
-    cc_sdk
-    cc_utils
-    cc_types
-    cc_config
-    cc_constants
-    cc_std
-    cc_tools
-    cc_skills_core
-    cc_tasks
-    cc_teams
-    cc_hooks
-    cc_state
-    cc_task_types
-    cc_coordinator
-    cc_vim
-    cc_session
-    cc_query
-    cc_orchestration
-    cc_memdir
-    cc_services
-    cc_plugins
+set(LOOM_SDK_EXPORT_TARGETS
+    loom_sdk
+    loom_utils
+    loom_types
+    loom_config
+    loom_constants
+    loom_std
+    loom_tools
+    loom_skills_core
+    loom_tasks
+    loom_teams
+    loom_hooks
+    loom_state
+    loom_task_types
+    loom_coordinator
+    loom_vim
+    loom_session
+    loom_query
+    loom_orchestration
+    loom_memdir
+    loom_services
+    loom_plugins
 )
-foreach(_loom_cc_target IN LISTS LOOM_CC_EXPORT_TARGETS)
-    target_compile_features(${_loom_cc_target} PUBLIC cxx_std_23)
+# Set EXPORT_NAME on every exported loom_* target so the installed name is
+# loom::<short> (e.g. loom::utils, not loom::loom_utils). loom_sdk already
+# has EXPORT_NAME sdk (set above); the rest get their loom_ prefix stripped.
+foreach(_t IN LISTS LOOM_SDK_EXPORT_TARGETS)
+    target_compile_features(${_t} PUBLIC cxx_std_23)
+    if(NOT _t STREQUAL "loom_sdk")
+                string(REGEX REPLACE "^loom_" "" _short "${_t}")
+        set_target_properties(${_t} PROPERTIES EXPORT_NAME "${_short}")
+    endif()
 endforeach()
 
-# tree-sitter is an optional PUBLIC dep of cc_utils (CC_ENABLE_TREE_SITTER,
+# tree-sitter is an optional PUBLIC dep of loom_utils (LOOM_ENABLE_TREE_SITTER,
 # default OFF). When ON, its targets must be in the export set too or
 # install(EXPORT) fails the closure check. Their headers are installed from
 # src/CMakeLists.txt, where the FetchContent source dirs are in scope.
 set(LOOM_TREESITTER_EXPORT_TARGETS)
-if(CC_ENABLE_TREE_SITTER)
+if(LOOM_ENABLE_TREE_SITTER)
     list(APPEND LOOM_TREESITTER_EXPORT_TARGETS tree-sitter tree-sitter-bash)
 endif()
 
 # Install the embeddable SDK surface + its transitive PUBLIC link closure.
-# The cc_* list is the transitive PUBLIC closure of cc_sdk (20 targets,
-# derived by walking target_link_libraries from cc_sdk), plus cc_std: every
+# The loom_* list is the transitive PUBLIC closure of loom_sdk (20 targets,
+# derived by walking target_link_libraries from loom_sdk), plus loom_std: every
 # target links the `import std;` module via the directory-level
-# link_libraries(cc_std) in src/CMakeLists.txt, so CMake's export check
-# requires cc_std in the set even though it is not a target_link_libraries
-# edge. cc_std's FILE_SET installs the toolchain-provided std.cppm (staged
+# link_libraries(loom_std) in src/CMakeLists.txt, so CMake's export check
+# requires loom_std in the set even though it is not a target_link_libraries
+# edge. loom_std's FILE_SET installs the toolchain-provided std.cppm (staged
 # into the build tree at configure time); a consumer rebuilding the std BMI
 # needs the same toolchain generation (same clang++/libc++), consistent with
 # the experimental ABI policy above. The FetchContent targets
@@ -407,9 +418,9 @@ endif()
 # is self-contained — find_dependency cannot conjure a FetchContent target.
 # Real target names (not aliases — CMake rejects installing ALIAS targets).
 # CURL/OpenSSL stay as find_dependency in loomConfig.cmake. ftxui-screen is
-# in the closure via cc_utils's PUBLIC TLL ftxui::screen (cc_utils.cmake:109).
+# in the closure via loom_utils's PUBLIC TLL ftxui::screen (loom_utils.cmake:109).
 install(TARGETS
-    ${LOOM_CC_EXPORT_TARGETS}
+    ${LOOM_SDK_EXPORT_TARGETS}
     yyjson
     uv_a
     httplib

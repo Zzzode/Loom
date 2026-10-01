@@ -1,0 +1,139 @@
+# ─── loom_commands: Command System ──────────────────────────────────────────────
+add_library(loom_commands)
+target_sources(loom_commands
+    PUBLIC FILE_SET CXX_MODULES FILES
+        commands/add_dir.cppm
+        commands/ant_trace.cppm
+        commands/advisor.cppm
+        commands/agents.cppm
+        commands/autofix_pr.cppm
+        commands/backfill_sessions.cppm
+        commands/branch.cppm
+        commands/break_cache.cppm
+        commands/bridge.cppm
+        commands/bridge-kick.cppm
+        commands/brief.cppm
+        commands/bughunter.cppm
+        commands/btw.cppm
+        commands/clear.cppm
+        commands/chrome.cppm
+        commands/color.cppm
+        commands/command.cppm
+        commands/command_registry.cppm
+        commands/commit.cppm
+        commands/commit_push_pr.cppm
+        commands/compact.cppm
+        commands/config.cppm
+        commands/context.cppm
+        commands/copy_cmd.cppm
+        commands/cost.cppm
+        commands/create_moved_to_plugin_command.cppm
+        commands/ctx-viz.cppm
+        commands/desktop.cppm
+        commands/debug_tool_call.cppm
+        commands/diff.cppm
+        commands/doctor.cppm
+        commands/effort.cppm
+        commands/env.cppm
+        commands/exit.cppm
+        commands/export_cmd.cppm
+        commands/fast.cppm
+        commands/feedback.cppm
+        commands/files.cppm
+        commands/good_loom.cppm
+        commands/heapdump.cppm
+        commands/help.cppm
+        commands/hooks.cppm
+        commands/ide.cppm
+        commands/init.cppm
+        commands/init_verifiers.cppm
+        commands/insights.cppm
+        commands/install.cppm
+        commands/issue.cppm
+        commands/keybindings_cmd.cppm
+        commands/mcp_cmd.cppm
+        commands/mcp/core_settings_loader.cppm
+        commands/memory.cppm
+        commands/mobile.cppm
+        commands/model.cppm
+        commands/mock_limits.cppm
+        commands/onboarding.cppm
+        commands/output_style.cppm
+        commands/passes.cppm
+        commands/permissions_cmd.cppm
+        commands/perf_issue.cppm
+        commands/plan.cppm
+        commands/plugin/manage_plugins.cppm
+        commands/plugin/plugin_helpers.cppm
+        commands/plugin/plugin_error_formatting.cppm
+        commands/plugin/plugin_details_helpers.cppm
+        commands/plugin/pagination_util.cppm
+        commands/plugin/plugin_manage.cppm
+        commands/plugin/plugin_parse_args.cppm
+        commands/plugin/plugin_trust.cppm
+        commands/plugin/plugin_trust_text.cppm
+        commands/plugin/plugin_ui_data.cppm
+        commands/plugin_cmd.cppm
+        commands/pr_comments.cppm
+        commands/privacy_settings.cppm
+        commands/rate_limit_options.cppm
+        commands/release_notes.cppm
+        commands/reload_plugins.cppm
+        commands/rename.cppm
+        commands/reset_limits.cppm
+        commands/resume.cppm
+        commands/review.cppm
+        commands/review/review_remote.cppm
+        commands/review/ultrareview.cppm
+        commands/rewind.cppm
+        commands/runtime_surface_commands.cppm
+        commands/sandbox_toggle.cppm
+        commands/security_review.cppm
+        commands/session.cppm
+        commands/share.cppm
+        commands/skills_cmd.cppm
+        commands/stats.cppm
+        commands/status.cppm
+        commands/statusline.cppm
+        commands/stickers.cppm
+        commands/summary.cppm
+        commands/tag.cppm
+        commands/tasks_cmd.cppm
+        commands/terminal_setup.cppm
+        commands/theme.cppm
+        commands/thinkback.cppm
+        commands/thinkback_play.cppm
+        commands/ultraplan.cppm
+        commands/upgrade.cppm
+        commands/usage.cppm
+        commands/version.cppm
+        commands/vim.cppm
+)
+target_sources(loom_commands PRIVATE
+    commands/command_registry_init.cpp
+    commands/command_registry_init_a.cpp
+    commands/command_registry_init_b.cpp
+    commands/command_registry_init_c.cpp
+    commands/command_registry_init_d.cpp
+    commands/command_registry_init_e.cpp
+    commands/mcp_cmd.cpp
+)
+target_link_libraries(loom_commands
+    PUBLIC
+        loom_utils
+        loom_types
+        loom_config
+        loom_state
+        loom_tools
+        # RFC-0001 B15: mcp_cmd / mcp.core_settings_loader import the lifted
+        # cc.orchestration.tools.mcp; color.cppm imports cc.orchestration.agent.utils.
+        loom_orchestration
+        # RFC-0001 Phase D B5c: plugin_cmd / plugin_manage / plugin_helpers
+        # import the cc.plugins.* modules (lifecycle/manager/marketplace/
+        # validation), now homed in loom_plugins.
+        loom_plugins
+        # RFC-0001 Phase D B5d: insights.cppm imports cc.session.list_sessions,
+        # now homed in loom_session.
+        loom_session
+        loom_vim
+)

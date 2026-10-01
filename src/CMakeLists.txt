@@ -12,8 +12,12 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ─── Optional tree-sitter dependency for bash AST danger classifier ───────────
-option(CC_ENABLE_TREE_SITTER "Enable tree-sitter bash parsing for AST danger classifier" OFF)
-if(CC_ENABLE_TREE_SITTER)
+option(LOOM_ENABLE_TREE_SITTER "Enable tree-sitter bash parsing for AST danger classifier" OFF)
+# Backwards-compat: CC_ENABLE_TREE_SITTER was the old name.
+if(DEFINED CC_ENABLE_TREE_SITTER AND NOT DEFINED LOOM_ENABLE_TREE_SITTER)
+    set(LOOM_ENABLE_TREE_SITTER "${CC_ENABLE_TREE_SITTER}" CACHE BOOL "Enable tree-sitter bash parsing for AST danger classifier" FORCE)
+endif()
+if(LOOM_ENABLE_TREE_SITTER)
     # tree-sitter is wired with the deprecated FetchContent_Populate + manual
     # library target pattern. CMake 4.x sets CMP0169 to NEW which forbids
     # FetchContent_Populate; allow it here until the wiring is modernized.
@@ -58,7 +62,7 @@ if(CC_ENABLE_TREE_SITTER)
     # BUILD_INTERFACE-only include dirs: a plain build-tree path here would
     # break install(EXPORT) ("INTERFACE_INCLUDE_DIRECTORIES ... prefixed in
     # the build directory") when tree-sitter is in the LOOMTargets export
-    # set (root CMakeLists.txt, CC_ENABLE_TREE_SITTER=ON). Consumers get the
+    # set (root CMakeLists.txt, LOOM_ENABLE_TREE_SITTER=ON). Consumers get the
     # install-tree include dir via the install(TARGETS ... INCLUDES
     # DESTINATION) entry; the header is installed below.
     target_include_directories(tree-sitter PUBLIC
@@ -102,64 +106,64 @@ if(CC_ENABLE_TREE_SITTER)
     endif()
 endif()
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_std.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_std.cmake")
 # Make the `import std;` BMI available to every module target defined below.
-link_libraries(cc_std)
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_utils.cmake")
-# RFC 0001 Phase D B6 — cc_teams: teams/swarm modules moved out of cc_utils.
-# Included after cc_utils (its sole link dependency) and before cc_tools
-# (which links cc_teams).
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_teams.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_state.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_task_types.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_history.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_constants.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_types.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_config.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_keybindings.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_memdir.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_coordinator.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_query.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_session.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_bootstrap.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_tasks.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_skills_core.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_tools.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_commands.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_services.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_hooks.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_cli.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_bridge.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_skills.cmake")
+link_libraries(loom_std)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_utils.cmake")
+# RFC 0001 Phase D B6 — loom_teams: teams/swarm modules moved out of loom_utils.
+# Included after loom_utils (its sole link dependency) and before loom_tools
+# (which links loom_teams).
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_teams.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_state.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_task_types.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_history.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_constants.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_types.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_config.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_keybindings.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_memdir.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_coordinator.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_query.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_session.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_bootstrap.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_tasks.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_skills_core.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_tools.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_commands.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_services.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_hooks.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_cli.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_bridge.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_skills.cmake")
 # RFC 0001 Phase B — rank-9 orchestration layer. Included after every link
-# dependency it needs this batch (cc_tools :112, cc_services :114,
-# cc_skills_core :111) and before the upper layers (cc_ui, cc_server) that
+# dependency it needs this batch (loom_tools :112, loom_services :114,
+# loom_skills_core :111) and before the upper layers (loom_ui, loom_server) that
 # link it.
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_orchestration.cmake")
-# RFC 0002 F4 — cc_ui area libraries, included in dependency order
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_orchestration.cmake")
+# RFC 0002 F4 — loom_ui area libraries, included in dependency order
 # (UI9_RANK ascending, leaves first: visual/tools rank 1, foundation rank 2,
 # chrome rank 3, prompt rank 4, widgets rank 5, permissions rank 6,
 # messages rank 7, features rank 8, dialogs rank 9, screens rank 10,
-# app rank 11). Each area library must exist before cc_ui links it.
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_visual.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_tools.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_foundation.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_chrome.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_prompt.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_widgets.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_permissions.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_messages.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_features.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_dialogs.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_screens.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui_app.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_ui.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_vim.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_daemon.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_migrations.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_server.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_benchmarks.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_plugins.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_core.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/cc_sdk.cmake")
+# app rank 11). Each area library must exist before loom_ui links it.
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_visual.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_tools.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_foundation.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_chrome.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_prompt.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_widgets.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_permissions.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_messages.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_features.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_dialogs.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_screens.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_app.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_vim.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_daemon.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_migrations.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_server.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_benchmarks.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_plugins.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_core.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_sdk.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom.cmake")

@@ -5,10 +5,10 @@
 add_executable(fuzz_sse_parser fuzz_sse_parser.cpp)
 target_compile_options(fuzz_sse_parser PRIVATE -fsanitize=fuzzer)
 target_link_options(fuzz_sse_parser PRIVATE -fsanitize=fuzzer)
-target_link_libraries(fuzz_sse_parser PRIVATE cc_services cc_utils)
+target_link_libraries(fuzz_sse_parser PRIVATE loom_services loom_utils)
 
 # Fuzz target: JSON parse + message extraction
 add_executable(fuzz_json_parse fuzz_json_parse.cpp)
 target_compile_options(fuzz_json_parse PRIVATE -fsanitize=fuzzer)
 target_link_options(fuzz_json_parse PRIVATE -fsanitize=fuzzer)
-target_link_libraries(fuzz_json_parse PRIVATE cc_utils)
+target_link_libraries(fuzz_json_parse PRIVATE loom_utils)

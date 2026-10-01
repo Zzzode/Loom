@@ -11,7 +11,7 @@ endif()
 
 # ─── Compiler Detection & Validation ─────────────────────────────────────────
 # Validate that the compiler supports C++20/23 named modules
-function(cc_check_modules_support)
+function(loom_check_modules_support)
     set(_modules_supported FALSE)
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -75,14 +75,14 @@ function(cc_check_modules_support)
     endif()
 
     # Export result to parent scope
-    set(CC_MODULES_SUPPORTED ${_modules_supported} PARENT_SCOPE)
+    set(LOOM_MODULES_SUPPORTED ${_modules_supported} PARENT_SCOPE)
 endfunction()
 
 # ─── Configure Module Build Directories ──────────────────────────────────────
 # Set up BMI (Binary Module Interface) output directories
-function(cc_configure_module_paths)
+function(loom_configure_module_paths)
     # Directory for generated BMI files (.gcm for GCC, .pcm for Clang, .ifc for MSVC)
-    set(CC_MODULE_BMI_DIR "${CMAKE_BINARY_DIR}/modules_bmi" PARENT_SCOPE)
+    set(LOOM_MODULE_BMI_DIR "${CMAKE_BINARY_DIR}/modules_bmi" PARENT_SCOPE)
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/modules_bmi")
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -96,11 +96,11 @@ endfunction()
 
 # ─── Utility: Add a module library with standard configuration ────────────────
 # Convenience wrapper for declaring a module library with FILE_SET CXX_MODULES
-function(cc_add_module_library TARGET_NAME)
+function(loom_add_module_library TARGET_NAME)
     cmake_parse_arguments(ARG "" "" "MODULE_FILES;DEPENDENCIES" ${ARGN})
 
     if(NOT ARG_MODULE_FILES)
-        message(FATAL_ERROR "cc_add_module_library(${TARGET_NAME}): MODULE_FILES is required")
+        message(FATAL_ERROR "loom_add_module_library(${TARGET_NAME}): MODULE_FILES is required")
     endif()
 
     add_library(${TARGET_NAME})
@@ -118,10 +118,10 @@ function(cc_add_module_library TARGET_NAME)
 endfunction()
 
 # ─── Run Checks ──────────────────────────────────────────────────────────────
-cc_check_modules_support()
-cc_configure_module_paths()
+loom_check_modules_support()
+loom_configure_module_paths()
 
-if(NOT CC_MODULES_SUPPORTED)
+if(NOT LOOM_MODULES_SUPPORTED)
     message(FATAL_ERROR
         "[Modules] C++20/23 module support could not be confirmed for this toolchain.")
 endif()

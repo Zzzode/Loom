@@ -31,20 +31,20 @@ if(NOT DEFINED CMAKE_C_COMPILER AND NOT DEFINED CMAKE_CXX_COMPILER)
         if(NOT DEFINED _loom_llvm_prefix)
             set(_loom_llvm_prefix "/opt/homebrew/opt/llvm")
         endif()
-        set(_cc_clang     "${_loom_llvm_prefix}/bin/clang")
-        set(_cc_clangxx   "${_loom_llvm_prefix}/bin/clang++")
-        set(_cc_scan_deps "${_loom_llvm_prefix}/bin/clang-scan-deps")
-        set(_cc_resource_dir "")  # Homebrew layout is self-consistent
+        set(_loom_clang     "${_loom_llvm_prefix}/bin/clang")
+        set(_loom_clangxx   "${_loom_llvm_prefix}/bin/clang++")
+        set(_loom_scan_deps "${_loom_llvm_prefix}/bin/clang-scan-deps")
+        set(_loom_resource_dir "")  # Homebrew layout is self-consistent
 
     elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
         if(NOT DEFINED _loom_llvm_prefix)
             set(_loom_llvm_prefix "$ENV{HOME}/.local/opt/llvm-21/usr/lib/llvm-21")
         endif()
         # Project convention: 21-local shim wrappers on PATH.
-        set(_cc_clang     "$ENV{HOME}/.local/bin/clang-21-local")
-        set(_cc_clangxx   "$ENV{HOME}/.local/bin/clang++-21-local")
-        set(_cc_scan_deps "$ENV{HOME}/.local/bin/clang-scan-deps-21-local")
-        set(_cc_resource_dir "${_loom_llvm_prefix}/lib/clang/21")
+        set(_loom_clang     "$ENV{HOME}/.local/bin/clang-21-local")
+        set(_loom_clangxx   "$ENV{HOME}/.local/bin/clang++-21-local")
+        set(_loom_scan_deps "$ENV{HOME}/.local/bin/clang-scan-deps-21-local")
+        set(_loom_resource_dir "${_loom_llvm_prefix}/lib/clang/21")
 
     else()
         message(WARNING
@@ -53,7 +53,7 @@ if(NOT DEFINED CMAKE_C_COMPILER AND NOT DEFINED CMAKE_CXX_COMPILER)
         return()
     endif()
 
-    foreach(_required_tool IN ITEMS _cc_clang _cc_clangxx _cc_scan_deps)
+    foreach(_required_tool IN ITEMS _loom_clang _loom_clangxx _loom_scan_deps)
         if(NOT EXISTS "${${_required_tool}}")
             message(FATAL_ERROR
                 "[AutoToolchain] Required LLVM tool not found: ${${_required_tool}}\n"
@@ -63,14 +63,14 @@ if(NOT DEFINED CMAKE_C_COMPILER AND NOT DEFINED CMAKE_CXX_COMPILER)
         endif()
     endforeach()
 
-    set(CMAKE_C_COMPILER   "${_cc_clang}"     CACHE FILEPATH "" FORCE)
-    set(CMAKE_CXX_COMPILER "${_cc_clangxx}"   CACHE FILEPATH "" FORCE)
-    set(CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS "${_cc_scan_deps}" CACHE FILEPATH "" FORCE)
+    set(CMAKE_C_COMPILER   "${_loom_clang}"     CACHE FILEPATH "" FORCE)
+    set(CMAKE_CXX_COMPILER "${_loom_clangxx}"   CACHE FILEPATH "" FORCE)
+    set(CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS "${_loom_scan_deps}" CACHE FILEPATH "" FORCE)
 
-    if(_cc_resource_dir)
+    if(_loom_resource_dir)
         # Linux shim wrappers need an explicit -resource-dir to find the
         # matching clang headers/builtins.
-        set(_rd_flag "-resource-dir ${_cc_resource_dir}")
+        set(_rd_flag "-resource-dir ${_loom_resource_dir}")
         set(CMAKE_C_FLAGS_INIT   "${CMAKE_C_FLAGS_INIT} ${_rd_flag}")
         set(CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT} ${_rd_flag}")
     endif()

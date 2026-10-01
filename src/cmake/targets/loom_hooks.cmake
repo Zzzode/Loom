@@ -1,0 +1,31 @@
+# ─── loom_hooks: Hooks System ───────────────────────────────────────────────────
+add_library(loom_hooks)
+target_sources(loom_hooks
+    PUBLIC FILE_SET CXX_MODULES FILES
+        hooks/command_queue.cppm
+        hooks/context.cppm
+        hooks/cost_hook.cppm
+        hooks/exit_handler.cppm
+        hooks/hooks_config.cppm
+        hooks/hooks_execution.cppm
+        hooks/hooks_registry.cppm
+        hooks/ide_at_mentioned.cppm
+        hooks/notifs/remaining_notifs.cppm
+        hooks/terminal_size.cppm
+        hooks/text_input.cppm
+        hooks/tool_permissions.cppm
+        hooks/lifecycle_hooks.cppm
+        hooks/typeahead.cppm
+        hooks/virtual_scroll.cppm
+        hooks/permission_resolver.cppm
+        hooks/tool_permission_gate.cppm
+)
+target_link_libraries(loom_hooks
+    PUBLIC
+        loom_utils
+        loom_types
+        loom_config
+        loom_state
+        loom_vim
+        uv_a
+)

@@ -46,7 +46,7 @@ endforeach()
 
 # Helper: mark a test executable target as C++-module-importing so that CMake
 # scans its TUs for `import` statements and propagates upstream BMI files.
-function(cc_test_target_enable_modules _name)
+function(loom_test_target_enable_modules _name)
     if(TARGET ${_name})
         set_target_properties(${_name} PROPERTIES CXX_SCAN_FOR_MODULES ON)
     endif()
@@ -63,12 +63,12 @@ add_executable(test_utils
 )
 target_link_libraries(test_utils
     PRIVATE
-        cc_core
-        cc_utils           # all 50+ cc.utils.* imports
-        cc_ui              # cc.ui.terminal_io
-        cc_plugins         # cc.plugins.marketplace
-        cc_memdir
-        cc_commands        # cc.commands.review.review_remote (parse_pr_input)
+        loom_core
+        loom_utils           # all 50+ cc.utils.* imports
+        loom_ui              # cc.ui.terminal_io
+        loom_plugins         # cc.plugins.marketplace
+        loom_memdir
+        loom_commands        # cc.commands.review.review_remote (parse_pr_input)
         GTest::gtest_main
 )
 gtest_discover_tests(test_utils DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -77,12 +77,12 @@ gtest_discover_tests(test_utils DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
 add_executable(test_core test_core.cpp)
 target_link_libraries(test_core
     PRIVATE
-        cc_core
-        cc_types           # import cc.types.types
-        cc_config          # import cc.config.*
-        cc_constants       # import cc.constants.constants
-        cc_coordinator     # import cc.coordinator.types
-        cc_tasks           # import cc.tasks.task_graph
+        loom_core
+        loom_types           # import cc.types.types
+        loom_config          # import cc.config.*
+        loom_constants       # import cc.constants.constants
+        loom_coordinator     # import cc.coordinator.types
+        loom_tasks           # import cc.tasks.task_graph
         GTest::gtest_main
 )
 gtest_discover_tests(test_core DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -91,15 +91,15 @@ gtest_discover_tests(test_core DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 add_executable(test_state test_state.cpp)
 target_link_libraries(test_state
     PRIVATE
-        cc_core
-        cc_state           # all cc.state.* imports
-        cc_session         # cc.session.history
-        cc_types           # cc.types.types
-        cc_cli             # cc.cli.update
-        cc_constants       # cc.constants.prompts
-        cc_services        # cc.services.mcp.*
-        cc_hooks           # cc.hooks.tool_permissions
-        cc_ui              # cc.ui.repl_screen / cc.ui.* (broad coverage)
+        loom_core
+        loom_state           # all cc.state.* imports
+        loom_session         # cc.session.history
+        loom_types           # cc.types.types
+        loom_cli             # cc.cli.update
+        loom_constants       # cc.constants.prompts
+        loom_services        # cc.services.mcp.*
+        loom_hooks           # cc.hooks.tool_permissions
+        loom_ui              # cc.ui.repl_screen / cc.ui.* (broad coverage)
         GTest::gtest_main
 )
 gtest_discover_tests(test_state DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -110,12 +110,12 @@ gtest_discover_tests(test_state DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
 add_executable(test_tools test_tools.cpp test_runtime_backends_install.cpp)
 target_link_libraries(test_tools
     PRIVATE
-        cc_core
-        cc_tools           # all 40+ cc.tools.* imports
-        cc_orchestration   # RFC-0001 B11: cc.orchestration.runtime_backends
-        cc_hooks           # cc.hooks.tool_permissions
-        cc_services        # cc.services.api.client, cc.services.mcp.*
-        cc_utils           # cc.utils.* helpers
+        loom_core
+        loom_tools           # all 40+ cc.tools.* imports
+        loom_orchestration   # RFC-0001 B11: cc.orchestration.runtime_backends
+        loom_hooks           # cc.hooks.tool_permissions
+        loom_services        # cc.services.api.client, cc.services.mcp.*
+        loom_utils           # cc.utils.* helpers
         GTest::gtest_main
 )
 gtest_discover_tests(test_tools DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -124,9 +124,9 @@ gtest_discover_tests(test_tools DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
 add_executable(test_hooks test_hooks.cpp)
 target_link_libraries(test_hooks
     PRIVATE
-        cc_core
-        cc_hooks           # all cc.hooks.* imports
-        cc_utils           # cc.serdes.json
+        loom_core
+        loom_hooks           # all cc.hooks.* imports
+        loom_utils           # cc.serdes.json
         GTest::gtest_main
 )
 gtest_discover_tests(test_hooks DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -135,10 +135,10 @@ gtest_discover_tests(test_hooks DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
 add_executable(test_services test_services.cpp)
 target_link_libraries(test_services
     PRIVATE
-        cc_core
-        cc_cli
-        cc_utils
-        cc_teams           # cc.teams.team_helpers
+        loom_core
+        loom_cli
+        loom_utils
+        loom_teams           # cc.teams.team_helpers
         GTest::gtest_main
 )
 gtest_discover_tests(test_services DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -149,10 +149,10 @@ gtest_discover_tests(test_services DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEO
 add_executable(test_sse_mock test_sse_mock.cpp)
 target_link_libraries(test_sse_mock
     PRIVATE
-        cc_core
-        cc_services
-        cc_utils
-        cc_cli             # cc.cli.sse_transport (TLS SSE tests)
+        loom_core
+        loom_services
+        loom_utils
+        loom_cli             # cc.cli.sse_transport (TLS SSE tests)
         httplib::httplib
         OpenSSL::SSL
         OpenSSL::Crypto
@@ -163,11 +163,11 @@ gtest_discover_tests(test_sse_mock DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEO
 add_executable(test_wire_backends test_wire_backends.cpp)
 target_link_libraries(test_wire_backends
     PRIVATE
-        cc_core
-        cc_query           # cc.query.wire_protocol + backend implementations
-        cc_utils
-        cc_types
-        cc_tools
+        loom_core
+        loom_query           # cc.query.wire_protocol + backend implementations
+        loom_utils
+        loom_types
+        loom_tools
         GTest::gtest_main
 )
 gtest_discover_tests(test_wire_backends DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -175,9 +175,9 @@ gtest_discover_tests(test_wire_backends DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_
 add_executable(test_with_retry test_with_retry.cpp)
 target_link_libraries(test_with_retry
     PRIVATE
-        cc_core
-        cc_services            # cc.services.api.with_retry*, cc.services.oauth
-        cc_utils
+        loom_core
+        loom_services            # cc.services.api.with_retry*, cc.services.oauth
+        loom_utils
         GTest::gtest_main
 )
 gtest_discover_tests(test_with_retry DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -190,9 +190,9 @@ gtest_discover_tests(test_with_retry DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIM
 add_executable(test_enterprise_auth test_enterprise_auth.cpp)
 target_link_libraries(test_enterprise_auth
     PRIVATE
-        cc_core
-        cc_services
-        cc_utils
+        loom_core
+        loom_services
+        loom_utils
         httplib::httplib
         OpenSSL::Crypto
         GTest::gtest_main
@@ -205,9 +205,9 @@ gtest_discover_tests(test_enterprise_auth DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVER
 add_executable(test_mcp_stdio test_mcp_stdio.cpp)
 target_link_libraries(test_mcp_stdio
     PRIVATE
-        cc_core
-        cc_services
-        cc_utils
+        loom_core
+        loom_services
+        loom_utils
         GTest::gtest_main
 )
 gtest_discover_tests(test_mcp_stdio DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -218,8 +218,8 @@ gtest_discover_tests(test_mcp_stdio DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIME
 
 set(_ui_test_libs
     PRIVATE
-        cc_core
-        cc_ui           # defense-in-depth: UI modules must be discoverable
+        loom_core
+        loom_ui           # defense-in-depth: UI modules must be discoverable
         GTest::gtest_main
 )
 
@@ -254,8 +254,8 @@ gtest_discover_tests(test_ui_dialogs DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIM
 add_executable(test_dialog_toolpermission test_dialog_toolpermission.cpp)
 target_link_libraries(test_dialog_toolpermission
     PRIVATE
-        cc_core
-        cc_ui
+        loom_core
+        loom_ui
         GTest::gtest_main
 )
 gtest_discover_tests(test_dialog_toolpermission
@@ -269,11 +269,11 @@ gtest_discover_tests(test_dialog_toolpermission
 add_executable(test_dialog_system test_dialog_system.cpp)
 target_link_libraries(test_dialog_system
     PRIVATE
-        cc_core
-        cc_ui                  # cc.ui.dialogs.* + cc.ui.design.theme
+        loom_core
+        loom_ui                  # cc.ui.dialogs.* + cc.ui.design.theme
         GTest::gtest_main
 )
-cc_test_target_enable_modules(test_dialog_system)
+loom_test_target_enable_modules(test_dialog_system)
 gtest_discover_tests(test_dialog_system
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
@@ -286,11 +286,11 @@ gtest_discover_tests(test_dialog_system
 add_executable(test_f2_composition_root test_f2_composition_root.cpp)
 target_link_libraries(test_f2_composition_root
     PRIVATE
-        cc_core
-        cc_ui                  # cc.ui.dialogs.* + cc.ui.screens.* + cc.ui.app.*
+        loom_core
+        loom_ui                  # cc.ui.dialogs.* + cc.ui.screens.* + cc.ui.app.*
         GTest::gtest_main
 )
-cc_test_target_enable_modules(test_f2_composition_root)
+loom_test_target_enable_modules(test_f2_composition_root)
 gtest_discover_tests(test_f2_composition_root
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
@@ -301,8 +301,8 @@ gtest_discover_tests(test_f2_composition_root
 add_executable(test_prompt_dialog test_prompt_dialog.cpp)
 target_link_libraries(test_prompt_dialog
     PRIVATE
-        cc_core
-        cc_ui
+        loom_core
+        loom_ui
         GTest::gtest_main
 )
 gtest_discover_tests(test_prompt_dialog
@@ -315,8 +315,8 @@ gtest_discover_tests(test_prompt_dialog
 add_executable(test_cost_threshold_dialog test_cost_threshold_dialog.cpp)
 target_link_libraries(test_cost_threshold_dialog
     PRIVATE
-        cc_core
-        cc_ui
+        loom_core
+        loom_ui
         GTest::gtest_main
 )
 gtest_discover_tests(test_cost_threshold_dialog
@@ -326,10 +326,10 @@ gtest_discover_tests(test_cost_threshold_dialog
 add_executable(test_tasks test_tasks.cpp)
 target_link_libraries(test_tasks
     PRIVATE
-        cc_core
-        cc_tasks               # cc.tasks.*
-        cc_tools               # cc.tools.agent_* / team / spawn_multi_agent
-        cc_utils               # cc.utils.* helpers (cc.teams.swarm.* arrives via cc_tools)
+        loom_core
+        loom_tasks               # cc.tasks.*
+        loom_tools               # cc.tools.agent_* / team / spawn_multi_agent
+        loom_utils               # cc.utils.* helpers (cc.teams.swarm.* arrives via loom_tools)
         GTest::gtest_main
 )
 gtest_discover_tests(test_tasks DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -338,10 +338,10 @@ gtest_discover_tests(test_tasks DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
 add_executable(test_commands test_commands.cpp)
 target_link_libraries(test_commands
     PRIVATE
-        cc_core
-        cc_commands            # cc.commands.*
-        cc_query               # cc.query.query_engine
-        cc_types               # cc.types.types
+        loom_core
+        loom_commands            # cc.commands.*
+        loom_query               # cc.query.query_engine
+        loom_types               # cc.types.types
         GTest::gtest_main
 )
 gtest_discover_tests(test_commands DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -352,9 +352,9 @@ gtest_discover_tests(test_commands DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEO
 add_executable(test_statusline test_statusline.cpp)
 target_link_libraries(test_statusline
     PRIVATE
-        cc_core
-        cc_commands            # cc.commands.statusline
-        cc_utils               # cc.serdes.json (statusline_runner now in cc_ui_app)
+        loom_core
+        loom_commands            # cc.commands.statusline
+        loom_utils               # cc.serdes.json (statusline_runner now in loom_ui_app)
         GTest::gtest_main
 )
 gtest_discover_tests(test_statusline DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -366,12 +366,12 @@ gtest_discover_tests(test_statusline DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIM
 add_executable(test_bootstrap test_bootstrap.cpp)
 target_link_libraries(test_bootstrap
     PRIVATE
-        cc_core
-        cc_bootstrap           # cc.bootstrap.interactive
-        cc_history             # cc.history
-        cc_task_types          # cc.task_types
-        cc_state               # cc.state.teammate_view_helpers
-        cc_utils               # cc.serdes.json
+        loom_core
+        loom_bootstrap           # cc.bootstrap.interactive
+        loom_history             # cc.history
+        loom_task_types          # cc.task_types
+        loom_state               # cc.state.teammate_view_helpers
+        loom_utils               # cc.serdes.json
         GTest::gtest_main
 )
 gtest_discover_tests(test_bootstrap DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -383,9 +383,9 @@ gtest_discover_tests(test_bootstrap DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIME
 add_executable(test_migrations test_migrations.cpp)
 target_link_libraries(test_migrations
     PRIVATE
-        cc_core
-        cc_migrations          # all cc.migrations.* imports
-        cc_utils               # cc.serdes.json
+        loom_core
+        loom_migrations          # all cc.migrations.* imports
+        loom_utils               # cc.serdes.json
         GTest::gtest_main
 )
 gtest_discover_tests(test_migrations DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -394,8 +394,8 @@ gtest_discover_tests(test_migrations DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIM
 add_executable(test_bridge test_bridge.cpp)
 target_link_libraries(test_bridge
     PRIVATE
-        cc_core
-        cc_daemon
+        loom_core
+        loom_daemon
         GTest::gtest_main
 )
 add_dependencies(test_bridge loom)
@@ -407,7 +407,7 @@ gtest_discover_tests(test_bridge DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT
 
 
 # ---------------------------------------------------------------------------
-# cc_sdk phases 2-3 (RFC 0001): golden wire-compatibility gate for the
+# loom_sdk phases 2-3 (RFC 0001): golden wire-compatibility gate for the
 # hand-rolled control protocol spoken by cc.server.server_main and
 # cc.bridge.bridge_messaging. Freezes the exact JSON for every spoken control
 # subtype under tests/golden/sdk_control/ before the ser/de rewire (design
@@ -416,52 +416,52 @@ gtest_discover_tests(test_bridge DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT
 add_executable(test_sdk_control_golden test_sdk_control_golden.cpp)
 target_link_libraries(test_sdk_control_golden
     PRIVATE
-        cc_core            # cc.server.server_main + cc.bridge.bridge_messaging BMIs
-        cc_utils           # cc.serdes.json
+        loom_core            # cc.server.server_main + cc.bridge.bridge_messaging BMIs
+        loom_utils           # cc.serdes.json
         GTest::gtest_main
 )
 gtest_discover_tests(test_sdk_control_golden
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 # ---------------------------------------------------------------------------
-# cc_sdk phases 2-3 (RFC 0001): round-trip ser/de tests for every moved
-# control DTO (design §4.2). Links cc_sdk + cc_server per the design.
+# loom_sdk phases 2-3 (RFC 0001): round-trip ser/de tests for every moved
+# control DTO (design §4.2). Links loom_sdk + loom_server per the design.
 # ---------------------------------------------------------------------------
 add_executable(test_sdk_serde test_sdk_serde.cpp)
 target_link_libraries(test_sdk_serde
     PRIVATE
-        cc_sdk
-        cc_server          # cc.server.control_protocol BMIs
+        loom_sdk
+        loom_server          # cc.server.control_protocol BMIs
         GTest::gtest_main
 )
 gtest_discover_tests(test_sdk_serde
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 # ---------------------------------------------------------------------------
-# cc_sdk phases 2-3 (RFC 0001): compile-time guards that the SDK island's
+# loom_sdk phases 2-3 (RFC 0001): compile-time guards that the SDK island's
 # CONVERGE aliases point at the canonical types (design §4.2).
 # ---------------------------------------------------------------------------
 add_executable(test_sdk_convergence test_sdk_convergence.cpp)
 target_link_libraries(test_sdk_convergence
     PRIVATE
-        cc_sdk
+        loom_sdk
         GTest::gtest_main
 )
 gtest_discover_tests(test_sdk_convergence
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 # ---------------------------------------------------------------------------
-# cc_sdk phases 2-3 (RFC 0001): first-consumer gate for cc.sdk.harness
+# loom_sdk phases 2-3 (RFC 0001): first-consumer gate for cc.sdk.harness
 # (design §4.4). Runs a Harness against a loopback HTTP server serving
 # canned Anthropic responses — the real transport with zero external calls.
-# Links cc_sdk (the harness) + cc_query (engine/assembly BMIs the test
+# Links loom_sdk (the harness) + loom_query (engine/assembly BMIs the test
 # references directly) + httplib (the loopback server).
 # ---------------------------------------------------------------------------
 add_executable(test_sdk_harness test_sdk_harness.cpp)
 target_link_libraries(test_sdk_harness
     PRIVATE
-        cc_sdk
-        cc_query
+        loom_sdk
+        loom_query
         httplib::httplib
         GTest::gtest_main
 )
@@ -472,9 +472,9 @@ gtest_discover_tests(test_sdk_harness
 add_executable(test_skills test_skills.cpp)
 target_link_libraries(test_skills
     PRIVATE
-        cc_core
-        cc_skills              # cc.skills.skill, cc.skills.bundled
-        cc_skills_core
+        loom_core
+        loom_skills              # cc.skills.skill, cc.skills.bundled
+        loom_skills_core
         GTest::gtest_main
 )
 gtest_discover_tests(test_skills DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -488,8 +488,8 @@ add_subdirectory(benchmarks)
 #
 # These two executables exercise the real bash fork/exec and filesystem
 # primitives in cc.tools.bash.impl / cc.tools.files.impl with real shell
-# and filesystem side-effects.  Instead of linking through `cc_tools`
-# (which transitively pulls in cc_services and can be broken by unrelated
+# and filesystem side-effects.  Instead of linking through `loom_tools`
+# (which transitively pulls in loom_services and can be broken by unrelated
 # module scan issues like services/api/sse_client.ddi) we build them via
 # the standalone helper script scripts/build_tools_standalone.bash which
 # precompiles only the two impl_* .cppm units and links against the
@@ -500,7 +500,7 @@ add_subdirectory(benchmarks)
 # Both binaries land in ${CMAKE_BINARY_DIR}:
 #   ${CMAKE_BINARY_DIR}/tools_smoke  — fine-grained CHECK assertions
 #   ${CMAKE_BINARY_DIR}/tools_e2e    — Bash × File cross-tool scenario
-set(CC_TOOLS_STANDALONE_BUILDER
+set(LOOM_TOOLS_STANDALONE_BUILDER
     "${CMAKE_CURRENT_SOURCE_DIR}/../scripts/build_tools_standalone.bash")
 
 add_custom_command(
@@ -509,11 +509,11 @@ add_custom_command(
         "${CMAKE_BINARY_DIR}/tools_e2e"
     COMMAND
         ${CMAKE_COMMAND} -E env
-            "CC_TOOLS_STANDALONE_BUILD_DIR=${CMAKE_BINARY_DIR}"
+            "LOOM_TOOLS_STANDALONE_BUILD_DIR=${CMAKE_BINARY_DIR}"
             "CXX=${CMAKE_CXX_COMPILER}"
-            bash "${CC_TOOLS_STANDALONE_BUILDER}" all
+            bash "${LOOM_TOOLS_STANDALONE_BUILDER}" all
     DEPENDS
-        "${CC_TOOLS_STANDALONE_BUILDER}"
+        "${LOOM_TOOLS_STANDALONE_BUILDER}"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools_smoke.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/tools_e2e.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/tools/bash/impl_bash.cppm"
@@ -572,9 +572,9 @@ add_executable(phase3_permission_smoke
 )
 target_link_libraries(phase3_permission_smoke
     PRIVATE
-        cc_core
-        cc_hooks
-        cc_utils
+        loom_core
+        loom_hooks
+        loom_utils
 )
 set_target_properties(phase3_permission_smoke PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
@@ -604,7 +604,7 @@ endif()
 add_executable(test_fix_hooks_integration test_fix_hooks_integration.cpp)
 target_link_libraries(test_fix_hooks_integration
     PRIVATE
-        cc_core
+        loom_core
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_hooks_integration DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -613,7 +613,7 @@ gtest_discover_tests(test_fix_hooks_integration DISCOVERY_TIMEOUT ${LOOM_TEST_DI
 add_executable(test_fix_query_engine test_fix_query_engine.cpp)
 target_link_libraries(test_fix_query_engine
     PRIVATE
-        cc_core
+        loom_core
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_query_engine DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -622,9 +622,9 @@ gtest_discover_tests(test_fix_query_engine DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVE
 add_executable(test_fix_state test_fix_state.cpp)
 target_link_libraries(test_fix_state
     PRIVATE
-        cc_core
-        cc_state
-        cc_utils
+        loom_core
+        loom_state
+        loom_utils
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_state DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -633,9 +633,9 @@ gtest_discover_tests(test_fix_state DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIME
 add_executable(test_fix_plugin test_fix_plugin.cpp)
 target_link_libraries(test_fix_plugin
     PRIVATE
-        cc_core
-        cc_utils
-        cc_plugins
+        loom_core
+        loom_utils
+        loom_plugins
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_plugin DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -644,7 +644,7 @@ gtest_discover_tests(test_fix_plugin DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIM
 add_executable(test_fix_yoga test_fix_yoga.cpp)
 target_link_libraries(test_fix_yoga
     PRIVATE
-        cc_core
+        loom_core
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_yoga DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -653,7 +653,7 @@ gtest_discover_tests(test_fix_yoga DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEO
 add_executable(test_fix_lsp_tool test_fix_lsp_tool.cpp)
 target_link_libraries(test_fix_lsp_tool
     PRIVATE
-        cc_core
+        loom_core
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_lsp_tool DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -664,10 +664,10 @@ gtest_discover_tests(test_fix_lsp_tool DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_T
 add_executable(test_fix_notifs test_fix_notifs.cpp)
 target_link_libraries(test_fix_notifs
     PRIVATE
-        cc_core
-        cc_hooks
-        cc_services
-        cc_orchestration   # RFC-0001 B15: cc.orchestration.mcp_connectivity + tools.mcp
+        loom_core
+        loom_hooks
+        loom_services
+        loom_orchestration   # RFC-0001 B15: cc.orchestration.mcp_connectivity + tools.mcp
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_notifs DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -676,8 +676,8 @@ gtest_discover_tests(test_fix_notifs DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIM
 add_executable(test_fix_misc_low test_fix_misc_low.cpp)
 target_link_libraries(test_fix_misc_low
     PRIVATE
-        cc_core
-        cc_services
+        loom_core
+        loom_services
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_misc_low DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -688,7 +688,7 @@ gtest_discover_tests(test_fix_misc_low DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_T
 #    pre-module TU) can override with:
 #        set_target_properties(<name> PROPERTIES CXX_SCAN_FOR_MODULES OFF)
 #    after this block.
-foreach(_cc_test IN ITEMS
+foreach(_loom_test IN ITEMS
     test_utils
     test_core
     test_state
@@ -724,7 +724,7 @@ foreach(_cc_test IN ITEMS
     test_fix_notifs
     test_fix_misc_low
 )
-    if(TARGET ${_cc_test})
-        set_target_properties(${_cc_test} PROPERTIES CXX_SCAN_FOR_MODULES ON)
+    if(TARGET ${_loom_test})
+        set_target_properties(${_loom_test} PROPERTIES CXX_SCAN_FOR_MODULES ON)
     endif()
 endforeach()

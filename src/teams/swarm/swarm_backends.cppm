@@ -10,7 +10,7 @@
 // imports cc.teams.team_helpers), swarm_backends_executor.cpp (RAII guard +
 // base vtable anchors), swarm_backends_registry.cpp, and
 // swarm_backends_detail.cpp (argv builders + protocol strings).
-export module cc.teams.swarm.backends;
+export module loom.teams.swarm.backends;
 
 import std;
 

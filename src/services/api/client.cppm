@@ -4,16 +4,16 @@ module;
 #include <curl/curl.h>
 #include <cstdint>
 
-export module cc.services.api.client;
+export module loom.services.api.client;
 
 import std;
 
-import cc.services.api.streaming;
-import cc.services.api.models;
-import cc.services.api.errors;
-import cc.services.auth.provider_selector;
-import cc.serdes.json;
-import cc.utils.error;
+import loom.services.api.streaming;
+import loom.services.api.models;
+import loom.services.api.errors;
+import loom.services.auth.provider_selector;
+import loom.serdes.json;
+import loom.utils.error;
 
 export namespace cc::services::api {
 

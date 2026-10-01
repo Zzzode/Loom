@@ -12,11 +12,11 @@ module;
 #include <sys/wait.h>     // waitpid
 #include <unistd.h>       // fork, setsid, dup2, execl, _exit, STDIN_FILENO
 
-export module cc.platform.clipboard;
+export module loom.platform.clipboard;
 
 import std;
 
-import cc.crypto.crypto;
+import loom.crypto.crypto;
 
 export namespace cc::utils::clipboard {
 

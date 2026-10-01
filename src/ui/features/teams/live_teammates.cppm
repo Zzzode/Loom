@@ -21,13 +21,13 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.features.teams.live_teammates;
+export module loom.ui.features.teams.live_teammates;
 
 import std;
 
-import cc.ui.foundation.theme_provider;
-import cc.ui.features.agents.agent_shared_widgets;
-import cc.tools.agent_color_manager;
+import loom.ui.foundation.theme_provider;
+import loom.ui.features.agents.agent_shared_widgets;
+import loom.tools.agent_color_manager;
 
 export namespace cc::ui::teams::live {
 

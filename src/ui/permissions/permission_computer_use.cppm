@@ -5,12 +5,12 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 
-export module cc.ui.permissions.permission_computer_use;
+export module loom.ui.permissions.permission_computer_use;
 
 import std;
 
-import cc.types.types;
-import cc.serdes.json;
+import loom.types.types;
+import loom.serdes.json;
 
 export namespace cc::ui::permissions {
 

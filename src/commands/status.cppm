@@ -4,13 +4,13 @@
 module;
 
 
-export module cc.commands.status;
+export module loom.commands.status;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.constants.product;
+import loom.types.types;
+import loom.commands.command;
+import loom.constants.product;
 
 export namespace cc::commands {
 

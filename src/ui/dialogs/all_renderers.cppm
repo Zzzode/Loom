@@ -10,16 +10,16 @@
 /// `using` declarations so lookup resolves without ambiguous
 /// namespace-qualification errors.
 module;
-export module cc.ui.dialogs.all_renderers;
+export module loom.ui.dialogs.all_renderers;
 
 import std;
 
-import cc.ui.dialogs.default_renderers;
-import cc.ui.dialogs.bottom_renderers;
-import cc.ui.dialogs.modal_renderers;
-import cc.ui.dialogs.cost_threshold_dialog;
-import cc.ui.dialogs.sandbox_permission;
-import cc.ui.dialogs.quick_open;
+import loom.ui.dialogs.default_renderers;
+import loom.ui.dialogs.bottom_renderers;
+import loom.ui.dialogs.modal_renderers;
+import loom.ui.dialogs.cost_threshold_dialog;
+import loom.ui.dialogs.sandbox_permission;
+import loom.ui.dialogs.quick_open;
 
 export namespace cc::ui::dialogs::all_renderers {
 

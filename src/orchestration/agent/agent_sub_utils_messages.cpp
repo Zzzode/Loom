@@ -3,13 +3,13 @@
 // append, and message text extraction.
 module;
 
-module cc.orchestration.agent.utils;
+module loom.orchestration.agent.utils;
 
 import std;
 
-import cc.serdes.json;
-import cc.services.api.client;
-import cc.tools.agent_runtime;
+import loom.serdes.json;
+import loom.services.api.client;
+import loom.tools.agent_runtime;
 
 namespace cc::tools::agent::utils {
 

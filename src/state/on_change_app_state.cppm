@@ -6,13 +6,13 @@ module;
 
 #include <cstdint>
 
-export module cc.state.on_change;
+export module loom.state.on_change;
 
 import std;
 
-import cc.state.app_state;
-import cc.state.selectors;
-import cc.state.persistence;
+import loom.state.app_state;
+import loom.state.selectors;
+import loom.state.persistence;
 
 export namespace cc::state::on_change {
 

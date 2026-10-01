@@ -7,11 +7,11 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-module cc.ui.visual.markdown;
+module loom.ui.visual.markdown;
 
 import std;
 
-import cc.ui.visual.code_highlight;
+import loom.ui.visual.code_highlight;
 
 namespace cc::ui {
 namespace detail {

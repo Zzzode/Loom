@@ -46,19 +46,19 @@ module;
 #include <unordered_set>
 #include <vector>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
-import cc.serdes.json;
-import cc.fs.atomic_replace;
-import cc.teams.team_helpers;
-import cc.teams.swarm.helpers;
-import cc.teams.swarm.backends;
-import cc.teams.swarm.pane_observer;
-import cc.tools.agent_runtime;
-import cc.ui.features.teams.live_teammates;
-import cc.ui.screens.repl_state;
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.triggers;
+import loom.serdes.json;
+import loom.fs.atomic_replace;
+import loom.teams.team_helpers;
+import loom.teams.swarm.helpers;
+import loom.teams.swarm.backends;
+import loom.teams.swarm.pane_observer;
+import loom.tools.agent_runtime;
+import loom.ui.features.teams.live_teammates;
+import loom.ui.screens.repl_state;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.triggers;
 
 namespace cc::ui {
 

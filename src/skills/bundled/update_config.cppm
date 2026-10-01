@@ -7,14 +7,14 @@ module;
 /// and verification workflow. Delegates all config I/O to cc.config.config
 /// and cc.config.feature_flags — NEVER reads/writes JSON files directly.
 
-export module cc.skills.bundled.update_config;
+export module loom.skills.bundled.update_config;
 
 import std;
 
-import cc.skills.skill;
-import cc.config.config;
-import cc.config.feature_flags;
-import cc.config.settings;
+import loom.skills.skill;
+import loom.config.config;
+import loom.config.feature_flags;
+import loom.config.settings;
 
 export namespace cc::skills::bundled {
 

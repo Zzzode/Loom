@@ -4,7 +4,7 @@
 module;
 
 
-export module cc.tools.agent_constants;
+export module loom.tools.agent_constants;
 
 import std;
 

@@ -20,13 +20,13 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.messages.system_text_message;
+export module loom.ui.messages.system_text_message;
 
 import std;
 
-import cc.ui.messages.message_components;
-import cc.ui.messages.message_timestamp;
-import cc.ui.foundation.design_figures;  // kReferenceMark, kTeardropAsterisk, kBlackCircle (single source of truth)
+import loom.ui.messages.message_components;
+import loom.ui.messages.message_timestamp;
+import loom.ui.foundation.design_figures;  // kReferenceMark, kTeardropAsterisk, kBlackCircle (single source of truth)
 
 export namespace cc::ui::messages {
 

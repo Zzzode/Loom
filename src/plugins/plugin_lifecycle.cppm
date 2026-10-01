@@ -9,10 +9,10 @@ module;
 #include <cstdio>
 #include <cstdlib>
 
-export module cc.plugins.plugin_lifecycle;
+export module loom.plugins.plugin_lifecycle;
 
 import std;
-import cc.process.bash.bash_execution;
+import loom.process.bash.bash_execution;
 
 export namespace cc::utils::plugins {
 

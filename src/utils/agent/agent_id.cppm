@@ -1,7 +1,7 @@
-export module cc.agent.agent_id;
+export module loom.agent.agent_id;
 
 import std;
-import cc.text.parse_int;
+import loom.text.parse_int;
 
 export namespace cc::utils::agent_id {
 

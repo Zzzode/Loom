@@ -27,17 +27,17 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.screens.resume_screen;
+export module loom.ui.screens.resume_screen;
 
 import std;
 
 // ---------------------------------------------------------------------------
 // Cross-module imports
 // ---------------------------------------------------------------------------
-import cc.session.history;
-import cc.types.types;
-import cc.ui.dialogs.trust_dialog;
-import cc.ui.dialogs.trust_utils;
+import loom.session.history;
+import loom.types.types;
+import loom.ui.dialogs.trust_dialog;
+import loom.ui.dialogs.trust_utils;
 
 export namespace cc::ui::resume_screen {
 using namespace ftxui;

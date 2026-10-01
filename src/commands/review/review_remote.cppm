@@ -11,16 +11,16 @@ module;
 #include <cstdint>
 #include <cstdio>
 
-export module cc.commands.review.review_remote;
+export module loom.commands.review.review_remote;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.process.exec_sync;
-import cc.process.shell.shell;
-import cc.platform.find_executable;
-import cc.scm.git.detect_repository;
+import loom.types.types;
+import loom.commands.command;
+import loom.process.exec_sync;
+import loom.process.shell.shell;
+import loom.platform.find_executable;
+import loom.scm.git.detect_repository;
 
 export namespace cc::commands {
 

@@ -28,16 +28,16 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.default_renderers;
-import cc.ui.dialogs.triggers;
-import cc.ui.screens.repl_screen;
-import cc.ui.screens.repl_state;
-import cc.ui.screens.permission_store;
-import cc.ui.permissions.single_prompt;
-import cc.ui.permissions.permission_computer_use;
-import cc.ui.permissions.permission_file_edit;
-import cc.ui.permissions.permission_file_write;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.default_renderers;
+import loom.ui.dialogs.triggers;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.permission_store;
+import loom.ui.permissions.single_prompt;
+import loom.ui.permissions.permission_computer_use;
+import loom.ui.permissions.permission_file_edit;
+import loom.ui.permissions.permission_file_write;
 
 namespace {
 

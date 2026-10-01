@@ -15,9 +15,9 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.serdes.json;
-import cc.plugins.plugin_marketplace;
-import cc.plugins.plugin_validation;
+import loom.serdes.json;
+import loom.plugins.plugin_marketplace;
+import loom.plugins.plugin_validation;
 
 namespace mp = cc::utils::plugin_marketplace;
 namespace pv = cc::utils::plugin_validation;

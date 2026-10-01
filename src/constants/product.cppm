@@ -5,7 +5,7 @@ module;
 #include <cstdlib>
 
 
-export module cc.constants.product;
+export module loom.constants.product;
 
 import std;
 

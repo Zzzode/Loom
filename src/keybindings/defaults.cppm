@@ -6,11 +6,11 @@ module;
 /// @brief Default keybinding definitions and reserved shortcuts.
 /// Migrated from src/keybindings/defaultBindings.ts, reservedShortcuts.ts
 
-export module cc.keybindings.defaults;
+export module loom.keybindings.defaults;
 
 import std;
 
-import cc.keybindings.schema;
+import loom.keybindings.schema;
 
 export namespace cc::keybindings {
 

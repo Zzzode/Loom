@@ -11,11 +11,11 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.messages.collapsed_content_message;
+export module loom.ui.messages.collapsed_content_message;
 
 import std;
 
-import cc.ui.visual.code_highlight;
+import loom.ui.visual.code_highlight;
 
 export namespace cc::ui::messages::collapsed_content {
 using namespace ftxui;

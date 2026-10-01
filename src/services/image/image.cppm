@@ -8,11 +8,11 @@ module;
 #include <cctype>
 #include <cstddef>
 
-export module cc.services.image;
+export module loom.services.image;
 
 import std;
 
-import cc.types.types;
+import loom.types.types;
 
 export namespace cc::services::image {
 

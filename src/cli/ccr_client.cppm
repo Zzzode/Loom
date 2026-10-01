@@ -2,11 +2,11 @@ module;
 #include <cstdio>
 #include <cstdint>
 
-export module cc.cli.ccr_client;
+export module loom.cli.ccr_client;
 
 import std;
 
-import cc.net.http.http;
+import loom.net.http.http;
 
 export namespace cc::cli {
 

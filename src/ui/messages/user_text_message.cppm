@@ -20,15 +20,15 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.messages.user_text_message;
+export module loom.ui.messages.user_text_message;
 
 import std;
 
-import cc.ui.messages.message_timestamp;
+import loom.ui.messages.message_timestamp;
 // P0-1: Unified prompt / user-message glyph source (TS figures.pointer).
 // Eliminates the local `kFiguresPointer` duplicate that diverged from the
 // prompt prefix's UTF-8 byte sequence in CPP Round 1-6.
-import cc.ui.foundation.design_figures;
+import loom.ui.foundation.design_figures;
 
 export namespace cc::ui::messages {
 

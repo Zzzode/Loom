@@ -8,12 +8,12 @@ module;
 
 #include <cstdint>
 
-export module cc.sdk.core_schemas;
+export module loom.sdk.core_schemas;
 
 import std;
 
-import cc.config.settings;       // SettingsScope (CONVERGE alias)
-import cc.tools.agent_runtime;   // AgentDefinition (CONVERGE alias)
+import loom.config.settings;       // SettingsScope (CONVERGE alias)
+import loom.tools.agent_runtime;   // AgentDefinition (CONVERGE alias)
 
 export namespace cc::sdk::core_schemas {
 

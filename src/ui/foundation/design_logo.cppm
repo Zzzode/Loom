@@ -14,12 +14,12 @@ module;
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 
-export module cc.ui.foundation.design_logo;
+export module loom.ui.foundation.design_logo;
 
 import std;
 
-import cc.ui.foundation.design_tokens;
-import cc.ui.foundation.theme_provider;
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
 
 export namespace cc::ui::design::logo {
 

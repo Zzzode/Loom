@@ -4,24 +4,24 @@
 // static shared map stays function-local here.
 module;
 
-module cc.tools.runtime_registry;
+module loom.tools.runtime_registry;
 
 import std;
 
-import cc.types.tool_types;
-import cc.tools.tool;  // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
-import cc.tools.runtime_backends.port;
-import cc.tools.ask_user;
-import cc.tools.plan_mode;
-import cc.tools.worktree;
-import cc.tools.powershell;
-import cc.tools.cron;
-import cc.tools.runtime_message_delivery;
-import cc.tools.skill;
-import cc.tools.sleep;
-import cc.tools.tungsten_tool;
-import cc.tools.workflow;
-import cc.tools.agent_runtime;
+import loom.types.tool_types;
+import loom.tools.tool;  // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
+import loom.tools.runtime_backends.port;
+import loom.tools.ask_user;
+import loom.tools.plan_mode;
+import loom.tools.worktree;
+import loom.tools.powershell;
+import loom.tools.cron;
+import loom.tools.runtime_message_delivery;
+import loom.tools.skill;
+import loom.tools.sleep;
+import loom.tools.tungsten_tool;
+import loom.tools.workflow;
+import loom.tools.agent_runtime;
 
 namespace cc::tools::detail {
 

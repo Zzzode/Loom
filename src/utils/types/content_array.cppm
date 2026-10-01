@@ -1,4 +1,4 @@
-export module cc.types.wire.content_array;
+export module loom.types.wire.content_array;
 
 import std;
 

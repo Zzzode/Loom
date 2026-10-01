@@ -2,11 +2,11 @@ module;
 
 #include <cstdlib>
 
-export module cc.tools.agent_runtime;
+export module loom.tools.agent_runtime;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 // cc.teams.team_helpers is no longer named by any declaration in this
 // interface (its only caller, has_teammate_identity, moved to
 // agent_runtime_builtin_impl.cpp), but removing this import makes
@@ -18,8 +18,8 @@ import cc.serdes.json;
 // team_helpers directly; reordering its own imports does not help).
 // Empirically verified by removing and rebuilding.
 // arch-check: keep-import
-import cc.teams.team_helpers;
-import cc.serdes.yaml;
+import loom.teams.team_helpers;
+import loom.serdes.yaml;
 
 export namespace cc::tools::agent_runtime {
 

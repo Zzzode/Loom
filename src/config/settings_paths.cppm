@@ -1,8 +1,8 @@
-export module cc.config.settings_paths;
+export module loom.config.settings_paths;
 
 import std;
 
-import cc.config.settings_sources;
+import loom.config.settings_sources;
 
 export namespace cc::utils::settings_paths {
 

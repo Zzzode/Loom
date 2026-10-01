@@ -6,39 +6,39 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.orchestration.agent.run;
+export module loom.orchestration.agent.run;
 
 import std;
 
-import cc.utils.error;
-import cc.scm.git.git;
-import cc.tools.tool;
-import cc.serdes.json;
-import cc.tools.agent_runtime;
-import cc.tools.agent_constants;
-import cc.tools.agent_memory;
-import cc.tools.agent_memory_snapshot;
-import cc.tools.agent_color_manager;
-import cc.tools.agent_display;
-import cc.tools.bash;
-import cc.tools.todo_write;
-import cc.tools.send_message;
-import cc.tools.team;
-import cc.orchestration.tools.mcp;
-import cc.tools.sleep;
-import cc.tools.web_fetch;
-import cc.skills.skill;
-import cc.teams.team_helpers;
-import cc.services.api.client;
-import cc.services.api.streaming;
-import cc.services.mcp.types;
-import cc.teams.swarm.backends;
-import cc.platform.env.env_utils;
-import cc.tools.support.tool_helpers;
-import cc.process.bash.bash_execution;
-import cc.orchestration.agent.utils;
-import cc.orchestration.agent.fork;
-import cc.orchestration.agent.resume;
+import loom.utils.error;
+import loom.scm.git.git;
+import loom.tools.tool;
+import loom.serdes.json;
+import loom.tools.agent_runtime;
+import loom.tools.agent_constants;
+import loom.tools.agent_memory;
+import loom.tools.agent_memory_snapshot;
+import loom.tools.agent_color_manager;
+import loom.tools.agent_display;
+import loom.tools.bash;
+import loom.tools.todo_write;
+import loom.tools.send_message;
+import loom.tools.team;
+import loom.orchestration.tools.mcp;
+import loom.tools.sleep;
+import loom.tools.web_fetch;
+import loom.skills.skill;
+import loom.teams.team_helpers;
+import loom.services.api.client;
+import loom.services.api.streaming;
+import loom.services.mcp.types;
+import loom.teams.swarm.backends;
+import loom.platform.env.env_utils;
+import loom.tools.support.tool_helpers;
+import loom.process.bash.bash_execution;
+import loom.orchestration.agent.utils;
+import loom.orchestration.agent.fork;
+import loom.orchestration.agent.resume;
 
 export namespace cc::tools::agent::run_ {
 

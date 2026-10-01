@@ -13,7 +13,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.tools.image_codec.port;
+export module loom.tools.image_codec.port;
 
 import std;
 

@@ -5,19 +5,19 @@ module;
 
 #include <cstdlib>  // std::getenv / ::setenv for LOOM_TEAM_NAME leader setup
 
-module cc.tools.runtime_registry;
+module loom.tools.runtime_registry;
 
 import std;
 
-import cc.types.tool_types;
-import cc.tools.tool;  // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
-import cc.serdes.json;
-import cc.tools.team;
-import cc.tools.send_message;
-import cc.tools.agent_runtime;
-import cc.tools.runtime_team_shared;
-import cc.tools.runtime_message_delivery;
-import cc.tasks.support;
+import loom.types.tool_types;
+import loom.tools.tool;  // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
+import loom.serdes.json;
+import loom.tools.team;
+import loom.tools.send_message;
+import loom.tools.agent_runtime;
+import loom.tools.runtime_team_shared;
+import loom.tools.runtime_message_delivery;
+import loom.tasks.support;
 
 namespace cc::tools::detail {
 

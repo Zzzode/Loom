@@ -4,7 +4,7 @@
 /// Migrated from src/constants/xml.ts
 module;
 
-export module cc.constants.xml;
+export module loom.constants.xml;
 
 import std;
 

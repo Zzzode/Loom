@@ -1,4 +1,4 @@
-export module cc.diagnostics.activity_manager;
+export module loom.diagnostics.activity_manager;
 
 import std;
 

@@ -6,7 +6,7 @@ module;
 
 #include <cctype>
 
-module cc.ui.visual.markdown;
+module loom.ui.visual.markdown;
 
 import std;
 

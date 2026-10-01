@@ -8,14 +8,14 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-export module cc.commands.skills_cmd;
+export module loom.commands.skills_cmd;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.skills.skill;
-import cc.skills.load_skills_dir;
+import loom.types.types;
+import loom.commands.command;
+import loom.skills.skill;
+import loom.skills.load_skills_dir;
 
 export namespace cc::commands {
 

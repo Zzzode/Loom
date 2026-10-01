@@ -20,22 +20,22 @@ module;
 ///
 /// Migrated from src/bridge/remoteBridgeCore.ts (~1008 lines).
 
-export module cc.bridge.core;
+export module loom.bridge.core;
 
 import std;
 
-import cc.types.types;
-import cc.bridge.config;
-import cc.bridge.transport;
-import cc.bridge.security;
-import cc.bridge.bridge_messaging;
-import cc.bridge.session_api;
-import cc.bridge.session_id_compat;
-import cc.bridge.debug_utils;
-import cc.bridge.flush_gate;
-import cc.bridge.messages;
-import cc.cli.sse_transport;
-import cc.cli.ccr_client;
+import loom.types.types;
+import loom.bridge.config;
+import loom.bridge.transport;
+import loom.bridge.security;
+import loom.bridge.bridge_messaging;
+import loom.bridge.session_api;
+import loom.bridge.session_id_compat;
+import loom.bridge.debug_utils;
+import loom.bridge.flush_gate;
+import loom.bridge.messages;
+import loom.cli.sse_transport;
+import loom.cli.ccr_client;
 
 export namespace cc::bridge {
 

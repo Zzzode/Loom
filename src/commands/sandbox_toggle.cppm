@@ -3,7 +3,7 @@ module;
 #include <unistd.h>
 
 
-export module cc.commands.sandbox_toggle;
+export module loom.commands.sandbox_toggle;
 
 import std;
 

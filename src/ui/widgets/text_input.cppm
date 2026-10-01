@@ -22,13 +22,13 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.widgets.text_input;
+export module loom.ui.widgets.text_input;
 
 import std;
 
-import cc.ui.foundation.ui_types;  // unified PromptInputMode canonical enum
-import cc.ui.prompt.prompt_paste_handler;  // PastePreview struct (GAP 1)
-import cc.vim.vim_controller;  // unified VimController state container
+import loom.ui.foundation.ui_types;  // unified PromptInputMode canonical enum
+import loom.ui.prompt.prompt_paste_handler;  // PastePreview struct (GAP 1)
+import loom.vim.vim_controller;  // unified VimController state container
 
 export namespace ui::components {
 using namespace ftxui;

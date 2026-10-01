@@ -3,7 +3,7 @@ module;
 #include <cstddef>
 
 
-export module cc.serdes.frontmatter_parser;
+export module loom.serdes.frontmatter_parser;
 
 import std;
 

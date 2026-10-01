@@ -2,14 +2,14 @@
 module;
 #include <cstdlib>
 
-export module cc.services.api.bootstrap;
+export module loom.services.api.bootstrap;
 
 import std;
 
-import cc.services.api.client;
-import cc.services.api.models;
-import cc.serdes.json;
-import cc.utils.error;
+import loom.services.api.client;
+import loom.services.api.models;
+import loom.serdes.json;
+import loom.utils.error;
 
 export namespace cc::services::api {
 

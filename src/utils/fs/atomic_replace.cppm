@@ -16,10 +16,10 @@ module;
 #include <stdlib.h>  // arc4random_buf (opaque C header, not <cstdlib>)
 #endif
 
-export module cc.fs.atomic_replace;
+export module loom.fs.atomic_replace;
 
 import std;
-import cc.fs.file_persistence;  // detail::open_for_fsync / fsync_fd
+import loom.fs.file_persistence;  // detail::open_for_fsync / fsync_fd
 
 namespace fs = std::filesystem;
 

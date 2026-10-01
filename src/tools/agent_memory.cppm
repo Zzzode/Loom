@@ -12,11 +12,11 @@ module;
 
 #include <cstdlib>
 
-export module cc.tools.agent_memory;
+export module loom.tools.agent_memory;
 
 import std;
 
-import cc.scm.git.git;
+import loom.scm.git.git;
 
 export namespace cc::tools::agent_memory {
 

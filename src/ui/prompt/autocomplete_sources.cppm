@@ -5,7 +5,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.ui.prompt.autocomplete_sources;
+export module loom.ui.prompt.autocomplete_sources;
 
 import std;
 

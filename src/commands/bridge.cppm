@@ -1,8 +1,8 @@
-export module cc.commands.bridge;
+export module loom.commands.bridge;
 
 import std;
 
-import cc.services.ide_integration;
+import loom.services.ide_integration;
 
 export namespace cc::commands::bridge {
 struct CommandResponse { bool ok{true}; std::string message; };

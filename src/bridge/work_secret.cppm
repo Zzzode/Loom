@@ -3,12 +3,12 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.bridge.work_secret;
+export module loom.bridge.work_secret;
 
 import std;
 
-import cc.bridge.jwt_utils;
-import cc.serdes.json;
+import loom.bridge.jwt_utils;
+import loom.serdes.json;
 
 export namespace cc::bridge {
 

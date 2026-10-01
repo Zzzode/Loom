@@ -3,13 +3,13 @@ module;
 #include <cstddef>
 
 
-export module cc.orchestration.agent.spawn_multi_agent;
+export module loom.orchestration.agent.spawn_multi_agent;
 
 import std;
 
-import cc.orchestration.agent;
-import cc.tools.agent_types;
-import cc.types.tool_types;
+import loom.orchestration.agent;
+import loom.tools.agent_types;
+import loom.types.tool_types;
 
 export namespace cc::tools {
 

@@ -15,12 +15,12 @@ module;
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.features.plugins.plugin_settings_dialog;
+export module loom.ui.features.plugins.plugin_settings_dialog;
 
 import std;
 
-import cc.types.types;
-import cc.commands.plugin_ui_data;
+import loom.types.types;
+import loom.commands.plugin_ui_data;
 
 export namespace cc::ui::plugins::plugin_settings_dialog {
 using namespace ftxui;

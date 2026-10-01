@@ -22,7 +22,7 @@ module;
 
 #include <cstdint>
 
-export module cc.orchestration.mcp_connectivity;
+export module loom.orchestration.mcp_connectivity;
 
 // graph_check parser hazard: qualify cc.tools symbols WITHOUT a leading "::"
 // (write cc::tools::set_mcp_snapshots_sink, never ::cc::tools::...). A
@@ -31,10 +31,10 @@ export module cc.orchestration.mcp_connectivity;
 // are used consistently throughout this file.
 import std;
 
-import cc.hooks.remaining_notifs;
-import cc.services.mcp.types;
-import cc.services.mcp.connection_manager;
-import cc.orchestration.tools.mcp;
+import loom.hooks.remaining_notifs;
+import loom.services.mcp.types;
+import loom.services.mcp.connection_manager;
+import loom.orchestration.tools.mcp;
 
 export namespace cc::orchestration::mcp_connectivity {
 

@@ -17,11 +17,11 @@ module;
 #include <ctime>
 #endif
 
-export module cc.commands.terminal_setup;
+export module loom.commands.terminal_setup;
 
 import std;
 
-import cc.platform.hyperlink;
+import loom.platform.hyperlink;
 
 export namespace cc::commands::terminal_setup {
 

@@ -41,20 +41,20 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-export module cc.commands.plugin_cmd;
+export module loom.commands.plugin_cmd;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.commands.plugin_parse_args;
-import cc.commands.plugin_helpers;
-import cc.commands.plugin_manage;
-import cc.commands.plugin_ui_data;
-import cc.plugins.plugin_lifecycle;
-import cc.plugins.plugin_validation;
-import cc.plugins.plugin_manager;
-import cc.plugins.plugin_marketplace;
+import loom.types.types;
+import loom.commands.command;
+import loom.commands.plugin_parse_args;
+import loom.commands.plugin_helpers;
+import loom.commands.plugin_manage;
+import loom.commands.plugin_ui_data;
+import loom.plugins.plugin_lifecycle;
+import loom.plugins.plugin_validation;
+import loom.plugins.plugin_manager;
+import loom.plugins.plugin_marketplace;
 
 export namespace cc::commands {
 

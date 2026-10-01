@@ -6,12 +6,12 @@ module;
 /// @brief StatsCommand implementing the /stats slash command.
 /// Shows session statistics: messages, tokens, tool uses, duration.
 
-export module cc.commands.stats;
+export module loom.commands.stats;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
+import loom.types.types;
+import loom.commands.command;
 
 export namespace cc::commands {
 

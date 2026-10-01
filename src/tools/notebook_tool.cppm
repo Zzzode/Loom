@@ -3,11 +3,11 @@ module;
 #include <cstddef>
 #include <cstdlib>
 
-export module cc.tools.notebook;
+export module loom.tools.notebook;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 namespace cc::tools::notebook_detail {
 

@@ -6,13 +6,13 @@ module;
 #include <cstdint>
 #include <cstddef>
 
-export module cc.tools.tool;
+export module loom.tools.tool;
 
 import std;
 
-export import cc.types.types;
-export import cc.types.tool_types;
-import cc.serdes.json;
+export import loom.types.types;
+export import loom.types.tool_types;
+import loom.serdes.json;
 
 export namespace cc::core {
 

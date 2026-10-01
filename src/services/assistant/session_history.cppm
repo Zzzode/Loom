@@ -7,7 +7,7 @@ module;
 #include <cstdlib>
 #include <cstdint>
 
-export module cc.services.assistant_session_history;
+export module loom.services.assistant_session_history;
 
 import std;
 

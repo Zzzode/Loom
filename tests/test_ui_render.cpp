@@ -15,9 +15,9 @@
 #include "test_ui_helpers.h"
 
 import std;
-import cc.ui.screens.repl_screen;
-import cc.ui.screens.repl_state;
-import cc.ui.screens.permission_store;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.permission_store;
 
 namespace {
 namespace fs = std::filesystem;

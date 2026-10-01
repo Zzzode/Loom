@@ -32,14 +32,14 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.dialogs.frame;
+export module loom.ui.dialogs.frame;
 
 import std;
 
-import cc.ui.foundation.theme_provider;
-import cc.ui.foundation.design_tokens;
-import cc.ui.foundation.component_primitives;
-import cc.ui.permissions.components;
+import loom.ui.foundation.theme_provider;
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.component_primitives;
+import loom.ui.permissions.components;
 
 export namespace cc::ui::dialogs::frame {
 

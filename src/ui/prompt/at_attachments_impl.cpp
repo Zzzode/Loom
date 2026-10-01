@@ -7,13 +7,13 @@
 module;
 
 
-module cc.ui.prompt.at_attachments;
+module loom.ui.prompt.at_attachments;
 
 import std;
-import cc.types.types;  // arch-check: keep-import
+import loom.types.types;  // arch-check: keep-import
 
-import cc.tools.agent_runtime;
-import cc.orchestration.tools.mcp;
+import loom.tools.agent_runtime;
+import loom.orchestration.tools.mcp;
 
 namespace cc::ui::prompt::at_attachments {
 

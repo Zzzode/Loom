@@ -12,11 +12,11 @@
 module;
 
 
-export module cc.ui.tools.agent;
+export module loom.ui.tools.agent;
 
 import std;
 
-import cc.ui.tools.registry;
+import loom.ui.tools.registry;
 
 export namespace cc::ui::tools::agent_ui {
 

@@ -11,7 +11,7 @@
 
 #include <gtest/gtest.h>
 
-import cc.ui.chrome.yoga;
+import loom.ui.chrome.yoga;
 
 using namespace cc::ui::layout;
 

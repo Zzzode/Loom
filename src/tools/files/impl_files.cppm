@@ -24,7 +24,7 @@ module;
 #include <cerrno>
 #include <cstddef>
 
-export module cc.tools.files.impl;
+export module loom.tools.files.impl;
 
 import std;
 

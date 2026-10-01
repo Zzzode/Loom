@@ -7,7 +7,7 @@ module;
 #include <unistd.h>
 #include <cstdint>
 
-export module cc.types.types;
+export module loom.types.types;
 
 import std;
 

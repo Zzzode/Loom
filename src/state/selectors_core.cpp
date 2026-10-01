@@ -6,11 +6,11 @@ module;
 #include <cstdint>
 #include <cstddef>
 
-module cc.state.selectors;
+module loom.state.selectors;
 
 import std;
 
-import cc.state.app_state;
+import loom.state.app_state;
 
 namespace cc::state::selectors {
 

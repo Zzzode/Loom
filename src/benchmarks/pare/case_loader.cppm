@@ -2,13 +2,13 @@ module;
 
 #include <cstddef>
 
-export module cc.benchmarks.pare.case_loader;
+export module loom.benchmarks.pare.case_loader;
 
 import std;
 
-import cc.benchmarks.pare.schema;
-import cc.serdes.json;
-import cc.crypto.crypto;
+import loom.benchmarks.pare.schema;
+import loom.serdes.json;
+import loom.crypto.crypto;
 
 export namespace cc::benchmarks::pare {
 

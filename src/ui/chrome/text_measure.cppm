@@ -8,7 +8,7 @@ module;
 #include <cstdint>
 #include <cstddef>
 
-export module cc.ui.chrome.text_measure;
+export module loom.ui.chrome.text_measure;
 
 import std;
 

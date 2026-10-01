@@ -30,15 +30,15 @@ module;
 #include <ctime>
 #include <httplib.h>
 
-export module cc.services.auth.sigv4;
+export module loom.services.auth.sigv4;
 
 import std;
 
-import cc.crypto.crypto;
-import cc.platform.env.env;
-import cc.utils.error;
-import cc.net.http.http_encoding;
-import cc.serdes.json;
+import loom.crypto.crypto;
+import loom.platform.env.env;
+import loom.utils.error;
+import loom.net.http.http_encoding;
+import loom.serdes.json;
 
 export namespace cc::services::auth::aws {
 

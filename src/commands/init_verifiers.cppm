@@ -22,15 +22,15 @@ module;
 #include <cstdlib>
 #include <cstdint>
 
-export module cc.commands.init_verifiers;
+export module loom.commands.init_verifiers;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.process.exec_sync;
-import cc.scm.git.git_filesystem;
-import cc.scm.git.detect_repository;
+import loom.types.types;
+import loom.commands.command;
+import loom.process.exec_sync;
+import loom.scm.git.git_filesystem;
+import loom.scm.git.detect_repository;
 
 export namespace cc::commands {
 

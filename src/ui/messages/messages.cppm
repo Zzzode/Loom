@@ -7,7 +7,7 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.messages.messages;
+export module loom.ui.messages.messages;
 
 import std;
 

@@ -3,7 +3,7 @@
 module;
 #include <cstdint>
 #include <ftxui/dom/elements.hpp>
-export module cc.ui.widgets.spinner_animations;
+export module loom.ui.widgets.spinner_animations;
 
 import std;
 export namespace cc::ui::components {

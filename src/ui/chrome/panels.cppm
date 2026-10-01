@@ -4,7 +4,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.ui.chrome.panels;
+export module loom.ui.chrome.panels;
 
 import std;
 

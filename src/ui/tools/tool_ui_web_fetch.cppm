@@ -13,11 +13,11 @@ module;
 
 #include <cstddef>
 
-export module cc.ui.tools.web_fetch;
+export module loom.ui.tools.web_fetch;
 
 import std;
 
-import cc.ui.tools.registry;
+import loom.ui.tools.registry;
 
 export namespace cc::ui::tools::web_fetch_ui {
 

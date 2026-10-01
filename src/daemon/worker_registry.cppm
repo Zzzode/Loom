@@ -16,11 +16,11 @@ module;
 #include <cstring>
 #include <cstddef>
 
-export module cc.daemon.worker_registry;
+export module loom.daemon.worker_registry;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::daemon {
 

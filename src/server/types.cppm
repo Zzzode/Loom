@@ -18,11 +18,11 @@ module;
 #include <cstdlib>
 #include <cstring>
 
-export module cc.server.types;
+export module loom.server.types;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::server {
 

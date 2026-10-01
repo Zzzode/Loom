@@ -12,20 +12,20 @@ module;
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 
-module cc.ui.screens.repl_screen;
+module loom.ui.screens.repl_screen;
 
 import std;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.permission_store;
-import cc.ui.dialogs.settings_dialog;
-import cc.config.config;
-import cc.ui.dialogs.trust_dialog;
-import cc.ui.permissions.permission_bash;
-import cc.ui.permissions.permission_file_edit;
-import cc.ui.permissions.permission_file_write;
-import cc.ui.permissions.single_prompt;
-import cc.ui.prompt.prompt_input_footer;  // c22: footer notification queue
+import loom.ui.screens.repl_state;
+import loom.ui.screens.permission_store;
+import loom.ui.dialogs.settings_dialog;
+import loom.config.config;
+import loom.ui.dialogs.trust_dialog;
+import loom.ui.permissions.permission_bash;
+import loom.ui.permissions.permission_file_edit;
+import loom.ui.permissions.permission_file_write;
+import loom.ui.permissions.single_prompt;
+import loom.ui.prompt.prompt_input_footer;  // c22: footer notification queue
 
 namespace cc::ui::repl_screen {
 using namespace ftxui;

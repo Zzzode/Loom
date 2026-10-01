@@ -23,11 +23,11 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.tools.runtime_shared_utils;
+export module loom.tools.runtime_shared_utils;
 
 import std;
 
-import cc.tools.send_message;   // MessagePriority / message_priority_name
+import loom.tools.send_message;   // MessagePriority / message_priority_name
 
 export namespace cc::tools::runtime_shared_utils {
 

@@ -5,7 +5,7 @@
 // per-TU engine identity (each definition must remain exactly once).
 module;
 
-module cc.query.query_engine;
+module loom.query.query_engine;
 
 import std;
 

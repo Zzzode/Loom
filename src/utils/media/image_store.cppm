@@ -4,7 +4,7 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.media.image_store;
+export module loom.media.image_store;
 
 import std;
 

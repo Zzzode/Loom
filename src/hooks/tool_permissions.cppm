@@ -4,7 +4,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.hooks.tool_permissions;
+export module loom.hooks.tool_permissions;
 
 import std;
 

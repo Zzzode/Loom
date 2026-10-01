@@ -8,19 +8,19 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.state.app_state;
-import cc.state.store;
-import cc.state.selectors;
-import cc.state.persistence;
-import cc.state.on_change;
-import cc.state.ftxui_integration;
-import cc.session.history;
-import cc.types.types;
-import cc.cli.update;
-import cc.services.mcp.auth;
-import cc.services.mcp.types;
-import cc.utils.error;
-import cc.constants.prompts;
+import loom.state.app_state;
+import loom.state.store;
+import loom.state.selectors;
+import loom.state.persistence;
+import loom.state.on_change;
+import loom.state.ftxui_integration;
+import loom.session.history;
+import loom.types.types;
+import loom.cli.update;
+import loom.services.mcp.auth;
+import loom.services.mcp.types;
+import loom.utils.error;
+import loom.constants.prompts;
 
 namespace {
 

@@ -6,14 +6,14 @@
 #include <climits>
 
 import std;
-import cc.types.types;
-import cc.config.config;
-import cc.config.feature_flags;
-import cc.constants.constants;
-import cc.coordinator.types;
-import cc.tasks.task_graph;
-import cc.serdes.yaml;
-import cc.text.parse_int;
+import loom.types.types;
+import loom.config.config;
+import loom.config.feature_flags;
+import loom.constants.constants;
+import loom.coordinator.types;
+import loom.tasks.task_graph;
+import loom.serdes.yaml;
+import loom.text.parse_int;
 
 TEST(CoreTypes, RoleToStringAndContentVariant) {
     EXPECT_EQ(cc::core::role_to_string(cc::core::Role::User), "user");

@@ -4,13 +4,13 @@
 module;
 
 
-export module cc.commands.agents;
+export module loom.commands.agents;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.tools.agent_runtime;
+import loom.types.types;
+import loom.commands.command;
+import loom.tools.agent_runtime;
 
 export namespace cc::commands {
 

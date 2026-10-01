@@ -1,4 +1,4 @@
-export module cc.scm.git.git_diff;
+export module loom.scm.git.git_diff;
 
 import std;
 

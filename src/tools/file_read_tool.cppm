@@ -4,17 +4,17 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.tools.file_read;
+export module loom.tools.file_read;
 
 import std;
 
-import cc.fs.file;
-import cc.utils.error;
-import cc.tools.image_codec.port;
-import cc.tools.tool;
-import cc.tools.notebook;
-import cc.serdes.json;
-import cc.skills.file_access.port;
+import loom.fs.file;
+import loom.utils.error;
+import loom.tools.image_codec.port;
+import loom.tools.tool;
+import loom.tools.notebook;
+import loom.serdes.json;
+import loom.skills.file_access.port;
 
 export namespace cc::tools::file_read {
 

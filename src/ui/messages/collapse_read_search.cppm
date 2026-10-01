@@ -1,7 +1,7 @@
 module;
 #include <cstddef>
 
-export module cc.ui.messages.collapse_read_search;
+export module loom.ui.messages.collapse_read_search;
 
 import std;
 

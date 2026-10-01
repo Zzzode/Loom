@@ -5,17 +5,17 @@ module;
 #include <cctype>
 #include <httplib.h>
 
-export module cc.services.mcp.auth;
+export module loom.services.mcp.auth;
 
 import std;
 
-import cc.utils.error;
-import cc.serdes.json;
-import cc.services.oauth.auth_code_listener;
-import cc.services.oauth.crypto;
-import cc.services.mcp.types;
-import cc.services.mcp.xaa;
-import cc.services.mcp.xaa_idp_login;
+import loom.utils.error;
+import loom.serdes.json;
+import loom.services.oauth.auth_code_listener;
+import loom.services.oauth.crypto;
+import loom.services.mcp.types;
+import loom.services.mcp.xaa;
+import loom.services.mcp.xaa_idp_login;
 
 export namespace cc::services::mcp {
 

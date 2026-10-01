@@ -1,6 +1,6 @@
 // OutputStyle command - deprecated, redirects to /config
 module;
-export module cc.commands.output_style;
+export module loom.commands.output_style;
 
 import std;
 export namespace cc::commands::output_style {

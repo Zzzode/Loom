@@ -13,11 +13,11 @@ module;
 
 #include <cctype>
 
-export module cc.skills.loom_api_content;
+export module loom.skills.loom_api_content;
 
 import std;
 
-import cc.skills.skill;
+import loom.skills.skill;
 
 export namespace cc::skills::loom_api_content {
 

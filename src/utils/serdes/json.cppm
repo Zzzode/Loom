@@ -21,11 +21,11 @@ struct yyjson_doc;
 struct yyjson_mut_val;
 struct yyjson_mut_doc;
 
-export module cc.serdes.json;
+export module loom.serdes.json;
 
 import std;
 
-import cc.utils.error;
+import loom.utils.error;
 
 export namespace cc::utils::json {
 

@@ -1,4 +1,4 @@
-export module cc.text.semantic_boolean;
+export module loom.text.semantic_boolean;
 
 import std;
 

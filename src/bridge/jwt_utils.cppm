@@ -2,7 +2,7 @@ module;
 #include <cstring>
 #include <ctime>
 
-export module cc.bridge.jwt_utils;
+export module loom.bridge.jwt_utils;
 
 import std;
 

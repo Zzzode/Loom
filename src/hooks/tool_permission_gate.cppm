@@ -9,11 +9,11 @@
 /// If no interactive prompt is installed the gate falls back to a safe
 /// default: AllowOnce for low-risk sandboxed calls and Deny otherwise.
 module;
-export module cc.hooks.tool_permission_gate;
+export module loom.hooks.tool_permission_gate;
 
 import std;
 
-import cc.hooks.permission_resolver;
+import loom.hooks.permission_resolver;
 
 export namespace cc::hooks::permission {
 

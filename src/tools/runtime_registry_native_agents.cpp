@@ -4,14 +4,14 @@
 // start-input builder.
 module;
 
-module cc.tools.runtime_registry;
+module loom.tools.runtime_registry;
 
 import std;
 
-import cc.tools.agent_runtime;
-import cc.tools.team;
-import cc.tools.runtime_team_shared;
-import cc.serdes.json;
+import loom.tools.agent_runtime;
+import loom.tools.team;
+import loom.tools.runtime_team_shared;
+import loom.serdes.json;
 
 namespace cc::tools::detail {
 

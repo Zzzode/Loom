@@ -19,11 +19,11 @@
 /// to avoid cc_ui -> cc_tools dependency issues (cc_tools is heavier).
 module;
 
-export module cc.ui.tools.file_edit;
+export module loom.ui.tools.file_edit;
 
 import std;
 
-import cc.ui.tools.registry;
+import loom.ui.tools.registry;
 
 export namespace cc::ui::tools::file_edit_ui {
 

@@ -11,8 +11,8 @@
 #include <cstdlib>
 
 import std;
-import cc.hooks.permission_resolver;
-import cc.hooks.tool_permission_gate;
+import loom.hooks.permission_resolver;
+import loom.hooks.tool_permission_gate;
 
 using namespace cc::hooks::permission;
 

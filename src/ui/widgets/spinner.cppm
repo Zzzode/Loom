@@ -3,7 +3,7 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 
-export module cc.ui.widgets.spinner;
+export module loom.ui.widgets.spinner;
 
 import std;
 

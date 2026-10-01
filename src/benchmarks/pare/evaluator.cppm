@@ -2,11 +2,11 @@ module;
 
 #include <cctype>
 
-export module cc.benchmarks.pare.evaluator;
+export module loom.benchmarks.pare.evaluator;
 
 import std;
 
-import cc.benchmarks.pare.schema;
+import loom.benchmarks.pare.schema;
 
 export namespace cc::benchmarks::pare {
 

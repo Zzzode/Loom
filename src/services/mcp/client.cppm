@@ -13,11 +13,11 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.services.mcp.client;
+export module loom.services.mcp.client;
 
 import std;
 
-import cc.services.mcp.types;
+import loom.services.mcp.types;
 
 export namespace cc::services::mcp {
 

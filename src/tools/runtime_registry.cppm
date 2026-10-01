@@ -11,29 +11,29 @@
 /// computer-use testing override variables stay in this interface.
 module;
 
-export module cc.tools.runtime_registry;
+export module loom.tools.runtime_registry;
 
 import std;
 
-import cc.tools.tool;
-import cc.tools.agent_types;
-import cc.tools.agent_runtime;
-import cc.tools.bash;
-import cc.tools.computer_use;
-import cc.tools.notebook;
-import cc.tools.task;
-import cc.tools.team;
+import loom.tools.tool;
+import loom.tools.agent_types;
+import loom.tools.agent_runtime;
+import loom.tools.bash;
+import loom.tools.computer_use;
+import loom.tools.notebook;
+import loom.tools.task;
+import loom.tools.team;
 // No name textually referenced, but removing this import crashes clang 22
 // (SIGSEGV in ASTReader on a missing typedef chain while reading this BMI) —
 // a PCM-reachability instance of LLVM #184957.
 // arch-check: keep-import
-import cc.tools.synthetic_output_tool;
-import cc.tools.web_browser;
-import cc.tools.runtime_message_delivery;
-import cc.tools.runtime_team_shared;
-import cc.tools.runtime_shared_utils;
-import cc.tools.runtime_backends.port;
-import cc.serdes.json;
+import loom.tools.synthetic_output_tool;
+import loom.tools.web_browser;
+import loom.tools.runtime_message_delivery;
+import loom.tools.runtime_team_shared;
+import loom.tools.runtime_shared_utils;
+import loom.tools.runtime_backends.port;
+import loom.serdes.json;
 
 export namespace cc::tools {
 

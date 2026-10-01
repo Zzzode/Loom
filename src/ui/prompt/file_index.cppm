@@ -12,11 +12,11 @@ module;
 
 #include <cstdio>
 
-export module cc.ui.prompt.file_index;
+export module loom.ui.prompt.file_index;
 
 import std;
 
-import cc.process.bash.bash_execution;
+import loom.process.bash.bash_execution;
 
 export namespace cc::ui::prompt::file_index {
 

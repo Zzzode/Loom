@@ -5,16 +5,16 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.bridge.api;
+export module loom.bridge.api;
 
 import std;
-import cc.text.parse_int;
+import loom.text.parse_int;
 
-import cc.types.types;
-import cc.bridge.messages;
-import cc.bridge.config;
-import cc.net.http.http;
-import cc.serdes.json;
+import loom.types.types;
+import loom.bridge.messages;
+import loom.bridge.config;
+import loom.net.http.http;
+import loom.serdes.json;
 
 export namespace cc::bridge {
 

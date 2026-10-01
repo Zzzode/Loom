@@ -13,18 +13,18 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <cstddef>
 
-export module cc.ui.messages.tool_use_message;
+export module loom.ui.messages.tool_use_message;
 
 import std;
 
-import cc.types.types;
-import cc.ui.visual.code_highlight;
+import loom.types.types;
+import loom.ui.visual.code_highlight;
 // Import the shared spinner via its module-interface name.  The file exports
 // `ui::components` so we alias at the bottom of this file for convenience.
-import cc.ui.widgets.spinner;
+import loom.ui.widgets.spinner;
 // For unescape_literal_newlines() + ansi_to_ftxui_elements() used by the
 // Output: section to decode JSON-escaped newlines and render ANSI SGR codes.
-import cc.ui.messages.message_tool_result;
+import loom.ui.messages.message_tool_result;
 
 export namespace cc::ui::messages::tool_use_message {
 using namespace ftxui;

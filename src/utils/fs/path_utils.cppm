@@ -3,7 +3,7 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.fs.path_utils;
+export module loom.fs.path_utils;
 
 import std;
 

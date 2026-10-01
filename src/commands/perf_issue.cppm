@@ -1,8 +1,8 @@
-export module cc.commands.perf_issue;
+export module loom.commands.perf_issue;
 
 import std;
 
-import cc.services.diagnostic.dump_diagnostic;
+import loom.services.diagnostic.dump_diagnostic;
 
 export namespace cc::commands::perf_issue {
 struct CommandResponse { bool ok{true}; std::string message; };

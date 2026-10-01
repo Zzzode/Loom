@@ -1,11 +1,11 @@
 // Session Memory Service Module
 module;
 
-export module cc.services.memory.sessionMemory;
+export module loom.services.memory.sessionMemory;
 
 import std;
 
-import cc.utils.error;
+import loom.utils.error;
 
 export namespace cc::services::memory {
 

@@ -4,42 +4,42 @@ module;
 
 #include <cstdint>
 
-export module cc.commands.runtime_surface_commands;
+export module loom.commands.runtime_surface_commands;
 
 import std;
-import cc.text.parse_int;
+import loom.text.parse_int;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.commands.ant_trace;
-import cc.commands.autofix_pr;
-import cc.commands.backfill_sessions;
-import cc.commands.break_cache;
-import cc.commands.bridge;
-import cc.commands.bughunter;
-import cc.commands.commit_push_pr;
-import cc.commands.create_moved_to_plugin_command;
-import cc.commands.debug_tool_call;
-import cc.commands.exit;
-import cc.commands.init_verifiers;
-import cc.commands.keybindings_cmd;
-import cc.commands.mock_limits;
-import cc.commands.onboarding;
-import cc.commands.output_style;
-import cc.commands.perf_issue;
-import cc.commands.pr_comments;
-import cc.commands.privacy_settings;
-import cc.commands.rate_limit_options;
-import cc.commands.release_notes;
-import cc.commands.reload_plugins;
-import cc.commands.reset_limits;
-import cc.commands.sandbox_toggle;
-import cc.commands.security_review;
-import cc.commands.statusline;
-import cc.commands.terminal_setup;
-import cc.commands.thinkback;
-import cc.commands.thinkback_play;
-import cc.commands.version;
+import loom.types.types;
+import loom.commands.command;
+import loom.commands.ant_trace;
+import loom.commands.autofix_pr;
+import loom.commands.backfill_sessions;
+import loom.commands.break_cache;
+import loom.commands.bridge;
+import loom.commands.bughunter;
+import loom.commands.commit_push_pr;
+import loom.commands.create_moved_to_plugin_command;
+import loom.commands.debug_tool_call;
+import loom.commands.exit;
+import loom.commands.init_verifiers;
+import loom.commands.keybindings_cmd;
+import loom.commands.mock_limits;
+import loom.commands.onboarding;
+import loom.commands.output_style;
+import loom.commands.perf_issue;
+import loom.commands.pr_comments;
+import loom.commands.privacy_settings;
+import loom.commands.rate_limit_options;
+import loom.commands.release_notes;
+import loom.commands.reload_plugins;
+import loom.commands.reset_limits;
+import loom.commands.sandbox_toggle;
+import loom.commands.security_review;
+import loom.commands.statusline;
+import loom.commands.terminal_setup;
+import loom.commands.thinkback;
+import loom.commands.thinkback_play;
+import loom.commands.version;
 
 export namespace cc::commands {
 

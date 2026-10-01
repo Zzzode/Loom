@@ -18,14 +18,14 @@ module;
 
 #include <cctype>
 
-export module cc.tools.script_primitives;
+export module loom.tools.script_primitives;
 
 import std;
 
-import cc.tools.script_types;
-import cc.tools.script_diagnostics;
-import cc.tools.script_typecheck;
-import cc.process.bash.bash_execution;
+import loom.tools.script_types;
+import loom.tools.script_diagnostics;
+import loom.tools.script_typecheck;
+import loom.process.bash.bash_execution;
 
 export namespace cc::tools::script_primitives {
 

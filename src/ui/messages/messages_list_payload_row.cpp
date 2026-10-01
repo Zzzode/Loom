@@ -8,21 +8,21 @@ module;
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 
-module cc.ui.messages.messages_list;
+module loom.ui.messages.messages_list;
 
 import std;
 
-import cc.ui.messages.message_row;
-import cc.ui.messages.user_text_message;
-import cc.ui.messages.local_command_output_message;
-import cc.ui.messages.assistant_text_message;
-import cc.ui.messages.thinking_message;
-import cc.ui.messages.system_text_message;
-import cc.ui.messages.message_tool_result;
-import cc.ui.messages.tool_use_message;
-import cc.ui.messages.message_image;
-import cc.ui.tools.registry;
-import cc.ui.tools.generic;
+import loom.ui.messages.message_row;
+import loom.ui.messages.user_text_message;
+import loom.ui.messages.local_command_output_message;
+import loom.ui.messages.assistant_text_message;
+import loom.ui.messages.thinking_message;
+import loom.ui.messages.system_text_message;
+import loom.ui.messages.message_tool_result;
+import loom.ui.messages.tool_use_message;
+import loom.ui.messages.message_image;
+import loom.ui.tools.registry;
+import loom.ui.tools.generic;
 
 namespace cc::ui::messages_list {
 

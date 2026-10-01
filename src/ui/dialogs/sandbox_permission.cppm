@@ -10,7 +10,7 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.dialogs.sandbox_permission;
+export module loom.ui.dialogs.sandbox_permission;
 
 import std;
 

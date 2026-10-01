@@ -6,15 +6,15 @@ module;
 
 #include <cstdint>
 
-export module cc.state.store;
+export module loom.state.store;
 
 import std;
 
-import cc.types.types;
-import cc.state.app_state;
-import cc.state.selectors;
-import cc.state.persistence;
-import cc.state.on_change;
+import loom.types.types;
+import loom.state.app_state;
+import loom.state.selectors;
+import loom.state.persistence;
+import loom.state.on_change;
 
 export namespace cc::state {
 

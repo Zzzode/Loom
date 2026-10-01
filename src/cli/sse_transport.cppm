@@ -17,7 +17,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.cli.sse_transport;
+export module loom.cli.sse_transport;
 
 import std;
 

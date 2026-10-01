@@ -4,7 +4,7 @@
 /// cc.skills.skill module, breaking the tools<->skills module cycle.
 module;
 
-export module cc.skills.file_access.port;
+export module loom.skills.file_access.port;
 
 import std;
 

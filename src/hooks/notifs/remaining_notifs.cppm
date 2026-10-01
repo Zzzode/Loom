@@ -53,7 +53,7 @@ module;
 #include <cstdlib>
 #include <ctime>
 
-export module cc.hooks.remaining_notifs;
+export module loom.hooks.remaining_notifs;
 
 import std;
 

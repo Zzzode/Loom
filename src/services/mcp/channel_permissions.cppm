@@ -25,12 +25,12 @@ module;
 #include <yyjson.h>
 #include <cstddef>
 
-export module cc.services.mcp.channel_permissions;
+export module loom.services.mcp.channel_permissions;
 
 import std;
 
-import cc.services.mcp.types;
-import cc.serdes.json;
+import loom.services.mcp.types;
+import loom.serdes.json;
 
 export namespace cc::services::mcp {
 

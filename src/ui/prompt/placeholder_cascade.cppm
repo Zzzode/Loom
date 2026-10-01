@@ -24,11 +24,11 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.prompt.placeholder_cascade;
+export module loom.ui.prompt.placeholder_cascade;
 
 import std;
 
-import cc.ui.foundation.ui_types;  // PromptInputMode
+import loom.ui.foundation.ui_types;  // PromptInputMode
 
 export namespace cc::ui::placeholder {
 

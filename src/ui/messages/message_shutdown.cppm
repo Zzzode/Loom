@@ -12,7 +12,7 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.messages.message_shutdown;
+export module loom.ui.messages.message_shutdown;
 
 import std;
 

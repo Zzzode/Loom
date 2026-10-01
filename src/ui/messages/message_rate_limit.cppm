@@ -11,11 +11,11 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.messages.message_rate_limit;
+export module loom.ui.messages.message_rate_limit;
 
 import std;
 
-import cc.ui.messages.message_components;
+import loom.ui.messages.message_components;
 
 export namespace cc::ui::messages {
 

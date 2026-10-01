@@ -3,21 +3,21 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 
-export module cc.ui.widgets.all_components;
+export module loom.ui.widgets.all_components;
 
 import std;
 
 // Import and re-export all new components
-export import cc.ui.foundation.components_figures;
-export import cc.ui.widgets.fast_icon;
-export import cc.ui.widgets.pr_badge;
-export import cc.ui.widgets.spinner;
-export import cc.ui.widgets.dev_bar;
-export import cc.ui.widgets.stats;
-export import cc.ui.widgets.tag_tabs;
-export import cc.ui.widgets.text_input;
+export import loom.ui.foundation.components_figures;
+export import loom.ui.widgets.fast_icon;
+export import loom.ui.widgets.pr_badge;
+export import loom.ui.widgets.spinner;
+export import loom.ui.widgets.dev_bar;
+export import loom.ui.widgets.stats;
+export import loom.ui.widgets.tag_tabs;
+export import loom.ui.widgets.text_input;
 // Unified canonical PromptInputMode enum — all modules import this from here.
-export import cc.ui.foundation.ui_types;
+export import loom.ui.foundation.ui_types;
 
 export namespace cc::ui::components {
 

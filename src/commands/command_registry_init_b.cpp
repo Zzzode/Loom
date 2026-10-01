@@ -1,25 +1,25 @@
 /// @file command_registry_init_b.cpp
 /// @brief Group B registration: utility commands (effort, fast, files, stats, etc.)
-module cc.commands.registry;
+module loom.commands.registry;
 
-import cc.commands.effort;
-import cc.commands.env;
-import cc.commands.fast;
-import cc.commands.feedback;
-import cc.commands.files;
-import cc.commands.heapdump;
-import cc.commands.hooks;
-import cc.commands.ide;
-import cc.commands.issue;
-import cc.commands.memory;
-import cc.commands.passes;
-import cc.commands.rename;
-import cc.commands.rewind;
-import cc.commands.share;
-import cc.commands.stats;
-import cc.commands.status;
-import cc.commands.summary;
-import cc.commands.tag;
+import loom.commands.effort;
+import loom.commands.env;
+import loom.commands.fast;
+import loom.commands.feedback;
+import loom.commands.files;
+import loom.commands.heapdump;
+import loom.commands.hooks;
+import loom.commands.ide;
+import loom.commands.issue;
+import loom.commands.memory;
+import loom.commands.passes;
+import loom.commands.rename;
+import loom.commands.rewind;
+import loom.commands.share;
+import loom.commands.stats;
+import loom.commands.status;
+import loom.commands.summary;
+import loom.commands.tag;
 
 namespace cc::commands {
 

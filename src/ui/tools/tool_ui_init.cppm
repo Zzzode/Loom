@@ -8,24 +8,24 @@
 /// LICENCE:  Exported.  Imported by app initialization code.
 module;
 
-export module cc.ui.tools.init;
+export module loom.ui.tools.init;
 
-import cc.ui.tools.registry;
-import cc.ui.tools.generic;
-import cc.ui.tools.bash;
-import cc.ui.tools.file_edit;
-import cc.ui.tools.file_write;
-import cc.ui.tools.file_read;
-import cc.ui.tools.grep;
-import cc.ui.tools.glob;
-import cc.ui.tools.web_fetch;
-import cc.ui.tools.web_search;
-import cc.ui.tools.skill;
-import cc.ui.tools.agent;
-import cc.ui.tools.task;
-import cc.ui.tools.mcp;
-import cc.ui.tools.lsp;
-import cc.ui.tools.longtail;
+import loom.ui.tools.registry;
+import loom.ui.tools.generic;
+import loom.ui.tools.bash;
+import loom.ui.tools.file_edit;
+import loom.ui.tools.file_write;
+import loom.ui.tools.file_read;
+import loom.ui.tools.grep;
+import loom.ui.tools.glob;
+import loom.ui.tools.web_fetch;
+import loom.ui.tools.web_search;
+import loom.ui.tools.skill;
+import loom.ui.tools.agent;
+import loom.ui.tools.task;
+import loom.ui.tools.mcp;
+import loom.ui.tools.lsp;
+import loom.ui.tools.longtail;
 
 export namespace cc::ui::tools {
 

@@ -11,7 +11,7 @@ module;
 #include <cstdint>
 #include <cstddef>
 
-export module cc.tools.script_diagnostics;
+export module loom.tools.script_diagnostics;
 
 import std;
 

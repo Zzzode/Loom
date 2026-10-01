@@ -14,11 +14,11 @@ module;
 #include <cstddef>
 #include <cstdlib>
 
-export module cc.tools.command_semantics;
+export module loom.tools.command_semantics;
 
 import std;
 
-import cc.text.format;
+import loom.text.format;
 
 export namespace cc::tools {
 

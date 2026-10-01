@@ -29,13 +29,13 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.features.agents.agent_cards;
+export module loom.ui.features.agents.agent_cards;
 
 import std;
 
-import cc.ui.features.agents.agent_shared_widgets;
-import cc.tools.agent_color_manager;
-import cc.ui.widgets.spinner_animations;
+import loom.ui.features.agents.agent_shared_widgets;
+import loom.tools.agent_color_manager;
+import loom.ui.widgets.spinner_animations;
 
 export namespace cc::ui::agents::cards {
 using namespace ftxui;

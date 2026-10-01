@@ -1,5 +1,5 @@
 
-export module cc.text.markdown_utils;
+export module loom.text.markdown_utils;
 
 import std;
 

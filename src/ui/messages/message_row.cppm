@@ -87,35 +87,35 @@ module;
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 
-export module cc.ui.messages.message_row;
+export module loom.ui.messages.message_row;
 
 import std;
 
 // --- Import per-type renderers ------------------------------------------
-import cc.ui.messages.message_timestamp;
-import cc.ui.messages.message_components;
+import loom.ui.messages.message_timestamp;
+import loom.ui.messages.message_components;
 
 // Nine UI4-owned generic types:
-import cc.ui.messages.user_text_message;
-import cc.ui.messages.assistant_text_message;
-import cc.ui.messages.system_text_message;
-import cc.ui.messages.message_user_command;
-import cc.ui.messages.message_rate_limit;
-import cc.ui.messages.message_shutdown;
-import cc.ui.messages.message_plan_approval;
-import cc.ui.messages.message_hook_progress;
-import cc.ui.messages.message_advisor;
+import loom.ui.messages.user_text_message;
+import loom.ui.messages.assistant_text_message;
+import loom.ui.messages.system_text_message;
+import loom.ui.messages.message_user_command;
+import loom.ui.messages.message_rate_limit;
+import loom.ui.messages.message_shutdown;
+import loom.ui.messages.message_plan_approval;
+import loom.ui.messages.message_hook_progress;
+import loom.ui.messages.message_advisor;
 
 // Flavours + shared modules:
-import cc.ui.messages.message_bash_io;
-import cc.ui.messages.message_channel;
-import cc.ui.messages.message_compact_boundary;
-import cc.ui.messages.message_image;
-import cc.ui.messages.message_task_assignment;
-import cc.ui.messages.message_tool_result;   // exports ToolResultOptions
-import cc.ui.messages.user_message;
-import cc.ui.messages.assistant_message;
-import cc.ui.messages.error_message;
+import loom.ui.messages.message_bash_io;
+import loom.ui.messages.message_channel;
+import loom.ui.messages.message_compact_boundary;
+import loom.ui.messages.message_image;
+import loom.ui.messages.message_task_assignment;
+import loom.ui.messages.message_tool_result;   // exports ToolResultOptions
+import loom.ui.messages.user_message;
+import loom.ui.messages.assistant_message;
+import loom.ui.messages.error_message;
 
 // =========================================================================
 // SIX COMPLEX MESSAGE TYPES — UI5 Agent
@@ -127,12 +127,12 @@ import cc.ui.messages.error_message;
 // UI4-owned user/assistant/system wrappers keep outer chrome (avatar,
 // role-badge, metadata row) while these branches forward complex content
 // payloads directly to the UI5 renderers.
-import cc.ui.messages.tool_use_message;
-import cc.ui.messages.thinking_message;
-import cc.ui.messages.attachment_message;
-import cc.ui.messages.api_error_message;
-import cc.ui.messages.collapsed_content_message;
-import cc.ui.messages.local_command_output_message;
+import loom.ui.messages.tool_use_message;
+import loom.ui.messages.thinking_message;
+import loom.ui.messages.attachment_message;
+import loom.ui.messages.api_error_message;
+import loom.ui.messages.collapsed_content_message;
+import loom.ui.messages.local_command_output_message;
 
 export namespace cc::ui::messages {
 

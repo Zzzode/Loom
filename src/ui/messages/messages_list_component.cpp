@@ -12,12 +12,12 @@ module;
 #include <ftxui/component/mouse.hpp>
 #include <ftxui/screen/box.hpp>
 
-module cc.ui.messages.messages_list;
+module loom.ui.messages.messages_list;
 
 import std;
 
-import cc.ui.messages.message_row;
-import cc.ui.messages.virtual_list;
+import loom.ui.messages.message_row;
+import loom.ui.messages.virtual_list;
 
 namespace cc::ui::messages_list {
 

@@ -11,9 +11,9 @@
 // crashes Clang's codegen; splitting them keeps each TU small and keeps the
 // entire dialog closure out of app.cppm's source-location budget. See the
 // impl units for the full rationale.
-export module cc.ui.app.app_dialog_registration;
+export module loom.ui.app.app_dialog_registration;
 
-import cc.ui.dialogs.system;
+import loom.ui.dialogs.system;
 
 export namespace cc::ui::app_dialogs {
 

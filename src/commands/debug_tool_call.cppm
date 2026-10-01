@@ -1,8 +1,8 @@
-export module cc.commands.debug_tool_call;
+export module loom.commands.debug_tool_call;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::commands::debug_tool_call {
 struct CommandResponse { bool ok{true}; std::string message; };

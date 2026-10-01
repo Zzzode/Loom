@@ -7,12 +7,12 @@ module;
 /// Injects bridge failure states for manual recovery testing.
 
 
-export module cc.commands.bridge_kick;
+export module loom.commands.bridge_kick;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
+import loom.types.types;
+import loom.commands.command;
 
 export namespace cc::commands {
 

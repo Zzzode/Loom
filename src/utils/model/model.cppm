@@ -1,5 +1,5 @@
 
-export module cc.model.model;
+export module loom.model.model;
 
 import std;
 

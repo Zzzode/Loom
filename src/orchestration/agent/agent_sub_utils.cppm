@@ -2,24 +2,24 @@ module;
 
 #include <cstdlib>
 
-export module cc.orchestration.agent.utils;
+export module loom.orchestration.agent.utils;
 
 import std;
 
-import cc.serdes.json;
-import cc.tools.tool;
-import cc.tools.agent_runtime;
-import cc.tools.agent_types;
-import cc.tools.agent_worktree;
-import cc.orchestration.tools.mcp;
+import loom.serdes.json;
+import loom.tools.tool;
+import loom.tools.agent_runtime;
+import loom.tools.agent_types;
+import loom.tools.agent_worktree;
+import loom.orchestration.tools.mcp;
 // Team / MemberRole (cc.tools.team), AgentColor (cc.teams.swarm.backends)
 // and SkillDefinition (cc.skills.skill) are named in declarations kept in
 // this interface, so their owner modules must be imported here even though
 // every function body that uses them moved to an implementation unit.
-import cc.tools.team;
-import cc.teams.swarm.backends;
-import cc.skills.skill;
-import cc.services.api.client;
+import loom.tools.team;
+import loom.teams.swarm.backends;
+import loom.skills.skill;
+import loom.services.api.client;
 
 export namespace cc::tools::agent::utils {
 

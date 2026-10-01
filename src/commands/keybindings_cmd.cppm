@@ -12,18 +12,18 @@ module;
 #include <cstdlib>
 #include <cctype>
 
-export module cc.commands.keybindings_cmd;
+export module loom.commands.keybindings_cmd;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.keybindings.schema;
-import cc.keybindings.defaults;
-import cc.keybindings.load_user_bindings;
-import cc.keybindings.template_;
-import cc.keybindings.shortcut_format;
-import cc.keybindings.validate;
+import loom.types.types;
+import loom.commands.command;
+import loom.keybindings.schema;
+import loom.keybindings.defaults;
+import loom.keybindings.load_user_bindings;
+import loom.keybindings.template_;
+import loom.keybindings.shortcut_format;
+import loom.keybindings.validate;
 
 export namespace cc::commands {
 

@@ -1,5 +1,5 @@
 
-export module cc.containers.set_utils;
+export module loom.containers.set_utils;
 
 import std;
 

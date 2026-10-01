@@ -16,14 +16,14 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <cstddef>
 
-module cc.ui.dialogs.hooks_renderer;
+module loom.ui.dialogs.hooks_renderer;
 
 import std;
 
-import cc.ui.features.hooks_ui;
-import cc.hooks.config;
-import cc.hooks.registry;
-import cc.tools.registry;
+import loom.ui.features.hooks_ui;
+import loom.hooks.config;
+import loom.hooks.registry;
+import loom.tools.registry;
 
 namespace cc::ui::dialogs::hooks_renderer {
 

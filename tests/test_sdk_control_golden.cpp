@@ -45,11 +45,11 @@
 
 import std;
 
-import cc.server.server_main;
-import cc.server.server_routes;
-import cc.bridge.bridge_messaging;
-import cc.hooks.tool_permissions;
-import cc.serdes.json;
+import loom.server.server_main;
+import loom.server.server_routes;
+import loom.bridge.bridge_messaging;
+import loom.hooks.tool_permissions;
+import loom.serdes.json;
 
 namespace {
 

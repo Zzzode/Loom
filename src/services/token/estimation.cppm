@@ -3,7 +3,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.services.token_estimation;
+export module loom.services.token_estimation;
 
 import std;
 

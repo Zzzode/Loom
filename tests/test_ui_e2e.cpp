@@ -15,12 +15,12 @@
 #include "test_ui_helpers.h"
 
 import std;
-import cc.ui.app.app;
-import cc.ui.messages.message_image;
-import cc.commands.registry;
-import cc.query.query_engine;
-import cc.tools.tool;
-import cc.session.app_storage;
+import loom.ui.app.app;
+import loom.ui.messages.message_image;
+import loom.commands.registry;
+import loom.query.query_engine;
+import loom.tools.tool;
+import loom.session.app_storage;
 
 namespace {
 namespace fs = std::filesystem;

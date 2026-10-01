@@ -18,14 +18,14 @@ module;
 
 #include <httplib.h>
 
-export module cc.services.mcp.xaa;
+export module loom.services.mcp.xaa;
 
 import std;
 
-import cc.crypto.crypto;
-import cc.utils.error;
-import cc.serdes.json;
-import cc.services.mcp.xaa_idp_login;
+import loom.crypto.crypto;
+import loom.utils.error;
+import loom.serdes.json;
+import loom.services.mcp.xaa_idp_login;
 
 export namespace cc::services::mcp {
 

@@ -10,7 +10,7 @@ module;
 #include <cstdint>
 #include <cctype>
 
-export module cc.commands.plugin_error_formatting;
+export module loom.commands.plugin_error_formatting;
 
 import std;
 

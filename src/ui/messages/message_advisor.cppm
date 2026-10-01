@@ -14,11 +14,11 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.messages.message_advisor;
+export module loom.ui.messages.message_advisor;
 
 import std;
 
-import cc.ui.messages.message_components;
+import loom.ui.messages.message_components;
 
 export namespace cc::ui::messages {
 

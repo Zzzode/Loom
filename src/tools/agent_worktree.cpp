@@ -6,13 +6,13 @@
 // leaf would point back into the subtree B15 lifts into cc.orchestration.
 module;
 
-module cc.tools.agent_worktree;
+module loom.tools.agent_worktree;
 
 import std;
 
-import cc.tools.agent_runtime;
-import cc.tools.runtime_shared_utils;
-import cc.scm.git.git;
+import loom.tools.agent_runtime;
+import loom.tools.runtime_shared_utils;
+import loom.scm.git.git;
 
 namespace cc::tools::agent {
 

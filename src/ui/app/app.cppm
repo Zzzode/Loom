@@ -13,18 +13,18 @@ module;
 #include <ftxui/component/screen_interactive.hpp>
 #include <cctype>
 
-export module cc.ui.app.app;
+export module loom.ui.app.app;
 
 import std;
 
-import cc.types.types;
-import cc.ui.visual.markdown;
-import cc.ui.screens.repl_state;
-import cc.ui.screens.messages_store;   // MessageDisplayEntry (project_message / local_command_messages_)
-import cc.ui.prompt.autocomplete_sources;
+import loom.types.types;
+import loom.ui.visual.markdown;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;   // MessageDisplayEntry (project_message / local_command_messages_)
+import loom.ui.prompt.autocomplete_sources;
 // P0-2: 7-stage message pipeline utilities (dedup / tag filter / tool augment).
-import cc.ui.messages.message_pipeline;
-import cc.ui.dialogs.system;
+import loom.ui.messages.message_pipeline;
+import loom.ui.dialogs.system;
 
 export namespace cc::ui {
 

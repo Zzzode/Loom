@@ -9,11 +9,11 @@ module;
 
 #include <cstdint>
 
-export module cc.tools.runtime_computer_use;
+export module loom.tools.runtime_computer_use;
 
 import std;
 
-import cc.tools.computer_use;
+import loom.tools.computer_use;
 
 export namespace cc::tools::runtime_computer_use {
 

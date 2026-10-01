@@ -13,14 +13,14 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 
-export module cc.ui.prompt.prompt_paste_handler;
+export module loom.ui.prompt.prompt_paste_handler;
 
 import std;
 
-import cc.text.parse_references;
+import loom.text.parse_references;
 // OS clipboard image read (macOS osascript «class PNGf»).
 // TS REF: src/utils/imagePaste.ts getImageFromClipboard / hasImageInClipboard
-import cc.platform.clipboard;
+import loom.platform.clipboard;
 
 export namespace cc::ui::prompt {
 using namespace ftxui;

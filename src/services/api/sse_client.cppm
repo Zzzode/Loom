@@ -10,11 +10,11 @@ module;
 #include <cstring>
 #include <curl/curl.h>
 
-export module cc.services.api.sse;
+export module loom.services.api.sse;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 // Note: this module intentionally avoids importing cc.services.api.* so it can
 // be used as an independent SSE primitive.  The full-featured AnthropicClient

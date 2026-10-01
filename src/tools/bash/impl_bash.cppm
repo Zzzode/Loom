@@ -39,7 +39,7 @@ extern "C" char*** loom_libc_environ_ptr() {
     return &environ;
 }
 
-export module cc.tools.bash.impl;
+export module loom.tools.bash.impl;
 
 import std;
 

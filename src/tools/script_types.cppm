@@ -3,11 +3,11 @@ module;
 #include <cctype>
 
 
-export module cc.tools.script_types;
+export module loom.tools.script_types;
 
 import std;
 
-import cc.tools.script_diagnostics;
+import loom.tools.script_diagnostics;
 
 export namespace cc::tools {
 

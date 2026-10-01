@@ -2,7 +2,7 @@ module;
 
 #include <cctype>
 
-export module cc.teams.agent_swarms_enabled;
+export module loom.teams.agent_swarms_enabled;
 
 import std;
 

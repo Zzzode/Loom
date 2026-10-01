@@ -11,7 +11,7 @@ module;
 #include <cstdlib>
 #include <cstdint>
 
-export module cc.ui.chrome.terminal_io;
+export module loom.ui.chrome.terminal_io;
 
 import std;
 

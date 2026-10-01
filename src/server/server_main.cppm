@@ -10,15 +10,15 @@ module;
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-export module cc.server.server_main;
+export module loom.server.server_main;
 
 import std;
 
-import cc.server.server_routes;
-import cc.server.control_protocol;
-import cc.hooks.tool_permissions;
-import cc.session.storage;
-import cc.serdes.json;
+import loom.server.server_routes;
+import loom.server.control_protocol;
+import loom.hooks.tool_permissions;
+import loom.session.storage;
+import loom.serdes.json;
 
 export namespace cc::server {
 

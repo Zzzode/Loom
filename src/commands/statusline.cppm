@@ -1,7 +1,7 @@
 // Statusline command - configures shell statusline/PS1 integration
 module;
 #include <cstdlib>
-export module cc.commands.statusline;
+export module loom.commands.statusline;
 
 import std;
 export namespace cc::commands::statusline {

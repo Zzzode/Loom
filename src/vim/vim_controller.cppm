@@ -14,11 +14,11 @@ module;
 
 #include <cstdint>
 
-export module cc.vim.vim_controller;
+export module loom.vim.vim_controller;
 
 import std;
 
-import cc.vim.vim_types;
+import loom.vim.vim_types;
 
 export namespace cc::vim {
 

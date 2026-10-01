@@ -11,20 +11,20 @@
 /// (the only TU that names raw httplib types).
 module;
 
-export module cc.query.query_engine;
+export module loom.query.query_engine;
 
 import std;
 
-import cc.types.types;
-import cc.tools.tool;
-import cc.utils.error;
-import cc.serdes.json;
-import cc.query.wire_protocol;
-import cc.hooks.tool_permissions;
-import cc.hooks.lifecycle_hooks;
-import cc.hooks.registry;
-import cc.hooks.execution;
-import cc.services.compact.api_microcompact;
+import loom.types.types;
+import loom.tools.tool;
+import loom.utils.error;
+import loom.serdes.json;
+import loom.query.wire_protocol;
+import loom.hooks.tool_permissions;
+import loom.hooks.lifecycle_hooks;
+import loom.hooks.registry;
+import loom.hooks.execution;
+import loom.services.compact.api_microcompact;
 
 export namespace cc::core {
 

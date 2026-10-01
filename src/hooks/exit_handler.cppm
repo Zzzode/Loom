@@ -5,7 +5,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.hooks.exit_handler;
+export module loom.hooks.exit_handler;
 
 import std;
 

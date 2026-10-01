@@ -1,4 +1,4 @@
-export module cc.commands.onboarding;
+export module loom.commands.onboarding;
 
 import std;
 export namespace cc::commands::onboarding {

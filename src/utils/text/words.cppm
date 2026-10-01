@@ -1,7 +1,7 @@
 module;
 #include <cstddef>
 
-export module cc.text.words;
+export module loom.text.words;
 
 import std;
 

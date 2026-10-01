@@ -23,11 +23,11 @@ extern "C" {
 }
 #endif
 
-export module cc.parsing.tree_sitter.bash;
+export module loom.parsing.tree_sitter.bash;
 
 import std;
 
-import cc.parsing.tree_sitter.base;
+import loom.parsing.tree_sitter.base;
 
 export namespace cc::utils::tree_sitter::bash {
 

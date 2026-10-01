@@ -7,7 +7,7 @@
 /// Both the SDK and the settings validation import from here.
 module;
 
-export module cc.sdk.sandbox_types;
+export module loom.sdk.sandbox_types;
 
 import std;
 

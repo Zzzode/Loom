@@ -20,22 +20,22 @@ module;
 #include <cstdint>
 #include <cstddef>
 
-export module cc.tools.file_edit;
+export module loom.tools.file_edit;
 
 import std;
 
-import cc.tools.tool;
-import cc.tools.file_edit_types;
-import cc.tools.file_edit_prompt;
-import cc.fs.file;
-import cc.utils.error;
-import cc.serdes.json;
-import cc.fs.edit.file_edit;
-import cc.fs.file_read_cache;
-import cc.text.string_utils;
-import cc.fs.path;
-import cc.tools.sed_edit_parser;
-import cc.skills.file_access.port;
+import loom.tools.tool;
+import loom.tools.file_edit_types;
+import loom.tools.file_edit_prompt;
+import loom.fs.file;
+import loom.utils.error;
+import loom.serdes.json;
+import loom.fs.edit.file_edit;
+import loom.fs.file_read_cache;
+import loom.text.string_utils;
+import loom.fs.path;
+import loom.tools.sed_edit_parser;
+import loom.skills.file_access.port;
 
 export namespace cc::tools::file_edit {
 

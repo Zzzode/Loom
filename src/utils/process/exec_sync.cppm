@@ -4,10 +4,10 @@ module;
 #include <cstdio>
 #include <sys/wait.h>
 
-export module cc.process.exec_sync;
+export module loom.process.exec_sync;
 
 import std;
-import cc.process.bash.bash_execution;
+import loom.process.bash.bash_execution;
 
 export namespace cc::utils {
 

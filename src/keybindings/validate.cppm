@@ -6,7 +6,7 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.keybindings.validate;
+export module loom.keybindings.validate;
 
 import std;
 

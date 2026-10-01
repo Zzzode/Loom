@@ -11,13 +11,13 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
 import std;
 
-import cc.types.types;
-import cc.ui.screens.repl_screen;
-import cc.ui.screens.messages_store;
+import loom.types.types;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.messages_store;
 
 namespace cc::ui {
 

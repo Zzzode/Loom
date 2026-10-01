@@ -5,12 +5,12 @@ module;
 
 #include <cstdint>
 
-export module cc.hooks.registry;
+export module loom.hooks.registry;
 
 import std;
 
-import cc.serdes.json;
-import cc.process.async;
+import loom.serdes.json;
+import loom.process.async;
 
 export namespace cc::utils::hooks_registry {
 

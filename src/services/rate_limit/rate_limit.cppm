@@ -3,7 +3,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.services.rate_limit;
+export module loom.services.rate_limit;
 
 import std;
 

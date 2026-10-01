@@ -2,7 +2,7 @@
 module;
 #include <cstddef>
 
-export module cc.tools.send_message;
+export module loom.tools.send_message;
 
 import std;
 

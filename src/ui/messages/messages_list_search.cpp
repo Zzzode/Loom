@@ -4,33 +4,33 @@
 // MessageRowPayload variant closure so it lands only once in the BMI graph.
 module;
 
-module cc.ui.messages.messages_list;
+module loom.ui.messages.messages_list;
 
 import std;
 
-import cc.ui.messages.message_row;
-import cc.ui.messages.user_text_message;
-import cc.ui.messages.message_user_command;
-import cc.ui.messages.message_bash_io;
-import cc.ui.messages.user_message;
-import cc.ui.messages.message_image;
-import cc.ui.messages.message_tool_result;
-import cc.ui.messages.local_command_output_message;
-import cc.ui.messages.attachment_message;
-import cc.ui.messages.assistant_text_message;
-import cc.ui.messages.tool_use_message;
-import cc.ui.messages.thinking_message;
-import cc.ui.messages.system_text_message;
-import cc.ui.messages.error_message;
-import cc.ui.messages.api_error_message;
-import cc.ui.messages.collapsed_content_message;
-import cc.ui.messages.message_components;
-import cc.ui.messages.message_plan_approval;
-import cc.ui.messages.message_hook_progress;
-import cc.ui.messages.message_shutdown;
-import cc.ui.messages.message_advisor;
-import cc.ui.tools.registry;
-import cc.ui.tools.generic;
+import loom.ui.messages.message_row;
+import loom.ui.messages.user_text_message;
+import loom.ui.messages.message_user_command;
+import loom.ui.messages.message_bash_io;
+import loom.ui.messages.user_message;
+import loom.ui.messages.message_image;
+import loom.ui.messages.message_tool_result;
+import loom.ui.messages.local_command_output_message;
+import loom.ui.messages.attachment_message;
+import loom.ui.messages.assistant_text_message;
+import loom.ui.messages.tool_use_message;
+import loom.ui.messages.thinking_message;
+import loom.ui.messages.system_text_message;
+import loom.ui.messages.error_message;
+import loom.ui.messages.api_error_message;
+import loom.ui.messages.collapsed_content_message;
+import loom.ui.messages.message_components;
+import loom.ui.messages.message_plan_approval;
+import loom.ui.messages.message_hook_progress;
+import loom.ui.messages.message_shutdown;
+import loom.ui.messages.message_advisor;
+import loom.ui.tools.registry;
+import loom.ui.tools.generic;
 
 namespace cc::ui::messages_list {
 

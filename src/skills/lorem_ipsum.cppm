@@ -23,11 +23,11 @@ module;
 #include <cctype>
 #include <cstdlib>
 
-export module cc.skills.lorem_ipsum;
+export module loom.skills.lorem_ipsum;
 
 import std;
 
-import cc.skills.skill;
+import loom.skills.skill;
 
 export namespace cc::skills::lorem_ipsum {
 

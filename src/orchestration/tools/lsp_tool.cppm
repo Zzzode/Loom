@@ -4,13 +4,13 @@ module;
 
 // LspTool - LSP operations wrapper for code intelligence actions
 
-export module cc.orchestration.tools.lsp;
+export module loom.orchestration.tools.lsp;
 
 import std;
 
-import cc.services.lsp.LSPServerManager;
-import cc.utils.error;
-import cc.serdes.json;
+import loom.services.lsp.LSPServerManager;
+import loom.utils.error;
+import loom.serdes.json;
 
 export namespace cc::tools {
 

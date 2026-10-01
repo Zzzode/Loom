@@ -13,13 +13,13 @@ module;
 #include <cstdint>
 #include <httplib.h>
 
-module cc.query.query_engine;
+module loom.query.query_engine;
 
 import std;
 
-import cc.types.types;
-import cc.utils.error;
-import cc.serdes.json;
+import loom.types.types;
+import loom.utils.error;
+import loom.serdes.json;
 
 namespace cc::core {
 

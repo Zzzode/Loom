@@ -7,17 +7,17 @@ module;
 
 #include <cstdlib>
 
-module cc.sdk.harness;
+module loom.sdk.harness;
 
 import std;
 
-import cc.types.types;
-import cc.config.config;        // ConfigManager, Settings
-import cc.query.query_engine;  // QueryEngine, QueryOptions, ModelParams
-import cc.query.assembly;     // assemble, resolve_engine_config, AssemblyConfig/Overrides/Callbacks
-import cc.hooks.tool_permissions;  // AskUserResponseFn
-import cc.session.storage;    // load_messages (resume path)
-import cc.serdes.json;        // JsonVal (parse_session_message_value)
+import loom.types.types;
+import loom.config.config;        // ConfigManager, Settings
+import loom.query.query_engine;  // QueryEngine, QueryOptions, ModelParams
+import loom.query.assembly;     // assemble, resolve_engine_config, AssemblyConfig/Overrides/Callbacks
+import loom.hooks.tool_permissions;  // AskUserResponseFn
+import loom.session.storage;    // load_messages (resume path)
+import loom.serdes.json;        // JsonVal (parse_session_message_value)
 
 namespace cc::sdk {
 

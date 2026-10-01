@@ -18,15 +18,15 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.ui.dialogs.trust_utils;
+export module loom.ui.dialogs.trust_utils;
 
 import std;
 
 // Reuse existing trust / security primitives instead of redefining them.
-import cc.process.bash.bash_security;
-import cc.services.team_memory.secret_scanner;
-import cc.commands.plugin_trust_text;
-import cc.plugins.plugin;
+import loom.process.bash.bash_security;
+import loom.services.team_memory.secret_scanner;
+import loom.commands.plugin_trust_text;
+import loom.plugins.plugin;
 
 export namespace cc::ui::trust_utils {
 

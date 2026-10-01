@@ -4,13 +4,13 @@
 // and sidechain/message JSON.
 module;
 
-module cc.orchestration.agent.utils;
+module loom.orchestration.agent.utils;
 
 import std;
 
-import cc.serdes.json;
-import cc.services.api.client;
-import cc.tools.tool;
+import loom.serdes.json;
+import loom.services.api.client;
+import loom.tools.tool;
 
 namespace cc::tools::agent::utils {
 

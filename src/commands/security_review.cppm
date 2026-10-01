@@ -15,14 +15,14 @@ module;
 
 #include <cstdint>
 
-export module cc.commands.security_review;
+export module loom.commands.security_review;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.process.exec_sync;
-import cc.services.team_memory.secret_scanner;
+import loom.types.types;
+import loom.commands.command;
+import loom.process.exec_sync;
+import loom.services.team_memory.secret_scanner;
 
 export namespace cc::commands {
 

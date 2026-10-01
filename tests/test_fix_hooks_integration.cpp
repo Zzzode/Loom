@@ -13,12 +13,12 @@
 
 
 import std;
-import cc.query.query_engine;
-import cc.tools.tool;
-import cc.hooks.execution;
-import cc.hooks.registry;
-import cc.hooks.lifecycle_hooks;
-import cc.types.types;
+import loom.query.query_engine;
+import loom.tools.tool;
+import loom.hooks.execution;
+import loom.hooks.registry;
+import loom.hooks.lifecycle_hooks;
+import loom.types.types;
 
 namespace fs = std::filesystem;
 namespace he = cc::utils::hooks_execution;

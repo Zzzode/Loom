@@ -25,14 +25,14 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.services.lsp.passive_feedback;
+export module loom.services.lsp.passive_feedback;
 
 import std;
 
-import cc.utils.error;
-import cc.serdes.json;
-import cc.services.lsp.diagnostic_registry;
-import cc.services.lsp.LSPServerManager;
+import loom.utils.error;
+import loom.serdes.json;
+import loom.services.lsp.diagnostic_registry;
+import loom.services.lsp.LSPServerManager;
 
 export namespace cc::services::lsp {
 

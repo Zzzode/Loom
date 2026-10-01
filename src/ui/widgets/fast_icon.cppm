@@ -2,11 +2,11 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.widgets.fast_icon;
+export module loom.ui.widgets.fast_icon;
 
 import std;
 
-import cc.ui.foundation.components_figures;
+import loom.ui.foundation.components_figures;
 
 export namespace ui::components {
 

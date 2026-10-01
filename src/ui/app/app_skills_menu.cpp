@@ -27,10 +27,10 @@ module;
 #include <utility>
 #include <vector>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
-import cc.ui.prompt.autocomplete_sources;
-import cc.ui.screens.repl_state;
+import loom.ui.prompt.autocomplete_sources;
+import loom.ui.screens.repl_state;
 
 namespace cc::ui {
 

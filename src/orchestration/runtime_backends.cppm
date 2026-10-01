@@ -24,23 +24,23 @@ module;
 #include <cstdint>
 #include <cstdlib>  // std::getenv("HOME") in the skill executor
 
-export module cc.orchestration.runtime_backends;
+export module loom.orchestration.runtime_backends;
 
 import std;
 
-import cc.services.image;
-import cc.tools.image_codec.port;
-import cc.tools.runtime_backends.port;
-import cc.types.types;
-import cc.types.tool_types;
-import cc.tools.tool;
-import cc.tools.runtime_registry;
-import cc.skills.skill;
-import cc.tools.agent_runtime;
-import cc.orchestration.tools.lsp;
-import cc.orchestration.tools.mcp;
-import cc.orchestration.agent;
-import cc.orchestration.mcp_connectivity;
+import loom.services.image;
+import loom.tools.image_codec.port;
+import loom.tools.runtime_backends.port;
+import loom.types.types;
+import loom.types.tool_types;
+import loom.tools.tool;
+import loom.tools.runtime_registry;
+import loom.skills.skill;
+import loom.tools.agent_runtime;
+import loom.orchestration.tools.lsp;
+import loom.orchestration.tools.mcp;
+import loom.orchestration.agent;
+import loom.orchestration.mcp_connectivity;
 
 // Inter-TU declarations: visible to every implementation unit of THIS module
 // but NOT exported (importers reach these only through the installed slots).

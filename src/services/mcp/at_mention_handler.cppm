@@ -14,11 +14,11 @@
 // responder always sees 1-based values, matching TS onAtMentioned output.
 module;
 
-export module cc.services.mcp.at_mention_handler;
+export module loom.services.mcp.at_mention_handler;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::services::mcp {
 

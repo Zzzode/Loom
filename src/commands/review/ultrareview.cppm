@@ -24,17 +24,17 @@ module;
 #include <cstdint>
 #include <cmath>
 
-export module cc.commands.review.ultrareview;
+export module loom.commands.review.ultrareview;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.config.feature_flags;
-import cc.services.api.usage;
-import cc.process.exec_sync;
-import cc.scm.git.git_filesystem;
-import cc.scm.git.detect_repository;
+import loom.types.types;
+import loom.commands.command;
+import loom.config.feature_flags;
+import loom.services.api.usage;
+import loom.process.exec_sync;
+import loom.scm.git.git_filesystem;
+import loom.scm.git.detect_repository;
 
 export namespace cc::commands {
 

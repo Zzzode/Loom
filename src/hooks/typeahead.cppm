@@ -5,7 +5,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.hooks.typeahead;
+export module loom.hooks.typeahead;
 
 import std;
 

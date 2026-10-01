@@ -6,12 +6,12 @@
 module;
 #include <cstddef>
 
-export module cc.tools.file_edit_prompt;
+export module loom.tools.file_edit_prompt;
 
 import std;
 
-import cc.tools.file_edit_types;
-import cc.text.string_utils;     // for first_line_of
+import loom.tools.file_edit_types;
+import loom.text.string_utils;     // for first_line_of
 
 export namespace cc::tools::file_edit {
 

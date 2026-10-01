@@ -8,13 +8,13 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-module cc.commands.mcp_cmd;
+module loom.commands.mcp_cmd;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.config.config;
+import loom.types.types;
+import loom.commands.command;
+import loom.config.config;
 
 namespace cc::commands {
 

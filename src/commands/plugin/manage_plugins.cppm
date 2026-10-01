@@ -1,7 +1,7 @@
 module;
 #include <cstdlib>
 
-export module cc.commands.plugin.manage_plugins;
+export module loom.commands.plugin.manage_plugins;
 
 import std;
 

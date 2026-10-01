@@ -46,11 +46,11 @@
 #include <unistd.h>
 
 import std;
-import cc.query.query_engine;
-import cc.tools.tool;
-import cc.types.types;
-import cc.serdes.json;
-import cc.memdir.paths;
+import loom.query.query_engine;
+import loom.tools.tool;
+import loom.types.types;
+import loom.serdes.json;
+import loom.memdir.paths;
 
 namespace fs = std::filesystem;
 

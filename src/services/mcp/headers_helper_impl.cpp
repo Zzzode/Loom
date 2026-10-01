@@ -8,11 +8,11 @@ module;
 #include <signal.h>
 #include <unistd.h>
 
-module cc.services.mcp.headers_helper;
+module loom.services.mcp.headers_helper;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 namespace cc::services::mcp {
 

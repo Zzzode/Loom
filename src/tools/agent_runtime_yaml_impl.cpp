@@ -7,11 +7,11 @@ module;
 #include <cctype>
 #include <cstdint>
 
-module cc.tools.agent_runtime;
+module loom.tools.agent_runtime;
 
 import std;
 
-import cc.serdes.yaml;
+import loom.serdes.yaml;
 
 namespace cc::tools::agent_runtime {
 

@@ -10,7 +10,7 @@ module;
 
 #include <ftxui/component/event.hpp>
 
-module cc.ui.widgets.text_input;
+module loom.ui.widgets.text_input;
 
 import std;
 

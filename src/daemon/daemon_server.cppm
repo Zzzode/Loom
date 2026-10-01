@@ -19,13 +19,13 @@ module;
 
 extern "C" char** environ;
 
-export module cc.daemon.daemon_server;
+export module loom.daemon.daemon_server;
 
 import std;
 
-import cc.bridge.api;
-import cc.bridge.work_secret;
-import cc.serdes.json;
+import loom.bridge.api;
+import loom.bridge.work_secret;
+import loom.serdes.json;
 
 export namespace cc::daemon {
 

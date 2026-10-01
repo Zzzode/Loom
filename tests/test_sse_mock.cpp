@@ -6,8 +6,8 @@
 #include <httplib.h>
 
 import std;
-import cc.services.api.sse;
-import cc.cli.sse_transport;
+import loom.services.api.sse;
+import loom.cli.sse_transport;
 
 using namespace cc::services::api::sse;
 

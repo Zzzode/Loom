@@ -29,7 +29,7 @@ module;
 #include <string>
 #include <string_view>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
 namespace cc::ui {
 

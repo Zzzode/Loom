@@ -7,13 +7,13 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 
-module cc.ui.messages.messages_list;
+module loom.ui.messages.messages_list;
 
 import std;
 
-import cc.ui.messages.message_row;
-import cc.ui.messages.message_timestamp;
-import cc.ui.foundation.design_figures;
+import loom.ui.messages.message_row;
+import loom.ui.messages.message_timestamp;
+import loom.ui.foundation.design_figures;
 
 namespace cc::ui::messages_list {
 

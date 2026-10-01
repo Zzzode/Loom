@@ -2,11 +2,11 @@
 /// @brief Keybindings skill - keyboard shortcut management workflow.
 module;
 
-export module cc.skills.keybindings;
+export module loom.skills.keybindings;
 
 import std;
 
-import cc.skills.skill;
+import loom.skills.skill;
 
 export namespace cc::skills::keybindings {
 

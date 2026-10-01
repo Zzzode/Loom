@@ -14,7 +14,7 @@
 // primitives only, so it imports no cc.ui.* area at all.
 module;
 
-export module cc.ui.screens.permission_store;
+export module loom.ui.screens.permission_store;
 
 import std;
 

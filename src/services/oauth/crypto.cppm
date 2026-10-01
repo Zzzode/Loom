@@ -1,11 +1,11 @@
 module;
 #include <cstdint>
 #include <cstddef>
-export module cc.services.oauth.crypto;
+export module loom.services.oauth.crypto;
 
 import std;
 
-import cc.crypto.crypto;
+import loom.crypto.crypto;
 
 export namespace cc::services::oauth {
 

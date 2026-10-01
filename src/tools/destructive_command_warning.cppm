@@ -13,11 +13,11 @@
 
 module;
 
-export module cc.tools.destructive_command_warning;
+export module loom.tools.destructive_command_warning;
 
 import std;
 
-import cc.parsing.tree_sitter.bash;
+import loom.parsing.tree_sitter.bash;
 
 export namespace cc::tools::bash_validation {
 

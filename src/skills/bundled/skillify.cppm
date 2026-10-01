@@ -5,12 +5,12 @@
 /// Heavier than the root-level skillify.cppm which is a simplified version.
 module;
 
-export module cc.skills.bundled.skillify;
+export module loom.skills.bundled.skillify;
 
 import std;
 
-import cc.skills.skill;
-import cc.skills.load_skills_dir;
+import loom.skills.skill;
+import loom.skills.load_skills_dir;
 
 export namespace cc::skills::bundled {
 

@@ -1,7 +1,7 @@
 module;
 #include <cstdlib>
 
-export module cc.commands.privacy_settings;
+export module loom.commands.privacy_settings;
 
 import std;
 

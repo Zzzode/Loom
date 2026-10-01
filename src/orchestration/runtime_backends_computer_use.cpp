@@ -10,18 +10,18 @@ module;
 #include <cctype>   // std::isalnum in normalize_name_for_mcp
 #include <cstdlib>  // std::getenv for LOOM_COMPUTER_USE_CMD
 
-module cc.orchestration.runtime_backends;
+module loom.orchestration.runtime_backends;
 
 import std;
 
-import cc.types.tool_types;
-import cc.tools.computer_use;
-import cc.tools.runtime_computer_use;
-import cc.orchestration.tools.mcp;
-import cc.tools.runtime_registry;
-import cc.serdes.json;
-import cc.process.bash.bash_execution;
-import cc.tools.image_codec.port;
+import loom.types.tool_types;
+import loom.tools.computer_use;
+import loom.tools.runtime_computer_use;
+import loom.orchestration.tools.mcp;
+import loom.tools.runtime_registry;
+import loom.serdes.json;
+import loom.process.bash.bash_execution;
+import loom.tools.image_codec.port;
 
 namespace cc::tools::detail {
 

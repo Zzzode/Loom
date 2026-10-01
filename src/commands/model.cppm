@@ -6,13 +6,13 @@ module;
 
 #include <cstdint>
 
-export module cc.commands.model;
+export module loom.commands.model;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.state.app_state;
+import loom.types.types;
+import loom.commands.command;
+import loom.state.app_state;
 
 export namespace cc::commands {
 

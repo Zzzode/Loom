@@ -2,7 +2,7 @@ module;
 
 #include <cstdint>
 
-export module cc.ui.messages.assistant_message;
+export module loom.ui.messages.assistant_message;
 
 import std;
 

@@ -4,7 +4,7 @@ module;
 #include <unistd.h>
 #include <cstdint>
 
-export module cc.tools.file_edit_types;
+export module loom.tools.file_edit_types;
 
 import std;
 

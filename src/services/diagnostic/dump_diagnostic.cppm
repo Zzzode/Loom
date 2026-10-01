@@ -17,7 +17,7 @@ module;
 #include <ctime>
 #endif
 
-export module cc.services.diagnostic.dump_diagnostic;
+export module loom.services.diagnostic.dump_diagnostic;
 
 import std;
 

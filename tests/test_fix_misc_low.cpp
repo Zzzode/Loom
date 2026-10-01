@@ -24,10 +24,10 @@
 #include <cstdlib>
 
 import std;
-import cc.services.mcp.oauth_port;
-import cc.services.team_memory.secret_scanner;
-import cc.services.mcp.in_process_transport;
-import cc.services.oauth.crypto;
+import loom.services.mcp.oauth_port;
+import loom.services.team_memory.secret_scanner;
+import loom.services.mcp.in_process_transport;
+import loom.services.oauth.crypto;
 
 namespace oauth_port = cc::services::mcp;
 namespace secret = cc::services::team_memory;

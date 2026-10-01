@@ -10,12 +10,12 @@ module;
 #include <cstdio>
 #include <cstddef>
 
-export module cc.tools.skill;
+export module loom.tools.skill;
 
 import std;
-import cc.text.parse_int;
+import loom.text.parse_int;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::tools::skill {
 

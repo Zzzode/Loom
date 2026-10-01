@@ -4,7 +4,7 @@
 #include <cstdlib>
 
 import std;
-import cc.constants.paths;
+import loom.constants.paths;
 
 namespace fs = std::filesystem;
 

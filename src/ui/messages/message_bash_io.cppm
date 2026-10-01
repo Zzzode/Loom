@@ -4,7 +4,7 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.messages.message_bash_io;
+export module loom.ui.messages.message_bash_io;
 
 import std;
 

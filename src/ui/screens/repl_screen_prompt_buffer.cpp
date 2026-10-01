@@ -21,11 +21,11 @@ module;
 #include <utility>
 #include <vector>
 
-module cc.ui.screens.repl_screen;
+module loom.ui.screens.repl_screen;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.prompt_store;
-import cc.types.types;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.prompt_store;
+import loom.types.types;
 
 namespace cc::ui::repl_screen {
 

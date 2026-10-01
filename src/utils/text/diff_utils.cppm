@@ -1,10 +1,10 @@
 module;
 #include <cctype>
 
-export module cc.text.diff_utils;
+export module loom.text.diff_utils;
 
 import std;
-import cc.text.parse_int;
+import loom.text.parse_int;
 
 export namespace cc::utils {
 

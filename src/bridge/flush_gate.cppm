@@ -3,7 +3,7 @@ module;
 #include <unistd.h>
 
 
-export module cc.bridge.flush_gate;
+export module loom.bridge.flush_gate;
 
 import std;
 

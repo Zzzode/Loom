@@ -2,7 +2,7 @@ module;
 
 #include <cmath>
 
-export module cc.model.model_cost;
+export module loom.model.model_cost;
 
 import std;
 

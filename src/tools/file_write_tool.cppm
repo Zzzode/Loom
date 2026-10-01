@@ -2,15 +2,15 @@
 module;
 
 
-export module cc.tools.file_write;
+export module loom.tools.file_write;
 
 import std;
 
-import cc.fs.file;
-import cc.utils.error;
-import cc.tools.tool;
-import cc.serdes.json;
-import cc.skills.file_access.port;
+import loom.fs.file;
+import loom.utils.error;
+import loom.tools.tool;
+import loom.serdes.json;
+import loom.skills.file_access.port;
 
 export namespace cc::tools::file_write {
 

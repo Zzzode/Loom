@@ -3,17 +3,17 @@ module;
 #include <cstddef>
 #include <cstdio>
 
-export module cc.tools.script;
+export module loom.tools.script;
 
 import std;
 
 // migrated: integrate collapse decision + script primitives + typecheck
-import cc.tools.script_primitives;
-import cc.tools.script_typecheck;
-import cc.tools.script_diagnostics;
-import cc.tools.script_types;
-import cc.tools.tool_display_names;
-import cc.process.bash.bash_execution;
+import loom.tools.script_primitives;
+import loom.tools.script_typecheck;
+import loom.tools.script_diagnostics;
+import loom.tools.script_types;
+import loom.tools.tool_display_names;
+import loom.process.bash.bash_execution;
 
 export namespace cc::tools {
 

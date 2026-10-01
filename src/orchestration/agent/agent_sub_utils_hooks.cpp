@@ -15,18 +15,18 @@ module;
 #include <cstdio>
 #include <sys/wait.h>
 
-module cc.orchestration.agent.utils;
+module loom.orchestration.agent.utils;
 
 import std;
 
-import cc.scm.git.git;
-import cc.process.bash.bash_execution;
-import cc.serdes.json;
-import cc.tools.todo_write;
-import cc.tools.bash;
-import cc.orchestration.tools.mcp;
-import cc.tools.agent_runtime;
-import cc.services.api.client;
+import loom.scm.git.git;
+import loom.process.bash.bash_execution;
+import loom.serdes.json;
+import loom.tools.todo_write;
+import loom.tools.bash;
+import loom.orchestration.tools.mcp;
+import loom.tools.agent_runtime;
+import loom.services.api.client;
 
 namespace cc::tools::agent::utils {
 

@@ -6,14 +6,14 @@ module;
 
 #include <cstdint>
 
-export module cc.tasks.task_graph;
+export module loom.tasks.task_graph;
 
 import std;
 
-import cc.types.types;
-import cc.coordinator.swarm;
-import cc.process.bash.bash_execution;
-import cc.tasks.task;   // canonical TaskType / TaskStatus / TaskResult / task_type_to_string
+import loom.types.types;
+import loom.coordinator.swarm;
+import loom.process.bash.bash_execution;
+import loom.tasks.task;   // canonical TaskType / TaskStatus / TaskResult / task_type_to_string
 
 export namespace cc::core {
 

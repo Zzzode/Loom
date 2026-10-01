@@ -12,7 +12,7 @@ module;
 #include <cstdint>
 #include <cstddef>
 
-export module cc.commands.plugin_pagination_util;
+export module loom.commands.plugin_pagination_util;
 
 import std;
 

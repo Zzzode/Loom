@@ -14,7 +14,7 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.messages.message_user_command;
+export module loom.ui.messages.message_user_command;
 
 import std;
 

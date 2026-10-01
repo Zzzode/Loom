@@ -7,9 +7,9 @@
 #include <cstdlib>
 
 import std;
-import cc.commands.statusline;
-import cc.ui.app.statusline_runner;
-import cc.serdes.json;
+import loom.commands.statusline;
+import loom.ui.app.statusline_runner;
+import loom.serdes.json;
 
 namespace {
 

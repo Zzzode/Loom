@@ -5,20 +5,20 @@
 // merely called from here.
 module;
 
-module cc.orchestration.agent.utils;
+module loom.orchestration.agent.utils;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 // Genuinely used: tool_result_already_replaced and
 // build_agent_tool_result_replacement reference cc::utils::PERSISTED_OUTPUT_TAG
 // / PERSISTED_OUTPUT_CLOSING_TAG (defined in tool_helpers.cppm); graph_check
 // cannot see qualified cc::utils::NAME evidence because cc::utils is a
 // shallow (<3 segment) namespace path.
-import cc.tools.support.tool_helpers;  // arch-check: keep-import
-import cc.tools.tool;
-import cc.tools.agent_runtime;
-import cc.services.api.client;
+import loom.tools.support.tool_helpers;  // arch-check: keep-import
+import loom.tools.tool;
+import loom.tools.agent_runtime;
+import loom.services.api.client;
 
 namespace cc::tools::agent::utils {
 

@@ -6,7 +6,7 @@ module;
 #include <cmath>
 #include <cstdlib>
 
-module cc.skills.support;
+module loom.skills.support;
 
 import std;
 

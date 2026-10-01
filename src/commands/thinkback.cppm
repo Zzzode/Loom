@@ -2,7 +2,7 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.commands.thinkback;
+export module loom.commands.thinkback;
 
 import std;
 

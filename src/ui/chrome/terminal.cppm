@@ -11,11 +11,11 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.chrome.terminal;
+export module loom.ui.chrome.terminal;
 
 import std;
 
-import cc.state.app_state;
+import loom.state.app_state;
 
 export namespace cc::ui {
 

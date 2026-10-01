@@ -29,14 +29,14 @@
 #include <unistd.h>
 
 import std;
-import cc.orchestration.tools.lsp;
-import cc.serdes.json;
-import cc.services.lsp.types;
-import cc.services.lsp.LSPServerInstance;
-import cc.services.lsp.diagnostic_registry;
-import cc.services.lsp.passive_feedback;
-import cc.services.lsp.LSPServerManager;
-import cc.services.lsp.client;
+import loom.orchestration.tools.lsp;
+import loom.serdes.json;
+import loom.services.lsp.types;
+import loom.services.lsp.LSPServerInstance;
+import loom.services.lsp.diagnostic_registry;
+import loom.services.lsp.passive_feedback;
+import loom.services.lsp.LSPServerManager;
+import loom.services.lsp.client;
 
 using cc::services::lsp::ScopedLspServerConfig;
 using cc::services::lsp::create_lsp_server_instance;

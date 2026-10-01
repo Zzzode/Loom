@@ -16,12 +16,12 @@ module;
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 
-export module cc.ui.foundation.component_primitives;
+export module loom.ui.foundation.component_primitives;
 
 import std;
 
-import cc.ui.foundation.design_tokens;
-import cc.ui.foundation.theme_provider;
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
 
 export namespace cc::ui::design::primitives {
 

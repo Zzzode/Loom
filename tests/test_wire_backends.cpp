@@ -17,12 +17,12 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.query.wire_protocol;
-import cc.query.wire_openai;
-import cc.query.wire_anthropic;
-import cc.serdes.json;
-import cc.types.types;
-import cc.tools.tool;
+import loom.query.wire_protocol;
+import loom.query.wire_openai;
+import loom.query.wire_anthropic;
+import loom.serdes.json;
+import loom.types.types;
+import loom.tools.tool;
 
 namespace {
 

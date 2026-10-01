@@ -8,11 +8,11 @@ module;
 
 #include <uv.h>
 
-export module cc.process.async;
+export module loom.process.async;
 
 import std;
 
-import cc.utils.error;
+import loom.utils.error;
 
 export namespace cc::utils::async {
 

@@ -9,13 +9,13 @@ module;
 // #include <ftxui/component/component.hpp>
 // #include <ftxui/component/screen_interactive.hpp>
 
-export module cc.state.ftxui_integration;
+export module loom.state.ftxui_integration;
 
 import std;
 
-import cc.state.app_state;
-import cc.state.store;
-import cc.state.selectors;
+import loom.state.app_state;
+import loom.state.store;
+import loom.state.selectors;
 
 export namespace cc::state::ftxui {
 

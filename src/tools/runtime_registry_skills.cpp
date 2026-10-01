@@ -6,13 +6,13 @@ module;
 
 #include <cstdlib>  // std::getenv("HOME") in execute_skill_tool
 
-module cc.tools.runtime_registry;
+module loom.tools.runtime_registry;
 
 import std;
 
-import cc.tools.tool;
-import cc.tools.feature_flags;
-import cc.serdes.json;
+import loom.tools.tool;
+import loom.tools.feature_flags;
+import loom.serdes.json;
 
 namespace cc::tools::detail {
 

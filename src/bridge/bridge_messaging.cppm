@@ -15,13 +15,13 @@ module;
 #include <cstdlib>
 #include <cstdint>
 
-export module cc.bridge.bridge_messaging;
+export module loom.bridge.bridge_messaging;
 
 import std;
 
-import cc.bridge.messages;
-import cc.server.control_protocol;
-import cc.serdes.json;
+import loom.bridge.messages;
+import loom.server.control_protocol;
+import loom.serdes.json;
 
 export namespace cc::bridge {
 

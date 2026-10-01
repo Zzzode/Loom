@@ -6,11 +6,11 @@ module;
 
 #include <cstdint>
 
-export module cc.state.app_state;
+export module loom.state.app_state;
 
 import std;
 
-import cc.types.types;
+import loom.types.types;
 
 export namespace cc::state {
 

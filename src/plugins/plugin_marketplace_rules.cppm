@@ -2,11 +2,11 @@ module;
 
 #include <cctype>
 
-export module cc.plugins.plugin_marketplace_rules;
+export module loom.plugins.plugin_marketplace_rules;
 
 import std;
 
-import cc.plugins.plugin_identifier;
+import loom.plugins.plugin_identifier;
 
 export namespace cc::utils::plugin_marketplace_rules {
 

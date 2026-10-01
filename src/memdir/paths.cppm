@@ -7,11 +7,11 @@ module;
 #include <cstdio>
 #include <cctype>
 
-export module cc.memdir.paths;
+export module loom.memdir.paths;
 
 import std;
 
-import cc.constants.paths;
+import loom.constants.paths;
 
 export namespace cc::memdir {
 

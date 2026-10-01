@@ -23,14 +23,14 @@ module;
 
 #include <cctype>
 
-export module cc.services.mcp.channel_notification;
+export module loom.services.mcp.channel_notification;
 
 import std;
 
-import cc.constants.xml;
-import cc.services.mcp.types;
-import cc.serdes.json;
-import cc.plugins.plugin_identifier;
+import loom.constants.xml;
+import loom.services.mcp.types;
+import loom.serdes.json;
+import loom.plugins.plugin_identifier;
 
 export namespace cc::services::mcp {
 

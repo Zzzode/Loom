@@ -8,18 +8,18 @@ module;
 
 #include <cstdlib>
 
-module cc.query.query_engine;
+module loom.query.query_engine;
 
 import std;
 
-import cc.types.types;
-import cc.serdes.json;
-import cc.security.tool_deny_rules;
-import cc.platform.env.env_utils;
-import cc.query.wire_protocol;
-import cc.query.wire_anthropic;
-import cc.query.wire_openai;
-import cc.services.compact.api_microcompact;
+import loom.types.types;
+import loom.serdes.json;
+import loom.security.tool_deny_rules;
+import loom.platform.env.env_utils;
+import loom.query.wire_protocol;
+import loom.query.wire_anthropic;
+import loom.query.wire_openai;
+import loom.services.compact.api_microcompact;
 
 namespace cc::core {
 

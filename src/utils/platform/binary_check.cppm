@@ -1,4 +1,4 @@
-export module cc.platform.binary_check;
+export module loom.platform.binary_check;
 
 import std;
 

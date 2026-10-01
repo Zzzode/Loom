@@ -7,12 +7,12 @@
 module;
 
 
-export module cc.plugins.plugin_manager;
+export module loom.plugins.plugin_manager;
 
 import std;
 
-import cc.plugins.plugin_identifier;
-import cc.plugins.plugin_loader;
+import loom.plugins.plugin_identifier;
+import loom.plugins.plugin_loader;
 
 export namespace cc::utils::plugin_manager {
 

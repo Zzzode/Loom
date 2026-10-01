@@ -6,7 +6,7 @@
 // grants path always maps to one shard mutex.
 module;
 
-module cc.teams.swarm.helpers;
+module loom.teams.swarm.helpers;
 
 import std;
 

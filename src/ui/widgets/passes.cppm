@@ -12,14 +12,14 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.widgets.passes;
+export module loom.ui.widgets.passes;
 
 import std;
 
-import cc.ui.foundation.component_primitives;
-import cc.ui.foundation.design_tokens;
-import cc.ui.foundation.theme_provider;
-import cc.types.types;
+import loom.ui.foundation.component_primitives;
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
+import loom.types.types;
 
 export namespace cc::ui::components::passes {
 

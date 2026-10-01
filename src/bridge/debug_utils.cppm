@@ -2,7 +2,7 @@ module;
 #include <ctime>
 #include <cstdlib>
 
-export module cc.bridge.debug_utils;
+export module loom.bridge.debug_utils;
 
 import std;
 

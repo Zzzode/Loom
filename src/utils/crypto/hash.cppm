@@ -2,11 +2,11 @@ module;
 
 #include <cstdint>
 
-export module cc.crypto.hash;
+export module loom.crypto.hash;
 
 import std;
 
-import cc.crypto.crypto;
+import loom.crypto.crypto;
 
 export namespace cc::utils::hash {
 

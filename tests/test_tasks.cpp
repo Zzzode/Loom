@@ -5,17 +5,17 @@
 #include <cstdlib>
 
 import std;
-import cc.tools.agent_runtime;
-import cc.tools.agent_types;
-import cc.orchestration.agent.spawn_multi_agent;
-import cc.tools.team;
-import cc.tasks.local_agent_task;
-import cc.tasks.in_process_teammate_task;
-import cc.tasks.pill_label;
-import cc.tasks.task;
-import cc.tasks.types;
-import cc.teams.swarm.backends;
-import cc.teams.swarm.pane_observer;
+import loom.tools.agent_runtime;
+import loom.tools.agent_types;
+import loom.orchestration.agent.spawn_multi_agent;
+import loom.tools.team;
+import loom.tasks.local_agent_task;
+import loom.tasks.in_process_teammate_task;
+import loom.tasks.pill_label;
+import loom.tasks.task;
+import loom.tasks.types;
+import loom.teams.swarm.backends;
+import loom.teams.swarm.pane_observer;
 
 namespace fs = std::filesystem;
 

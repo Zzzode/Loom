@@ -6,7 +6,7 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.constants.constants;
+export module loom.constants.constants;
 
 import std;
 

@@ -9,7 +9,7 @@ module;
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-export module cc.cli.websocket_transport;
+export module loom.cli.websocket_transport;
 
 import std;
 

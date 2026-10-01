@@ -44,29 +44,29 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.screens.repl_screen;
+export module loom.ui.screens.repl_screen;
 
 import std;
 
 // RFC 0002 F3 Finalize: repl_state is imported (not re-exported) — call sites
 // that name ReplScreenState / ReplMode / the store types import repl_state or
 // the owning cc.ui.screens.*_store module directly.
-import cc.ui.screens.repl_state;
+import loom.ui.screens.repl_state;
 // Store types named in this interface's declarations.
-import cc.ui.screens.messages_store;   // MessageDisplayEntry
-import cc.ui.screens.task_view_store;  // SpinnerMode
-import cc.ui.screens.chrome_store;     // StatusBarData
+import loom.ui.screens.messages_store;   // MessageDisplayEntry
+import loom.ui.screens.task_view_store;  // SpinnerMode
+import loom.ui.screens.chrome_store;     // StatusBarData
 
 // Core engine types (ImageBlock in the stash signatures; only named
 // globally qualified as ::cc::core::ImageBlock).
-import cc.types.types;  // arch-check: keep-import
+import loom.types.types;  // arch-check: keep-import
 // UnseenDivider used by RenderMessages / ComputeUnseenDivider.
-import cc.ui.messages.messages_list;
+import loom.ui.messages.messages_list;
 // StreamingMarkdown pointer in surviving declarations (only named
 // globally qualified as ::cc::ui::StreamingMarkdown*).
-import cc.ui.visual.markdown;  // arch-check: keep-import
+import loom.ui.visual.markdown;  // arch-check: keep-import
 // AgentCardData is a member type of AgentMenuOptions.
-import cc.ui.features.agents.agent_cards;
+import loom.ui.features.agents.agent_cards;
 
 // Forward imports (implement bodies in owning agent modules):
 //   cc.ui.dialogs.{permission_prompts,mcp_dialogs,trust_dialog,

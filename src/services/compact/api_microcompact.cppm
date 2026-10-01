@@ -3,11 +3,11 @@
 module;
 #include <cstdlib>
 #include <cstdint>
-export module cc.services.compact.api_microcompact;
+export module loom.services.compact.api_microcompact;
 
 import std;
 
-import cc.platform.env.env_utils;
+import loom.platform.env.env_utils;
 
 export namespace cc::services::compact {
 

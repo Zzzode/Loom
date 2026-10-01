@@ -8,7 +8,7 @@ module;
 #include <cctype>
 #include <cstdlib>
 
-module cc.tools.agent_runtime;
+module loom.tools.agent_runtime;
 
 import std;
 

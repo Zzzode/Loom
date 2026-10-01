@@ -20,7 +20,7 @@ module;
 
 #include <cstdint>
 
-export module cc.vim.vim_types;
+export module loom.vim.vim_types;
 
 import std;
 

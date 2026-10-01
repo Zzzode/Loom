@@ -8,11 +8,11 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.bootstrap.interactive;
-import cc.history;
-import cc.task_types;
-import cc.state.teammate_view_helpers;
-import cc.serdes.json;
+import loom.bootstrap.interactive;
+import loom.history;
+import loom.task_types;
+import loom.state.teammate_view_helpers;
+import loom.serdes.json;
 
 using namespace std::literals;
 

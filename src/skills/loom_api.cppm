@@ -2,11 +2,11 @@
 /// @brief Loom API skill - direct API interaction patterns.
 module;
 
-export module cc.skills.loom_api;
+export module loom.skills.loom_api;
 
 import std;
 
-import cc.skills.skill;
+import loom.skills.skill;
 
 export namespace cc::skills::loom_api {
 

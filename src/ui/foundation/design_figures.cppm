@@ -27,7 +27,7 @@ module;
 #include <ftxui/dom/elements.hpp>  // for ftxui::Color forward refs that
                                    // downstream consumers need, and to keep
                                    // the module graph consistent.
-export module cc.ui.foundation.design_figures;
+export module loom.ui.foundation.design_figures;
 
 import std;
 

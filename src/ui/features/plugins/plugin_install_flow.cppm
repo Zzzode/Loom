@@ -20,14 +20,14 @@ module;
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.features.plugins.plugin_install_flow;
+export module loom.ui.features.plugins.plugin_install_flow;
 
 import std;
 
-import cc.commands.plugin_ui_data;
-import cc.commands.plugin_details_helpers;
-import cc.commands.plugin_trust_text;
-import cc.ui.foundation.feature_dialog_protocol;
+import loom.commands.plugin_ui_data;
+import loom.commands.plugin_details_helpers;
+import loom.commands.plugin_trust_text;
+import loom.ui.foundation.feature_dialog_protocol;
 
 export namespace cc::ui::plugins::plugin_install_flow {
 using namespace ftxui;

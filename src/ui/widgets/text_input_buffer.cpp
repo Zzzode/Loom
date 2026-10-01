@@ -16,14 +16,14 @@ module;
 
 #include <ftxui/screen/color.hpp>
 
-module cc.ui.widgets.text_input;
+module loom.ui.widgets.text_input;
 
 import std;
 
-import cc.ui.foundation.design_figures;
-import cc.ui.foundation.ui_types;
-import cc.ui.prompt.prompt_paste_handler;
-import cc.text.parse_references;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.ui_types;
+import loom.ui.prompt.prompt_paste_handler;
+import loom.text.parse_references;
 
 namespace ui::components {
 

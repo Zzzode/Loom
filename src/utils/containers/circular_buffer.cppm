@@ -3,7 +3,7 @@
 module;
 #include <cstddef>
 
-export module cc.containers.circular_buffer;
+export module loom.containers.circular_buffer;
 
 import std;
 

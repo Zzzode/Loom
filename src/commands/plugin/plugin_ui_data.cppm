@@ -29,13 +29,13 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.commands.plugin_ui_data;
+export module loom.commands.plugin_ui_data;
 
 import std;
 
-import cc.commands.plugin_parse_args;
-import cc.commands.plugin_helpers;
-import cc.commands.plugin_manage;
+import loom.commands.plugin_parse_args;
+import loom.commands.plugin_helpers;
+import loom.commands.plugin_manage;
 
 export namespace cc::commands::plugin_ui {
 

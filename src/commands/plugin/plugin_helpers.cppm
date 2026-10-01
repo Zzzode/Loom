@@ -14,7 +14,7 @@ module;
 #include <cctype>
 #include <cstddef>
 
-export module cc.commands.plugin_helpers;
+export module loom.commands.plugin_helpers;
 
 import std;
 

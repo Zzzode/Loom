@@ -4,10 +4,10 @@ module;
 #include <cstdint>
 #include <cstdio>
 
-export module cc.tools.powershell;
+export module loom.tools.powershell;
 
 import std;
-import cc.process.bash.bash_execution;
+import loom.process.bash.bash_execution;
 
 
 export namespace cc::tools {

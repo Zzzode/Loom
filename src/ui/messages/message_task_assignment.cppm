@@ -4,7 +4,7 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.messages.message_task_assignment;
+export module loom.ui.messages.message_task_assignment;
 
 import std;
 

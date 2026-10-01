@@ -15,15 +15,15 @@
 module;
 
 
-export module cc.tools.bash_validation;
+export module loom.tools.bash_validation;
 
 import std;
 
-import cc.tools.destructive_command_warning;
-import cc.tools.mode_validation;
-import cc.tools.path_validation;
-import cc.tools.readonly_validation;
-import cc.tools.should_use_sandbox;
+import loom.tools.destructive_command_warning;
+import loom.tools.mode_validation;
+import loom.tools.path_validation;
+import loom.tools.readonly_validation;
+import loom.tools.should_use_sandbox;
 
 export namespace cc::tools::bash_validation {
 

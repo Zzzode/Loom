@@ -4,14 +4,14 @@ module;
 #include <cctype>
 #include <cstdio>
 
-export module cc.tools.web_search;
+export module loom.tools.web_search;
 
 import std;
 
-import cc.utils.error;
-import cc.tools.tool;
-import cc.serdes.json;
-import cc.process.bash.bash_execution;
+import loom.utils.error;
+import loom.tools.tool;
+import loom.serdes.json;
+import loom.process.bash.bash_execution;
 
 export namespace cc::tools::web_search {
 

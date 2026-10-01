@@ -13,11 +13,11 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.hooks.remaining_notifs;
-import cc.services.mcp.connection_manager;
-import cc.services.mcp.types;
-import cc.orchestration.mcp_connectivity;
-import cc.orchestration.tools.mcp;
+import loom.hooks.remaining_notifs;
+import loom.services.mcp.connection_manager;
+import loom.services.mcp.types;
+import loom.orchestration.mcp_connectivity;
+import loom.orchestration.tools.mcp;
 
 namespace notif = cc::hooks::notifs;
 namespace svc_mcp = cc::services::mcp;

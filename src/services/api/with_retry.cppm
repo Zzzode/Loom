@@ -1,13 +1,13 @@
 // API Retry Logic - Exponential backoff with jitter, fallback, and persistence
 module;
 
-export module cc.services.api.with_retry;
+export module loom.services.api.with_retry;
 
 import std;
 
-import cc.services.api.errors;
-import cc.services.api.models;
-import cc.utils.error;
+import loom.services.api.errors;
+import loom.services.api.models;
+import loom.utils.error;
 
 export namespace cc::services::api {
 

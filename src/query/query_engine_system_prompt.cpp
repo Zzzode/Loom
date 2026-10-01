@@ -8,19 +8,19 @@ module;
 
 #include <cstdio>
 
-module cc.query.query_engine;
+module loom.query.query_engine;
 
 import std;
 
-import cc.types.types;
-import cc.memdir.paths;
+import loom.types.types;
+import loom.memdir.paths;
 // Genuinely used via global-namespace calls (::memdir::build_memory_lines,
 // ::memdir::join_lines, ::memdir::truncate_entrypoint_content); the
 // dead-import heuristic only attributes deep cc::-namespace paths, so the
 // global ::memdir:: qualification is invisible to it.
-import cc.memdir.memdir;  // arch-check: keep-import
-import cc.constants.paths;
-import cc.process.bash.bash_execution;
+import loom.memdir.memdir;  // arch-check: keep-import
+import loom.constants.paths;
+import loom.process.bash.bash_execution;
 
 namespace cc::core {
 

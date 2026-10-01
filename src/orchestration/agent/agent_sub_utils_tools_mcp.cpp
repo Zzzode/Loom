@@ -3,14 +3,14 @@
 // connect/prepare/upsert mapping, and skill discovery/preload.
 module;
 
-module cc.orchestration.agent.utils;
+module loom.orchestration.agent.utils;
 
 import std;
 
-import cc.orchestration.tools.mcp;
-import cc.services.mcp.types;
-import cc.tools.agent_runtime;
-import cc.skills.skill;
+import loom.orchestration.tools.mcp;
+import loom.services.mcp.types;
+import loom.tools.agent_runtime;
+import loom.skills.skill;
 
 namespace cc::tools::agent::utils {
 

@@ -5,7 +5,7 @@ module;
 #include <climits>
 #include <cstddef>
 
-export module cc.serdes.yaml;
+export module loom.serdes.yaml;
 
 import std;
 

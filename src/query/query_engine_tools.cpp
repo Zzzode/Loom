@@ -5,18 +5,18 @@
 // notification draining, and the discovered-skills/denial accessors.
 module;
 
-module cc.query.query_engine;
+module loom.query.query_engine;
 
 import std;
 
-import cc.types.types;
-import cc.types.tool_types;
-import cc.serdes.json;
-import cc.hooks.tool_permissions;
-import cc.hooks.lifecycle_hooks;
-import cc.hooks.registry;
-import cc.hooks.execution;
-import cc.tools.agent_runtime;
+import loom.types.types;
+import loom.types.tool_types;
+import loom.serdes.json;
+import loom.hooks.tool_permissions;
+import loom.hooks.lifecycle_hooks;
+import loom.hooks.registry;
+import loom.hooks.execution;
+import loom.tools.agent_runtime;
 
 namespace cc::core {
 

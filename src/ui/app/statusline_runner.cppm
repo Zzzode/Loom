@@ -28,12 +28,12 @@
 module;
 
 
-export module cc.ui.app.statusline_runner;
+export module loom.ui.app.statusline_runner;
 
 import std;
 
-import cc.serdes.json;
-import cc.hooks.execution;
+import loom.serdes.json;
+import loom.hooks.execution;
 
 export namespace cc::utils::statusline {
 

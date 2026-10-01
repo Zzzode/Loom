@@ -33,11 +33,11 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.dialogs.cost_threshold_dialog;
+export module loom.ui.dialogs.cost_threshold_dialog;
 
 import std;
 
-import cc.constants.product;
+import loom.constants.product;
 
 export namespace cc::ui::dialogs::cost_threshold {
 

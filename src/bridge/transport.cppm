@@ -12,12 +12,12 @@ module;
 #include <sys/socket.h>
 #include <unistd.h>
 
-export module cc.bridge.transport;
+export module loom.bridge.transport;
 
 import std;
 
-import cc.serdes.json;
-import cc.net.http.http;
+import loom.serdes.json;
+import loom.net.http.http;
 
 
 export namespace cc::bridge {

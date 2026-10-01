@@ -8,11 +8,11 @@ module;
 #include <sys/wait.h>
 #include <unistd.h>
 
-module cc.services.mcp.client;
+module loom.services.mcp.client;
 
 import std;
 
-import cc.services.mcp.types;
+import loom.services.mcp.types;
 
 namespace cc::services::mcp {
 

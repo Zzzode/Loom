@@ -26,11 +26,11 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 
-export module cc.ui.foundation.logo_v2;
+export module loom.ui.foundation.logo_v2;
 
 import std;
 
-import cc.ui.foundation.logo;  // LogoDisplayData + RenderCondensedLogoElement +
+import loom.ui.foundation.logo;  // LogoDisplayData + RenderCondensedLogoElement +
                      // RenderOpus1MNotice + RenderBrandChip helpers
 
 export namespace cc::ui::logo_v2 {

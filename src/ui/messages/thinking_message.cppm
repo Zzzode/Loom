@@ -16,12 +16,12 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.messages.thinking_message;
+export module loom.ui.messages.thinking_message;
 
 import std;
 
-import cc.types.types;
-import cc.ui.foundation.design_figures;  // kSpinnerFrames canonical set (GAP 4)
+import loom.types.types;
+import loom.ui.foundation.design_figures;  // kSpinnerFrames canonical set (GAP 4)
 
 export namespace cc::ui::messages::thinking_message {
 using namespace ftxui;

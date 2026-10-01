@@ -52,13 +52,13 @@ module;
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.dialogs.elicitation;
+export module loom.ui.dialogs.elicitation;
 
 import std;
 
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.frame;
-import cc.ui.foundation.theme_provider;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.frame;
+import loom.ui.foundation.theme_provider;
 
 export namespace cc::ui::dialogs::elicitation {
 

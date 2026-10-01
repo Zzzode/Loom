@@ -14,7 +14,7 @@
 // no cc.ui.* area at all.
 module;
 
-export module cc.ui.screens.chrome_store;
+export module loom.ui.screens.chrome_store;
 
 import std;
 

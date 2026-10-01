@@ -5,13 +5,13 @@ module;
 
 #include <cstdint>
 
-export module cc.commands.branch;
+export module loom.commands.branch;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.process.bash.bash_execution;
+import loom.types.types;
+import loom.commands.command;
+import loom.process.bash.bash_execution;
 
 export namespace cc::commands {
 

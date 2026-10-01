@@ -1,7 +1,7 @@
 module;
 #include <cstdlib>
 
-export module cc.commands.release_notes;
+export module loom.commands.release_notes;
 
 import std;
 

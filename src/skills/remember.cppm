@@ -2,11 +2,11 @@
 /// @brief Remember skill - persistent memory and context recall.
 module;
 
-export module cc.skills.remember;
+export module loom.skills.remember;
 
 import std;
 
-import cc.skills.skill;
+import loom.skills.skill;
 
 export namespace cc::skills::remember {
 

@@ -32,7 +32,7 @@ module;
 #include <ftxui/screen/color.hpp>
 #include <cstddef>
 
-export module cc.ui.dialogs.mcp_dialogs;
+export module loom.ui.dialogs.mcp_dialogs;
 
 import std;
 

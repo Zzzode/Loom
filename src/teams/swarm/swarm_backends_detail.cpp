@@ -8,7 +8,7 @@
 // tokens, CLI flags, env var names) — bodies are byte-identical moves.
 module;
 
-module cc.teams.swarm.backends;
+module loom.teams.swarm.backends;
 
 import std;
 

@@ -25,12 +25,12 @@ module;
 #include <variant>
 #include <vector>
 
-module cc.ui.messages.messages_list;
+module loom.ui.messages.messages_list;
 
-import cc.ui.messages.message_row;
-import cc.ui.messages.message_tool_result;
-import cc.ui.messages.thinking_message;
-import cc.ui.messages.tool_use_message;
+import loom.ui.messages.message_row;
+import loom.ui.messages.message_tool_result;
+import loom.ui.messages.thinking_message;
+import loom.ui.messages.tool_use_message;
 
 namespace cc::ui::messages_list {
 

@@ -46,7 +46,7 @@ module;
 
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.messages.scroll_keys;
+export module loom.ui.messages.scroll_keys;
 
 import std;
 

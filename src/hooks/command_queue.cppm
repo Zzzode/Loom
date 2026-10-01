@@ -4,7 +4,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.hooks.command_queue;
+export module loom.hooks.command_queue;
 
 import std;
 

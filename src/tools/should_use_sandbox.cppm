@@ -23,11 +23,11 @@ module;
 #include <cctype>
 #include <cstddef>
 
-export module cc.tools.should_use_sandbox;
+export module loom.tools.should_use_sandbox;
 
 import std;
 
-import cc.tools.bash_security;
+import loom.tools.bash_security;
 
 export namespace cc::tools::sandbox {
 

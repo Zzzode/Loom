@@ -1,4 +1,4 @@
-export module cc.ui.foundation.components_figures;
+export module loom.ui.foundation.components_figures;
 
 import std;
 

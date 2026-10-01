@@ -7,13 +7,13 @@ module;
 
 #include <cstdlib>
 
-module cc.tools.agent_runtime;
+module loom.tools.agent_runtime;
 
 import std;
 
-import cc.serdes.json;
-import cc.teams.team_helpers;
-import cc.serdes.yaml;
+import loom.serdes.json;
+import loom.teams.team_helpers;
+import loom.serdes.yaml;
 
 namespace cc::tools::agent_runtime {
 

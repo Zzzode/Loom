@@ -12,7 +12,7 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.messages.api_error_message;
+export module loom.ui.messages.api_error_message;
 
 import std;
 

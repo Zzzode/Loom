@@ -8,16 +8,16 @@
 module;
 
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
 import std;
 
-import cc.types.types;
-import cc.types.command;
-import cc.commands.command;
-import cc.query.query_engine;
-import cc.state.store;
-import cc.state.app_state;
+import loom.types.types;
+import loom.types.command;
+import loom.commands.command;
+import loom.query.query_engine;
+import loom.state.store;
+import loom.state.app_state;
 
 namespace cc::ui {
 

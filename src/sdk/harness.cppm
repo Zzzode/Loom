@@ -26,17 +26,17 @@ module;
 
 #include <cstdint>
 
-export module cc.sdk.harness;
+export module loom.sdk.harness;
 
 import std;
 
-import cc.types.types;            // ContentBlock, Message, TokenUsage, StreamEvent, Result, AssistantMessage
-import cc.query.wire_protocol;    // WireBackend (for BackendFactory)
-import cc.hooks.tool_permissions; // PermissionContext, PermissionResponse
+import loom.types.types;            // ContentBlock, Message, TokenUsage, StreamEvent, Result, AssistantMessage
+import loom.query.wire_protocol;    // WireBackend (for BackendFactory)
+import loom.hooks.tool_permissions; // PermissionContext, PermissionResponse
 // ToolRegistry is needed for the register_extra_tools field type; the
 // detector does not harvest the class name past cc.tools.tool's
 // concept/requires blocks (same marker as query_assembly.cppm).
-import cc.tools.tool;  // arch-check: keep-import
+import loom.tools.tool;  // arch-check: keep-import
 
 export namespace cc::sdk {
 

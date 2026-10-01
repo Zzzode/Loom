@@ -13,16 +13,16 @@ module;
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
 
-module cc.ui.screens.repl_screen;
+module loom.ui.screens.repl_screen;
 
 import std;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.task_view_store;
-import cc.ui.dialogs.cost_threshold_dialog;
-import cc.ui.foundation.design_figures;
-import cc.ui.foundation.theme_provider;
-import cc.ui.prompt.prompt_input_footer;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.task_view_store;
+import loom.ui.dialogs.cost_threshold_dialog;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.theme_provider;
+import loom.ui.prompt.prompt_input_footer;
 
 namespace cc::ui::repl_screen {
 using namespace ftxui;

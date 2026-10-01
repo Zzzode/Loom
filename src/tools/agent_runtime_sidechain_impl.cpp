@@ -4,11 +4,11 @@
 // readers (TS-jsonl and sidechain-jsonl), and NativeAgentRecord loading.
 module;
 
-module cc.tools.agent_runtime;
+module loom.tools.agent_runtime;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 namespace cc::tools::agent_runtime {
 

@@ -12,12 +12,12 @@ module;
 
 #include <yyjson.h>
 
-export module cc.state.teammate_view_helpers;
+export module loom.state.teammate_view_helpers;
 
 import std;
 
-import cc.serdes.json;
-import cc.task_types;
+import loom.serdes.json;
+import loom.task_types;
 
 export namespace cc::state::teammate_view {
 

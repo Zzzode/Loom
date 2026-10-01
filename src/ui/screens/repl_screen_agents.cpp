@@ -12,16 +12,16 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-module cc.ui.screens.repl_screen;
+module loom.ui.screens.repl_screen;
 
 import std;
 
-import cc.ui.screens.repl_state;
-import cc.ui.features.agents.agent_wizard;
-import cc.ui.dialogs.system;
-import cc.ui.features.agents.agent_cards;
-import cc.tools.agent_display;
-import cc.ui.foundation.theme_provider;
+import loom.ui.screens.repl_state;
+import loom.ui.features.agents.agent_wizard;
+import loom.ui.dialogs.system;
+import loom.ui.features.agents.agent_cards;
+import loom.tools.agent_display;
+import loom.ui.foundation.theme_provider;
 
 namespace cc::ui::repl_screen {
 using namespace ftxui;

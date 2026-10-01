@@ -12,11 +12,11 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.visual.structured_diff;
+export module loom.ui.visual.structured_diff;
 
 import std;
 
-import cc.fs.edit.file_edit;
+import loom.fs.edit.file_edit;
 
 export namespace cc::ui::structured_diff {
 using namespace ftxui;

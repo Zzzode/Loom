@@ -5,7 +5,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.process.shell.shell_parser;
+export module loom.process.shell.shell_parser;
 
 import std;
 

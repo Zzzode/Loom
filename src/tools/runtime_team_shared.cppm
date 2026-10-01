@@ -14,19 +14,19 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.tools.runtime_team_shared;
+export module loom.tools.runtime_team_shared;
 
 import std;
 
-import cc.serdes.json;
-import cc.tools.agent_worktree;       // cleanup_agent_worktree
-import cc.tools.agent_runtime;        // NativeAgentRecord / native_agent_store / runtime_state_dir
-import cc.tools.bash;                 // stop_background_tasks_for_agent
-import cc.tools.team;
-import cc.tools.runtime_shared_utils; // safe_runtime_dir_component, path helpers
-import cc.teams.team_helpers;         // team_runtime_dir
-import cc.fs.atomic_replace;       // c16 hardened team-data replaces
-import cc.teams.swarm.backends;       // BackendRegistry
+import loom.serdes.json;
+import loom.tools.agent_worktree;       // cleanup_agent_worktree
+import loom.tools.agent_runtime;        // NativeAgentRecord / native_agent_store / runtime_state_dir
+import loom.tools.bash;                 // stop_background_tasks_for_agent
+import loom.tools.team;
+import loom.tools.runtime_shared_utils; // safe_runtime_dir_component, path helpers
+import loom.teams.team_helpers;         // team_runtime_dir
+import loom.fs.atomic_replace;       // c16 hardened team-data replaces
+import loom.teams.swarm.backends;       // BackendRegistry
 
 export namespace cc::tools::runtime_team_shared {
 

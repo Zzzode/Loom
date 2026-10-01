@@ -21,12 +21,12 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.dialogs.feature_wizard_adapter;
+export module loom.ui.dialogs.feature_wizard_adapter;
 
 import std;
 
-import cc.ui.foundation.feature_dialog_protocol;
-import cc.ui.dialogs.wizard_dialog;
+import loom.ui.foundation.feature_dialog_protocol;
+import loom.ui.dialogs.wizard_dialog;
 
 export namespace cc::ui::feature_wizard_adapter {
 

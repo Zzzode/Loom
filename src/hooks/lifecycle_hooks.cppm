@@ -4,7 +4,7 @@
 module;
 
 
-export module cc.hooks.lifecycle_hooks;
+export module loom.hooks.lifecycle_hooks;
 
 import std;
 

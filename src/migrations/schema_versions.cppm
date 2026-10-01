@@ -4,12 +4,12 @@ module;
 
 #include <fcntl.h>
 
-export module cc.migrations.schema_versions;
+export module loom.migrations.schema_versions;
 
 import std;
 
-import cc.fs.atomic_replace;
-import cc.fs.lockfile;
+import loom.fs.atomic_replace;
+import loom.fs.lockfile;
 
 export namespace cc::migrations {
 

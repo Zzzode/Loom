@@ -1,5 +1,5 @@
 
-export module cc.hooks.cost_hook;
+export module loom.hooks.cost_hook;
 
 import std;
 

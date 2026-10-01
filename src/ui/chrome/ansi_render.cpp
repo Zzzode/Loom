@@ -18,11 +18,11 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-module cc.ui.chrome.ansi_render;
+module loom.ui.chrome.ansi_render;
 
 import std;
 
-import cc.ui.chrome.terminal_io;  // SgrAttr / ColorValue / Color16/256/TrueColor
+import loom.ui.chrome.terminal_io;  // SgrAttr / ColorValue / Color16/256/TrueColor
 
 namespace cc::ui::messages {
 

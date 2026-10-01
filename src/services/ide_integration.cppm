@@ -13,14 +13,14 @@ module;
 #include <sys/socket.h>
 #include <unistd.h>
 
-export module cc.services.ide_integration;
+export module loom.services.ide_integration;
 
 import std;
 
-import cc.serdes.json;
-import cc.process.async;
-import cc.services.mcp.client;
-import cc.services.mcp.types;
+import loom.serdes.json;
+import loom.process.async;
+import loom.services.mcp.client;
+import loom.services.mcp.types;
 
 export namespace cc::utils::ide {
 

@@ -3,17 +3,17 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.benchmarks.pare.run;
+export module loom.benchmarks.pare.run;
 
 import std;
 
-import cc.benchmarks.pare.schema;
-import cc.benchmarks.pare.case_loader;
-import cc.benchmarks.pare.execute_ref;
-import cc.benchmarks.pare.metrics;
-import cc.benchmarks.pare.workspace;
-import cc.serdes.json;
-import cc.fs.file;
+import loom.benchmarks.pare.schema;
+import loom.benchmarks.pare.case_loader;
+import loom.benchmarks.pare.execute_ref;
+import loom.benchmarks.pare.metrics;
+import loom.benchmarks.pare.workspace;
+import loom.serdes.json;
+import loom.fs.file;
 
 export namespace cc::benchmarks::pare {
 

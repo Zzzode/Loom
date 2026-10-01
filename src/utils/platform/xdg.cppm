@@ -2,7 +2,7 @@ module;
 
 #include <cstdlib>
 
-export module cc.platform.xdg;
+export module loom.platform.xdg;
 
 import std;
 

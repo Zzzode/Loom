@@ -12,11 +12,11 @@
 module;
 
 
-export module cc.ui.tools.web_search;
+export module loom.ui.tools.web_search;
 
 import std;
 
-import cc.ui.tools.registry;
+import loom.ui.tools.registry;
 
 export namespace cc::ui::tools::web_search_ui {
 

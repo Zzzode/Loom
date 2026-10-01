@@ -3,10 +3,10 @@ module;
 #include <cctype>
 #include <cstdint>
 
-export module cc.net.http.ssrf_guard;
+export module loom.net.http.ssrf_guard;
 
 import std;
-import cc.text.parse_int;
+import loom.text.parse_int;
 
 export namespace cc::utils::ssrf_guard {
 

@@ -13,16 +13,16 @@ module;
 #include <sys/stat.h>
 #include <sys/file.h>
 
-export module cc.config.config;
+export module loom.config.config;
 
 import std;
 
-import cc.types.types;
-import cc.serdes.json;
-import cc.text.parse_int;
-import cc.constants.paths;
+import loom.types.types;
+import loom.serdes.json;
+import loom.text.parse_int;
+import loom.constants.paths;
 
-export import cc.config.mcp_types;
+export import loom.config.mcp_types;
 
 export namespace cc::core {
 

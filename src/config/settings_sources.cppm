@@ -1,4 +1,4 @@
-export module cc.config.settings_sources;
+export module loom.config.settings_sources;
 
 import std;
 

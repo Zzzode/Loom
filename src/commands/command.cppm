@@ -5,11 +5,11 @@ module;
 
 #include <cstdint>
 
-export module cc.commands.command;
+export module loom.commands.command;
 
 import std;
 
-import cc.types.types;
+import loom.types.types;
 
 export namespace cc::core {
 

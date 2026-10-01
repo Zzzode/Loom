@@ -1,9 +1,9 @@
 
-export module cc.tools.support.script_tool_enabled;
+export module loom.tools.support.script_tool_enabled;
 
 import std;
 
-import cc.platform.env.env_utils;
+import loom.platform.env.env_utils;
 
 export namespace cc::utils::script_tool {
 

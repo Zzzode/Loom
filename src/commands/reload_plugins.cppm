@@ -1,6 +1,6 @@
 // Reload Plugins command - refreshes all active plugins and extensions
 module;
-export module cc.commands.reload_plugins;
+export module loom.commands.reload_plugins;
 
 import std;
 export namespace cc::commands::reload_plugins {

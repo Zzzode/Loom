@@ -6,7 +6,7 @@ module;
 #include <cstdlib>
 #include <sys/utsname.h>
 
-export module cc.constants.prompts;
+export module loom.constants.prompts;
 
 import std;
 

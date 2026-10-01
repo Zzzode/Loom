@@ -11,12 +11,12 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.prompt.vim_input;
+export module loom.ui.prompt.vim_input;
 
 import std;
 
-import cc.ui.foundation.ui_types;  // TS REF: canonical VimMode lives here
-import cc.vim.vim_controller;  // unified VimController state
+import loom.ui.foundation.ui_types;  // TS REF: canonical VimMode lives here
+import loom.vim.vim_controller;  // unified VimController state
 
 export namespace cc::ui::prompt::vim_input {
 using namespace ftxui;

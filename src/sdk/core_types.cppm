@@ -7,11 +7,11 @@ module;
 
 #include <cstdint>
 
-export module cc.sdk.core_types;
+export module loom.sdk.core_types;
 
 import std;
 
-import cc.sdk.core_schemas;
+import loom.sdk.core_schemas;
 
 export namespace cc::sdk::core_types {
 

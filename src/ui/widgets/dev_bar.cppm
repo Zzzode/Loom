@@ -2,7 +2,7 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.widgets.dev_bar;
+export module loom.ui.widgets.dev_bar;
 
 import std;
 

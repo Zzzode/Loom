@@ -9,15 +9,15 @@ module;
 #include <cstdlib>
 #include <cctype>
 
-export module cc.services.extract_memories;
+export module loom.services.extract_memories;
 
 import std;
 
-import cc.types.types;
-import cc.process.async;
-import cc.utils.error;
-import cc.serdes.json;
-import cc.fs.file;
+import loom.types.types;
+import loom.process.async;
+import loom.utils.error;
+import loom.serdes.json;
+import loom.fs.file;
 
 export namespace cc::services::extract_memories {
 

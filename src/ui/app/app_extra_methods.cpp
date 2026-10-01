@@ -36,29 +36,29 @@ module;
 #include <unordered_set>
 #include <vector>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
-import cc.query.query_engine;
-import cc.commands.registry;
-import cc.commands.command;
-import cc.session.app_storage;
-import cc.hooks.lifecycle_hooks;
+import loom.query.query_engine;
+import loom.commands.registry;
+import loom.commands.command;
+import loom.session.app_storage;
+import loom.hooks.lifecycle_hooks;
 
 // ── Imports needed by the 5 methods (not available via the interface) ────
-import cc.process.bash.bash_execution;
-import cc.model.model;
-import cc.constants.constants;
-import cc.scm.git.git;
-import cc.crypto.crypto;
-import cc.platform.clipboard;
-import cc.text.parse_references;
-import cc.ui.messages.collapse_background_bash;
-import cc.ui.features.agents.agent_shared_widgets;
-import cc.tools.agent_display;
+import loom.process.bash.bash_execution;
+import loom.model.model;
+import loom.constants.constants;
+import loom.scm.git.git;
+import loom.crypto.crypto;
+import loom.platform.clipboard;
+import loom.text.parse_references;
+import loom.ui.messages.collapse_background_bash;
+import loom.ui.features.agents.agent_shared_widgets;
+import loom.tools.agent_display;
 
 // ── Imports available via the interface but needed for namespace aliases ─
-import cc.tools.agent_runtime;
-import cc.ui.features.agents.agent_cards;
+import loom.tools.agent_runtime;
+import loom.ui.features.agents.agent_cards;
 
 namespace cc::ui {
 

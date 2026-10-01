@@ -17,11 +17,11 @@ module;
 
 #include <cctype>
 
-export module cc.skills.verify_content;
+export module loom.skills.verify_content;
 
 import std;
 
-import cc.skills.skill;
+import loom.skills.skill;
 
 export namespace cc::skills::verify_content {
 

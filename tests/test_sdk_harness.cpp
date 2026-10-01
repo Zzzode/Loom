@@ -17,12 +17,12 @@
 
 import std;
 
-import cc.types.types;
-import cc.tools.tool;              // ToolInput, ToolResult, ToolPermission
-import cc.tools.runtime_registry;  // make_runtime_tool (detail namespace)
-import cc.hooks.tool_permissions;  // PermissionContext, PermissionResponse
-import cc.session.storage;         // append_message (resume seed)
-import cc.sdk.harness;
+import loom.types.types;
+import loom.tools.tool;              // ToolInput, ToolResult, ToolPermission
+import loom.tools.runtime_registry;  // make_runtime_tool (detail namespace)
+import loom.hooks.tool_permissions;  // PermissionContext, PermissionResponse
+import loom.session.storage;         // append_message (resume seed)
+import loom.sdk.harness;
 
 namespace {
 

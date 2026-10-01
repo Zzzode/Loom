@@ -1,4 +1,4 @@
-export module cc.ui.messages.message_predicates;
+export module loom.ui.messages.message_predicates;
 
 import std;
 

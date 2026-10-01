@@ -1,11 +1,11 @@
 module;
 
-export module cc.tools.bash_permissions;
+export module loom.tools.bash_permissions;
 
 import std;
 
-import cc.tools.command_semantics;  // migrated: shared classifiers
-import cc.tools.tool;  // ToolPermission for default_bash_level_for bridge
+import loom.tools.command_semantics;  // migrated: shared classifiers
+import loom.tools.tool;  // ToolPermission for default_bash_level_for bridge
 
 export namespace cc::tools {
 

@@ -7,7 +7,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.hooks.virtual_scroll;
+export module loom.hooks.virtual_scroll;
 
 import std;
 

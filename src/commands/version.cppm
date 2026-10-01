@@ -1,8 +1,8 @@
-export module cc.commands.version;
+export module loom.commands.version;
 
 import std;
 
-import cc.constants.product;
+import loom.constants.product;
 
 export namespace cc::commands::version {
 

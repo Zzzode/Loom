@@ -1,25 +1,25 @@
 /// @file command_registry_init_a.cpp
 /// @brief Group A registration: core commands (commit, review, config, help, etc.)
-module cc.commands.registry;
+module loom.commands.registry;
 
-import cc.commands.commit;
-import cc.commands.review;
-import cc.commands.config;
-import cc.commands.context;
-import cc.commands.diff;
-import cc.commands.mcp_cmd;
-import cc.commands.compact;
-import cc.commands.help;
-import cc.commands.doctor;
-import cc.commands.clear;
-import cc.commands.add_dir;
-import cc.commands.agents;
-import cc.commands.btw;
-import cc.commands.advisor;
-import cc.commands.bridge_kick;
-import cc.commands.brief;
-import cc.commands.color;
-import cc.commands.ctx_viz;
+import loom.commands.commit;
+import loom.commands.review;
+import loom.commands.config;
+import loom.commands.context;
+import loom.commands.diff;
+import loom.commands.mcp_cmd;
+import loom.commands.compact;
+import loom.commands.help;
+import loom.commands.doctor;
+import loom.commands.clear;
+import loom.commands.add_dir;
+import loom.commands.agents;
+import loom.commands.btw;
+import loom.commands.advisor;
+import loom.commands.bridge_kick;
+import loom.commands.brief;
+import loom.commands.color;
+import loom.commands.ctx_viz;
 
 namespace cc::commands {
 

@@ -45,14 +45,14 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.query.wire_openai;
+export module loom.query.wire_openai;
 
 import std;
 
-import cc.types.types;
-import cc.tools.tool;
-import cc.serdes.json;
-import cc.query.wire_protocol;
+import loom.types.types;
+import loom.tools.tool;
+import loom.serdes.json;
+import loom.query.wire_protocol;
 
 export namespace cc::query::wire {
 

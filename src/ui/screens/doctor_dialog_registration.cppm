@@ -19,12 +19,12 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.screens.doctor_dialog_registration;
+export module loom.ui.screens.doctor_dialog_registration;
 
 import std;
 
-import cc.ui.dialogs.system;
-import cc.ui.screens.doctor_screen;
+import loom.ui.dialogs.system;
+import loom.ui.screens.doctor_screen;
 
 export namespace cc::ui::screens::doctor_dialog_registration {
 

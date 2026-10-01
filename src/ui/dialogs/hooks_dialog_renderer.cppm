@@ -10,11 +10,11 @@
 module;
 
 
-export module cc.ui.dialogs.hooks_renderer;
+export module loom.ui.dialogs.hooks_renderer;
 
 import std;
 
-import cc.ui.dialogs.system;
+import loom.ui.dialogs.system;
 
 export namespace cc::ui::dialogs::hooks_renderer {
 

@@ -27,12 +27,12 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 
-export module cc.ui.dialogs.system;
+export module loom.ui.dialogs.system;
 
 import std;
 
-import cc.ui.foundation.theme_provider;
-import cc.ui.permissions.single_prompt;
+import loom.ui.foundation.theme_provider;
+import loom.ui.permissions.single_prompt;
 
 export namespace cc::ui::dialogs::system {
 

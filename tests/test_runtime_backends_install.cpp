@@ -11,7 +11,7 @@
 // providers.) The image-codec/skill slots are still additionally
 // reset by FileToolServicesGuard around the cases that need them.
 import std;
-import cc.orchestration.runtime_backends;
+import loom.orchestration.runtime_backends;
 
 namespace {
 

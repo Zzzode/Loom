@@ -13,12 +13,12 @@ module;
 #include <sys/types.h>
 #include <unistd.h>
 
-module cc.services.mcp.client;
+module loom.services.mcp.client;
 
 import std;
 
-import cc.services.mcp.types;
-import cc.net.http.http;
+import loom.services.mcp.types;
+import loom.net.http.http;
 
 namespace cc::services::mcp {
 

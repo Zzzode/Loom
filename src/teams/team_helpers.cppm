@@ -12,12 +12,12 @@ module;
 #include <cstddef>
 #endif
 
-export module cc.teams.team_helpers;
+export module loom.teams.team_helpers;
 
 import std;
 
-import cc.serdes.json;
-import cc.fs.atomic_replace;
+import loom.serdes.json;
+import loom.fs.atomic_replace;
 
 export namespace cc::utils {
 

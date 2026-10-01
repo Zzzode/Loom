@@ -4,7 +4,7 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.permissions.permission_shell_helpers;
+export module loom.ui.permissions.permission_shell_helpers;
 
 import std;
 

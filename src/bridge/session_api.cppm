@@ -5,13 +5,13 @@ module;
 /// @file session_api.cppm
 /// @brief Thin HTTP wrappers for CCR v2 code-session API
 
-export module cc.bridge.session_api;
+export module loom.bridge.session_api;
 
 import std;
 
-import cc.types.types;
-import cc.net.http.http;
-import cc.serdes.json;
+import loom.types.types;
+import loom.net.http.http;
+import loom.serdes.json;
 
 export namespace cc::bridge {
 

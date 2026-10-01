@@ -46,11 +46,11 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.messages.message_pipeline;
+export module loom.ui.messages.message_pipeline;
 
 import std;
 
-import cc.ui.foundation.design_figures;
+import loom.ui.foundation.design_figures;
 
 export namespace cc::ui::messages::pipeline {
 

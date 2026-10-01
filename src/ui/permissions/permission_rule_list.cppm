@@ -19,16 +19,16 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.permissions.rule_list;
+export module loom.ui.permissions.rule_list;
 
 import std;
 
-import cc.security.permissions_engine;
-import cc.ui.permissions.scope_editor;
-import cc.ui.permissions.components;
-import cc.ui.foundation.design_tokens;
-import cc.ui.widgets.custom_select;
-import cc.ui.visual.structured_diff;
+import loom.security.permissions_engine;
+import loom.ui.permissions.scope_editor;
+import loom.ui.permissions.components;
+import loom.ui.foundation.design_tokens;
+import loom.ui.widgets.custom_select;
+import loom.ui.visual.structured_diff;
 
 export namespace cc::ui::permissions::rule_list {
 using namespace ftxui;

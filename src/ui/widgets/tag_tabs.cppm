@@ -5,7 +5,7 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.widgets.tag_tabs;
+export module loom.ui.widgets.tag_tabs;
 
 import std;
 

@@ -21,14 +21,14 @@ module;
 #include <utility>
 #include <vector>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
-import cc.types.types;
-import cc.ui.screens.repl_state;
-import cc.ui.screens.task_view_store;
-import cc.ui.screens.messages_store;
-import cc.ui.screens.dialog_store;
-import cc.ui.screens.chrome_store;
+import loom.types.types;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.task_view_store;
+import loom.ui.screens.messages_store;
+import loom.ui.screens.dialog_store;
+import loom.ui.screens.chrome_store;
 
 namespace cc::ui {
 

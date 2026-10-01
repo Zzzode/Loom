@@ -14,37 +14,37 @@ module;
 
 #include <ftxui/component/event.hpp>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
 import std;
 
 // ── Base imports (only those actually used by constructor) ─────────────
-import cc.ui.prompt.autocomplete_sources;
-import cc.ui.screens.repl_screen;
-import cc.ui.screens.repl_state;
-import cc.session.app_storage;
+import loom.ui.prompt.autocomplete_sources;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
+import loom.session.app_storage;
 
 // ── Constructor-only imports (moved out of app_autocomplete.cpp) ────────
-import cc.hooks.cost_hook;
-import cc.services.mcp.elicitation_handler;
-import cc.services.mcp.at_mention_handler;
-import cc.tools.ask_user;
-import cc.ui.dialogs.default_renderers;
-import cc.ui.dialogs.elicitation;
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.triggers;
-import cc.ui.app.app_dialog_registration;
-import cc.ui.tools.init;
-import cc.ui.prompt.prompt_input_footer;
-import cc.ui.app.statusline_runner;
-import cc.model.model;
-import cc.constants.constants;
-import cc.skills.load_skills_dir;
-import cc.state.app_state;
-import cc.state.store;
-import cc.query.query_engine;
-import cc.hooks.lifecycle_hooks;
-import cc.commands.command;
+import loom.hooks.cost_hook;
+import loom.services.mcp.elicitation_handler;
+import loom.services.mcp.at_mention_handler;
+import loom.tools.ask_user;
+import loom.ui.dialogs.default_renderers;
+import loom.ui.dialogs.elicitation;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.triggers;
+import loom.ui.app.app_dialog_registration;
+import loom.ui.tools.init;
+import loom.ui.prompt.prompt_input_footer;
+import loom.ui.app.statusline_runner;
+import loom.model.model;
+import loom.constants.constants;
+import loom.skills.load_skills_dir;
+import loom.state.app_state;
+import loom.state.store;
+import loom.query.query_engine;
+import loom.hooks.lifecycle_hooks;
+import loom.commands.command;
 
 namespace cc::ui {
 

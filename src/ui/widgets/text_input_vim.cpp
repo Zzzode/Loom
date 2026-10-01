@@ -12,11 +12,11 @@ module;
 
 #include <ftxui/component/event.hpp>
 
-module cc.ui.widgets.text_input;
+module loom.ui.widgets.text_input;
 
 import std;
 
-import cc.ui.foundation.ui_types;  // cc::ui::common::VimMode canonical enum
+import loom.ui.foundation.ui_types;  // cc::ui::common::VimMode canonical enum
 
 namespace ui::components {
 

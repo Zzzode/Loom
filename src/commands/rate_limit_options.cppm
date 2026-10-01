@@ -1,7 +1,7 @@
 module;
 #include <cstdlib>
 
-export module cc.commands.rate_limit_options;
+export module loom.commands.rate_limit_options;
 
 import std;
 

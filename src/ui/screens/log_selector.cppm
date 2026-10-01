@@ -43,13 +43,13 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 
-export module cc.ui.screens.log_selector;
+export module loom.ui.screens.log_selector;
 
 import std;
 
-import cc.ui.dialogs.trust_dialog;
-import cc.ui.dialogs.trust_utils;
-import cc.ui.foundation.design_tokens;
+import loom.ui.dialogs.trust_dialog;
+import loom.ui.dialogs.trust_utils;
+import loom.ui.foundation.design_tokens;
 
 export namespace cc::ui::screens::log_selector {
 

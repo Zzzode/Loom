@@ -16,13 +16,13 @@ module;
 
 #include <cstdint>
 
-export module cc.server.control_protocol;
+export module loom.server.control_protocol;
 
 import std;
 
-import cc.serdes.json;
-import cc.tools.agent_runtime;
-import cc.model.effort;  // arch-check: keep-import (EffortLevel alias, line 39)
+import loom.serdes.json;
+import loom.tools.agent_runtime;
+import loom.model.effort;  // arch-check: keep-import (EffortLevel alias, line 39)
 
 export namespace cc::server::control {
 

@@ -1,17 +1,17 @@
 // TeamCreateTool - Creates a new multi-agent swarm team for parallel coordination
 module;
 
-export module cc.tools.team_create;
+export module loom.tools.team_create;
 
 import std;
 
-import cc.tools.tool;
-import cc.tools.runtime_registry;
-import cc.tools.agent_types;
-import cc.tools.team;
-import cc.serdes.json;
-import cc.utils.error;
-import cc.fs.atomic_replace;
+import loom.tools.tool;
+import loom.tools.runtime_registry;
+import loom.tools.agent_types;
+import loom.tools.team;
+import loom.serdes.json;
+import loom.utils.error;
+import loom.fs.atomic_replace;
 
 export namespace cc::tools::team_create {
 

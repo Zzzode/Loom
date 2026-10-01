@@ -7,25 +7,25 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-module cc.ui.screens.repl_screen;
+module loom.ui.screens.repl_screen;
 
 import std;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.messages_store;
-import cc.types.types;  // arch-check: keep-import (::cc::core::ImageBlockSource)
-import cc.ui.messages.message_row;
-import cc.ui.messages.message_image;
-import cc.ui.messages.messages_list;
-import cc.ui.visual.markdown;  // arch-check: keep-import (::cc::ui::StreamingMarkdown)
-import cc.ui.messages.user_text_message;
-import cc.ui.messages.assistant_text_message;
-import cc.ui.messages.system_text_message;
-import cc.ui.messages.thinking_message;
-import cc.ui.messages.tool_use_message;
-import cc.ui.messages.message_tool_result;
-import cc.ui.messages.local_command_output_message;
-import cc.ui.messages.api_error_message;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;
+import loom.types.types;  // arch-check: keep-import (::cc::core::ImageBlockSource)
+import loom.ui.messages.message_row;
+import loom.ui.messages.message_image;
+import loom.ui.messages.messages_list;
+import loom.ui.visual.markdown;  // arch-check: keep-import (::cc::ui::StreamingMarkdown)
+import loom.ui.messages.user_text_message;
+import loom.ui.messages.assistant_text_message;
+import loom.ui.messages.system_text_message;
+import loom.ui.messages.thinking_message;
+import loom.ui.messages.tool_use_message;
+import loom.ui.messages.message_tool_result;
+import loom.ui.messages.local_command_output_message;
+import loom.ui.messages.api_error_message;
 
 namespace cc::ui::repl_screen {
 using namespace ftxui;

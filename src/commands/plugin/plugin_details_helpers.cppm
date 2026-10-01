@@ -9,7 +9,7 @@
 module;
 
 
-export module cc.commands.plugin_details_helpers;
+export module loom.commands.plugin_details_helpers;
 
 import std;
 

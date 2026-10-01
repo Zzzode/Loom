@@ -6,13 +6,13 @@
 module;
 
 
-export module cc.commands.install;
+export module loom.commands.install;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.constants.product;
+import loom.types.types;
+import loom.commands.command;
+import loom.constants.product;
 
 export namespace cc::commands {
 

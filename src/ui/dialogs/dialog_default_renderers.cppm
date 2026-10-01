@@ -25,18 +25,18 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.dialogs.default_renderers;
+export module loom.ui.dialogs.default_renderers;
 
 import std;
 
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.frame;
-import cc.ui.dialogs.sandbox_permission;
-import cc.ui.permissions.single_prompt;
-import cc.ui.permissions.components;
-import cc.ui.foundation.theme_provider;
-import cc.ui.foundation.component_primitives;
-import cc.ui.dialogs.cost_threshold_dialog;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.frame;
+import loom.ui.dialogs.sandbox_permission;
+import loom.ui.permissions.single_prompt;
+import loom.ui.permissions.components;
+import loom.ui.foundation.theme_provider;
+import loom.ui.foundation.component_primitives;
+import loom.ui.dialogs.cost_threshold_dialog;
 
 export namespace cc::ui::dialogs::default_renderers {
 

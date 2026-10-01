@@ -11,14 +11,14 @@
 #include <unistd.h>
 
 import std;
-import cc.bridge.api;
-import cc.bridge.config;
-import cc.bridge.messages;
-import cc.bridge.session_id_compat;
-import cc.bridge.transport;
-import cc.bridge.work_secret;
-import cc.daemon.daemon_client;
-import cc.daemon.daemon_server;
+import loom.bridge.api;
+import loom.bridge.config;
+import loom.bridge.messages;
+import loom.bridge.session_id_compat;
+import loom.bridge.transport;
+import loom.bridge.work_secret;
+import loom.daemon.daemon_client;
+import loom.daemon.daemon_server;
 
 namespace {
 

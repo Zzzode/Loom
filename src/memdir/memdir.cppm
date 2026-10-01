@@ -5,11 +5,11 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-export module cc.memdir.memdir;
+export module loom.memdir.memdir;
 
 import std;
 
-import cc.platform.env.env_utils;
+import loom.platform.env.env_utils;
 
 export namespace memdir {
 

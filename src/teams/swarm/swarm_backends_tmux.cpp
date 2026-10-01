@@ -9,7 +9,7 @@
 // removed entirely (declaration and definition).
 module;
 
-module cc.teams.swarm.backends;
+module loom.teams.swarm.backends;
 
 import std;
 

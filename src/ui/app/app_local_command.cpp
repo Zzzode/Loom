@@ -27,10 +27,10 @@ module;
 #include <string>
 #include <utility>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.messages_store;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;
 
 namespace cc::ui {
 

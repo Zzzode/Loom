@@ -1,8 +1,8 @@
-export module cc.commands.reset_limits;
+export module loom.commands.reset_limits;
 
 import std;
 
-import cc.services.rate_limit.rate_limit_hook;
+import loom.services.rate_limit.rate_limit_hook;
 
 export namespace cc::commands::reset_limits {
 struct CommandResponse { bool ok{true}; std::string message; };

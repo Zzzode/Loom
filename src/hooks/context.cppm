@@ -12,11 +12,11 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-export module cc.hooks.context;
+export module loom.hooks.context;
 
 import std;
 
-import cc.constants.paths;
+import loom.constants.paths;
 
 namespace fs = std::filesystem;
 

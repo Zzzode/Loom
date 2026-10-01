@@ -7,12 +7,12 @@ module;
 #include <cstdio>
 #include <cstddef>
 
-export module cc.scm.git.git;
+export module loom.scm.git.git;
 
 import std;
 
-import cc.utils.error;
-import cc.process.bash.bash_execution;
+import loom.utils.error;
+import loom.process.bash.bash_execution;
 
 export namespace cc::utils::git {
 

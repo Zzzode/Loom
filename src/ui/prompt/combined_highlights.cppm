@@ -30,12 +30,12 @@ module;
 
 #include <ftxui/screen/color.hpp>
 
-export module cc.ui.prompt.combined_highlights;
+export module loom.ui.prompt.combined_highlights;
 
 import std;
 
-import cc.parsing.highlight.text_highlighting;
-import cc.text.parse_references;
+import loom.parsing.highlight.text_highlighting;
+import loom.text.parse_references;
 
 export namespace cc::ui::prompt {
 

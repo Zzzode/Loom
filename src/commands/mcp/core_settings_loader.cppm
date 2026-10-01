@@ -12,13 +12,13 @@
 /// install it explicitly and reset the slot to null in cleanup.
 module;
 
-export module cc.commands.mcp.core_settings_loader;
+export module loom.commands.mcp.core_settings_loader;
 
 import std;
 
-import cc.config.config;
-import cc.orchestration.tools.mcp;
-import cc.services.mcp.xaa_idp_login;
+import loom.config.config;
+import loom.orchestration.tools.mcp;
+import loom.services.mcp.xaa_idp_login;
 
 export namespace cc::commands {
 

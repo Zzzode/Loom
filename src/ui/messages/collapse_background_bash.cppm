@@ -26,12 +26,12 @@
 module;
 
 
-export module cc.ui.messages.collapse_background_bash;
+export module loom.ui.messages.collapse_background_bash;
 
 import std;
 
-import cc.types.types;
-import cc.ui.messages.message_pipeline;  // reuse faithful extract_tag()
+import loom.types.types;
+import loom.ui.messages.message_pipeline;  // reuse faithful extract_tag()
 
 export namespace cc::ui::messages::collapse {
 

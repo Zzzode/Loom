@@ -1,7 +1,7 @@
 module;
 #include <cstdlib>
 
-export module cc.commands.exit;
+export module loom.commands.exit;
 
 import std;
 

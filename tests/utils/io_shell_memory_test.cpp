@@ -2,10 +2,10 @@
 
 
 import std;
-import cc.process.bash.bash_shell_quoting;
-import cc.fs.memory_file_detection;
-import cc.model.model_cost;
-import cc.fs.read_file_in_range;
+import loom.process.bash.bash_shell_quoting;
+import loom.fs.memory_file_detection;
+import loom.model.model_cost;
+import loom.fs.read_file_in_range;
 
 TEST(MemoryFileDetection, DetectsSessionFilesPatternsAndMemoryDirectories) {
     using namespace cc::utils::memory_file_detection;

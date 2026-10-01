@@ -8,12 +8,12 @@ module;
 #include <cstdint>
 #include <cstring>
 
-export module cc.bootstrap.interactive;
+export module loom.bootstrap.interactive;
 
 import std;
 
-import cc.hooks.ide_at_mentioned;
-import cc.serdes.json;
+import loom.hooks.ide_at_mentioned;
+import loom.serdes.json;
 
 export namespace cc::bootstrap::interactive {
 

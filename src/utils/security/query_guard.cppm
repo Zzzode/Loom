@@ -2,7 +2,7 @@ module;
 
 #include <cstdint>
 
-export module cc.security.query_guard;
+export module loom.security.query_guard;
 
 import std;
 

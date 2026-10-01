@@ -14,7 +14,7 @@
 /// itself imports 30+ sub-command modules); isolating it in its own
 /// TU prevents the aggregate BMI load from overflowing the budget.
 
-module cc.commands.registry;
+module loom.commands.registry;
 
 namespace cc::commands {
 

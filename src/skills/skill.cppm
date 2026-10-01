@@ -7,16 +7,16 @@ module;
 #include <cstdint>
 #include <cctype>
 
-export module cc.skills.skill;
+export module loom.skills.skill;
 
 import std;
 
-import cc.types.types;
+import loom.types.types;
 
 // RFC-0001 B10 — file-access hook lives in the skills-owned port leaf;
 // re-exported here so load_skills_dir's registrar and all importers keep
 // resolving cc::skills::set_file_access_hook / notify_file_access.
-export import cc.skills.file_access.port;
+export import loom.skills.file_access.port;
 
 export namespace cc::skills {
 

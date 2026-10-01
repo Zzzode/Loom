@@ -4,12 +4,12 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.benchmarks.pare.metrics;
+export module loom.benchmarks.pare.metrics;
 
 import std;
 
-import cc.benchmarks.pare.schema;
-import cc.serdes.json;
+import loom.benchmarks.pare.schema;
+import loom.serdes.json;
 
 export namespace cc::benchmarks::pare {
 

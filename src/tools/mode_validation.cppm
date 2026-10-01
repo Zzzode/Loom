@@ -7,11 +7,11 @@ module;
 // permission mode (acceptEdits, bypassPermissions, dontAsk, etc.).
 // Ported from src/tools/BashTool/modeValidation.ts
 
-export module cc.tools.mode_validation;
+export module loom.tools.mode_validation;
 
 import std;
 
-import cc.tools.bash_security;
+import loom.tools.bash_security;
 
 export namespace cc::tools::mode_validation {
 

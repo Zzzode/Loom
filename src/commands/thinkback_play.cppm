@@ -1,7 +1,7 @@
 // Thinkback Play command - plays back recorded thinking animations
 module;
 #include <cstdlib>
-export module cc.commands.thinkback_play;
+export module loom.commands.thinkback_play;
 
 import std;
 export namespace cc::commands::thinkback_play {

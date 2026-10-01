@@ -6,14 +6,14 @@
 // surfaced as presence-only objects.
 module;
 
-module cc.orchestration.runtime_backends;
+module loom.orchestration.runtime_backends;
 
 import std;
 
-import cc.config.config;
-import cc.types.tool_types;
-import cc.tools.runtime_registry;
-import cc.serdes.json;
+import loom.config.config;
+import loom.types.tool_types;
+import loom.tools.runtime_registry;
+import loom.serdes.json;
 
 namespace cc::orchestration::detail {
 

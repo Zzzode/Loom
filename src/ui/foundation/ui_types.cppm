@@ -13,13 +13,13 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.foundation.ui_types;
+export module loom.ui.foundation.ui_types;
 
 import std;
 
 // Canonical VimMode lives in cc_vim (low-level target) to avoid circular
 // deps: cc_hooks needs VimMode but cc_ui depends on cc_hooks.
-import cc.vim.vim_types;
+import loom.vim.vim_types;
 
 export namespace cc::ui::common {
 

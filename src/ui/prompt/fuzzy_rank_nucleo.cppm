@@ -21,7 +21,7 @@ module;
 #include <cctype>
 #include <cstddef>
 
-export module cc.ui.prompt.fuzzy_rank_nucleo;
+export module loom.ui.prompt.fuzzy_rank_nucleo;
 
 import std;
 

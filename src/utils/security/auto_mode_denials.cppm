@@ -1,4 +1,4 @@
-export module cc.security.auto_mode_denials;
+export module loom.security.auto_mode_denials;
 
 import std;
 

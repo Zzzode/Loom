@@ -8,7 +8,7 @@ module;
 
 #include <yyjson.h>
 
-module cc.serdes.json;
+module loom.serdes.json;
 
 namespace cc::utils::json {
 

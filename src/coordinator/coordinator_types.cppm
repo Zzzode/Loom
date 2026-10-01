@@ -5,7 +5,7 @@ module;
 
 #include <cstdint>
 
-export module cc.coordinator.types;
+export module loom.coordinator.types;
 
 import std;
 

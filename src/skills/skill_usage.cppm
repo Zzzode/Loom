@@ -9,7 +9,7 @@
 module;
 
 
-export module cc.skills.support;
+export module loom.skills.support;
 
 import std;
 

@@ -24,10 +24,10 @@ module;
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.task_view_store;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.task_view_store;
 
 namespace cc::ui {
 

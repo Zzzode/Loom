@@ -8,14 +8,14 @@ module;
 #include <cstdio>
 #include <cstdlib>
 
-export module cc.commands.copy_cmd;
+export module loom.commands.copy_cmd;
 
 import std;
-import cc.text.parse_int;
+import loom.text.parse_int;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.process.bash.bash_execution;
+import loom.types.types;
+import loom.commands.command;
+import loom.process.bash.bash_execution;
 
 export namespace cc::commands {
 

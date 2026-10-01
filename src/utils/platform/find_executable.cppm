@@ -4,7 +4,7 @@ module;
 #include <sys/stat.h>
 #include <unistd.h>
 
-export module cc.platform.find_executable;
+export module loom.platform.find_executable;
 
 import std;
 

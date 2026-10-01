@@ -26,53 +26,53 @@
 #include <limits>
 
 import std;
-import cc.cli.ccr_client;
-import cc.cli.sse_transport;
-import cc.bridge.core;
-import cc.config.config;
-import cc.constants.paths;
-import cc.services.api.client;
-import cc.services.api.errors;
-import cc.services.api.session_ingress;
-import cc.services.api.streaming;
-import cc.services.compact.api_microcompact;
-import cc.services.lsp.LSPServerManager;
-import cc.services.lsp.client;
-import cc.services.mcp.client;
-import cc.services.mcp.auth;
-import cc.services.mcp.channel_permissions;
-import cc.services.mcp.config;
-import cc.services.mcp.connection_manager;
-import cc.services.mcp.elicitation_handler;
-import cc.services.mcp.headers_helper;
-import cc.services.mcp.vscode_sdk_mcp;
-import cc.services.memory.sessionMemory;
-import cc.services.extract_memories;
-import cc.services.mcp.types;
-import cc.services.mcp.xaa;
-import cc.services.mcp.xaa_idp_login;
-import cc.services.mcp.oauth_port;
-import cc.services.rate_limit;
-import cc.services.token_estimation;
-import cc.services.prompt_suggestion;
-import cc.server.server_routes;
-import cc.server.server_main;
-import cc.session.storage;
-import cc.session.history;
-import cc.commands.config;
-import cc.commands.mcp.core_settings_loader;
-import cc.orchestration.tools.mcp;
-import cc.query.query_engine;
-import cc.memdir.paths;
-import cc.tools.agent_runtime;
-import cc.tools.team;
-import cc.tools.tool;
-import cc.types.types;
-import cc.utils.error;
-import cc.services.ide_integration;
-import cc.serdes.json;
-import cc.teams.team_helpers;
-import cc.fs.atomic_replace;
+import loom.cli.ccr_client;
+import loom.cli.sse_transport;
+import loom.bridge.core;
+import loom.config.config;
+import loom.constants.paths;
+import loom.services.api.client;
+import loom.services.api.errors;
+import loom.services.api.session_ingress;
+import loom.services.api.streaming;
+import loom.services.compact.api_microcompact;
+import loom.services.lsp.LSPServerManager;
+import loom.services.lsp.client;
+import loom.services.mcp.client;
+import loom.services.mcp.auth;
+import loom.services.mcp.channel_permissions;
+import loom.services.mcp.config;
+import loom.services.mcp.connection_manager;
+import loom.services.mcp.elicitation_handler;
+import loom.services.mcp.headers_helper;
+import loom.services.mcp.vscode_sdk_mcp;
+import loom.services.memory.sessionMemory;
+import loom.services.extract_memories;
+import loom.services.mcp.types;
+import loom.services.mcp.xaa;
+import loom.services.mcp.xaa_idp_login;
+import loom.services.mcp.oauth_port;
+import loom.services.rate_limit;
+import loom.services.token_estimation;
+import loom.services.prompt_suggestion;
+import loom.server.server_routes;
+import loom.server.server_main;
+import loom.session.storage;
+import loom.session.history;
+import loom.commands.config;
+import loom.commands.mcp.core_settings_loader;
+import loom.orchestration.tools.mcp;
+import loom.query.query_engine;
+import loom.memdir.paths;
+import loom.tools.agent_runtime;
+import loom.tools.team;
+import loom.tools.tool;
+import loom.types.types;
+import loom.utils.error;
+import loom.services.ide_integration;
+import loom.serdes.json;
+import loom.teams.team_helpers;
+import loom.fs.atomic_replace;
 
 namespace fs = std::filesystem;
 
@@ -8539,8 +8539,8 @@ TEST(LspClientParser, ParseInitializeResultPopulatesCapabilities) {
 
 // ─── P2-07: WorkerRegistry + Server types smoke tests ───────────────────────
 
-import cc.daemon.worker_registry;
-import cc.server.types;
+import loom.daemon.worker_registry;
+import loom.server.types;
 
 namespace {
 

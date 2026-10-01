@@ -16,16 +16,16 @@ module;
 
 #include <cctype>
 
-export module cc.tools.sed_validation;
+export module loom.tools.sed_validation;
 
 import std;
 
-import cc.tools.bash_validation;
-import cc.tools.bash_security;
-import cc.tools.destructive_command_warning;
-import cc.parsing.cli.argument_substitution;
-import cc.process.bash.bash_shell_quoting;
-import cc.tools.sed_edit_parser;
+import loom.tools.bash_validation;
+import loom.tools.bash_security;
+import loom.tools.destructive_command_warning;
+import loom.parsing.cli.argument_substitution;
+import loom.process.bash.bash_shell_quoting;
+import loom.tools.sed_edit_parser;
 
 export namespace cc::tools::sed_validation {
 

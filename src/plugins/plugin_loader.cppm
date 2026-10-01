@@ -14,14 +14,14 @@ module;
 #include <sys/wait.h>
 #endif
 
-export module cc.plugins.plugin_loader;
+export module loom.plugins.plugin_loader;
 
 import std;
 
-import cc.plugins.plugin_identifier;
-import cc.plugins.plugin_versioning;
-import cc.serdes.json;
-import cc.process.bash.bash_execution;
+import loom.plugins.plugin_identifier;
+import loom.plugins.plugin_versioning;
+import loom.serdes.json;
+import loom.process.bash.bash_execution;
 
 export namespace cc::utils::plugin_loader {
 

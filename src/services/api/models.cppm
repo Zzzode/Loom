@@ -1,7 +1,7 @@
 // Model Definitions - Loom model registry, configs, cost calculation
 module;
 
-export module cc.services.api.models;
+export module loom.services.api.models;
 
 import std;
 

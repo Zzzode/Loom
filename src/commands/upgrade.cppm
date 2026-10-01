@@ -6,14 +6,14 @@
 module;
 
 
-export module cc.commands.upgrade;
+export module loom.commands.upgrade;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.constants.product;
-import cc.process.exec_sync;
+import loom.types.types;
+import loom.commands.command;
+import loom.constants.product;
+import loom.process.exec_sync;
 
 // Module-internal helpers (module linkage; intentionally not exported).
 namespace cc::commands {

@@ -10,11 +10,11 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.prompt.prompt_stash_notice;
+export module loom.ui.prompt.prompt_stash_notice;
 
 import std;
 
-import cc.ui.foundation.design_figures;  // kPointerSmall (figures.pointerSmall '›')
+import loom.ui.foundation.design_figures;  // kPointerSmall (figures.pointerSmall '›')
 
 export namespace cc::ui::prompt {
 using namespace ftxui;

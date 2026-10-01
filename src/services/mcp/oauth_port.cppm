@@ -16,7 +16,7 @@ module;
 #include <cstring>
 #include <netinet/in.h>
 #include <sys/socket.h>
-export module cc.services.mcp.oauth_port;
+export module loom.services.mcp.oauth_port;
 
 import std;
 export namespace cc::services::mcp {

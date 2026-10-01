@@ -4,7 +4,7 @@ module;
 #include <cstdlib>
 #include <cctype>
 
-export module cc.tools.cron;
+export module loom.tools.cron;
 
 import std;
 

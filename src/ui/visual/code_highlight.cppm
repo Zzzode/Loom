@@ -18,11 +18,11 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.visual.code_highlight;
+export module loom.ui.visual.code_highlight;
 
 import std;
 
-import cc.types.types;
+import loom.types.types;
 
 export namespace cc::ui::code_highlight {
 using namespace ftxui;

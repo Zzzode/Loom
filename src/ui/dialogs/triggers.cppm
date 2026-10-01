@@ -11,13 +11,13 @@
 module;
 #include <cstdint>
 
-export module cc.ui.dialogs.triggers;
+export module loom.ui.dialogs.triggers;
 
 import std;
 
-import cc.constants.product;
-import cc.ui.dialogs.system;
-import cc.ui.permissions.single_prompt;
+import loom.constants.product;
+import loom.ui.dialogs.system;
+import loom.ui.permissions.single_prompt;
 
 export namespace cc::ui::dialogs::triggers {
 

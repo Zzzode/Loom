@@ -1,7 +1,7 @@
 module;
 #include <cstdlib>
 
-export module cc.commands.plugin.plugin_trust;
+export module loom.commands.plugin.plugin_trust;
 
 import std;
 

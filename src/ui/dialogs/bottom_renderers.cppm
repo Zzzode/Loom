@@ -5,10 +5,10 @@
 /// integrity it now simply re-exports the default renderers (all of
 /// which delegate to the single source-of-truth modules).
 module;
-export module cc.ui.dialogs.bottom_renderers;
+export module loom.ui.dialogs.bottom_renderers;
 
 import std;
-import cc.ui.dialogs.default_renderers;
+import loom.ui.dialogs.default_renderers;
 
 export namespace cc::ui::dialogs::bottom_renderers {
 using cc::ui::dialogs::default_renderers::register_default_renderers;

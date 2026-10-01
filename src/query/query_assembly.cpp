@@ -6,19 +6,19 @@ module;
 
 #include <cstdlib>
 
-module cc.query.assembly;
+module loom.query.assembly;
 
 import std;
 
-import cc.types.types;
-import cc.config.config;
-import cc.query.query_engine;
-import cc.tools.tool;
-import cc.tools.runtime_registry;
-import cc.tools.agent_types;
-import cc.hooks.tool_permissions;
-import cc.orchestration.runtime_backends;
-import cc.serdes.json;
+import loom.types.types;
+import loom.config.config;
+import loom.query.query_engine;
+import loom.tools.tool;
+import loom.tools.runtime_registry;
+import loom.tools.agent_types;
+import loom.hooks.tool_permissions;
+import loom.orchestration.runtime_backends;
+import loom.serdes.json;
 
 namespace cc::query {
 

@@ -1,8 +1,8 @@
-export module cc.plugins.plugin_dependency_resolver;
+export module loom.plugins.plugin_dependency_resolver;
 
 import std;
 
-import cc.plugins.plugin_identifier;
+import loom.plugins.plugin_identifier;
 
 export namespace cc::utils::plugin_dependency_resolver {
 

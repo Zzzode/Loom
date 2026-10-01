@@ -8,13 +8,13 @@ module;
 
 #include <cstdlib>
 
-export module cc.keybindings.load_user_bindings;
+export module loom.keybindings.load_user_bindings;
 
 import std;
 
-import cc.keybindings.schema;
-import cc.keybindings.defaults;
-import cc.serdes.json;
+import loom.keybindings.schema;
+import loom.keybindings.defaults;
+import loom.serdes.json;
 
 export namespace cc::keybindings {
 

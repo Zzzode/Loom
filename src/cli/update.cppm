@@ -4,7 +4,7 @@ module;
 #include <httplib.h>
 #include <cstddef>
 
-export module cc.cli.update;
+export module loom.cli.update;
 
 import std;
 

@@ -2,13 +2,13 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-export module cc.server.server_routes;
+export module loom.server.server_routes;
 
 import std;
 
-import cc.config.config;
-import cc.hooks.tool_permissions;
-import cc.query.assembly;
+import loom.config.config;
+import loom.hooks.tool_permissions;
+import loom.query.assembly;
 // RFC-0001 cc-sdk phase 3 (§2.1): the inline execute_native_query adapter
 // below references cc.query.assembly types (AssemblyHandle PIMPL ->
 // ToolRegistry/QueryEngine/AgentLivePermissionCheckFn). With reduced BMI,
@@ -20,17 +20,17 @@ import cc.query.assembly;
 // textually referenced in this file anymore; the imports are kept for BMI
 // reachability only.
 // arch-check: keep-import
-import cc.query.query_engine;
+import loom.query.query_engine;
 // arch-check: keep-import
-import cc.tools.tool;
+import loom.tools.tool;
 // arch-check: keep-import
-import cc.tools.runtime_registry;
+import loom.tools.runtime_registry;
 // arch-check: keep-import
-import cc.orchestration.runtime_backends;
-import cc.services.api.session_ingress;
-import cc.session.storage;
-import cc.types.types;
-import cc.serdes.json;
+import loom.orchestration.runtime_backends;
+import loom.services.api.session_ingress;
+import loom.session.storage;
+import loom.types.types;
+import loom.serdes.json;
 
 export namespace cc::server {
 

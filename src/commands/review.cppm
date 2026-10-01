@@ -7,13 +7,13 @@ module;
 #include <cstdint>
 #include <cstdio>
 
-export module cc.commands.review;
+export module loom.commands.review;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.process.bash.bash_execution;
+import loom.types.types;
+import loom.commands.command;
+import loom.process.bash.bash_execution;
 
 export namespace cc::commands {
 

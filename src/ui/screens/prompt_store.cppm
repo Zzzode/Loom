@@ -16,7 +16,7 @@ module;
 
 #include <ftxui/screen/color.hpp>
 
-export module cc.ui.screens.prompt_store;
+export module loom.ui.screens.prompt_store;
 
 import std;
 
@@ -24,8 +24,8 @@ import std;
 // leading-`::` qualified names `::cc::core::ImageBlock`, which the
 // dead-import detector's prefix-chain cannot resolve — same blind spot as
 // messages_store.cppm's identical import, hence the keep-import marker.
-import cc.types.types;                  // arch-check: keep-import
-import cc.ui.foundation.ui_types;       // cc::ui::common::PromptInputMode
+import loom.types.types;                  // arch-check: keep-import
+import loom.ui.foundation.ui_types;       // cc::ui::common::PromptInputMode
 
 export namespace cc::ui::repl_screen {
 

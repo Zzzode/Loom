@@ -16,11 +16,11 @@ module;
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/animation.hpp>
 
-export module cc.ui.messages.message_hook_progress;
+export module loom.ui.messages.message_hook_progress;
 
 import std;
 
-import cc.ui.messages.message_components;
+import loom.ui.messages.message_components;
 
 export namespace cc::ui::messages {
 

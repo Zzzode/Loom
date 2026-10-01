@@ -6,11 +6,11 @@ module;
 #include <cstdint>
 #include <cstring>
 
-export module cc.crypto.crypto;
+export module loom.crypto.crypto;
 
 import std;
 
-import cc.utils.error;
+import loom.utils.error;
 
 export namespace cc::utils::crypto {
 

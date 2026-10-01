@@ -2,7 +2,7 @@
 // Build with -fsanitize=fuzzer when ENABLE_FUZZING is ON.
 
 import std;
-import cc.services.api.sse;
+import loom.services.api.sse;
 
 #include <cstddef>
 #include <cstdint>

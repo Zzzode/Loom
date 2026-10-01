@@ -15,11 +15,11 @@ module;
 #include <cstdio>
 #include <cstdlib>
 
-module cc.teams.swarm.backends;
+module loom.teams.swarm.backends;
 
 import std;
 
-import cc.process.bash.bash_execution;
+import loom.process.bash.bash_execution;
 
 namespace cc::utils::swarm_backends::detail {
 

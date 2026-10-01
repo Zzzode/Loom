@@ -25,20 +25,20 @@ module;
 
 #include <cstdint>
 
-export module cc.query.assembly;
+export module loom.query.assembly;
 
 import std;
 
-import cc.types.types;       // cc::core::Result
-import cc.config.config;     // cc::core::Settings
-import cc.query.query_engine; // cc::core::QueryEngineConfig, QueryEngine
-import cc.serdes.json;       // cc::utils::json::JsonVal (parse_session_message_value)
+import loom.types.types;       // cc::core::Result
+import loom.config.config;     // cc::core::Settings
+import loom.query.query_engine; // cc::core::QueryEngineConfig, QueryEngine
+import loom.serdes.json;       // cc::utils::json::JsonVal (parse_session_message_value)
 // ToolRegistry is needed for the register_extra_tools field type; the
 // detector does not harvest the class name past cc.tools.tool's
 // concept/requires blocks (same marker as runtime_message_delivery.cppm).
-import cc.tools.tool;  // arch-check: keep-import
-import cc.hooks.tool_permissions; // cc::hooks::AskUserResponseFn
-import cc.tools.agent_types; // cc::tools::AgentLivePermissionCheckFn
+import loom.tools.tool;  // arch-check: keep-import
+import loom.hooks.tool_permissions; // cc::hooks::AskUserResponseFn
+import loom.tools.agent_types; // cc::tools::AgentLivePermissionCheckFn
 
 export namespace cc::query {
 

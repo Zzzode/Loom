@@ -11,7 +11,7 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.messages.attachment_message;
+export module loom.ui.messages.attachment_message;
 
 import std;
 

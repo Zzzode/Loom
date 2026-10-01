@@ -1,7 +1,7 @@
 module;
 #include <cstdlib>
 
-export module cc.model.providers;
+export module loom.model.providers;
 
 import std;
 

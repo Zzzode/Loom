@@ -5,7 +5,7 @@ module;
 
 #include <cstdint>
 
-export module cc.types.command;
+export module loom.types.command;
 
 import std;
 

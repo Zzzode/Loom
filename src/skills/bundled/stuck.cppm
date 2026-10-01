@@ -26,12 +26,12 @@ module;
 #include <cstdlib>
 #include <cstdint>
 
-export module cc.skills.bundled.stuck;
+export module loom.skills.bundled.stuck;
 
 import std;
 
-import cc.skills.skill;
-import cc.skills.load_skills_dir;
+import loom.skills.skill;
+import loom.skills.load_skills_dir;
 
 export namespace cc::skills::bundled {
 

@@ -27,20 +27,20 @@ module;
 #include <sys/un.h>
 #endif
 
-export module cc.tools.runtime_message_delivery;
+export module loom.tools.runtime_message_delivery;
 
 import std;
 
-import cc.types.tool_types;
-import cc.tools.tool;  // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
-import cc.tools.agent_runtime;       // NativeAgentRecord / native_agent_store
-import cc.tools.send_message;        // SendMessageTool / MessagePriority / DeliveryStatus
-import cc.tools.team;                // TeamMember / global_team_store
-import cc.tools.runtime_shared_utils;
-import cc.serdes.json;
-import cc.net.http.http;
-import cc.crypto.uuid_utils;
-import cc.teams.team_helpers;
+import loom.types.tool_types;
+import loom.tools.tool;  // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
+import loom.tools.agent_runtime;       // NativeAgentRecord / native_agent_store
+import loom.tools.send_message;        // SendMessageTool / MessagePriority / DeliveryStatus
+import loom.tools.team;                // TeamMember / global_team_store
+import loom.tools.runtime_shared_utils;
+import loom.serdes.json;
+import loom.net.http.http;
+import loom.crypto.uuid_utils;
+import loom.teams.team_helpers;
 
 export namespace cc::tools::runtime_message_delivery {
 

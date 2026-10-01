@@ -14,12 +14,12 @@ module;
 
 #include <cctype>
 
-export module cc.tools.sed_edit_parser;
+export module loom.tools.sed_edit_parser;
 
 import std;
 
-import cc.parsing.cli.argument_substitution;
-import cc.process.bash.bash_shell_quoting;
+import loom.parsing.cli.argument_substitution;
+import loom.process.bash.bash_shell_quoting;
 
 export namespace cc::tools::sed_edit_parser {
 

@@ -6,15 +6,15 @@ module;
 
 #include <cctype>
 
-export module cc.commands.color;
+export module loom.commands.color;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.state.app_state;
-import cc.tools.agent_color_manager;
-import cc.orchestration.agent.utils;
+import loom.types.types;
+import loom.commands.command;
+import loom.state.app_state;
+import loom.tools.agent_color_manager;
+import loom.orchestration.agent.utils;
 
 export namespace cc::commands {
 

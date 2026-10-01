@@ -2,7 +2,7 @@
 // and the free object()/array() factories (RFC 0001 Phase C batch 10). These
 // compose only the JsonMutDoc / JsonMutVal wrappers and make no yyjson calls,
 // so this unit has an empty global module fragment.
-module cc.serdes.json;
+module loom.serdes.json;
 
 import std;
 

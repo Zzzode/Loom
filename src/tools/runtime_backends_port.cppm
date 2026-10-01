@@ -33,18 +33,18 @@
 /// type-erased snapshot ever crosses this seam.
 module;
 
-export module cc.tools.runtime_backends.port;
+export module loom.tools.runtime_backends.port;
 
 import std;
 
-import cc.types.types;
-import cc.types.tool_types;
+import loom.types.types;
+import loom.types.tool_types;
 // The surviving AgentToolFactory alias names cc::core::ITool and
 // cc::core::ToolRegistry, both `class` declarations in cc.tools.tool that
 // graph_check's textual symbol harvest does not see; the pre-C3
 // ToolDefinition evidence left with the deleted MCP provider alias.
-import cc.tools.tool;               // arch-check: keep-import
-import cc.tools.agent_types;
+import loom.tools.tool;               // arch-check: keep-import
+import loom.tools.agent_types;
 
 export namespace cc::tools {
 

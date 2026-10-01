@@ -4,12 +4,12 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 
-export module cc.ui.messages.message_components;
+export module loom.ui.messages.message_components;
 
 import std;
 
-import cc.ui.chrome.layout;
-import cc.ui.foundation.design_figures;  // kBlackCircleFallback (● U+25CF) — single source of truth
+import loom.ui.chrome.layout;
+import loom.ui.foundation.design_figures;  // kBlackCircleFallback (● U+25CF) — single source of truth
 
 export namespace cc::ui::messages {
 

@@ -94,20 +94,20 @@ module;
 #include <ftxui/screen/box.hpp>
 #include <ftxui/screen/color.hpp>
 
-export module cc.ui.messages.messages_list;
+export module loom.ui.messages.messages_list;
 
 import std;
 
 // ─── Strict re-uses (no type / colour duplication) ──────────────────────
-import cc.ui.messages.message_row;
-import cc.ui.messages.virtual_list;   // P0-3: VirtualMessageList types + factory
+import loom.ui.messages.message_row;
+import loom.ui.messages.virtual_list;   // P0-3: VirtualMessageList types + factory
 // StreamingMarkdown is named by the MessagesListInput::streaming_md member.
 // Per-message-type variant owner modules (user_text_message, tool_use_message,
 // …) are imported ONLY by the module implementation units that name their
 // alternatives — messages_list_search.cpp (the std::visit closure) and
 // messages_list_payload_row.cpp (faithful dispatch) — keeping them out of
 // this interface's BMI.
-import cc.ui.visual.markdown;   // arch-check: keep-import — StreamingMarkdown* member (global-qualified; checker sees only unqualified uses)
+import loom.ui.visual.markdown;   // arch-check: keep-import — StreamingMarkdown* member (global-qualified; checker sees only unqualified uses)
 // =========================================================================
 // Small palette helpers — tokens placeholders (swap for cc.ui.foundation.design_tokens)
 // =========================================================================

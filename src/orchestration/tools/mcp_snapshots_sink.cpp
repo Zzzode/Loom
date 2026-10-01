@@ -5,7 +5,7 @@
 // core_settings_mcp_loader / global_mcp_router anchor style.
 module;
 
-module cc.orchestration.tools.mcp;
+module loom.orchestration.tools.mcp;
 
 import std;
 

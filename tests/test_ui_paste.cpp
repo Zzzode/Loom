@@ -15,22 +15,22 @@
 #include "test_ui_helpers.h"
 
 import std;
-import cc.ui.app.app;
-import cc.ui.screens.repl_screen;
-import cc.ui.screens.repl_state;
-import cc.ui.screens.messages_store;
-import cc.ui.prompt.prompt_input;
-import cc.ui.foundation.logo_v2;
-import cc.ui.chrome.fullscreen_layout;
-import cc.ui.messages.message_image;
-import cc.commands.registry;
-import cc.query.query_engine;
-import cc.tools.tool;
-import cc.session.app_storage;
-import cc.text.parse_references;
-import cc.ui.foundation.design_tokens;
-import cc.ui.foundation.design_figures;
-import cc.ui.foundation.theme_provider;
+import loom.ui.app.app;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;
+import loom.ui.prompt.prompt_input;
+import loom.ui.foundation.logo_v2;
+import loom.ui.chrome.fullscreen_layout;
+import loom.ui.messages.message_image;
+import loom.commands.registry;
+import loom.query.query_engine;
+import loom.tools.tool;
+import loom.session.app_storage;
+import loom.text.parse_references;
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.theme_provider;
 
 namespace {
 namespace fs = std::filesystem;

@@ -22,14 +22,14 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.dialogs.quick_open;
+export module loom.ui.dialogs.quick_open;
 
 import std;
 
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.frame;
-import cc.ui.foundation.theme_provider;
-import cc.ui.permissions.components;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.frame;
+import loom.ui.foundation.theme_provider;
+import loom.ui.permissions.components;
 
 export namespace cc::ui::dialogs::quick_open {
 

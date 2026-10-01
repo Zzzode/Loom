@@ -2,7 +2,7 @@ module;
 #include <cctype>
 #include <cstddef>
 
-export module cc.tools.bash_security;
+export module loom.tools.bash_security;
 
 import std;
 

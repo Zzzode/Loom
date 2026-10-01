@@ -19,12 +19,12 @@ module;
 #include <cstdint>
 #include <cstddef>
 
-export module cc.state.selectors;
+export module loom.state.selectors;
 
 import std;
 
-import cc.types.types;
-import cc.state.app_state;
+import loom.types.types;
+import loom.state.app_state;
 
 export namespace cc::state::selectors {
 

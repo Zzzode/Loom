@@ -5,12 +5,12 @@
 module;
 
 
-export module cc.commands.init;
+export module loom.commands.init;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
+import loom.types.types;
+import loom.commands.command;
 
 export namespace cc::commands {
 

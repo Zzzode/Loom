@@ -3,15 +3,15 @@ module;
 #include <cstdlib>
 #include <cstdint>
 
-export module cc.services.lsp.LSPServerManager;
+export module loom.services.lsp.LSPServerManager;
 
 import std;
 
-import cc.utils.error;
-import cc.serdes.json;
-import cc.services.lsp.types;
-import cc.services.lsp.LSPServerInstance;
-import cc.services.lsp.diagnostic_registry;
+import loom.utils.error;
+import loom.serdes.json;
+import loom.services.lsp.types;
+import loom.services.lsp.LSPServerInstance;
+import loom.services.lsp.diagnostic_registry;
 
 export namespace cc::services::lsp {
 

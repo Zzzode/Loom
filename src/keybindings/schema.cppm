@@ -6,7 +6,7 @@ module;
 /// @brief Keybinding schema and types.
 /// Migrated from src/keybindings/schema.ts, parser.ts, match.ts
 
-export module cc.keybindings.schema;
+export module loom.keybindings.schema;
 
 import std;
 

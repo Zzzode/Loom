@@ -33,11 +33,11 @@ module;
 #include <unistd.h>
 #include <cstddef>
 
-export module cc.services.mcp.stdio;
+export module loom.services.mcp.stdio;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::services::mcp::stdio {
 

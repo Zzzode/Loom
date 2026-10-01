@@ -2,7 +2,7 @@
 module;
 #include <cstddef>
 
-export module cc.tools.plan_mode;
+export module loom.tools.plan_mode;
 
 import std;
 

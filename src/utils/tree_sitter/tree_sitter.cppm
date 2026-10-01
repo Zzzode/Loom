@@ -18,7 +18,7 @@ extern "C" {
 extern "C" const TSLanguage* tree_sitter_bash();
 #endif
 
-export module cc.parsing.tree_sitter.base;
+export module loom.parsing.tree_sitter.base;
 
 import std;
 

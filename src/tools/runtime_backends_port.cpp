@@ -5,7 +5,7 @@
 // interface (inline-def ratchet).
 module;
 
-module cc.tools.runtime_backends.port;
+module loom.tools.runtime_backends.port;
 
 import std;
 
@@ -14,10 +14,10 @@ import std;
 // SkillLoaderExecutor, ITool, AgentConfig, ...), which graph_check's textual
 // evidence heuristic cannot attribute; the imports are required for the
 // std::function slot definitions.
-import cc.types.types;              // arch-check: keep-import
-import cc.types.tool_types;         // arch-check: keep-import
-import cc.tools.tool;               // arch-check: keep-import
-import cc.tools.agent_types;        // arch-check: keep-import
+import loom.types.types;              // arch-check: keep-import
+import loom.types.tool_types;         // arch-check: keep-import
+import loom.tools.tool;               // arch-check: keep-import
+import loom.tools.agent_types;        // arch-check: keep-import
 
 namespace cc::tools::detail {
 

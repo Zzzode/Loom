@@ -9,7 +9,7 @@
 // (swarm_backends.cppm.o); every other TU binds them and these bodies as U.
 module;
 
-module cc.teams.swarm.backends;
+module loom.teams.swarm.backends;
 
 import std;
 

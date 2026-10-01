@@ -28,32 +28,32 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <cstdint>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
 import std;
-import cc.query.query_engine;
-import cc.commands.registry;
-import cc.commands.command;
-import cc.session.app_storage;
-import cc.hooks.lifecycle_hooks;
+import loom.query.query_engine;
+import loom.commands.registry;
+import loom.commands.command;
+import loom.session.app_storage;
+import loom.hooks.lifecycle_hooks;
 
-import cc.commands.registry;
-import cc.tools.agent_runtime;
-import cc.ui.features.agents.agent_cards;
-import cc.ui.prompt.autocomplete_sources;
-import cc.ui.foundation.declared_cursor;
-import cc.ui.prompt.file_index;
-import cc.ui.prompt.fuzzy_rank_nucleo;
-import cc.ui.screens.repl_screen;
-import cc.ui.screens.repl_state;
-import cc.ui.screens.messages_store;
-import cc.diagnostics.debug;
-import cc.platform.hyperlink;
-import cc.text.parse_references;
-import cc.fs.path;
-import cc.skills.support;
-import cc.session.app_storage;
-import cc.teams.swarm.pane_observer;
+import loom.commands.registry;
+import loom.tools.agent_runtime;
+import loom.ui.features.agents.agent_cards;
+import loom.ui.prompt.autocomplete_sources;
+import loom.ui.foundation.declared_cursor;
+import loom.ui.prompt.file_index;
+import loom.ui.prompt.fuzzy_rank_nucleo;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;
+import loom.diagnostics.debug;
+import loom.platform.hyperlink;
+import loom.text.parse_references;
+import loom.fs.path;
+import loom.skills.support;
+import loom.session.app_storage;
+import loom.teams.swarm.pane_observer;
 
 namespace cc::ui {
 namespace agent_runtime = cc::tools::agent_runtime;

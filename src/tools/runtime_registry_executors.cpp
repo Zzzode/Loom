@@ -9,20 +9,20 @@ module;
 
 #include <cctype>   // std::isalnum in safe_ref
 
-module cc.tools.runtime_registry;
+module loom.tools.runtime_registry;
 
 import std;
 
-import cc.types.tool_types;
-import cc.tools.script;
-import cc.tools.script_types;
-import cc.tools.task;
-import cc.tools.bash;
-import cc.tools.agent_runtime;
-import cc.tools.notebook;
-import cc.tools.web_browser;
-import cc.process.bash.bash_execution;
-import cc.serdes.json;
+import loom.types.tool_types;
+import loom.tools.script;
+import loom.tools.script_types;
+import loom.tools.task;
+import loom.tools.bash;
+import loom.tools.agent_runtime;
+import loom.tools.notebook;
+import loom.tools.web_browser;
+import loom.process.bash.bash_execution;
+import loom.serdes.json;
 
 namespace cc::tools::detail {
 

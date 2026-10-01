@@ -1,6 +1,6 @@
 module;
 
-export module cc.fs.read_file_in_range;
+export module loom.fs.read_file_in_range;
 
 import std;
 

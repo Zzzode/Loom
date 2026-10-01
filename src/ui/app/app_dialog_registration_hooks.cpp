@@ -4,10 +4,10 @@
 // hooks_config + hooks_registry + registry imports live in the hooks_renderer
 // module implementation unit (hooks_dialog_renderer_impl.cpp), which has its
 // own independent source-location budget.
-module cc.ui.app.app_dialog_registration;
+module loom.ui.app.app_dialog_registration;
 
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.hooks_renderer;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.hooks_renderer;
 
 namespace cc::ui::app_dialogs {
 void register_hooks_dialog_renderer(

@@ -3,12 +3,12 @@
 module;
 
 
-export module cc.commands.good_loom;
+export module loom.commands.good_loom;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
+import loom.types.types;
+import loom.commands.command;
 
 export namespace cc::commands {
 

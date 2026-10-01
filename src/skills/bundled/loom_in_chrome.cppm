@@ -6,12 +6,12 @@ module;
 #include <cstdlib>
 #include <cstdio>
 
-export module cc.skills.bundled.loom_in_chrome;
+export module loom.skills.bundled.loom_in_chrome;
 
 import std;
 
-import cc.skills.load_skills_dir;
-import cc.process.bash.bash_execution;
+import loom.skills.load_skills_dir;
+import loom.process.bash.bash_execution;
 
 export namespace cc::skills::bundled {
 

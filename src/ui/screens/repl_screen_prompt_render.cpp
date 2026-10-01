@@ -13,20 +13,20 @@ module;
 #include <ftxui/screen/string.hpp>
 #include <ftxui/screen/screen.hpp>  // ftxui::Screen::Cursor
 
-module cc.ui.screens.repl_screen;
+module loom.ui.screens.repl_screen;
 
 import std;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.prompt_store;
-import cc.ui.widgets.text_input;
-import cc.ui.foundation.design_figures;
-import cc.ui.foundation.design_tokens;
-import cc.ui.foundation.theme_provider;
-import cc.ui.prompt.vim_input;
-import cc.ui.foundation.declared_cursor;
-import cc.ui.prompt.prompt_stash_notice;
-import cc.ui.prompt.placeholder_cascade;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.prompt_store;
+import loom.ui.widgets.text_input;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
+import loom.ui.prompt.vim_input;
+import loom.ui.foundation.declared_cursor;
+import loom.ui.prompt.prompt_stash_notice;
+import loom.ui.prompt.placeholder_cascade;
 
 namespace cc::ui::repl_screen {
 using namespace ftxui;

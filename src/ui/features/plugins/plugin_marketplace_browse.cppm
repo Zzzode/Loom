@@ -16,15 +16,15 @@ module;
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.features.plugins.plugin_marketplace_browse;
+export module loom.ui.features.plugins.plugin_marketplace_browse;
 
 import std;
 
-import cc.types.types;
-import cc.commands.plugin_ui_data;
-import cc.commands.plugin_helpers;
-import cc.commands.plugin_pagination_util;
-import cc.ui.widgets.custom_select;
+import loom.types.types;
+import loom.commands.plugin_ui_data;
+import loom.commands.plugin_helpers;
+import loom.commands.plugin_pagination_util;
+import loom.ui.widgets.custom_select;
 
 export namespace cc::ui::plugins::plugin_marketplace_browse {
 using namespace ftxui;

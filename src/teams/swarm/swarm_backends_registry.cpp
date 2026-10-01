@@ -4,7 +4,7 @@
 // class). The five trivial locking accessors stay inline in the primary.
 module;
 
-module cc.teams.swarm.backends;
+module loom.teams.swarm.backends;
 
 import std;
 

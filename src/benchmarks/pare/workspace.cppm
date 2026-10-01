@@ -2,12 +2,12 @@ module;
 
 #include <ctime>
 
-export module cc.benchmarks.pare.workspace;
+export module loom.benchmarks.pare.workspace;
 
 import std;
 
-import cc.process.process;
-import cc.scm.git.git;
+import loom.process.process;
+import loom.scm.git.git;
 
 export namespace cc::benchmarks::pare {
 

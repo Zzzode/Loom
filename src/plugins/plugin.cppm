@@ -7,11 +7,11 @@ module;
 
 #include <uv.h>
 
-export module cc.plugins.plugin;
+export module loom.plugins.plugin;
 
 import std;
 
-import cc.types.types;
+import loom.types.types;
 
 export namespace cc::plugins {
 

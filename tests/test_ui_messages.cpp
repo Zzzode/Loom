@@ -15,23 +15,23 @@
 #include "test_ui_helpers.h"
 
 import std;
-import cc.ui.messages.messages;
-import cc.ui.messages.message_pipeline;
-import cc.ui.messages.collapse_background_bash;
-import cc.ui.messages.virtual_list;
-import cc.ui.messages.messages_list;
-import cc.ui.messages.message_row;
-import cc.ui.messages.user_text_message;
-import cc.ui.messages.assistant_text_message;
-import cc.ui.messages.message_image;
-import cc.ui.visual.markdown;
-import cc.ui.foundation.design_tokens;
-import cc.ui.foundation.design_figures;
-import cc.constants.constants;
-import cc.text.parse_references;
-import cc.ui.widgets.components;
-import cc.ui.widgets.all_components;
-import cc.types.types;
+import loom.ui.messages.messages;
+import loom.ui.messages.message_pipeline;
+import loom.ui.messages.collapse_background_bash;
+import loom.ui.messages.virtual_list;
+import loom.ui.messages.messages_list;
+import loom.ui.messages.message_row;
+import loom.ui.messages.user_text_message;
+import loom.ui.messages.assistant_text_message;
+import loom.ui.messages.message_image;
+import loom.ui.visual.markdown;
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.design_figures;
+import loom.constants.constants;
+import loom.text.parse_references;
+import loom.ui.widgets.components;
+import loom.ui.widgets.all_components;
+import loom.types.types;
 
 namespace {
 namespace fs = std::filesystem;

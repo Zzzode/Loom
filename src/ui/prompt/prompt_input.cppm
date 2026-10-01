@@ -6,11 +6,11 @@ module;
 #include <cstdlib>
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.prompt.prompt_input;
+export module loom.ui.prompt.prompt_input;
 
 import std;
 
-import cc.ui.foundation.ui_types;  // canonical VimMode
+import loom.ui.foundation.ui_types;  // canonical VimMode
 
 export namespace cc::ui {
 

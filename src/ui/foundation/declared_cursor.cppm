@@ -26,7 +26,7 @@ module;
 #include <ftxui/screen/box.hpp>
 #include <ftxui/screen/screen.hpp>
 
-export module cc.ui.foundation.declared_cursor;
+export module loom.ui.foundation.declared_cursor;
 
 import std;
 

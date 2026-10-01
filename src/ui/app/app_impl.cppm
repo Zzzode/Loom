@@ -11,13 +11,13 @@
 module;
 
 
-export module cc.ui.app.app:impl;
+export module loom.ui.app.app:impl;
 
 import std;
 
-import cc.ui.app.app;
-import cc.vim.vim_mode;
-import cc.hooks.exit_handler;
+import loom.ui.app.app;
+import loom.vim.vim_mode;
+import loom.hooks.exit_handler;
 
 namespace cc::ui {
 

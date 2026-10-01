@@ -19,12 +19,12 @@ module;
 #include <utility>
 #include <vector>
 
-module cc.ui.screens.repl_screen;
+module loom.ui.screens.repl_screen;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.messages_store;
-import cc.ui.messages.messages_list;
-import cc.ui.messages.virtual_list;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;
+import loom.ui.messages.messages_list;
+import loom.ui.messages.virtual_list;
 
 namespace cc::ui::repl_screen {
 

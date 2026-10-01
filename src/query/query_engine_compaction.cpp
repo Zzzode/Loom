@@ -8,17 +8,17 @@ module;
 
 #include <cstdlib>
 
-module cc.query.query_engine;
+module loom.query.query_engine;
 
 import std;
 
-import cc.types.types;
-import cc.tools.agent_runtime;
+import loom.types.types;
+import loom.tools.agent_runtime;
 // Genuinely used for cc::utils::PERSISTED_OUTPUT_TAG / ..._CLOSING_TAG /
 // TOOL_RESULT_CLEARED_MESSAGE: namespace-scope constexpr string_views the
 // dead-import heuristic does not harvest.
-import cc.tools.support.tool_helpers;  // arch-check: keep-import
-import cc.platform.env.env_utils;
+import loom.tools.support.tool_helpers;  // arch-check: keep-import
+import loom.platform.env.env_utils;
 
 namespace cc::core {
 

@@ -4,26 +4,26 @@
 // collectors.
 module;
 
-module cc.tools.runtime_registry;
+module loom.tools.runtime_registry;
 
 import std;
 
-import cc.tools.tool;
-import cc.tools.agent_types;
-import cc.tools.runtime_backends.port;
-import cc.tools.bash;
-import cc.tools.built_in_agents;
-import cc.tools.feature_flags;
-import cc.tools.file_edit;
-import cc.tools.file_read;
-import cc.tools.file_write;
-import cc.tools.glob;
+import loom.tools.tool;
+import loom.tools.agent_types;
+import loom.tools.runtime_backends.port;
+import loom.tools.bash;
+import loom.tools.built_in_agents;
+import loom.tools.feature_flags;
+import loom.tools.file_edit;
+import loom.tools.file_read;
+import loom.tools.file_write;
+import loom.tools.glob;
 // make_grep_tool() is called below; the arch checker's trailing-return-type
 // extraction does not see it exported (pre-existing false negative).
-import cc.tools.grep;  // arch-check: keep-import
-import cc.tools.todo_write;
-import cc.tools.web_fetch;
-import cc.tools.web_search;
+import loom.tools.grep;  // arch-check: keep-import
+import loom.tools.todo_write;
+import loom.tools.web_fetch;
+import loom.tools.web_search;
 
 namespace cc::tools::detail {
 

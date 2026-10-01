@@ -7,12 +7,12 @@ module;
 
 #include <sys/resource.h>
 
-export module cc.commands.heapdump;
+export module loom.commands.heapdump;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
+import loom.types.types;
+import loom.commands.command;
 
 // Module-internal helpers (module linkage; intentionally not exported).
 namespace cc::commands {

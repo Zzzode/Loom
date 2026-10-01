@@ -14,12 +14,12 @@
 // by-value field types (AgentCardData, LiveTeammate) recreate no up-edge.
 module;
 
-export module cc.ui.screens.task_view_store;
+export module loom.ui.screens.task_view_store;
 
 import std;
 
-import cc.ui.features.agents.agent_cards;        // AgentCardData
-import cc.ui.features.teams.live_teammates;      // LiveTeammate
+import loom.ui.features.agents.agent_cards;        // AgentCardData
+import loom.ui.features.teams.live_teammates;      // LiveTeammate
 
 export namespace cc::ui::repl_screen {
 

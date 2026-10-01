@@ -6,15 +6,15 @@ module;
 /// @brief AddDirCommand implementing the /add-dir slash command.
 /// Adds a working directory to the session or local settings.
 
-export module cc.commands.add_dir;
+export module loom.commands.add_dir;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.fs.path;
-import cc.state.app_state;
-import cc.state.store;
+import loom.types.types;
+import loom.commands.command;
+import loom.fs.path;
+import loom.state.app_state;
+import loom.state.store;
 
 export namespace cc::commands {
 

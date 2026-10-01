@@ -32,12 +32,12 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
-export module cc.ui.prompt.mode_indicator;
+export module loom.ui.prompt.mode_indicator;
 
 import std;
 
-import cc.ui.foundation.design_figures;
-import cc.ui.foundation.ui_types;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.ui_types;
 
 export namespace cc::ui::prompt::mode_indicator {
 

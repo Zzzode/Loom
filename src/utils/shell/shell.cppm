@@ -10,7 +10,7 @@ module;
 #include <cstddef>
 #include <cstdlib>
 
-export module cc.process.shell.shell;
+export module loom.process.shell.shell;
 
 import std;
 

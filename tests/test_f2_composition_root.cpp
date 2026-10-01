@@ -29,12 +29,12 @@
 #include <ftxui/component/component.hpp>
 
 import std;
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.default_renderers;
-import cc.ui.screens.doctor_dialog_registration;
-import cc.ui.foundation.feature_dialog_protocol;
-import cc.ui.dialogs.feature_wizard_adapter;
-import cc.ui.app.app_dialog_registration;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.default_renderers;
+import loom.ui.screens.doctor_dialog_registration;
+import loom.ui.foundation.feature_dialog_protocol;
+import loom.ui.dialogs.feature_wizard_adapter;
+import loom.ui.app.app_dialog_registration;
 
 namespace {
 

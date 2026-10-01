@@ -17,11 +17,11 @@ module;
 #include <cctype>
 #include <cstddef>
 
-export module cc.tools.path_validation;
+export module loom.tools.path_validation;
 
 import std;
 
-import cc.tools.mode_validation;  // for PermissionResult / PermissionBehavior
+import loom.tools.mode_validation;  // for PermissionResult / PermissionBehavior
 
 export namespace cc::tools::path_validation {
 

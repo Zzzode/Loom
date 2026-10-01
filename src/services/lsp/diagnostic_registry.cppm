@@ -22,12 +22,12 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.services.lsp.diagnostic_registry;
+export module loom.services.lsp.diagnostic_registry;
 
 import std;
 
-import cc.utils.error;
-import cc.serdes.json;
+import loom.utils.error;
+import loom.serdes.json;
 
 export namespace cc::services::lsp {
 

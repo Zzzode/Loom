@@ -2,13 +2,13 @@
 // mapping, parent session id, team completion status, and ToolResult text.
 module;
 
-module cc.orchestration.agent.utils;
+module loom.orchestration.agent.utils;
 
 import std;
 
-import cc.teams.swarm.backends;
-import cc.tools.team;
-import cc.types.tool_types;
+import loom.teams.swarm.backends;
+import loom.tools.team;
+import loom.types.tool_types;
 
 namespace cc::tools::agent::utils {
 

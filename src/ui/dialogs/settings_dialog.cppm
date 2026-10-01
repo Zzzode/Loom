@@ -13,13 +13,13 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.dialogs.settings_dialog;
+export module loom.ui.dialogs.settings_dialog;
 
 import std;
 
-import cc.types.types;
-import cc.config.config;
-import cc.ui.widgets.custom_select;
+import loom.types.types;
+import loom.config.config;
+import loom.ui.widgets.custom_select;
 
 export namespace cc::ui::dialogs::settings_dialog {
 using namespace ftxui;

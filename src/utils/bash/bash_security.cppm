@@ -5,7 +5,7 @@
 //           commandAnalyzer.ts, commandDenylist.ts
 module;
 
-export module cc.process.bash.bash_security;
+export module loom.process.bash.bash_security;
 
 import std;
 

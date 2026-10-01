@@ -22,18 +22,18 @@
 #include <ftxui/component/event.hpp>
 
 import std;
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.frame;
-import cc.ui.dialogs.default_renderers;
-import cc.ui.dialogs.modal_renderers;
-import cc.ui.dialogs.bottom_renderers;
-import cc.ui.dialogs.all_renderers;
-import cc.ui.dialogs.triggers;
-import cc.ui.dialogs.quick_open;
-import cc.ui.dialogs.sandbox_permission;
-import cc.ui.foundation.theme_provider;
-import cc.ui.foundation.design_tokens;
-import cc.constants.product;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.frame;
+import loom.ui.dialogs.default_renderers;
+import loom.ui.dialogs.modal_renderers;
+import loom.ui.dialogs.bottom_renderers;
+import loom.ui.dialogs.all_renderers;
+import loom.ui.dialogs.triggers;
+import loom.ui.dialogs.quick_open;
+import loom.ui.dialogs.sandbox_permission;
+import loom.ui.foundation.theme_provider;
+import loom.ui.foundation.design_tokens;
+import loom.constants.product;
 
 namespace {
 

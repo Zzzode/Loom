@@ -1,4 +1,4 @@
-export module cc.ui.messages.collapse_notifications;
+export module loom.ui.messages.collapse_notifications;
 
 import std;
 

@@ -11,14 +11,14 @@ module;
 #include <cstring>
 #include <cstdint>
 
-export module cc.services.lsp.client;
+export module loom.services.lsp.client;
 
 import std;
 
-import cc.serdes.json;
-import cc.types.types;
-import cc.process.bash.bash_execution;
-import cc.services.lsp.diagnostic_registry;
+import loom.serdes.json;
+import loom.types.types;
+import loom.process.bash.bash_execution;
+import loom.services.lsp.diagnostic_registry;
 
 export namespace cc::services::lsp {
 

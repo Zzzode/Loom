@@ -6,13 +6,13 @@ module;
 
 #include <cstdint>
 
-export module cc.hooks.config;
+export module loom.hooks.config;
 
 import std;
 
-import cc.serdes.json;
-import cc.process.async;
-import cc.hooks.registry;
+import loom.serdes.json;
+import loom.process.async;
+import loom.hooks.registry;
 
 export namespace cc::utils::hooks_config {
 

@@ -3,7 +3,7 @@ module;
 #include <cstddef>
 
 
-export module cc.services.mcp.headers_helper;
+export module loom.services.mcp.headers_helper;
 
 import std;
 

@@ -4,12 +4,12 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.tools.team;
+export module loom.tools.team;
 
 import std;
 
-import cc.serdes.json;
-import cc.fs.atomic_replace;
+import loom.serdes.json;
+import loom.fs.atomic_replace;
 
 export namespace cc::tools {
 

@@ -6,7 +6,7 @@ module;
 #include <cstdint>
 #include <cctype>
 
-export module cc.model.token_budget;
+export module loom.model.token_budget;
 
 import std;
 

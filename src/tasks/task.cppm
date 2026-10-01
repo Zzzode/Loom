@@ -6,12 +6,12 @@ module;
 
 #include <cstdint>
 
-export module cc.tasks.task;
+export module loom.tasks.task;
 
 import std;
 
-import cc.types.types;
-import cc.process.bash.bash_execution;
+import loom.types.types;
+import loom.process.bash.bash_execution;
 
 export namespace cc::core {
 

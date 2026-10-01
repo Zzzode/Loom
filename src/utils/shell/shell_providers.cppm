@@ -7,12 +7,12 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.process.shell.shell_providers;
+export module loom.process.shell.shell_providers;
 
 import std;
 
-import cc.process.shell.shell;
-import cc.process.bash.bash_execution;
+import loom.process.shell.shell;
+import loom.process.bash.bash_execution;
 
 export namespace cc::utils::shell_providers {
 

@@ -29,13 +29,13 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <cstddef>
 
-export module cc.ui.visual.file_edit_tool_diff;
+export module loom.ui.visual.file_edit_tool_diff;
 
 import std;
 
-import cc.fs.edit.file_edit;
-import cc.text.string_utils;
-import cc.ui.visual.structured_diff;
+import loom.fs.edit.file_edit;
+import loom.text.string_utils;
+import loom.ui.visual.structured_diff;
 
 export namespace cc::ui::components::file_edit_tool_diff {
 

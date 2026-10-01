@@ -23,12 +23,12 @@ module;
 #include <cstddef>
 #include <cstdlib>
 
-export module cc.tools.readonly_validation;
+export module loom.tools.readonly_validation;
 
 import std;
 
-import cc.tools.mode_validation;   // PermissionBehavior / PermissionResult / PermissionMode
-import cc.tools.path_validation;   // FileOperationType / split_compound_command / simple_shell_tokenize
+import loom.tools.mode_validation;   // PermissionBehavior / PermissionResult / PermissionMode
+import loom.tools.path_validation;   // FileOperationType / split_compound_command / simple_shell_tokenize
 
 export namespace cc::tools::readonly_validation {
 

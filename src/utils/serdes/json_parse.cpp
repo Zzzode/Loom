@@ -7,11 +7,11 @@ module;
 
 #include <yyjson.h>
 
-module cc.serdes.json;
+module loom.serdes.json;
 
 import std;
 
-import cc.utils.error;
+import loom.utils.error;
 
 namespace cc::utils::json {
 

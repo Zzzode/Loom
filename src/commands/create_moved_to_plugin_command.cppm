@@ -1,4 +1,4 @@
-export module cc.commands.create_moved_to_plugin_command;
+export module loom.commands.create_moved_to_plugin_command;
 
 import std;
 export namespace cc::commands::create_moved_to_plugin_command {

@@ -5,7 +5,7 @@ module;
 #include <cstdlib>
 #include <cctype>
 
-export module cc.bridge.config;
+export module loom.bridge.config;
 
 import std;
 

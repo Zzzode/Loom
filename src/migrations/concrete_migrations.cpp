@@ -24,11 +24,11 @@ module;
 
 #include <yyjson.h>
 
-module cc.migrations.concrete;
+module loom.migrations.concrete;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 namespace cc::migrations::concrete {
 

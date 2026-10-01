@@ -8,14 +8,14 @@ module;
 #include <cstdio>
 #include <cstdlib>
 
-export module cc.tools.script_typecheck;
+export module loom.tools.script_typecheck;
 
 import std;
 
-import cc.tools.script_types;
-import cc.tools.script_diagnostics;
-import cc.serdes.json;
-import cc.process.bash.bash_execution;
+import loom.tools.script_types;
+import loom.tools.script_diagnostics;
+import loom.serdes.json;
+import loom.process.bash.bash_execution;
 
 export namespace cc::tools::script_typecheck {
 

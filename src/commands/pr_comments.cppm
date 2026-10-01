@@ -1,6 +1,6 @@
 // PR Comments command - fetches and summarizes PR comments for the current branch
 module;
-export module cc.commands.pr_comments;
+export module loom.commands.pr_comments;
 
 import std;
 export namespace cc::commands::pr_comments {

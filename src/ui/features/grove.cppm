@@ -14,13 +14,13 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstdio>
 
-export module cc.ui.features.grove;
+export module loom.ui.features.grove;
 
 import std;
 
-import cc.ui.foundation.component_primitives;
-import cc.ui.foundation.design_tokens;
-import cc.ui.foundation.theme_provider;
+import loom.ui.foundation.component_primitives;
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
 
 export namespace cc::ui::components::grove {
 

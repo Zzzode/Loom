@@ -12,14 +12,14 @@ module;
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.permissions.permission_rules_ui;
+export module loom.ui.permissions.permission_rules_ui;
 
 import std;
 
-import cc.types.types;
-import cc.ui.permissions.rule_list;
-import cc.ui.foundation.design_tokens;
-import cc.ui.permissions.components;
+import loom.types.types;
+import loom.ui.permissions.rule_list;
+import loom.ui.foundation.design_tokens;
+import loom.ui.permissions.components;
 
 export namespace cc::ui::permissions {
 

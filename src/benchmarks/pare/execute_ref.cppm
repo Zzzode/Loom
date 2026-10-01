@@ -7,15 +7,15 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.benchmarks.pare.execute_ref;
+export module loom.benchmarks.pare.execute_ref;
 
 import std;
 
-import cc.benchmarks.pare.schema;
-import cc.benchmarks.pare.evaluator;
-import cc.benchmarks.pare.metrics;
-import cc.serdes.json;
-import cc.process.bash.bash_execution;
+import loom.benchmarks.pare.schema;
+import loom.benchmarks.pare.evaluator;
+import loom.benchmarks.pare.metrics;
+import loom.serdes.json;
+import loom.process.bash.bash_execution;
 
 export namespace cc::benchmarks::pare {
 

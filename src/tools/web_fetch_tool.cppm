@@ -8,13 +8,13 @@ module;
 #include <sys/wait.h>
 #include <unistd.h>
 
-export module cc.tools.web_fetch;
+export module loom.tools.web_fetch;
 
 import std;
 
-import cc.utils.error;
-import cc.tools.tool;
-import cc.serdes.json;
+import loom.utils.error;
+import loom.tools.tool;
+import loom.serdes.json;
 
 export namespace cc::tools::web_fetch {
 

@@ -23,16 +23,16 @@ module;
 
 #include <httplib.h>
 
-export module cc.services.mcp.xaa_idp_login;
+export module loom.services.mcp.xaa_idp_login;
 
 import std;
 
-import cc.fs.atomic_replace;
-import cc.crypto.crypto;
-import cc.utils.error;
-import cc.serdes.json;
-import cc.platform.hyperlink;
-import cc.services.mcp.oauth_port;
+import loom.fs.atomic_replace;
+import loom.crypto.crypto;
+import loom.utils.error;
+import loom.serdes.json;
+import loom.platform.hyperlink;
+import loom.services.mcp.oauth_port;
 
 export namespace cc::services::mcp {
 

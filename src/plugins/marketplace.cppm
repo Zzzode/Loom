@@ -8,11 +8,11 @@ module;
 #include <sys/socket.h>
 #include <netdb.h>
 
-export module cc.plugins.marketplace;
+export module loom.plugins.marketplace;
 
 import std;
 
-import cc.crypto.crypto;
+import loom.crypto.crypto;
 
 export namespace cc::plugins {
 

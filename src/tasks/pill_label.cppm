@@ -4,12 +4,12 @@
 module;
 
 
-export module cc.tasks.pill_label;
+export module loom.tasks.pill_label;
 
 import std;
 
-import cc.tasks.task;
-import cc.tasks.types;
+import loom.tasks.task;
+import loom.tasks.types;
 
 export namespace cc::tasks {
 

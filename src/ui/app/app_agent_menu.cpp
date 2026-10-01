@@ -14,33 +14,33 @@ module;
 #include <cstdlib>
 #include <ftxui/component/event.hpp>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
 import std;
-import cc.query.query_engine;
-import cc.commands.registry;
-import cc.commands.command;
-import cc.session.app_storage;
-import cc.hooks.lifecycle_hooks;
+import loom.query.query_engine;
+import loom.commands.registry;
+import loom.commands.command;
+import loom.session.app_storage;
+import loom.hooks.lifecycle_hooks;
 
 // ── Base imports (shared with app_autocomplete.cpp) ─────────────────────
-import cc.ui.screens.repl_screen;
-import cc.ui.screens.repl_state;
-import cc.ui.screens.messages_store;
-import cc.ui.screens.task_view_store;
-import cc.session.app_storage;
-import cc.text.parse_references;
-import cc.diagnostics.debug;
-import cc.tools.agent_runtime;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;
+import loom.ui.screens.task_view_store;
+import loom.session.app_storage;
+import loom.text.parse_references;
+import loom.diagnostics.debug;
+import loom.tools.agent_runtime;
 
 // ── Agent-menu-only imports (moved out of app_autocomplete.cpp) ─────────
-import cc.tools.agent_display;
-import cc.ui.features.agents.agent_cards;
-import cc.ui.dialogs.triggers;
-import cc.ui.dialogs.system;
-import cc.ui.permissions.single_prompt;
-import cc.ui.permissions.permission_computer_use;
-import cc.hooks.cost_hook;
+import loom.tools.agent_display;
+import loom.ui.features.agents.agent_cards;
+import loom.ui.dialogs.triggers;
+import loom.ui.dialogs.system;
+import loom.ui.permissions.single_prompt;
+import loom.ui.permissions.permission_computer_use;
+import loom.hooks.cost_hook;
 
 namespace cc::ui {
 namespace agent_runtime = cc::tools::agent_runtime;

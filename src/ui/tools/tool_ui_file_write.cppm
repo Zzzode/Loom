@@ -15,11 +15,11 @@
 module;
 
 
-export module cc.ui.tools.file_write;
+export module loom.ui.tools.file_write;
 
 import std;
 
-import cc.ui.tools.registry;
+import loom.ui.tools.registry;
 
 export namespace cc::ui::tools::file_write_ui {
 

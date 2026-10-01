@@ -20,12 +20,12 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.fs.edit.file_edit;
+export module loom.fs.edit.file_edit;
 
 import std;
 
-import cc.fs.file_read_cache;
-import cc.text.string_utils;
+import loom.fs.file_read_cache;
+import loom.text.string_utils;
 
 export namespace cc::utils::file_edit {
 

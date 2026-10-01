@@ -10,11 +10,11 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.skills.bundled.skill_keybindings;
+export module loom.skills.bundled.skill_keybindings;
 
 import std;
 
-import cc.skills.load_skills_dir;
+import loom.skills.load_skills_dir;
 
 export namespace cc::skills::bundled {
 

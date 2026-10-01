@@ -4,7 +4,7 @@ module;
 
 #include <cstdint>
 
-export module cc.utils.error;
+export module loom.utils.error;
 
 import std;
 

@@ -9,15 +9,15 @@ module;
 #include <unistd.h>
 #include <cstdint>
 
-export module cc.commands.tasks_cmd;
+export module loom.commands.tasks_cmd;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.tasks.task;        // TaskType / TaskStatus / task_type_to_string
-import cc.tasks.task_graph;
-import cc.tasks.types;
+import loom.types.types;
+import loom.commands.command;
+import loom.tasks.task;        // TaskType / TaskStatus / task_type_to_string
+import loom.tasks.task_graph;
+import loom.tasks.types;
 
 export namespace cc::commands {
 

@@ -18,7 +18,7 @@ module;
 #include <cstdint>
 #include <cstddef>
 
-export module cc.hooks.permission_resolver;
+export module loom.hooks.permission_resolver;
 
 import std;
 

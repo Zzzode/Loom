@@ -14,27 +14,27 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-export module cc.tools.bash;
+export module loom.tools.bash;
 
 import std;
 
-import cc.utils.error;
-import cc.process.async;
-import cc.tools.tool;
-import cc.tools.agent_runtime;
-import cc.serdes.json;
-import cc.process.shell.shell_providers;
-import cc.tools.sed_validation;
+import loom.utils.error;
+import loom.process.async;
+import loom.tools.tool;
+import loom.tools.agent_runtime;
+import loom.serdes.json;
+import loom.process.shell.shell_providers;
+import loom.tools.sed_validation;
 // migrated (Agent 8): result formatting + exit-code semantics
-import cc.tools.command_semantics;
-import cc.tools.bash_result_formatting;
-import cc.tools.bash_permissions;
+import loom.tools.command_semantics;
+import loom.tools.bash_result_formatting;
+import loom.tools.bash_permissions;
 // migrated (Agent 3): bash security & validation helper modules
-import cc.tools.destructive_command_warning;
-import cc.tools.mode_validation;
-import cc.tools.path_validation;
-import cc.tools.readonly_validation;
-import cc.tools.should_use_sandbox;
+import loom.tools.destructive_command_warning;
+import loom.tools.mode_validation;
+import loom.tools.path_validation;
+import loom.tools.readonly_validation;
+import loom.tools.should_use_sandbox;
 
 export namespace cc::tools::bash {
 

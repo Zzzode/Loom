@@ -44,16 +44,16 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.features.agents.agent_wizard;
+export module loom.ui.features.agents.agent_wizard;
 
 import std;
 
-import cc.ui.foundation.feature_dialog_protocol;
-import cc.ui.widgets.custom_select;
-import cc.ui.features.agents.agent_shared_widgets;
-import cc.ui.features.agents.agent_cards;
-import cc.tools.agent_color_manager;
-import cc.teams.swarm.backends;
+import loom.ui.foundation.feature_dialog_protocol;
+import loom.ui.widgets.custom_select;
+import loom.ui.features.agents.agent_shared_widgets;
+import loom.ui.features.agents.agent_cards;
+import loom.tools.agent_color_manager;
+import loom.teams.swarm.backends;
 
 export namespace cc::ui::agents::wizard {
 using namespace ftxui;

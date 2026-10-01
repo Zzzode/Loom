@@ -1,11 +1,11 @@
 module;
 #include <cstdlib>
 
-module cc.services.mcp.config;
+module loom.services.mcp.config;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 namespace cc::services::mcp {
 

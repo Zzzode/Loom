@@ -6,12 +6,12 @@ module;
 
 #include <cstdlib>
 
-module cc.query.query_engine;
+module loom.query.query_engine;
 
 import std;
 
-import cc.query.wire_protocol;
-import cc.services.analytics;
+import loom.query.wire_protocol;
+import loom.services.analytics;
 
 namespace cc::core {
 

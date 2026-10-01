@@ -1,4 +1,4 @@
-export module cc.services.mcp.elicitation_handler;
+export module loom.services.mcp.elicitation_handler;
 
 import std;
 

@@ -5,7 +5,7 @@ module;
 #include <netinet/in.h>
 #include <unistd.h>
 
-export module cc.services.mcp.types;
+export module loom.services.mcp.types;
 
 import std;
 
@@ -14,10 +14,10 @@ import std;
 // cannot attribute; the re-export is both exempt from that check and propagates
 // the complete types to auth/connection_manager/config, which import this
 // primary rather than the leaf directly.
-export import cc.config.mcp_types;
+export import loom.config.mcp_types;
 
-import cc.utils.error;
-import cc.serdes.json;
+import loom.utils.error;
+import loom.serdes.json;
 
 export namespace cc::services::mcp {
 

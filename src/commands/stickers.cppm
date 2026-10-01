@@ -4,12 +4,12 @@ module;
 
 #include <cstdlib>
 
-export module cc.commands.stickers;
+export module loom.commands.stickers;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
+import loom.types.types;
+import loom.commands.command;
 
 export namespace cc::commands {
 

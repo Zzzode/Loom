@@ -30,7 +30,7 @@ module;
 
 #include <cstdlib>
 
-export module cc.constants.paths;
+export module loom.constants.paths;
 
 import std;
 

@@ -9,12 +9,12 @@ module;
 
 #include <cctype>
 
-export module cc.keybindings.template_;
+export module loom.keybindings.template_;
 
 import std;
 
-import cc.keybindings.schema;
-import cc.keybindings.defaults;
+import loom.keybindings.schema;
+import loom.keybindings.defaults;
 
 export namespace cc::keybindings {
 

@@ -4,17 +4,17 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.hooks.command_queue;
-import cc.hooks.context;
-import cc.hooks.ide_at_mentioned;
-import cc.hooks.remaining_notifs;
-import cc.hooks.terminal_size;
-import cc.hooks.text_input;
-import cc.hooks.typeahead;
-import cc.hooks.virtual_scroll;
-import cc.hooks.execution;
-import cc.serdes.json;
-import cc.hooks.registry;
+import loom.hooks.command_queue;
+import loom.hooks.context;
+import loom.hooks.ide_at_mentioned;
+import loom.hooks.remaining_notifs;
+import loom.hooks.terminal_size;
+import loom.hooks.text_input;
+import loom.hooks.typeahead;
+import loom.hooks.virtual_scroll;
+import loom.hooks.execution;
+import loom.serdes.json;
+import loom.hooks.registry;
 
 using namespace std::chrono_literals;
 

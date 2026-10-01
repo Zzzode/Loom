@@ -5,13 +5,13 @@ module;
 
 #include <cstdint>
 
-export module cc.commands.vim;
+export module loom.commands.vim;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.vim.vim_types;  // canonical VimMode (cc_vim target)
+import loom.types.types;
+import loom.commands.command;
+import loom.vim.vim_types;  // canonical VimMode (cc_vim target)
 
 export namespace cc::commands {
 

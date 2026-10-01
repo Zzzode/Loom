@@ -14,11 +14,11 @@ module;
 
 #include <cctype>
 
-export module cc.ui.tools.generic;
+export module loom.ui.tools.generic;
 
 import std;
 
-import cc.ui.tools.registry;
+import loom.ui.tools.registry;
 
 export namespace cc::ui::tools::generic_tool {
 

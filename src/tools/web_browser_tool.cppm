@@ -4,13 +4,13 @@ module;
 #include <cstdio>
 #include <cstdlib>
 
-export module cc.tools.web_browser;
+export module loom.tools.web_browser;
 
 import std;
 
-import cc.process.bash.bash_execution;
+import loom.process.bash.bash_execution;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 
 export namespace cc::tools {

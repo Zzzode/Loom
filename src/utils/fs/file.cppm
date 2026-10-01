@@ -4,11 +4,11 @@ module;
 
 #include <cctype>
 
-export module cc.fs.file;
+export module loom.fs.file;
 
 import std;
 
-import cc.fs.path;
+import loom.fs.path;
 
 export namespace cc::utils::file {
 

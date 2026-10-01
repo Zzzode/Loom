@@ -18,14 +18,14 @@ module;
 #  include <poll.h>
 #endif
 
-export module cc.commands.doctor;
+export module loom.commands.doctor;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.config.config;
-import cc.process.bash.bash_execution;
+import loom.types.types;
+import loom.commands.command;
+import loom.config.config;
+import loom.process.bash.bash_execution;
 
 export namespace cc::commands {
 

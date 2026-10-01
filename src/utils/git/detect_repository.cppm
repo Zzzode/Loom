@@ -2,11 +2,11 @@ module;
 
 #include <cstdio>
 
-export module cc.scm.git.detect_repository;
+export module loom.scm.git.detect_repository;
 
 import std;
 
-import cc.process.bash.bash_execution;
+import loom.process.bash.bash_execution;
 
 export namespace cc::utils {
 

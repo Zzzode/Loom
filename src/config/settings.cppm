@@ -5,10 +5,10 @@ module;
 /// @file settings.cppm
 /// @brief User settings management.
 /// Supplements existing config.cppm with settings-specific logic.
-export module cc.config.settings;
+export module loom.config.settings;
 
-import cc.serdes.json;
-import cc.constants.paths;
+import loom.serdes.json;
+import loom.constants.paths;
 
 import std;
 

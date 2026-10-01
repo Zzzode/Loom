@@ -10,18 +10,18 @@ module;
 #include <cstddef>
 #include <cstdlib>
 
-export module cc.commands.mcp_cmd;
+export module loom.commands.mcp_cmd;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.config.config;
-import cc.orchestration.tools.mcp;
-import cc.services.mcp.connection_manager;
-import cc.services.mcp.xaa_idp_login;
-import cc.services.mcp.types;
-import cc.services.mcp.config;
+import loom.types.types;
+import loom.commands.command;
+import loom.config.config;
+import loom.orchestration.tools.mcp;
+import loom.services.mcp.connection_manager;
+import loom.services.mcp.xaa_idp_login;
+import loom.services.mcp.types;
+import loom.services.mcp.config;
 
 // Alias NativeMcpStatus to the runtime type defined in cc.orchestration.tools.mcp so the
 // data-prep row builders below can use a short name without pulling in all

@@ -1,11 +1,11 @@
 // LSP Types Module
 module;
 
-export module cc.services.lsp.types;
+export module loom.services.lsp.types;
 
 import std;
 
-import cc.utils.error;
+import loom.utils.error;
 
 export namespace cc::services::lsp {
 

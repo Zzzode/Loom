@@ -6,7 +6,7 @@ module;
 #include <unistd.h>
 #include <cstddef>
 
-export module cc.services.oauth.auth_code_listener;
+export module loom.services.oauth.auth_code_listener;
 
 import std;
 

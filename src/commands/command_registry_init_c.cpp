@@ -1,23 +1,23 @@
 /// @file command_registry_init_c.cpp
 /// @brief Group C registration: session/model/plan commands (model, cost, plan, insights, etc.)
-module cc.commands.registry;
+module loom.commands.registry;
 
-import cc.commands.upgrade;
-import cc.commands.ultraplan;
-import cc.commands.review.ultrareview;
-import cc.commands.review.review_remote;
-import cc.commands.security_review;
-import cc.commands.init_verifiers;
-import cc.commands.install;
-import cc.commands.insights;
-import cc.commands.init;
-import cc.commands.session;
-import cc.commands.resume;
-import cc.commands.model;
-import cc.commands.cost;
-import cc.commands.plan;
-import cc.commands.theme;
-import cc.commands.vim;
+import loom.commands.upgrade;
+import loom.commands.ultraplan;
+import loom.commands.review.ultrareview;
+import loom.commands.review.review_remote;
+import loom.commands.security_review;
+import loom.commands.init_verifiers;
+import loom.commands.install;
+import loom.commands.insights;
+import loom.commands.init;
+import loom.commands.session;
+import loom.commands.resume;
+import loom.commands.model;
+import loom.commands.cost;
+import loom.commands.plan;
+import loom.commands.theme;
+import loom.commands.vim;
 
 namespace cc::commands {
 

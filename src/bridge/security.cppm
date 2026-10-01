@@ -5,7 +5,7 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-export module cc.bridge.security;
+export module loom.bridge.security;
 
 import std;
 

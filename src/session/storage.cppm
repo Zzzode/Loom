@@ -7,11 +7,11 @@ module;
 #include <yyjson.h>
 #include <cstdint>
 
-export module cc.session.storage;
+export module loom.session.storage;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::session {
 

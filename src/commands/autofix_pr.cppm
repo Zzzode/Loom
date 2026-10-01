@@ -1,8 +1,8 @@
-export module cc.commands.autofix_pr;
+export module loom.commands.autofix_pr;
 
 import std;
 
-import cc.process.exec_sync;
+import loom.process.exec_sync;
 
 export namespace cc::commands::autofix_pr {
 struct CommandResponse { bool ok{true}; std::string message; };

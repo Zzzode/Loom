@@ -23,7 +23,7 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.ui.dialogs.prompt_dialog;
+import loom.ui.dialogs.prompt_dialog;
 
 namespace {
 

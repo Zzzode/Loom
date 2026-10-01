@@ -1,4 +1,4 @@
-export module cc.tools.tungsten_tool;
+export module loom.tools.tungsten_tool;
 
 import std;
 

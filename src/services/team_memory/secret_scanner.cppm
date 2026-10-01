@@ -15,7 +15,7 @@
 /// character classes per the TS notes.
 module;
 #include <cctype>
-export module cc.services.team_memory.secret_scanner;
+export module loom.services.team_memory.secret_scanner;
 
 import std;
 export namespace cc::services::team_memory {

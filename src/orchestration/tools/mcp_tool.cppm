@@ -3,7 +3,7 @@ module;
 #include <cctype>
 #include <cstdlib>
 
-export module cc.orchestration.tools.mcp;
+export module loom.orchestration.tools.mcp;
 
 import std;
 
@@ -11,14 +11,14 @@ import std;
 // ConfigManager layer reaches the runtime through the loader sink below
 // (cc::tools::set_core_settings_mcp_loader), installed by the production
 // composition root in cc.commands.mcp.core_settings_loader.
-import cc.config.mcp_types;
-import cc.services.mcp.config;
-import cc.services.mcp.connection_manager;
-import cc.services.mcp.auth;
-import cc.services.mcp.types;
-import cc.serdes.json;
-import cc.types.tool_types;
-import cc.tools.mcp_classify;  // migrated: integrate collapse decision
+import loom.config.mcp_types;
+import loom.services.mcp.config;
+import loom.services.mcp.connection_manager;
+import loom.services.mcp.auth;
+import loom.services.mcp.types;
+import loom.serdes.json;
+import loom.types.tool_types;
+import loom.tools.mcp_classify;  // migrated: integrate collapse decision
 
 export namespace cc::tools {
 

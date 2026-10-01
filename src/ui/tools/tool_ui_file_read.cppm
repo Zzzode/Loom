@@ -16,11 +16,11 @@ module;
 
 #include <cctype>
 
-export module cc.ui.tools.file_read;
+export module loom.ui.tools.file_read;
 
 import std;
 
-import cc.ui.tools.registry;
+import loom.ui.tools.registry;
 
 export namespace cc::ui::tools::file_read_ui {
 

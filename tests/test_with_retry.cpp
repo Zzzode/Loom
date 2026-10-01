@@ -13,8 +13,8 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.services.api.with_retry;
-import cc.services.api.with_retry_simple;
+import loom.services.api.with_retry;
+import loom.services.api.with_retry_simple;
 
 // Do not use "using namespace cc::services::api" — it contains another RetryConfig
 // (Phase 2 full version) which conflicts with with_retry_simple::RetryConfig.

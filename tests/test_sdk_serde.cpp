@@ -24,8 +24,8 @@
 
 import std;
 
-import cc.server.control_protocol;
-import cc.serdes.json;
+import loom.server.control_protocol;
+import loom.serdes.json;
 
 namespace {
 

@@ -36,15 +36,15 @@ module;
 #include <cstdint>
 #include <ctime>
 
-export module cc.commands.insights;
+export module loom.commands.insights;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.session.list_sessions;
-import cc.serdes.json;
-import cc.utils.error;
+import loom.types.types;
+import loom.commands.command;
+import loom.session.list_sessions;
+import loom.serdes.json;
+import loom.utils.error;
 
 export namespace cc::commands {
 

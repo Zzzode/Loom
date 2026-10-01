@@ -28,9 +28,9 @@
 
 
 import std;
-import cc.state.app_state;
-import cc.state.store;
-import cc.state.persistence;
+import loom.state.app_state;
+import loom.state.store;
+import loom.state.persistence;
 
 using cc::state::Action;
 using cc::state::ActionType;

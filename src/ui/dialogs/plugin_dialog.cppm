@@ -28,20 +28,20 @@ module;
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.dialogs.plugin_dialog;
+export module loom.ui.dialogs.plugin_dialog;
 
 import std;
 
-import cc.commands.plugin_ui_data;
-import cc.commands.plugin_helpers;
-import cc.commands.plugin_error_formatting;
-import cc.commands.plugin_details_helpers;
-import cc.commands.plugin_pagination_util;
-import cc.commands.plugin_trust_text;
-import cc.ui.features.plugins.plugin_install_flow;
-import cc.ui.features.plugins.plugin_manage_panel;
-import cc.ui.features.plugins.plugin_marketplace_browse;
-import cc.ui.features.plugins.plugin_settings_dialog;
+import loom.commands.plugin_ui_data;
+import loom.commands.plugin_helpers;
+import loom.commands.plugin_error_formatting;
+import loom.commands.plugin_details_helpers;
+import loom.commands.plugin_pagination_util;
+import loom.commands.plugin_trust_text;
+import loom.ui.features.plugins.plugin_install_flow;
+import loom.ui.features.plugins.plugin_manage_panel;
+import loom.ui.features.plugins.plugin_marketplace_browse;
+import loom.ui.features.plugins.plugin_settings_dialog;
 
 export namespace cc::ui::dialogs::plugin_dialog {
 using namespace ftxui;

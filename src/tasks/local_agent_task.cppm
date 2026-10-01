@@ -4,12 +4,12 @@
 module;
 
 
-export module cc.tasks.local_agent_task;
+export module loom.tasks.local_agent_task;
 
 import std;
 
-import cc.tasks.task;
-import cc.tasks.types;
+import loom.tasks.task;
+import loom.tasks.types;
 
 export namespace cc::tasks {
 

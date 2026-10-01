@@ -5,11 +5,11 @@ module;
 #include <cstdint>
 #include <cctype>
 
-export module cc.security.permissions;
+export module loom.security.permissions;
 
 import std;
 
-import cc.process.shell.shell_parser;
+import loom.process.shell.shell_parser;
 
 export namespace cc::utils::permissions {
 

@@ -42,17 +42,17 @@ module;
 #include <ctime>
 #include <httplib.h>
 
-export module cc.services.auth.azure_credential;
+export module loom.services.auth.azure_credential;
 
 import std;
 
-import cc.platform.env.env;
-import cc.utils.error;
-import cc.net.http.http_encoding;
-import cc.serdes.json;
+import loom.platform.env.env;
+import loom.utils.error;
+import loom.net.http.http_encoding;
+import loom.serdes.json;
 
 // bash_execution — for AzureCliCredential shell-out.
-import cc.process.bash.bash_execution;
+import loom.process.bash.bash_execution;
 
 export namespace cc::services::auth::azure {
 

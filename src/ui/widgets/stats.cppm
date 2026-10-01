@@ -3,7 +3,7 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <cstddef>
 
-export module cc.ui.widgets.stats;
+export module loom.ui.widgets.stats;
 
 import std;
 

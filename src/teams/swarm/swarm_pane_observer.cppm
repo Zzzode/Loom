@@ -8,11 +8,11 @@ module;
 
 #include <cstdint>
 
-export module cc.teams.swarm.pane_observer;
+export module loom.teams.swarm.pane_observer;
 
 import std;
 
-import cc.teams.swarm.backends;
+import loom.teams.swarm.backends;
 
 export namespace cc::utils::pane_observer {
 

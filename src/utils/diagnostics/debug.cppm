@@ -2,11 +2,11 @@ module;
 #include <cstdlib>
 #include <ctime>
 
-export module cc.diagnostics.debug;
+export module loom.diagnostics.debug;
 
 import std;
 
-import cc.diagnostics.debug_filter;
+import loom.diagnostics.debug_filter;
 
 export namespace cc::utils {
 

@@ -2,7 +2,7 @@ module;
 
 #include <cstdint>
 
-export module cc.benchmarks.pare.schema;
+export module loom.benchmarks.pare.schema;
 
 import std;
 

@@ -24,19 +24,19 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.messages.assistant_text_message;
+export module loom.ui.messages.assistant_text_message;
 
 import std;
 
-import cc.ui.messages.message_components;
-import cc.ui.messages.message_timestamp;
-import cc.ui.visual.markdown;
+import loom.ui.messages.message_components;
+import loom.ui.messages.message_timestamp;
+import loom.ui.visual.markdown;
 // R7: BLACK_CIRCLE selection recoloring uses palette.suggestion +
 // message_actions_background tokens (not inline RGB) so light/daltonized
 // variants stay faithful.  Figures provides kBullet (U+25CF = TS BLACK_CIRCLE).
-import cc.ui.foundation.design_tokens;
-import cc.ui.foundation.theme_provider;
-import cc.ui.foundation.design_figures;
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
+import loom.ui.foundation.design_figures;
 
 // ─── Prompt XML tag stripping (module-internal) ────────────────────────
 // Models sometimes emit prompt scaffolding XML blocks (<commit_analysis>,

@@ -1,11 +1,11 @@
 module;
 #include <cstdint>
 #include <cstdlib>
-export module cc.commands.backfill_sessions;
+export module loom.commands.backfill_sessions;
 
 import std;
 
-import cc.services.assistant_session_history;
+import loom.services.assistant_session_history;
 
 export namespace cc::commands::backfill_sessions {
 namespace fs = std::filesystem;

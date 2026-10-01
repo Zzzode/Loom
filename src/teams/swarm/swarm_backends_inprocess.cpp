@@ -7,11 +7,11 @@
 // unit that imports cc.teams.team_helpers, since mailbox I/O is the sole use.
 module;
 
-module cc.teams.swarm.backends;
+module loom.teams.swarm.backends;
 
 import std;
 
-import cc.teams.team_helpers;
+import loom.teams.team_helpers;
 
 namespace cc::utils::swarm_backends {
 

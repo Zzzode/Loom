@@ -2,11 +2,11 @@ module;
 #include <cstdlib>
 #include <cstdio>
 
-export module cc.tools.built_in_agents;
+export module loom.tools.built_in_agents;
 
 import std;
 
-import cc.tools.agent_runtime;
+import loom.tools.agent_runtime;
 
 export namespace cc::tools::built_in_agents {
 

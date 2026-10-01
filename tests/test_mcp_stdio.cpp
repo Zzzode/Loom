@@ -12,7 +12,7 @@
 #include <sys/types.h>
 
 import std;
-import cc.services.mcp.stdio;
+import loom.services.mcp.stdio;
 
 using namespace cc::services::mcp::stdio;
 using namespace std::chrono_literals;

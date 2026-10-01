@@ -27,13 +27,13 @@ module;
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 
-module cc.ui.app.app_dialog_registration;
+module loom.ui.app.app_dialog_registration;
 
 import std;
 
-import cc.ui.foundation.feature_dialog_protocol;
-import cc.ui.dialogs.feature_wizard_adapter;
-import cc.ui.dialogs.trust_dialog;
+import loom.ui.foundation.feature_dialog_protocol;
+import loom.ui.dialogs.feature_wizard_adapter;
+import loom.ui.dialogs.trust_dialog;
 
 namespace cc::ui::app_dialogs {
 

@@ -2,13 +2,13 @@
 module;
 #include <cstdlib>
 
-export module cc.services.api.streaming;
+export module loom.services.api.streaming;
 
 import std;
 
-import cc.serdes.json;
-import cc.utils.error;
-import cc.services.api.errors;
+import loom.serdes.json;
+import loom.utils.error;
+import loom.services.api.errors;
 
 export namespace cc::services::api {
 

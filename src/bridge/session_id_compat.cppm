@@ -3,7 +3,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.bridge.session_id_compat;
+export module loom.bridge.session_id_compat;
 
 import std;
 

@@ -10,14 +10,14 @@ module;
 #include <ctime>
 #include <cstdlib>
 
-export module cc.plugins.plugin_marketplace;
+export module loom.plugins.plugin_marketplace;
 
 import std;
 
-import cc.process.exec_sync;
-import cc.serdes.json;
-import cc.plugins.plugin_identifier;
-import cc.plugins.plugin_marketplace_rules;
+import loom.process.exec_sync;
+import loom.serdes.json;
+import loom.plugins.plugin_identifier;
+import loom.plugins.plugin_marketplace_rules;
 
 export namespace cc::utils::plugin_marketplace {
 

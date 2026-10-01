@@ -15,7 +15,7 @@ module;
 /// (no microtask scheduler in the migration); this is acceptable parity because
 /// the only observable difference is stack depth under deeply nested sends,
 /// which the MCP message loop does not drive.
-export module cc.services.mcp.in_process_transport;
+export module loom.services.mcp.in_process_transport;
 
 import std;
 export namespace cc::services::mcp {

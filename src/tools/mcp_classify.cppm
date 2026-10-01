@@ -2,7 +2,7 @@ module;
 #include <cstddef>
 #include <cctype>
 
-export module cc.tools.mcp_classify;
+export module loom.tools.mcp_classify;
 
 import std;
 

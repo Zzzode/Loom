@@ -6,12 +6,12 @@ module;
 
 #include <cstdint> // global int64_t used unqualified; import std gives std::int64_t only
 
-module cc.services.mcp.client;
+module loom.services.mcp.client;
 
 import std;
 
-import cc.services.mcp.types;
-import cc.serdes.json;
+import loom.services.mcp.types;
+import loom.serdes.json;
 
 namespace cc::services::mcp {
 

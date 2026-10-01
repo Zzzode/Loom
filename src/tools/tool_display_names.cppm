@@ -7,7 +7,7 @@
 /// without duplicating the mapping in each caller.
 module;
 
-export module cc.tools.tool_display_names;
+export module loom.tools.tool_display_names;
 
 import std;
 

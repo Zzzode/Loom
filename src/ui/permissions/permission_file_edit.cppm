@@ -45,13 +45,13 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.permissions.permission_file_edit;
+export module loom.ui.permissions.permission_file_edit;
 
 import std;
 
-import cc.ui.visual.file_edit_tool_diff;
-import cc.ui.permissions.components;
-import cc.fs.edit.file_edit;
+import loom.ui.visual.file_edit_tool_diff;
+import loom.ui.permissions.components;
+import loom.fs.edit.file_edit;
 
 export namespace cc::ui::permissions::file_edit {
 

@@ -22,12 +22,12 @@ module;
 
 #include <cstdlib>
 #include <cstdint>
-export module cc.services.analytics;
+export module loom.services.analytics;
 
 import std;
 
-import cc.serdes.json;
-import cc.platform.xdg;
+import loom.serdes.json;
+import loom.platform.xdg;
 
 export namespace cc::services::analytics {
 

@@ -7,11 +7,11 @@ module;
 
 #include <cstdint>
 
-export module cc.coordinator.swarm;
+export module loom.coordinator.swarm;
 
 import std;
 
-import cc.types.types;
+import loom.types.types;
 
 export namespace cc::core {
 

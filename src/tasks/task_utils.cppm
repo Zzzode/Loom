@@ -3,7 +3,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.tasks.support;
+export module loom.tasks.support;
 
 import std;
 

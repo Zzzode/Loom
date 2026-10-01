@@ -57,12 +57,12 @@ module;
 ///   4. Workflow (debug, simplify, skillify, self-unstuck, stuck, loop, batch)
 ///   6. Integration (loom-api, loom-api-content, loom-in-chrome)
 
-export module cc.skills.bundled;
+export module loom.skills.bundled;
 
 import std;
 
-import cc.skills.skill;
-import cc.skills.load_skills_dir;
+import loom.skills.skill;
+import loom.skills.load_skills_dir;
 
 // ---------------------------------------------------------------------------
 // Root-level skill modules (imported + re-registered in BundledSkills)
@@ -73,34 +73,34 @@ import cc.skills.load_skills_dir;
 // the BundledSkills registry below uses the BUNDLED submodule versions
 // (make_bundled_*_skill factories) for TS parity.
 // ---------------------------------------------------------------------------
-import cc.skills.loom_api;
-import cc.skills.loom_api_content;
-import cc.skills.lorem_ipsum;
-import cc.skills.remember;
-import cc.skills.simplify;
-import cc.skills.verify_content;
-import cc.skills.keybindings; // NOTE: simple shortcut sheet, separate from keybindings-help
+import loom.skills.loom_api;
+import loom.skills.loom_api_content;
+import loom.skills.lorem_ipsum;
+import loom.skills.remember;
+import loom.skills.simplify;
+import loom.skills.verify_content;
+import loom.skills.keybindings; // NOTE: simple shortcut sheet, separate from keybindings-help
 
 // ---------------------------------------------------------------------------
 // Bundled sub-modules (runtime impls from cpp_migration/src/skills/bundled/)
 // ---------------------------------------------------------------------------
-import cc.skills.bundled.stuck;      // runtime: detect_stuck_pattern, get_stuck_skill_manifest
-import cc.skills.bundled.loom_in_chrome;
-import cc.skills.bundled.skill_keybindings;
+import loom.skills.bundled.stuck;      // runtime: detect_stuck_pattern, get_stuck_skill_manifest
+import loom.skills.bundled.loom_in_chrome;
+import loom.skills.bundled.skill_keybindings;
 
 // -- S4: 4 tool-type bundled skill submodules (Phase 2, S4 audit) --
 // debug:    5-type failure classifier + regex error extractor + ranked
 //           hypothesis + verify/fix loop (delegates to tools; NO popen)
-import cc.skills.bundled.debug;
+import loom.skills.bundled.debug;
 // loop:     structured iteration w/ stop_condition (regex/implicit),
 //           max_iter, sleep, timeout (delegates to query_engine; NO popen)
-import cc.skills.bundled.loop;
+import loom.skills.bundled.loop;
 // skillify: full TS-parity 4-phase meta-skill creator
 //           (session analysis → interview → SKILL.md → confirm+write)
-import cc.skills.bundled.skillify;
+import loom.skills.bundled.skillify;
 // update-config: full TS-parity settings + hooks docs + 7-step
 //                hook verification flow (config I/O → cc.config modules)
-import cc.skills.bundled.update_config;
+import loom.skills.bundled.update_config;
 
 export namespace cc::skills {
 

@@ -9,12 +9,12 @@ module;
 #include <signal.h>
 #include <sys/types.h>
 
-export module cc.process.process;
+export module loom.process.process;
 
 import std;
 
-import cc.utils.error;
-import cc.process.async;
+import loom.utils.error;
+import loom.process.async;
 
 export namespace cc::utils::process {
 

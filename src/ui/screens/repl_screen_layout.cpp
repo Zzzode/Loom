@@ -9,20 +9,20 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-module cc.ui.screens.repl_screen;
+module loom.ui.screens.repl_screen;
 
 import std;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.messages_store;
-import cc.ui.chrome.ink_utils;
-import cc.platform.terminal_helpers;
-import cc.ui.chrome.fullscreen_layout;
-import cc.ui.foundation.logo_v2;
-import cc.ui.features.teams.live_teammates;
-import cc.ui.prompt.prompt_input_footer;
-import cc.ui.messages.virtual_list;
-import cc.ui.visual.markdown;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;
+import loom.ui.chrome.ink_utils;
+import loom.platform.terminal_helpers;
+import loom.ui.chrome.fullscreen_layout;
+import loom.ui.foundation.logo_v2;
+import loom.ui.features.teams.live_teammates;
+import loom.ui.prompt.prompt_input_footer;
+import loom.ui.messages.virtual_list;
+import loom.ui.visual.markdown;
 
 namespace cc::ui::repl_screen {
 using namespace ftxui;

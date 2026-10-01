@@ -12,12 +12,12 @@ module;
 #include <cctype>
 #include <cstddef>
 
-export module cc.tools.agent_color_manager;
+export module loom.tools.agent_color_manager;
 
 import std;
 
-import cc.teams.swarm.backends;
-import cc.teams.swarm.helpers;
+import loom.teams.swarm.backends;
+import loom.teams.swarm.helpers;
 
 export namespace cc::tools::agent_color_manager {
 

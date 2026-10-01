@@ -18,14 +18,14 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.widgets.text_input_widget;
+export module loom.ui.widgets.text_input_widget;
 
 import std;
 
-import cc.parsing.highlight.text_highlighting;
-import cc.ui.prompt.combined_highlights;
-import cc.ui.prompt.placeholder_cascade;  // P1: RenderPlaceholder helper
-import cc.ui.foundation.ui_types;  // canonical VimMode
+import loom.parsing.highlight.text_highlighting;
+import loom.ui.prompt.combined_highlights;
+import loom.ui.prompt.placeholder_cascade;  // P1: RenderPlaceholder helper
+import loom.ui.foundation.ui_types;  // canonical VimMode
 
 export namespace cc::ui::text_input_widget {
 using namespace ftxui;

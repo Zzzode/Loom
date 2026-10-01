@@ -15,31 +15,31 @@
 
 // Import our core modules
 import std;
-import cc.query.query_engine;
-import cc.types.types;
-import cc.tools.tool;
-import cc.tools.agent_runtime;
-import cc.tools.runtime_registry;
-import cc.hooks.tool_permissions;
-import cc.hooks.lifecycle_hooks;
-import cc.types.command;
-import cc.commands.command;
-import cc.commands.registry;
-import cc.commands.mcp.core_settings_loader;
-import cc.orchestration.runtime_backends;
-import cc.constants.product;
-import cc.services.api.session_ingress;
-import cc.session.app_storage;
-import cc.serdes.json;
-import cc.net.http.http;
-import cc.teams.swarm.backends;
-import cc.teams.team_helpers;
-import cc.teams.swarm.helpers;
-import cc.session.history;
-import cc.daemon.daemon_server;
-import cc.server.server_main;
-import cc.cli.websocket_transport;
-import cc.config.settings;
+import loom.query.query_engine;
+import loom.types.types;
+import loom.tools.tool;
+import loom.tools.agent_runtime;
+import loom.tools.runtime_registry;
+import loom.hooks.tool_permissions;
+import loom.hooks.lifecycle_hooks;
+import loom.types.command;
+import loom.commands.command;
+import loom.commands.registry;
+import loom.commands.mcp.core_settings_loader;
+import loom.orchestration.runtime_backends;
+import loom.constants.product;
+import loom.services.api.session_ingress;
+import loom.session.app_storage;
+import loom.serdes.json;
+import loom.net.http.http;
+import loom.teams.swarm.backends;
+import loom.teams.team_helpers;
+import loom.teams.swarm.helpers;
+import loom.session.history;
+import loom.daemon.daemon_server;
+import loom.server.server_main;
+import loom.cli.websocket_transport;
+import loom.config.settings;
 
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 namespace fs = std::filesystem;

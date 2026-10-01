@@ -20,10 +20,10 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.migrations.concrete;
-import cc.migrations.migration_runner;
-import cc.migrations.schema_versions;
-import cc.serdes.json;
+import loom.migrations.concrete;
+import loom.migrations.migration_runner;
+import loom.migrations.schema_versions;
+import loom.serdes.json;
 
 namespace fs = std::filesystem;
 namespace concrete = cc::migrations::concrete;

@@ -1,7 +1,7 @@
 // SleepTool - Proactive mode waiting with cancellation support
 module;
 
-export module cc.tools.sleep;
+export module loom.tools.sleep;
 
 import std;
 

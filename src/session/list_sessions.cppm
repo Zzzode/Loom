@@ -2,7 +2,7 @@ module;
 #include <cstddef>
 #include <cstdlib>
 
-export module cc.session.list_sessions;
+export module loom.session.list_sessions;
 
 import std;
 

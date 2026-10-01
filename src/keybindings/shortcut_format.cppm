@@ -9,12 +9,12 @@
 module;
 
 
-export module cc.keybindings.shortcut_format;
+export module loom.keybindings.shortcut_format;
 
 import std;
 
-import cc.keybindings.schema;
-import cc.keybindings.defaults;
+import loom.keybindings.schema;
+import loom.keybindings.defaults;
 
 export namespace cc::keybindings {
 

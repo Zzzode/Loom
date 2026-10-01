@@ -6,13 +6,13 @@ module;
 
 #include <cstdint>
 
-export module cc.commands.config;
+export module loom.commands.config;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.config.config;
+import loom.types.types;
+import loom.commands.command;
+import loom.config.config;
 
 export namespace cc::commands {
 

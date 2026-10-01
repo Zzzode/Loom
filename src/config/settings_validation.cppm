@@ -3,7 +3,7 @@ module;
 #include <cctype>
 #include <cstdlib>
 
-export module cc.config.settings_validation;
+export module loom.config.settings_validation;
 
 import std;
 

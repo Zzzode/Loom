@@ -6,12 +6,12 @@ module;
 
 #include <cstdint>
 
-export module cc.session.history;
+export module loom.session.history;
 
 import std;
 
-import cc.types.types;
-import cc.serdes.json;
+import loom.types.types;
+import loom.serdes.json;
 
 export namespace cc::core {
 

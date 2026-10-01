@@ -7,59 +7,59 @@
 /// compile time — catching the drift before it reaches review.
 #include <type_traits>
 
-import cc.sdk.core_schemas;
-import cc.sdk.runtime_types;
+import loom.sdk.core_schemas;
+import loom.sdk.runtime_types;
 
 // Canonical type modules (for the right-hand side of each is_same_v).
-import cc.config.settings;
-import cc.tools.agent_runtime;
-import cc.model.effort;
+import loom.config.settings;
+import loom.tools.agent_runtime;
+import loom.model.effort;
 
 // ── core_schemas CONVERGE aliases ───────────────────────────────────────────
 
 static_assert(
-    std::is_same_v<cc::sdk::core_schemas::ConfigScope,
-                   cc::config::SettingsScope>,
-    "cc::sdk::core_schemas::ConfigScope must alias cc::config::SettingsScope");
+    std::is_same_v<loom::sdk::core_schemas::ConfigScope,
+                   loom::config::SettingsScope>,
+    "loom::sdk::core_schemas::ConfigScope must alias loom::config::SettingsScope");
 
 static_assert(
-    std::is_same_v<cc::sdk::core_schemas::SettingSource,
-                   cc::config::SettingsScope>,
-    "cc::sdk::core_schemas::SettingSource must alias cc::config::SettingsScope");
+    std::is_same_v<loom::sdk::core_schemas::SettingSource,
+                   loom::config::SettingsScope>,
+    "loom::sdk::core_schemas::SettingSource must alias loom::config::SettingsScope");
 
 static_assert(
-    std::is_same_v<cc::sdk::core_schemas::AgentDefinition,
-                   cc::tools::agent_runtime::AgentDefinition>,
-    "cc::sdk::core_schemas::AgentDefinition must alias "
-    "cc::tools::agent_runtime::AgentDefinition");
+    std::is_same_v<loom::sdk::core_schemas::AgentDefinition,
+                   loom::tools::agent_runtime::AgentDefinition>,
+    "loom::sdk::core_schemas::AgentDefinition must alias "
+    "loom::tools::agent_runtime::AgentDefinition");
 
 // ── runtime_types CONVERGE aliases ──────────────────────────────────────────
 
 static_assert(
-    std::is_same_v<cc::sdk::runtime::EffortLevel,
-                   cc::utils::EffortLevel>,
-    "cc::sdk::runtime::EffortLevel must alias cc::utils::EffortLevel");
+    std::is_same_v<loom::sdk::runtime::EffortLevel,
+                   loom::utils::EffortLevel>,
+    "loom::sdk::runtime::EffortLevel must alias loom::utils::EffortLevel");
 
 // ── core_types re-exports resolve through the aliases ───────────────────────
 
-import cc.sdk.core_types;
+import loom.sdk.core_types;
 
 static_assert(
-    std::is_same_v<cc::sdk::core_types::ConfigScope,
-                   cc::config::SettingsScope>,
-    "cc::sdk::core_types::ConfigScope must resolve to cc::config::SettingsScope");
+    std::is_same_v<loom::sdk::core_types::ConfigScope,
+                   loom::config::SettingsScope>,
+    "loom::sdk::core_types::ConfigScope must resolve to loom::config::SettingsScope");
 
 static_assert(
-    std::is_same_v<cc::sdk::core_types::SettingSource,
-                   cc::config::SettingsScope>,
-    "cc::sdk::core_types::SettingSource must resolve to "
-    "cc::config::SettingsScope");
+    std::is_same_v<loom::sdk::core_types::SettingSource,
+                   loom::config::SettingsScope>,
+    "loom::sdk::core_types::SettingSource must resolve to "
+    "loom::config::SettingsScope");
 
 static_assert(
-    std::is_same_v<cc::sdk::core_types::AgentDefinition,
-                   cc::tools::agent_runtime::AgentDefinition>,
-    "cc::sdk::core_types::AgentDefinition must resolve to "
-    "cc::tools::agent_runtime::AgentDefinition");
+    std::is_same_v<loom::sdk::core_types::AgentDefinition,
+                   loom::tools::agent_runtime::AgentDefinition>,
+    "loom::sdk::core_types::AgentDefinition must resolve to "
+    "loom::tools::agent_runtime::AgentDefinition");
 
 // All checks are compile-time (static_assert). The test executable links
 // gtest_main so the linker is satisfied; no runtime tests are needed.

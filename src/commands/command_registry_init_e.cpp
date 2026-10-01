@@ -13,9 +13,9 @@
 /// version).  Loading all of those BMIs in a single translation unit would
 /// blow past clang's 31-bit SourceLocation budget; keeping them in their
 /// own impl unit bounds the per-TU footprint.
-module cc.commands.registry;
+module loom.commands.registry;
 
-import cc.commands.runtime_surface_commands;
+import loom.commands.runtime_surface_commands;
 
 namespace cc::commands {
 

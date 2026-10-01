@@ -2,7 +2,7 @@ module;
 
 #include <cctype>
 
-export module cc.process.shell.shell_rule_matching;
+export module loom.process.shell.shell_rule_matching;
 
 import std;
 

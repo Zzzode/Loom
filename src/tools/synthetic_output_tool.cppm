@@ -3,7 +3,7 @@ module;
 #include <cstddef>
 
 
-export module cc.tools.synthetic_output_tool;
+export module loom.tools.synthetic_output_tool;
 
 import std;
 

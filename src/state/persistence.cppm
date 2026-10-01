@@ -13,13 +13,13 @@ module;
 #include <fcntl.h>
 #include <cstddef>
 
-export module cc.state.persistence;
+export module loom.state.persistence;
 
 import std;
 
-import cc.state.app_state;
-import cc.serdes.json;
-import cc.utils.error;
+import loom.state.app_state;
+import loom.serdes.json;
+import loom.utils.error;
 
 export namespace cc::state::persistence {
 

@@ -15,13 +15,13 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <cctype>
 
-export module cc.ui.features.plugins.plugin_manage_panel;
+export module loom.ui.features.plugins.plugin_manage_panel;
 
 import std;
 
-import cc.commands.plugin_ui_data;
-import cc.commands.plugin_pagination_util;
-import cc.ui.widgets.custom_select;
+import loom.commands.plugin_ui_data;
+import loom.commands.plugin_pagination_util;
+import loom.ui.widgets.custom_select;
 
 export namespace cc::ui::plugins::plugin_manage_panel {
 using namespace ftxui;

@@ -1,8 +1,8 @@
-export module cc.commands.commit_push_pr;
+export module loom.commands.commit_push_pr;
 
 import std;
 
-import cc.process.exec_sync;
+import loom.process.exec_sync;
 
 export namespace cc::commands::commit_push_pr {
 struct CommandResponse { bool ok{true}; bool inject{false}; std::string message; };

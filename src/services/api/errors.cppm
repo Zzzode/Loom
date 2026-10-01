@@ -2,12 +2,12 @@
 module;
 #include <cstdlib>
 
-export module cc.services.api.errors;
+export module loom.services.api.errors;
 
 import std;
 
-import cc.services.api.models;
-import cc.serdes.json;
+import loom.services.api.models;
+import loom.serdes.json;
 
 export namespace cc::services::api::errors {
 

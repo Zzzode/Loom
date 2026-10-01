@@ -6,13 +6,13 @@
 // hazard: the two must move together and stay byte-identical).
 module;
 
-module cc.orchestration.runtime_backends;
+module loom.orchestration.runtime_backends;
 
 import std;
 
-import cc.types.tool_types;
-import cc.orchestration.tools.lsp;
-import cc.tools.runtime_registry;
+import loom.types.tool_types;
+import loom.orchestration.tools.lsp;
+import loom.tools.runtime_registry;
 
 namespace cc::orchestration::detail {
 

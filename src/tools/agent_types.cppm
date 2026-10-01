@@ -1,5 +1,5 @@
 
-export module cc.tools.agent_types;
+export module loom.tools.agent_types;
 
 import std;
 

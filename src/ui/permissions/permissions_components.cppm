@@ -20,11 +20,11 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.permissions.components;
+export module loom.ui.permissions.components;
 
 import std;
 
-import cc.security.permissions_engine;
+import loom.security.permissions_engine;
 
 export namespace cc::ui::permissions::components {
 using namespace ftxui;

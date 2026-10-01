@@ -6,13 +6,13 @@ module;
 #include <cstdint>
 #include <cstdlib>
 
-export module cc.session.app_storage;
+export module loom.session.app_storage;
 
 import std;
 
-import cc.serdes.json;
-import cc.utils.error;
-import cc.crypto.crypto;
+import loom.serdes.json;
+import loom.utils.error;
+import loom.crypto.crypto;
 
 export namespace cc::utils {
 

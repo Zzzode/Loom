@@ -31,11 +31,11 @@ module;
 #include <poll.h>
 #endif
 
-export module cc.ui.screens.doctor_screen;
+export module loom.ui.screens.doctor_screen;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 // Design-system tokens (shared with other screens)
 // Palette matches Pane / design-system/Pane.tsx + Doctor severity colors.

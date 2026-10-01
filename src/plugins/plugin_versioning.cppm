@@ -1,8 +1,8 @@
-export module cc.plugins.plugin_versioning;
+export module loom.plugins.plugin_versioning;
 
 import std;
 
-import cc.crypto.crypto;
+import loom.crypto.crypto;
 
 export namespace cc::utils::plugin_versioning {
 

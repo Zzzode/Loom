@@ -12,12 +12,12 @@ module;
 #include <cstddef>
 #include <cstdio>
 
-export module cc.skills.bundled.loop;
+export module loom.skills.bundled.loop;
 
 import std;
 
-import cc.skills.skill;
-import cc.skills.load_skills_dir;
+import loom.skills.skill;
+import loom.skills.load_skills_dir;
 
 export namespace cc::skills::bundled {
 

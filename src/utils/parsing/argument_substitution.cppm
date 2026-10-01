@@ -2,7 +2,7 @@ module;
 
 #include <cctype>
 
-export module cc.parsing.cli.argument_substitution;
+export module loom.parsing.cli.argument_substitution;
 
 import std;
 

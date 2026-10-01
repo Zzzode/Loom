@@ -5,7 +5,7 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.messages.message_compact_boundary;
+export module loom.ui.messages.message_compact_boundary;
 
 import std;
 

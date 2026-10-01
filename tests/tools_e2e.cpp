@@ -18,8 +18,8 @@
 #include <cstring>
 
 import std;
-import cc.tools.bash.impl;
-import cc.tools.files.impl;
+import loom.tools.bash.impl;
+import loom.tools.files.impl;
 
 using namespace cc::tools::bash::impl;
 using namespace cc::tools::files::impl;

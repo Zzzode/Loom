@@ -1,9 +1,9 @@
-export module cc.commands.mock_limits;
+export module loom.commands.mock_limits;
 
 import std;
-import cc.text.parse_int;
+import loom.text.parse_int;
 
-import cc.services.rate_limit.rate_limit_hook;
+import loom.services.rate_limit.rate_limit_hook;
 
 export namespace cc::commands::mock_limits {
 struct CommandResponse { bool ok{true}; std::string message; };

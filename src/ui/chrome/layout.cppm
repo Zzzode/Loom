@@ -6,11 +6,11 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.chrome.layout;
+export module loom.ui.chrome.layout;
 
 import std;
 
-import cc.ui.chrome.panels;
+import loom.ui.chrome.panels;
 
 export namespace cc::ui {
 

@@ -8,17 +8,17 @@ module;
 #include <ftxui/component/component.hpp>
 #include <cstddef>
 
-export module cc.ui.messages.message_tool_result;
+export module loom.ui.messages.message_tool_result;
 
 import std;
 
-import cc.types.types;
+import loom.types.types;
 // RFC 0002 F1 row 8: the ANSI/SGR -> FTXUI helpers (sgr_color_value_to_ftxui,
 // apply_sgr_run, ansi_to_ftxui_elements) moved to the chrome leaf
 // cc.ui.chrome.ansi_render; messages -> chrome is downward-legal.
-import cc.ui.chrome.ansi_render;
-import cc.ui.messages.message_components;  // for padding() Decorator
-import cc.ui.visual.markdown;                     // render_markdown() for natural-language tool results
+import loom.ui.chrome.ansi_render;
+import loom.ui.messages.message_components;  // for padding() Decorator
+import loom.ui.visual.markdown;                     // render_markdown() for natural-language tool results
 
 export namespace cc::ui::messages {
 

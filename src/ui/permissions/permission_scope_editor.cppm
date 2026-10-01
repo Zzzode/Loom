@@ -24,12 +24,12 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.permissions.scope_editor;
+export module loom.ui.permissions.scope_editor;
 
 import std;
 
-import cc.security.permissions_engine;
-import cc.ui.permissions.components;
+import loom.security.permissions_engine;
+import loom.ui.permissions.components;
 
 export namespace cc::ui::permissions::scope_editor {
 using namespace ftxui;

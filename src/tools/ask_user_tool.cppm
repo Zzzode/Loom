@@ -2,7 +2,7 @@
 module;
 #include <cstddef>
 
-export module cc.tools.ask_user;
+export module loom.tools.ask_user;
 
 import std;
 

@@ -24,7 +24,7 @@
 module;
 
 
-export module cc.ui.tools.registry;
+export module loom.ui.tools.registry;
 
 import std;
 

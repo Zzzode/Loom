@@ -6,11 +6,11 @@ module;
 /// @brief Inbound message processing and attachments
 
 
-export module cc.bridge.messages;
+export module loom.bridge.messages;
 
 import std;
 
-import cc.types.types;
+import loom.types.types;
 
 export namespace cc::bridge {
 

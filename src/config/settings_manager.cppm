@@ -6,15 +6,15 @@ module;
 #include <cstdlib>
 #include <cstdint>
 
-export module cc.config.settings_manager;
+export module loom.config.settings_manager;
 
 import std;
 
-import cc.serdes.json;
-import cc.config.settings_merge;
-import cc.config.settings_paths;
-import cc.config.settings_sources;
-import cc.config.settings_validation;
+import loom.serdes.json;
+import loom.config.settings_merge;
+import loom.config.settings_paths;
+import loom.config.settings_sources;
+import loom.config.settings_validation;
 
 export namespace cc::utils::settings_manager {
 

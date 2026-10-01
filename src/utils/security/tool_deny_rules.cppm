@@ -12,7 +12,7 @@ module;
 
 #include <cctype>
 
-export module cc.security.tool_deny_rules;
+export module loom.security.tool_deny_rules;
 
 import std;
 

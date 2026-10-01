@@ -24,13 +24,13 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.features.agents.agent_shared_widgets;
+export module loom.ui.features.agents.agent_shared_widgets;
 
 import std;
 
-import cc.teams.swarm.backends;
-import cc.tools.agent_color_manager;
-import cc.ui.widgets.spinner_animations;
+import loom.teams.swarm.backends;
+import loom.tools.agent_color_manager;
+import loom.ui.widgets.spinner_animations;
 
 export namespace cc::ui::agents::shared {
 using namespace ftxui;

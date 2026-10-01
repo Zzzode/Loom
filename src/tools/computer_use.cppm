@@ -9,7 +9,7 @@ module;
 #include <cstddef>
 #endif
 
-export module cc.tools.computer_use;
+export module loom.tools.computer_use;
 
 import std;
 

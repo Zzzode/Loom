@@ -9,17 +9,17 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/string.hpp>
 
-module cc.ui.screens.repl_screen;
+module loom.ui.screens.repl_screen;
 
 import std;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.task_view_store;
-import cc.ui.screens.chrome_store;
-import cc.constants.spinner_verbs;
-import cc.ui.foundation.design_logo;
-import cc.ui.foundation.logo;
-import cc.ui.foundation.logo_v2;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.task_view_store;
+import loom.ui.screens.chrome_store;
+import loom.constants.spinner_verbs;
+import loom.ui.foundation.design_logo;
+import loom.ui.foundation.logo;
+import loom.ui.foundation.logo_v2;
 
 namespace cc::ui::repl_screen {
 using namespace ftxui;

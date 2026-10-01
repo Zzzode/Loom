@@ -1,4 +1,4 @@
-export module cc.ui.messages.error_message;
+export module loom.ui.messages.error_message;
 
 import std;
 

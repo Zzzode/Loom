@@ -4,7 +4,7 @@ module;
 
 #include <ctime>
 
-export module cc.diagnostics.log;
+export module loom.diagnostics.log;
 
 import std;
 

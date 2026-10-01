@@ -5,20 +5,20 @@
 // flattening, and the detached post-turn memory-extraction sub-engine.
 module;
 
-module cc.query.query_engine;
+module loom.query.query_engine;
 
 import std;
 
-import cc.types.types;
-import cc.utils.error;
-import cc.serdes.json;
+import loom.types.types;
+import loom.utils.error;
+import loom.serdes.json;
 // ToolRegistry (used by the memory-extraction thread) arrives through the
 // primary interface's retained `import cc.tools.tool` — visible to every
 // impl unit of this module; no direct import needed here.
-import cc.session.storage;
-import cc.memdir.paths;
-import cc.services.extract_memories;
-import cc.diagnostics.debug;
+import loom.session.storage;
+import loom.memdir.paths;
+import loom.services.extract_memories;
+import loom.diagnostics.debug;
 
 namespace cc::core {
 

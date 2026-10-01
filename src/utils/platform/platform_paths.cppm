@@ -1,4 +1,4 @@
-export module cc.platform.platform_paths;
+export module loom.platform.platform_paths;
 
 import std;
 

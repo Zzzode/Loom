@@ -4,7 +4,7 @@
 module;
 
 
-export module cc.constants.spinner_verbs;
+export module loom.constants.spinner_verbs;
 
 import std;
 

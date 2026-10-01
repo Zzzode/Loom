@@ -10,12 +10,12 @@
 // screens side (cc.ui.screens.doctor_dialog_registration) so that the dialogs
 // area no longer imports screens (dialogs -> screens was a UI9 back edge).
 // app -> screens is downward-legal (app rank 11 > screens rank 10).
-module cc.ui.app.app_dialog_registration;
+module loom.ui.app.app_dialog_registration;
 
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.default_renderers;
-import cc.ui.dialogs.plugin_dialog_renderer;
-import cc.ui.screens.doctor_dialog_registration;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.default_renderers;
+import loom.ui.dialogs.plugin_dialog_renderer;
+import loom.ui.screens.doctor_dialog_registration;
 
 namespace cc::ui::app_dialogs {
 void register_default_dialog_renderers(

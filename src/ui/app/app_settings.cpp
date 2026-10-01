@@ -3,12 +3,12 @@
 module;
 
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
 import std;
 
-import cc.config.settings_manager;
-import cc.ui.screens.repl_state;
+import loom.config.settings_manager;
+import loom.ui.screens.repl_state;
 
 namespace cc::ui {
 

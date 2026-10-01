@@ -4,13 +4,13 @@
 module;
 
 
-export module cc.commands.desktop;
+export module loom.commands.desktop;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.process.exec_sync;
+import loom.types.types;
+import loom.commands.command;
+import loom.process.exec_sync;
 
 // Module-internal helpers (module linkage; intentionally not exported).
 namespace cc::commands {

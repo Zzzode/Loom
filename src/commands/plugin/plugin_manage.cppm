@@ -18,13 +18,13 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.commands.plugin_manage;
+export module loom.commands.plugin_manage;
 
 import std;
 
-import cc.commands.plugin_helpers;
-import cc.plugins.plugin_validation;
-import cc.plugins.plugin_manager;
+import loom.commands.plugin_helpers;
+import loom.plugins.plugin_validation;
+import loom.plugins.plugin_manager;
 
 export namespace cc::commands::plugin_manage {
 

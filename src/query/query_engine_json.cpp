@@ -4,12 +4,12 @@
 // surviving declarations of these members name JsonMutVal/JsonMutDoc.
 module;
 
-module cc.query.query_engine;
+module loom.query.query_engine;
 
 import std;
 
-import cc.types.types;
-import cc.serdes.json;
+import loom.types.types;
+import loom.serdes.json;
 
 namespace cc::core {
 

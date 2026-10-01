@@ -34,19 +34,19 @@
 //   - exposes `resolve_model_id(...)` for provider-specific model string.
 module;
 
-export module cc.services.auth.provider_selector;
+export module loom.services.auth.provider_selector;
 
 import std;
 
-import cc.services.auth.sigv4;
-import cc.services.auth.gcp_adc;
-import cc.services.auth.azure_credential;
-import cc.services.api.models;
+import loom.services.auth.sigv4;
+import loom.services.auth.gcp_adc;
+import loom.services.auth.azure_credential;
+import loom.services.api.models;
 
-import cc.platform.env.env;
-import cc.utils.error;
-import cc.net.http.http_encoding;
-import cc.model.providers;
+import loom.platform.env.env;
+import loom.utils.error;
+import loom.net.http.http_encoding;
+import loom.model.providers;
 
 export namespace cc::services::auth::byoc {
 

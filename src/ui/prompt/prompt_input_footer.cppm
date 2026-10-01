@@ -43,7 +43,7 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.prompt.prompt_input_footer;
+export module loom.ui.prompt.prompt_input_footer;
 
 import std;
 
@@ -51,13 +51,13 @@ import std;
 // RFC 0002 F1 row 8: lives in the chrome leaf cc.ui.chrome.ansi_render (the
 // prompt -> messages back edge through message_tool_result is severed; the
 // function stays in cc::ui::messages namespace, reached via the msgs alias).
-import cc.ui.chrome.ansi_render;
+import loom.ui.chrome.ansi_render;
 // P0-1: palette tokens (bash_border / prompt_border color resolution).
-import cc.ui.foundation.design_tokens;
+import loom.ui.foundation.design_tokens;
 // P0-1: active theme provider for bash-border consistency (BUG-3 fix).
-import cc.ui.foundation.theme_provider;
+import loom.ui.foundation.theme_provider;
 // Unified canonical PromptInputMode enum (replaces local 5-value definition).
-import cc.ui.foundation.ui_types;
+import loom.ui.foundation.ui_types;
 
 export namespace cc::ui::prompt::footer {
 

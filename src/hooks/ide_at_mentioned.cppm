@@ -1,5 +1,5 @@
 
-export module cc.hooks.ide_at_mentioned;
+export module loom.hooks.ide_at_mentioned;
 
 import std;
 

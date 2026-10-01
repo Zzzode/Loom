@@ -4,12 +4,12 @@ module;
 #include <cctype>
 #include <cstdio>
 
-export module cc.tools.workflow;
+export module loom.tools.workflow;
 
 import std;
 
-import cc.serdes.json;
-import cc.process.bash.bash_execution;
+import loom.serdes.json;
+import loom.process.bash.bash_execution;
 
 export namespace cc::tools {
 

@@ -20,24 +20,24 @@ module;
 
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.screens.repl_state;
+export module loom.ui.screens.repl_state;
 
 import std;
 
-import cc.types.types;
-import cc.ui.foundation.ui_types;                 // cc::ui::common::PromptInputMode
-import cc.ui.dialogs.system;                     // DialogQueue / payloads
-import cc.ui.prompt.prompt_input_footer;         // footer::* projection types
-import cc.ui.screens.messages_store;             // MessagesStore / MessageDisplayEntry
-import cc.ui.screens.prompt_store;               // PromptStore / StashedPrompt
-import cc.ui.screens.task_view_store;            // TaskViewStore / SpinnerMode
-import cc.ui.screens.permission_store;           // PermissionStore / PermissionRequestInfo
-import cc.ui.screens.dialog_store;               // DialogStore / dialog handles
-import cc.ui.screens.mcp_status_store;           // McpStatusStore
-import cc.ui.screens.chrome_store;               // ChromeStore / StatusBarData
-import cc.ui.features.agents.agent_cards;        // AgentCardData
-import cc.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
-import cc.ui.visual.markdown;                    // StreamingMarkdown (ptr field)
+import loom.types.types;
+import loom.ui.foundation.ui_types;                 // cc::ui::common::PromptInputMode
+import loom.ui.dialogs.system;                     // DialogQueue / payloads
+import loom.ui.prompt.prompt_input_footer;         // footer::* projection types
+import loom.ui.screens.messages_store;             // MessagesStore / MessageDisplayEntry
+import loom.ui.screens.prompt_store;               // PromptStore / StashedPrompt
+import loom.ui.screens.task_view_store;            // TaskViewStore / SpinnerMode
+import loom.ui.screens.permission_store;           // PermissionStore / PermissionRequestInfo
+import loom.ui.screens.dialog_store;               // DialogStore / dialog handles
+import loom.ui.screens.mcp_status_store;           // McpStatusStore
+import loom.ui.screens.chrome_store;               // ChromeStore / StatusBarData
+import loom.ui.features.agents.agent_cards;        // AgentCardData
+import loom.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
+import loom.ui.visual.markdown;                    // StreamingMarkdown (ptr field)
 
 export namespace cc::ui::repl_screen {
 using namespace ftxui;

@@ -1,21 +1,21 @@
 /// @file command_registry_init_d.cpp
 /// @brief Group D registration: system commands (permissions, plugin, etc.)
-module cc.commands.registry;
+module loom.commands.registry;
 
-import cc.commands.permissions_cmd;
-import cc.commands.plugin_cmd;
-import cc.commands.usage;
-import cc.commands.branch;
-import cc.commands.chrome;
-import cc.commands.copy_cmd;
-import cc.commands.desktop;
-import cc.commands.export_cmd;
-import cc.commands.good_loom;
-import cc.commands.mobile;
-import cc.commands.stickers;
-import cc.commands.tasks_cmd;
-import cc.commands.skills_cmd;
-import cc.commands.keybindings_cmd;
+import loom.commands.permissions_cmd;
+import loom.commands.plugin_cmd;
+import loom.commands.usage;
+import loom.commands.branch;
+import loom.commands.chrome;
+import loom.commands.copy_cmd;
+import loom.commands.desktop;
+import loom.commands.export_cmd;
+import loom.commands.good_loom;
+import loom.commands.mobile;
+import loom.commands.stickers;
+import loom.commands.tasks_cmd;
+import loom.commands.skills_cmd;
+import loom.commands.keybindings_cmd;
 
 namespace cc::commands {
 

@@ -1,4 +1,4 @@
-export module cc.services.api.usage;
+export module loom.services.api.usage;
 
 import std;
 

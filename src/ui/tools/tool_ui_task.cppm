@@ -13,11 +13,11 @@
 module;
 
 
-export module cc.ui.tools.task;
+export module loom.ui.tools.task;
 
 import std;
 
-import cc.ui.tools.registry;
+import loom.ui.tools.registry;
 
 export namespace cc::ui::tools::task_ui {
 

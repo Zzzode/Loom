@@ -16,19 +16,19 @@ module;
 #include <string>
 #include <variant>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
-import cc.query.query_engine;
-import cc.commands.registry;
-import cc.commands.command;
-import cc.session.app_storage;
-import cc.hooks.lifecycle_hooks;
+import loom.query.query_engine;
+import loom.commands.registry;
+import loom.commands.command;
+import loom.session.app_storage;
+import loom.hooks.lifecycle_hooks;
 
-import cc.types.types;
-import cc.hooks.lifecycle_hooks;
-import cc.services.prompt_suggestion;
-import cc.ui.screens.repl_screen;
-import cc.ui.screens.repl_state;
+import loom.types.types;
+import loom.hooks.lifecycle_hooks;
+import loom.services.prompt_suggestion;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
 
 namespace cc::ui {
 

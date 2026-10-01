@@ -8,7 +8,7 @@ module;
 #include <cstddef>
 #include <cstdlib>
 
-export module cc.config.feature_flags;
+export module loom.config.feature_flags;
 
 import std;
 

@@ -27,7 +27,7 @@ module;
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 
-export module cc.ui.foundation.feature_dialog_protocol;
+export module loom.ui.foundation.feature_dialog_protocol;
 
 import std;
 

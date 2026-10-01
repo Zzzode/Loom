@@ -2,11 +2,11 @@
 /// @brief Simplify skill - code simplification and cleanup workflow.
 module;
 
-export module cc.skills.simplify;
+export module loom.skills.simplify;
 
 import std;
 
-import cc.skills.skill;
+import loom.skills.skill;
 
 export namespace cc::skills::simplify {
 

@@ -39,13 +39,13 @@ module;
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.dialogs.trust_dialog;
+export module loom.ui.dialogs.trust_dialog;
 
 import std;
 
-import cc.ui.dialogs.trust_utils;
-import cc.plugins.plugin;
-import cc.commands.plugin.plugin_trust;
+import loom.ui.dialogs.trust_utils;
+import loom.plugins.plugin;
+import loom.commands.plugin.plugin_trust;
 
 export namespace cc::ui::trust_dialog {
 

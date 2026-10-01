@@ -30,13 +30,13 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.messages.message_image;
+export module loom.ui.messages.message_image;
 
 import std;
 
-import cc.ui.messages.message_timestamp;
-import cc.media.image_store;
-import cc.platform.hyperlink;
+import loom.ui.messages.message_timestamp;
+import loom.media.image_store;
+import loom.platform.hyperlink;
 
 export namespace cc::ui::messages::image {
 

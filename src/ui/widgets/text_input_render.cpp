@@ -16,13 +16,13 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/screen/string.hpp>  // for string_width
 
-module cc.ui.widgets.text_input;
+module loom.ui.widgets.text_input;
 
 import std;
 
-import cc.text.parse_references;
-import cc.ui.prompt.prompt_paste_handler;
-import cc.ui.prompt.placeholder_cascade;
+import loom.text.parse_references;
+import loom.ui.prompt.prompt_paste_handler;
+import loom.ui.prompt.placeholder_cascade;
 
 namespace ui::components {
 

@@ -15,19 +15,19 @@
 #include "test_ui_helpers.h"
 
 import std;
-import cc.ui.app.app;
-import cc.ui.screens.repl_screen;
-import cc.ui.screens.repl_state;
-import cc.ui.screens.messages_store;
-import cc.commands.registry;
-import cc.query.query_engine;
-import cc.tools.tool;
-import cc.session.app_storage;
-import cc.ui.foundation.design_figures;
-import cc.ui.foundation.theme_provider;
-import cc.ui.widgets.all_components;
-import cc.ui.messages.user_text_message;
-import cc.ui.foundation.declared_cursor;
+import loom.ui.app.app;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;
+import loom.commands.registry;
+import loom.query.query_engine;
+import loom.tools.tool;
+import loom.session.app_storage;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.theme_provider;
+import loom.ui.widgets.all_components;
+import loom.ui.messages.user_text_message;
+import loom.ui.foundation.declared_cursor;
 
 namespace {
 namespace fs = std::filesystem;

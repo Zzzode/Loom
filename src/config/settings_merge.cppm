@@ -1,4 +1,4 @@
-export module cc.config.settings_merge;
+export module loom.config.settings_merge;
 
 import std;
 

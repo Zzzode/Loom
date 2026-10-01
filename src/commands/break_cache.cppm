@@ -1,7 +1,7 @@
 module;
 #include <cstdint>
 #include <cstdlib>
-export module cc.commands.break_cache;
+export module loom.commands.break_cache;
 
 import std;
 export namespace cc::commands::break_cache {

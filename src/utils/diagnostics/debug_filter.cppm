@@ -2,7 +2,7 @@ module;
 #include <cstdlib>
 #include <cstddef>
 
-export module cc.diagnostics.debug_filter;
+export module loom.diagnostics.debug_filter;
 
 import std;
 

@@ -3,7 +3,7 @@
 /// Rank-1 leaf: ToolInput/ToolOutputContent/ToolResult with zero cc.*
 /// imports; cc.tools.tool re-exports it so existing importers stay
 /// unchanged. has_field stays in cc.tools.tool (it needs cc.serdes.json).
-export module cc.types.tool_types;
+export module loom.types.tool_types;
 
 import std;
 

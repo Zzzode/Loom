@@ -30,7 +30,7 @@ module;
 #include <ftxui/component/event.hpp>
 #include <cstddef>
 
-export module cc.ui.widgets.custom_select;
+export module loom.ui.widgets.custom_select;
 
 import std;
 

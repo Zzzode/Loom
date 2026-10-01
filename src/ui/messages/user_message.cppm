@@ -1,4 +1,4 @@
-export module cc.ui.messages.user_message;
+export module loom.ui.messages.user_message;
 
 import std;
 
@@ -7,7 +7,7 @@ import std;
 // payloads — teammate / plan / agent-notify / memory / resource) also caps
 // displayed text at 10_000 chars.
 // TS REF: src/components/messages/UserPromptMessage.tsx lines 28-70.
-import cc.ui.messages.user_text_message;
+import loom.ui.messages.user_text_message;
 
 export namespace cc::ui::messages {
 

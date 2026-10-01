@@ -2,7 +2,7 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 
-export module cc.ui.widgets.pr_badge;
+export module loom.ui.widgets.pr_badge;
 
 import std;
 

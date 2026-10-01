@@ -5,7 +5,7 @@ module;
 #include <cctype>
 #include <cstdlib>
 
-export module cc.platform.env.env;
+export module loom.platform.env.env;
 
 import std;
 

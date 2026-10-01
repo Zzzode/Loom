@@ -15,22 +15,22 @@
 #include "test_ui_helpers.h"
 
 import std;
-import cc.ui.chrome.terminal;
-import cc.ui.foundation.theme_provider;
-import cc.ui.foundation.design_tokens;
-import cc.ui.widgets.components;
-import cc.ui.widgets.all_components;
-import cc.ui.widgets.passes;
-import cc.ui.features.grove;
-import cc.ui.features.plugins.lsp_recommendation_menu;
-import cc.ui.features.plugins.plugin_hint_menu;
-import cc.ui.foundation.declared_cursor;
-import cc.ui.chrome.panels;
-import cc.ui.visual.markdown;
-import cc.ui.prompt.prompt_input_footer;
-import cc.ui.prompt.placeholder_cascade;
-import cc.ui.foundation.design_figures;
-import cc.constants.constants;
+import loom.ui.chrome.terminal;
+import loom.ui.foundation.theme_provider;
+import loom.ui.foundation.design_tokens;
+import loom.ui.widgets.components;
+import loom.ui.widgets.all_components;
+import loom.ui.widgets.passes;
+import loom.ui.features.grove;
+import loom.ui.features.plugins.lsp_recommendation_menu;
+import loom.ui.features.plugins.plugin_hint_menu;
+import loom.ui.foundation.declared_cursor;
+import loom.ui.chrome.panels;
+import loom.ui.visual.markdown;
+import loom.ui.prompt.prompt_input_footer;
+import loom.ui.prompt.placeholder_cascade;
+import loom.ui.foundation.design_figures;
+import loom.constants.constants;
 
 namespace {
 namespace fs = std::filesystem;

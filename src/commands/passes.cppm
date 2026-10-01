@@ -4,12 +4,12 @@
 module;
 
 
-export module cc.commands.passes;
+export module loom.commands.passes;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
+import loom.types.types;
+import loom.commands.command;
 
 export namespace cc::commands {
 

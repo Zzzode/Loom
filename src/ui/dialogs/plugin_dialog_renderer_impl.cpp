@@ -18,16 +18,16 @@ module;
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 
-module cc.ui.dialogs.plugin_dialog_renderer;
+module loom.ui.dialogs.plugin_dialog_renderer;
 
 import std;
 
-import cc.ui.dialogs.system;
-import cc.ui.dialogs.plugin_dialog;
-import cc.commands.plugin.manage_plugins;
-import cc.commands.plugin_ui_data;
-import cc.commands.plugin_helpers;
-import cc.plugins.plugin_marketplace;
+import loom.ui.dialogs.system;
+import loom.ui.dialogs.plugin_dialog;
+import loom.commands.plugin.manage_plugins;
+import loom.commands.plugin_ui_data;
+import loom.commands.plugin_helpers;
+import loom.plugins.plugin_marketplace;
 
 namespace cc::ui::dialogs::plugin_dialog_renderer {
 

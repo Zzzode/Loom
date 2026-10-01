@@ -2,7 +2,7 @@ module;
 
 #include <cctype>
 
-export module cc.process.timeouts;
+export module loom.process.timeouts;
 
 import std;
 

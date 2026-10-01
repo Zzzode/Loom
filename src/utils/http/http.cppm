@@ -5,7 +5,7 @@ module;
 #include <cstdlib>
 #include <httplib.h>
 
-export module cc.net.http.http;
+export module loom.net.http.http;
 
 import std;
 

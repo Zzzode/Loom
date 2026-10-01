@@ -5,14 +5,14 @@
 // global /cost sync).
 module;
 
-module cc.query.query_engine;
+module loom.query.query_engine;
 
 import std;
 
-import cc.types.types;
-import cc.utils.error;
-import cc.hooks.lifecycle_hooks;
-import cc.constants.cost_tracker;
+import loom.types.types;
+import loom.utils.error;
+import loom.hooks.lifecycle_hooks;
+import loom.constants.cost_tracker;
 
 namespace cc::core {
 

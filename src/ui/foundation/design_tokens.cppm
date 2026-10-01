@@ -17,7 +17,7 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 
-export module cc.ui.foundation.design_tokens;
+export module loom.ui.foundation.design_tokens;
 
 import std;
 

@@ -9,14 +9,14 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.teams.swarm.helpers;
+export module loom.teams.swarm.helpers;
 
 import std;
 
-import cc.teams.swarm.backends;
-import cc.teams.team_helpers;
-import cc.serdes.json;
-import cc.fs.atomic_replace;
+import loom.teams.swarm.backends;
+import loom.teams.team_helpers;
+import loom.serdes.json;
+import loom.fs.atomic_replace;
 
 export namespace cc::utils::swarm_helpers {
 

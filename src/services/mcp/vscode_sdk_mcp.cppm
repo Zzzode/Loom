@@ -1,11 +1,11 @@
 module;
 #include <cstdlib>
 
-export module cc.services.mcp.vscode_sdk_mcp;
+export module loom.services.mcp.vscode_sdk_mcp;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::services::mcp {
 

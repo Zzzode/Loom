@@ -2,14 +2,14 @@
 // GrepTool - File content grep search
 module;
 
-export module cc.tools.grep;
+export module loom.tools.grep;
 
 import std;
 
-import cc.fs.file;
-import cc.utils.error;
-import cc.tools.tool;
-import cc.serdes.json;
+import loom.fs.file;
+import loom.utils.error;
+import loom.tools.tool;
+import loom.serdes.json;
 
 export namespace cc::tools::grep {
 

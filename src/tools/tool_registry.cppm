@@ -2,12 +2,12 @@
 module;
 
 
-export module cc.tools.registry;
+export module loom.tools.registry;
 
 import std;
 
-import cc.tools.tool;
-import cc.tools.runtime_registry;
+import loom.tools.tool;
+import loom.tools.runtime_registry;
 
 export namespace cc::tools::registry {
 

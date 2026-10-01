@@ -4,8 +4,8 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.skills.skill;
-import cc.skills.bundled;
+import loom.skills.skill;
+import loom.skills.bundled;
 
 namespace fs = std::filesystem;
 

@@ -12,11 +12,11 @@
 module;
 
 
-export module cc.ui.tools.lsp;
+export module loom.ui.tools.lsp;
 
 import std;
 
-import cc.ui.tools.registry;
+import loom.ui.tools.registry;
 
 export namespace cc::ui::tools::lsp_ui {
 

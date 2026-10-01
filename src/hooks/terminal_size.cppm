@@ -8,7 +8,7 @@ module;
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-export module cc.hooks.terminal_size;
+export module loom.hooks.terminal_size;
 
 import std;
 

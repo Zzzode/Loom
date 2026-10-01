@@ -4,12 +4,12 @@
 module;
 
 
-export module cc.commands.ctx_viz;
+export module loom.commands.ctx_viz;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
+import loom.types.types;
+import loom.commands.command;
 
 export namespace cc::commands {
 

@@ -14,7 +14,7 @@
 // StickyPrompt) recreate no up-edge.
 module;
 
-export module cc.ui.screens.messages_store;
+export module loom.ui.screens.messages_store;
 
 import std;
 
@@ -22,10 +22,10 @@ import std;
 // via leading-`::` qualified names `::cc::core::ImageBlock`, which the
 // dead-import detector's prefix-chain cannot resolve — same blind spot as
 // repl_screen.cppm's identical import, hence the keep-import marker.
-import cc.types.types;                  // arch-check: keep-import
-import cc.ui.messages.messages_list;    // UnseenDivider
-import cc.ui.messages.virtual_list;     // JumpHandle / VirtualListState
-import cc.ui.chrome.fullscreen_layout;  // StickyPrompt
+import loom.types.types;                  // arch-check: keep-import
+import loom.ui.messages.messages_list;    // UnseenDivider
+import loom.ui.messages.virtual_list;     // JumpHandle / VirtualListState
+import loom.ui.chrome.fullscreen_layout;  // StickyPrompt
 
 export namespace cc::ui::repl_screen {
 

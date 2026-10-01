@@ -29,15 +29,15 @@
 #include <httplib.h>
 
 import std;
-import cc.crypto.crypto;
-import cc.platform.env.env;
-import cc.net.http.http_encoding;
-import cc.serdes.json;
+import loom.crypto.crypto;
+import loom.platform.env.env;
+import loom.net.http.http_encoding;
+import loom.serdes.json;
 
-import cc.services.auth.sigv4;
-import cc.services.auth.gcp_adc;
-import cc.services.auth.azure_credential;
-import cc.services.auth.provider_selector;
+import loom.services.auth.sigv4;
+import loom.services.auth.gcp_adc;
+import loom.services.auth.azure_credential;
+import loom.services.auth.provider_selector;
 
 // ---------------------------------------------------------------------------
 // Test helpers.

@@ -10,7 +10,7 @@ module;
 #include <objbase.h>
 #endif
 
-export module cc.fs.path;
+export module loom.fs.path;
 
 import std;
 

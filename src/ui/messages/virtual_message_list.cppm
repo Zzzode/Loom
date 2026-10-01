@@ -63,12 +63,12 @@ module;
 #include <ftxui/screen/color.hpp>
 #include <cstddef>
 
-export module cc.ui.messages.virtual_list;
+export module loom.ui.messages.virtual_list;
 
 import std;
 
-import cc.ui.messages.scroll_keys;
-import cc.ui.foundation.design_tokens;
+import loom.ui.messages.scroll_keys;
+import loom.ui.foundation.design_tokens;
 
 // NOTE: The VirtualList module intentionally keeps its own VisibleRow struct.
 //       `cc.ui.messages.messages_list` is a separate, larger module that

@@ -33,7 +33,7 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.dialogs.wizard_dialog;
+export module loom.ui.dialogs.wizard_dialog;
 
 import std;
 

@@ -7,7 +7,7 @@ module;
 #include <cmath>
 #include <cstdint>
 
-export module cc.services.api.with_retry_simple;
+export module loom.services.api.with_retry_simple;
 
 import std;
 

@@ -18,11 +18,11 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.messages.message_plan_approval;
+export module loom.ui.messages.message_plan_approval;
 
 import std;
 
-import cc.types.types;
+import loom.types.types;
 
 export namespace cc::ui::messages {
 

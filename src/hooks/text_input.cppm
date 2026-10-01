@@ -7,7 +7,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.hooks.text_input;
+export module loom.hooks.text_input;
 
 import std;
 

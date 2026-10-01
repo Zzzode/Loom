@@ -2,13 +2,13 @@ module;
 #include <cstdlib>
 #include <cstddef>
 #include <cstdint>
-export module cc.services.api.session_ingress;
+export module loom.services.api.session_ingress;
 
 import std;
-import cc.text.parse_int;
+import loom.text.parse_int;
 
-import cc.net.http.http;
-import cc.serdes.json;
+import loom.net.http.http;
+import loom.serdes.json;
 
 export namespace cc::services::api {
 

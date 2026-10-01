@@ -3,7 +3,7 @@ module;
 #include <cstddef>
 
 
-export module cc.ui.chrome.yoga;
+export module loom.ui.chrome.yoga;
 
 import std;
 

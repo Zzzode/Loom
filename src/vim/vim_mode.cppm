@@ -1,9 +1,9 @@
 
-export module cc.vim.vim_mode;
+export module loom.vim.vim_mode;
 
 import std;
 
-import cc.vim.vim_types;  // canonical VimMode (lives in cc_vim to avoid circular deps)
+import loom.vim.vim_types;  // canonical VimMode (lives in cc_vim to avoid circular deps)
 
 export namespace cc::vim {
 

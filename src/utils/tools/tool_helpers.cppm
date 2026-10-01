@@ -2,11 +2,11 @@ module;
 
 #include <cstddef>
 
-export module cc.tools.support.tool_helpers;
+export module loom.tools.support.tool_helpers;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::utils {
 

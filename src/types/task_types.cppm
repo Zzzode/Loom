@@ -15,11 +15,11 @@ module;
 #include <yyjson.h>
 #include <cstddef>
 
-export module cc.task_types;
+export module loom.task_types;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::tasks {
 

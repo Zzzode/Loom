@@ -9,7 +9,7 @@
 /// B15 lifts into cc.orchestration.
 ///
 /// Worktree CREATION stays in agent.utils (it consumes AgentExecutionPlan).
-export module cc.tools.agent_worktree;
+export module loom.tools.agent_worktree;
 
 import std;
 

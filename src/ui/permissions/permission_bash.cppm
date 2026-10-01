@@ -48,12 +48,12 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.permissions.permission_bash;
+export module loom.ui.permissions.permission_bash;
 
 import std;
 
-import cc.ui.permissions.components;
-import cc.ui.permissions.permission_shell_helpers;
+import loom.ui.permissions.components;
+import loom.ui.permissions.permission_shell_helpers;
 
 export namespace cc::ui::permissions::bash_prompt {
 

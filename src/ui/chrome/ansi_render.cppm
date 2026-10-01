@@ -33,11 +33,11 @@
 /// terminal_io is itself a std-only leaf.
 module;
 
-export module cc.ui.chrome.ansi_render;
+export module loom.ui.chrome.ansi_render;
 
 import std;
 
-import cc.ui.chrome.terminal_io;  // SgrAttr
+import loom.ui.chrome.terminal_io;  // SgrAttr
 
 export namespace cc::ui::messages {
 

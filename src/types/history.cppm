@@ -13,11 +13,11 @@ module;
 #include <yyjson.h>
 #include <cstddef>
 
-export module cc.history;
+export module loom.history;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::history {
 

@@ -32,7 +32,7 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 
-export module cc.ui.dialogs.prompt_dialog;
+export module loom.ui.dialogs.prompt_dialog;
 
 import std;
 

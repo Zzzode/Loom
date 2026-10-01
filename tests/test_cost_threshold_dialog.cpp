@@ -31,7 +31,7 @@
 #include <gtest/gtest.h>
 
 import std;
-import cc.ui.dialogs.cost_threshold_dialog;
+import loom.ui.dialogs.cost_threshold_dialog;
 
 namespace {
 

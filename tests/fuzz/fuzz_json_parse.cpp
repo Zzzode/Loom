@@ -2,7 +2,7 @@
 // Build with -fsanitize=fuzzer when ENABLE_FUZZING is ON.
 
 import std;
-import cc.serdes.json;
+import loom.serdes.json;
 
 #include <cstddef>
 #include <cstdint>

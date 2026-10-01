@@ -20,11 +20,11 @@ module;
 #include <windows.h>
 #endif
 
-export module cc.ui.chrome.ink_utils;
+export module loom.ui.chrome.ink_utils;
 
 import std;
 
-import cc.ui.chrome.text_measure;
+import loom.ui.chrome.text_measure;
 
 export namespace cc::ui::ink_utils {
 

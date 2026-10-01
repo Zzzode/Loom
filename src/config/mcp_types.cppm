@@ -2,7 +2,7 @@
 /// @brief Canonical MCP (Model Context Protocol) configuration data types.
 /// Rank-1 leaf: defines McpOAuthConfig/McpServerConfig with zero cc.* imports;
 /// cc.config.config re-exports it so existing importers stay unchanged.
-export module cc.config.mcp_types;
+export module loom.config.mcp_types;
 
 import std;
 

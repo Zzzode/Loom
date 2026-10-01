@@ -6,10 +6,10 @@ module;
 
 #include <cstdint>
 
-export module cc.constants.cost_tracker;
+export module loom.constants.cost_tracker;
 
 import std;
-import cc.types.types;  // arch-check: keep-import
+import loom.types.types;  // arch-check: keep-import
 
 
 export namespace cc::core {

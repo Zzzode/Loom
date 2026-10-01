@@ -1,7 +1,7 @@
 module;
 #include <ctime>
 
-export module cc.ui.messages.message_timestamp;
+export module loom.ui.messages.message_timestamp;
 
 import std;
 

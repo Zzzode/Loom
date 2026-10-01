@@ -12,12 +12,12 @@
 module;
 
 
-export module cc.tools.agent_memory_snapshot;
+export module loom.tools.agent_memory_snapshot;
 
 import std;
 
-import cc.tools.agent_memory;
-import cc.serdes.json;
+import loom.tools.agent_memory;
+import loom.serdes.json;
 
 export namespace cc::tools::agent_memory_snapshot {
 

@@ -1,11 +1,11 @@
 module;
 #include <unistd.h>
 #include <cstdlib>
-export module cc.commands.ant_trace;
+export module loom.commands.ant_trace;
 
 import std;
 
-import cc.constants.product;
+import loom.constants.product;
 
 export namespace cc::commands::ant_trace {
 namespace fs = std::filesystem;

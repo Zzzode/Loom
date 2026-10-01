@@ -20,15 +20,15 @@ module;
 // command-hook runner can propagate the parent process environment.
 extern "C" char** environ;
 
-export module cc.hooks.execution;
+export module loom.hooks.execution;
 
 import std;
-import cc.text.parse_int;
+import loom.text.parse_int;
 
-import cc.serdes.json;
-import cc.process.async;
-import cc.hooks.registry;
-import cc.net.http.ssrf_guard;
+import loom.serdes.json;
+import loom.process.async;
+import loom.hooks.registry;
+import loom.net.http.ssrf_guard;
 
 export namespace cc::utils::hooks_execution {
 

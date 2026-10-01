@@ -4,11 +4,11 @@ module;
 
 #include <cstdint>
 
-export module cc.migrations.concrete;
+export module loom.migrations.concrete;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 namespace cc::migrations::concrete {
 

@@ -3,12 +3,12 @@
 // body edit to one RPC method recompiles this smaller object only.
 module;
 
-module cc.services.mcp.client;
+module loom.services.mcp.client;
 
 import std;
 
-import cc.services.mcp.types;
-import cc.serdes.json;
+import loom.services.mcp.types;
+import loom.serdes.json;
 
 namespace cc::services::mcp {
 

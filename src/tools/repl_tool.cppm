@@ -38,11 +38,11 @@ extern char** environ;
 #define CC_ENVIRON environ
 #endif
 
-export module cc.tools.repl;
+export module loom.tools.repl;
 
 import std;
 
-import cc.serdes.json;
+import loom.serdes.json;
 
 export namespace cc::tools::repl {
 

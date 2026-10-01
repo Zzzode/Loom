@@ -2,7 +2,7 @@ module;
 
 #include <cstddef>
 
-export module cc.fs.file_read_cache;
+export module loom.fs.file_read_cache;
 
 import std;
 

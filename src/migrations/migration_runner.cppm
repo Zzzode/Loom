@@ -2,7 +2,7 @@ module;
 #include <cstdint>
 #include <cstddef>
 
-export module cc.migrations.migration_runner;
+export module loom.migrations.migration_runner;
 
 import std;
 

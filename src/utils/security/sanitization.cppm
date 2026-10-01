@@ -5,7 +5,7 @@ module;
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
-export module cc.security.sanitization;
+export module loom.security.sanitization;
 
 import std;
 

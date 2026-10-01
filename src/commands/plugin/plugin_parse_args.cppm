@@ -8,7 +8,7 @@ module;
 
 #include <cctype>
 
-export module cc.commands.plugin_parse_args;
+export module loom.commands.plugin_parse_args;
 
 import std;
 

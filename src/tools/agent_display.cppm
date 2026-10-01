@@ -13,11 +13,11 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module cc.tools.agent_display;
+export module loom.tools.agent_display;
 
 import std;
 
-import cc.tools.agent_runtime;
+import loom.tools.agent_runtime;
 
 export namespace cc::tools::agent_display {
 

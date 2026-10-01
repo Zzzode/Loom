@@ -2,11 +2,11 @@
 module;
 #include <cstddef>
 
-export module cc.tools.task;
+export module loom.tools.task;
 
 import std;
 
-import cc.tools.agent_runtime;
+import loom.tools.agent_runtime;
 
 export namespace cc::tools {
 

@@ -1,5 +1,5 @@
 
-export module cc.skills.mcp_skill_builders;
+export module loom.skills.mcp_skill_builders;
 
 import std;
 

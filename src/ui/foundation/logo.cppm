@@ -4,7 +4,7 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 
-export module cc.ui.foundation.logo;
+export module loom.ui.foundation.logo;
 
 import std;
 

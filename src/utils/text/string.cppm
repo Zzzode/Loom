@@ -6,7 +6,7 @@ module;
 #include <cctype>
 #include <cstddef>
 
-export module cc.text.string;
+export module loom.text.string;
 
 import std;
 

@@ -7,13 +7,13 @@
 // own input.json() — no shared state with the tools-side dispatcher.
 module;
 
-module cc.orchestration.runtime_backends;
+module loom.orchestration.runtime_backends;
 
 import std;
 
-import cc.types.tool_types;
-import cc.orchestration.tools.mcp;
-import cc.tools.runtime_registry;
+import loom.types.tool_types;
+import loom.orchestration.tools.mcp;
+import loom.tools.runtime_registry;
 
 namespace cc::orchestration::detail {
 

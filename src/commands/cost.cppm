@@ -5,14 +5,14 @@ module;
 
 #include <cstdint>
 
-export module cc.commands.cost;
+export module loom.commands.cost;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.state.app_state;
-import cc.constants.cost_tracker;
+import loom.types.types;
+import loom.commands.command;
+import loom.state.app_state;
+import loom.constants.cost_tracker;
 
 export namespace cc::commands {
 

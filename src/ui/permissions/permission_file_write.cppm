@@ -48,12 +48,12 @@ module;
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 
-export module cc.ui.permissions.permission_file_write;
+export module loom.ui.permissions.permission_file_write;
 
 import std;
 
-import cc.ui.visual.code_highlight;
-import cc.ui.permissions.components;
+import loom.ui.visual.code_highlight;
+import loom.ui.permissions.components;
 
 export namespace cc::ui::permissions::file_write {
 

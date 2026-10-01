@@ -4,13 +4,13 @@
 module;
 
 
-export module cc.tasks.in_process_teammate_task;
+export module loom.tasks.in_process_teammate_task;
 
 import std;
 
-import cc.tasks.task;
-import cc.tasks.types;
-import cc.hooks.remaining_notifs;  // W7: feed TeammateShutdown slot from live tasks
+import loom.tasks.task;
+import loom.tasks.types;
+import loom.hooks.remaining_notifs;  // W7: feed TeammateShutdown slot from live tasks
 
 export namespace cc::tasks {
 

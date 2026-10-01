@@ -9,13 +9,13 @@ module;
 #include <cstdint>
 #include <cctype>
 
-export module cc.commands.permissions_cmd;
+export module loom.commands.permissions_cmd;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.security.permissions_engine;
+import loom.types.types;
+import loom.commands.command;
+import loom.security.permissions_engine;
 
 export namespace cc::commands {
 

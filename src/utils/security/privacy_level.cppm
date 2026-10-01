@@ -1,5 +1,5 @@
 
-export module cc.security.privacy_level;
+export module loom.security.privacy_level;
 
 import std;
 

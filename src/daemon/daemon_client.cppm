@@ -14,7 +14,7 @@ module;
 #include <cerrno>
 #include <cstddef>
 
-export module cc.daemon.daemon_client;
+export module loom.daemon.daemon_client;
 
 import std;
 

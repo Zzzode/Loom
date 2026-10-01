@@ -24,13 +24,13 @@ module;
 /// (strings in, engine types out) rather than exposing vendor JSON types,
 /// so a backend can be implemented and tested without any engine internals.
 
-export module cc.query.wire_protocol;
+export module loom.query.wire_protocol;
 
 import std;
 
-import cc.types.types;
-import cc.tools.tool;
-import cc.serdes.json;
+import loom.types.types;
+import loom.tools.tool;
+import loom.serdes.json;
 
 export namespace cc::query::wire {
 

@@ -10,14 +10,14 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
 
-module cc.ui.screens.repl_screen;
+module loom.ui.screens.repl_screen;
 
 import std;
 
-import cc.ui.screens.repl_state;
-import cc.ui.screens.dialog_store;
-import cc.ui.dialogs.system;
-import cc.ui.chrome.fullscreen_layout;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.dialog_store;
+import loom.ui.dialogs.system;
+import loom.ui.chrome.fullscreen_layout;
 
 namespace cc::ui::repl_screen {
 using namespace ftxui;

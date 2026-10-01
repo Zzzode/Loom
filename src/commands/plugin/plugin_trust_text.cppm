@@ -9,7 +9,7 @@
 module;
 
 
-export module cc.commands.plugin_trust_text;
+export module loom.commands.plugin_trust_text;
 
 import std;
 

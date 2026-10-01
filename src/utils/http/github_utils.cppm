@@ -6,12 +6,12 @@ module;
 #include <cstdlib>
 #include <httplib.h>
 
-export module cc.net.http.github_utils;
+export module loom.net.http.github_utils;
 
 import std;
 
-import cc.serdes.json;
-import cc.process.bash.bash_execution;
+import loom.serdes.json;
+import loom.process.bash.bash_execution;
 
 export namespace cc::utils {
 

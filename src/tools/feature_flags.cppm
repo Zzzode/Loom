@@ -10,7 +10,7 @@
 /// to `true` (or pass a `-D` define via CMake if we add that plumbing later).
 module;
 
-export module cc.tools.feature_flags;
+export module loom.tools.feature_flags;
 
 // TS REF: src/tools.ts:16-24  (USER_TYPE === 'ant' gates)
 // Ant-internal build flag.  When true, REPLTool + SuggestBackgroundPRTool +

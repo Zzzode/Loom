@@ -3,7 +3,7 @@
 #include <cstdlib>
 
 import std;
-import cc.config.settings_validation;
+import loom.config.settings_validation;
 
 TEST(SettingsValidationConfig, ClassifiesPatternToolsAndCustomWebValidators) {
     using namespace cc::utils::settings_validation;

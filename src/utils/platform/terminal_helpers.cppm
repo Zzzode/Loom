@@ -4,7 +4,7 @@ module;
 #include <cstdio>
 #include <cstdlib>
 
-export module cc.platform.terminal_helpers;
+export module loom.platform.terminal_helpers;
 
 import std;
 

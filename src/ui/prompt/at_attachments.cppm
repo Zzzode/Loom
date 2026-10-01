@@ -12,10 +12,10 @@ module;
 
 #include <cstdlib>
 
-export module cc.ui.prompt.at_attachments;
+export module loom.ui.prompt.at_attachments;
 
 import std;
-import cc.types.types;  // arch-check: keep-import
+import loom.types.types;  // arch-check: keep-import
 
 
 export namespace cc::ui::prompt::at_attachments {

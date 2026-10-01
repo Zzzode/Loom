@@ -13,15 +13,15 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
 
-module cc.ui.app.app_dialog_registration;
+module loom.ui.app.app_dialog_registration;
 
 import std;
 
-import cc.ui.dialogs.system;
-import cc.ui.screens.repl_screen;
-import cc.ui.screens.repl_state;
-import cc.ui.features.teams.live_teammates;
-import cc.teams.team_helpers;
+import loom.ui.dialogs.system;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
+import loom.ui.features.teams.live_teammates;
+import loom.teams.team_helpers;
 
 using namespace ftxui;
 

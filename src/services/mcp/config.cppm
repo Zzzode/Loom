@@ -2,11 +2,11 @@
 module;
 #include <cstddef>
 
-export module cc.services.mcp.config;
+export module loom.services.mcp.config;
 
 import std;
 
-import cc.services.mcp.types;
+import loom.services.mcp.types;
 
 export namespace cc::services::mcp {
 

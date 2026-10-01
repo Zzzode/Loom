@@ -2,11 +2,11 @@ module;
 
 #include <cctype>
 
-export module cc.plugins.plugin_identifier;
+export module loom.plugins.plugin_identifier;
 
 import std;
 
-import cc.config.settings_sources;
+import loom.config.settings_sources;
 
 export namespace cc::utils::plugin_identifier {
 

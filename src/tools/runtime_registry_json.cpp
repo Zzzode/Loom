@@ -6,14 +6,14 @@ module;
 
 #include <cctype> // std::tolower / std::isspace / std::isalnum
 
-module cc.tools.runtime_registry;
+module loom.tools.runtime_registry;
 
 import std;
 
-import cc.serdes.json;
-import cc.text.parse_int;
-import cc.tools.notebook;
-import cc.tools.web_browser;
+import loom.serdes.json;
+import loom.text.parse_int;
+import loom.tools.notebook;
+import loom.tools.web_browser;
 
 namespace cc::tools::detail {
 

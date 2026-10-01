@@ -2,7 +2,7 @@
 module;
 #include <cstdlib>
 
-export module cc.tools.worktree;
+export module loom.tools.worktree;
 
 import std;
 

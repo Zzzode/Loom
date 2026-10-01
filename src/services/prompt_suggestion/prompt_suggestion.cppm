@@ -25,12 +25,12 @@ module;
 #include <cmath>
 #include <cctype>
 
-export module cc.services.prompt_suggestion;
+export module loom.services.prompt_suggestion;
 
 import std;
 
-import cc.types.types;
-import cc.text.string_utils;
+import loom.types.types;
+import loom.text.string_utils;
 
 export namespace cc::services::prompt_suggestion {
 

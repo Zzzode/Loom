@@ -5,13 +5,13 @@
 module;
 
 
-export module cc.commands.ide;
+export module loom.commands.ide;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
-import cc.services.ide_integration;
+import loom.types.types;
+import loom.commands.command;
+import loom.services.ide_integration;
 
 export namespace cc::commands {
 

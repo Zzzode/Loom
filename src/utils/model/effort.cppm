@@ -1,5 +1,5 @@
 
-export module cc.model.effort;
+export module loom.model.effort;
 
 import std;
 

@@ -6,7 +6,7 @@ module;
 
 #include <cstdint>
 
-export module cc.services.rate_limit.rate_limit_hook;
+export module loom.services.rate_limit.rate_limit_hook;
 
 import std;
 

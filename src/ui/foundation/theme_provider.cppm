@@ -16,11 +16,11 @@ module;
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component_base.hpp>
 
-export module cc.ui.foundation.theme_provider;
+export module loom.ui.foundation.theme_provider;
 
 import std;
 
-import cc.ui.foundation.design_tokens;
+import loom.ui.foundation.design_tokens;
 
 export namespace cc::ui::design::theme {
 

@@ -31,23 +31,23 @@ module;
 
 // (sys/stat.h functionality provided by <filesystem>)
 
-export module cc.skills.load_skills_dir;
+export module loom.skills.load_skills_dir;
 
 import std;
 
-import cc.serdes.yaml;
-import cc.serdes.frontmatter_parser;
-import cc.scm.git.gitignore;
-import cc.parsing.cli.argument_substitution;
-import cc.model.effort;
-import cc.platform.env.env_utils;
-import cc.diagnostics.log;
-import cc.text.markdown_utils;
-import cc.fs.path_utils;
-import cc.platform.platform_paths;
-import cc.text.string_utils;
-import cc.skills.mcp_skill_builders;
-export import cc.skills.skill;
+import loom.serdes.yaml;
+import loom.serdes.frontmatter_parser;
+import loom.scm.git.gitignore;
+import loom.parsing.cli.argument_substitution;
+import loom.model.effort;
+import loom.platform.env.env_utils;
+import loom.diagnostics.log;
+import loom.text.markdown_utils;
+import loom.fs.path_utils;
+import loom.platform.platform_paths;
+import loom.text.string_utils;
+import loom.skills.mcp_skill_builders;
+export import loom.skills.skill;
 
 export namespace cc::skills {
 

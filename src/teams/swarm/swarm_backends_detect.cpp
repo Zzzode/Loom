@@ -4,7 +4,7 @@
 // (formerly static-inline in the class). import std supplies std::getenv.
 module;
 
-module cc.teams.swarm.backends;
+module loom.teams.swarm.backends;
 
 import std;
 

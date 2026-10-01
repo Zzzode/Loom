@@ -5,17 +5,17 @@ module;
 #include <cctype>
 #include <cstdlib>
 
-module cc.ui.prompt.autocomplete_sources;
+module loom.ui.prompt.autocomplete_sources;
 
 import std;
 
-import cc.skills.skill;
-import cc.skills.load_skills_dir;
-import cc.skills.bundled;
-import cc.tools.agent_runtime;
-import cc.orchestration.tools.mcp;
-import cc.ui.prompt.fuzzy_rank_nucleo;
-import cc.serdes.json;
+import loom.skills.skill;
+import loom.skills.load_skills_dir;
+import loom.skills.bundled;
+import loom.tools.agent_runtime;
+import loom.orchestration.tools.mcp;
+import loom.ui.prompt.fuzzy_rank_nucleo;
+import loom.serdes.json;
 
 namespace cc::ui::autocomplete_sources {
 

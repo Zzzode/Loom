@@ -4,11 +4,11 @@
 module;
 
 
-export module cc.tasks.types;
+export module loom.tasks.types;
 
 import std;
 
-import cc.tasks.task;
+import loom.tasks.task;
 
 export namespace cc::tasks {
 

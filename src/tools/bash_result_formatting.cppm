@@ -17,11 +17,11 @@ module;
 #include <cstdint>
 #include <cstring>
 
-export module cc.tools.bash_result_formatting;
+export module loom.tools.bash_result_formatting;
 
 import std;
 
-import cc.text.format;
+import loom.text.format;
 
 export namespace cc::tools::bash {
 

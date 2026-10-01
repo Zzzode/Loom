@@ -18,7 +18,7 @@
 // so it imports no cc.ui.* area at all.
 module;
 
-export module cc.ui.screens.mcp_status_store;
+export module loom.ui.screens.mcp_status_store;
 
 import std;
 

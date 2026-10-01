@@ -5,12 +5,12 @@ module;
 
 #include <cstdlib>
 
-export module cc.commands.feedback;
+export module loom.commands.feedback;
 
 import std;
 
-import cc.types.types;
-import cc.commands.command;
+import loom.types.types;
+import loom.commands.command;
 
 export namespace cc::commands {
 

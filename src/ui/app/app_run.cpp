@@ -9,13 +9,13 @@ module;
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 
-module cc.ui.app.app;
+module loom.ui.app.app;
 
-import cc.query.query_engine;
-import cc.commands.registry;
-import cc.session.app_storage;
-import cc.hooks.tool_permissions;
-import cc.hooks.lifecycle_hooks;
+import loom.query.query_engine;
+import loom.commands.registry;
+import loom.session.app_storage;
+import loom.hooks.tool_permissions;
+import loom.hooks.lifecycle_hooks;
 
 namespace cc::ui {
 

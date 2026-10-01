@@ -3,18 +3,18 @@ module;
 
 #include <cctype>
 
-export module cc.services.mcp.connection_manager;
+export module loom.services.mcp.connection_manager;
 
 import std;
 
-import cc.services.mcp.types;
-import cc.services.mcp.client;
-import cc.services.mcp.config;
-import cc.services.mcp.headers_helper;
-import cc.services.mcp.auth;
-import cc.services.mcp.at_mention_handler;
-import cc.services.mcp.channel_notification;
-import cc.serdes.json;
+import loom.services.mcp.types;
+import loom.services.mcp.client;
+import loom.services.mcp.config;
+import loom.services.mcp.headers_helper;
+import loom.services.mcp.auth;
+import loom.services.mcp.at_mention_handler;
+import loom.services.mcp.channel_notification;
+import loom.serdes.json;
 
 export namespace cc::services::mcp {
 

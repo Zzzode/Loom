@@ -4,16 +4,16 @@
 // identity/teammate-name helpers, and the built-in system prompts.
 module;
 
-module cc.orchestration.agent.utils;
+module loom.orchestration.agent.utils;
 
 import std;
 
-import cc.scm.git.git;
-import cc.platform.env.env_utils;
-import cc.text.parse_int;
-import cc.teams.team_helpers;
-import cc.tools.team;
-import cc.services.api.client;
+import loom.scm.git.git;
+import loom.platform.env.env_utils;
+import loom.text.parse_int;
+import loom.teams.team_helpers;
+import loom.tools.team;
+import loom.services.api.client;
 
 namespace cc::tools::agent::utils {
 

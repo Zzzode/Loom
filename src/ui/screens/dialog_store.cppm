@@ -15,11 +15,11 @@
 // up-edge.
 module;
 
-export module cc.ui.screens.dialog_store;
+export module loom.ui.screens.dialog_store;
 
 import std;
 
-import cc.ui.dialogs.system;                     // DialogQueue / DialogRendererRegistry
+import loom.ui.dialogs.system;                     // DialogQueue / DialogRendererRegistry
 
 export namespace cc::ui::repl_screen {
 

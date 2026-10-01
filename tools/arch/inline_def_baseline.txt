@@ -7,8 +7,8 @@ loom.server.control_protocol 173
 loom.daemon.daemon_server 73
 loom.ui.permissions.rule_list 67
 loom.skills.load_skills_dir 66
-loom.server.server_routes 63
 loom.plugins.plugin_loader 60
+loom.server.server_routes 59
 loom.bridge.core 58
 loom.services.mcp.channel_notification 53
 loom.services.lsp.client 52

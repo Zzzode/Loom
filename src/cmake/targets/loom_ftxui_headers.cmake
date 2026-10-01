@@ -5,6 +5,19 @@
 # `import <ftxui/screen/color.hpp>;` in the module purview instead of a textual
 # GMF #include. Pilot consumer: utils/parsing/text_highlighting.cppm.
 #
+# FULL ROLLOUT ATTEMPT (2026-10-01): all 14 FTXUI headers were built as HUs and
+# 144 source files were converted from textual #include to `import <ftxui/...>;`.
+# The rollout was REVERTED because of transitive BMI leakage: when a module
+# interface imports an FTXUI header unit, its BMI embeds the HU's std-header
+# declarations (elements.hpp includes <string>, <vector>, <functional>, etc.).
+# A module that imports that interface — even without touching FTXUI itself —
+# then sees those std declarations as non-reachable, shadowing `import std;`
+# and failing with "'vector' must be defined before it is used".  The pilot
+# works because color.hpp is a lightweight leaf whose std declarations don't
+# conflict; heavyweight headers (elements.hpp, component.hpp) break every
+# transitive importer.  The CMake infrastructure below is kept intact for when
+# the leakage is fixed (clang update or CMake CXX_MODULE_HEADERS support).
+#
 # TOOLCHAIN GATE — header units require Clang >= 23. On Clang 22 (the pinned
 # local-linux preset, and CI's llvm@22) OQ-1 was REJECTED: LLVM #184957 made a
 # reduced-BMI closure that mixed a header unit with `import std;` mis-merge

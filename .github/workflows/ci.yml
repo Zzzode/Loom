@@ -31,12 +31,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install cmake ninja llvm@22 lld curl openssl sccache
-          echo "$(brew --prefix llvm@22)/bin" >> $GITHUB_PATH
-          # clang resolves -fuse-ld=lld as <toolchain>/bin/ld64.lld; the lld
-          # formula (23) ships the binary, llvm@22 does not, so link it in.
+          brew install cmake ninja llvm lld curl openssl sccache
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+          # clang resolves -fuse-ld=lld as <toolchain>/bin/ld64.lld; llvm 23
+          # already ships the binary, so this symlink is redundant but kept
+          # defensively (harmless: same lld build, ln -sf overwrites).
           ln -sf "$(brew --prefix lld)/bin/ld64.lld" \
-                 "$(brew --prefix llvm@22)/bin/ld64.lld"
+                 "$(brew --prefix llvm)/bin/ld64.lld"
 
       - name: Restore sccache
         # RFC 0001 Phase E (OQ-5) named-module compiler cache. Verified on
@@ -49,9 +50,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/sccache
-          key: macos14-sccache-${{ runner.os }}-llvm22-${{ hashFiles('CMakeLists.txt','CMakePresets.json','cmake/**','src/cmake/**') }}
+          key: macos14-sccache-${{ runner.os }}-llvm23-${{ hashFiles('CMakeLists.txt','CMakePresets.json','cmake/**','src/cmake/**') }}
           restore-keys: |
-            macos14-sccache-${{ runner.os }}-llvm22-
+            macos14-sccache-${{ runner.os }}-llvm23-
 
       - name: Verify tool versions
         env:
@@ -75,7 +76,7 @@ jobs:
           SCCACHE_DIR: ${{ runner.temp }}/sccache
           SCCACHE_CACHE_SIZE: 5G
         run: |
-          LLVM_PREFIX="$(brew --prefix llvm@22)"
+          LLVM_PREFIX="$(brew --prefix llvm)"
           SDKROOT="$(xcrun --show-sdk-path)"
           cmake --preset debug \
             -DCMAKE_C_COMPILER="${LLVM_PREFIX}/bin/clang" \

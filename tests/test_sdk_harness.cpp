@@ -2,7 +2,7 @@
 /// @brief First-consumer gate for loom.sdk.harness (RFC 0001 cc-sdk phase 3,
 ///        design §4.4). A direct in-tree test consumer that constructs a
 ///        Harness, runs a turn against a loopback HTTP server serving canned
-///        Anthropic Messages API responses (the WireBackend seam does not
+///        Messages API responses (the WireBackend seam does not
 ///        reach the transport — §2.4 — so a loopback server is the transport
 ///        mock), and asserts the TurnResult / events / resume / permission
 ///        bridge. Tests are not in the graph_check.py module graph (it scans
@@ -87,7 +87,7 @@ std::string make_harness_config(loom::sdk::HarnessConfig& config,
     return base_url;
 }
 
-// Canned non-streaming Anthropic Messages API response (one text block).
+// Canned non-streaming Messages API response (one text block).
 constexpr std::string_view kTextResponse =
     R"({"id":"msg_test","type":"message","role":"assistant","model":"loom-test","content":[{"type":"text","text":"ok"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})";
 
@@ -122,7 +122,7 @@ constexpr std::string_view kFinalTextResponse =
 
 } // namespace
 
-// §4.4: run() against a loopback HTTP server serving a canned Anthropic
+// §4.4: run() against a loopback HTTP server serving a canned Messages API
 // response — exercising the real transport with zero external calls.
 TEST(SdkHarness, RunAgainstLoopback) {
     LoopbackServer server{std::vector<std::string>{std::string(kTextResponse)},
@@ -163,8 +163,8 @@ TEST(SdkHarness, AbortBeforeRunReturnsErrorOnce) {
     config.model = "loom-test";
     config.api_key_provider = [] { return "sk-test"; };
     // Point at a closed local port so the second run()'s transport failure
-    // is deterministic and local — NOT a real POST to the default
-    // api.anthropic.com (which on a networked machine would be an external
+    // is deterministic and local — NOT a real POST to an external
+    // endpoint (which on a networked machine would be an external
     // call, violating §4.4's zero-external-calls gate).
     config.base_url = "http://127.0.0.1:1";
     loom::sdk::Harness harness(std::move(config));

@@ -162,7 +162,7 @@ TEST(StateStore, DispatchMessageAndSettingsParityActions) {
         make_user_message("msg-2", "replacement")});
 
     loom::state::Settings settings;
-    settings.model = "claude-sonnet-4-6";
+    settings.model = "test-model";
     settings.theme = "dark";
     settings.verbose = true;
     store->dispatch(loom::state::Action{loom::state::ActionType::UpdateSettings, settings});
@@ -176,7 +176,7 @@ TEST(StateStore, DispatchMessageAndSettingsParityActions) {
     EXPECT_EQ(updated.id.value, "msg-2");
     ASSERT_EQ(updated.content.size(), 1u);
     EXPECT_EQ(std::get<loom::core::TextBlock>(updated.content.front()).text, "replacement");
-    EXPECT_EQ(state.settings.model, "claude-sonnet-4-6");
+    EXPECT_EQ(state.settings.model, "test-model");
     EXPECT_EQ(state.settings.theme, "dark");
     EXPECT_TRUE(state.settings.verbose);
     EXPECT_FALSE(state.thinking_enabled);
@@ -674,8 +674,8 @@ TEST(Persistence, RoundTripsAllPersistedFields) {
     src.selected_ip_agent_index = 7;
     src.coordinator_task_index = 3;
     src.remote_background_task_count = 9;
-    src.main_loop_model = "claude-opus-4-8";
-    src.advisor_model = "claude-haiku-4-5";
+    src.main_loop_model = "test-model";
+    src.advisor_model = "test-model";
     src.effort_value = "high";
     src.status_line_text = "custom status";
 
@@ -1099,19 +1099,18 @@ TEST(McpAuth, XaaFlowDoesNotReturnUnimplementedError) {
 
 TEST(SystemPrompts, ComputeSimpleEnvInfoIncludesDynamicRuntimeDetails) {
     auto env_info = loom::constants::prompts::compute_simple_env_info(
-        "claude-sonnet-4-6",
+        "test-model",
         {"/tmp/loom-extra"});
 
     EXPECT_NE(env_info.find("# Environment"), std::string::npos);
     EXPECT_NE(env_info.find("Primary working directory:"), std::string::npos);
     EXPECT_NE(env_info.find("Additional working directories:"), std::string::npos);
     EXPECT_NE(env_info.find("/tmp/loom-extra"), std::string::npos);
-    EXPECT_NE(env_info.find("Assistant knowledge cutoff is August 2025."), std::string::npos);
 }
 
 TEST(SystemPrompts, GetSystemPromptAssemblesStaticAndDynamicSections) {
     loom::constants::prompts::SystemPromptOptions options{
-        .model = "claude-opus-4-6",
+        .model = "test-model",
         .enabled_tools = {"Read", "Write"},
         .additional_working_directories = {},
         .simple = false,

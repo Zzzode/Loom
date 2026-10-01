@@ -12,11 +12,6 @@ module;
 
 export module loom.tools.feature_flags;
 
-// TS REF: src/tools.ts:16-24  (USER_TYPE === 'ant' gates)
-// Ant-internal build flag.  When true, REPLTool + SuggestBackgroundPRTool +
-// ConfigTool + TungstenTool are registered (matching TS ant-only paths).
-constexpr bool USER_TYPE_ANT = false;
-
 // TS REF: src/tools.ts:25-28  (SleepTool gate)
 // Enables the SleepTool.  TS gates this on PROACTIVE || KAIROS.
 constexpr bool FEATURE_PROACTIVE = false;
@@ -113,10 +108,6 @@ export namespace loom::tools::features {
 
 // Re-export the flags under a readable namespace for call sites.
 // TS REF: src/tools.ts:16-158, 195-256
-
-/// Ant-only tools (REPLTool, SuggestBackgroundPRTool, ConfigTool, TungstenTool).
-/// TS REF: src/tools.ts:16-24, 216-218, 234
-inline constexpr bool kUserTypeAnt = USER_TYPE_ANT;
 
 /// SleepTool registration.  TS REF: src/tools.ts:25-28, 236
 inline constexpr bool kEnableSleepTool = FEATURE_PROACTIVE || FEATURE_KAIROS;

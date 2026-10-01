@@ -24,11 +24,6 @@ namespace loom::tools::agent::utils {
 
 namespace fs = std::filesystem;
 
-[[nodiscard]] bool agent_growthbook_env_overrides_enabled() {
-    const char* user_type = std::getenv("USER_TYPE");
-    return user_type && std::string_view(user_type) == "ant";
-}
-
 [[nodiscard]] std::optional<std::size_t> json_positive_size_t(
     loom::utils::json::JsonVal value
 ) {

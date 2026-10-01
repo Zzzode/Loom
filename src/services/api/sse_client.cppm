@@ -1,4 +1,4 @@
-// Anthropic SSE Streaming Client (Phase 3-E)
+// Messages API SSE Streaming Client (Phase 3-E)
 // Lightweight, dependency-minimal SSE client built on libcurl + loom.serdes.json.
 // - text-only messages (Phase 3)
 // - dry-run gate when api_key is empty (no network)
@@ -17,7 +17,7 @@ import std;
 import loom.serdes.json;
 
 // Note: this module intentionally avoids importing loom.services.api.* so it can
-// be used as an independent SSE primitive.  The full-featured AnthropicClient
+// be used as an independent SSE primitive.  The full-featured MessagesClient
 // in loom.services.api.client builds on top of this module.
 
 export namespace loom::services::api::sse {
@@ -78,10 +78,10 @@ struct StreamingCallbacks {
 // =========================================================================
 
 struct ApiConfig {
-    std::string base_url    = "https://api.anthropic.com/v1";
+    std::string base_url;
     std::string api_key;    // if empty -> dry-run (no network, immediate on_final)
     std::string api_version = "2023-06-01";
-    std::string model_id    = "claude-sonnet-4-20250514";
+    std::string model_id;
     int         max_tokens  = 8192;
     double      temperature = 0.7;
 };
@@ -568,7 +568,7 @@ inline int PostMessagesStream(
     const std::vector<Message>&   messages,
     SseCallbacks                  cbs,
     std::string_view              api_version = "2023-06-01",
-    std::string_view              model_id    = "claude-sonnet-4-20250514",
+    std::string_view              model_id    = "",
     int                           max_tokens  = 8192,
     double                        temperature = 0.7) {
 

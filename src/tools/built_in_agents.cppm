@@ -464,14 +464,14 @@ inline constexpr std::string_view kLoomAccentCodeGuideAgentType = "loom-guide";
 // issues-explainer rather than /feedback. For the C++ migration we default to
 // the direct-service branch; ant-native builds can override via a build flag.
 inline constexpr bool kIsUsing3PServices = false;
-inline constexpr std::string_view kIssuesExplainer = "https://console.anthropic.com/support";
+inline constexpr std::string_view kIssuesExplainer = "";
 
-[[nodiscard]] inline std::string get_claude_code_guide_base_prompt() {
+[[nodiscard]] inline std::string get_loom_guide_base_prompt() {
     const std::string local_search_hint = kHasEmbeddedSearchTools
         ? std::format("{}, `find`, and `grep`", kFileReadToolName)
         : std::format("{}, {}, and {}", kFileReadToolName, kGlobToolName, kGrepToolName);
 
-    return std::format(R"(You are the Loom guide agent. Your primary responsibility is helping users understand and use Loom, the Loom Agent SDK, and the Loom API (formerly the Anthropic API) effectively.
+    return std::format(R"(You are the Loom guide agent. Your primary responsibility is helping users understand and use Loom, the Loom Agent SDK, and the Loom API effectively.
 
 **Your expertise spans three domains:**
 
@@ -479,7 +479,7 @@ inline constexpr std::string_view kIssuesExplainer = "https://console.anthropic.
 
 2. **Loom Agent SDK**: A framework for building custom AI agents based on Loom technology. Available for Node.js/TypeScript and Python.
 
-3. **Loom API**: The Loom API (formerly known as the Anthropic API) for direct model interaction, tool use, and integrations.
+3. **Loom API**: The Loom API for direct model interaction, tool use, and integrations.
 
 **Documentation sources:**
 
@@ -503,9 +503,9 @@ inline constexpr std::string_view kIssuesExplainer = "https://console.anthropic.
   - Cost tracking and context management
   Note: Agent SDK docs are part of the Loom API documentation at the same URL.
 
-- **Loom API docs** ({}): Fetch this for questions about the Loom API (formerly the Anthropic API), including:
+- **Loom API docs** ({}): Fetch this for questions about the Loom API, including:
   - Messages API and streaming
-  - Tool use (function calling) and Anthropic-defined tools (computer use, code execution, web search, text editor, bash, programmatic tool calling, tool search tool, context editing, Files API, structured outputs)
+  - Tool use (function calling) and built-in tools (computer use, code execution, web search, text editor, bash, programmatic tool calling, tool search tool, context editing, Files API, structured outputs)
   - Vision, PDF support, and citations
   - Extended thinking and structured outputs
   - MCP connector for remote MCP servers
@@ -548,17 +548,11 @@ Complete the user's request by providing accurate, documentation-based guidance.
 }
 
 inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
-    R"(Use this agent when the user asks questions ("Can Loom...", "Does Loom...", "How do I...") about: (1) Loom (the CLI tool) - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) Loom Agent SDK - building custom agents; (3) Loom API (formerly Anthropic API) - API usage, tool use, Anthropic SDK usage. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed loom-guide agent that you can continue via SendMessage.)";
+    R"(Use this agent when the user asks questions ("Can Loom...", "Does Loom...", "How do I...") about: (1) Loom (the CLI tool) - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) Loom Agent SDK - building custom agents; (3) Loom API - API usage, tool use, SDK usage. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed loom-guide agent that you can continue via SendMessage.)";
 
 // ---------------------------------------------------------------------------
 // Agent definitions — named constants matching the TS exports.
 // ---------------------------------------------------------------------------
-
-// Helper: determine USER_TYPE == "ant" for model selection.
-[[nodiscard]] inline bool is_ant_user() {
-    const char* user_type = std::getenv("USER_TYPE");
-    return user_type && std::string_view(user_type) == "ant";
-}
 
 // --- kGeneralPurposeAgent ---
 [[nodiscard]] inline AgentDefinition make_general_purpose_agent() {
@@ -627,7 +621,7 @@ inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
     return AgentDefinition{
         .agent_type = "Explore",
         .when_to_use = std::string{kExploreWhenToUse},
-        .model = is_ant_user() ? "inherit" : "haiku",
+        .model = "inherit",
         .source = "built-in",
         .filename = std::nullopt,
         .path = std::nullopt,
@@ -697,7 +691,7 @@ inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
 }
 
 // --- kLoomAccentCodeGuideAgent ---
-[[nodiscard]] inline AgentDefinition make_claude_code_guide_agent() {
+[[nodiscard]] inline AgentDefinition make_loom_guide_agent() {
     const std::vector<std::string> tools = kHasEmbeddedSearchTools
         ? std::vector<std::string>{
               std::string{kBashToolName},
@@ -717,12 +711,12 @@ inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
     // custom agents, MCP servers, plugin skills, user settings) are injected at
     // runtime by the agent spawning code when it has access to ToolUseContext.
     const std::string base_with_feedback =
-        get_claude_code_guide_base_prompt() + "\n" + std::string{get_feedback_guideline()};
+        get_loom_guide_base_prompt() + "\n" + std::string{get_feedback_guideline()};
 
     return AgentDefinition{
         .agent_type = std::string{kLoomAccentCodeGuideAgentType},
         .when_to_use = std::string{kLoomAccentCodeGuideWhenToUse},
-        .model = "haiku",
+        .model = "inherit",
         .source = "built-in",
         .filename = std::nullopt,
         .path = std::nullopt,
@@ -934,7 +928,7 @@ inline constexpr std::string_view kCoordinatorWorkerWhenToUse =
 
     // Include Code Guide agent for non-SDK entrypoints.
     if (!is_sdk_entrypoint()) {
-        agents.push_back(make_claude_code_guide_agent());
+        agents.push_back(make_loom_guide_agent());
     }
 
     if (is_verification_agent_enabled()) {

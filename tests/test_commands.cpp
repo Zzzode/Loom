@@ -369,7 +369,7 @@ TEST(AppCommandRegistry, ConfigListGetReflectLoadedConfig) {
         EXPECT_NE(list->message.find("= light"), std::string::npos);
         EXPECT_NE(list->message.find("= 42s"), std::string::npos);
         // ...and the defaults they replaced do not.
-        EXPECT_EQ(list->message.find("claude-sonnet-4-20250514"), std::string::npos);
+        EXPECT_EQ(list->message.find("test-model"), std::string::npos);
         EXPECT_EQ(list->message.find("= auto"), std::string::npos);
         EXPECT_EQ(list->message.find("= 120s"), std::string::npos);
 
@@ -912,17 +912,19 @@ TEST(ModelCommand, ListsSwitchesAndCompletesModels) {
 
     auto list = model.execute(ctx({"list"}));
     ASSERT_TRUE(list.has_value());
-    EXPECT_NE(list->message.find("claude-sonnet-4-20250514"), std::string::npos);
+    EXPECT_NE(list->message.find("Available models"), std::string::npos);
 
-    auto switched = model.execute(ctx({"set", "claude-opus-4-20250514"}));
+    auto switched = model.execute(ctx({"set", "test-model"}));
     ASSERT_TRUE(switched.has_value());
-    EXPECT_NE(switched->message.find("claude-opus-4-20250514"), std::string::npos);
+    EXPECT_NE(switched->message.find("test-model"), std::string::npos);
 
-    auto invalid = model.validate(ctx({"not-a-model"}));
-    EXPECT_FALSE(invalid.has_value());
+    // Any non-empty model ID is valid (no built-in model list)
+    auto valid = model.validate(ctx({"not-a-model"}));
+    EXPECT_TRUE(valid.has_value());
 
+    // No built-in model completions — only subcommands match
     auto completions = model.complete("claude-");
-    EXPECT_GE(completions.size(), 3u);
+    EXPECT_TRUE(completions.empty());
 }
 
 TEST(MigratedCommandMetadata, HooksAndRewindExposeTypeScriptCompatibleMetadata) {
@@ -1215,8 +1217,6 @@ TEST(Insights, CommandDefinitionAndModel) {
     auto def = loom::commands::InsightsCommand::definition();
     EXPECT_EQ(def.name, "insights");
     EXPECT_FALSE(def.hidden);
-    EXPECT_EQ(loom::commands::InsightsCommand::default_analysis_model(),
-              "claude-opus-4-20250514");
 }
 
 TEST(Insights, CommandExecuteWithNoSessionsIsGraceful) {
@@ -1712,8 +1712,8 @@ TEST(AppCommandRegistry, ConfigSetDoesNotBakeEnvModelIntoProjectFile) {
 
 // RFC-0001 B followup c19: pin the serializer's EXISTING exclusion of the
 // network secret/endpoint values at the byte level, so a future serializer
-// change cannot silently start leaking an exported ANTHROPIC_API_KEY /
-// ANTHROPIC_BASE_URL / proxy into the tracked project file. Test 2.
+// change cannot silently start leaking an exported LOOM_API_KEY /
+// LOOM_BASE_URL / proxy into the tracked project file. Test 2.
 TEST(AppCommandRegistry, ConfigSetNeverWritesEnvCredentialsToFile) {
     namespace fs = std::filesystem;
     const auto root = cmd_make_temp_root("loom_cmd_c19_secrets_");
@@ -1726,8 +1726,8 @@ TEST(AppCommandRegistry, ConfigSetNeverWritesEnvCredentialsToFile) {
 
     EnvironmentGuard home_guard("HOME", home.string());
     EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
-    EnvironmentGuard api_guard("ANTHROPIC_API_KEY", "SECRET-c19-traceable-key");
-    EnvironmentGuard base_guard("ANTHROPIC_BASE_URL",
+    EnvironmentGuard api_guard("LOOM_API_KEY", "SECRET-c19-traceable-key");
+    EnvironmentGuard base_guard("LOOM_BASE_URL",
                                 "https://SECRET-c19-base.example.invalid/api");
     EnvironmentGuard proxy_guard("HTTPS_PROXY",
                                  "http://SECRET-c19-proxy.example:3128");

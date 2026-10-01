@@ -13,9 +13,6 @@ export module loom.ui.widgets.components;
 
 import std;
 
-import loom.types.types;
-import loom.ui.visual.markdown;
-
 export namespace loom::ui {
 
 // ============================================================

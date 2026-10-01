@@ -34,7 +34,7 @@ enum class ErrorSeverity : std::uint8_t {
 /// The canonical API error payload for rendering.
 struct APIErrorData {
     std::optional<int> http_status;           // e.g. 401 / 500
-    std::string provider;                     // "Anthropic", "OpenAI", etc.
+    std::string provider;                     // "Messages", "OpenAI", etc.
     std::string error_code;                   // e.g. "auth_error", "rate_limit"
     std::string message;                      // Human-readable message
     std::string trace_id;                     // x-request-id / x-amzn-trace-id

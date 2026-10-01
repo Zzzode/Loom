@@ -99,9 +99,9 @@ namespace fs = std::filesystem;
     // TS REF: src/tools.ts:36-38 (AGENT_TRIGGERS_REMOTE)
     // so it is registered unconditionally.  Runtime behavior is controlled by
     // LOOM_REMOTE_TRIGGER_COMMAND env var.
-    // TS REF: src/tools.ts:16-19 (USER_TYPE==='ant' — REPLTool)
+    // TS REF: src/tools.ts:16-19 (REPLTool)
     // In CPP, "repl" delegates to execute_script() which has a working
-    // implementation, so it is registered unconditionally (not ant-only).
+    // implementation, so it is registered unconditionally.
     names.push_back("repl");
     // TS REF: src/tools.ts:29-34 (AGENT_TRIGGERS)
     // In CPP, schedule_cron has a working implementation (loom.tools.cron),
@@ -134,10 +134,10 @@ namespace fs = std::filesystem;
     if constexpr (features::kToolSearch) {
         names.push_back("tool_search");
     }
-    // TS REF: src/tools.ts:217 (USER_TYPE==='ant' — TungstenTool)
-    if constexpr (features::kUserTypeAnt) {
-        names.push_back("tungsten");
-    }
+    // TS REF: src/tools.ts:217 (TungstenTool)
+    // In CPP, tungsten has a working implementation (loom.tools.tungsten_tool),
+    // so it is registered unconditionally.
+    names.push_back("tungsten");
     // TS REF: src/tools.ts:117-119 (WEB_BROWSER_TOOL)
     if constexpr (features::kWebBrowserTool) {
         names.push_back("web_browser");
@@ -151,7 +151,6 @@ namespace fs = std::filesystem;
     if constexpr (features::kMonitorTool) names.push_back("monitor");
     if constexpr (features::kSendUserFileTool) names.push_back("send_user_file");
     if constexpr (features::kSubscribePRTool) names.push_back("subscribe_pr");
-    if constexpr (features::kUserTypeAnt) names.push_back("suggest_background_pr");
     if constexpr (features::kOverflowTestTool) names.push_back("overflow_test");
     if constexpr (features::kContextCollapse) names.push_back("ctx_inspect");
     if constexpr (features::kTerminalPanel) names.push_back("terminal_capture");

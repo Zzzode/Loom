@@ -45,7 +45,7 @@ using loom::core::ToolPermission;
 using loom::core::InputSchema;
 using loom::core::SchemaProperty;
 using loom::utils::Result;
-using loom::services::api::AnthropicClient;
+using loom::services::api::MessagesClient;
 using loom::services::api::CreateMessageRequest;
 using loom::services::api::Message;
 using loom::services::api::ContentBlock;
@@ -181,7 +181,7 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
         std::make_move_iterator(explicit_fork_context_messages.begin()),
         std::make_move_iterator(explicit_fork_context_messages.end()));
     // migrated edge case: filter out any assistant messages whose tool_use
-    // blocks lack corresponding tool_results. Without this the Anthropic
+    // blocks lack corresponding tool_results. Without this the Messages
     // API rejects the request outright ("message with tool_use must be
     // followed by user message with tool_result"). Mirrors TS
     // filterIncompleteToolCalls applied to fork_context_messages.

@@ -4,7 +4,7 @@
 ///   LAYER-1 CRITICAL FIX — Contract (17 cases):
 ///   - Payload  = { double dollars_spent, optional<string> model_name,
 ///                 function<void()> on_done }.
-///   - Render   = Title sprintf("You've spent $%.0f on the Anthropic API
+///   - Render   = Title sprintf("You've spent $%.0f on the API
 ///                       this session.", dollars_spent)
 ///                Body   "Learn more about how to monitor your spending:"
 ///                       + external docs link
@@ -134,29 +134,29 @@ std::string norm(std::string&& s) {
 // Test 1 — integer dollar amount renders as "$N" without decimals.
 TEST(CostThreshold, FormatTitleIntegerDollars) {
     EXPECT_EQ(ct::format_title(5.0),
-              "You've spent $5 on the Anthropic API this session.");
+              "You've spent $5 on the API this session.");
 }
 
 // Test 2 — fractional dollars round to nearest whole (%.0f semantics).
 TEST(CostThreshold, FormatTitleRoundsFractionalDollars) {
     EXPECT_EQ(ct::format_title(4.7),
-              "You've spent $5 on the Anthropic API this session.");
+              "You've spent $5 on the API this session.");
     EXPECT_EQ(ct::format_title(4.3),
-              "You've spent $4 on the Anthropic API this session.");
+              "You've spent $4 on the API this session.");
 }
 
 // Test 3 — zero spend allowed (boundary).
 TEST(CostThreshold, FormatTitleZeroSpend) {
     EXPECT_EQ(ct::format_title(0.0),
-              "You've spent $0 on the Anthropic API this session.");
+              "You've spent $0 on the API this session.");
 }
 
 // Test 4 — large dollar amounts don't overflow or error.
 TEST(CostThreshold, FormatTitleLargeDollarAmounts) {
     EXPECT_EQ(ct::format_title(999.99),
-              "You've spent $1000 on the Anthropic API this session.");
+              "You've spent $1000 on the API this session.");
     EXPECT_EQ(ct::format_title(12345.67),
-              "You've spent $12346 on the Anthropic API this session.");
+              "You've spent $12346 on the API this session.");
 }
 
 // ============================================================
@@ -181,13 +181,13 @@ TEST(CostThreshold, PayloadFieldsMatchP0Contract) {
 TEST(CostThreshold, StateFromPayloadCopiesAllFields) {
     ct::CostThresholdPayload p{
         .dollars_spent = 7.6,
-        .model_name    = std::string("claude-3-5-sonnet-20241022"),
+        .model_name    = std::string("test-model"),
         .on_done       = [] { /* no-op */ },
     };
     ct::CostThresholdState st = ct::state_from_payload(p);
     EXPECT_DOUBLE_EQ(st.dollars_spent, 7.6);
     ASSERT_TRUE(st.model_name.has_value());
-    EXPECT_EQ(*st.model_name, "claude-3-5-sonnet-20241022");
+    EXPECT_EQ(*st.model_name, "test-model");
     EXPECT_EQ(st.selected_index, 0);
     EXPECT_TRUE(static_cast<bool>(st.on_done));
 }
@@ -216,7 +216,7 @@ TEST(CostThreshold, RenderShowsInterpolatedTitle) {
         .on_done = nullptr,
     };
     auto plain = strip_ansi(render_to_plain_text(ct::RenderCostThreshold(st), 78, 14));
-    EXPECT_NE(plain.find("You've spent $5 on the Anthropic API this session."),
+    EXPECT_NE(plain.find("You've spent $5 on the API this session."),
               std::string::npos);
 }
 
@@ -238,12 +238,12 @@ TEST(CostThreshold, RenderShowsDocsLink) {
 TEST(CostThreshold, RenderShowsModelNameWhenPresent) {
     ct::CostThresholdState st{
         .dollars_spent = 5.0,
-        .model_name    = std::string("claude-opus-3"),
+        .model_name    = std::string("test-model"),
         .selected_index = 0,
         .on_done = nullptr,
     };
     auto plain = strip_ansi(render_to_plain_text(ct::RenderCostThreshold(st), 78, 14));
-    EXPECT_NE(plain.find("(model: claude-opus-3)"), std::string::npos);
+    EXPECT_NE(plain.find("(model: test-model)"), std::string::npos);
 }
 
 // Test 11 — Renderer OMITs model line when model_name is empty/absent.
@@ -287,7 +287,7 @@ TEST(CostThreshold, RenderHasSingleGotItThanksButtonNo3ActionChrome) {
 TEST(CostThreshold, Golden_TitleWithInterpolatedDollars) {
     ct::CostThresholdState st{
         .dollars_spent  = 4.7,  // rounds to $5
-        .model_name     = std::string("claude-3-5-sonnet-20241022"),
+        .model_name     = std::string("test-model"),
         .selected_index = 0,
         .on_done = nullptr,
     };

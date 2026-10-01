@@ -8,7 +8,7 @@ module;
 ///        vendor's JSON shape.
 ///
 /// Two backends are targeted (owner decision 2026-09-19):
-///   1. Anthropic-compatible  — the /v1/messages shape this project grew on.
+///   1. Messages API  — the /v1/messages shape this project grew on.
 ///   2. OpenAI-compatible     — /v1/chat/completions, so any OpenAI-compatible
 ///                              endpoint (local llama.cpp, vLLM, Ollama,
 ///                              OpenRouter, ...) works with the same agent loop.
@@ -46,29 +46,29 @@ using loom::core::ToolDefinition;
 
 /// Which wire format a backend speaks.
 enum class WireApi {
-    Anthropic,  ///< POST {base}/v1/messages, SSE event: content_block_delta ...
+    Messages,   ///< POST {base}/v1/messages, SSE event: content_block_delta ...
     OpenAi,     ///< POST {base}/v1/chat/completions, SSE data: {choices:[...]}
 };
 
 [[nodiscard]] constexpr std::string_view wire_api_name(WireApi api) noexcept {
     switch (api) {
-        case WireApi::Anthropic: return "anthropic";
-        case WireApi::OpenAi:    return "openai";
+        case WireApi::Messages: return "messages";
+        case WireApi::OpenAi:   return "openai";
     }
     return "unknown";
 }
 
 /// Resolve the wire API from a model-endpoint provider name. Bedrock/Vertex/
-/// Foundry are Anthropic-shaped proxies today (they speak /v1/messages under
-/// a different URL scheme), so they map to the Anthropic wire format; a
+/// Foundry are Messages API-shaped proxies today (they speak /v1/messages under
+/// a different URL scheme), so they map to the Messages API wire format; a
 /// genuinely different vendor would add a case here.
 /// Kept as a string-taking overload so this module does not need to import
 /// the config module (which would add a dependency cycle risk).
 [[nodiscard]] inline std::optional<WireApi> wire_api_from_provider(
     std::string_view provider_name) {
-    if (provider_name == "anthropic" || provider_name == "bedrock" ||
+    if (provider_name == "messages" || provider_name == "bedrock" ||
         provider_name == "vertex" || provider_name == "foundry") {
-        return WireApi::Anthropic;
+        return WireApi::Messages;
     }
     if (provider_name == "openai_compat" || provider_name == "openai" ||
         provider_name == "compatible") {
@@ -78,11 +78,11 @@ enum class WireApi {
 }
 
 /// Resolve the wire API from a user-facing string (config / env).
-/// Accepts: "anthropic", "openai", "openai-compatible", "openai_compat",
+/// Accepts: "messages", "openai", "openai-compatible", "openai_compat",
 /// "compatible". Anything else yields nullopt so callers can fall back.
 [[nodiscard]] inline std::optional<WireApi> wire_api_from_string(
     std::string_view name) {
-    if (name == "anthropic" || name == "messages") return WireApi::Anthropic;
+    if (name == "messages") return WireApi::Messages;
     if (name == "openai" || name == "openai-compatible" ||
         name == "openai_compat" || name == "compatible" ||
         name == "chat-completions") {
@@ -111,7 +111,7 @@ struct RequestInput {
     bool thinking_enabled = false;
     std::optional<std::uint32_t> thinking_budget_tokens;
     /// Emit the native computer-use tool shape when the backend has one.
-    /// Anthropic => {"type":"computer_20241022",...}; OpenAI => ordinary
+    /// Messages API => {"type":"computer_20241022",...}; OpenAI => ordinary
     /// function tool using the schema (the capability still works).
     bool native_computer_tool = false;
     int64_t computer_display_width = 1024;
@@ -193,7 +193,7 @@ public:
         std::string_view event_name, std::string_view data) const = 0;
 
     /// Whether a stop_reason value means the model wants tools executed.
-    /// Anthropic: "tool_use"; OpenAI: "tool_calls".
+    /// Messages API: "tool_use"; OpenAI: "tool_calls".
     [[nodiscard]] virtual bool stop_reason_is_tool_use(
         std::string_view stop_reason) const = 0;
 };

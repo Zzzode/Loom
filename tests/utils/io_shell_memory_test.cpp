@@ -61,11 +61,13 @@ TEST(ModelCost, CalculatesTokenCostsAndFormatsPricingStrings) {
     EXPECT_EQ(format_model_pricing(COST_TIER_3_15), "$3/$15 per Mtok");
     EXPECT_EQ(format_model_pricing(COST_HAIKU_35), "$0.80/$4 per Mtok");
 
-    const auto opus_fast = get_model_costs("claude-opus-4-6", Usage{.speed = "fast"}, true);
-    EXPECT_DOUBLE_EQ(opus_fast.input_tokens, 30.0);
-    const auto unknown = get_model_costs("provider-unknown-model", Usage{}, true, "claude-sonnet-4-5");
-    EXPECT_DOUBLE_EQ(unknown.input_tokens, 3.0);
-    EXPECT_EQ(get_model_pricing_string("claude-sonnet-4-5"), std::optional<std::string>{"$3/$15 per Mtok"});
+    // model_costs() map is empty — all models fall through to COST_TIER_5_25 default.
+    const auto costs = get_model_costs("test-model", Usage{}, true);
+    EXPECT_DOUBLE_EQ(costs.input_tokens, 5.0);
+    const auto unknown = get_model_costs("provider-unknown-model", Usage{}, true, "test-model");
+    EXPECT_DOUBLE_EQ(unknown.input_tokens, 5.0);
+    // No pricing string for any model (empty map).
+    EXPECT_FALSE(get_model_pricing_string("test-model").has_value());
     EXPECT_FALSE(get_model_pricing_string("unknown-model").has_value());
 }
 

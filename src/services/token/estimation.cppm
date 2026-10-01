@@ -78,16 +78,7 @@ public:
 
 
     [[nodiscard]] static auto get_model_limit(std::string_view model_id) -> size_t {
-
-        if (model_id.find("claude-4") != std::string_view::npos ||
-            model_id.find("claude-sonnet-4") != std::string_view::npos ||
-            model_id.find("claude-opus-4") != std::string_view::npos)
-            return 200'000;
-
-        if (model_id.find("claude-3-5") != std::string_view::npos) return 200'000;
-
-        if (model_id.find("claude-3") != std::string_view::npos) return 200'000;
-
+        (void)model_id;
         return 100'000;
     }
 

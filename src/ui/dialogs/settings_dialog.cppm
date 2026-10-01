@@ -243,7 +243,7 @@ struct WorkingSettings {
     bool compact_mode = false;
 
     // Model
-    std::string default_model = "claude-sonnet-4-20250514";
+    std::string default_model;  // no default — user configures their model
     std::uint32_t max_output_tokens = 16384;
     bool extended_thinking = false;
     std::optional<std::uint32_t> thinking_budget;
@@ -515,7 +515,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(RenderTabHeader("API", "Endpoints, authentication and timeouts"));
 
     // Base URL
-    std::string url_display = w.base_url.value_or("(default: api.anthropic.com)");
+    std::string url_display = w.base_url.value_or("(no default — set LOOM_BASE_URL)");
     body.push_back(SettingRow(
         "Base URL",
         text(" " + url_display + " ") | color(Color::Cyan) |
@@ -530,7 +530,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         if (k.size() <= 8) key_display = std::string(k.size(), '*');
         else key_display = k.substr(0, 4) + "***" + k.substr(k.size() - 3);
     } else {
-        key_display = "(not set — will read $ANTHROPIC_API_KEY)";
+        key_display = "(not set — will read $LOOM_API_KEY)";
     }
     body.push_back(SettingRow(
         "API Key",
@@ -1359,16 +1359,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                         mark(); return true;
                     }
                     if (row == 2) { toggle(w.extended_thinking); return true; }
-                    if (row == 0) { // cycle model
-                        static const std::vector<std::string> kModels = {
-                            "claude-sonnet-4-20250514",
-                            "claude-opus-4-20250514",
-                            "claude-haiku-4-20250514",
-                        };
-                        auto it = std::find(kModels.begin(), kModels.end(), w.default_model);
-                        int idx = (it == kModels.end()) ? 0
-                                  : static_cast<int>(it - kModels.begin());
-                        w.default_model = kModels[(idx + 1) % kModels.size()];
+                    if (row == 0) { // cycle model — no built-in presets, no-op
                         mark(); return true;
                     }
                     if (row == 3) { // thinking budget step
@@ -1391,15 +1382,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                         w.context_window_size = kCtx[(idx + 1) % kCtx.size()];
                         mark(); return true;
                     }
-                    if (row == 5) { // teammate model cycle
-                        static const std::vector<std::string> kTeam = {
-                            "", "claude-sonnet-4-20250514",
-                            "claude-haiku-4-20250514",
-                        };
-                        auto it = std::find(kTeam.begin(), kTeam.end(), w.teammate_model);
-                        int idx = (it == kTeam.end()) ? 0
-                                  : static_cast<int>(it - kTeam.begin());
-                        w.teammate_model = kTeam[(idx + 1) % kTeam.size()];
+                    if (row == 5) { // teammate model cycle — no built-in presets, no-op
                         mark(); return true;
                     }
                     break;
@@ -1413,7 +1396,6 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                     if (row == 0) { // cycle base URL presets
                         static const std::vector<std::optional<std::string>> kUrls = {
                             std::nullopt,
-                            std::optional("https://api.anthropic.com"),
                             std::optional("http://localhost:8080"),
                         };
                         auto it = std::find(kUrls.begin(), kUrls.end(), w.base_url);
@@ -1429,7 +1411,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                             show_toast("API key cleared");
                         } else {
                             show_toast(
-                                "Set ANTHROPIC_API_KEY or run the auth flow",
+                                "Set LOOM_API_KEY or run the auth flow",
                                 Color::Yellow);
                         }
                         return true;

@@ -304,10 +304,6 @@ void add_agent_memory_tools(std::vector<std::string>& tools);
 
 [[nodiscard]] std::string canonical_tool_name(std::string_view value);
 
-[[nodiscard]] bool env_flag_enabled(const char* name);
-
-[[nodiscard]] bool is_ant_user();
-
 [[nodiscard]] bool agent_model_supports_effort(std::string_view model);
 
 [[nodiscard]] bool agent_model_supports_max_effort(std::string_view model);
@@ -653,7 +649,7 @@ void append_merged_user_message(std::vector<Message>& messages, Message message)
 // filter_resume_unresolved_tool_use_messages (which only drops an assistant
 // message when ALL of its tool_uses are unresolved): here a single orphaned
 // tool_use is enough to exclude the entire assistant message, because the
-// Anthropic API rejects requests where any tool_use is missing its result.
+// the Messages API rejects requests where any tool_use is missing its result.
 //
 // Use this when splicing a parent's conversation history into a sub-agent's
 // context (fork / resume paths) to avoid sending malformed message sequences.
@@ -692,15 +688,12 @@ inline constexpr std::size_t AGENT_DEFAULT_TOOL_RESULT_THRESHOLD_CHARS = 50'000;
 inline constexpr std::string_view AGENT_PERSIST_THRESHOLD_OVERRIDE_FLAG = "tengu_satin_quoll";
 inline constexpr std::string_view AGENT_PER_MESSAGE_BUDGET_OVERRIDE_FLAG = "tengu_hawthorn_window";
 
-[[nodiscard]] bool agent_growthbook_env_overrides_enabled();
-
 [[nodiscard]] std::optional<std::size_t> json_positive_size_t(
     loom::utils::json::JsonVal value
 );
 
 template <typename Fn>
 inline void with_agent_growthbook_env_overrides(Fn&& fn) {
-    if (!agent_growthbook_env_overrides_enabled()) return;
     const char* raw = std::getenv("LOOM_INTERNAL_FC_OVERRIDES");
     if (!raw || !*raw) return;
     auto parsed = loom::utils::json::parse(raw);

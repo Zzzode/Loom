@@ -12,14 +12,7 @@ enum class Platform : unsigned char {
     Linux,
 };
 
-[[nodiscard]] inline std::string managed_file_path(
-    Platform platform,
-    std::string_view user_type = {},
-    std::optional<std::string_view> managed_settings_path_override = std::nullopt
-) {
-    if (user_type == "ant" && managed_settings_path_override && !managed_settings_path_override->empty()) {
-        return std::string(*managed_settings_path_override);
-    }
+[[nodiscard]] inline std::string managed_file_path(Platform platform) {
     switch (platform) {
         case Platform::MacOS: return "/Library/Application Support/Loom";
         case Platform::Windows: return "C:\\Program Files\\Loom";

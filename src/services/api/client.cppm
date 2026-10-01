@@ -1,4 +1,4 @@
-// Anthropic API Client - Complete implementation with async, streaming, retry
+// Messages API Client - Complete implementation with async, streaming, retry
 module;
 #include <cstddef>
 #include <curl/curl.h>
@@ -115,7 +115,6 @@ struct CreateMessageRequest {
     std::optional<int> thinking_budget;
     std::optional<std::string> output_effort;
     std::optional<TaskBudget> task_budget;
-    std::optional<int> internal_effort_override;
     std::vector<std::string> betas;
     std::optional<std::string> metadata_user_id;
 };
@@ -381,13 +380,6 @@ public:
             }
             root.add("output_config", output_config);
         }
-        if (request.internal_effort_override) {
-            auto anthropic_internal = doc.object();
-            anthropic_internal.add(
-                "effort_override",
-                doc.number(static_cast<int64_t>(*request.internal_effort_override)));
-            root.add("anthropic_internal", anthropic_internal);
-        }
 
         doc.set_root(root);
         return doc.to_string();
@@ -613,13 +605,13 @@ public:
 };
 
 // =========================================================================
-// Main Anthropic API Client
+// Main Messages API Client
 // =========================================================================
 
-class AnthropicClient {
+class MessagesClient {
 public:
     struct Config {
-        std::string base_url = "https://api.anthropic.com";
+        std::string base_url;
         std::string api_key;
         std::string auth_token;  // For Loom AI OAuth
         std::string api_version = "2023-06-01";
@@ -627,13 +619,13 @@ public:
         int max_retries = 10;
         std::chrono::milliseconds base_retry_delay{500};
         std::optional<std::string> fallback_model;
-        Provider provider = Provider::Anthropic;
+        Provider provider = Provider::Messages;
         std::string region;
         std::vector<std::string> beta_headers;
         std::string user_agent = "Loom/1.0";
     };
 
-    explicit AnthropicClient(Config config)
+    explicit MessagesClient(Config config)
         : config_(std::move(config))
         , rate_limiter_(60)
         , auth_ctx_(std::make_unique<loom::services::auth::byoc::EnterpriseAuthContext>()) {}
@@ -924,8 +916,13 @@ public:
 
     // Verify API key
     [[nodiscard]] Result<bool> verify_api_key() {
+        if (!config_.fallback_model || config_.fallback_model->empty()) {
+            return std::unexpected(loom::utils::Error(
+                loom::utils::ErrorCode::invalid_argument,
+                "No model configured — set fallback_model in client config"));
+        }
         CreateMessageRequest request;
-        request.model = "claude-3-haiku-20240307";  // Use cheapest model
+        request.model = *config_.fallback_model;
         request.max_tokens = 1;
         request.messages.push_back(Message::from_text("user", "test"));
 

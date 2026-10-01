@@ -101,7 +101,7 @@ struct BudgetTracker {
 };
 
 struct ApiClientConfig {
-    std::string base_url{"https://api.anthropic.com"};
+    std::string base_url;
     std::string api_key;
     std::string auth_token;  // OAuth/Pro/gateway bearer token; sent as Authorization: Bearer when non-empty (takes precedence over api_key)
     std::string api_version{"2023-06-01"};
@@ -132,7 +132,7 @@ struct PermissionDenial {
 
 /// Model parameters for API requests
 struct ModelParams {
-    std::string model = "claude-sonnet-4-20250514";  // Default model
+    std::string model;                               // Model ID (user-configured, no default)
     std::uint32_t max_tokens = 16384;                 // Max output tokens
     std::optional<double> temperature;                // Sampling temperature
     std::optional<double> top_p;                      // Nucleus sampling
@@ -172,7 +172,7 @@ struct QueryEngineConfig {
     RetryPolicy retry_policy;
     ContextWindowConfig context_window;
     ThinkingConfig thinking_config;
-    std::string api_key;                            // Anthropic API key (x-api-key)
+    std::string api_key;                            // API key (x-api-key)
     std::string auth_token;                         // OAuth/gateway bearer token (Authorization: Bearer); takes precedence over api_key when set
     std::optional<std::string> base_url;            // Custom API base URL
     std::optional<std::string> custom_system_prompt;// Custom system prompt
@@ -181,12 +181,12 @@ struct QueryEngineConfig {
     /// Fixed session id instead of a generated one — lets a resumed run use
     /// the same session-memory/summary.md and transcript directory.
     std::optional<std::string> session_id_override;
-    /// Which wire protocol to speak. Unset => Anthropic (the historical
+    /// Which wire protocol to speak. Unset => Messages API (the historical
     /// default, so existing configs keep working unchanged). Set to
     /// "openai"/"openai-compatible" to drive any OpenAI-compatible endpoint.
     std::optional<std::string> wire_api;
     /// Whether to emit the vendor-native computer-use tool shape. Defaults to
-    /// true for the Anthropic wire (its native tool is what makes the
+    /// true for the Messages API wire (its native tool is what makes the
     /// see→act loop work best there); the OpenAI wire always uses the plain
     /// function form regardless.
     std::optional<bool> native_computer_tool;
@@ -354,7 +354,7 @@ public:
 
     /// Wire backend factory seam (RFC 0001 cc-sdk phase 3, §2.4). When set,
     /// make_wire_backend() delegates to the factory; when unset, the default
-    /// Anthropic/OpenAI construction runs unchanged. The seam intercepts
+    /// Messages API/OpenAI construction runs unchanged. The seam intercepts
     /// request-body serialization only — make_wire_backend() is called
     /// solely from build_request_body and only prepare() is used. The
     /// transport (httplib POST, SSE streaming, response parsing) does NOT
@@ -805,11 +805,11 @@ private:
     ApiClientConfig api_config_;
     /// Selected wire protocol. Set in setup_api_client(); read when
     /// serializing requests and parsing responses.
-    loom::query::wire::WireApi wire_api_ = loom::query::wire::WireApi::Anthropic;
+    loom::query::wire::WireApi wire_api_ = loom::query::wire::WireApi::Messages;
     /// When true, emit the vendor-native computer-use tool shape.
     bool native_computer_tool_ = true;
     /// Optional wire backend factory (§2.4). When set, make_wire_backend()
-    /// delegates to it instead of the default Anthropic/OpenAI construction.
+    /// delegates to it instead of the default Messages API/OpenAI construction.
     WireBackendFactory wire_backend_factory_;
 
     // ── Post-turn LLM memory extraction (TS extractMemories) ────────────────

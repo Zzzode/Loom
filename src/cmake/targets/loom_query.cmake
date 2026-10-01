@@ -3,7 +3,7 @@ add_library(loom_query)
 target_sources(loom_query
     PUBLIC FILE_SET CXX_MODULES FILES
         query/wire_protocol.cppm
-        query/wire_anthropic.cppm
+        query/wire_messages.cppm
         query/wire_openai.cppm
         query/query_engine.cppm
         # RFC 0001 cc-sdk phase 3 (§2.1): the assemble-only engine recipe

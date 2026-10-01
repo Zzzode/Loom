@@ -3,7 +3,7 @@
 ///
 /// Mirrors RateLimitMessage.tsx (160 lines):
 ///   ⚠️ Rate limit reached (429)  ▸ 12s remaining   [Retry now] [Options]
-///   model: claude-sonnet-4-20250514
+///   model: <model-id>
 module;
 
 #include <ftxui/dom/elements.hpp>

@@ -13,8 +13,8 @@ import std;
 export namespace loom::constants::prompts {
 
 // No bundled documentation site is shipped, so no docs-map URL is
-// advertised to the model. (This was an Anthropic docs URL; renaming its
-// host would have invented a domain that does not resolve.)
+// advertised to the model. (A docs URL was previously hardcoded here; it
+// was removed because no Loom docs domain exists yet.)
 inline constexpr std::string_view loom_docs_map_url = "";
 
 // Boundary marker separating static (cacheable) content from dynamic content.
@@ -22,22 +22,6 @@ inline constexpr std::string_view loom_docs_map_url = "";
 // Everything AFTER contains user/session-specific content.
 inline constexpr std::string_view system_prompt_dynamic_boundary =
     "__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__";
-
-// Latest frontier model name for prompt references
-inline constexpr std::string_view frontier_model_name = "Loom Opus 4.6";
-
-// Model family IDs for the latest in each tier
-struct ModelFamilyIds {
-    std::string_view opus;
-    std::string_view sonnet;
-    std::string_view haiku;
-};
-
-inline constexpr ModelFamilyIds loom_4_5_or_4_6_model_ids = {
-    .opus = "claude-opus-4-6",
-    .sonnet = "claude-sonnet-4-6",
-    .haiku = "claude-haiku-4-5-20251001",
-};
 
 // Default system prompt for sub-agents
 inline constexpr std::string_view default_agent_prompt =
@@ -61,29 +45,6 @@ inline constexpr std::string_view summarize_tool_results_section =
     "When working with tool results, write down any important information you might need "
     "later in your response, as the original tool result may be cleared later.";
 
-// Knowledge cutoff dates per model family
-enum class ModelFamily {
-    loom_sonnet_4_6,
-    loom_opus_4_6,
-    loom_opus_4_5,
-    loom_haiku_4,
-    loom_opus_4,
-    loom_sonnet_4,
-    unknown,
-};
-
-inline constexpr std::string_view get_knowledge_cutoff(ModelFamily family) {
-    switch (family) {
-        case ModelFamily::loom_sonnet_4_6: return "August 2025";
-        case ModelFamily::loom_opus_4_6:   return "May 2025";
-        case ModelFamily::loom_opus_4_5:   return "May 2025";
-        case ModelFamily::loom_haiku_4:    return "February 2025";
-        case ModelFamily::loom_opus_4:     return "January 2025";
-        case ModelFamily::loom_sonnet_4:   return "January 2025";
-        default:                             return "";
-    }
-}
-
 struct SystemPromptOptions {
     std::string model;
     std::vector<std::string> enabled_tools;
@@ -91,32 +52,6 @@ struct SystemPromptOptions {
     bool simple = false;
     bool use_global_cache_boundary = true;
 };
-
-[[nodiscard]] inline ModelFamily model_family_from_id(std::string_view model_id) {
-    if (model_id.find("claude-sonnet-4-6") != std::string_view::npos) {
-        return ModelFamily::loom_sonnet_4_6;
-    }
-    if (model_id.find("claude-opus-4-6") != std::string_view::npos) {
-        return ModelFamily::loom_opus_4_6;
-    }
-    if (model_id.find("claude-opus-4-5") != std::string_view::npos) {
-        return ModelFamily::loom_opus_4_5;
-    }
-    if (model_id.find("claude-haiku-4") != std::string_view::npos) {
-        return ModelFamily::loom_haiku_4;
-    }
-    if (model_id.find("claude-opus-4") != std::string_view::npos) {
-        return ModelFamily::loom_opus_4;
-    }
-    if (model_id.find("claude-sonnet-4") != std::string_view::npos) {
-        return ModelFamily::loom_sonnet_4;
-    }
-    return ModelFamily::unknown;
-}
-
-[[nodiscard]] inline std::string get_knowledge_cutoff(std::string_view model_id) {
-    return std::string(get_knowledge_cutoff(model_family_from_id(model_id)));
-}
 
 [[nodiscard]] inline std::string get_cwd() {
     std::error_code ec;
@@ -174,12 +109,7 @@ struct SystemPromptOptions {
 }
 
 [[nodiscard]] inline std::string model_description(std::string_view model_id) {
-    auto family = model_family_from_id(model_id);
-    if (family == ModelFamily::unknown) {
-        return "You are powered by the model " + std::string(model_id) + ".";
-    }
-    return "You are powered by the model named " + std::string(frontier_model_name) +
-        ". The exact model ID is " + std::string(model_id) + ".";
+    return "You are powered by the model " + std::string(model_id) + ".";
 }
 
 [[nodiscard]] inline std::vector<std::string> prepend_bullets(const std::vector<std::string>& items) {
@@ -217,18 +147,8 @@ struct SystemPromptOptions {
     items.push_back("OS Version: " + get_uname_sr());
     items.push_back(model_description(model_id));
 
-    auto cutoff = get_knowledge_cutoff(model_id);
-    if (!cutoff.empty()) {
-        items.push_back("Assistant knowledge cutoff is " + cutoff + ".");
-    }
-    items.push_back("The most recent Loom model family is Loom 4.5/4.6. Model IDs — Opus 4.6: '" +
-        std::string(loom_4_5_or_4_6_model_ids.opus) + "', Sonnet 4.6: '" +
-        std::string(loom_4_5_or_4_6_model_ids.sonnet) + "', Haiku 4.5: '" +
-        std::string(loom_4_5_or_4_6_model_ids.haiku) +
-        "'. When building AI applications, default to the latest and most capable Loom models.");
     items.push_back("Loom is available as a CLI in the terminal, desktop app (Mac/Windows), and IDE extensions (VS Code, JetBrains).");
-    items.push_back("Fast mode for Loom uses the same " + std::string(frontier_model_name) +
-        " model with faster output. It does NOT switch to a different model. It can be toggled with /fast.");
+    items.push_back("Fast mode for Loom uses the same model with faster output. It does NOT switch to a different model. It can be toggled with /fast.");
 
     std::vector<std::string> lines{
         "# Environment",

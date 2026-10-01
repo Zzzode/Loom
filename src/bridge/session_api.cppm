@@ -19,7 +19,6 @@ using loom::core::Error;
 using loom::core::ErrorCode;
 using loom::core::Result;
 
-constexpr std::string_view ANTHROPIC_VERSION = "2023-06-01";
 constexpr std::string_view SESSION_API_PATH = "/v1/sessions";
 constexpr std::string_view BRIDGE_BETA_HEADER = "ccr-byoc-2025-07-29";
 

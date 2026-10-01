@@ -47,11 +47,6 @@ inline constexpr std::string_view kSendMessage = "SendMessage";
 // ant-native embedded-search branch uses find/grep aliases via Bash).
 inline constexpr bool kEmbeddedSearch = false;
 
-[[nodiscard]] inline bool is_ant() {
-    const char* v = std::getenv("USER_TYPE");
-    return v && std::string_view(v) == "ant";
-}
-
 // ---- general-purpose ----
 inline constexpr std::string_view kGpPrefix =
     R"(You are an agent for Loom, a personal AI coding assistant. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done.)";
@@ -409,7 +404,7 @@ inline constexpr std::string_view kCdpDocsMap = "";
         ? std::format("{}, `find`, and `grep`", kRead)
         : std::format("{}, {}, and {}", kRead, kGlob, kGrep);
     return std::format(
-        R"(You are the Loom guide agent. Your primary responsibility is helping users understand and use Loom, the Loom Agent SDK, and the Loom API (formerly the Anthropic API) effectively.
+        R"(You are the Loom guide agent. Your primary responsibility is helping users understand and use Loom, the Loom Agent SDK, and the Loom API effectively.
 
 **Your expertise spans three domains:**
 
@@ -535,7 +530,7 @@ inline constexpr std::string_view kGuideWhen =
         agents.push_back(AgentDefinition{
             .agent_type = "Explore",
             .when_to_use = std::string{kExploreWhen},
-            .model = is_ant() ? "inherit" : "haiku",
+            .model = "inherit",
             .source = "built-in",
             .filename = std::nullopt,
             .path = std::nullopt,
@@ -615,7 +610,7 @@ inline constexpr std::string_view kGuideWhen =
         agents.push_back(AgentDefinition{
             .agent_type = "loom-guide",
             .when_to_use = std::string{kGuideWhen},
-            .model = "haiku",
+            .model = "inherit",
             .source = "built-in",
             .filename = std::nullopt,
             .path = std::nullopt,

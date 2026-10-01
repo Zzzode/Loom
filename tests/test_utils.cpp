@@ -33,7 +33,6 @@ import loom.ui.messages.collapse_notifications;
 import loom.agent.agent_id;
 import loom.security.auto_mode_denials;
 import loom.diagnostics.activity_manager;
-import loom.teams.agent_swarms_enabled;
 import loom.platform.env.env_utils;
 import loom.cache.cache_paths;
 import loom.platform.binary_check;
@@ -1220,8 +1219,8 @@ TEST(PluginIdentifier, ParsesBuildsAndMapsScopes) {
 
     EXPECT_EQ(loom::utils::plugin_identifier::build_plugin_id("a", "b"), "a@b");
     EXPECT_EQ(loom::utils::plugin_identifier::build_plugin_id("a", std::nullopt), "a");
-    EXPECT_TRUE(loom::utils::plugin_identifier::is_official_marketplace_name("anthropic-marketplace"));
-    EXPECT_TRUE(loom::utils::plugin_identifier::is_official_marketplace_name("ANTHROPIC-MARKETPLACE"));
+    EXPECT_TRUE(loom::utils::plugin_identifier::is_official_marketplace_name("loom-marketplace"));
+    EXPECT_TRUE(loom::utils::plugin_identifier::is_official_marketplace_name("LOOM-MARKETPLACE"));
     EXPECT_FALSE(loom::utils::plugin_identifier::is_official_marketplace_name("third-party"));
 
     auto source = loom::utils::plugin_identifier::scope_to_setting_source(loom::utils::plugin_identifier::PluginScope::Project);
@@ -1595,7 +1594,6 @@ TEST(SettingsPathsAndMerge, ComputesManagedAndRelativePathsAndDedupesArrays) {
     EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::MacOS), "/Library/Application Support/Loom");
     EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::Windows), "C:\\Program Files\\Loom");
     EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::Linux), "/etc/loom");
-    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::Linux, "ant", "/tmp/managed"), "/tmp/managed");
     EXPECT_EQ(loom::utils::settings_paths::managed_settings_drop_in_dir("/etc/loom"), "/etc/loom/managed-settings.d");
     EXPECT_EQ(loom::utils::settings_paths::relative_settings_file_path_for_source(SettingSource::ProjectSettings), ".loom/settings.json");
     EXPECT_EQ(loom::utils::settings_paths::relative_settings_file_path_for_source(SettingSource::LocalSettings), ".loom/settings.local.json");
@@ -1610,26 +1608,23 @@ TEST(PluginMarketplaceRules, AppliesOfficialNameAndAutoUpdateRules) {
     using loom::utils::plugin_marketplace_rules::MarketplaceSource;
     using loom::utils::plugin_marketplace_rules::MarketplaceSourceType;
 
-    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("anthropic-marketplace", std::nullopt));
+    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("loom-marketplace", std::nullopt));
     EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("knowledge-work-plugins", std::nullopt));
     EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("third-party", true));
-    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("anthropic-marketplace", false));
+    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("loom-marketplace", false));
 
-    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("anthropic-marketplace"));
+    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("loom-marketplace"));
     EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("loom-official"));
-    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("anthropic-marketplace-new"));
+    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("loom-marketplace-new"));
     EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("clаude")); // contains Cyrillic a
 
-    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::validate_official_name_source(
-        "anthropic-marketplace",
-        MarketplaceSource{.type = MarketplaceSourceType::Github, .repo = "anthropics/plugins", .url = ""}
-    ).has_value());
+    // Official names are reserved — validate_official_name_source returns an error.
     auto invalid = loom::utils::plugin_marketplace_rules::validate_official_name_source(
-        "anthropic-marketplace",
-        MarketplaceSource{.type = MarketplaceSourceType::Git, .repo = "", .url = "https://github.com/other/plugins.git"}
+        "loom-marketplace",
+        MarketplaceSource{.type = MarketplaceSourceType::Github, .repo = "other/plugins", .url = ""}
     );
     ASSERT_TRUE(invalid.has_value());
-    EXPECT_NE(invalid->find("reserved for official Anthropic marketplaces"), std::string::npos);
+    EXPECT_NE(invalid->find("reserved for official marketplaces"), std::string::npos);
 }
 
 TEST(PluginMarketplace, ComputesRealSha256Checksums) {
@@ -1928,18 +1923,6 @@ TEST(ActivityManager, DeduplicatesCliActivityAndRecordsUserWithinTimeout) {
     EXPECT_FALSE(manager.get_activity_states().is_user_active);
 }
 
-TEST(AgentSwarmsEnabled, AppliesAntOverrideOptInAndKillswitch) {
-    using namespace loom::utils::agent_swarms_enabled;
-
-    EXPECT_TRUE(is_agent_swarms_enabled({.user_type = "ant", .env_opt_in = false, .flag_set = false, .growthbook_enabled = false}));
-    EXPECT_FALSE(is_agent_swarms_enabled({.user_type = "external", .env_opt_in = false, .flag_set = false, .growthbook_enabled = true}));
-    EXPECT_TRUE(is_agent_swarms_enabled({.user_type = "external", .env_opt_in = true, .flag_set = false, .growthbook_enabled = true}));
-    EXPECT_TRUE(is_agent_swarms_enabled({.user_type = "external", .env_opt_in = false, .flag_set = true, .growthbook_enabled = true}));
-    EXPECT_FALSE(is_agent_swarms_enabled({.user_type = "external", .env_opt_in = true, .flag_set = false, .growthbook_enabled = false}));
-    EXPECT_TRUE(is_env_truthy(" YES "));
-    EXPECT_FALSE(is_env_truthy("off"));
-}
-
 TEST(EnvUtilsCompat, ParsesTruthyFalsyOptionsAndEnvVars) {
     EXPECT_TRUE(loom::utils::is_env_truthy(" on "));
     EXPECT_TRUE(loom::utils::is_env_truthy("TRUE"));
@@ -2062,19 +2045,21 @@ TEST(LoomHints, PendingHintStoreIsSingleSlotAndOncePerSession) {
 TEST(CommitAttribution, SanitizesInternalModelNamesAndSurfaceKeys) {
     using namespace loom::utils::commit_attribution;
 
-    EXPECT_EQ(sanitize_model_name("claude-opus-4-6-fast"), "claude-opus-4-6");
-    EXPECT_EQ(sanitize_model_name("internal-sonnet-4-5-thinking"), "claude-sonnet-4-5");
-    EXPECT_EQ(sanitize_model_name("haiku-3-5-test"), "claude-haiku-3-5");
-    EXPECT_EQ(sanitize_model_name("unknown-codename"), "loom");
-    EXPECT_EQ(sanitize_surface_key("cli/opus-4-5-fast"), "cli/claude-opus-4-5");
+    // sanitize_model_name is now a pass-through (empty → "loom")
+    EXPECT_EQ(sanitize_model_name("test-model-fast"), "test-model-fast");
+    EXPECT_EQ(sanitize_model_name("internal-sonnet-4-5-thinking"), "internal-sonnet-4-5-thinking");
+    EXPECT_EQ(sanitize_model_name("haiku-3-5-test"), "haiku-3-5-test");
+    EXPECT_EQ(sanitize_model_name("unknown-codename"), "unknown-codename");
+    EXPECT_EQ(sanitize_model_name(""), "loom");
+    EXPECT_EQ(sanitize_surface_key("cli/opus-4-5-fast"), "cli/opus-4-5-fast");
     EXPECT_EQ(sanitize_surface_key("cli"), "cli");
 }
 
 TEST(CommitAttribution, TracksChangedRegionCreationDeletionAndBulkChanges) {
     using namespace loom::utils::commit_attribution;
 
-    auto state = create_empty_attribution_state("cli/claude-sonnet-4-5");
-    EXPECT_EQ(state.surface, "cli/claude-sonnet-4-5");
+    auto state = create_empty_attribution_state("cli/test-model");
+    EXPECT_EQ(state.surface, "cli/test-model");
 
     state = track_file_modification(state, "src/a.ts", "hello world", "hello brave world", 10.0);
     ASSERT_TRUE(state.file_states.contains("src/a.ts"));
@@ -2582,7 +2567,7 @@ TEST(JsonCCUtils, JsonGetPathAccess) {
 
 TEST(FlagSettings, AppliesEnvBlockAndModelAndApiKey) {
     auto parsed = loom::utils::json::parse(
-        R"({"env":{"ANTHROPIC_API_KEY":"sk-test","ANTHROPIC_BASE_URL":"https://glm.example"},"model":"glm-4.6","apiKey":"sk-from-apikey"})");
+        R"({"env":{"LOOM_API_KEY":"sk-test","LOOM_BASE_URL":"https://glm.example"},"model":"glm-4.6","apiKey":"sk-from-apikey"})");
     ASSERT_TRUE(parsed.has_value());
 
     std::unordered_map<std::string, std::string> recorded;
@@ -2593,8 +2578,8 @@ TEST(FlagSettings, AppliesEnvBlockAndModelAndApiKey) {
         });
 
     ASSERT_EQ(recorded.size(), 2u);
-    EXPECT_EQ(recorded["ANTHROPIC_API_KEY"], "sk-test");
-    EXPECT_EQ(recorded["ANTHROPIC_BASE_URL"], "https://glm.example");
+    EXPECT_EQ(recorded["LOOM_API_KEY"], "sk-test");
+    EXPECT_EQ(recorded["LOOM_BASE_URL"], "https://glm.example");
     ASSERT_TRUE(result.model.has_value());
     EXPECT_EQ(*result.model, "glm-4.6");
     ASSERT_TRUE(result.api_key.has_value());
@@ -2622,7 +2607,7 @@ TEST(FlagSettings, AppliesStatusLineCommandSettings) {
 
 TEST(FlagSettings, ResolvesDefaultModelFromEnvironmentPriority) {
     std::map<std::string, std::string> env{
-        {"ANTHROPIC_DEFAULT_SONNET_MODEL", "glm-sonnet-default"},
+        {"LOOM_MODEL", "glm-sonnet-default"},
     };
     auto getter = [&](std::string_view name) -> std::optional<std::string> {
         auto it = env.find(std::string(name));
@@ -2634,10 +2619,10 @@ TEST(FlagSettings, ResolvesDefaultModelFromEnvironmentPriority) {
         loom::config::resolve_default_model_from_environment(getter),
         "glm-sonnet-default");
 
-    env["ANTHROPIC_MODEL"] = "anthropic-model";
+    env["LOOM_MODEL"] = "test-model";
     EXPECT_EQ(
         loom::config::resolve_default_model_from_environment(getter),
-        "anthropic-model");
+        "test-model");
 
     env["LOOM_MODEL"] = "loom-model";
     EXPECT_EQ(

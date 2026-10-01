@@ -345,7 +345,7 @@ public:
         "LOOM_USE_BEDROCK",
         "LOOM_USE_VERTEX",
         "LOOM_USE_FOUNDRY",
-        "ANTHROPIC_BASE_URL",
+        "LOOM_BASE_URL",
         "LOOM_CONFIG_DIR",
         "LOOM_REMOTE",
         "LOOM_REMOTE_MEMORY_DIR",

@@ -1,5 +1,5 @@
-/// @file wire_anthropic.cppm
-/// @brief Anthropic /v1/messages wire backend: the first implementation of
+/// @file wire_messages.cppm
+/// @brief Messages API /v1/messages wire backend: the first implementation of
 ///        the loom::query::wire::WireBackend seam.
 ///
 /// This is a pure extraction of the serialization/parsing QueryEngine used to
@@ -14,19 +14,19 @@
 ///   * which host to hit and which API version to claim -- constructor
 ///     parameters here, since RequestInput does not carry a base URL;
 ///   * credentials -- the engine computes them and passes them verbatim in
-///     `extra_headers` (see anthropic_credential_header);
+///     `extra_headers` (see messages_credential_header);
 ///   * which tools are sent at all (deny-rule filtering, enabled-tool
 ///     filtering, dynamic/MCP merging and dedup happen before this point), and
 ///     which MCP tools have a verbatim schema (RequestInput::tool_schemas);
 ///   * the context-management edits, task budget and response schema, which
 ///     come from env-dependent / mutable engine state. They ride in
-///     AnthropicWireOptions because RequestInput has no field for them.
+///     MessagesWireOptions because RequestInput has no field for them.
 module;
 
 #include <unistd.h>
 #include <cstdint>
 
-export module loom.query.wire_anthropic;
+export module loom.query.wire_messages;
 
 import std;
 
@@ -92,8 +92,8 @@ struct ResponseSchema {
 /// NOTE: the project builds with -Wmissing-designated-field-initializers, so a
 /// caller that wants only some of these should assign fields one by one rather
 /// than use a partial designated initializer.
-struct AnthropicWireOptions {
-    std::string base_url{"https://api.anthropic.com"};
+struct MessagesWireOptions {
+    std::string base_url;
     std::string api_version{"2023-06-01"};
     /// Header pairs emitted verbatim, right after `anthropic-version`. The
     /// engine passes its credential header (Authorization / x-api-key) and
@@ -162,8 +162,8 @@ struct ApiMessagesEndpoint {
 /// Credential header exactly as the engine computes it: a non-empty bearer
 /// token wins and is sent as `Authorization: Bearer <token>`, otherwise the
 /// plain key goes out as `x-api-key`. Callers put the result into
-/// AnthropicWireOptions::extra_headers.
-[[nodiscard]] inline std::pair<std::string, std::string> anthropic_credential_header(
+/// MessagesWireOptions::extra_headers.
+[[nodiscard]] inline std::pair<std::string, std::string> messages_credential_header(
     std::string_view api_key,
     std::string_view auth_token
 ) {
@@ -177,15 +177,15 @@ struct ApiMessagesEndpoint {
 // The backend
 // =========================================================================
 
-/// Anthropic /v1/messages backend: POST {base}/v1/messages, `event:`-typed SSE
+/// Messages API /v1/messages backend: POST {base}/v1/messages, `event:`-typed SSE
 /// stream on the way back. Stateless with respect to a request; the only state
 /// it holds is deployment configuration (URL, version, static headers) and the
 /// optional output_config / context_management inputs.
-class AnthropicWireBackend : public WireBackend {
+class MessagesWireBackend : public WireBackend {
 public:
     /// Convenience form for the common case: just the deployment coordinates
     /// plus the header pairs the caller computes itself.
-    explicit AnthropicWireBackend(
+    explicit MessagesWireBackend(
         std::string base_url,
         std::string api_version = "2023-06-01",
         std::vector<std::pair<std::string, std::string>> extra_headers = {}
@@ -196,11 +196,11 @@ public:
     }
 
     /// Full configuration (context management / task budget / response schema).
-    explicit AnthropicWireBackend(AnthropicWireOptions options)
+    explicit MessagesWireBackend(MessagesWireOptions options)
         : options_(std::move(options)) {}
 
     [[nodiscard]] WireApi api() const noexcept override {
-        return WireApi::Anthropic;
+        return WireApi::Messages;
     }
 
     /// URL + serialized body + headers for one non-streaming request.
@@ -469,7 +469,7 @@ public:
             append_message_to_json(msg, messages_arr, doc);
         }
 
-        // System prompt as a top-level field (Anthropic API format); omitted
+        // System prompt as a top-level field (Messages API format); omitted
         // when empty. The engine hoists it here from the SystemMessages as it
         // walks the conversation, so the engine hands it over pre-extracted.
         if (!input.system_prompt.empty()) {
@@ -484,9 +484,9 @@ public:
             auto tools_arr = doc.array();
             for (const auto& tool : input.tools) {
                 auto tool_obj = doc.object();
-                // Native Anthropic computer-use tool, identified by the
+                // Native Messages API computer-use tool, identified by the
                 // registry's internal name "computer_use" and emitted under
-                // the Anthropic wire name "computer" with display geometry
+                // the Messages API wire name "computer" with display geometry
                 // and no input_schema. Only when the caller asked for the
                 // native shape (RequestInput::native_computer_tool); otherwise
                 // it is an ordinary function tool.
@@ -844,7 +844,7 @@ private:
         }
         if (has_schema) {
             // Structured output: force the model to return JSON conforming to
-            // the supplied JSON schema (Anthropic output_config.format.json_schema).
+            // the supplied JSON schema (Messages API output_config.format.json_schema).
             auto format = doc.object();
             format.add("type", doc.string("json_schema"));
             auto schema_obj = doc.object();
@@ -859,7 +859,7 @@ private:
         root.add("output_config", output_config);
     }
 
-    AnthropicWireOptions options_;
+    MessagesWireOptions options_;
 };
 
 } // namespace loom::query::wire

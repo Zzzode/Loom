@@ -59,9 +59,9 @@ struct MarketplaceSource {
     const auto normalized = lower_copy(name);
     if (loom::utils::plugin_identifier::is_official_marketplace_name(normalized)) return false;
     if (contains_non_ascii(name)) return true;
-    if (has_separator_between(normalized, "official", "anthropic") || has_separator_between(normalized, "official", "loom")) return true;
-    if (has_separator_between(normalized, "anthropic", "official") || has_separator_between(normalized, "loom", "official")) return true;
-    for (std::string_view brand : {"anthropic", "loom"}) {
+    if (has_separator_between(normalized, "official", "loom")) return true;
+    if (has_separator_between(normalized, "loom", "official")) return true;
+    for (std::string_view brand : {"loom"}) {
         if (normalized.starts_with(brand)) {
             auto rest = normalized.substr(brand.size());
             while (!rest.empty() && !((rest.front() >= 'a' && rest.front() <= 'z') || (rest.front() >= '0' && rest.front() <= '9'))) rest.erase(0, 1);
@@ -74,18 +74,8 @@ struct MarketplaceSource {
 [[nodiscard]] inline std::optional<std::string> validate_official_name_source(std::string_view name, const MarketplaceSource& source) {
     const auto normalized = lower_copy(name);
     if (!loom::utils::plugin_identifier::is_official_marketplace_name(normalized)) return std::nullopt;
-    constexpr std::string_view official_org = "anthropics";
-    const auto message = "The name '" + std::string(name) + "' is reserved for official Anthropic marketplaces. Only repositories from 'github.com/anthropics/' can use this name.";
-    if (source.type == MarketplaceSourceType::Github) {
-        const auto repo = lower_copy(source.repo);
-        if (repo.starts_with(std::string(official_org) + "/")) return std::nullopt;
-        return message;
-    }
-    if (source.type == MarketplaceSourceType::Git) {
-        const auto url = lower_copy(source.url);
-        if (url.find("github.com/anthropics/") != std::string::npos || url.find("git@github.com:anthropics/") != std::string::npos) return std::nullopt;
-        return message;
-    }
+    const auto message = "The name '" + std::string(name) + "' is reserved for official marketplaces.";
+    (void)source;
     return message;
 }
 

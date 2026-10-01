@@ -20,7 +20,7 @@
 //   4. IMDSv2 (EC2 Instance Metadata Service) via PUT /latest/api/token then
 //      GET /latest/meta-data/iam/security-credentials/<role>.  TTL 6h.
 //
-// Provider call sites (AnthropicClient / QueryEngine) are responsible for
+// Provider call sites (MessagesClient / QueryEngine) are responsible for
 // calling `refresh_aws_credentials()` (the shell hooks equivalent of TS
 // `refreshAndGetAwsCredentials()`) before signing, if user scripts need to
 // run first.  This module does NOT spawn user shells.
@@ -339,7 +339,7 @@ struct SignedRequest {
 // Required inputs:
 //   method — "GET", "POST", etc. (UPPERCASE; AWS rejects anything else)
 //   endpoint_host — "bedrock-runtime.us-east-1.amazonaws.com" (NO scheme, NO port defaulted when scheme standard)
-//   uri_path — "/model/anthropic.claude-sonnet-4-20250514-v1:0/invoke"
+//   uri_path — "/model/<model-id>/invoke"
 //   query — sorted later; callers can pass raw unsorted key/val pairs
 //   body_bytes — POST payload (will be SHA-256 hashed; hex is BOTH added to
 //                x-amz-content-sha256 AND used as payload line in canonical req)
@@ -664,8 +664,7 @@ resolve_default_credentials() {
 }
 
 // TS client.ts priority for region:
-//   ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION (per-model, handled by caller)
-//     > AWS_REGION > AWS_DEFAULT_REGION > "us-east-1"
+//   AWS_REGION > AWS_DEFAULT_REGION > "us-east-1"
 [[nodiscard]] inline std::string resolve_region() {
     using loom::utils::env::get_env;
     if (auto r = get_env("AWS_REGION"); r && !r->empty()) return *r;

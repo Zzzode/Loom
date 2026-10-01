@@ -366,7 +366,7 @@ std::expected<AgentExecutionResult, std::string> run_agent(const AgentRuntimeCon
 
     // NOTE: the actual LLM streaming loop is intentionally NOT here — it lives
     // in loom::tools::agent::AgentWorker::run_agent_loop (agent_tool.cppm),
-    // which owns the Anthropic client, tool dispatch, and streaming state
+    // which owns the API client, tool dispatch, and streaming state
     // machine. This function is the *runtime lifecycle bookkeeping* entrypoint
     // used by background/coordinator workers, tests, and RPC callers that only
     // need metadata / transcript / persistence semantics.

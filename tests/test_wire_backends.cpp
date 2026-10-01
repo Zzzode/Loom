@@ -2,7 +2,7 @@
 /// @brief Tests for the wire-protocol backend seam (loom.query.wire_protocol)
 ///        and its two implementations.
 ///
-/// The seam exists so the agent loop can talk to either an Anthropic-shaped
+/// The seam exists so the agent loop can talk to either a Messages API-shaped
 /// /v1/messages endpoint or any OpenAI-compatible /v1/chat/completions
 /// endpoint. These tests pin the CONTRACT each backend must honour:
 ///   * request URL/body shape,
@@ -19,7 +19,7 @@
 import std;
 import loom.query.wire_protocol;
 import loom.query.wire_openai;
-import loom.query.wire_anthropic;
+import loom.query.wire_messages;
 import loom.serdes.json;
 import loom.types.types;
 import loom.tools.tool;
@@ -76,7 +76,7 @@ loom::utils::json::JsonDoc parse_or_fail(const std::string& text) {
 // ===========================================================================
 
 TEST(WireProtocol, ApiNameResolution) {
-    EXPECT_EQ(*wire::wire_api_from_string("anthropic"), WireApi::Anthropic);
+    EXPECT_EQ(*wire::wire_api_from_string("messages"), WireApi::Messages);
     EXPECT_EQ(*wire::wire_api_from_string("openai"), WireApi::OpenAi);
     EXPECT_EQ(*wire::wire_api_from_string("openai-compatible"), WireApi::OpenAi);
     EXPECT_EQ(*wire::wire_api_from_string("openai_compat"), WireApi::OpenAi);
@@ -85,17 +85,17 @@ TEST(WireProtocol, ApiNameResolution) {
 }
 
 TEST(WireProtocol, ProviderNameResolution) {
-    // Anthropic-shaped proxies all speak /v1/messages.
-    EXPECT_EQ(*wire::wire_api_from_provider("anthropic"), WireApi::Anthropic);
-    EXPECT_EQ(*wire::wire_api_from_provider("bedrock"), WireApi::Anthropic);
-    EXPECT_EQ(*wire::wire_api_from_provider("vertex"), WireApi::Anthropic);
-    EXPECT_EQ(*wire::wire_api_from_provider("foundry"), WireApi::Anthropic);
+    // Messages API-shaped proxies all speak /v1/messages.
+    EXPECT_EQ(*wire::wire_api_from_provider("messages"), WireApi::Messages);
+    EXPECT_EQ(*wire::wire_api_from_provider("bedrock"), WireApi::Messages);
+    EXPECT_EQ(*wire::wire_api_from_provider("vertex"), WireApi::Messages);
+    EXPECT_EQ(*wire::wire_api_from_provider("foundry"), WireApi::Messages);
     EXPECT_EQ(*wire::wire_api_from_provider("openai_compat"), WireApi::OpenAi);
     EXPECT_FALSE(wire::wire_api_from_provider("mystery").has_value());
 }
 
 TEST(WireProtocol, ApiNamesRoundTrip) {
-    EXPECT_EQ(wire::wire_api_name(WireApi::Anthropic), "anthropic");
+    EXPECT_EQ(wire::wire_api_name(WireApi::Messages), "messages");
     EXPECT_EQ(wire::wire_api_name(WireApi::OpenAi), "openai");
 }
 
@@ -186,7 +186,7 @@ TEST(OpenAiWireBackend, ToolsUseFunctionShapeWithVerbatimSchema) {
 }
 
 TEST(OpenAiWireBackend, ComputerUseStaysAnOrdinaryFunctionTool) {
-    // Unlike Anthropic, OpenAI has no native computer tool. The capability
+    // Unlike the Messages API, OpenAI has no native computer tool. The capability
     // must still be exposed — as a normal function tool.
     wire::OpenAiWireBackend backend("http://h");
     wire::RequestInput input;
@@ -406,14 +406,14 @@ TEST(OpenAiWireBackend, GarbageFrameReportsError) {
 }
 
 // ===========================================================================
-// Anthropic backend — this is the format the engine grew up on, so the tests
+// Messages API backend — this is the format the engine grew up on, so the tests
 // pin the /v1/messages shape and the native computer_20241022 tool.
 // ===========================================================================
 
-TEST(AnthropicWireBackend, BuildsMessagesRequest) {
-    wire::AnthropicWireBackend backend("https://api.anthropic.com");
+TEST(MessagesWireBackend, BuildsMessagesRequest) {
+    wire::MessagesWireBackend backend("https://api.example.com");
     wire::RequestInput input;
-    input.model = "claude-sonnet-4-20250514";
+    input.model = "test-model";
     input.max_tokens = 2048;
     input.stream = false;
     input.system_prompt = "You are an agent.";
@@ -426,16 +426,16 @@ TEST(AnthropicWireBackend, BuildsMessagesRequest) {
 
     auto doc = parse_or_fail(prepared->body);
     const auto root = doc.root();
-    EXPECT_EQ(std::string(root.get("model").as_str()), "claude-sonnet-4-20250514");
+    EXPECT_EQ(std::string(root.get("model").as_str()), "test-model");
     EXPECT_EQ(root.get("max_tokens").as_int(), 2048);
-    // Anthropic carries the system prompt as a TOP-LEVEL field.
+    // The Messages API carries the system prompt as a TOP-LEVEL field.
     EXPECT_TRUE(root.get("system").is_str());
     EXPECT_EQ(std::string(root.get("system").as_str()), "You are an agent.");
     EXPECT_TRUE(root.get("messages").is_arr());
 }
 
-TEST(AnthropicWireBackend, SendsAnthropicVersionHeader) {
-    wire::AnthropicWireBackend backend("https://api.anthropic.com");
+TEST(MessagesWireBackend, SendsMessagesApiVersionHeader) {
+    wire::MessagesWireBackend backend("https://api.example.com");
     wire::RequestInput input;
     input.model = "m";
     input.messages.push_back(loom::core::Message{make_user("hi")});
@@ -449,8 +449,8 @@ TEST(AnthropicWireBackend, SendsAnthropicVersionHeader) {
     EXPECT_TRUE(saw_version);
 }
 
-TEST(AnthropicWireBackend, NativeComputerToolUsesComputer20241022) {
-    wire::AnthropicWireBackend backend("https://api.anthropic.com");
+TEST(MessagesWireBackend, NativeComputerToolUsesComputer20241022) {
+    wire::MessagesWireBackend backend("https://api.example.com");
     wire::RequestInput input;
     input.model = "m";
     input.messages.push_back(loom::core::Message{make_user("hi")});
@@ -477,10 +477,10 @@ TEST(AnthropicWireBackend, NativeComputerToolUsesComputer20241022) {
     EXPECT_FALSE(tool.get("input_schema").valid());
 }
 
-TEST(AnthropicWireBackend, ParsesMessageResponse) {
-    wire::AnthropicWireBackend backend("https://api.anthropic.com");
+TEST(MessagesWireBackend, ParsesMessageResponse) {
+    wire::MessagesWireBackend backend("https://api.example.com");
     const std::string body = R"({
-      "id":"msg_1","model":"claude-sonnet-4-20250514","role":"assistant",
+      "id":"msg_1","model":"test-model","role":"assistant",
       "stop_reason":"tool_use",
       "content":[{"type":"text","text":"let me look"},
                  {"type":"tool_use","id":"toolu_1","name":"Read",
@@ -512,8 +512,8 @@ TEST(AnthropicWireBackend, ParsesMessageResponse) {
     EXPECT_TRUE(saw_tool);
 }
 
-TEST(AnthropicWireBackend, DecodesContentBlockDelta) {
-    wire::AnthropicWireBackend backend("https://api.anthropic.com");
+TEST(MessagesWireBackend, DecodesContentBlockDelta) {
+    wire::MessagesWireBackend backend("https://api.example.com");
     auto deltas = backend.parse_stream_event(
         "content_block_delta",
         R"({"index":0,"delta":{"type":"text_delta","text":"Hello"}})");
@@ -528,8 +528,8 @@ TEST(AnthropicWireBackend, DecodesContentBlockDelta) {
     EXPECT_TRUE(saw_text);
 }
 
-TEST(AnthropicWireBackend, DecodesMessageDeltaStopReason) {
-    wire::AnthropicWireBackend backend("https://api.anthropic.com");
+TEST(MessagesWireBackend, DecodesMessageDeltaStopReason) {
+    wire::MessagesWireBackend backend("https://api.example.com");
     auto deltas = backend.parse_stream_event(
         "message_delta",
         R"({"delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":7}})");
@@ -543,8 +543,8 @@ TEST(AnthropicWireBackend, DecodesMessageDeltaStopReason) {
     EXPECT_TRUE(saw_stop);
 }
 
-TEST(AnthropicWireBackend, PingIsIgnoredNotAnError) {
-    wire::AnthropicWireBackend backend("https://api.anthropic.com");
+TEST(MessagesWireBackend, PingIsIgnoredNotAnError) {
+    wire::MessagesWireBackend backend("https://api.example.com");
     auto deltas = backend.parse_stream_event("ping", R"({"type":"ping"})");
     for (const auto& d : deltas) {
         EXPECT_NE(d.kind, StreamDelta::Kind::Error);

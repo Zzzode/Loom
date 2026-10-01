@@ -116,7 +116,6 @@ namespace detail {
 
 [[nodiscard]] std::optional<std::string> env_team_name() {
     if (const char* value = std::getenv("LOOM_TEAM_NAME"); value && *value) return std::string(value);
-    if (const char* value = std::getenv("CLAUDE_CODE_TEAM_NAME"); value && *value) return std::string(value);
     return std::nullopt;
 }
 

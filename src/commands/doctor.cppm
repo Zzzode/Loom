@@ -152,34 +152,52 @@ private:
             .name = "API Key",
             .status = CheckStatus::Fail,
             .message = "No API key found",
-            .fix_suggestion = "Set ANTHROPIC_API_KEY environment variable or use /config set",
+            .fix_suggestion = "Set LOOM_API_KEY environment variable or use /config set",
         };
     }
 
     /// Check API endpoint connectivity via a real TCP probe.
-    /// Performs a short-timeout non-blocking connect to the API host on port
-    /// 443 and reports the measured RTT. Fail-closed: any probe error yields a
-    /// Fail status carrying the real error string rather than a fake Pass.
-    [[nodiscard]] static DiagnosticCheck check_api_connectivity() {
-        constexpr std::string_view kHost = "api.anthropic.com";
+    /// Performs a short-timeout non-blocking connect to the configured API
+    /// host on port 443 and reports the measured RTT. Fail-closed: any probe
+    /// error yields a Fail status carrying the real error string rather than
+    /// a fake Pass.  Skipped (Warning) when no endpoint is configured.
+    [[nodiscard]] DiagnosticCheck check_api_connectivity() const {
+        // Derive the probe target from the configured base URL.
+        std::string host;
+        if (const char* base = std::getenv("LOOM_BASE_URL"); base && *base) {
+            std::string_view url(base);
+            auto scheme_end = url.find("://");
+            auto remainder = (scheme_end != std::string_view::npos)
+                ? url.substr(scheme_end + 3) : url;
+            auto slash = remainder.find('/');
+            host = std::string(remainder.substr(0, slash));
+        }
+        if (host.empty()) {
+            return DiagnosticCheck{
+                .name = "API Connectivity",
+                .status = CheckStatus::Warn,
+                .message = "No API endpoint configured",
+                .fix_suggestion = "Set LOOM_BASE_URL or configure network.base_url in settings",
+            };
+        }
         constexpr int kPort = 443;
         constexpr int kTimeoutMs = 3000;
 
-        auto probe = tcp_connect_rtt_ms(kHost, kPort, kTimeoutMs);
+        auto probe = tcp_connect_rtt_ms(host, kPort, kTimeoutMs);
         if (probe.has_value()) {
             return DiagnosticCheck{
                 .name = "API Connectivity",
                 .status = CheckStatus::Pass,
-                .message = std::format("Reached {}:{} in {} ms", kHost, kPort, *probe),
+                .message = std::format("Reached {}:{} in {} ms", host, kPort, *probe),
                 .detail = std::format(
-                    "https://{} (TCP connect OK, RTT {} ms)", kHost, *probe),
+                    "https://{} (TCP connect OK, RTT {} ms)", host, *probe),
             };
         }
         // Fail-closed: surface the real error instead of a hardcoded Pass.
         return DiagnosticCheck{
             .name = "API Connectivity",
             .status = CheckStatus::Fail,
-            .message = std::format("Cannot reach {}:{}", kHost, kPort),
+            .message = std::format("Cannot reach {}:{}", host, kPort),
             .detail = probe.error(),
             .fix_suggestion = "Check DNS resolution, proxy configuration, and firewall rules.",
         };

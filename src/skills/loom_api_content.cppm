@@ -1,7 +1,7 @@
 /// @file loom_api_content.cppm
 /// @brief Loom API content skill — auto-detects project language, injects
 ///        a curated Reading Guide, model metadata, and cross-references to
-///        shared / language-specific reference docs for Anthropic SDK usage.
+///        shared / language-specific reference docs for Messages API SDK usage.
 ///
 /// This is the C++20 port of `src/skills/bundled/loomApiContent.ts` plus the
 /// runtime logic from `src/skills/bundled/loomApi.ts`. The TS version
@@ -32,13 +32,13 @@ struct ModelVar {
 };
 
 constexpr std::array<ModelVar, 7> SKILL_MODEL_VARS{{
-    {"OPUS_ID",         "claude-opus-4-6"},
-    {"OPUS_NAME",       "Loom Opus 4.6"},
-    {"SONNET_ID",       "claude-sonnet-4-6"},
-    {"SONNET_NAME",     "Loom Sonnet 4.6"},
-    {"HAIKU_ID",        "claude-haiku-4-5"},
-    {"HAIKU_NAME",      "Loom Haiku 4.5"},
-    {"PREV_SONNET_ID",  "claude-sonnet-4-5"},
+    {"OPUS_ID",         "opus-model-id"},
+    {"OPUS_NAME",       "Opus"},
+    {"SONNET_ID",       "sonnet-model-id"},
+    {"SONNET_NAME",     "Sonnet"},
+    {"HAIKU_ID",        "haiku-model-id"},
+    {"HAIKU_NAME",      "Haiku"},
+    {"PREV_SONNET_ID",  "previous-sonnet-model-id"},
 }};
 
 /// Replace every `{{KEY}}` occurrence in `text` with the matching value from
@@ -240,7 +240,7 @@ The relevant documentation for your detected language ("{lang}") is cross-refere
 constexpr std::string_view WHEN_TO_USE_WEB_FETCH = R"raw(
 ## When to Use WebFetch
 
-Fetch the live Anthropic docs **when**:
+Fetch the live API docs **when**:
   1. The user asks about a *recently shipped* API feature (betas, new models,
      new SDK methods) that may postdate this skill's bundled snapshot.
   2. The user reports an error string you cannot map with confidence from
@@ -249,10 +249,10 @@ Fetch the live Anthropic docs **when**:
      and you need to verify route shape.
 
 Preferred source URLs (from `shared/live-sources.md`):
-  * API reference:    https://docs.anthropic.com/en/api/messages
-  * SDK docs root:    https://docs.anthropic.com/en/docs/intro-to-loom
-  * Prompt caching:   https://docs.anthropic.com/en/docs/build-with-loom/prompt-caching
-  * Tool use guide:   https://docs.anthropic.com/en/docs/use-cases/tool-use
+  * API reference:    https://docs.loom.dev/en/api/messages
+  * SDK docs root:    https://docs.loom.dev/en/docs/intro-to-loom
+  * Prompt caching:   https://docs.loom.dev/en/docs/build-with-loom/prompt-caching
+  * Tool use guide:   https://docs.loom.dev/en/docs/use-cases/tool-use
 
 **Always** prefer bundled `shared/*.md` and `{lang}/**/*.md` content *first*;
 fall back to WebFetch *only* when bundled content is insufficient or stale.
@@ -291,16 +291,16 @@ fall back to WebFetch *only* when bundled content is insufficient or stale.
 // carries the bulk of the instruction. Matches TS `basePrompt` (everything
 // before `## Reading Guide` in SKILL.md).
 // ============================================================
-constexpr std::string_view BASE_PROMPT = R"raw(# loom-api — Build apps with the Loom API / Anthropic SDKs
+constexpr std::string_view BASE_PROMPT = R"raw(# loom-api — Build apps with the Loom API
 
-You are an expert assistant for **Anthropic's Loom platform**. Help the user
+You are an expert assistant for **the Loom platform**. Help the user
 build, debug, and optimize applications that call the Loom Messages API
 directly or via the official SDKs.
 
 ## Mandatory Response Style
 
 1. **Quote the exact route + HTTP verb** whenever you describe an API call
-   (e.g. `POST https://api.anthropic.com/v1/messages`).
+   (e.g. `POST https://api.loom.dev/v1/messages`).
 2. **Always include a fully runnable code sample** in the user's project
    language (auto-detected; see Reading Guide below). If language is unknown,
    show both `curl` and `python` snippets.
@@ -363,9 +363,8 @@ directly or via the official SDKs.
 // SkillDefinition factory — registered via BundledSkills in bundled.cppm.
 //
 // Trigger patterns follow the TS registration description:
-//   TRIGGER when: code imports `anthropic` / `@anthropic-ai/sdk` /
-//   `loom_agent_sdk`, or user asks to use Loom API, Anthropic SDKs,
-//   or Agent SDK.
+//   TRIGGER when: code imports `loom_agent_sdk`, or user asks to use Loom
+//   API, Messages API, or Agent SDK.
 //   DO NOT TRIGGER when: code imports `openai` / other AI SDK, general
 //   programming, or ML/data-science tasks unrelated to Loom.
 // ============================================================
@@ -373,20 +372,17 @@ directly or via the official SDKs.
     return SkillDefinition{
         .name = "loom-api-content",
         .description =
-            "Build apps with the Loom API or Anthropic SDK.\n"
-            "TRIGGER when: code imports `anthropic` / `@anthropic-ai/sdk` / "
-            "`loom_agent_sdk`, or user asks about Loom API, Messages "
-            "endpoint, tool_use, prompt caching, streaming, batches, or "
-            "files-api.\n"
+            "Build apps with the Loom API.\n"
+            "TRIGGER when: code imports `loom_agent_sdk`, or user asks about "
+            "Loom API, Messages endpoint, tool_use, prompt caching, streaming, "
+            "batches, or files-api.\n"
             "DO NOT TRIGGER when: code imports `openai` / other AI SDK, "
             "general programming, or ML/data-science tasks.",
         .trigger_patterns = {
             // Explicit skill invocation or product-name mentions
             R"(/loom-api\b)",
-            R"(\bclaude\s*api\b)",
-            R"(\banthropic\s*api\b)",
-            R"(\banthropic\s+sdk\b)",
-            R"(\bclaude\s+sdk\b)",
+            R"(\bloom\s*api\b)",
+            R"(\bmessages\s*api\b)",
 
             // API surface keywords
             R"(\bmessages\s+endpoint\b)",
@@ -398,15 +394,8 @@ directly or via the official SDKs.
             R"(stream(?:ing)?\s*(?:tokens|response|sse))",
             R"(\bmessage\s+batch(?:es)?\b)",
             R"(\bfiles\s+api\b)",
-            R"(\bclaude\s*agent\s*sdk\b)",
+            R"(\bloom\s*agent\s*sdk\b)",
             R"(\bagent\s+sdk\b.*(?:python|typescript|ts))",
-
-            // Import patterns (codebase context is matched elsewhere; these
-            // catch user questions that *contain* the import literal)
-            R"(import\s+.*\banthropic\b)",
-            R"(from\s+['"]?anthropic['"]?)",
-            R"(require\s*\(\s*['"]@anthropic-ai)",
-            R"(ClaudeAgent\b)",
         },
         .content =
             // Default content (no args, cwd unknown). build_prompt() is

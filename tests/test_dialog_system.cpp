@@ -735,7 +735,7 @@ TEST(DefaultRenderers, RegisterAllDefaultRenderers) {
         dsys::CostThresholdPayload ct;
         ct.id = "ct-test";
         ct.dollars_spent = 4.7;    // rounds to $5
-        ct.model_name = std::string("claude-sonnet");
+        ct.model_name = std::string("test-model");
         dsys::DialogPayloadVariant payload = ct;
         auto el = registry.render(payload, ctx);
         EXPECT_NE(el, nullptr);
@@ -745,7 +745,7 @@ TEST(DefaultRenderers, RegisterAllDefaultRenderers) {
         std::string out = screen.ToString();
         EXPECT_FALSE(out.empty());
         // Title must be formatted with dollars_spent using $%.0f (rounded)
-        EXPECT_NE(out.find("You've spent $5 on the Anthropic API this session."),
+        EXPECT_NE(out.find("You've spent $5 on the API this session."),
                   std::string::npos);
         // Body + docs link must appear
         EXPECT_NE(out.find("Learn more about how to monitor your spending:"),
@@ -1210,7 +1210,7 @@ TEST(DialogTriggers, PushCostThresholdCreatesDialog) {
     namespace dtrig = loom::ui::dialogs::triggers;
 
     dtrig::PushCostThreshold(
-        queue, 5.2, std::optional<std::string>{"claude-sonnet-4.6"},
+        queue, 5.2, std::optional<std::string>{"test-model.6"},
         []() {});
 
     EXPECT_TRUE(queue.has_any_bottom());
@@ -2525,7 +2525,7 @@ TEST(DialogRenderers, Golden_CostThreshold) {
     dsys::CostThresholdPayload ct;
     ct.id = "cost-gold-1";
     ct.dollars_spent = 4.7;        // rounds to $5 per %.0f
-    ct.model_name = "claude-3-5-sonnet-20241022";
+    ct.model_name = "test-model";
     std::atomic<int> done_calls{0};
     ct.on_done = [&] { done_calls.fetch_add(1); };
 
@@ -2544,13 +2544,13 @@ TEST(DialogRenderers, Golden_CostThreshold) {
     const std::string out = screen.ToString();
 
     // Contractually required content.
-    EXPECT_NE(out.find("You've spent $5 on the Anthropic API this session."),
+    EXPECT_NE(out.find("You've spent $5 on the API this session."),
               std::string::npos);
     EXPECT_NE(out.find("Learn more about how to monitor your spending:"),
               std::string::npos);
     EXPECT_EQ(out.find("code.loom.com"), std::string::npos)
         << "no docs host is configured, so no link may be rendered";
-    EXPECT_NE(out.find("(model: claude-3-5-sonnet-20241022)"),
+    EXPECT_NE(out.find("(model: test-model)"),
               std::string::npos);
     EXPECT_NE(out.find("Got it, thanks!"), std::string::npos);
 
@@ -2660,13 +2660,13 @@ TEST(DialogRenderers, Golden_SettingsPanel) {
                 // 3 rows: Model, API base, Max tokens
                 hbox({
                     text("  Model") | dim | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 22),
-                    text("claude-sonnet-4.6") | bold,
+                    text("test-model.6") | bold,
                     filler(),
                 }),
                 hbox({
                     text("  API base") | dim
                         | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 22),
-                    text("api.anthropic.com"),
+                    text("(no default)"),
                     filler(),
                 }),
                 hbox({

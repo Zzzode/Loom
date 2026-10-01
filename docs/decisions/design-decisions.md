@@ -165,7 +165,7 @@ promoted to the repository root in the same series of commits, so
 - **`cpp_migration/src/services/api/sse_client.cppm:26`** — This module deliberately avoids
   importing anything from `loom.services.api.*` so it can be built and tested in isolation.
 
-- **`cpp_migration/src/query/wire_anthropic.cppm:293-300`** — Mapping notes for the Anthropic SSE
+- **`cpp_migration/src/query/wire_messages.cppm:293-300`** — Mapping notes for the Messages API SSE
   decoder, "all deliberate, to keep the engine's behaviour". `message_start` carries the message
   id/model but `StreamDelta` has no field for them, so only the usage fields travel through.
   `content_block_start` has **no dedicated `StreamDelta` kind**: a text/thinking block start is
@@ -173,16 +173,16 @@ promoted to the repository root in the same series of commits, so
   first delta still reproduces the engine's possibly-empty block), and a `tool_use` start becomes
   `ToolUseStart` carrying the id and name.
 
-- **`cpp_migration/src/query/wire_anthropic.cppm:306`** — Unknown event names and unparseable
+- **`cpp_migration/src/query/wire_messages.cppm:306`** — Unknown event names and unparseable
   frames yield **nothing**, "exactly" as the engine does. Do not add a throw or a default-delta
   here.
 
-- **`cpp_migration/src/query/wire_anthropic.cppm:453`** — "Anything else: silently ignored, as in
+- **`cpp_migration/src/query/wire_messages.cppm:453`** — "Anything else: silently ignored, as in
   the engine."
 
-- **`cpp_migration/src/query/wire_anthropic.cppm:98-100`** — The project builds with
+- **`cpp_migration/src/query/wire_messages.cppm:98-100`** — The project builds with
   `-Wmissing-designated-field-initializers`, so callers that want only *some* fields of
-  `AnthropicWireOptions` must assign field-by-field; a partial designated initializer is a build
+  `MessagesWireOptions` must assign field-by-field; a partial designated initializer is a build
   error.
 
 - **`cpp_migration/src/query/wire_openai.cppm:40-42`** — The OpenAI backend is intentionally
@@ -208,7 +208,7 @@ promoted to the repository root in the same series of commits, so
   OpenAI-compatible representation. `thinking_enabled` / `thinking_budget_tokens` are
   **deliberately ignored**: sending a `thinking` object would be rejected by most endpoints, and no
   field exists that would make the model emit a `ThinkingBlock` back. Thinking remains an
-  Anthropic-backend-only feature.
+  Messages API-backend-only feature.
 
 - **`cpp_migration/src/query/wire_openai.cppm:536-537`** — Endpoints that accept
   `max_completion_tokens` instead of `max_tokens` (newer OpenAI reasoning models) need a
@@ -1200,7 +1200,7 @@ promoted to the repository root in the same series of commits, so
   `AGENT_TRIGGERS`; the remote-trigger tool's runtime behaviour is controlled by
   `LOOM_REMOTE_TRIGGER_COMMAND`), because the C++ implementations actually work.
 
-- **`cpp_migration/src/tools/computer_use.cppm:841-845`** — Anthropic computer-use returns a **FRESH
+- **`cpp_migration/src/tools/computer_use.cppm:841-845`** — The computer-use protocol returns a **FRESH
   screenshot after every action**, not just the explicit screenshot action — the model is otherwise
   **blind to the result of a click/keystroke**. A full-screen capture is therefore attached to every
   successful input action's result. If capture is unavailable the action still returns success
@@ -2597,7 +2597,7 @@ promoted to the repository root in the same series of commits, so
   build/install guidance instead of running an installer.
 
 - **`cpp_migration/src/commands/review/ultrareview.cppm:17-19`** — The hosted **server-side
-  billing/overage gate** (`checkOverageGate` + Extra Usage) was **removed along with the Anthropic cloud
+  billing/overage gate** (`checkOverageGate` + Extra Usage) was **removed along with the cloud
   coupling**: a **local** multi-round review has **no remote quota to enforce**. Do not re-add a quota
   check.
 
@@ -3196,11 +3196,11 @@ duplicating prose. Entries marked **(new)** are decisions recorded *only* here.
   **`:530-534`** — The `LOSSY:` markers (stateless backend; base64 not inlined; `top_k` dropped;
   computer-tool shape ignored; thinking ignored). See A.3.
 
-- **`cpp_migration/src/query/wire_anthropic.cppm:13`** — **(new)** `/// What the backend intentionally
+- **`cpp_migration/src/query/wire_messages.cppm:13`** — **(new)** `/// What the backend intentionally
   does NOT own (the engine still does):` — this is the *seam declaration* for the wire-backend
   abstraction. It is the authority on which responsibilities may not migrate into a backend.
 
-- **`cpp_migration/src/query/wire_anthropic.cppm:293`** — `Mapping notes (all deliberate, to keep the
+- **`cpp_migration/src/query/wire_messages.cppm:293`** — `Mapping notes (all deliberate, to keep the
   engine's behaviour)`. See A.3.
 
 - **`cpp_migration/src/query/wire_protocol.cppm:19-21`** — `Design note: the interface is intentionally

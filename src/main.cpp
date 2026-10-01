@@ -117,7 +117,7 @@ Options:
   --settings <file|json>
                        Load settings from a JSON file path or inline JSON.
                        Highest-priority source. Supports `env` (process env
-                       vars, e.g. ANTHROPIC_API_KEY/ANTHROPIC_BASE_URL),
+                       vars, e.g. LOOM_API_KEY/LOOM_BASE_URL),
                        `apiKey`, `model`, and `statusLine`.
   --debug              Enable debug logging
   --simple-ui          Use simple text UI (not interactive)
@@ -168,7 +168,7 @@ Options:
 
 Examples:
   loom                                    # Start interactive mode
-  loom --model claude-3-5-sonnet-20241022 # Use specific model
+  loom --model <model-id>                 # Use specific model
   loom --server --server-port 3000        # Start direct-connect server
 )");
 }
@@ -463,17 +463,6 @@ void set_env_value(const char* key, const std::string& value) {
 #endif
 }
 
-void set_env_value_pair(const char* primary, const char* compatible, const std::optional<std::string>& value) {
-    if (!value || value->empty()) return;
-    set_env_value(primary, *value);
-    set_env_value(compatible, *value);
-}
-
-void set_env_bool_pair(const char* primary, const char* compatible, bool value) {
-    set_env_value(primary, value ? "1" : "0");
-    set_env_value(compatible, value ? "1" : "0");
-}
-
 void apply_flag_status_line_environment(const loom::config::FlagStatusLineSettings& status_line) {
     const bool has_command = status_line.command && !status_line.command->empty();
     const bool type_allows_command = !status_line.type || *status_line.type == "command";
@@ -484,7 +473,7 @@ void apply_flag_status_line_environment(const loom::config::FlagStatusLineSettin
         set_env_value("LOOM_STATUS_LINE_COMMAND", *status_line.command);
         set_env_value("LOOM_STATUS_LINE_COMMAND", *status_line.command);
     }
-    set_env_bool_pair("LOOM_STATUS_LINE_ENABLED", "CLAUDE_CODE_STATUS_LINE_ENABLED", enabled);
+    set_env_value("LOOM_STATUS_LINE_ENABLED", enabled ? "1" : "0");
 
     if (status_line.padding) {
         const auto padding = std::to_string(*status_line.padding);
@@ -545,14 +534,17 @@ std::optional<loom::config::FlagSettingsResult> load_flag_settings(
 }
 
 void apply_teammate_environment(const CliOptions& opts) {
-    set_env_value_pair("LOOM_AGENT_ID", "CLAUDE_CODE_AGENT_ID", opts.agent_id);
-    set_env_value_pair("LOOM_AGENT_NAME", "CLAUDE_CODE_AGENT_NAME", opts.agent_name);
-    set_env_value_pair("LOOM_TEAM_NAME", "CLAUDE_CODE_TEAM_NAME", opts.team_name);
-    set_env_value_pair("LOOM_AGENT_TYPE", "CLAUDE_CODE_AGENT_TYPE", opts.agent_type);
-    set_env_value_pair("LOOM_AGENT_COLOR", "CLAUDE_CODE_AGENT_COLOR", opts.agent_color);
-    set_env_value_pair("LOOM_PARENT_SESSION_ID", "CLAUDE_CODE_PARENT_SESSION_ID", opts.parent_session_id);
-    set_env_value_pair("LOOM_SESSION_ID", "CLAUDE_CODE_SESSION_ID", opts.session_id);
-    set_env_value_pair("LOOM_TASK_ID", "CLAUDE_CODE_TASK_ID", opts.task_id);
+    auto set_optional = [](const char* key, const std::optional<std::string>& v) {
+        if (v && !v->empty()) set_env_value(key, *v);
+    };
+    set_optional("LOOM_AGENT_ID", opts.agent_id);
+    set_optional("LOOM_AGENT_NAME", opts.agent_name);
+    set_optional("LOOM_TEAM_NAME", opts.team_name);
+    set_optional("LOOM_AGENT_TYPE", opts.agent_type);
+    set_optional("LOOM_AGENT_COLOR", opts.agent_color);
+    set_optional("LOOM_PARENT_SESSION_ID", opts.parent_session_id);
+    set_optional("LOOM_SESSION_ID", opts.session_id);
+    set_optional("LOOM_TASK_ID", opts.task_id);
     if (opts.plan_mode_required) {
         set_env_value("LOOM_PLAN_MODE_REQUIRED", "1");
         set_env_value("LOOM_PLAN_MODE_REQUIRED", "true");
@@ -587,9 +579,7 @@ loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
     // the team leader over the mailbox and blocks for the verdict, failing
     // closed on timeout. TS REF: swarmWorkerHandler.ts → permissionSync.
     const char* w_agent = std::getenv("LOOM_AGENT_NAME");
-    if ((!w_agent || !*w_agent)) w_agent = std::getenv("CLAUDE_CODE_AGENT_NAME");
     const char* w_team = std::getenv("LOOM_TEAM_NAME");
-    if ((!w_team || !*w_team)) w_team = std::getenv("CLAUDE_CODE_TEAM_NAME");
     const bool is_worker_teammate =
         (w_agent && *w_agent) && (w_team && *w_team);
 
@@ -691,20 +681,20 @@ auto load_config() -> loom::core::QueryEngineConfig {
     loom::core::QueryEngineConfig config;
 
     // API key from environment (required for operation)
-    if (const char* key = std::getenv("ANTHROPIC_API_KEY")) {
+    if (const char* key = std::getenv("LOOM_API_KEY")) {
         config.api_key = key;
     }
-    // Bearer token for endpoints that take one (e.g. ANTHROPIC_AUTH_TOKEN supplied
+    // Bearer token for endpoints that take one (e.g. LOOM_AUTH_TOKEN supplied
     // via --settings env, or a gateway token). When present it is sent as
     // "Authorization: Bearer" and takes precedence over api_key. This carries a
     // user-supplied credential to the configured endpoint; it is not an account
     // login, and there is no credential store behind it.
-    if (const char* token = std::getenv("ANTHROPIC_AUTH_TOKEN")) {
+    if (const char* token = std::getenv("LOOM_AUTH_TOKEN")) {
         config.auth_token = token;
     }
 
     // Base URL override (e.g. for proxies or custom endpoints)
-    if (const char* url = std::getenv("ANTHROPIC_BASE_URL")) {
+    if (const char* url = std::getenv("LOOM_BASE_URL")) {
         config.base_url = url;
     }
 
@@ -1647,7 +1637,7 @@ auto run_simple_ui(
         }
 
         if (engine == nullptr) {
-            std::println("Error: ANTHROPIC_API_KEY is required for model queries. Slash commands remain available.");
+            std::println("Error: LOOM_API_KEY is required for model queries. Slash commands remain available.");
             continue;
         }
 
@@ -1705,7 +1695,7 @@ int main(int argc, const char* argv[]) {
     // Apply --settings EARLY, before --help and every other subsystem.
     // This mirrors the TS eagerLoadSettings() flow: a malformed payload is a
     // hard error that surfaces before any other processing, while a valid
-    // payload populates the process env (ANTHROPIC_API_KEY / ANTHROPIC_BASE_URL
+    // payload populates the process env (LOOM_API_KEY / LOOM_BASE_URL
     // / ...) and records model/apiKey overrides for later application.
     std::optional<std::string> settings_model_override;
     std::optional<std::string> settings_api_key_override;
@@ -1725,11 +1715,11 @@ int main(int argc, const char* argv[]) {
             return 1;
         }
         settings_deny_rules = applied->deny_rules;
-        // `apiKey` from settings mirrors a sibling `env.ANTHROPIC_API_KEY`:
+        // `apiKey` from settings mirrors a sibling `env.LOOM_API_KEY`:
         // apply it to the process env BEFORE load_config() reads it, so the API
         // client picks it up without an explicit `env` block.
         if (settings_api_key_override && !settings_api_key_override->empty()) {
-            set_env_value("ANTHROPIC_API_KEY", *settings_api_key_override);
+            set_env_value("LOOM_API_KEY", *settings_api_key_override);
         }
         if (applied->status_line) {
             apply_flag_status_line_environment(*applied->status_line);
@@ -1876,7 +1866,7 @@ int main(int argc, const char* argv[]) {
         return run_simple_ui(nullptr, cmd_registry);
     }
     if (config.api_key.empty() && config.auth_token.empty()) {
-        std::println(stderr, "Error: no API credentials found (set ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN,");
+        std::println(stderr, "Error: no API credentials found (set LOOM_API_KEY or LOOM_AUTH_TOKEN,");
         std::println(stderr, "or provide them via --settings <file>).");
         return 1;
     }

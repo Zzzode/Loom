@@ -420,7 +420,7 @@ build_structured_send_message_payload(
 // ---------------------------------------------------------------------------
 
 [[nodiscard]] inline bool runtime_has_agent_api_credentials() {
-    if (auto* key = std::getenv("ANTHROPIC_API_KEY"); key && key[0] != '\0') return true;
+    if (auto* key = std::getenv("LOOM_API_KEY"); key && key[0] != '\0') return true;
     if (auto* token = std::getenv("LOOM_AUTH_TOKEN"); token && token[0] != '\0') return true;
     return false;
 }
@@ -483,7 +483,7 @@ build_structured_send_message_payload(
         return "background resume deferred: agent is managed by a remote or external teammate backend";
     }
     if (!runtime_has_agent_api_credentials()) {
-        return "background resume deferred: no Anthropic API credentials are configured";
+        return "background resume deferred: no API credentials are configured";
     }
 
     auto started = registry->execute(

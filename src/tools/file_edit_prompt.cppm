@@ -2,7 +2,7 @@
 // Migrated from src/tools/FileEditTool/prompt.ts.
 // Agent 9: audit completed 2026-06-09. Matches TS getEditToolDescription()
 // (including the pre-read instruction, line-prefix-format note, and the
-// ANT-user minimal-uniqueness hint).
+// minimal-uniqueness hint, included unconditionally).
 module;
 #include <cstddef>
 
@@ -41,22 +41,16 @@ inline std::string get_line_prefix_format_description(bool compact_mode) {
 ///
 /// \p read_tool_name   - the `Read` tool name (FileReadTool's kToolName).
 /// \p compact_prefix   - isCompactLinePrefixEnabled() flag value.
-/// \p is_ant_user      - true when USER_TYPE == "ant" (adds a hint about
-///                       keeping old_string minimal).
 inline std::string get_edit_tool_description(
     std::string_view read_tool_name = "Read", // = FILE_READ_TOOL_NAME from TS
-    bool compact_prefix = false,
-    bool is_ant_user = false
+    bool compact_prefix = false
 ) {
     const auto prefix_fmt = get_line_prefix_format_description(compact_prefix);
 
-    std::string minimal_uniqueness_hint;
-    if (is_ant_user) {
-        minimal_uniqueness_hint =
-            "\n- Use the smallest old_string that's clearly unique — usually "
-            "2-4 adjacent lines is sufficient. Avoid including 10+ lines of "
-            "context when less uniquely identifies the target.";
-    }
+    const std::string minimal_uniqueness_hint =
+        "\n- Use the smallest old_string that's clearly unique — usually "
+        "2-4 adjacent lines is sufficient. Avoid including 10+ lines of "
+        "context when less uniquely identifies the target.";
 
     std::ostringstream oss;
     oss << "Performs exact string replacements in files.\n"

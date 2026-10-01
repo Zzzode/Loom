@@ -1,4 +1,4 @@
-// SSE Stream Parser - Complete Server-Sent Events handling for Anthropic API
+// SSE Stream Parser - Complete Server-Sent Events handling for Messages API
 module;
 #include <cstdlib>
 
@@ -443,7 +443,7 @@ public:
     explicit StreamParser(StreamConfig config = {})
         : state_(std::make_shared<SharedState>(std::move(config))) {}
 
-    // Factory method for parser setup; AnthropicClient owns the HTTP transfer.
+    // Factory method for parser setup; MessagesClient owns the HTTP transfer.
     static std::optional<StreamParser> create(
         const std::string&,
         const std::string&,

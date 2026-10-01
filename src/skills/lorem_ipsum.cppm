@@ -8,9 +8,6 @@
 ///   - TS argument model: `/lorem-ipsum N` where N = target token count
 ///     (default 10_000, hard cap 500_000).  C++ mirrors this via
 ///     `generate_by_tokens(n)`.
-///   - TS gates behind USER_TYPE == 'ant'.  C++ exposes
-///     `is_ant_user() -> bool` and the SkillDefinition factory will return
-///     a no-op when the gate fails (caller-side gating is also available).
 ///   - The TS skill does NOT actually open with the canonical
 ///     "Lorem ipsum dolor sit amet..." phrase — every word is random-sampled
 ///     from ONE_TOKEN_WORDS.  Preserved exactly (canonical opening would
@@ -21,7 +18,6 @@
 ///     `generate_csv`, natural-language number parsing ("five" -> 5).
 module;
 #include <cctype>
-#include <cstdlib>
 
 export module loom.skills.lorem_ipsum;
 
@@ -321,24 +317,8 @@ struct ParseResult {
 constexpr std::size_t kTokenCap = 500'000;   // TS: 500k safety cap
 constexpr std::size_t kDefaultTokens = 10'000;
 
-[[nodiscard]] inline bool is_ant_user() {
-    if (const char* v = std::getenv("USER_TYPE")) {
-        return std::string_view(v) == "ant";
-    }
-    return false;
-}
-
 [[nodiscard]] inline ParseResult run_from_args(std::string_view args) {
     ParseResult r;
-    // Gate: ant-only (TS behavior).  Callers that want universal access can
-    // simply call generate_* directly; this function mirrors the slash-cmd.
-    if (!is_ant_user()) {
-        // TS: silently does nothing (early return).  We keep parity but
-        // surface a short hint for diagnostics.
-        r.ok = true;
-        r.output = "";
-        return r;
-    }
 
     std::string in(args);
     std::transform(in.begin(), in.end(), in.begin(),
@@ -499,7 +479,7 @@ constexpr std::size_t kDefaultTokens = 10'000;
             "Generate filler text for long-context testing.  "
             "Specify token count as argument (e.g., /lorem-ipsum 50000).  "
             "Outputs approximately the requested number of tokens.  "
-            "ANT-only (USER_TYPE=ant).  Also supports: "
+            "Also supports: "
             "'5 paragraphs', '200 words', '500 chars', 'json 3', "
             "'code 40', 'csv 100'. "
             "[argument: token_count | 5 paragraphs | 200 words | json N | code N | csv N]",
@@ -533,9 +513,6 @@ testing, UI prototyping, and fill-up-to-N-tokens scenarios.
 Each generated word comes from a vocabulary that was verified to tokenise
 as exactly one token per word, so the token count argument is a reliable
 approximation of the real API token consumption.
-
-### Access
-Ant-only.  Requires `USER_TYPE=ant` in the environment.
 )",
         .is_builtin = true,
         .author = std::nullopt,

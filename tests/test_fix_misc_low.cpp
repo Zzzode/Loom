@@ -94,16 +94,6 @@ TEST(SecretScanner, DetectsGitHubPat) {
     EXPECT_EQ(it->label, "GitHub PAT");
 }
 
-TEST(SecretScanner, DetectsAnthropicApiKey) {
-    std::string body(93, 'x');
-    auto m = secret::scan_for_secrets("k = sk-ant-api03-" + body + "AA");
-    ASSERT_FALSE(m.empty());
-    auto it = std::find_if(m.begin(), m.end(),
-                           [](const auto& x) { return x.ruleId == "anthropic-api-key"; });
-    ASSERT_NE(it, m.end());
-    EXPECT_EQ(it->label, "Anthropic API Key");
-}
-
 TEST(SecretScanner, DetectsStripeAccessToken) {
     auto m = secret::scan_for_secrets("sk_live_abc1234567890xyzXYZ");
     ASSERT_FALSE(m.empty());

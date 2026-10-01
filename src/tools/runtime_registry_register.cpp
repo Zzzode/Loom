@@ -362,9 +362,9 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
                 },
             }, "shell"));
     }
-    // TS REF: src/tools.ts:16-19, 234 (REPLTool — USER_TYPE==='ant')
+    // TS REF: src/tools.ts:16-19, 234 (REPLTool)
     // In CPP, "repl" delegates to execute_script() which has a working
-    // implementation, so it is registered unconditionally (not ant-only).
+    // implementation, so it is registered unconditionally.
     registry.register_tool(simple("repl", "Run a one-shot REPL snippet",
         ToolPermission::Execute, {prop("code", "string", "Code to execute", true)}, "execution"));
     // TS REF: src/tools.ts:29-34, 237 (Cron tools — AGENT_TRIGGERS)
@@ -449,10 +449,10 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
         registry.register_tool(simple("tool_search", "Search registered runtime tools", ToolPermission::ReadOnly,
             {prop("query", "string", "Search query", false)}, "tools"));
     }
-    // TS REF: src/tools.ts:217 (TungstenTool — USER_TYPE==='ant')
-    if constexpr (features::kUserTypeAnt) {
-        registry.register_tool(simple("tungsten", "Use the Tungsten integration when configured", ToolPermission::Network, {}, "integrations"));
-    }
+    // TS REF: src/tools.ts:217 (TungstenTool)
+    // In CPP, tungsten has a working implementation (loom.tools.tungsten_tool),
+    // so it is registered unconditionally.
+    registry.register_tool(simple("tungsten", "Use the Tungsten integration when configured", ToolPermission::Network, {}, "integrations"));
     // TS REF: src/tools.ts:117-119, 219 (WebBrowserTool — WEB_BROWSER_TOOL)
     if constexpr (features::kWebBrowserTool) {
         registry.register_tool(simple("web_browser", "Automate browser navigation, extraction, form fill, and screenshots",
@@ -490,11 +490,6 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
     if constexpr (features::kSubscribePRTool) {
         registry.register_tool(simple("subscribe_pr", "Subscribe to a GitHub PR for updates",
             ToolPermission::Network, {prop("pr_url", "string", "PR URL to subscribe to", true)}, "github"));
-    }
-    // TS REF: src/tools.ts:20-24, 218 (SuggestBackgroundPRTool — USER_TYPE==='ant')
-    if constexpr (features::kUserTypeAnt) {
-        registry.register_tool(simple("suggest_background_pr", "Suggest creating a background PR for the current changes",
-            ToolPermission::ReadOnly, {}, "ant-internal"));
     }
     // TS REF: src/tools.ts:107-109, 223 (OverflowTestTool)
     if constexpr (features::kOverflowTestTool) {

@@ -73,7 +73,7 @@ using PermissionCallback =
 using EventSink = std::function<void(const loom::core::StreamEvent&)>;
 
 /// Wire backend factory. When unset, the engine builds its default
-/// Anthropic/OpenAI backend from QueryEngineConfig.
+/// Messages API/OpenAI backend from QueryEngineConfig.
 ///
 /// SCOPE (§2.4): this seam intercepts request-body serialization only —
 /// make_wire_backend() is called solely from build_request_body and only
@@ -99,7 +99,7 @@ struct HarnessConfig {
     std::optional<std::string> system_prompt;
     std::optional<std::string> append_system_prompt;
     std::optional<std::string> base_url;
-    std::optional<std::string> wire_api;  // "anthropic" | "openai"
+    std::optional<std::string> wire_api;  // "messages" | "openai"
     /// Injected, never stored. When unset, the key falls back to settings;
     /// when that is also empty and base_url is set, a placeholder key is
     /// used (a loopback/gateway ignores it).

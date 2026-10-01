@@ -30,7 +30,7 @@ Under active development. It builds and its test suite passes on Linux
   `/branch`, `/diff`, and PR automation.
 - **Session persistence** — conversations are persisted and resumable
   (`--continue`, `--resume`, `/session`).
-- **Multi-wire backends** — speaks the Anthropic and OpenAI wire formats
+- **Multi-wire backends** — speaks the Messages API and OpenAI wire formats
   through a vendor-neutral seam; the engine never serializes a wire format
   itself.
 - **C++23 named modules** — the entire tree is built as C++23 named modules
@@ -132,16 +132,16 @@ Run `loom --help` for the full list (45 flags).
 ### Pointing at an endpoint
 
 ```bash
-ANTHROPIC_API_KEY=... ANTHROPIC_BASE_URL=... ./build/clang23-debug/bin/loom
+LOOM_API_KEY=... LOOM_BASE_URL=... ./build/clang23-debug/bin/loom
 ```
 
 An OpenAI-compatible endpoint works too — set `LOOM_WIRE_API=openai` (or the
-`wire_api` config key) and point `ANTHROPIC_BASE_URL` at it. Loom speaks both
+`wire_api` config key) and point `LOOM_BASE_URL` at it. Loom speaks both
 wire formats through a seam that `src/query/wire_protocol.cppm` defines; the
 engine itself is format-agnostic.
 
 Credentials reach the wire through a single decision point: Bearer auth when a
-token is set, else `x-api-key`. `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN`
+token is set, else `x-api-key`. `LOOM_API_KEY` / `LOOM_AUTH_TOKEN`
 are read as user-supplied credentials for the user's own endpoint — there is
 no account system and no login.
 
@@ -164,7 +164,7 @@ transcripts land in `~/.loom/sessions/`, API dumps in
 
 The `--settings` flag loads settings from a JSON file path or inline JSON. It
 is the highest-priority source and supports `env` (process env vars, e.g.
-`ANTHROPIC_API_KEY`/`ANTHROPIC_BASE_URL`), `apiKey`, `model`, `theme`,
+`LOOM_API_KEY`/`LOOM_BASE_URL`), `apiKey`, `model`, `theme`,
 `permissions`, `mcpServers`, `hooks`, and `statusLine`.
 
 ### MCP server configuration
@@ -275,7 +275,7 @@ benchmarks/pare/ benchmark case data
 
 The engine (`src/query/query_engine.cppm`) owns the streaming loop, tool-call
 loop, thinking mode, and retry. The wire-protocol seam
-(`src/query/wire_protocol.cppm`) defines `WireBackend`; `wire_anthropic.cppm`
+(`src/query/wire_protocol.cppm`) defines `WireBackend`; `wire_messages.cppm`
 and `wire_openai.cppm` implement it. The engine builds a vendor-neutral
 `RequestInput` and never serializes a wire format itself.
 

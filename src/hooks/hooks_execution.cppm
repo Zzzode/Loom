@@ -673,7 +673,6 @@ struct ParsedUrl {
 }
 
 inline const std::vector<std::string_view> kDefaultHttpAllowlist = {
-    "https://api.anthropic.com",
     "https://hooks.slack.com",
 };
 

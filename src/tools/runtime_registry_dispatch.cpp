@@ -58,7 +58,7 @@ using loom::core::ToolResult;
         return ToolResult::success(answer);
     }
     if (name == "brief") return execute_brief(input);
-    // "computer" is the Anthropic native wire name (model sees it via the
+    // "computer" is the Messages API native wire name (model sees it via the
     // computer_20241022 tool); "computer_use" is the internal registry name.
     // RFC-0001 B15: the ONE computer_use backend slot covers both; the body
     // lives in loom.orchestration.runtime_backends.
@@ -315,11 +315,6 @@ using loom::core::ToolResult;
         return ToolResult::error(std::format(
             "subscribe_pr stub: pr_url=\"{}\" — not yet implemented in CPP migration",
             pr_url));
-    }
-    if (name == "suggest_background_pr") {
-        // TS REF: src/tools.ts:20-24 (SuggestBackgroundPRTool — USER_TYPE==='ant')
-        return ToolResult::error(
-            "suggest_background_pr stub: not yet implemented in CPP migration");
     }
     if (name == "overflow_test") {
         // TS REF: src/tools.ts:107-109 (OverflowTestTool)

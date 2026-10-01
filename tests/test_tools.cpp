@@ -498,9 +498,9 @@ std::string shell_quote_for_test(std::string_view value) {
     return out;
 }
 
-class LocalSlowAnthropicStreamServer {
+class LocalSlowMessagesStreamServer {
 public:
-    explicit LocalSlowAnthropicStreamServer(std::chrono::milliseconds delay)
+    explicit LocalSlowMessagesStreamServer(std::chrono::milliseconds delay)
         : delay_(delay) {
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             {
@@ -534,7 +534,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalSlowAnthropicStreamServer() {
+    ~LocalSlowMessagesStreamServer() {
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
@@ -581,9 +581,9 @@ private:
     std::optional<std::string> last_body_;
 };
 
-class LocalSleepToolUseAnthropicServer {
+class LocalSleepToolUseMessagesServer {
 public:
-    LocalSleepToolUseAnthropicServer() {
+    LocalSleepToolUseMessagesServer() {
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             std::size_t count = 0;
             {
@@ -634,7 +634,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalSleepToolUseAnthropicServer() {
+    ~LocalSleepToolUseMessagesServer() {
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
@@ -675,9 +675,9 @@ private:
     std::optional<std::string> last_body_;
 };
 
-class LocalBashToolUseAnthropicServer {
+class LocalBashToolUseMessagesServer {
 public:
-    LocalBashToolUseAnthropicServer() {
+    LocalBashToolUseMessagesServer() {
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             std::size_t count = 0;
             {
@@ -728,7 +728,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalBashToolUseAnthropicServer() {
+    ~LocalBashToolUseMessagesServer() {
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
@@ -769,9 +769,9 @@ private:
     std::optional<std::string> last_body_;
 };
 
-class LocalScriptedBashToolUseAnthropicServer {
+class LocalScriptedBashToolUseMessagesServer {
 public:
-    explicit LocalScriptedBashToolUseAnthropicServer(
+    explicit LocalScriptedBashToolUseMessagesServer(
         std::string command,
         std::string final_text = "scripted bash complete"
     ) : command_(std::move(command)), final_text_(std::move(final_text)) {
@@ -830,7 +830,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalScriptedBashToolUseAnthropicServer() {
+    ~LocalScriptedBashToolUseMessagesServer() {
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
@@ -874,9 +874,9 @@ private:
     std::vector<std::string> request_bodies_;
 };
 
-class LocalScriptedToolUseAnthropicServer {
+class LocalScriptedToolUseMessagesServer {
 public:
-    LocalScriptedToolUseAnthropicServer(
+    LocalScriptedToolUseMessagesServer(
         std::string tool_name,
         std::string tool_input_json,
         std::string tool_use_id,
@@ -939,7 +939,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalScriptedToolUseAnthropicServer() {
+    ~LocalScriptedToolUseMessagesServer() {
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
@@ -980,9 +980,9 @@ private:
     std::vector<std::string> request_bodies_;
 };
 
-class LocalPerTurnBashPwdAnthropicServer {
+class LocalPerTurnBashPwdMessagesServer {
 public:
-    LocalPerTurnBashPwdAnthropicServer() {
+    LocalPerTurnBashPwdMessagesServer() {
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             {
                 std::lock_guard lock(mutex_);
@@ -1034,7 +1034,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalPerTurnBashPwdAnthropicServer() {
+    ~LocalPerTurnBashPwdMessagesServer() {
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
@@ -1065,9 +1065,9 @@ private:
     std::vector<std::string> request_bodies_;
 };
 
-class LocalPerTurnBashCommandAnthropicServer {
+class LocalPerTurnBashCommandMessagesServer {
 public:
-    explicit LocalPerTurnBashCommandAnthropicServer(
+    explicit LocalPerTurnBashCommandMessagesServer(
         std::string command,
         std::string final_text = "bash command complete"
     ) : command_(std::move(command)), final_text_(std::move(final_text)) {
@@ -1126,7 +1126,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalPerTurnBashCommandAnthropicServer() {
+    ~LocalPerTurnBashCommandMessagesServer() {
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
@@ -3100,7 +3100,6 @@ TEST(Tools, AgentRuntimeLoadsSettingsFlagAndPolicyAgentsInPriorityOrder) {
     "prompt": "flag only prompt"
   }
 })JSON");
-    EnvironmentUnsetGuard legacy_flag_agents("CLAUDE_CODE_AGENTS_JSON");
     EnvironmentGuard policy_settings("LOOM_POLICY_SETTINGS", policy_path.string());
 
     auto agents = loom::tools::agent_runtime::get_all_agent_definitions(root);
@@ -3169,7 +3168,6 @@ Project prompt.
     "prompt": "flag prompt"
   }
 })JSON");
-    EnvironmentUnsetGuard legacy_flag_agents("CLAUDE_CODE_AGENTS_JSON");
     EnvironmentGuard policy_settings("LOOM_POLICY_SETTINGS", policy_path.string());
 
     auto agents = loom::tools::agent_runtime::get_all_agent_definitions(root);
@@ -3353,7 +3351,7 @@ TEST(Tools, AgentToolAppliesInitialPromptAndToolRestrictionsInExecutionPlan) {
         agent << R"MD(---
 name: restricted-reviewer
 description: Reviews with restricted tools
-model: haiku
+model: test-model
 tools: [Read, Bash]
 disallowedTools: [Bash]
 permissionMode: acceptEdits
@@ -3380,7 +3378,7 @@ Review with a narrow tool set.
 
         ASSERT_TRUE(plan.has_value()) << plan.error();
         EXPECT_EQ(plan->agent_type, "restricted-reviewer");
-        EXPECT_EQ(plan->model, "claude-3-5-haiku-20241022");
+        EXPECT_EQ(plan->model, "test-model");
         EXPECT_EQ(plan->max_turns, 2);
         ASSERT_TRUE(plan->mode.has_value());
         EXPECT_EQ(*plan->mode, "acceptEdits");
@@ -3509,11 +3507,10 @@ Do focused work.
 
 TEST(Tools, AgentToolAppliesAgentEffortToApiRequest) {
     EnvironmentUnsetGuard user_type_guard("USER_TYPE");
-    EnvironmentUnsetGuard always_effort_guard("LOOM_ALWAYS_ENABLE_EFFORT");
 
     {
         loom::services::api::CreateMessageRequest request;
-        request.model = "claude-sonnet-4-6-20260601";
+        request.model = "test-model-20260601";
         loom::tools::agent::apply_agent_effort_to_request(
             request,
             std::optional<std::string>{" high "});
@@ -3521,23 +3518,11 @@ TEST(Tools, AgentToolAppliesAgentEffortToApiRequest) {
         ASSERT_TRUE(request.output_effort.has_value());
         EXPECT_EQ(*request.output_effort, "high");
         EXPECT_TRUE(std::ranges::contains(request.betas, "effort-2025-11-24"));
-        EXPECT_FALSE(request.internal_effort_override.has_value());
     }
 
     {
         loom::services::api::CreateMessageRequest request;
-        request.model = "claude-sonnet-4-6-20260601";
-        loom::tools::agent::apply_agent_effort_to_request(
-            request,
-            std::optional<std::string>{"max"});
-
-        ASSERT_TRUE(request.output_effort.has_value());
-        EXPECT_EQ(*request.output_effort, "high");
-    }
-
-    {
-        loom::services::api::CreateMessageRequest request;
-        request.model = "claude-opus-4-6-20260601";
+        request.model = "test-model-20260601";
         loom::tools::agent::apply_agent_effort_to_request(
             request,
             std::optional<std::string>{"max"});
@@ -3548,36 +3533,33 @@ TEST(Tools, AgentToolAppliesAgentEffortToApiRequest) {
 
     {
         loom::services::api::CreateMessageRequest request;
-        request.model = "claude-3-5-haiku-20241022";
+        request.model = "test-model";
         loom::tools::agent::apply_agent_effort_to_request(
             request,
             std::optional<std::string>{"high"});
 
-        EXPECT_FALSE(request.output_effort.has_value());
-        EXPECT_TRUE(request.betas.empty());
+        ASSERT_TRUE(request.output_effort.has_value());
+        EXPECT_EQ(*request.output_effort, "high");
+        EXPECT_TRUE(std::ranges::contains(request.betas, "effort-2025-11-24"));
     }
 
     {
         loom::services::api::CreateMessageRequest request;
-        request.model = "claude-sonnet-4-6-20260601";
+        request.model = "test-model-20260601";
         loom::tools::agent::apply_agent_effort_to_request(
             request,
             std::optional<std::string>{"77"});
 
         EXPECT_FALSE(request.output_effort.has_value());
-        EXPECT_FALSE(request.internal_effort_override.has_value());
     }
 
     {
-        EnvironmentGuard ant_user("USER_TYPE", "ant");
         loom::services::api::CreateMessageRequest request;
-        request.model = "claude-sonnet-4-6-20260601";
+        request.model = "test-model-20260601";
         loom::tools::agent::apply_agent_effort_to_request(
             request,
             std::optional<std::string>{"77"});
 
-        ASSERT_TRUE(request.internal_effort_override.has_value());
-        EXPECT_EQ(*request.internal_effort_override, 77);
         EXPECT_FALSE(request.output_effort.has_value());
     }
 }
@@ -3934,7 +3916,6 @@ TEST(Tools, AgentToolPermissionRulesMatchToolNamesFromParameterizedSpecs) {
 }
 
 TEST(Tools, AgentToolBaseFilteringMatchesTypeScriptToolSets) {
-    EnvironmentUnsetGuard user_type_guard("USER_TYPE");
     EnvironmentUnsetGuard nested_guard("LOOM_ENABLE_NESTED_AGENTS");
 
     EXPECT_FALSE(loom::tools::agent::agent_base_filter_allows_tool(
@@ -4456,11 +4437,11 @@ Review with stop hooks.
 )MD";
     }
 
-    LocalSlowAnthropicStreamServer server(std::chrono::milliseconds(750));
+    LocalSlowMessagesStreamServer server(std::chrono::milliseconds(750));
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "stop-hook-cancel-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -4542,11 +4523,11 @@ Review with tool hooks.
 )MD";
     }
 
-    LocalScriptedBashToolUseAnthropicServer server("printf tool-output", "tool hook complete");
+    LocalScriptedBashToolUseMessagesServer server("printf tool-output", "tool hook complete");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "tool-hook-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -4607,13 +4588,13 @@ Review with deny hooks.
 )MD";
     }
 
-    LocalScriptedBashToolUseAnthropicServer server(
+    LocalScriptedBashToolUseMessagesServer server(
         "printf executed > " + shell_quote_for_test(executed_marker.string()),
         "pre hook deny complete");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "pre-tool-deny-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -4676,13 +4657,13 @@ Review with update hooks.
 )MD";
     }
 
-    LocalScriptedBashToolUseAnthropicServer server(
+    LocalScriptedBashToolUseMessagesServer server(
         "printf original > " + shell_quote_for_test(marker.string()),
         "pre hook update complete");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "pre-tool-update-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -4782,19 +4763,19 @@ TEST(Tools, AgentToolLivePermissionHookDeniesChildReadWriteEditAndBash) {
     };
 
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
     EnvironmentGuard model_guard("LOOM_MODEL", "live-permission-deny-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     for (const auto& tc : cases) {
         SCOPED_TRACE(tc.tool_name);
-        LocalScriptedToolUseAnthropicServer server(
+        LocalScriptedToolUseMessagesServer server(
             tc.tool_name,
             tc.input_json,
             tc.tool_use_id,
             "permission deny complete");
         ASSERT_TRUE(server.valid());
-        EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+        EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
 
         std::vector<loom::hooks::PermissionContext> calls;
         loom::hooks::ToolPermissionHook permission_hook;
@@ -4894,7 +4875,7 @@ TEST(Tools, AgentToolBackgroundAgentPreservesLivePermissionHook) {
 
     auto bash_marker = root / "background-bash-denied.txt";
     const auto command = "printf background-denied > " + shell_quote_for_test(bash_marker.string());
-    LocalScriptedToolUseAnthropicServer server(
+    LocalScriptedToolUseMessagesServer server(
         "Bash",
         std::format(
             R"({{"command":"{}","description":"write background marker"}})",
@@ -4904,8 +4885,8 @@ TEST(Tools, AgentToolBackgroundAgentPreservesLivePermissionHook) {
     ASSERT_TRUE(server.valid());
 
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "background-live-permission-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -5063,19 +5044,19 @@ TEST(Tools, AgentToolLivePermissionHookCanAllowAndUpdateChildToolInputs) {
     };
 
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
     EnvironmentGuard model_guard("LOOM_MODEL", "live-permission-update-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     for (const auto& tc : cases) {
         SCOPED_TRACE(tc.tool_name);
-        LocalScriptedToolUseAnthropicServer server(
+        LocalScriptedToolUseMessagesServer server(
             tc.tool_name,
             tc.input_json,
             tc.tool_use_id,
             "permission update complete");
         ASSERT_TRUE(server.valid());
-        EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+        EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
 
         std::vector<loom::hooks::PermissionContext> calls;
         loom::hooks::ToolPermissionHook permission_hook;
@@ -5170,13 +5151,13 @@ Review with pre stop hooks.
 )MD";
     }
 
-    LocalScriptedBashToolUseAnthropicServer server(
+    LocalScriptedBashToolUseMessagesServer server(
         "printf tool-output > " + shell_quote_for_test(bash_marker.string()),
         "should not be requested");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "pre-tool-stop-hook-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -5238,11 +5219,11 @@ Review with failure hooks.
 )MD";
     }
 
-    LocalScriptedBashToolUseAnthropicServer server("printf failing; exit 7", "failure hook complete");
+    LocalScriptedBashToolUseMessagesServer server("printf failing; exit 7", "failure hook complete");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "post-tool-failure-hook-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -5299,11 +5280,11 @@ Review with stop hooks.
 )MD";
     }
 
-    LocalScriptedBashToolUseAnthropicServer server("printf tool-output", "should not be requested");
+    LocalScriptedBashToolUseMessagesServer server("printf tool-output", "should not be requested");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "post-tool-stop-hook-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -5429,15 +5410,15 @@ Review with MCP output hooks.
     ASSERT_TRUE(restarted.has_value()) << restarted.error();
     ASSERT_EQ(restarted->status, "ready");
 
-    LocalScriptedToolUseAnthropicServer server(
+    LocalScriptedToolUseMessagesServer server(
         "mcp",
         R"({"server_name":"echo_fixture","tool_name":"echo","arguments":{"value":"hello"}})",
         "toolu_mcp_fixture",
         "mcp hook complete");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "post-tool-mcp-update-hook-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -7201,11 +7182,11 @@ TEST(Tools, AgentToolUpdatesProgressAfterStartingApiStream) {
     auto root = fs::temp_directory_path() / "loom_native_agent_progress_test";
     { std::error_code ec; fs::remove_all(root, ec); }
     fs::create_directories(root);
-    LocalSlowAnthropicStreamServer server(std::chrono::milliseconds(750));
+    LocalSlowMessagesStreamServer server(std::chrono::milliseconds(750));
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "stream-progress-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -7253,11 +7234,11 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringModelStream) {
     auto root = fs::temp_directory_path() / "loom_native_agent_stream_cancel_test";
     fs::remove_all(root);
     fs::create_directories(root);
-    LocalSlowAnthropicStreamServer server(std::chrono::milliseconds(750));
+    LocalSlowMessagesStreamServer server(std::chrono::milliseconds(750));
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "stream-cancel-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -7324,11 +7305,11 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringSleepToolExecution) {
     auto root = fs::temp_directory_path() / "loom_native_agent_sleep_cancel_test";
     fs::remove_all(root);
     fs::create_directories(root);
-    LocalSleepToolUseAnthropicServer server;
+    LocalSleepToolUseMessagesServer server;
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "sleep-cancel-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -7403,15 +7384,15 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringWebFetchToolExecution) {
     const auto fetch_input = std::format(
         R"({{"url":"{}"}})",
         loom::tools::agent::json_escape_string(content_server.url()));
-    LocalScriptedToolUseAnthropicServer server(
+    LocalScriptedToolUseMessagesServer server(
         "WebFetch",
         fetch_input,
         "toolu_webfetch_cancel",
         "should not continue after web fetch cancellation");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "webfetch-cancel-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -7472,11 +7453,11 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringBashToolExecution) {
     auto root = fs::temp_directory_path() / "loom_native_agent_bash_cancel_test";
     fs::remove_all(root);
     fs::create_directories(root);
-    LocalBashToolUseAnthropicServer server;
+    LocalBashToolUseMessagesServer server;
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "bash-cancel-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -8165,7 +8146,6 @@ TEST(Tools, AgentToolUsesGrowthBookToolResultThresholdOverrides) {
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard ant_user_guard("USER_TYPE", "ant");
     EnvironmentGuard override_guard(
         "LOOM_INTERNAL_FC_OVERRIDES",
         R"({"tengu_satin_quoll":{"Bash":50000,"Read":1}})");
@@ -8228,7 +8208,6 @@ TEST(Tools, AgentToolUsesGrowthBookAggregateBudgetOverride) {
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard ant_user_guard("USER_TYPE", "ant");
     EnvironmentGuard override_guard("LOOM_INTERNAL_FC_OVERRIDES", R"({"tengu_hawthorn_window":10000})");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
@@ -8692,7 +8671,7 @@ TEST(Tools, RuntimeSendMessageQueuesStoppedNativeAgentForResume) {
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentUnsetGuard anthropic_key_guard("ANTHROPIC_API_KEY");
+    EnvironmentUnsetGuard api_key_guard("LOOM_API_KEY");
     EnvironmentUnsetGuard loom_token_guard("LOOM_AUTH_TOKEN");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -8723,7 +8702,7 @@ TEST(Tools, RuntimeSendMessageQueuesStoppedNativeAgentForResume) {
     ASSERT_FALSE(delivered->is_error);
     ASSERT_FALSE(delivered->content.empty());
     EXPECT_NE(delivered->content.front().text.find("queued for background resume"), std::string::npos);
-    EXPECT_NE(delivered->content.front().text.find("background resume deferred: no Anthropic API credentials"), std::string::npos);
+    EXPECT_NE(delivered->content.front().text.find("background resume deferred: no API credentials are configured"), std::string::npos);
 
     auto record = loom::tools::agent_runtime::native_agent_store().get("resume-target");
     ASSERT_TRUE(record.has_value());
@@ -8872,12 +8851,12 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
     auto root = fs::temp_directory_path() / "loom_team_create_native_start_test";
     fs::remove_all(root);
     fs::create_directories(root);
-    LocalSlowAnthropicStreamServer server(std::chrono::milliseconds(1));
+    LocalSlowMessagesStreamServer server(std::chrono::milliseconds(1));
     ASSERT_TRUE(server.valid());
     EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
     EnvironmentGuard agent_runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "team-create-native-start-model");
     loom::tools::global_team_store().clear_for_testing();
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
@@ -9002,12 +8981,12 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
     auto root = fs::temp_directory_path() / "loom_team_create_restart_resume_test";
     { std::error_code ec; fs::remove_all(root, ec); }
     fs::create_directories(root);
-    LocalSlowAnthropicStreamServer server(std::chrono::milliseconds(1));
+    LocalSlowMessagesStreamServer server(std::chrono::milliseconds(1));
     ASSERT_TRUE(server.valid());
     EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
     EnvironmentGuard agent_runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "team-create-restart-resume-model");
     loom::tools::global_team_store().clear_for_testing();
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
@@ -9123,14 +9102,14 @@ TEST(Tools, RuntimeTeamCreateStartsNativeAgentsWithWorktreeIsolation) {
     ASSERT_EQ(std::system(std::format("git -C \"{}\" add README.md", root.string()).c_str()), 0);
     ASSERT_EQ(std::system(std::format("git -C \"{}\" commit -q --no-verify -m init", root.string()).c_str()), 0);
 
-    LocalPerTurnBashCommandAnthropicServer server(
+    LocalPerTurnBashCommandMessagesServer server(
         "printf team-worktree > team_member_marker.txt; pwd",
         "team worktree complete");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
     EnvironmentGuard agent_runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "team-worktree-test-model");
     loom::tools::global_team_store().clear_for_testing();
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
@@ -9255,11 +9234,11 @@ TEST(Tools, AgentToolBackgroundAgentCwdIsScopedPerToolWithoutChangingProcessCwd)
     fs::create_directories(root / "agent-a");
     fs::create_directories(root / "agent-b");
     const auto original_cwd = fs::current_path();
-    LocalPerTurnBashPwdAnthropicServer server;
+    LocalPerTurnBashPwdMessagesServer server;
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "cwd-isolation-test-model");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
@@ -10753,7 +10732,7 @@ TEST(RuntimeMessageDelivery, SessionIdAndEnvSafety) {
     EXPECT_EQ(md::strip_runtime_trailing_slashes("/foo/bar//"), "/foo/bar");
 
     // Credential check returns false when neither env var is set.
-    ::unsetenv("ANTHROPIC_API_KEY");
+    ::unsetenv("LOOM_API_KEY");
     ::unsetenv("LOOM_AUTH_TOKEN");
     EXPECT_FALSE(md::runtime_has_agent_api_credentials());
 
@@ -11678,6 +11657,7 @@ using namespace loom::core;
 
 TEST(ToolDenyRulesQueryEngine, NativeComputerToolEmitsComputer20241022Schema) {
     QueryEngineConfig config;
+    config.base_url = "http://127.0.0.1:1";  // never contacted
     config.tools.push_back(ToolDefinition{
         .name = "computer_use",
         .description = "ignored for native computer tool",
@@ -11709,6 +11689,7 @@ TEST(ToolDenyRulesQueryEngine, NativeComputerToolEmitsComputer20241022Schema) {
 
 TEST(ToolDenyRulesQueryEngine, RegularFunctionToolUnaffectedByComputerShape) {
     QueryEngineConfig config;
+    config.base_url = "http://127.0.0.1:1";  // never contacted
     config.tools.push_back(ToolDefinition{
         .name = "Bash",
         .description = "Run a shell command",
@@ -12023,13 +12004,13 @@ QueryEngineConfig base_config() {
 
 }  // namespace
 
-TEST(WireSeam, DefaultsToTheAnthropicWire) {
+TEST(WireSeam, DefaultsToTheMessagesWire) {
     ToolRegistry registry;
     QueryEngine engine(base_config(), registry);
     const auto doc = parse(engine.build_request_body_for_testing());
     ASSERT_TRUE(doc.has_value());
     const auto root = doc->root();
-    // Anthropic shape: top-level system (when set) and a nested tool type.
+    // Messages API shape: top-level system (when set) and a nested tool type.
     EXPECT_TRUE(root.get("model").valid());
     EXPECT_TRUE(root.get("max_tokens").is_num());
     EXPECT_EQ(std::string(root.get("tools").at(0).get("type").as_str()),
@@ -12046,14 +12027,14 @@ TEST(WireSeam, OpenAiWireProducesAChatCompletionsBody) {
     const auto root = doc->root();
     // OpenAI tool shape nests everything under "function" and carries no
     // top-level "type" on the tool call itself; the engine must not emit the
-    // Anthropic nesting.
+    // Messages API nesting.
     const auto tool = root.get("tools").at(0);
     EXPECT_EQ(std::string(tool.get("type").as_str()), "function");
     ASSERT_TRUE(tool.get("function").valid())
         << "OpenAI tools must nest name/description/parameters under `function`";
     EXPECT_EQ(std::string(tool.get("function").get("name").as_str()), "Echo");
     EXPECT_TRUE(tool.get("function").get("parameters").valid());
-    // Anthropic-only fields must be absent.
+    // Messages API-only fields must be absent.
     EXPECT_FALSE(tool.get("input_schema").valid());
     EXPECT_FALSE(root.get("system").valid())
         << "OpenAI carries the system prompt as a role:system message";
@@ -12113,14 +12094,14 @@ TEST(WireSeam, EnvVarNameSelectsTheWire) {
         << "LOOM_WIRE_API should select the OpenAI backend";
 }
 
-TEST(WireSeam, UnknownWireApiFallsBackToAnthropic) {
+TEST(WireSeam, UnknownWireApiFallsBackToMessages) {
     auto config = base_config();
     config.wire_api = "no-such-vendor";
     ToolRegistry registry;
     QueryEngine engine(std::move(config), registry);
     const auto doc = parse(engine.build_request_body_for_testing());
     ASSERT_TRUE(doc.has_value());
-    // Anthropic nesting is back, so the bogus value was ignored rather than
+    // Messages API nesting is back, so the bogus value was ignored rather than
     // producing an empty or malformed body.
     EXPECT_TRUE(doc->root().get("tools").at(0).get("input_schema").valid());
 }
@@ -12145,7 +12126,7 @@ TEST(WireSeam, OpenAiWireHasNoNativeComputerToolShape) {
     for (size_t i = 0; i < tools.size(); ++i) {
         const auto t = tools.at(i);
         EXPECT_FALSE(t.get("type").as_str() == std::string_view("computer_20241022"))
-            << "the native computer tool type is Anthropic-only";
+            << "the native computer tool type is Messages API-only";
     }
 }
 
@@ -13243,7 +13224,7 @@ TEST(RuntimeConfigTool, InvalidReadonlyBlockedUnknownAreErrors) {
     expect_error(R"({"action":"set","key":"display.theme","value":"dark"})",
                  "not writable through this tool");
     expect_error(R"({"action":"set","key":"network.api_key","value":"abc"})",
-                 "ANTHROPIC_API_KEY");
+                 "LOOM_API_KEY");
     expect_error(R"({"action":"set","key":"mcpServers","value":{}})",
                  "loom mcp");
     expect_error(R"({"action":"set","key":"xaaIdp","value":{}})", "/mcp xaa");
@@ -13384,7 +13365,7 @@ TEST(RuntimeConfigTool, SecretBytesNeverLeakResponses) {
         f << "{\"network\":{\"api_key\":\"" << kSecret
           << "\",\"base_url\":\"https://" << kSecret << ".invalid/\"}}";
     }
-    EnvironmentGuard key_guard("ANTHROPIC_API_KEY", std::string(kSecret));
+    EnvironmentGuard key_guard("LOOM_API_KEY", std::string(kSecret));
 
     const std::array<std::string_view, 3> payloads = {{
         R"({"action":"get","key":"network.api_key"})",
@@ -13407,9 +13388,9 @@ TEST(RuntimeConfigTool, SecretBytesNeverLeakResponses) {
     EXPECT_EQ(std::string(setting.get("source").as_str()), "env");
 }
 
-// ANTHROPIC_AUTH_TOKEN (Bearer on the wire) also yields set:true presence
+// LOOM_AUTH_TOKEN (Bearer on the wire) also yields set:true presence
 // for network.api_key without leaking the token, alone and alongside
-// ANTHROPIC_API_KEY.
+// LOOM_API_KEY.
 TEST(RuntimeConfigTool, AuthTokenPresenceAndSecretOmission) {
     RtConfigEnv env;
     loom::core::ToolRegistry registry;
@@ -13418,8 +13399,8 @@ TEST(RuntimeConfigTool, AuthTokenPresenceAndSecretOmission) {
     constexpr std::string_view kTokenSecret =
         "SECRET-rt-c13c-auth-token-9911";
     {
-        EnvironmentUnsetGuard no_api_key("ANTHROPIC_API_KEY");
-        EnvironmentGuard token_guard("ANTHROPIC_AUTH_TOKEN",
+        EnvironmentUnsetGuard no_api_key("LOOM_API_KEY");
+        EnvironmentGuard token_guard("LOOM_AUTH_TOKEN",
                                      std::string(kTokenSecret));
 
         auto presence = rt_config_run(
@@ -13434,7 +13415,7 @@ TEST(RuntimeConfigTool, AuthTokenPresenceAndSecretOmission) {
         EXPECT_EQ(std::string(setting.get("source").as_str()), "env");
 
         // Combined with an API key: still set, and neither secret leaks.
-        EnvironmentGuard key_guard("ANTHROPIC_API_KEY",
+        EnvironmentGuard key_guard("LOOM_API_KEY",
                                    "SECRET-rt-c13c-api-key-3322");
         auto both = rt_config_run(
             registry, R"({"action":"get","key":"network.api_key"})");
@@ -13449,8 +13430,8 @@ TEST(RuntimeConfigTool, AuthTokenPresenceAndSecretOmission) {
     }
 
     // Neither set → presence false / source none.
-    EnvironmentUnsetGuard no_api_key("ANTHROPIC_API_KEY");
-    EnvironmentUnsetGuard no_token("ANTHROPIC_AUTH_TOKEN");
+    EnvironmentUnsetGuard no_api_key("LOOM_API_KEY");
+    EnvironmentUnsetGuard no_token("LOOM_AUTH_TOKEN");
     auto none = rt_config_run(
         registry, R"({"action":"get","key":"network.api_key"})");
     RtConfigJson nparsed(none->content.front().text);

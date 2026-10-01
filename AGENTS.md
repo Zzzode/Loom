@@ -110,7 +110,7 @@ cycle-free. Two caveats from the single-target era still hold:
 | Path | What |
 |---|---|
 | `src/query/` | **The engine.** `query_engine.cppm` owns the streaming loop, tool-call loop, thinking mode, retry. Start here for anything about model interaction. |
-| `src/query/wire_*.cppm` | The wire-protocol seam. `wire_protocol.cppm` defines `WireBackend`; `wire_anthropic.cppm` and `wire_openai.cppm` implement it. The engine builds a vendor-neutral `RequestInput` and never serializes a wire format itself. |
+| `src/query/wire_*.cppm` | The wire-protocol seam. `wire_protocol.cppm` defines `WireBackend`; `wire_messages.cppm` and `wire_openai.cppm` implement it. The engine builds a vendor-neutral `RequestInput` and never serializes a wire format itself. |
 | `src/tools/` | Tool implementations, each with its input schema, permission model, and execution. |
 | `src/commands/` | Slash commands. Registered via `command_registry_init_*.cpp`. |
 | `src/ui/` | FTXUI interface. **Not Ink, not React** — do not port React idioms into it. Cut by responsibility: `foundation/` (tokens, theme, figures, primitives), `chrome/` (layout, renderer, terminal I/O), `widgets/` (reusable controls), `visual/` (markdown/diff rendering), `messages/`, `dialogs/`, `permissions/`, `prompt/`, `screens/`, `features/{agents,teams,tasks,plugins,mcp}/`, `tools/` (tool-UI registry), and `app/` (the top-level app orchestrator shards). Twelve `loom_ui_<area>` targets aggregated by the `loom_ui` INTERFACE library — see the build-layout note above. |
@@ -145,9 +145,9 @@ entries — which may carry Authorization headers — into VCS.
 ### Wire backends
 
 `wire_api` config key or `LOOM_WIRE_API` env selects the backend; unset ⇒
-Anthropic. Credentials reach the wire through the single decision point in
-`query/wire_anthropic.cppm` (Bearer when a token is set, else `x-api-key`).
-`ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` are read as user-supplied
+Messages API. Credentials reach the wire through the single decision point in
+`query/wire_messages.cppm` (Bearer when a token is set, else `x-api-key`).
+`LOOM_API_KEY` / `LOOM_AUTH_TOKEN` are read as user-supplied
 credentials for the user's own endpoint — there is no account system and no
 login.
 

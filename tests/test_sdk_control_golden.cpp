@@ -309,7 +309,7 @@ TEST(SdkControlGolden, BridgeParsesControlRequestSetModel) {
     EXPECT_EQ(req.request_id, "model_req_001");
     EXPECT_EQ(req.request.subtype, "set_model");
     ASSERT_TRUE(req.request.model.has_value());
-    EXPECT_EQ(*req.request.model, "claude-sonnet-4");
+    EXPECT_EQ(*req.request.model, "test-model");
 }
 
 TEST(SdkControlGolden, BridgeParsesControlRequestSetMaxThinkingTokens) {
@@ -517,7 +517,7 @@ TEST(SdkControlGolden, BridgeHandlesOutboundOnlyRejectsMutableRequest) {
 
 TEST(SdkControlGolden, ServerResultMessage) {
     auto resp = loom::utils::json::parse(
-        R"({"id":"msg_001","response":"done","model":"claude-sonnet-4",)"
+        R"({"id":"msg_001","response":"done","model":"test-model",)"
         R"("elapsed_ms":1500,"usage":{"input_tokens":100,"output_tokens":50}})");
     ASSERT_TRUE(resp.has_value());
     check_golden_result("server_result_message",
@@ -534,7 +534,7 @@ TEST(SdkControlGolden, ServerResultIngressEvent) {
     // normalization needed.
     srv::DirectQueryResult qr;
     qr.content = "done";
-    qr.model = "claude-sonnet-4";
+    qr.model = "test-model";
     qr.input_tokens = 100;
     qr.output_tokens = 50;
     qr.tool_rounds = 2;

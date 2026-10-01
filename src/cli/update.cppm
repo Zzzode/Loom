@@ -450,12 +450,12 @@ inline std::string get_config_path() {
 
 inline std::string get_manifest_url(const std::string& channel) {
     if (channel == "beta") {
-        return "https://updates.anthropic.com/loom/beta/manifest.json";
+        return "https://updates.loom.dev/loom/beta/manifest.json";
     }
     if (channel == "nightly") {
-        return "https://updates.anthropic.com/loom/nightly/manifest.json";
+        return "https://updates.loom.dev/loom/nightly/manifest.json";
     }
-    return "https://updates.anthropic.com/loom/stable/manifest.json";
+    return "https://updates.loom.dev/loom/stable/manifest.json";
 }
 
 // Format a user-facing update notification message

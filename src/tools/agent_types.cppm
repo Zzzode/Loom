@@ -55,7 +55,7 @@ inline auto parse_agent_type(std::string_view str) -> std::optional<AgentType> {
 struct AgentConfig {
     int max_turns = 200;           // Max agentic loop iterations
     int max_depth = 3;             // Max recursive agent nesting depth
-    std::string default_model = "claude-sonnet-4-20250514";
+    std::string default_model;  // No default — must be explicitly configured
     std::vector<std::string> allowed_tools;  // Empty = inherit all from parent
     std::vector<std::string> denied_tools;   // Explicitly blocked tools for sub-agents
     std::optional<std::string> parent_agent_id;

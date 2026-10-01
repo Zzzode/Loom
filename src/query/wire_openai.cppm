@@ -4,26 +4,26 @@
 /// Implements the `loom::query::wire::WireBackend` seam so the engine's agent
 /// loop can drive any OpenAI-compatible endpoint (llama.cpp server, vLLM,
 /// Ollama, OpenRouter, LM Studio, ...) with the same tool execution,
-/// permission and UI paths it uses for Anthropic.
+/// permission and UI paths it uses for Messages API.
 ///
 /// This is a NEW implementation (nothing to port from TS): the project grew
-/// on the Anthropic /v1/messages shape, and the OpenAI chat-completions shape
+/// on the Messages API /v1/messages shape, and the OpenAI chat-completions shape
 /// differs in ways that are lossy in both directions. Every such loss is
 /// called out inline with a "LOSSY:" marker and summarized here:
 ///
 ///   * system prompt   — OpenAI has no top-level `system`; it becomes the
 ///                       FIRST element of the flat `messages` array.
-///   * tool results    — Anthropic nests `tool_result` blocks inside a user
+///   * tool results    — Messages API nests `tool_result` blocks inside a user
 ///                       message; OpenAI requires ONE message with
 ///                       role:"tool" per result. A single engine message may
 ///                       therefore expand into several wire messages.
-///   * tool calls      — Anthropic uses `tool_use` content blocks; OpenAI
+///   * tool calls      — Messages API uses `tool_use` content blocks; OpenAI
 ///                       uses an assistant-level `tool_calls` array whose
 ///                       `function.arguments` is a JSON *string*.
 ///   * thinking        — no standard field exists; ThinkingBlocks are
 ///                       DROPPED on the way out and never produced on the
 ///                       way in (the engine still handles thinking when the
-///                       Anthropic backend asks for it).
+///                       Messages API backend asks for it).
 ///   * documents       — no `document` content part exists; a DocumentBlock
 ///                       degrades to a text placeholder that names the media
 ///                       type but does NOT inline the payload.
@@ -318,7 +318,7 @@ struct MessageParts {
                     // LOSSY: dropped, not even as text — the thinking text is
                     // not part of the conversation the model should see again,
                     // and no OpenAI-compatible field can round-trip it
-                    // (Anthropic needs the signature back; OpenAI has none).
+                    // (Messages API needs the signature back; OpenAI has none).
                     return;
                 }
             },
@@ -366,7 +366,7 @@ inline void append_message(json::JsonMutDoc& doc, const Message& msg,
                 // part of its own — emitting an empty `content: []` user turn
                 // would be both meaningless and rejected by strict servers.
                 // This is a common shape in the engine, which nests
-                // tool_result blocks inside user messages (Anthropic style).
+                // tool_result blocks inside user messages (Messages API style).
                 if (parts.content.size() > 0) {
                     auto msg_obj = doc.object();
                     msg_obj.add("role", doc.string("user"));
@@ -490,7 +490,7 @@ public:
                 // computer-use capability still works — the tool is offered
                 // as a plain function whose schema describes the actions —
                 // it just is not the vendor-specific "computer_20241022"
-                // shape the Anthropic backend emits.
+                // shape the Messages API backend emits.
                 auto tool_obj = doc.object();
                 tool_obj.add("type", doc.string("function"));
                 auto function = doc.object();
@@ -523,7 +523,7 @@ public:
         // `thinking_enabled` / `thinking_budget_tokens` are deliberately
         // ignored — sending a `thinking` object would be rejected by most
         // endpoints, and there is no field that would make the model emit a
-        // ThinkingBlock back. Thinking stays an Anthropic-backend feature.
+        // ThinkingBlock back. Thinking stays a Messages API backend feature.
         //
         // NOTE: endpoints that accept `max_completion_tokens` instead of
         // `max_tokens` (newer OpenAI reasoning models) need a different

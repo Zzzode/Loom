@@ -36,12 +36,6 @@ struct SecretRule {
     bool case_insensitive = false;
 };
 
-// Anthropic API key prefix, assembled at runtime so the literal byte sequence
-// is not present verbatim (mirrors the TS excluded-strings dodge).
-inline std::string anthropic_key_prefix() {
-    return std::string{"sk"} + "-" + "ant" + "-" + "api";
-}
-
 // Portable subset of the TS SECRET_RULES. std::regex ECMAScript syntax does
 // not support inline (?i) flags, so case-insensitive rules set the flag bit
 // instead and use explicit character classes where the TS does.
@@ -60,11 +54,6 @@ inline const std::vector<SecretRule>& secret_rules() {
          R"(\b(doo_v1_[a-f0-9]{64})(?:[\x60'"\s;]|\\[nr]|$))"},
 
         // — AI APIs —
-        {"anthropic-api-key",
-         "\\b(" + anthropic_key_prefix() +
-             R"(03-[a-zA-Z0-9_\-]{93}AA)(?:[\x60'"\s;]|\\[nr]|$))"},
-        {"anthropic-admin-api-key",
-         R"(\b(sk-ant-admin01-[a-zA-Z0-9_\-]{93}AA)(?:[\x60'"\s;]|\\[nr]|$))"},
         {"openai-api-key",
          R"(\b(sk-(?:proj|svcacct|admin)-(?:[A-Za-z0-9_-]{74}|[A-Za-z0-9_-]{58})T3BlbkFJ(?:[A-Za-z0-9_-]{74}|[A-Za-z0-9_-]{58})\b|sk-[a-zA-Z0-9]{20}T3BlbkFJ[a-zA-Z0-9]{20})(?:[\x60'"\s;]|\\[nr]|$))"},
         {"huggingface-access-token",

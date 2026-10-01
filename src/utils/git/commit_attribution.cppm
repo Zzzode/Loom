@@ -42,10 +42,6 @@ struct FileChange {
 };
 
 namespace detail {
-    [[nodiscard]] inline bool contains(std::string_view haystack, std::string_view needle) noexcept {
-        return haystack.find(needle) != std::string_view::npos;
-    }
-
     [[nodiscard]] inline std::uint32_t rotr(std::uint32_t value, std::uint32_t bits) noexcept {
         return (value >> bits) | (value << (32u - bits));
     }
@@ -212,17 +208,8 @@ namespace detail {
 } // namespace detail
 
 [[nodiscard]] inline std::string sanitize_model_name(std::string_view short_name) {
-    if (detail::contains(short_name, "opus-4-6")) return "claude-opus-4-6";
-    if (detail::contains(short_name, "opus-4-5")) return "claude-opus-4-5";
-    if (detail::contains(short_name, "opus-4-1")) return "claude-opus-4-1";
-    if (detail::contains(short_name, "opus-4")) return "claude-opus-4";
-    if (detail::contains(short_name, "sonnet-4-6")) return "claude-sonnet-4-6";
-    if (detail::contains(short_name, "sonnet-4-5")) return "claude-sonnet-4-5";
-    if (detail::contains(short_name, "sonnet-4")) return "claude-sonnet-4";
-    if (detail::contains(short_name, "sonnet-3-7")) return "claude-sonnet-3-7";
-    if (detail::contains(short_name, "haiku-4-5")) return "claude-haiku-4-5";
-    if (detail::contains(short_name, "haiku-3-5")) return "claude-haiku-3-5";
-    return "loom";
+    if (short_name.empty()) return "loom";
+    return std::string(short_name);
 }
 
 [[nodiscard]] inline std::string sanitize_surface_key(std::string_view surface_key) {

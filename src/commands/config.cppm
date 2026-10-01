@@ -334,7 +334,7 @@ private:
     /// Get all known configuration keys with metadata
     [[nodiscard]] static std::vector<ConfigKeyInfo> known_keys() {
         return {
-            {"model.default_model",     "LLM model to use",             "string", "claude-sonnet-4-20250514"},
+            {"model.default_model",     "LLM model to use",             "string", ""},
             {"model.max_output_tokens", "Maximum output token count",   "int",    "16384"},
             {"model.extended_thinking", "Enable extended thinking",     "bool",   "false"},
             {"display.show_thinking",   "Show thinking blocks",         "bool",   "true"},

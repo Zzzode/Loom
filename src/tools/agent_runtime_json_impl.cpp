@@ -419,7 +419,6 @@ void append_json_string_map(
 }
 [[nodiscard]] std::vector<AgentDefinition> load_flag_agent_definitions() {
     const char* json = std::getenv("LOOM_AGENTS_JSON");
-    if (!json || !*json) json = std::getenv("CLAUDE_CODE_AGENTS_JSON");
     if (!json || !*json) return {};
     return parse_agents_json_string(json, "flagSettings", fs::path{"<flag-agents>"});
 }

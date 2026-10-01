@@ -2,7 +2,7 @@
 /// @brief Faithful port of src/components/CostThresholdDialog.tsx
 ///
 /// The cost-threshold dialog is a purely informative alert shown when the
-/// session's Anthropic API spend reaches a pre-configured threshold.
+/// session's API spend reaches a pre-configured threshold.
 ///
 /// It is a "Got it, thanks!" dialog with a single Select-style option.
 /// Both Enter (commit selection) and Escape (Dialog.onCancel) dismiss the
@@ -11,7 +11,7 @@
 ///
 /// Contract (P0):
 ///   Payload  = { dollars_spent, optional model_name, on_done: void() }
-///   Render   = title sprintf("You've spent $%.0f on the Anthropic API
+///   Render   = title sprintf("You've spent $%.0f on the API
 ///                       this session.", dollars_spent)
 ///              body   = "Learn more about how to monitor your spending:"
 ///                       + https://code.loom.com/docs/en/costs
@@ -101,7 +101,7 @@ struct CostThresholdState {
     };
 }
 
-/// Format the dialog title — "You've spent $N on the Anthropic API this
+/// Format the dialog title — "You've spent $N on the API this
 /// session."  Uses `std::lround` so that e.g. $4.70 displays as "$5" to
 /// match the exact sprintf("%.0f") semantics required by the contract.
 [[nodiscard]] inline std::string format_title(double dollars_spent) {
@@ -109,7 +109,7 @@ struct CostThresholdState {
     // Use std::to_string; for non-negative values (spend is always
     // non-negative) this matches sprintf("%lld") perfectly.
     return "You've spent $" + std::to_string(whole) +
-           " on the Anthropic API this session.";
+           " on the API this session.";
 }
 
 // ---------------------------------------------------------------------------
@@ -119,11 +119,11 @@ struct CostThresholdState {
 /// Faithful 1:1 render of TS <CostThresholdDialog>.
 ///
 ///   ┌──────────────────────────────────────────────────────────┐
-///   │ You've spent $5 on the Anthropic API this session.       │
+///   │ You've spent $5 on the API this session.                    │
 ///   ├──────────────────────────────────────────────────────────┤
 ///   │  Learn more about how to monitor your spending:          │
 ///   │  https://code.loom.com/docs/en/costs                   │
-///   │  (model: claude-3-5-sonnet-20241022)                     │  ← optional
+///   │  (model: <model-id>)                                     │  ← optional
 ///   ├──────────────────────────────────────────────────────────┤
 ///   │  ● Got it, thanks!                                       │
 ///   ├──────────────────────────────────────────────────────────┤

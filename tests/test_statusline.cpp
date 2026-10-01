@@ -128,7 +128,7 @@ using loom::utils::json::parse;
 
 TEST(StatuslineJson, SerializesBaseFields) {
     StatusLineCommandInput input;
-    input.model.id = "claude-3-5-sonnet";
+    input.model.id = "test-model";
     input.model.display_name = "Loom 3.5 Sonnet";
     input.workspace.current_dir = "/home/user/project";
     input.workspace.project_dir = "/home/user/project";
@@ -145,7 +145,7 @@ TEST(StatuslineJson, SerializesBaseFields) {
     // model
     auto model = root.get("model");
     EXPECT_TRUE(model.is_obj());
-    EXPECT_EQ(model.get("id").as_str(), "claude-3-5-sonnet");
+    EXPECT_EQ(model.get("id").as_str(), "test-model");
     EXPECT_EQ(model.get("display_name").as_str(), "Loom 3.5 Sonnet");
 
     // workspace
@@ -634,7 +634,7 @@ TEST(StatuslineExecute, ComplexJsonInputPassedCorrectly) {
 
     StatusLineCommandInput input;
     input.session_name = "complex-session";
-    input.model.id = "claude-3-opus";
+    input.model.id = "test-model";
     input.model.display_name = "Loom 3 Opus";
     input.workspace.current_dir = "/home/user/work";
     input.workspace.project_dir = "/home/user/work";

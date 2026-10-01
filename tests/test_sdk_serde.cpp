@@ -145,7 +145,7 @@ TEST(SdkSerde, SetPermissionModeRequest) {
 
 TEST(SdkSerde, SetModelRequest) {
     ControlSetModelRequest v;
-    v.model = "claude-sonnet-4-20250514";
+    v.model = "test-model";
     ROUND_TRIP_REQUEST(v);
 }
 
@@ -233,7 +233,7 @@ TEST(SdkSerde, StopTaskRequest) {
 
 TEST(SdkSerde, ApplyFlagSettingsRequest) {
     ControlApplyFlagSettingsRequest v;
-    v.settings = {{"model", "claude-sonnet-4-20250514"}};
+    v.settings = {{"model", "test-model"}};
     ROUND_TRIP_REQUEST(v);
 }
 
@@ -262,7 +262,7 @@ TEST(SdkSerde, InitializeResponse) {
     v.available_output_styles = {"default", "concise"};
     v.account = AccountInfo{
         .email = "user@example.com",
-        .organization = "Anthropic",
+        .organization = "Example Corp",
         .subscription_type = "pro",
         .token_source = "oauth",
         .api_key_source = "user",
@@ -271,8 +271,8 @@ TEST(SdkSerde, InitializeResponse) {
     v.commands = {SlashCommand{.name = "review", .description = "Review code", .argument_hint = "[pr]"}};
     v.agents = {AgentInfo{.name = "code-reviewer", .description = "Reviews code", .model = "sonnet"}};
     v.models = {ModelInfo{
-        .value = "claude-sonnet-4-20250514",
-        .display_name = "Claude Sonnet 4",
+        .value = "test-model",
+        .display_name = "Test Model",
         .description = "Smart model",
         .supports_effort = true,
         .supported_effort_levels = std::vector<std::string>{"low", "medium", "high"},
@@ -376,7 +376,7 @@ TEST(SdkSerde, SDKResultSuccess) {
     v.usage_json = R"({"input_tokens":1500,"output_tokens":300,)"
                    R"("cache_creation_input_tokens":0,"cache_read_input_tokens":0,)"
                    R"("server_tool_use":{"web_search_requests":0}})";
-    v.model_usage = {{"claude-sonnet-4-20250514", ModelUsage{
+    v.model_usage = {{"test-model", ModelUsage{
         .input_tokens = 1500,
         .output_tokens = 300,
         .cache_read_input_tokens = 200,
@@ -421,7 +421,7 @@ TEST(SdkSerde, SDKResultError) {
     v.usage_json = R"({"input_tokens":50000,"output_tokens":10000,)"
                    R"("cache_creation_input_tokens":0,"cache_read_input_tokens":0,)"
                    R"("server_tool_use":{"web_search_requests":0}})";
-    v.model_usage = {{"claude-sonnet-4-20250514", ModelUsage{
+    v.model_usage = {{"test-model", ModelUsage{
         .input_tokens = 50000,
         .output_tokens = 10000,
         .cache_read_input_tokens = 0,
@@ -449,7 +449,7 @@ TEST(SdkSerde, SDKSystemMessage) {
     v.subtype = "init";
     v.uuid = "msg-uuid-007";
     v.session_id = "sess-001";
-    v.model = "claude-sonnet-4-20250514";
+    v.model = "test-model";
     v.permission_mode = PermissionMode::Default;
     v.tools = std::vector<std::string>{"Bash", "Read", "Write"};
     v.agents = std::vector<std::string>{"code-reviewer"};
@@ -707,7 +707,7 @@ TEST(SdkSerde, StdinMessageUser) {
 TEST(SdkSerde, StdinMessageControlRequest) {
     ControlRequest inner;
     inner.request_id = "req-001";
-    inner.request = ControlSetModelRequest{.model = "claude-sonnet-4-20250514"};
+    inner.request = ControlSetModelRequest{.model = "test-model"};
     StdinMessage v{std::move(inner)};
     ROUND_TRIP_STR(StdinMessage_to_json, StdinMessage_from_json, v);
 }
@@ -750,8 +750,8 @@ TEST(SdkSerde, AgentInfo) {
 
 TEST(SdkSerde, ModelInfo) {
     ModelInfo v{
-        .value = "claude-sonnet-4-20250514",
-        .display_name = "Claude Sonnet 4",
+        .value = "test-model",
+        .display_name = "Test Model",
         .description = "Smart",
         .supports_effort = true,
         .supported_effort_levels = std::vector<std::string>{"low", "high"},
@@ -765,7 +765,7 @@ TEST(SdkSerde, ModelInfo) {
 TEST(SdkSerde, AccountInfo) {
     AccountInfo v{
         .email = "user@example.com",
-        .organization = "Anthropic",
+        .organization = "Example Corp",
         .subscription_type = "pro",
         .token_source = "oauth",
         .api_key_source = "user",

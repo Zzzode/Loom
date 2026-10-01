@@ -8,7 +8,6 @@
 add_library(loom_teams)
 target_sources(loom_teams
     PUBLIC FILE_SET CXX_MODULES FILES
-        teams/agent_swarms_enabled.cppm
         teams/control_message_compat.cppm
         teams/team_helpers.cppm
         teams/swarm/swarm_backends.cppm

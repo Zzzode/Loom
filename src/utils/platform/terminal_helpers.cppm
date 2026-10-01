@@ -53,22 +53,8 @@ TerminalPanel& get_terminal_panel();
 /// Constants
 inline constexpr std::string_view LOOM_SOCKET_PREFIX = "loom";
 
-/// Gets the socket name for Loom's isolated tmux session (format: loom-<PID>)
-std::string get_claude_socket_name();
-
-/// Gets the socket path if the socket has been initialized. Returns empty if not.
-std::optional<std::string> get_claude_socket_path();
-
-/// Sets socket info after initialization
-void set_claude_socket_info(std::string_view path, int pid);
-
 /// Returns whether the socket has been initialized
 bool is_socket_initialized();
-
-/// Gets the TMUX environment variable value for Loom's isolated socket.
-/// Format: "socket_path,server_pid,pane_index"
-/// Returns nullopt if socket is not yet initialized.
-std::optional<std::string> get_claude_tmux_env();
 
 /// Checks if tmux is available on this system (cached after first check)
 std::expected<bool, std::string> check_tmux_available();
@@ -139,7 +125,7 @@ inline bool supports_fullscreen() {
 ///   - Explicit opt-out (LOOM_NO_FLICKER=0) → false
 ///   - Explicit opt-in  (LOOM_NO_FLICKER=1) → true
 ///   - Auto-disable under tmux -CC control mode    → false
-///   - Default: USER_TYPE == "ant" ? true : false
+///   - Default: false
 inline bool is_fullscreen_enabled() {
     // Explicit user opt-out always wins.
     if (detail::is_env_defined_falsy("LOOM_NO_FLICKER")) return false;
@@ -148,9 +134,8 @@ inline bool is_fullscreen_enabled() {
     // Auto-disable under tmux -CC: alt-screen + mouse tracking corrupts
     // terminal state on double-click and mouse wheel is dead.
     if (is_tmux_control_mode()) return false;
-    // Default: on for ant builds, off for external users.
-    const char* user_type = std::getenv("USER_TYPE");
-    return user_type && std::string_view(user_type) == "ant";
+    // Default: off unless explicitly opted in.
+    return false;
 }
 
 /// Enter fullscreen/alternate screen mode (smcup / DEC 1049).

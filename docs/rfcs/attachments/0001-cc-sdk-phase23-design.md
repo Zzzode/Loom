@@ -406,7 +406,7 @@ struct AssemblyOverrides {
     std::optional<std::string> requested_model;
     std::optional<std::string> api_key;        // bypasses settings.network.api_key
     std::optional<std::string> base_url;
-    std::optional<std::string> wire_api;       // "anthropic" | "openai"
+    std::optional<std::string> wire_api;       // "messages" | "openai"
     std::optional<std::string> cwd;
 };
 
@@ -607,7 +607,7 @@ struct HarnessConfig {
     std::optional<std::string> system_prompt;
     std::optional<std::string> append_system_prompt;
     std::optional<std::string> base_url;
-    std::optional<std::string> wire_api;             // "anthropic" | "openai"
+    std::optional<std::string> wire_api;             // "messages" | "openai"
     ApiKeyProvider api_key_provider;                 // injected, never stored
     BackendFactory backend_factory;                  // optional WireBackend seam
     PermissionCallback permission_callback;          // optional; absent = engine default
@@ -1105,7 +1105,7 @@ canonical type reachable.
   `test_server`. The server route is covered in substance by
   `tests/test_services.cpp` `TEST(ServerRoutes, …)` (e.g.
   `:7466`, `:7599`), which exercises the real recipe via
-  `LocalAnthropicMessagesServer` — these must stay green after the route is
+  `LocalMessagesServer` — these must stay green after the route is
   re-expressed through `cc.query.assembly`. (The doc previously misnamed this
   `test_server`.)
 - **`bridge_messaging` has NO existing regression net (F6):** `tests/test_bridge.cpp`
@@ -1394,8 +1394,8 @@ re-expression so a harness problem never blocks the server.
     link the `cc_server` target itself. (§2.6 already stated this closure for
     install; the phase-3 sections are now consistent with it.)
   - *Non-deterministic test (med):* `AbortBeforeRunReturnsErrorOnce` set no
-    `base_url`, so the second `run()` POSTed to the default
-    `api.anthropic.com` — a real external call on a networked machine.
+    `base_url`, so the second `run()` POSTed to the default API
+    endpoint — a real external call on a networked machine.
     Fixed: `config.base_url = "http://127.0.0.1:1"` (closed local port) so
     the transport failure is deterministic and local (§4.4 zero-external-calls).
   - *Commit-granularity deviation (low, recorded):* the

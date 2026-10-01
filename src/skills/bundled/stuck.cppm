@@ -15,7 +15,8 @@
 ///     All of the above is ported verbatim as `kStuckPrompt`.
 ///   - TS also appends user args under "## User-provided context".
 ///     Exposed via `build_stuck_prompt(args)`.
-///   - TS gates on USER_TYPE == 'ant'; `is_ant_user()` mirrors this.
+///   - TS gates on USER_TYPE == 'ant'; that gate was Anthropic-internal and
+///     is intentionally not ported.
 ///   - The pre-existing `detect_stuck_pattern` / `suggest_unstuck_action` /
 ///     `get_alternative_approaches` helpers (added by an earlier C++ pass,
 ///     not present in TS) are RETAINED as supplementary pure utilities
@@ -23,7 +24,6 @@
 ///     reaching for `ps`.  They are NOT a replacement for STUCK_PROMPT.
 module;
 #include <cctype>
-#include <cstdlib>
 #include <cstdint>
 
 export module loom.skills.bundled.stuck;
@@ -128,14 +128,6 @@ details themselves).
         out += std::format("\n## User-provided context\n\n{}\n", args);
     }
     return out;
-}
-
-/// ANT user gate (matches TS: `if (process.env.USER_TYPE !== 'ant') return;`).
-[[nodiscard]] inline bool is_ant_user() {
-    if (const char* v = std::getenv("USER_TYPE")) {
-        return std::string_view(v) == "ant";
-    }
-    return false;
 }
 
 // ============================================================
@@ -333,7 +325,7 @@ loom::skills::SkillManifest get_stuck_skill_manifest() {
     return loom::skills::SkillManifest{
         .name = "stuck",
         .description =
-            "[ANT-ONLY] Investigate frozen/stuck/slow Loom sessions "
+            "Investigate frozen/stuck/slow Loom sessions "
             "on this machine and post a diagnostic report to "
             "#loom-feedback.",
         .version = "1.1.0",
@@ -353,7 +345,7 @@ loom::skills::SkillManifest get_stuck_skill_manifest() {
     return loom::skills::SkillDefinition{
         .name = "stuck",
         .description =
-            "[ANT-ONLY] Investigate frozen/stuck/slow Loom sessions "
+            "Investigate frozen/stuck/slow Loom sessions "
             "on this machine and post a diagnostic report to "
             "#loom-feedback.",
         .trigger_patterns = {

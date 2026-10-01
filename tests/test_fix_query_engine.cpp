@@ -534,7 +534,7 @@ TEST(QueryEngineFix, FallsBackToSecondaryModelOnOverloadedError) {
     fs::remove_all(root);
 }
 
-TEST(QueryEngineFix, PreservesPathPrefixInAnthropicBaseUrl) {
+TEST(QueryEngineFix, PreservesPathPrefixInMessagesBaseUrl) {
     ScriptedHttpServer server({
         ScriptedHttpServer::Response{.status = 200, .body = R"({"id":"msg_ok","type":"message","role":"assistant","model":"primary-model","content":[{"type":"text","text":"done"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})"},
     });
@@ -761,7 +761,7 @@ TEST(SseEventDecoder, MultipleEventsAcrossFeedsWithPartialTail) {
     EXPECT_EQ(e2[0].data, "3");
 }
 
-TEST(SseEventDecoder, RealisticAnthropicStreamFramesCorrectly) {
+TEST(SseEventDecoder, RealisticMessagesStreamFramesCorrectly) {
     loom::core::SseEventDecoder dec;
     std::string stream =
         "event: message_start\n"

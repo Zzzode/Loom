@@ -458,8 +458,8 @@ struct FoundryAuthMode {
     bool use_foundry = false;
     bool skip_auth = false;
     std::optional<std::string> api_key;     // non-empty = Ocp-Apim-Subscription-Key
-    std::string resource;                   // ANTHROPIC_FOUNDRY_RESOURCE or ""
-    std::string base_url;                   // ANTHROPIC_FOUNDRY_BASE_URL or ""
+    std::string resource;                   // LOOM_FOUNDRY_RESOURCE or ""
+    std::string base_url;                   // LOOM_FOUNDRY_BASE_URL or ""
 };
 
 [[nodiscard]] inline FoundryAuthMode detect_foundry_mode() {
@@ -468,13 +468,13 @@ struct FoundryAuthMode {
     FoundryAuthMode m;
     m.use_foundry = is_env_truthy("LOOM_USE_FOUNDRY");
     m.skip_auth  = is_env_truthy("LOOM_SKIP_FOUNDRY_AUTH");
-    if (auto k = get_env("ANTHROPIC_FOUNDRY_API_KEY"); k && !k->empty()) {
+    if (auto k = get_env("LOOM_FOUNDRY_API_KEY"); k && !k->empty()) {
         m.api_key = std::move(*k);
     }
-    if (auto r = get_env("ANTHROPIC_FOUNDRY_RESOURCE"); r && !r->empty()) {
+    if (auto r = get_env("LOOM_FOUNDRY_RESOURCE"); r && !r->empty()) {
         m.resource = std::move(*r);
     }
-    if (auto u = get_env("ANTHROPIC_FOUNDRY_BASE_URL"); u && !u->empty()) {
+    if (auto u = get_env("LOOM_FOUNDRY_BASE_URL"); u && !u->empty()) {
         m.base_url = std::move(*u);
     }
     return m;
@@ -493,47 +493,6 @@ struct FoundryAuthMode {
     }
     if (!m.resource.empty()) {
         return "https://" + m.resource + ".services.ai.azure.com";
-    }
-    return {};
-}
-
-// ---------------------------------------------------------------------------
-// Default deployment name lookup for Foundry.
-// Matches TS ALL_MODEL_CONFIGS table (same short-keys as Bedrock/Vertex).
-// Callers allow user override via settings.modelOverrides[canonical_id].
-// ---------------------------------------------------------------------------
-struct DeploymentIdMapEntry {
-    std::string_view canonical_first_party;
-    std::string_view foundry_deployment;
-};
-
-inline constexpr std::array<DeploymentIdMapEntry, 11> kDefaultFoundryDeployments = {{
-    {"claude-3-5-sonnet-20241022-v2:0", "claude-3-5-sonnet"},
-    {"claude-3-7-sonnet-20250219",       "claude-3-7-sonnet"},
-    {"claude-sonnet-4-20250514-v1:0",    "claude-sonnet-4"},
-    {"claude-sonnet-4-5-20250929-v1:0",  "claude-sonnet-4-5"},
-    {"claude-sonnet-4-6",                "claude-sonnet-4-6"},
-    {"claude-3-5-haiku-20241022-v1:0",   "claude-3-5-haiku"},
-    {"claude-haiku-4-5-20251001-v1:0",   "claude-haiku-4-5"},
-    {"claude-opus-4-20250514-v1:0",      "claude-opus-4"},
-    {"claude-opus-4-1-20250805-v1:0",    "claude-opus-4-1"},
-    {"claude-opus-4-5-20251101-v1:0",    "claude-opus-4-5"},
-    {"claude-opus-4-6-v1",               "claude-opus-4-6"},
-}};
-
-[[nodiscard]] inline std::string_view lookup_default_deployment(
-    std::string_view canonical_first_party_id) {
-    for (const auto& e : kDefaultFoundryDeployments) {
-        if (canonical_first_party_id == e.canonical_first_party) {
-            return e.foundry_deployment;
-        }
-    }
-    // Fuzzy prefix match (covers version-qualified IDs not in the table).
-    for (const auto& e : kDefaultFoundryDeployments) {
-        if (canonical_first_party_id.find(e.canonical_first_party) !=
-            std::string_view::npos) {
-            return e.foundry_deployment;
-        }
     }
     return {};
 }

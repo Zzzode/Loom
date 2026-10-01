@@ -54,12 +54,10 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
 
 [[nodiscard]] inline std::string resolve_default_model_from_environment(
     const EnvGetter& env_getter,
-    std::string_view fallback = "claude-sonnet-4-20250514"
+    std::string_view fallback = ""
 ) {
     auto model = first_non_empty_env(env_getter, {
         "LOOM_MODEL",
-        "ANTHROPIC_MODEL",
-        "ANTHROPIC_DEFAULT_SONNET_MODEL",
     });
     return model.value_or(std::string(fallback));
 }
@@ -89,8 +87,8 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
 /// keys that the C++ port currently understands:
 ///   - `env`:     object of name->string; each is set via the env_setter
 ///                (production: setenv). This is the key path for provider
-///                credentials (ANTHROPIC_API_KEY / ANTHROPIC_BASE_URL / ...).
-///   - `apiKey`:  string; reported back so the caller can set ANTHROPIC_API_KEY.
+///                credentials (LOOM_API_KEY / LOOM_BASE_URL / ...).
+///   - `apiKey`:  string; reported back so the caller can set LOOM_API_KEY.
 ///   - `model`:   string; reported back so the caller can override the default.
 ///   - `statusLine`: command settings reported back for UI projection.
 ///
@@ -119,7 +117,7 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
         });
     }
 
-    // apiKey: string -> reported back (caller sets ANTHROPIC_API_KEY)
+    // apiKey: string -> reported back (caller sets LOOM_API_KEY)
     if (auto api_key = root.get("apiKey"); api_key.is_str()) {
         out.api_key = std::string(api_key.as_str());
     }

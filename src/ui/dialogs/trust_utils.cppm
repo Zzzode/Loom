@@ -418,7 +418,7 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
         bullets.push_back("Code is not signed. Integrity or provenance cannot be verified.");
     }
     if (summary.unknown_marketplace) {
-        bullets.push_back("Marketplace is NOT on the official Anthropic allowlist.");
+        bullets.push_back("Marketplace is NOT on the official allowlist.");
     }
     if (!summary.domains.empty()) {
         for (const auto& d : summary.domains) {
@@ -450,15 +450,8 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
     // Reuse the marketplace allowlist from plugin_trust_text.cppm.
     if (is_trusted_marketplace_domain(host)) return true;
 
-    static constexpr std::array<std::string_view, 18> kSafeHosts = {{
-        "api.anthropic.com",
-        "anthropic.com",
-        "marketplace.anthropic.com",
+    static constexpr std::array<std::string_view, 11> kSafeHosts = {{
         "loomcode.app",
-        "console.anthropic.com",
-        "status.anthropic.com",
-        "docs.anthropic.com",
-        "support.anthropic.com",
         "aws.amazon.com",
         "cloud.google.com",
         "console.cloud.google.com",

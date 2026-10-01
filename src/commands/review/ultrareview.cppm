@@ -15,7 +15,7 @@
 ///      injects the prompt into query_engine (no direct provider SDK calls).
 ///
 /// The hosted server-side billing/overage gate (checkOverageGate + Extra
-/// Usage) was removed along with the Anthropic cloud coupling: a local
+/// Usage) was removed along with the cloud coupling: a local
 /// multi-round review has no remote quota to enforce.
 module;
 
@@ -387,7 +387,7 @@ public:
         // 3) Compute billing note and compose the top-level prompt that will
         //    be injected into query_engine.  Each round's nested query is
         //    handled by query_engine via tool-calls (Task sub-agent) — we do
-        //    NOT call the Anthropic SDK ourselves.
+        //    NOT call the API SDK ourselves.
         // No server-side quota: a local review carries no billing note.
         const std::string note;
 

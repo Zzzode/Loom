@@ -33,7 +33,6 @@ current documentation.
 - `2026-06-15-migration-gap-remediation-plan.md`
 - `2026-06-18-independent-completeness-audit.md`
 - `2026-09-16-retained-feature-gap-audit.md`
-- `2026-09-19-anthropic-decoupling-plan.md`
 - `migration-audit-report.md`
 - `audit_round7_full_report.json` — 38 `ts_path` values, 8 of them absolute
   macOS paths under `/Users/bytedance/`. This was the primary input to the

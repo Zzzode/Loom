@@ -29,13 +29,13 @@ using namespace loom::services::api::with_retry_simple;
 
 namespace {
 
-/// Build a realistic multi-delta SSE body (mimics Anthropic streaming response)
+/// Build a realistic multi-delta SSE body (mimics Messages API streaming response)
 std::string BuildBenchmarkSseBody() {
     std::string out;
     out.reserve(4096);
     out += "event: message_start\n"
            "data: {\"message\":{\"id\":\"msg_bench\",\"type\":\"message\","
-           "\"role\":\"assistant\",\"model\":\"claude-sonnet-4-20250514\","
+           "\"role\":\"assistant\",\"model\":\"test-model\","
            "\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,"
            "\"usage\":{\"input_tokens\":25,\"output_tokens\":0}}}\n\n";
     out += "event: content_block_start\n"
@@ -111,7 +111,7 @@ BENCHMARK(BM_SseParser);
 static void BM_JsonSerialize(benchmark::State& state) {
     ApiConfig cfg;
     cfg.api_key = "";  // dry-run: BuildMessagesBody is still called before the gate
-    cfg.model_id = "claude-sonnet-4-20250514";
+    cfg.model_id = "test-model";
     cfg.max_tokens = 4096;
     SseClient client(cfg);
 

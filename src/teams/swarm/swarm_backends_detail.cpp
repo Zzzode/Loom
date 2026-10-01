@@ -166,7 +166,6 @@ std::string build_capture_pane_command(
 
 std::string teammate_command() {
     if (const char* env = std::getenv("LOOM_TEAMMATE_COMMAND"); env && *env) return std::string(env);
-    if (const char* env = std::getenv("CLAUDE_CODE_TEAMMATE_COMMAND"); env && *env) return std::string(env);
     if (const char* env = std::getenv("LOOM_BINARY"); env && *env) return std::string(env);
     return "loom";
 }
@@ -196,7 +195,6 @@ std::string build_teammate_cli_command(const TeammateSpawnConfig& config) {
 
 std::optional<TeammateMode> forced_mode_from_env() {
     const char* raw = std::getenv("LOOM_TEAMMATE_BACKEND");
-    if (!raw || !*raw) raw = std::getenv("CLAUDE_CODE_TEAMMATE_BACKEND");
     if (!raw || !*raw) return std::nullopt;
     std::string value(raw);
     if (value == "in-process" || value == "inprocess" || value == "native") return TeammateMode::InProcess;

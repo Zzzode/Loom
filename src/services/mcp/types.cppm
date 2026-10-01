@@ -430,7 +430,7 @@ inline std::optional<ToolCallResult> parse_tool_call_result(const std::string& j
                 else if (auto mt = item.get("mediaType"); mt.is_str()) ci.media_type = mt.as_str();
                 else if (auto mt = item.get("media_type"); mt.is_str()) ci.media_type = mt.as_str();
                 if (auto d = item.get("data"); d.is_str()) ci.data = d.as_str();
-                // Try nested "source" object (Anthropic API format)
+                // Try nested "source" object (Messages API format)
                 if (!ci.data) {
                     if (auto src = item.get("source"); src.is_obj()) {
                         if (auto mt = src.get("media_type"); mt.is_str()) ci.media_type = mt.as_str();

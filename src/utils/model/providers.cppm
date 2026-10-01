@@ -8,15 +8,13 @@ import std;
 export namespace loom::utils {
 
 enum class Provider {
-    Anthropic,
+    Messages,
     Bedrock,
     Vertex,
     Custom
 };
 
 Provider detect_provider(std::string_view model_id) {
-    // Bedrock models use anthropic. prefix
-    if (model_id.starts_with("anthropic.")) return Provider::Bedrock;
     // Vertex models may have publishers/ prefix
     if (model_id.find("publishers/") != std::string_view::npos) return Provider::Vertex;
     // Check environment for custom provider
@@ -27,14 +25,16 @@ Provider detect_provider(std::string_view model_id) {
         if (cv == "vertex") return Provider::Vertex;
         if (cv == "custom") return Provider::Custom;
     }
-    // Default to Anthropic for loom-* models
-    return Provider::Anthropic;
+    // Default to Messages API
+    return Provider::Messages;
 }
 
 std::string get_api_base_url(Provider provider) {
     switch (provider) {
-        case Provider::Anthropic:
-            return "https://api.anthropic.com";
+        case Provider::Messages: {
+            const char* base = std::getenv("LOOM_BASE_URL");
+            return base ? std::string(base) : "";
+        }
         case Provider::Bedrock: {
             const char* region = std::getenv("AWS_REGION");
             std::string r = region ? region : "us-east-1";
@@ -48,17 +48,17 @@ std::string get_api_base_url(Provider provider) {
             return "https://" + reg + "-aiplatform.googleapis.com/v1/projects/" + p;
         }
         case Provider::Custom: {
-            const char* base = std::getenv("ANTHROPIC_BASE_URL");
+            const char* base = std::getenv("LOOM_BASE_URL");
             return base ? std::string(base) : "http://localhost:8080";
         }
     }
-    return "https://api.anthropic.com";
+    return "";
 }
 
 std::pair<std::string, std::string> get_auth_header(Provider provider) {
     switch (provider) {
-        case Provider::Anthropic: {
-            const char* key = std::getenv("ANTHROPIC_API_KEY");
+        case Provider::Messages: {
+            const char* key = std::getenv("LOOM_API_KEY");
             return {"x-api-key", key ? std::string(key) : ""};
         }
         case Provider::Bedrock:
@@ -68,7 +68,7 @@ std::pair<std::string, std::string> get_auth_header(Provider provider) {
             // Vertex uses OAuth2 bearer token
             return {"Authorization", "Bearer "};
         case Provider::Custom: {
-            const char* key = std::getenv("ANTHROPIC_API_KEY");
+            const char* key = std::getenv("LOOM_API_KEY");
             return {"x-api-key", key ? std::string(key) : ""};
         }
     }
@@ -77,15 +77,15 @@ std::pair<std::string, std::string> get_auth_header(Provider provider) {
 
 bool is_provider_configured(Provider provider) {
     switch (provider) {
-        case Provider::Anthropic:
-            return std::getenv("ANTHROPIC_API_KEY") != nullptr;
+        case Provider::Messages:
+            return std::getenv("LOOM_API_KEY") != nullptr;
         case Provider::Bedrock:
             return std::getenv("AWS_REGION") != nullptr ||
                    std::getenv("AWS_PROFILE") != nullptr;
         case Provider::Vertex:
             return std::getenv("GOOGLE_CLOUD_PROJECT") != nullptr;
         case Provider::Custom:
-            return std::getenv("ANTHROPIC_BASE_URL") != nullptr;
+            return std::getenv("LOOM_BASE_URL") != nullptr;
     }
     return false;
 }

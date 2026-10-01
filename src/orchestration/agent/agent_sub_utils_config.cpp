@@ -25,7 +25,7 @@ namespace fs = std::filesystem;
     if (loom::utils::is_env_defined_falsy(disable)) return true;
     if (loom::utils::is_env_truthy(std::getenv("LOOM_SIMPLE"))) return false;
     if (loom::utils::is_env_truthy(std::getenv("LOOM_REMOTE")) &&
-        (!std::getenv("LOOM_REMOTE_MEMORY_DIR") || !*std::getenv("CLAUDE_CODE_REMOTE_MEMORY_DIR"))) {
+        !std::getenv("LOOM_REMOTE_MEMORY_DIR")) {
         return false;
     }
     return true;
@@ -198,9 +198,6 @@ void add_agent_memory_tools(std::vector<std::string>& tools) {
 
 [[nodiscard]] std::optional<std::string> resolve_agent_model(std::optional<std::string> model) {
     if (!model || model->empty() || *model == "inherit") return std::nullopt;
-    if (*model == "sonnet") return "claude-sonnet-4-20250514";
-    if (*model == "opus") return "claude-opus-4-20250514";
-    if (*model == "haiku") return "claude-3-5-haiku-20241022";
     return model;
 }
 
@@ -284,37 +281,14 @@ Guidelines:
     return out;
 }
 
-[[nodiscard]] bool env_flag_enabled(const char* name) {
-    const char* raw = std::getenv(name);
-    if (!raw || *raw == '\0') return false;
-    const auto value = lowercase_ascii(raw);
-    return value != "0" && value != "false" && value != "no" && value != "off";
-}
-
-[[nodiscard]] bool is_ant_user() {
-    if (const char* value = std::getenv("USER_TYPE")) {
-        return std::string_view(value) == "ant";
-    }
-    return false;
-}
-
-[[nodiscard]] bool agent_model_supports_effort(std::string_view model) {
-    if (env_flag_enabled("LOOM_ALWAYS_ENABLE_EFFORT")) return true;
-    const auto lower = lowercase_ascii(model);
-    if (lower.find("opus-4-6") != std::string::npos ||
-        lower.find("sonnet-4-6") != std::string::npos) {
-        return true;
-    }
-    if (lower.find("haiku") != std::string::npos ||
-        lower.find("sonnet") != std::string::npos ||
-        lower.find("opus") != std::string::npos) {
-        return false;
-    }
+// No built-in model list — effort is passed through for any model.
+// The API endpoint will reject it if the model doesn't support it.
+[[nodiscard]] bool agent_model_supports_effort(std::string_view /*model*/) {
     return true;
 }
 
-[[nodiscard]] bool agent_model_supports_max_effort(std::string_view model) {
-    return is_ant_user() || lowercase_ascii(model).find("opus-4-6") != std::string::npos;
+[[nodiscard]] bool agent_model_supports_max_effort(std::string_view /*model*/) {
+    return true;
 }
 
 [[nodiscard]] bool is_agent_effort_level(std::string_view value) {
@@ -379,9 +353,6 @@ void apply_agent_effort_to_request(
     if (trimmed.empty()) return;
 
     if (auto numeric = parse_agent_numeric_effort(trimmed)) {
-        if (is_ant_user()) {
-            request.internal_effort_override = *numeric;
-        }
         return;
     }
 

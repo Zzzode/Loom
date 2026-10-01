@@ -5,8 +5,8 @@
   [2m[38;2;102;102;102m[49mTab: general                                                                                    [22m[39m[49m  
 [90m[49m────────────────────────────────────────────────────────────────────────────────────────────────────[39m[49m
                                                                                                     
-    [2m  Model               [22m[1mclaude-sonnet-4.6[22m                                                         
-    [2m  API base            [22mapi.anthropic.com                                                         
+    [2m  Model               [22m[1mtest-model.6[22m                                                              
+    [2m  API base            [22m(no default)                                                              
     [2m  Max tokens          [22m8192                                                                      
                                                                                                     
     [2m  Esc to close[22m                                                                                  

@@ -553,17 +553,11 @@ namespace detail {
     if (const char* value = std::getenv("LOOM_TEAM_NAME"); value && *value) {
         return value;
     }
-    if (const char* value = std::getenv("CLAUDE_CODE_TEAM_NAME"); value && *value) {
-        return value;
-    }
     return "default";
 }
 
 [[nodiscard]] inline std::string current_agent_name() {
     if (const char* value = std::getenv("LOOM_AGENT_NAME"); value && *value) {
-        return value;
-    }
-    if (const char* value = std::getenv("CLAUDE_CODE_AGENT_NAME"); value && *value) {
         return value;
     }
     return "team-lead";

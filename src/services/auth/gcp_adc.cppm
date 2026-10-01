@@ -505,7 +505,7 @@ private:
 struct VertexAuthMode {
     bool use_vertex = false;
     bool skip_auth = false;
-    // If user sets ANTHROPIC_VERTEX_PROJECT_ID explicitly AND no standard
+    // If user sets LOOM_VERTEX_PROJECT_ID explicitly AND no standard
     // GCP project discovery method is present, this should be used as the
     // last-resort fallback (avoids 12s IMDS timeout on laptops).
     std::optional<std::string> fallback_project_id;
@@ -528,7 +528,7 @@ struct VertexAuthMode {
         (get_env("google_application_credentials") &&
          !get_env("google_application_credentials")->empty());
     if (!has_project_env && !has_key_file) {
-        if (auto pid = get_env("ANTHROPIC_VERTEX_PROJECT_ID");
+        if (auto pid = get_env("LOOM_VERTEX_PROJECT_ID");
             pid && !pid->empty()) {
             m.fallback_project_id = std::move(*pid);
         }
@@ -537,35 +537,10 @@ struct VertexAuthMode {
 }
 
 // Vertex region resolution.  Per TS envUtils::getVertexRegionForModel:
-//   1. VERTEX_REGION_LOOM_<model> per-model override env (12 vars).
-//   2. CLOUD_ML_REGION global.
-//   3. default: "us-east5".
-// We don't have a per-model registry here, so accept a model_id_hint string;
-// callers that know the model short key can pass the canonical firstPartyId.
-[[nodiscard]] inline std::string resolve_vertex_region(
-    std::string_view model_id_hint = {}) {
+// Resolve the Vertex region from environment.
+// Priority: CLOUD_ML_REGION > "us-east5".
+[[nodiscard]] inline std::string resolve_vertex_region() {
     using loom::utils::env::get_env;
-    // Build known env var names per TS VERTEX_REGION_OVERRIDES.
-    static const std::pair<std::string_view, std::string_view> kOverrides[] = {
-        {"claude-3-5-sonnet", "VERTEX_REGION_LOOM_3_5_SONNET"},
-        {"claude-3-7-sonnet", "VERTEX_REGION_LOOM_3_7_SONNET"},
-        {"claude-sonnet-4",   "VERTEX_REGION_LOOM_4_0_SONNET"},
-        {"claude-sonnet-4-5", "VERTEX_REGION_LOOM_4_5_SONNET"},
-        {"claude-sonnet-4-6", "VERTEX_REGION_LOOM_4_6_SONNET"},
-        {"claude-3-5-haiku",  "VERTEX_REGION_LOOM_3_5_HAIKU"},
-        {"claude-haiku-4-5",  "VERTEX_REGION_LOOM_HAIKU_4_5"},
-        {"claude-opus-4",     "VERTEX_REGION_LOOM_OPUS_4"},
-        {"claude-opus-4-1",   "VERTEX_REGION_LOOM_OPUS_4_1"},
-        {"claude-opus-4-5",   "VERTEX_REGION_LOOM_OPUS_4_5"},
-        {"claude-opus-4-6",   "VERTEX_REGION_LOOM_OPUS_4_6"},
-    };
-    for (const auto& [prefix, env_var] : kOverrides) {
-        if (model_id_hint.find(prefix) != std::string_view::npos) {
-            if (auto r = get_env(std::string(env_var)); r && !r->empty()) {
-                return *r;
-            }
-        }
-    }
     if (auto r = get_env("CLOUD_ML_REGION"); r && !r->empty()) return *r;
     return "us-east5";
 }

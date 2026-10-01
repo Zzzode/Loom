@@ -120,7 +120,7 @@ static int ParseSseRef(std::string_view bytes,
 // ---------------------------------------------------------------------------
 constexpr const char* FAKE_SSE =
     "event: message_start\n"
-    "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"model\":\"claude-sonnet-4-20250514\"}}\n"
+    "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"model\":\"test-model\"}}\n"
     "\n"
     "event: content_block_start\n"
     "data: {\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n"

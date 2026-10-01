@@ -23,8 +23,8 @@ export namespace loom::commands::plugin {
 /// Mirrors the static body of TS: PluginTrustWarning (the italic Text block).
 constexpr std::string_view kTrustDisclaimerBody =
     "Make sure you trust a plugin before installing, updating, or using it. "
-    "Anthropic does not control what MCP servers, files, or other software "
-    "are included in plugins and cannot verify that they will work as "
+    "The plugin marketplace does not control what MCP servers, files, or other "
+    "software are included in plugins and cannot verify that they will work as "
     "intended or that they won't change. See each plugin's homepage for "
     "more information.";
 
@@ -67,11 +67,8 @@ constexpr std::string_view kTrustDisclaimerPrefix = " ";
 /// ultimately decides whether to add custom text.
 [[nodiscard]] constexpr bool is_trusted_marketplace_domain(std::string_view domain) noexcept
 {
-    // Anthropic / Loom official domains.
-    if (domain == "marketplace.anthropic.com") return true;
-    if (domain == "api.anthropic.com")         return true;
-    if (domain == "loomcode.app")            return true;
-    if (domain == "anthropic.com")             return true;
+    // Loom official domains.
+    if (domain == "loomcode.app") return true;
     return false;
 }
 
@@ -84,7 +81,7 @@ constexpr std::string_view kTrustDisclaimerPrefix = " ";
     if (is_trusted_marketplace_domain(marketplace_domain)) {
         return std::nullopt;
     }
-    return std::format("This plugin is sourced from \"{}\" ({}), which is not an official Anthropic marketplace.",
+    return std::format("This plugin is sourced from \"{}\" ({}), which is not an official marketplace.",
                        marketplace_name,
                        marketplace_domain.empty() ? std::string_view{"unknown domain"} : marketplace_domain);
 }

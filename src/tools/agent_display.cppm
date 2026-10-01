@@ -107,11 +107,6 @@ struct ResolvedAgent {
 // Model / source display helpers
 // ============================================================================
 
-/// Default sub-agent model alias used when the agent definition does not pin
-/// one and no global override is known.  Kept as a compile-time fallback so
-/// the display helpers remain pure (no bootstrap state access).
-inline constexpr std::string_view DEFAULT_SUBAGENT_MODEL = "claude-sonnet-4-20250514";
-
 /// Resolve the display model string for an agent.
 /// Returns the model alias or 'inherit' for display purposes.
 ///
@@ -127,7 +122,7 @@ inline constexpr std::string_view DEFAULT_SUBAGENT_MODEL = "claude-sonnet-4-2025
     } else if (global_default && !global_default->empty()) {
         model = *global_default;
     } else {
-        model = DEFAULT_SUBAGENT_MODEL;
+        return std::nullopt;
     }
     if (model.empty()) return std::nullopt;
     return std::string{model};

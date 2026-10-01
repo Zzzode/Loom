@@ -1,9 +1,9 @@
 ╭ Cost Threshold ────────────────────────────────────────────────────────────╮
-│You've spent $5 on the Anthropic API this session.                          │
+│You've spent $5 on the API this session.                                    │
 ├────────────────────────────────────────────────────────────────────────────┤
 │Learn more about how to monitor your spending:                              │
 │                                                                            │
-│(model: claude-3-5-sonnet-20241022)                                         │
+│(model: test-model)                                                         │
 ├────────────────────────────────────────────────────────────────────────────┤
 │● Got it, thanks!                                                           │
 ├────────────────────────────────────────────────────────────────────────────┤

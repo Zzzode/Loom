@@ -6,7 +6,7 @@
 //     1. BEDROCK    — LOOM_USE_BEDROCK
 //     2. VERTEX     — LOOM_USE_VERTEX
 //     3. FOUNDRY    — LOOM_USE_FOUNDRY
-//     4. firstParty — default, api.anthropic.com
+//     4. firstParty — default, Messages API
 //
 // Note: upstream TS has a BUG where `client.ts` branches BEDROCK > FOUNDRY >
 // VERTEX while `providers.ts` says BEDROCK > VERTEX > FOUNDRY.  We choose the
@@ -22,7 +22,7 @@
 //   * Vertex  — GCP OAuth2 Bearer from ADC + Authorization header, plus
 //               optional x-goog-user-project from quota_project_id.
 //   * Foundry — Entra Bearer from DefaultAzureCredential, OR Ocp-Apim-Subscription-Key
-//              when ANTHROPIC_FOUNDRY_API_KEY is set.
+//              when LOOM_FOUNDRY_API_KEY is set.
 //   * 1P      — x-api-key + Authorization (OAuth Pro) pattern already used.
 //
 // The module exports a class `EnterpriseAuthContext` that:
@@ -118,11 +118,11 @@ struct ResolvedAuth {
 //   /model/{model-id-or-arn}/invoke-with-response-stream (streaming)
 // Host shape (matches env_utils resolve_aws_region / env override):
 //   https://bedrock-runtime.{region}.amazonaws.com
-// Custom base_url (ANTHROPIC_BEDROCK_BASE_URL) overrides host.
+// Custom base_url (LOOM_BEDROCK_BASE_URL) overrides host.
 // ---------------------------------------------------------------------------
 [[nodiscard]] inline std::string bedrock_base_url(std::string_view region) {
     using loom::utils::env::get_env;
-    if (auto u = get_env("ANTHROPIC_BEDROCK_BASE_URL"); u && !u->empty()) {
+    if (auto u = get_env("LOOM_BEDROCK_BASE_URL"); u && !u->empty()) {
         auto r = *u;
         while (!r.empty() && r.back() == '/') r.pop_back();
         return r;
@@ -142,8 +142,8 @@ struct ResolvedAuth {
 
 // ---------------------------------------------------------------------------
 // EnterpriseAuthContext — stateful cache + auth resolver.
-// Intended to be owned by AnthropicClient (one per client instance).
-// NOT thread-safe — QueryEngine / AnthropicClient already serialize the
+// Intended to be owned by MessagesClient (one per client instance).
+// NOT thread-safe — QueryEngine / MessagesClient already serialize the
 // request loop via the streaming mutex.
 // ---------------------------------------------------------------------------
 class EnterpriseAuthContext {
@@ -174,7 +174,7 @@ public:
     }
 
     // Resolve authentication for a single HTTP call.  Parameters:
-    //   canonical_first_party_id — "claude-sonnet-4-20250514-v1:0" style
+    //   canonical_first_party_id — model identifier string
     //   method   — "GET" / "POST" (upper case).  All providers POST for messages.
     //   request_body_bytes — payload to send (used for SigV4 payload hash,
     //                         and stored back in ResolvedAuth.bedrock_path).
@@ -239,7 +239,7 @@ private:
         using loom::utils::env::get_env;
         using loom::utils::Provider;
         using loom::utils::get_api_base_url;
-        out.base_url = get_api_base_url(Provider::Anthropic);
+        out.base_url = get_api_base_url(Provider::Messages);
         out.model_id = std::string(canonical_id);
         out.endpoint_host = extract_host_from_url(out.base_url);
         return out;
@@ -253,7 +253,7 @@ private:
         const std::vector<std::pair<std::string, std::string>>& extra_headers,
         ResolvedAuth out) {
         out.base_url = bedrock_base_url(bedrock_region_);
-        out.model_id = resolve_bedrock_model_id(canonical_id);
+        out.model_id = std::string(canonical_id);
         out.bedrock_path = bedrock_path_for_model(out.model_id, streaming);
         out.endpoint_host = extract_host_from_url(out.base_url);
 
@@ -298,8 +298,8 @@ private:
 
     Result<ResolvedAuth> resolve_vertex(std::string_view canonical_id,
                                          ResolvedAuth out) {
-        // Model string via Vertex lookup.
-        out.model_id = resolve_vertex_model_id(canonical_id);
+        // Model string — pass through the canonical model ID.
+        out.model_id = std::string(canonical_id);
         // Resolve project_id: cached provider ->last_project_id, else env,
         // else fallback (detect_vertex_mode already set it for the 12s case).
         std::string project_id;
@@ -325,7 +325,7 @@ private:
             return std::unexpected(Error(
                 loom::utils::ErrorCode::internal_error,
                 "GCP Vertex: no project_id resolved.  Set GOOGLE_CLOUD_PROJECT, "
-                "GCLOUD_PROJECT, or ANTHROPIC_VERTEX_PROJECT_ID, attach a GKE "
+                "GCLOUD_PROJECT, or LOOM_VERTEX_PROJECT_ID, attach a GKE "
                 "Workload Identity, or set `gcpAuthRefresh` in settings."));
         }
         out.base_url = gcp::make_vertex_base_url(vertex_region_, project_id);
@@ -347,17 +347,13 @@ private:
     Result<ResolvedAuth> resolve_foundry(std::string_view canonical_id,
                                           ResolvedAuth out) {
         using namespace azure;
-        // Default deployment name + override via modelOverrides (handled by
-        // caller — here we just return the default).
-        std::string_view dep = lookup_default_deployment(canonical_id);
-        if (dep.empty()) dep = canonical_id;
-        out.model_id = std::string(dep);
+        out.model_id = std::string(canonical_id);
 
         if (foundry_base_url_.empty()) {
             return std::unexpected(Error(
                 loom::utils::ErrorCode::internal_error,
-                "Azure Foundry: no endpoint.  Set ANTHROPIC_FOUNDRY_BASE_URL "
-                "or ANTHROPIC_FOUNDRY_RESOURCE."));
+                "Azure Foundry: no endpoint.  Set LOOM_FOUNDRY_BASE_URL "
+                "or LOOM_FOUNDRY_RESOURCE."));
         }
         out.base_url = foundry_base_url_;
         out.endpoint_host = extract_host_from_url(out.base_url);
@@ -398,53 +394,6 @@ private:
             host = host.substr(0, colon);
         }
         return std::string(host);
-    }
-
-    // --- Provider-specific default model ID tables.
-    // These mirror TS ALL_MODEL_CONFIGS tables for Bedrock + Vertex.
-    // Foundry handled in azure_credential module via lookup_default_deployment.
-    // We keep them here (rather than in each auth module) because they are a
-    // lookup property of the BYOC dispatch, not the auth protocol itself.
-    static std::string resolve_vertex_model_id(std::string_view canonical) {
-        static const std::pair<std::string_view, std::string_view> kTable[] = {
-            {"claude-3-5-sonnet-20241022-v2:0", "claude-3-5-sonnet-v2@20241022"},
-            {"claude-3-7-sonnet-20250219",       "claude-3-7-sonnet@20250219"},
-            {"claude-sonnet-4-20250514-v1:0",    "claude-sonnet-4@20250514"},
-            {"claude-sonnet-4-5-20250929-v1:0",  "claude-sonnet-4-5@20250929"},
-            {"claude-sonnet-4-6",                "claude-sonnet-4-6"},
-            {"claude-3-5-haiku-20241022-v1:0",   "claude-3-5-haiku@20241022"},
-            {"claude-haiku-4-5-20251001-v1:0",   "claude-haiku-4-5@20251001"},
-            {"claude-opus-4-20250514-v1:0",      "claude-opus-4@20250514"},
-            {"claude-opus-4-1-20250805-v1:0",    "claude-opus-4-1@20250805"},
-            {"claude-opus-4-5-20251101-v1:0",    "claude-opus-4-5@20251101"},
-            {"claude-opus-4-6-v1",               "claude-opus-4-6"},
-        };
-        for (const auto& [k, v] : kTable) {
-            if (canonical == k) return std::string(v);
-            if (canonical.find(k) != std::string_view::npos) return std::string(v);
-        }
-        return std::string(canonical);
-    }
-
-    static std::string resolve_bedrock_model_id(std::string_view canonical) {
-        static const std::pair<std::string_view, std::string_view> kTable[] = {
-            {"claude-3-5-sonnet-20241022-v2:0", "anthropic.claude-3-5-sonnet-20241022-v2:0"},
-            {"claude-3-7-sonnet-20250219",       "us.anthropic.claude-3-7-sonnet-20250219-v1:0"},
-            {"claude-sonnet-4-20250514-v1:0",    "us.anthropic.claude-sonnet-4-20250514-v1:0"},
-            {"claude-sonnet-4-5-20250929-v1:0",  "us.anthropic.claude-sonnet-4-5-20250929-v1:0"},
-            {"claude-sonnet-4-6",                "us.anthropic.claude-sonnet-4-6"},
-            {"claude-3-5-haiku-20241022-v1:0",   "us.anthropic.claude-3-5-haiku-20241022-v1:0"},
-            {"claude-haiku-4-5-20251001-v1:0",   "us.anthropic.claude-haiku-4-5-20251001-v1:0"},
-            {"claude-opus-4-20250514-v1:0",      "us.anthropic.claude-opus-4-20250514-v1:0"},
-            {"claude-opus-4-1-20250805-v1:0",    "us.anthropic.claude-opus-4-1-20250805-v1:0"},
-            {"claude-opus-4-5-20251101-v1:0",    "us.anthropic.claude-opus-4-5-20251101-v1:0"},
-            {"claude-opus-4-6-v1",               "us.anthropic.claude-opus-4-6-v1"},
-        };
-        for (const auto& [k, v] : kTable) {
-            if (canonical == k) return std::string(v);
-            if (canonical.find(k) != std::string_view::npos) return std::string(v);
-        }
-        return std::string(canonical);
     }
 };
 

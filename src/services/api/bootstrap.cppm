@@ -48,12 +48,12 @@ struct BootstrapConfig {
 };
 
 // =========================================================================
-// Create an AnthropicClient from BootstrapConfig or environment
+// Create an MessagesClient from BootstrapConfig or environment
 // =========================================================================
 
-[[nodiscard]] inline AnthropicClient::Config build_client_config(const BootstrapConfig& bootstrap) {
-    AnthropicClient::Config cfg;
-    cfg.base_url = bootstrap.base_url.empty() ? "https://api.anthropic.com" : bootstrap.base_url;
+[[nodiscard]] inline MessagesClient::Config build_client_config(const BootstrapConfig& bootstrap) {
+    MessagesClient::Config cfg;
+    cfg.base_url = bootstrap.base_url;
     cfg.timeout = bootstrap.timeout;
     cfg.beta_headers = bootstrap.beta_headers;
     cfg.user_agent = bootstrap.user_agent;
@@ -66,7 +66,7 @@ struct BootstrapConfig {
         cfg.api_key = *bootstrap.api_key;
     } else {
         // Try environment variables
-        if (auto* key = std::getenv("ANTHROPIC_API_KEY"); key && key[0] != '\0') {
+        if (auto* key = std::getenv("LOOM_API_KEY"); key && key[0] != '\0') {
             cfg.api_key = key;
         } else if (auto* token = std::getenv("LOOM_AUTH_TOKEN"); token && token[0] != '\0') {
             cfg.auth_token = token;
@@ -74,8 +74,8 @@ struct BootstrapConfig {
     }
 
     // Base URL from env
-    if (cfg.base_url == "https://api.anthropic.com") {
-        if (auto* url = std::getenv("ANTHROPIC_BASE_URL"); url && url[0] != '\0') {
+    if (cfg.base_url.empty()) {
+        if (auto* url = std::getenv("LOOM_BASE_URL"); url && url[0] != '\0') {
             cfg.base_url = url;
         }
     }
@@ -83,8 +83,8 @@ struct BootstrapConfig {
     return cfg;
 }
 
-[[nodiscard]] inline AnthropicClient create_client(const BootstrapConfig& bootstrap = {}) {
-    return AnthropicClient(build_client_config(bootstrap));
+[[nodiscard]] inline MessagesClient create_client(const BootstrapConfig& bootstrap = {}) {
+    return MessagesClient(build_client_config(bootstrap));
 }
 
 // =========================================================================
@@ -268,7 +268,7 @@ public:
     }
 
     // Create an API client using the stored bootstrap config
-    [[nodiscard]] AnthropicClient create_api_client() const {
+    [[nodiscard]] MessagesClient create_api_client() const {
         return create_client(config_);
     }
 
@@ -304,7 +304,7 @@ inline void bootstrap_async(const BootstrapConfig& config) {
 }
 
 // Convenience: create a client from global state or defaults
-[[nodiscard]] inline AnthropicClient get_default_client() {
+[[nodiscard]] inline MessagesClient get_default_client() {
     if (BootstrapState::instance().is_initialized()) {
         return BootstrapState::instance().create_api_client();
     }

@@ -677,7 +677,7 @@ namespace detail {
         auto resolved = loom::query::resolve_engine_config(settings, overrides);
         if (!resolved) return std::unexpected(resolved.error().format());
         if (resolved->api_key.empty()) {
-            return std::unexpected("ANTHROPIC_API_KEY is required for direct-connect /message");
+            return std::unexpected("LOOM_API_KEY is required for direct-connect /message");
         }
 
         // Permission bridge: the ask_user callback wraps the session-scoped

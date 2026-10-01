@@ -18,11 +18,11 @@ int StartMockAndGetPort(httplib::Server& svr) {
     return port >= 0 ? port : -1;
 }
 
-std::string BuildAnthropicSseBody() {
+std::string BuildMessagesSseBody() {
     std::string out;
     out += "event: message_start\n"
            "data: {\"message\":{\"id\":\"msg_1\",\"type\":\"message\","
-           "\"role\":\"assistant\",\"model\":\"claude-sonnet-4-20250514\","
+           "\"role\":\"assistant\",\"model\":\"test-model\","
            "\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,"
            "\"usage\":{\"input_tokens\":10,\"output_tokens\":0}}}\n\n";
     out += "event: content_block_start\n"
@@ -46,8 +46,8 @@ std::string BuildAnthropicSseBody() {
     return out;
 }
 
-void WriteAnthropicSseResponse(const httplib::Request&, httplib::Response& res) {
-    static const std::string kBody = BuildAnthropicSseBody();
+void WriteMessagesSseResponse(const httplib::Request&, httplib::Response& res) {
+    static const std::string kBody = BuildMessagesSseBody();
     res.set_header("Cache-Control", "no-cache");
     res.set_content(kBody, "text/event-stream");
 }
@@ -120,13 +120,13 @@ TEST(SseClientE2E, DryRunDoesNotGoToNetwork) {
 // TEST 2: Localhost mock → StreamingCallbacks
 // ===========================================================================
 TEST(SseClientE2E, LocalhostMockStreamingCallbacks) {
-    MockServerRAII mock(&WriteAnthropicSseResponse);
+    MockServerRAII mock(&WriteMessagesSseResponse);
     ASSERT_GE(mock.port, 0);
 
     ApiConfig cfg;
     cfg.base_url = std::string("http://127.0.0.1:") + std::to_string(mock.port) + "/v1";
     cfg.api_key  = "sk-fake-key";
-    cfg.model_id = "claude-sonnet-4-20250514";
+    cfg.model_id = "test-model";
     SseClient client(std::move(cfg));
 
     std::vector<TextMessage> msgs;
@@ -174,7 +174,7 @@ TEST(SseClientE2E, LocalhostMockStreamingCallbacks) {
 // TEST 3: Localhost mock → 4-field SseCallbacks (dispatch-compatible API)
 // ===========================================================================
 TEST(SseClientE2E, LocalhostMockDispatchStyleCallbacks) {
-    MockServerRAII mock(&WriteAnthropicSseResponse);
+    MockServerRAII mock(&WriteMessagesSseResponse);
     ASSERT_GE(mock.port, 0);
 
     std::vector<std::string> event_names;
@@ -201,7 +201,7 @@ TEST(SseClientE2E, LocalhostMockDispatchStyleCallbacks) {
     EXPECT_EQ(err_http, 0);
     EXPECT_TRUE(err_reason.empty());
 
-    // Every mandatory Anthropic SSE event type must appear somewhere.
+    // Every mandatory Messages API SSE event type must appear somewhere.
     auto has = [&](const char* n) {
         for (const auto& s : event_names) if (s == n) return true;
         return false;
@@ -259,7 +259,7 @@ TEST(SseClientE2E, MockHttp429TriggersError) {
 // TEST 5: FeedParser cross-chunk split + ResetParser (unit, no network)
 // ===========================================================================
 TEST(SseParser, CrossChunkEventSplit) {
-    SseClient client(ApiConfig{.api_key = "unused"});
+    SseClient client(ApiConfig{.base_url = "", .api_key = "unused", .model_id = "test-model"});
     StreamingCallbacks cbs;
 
     std::vector<std::pair<SseEventType, std::string>> events;

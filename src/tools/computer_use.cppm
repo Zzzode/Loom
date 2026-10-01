@@ -825,7 +825,7 @@ public:
 
 private:
 private:
-    // Anthropic computer-use returns a FRESH screenshot after every action,
+    // The computer-use protocol returns a FRESH screenshot after every action,
     // not just the explicit screenshot action — the model is blind to the
     // result of a click/keystroke otherwise. Attach a full-screen capture to
     // a successful input action's result.

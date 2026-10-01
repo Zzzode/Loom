@@ -21,10 +21,6 @@ inline constexpr std::string_view kAppName = "loom";
 
 // ============================================================
 namespace api_limits {
-    inline constexpr size_t kMaxTokensClaude3Opus = 200000;
-    inline constexpr size_t kMaxTokensClaude3Sonnet = 200000;
-    inline constexpr size_t kMaxTokensClaude35Sonnet = 200000;
-    inline constexpr size_t kMaxTokensClaude4Sonnet = 200000;
     inline constexpr size_t kMaxTokensDefault = 128000;
     inline constexpr size_t kMaxOutputTokens = 8192;
     inline constexpr size_t kMaxOutputTokensExtended = 64000;
@@ -170,23 +166,6 @@ namespace timeouts {
 
 // ============================================================
 
-// ============================================================
-namespace models {
-    inline constexpr std::string_view kLoomAccent3Opus = "claude-3-opus-20240229";
-    inline constexpr std::string_view kLoomAccent3Sonnet = "claude-3-sonnet-20240229";
-    inline constexpr std::string_view kLoomAccent35Sonnet = "claude-3-5-sonnet-20241022";
-    inline constexpr std::string_view kLoomAccent4Sonnet = "claude-sonnet-4-20250514";
-    inline constexpr std::string_view kLoomAccent45Haiku = "claude-haiku-4-5-20251001";
-    inline constexpr std::string_view kLoomAccent45Opus = "claude-opus-4-5";
-    inline constexpr std::string_view kLoomAccent46Opus = "claude-opus-4-6";
-    inline constexpr std::string_view kLoomAccent46Sonnet = "claude-sonnet-4-6";
-    inline constexpr std::string_view kDefault = "claude-sonnet-4-20250514";
-    inline constexpr std::string_view kFrontierModelName = "Loom Opus 4.6";
-}
-
-// ============================================================
-
-// ============================================================
 namespace figures {
     inline constexpr std::string_view kBlackCircle = "●";
     inline constexpr std::string_view kBulletOperator = "∙";
@@ -383,27 +362,7 @@ namespace xml_tags {
 // ============================================================
 
 // ============================================================
-namespace knowledge_cutoff {
-    inline constexpr std::string_view kLoomAccent46Sonnet = "August 2025";
-    inline constexpr std::string_view kLoomAccent46Opus = "May 2025";
-    inline constexpr std::string_view kLoomAccent45Opus = "May 2025";
-    inline constexpr std::string_view kLoomAccent4Haiku = "February 2025";
-    inline constexpr std::string_view kLoomAccent4 = "January 2025";
 
-    [[nodiscard]] inline std::optional<std::string_view> get_for_model(std::string_view model_id) {
-        if (model_id.find("claude-sonnet-4-6") != std::string_view::npos) return kLoomAccent46Sonnet;
-        if (model_id.find("claude-opus-4-6") != std::string_view::npos) return kLoomAccent46Opus;
-        if (model_id.find("claude-opus-4-5") != std::string_view::npos) return kLoomAccent45Opus;
-        if (model_id.find("claude-haiku-4") != std::string_view::npos) return kLoomAccent4Haiku;
-        if (model_id.find("claude-opus-4") != std::string_view::npos || 
-            model_id.find("claude-sonnet-4") != std::string_view::npos) return kLoomAccent4;
-        return std::nullopt;
-    }
-}
-
-// ============================================================
-
-// ============================================================
 namespace error_ids {
     inline constexpr uint32_t kToolUseSummaryGenerationFailed = 344;
 }

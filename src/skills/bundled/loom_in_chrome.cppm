@@ -171,7 +171,6 @@ inline std::string detect_platform() {
 // ---------------------------------------------------------------------------
 
 /// Determine whether the Loom in Chrome skill should be auto-enabled.
-/// Mirrors TS: getIsInteractive() && isChromeExtensionInstalled() && (ant user || feature flag)
 /// C++ implementation is conservative: only enables when explicit env/config signals are
 /// present; the full cached-extension-installation scan is deferred to runtime.
 inline bool should_auto_enable_loom_in_chrome() {

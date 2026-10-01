@@ -26,14 +26,8 @@ struct ModelPricing {
     double cache_read_per_token;
 };
 
-/// Known model pricing
-const std::unordered_map<std::string, ModelPricing> MODEL_PRICES = {
-    {"claude-3-5-sonnet-20241022", {3.0, 15.0, 3.75, 0.30}},
-    {"claude-3-7-sonnet-20250219", {3.0, 15.0, 3.75, 0.30}},
-    {"claude-3-opus-20240229", {15.0, 75.0, 18.75, 1.50}},
-    {"claude-3-sonnet-20240229", {3.0, 15.0, 3.75, 0.30}},
-    {"claude-3-haiku-20240307", {0.25, 1.25, 0.30, 0.03}},
-};
+/// Known model pricing (populated at runtime; no built-in model entries)
+const std::unordered_map<std::string, ModelPricing> MODEL_PRICES = {};
 
 /// Default fallback pricing for unknown models
 const ModelPricing FALLBACK_PRICING = {3.0, 15.0, 3.75, 0.30};

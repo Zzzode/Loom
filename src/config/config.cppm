@@ -94,7 +94,7 @@ public:
 
 /// Model-specific settings
 struct ModelSettings {
-    std::string default_model = "claude-sonnet-4-20250514";
+    std::string default_model;  // No default — must be explicitly configured
     std::uint32_t max_output_tokens = 16384;
     std::optional<double> temperature;
     bool extended_thinking = false;
@@ -127,7 +127,7 @@ struct DisplaySettings {
 
 /// Network and API connection settings
 struct NetworkSettings {
-    std::optional<std::string> api_key;            // Anthropic API key
+    std::optional<std::string> api_key;            // API key
     std::optional<std::string> base_url;           // Custom API endpoint
     std::optional<std::string> proxy;              // HTTP proxy URL
     std::uint32_t timeout_seconds = 120;           // Request timeout
@@ -1313,13 +1313,13 @@ private:
 
     /// Apply environment variables to settings (highest override priority)
     void apply_environment_variables() {
-        // ANTHROPIC_API_KEY -> network.api_key
-        if (auto* val = std::getenv("ANTHROPIC_API_KEY")) {
+        // LOOM_API_KEY -> network.api_key
+        if (auto* val = std::getenv("LOOM_API_KEY")) {
             settings_.network.api_key = val;
         }
 
-        // ANTHROPIC_BASE_URL -> network.base_url
-        if (auto* val = std::getenv("ANTHROPIC_BASE_URL")) {
+        // LOOM_BASE_URL -> network.base_url
+        if (auto* val = std::getenv("LOOM_BASE_URL")) {
             settings_.network.base_url = val;
         }
 
@@ -1353,7 +1353,7 @@ private:
 
     /// c21: the known-section leaf tokens for a save, computed from the SAME
     /// in-memory state the old full serializer used. Each string is a bare
-    /// JSON value token (e.g. "\"claude-…\"", "16384", "true") fed to
+    /// JSON value token (e.g. "\"<model-id>\"", "16384", "true") fed to
     /// JsonMutDoc::raw_json by apply_save_fragments. The c19 env-baking
     /// guard and the §B mcpServers secret-boundary filter are applied here,
     /// exactly as the old serialize_settings did.
@@ -2117,7 +2117,7 @@ private:
     }
 
     /// thinking_budget-specific coercion: null or 0 clears, otherwise a
-    /// uint >= 1024 (the Anthropic minimum).
+    /// uint >= 1024 (the API minimum).
     [[nodiscard]] static Result<CoercedUserValue>
     coerce_thinking_budget(const loom::utils::json::JsonVal& value) {
         constexpr std::string_view key = "model.thinking_budget";
@@ -2144,7 +2144,7 @@ private:
         if (parsed < 1024) {
             return std::unexpected(Error::make(
                 ErrorCode::InvalidInput,
-                std::format("'{}' must be at least 1024 (the Anthropic minimum)",
+                std::format("'{}' must be at least 1024 (the API minimum)",
                             key)));
         }
         if (static_cast<std::uint64_t>(parsed) >
@@ -2225,11 +2225,9 @@ private:
         // The interactive resolver additionally honors these for the model;
         // ConfigManager itself does not model them (D1 source_note).
         if (spec.key == "model.default_model" &&
-            (std::getenv("ANTHROPIC_MODEL") != nullptr ||
-             std::getenv("ANTHROPIC_DEFAULT_SONNET_MODEL") != nullptr)) {
+            std::getenv("LOOM_MODEL") != nullptr) {
             token.set("source_note",
-                "ANTHROPIC_MODEL/ANTHROPIC_DEFAULT_SONNET_MODEL also override "
-                "interactive model resolution");
+                "LOOM_MODEL also overrides interactive model resolution");
         }
         append_effective_value(token, spec);
         doc.set_root(token);
@@ -3045,10 +3043,10 @@ ConfigManager::find_user_setting(std::string_view dotted) noexcept {
 ConfigManager::blocked_settings() noexcept {
     static constexpr BlockedSetting blocked[] = {
         {"network.api_key",
-         "Set the ANTHROPIC_API_KEY environment variable to configure the API "
+         "Set the LOOM_API_KEY environment variable to configure the API "
          "key; this tool never reads or writes credential values."},
         {"network.base_url",
-         "Set the ANTHROPIC_BASE_URL environment variable to configure the "
+         "Set the LOOM_BASE_URL environment variable to configure the "
          "endpoint."},
         {"network.proxy",
          "Set the HTTPS_PROXY environment variable (HTTP_PROXY is used as a "
@@ -3181,11 +3179,11 @@ ConfigManager::agent_secret_presence_json(std::string_view dotted) const {
         // The wire accepts either the x-api-key credential or a Bearer
         // auth token; presence covers both (the value itself is never
         // projected).
-        env_value = std::getenv("ANTHROPIC_API_KEY");
-        if (env_value == nullptr) env_value = std::getenv("ANTHROPIC_AUTH_TOKEN");
+        env_value = std::getenv("LOOM_API_KEY");
+        if (env_value == nullptr) env_value = std::getenv("LOOM_AUTH_TOKEN");
     } else if (dotted == "network.base_url") {
         leaf = "base_url";
-        env_value = std::getenv("ANTHROPIC_BASE_URL");
+        env_value = std::getenv("LOOM_BASE_URL");
     } else if (dotted == "network.proxy") {
         leaf = "proxy";
         env_value = std::getenv("HTTPS_PROXY");

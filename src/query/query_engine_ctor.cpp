@@ -48,7 +48,7 @@ QueryEngine::QueryEngine(QueryEngineConfig config, ToolRegistry& registry)
 }
 
 void QueryEngine::setup_api_client() {
-    api_config_.base_url = config_.base_url.value_or("https://api.anthropic.com");
+    api_config_.base_url = config_.base_url.value_or("");
     api_config_.api_key = config_.api_key;
     api_config_.auth_token = config_.auth_token;
     api_config_.api_version = "2023-06-01";
@@ -57,8 +57,8 @@ void QueryEngine::setup_api_client() {
     api_config_.base_retry_delay = config_.retry_policy.initial_delay;
 
     // Select the wire protocol. Unset keeps the historical behaviour
-    // (Anthropic /v1/messages). See loom.query.wire_protocol for the seam.
-    wire_api_ = loom::query::wire::WireApi::Anthropic;
+    // (Messages API /v1/messages). See loom.query.wire_protocol for the seam.
+    wire_api_ = loom::query::wire::WireApi::Messages;
     if (config_.wire_api && !config_.wire_api->empty()) {
         if (auto parsed = loom::query::wire::wire_api_from_string(*config_.wire_api)) {
             wire_api_ = *parsed;
@@ -72,7 +72,7 @@ void QueryEngine::setup_api_client() {
         }
     }
     native_computer_tool_ =
-        config_.native_computer_tool.value_or(wire_api_ == loom::query::wire::WireApi::Anthropic);
+        config_.native_computer_tool.value_or(wire_api_ == loom::query::wire::WireApi::Messages);
 }
 
 } // namespace loom::core

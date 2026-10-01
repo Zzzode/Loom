@@ -1,5 +1,5 @@
 /// @file api.cppm
-/// @brief Bridge API client for communicating with the Anthropic bridge API
+/// @brief Bridge API client for communicating with the Loom bridge API
 module;
 
 #include <cctype>

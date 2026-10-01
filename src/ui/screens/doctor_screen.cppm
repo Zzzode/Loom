@@ -175,11 +175,11 @@ struct DoctorDataModel {
     static const std::array<CheckDefinition, kCheckCount> kChecks{{
         { CheckId::ApiKey,
           "API Key Validity",
-          "Validates the Anthropic API key via an authenticated HTTP probe.",
+          "Validates the API key via an authenticated HTTP probe.",
           "Connectivity" },
         { CheckId::Network,
           "Network Connectivity",
-          "Checks DNS + TLS reachability to api.anthropic.com and other endpoints.",
+          "Checks DNS + TLS reachability to the configured API endpoint.",
           "Connectivity" },
         { CheckId::ConfigReadWrite,
           "Config File Access",
@@ -437,11 +437,11 @@ struct DoctorContext {
     std::filesystem::path mcp_config;           // MCP servers config
     std::filesystem::path plugin_dir;           // plugins root
     std::filesystem::path token_store;          // OAuth token directory
-    std::string anthropic_api_key;
+    std::string api_key;
     std::string shell;
     std::string current_version = "1.0.0-cpp";
     std::optional<std::string> latest_version;  // if known, compared against current_version
-    std::string network_endpoint = "api.anthropic.com";
+    std::string network_endpoint;  // configured API host (empty = not configured)
 };
 
 [[nodiscard]] inline DoctorContext default_doctor_context() {
@@ -461,8 +461,17 @@ struct DoctorContext {
     ctx.mcp_config = ctx.config_home / "mcp_servers.json";
     ctx.plugin_dir = ctx.config_home / "plugins";
     ctx.token_store = ctx.config_home / "tokens";
-    ctx.anthropic_api_key = detail::env_or("ANTHROPIC_API_KEY");
+    ctx.api_key = detail::env_or("LOOM_API_KEY");
     ctx.shell = detail::env_or("SHELL");
+    // Derive the network probe target from the configured base URL.
+    if (auto base = detail::env_or("LOOM_BASE_URL"); !base.empty()) {
+        // Extract host from URL (strip scheme and path).
+        auto scheme_end = base.find("://");
+        auto remainder = (scheme_end != std::string::npos)
+            ? base.substr(scheme_end + 3) : base;
+        auto slash = remainder.find('/');
+        ctx.network_endpoint = remainder.substr(0, slash);
+    }
     return ctx;
 }
 
@@ -488,20 +497,27 @@ struct DoctorContext {
 
     switch (id) {
     case CheckId::ApiKey: {
-        if (!ctx.anthropic_api_key.empty()) {
+        if (!ctx.api_key.empty()) {
             r.severity = DiagnosticSeverity::Ok;
-            r.message = "ANTHROPIC_API_KEY is set (length " +
-                        std::to_string(ctx.anthropic_api_key.size()) + ").";
+            r.message = "LOOM_API_KEY is set (length " +
+                        std::to_string(ctx.api_key.size()) + ").";
             r.detail = "Presence check passed. An authenticated HTTP probe is not run here to keep diagnostics deterministic.";
         } else {
             r.severity = DiagnosticSeverity::Warning;
-            r.message = "ANTHROPIC_API_KEY is not set in the environment.";
+            r.message = "LOOM_API_KEY is not set in the environment.";
             r.detail = "The client may still authenticate via OAuth credentials; if neither is configured, requests will fail.";
-            r.fix_hint = "Export ANTHROPIC_API_KEY or complete OAuth login.";
+            r.fix_hint = "Export LOOM_API_KEY or complete OAuth login.";
         }
         break;
     }
     case CheckId::Network: {
+        if (ctx.network_endpoint.empty()) {
+            r.severity = DiagnosticSeverity::Warning;
+            r.message = "No API endpoint configured.";
+            r.detail = "Set LOOM_BASE_URL to configure an API endpoint.";
+            r.fix_hint = "Export LOOM_BASE_URL or configure network.base_url in settings.";
+            break;
+        }
         auto probe = detail::tcp_connect_rtt_ms(ctx.network_endpoint, 443, 2500);
         if (probe.has_value()) {
             r.severity = DiagnosticSeverity::Ok;
@@ -1255,7 +1271,7 @@ namespace detail {
                                 perm.message,
                                 perm.severity,
                                 {"Use `/config permissions` to reorder and deduplicate.",
-                                 "See docs: https://docs.anthropic.com/loom/docs/tool-permissions"},
+                                 "See docs: https://docs.loom.dev/loom/docs/tool-permissions"},
                             });
                         }
                         auto& mcp = rt->model.results[static_cast<std::size_t>(CheckId::McpServers)];

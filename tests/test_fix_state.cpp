@@ -195,7 +195,7 @@ TEST(StatePersistence, SaveLoadRoundTripPreservesFields) {
     src.fast_mode = true;
     src.working_directory = std::string("/tmp/fix_state_test");
     src.view_selection_mode = std::string("viewing-agent");
-    src.main_loop_model = std::string("claude-sonnet-test");
+    src.main_loop_model = std::string("test-model");
     src.selected_ip_agent_index = 7;
 
     auto saved = persist.save_state(src);
@@ -209,7 +209,7 @@ TEST(StatePersistence, SaveLoadRoundTripPreservesFields) {
     EXPECT_EQ(loaded->working_directory, "/tmp/fix_state_test");
     EXPECT_EQ(loaded->view_selection_mode, "viewing-agent");
     ASSERT_TRUE(loaded->main_loop_model.has_value());
-    EXPECT_EQ(*loaded->main_loop_model, "claude-sonnet-test");
+    EXPECT_EQ(*loaded->main_loop_model, "test-model");
     EXPECT_EQ(loaded->selected_ip_agent_index, 7);
 
     std::filesystem::remove(tmp);

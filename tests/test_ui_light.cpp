@@ -707,7 +707,7 @@ TEST(StatusLine, BuiltinNoGitBranchOmitsBranch) {
     pif::BuiltinStatusLineData data;
     data.cwd = "/tmp/some_project";
     data.git_branch = "";   // not a git repo
-    data.model_name = "claude-sonnet-5";
+    data.model_name = "test-model";
     data.context_token_count = 0;
     data.context_window_size = 200000;
 
@@ -724,7 +724,7 @@ TEST(StatusLine, BuiltinNoGitBranchOmitsBranch) {
     // Folder shown
     EXPECT_NE(rendered.find("some_project"), std::string::npos);
     // Model shown
-    EXPECT_NE(rendered.find("claude-sonnet-5"), std::string::npos);
+    EXPECT_NE(rendered.find("test-model"), std::string::npos);
     // No branch glyph (🌿) since git_branch is empty
     EXPECT_EQ(rendered.find("\xf0\x9f\x8c\xbf"), std::string::npos);  // 🌿
 }

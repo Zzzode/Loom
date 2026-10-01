@@ -33,34 +33,11 @@ inline constexpr ModelCosts COST_HAIKU_35{0.8, 4, 1, 0.08, 0.01};
 inline constexpr ModelCosts COST_HAIKU_45{1, 5, 1.25, 0.1, 0.01};
 
 [[nodiscard]] inline std::string canonical_model_name(std::string model) {
-    if (model.find("haiku-3-5") != std::string::npos || model.find("3-5-haiku") != std::string::npos) return "claude-haiku-3-5";
-    if (model.find("haiku-4-5") != std::string::npos || model.find("4-5-haiku") != std::string::npos) return "claude-haiku-4-5";
-    if (model.find("sonnet-3-5") != std::string::npos || model.find("3-5-sonnet") != std::string::npos) return "claude-sonnet-3-5";
-    if (model.find("sonnet-3-7") != std::string::npos || model.find("3-7-sonnet") != std::string::npos) return "claude-sonnet-3-7";
-    if (model.find("sonnet-4-6") != std::string::npos || model.find("4-6-sonnet") != std::string::npos) return "claude-sonnet-4-6";
-    if (model.find("sonnet-4-5") != std::string::npos || model.find("4-5-sonnet") != std::string::npos) return "claude-sonnet-4-5";
-    if (model.find("sonnet-4") != std::string::npos || model.find("4-sonnet") != std::string::npos) return "claude-sonnet-4";
-    if (model.find("opus-4-6") != std::string::npos || model.find("4-6-opus") != std::string::npos) return "claude-opus-4-6";
-    if (model.find("opus-4-5") != std::string::npos || model.find("4-5-opus") != std::string::npos) return "claude-opus-4-5";
-    if (model.find("opus-4-1") != std::string::npos || model.find("4-1-opus") != std::string::npos) return "claude-opus-4-1";
-    if (model.find("opus-4") != std::string::npos || model.find("4-opus") != std::string::npos) return "claude-opus-4";
     return model;
 }
 
 [[nodiscard]] inline const std::map<std::string, ModelCosts>& model_costs() {
-    static const std::map<std::string, ModelCosts> costs = {
-        {"claude-haiku-3-5", COST_HAIKU_35},
-        {"claude-haiku-4-5", COST_HAIKU_45},
-        {"claude-sonnet-3-5", COST_TIER_3_15},
-        {"claude-sonnet-3-7", COST_TIER_3_15},
-        {"claude-sonnet-4", COST_TIER_3_15},
-        {"claude-sonnet-4-5", COST_TIER_3_15},
-        {"claude-sonnet-4-6", COST_TIER_3_15},
-        {"claude-opus-4", COST_TIER_15_75},
-        {"claude-opus-4-1", COST_TIER_15_75},
-        {"claude-opus-4-5", COST_TIER_5_25},
-        {"claude-opus-4-6", COST_TIER_5_25},
-    };
+    static const std::map<std::string, ModelCosts> costs = {};
     return costs;
 }
 
@@ -72,15 +49,18 @@ inline constexpr ModelCosts COST_HAIKU_45{1, 5, 1.25, 0.1, 0.01};
     std::string model,
     const Usage& usage = {},
     bool global_fast_mode_enabled = true,
-    std::string default_main_loop_model = "claude-sonnet-4-5"
+    std::string default_main_loop_model = ""
 ) {
+    (void)usage;
+    (void)global_fast_mode_enabled;
     const auto short_name = canonical_model_name(model);
-    if (short_name == "claude-opus-4-6") return get_opus_46_cost_tier(usage.speed == "fast", global_fast_mode_enabled);
     const auto& costs = model_costs();
     auto it = costs.find(short_name);
     if (it != costs.end()) return it->second;
-    auto fallback = costs.find(canonical_model_name(std::move(default_main_loop_model)));
-    if (fallback != costs.end()) return fallback->second;
+    if (!default_main_loop_model.empty()) {
+        auto fallback = costs.find(canonical_model_name(std::move(default_main_loop_model)));
+        if (fallback != costs.end()) return fallback->second;
+    }
     return COST_TIER_5_25;
 }
 
@@ -96,7 +76,7 @@ inline constexpr ModelCosts COST_HAIKU_45{1, 5, 1.25, 0.1, 0.01};
     std::string model,
     const Usage& usage,
     bool global_fast_mode_enabled = true,
-    std::string default_main_loop_model = "claude-sonnet-4-5"
+    std::string default_main_loop_model = ""
 ) {
     return tokens_to_usd_cost(get_model_costs(std::move(model), usage, global_fast_mode_enabled, std::move(default_main_loop_model)), usage);
 }
@@ -107,7 +87,7 @@ inline constexpr ModelCosts COST_HAIKU_45{1, 5, 1.25, 0.1, 0.01};
     double output_tokens,
     double cache_read_input_tokens,
     double cache_creation_input_tokens,
-    std::string default_main_loop_model = "claude-sonnet-4-5"
+    std::string default_main_loop_model = ""
 ) {
     return calculate_usd_cost(std::move(model), Usage{
         .input_tokens = input_tokens,

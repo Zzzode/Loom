@@ -97,7 +97,7 @@ public:
             return switch_model(std::string(ctx.args[1]), ctx);
         }
 
-        // Quick switch: /model claude-sonnet-4-20250514
+        // Quick switch: /model <model-id>
         return switch_model(sub, ctx);
     }
 
@@ -133,11 +133,7 @@ private:
     };
 
     [[nodiscard]] static const std::vector<FallbackModel>& fallback_models() {
-        static const std::vector<FallbackModel> models = {
-            {"claude-sonnet-4-20250514", "Loom Sonnet 4", 200000, 3.0, 15.0},
-            {"claude-opus-4-20250514", "Loom Opus 4", 200000, 15.0, 75.0},
-            {"claude-haiku-3-5-20241022", "Loom 3.5 Haiku", 200000, 0.25, 1.25},
-        };
+        static const std::vector<FallbackModel> models = {};
         return models;
     }
 
@@ -161,7 +157,7 @@ private:
                 return state->current_model.model_id;
             }
         }
-        return "claude-sonnet-4-20250514";
+        return "";
     }
 
     /// Get available models from AppState, or fallback to hardcoded list.
@@ -202,9 +198,10 @@ private:
     // Validation
     // -----------------------------------------------------------------------
 
-    [[nodiscard]] static bool is_valid_model(std::string_view name, const CommandContext& ctx) {
-        auto models = get_available_models(ctx);
-        return std::ranges::any_of(models, [&](const auto& m) { return m.id == name; });
+    [[nodiscard]] static bool is_valid_model(std::string_view name, const CommandContext& /*ctx*/) {
+        // No built-in model list — any non-empty model ID is accepted.
+        // The harness is provider-agnostic; users configure their own model.
+        return !name.empty();
     }
 
     // -----------------------------------------------------------------------

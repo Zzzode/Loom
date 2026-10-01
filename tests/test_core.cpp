@@ -107,7 +107,7 @@ TEST(UtilsParseInt, StrictFromCharsSemantics) {
 
 TEST(CoreConfig, ConfigManagerExposesDefaultSettings) {
     loom::core::ConfigManager manager;
-    EXPECT_FALSE(manager.settings().model.default_model.empty());
+    EXPECT_TRUE(manager.settings().model.default_model.empty());
     EXPECT_GT(manager.settings().model.max_output_tokens, 0u);
 }
 

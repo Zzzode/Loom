@@ -114,7 +114,7 @@ struct WizardDraft {
     std::vector<std::string> path_denylist;      // glob patterns
 
     // Step 3
-    std::string model = "claude-sonnet-4-20250514";
+    std::string model;  // no default — user configures their model
     double temperature = 1.0;   // 0.0 .. 2.0
     std::string system_prompt;
 
@@ -152,12 +152,9 @@ inline std::vector<SelectOption> canonical_tool_options() {
 }
 
 inline std::vector<SelectOption> canonical_model_options() {
-    return {
-        {.label = "Loom Sonnet 4",   .value = "claude-sonnet-4-20250514",  .description = "Fast, balanced — default",      .group = "Sonnet",  .icon = "⚡"},
-        {.label = "Loom Opus 4.6",   .value = "claude-opus-4-20250514",    .description = "Best reasoning, highest cost",  .group = "Opus",    .icon = "💎"},
-        {.label = "Loom Haiku 4",    .value = "claude-haiku-4-20250514",   .description = "Cheapest, fastest — for agents",.group = "Haiku",   .icon = "🌱"},
-        {.label = "Loom 0.6",   .value = "loom-0-20250609",    .description = "Code-specialized model",        .group = "Code",    .icon = "💻"},
-    };
+    // No built-in model presets — the harness is provider-agnostic.
+    // Users type their model ID directly in the wizard.
+    return {};
 }
 
 inline std::vector<SelectOption> canonical_role_options() {

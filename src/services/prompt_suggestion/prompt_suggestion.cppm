@@ -279,7 +279,7 @@ namespace detail {
 
 // Replicates the loom_voice prefix alternation (case-insensitive on the original,
 // applied to mixed-case input).
-[[nodiscard]] inline bool matches_claude_voice(std::string_view text) {
+[[nodiscard]] inline bool matches_loom_voice(std::string_view text) {
     static constexpr std::string_view prefixes[] = {
         "let me", "i'll", "i've", "i'm", "i can", "i would", "i think", "i notice",
         "here's", "here is", "here are", "that's", "this is", "this will",
@@ -369,7 +369,7 @@ namespace detail {
     if (detail::matches_evaluative(lower)) return SuggestionFilterReason::evaluative;
 
     // loom_voice
-    if (detail::matches_claude_voice(suggestion)) return SuggestionFilterReason::loom_voice;
+    if (detail::matches_loom_voice(suggestion)) return SuggestionFilterReason::loom_voice;
 
     return std::nullopt;
 }

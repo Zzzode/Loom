@@ -1444,7 +1444,7 @@ inline std::vector<NativeMcpServerStatus> native_mcp_statuses() {
 
 /// Convert a native MCP tool result into the engine ToolResult, preserving
 /// structured content items — notably screenshot IMAGE blocks returned by
-/// computer-use MCP servers. Anthropic requires a screenshot after every
+/// computer-use MCP servers. The Messages API requires a screenshot after every
 /// computer action, so dropping images here would break the computer-use
 /// loop. Falls back to the flattened text when no text/image items exist.
 [[nodiscard]] inline loom::core::ToolResult mcp_result_to_tool_result(

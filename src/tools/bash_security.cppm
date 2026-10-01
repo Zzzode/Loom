@@ -128,7 +128,7 @@ inline auto sanitize_command_for_display(std::string_view command) -> std::strin
 
     static const std::regex secret_patterns[] = {
         std::regex(R"((API_KEY|SECRET|TOKEN|PASSWORD|PASSWD|KEY)=['"]?)[^\s'"]+)", std::regex::icase),
-        std::regex(R"((sk-[a-zA-Z0-9]{20,}))"),          // OpenAI/Anthropic style keys
+        std::regex(R"((sk-[a-zA-Z0-9]{20,}))"),          // API style keys
         std::regex(R"((ghp_[a-zA-Z0-9]{36,}))"),         // GitHub PAT
         std::regex(R"((Bearer\s+)[^\s]+)", std::regex::icase),  // Bearer tokens
         std::regex(R"((-p\s+|--password[= ])\S+)"),

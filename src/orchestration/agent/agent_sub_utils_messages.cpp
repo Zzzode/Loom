@@ -173,7 +173,7 @@ void append_merged_user_message(std::vector<Message>& messages, Message message)
 // filter_resume_unresolved_tool_use_messages (which only drops an assistant
 // message when ALL of its tool_uses are unresolved): here a single orphaned
 // tool_use is enough to exclude the entire assistant message, because the
-// Anthropic API rejects requests where any tool_use is missing its result.
+// the Messages API rejects requests where any tool_use is missing its result.
 //
 // Use this when splicing a parent's conversation history into a sub-agent's
 // context (fork / resume paths) to avoid sending malformed message sequences.

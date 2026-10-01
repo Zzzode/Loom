@@ -235,9 +235,9 @@ private:
             {"/commit -m \"fix: typo\"",   "Commit with a manual message"},
             {"/review",                    "Review all uncommitted changes"},
             {"/review --branch main",      "Review changes vs main branch"},
-            {"/config set model.default_model claude-sonnet-4-20250514", "Change model"},
+            {"/config set model.default_model <model-id>", "Change model"},
             {"/compact --dry-run",         "Preview compaction without applying"},
-            {"/mcp add filesystem npx -y @anthropic/mcp-fs", "Add an MCP server"},
+            {"/mcp add filesystem npx -y @modelcontextprotocol/server-filesystem", "Add an MCP server"},
             {"/doctor",                    "Run system diagnostics"},
             {"/clear --reset",             "Clear screen and reset conversation"},
         }};

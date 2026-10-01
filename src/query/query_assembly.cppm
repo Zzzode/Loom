@@ -51,14 +51,14 @@ struct AssemblyOverrides {
     std::optional<std::string> requested_model;
     std::optional<std::string> api_key;  // bypasses settings.network.api_key
     std::optional<std::string> base_url;
-    std::optional<std::string> wire_api; // "anthropic" | "openai"
+    std::optional<std::string> wire_api; // "messages" | "openai"
     std::optional<std::string> cwd;
 };
 
 /// Shared settings -> QueryEngineConfig resolver (the recipe's :714-731
 /// mapping). Does NOT hard-error on an empty api_key — the caller enforces
 /// its own key policy: the server adapter requires a real key for the
-/// direct-connect Anthropic path (server_routes.cppm:733-735); a harness
+/// direct-connect Messages API path (server_routes.cppm:733-735); a harness
 /// with a loopback/gateway base_url supplies a placeholder key and bypasses
 /// the check. This is the single resolution path for both callers.
 [[nodiscard]] loom::core::Result<loom::core::QueryEngineConfig> resolve_engine_config(

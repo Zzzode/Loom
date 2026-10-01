@@ -89,17 +89,11 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
         return std::isdigit(static_cast<unsigned char>(ch));
     });
 }
-[[nodiscard]] bool is_ant_user_type() {
-    const char* value = std::getenv("USER_TYPE");
-    return value && std::string_view(value) == "ant";
-}
 [[nodiscard]] bool valid_agent_isolation(std::string_view value) {
-    if (value == "worktree") return true;
-    if (value == "remote") return is_ant_user_type();
-    return false;
+    return value == "worktree";
 }
 [[nodiscard]] std::string valid_agent_isolation_options() {
-    return is_ant_user_type() ? "worktree, remote" : "worktree";
+    return "worktree";
 }
 [[nodiscard]] std::string canonical_hook_event_name(std::string_view event) {
     auto canonical = canonicalize_agent_type(event);

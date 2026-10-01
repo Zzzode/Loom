@@ -1,5 +1,5 @@
 ╭ Cost Threshold ────────────────────────────────────────────────────────────╮
-│You've spent $12 on the Anthropic API this session.                         │
+│You've spent $12 on the API this session.                                   │
 ├────────────────────────────────────────────────────────────────────────────┤
 │Learn more about how to monitor your spending:                              │
 │                                                                            │

@@ -314,9 +314,9 @@ std::optional<int> localhost_url_port(std::string_view url) {
     }
 }
 
-class LocalAnthropicMessagesServer {
+class LocalMessagesServer {
 public:
-    explicit LocalAnthropicMessagesServer(
+    explicit LocalMessagesServer(
         std::vector<std::string> response_bodies = {},
         std::vector<int> response_statuses = {})
         : response_bodies_(std::move(response_bodies)),
@@ -352,7 +352,7 @@ public:
         });
     }
 
-    ~LocalAnthropicMessagesServer() {
+    ~LocalMessagesServer() {
         running_.store(false);
         if (listen_fd_ >= 0) {
             ::shutdown(listen_fd_, SHUT_RDWR);
@@ -2557,7 +2557,7 @@ TEST(ApiErrors, RetryDecisionUsesRetryableCategories) {
 }
 
 TEST(ApiErrors, ClientMapsJsonHttpErrorsToStructuredMessages) {
-    auto error = loom::services::api::AnthropicClient::error_from_http_response(
+    auto error = loom::services::api::MessagesClient::error_from_http_response(
         400,
         R"({"type":"error","error":{"type":"invalid_request_error","message":"prompt is too long"}})",
         std::optional<std::string>{"req_123"});
@@ -2568,7 +2568,7 @@ TEST(ApiErrors, ClientMapsJsonHttpErrorsToStructuredMessages) {
 }
 
 TEST(ApiErrors, ClientPreservesRetryAfterFromJsonHttpErrors) {
-    auto error = loom::services::api::AnthropicClient::error_from_http_response(
+    auto error = loom::services::api::MessagesClient::error_from_http_response(
         429,
         R"({"error":{"type":"rate_limit_error","message":"too many requests","retry_after_seconds":7}})");
 
@@ -2581,28 +2581,28 @@ TEST(ApiErrors, ClientErrorDetailsDriveRetryClassification) {
     using loom::services::api::errors::ApiErrorCategory;
     using loom::services::api::errors::ErrorClassifier;
 
-    auto invalid_error = loom::services::api::AnthropicClient::error_from_http_response(
+    auto invalid_error = loom::services::api::MessagesClient::error_from_http_response(
         400,
         R"({"error":{"type":"invalid_request_error","message":"bad tool schema"}})");
-    auto invalid_details = loom::services::api::AnthropicClient::error_details_from_error(invalid_error);
+    auto invalid_details = loom::services::api::MessagesClient::error_details_from_error(invalid_error);
 
     EXPECT_EQ(invalid_details.category, ApiErrorCategory::InvalidRequest);
     EXPECT_EQ(invalid_details.http_status, 400);
     EXPECT_EQ(invalid_details.error_type, "invalid_request_error");
     EXPECT_FALSE(ErrorClassifier::is_retryable(invalid_details));
 
-    auto rate_limit_error = loom::services::api::AnthropicClient::error_from_http_response(
+    auto rate_limit_error = loom::services::api::MessagesClient::error_from_http_response(
         429,
         R"({"error":{"type":"rate_limit_error","message":"too many requests","retry_after_seconds":7}})");
-    auto rate_limit_details = loom::services::api::AnthropicClient::error_details_from_error(rate_limit_error);
+    auto rate_limit_details = loom::services::api::MessagesClient::error_details_from_error(rate_limit_error);
 
     EXPECT_EQ(rate_limit_details.category, ApiErrorCategory::RateLimited);
     EXPECT_EQ(rate_limit_details.retry_after_seconds, std::optional<int>{7});
     EXPECT_TRUE(ErrorClassifier::is_retryable(rate_limit_details));
 }
 
-TEST(QueryEngine, AppliesPerQueryEnabledToolsToAnthropicRequest) {
-    LocalAnthropicMessagesServer server;
+TEST(QueryEngine, AppliesPerQueryEnabledToolsToMessagesRequest) {
+    LocalMessagesServer server;
     ASSERT_NE(server.port(), 0);
 
     auto root = fs::temp_directory_path() / "loom-query-engine-tool-filter-test";
@@ -2678,8 +2678,8 @@ TEST(QueryEngine, AppliesPerQueryEnabledToolsToAnthropicRequest) {
     fs::remove_all(root);
 }
 
-TEST(QueryEngine, SnipMetadataProjectsRemovedMessagesFromAnthropicRequest) {
-    LocalAnthropicMessagesServer server;
+TEST(QueryEngine, SnipMetadataProjectsRemovedMessagesFromMessagesRequest) {
+    LocalMessagesServer server;
     ASSERT_NE(server.port(), 0);
 
     auto root = fs::temp_directory_path() / "loom-query-engine-snip-projection-test";
@@ -2756,7 +2756,6 @@ TEST(QueryEngine, SnipMetadataProjectsRemovedMessagesFromAnthropicRequest) {
 }
 
 TEST(ApiMicrocompact, BuildsThinkingAndToolContextManagementStrategies) {
-    EnvironmentGuard user_type_guard("USER_TYPE", "ant");
     EnvironmentGuard clear_results_guard("USE_API_CLEAR_TOOL_RESULTS", "1");
     EnvironmentGuard clear_uses_guard("USE_API_CLEAR_TOOL_USES", "true");
     EnvironmentGuard max_tokens_guard("API_MAX_INPUT_TOKENS", "1000");
@@ -2792,13 +2791,12 @@ TEST(ApiMicrocompact, BuildsThinkingAndToolContextManagementStrategies) {
 
 TEST(QueryEngine, SerializesTaskBudgetAndApiContextManagementRequestConfig) {
     EnvironmentUnsetGuard disable_thinking_guard("LOOM_DISABLE_THINKING");
-    EnvironmentGuard user_type_guard("USER_TYPE", "ant");
     EnvironmentGuard clear_results_guard("USE_API_CLEAR_TOOL_RESULTS", "1");
     EnvironmentGuard clear_uses_guard("USE_API_CLEAR_TOOL_USES", "1");
     EnvironmentGuard max_tokens_guard("API_MAX_INPUT_TOKENS", "1000");
     EnvironmentGuard target_tokens_guard("API_TARGET_INPUT_TOKENS", "250");
 
-    LocalAnthropicMessagesServer server;
+    LocalMessagesServer server;
     ASSERT_NE(server.port(), 0);
 
     auto root = fs::temp_directory_path() / "loom-query-engine-task-budget-context-management-test";
@@ -2857,11 +2855,10 @@ TEST(QueryEngine, SerializesTaskBudgetAndApiContextManagementRequestConfig) {
 
 TEST(QueryEngine, DisableThinkingEnvSuppressesThinkingAndClearThinkingContextManagement) {
     EnvironmentGuard disable_thinking_guard("LOOM_DISABLE_THINKING", "1");
-    EnvironmentUnsetGuard user_type_guard("USER_TYPE");
     EnvironmentUnsetGuard clear_results_guard("USE_API_CLEAR_TOOL_RESULTS");
     EnvironmentUnsetGuard clear_uses_guard("USE_API_CLEAR_TOOL_USES");
 
-    LocalAnthropicMessagesServer server;
+    LocalMessagesServer server;
     ASSERT_NE(server.port(), 0);
 
     auto root = fs::temp_directory_path() / "loom-query-engine-disable-thinking-test";
@@ -2896,7 +2893,7 @@ TEST(QueryEngine, DisableThinkingEnvSuppressesThinkingAndClearThinkingContextMan
 }
 
 TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
-    LocalAnthropicMessagesServer server;
+    LocalMessagesServer server;
     ASSERT_NE(server.port(), 0);
 
     auto root = fs::temp_directory_path() / "loom-query-engine-agent-notification-test";
@@ -3115,6 +3112,7 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
 
     loom::core::ToolRegistry registry;
     loom::core::QueryEngineConfig config;
+    config.base_url = "http://127.0.0.1:1";  // never contacted
     config.context_window.auto_compact = false;
     config.cwd = (root / "work").string();
     config.session_id_override = "resume-session-id";
@@ -3240,7 +3238,7 @@ TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
 }
 
 TEST(QueryEngine, CompactConversationCarriesTaskBudgetRemainingIntoNextRequest) {
-    LocalAnthropicMessagesServer server;
+    LocalMessagesServer server;
     ASSERT_NE(server.port(), 0);
 
     auto root = fs::temp_directory_path() / "loom-query-task-budget-compact-carry-test";
@@ -3366,7 +3364,7 @@ TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBounda
     ASSERT_GT(pre_tokens, 0u);
     ASSERT_LT(pre_tokens, 10'000u);
 
-    LocalAnthropicMessagesServer resumed_server;
+    LocalMessagesServer resumed_server;
     ASSERT_NE(resumed_server.port(), 0);
     loom::core::ToolRegistry restored_registry;
     loom::core::QueryEngineConfig restored_config;
@@ -3529,7 +3527,7 @@ TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
 }
 
 TEST(QueryEngine, ReactiveCompactRetriesPromptTooLongAfterWritingBoundary) {
-    LocalAnthropicMessagesServer server(
+    LocalMessagesServer server(
         {
             R"({"error":{"type":"invalid_request_error","message":"prompt_too_long"}})",
             R"({"id":"msg_reactive","type":"message","role":"assistant","model":"loom-test","content":[{"type":"text","text":"reactive-ok"}],"stop_reason":"end_turn","usage":{"input_tokens":2,"output_tokens":3}})",
@@ -3598,7 +3596,7 @@ TEST(QueryEngine, ReactiveCompactRetriesPromptTooLongAfterWritingBoundary) {
 }
 
 TEST(QueryEngine, AppliesMainThreadToolResultBudgetBeforeModelRequest) {
-    LocalAnthropicMessagesServer server;
+    LocalMessagesServer server;
     ASSERT_NE(server.port(), 0);
 
     auto root = fs::temp_directory_path() / "loom-query-tool-result-budget-test";
@@ -3722,7 +3720,7 @@ TEST(QueryEngine, AppliesMainThreadToolResultBudgetBeforeModelRequest) {
     ASSERT_TRUE(restored_replacement.has_value());
     EXPECT_EQ(*restored_replacement, *original_replacement);
 
-    LocalAnthropicMessagesServer resumed_server;
+    LocalMessagesServer resumed_server;
     ASSERT_NE(resumed_server.port(), 0);
     loom::core::ToolRegistry restored_registry;
     restored_registry.register_tool(std::make_unique<DefinitionOnlyTool>(loom::core::ToolDefinition{
@@ -3770,7 +3768,7 @@ TEST(QueryEngine, TimeBasedMicrocompactClearsOldCompactableToolResultsBeforeRequ
     EnvironmentGuard gap_guard("LOOM_TIME_BASED_MICROCOMPACT_GAP_MINUTES", "30");
     EnvironmentGuard keep_guard("LOOM_TIME_BASED_MICROCOMPACT_KEEP_RECENT", "1");
 
-    LocalAnthropicMessagesServer server;
+    LocalMessagesServer server;
     ASSERT_NE(server.port(), 0);
 
     auto root = fs::temp_directory_path() / "loom-query-time-based-microcompact-test";
@@ -3976,7 +3974,6 @@ TEST(ApiClient, RequestSerializerSerializesEffortConfig) {
         .total = 12000,
         .remaining = 3456,
     };
-    request.internal_effort_override = 77;
 
     auto serialized = loom::services::api::RequestSerializer::serialize(request);
     auto parsed = loom::utils::json::parse(serialized);
@@ -3990,9 +3987,6 @@ TEST(ApiClient, RequestSerializerSerializesEffortConfig) {
     EXPECT_EQ(task_budget.get("type").as_str(), "tokens");
     EXPECT_EQ(task_budget.get("total").as_int(), 12000);
     EXPECT_EQ(task_budget.get("remaining").as_int(), 3456);
-    auto anthropic_internal = parsed->root().get("anthropic_internal");
-    ASSERT_TRUE(anthropic_internal.is_obj());
-    EXPECT_EQ(anthropic_internal.get("effort_override").as_int(), 77);
 }
 
 TEST(ApiClient, ResponseParserPreservesToolUseInputJson) {
@@ -5998,7 +5992,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
         std::ofstream file(project_path);
         file << R"JSON({
   "model": {
-    "default_model": "claude-x"
+    "default_model": "test-model"
   },
   "mcpServers": {
     "keep-me": {
@@ -6024,7 +6018,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
         EXPECT_EQ(*xaa.callback_port, 8765);
         ASSERT_EQ(loaded.settings().mcp_servers.size(), 1u);
         EXPECT_EQ(loaded.settings().mcp_servers.front().name, "keep-me");
-        EXPECT_EQ(loaded.settings().model.default_model, "claude-x");
+        EXPECT_EQ(loaded.settings().model.default_model, "test-model");
 
         // Mutate something unrelated (display theme), then full-save.
         loaded.settings_mut().display.theme = "dark";
@@ -6151,8 +6145,8 @@ TEST(McpTypes, EnvironmentLayerLeavesMcpServersUntouched) {
     fs::create_directories(root);
     const auto project_path = root / "project.json";
 
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "env-layer-test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", "https://env.example.com");
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "env-layer-test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", "https://env.example.com");
 
     {
         std::ofstream project_file(project_path);
@@ -7220,10 +7214,10 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     fs::remove_all(root);
     fs::create_directories(sessions_dir);
 
-    LocalAnthropicMessagesServer server;
+    LocalMessagesServer server;
     ASSERT_NE(server.port(), 0);
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", server.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "direct-route-test-model");
     CurrentPathGuard cwd_guard(root);
 
@@ -7353,13 +7347,13 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
     fs::remove_all(root);
     fs::create_directories(sessions_dir);
 
-    LocalAnthropicMessagesServer anthropic;
-    ASSERT_NE(anthropic.port(), 0);
+    LocalMessagesServer server;
+    ASSERT_NE(server.port(), 0);
     LocalCcrHttpServer ccr;
     ASSERT_TRUE(ccr.ready());
 
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", anthropic.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "direct-ingress-test-model");
     CurrentPathGuard cwd_guard(root);
 
@@ -7451,10 +7445,10 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     fs::remove_all(root);
     fs::create_directories(sessions_dir);
 
-    LocalAnthropicMessagesServer anthropic;
-    ASSERT_NE(anthropic.port(), 0);
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", anthropic.base_url());
+    LocalMessagesServer server;
+    ASSERT_NE(server.port(), 0);
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard model_guard("LOOM_MODEL", "direct-server-test-model");
     EnvironmentGuard sessions_guard("LOOM_SERVER_SESSIONS_DIR", sessions_dir.string());
     CurrentPathGuard cwd_guard(root);
@@ -7544,7 +7538,7 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     ::shutdown(*ws_fd, SHUT_RDWR);
     ::close(*ws_fd);
 
-    auto request_bodies = anthropic.wait_for_bodies(prompts.size());
+    auto request_bodies = server.wait_for_bodies(prompts.size());
     ASSERT_TRUE(request_bodies.has_value());
     auto request_json = loom::utils::json::parse(request_bodies->back());
     ASSERT_TRUE(request_json.has_value()) << request_bodies->back();
@@ -7769,7 +7763,7 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
         output << "directory permission content\n";
     }
 
-    LocalAnthropicMessagesServer anthropic({
+    LocalMessagesServer server({
         std::format(
             R"({{"id":"msg_read_allow_tool","type":"message","role":"assistant","model":"loom-test","content":[{{"type":"tool_use","id":"toolu_read_allow","name":"Read","input":{{"file_path":"{}"}}}}],"stop_reason":"tool_use","usage":{{"input_tokens":1,"output_tokens":1}}}})",
             allowed_file.string()),
@@ -7795,10 +7789,10 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
             errored_file.string()),
         R"({"id":"msg_read_error_done","type":"message","role":"assistant","model":"loom-test","content":[{"type":"text","text":"read permission error"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})",
     });
-    ASSERT_NE(anthropic.port(), 0);
+    ASSERT_NE(server.port(), 0);
 
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", anthropic.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard sessions_guard("LOOM_SERVER_SESSIONS_DIR", sessions_dir.string());
     CurrentPathGuard cwd_guard(root);
     loom::server::reset_route_state_for_testing();
@@ -7950,7 +7944,7 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
         "read permission error",
         "client callback failed direct permission test");
 
-    auto request_bodies = anthropic.wait_for_bodies(12);
+    auto request_bodies = server.wait_for_bodies(12);
     ASSERT_TRUE(request_bodies.has_value());
     ASSERT_EQ(request_bodies->size(), 12u);
     EXPECT_NE((*request_bodies)[1].find("permission bridge content"), std::string::npos);
@@ -7977,16 +7971,16 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     fs::remove_all(root);
     fs::create_directories(root);
 
-    LocalAnthropicMessagesServer anthropic({
+    LocalMessagesServer server({
         R"({"id":"msg_team_create_tool","type":"message","role":"assistant","model":"loom-test","content":[{"type":"tool_use","id":"toolu_team_create","name":"team_create","input":{"team_id":"direct-team-id","team_name":"Direct Team","members":[{"agent_id":"reviewer-one","role":"reviewer"},{"agent_id":"researcher-one","role":"worker"}],"task_list":[{"id":"direct-task","description":"Inspect direct connect team migration","assigned_to":"reviewer-one"}]}}],"stop_reason":"tool_use","usage":{"input_tokens":1,"output_tokens":1}})",
         R"({"id":"msg_team_create_done","type":"message","role":"assistant","model":"loom-test","content":[{"type":"text","text":"direct team created"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})",
         R"({"id":"msg_send_message_tool","type":"message","role":"assistant","model":"loom-test","content":[{"type":"tool_use","id":"toolu_send_message","name":"send_message","input":{"target_agent":"reviewer-one","team_name":"Direct Team","content":"Please review direct connect team output","summary":"direct team follow-up"}}],"stop_reason":"tool_use","usage":{"input_tokens":1,"output_tokens":1}})",
         R"({"id":"msg_send_message_done","type":"message","role":"assistant","model":"loom-test","content":[{"type":"text","text":"direct team message delivered"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})",
     });
-    ASSERT_NE(anthropic.port(), 0);
+    ASSERT_NE(server.port(), 0);
 
-    EnvironmentGuard api_key_guard("ANTHROPIC_API_KEY", "test-key");
-    EnvironmentGuard base_url_guard("ANTHROPIC_BASE_URL", anthropic.base_url());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
     EnvironmentGuard sessions_guard("LOOM_SERVER_SESSIONS_DIR", sessions_dir.string());
     EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
     EnvironmentGuard agent_runtime_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
@@ -8073,7 +8067,7 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     ::shutdown(*ws_fd, SHUT_RDWR);
     ::close(*ws_fd);
 
-    auto request_bodies = anthropic.wait_for_bodies(4);
+    auto request_bodies = server.wait_for_bodies(4);
     ASSERT_TRUE(request_bodies.has_value());
     ASSERT_EQ(request_bodies->size(), 4u);
     auto first_request = loom::utils::json::parse(request_bodies->front());
@@ -8191,8 +8185,8 @@ TEST(TokenEstimator, EstimatesTextImagesToolsAndModelLimits) {
     EXPECT_EQ(TokenEstimator::estimate_text(""), 1u);
     EXPECT_EQ(TokenEstimator::estimate_image(512, 512, ImageDetail::low), 85u);
     EXPECT_GT(TokenEstimator::estimate_tool_use("Read", R"({"file_path":"main.cpp"})"), 50u);
-    EXPECT_EQ(TokenEstimator::get_model_limit("claude-3-5-sonnet"), 200000u);
-    EXPECT_TRUE(TokenEstimator::fits_in_context(1000, "claude-3-5-sonnet"));
+    EXPECT_EQ(TokenEstimator::get_model_limit("test-model"), 100000u);
+    EXPECT_TRUE(TokenEstimator::fits_in_context(1000, "test-model"));
 }
 
 // LSP response parsers — exercised against canned JSON fixtures (no server).
@@ -9281,7 +9275,7 @@ TEST(ConfigManagerUserSettings, TemperatureBoundsAndClear) {
     EXPECT_DOUBLE_EQ(*after_mgr.settings().model.temperature, 0.25);
 }
 
-// thinking_budget: null/0 clear, otherwise the Anthropic 1024 minimum.
+// thinking_budget: null/0 clear, otherwise the API 1024 minimum.
 TEST(ConfigManagerUserSettings, ThinkingBudgetBoundsAndClear) {
     C13Paths p("budget");
     auto m = p.manager();
@@ -9352,8 +9346,8 @@ TEST(ConfigManagerUserSettings, ReadonlyBlockedUnknownRejected) {
               std::string::npos);
 
     const std::array<std::pair<const char*, const char*>, 9> blocked_cases = {{
-        {"network.api_key", "ANTHROPIC_API_KEY"},
-        {"network.base_url", "ANTHROPIC_BASE_URL"},
+        {"network.api_key", "LOOM_API_KEY"},
+        {"network.base_url", "LOOM_BASE_URL"},
         {"network.proxy", "HTTPS_PROXY"},
         {"network.verify_ssl", "TLS"},
         {"permissions.deny_rules", "permission"},
@@ -9634,12 +9628,12 @@ TEST(ConfigManagerUserSettings, ConfigDirRoutingOnlyUserTouched) {
 // presence-only secret projection (credential bytes never serialized).
 TEST(ConfigManagerUserSettings, ProvenanceShadowAndSecretPresence) {
     // Presence/provenance assertions are sensitive to ambient credential
-    // env vars (including ANTHROPIC_AUTH_TOKEN, which counts as presence
+    // env vars (including LOOM_AUTH_TOKEN, which counts as presence
     // for network.api_key); start hermetic. Inner EnvironmentGuards below
     // restore into the unset state, and these restore the shell at exit.
-    EnvironmentUnsetGuard g_api("ANTHROPIC_API_KEY");
-    EnvironmentUnsetGuard g_auth("ANTHROPIC_AUTH_TOKEN");
-    EnvironmentUnsetGuard g_base("ANTHROPIC_BASE_URL");
+    EnvironmentUnsetGuard g_api("LOOM_API_KEY");
+    EnvironmentUnsetGuard g_auth("LOOM_AUTH_TOKEN");
+    EnvironmentUnsetGuard g_base("LOOM_BASE_URL");
     EnvironmentUnsetGuard g_http_proxy("HTTP_PROXY");
     EnvironmentUnsetGuard g_https_proxy("HTTPS_PROXY");
 
@@ -9705,9 +9699,9 @@ TEST(ConfigManagerUserSettings, ProvenanceShadowAndSecretPresence) {
         EXPECT_NE(bytes.find("written-model"), std::string::npos);
     }
 
-    // ANTHROPIC_API_KEY presence is env-sourced and never leaks bytes,
+    // LOOM_API_KEY presence is env-sourced and never leaks bytes,
     // neither single-get nor get-all.
-    EnvironmentGuard key_guard("ANTHROPIC_API_KEY",
+    EnvironmentGuard key_guard("LOOM_API_KEY",
                                "SECRET-zx9w87-traceable-key");
     EnvironmentGuard proxy_guard("HTTP_PROXY", "http://SECRET-zx9w87-proxy:3128");
     {
@@ -9732,15 +9726,15 @@ TEST(ConfigManagerUserSettings, ProvenanceShadowAndSecretPresence) {
     }
 }
 
-// ANTHROPIC_MODEL adds the interactive-resolver source note.
-TEST(ConfigManagerUserSettings, AnthropicModelSourceNote) {
+// LOOM_MODEL adds the interactive-resolver source note.
+TEST(ConfigManagerUserSettings, ModelSourceNote) {
     C13Paths p("note");
-    EnvironmentGuard guard("ANTHROPIC_MODEL", "interactive-model");
+    EnvironmentGuard guard("LOOM_MODEL", "interactive-model");
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
     auto token = m.agent_setting_value_json("model.default_model");
     ASSERT_TRUE(token.has_value());
-    EXPECT_NE(token->find("ANTHROPIC_DEFAULT_SONNET_MODEL"),
+    EXPECT_NE(token->find("LOOM_MODEL"),
               std::string::npos);
 }
 
@@ -10214,7 +10208,7 @@ TEST(ConfigManagerC19, SavePreservesFileValueUnderEnvOverlay) {
         auto doc = loom::utils::json::parse_file(q.project_path);
         ASSERT_TRUE(doc.has_value());
         EXPECT_EQ(doc->root().get("model").get("default_model").as_str(),
-                  std::string_view("claude-sonnet-4-20250514"));
+                  std::string_view(""));
     }
 }
 

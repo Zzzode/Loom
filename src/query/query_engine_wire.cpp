@@ -17,7 +17,7 @@ import loom.serdes.json;
 import loom.security.tool_deny_rules;
 import loom.platform.env.env_utils;
 import loom.query.wire_protocol;
-import loom.query.wire_anthropic;
+import loom.query.wire_messages;
 import loom.query.wire_openai;
 import loom.services.compact.api_microcompact;
 
@@ -68,7 +68,7 @@ void QueryEngine::add_output_config_to_json(
     }
     if (has_schema) {
         // Structured output: force the model to return JSON conforming to
-        // the supplied JSON schema (Anthropic output_config.format.json_schema).
+        // the supplied JSON schema (Messages API output_config.format.json_schema).
         auto format = doc.object();
         format.add("type", doc.string("json_schema"));
         auto schema_obj = doc.object();
@@ -146,12 +146,12 @@ QueryEngine::make_wire_backend() const {
         return std::make_unique<loom::query::wire::OpenAiWireBackend>(
             api_config_.base_url, std::move(auth));
     }
-    // Anthropic (default): credential precedence matches the historical
+    // Messages API (default): credential precedence matches the historical
     // engine behaviour — bearer token wins over x-api-key.
     std::vector<std::pair<std::string, std::string>> auth;
-    auth.push_back(loom::query::wire::anthropic_credential_header(
+    auth.push_back(loom::query::wire::messages_credential_header(
         api_config_.api_key, api_config_.auth_token));
-    loom::query::wire::AnthropicWireOptions opts;
+    loom::query::wire::MessagesWireOptions opts;
     opts.base_url = api_config_.base_url;
     opts.api_version = api_config_.api_version;
     opts.extra_headers = std::move(auth);
@@ -184,7 +184,7 @@ QueryEngine::make_wire_backend() const {
         rs.schema_json = config_.response_schema->schema_json;
         opts.response_schema = std::move(rs);
     }
-    return std::make_unique<loom::query::wire::AnthropicWireBackend>(
+    return std::make_unique<loom::query::wire::MessagesWireBackend>(
         std::move(opts));
 }
 

@@ -64,8 +64,6 @@ public:
         std::vector<std::string> suggestions;
 
         static constexpr std::array models = {
-            "claude-3-opus", "claude-3-sonnet", "claude-3-haiku",
-            "claude-3-5-opus", "claude-3-5-sonnet",
             "off", "unset"
         };
 

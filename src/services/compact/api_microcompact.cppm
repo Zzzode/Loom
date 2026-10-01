@@ -55,11 +55,6 @@ inline constexpr std::uint32_t k_default_target_input_tokens = 40'000;
         std::min<unsigned long>(value, std::numeric_limits<std::uint32_t>::max()));
 }
 
-[[nodiscard]] inline bool is_ant_user() {
-    const char* user_type = std::getenv("USER_TYPE");
-    return user_type != nullptr && std::string_view(user_type) == "ant";
-}
-
 [[nodiscard]] inline std::uint32_t clear_at_least_value(
     std::uint32_t trigger_threshold,
     std::uint32_t keep_target
@@ -104,11 +99,6 @@ inline constexpr std::uint32_t k_default_target_input_tokens = 40'000;
             strategy.keep_all_thinking = true;
         }
         config.edits.push_back(std::move(strategy));
-    }
-
-    if (!detail::is_ant_user()) {
-        if (config.edits.empty()) return std::nullopt;
-        return config;
     }
 
     const bool use_clear_tool_results = detail::env_truthy("USE_API_CLEAR_TOOL_RESULTS");

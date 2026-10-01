@@ -45,9 +45,6 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] bool all_agent_disallows_tool(std::string_view tool_name) {
     const bool nested_agents_enabled = [] {
-        if (const char* value = std::getenv("USER_TYPE"); value && std::string_view(value) == "ant") {
-            return true;
-        }
         if (const char* value = std::getenv("LOOM_ENABLE_NESTED_AGENTS"); value && *value) {
             return true;
         }

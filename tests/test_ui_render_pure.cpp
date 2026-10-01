@@ -145,7 +145,7 @@ TEST(ReplScreen, ShiftReturnInsertsNewlineForBothTerminalEncodings) {
 
 
 
-TEST(ReplScreen, WelcomeHeaderWidthAndClaudeColorTrackTerminal) {
+TEST(ReplScreen, WelcomeHeaderWidthAndColorTrackTerminal) {
     namespace repl = loom::ui::repl_screen;
     namespace thm = loom::ui::design::theme;
 

@@ -111,6 +111,7 @@ TEST(AppRuntime, FreshWelcomeAnimationKeepsTickingAfterStartupWindow) {
 TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
+    config.model_params.model = "test-model";
     config.context_window.auto_compact = false;
     config.cwd = fs::temp_directory_path().string();
     loom::core::QueryEngine engine(std::move(config), tools);
@@ -131,11 +132,11 @@ TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
             exited = true;
         });
 
-    // --- Initial render: prompt input without the old native status bar ---
+    // --- Initial render: prompt input with the status bar ---
     app->SyncState();
     auto initial = render_to_plain_text(app->Render(), 120, 28);
-    EXPECT_EQ(app->status_bar_model_for_testing(), "claude-sonnet-4-20250514");
-    EXPECT_EQ(initial.find("claude-sonnet-4-20250514"), std::string::npos);
+    EXPECT_EQ(app->status_bar_model_for_testing(), "test-model");
+    EXPECT_NE(initial.find("test-model"), std::string::npos);
     EXPECT_EQ(initial.find("You are Loom"), std::string::npos);
     EXPECT_NE(initial.find("❯"), std::string::npos);
 
@@ -934,7 +935,7 @@ TEST(AppRuntime, CtrlCIdleRequiresDoublePressWithinWindow) {
 
 
 TEST(AppRuntime, StreamFallbackErrorIsRendered) {
-    LocalErrorAnthropicStreamServer server;
+    LocalErrorMessagesStreamServer server;
     ASSERT_TRUE(server.valid());
 
     loom::core::ToolRegistry tools;
@@ -976,7 +977,7 @@ TEST(AppRuntime, StreamFallbackErrorIsRendered) {
 
 
 TEST(AppRuntime, CtrlCWhileStreamingQueryCancelsWithoutExiting) {
-    LocalChunkedAnthropicStreamServer server;
+    LocalChunkedMessagesStreamServer server;
     ASSERT_TRUE(server.valid());
 
     loom::core::ToolRegistry tools;
@@ -1037,7 +1038,7 @@ TEST(AppRuntime, CtrlCWhileStreamingQueryCancelsWithoutExiting) {
 
 
 TEST(AppRuntime, StreamingToolUseShowsSpinnerAndLoadingState) {
-    LocalToolUseAnthropicStreamServer server;
+    LocalToolUseMessagesStreamServer server;
     ASSERT_TRUE(server.valid());
 
     loom::core::ToolRegistry tools;
@@ -1099,7 +1100,7 @@ TEST(AppRuntime, StreamingToolUseShowsSpinnerAndLoadingState) {
 
 
 TEST(AppRuntime, StreamingThinkingShowsSpinnerAndFinalContent) {
-    LocalThinkingAnthropicStreamServer server;
+    LocalThinkingMessagesStreamServer server;
     ASSERT_TRUE(server.valid());
 
     loom::core::ToolRegistry tools;
@@ -1593,7 +1594,7 @@ TEST(AutocompleteSources, BuildAgentSuggestionsHasColors) {
     // match passes for everything when query is empty).
     auto sugs = acsrc::build_agent_suggestions("", "", 0, 7);
     ASSERT_FALSE(sugs.empty());
-    bool found_claude = false;
+    bool found_loom = false;
     for (const auto& s : sugs) {
         EXPECT_FALSE(s.display_text.empty());
         EXPECT_TRUE(s.display_text.starts_with("@"))
@@ -1602,12 +1603,12 @@ TEST(AutocompleteSources, BuildAgentSuggestionsHasColors) {
         EXPECT_EQ(s.replacement_end, 7u);
         EXPECT_FALSE(s.submit_on_return);
         if (s.display_text == "@loom") {
-            found_claude = true;
+            found_loom = true;
             EXPECT_FALSE(s.icon.empty()) << "loom agent should have an icon";
             EXPECT_FALSE(s.id.empty());
         }
     }
-    EXPECT_TRUE(found_claude) << "@loom suggestion not found in results";
+    EXPECT_TRUE(found_loom) << "@loom suggestion not found in results";
 
     // Fuzzy filter: query "xyz" should match nothing (no agent named xyz).
     auto filtered = acsrc::build_agent_suggestions("", "xyz_nonexistent", 0, 3);
@@ -1836,9 +1837,9 @@ TEST(AppRuntime, AtAgentShowsAgentSuggestions) {
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('o')));
 
     auto suggestions = app->autocomplete_suggestions_for_testing();
-    bool found_claude = std::any_of(suggestions.begin(), suggestions.end(),
+    bool found_loom = std::any_of(suggestions.begin(), suggestions.end(),
         [](const std::string& s) { return s.find("@loom") != std::string::npos; });
-    EXPECT_TRUE(found_claude) << "@lo should surface the @loom agent suggestion";
+    EXPECT_TRUE(found_loom) << "@lo should surface the @loom agent suggestion";
 
     fs::remove_all(storage_root);
 }

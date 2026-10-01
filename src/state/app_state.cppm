@@ -144,8 +144,8 @@ enum class RemoteConnectionStatus {
 
 /// Configuration for the active model
 struct ModelConfig {
-    std::string model_id;           // e.g., "claude-sonnet-4-20250514"
-    std::string display_name;       // e.g., "Loom Sonnet 4"
+    std::string model_id;           // e.g., "gpt-4o", "deepseek-chat"
+    std::string display_name;       // e.g., "GPT-4o"
     std::uint32_t max_tokens = 8192;
     double temperature = 1.0;
     std::optional<std::string> system_prompt_override;

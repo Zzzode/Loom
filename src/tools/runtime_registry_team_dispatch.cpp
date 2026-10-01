@@ -56,7 +56,7 @@ namespace json = loom::utils::json;
         return ToolResult::error("team_create start_native_agents requires an attached runtime registry");
     }
     if (start_native_agents && !runtime_has_agent_api_credentials()) {
-        return ToolResult::error("team_create start_native_agents requires Anthropic API credentials");
+        return ToolResult::error("team_create start_native_agents requires API credentials");
     }
     auto result = tool.execute(id, team, members);
     if (!result) return ToolResult::error(std::string(format_error(result.error())));
@@ -68,7 +68,6 @@ namespace json = loom::utils::json;
     // inbox never activate because get_team_name() stays empty.
     // TS REF: TeamCreateTool sets setLeaderTeamName + AppState.teamContext.
     if (std::getenv("LOOM_TEAM_NAME") == nullptr &&
-        std::getenv("CLAUDE_CODE_TEAM_NAME") == nullptr &&
         !(*result)->name.empty()) {
         ::setenv("LOOM_TEAM_NAME", (*result)->name.c_str(), 1);
         // task-list resolution also tracks the leader team.

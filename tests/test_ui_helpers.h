@@ -135,9 +135,9 @@ private:
     std::optional<std::string> previous_;
 };
 
-class LocalChunkedAnthropicStreamServer {
+class LocalChunkedMessagesStreamServer {
 public:
-    LocalChunkedAnthropicStreamServer() {
+    LocalChunkedMessagesStreamServer() {
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             {
                 std::lock_guard lock(mutex_);
@@ -199,7 +199,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalChunkedAnthropicStreamServer() {
+    ~LocalChunkedMessagesStreamServer() {
         release_after_cancel();
         server_.stop();
         if (thread_.joinable()) thread_.join();
@@ -247,16 +247,16 @@ private:
 };
 
 struct ReleaseAfterCancelGuard {
-    LocalChunkedAnthropicStreamServer& server;
+    LocalChunkedMessagesStreamServer& server;
 
     ~ReleaseAfterCancelGuard() {
         server.release_after_cancel();
     }
 };
 
-class LocalToolUseAnthropicStreamServer {
+class LocalToolUseMessagesStreamServer {
 public:
-    LocalToolUseAnthropicStreamServer() {
+    LocalToolUseMessagesStreamServer() {
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             std::size_t request_number = 0;
             {
@@ -339,7 +339,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalToolUseAnthropicStreamServer() {
+    ~LocalToolUseMessagesStreamServer() {
         release_after_preview();
         server_.stop();
         if (thread_.joinable()) thread_.join();
@@ -387,16 +387,16 @@ private:
 };
 
 struct ReleaseAfterToolPreviewGuard {
-    LocalToolUseAnthropicStreamServer& server;
+    LocalToolUseMessagesStreamServer& server;
 
     ~ReleaseAfterToolPreviewGuard() {
         server.release_after_preview();
     }
 };
 
-class LocalThinkingAnthropicStreamServer {
+class LocalThinkingMessagesStreamServer {
 public:
-    LocalThinkingAnthropicStreamServer() {
+    LocalThinkingMessagesStreamServer() {
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             {
                 std::lock_guard lock(mutex_);
@@ -464,7 +464,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalThinkingAnthropicStreamServer() {
+    ~LocalThinkingMessagesStreamServer() {
         release_after_preview();
         server_.stop();
         if (thread_.joinable()) thread_.join();
@@ -512,16 +512,16 @@ private:
 };
 
 struct ReleaseAfterThinkingPreviewGuard {
-    LocalThinkingAnthropicStreamServer& server;
+    LocalThinkingMessagesStreamServer& server;
 
     ~ReleaseAfterThinkingPreviewGuard() {
         server.release_after_preview();
     }
 };
 
-class LocalErrorAnthropicStreamServer {
+class LocalErrorMessagesStreamServer {
 public:
-    LocalErrorAnthropicStreamServer() {
+    LocalErrorMessagesStreamServer() {
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             (void)req;
             {
@@ -543,7 +543,7 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalErrorAnthropicStreamServer() {
+    ~LocalErrorMessagesStreamServer() {
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }

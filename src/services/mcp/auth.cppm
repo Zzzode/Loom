@@ -687,9 +687,9 @@ public:
 };
 
 // Loom OAuth client provider
-class ClaudeAuthProvider : public IOAuthClientProvider {
+class McpOAuthProvider : public IOAuthClientProvider {
 public:
-    ClaudeAuthProvider(const std::string& server_name,
+    McpOAuthProvider(const std::string& server_name,
                        const McpServerConfig& server_config,
                        const std::string& redirect_uri,
                        bool handle_redirection,
@@ -873,7 +873,7 @@ Result<void> perform_mcp_oauth_flow(
         auto redirect_uri = listener.get_redirect_uri();
         
         // Create auth provider
-        ClaudeAuthProvider provider(server_name, server_config, redirect_uri, true, 
+        McpOAuthProvider provider(server_name, server_config, redirect_uri, true,
                                     on_authorization_url, skip_browser_open);
         
         // Fetch metadata

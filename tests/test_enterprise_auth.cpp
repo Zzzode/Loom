@@ -132,8 +132,8 @@ TEST(EnterpriseAuth_Encoding, UriEncode_ReservedPercentEncoded) {
 
 TEST(EnterpriseAuth_Encoding, UriEncodePath_KeepsForwardSlash) {
     EXPECT_EQ(loom::utils::http::uri_encode_path(
-        "/model/anthropic.claude-sonnet-4-20250514-v1:0/invoke-with-response-stream"),
-        "/model/anthropic.claude-sonnet-4-20250514-v1%3A0/invoke-with-response-stream");
+        "/model/anthropic.test-model-v1:0/invoke-with-response-stream"),
+        "/model/anthropic.test-model-v1%3A0/invoke-with-response-stream");
     // Colons are NOT unreserved — they MUST be percent-encoded even in paths.
 }
 
@@ -232,11 +232,11 @@ TEST(EnterpriseAuth_SigV4, SignRequest_BedrockPost_PayloadHash) {
         ""};
     const auto tp = std::chrono::system_clock::from_time_t(
         /*2024-06-01T12:00:00Z = 1717243200*/ 1717243200);
-    const std::string body = R"({"model":"anthropic.claude-sonnet-4:0","max_tokens":2048})";
+    const std::string body = R"({"model":"anthropic.test-model:0","max_tokens":2048})";
     auto signed_r = sign_request(
         "POST",
         "bedrock-runtime.us-east-1.amazonaws.com",
-        "/model/anthropic.claude-sonnet-4-20250514-v1:0/invoke-with-response-stream",
+        "/model/anthropic.test-model-v1:0/invoke-with-response-stream",
         /*query=*/{},
         body,
         {{"Content-Type", "application/json"},
@@ -391,26 +391,14 @@ TEST(EnterpriseAuth_Gcp, ParseAdcJson_UnknownType) {
               AdcType::ExternalAccount);
 }
 
-TEST(EnterpriseAuth_Gcp, VertexRegion_PerModelAndGlobal) {
+TEST(EnterpriseAuth_Gcp, VertexRegion_GlobalOnly) {
     using namespace loom::services::auth::gcp;
     EnvRollback env;
     env.unset("CLOUD_ML_REGION");
-    // Clear all 12 per-model vars.
-    for (const auto& name : {
-        "VERTEX_REGION_LOOM_3_5_SONNET",
-        "VERTEX_REGION_LOOM_4_5_SONNET",
-        "VERTEX_REGION_LOOM_4_6_SONNET",
-        "VERTEX_REGION_LOOM_3_5_HAIKU",
-    }) env.unset(name);
+    // No per-model region overrides — just CLOUD_ML_REGION or default.
     EXPECT_EQ(resolve_vertex_region(), "us-east5");
     env.set("CLOUD_ML_REGION", "europe-west1");
     EXPECT_EQ(resolve_vertex_region(), "europe-west1");
-    // Per-model override beats CLOUD_ML_REGION.
-    env.set("VERTEX_REGION_LOOM_4_6_SONNET", "us-central1");
-    EXPECT_EQ(resolve_vertex_region("claude-sonnet-4-6"), "us-central1");
-    // Other model keys still fall back to CLOUD_ML_REGION.
-    EXPECT_EQ(resolve_vertex_region("claude-3-5-haiku-20241022-v1:0"),
-              "europe-west1");
 }
 
 TEST(EnterpriseAuth_Gcp, MakeVertexBaseUrl_Format) {
@@ -424,18 +412,8 @@ TEST(EnterpriseAuth_Gcp, MakeVertexBaseUrl_Format) {
 }
 
 // ===========================================================================
-// SECTION 4: Azure Foundry — deployment lookup + endpoint resolution.
+// SECTION 4: Azure Foundry — endpoint resolution.
 // ===========================================================================
-TEST(EnterpriseAuth_Azure, FoundryDeployment_ExactAndPrefix) {
-    using namespace loom::services::auth::azure;
-    EXPECT_EQ(lookup_default_deployment("claude-opus-4-6-v1"), "claude-opus-4-6");
-    // Prefix fuzzy match for pre-release IDs.
-    EXPECT_EQ(lookup_default_deployment("claude-sonnet-4-6-rc1"),
-              "claude-sonnet-4-6");
-    // Unknown fallthrough.
-    EXPECT_EQ(lookup_default_deployment("model-never-heard-of"), ""sv);
-}
-
 TEST(EnterpriseAuth_Azure, ResolveFoundryBaseUrl_Resource) {
     using namespace loom::services::auth::azure;
     FoundryAuthMode m;
@@ -497,20 +475,21 @@ TEST(EnterpriseAuth_ProviderSelector, Foundry_ExplicitEnv) {
     EXPECT_EQ(detect_active_provider(), EnterpriseProvider::Foundry);
 }
 
-TEST(EnterpriseAuth_ProviderSelector, FirstParty_BaseUrlDefault) {
+TEST(EnterpriseAuth_ProviderSelector, FirstParty_BaseUrlFromEnv) {
     using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.unset("LOOM_USE_BEDROCK");
     env.unset("LOOM_USE_VERTEX");
     env.unset("LOOM_USE_FOUNDRY");
+    env.set("LOOM_BASE_URL", "https://api.example.com/v1");
     EnterpriseAuthContext ctx;
     ASSERT_EQ(ctx.provider(), EnterpriseProvider::FirstParty);
     auto r = ctx.resolve_auth_for_request(
-        "claude-sonnet-4-6", "POST", "", /*streaming=*/false, {});
+        "test-model", "POST", "", /*streaming=*/false, {});
     ASSERT_TRUE(r.has_value());
-    // Provider-agnostic Anthropic endpoint.
-    EXPECT_TRUE(r->base_url.find("anthropic.com") != std::string::npos);
-    EXPECT_EQ(r->model_id, "claude-sonnet-4-6");
+    // Base URL comes from LOOM_BASE_URL (no hardcoded default).
+    EXPECT_EQ(r->base_url, "https://api.example.com/v1");
+    EXPECT_EQ(r->model_id, "test-model");
     EXPECT_TRUE(r->headers.empty()); // no auth header yet — caller adds x-api-key
 }
 
@@ -525,7 +504,7 @@ TEST(EnterpriseAuth_ProviderSelector, Bedrock_BaseUrlAndPath) {
     EnterpriseAuthContext ctx;
     ASSERT_EQ(ctx.provider(), EnterpriseProvider::Bedrock);
     auto r = ctx.resolve_auth_for_request(
-        "claude-sonnet-4-20250514-v1:0", "POST", "{}", /*streaming=*/true,
+        "test-model-v1:0", "POST", "{}", /*streaming=*/true,
         {{"Content-Type", "application/json"}});
     ASSERT_TRUE(r.has_value());
     EXPECT_EQ(ctx.bedrock_region(), "eu-west-2");
@@ -534,8 +513,8 @@ TEST(EnterpriseAuth_ProviderSelector, Bedrock_BaseUrlAndPath) {
     // Streaming path variant.
     EXPECT_NE(r->bedrock_path.find("invoke-with-response-stream"),
               std::string::npos);
-    // Model ID mapped to Bedrock US cross-region prefix.
-    EXPECT_TRUE(r->model_id.starts_with("us.anthropic.claude-sonnet-4"));
+    // Model ID passed through as-is (no Bedrock prefix mapping).
+    EXPECT_EQ(r->model_id, "test-model-v1:0");
     // Skip auth → no headers attached.
     EXPECT_TRUE(r->headers.empty());
     // Endpoint host derived correctly.
@@ -547,12 +526,12 @@ TEST(EnterpriseAuth_ProviderSelector, Vertex_SkipAuthFillsBaseUrlFromFallback) {
     EnvRollback env;
     env.set("LOOM_USE_VERTEX", "1");
     env.set("LOOM_SKIP_VERTEX_AUTH", "1");
-    env.set("ANTHROPIC_VERTEX_PROJECT_ID", "fallback-42");
+    env.set("LOOM_VERTEX_PROJECT_ID", "fallback-42");
     env.set("CLOUD_ML_REGION", "europe-west4");
     EnterpriseAuthContext ctx;
     ASSERT_EQ(ctx.provider(), EnterpriseProvider::Vertex);
     auto r = ctx.resolve_auth_for_request(
-        "claude-sonnet-4-6", "POST", "{}", /*streaming=*/true, {});
+        "test-model", "POST", "{}", /*streaming=*/true, {});
     ASSERT_TRUE(r.has_value()) << r.error().message();
     EXPECT_EQ(ctx.vertex_region(), "europe-west4");
     EXPECT_TRUE(r->base_url.starts_with(
@@ -560,7 +539,7 @@ TEST(EnterpriseAuth_ProviderSelector, Vertex_SkipAuthFillsBaseUrlFromFallback) {
     EXPECT_NE(r->base_url.find("projects/fallback-42"), std::string::npos);
     EXPECT_NE(r->base_url.find("locations/europe-west4"), std::string::npos);
     // Model ID Vertex @-format.
-    EXPECT_EQ(r->model_id, "claude-sonnet-4-6");
+    EXPECT_EQ(r->model_id, "test-model");
 }
 
 TEST(EnterpriseAuth_ProviderSelector, Bedrock_BearerTokenModeSkipsSigning) {
@@ -571,7 +550,7 @@ TEST(EnterpriseAuth_ProviderSelector, Bedrock_BearerTokenModeSkipsSigning) {
     env.set("AWS_REGION", "us-east-1");
     EnterpriseAuthContext ctx;
     auto r = ctx.resolve_auth_for_request(
-        "claude-opus-4-6-v1", "POST", "{}", /*streaming=*/false, {});
+        "test-model-v1", "POST", "{}", /*streaming=*/false, {});
     ASSERT_TRUE(r.has_value());
     // Bearer token directly attached.
     bool found_auth = false;

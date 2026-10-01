@@ -308,7 +308,7 @@ connected_computer_use_mcp_server() {
         auto data = codec.to_base64(
             std::span<const std::uint8_t>(result.screenshot->pixels.data(), result.screenshot->pixels.size()));
         // Pass through the backend-declared encoding, restricted to the
-        // media types the Anthropic API accepts (png/jpeg/webp/gif). Native
+        // media types the Messages API accepts (png/jpeg/webp/gif). Native
         // macOS capture and a well-formed computer-use MCP server return one
         // of these. The internal raw-pixel marker "rgba" (and anything
         // unrecognized) is not a wire type, so default to png rather than

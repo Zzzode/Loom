@@ -19,7 +19,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     }
 
     // Exercise message extraction patterns typical in SSE event handling:
-    // Look for content_block_delta -> delta -> text (Anthropic streaming format).
+    // Look for content_block_delta -> delta -> text (Messages API streaming format).
     auto& doc = result.value();
     auto root = doc.root();
 

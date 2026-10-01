@@ -20,7 +20,7 @@
 ///   - LLM facet extraction wired through an injectable std::function seam
 ///     (llm_extract_fn) so the call site is testable with a stub without
 ///     hitting the network. The default implementation calls the existing
-///     AnthropicClient::create_message completion API.
+///     MessagesClient::create_message completion API.
 ///
 /// Deferred (reported as residual): remote homespace collection (requires
 /// ssh/scp/coder subprocesses — environment-specific), S3 upload, multi-clauding
@@ -576,11 +576,6 @@ extract_facets_with_seam(const LlmExtractFn& seam,
 // ============================================================================
 class InsightsCommand {
 public:
-    /// Default analysis model id (Opus). Mirrors the TS getAnalysisModel().
-    [[nodiscard]] static constexpr std::string_view default_analysis_model() {
-        return "claude-opus-4-20250514";
-    }
-
     [[nodiscard]] static CommandDefinition definition() {
         return CommandDefinition{
             .name = "insights",

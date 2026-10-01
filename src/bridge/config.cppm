@@ -210,16 +210,12 @@ public:
 // ---- Bridge Auth Configuration ----
 
 [[nodiscard]] auto getBridgeTokenOverride() -> std::optional<std::string> {
-    auto* user_type = std::getenv("USER_TYPE");
-    if (user_type == nullptr || std::string_view(user_type) != "ant") return std::nullopt;
     auto* token = std::getenv("LOOM_BRIDGE_OAUTH_TOKEN");
     if (token == nullptr) return std::nullopt;
     return std::string(token);
 }
 
 [[nodiscard]] auto getBridgeBaseUrlOverride() -> std::optional<std::string> {
-    auto* user_type = std::getenv("USER_TYPE");
-    if (user_type == nullptr || std::string_view(user_type) != "ant") return std::nullopt;
     auto* url = std::getenv("LOOM_BRIDGE_BASE_URL");
     if (url == nullptr) return std::nullopt;
     return std::string(url);

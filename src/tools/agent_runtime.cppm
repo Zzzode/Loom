@@ -218,7 +218,6 @@ struct PluginComponentPaths {
 }
 
 [[nodiscard]] bool valid_agent_effort(std::string_view value);
-[[nodiscard]] bool is_ant_user_type();
 [[nodiscard]] bool valid_agent_isolation(std::string_view value);
 [[nodiscard]] std::string valid_agent_isolation_options();
 

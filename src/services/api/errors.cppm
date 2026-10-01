@@ -1,4 +1,4 @@
-// API Error Handling - Comprehensive error types and utilities for Anthropic API
+// API Error Handling - Comprehensive error types and utilities for Messages API
 module;
 #include <cstdlib>
 
@@ -331,7 +331,7 @@ public:
         Provider provider,
         std::string_view) {
         switch (provider) {
-            case Provider::Anthropic:
+            case Provider::Messages:
                 return "Model not found";
             case Provider::Bedrock:
                 return "You don't have access to the model with the specified model ID";
@@ -343,7 +343,7 @@ public:
 
     [[nodiscard]] static std::string_view quota_exceeded(Provider provider) {
         switch (provider) {
-            case Provider::Anthropic:
+            case Provider::Messages:
                 return "Credit balance is too low";
             case Provider::Bedrock:
                 return "Bedrock service limits exceeded";

@@ -111,8 +111,8 @@ struct FileWritePermissionProps {
 
     // ── Context flags (drive dynamic UI) ──
     bool in_allowed_path = true;     ///< Path is inside working directory
-    bool is_claude_folder = false;   ///< Inside project .loom/
-    bool is_global_claude_folder = false; ///< Inside ~/.loom/
+    bool is_loom_folder = false;   ///< Inside project .loom/
+    bool is_global_loom_folder = false; ///< Inside ~/.loom/
     std::optional<std::string> symlink_target; ///< Symlink target if any
 
     // ── Worker badge (teammate requests) ──
@@ -393,14 +393,14 @@ inline std::vector<Option> build_options(
     //   • In allowed path → generic "allow all edits during this session"
     //   • Outside allowed path → includes directory name
 
-    if ((p.is_claude_folder || p.is_global_claude_folder)) {
+    if ((p.is_loom_folder || p.is_global_loom_folder)) {
         // Special .loom folder session option
         opts.push_back({
             .value = "yes-loom-folder",
             .label = "Yes, and allow Loom to edit its own settings for this session",
             .description = "",
             .decision = Decision::AllowSession,
-            .scope = p.is_global_claude_folder
+            .scope = p.is_global_loom_folder
                 ? SessionScope::GlobalLoomFolder
                 : SessionScope::LoomFolder,
         });

@@ -217,7 +217,7 @@ int main(int /*argc*/, char* argv[]) {
     char* const m_argv[] = {
         const_cast<char*>(bin.c_str()),
         const_cast<char*>("--model"),
-        const_cast<char*>("claude-opus-4-8"),
+        const_cast<char*>("test-model"),
         const_cast<char*>("--list-runtime-tools"),
         nullptr,
     };

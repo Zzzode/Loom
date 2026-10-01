@@ -184,7 +184,7 @@ ninja dry-run, not by PSS.
   persisted-data shape changes. `messages.jsonl` block coverage and
   `dump-prompts/<id>.jsonl` are byte-identical (no engine/wire change).
   Reason: pure UI-module refactoring.
-- [x] **Wire-protocol compatibility (`wire_anthropic` / `wire_openai`) —
+- [x] **Wire-protocol compatibility (`wire_messages` / `wire_openai`) —
   field additions are additive; removals justified.** N/A — no wire change.
   Reason: no `src/query/wire_*` or `src/tools/` schema is touched.
 

@@ -334,7 +334,7 @@ struct MarketplaceInfo {
     std::string name;
     std::size_t total_plugins = 0;
     std::size_t installed_count = 0;
-    std::optional<std::string> source_display; // e.g. "GitHub: anthropic/plugins"
+    std::optional<std::string> source_display; // e.g. "GitHub: loom/plugins"
     std::optional<std::string> warning;
 };
 

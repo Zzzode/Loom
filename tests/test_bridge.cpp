@@ -1328,8 +1328,8 @@ TEST(BridgeDaemon, ForkExecsNativeHeadlessSessionThroughRemoteLifecycle) {
     const auto env_root = unique_temp_file("_native_headless_home");
     std::filesystem::remove_all(env_root);
     std::filesystem::create_directories(env_root);
-    ScopedEnvVar api_key("ANTHROPIC_API_KEY", "fake-key");
-    ScopedEnvVar anthropic_base("ANTHROPIC_BASE_URL", server.base_url());
+    ScopedEnvVar api_key("LOOM_API_KEY", "fake-key");
+    ScopedEnvVar api_base("LOOM_BASE_URL", server.base_url());
     ScopedEnvVar xdg_config("XDG_CONFIG_HOME", env_root.string());
     ScopedEnvVar home("HOME", env_root.string());
 

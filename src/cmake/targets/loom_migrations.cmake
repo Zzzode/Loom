@@ -7,5 +7,6 @@ target_sources(loom_migrations
         migrations/concrete_migrations.cppm
         migrations/migration_runner.cppm
         migrations/schema_versions.cppm
+        migrations/lockfile.cppm
 )
 target_link_libraries(loom_migrations PUBLIC loom_utils)

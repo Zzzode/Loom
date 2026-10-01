@@ -18,4 +18,7 @@ loom.config.settings -> loom.serdes.json
 # helpers — same class as loom.config.config -> loom.serdes.json above.
 loom.migrations.concrete -> loom.serdes.json
 loom.migrations.schema_versions -> loom.fs.atomic_replace
-loom.migrations.schema_versions -> loom.fs.lockfile
+#
+# 2026-10-01: loom.migrations.schema_versions -> loom.fs.lockfile removed —
+# the module had a single importer (migrations), so it was moved into the
+# loom_migrations target and renamed to loom.migrations.lockfile.

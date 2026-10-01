@@ -9,7 +9,7 @@ export module loom.migrations.schema_versions;
 import std;
 
 import loom.fs.atomic_replace;
-import loom.fs.lockfile;
+import loom.migrations.lockfile;
 
 export namespace loom::migrations {
 

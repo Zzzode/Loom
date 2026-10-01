@@ -45,7 +45,6 @@ target_sources(loom_utils
         utils/http/http_encoding.cppm
         utils/platform/hyperlink.cppm
         utils/serdes/json.cppm
-        utils/fs/lockfile.cppm
         utils/diagnostics/log.cppm
         utils/text/markdown_utils.cppm
         utils/fs/memory_file_detection.cppm

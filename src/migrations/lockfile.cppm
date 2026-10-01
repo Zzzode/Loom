@@ -4,7 +4,7 @@ module;
 #include <fcntl.h>
 #include <sys/file.h>
 
-export module loom.fs.lockfile;
+export module loom.migrations.lockfile;
 
 import std;
 

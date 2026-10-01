@@ -17,7 +17,11 @@ loom.config.settings -> loom.serdes.json
 # Config migration code sits in the config layer and uses utils json/file
 # helpers — same class as loom.config.config -> loom.serdes.json above.
 loom.migrations.concrete -> loom.serdes.json
-loom.migrations.schema_versions -> loom.fs.atomic_replace
+#
+# 2026-10-01: loom.migrations.schema_versions -> loom.fs.atomic_replace
+# removed — atomic_replace and file_persistence are self-contained POSIX
+# primitives (no Loom deps except each other), reclassified to rank 0 via
+# MODULE_RANK_OVERRIDE.
 #
 # 2026-10-01: loom.migrations.schema_versions -> loom.fs.lockfile removed —
 # the module had a single importer (migrations), so it was moved into the

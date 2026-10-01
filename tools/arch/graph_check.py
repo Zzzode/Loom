@@ -151,6 +151,11 @@ MODULE_RANK_OVERRIDE = {
     "loom.config.settings_paths": 2,
     "loom.config.settings_sources": 2,
     "loom.config.settings_validation": 2,
+    # Self-contained POSIX filesystem primitives (no Loom deps except each
+    # other). Used by loom.migrations (rank 1) for schema-version writes;
+    # without the override that reads as a rank-1->2 upward edge.
+    "loom.fs.atomic_replace": 0,
+    "loom.fs.file_persistence": 0,
 }
 
 # RFC 0001 Phase D B7: loom.utils stays in CORE8 even though the rename track

@@ -158,11 +158,17 @@ public:
 
     [[nodiscard]] auto load() -> std::expected<BridgeConfig, std::string> {
 
-        if (auto* port = std::getenv("CC_BRIDGE_PORT"))
+        if (auto* port = std::getenv("LOOM_BRIDGE_PORT"))
             config_.port = static_cast<uint16_t>(std::stoi(port));
-        if (auto* host = std::getenv("CC_BRIDGE_HOST"))
+        else if (auto* port = std::getenv("CC_BRIDGE_PORT")) // backwards compat
+            config_.port = static_cast<uint16_t>(std::stoi(port));
+        if (auto* host = std::getenv("LOOM_BRIDGE_HOST"))
             config_.host = host;
-        if (auto* token = std::getenv("CC_BRIDGE_TOKEN"))
+        else if (auto* host = std::getenv("CC_BRIDGE_HOST")) // backwards compat
+            config_.host = host;
+        if (auto* token = std::getenv("LOOM_BRIDGE_TOKEN"))
+            config_.auth_token = token;
+        else if (auto* token = std::getenv("CC_BRIDGE_TOKEN")) // backwards compat
             config_.auth_token = token;
         return config_;
     }

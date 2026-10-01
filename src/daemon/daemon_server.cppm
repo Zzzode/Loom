@@ -1298,8 +1298,8 @@ private:
             set("LOOM_POST_FOR_SESSION_INGRESS_V2", "1");
         }
         if (remote_session_id && !remote_session_id->empty()) {
-            set("CC_REMOTE_SESSION_ID", *remote_session_id);
             set("LOOM_REMOTE_SESSION_ID", *remote_session_id);
+            set("CC_REMOTE_SESSION_ID", *remote_session_id); // backwards compat
         }
         if (secret.use_code_sessions) {
             set("LOOM_USE_CODE_SESSIONS", *secret.use_code_sessions ? "true" : "false");

@@ -35,7 +35,7 @@ namespace detail {
     /// Base URL of the configuration documentation site.
     ///
     /// Empty by default: this project ships no documentation site, and a
-    /// relative path is not a usable link. Set CC_LOOM_DOCS_BASE (or point it
+    /// relative path is not a usable link. Set LOOM_DOCS_BASE (or point it
     /// at your own docs) to turn doc links back on.
     [[nodiscard]] inline std::string_view documentation_base() {
         if (const char* base = std::getenv("LOOM_DOCS_BASE"); base && *base) {

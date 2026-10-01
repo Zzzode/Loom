@@ -233,8 +233,8 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
 }
 [[nodiscard]] bool is_fork_subagent_enabled() {
     if (env_truthy("FORK_SUBAGENT")) {
-        if (env_truthy("CC_COORDINATOR_MODE")) return false;
-        if (env_truthy("CC_NON_INTERACTIVE")) return false;
+        if (env_truthy("LOOM_COORDINATOR_MODE") || env_truthy("CC_COORDINATOR_MODE")) return false;
+        if (env_truthy("LOOM_NON_INTERACTIVE") || env_truthy("CC_NON_INTERACTIVE")) return false;
         return true;
     }
     return false;

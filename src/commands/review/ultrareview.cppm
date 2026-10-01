@@ -250,8 +250,13 @@ struct ReviewPlan {
 
     // GrowthBook check via the shared GrowthBookClient singleton interface
     // (the get_feature_value method looks up tengu_review_bughunter_config.enabled)
-    // We expose a fallback: the env var CC_ULTRAREVIEW=1 can force it on.
-    if (const char* env = std::getenv("CC_ULTRAREVIEW")) {
+    // We expose a fallback: the env var LOOM_ULTRAREVIEW=1 (or the legacy
+    // CC_ULTRAREVIEW=1) can force it on.
+    if (const char* env = std::getenv("LOOM_ULTRAREVIEW")) {
+        std::string_view sv(env);
+        if (sv == "1" || sv == "true" || sv == "yes") return true;
+    }
+    if (const char* env = std::getenv("CC_ULTRAREVIEW")) { // backwards compat
         std::string_view sv(env);
         if (sv == "1" || sv == "true" || sv == "yes") return true;
     }

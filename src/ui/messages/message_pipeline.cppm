@@ -437,7 +437,7 @@ match_tool_tag(std::string_view text) noexcept {
 // ─── Stage 5 TOOL_RESULT_AUGMENT ────────────────────────────────────────────
 //
 // Augment fields beyond what QueryEngine returns:
-//   * truncated   : bool   (result bytes > CC_MAX_TOOL_PREVIEW_BYTES)
+//   * truncated   : bool   (result bytes > kMaxToolPreviewBytes)
 //   * error_code  : int    (parsed from "Error 123:" or exit-code prefix)
 //   * preview     : string (first 200 chars / first non-empty line, collapse WS)
 //

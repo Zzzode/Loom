@@ -204,8 +204,8 @@ auto create_ingress_from_environment() -> std::expected<bool, std::string> {
         "LOOM_SESSION_INGRESS_URL",
     });
     auto session_id = detail::first_env({
-        "CC_REMOTE_SESSION_ID",
         "LOOM_REMOTE_SESSION_ID",
+        "CC_REMOTE_SESSION_ID", // backwards compat
     });
     auto auth_token = detail::env_value("LOOM_SESSION_ACCESS_TOKEN");
     auto worker_epoch = detail::env_int64("LOOM_WORKER_EPOCH");

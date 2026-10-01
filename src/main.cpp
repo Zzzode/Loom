@@ -838,9 +838,8 @@ std::string text_from_assistant_message(const loom::core::AssistantMessage& mess
 std::string headless_session_id(const CliOptions& opts) {
     if (opts.session_id && !opts.session_id->empty()) return *opts.session_id;
     if (opts.resume_session_id && !opts.resume_session_id->empty()) return *opts.resume_session_id;
-    if (auto value = env_string("CC_REMOTE_SESSION_ID")) return *value;
     if (auto value = env_string("LOOM_REMOTE_SESSION_ID")) return *value;
-    if (auto value = env_string("LOOM_SESSION_ID")) return *value;
+    if (auto value = env_string("CC_REMOTE_SESSION_ID")) return *value; // backwards compat
     if (auto value = env_string("LOOM_SESSION_ID")) return *value;
     return "headless-session";
 }

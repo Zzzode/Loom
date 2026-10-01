@@ -489,8 +489,11 @@ public:
         // duplex pipe is a single socketpair-backed FILE*, so without an
         // explicit redirect the server's stderr (diagnostics/logs) is merged
         // into the stream and corrupts JSON-RPC framing. Redirect to a log
-        // file when CC_LSP_LOG is set, otherwise discard.
-        if (const char* lsp_log = std::getenv("CC_LSP_LOG")) {
+        // file when LOOM_LSP_LOG (or legacy CC_LSP_LOG) is set, otherwise
+        // discard.
+        const char* lsp_log = std::getenv("LOOM_LSP_LOG");
+        if (!lsp_log) lsp_log = std::getenv("CC_LSP_LOG"); // backwards compat
+        if (lsp_log) {
             full_cmd += " 2>>";
             full_cmd += lsp_log;
         } else {

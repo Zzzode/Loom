@@ -11,14 +11,14 @@ import std;
 
 import loom.types.types;
 import loom.commands.command;
-import loom.vim.vim_types;  // canonical VimMode (cc_vim target)
+import loom.vim.vim_types;  // canonical VimMode (loom_vim target)
 
 export namespace loom::commands {
 
 using namespace loom::core;
 
 // Canonical VimMode — imported from loom::vim (vim/vim_types.cppm).
-// Lives in cc_vim to avoid circular deps.
+// Lives in loom_vim to avoid circular deps.
 // TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
 // This replaces the previous local VimModeState enum { Normal, Insert, Visual,
 // Command } that conflicted with other implementations.

@@ -4,7 +4,7 @@
 ///
 /// Faithful TS port of BashTool.tsx UI methods.
 ///
-/// MODULE:   cc.ui.tools.bash
+/// MODULE:   loom.ui.tools.bash
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

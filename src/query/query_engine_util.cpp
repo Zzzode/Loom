@@ -1,4 +1,4 @@
-// Implementation unit for cc.query.query_engine — the single out-of-line
+// Implementation unit for loom.query.query_engine — the single out-of-line
 // definition of the shared ID/jitter utilities. Their function-local
 // thread_local RNGs stay INSIDE these functions on purpose: promoting them
 // to namespace scope would risk static-initialization-order fiasco and

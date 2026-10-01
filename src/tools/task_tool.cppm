@@ -32,7 +32,7 @@ constexpr auto task_status_name(TaskStatus s) -> std::string_view {
 
 // Agent specialization types for task execution. Named TaskAgentType: the
 // unqualified loom::tools::AgentType spelling belongs to the agent DTO leaf
-// cc.tools.agent_types (Explore/Plan/Verify/...), and the two attached
+// loom.tools.agent_types (Explore/Plan/Verify/...), and the two attached
 // enums could never be imported by one translation unit together.
 enum class TaskAgentType {
     Search,

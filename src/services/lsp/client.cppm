@@ -99,7 +99,7 @@ struct LocationLink {
 };
 
 // Local LSP diagnostic transport struct. Renamed from `Diagnostic` to avoid
-// colliding with cc.services.lsp.diagnostic_registry's exported
+// colliding with loom.services.lsp.diagnostic_registry's exported
 // loom::services::lsp::Diagnostic (both modules export into the same namespace).
 // TS REF: vscode-languageserver-protocol Diagnostic (raw client-side shape)
 struct LspClientDiagnostic {

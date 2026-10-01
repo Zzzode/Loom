@@ -9,7 +9,7 @@
 // composition root, never a direct field reach-up.
 //
 // Import discipline (enforced by `graph_check.py --store-lint`): a store
-// module's cc.ui.* imports target only areas ranked below screens
+// module's loom.ui.* imports target only areas ranked below screens
 // (UI9_RANK < 10). dialogs (9) is downward-legal, so the concrete
 // by-value DialogQueue / DialogRendererRegistry fields recreate no
 // up-edge.
@@ -25,7 +25,7 @@ export namespace loom::ui::repl_screen {
 
 /// RFC 0002 F3 store — dialog state (overlay dialogs, inline panels,
 /// wizard/trust component handles, the M7 dialog queue + renderer
-/// registry), sharded out of ReplScreenState. Homed in cc.ui.screens
+/// registry), sharded out of ReplScreenState. Homed in loom.ui.screens
 /// (rank 10): the concrete cross-area field types (DialogQueue,
 /// DialogRendererRegistry) live in dialogs (rank 9), so by-value fields
 /// recreate no up-edge. The component handles are std::shared_ptr<void>

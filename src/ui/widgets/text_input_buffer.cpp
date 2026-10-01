@@ -1,4 +1,4 @@
-// text_input_buffer.cpp - impl unit for cc.ui.widgets.text_input
+// text_input_buffer.cpp - impl unit for loom.ui.widgets.text_input
 // (RFC 0001 Phase C batch 8). TextInputImpl ctor and the editing / buffer /
 // history / suggestion core: text mutation, cursor/selection moves, undo
 // stack, history navigation, paste (with the 10k truncation preview path),
@@ -35,7 +35,7 @@ namespace {
 //
 // RFC 0001 Phase C batch 8: demoted from a private TextInputImpl member (and
 // its TruncatedPasteResult alias) to this file-local free function so the
-// primary interface no longer names cc.text.parse_references. paste_text is
+// primary interface no longer names loom.text.parse_references. paste_text is
 // its only caller; maybe_apply_input_truncation calls the shared utility
 // directly, as it always did.
 loom::utils::TruncatedPasteResult truncate_paste_result(

@@ -1,10 +1,10 @@
-// markdown_render_impl.cpp - impl unit for cc.ui.visual.markdown (RFC 0001
+// markdown_render_impl.cpp - impl unit for loom.ui.visual.markdown (RFC 0001
 // Phase C batch 6). Holds the FTXUI block/inline renderers: render_inlines,
 // render_heading, the depth numbering helpers (number_to_letter,
 // number_to_roman, get_list_number - in the pre-existing nested
 // loom::ui::detail::detail namespace), render_ulist/olist/blockquote/table/hr.
 // render_code_block lives in markdown_render_code_impl.cpp (it pulls in
-// cc.ui.visual.code_highlight).
+// loom.ui.visual.code_highlight).
 module;
 
 #include <ftxui/dom/elements.hpp>

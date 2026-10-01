@@ -3,7 +3,7 @@
 ///
 /// Tool dispatch needs concrete backends that live above the tools layer
 /// (lifted LSP/MCP/computer-use tools, the Agent tool, MCP connectivity), but
-/// cc_tools cannot depend on cc_orchestration (rank 8 -> rank 9 would be an
+/// loom_tools cannot depend on loom_orchestration (rank 8 -> rank 9 would be an
 /// upward edge). The concrete backends are installed once at process startup
 /// via loom::orchestration::install_runtime_backends() and acquired through the
 /// accessors declared below.
@@ -28,8 +28,8 @@
 /// NOT live here: its signature names loom::services::mcp::McpServerSnapshot,
 /// and naming a services type from this rank-8 port would recreate a
 /// tools->services area edge (the post-B15 target graph has zero). The sink
-/// stays with the lifted cc.orchestration.tools.mcp module, where importing
-/// cc.services.mcp.* is a rank-9 -> rank-7 downward edge. No raw pointer or
+/// stays with the lifted loom.orchestration.tools.mcp module, where importing
+/// loom.services.mcp.* is a rank-9 -> rank-7 downward edge. No raw pointer or
 /// type-erased snapshot ever crosses this seam.
 module;
 
@@ -40,7 +40,7 @@ import std;
 import loom.types.types;
 import loom.types.tool_types;
 // The surviving AgentToolFactory alias names loom::core::ITool and
-// loom::core::ToolRegistry, both `class` declarations in cc.tools.tool that
+// loom::core::ToolRegistry, both `class` declarations in loom.tools.tool that
 // graph_check's textual symbol harvest does not see; the pre-C3
 // ToolDefinition evidence left with the deleted MCP provider alias.
 import loom.tools.tool;               // arch-check: keep-import
@@ -63,7 +63,7 @@ using RuntimeToolExecutor =
         const loom::core::ToolInput&)>;
 
 /// 5-arg Agent tool factory — the exact make_agent_tool shape owned by the
-/// lifted cc.orchestration.agent module:
+/// lifted loom.orchestration.agent module:
 ///   (AgentConfig, depth, ToolRegistry*, live permission checker,
 ///    background-hook-valid flag) -> owned ITool.
 using AgentToolFactory = std::function<std::unique_ptr<loom::core::ITool>(

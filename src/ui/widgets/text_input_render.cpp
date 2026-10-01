@@ -1,7 +1,7 @@
-// text_input_render.cpp - impl unit for cc.ui.widgets.text_input
+// text_input_render.cpp - impl unit for loom.ui.widgets.text_input
 // (RFC 0001 Phase C batch 8). All FTXUI rendering: TextInputImpl::Render and
 // the input-area caret/multiline/selection painter (incl. the [Image #N]
-// chip inversion that needs cc.text.parse_references), the suggestions
+// chip inversion that needs loom.text.parse_references), the suggestions
 // dropdown, reverse-search panel, paste-preview overlay, the two public
 // render primitives (RenderInputAreaPub / RenderSuggestionsFromListPub),
 // cursor_display_col, and the free TextInput() component factory.

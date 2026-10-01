@@ -1,4 +1,4 @@
-// swarm_backends_detect.cpp — implementation unit for cc.teams.swarm.backends
+// swarm_backends_detect.cpp — implementation unit for loom.teams.swarm.backends
 // (RFC 0001 Phase C batch 10). EnvironmentDetection and TeammateModeSnapshot:
 // every member body plus the 7 + 4 out-of-line static data definitions
 // (formerly static-inline in the class). import std supplies std::getenv.

@@ -41,7 +41,7 @@ int main() {
     std::puts("=== Phase 3-B/C E2E: Bash x Files ===");
 
     // 1. Scratch dir.
-    const fs::path scratch = fs::temp_directory_path() / "cc_phase3_e2e";
+    const fs::path scratch = fs::temp_directory_path() / "loom_phase3_e2e";
     std::error_code ec;
     fs::remove_all(scratch, ec);
     fs::create_directories(scratch / "data", ec);

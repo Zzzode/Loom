@@ -3,7 +3,7 @@
 /// Export conversation in Markdown / JSON / JSONL / Transcript formats,
 /// with filters (system/tool/thinking/user+assistant), truncation options,
 /// and destinations (file / stdout / clipboard). Reuses Message types from
-/// cc.types.types (FTXUI rendering DEFERRED to Phase 4).
+/// loom.types.types (FTXUI rendering DEFERRED to Phase 4).
 module;
 
 #include <cctype>

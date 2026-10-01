@@ -7,7 +7,7 @@ export module loom.tools.agent_runtime;
 import std;
 
 import loom.serdes.json;
-// cc.teams.team_helpers is no longer named by any declaration in this
+// loom.teams.team_helpers is no longer named by any declaration in this
 // interface (its only caller, has_teammate_identity, moved to
 // agent_runtime_builtin_impl.cpp), but removing this import makes
 // src/ui/app/app_team.cpp fail with "call to 'operator new' is ambiguous"
@@ -331,7 +331,7 @@ enum class ResolutionError {
 // Rich-result wrapper around resolve_requested_agent_type: returns the matched
 // AgentDefinition directly, or a ResolutionError explaining why resolution failed.
 //
-// This is the C++-idiomatic public API consumed by cc.tools.agent_type_resolution.
+// This is the C++-idiomatic public API consumed by loom.tools.agent_type_resolution.
 
 [[nodiscard]] std::expected<AgentDefinition, ResolutionError> resolve_agent_type(
     std::string_view id,

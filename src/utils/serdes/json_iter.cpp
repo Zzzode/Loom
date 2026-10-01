@@ -1,4 +1,4 @@
-// Implementation unit for cc.serdes.json — the four type-erased iterator
+// Implementation unit for loom.serdes.json — the four type-erased iterator
 // walker bodies behind the inline iter/iter_obj template shells (RFC 0001
 // Phase C batch 10). The textual <yyjson.h> lives here, not in the module
 // interface.

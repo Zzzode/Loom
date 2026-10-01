@@ -2,9 +2,9 @@
 /// @brief Neutral vocabulary + erased factory registry for feature-owned
 /// dialogs (RFC 0002 F2, row 6 registry inversion).
 ///
-/// MODULE:   cc.ui.foundation.feature_dialog_protocol
+/// MODULE:   loom.ui.foundation.feature_dialog_protocol
 /// AREA:     foundation (UI9 rank 2 — below both features(8) and dialogs(9)).
-/// IMPORTS:  std + textual FTXUI only. NO cc.* module imports, by design:
+/// IMPORTS:  std + textual FTXUI only. NO loom.* module imports, by design:
 ///           this leaf is the seam that lets the features area obtain dialog
 ///           components without importing the dialogs area (features ->
 ///           dialogs was the last UI9 back edge).
@@ -64,8 +64,8 @@ struct FeatureWizardRequest {
     std::vector<FeatureWizardStep> steps;
 };
 
-/// Neutral trust decision. Mirrors cc.ui.dialogs.trust_dialog::TrustChoice
-/// (== cc.ui.dialogs.trust_utils::TrustChoice) without naming it, so the
+/// Neutral trust decision. Mirrors loom.ui.dialogs.trust_dialog::TrustChoice
+/// (== loom.ui.dialogs.trust_utils::TrustChoice) without naming it, so the
 /// features area never imports trust_dialog. The composition root maps
 /// td::TrustChoice <-> this enum 1:1.
 enum class TrustChoice : std::uint8_t {

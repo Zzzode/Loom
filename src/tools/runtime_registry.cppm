@@ -2,10 +2,10 @@
 /// @brief Runtime registration for all migrated tools exposed to the query engine.
 ///
 /// Declaration-only module interface. All non-trivial bodies live in module
-/// implementation units beginning `module cc.tools.runtime_registry;`
+/// implementation units beginning `module loom.tools.runtime_registry;`
 /// (runtime_registry_{json,executors,native_agents,computer_use,skills,
 /// dispatch,team_dispatch,register}.cpp, wired via a separate PRIVATE
-/// target_sources block in cc_tools.cmake — never the FILE_SET CXX_MODULES
+/// target_sources block in loom_tools.cmake — never the FILE_SET CXX_MODULES
 /// list). The constexpr function-pointer aliases, the inline team-artifact
 /// wrappers that take function-pointer addresses, and the mutable
 /// computer-use testing override variables stay in this interface.
@@ -268,9 +268,9 @@ constexpr auto collect_team_native_agents = &runtime_team_shared::collect_team_n
 [[nodiscard]] Result<ToolResult> execute_web_browser(const ToolInput& input);
 
 // RFC-0001 B15: the computer-use parse/backend/collector declarations and
-// execute_computer_use moved to cc.orchestration.runtime_backends; dispatch
+// execute_computer_use moved to loom.orchestration.runtime_backends; dispatch
 // reaches the single computer_use backend (covering BOTH 'computer_use' and
-// the native 'computer' name) through cc.tools.runtime_backends.port. These
+// the native 'computer' name) through loom.tools.runtime_backends.port. These
 // two mutable inline overrides stay here: they are named by the inline test
 // setters below and by the moved orchestration implementation unit (which
 // imports this module for them and for the json_* helpers).
@@ -280,9 +280,9 @@ inline std::optional<loom::core::computer_use::InputProvider> computer_use_input
 } // namespace loom::tools::detail
 
 // RFC-0001 B15: the four computer-use test setters keep their strong symbols
-// IN cc_tools. Their trivial bodies are inline in this interface and assign
+// IN loom_tools. Their trivial bodies are inline in this interface and assign
 // the exported inline override variables above; the production computer-use
-// implementation unit (now in cc_orchestration) reads those same variables.
+// implementation unit (now in loom_orchestration) reads those same variables.
 inline void set_runtime_computer_use_capture_provider_for_testing(
     loom::core::computer_use::CaptureProvider provider) {
     detail::computer_use_capture_provider_override = std::move(provider);
@@ -393,7 +393,7 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
 void register_runtime_tools(loom::core::ToolRegistry& registry);
 
 // RFC-0001 B15: collect_mcp_tool_definitions / collect_mcp_input_schemas
-// moved to cc.orchestration.runtime_backends (exported in loom::tools there);
+// moved to loom.orchestration.runtime_backends (exported in loom::tools there);
 // their data comes from the lifted NativeMcpRuntime and reaches main/server
 // via the orchestration module, not this rank-8 registry.
 

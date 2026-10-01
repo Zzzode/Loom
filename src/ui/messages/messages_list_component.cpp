@@ -1,4 +1,4 @@
-// messages_list_component.cpp - impl unit for cc.ui.messages.messages_list
+// messages_list_component.cpp - impl unit for loom.ui.messages.messages_list
 // (RFC 0001 Phase C batch 7). MessagesListComponent's ctor, OnEvent (the key
 // function), Render and private selection/cache helpers, plus the
 // MakeMessagesList factory - all out-of-line here so each emits once as a

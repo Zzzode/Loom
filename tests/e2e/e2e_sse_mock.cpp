@@ -39,7 +39,7 @@ static inline std::string_view trim(std::string_view s) {
     return s;
 }
 
-/// Reference SSE event splitter (mirrors cc.services.api.sse::SseClient::FeedParser).
+/// Reference SSE event splitter (mirrors loom.services.api.sse::SseClient::FeedParser).
 /// Returns number of complete events parsed; also fills *out_delta_accum and
 /// *out_delta_count if non-null.
 static int ParseSseRef(std::string_view bytes,

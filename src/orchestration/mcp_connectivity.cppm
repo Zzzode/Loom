@@ -3,7 +3,7 @@
 ///
 /// Consumes the B6 NativeMcpRuntime snapshot sink
 /// (loom::tools::set_mcp_snapshots_sink) and projects every emitted snapshot
-/// vector into the EXISTING cc.hooks.remaining_notifs MCP connectivity slot
+/// vector into the EXISTING loom.hooks.remaining_notifs MCP connectivity slot
 /// via set_raw_mcp_connectivity, so the current get_mcp_connectivity_status()
 /// / has_mcp_connectivity_issues() readers see the data unchanged.
 ///
@@ -12,7 +12,7 @@
 /// NativeMcpRuntime::all_statuses) and the hook-local mapper/services
 /// imports were deleted. The sink installed here is now the ONLY writer of
 /// the hook connectivity slot — the hook module itself is pure data/slot
-/// with zero cc.services imports.
+/// with zero loom.services imports.
 ///
 /// Single-sink design: one std::function installed exactly once at the
 /// composition root (main()). The hook gains no provider/refresh API —
@@ -24,7 +24,7 @@ module;
 
 export module loom.orchestration.mcp_connectivity;
 
-// graph_check parser hazard: qualify cc.tools symbols WITHOUT a leading "::"
+// graph_check parser hazard: qualify loom.tools symbols WITHOUT a leading "::"
 // (write loom::tools::set_mcp_snapshots_sink, never ::loom::tools::...). A
 // leading-colon chain defeats the namespace-path evidence heuristic and
 // makes this import look like a NEW dead import. Un-prefixed loom:: qualifiers

@@ -10,7 +10,7 @@ import loom.config.config;
 import loom.hooks.tool_permissions;
 import loom.query.assembly;
 // RFC-0001 cc-sdk phase 3 (§2.1): the inline execute_native_query adapter
-// below references cc.query.assembly types (AssemblyHandle PIMPL ->
+// below references loom.query.assembly types (AssemblyHandle PIMPL ->
 // ToolRegistry/QueryEngine/AgentLivePermissionCheckFn). With reduced BMI,
 // server_routes's BMI carries those type references; consumers (main.cpp,
 // test_services, …) get only direct-import BMIs on their compile line, so
@@ -302,7 +302,7 @@ namespace detail {
         return lines;
     }
 
-    // Prior-message seeding moved to cc.query.assembly (parse_session_message_value
+    // Prior-message seeding moved to loom.query.assembly (parse_session_message_value
     // + restore_conversation, the real resume path) — the server adapter passes
     // prior_message_lines through AssemblyConfig unchanged (RFC 0001 cc-sdk
     // phase 3, §2.1 F4).
@@ -647,7 +647,7 @@ namespace detail {
 		    }
 
     // The AgentLivePermissionCheck <-> ToolPermissionHook bridge moved to
-    // cc.query.assembly (query_assembly.cpp, internal) — assemble() wires it
+    // loom.query.assembly (query_assembly.cpp, internal) — assemble() wires it
     // as the registry's permission_check when the caller supplies an ask_user
     // callback, so the re-expressed route keeps its current permission
     // behaviour (RFC 0001 cc-sdk phase 3, §2.1).
@@ -656,7 +656,7 @@ namespace detail {
 			        const DirectQueryRequest& request
 		    ) {
         // Test seam: the query_executor_override short-circuit stays in the
-        // adapter (a cc.server-local test seam), AHEAD of assemble(...) —
+        // adapter (a loom.server-local test seam), AHEAD of assemble(...) —
         // the assembly itself knows nothing of it (§2.1).
         if (query_executor_override) return (*query_executor_override)(request);
 
@@ -667,7 +667,7 @@ namespace detail {
         const auto& settings = manager.settings();
 
         // Resolve the engine config through the shared resolver (§2.1) — the
-        // recipe's settings->config mapping lives in cc.query.assembly now,
+        // recipe's settings->config mapping lives in loom.query.assembly now,
         // not in this adapter. The server passes only the per-request model
         // override today. The empty-api_key hard-error stays here (the
         // resolver does not enforce a key policy, so a loopback/gateway

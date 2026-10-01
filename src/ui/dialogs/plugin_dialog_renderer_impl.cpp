@@ -3,7 +3,7 @@
 ///
 /// This file contains the ACTUAL implementation (holder, data preparation,
 /// view-state derivation, renderer lambda).  It is a module implementation
-/// unit (`module cc.ui.dialogs.plugin_dialog_renderer;` without `export`),
+/// unit (`module loom.ui.dialogs.plugin_dialog_renderer;` without `export`),
 /// so its heavy imports (plugin_dialog, plugin_ui_data, plugin_helpers,
 /// plugin_marketplace, manage_plugins) have their own independent
 /// source-location budget.  Importers of the module interface never see

@@ -4,7 +4,7 @@
 /// Call `register_builtin_tool_uis()` once at startup to populate the
 /// global tool UI registry with all built-in tool UI renderers.
 ///
-/// MODULE:   cc.ui.tools.init
+/// MODULE:   loom.ui.tools.init
 /// LICENCE:  Exported.  Imported by app initialization code.
 module;
 

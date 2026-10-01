@@ -1,14 +1,14 @@
 /// @file test_fix_notifs.cpp
 /// @brief Coverage for the MCP-connectivity bridge in
-///        cc.orchestration.mcp_connectivity (to_hook_status / project_connectivity
+///        loom.orchestration.mcp_connectivity (to_hook_status / project_connectivity
 ///        / wire_mcp_connectivity, the sole writer of the hook MCP slot since
 ///        the B8 cut) and for the real-backend teammate bridge still living in
-///        cc.hooks.remaining_notifs:
+///        loom.hooks.remaining_notifs:
 ///          * inject_teammate_shutdowns_from_tasks<>() — task list -> slot
 ///
 /// The teammate bridge is a template that takes the terminal-state test and
 /// cause mapping as callables, so it can be exercised here with a fake task
-/// struct (no cc.tasks dependency required).
+/// struct (no loom.tasks dependency required).
 
 #include <gtest/gtest.h>
 
@@ -78,7 +78,7 @@ notif::TeammateShutdownCause to_cause(const FakeTask& t) {
 // ─── MCP status mapping ─────────────────────────────────────────────────────
 
 // RFC-0001 B8: the hook-local mapper was deleted with the direct
-// hooks->services leg; cc.orchestration.mcp_connectivity::to_hook_status is now
+// hooks->services leg; loom.orchestration.mcp_connectivity::to_hook_status is now
 // the only ConnectionStatus -> McpServerStatus mapping.
 
 TEST(FixNotifs, McpStatusMappingConnected) {

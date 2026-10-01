@@ -1,7 +1,7 @@
 /// @file tool_ui_agent.cppm
 /// @brief Agent tool UI — userFacingName, renderToolUseMessage, etc.
 ///
-/// MODULE:   cc.ui.tools.agent
+/// MODULE:   loom.ui.tools.agent
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

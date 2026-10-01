@@ -1,5 +1,5 @@
 /// @file test_wire_backends.cpp
-/// @brief Tests for the wire-protocol backend seam (cc.query.wire_protocol)
+/// @brief Tests for the wire-protocol backend seam (loom.query.wire_protocol)
 ///        and its two implementations.
 ///
 /// The seam exists so the agent loop can talk to either an Anthropic-shaped

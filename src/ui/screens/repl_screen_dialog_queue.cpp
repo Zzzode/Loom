@@ -1,4 +1,4 @@
-// repl_screen_dialog_queue.cpp - impl unit for cc.ui.screens.repl_screen
+// repl_screen_dialog_queue.cpp - impl unit for loom.ui.screens.repl_screen
 // (RFC 0001 Phase C batch 9). the whole dialog_queue_render namespace: slot context + standalone /
 // modal / overlay / bottom renderers, priority event dispatch and layer
 // composition.

@@ -831,7 +831,7 @@ inline void drain_all_background_tasks() {
 /// Classify a command by type.
 ///
 /// Dangerous-pattern detection is now delegated to
-/// cc.tools.destructive_command_warning which has a richer regex-based
+/// loom.tools.destructive_command_warning which has a richer regex-based
 /// table covering git, file-deletion, database, and infrastructure ops.
 [[nodiscard]] CommandType classify_command(std::string_view command) noexcept {
     std::string_view base_cmd = command;

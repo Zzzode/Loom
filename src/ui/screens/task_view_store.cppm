@@ -9,7 +9,7 @@
 // composition root, never a direct field reach-up.
 //
 // Import discipline (enforced by `graph_check.py --store-lint`): a store
-// module's cc.ui.* imports target only areas ranked below screens
+// module's loom.ui.* imports target only areas ranked below screens
 // (UI9_RANK < 10). features (8) is downward-legal, so the concrete
 // by-value field types (AgentCardData, LiveTeammate) recreate no up-edge.
 module;
@@ -34,7 +34,7 @@ enum class SpinnerMode : std::uint8_t {
 
 /// RFC 0002 F3 store — task-view state (spinner mode, task notifications,
 /// agent/teammate live state), sharded out of ReplScreenState. Homed in
-/// cc.ui.screens (rank 10): the concrete cross-area field types
+/// loom.ui.screens (rank 10): the concrete cross-area field types
 /// (AgentCardData, LiveTeammate) live in features (rank 8), so by-value
 /// fields recreate no up-edge. UI-thread-affined plain data — see the
 /// file header for the threading and import rules.

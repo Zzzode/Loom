@@ -1,7 +1,7 @@
 /// @file file_access_port.cppm
 /// @brief File-access hook port — skills-owned callback leaf.
 /// The file tools depend on this rank-5 contract instead of the concrete
-/// cc.skills.skill module, breaking the tools<->skills module cycle.
+/// loom.skills.skill module, breaking the tools<->skills module cycle.
 module;
 
 export module loom.skills.file_access.port;
@@ -14,13 +14,13 @@ export namespace loom::skills {
 // File Access Hook - cross-module skill discovery trigger
 // ============================================================
 //
-// The file tools (cc_tools) need to trigger skill discovery after
-// read/write/edit operations, but cc_tools cannot depend on cc_skills
+// The file tools (loom_tools) need to trigger skill discovery after
+// read/write/edit operations, but loom_tools cannot depend on loom_skills
 // (which owns load_skills_dir / SkillRegistry) due to a circular
-// dependency: cc_skills already links cc_tools.
+// dependency: loom_skills already links loom_tools.
 //
-// Solution: a lightweight callback registered in cc_skills_core.
-// The cc_skills module sets the hook at startup; file tools call
+// Solution: a lightweight callback registered in loom_skills_core.
+// The loom_skills module sets the hook at startup; file tools call
 // notify_file_access() which invokes the hook if set.
 
 /// Hook type: called after a file is read/written/edited.
@@ -38,7 +38,7 @@ namespace detail {
 }
 } // namespace detail
 
-/// Register the file-access hook. Called by cc_skills at init time.
+/// Register the file-access hook. Called by loom_skills at init time.
 /// Pass nullptr to unregister.
 inline void set_file_access_hook(FileAccessHook hook) {
     detail::file_access_hook() = std::move(hook);

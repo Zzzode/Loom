@@ -1,4 +1,4 @@
-// messages_list_search.cpp - impl unit for cc.ui.messages.messages_list
+// messages_list_search.cpp - impl unit for loom.ui.messages.messages_list
 // (RFC 0001 Phase C batch 7). The std::visit payload_preview and the rich
 // two-tier extract_search_text. This is the DEDICATED TU for the ~20-module
 // MessageRowPayload variant closure so it lands only once in the BMI graph.

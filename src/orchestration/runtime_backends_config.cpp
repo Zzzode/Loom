@@ -1,4 +1,4 @@
-// Implementation unit for cc.orchestration.runtime_backends — the c13b
+// Implementation unit for loom.orchestration.runtime_backends — the c13b
 // structured 'config' runtime tool backend. A fresh ConfigManager is built
 // PER CALL (path/env resolution happens at call time) and every load is
 // quiet so the in-process TUI never paints a §A stderr diagnostic. Outputs

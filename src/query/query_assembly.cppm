@@ -18,7 +18,7 @@
 /// `handle.engine().query(...)` / `stream_query(...)` themselves.
 ///
 /// All non-trivial bodies live in the `query_assembly.cpp` implementation
-/// unit (the same discipline as cc.query.query_engine): this interface keeps
+/// unit (the same discipline as loom.query.query_engine): this interface keeps
 /// only the configuration structs, the resolver/assemble declarations, and
 /// the opaque AssemblyHandle PIMPL declaration.
 module;
@@ -34,7 +34,7 @@ import loom.config.config;     // loom::core::Settings
 import loom.query.query_engine; // loom::core::QueryEngineConfig, QueryEngine
 import loom.serdes.json;       // loom::utils::json::JsonVal (parse_session_message_value)
 // ToolRegistry is needed for the register_extra_tools field type; the
-// detector does not harvest the class name past cc.tools.tool's
+// detector does not harvest the class name past loom.tools.tool's
 // concept/requires blocks (same marker as runtime_message_delivery.cppm).
 import loom.tools.tool;  // arch-check: keep-import
 import loom.hooks.tool_permissions; // loom::hooks::AskUserResponseFn
@@ -121,7 +121,7 @@ private:
 
 /// Parse one messages.jsonl document into a loom::core::Message. The same
 /// reader assemble() uses for prior_message_lines, exported so
-/// cc.sdk.harness::resume() can restore a prior session without
+/// loom.sdk.harness::resume() can restore a prior session without
 /// re-implementing the format (RFC 0001 cc-sdk phase 3, §2.3 resume path).
 /// This is a role/content-string-only reader: it drops tool_use/
 /// tool_result/image blocks, so a session that used tools cannot be

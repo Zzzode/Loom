@@ -5,7 +5,7 @@ module;
 /// @file tool_ui_longtail.cppm
 /// @brief Long-tail tool UIs — all remaining tools in one module.
 ///
-/// MODULE:   cc.ui.tools.longtail
+/// MODULE:   loom.ui.tools.longtail
 /// LICENCE:  Exported.  Imported by tool UI registry initialization.
 ///
 /// These are the less-frequently-used tools that don't warrant their own

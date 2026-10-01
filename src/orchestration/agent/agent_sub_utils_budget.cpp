@@ -1,4 +1,4 @@
-// Implementation unit for cc.orchestration.agent.utils — GrowthBook env overrides,
+// Implementation unit for loom.orchestration.agent.utils — GrowthBook env overrides,
 // threshold maps, tool-result candidate grouping, persisted-output
 // replacement writing, and budget application. The template
 // with_agent_growthbook_env_overrides stays defined in the interface and is

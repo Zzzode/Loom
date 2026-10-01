@@ -2,7 +2,7 @@
 /// @brief Core dialog framework: type-safe dialog types, priority queue,
 ///        renderer registry, and slot-based rendering dispatch.
 ///
-/// MODULE:   cc.ui.dialogs.system
+/// MODULE:   loom.ui.dialogs.system
 /// LICENCE:  Exported.  Imported by REPL screen, dialog implementations,
 ///           and engine-side dialog lifecycle managers.
 ///

@@ -1,7 +1,7 @@
 /// @file tool_ui_web_fetch.cppm
 /// @brief WebFetch tool UI — userFacingName, renderToolUseMessage, etc.
 ///
-/// MODULE:   cc.ui.tools.web_fetch
+/// MODULE:   loom.ui.tools.web_fetch
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

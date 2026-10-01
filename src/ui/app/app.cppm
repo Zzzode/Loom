@@ -28,7 +28,7 @@ import loom.ui.dialogs.system;
 
 export namespace loom::ui {
 
-// PIMPL backing type, defined in the internal partition cc.ui.app.app:impl.
+// PIMPL backing type, defined in the internal partition loom.ui.app.app:impl.
 // Forward-declared here so the interface can hold a unique_ptr without
 // importing the heavy modules its member objects require.
 struct AppImpl;
@@ -50,18 +50,18 @@ struct TeammateStateDeleter {
 };
 
 // Nested PIMPL for settings (disk load + file-watch). Defined in
-// app_settings.cpp; keeps cc.config.settings_manager out of the :impl BMI.
+// app_settings.cpp; keeps loom.config.settings_manager out of the :impl BMI.
 struct SettingsState;
 struct SettingsStateDeleter {
     void operator()(SettingsState* p) const noexcept;
 };
 
 // Defined in app_store_bridge.cpp; type-erased shared_ptr factory so :impl
-// never imports cc.state.{store,app_state}.
+// never imports loom.state.{store,app_state}.
 [[nodiscard]] std::shared_ptr<void> create_typed_app_store();
 
 // Plain-data projection of the AppState bridge fields, returned by
-// AppAdapter::bridge_state() so callers need not import cc.state.app_state.
+// AppAdapter::bridge_state() so callers need not import loom.state.app_state.
 struct BridgeState {
     bool enabled = false;
     bool explicit_remote = false;
@@ -71,7 +71,7 @@ struct BridgeState {
 };
 
 // SL-11: defined in app_prompt_suggestion_wiring.cpp (impl unit) to keep the
-// heavy cc.services.prompt_suggestion import out of this thin module (clang
+// heavy loom.services.prompt_suggestion import out of this thin module (clang
 // 2GB source-location budget).
 void wire_prompt_suggestion_hook(void* hooks, void* engine,
                                  std::shared_ptr<loom::ui::repl_screen::ReplScreenState> state);
@@ -160,8 +160,8 @@ private:
     // constructor body calls this; teardown goes through AppImplDeleter, so
     // neither impl unit needs AppImpl's layout.
     // Stored type-erased as void* in AppImpl; each impl unit casts back
-    // after importing the owning module (cc.query/cc.hooks/cc.commands/
-    // cc.session.app_storage), keeping those closures out of this BMI.
+    // after importing the owning module (loom.query/loom.hooks/loom.commands/
+    // loom.session.app_storage), keeping those closures out of this BMI.
     void construct_impl(void* engine, void* lifecycle_hooks,
                         void* cmd_registry, void* storage);
     void construct_teammate();
@@ -534,8 +534,8 @@ public:
     void TriggerStatuslineUpdate();
 
     // Build the statusline JSON payload / execute the user command.
-    // Out-of-line in app_constructor.cpp so cc.ui.app.statusline_runner,
-    // cc.utils.model and cc.constants stay out of this interface's BMI.
+    // Out-of-line in app_constructor.cpp so loom.ui.app.statusline_runner,
+    // loom.utils.model and loom.constants stay out of this interface's BMI.
     [[nodiscard]] std::string BuildStatuslineInputJson();
     bool ExecuteStatuslineCommand(std::string_view command,
                                   std::string json_input,

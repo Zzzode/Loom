@@ -3,13 +3,13 @@
 // fields no single store owns.
 //
 // Split from repl_screen.cppm so importers that only need the state struct
-// (cc.ui.app.app and its impl shards) do not pull the full rendering closure
+// (loom.ui.app.app and its impl shards) do not pull the full rendering closure
 // (message/dialog/widget renderers — over a hundred modules) into their BMI.
 //
 // RFC 0002 F3 Finalize: the per-store re-export shims are deleted. The seven
 // domain stores (MessagesStore, PromptStore, TaskViewStore, PermissionStore,
 // DialogStore, McpStatusStore, ChromeStore) live in their own
-// cc.ui.screens.*_store modules; this facade imports them (plain, not
+// loom.ui.screens.*_store modules; this facade imports them (plain, not
 // re-exported) because ReplScreenState holds each by value. Call sites that
 // name a store type import that store module directly — the store-placement
 // lint (graph_check.py --store-lint) enforces that only the app composition
@@ -102,14 +102,14 @@ using InputMode = loom::ui::common::PromptInputMode;
 // =========================================================
 
 /// RFC 0002 F3: StatusBarData (the status-bar projection) lives in
-/// cc.ui.screens.chrome_store (ChromeStore, imported above).
+/// loom.ui.screens.chrome_store (ChromeStore, imported above).
 
 /// Minimal Message projection for orchestration.
-/// RFC 0002 F3: MessageDisplayEntry lives in cc.ui.screens.messages_store
+/// RFC 0002 F3: MessageDisplayEntry lives in loom.ui.screens.messages_store
 /// (imported above; call sites that name it import that store directly).
 
 /// RFC 0002 F3: PermissionToolKind + PermissionRequestInfo (the permission-
-/// prompt subset, TS ToolUseConfirm) live in cc.ui.screens.permission_store
+/// prompt subset, TS ToolUseConfirm) live in loom.ui.screens.permission_store
 /// (imported above). The dead nested DialogContext bridge struct (zero type
 /// usages anywhere; repl_screen_dialog_queue.cpp notes there are ZERO writes
 /// to it) was deleted rather than moved — project convention prefers
@@ -122,14 +122,14 @@ struct ReplScreenState {
     ReplMode mode = ReplMode::Normal;
     // RFC 0002 F3: prompt-input state (input mode, stashed prompt,
     // placeholder cascade inputs, teammate prefix color) lives in
-    // cc.ui.screens.prompt_store (PromptStore).
+    // loom.ui.screens.prompt_store (PromptStore).
     PromptStore prompt_store;
     // RFC 0002 F3: task-view state (spinner mode, task notifications,
-    // agent/teammate live state) lives in cc.ui.screens.task_view_store
+    // agent/teammate live state) lives in loom.ui.screens.task_view_store
     // (TaskViewStore).
     TaskViewStore task_view_store;
     // RFC 0002 F3: message-list / scroll / transcript-chrome state lives in
-    // cc.ui.screens.messages_store (MessagesStore).
+    // loom.ui.screens.messages_store (MessagesStore).
     MessagesStore messages_store;
     bool active_local_jsx_command = false;
     std::string active_local_jsx_command_name;
@@ -183,7 +183,7 @@ struct ReplScreenState {
     // (app_version, model_display_name, billing_type, git_branch,
     // user_display_name, the feed-content vectors + show_* flags, and the
     // StatusBarData status_bar projection) lives in
-    // cc.ui.screens.chrome_store (ChromeStore).
+    // loom.ui.screens.chrome_store (ChromeStore).
     ChromeStore chrome_store;
 
     // ── P1 Footer notifications ──────────────────────────────────────
@@ -271,13 +271,13 @@ struct ReplScreenState {
     // Faithful to TS useIdeAtMentioned.ts -> inputState.insert at cursor.
     // RFC 0002 F3: the staging mutex + queue moved OUT to AppImpl; the
     // DRAINED queue lives in McpStatusStore (mcp_status_store field below,
-    // cc.ui.screens.mcp_status_store).
+    // loom.ui.screens.mcp_status_store).
     McpStatusStore mcp_status_store;
     // RFC 0002 F3: the StatusBarData status_bar projection moved to
     // ChromeStore (chrome_store field above).
     // RFC 0002 F3: permission-prompt state (PermissionToolKind + the
     // ToolUseConfirm subset PermissionRequestInfo) lives in
-    // cc.ui.screens.permission_store (PermissionStore).
+    // loom.ui.screens.permission_store (PermissionStore).
     PermissionStore permission_store;
     // Settings-driven UI configuration (mirrors AppState.settings subset
     // that the renderer needs — populated by the engine/app layer).
@@ -334,7 +334,7 @@ struct ReplScreenState {
 
     // RFC 0002 F3: dialog state (overlay dialogs, inline panels, wizard /
     // trust component handles, the M7 dialog queue + renderer registry)
-    // lives in cc.ui.screens.dialog_store (DialogStore).
+    // lives in loom.ui.screens.dialog_store (DialogStore).
     DialogStore dialog_store;
 };
 

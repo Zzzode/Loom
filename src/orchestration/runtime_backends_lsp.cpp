@@ -1,4 +1,4 @@
-// Implementation unit for cc.orchestration.runtime_backends — the lifted
+// Implementation unit for loom.orchestration.runtime_backends — the lifted
 // 'lsp' runtime tool backend. The parse/format/execute bodies moved
 // verbatim from runtime_registry_executors.cpp (RFC-0001 B15); the
 // 11-string parse_lsp_action mirror is intentionally duplicated here next

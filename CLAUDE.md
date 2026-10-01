@@ -56,15 +56,15 @@ for `.deps-cache/<dep>-src/` automatically — no flags needed when it is presen
 ## Architecture
 
 **Modules, not headers.** The tree is C++23 named modules (`export module
-cc.<area>.<thing>;`), built with `-fmodules-reduced-bmi`. Two consequences
+loom.<area>.<thing>;`), built with `-fmodules-reduced-bmi`. Two consequences
 worth internalizing:
 
 - **A module's name does not have to match its path.** `export module
-  cc.ui.design.tokens;` can live in `ui/design/tokens.cppm`. Moving a file
+  loom.ui.design.tokens;` can live in `ui/design/tokens.cppm`. Moving a file
   therefore usually needs only a `CMakeLists.txt` path update — not an import
   rewrite. This is what makes directory restructuring cheap here.
 - **Importers are found by module name, not filename.** To check whether a
-  module is used, grep for `import cc.area.thing;`, and cover `tests/` too.
+  module is used, grep for `import loom.area.thing;`, and cover `tests/` too.
 
 **Build layout.** `src/CMakeLists.txt` holds global/project setup and, in
 dependency order, one `include()` per target pulling a file from
@@ -74,8 +74,8 @@ conditional at the top are visible throughout — `add_subdirectory()` would add
 a directory scope and change evaluation order. When adding a target, add its
 file under `src/cmake/targets/` and an `include()` in the same dependency order.
 
-**`cc_ui` is an INTERFACE aggregate over ~12 area libraries
-(`cc_ui_foundation` … `cc_ui_app`), split out of the former single target
+**`loom_ui` is an INTERFACE aggregate over ~12 area libraries
+(`loom_ui_foundation` … `loom_ui_app`), split out of the former single target
 by RFC 0002 F4.** The module graph is a DAG (217 ui
 modules, zero module-level cycles). At the responsibility-directory level
 (`foundation`, `dialogs`, `messages`, …), nine areas *used to* collapse into
@@ -91,7 +91,7 @@ cycle-free. Two caveats from the single-target era still hold:
   *body*-edit fan-out: each target has its own `CXX.dd` dyndep file, so a
   body edit recompiles only that area's objects, not the whole closure. Do
   not split expecting interface-edit speedups.
-- **The single FILE_SET let clang-scan-deps resolve intra-`cc.ui.*` imports
+- **The single FILE_SET let clang-scan-deps resolve intra-`loom.ui.*` imports
   both ways.** The split uses per-target FILE_SETs with cross-area BMI
   propagation via `target_link_libraries`; this must keep clang-scan-deps
   resolving cross-area imports (verified by the dual-preset build).
@@ -104,7 +104,7 @@ cycle-free. Two caveats from the single-target era still hold:
 | `src/query/wire_*.cppm` | The wire-protocol seam. `wire_protocol.cppm` defines `WireBackend`; `wire_anthropic.cppm` and `wire_openai.cppm` implement it. The engine builds a vendor-neutral `RequestInput` and never serializes a wire format itself. |
 | `src/tools/` | Tool implementations, each with its input schema, permission model, and execution. |
 | `src/commands/` | Slash commands. Registered via `command_registry_init_*.cpp`. |
-| `src/ui/` | FTXUI interface. **Not Ink, not React** — do not port React idioms into it. Cut by responsibility: `foundation/` (tokens, theme, figures, primitives), `chrome/` (layout, renderer, terminal I/O), `widgets/` (reusable controls), `visual/` (markdown/diff rendering), `messages/`, `dialogs/`, `permissions/`, `prompt/`, `screens/`, `features/{agents,teams,tasks,plugins,mcp}/`, `tools/` (tool-UI registry), and `app/` (the top-level app orchestrator shards). Twelve `cc_ui_<area>` targets aggregated by the `cc_ui` INTERFACE library — see the build-layout note above. |
+| `src/ui/` | FTXUI interface. **Not Ink, not React** — do not port React idioms into it. Cut by responsibility: `foundation/` (tokens, theme, figures, primitives), `chrome/` (layout, renderer, terminal I/O), `widgets/` (reusable controls), `visual/` (markdown/diff rendering), `messages/`, `dialogs/`, `permissions/`, `prompt/`, `screens/`, `features/{agents,teams,tasks,plugins,mcp}/`, `tools/` (tool-UI registry), and `app/` (the top-level app orchestrator shards). Twelve `loom_ui_<area>` targets aggregated by the `loom_ui` INTERFACE library — see the build-layout note above. |
 | `src/services/` | External integrations: MCP, LSP, API clients, plugins. |
 | `src/state/` | AppState store and reducers. |
 | `src/constants/paths.cppm` | **The single source for config/memory path resolution.** Both cascades live here; delegate to it rather than hardcoding paths. |

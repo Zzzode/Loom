@@ -1,4 +1,4 @@
-// app_testing_seams.cpp — plain impl unit for cc.ui.app.app. Owns the
+// app_testing_seams.cpp — plain impl unit for loom.ui.app.app. Owns the
 // AppAdapter test-seam bodies (RFC 0002 F3 Finalize): the 28
 // *_for_testing accessors that were inline in app.cppm. Declarations stay
 // in app.cppm; the bodies move here so the interface ratchet

@@ -1,5 +1,5 @@
 // app_settings.cpp — plain impl unit owning the SettingsState nested PIMPL.
-// Keeps cc.config.settings_manager out of both app.cppm and the :impl BMI.
+// Keeps loom.config.settings_manager out of both app.cppm and the :impl BMI.
 module;
 
 

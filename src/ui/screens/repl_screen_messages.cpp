@@ -1,4 +1,4 @@
-// repl_screen_messages.cpp - impl unit for cc.ui.screens.repl_screen
+// repl_screen_messages.cpp - impl unit for loom.ui.screens.repl_screen
 // (RFC 0001 Phase C batch 9). RenderMessages: the single message-row projection from MessageDisplayEntry to the messages_list view input.
 //
 // Phase A (#184957): textual FTXUI GMF headers + `import std;`

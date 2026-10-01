@@ -3,7 +3,7 @@
 /// Subcommands: list | search PATTERN | reset | export | set KEY ACTION.
 /// Default (no args): creates keybindings.json template + opens in editor
 ///   (mirrors TS src/commands/keybindings/keybindings.ts logic exactly).
-/// Reuses cc.keybindings.* modules — no type redefinition, no custom key table.
+/// Reuses loom.keybindings.* modules — no type redefinition, no custom key table.
 /// UI rendering (FTXUI tables/dialogs) DEFERRED to Phase 4.
 module;
 
@@ -54,8 +54,8 @@ struct KeybindingSearchRow : public KeybindingListRow {
 // ============================================================================
 
 /// KeybindingsCommand implements the /keybindings slash command.
-/// Uses cc.keybindings.load_user_bindings (KeybindingLoader + defaults +
-/// user JSON merge) and cc.keybindings.template_ for template generation.
+/// Uses loom.keybindings.load_user_bindings (KeybindingLoader + defaults +
+/// user JSON merge) and loom.keybindings.template_ for template generation.
 class KeybindingsCommand {
 public:
     [[nodiscard]] static CommandDefinition definition() {

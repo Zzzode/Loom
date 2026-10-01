@@ -1,7 +1,7 @@
-// Implementation unit for cc.tools.runtime_registry — the terminal manual
+// Implementation unit for loom.tools.runtime_registry — the terminal manual
 // SKILL.md fallback, the runtime tool-name list, and tool_search. The B12
 // SkillLoader executor slot itself lives in
-// cc.tools.runtime_backends.port (anchored runtime_backends_port.cpp).
+// loom.tools.runtime_backends.port (anchored runtime_backends_port.cpp).
 module;
 
 #include <cstdlib>  // std::getenv("HOME") in execute_skill_tool
@@ -104,7 +104,7 @@ namespace fs = std::filesystem;
     // implementation, so it is registered unconditionally (not ant-only).
     names.push_back("repl");
     // TS REF: src/tools.ts:29-34 (AGENT_TRIGGERS)
-    // In CPP, schedule_cron has a working implementation (cc.tools.cron),
+    // In CPP, schedule_cron has a working implementation (loom.tools.cron),
     // so it is registered unconditionally.
     names.push_back("schedule_cron");
     // TS REF: src/tools.ts:252-254 (isScriptToolEnabled)

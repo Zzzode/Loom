@@ -14,7 +14,7 @@
 //
 // Register in tests/CMakeLists.txt (see cmakeNeeds in the migration plan):
 //   add_executable(test_fix_misc_low test_fix_misc_low.cpp)
-//   target_link_libraries(test_fix_misc_low PRIVATE cc_services cc_hooks
+//   target_link_libraries(test_fix_misc_low PRIVATE loom_services loom_hooks
 //                         GTest::gtest_main)
 //   gtest_discover_tests(test_fix_misc_low
 //       DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

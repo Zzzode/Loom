@@ -11,7 +11,7 @@
 ///           with "Add exception" per row. Two-button actions per row:
 ///           [Allow in workspace only] / [Never allow].
 ///
-/// All state mutations go through cc.security.permissions_engine public API
+/// All state mutations go through loom.security.permissions_engine public API
 /// (add_rule / remove_rule / get_rules / export_rules / import_rules).
 /// This file never duplicates the pattern-matching or evaluation logic.
 module;

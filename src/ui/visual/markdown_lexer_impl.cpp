@@ -1,4 +1,4 @@
-// markdown_lexer_impl.cpp - impl unit for cc.ui.visual.markdown (RFC 0001
+// markdown_lexer_impl.cpp - impl unit for loom.ui.visual.markdown (RFC 0001
 // Phase C batch 6). Holds the block/inline lexer: tokenize_inline, the GFM
 // table helpers, ordered-list detection, split_lines and lex_blocks - moved
 // out of the interface BMI.

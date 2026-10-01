@@ -1,6 +1,6 @@
 /// @file agent_wizard.cppm
 /// @brief Agent creation/edit wizard. 4 agent-specific steps built on top of
-/// the UI11 cc.ui.dialogs.wizard_dialog framework.
+/// the UI11 loom.ui.dialogs.wizard_dialog framework.
 ///
 /// Replaces the old 6-step skeleton (same filename) and consolidates migration
 /// of:
@@ -26,13 +26,13 @@
 /// On wizard completion: fires on_save with the aggregated wizard state.
 ///
 /// Reuses:
-///   - cc.ui.foundation.feature_dialog_protocol (neutral wizard request +
+///   - loom.ui.foundation.feature_dialog_protocol (neutral wizard request +
 ///     ViewKind factory registry — RFC 0002 F2 row 6 inversion; this module
-///     no longer imports cc.ui.dialogs.wizard_dialog)
-///   - cc.ui.widgets.custom_select  (MakeSingleSelect / MakeMultiSelect for roles,
+///     no longer imports loom.ui.dialogs.wizard_dialog)
+///   - loom.ui.widgets.custom_select  (MakeSingleSelect / MakeMultiSelect for roles,
 ///                           tools, model)
-///   - cc.ui.features.agents.agent_shared_widgets (AgentAvatar, RoleTags, RunStats)
-///   - cc.tools.agent_color_manager (8-color palette, explicit set)
+///   - loom.ui.features.agents.agent_shared_widgets (AgentAvatar, RoleTags, RunStats)
+///   - loom.tools.agent_color_manager (8-color palette, explicit set)
 module;
 
 #include <cctype>
@@ -737,7 +737,7 @@ struct AgentWizardOptions {
 /// FeatureWizardRequest and resolves the ViewKind::AgentWizard factory
 /// (registered by the composition root — RFC 0002 F2 row 6). The factory
 /// builds the concrete wizard_dialog component; this module never imports
-/// cc.ui.dialogs.wizard_dialog.
+/// loom.ui.dialogs.wizard_dialog.
 [[nodiscard]] inline Component AgentWizard(AgentWizardOptions opts) {
     auto draft = std::make_shared<WizardDraft>();
 

@@ -3,7 +3,7 @@
 ///
 /// Faithful TS port of ReadTool UI methods.
 ///
-/// MODULE:   cc.ui.tools.file_read
+/// MODULE:   loom.ui.tools.file_read
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

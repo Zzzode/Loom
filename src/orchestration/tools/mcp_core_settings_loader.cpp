@@ -1,6 +1,6 @@
-// Implementation unit for cc.orchestration.tools.mcp — RFC-0001 B4 core-settings MCP loader
+// Implementation unit for loom.orchestration.tools.mcp — RFC-0001 B4 core-settings MCP loader
 // sink storage. The two bodies live here (not in the .cppm) so the
-// inline-definition ratchet on cc.orchestration.tools.mcp does not grow; the single
+// inline-definition ratchet on loom.orchestration.tools.mcp does not grow; the single
 // function-local static below is the one strong symbol every TU binds to,
 // matching the NativeMcpRuntime::instance / global_mcp_router anchor style.
 module;

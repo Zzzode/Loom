@@ -1,4 +1,4 @@
-// repl_screen_layout.cpp - impl unit for cc.ui.screens.repl_screen
+// repl_screen_layout.cpp - impl unit for loom.ui.screens.repl_screen
 // (RFC 0001 Phase C batch 9). RouteDialog and RenderReplScreen - terminal probe, unseen divider, the
 // FullscreenLayout slot composition (scrollable/header/bottom) with both
 // sticky/pill lambdas, and final dialog-queue layering.

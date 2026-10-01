@@ -1,8 +1,8 @@
-// Implementation unit for cc.tools.agent_runtime — built-in agent prompt
+// Implementation unit for loom.tools.agent_runtime — built-in agent prompt
 // builders and their constants (builtin_detail), plugin component
 // discovery/qualification, directory/settings/flag/policy agent loading,
 // the get_all/find definition union, and teammate-identity prompt assembly.
-// This is the only unit that imports cc.teams.team_helpers.
+// This is the only unit that imports loom.teams.team_helpers.
 module;
 
 #include <cstdlib>
@@ -400,7 +400,7 @@ inline constexpr std::string_view kVerificationReminder =
     "CRITICAL: This is a VERIFICATION-ONLY task. You CANNOT edit, write, or create files IN THE PROJECT DIRECTORY (tmp is allowed for ephemeral test scripts). You MUST end with VERDICT: PASS, VERDICT: FAIL, or VERDICT: PARTIAL.";
 
 // ---- loom-guide ----
-// Empty: no documentation host is shipped (see cc.constants.prompts).
+// Empty: no documentation host is shipped (see loom.constants.prompts).
 inline constexpr std::string_view kCcdocsMap = "";
 inline constexpr std::string_view kCdpDocsMap = "";
 

@@ -757,8 +757,8 @@ Result<std::optional<OAuthServerMetadata>> fetch_auth_server_metadata(
 //
 // RFC-0001 B followup c17a: `xaa_callback_port` is the configured fixed
 // loopback port for the XAA IdP login (settings.xaaIdp.callbackPort), INJECTED
-// by the caller. This module (cc.services, rank 7) cannot read
-// cc.config.config (rank 1), so the composition layer that owns the settings —
+// by the caller. This module (loom.services, rank 7) cannot read
+// loom.config.config (rank 1), so the composition layer that owns the settings —
 // which already populates server_config.oauth — supplies it here; it is
 // ignored on the non-XAA path.
 //

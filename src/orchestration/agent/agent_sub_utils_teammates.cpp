@@ -1,4 +1,4 @@
-// Implementation unit for cc.orchestration.agent.utils — teammate role/color
+// Implementation unit for loom.orchestration.agent.utils — teammate role/color
 // mapping, parent session id, team completion status, and ToolResult text.
 module;
 

@@ -1,5 +1,5 @@
 /// @file test_fix_hooks_integration.cpp
-/// @brief Regression coverage for fix B2: confirm cc.hooks.execution
+/// @brief Regression coverage for fix B2: confirm loom.hooks.execution
 ///        (the user-configured-hook engine) is wired into the QueryEngine
 ///        tool-call dispatch path. Mirrors the TS wiring where
 ///        src/services/tools/toolExecution.ts runs executePreToolHooks /

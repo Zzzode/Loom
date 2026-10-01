@@ -11,9 +11,9 @@
 ///   - StepTimeline             (vertical pipe + dots + per-step status color)
 ///
 /// Reuses:
-///   - cc.tools.agent_color_manager  (AgentColor / hash-color assignment)
-///   - cc.teams.swarm.backends       (AgentColor enum)
-///   - cc.ui.widgets.spinner_animations  (running spinner glyphs)
+///   - loom.tools.agent_color_manager  (AgentColor / hash-color assignment)
+///   - loom.teams.swarm.backends       (AgentColor enum)
+///   - loom.ui.widgets.spinner_animations  (running spinner glyphs)
 module;
 
 #include <cctype>

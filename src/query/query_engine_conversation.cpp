@@ -1,4 +1,4 @@
-// Implementation unit for cc.query.query_engine — conversation lifecycle:
+// Implementation unit for loom.query.query_engine — conversation lifecycle:
 // get/restore/clear, locking append (+ transcript persistence + auto
 // compact trigger), session metadata/dump-prompt wiring, explicit
 // compaction, session-summary I/O, user-message construction, transcript
@@ -13,7 +13,7 @@ import loom.types.types;
 import loom.utils.error;
 import loom.serdes.json;
 // ToolRegistry (used by the memory-extraction thread) arrives through the
-// primary interface's retained `import cc.tools.tool` — visible to every
+// primary interface's retained `import loom.tools.tool` — visible to every
 // impl unit of this module; no direct import needed here.
 import loom.session.storage;
 import loom.memdir.paths;

@@ -70,7 +70,7 @@ struct Diagnostic {
 // =========================================================================
 // ANSI styling helpers — intentionally light-weight so we don't pull in
 // any new dependency. Consumers that run without a TTY can strip the
-// escape codes later via cc.utils.ansi_rendering::strip_ansi_codes.
+// escape codes later via loom.utils.ansi_rendering::strip_ansi_codes.
 // =========================================================================
 namespace ansi {
     constexpr std::string_view reset   = "\033[0m";

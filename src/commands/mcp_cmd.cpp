@@ -1,5 +1,5 @@
 /// @file mcp_cmd.cpp
-/// @brief Module implementation unit for cc.commands.mcp_cmd. Out-of-line
+/// @brief Module implementation unit for loom.commands.mcp_cmd. Out-of-line
 /// bodies for the per-tier --scope routing helpers (RFC-0001 B followup c6);
 /// the inline-def ratchet keeps the interface unit at its frozen body count.
 module;

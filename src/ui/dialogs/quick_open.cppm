@@ -2,7 +2,7 @@
 /// @brief Quick Open / Command Palette dialog — faithful port of TS
 ///        QuickOpen component with fuzzy search, categories, and keyboard nav.
 ///
-/// MODULE:   cc.ui.dialogs.quick_open
+/// MODULE:   loom.ui.dialogs.quick_open
 /// LICENCE:  Exported.  Imported by default_renderers to register, and
 ///           by dialog_triggers / app code to build item lists.
 ///

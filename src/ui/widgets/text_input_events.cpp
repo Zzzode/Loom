@@ -1,4 +1,4 @@
-// text_input_events.cpp - impl unit for cc.ui.widgets.text_input
+// text_input_events.cpp - impl unit for loom.ui.widgets.text_input
 // (RFC 0001 Phase C batch 8). The readline-style event dispatcher:
 // TextInputImpl::HandleEvent (its `after_change` goto label stays intact in
 // this one function), reverse-history search (HandleSearchEvent +

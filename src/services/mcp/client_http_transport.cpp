@@ -1,5 +1,5 @@
-// Implementation unit for cc.services.mcp.client — StreamableHttpTransport
-// bodies. This is the ONLY implementation unit that imports cc.net.http.http,
+// Implementation unit for loom.services.mcp.client — StreamableHttpTransport
+// bodies. This is the ONLY implementation unit that imports loom.net.http.http,
 // so the textual <httplib.h> closure never enters the module interface BMI
 // nor the other transport units.
 module;

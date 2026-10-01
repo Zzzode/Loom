@@ -1,4 +1,4 @@
-// Implementation unit for cc.serdes.json — JsonMutDoc lifetime and factory
+// Implementation unit for loom.serdes.json — JsonMutDoc lifetime and factory
 // methods (RFC 0001 Phase C batch 10). The textual <yyjson.h> lives here, not
 // in the module interface.
 module;

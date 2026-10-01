@@ -26,7 +26,7 @@ export namespace loom::commands::plugin_helpers {
 
 /// Mirrors TS `PluginError.type` discriminant — kept in the commands layer
 /// so we can format errors without importing the full plugin type system.
-/// The actual error struct lives in `cc.plugins.plugin_validation`; this enum
+/// The actual error struct lives in `loom.plugins.plugin_validation`; this enum
 /// is the wire-compatible subset we need for display.
 enum class ErrorKind : unsigned char {
     PathNotFound,

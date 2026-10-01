@@ -218,7 +218,7 @@ struct TitleCandidate {
 // =========================================================================
 
 /// Build an SDKControlRequest from a parsed JSON object.
-/// Delegates to cc.server.control_protocol ser/de; the variant is
+/// Delegates to loom.server.control_protocol ser/de; the variant is
 /// flattened back into the bridge's lightweight SDKControlRequest
 /// (only subtype/model/mode/max_thinking_tokens are consumed here).
 [[nodiscard]] inline SDKControlRequest parse_control_request(loom::utils::json::JsonVal root) {
@@ -245,7 +245,7 @@ struct TitleCandidate {
 }
 
 /// Build an SDKControlResponse from a parsed JSON object.
-/// Delegates to cc.server.control_protocol ser/de; the variant is
+/// Delegates to loom.server.control_protocol ser/de; the variant is
 /// flattened back into the bridge's lightweight SDKControlResponse.
 [[nodiscard]] inline SDKControlResponse parse_control_response(loom::utils::json::JsonVal root) {
     SDKControlResponse resp;
@@ -427,7 +427,7 @@ inline constexpr std::string_view OUTBOUND_ONLY_ERROR =
     "This session is outbound-only. Enable Remote Control locally to allow inbound control.";
 
 /// Helper: build a control_response JSON event string.
-/// Delegates to cc.server.control_protocol ser/de so the wire format
+/// Delegates to loom.server.control_protocol ser/de so the wire format
 /// is defined in exactly one place.
 [[nodiscard]] inline std::string build_control_response_event(
     const std::string& session_id,

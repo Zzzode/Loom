@@ -1,7 +1,7 @@
 /// @file plugin_dialog_renderer.cppm
 /// @brief PluginDialog dialog renderer — thin module interface.
 ///
-/// MODULE:   cc.ui.dialogs.plugin_dialog_renderer
+/// MODULE:   loom.ui.dialogs.plugin_dialog_renderer
 /// LICENCE:  Exported.  The interface is thin (just a function declaration)
 ///           so importers never see the heavy plugin_dialog / plugin_ui_data /
 ///           plugin_marketplace transitive closure.  The actual implementation

@@ -8,10 +8,10 @@
 // composition root, never a direct field reach-up.
 //
 // Import discipline (enforced by `graph_check.py --store-lint`): a store
-// module's cc.ui.* imports target only areas ranked below screens
+// module's loom.ui.* imports target only areas ranked below screens
 // (UI9_RANK < 10). Every field here is a std-only type (strings, vectors,
 // bools and the std-only StatusBarData projection), so this store imports
-// no cc.ui.* area at all.
+// no loom.ui.* area at all.
 module;
 
 export module loom.ui.screens.chrome_store;
@@ -35,7 +35,7 @@ struct StatusBarData {
 };
 
 /// RFC 0002 F3 store — chrome / welcome-header / status-bar projection
-/// state, sharded out of ReplScreenState. Homed in cc.ui.screens (rank 10):
+/// state, sharded out of ReplScreenState. Homed in loom.ui.screens (rank 10):
 /// every field is a std-only type, so no cross-area edge is created at all.
 /// The StickyPrompt chrome-layout state named in the shard inventory was
 /// already classified into MessagesStore (scroll/chrome state) when that

@@ -1,4 +1,4 @@
-// messages_list_payload_row.cpp - impl unit for cc.ui.messages.messages_list
+// messages_list_payload_row.cpp - impl unit for loom.ui.messages.messages_list
 // (RFC 0001 Phase C batch 7). The single detail::render_payload_row body in
 // its own TU to cap peak source-location/PSS: it fans out to every faithful
 // per-type message renderer plus the tool UI registry.

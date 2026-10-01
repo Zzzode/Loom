@@ -1,9 +1,9 @@
-// Implementation unit for cc.orchestration.agent.utils — the three RAII cleanup
+// Implementation unit for loom.orchestration.agent.utils — the three RAII cleanup
 // guard destructors, command-hook execution (popen/pclose + WIF* status
 // macros), hook JSON output parsers, frontmatter/tool hook runners, hook
 // context formatting, worktree creation, cwd normalization, agent
 // record upsert, and the runtime-context formatter.
-// Worktree CLEANUP moved to cc.tools.agent_worktree (RFC-0001 B14); the
+// Worktree CLEANUP moved to loom.tools.agent_worktree (RFC-0001 B14); the
 // agent.utils shell_quote stays here, still used by run_agent_command_hook.
 //
 // <sys/wait.h> is a global-module-fragment header because WIFEXITED /

@@ -1,5 +1,5 @@
 /// @file test_tasks.cpp
-/// @brief cc_tasks migration parity tests.
+/// @brief loom_tasks migration parity tests.
 
 #include <gtest/gtest.h>
 #include <cstdlib>

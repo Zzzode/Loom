@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.runtime_registry — tool factory helpers
+// Implementation unit for loom.tools.runtime_registry — tool factory helpers
 // (define_tool / make_runtime_tool), the RuntimeFunctionTool key function,
 // register_runtime_tools (both overloads), and the MCP tool-definition
 // collectors.
@@ -91,7 +91,7 @@ using loom::core::ToolPermission;
 // Built-in agent registry access.
 //
 // The canonical source of built-in agent definitions lives in
-// cc.tools.built_in_agents (migrated from TS builtInAgents.ts + built-in/*).
+// loom.tools.built_in_agents (migrated from TS builtInAgents.ts + built-in/*).
 // agent_runtime::built_in_agent_definitions() mirrors these definitions for
 // use inside the agent_runtime module (avoiding a circular module import).
 //
@@ -111,7 +111,7 @@ get_built_in_agent_definitions() {
 void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptions options) {
     namespace features = loom::tools::features;
 
-    // RFC-0001 B15: AgentTool lives in cc_orchestration now. The factory
+    // RFC-0001 B15: AgentTool lives in loom_orchestration now. The factory
     // arrives via the per-call option (tests: 7 bind sites) or the process
     // slot installed once by loom::orchestration::install_runtime_backends().
     // Resolve and invoke it BEFORE the permission checker is moved, passing
@@ -368,7 +368,7 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
     registry.register_tool(simple("repl", "Run a one-shot REPL snippet",
         ToolPermission::Execute, {prop("code", "string", "Code to execute", true)}, "execution"));
     // TS REF: src/tools.ts:29-34, 237 (Cron tools — AGENT_TRIGGERS)
-    // In CPP, schedule_cron has a working implementation (cc.tools.cron),
+    // In CPP, schedule_cron has a working implementation (loom.tools.cron),
     // so it is registered unconditionally.
     registry.register_tool(simple("schedule_cron", "Schedule a cron-style reminder for this process",
         ToolPermission::Write, {prop("message", "string", "Scheduled message", true)}, "tasks"));

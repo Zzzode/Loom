@@ -202,7 +202,7 @@ inline constexpr std::array MARKETPLACE_ONLY_MANIFEST_FIELDS = {
 //
 // The TS original uses Zod schemas; this C++ port mirrors the same happy-path
 // checks (file existence/JSON parse, path-traversal scan, required `name`,
-// marketplace-only-field warnings) using the yyjson-backed cc.serdes.json
+// marketplace-only-field warnings) using the yyjson-backed loom.serdes.json
 // module. Fields that the TS schema would reject (wrong types, missing required
 // keys) surface as ValidationError entries. Anything not ported (deep schema
 // constraints, hooks/frontmatter validation) is reported honestly as an error

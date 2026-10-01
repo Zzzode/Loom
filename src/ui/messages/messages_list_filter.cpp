@@ -1,4 +1,4 @@
-// messages_list_filter.cpp - impl unit for cc.ui.messages.messages_list
+// messages_list_filter.cpp - impl unit for loom.ui.messages.messages_list
 // (RFC 0001 Phase C batch 7). Brief-mode filtering, drop-text mask, expand
 // keys, the lowered/cached search-text accessor, shape categories and the
 // O(N) build_visible_rows walk. No FTXUI types are named here.

@@ -1,4 +1,4 @@
-// Implementation unit for cc.services.mcp.client — StdioTransport bodies.
+// Implementation unit for loom.services.mcp.client — StdioTransport bodies.
 // Out-of-line so the POSIX GMF below never enters the module interface BMI.
 module;
 

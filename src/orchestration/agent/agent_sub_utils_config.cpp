@@ -1,4 +1,4 @@
-// Implementation unit for cc.orchestration.agent.utils — env/config/memory path
+// Implementation unit for loom.orchestration.agent.utils — env/config/memory path
 // resolution, model alias resolution, effort beta-header handling,
 // permission-mode normalization, canonical tool-name string utilities,
 // identity/teammate-name helpers, and the built-in system prompts.

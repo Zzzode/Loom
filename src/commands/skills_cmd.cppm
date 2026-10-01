@@ -1,7 +1,7 @@
 /// @file skills_cmd.cppm
 /// @brief SkillsCommand implementing the /skills slash command.
-/// Reuses cc.skills.skill (SkillDefinition, SkillLoader) and
-/// cc.skills.load_skills_dir (SkillManifest) — no type duplication.
+/// Reuses loom.skills.skill (SkillDefinition, SkillLoader) and
+/// loom.skills.load_skills_dir (SkillManifest) — no type duplication.
 /// UI rendering (FTXUI tables/dialogs) DEFERRED to Phase 4.
 module;
 
@@ -46,7 +46,7 @@ struct SkillTriggerRow {
 // ============================================================================
 
 /// SkillsCommand implements the /skills slash command.
-/// Reuses the cc.skills.* modules for type definitions and loading.
+/// Reuses the loom.skills.* modules for type definitions and loading.
 class SkillsCommand {
 public:
     [[nodiscard]] static CommandDefinition definition() {
@@ -84,7 +84,7 @@ public:
     // ========================================================================
 
     /// Collect all installed skills as rows, using SkillLoader::discover_all
-    /// (from cc.skills.skill) and bundled skills from cc.skills.bundled.
+    /// (from loom.skills.skill) and bundled skills from loom.skills.bundled.
     static void add_context_skill_path(
         loom::skills::SkillLoader& loader,
         std::string_view cwd) {

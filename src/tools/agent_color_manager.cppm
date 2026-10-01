@@ -3,7 +3,7 @@
 /// Migrated from src/tools/AgentTool/agentColorManager.ts.
 ///
 /// The underlying `AgentColor` enum and `TeammateLayoutManager` round-robin
-/// palette already live in `cc.teams.swarm.backends` / `cc.teams.swarm.helpers`.
+/// palette already live in `loom.teams.swarm.backends` / `loom.teams.swarm.helpers`.
 /// This module exposes the thin agent-specific API (get/set/cycle/reset) used
 /// by the AgentTool entry points.  The general-purpose ("main thread") agent
 /// intentionally has no assigned color to distinguish it from sub-agents.

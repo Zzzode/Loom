@@ -13,18 +13,18 @@
 ///
 /// Backend wiring status (mirrors TS src/hooks/notifs/*):
 ///   * McpConnectivity      -> SLOT, fed externally by the rank-13
-///                             cc.orchestration.mcp_connectivity bridge over the
-///                             cc.tools MCP snapshot sink (the sole writer
+///                             loom.orchestration.mcp_connectivity bridge over the
+///                             loom.tools MCP snapshot sink (the sole writer
 ///                             since the B8 cut; this module has no services
 ///                             dependency).
 ///                             TS: useMcpConnectivityStatus filters mcpClients
 ///                             by failed/needs-auth.
-///   * TeammateShutdown     -> REAL: cc.tasks.in_process_teammate_task
+///   * TeammateShutdown     -> REAL: loom.tasks.in_process_teammate_task
 ///                             (inject_teammate_shutdowns_from_tasks()).
 ///                             TS: useTeammateLifecycleNotification reads
 ///                             task.status transitions.
 ///   * ModelMigration       -> SLOT fallback (intentional). The migration
-///                             writer exists (cc.migrations.concrete_migrations
+///                             writer exists (loom.migrations.concrete_migrations
 ///                             writes *MigrationTimestamp keys) but no
 ///                             ConfigManager reader exposes arbitrary
 ///                             timestamp keys yet, so the slot is the only
@@ -34,14 +34,14 @@
 ///                             doctor-screen display string, no typed accessor.
 ///   * PluginAutoupdate     -> SLOT fallback. TS subscribes via
 ///                             onPluginsAutoUpdated(); no equivalent event
-///                             bus exists in cc.plugins.plugin_lifecycle yet.
+///                             bus exists in loom.plugins.plugin_lifecycle yet.
 ///   * PluginInstallation   -> SLOT fallback. TS reads
 ///                             s.plugins.installationStatus{marketplaces,
 ///                             plugins} from AppState; the C++ installation
 ///                             manager has no failed-install snapshot model.
 ///   * SettingsErrors       -> SLOT fallback. TS calls
 ///                             getSettingsWithAllErrors(); C++ has plugin
-///                             validation errors only (cc.plugins.plugin
+///                             validation errors only (loom.plugins.plugin
 ///                             _validation), no settings-schema validator.
 ///   * SubscriptionSwitch   -> SLOT fallback. TS queries
 ///                             isLoomAISubscriber() + OAuth profile
@@ -543,7 +543,7 @@ inline void acknowledge_teammate_shutdown(std::string_view agent_id) {
 }
 
 // --------------------------------------------------------------------------
-// Real-backend bridge: cc.tasks.in_process_teammate_task
+// Real-backend bridge: loom.tasks.in_process_teammate_task
 //
 // Mirrors TS useTeammateLifecycleNotification (src/hooks/notifs/
 // useTeammateShutdownNotification.ts), which inspects the AppState task map
@@ -554,7 +554,7 @@ inline void acknowledge_teammate_shutdown(std::string_view agent_id) {
 // existing get_teammate_shutdowns() recency/dismissal filter take over.
 //
 // This is a template so the hook module does not need to import the tasks
-// module (avoids a cc_hooks -> cc_tasks CMake edge); the caller's task type
+// module (avoids a loom_hooks -> loom_tasks CMake edge); the caller's task type
 // must expose `.identity.agent_id` / `.identity.agent_name` (std::string).
 // The terminal-state test and cause mapping are passed in as callables so
 // this module stays decoupled from the exact TaskStatus enum definition.

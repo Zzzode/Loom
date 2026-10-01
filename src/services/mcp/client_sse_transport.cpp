@@ -1,4 +1,4 @@
-// Implementation unit for cc.services.mcp.client — SseTransport bodies.
+// Implementation unit for loom.services.mcp.client — SseTransport bodies.
 // Out-of-line so the raw-socket POSIX GMF below stays out of the interface
 // BMI. All bodies are cold-path reconnect/SSE parsing.
 module;

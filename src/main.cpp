@@ -44,7 +44,7 @@ import loom.config.settings;
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 namespace fs = std::filesystem;
 
-extern "C" [[nodiscard]] int cc_ui_run_app_bridge(
+extern "C" [[nodiscard]] int loom_ui_run_app_bridge(
     loom::core::QueryEngine* engine,
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
     loom::commands::AppCommandRegistry* cmd_registry,
@@ -667,7 +667,7 @@ int run_runtime_tool_once(const CliOptions& opts) {
     });
     // TS PARITY FALLBACK: route unregistered tool names to MCP servers.
     // RFC-0001 B15: the fallback (NativeMcpRuntime iteration, last_error,
-    // exact ToolNotFound text) is built directly from cc.orchestration;
+    // exact ToolNotFound text) is built directly from loom.orchestration;
     // main binds it onto this registry itself, there is no seam slot.
     tool_registry.set_missing_tool_handler(
         loom::orchestration::make_missing_tool_backend());
@@ -1947,7 +1947,7 @@ int main(int argc, const char* argv[]) {
     // has the tool, the original ToolNotFound error is preserved.
     // RFC-0001 B15: the unified missing-tool fallback (all_statuses order,
     // std::string{input.json()}, exact ToolNotFound text) is built by
-    // cc.orchestration; the per-site lambdas are gone.
+    // loom.orchestration; the per-site lambdas are gone.
     tool_registry.set_missing_tool_handler(
         loom::orchestration::make_missing_tool_backend());
 
@@ -2015,7 +2015,7 @@ int main(int argc, const char* argv[]) {
         if (opts.use_simple_ui) {
             return run_simple_ui(&engine, cmd_registry);
         } else {
-            return cc_ui_run_app_bridge(&engine, &lifecycle_hooks, &cmd_registry, &storage, &permission_hook);
+            return loom_ui_run_app_bridge(&engine, &lifecycle_hooks, &cmd_registry, &storage, &permission_hook);
         }
     } catch (const std::exception& e) {
         std::println(stderr, "UI startup failed: {}", e.what());

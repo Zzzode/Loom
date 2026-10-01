@@ -1,4 +1,4 @@
-// Implementation unit for cc.orchestration.agent.utils — JSON getters/parsers,
+// Implementation unit for loom.orchestration.agent.utils — JSON getters/parsers,
 // tool-input agent_id injection and cwd-override shaping,
 // parse_agent_tool_request, content-block/message JSON (de)serialization,
 // and sidechain/message JSON.

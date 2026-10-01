@@ -287,7 +287,7 @@ class UserTextMessageComponent : public ComponentBase {
 // figures.pointer is U+276F "❯".  No timestamp / role label in the non-brief
 // path — that only appears in the brief/chat layout.
 //
-// NOTE: The glyph itself lives in cc.ui.foundation.design_figures::kPointer — the
+// NOTE: The glyph itself lives in loom.ui.foundation.design_figures::kPointer — the
 // authoritative source used by the prompt prefix, user messages, and plugin
 // manager.  Use `namespace figs = loom::ui::design::figures;` below.
 

@@ -1,5 +1,5 @@
 /// @file test_sdk_harness.cpp
-/// @brief First-consumer gate for cc.sdk.harness (RFC 0001 cc-sdk phase 3,
+/// @brief First-consumer gate for loom.sdk.harness (RFC 0001 cc-sdk phase 3,
 ///        design §4.4). A direct in-tree test consumer that constructs a
 ///        Harness, runs a turn against a loopback HTTP server serving canned
 ///        Anthropic Messages API responses (the WireBackend seam does not
@@ -238,7 +238,7 @@ TEST(SdkHarness, ResumeRestoresConversation) {
     fs::create_directories(sessions_dir);
     const std::string session_id = "resume-test-session";
 
-    // Seed a messages.jsonl via cc.session.storage (the same writer the
+    // Seed a messages.jsonl via loom.session.storage (the same writer the
     // engine's session persistence uses).
     ASSERT_TRUE(loom::session::append_message(
         sessions_dir, session_id,

@@ -1,5 +1,5 @@
-// app_dialog_registration_all.cpp — impl unit for cc.ui.app_dialog_registration.
-// Imports ONLY cc.ui.dialogs.all_renderers (22 dialog implementations — the
+// app_dialog_registration_all.cpp — impl unit for loom.ui.app_dialog_registration.
+// Imports ONLY loom.ui.dialogs.all_renderers (22 dialog implementations — the
 // largest aggregator, but still a single aggregator's closure, which compiles
 // fine on its own). See app_dialog_registration.cppm for the rationale.
 module loom.ui.app.app_dialog_registration;

@@ -3,7 +3,7 @@
 /// @brief Faithful C++/FTXUI port of TS `FullscreenLayout.tsx` — the
 ///        slot-based REPL shell architecture.
 ///
-/// MODULE:   cc.ui.chrome.fullscreen_layout
+/// MODULE:   loom.ui.chrome.fullscreen_layout
 /// LICENCE:  Exported.  Imported by repl_screen.cppm (RenderReplScreen).
 ///
 /// TS REGION MODEL (FullscreenLayout.tsx, ~lines 270-330):

@@ -1,4 +1,4 @@
-// messages_list_geometry.cpp - impl unit for cc.ui.messages.messages_list
+// messages_list_geometry.cpp - impl unit for loom.ui.messages.messages_list
 // (RFC 0001 Phase C batch 7). Per-row line-height heuristics and the
 // VisibleRow <-> virtual_list::VisibleRow encoding (backend_index bit pack).
 //

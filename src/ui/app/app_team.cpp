@@ -1,4 +1,4 @@
-// app_team.cpp — plain impl unit for cc.ui.app. Owns TeammateState (the
+// app_team.cpp — plain impl unit for loom.ui.app. Owns TeammateState (the
 // nested PIMPL for the teammate inbox/permission cluster).
 //
 // Contains the leader-side live teams projection:
@@ -16,7 +16,7 @@
 // the swarm/observer import closure never enters app.cppm's source-location
 // budget. Event-driven: the observer's background poller only flags a dirty
 // atomic + posts one FTXUI event; there is NO constant-rate render ticker.
-// c16/LLVM #184957: this is one of the cc.ui.app.app implementation units
+// c16/LLVM #184957: this is one of the loom.ui.app.app implementation units
 // that must NOT `import std` — under the reduced-BMI writer a cold module
 // cache mis-merges the global aligned operator new when an app impl unit
 // imports std while the primary's GMF pulls libc++ textually via FTXUI.

@@ -2,7 +2,7 @@
 // registration.
 //
 // Exposes four register_*_dialog_renderers() declarations and imports only the
-// lightweight cc.ui.dialogs.system (needed to name the DialogRendererRegistry
+// lightweight loom.ui.dialogs.system (needed to name the DialogRendererRegistry
 // parameter type). The heavy dialog-renderer fan-out lives in four sibling
 // module implementation units (app_dialog_registration_{default,modal,bottom,
 // all}.cpp), one per renderer aggregator, so that NO single translation unit
@@ -32,7 +32,7 @@ void register_teams_dialog_renderer(
 
 /// RFC 0002 F2 row 6: register the feature-dialog factories (agent wizard,
 /// plugin install wizard, plugin trust dialog) into the
-/// cc.ui.foundation.feature_dialog_protocol erased-factory registry. The
+/// loom.ui.foundation.feature_dialog_protocol erased-factory registry. The
 /// concrete static_pointer_cast of the erased request lives in the impl unit
 /// (app_feature_dialog_registration.cpp), never in a feature or dialogs
 /// module. Called once at app startup, alongside the dialog renderers.

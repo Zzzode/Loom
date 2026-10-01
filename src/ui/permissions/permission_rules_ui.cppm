@@ -29,7 +29,7 @@ namespace dt   = loom::ui::design::tokens;
 namespace pc   = loom::ui::permissions::components;
 namespace peng = loom::utils::permissions_engine;
 
-// Panel model/callbacks and PermTab are owned by cc.ui.permissions.rule_list
+// Panel model/callbacks and PermTab are owned by loom.ui.permissions.rule_list
 // (exported) so BuildPermissionsTabs can consume them without a circular
 // import; alias them into this namespace.
 using rl::PermissionsPanelCallbacks;

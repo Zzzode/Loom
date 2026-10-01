@@ -1,9 +1,9 @@
 /// @file core_settings_loader.cppm
 /// @brief RFC-0001 B4 composition root: bridges the core settings layer
 /// (loom::core::ConfigManager) into the native MCP runtime through the loader
-/// sink declared in cc.orchestration.tools.mcp. This module is the ONLY place allowed to
-/// know both cc.config.config and cc.orchestration.tools.mcp, which deletes the
-/// cc.orchestration.tools.mcp -> cc.config.config upward edge (tools rank 8 -> config rank 1).
+/// sink declared in loom.orchestration.tools.mcp. This module is the ONLY place allowed to
+/// know both loom.config.config and loom.orchestration.tools.mcp, which deletes the
+/// loom.orchestration.tools.mcp -> loom.config.config upward edge (tools rank 8 -> config rank 1).
 ///
 /// The lambda body below is the verbatim ConfigManager block that used to
 /// live in NativeMcpRuntime::ensure_loaded_from_config. The production binary
@@ -22,15 +22,15 @@ import loom.services.mcp.xaa_idp_login;
 
 export namespace loom::commands {
 
-/// Install the production core-settings MCP loader into the cc.orchestration.tools.mcp
+/// Install the production core-settings MCP loader into the loom.orchestration.tools.mcp
 /// sink. Idempotent: installing again simply replaces the previous loader.
 /// The loader is invoked lazily on the native runtime's first config load and
 /// must propagate a failed ConfigManager::load() verbatim.
 ///
 /// RFC-0001 B followup c17a: the loader ALSO returns the configured XAA IdP
 /// callback port (settings.xaaIdp.callbackPort) in the same CoreSettingsMcpLayer.
-/// This module is the one composition root that may see both cc.config.config
-/// and cc.orchestration.tools.mcp, so it is where the single authoritative port
+/// This module is the one composition root that may see both loom.config.config
+/// and loom.orchestration.tools.mcp, so it is where the single authoritative port
 /// store is read into the runtime — the XAA `--xaa` login path then forwards it
 /// to authenticate_xaa() without either layer importing the other.
 inline void install_core_settings_mcp_loader() {

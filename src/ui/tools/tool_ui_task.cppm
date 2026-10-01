@@ -1,7 +1,7 @@
 /// @file tool_ui_task.cppm
 /// @brief Task tool UI — TaskCreate / TaskUpdate
 ///
-/// MODULE:   cc.ui.tools.task
+/// MODULE:   loom.ui.tools.task
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

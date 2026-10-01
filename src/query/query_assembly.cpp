@@ -1,4 +1,4 @@
-// Implementation unit for cc.query.assembly — the engine assembly recipe
+// Implementation unit for loom.query.assembly — the engine assembly recipe
 // extracted from the server's detail::execute_native_query (RFC 0001
 // cc-sdk phase 3, §2.1). Bodies live here (not the interface) so the
 // orchestration/runtime-registry imports never enter the module BMI.
@@ -61,7 +61,7 @@ namespace fs = std::filesystem;
 // append_message_for_testing-based server helper.
 //
 // Exported (declared in query_assembly.cppm) so the harness's resume() path
-// can parse session messages without a cc.server import. Defined here in
+// can parse session messages without a loom.server import. Defined here in
 // namespace loom::query (NOT the anonymous namespace above) so the exported
 // declaration links.
 [[nodiscard]] std::optional<loom::core::Message> parse_session_message_value(

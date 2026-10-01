@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.runtime_registry — the team_create and
+// Implementation unit for loom.tools.runtime_registry — the team_create and
 // team_delete branches extracted from the execute_simple_runtime_tool mega
 // dispatcher so no single implementation unit approaches ~700 LOC.
 module;

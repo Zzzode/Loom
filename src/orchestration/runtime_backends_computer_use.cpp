@@ -1,10 +1,10 @@
-// Implementation unit for cc.orchestration.runtime_backends (moved
-// verbatim from cc.tools.runtime_registry in RFC-0001 B15) — native
+// Implementation unit for loom.orchestration.runtime_backends (moved
+// verbatim from loom.tools.runtime_registry in RFC-0001 B15) — native
 // computer-use routing: the local command backend, action parsing, the
 // connected computer-use MCP server check, and execute_computer_use. The
-// four test setters stayed in cc_tools (inline in runtime_registry.cppm);
+// four test setters stayed in loom_tools (inline in runtime_registry.cppm);
 // this unit reaches the exported inline override variables through
-// cc.tools.runtime_registry.
+// loom.tools.runtime_registry.
 module;
 
 #include <cctype>   // std::isalnum in normalize_name_for_mcp
@@ -33,9 +33,9 @@ constexpr std::string_view kComputerUseMcpServerName = "computer-use";
 
 } // namespace
 
-// RFC-0001 B15: these were declared in the cc.tools.runtime_registry
+// RFC-0001 B15: these were declared in the loom.tools.runtime_registry
 // interface solely for cross-TU use by this one implementation unit. After
-// the move they are TU-local to cc.orchestration.runtime_backends.
+// the move they are TU-local to loom.orchestration.runtime_backends.
 struct ComputerUseCommandBackendResult {
     std::optional<std::string> screenshot_base64;
     std::optional<std::string> format;

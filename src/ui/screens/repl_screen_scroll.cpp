@@ -1,4 +1,4 @@
-// repl_screen_scroll.cpp - impl unit for cc.ui.screens.repl_screen
+// repl_screen_scroll.cpp - impl unit for loom.ui.screens.repl_screen
 // (RFC 0001 Phase C batch 9). unseen-divider computation, visible-message projection, transcript row
 // estimation and scroll bounds (incl. the virtual_list JumpHandle fast path).
 //

@@ -78,7 +78,7 @@ enum class CommandPermission : std::uint8_t {
 /// Central registry that owns all command instances and provides dispatch,
 /// lookup, autocompletion, permission checking, and history tracking.
 class AppCommandRegistry {
-    CommandRegistry registry_;                         // Core registry from cc.core.command
+    CommandRegistry registry_;                         // Core registry from loom.core.command
     std::deque<CommandHistoryEntry> history_;          // Command execution history
     std::uint32_t max_history_size_ = 100;            // Maximum history entries to retain
     CommandPermission current_permission_ = CommandPermission::Admin;  // Current session permission

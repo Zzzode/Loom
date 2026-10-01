@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.agent_runtime — pure text/enum/
+// Implementation unit for loom.tools.agent_runtime — pure text/enum/
 // predicate/builder helpers: whitespace and list parsing, agent-type
 // canonicalization and resolution, hook-event canonical names, fork-child
 // message builders, JSON/XML escaping, transcript role helpers. Lightest

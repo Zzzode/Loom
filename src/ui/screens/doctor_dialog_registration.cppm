@@ -1,12 +1,12 @@
 /// @file doctor_dialog_registration.cppm
 /// @brief Registers the Doctor dialog renderer into DialogRendererRegistry.
 ///
-/// MODULE:   cc.ui.screens.doctor_dialog_registration
+/// MODULE:   loom.ui.screens.doctor_dialog_registration
 /// LICENCE:  Exported.  Imported by the app composition root to register the
 ///           Doctor dialog renderer alongside the default set.
 ///
 /// RFC 0002 F2 (row 4 registry inversion): the doctor renderer registration
-/// moved OUT of cc.ui.dialogs.default_renderers so that the dialogs area no
+/// moved OUT of loom.ui.dialogs.default_renderers so that the dialogs area no
 /// longer imports the screens area.  dialogs -> screens was a back edge under
 /// the UI9 rank table (screens rank 10 > dialogs rank 9); screens -> dialogs
 /// is downward-legal, so the registration lives here on the screens side.

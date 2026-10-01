@@ -1,5 +1,5 @@
-// app_dialog_registration_bottom.cpp — impl unit for cc.ui.app_dialog_registration.
-// Imports ONLY cc.ui.dialogs.bottom_renderers (11 bottom-slot callouts) so this
+// app_dialog_registration_bottom.cpp — impl unit for loom.ui.app_dialog_registration.
+// Imports ONLY loom.ui.dialogs.bottom_renderers (11 bottom-slot callouts) so this
 // TU's closure stays small. See app_dialog_registration.cppm for the rationale.
 module loom.ui.app.app_dialog_registration;
 

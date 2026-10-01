@@ -1,4 +1,4 @@
-// repl_screen_agents.cpp - impl unit for cc.ui.screens.repl_screen
+// repl_screen_agents.cpp - impl unit for loom.ui.screens.repl_screen
 // (RFC 0001 Phase C batch 9). the agent wizard helpers and the whole agents_menu cluster:
 // AgentMenuListBase out-of-line ctor/Render/OnEvent + static row helpers,
 // the AgentMenuList factory, and the lazy agents-component accessors.

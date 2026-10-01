@@ -1,5 +1,5 @@
 // HTTP-level retry executor for libcurl-backed clients.
-// Exposes the simple int-based return contract used by cc.services.api.sse:
+// Exposes the simple int-based return contract used by loom.services.api.sse:
 //   return == 0          -> success
 //   return > 0           -> HTTP status (retry if in cfg.retry_on_http)
 //   return < 0           -> libcurl transport error (always retry up to max)

@@ -1,5 +1,5 @@
-// app_dialog_registration_hooks.cpp — impl unit for cc.ui.app_dialog_registration.
-// Imports ONLY cc.ui.dialogs.hooks_renderer (thin interface — just a function
+// app_dialog_registration_hooks.cpp — impl unit for loom.ui.app_dialog_registration.
+// Imports ONLY loom.ui.dialogs.hooks_renderer (thin interface — just a function
 // declaration) so this TU's closure stays small.  The heavy hooks_ui +
 // hooks_config + hooks_registry + registry imports live in the hooks_renderer
 // module implementation unit (hooks_dialog_renderer_impl.cpp), which has its

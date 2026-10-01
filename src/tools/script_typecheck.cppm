@@ -269,7 +269,7 @@ auto run_via_subprocess(
     // Escape for single-quoted shell heredoc: just use printf.
     // Simpler: write to a real tempfile then execute it.
     auto tmp = fs::temp_directory_path() /
-        std::format("cc_tc_{}.mjs",
+        std::format("loom_tc_{}.mjs",
             std::chrono::steady_clock::now().time_since_epoch().count());
 
     {
@@ -544,7 +544,7 @@ const MAX_DIAGNOSTICS = {};
     );
 
     auto tmp = fs::temp_directory_path() /
-        std::format("cc_tcf_{}.mjs",
+        std::format("loom_tcf_{}.mjs",
             std::chrono::steady_clock::now().time_since_epoch().count());
     { std::ofstream(tmp, std::ios::binary) << runner; }
 

@@ -1,9 +1,9 @@
-// Implementation unit for cc.query.query_engine — request construction:
+// Implementation unit for loom.query.query_engine — request construction:
 // wire backend selection, neutral RequestInput assembly, body preparation,
 // thinking/context-management gating, output_config JSON, task-budget
 // accounting, and the working-directory/context-utilization accessors.
 // This is the ONLY implementation unit that imports the two concrete wire
-// backends and cc.security.tool_deny_rules.
+// backends and loom.security.tool_deny_rules.
 module;
 
 #include <cstdlib>
@@ -127,7 +127,7 @@ void QueryEngine::set_wire_backend_factory(WireBackendFactory factory) {
 
 [[nodiscard]] std::unique_ptr<loom::query::wire::WireBackend>
 QueryEngine::make_wire_backend() const {
-    // §2.4 seam: when a factory was injected (e.g. by cc.sdk.harness),
+    // §2.4 seam: when a factory was injected (e.g. by loom.sdk.harness),
     // delegate request-body serialization to it. The transport is NOT
     // intercepted — send_request still does the real httplib POST.
     if (wire_backend_factory_) {

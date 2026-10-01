@@ -5,7 +5,7 @@
 ///        with left/right columns containing mode indicators, tasks, teams,
 ///        hints, and status info.
 ///
-/// MODULE:   cc.ui.prompt.prompt_input_footer
+/// MODULE:   loom.ui.prompt.prompt_input_footer
 /// LICENCE:  Exported.  Imported by repl_screen.cppm (bottom slot assembly).
 ///
 /// TS REFERENCE STRUCTURE (PromptInputFooter.tsx):
@@ -48,7 +48,7 @@ export module loom.ui.prompt.prompt_input_footer;
 import std;
 
 // ANSI → FTXUI element converter (used by StatusLine for colored command output).
-// RFC 0002 F1 row 8: lives in the chrome leaf cc.ui.chrome.ansi_render (the
+// RFC 0002 F1 row 8: lives in the chrome leaf loom.ui.chrome.ansi_render (the
 // prompt -> messages back edge through message_tool_result is severed; the
 // function stays in loom::ui::messages namespace, reached via the msgs alias).
 import loom.ui.chrome.ansi_render;

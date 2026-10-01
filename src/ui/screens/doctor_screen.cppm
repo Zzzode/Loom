@@ -1304,7 +1304,7 @@ namespace detail {
                         rt->summary_ui.show_fix_log = true;
                         rt->summary_ui.fix_step = 1;
                         // Phase-5 integration point: invoke each fix_command
-                        // via cc.services.bash_runner sequentially, streaming
+                        // via loom.services.bash_runner sequentially, streaming
                         // stdout/stderr back to fix_log_lines for display.
                     }
                     return true;

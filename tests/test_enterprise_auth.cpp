@@ -296,7 +296,7 @@ TEST(EnterpriseAuth_SigV4, CredentialsFromEnv_HonorsAwsVars) {
 TEST(EnterpriseAuth_SigV4, CredentialsFromIni_ParseSimple) {
     using namespace loom::services::auth::aws;
     // Write a temp credentials file.
-    char tmp_path[] = "/tmp/cc_sigv4_ini_XXXXXX";
+    char tmp_path[] = "/tmp/loom_sigv4_ini_XXXXXX";
     int fd = mkstemp(tmp_path);
     ASSERT_GE(fd, 0);
     FILE* f = fdopen(fd, "w");

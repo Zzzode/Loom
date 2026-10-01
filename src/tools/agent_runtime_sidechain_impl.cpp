@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.agent_runtime — sidechain/transcript
+// Implementation unit for loom.tools.agent_runtime — sidechain/transcript
 // persistence: task-notification rendering, JSONL entry construction and
 // fork rebasing, tool-use state collection, record persistence, transcript
 // readers (TS-jsonl and sidechain-jsonl), and NativeAgentRecord loading.

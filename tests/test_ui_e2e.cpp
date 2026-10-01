@@ -28,7 +28,7 @@ namespace fs = std::filesystem;
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.chrome.terminal: FTXUI terminal controller and common widgets
+// loom.ui.chrome.terminal: FTXUI terminal controller and common widgets
 // ═══════════════════════════════════════════════════════════════════════════════
 
 
@@ -210,7 +210,7 @@ TEST(E2E_Gate, StartupScreenHasAllElements) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
-        ("cc_e2e_gate_startup_" +
+        ("loom_e2e_gate_startup_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     loom::utils::SessionStorage storage(storage_root);
 
@@ -260,7 +260,7 @@ TEST(E2E_Gate, StatuslineVisibleAfterSubmit) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
-        ("cc_e2e_gate_statusline_" +
+        ("loom_e2e_gate_statusline_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     loom::utils::SessionStorage storage(storage_root);
 
@@ -326,7 +326,7 @@ TEST(E2E_Gate, McpToolUseBlockRendersWithNameAndInput) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
-        ("cc_e2e_gate_tooluse_" +
+        ("loom_e2e_gate_tooluse_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     loom::utils::SessionStorage storage(storage_root);
 
@@ -404,7 +404,7 @@ TEST(E2E_Gate, McpToolResultRendersAsSeparateCard) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
-        ("cc_e2e_gate_toolresult_separate_" +
+        ("loom_e2e_gate_toolresult_separate_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     loom::utils::SessionStorage storage(storage_root);
 
@@ -501,7 +501,7 @@ TEST(E2E_Gate, McpResultSummaryFormatShownRaw) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
-        ("cc_e2e_gate_result_raw_" +
+        ("loom_e2e_gate_result_raw_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     loom::utils::SessionStorage storage(storage_root);
 
@@ -585,7 +585,7 @@ TEST(E2E_Gate, McpToolResultSuppressedInToolUseCardDuringStreaming) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
-        ("cc_e2e_gate_no_output_in_tooluse_" +
+        ("loom_e2e_gate_no_output_in_tooluse_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     loom::utils::SessionStorage storage(storage_root);
 
@@ -700,7 +700,7 @@ TEST(E2E_Gate, McpToolsIncludedInApiRequestBody) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
-        ("cc_e2e_gate_apibody_" +
+        ("loom_e2e_gate_apibody_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     loom::utils::SessionStorage storage(storage_root);
 
@@ -826,7 +826,7 @@ TEST(E2E_Gate, FullConversationGoldenSnapshot) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
-        ("cc_e2e_gate_golden_" +
+        ("loom_e2e_gate_golden_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     loom::utils::SessionStorage storage(storage_root);
 

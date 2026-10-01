@@ -1,7 +1,7 @@
 /// @file tool_ui_lsp.cppm
 /// @brief LSP tool UI — userFacingName, renderToolUseMessage, etc.
 ///
-/// MODULE:   cc.ui.tools.lsp
+/// MODULE:   loom.ui.tools.lsp
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

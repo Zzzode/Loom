@@ -1,10 +1,10 @@
-// Implementation unit for cc.query.query_engine — the direct httplib HTTP
+// Implementation unit for loom.query.query_engine — the direct httplib HTTP
 // path: non-streaming send_request, SSE stream_single_api_call, response
 // parsing, SSE framing (SseEventDecoder::feed), and the free
 // api_messages_endpoint helper. This is the ONLY implementation unit that
 // textually includes <httplib.h>; keeping it here lets the third-party
 // header leave the module interface BMI. Raw httplib types are NOT exported
-// by cc.net.http.http (it includes the same header in its own global module
+// by loom.net.http.http (it includes the same header in its own global module
 // fragment and only exports loom::utils::HttpClient wrappers), so this TU
 // textually includes <httplib.h> exactly like src/services/auth/*.cppm.
 module;

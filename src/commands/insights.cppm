@@ -9,7 +9,7 @@
 ///     snake_case category/outcome/satisfaction/friction/success labels
 ///   - goal_categories / outcomes / satisfaction / friction aggregation
 ///     (aggregate_facets) — pure and deterministic
-///   - File-based facet caching (JSON round-trip via cc.serdes.json) with the
+///   - File-based facet caching (JSON round-trip via loom.serdes.json) with the
 ///     same validity predicate as the TS source
 ///   - HTML report rendering from aggregated data (pure string building)
 ///   - LLM narrative fallback: when no cached facets exist, the command

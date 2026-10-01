@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.runtime_registry — ad-hoc JSON field
+// Implementation unit for loom.tools.runtime_registry — ad-hoc JSON field
 // accessors, notebook/browser action parsing, and small text helpers. Separate
 // from the executor/dispatch/register units so a body edit to one helper
 // recompiles this smaller object only.
@@ -20,7 +20,7 @@ namespace loom::tools::detail {
 namespace fs = std::filesystem;
 
 // Ad-hoc JSON field accessors over a raw JSON string. These now delegate to
-// cc.serdes.json (parse once, then typed access) instead of hand-written byte
+// loom.serdes.json (parse once, then typed access) instead of hand-written byte
 // scanning — the scanner was obfuscation-prone (it matched the first "\"key\""
 // substring anywhere, including inside string values) and is eliminated as
 // part of the JSON-consolidation work (audit §13 #3). Signatures/semantics are

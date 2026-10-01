@@ -25,8 +25,8 @@ jobs:
       # the frozen snapshots in tools/arch/*_baseline.txt.
       # --target-core8 also evaluates every current-state predicate AND
       # the RFC 0001 Phase B future-state gate (9 singleton areas incl.
-      # cc.orchestration). Enabled from Phase B batch 5 (2026-09-27),
-      # the batch that dissolved the {cc.hooks,cc.services,cc.tools} SCC;
+      # loom.orchestration). Enabled from Phase B batch 5 (2026-09-27),
+      # the batch that dissolved the {loom.hooks,loom.services,loom.tools} SCC;
       # it then stays green through the remaining lifts and prevents the
       # SCC from silently reforming (a contract-only return path can pass
       # the default predicates while closing the loop).

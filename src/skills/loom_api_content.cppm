@@ -7,7 +7,7 @@
 /// runtime logic from `src/skills/bundled/loomApi.ts`. The TS version
 /// lazy-loads 247 KB of inlined `.md` strings; here we embed the structural
 /// parts (Reading Guide, model constants, doc-route table, common pitfalls)
-/// as raw string literals and rely on cc.tools.web_fetch + cc.tools.file_read
+/// as raw string literals and rely on loom.tools.web_fetch + loom.tools.file_read
 /// for any docs that must be resolved at runtime.
 module;
 

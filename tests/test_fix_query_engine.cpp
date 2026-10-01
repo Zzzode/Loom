@@ -2,7 +2,7 @@
 /// @brief Dedicated QueryEngine test target closing audit finding B1.
 ///
 /// The audit reports query_engine.cppm at 0.86% coverage with no test target
-/// referencing it directly. The cc_core aggregator pulls cc_query transitively,
+/// referencing it directly. The loom_core aggregator pulls loom_query transitively,
 /// but the existing QueryEngine coverage lives inside test_services.cpp (a
 /// 280k-line mega-target) which muddies per-file attribution. This file is a
 /// focused, standalone QueryEngine test target.
@@ -83,7 +83,7 @@ struct EnvironmentGuard {
 /// (status, body) responses, one per incoming request, and records the bodies
 /// it received. Used to drive QueryEngine.query() through call_api()'s
 /// fallback-model branch. Intentionally tiny (no httplib dep) so the test
-/// target links only against cc_core.
+/// target links only against loom_core.
 class ScriptedHttpServer {
 public:
     struct Response {

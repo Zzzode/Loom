@@ -1,8 +1,8 @@
-// markdown_render_code_impl.cpp - impl unit for cc.ui.visual.markdown
+// markdown_render_code_impl.cpp - impl unit for loom.ui.visual.markdown
 // (RFC 0001 Phase C batch 6). Holds render_code_block(), the ONLY body that
-// uses cc.ui.visual.code_highlight: keeping that import here (instead of in
-// the cppm) removes code_highlight (+ its cc.types.types closure) from the
-// markdown BMI and from every importer of cc.ui.visual.markdown.
+// uses loom.ui.visual.code_highlight: keeping that import here (instead of in
+// the cppm) removes code_highlight (+ its loom.types.types closure) from the
+// markdown BMI and from every importer of loom.ui.visual.markdown.
 module;
 
 #include <ftxui/dom/elements.hpp>

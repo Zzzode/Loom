@@ -1,4 +1,4 @@
-// Implementation unit for cc.serdes.json — JsonDoc lifetime/delegates and the
+// Implementation unit for loom.serdes.json — JsonDoc lifetime/delegates and the
 // free parse* entry points (RFC 0001 Phase C batch 10). The textual
 // <yyjson.h> lives here, not in the module interface.
 module;

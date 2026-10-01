@@ -1,11 +1,11 @@
 /// @file feature_wizard_adapter.cppm
 /// @brief Generic adapter: the feature_dialog_protocol neutral wizard request
-/// -> cc.ui.dialogs.wizard_dialog's WizardComponent (RFC 0002 F2, row 6).
+/// -> loom.ui.dialogs.wizard_dialog's WizardComponent (RFC 0002 F2, row 6).
 ///
-/// MODULE:   cc.ui.dialogs.feature_wizard_adapter
+/// MODULE:   loom.ui.dialogs.feature_wizard_adapter
 /// AREA:     dialogs (UI9 rank 9).
-/// IMPORTS:  cc.ui.foundation.feature_dialog_protocol (rank 2 — downward),
-///           cc.ui.dialogs.wizard_dialog (same area). NO features import:
+/// IMPORTS:  loom.ui.foundation.feature_dialog_protocol (rank 2 — downward),
+///           loom.ui.dialogs.wizard_dialog (same area). NO features import:
 ///           this adapter is generic and works for any ViewKind whose erased
 ///           request is a FeatureWizardRequest (AgentWizard, PluginInstall).
 ///

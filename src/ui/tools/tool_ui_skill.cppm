@@ -1,7 +1,7 @@
 /// @file tool_ui_skill.cppm
 /// @brief Skill tool UI — userFacingName, renderToolUseMessage, etc.
 ///
-/// MODULE:   cc.ui.tools.skill
+/// MODULE:   loom.ui.tools.skill
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

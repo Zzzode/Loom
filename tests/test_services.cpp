@@ -5687,7 +5687,7 @@ TEST(ConfigManager, PreservesRemoteMcpServerAuthSettings) {
 }
 
 // RFC-0001 B4: persisted-data round-trip coverage for the canonical
-// cc.config.mcp_types settings shape — legacy snake_case reads, project/global
+// loom.config.mcp_types settings shape — legacy snake_case reads, project/global
 // layering, and environment-layer non-interference.
 TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
     const auto root = c13_make_temp_root("loom_mcp_types_legacy_test_");
@@ -12806,7 +12806,7 @@ TEST(XaaConfigC17a, XaaIdpFileCallbackPortLineIsIgnored) {
 // Resolution: ONE authoritative store — settings.xaaIdp.callbackPort. The
 // c17 ~/.loom/xaa-idp.txt surface is REMOVED (the test above pins that), and
 // the composition layer injects the settings value into authenticate_xaa()
-// (see cc.commands.mcp.core_settings_loader -> CoreSettingsMcpLayer ->
+// (see loom.commands.mcp.core_settings_loader -> CoreSettingsMcpLayer ->
 // native_mcp_xaa_callback_port(), pinned in test_tools).
 //
 // FINDING 2: `idp_client_secret` was dropped on `/mcp xaa login` — setup
@@ -12927,7 +12927,7 @@ TEST(XaaIdpLoginC17a, FreshStoreWritesSecretAndToken) {
 
 // authenticate_xaa() (the --xaa runtime login entry) gained the injected
 // callback port as its 5th parameter, so the composition layer can thread
-// settings.xaaIdp.callbackPort in without cc.services seeing cc.config. The
+// settings.xaaIdp.callbackPort in without loom.services seeing loom.config. The
 // 4-argument call shape (on_auth_url + skip_browser, no port) must keep
 // compiling.
 TEST(XaaIdpLoginC17a, AuthenticateXaaAcceptsInjectedCallbackPort) {
@@ -12967,14 +12967,14 @@ TEST(XaaIdpLoginC17a, ResolvedStorePortReachesLoginSeam) {
 }
 
 // FINDING 1, full chain: with the REAL production core-settings loader
-// installed (cc.commands.mcp.core_settings_loader, which is the one place
-// allowed to see both cc.config.config and cc.orchestration.tools.mcp), a
+// installed (loom.commands.mcp.core_settings_loader, which is the one place
+// allowed to see both loom.config.config and loom.orchestration.tools.mcp), a
 // settings.xaaIdp.callbackPort written to the real config tiers is loaded into
 // the native runtime and surfaced by native_mcp_xaa_callback_port() — the value
 // McpAuthTool forwards to authenticate_xaa(). No fake loader, no network.
 //
-// This module reaches cc.orchestration.* through cc_core (test_tools links
-// cc_orchestration directly, test_services transitively).
+// This module reaches loom.orchestration.* through loom_core (test_tools links
+// loom_orchestration directly, test_services transitively).
 TEST(XaaIdpLoginC17a, ProductionLoaderPropagatesXaaCallbackPort) {
     namespace fs2 = std::filesystem;
     const auto root = c13_make_temp_root("loom_c17a_prod_loader_");
@@ -13081,7 +13081,7 @@ TEST(XaaIdpLoginC17a, PortSurvivesSyncBeforeReadProductionOrdering) {
 
 // RFC-0001 B followup c17a — the store holds an IdP client secret and a
 // cached id_token; both writers now route through
-// cc.utils.atomic_replace_file(OwnerOnly) and force the containing xaa/ dir
+// loom.utils.atomic_replace_file(OwnerOnly) and force the containing xaa/ dir
 // to 0700, so the credentials are owner-only at rest instead of the previous
 // 0644 file / 0755 dir under umask 022. These tests run under umask 022 (the
 // common default) for umask-independence: the mode must come from the code,

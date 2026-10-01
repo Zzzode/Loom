@@ -15,11 +15,11 @@
 ///         * variant dispatch to RenderMessageRowByType (UI4 message_row)
 ///
 /// DEPENDENCIES (STRICT — no type/color duplication):
-///   import cc.ui.messages.message_row;
+///   import loom.ui.messages.message_row;
 ///       -> MessageShape enum  +  MessageRowPayload variant
 ///       +  RenderMessageRowByType(shape, payload, callbacks)
-///   import cc.ui.messages.virtual_list;  // virtual-row conversion types
-///   import cc.ui.visual.markdown;        // StreamingMarkdown member type
+///   import loom.ui.messages.virtual_list;  // virtual-row conversion types
+///   import loom.ui.visual.markdown;        // StreamingMarkdown member type
 ///
 ///   Bodies live in the seven module implementation units (RFC 0001 Phase C
 ///   batch 7): messages_list_{filter,search,geometry,envelope,payload_row,
@@ -109,7 +109,7 @@ import loom.ui.messages.virtual_list;   // P0-3: VirtualMessageList types + fact
 // this interface's BMI.
 import loom.ui.visual.markdown;   // arch-check: keep-import — StreamingMarkdown* member (global-qualified; checker sees only unqualified uses)
 // =========================================================================
-// Small palette helpers — tokens placeholders (swap for cc.ui.foundation.design_tokens)
+// Small palette helpers — tokens placeholders (swap for loom.ui.foundation.design_tokens)
 // =========================================================================
 // Each lookup returns an ftxui::Color.  Kept in a single namespace so the
 // grep-replace for real tokens is mechanical.
@@ -858,7 +858,7 @@ class MessagesListComponent final : public ComponentBase {
 //   In repl_screen.cppm's `RenderMessages` / `MakeReplScreen` the call site
 //   uses this shape/payload API once the engine owns the parallel vectors:
 //
-//     import cc.ui.messages.messages_list;
+//     import loom.ui.messages.messages_list;
 //     using loom::ui::messages_list::MakeMessagesList;
 //     using loom::ui::messages_list::MessagesListInput;
 //     using loom::ui::messages_list::MessagesListCallbacks;

@@ -1,4 +1,4 @@
-// repl_screen_prompt_render.cpp - impl unit for cc.ui.screens.repl_screen
+// repl_screen_prompt_render.cpp - impl unit for loom.ui.screens.repl_screen
 // (RFC 0001 Phase C batch 9). placeholder cascade adapter, the full prompt-input renderer (synced
 // TextInputImpl + vim badge + stash notice + declared caret), and the
 // autocomplete suggestions dropdown.
@@ -45,7 +45,7 @@ using namespace ftxui;
 //                                  (only before first submit, with suggestions enabled)
 //   6. Fallback                 → std::nullopt (no placeholder shown)
 //
-// Implementation lives in cc.ui.prompt.placeholder_cascade module for
+// Implementation lives in loom.ui.prompt.placeholder_cascade module for
 // reusability by standalone TextInputImpl and dialog widgets.  This thin
 // adapter projects ReplScreenState onto PlaceholderContext.
 

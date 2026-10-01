@@ -6,7 +6,7 @@
 ///   blockquotes, tables (GFM), horizontal rules
 /// - Inline formatting: bold, italic, inline code, links,
 ///   escaped characters (strikethrough intentionally disabled, mirroring TS)
-/// - Syntax-highlighted code blocks via cc.ui.visual.code_highlight
+/// - Syntax-highlighted code blocks via loom.ui.visual.code_highlight
 /// - LRU token cache for fast re-renders (virtual scrolling)
 /// - Fast-path: skip lexing for plain text with no markdown markers
 /// - Theme-aware coloring with dimColor option

@@ -1,7 +1,7 @@
 /// @file mcp_types.cppm
 /// @brief Canonical MCP (Model Context Protocol) configuration data types.
-/// Rank-1 leaf: defines McpOAuthConfig/McpServerConfig with zero cc.* imports;
-/// cc.config.config re-exports it so existing importers stay unchanged.
+/// Rank-1 leaf: defines McpOAuthConfig/McpServerConfig with zero loom.* imports;
+/// loom.config.config re-exports it so existing importers stay unchanged.
 export module loom.config.mcp_types;
 
 import std;

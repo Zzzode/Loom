@@ -288,7 +288,7 @@ struct TempWorkspace {
         auto suffix = std::to_string(
             std::chrono::steady_clock::now().time_since_epoch().count()
         );
-        root = std::filesystem::temp_directory_path() / ("cc_at_mention_" + suffix);
+        root = std::filesystem::temp_directory_path() / ("loom_at_mention_" + suffix);
         std::filesystem::create_directories(root / std::filesystem::path(std::string(rel)).parent_path());
         file = root / std::string(rel);
         std::ofstream out(file);

@@ -6,7 +6,7 @@
 /// (injection, auth, crypto, XSS, SSRF, etc.) plus hardcoded-secret scanning.
 ///
 /// Implementation notes:
-///   * Hardcoded-secret detection REUSES `cc.services.team_memory.secret_scanner`
+///   * Hardcoded-secret detection REUSES `loom.services.team_memory.secret_scanner`
 ///     — the regex list is NOT duplicated here.
 ///   * The LLM call itself is NOT made here.  The command builds a structured
 ///     prompt and injects it via `CommandResult::inject`, which flows through

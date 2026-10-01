@@ -28,7 +28,7 @@ enum class TaskType : std::uint8_t {
     LocalWorkflow,
     MonitorMcp,
     Dream,
-    // Scheduler-facing aliases used by cc.tasks.task_graph (superset of the
+    // Scheduler-facing aliases used by loom.tasks.task_graph (superset of the
     // canonical task-runner classification above; kept as distinct enumerators
     // to preserve switch-coverage on the runner side while letting the graph
     // layer schedule generic work).

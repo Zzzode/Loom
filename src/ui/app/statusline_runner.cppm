@@ -21,7 +21,7 @@
 ///   - Empty output → no display
 ///   - Output is trimmed; blank lines are removed
 ///
-/// MODULE:   cc.ui.app.statusline_runner
+/// MODULE:   loom.ui.app.statusline_runner
 /// LICENCE:  Exported.  Imported by app.cppm (AppAdapter).
 /// =========================================================================
 

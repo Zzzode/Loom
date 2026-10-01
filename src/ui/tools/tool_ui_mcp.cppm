@@ -1,7 +1,7 @@
 /// @file tool_ui_mcp.cppm
 /// @brief MCP tool UI — userFacingName, renderToolUseMessage, etc.
 ///
-/// MODULE:   cc.ui.tools.mcp
+/// MODULE:   loom.ui.tools.mcp
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

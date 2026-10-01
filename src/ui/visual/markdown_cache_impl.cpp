@@ -1,4 +1,4 @@
-// markdown_cache_impl.cpp - impl unit for cc.ui.visual.markdown (RFC 0001
+// markdown_cache_impl.cpp - impl unit for loom.ui.visual.markdown (RFC 0001
 // Phase C batch 6). The single out-of-line definitions of TokenCache's
 // ctor/find/put (CacheEntry + lru_/map_ stay private members declared in the
 // interface - needed for class layout) and the SINGLE definition of

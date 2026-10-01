@@ -1,4 +1,4 @@
-// repl_screen_prompt_buffer.cpp - impl unit for cc.ui.screens.repl_screen
+// repl_screen_prompt_buffer.cpp - impl unit for loom.ui.screens.repl_screen
 // (RFC 0001 Phase C batch 9). prompt text-buffer mutation: utf8 cursor helpers, insert/backspace/delete,
 // pending @mention drain, prompt stash/restore, cursor moves and the
 // text-derived bash-mode predicate.

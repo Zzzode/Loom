@@ -17,8 +17,8 @@ export module loom.ui.foundation.ui_types;
 
 import std;
 
-// Canonical VimMode lives in cc_vim (low-level target) to avoid circular
-// deps: cc_hooks needs VimMode but cc_ui depends on cc_hooks.
+// Canonical VimMode lives in loom_vim (low-level target) to avoid circular
+// deps: loom_hooks needs VimMode but loom_ui depends on loom_hooks.
 import loom.vim.vim_types;
 
 export namespace loom::ui::common {
@@ -212,10 +212,10 @@ enum class EffortLevel {
 };
 
 // ============================================================
-// Canonical VimMode enum — re-exported from cc.vim.vim_types
+// Canonical VimMode enum — re-exported from loom.vim.vim_types
 //
-// Canonical definition lives in cc_vim (vim/vim_types.cppm) to avoid
-// circular deps (cc_hooks needs VimMode but cc_ui depends on cc_hooks).
+// Canonical definition lives in loom_vim (vim/vim_types.cppm) to avoid
+// circular deps (loom_hooks needs VimMode but loom_ui depends on loom_hooks).
 //
 // UNIFIED: replaces 5 incompatible VimMode definitions scattered across
 //   - src/ui/prompt/vim_input.cppm (6 values)

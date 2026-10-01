@@ -3,11 +3,11 @@ export module loom.vim.vim_mode;
 
 import std;
 
-import loom.vim.vim_types;  // canonical VimMode (lives in cc_vim to avoid circular deps)
+import loom.vim.vim_types;  // canonical VimMode (lives in loom_vim to avoid circular deps)
 
 export namespace loom::vim {
 
-// Canonical VimMode — defined in cc.vim.vim_types (same loom::vim namespace).
+// Canonical VimMode — defined in loom.vim.vim_types (same loom::vim namespace).
 // TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
 //          src/hooks/useVimInput.ts (internal state machine tracks more)
 // This replaces the previous local 6-value enum { Normal,Insert,Visual,

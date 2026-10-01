@@ -1,4 +1,4 @@
-// Implementation unit for cc.query.query_engine — conversation compaction
+// Implementation unit for loom.query.query_engine — conversation compaction
 // and tool-result budgeting: time-based microcompaction, the large-output
 // disk-spill budget, snip-boundary replay, compaction summaries, token
 // estimation, and the env/lowercase static helpers. The std::visit lambdas

@@ -8,7 +8,7 @@
 // composition root, never a direct field reach-up.
 //
 // Import discipline (enforced by `graph_check.py --store-lint`): a store
-// module's cc.ui.* imports target only areas ranked below screens
+// module's loom.ui.* imports target only areas ranked below screens
 // (UI9_RANK < 10). messages (7) and chrome (3) are downward-legal, so the
 // concrete by-value field types (UnseenDivider, JumpHandle/VirtualListState,
 // StickyPrompt) recreate no up-edge.
@@ -99,7 +99,7 @@ struct MessageDisplayEntry {
 };
 
 /// RFC 0002 F3 store — message-list, scroll and transcript-chrome state,
-/// sharded out of ReplScreenState. Homed in cc.ui.screens (rank 10): the
+/// sharded out of ReplScreenState. Homed in loom.ui.screens (rank 10): the
 /// concrete cross-area field types live in areas ranked below screens, so
 /// by-value fields recreate no up-edge. UI-thread-affined plain data —
 /// see the file header for the threading and import rules.

@@ -1,10 +1,10 @@
-// Implementation unit for cc.tools.runtime_registry — the simple runtime tool
+// Implementation unit for loom.tools.runtime_registry — the simple runtime tool
 // executors (shell/script/task/config/resource/notebook/worktree/brief/
 // web-browser). Bodies moved out of the god interface so an edit to one
 // executor recompiles this object instead of the importer fan-out.
 //
 // RFC-0001 B15: parse_lsp_action / format_lsp_result / execute_lsp_tool moved
-// verbatim to cc.orchestration.runtime_backends (runtime_backends_lsp.cpp).
+// verbatim to loom.orchestration.runtime_backends (runtime_backends_lsp.cpp).
 module;
 
 #include <cctype>   // std::isalnum in safe_ref

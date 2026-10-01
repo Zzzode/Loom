@@ -6,7 +6,7 @@
 /// in-memory cache of "always" decisions, applies the default-risk
 /// heuristic, and returns a single `Decision`.  The interactive user
 /// prompt (if any) is the responsibility of the higher-level
-/// `PermissionGate` in `cc.hooks.tool_permission_gate`.
+/// `PermissionGate` in `loom.hooks.tool_permission_gate`.
 ///
 /// Decision enum numeric values are FROZEN for backward compat with any
 /// Phase C-E code that may have stored them on disk:

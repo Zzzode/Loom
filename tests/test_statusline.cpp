@@ -1,7 +1,7 @@
 /// @file test_statusline.cpp
 /// @brief Unit tests for the statusline system:
-///   - cc.commands.statusline      (shell integration setup command)
-///   - cc.ui.app.statusline_runner  (statusline command execution + JSON input)
+///   - loom.commands.statusline      (shell integration setup command)
+///   - loom.ui.app.statusline_runner  (statusline command execution + JSON input)
 
 #include <gtest/gtest.h>
 #include <cstdlib>
@@ -45,7 +45,7 @@ struct ScopedEnvVar {
 };
 
 // ===========================================================================
-// 1. cc.commands.statusline — shell integration setup command
+// 1. loom.commands.statusline — shell integration setup command
 // ===========================================================================
 
 TEST(StatuslineCommand, NameIsStatusline) {
@@ -119,7 +119,7 @@ TEST(StatuslineCommand, NoCustomFormatWhenEmpty) {
 }
 
 // ===========================================================================
-// 2. cc.ui.app.statusline_runner — JSON serialization (to_json)
+// 2. loom.ui.app.statusline_runner — JSON serialization (to_json)
 // ===========================================================================
 
 using loom::utils::statusline::StatusLineCommandInput;
@@ -507,7 +507,7 @@ TEST(StatuslineJson, EmptyAddedDirsIsValidArray) {
 }
 
 // ===========================================================================
-// 3. cc.ui.app.statusline_runner — execute_statusline_command
+// 3. loom.ui.app.statusline_runner — execute_statusline_command
 // ===========================================================================
 
 using loom::utils::statusline::execute_statusline_command;

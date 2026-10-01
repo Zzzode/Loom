@@ -1,4 +1,4 @@
-// Implementation unit for cc.query.query_engine — tool dispatch and
+// Implementation unit for loom.query.query_engine — tool dispatch and
 // permission enforcement: execute_single_tool (lifecycle + user hooks and
 // the registry call), the std::async fan-out in execute_pending_tools,
 // error-result construction, the permission-hook check, native-agent
@@ -163,7 +163,7 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         }
     }
 
-    // User-configured PreToolUse hooks (cc.hooks.execution engine).
+    // User-configured PreToolUse hooks (loom.hooks.execution engine).
     // Mirrors src/services/tools/toolExecution.ts:884-946 where the TS
     // engine runs executePreToolHooks before tool execution and honors
     // BlockToolCall/AbortQuery by denying permission. Guarded so behavior
@@ -309,7 +309,7 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         });
     }
 
-    // User-configured PostToolUse hooks (cc.hooks.execution engine).
+    // User-configured PostToolUse hooks (loom.hooks.execution engine).
     // Mirrors src/services/tools/toolExecution.ts:1567-1577 where the TS
     // engine runs executePostToolHooks after the tool executes. On
     // BlockToolCall/AbortQuery the action reason is surfaced as an error

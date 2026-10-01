@@ -36,19 +36,19 @@ promoted to the repository root in the same series of commits, so
 ### A.1 — Vim mode / input mode consolidation
 
 - **`cpp_migration/src/vim/vim_types.cppm:8-18`** — The canonical `VimMode` enum deliberately lives
-  in a low-level module (`cc_vim`, depending only on `cc_utils`) rather than next to its UI
+  in a low-level module (`loom_vim`, depending only on `loom_utils`) rather than next to its UI
   consumers. Five mutually incompatible local `VimMode` definitions had grown in the C++ tree
   (a 6-value one in `ui/prompt/vim_input.cppm`, a 3-value one in `ui/prompt_input.cppm`, another
   6-value one in `vim/vim_mode.cppm`, a 5-value one in `hooks/vim_input.cppm`, and a plain
   `bool enable_vim` in `ui/components/text_input.cppm`). They were unified here because
-  `cc_hooks` needs `VimMode` while `cc_ui` depends on `cc_hooks`, so any higher placement creates
+  `loom_hooks` needs `VimMode` while `loom_ui` depends on `loom_hooks`, so any higher placement creates
   a cycle. The resulting enum is `{Normal, Insert, Visual, VisualLine, VisualBlock, Replace,
   Command}`.
 
 - **`cpp_migration/src/hooks/vim_input.cppm:30-36`** — Divergence from the *previous C++ state*:
   this file's local `VimMode` used to be a 5-value enum `{Normal, Insert, Visual, VisualLine,
   Command}` that was **missing `VisualBlock` and `Replace`**. Replaced by the canonical
-  `cc::vim::VimMode`. A maintainer adding a new vim mode must add it to `vim_types.cppm`, not to
+  `loom::vim::VimMode`. A maintainer adding a new vim mode must add it to `vim_types.cppm`, not to
   any per-consumer enum — the per-consumer enums no longer exist and re-introducing one silently
   resurrects the "missing modes" bug.
 
@@ -73,7 +73,7 @@ promoted to the repository root in the same series of commits, so
 
 - **`cpp_migration/src/ui/prompt_input.cppm:443-447`** — The `VimHandler` class was **removed
   entirely**. Vim handling is now split across three places that must stay coordinated:
-  `cc::ui::common::VimMode` (the enum), `cc::ui::prompt::vim_input` (standalone component), and
+  `loom::ui::common::VimMode` (the enum), `loom::ui::prompt::vim_input` (standalone component), and
   `ui::components::TextInputImpl` holding an `optional<VimMode>`. Anyone looking for a `VimHandler`
   type will not find one.
 
@@ -97,7 +97,7 @@ promoted to the repository root in the same series of commits, so
 
 - **`cpp_migration/src/ui/common/ui_types.cppm:116-119`** — The `inputModes.ts` helpers
   (`prependModeCharacterToInput`, `getModeFromInput`, `getValueFromInput`, `isInputModeCharacter`)
-  do **not** live next to the mode enum. They live in `cc::ui::design::figures`, which is declared
+  do **not** live next to the mode enum. They live in `loom::ui::design::figures`, which is declared
   the single source of truth for prompt-prefix glyphs *and* mode-detection utilities. Putting a
   mode-detection helper beside `PromptInputMode` splits that source of truth.
 
@@ -136,8 +136,8 @@ promoted to the repository root in the same series of commits, so
   the prompt prefix, only as badge / status-row content.
 
 - **`cpp_migration/src/ui/common/ui_types.cppm:222-237`** — The same VimMode unification note
-  repeated at the `using cc::vim::VimMode` site, with the explicit note that `cc_hooks` needs
-  `VimMode` but `cc_ui` depends on `cc_hooks`.
+  repeated at the `using loom::vim::VimMode` site, with the explicit note that `loom_hooks` needs
+  `VimMode` but `loom_ui` depends on `loom_hooks`.
 
 ### A.3 — Wiring the client-side SSE / streaming events
 
@@ -163,7 +163,7 @@ promoted to the repository root in the same series of commits, so
   the client **never** goes out to the network. This is a hard gate, not a warning.
 
 - **`cpp_migration/src/services/api/sse_client.cppm:26`** — This module deliberately avoids
-  importing anything from `cc.services.api.*` so it can be built and tested in isolation.
+  importing anything from `loom.services.api.*` so it can be built and tested in isolation.
 
 - **`cpp_migration/src/query/wire_anthropic.cppm:293-300`** — Mapping notes for the Anthropic SSE
   decoder, "all deliberate, to keep the engine's behaviour". `message_start` carries the message
@@ -728,7 +728,7 @@ promoted to the repository root in the same series of commits, so
   **MUST NOT** be null; it *is* the content.
 
 - **`cpp_migration/src/ui/dialogs/trust_dialog.cppm:777-778`** — **DO NOT re-implement the trust
-  model**: this short-circuits through the existing `cc::commands::get_trust_level`.
+  model**: this short-circuits through the existing `loom::commands::get_trust_level`.
 
 - **`cpp_migration/src/ui/dialogs/trust_utils.cppm:273`** — Malformed patterns are skipped — the scan
   **never fails**. A throwing regex here would take down the trust UI.
@@ -825,7 +825,7 @@ promoted to the repository root in the same series of commits, so
 
 - **`cpp_migration/src/ui/prompt/fuzzy_rank_nucleo.cppm:31-34`** — The scoring constants
   (`SCORE_MATCH = 16`, `BONUS_BOUNDARY = 8`, `BONUS_CAMEL = 6`, `BONUS_CONSECUTIVE = 4`,
-  `GAP_START = -3`, …) are **mirrored from the former `cc.utils.file_index` (deleted in the
+  `GAP_START = -3`, …) are **mirrored from the former `loom.utils.file_index` (deleted in the
   Phase D dead-code pass; the constants are now self-contained in this module) so the two
   scorers stay in sync without a hard import**. Changing one without the other makes the two
   scorers disagree.
@@ -1302,7 +1302,7 @@ promoted to the repository root in the same series of commits, so
   (`"self-unstuck"`) so neither behaviour is lost. Re-merging the names re-creates the ambiguity.
 
 - **`cpp_migration/src/skills/bundled/skill_keybindings.cppm:450-453`** — The skill name is
-  **`"keybindings-help"` (NOT `"keybindings"`)**. The root-level `cc.skills.keybindings` module
+  **`"keybindings-help"` (NOT `"keybindings"`)**. The root-level `loom.skills.keybindings` module
   provides a **simple shortcut reference sheet** under the name `"keybindings"`. Two different skills,
   two different names.
 
@@ -1326,7 +1326,7 @@ promoted to the repository root in the same series of commits, so
   it. Re-acquiring is a deadlock.
 
 - **`cpp_migration/src/skills/skill.cppm:380-384`** — Skill discovery is triggered from file tools via
-  a **file-access hook**, because `cc_tools` **cannot depend on `cc_skills`** (circular dependency).
+  a **file-access hook**, because `loom_tools` **cannot depend on `loom_skills`** (circular dependency).
   The hook is the decoupling seam.
 
 - **`cpp_migration/src/skills/skill.cppm:427`** — Skill discovery is **best-effort; it must never fail
@@ -1501,10 +1501,10 @@ promoted to the repository root in the same series of commits, so
   round-trip it through the simplified model.
 
 
-- **`cpp_migration/src/server/types.cppm:6-13`** — `cc::server::detail` already holds
+- **`cpp_migration/src/server/types.cppm:6-13`** — `loom::server::detail` already holds
   `DirectQueryRequest` / `DirectQueryResult` / `DirectPermissionRequest` / `DirectPermissionRule` /
   `DirectPermissionDirectory` / `DirectPermissionSessionState` as **route-local helpers**. Those are
-  **intentionally kept internal** to `cc.server.server_routes` (detail namespace, **different shape** —
+  **intentionally kept internal** to `loom.server.server_routes` (detail namespace, **different shape** —
   they carry cancel flags, filesystem paths, etc.). The types in `server/types.cppm` are the
   **canonical HTTP DTOs**; future refactors are expected to make `server_routes` **convert between**
   its internal helpers and these public structs.
@@ -1586,7 +1586,7 @@ promoted to the repository root in the same series of commits, so
 
 - **`cpp_migration/src/services/lsp/client.cppm:117-126`** — The client-local diagnostic struct is
   named `LspClientDiagnostic`, **renamed from `Diagnostic`**, to avoid colliding with
-  `cc.services.lsp.diagnostic_registry`'s exported `cc::services::lsp::Diagnostic` — **both modules
+  `loom.services.lsp.diagnostic_registry`'s exported `loom::services::lsp::Diagnostic` — **both modules
   export into the same namespace**. Re-using the name re-creates an ODR collision.
 
 - **`cpp_migration/src/services/lsp/client.cppm:1516-1526`** — LSP allows `code` to be a **string OR a
@@ -1888,14 +1888,14 @@ promoted to the repository root in the same series of commits, so
 ### B.7 — Cross-module action-ordinal coupling
 
 - **`cpp_migration/src/commands/compact.cppm:29-36`** — `ACTION_ADD_NOTIFICATION = 18` is the **ordinal
-  of `ActionType::AddNotification` in `cc::state::ActionType`** and **must be kept in sync with
+  of `ActionType::AddNotification` in `loom::state::ActionType`** and **must be kept in sync with
   `store.cppm`'s enum ordering**. Inserting a new enumerator anywhere but the end silently re-points
   every ordinal constant.
 
 - **`cpp_migration/src/commands/brief.cppm:24-26`** — `ACTION_SET_BRIEF_ONLY = 24`, same rule.
 
 - **`cpp_migration/src/commands/clear.cppm:29-32`** — Action-type ordinals must be kept in sync with
-  `cc::state::ActionType` in `store.cppm`.
+  `loom::state::ActionType` in `store.cppm`.
 
 - **`cpp_migration/src/commands/cost.cppm:29`** and **`commands/plan.cppm:29`** — Ordinals of
   `ActionType::UpdateUsage` / `ActionType::SetPermissionMode`; same sync rule.
@@ -1925,7 +1925,7 @@ promoted to the repository root in the same series of commits, so
   static set.
 
 - **`cpp_migration/src/skills/load_skills_dir.cppm:2288-2298`** — The file-access hook is registered so
-  that file tools (`cc_tools`) can trigger skill discovery **without depending on `cc_skills`**
+  that file tools (`loom_tools`) can trigger skill discovery **without depending on `loom_skills`**
   (avoiding a circular dependency). Registration happens once at static-init or app startup.
 
 - **`cpp_migration/src/skills/skill.cppm:380-384`** — See the same seam from the skills side.
@@ -1938,8 +1938,8 @@ promoted to the repository root in the same series of commits, so
 - **`cpp_migration/src/services/plugins/installation_manager.cppm:1-17`** — This module has **ZERO
   live importers**, and there is no trivial single-call delegation (the real manager holds richer
   state). The body is **kept compiling but is intentionally not wired to a transport**. The real
-  lifecycle backends are `cc.plugins.plugin_manager`, `cc.plugins.plugin_marketplace`
-  (the former `cc.utils.plugin_marketplace_lifecycle` was deleted in the Phase B dead-code
+  lifecycle backends are `loom.plugins.plugin_manager`, `loom.plugins.plugin_marketplace`
+  (the former `loom.utils.plugin_marketplace_lifecycle` was deleted in the Phase B dead-code
   pass, followup c10-b19), and `commands/plugin/plugin_manage` — **prefer those**.
 
 - **`cpp_migration/src/services/plugins/cli_commands.cppm:71-80`** — This shim is **superseded**; it
@@ -2022,7 +2022,7 @@ promoted to the repository root in the same series of commits, so
   **not enforced**; in a TTY only the stated guarantee holds.
 
 - **`cpp_migration/src/ui/messages/virtual_message_list.cppm:78-85`** — `VirtualList` **intentionally
-  keeps its own `VisibleRow` struct**. `cc.ui.messages.messages_list` is a separate, larger module that
+  keeps its own `VisibleRow` struct**. `loom.ui.messages.messages_list` is a separate, larger module that
   imports 25+ per-row type modules; importing it here would cause a **cascade of BMI size issues and
   potential circular edges**. Instead the *caller* knows both types and builds a
   `vector<VisibleRow>` snapshot via a small conversion function — the same decoupling as TS.
@@ -2417,7 +2417,7 @@ promoted to the repository root in the same series of commits, so
 
 - **`cpp_migration/src/tools/agent_memory.cppm:1-10`** — The low-level helpers (`agent_memory_dir`,
   `load_agent_memory_prompt`, `agent_memory_scope_note`, `sanitize_agent_memory_component`) live in
-  `cc.tools.agent` (`agent_tool.cppm`), not here, so the rest of the codebase does not need to pull the
+  `loom.tools.agent` (`agent_tool.cppm`), not here, so the rest of the codebase does not need to pull the
   entire Agent tool implementation. This module only re-exports the remaining public API.
 
 - **`cpp_migration/src/tools/agent_memory_snapshot.cppm:76-79`** — The TS uses Zod schemas; the C++ uses
@@ -2433,7 +2433,7 @@ promoted to the repository root in the same series of commits, so
   `using`-imports is **ambiguous**; they remain in the `agent_tool` root via using-imports from
   submodules. Reorganizing without resolving the split breaks the module.
 
-- **`cpp_migration/src/ui/agents/agent_wizard.cppm:67-73`** — `cc.ui.wizard_dialog` exposes
+- **`cpp_migration/src/ui/agents/agent_wizard.cppm:67-73`** — `loom.ui.wizard_dialog` exposes
   `MakeWizard(WizardConfig, StepsFn)` whose steps carry `Element`-render + event callbacks; the agent
   wizard uses a **different pattern** (props object + steps that return full `Component` objects). Local
   adapter types bridge the two; the imported `WizardStep` type is **not** used directly.
@@ -2568,7 +2568,7 @@ promoted to the repository root in the same series of commits, so
   Only *paths* get OSC 8 hyperlinks.
 
 - **`cpp_migration/src/commands/terminal_setup.cppm:194-200`** — The hyperlink gate lives **inside**
-  `cc::utils::make_hyperlink()`, matching the TS early return. Divergence noted: unlike TS, this helper
+  `loom::utils::make_hyperlink()`, matching the TS early return. Divergence noted: unlike TS, this helper
   emits **ST as ESC-backslash** rather than BEL+ST — both are legal OSC 8 terminators.
 
 - **`cpp_migration/src/commands/terminal_setup.cppm:433`** — Bail paths are **user-facing and linked**
@@ -2703,7 +2703,7 @@ promoted to the repository root in the same series of commits, so
   missing-severity default of **Info**.
 
 - **`cpp_migration/src/services/lsp/client.cppm:117-121`** — Two modules export into the **same
-  namespace** (`cc::services::lsp`); the local struct was renamed to `LspClientDiagnostic` to avoid an
+  namespace** (`loom::services::lsp`); the local struct was renamed to `LspClientDiagnostic` to avoid an
   ODR collision with `diagnostic_registry`'s `Diagnostic`.
 
 - **`cpp_migration/src/services/lsp/client.cppm:728-730`** — The registry injection is **additive** to
@@ -2772,7 +2772,7 @@ promoted to the repository root in the same series of commits, so
   contract**; `app.cppm` (G2) populates it and this helper (G1) reads it.
 
 - **`cpp_migration/src/ui/messages/user_text_message.cppm:295`** — The pointer glyph is **not** defined
-  here — it lives in `cc.ui.design.figures::kPointer`. A literal here reintroduces the
+  here — it lives in `loom.ui.design.figures::kPointer`. A literal here reintroduces the
   "prefix glyph three fights" bug.
 
 - **`cpp_migration/src/ui/messages/system_text_message.cppm:244-249`** — The glyph names were
@@ -2808,7 +2808,7 @@ promoted to the repository root in the same series of commits, so
   character granularity**. `Deferred(#ui7-word-diff)` tracks consolidating it.
 
 - **`cpp_migration/src/ui/prompt/fuzzy_rank_nucleo.cppm:31-34`** — The scoring constants are
-  **mirrored from the former `cc.utils.file_index` (deleted in the Phase B dead-code pass, followup c10-b19; the
+  **mirrored from the former `loom.utils.file_index` (deleted in the Phase B dead-code pass, followup c10-b19; the
   constants are now self-contained in this module)** so the two scorers agree **without a hard
   import**. Editing one side alone makes the two disagree.
 
@@ -2832,7 +2832,7 @@ promoted to the repository root in the same series of commits, so
 
 - **`cpp_migration/src/ui/screens/repl_screen.cppm:3061-3068`** — The `InputMode` → footer
   `PromptInputMode` assignment is a direct cast only because the two are now the **same unified type**
-  (`cc::ui::common::PromptInputMode`). Splitting the type again requires restoring a translation table.
+  (`loom::ui::common::PromptInputMode`). Splitting the type again requires restoring a translation table.
 
 - **`cpp_migration/src/ui/screens/repl_screen.cppm:4097-4104`** — The dialog-slot predicates are checked
   **inside `DispatchDialogQueueEvents()`**, and the per-slot helpers are **not re-exposed** here **to
@@ -2853,7 +2853,7 @@ promoted to the repository root in the same series of commits, so
   TS `Doctor.tsx` `VersionLockInfo` structure.
 
 - **`cpp_migration/src/ui/dialogs/all_renderers.cppm:1-11`** — **TEST CONTRACT:** unit tests alias
-  `namespace dr = cc::ui::dialogs::all_renderers;` and call `dr::RenderXxx(...)` / `dr::HandleXxxEvent(...)`.
+  `namespace dr = loom::ui::dialogs::all_renderers;` and call `dr::RenderXxx(...)` / `dr::HandleXxxEvent(...)`.
   This module re-exports **every** such function via explicit `using` declarations so lookup resolves
   **without ambiguous namespace-qualification errors**. A new renderer added to a sub-module **must also
   be re-exported here** or the tests stop finding it.
@@ -2912,14 +2912,14 @@ promoted to the repository root in the same series of commits, so
 
 - **`cpp_migration/src/ui/teams/team_details_dialog.cppm:42-46`** — The usage-stats `Element` is
   **pre-rendered by the caller** and passed in via `usage_stats_element`; importing
-  `cc.ui.dialogs.usage_dialog` was avoided to keep the file standalone. Callers that forget to pass it
+  `loom.ui.dialogs.usage_dialog` was avoided to keep the file standalone. Callers that forget to pass it
   get no real numbers.
 
 - **`cpp_migration/src/ui/teams/teams_overview.cppm:57`** — The `Member` / `Activity` / avatar helpers
   are **functionally equivalent to** the UI13 versions but **independently consumed standalone**.
 
 - **`cpp_migration/src/ui/tasks/task_list_view.cppm:44`** — A local POD is deliberately kept for display
-  so the view is **decoupled** from `cc.tasks.*`.
+  so the view is **decoupled** from `loom.tasks.*`.
 
 - **`cpp_migration/src/ui/tasks/task_details_dialog.cppm:181`** — Temporary input buffers are **kept in
   sync with the data** for rendering — two sources of truth in the interim.
@@ -2938,8 +2938,8 @@ promoted to the repository root in the same series of commits, so
   **kept in sync with the TS source file** by hand.
 
 - **`cpp_migration/src/skills/load_skills_dir.cppm:2288-2298`** — The file-access hook is the seam that
-  lets `cc_tools` trigger skill discovery **without depending on `cc_skills`**; `cc_tools` calls the
-  hook, `cc_skills` registers it.
+  lets `loom_tools` trigger skill discovery **without depending on `loom_skills`**; `loom_tools` calls the
+  hook, `loom_skills` registers it.
 
 - **`cpp_migration/src/skills/loom_api_content.cppm:32-35`** — The model-var map must match the TS
   `SKILL_MODEL_VARS`; the `{{OPUS_ID}}`-style placeholders in the prompt fragments are resolved from it.
@@ -3054,7 +3054,7 @@ preserved in prose — and so a future reader knows **which** TS file the number
 
 - **`cpp_migration/src/commands/compact.cppm:29-36`**, **`brief.cppm:24-26`**, **`clear.cppm:29-32`**,
   **`cost.cppm:29`**, **`plan.cppm:29`** — Action-type ordinals must track `store.cppm`'s
-  `cc::state::ActionType` ordering.
+  `loom::state::ActionType` ordering.
 
 - **`cpp_migration/src/ui/design_system/design_tokens.cppm:244-266`** — The rainbow token set is
   **7 base + 7 shimmer = 14 individual fields**, constructed individually so each theme variant can
@@ -3148,7 +3148,7 @@ preserved in prose — and so a future reader knows **which** TS file the number
   `static_pointer_cast` of the erased `shared_ptr<void>` request back to `FeatureWizardRequest` /
   `FeatureTrustRequest` is confined to `src/ui/app/app_feature_dialog_registration.cpp` (grep `src/`
   to verify — no feature or dialogs module casts the erased request). The neutral `TrustChoice`
-  enum mirrors `cc::ui::trust_dialog::TrustChoice` 1:1; the mapping lives in
+  enum mirrors `loom::ui::trust_dialog::TrustChoice` 1:1; the mapping lives in
   `to_neutral_trust_choice` in the same app impl unit, so adding a trust-dialog choice on one side
   without the other is a compile error there, not a silent fallthrough.
 

@@ -1,7 +1,7 @@
 /// @file command_registry_init_e.cpp
 /// @brief Group E registration: runtime-surface commands (transitively imports 30+ modules).
 ///
-/// This file is kept separate because `cc.commands.runtime_surface_commands`
+/// This file is kept separate because `loom.commands.runtime_surface_commands`
 /// imports 30+ sub-command modules in its interface (ant_trace, autofix_pr,
 /// backfill_sessions, break_cache, bridge, bughunter, commit_push_pr,
 /// create_moved_to_plugin_command, debug_tool_call, exit, extra_usage,

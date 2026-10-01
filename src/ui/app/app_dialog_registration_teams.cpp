@@ -1,4 +1,4 @@
-// app_dialog_registration_teams.cpp — impl unit for cc.ui.app_dialog_registration.
+// app_dialog_registration_teams.cpp — impl unit for loom.ui.app_dialog_registration.
 //
 // TeamsView modal renderer. Kept in its own TU (not appended to
 // app_dialog_registration_default.cpp): aggregating dialog closures in one

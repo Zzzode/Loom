@@ -18,7 +18,7 @@ import loom.tasks.task;   // canonical TaskType / TaskStatus / TaskResult / task
 export namespace loom::core {
 
 // ============================================================
-// Task types and status (canonical definitions live in cc.tasks.task;
+// Task types and status (canonical definitions live in loom.tasks.task;
 // task_status_to_string is a local companion helper kept here because
 // task_graph owns the high-level scheduler-facing TaskStatus semantics).
 // ============================================================
@@ -37,7 +37,7 @@ export namespace loom::core {
     return "unknown";
 }
 
-/// Background task ID (alias of canonical loom::core::TaskId from cc.tasks.task).
+/// Background task ID (alias of canonical loom::core::TaskId from loom.tasks.task).
 using BackgroundTaskId = TaskId;
 
 /// Fetch the task id as a printable short string.

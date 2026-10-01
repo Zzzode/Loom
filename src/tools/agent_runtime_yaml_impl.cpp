@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.agent_runtime — YAML scalar/field/list
+// Implementation unit for loom.tools.agent_runtime — YAML scalar/field/list
 // helpers, the YAML overloads of parse_inline_mcp_server_config /
 // parse_agent_mcp_servers, the five YAML agent-hook parsers, markdown
 // frontmatter agent parsing (parse_agent_markdown), and get_parse_error.

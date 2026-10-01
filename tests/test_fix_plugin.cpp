@@ -8,7 +8,7 @@
 // migration rules forbid editing that file. The owning integration agent must
 // add an `add_executable(test_fix_plugin test_fix_plugin.cpp)` + GoogleTest
 // discovery block (see cmakeNeeds in the migration plan) before ctest can run
-// it. Written so that, once linked against cc_utils, it exercises the ported
+// it. Written so that, once linked against loom_utils, it exercises the ported
 // logic without touching the network (directory/file sources only).
 
 #include <cstdlib>
@@ -29,10 +29,10 @@ namespace {
 class TempPluginsEnv {
 public:
     TempPluginsEnv() {
-        auto tmpl = std::filesystem::temp_directory_path() / "cc_fix_plugin_XXXXXX";
+        auto tmpl = std::filesystem::temp_directory_path() / "loom_fix_plugin_XXXXXX";
         // mkdtemp-safe: create a uniquely named dir manually.
         dir_ = std::filesystem::temp_directory_path()
-            / ("cc_fix_plugin_" + std::to_string(std::hash<std::thread::id>{}(
+            / ("loom_fix_plugin_" + std::to_string(std::hash<std::thread::id>{}(
                   std::this_thread::get_id())) + "_"
               + std::to_string(counter_++));
         std::filesystem::create_directories(dir_);
@@ -78,7 +78,7 @@ void write_file(const std::filesystem::path& p, const std::string& body) {
 
 // H2: validate_file on a valid plugin.json returns success=true with no errors.
 TEST(PluginValidationFix, ValidPluginManifestPasses) {
-    auto tmp = std::filesystem::temp_directory_path() / "cc_plugin_valid.json";
+    auto tmp = std::filesystem::temp_directory_path() / "loom_plugin_valid.json";
     write_file(tmp, R"({"name":"my-plugin","version":"1.0.0","description":"x","author":"me"})");
     auto r = pv::validate_file(tmp);
     EXPECT_TRUE(r.success) << "errors: " << (r.errors.empty() ? "" : r.errors[0].message);
@@ -89,7 +89,7 @@ TEST(PluginValidationFix, ValidPluginManifestPasses) {
 // H2: a plugin.json missing the required 'name' field must now FAIL (previously
 // the stub returned success=true unconditionally).
 TEST(PluginValidationFix, MissingNameFails) {
-    auto tmp = std::filesystem::temp_directory_path() / "cc_plugin_noname.json";
+    auto tmp = std::filesystem::temp_directory_path() / "loom_plugin_noname.json";
     write_file(tmp, R"({"version":"1.0.0"})");
     auto r = pv::validate_file(tmp);
     EXPECT_FALSE(r.success);
@@ -107,7 +107,7 @@ TEST(PluginValidationFix, MissingFileFails) {
 
 // H2: path traversal in a commands entry is flagged (security pre-check).
 TEST(PluginValidationFix, PathTraversalFlagged) {
-    auto tmp = std::filesystem::temp_directory_path() / "cc_plugin_traversal.json";
+    auto tmp = std::filesystem::temp_directory_path() / "loom_plugin_traversal.json";
     write_file(tmp, R"({"name":"p","commands":["../escape.sh"]})");
     auto r = pv::validate_file(tmp);
     EXPECT_FALSE(r.success);
@@ -121,7 +121,7 @@ TEST(PluginValidationFix, PathTraversalFlagged) {
 
 // H2: a marketplace.json is detected via the "plugins" array and validated.
 TEST(PluginValidationFix, MarketplaceWithDuplicateNamesFails) {
-    auto tmp = std::filesystem::temp_directory_path() / "cc_marketplace.json";
+    auto tmp = std::filesystem::temp_directory_path() / "loom_marketplace.json";
     write_file(tmp,
         R"({"name":"mkt","plugins":[{"name":"a","source":"./a"},{"name":"a","source":"./b"}]})");
     auto r = pv::validate_file(tmp);

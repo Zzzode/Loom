@@ -1,4 +1,4 @@
-// Implementation unit for cc.orchestration.agent.utils — fork-context parsing, the
+// Implementation unit for loom.orchestration.agent.utils — fork-context parsing, the
 // four resume message filters, content-replacement application, sidechain
 // append, and message text extraction.
 module;

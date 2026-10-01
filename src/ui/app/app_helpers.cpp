@@ -1,4 +1,4 @@
-// app_helpers.cpp — plain impl unit for cc.ui.app.app. Owns the env/config
+// app_helpers.cpp — plain impl unit for loom.ui.app.app. Owns the env/config
 // and text/UTF helper bodies (RFC 0001 Phase C batch 1):
 //   free functions: non_empty_env, first_non_empty_env, parse_bool_text,
 //     parse_int_text, trim_ascii_copy, summarize_agent_description,

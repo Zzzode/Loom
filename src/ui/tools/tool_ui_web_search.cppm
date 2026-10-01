@@ -1,7 +1,7 @@
 /// @file tool_ui_web_search.cppm
 /// @brief WebSearch tool UI — userFacingName, renderToolUseMessage, etc.
 ///
-/// MODULE:   cc.ui.tools.web_search
+/// MODULE:   loom.ui.tools.web_search
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

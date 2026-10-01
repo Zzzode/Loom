@@ -1,5 +1,5 @@
 /// @file test_fix_yoga.cpp
-/// @brief Coverage for the implemented subset of cc.ui.layout.yoga.
+/// @brief Coverage for the implemented subset of loom.ui.layout.yoga.
 ///
 /// The C++ yoga module is a small single-pass flexbox (see the module-level
 /// header in yoga.cppm for the exact supported subset). These tests pin the

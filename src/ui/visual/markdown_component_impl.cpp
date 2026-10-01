@@ -1,4 +1,4 @@
-// markdown_component_impl.cpp - impl unit for cc.ui.visual.markdown
+// markdown_component_impl.cpp - impl unit for loom.ui.visual.markdown
 // (RFC 0001 Phase C batch 6). Holds MarkdownComponentBase's ctor, Render()
 // and OnEvent() in THIS ONE TU so those bodies emit once as strong symbols
 // (Render is the key function - out-of-line, non-inline). Under clang named

@@ -1,7 +1,7 @@
 /// @file dialog_default_renderers.cppm
 /// @brief Default dialog renderers for M7 payload types.
 ///
-/// MODULE:   cc.ui.dialogs.default_renderers
+/// MODULE:   loom.ui.dialogs.default_renderers
 /// LICENCE:  Exported.  Imported by app initialization to register the
 ///           default set of dialog renderers.
 ///
@@ -251,7 +251,7 @@ inline bool HandleToolPermissionEvent(
     const dsys::SandboxPermissionPayload& p,
     const dsys::DialogRenderContext& ctx)
 {
-    // Delegate to the faithful renderer port in cc.ui.dialogs.sandbox_permission
+    // Delegate to the faithful renderer port in loom.ui.dialogs.sandbox_permission
     // (see sandbox_permission.cppm for the 1:1 TS layout).
     return loom::ui::dialogs::sandbox_permission::RenderDefault(p, ctx);
 }
@@ -614,11 +614,11 @@ void register_default_renderers(dsys::DialogRendererRegistry& registry) {
     // They are intentionally NOT registered here.  No trigger paths exist yet for these
     // types, so registering a stub renderer would be dead code / a misleading
     // placeholder.  When M8 chrome is actually ported, add the real FTXUI components
-    // (`cc.ui.dialogs.*` module(s)) and call registry.register_dialog(...) here,
+    // (`loom.ui.dialogs.*` module(s)) and call registry.register_dialog(...) here,
     // one block per pair, matching the 7 types above.
     //
     // The Doctor dialog renderer is registered separately from the screens side
-    // by cc.ui.screens.doctor_dialog_registration (RFC 0002 F2 row-4 inversion:
+    // by loom.ui.screens.doctor_dialog_registration (RFC 0002 F2 row-4 inversion:
     // dialogs must not import screens).  The composition root calls
     // register_doctor_renderer() alongside this function.
 

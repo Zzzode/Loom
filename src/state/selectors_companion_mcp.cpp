@@ -1,4 +1,4 @@
-// selectors_companion_mcp.cpp - impl unit for cc.state.selectors
+// selectors_companion_mcp.cpp - impl unit for loom.state.selectors
 // (RFC 0001 Phase C batch 10). Companion (buddy) reaction/pet selectors —
 // was_companion_petted_recently is the only clock-reading selector — and the
 // MCP client/tool/command + plugin selectors.

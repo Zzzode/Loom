@@ -33,7 +33,7 @@
 /// list) return that text as the message.
 ///
 /// Heavy plugin work (actual install/uninstall/validation) is delegated to
-/// the `cc.plugins.plugin_*` modules.  This layer is only the command I/O.
+/// the `loom.plugins.plugin_*` modules.  This layer is only the command I/O.
 
 module;
 
@@ -566,7 +566,7 @@ private:
 
     /// Disk scan of installed plugins (kept for completion / text lists).
     /// The rich "what plugins are loaded and active?" query uses
-    /// cc.plugins.plugin_manager; this is a best-effort offline view.
+    /// loom.plugins.plugin_manager; this is a best-effort offline view.
     [[nodiscard]] static std::vector<PluginInfo> load_installed_plugins() {
         namespace fs = std::filesystem;
         std::vector<PluginInfo> plugins;

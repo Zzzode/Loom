@@ -1,5 +1,5 @@
 // app_run.cpp — impl unit for RunApp() and the extern "C" bridge.
-// Kept out of app.cppm so cc.hooks.tool_permissions and the FTXUI
+// Kept out of app.cppm so loom.hooks.tool_permissions and the FTXUI
 // screen-interactive / termios closure stay out of the interface BMI.
 module;
 
@@ -105,7 +105,7 @@ namespace {
 
 }  // namespace
 
-extern "C" int cc_ui_run_app_bridge(
+extern "C" int loom_ui_run_app_bridge(
     loom::core::QueryEngine* engine,
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
     loom::commands::AppCommandRegistry* cmd_registry,

@@ -9,7 +9,7 @@
 // composition root, never a direct field reach-up.
 //
 // Import discipline (enforced by `graph_check.py --store-lint`): a store
-// module's cc.ui.* imports target only areas ranked below screens
+// module's loom.ui.* imports target only areas ranked below screens
 // (UI9_RANK < 10). foundation (2) is downward-legal, so the
 // PromptInputMode field type recreates no up-edge.
 module;
@@ -58,7 +58,7 @@ struct StashedPrompt {
 
 /// RFC 0002 F3 store — prompt-input state (input mode, stashed prompt,
 /// placeholder-cascade inputs, teammate prefix color), sharded out of
-/// ReplScreenState. Homed in cc.ui.screens (rank 10): the concrete
+/// ReplScreenState. Homed in loom.ui.screens (rank 10): the concrete
 /// cross-area field type (PromptInputMode) lives in foundation (rank 2),
 /// so a by-value field recreates no up-edge. UI-thread-affined plain data
 /// — see the file header for the threading and import rules.

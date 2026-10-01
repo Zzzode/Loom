@@ -1,10 +1,10 @@
 // app_feature_dialog_registration.cpp — impl unit for
-// cc.ui.app.app_dialog_registration.
+// loom.ui.app.app_dialog_registration.
 //
 // RFC 0002 F2 (row 6 registry inversion): registers the concrete dialog
 // factories for the feature-owned views (agent wizard, plugin install
 // wizard, plugin trust dialog) into the
-// cc.ui.foundation.feature_dialog_protocol erased-factory registry. This is
+// loom.ui.foundation.feature_dialog_protocol erased-factory registry. This is
 // the composition root: the static_pointer_cast of the erased
 // shared_ptr<void> request back to the leaf's concrete request type lives
 // ONLY here (grep src/ to verify — no feature or dialogs module casts the

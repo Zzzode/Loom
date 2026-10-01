@@ -1,7 +1,7 @@
 /// @file dialog_frame.cppm
 /// @brief Reusable DialogFrame component — faithful port of TS PermissionDialog.tsx.
 ///
-/// MODULE:   cc.ui.dialogs.frame
+/// MODULE:   loom.ui.dialogs.frame
 /// LICENCE:  Exported.  Imported by all dialog renderers that use the
 ///           standard permission-style frame.
 ///

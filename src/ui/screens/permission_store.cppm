@@ -9,9 +9,9 @@
 // composition root, never a direct field reach-up.
 //
 // Import discipline (enforced by `graph_check.py --store-lint`): a store
-// module's cc.ui.* imports target only areas ranked below screens
+// module's loom.ui.* imports target only areas ranked below screens
 // (UI9_RANK < 10). This store's field types are std + types.types
-// primitives only, so it imports no cc.ui.* area at all.
+// primitives only, so it imports no loom.ui.* area at all.
 module;
 
 export module loom.ui.screens.permission_store;
@@ -76,7 +76,7 @@ struct PermissionRequestInfo {
 };
 
 /// RFC 0002 F3 store — permission-prompt state (tool kind + ToolUseConfirm
-/// subset), sharded out of ReplScreenState. Homed in cc.ui.screens
+/// subset), sharded out of ReplScreenState. Homed in loom.ui.screens
 /// (rank 10): the field types are std + types.types primitives only, so no
 /// cross-area edge is created at all. UI-thread-affined plain data —
 /// see the file header for the threading and import rules.

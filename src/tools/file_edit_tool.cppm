@@ -2,15 +2,15 @@
 // Agent 9: audit completed 2026-06-09.
 //   - Rewritten to mirror TS FileEditTool.ts validateInput() branches 1:1
 //     (error codes 0..10 + meta field passthrough).
-//   - Integrated cc.tools.file_edit_types: ValidationOutcome /
+//   - Integrated loom.tools.file_edit_types: ValidationOutcome /
 //     ValidationErrorCode / FileEditInput / FileEditOutput.
-//   - Integrated cc.fs.edit.file_edit: find_actual_string,
+//   - Integrated loom.fs.edit.file_edit: find_actual_string,
 //     preserve_quote_style, get_patch_for_edit, read_file_for_edit,
 //     normalize_file_edit_input, are_file_edits_inputs_equivalent,
 //     compute_structured_patch.
-//   - Integrated cc.tools.file_edit_prompt: user_facing_name,
+//   - Integrated loom.tools.file_edit_prompt: user_facing_name,
 //     format_tool_result_block, format_edit_preview.
-//   - Integrated cc.tools.sed_edit_parser: try_parse_sed_in_place() now
+//   - Integrated loom.tools.sed_edit_parser: try_parse_sed_in_place() now
 //     delegates to parse_sed_edit_command() for real parsing.
 //   - NOTE: React UI components in UI.tsx (JSX renderers) deferred to
 //     Phase 4 / FTXUI. Only the pure text-formatting helpers were ported.
@@ -130,7 +130,7 @@ private:
 };
 
 // =========================================================================
-// Sed parser integration (delegates to cc.tools.sed_edit_parser)
+// Sed parser integration (delegates to loom.tools.sed_edit_parser)
 // =========================================================================
 
 /// Try to extract a FileEditInput from a raw `sed -i` command string.

@@ -1,10 +1,10 @@
-// swarm_backends_inprocess.cpp — implementation unit for cc.teams.swarm.backends
+// swarm_backends_inprocess.cpp — implementation unit for loom.teams.swarm.backends
 // (RFC 0001 Phase C batch 10). InProcessBackend's five out-of-line members
 // (spawn is the out-of-line key function — its body is strong here; under
 // clang named modules the class vtable/typeinfo is emitted strong in the
 // interface unit swarm_backends.cppm.o) plus
 // detail::write_backend_message_to_mailbox. This is the only swarm_backends
-// unit that imports cc.teams.team_helpers, since mailbox I/O is the sole use.
+// unit that imports loom.teams.team_helpers, since mailbox I/O is the sole use.
 module;
 
 module loom.teams.swarm.backends;

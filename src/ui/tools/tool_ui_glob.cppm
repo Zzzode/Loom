@@ -1,7 +1,7 @@
 /// @file tool_ui_glob.cppm
 /// @brief Glob tool UI — userFacingName, renderToolUseMessage, etc.
 ///
-/// MODULE:   cc.ui.tools.glob
+/// MODULE:   loom.ui.tools.glob
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

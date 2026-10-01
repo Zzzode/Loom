@@ -1,4 +1,4 @@
-// Implementation unit for cc.sdk.harness — the opaque embedding entrypoint
+// Implementation unit for loom.sdk.harness — the opaque embedding entrypoint
 // (RFC 0001 cc-sdk phase 3, §2.2). Bodies live here (not the interface) so
 // the engine/assembly/config/session imports never enter the module BMI:
 // the interface names only the public DTOs, keeping the harness BMI light
@@ -275,8 +275,8 @@ loom::core::Result<void> Harness::resume(std::string_view session_id) {
     // parse_session_message_value (the assembly's role/content-string
     // reader — lossy for tool_use/tool_result/image blocks; see §2.3
     // deviation note) -> restore_conversation (which also rebuilds
-    // content-replacement state). No cc.server import. (OpenSSL DOES
-    // enter the SDK closure via cc_query -> cc_services — the accepted
+    // content-replacement state). No loom.server import. (OpenSSL DOES
+    // enter the SDK closure via loom_query -> loom_services — the accepted
     // phase-3 cost; see §3.4.)
     auto docs = loom::session::load_messages(*impl_->sessions_dir_, session_id);
     if (docs.empty()) {

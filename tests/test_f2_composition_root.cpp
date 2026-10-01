@@ -3,21 +3,21 @@
 ///
 /// F2 cut 4 (doctor renderer inversion): dialog_default_renderers no longer
 /// imports doctor_screen. The doctor renderer registration lives on the
-/// screens side (cc.ui.screens.doctor_dialog_registration) and is wired by the
+/// screens side (loom.ui.screens.doctor_dialog_registration) and is wired by the
 /// composition root. These tests prove register_doctor_renderer() adds a
 /// renderer that register_default_renderers() alone does not, and that the
 /// doctor dialog renders through DialogRendererRegistry (not the fallback).
 ///
 /// F2 cut 6 (feature-dialog protocol inversion): feature modules no longer
 /// import wizard_dialog / trust_dialog. They build a neutral request and
-/// resolve a factory by ViewKind from cc.ui.foundation.feature_dialog_protocol.
-/// The composition root (cc.ui.app.app_dialog_registration) registers the
+/// resolve a factory by ViewKind from loom.ui.foundation.feature_dialog_protocol.
+/// The composition root (loom.ui.app.app_dialog_registration) registers the
 /// concrete factories. These tests prove the register/resolve/invoke path
 /// end-to-end and that the dialogs-side adapter (feature_wizard_adapter)
 /// converts a neutral FeatureWizardRequest into a wizard component.
 ///
-/// This TU does NOT import cc.ui.dialogs.wizard_dialog or
-/// cc.ui.dialogs.trust_dialog directly — the whole point is that the flows
+/// This TU does NOT import loom.ui.dialogs.wizard_dialog or
+/// loom.ui.dialogs.trust_dialog directly — the whole point is that the flows
 /// go through the protocol leaf. The wizard_dialog import is transitive
 /// through the dialogs-side adapter (the dialogs half of the inversion);
 /// the trust_dialog import is hidden inside the composition-root impl unit.

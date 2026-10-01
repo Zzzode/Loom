@@ -1,7 +1,7 @@
 /// @file skill_keybindings.cppm
 /// @brief Bundled keybindings-help skill - comprehensive customization guide.
 /// Mirrors src/skills/bundled/keybindings.ts.
-/// DIFFERS from root-level cc.skills.keybindings (a simple shortcut reference sheet):
+/// DIFFERS from root-level loom.skills.keybindings (a simple shortcut reference sheet):
 ///   - Root  : name="keybindings"       — simple keyboard cheat-sheet (static)
 ///   - Here : name="keybindings-help"  — full customization workflow with
 ///             file format, reserved shortcuts, /doctor validation, and
@@ -445,7 +445,7 @@ inline bool is_keybinding_customization_enabled() {
 
 /// Get the skill manifest for the bundled keybindings-help skill.
 /// NOTE: skill name is `"keybindings-help"` (NOT `"keybindings"`).
-/// The root-level `cc.skills.keybindings` module provides a simple shortcut
+/// The root-level `loom.skills.keybindings` module provides a simple shortcut
 /// reference sheet under name `"keybindings"`.
 loom::skills::SkillManifest get_keybindings_help_skill_manifest() {
     return loom::skills::SkillManifest{

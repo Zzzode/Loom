@@ -1,4 +1,4 @@
-// repl_screen_events.cpp - impl unit for cc.ui.screens.repl_screen
+// repl_screen_events.cpp - impl unit for loom.ui.screens.repl_screen
 // (RFC 0001 Phase C batch 9). both ReplScreen() component factories - the Renderer lambda and the
 // full CatchEvent tier (dialog queue > panel dialogs > global shortcuts >
 // readline input).

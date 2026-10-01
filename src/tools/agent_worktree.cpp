@@ -1,9 +1,9 @@
-// Implementation unit for cc.tools.agent_worktree (RFC-0001 B14). The body
+// Implementation unit for loom.tools.agent_worktree (RFC-0001 B14). The body
 // moved verbatim from agent_sub_utils_hooks.cpp; the only spelling change is
 // shell_quote -> loom::tools::runtime_shared_utils::shell_quote (a byte-identical
 // single-quote escaper): the agent.utils shell_quote stays in the hooks
 // impl unit for run_agent_command_hook, and importing agent.utils from this
-// leaf would point back into the subtree B15 lifts into cc.orchestration.
+// leaf would point back into the subtree B15 lifts into loom.orchestration.
 module;
 
 module loom.tools.agent_worktree;

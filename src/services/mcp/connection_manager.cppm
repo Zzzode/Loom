@@ -648,7 +648,7 @@ private:
             start_notification_refresh(server_name, ListChangedKind::Prompts);
         } else if (notification.method == "at_mentioned") {
             // IDE at-mention: forward the raw params to whichever UI responder
-            // has registered (see cc.services.mcp.at_mention_handler). This is
+            // has registered (see loom.services.mcp.at_mention_handler). This is
             // the JSON-RPC inbound dispatch point that useIdeAtMentioned.ts
             // hooks via client.setNotificationHandler on the TS side.
             dispatch_at_mention(server_name, notification.params_json);

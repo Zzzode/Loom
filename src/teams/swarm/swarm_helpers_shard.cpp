@@ -1,4 +1,4 @@
-// swarm_helpers_shard.cpp — implementation unit for cc.teams.swarm.helpers
+// swarm_helpers_shard.cpp — implementation unit for loom.teams.swarm.helpers
 // (RFC-0001 B followup c16). Holds the body of
 // WorkerPermissionGrants::shard_index_for so the FNV-1a hashing loop does
 // not add an inline definition to the frozen inline-def count of the

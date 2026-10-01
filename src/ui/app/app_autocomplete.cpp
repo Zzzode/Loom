@@ -936,7 +936,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
 // These were previously defined inline in AppAdapter's class body.  Moving
 // them out makes Render() the key function (first non-inline virtual), so
 // the vtable is emitted in this impl TU rather than in every TU that imports
-// cc.ui.app.  This avoids a clang crash in DefineUsedVTables during app.cppm
+// loom.ui.app.  This avoids a clang crash in DefineUsedVTables during app.cppm
 // compilation (exit code 139 in NamespaceDecl::getMostRecentDeclImpl).
 
 AppAdapter::~AppAdapter() {

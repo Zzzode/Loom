@@ -1,4 +1,4 @@
-// Implementation unit for cc.orchestration.runtime_backends — the four
+// Implementation unit for loom.orchestration.runtime_backends — the four
 // lifted MCP runtime tool backends (mcp / list_mcp_resources /
 // read_mcp_resource / mcp_auth) and the two MCP snapshot-derived providers
 // (visible tool definitions and verbatim input schemas). Bodies lifted

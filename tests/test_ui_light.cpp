@@ -38,7 +38,7 @@ namespace fs = std::filesystem;
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.chrome.terminal: FTXUI terminal controller and common widgets
+// loom.ui.chrome.terminal: FTXUI terminal controller and common widgets
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Terminal, ColorThemesAreConstructible) {
@@ -107,7 +107,7 @@ TEST(Terminal, StatusBarRendersTokensAndCost) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.widgets.components: reusable FTXUI render helpers
+// loom.ui.widgets.components: reusable FTXUI render helpers
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Components, RenderToolUseReturnsElement) {
@@ -858,7 +858,7 @@ TEST(Panels, DiffPanelAggregatesStats) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.messages.messages: message parsing and renderable views
+// loom.ui.messages.messages: message parsing and renderable views
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Markdown, OrderedListSupportsMultiDigitNumbers) {
@@ -978,7 +978,7 @@ TEST(Components, BuildPassesPanelReturnsComponent) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.features.grove — Grove tree view
+// loom.ui.features.grove — Grove tree view
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Components, GroveKindLabelAllValues) {
@@ -1051,7 +1051,7 @@ TEST(Components, GroveBuildTreeReturnsComponent) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.components.lsp_recommendation_menu — LSP plugin rec menu
+// loom.ui.components.lsp_recommendation_menu — LSP plugin rec menu
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Components, LspRecRatingStarsZero) {
@@ -1119,7 +1119,7 @@ TEST(Components, BuildLspRecommendationMenuReturnsComponent) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.features.plugins.plugin_hint_menu — Plugin hint menu
+// loom.ui.features.plugins.plugin_hint_menu — Plugin hint menu
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Components, PluginHintDefaultConstructs) {
@@ -1185,7 +1185,7 @@ TEST(Components, PluginHintMenuUpdateState) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.foundation.design_figures: Glyph byte-sequence fidelity tests
+// loom.ui.foundation.design_figures: Glyph byte-sequence fidelity tests
 // TS REF: src/constants/figures.ts + node_modules/figures/index.js
 // Every glyph's exact UTF-8 bytes must match the TS reference so that golden
 // snapshots don't drift between platforms.  These tests are the single source

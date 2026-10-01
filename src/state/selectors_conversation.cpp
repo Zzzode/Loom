@@ -1,8 +1,8 @@
-// selectors_conversation.cpp - impl unit for cc.state.selectors
+// selectors_conversation.cpp - impl unit for loom.state.selectors
 // (RFC 0001 Phase C batch 10). Message/conversation selectors: counts,
 // loading/streaming/error state, total token usage + cost, working and
 // allowed directories, and the composite is_ui_busy. This is the ONLY impl
-// unit that imports cc.types.types (loom::core::TokenUsage in get_total_usage).
+// unit that imports loom.types.types (loom::core::TokenUsage in get_total_usage).
 module;
 
 #include <cstddef>

@@ -1,4 +1,4 @@
-// swarm_backends_registry.cpp — implementation unit for cc.teams.swarm.backends
+// swarm_backends_registry.cpp — implementation unit for loom.teams.swarm.backends
 // (RFC 0001 Phase C batch 10). BackendRegistry's six out-of-line members and
 // its six out-of-line static data definitions (formerly static-inline in the
 // class). The five trivial locking accessors stay inline in the primary.

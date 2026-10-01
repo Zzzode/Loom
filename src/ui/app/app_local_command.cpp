@@ -1,4 +1,4 @@
-// app_local_command.cpp — plain impl unit for cc.ui.app.app. Owns the
+// app_local_command.cpp — plain impl unit for loom.ui.app.app. Owns the
 // local-command / local-JSX row bodies (RFC 0001 Phase C batch 2):
 //   AppAdapter::AppendLocalMessagesToScreenState
 //   AppAdapter::AppendLocalCommandInputMessage

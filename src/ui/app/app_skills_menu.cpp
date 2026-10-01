@@ -1,4 +1,4 @@
-// app_skills_menu.cpp — plain impl unit for cc.ui.app.app. Owns the
+// app_skills_menu.cpp — plain impl unit for loom.ui.app.app. Owns the
 // skills-menu helper bodies (RFC 0001 Phase C batch 1):
 //   AppAdapter static members: skill_source_order,
 //     is_visible_skills_menu_source, skills_menu_token_estimate,

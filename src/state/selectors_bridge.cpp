@@ -1,4 +1,4 @@
-// selectors_bridge.cpp - impl unit for cc.state.selectors
+// selectors_bridge.cpp - impl unit for loom.state.selectors
 // (RFC 0001 Phase C batch 10). REPL bridge status selectors plus the
 // composite connectivity / bridge-activity selectors.
 module;

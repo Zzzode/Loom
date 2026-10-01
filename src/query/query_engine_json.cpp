@@ -1,6 +1,6 @@
-// Implementation unit for cc.query.query_engine — Message/ContentBlock to
+// Implementation unit for loom.query.query_engine — Message/ContentBlock to
 // request-JSON serialization (append_message_to_json / content_to_json).
-// cc.serdes.json also stays imported by the module interface because the
+// loom.serdes.json also stays imported by the module interface because the
 // surviving declarations of these members name JsonMutVal/JsonMutDoc.
 module;
 

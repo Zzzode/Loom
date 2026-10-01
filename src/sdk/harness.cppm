@@ -1,8 +1,8 @@
 /// @file harness.cppm
-/// @brief cc.sdk.harness — the opaque embedding entrypoint (RFC 0001
+/// @brief loom.sdk.harness — the opaque embedding entrypoint (RFC 0001
 ///        cc-sdk phase 3, §2.2).
 ///
-/// The Harness wraps the extracted engine recipe (cc.query.assembly,
+/// The Harness wraps the extracted engine recipe (loom.query.assembly,
 /// rank 10) behind an opaque PIMPL handle: construct once, run/stream many
 /// turns, abort, resume. The embedder holds one Harness by value (or
 /// unique_ptr); one Harness = one session (the owned QueryEngine holds the
@@ -10,9 +10,9 @@
 /// Harness instances.
 ///
 /// Layering (§3.4): this module sits at rank 16 (the apex) and imports only
-/// downward — cc.types (0), cc.hooks (4), cc.tools (8), cc.query.wire_protocol
-/// (10). It does NOT import cc.server (rank 13), so OpenSSL::Crypto (a
-/// cc_server dep) never enters the SDK link closure. The assembly import
+/// downward — loom.types (0), loom.hooks (4), loom.tools (8), loom.query.wire_protocol
+/// (10). It does NOT import loom.server (rank 13), so OpenSSL::Crypto (a
+/// loom_server dep) never enters the SDK link closure. The assembly import
 /// lives in the implementation unit (harness.cpp), not here — the interface
 /// names no assembly type, and an unused interface import would be a dead
 /// import (graph_check).
@@ -34,7 +34,7 @@ import loom.types.types;            // ContentBlock, Message, TokenUsage, Stream
 import loom.query.wire_protocol;    // WireBackend (for BackendFactory)
 import loom.hooks.tool_permissions; // PermissionContext, PermissionResponse
 // ToolRegistry is needed for the register_extra_tools field type; the
-// detector does not harvest the class name past cc.tools.tool's
+// detector does not harvest the class name past loom.tools.tool's
 // concept/requires blocks (same marker as query_assembly.cppm).
 import loom.tools.tool;  // arch-check: keep-import
 
@@ -146,9 +146,9 @@ public:
     void abort() noexcept;
 
     /// Resume a prior session from disk (requires sessions_dir). Uses the
-    /// real engine resume path: cc.session::load_messages ->
+    /// real engine resume path: loom.session::load_messages ->
     /// parse_session_message_value -> QueryEngine::restore_conversation
-    /// (§2.3). No cc.server import.
+    /// (§2.3). No loom.server import.
     [[nodiscard]] loom::core::Result<void> resume(std::string_view session_id);
 
     /// Current session id (for resume/fork correlation).

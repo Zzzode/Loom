@@ -2,8 +2,8 @@
 /// @brief Image codec port — orchestration-owned callback leaf.
 ///
 /// File/image tools need image metadata and base64 codec services that are
-/// implemented in cc_services (loom::services::image::ImageService) and wired by
-/// cc_orchestration, but cc_tools cannot depend on cc_orchestration (rank 8 ->
+/// implemented in loom_services (loom::services::image::ImageService) and wired by
+/// loom_orchestration, but loom_tools cannot depend on loom_orchestration (rank 8 ->
 /// rank 9 would be an upward edge). The concrete backend is installed once at
 /// process startup via loom::orchestration::install_runtime_backends(); tool
 /// code acquires it through codec() and fails closed when no deployment

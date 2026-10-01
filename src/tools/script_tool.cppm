@@ -99,7 +99,7 @@ public:
         auto start_time = std::chrono::steady_clock::now();
 
         auto tmp_path = std::filesystem::temp_directory_path() /
-            std::format("cc_script_{}{}", std::chrono::steady_clock::now().time_since_epoch().count(),
+            std::format("loom_script_{}{}", std::chrono::steady_clock::now().time_since_epoch().count(),
                         script_extension(request.language));
 
         {
@@ -194,7 +194,7 @@ private:
     {
         std::vector<Diagnostic> diags;
 
-        // migrated: integrate script typecheck via cc.tools.script_typecheck
+        // migrated: integrate script typecheck via loom.tools.script_typecheck
         if (lang != ScriptLanguage::JavaScript && lang != ScriptLanguage::TypeScript) {
             // Only JS/TS runs type-checking; Python/Shell keep the empty list.
             // TypeScript subset is treated as JS for this placeholder mapping.

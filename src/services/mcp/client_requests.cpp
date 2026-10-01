@@ -1,4 +1,4 @@
-// Implementation unit for cc.services.mcp.client — the public JSON-RPC API
+// Implementation unit for loom.services.mcp.client — the public JSON-RPC API
 // methods (tools/resources/prompts). Separate from client_protocol.cpp so a
 // body edit to one RPC method recompiles this smaller object only.
 module;

@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.runtime_registry — native-agent record
+// Implementation unit for loom.tools.runtime_registry — native-agent record
 // formatters, transcript-artifact cleanup (whose function pointers are taken
 // by inline wrappers that stay in the interface), and the team-member Agent
 // start-input builder.

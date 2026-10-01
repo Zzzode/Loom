@@ -5,7 +5,7 @@
 /// defaults: user-facing name = raw tool name (title-cased), message =
 /// first line of input JSON, no tag, generic progress/queued text.
 ///
-/// MODULE:   cc.ui.tools.generic
+/// MODULE:   loom.ui.tools.generic
 /// LICENCE:  Exported.  Imported by tool_ui_registry and as fallback.
 ///
 /// TS REFERENCE:

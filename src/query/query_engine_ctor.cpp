@@ -1,6 +1,6 @@
-// Implementation unit for cc.query.query_engine — the QueryEngine
+// Implementation unit for loom.query.query_engine — the QueryEngine
 // constructor and API-client setup. This is the ONLY implementation unit
-// that imports cc.services.analytics (the local-only session_start event),
+// that imports loom.services.analytics (the local-only session_start event),
 // so that dependency never enters the module interface BMI.
 module;
 
@@ -57,7 +57,7 @@ void QueryEngine::setup_api_client() {
     api_config_.base_retry_delay = config_.retry_policy.initial_delay;
 
     // Select the wire protocol. Unset keeps the historical behaviour
-    // (Anthropic /v1/messages). See cc.query.wire_protocol for the seam.
+    // (Anthropic /v1/messages). See loom.query.wire_protocol for the seam.
     wire_api_ = loom::query::wire::WireApi::Anthropic;
     if (config_.wire_api && !config_.wire_api->empty()) {
         if (auto parsed = loom::query::wire::wire_api_from_string(*config_.wire_api)) {

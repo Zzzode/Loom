@@ -18,7 +18,7 @@
 //
 // Register in tests/CMakeLists.txt:
 //   add_executable(test_fix_lsp_tool test_fix_lsp_tool.cpp)
-//   target_link_libraries(test_fix_lsp_tool PRIVATE cc_core GTest::gtest_main)
+//   target_link_libraries(test_fix_lsp_tool PRIVATE loom_core GTest::gtest_main)
 //   target_compile_options(test_fix_lsp_tool PRIVATE
 //       $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-missing-designated-field-initializers>)
 //   gtest_discover_tests(test_fix_lsp_tool

@@ -116,7 +116,7 @@ struct TempCwdGuard {
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.chrome.terminal: FTXUI terminal controller and common widgets
+// loom.ui.chrome.terminal: FTXUI terminal controller and common widgets
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(WizardDialog, RendersStepFactoryContent) {

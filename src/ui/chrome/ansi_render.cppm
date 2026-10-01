@@ -3,7 +3,7 @@
 ///
 /// RFC 0002 phase F1, row 8: the three helpers (sgr_color_value_to_ftxui,
 /// apply_sgr_run, ansi_to_ftxui_elements) were extracted VERBATIM from
-/// cc.ui.messages.message_tool_result into this chrome-area leaf. The
+/// loom.ui.messages.message_tool_result into this chrome-area leaf. The
 /// bodies live in the module implementation unit ansi_render.cpp (the
 /// Phase-C recipe) so a body edit recompiles exactly one object (fan-out
 /// = 1) and this declarations-only BMI stays cheap for importers.
@@ -29,7 +29,7 @@
 /// and compose the lines.  The leaf's BMI is now on the order of
 /// terminal_io's (~2.27 MB), keeping importer PSS low.
 ///
-/// The leaf imports only std + cc.ui.chrome.terminal_io (for SgrAttr);
+/// The leaf imports only std + loom.ui.chrome.terminal_io (for SgrAttr);
 /// terminal_io is itself a std-only leaf.
 module;
 

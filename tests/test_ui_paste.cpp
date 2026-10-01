@@ -38,12 +38,12 @@ namespace fs = std::filesystem;
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.chrome.terminal: FTXUI terminal controller and common widgets
+// loom.ui.chrome.terminal: FTXUI terminal controller and common widgets
 // ═══════════════════════════════════════════════════════════════════════════════
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.chrome.panels: panel data models and state transitions
+// loom.ui.chrome.panels: panel data models and state transitions
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(PromptInput, InputBufferInsertMoveAndDelete) {
@@ -605,7 +605,7 @@ TEST(FullscreenLayout, StickyPromptState2_HeaderVisible) {
 
     // Golden snapshot: captures exact layout (sticky header visible,
     // padCollapsed=0, messages + prompt below).  Regenerates with
-    // `UPDATE_GOLDENS=1 ./cc_test --gtest_filter='*State2*'`.
+    // `UPDATE_GOLDENS=1 ./loom_test --gtest_filter='*State2*'`.
     // Re-render to a fresh snapshot (std::move consumed el above).
     fl s2 = default_slots();
     s2.sticky_prompt = Sp{"Write a snake game in Python", 17};

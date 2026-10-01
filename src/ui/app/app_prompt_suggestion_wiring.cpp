@@ -1,7 +1,7 @@
-// app_prompt_suggestion_wiring.cpp — impl unit for cc.ui.app. Keeps the heavy
-// cc.services.prompt_suggestion import (1004-line service) OUT of app.cppm so
+// app_prompt_suggestion_wiring.cpp — impl unit for loom.ui.app. Keeps the heavy
+// loom.services.prompt_suggestion import (1004-line service) OUT of app.cppm so
 // app's BMI stays under clang's 2GB source-location budget — test_ui.cpp and
-// other cc.ui importers would otherwise blow the budget transitively. Defines
+// other loom.ui importers would otherwise blow the budget transitively. Defines
 // wire_prompt_suggestion_hook(), which is declared (not defined) in app.cppm.
 //
 // Phase A (import std): this impl unit deliberately keeps std TEXTUAL and

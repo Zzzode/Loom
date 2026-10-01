@@ -1,4 +1,4 @@
-// Implementation unit for cc.serdes.json — JsonVal read-only accessors
+// Implementation unit for loom.serdes.json — JsonVal read-only accessors
 // (RFC 0001 Phase C batch 10). The textual <yyjson.h> lives here, not in the
 // module interface.
 module;

@@ -10,7 +10,7 @@ import std;
 // RFC-0001 B4: only the rank-1 contract leaf is imported here; the core
 // ConfigManager layer reaches the runtime through the loader sink below
 // (loom::tools::set_core_settings_mcp_loader), installed by the production
-// composition root in cc.commands.mcp.core_settings_loader.
+// composition root in loom.commands.mcp.core_settings_loader.
 import loom.config.mcp_types;
 import loom.services.mcp.config;
 import loom.services.mcp.connection_manager;
@@ -840,7 +840,7 @@ inline void merge_native_mcp_servers(
 
 // RFC-0001 B4: sink that lets the production composition root feed the
 // loom::core::ConfigManager ("core settings") MCP layer into the native runtime
-// without cc.orchestration.tools.mcp importing cc.config.config. The loader returns the
+// without loom.orchestration.tools.mcp importing loom.config.config. The loader returns the
 // mapped native servers (or the ConfigManager load error verbatim). When no
 // loader is installed (test binaries), the core settings layer is skipped and
 // only the services ConfigLoader + plugin discovery layers run.
@@ -849,7 +849,7 @@ inline void merge_native_mcp_servers(
 // callback port from the SAME ConfigManager load (settings.xaaIdp.callbackPort,
 // written by `/mcp xaa setup --callback-port`). The XAA runtime login path
 // (McpAuthTool -> perform_mcp_oauth_flow -> authenticate_xaa) needs that port
-// but cannot read cc.config.config, so the composition layer supplies it here.
+// but cannot read loom.config.config, so the composition layer supplies it here.
 // The runtime reads it FRESH per lookup (NativeMcpRuntime::xaa_callback_port)
 // rather than caching it, so it is available regardless of whether a config
 // load or a sync() populated the runtime first. It is a member (not a second
@@ -890,7 +890,7 @@ namespace detail {
 void set_core_settings_mcp_loader(CoreSettingsMcpServersLoader loader);
 
 // RFC-0001 B6/B8: sink fed the same live manager snapshots all_statuses()
-// projects into its returned statuses. The cc.bootstrap MCP-connectivity
+// projects into its returned statuses. The loom.bootstrap MCP-connectivity
 // bridge (installed once at main()) is its sole production consumer; since
 // the B8 atomic cut that bridge is also the SOLE writer of the hook
 // connectivity slot.
@@ -1127,7 +1127,7 @@ public:
             }
         }
         // RFC-0001 B6/B8: fire the snapshot sink only after mutex_ is
-        // released — the sink is external composition code (the cc.bootstrap
+        // released — the sink is external composition code (the loom.bootstrap
         // MCP-connectivity bridge is its sole production installer) and must
         // not run under the runtime lock. One fetch, shared with the loop
         // above; unset sink is a no-op apart from the moved-away vector. The

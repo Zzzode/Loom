@@ -20,7 +20,7 @@
 //
 // Register in tests/CMakeLists.txt:
 //   add_executable(test_fix_state test_fix_state.cpp)
-//   target_link_libraries(test_fix_state PRIVATE cc_core GTest::gtest_main)
+//   target_link_libraries(test_fix_state PRIVATE loom_core GTest::gtest_main)
 //   gtest_discover_tests(test_fix_state
 //       DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 

@@ -2073,7 +2073,7 @@ TEST(DialogRenderers, Golden_ToolPermissionOverlay) {
 
     // Hermetic renderer: uses payload fields that are always populated and
     // captures command/cwd directly in the lambda to avoid requiring an
-    // explicit import of cc.ui.permissions.single_prompt in this TU.
+    // explicit import of loom.ui.permissions.single_prompt in this TU.
     const std::string kCommand = "rm -rf node_modules/";
     const std::string kCwd     = "/home/user/proj";
 
@@ -2142,7 +2142,7 @@ TEST(DialogRenderers, Golden_ToolPermissionOverlay) {
 }
 
 TEST(DialogRenderers, Golden_SandboxPermission) {
-    // FAITHFUL PORT: uses cc.ui.dialogs.sandbox_permission (1:1 TS layout)
+    // FAITHFUL PORT: uses loom.ui.dialogs.sandbox_permission (1:1 TS layout)
     // rather than the pre-existing stub renderer.
 
     namespace sbp = loom::ui::dialogs::sandbox_permission;
@@ -2509,7 +2509,7 @@ TEST(DialogRenderers, Golden_Elicitation) {
 
 TEST(DialogRenderers, Golden_CostThreshold) {
     // P0x3 contract — CostThreshold render MUST be delegated to the unified
-    // cc.ui.dialogs.cost_threshold_dialog module (single source of truth).
+    // loom.ui.dialogs.cost_threshold_dialog module (single source of truth).
     // No locally-fabricated chrome (Continue / Reset counter / Quit) is
     // permitted.  See the dedicated golden snapshots in
     // test_cost_threshold_dialog.cpp:
@@ -2712,7 +2712,7 @@ TEST(DialogRenderers, Golden_SettingsPanel) {
 // ============================================================
 
 /// Minimal replica of ReplScreenState's dialog-relevant fields.
-/// We intentionally do NOT import cc.ui.screens.repl_screen to avoid
+/// We intentionally do NOT import loom.ui.screens.repl_screen to avoid
 /// build-system churn (CMake INTERFACE→FILE_SET BMI propagation gaps).
 struct MiniReplState {
     dsys::DialogQueue dialog_queue;

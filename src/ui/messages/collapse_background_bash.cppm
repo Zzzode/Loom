@@ -47,7 +47,7 @@ inline constexpr std::string_view kSummaryTag          = "summary";
 //   `export const BACKGROUND_BASH_SUMMARY_PREFIX = 'Background command '`
 // Mirrored locally (must equal loom::tasks::BACKGROUND_BASH_SUMMARY_PREFIX in
 // tasks/local_shell_task.cppm:31) rather than imported, so the UI-messages
-// layer stays free of the cc.tasks.* / bash-execution module graph.  If the
+// layer stays free of the loom.tasks.* / bash-execution module graph.  If the
 // task-layer constant ever changes, update this mirror in lock-step.
 inline constexpr std::string_view kBackgroundBashSummaryPrefix = "Background command ";
 

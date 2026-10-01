@@ -20,7 +20,7 @@
 /// All primitives are re-implemented here with POSIX APIs (fork/exec /
 /// std::ifstream / std::filesystem) because the C++23 named-module
 /// implementations are not reachable from a .cpp TU; the goal is to
-/// validate behaviour parity with the cc_tools modules on identical input.
+/// validate behaviour parity with the loom_tools modules on identical input.
 #include <cassert>
 #include <cerrno>
 #include <cstdio>
@@ -41,7 +41,7 @@
 namespace fs = std::filesystem;
 
 // ============================================================================
-// POSIX helpers (mirror cc_tools behaviour without module BMI import)
+// POSIX helpers (mirror loom_tools behaviour without module BMI import)
 // ============================================================================
 
 struct ExecResult {
@@ -152,7 +152,7 @@ struct TempDir {
 int main() {
     using namespace std;
 
-    TempDir tmp("cc_e2e_bash_file");
+    TempDir tmp("loom_e2e_bash_file");
     printf("[E2E-3] tempdir = %s\n", tmp.path.c_str());
 
     // 2) write files

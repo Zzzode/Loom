@@ -15,7 +15,7 @@
 ///     child is killed and `on_exit` fires with a descriptive exit code
 ///   * Stop() drains both pipes and reaps the child — no zombies
 ///
-/// This module is intentionally independent of the larger `cc.services.mcp`
+/// This module is intentionally independent of the larger `loom.services.mcp`
 /// infrastructure so it can be unit-tested with a trivial mock server
 /// (e.g. `/bin/sh -c 'while IFS= read -r line; do echo "$line"; done'`)
 /// without bringing in any other C++ modules.
@@ -404,7 +404,7 @@ inline void StdioTransport::ReaderLoop(const StdioServerSpec& /*spec*/) {
         if (line.front() == ':') return;   // SSE-style comment lines
 
         JsonRpcMessage msg;
-        // Parse via the canonical cc.serdes.json wrapper (RAII; no manual free).
+        // Parse via the canonical loom.serdes.json wrapper (RAII; no manual free).
         auto parsed = json::parse(line);
         if (!parsed) {
             msg.is_valid = false;

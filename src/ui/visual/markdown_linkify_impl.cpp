@@ -1,4 +1,4 @@
-// markdown_linkify_impl.cpp - impl unit for cc.ui.visual.markdown (RFC 0001
+// markdown_linkify_impl.cpp - impl unit for loom.ui.visual.markdown (RFC 0001
 // Phase C batch 6). Holds linkify_issue_references(): owner/repo#123 ->
 // FTXUI OSC 8 hyperlink elements. Moved out of the interface BMI.
 module;

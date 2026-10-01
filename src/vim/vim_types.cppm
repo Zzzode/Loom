@@ -2,8 +2,8 @@
 /// @brief Canonical VimMode enum — single source of truth for all vim mode
 ///        representations across the codebase.
 ///
-/// Lives in cc_vim (low-level target, depends only on cc_utils) so both
-/// cc_hooks and cc_ui can safely import it without circular dependencies.
+/// Lives in loom_vim (low-level target, depends only on loom_utils) so both
+/// loom_hooks and loom_ui can safely import it without circular dependencies.
 ///
 /// Replaces 5 incompatible local VimMode definitions:
 ///   - src/ui/prompt/vim_input.cppm (6 values)

@@ -593,7 +593,7 @@ private:
     std::optional<loom::ui::prompt::PastePreview> paste_preview_;
 
     // ============================================================
-    // Vim mode state (unified VimController from cc.vim.vim_controller)
+    // Vim mode state (unified VimController from loom.vim.vim_controller)
     // TS REF: src/hooks/useVimInput.ts — vim state machine wrapping text input
     // ============================================================
     loom::vim::VimController vim_;

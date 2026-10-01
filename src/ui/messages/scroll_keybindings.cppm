@@ -3,7 +3,7 @@
 /// @brief Unified scroll-key FSM for all long lists (messages, tasks,
 ///        kanban, agent browse, plugins).  Mirrors TS ScrollKeybindingHandler.
 ///
-/// MODULE:   cc.ui.messages.scroll_keys
+/// MODULE:   loom.ui.messages.scroll_keys
 /// LICENCE:  Exported.  VirtualMessageList, TasksList, KanbanList all import.
 ///
 /// ┌─────────────────────────────────────────────────────────────────────┐

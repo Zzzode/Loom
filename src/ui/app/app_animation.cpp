@@ -1,4 +1,4 @@
-// app_animation.cpp — plain impl unit for cc.ui.app.app. Owns the animation
+// app_animation.cpp — plain impl unit for loom.ui.app.app. Owns the animation
 // ticker + render-event post bodies (RFC 0001 Phase C batch 2):
 //   AppAdapter::StartUiAnimationTicker — the jthread animation ticker
 //   AppAdapter::PostRenderEvent        — Post(Event::Custom) helper

@@ -1,4 +1,4 @@
-// markdown_api_impl.cpp - impl unit for cc.ui.visual.markdown (RFC 0001
+// markdown_api_impl.cpp - impl unit for loom.ui.visual.markdown (RFC 0001
 // Phase C batch 6). Holds the public entry points render_markdown /
 // render_markdown_dim, the cache-management accessors, and the
 // StreamingMarkdown out-of-line members (update, reset, private static

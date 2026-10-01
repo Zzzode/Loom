@@ -1,8 +1,8 @@
 /// @file tool_types.cppm
 /// @brief Tool input/output DTOs shared across layers.
-/// Rank-1 leaf: ToolInput/ToolOutputContent/ToolResult with zero cc.*
-/// imports; cc.tools.tool re-exports it so existing importers stay
-/// unchanged. has_field stays in cc.tools.tool (it needs cc.serdes.json).
+/// Rank-1 leaf: ToolInput/ToolOutputContent/ToolResult with zero loom.*
+/// imports; loom.tools.tool re-exports it so existing importers stay
+/// unchanged. has_field stays in loom.tools.tool (it needs loom.serdes.json).
 export module loom.types.tool_types;
 
 import std;

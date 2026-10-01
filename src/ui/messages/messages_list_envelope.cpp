@@ -1,4 +1,4 @@
-// messages_list_envelope.cpp - impl unit for cc.ui.messages.messages_list
+// messages_list_envelope.cpp - impl unit for loom.ui.messages.messages_list
 // (RFC 0001 Phase C batch 7). Role chrome (emoji/label/pill/background/
 // accent/spinner), the message envelope, unseen + transcript-cap dividers,
 // the compact-group and empty-state rows, and status-badge derivation.

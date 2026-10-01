@@ -776,7 +776,7 @@ private:
     loom::hooks::ToolPermissionHook* permission_hook_ = nullptr;  // Optional permission policy
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks_ = nullptr; // Optional lifecycle hooks
     // User-configured hook path (PreToolUse/PostToolUse via the
-    // cc.hooks.execution engine). Mirrors src/utils/hooks.ts in TS.
+    // loom.hooks.execution engine). Mirrors src/utils/hooks.ts in TS.
     // When empty/disabled the tool loop is unchanged (parity with TS, which
     // only runs the pipeline when matching hooks exist).
     std::vector<loom::utils::hooks_registry::IndividualHookConfig> user_hooks_;

@@ -187,7 +187,7 @@ namespace detail {
 /// RFC-0001 followup c20: the string-view redact_tokens() moved to
 /// xaa_idp_login.cppm (detail::redact_tokens) so the C1 OIDC-login leg and
 /// this module's C2 leg share one helper; it is visible here via the
-/// cc.services.mcp.xaa_idp_login import above.
+/// loom.services.mcp.xaa_idp_login import above.
 [[nodiscard]] inline std::string redact_tokens_json(JsonVal val) {
     // Serialize then redact
     // We can't easily serialize a JsonVal to string without yyjson_write,
@@ -881,7 +881,7 @@ namespace detail {
 /// @param callback_port RFC-0001 B followup c17a — the configured fixed loopback
 ///        callback port for the IdP login, or nullopt. It is INJECTED by the
 ///        caller rather than read here from a file: this module sits at
-///        cc.services (rank 7) and cannot see cc.config.config (rank 1), so the
+///        loom.services (rank 7) and cannot see loom.config.config (rank 1), so the
 ///        single authoritative store (settings.xaaIdp.callbackPort, written by
 ///        `/mcp xaa setup --callback-port`) must be threaded in from the layer
 ///        that owns it — exactly as server_config already carries the AS OAuth

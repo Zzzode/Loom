@@ -12,8 +12,8 @@ import loom.tools.agent_runtime;
 import loom.tools.agent_types;
 import loom.tools.agent_worktree;
 import loom.orchestration.tools.mcp;
-// Team / MemberRole (cc.tools.team), AgentColor (cc.teams.swarm.backends)
-// and SkillDefinition (cc.skills.skill) are named in declarations kept in
+// Team / MemberRole (loom.tools.team), AgentColor (loom.teams.swarm.backends)
+// and SkillDefinition (loom.skills.skill) are named in declarations kept in
 // this interface, so their owner modules must be imported here even though
 // every function body that uses them moved to an implementation unit.
 import loom.tools.team;
@@ -37,7 +37,7 @@ using loom::services::api::ContentBlockType;
 // Agent Configuration
 // =========================================================================
 // The AgentConfig / AgentLivePermissionCheck(Fn) DTOs live in the
-// zero-service-dependency leaf cc.tools.agent_types; re-export them under
+// zero-service-dependency leaf loom.tools.agent_types; re-export them under
 // the agent::utils spelling so the agent subtree keeps resolving without
 // touching its using-declarations.
 
@@ -579,8 +579,8 @@ void append_hook_additional_context_messages(
 void upsert_agent_record_for_plan(const AgentExecutionPlan& plan);
 
 // Worktree cleanup (result + entry point) lives on the zero-facade leaf
-// cc.tools.agent_worktree (RFC-0001 B14); re-export under the utils spelling
-// so the agent subtree and the cc.orchestration.agent facade keep resolving with no
+// loom.tools.agent_worktree (RFC-0001 B14); re-export under the utils spelling
+// so the agent subtree and the loom.orchestration.agent facade keep resolving with no
 // call-site churn.
 using loom::tools::agent::AgentWorktreeCleanupResult;
 using loom::tools::agent::cleanup_agent_worktree;

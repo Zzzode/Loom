@@ -4293,8 +4293,8 @@ Use the plugin review checklist.
 
 // RFC-0001 B12: with NO orchestration-installed SkillLoader executor, the
 // 'skill' dispatch falls through to the terminal manual SKILL.md walk kept
-// in cc_tools. This test deliberately instantiates NO FileToolServicesGuard
-// (the process-global executor slot is unset), proving cc_tools stays
+// in loom_tools. This test deliberately instantiates NO FileToolServicesGuard
+// (the process-global executor slot is unset), proving loom_tools stays
 // self-contained for hermetic binaries.
 TEST(Tools, SkillToolFallsBackToManualWalkWithoutExecutor) {
     // Distinctive body: pins that success comes from the manual SKILL.md walk
@@ -10498,9 +10498,9 @@ TEST(RuntimeComputerUse, EscapesAndBuildsActionPayload) {
 
 // ---------------------------------------------------------------------------
 // §13 #1: tests for extracted runtime subsystems
-//   * cc.tools.runtime_shared_utils
-//   * cc.tools.runtime_team_shared
-//   * cc.tools.runtime_message_delivery
+//   * loom.tools.runtime_shared_utils
+//   * loom.tools.runtime_team_shared
+//   * loom.tools.runtime_message_delivery
 // ---------------------------------------------------------------------------
 
 TEST(RuntimeSharedUtils, EscapeAndQuote) {
@@ -11176,7 +11176,7 @@ static bool danger_has_pattern(const loom::tools::bash_validation::DangerClassif
 // pipe_to_shell, piped_rm, dangerous_subshell, fork_bomb_detected,
 // env_injection_risk, unsafe_chmod, recursive_rm_root, heredoc_destructive)
 // that are ONLY emitted by the tree-sitter AST classifier.  The regex
-// fallback path (cc.tools.destructive_command_warning's pattern catalogue)
+// fallback path (loom.tools.destructive_command_warning's pattern catalogue)
 // covers git/rm/DROP/kubectl/terraform but none of the AST-only patterns,
 // so these tests cannot meaningfully run when CC_HAS_TREE_SITTER is off.
 // Guard them so the suite stays GREEN in both builds without weakening any

@@ -28,7 +28,7 @@ export namespace loom::skills::verify_content {
 // ============================================================
 // Pure helpers (ported from the TS skill body). These have no side-effects
 // — they only format strings and classify inputs. Any real execution is
-// delegated to cc.tools.bash at the call site.
+// delegated to loom.tools.bash at the call site.
 // ============================================================
 
 /// Strip HTML `<!-- comments -->` (same pipeline used in loom_api_content).

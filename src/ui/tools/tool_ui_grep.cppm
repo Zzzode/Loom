@@ -1,7 +1,7 @@
 /// @file tool_ui_grep.cppm
 /// @brief Grep tool UI — userFacingName, renderToolUseMessage, etc.
 ///
-/// MODULE:   cc.ui.tools.grep
+/// MODULE:   loom.ui.tools.grep
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

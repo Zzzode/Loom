@@ -25,8 +25,8 @@ import loom.tools.team;
 import loom.orchestration.tools.mcp;
 import loom.tools.sleep;
 import loom.tools.web_fetch;
-// RFC-0001 B10 — dead `import cc.skills.skill;` deleted: the file-access
-// hook move unmasked it (zero cc.skills references in this TU).
+// RFC-0001 B10 — dead `import loom.skills.skill;` deleted: the file-access
+// hook move unmasked it (zero loom.skills references in this TU).
 import loom.teams.team_helpers;
 import loom.services.api.client;
 import loom.services.api.streaming;

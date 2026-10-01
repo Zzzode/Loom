@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.runtime_registry — the
+// Implementation unit for loom.tools.runtime_registry — the
 // execute_simple_runtime_tool mega dispatcher. The team_create/team_delete
 // branches live in runtime_registry_team_dispatch.cpp; the function-local
 // static shared map stays function-local here.
@@ -61,14 +61,14 @@ using loom::core::ToolResult;
     // "computer" is the Anthropic native wire name (model sees it via the
     // computer_20241022 tool); "computer_use" is the internal registry name.
     // RFC-0001 B15: the ONE computer_use backend slot covers both; the body
-    // lives in cc.orchestration.runtime_backends.
+    // lives in loom.orchestration.runtime_backends.
     if (name == "computer_use" || name == "computer") {
         if (auto& backend = computer_use_backend(); backend) return backend(input);
         return ToolResult::error(std::format(
             "Runtime tool '{}' has no runtime handler", name));
     }
     // c13b: the structured config tool backend lives in
-    // cc.orchestration.runtime_backends; dispatch only does the seam
+    // loom.orchestration.runtime_backends; dispatch only does the seam
     // lookup and fails closed with the standard terminal text.
     if (name == "config") {
         if (auto& backend = config_backend(); backend) return backend(input);
@@ -113,7 +113,7 @@ using loom::core::ToolResult;
             result->branch_name, result->original_path.string()));
     }
     // RFC-0001 B15: the LSP and four MCP branches moved to
-    // cc.orchestration.runtime_backends; dispatch only does the seam lookup.
+    // loom.orchestration.runtime_backends; dispatch only does the seam lookup.
     // Every null slot returns the byte-identical terminal error literal.
     if (name == "lsp") {
         if (auto& backend = lsp_backend(); backend) return backend(input);

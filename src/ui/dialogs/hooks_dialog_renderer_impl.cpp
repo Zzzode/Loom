@@ -3,7 +3,7 @@
 ///
 /// This file contains the ACTUAL implementation (holder, conversion
 /// functions, renderer lambda).  It is a module implementation unit
-/// (`module cc.ui.dialogs.hooks_renderer;` without `export`), so its
+/// (`module loom.ui.dialogs.hooks_renderer;` without `export`), so its
 /// heavy imports (hooks_ui, hooks_config, hooks_registry, registry)
 /// have their own independent source-location budget.  Importers of
 /// the module interface never see this closure.

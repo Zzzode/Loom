@@ -4,11 +4,11 @@
 /// Owns the 21-subtype stdio/WS control protocol, the Stdin/Stdout envelopes,
 /// the SDK stdout wire-message family, and the wire-closure types they
 /// reference (SlashCommand, ModelInfo, AccountInfo, FastModeState, AgentInfo,
-/// ModelUsage). Moved from the rank-16 cc.sdk island (RFC 0001 phases 2-3,
+/// ModelUsage). Moved from the rank-16 loom.sdk island (RFC 0001 phases 2-3,
 /// §1.2-1.3) so the live server/bridge (rank 13) can import the canonical
 /// wire schema without an upward edge.
 ///
-/// Ser/de follows the cc.server.types pattern: free X_to_json / X_from_json
+/// Ser/de follows the loom.server.types pattern: free X_to_json / X_from_json
 /// plus ADL to_json / from_json overloads. The golden wire-compatibility gate
 /// (tests/test_sdk_control_golden.cpp) freezes the exact bytes for every
 /// spoken subtype.
@@ -30,15 +30,15 @@ export namespace loom::server::control {
 // Converged type aliases (canonical types — §1.2 move closure)
 // ============================================================================
 
-/// The engine's agent shape (cc.tools.agent_runtime). The SDK island twin is
+/// The engine's agent shape (loom.tools.agent_runtime). The SDK island twin is
 /// converged to this alias so the moved DTOs reference the canonical type.
 using AgentDefinition = loom::tools::agent_runtime::AgentDefinition;
 
-/// Identical 4-value effort enum (cc.model.effort, in cc_utils).
+/// Identical 4-value effort enum (loom.model.effort, in loom_utils).
 using EffortLevel = loom::utils::EffortLevel;
 
 // ============================================================================
-// Wire-closure types (moved from cc.sdk.core_schemas — §1.2)
+// Wire-closure types (moved from loom.sdk.core_schemas — §1.2)
 // ============================================================================
 
 /// Slash command (skill) info. Carried by ControlInitializeResponse.commands.
@@ -103,7 +103,7 @@ struct ModelUsage {
 // Wire enums (no clean canonical twin — kept as wire types)
 // ============================================================================
 
-/// Wire permission mode (5 values; the canonical cc.tools.mode_validation
+/// Wire permission mode (5 values; the canonical loom.tools.mode_validation
 /// has 4 and different enumerator names — kept as a wire type).
 enum class PermissionMode : std::uint8_t {
     Default,
@@ -793,7 +793,7 @@ struct UpdateEnvironmentVariablesMessage {
 };
 
 // ============================================================================
-// Runtime-only control request structs (from cc.sdk.control_types)
+// Runtime-only control request structs (from loom.sdk.control_types)
 // ============================================================================
 
 /// End session request.
@@ -824,7 +824,7 @@ struct SDKControlMcpOAuthCallbackUrlRequest {
 };
 
 // ============================================================================
-// SDK stdout wire-message family (moved from cc.sdk.core_types)
+// SDK stdout wire-message family (moved from loom.sdk.core_types)
 // ============================================================================
 
 /// SDK user message.
@@ -1005,7 +1005,7 @@ using SDKMessage = std::variant<
 >;
 
 // ============================================================================
-// Stdin/Stdout envelopes (moved from cc.sdk.control_types)
+// Stdin/Stdout envelopes (moved from loom.sdk.control_types)
 // ============================================================================
 
 /// Messages written to stdout by the CLI.

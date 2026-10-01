@@ -35,7 +35,7 @@ namespace fs = std::filesystem;
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.chrome.terminal: FTXUI terminal controller and common widgets
+// loom.ui.chrome.terminal: FTXUI terminal controller and common widgets
 // ═══════════════════════════════════════════════════════════════════════════════
 
 
@@ -1462,7 +1462,7 @@ TEST(AppRuntime, ToolResultToAssistantTextSpacingIsOneLine) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root2 = fs::temp_directory_path() /
-        ("cc_spacing_test_" +
+        ("loom_spacing_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     loom::utils::SessionStorage storage(storage_root2);
 

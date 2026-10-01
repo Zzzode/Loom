@@ -1,4 +1,4 @@
-// selectors_features.cpp - impl unit for cc.state.selectors
+// selectors_features.cpp - impl unit for loom.state.selectors
 // (RFC 0001 Phase C batch 10). Feature selectors: prompt suggestion,
 // speculation, skill-improvement suggestion, inbox messages, and the worker
 // sandbox permission/request selectors.

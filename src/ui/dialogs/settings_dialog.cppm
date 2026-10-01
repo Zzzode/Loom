@@ -2,7 +2,7 @@
 /// @brief Settings interface with tabbed navigation (General, Model, API,
 /// Permissions, Tools, MCP, LSP, Bridge, Hooks, Privacy, About, Status, Usage).
 /// Migrated from Settings.tsx, Config.tsx, Status.tsx. Config read/write is
-/// delegated 100% to ConfigManager (cc.config.config) — no direct JSON I/O.
+/// delegated 100% to ConfigManager (loom.config.config) — no direct JSON I/O.
 module;
 
 #include <ctime>

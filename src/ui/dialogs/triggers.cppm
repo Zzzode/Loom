@@ -497,7 +497,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
         // confirmation banner.  The on_response callback is a no-op because
         // the actual model switch is performed by the command handler when
         // the user selects a model (which dispatches SwitchModel via the
-        // AppState action system — see cc.commands.model).
+        // AppState action system — see loom.commands.model).
         PushModelSwitch(queue, "", "", [](bool){});
         return true;
     }

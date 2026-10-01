@@ -19,11 +19,11 @@
 /// =========================================================
 ///
 /// RENDERING DELEGATION (this file does NOT contain render bodies):
-///   status bar   -> cc.ui.prompt.prompt_input_footer (UI1, user-configurable command output)
-///   spinner      -> cc.ui.components.spinner_widget (UI19)
-///   msg list     -> cc.ui.messages.messages (RenderMessages wrapper, UI4/5)
-///   prompt input -> cc.ui.prompt.prompt_input_full (UI2)
-///   dialogs      -> cc.ui.dialogs.* (DialogQueue 4-slot system, UI8-UI11/UI16)
+///   status bar   -> loom.ui.prompt.prompt_input_footer (UI1, user-configurable command output)
+///   spinner      -> loom.ui.components.spinner_widget (UI19)
+///   msg list     -> loom.ui.messages.messages (RenderMessages wrapper, UI4/5)
+///   prompt input -> loom.ui.prompt.prompt_input_full (UI2)
+///   dialogs      -> loom.ui.dialogs.* (DialogQueue 4-slot system, UI8-UI11/UI16)
 ///
 /// RFC 0001 Phase C batch 9: every body lives in ten module implementation
 /// units — repl_screen_messages.cpp (row projection), repl_screen_scroll.cpp
@@ -50,7 +50,7 @@ import std;
 
 // RFC 0002 F3 Finalize: repl_state is imported (not re-exported) — call sites
 // that name ReplScreenState / ReplMode / the store types import repl_state or
-// the owning cc.ui.screens.*_store module directly.
+// the owning loom.ui.screens.*_store module directly.
 import loom.ui.screens.repl_state;
 // Store types named in this interface's declarations.
 import loom.ui.screens.messages_store;   // MessageDisplayEntry
@@ -69,16 +69,16 @@ import loom.ui.visual.markdown;  // arch-check: keep-import
 import loom.ui.features.agents.agent_cards;
 
 // Forward imports (implement bodies in owning agent modules):
-//   cc.ui.dialogs.{permission_prompts,mcp_dialogs,trust_dialog,
+//   loom.ui.dialogs.{permission_prompts,mcp_dialogs,trust_dialog,
 //                  sandbox_dialog,settings_dialog,model_picker,
 //                  ide_dialogs,plugin_dialog,
 //                  feedback_survey,config_dialog,mcp_dialogs}
-//   cc.ui.prompt.{prompt_input_full,autocomplete,vim_input}
-//   cc.ui.messages.{assistant_message,user_message,structured_diff}
-//   cc.ui.components.{custom_select,diff_view,spinner_widget,
+//   loom.ui.prompt.{prompt_input_full,autocomplete,vim_input}
+//   loom.ui.messages.{assistant_message,user_message,structured_diff}
+//   loom.ui.components.{custom_select,diff_view,spinner_widget,
 //                     file_tree,text_input_widget,notification,
 //                     cost_display,dev_bar,status_line}
-//   cc.ui.{design.dialog,hooks.hooks_ui,permissions.permission_views,
+//   loom.ui.{design.dialog,hooks.hooks_ui,permissions.permission_views,
 //          agents.agent_editor,tasks.task_list_ui,markdown,terminal}
 
 export namespace loom::ui::repl_screen {
@@ -89,7 +89,7 @@ using namespace ftxui;
 // (bodies in repl_screen_welcome.cpp)
 // =========================================================
 
-// UI1: status bar — delegates to cc.ui.components.status_line.
+// UI1: status bar — delegates to loom.ui.components.status_line.
 [[nodiscard]] Element RenderStatusBar(const StatusBarData& d);
 
 // UI19: spinner line shell.  Single loom-gold theme, cycling

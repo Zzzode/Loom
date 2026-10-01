@@ -1,13 +1,13 @@
 // C++23 Module: runtime backend installation for the orchestration layer.
 //
-// RFC 0001 Phase B: cc_orchestration is the rank-9 layer that wires concrete
-// lower-ranked services (cc_services, cc_skills, ...) into the callback
+// RFC 0001 Phase B: loom_orchestration is the rank-9 layer that wires concrete
+// lower-ranked services (loom_services, loom_skills, ...) into the callback
 // ports owned by the tools layer. This is the ONE installer:
-//   - cc.services.image-backed image codec (cc.tools.image_codec.port, B11);
-//   - cc.skills::SkillLoader-backed skill executor (B12);
+//   - loom.services.image-backed image codec (loom.tools.image_codec.port, B11);
+//   - loom.skills::SkillLoader-backed skill executor (B12);
 //   - the six lifted runtime tool backends (lsp / mcp / list_mcp_resources /
 //     read_mcp_resource / mcp_auth / computer_use, B15);
-//   - the Agent tool factory (cc.orchestration.agent, B15);
+//   - the Agent tool factory (loom.orchestration.agent, B15);
 //   - the MCP-connectivity -> hook snapshot sink (rehomed bridge, B15).
 //
 // The registry missing-tool fallback (make_missing_tool_backend) and the MCP
@@ -77,7 +77,7 @@ export namespace loom::tools {
 // MCP tool-pool collectors, lifted verbatim from
 // runtime_registry_register.cpp (bodies in runtime_backends_mcp.cpp). They
 // stay in namespace loom::tools so main.cpp / server_routes call sites are
-// unchanged; their home module is now cc.orchestration.runtime_backends.
+// unchanged; their home module is now loom.orchestration.runtime_backends.
 [[nodiscard]] std::vector<loom::core::ToolDefinition> collect_mcp_tool_definitions();
 
 [[nodiscard]] std::unordered_map<std::string, std::string>
@@ -131,7 +131,7 @@ namespace fs = std::filesystem;
 }
 
 /// Build the production SkillLoader executor: directory/plugin skill
-/// discovery lifted verbatim out of cc.tools.runtime_registry's skill branch
+/// discovery lifted verbatim out of loom.tools.runtime_registry's skill branch
 /// (HOME/.codex/skills, HOME/.agents/skills, cwd/skills, plus plugin
 /// component skills via agent_runtime). Returns std::nullopt when no skill
 /// matches so the tools-side terminal manual SKILL.md walk runs. Exposed (not
@@ -260,7 +260,7 @@ inline void install_runtime_backends() {
                     permission_hook_valid_for_background);
             });
 
-        // MCP connectivity -> hook snapshot sink (rehomed from cc_bootstrap).
+        // MCP connectivity -> hook snapshot sink (rehomed from loom_bootstrap).
         loom::orchestration::mcp_connectivity::wire_mcp_connectivity();
     });
 }

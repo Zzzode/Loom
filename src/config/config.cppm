@@ -2370,7 +2370,7 @@ private:
     /// 16 hex chars (64 bits) of tmp-name randomness, so pre-spraying
     /// symlinks at guessed "<path>.tmp.<pid>.<n>" names cannot exhaust the
     /// retry loop. arc4random where the platform ships it; random_device +
-    /// mt19937_64 elsewhere (mirrors cc.tasks id generation).
+    /// mt19937_64 elsewhere (mirrors loom.tasks id generation).
     [[nodiscard]] static std::string random_tmp_suffix() {
         std::uint64_t value = 0;
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)

@@ -1,10 +1,10 @@
 /// @file test_sdk_control_golden.cpp
 /// @brief Golden wire-compatibility gate for the hand-rolled control protocol
-///        spoken by cc.server.server_main and cc.bridge.bridge_messaging
-///        (RFC 0001 cc_sdk phases 2-3 design, §4.2 S6).
+///        spoken by loom.server.server_main and loom.bridge.bridge_messaging
+///        (RFC 0001 loom_sdk phases 2-3 design, §4.2 S6).
 ///
 /// Before the hand-rolled JSON is replaced by the new
-/// cc.server.control_protocol ser/de, this suite freezes the EXACT bytes the
+/// loom.server.control_protocol ser/de, this suite freezes the EXACT bytes the
 /// live code produces for every spoken control subtype, and the exact parse
 /// the live parsers extract from representative wire input. The next step's
 /// ser/de must reproduce these fixtures byte-for-byte (the golden gate) —
@@ -128,7 +128,7 @@ std::string read_golden(const std::string& name) {
 }
 
 // Bring the hand-rolled server functions into scope. They live in
-// loom::server::detail (exported by cc.server.server_main) — the detail
+// loom::server::detail (exported by loom.server.server_main) — the detail
 // namespace is a naming convention, not an access boundary.
 namespace srv = loom::server::detail;
 
@@ -512,7 +512,7 @@ TEST(SdkControlGolden, BridgeHandlesOutboundOnlyRejectsMutableRequest) {
 // the exact result-message bytes the live code speaks — in particular the
 // "modelUsage" key (camelCase, matching the TS schema) and the nested
 // "server_tool_use" object inside "usage" — so a future rewire of the live
-// emitters to cc.server.control_protocol is verified byte-for-byte.
+// emitters to loom.server.control_protocol is verified byte-for-byte.
 // ===========================================================================
 
 TEST(SdkControlGolden, ServerResultMessage) {

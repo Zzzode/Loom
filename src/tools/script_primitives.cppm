@@ -12,7 +12,7 @@
 //
 //   2. Step-level helpers: run_file / run_test / run_typecheck /
 //      install_package / format_file.  These DO spawn subprocesses
-//      (via cc.process.bash.bash_execution) and are used by higher-level
+//      (via loom.process.bash.bash_execution) and are used by higher-level
 //      script step orchestration.
 module;
 
@@ -576,7 +576,7 @@ auto get_primitive_tools() -> std::vector<PrimitiveTool> {
                 // Parse notebook as JSON, find cells[idx], replace source.
                 // Use a very small hand-rolled parser to avoid importing
                 // extra JSON infrastructure here — the yyjson module is
-                // available via cc.serdes.json but callers can fall back
+                // available via loom.serdes.json but callers can fall back
                 // to FileEdit if the cell shape is unusual.
                 //
                 // For robustness we import json and do it properly.
@@ -616,7 +616,7 @@ auto get_primitive_tools() -> std::vector<PrimitiveTool> {
                 // TS uses globalThis.fetch — pure in-process, no shelling out.
                 // In C++ the real fetch lives in the WebFetchTool module;
                 // here we only provide the primitive registry entry.  A real
-                // implementation would import cc.services.http or similar.
+                // implementation would import loom.services.http or similar.
                 return std::format(
                     "WebFetch: URL {} dispatch handled by WebFetchTool module", url);
             },

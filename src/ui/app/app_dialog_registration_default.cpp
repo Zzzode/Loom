@@ -1,13 +1,13 @@
-// app_dialog_registration_default.cpp — impl unit for cc.ui.app_dialog_registration.
-// Imports cc.ui.dialogs.default_renderers (6 core dialogs) and
-// cc.ui.dialogs.plugin_dialog_renderer (thin interface — just a function
+// app_dialog_registration_default.cpp — impl unit for loom.ui.app_dialog_registration.
+// Imports loom.ui.dialogs.default_renderers (6 core dialogs) and
+// loom.ui.dialogs.plugin_dialog_renderer (thin interface — just a function
 // declaration) so this TU's closure stays small.  The heavy plugin_dialog +
 // plugin_ui_data + plugin_marketplace imports live in the renderer's
 // implementation unit (plugin_dialog_renderer_impl.cpp), which has its own
 // independent source-location budget.
 //
 // RFC 0002 F2 (row 4): the Doctor dialog renderer is registered from the
-// screens side (cc.ui.screens.doctor_dialog_registration) so that the dialogs
+// screens side (loom.ui.screens.doctor_dialog_registration) so that the dialogs
 // area no longer imports screens (dialogs -> screens was a UI9 back edge).
 // app -> screens is downward-legal (app rank 11 > screens rank 10).
 module loom.ui.app.app_dialog_registration;

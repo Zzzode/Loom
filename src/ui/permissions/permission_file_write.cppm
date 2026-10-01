@@ -3,7 +3,7 @@
 /// @brief Faithful C++/FTXUI port of TS FileWritePermissionRequest +
 ///        FileWriteToolDiff + FilePermissionDialog.
 ///
-/// MODULE:   cc.ui.permissions.permission_file_write
+/// MODULE:   loom.ui.permissions.permission_file_write
 /// LICENCE:  Exported.  Callers instantiate via MakeFileWritePermissionPrompt.
 ///
 /// TS REFERENCE (3 files, ~450 lines total):
@@ -137,7 +137,7 @@ struct FileWritePermissionProps {
 // ─── Internal: Diff computation (LCS-based) ────────────────────────────────
 //
 // Kept inline here because it's small and self-contained; shared diff
-// utilities live in cc.ui.visual.file_edit_tool_diff but that module
+// utilities live in loom.ui.visual.file_edit_tool_diff but that module
 // is geared toward edit-hunk style diffs.  For file-write we do a full
 // unified diff of old vs new content.
 

@@ -9,7 +9,7 @@
 /// selectors_ui_tasks.cpp (UI state + tasks/agents + the task-view/multi-agent
 /// composites), selectors_companion_mcp.cpp (companion buddy + MCP/plugins),
 /// selectors_conversation.cpp (message/conversation + is_ui_busy; the only
-/// impl unit that imports cc.types.types for loom::core::TokenUsage), and
+/// impl unit that imports loom.types.types for loom::core::TokenUsage), and
 /// selectors_features.cpp (prompt suggestion, speculation, skill improvement,
 /// inbox, worker sandbox).  This primary keeps the MemoizedSelector class
 /// template and the five create_*_based_selector factory templates inline

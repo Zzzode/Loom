@@ -1,4 +1,4 @@
-// selectors_core.cpp - impl unit for cc.state.selectors
+// selectors_core.cpp - impl unit for loom.state.selectors
 // (RFC 0001 Phase C batch 10). Basic AppState flag/enum selectors and the
 // settings / notification / overlay / effort / Ultraplan selectors.
 module;

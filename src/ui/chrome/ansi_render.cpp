@@ -1,9 +1,9 @@
 /// @file ansi_render.cpp
 /// @brief ANSI / SGR -> FTXUI Element render helpers — bodies.
 ///
-/// Module implementation unit for cc.ui.chrome.ansi_render (RFC 0002 phase
+/// Module implementation unit for loom.ui.chrome.ansi_render (RFC 0002 phase
 /// F1, row 8). The three function bodies were extracted VERBATIM from
-/// cc.ui.messages.message_tool_result; only the `inline` specifier was
+/// loom.ui.messages.message_tool_result; only the `inline` specifier was
 /// dropped (the bodies now live in this impl unit, the Phase-C recipe, so
 /// a body edit recompiles exactly this object — fan-out = 1 — and the
 /// declarations-only BMI keeps importers cheap).
@@ -34,7 +34,7 @@ using namespace ftxui;
 // text.  This helper walks the input once, splitting on ESC[...m runs, and
 // emits a hbox of colored ftxui Elements so the decoration is honored.
 //
-// Mapping notes (mirror the SGR codes cc.ui.termio understands):
+// Mapping notes (mirror the SGR codes loom.ui.termio understands):
 //   Color16  -> Palette256 index (standard ANSI 0-15 slots)
 //   Color256 -> Palette256 index
 //   TrueColor-> Color::RGB

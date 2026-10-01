@@ -2275,8 +2275,8 @@ private:
 // File-Access Hook Registration
 // =========================================================================
 //
-// Register the file-access hook so that file tools (cc_tools) can trigger
-// skill discovery without depending on cc_skills (avoiding circular dep).
+// Register the file-access hook so that file tools (loom_tools) can trigger
+// skill discovery without depending on loom_skills (avoiding circular dep).
 // This is called once during static initialization or app startup.
 //
 // TS REF: FileReadTool/FileWriteTool/FileEditTool call discoverSkillDirsForPaths

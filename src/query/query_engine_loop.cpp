@@ -1,7 +1,7 @@
-// Implementation unit for cc.query.query_engine — the top-level query
+// Implementation unit for loom.query.query_engine — the top-level query
 // state machine: blocking query(), streaming stream_query(), the internal
 // tool-call loop, and the retry/fallback call_api wrapper. This is the
-// ONLY implementation unit that imports cc.constants.cost_tracker (the
+// ONLY implementation unit that imports loom.constants.cost_tracker (the
 // global /cost sync).
 module;
 

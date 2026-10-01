@@ -31,7 +31,7 @@ module;
 //   stuck.cppm                    OK migrated (Phase 0)  runtime impl in bundled/stuck
 //                                 + self-unstuck definition here + /stuck adapter
 //   update_config.cppm            OK (S4, THIS commit)  BUNDLED: full TS prompt w/ hooks docs
-//                                 Config I/O 100% delegates to cc.config modules
+//                                 Config I/O 100% delegates to loom.config modules
 //                                 NOTE: root update_config.cppm = simplified stub
 //   verify.cppm                   OK migrated (Phase 0)  make_verify_skill()
 //   verify_content.cppm           IN S1 migrated (root: make_verify_content_skill)
@@ -99,7 +99,7 @@ import loom.skills.bundled.loop;
 //           (session analysis → interview → SKILL.md → confirm+write)
 import loom.skills.bundled.skillify;
 // update-config: full TS-parity settings + hooks docs + 7-step
-//                hook verification flow (config I/O → cc.config modules)
+//                hook verification flow (config I/O → loom.config modules)
 import loom.skills.bundled.update_config;
 
 export namespace loom::skills {
@@ -117,12 +117,12 @@ export namespace loom::skills {
 //              callback for query_engine delegation
 //     - skillify: build_skill_save_path(), rescan_skills() → load_skills_dir
 //     - update-config: resolve_settings_path(), set_feature_flag() →
-//                      cc.config.config::ConfigManager + feature_flags
+//                      loom.config.config::ConfigManager + feature_flags
 // ============================================================
 
 // --- Debug (S4: upgraded from Phase 0 stub) ---------------------------------
 /// Systematic debugging workflow skill
-/// IMPLEMENTATION: cc.skills.bundled.debug — 5-type classifier, regex error
+/// IMPLEMENTATION: loom.skills.bundled.debug — 5-type classifier, regex error
 /// extractor, 3-5 ranked hypotheses, verify/fix loop via ToolDelegates.
 /// NEVER calls popen/subprocess; all execution delegates to BashTool /
 /// ScriptTool / FileEditTool through the ToolDelegates callback bundle.
@@ -132,7 +132,7 @@ export namespace loom::skills {
 
 // --- Loop (S4: upgraded from Phase 0 stub) ----------------------------------
 /// Structured iterative refinement loop skill
-/// IMPLEMENTATION: cc.skills.bundled.loop — LoopConfig (loop_body +
+/// IMPLEMENTATION: loom.skills.bundled.loop — LoopConfig (loop_body +
 /// stop_condition regex/keywords/implicit + max_iterations + sleep +
 /// timeout).  run_loop() delegates LLM calls to the caller via the
 /// IterationExecutor callback (query_engine integration).  NEVER calls
@@ -148,8 +148,8 @@ export namespace loom::skills {
 ///   Phase 2: 4-round structured user interview via AskUserQuestion
 ///   Phase 3: SKILL.md generation with YAML frontmatter + step annotations
 ///   Phase 4: Render for review → confirm → write → register
-/// IMPLEMENTATION: cc.skills.bundled.skillify.  Skill file discovery and
-/// registration delegate to cc.skills.load_skills_dir (no duplicate parser).
+/// IMPLEMENTATION: loom.skills.bundled.skillify.  Skill file discovery and
+/// registration delegate to loom.skills.load_skills_dir (no duplicate parser).
 ///
 /// TS parity: src/skills/bundled/skillify.ts is the only skillify impl in TS
 /// (no root-level stub exists upstream). The C++ root-level stub was removed
@@ -165,8 +165,8 @@ export namespace loom::skills {
 ///   - 7-step Hook Verification Flow (dedup → construct → pipe-test →
 ///     write → validate → prove → handoff)
 ///   - Array merging rules, common mistakes, troubleshooting
-/// IMPLEMENTATION: cc.skills.bundled.update_config.  All config I/O delegates
-/// 100% to cc.config.config::ConfigManager and cc.config.feature_flags::
+/// IMPLEMENTATION: loom.skills.bundled.update_config.  All config I/O delegates
+/// 100% to loom.config.config::ConfigManager and loom.config.feature_flags::
 /// FeatureFlagManager — NEVER reads/writes raw JSON files here.
 ///
 /// TS parity: src/skills/bundled/updateConfig.ts is the only update-config
@@ -259,7 +259,7 @@ export namespace loom::skills {
 /// NOTE: This used to be registered as "stuck" (v1.0).  The /stuck slash
 /// command in TS is about DIAGNOSING OTHER CLAUDE CODE SESSIONS on the
 /// same machine (see loom::skills::bundled::make_stuck_skill imported from
-/// cc.skills.bundled.stuck).  We keep the generic self-unstuck advice
+/// loom.skills.bundled.stuck).  We keep the generic self-unstuck advice
 /// under a separate discoverable name so neither behaviour is lost.
 [[nodiscard]] inline SkillDefinition make_self_unstuck_skill() {
     return SkillDefinition{
@@ -306,7 +306,7 @@ export namespace loom::skills {
 }
 
 /// /stuck skill - diagnose other sessions + get alternative approaches.
-/// Wraps runtime functions from cc.skills.bundled.stuck into a SkillDefinition.
+/// Wraps runtime functions from loom.skills.bundled.stuck into a SkillDefinition.
 [[nodiscard]] inline SkillDefinition make_stuck_skill() {
     auto manifest = loom::skills::bundled::get_stuck_skill_manifest();
     std::vector<std::string> triggers;
@@ -385,7 +385,7 @@ and loom::skills::bundled::suggest_unstuck_action(context).
 /// Bundled keybindings-help skill - full customization workflow.
 /// NOTE: This is the COMPREHENSIVE guide (name = "keybindings-help"), distinct
 /// from the root-level simple shortcut sheet (name = "keybindings") in
-/// cc.skills.keybindings.  The two skills target different user needs:
+/// loom.skills.keybindings.  The two skills target different user needs:
 ///   - keybindings       -> quick lookup of default shortcuts
 ///   - keybindings-help  -> file format, rebinding recipes, /doctor validation
 [[nodiscard]] inline SkillDefinition make_keybindings_help_skill() {
@@ -432,7 +432,7 @@ public:
 
         // 1. Config / infrastructure
         // S4 audit: bundled update-config (full TS-parity w/ hooks docs) supersedes
-        // the root-level simplified stub.  Config I/O delegates to cc.config.*
+        // the root-level simplified stub.  Config I/O delegates to loom.config.*
         // modules, no raw JSON readers.
         skills_.push_back(make_update_config_skill());
 
@@ -454,7 +454,7 @@ public:
         skills_.push_back(make_debug_skill());
         skills_.push_back(loom::skills::simplify::make_simplify_skill());
         // S4 skillify: full TS-parity 4-phase meta-skill creator.
-        // Skill file discovery delegates to cc.skills.load_skills_dir.
+        // Skill file discovery delegates to loom.skills.load_skills_dir.
         skills_.push_back(make_skillify_skill());
         skills_.push_back(make_self_unstuck_skill());
         skills_.push_back(make_stuck_skill());

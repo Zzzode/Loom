@@ -4,8 +4,8 @@ module;
 
 /// @file update_config.cppm
 /// @brief Bundled Update Config skill with full settings schema, hooks docs,
-/// and verification workflow. Delegates all config I/O to cc.config.config
-/// and cc.config.feature_flags — NEVER reads/writes JSON files directly.
+/// and verification workflow. Delegates all config I/O to loom.config.config
+/// and loom.config.feature_flags — NEVER reads/writes JSON files directly.
 
 export module loom.skills.bundled.update_config;
 
@@ -403,7 +403,7 @@ When adding to permission or hook arrays, **merge with existing**, don't replace
 
 /// Full bundled update-config skill with settings schema, hooks docs,
 /// and structured hook verification flow. Delegates config I/O entirely
-/// to cc.config.config::ConfigManager and cc.config.feature_flags.
+/// to loom.config.config::ConfigManager and loom.config.feature_flags.
 [[nodiscard]] inline SkillDefinition make_bundled_update_config_skill() {
     std::string full_content;
     full_content.reserve(
@@ -490,7 +490,7 @@ If a hook isn't running:
 }
 
 // ============================================================
-// Config Delegation Helpers (100% delegate to cc.config modules)
+// Config Delegation Helpers (100% delegate to loom.config modules)
 // ============================================================
 
 /// Get the correct settings path for a scope. Delegate to settings.cppm.

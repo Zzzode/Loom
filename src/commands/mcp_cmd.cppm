@@ -23,7 +23,7 @@ import loom.services.mcp.xaa_idp_login;
 import loom.services.mcp.types;
 import loom.services.mcp.config;
 
-// Alias NativeMcpStatus to the runtime type defined in cc.orchestration.tools.mcp so the
+// Alias NativeMcpStatus to the runtime type defined in loom.orchestration.tools.mcp so the
 // data-prep row builders below can use a short name without pulling in all
 // of the connection-manager snapshot machinery.
 namespace loom::tools {
@@ -87,7 +87,7 @@ enum class McpAction : std::uint8_t {
 };
 
 /// Runtime snapshot of an MCP server (kept minimal; full state lives in
-/// cc.services.mcp.connection_manager and cc.orchestration.tools.mcp).
+/// loom.services.mcp.connection_manager and loom.orchestration.tools.mcp).
 struct McpServerStatus {
     std::string name;
     std::string status_text;       // human-readable status label

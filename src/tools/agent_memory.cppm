@@ -4,7 +4,7 @@
 ///
 /// NOTE: The low-level helpers `agent_memory_dir`, `load_agent_memory_prompt`,
 /// `agent_memory_scope_note` and `sanitize_agent_memory_component` already live
-/// in `cc.orchestration.agent` (agent_tool.cppm).  This module re-exports the remaining
+/// in `loom.orchestration.agent` (agent_tool.cppm).  This module re-exports the remaining
 /// public API from the TS source (scope enum, security checks, entrypoint path,
 /// human-readable scope display) so that the rest of the codebase does not need
 /// to pull the entire Agent tool implementation.

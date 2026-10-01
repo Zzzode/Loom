@@ -1,4 +1,4 @@
-// repl_screen_welcome.cpp - impl unit for cc.ui.screens.repl_screen
+// repl_screen_welcome.cpp - impl unit for loom.ui.screens.repl_screen
 // (RFC 0001 Phase C batch 9). status bar, spinner, truncate_columns, the preserved legacy welcome
 // helpers and the LogoV2 welcome header.
 //
@@ -24,7 +24,7 @@ import loom.ui.foundation.logo_v2;
 namespace loom::ui::repl_screen {
 using namespace ftxui;
 
-// UI1: status bar — delegates to cc.ui.components.status_line.
+// UI1: status bar — delegates to loom.ui.components.status_line.
 // For now we provide a semantic assembler that status_line will style.
 [[nodiscard]] Element RenderStatusBar(const StatusBarData& d) {
     Elements L = { text(" ") };

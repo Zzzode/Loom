@@ -1,7 +1,7 @@
 /// @file permission_rule_list.cppm
 /// @brief Three-column permission rule editor (groups | rules table w/ virtual
 /// scroll + batch ops | editor + hit-test firewall).  JSON import/export diff.
-/// All mutations flow through callbacks to cc.security.permissions_engine.
+/// All mutations flow through callbacks to loom.security.permissions_engine.
 /// Migrated from src/components/permissions/rules/PermissionRuleList.tsx.
 module;
 
@@ -1568,7 +1568,7 @@ inline bool HandleDiffModal(RuleListState& st, Event e) {
 // =========================================================================
 // loom::utils::permissions_engine – NEW namespace: denial + workspace state
 // =========================================================================
-// This namespace is declared locally because the existing cc.security.permissions_engine
+// This namespace is declared locally because the existing loom.security.permissions_engine
 // module exports into loom::utils::permissions.  We follow the task spec and
 // use a distinct namespace so that callers can write
 //   loom::utils::permissions_engine::recent_denials(50)

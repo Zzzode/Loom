@@ -1,4 +1,4 @@
-// repl_screen_dialog_panels.cpp - impl unit for cc.ui.screens.repl_screen
+// repl_screen_dialog_panels.cpp - impl unit for loom.ui.screens.repl_screen
 // (RFC 0001 Phase C batch 9). the settings / trust lazy dialog components and the tool-permission panel
 // cluster (the PermissionPanelKind classifier is TU-local here).
 //

@@ -1,4 +1,4 @@
-// Implementation unit for cc.query.query_engine — system prompt assembly:
+// Implementation unit for loom.query.query_engine — system prompt assembly:
 // SystemPromptBuilder::build/default, QueryEngine::build_and_add_system_prompt
 // (project/user/auto memory + session summary injection), and the git
 // context popen probe. <cstdio> is a global-module-fragment header because

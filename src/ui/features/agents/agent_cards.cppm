@@ -14,12 +14,12 @@
 ///                  + 4 action buttons
 ///
 /// Reuses:
-///   - cc.ui.features.agents.agent_shared_widgets  (Avatar, StatusDot, RoleTags,
+///   - loom.ui.features.agents.agent_shared_widgets  (Avatar, StatusDot, RoleTags,
 ///                                    RunStatsBar, ToolChips, StepTimeline,
 ///                                    AgentStatus enum)
-///   - cc.tools.agent_color_manager (color hash)
-///   - cc.ui.widgets.spinner_animations (running spinner glyph)
-///   - cc.tools.agent_runtime::AgentDefinition  (data model, readonly)
+///   - loom.tools.agent_color_manager (color hash)
+///   - loom.ui.widgets.spinner_animations (running spinner glyph)
+///   - loom.tools.agent_runtime::AgentDefinition  (data model, readonly)
 module;
 
 #include <cstdint>

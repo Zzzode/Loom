@@ -4,7 +4,7 @@
 ///        spacer-based vscroll thumb accuracy, streaming anchor auto-scroll
 ///        and incremental-load triggers.  Canvas-style viewport slice.
 ///
-/// MODULE:   cc.ui.messages.virtual_list
+/// MODULE:   loom.ui.messages.virtual_list
 ///
 /// ┌──────────────────────────────────────────────────────────────────────┐
 /// │  Why NOT use ftxui::yframe directly?                                │
@@ -71,7 +71,7 @@ import loom.ui.messages.scroll_keys;
 import loom.ui.foundation.design_tokens;
 
 // NOTE: The VirtualList module intentionally keeps its own VisibleRow struct.
-//       `cc.ui.messages.messages_list` is a separate, larger module that
+//       `loom.ui.messages.messages_list` is a separate, larger module that
 //       imports 25+ per-row type modules.  Importing it here would cause a
 //       cascade of BMI size issues and potential circular edges.
 //

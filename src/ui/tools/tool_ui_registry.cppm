@@ -5,10 +5,10 @@
 ///
 /// The TS reference puts these as methods on each tool class
 /// (userFacingName, renderToolUseMessage, renderToolUseTag, etc.).
-/// In C++ we keep UI concerns out of the tools layer (cc_tools) and
+/// In C++ we keep UI concerns out of the tools layer (loom_tools) and
 /// instead register UI renderers in a separate registry here.
 ///
-/// MODULE:   cc.ui.tools.registry
+/// MODULE:   loom.ui.tools.registry
 /// LICENCE:  Exported.  Imported by message projection code and the
 ///           faithful tool-use message renderer.
 ///

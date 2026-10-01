@@ -1,5 +1,5 @@
-// app_dialog_registration_modal.cpp — impl unit for cc.ui.app_dialog_registration.
-// Imports ONLY cc.ui.dialogs.modal_renderers (5 modal dialogs) so this TU's
+// app_dialog_registration_modal.cpp — impl unit for loom.ui.app_dialog_registration.
+// Imports ONLY loom.ui.dialogs.modal_renderers (5 modal dialogs) so this TU's
 // closure stays small. See app_dialog_registration.cppm for the rationale.
 module loom.ui.app.app_dialog_registration;
 

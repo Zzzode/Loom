@@ -1,5 +1,5 @@
 // Anthropic SSE Streaming Client (Phase 3-E)
-// Lightweight, dependency-minimal SSE client built on libcurl + cc.serdes.json.
+// Lightweight, dependency-minimal SSE client built on libcurl + loom.serdes.json.
 // - text-only messages (Phase 3)
 // - dry-run gate when api_key is empty (no network)
 // - abort propagation via should_abort callback
@@ -16,9 +16,9 @@ import std;
 
 import loom.serdes.json;
 
-// Note: this module intentionally avoids importing cc.services.api.* so it can
+// Note: this module intentionally avoids importing loom.services.api.* so it can
 // be used as an independent SSE primitive.  The full-featured AnthropicClient
-// in cc.services.api.client builds on top of this module.
+// in loom.services.api.client builds on top of this module.
 
 export namespace loom::services::api::sse {
 
@@ -328,7 +328,7 @@ public:
 
 private:
     // -----------------------------------------------------------------
-    // Body builder using cc.serdes.json (RAII mutable doc) for zero-copy headers
+    // Body builder using loom.serdes.json (RAII mutable doc) for zero-copy headers
     // -----------------------------------------------------------------
     [[nodiscard]] std::string BuildMessagesBody(
         std::string_view system_prompt,

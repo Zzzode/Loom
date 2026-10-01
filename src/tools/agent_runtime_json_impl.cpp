@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.agent_runtime — JSON scalar/field/list
+// Implementation unit for loom.tools.agent_runtime — JSON scalar/field/list
 // helpers, the JSON overloads of parse_inline_mcp_server_config /
 // parse_agent_mcp_servers, the five JSON agent-hook parsers, JSON agent
 // definition loading (file/string/settings/flag/policy), content-text and

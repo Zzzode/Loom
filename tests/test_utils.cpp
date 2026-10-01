@@ -363,7 +363,7 @@ TEST(StringUtilsCompat, SafeJoinLinesTruncatesLikeTypeScriptHelper) {
 
 // Retargeted from the deleted `core.screens` module (a dead parallel model of
 // the screen layer, no production importers) to the parser the app actually
-// uses: `cc.commands.parse_pr_input` (module cc.commands.review.review_remote).
+// uses: `loom.commands.parse_pr_input` (module loom.commands.review.review_remote).
 // That function had no test.
 //
 // These assert what the LIVE parser guarantees, which is not identical to what
@@ -472,12 +472,12 @@ TEST(CollapseReadSearchSummary, IncludesTeamMemorySummaryPartsInTypeScriptOrder)
 TEST(Memdir, TeamMemoryCanBeEnabledAtRuntime) {
     ScopedEnvVar disable_auto("LOOM_DISABLE_AUTO_MEMORY");
     ScopedEnvVar enable_team("LOOM_ENABLE_TEAM_MEMORY");
-    ScopedEnvVar cc_sync_url("CC_TEAM_MEMORY_SYNC_URL");
+    ScopedEnvVar loom_sync_url("CC_TEAM_MEMORY_SYNC_URL");
     ScopedEnvVar ts_sync_url("TEAM_MEMORY_SYNC_URL");
 
     disable_auto.unset();
     enable_team.unset();
-    cc_sync_url.unset();
+    loom_sync_url.unset();
     ts_sync_url.unset();
     EXPECT_FALSE(memdir::is_team_memory_enabled());
 
@@ -489,13 +489,13 @@ TEST(Memdir, TeamMemoryCanBeEnabledAtRuntime) {
 
     disable_auto.unset();
     enable_team.set("false");
-    cc_sync_url.set("https://team-memory.example");
+    loom_sync_url.set("https://team-memory.example");
     EXPECT_FALSE(memdir::is_team_memory_enabled());
 
     enable_team.unset();
     EXPECT_TRUE(memdir::is_team_memory_enabled());
 
-    cc_sync_url.unset();
+    loom_sync_url.unset();
     ts_sync_url.set("https://team-memory.example");
     EXPECT_TRUE(memdir::is_team_memory_enabled());
 }
@@ -2319,7 +2319,7 @@ TEST(SlashCommandParsing, ParsesRegularAndMcpSlashCommands) {
 }
 
 // ===========================================================================
-// cc.ui.chrome.terminal_io — pure ANSI/CSI/SGR parsing helpers.
+// loom.ui.chrome.terminal_io — pure ANSI/CSI/SGR parsing helpers.
 // These parser entry points (parse_sgr, strip_ansi, parse_csi, tokenize_ansi)
 // had no direct test coverage; the suite below pins their contract.
 // ===========================================================================
@@ -2485,7 +2485,7 @@ TEST(TerminalIO, GenerateCSIMultipleParams) {
     EXPECT_EQ(seq, std::string("\033[5;10H"));
 }
 
-// ─── cc.serdes.json parser coverage (guards the parse/parse_file/to_string/
+// ─── loom.serdes.json parser coverage (guards the parse/parse_file/to_string/
 // chained-get surface used across services) ──────────────────────────────────
 TEST(JsonCCUtils, ParsesPrimitivesAndCollections) {
     auto doc_null = loom::utils::json::parse("null");

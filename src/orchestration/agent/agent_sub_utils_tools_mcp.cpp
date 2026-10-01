@@ -1,4 +1,4 @@
-// Implementation unit for cc.orchestration.agent.utils — tool allow/disallow rule
+// Implementation unit for loom.orchestration.agent.utils — tool allow/disallow rule
 // parsing and matching, agent-type permission rules, native MCP server
 // connect/prepare/upsert mapping, and skill discovery/preload.
 module;

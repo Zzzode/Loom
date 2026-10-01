@@ -1,4 +1,4 @@
-// selectors_ui_tasks.cpp - impl unit for cc.state.selectors
+// selectors_ui_tasks.cpp - impl unit for loom.state.selectors
 // (RFC 0001 Phase C batch 10). UI-state selectors (selected IP agent index,
 // coordinator task index, view mode, footer/spinner) and the tasks & agent
 // name-registry selectors, plus the task-view / multi-agent composites.

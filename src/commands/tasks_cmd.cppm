@@ -1,8 +1,8 @@
 /// @file tasks_cmd.cppm
 /// @brief TasksCommand implementing the /tasks slash command.
 /// Subcommands: list | add | cancel | complete | watch | log TASK_ID.
-/// Reuses cc.tasks.task_graph (BackgroundTask, TaskScheduler) and
-/// cc.tasks.types (TaskState variants) — no type duplication.
+/// Reuses loom.tasks.task_graph (BackgroundTask, TaskScheduler) and
+/// loom.tasks.types (TaskState variants) — no type duplication.
 /// UI rendering (FTXUI dialogs/tables) DEFERRED to Phase 4.
 module;
 
@@ -52,7 +52,7 @@ struct TaskLogRow {
 // ============================================================================
 
 /// TasksCommand implements the /tasks slash command.
-/// Uses the global TaskScheduler from cc.tasks.task_graph for all state.
+/// Uses the global TaskScheduler from loom.tasks.task_graph for all state.
 class TasksCommand {
 public:
     [[nodiscard]] static CommandDefinition definition() {

@@ -1,4 +1,4 @@
-// cc.services.mcp.at_mention_handler — inbound "at_mentioned" notification
+// loom.services.mcp.at_mention_handler — inbound "at_mentioned" notification
 // dispatch. Faithful counterpart of TS useIdeAtMentioned.ts, which registers
 // a notification handler on the IDE MCP client. In C++ the single inbound
 // dispatch path lives in McpConnectionManager::handle_server_notification

@@ -1,4 +1,4 @@
-// text_input_vim.cpp - impl unit for cc.ui.widgets.text_input
+// text_input_vim.cpp - impl unit for loom.ui.widgets.text_input
 // (RFC 0001 Phase C batch 8). TextInputImpl::HandleVimEvent — the normal /
 // visual / command / replace vim dispatcher; its `after_vim` goto label
 // stays intact inside this one function, which is never split — plus the

@@ -1,6 +1,6 @@
 // app_store_bridge.cpp — impl unit for the engine/app-store CommandContext
 // bridge free functions, kept OUT of app.cppm so the interface BMI need not
-// import cc.state.store / cc.state.app_state.
+// import loom.state.store / loom.state.app_state.
 //
 // Contains: compact_runtime_messages, compact_runtime_apply,
 //           app_store_dispatch, app_store_get_state,
@@ -170,7 +170,7 @@ const void* app_store_get_state(void* store_ptr) {
 }
 
 
-// Type-erased AppStore factory (keeps cc.state.* out of the :impl partition).
+// Type-erased AppStore factory (keeps loom.state.* out of the :impl partition).
 [[nodiscard]] std::shared_ptr<void> create_typed_app_store() {
     // Adopt the unique_ptr's raw pointer: shared_ptr<void> type-erases the
     // deleter at this construction site, so :impl need never name AppStore.

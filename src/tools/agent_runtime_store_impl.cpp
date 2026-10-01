@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.agent_runtime — the NativeAgentStore
+// Implementation unit for loom.tools.agent_runtime — the NativeAgentStore
 // out-of-line member functions, the single native_agent_store() singleton
 // definition (Meyers function-local static), and the lifecycle entrypoints
 // runtime_agent_id / run_agent / fork_subagent / resume_agent /
@@ -372,7 +372,7 @@ std::expected<AgentExecutionResult, std::string> run_agent(const AgentRuntimeCon
     // need metadata / transcript / persistence semantics.
     //
     // To actually execute a query loop, instantiate an AgentWorker from the
-    // cc.orchestration.agent module and invoke build_agent_execution_plan() followed
+    // loom.orchestration.agent module and invoke build_agent_execution_plan() followed
     // by run_agent_loop(). Those are wire-compatible with the TS `runAgent`
     // generator: same permission handling, same MCP isolation, same
     // SubagentStart/SubagentStop hook execution, same transcript persistence.

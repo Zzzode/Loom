@@ -3,7 +3,7 @@
 /// @brief Faithful C++/FTXUI port of TS FileEditPermissionRequest +
 ///        FileEditToolDiff + FilePermissionDialog.
 ///
-/// MODULE:   cc.ui.permissions.permission_file_edit
+/// MODULE:   loom.ui.permissions.permission_file_edit
 /// LICENCE:  Exported.  Callers instantiate via MakeFileEditPermissionPrompt.
 ///
 /// TS REFERENCE (3 files, ~380 lines total):

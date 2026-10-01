@@ -39,7 +39,7 @@ namespace fs = std::filesystem;
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.chrome.terminal: FTXUI terminal controller and common widgets
+// loom.ui.chrome.terminal: FTXUI terminal controller and common widgets
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(Messages, ParseMarkdownRecognizesHeadingListAndCodeBlock) {
@@ -96,7 +96,7 @@ TEST(Messages, ThinkingViewCanToggleCollapse) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// cc.ui.prompt.prompt_input: prompt buffer, history, typeahead, vim behavior
+// loom.ui.prompt.prompt_input: prompt buffer, history, typeahead, vim behavior
 // ═══════════════════════════════════════════════════════════════════════════════
 
 namespace pl = loom::ui::messages::pipeline;
@@ -1271,7 +1271,7 @@ TEST(MessagesList, UnseenDivider_RendersDividerInTranscript_Golden) {
         << "divider must render BEFORE its target payload row";
 
     // ── Golden snapshot (TS REF: Messages.tsx L631-635 Divider element).
-    //    UPDATE_GOLDENS=1 ./cc_test --gtest_filter='*Golden*' to refresh.
+    //    UPDATE_GOLDENS=1 ./loom_test --gtest_filter='*Golden*' to refresh.
     // Re-render to a fresh snapshot (std::move consumed el above).
     auto in2 = make_synthetic_input(4, "snap00000000000000000000");
     in2.unseen_divider = UnseenDivider{

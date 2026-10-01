@@ -3,7 +3,7 @@
 ///
 /// Faithful TS port of FileWriteTool UI methods.
 ///
-/// MODULE:   cc.ui.tools.file_write
+/// MODULE:   loom.ui.tools.file_write
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:

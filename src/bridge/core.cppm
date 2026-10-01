@@ -48,7 +48,7 @@ using loom::core::Result;
 // =========================================================================
 //
 // These previously lived in bridge/init.cppm and reached this module only
-// transitively through `import cc.bridge.init`. init.cppm was a dead
+// transitively through `import loom.bridge.init`. init.cppm was a dead
 // duplicate of the v1 daemon loop (the live one is daemon/daemon_server.cppm)
 // with zero production importers, so the types it actually owned moved here
 // — this module is their only remaining consumer.

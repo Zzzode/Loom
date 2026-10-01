@@ -1,4 +1,4 @@
-// Implementation unit for cc.tools.runtime_backends.port — the single
+// Implementation unit for loom.tools.runtime_backends.port — the single
 // function-local RuntimeBackendSlots struct and every setter/clearer/
 // accessor declared by the unified seam. RFC-0001 B15: one struct of
 // std::function slots, one anchor TU, no inline definitions in the module

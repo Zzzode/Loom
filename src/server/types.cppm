@@ -7,7 +7,7 @@
 ///   loom::server::detail already contains DirectQueryRequest / DirectQueryResult /
 ///   DirectPermissionRequest / DirectPermissionRule / DirectPermissionDirectory /
 ///   DirectPermissionSessionState as route-local helpers.  Those structs are
-///   intentionally kept internal to cc.server.server_routes (detail namespace,
+///   intentionally kept internal to loom.server.server_routes (detail namespace,
 ///   different shape — they carry cancel flags, filesystem paths, etc.).  The types
 ///   below are the canonical HTTP DTOs.  Future refactors are expected to make
 ///   server_routes convert between its internal helpers and these public structs.
@@ -43,7 +43,7 @@ enum class Role : uint8_t {
 };
 
 /// Decision that a permission rule / request resolves to.  Mirrors a subset of
-/// cc.hooks.permission but is reproduced here so the server module does not need
+/// loom.hooks.permission but is reproduced here so the server module does not need
 /// to pull in the full hooks dependency tree.
 enum class PermissionDecision : uint8_t {
     /// Ask the user interactively for this invocation.
@@ -261,7 +261,7 @@ struct DirectQueryStreamChunk {
 // ─────────────────────────────────────────────────────────────────────────────
 // Ser/de helpers
 //
-// These use the yyjson-backed cc.serdes.json module.  For each type T we emit
+// These use the yyjson-backed loom.serdes.json module.  For each type T we emit
 //   std::string        T_to_json(const T&);
 //   std::expected<T, std::string> T_from_json(std::string_view);
 // plus a free-function to_json / from_json overload inside the loom::server

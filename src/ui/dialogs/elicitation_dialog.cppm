@@ -1,7 +1,7 @@
 /// @file elicitation_dialog.cppm
 /// @brief Elicitation — MCP structured-input confirmation dialog.
 ///
-/// MODULE:   cc.ui.dialogs.elicitation
+/// MODULE:   loom.ui.dialogs.elicitation
 /// LICENCE:  Exported.  Renderer + keyboard-event handler for the
 ///           simple Band3 Elicitation prompt shown when an MCP server
 ///           asks Loom to gather extra input from the user.
@@ -15,7 +15,7 @@
 ///   This module renders the SIMPLE (non-form, non-URL-resolving) form
 ///   of the prompt — just "Allow connecting to <server name>?" with
 ///   three escape hatches.  Multi-field schemas are handled by the
-///   heavier cc.ui.dialogs.mcp_dialogs module (Faithful port of the
+///   heavier loom.ui.dialogs.mcp_dialogs module (Faithful port of the
 ///   1200-line renderFormFields engine).
 ///
 /// VISUAL SPEC (faithful to TS <Dialog color="permission">):
@@ -196,7 +196,7 @@ inline bool HandleElicitationEvent(
 
 /// Register the Elicitation renderer + event handler into a registry.
 /// (The default set of registrations lives in
-/// cc.ui.dialogs.default_renderers — callers that want to opt-in to
+/// loom.ui.dialogs.default_renderers — callers that want to opt-in to
 /// only this specific dialog can do so directly via this helper.)
 inline void RegisterElicitationDialog(dsys::DialogRendererRegistry& registry)
 {

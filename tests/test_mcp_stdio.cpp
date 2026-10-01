@@ -1,5 +1,5 @@
 /// @file test_mcp_stdio.cpp
-/// @brief Phase 3-D: Unit tests for cc.services.mcp.stdio (StdioTransport).
+/// @brief Phase 3-D: Unit tests for loom.services.mcp.stdio (StdioTransport).
 ///
 /// Uses a real POSIX fork() subprocess (/bin/sh echo loop) as the mock MCP
 /// server so the Start → SendJsonRpc → on_incoming_message → Stop lifecycle

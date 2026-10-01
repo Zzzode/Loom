@@ -454,7 +454,7 @@ inline constexpr std::string_view kVerificationCriticalReminder =
 
 // --- loomCodeGuideAgent.ts ---
 // No documentation host is shipped with this build; see the note in
-// cc.constants.prompts. Empty values keep the prompt template intact
+// loom.constants.prompts. Empty values keep the prompt template intact
 // without advertising URLs that do not resolve.
 inline constexpr std::string_view kLoomAccentCodeDocsMapUrl = "";
 inline constexpr std::string_view kCdpDocsMapUrl = "";

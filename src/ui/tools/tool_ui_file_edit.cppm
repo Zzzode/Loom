@@ -4,7 +4,7 @@
 ///
 /// Faithful TS port of FileEditTool UI methods.
 ///
-/// MODULE:   cc.ui.tools.file_edit
+/// MODULE:   loom.ui.tools.file_edit
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 ///
 /// TS REFERENCE:
@@ -16,7 +16,7 @@
 ///
 /// NOTE: The tools layer has helpers in file_edit_prompt.cppm (user_facing_name,
 /// get_tool_use_summary).  We re-implement the core logic here in the UI layer
-/// to avoid cc_ui -> cc_tools dependency issues (cc_tools is heavier).
+/// to avoid loom_ui -> loom_tools dependency issues (loom_tools is heavier).
 module;
 
 export module loom.ui.tools.file_edit;

@@ -1,4 +1,4 @@
-// messages_list_view.cpp - impl unit for cc.ui.messages.messages_list
+// messages_list_view.cpp - impl unit for loom.ui.messages.messages_list
 // (RFC 0001 Phase C batch 7). The static render_messages_list_view and the
 // windowed render_messages_list_virtual element builders.
 module;

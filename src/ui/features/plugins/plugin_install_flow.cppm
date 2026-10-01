@@ -4,11 +4,11 @@
 ///        Step 1 Source → Step 2 Review → Step 3 Trust validation (reuse UI8)
 ///        → Step 4 Install progress → Step 5 Complete.
 ///
-/// Step 3 fully reuses cc.ui.dialogs.trust_dialog::MakeTrustDialogComponent —
+/// Step 3 fully reuses loom.ui.dialogs.trust_dialog::MakeTrustDialogComponent —
 /// but indirectly: this module builds a neutral FeatureTrustRequest and
 /// resolves the ViewKind::PluginTrust factory (registered by the composition
-/// root). This module no longer imports cc.ui.dialogs.trust_dialog or
-/// cc.ui.dialogs.wizard_dialog (features -> dialogs was the last UI9 back
+/// root). This module no longer imports loom.ui.dialogs.trust_dialog or
+/// loom.ui.dialogs.wizard_dialog (features -> dialogs was the last UI9 back
 /// edge).
 module;
 

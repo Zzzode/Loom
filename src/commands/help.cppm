@@ -235,7 +235,7 @@ private:
             {"/commit -m \"fix: typo\"",   "Commit with a manual message"},
             {"/review",                    "Review all uncommitted changes"},
             {"/review --branch main",      "Review changes vs main branch"},
-            {"/config set model.default_model <model-id>", "Change model"},
+            {"/config set model <model-id>", "Change model"},
             {"/compact --dry-run",         "Preview compaction without applying"},
             {"/mcp add filesystem npx -y @modelcontextprotocol/server-filesystem", "Add an MCP server"},
             {"/doctor",                    "Run system diagnostics"},

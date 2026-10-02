@@ -515,7 +515,7 @@ struct DoctorContext {
             r.severity = DiagnosticSeverity::Warning;
             r.message = "No API endpoint configured.";
             r.detail = "Set LOOM_BASE_URL to configure an API endpoint.";
-            r.fix_hint = "Export LOOM_BASE_URL or configure network.base_url in settings.";
+            r.fix_hint = "Export LOOM_BASE_URL or configure baseUrl in settings.json.";
             break;
         }
         auto probe = detail::tcp_connect_rtt_ms(ctx.network_endpoint, 443, 2500);

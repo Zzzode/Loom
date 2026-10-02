@@ -104,6 +104,10 @@ public:
                 true, "Opening doctor...", "UI:doctor", CommandStatus::Succeeded};
         }
 
+        // Load config so check_api_key() and friends see file-sourced values.
+        // Quiet: a hard tier failure is non-fatal for diagnostics.
+        (void)config_manager_.load(loom::core::LoadOptions{.quiet = true});
+
         std::vector<DiagnosticCheck> results;
         results.reserve(8);
 
@@ -177,7 +181,7 @@ private:
                 .name = "API Connectivity",
                 .status = CheckStatus::Warn,
                 .message = "No API endpoint configured",
-                .fix_suggestion = "Set LOOM_BASE_URL or configure network.base_url in settings",
+                .fix_suggestion = "Set LOOM_BASE_URL or configure baseUrl in settings.json",
             };
         }
         constexpr int kPort = 443;

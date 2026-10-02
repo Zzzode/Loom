@@ -114,6 +114,8 @@ struct PermissionSettings {
     // list before each API request. Parsed identically by interactive and
     // headless engines so neither path can bypass them.
     std::vector<std::string> deny_rules;
+    std::string permission_mode;               // Flat key: permissionMode
+    std::vector<std::string> allowed_tools;    // Flat key: allowedTools
 };
 
 /// Display and UI settings
@@ -123,6 +125,8 @@ struct DisplaySettings {
     bool compact_mode = false;                 // Minimal output formatting
     std::optional<std::uint32_t> line_width;   // Terminal line width override
     std::string theme = "auto";               // Color theme (auto, dark, light)
+    bool verbose = false;                      // Flat key: verbose
+    bool vim_mode = false;                     // Flat key: vimMode
 };
 
 /// Network and API connection settings
@@ -161,9 +165,9 @@ struct Settings {
 /// Physical MCP config file tiers. Same-name resolution, highest first:
 /// Local > Project > User.
 enum class McpStorageScope : std::uint8_t {
-    User   = 0, // $LOOM_CONFIG_DIR/config.json, else ~/.loom/config.json
-    Project= 1, // <project>/.loom/config.json (tracked by VCS)
-    Local  = 2, // <project>/.loom/config.local.json (gitignored)
+    User   = 0, // $LOOM_CONFIG_DIR/settings.json, else ~/.loom/settings.json
+    Project= 1, // <project>/.loom/settings.json (tracked by VCS)
+    Local  = 2, // <project>/.loom/settings.local.json (gitignored)
 };
 
 /// Outcome of a best-effort cross-file MCP server removal (D3). The command
@@ -211,7 +215,7 @@ enum class UserSettingKind : std::uint8_t {
 /// `enum_values`/`enum_count` carry the exact-match value list for
 /// Enumeration specs (the others leave them empty).
 struct UserSettingSpec {
-    std::string_view key;       // Canonical dotted token, e.g. "model.temperature".
+    std::string_view key;       // Canonical flat key, e.g. "temperature".
     std::string_view section;   // Top-level JSON section.
     std::string_view leaf;      // Leaf name inside the section.
     UserSettingKind kind;
@@ -346,7 +350,7 @@ class ConfigManager {
     // overwrite AND the serializer can emit. disk_leaves_ is deliberately NOT
     // reused: it records "this leaf was seen in some FILE", which is
     // orthogonal to "the ENV overwrote the merged value" (a leaf can be both
-    // — LOOM_MODEL set AND model.default_model on disk — and then the env
+    // — LOOM_MODEL set AND model on disk — and then the env
     // wins, so a disk_leaves_-driven serializer would bake exactly the env
     // value we must not persist). Instead apply_environment_variables records,
     // per leaf, the env VALUE it applied and the PRE-OVERLAY merged value (the
@@ -366,7 +370,7 @@ class ConfigManager {
 public:
     /// Initialize with default settings
     ConfigManager()
-        : user_path_(loom::constants::paths::config_home_write() / "config.json")
+        : user_path_(loom::constants::paths::config_home_write() / "settings.json")
         , project_path_(default_project_config_path())
         , local_path_(derive_local_config_path(default_project_config_path())) {}
 
@@ -525,8 +529,8 @@ public:
     /// instead (see build_save_fragments). Only the two env-overridable model
     /// leaves have provenance to mark, so other keys are a no-op.
     void clear_env_provenance(std::string_view section, std::string_view leaf) {
-        if ((section == "model" && leaf == "default_model") ||
-            (section == "model" && leaf == "max_output_tokens")) {
+        if ((section == "" && leaf == "model") ||
+            (section == "" && leaf == "maxOutputTokens")) {
             env_explicit_leaves_.emplace(std::string(section),
                                          std::string(leaf));
         }
@@ -566,8 +570,8 @@ public:
     /// scalars plus 9 read-only metadata keys.
     [[nodiscard]] static std::span<const UserSettingSpec> user_setting_specs() noexcept;
 
-    /// Find a projected spec by its canonical dotted token (e.g.
-    /// "model.temperature"). Returns nullptr outside the closed 16-key set.
+    /// Find a projected spec by its canonical flat key (e.g.
+    /// "temperature"). Returns nullptr outside the closed 16-key set.
     [[nodiscard]] static const UserSettingSpec*
     find_user_setting(std::string_view dotted) noexcept;
 
@@ -633,8 +637,8 @@ public:
     [[nodiscard]] std::optional<std::string>
     agent_setting_value_json(std::string_view dotted) const;
 
-    /// Presence-only projection for network.api_key / network.base_url /
-    /// network.proxy: {key,set,source} — credential/endpoint bytes are
+    /// Presence-only projection for apiKey / baseUrl /
+    /// proxy: {key,set,source} — credential/endpoint bytes are
     /// never serialized. Returns nullopt for other keys.
     [[nodiscard]] std::optional<std::string>
     agent_secret_presence_json(std::string_view dotted) const;
@@ -1047,82 +1051,83 @@ private:
         auto seen = [this](std::string_view section, std::string_view leaf) {
             disk_leaves_.emplace(std::string(section), std::string(leaf));
         };
-        // Model settings
+        // Model settings (legacy structured format — flat keys parsed later)
         if (auto model = root.get("model"); model.is_obj()) {
             if (auto v = model.get("default_model"); v.is_str()) {
                 settings_.model.default_model = std::string(v.as_str());
-                seen("model", "default_model");
+                seen("", "model");
             }
             if (auto v = model.get("max_output_tokens"); v.is_num()) {
                 settings_.model.max_output_tokens = static_cast<std::uint32_t>(v.as_int());
-                seen("model", "max_output_tokens");
+                seen("", "maxOutputTokens");
             }
             if (auto v = model.get("temperature"); v.is_num()) {
                 settings_.model.temperature = v.as_double();
-                seen("model", "temperature");
+                seen("", "temperature");
             }
             if (auto v = model.get("extended_thinking"); v.is_bool()) {
                 settings_.model.extended_thinking = v.as_bool();
-                seen("model", "extended_thinking");
+                seen("", "extendedThinking");
             }
             if (auto v = model.get("thinking_budget"); v.is_num()) {
                 settings_.model.thinking_budget = static_cast<std::uint32_t>(v.as_int());
-                seen("model", "thinking_budget");
+                seen("", "thinkingBudget");
             }
             if (auto v = model.get("context_window_size"); v.is_num()) {
                 settings_.model.context_window_size = static_cast<std::uint32_t>(v.as_int());
-                seen("model", "context_window_size");
+                seen("", "contextWindowSize");
             }
         }
 
-        // Display settings
+        // Display settings (legacy structured format — flat keys parsed later)
         if (auto display = root.get("display"); display.is_obj()) {
             if (auto v = display.get("show_thinking"); v.is_bool()) {
                 settings_.display.show_thinking = v.as_bool();
-                seen("display", "show_thinking");
+                seen("", "showThinking");
             }
             if (auto v = display.get("show_token_usage"); v.is_bool()) {
                 settings_.display.show_token_usage = v.as_bool();
-                seen("display", "show_token_usage");
+                seen("", "showTokenUsage");
             }
             if (auto v = display.get("compact_mode"); v.is_bool()) {
                 settings_.display.compact_mode = v.as_bool();
-                seen("display", "compact_mode");
+                seen("", "compactMode");
             }
             if (auto v = display.get("line_width"); v.is_num()) {
                 settings_.display.line_width = static_cast<std::uint32_t>(v.as_int());
-                seen("display", "line_width");
+                seen("", "lineWidth");
             }
             if (auto v = display.get("theme"); v.is_str()) {
                 settings_.display.theme = std::string(v.as_str());
-                seen("display", "theme");
+                seen("", "theme");
             }
         }
 
-        // Network settings
+        // Network settings (legacy structured format — flat keys parsed later)
         if (auto network = root.get("network"); network.is_obj()) {
             if (auto v = network.get("api_key"); v.is_str()) {
                 settings_.network.api_key = std::string(v.as_str());
-                seen("network", "api_key");
+                seen("", "apiKey");
             }
             if (auto v = network.get("base_url"); v.is_str()) {
                 settings_.network.base_url = std::string(v.as_str());
-                seen("network", "base_url");
+                seen("", "baseUrl");
             }
             if (auto v = network.get("proxy"); v.is_str()) {
                 settings_.network.proxy = std::string(v.as_str());
-                seen("network", "proxy");
+                seen("", "proxy");
             }
             if (auto v = network.get("timeout_seconds"); v.is_num()) {
                 settings_.network.timeout_seconds = static_cast<std::uint32_t>(v.as_int());
-                seen("network", "timeout_seconds");
+                seen("", "timeoutSeconds");
             }
             if (auto v = network.get("max_retries"); v.is_num()) {
                 settings_.network.max_retries = static_cast<std::uint32_t>(v.as_int());
-                seen("network", "max_retries");
+                seen("", "maxRetries");
             }
             if (auto v = network.get("verify_ssl"); v.is_bool()) {
                 settings_.network.verify_ssl = v.as_bool();
+                seen("", "verifySsl");
             }
         }
 
@@ -1308,22 +1313,143 @@ private:
             }
         }
 
+        // ================================================================
+        // Flat camelCase keys (unified settings.json format). Parsed AFTER
+        // the structured sections so flat keys take precedence. The flat
+        // format is the canonical user-facing format, matching the
+        // --settings flag format (apiKey, model, theme, ...).
+        // ================================================================
+
+        // model: flat string (structured object handled above)
+        if (auto v = root.get("model"); v.is_str()) {
+            settings_.model.default_model = std::string(v.as_str());
+            seen("", "model");
+        }
+        // maxOutputTokens
+        if (auto v = root.get("maxOutputTokens"); v.is_num()) {
+            settings_.model.max_output_tokens = static_cast<std::uint32_t>(v.as_int());
+            seen("", "maxOutputTokens");
+        }
+        // temperature
+        if (auto v = root.get("temperature"); v.is_num()) {
+            settings_.model.temperature = v.as_double();
+            seen("", "temperature");
+        }
+        // extendedThinking
+        if (auto v = root.get("extendedThinking"); v.is_bool()) {
+            settings_.model.extended_thinking = v.as_bool();
+            seen("", "extendedThinking");
+        }
+        // thinkingBudget
+        if (auto v = root.get("thinkingBudget"); v.is_num()) {
+            settings_.model.thinking_budget = static_cast<std::uint32_t>(v.as_int());
+            seen("", "thinkingBudget");
+        }
+        // contextWindowSize
+        if (auto v = root.get("contextWindowSize"); v.is_num()) {
+            settings_.model.context_window_size = static_cast<std::uint32_t>(v.as_int());
+            seen("", "contextWindowSize");
+        }
+
+        // theme
+        if (auto v = root.get("theme"); v.is_str()) {
+            settings_.display.theme = std::string(v.as_str());
+            seen("", "theme");
+        }
+        // showThinking
+        if (auto v = root.get("showThinking"); v.is_bool()) {
+            settings_.display.show_thinking = v.as_bool();
+            seen("", "showThinking");
+        }
+        // showTokenUsage
+        if (auto v = root.get("showTokenUsage"); v.is_bool()) {
+            settings_.display.show_token_usage = v.as_bool();
+            seen("", "showTokenUsage");
+        }
+        // compactMode
+        if (auto v = root.get("compactMode"); v.is_bool()) {
+            settings_.display.compact_mode = v.as_bool();
+            seen("", "compactMode");
+        }
+        // lineWidth
+        if (auto v = root.get("lineWidth"); v.is_num()) {
+            settings_.display.line_width = static_cast<std::uint32_t>(v.as_int());
+            seen("", "lineWidth");
+        }
+        // verbose
+        if (auto v = root.get("verbose"); v.is_bool()) {
+            settings_.display.verbose = v.as_bool();
+            seen("", "verbose");
+        }
+        // vimMode
+        if (auto v = root.get("vimMode"); v.is_bool()) {
+            settings_.display.vim_mode = v.as_bool();
+            seen("", "vimMode");
+        }
+
+        // apiKey
+        if (auto v = root.get("apiKey"); v.is_str()) {
+            settings_.network.api_key = std::string(v.as_str());
+            seen("", "apiKey");
+        }
+        // baseUrl
+        if (auto v = root.get("baseUrl"); v.is_str()) {
+            settings_.network.base_url = std::string(v.as_str());
+            seen("", "baseUrl");
+        }
+        // proxy
+        if (auto v = root.get("proxy"); v.is_str()) {
+            settings_.network.proxy = std::string(v.as_str());
+            seen("", "proxy");
+        }
+        // timeoutSeconds
+        if (auto v = root.get("timeoutSeconds"); v.is_num()) {
+            settings_.network.timeout_seconds = static_cast<std::uint32_t>(v.as_int());
+            seen("", "timeoutSeconds");
+        }
+        // maxRetries
+        if (auto v = root.get("maxRetries"); v.is_num()) {
+            settings_.network.max_retries = static_cast<std::uint32_t>(v.as_int());
+            seen("", "maxRetries");
+        }
+        // verifySsl
+        if (auto v = root.get("verifySsl"); v.is_bool()) {
+            settings_.network.verify_ssl = v.as_bool();
+            seen("", "verifySsl");
+        }
+
+        // permissionMode
+        if (auto v = root.get("permissionMode"); v.is_str()) {
+            settings_.permissions.permission_mode = std::string(v.as_str());
+            seen("permissions", "permission_mode");
+        }
+        // allowedTools
+        if (auto arr = root.get("allowedTools"); arr.is_arr()) {
+            settings_.permissions.allowed_tools.clear();
+            for (std::size_t i = 0; i < arr.size(); ++i) {
+                if (auto item = arr.at(i); item.is_str()) {
+                    settings_.permissions.allowed_tools.emplace_back(item.as_str());
+                }
+            }
+            seen("permissions", "allowed_tools");
+        }
+
         return {};
     }
 
     /// Apply environment variables to settings (highest override priority)
     void apply_environment_variables() {
-        // LOOM_API_KEY -> network.api_key
+        // LOOM_API_KEY -> apiKey
         if (auto* val = std::getenv("LOOM_API_KEY")) {
             settings_.network.api_key = val;
         }
 
-        // LOOM_BASE_URL -> network.base_url
+        // LOOM_BASE_URL -> baseUrl
         if (auto* val = std::getenv("LOOM_BASE_URL")) {
             settings_.network.base_url = val;
         }
 
-        // LOOM_MODEL -> model.default_model. The pre-overlay merged value
+        // LOOM_MODEL -> model. The pre-overlay merged value
         // (from a file, or the built-in default) is captured alongside the
         // env value so a save can re-emit the FILE's own value instead of the
         // ephemeral env one.
@@ -1334,14 +1460,14 @@ private:
             env_model_engaged_ = true;
         }
 
-        // HTTPS_PROXY / HTTP_PROXY -> network.proxy
+        // HTTPS_PROXY / HTTP_PROXY -> proxy
         if (auto* val = std::getenv("HTTPS_PROXY")) {
             settings_.network.proxy = val;
         } else if (auto* val2 = std::getenv("HTTP_PROXY")) {
             settings_.network.proxy = val2;
         }
 
-        // LOOM_MAX_TOKENS -> model.max_output_tokens. Engagement uses the
+        // LOOM_MAX_TOKENS -> maxOutputTokens. Engagement uses the
         // single range-checked predicate shared with set-shadow disclosure.
         if (auto parsed = parse_env_max_tokens(std::getenv("LOOM_MAX_TOKENS"))) {
             env_backup_max_output_tokens_ = settings_.model.max_output_tokens;
@@ -1358,20 +1484,23 @@ private:
     /// guard and the §B mcpServers secret-boundary filter are applied here,
     /// exactly as the old serialize_settings did.
     struct SaveFragments {
-        // model section (c19 guard applied to the two env-overridable leaves)
-        std::string model_default_model;
-        std::string model_max_output_tokens;
-        std::string model_extended_thinking;
-        std::string model_context_window_size;
-        // display
-        std::string display_show_thinking;
-        std::string display_show_token_usage;
-        std::string display_compact_mode;
-        std::string display_theme;
-        // network
-        std::string network_timeout_seconds;
-        std::string network_max_retries;
-        std::string network_verify_ssl;
+        // model (c19 guard applied to the two env-overridable leaves)
+        std::string model;
+        std::string max_output_tokens;
+        std::string extended_thinking;
+        std::string context_window_size;
+        // display (flat camelCase)
+        std::string show_thinking;
+        std::string show_token_usage;
+        std::string compact_mode;
+        std::string theme;
+        std::string verbose;
+        std::string vim_mode;
+        // network (flat camelCase; apiKey/baseUrl are NOT saved — credentials
+        // are user-tier only, never written to the VCS-tracked project file)
+        std::string timeout_seconds;
+        std::string max_retries;
+        std::string verify_ssl;
         // features top-level scalar (raw JSON token)
         std::string features;
         // mcpServers entries to emit (§B-filtered): name -> bare object
@@ -1390,12 +1519,12 @@ private:
         std::optional<std::string> xaa_callback_port;
     };
 
-    /// c21: compute the known-section fragments for a save. The c19
-    /// env-baking guard (model.default_model / model.max_output_tokens) and
+    /// c21: compute the known-key fragments for a save. The c19
+    /// env-baking guard (model / maxOutputTokens) and
     /// the §B mcpServers secret-boundary filter are applied here, from the
     /// same in-memory state the old serialize_settings read. Only those two
-    /// model leaves are affected by the env guard; network.api_key /
-    /// base_url / proxy have always been omitted (no credential bytes leave
+    /// model keys are affected by the env guard; apiKey /
+    /// baseUrl / proxy have always been omitted (no credential bytes leave
     /// a save), which this preserves bit for bit.
     [[nodiscard]] SaveFragments
     build_save_fragments() const {
@@ -1403,11 +1532,11 @@ private:
         const bool model_still_env =
             env_model_value_.has_value() &&
             settings_.model.default_model == *env_model_value_ &&
-            !env_explicit_leaves_.contains({"model", "default_model"});
+            !env_explicit_leaves_.contains({"", "model"});
         const bool tokens_still_env =
             env_tokens_value_.has_value() &&
             settings_.model.max_output_tokens == *env_tokens_value_ &&
-            !env_explicit_leaves_.contains({"model", "max_output_tokens"});
+            !env_explicit_leaves_.contains({"", "maxOutputTokens"});
         // value_or is belt-and-braces: a *still_env* leaf always has a backup
         // (both are captured together by apply_environment_variables).
         const std::string model_to_emit =
@@ -1419,28 +1548,32 @@ private:
                 ? env_backup_max_output_tokens_.value_or(settings_.model.max_output_tokens)
                 : settings_.model.max_output_tokens;
 
-        frag.model_default_model =
+        frag.model =
             std::format("\"{}\"", escape_json(model_to_emit));
-        frag.model_max_output_tokens = std::to_string(tokens_to_emit);
-        frag.model_extended_thinking =
+        frag.max_output_tokens = std::to_string(tokens_to_emit);
+        frag.extended_thinking =
             settings_.model.extended_thinking ? "true" : "false";
-        frag.model_context_window_size =
+        frag.context_window_size =
             std::to_string(settings_.model.context_window_size);
 
-        frag.display_show_thinking =
+        frag.show_thinking =
             settings_.display.show_thinking ? "true" : "false";
-        frag.display_show_token_usage =
+        frag.show_token_usage =
             settings_.display.show_token_usage ? "true" : "false";
-        frag.display_compact_mode =
+        frag.compact_mode =
             settings_.display.compact_mode ? "true" : "false";
-        frag.display_theme =
+        frag.theme =
             std::format("\"{}\"", escape_json(settings_.display.theme));
+        frag.verbose =
+            settings_.display.verbose ? "true" : "false";
+        frag.vim_mode =
+            settings_.display.vim_mode ? "true" : "false";
 
-        frag.network_timeout_seconds =
+        frag.timeout_seconds =
             std::to_string(settings_.network.timeout_seconds);
-        frag.network_max_retries =
+        frag.max_retries =
             std::to_string(settings_.network.max_retries);
-        frag.network_verify_ssl =
+        frag.verify_ssl =
             settings_.network.verify_ssl ? "true" : "false";
 
         frag.features = std::to_string(settings_.features.raw());
@@ -1484,13 +1617,19 @@ private:
         return frag;
     }
 
-    /// c21: patch the KNOWN sections of a parsed config document leaf-by-
-    /// leaf, leaving every other key (top-level and intra-section) untouched.
-    /// Each known leaf is add()-ed (yyjson_mut_obj_put replaces in place,
-    /// preserving key order; new keys append), so unknown siblings survive.
-    /// The §B filter reconciles mcpServers to the emit set (user/local-only
-    /// entries are removed); optional sections are removed when unset,
-    /// matching the old serializer's omit-when-unset rule.
+    /// c21: patch the KNOWN flat camelCase keys of a parsed config document
+    /// at the ROOT level, leaving every other key (top-level and intra-
+    /// section) untouched. Each known key is add()-ed (yyjson_mut_obj_put
+    /// replaces in place, preserving key order; new keys append), so unknown
+    /// siblings survive. The §B filter reconciles mcpServers to the emit set
+    /// (user/local-only entries are removed); optional sections are removed
+    /// when unset, matching the old serializer's omit-when-unset rule.
+    ///
+    /// Legacy structured sections (`model`, `display`, `network` objects)
+    /// are left in place if present; flat keys take precedence on read
+    /// (parsed after structured sections in merge_parsed). The `model` key
+    /// is replaced outright (string replaces object) since JSON cannot hold
+    /// both.
     static VoidResult
     apply_save_fragments(loom::utils::json::JsonMutVal& root,
                          loom::utils::json::JsonMutDoc& doc,
@@ -1508,36 +1647,38 @@ private:
             return {};
         };
 
-        // model — ensure_object keeps unknown intra-section keys.
-        auto model = root.ensure_object("model");
-        if (auto r = patch_leaf(model, "default_model",
-                                frag.model_default_model); !r) return r;
-        if (auto r = patch_leaf(model, "max_output_tokens",
-                                frag.model_max_output_tokens); !r) return r;
-        if (auto r = patch_leaf(model, "extended_thinking",
-                                frag.model_extended_thinking); !r) return r;
-        if (auto r = patch_leaf(model, "context_window_size",
-                                frag.model_context_window_size); !r) return r;
+        // model — flat string at root (replaces any legacy model object)
+        if (auto r = patch_leaf(root, "model",
+                                frag.model); !r) return r;
+        if (auto r = patch_leaf(root, "maxOutputTokens",
+                                frag.max_output_tokens); !r) return r;
+        if (auto r = patch_leaf(root, "extendedThinking",
+                                frag.extended_thinking); !r) return r;
+        if (auto r = patch_leaf(root, "contextWindowSize",
+                                frag.context_window_size); !r) return r;
 
-        // display
-        auto display = root.ensure_object("display");
-        if (auto r = patch_leaf(display, "show_thinking",
-                                frag.display_show_thinking); !r) return r;
-        if (auto r = patch_leaf(display, "show_token_usage",
-                                frag.display_show_token_usage); !r) return r;
-        if (auto r = patch_leaf(display, "compact_mode",
-                                frag.display_compact_mode); !r) return r;
-        if (auto r = patch_leaf(display, "theme",
-                                frag.display_theme); !r) return r;
+        // display — flat camelCase at root
+        if (auto r = patch_leaf(root, "showThinking",
+                                frag.show_thinking); !r) return r;
+        if (auto r = patch_leaf(root, "showTokenUsage",
+                                frag.show_token_usage); !r) return r;
+        if (auto r = patch_leaf(root, "compactMode",
+                                frag.compact_mode); !r) return r;
+        if (auto r = patch_leaf(root, "theme",
+                                frag.theme); !r) return r;
+        if (auto r = patch_leaf(root, "verbose",
+                                frag.verbose); !r) return r;
+        if (auto r = patch_leaf(root, "vimMode",
+                                frag.vim_mode); !r) return r;
 
-        // network
-        auto network = root.ensure_object("network");
-        if (auto r = patch_leaf(network, "timeout_seconds",
-                                frag.network_timeout_seconds); !r) return r;
-        if (auto r = patch_leaf(network, "max_retries",
-                                frag.network_max_retries); !r) return r;
-        if (auto r = patch_leaf(network, "verify_ssl",
-                                frag.network_verify_ssl); !r) return r;
+        // network — flat camelCase at root (apiKey/baseUrl NOT saved:
+        // credentials are user-tier only, never written to VCS-tracked file)
+        if (auto r = patch_leaf(root, "timeoutSeconds",
+                                frag.timeout_seconds); !r) return r;
+        if (auto r = patch_leaf(root, "maxRetries",
+                                frag.max_retries); !r) return r;
+        if (auto r = patch_leaf(root, "verifySsl",
+                                frag.verify_ssl); !r) return r;
 
         // features (top-level scalar)
         if (auto r = patch_leaf(root, "features", frag.features); !r) return r;
@@ -1791,13 +1932,13 @@ private:
         return std::string(child.as_str());
     }
 
-    /// Get default project config path (.loom/config.json in cwd)
+    /// Get default project config path (.loom/settings.json in cwd)
     [[nodiscard]] static std::filesystem::path default_project_config_path() {
-        return std::filesystem::current_path() / ".loom" / "config.json";
+        return std::filesystem::current_path() / ".loom" / "settings.json";
     }
 
     /// Local companion of the project file: "<parent>/<stem>.local.json".
-    /// Production: .loom/config.json -> .loom/config.local.json;
+    /// Production: .loom/settings.json -> .loom/settings.local.json;
     /// 2-arg test ctor: root/project.json -> root/project.local.json.
     [[nodiscard]] static std::filesystem::path
     derive_local_config_path(const std::filesystem::path& project_path) {
@@ -2120,7 +2261,7 @@ private:
     /// uint >= 1024 (the API minimum).
     [[nodiscard]] static Result<CoercedUserValue>
     coerce_thinking_budget(const loom::utils::json::JsonVal& value) {
-        constexpr std::string_view key = "model.thinking_budget";
+        constexpr std::string_view key = "thinkingBudget";
         if (value.is_null()) {
             return CoercedUserValue{"null", true};
         }
@@ -2179,31 +2320,31 @@ private:
         const auto& n = settings_.network;
         const auto& p = settings_.permissions;
         const std::string_view key = spec.key;
-        if (key == "model.default_model") { token.set("value", m.default_model); return; }
-        if (key == "model.max_output_tokens") { token.set("value", static_cast<std::int64_t>(m.max_output_tokens)); return; }
-        if (key == "model.temperature") {
+        if (key == "model") { token.set("value", m.default_model); return; }
+        if (key == "maxOutputTokens") { token.set("value", static_cast<std::int64_t>(m.max_output_tokens)); return; }
+        if (key == "temperature") {
             if (m.temperature) token.add("value", token.make_real(*m.temperature));
             else token.add("value", token.make_null());
             return;
         }
-        if (key == "model.extended_thinking") { token.set("value", m.extended_thinking); return; }
-        if (key == "model.thinking_budget") {
+        if (key == "extendedThinking") { token.set("value", m.extended_thinking); return; }
+        if (key == "thinkingBudget") {
             if (m.thinking_budget) token.set("value", static_cast<std::int64_t>(*m.thinking_budget));
             else token.add("value", token.make_null());
             return;
         }
-        if (key == "model.context_window_size") { token.set("value", static_cast<std::int64_t>(m.context_window_size)); return; }
-        if (key == "display.show_thinking") { token.set("value", d.show_thinking); return; }
-        if (key == "display.show_token_usage") { token.set("value", d.show_token_usage); return; }
-        if (key == "display.compact_mode") { token.set("value", d.compact_mode); return; }
-        if (key == "display.theme") { token.set("value", d.theme); return; }
-        if (key == "display.line_width") {
+        if (key == "contextWindowSize") { token.set("value", static_cast<std::int64_t>(m.context_window_size)); return; }
+        if (key == "showThinking") { token.set("value", d.show_thinking); return; }
+        if (key == "showTokenUsage") { token.set("value", d.show_token_usage); return; }
+        if (key == "compactMode") { token.set("value", d.compact_mode); return; }
+        if (key == "theme") { token.set("value", d.theme); return; }
+        if (key == "lineWidth") {
             if (d.line_width) token.set("value", static_cast<std::int64_t>(*d.line_width));
             else token.add("value", token.make_null());
             return;
         }
-        if (key == "network.timeout_seconds") { token.set("value", static_cast<std::int64_t>(n.timeout_seconds)); return; }
-        if (key == "network.max_retries") { token.set("value", static_cast<std::int64_t>(n.max_retries)); return; }
+        if (key == "timeoutSeconds") { token.set("value", static_cast<std::int64_t>(n.timeout_seconds)); return; }
+        if (key == "maxRetries") { token.set("value", static_cast<std::int64_t>(n.max_retries)); return; }
         if (key == "permissions.allow_bash") { token.set("value", p.allow_bash); return; }
         if (key == "permissions.allow_file_write") { token.set("value", p.allow_file_write); return; }
         if (key == "permissions.allow_network") { token.set("value", p.allow_network); return; }
@@ -2224,7 +2365,7 @@ private:
         token.set("source", setting_source(spec));
         // The interactive resolver additionally honors these for the model;
         // ConfigManager itself does not model them (D1 source_note).
-        if (spec.key == "model.default_model" &&
+        if (spec.key == "model" &&
             std::getenv("LOOM_MODEL") != nullptr) {
             token.set("source_note",
                 "LOOM_MODEL also overrides interactive model resolution");
@@ -2961,14 +3102,14 @@ private:
     }
 
     /// Ensure the data + lock basenames of a written tier are ignored.
-    /// The PROJECT data file (.loom/config.json) is intentionally
+    /// The PROJECT data file (.loom/settings.json) is intentionally
     /// VCS-TRACKED, so only its `.lock` sibling is ignored; the LOCAL data
     /// file and lock are both secret-bearing and both ignored. User
     /// tiers never touch a .gitignore.
     void ensure_config_gitignored(McpStorageScope scope) const {
         static constexpr std::string_view local[] = {
-            "config.local.json", "config.local.json.lock"};
-        static constexpr std::string_view project[] = {"config.json.lock"};
+            "settings.local.json", "settings.local.json.lock"};
+        static constexpr std::string_view project[] = {"settings.json.lock"};
         switch (scope) {
         case McpStorageScope::Local:
             append_gitignore_basenames(local);
@@ -2989,37 +3130,37 @@ private:
 [[nodiscard]] inline std::span<const UserSettingSpec>
 ConfigManager::user_setting_specs() noexcept {
     // The CLOSED projected set: 7 writable server-direct-query scalars
-    // followed by the 9 read-only metadata keys. Order within a section is
-    // the serialization order of get-all.
+    // followed by the 9 read-only metadata keys. Flat camelCase keys at
+    // root level (unified settings.json format); section is "" for root.
     static constexpr UserSettingSpec specs[] = {
         // ── writable (7) ──
-        {"model.default_model",      "model", "default_model",
+        {"model",            "", "model",
          UserSettingKind::String,    true, true, "string", "LOOM_MODEL"},
-        {"model.max_output_tokens",  "model", "max_output_tokens",
+        {"maxOutputTokens",  "", "maxOutputTokens",
          UserSettingKind::UInteger,  true, true, "integer", "LOOM_MAX_TOKENS"},
-        {"model.temperature",        "model", "temperature",
+        {"temperature",      "", "temperature",
          UserSettingKind::Number,    true, false, "number", ""},
-        {"model.extended_thinking",  "model", "extended_thinking",
+        {"extendedThinking", "", "extendedThinking",
          UserSettingKind::Boolean,   true, false, "boolean", ""},
-        {"model.thinking_budget",    "model", "thinking_budget",
+        {"thinkingBudget",   "", "thinkingBudget",
          UserSettingKind::UInteger,  true, true, "integer", ""},
-        {"model.context_window_size","model", "context_window_size",
+        {"contextWindowSize","", "contextWindowSize",
          UserSettingKind::UInteger,  true, true, "integer", ""},
-        {"network.max_retries",      "network", "max_retries",
+        {"maxRetries",       "", "maxRetries",
          UserSettingKind::UInteger,  true, false, "integer", ""},
         // ── read-only metadata (9) ──
-        {"display.show_thinking",    "display", "show_thinking",
+        {"showThinking",     "", "showThinking",
          UserSettingKind::Boolean,   false, false, "boolean", ""},
-        {"display.show_token_usage", "display", "show_token_usage",
+        {"showTokenUsage",   "", "showTokenUsage",
          UserSettingKind::Boolean,   false, false, "boolean", ""},
-        {"display.compact_mode",     "display", "compact_mode",
+        {"compactMode",      "", "compactMode",
          UserSettingKind::Boolean,   false, false, "boolean", ""},
-        {"display.theme",            "display", "theme",
+        {"theme",            "", "theme",
          UserSettingKind::Enumeration, false, false, "string", "",
          {"auto", "dark", "light"}, 3},
-        {"display.line_width",       "display", "line_width",
+        {"lineWidth",        "", "lineWidth",
          UserSettingKind::UInteger,  false, true, "integer", ""},
-        {"network.timeout_seconds",  "network", "timeout_seconds",
+        {"timeoutSeconds",   "", "timeoutSeconds",
          UserSettingKind::UInteger,  false, true, "integer", ""},
         {"permissions.allow_bash",       "permissions", "allow_bash",
          UserSettingKind::Boolean,   false, false, "boolean", ""},
@@ -3042,16 +3183,16 @@ ConfigManager::find_user_setting(std::string_view dotted) noexcept {
 [[nodiscard]] inline std::span<const BlockedSetting>
 ConfigManager::blocked_settings() noexcept {
     static constexpr BlockedSetting blocked[] = {
-        {"network.api_key",
+        {"apiKey",
          "Set the LOOM_API_KEY environment variable to configure the API "
          "key; this tool never reads or writes credential values."},
-        {"network.base_url",
+        {"baseUrl",
          "Set the LOOM_BASE_URL environment variable to configure the "
          "endpoint."},
-        {"network.proxy",
+        {"proxy",
          "Set the HTTPS_PROXY environment variable (HTTP_PROXY is used as a "
          "fallback) to configure the proxy."},
-        {"network.verify_ssl",
+        {"verifySsl",
          "TLS certificate verification is a security kill switch and cannot "
          "be changed through this tool."},
         {"permissions.deny_rules",
@@ -3132,8 +3273,8 @@ ConfigManager::serialize_user_setting_specs_json() {
     root.add("blocked", blocked);
 
     auto null_clear = root.make_arr();
-    null_clear.append(doc.string("model.temperature"));
-    null_clear.append(doc.string("model.thinking_budget"));
+    null_clear.append(doc.string("temperature"));
+    null_clear.append(doc.string("thinkingBudget"));
     root.add("null_clear_keys", null_clear);
     root.set("null_clear_note",
         "A JSON null clears the leaf in the USER tier file only; a value in "
@@ -3148,10 +3289,15 @@ ConfigManager::serialize_agent_settings_json() const {
     namespace json = loom::utils::json;
     json::JsonMutDoc doc;
     auto root = doc.object();
-    // Fixed section order; each projected section is always present.
-    constexpr std::array<std::string_view, 4> sections = {
-        "model", "display", "network", "permissions"};
-    for (const auto section_name : sections) {
+    // Flat keys (section == "") are emitted at the top level; nested keys
+    // (permissions.*) keep their section name as a grouping object.
+    for (const auto& spec : user_setting_specs()) {
+        if (!spec.section.empty()) continue;
+        root.add(spec.leaf, doc.raw_json(build_setting_token(spec)));
+    }
+    constexpr std::array<std::string_view, 1> nested_sections = {
+        "permissions"};
+    for (const auto section_name : nested_sections) {
         auto section = doc.object();
         for (const auto& spec : user_setting_specs()) {
             if (spec.section != section_name) continue;
@@ -3174,17 +3320,17 @@ ConfigManager::agent_setting_value_json(std::string_view dotted) const {
 ConfigManager::agent_secret_presence_json(std::string_view dotted) const {
     const char* leaf = nullptr;
     const char* env_value = nullptr;
-    if (dotted == "network.api_key") {
-        leaf = "api_key";
+    if (dotted == "apiKey") {
+        leaf = "apiKey";
         // The wire accepts either the x-api-key credential or a Bearer
         // auth token; presence covers both (the value itself is never
         // projected).
         env_value = std::getenv("LOOM_API_KEY");
         if (env_value == nullptr) env_value = std::getenv("LOOM_AUTH_TOKEN");
-    } else if (dotted == "network.base_url") {
-        leaf = "base_url";
+    } else if (dotted == "baseUrl") {
+        leaf = "baseUrl";
         env_value = std::getenv("LOOM_BASE_URL");
-    } else if (dotted == "network.proxy") {
+    } else if (dotted == "proxy") {
         leaf = "proxy";
         env_value = std::getenv("HTTPS_PROXY");
         if (env_value == nullptr) env_value = std::getenv("HTTP_PROXY");
@@ -3196,7 +3342,7 @@ ConfigManager::agent_secret_presence_json(std::string_view dotted) const {
     if (env_value != nullptr) {
         source = "env";
     } else if (disk_leaves_.contains(
-                   std::pair<std::string, std::string>("network", leaf))) {
+                   std::pair<std::string, std::string>("", leaf))) {
         source = "file";
     }
 
@@ -3242,7 +3388,7 @@ ConfigManager::set_user_setting(std::string_view dotted,
 
     // Key-specific validation, then kind coercion.
     CoercedUserValue coerced;
-    if (dotted == "model.thinking_budget") {
+    if (dotted == "thinkingBudget") {
         auto budget = coerce_thinking_budget(value);
         if (!budget) return std::unexpected(budget.error());
         coerced = *budget;
@@ -3250,14 +3396,14 @@ ConfigManager::set_user_setting(std::string_view dotted,
         auto generic = coerce_user_value(*spec, value);
         if (!generic) return std::unexpected(generic.error());
         coerced = *generic;
-        if (dotted == "model.temperature" && !coerced.null_clear) {
+        if (dotted == "temperature" && !coerced.null_clear) {
             auto reparsed = loom::utils::json::parse(coerced.token);
             const double temperature =
                 reparsed ? reparsed->root().as_double() : 0.0;
             if (temperature < 0.0 || temperature > 1.0) {
                 return std::unexpected(Error::make(
                     ErrorCode::InvalidInput,
-                    "model.temperature must be between 0 and 1 (or null to "
+                    "temperature must be between 0 and 1 (or null to "
                     "clear the user-tier value)"));
             }
         }
@@ -3296,7 +3442,6 @@ ConfigManager::set_user_setting(std::string_view dotted,
         user_path_,
         [&](loom::utils::json::JsonMutVal& root,
             loom::utils::json::JsonMutDoc& doc) -> VoidResult {
-            auto section_obj = root.ensure_object(section);
             // raw_json("null") yields a valid JSON-null value that
             // yyjson_mut_obj_put KEEPS (only a null pointer deletes), so
             // the explicit null-clear is written into the user file.
@@ -3306,7 +3451,14 @@ ConfigManager::set_user_setting(std::string_view dotted,
                     ErrorCode::InternalError,
                     "Internal error: serialized setting is not valid JSON"));
             }
-            section_obj.add(leaf, leaf_value);
+            // Flat keys (section == "") patch at root level; nested keys
+            // (e.g. permissions.allow_bash) patch inside their section.
+            if (section.empty()) {
+                root.add(leaf, leaf_value);
+            } else {
+                auto section_obj = root.ensure_object(section);
+                section_obj.add(leaf, leaf_value);
+            }
             return {};
         },
         /*owner_only=*/false,

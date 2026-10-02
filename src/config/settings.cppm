@@ -27,6 +27,7 @@ struct FlagStatusLineSettings {
 struct FlagSettingsResult {
     std::optional<std::string> model;        // from `model` (string) if present
     std::optional<std::string> api_key;      // from `apiKey` (string) if present
+    std::optional<std::string> base_url;     // from `baseUrl` (string) if present
     std::optional<FlagStatusLineSettings> status_line; // from `statusLine` if present
     std::vector<std::string> applied_env_keys; // env vars set (in iteration order)
     std::vector<std::string> deferred_keys;    // recognized-but-unhandled or unknown keys
@@ -122,6 +123,11 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
         out.api_key = std::string(api_key.as_str());
     }
 
+    // baseUrl: string -> reported back (caller sets LOOM_BASE_URL)
+    if (auto base_url = root.get("baseUrl"); base_url.is_str()) {
+        out.base_url = std::string(base_url.as_str());
+    }
+
     // model: string -> reported back (caller overrides default model)
     if (auto model = root.get("model"); model.is_str()) {
         out.model = std::string(model.as_str());
@@ -164,8 +170,8 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
     root.iter_obj([&](auto key, auto /*value*/) {
         if (!key.is_str()) return;
         const auto name = std::string(key.as_str());
-        if (name == "env" || name == "apiKey" || name == "model" ||
-            name == "statusLine" || name == "permissions") return;
+        if (name == "env" || name == "apiKey" || name == "baseUrl" ||
+            name == "model" || name == "statusLine" || name == "permissions") return;
         out.deferred_keys.push_back(name);
     });
 

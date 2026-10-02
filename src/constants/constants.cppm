@@ -132,7 +132,6 @@ namespace tool_limits {
 // ============================================================
 namespace paths {
     inline constexpr std::string_view kConfigDir = ".loom";
-    inline constexpr std::string_view kConfigFile = "config.json";
     inline constexpr std::string_view kSessionsDir = "sessions";
     inline constexpr std::string_view kPluginsDir = "plugins";
     inline constexpr std::string_view kCacheDir = "cache";

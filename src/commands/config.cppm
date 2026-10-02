@@ -180,23 +180,23 @@ private:
         const auto& settings = config_manager_.settings();
         std::string output = "Current Configuration:\n\n";
 
-        output += std::format("  model.default_model     = {}\n", settings.model.default_model);
-        output += std::format("  model.max_output_tokens = {}\n", settings.model.max_output_tokens);
-        output += std::format("  model.extended_thinking = {}\n",
+        output += std::format("  model             = {}\n", settings.model.default_model);
+        output += std::format("  maxOutputTokens   = {}\n", settings.model.max_output_tokens);
+        output += std::format("  extendedThinking  = {}\n",
                              settings.model.extended_thinking ? "true" : "false");
-        output += std::format("  model.context_window    = {}\n", settings.model.context_window_size);
+        output += std::format("  contextWindowSize = {}\n", settings.model.context_window_size);
         output += "\n";
-        output += std::format("  display.show_thinking   = {}\n",
+        output += std::format("  showThinking      = {}\n",
                              settings.display.show_thinking ? "true" : "false");
-        output += std::format("  display.show_tokens     = {}\n",
+        output += std::format("  showTokenUsage    = {}\n",
                              settings.display.show_token_usage ? "true" : "false");
-        output += std::format("  display.theme           = {}\n", settings.display.theme);
+        output += std::format("  theme             = {}\n", settings.display.theme);
         output += "\n";
-        output += std::format("  network.timeout         = {}s\n", settings.network.timeout_seconds);
-        output += std::format("  network.max_retries     = {}\n", settings.network.max_retries);
-        output += std::format("  network.verify_ssl      = {}\n",
+        output += std::format("  timeoutSeconds    = {}s\n", settings.network.timeout_seconds);
+        output += std::format("  maxRetries        = {}\n", settings.network.max_retries);
+        output += std::format("  verifySsl         = {}\n",
                              settings.network.verify_ssl ? "true" : "false");
-        output += std::format("  network.api_key         = {}\n",
+        output += std::format("  apiKey            = {}\n",
                              settings.network.api_key ? "***" : "(not set)");
         output += "\n";
         output += std::format("  permissions.allow_bash  = {}\n",
@@ -227,7 +227,7 @@ private:
         if (!apply_result) return std::unexpected(apply_result.error());
 
         // c19: this is an EXPLICIT user write, so mark the leaf as user intent
-        // before the full save. Without this, `/config set model.default_model X`
+        // before the full save. Without this, `/config set model X`
         // with LOOM_MODEL still exported would only persist X when X differs
         // from the env value; the marker makes user intent win even when the
         // user sets the value back to the env value. The (section, leaf) pair
@@ -275,25 +275,26 @@ private:
         return CommandResult::success(std::move(output));
     }
 
-    /// Resolve a dotted config key to its current value
+    /// Resolve a flat config key to its current value
     [[nodiscard]] std::optional<std::string> resolve_key(std::string_view key) const {
         const auto& s = config_manager_.settings();
-        if (key == "model.default_model")      return s.model.default_model;
-        if (key == "model.max_output_tokens")  return std::to_string(s.model.max_output_tokens);
-        if (key == "model.extended_thinking")  return s.model.extended_thinking ? "true" : "false";
-        if (key == "display.show_thinking")    return s.display.show_thinking ? "true" : "false";
-        if (key == "display.theme")            return s.display.theme;
-        if (key == "network.timeout")          return std::to_string(s.network.timeout_seconds);
-        if (key == "network.max_retries")      return std::to_string(s.network.max_retries);
-        if (key == "permissions.allow_bash")   return s.permissions.allow_bash ? "true" : "false";
+        if (key == "model")             return s.model.default_model;
+        if (key == "maxOutputTokens")   return std::to_string(s.model.max_output_tokens);
+        if (key == "extendedThinking")  return s.model.extended_thinking ? "true" : "false";
+        if (key == "showThinking")      return s.display.show_thinking ? "true" : "false";
+        if (key == "theme")             return s.display.theme;
+        if (key == "timeoutSeconds")    return std::to_string(s.network.timeout_seconds);
+        if (key == "maxRetries")        return std::to_string(s.network.max_retries);
+        if (key == "permissions.allow_bash") return s.permissions.allow_bash ? "true" : "false";
         return std::nullopt;
     }
 
     /// Validate a value before applying it
     [[nodiscard]] static VoidResult validate_value(std::string_view key, std::string_view value) {
         // Boolean keys
-        if (key.ends_with("thinking") || key.starts_with("permissions.") ||
-            key == "network.verify_ssl" || key == "display.show_tokens") {
+        if (key == "extendedThinking" || key == "showThinking" ||
+            key == "showTokenUsage" || key == "verifySsl" ||
+            key.starts_with("permissions.")) {
             if (value != "true" && value != "false") {
                 return std::unexpected(Error::make(
                     ErrorCode::InvalidRequest,
@@ -302,8 +303,8 @@ private:
             }
         }
         // Integer keys
-        if (key == "model.max_output_tokens" || key == "network.timeout" ||
-            key == "network.max_retries") {
+        if (key == "maxOutputTokens" || key == "timeoutSeconds" ||
+            key == "maxRetries") {
             try { (void)std::stoul(std::string(value)); }
             catch (...) {
                 return std::unexpected(Error::make(
@@ -318,14 +319,14 @@ private:
     /// Apply a validated setting to the config manager
     [[nodiscard]] VoidResult apply_setting(std::string_view key, std::string_view value) {
         auto& s = config_manager_.settings_mut();
-        if (key == "model.default_model")          { s.model.default_model = value; return {}; }
-        if (key == "model.max_output_tokens")      { s.model.max_output_tokens = std::stoul(std::string(value)); return {}; }
-        if (key == "model.extended_thinking")      { s.model.extended_thinking = (value == "true"); return {}; }
-        if (key == "display.show_thinking")        { s.display.show_thinking = (value == "true"); return {}; }
-        if (key == "display.theme")                { s.display.theme = value; return {}; }
-        if (key == "network.timeout")              { s.network.timeout_seconds = std::stoul(std::string(value)); return {}; }
-        if (key == "network.max_retries")          { s.network.max_retries = std::stoul(std::string(value)); return {}; }
-        if (key == "permissions.allow_bash")       { s.permissions.allow_bash = (value == "true"); return {}; }
+        if (key == "model")               { s.model.default_model = value; return {}; }
+        if (key == "maxOutputTokens")     { s.model.max_output_tokens = std::stoul(std::string(value)); return {}; }
+        if (key == "extendedThinking")    { s.model.extended_thinking = (value == "true"); return {}; }
+        if (key == "showThinking")        { s.display.show_thinking = (value == "true"); return {}; }
+        if (key == "theme")               { s.display.theme = value; return {}; }
+        if (key == "timeoutSeconds")      { s.network.timeout_seconds = std::stoul(std::string(value)); return {}; }
+        if (key == "maxRetries")          { s.network.max_retries = std::stoul(std::string(value)); return {}; }
+        if (key == "permissions.allow_bash") { s.permissions.allow_bash = (value == "true"); return {}; }
 
         return std::unexpected(Error::make(ErrorCode::ConfigNotFound,
             std::format("Unknown or read-only key: '{}'", key)));
@@ -334,14 +335,14 @@ private:
     /// Get all known configuration keys with metadata
     [[nodiscard]] static std::vector<ConfigKeyInfo> known_keys() {
         return {
-            {"model.default_model",     "LLM model to use",             "string", ""},
-            {"model.max_output_tokens", "Maximum output token count",   "int",    "16384"},
-            {"model.extended_thinking", "Enable extended thinking",     "bool",   "false"},
-            {"display.show_thinking",   "Show thinking blocks",         "bool",   "true"},
-            {"display.theme",           "Color theme (auto/dark/light)","enum",   "auto"},
-            {"network.timeout",         "Request timeout (seconds)",    "int",    "120"},
-            {"network.max_retries",     "Max retry attempts",           "int",    "3"},
-            {"permissions.allow_bash",  "Allow bash execution",         "bool",   "true"},
+            {"model",             "LLM model to use",             "string", ""},
+            {"maxOutputTokens",   "Maximum output token count",   "int",    "16384"},
+            {"extendedThinking",  "Enable extended thinking",     "bool",   "false"},
+            {"showThinking",      "Show thinking blocks",         "bool",   "true"},
+            {"theme",             "Color theme (auto/dark/light)","enum",   "auto"},
+            {"timeoutSeconds",    "Request timeout (seconds)",    "int",    "120"},
+            {"maxRetries",        "Max retry attempts",           "int",    "3"},
+            {"permissions.allow_bash", "Allow bash execution",    "bool",   "true"},
         };
     }
 };

@@ -197,17 +197,15 @@ TEST(SettingsDialog, SavePreservesUnknownKeys) {
 
     TempCwdGuard cwd_guard;
     const auto dir = fs::current_path();
-    const auto project_path = dir / ".loom" / "config.json";
+    const auto project_path = dir / ".loom" / "settings.json";
     fs::create_directories(project_path.parent_path());
     {
         std::ofstream seed(project_path);
         seed << "{\n"
                 "  \"x-custom\": { \"tool\": \"loom\" },\n"
-                "  \"model\": {\n"
-                "    \"default_model\": \"seed-model-dialog\",\n"
-                "    \"x_custom_leaf\": 42\n"
-                "  },\n"
-                "  \"display\": { \"theme\": \"dark\" }\n"
+                "  \"model\": \"seed-model-dialog\",\n"
+                "  \"x_custom_leaf\": 42,\n"
+                "  \"theme\": \"dark\"\n"
                 "}\n";
     }
 
@@ -229,15 +227,14 @@ TEST(SettingsDialog, SavePreservesUnknownKeys) {
     ASSERT_TRUE(root_node.has("x-custom"));
     EXPECT_EQ(root_node.get("x-custom").get("tool").as_str(),
               std::string_view("loom"));
-    // The unknown key inside "model" survives alongside the known leaves.
-    const auto model = root_node.get("model");
-    ASSERT_TRUE(model.is_obj());
-    EXPECT_EQ(model.get("default_model").as_str(),
+    // The known flat key is preserved, and the unknown sibling
+    // survives alongside it.
+    EXPECT_EQ(root_node.get("model").as_str(),
               std::string_view("seed-model-dialog"));
-    ASSERT_TRUE(model.has("x_custom_leaf"));
-    EXPECT_EQ(model.get("x_custom_leaf").as_int(), 42);
+    ASSERT_TRUE(root_node.has("x_custom_leaf"));
+    EXPECT_EQ(root_node.get("x_custom_leaf").as_int(), 42);
     // The known display value round-tripped.
-    EXPECT_EQ(root_node.get("display").get("theme").as_str(),
+    EXPECT_EQ(root_node.get("theme").as_str(),
               std::string_view("dark"));
 }
 

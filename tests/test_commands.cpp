@@ -165,14 +165,14 @@ loom::core::VoidResult compact_runtime_apply(void* state) {
 } // namespace
 
 TEST(CommandRegistry, ParsesSlashCommandsAndArguments) {
-    auto parsed = loom::core::CommandRegistry::parse("/config get model.default_model");
+    auto parsed = loom::core::CommandRegistry::parse("/config get model");
 
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->name, "config");
     ASSERT_EQ(parsed->args.size(), 2u);
     EXPECT_EQ(parsed->args[0], "get");
-    EXPECT_EQ(parsed->args[1], "model.default_model");
-    EXPECT_EQ(parsed->raw, "/config get model.default_model");
+    EXPECT_EQ(parsed->args[1], "model");
+    EXPECT_EQ(parsed->raw, "/config get model");
 
     EXPECT_FALSE(loom::core::CommandRegistry::parse("not a command").has_value());
 }
@@ -272,7 +272,7 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
         ASSERT_TRUE(scoped.has_value());
         ASSERT_TRUE(scoped->ok) << scoped->message;
 
-        auto project = loom::utils::json::parse_file(work / ".loom" / "config.json");
+        auto project = loom::utils::json::parse_file(work / ".loom" / "settings.json");
         ASSERT_TRUE(project.has_value());
         const auto s1 = project->root().get("mcpServers").get("s1");
         ASSERT_TRUE(s1.is_obj());
@@ -292,7 +292,7 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
         ASSERT_TRUE(remote->ok) << remote->message;
 
         // Default scope is local: header must land in the local tier file.
-        auto local = loom::utils::json::parse_file(work / ".loom" / "config.local.json");
+        auto local = loom::utils::json::parse_file(work / ".loom" / "settings.local.json");
         ASSERT_TRUE(local.has_value());
         const auto r1 = local->root().get("mcpServers").get("r1");
         ASSERT_TRUE(r1.is_obj());
@@ -308,7 +308,7 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
         ASSERT_TRUE(two_scopes.has_value());
         ASSERT_TRUE(two_scopes->ok) << two_scopes->message;
 
-        auto user = loom::utils::json::parse_file(cfg / "config.json");
+        auto user = loom::utils::json::parse_file(cfg / "settings.json");
         ASSERT_TRUE(user.has_value());
         EXPECT_TRUE(user->root().get("mcpServers").has("s2"));
         EXPECT_FALSE(project->root().get("mcpServers").has("s2"));
@@ -320,7 +320,7 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
 // RFC-0001 B followup c8: ConfigCommand held a default-constructed
 // ConfigManager and never called load(), so /config list and /config get
 // rendered built-in DEFAULTS instead of the user's files. Seeds the project
-// .loom/config.json and drives the real AppCommandRegistry (see c6 above).
+// .loom/settings.json and drives the real AppCommandRegistry (see c6 above).
 TEST(AppCommandRegistry, ConfigListGetReflectLoadedConfig) {
     namespace fs = std::filesystem;
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
@@ -349,11 +349,11 @@ TEST(AppCommandRegistry, ConfigListGetReflectLoadedConfig) {
 
     {
         {
-            std::ofstream seed(work / ".loom" / "config.json");
+            std::ofstream seed(work / ".loom" / "settings.json");
             seed << "{\n"
-                    "  \"model\": { \"default_model\": \"custom-model-x\" },\n"
-                    "  \"display\": { \"theme\": \"light\" },\n"
-                    "  \"network\": { \"timeout_seconds\": 42 }\n"
+                    "  \"model\": \"custom-model-x\",\n"
+                    "  \"theme\": \"light\",\n"
+                    "  \"timeoutSeconds\": 42\n"
                     "}\n";
         }
 
@@ -373,20 +373,20 @@ TEST(AppCommandRegistry, ConfigListGetReflectLoadedConfig) {
         EXPECT_EQ(list->message.find("= auto"), std::string::npos);
         EXPECT_EQ(list->message.find("= 120s"), std::string::npos);
 
-        auto get_model = registry.execute("/config get model.default_model", ctx());
+        auto get_model = registry.execute("/config get model", ctx());
         ASSERT_TRUE(get_model.has_value());
         ASSERT_TRUE(get_model->ok) << get_model->message;
-        EXPECT_EQ(get_model->message, "model.default_model = custom-model-x");
+        EXPECT_EQ(get_model->message, "model = custom-model-x");
 
-        auto get_theme = registry.execute("/config get display.theme", ctx());
+        auto get_theme = registry.execute("/config get theme", ctx());
         ASSERT_TRUE(get_theme.has_value());
         ASSERT_TRUE(get_theme->ok) << get_theme->message;
-        EXPECT_EQ(get_theme->message, "display.theme = light");
+        EXPECT_EQ(get_theme->message, "theme = light");
 
-        auto get_timeout = registry.execute("/config get network.timeout", ctx());
+        auto get_timeout = registry.execute("/config get timeoutSeconds", ctx());
         ASSERT_TRUE(get_timeout.has_value());
         ASSERT_TRUE(get_timeout->ok) << get_timeout->message;
-        EXPECT_EQ(get_timeout->message, "network.timeout = 42");
+        EXPECT_EQ(get_timeout->message, "timeoutSeconds = 42");
     }
 
     cleanup();
@@ -426,15 +426,15 @@ TEST(AppCommandRegistry, ConfigSetPreservesExistingSections) {
                            std::istreambuf_iterator<char>());
     };
 
-    const fs::path project_path = work / ".loom" / "config.json";
-    const fs::path user_path = cfg / "config.json";
+    const fs::path project_path = work / ".loom" / "settings.json";
+    const fs::path user_path = cfg / "settings.json";
 
     {
         {
             std::ofstream seed(project_path);
             seed << "{\n"
-                    "  \"model\": { \"default_model\": \"custom-model-x\" },\n"
-                    "  \"display\": { \"theme\": \"dark\" },\n"
+                    "  \"model\": \"custom-model-x\",\n"
+                    "  \"theme\": \"dark\",\n"
                     "  \"mcpServers\": {\n"
                     "    \"proj-srv\": {\n"
                     "      \"type\": \"stdio\",\n"
@@ -459,17 +459,17 @@ TEST(AppCommandRegistry, ConfigSetPreservesExistingSections) {
         const std::string user_bytes_before = read_file(user_path);
 
         loom::commands::AppCommandRegistry registry;
-        auto set = registry.execute("/config set display.theme light", ctx());
+        auto set = registry.execute("/config set theme light", ctx());
         ASSERT_TRUE(set.has_value());
         ASSERT_TRUE(set->ok) << set->message;
-        EXPECT_EQ(set->message, "Set display.theme = light");
+        EXPECT_EQ(set->message, "Set theme = light");
 
         auto project = loom::utils::json::parse_file(project_path);
         ASSERT_TRUE(project.has_value());
         const auto root_node = project->root();
-        EXPECT_EQ(root_node.get("model").get("default_model").as_str(),
+        EXPECT_EQ(root_node.get("model").as_str(),
                   std::string_view("custom-model-x"));
-        EXPECT_EQ(root_node.get("display").get("theme").as_str(),
+        EXPECT_EQ(root_node.get("theme").as_str(),
                   std::string_view("light"));
 
         // The project-owned server survives with its OWN parsed value.
@@ -523,22 +523,20 @@ TEST(AppCommandRegistry, ConfigSetPreservesUnknownKeys) {
         fs::remove_all(root);
     };
 
-    const fs::path project_path = work / ".loom" / "config.json";
+    const fs::path project_path = work / ".loom" / "settings.json";
     {
         std::ofstream seed(project_path);
         seed << "{\n"
                 "  \"x-custom\": { \"tool\": \"loom\" },\n"
-                "  \"model\": {\n"
-                "    \"default_model\": \"seed-model\",\n"
-                "    \"x_custom_leaf\": 42\n"
-                "  },\n"
-                "  \"display\": { \"theme\": \"dark\" }\n"
+                "  \"model\": \"seed-model\",\n"
+                "  \"x_custom_leaf\": 42,\n"
+                "  \"theme\": \"dark\"\n"
                 "}\n";
     }
 
     {
         loom::commands::AppCommandRegistry registry;
-        auto set = registry.execute("/config set display.theme light", ctx());
+        auto set = registry.execute("/config set theme light", ctx());
         ASSERT_TRUE(set.has_value());
         ASSERT_TRUE(set->ok) << set->message;
 
@@ -549,15 +547,14 @@ TEST(AppCommandRegistry, ConfigSetPreservesUnknownKeys) {
         ASSERT_TRUE(root_node.has("x-custom"));
         EXPECT_EQ(root_node.get("x-custom").get("tool").as_str(),
                   std::string_view("loom"));
-        // The unknown key inside "model" survives alongside the known leaves.
-        const auto model = root_node.get("model");
-        ASSERT_TRUE(model.is_obj());
-        EXPECT_EQ(model.get("default_model").as_str(),
+        // The known flat key is preserved, and the unknown sibling
+        // survives alongside it.
+        EXPECT_EQ(root_node.get("model").as_str(),
                   std::string_view("seed-model"));
-        ASSERT_TRUE(model.has("x_custom_leaf"));
-        EXPECT_EQ(model.get("x_custom_leaf").as_int(), 42);
+        ASSERT_TRUE(root_node.has("x_custom_leaf"));
+        EXPECT_EQ(root_node.get("x_custom_leaf").as_int(), 42);
         // The intended write landed.
-        EXPECT_EQ(root_node.get("display").get("theme").as_str(),
+        EXPECT_EQ(root_node.get("theme").as_str(),
                   std::string_view("light"));
     }
 
@@ -592,33 +589,33 @@ TEST(AppCommandRegistry, ConfigGetReflectsExternalEdit) {
         fs::remove_all(root);
     };
 
-    const fs::path project_path = work / ".loom" / "config.json";
+    const fs::path project_path = work / ".loom" / "settings.json";
     {
         std::ofstream seed(project_path);
-        seed << "{\n  \"model\": { \"default_model\": \"v1\" }\n}\n";
+        seed << "{\n  \"model\": \"v1\"\n}\n";
     }
 
     {
         loom::commands::AppCommandRegistry registry;
 
-        auto get1 = registry.execute("/config get model.default_model", ctx());
+        auto get1 = registry.execute("/config get model", ctx());
         ASSERT_TRUE(get1.has_value());
         ASSERT_TRUE(get1->ok) << get1->message;
-        EXPECT_EQ(get1->message, "model.default_model = v1");
+        EXPECT_EQ(get1->message, "model = v1");
 
         // External edit between commands.
         {
             std::ofstream edit(project_path, std::ios::trunc);
-            edit << "{\n  \"model\": { \"default_model\": \"v2\" }\n}\n";
+            edit << "{\n  \"model\": \"v2\"\n}\n";
         }
 
         // Stat-based invalidation: the second command detects the external
         // edit (content hash change) and re-reads the file instead of serving
         // the latched "v1" snapshot.
-        auto get2 = registry.execute("/config get model.default_model", ctx());
+        auto get2 = registry.execute("/config get model", ctx());
         ASSERT_TRUE(get2.has_value());
         ASSERT_TRUE(get2->ok) << get2->message;
-        EXPECT_EQ(get2->message, "model.default_model = v2");
+        EXPECT_EQ(get2->message, "model = v2");
     }
 
     cleanup();
@@ -652,7 +649,7 @@ TEST(AppCommandRegistry, McpSuggestionsReflectExternalConfigEdit) {
         fs::remove_all(root);
     };
 
-    const fs::path project_path = work / ".loom" / "config.json";
+    const fs::path project_path = work / ".loom" / "settings.json";
     {
         std::ofstream seed(project_path);
         seed << "{\n  \"mcpServers\": { \"alpha\": { \"command\": \"true\" } }\n}\n";
@@ -709,7 +706,7 @@ TEST(AppCommandRegistry, ConfigSetFailsOnUnreadableProjectConfig) {
         fs::remove_all(root);
     };
 
-    const fs::path project_path = work / ".loom" / "config.json";
+    const fs::path project_path = work / ".loom" / "settings.json";
 
     {
         {
@@ -724,14 +721,14 @@ TEST(AppCommandRegistry, ConfigSetFailsOnUnreadableProjectConfig) {
         const std::string bytes_before = read_file(project_path);
 
         loom::commands::AppCommandRegistry registry;
-        auto set = registry.execute("/config set display.theme dark", ctx());
+        auto set = registry.execute("/config set theme dark", ctx());
         ASSERT_TRUE(set.has_value());
         EXPECT_FALSE(set->ok);
         EXPECT_FALSE(set->message.empty());
 
         // File bytes untouched, no atomic-write tmp, no new files in .loom.
         EXPECT_EQ(read_file(project_path), bytes_before);
-        EXPECT_FALSE(fs::exists(work / ".loom" / "config.json.tmp"));
+        EXPECT_FALSE(fs::exists(work / ".loom" / "settings.json.tmp"));
         std::error_code ec;
         EXPECT_EQ(std::distance(fs::directory_iterator(work / ".loom", ec),
                                 fs::directory_iterator()), 1);
@@ -896,7 +893,7 @@ TEST(ConfigCommand, ValidatesRequiredArgumentsAndListsConfig) {
 
     EXPECT_TRUE(config.validate(ctx({"list"})).has_value());
     EXPECT_FALSE(config.validate(ctx({"get"})).has_value());
-    EXPECT_FALSE(config.validate(ctx({"set", "model.default_model"})).has_value());
+    EXPECT_FALSE(config.validate(ctx({"set", "model"})).has_value());
 
     auto list = config.execute(ctx({"list"}));
     ASSERT_TRUE(list.has_value());
@@ -1571,7 +1568,7 @@ TEST(TerminalSetupCommand, PathToFileUrlEncodingAndHyperlinkGate) {
 }
 
 // RFC-0001 B followup c17a — END-TO-END: `/mcp xaa setup --callback-port`
-// persists settings.xaaIdp.callbackPort (config.json), and the SAME store is
+// persists settings.xaaIdp.callbackPort (settings.json), and the SAME store is
 // what the XAA login path resolves its fixed loopback port from. Drives the
 // real AppCommandRegistry (temp HOME / LOOM_CONFIG_DIR / CWD), then asserts
 // the persisted value flows through build_login_options() — the exact seam
@@ -1611,9 +1608,9 @@ TEST(AppCommandRegistry, XaaSetupCallbackPortReachesLoginSeam) {
         ASSERT_TRUE(setup.has_value());
         ASSERT_TRUE(setup->ok) << setup->message;
 
-        // The value landed in the SUPPORTED store (config.json / xaaIdp), not
+        // The value landed in the SUPPORTED store (settings.json / xaaIdp), not
         // in a separate file. Default save target is the project tier.
-        auto project = loom::utils::json::parse_file(work / ".loom" / "config.json");
+        auto project = loom::utils::json::parse_file(work / ".loom" / "settings.json");
         ASSERT_TRUE(project.has_value());
         const auto xaa = project->root().get("xaaIdp");
         ASSERT_TRUE(xaa.is_obj());
@@ -1664,21 +1661,21 @@ TEST(AppCommandRegistry, ConfigSetDoesNotBakeEnvModelIntoProjectFile) {
         fs::remove_all(root);
     };
 
-    const fs::path project_path = work / ".loom" / "config.json";
+    const fs::path project_path = work / ".loom" / "settings.json";
 
     {
         {
             std::ofstream seed(project_path);
             seed << "{\n"
-                    "  \"model\": { \"default_model\": \"file-model-c19\" },\n"
-                    "  \"display\": { \"theme\": \"light\" }\n"
+                    "  \"model\": \"file-model-c19\",\n"
+                    "  \"theme\": \"light\"\n"
                     "}\n";
         }
 
         // Construct AFTER env + cwd: the command's manager binds paths in its
         // ctor and reads the env on load().
         loom::commands::AppCommandRegistry registry;
-        auto set = registry.execute("/config set display.theme dark", ctx());
+        auto set = registry.execute("/config set theme dark", ctx());
         ASSERT_TRUE(set.has_value());
         ASSERT_TRUE(set->ok) << set->message;
 
@@ -1692,7 +1689,7 @@ TEST(AppCommandRegistry, ConfigSetDoesNotBakeEnvModelIntoProjectFile) {
         // The file's OWN model value is preserved (not dropped, not env).
         auto project = loom::utils::json::parse_file(project_path);
         ASSERT_TRUE(project.has_value());
-        EXPECT_EQ(project->root().get("model").get("default_model").as_str(),
+        EXPECT_EQ(project->root().get("model").as_str(),
                   std::string_view("file-model-c19"));
     }
 
@@ -1740,23 +1737,23 @@ TEST(AppCommandRegistry, ConfigSetNeverWritesEnvCredentialsToFile) {
         fs::remove_all(root);
     };
 
-    const fs::path project_path = work / ".loom" / "config.json";
+    const fs::path project_path = work / ".loom" / "settings.json";
     {
         std::ofstream seed(project_path);
-        seed << "{\n  \"display\": { \"theme\": \"light\" }\n}\n";
+        seed << "{\n  \"theme\": \"light\"\n}\n";
     }
 
     {
         loom::commands::AppCommandRegistry registry;
-        auto set = registry.execute("/config set display.theme dark", ctx());
+        auto set = registry.execute("/config set theme dark", ctx());
         ASSERT_TRUE(set.has_value());
         ASSERT_TRUE(set->ok) << set->message;
 
         const std::string bytes = cmd_read_file(project_path);
         // No transport of the exported credential/endpoint bytes anywhere.
         EXPECT_EQ(bytes.find("SECRET-c19"), std::string::npos) << bytes;
-        EXPECT_EQ(bytes.find("api_key"), std::string::npos) << bytes;
-        EXPECT_EQ(bytes.find("base_url"), std::string::npos) << bytes;
+        EXPECT_EQ(bytes.find("apiKey"), std::string::npos) << bytes;
+        EXPECT_EQ(bytes.find("baseUrl"), std::string::npos) << bytes;
         EXPECT_EQ(bytes.find("proxy"), std::string::npos) << bytes;
         // The intended write is still there.
         EXPECT_NE(bytes.find("\"theme\": \"dark\""), std::string::npos) << bytes;
@@ -1792,10 +1789,10 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
         fs::remove_all(root);
     };
 
-    const fs::path project_path = work / ".loom" / "config.json";
+    const fs::path project_path = work / ".loom" / "settings.json";
     {
         std::ofstream seed(project_path);
-        seed << "{\n  \"model\": { \"default_model\": \"file-seed-c19\" }\n}\n";
+        seed << "{\n  \"model\": \"file-seed-c19\"\n}\n";
     }
 
     {
@@ -1803,7 +1800,7 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
 
         // Explicit user intent while LOOM_MODEL=Y: X wins on disk.
         auto set_model = registry.execute(
-            "/config set model.default_model X-user-model-c19", ctx());
+            "/config set model X-user-model-c19", ctx());
         ASSERT_TRUE(set_model.has_value());
         ASSERT_TRUE(set_model->ok) << set_model->message;
         {
@@ -1812,18 +1809,18 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
             EXPECT_EQ(bytes.find("Y-env-model-c19"), std::string::npos) << bytes;
             auto project = loom::utils::json::parse_file(project_path);
             ASSERT_TRUE(project.has_value());
-            EXPECT_EQ(project->root().get("model").get("default_model").as_str(),
+            EXPECT_EQ(project->root().get("model").as_str(),
                       std::string_view("X-user-model-c19"));
         }
 
-        // Same rule for model.max_output_tokens with LOOM_MAX_TOKENS engaged.
+        // Same rule for maxOutputTokens with LOOM_MAX_TOKENS engaged.
         auto set_tokens = registry.execute(
-            "/config set model.max_output_tokens 2048", ctx());
+            "/config set maxOutputTokens 2048", ctx());
         ASSERT_TRUE(set_tokens.has_value());
         ASSERT_TRUE(set_tokens->ok) << set_tokens->message;
         {
             const std::string bytes = cmd_read_file(project_path);
-            EXPECT_NE(bytes.find("\"max_output_tokens\": 2048"), std::string::npos)
+            EXPECT_NE(bytes.find("\"maxOutputTokens\": 2048"), std::string::npos)
                 << bytes;
             EXPECT_EQ(bytes.find("9999"), std::string::npos) << bytes;
         }
@@ -1832,9 +1829,9 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
         // so within THIS manager the explicit set is what /config get reports
         // (the in-memory value is the user's X). A FRESH load while the env
         // is still exported re-applies the overlay and yields Y — see below.
-        auto get_model = registry.execute("/config get model.default_model", ctx());
+        auto get_model = registry.execute("/config get model", ctx());
         ASSERT_TRUE(get_model.has_value());
-        EXPECT_EQ(get_model->message, "model.default_model = X-user-model-c19");
+        EXPECT_EQ(get_model->message, "model = X-user-model-c19");
     }
 
     // Send still exported: a fresh process re-applies the env overlay, so the

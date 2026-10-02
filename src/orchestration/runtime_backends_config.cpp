@@ -100,7 +100,7 @@ namespace {
         if (!root.has("value")) {
             return ToolResult::error(
                 "config set requires a value (use null to clear "
-                "model.temperature or model.thinking_budget)");
+                "temperature or thinkingBudget)");
         }
         // set_user_setting validates, patches with salvage=ON, and performs
         // the quiet post-write reload itself.

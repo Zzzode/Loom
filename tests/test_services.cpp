@@ -5991,9 +5991,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
     {
         std::ofstream file(project_path);
         file << R"JSON({
-  "model": {
-    "default_model": "test-model"
-  },
+  "model": "test-model",
   "mcpServers": {
     "keep-me": {
       "command": "node",
@@ -6052,7 +6050,7 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
     const auto keep = servers.get("keep-me");
     ASSERT_TRUE(keep.is_obj());
     EXPECT_EQ(std::string(keep.get("command").as_str()), "node");
-    EXPECT_EQ(std::string(doc->root().get("display").get("theme").as_str()), "dark");
+    EXPECT_EQ(std::string(doc->root().get("theme").as_str()), "dark");
 
     // Reload: all three XAA values survive.
     loom::core::ConfigManager reloaded(project_path);
@@ -6440,8 +6438,8 @@ TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
     fs::remove_all(root);
 }
 
-// Group 4: the default Local scope creates config.local.json (no
-// config.json) and appends its basename to ./.gitignore exactly once,
+// Group 4: the default Local scope creates settings.local.json (no
+// settings.json) and appends its basename to ./.gitignore exactly once,
 // coping with a pre-existing file that has no trailing newline.
 TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     if (std::system("git --version >/dev/null 2>&1") != 0) {
@@ -6458,8 +6456,8 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     c6_write_file(root / ".gitignore", "sentinel");
 
     const auto user_path    = root / "user.json";
-    const auto project_path = root / ".loom" / "config.json";
-    const auto local_path   = root / ".loom" / "config.local.json";
+    const auto project_path = root / ".loom" / "settings.json";
+    const auto local_path   = root / ".loom" / "settings.local.json";
 
     auto make_stdio = [](std::string name) {
         loom::core::McpServerConfig cfg;
@@ -6481,7 +6479,7 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     EXPECT_FALSE(fs::exists(project_path));
     // c13d: the local lock sibling is ignored alongside the data file.
     EXPECT_EQ(c6_read_file(root / ".gitignore"),
-              "sentinel\nconfig.local.json\nconfig.local.json.lock\n");
+              "sentinel\nsettings.local.json\nsettings.local.json.lock\n");
 
     // The local tier is the documented secret holder: owner-only (0600).
     {
@@ -6507,8 +6505,8 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     const std::string gitignore = c6_read_file(root / ".gitignore");
     // Line-exact idempotency (the lock line contains the data basename as
     // a substring, so count whole lines).
-    EXPECT_EQ(c6_count_occurrences(gitignore, "config.local.json\n"), 1u);
-    EXPECT_EQ(c6_count_occurrences(gitignore, "config.local.json.lock\n"), 1u);
+    EXPECT_EQ(c6_count_occurrences(gitignore, "settings.local.json\n"), 1u);
+    EXPECT_EQ(c6_count_occurrences(gitignore, "settings.local.json.lock\n"), 1u);
     auto parsed = loom::utils::json::parse_file(local_path);
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->root().get("mcpServers").size(), 2u);
@@ -6773,8 +6771,8 @@ TEST(McpTypes, McpUserScopeHonorsConfigDirEnv) {
         ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::User, cfg)
                         .has_value());
     }
-    EXPECT_TRUE(fs::exists(config_dir / "config.json"));
-    EXPECT_FALSE(fs::exists(fake_home / ".loom" / "config.json"));
+    EXPECT_TRUE(fs::exists(config_dir / "settings.json"));
+    EXPECT_FALSE(fs::exists(fake_home / ".loom" / "settings.json"));
 
     {
         loom::core::ConfigManager reloaded;
@@ -7119,8 +7117,8 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     // c13e: gitignore appends require a work tree.
     ASSERT_EQ(std::system("git init -q --initial-branch main"), 0);
     const auto user_path    = root / "user.json";
-    const auto project_path = root / ".loom" / "config.json";
-    const auto local_path   = root / ".loom" / "config.local.json";
+    const auto project_path = root / ".loom" / "settings.json";
+    const auto local_path   = root / ".loom" / "settings.local.json";
 
     auto make_cfg = [](std::string name) {
         loom::core::McpServerConfig cfg;
@@ -7182,8 +7180,8 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     // sibling, but the local data basename is not ignored yet.
     if (fs::exists(root / ".gitignore")) {
         const auto prior = c6_read_file(root / ".gitignore");
-        EXPECT_EQ(prior.find("config.local.json"), std::string::npos);
-        EXPECT_NE(prior.find("config.json.lock"), std::string::npos);
+        EXPECT_EQ(prior.find("settings.local.json"), std::string::npos);
+        EXPECT_NE(prior.find("settings.json.lock"), std::string::npos);
     }
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
@@ -7192,9 +7190,9 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
                                               make_cfg("l2")).has_value());
     }
     ASSERT_TRUE(fs::exists(root / ".gitignore"));
-    EXPECT_NE(c6_read_file(root / ".gitignore").find("config.local.json"),
+    EXPECT_NE(c6_read_file(root / ".gitignore").find("settings.local.json"),
               std::string::npos);
-    EXPECT_NE(c6_read_file(root / ".gitignore").find("config.local.json.lock"),
+    EXPECT_NE(c6_read_file(root / ".gitignore").find("settings.local.json.lock"),
               std::string::npos);
     EXPECT_EQ(mode_of(local_path),
               fs::perms::owner_read | fs::perms::owner_write);
@@ -9202,13 +9200,13 @@ TEST(ConfigManagerUserSettings, SevenWritableKindsRoundTrip) {
             ASSERT_TRUE(out.has_value()) << out.error().message;
             EXPECT_FALSE(out->repaired.has_value());
         };
-        setv("model.default_model", R"("  my-model  ")");
-        setv("model.max_output_tokens", "4096");
-        setv("model.temperature", "0.5");
-        setv("model.extended_thinking", "true");
-        setv("model.thinking_budget", "2048");
-        setv("model.context_window_size", "100000");
-        setv("network.max_retries", "0");
+        setv("model", R"("  my-model  ")");
+        setv("maxOutputTokens", "4096");
+        setv("temperature", "0.5");
+        setv("extendedThinking", "true");
+        setv("thinkingBudget", "2048");
+        setv("contextWindowSize", "100000");
+        setv("maxRetries", "0");
     }
     auto fresh = p.manager();
     ASSERT_TRUE(fresh.load().has_value());
@@ -9225,11 +9223,11 @@ TEST(ConfigManagerUserSettings, SevenWritableKindsRoundTrip) {
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto out1 = m.set_user_setting("model.extended_thinking", c13_parse("false"));
+        auto out1 = m.set_user_setting("extendedThinking", c13_parse("false"));
         ASSERT_TRUE(out1.has_value());
-        auto out2 = m.set_user_setting("model.temperature", c13_parse("0.25"));
+        auto out2 = m.set_user_setting("temperature", c13_parse("0.25"));
         ASSERT_TRUE(out2.has_value());
-        auto out3 = m.set_user_setting("network.max_retries", c13_parse("5"));
+        auto out3 = m.set_user_setting("maxRetries", c13_parse("5"));
         ASSERT_TRUE(out3.has_value()) << out3.error().message;
     }
     auto reloaded = p.manager();
@@ -9243,23 +9241,23 @@ TEST(ConfigManagerUserSettings, SevenWritableKindsRoundTrip) {
 // only — a lower-tier value still wins the merge).
 TEST(ConfigManagerUserSettings, TemperatureBoundsAndClear) {
     C13Paths p("temp");
-    c13_write_file(p.project_path, R"JSON({"model":{"temperature":0.25}})JSON");
+    c13_write_file(p.project_path, R"JSON({"temperature":0.25})JSON");
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
 
     for (const auto* bad : {"-0.01", "1.01", "2", "\"hot\"", "true"}) {
-        auto out = m.set_user_setting("model.temperature", c13_parse(bad));
+        auto out = m.set_user_setting("temperature", c13_parse(bad));
         EXPECT_FALSE(out.has_value()) << bad;
     }
     for (const auto* good : {"0", "1", "0.75", "\"0.1\""}) {
-        auto out = m.set_user_setting("model.temperature", c13_parse(good));
+        auto out = m.set_user_setting("temperature", c13_parse(good));
         EXPECT_TRUE(out.has_value()) << good << ": "
             << (out ? "" : out.error().message);
     }
     // Explicit null clears the USER leaf: the file stores null and the
     // effective value falls through to the project 0.25.
     {
-        auto out = m.set_user_setting("model.temperature", c13_parse("null"));
+        auto out = m.set_user_setting("temperature", c13_parse("null"));
         ASSERT_TRUE(out.has_value());
         EXPECT_EQ(out->value_token, "null");
     }
@@ -9281,18 +9279,18 @@ TEST(ConfigManagerUserSettings, ThinkingBudgetBoundsAndClear) {
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
 
-    EXPECT_FALSE(m.set_user_setting("model.thinking_budget", c13_parse("512")).has_value());
-    EXPECT_FALSE(m.set_user_setting("model.thinking_budget", c13_parse("\"abc\"")).has_value());
-    EXPECT_FALSE(m.set_user_setting("model.thinking_budget", c13_parse("-1")).has_value());
-    ASSERT_TRUE(m.set_user_setting("model.thinking_budget", c13_parse("1024")).has_value());
+    EXPECT_FALSE(m.set_user_setting("thinkingBudget", c13_parse("512")).has_value());
+    EXPECT_FALSE(m.set_user_setting("thinkingBudget", c13_parse("\"abc\"")).has_value());
+    EXPECT_FALSE(m.set_user_setting("thinkingBudget", c13_parse("-1")).has_value());
+    ASSERT_TRUE(m.set_user_setting("thinkingBudget", c13_parse("1024")).has_value());
     {
         auto at_min = p.manager();
         ASSERT_TRUE(at_min.load().has_value());
         EXPECT_EQ(*at_min.settings().model.thinking_budget, 1024u);
     }
     // 0 maps to a null clear; the value is removed from the user file.
-    ASSERT_TRUE(m.set_user_setting("model.thinking_budget", c13_parse("0")).has_value());
-    ASSERT_TRUE(m.set_user_setting("model.thinking_budget", c13_parse("null")).has_value());
+    ASSERT_TRUE(m.set_user_setting("thinkingBudget", c13_parse("0")).has_value());
+    ASSERT_TRUE(m.set_user_setting("thinkingBudget", c13_parse("null")).has_value());
     auto after_mgr = p.manager();
     ASSERT_TRUE(after_mgr.load().has_value());
     EXPECT_FALSE(after_mgr.settings().model.thinking_budget.has_value());
@@ -9308,26 +9306,26 @@ TEST(ConfigManagerUserSettings, MalformedValuesRejected) {
         auto out = m.set_user_setting(key, c13_parse(json));
         EXPECT_FALSE(out.has_value()) << key << " <- " << json;
     };
-    rejected("model.default_model", R"("")");
-    rejected("model.default_model", R"("   ")");
-    rejected("model.default_model", "42");
-    rejected("model.max_output_tokens", "\"abc\"");
-    rejected("model.max_output_tokens", "-1");
-    rejected("model.max_output_tokens", "1.5");
-    rejected("model.max_output_tokens", "4294967296"); // uint32 max + 1
-    rejected("model.max_output_tokens", "\"18446744073709551616\"");
-    rejected("model.max_output_tokens", "\"-5\"");
-    rejected("model.context_window_size", "0");        // positive uint
-    rejected("model.extended_thinking", "\"yes\"");    // exact true|false only
-    rejected("model.extended_thinking", "1");
-    rejected("network.max_retries", "\"1x\"");
-    rejected("model.temperature", "{}");
+    rejected("model", R"("")");
+    rejected("model", R"("   ")");
+    rejected("model", "42");
+    rejected("maxOutputTokens", "\"abc\"");
+    rejected("maxOutputTokens", "-1");
+    rejected("maxOutputTokens", "1.5");
+    rejected("maxOutputTokens", "4294967296"); // uint32 max + 1
+    rejected("maxOutputTokens", "\"18446744073709551616\"");
+    rejected("maxOutputTokens", "\"-5\"");
+    rejected("contextWindowSize", "0");        // positive uint
+    rejected("extendedThinking", "\"yes\"");    // exact true|false only
+    rejected("extendedThinking", "1");
+    rejected("maxRetries", "\"1x\"");
+    rejected("temperature", "{}");
 
     // No file was created by the failed writes.
     EXPECT_FALSE(fs::exists(p.user_path));
 
     // max_retries accepts 0; the positive keys do not.
-    ASSERT_TRUE(m.set_user_setting("network.max_retries", c13_parse("0"))
+    ASSERT_TRUE(m.set_user_setting("maxRetries", c13_parse("0"))
                     .has_value());
 }
 
@@ -9338,7 +9336,7 @@ TEST(ConfigManagerUserSettings, ReadonlyBlockedUnknownRejected) {
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
 
-    auto ro = m.set_user_setting("display.theme", c13_parse(R"("dark")"));
+    auto ro = m.set_user_setting("theme", c13_parse(R"("dark")"));
     ASSERT_FALSE(ro.has_value());
     EXPECT_NE(ro.error().message.find("not writable through this tool"),
               std::string::npos);
@@ -9346,10 +9344,10 @@ TEST(ConfigManagerUserSettings, ReadonlyBlockedUnknownRejected) {
               std::string::npos);
 
     const std::array<std::pair<const char*, const char*>, 9> blocked_cases = {{
-        {"network.api_key", "LOOM_API_KEY"},
-        {"network.base_url", "LOOM_BASE_URL"},
-        {"network.proxy", "HTTPS_PROXY"},
-        {"network.verify_ssl", "TLS"},
+        {"apiKey", "LOOM_API_KEY"},
+        {"baseUrl", "LOOM_BASE_URL"},
+        {"proxy", "HTTPS_PROXY"},
+        {"verifySsl", "TLS"},
         {"permissions.deny_rules", "permission"},
         {"systemPrompt", "session"},
         {"customInstructions", "session"},
@@ -9377,14 +9375,14 @@ TEST(ConfigManagerUserSettings, ReadonlyBlockedUnknownRejected) {
 TEST(ConfigManagerUserSettings, ReadOnlyProjectionAndListShape) {
     C13Paths p("projection");
     c13_write_file(p.user_path, R"JSON({
-      "display": {"theme": "dark", "line_width": 120, "compact_mode": true},
-      "network": {"timeout_seconds": 45},
+      "theme": "dark", "lineWidth": 120, "compactMode": true,
+      "timeoutSeconds": 45,
       "permissions": {"allow_network": false}
     })JSON");
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
 
-    auto theme = m.agent_setting_value_json("display.theme");
+    auto theme = m.agent_setting_value_json("theme");
     ASSERT_TRUE(theme.has_value());
     auto theme_val = c13_parse(*theme);
     EXPECT_EQ(theme_val.root.get("writable").as_bool(), false);
@@ -9394,10 +9392,10 @@ TEST(ConfigManagerUserSettings, ReadOnlyProjectionAndListShape) {
     EXPECT_EQ(std::string(theme_val.root.get("value").as_str()), "dark");
 
     auto settings = c13_parse(m.serialize_agent_settings_json());
-    EXPECT_TRUE(settings.root.get("model").get("temperature").get("value").is_null());
-    ASSERT_TRUE(settings.root.get("model").get("temperature").is_obj());
-    EXPECT_EQ(settings.root.get("display").get("line_width").get("value").as_int(), 120);
-    EXPECT_EQ(settings.root.get("network").get("timeout_seconds").get("value").as_int(), 45);
+    EXPECT_TRUE(settings.root.get("temperature").get("value").is_null());
+    ASSERT_TRUE(settings.root.get("temperature").is_obj());
+    EXPECT_EQ(settings.root.get("lineWidth").get("value").as_int(), 120);
+    EXPECT_EQ(settings.root.get("timeoutSeconds").get("value").as_int(), 45);
     EXPECT_EQ(settings.root.get("permissions").get("allow_network").get("value").as_bool(), false);
 
     auto list = c13_parse(loom::core::ConfigManager::serialize_user_setting_specs_json());
@@ -9407,7 +9405,7 @@ TEST(ConfigManagerUserSettings, ReadOnlyProjectionAndListShape) {
     // Enumeration metadata survives into the list payload.
     bool found_theme = false;
     list.root.get("read_only").iter([&](auto item) {
-        if (std::string(item.get("key").as_str()) == "display.theme") {
+        if (std::string(item.get("key").as_str()) == "theme") {
             found_theme = true;
             EXPECT_EQ(item.get("enum_values").size(), 3u);
         }
@@ -9415,8 +9413,8 @@ TEST(ConfigManagerUserSettings, ReadOnlyProjectionAndListShape) {
     EXPECT_TRUE(found_theme);
     auto null_keys = list.root.get("null_clear_keys");
     ASSERT_EQ(null_keys.size(), 2u);
-    EXPECT_EQ(std::string(null_keys.at(0).as_str()), "model.temperature");
-    EXPECT_EQ(std::string(null_keys.at(1).as_str()), "model.thinking_budget");
+    EXPECT_EQ(std::string(null_keys.at(0).as_str()), "temperature");
+    EXPECT_EQ(std::string(null_keys.at(1).as_str()), "thinkingBudget");
 }
 
 // Patching one leaf preserves sibling model/display keys, unknown top-level
@@ -9424,33 +9422,31 @@ TEST(ConfigManagerUserSettings, ReadOnlyProjectionAndListShape) {
 TEST(ConfigManagerUserSettings, SiblingUnknownAndMcpPreserved) {
     C13Paths p("preserve");
     c13_write_file(p.user_path, R"JSON({
-  "model": {
-    "default_model": "kept-model",
-    "context_window_size": 123456,
-    "unknown_future_flag": true
-  },
-  "display": {"theme": "light"},
+  "model": "kept-model",
+  "contextWindowSize": 123456,
+  "unknown_future_flag": true,
+  "theme": "light",
   "mcpServers": {"srv": {"command": "node", "args": ["x.js"]}},
   "totally_unknown_section": {"a": [1, 2, 3]}
 })JSON");
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
-    ASSERT_TRUE(m.set_user_setting("network.max_retries", c13_parse("7"))
+    ASSERT_TRUE(m.set_user_setting("maxRetries", c13_parse("7"))
                     .has_value());
 
     auto doc = loom::utils::json::parse_file(p.user_path);
     ASSERT_TRUE(doc.has_value());
     const auto root = doc->root();
-    EXPECT_EQ(root.get("model").get("default_model").as_str(),
+    EXPECT_EQ(root.get("model").as_str(),
               std::string_view("kept-model"));
-    EXPECT_EQ(root.get("model").get("context_window_size").as_int(), 123456);
-    EXPECT_EQ(root.get("model").get("unknown_future_flag").as_bool(), true);
-    EXPECT_EQ(root.get("display").get("theme").as_str(),
+    EXPECT_EQ(root.get("contextWindowSize").as_int(), 123456);
+    EXPECT_EQ(root.get("unknown_future_flag").as_bool(), true);
+    EXPECT_EQ(root.get("theme").as_str(),
               std::string_view("light"));
     EXPECT_EQ(root.get("mcpServers").get("srv").get("command").as_str(),
               std::string_view("node"));
     EXPECT_EQ(root.get("totally_unknown_section").get("a").at(1).as_int(), 2);
-    EXPECT_EQ(root.get("network").get("max_retries").as_int(), 7);
+    EXPECT_EQ(root.get("maxRetries").as_int(), 7);
 }
 
 // Salvage tri-state: valid object untouched; leading object + trailing junk
@@ -9459,37 +9455,37 @@ TEST(ConfigManagerUserSettings, SalvageTriState) {
     C13Paths p("salvage");
 
     // 1. strict-valid object → Untouched (repaired null), keys preserved.
-    c13_write_file(p.user_path, R"JSON({"model":{"default_model":"a"},"x":1})JSON");
+    c13_write_file(p.user_path, R"JSON({"model": "a", "x": 1})JSON");
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto out = m.set_user_setting("network.max_retries", c13_parse("2"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("2"));
         ASSERT_TRUE(out.has_value());
         EXPECT_FALSE(out->repaired.has_value());
         auto root = c13_parse([&] { std::ifstream f(p.user_path);
             return std::string(std::istreambuf_iterator<char>(f),
                                std::istreambuf_iterator<char>()); }());
-        EXPECT_EQ(root.root.get("model").get("default_model").as_str(),
+        EXPECT_EQ(root.root.get("model").as_str(),
                   std::string_view("a"));
         EXPECT_EQ(root.root.get("x").as_int(), 1);
     }
 
     // 2. complete leading OBJECT + trailing junk → trailing_junk_dropped.
     c13_write_file(p.user_path,
-                  R"JSON({"model":{"default_model":"b"}} TRAILING GARBAGE)JSON");
+                  R"JSON({"model": "b"}} TRAILING GARBAGE)JSON");
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto out = m.set_user_setting("network.max_retries", c13_parse("3"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("3"));
         ASSERT_TRUE(out.has_value());
         ASSERT_TRUE(out->repaired.has_value());
         EXPECT_EQ(*out->repaired, "trailing_junk_dropped");
         auto root = c13_parse([&] { std::ifstream f(p.user_path);
             return std::string(std::istreambuf_iterator<char>(f),
                                std::istreambuf_iterator<char>()); }());
-        EXPECT_EQ(root.root.get("model").get("default_model").as_str(),
+        EXPECT_EQ(root.root.get("model").as_str(),
                   std::string_view("b"));
-        EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 3);
+        EXPECT_EQ(root.root.get("maxRetries").as_int(), 3);
     }
 
     // 3. leading complete non-object [1,2] + junk → replaced_unparseable.
@@ -9497,22 +9493,22 @@ TEST(ConfigManagerUserSettings, SalvageTriState) {
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto out = m.set_user_setting("network.max_retries", c13_parse("4"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("4"));
         ASSERT_TRUE(out.has_value());
         ASSERT_TRUE(out->repaired.has_value());
         EXPECT_EQ(*out->repaired, "replaced_unparseable");
         auto root = c13_parse([&] { std::ifstream f(p.user_path);
             return std::string(std::istreambuf_iterator<char>(f),
                                std::istreambuf_iterator<char>()); }());
-        EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 4);
+        EXPECT_EQ(root.root.get("maxRetries").as_int(), 4);
     }
 
     // 4. trailing-comma malformed object → replaced_unparseable.
-    c13_write_file(p.user_path, R"JSON({"model":{"default_model":"c",}})JSON");
+    c13_write_file(p.user_path, R"JSON({"model": "c",}})JSON");
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto out = m.set_user_setting("network.max_retries", c13_parse("5"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("5"));
         ASSERT_TRUE(out.has_value());
         ASSERT_TRUE(out->repaired.has_value());
         EXPECT_EQ(*out->repaired, "replaced_unparseable");
@@ -9523,7 +9519,7 @@ TEST(ConfigManagerUserSettings, SalvageTriState) {
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto out = m.set_user_setting("network.max_retries", c13_parse("6"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("6"));
         ASSERT_TRUE(out.has_value());
         EXPECT_EQ(out->repaired.value_or(""), "replaced_unparseable");
     }
@@ -9534,10 +9530,10 @@ TEST(ConfigManagerUserSettings, SalvageTriState) {
 TEST(ConfigManagerUserSettings, DuplicateKeyCanonicalizedOnPatch) {
     C13Paths p("dup");
     c13_write_file(p.user_path,
-        R"JSON({"model":{"default_model":"one","default_model":"two"}}junk!)JSON");
+        R"JSON({"model": "one", "model": "two"}}junk!)JSON");
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
-    auto out = m.set_user_setting("model.default_model", c13_parse(R"("final")"));
+    auto out = m.set_user_setting("model", c13_parse(R"("final")"));
     ASSERT_TRUE(out.has_value());
     EXPECT_EQ(out->repaired.value_or(""), "trailing_junk_dropped");
 
@@ -9545,11 +9541,11 @@ TEST(ConfigManagerUserSettings, DuplicateKeyCanonicalizedOnPatch) {
     const std::string bytes((std::istreambuf_iterator<char>(f)),
                             std::istreambuf_iterator<char>());
     // Exactly one canonical leaf spelling survives.
-    EXPECT_EQ(c6_count_occurrences(bytes, "\"default_model\""), 1u);
+    EXPECT_EQ(c6_count_occurrences(bytes, "\"model\""), 1u);
     EXPECT_EQ(bytes.find("\"one\""), std::string::npos);
     EXPECT_EQ(bytes.find("\"two\""), std::string::npos);
     auto root = c13_parse(bytes);
-    EXPECT_EQ(root.root.get("model").get("default_model").as_str(),
+    EXPECT_EQ(root.root.get("model").as_str(),
               std::string_view("final"));
 }
 
@@ -9560,20 +9556,20 @@ TEST(ConfigManagerUserSettings, BlankAndMissingFileFreshStart) {
         std::ofstream(p.user_path) << "  \n\t \n";
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("1"));
         ASSERT_TRUE(out.has_value());
         EXPECT_FALSE(out->repaired.has_value());
     }
     fs::remove(p.user_path);
     {
         auto m = p.manager();
-        auto out = m.set_user_setting("network.max_retries", c13_parse("2"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("2"));
         ASSERT_TRUE(out.has_value());
         EXPECT_FALSE(out->repaired.has_value());
         auto root = c13_parse([&] { std::ifstream f(p.user_path);
             return std::string(std::istreambuf_iterator<char>(f),
                                std::istreambuf_iterator<char>()); }());
-        EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 2);
+        EXPECT_EQ(root.root.get("maxRetries").as_int(), 2);
     }
 }
 
@@ -9581,13 +9577,13 @@ TEST(ConfigManagerUserSettings, BlankAndMissingFileFreshStart) {
 TEST(ConfigManagerUserSettings, Mode0600Preserved) {
     if (::getuid() == 0) GTEST_SKIP() << "modes are bypassed for root";
     C13Paths p("mode");
-    c13_write_file(p.user_path, R"JSON({"network":{"max_retries":1}})JSON");
+    c13_write_file(p.user_path, R"JSON({"maxRetries": 1}})JSON");
     fs::permissions(p.user_path,
                     fs::perms::owner_read | fs::perms::owner_write,
                     fs::perm_options::replace);
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
-    ASSERT_TRUE(m.set_user_setting("network.max_retries", c13_parse("9"))
+    ASSERT_TRUE(m.set_user_setting("maxRetries", c13_parse("9"))
                     .has_value());
     const auto mode = fs::status(p.user_path).permissions() & fs::perms::mask;
     EXPECT_EQ(mode, fs::perms::owner_read | fs::perms::owner_write);
@@ -9613,11 +9609,11 @@ TEST(ConfigManagerUserSettings, ConfigDirRoutingOnlyUserTouched) {
     {
         loom::core::ConfigManager m;
         ASSERT_TRUE(m.load().has_value());
-        auto out = m.set_user_setting("network.max_retries", c13_parse("4"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("4"));
         ASSERT_TRUE(out.has_value());
-        EXPECT_EQ(out->path, cfg_dir / "config.json");
+        EXPECT_EQ(out->path, cfg_dir / "settings.json");
     }
-    EXPECT_TRUE(fs::exists(cfg_dir / "config.json"));
+    EXPECT_TRUE(fs::exists(cfg_dir / "settings.json"));
     EXPECT_FALSE(fs::exists(fake_home / ".loom"));
     EXPECT_FALSE(fs::exists(work / ".loom"));
     std::error_code ec;
@@ -9639,31 +9635,31 @@ TEST(ConfigManagerUserSettings, ProvenanceShadowAndSecretPresence) {
 
     C13Paths p("provenance");
     c13_write_file(p.user_path, R"JSON({
-      "model": {"default_model": "file-model", "max_output_tokens": 111},
-      "network": {"api_key": "SECRET-zx9w87-traceable-key",
-                  "base_url": "https://SECRET-zx9w87.example.invalid/api"}
+      "model": "file-model", "maxOutputTokens": 111,
+      "apiKey": "SECRET-zx9w87-traceable-key",
+      "baseUrl": "https://SECRET-zx9w87.example.invalid/api"
     })JSON");
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
         auto settings = c13_parse(m.serialize_agent_settings_json());
-        EXPECT_EQ(std::string(settings.root.get("model").get("default_model")
+        EXPECT_EQ(std::string(settings.root.get("model")
                                   .get("source").as_str()), "file");
-        EXPECT_EQ(std::string(settings.root.get("network").get("max_retries")
+        EXPECT_EQ(std::string(settings.root.get("maxRetries")
                                   .get("source").as_str()), "default");
 
-        auto presence = m.agent_secret_presence_json("network.api_key");
+        auto presence = m.agent_secret_presence_json("apiKey");
         ASSERT_TRUE(presence.has_value());
         auto pv = c13_parse(*presence);
         EXPECT_EQ(pv.root.get("set").as_bool(), true);
         EXPECT_EQ(std::string(pv.root.get("source").as_str()), "file");
         EXPECT_EQ(presence->find("SECRET-zx9w87"), std::string::npos);
 
-        auto url = m.agent_secret_presence_json("network.base_url");
+        auto url = m.agent_secret_presence_json("baseUrl");
         ASSERT_TRUE(url.has_value());
         EXPECT_EQ(url->find("SECRET-zx9w87"), std::string::npos);
 
-        auto none = m.agent_secret_presence_json("network.proxy");
+        auto none = m.agent_secret_presence_json("proxy");
         ASSERT_TRUE(none.has_value());
         auto nv = c13_parse(*none);
         EXPECT_EQ(nv.root.get("set").as_bool(), false);
@@ -9675,14 +9671,14 @@ TEST(ConfigManagerUserSettings, ProvenanceShadowAndSecretPresence) {
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto token = m.agent_setting_value_json("model.default_model");
+        auto token = m.agent_setting_value_json("model");
         ASSERT_TRUE(token.has_value());
         auto tv = c13_parse(*token);
         EXPECT_EQ(std::string(tv.root.get("source").as_str()), "env");
         EXPECT_EQ(std::string(tv.root.get("env_var").as_str()), "LOOM_MODEL");
         EXPECT_EQ(std::string(tv.root.get("value").as_str()), "env-model");
 
-        auto out = m.set_user_setting("model.default_model",
+        auto out = m.set_user_setting("model",
                                       c13_parse(R"("written-model")"));
         ASSERT_TRUE(out.has_value());
         EXPECT_TRUE(out->shadowed);
@@ -9690,7 +9686,7 @@ TEST(ConfigManagerUserSettings, ProvenanceShadowAndSecretPresence) {
 
         // The post-write reload keeps reporting the env value/source.
         auto after = c13_parse(
-            *m.agent_setting_value_json("model.default_model"));
+            *m.agent_setting_value_json("model"));
         EXPECT_EQ(std::string(after.root.get("source").as_str()), "env");
         EXPECT_EQ(std::string(after.root.get("value").as_str()), "env-model");
         std::ifstream f(p.user_path);
@@ -9707,14 +9703,14 @@ TEST(ConfigManagerUserSettings, ProvenanceShadowAndSecretPresence) {
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto presence = m.agent_secret_presence_json("network.api_key");
+        auto presence = m.agent_secret_presence_json("apiKey");
         ASSERT_TRUE(presence.has_value());
         auto pv = c13_parse(*presence);
         EXPECT_EQ(pv.root.get("set").as_bool(), true);
         EXPECT_EQ(std::string(pv.root.get("source").as_str()), "env");
         EXPECT_EQ(presence->find("SECRET-zx9w87"), std::string::npos);
 
-        auto proxy = m.agent_secret_presence_json("network.proxy");
+        auto proxy = m.agent_secret_presence_json("proxy");
         ASSERT_TRUE(proxy.has_value());
         auto px = c13_parse(*proxy);
         EXPECT_EQ(px.root.get("set").as_bool(), true);
@@ -9732,7 +9728,7 @@ TEST(ConfigManagerUserSettings, ModelSourceNote) {
     EnvironmentGuard guard("LOOM_MODEL", "interactive-model");
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
-    auto token = m.agent_setting_value_json("model.default_model");
+    auto token = m.agent_setting_value_json("model");
     ASSERT_TRUE(token.has_value());
     EXPECT_NE(token->find("LOOM_MODEL"),
               std::string::npos);
@@ -9744,14 +9740,14 @@ TEST(ConfigManagerUserSettings, SectionWrongTypeReplaced) {
     c13_write_file(p.user_path, R"JSON({"model":[1,2,3]})JSON");
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
-    auto out = m.set_user_setting("model.default_model",
+    auto out = m.set_user_setting("model",
                                   c13_parse(R"("rebuilt")"));
     ASSERT_TRUE(out.has_value());
     auto root = c13_parse([&] { std::ifstream f(p.user_path);
         return std::string(std::istreambuf_iterator<char>(f),
                            std::istreambuf_iterator<char>()); }());
-    ASSERT_TRUE(root.root.get("model").is_obj());
-    EXPECT_EQ(root.root.get("model").get("default_model").as_str(),
+    ASSERT_TRUE(root.root.get("model").is_str());
+    EXPECT_EQ(root.root.get("model").as_str(),
               std::string_view("rebuilt"));
 }
 
@@ -9776,7 +9772,7 @@ TEST(ConfigManagerUserSettings, SilentLoadSalvageClearsFlagAndReloadWarning) {
         EXPECT_FALSE(testing::internal::GetCapturedStderr().empty());
 
         // Salvaging write repairs the file and clears the flag (D4 reload).
-        auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("1"));
         ASSERT_TRUE(out.has_value());
         ASSERT_TRUE(out->repaired.has_value());
         EXPECT_EQ(*out->repaired, "replaced_unparseable");
@@ -9794,7 +9790,7 @@ TEST(ConfigManagerUserSettings, SilentLoadSalvageClearsFlagAndReloadWarning) {
         auto m = p.manager();
         // Pre-write load hard-fails on the project tier, as designed.
         EXPECT_FALSE(m.load(loom::core::LoadOptions{.quiet = true}).has_value());
-        auto out = m.set_user_setting("network.max_retries", c13_parse("8"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("8"));
         ASSERT_TRUE(out.has_value()) << out.error().message;
         ASSERT_TRUE(out->reload_warning.has_value());
         EXPECT_NE(out->reload_warning->find("parse"), std::string::npos);
@@ -9802,7 +9798,7 @@ TEST(ConfigManagerUserSettings, SilentLoadSalvageClearsFlagAndReloadWarning) {
         auto root = c13_parse([&] { std::ifstream f(p.user_path);
             return std::string(std::istreambuf_iterator<char>(f),
                                std::istreambuf_iterator<char>()); }());
-        EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 8);
+        EXPECT_EQ(root.root.get("maxRetries").as_int(), 8);
     }
 }
 
@@ -9813,19 +9809,25 @@ TEST(ConfigManagerUserSettings, SpecTableIsClosed) {
     EXPECT_EQ(specs.size(), 16u);
     int writable = 0;
     for (const auto& spec : specs) {
-        EXPECT_EQ(spec.key,
-                  std::string(spec.section) + "." +
-                      std::string(spec.leaf));
+        // Flat keys (section == "") have key == leaf; nested keys have
+        // key == section + "." + leaf.
+        if (spec.section.empty()) {
+            EXPECT_EQ(spec.key, spec.leaf);
+        } else {
+            EXPECT_EQ(spec.key,
+                      std::string(spec.section) + "." +
+                          std::string(spec.leaf));
+        }
         if (spec.writable) ++writable;
     }
     EXPECT_EQ(writable, 7);
-    EXPECT_NE(loom::core::ConfigManager::find_user_setting("model.temperature"),
+    EXPECT_NE(loom::core::ConfigManager::find_user_setting("temperature"),
               nullptr);
     EXPECT_EQ(loom::core::ConfigManager::find_user_setting("nope.nope"),
               nullptr);
     EXPECT_TRUE(loom::core::ConfigManager::blocked_setting_message("xaaIdp")
                     .has_value());
-    EXPECT_FALSE(loom::core::ConfigManager::blocked_setting_message("model.temperature")
+    EXPECT_FALSE(loom::core::ConfigManager::blocked_setting_message("temperature")
                      .has_value());
 }
 
@@ -9833,8 +9835,8 @@ TEST(ConfigManagerUserSettings, SpecTableIsClosed) {
 // RFC-0001 B followup c13c — hardened atomic writer + coercion/env/BOM nits.
 // ===========================================================================
 
-// Pre-placed config.json.tmp symlink must never be followed: the victim is
-// untouched, config.json ends up a regular file, and the stale symlink is
+// Pre-placed settings.json.tmp symlink must never be followed: the victim is
+// untouched, settings.json ends up a regular file, and the stale symlink is
 // removed rather than left behind.
 TEST(ConfigManagerUserSettings, AtomicWriterTmpSymlinkNeverFollowed) {
     C13Paths p("symlink");
@@ -9851,7 +9853,7 @@ TEST(ConfigManagerUserSettings, AtomicWriterTmpSymlinkNeverFollowed) {
 
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
-    auto out = m.set_user_setting("network.max_retries", c13_parse("3"));
+    auto out = m.set_user_setting("maxRetries", c13_parse("3"));
     ASSERT_TRUE(out.has_value()) << out.error().message;
 
     // Victim bytes unchanged.
@@ -9861,14 +9863,14 @@ TEST(ConfigManagerUserSettings, AtomicWriterTmpSymlinkNeverFollowed) {
                                 std::istreambuf_iterator<char>());
         EXPECT_EQ(bytes, kCanary);
     }
-    // config.json is a REGULAR file with the correct JSON.
+    // settings.json is a REGULAR file with the correct JSON.
     std::error_code ec;
     EXPECT_EQ(fs::symlink_status(p.user_path, ec).type(),
               fs::file_type::regular);
     auto root = c13_parse([&] { std::ifstream f(p.user_path);
         return std::string(std::istreambuf_iterator<char>(f),
                            std::istreambuf_iterator<char>()); }());
-    EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 3);
+    EXPECT_EQ(root.root.get("maxRetries").as_int(), 3);
     // No leftover attacker symlink.
     EXPECT_NE(fs::symlink_status(legacy_tmp, ec).type(),
               fs::file_type::symlink);
@@ -9890,7 +9892,7 @@ TEST(ConfigManagerUserSettings, AtomicWriterTmpDirRefusedFifoCleared) {
         ASSERT_FALSE(ec);
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto out = m.set_user_setting("network.max_retries", c13_parse("3"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("3"));
         EXPECT_FALSE(out.has_value());
         EXPECT_EQ(fs::symlink_status(legacy_tmp).type(),
                   fs::file_type::directory);
@@ -9903,13 +9905,13 @@ TEST(ConfigManagerUserSettings, AtomicWriterTmpDirRefusedFifoCleared) {
         ASSERT_EQ(::mkfifo(legacy_tmp.c_str(), 0600), 0);
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
-        auto out = m.set_user_setting("network.max_retries", c13_parse("3"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("3"));
         EXPECT_TRUE(out.has_value()) << out.error().message;
         EXPECT_FALSE(fs::exists(legacy_tmp));
         auto root = c13_parse([&] { std::ifstream f(p.user_path);
             return std::string(std::istreambuf_iterator<char>(f),
                                std::istreambuf_iterator<char>()); }());
-        EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 3);
+        EXPECT_EQ(root.root.get("maxRetries").as_int(), 3);
     }
 }
 
@@ -9921,13 +9923,13 @@ TEST(ConfigManagerUserSettings, ConcurrentSetProcessesNoCollisions) {
     C13Paths p("concurrent");
     constexpr int kProcesses = 20;
     constexpr std::array<std::string_view, 7> keys = {{
-        "network.max_retries",
-        "model.max_output_tokens",
-        "model.context_window_size",
-        "model.thinking_budget",
-        "model.extended_thinking",
-        "model.temperature",
-        "model.default_model",
+        "maxRetries",
+        "maxOutputTokens",
+        "contextWindowSize",
+        "thinkingBudget",
+        "extendedThinking",
+        "temperature",
+        "model",
     }};
     std::array<std::string, keys.size()> last_values{{
         "100", "20000", "300000", "4096", "true", "0.5", "concurrent-model"
@@ -9942,7 +9944,7 @@ TEST(ConfigManagerUserSettings, ConcurrentSetProcessesNoCollisions) {
             (void)m.load();
             const std::string value = last_values[i % keys.size()];
             const std::string payload =
-                key == "model.default_model"
+                key == "model"
                     ? std::format("\"{}\"", value)
                     : value;
             auto out = m.set_user_setting(key, c13_parse(payload));
@@ -9967,13 +9969,13 @@ TEST(ConfigManagerUserSettings, ConcurrentSetProcessesNoCollisions) {
     ASSERT_TRUE(doc.has_value());
     const auto root = doc->root();
     ASSERT_TRUE(root.is_obj());
-    EXPECT_EQ(root.get("network").get("max_retries").as_int(), 100);
-    EXPECT_EQ(root.get("model").get("max_output_tokens").as_int(), 20000);
-    EXPECT_EQ(root.get("model").get("context_window_size").as_int(), 300000);
-    EXPECT_EQ(root.get("model").get("thinking_budget").as_int(), 4096);
-    EXPECT_EQ(root.get("model").get("extended_thinking").as_bool(), true);
-    EXPECT_DOUBLE_EQ(root.get("model").get("temperature").as_double(), 0.5);
-    EXPECT_EQ(root.get("model").get("default_model").as_str(),
+    EXPECT_EQ(root.get("maxRetries").as_int(), 100);
+    EXPECT_EQ(root.get("maxOutputTokens").as_int(), 20000);
+    EXPECT_EQ(root.get("contextWindowSize").as_int(), 300000);
+    EXPECT_EQ(root.get("thinkingBudget").as_int(), 4096);
+    EXPECT_EQ(root.get("extendedThinking").as_bool(), true);
+    EXPECT_DOUBLE_EQ(root.get("temperature").as_double(), 0.5);
+    EXPECT_EQ(root.get("model").as_str(),
               std::string_view("concurrent-model"));
 
     // No stale tmp debris (fixed or unique-named) remains.
@@ -9990,17 +9992,17 @@ TEST(ConfigManagerUserSettings, IntegralDoubleCoercion) {
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
 
-    ASSERT_TRUE(m.set_user_setting("model.max_output_tokens", c13_parse("4096.0"))
+    ASSERT_TRUE(m.set_user_setting("maxOutputTokens", c13_parse("4096.0"))
                     .has_value());
-    ASSERT_TRUE(m.set_user_setting("model.context_window_size", c13_parse("100000.0"))
+    ASSERT_TRUE(m.set_user_setting("contextWindowSize", c13_parse("100000.0"))
                     .has_value());
-    ASSERT_TRUE(m.set_user_setting("network.max_retries", c13_parse("0.0"))
+    ASSERT_TRUE(m.set_user_setting("maxRetries", c13_parse("0.0"))
                     .has_value());
-    ASSERT_TRUE(m.set_user_setting("model.thinking_budget", c13_parse("2048.0"))
+    ASSERT_TRUE(m.set_user_setting("thinkingBudget", c13_parse("2048.0"))
                     .has_value());
 
     for (const auto* bad : {"4096.5", "-1.0", "4294967296.0", "1e40"}) {
-        EXPECT_FALSE(m.set_user_setting("model.max_output_tokens",
+        EXPECT_FALSE(m.set_user_setting("maxOutputTokens",
                                         c13_parse(bad)).has_value()) << bad;
     }
     auto reloaded = p.manager();
@@ -10022,7 +10024,7 @@ TEST(ConfigManagerUserSettings, TemperatureTextStrictDoublePortable) {
 
     auto try_text = [&](const char* text) {
         return m.set_user_setting(
-            "model.temperature",
+            "temperature",
             c13_parse(std::format("\"{}\"", text)));
     };
 
@@ -10076,7 +10078,7 @@ TEST(ConfigManagerUserSettings, TemperatureTextStrictDoublePortable) {
 TEST(ConfigManagerUserSettings, MaxTokensEnvEngagementConsistent) {
     C13Paths p("envrange");
     c13_write_file(p.user_path,
-                   R"JSON({"model":{"max_output_tokens": 777}})JSON");
+                   R"JSON({"maxOutputTokens": 777})JSON");
 
     struct Observation {
         bool source_env;
@@ -10088,10 +10090,10 @@ TEST(ConfigManagerUserSettings, MaxTokensEnvEngagementConsistent) {
         auto m = p.manager();
         EXPECT_TRUE(m.load().has_value());
         auto token = c13_parse(
-            *m.agent_setting_value_json("model.max_output_tokens"));
+            *m.agent_setting_value_json("maxOutputTokens"));
         const bool source_env =
             std::string(token.root.get("source").as_str()) == "env";
-        auto out = m.set_user_setting("model.max_output_tokens",
+        auto out = m.set_user_setting("maxOutputTokens",
                                       c13_parse("888"));
         EXPECT_TRUE(out.has_value());
         // The post-write quiet reload re-applies the same env predicate, so
@@ -10131,8 +10133,8 @@ TEST(ConfigManagerUserSettings, MaxTokensEnvEngagementConsistent) {
 TEST(ConfigManagerC19, SavePreservesFileValueUnderEnvOverlay) {
     C13Paths p("c19bake");
     c13_write_file(p.project_path, R"JSON({
-      "model": {"default_model": "file-model-c19", "max_output_tokens": 512}
-    })JSON");
+  "model": "file-model-c19", "maxOutputTokens": 512
+})JSON");
     // The save path's .gitignore appender walks up from CWD; run inside the
     // ancestry-clean temp root so it cannot reach a real work tree.
     CurrentPathGuard cwd_guard(p.root);
@@ -10162,11 +10164,11 @@ TEST(ConfigManagerC19, SavePreservesFileValueUnderEnvOverlay) {
     {
         auto doc = loom::utils::json::parse_file(p.project_path);
         ASSERT_TRUE(doc.has_value());
-        EXPECT_EQ(doc->root().get("model").get("default_model").as_str(),
+        EXPECT_EQ(doc->root().get("model").as_str(),
                   std::string_view("file-model-c19"));
-        EXPECT_EQ(doc->root().get("model").get("max_output_tokens").as_int(),
+        EXPECT_EQ(doc->root().get("maxOutputTokens").as_int(),
                   512);
-        EXPECT_EQ(doc->root().get("display").get("theme").as_str(),
+        EXPECT_EQ(doc->root().get("theme").as_str(),
                   std::string_view("dark"));
     }
 
@@ -10181,11 +10183,11 @@ TEST(ConfigManagerC19, SavePreservesFileValueUnderEnvOverlay) {
         ASSERT_TRUE(m.save().has_value());
         auto doc = loom::utils::json::parse_file(p.project_path);
         ASSERT_TRUE(doc.has_value());
-        EXPECT_EQ(doc->root().get("model").get("default_model").as_str(),
+        EXPECT_EQ(doc->root().get("model").as_str(),
                   std::string_view("file-model-c19"));
-        EXPECT_EQ(doc->root().get("model").get("max_output_tokens").as_int(),
+        EXPECT_EQ(doc->root().get("maxOutputTokens").as_int(),
                   512);
-        EXPECT_EQ(doc->root().get("display").get("show_thinking").as_bool(),
+        EXPECT_EQ(doc->root().get("showThinking").as_bool(),
                   false);
     }
 
@@ -10207,7 +10209,7 @@ TEST(ConfigManagerC19, SavePreservesFileValueUnderEnvOverlay) {
         EXPECT_EQ(qbytes.find("env-only-c19"), std::string::npos) << qbytes;
         auto doc = loom::utils::json::parse_file(q.project_path);
         ASSERT_TRUE(doc.has_value());
-        EXPECT_EQ(doc->root().get("model").get("default_model").as_str(),
+        EXPECT_EQ(doc->root().get("model").as_str(),
                   std::string_view(""));
     }
 }
@@ -10225,7 +10227,7 @@ TEST(ConfigManagerC19, ExplicitSetSurvivesPostReloadThenUnrelatedSave) {
     // is the effective one (matches the /config command suite, where the
     // project file is the same file the manager was constructed over).
     c13_write_file(p.user_path, R"JSON({
-      "model": {"default_model": "seed-c19"}
+      "model": "seed-c19"}
     })JSON");
     CurrentPathGuard cwd_guard(p.root);
 
@@ -10234,7 +10236,7 @@ TEST(ConfigManagerC19, ExplicitSetSurvivesPostReloadThenUnrelatedSave) {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
         EXPECT_EQ(m.settings().model.default_model, "env-c19");  // env wins
-        auto out = m.set_user_setting("model.default_model",
+        auto out = m.set_user_setting("model",
                                       c13_parse(R"("user-x-c19")"));
         ASSERT_TRUE(out.has_value());
         EXPECT_TRUE(out->shadowed);
@@ -10277,7 +10279,7 @@ TEST(ConfigManagerC19, ExplicitSetToEnvValueStillPersists) {
         ASSERT_TRUE(m.load().has_value());
         // The env value is what the (absent) file would lose; the user sets
         // the SAME string explicitly.
-        m.clear_env_provenance("model", "default_model");
+        m.clear_env_provenance("", "model");
         ASSERT_TRUE(m.save().has_value());
     }
     {
@@ -10299,32 +10301,31 @@ TEST(ConfigManagerUserSettings, BomStrippedOnLoadAndPatch) {
     {
         std::ofstream f(p.user_path, std::ios::binary);
         f << "\xEF\xBB\xBF"
-          << R"({"network":{"max_retries":4},)"
-          << R"("model":{"default_model":"bom-kept"}} TRAIL JUNK)";
+          << R"({"maxRetries": 4, "model": "bom-kept"} TRAIL JUNK)";
     }
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());  // soft tier tolerated
-        auto out = m.set_user_setting("network.max_retries", c13_parse("5"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("5"));
         ASSERT_TRUE(out.has_value());
         ASSERT_TRUE(out->repaired.has_value());
         EXPECT_EQ(*out->repaired, "trailing_junk_dropped");
         auto repaired = loom::utils::json::parse_file(p.user_path);
         ASSERT_TRUE(repaired.has_value());
         const auto root = repaired->root();
-        EXPECT_EQ(root.get("network").get("max_retries").as_int(), 5);
-        EXPECT_EQ(root.get("model").get("default_model").as_str(),
+        EXPECT_EQ(root.get("maxRetries").as_int(), 5);
+        EXPECT_EQ(root.get("model").as_str(),
                   std::string_view("bom-kept"));
     }
     {
         std::ofstream f(p.user_path, std::ios::binary);
-        f << "\xEF\xBB\xBF" << R"({"network":{"max_retries":6}})";
+        f << "\xEF\xBB\xBF" << R"({"maxRetries": 6})";
     }
     {
         auto m = p.manager();
         ASSERT_TRUE(m.load().has_value());
         EXPECT_EQ(m.settings().network.max_retries, 6u);
-        auto out = m.set_user_setting("network.max_retries", c13_parse("7"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("7"));
         ASSERT_TRUE(out.has_value());
         EXPECT_FALSE(out->repaired.has_value());
         auto reloaded = p.manager();
@@ -10394,8 +10395,8 @@ struct C13GitRepo {
 
     [[nodiscard]] loom::core::ConfigManager manager() const {
         return loom::core::ConfigManager(outside / "user.json",
-                                       loom / "config.json",
-                                       loom / "config.local.json");
+                                       loom / "settings.json",
+                                       loom / "settings.local.json");
     }
 };
 
@@ -10421,18 +10422,18 @@ TEST(ConfigManagerC13d, LocalWriteIgnoresDataAndLockTracksGitignore) {
         ASSERT_TRUE(m.upsert_mcp_server(loom::core::McpStorageScope::Local, cfg)
                         .has_value());
     }
-    EXPECT_TRUE(fs::exists(repo.loom / "config.local.json"));
-    EXPECT_TRUE(fs::exists(repo.loom / "config.local.json.lock"));
+    EXPECT_TRUE(fs::exists(repo.loom / "settings.local.json"));
+    EXPECT_TRUE(fs::exists(repo.loom / "settings.local.json.lock"));
 
     repo.git("git add -A");
     const auto status = repo.porcelain();
     EXPECT_NE(status.find(".gitignore"), std::string::npos);
-    EXPECT_EQ(status.find("config.local.json"), std::string::npos) << status;
-    EXPECT_EQ(status.find("config.local.json.lock"), std::string::npos)
+    EXPECT_EQ(status.find("settings.local.json"), std::string::npos) << status;
+    EXPECT_EQ(status.find("settings.local.json.lock"), std::string::npos)
         << status;
 }
 
-// Project-tier save: config.json TRACKED, only the lock is ignored.
+// Project-tier save: settings.json TRACKED, only the lock is ignored.
 TEST(ConfigManagerC13d, ProjectSaveTracksDataIgnoresLock) {
     if (!c13_git_available()) GTEST_SKIP() << "git not available";
     C13GitRepo repo("project");
@@ -10443,20 +10444,20 @@ TEST(ConfigManagerC13d, ProjectSaveTracksDataIgnoresLock) {
         ASSERT_TRUE(m.load().has_value());
         ASSERT_TRUE(m.save().has_value());
     }
-    EXPECT_TRUE(fs::exists(repo.loom / "config.json"));
-    EXPECT_TRUE(fs::exists(repo.loom / "config.json.lock"));
+    EXPECT_TRUE(fs::exists(repo.loom / "settings.json"));
+    EXPECT_TRUE(fs::exists(repo.loom / "settings.json.lock"));
 
     repo.git("git add -A");
     const auto status = repo.porcelain();
-    EXPECT_NE(status.find(".loom/config.json"), std::string::npos) << status;
-    EXPECT_EQ(status.find("config.json.lock"), std::string::npos) << status;
+    EXPECT_NE(status.find(".loom/settings.json"), std::string::npos) << status;
+    EXPECT_EQ(status.find("settings.json.lock"), std::string::npos) << status;
 
     // The .gitignore rule names the lock, never the data file.
     std::ifstream gi(repo.root / ".gitignore");
     const std::string text((std::istreambuf_iterator<char>(gi)),
                            std::istreambuf_iterator<char>());
-    EXPECT_NE(text.find("config.json.lock"), std::string::npos);
-    EXPECT_EQ(text.find("\nconfig.json\n"), std::string::npos);
+    EXPECT_NE(text.find("settings.json.lock"), std::string::npos);
+    EXPECT_EQ(text.find("\nsettings.json\n"), std::string::npos);
 }
 
 // Repeated local/project writes never duplicate ignore lines.
@@ -10484,10 +10485,10 @@ TEST(ConfigManagerC13d, GitignoreLinesAreIdempotent) {
         return std::string((std::istreambuf_iterator<char>(f)),
                            std::istreambuf_iterator<char>());
     }();
-    EXPECT_EQ(c6_count_occurrences(text, "config.local.json\n"), 1u) << text;
-    EXPECT_EQ(c6_count_occurrences(text, "config.local.json.lock\n"), 1u)
+    EXPECT_EQ(c6_count_occurrences(text, "settings.local.json\n"), 1u) << text;
+    EXPECT_EQ(c6_count_occurrences(text, "settings.local.json.lock\n"), 1u)
         << text;
-    EXPECT_EQ(c6_count_occurrences(text, "config.json.lock\n"), 1u) << text;
+    EXPECT_EQ(c6_count_occurrences(text, "settings.json.lock\n"), 1u) << text;
 }
 
 // User tier writes create no .gitignore at all.
@@ -10499,7 +10500,7 @@ TEST(ConfigManagerC13d, UserWritesNoGitignore) {
     {
         auto m = repo.manager();
         ASSERT_TRUE(m.load().has_value());
-        ASSERT_TRUE(m.set_user_setting("network.max_retries", c13_parse("2"))
+        ASSERT_TRUE(m.set_user_setting("maxRetries", c13_parse("2"))
                         .has_value());
     }
     EXPECT_FALSE(fs::exists(repo.root / ".gitignore"));
@@ -10608,7 +10609,7 @@ TEST(ConfigManagerC13d, BoundedLockWaitSuccessThenTimeout) {
         await_ready(h.read_fd);
         auto m = p.manager();
         const auto start = std::chrono::steady_clock::now();
-        auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("1"));
         const auto elapsed = std::chrono::duration_cast<
             std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - start).count();
@@ -10630,10 +10631,10 @@ TEST(ConfigManagerC13d, BoundedLockWaitSuccessThenTimeout) {
         ASSERT_GT(h.pid, 0);
         HolderReaper reaper(h.pid);
         await_ready(h.read_fd);
-        c13_write_file(p.user_path, R"JSON({"network":{"max_retries":9}})JSON");
+        c13_write_file(p.user_path, R"JSON({"maxRetries": 9})JSON");
         auto m = p.manager();
         const auto start = std::chrono::steady_clock::now();
-        auto out = m.set_user_setting("network.max_retries", c13_parse("7"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("7"));
         const auto elapsed = std::chrono::duration_cast<
             std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - start).count();
@@ -10651,7 +10652,7 @@ TEST(ConfigManagerC13d, BoundedLockWaitSuccessThenTimeout) {
         // File unmodified; no tmp debris of any kind.
         auto doc = loom::utils::json::parse_file(p.user_path);
         ASSERT_TRUE(doc.has_value());
-        EXPECT_EQ(doc->root().get("network").get("max_retries").as_int(), 9);
+        EXPECT_EQ(doc->root().get("maxRetries").as_int(), 9);
         for (const auto& entry : fs::directory_iterator(p.root)) {
             const auto name = entry.path().filename().string();
             EXPECT_EQ(name.find(".tmp."), std::string::npos) << name;
@@ -11011,7 +11012,7 @@ TEST(ConfigManagerC15, FifoLockNameRejectedWithoutBlocking) {
 
     auto m = p.manager();
     const auto start = std::chrono::steady_clock::now();
-    auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+    auto out = m.set_user_setting("maxRetries", c13_parse("1"));
     const auto elapsed = std::chrono::duration_cast<
         std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - start).count();
@@ -11042,23 +11043,23 @@ TEST(ConfigManagerC13d, LegacyTmpRegularAndFifoDebrisAutoRemoved) {
 
     {
         std::ofstream(p.user_path.string() + ".tmp") << "old crash junk";
-        auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("1"));
         ASSERT_TRUE(out.has_value()) << out.error().message;
         EXPECT_FALSE(fs::exists(p.user_path.string() + ".tmp"));
         auto root = c13_parse([&] { std::ifstream f(p.user_path);
             return std::string(std::istreambuf_iterator<char>(f),
                                std::istreambuf_iterator<char>()); }());
-        EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 1);
+        EXPECT_EQ(root.root.get("maxRetries").as_int(), 1);
     }
     {
         ASSERT_EQ(::mkfifo((p.user_path.string() + ".tmp").c_str(), 0600), 0);
-        auto out = m.set_user_setting("network.max_retries", c13_parse("2"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("2"));
         ASSERT_TRUE(out.has_value()) << out.error().message;
         EXPECT_FALSE(fs::exists(p.user_path.string() + ".tmp"));
         auto root = c13_parse([&] { std::ifstream f(p.user_path);
             return std::string(std::istreambuf_iterator<char>(f),
                                std::istreambuf_iterator<char>()); }());
-        EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 2);
+        EXPECT_EQ(root.root.get("maxRetries").as_int(), 2);
     }
 }
 
@@ -11074,7 +11075,7 @@ TEST(ConfigManagerC13d, SymlinkedLeafAndLockRefusedWithSpecificErrors) {
     fs::create_symlink(victim, p.user_path);
     {
         auto m = p.manager();
-        auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("1"));
         ASSERT_FALSE(out.has_value());
         EXPECT_NE(out.error().message.find("symbolic link"),
                   std::string::npos);
@@ -11095,7 +11096,7 @@ TEST(ConfigManagerC13d, SymlinkedLeafAndLockRefusedWithSpecificErrors) {
     fs::create_symlink(victim, p.user_path.string() + ".lock");
     {
         auto m = p.manager();
-        auto out = m.set_user_setting("network.max_retries", c13_parse("1"));
+        auto out = m.set_user_setting("maxRetries", c13_parse("1"));
         ASSERT_FALSE(out.has_value());
         EXPECT_NE(out.error().message.find("symlinked configuration lock"),
                   std::string::npos);
@@ -11141,7 +11142,7 @@ TEST(ConfigManagerC13d, FullSavePreservesMode) {
     if (::getuid() == 0) GTEST_SKIP() << "modes are bypassed for root";
     C13Paths p("savemode");
     CurrentPathGuard cwd_guard(p.root);
-    c13_write_file(p.project_path, R"JSON({"network":{"max_retries":1}})JSON");
+    c13_write_file(p.project_path, R"JSON({"maxRetries": 1})JSON");
     fs::permissions(p.project_path,
                     fs::perms::owner_read | fs::perms::owner_write,
                     fs::perm_options::replace);
@@ -11174,7 +11175,7 @@ TEST(ConfigManagerC13d, FullSaveSymlinkedLeafRefused) {
 TEST(ConfigManagerC13d, ConcurrentSaveAndPatchersAlwaysParseable) {
     C13Paths p("saveconcurrent");
     CurrentPathGuard cwd_guard(p.root);
-    c13_write_file(p.user_path, R"JSON({"network":{"max_retries":1}})JSON");
+    c13_write_file(p.user_path, R"JSON({"maxRetries": 1})JSON");
 
     constexpr int kChildren = 11;
     std::array<int, kChildren> pids{};
@@ -11188,11 +11189,11 @@ TEST(ConfigManagerC13d, ConcurrentSaveAndPatchersAlwaysParseable) {
                 _exit(m.save()
                           ? 0 : 2);
             }
-            const char* keys[] = {"network.max_retries",
-                                  "model.max_output_tokens",
-                                  "model.context_window_size",
-                                  "model.thinking_budget",
-                                  "model.extended_thinking"};
+            const char* keys[] = {"maxRetries",
+                                  "maxOutputTokens",
+                                  "contextWindowSize",
+                                  "thinkingBudget",
+                                  "extendedThinking"};
             const char* vals[] = {"100", "20000", "300000", "4096", "true"};
             const int k = i % 5;
             auto out = m.set_user_setting(
@@ -11213,9 +11214,9 @@ TEST(ConfigManagerC13d, ConcurrentSaveAndPatchersAlwaysParseable) {
     auto doc = loom::utils::json::parse_file(p.user_path);
     ASSERT_TRUE(doc.has_value());
     ASSERT_TRUE(doc->root().is_obj());
-    EXPECT_EQ(doc->root().get("model").get("max_output_tokens").as_int(),
+    EXPECT_EQ(doc->root().get("maxOutputTokens").as_int(),
               20000);
-    EXPECT_EQ(doc->root().get("model").get("extended_thinking").as_bool(),
+    EXPECT_EQ(doc->root().get("extendedThinking").as_bool(),
               true);
     // Project save produced a parseable full document.
     auto project_doc = loom::utils::json::parse_file(p.project_path);
@@ -11243,7 +11244,7 @@ TEST(ConfigManagerC13d, PresprayedPredictableTmpNamesDefeated) {
     }
     auto m = p.manager();
     ASSERT_TRUE(m.load().has_value());
-    auto out = m.set_user_setting("network.max_retries", c13_parse("3"));
+    auto out = m.set_user_setting("maxRetries", c13_parse("3"));
     ASSERT_TRUE(out.has_value()) << out.error().message;
 
     {
@@ -11258,7 +11259,7 @@ TEST(ConfigManagerC13d, PresprayedPredictableTmpNamesDefeated) {
     auto root = c13_parse([&] { std::ifstream f(p.user_path);
         return std::string(std::istreambuf_iterator<char>(f),
                            std::istreambuf_iterator<char>()); }());
-    EXPECT_EQ(root.root.get("network").get("max_retries").as_int(), 3);
+    EXPECT_EQ(root.root.get("maxRetries").as_int(), 3);
 }
 
 // ===========================================================================
@@ -11343,8 +11344,8 @@ TEST(ConfigManagerC13e, NestedCwdAppendsAtRepoRoot) {
     fs::create_directories(nested);
 
     const auto user_path    = nested / "user.json";
-    const auto project_path = nested / ".loom" / "config.json";
-    const auto local_path   = nested / ".loom" / "config.local.json";
+    const auto project_path = nested / ".loom" / "settings.json";
+    const auto local_path   = nested / ".loom" / "settings.local.json";
 
     {
         CurrentPathGuard cwd_guard(nested);
@@ -11366,10 +11367,10 @@ TEST(ConfigManagerC13e, NestedCwdAppendsAtRepoRoot) {
         std::ifstream f(root_gi);
         const std::string text((std::istreambuf_iterator<char>(f)),
                                std::istreambuf_iterator<char>());
-        EXPECT_NE(text.find("config.local.json.lock"), std::string::npos);
-        EXPECT_NE(text.find("config.local.json\n"), std::string::npos);
-        EXPECT_NE(text.find("config.json.lock"), std::string::npos);
-        EXPECT_EQ(text.find("config.json\n"), std::string::npos);
+        EXPECT_NE(text.find("settings.local.json.lock"), std::string::npos);
+        EXPECT_NE(text.find("settings.local.json\n"), std::string::npos);
+        EXPECT_NE(text.find("settings.json.lock"), std::string::npos);
+        EXPECT_EQ(text.find("settings.json\n"), std::string::npos);
     }
     fs::remove_all(base);
 }
@@ -11382,7 +11383,7 @@ TEST(ConfigManagerC13e, NestedCwdAppendsAtRepoRoot) {
 TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
     // C13Paths anchors p.root under a git-ANCESTRY-CLEAN base (this box
     // carries a stray /tmp/.git, which would otherwise make forked savers
-    // write config.json.lock into /tmp/.gitignore), so the claim below is
+    // write settings.json.lock into /tmp/.gitignore), so the claim below is
     // now true rather than merely CI-lucky.
     C13Paths p("samefile");
     // Forked children inherit cwd: keep every ignore-append probe inside
@@ -11390,9 +11391,9 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
     // .gitignore can be created anywhere up the chain.
     CurrentPathGuard cwd_guard(p.root);
     c13_write_file(p.project_path, R"JSON({
-      "network": {"max_retries": 1},
-      "model": {"default_model": "seed-model"}
-    })JSON");
+  "maxRetries": 1,
+  "model": "seed-model"
+})JSON");
 
     // Snapshot pre-existing .gitignore files on the exact chain this
     // fixture uses (recorded in p.base) before the fork storm.
@@ -11427,11 +11428,11 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
         pids[static_cast<std::size_t>(idx++)] = pid;
     }
     const std::array<std::string_view, 5> keys = {{
-        "network.max_retries",
-        "model.max_output_tokens",
-        "model.context_window_size",
-        "model.extended_thinking",
-        "model.default_model",
+        "maxRetries",
+        "maxOutputTokens",
+        "contextWindowSize",
+        "extendedThinking",
+        "model",
     }};
     for (int k = 0; k < kPatchers; ++k) {
         const pid_t pid = ::fork();
@@ -11441,10 +11442,10 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
             (void)m.load();
             const auto& key = keys[static_cast<std::size_t>(k % keys.size())];
             const char* payload =
-                key == "model.default_model" ? R"("contend-model")"
-                : key == "model.extended_thinking" ? "true"
-                : key == "model.max_output_tokens" ? "2048"
-                : key == "model.context_window_size" ? "100000"
+                key == "model" ? R"("contend-model")"
+                : key == "extendedThinking" ? "true"
+                : key == "maxOutputTokens" ? "2048"
+                : key == "contextWindowSize" ? "100000"
                 : "7";
             auto out = m.set_user_setting(key, c13_parse(payload));
             _exit(out.has_value() ? 0 : 2);
@@ -11562,7 +11563,7 @@ void c16_raw_array_reader(const fs::path& path,
 
 // c16 production-shape storm child: an exclusive RMW rewrite of the inbox
 // (lock + atomic replace, rotating payload) followed by a full team
-// config.json rewrite, looped until the deadline.
+// settings.json rewrite, looped until the deadline.
 void c16_storm_writer_child(std::string teams_root,
                             std::string team,
                             std::string agent,
@@ -12533,7 +12534,7 @@ TEST(XaaConfigC17a, XaaIdpFileCallbackPortLineIsIgnored) {
 // FINDING 1: c17 added XaaConfig::callback_port + a `callback_port=` parse in
 // ~/.loom/xaa-idp.txt, but NOTHING in src/ ever WRITES that file (only tests
 // did), while the SUPPORTED surface `/mcp xaa setup --callback-port` persists
-// settings.xaaIdp.callbackPort (config.json). Two stores for one setting, and
+// settings.xaaIdp.callbackPort (settings.json). Two stores for one setting, and
 // the CLI-writable one did not reach the --xaa runtime path.
 //
 // Resolution: ONE authoritative store — settings.xaaIdp.callbackPort. The
@@ -12735,7 +12736,7 @@ TEST(XaaIdpLoginC17a, ProductionLoaderPropagatesXaaCallbackPort) {
 
     // Write the project config tier the production loader reads.
     {
-        std::ofstream f(work / ".loom" / "config.json");
+        std::ofstream f(work / ".loom" / "settings.json");
         f << R"JSON({
   "xaaIdp": { "issuer": "https://idp.example.com", "clientId": "loom-cli", "callbackPort": 19485 }
 })JSON";
@@ -12786,7 +12787,7 @@ TEST(XaaIdpLoginC17a, PortSurvivesSyncBeforeReadProductionOrdering) {
     reset();
 
     {
-        std::ofstream f(work / ".loom" / "config.json");
+        std::ofstream f(work / ".loom" / "settings.json");
         f << R"JSON({
   "xaaIdp": { "issuer": "https://idp.example.com", "clientId": "loom-cli", "callbackPort": 19485 }
 })JSON";
@@ -13197,7 +13198,7 @@ TEST(XaaIdpLoginC20, LegacyMigrationSkippedWhenIssuerEmpty) {
 
     // NO xaaIdp key in the config -> issuer is empty.
     {
-        std::ofstream f(work / ".loom" / "config.json");
+        std::ofstream f(work / ".loom" / "settings.json");
         f << "{}\n";
     }
     // Legacy file with a secret line that must NOT be migrated.

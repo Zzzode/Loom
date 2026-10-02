@@ -40,6 +40,8 @@ import loom.server.server_main;
 import loom.cli.websocket_transport;
 import loom.config.settings;
 import loom.config.config;
+import loom.config.settings_manager;
+import loom.constants.paths;
 
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 namespace fs = std::filesystem;
@@ -676,12 +678,130 @@ int run_runtime_tool_once(const CliOptions& opts) {
 }
 
 /**
+ * Migrate a legacy config.json (structured nested format) to the unified
+ * settings.json (flat camelCase format). One-time, idempotent: skips when
+ * the target already exists or the source is absent. The old file is renamed
+ * to .bak, never deleted.
+ */
+void migrate_config_to_settings() {
+    namespace json = loom::utils::json;
+
+    struct TierPath {
+        fs::path old_path;
+        fs::path new_path;
+    };
+
+    const auto user_dir = loom::constants::paths::config_home_write();
+    const auto project_dir = fs::current_path() / ".loom";
+
+    const TierPath tiers[] = {
+        {user_dir / "config.json",       user_dir / "settings.json"},
+        {project_dir / "config.json",    project_dir / "settings.json"},
+        {project_dir / "config.local.json", project_dir / "settings.local.json"},
+    };
+
+    // Structured section → flat key mapping (leaf name → flat camelCase key)
+    struct KeyMap { std::string_view section; std::string_view leaf; std::string_view flat; };
+    static constexpr KeyMap key_map[] = {
+        {"model", "default_model",       "model"},
+        {"model", "max_output_tokens",   "maxOutputTokens"},
+        {"model", "temperature",         "temperature"},
+        {"model", "extended_thinking",   "extendedThinking"},
+        {"model", "thinking_budget",     "thinkingBudget"},
+        {"model", "context_window_size", "contextWindowSize"},
+        {"display", "theme",             "theme"},
+        {"display", "show_thinking",     "showThinking"},
+        {"display", "show_token_usage",  "showTokenUsage"},
+        {"display", "compact_mode",      "compactMode"},
+        {"display", "line_width",        "lineWidth"},
+        {"network", "api_key",           "apiKey"},
+        {"network", "base_url",          "baseUrl"},
+        {"network", "proxy",             "proxy"},
+        {"network", "timeout_seconds",   "timeoutSeconds"},
+        {"network", "max_retries",       "maxRetries"},
+        {"network", "verify_ssl",        "verifySsl"},
+    };
+
+    for (const auto& tier : tiers) {
+        std::error_code ec;
+        if (fs::exists(tier.new_path, ec)) continue;
+        if (!fs::exists(tier.old_path, ec)) continue;
+
+        // Read old file
+        std::ifstream in(tier.old_path);
+        if (!in.is_open()) continue;
+        std::string content((std::istreambuf_iterator<char>(in)),
+                             std::istreambuf_iterator<char>());
+        auto parsed = json::parse(content);
+        if (!parsed || !parsed->root().is_obj()) continue;
+
+        // Build new flat document
+        json::JsonMutDoc doc;
+        auto root = doc.object();
+
+        // Copy all keys, flattening structured sections
+        parsed->root().iter_obj([&](auto key, auto value) {
+            if (!key.is_str()) return;
+            const auto key_str = std::string(key.as_str());
+
+            // Check if this is a structured section to flatten
+            bool flattened = false;
+            for (const auto& km : key_map) {
+                if (key_str == km.section && value.is_obj()) {
+                    // Flatten this section
+                    value.iter_obj([&](auto leaf_key, auto leaf_val) {
+                        if (!leaf_key.is_str()) return;
+                        const auto leaf_str = std::string(leaf_key.as_str());
+                        for (const auto& km2 : key_map) {
+                            if (km2.section == key_str && km2.leaf == leaf_str) {
+                                root.add(km2.flat, doc.copy_val(leaf_val));
+                                break;
+                            }
+                        }
+                        // Unknown leaves in a known section are dropped
+                        // (they were never part of the documented schema)
+                    });
+                    flattened = true;
+                    break;
+                }
+            }
+
+            // Keys that are already flat (mcpServers, features, etc.)
+            if (!flattened) {
+                root.add(key_str, doc.copy_val(value));
+            }
+        });
+
+        doc.set_root(root);
+
+        // Ensure parent directory exists
+        fs::create_directories(tier.new_path.parent_path(), ec);
+
+        // Write new file atomically
+        const auto new_str = doc.to_string();
+        const auto tmp_path = tier.new_path;
+        std::ofstream out(tmp_path, std::ios::trunc);
+        if (!out.is_open()) continue;
+        out << new_str;
+        out.close();
+
+        // Rename old file to .bak
+        const auto bak_path = tier.old_path;
+        fs::rename(tier.old_path, bak_path, ec);
+
+        std::println(stderr, "[migrate] {} → {} (old file saved as {})",
+                     tier.old_path.string(), tier.new_path.string(),
+                     bak_path.string());
+    }
+}
+
+/**
  * Load engine configuration from environment and defaults
  */
 auto load_config() -> loom::core::QueryEngineConfig {
     loom::core::QueryEngineConfig config;
 
-    // Load config file (~/.loom/config.json) as a fallback for credentials
+    // Load config file (~/.loom/settings.json) as a fallback for credentials
     // and model settings. Env vars take precedence over file values.
     loom::core::ConfigManager file_config;
     if (auto result = file_config.load(loom::core::LoadOptions{.quiet = true}); !result) {
@@ -1738,6 +1858,11 @@ int main(int argc, const char* argv[]) {
         if (settings_api_key_override && !settings_api_key_override->empty()) {
             set_env_value("LOOM_API_KEY", *settings_api_key_override);
         }
+        // `baseUrl` from settings mirrors a sibling `env.LOOM_BASE_URL`:
+        // apply it to the process env BEFORE load_config() reads it.
+        if (applied->base_url && !applied->base_url->empty()) {
+            set_env_value("LOOM_BASE_URL", *applied->base_url);
+        }
         if (applied->status_line) {
             apply_flag_status_line_environment(*applied->status_line);
         }
@@ -1750,6 +1875,9 @@ int main(int argc, const char* argv[]) {
             }
             if (applied->api_key) {
                 std::println(stderr, "[settings] apiKey override provided");
+            }
+            if (applied->base_url) {
+                std::println(stderr, "[settings] baseUrl override: {}", *applied->base_url);
             }
             if (applied->status_line) {
                 std::println(stderr, "[settings] statusLine override: {}",
@@ -1852,6 +1980,10 @@ int main(int argc, const char* argv[]) {
     if (opts.bridge_daemon_once) {
         return run_bridge_daemon_once(opts);
     }
+
+    // One-time migration: legacy config.json → unified settings.json.
+    // Idempotent; skips when target exists or source is absent.
+    migrate_config_to_settings();
 
     auto config = load_config();
     // permissions.deny from --settings feeds the pre-request tool filter.

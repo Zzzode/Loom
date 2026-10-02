@@ -1291,7 +1291,7 @@ bool AppAdapter::OnEvent(Event event) {
     if (event == Event::Custom) {
         // Event-driven pane-observer wake: the background capture pass flags
         // this atomic (never touches screen state off-thread). Gated so the
-        // 50ms PostRenderEvent animation traffic does no config.json I/O.
+        // 50ms PostRenderEvent animation traffic does no settings.json I/O.
         if (pane_snapshot_dirty_.exchange(false,
                                           std::memory_order_acq_rel)) {
             ProjectLiveTeammatesToScreenState();

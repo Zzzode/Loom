@@ -119,6 +119,9 @@ Run `loom --help` for the full list (45 flags).
 
 ### Pointing at an endpoint
 
+Credentials and endpoint URLs are read from `settings.json` (see above) or
+environment variables:
+
 ```bash
 LOOM_API_KEY=... LOOM_BASE_URL=... ./build/clang23-debug/bin/loom
 ```
@@ -150,10 +153,30 @@ transcripts land in `~/.loom/sessions/`, API dumps in
 
 ### Settings file
 
+Loom reads a single unified settings file, `settings.json`, from the config
+directory (see above). The format is flat camelCase, matching the `--settings`
+flag payload:
+
+```json
+{
+  "apiKey": "sk-...",
+  "baseUrl": "https://api.example.com",
+  "model": "claude-sonnet-4-20250514",
+  "theme": "auto",
+  "verbose": false,
+  "vimMode": false,
+  "mcpServers": { ... },
+  "permissions": { "deny": [...] }
+}
+```
+
 The `--settings` flag loads settings from a JSON file path or inline JSON. It
 is the highest-priority source and supports `env` (process env vars, e.g.
-`LOOM_API_KEY`/`LOOM_BASE_URL`), `apiKey`, `model`, `theme`,
+`LOOM_API_KEY`/`LOOM_BASE_URL`), `apiKey`, `baseUrl`, `model`, `theme`,
 `permissions`, `mcpServers`, `hooks`, and `statusLine`.
+
+A legacy `config.json` (structured nested format) is migrated automatically to
+`settings.json` on first run; the old file is renamed to `config.json.bak`.
 
 ### MCP server configuration
 
@@ -161,9 +184,9 @@ MCP servers are configured with `loom mcp add/remove/enable/disable` and live
 in three physical JSON files, highest precedence first:
 
 ```
-local    <project>/.loom/config.local.json  (gitignored)
-project  <project>/.loom/config.json         (VCS-tracked)
-user     $LOOM_CONFIG_DIR/config.json, else ~/.loom/config.json
+local    <project>/.loom/settings.local.json  (gitignored)
+project  <project>/.loom/settings.json         (VCS-tracked)
+user     $LOOM_CONFIG_DIR/settings.json, else ~/.loom/settings.json
 ```
 
 Same-named entries overlay per entry across the files; `--scope` patches

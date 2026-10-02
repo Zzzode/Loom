@@ -38,15 +38,14 @@ The committed presets target the macOS CI runner and will not configure here.
 Use the machine-local presets (gitignored, because they hold absolute paths):
 
 ```bash
-cmake --preset local-linux-clang23            # debug (LLVM 23)
-cmake --preset local-linux-clang23-release    # release (LLVM 23, -O2)
-cmake --build --preset local-linux-clang23 -j8
-ctest --preset local-linux-clang23 -j$(nproc)
+cmake --preset local-linux            # debug (LLVM 23)
+cmake --preset local-linux-release    # release (LLVM 23, -O2)
+cmake --build --preset local-linux -j8
+ctest --preset local-linux -j$(nproc)
 ```
 
-The `local-linux` / `local-linux-release` presets pin Homebrew LLVM 22 and are
-kept for reference; `local-linux-clang23*` use Homebrew LLVM 23.1.2, which
-fixes two LLVM 22 defects:
+The local presets use Homebrew LLVM 23.1.2, which fixes two LLVM 22 defects
+that previously required workarounds:
 
 - **LLVM #184957** (operator new ambiguity with textual libc++ + `import std;`)
   — fixed by PR #179178. All 13 impl units that kept textual std headers as a

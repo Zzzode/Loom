@@ -63,26 +63,14 @@ ctest --preset debug -j$(nproc)
 
 ### On Linux
 
-The committed presets target macOS. On Linux, copy the machine-local preset
-(gitignored, because it holds absolute paths) and adjust the compiler
-prefixes to your own LLVM 23 install:
+The same presets work — `AutoToolchain.cmake` auto-detects Homebrew LLVM on
+Linux (`/home/linuxbrew/.linuxbrew/opt/llvm`) and configures libc++, glibc,
+and system OpenSSL/curl paths automatically. No machine-local presets needed.
 
 ```bash
-cp CMakeUserPresets.json.example CMakeUserPresets.json
-# Edit CMakeUserPresets.json: replace <LLVM_PREFIX> and <BREW_PREFIX>
-# with your own paths (e.g. /home/linuxbrew/.linuxbrew/opt/llvm).
-
-cmake --preset local-linux-clang23
-cmake --build --preset local-linux-clang23 -j8
-ctest --preset local-linux-clang23 -j$(nproc)
-```
-
-For a release build (`-O2 -DNDEBUG`):
-
-```bash
-cmake --preset local-linux-clang23-release
-cmake --build --preset local-linux-clang23-release -j8
-ctest --preset local-linux-clang23-release -j$(nproc)
+cmake --preset debug
+cmake --build --preset debug -j8
+ctest --preset debug -j$(nproc)
 ```
 
 ### Offline builds

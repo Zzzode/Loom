@@ -145,6 +145,16 @@ struct XaaIdpSettings {
     std::optional<int> callback_port;
 };
 
+/// Status line configuration (statusLine key in settings.json).
+/// Mirrors FlagStatusLineSettings so the file-based path and the
+/// --settings flag path produce the same env-var injection.
+struct StatusLineSettings {
+    std::optional<std::string> type;      // "command" (only supported type)
+    std::optional<std::string> command;   // Shell command to execute
+    std::optional<bool> enabled;          // Explicit on/off; null = auto
+    std::optional<int> padding;           // Left padding in columns
+};
+
 /// Top-level settings aggregating all configuration sections
 struct Settings {
     ModelSettings model;
@@ -156,6 +166,7 @@ struct Settings {
     std::optional<std::string> system_prompt;      // Custom system prompt override
     std::vector<std::string> custom_instructions;  // Additional context instructions
     XaaIdpSettings xaa_idp;                         // XAA IdP configuration
+    StatusLineSettings status_line;                // Status line command config
 };
 
 // ============================================================
@@ -1441,6 +1452,23 @@ private:
                 if (auto item = arr.at(i); item.is_str()) {
                     settings_.permissions.allowed_tools.emplace_back(item.as_str());
                 }
+            }
+        }
+
+        // statusLine — full type support (SettingsManager's flat parser
+        // drops non-string leaves like padding; this path preserves them).
+        if (auto sl = root.get("statusLine"); sl.is_obj()) {
+            if (auto v = sl.get("type"); v.is_str()) {
+                settings_.status_line.type = std::string(v.as_str());
+            }
+            if (auto v = sl.get("command"); v.is_str()) {
+                settings_.status_line.command = std::string(v.as_str());
+            }
+            if (auto v = sl.get("enabled"); v.is_bool()) {
+                settings_.status_line.enabled = v.as_bool();
+            }
+            if (auto v = sl.get("padding"); v.is_num()) {
+                settings_.status_line.padding = static_cast<int>(v.as_int());
             }
         }
 

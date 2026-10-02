@@ -731,6 +731,30 @@ auto load_config() -> loom::core::QueryEngineConfig {
     config.retry_policy.max_retries = 3;
     config.context_window.max_context_tokens = 200000;
 
+    // statusLine from settings.json → env vars. The --settings flag path
+    // (apply_flag_status_line_environment) runs BEFORE this function and
+    // sets the same env vars unconditionally; here we only fill in values
+    // the flag did not provide, so flag > file precedence holds.
+    {
+        const auto& sl = file_config.settings().status_line;
+        const bool has_command = sl.command && !sl.command->empty();
+        const bool type_allows = !sl.type || *sl.type == "command";
+        const bool enabled = sl.enabled.value_or(has_command && type_allows) &&
+            has_command && type_allows;
+
+        auto set_if_unset = [](const char* key, const std::string& val) {
+            if (!std::getenv(key)) set_env_value(key, val);
+        };
+
+        if (has_command) {
+            set_if_unset("LOOM_STATUS_LINE_COMMAND", *sl.command);
+        }
+        set_if_unset("LOOM_STATUS_LINE_ENABLED", enabled ? "1" : "0");
+        if (sl.padding) {
+            set_if_unset("LOOM_STATUS_LINE_PADDING", std::to_string(*sl.padding));
+        }
+    }
+
     return config;
 }
 

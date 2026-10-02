@@ -2588,6 +2588,21 @@ TEST(FlagSettings, AppliesEnvBlockAndModelAndApiKey) {
     EXPECT_TRUE(result.deferred_keys.empty());
 }
 
+// baseUrl is reported back like apiKey/model and is never deferred.
+TEST(FlagSettings, AppliesBaseUrl) {
+    auto parsed = loom::utils::json::parse(
+        R"({"baseUrl":"https://x.example"})");
+    ASSERT_TRUE(parsed.has_value());
+
+    auto result = loom::config::apply_flag_settings(
+        parsed->root(), [](auto, auto) {});
+
+    ASSERT_TRUE(result.base_url.has_value());
+    EXPECT_EQ(*result.base_url, "https://x.example");
+    // baseUrl is a consumed key, not deferred.
+    EXPECT_TRUE(result.deferred_keys.empty());
+}
+
 TEST(FlagSettings, AppliesStatusLineCommandSettings) {
     auto parsed = loom::utils::json::parse(
         R"({"statusLine":{"type":"command","command":"~/.loom/statusline.sh","padding":2}})");

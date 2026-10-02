@@ -27,12 +27,15 @@ enum class ConfigAction : std::uint8_t {
     Path,       // Show config file locations
 };
 
-/// Known configuration keys with their metadata
+/// Known configuration keys with their metadata. Projected from
+/// ConfigManager::user_setting_specs() — the spec table is the single
+/// source of truth for the key set; this struct only carries the
+/// presentation shape used by the completion list.
 struct ConfigKeyInfo {
     std::string_view key;
     std::string_view description;
     std::string_view type;          // "string", "bool", "int", "enum"
-    std::optional<std::string_view> default_value;
+    std::optional<std::string> default_value;
 };
 
 /// ConfigCommand implements the /config slash command.
@@ -275,75 +278,181 @@ private:
         return CommandResult::success(std::move(output));
     }
 
-    /// Resolve a flat config key to its current value
-    [[nodiscard]] std::optional<std::string> resolve_key(std::string_view key) const {
-        const auto& s = config_manager_.settings();
-        if (key == "model")             return s.model.default_model;
-        if (key == "maxOutputTokens")   return std::to_string(s.model.max_output_tokens);
-        if (key == "extendedThinking")  return s.model.extended_thinking ? "true" : "false";
-        if (key == "showThinking")      return s.display.show_thinking ? "true" : "false";
-        if (key == "theme")             return s.display.theme;
-        if (key == "timeoutSeconds")    return std::to_string(s.network.timeout_seconds);
-        if (key == "maxRetries")        return std::to_string(s.network.max_retries);
-        if (key == "permissions.allow_bash") return s.permissions.allow_bash ? "true" : "false";
+    /// Map a UserSettingKind to the short type token carried in
+    /// ConfigKeyInfo. Number (a floating-point scalar such as temperature)
+    /// is reported as "int" because the completion metadata has no
+    /// floating-point token; the value is still validated as a number.
+    [[nodiscard]] static constexpr std::string_view
+    type_name_for(UserSettingKind kind) noexcept {
+        switch (kind) {
+            case UserSettingKind::String:      return "string";
+            case UserSettingKind::Boolean:     return "bool";
+            case UserSettingKind::UInteger:    return "int";
+            case UserSettingKind::Number:      return "int";
+            case UserSettingKind::Enumeration: return "enum";
+        }
+        return "string";
+    }
+
+    /// Project a spec's default value from a default-constructed Settings,
+    /// so the Settings member initializers stay the single source of truth
+    /// for defaults. Unset optional leaves report nullopt.
+    [[nodiscard]] static std::optional<std::string>
+    default_value_for(const UserSettingSpec& spec) {
+        const Settings d{};
+        const std::string_view key = spec.key;
+        if (key == "model")              return d.model.default_model;
+        if (key == "maxOutputTokens")    return std::to_string(d.model.max_output_tokens);
+        if (key == "temperature")        return d.model.temperature
+            ? std::optional<std::string>(std::format("{}", *d.model.temperature))
+            : std::nullopt;
+        if (key == "extendedThinking")   return d.model.extended_thinking ? "true" : "false";
+        if (key == "thinkingBudget")     return d.model.thinking_budget
+            ? std::optional<std::string>(std::to_string(*d.model.thinking_budget))
+            : std::nullopt;
+        if (key == "contextWindowSize")  return std::to_string(d.model.context_window_size);
+        if (key == "showThinking")       return d.display.show_thinking ? "true" : "false";
+        if (key == "showTokenUsage")     return d.display.show_token_usage ? "true" : "false";
+        if (key == "compactMode")        return d.display.compact_mode ? "true" : "false";
+        if (key == "theme")              return d.display.theme;
+        if (key == "lineWidth")          return d.display.line_width
+            ? std::optional<std::string>(std::to_string(*d.display.line_width))
+            : std::nullopt;
+        if (key == "timeoutSeconds")     return std::to_string(d.network.timeout_seconds);
+        if (key == "maxRetries")         return std::to_string(d.network.max_retries);
+        if (key == "permissions.allow_bash")       return d.permissions.allow_bash ? "true" : "false";
+        if (key == "permissions.allow_file_write") return d.permissions.allow_file_write ? "true" : "false";
+        if (key == "permissions.allow_network")    return d.permissions.allow_network ? "true" : "false";
         return std::nullopt;
     }
 
-    /// Validate a value before applying it
-    [[nodiscard]] static VoidResult validate_value(std::string_view key, std::string_view value) {
-        // Boolean keys
-        if (key == "extendedThinking" || key == "showThinking" ||
-            key == "showTokenUsage" || key == "verifySsl" ||
-            key.starts_with("permissions.")) {
-            if (value != "true" && value != "false") {
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidRequest,
-                    std::format("'{}' must be 'true' or 'false', got: '{}'", key, value)
-                ));
-            }
+    /// Resolve a flat config key to its current value. The key set is the
+    /// closed spec table — find_user_setting rejects unknown keys. The
+    /// key-to-field mapping is not in the spec table (it lives in the
+    /// Settings struct), so the if-chain stays; it now covers ALL 16
+    /// projected keys instead of the previous 8.
+    [[nodiscard]] std::optional<std::string> resolve_key(std::string_view key) const {
+        if (loom::core::ConfigManager::find_user_setting(key) == nullptr) {
+            return std::nullopt;
         }
-        // Integer keys
-        if (key == "maxOutputTokens" || key == "timeoutSeconds" ||
-            key == "maxRetries") {
-            try { (void)std::stoul(std::string(value)); }
-            catch (...) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidRequest,
-                    std::format("'{}' must be a positive integer, got: '{}'", key, value)
-                ));
-            }
+        const auto& s = config_manager_.settings();
+        if (key == "model")             return s.model.default_model;
+        if (key == "maxOutputTokens")   return std::to_string(s.model.max_output_tokens);
+        if (key == "temperature")       return s.model.temperature
+            ? std::optional<std::string>(std::format("{}", *s.model.temperature))
+            : std::optional<std::string>("unset");
+        if (key == "extendedThinking")  return s.model.extended_thinking ? "true" : "false";
+        if (key == "thinkingBudget")    return s.model.thinking_budget
+            ? std::optional<std::string>(std::to_string(*s.model.thinking_budget))
+            : std::optional<std::string>("unset");
+        if (key == "contextWindowSize") return std::to_string(s.model.context_window_size);
+        if (key == "showThinking")      return s.display.show_thinking ? "true" : "false";
+        if (key == "showTokenUsage")    return s.display.show_token_usage ? "true" : "false";
+        if (key == "compactMode")       return s.display.compact_mode ? "true" : "false";
+        if (key == "theme")             return s.display.theme;
+        if (key == "lineWidth")         return s.display.line_width
+            ? std::optional<std::string>(std::to_string(*s.display.line_width))
+            : std::optional<std::string>("unset");
+        if (key == "timeoutSeconds")    return std::to_string(s.network.timeout_seconds);
+        if (key == "maxRetries")        return std::to_string(s.network.max_retries);
+        if (key == "permissions.allow_bash")       return s.permissions.allow_bash ? "true" : "false";
+        if (key == "permissions.allow_file_write") return s.permissions.allow_file_write ? "true" : "false";
+        if (key == "permissions.allow_network")    return s.permissions.allow_network ? "true" : "false";
+        return std::nullopt;
+    }
+
+    /// Validate a value before applying it. The spec table drives the
+    /// type check: Boolean keys accept only "true"/"false", UInteger keys
+    /// must parse via stoul, Number keys via stod. Unknown keys (outside
+    /// the closed 16-key set, including blocked keys such as verifySsl)
+    /// pass through — apply_setting rejects them with the canonical
+    /// "Unknown or read-only key" error.
+    [[nodiscard]] static VoidResult validate_value(std::string_view key, std::string_view value) {
+        const auto* spec = loom::core::ConfigManager::find_user_setting(key);
+        if (spec == nullptr) return {};
+        switch (spec->kind) {
+            case UserSettingKind::Boolean:
+                if (value != "true" && value != "false") {
+                    return std::unexpected(Error::make(
+                        ErrorCode::InvalidRequest,
+                        std::format("'{}' must be 'true' or 'false', got: '{}'", key, value)
+                    ));
+                }
+                break;
+            case UserSettingKind::UInteger:
+                try { (void)std::stoul(std::string(value)); }
+                catch (...) {
+                    return std::unexpected(Error::make(
+                        ErrorCode::InvalidRequest,
+                        std::format("'{}' must be a positive integer, got: '{}'", key, value)
+                    ));
+                }
+                break;
+            case UserSettingKind::Number:
+                try { (void)std::stod(std::string(value)); }
+                catch (...) {
+                    return std::unexpected(Error::make(
+                        ErrorCode::InvalidRequest,
+                        std::format("'{}' must be a number, got: '{}'", key, value)
+                    ));
+                }
+                break;
+            case UserSettingKind::String:
+            case UserSettingKind::Enumeration:
+                break;  // No value validation.
         }
         return {};
     }
 
-    /// Apply a validated setting to the config manager
+    /// Apply a validated setting to the config manager. find_user_setting
+    /// rejects keys outside the closed 16-key spec set; the if-chain then
+    /// maps every projected key to its Settings field. The spec table's
+    /// `writable` flag governs the agent-facing settings tool (user-tier
+    /// writes) — the /config command writes the project tier and so allows
+    /// setting every projected key, including the 9 read-only metadata
+    /// keys (theme, showThinking, ...). The key-to-field mapping is not in
+    /// the spec table, so the if-chain stays; it now covers ALL 16
+    /// projected keys instead of the previous 8.
     [[nodiscard]] VoidResult apply_setting(std::string_view key, std::string_view value) {
+        if (loom::core::ConfigManager::find_user_setting(key) == nullptr) {
+            return std::unexpected(Error::make(ErrorCode::ConfigNotFound,
+                std::format("Unknown or read-only key: '{}'", key)));
+        }
         auto& s = config_manager_.settings_mut();
         if (key == "model")               { s.model.default_model = value; return {}; }
         if (key == "maxOutputTokens")     { s.model.max_output_tokens = std::stoul(std::string(value)); return {}; }
+        if (key == "temperature")         { s.model.temperature = std::stod(std::string(value)); return {}; }
         if (key == "extendedThinking")    { s.model.extended_thinking = (value == "true"); return {}; }
+        if (key == "thinkingBudget")      { s.model.thinking_budget = std::stoul(std::string(value)); return {}; }
+        if (key == "contextWindowSize")   { s.model.context_window_size = std::stoul(std::string(value)); return {}; }
         if (key == "showThinking")        { s.display.show_thinking = (value == "true"); return {}; }
+        if (key == "showTokenUsage")      { s.display.show_token_usage = (value == "true"); return {}; }
+        if (key == "compactMode")         { s.display.compact_mode = (value == "true"); return {}; }
         if (key == "theme")               { s.display.theme = value; return {}; }
+        if (key == "lineWidth")           { s.display.line_width = std::stoul(std::string(value)); return {}; }
         if (key == "timeoutSeconds")      { s.network.timeout_seconds = std::stoul(std::string(value)); return {}; }
         if (key == "maxRetries")          { s.network.max_retries = std::stoul(std::string(value)); return {}; }
-        if (key == "permissions.allow_bash") { s.permissions.allow_bash = (value == "true"); return {}; }
-
+        if (key == "permissions.allow_bash")       { s.permissions.allow_bash = (value == "true"); return {}; }
+        if (key == "permissions.allow_file_write") { s.permissions.allow_file_write = (value == "true"); return {}; }
+        if (key == "permissions.allow_network")    { s.permissions.allow_network = (value == "true"); return {}; }
         return std::unexpected(Error::make(ErrorCode::ConfigNotFound,
             std::format("Unknown or read-only key: '{}'", key)));
     }
 
-    /// Get all known configuration keys with metadata
+    /// Get all known configuration keys with metadata, projected from the
+    /// ConfigManager spec table so the key set can never drift from the
+    /// serializer's keys.
     [[nodiscard]] static std::vector<ConfigKeyInfo> known_keys() {
-        return {
-            {"model",             "LLM model to use",             "string", ""},
-            {"maxOutputTokens",   "Maximum output token count",   "int",    "16384"},
-            {"extendedThinking",  "Enable extended thinking",     "bool",   "false"},
-            {"showThinking",      "Show thinking blocks",         "bool",   "true"},
-            {"theme",             "Color theme (auto/dark/light)","enum",   "auto"},
-            {"timeoutSeconds",    "Request timeout (seconds)",    "int",    "120"},
-            {"maxRetries",        "Max retry attempts",           "int",    "3"},
-            {"permissions.allow_bash", "Allow bash execution",    "bool",   "true"},
-        };
+        std::vector<ConfigKeyInfo> result;
+        for (const auto& spec : loom::core::ConfigManager::user_setting_specs()) {
+            result.push_back(ConfigKeyInfo{
+                .key = spec.key,
+                .description = spec.description,
+                .type = type_name_for(spec.kind),
+                .default_value = default_value_for(spec),
+            });
+        }
+        return result;
     }
 };
 

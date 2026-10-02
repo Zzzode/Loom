@@ -213,7 +213,9 @@ enum class UserSettingKind : std::uint8_t {
 /// One projected configuration key. The writable set is CLOSED at seven
 /// server-direct-query scalars; nine further keys are projected read-only.
 /// `enum_values`/`enum_count` carry the exact-match value list for
-/// Enumeration specs (the others leave them empty).
+/// Enumeration specs (the others leave them empty). `description` is a
+/// short human-readable summary consumed by surfaces that list keys
+/// (e.g. the /config command's completion metadata).
 struct UserSettingSpec {
     std::string_view key;       // Canonical flat key, e.g. "temperature".
     std::string_view section;   // Top-level JSON section.
@@ -223,6 +225,7 @@ struct UserSettingSpec {
     bool positive;              // UInteger: reject 0 when true.
     std::string_view type;      // JSON type token: string|boolean|integer|number.
     std::string_view env_var;   // Env override name, or empty.
+    std::string_view description; // Short human-readable summary.
     std::array<std::string_view, 4> enum_values{};
     std::uint8_t enum_count = 0;
 };
@@ -389,6 +392,13 @@ public:
         , project_path_(std::move(project))
         , local_path_(std::move(local)) {}
 
+    /// Migrate legacy config.json files (structured nested format) to the
+    /// unified settings.json (flat camelCase format). One-time, idempotent:
+    /// skips when the target already exists or the source is absent. The old
+    /// file is renamed to .bak, never deleted. Static: it touches no
+    /// ConfigManager instance state, so tests can drive it directly.
+    static void migrate_legacy_config();
+
     /// Load configuration from all sources, merging by priority. Passing
     /// LoadOptions{.quiet = true} suppresses ONLY the §A soft-tier stderr
     /// diagnostics; every tier is read and merged identically.
@@ -526,13 +536,16 @@ public:
     /// in-memory value even if it happens to equal the value the environment
     /// overlay applied. /config set calls this before saving; a plain
     /// settings_mut() change is recognized by the value-difference rule
-    /// instead (see build_save_fragments). Only the two env-overridable model
-    /// leaves have provenance to mark, so other keys are a no-op.
+    /// instead (see build_save_fragments). Only leaves with an env_var in the
+    /// spec table have provenance to mark, so other keys are a no-op.
     void clear_env_provenance(std::string_view section, std::string_view leaf) {
-        if ((section == "" && leaf == "model") ||
-            (section == "" && leaf == "maxOutputTokens")) {
-            env_explicit_leaves_.emplace(std::string(section),
-                                         std::string(leaf));
+        for (const auto& spec : user_setting_specs()) {
+            if (!spec.env_var.empty() &&
+                spec.section == section && spec.leaf == leaf) {
+                env_explicit_leaves_.emplace(std::string(section),
+                                             std::string(leaf));
+                return;
+            }
         }
     }
 
@@ -1045,9 +1058,12 @@ private:
     /// Uses yyjson via loom::utils::json to deserialize fields.
     [[nodiscard]] VoidResult
     merge_parsed(loom::utils::json::JsonVal root, McpStorageScope scope) {
-        // c13b: every successfully-applied projected leaf is recorded so
-        // source classification can distinguish a file value from a value
-        // that merely equals the built-in default.
+        // c13b: every successfully-applied leaf whose disk provenance is
+        // queried is recorded: projected leaves feed setting_source()'s
+        // file-vs-default classification, and apiKey/baseUrl/proxy feed
+        // agent_secret_presence_json(). Leaves with no provenance consumer
+        // (verbose, vimMode, verifySsl, permission_mode, allowed_tools) are
+        // not recorded.
         auto seen = [this](std::string_view section, std::string_view leaf) {
             disk_leaves_.emplace(std::string(section), std::string(leaf));
         };
@@ -1127,7 +1143,6 @@ private:
             }
             if (auto v = network.get("verify_ssl"); v.is_bool()) {
                 settings_.network.verify_ssl = v.as_bool();
-                seen("", "verifySsl");
             }
         }
 
@@ -1379,12 +1394,10 @@ private:
         // verbose
         if (auto v = root.get("verbose"); v.is_bool()) {
             settings_.display.verbose = v.as_bool();
-            seen("", "verbose");
         }
         // vimMode
         if (auto v = root.get("vimMode"); v.is_bool()) {
             settings_.display.vim_mode = v.as_bool();
-            seen("", "vimMode");
         }
 
         // apiKey
@@ -1415,13 +1428,11 @@ private:
         // verifySsl
         if (auto v = root.get("verifySsl"); v.is_bool()) {
             settings_.network.verify_ssl = v.as_bool();
-            seen("", "verifySsl");
         }
 
         // permissionMode
         if (auto v = root.get("permissionMode"); v.is_str()) {
             settings_.permissions.permission_mode = std::string(v.as_str());
-            seen("permissions", "permission_mode");
         }
         // allowedTools
         if (auto arr = root.get("allowedTools"); arr.is_arr()) {
@@ -1431,7 +1442,6 @@ private:
                     settings_.permissions.allowed_tools.emplace_back(item.as_str());
                 }
             }
-            seen("permissions", "allowed_tools");
         }
 
         return {};
@@ -1489,6 +1499,10 @@ private:
         std::string max_output_tokens;
         std::string extended_thinking;
         std::string context_window_size;
+        // Optional model leaves: nullopt => the key is left untouched on a
+        // save (a rebuilt-from-scratch file simply omits it).
+        std::optional<double> temperature;
+        std::optional<std::uint32_t> thinking_budget;
         // display (flat camelCase)
         std::string show_thinking;
         std::string show_token_usage;
@@ -1529,14 +1543,30 @@ private:
     [[nodiscard]] SaveFragments
     build_save_fragments() const {
         SaveFragments frag;
+        // Whether an env-overridable leaf was EXPLICITLY written this
+        // session. Derived from the spec table: only specs with a non-empty
+        // env_var carry provenance, so a new env-overridable key gets the
+        // guard without touching this code.
+        auto env_explicitly_set = [&](std::string_view section,
+                                      std::string_view leaf) {
+            for (const auto& spec : user_setting_specs()) {
+                if (!spec.env_var.empty() &&
+                    spec.section == section && spec.leaf == leaf) {
+                    return env_explicit_leaves_.contains(
+                        std::pair<std::string, std::string>(
+                            std::string(section), std::string(leaf)));
+                }
+            }
+            return false;
+        };
         const bool model_still_env =
             env_model_value_.has_value() &&
             settings_.model.default_model == *env_model_value_ &&
-            !env_explicit_leaves_.contains({"", "model"});
+            !env_explicitly_set("", "model");
         const bool tokens_still_env =
             env_tokens_value_.has_value() &&
             settings_.model.max_output_tokens == *env_tokens_value_ &&
-            !env_explicit_leaves_.contains({"", "maxOutputTokens"});
+            !env_explicitly_set("", "maxOutputTokens");
         // value_or is belt-and-braces: a *still_env* leaf always has a backup
         // (both are captured together by apply_environment_variables).
         const std::string model_to_emit =
@@ -1555,6 +1585,8 @@ private:
             settings_.model.extended_thinking ? "true" : "false";
         frag.context_window_size =
             std::to_string(settings_.model.context_window_size);
+        frag.temperature = settings_.model.temperature;
+        frag.thinking_budget = settings_.model.thinking_budget;
 
         frag.show_thinking =
             settings_.display.show_thinking ? "true" : "false";
@@ -1656,6 +1688,19 @@ private:
                                 frag.extended_thinking); !r) return r;
         if (auto r = patch_leaf(root, "contextWindowSize",
                                 frag.context_window_size); !r) return r;
+        // Optional model leaves: patch only when set, so a save re-emits
+        // them on a rebuilt-from-scratch file while an unset in-memory
+        // value leaves an on-disk key untouched (same save semantics).
+        if (frag.temperature) {
+            loom::utils::json::JsonMutDoc num_doc;
+            num_doc.set_root(num_doc.number(*frag.temperature));
+            if (auto r = patch_leaf(root, "temperature",
+                                    num_doc.to_string()); !r) return r;
+        }
+        if (frag.thinking_budget) {
+            if (auto r = patch_leaf(root, "thinkingBudget",
+                                    std::to_string(*frag.thinking_budget)); !r) return r;
+        }
 
         // display — flat camelCase at root
         if (auto r = patch_leaf(root, "showThinking",
@@ -3124,6 +3169,134 @@ private:
 };
 
 // ================================================================
+// Legacy config.json → settings.json migration
+// ================================================================
+
+inline void ConfigManager::migrate_legacy_config() {
+    namespace fs = std::filesystem;
+    namespace json = loom::utils::json;
+
+    struct TierPath {
+        fs::path old_path;
+        fs::path new_path;
+    };
+
+    const auto user_dir = loom::constants::paths::config_home_write();
+    const auto project_dir = fs::current_path() / ".loom";
+
+    const TierPath tiers[] = {
+        {user_dir / "config.json",       user_dir / "settings.json"},
+        {project_dir / "config.json",    project_dir / "settings.json"},
+        {project_dir / "config.local.json", project_dir / "settings.local.json"},
+    };
+
+    // Structured section → flat key mapping (leaf name → flat camelCase key)
+    struct KeyMap { std::string_view section; std::string_view leaf; std::string_view flat; };
+    static constexpr KeyMap key_map[] = {
+        {"model", "default_model",       "model"},
+        {"model", "max_output_tokens",   "maxOutputTokens"},
+        {"model", "temperature",         "temperature"},
+        {"model", "extended_thinking",   "extendedThinking"},
+        {"model", "thinking_budget",     "thinkingBudget"},
+        {"model", "context_window_size", "contextWindowSize"},
+        {"display", "theme",             "theme"},
+        {"display", "show_thinking",     "showThinking"},
+        {"display", "show_token_usage",  "showTokenUsage"},
+        {"display", "compact_mode",      "compactMode"},
+        {"display", "line_width",        "lineWidth"},
+        {"network", "api_key",           "apiKey"},
+        {"network", "base_url",          "baseUrl"},
+        {"network", "proxy",             "proxy"},
+        {"network", "timeout_seconds",   "timeoutSeconds"},
+        {"network", "max_retries",       "maxRetries"},
+        {"network", "verify_ssl",        "verifySsl"},
+    };
+
+    for (const auto& tier : tiers) {
+        std::error_code ec;
+        if (fs::exists(tier.new_path, ec)) continue;
+        if (!fs::exists(tier.old_path, ec)) continue;
+
+        // Read old file
+        std::ifstream in(tier.old_path);
+        if (!in.is_open()) continue;
+        std::string content((std::istreambuf_iterator<char>(in)),
+                             std::istreambuf_iterator<char>());
+        // Strip a UTF-8 BOM; json::parse rejects a leading BOM and the
+        // migration would silently skip the file otherwise.
+        if (content.starts_with("\xEF\xBB\xBF")) content = content.substr(3);
+        auto parsed = json::parse(content);
+        if (!parsed || !parsed->root().is_obj()) continue;
+
+        // Build new flat document
+        json::JsonMutDoc doc;
+        auto root = doc.object();
+
+        // Copy all keys, flattening structured sections
+        parsed->root().iter_obj([&](auto key, auto value) {
+            if (!key.is_str()) return;
+            const auto key_str = std::string(key.as_str());
+
+            // Check if this is a structured section to flatten
+            bool flattened = false;
+            for (const auto& km : key_map) {
+                if (key_str == km.section && value.is_obj()) {
+                    // Flatten this section
+                    value.iter_obj([&](auto leaf_key, auto leaf_val) {
+                        if (!leaf_key.is_str()) return;
+                        const auto leaf_str = std::string(leaf_key.as_str());
+                        for (const auto& km2 : key_map) {
+                            if (km2.section == key_str && km2.leaf == leaf_str) {
+                                root.add(km2.flat, doc.copy_val(leaf_val));
+                                break;
+                            }
+                        }
+                        // Unknown leaves in a known section are dropped
+                        // (they were never part of the documented schema)
+                    });
+                    flattened = true;
+                    break;
+                }
+            }
+
+            // Keys that are already flat (mcpServers, features, etc.)
+            if (!flattened) {
+                root.add(key_str, doc.copy_val(value));
+            }
+        });
+
+        doc.set_root(root);
+
+        // Ensure parent directory exists
+        fs::create_directories(tier.new_path.parent_path(), ec);
+
+        // Write new file atomically: write to a tmp file in the same directory,
+        // then rename it into place so a crash mid-write never leaves a
+        // truncated settings.json behind.
+        const auto new_str = doc.to_string();
+        const auto tmp_path = fs::path(tier.new_path.string() + ".tmp.migrate");
+        std::ofstream out(tmp_path, std::ios::trunc);
+        if (!out.is_open()) continue;
+        out << new_str;
+        out.close();
+        fs::rename(tmp_path, tier.new_path, ec);
+        if (ec) {
+            // Publish failed; drop the tmp file and leave the old file in place.
+            fs::remove(tmp_path, ec);
+            continue;
+        }
+
+        // Rename old file to .bak
+        const auto bak_path = fs::path(tier.old_path.string() + ".bak");
+        fs::rename(tier.old_path, bak_path, ec);
+
+        std::println(stderr, "[migrate] {} → {} (old file saved as {})",
+                     tier.old_path.string(), tier.new_path.string(),
+                     bak_path.string());
+    }
+}
+
+// ================================================================
 // c13b structured user settings — out-of-class definitions
 // ================================================================
 
@@ -3135,39 +3308,55 @@ ConfigManager::user_setting_specs() noexcept {
     static constexpr UserSettingSpec specs[] = {
         // ── writable (7) ──
         {"model",            "", "model",
-         UserSettingKind::String,    true, true, "string", "LOOM_MODEL"},
+         UserSettingKind::String,    true, true, "string", "LOOM_MODEL",
+         "LLM model to use"},
         {"maxOutputTokens",  "", "maxOutputTokens",
-         UserSettingKind::UInteger,  true, true, "integer", "LOOM_MAX_TOKENS"},
+         UserSettingKind::UInteger,  true, true, "integer", "LOOM_MAX_TOKENS",
+         "Maximum output token count"},
         {"temperature",      "", "temperature",
-         UserSettingKind::Number,    true, false, "number", ""},
+         UserSettingKind::Number,    true, false, "number", "",
+         "Sampling temperature"},
         {"extendedThinking", "", "extendedThinking",
-         UserSettingKind::Boolean,   true, false, "boolean", ""},
+         UserSettingKind::Boolean,   true, false, "boolean", "",
+         "Enable extended thinking"},
         {"thinkingBudget",   "", "thinkingBudget",
-         UserSettingKind::UInteger,  true, true, "integer", ""},
+         UserSettingKind::UInteger,  true, true, "integer", "",
+         "Extended thinking token budget"},
         {"contextWindowSize","", "contextWindowSize",
-         UserSettingKind::UInteger,  true, true, "integer", ""},
+         UserSettingKind::UInteger,  true, true, "integer", "",
+         "Context window size in tokens"},
         {"maxRetries",       "", "maxRetries",
-         UserSettingKind::UInteger,  true, false, "integer", ""},
+         UserSettingKind::UInteger,  true, false, "integer", "",
+         "Max retry attempts"},
         // ── read-only metadata (9) ──
         {"showThinking",     "", "showThinking",
-         UserSettingKind::Boolean,   false, false, "boolean", ""},
+         UserSettingKind::Boolean,   false, false, "boolean", "",
+         "Show thinking blocks"},
         {"showTokenUsage",   "", "showTokenUsage",
-         UserSettingKind::Boolean,   false, false, "boolean", ""},
+         UserSettingKind::Boolean,   false, false, "boolean", "",
+         "Show token usage counters"},
         {"compactMode",      "", "compactMode",
-         UserSettingKind::Boolean,   false, false, "boolean", ""},
+         UserSettingKind::Boolean,   false, false, "boolean", "",
+         "Minimal output formatting"},
         {"theme",            "", "theme",
          UserSettingKind::Enumeration, false, false, "string", "",
+         "Color theme (auto/dark/light)",
          {"auto", "dark", "light"}, 3},
         {"lineWidth",        "", "lineWidth",
-         UserSettingKind::UInteger,  false, true, "integer", ""},
+         UserSettingKind::UInteger,  false, true, "integer", "",
+         "Terminal line width override"},
         {"timeoutSeconds",   "", "timeoutSeconds",
-         UserSettingKind::UInteger,  false, true, "integer", ""},
+         UserSettingKind::UInteger,  false, true, "integer", "",
+         "Request timeout in seconds"},
         {"permissions.allow_bash",       "permissions", "allow_bash",
-         UserSettingKind::Boolean,   false, false, "boolean", ""},
+         UserSettingKind::Boolean,   false, false, "boolean", "",
+         "Allow bash execution"},
         {"permissions.allow_file_write", "permissions", "allow_file_write",
-         UserSettingKind::Boolean,   false, false, "boolean", ""},
+         UserSettingKind::Boolean,   false, false, "boolean", "",
+         "Allow file modifications"},
         {"permissions.allow_network",    "permissions", "allow_network",
-         UserSettingKind::Boolean,   false, false, "boolean", ""},
+         UserSettingKind::Boolean,   false, false, "boolean", "",
+         "Allow network requests"},
     };
     return specs;
 }
@@ -3295,8 +3484,17 @@ ConfigManager::serialize_agent_settings_json() const {
         if (!spec.section.empty()) continue;
         root.add(spec.leaf, doc.raw_json(build_setting_token(spec)));
     }
-    constexpr std::array<std::string_view, 1> nested_sections = {
-        "permissions"};
+    // Nested sections: every distinct non-empty section name in the spec
+    // table (today only "permissions"), collected at runtime so a new
+    // nested section is grouped automatically.
+    std::vector<std::string_view> nested_sections;
+    for (const auto& spec : user_setting_specs()) {
+        if (spec.section.empty()) continue;
+        if (std::ranges::find(nested_sections, spec.section) ==
+            nested_sections.end()) {
+            nested_sections.push_back(spec.section);
+        }
+    }
     for (const auto section_name : nested_sections) {
         auto section = doc.object();
         for (const auto& spec : user_setting_specs()) {

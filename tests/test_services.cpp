@@ -10335,6 +10335,225 @@ TEST(ConfigManagerUserSettings, BomStrippedOnLoadAndPatch) {
 }
 
 // ===========================================================================
+// config.json -> settings.json migration (ConfigManager::migrate_legacy_config)
+// ===========================================================================
+namespace {
+
+// Hermetic scratch tree for migration tests: a fake $HOME (so
+// config_home_write() resolves to <home>/.loom) and a fake cwd (so the
+// project tier resolves to <work>/.loom). The caller must unset
+// LOOM_CONFIG_DIR for config_home_write() to fall back to $HOME.
+struct MigrationPaths {
+    fs::path root;
+    fs::path home;      // fake $HOME
+    fs::path user_dir;  // <home>/.loom
+    fs::path work;      // fake cwd
+
+    explicit MigrationPaths(std::string_view tag)
+        : root(c13_make_temp_root(
+              std::string("loom_migrate_") + std::string(tag)))
+        , home(root / "home")
+        , user_dir(home / ".loom")
+        , work(root / "work") {
+        fs::create_directories(user_dir);
+        fs::create_directories(work);
+    }
+    ~MigrationPaths() {
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
+
+    [[nodiscard]] fs::path user_config() const {
+        return user_dir / "config.json";
+    }
+    [[nodiscard]] fs::path user_settings() const {
+        return user_dir / "settings.json";
+    }
+    [[nodiscard]] fs::path user_config_bak() const {
+        return user_dir / "config.json.bak";
+    }
+};
+
+} // namespace
+
+// A structured config.json is flattened into settings.json, and the old
+// file is renamed to .bak.
+TEST(ConfigManagerMigration, NormalMigration) {
+    MigrationPaths p("normal");
+    EnvironmentUnsetGuard cfg_dir_guard("LOOM_CONFIG_DIR");
+    EnvironmentGuard home_guard("HOME", p.home.string());
+    CurrentPathGuard cwd_guard(p.work);
+
+    c13_write_file(p.user_config(), R"JSON({
+  "model": {"default_model": "x", "max_output_tokens": 4096},
+  "display": {"theme": "dark"},
+  "network": {"max_retries": 3}
+})JSON");
+
+    loom::core::ConfigManager::migrate_legacy_config();
+
+    // settings.json exists with flat camelCase keys.
+    ASSERT_TRUE(fs::exists(p.user_settings()));
+    auto doc = loom::utils::json::parse_file(p.user_settings());
+    ASSERT_TRUE(doc.has_value());
+    const auto root = doc->root();
+    ASSERT_TRUE(root.is_obj());
+    // The structured model object is flattened to a flat string.
+    ASSERT_TRUE(root.get("model").is_str());
+    EXPECT_FALSE(root.get("model").is_obj());
+    EXPECT_EQ(root.get("model").as_str(), std::string_view("x"));
+    EXPECT_EQ(root.get("maxOutputTokens").as_int(), 4096);
+    EXPECT_EQ(root.get("theme").as_str(), std::string_view("dark"));
+    EXPECT_EQ(root.get("maxRetries").as_int(), 3);
+
+    // The old file is gone, preserved as .bak.
+    EXPECT_FALSE(fs::exists(p.user_config()));
+    EXPECT_TRUE(fs::exists(p.user_config_bak()));
+}
+
+// A second migration run is a no-op: the existing settings.json is left
+// untouched and the .bak from the first run is not re-renamed.
+TEST(ConfigManagerMigration, MigrationIdempotent) {
+    MigrationPaths p("idempotent");
+    EnvironmentUnsetGuard cfg_dir_guard("LOOM_CONFIG_DIR");
+    EnvironmentGuard home_guard("HOME", p.home.string());
+    CurrentPathGuard cwd_guard(p.work);
+
+    c13_write_file(p.user_config(),
+                   R"JSON({"model": {"default_model": "y"}})JSON");
+
+    loom::core::ConfigManager::migrate_legacy_config();
+    ASSERT_TRUE(fs::exists(p.user_settings()));
+    const auto read_settings = [&] {
+        std::ifstream f(p.user_settings());
+        return std::string(std::istreambuf_iterator<char>(f),
+                           std::istreambuf_iterator<char>());
+    };
+    const std::string first = read_settings();
+
+    // Second run: settings.json already exists, so the tier is skipped.
+    loom::core::ConfigManager::migrate_legacy_config();
+    EXPECT_EQ(read_settings(), first);
+    EXPECT_TRUE(fs::exists(p.user_config_bak()));
+    EXPECT_FALSE(fs::exists(p.user_config()));
+}
+
+// A corrupt config.json is skipped without crashing: no settings.json is
+// created and the source is left in place (no .bak).
+TEST(ConfigManagerMigration, CorruptSourceSkipped) {
+    MigrationPaths p("corrupt");
+    EnvironmentUnsetGuard cfg_dir_guard("LOOM_CONFIG_DIR");
+    EnvironmentGuard home_guard("HOME", p.home.string());
+    CurrentPathGuard cwd_guard(p.work);
+
+    c13_write_file(p.user_config(), "THIS IS NOT JSON {{{");
+
+    loom::core::ConfigManager::migrate_legacy_config();
+
+    EXPECT_FALSE(fs::exists(p.user_settings()));
+    EXPECT_TRUE(fs::exists(p.user_config()));
+    EXPECT_FALSE(fs::exists(p.user_config_bak()));
+}
+
+// A pre-existing settings.json blocks migration of that tier: the target is
+// untouched and config.json is not renamed.
+TEST(ConfigManagerMigration, ExistingTargetSkipsMigration) {
+    MigrationPaths p("existing");
+    EnvironmentUnsetGuard cfg_dir_guard("LOOM_CONFIG_DIR");
+    EnvironmentGuard home_guard("HOME", p.home.string());
+    CurrentPathGuard cwd_guard(p.work);
+
+    c13_write_file(p.user_settings(), R"JSON({"model": "keep-me"})JSON");
+    c13_write_file(p.user_config(),
+                   R"JSON({"model": {"default_model": "discard"}})JSON");
+
+    loom::core::ConfigManager::migrate_legacy_config();
+
+    auto doc = loom::utils::json::parse_file(p.user_settings());
+    ASSERT_TRUE(doc.has_value());
+    EXPECT_EQ(doc->root().get("model").as_str(),
+              std::string_view("keep-me"));
+    EXPECT_TRUE(fs::exists(p.user_config()));
+    EXPECT_FALSE(fs::exists(p.user_config_bak()));
+}
+
+// Legacy structured sections still load (backward compat): every leaf is
+// merged into the typed settings.
+TEST(ConfigManagerUserSettings, StructuredFormatLoads) {
+    EnvironmentUnsetGuard model_guard("LOOM_MODEL");
+    EnvironmentUnsetGuard tokens_guard("LOOM_MAX_TOKENS");
+    C13Paths p("structload");
+    c13_write_file(p.user_path, R"JSON({
+  "model": {"default_model": "x", "temperature": 0.5},
+  "display": {"theme": "dark"},
+  "network": {"max_retries": 3}
+})JSON");
+    auto m = p.manager();
+    ASSERT_TRUE(m.load().has_value());
+    const auto& s = m.settings();
+    EXPECT_EQ(s.model.default_model, "x");
+    ASSERT_TRUE(s.model.temperature.has_value());
+    EXPECT_DOUBLE_EQ(*s.model.temperature, 0.5);
+    EXPECT_EQ(s.display.theme, "dark");
+    EXPECT_EQ(s.network.max_retries, 3u);
+}
+
+// A save after loading a structured file re-emits flat camelCase keys: the
+// structured model object is replaced outright by a flat string.
+TEST(ConfigManagerUserSettings, StructuredFormatSaveConvertsToFlat) {
+    EnvironmentUnsetGuard model_guard("LOOM_MODEL");
+    EnvironmentUnsetGuard tokens_guard("LOOM_MAX_TOKENS");
+    C13Paths p("structsave");
+    // Seed the PROJECT tier: save() writes to project_path_.
+    c13_write_file(p.project_path, R"JSON({
+  "model": {"default_model": "x", "max_output_tokens": 4096},
+  "display": {"theme": "dark"},
+  "network": {"max_retries": 3}
+})JSON");
+    {
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        // save() appends to a .gitignore found by walking up from cwd; pin
+        // cwd to the git-ancestry-clean scratch root so no real work tree
+        // is touched.
+        CurrentPathGuard cwd_guard(p.root);
+        ASSERT_TRUE(m.save().has_value());
+    }
+    auto doc = loom::utils::json::parse_file(p.project_path);
+    ASSERT_TRUE(doc.has_value());
+    const auto root = doc->root();
+    // The structured model object is replaced by a flat string.
+    ASSERT_TRUE(root.get("model").is_str());
+    EXPECT_FALSE(root.get("model").is_obj());
+    EXPECT_EQ(root.get("model").as_str(), std::string_view("x"));
+    // Flat camelCase keys now exist at root.
+    EXPECT_EQ(root.get("maxOutputTokens").as_int(), 4096);
+    EXPECT_EQ(root.get("theme").as_str(), std::string_view("dark"));
+    EXPECT_EQ(root.get("maxRetries").as_int(), 3);
+}
+
+// The verbose / vimMode flat display keys parse and round-trip through a
+// save.
+TEST(ConfigManagerUserSettings, VerboseAndVimModeParse) {
+    C13Paths p("verbose");
+    c13_write_file(p.user_path,
+                   R"JSON({"verbose": true, "vimMode": true})JSON");
+    {
+        auto m = p.manager();
+        ASSERT_TRUE(m.load().has_value());
+        EXPECT_TRUE(m.settings().display.verbose);
+        EXPECT_TRUE(m.settings().display.vim_mode);
+        CurrentPathGuard cwd_guard(p.root);
+        ASSERT_TRUE(m.save().has_value());
+    }
+    auto doc = loom::utils::json::parse_file(p.project_path);
+    ASSERT_TRUE(doc.has_value());
+    const auto root = doc->root();
+    EXPECT_EQ(root.get("verbose").as_bool(), true);
+    EXPECT_EQ(root.get("vimMode").as_bool(), true);
+}
+
+// ===========================================================================
 // RFC-0001 B followup c13d — lockfile gitignore, bounded lock, full-save
 // hardening, legacy-tmp/random-name attacks.
 // ===========================================================================

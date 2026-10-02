@@ -111,6 +111,62 @@ TEST(CoreConfig, ConfigManagerExposesDefaultSettings) {
     EXPECT_GT(manager.settings().model.max_output_tokens, 0u);
 }
 
+// The statusLine.segments nested object controls the built-in status bar
+// segment toggles.  Verify round-trip parse + save.
+TEST(CoreConfig, StatusLineSegmentsRoundTrip) {
+    namespace fs = std::filesystem;
+    const auto root = fs::temp_directory_path() / "loom_core_segments_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    const auto user_path = root / "settings.json";
+
+    {
+        std::ofstream seed(user_path);
+        seed << R"({"statusLine":{"type":"command","command":"","enabled":true,)"
+                R"("segments":{"cwd":true,"git":false,"model":true,)"
+                R"("tokens":true,"cost":false,"tasks":true,"agent":false}}})";
+    }
+
+    {
+        loom::core::ConfigManager manager(user_path, {}, {});
+        ASSERT_TRUE(manager.load(loom::core::LoadOptions{.quiet = true}).has_value());
+
+        const auto& sl = manager.settings().status_line;
+        ASSERT_TRUE(sl.enabled.has_value());
+        EXPECT_TRUE(*sl.enabled);
+        EXPECT_EQ(sl.segments.size(), 7u);
+        EXPECT_TRUE(sl.segments.at("cwd"));
+        EXPECT_FALSE(sl.segments.at("git"));
+        EXPECT_TRUE(sl.segments.at("model"));
+        EXPECT_TRUE(sl.segments.at("tokens"));
+        EXPECT_FALSE(sl.segments.at("cost"));
+        EXPECT_TRUE(sl.segments.at("tasks"));
+        EXPECT_FALSE(sl.segments.at("agent"));
+
+        // Mutate + save to user tier, then reload to verify persistence.
+        manager.settings_mut().status_line.segments["git"] = true;
+        manager.settings_mut().status_line.segments["tasks"] = false;
+        auto saved = manager.save_user();
+        ASSERT_TRUE(saved.has_value()) << saved.error().message;
+    }
+
+    {
+        loom::core::ConfigManager reloaded(user_path, {}, {});
+        ASSERT_TRUE(reloaded.load(loom::core::LoadOptions{.quiet = true}).has_value());
+
+        const auto& sl = reloaded.settings().status_line;
+        EXPECT_TRUE(sl.segments.at("cwd"));
+        EXPECT_TRUE(sl.segments.at("git"));    // flipped
+        EXPECT_TRUE(sl.segments.at("model"));
+        EXPECT_TRUE(sl.segments.at("tokens"));
+        EXPECT_FALSE(sl.segments.at("cost"));
+        EXPECT_FALSE(sl.segments.at("tasks")); // flipped
+        EXPECT_FALSE(sl.segments.at("agent"));
+    }
+
+    fs::remove_all(root);
+}
+
 // RFC-0001 B followup c22: a soft-tier (user/local) parse warning is collected
 // into a per-instance diagnostics vector (drained by the TUI toast sink) rather
 // than only printed to stderr. The CLI path keeps its stderr println; this

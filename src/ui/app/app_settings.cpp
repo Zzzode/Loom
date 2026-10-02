@@ -8,6 +8,8 @@ module loom.ui.app.app;
 import std;
 
 import loom.config.settings_manager;
+import loom.config.config;             // ConfigManager for statusLine.segments
+import loom.ui.prompt.prompt_input_footer;  // StatusBarSegments
 
 namespace loom::ui {
 
@@ -119,6 +121,25 @@ void AppAdapter::ProjectSettingsToScreenState() {
     if (!screen_state_->status_line_enabled) {
         screen_state_->status_line_text.clear();
     }
+
+    // ── Built-in status bar (statusLine.enabled + statusLine.segments) ──
+    // The SettingsManager flattens nested objects and drops non-string
+    // values, so the bool-valued `segments` sub-object cannot survive
+    // that path.  Read from ConfigManager instead, which has full type
+    // support.  Thread-local + reload-on-call mirrors the settings-dialog
+    // fallback pattern (repl_screen_dialog_panels.cpp).
+    static thread_local loom::core::ConfigManager bar_cfg;
+    (void)bar_cfg.load(loom::core::LoadOptions{.quiet = true});
+    const auto& sl = bar_cfg.settings().status_line;
+    screen_state_->status_bar_enabled = sl.enabled.value_or(true);
+    auto& segs = screen_state_->status_bar_segments;
+    if (auto it = sl.segments.find("cwd");    it != sl.segments.end()) segs.cwd    = it->second;
+    if (auto it = sl.segments.find("git");    it != sl.segments.end()) segs.git    = it->second;
+    if (auto it = sl.segments.find("model");  it != sl.segments.end()) segs.model  = it->second;
+    if (auto it = sl.segments.find("tokens"); it != sl.segments.end()) segs.tokens = it->second;
+    if (auto it = sl.segments.find("cost");   it != sl.segments.end()) segs.cost   = it->second;
+    if (auto it = sl.segments.find("tasks");  it != sl.segments.end()) segs.tasks  = it->second;
+    if (auto it = sl.segments.find("agent");  it != sl.segments.end()) segs.agent  = it->second;
 }
 
 

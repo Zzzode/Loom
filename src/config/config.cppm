@@ -148,11 +148,14 @@ struct XaaIdpSettings {
 /// Status line configuration (statusLine key in settings.json).
 /// Mirrors FlagStatusLineSettings so the file-based path and the
 /// --settings flag path produce the same env-var injection.
+/// When `command` is set, the command-based path runs (shell → stdout).
+/// When `command` is empty, the built-in renderer uses `segments` toggles.
 struct StatusLineSettings {
-    std::optional<std::string> type;      // "command" (only supported type)
+    std::optional<std::string> type;      // "command" or "builtin"
     std::optional<std::string> command;   // Shell command to execute
     std::optional<bool> enabled;          // Explicit on/off; null = auto
     std::optional<int> padding;           // Left padding in columns
+    std::map<std::string, bool> segments; // Built-in renderer segment toggles
 };
 
 /// Top-level settings aggregating all configuration sections
@@ -166,7 +169,7 @@ struct Settings {
     std::optional<std::string> system_prompt;      // Custom system prompt override
     std::vector<std::string> custom_instructions;  // Additional context instructions
     XaaIdpSettings xaa_idp;                         // XAA IdP configuration
-    StatusLineSettings status_line;                // Status line command config
+    StatusLineSettings status_line;                // Status line config (command + builtin)
 };
 
 // ============================================================
@@ -530,6 +533,63 @@ public:
         // The project file itself stays VCS-tracked; only its lock sibling
         // is ignored.
         ensure_config_gitignored(McpStorageScope::Project);
+        return {};
+    }
+
+    /// Persist the current settings to the USER tier file
+    /// (~/.loom/settings.json).  Uses the same fragment-patch mechanism as
+    /// save() but targets user_path_ instead of project_path_.  Used by
+    /// the /statusline dialog so segment toggles land in the user's
+    /// global settings rather than a project-local file.
+    [[nodiscard]] VoidResult save_user() {
+        if (user_path_.empty()) {
+            return std::unexpected(Error::make(
+                ErrorCode::ConfigWriteError,
+                "No user configuration file is configured for writes"));
+        }
+
+        // Fail closed on a symlinked leaf before touching anything.
+        if (auto link_error = symlinked_leaf_error(user_path_)) {
+            return std::unexpected(*link_error);
+        }
+
+        // Ensure parent directory exists
+        auto parent = user_path_.parent_path();
+        if (!parent.empty()) {
+            std::error_code ec;
+            std::filesystem::create_directories(parent, ec);
+            if (ec) {
+                return std::unexpected(Error::make(
+                    ErrorCode::ConfigWriteError,
+                    std::format("Failed to create config directory: {}", parent.string())
+                ));
+            }
+        }
+
+        const SaveFragments frag = build_save_fragments();
+        const Error strict_error = Error::make(
+            ErrorCode::ConfigParseError,
+            std::format("{} is not valid JSON; repair or move it aside before "
+                        "saving configuration", user_path_.string()));
+        SalvageResult salvage_out = SalvageResult::Untouched;
+        auto patched = patch_object_file(user_path_,
+            [&](loom::utils::json::JsonMutVal& root,
+                loom::utils::json::JsonMutDoc& doc) -> VoidResult {
+                return apply_save_fragments(root, doc, frag);
+            },
+            /*owner_only=*/false,
+            SalvageMode::Strict,
+            strict_error,
+            salvage_out);
+        if (!patched) return std::unexpected(patched.error());
+        dirty_ = false;
+
+        // Refresh the user-tier signature so tier_files_changed() doesn't
+        // mistake our own write for an external edit.
+        if (!user_path_.empty()) {
+            tier_signatures_[scope_index(McpStorageScope::User)] =
+                tier_signature(user_path_);
+        }
         return {};
     }
 
@@ -1457,6 +1517,8 @@ private:
 
         // statusLine — full type support (SettingsManager's flat parser
         // drops non-string leaves like padding; this path preserves them).
+        // When `command` is set, the command-based path runs (shell → stdout).
+        // When `command` is empty, the built-in renderer uses `segments`.
         if (auto sl = root.get("statusLine"); sl.is_obj()) {
             if (auto v = sl.get("type"); v.is_str()) {
                 settings_.status_line.type = std::string(v.as_str());
@@ -1469,6 +1531,14 @@ private:
             }
             if (auto v = sl.get("padding"); v.is_num()) {
                 settings_.status_line.padding = static_cast<int>(v.as_int());
+            }
+            if (auto segs = sl.get("segments"); segs.is_obj()) {
+                segs.iter_obj([&](auto key, auto val) {
+                    if (key.is_str() && val.is_bool()) {
+                        settings_.status_line.segments[
+                            std::string(key.as_str())] = val.as_bool();
+                    }
+                });
             }
         }
 
@@ -1559,6 +1629,9 @@ private:
         std::optional<std::string> xaa_issuer;
         std::optional<std::string> xaa_client_id;
         std::optional<std::string> xaa_callback_port;
+        // statusLine: nullopt => the key is left untouched on save.
+        // When set, the JSON object fragment replaces the statusLine key.
+        std::optional<std::string> status_line_json;
     };
 
     /// c21: compute the known-key fragments for a save. The c19
@@ -1674,6 +1747,51 @@ private:
                 frag.xaa_callback_port = std::to_string(*xaa.callback_port);
             }
         }
+
+        // statusLine: emit when any field is set. The JSON object includes
+        // type/command/enabled/padding/segments as present. When all fields
+        // are unset, the key is left untouched (nullopt).
+        const auto& sl = settings_.status_line;
+        if (sl.type || sl.command || sl.enabled || sl.padding ||
+            !sl.segments.empty()) {
+            std::string obj = "{";
+            bool first = true;
+            auto append_kv = [&](std::string_view key,
+                                 const std::string& token) {
+                if (!first) obj += ",";
+                obj += std::format("\"{}\":{}", key, token);
+                first = false;
+            };
+            if (sl.type) {
+                append_kv("type",
+                    std::format("\"{}\"", escape_json(*sl.type)));
+            }
+            if (sl.command) {
+                append_kv("command",
+                    std::format("\"{}\"", escape_json(*sl.command)));
+            }
+            if (sl.enabled) {
+                append_kv("enabled", *sl.enabled ? "true" : "false");
+            }
+            if (sl.padding) {
+                append_kv("padding", std::to_string(*sl.padding));
+            }
+            if (!sl.segments.empty()) {
+                std::string segs = "{";
+                bool seg_first = true;
+                for (const auto& [key, val] : sl.segments) {
+                    if (!seg_first) segs += ",";
+                    segs += std::format("\"{}\":{}", key,
+                                        val ? "true" : "false");
+                    seg_first = false;
+                }
+                segs += "}";
+                append_kv("segments", segs);
+            }
+            obj += "}";
+            frag.status_line_json = std::move(obj);
+        }
+
         return frag;
     }
 
@@ -1827,6 +1945,18 @@ private:
             }
         } else {
             (void)root.remove("xaaIdp");
+        }
+
+        // statusLine: replace the entire object when a fragment is present.
+        // nullopt leaves the key untouched (no churn on unrelated saves).
+        if (frag.status_line_json) {
+            auto val = doc.raw_json(*frag.status_line_json);
+            if (!val.valid()) {
+                return std::unexpected(Error::make(
+                    ErrorCode::InternalError,
+                    "Failed to serialize statusLine fragment"));
+            }
+            (void)root.add("statusLine", val);
         }
 
         return {};

@@ -93,7 +93,6 @@ target_sources(loom_commands
         commands/skills_cmd.cppm
         commands/stats.cppm
         commands/status.cppm
-        commands/statusline.cppm
         commands/stickers.cppm
         commands/summary.cppm
         commands/tag.cppm

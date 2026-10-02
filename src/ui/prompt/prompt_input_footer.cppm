@@ -411,6 +411,19 @@ namespace fs = std::filesystem;
 
 // P0-6 builtin statusline data.  Defined early so StatusLineOptions can
 // hold a std::optional<BuiltinStatusLineData>.
+
+/// Per-segment enable mask for the built-in status bar. Each bool controls
+/// one segment; defaults match the "default" preset.
+struct StatusBarSegments {
+    bool cwd = true;       // 📁 last 2 path components
+    bool git = true;       // 🌿 branch name
+    bool model = true;     // 🤖 model display name
+    bool tokens = true;    // ▮ context usage bar + percentage
+    bool cost = true;      // $ session cost
+    bool tasks = false;    // ⚙ N teams
+    bool agent = false;    // 👤 current agent name
+};
+
 struct BuiltinStatusLineData {
     std::string cwd;                ///< Current working directory (full path)
     std::string git_branch;         ///< Git branch name (empty if not a repo)
@@ -420,6 +433,10 @@ struct BuiltinStatusLineData {
     int context_token_count = 0;    ///< Total context tokens (in+out)
     std::optional<double> cost_usd; ///< Session cost in USD
     int context_window_size = 200000; ///< Context window size (default 200k)
+    int task_count = 0;             ///< Background task/teammate count
+    std::string agent_name;         ///< Current agent display name
+    StatusBarSegments segments;     ///< Per-segment enable mask
+    bool status_bar_enabled = true; ///< Master switch (false = hide entirely)
 };
 
 /// Extract the last N path components for display.
@@ -562,6 +579,9 @@ struct StatusLineOptions {
 
 /// Render the built-in statusline.
 /// Produces a single-row element with colored pills.
+/// Each segment is guarded by the corresponding flag in
+/// BuiltinStatusLineData::segments; the master switch
+/// status_bar_enabled hides the bar entirely.
 [[nodiscard]] inline Element RenderBuiltinStatusLine(
     const BuiltinStatusLineData& data)
 {
@@ -574,8 +594,11 @@ struct StatusLineOptions {
     using ftxui::bold;
     using ftxui::dim;
 
+    // Master switch: hidden entirely when disabled.
+    if (!data.status_bar_enabled) return text("");
+
     // Resolve colors from active theme palette.
-    // Uses real Palette fields (see design_system/design_tokens.cppm).
+    // Uses real Palette fields (see foundation/design_tokens.cppm).
     namespace theme_ns = loom::ui::design::theme;
     auto theme = theme_ns::current_theme();
     const auto& pal = *theme.palette;
@@ -585,67 +608,106 @@ struct StatusLineOptions {
     const Color kBranchColor = pal.success;          // green
     const Color kModelColor = pal.info;              // blue/cyan
     const Color kCostColor = pal.success;            // green
+    const Color kTasksColor = pal.warning;           // amber
+    const Color kAgentColor = pal.info;              // blue/cyan
     const Color kBgColor = Color::RGB(20, 20, 22);
 
-    Elements parts;
+    // Build each segment as its own Elements vector.  Only visible
+    // segments are pushed; separators are inserted between adjacent
+    // visible ones so there are never dangling gaps.
+    std::vector<Elements> segs;
 
     // ── 📁 Folder pill ──────────────────────────────────────
-    std::string folder_display = GetLastPathComponents(data.cwd, 2);
-    if (folder_display.empty()) folder_display = "~";
-    parts.push_back(text("📁 ") | dim | color(kFolderColor));
-    parts.push_back(text(folder_display) | dim | color(kFolderColor));
+    if (data.segments.cwd) {
+        std::string folder_display = GetLastPathComponents(data.cwd, 2);
+        if (folder_display.empty()) folder_display = "~";
+        segs.push_back({
+            text("📁 ") | dim | color(kFolderColor),
+            text(folder_display) | dim | color(kFolderColor),
+        });
+    }
 
     // ── 🌿 Git branch pill ──────────────────────────────────
-    if (!data.git_branch.empty()) {
-        parts.push_back(text("  🌿 ") | dim | color(kBranchColor));
-        parts.push_back(text(data.git_branch) | dim | color(kBranchColor));
+    if (data.segments.git && !data.git_branch.empty()) {
+        segs.push_back({
+            text("🌿 ") | dim | color(kBranchColor),
+            text(data.git_branch) | dim | color(kBranchColor),
+        });
     }
 
     // ── 🤖 Model pill ───────────────────────────────────────
-    if (!data.model_name.empty()) {
-        parts.push_back(text("  🤖 ") | dim | color(kModelColor));
-        parts.push_back(text(data.model_name) | bold | color(kModelColor));
+    if (data.segments.model && !data.model_name.empty()) {
+        segs.push_back({
+            text("🤖 ") | dim | color(kModelColor),
+            text(data.model_name) | bold | color(kModelColor),
+        });
     }
 
     // ── ▮ Context usage bar ─────────────────────────────────
-    // Calculate usage percentage
-    double pct = 0.0;
-    if (data.context_window_size > 0) {
-        pct = 100.0 * data.context_token_count /
-              static_cast<double>(data.context_window_size);
+    if (data.segments.tokens) {
+        // Calculate usage percentage
+        double pct = 0.0;
+        if (data.context_window_size > 0) {
+            pct = 100.0 * data.context_token_count /
+                  static_cast<double>(data.context_window_size);
+        }
+        int pct_int = static_cast<int>(std::round(pct));
+
+        // Build a mini progress bar: ▮▮▮▮▯▯▯▯ (10 segments)
+        constexpr int kBarSegments = 10;
+        int filled = static_cast<int>(std::round(
+            pct / 100.0 * kBarSegments));
+        filled = std::clamp(filled, 0, kBarSegments);
+        std::string bar;
+        for (int i = 0; i < filled; ++i) bar += "▮";
+        for (int i = filled; i < kBarSegments; ++i) bar += "▯";
+
+        // Color: green < 50%, amber 50-80%, red > 80%
+        Color bar_color = Color::RGB(120, 200, 120);  // green
+        if (pct >= 80.0) bar_color = Color::RGB(220, 80, 80);   // red
+        else if (pct >= 50.0) bar_color = kLoomGold;           // amber
+
+        // Percentage + token counts
+        std::string ctx_str = FormatTokensK(data.context_token_count);
+        std::string win_str = FormatTokensK(data.context_window_size);
+        segs.push_back({
+            text(bar) | color(bar_color),
+            text(std::format(" {}% {}/{}",
+                              pct_int, ctx_str, win_str)) | dim,
+        });
     }
-    int pct_int = static_cast<int>(std::round(pct));
-
-    // Build a mini progress bar: ▮▮▮▮▯▯▯▯ (10 segments)
-    constexpr int kBarSegments = 10;
-    int filled = static_cast<int>(std::round(
-        pct / 100.0 * kBarSegments));
-    filled = std::clamp(filled, 0, kBarSegments);
-    std::string bar;
-    for (int i = 0; i < filled; ++i) bar += "▮";
-    for (int i = filled; i < kBarSegments; ++i) bar += "▯";
-
-    // Color: green < 50%, amber 50-80%, red > 80%
-    Color bar_color = Color::RGB(120, 200, 120);  // green
-    if (pct >= 80.0) bar_color = Color::RGB(220, 80, 80);   // red
-    else if (pct >= 50.0) bar_color = kLoomGold;           // amber
-
-    parts.push_back(text("  ") | dim);
-    parts.push_back(text(bar) | color(bar_color));
-
-    // Percentage + token counts
-    std::string ctx_str = FormatTokensK(data.context_token_count);
-    std::string win_str = FormatTokensK(data.context_window_size);
-    parts.push_back(text(std::format(" {}% {}/{}",
-                      pct_int, ctx_str, win_str))
-                    | dim);
 
     // ── $ Cost ──────────────────────────────────────────────
-    if (data.cost_usd && *data.cost_usd > 0.0) {
+    if (data.segments.cost && data.cost_usd && *data.cost_usd > 0.0) {
         char cost_buf[32];
         std::snprintf(cost_buf, sizeof(cost_buf), "$%.4f", *data.cost_usd);
-        parts.push_back(text("  ") | dim);
-        parts.push_back(text(cost_buf) | dim | color(kCostColor));
+        segs.push_back({
+            text(cost_buf) | dim | color(kCostColor),
+        });
+    }
+
+    // ── ⚙ Tasks pill ────────────────────────────────────────
+    if (data.segments.tasks && data.task_count > 0) {
+        segs.push_back({
+            text("⚙ ") | dim | color(kTasksColor),
+            text(std::format("{} teams", data.task_count))
+                | dim | color(kTasksColor),
+        });
+    }
+
+    // ── 👤 Agent pill ───────────────────────────────────────
+    if (data.segments.agent && !data.agent_name.empty()) {
+        segs.push_back({
+            text("👤 ") | dim | color(kAgentColor),
+            text(data.agent_name) | dim | color(kAgentColor),
+        });
+    }
+
+    // Flatten with two-space separators between adjacent visible segments.
+    Elements parts;
+    for (std::size_t i = 0; i < segs.size(); ++i) {
+        if (i > 0) parts.push_back(text("  ") | dim);
+        for (auto& el : segs[i]) parts.push_back(std::move(el));
     }
 
     return hbox({ text(" "), hbox(std::move(parts)), text(" ") })

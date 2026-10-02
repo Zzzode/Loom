@@ -1,13 +1,15 @@
 /// @file test_statusline.cpp
 /// @brief Unit tests for the statusline system:
-///   - loom.commands.statusline      (shell integration setup command)
 ///   - loom.ui.app.statusline_runner  (statusline command execution + JSON input)
+///
+/// The old loom.commands.statusline shell-PS1 setup command was replaced
+/// by the /statusline segment toggle dialog (see test_commands.cpp for
+/// the command metadata test).
 
 #include <gtest/gtest.h>
 #include <cstdlib>
 
 import std;
-import loom.commands.statusline;
 import loom.ui.app.statusline_runner;
 import loom.serdes.json;
 
@@ -45,81 +47,7 @@ struct ScopedEnvVar {
 };
 
 // ===========================================================================
-// 1. loom.commands.statusline — shell integration setup command
-// ===========================================================================
-
-TEST(StatuslineCommand, NameIsStatusline) {
-    EXPECT_EQ(loom::commands::statusline::name(), "statusline");
-}
-
-TEST(StatuslineCommand, RunReturnsOkResponse) {
-    ScopedEnvVar shell("SHELL");
-    shell.set("/bin/zsh");
-    auto result = loom::commands::statusline::run();
-    EXPECT_TRUE(result.ok);
-    EXPECT_FALSE(result.message.empty());
-}
-
-TEST(StatuslineCommand, DetectsZshShell) {
-    ScopedEnvVar shell("SHELL");
-    shell.set("/bin/zsh");
-    auto result = loom::commands::statusline::run();
-    EXPECT_NE(result.message.find("Detected shell: zsh"), std::string::npos);
-    EXPECT_NE(result.message.find(".zshrc"), std::string::npos);
-    EXPECT_NE(result.message.find("RPROMPT"), std::string::npos);
-    EXPECT_NE(result.message.find("loom --status-json"), std::string::npos);
-}
-
-TEST(StatuslineCommand, DetectsBashShell) {
-    ScopedEnvVar shell("SHELL");
-    shell.set("/bin/bash");
-    auto result = loom::commands::statusline::run();
-    EXPECT_NE(result.message.find("Detected shell: bash"), std::string::npos);
-    EXPECT_NE(result.message.find(".bashrc"), std::string::npos);
-    EXPECT_NE(result.message.find("PROMPT_COMMAND"), std::string::npos);
-    EXPECT_NE(result.message.find("loom --status-json"), std::string::npos);
-}
-
-TEST(StatuslineCommand, DetectsFishShell) {
-    ScopedEnvVar shell("SHELL");
-    shell.set("/usr/local/bin/fish");
-    auto result = loom::commands::statusline::run();
-    EXPECT_NE(result.message.find("Detected shell: fish"), std::string::npos);
-    EXPECT_NE(result.message.find("fish_right_prompt"), std::string::npos);
-    EXPECT_NE(result.message.find("loom --status-json"), std::string::npos);
-}
-
-TEST(StatuslineCommand, UnknownShellWhenEnvMissing) {
-    ScopedEnvVar shell("SHELL");
-    shell.unset();
-    auto result = loom::commands::statusline::run();
-    EXPECT_NE(result.message.find("Detected shell: unknown"), std::string::npos);
-    EXPECT_NE(result.message.find("Could not detect shell type"), std::string::npos);
-}
-
-TEST(StatuslineCommand, EmptyShellVarTreatedAsUnknown) {
-    ScopedEnvVar shell("SHELL");
-    shell.set("");
-    auto result = loom::commands::statusline::run();
-    EXPECT_NE(result.message.find("Detected shell: unknown"), std::string::npos);
-}
-
-TEST(StatuslineCommand, CustomFormatAppendedWhenProvided) {
-    ScopedEnvVar shell("SHELL");
-    shell.set("/bin/zsh");
-    auto result = loom::commands::statusline::run("%model %cost");
-    EXPECT_NE(result.message.find("Custom format: %model %cost"), std::string::npos);
-}
-
-TEST(StatuslineCommand, NoCustomFormatWhenEmpty) {
-    ScopedEnvVar shell("SHELL");
-    shell.set("/bin/zsh");
-    auto result = loom::commands::statusline::run("");
-    EXPECT_EQ(result.message.find("Custom format:"), std::string::npos);
-}
-
-// ===========================================================================
-// 2. loom.ui.app.statusline_runner — JSON serialization (to_json)
+// loom.ui.app.statusline_runner — JSON serialization (to_json)
 // ===========================================================================
 
 using loom::utils::statusline::StatusLineCommandInput;

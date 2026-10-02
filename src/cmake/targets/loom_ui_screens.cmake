@@ -18,6 +18,7 @@ target_sources(loom_ui_screens
     PUBLIC FILE_SET CXX_MODULES FILES
         ui/screens/doctor_screen.cppm
         ui/screens/doctor_dialog_registration.cppm  # RFC 0002 F2 row 4: doctor renderer registration (screens side; dialogs must not import screens)
+        ui/screens/statusline_dialog.cppm      # /statusline segment toggle dialog (screens-side registration, same rank constraint)
         ui/screens/repl_state.cppm
         ui/screens/messages_store.cppm        # RFC 0002 F3: MessagesStore (message-list/scroll/chrome state shard)
         ui/screens/prompt_store.cppm          # RFC 0002 F3: PromptStore (prompt-input state shard)

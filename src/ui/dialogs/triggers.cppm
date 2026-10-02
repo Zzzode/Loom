@@ -550,6 +550,16 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
         queue.push_modal(std::move(p));
         return true;
     }
+    // ── Statusline — modal built-in status bar segment toggle ──
+    if (metadata == "UI:statusline") {
+        dsys::StatuslineDialogPayload p;
+        p.id = "statusline-dialog";
+        p.on_close = [&queue]() {
+            queue.pop_modal();
+        };
+        queue.push_modal(std::move(p));
+        return true;
+    }
     // Callouts — bottom-slot chrome, each with their own payload struct.
     if (metadata.starts_with("UI:undercover|")) {
         dsys::UndercoverCalloutPayload p;

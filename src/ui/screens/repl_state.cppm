@@ -317,6 +317,13 @@ struct ReplScreenState {
     std::string status_line_command;        // Shell command for status line
     int status_line_padding = 0;            // Horizontal padding for status line
     std::string status_line_text;           // Cached output of the status line command (may contain ANSI)
+
+    // Built-in status bar (the toggleable segment bar rendered by
+    // RenderBuiltinStatusLine).  Driven by the `statusLine` config key's
+    // `enabled` and `segments` sub-object; projected from ConfigManager
+    // in app_settings.cpp.
+    bool status_bar_enabled = true;
+    loom::ui::prompt::footer::StatusBarSegments status_bar_segments;
     // Counts and live-teams state moved to TaskViewStore (task_view_store
     // field above) in RFC 0002 F3.
 

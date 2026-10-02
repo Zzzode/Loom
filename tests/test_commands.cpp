@@ -233,6 +233,18 @@ TEST(AppCommandRegistry, DispatchesMigratedRuntimeCommands) {
     EXPECT_EQ(exit->metadata, "EXIT");
 }
 
+// /statusline opens the built-in status bar segment toggle dialog via
+// the "UI:statusline" metadata tag (replaces the old shell-PS1 printer).
+TEST(AppCommandRegistry, StatuslineOpensDialogMetadata) {
+    loom::commands::AppCommandRegistry registry;
+
+    auto result = registry.execute("/statusline", ctx());
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(result->ok);
+    ASSERT_TRUE(result->metadata.has_value());
+    EXPECT_EQ(*result->metadata, "UI:statusline");
+}
+
 // RFC-0001 B followup c6 review: the /mcp add flag loop used to double-
 // consume every value-flag (the inner consumer AND the loop tail both
 // advanced), so the flag's VALUE was revisited as a positional token:

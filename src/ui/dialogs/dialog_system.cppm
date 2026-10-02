@@ -89,6 +89,7 @@ enum class DialogType : std::uint16_t {
     FeedbackSurvey,         ///< feedback survey
     ManagedSettingsSecurity,///< managed settings security page
     HooksConfig,            ///< /hooks configuration menu
+    StatuslineDialog,       ///< /statusline segment toggle
 
     // -- Standalone / full-screen (not in REPL layout) --
     TrustDialog,            ///< first-run trust dialog
@@ -143,6 +144,7 @@ enum class DialogType : std::uint16_t {
         case DialogType::FeedbackSurvey:           return "feedback-survey";
         case DialogType::ManagedSettingsSecurity:  return "managed-settings-security";
         case DialogType::HooksConfig:              return "hooks-config";
+        case DialogType::StatuslineDialog:         return "statusline-dialog";
         case DialogType::TrustDialog:              return "trust-dialog";
         case DialogType::Onboarding:               return "onboarding";
         case DialogType::CreateAgentWizard:        return "create-agent-wizard";
@@ -211,6 +213,7 @@ enum class DialogSlot : std::uint8_t {
         case DialogType::FeedbackSurvey:
         case DialogType::ManagedSettingsSecurity:
         case DialogType::HooksConfig:
+        case DialogType::StatuslineDialog:
             return DialogSlot::Modal;
 
         case DialogType::TrustDialog:
@@ -747,6 +750,16 @@ struct HooksDialogPayload {
     std::function<void()> on_close;
 };
 
+/// Payload for the status bar segment toggle dialog (modal).
+/// Carries a type-erased component handle so the dialog-system module
+/// does not depend on the statusline dialog implementation.  Renderers
+/// cast the opaque pointer back to the FTXUI Component.
+struct StatuslineDialogPayload {
+    std::string id;
+    std::shared_ptr<void> component;  ///< Opaque statusline dialog component
+    std::function<void()> on_close;
+};
+
 /// Payload for Doctor diagnostics screen (standalone).
 ///
 /// Holds a type-erased component handle so the dialog-system module does
@@ -806,7 +819,8 @@ using DialogPayloadVariant = std::variant<
     CreateAgentWizardPayload,
     EditAgentWizardPayload,
     HooksDialogPayload,
-    DoctorDialogPayload
+    DoctorDialogPayload,
+    StatuslineDialogPayload
 >;
 
 /// Get the DialogType from a payload variant.
@@ -905,6 +919,8 @@ using DialogPayloadVariant = std::variant<
             return DialogType::HooksConfig;
         } else if constexpr (std::is_same_v<T, DoctorDialogPayload>) {
             return DialogType::Doctor;
+        } else if constexpr (std::is_same_v<T, StatuslineDialogPayload>) {
+            return DialogType::StatuslineDialog;
         }
         return DialogType::_COUNT;
     }, payload);

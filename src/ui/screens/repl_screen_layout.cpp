@@ -255,6 +255,10 @@ using namespace ftxui;
         // Context window size: use 200k default; model-specific overrides
         // could be added later from model metadata.
         builtin_data.context_window_size = 200000;
+        builtin_data.task_count = s.task_view_store.teammate_count;
+        builtin_data.agent_name = s.chrome_store.status_bar.agent_name.value_or("");
+        builtin_data.segments = s.status_bar_segments;
+        builtin_data.status_bar_enabled = s.status_bar_enabled;
 
         pif::StatusLineOptions status_line_opts;
         status_line_opts.content = s.status_line_text;

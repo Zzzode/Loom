@@ -31,7 +31,6 @@ import loom.commands.rate_limit_options;
 import loom.commands.reload_plugins;
 import loom.commands.reset_limits;
 import loom.commands.sandbox_toggle;
-import loom.commands.statusline;
 import loom.commands.terminal_setup;
 import loom.commands.thinkback;
 import loom.commands.thinkback_play;
@@ -112,7 +111,28 @@ LOOM_RUNTIME_HELPER_COMMAND(PerfIssueCommand, "perf-issue", "Collect performance
 LOOM_RUNTIME_HELPER_COMMAND(PrCommentsCommand, "pr-comments", "Inspect pull request comments", "git", pr_comments::run)
 LOOM_RUNTIME_HELPER_COMMAND(ReloadPluginsCommand, "reload-plugins", "Reload installed plugins", "plugins", reload_plugins::run)
 LOOM_RUNTIME_HELPER_COMMAND(ResetLimitsCommand, "reset-limits", "Reset local mock limits", "usage", reset_limits::run)
-LOOM_RUNTIME_HELPER_COMMAND(StatuslineCommand, "statusline", "Configure statusline output", "terminal", statusline::run)
+
+/// /statusline — open the built-in status bar segment toggle dialog.
+/// Replaces the old shell-PS1 integration text printer; the dialog lets
+/// the user toggle each segment (cwd, git, model, tokens, cost, tasks,
+/// agent) and persists to the user-tier settings.json.
+class StatuslineCommand final : public detail::BasicCommand {
+public:
+    [[nodiscard]] static CommandDefinition definition() {
+        return CommandDefinition{
+            .name = "statusline",
+            .description = "Toggle status bar segments",
+            .args = {},
+            .category = "config",
+        };
+    }
+
+    [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
+        return CommandResult{true, "Opening status bar settings...",
+                             "UI:statusline", CommandStatus::Succeeded};
+    }
+};
+
 LOOM_RUNTIME_HELPER_COMMAND(TerminalSetupCommand, "terminal-setup", "Configure terminal integration", "terminal", terminal_setup::run)
 LOOM_RUNTIME_HELPER_COMMAND(ThinkbackPlayCommand, "thinkback-play", "Replay thinking history", "thinking", thinkback_play::run)
 

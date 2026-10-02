@@ -39,6 +39,7 @@ import loom.daemon.daemon_server;
 import loom.server.server_main;
 import loom.cli.websocket_transport;
 import loom.config.settings;
+import loom.config.config;
 
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 namespace fs = std::filesystem;
@@ -680,10 +681,20 @@ int run_runtime_tool_once(const CliOptions& opts) {
 auto load_config() -> loom::core::QueryEngineConfig {
     loom::core::QueryEngineConfig config;
 
-    // API key from environment (required for operation)
+    // Load config file (~/.loom/config.json) as a fallback for credentials
+    // and model settings. Env vars take precedence over file values.
+    loom::core::ConfigManager file_config;
+    if (auto result = file_config.load(loom::core::LoadOptions{.quiet = true}); !result) {
+        // Non-fatal: env vars may still provide everything needed.
+    }
+
+    // API key: env var first, then config file
     if (const char* key = std::getenv("LOOM_API_KEY")) {
         config.api_key = key;
+    } else if (auto file_key = file_config.api_key()) {
+        config.api_key = *file_key;
     }
+
     // Bearer token for endpoints that take one (e.g. LOOM_AUTH_TOKEN supplied
     // via --settings env, or a gateway token). When present it is sent as
     // "Authorization: Bearer" and takes precedence over api_key. This carries a
@@ -693,11 +704,14 @@ auto load_config() -> loom::core::QueryEngineConfig {
         config.auth_token = token;
     }
 
-    // Base URL override (e.g. for proxies or custom endpoints)
+    // Base URL: env var first, then config file
     if (const char* url = std::getenv("LOOM_BASE_URL")) {
         config.base_url = url;
+    } else if (const auto& file_url = file_config.settings().network.base_url) {
+        config.base_url = *file_url;
     }
 
+    // Model: env var first, then config file
     config.model_params.model = loom::config::resolve_default_model_from_environment(
         [](std::string_view name) -> std::optional<std::string> {
             const auto key = std::string(name);
@@ -706,6 +720,9 @@ auto load_config() -> loom::core::QueryEngineConfig {
             }
             return std::nullopt;
         });
+    if (config.model_params.model.empty() && !file_config.settings().model.default_model.empty()) {
+        config.model_params.model = file_config.settings().model.default_model;
+    }
 
     config.max_budget_usd = 10.0;
     config.cwd = fs::current_path().string();

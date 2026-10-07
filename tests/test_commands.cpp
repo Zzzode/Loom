@@ -25,6 +25,7 @@ import loom.commands.rewind;
 import loom.commands.plugin_cmd;
 import loom.commands.plugin_ui_data;
 import loom.commands.plugin_parse_args;
+import loom.commands.resume;
 import loom.utils.error;
 import loom.serdes.json;
 import loom.commands.terminal_setup;
@@ -1930,4 +1931,186 @@ TEST(AppCommandRegistry, XaaShowPresenceOnlyDoesNotEchoSecret) {
     }
 
     cleanup();
+}
+
+// ── ResumeCommand ──────────────────────────────────────────────────────────
+// Regression guard: /resume must list sessions from disk.  The command's
+// recent_sessions_ was only ever populated via set_recent_sessions(), which
+// has zero callers in the app — so /resume always reported "No recent
+// sessions found."  execute() now loads from ~/.loom/sessions directly.
+TEST(ResumeCommand, ListsSessionsFromDisk) {
+    // Override HOME so load_sessions() resolves ~/.loom/sessions to a temp dir.
+    const char* old_home = std::getenv("HOME");
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_resume_cmd_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(temp_home / ".loom" / "sessions");
+    setenv("HOME", temp_home.string().c_str(), 1);
+
+    // Create a session with metadata and an actual messages file.
+    const auto session_dir = temp_home / ".loom" / "sessions" / "abc12345-def";
+    fs::create_directories(session_dir);
+    {
+        std::ofstream ofs(session_dir / "metadata.json");
+        ofs << R"({"id":"abc12345-def","title":"My Session","model":"loom-test","message_count":42})";
+        // messages.jsonl: the engine appends one JSON object per line.
+        // count_messages_on_disk reads this file, not metadata.json.
+        std::ofstream(session_dir / "messages.jsonl")
+            << "{\"role\":\"user\",\"content\":\"hello\"}\n"
+            << "{\"role\":\"assistant\",\"content\":\"hi there\"}\n";
+    }
+
+    loom::commands::ResumeCommand cmd;
+
+    // /resume (no args) opens the interactive picker via metadata.
+    auto listed = cmd.execute(ctx());
+    ASSERT_TRUE(listed.has_value());
+    EXPECT_EQ(listed->metadata, "UI:resume");
+
+    // /resume last returns metadata with the session ID for direct resume.
+    auto resumed = cmd.execute(ctx({"last"}));
+    ASSERT_TRUE(resumed.has_value());
+    EXPECT_NE(resumed->message.find("Resuming session"), std::string::npos)
+        << resumed->message;
+    EXPECT_NE(resumed->message.find("My Session"), std::string::npos)
+        << resumed->message;
+    ASSERT_TRUE(resumed->metadata.has_value());
+    EXPECT_EQ(*resumed->metadata, "UI:resume:abc12345-def");
+
+    // Restore HOME and clean up.
+    if (old_home) setenv("HOME", old_home, 1);
+    else unsetenv("HOME");
+    fs::remove_all(temp_home);
+}
+
+TEST(ResumeCommand, FiltersEmptySessionsAndShowsUsefulInfo) {
+    // Override HOME so load_sessions() resolves ~/.loom/sessions to a temp dir.
+    const char* old_home = std::getenv("HOME");
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_resume_filter_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(temp_home / ".loom" / "sessions");
+    setenv("HOME", temp_home.string().c_str(), 1);
+
+    // Session 1: UUID format, has messages, title "Session" (generic).
+    // Should show first user message as the title.
+    {
+        const auto dir = temp_home / ".loom" / "sessions" / "82702bdd-679b-44d9";
+        fs::create_directories(dir);
+        std::ofstream(dir / "metadata.json")
+            << R"({"id":"82702bdd-679b-44d9","title":"Session","model":"test","message_count":13})";
+        // messages.jsonl: one JSON object per line (engine format).
+        std::ofstream(dir / "messages.jsonl")
+            << "{\"role\":\"user\",\"content\":\"你好世界\"}\n"
+            << "{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"hi\"}]}\n";
+    }
+
+    // Session 2: session_<ts>_<hex> format, has messages, no title.
+    // Should show the hex suffix (not "session_") and first user message.
+    {
+        const auto dir = temp_home / ".loom" / "sessions" / "session_1791013130731_410e223d";
+        fs::create_directories(dir);
+        std::ofstream(dir / "metadata.json")
+            << R"({"id":"session_1791013130731_410e223d","model":"test","message_count":5})";
+        std::ofstream(dir / "messages.jsonl")
+            << "{\"role\":\"user\",\"content\":\"fix the bug\"}\n";
+    }
+
+    // Session 3: empty session (0 messages) — should be filtered out.
+    {
+        const auto dir = temp_home / ".loom" / "sessions" / "session_1791023518606_e3b7fcd0";
+        fs::create_directories(dir);
+        std::ofstream(dir / "metadata.json")
+            << R"({"id":"session_1791023518606_e3b7fcd0","model":"test","message_count":0})";
+    }
+
+    loom::commands::ResumeCommand cmd;
+    // /resume list still returns the text list (used by the text fallback).
+    auto listed = cmd.execute(ctx({"list"}));
+    ASSERT_TRUE(listed.has_value());
+    const auto& msg = listed->message;
+
+    // The empty session should not appear.
+    EXPECT_EQ(msg.find("e3b7fcd0"), std::string::npos) << msg;
+
+    // UUID session: first 8 chars of ID + first user message as title.
+    EXPECT_NE(msg.find("82702bdd"), std::string::npos) << msg;
+    EXPECT_NE(msg.find("你好世界"), std::string::npos) << msg;
+
+    // session_ format: hex suffix (not "session_") + first user message.
+    EXPECT_NE(msg.find("410e223d"), std::string::npos) << msg;
+    EXPECT_NE(msg.find("fix the bug"), std::string::npos) << msg;
+    // The useless "session_" prefix should NOT appear as an ID.
+    EXPECT_EQ(msg.find("session_ —"), std::string::npos) << msg;
+
+    // Restore HOME and clean up.
+    if (old_home) setenv("HOME", old_home, 1);
+    else unsetenv("HOME");
+    fs::remove_all(temp_home);
+}
+
+// Regression guard: sessions whose messages.jsonl stores user content as an
+// array of content blocks ({"content":[{"type":"text","text":"…"}]}) rather
+// than a plain string must still extract the first user message as the title.
+TEST(ResumeCommand, TitleExtractionHandlesArrayContent) {
+    const char* old_home = std::getenv("HOME");
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_resume_array_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(temp_home / ".loom" / "sessions");
+    setenv("HOME", temp_home.string().c_str(), 1);
+
+    {
+        const auto dir = temp_home / ".loom" / "sessions" / "arr12345-test";
+        fs::create_directories(dir);
+        std::ofstream(dir / "metadata.json")
+            << R"({"id":"arr12345-test","title":"Session","model":"test","message_count":3})";
+        // Array-format content (multi-block or non-TextBlock messages).
+        std::ofstream(dir / "messages.jsonl")
+            << "{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Fix the array parsing bug\"}]}\n"
+            << "{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Done\"}]}\n";
+    }
+
+    loom::commands::ResumeCommand cmd;
+    auto listed = cmd.execute(ctx({"list"}));
+    ASSERT_TRUE(listed.has_value());
+    EXPECT_NE(listed->message.find("Fix the array parsing bug"), std::string::npos)
+        << listed->message;
+
+    if (old_home) setenv("HOME", old_home, 1);
+    else unsetenv("HOME");
+    fs::remove_all(temp_home);
+}
+
+TEST(ResumeCommand, TitleExtractionHandlesLegacyMessagesJson) {
+    // Legacy sessions store messages in messages.json (a JSON array with
+    // "text" fields) instead of messages.jsonl.  The title extractor
+    // must fall back to this format when messages.jsonl is absent.
+    const char* old_home = std::getenv("HOME");
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_resume_legacy_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(temp_home / ".loom" / "sessions");
+    setenv("HOME", temp_home.string().c_str(), 1);
+
+    {
+        const auto dir = temp_home / ".loom" / "sessions" / "legacy-uuid-001";
+        fs::create_directories(dir);
+        std::ofstream(dir / "metadata.json")
+            << R"({"id":"legacy-uuid-001","title":"Session","model":"test","message_count":2})";
+        // Legacy format: JSON array with "text" field (not "content").
+        std::ofstream(dir / "messages.json")
+            << R"([{"role":"user","text":"你好世界"},)"
+            << R"({"role":"assistant","text":"你好！有什么可以帮你的？"}])";
+    }
+
+    loom::commands::ResumeCommand cmd;
+    auto listed = cmd.execute(ctx({"list"}));
+    ASSERT_TRUE(listed.has_value());
+    EXPECT_NE(listed->message.find("你好世界"), std::string::npos)
+        << listed->message;
+
+    if (old_home) setenv("HOME", old_home, 1);
+    else unsetenv("HOME");
+    fs::remove_all(temp_home);
 }

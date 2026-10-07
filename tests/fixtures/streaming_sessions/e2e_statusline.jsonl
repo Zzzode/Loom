@@ -1,0 +1,9 @@
+{"type":"stream_start","message_id":"msg_statusline_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":0,"delta_text":"The debug build is green and all tests pass."}
+{"type":"content_block_stop","index":0}
+{"type":"stream_end","stop_reason":"end_turn","usage":{"input_tokens":25,"output_tokens":12}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":"The debug build is green and all tests pass."}]}}
+{"type":"__checkpoint__","name":"after_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

@@ -1,8 +1,7 @@
 /// @file text_measure.cppm
 /// @brief Text measurement utilities for terminal rendering.
-/// Migrates: src/ink/ text measurement files
-///   - measure-text.ts, measure-element.ts, stringWidth.ts,
-///     widest-line.ts, line-width-cache.ts, get-max-width.ts, bidi.ts
+/// Provides text-width measurement, line-width caching, and bidi support
+/// for terminal rendering.
 module;
 
 #include <cstdint>

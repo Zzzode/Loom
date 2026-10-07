@@ -218,6 +218,30 @@ inline void PushQuickOpen(dsys::DialogQueue& queue,
 }
 
 // ---------------------------------------------------------------------------
+// SessionPicker (standalone fullscreen /resume picker)
+// ---------------------------------------------------------------------------
+inline void PushSessionPicker(dsys::DialogQueue& queue,
+                              std::vector<dsys::SessionPickerEntry> sessions,
+                              std::function<void(const std::string& session_id)> on_select) {
+    dsys::SessionPickerPayload p;
+    p.id = "session-picker";
+    p.query = "";
+    p.sessions = std::move(sessions);
+    p.selected_index = 0;
+    // Wrap the callback so the standalone dialog is always popped.
+    // Must be mutable: pop_standalone() destroys this lambda (and its
+    // captures) along with the payload, so move the user callback to a
+    // local BEFORE popping — otherwise the capture is destroyed mid-call.
+    p.on_select = [&queue, on_select = std::move(on_select)](
+                      const std::string& session_id) mutable {
+        auto cb = std::move(on_select);
+        queue.pop_standalone();
+        if (cb) cb(session_id);
+    };
+    queue.push_standalone(std::move(p));
+}
+
+// ---------------------------------------------------------------------------
 // AboutDialog
 // ---------------------------------------------------------------------------
 inline void PushAboutDialog(dsys::DialogQueue& queue,
@@ -337,8 +361,8 @@ inline void PushManagedSettingsSecurity(dsys::DialogQueue& queue,
 // view (e.g. "discover-plugins", "manage-plugins?action=uninstall").  The
 // renderer parses id_suffix to derive the initial ViewState (pre-select a
 // tab, row, or auto-open an action panel).  menu_selected is retained on
-// the payload for back-compat but is no longer used for routing (the TS
-// reference has no card dashboard — it routes straight to the tabs).
+// the payload for back-compat but is no longer used for routing (no
+// card dashboard — routes straight to the tabs).
 inline void PushPluginDialog(dsys::DialogQueue& queue,
                              int menu_selected,
                              std::string id_suffix,
@@ -478,10 +502,9 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
     // ── Plugin dialog — all "UI:plugins:*" variants map to the same   ──
     //    PluginDialog modal, just with a different id_suffix.  The      ──
     //    renderer derives the initial ViewState from id_suffix (the     ──
-    //    TS reference has no card dashboard — it routes straight to the ──
-    //    Discover/Installed/Marketplaces tabs).  menu_selected is kept  ──
-    //    on the payload for back-compat but is no longer used for       ──
-    //    routing.
+    //    no card dashboard — routes straight to the Discover/Installed/ ──
+    //    Marketplaces tabs).  menu_selected is kept on the payload for  ──
+    //    back-compat but is no longer used for routing.                 ──
     if (metadata == "UI:plugins:discover-plugins") {
         // Discover tab (trending & recommended plugins)
         PushPluginDialog(queue, 2, "discover-plugins",

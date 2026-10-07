@@ -1,13 +1,6 @@
 /// @file tool_deny_rules.cppm
 /// @brief Pure permission deny-rule grammar and matcher for pre-listing tool
 /// filtering. Zero internal imports so any layer can consume it.
-///
-/// TS PARITY (single shared policy source):
-///   - src/services/mcp/normalization.ts:17        normalizeNameForMCP
-///   - src/services/mcp/mcpStringUtils.ts:19-32    mcpInfoFromString
-///   - src/utils/permissions/permissionRuleParser.ts:100-133
-///                                                 permissionRuleValueFromString
-///   - src/utils/permissions/permissions.ts:238-269 toolMatchesRule
 module;
 
 #include <cctype>
@@ -20,35 +13,31 @@ export namespace loom::utils::tool_deny_rules {
 
 // ============================================================
 // MCP name normalization
-// TS REF: src/services/mcp/normalization.ts:7,17-23
 // ============================================================
 
 /// Normalize server/tool names for the API pattern ^[a-zA-Z0-9_-]{1,64}$:
 /// every char outside [A-Za-z0-9_-] becomes '_'.
 ///
-/// The TS original special-cased names carrying the vendor's hosted-connector
-/// prefix, collapsing underscore runs for those. That branch is deleted: there
-/// is no hosted connector service, so nothing can produce a name with that
-/// prefix, and the branch was unreachable for every real MCP server name (which
-/// comes from user configuration). A prefix test that can never be true is not
-/// a safety net, it is a place for a future reader to believe something is
-/// handled that is not.
+/// The hosted-connector prefix special case is deleted: there is no
+/// hosted connector service, so nothing can produce a name with that
+/// prefix, and the branch was unreachable for every real MCP server name
+/// (which comes from user configuration). A prefix test that can never be
+/// true is not a safety net, it is a place for a future reader to believe
+/// something is handled that is not.
 [[nodiscard]] inline std::string normalize_name_for_mcp(std::string_view name) {
-    // TS REF: normalization.ts:17
     std::string normalized;
     normalized.reserve(name.size());
     for (const char ch : name) {
         const unsigned char uch = static_cast<unsigned char>(ch);
         const bool allowed =
             std::isalnum(uch) != 0 || ch == '_' || ch == '-';
-        normalized.push_back(allowed ? ch : '_');  // TS REF: normalization.ts:18
+        normalized.push_back(allowed ? ch : '_');
     }
     return normalized;
 }
 
 // ============================================================
 // MCP qualified-name parsing
-// TS REF: src/services/mcp/mcpStringUtils.ts:19-32
 // ============================================================
 
 struct McpInfo {
@@ -63,11 +52,10 @@ struct McpInfo {
 /// "mcp__serverName" yields a nullopt tool. Returns nullopt when the input is
 /// not a qualified MCP name.
 ///
-/// Known TS limitation (mcpStringUtils.ts:14-17): a server name containing
-/// "__" parses incorrectly; replicate, do not "fix".
+/// Known limitation: a server name containing "__" parses incorrectly;
+/// replicate, do not "fix".
 [[nodiscard]] inline std::optional<McpInfo> mcp_info_from_string(
     std::string_view tool_string) {
-    // TS REF: mcpStringUtils.ts:23 — toolString.split('__')
     std::vector<std::string> parts;
     std::size_t start = 0;
     while (true) {
@@ -80,14 +68,12 @@ struct McpInfo {
         start = pos + 2;
     }
 
-    // TS REF: mcpStringUtils.ts:25 — mcpPart !== 'mcp' || !serverName
     if (parts.size() < 2 || parts[0] != "mcp" || parts[1].empty()) {
         return std::nullopt;
     }
 
     McpInfo info;
     info.server = parts[1];
-    // TS REF: mcpStringUtils.ts:29-30 — remaining parts joined with "__"
     if (parts.size() > 2) {
         std::string tool_name = parts[2];
         for (std::size_t i = 3; i < parts.size(); ++i) {
@@ -101,7 +87,6 @@ struct McpInfo {
 
 // ============================================================
 // Permission rule parsing
-// TS REF: src/utils/permissions/permissionRuleParser.ts
 // ============================================================
 
 struct ParsedDenyRule {
@@ -112,8 +97,6 @@ struct ParsedDenyRule {
 namespace detail {
 
 /// Apply legacy tool-name renames so old rules resolve to canonical names.
-/// TS REF: permissionRuleParser.ts:21-29 (Agent='Agent', TaskStop='TaskStop',
-/// TaskOutput='TaskOutput' constants).
 [[nodiscard]] inline std::string normalize_legacy_tool_name(
     std::string_view name) {
     if (name == "Task") return "Agent";
@@ -125,7 +108,7 @@ namespace detail {
 }
 
 /// Index of the first occurrence of `ch` not preceded by an odd run of
-/// backslashes, or npos. TS REF: permissionRuleParser.ts:158-175.
+/// backslashes, or npos.
 [[nodiscard]] inline std::size_t find_first_unescaped_char(
     std::string_view str, char ch) noexcept {
     for (std::size_t i = 0; i < str.size(); ++i) {
@@ -142,7 +125,7 @@ namespace detail {
 }
 
 /// Index of the last occurrence of `ch` not preceded by an odd run of
-/// backslashes, or npos. TS REF: permissionRuleParser.ts:181-198.
+/// backslashes, or npos.
 [[nodiscard]] inline std::size_t find_last_unescaped_char(
     std::string_view str, char ch) noexcept {
     if (str.empty()) return std::string_view::npos;
@@ -168,48 +151,44 @@ namespace detail {
 /// Only the presence of content matters for deny filtering: content-bearing
 /// rules never strip a whole tool. The content string itself is therefore not
 /// returned. Empty content ("Bash()") and wildcard content ("Bash(*)") are
-/// treated as bare tool-name rules, matching TS.
-/// TS REF: permissionRuleParser.ts:93-133.
+/// treated as bare tool-name rules.
 [[nodiscard]] inline ParsedDenyRule parse_deny_rule(
     std::string_view rule_string) {
-    // TS REF: permissionRuleParser.ts:97-101
     const auto open = detail::find_first_unescaped_char(rule_string, '(');
     if (open == std::string_view::npos) {
         return {detail::normalize_legacy_tool_name(rule_string), false};
     }
 
-    // TS REF: permissionRuleParser.ts:104-108
     const auto close = detail::find_last_unescaped_char(rule_string, ')');
     if (close == std::string_view::npos || close <= open) {
         return {detail::normalize_legacy_tool_name(rule_string), false};
     }
 
-    // TS REF: permissionRuleParser.ts:111-114 — closing paren must end string
+    // Closing paren must end string
     if (close != rule_string.size() - 1) {
         return {detail::normalize_legacy_tool_name(rule_string), false};
     }
 
     const std::string_view tool_name = rule_string.substr(0, open);
-    // TS REF: permissionRuleParser.ts:120-122 — missing tool name is malformed
+    // Missing tool name is malformed
     if (tool_name.empty()) {
         return {detail::normalize_legacy_tool_name(rule_string), false};
     }
 
     const std::string_view raw_content =
         rule_string.substr(open + 1, close - open - 1);
-    // TS REF: permissionRuleParser.ts:126-128 — '' or '*' is tool-wide
+    // '' or '*' is tool-wide
     if (raw_content.empty() || raw_content == "*") {
         return {detail::normalize_legacy_tool_name(tool_name), false};
     }
 
-    // Content is unescaped in TS (permissionRuleParser.ts:131) but deny
-    // matching only needs to know content exists.
+    // Content is not unescaped — deny matching only needs to know content
+    // exists.
     return {detail::normalize_legacy_tool_name(tool_name), true};
 }
 
 // ============================================================
 // Tool view + name used for permission checks
-// TS REF: src/services/mcp/mcpStringUtils.ts:39-67
 // ============================================================
 
 /// Minimal description of a tool at the filtering point. Built-ins carry only
@@ -223,8 +202,6 @@ struct DenyToolView {
 };
 
 /// Build the name used for permission rule matching.
-/// TS REF: mcpStringUtils.ts:60-67 getToolNameForPermissionCheck +
-/// mcpStringUtils.ts:39-52 getMcpPrefix/buildMcpToolName.
 [[nodiscard]] inline std::string permission_check_name(
     const DenyToolView& tool) {
     if (tool.mcp_server) {
@@ -239,7 +216,6 @@ struct DenyToolView {
 
 // ============================================================
 // Rule matching
-// TS REF: src/utils/permissions/permissions.ts:238-269
 // ============================================================
 
 /// True when a single raw deny rule strips the tool whose qualified
@@ -256,13 +232,13 @@ struct DenyToolView {
     std::string_view name_for_check) {
     const ParsedDenyRule rule = parse_deny_rule(rule_string);
 
-    // TS REF: permissions.ts:243-245 — ruleContent defined => no whole-tool match
+    // Content-bearing rule => no whole-tool match
     if (rule.has_content) return false;
 
-    // TS REF: permissions.ts:254-256 — direct tool name match
+    // Direct tool name match
     if (rule.tool_name == name_for_check) return true;
 
-    // TS REF: permissions.ts:260-268 — MCP server-level permission
+    // MCP server-level permission
     const auto rule_info = mcp_info_from_string(rule.tool_name);
     const auto tool_info = mcp_info_from_string(name_for_check);
     if (!rule_info || !tool_info) return false;
@@ -274,8 +250,6 @@ struct DenyToolView {
 /// True when ANY of the raw deny rule strings strips the given tool.
 /// An empty rule list matches nothing. Garbage rules simply match nothing;
 /// the matcher never throws on malformed input.
-/// TS REF: permissions.ts:213-221 (getDenyRules flatten) + 287-292
-/// (getDenyRuleForTool first match).
 [[nodiscard]] inline bool is_tool_denied(
     std::span<const std::string> deny_rule_strings,
     const DenyToolView& tool) {

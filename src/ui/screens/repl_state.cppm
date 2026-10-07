@@ -54,8 +54,8 @@ using DialogPayloadVariant   = dsys_fw::DialogPayloadVariant;
 // Enums
 // =========================================================
 
-/// Top-level mode.  1:1 with TS focusedInputDialog union (REPL.tsx:2017)
-/// plus contextual panel modes.  TS names in trailing comments.
+/// Top-level mode.  1:1 with the focusedInputDialog union
+/// plus contextual panel modes.  Names in trailing comments.
 enum class ReplMode : std::uint8_t {
     Normal,                   // (none) — base layout
     // Dialogs (overlay via dbox)
@@ -91,9 +91,8 @@ enum class ReplMode : std::uint8_t {
 ///   {Prompt, Bash, SlashCommand, HistorySearch, PlanMode,
 ///    VimInsert, VimNormal, VimVisual, OrphanedPermission, TaskNotification}
 /// Old→new mapping:
-///   InputMode::Prompt → PromptInputMode::Normal  (TS: 'prompt')
+///   InputMode::Prompt → PromptInputMode::Normal  ('prompt')
 /// All other values retain their names in the unified enum.
-/// TS REF: src/types/textInputTypes.ts:265 (PromptInputMode type)
 using InputMode = loom::ui::common::PromptInputMode;
 
 // =========================================================
@@ -108,7 +107,7 @@ using InputMode = loom::ui::common::PromptInputMode;
 /// (imported above; call sites that name it import that store directly).
 
 /// RFC 0002 F3: PermissionToolKind + PermissionRequestInfo (the permission-
-/// prompt subset, TS ToolUseConfirm) live in loom.ui.screens.permission_store
+/// prompt subset, ToolUseConfirm) live in loom.ui.screens.permission_store
 /// (imported above). The dead nested DialogContext bridge struct (zero type
 /// usages anywhere; repl_screen_dialog_queue.cpp notes there are ZERO writes
 /// to it) was deleted rather than moved — project convention prefers
@@ -135,35 +134,35 @@ struct ReplScreenState {
     std::string active_local_jsx_command_args;
     std::string active_local_jsx_content;
     int active_agents_selection_position = 0;
-    // TS REF: Messages.tsx expandedKeys (L563) — Set of expand keys the user
+    // expanded_keys — Set of expand keys the user
     // has toggled open via Enter/Space on clickable rows.  Tool results and
     // thinking blocks render with verbose=true when their expand key is in
     // this set, showing full content instead of truncated summary.
     std::unordered_set<std::string> expanded_keys;
 
-    /// TS REF: Messages.tsx isBriefOnly prop (L236, L510-514).
+    /// is_brief_mode flag.
     /// When true, only brief-tool calls + their results + real user input
     /// are shown; assistant text, thinking, and non-brief tools are hidden.
     /// Toggled by the user (e.g., via /brief command or status bar click).
     bool is_brief_mode = false;
 
-    /// TS REF: Messages.tsx L382-389 + L395-419  isStreamingThinkingVisible.
-    /// When true, ALL completed thinking blocks are hidden (TS:
-    /// lastThinkingBlockId = 'streaming').  Set by app.cppm when any streaming
+    /// isStreamingThinkingVisible.
+    /// When true, ALL completed thinking blocks are hidden
+    /// (lastThinkingBlockId = 'streaming').  Set by app.cppm when any streaming
     /// thinking entry is active or within its 30s grace period.
     bool streaming_thinking_globally_visible = false;
 
-    /// TS REF: Messages.tsx isTranscriptMode (L459, screen === 'transcript').
+    /// is_transcript_mode (transcript screen).
     /// When true, the message list shows the FULL transcript (all message
     /// types visible, bypassing brief/dropText filters).  Capped at last 30
     /// messages unless show_all_in_transcript is also true.
-    /// Toggled by Ctrl+O (TS: app:toggleTranscript global shortcut).
+    /// Toggled by Ctrl+O (app:toggleTranscript global shortcut).
     bool is_transcript_mode = false;
 
-    /// TS REF: Messages.tsx showAllInTranscript prop (L223, L467, L515-516).
+    /// show_all_in_transcript flag.
     /// When true AND is_transcript_mode is true, the 30-message cap is lifted
     /// and ALL messages are rendered.  Toggled by Ctrl+E while in transcript
-    /// mode (TS: transcript:toggleShowAll shortcut, Transcript context).
+    /// mode (transcript:toggleShowAll shortcut, Transcript context).
     bool show_all_in_transcript = false;
 
     // Input
@@ -186,7 +185,6 @@ struct ReplScreenState {
     ChromeStore chrome_store;
 
     // ── P1 Footer notifications ──────────────────────────────────────
-    // TS REF: src/components/PromptInput/Notifications.tsx
     // These fields drive the right-column notification area.
     // RenderNotifications() picks the highest-priority active item.
     loom::ui::prompt::footer::ApiKeyStatus api_key_status =
@@ -194,7 +192,7 @@ struct ReplScreenState {
     bool is_remote_session = false;   // LOOM_REMOTE → changes error text
     bool debug_mode = false;          // "Debug mode" pill
     bool verbose = false;             // show token count when valid + verbose
-    // IDE selection indicator (TS IdeStatusIndicator.tsx)
+    // IDE selection indicator (IdeStatusIndicator)
     bool ide_connected = false;
     std::optional<std::string> ide_file_path;
     std::optional<int> ide_selected_lines;
@@ -202,7 +200,6 @@ struct ReplScreenState {
     std::optional<std::string> footer_dynamic_text;
     std::optional<std::string> footer_dynamic_color;  // "error" / "warning" / empty=dim
     // P1: Notification queue — rotating carousel of up to 12 status notices.
-    // TS REF: src/context/notifications.tsx (useNotifications hook)
     // Items are added via hooks (env-hook, rate-limit warnings, etc.) and
     // rotate through the footer's notification slot on a timeout basis.
     loom::ui::prompt::footer::NotificationQueue footer_notification_queue;
@@ -218,30 +215,29 @@ struct ReplScreenState {
         std::size_t replacement_end = std::string::npos;
         bool submit_on_return = false;
         /// Optional icon prefix (e.g. "📄" for files, "📁" for dirs).
-        /// TS REF: src/components/PromptInput/PromptInputFooterSuggestions.tsx:24
-        ///          (getIcon — + for files, ◇ for MCP, * for agents).
+        /// getIcon — + for files, ◇ for MCP, * for agents.
         std::string icon{};
         // INF-02: stable identity for selection preservation across refreshes
-        // (TS getPreservedSelection-by-id, src/hooks/useTypeahead.tsx:52-74).
+        // (getPreservedSelection-by-id).
         // Defaults to display_text when a caller doesn't supply a richer id,
         // so same-display items from different sources can be distinguished.
         // `{}` in-class init so existing partial designated initializers (e.g.
         // in tests/test_ui.cpp) don't trip -Wmissing-designated-field-initializers.
         std::string id{};
         /// Optional color name for a colored dot prefix (e.g. "red", "blue").
-        /// TS REF: src/hooks/unifiedSuggestions.ts:77-108 — agent defs include
-        ///          a color field used to tint the avatar dot in the picker.
+        /// Agent defs include a color field used to tint the avatar dot
+        /// in the picker.
         std::string color_name{};
     };
     std::vector<AutocompleteSuggestion> autocomplete_suggestions;
     // INF-05: input text at which the user dismissed the popup with Esc.
     // RefreshAutocompleteSuggestions stays dismissed until the input changes
-    // (TS dismissedForInputRef, src/hooks/useTypeahead.tsx:893-908).
+    // (dismissedForInputRef).
     std::string dismissed_autocomplete_for_input;
     // INF-03: precomputed stable name-column width for slash suggestions (max
     // over ALL candidates) so the description column doesn't jitter while
     // filtering. 0 = derive dynamically per visible row (@, #, ...).
-    // Mirrors TS maxColumnWidth (src/hooks/useTypeahead.tsx:380-386).
+    // Mirrors maxColumnWidth.
     int autocomplete_stable_name_width = 0;
     // SL-03: pending inline argument hint for the slash command currently being
     // typed (e.g. "set <key> <value>"). Populated by RefreshAutocompleteSuggestions
@@ -267,7 +263,7 @@ struct ReplScreenState {
     // on the MCP receive thread, so they are staged under mutex in the AppImpl
     // composition layer and drained on the render thread
     // (DrainPendingAtMentionInserts -> ApplyPendingAtMentionInserts).
-    // Faithful to TS useIdeAtMentioned.ts -> inputState.insert at cursor.
+    // Inserts at cursor.
     // RFC 0002 F3: the staging mutex + queue moved OUT to AppImpl; the
     // DRAINED queue lives in McpStatusStore (mcp_status_store field below,
     // loom.ui.screens.mcp_status_store).
@@ -278,13 +274,13 @@ struct ReplScreenState {
     // ToolUseConfirm subset PermissionRequestInfo) lives in
     // loom.ui.screens.permission_store (PermissionStore).
     PermissionStore permission_store;
-    // Settings-driven UI configuration (mirrors AppState.settings subset
+    // Settings-driven UI configuration (the settings subset
     // that the renderer needs — populated by the engine/app layer).
     std::string settings_model;             // Configured default model
-    std::string settings_agent_name;        // Configured settings.agent (TS getInitialSettings().agent)
+    std::string settings_agent_name;        // Configured settings.agent
 
-    // Bridge / remote-control footer projection (TS replBridge* AppState
-    // fields; projected from AppStore in SyncState).
+    // Bridge / remote-control footer projection (bridge
+    // fields; projected from the app store in SyncState).
     bool bridge_enabled = false;
     bool bridge_explicit_remote = false;
     bool bridge_connected = false;
@@ -292,21 +288,20 @@ struct ReplScreenState {
     bool bridge_reconnecting = false;
     bool bridge_selected = false;           // footer item focused (IDE selection)
 
-    // Footer pasting indicator (TS usePasteHandler.ts isPasting +
+    // Footer pasting indicator (isPasting +
     // PASTE_COMPLETION_TIMEOUT_MS = 100ms). A multi-char event (terminal
     // paste arrives as one batch) stamps this point; RenderLeftSide shows
     // "Pasting text…" for 100ms after it. Event-driven — no ticker.
     std::optional<std::chrono::steady_clock::time_point> pasting_since;
 
-    // TS REF: src/hooks/useTextInput.ts:126-153 handleEscape via
-    // src/hooks/useDoublePress.ts:6 DOUBLE_PRESS_TIMEOUT_MS = 800.
+    // handleEscape via DOUBLE_PRESS_TIMEOUT_MS = 800.
     // First Esc on non-empty input arms (notification "Esc again to clear");
     // a second Esc within 800ms persists to prompt history and clears.
     // Event-driven — no timer (same pattern as pasting_since).
     std::optional<std::chrono::steady_clock::time_point> escape_pending_since;
 
-    // TS REF: src/hooks/useTextInput.ts:108-120 handleCtrlC double-press —
-    // useExitOnCtrlCD exitState projected for
+    // handleCtrlC double-press —
+    // exit state projected for
     // LeftSideOptions.exit_message_show. Presence of the timestamp = show;
     // expiry is event-driven at render (pasting_since pattern). The app
     // layer owns the exit decision; the screen only renders the window.
@@ -327,7 +322,7 @@ struct ReplScreenState {
     // Counts and live-teams state moved to TaskViewStore (task_view_store
     // field above) in RFC 0002 F3.
 
-    // Permission mode (cycled via shift+tab; TS REF: getNextPermissionMode.ts)
+    // Permission mode (cycled via shift+tab; getNextPermissionMode)
     loom::ui::prompt::footer::PermissionMode permission_mode =
         loom::ui::prompt::footer::PermissionMode::Default;
     // Dialog-suppression flag (typing -> suppress interrupt dialogs)
@@ -344,25 +339,25 @@ struct ReplScreenState {
     DialogStore dialog_store;
 };
 
-/// Engine-facing callbacks (TS ReplScreen external prop callbacks).
+/// Engine-facing callbacks (ReplScreen external prop callbacks).
 struct ReplScreenCallbacks {
     std::function<void(const std::string&, InputMode)> on_submit;
     std::function<void()> on_interrupt;                 // Ctrl+C
     std::function<void()> on_exit;                      // Ctrl+D or /exit
-    /// TS REF: src/keybindings/defaultBindings.ts:42 'ctrl+l':'app:redraw'
-    /// (Global context) + useGlobalKeybindings.tsx handleRedraw ->
-    /// ink forceRedraw (ERASE_SCREEN '\x1b[2J' + CURSOR_HOME '\x1b[H', then
+    /// 'ctrl+l':'app:redraw'
+    /// (Global context) + handleRedraw ->
+    /// forceRedraw (ERASE_SCREEN '\x1b[2J' + CURSOR_HOME '\x1b[H', then
     /// repaint). The engine forces a terminal repaint WITHOUT mutating the
     /// input text or autocomplete state.
     std::function<void()> on_redraw;
-    /// TS REF: src/hooks/useTextInput.ts:142-150 — Esc double-press clear
+    /// Esc double-press clear
     /// persists the original value via addToHistory before clearing. The
     /// engine owns the session id / project cwd for the history append.
     std::function<void(const std::string&)> on_save_to_history;
     // Legacy simple permission response (allow/deny + always flag)
     std::function<void(bool, std::optional<bool>)> on_permission_response;
     // M6: Rich permission response — decision kind, scope, and feedback text.
-    // Mirrors TS onPermissionRequestDecision callback.
+    // Mirrors onPermissionRequestDecision callback.
     std::function<void(
         std::string_view decision,  // "allow_once", "allow_always", "deny", "abort"
         std::string_view scope,     // "session", "global", "project", "loom_folder", etc.
@@ -376,21 +371,19 @@ struct ReplScreenCallbacks {
     std::function<void(const loom::ui::agents::wizard::WizardDraft& draft)> save_agent_from_wizard;
     std::function<void()> on_local_jsx_cancel;
     std::function<bool(Event)> on_local_jsx_event;
-    /// Called when user cycles permission mode (shift+tab).  TS REF:
-    /// PromptInput.tsx:1409 handleCycleMode → cyclePermissionMode().
+    /// Called when user cycles permission mode (shift+tab).  handleCycleMode
+    /// → cyclePermissionMode().
     std::function<void(loom::ui::prompt::footer::PermissionMode)> on_permission_cycle;
     /// GAP 3: msg-system-api-error-retry — called when user clicks "Retry"
     /// on an API error message.  Re-sends the last user message.
-    /// TS REF: src/components/messages/SystemAPIErrorMessage.tsx — the
-    ///   retry button re-triggers the last user submission.
+    /// The retry button re-triggers the last user submission.
     std::function<void()> on_retry;
     /// P2 gap api-error-retry: called when user clicks "Clear session"
     /// on a session-expired API error card.  Resets the conversation so
     /// the user can re-authenticate.
-    /// TS REF: SystemAPIErrorMessage.tsx — onClearSession prop.
+    /// onClearSession prop.
     std::function<void()> on_clear_session;
-    /// TS REF: Messages.tsx L703-712 + Markdown.tsx L186-235 — shared
-    /// StreamingMarkdown instance for the streaming-text tail row.
+    /// Shared StreamingMarkdown instance for the streaming-text tail row.
     /// When non-null, RenderMessages threads it to the messages list
     /// so is_streaming rows use stable-prefix caching.
     ::loom::ui::StreamingMarkdown* streaming_md = nullptr;

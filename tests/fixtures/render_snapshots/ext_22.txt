@@ -1,0 +1,13 @@
+This is  not okay, but this is.
+
+This is  not okay, but **this** is.
+
+Nope, I won't have .
+
+No  here either.
+
+This   is okay though.
+
+Yep, okay.
+
+<!- But we're strict. -> <! No nonsense. >

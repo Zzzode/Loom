@@ -1,0 +1,4 @@
+{"type":"stream_start","message_id":"msg_err_ratelimit_1","model":"test-model"}
+{"type":"stream_error","error_type":"rate_limit_error","message":"Rate limit exceeded, retry after 30s"}
+{"type":"__checkpoint__","name":"after_error"}
+{"type":"__end_query__"}

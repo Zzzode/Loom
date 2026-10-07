@@ -1,6 +1,5 @@
 // User command message - displays slash commands executed by the user
 //
-// Matches UserCommandMessage.tsx:
 //   ┌─ green $ prefix, inline command + args, copy button
 //   │  $ /commit "feat: xyz"                          [📋 copy]
 //   └─ optional output block below, up to N lines

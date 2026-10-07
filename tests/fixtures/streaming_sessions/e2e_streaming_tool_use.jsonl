@@ -1,0 +1,11 @@
+{"type":"stream_start","message_id":"msg_stream_tool_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"tool_use","id":"toolu_ui_1","name":"Bash","input_json":"{}"}}
+{"type":"content_block_delta","index":0,"delta_text":"{\"command\":\"npm test\"}"}
+{"type":"__checkpoint__","name":"during_streaming"}
+{"type":"content_block_stop","index":0}
+{"type":"stream_end","stop_reason":"tool_use","usage":{"input_tokens":11,"output_tokens":5}}
+{"type":"tool_execution_start","tool_use_id":"toolu_ui_1","tool_name":"Bash","input_json":"{\"command\":\"npm test\"}"}
+{"type":"tool_execution_end","tool_use_id":"toolu_ui_1","result":"> loom@0.1.0 test\n> ctest --preset debug\n\n100% tests passed","is_error":false}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"tool_use","content":[{"type":"tool_use","id":"toolu_ui_1","name":"Bash","input_json":"{\"command\":\"npm test\"}"}]}}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

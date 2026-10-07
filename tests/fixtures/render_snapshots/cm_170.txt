@@ -1,0 +1,5 @@
+// JavaScript example
+
+document.getElementById("demo").innerHTML = "Hello JavaScript!";
+
+okay

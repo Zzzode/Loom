@@ -91,7 +91,7 @@ using loom::core::ToolPermission;
 // Built-in agent registry access.
 //
 // The canonical source of built-in agent definitions lives in
-// loom.tools.built_in_agents (migrated from TS builtInAgents.ts + built-in/*).
+// loom.tools.built_in_agents.
 // agent_runtime::built_in_agent_definitions() mirrors these definitions for
 // use inside the agent_runtime module (avoiding a circular module import).
 //
@@ -133,7 +133,6 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
 
     auto permission_check = std::move(options.permission_check);
 
-    // TS REF: src/tools.ts:199 (isBashToolDisabled runtime check)
     if constexpr (features::kBashToolEnabled) {
         registry.register_tool(make_bash_tool());
     }
@@ -227,7 +226,6 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
         registry.register_tool(std::make_unique<ReadAdapter>(shared_read_state));
     }
     registry.register_tool(make_file_write_tool());
-    // TS REF: src/tools.ts:203 (hasEmbeddedSearchTools — ant-native bfs/ugrep
     // suppresses dedicated Glob/Grep tools when embedded search is available)
     if constexpr (!features::kEmbeddedSearchTools) {
         registry.register_tool(make_glob_tool());
@@ -299,14 +297,12 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
         ToolPermission::Write, {}, "planning"));
     registry.register_tool(simple("exit_plan_mode", "Exit plan mode",
         ToolPermission::Write, {}, "planning"));
-    // TS REF: src/tools.ts:227 (isWorktreeModeEnabled — Enter/ExitWorktree)
     if constexpr (features::kWorktreeMode) {
         registry.register_tool(simple("enter_worktree", "Create and enter a git worktree",
             ToolPermission::Execute, {prop("branch", "string", "Branch name", true)}, "git"));
         registry.register_tool(simple("exit_worktree", "Remove a git worktree",
             ToolPermission::Execute, {prop("path", "string", "Worktree path", false)}, "git"));
     }
-    // TS REF: src/tools.ts:226 (ENABLE_LSP_TOOL env var)
     if constexpr (features::kEnableLspTool) {
         registry.register_tool(simple("lsp", "Fallback language intelligence for definitions, references, symbols, hover, and diagnostics",
             ToolPermission::ReadOnly, {prop("file_path", "string", "File path", true)}, "code"));
@@ -332,7 +328,6 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
             prop("cell_type", "string", "code, markdown, or raw", false),
             prop("edit_mode", "string", "replace, insert, or delete", false),
         }, "filesystem"));
-    // TS REF: src/tools.ts:152-157, 244 (getPowerShellTool — runtime check)
     if constexpr (features::kPowerShellTool) {
         registry.register_tool(simple("powershell", "Execute a PowerShell command on Windows",
             ToolPermission::Execute, {
@@ -362,17 +357,14 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
                 },
             }, "shell"));
     }
-    // TS REF: src/tools.ts:16-19, 234 (REPLTool)
     // In CPP, "repl" delegates to execute_script() which has a working
     // implementation, so it is registered unconditionally.
     registry.register_tool(simple("repl", "Run a one-shot REPL snippet",
         ToolPermission::Execute, {prop("code", "string", "Code to execute", true)}, "execution"));
-    // TS REF: src/tools.ts:29-34, 237 (Cron tools — AGENT_TRIGGERS)
     // In CPP, schedule_cron has a working implementation (loom.tools.cron),
     // so it is registered unconditionally.
     registry.register_tool(simple("schedule_cron", "Schedule a cron-style reminder for this process",
         ToolPermission::Write, {prop("message", "string", "Scheduled message", true)}, "tasks"));
-    // TS REF: src/tools.ts:252-254 (ScriptTool — isScriptToolEnabled)
     if constexpr (features::kScriptToolEnabled) {
         registry.register_tool(simple("script", "Execute a bounded script",
             ToolPermission::Execute, {prop("code", "string", "Script code", true)}, "execution"));
@@ -414,7 +406,6 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
             prop("session_id", "string", "Session identifier for ${LOOM_SESSION_ID}", false),
             prop("name", "string", "Alias for skill_path", false),
         }, "skills"));
-    // TS REF: src/tools.ts:25-28, 236 (SleepTool — PROACTIVE || KAIROS)
     if constexpr (features::kEnableSleepTool) {
         registry.register_tool(simple("sleep", "Sleep for a bounded number of seconds",
             ToolPermission::Execute, {prop("duration", "number", "Duration in seconds", true)}, "execution"));
@@ -422,7 +413,6 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
     registry.register_tool(simple("synthetic_output", "Return provided synthetic output content",
         ToolPermission::ReadOnly, {prop("content", "string", "Content", true)}, "testing"));
 
-    // TS REF: src/tools.ts:220-222 (isTodoV2Enabled — TaskCreate/Get/Update/List)
     if constexpr (features::kTodoV2) {
         for (const auto& name : {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
             registry.register_tool(simple(name, std::format("Runtime task operation {}", name), ToolPermission::Write,
@@ -432,40 +422,33 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
                 }, "tasks"));
         }
     }
-    // TS REF: src/tools.ts:230-232 (isAgentSwarmsEnabled — TeamCreate/Delete)
     if constexpr (features::kAgentSwarmsEnabled) {
         registry.register_tool(simple("team_create", "Create a runtime team record", ToolPermission::Write,
             {prop("team_name", "string", "Team name", false)}, "agents"));
         registry.register_tool(simple("team_delete", "Delete a runtime team record", ToolPermission::Write,
             {prop("team_name", "string", "Team name", true)}, "agents"));
     }
-    // TS REF: src/tools.ts:246 (NODE_ENV==='test' — TestingPermissionTool)
     if constexpr (features::kTestingPermissionTool) {
         registry.register_tool(simple("testing", "Run a test command", ToolPermission::Execute,
             {prop("command", "string", "Test command", false)}, "testing"));
     }
-    // TS REF: src/tools.ts:251 (isToolSearchEnabledOptimistic — ToolSearchTool)
     if constexpr (features::kToolSearch) {
         registry.register_tool(simple("tool_search", "Search registered runtime tools", ToolPermission::ReadOnly,
             {prop("query", "string", "Search query", false)}, "tools"));
     }
-    // TS REF: src/tools.ts:217 (TungstenTool)
     // In CPP, tungsten has a working implementation (loom.tools.tungsten_tool),
     // so it is registered unconditionally.
     registry.register_tool(simple("tungsten", "Use the Tungsten integration when configured", ToolPermission::Network, {}, "integrations"));
-    // TS REF: src/tools.ts:117-119, 219 (WebBrowserTool — WEB_BROWSER_TOOL)
     if constexpr (features::kWebBrowserTool) {
         registry.register_tool(simple("web_browser", "Automate browser navigation, extraction, form fill, and screenshots",
             ToolPermission::Network, {prop("action", "string", "Browser action", true)}, "browser"));
     }
-    // TS REF: src/tools.ts:129-134, 235 (WorkflowTool — WORKFLOW_SCRIPTS)
     if constexpr (features::kWorkflowScripts) {
         registry.register_tool(simple("workflow", "Read and execute workflow definitions", ToolPermission::ReadOnly,
             {prop("file", "string", "Workflow file", true)}, "workflow"));
     }
 
     // ── Feature-gated stub tools (registered only when their flag is on) ────
-    // TS REF: src/tools.ts:45-49, 242 (PushNotificationTool — KAIROS || KAIROS_PUSH_NOTIFICATION)
     if constexpr (features::kPushNotificationTool) {
         registry.register_tool(simple("push_notification", "Send a push notification to the user",
             ToolPermission::Write, {
@@ -473,7 +456,6 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
                 prop("body", "string", "Notification body", false),
             }, "notifications"));
     }
-    // TS REF: src/tools.ts:39-41, 239 (MonitorTool — MONITOR_TOOL)
     if constexpr (features::kMonitorTool) {
         registry.register_tool(simple("monitor", "Monitor a background process or file for changes",
             ToolPermission::ReadOnly, {
@@ -481,42 +463,34 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
                 prop("pattern", "string", "Regex pattern to watch for", false),
             }, "monitoring"));
     }
-    // TS REF: src/tools.ts:42-44, 241 (SendUserFileTool — KAIROS)
     if constexpr (features::kSendUserFileTool) {
         registry.register_tool(simple("send_user_file", "Send a file to the user",
             ToolPermission::Write, {prop("file_path", "string", "Path to the file", true)}, "delivery"));
     }
-    // TS REF: src/tools.ts:50-52, 243 (SubscribePRTool — KAIROS_GITHUB_WEBHOOKS)
     if constexpr (features::kSubscribePRTool) {
         registry.register_tool(simple("subscribe_pr", "Subscribe to a GitHub PR for updates",
             ToolPermission::Network, {prop("pr_url", "string", "PR URL to subscribe to", true)}, "github"));
     }
-    // TS REF: src/tools.ts:107-109, 223 (OverflowTestTool)
     if constexpr (features::kOverflowTestTool) {
         registry.register_tool(simple("overflow_test", "Test tool for context overflow scenarios",
             ToolPermission::ReadOnly, {prop("size", "number", "Size in tokens", false)}, "testing"));
     }
-    // TS REF: src/tools.ts:110-112, 224 (CtxInspectTool — CONTEXT_COLLAPSE)
     if constexpr (features::kContextCollapse) {
         registry.register_tool(simple("ctx_inspect", "Inspect the current context window usage",
             ToolPermission::ReadOnly, {}, "context"));
     }
-    // TS REF: src/tools.ts:113-116, 225 (TerminalCaptureTool — TERMINAL_PANEL)
     if constexpr (features::kTerminalPanel) {
         registry.register_tool(simple("terminal_capture", "Capture the current terminal screen content",
             ToolPermission::ReadOnly, {}, "terminal"));
     }
-    // TS REF: src/tools.ts:123-125, 245 (SnipTool — HISTORY_SNIP)
     if constexpr (features::kHistorySnip) {
         registry.register_tool(simple("snip", "Create a snippet from conversation history",
             ToolPermission::Write, {prop("query", "string", "Snippet query", false)}, "history"));
     }
-    // TS REF: src/tools.ts:126-128, 229 (ListPeersTool — UDS_INBOX)
     if constexpr (features::kUdsInbox) {
         registry.register_tool(simple("list_peers", "List connected peer sessions",
             ToolPermission::ReadOnly, {}, "peers"));
     }
-    // TS REF: src/tools.ts:91-96, 233 (VerifyPlanExecutionTool — LOOM_VERIFY_PLAN)
     if constexpr (features::kVerifyPlanExecution) {
         registry.register_tool(simple("verify_plan_execution", "Verify that a plan execution matches expectations",
             ToolPermission::ReadOnly, {prop("plan", "string", "Plan to verify", true)}, "planning"));

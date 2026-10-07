@@ -54,15 +54,11 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
         120,
         16));
 
-    // Phase 2 Faithful: CondensedLogo 3-line strip + Opus1M notice banner
+    // Phase 2 Faithful: CondensedLogo 3-line strip
     // (replaces the old ASCII-card + Recent activity / What's new feed).
     EXPECT_NE(rendered.find("Loom"), std::string::npos);
     EXPECT_NE(rendered.find("GLM-5.2"), std::string::npos);
     EXPECT_NE(rendered.find("/tmp/cpp_migration"), std::string::npos);
-    EXPECT_NE(rendered.find("Opus now defaults to 1M context"),
-              std::string::npos);
-    EXPECT_NE(rendered.find("5x more room, same pricing"),
-              std::string::npos);
 
     // Old feed-card fields that no longer appear in the faithful layout.
     EXPECT_EQ(rendered.find("Welcome back!"), std::string::npos);
@@ -71,9 +67,9 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
     EXPECT_EQ(rendered.find("Welcome to Loom"), std::string::npos);
     EXPECT_EQ(rendered.find("Use /model to switch between models"),
               std::string::npos);
-    // Faithful Loom mascot is a 9×3 block-art composed of unicode BOX DRAWING /
-    // QUADRANT chars (▛ ▜ ▝ ▘ etc.) — there must be NO 🐱 U+1F431 emoji
-    // anywhere (the UTF-8 encoding of U+1F431 is the 4-byte sequence below).
+    // The Loom brand icon is a 9×3 plain-weave block-art (█ ░) — there must
+    // be NO 🐱 U+1F431 emoji anywhere (the UTF-8 encoding of U+1F431 is the
+    // 4-byte sequence below).
     EXPECT_EQ(rendered.find("\xF0\x9F\x90\xB1"), std::string::npos);
 }
 
@@ -131,10 +127,10 @@ TEST(ReplScreen, ShiftReturnInsertsNewlineForBothTerminalEncodings) {
         app->OnEvent(ftxui::Event::Special(seq));
         app->OnEvent(ftxui::Event::Character('b'));
 
-        const auto text = app->input_text_for_testing();
+        const auto text = test_seams(app).input_text_for_testing();
         EXPECT_EQ(text, "a\nb")
             << "shift-return sequence should insert a newline";
-        EXPECT_FALSE(app->is_query_running_for_testing())
+        EXPECT_FALSE(test_seams(app).is_query_running_for_testing())
             << "shift-return must not submit the prompt";
 
         app.reset();
@@ -165,11 +161,9 @@ TEST(ReplScreen, WelcomeHeaderWidthAndColorTrackTerminal) {
     // CondensedLogo should be able to consume almost the full terminal width
     // when cwd is long enough to need it.
     EXPECT_GE(max_line_width_bytes(wide), 40u);
-    EXPECT_NE(wide.find("Opus now defaults to 1M context"),
-              std::string::npos);
 
     // Faithful condensed logo uses the brand accent (same as TS
-    // LogoV2's Loom mascot accent RGB(215,119,87) = #D77757) on the first row
+    // LogoV2's Loom icon accent RGB(215,119,87) = #D77757) on the weave
     // glyph, instead of the old primary-palette border decoration.  The
     // accent must appear somewhere in the rendered header.
     const ftxui::Color kBrandAccent(215, 119, 87);
@@ -213,16 +207,14 @@ TEST(ReplScreen, WelcomeHeaderAnimatesAsteriskColor) {
         16);
 
     // Phase 2 + P0-4 Faithful CondensedLogo: the welcome strip is a
-    // static 3-line logo + notice stack (Opus1m + gated rest).
+    // static 3-line logo + notice stack (gated notices).
     // There is NO per-frame asterisk animation — both frames must
     // therefore render byte-for-byte identical, and no "asterisk-like"
     // glyph is allowed in the output; the old rotating `✦✧✶` spinner
     // chars embedded inside the old ASCII-art card must NOT appear.
     EXPECT_EQ(frame0, frame8);
-    // Sanity: condensed-logo branding + Opus1m body present.
+    // Sanity: condensed-logo branding present.
     EXPECT_NE(strip_ansi(frame0).find("Loom"), std::string::npos);
-    EXPECT_NE(strip_ansi(frame0).find("Opus now defaults to 1M context"),
-              std::string::npos);
     // Old rotating-spinner glyphs (✦ U+2726, ✧ U+2727, ✶ U+2736) must be
     // absent — these were the per-frame animation characters.
     EXPECT_EQ(strip_ansi(frame0).find("\xE2\x9C\xA6"), std::string::npos);  // ✦
@@ -357,6 +349,51 @@ TEST(ReplScreen, TranscriptScrollOffsetMovesLongLocalCommandOutput) {
         8));
     EXPECT_EQ(scrolled.find("line-00"), std::string::npos);
     EXPECT_NE(scrolled.find("line-25"), std::string::npos);
+}
+
+// Regression: the virtual render path (80+ visible messages) wrapped its
+// body in yframe WITHOUT focusPosition, so yframe always showed the top
+// spacer — the user saw blank space instead of scrolled content.
+TEST(ReplScreen, VirtualTranscriptScrollOffsetMovesContent) {
+    namespace repl = loom::ui::repl_screen;
+
+    repl::ReplScreenState state;
+    state.messages_store.viewport_height_lines = 8;
+    state.messages_store.scroll_pinned_to_bottom = false;
+
+    // 100 assistant messages — exceeds kBigChatThreshold (80), so the
+    // virtual windowed renderer is used.
+    for (int i = 0; i < 100; ++i) {
+        repl::MessageDisplayEntry msg;
+        msg.role = "assistant";
+        msg.content_preview = std::format("vmsg-{:03}", i);
+        state.messages_store.messages.push_back(std::move(msg));
+    }
+
+    // scroll_offset = 0 — first message should be visible.
+    auto top = strip_ansi(render_to_plain_text(
+        repl::RenderMessages(state.messages_store.messages,
+                             state.messages_store.selected_message_idx,
+                             state.messages_store.viewport_height_lines,
+                             state.messages_store.scroll_offset,
+                             state.messages_store.scroll_pinned_to_bottom),
+        120,
+        20));
+    EXPECT_NE(top.find("vmsg-000"), std::string::npos) << top;
+
+    // Scroll to offset 60 — first message should NOT be visible, but some
+    // later message should be.
+    state.messages_store.scroll_offset = 60;
+    auto scrolled = strip_ansi(render_to_plain_text(
+        repl::RenderMessages(state.messages_store.messages,
+                             state.messages_store.selected_message_idx,
+                             state.messages_store.viewport_height_lines,
+                             state.messages_store.scroll_offset,
+                             state.messages_store.scroll_pinned_to_bottom),
+        120,
+        20));
+    EXPECT_EQ(scrolled.find("vmsg-000"), std::string::npos) << scrolled;
+    EXPECT_NE(scrolled.find("vmsg-"), std::string::npos) << scrolled;
 }
 
 

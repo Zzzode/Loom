@@ -15,7 +15,6 @@ import loom.ui.foundation.ui_types;  // canonical VimMode
 export namespace loom::ui {
 
 // Canonical VimMode — imported from loom::ui::common (ui_types.cppm).
-// TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
 // This replaces the previous local 3-value enum { Normal, Insert, Visual }
 // that conflicted with the 6-value version in vim_input.cppm.
 using loom::ui::common::VimMode;
@@ -436,6 +435,5 @@ private:
 //   - loom::ui::common::VimMode (canonical enum, ui_types.cppm)
 //   - loom::ui::prompt::vim_input (standalone VimInput component)
 //   - ui::components::TextInputImpl with optional<VimMode> (text_input.cppm)
-// TS REF: src/hooks/useVimInput.ts — single vim state machine wrapping text input.
 
 } // namespace loom::ui

@@ -32,7 +32,6 @@ import loom.ui.foundation.design_tokens;
 import loom.constants.constants;
 import loom.config.config;
 import loom.serdes.json;
-import loom.ui.messages.messages;
 import loom.ui.messages.message_pipeline;
 import loom.ui.widgets.components;
 import loom.ui.widgets.all_components;

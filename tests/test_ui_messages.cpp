@@ -15,12 +15,12 @@
 #include "test_ui_helpers.h"
 
 import std;
-import loom.ui.messages.messages;
 import loom.ui.messages.message_pipeline;
 import loom.ui.messages.collapse_background_bash;
 import loom.ui.messages.virtual_list;
 import loom.ui.messages.messages_list;
 import loom.ui.messages.message_row;
+import loom.ui.messages.thinking_message;
 import loom.ui.messages.user_text_message;
 import loom.ui.messages.assistant_text_message;
 import loom.ui.messages.message_image;
@@ -37,63 +37,6 @@ namespace {
 namespace fs = std::filesystem;
 }
 
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// loom.ui.chrome.terminal: FTXUI terminal controller and common widgets
-// ═══════════════════════════════════════════════════════════════════════════════
-
-TEST(Messages, ParseMarkdownRecognizesHeadingListAndCodeBlock) {
-    auto blocks = loom::ui::parse_markdown("# Title\n- item\n```cpp\nint main() {}\n```");
-
-    ASSERT_EQ(blocks.size(), 3u);
-    EXPECT_EQ(blocks[0].type, loom::ui::BlockType::Heading);
-    EXPECT_EQ(blocks[1].type, loom::ui::BlockType::List);
-    EXPECT_EQ(blocks[2].type, loom::ui::BlockType::CodeBlock);
-    EXPECT_EQ(blocks[2].language, "cpp");
-}
-
-TEST(Messages, ToolUseViewFormatsStatusAndDuration) {
-    loom::ui::ToolUseView view{
-        .tool_name = "bash",
-        .tool_input = "{}",
-        .tool_output = "done",
-        .status = loom::ui::ToolStatus::Success,
-        .started_at = std::chrono::system_clock::now(),
-        .completed_at = std::nullopt,
-        .expanded = false,
-        .duration_ms = 1200,
-    };
-
-    EXPECT_EQ(view.status_icon(), "✓");
-    EXPECT_EQ(view.duration_display(), "1.2s");
-    view.toggle_expand();
-    EXPECT_TRUE(view.expanded);
-}
-
-TEST(Messages, ErrorViewFormatsErrorCode) {
-    loom::ui::ErrorView error{
-        .message = "failed",
-        .error_code = "E_TEST",
-        .timestamp = std::chrono::system_clock::now(),
-        .suggestion = std::nullopt,
-        .is_retryable = false,
-    };
-
-    EXPECT_EQ(error.formatted(), "[E_TEST] failed");
-}
-
-TEST(Messages, ThinkingViewCanToggleCollapse) {
-    loom::ui::ThinkingView view{
-        .content = "first line\nsecond line",
-        .timestamp = std::chrono::system_clock::now(),
-        .collapsed = true,
-        .token_count = 0,
-    };
-
-    EXPECT_TRUE(view.summary().starts_with("first line"));
-    view.toggle_collapse();
-    EXPECT_FALSE(view.collapsed);
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // loom.ui.prompt.prompt_input: prompt buffer, history, typeahead, vim behavior
@@ -1170,10 +1113,6 @@ auto make_synthetic_input(std::size_t num_rows,
 
 } // namespace unseen_divider_test
 
-// T1: Condensed mode (default is_condensed_mode = true) renders the 3-row
-//     CondensedLogo strip (Loom + version · model·billing · cwd) and the
-//     Opus1M notice.  The brand chip and FeedColumn
-//     / rounded border MUST NOT appear.
 TEST(MessagesList, UnseenDivider_PrefixMatchFindsTargetRow) {
     using namespace unseen_divider_test;
     auto in = make_synthetic_input(6, "old0000000000000000000");
@@ -1374,3 +1313,169 @@ TEST(MessagesList, UnseenDivider_AnchorWithEmptyUuidEntries_NoCrash) {
 //      MessageShape::UserImage and populates ImageMessageData from the block.
 // TS REF: src/components/UserImageMessage.tsx (renderer)
 //         src/utils/processUserInput/processUserInput.ts L351-395 (content blocks)
+
+// =============================================================================
+// Click-to-expand: thinking blocks
+// =============================================================================
+
+TEST(MessagesList, IsRowClickable_ThinkingWithContent) {
+    using namespace loom::ui::messages;
+    using namespace loom::ui::messages_list;
+
+    thinking_message::ThinkingMessageOptions opts;
+    opts.data.raw_text = "I should check the file first.";
+    opts.data.state = thinking_message::ThinkingState::Complete;
+
+    MessageRowPayload payload = opts;
+    EXPECT_TRUE(is_row_clickable(MessageShape::AssistantThinking, payload));
+}
+
+TEST(MessagesList, IsRowClickable_ThinkingEmpty) {
+    using namespace loom::ui::messages;
+    using namespace loom::ui::messages_list;
+
+    thinking_message::ThinkingMessageOptions opts;
+    opts.data.raw_text = "";
+    opts.data.sections.clear();
+
+    MessageRowPayload payload = opts;
+    EXPECT_FALSE(is_row_clickable(MessageShape::AssistantThinking, payload));
+}
+
+TEST(MessagesList, IsRowClickable_RedactedThinkingNotClickable) {
+    using namespace loom::ui::messages;
+    using namespace loom::ui::messages_list;
+
+    thinking_message::ThinkingMessageOptions opts;
+    opts.data.raw_text = "redacted content";
+    opts.data.state = thinking_message::ThinkingState::Complete;
+
+    MessageRowPayload payload = opts;
+    // Redacted thinking has nothing to expand — not clickable.
+    EXPECT_FALSE(is_row_clickable(MessageShape::AssistantRedactedThinking, payload));
+}
+
+// =============================================================================
+// Thinking block Markdown rendering
+// =============================================================================
+
+TEST(Messages, ThinkingBlockRendersMarkdown) {
+    // Regression test: thinking content was rendered as plain text line-by-line,
+    // showing raw ```cpp fence markers instead of a rendered code block.
+    // The fix routes the thinking body through render_markdown_dim.
+    using namespace loom::ui::messages;
+    using namespace sticky_prompt_test;
+
+    thinking_message::ThinkingMessageData data;
+    data.raw_text =
+        "Found it! Line 611:\n"
+        "```cpp\n"
+        "const Color kBgColor = Color::RGB(20, 20, 22);\n"
+        "```\n"
+        "And line 711-713:\n"
+        "```cpp\n"
+        "return hbox({ text(\" \"), hbox(std::move(parts)), text(\" \") })\n"
+        "    | bgcolor(kBgColor)\n"
+        "    | s\n"
+        "```\n";
+    data.state = thinking_message::ThinkingState::Complete;
+    data.is_collapsed = false;
+
+    // Render in transcript mode (expanded).
+    auto el = thinking_message::RenderThinkingMessageFaithful(
+        data, /*is_transcript_mode=*/true, /*verbose=*/false, /*add_margin=*/false);
+    std::string snap = strip_ansi(render_ansi(std::move(el), 100, 30));
+
+    // The code content must be visible.
+    EXPECT_NE(snap.find("kBgColor"), std::string::npos) << snap;
+    EXPECT_NE(snap.find("RGB(20, 20, 22)"), std::string::npos) << snap;
+    // Raw markdown fence markers must NOT appear (rendered as code block).
+    EXPECT_EQ(snap.find("```"), std::string::npos) << snap;
+}
+
+// =============================================================================
+// RowClickTracker: frame lifecycle + hit-testing
+// =============================================================================
+
+TEST(MessagesList, RowClickTracker_TrackAndHitTest) {
+    using namespace loom::ui::messages_list;
+
+    RowClickTracker tracker;
+
+    // Frame 1: track two rows.
+    tracker.begin_frame();
+    Box& box1 = tracker.track_row("key-abc-123");
+    box1.x_min = 10; box1.x_max = 50;
+    box1.y_min = 5;  box1.y_max = 7;
+    Box& box2 = tracker.track_row("key-def-456");
+    box2.x_min = 10; box2.x_max = 50;
+    box2.y_min = 8;  box2.y_max = 10;
+    tracker.end_frame();
+
+    // Hit inside box1.
+    auto hit1 = tracker.hit_test(20, 6);
+    ASSERT_TRUE(hit1.has_value());
+    EXPECT_EQ(*hit1, "key-abc-123");
+
+    // Hit inside box2.
+    auto hit2 = tracker.hit_test(30, 9);
+    ASSERT_TRUE(hit2.has_value());
+    EXPECT_EQ(*hit2, "key-def-456");
+
+    // Miss.
+    EXPECT_FALSE(tracker.hit_test(0, 0).has_value());
+}
+
+TEST(MessagesList, RowClickTracker_EndFrameTrimsStaleBoxes) {
+    using namespace loom::ui::messages_list;
+
+    RowClickTracker tracker;
+
+    // Frame 1: track two rows.
+    tracker.begin_frame();
+    Box& b1 = tracker.track_row("key-a");
+    b1.x_min = 0; b1.x_max = 100; b1.y_min = 0; b1.y_max = 10;
+    Box& b2 = tracker.track_row("key-b");
+    b2.x_min = 0; b2.x_max = 100; b2.y_min = 11; b2.y_max = 20;
+    tracker.end_frame();
+    EXPECT_EQ(tracker.boxes.size(), 2u);
+
+    // Frame 2: only one row — stale box must be trimmed.
+    tracker.begin_frame();
+    Box& b3 = tracker.track_row("key-c");
+    b3.x_min = 0; b3.x_max = 100; b3.y_min = 0; b3.y_max = 5;
+    tracker.end_frame();
+    EXPECT_EQ(tracker.boxes.size(), 1u);
+
+    // Old box2's position must not hit.
+    EXPECT_FALSE(tracker.hit_test(50, 15).has_value());
+    // New box hits.
+    auto hit = tracker.hit_test(50, 3);
+    ASSERT_TRUE(hit.has_value());
+    EXPECT_EQ(*hit, "key-c");
+}
+
+TEST(MessagesList, RowClickTracker_ReusesBoxesAcrossFrames) {
+    using namespace loom::ui::messages_list;
+
+    RowClickTracker tracker;
+
+    // Frame 1.
+    tracker.begin_frame();
+    Box& b1 = tracker.track_row("key-a");
+    b1.x_min = 0; b1.x_max = 10; b1.y_min = 0; b1.y_max = 5;
+    tracker.end_frame();
+    const auto* box_ptr = tracker.boxes[0].get();
+
+    // Frame 2: same count — boxes must be reused (same pointer).
+    tracker.begin_frame();
+    Box& b2 = tracker.track_row("key-b");
+    b2.x_min = 0; b2.x_max = 10; b2.y_min = 0; b2.y_max = 5;
+    tracker.end_frame();
+    EXPECT_EQ(tracker.boxes[0].get(), box_ptr);
+
+    // Key was overwritten.
+    auto hit = tracker.hit_test(5, 2);
+    ASSERT_TRUE(hit.has_value());
+    EXPECT_EQ(*hit, "key-b");
+}

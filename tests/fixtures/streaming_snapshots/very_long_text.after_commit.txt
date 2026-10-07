@@ -1,0 +1,39 @@
+◆ Loom  · model_api/experimental_0812_256k
+
+█░█░█░█░█  Loom
+░█░█░█░█░  model_api/experimental_0812_256k
+█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+
+● Modern C++ codebases face a persistent tension between compile-time encapsulation and runtime flexibility, and the
+  choice between header-only interfaces, named modules, and dynamic polymorphism shapes everything from incremental
+  build times to final binary size. Named modules promise faster compilation and stronger isolation by replacing the
+  fragile textual inclusion model with an explicit import graph, but they require every translation unit to agree on
+  module ownership and dependency direction, which is why the Loom project enforces a directed acyclic graph at the
+  responsibility-directory level and rejects cycles with a build-time graph check rather than relying on convention
+  alone. The result is a codebase where restructuring a directory is a one-line CMake change instead of a sweeping
+  import rewrite, and where the compiler can reason about interface boundaries that were previously invisible to the
+  build system.
+
+● Modern C++ codebases face a persistent tension between compile-time encapsulation and runtime flexibility, and the  ▌
+  choice between header-only interfaces, named modules, and dynamic polymorphism shapes everything from incremental
+  build times to final binary size. Named modules promise faster compilation and stronger isolation by replacing the
+  fragile textual inclusion model with an explicit import graph, but they require every translation unit to agree on
+  module ownership and dependency direction, which is why the Loom project enforces a directed acyclic graph at the
+  responsibility-directory level and rejects cycles with a build-time graph check rather than relying on convention
+  alone. The result is a codebase where restructuring a directory is a one-line CMake change instead of a sweeping
+  import rewrite, and where the compiler can reason about interface boundaries that were previously invisible to the
+  build system.
+
+
+
+
+
+
+
+
+
+  <spinner> <verb>….
+──────────────────────────────────────────────────────────────────────────────────
+ ❯ Try "fix lint errors"
+──────────────────────────────────────────────────────────────────────────────────
+   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

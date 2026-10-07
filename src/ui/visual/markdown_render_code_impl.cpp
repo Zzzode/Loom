@@ -18,7 +18,7 @@ namespace detail {
 
 [[nodiscard]] Element render_code_block(const BlockToken& tok,
                                         const MarkdownOptions& opts) {
-    // Split into lines (preserve trailing empty line behavior like TS EOL).
+    // Split into lines (preserve trailing empty line behavior like EOL).
     auto split_lines = [](std::string_view code) {
         std::vector<std::string> lines;
         std::size_t start = 0;
@@ -48,16 +48,26 @@ namespace detail {
         for (const auto& hl : highlighted.lines) {
             // Chrome-free: no line-number gutter, no diff background, no
             // highlight background. Just the colored tokens of each line.
-            Elements parts;
+            //
+            // colored_text_line (not hbox of text()): hbox routes overwidth
+            // lines through box_helper::ComputeShrinkHard, which shrinks
+            // every token proportionally and swallows characters from the
+            // middle. colored_text_line keeps each token full-width and
+            // truncates only at the right edge.
+            std::vector<code_highlight::ColoredSegment> segments;
             if (hl.tokens.empty()) {
-                parts.push_back(text(""));
+                segments.push_back({.text = ""});
             } else {
                 for (const auto& t : hl.tokens) {
-                    parts.push_back(text(t.text) | color(
-                        code_highlight::token_color(t.type, theme)));
+                    segments.push_back({
+                        .text = t.text,
+                        .foreground = code_highlight::token_color(
+                            t.type, theme),
+                    });
                 }
             }
-            Element line_el = hbox(std::move(parts));
+            Element line_el = code_highlight::colored_text_line(
+                std::move(segments));
             if (opts.dim_color) line_el = line_el | dim;
             out.push_back(std::move(line_el));
         }

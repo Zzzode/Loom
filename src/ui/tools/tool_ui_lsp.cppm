@@ -1,14 +1,8 @@
 /// @file tool_ui_lsp.cppm
-/// @brief LSP tool UI — userFacingName, renderToolUseMessage, etc.
+/// @brief LSP tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.lsp
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/LSPTool/LSPTool.tsx
-///   - userFacingName: "LSP"
-///   - renderToolUseMessage: method name
-///   - isTransparentWrapper: false
 module;
 
 
@@ -126,9 +120,8 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: LSPTool — renderToolResultMessage shows LSP response content
-    // (diagnostics, definitions, etc.).  Output IS visible on screen;
-    // index it so users can search for symbol names and file paths.
+    // LSP response content (diagnostics, definitions, etc.) is visible on
+    // screen; index it so users can search for symbol names and file paths.
     fns.extract_search_text = [](
         std::string_view output_text,
         std::string_view /*error_text*/) -> std::optional<std::string>

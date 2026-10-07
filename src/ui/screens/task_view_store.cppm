@@ -23,8 +23,7 @@ import loom.ui.features.teams.live_teammates;      // LiveTeammate
 
 export namespace loom::ui::repl_screen {
 
-/// Spinner modes.  TS SpinnerMode (SpinnerAnimationRow.tsx switch cases +
-/// SpinnerWithVerb usage in REPL.tsx): requesting/thinking/responding/
+/// Spinner modes: requesting/thinking/responding/
 /// tool-input/tool-use + briefing/idle for KAIROS brief mode.
 /// Moved here from repl_state.cppm in RFC 0002 F3 (TaskViewStore shard).
 enum class SpinnerMode : std::uint8_t {
@@ -51,9 +50,7 @@ struct TaskViewStore {
     bool teams_footer_selected = false;
 
     // ── Live teams (leader view) ────────────────────────────────────────
-    // TS REF: src/components/teams/TeamStatus.tsx (footer count) +
-    // TeamsDialog.tsx (roster) + CoordinatorAgentStatus.tsx AgentLine
-    // (per-teammate live status + output tail). Projected by AppAdapter from
+    // Per-teammate live status + output tail. Projected by AppAdapter from
     // (a) agent_runtime::native_agent_store() for in-process teammates and
     // (b) loom::utils::swarm_pane_observer for tmux pane teammates.
     // Event-driven: the observer posts a refresh when pane content changes;
@@ -68,5 +65,19 @@ struct TaskViewStore {
     // agent menu. Populated by AppAdapter from the agent definitions.
     std::vector<loom::ui::agents::cards::AgentCardData> agent_cards;
 };
+
+/// True when a tool/query is currently animating (spinner visible).
+/// Replaces the `spinner_mode != SpinnerMode::Hidden` predicate that was
+/// copy-pasted at 8+ call sites across layout/events/animation code.
+[[nodiscard]] inline bool IsToolAnimating(const TaskViewStore& store) {
+    return store.spinner_mode != SpinnerMode::Hidden;
+}
+
+/// Set the spinner mode. Replaces the verbose
+/// `store.spinner_mode = repl::SpinnerMode::X` pattern at 5 call sites.
+/// Call sites that also set spinner_verb/spinner_tip do so separately.
+inline void SetSpinner(TaskViewStore& store, SpinnerMode mode) {
+    store.spinner_mode = mode;
+}
 
 }  // namespace loom::ui

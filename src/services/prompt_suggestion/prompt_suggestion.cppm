@@ -1,13 +1,13 @@
 /// @file prompt_suggestion.cppm
 /// @brief Prompt suggestion service.
 ///
-/// Ports the deterministic (LLM-free) core of the TS prompt-suggestion + speculation
-/// engine (src/services/PromptSuggestion/{promptSuggestion,speculation}.ts). The TS engine
-/// ultimately produces ONE LLM suggestion via runForkedAgent then gates it with a chain of
-/// guards + a quality filter; the speculative agent loop runs an overlay filesystem with a
-/// custom canUseTool gateway. The LLM fork, overlay fs, React setAppState, analytics and
-/// growthbook feature flags have no C++ equivalent yet and are DEFERRED. What IS portable
-/// and is ported here:
+/// Implements the deterministic (LLM-free) core of the prompt-suggestion +
+/// speculation engine. The full engine ultimately produces ONE LLM suggestion
+/// via a forked agent then gates it with a chain of guards + a quality filter;
+/// the speculative agent loop runs an overlay filesystem with a custom
+/// canUseTool gateway. The LLM fork, overlay fs, app-state updates, analytics
+/// and feature flags have no C++ equivalent yet and are DEFERRED. What IS
+/// implemented here:
 ///   - should_filter_suggestion: the ~12-rule quality classifier (regex/style).
 ///   - get_suggestion_suppress_reason / get_parent_cache_suppress_reason: pure gates.
 ///   - is_read_only_tool / is_write_tool membership against WRITE_TOOLS / SAFE_READ_ONLY_TOOLS.
@@ -16,7 +16,7 @@
 ///   - A NEW deterministic heuristic ranker (rank_candidate_suggestions) that generates N
 ///     candidates from conversation signals and scores each in [0,1], replacing the
 ///     previously-hardcoded single suggestion. No LLM. Documented as a placeholder heuristic
-///     until runForkedAgent is ported; do NOT claim parity with the TS LLM path.
+///     until an LLM fork path exists; do NOT claim parity with the LLM path.
 module;
 
 #include <cstdint>
@@ -43,7 +43,7 @@ using loom::utils::starts_with_ignore_case;
 using loom::utils::contains_ignore_case;
 
 // ============================================================
-// Static tool sets (mirror speculation.ts WRITE_TOOLS / SAFE_READ_ONLY_TOOLS)
+// Static tool sets (WRITE_TOOLS / SAFE_READ_ONLY_TOOLS)
 // ============================================================
 
 // Write tools that may modify the filesystem during speculation.
@@ -68,11 +68,11 @@ inline constexpr std::array<std::string_view, 17> ALLOWED_SINGLE_WORDS = {
     "push", "commit", "deploy", "stop", "continue", "check", "exit", "quit", "no"};
 
 // ============================================================
-// Enums mirroring TS suppress/filter reason unions (for testability + future telemetry)
+// Suppress/filter reason enums (for testability + future telemetry)
 // ============================================================
 
 // Why a generated suggestion was filtered out by the quality gate. Mirrors the
-// ordered rule list in promptSuggestion.ts shouldFilterSuggestion.
+// ordered rule list for shouldFilterSuggestion.
 enum class SuggestionFilterReason : std::uint8_t {
     empty,
     done,
@@ -89,8 +89,7 @@ enum class SuggestionFilterReason : std::uint8_t {
     loom_voice,
 };
 
-// Why suggestion generation was suppressed entirely. Mirrors the union produced by
-// getSuggestionSuppressReason / tryGenerateSuggestion guards.
+// Why suggestion generation was suppressed entirely.
 enum class SuggestionSuppressReason : std::uint8_t {
     disabled,
     pending_permission,
@@ -101,7 +100,7 @@ enum class SuggestionSuppressReason : std::uint8_t {
     aborted,
 };
 
-// The PromptVariant model identifier (TS: 'user_intent' | 'stated_intent'). Currently
+// The PromptVariant model identifier ('user_intent' | 'stated_intent'). Currently
 // always 'user_intent' but kept as a typed enum for future A/B variants.
 enum class PromptVariant : std::uint8_t {
     user_intent,
@@ -112,9 +111,9 @@ enum class PromptVariant : std::uint8_t {
     return PromptVariant::user_intent;
 }
 
-// The fixed prompt that, in the TS engine, is sent to runForkedAgent to elicit a single
-// suggestion. Ported verbatim: it documents the intent model and will be reused when an
-// LLM fork path exists in C++. NOT used by the deterministic ranker.
+// The fixed prompt that elicits a single suggestion from the LLM fork.
+// It documents the intent model and will be reused when an LLM fork path
+// exists in C++. NOT used by the deterministic ranker.
 inline constexpr std::string_view SUGGESTION_PROMPT =
     "[SUGGESTION MODE: Suggest what the user might naturally type next into Loom.]\n"
     "FIRST: Look at the user's recent messages and original request.\n"
@@ -181,9 +180,9 @@ struct SuggestionRequest {
 // ============================================================
 // Quality filter: should_filter_suggestion
 //
-// Faithful port of promptSuggestion.ts shouldFilterSuggestion. ASCII-only (TS suggestions
-// are ASCII in practice). The TS regexes are replicated with custom scanners; behavior is
-// matched exactly per the golden-table tests in test_services.cpp.
+// Faithful implementation of shouldFilterSuggestion. ASCII-only (suggestions
+// are ASCII in practice). The regexes are replicated with custom scanners;
+// behavior is matched exactly per the golden-table tests in test_services.cpp.
 // ============================================================
 
 namespace detail {
@@ -305,7 +304,7 @@ namespace detail {
 } // namespace detail
 
 // Returns the matched filter reason, or nullopt if the suggestion passes all rules.
-// Mirrors the exact rule ORDER of promptSuggestion.ts so the first match wins.
+// Mirrors the exact rule ORDER so the first match wins.
 [[nodiscard]] inline std::optional<SuggestionFilterReason> should_filter_reason(
     std::string_view suggestion)
 {
@@ -374,7 +373,7 @@ namespace detail {
     return std::nullopt;
 }
 
-// Boolean convenience wrapper matching the TS signature.
+// Boolean convenience wrapper.
 [[nodiscard]] inline bool should_filter_suggestion(std::string_view suggestion) {
     return should_filter_reason(suggestion).has_value();
 }
@@ -382,14 +381,14 @@ namespace detail {
 // ============================================================
 // Suppress-reason gates (getSuggestionSuppressReason / getParentCacheSuppressReason)
 //
-// These map onto C++ AppState fields where they exist. The TS engine additionally checks
-// appState.elicitation.queue.length > 0 and currentLimits.status !== 'allowed'; C++ has no
-// elicitation queue or rate-limit service, so those two reasons are intentionally NOT
-// produced (the function returns nullopt for them). This is an explicit, documented gap.
+// These map onto C++ AppState fields where they exist. The full engine
+// additionally checks an elicitation queue and a rate-limit status; C++ has
+// neither, so those two reasons are intentionally NOT produced (the function
+// returns nullopt for them). This is an explicit, documented gap.
 // ============================================================
 
 // Minimal AppState view: only the fields the gate actually reads. Callers wrap their real
-// AppState into this struct. Mirrors the four available TS reasons.
+// AppState into this struct.
 struct AppStateView {
     bool prompt_suggestion_enabled{true};
     bool pending_worker_request{false};
@@ -410,8 +409,8 @@ get_suggestion_suppress_reason(const AppStateView& state) {
 
 inline constexpr std::uint64_t MAX_PARENT_UNCACHED_TOKENS = 10'000;
 
-// Pure arithmetic over TokenUsage. TS reads input_tokens + cache_creation_input_tokens +
-// output_tokens; C++ TokenUsage uses cache_creation_tokens (slightly different field name).
+// Pure arithmetic over TokenUsage. Sums input_tokens + cache_creation_tokens +
+// output_tokens.
 [[nodiscard]] inline std::optional<SuggestionSuppressReason>
 get_parent_cache_suppress_reason(const TokenUsage& usage) {
     const std::uint64_t total = static_cast<std::uint64_t>(usage.input_tokens) +
@@ -427,7 +426,7 @@ get_parent_cache_suppress_reason(const TokenUsage& usage) {
 // THE replacement for the previously-hardcoded single speculative suggestion. Generates N
 // candidate suggestion strings deterministically from conversation signals and scores each
 // in [0,1], then returns sorted + deduped top-k after passing every candidate through the
-// ported should_filter_reason gate. No LLM.
+// should_filter_reason gate. No LLM.
 //
 // Score(suggestion, request) = clamp01(base_prior + sum(signal_boost_i))
 //   - base_prior is per-template.
@@ -435,9 +434,10 @@ get_parent_cache_suppress_reason(const TokenUsage& usage) {
 //     assistant-is-last-role prior, failed-last-shell-command (strong boost to fix-cmd,
 //     dim others), open_files count (boost review), turn-count early-conversation prior.
 //
-// This is a CONSERVATIVE PLACEHOLDER heuristic. The TS engine produces an LLM suggestion;
-// this ranker cannot match that quality and does not claim parity. It is deterministic,
-// offline, and replaceable later by the LLM path when runForkedAgent is ported.
+// This is a CONSERVATIVE PLACEHOLDER heuristic. The full engine produces an
+// LLM suggestion; this ranker cannot match that quality and does not claim
+// parity. It is deterministic, offline, and replaceable later by the LLM
+// path.
 // ============================================================
 
 namespace detail {
@@ -539,8 +539,8 @@ struct ContentHaystack {
     std::vector<Suggestion> results;
     if (request.recent_turns.empty()) return results;
 
-    // Early-conversation gate: TS requires >= 2 assistant turns before suggesting. Mirror
-    // that with the conversation-length proxy (>= 2 turns of any role).
+    // Early-conversation gate: require >= 2 assistant turns before suggesting,
+    // approximated with the conversation-length proxy (>= 2 turns of any role).
     const std::size_t assistant_turns = std::ranges::count_if(
         request.recent_turns, [](const ConversationTurn& t) { return t.role == "assistant"; });
     if (assistant_turns < 1) return results;
@@ -596,7 +596,7 @@ struct ContentHaystack {
         scored.push_back({cand, detail::clamp01(score)});
     }
 
-    // Filter through the ported quality gate, then collect survivors.
+    // Filter through the quality gate, then collect survivors.
     for (const auto& s : scored) {
         if (should_filter_suggestion(s.cand.text)) continue;
         results.push_back(Suggestion{
@@ -629,9 +629,10 @@ struct ContentHaystack {
 // ============================================================
 // Speculation boundary classifier (pure slice of canUseTool)
 //
-// The TS speculation canUseTool gateway performs filesystem side effects (copy-on-write,
-// overlay path rewrite, abortController.abort, setAppState) AND a pure decision. Only the
-// pure decision is portable; the side-effecting overlay loop is DEFERRED.
+// The speculation canUseTool gateway performs filesystem side effects
+// (copy-on-write, overlay path rewrite, abort, app-state updates) AND a pure
+// decision. Only the pure decision is portable; the side-effecting overlay
+// loop is DEFERRED.
 // ============================================================
 
 enum class PermissionMode : std::uint8_t {
@@ -641,7 +642,7 @@ enum class PermissionMode : std::uint8_t {
     Plan,
 };
 
-// Mirrors TS CompletionBoundary variant. 'complete' is included for completeness but is
+// CompletionBoundary variant. 'complete' is included for completeness but is
 // only ever produced by the agent loop, never by the pure classifier.
 struct CompletionBoundaryBash { std::string command; };
 struct CompletionBoundaryEdit { std::string tool_name; std::string file_path; };
@@ -664,10 +665,10 @@ struct BoundaryVerdict {
     std::optional<CompletionBoundary> boundary;
 };
 
-// A tiny read-only bash classifier. The TS path delegates to checkReadOnlyConstraints +
-// commandHasAnyCd; porting that validator in full is out of scope. We approximate the
-// common, unambiguous cases: missing/empty command, or any of a small set of mutating
-// leading verbs -> stop. Read-only commands like ls/git status/grep -> allow.
+// A tiny read-only bash classifier. A full read-only-constraints validator is
+// out of scope. We approximate the common, unambiguous cases: missing/empty
+// command, or any of a small set of mutating leading verbs -> stop. Read-only
+// commands like ls/git status/grep -> allow.
 // This is intentionally conservative (false-stops are safe; speculation just aborts).
 [[nodiscard]] inline bool is_read_only_bash_command(std::string_view command) {
     auto t = trim(command);
@@ -686,8 +687,8 @@ struct BoundaryVerdict {
     return true;
 }
 
-// Pure decision core. input_json is the raw JSON string of the tool input (the TS path
-// reads file_path / path / notebook_path / command / url fields from it).
+// Pure decision core. input_json is the raw JSON string of the tool input
+// (file_path / path / notebook_path / command / url fields).
 [[nodiscard]] inline BoundaryVerdict classify_completion_boundary(
     std::string_view tool_name,
     std::string_view input_json,
@@ -721,8 +722,8 @@ struct BoundaryVerdict {
     }
 
     if (tool_name == "Bash") {
-        // Extract the "command" field value from input_json via a naive scan (the TS path
-        // uses checkReadOnlyConstraints). We look for "command":"...".
+        // Extract the "command" field value from input_json via a naive scan.
+        // We look for "command":"...".
         std::string command;
         const auto key = std::string_view{"\"command\""};
         auto kpos = input_json.find(key);
@@ -747,7 +748,7 @@ struct BoundaryVerdict {
         return v;
     }
 
-    // Unknown tool: stop with denied_tool. Detail mirrors the TS fallback ordering.
+    // Unknown tool: stop with denied_tool.
     std::string detail_str;
     v.decision = BoundaryDecision::Stop;
     v.boundary = CompletionBoundaryDeniedTool{
@@ -760,10 +761,10 @@ struct BoundaryVerdict {
 // ============================================================
 // Pure message helpers (countToolsInMessages / prepareMessagesForInjection)
 //
-// Operate on a simplified ContentBlock model. The TS Message has typed unions; C++ has no
-// Message type in this module, so we model the portable slice as a vector of typed blocks.
-// These helpers are extracted for reuse by the future speculation accept path; the actual
-// accept path (fs overlay, setMessages) is DEFERRED.
+// Operate on a simplified ContentBlock model. There is no Message type in
+// this module, so we model the portable slice as a vector of typed blocks.
+// These helpers are extracted for reuse by the future speculation accept
+// path; the actual accept path (fs overlay, message updates) is DEFERRED.
 // ============================================================
 
 struct ContentBlock {
@@ -780,7 +781,7 @@ struct SimplifiedMessage {
     bool is_api_error{false};                  // assistant message marked as API error
 };
 
-// Replicates countToolsInMessages: count tool_result blocks that are not errors across
+// Count tool_result blocks that are not errors across
 // user messages with array content.
 [[nodiscard]] inline std::size_t count_tools_in_messages(
     const std::vector<SimplifiedMessage>& messages)
@@ -795,7 +796,7 @@ struct SimplifiedMessage {
     return count;
 }
 
-// Replicates prepareMessagesForInjection. Pure filter:
+// Pure filter:
 //   - strips thinking / redacted_thinking blocks;
 //   - drops tool_use blocks whose id has no successful (non-error) result;
 //   - drops tool_result blocks whose tool_use_id is not in the successful set;

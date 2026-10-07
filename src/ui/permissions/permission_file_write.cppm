@@ -1,20 +1,12 @@
 /// =========================================================================
 /// @file permission_file_write.cppm
-/// @brief Faithful C++/FTXUI port of TS FileWritePermissionRequest +
+/// @brief Faithful C++/FTXUI port of FileWritePermissionRequest +
 ///        FileWriteToolDiff + FilePermissionDialog.
 ///
 /// MODULE:   loom.ui.permissions.permission_file_write
 /// LICENCE:  Exported.  Callers instantiate via MakeFileWritePermissionPrompt.
 ///
-/// TS REFERENCE (3 files, ~450 lines total):
-///   src/components/permissions/FileWritePermissionRequest/
-///       FileWritePermissionRequest.tsx  — top-level component
-///       FileWriteToolDiff.tsx            — diff/code preview
-///   src/components/permissions/FilePermissionDialog/
-///       FilePermissionDialog.tsx         — shared dialog shell + options
-///       permissionOptions.tsx            — option builder
-///
-/// FAITHFUL FEATURES (1:1 with TS):
+/// FAITHFUL FEATURES:
 ///   • Title: "Create file" / "Overwrite file" (depends on file_exists)
 ///   • Subtitle: relative path (dimmed)
 ///   • Symlink warning banner (yellow) when path resolves through a symlink
@@ -63,7 +55,7 @@ namespace ch = loom::ui::code_highlight;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-/// Decision returned by the prompt (1:1 with TS PermissionOption type).
+/// Decision returned by the prompt (1:1 with PermissionOption type).
 enum class Decision : std::uint8_t {
     AllowOnce,    ///< Allow only this write (accept-once)
     AllowSession, ///< Allow all writes session-wide (accept-session)
@@ -71,14 +63,14 @@ enum class Decision : std::uint8_t {
     Abort,        ///< Escape / abort the whole operation
 };
 
-/// Scope for session-level allow (mirrors TS accept-session scope).
+/// Scope for session-level allow (mirrors accept-session scope).
 enum class SessionScope : std::uint8_t {
     Default,          ///< Normal directory-wide session allow
     LoomFolder,     ///< Project .loom/ folder special case
     GlobalLoomFolder, ///< Global ~/.loom/ folder special case
 };
 
-/// One selectable option in the dialog.  Mirrors TS `OptionWithDescription`
+/// One selectable option in the dialog.  Mirrors `OptionWithDescription`
 /// plus the `type: 'input'` variant used in feedback mode.
 struct Option {
     std::string value{};            ///< Machine-readable identifier
@@ -192,7 +184,7 @@ inline std::vector<std::pair<int, int>> compute_lcs(
 }
 
 /// Render a unified diff as FTXUI Elements (one per line).
-/// Matches TS StructuredDiff visual style:
+/// Matches StructuredDiff visual style:
 ///   - Deletions: red, prefixed with "- "
 ///   - Additions: green, prefixed with "+ "
 ///   - Context: dim, prefixed with "  "
@@ -315,10 +307,10 @@ inline Element render_highlighted_code(
 // ─── Content area ──────────────────────────────────────────────────────────
 //
 // Dashed top+bottom border box with either a unified diff (overwrite) or
-// syntax-highlighted code (new file).  Mirrors TS FileWriteToolDiff.tsx.
+// syntax-highlighted code (new file).  Mirrors FileWriteToolDiff.
 
 /// Render the content preview area.
-/// Matches TS FileWriteToolDiff.tsx dashed-border Box.
+/// Matches FileWriteToolDiff dashed-border Box.
 [[nodiscard]] inline Element RenderContentBox(const FileWritePermissionProps& p) {
     Element content_el;
 
@@ -337,9 +329,8 @@ inline Element render_highlighted_code(
             static_cast<int>(p.max_visible_lines)) | xflex;
     }
 
-    // Dashed top+bottom border (subtle) — matches TS:
-    //   borderStyle="dashed", borderColor="subtle",
-    //   borderLeft={false}, borderRight={false}, paddingX={1}
+    // Dashed top+bottom border (subtle) — matches:
+    //   dashed top/bottom borders, horizontal padding = 1
     auto dashed_top = separatorDouble() | color(Color::GrayDark);
     auto dashed_bottom = separatorDouble() | color(Color::GrayDark);
 
@@ -353,11 +344,11 @@ inline Element render_highlighted_code(
 // ─── Option builder ────────────────────────────────────────────────────────
 //
 // Builds the 3-option list dynamically based on path context.
-// Mirrors TS getFilePermissionOptions() in permissionOptions.tsx.
+// Mirrors getFilePermissionOptions() in permissionOptions.
 
 namespace detail {
 
-/// Build option list from props.  Mirrors TS getFilePermissionOptions().
+/// Build option list from props.  Mirrors getFilePermissionOptions().
 /// Caller passes feedback text for input-mode options.
 inline std::vector<Option> build_options(
     const FileWritePermissionProps& p,
@@ -388,7 +379,7 @@ inline std::vector<Option> build_options(
 
     // ── Option 2: Session-wide accept (dynamic label) ──
     //
-    // TS logic:
+    // logic:
     //   • In .loom/ folder → special "edit its own settings" label
     //   • In allowed path → generic "allow all edits during this session"
     //   • Outside allowed path → includes directory name
@@ -459,7 +450,7 @@ inline std::vector<Option> build_options(
 }
 
 /// Render one option row (Select-style, with ❯ marker and optional input).
-/// Mirrors TS CustomSelect option rendering + input variant.
+/// Mirrors CustomSelect option rendering + input variant.
 [[nodiscard]] inline Element RenderOptionRow(const Option& opt, bool focused) {
     auto marker = focused
         ? text("❯ ") | color(Color::Cyan) | bold
@@ -474,7 +465,7 @@ inline std::vector<Option> build_options(
 
     if (opt.is_input) {
         // Input option: label on first line, input field below
-        // TS shows the label + a text input with placeholder
+        // shows the label + a text input with placeholder
         std::string display_text = opt.input_value.empty()
             ? opt.input_placeholder
             : opt.input_value;
@@ -510,11 +501,11 @@ struct PromptState {
 
 // ─── Renderer ──────────────────────────────────────────────────────────────
 //
-// Layout mirrors TS FilePermissionDialog.tsx (from outside in):
+// Layout mirrors FilePermissionDialog (from outside in):
 //   PermissionDialog (colored frame, title, subtitle, worker badge)
 //     ├── symlink warning (optional)
 //     ├── content (diff / code)
-//     └── paddingX=1 box:
+//     └── horizontal-padding=1 box:
 //           ├── question
 //           └── Select (options)
 //   Bottom hint bar (outside dialog):
@@ -531,7 +522,7 @@ struct PromptState {
     auto subtitle_el = text(p.relative_path) | dim;
 
     // Worker badge (if present, shows to the right of title)
-    // TS: workerBadge prop → small colored badge with worker name
+    // workerBadge prop → small colored badge with worker name
     Element header_right = filler();
     if (p.has_worker_badge && !p.worker_name.empty()) {
         header_right = hbox({
@@ -545,10 +536,10 @@ struct PromptState {
         subtitle_el,
     });
 
-    // ── Symlink warning (yellow, matches TS symlinkWarning) ──
+    // ── Symlink warning (yellow, matches symlinkWarning) ──
     Element symlink_warning = text("");
     if (p.symlink_target && !p.symlink_target->empty()) {
-        // TS: "This will modify {target} (outside working directory) via a symlink"
+        // "This will modify {target} (outside working directory) via a symlink"
         // or "Symlink target: {target}" if inside cwd
         std::string warning_text = "Symlink target: " + *p.symlink_target;
         symlink_warning = hbox({
@@ -576,7 +567,7 @@ struct PromptState {
     }
     auto options_el = vbox(option_els);
 
-    // ── Body assembly (paddingX=1 like TS inner box) ──
+    // ── Body assembly (horizontal padding = 1 like inner box) ──
     Elements body_els;
     body_els.push_back(text(""));  // top padding
     body_els.push_back(title_block);
@@ -592,7 +583,7 @@ struct PromptState {
     body_els.push_back(content_box);
     body_els.push_back(text(""));
 
-    // Question + options in paddingX=1 container
+    // Question + options in horizontal-padding=1 container
     Elements padded_els;
     padded_els.push_back(question_el);
     padded_els.push_back(text(""));
@@ -608,14 +599,14 @@ struct PromptState {
         | size(WIDTH, LESS_THAN, 80);
 
     // ── Outer frame: permission-colored window ──
-    // Matches PermissionDialog.tsx borderColor="permission" top border
+    // Matches PermissionDialog permission-coloured top border
     auto dialog = window(
         text(" 🔒 Permission ") | bold | color(Color::Yellow),
         body | xflex
     ) | color(Color::Yellow);
 
-    // ── Bottom hint bar (outside dialog, matches TS) ──
-    // TS: "Esc to cancel · Tab to amend" — amend shown when focused on
+    // ── Bottom hint bar (outside dialog) ──
+    // "Esc to cancel · Tab to amend" — amend shown when focused on
     // yes/no option and not currently in input mode.
     bool show_amend_hint = false;
     if (st->focused_option >= 0 &&
@@ -643,8 +634,8 @@ struct PromptState {
 
     return vbox({
         dialog,
-        text(" "),   // small gap (matches marginTop=1)
-        hbox({ text("  "), footer_hint }), // paddingX=1
+        text(" "),   // small gap (matches top margin = 1)
+        hbox({ text("  "), footer_hint }), // horizontal padding = 1
     });
 }
 
@@ -652,7 +643,7 @@ struct PromptState {
 
 /// Create an interactive file write permission prompt component.
 ///
-/// Keyboard shortcuts (faithful to TS FilePermissionDialog + Select):
+/// Keyboard shortcuts (faithful to FilePermissionDialog + Select):
 ///   ↑ / ↓ / j / k  = Navigate options
 ///   Enter           = Confirm selected option
 ///   y / Y          = Quick accept (AllowOnce)
@@ -663,7 +654,7 @@ struct PromptState {
 ///   Backspace      = Delete char in input mode
 ///   Printable chars = Type into focused input field
 ///
-/// Mirrors TS useFilePermissionDialog + Select keyboard handling.
+/// Mirrors the file-permission-dialog keyboard handling.
 [[nodiscard]] inline Component MakeFileWritePermissionPrompt(
     FileWritePermissionProps props)
 {
@@ -743,7 +734,7 @@ struct PromptState {
         }
 
         // ── Tab: toggle input mode on focused option ──
-        // TS uses Shift+Tab for cycleMode; we follow the same pattern.
+        // uses Shift+Tab for cycleMode; we follow the same pattern.
         // Tab = toggle input mode on current option (if it's yes/no)
         if (event == Event::Tab) {
             if (current_opt.value == "yes") {
@@ -761,7 +752,7 @@ struct PromptState {
                 return true;
             }
             // For session option, Tab cycles to next option
-            // (mirrors TS behavior where Tab cycles through select options)
+            // (mirrors behavior where Tab cycles through select options)
             focus = (focus + 1) % count;
             return true;
         }
@@ -814,7 +805,7 @@ struct PromptState {
 
         // ── Escape: abort ──
         if (event == Event::Escape) {
-            // If in input mode, Esc exits input mode first (TS behavior)
+            // If in input mode, Esc exits input mode first (behavior)
             if (in_input_mode) {
                 if (current_opt.value == "yes") {
                     p.yes_input_mode = false;

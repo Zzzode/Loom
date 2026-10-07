@@ -1,8 +1,7 @@
 /// @file plugin_cmd.cppm
 /// @brief PluginCommand — implementation of the `/plugin` slash command.
 ///
-/// Provides the full subcommand surface area translated from the TS
-/// `src/commands/plugin/` tree:
+/// Provides the full subcommand surface area:
 ///
 ///   • /plugin (no args)            → open the tabbed plugin dialog on the
 ///                                    Discover tab (no intermediate text)
@@ -21,8 +20,7 @@
 ///
 /// Aliases: /plugins, /marketplace  (registered via definition().aliases)
 ///
-/// Behaviour matches the TS `src/commands/plugin/PluginSettings.tsx`
-/// dispatch: interactive subcommands open the tabbed plugin dialog with NO
+/// Dispatch: interactive subcommands open the tabbed plugin dialog with NO
 /// intermediate text — they return a `CommandResult` whose `metadata` field
 /// contains `"UI:plugins:<view>"`.  The runtime (see ui/dialogs/triggers.cppm
 /// PushFromCommandMetadata) detects this and spawns the PluginDialog on the
@@ -148,7 +146,7 @@ public:
     // ── execute ───────────────────────────────────────────────────────────
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         // Rebuild the raw arg string after the command name so parse_plugin_args
-        // sees exactly what the TS implementation receives.
+        // sees the full argument string.
         const std::string raw = join_args(ctx.args);
         const ParsedArgs cmd = parse_plugin_args(
             raw.empty() ? std::optional<std::string_view>{}
@@ -160,11 +158,10 @@ public:
                 return CommandResult::success(std::string{k_plugin_help_text});
 
             case SubcommandType::Menu:
-                // TS REF: src/commands/plugin/PluginSettings.tsx — bare
-                // `/plugin` (or any unrecognized subcommand) routes directly to
-                // the Discover tab with NO intermediate text.  We return empty
-                // text + the spawn metadata so the REPL opens the dialog
-                // straight onto the Discover tab, matching TS behaviour.
+                // Bare `/plugin` (or any unrecognized subcommand) routes
+                // directly to the Discover tab with NO intermediate text.
+                // We return empty text + the spawn metadata so the REPL
+                // opens the dialog straight onto the Discover tab.
                 return CommandResult{
                     true,
                     std::string{},
@@ -176,10 +173,10 @@ public:
                 return cmd_install(cmd);
 
             case SubcommandType::Manage:
-                // TS REF: PluginSettings.tsx — `/plugin manage` routes directly
-                // to the Installed (manage-plugins) tab with NO textual list
-                // printed first.  Return only the spawn metadata; the dialog
-                // renders the installed plugins.
+                // `/plugin manage` routes directly to the Installed
+                // (manage-plugins) tab with NO textual list printed first.
+                // Return only the spawn metadata; the dialog renders the
+                // installed plugins.
                 return CommandResult{
                     true,
                     std::string{},
@@ -244,9 +241,7 @@ private:
     // ── install ──────────────────────────────────────────────────────────
     [[nodiscard]] Result<CommandResult> cmd_install(const ParsedArgs& cmd) const {
         // Case 1: bare "install" with no target → open the Discover tab.
-        // TS REF: PluginSettings.tsx getInitialViewState('install') →
-        // {type:'discover-plugins'}; the dialog opens directly with no
-        // intermediate "Opening…" text.
+        // The dialog opens directly with no intermediate "Opening…" text.
         if (!cmd.plugin_name && !cmd.marketplace) {
             return CommandResult{
                 true,
@@ -257,10 +252,8 @@ private:
         }
 
         // Case 2: marketplace only (URL/path without plugin name).
-        // TS REF: getInitialViewState('install' with marketplace) →
-        // {type:'browse-marketplace', targetMarketplace}.  No intermediate
-        // text; the metadata carries the normalized marketplace name so the
-        // dialog opens scoped to that marketplace.
+        // No intermediate text; the metadata carries the normalized
+        // marketplace name so the dialog opens scoped to that marketplace.
         if (cmd.marketplace && !cmd.plugin_name) {
             auto plan = classify_marketplace_input(*cmd.marketplace);
             if (!plan.ok) {
@@ -396,10 +389,9 @@ private:
 
         switch (cmd.market_action) {
             case MarketplaceAction::None:
-                // Bare "marketplace" with no sub-action → open the Marketplaces
-                // tab directly via metadata, no intermediate text.  1:1 with
-                // TS getInitialViewState('marketplace') → {type:'manage-
-                // marketplaces'}; matches the Manage/Install pattern.
+                // Bare "marketplace" with no sub-action → open the
+                // Marketplaces tab directly via metadata, no intermediate
+                // text. Matches the Manage/Install pattern.
                 return CommandResult{
                     true,
                     std::string{},

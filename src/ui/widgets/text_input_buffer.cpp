@@ -29,7 +29,6 @@ namespace ui::components {
 
 namespace {
 
-// TS REF: inputPaste.ts TRUNCATION_THRESHOLD=10000, PREVIEW_LENGTH=1000.
 // Delegates to loom::utils::maybe_truncate_paste for the actual truncation
 // logic (shared with app.cppm's ProcessCompletedPastes text-paste path).
 //
@@ -94,8 +93,6 @@ void TextInputImpl::set_text(const std::string& t) {
 // ------------------------------------------------------------
 void TextInputImpl::add_to_history(const std::string& entry) {
     if (!entry.empty()) {
-        // TS REF: src/components/PromptInput/inputModes.ts:4-14
-        //   (prependModeCharacterToInput)
         // History stores the raw mode-prefixed string so recalling a
         // bash entry re-detects the mode via getModeFromInput on the
         // first character.
@@ -108,8 +105,6 @@ void TextInputImpl::add_to_history(const std::string& entry) {
         // "!!cmd" and the second recall would show "!!cmd".
         std::string hist_entry = entry;
         namespace figs = loom::ui::design::figures;
-        // TS REF: src/components/PromptInput/inputModes.ts:4-14
-        //   (prependModeCharacterToInput)
         // Only prepend '!' when (a) prompt_mode says the user intended
         // bash AND (b) the entry doesn't already carry a '!' prefix
         // (which happens when text_ was populated by insert_char /
@@ -320,8 +315,6 @@ void TextInputImpl::PasteText(const std::string& paste_content) {
 }
 
 /// Confirm the pending paste preview: insert the truncated content.
-/// TS REF: inputPaste.ts — confirmed large pastes are truncated to
-///   head 500 + placeholder + tail 500 before insertion.
 /// If the preview carries placeholder_content (truncated middle), emit
 /// it via on_paste_truncated so the caller can store it for later
 /// expansion at submit time (expand_pasted_text_refs).
@@ -437,10 +430,10 @@ void TextInputImpl::paste_text(const std::string& paste) {
     }
 
     // GAP 1: paste-text-truncation-10k-threshold
-    // TS REF: src/components/PromptInput/inputPaste.ts — pastes longer than
-    //   TRUNCATION_THRESHOLD (10 000 chars) show a PastePreview confirmation
-    //   overlay instead of being inserted directly.  The user must press
-    //   Enter to confirm (truncated insert) or Esc to cancel.
+    // Pastes longer than TRUNCATION_THRESHOLD (10 000 chars) show a
+    // PastePreview confirmation overlay instead of being inserted
+    // directly.  The user must press Enter to confirm (truncated
+    // insert) or Esc to cancel.
     constexpr std::size_t kTruncationThreshold = 10000;
     if (normalized.size() > kTruncationThreshold) {
         // Count lines in the full paste (for preview display)
@@ -498,7 +491,6 @@ void TextInputImpl::insert_suggestion(const Suggestion& s) {
 void TextInputImpl::submit_internal(bool hard) {
     if (text_.empty()) return;
     add_to_history(text_);
-    // TS REF: src/components/PromptInput/inputModes.ts:23-29 (getValueFromInput)
     // Strip the mode-prefix char ('!' for bash) from the value passed
     // to on_submit / on_soft_submit so the engine receives clean text.
     // The raw text_ is preserved for history (add_to_history above).
@@ -573,20 +565,17 @@ std::string TextInputImpl::mask_text(const std::string& s) const {
     return result;
 }
 
-// TS REF: src/components/PromptInput/useMaybeTruncateInput.ts — the hook
-//   that watches the entire input value and truncates it when it exceeds
-//   TRUNCATION_THRESHOLD (10 000 chars), regardless of how it got there
-//   (paste, set_text, accumulated typing, etc.).
+// Watches the entire input value and truncates it when it exceeds
+// TRUNCATION_THRESHOLD (10 000 chars), regardless of how it got there
+// (paste, set_text, accumulated typing, etc.).
 //
-//   Only applies once per "input session" (has_applied_truncation_ guard).
-//   The guard is reset when the input is cleared (submit / clear),
-//   matching the TS useEffect that resets hasAppliedTruncationToInput
-//   when input === ''.
+// Only applies once per "input session" (has_applied_truncation_ guard).
+// The guard is reset when the input is cleared (submit / clear).
 //
-//   Returns true if truncation was applied (text_ was modified).
-//   On truncation: stores the elided middle content via on_paste_truncated
-//   so the caller can expand [...Truncated text #N] refs at submit time
-//   (expand_pasted_text_refs).
+// Returns true if truncation was applied (text_ was modified).
+// On truncation: stores the elided middle content via on_paste_truncated
+// so the caller can expand [...Truncated text #N] refs at submit time
+// (expand_pasted_text_refs).
 bool TextInputImpl::maybe_apply_input_truncation() {
     if (has_applied_truncation_) return false;
     constexpr std::size_t kTruncationThreshold = 10000;
@@ -603,8 +592,6 @@ bool TextInputImpl::maybe_apply_input_truncation() {
     sel_start_ = sel_end_ = -1;
 
     // Store the elided content for later expansion (expand_pasted_text_refs).
-    // TS REF: useMaybeTruncateInput.ts L34-41 — setPastedContents stores
-    //   {id, type: 'text', content: placeholderContent}.
     if (options_.on_paste_truncated) {
         options_.on_paste_truncated(paste_id, result.placeholder_content);
     }
@@ -614,8 +601,7 @@ bool TextInputImpl::maybe_apply_input_truncation() {
 }
 
 void TextInputImpl::recompute_derived() {
-    // TS REF: src/components/PromptInput/useMaybeTruncateInput.ts L24-50
-    //   General safety net: if the total input exceeds 10k chars (regardless
+    // General safety net: if the total input exceeds 10k chars (regardless
     //   of how — paste, set_text, accumulated edits), truncate to head 500
     //   + placeholder ref + tail 500, store elided content for submit-time
     //   expansion.  Only applies once per input session (guard resets on
@@ -624,9 +610,8 @@ void TextInputImpl::recompute_derived() {
     //   via text().
     (void)maybe_apply_input_truncation();
 
-    // TS REF: useMaybeTruncateInput.ts L53-57 — reset the truncation guard
-    //   when input is cleared (e.g. after submit), so the next session can
-    //   be truncated independently.
+    // Reset the truncation guard when input is cleared (e.g. after
+    // submit), so the next session can be truncated independently.
     if (text_.empty()) {
         has_applied_truncation_ = false;
     }
@@ -637,16 +622,13 @@ void TextInputImpl::recompute_derived() {
     // Crude token estimate: ~4 chars = 1 token. Avoid float where possible.
     ctx.input_tokens_estimate = (ctx.char_count + 2) / 4;
     // Update prompt mode from first character(s).
-    // TS REF: src/components/PromptInput/inputModes.ts:16-21 (getModeFromInput)
     //
-    // IMPORTANT: We do NOT strip the leading '!' from text_ here.  Per TS
-    // semantics, the raw input buffer keeps the mode-prefix char so that
-    // (a) standalone TextInput usage (tests, dialogs) sees the exact text
-    // the user typed, and (b) history round-trips correctly via
-    // prependModeCharacterToInput.  The "!" is stripped only at VALUE
-    // extraction time (figures::strip_mode_prefix in submit paths and
-    // REPL on_submit handlers) — TS REF: inputModes.ts:23-29
-    // (getValueFromInput).
+    // IMPORTANT: We do NOT strip the leading '!' from text_ here.  The
+    // raw input buffer keeps the mode-prefix char so that (a) standalone
+    // TextInput usage (tests, dialogs) sees the exact text the user
+    // typed, and (b) history round-trips correctly.  The "!" is stripped
+    // only at VALUE extraction time (figures::strip_mode_prefix in submit
+    // paths and REPL on_submit handlers).
     //
     // The prompt_mode flag is still set here so that callers who read
     // ctx.prompt_mode (e.g. add_to_history prepend guard) know the
@@ -656,18 +638,14 @@ void TextInputImpl::recompute_derived() {
     // by hiding text_[0] here.
     if (!text_.empty()) {
         namespace figs = loom::ui::design::figures;
-        // TS REF: src/components/PromptInput/inputModes.ts:16-21 (getModeFromInput)
-        // Use canonical figures::get_mode_from_input for bash detection (the
-        // only mode that changes the prompt-prefix glyph per TS).  All other
-        // prefix-triggered modes (/ @ * &) remain in the switch below since
-        // they map to the extended CPP PromptInputMode enum values that don't
-        // exist in the narrow TS PromptMode enum.
+        // Use canonical figures::get_mode_from_input for bash detection
+        // (the only mode that changes the prompt-prefix glyph).  All other
+        // prefix-triggered modes (/ @ * &) remain in the switch below.
         if (figs::get_mode_from_input(text_) == figs::PromptMode::kBash) {
             ctx.prompt_mode = PromptInputMode::Bash;
-            // TS REF: src/components/PromptInput/PromptInput.tsx:874
-            //   onModeChange('bash') — caller (repl_screen) reads
-            //   ctx.prompt_mode via effective_is_bash() to pick the
-            //   kBashGlyph "!" prefix with bashBorder color.
+            // Caller (repl_screen) reads ctx.prompt_mode via
+            // effective_is_bash() to pick the kBashGlyph "!" prefix with
+            // bash_border color.
         } else {
             switch (text_[0]) {
                 case '/': ctx.prompt_mode = PromptInputMode::SlashCommand; break;

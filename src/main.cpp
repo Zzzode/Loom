@@ -579,7 +579,7 @@ loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
     // via --agent-name + --team-name; the leader itself never has an agent
     // name) must not pop its own local dialog in a background pane. It asks
     // the team leader over the mailbox and blocks for the verdict, failing
-    // closed on timeout. TS REF: swarmWorkerHandler.ts → permissionSync.
+    // closed on timeout.
     const char* w_agent = std::getenv("LOOM_AGENT_NAME");
     const char* w_team = std::getenv("LOOM_TEAM_NAME");
     const bool is_worker_teammate =
@@ -649,7 +649,7 @@ int run_runtime_tool_once(const CliOptions& opts) {
     loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
         .parent_permission_mode = parent_permission_mode_from_options(opts),
     });
-    // TS PARITY FALLBACK: route unregistered tool names to MCP servers.
+    // Fallback: route unregistered tool names to MCP servers.
     // RFC-0001 B15: the fallback (NativeMcpRuntime iteration, last_error,
     // exact ToolNotFound text) is built directly from loom.orchestration;
     // main binds it onto this registry itself, there is no seam slot.
@@ -1721,7 +1721,6 @@ int main(int argc, const char* argv[]) {
     // Capture the tmux environment BEFORE any pane backend runs. Pane spawn
     // decisions depend on whether the leader is itself inside tmux; without
     // this every team creation wrongly takes the external-session path.
-    // TS REF: utils/swarm/backends/detection.ts module-load capture.
     loom::utils::swarm_backends::EnvironmentDetection::capture_env(
         std::getenv("TMUX") ? std::getenv("TMUX") : "",
         std::getenv("TMUX_PANE") ? std::getenv("TMUX_PANE") : "");
@@ -1832,8 +1831,7 @@ int main(int argc, const char* argv[]) {
     loom::orchestration::install_runtime_backends();
 
     // Resolve leader/teammate identity from the environment just exported by
-    // apply_teammate_environment and the canonical <team>/config.json (see
-    // src/utils/swarm/reconnection.ts computeInitialTeamContext).
+    // apply_teammate_environment and the canonical <team>/config.json.
     if (auto initial_team = loom::utils::compute_initial_team_context_from_env()) {
         if (!initial_team->is_leader) {
             // Persist into the dynamic-context slot so teammate paths and
@@ -1961,9 +1959,8 @@ int main(int argc, const char* argv[]) {
     });
 
     // ── MCP tool fallback handler ────────────────────────────────────
-    // TS PARITY: In TS, each MCP server's tools are registered as
-    // individual tools in the tool pool (assembleToolPool merges
-    // built-in + mcp.tools).  The model can then call them directly
+    // Each MCP server's tools are registered as
+    // individual tools in the tool pool.  The model can then call them directly
     // (e.g. "analyze_image" instead of the generic "mcp" wrapper).
     //
     // In CPP, only the generic "mcp" tool is registered.  When the
@@ -1984,7 +1981,7 @@ int main(int argc, const char* argv[]) {
 
     // Populate config.tools with definitions for the API request body
     config.tools = tool_registry.get_visible_definitions();
-    // TS PARITY: MCP tools are discovered dynamically (after server
+    // MCP tools are discovered dynamically (after server
     // connection).  Set a provider callback so build_request_body()
     // picks up newly-connected MCP servers' tools on every API call.
     config.dynamic_tools_provider = []() -> std::vector<loom::core::ToolDefinition> {

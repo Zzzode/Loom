@@ -7,9 +7,9 @@
 ///           and engine-side dialog lifecycle managers.
 ///
 /// ARCHITECTURE (M7):
-///   - DialogType: type tag enum (1:1 with TS dialog types)
+///   - DialogType: type tag enum
 ///   - DialogSlot: which FullscreenLayout slot a dialog renders in
-///   - DialogPriority: priority bands (mirrors TS getFocusedInputDialog order)
+///   - DialogPriority: priority bands
 ///   - DialogPayloadVariant: std::variant of all dialog payload structs
 ///   - DialogQueue: per-slot, per-priority-band FIFO queue with suppression
 ///   - DialogRendererRegistry: maps DialogType -> render function
@@ -40,10 +40,10 @@ using namespace ftxui;
 using Theme = loom::ui::design::theme::Theme;
 
 // ============================================================
-// DialogType — type tag enum (1:1 with TS dialog types)
+// DialogType — type tag enum
 // ============================================================
 
-/// Type tag for each dialog kind.  1:1 correspondence with TS dialog types.
+/// Type tag for each dialog kind.
 /// Each type has an associated slot preference and priority band.
 enum class DialogType : std::uint16_t {
     // -- overlay slot (inside ScrollBox) --
@@ -99,6 +99,7 @@ enum class DialogType : std::uint16_t {
     CreateAgentWizard,      ///< new agent wizard
     EditAgentWizard,        ///< edit agent wizard
     Doctor,                 ///< /doctor diagnostics screen
+    SessionPicker,          ///< /resume session picker (standalone fullscreen)
 
     _COUNT,                 ///< sentinel
 };
@@ -150,6 +151,7 @@ enum class DialogType : std::uint16_t {
         case DialogType::CreateAgentWizard:        return "create-agent-wizard";
         case DialogType::EditAgentWizard:          return "edit-agent-wizard";
         case DialogType::Doctor:                   return "doctor";
+        case DialogType::SessionPicker:            return "session-picker";
         case DialogType::_COUNT:                   return "(count)";
     }
     return "unknown";
@@ -160,7 +162,7 @@ enum class DialogType : std::uint16_t {
 // ============================================================
 
 /// Which FullscreenLayout slot a dialog renders in.
-/// Mirrors TS slot architecture: overlay, bottom, modal, standalone.
+/// Slot architecture: overlay, bottom, modal, standalone.
 enum class DialogSlot : std::uint8_t {
     Overlay,    ///< inside ScrollBox (tool-permission)
     Bottom,     ///< bottom slot — focusedInputDialog set
@@ -223,6 +225,7 @@ enum class DialogSlot : std::uint8_t {
         case DialogType::CreateAgentWizard:
         case DialogType::EditAgentWizard:
         case DialogType::Doctor:
+        case DialogType::SessionPicker:
             return DialogSlot::Standalone;
 
         case DialogType::_COUNT:
@@ -236,7 +239,6 @@ enum class DialogSlot : std::uint8_t {
 // ============================================================
 
 /// Priority band for bottom-slot dialogs.
-/// Mirrors TS `getFocusedInputDialog()` priority order (REPL.tsx:2017).
 ///
 /// Band 0 (highest) — implicit exit states
 /// Band 1 — MessageSelector (never suppressed by typing)
@@ -297,7 +299,7 @@ enum class DialogPriority : std::uint8_t {
 }
 
 /// Whether a dialog is suppressed while the user is actively typing.
-/// Mirrors TS: only MessageSelector (band 1) shows while typing.
+/// Only MessageSelector (band 1) shows while typing.
 /// Bottom-slot banners 2..6 are all hidden during typing so the focus
 /// remains on the user's input.  Overlay and Modal/Standalone have their
 /// own typing rules in should_show_dialog().
@@ -346,10 +348,10 @@ struct SandboxPermissionPayload {
     bool is_worker = false;
     std::string worker_request_id;
     std::function<void(bool allow, bool always)> on_response;
-    // -- Faithful-port extension fields (added in Dialog#2 SandboxPermission) --
-    /// When true, suppress the "always allow this host" option (matches TS
-    /// `shouldAllowManagedSandboxDomainsOnly()`).  nullopt => not set, treat
-    /// as false so the default behavior matches TS pre-feature-gate.
+    // -- Extension fields (added in Dialog#2 SandboxPermission) --
+    /// When true, suppress the "always allow this host" option.
+    /// nullopt => not set, treat as false so the default behavior
+    /// matches the pre-feature-gate behavior.
     std::optional<bool> managed_domains_only;
     /// 0-based focused index in the option list.  Renderers and event
     /// handlers use this to highlight the active Select option.  Mapping:
@@ -357,11 +359,11 @@ struct SandboxPermissionPayload {
     ///   1 -> "Yes, and don't ask again for <host>" (when !managed_domains_only)
     ///   2 -> "No, ... (esc)" (always present)
     std::optional<std::int8_t> focused_index;
-    /// Optional: the rule that caused this prompt to fire (TS permission-
+    /// Optional: the rule that caused this prompt to fire (permission-
     /// system extension surface for audit logging / explainability).
     std::optional<std::string> permission_rule_match_explanation;
     /// Optional: abort/cancel callback used by JSX-tool-animation overlay
-    /// consumers (TS: onCancel).  Defaults to the same callback shape as
+    /// consumers (onCancel).  Defaults to the same callback shape as
     /// the Deny branch for backwards compatibility.
     std::function<void()> on_dismiss;
 };
@@ -618,6 +620,27 @@ struct QuickOpenPayload {
     std::function<void(int index, bool confirmed)> on_result;
 };
 
+/// An entry in the session picker list (one per resumable session).
+struct SessionPickerEntry {
+    std::string session_id;
+    std::string title;        ///< first user message or stored title
+    std::string age_string;   ///< "2h ago"
+    int message_count = 0;
+    std::string cwd;          ///< project path
+    std::string model;        ///< model name (for display)
+};
+
+/// Payload for SessionPicker standalone dialog (fullscreen /resume picker).
+struct SessionPickerPayload {
+    std::string id;
+    std::string query;
+    std::vector<SessionPickerEntry> sessions;
+    int selected_index = 0;
+    /// Called with the chosen session id when the user confirms (Enter),
+    /// or with an empty string when the user cancels (Esc).
+    std::function<void(const std::string& session_id)> on_select;
+};
+
 /// Payload for PluginDialog modal.
 struct PluginDialogPayload {
     std::string id;
@@ -820,7 +843,8 @@ using DialogPayloadVariant = std::variant<
     EditAgentWizardPayload,
     HooksDialogPayload,
     DoctorDialogPayload,
-    StatuslineDialogPayload
+    StatuslineDialogPayload,
+    SessionPickerPayload
 >;
 
 /// Get the DialogType from a payload variant.
@@ -921,6 +945,8 @@ using DialogPayloadVariant = std::variant<
             return DialogType::Doctor;
         } else if constexpr (std::is_same_v<T, StatuslineDialogPayload>) {
             return DialogType::StatuslineDialog;
+        } else if constexpr (std::is_same_v<T, SessionPickerPayload>) {
+            return DialogType::SessionPicker;
         }
         return DialogType::_COUNT;
     }, payload);
@@ -956,19 +982,11 @@ using DialogPayloadVariant = std::variant<
 /// Carries theme, terminal size, and optional REPL state.
 ///
 /// P2 gap "modal-context": `modal_available_cols` / `modal_available_rows`
-/// mirror TS `ModalContext` (FullscreenLayout.tsx L422-426) — the actual
-/// available width/height INSIDE the modal pane after subtracting the
-/// transcript peek rows + ▔ divider + horizontal padding.  Modal-slot
-/// renderers should prefer these over `term_cols`/`term_rows` when sizing
-/// content.  Bottom/overlay/standalone renderers leave these at 0 and use
-/// `term_cols`/`term_rows` directly.
-///
-/// TS REF: src/components/FullscreenLayout.tsx L422-426
-///   <ModalContext value={{
-///     rows: terminalRows - MODAL_TRANSCRIPT_PEEK - 1,
-///     columns: columns - 4,
-///     scrollRef: modalScrollRef ?? null
-///   }}>
+/// carry the actual available width/height INSIDE the modal pane after
+/// subtracting the transcript peek rows + ▔ divider + horizontal padding.
+/// Modal-slot renderers should prefer these over `term_cols`/`term_rows`
+/// when sizing content.  Bottom/overlay/standalone renderers leave these
+/// at 0 and use `term_cols`/`term_rows` directly.
 struct DialogRenderContext {
     int term_cols = 80;
     int term_rows = 24;
@@ -978,7 +996,7 @@ struct DialogRenderContext {
     /// Typed as `void*` to avoid a dependency cycle with repl_screen.
     const void* repl_state = nullptr;
 
-    // ── ModalContext (TS REF: FullscreenLayout.tsx L422-426) ──────────
+    // ── Modal context dimensions ──────────────────────────────────────
     // Actual available content area for modal-slot dialogs.
     // Computed as:
     //   modal_available_cols = term_cols - 4   (2px padding each side)
@@ -1268,7 +1286,7 @@ public:
     // Install*Wizard, CreateAgentWizard, EditAgentWizard.  Per design doc
     // §3.1 these render the entire terminal (no chrome visible) and take
     // all input focus.  Only one can exist at a time — a new push replaces
-    // the previous one to match the TS "one wizard at a time" invariant.
+    // the previous one to maintain the "one wizard at a time" invariant.
 
     /// True if a standalone dialog is currently queued.
     [[nodiscard]] bool has_standalone() const {
@@ -1352,7 +1370,7 @@ private:
     std::vector<DialogPayloadVariant> modal_stack_;
 
     // standalone slot: optional single-item fullscreen (0 or 1 dialog)
-    // New push replaces old — matches TS "one wizard at a time" invariant.
+    // New push replaces old — "one wizard at a time" invariant.
     std::optional<DialogPayloadVariant> standalone_;
 
     /// Find the highest-priority non-empty non-suppressed bottom band.
@@ -1398,7 +1416,7 @@ private:
 // ============================================================
 
 /// Determine if a dialog should be shown given typing state and animation state.
-/// Mirrors TS suppression logic (typing + animation-active guard).
+/// Suppression logic (typing + animation-active guard).
 [[nodiscard]] inline bool should_show_dialog(const DialogPayloadVariant& dlg,
                                               bool is_prompt_input_active,
                                               bool allow_dialogs_with_animation = true) {

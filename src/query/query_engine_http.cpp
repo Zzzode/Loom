@@ -148,14 +148,19 @@ void add_beta_headers(httplib::Headers& headers,
     // Build request body
     std::string body = build_request_body(options);
 
-    // Create HTTP client
-    httplib::Client cli(endpoint->client_base_url);
-    cli.set_connection_timeout(api_config_.timeout);
-    cli.set_read_timeout(api_config_.timeout);
-    cli.set_write_timeout(api_config_.timeout);
+    // Create HTTP client (shared_ptr so abort_callback_ can safely call
+    // cli->stop() from the main thread even after this function returns).
+    auto cli = std::make_shared<httplib::Client>(endpoint->client_base_url);
+    cli->set_connection_timeout(api_config_.timeout);
+    cli->set_read_timeout(api_config_.timeout);
+    cli->set_write_timeout(api_config_.timeout);
 
-    // Send request
-    auto res = cli.Post(endpoint->path, headers, body, "application/json");
+    // Register socket-shutdown callback so abort() (ESC) can interrupt
+    // the blocking Post() immediately instead of waiting for the read
+    // timeout (up to 120 s).
+    set_abort_callback([cli]() { cli->stop(); });
+    auto res = cli->Post(endpoint->path, headers, body, "application/json");
+    set_abort_callback(nullptr);
 
     if (!res) {
         auto err = res.error();
@@ -327,10 +332,12 @@ void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
     }
 
     // Create HTTP client
-    httplib::Client cli(endpoint->client_base_url);
-    cli.set_connection_timeout(api_config_.timeout);
-    cli.set_read_timeout(api_config_.timeout);
-    cli.set_write_timeout(api_config_.timeout);
+    // Create HTTP client (shared_ptr so abort_callback_ can safely call
+    // cli->stop() from the main thread even after this function returns).
+    auto cli = std::make_shared<httplib::Client>(endpoint->client_base_url);
+    cli->set_connection_timeout(api_config_.timeout);
+    cli->set_read_timeout(api_config_.timeout);
+    cli->set_write_timeout(api_config_.timeout);
 
     // SSE parsing state
     SseEventDecoder sse_decoder_;
@@ -539,7 +546,12 @@ void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
 
     httplib::Response res;
     httplib::Error err;
-    bool ok = cli.send(req, res, err);
+    // Register socket-shutdown callback so abort() (ESC) can interrupt
+    // the blocking send() immediately instead of waiting for the read
+    // timeout (up to 120 s).
+    set_abort_callback([cli]() { cli->stop(); });
+    bool ok = cli->send(req, res, err);
+    set_abort_callback(nullptr);
 
     if (!ok || (res.status >= 400 && blocks.empty())) {
         // If streaming failed and we got nothing, fall back to non-streaming

@@ -21,7 +21,9 @@ export module loom.ui.messages.thinking_message;
 import std;
 
 import loom.types.types;
+import loom.ui.foundation.clock;
 import loom.ui.foundation.design_figures;  // kSpinnerFrames canonical set (GAP 4)
+import loom.ui.visual.markdown;           // render_markdown_dim for thinking body
 
 export namespace loom::ui::messages::thinking_message {
 using namespace ftxui;
@@ -31,8 +33,7 @@ using namespace ftxui;
 // ============================================================
 
 /// Threshold (seconds) after which active thinking shows a "still thinking"
-/// banner.  TS REF: Messages.tsx — streaming thinking stays visible for
-/// 30s after streaming ends (isStreamingThinkingVisible).
+/// banner.  Streaming thinking stays visible for 30s after streaming ends.
 inline constexpr int kThinkingTimeoutSeconds = 30;
 
 // ============================================================
@@ -82,7 +83,6 @@ struct ThinkingMessageData {
 
     /// Wall-clock time when thinking started (for live "still thinking"
     /// banner).  If zero-duration, the static `duration` field is used.
-    /// TS REF: Messages.tsx streamingThinking visibility 30s timeout.
     std::chrono::steady_clock::time_point thinking_start_time{};
 };
 
@@ -228,7 +228,7 @@ inline std::size_t count_lines(const std::string& s) {
 [[nodiscard]] inline std::chrono::milliseconds effective_duration(
     const ThinkingMessageData& data) {
     if (data.thinking_start_time.time_since_epoch().count() != 0) {
-        auto now = std::chrono::steady_clock::now();
+        auto now = clock::steady_now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             now - data.thinking_start_time);
         // Use max(static, live) to avoid going backwards
@@ -238,7 +238,6 @@ inline std::size_t count_lines(const std::string& s) {
 }
 
 /// Return true if thinking has exceeded the 30s timeout threshold.
-/// TS REF: Messages.tsx isStreamingThinkingVisible 30s window.
 [[nodiscard]] inline bool is_thinking_timed_out(const ThinkingMessageData& data) {
     if (data.state != ThinkingState::Active) return false;
     auto dur = effective_duration(data);
@@ -247,7 +246,6 @@ inline std::size_t count_lines(const std::string& s) {
 
 /// Render the "Still thinking... (30s+)" timeout banner.
 /// Returns an empty element if thinking has not exceeded the threshold.
-/// TS REF: ThinkingMessage.tsx — subtle indicator when thinking runs long.
 [[nodiscard]] inline Element RenderThinkingTimeoutBanner(
     const ThinkingMessageData& data) {
     if (!is_thinking_timed_out(data)) return text("");
@@ -264,7 +262,7 @@ inline std::size_t count_lines(const std::string& s) {
 // ============================================================
 
 /// Spinner frames for active thinking.
-/// TS REF: SpinnerGlyph.tsx — canonical 10-frame braille spinner from
+/// Canonical 10-frame braille spinner from
 ///   loom::ui::design::figures::kSpinnerFrames (GAP 4: fig-spinner-frame-inconsistency).
 ///   Previously this had only 8 frames (dropping '⠇⠏'), now unified to 10.
 [[nodiscard]] inline std::string thinking_spinner(int frame) {
@@ -542,63 +540,97 @@ inline std::size_t count_lines(const std::string& s) {
 }
 
 // ============================================================
-// M4: Faithful TS renderer (AssistantThinkingMessage.tsx)
+// M4: Faithful renderer
 // ============================================================
 //
-// TS renders a MINIMAL thinking block (not the bordered/collapsing panel
+// Renders a MINIMAL thinking block (not the bordered/collapsing panel
 // above).  Two states:
 //
 //   collapsed (not transcript, not verbose):
-//     <Box marginTop={addMargin?1:0}>
-//       <Text dimColor italic>∴ Thinking <CtrlOToExpand/></Text>
-//     </Box>
+//     `∴ Thinking (ctrl+o to expand)` dim italic, with optional top margin
 //
 //   expanded (transcript or verbose):
-//     <Box flexDirection="column" gap={1} marginTop={addMargin?1:0} width="100%">
-//       <Text dimColor italic>∴ Thinking…</Text>
-//       <Box paddingLeft={2}><Markdown dimColor>{thinking}</Markdown></Box>
-//     </Box>
+//     `∴ Thinking…` dim italic, followed by the thinking text indented 2
+//     columns, with optional top margin
 //
 // Label glyph is U+2234 "∴" (THEREFORE).  No header decoration, no spinner,
 // no token count, no border, no budget bar, no toggle hints — all of those
 // belong to the richer divergent panel above (kept for the interactive UI).
 
-/// The TS thinking label glyph (U+2234 "∴" THEREFORE).
+/// The thinking label glyph (U+2234 "∴" THEREFORE).
 inline constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4";  // ∴
 
 /// CtrlOToExpand hint text rendered after the collapsed label.
 inline constexpr std::string_view kCtrlOHint = " (ctrl+o to expand)";
 
-/// Faithful collapsed-state render:  `∴ Thinking (ctrl+o to expand)` dim italic.
-/// Matches TS exactly — there is NO inline preview of the thinking content in
-/// collapsed mode; the body only appears in expanded (transcript/verbose) mode.
+/// Faithful collapsed-state render:  `∴ Thought for 5s (ctrl+o to expand)` dim.
+/// Shows the thinking duration when available so the collapsed label carries
+/// useful information instead of being a generic "Thinking" placeholder.
 ///
 /// When `show_timeout` is true (thinking > 30s), the label becomes
 /// `∴ Thinking (30s+) (ctrl+o to expand)` with a dim yellow tint.
-/// TS REF: Messages.tsx isStreamingThinkingVisible 30s timeout window.
 [[nodiscard]] inline Element RenderThinkingMessageCollapsed(
-    std::string_view /*thinking*/, bool add_margin,
-    bool show_timeout = false, int timeout_seconds = 0) {
+    std::string_view thinking, bool add_margin,
+    bool show_timeout = false, int timeout_seconds = 0,
+    std::chrono::milliseconds duration = std::chrono::milliseconds{0}) {
     Elements line_parts;
     line_parts.push_back(text(std::string(kThinkingLabel)));
     if (show_timeout) {
         line_parts.push_back(text(" Thinking"));
         line_parts.push_back(text(std::format(" ({}s+)", timeout_seconds))
                              | color(Color::Yellow));
+    } else if (duration.count() > 0) {
+        // Show "Thought for Xs" or "Thought for Xms" when duration is known.
+        auto ms = duration.count();
+        if (ms >= 1000) {
+            line_parts.push_back(text(std::format(" Thought for {:.1f}s", ms / 1000.0)));
+        } else {
+            line_parts.push_back(text(std::format(" Thought for {}ms", ms)));
+        }
     } else {
         line_parts.push_back(text(" Thinking"));
+    }
+    // Brief summary: first non-empty line of thinking content, truncated.
+    // Gives the user a glimpse of what was thought about without expanding.
+    if (!thinking.empty()) {
+        std::string summary;
+        std::size_t pos = 0;
+        while (pos < thinking.size()) {
+            auto nl = thinking.find('\n', pos);
+            std::string_view line = (nl == std::string_view::npos)
+                ? thinking.substr(pos)
+                : thinking.substr(pos, nl - pos);
+            // Trim leading whitespace.
+            while (!line.empty() && (line.front() == ' ' || line.front() == '\t'))
+                line.remove_prefix(1);
+            if (!line.empty()) {
+                summary = std::string(line);
+                break;
+            }
+            if (nl == std::string_view::npos) break;
+            pos = nl + 1;
+        }
+        constexpr std::size_t kMaxSummaryLen = 50;
+        if (summary.size() > kMaxSummaryLen) {
+            summary = summary.substr(0, kMaxSummaryLen) + "…";
+        }
+        if (!summary.empty()) {
+            line_parts.push_back(text("  " + summary) | dim);
+        }
     }
     line_parts.push_back(text(std::string(kCtrlOHint)));
     Element label = hbox(std::move(line_parts))
         | dim | color(Color::GrayLight);
-    // FTXUI has no true italic; dim+gray approximates the dimColor+italic look.
+    // FTXUI has no true italic; dim+gray approximates the dim-italic look.
     if (add_margin) return vbox({text(""), std::move(label)});
     return label;
 }
 
 /// Faithful expanded-state render:  `∴ Thinking…` label + indented dim body.
 /// `body` is the caller-supplied rendered thinking content (M5 wires Markdown;
-/// M4 passes plain dim text).  Indented paddingLeft=2 per TS.
+/// M4 passes plain dim text).  Indented left padding = 2.
+/// Adds a blank line before and after for visual separation from adjacent
+/// user/assistant messages.
 [[nodiscard]] inline Element RenderThinkingMessageExpanded(
     const std::string& thinking, bool add_margin) {
     Element label = hbox({
@@ -606,32 +638,22 @@ inline constexpr std::string_view kCtrlOHint = " (ctrl+o to expand)";
         text(" Thinking…"),
     }) | dim | color(Color::GrayLight);
 
-    // Body: indented 2, dim.  Plain-text fallback (M5 swaps in Markdown).
-    Elements bl;
-    {
-        std::size_t s = 0;
-        while (s < thinking.size()) {
-            auto nl = thinking.find('\n', s);
-            std::string line = (nl == std::string::npos) ? thinking.substr(s)
-                                                          : thinking.substr(s, nl - s);
-            bl.push_back(text(std::move(line)) | dim | color(Color::GrayLight));
-            if (nl == std::string::npos) break;
-            s = nl + 1;
-        }
-    }
-    Element body = vbox(std::move(bl));
+    // Body: indented 2, dim.  Rendered as Markdown (code fences, lists,
+    // headings, etc.) with dim styling to match the thinking block's
+    // visual treatment.
+    Element body = ::loom::ui::render_markdown_dim(thinking);
 
     Element inner = vbox({
         std::move(label),
         hbox({text("  "), std::move(body)}),
     });
-    if (add_margin) return vbox({text(""), std::move(inner)});
+    if (add_margin) return vbox({text(""), std::move(inner), text("")});
     return inner;
 }
 
 /// Top-level faithful dispatcher mirroring AssistantThinkingMessage:
-/// shouldShowFullThinking = isTranscriptMode || verbose  → expanded; else
-/// collapsed.  Empty thinking → empty element (TS returns null).
+/// show_full_thinking = is_transcript_mode || verbose  → expanded; else
+/// collapsed.  Empty thinking → empty element.
 [[nodiscard]] inline Element RenderThinkingMessageFaithful(
     const ThinkingMessageData& data, bool is_transcript_mode, bool verbose,
     bool add_margin = true) {
@@ -653,7 +675,8 @@ inline constexpr std::string_view kCtrlOHint = " (ctrl+o to expand)";
         int secs = timed_out ? static_cast<int>(
             effective_duration(data).count() / 1000) : 0;
         return RenderThinkingMessageCollapsed(thinking, add_margin,
-                                              timed_out, secs);
+                                              timed_out, secs,
+                                              data.duration);
     }
     return RenderThinkingMessageExpanded(thinking, add_margin);
 }

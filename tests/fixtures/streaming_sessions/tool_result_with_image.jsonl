@@ -1,0 +1,11 @@
+{"type":"stream_start","message_id":"msg_img_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"tool_use","id":"tu1","name":"AnalyzeImage","input_json":"{}"}}
+{"type":"content_block_delta","index":0,"delta_text":"{\"image_path\":\"/tmp/chart.png\",\"question\":\"Describe this chart.\"}"}
+{"type":"content_block_stop","index":0}
+{"type":"stream_end","stop_reason":"tool_use","usage":{"input_tokens":220,"output_tokens":18}}
+{"type":"tool_execution_start","tool_use_id":"tu1","tool_name":"AnalyzeImage","input_json":"{\"image_path\":\"/tmp/chart.png\",\"question\":\"Describe this chart.\"}"}
+{"type":"tool_execution_end","tool_use_id":"tu1","result":"Analysis complete.","is_error":false}
+{"type":"__commit__","message":{"role":"tool","tool_use_id":"tu1","tool_name":"AnalyzeImage","content":[{"type":"tool_result","tool_use_id":"tu1","content":[{"type":"text","text":"Analysis complete. The chart shows a steady upward trend."},{"type":"image","media_type":"image/png","data":"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="}]}]}}
+{"type":"__checkpoint__","name":"after_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

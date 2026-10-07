@@ -70,7 +70,7 @@ using IterationExecutor = std::function<std::expected<std::string, std::string>(
 
 namespace detail {
 
-/// Parse "[interval] <prompt>" style argument (mirrors TS loop.ts parsing)
+/// Parse "[interval] <prompt>" style argument
 /// Returns {interval_ms, prompt} or error.
 inline std::expected<std::pair<std::chrono::milliseconds, std::string>, std::string>
 parse_interval_prompt(std::string_view args) {
@@ -100,7 +100,7 @@ parse_interval_prompt(std::string_view args) {
                         case 'h': interval = std::chrono::hours(n);   break;
                         case 'd': interval = std::chrono::hours(n*24); break;
                     }
-                    // Minimum interval: 1 minute (per TS spec)
+                    // Minimum interval: 1 minute
                     if (interval < std::chrono::minutes(1))
                         interval = std::chrono::minutes(1);
                     std::string rest = input.substr(first_space + 1);

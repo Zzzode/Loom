@@ -1,9 +1,8 @@
 /// @file plugin_error_formatting.cppm
 /// @brief Plugin error formatting and guidance helpers.
 ///
-/// Pure-logic extraction from src/commands/plugin/PluginErrors.tsx.
 /// Converts structured PluginError variants to human-readable messages
-/// and user-facing troubleshooting guidance. No React/FTXUI dependencies.
+/// and user-facing troubleshooting guidance. No FTXUI dependencies.
 
 module;
 
@@ -20,7 +19,6 @@ export namespace loom::commands::plugin {
 // Plugin error type enumeration
 // ---------------------------------------------------------------------------
 
-/// Mirrors the TS PluginError discriminated-union `type` field.
 enum class ErrorType : std::uint8_t {
     PathNotFound,
     GitAuthFailed,
@@ -110,7 +108,6 @@ struct PluginErrorDetail {
 // ---------------------------------------------------------------------------
 
 /// Render a PluginError as a single-line (or multi-line) user-readable string.
-/// Mirrors TS: formatErrorMessage(error: PluginError): string
 [[nodiscard]] inline std::string format_error_message(
     ErrorType type, const PluginErrorDetail& d)
 {
@@ -205,7 +202,7 @@ struct PluginErrorDetail {
 // ---------------------------------------------------------------------------
 
 /// Return user-facing troubleshooting text for an error, or nullopt when
-/// no guidance applies. Mirrors TS: getErrorGuidance(error: PluginError)
+/// no guidance applies.
 [[nodiscard]] inline std::optional<std::string> get_error_guidance(
     ErrorType type, const PluginErrorDetail& d)
 {

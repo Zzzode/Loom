@@ -1,23 +1,13 @@
 
 /// @file tool_ui_file_edit.cppm
-/// @brief FileEdit tool UI — userFacingName, renderToolUseMessage, etc.
-///
-/// Faithful TS port of FileEditTool UI methods.
+/// @brief FileEdit tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.file_edit
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/FileEditTool/FileEditTool.tsx
-///   - userFacingName: "Update" / "Create" / "Updated plan"
-///   - renderToolUseMessage: file path
-///   - renderToolUseTag: "plan" if in plans directory
-///   - isTransparentWrapper: false
-///
+module;
 /// NOTE: The tools layer has helpers in file_edit_prompt.cppm (user_facing_name,
 /// get_tool_use_summary).  We re-implement the core logic here in the UI layer
 /// to avoid loom_ui -> loom_tools dependency issues (loom_tools is heavier).
-module;
 
 export module loom.ui.tools.file_edit;
 
@@ -99,7 +89,7 @@ namespace detail {
 
 /// Check if path is in a plans directory.
 [[nodiscard]] inline bool is_plan_file(std::string_view path) {
-    // TS: getPlansDirectory() — typically .loom/plans or similar
+    // Typically .loom/plans or similar
     return path.find("plans/") != std::string_view::npos ||
            path.find(".plan") != std::string_view::npos;
 }
@@ -126,7 +116,7 @@ namespace detail {
         if (old_str.empty() && !path.empty()) {
             // Could be either create or replace_all; we can't tell for sure
             // from JSON alone.  Default to "Update" which is the common case.
-            // TS checks input.oldString === undefined || input.oldString === ""
+            // Check if oldString is undefined or empty
             // but also whether replace_all is true.  We approximate.
             if (input_json.find("\"replace_all\"") != std::string_view::npos) {
                 if (input_json.find("true") != std::string_view::npos) {
@@ -173,7 +163,6 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: FileEditTool — same rationale as FileWriteTool.ts L146.
     // Transcript render shows a structured diff (update) or HighlightedCode
     // (create).  The output field carries the raw new content which is NOT
     // shown in update mode — indexing it would produce phantom matches.

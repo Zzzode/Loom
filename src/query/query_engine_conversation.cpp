@@ -34,6 +34,20 @@ void QueryEngine::restore_conversation(std::vector<Message> messages) {
     rebuild_content_replacement_state_locked();
 }
 
+void QueryEngine::set_session_id(std::string id) {
+    std::lock_guard lock(conversation_mutex_);
+    session_id_.value = std::move(id);
+}
+
+void QueryEngine::set_abort_callback(std::function<void()> cb) {
+    std::lock_guard lock(abort_callback_mutex_);
+    abort_callback_ = std::move(cb);
+}
+
+std::optional<std::filesystem::path> QueryEngine::sessions_dir() const noexcept {
+    return sessions_dir_;
+}
+
 void QueryEngine::clear_conversation() {
     std::lock_guard lock(conversation_mutex_);
     conversation_.clear();

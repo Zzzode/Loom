@@ -18,9 +18,6 @@
 ///       * MakeInputAndConfirm    (Input field -> Confirm)
 ///       * MakeFileWizard         (Select path -> Preview -> Confirm write)
 ///
-/// Migrated from components/wizard/ (WizardProvider.tsx, WizardDialogLayout.tsx,
-/// WizardNavigationFooter.tsx, useWizard.ts, index.ts).
-///
 /// Specific wizard content (install-GH-app, MCP add-server, plugin install) is
 /// OWNED BY dedicated agents — this file is the framework + samples only.
 module;

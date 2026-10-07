@@ -1,8 +1,7 @@
 /// @file plugin_trust_text.cppm
 /// @brief Trust-warning text builder for plugin installation screens.
 ///
-/// Extracted from src/commands/plugin/PluginTrustWarning.tsx.
-/// The React Box/Text JSX rendering is deferred to Phase 4 (FTXUI).
+/// The rendered warning banner is deferred to Phase 4 (FTXUI).
 /// This module provides the pure text assembly used by both the warning
 /// banner and the headless CLI installation path.
 
@@ -20,7 +19,6 @@ export namespace loom::commands::plugin {
 // ---------------------------------------------------------------------------
 
 /// Core trust disclaimer shown before any install / update / enable action.
-/// Mirrors the static body of TS: PluginTrustWarning (the italic Text block).
 constexpr std::string_view kTrustDisclaimerBody =
     "Make sure you trust a plugin before installing, updating, or using it. "
     "The plugin marketplace does not control what MCP servers, files, or other "
@@ -38,8 +36,6 @@ constexpr std::string_view kTrustDisclaimerPrefix = " ";
 
 /// Build the complete trust-warning text without any styling.
 /// If `custom_message` is provided by marketplace config, it is appended.
-/// Mirrors the assembly inside the JSX in PluginTrustWarning.tsx:
-///   disclaimter-body + (customMessage ? ` ${customMessage}` : "")
 [[nodiscard]] inline std::string build_trust_warning_text(
     std::optional<std::string_view> custom_message = std::nullopt)
 {
@@ -62,9 +58,7 @@ constexpr std::string_view kTrustDisclaimerPrefix = " ";
 
 /// Returns true when a given marketplace domain is on the hardcoded
 /// trust-allowlist. Anything not on the list will show an extra
-/// "unofficial source" line. Exposed here because PluginTrustWarning.tsx
-/// imports `getPluginTrustMessage()` from marketplaceHelpers.ts, which
-/// ultimately decides whether to add custom text.
+/// "unofficial source" line.
 [[nodiscard]] constexpr bool is_trusted_marketplace_domain(std::string_view domain) noexcept
 {
     // Loom official domains.

@@ -160,13 +160,10 @@ inline void reset_dismissals_for_tests() {
 // ==========================================================================
 // 1. NpmDeprecation (useNpmDeprecationNotification)
 //
-// SLOT FALLBACK (intentional). The TS hook gates on
-// getCurrentInstallationType() === 'development' and isInBundledMode() (src/
-// hooks/notifs/useNpmDeprecationNotification.tsx). In C++ the doctor screen
-// carries a display-only `installation_type` string (ui/screens/
-// doctor_screen.cppm) but no typed getCurrentInstallationType() accessor, and
-// there is no bundled-mode flag. Until those producers exist this slot is the
-// honest injection point.
+// SLOT FALLBACK (intentional). The doctor screen carries a display-only
+// `installation_type` string (ui/screens/doctor_screen.cppm) but no typed
+// getCurrentInstallationType() accessor, and there is no bundled-mode flag.
+// Until those producers exist this slot is the honest injection point.
 // ==========================================================================
 
 struct NpmDeprecationInfo {
@@ -209,9 +206,7 @@ inline void dismiss_npm_deprecation(std::string_view id = {}) {
 // ==========================================================================
 // 2. PluginAutoupdate (usePluginAutoupdateNotification)
 //
-// SLOT FALLBACK (intentional). The TS hook subscribes via
-// onPluginsAutoUpdated() (src/utils/plugins/pluginAutoupdate.js) in src/hooks/
-// notifs/usePluginAutoupdateNotification.tsx. The C++ plugin lifecycle
+// SLOT FALLBACK (intentional). The plugin lifecycle
 // (src/utils/plugin_lifecycle.cppm) tracks per-plugin state but has no
 // autoupdate event bus / subscriber API. Until that producer exists this slot
 // is the honest injection point.
@@ -256,10 +251,7 @@ inline void acknowledge_plugin_update(std::string_view plugin_id) {
 // ==========================================================================
 // 4. PluginInstallationStatus (usePluginInstallationStatus)
 //
-// SLOT FALLBACK (intentional). The TS hook reads
-// s.plugins.installationStatus { marketplaces[], plugins[] } with per-entry
-// status === 'failed' from AppState (src/hooks/notifs/
-// usePluginInstallationStatus.tsx). The C++ PluginInstallationManager
+// SLOT FALLBACK (intentional). The PluginInstallationManager
 // (src/services/plugins/installation_manager.cppm) only tracks installed IDs
 // with install()/uninstall()/update() result types, exposing no failed-
 // install snapshot model. Until that producer exists this slot is the honest
@@ -380,12 +372,10 @@ inline auto has_mcp_connectivity_issues() -> bool {
 // ==========================================================================
 // 6. SettingsErrors (useSettingsErrors)
 //
-// SLOT FALLBACK (intentional). The TS hook calls getSettingsWithAllErrors()
-// (src/utils/settings/allErrors.js) in src/hooks/notifs/useSettingsErrors.tsx.
-// C++ has plugin-manifest validation errors only (src/utils/plugin_validation
-// .cppm's ValidationError); there is no settings-schema validator producing
-// config-path errors. Until that producer exists this slot is the honest
-// injection point.
+// SLOT FALLBACK (intentional). C++ has plugin-manifest validation errors
+// only (src/utils/plugin_validation.cppm's ValidationError); there is no
+// settings-schema validator producing config-path errors. Until that producer
+// exists this slot is the honest injection point.
 // ==========================================================================
 
 enum class SettingsSeverity {
@@ -521,9 +511,7 @@ inline void inject_teammate_shutdowns_from_tasks(
 // ==========================================================================
 // 8. SubscriptionSwitch (useCanSwitchToExistingSubscription)
 //
-// SLOT FALLBACK (intentional). The TS hook queries isLoomAISubscriber() and
-// the OAuth profile's account.has_claude_max / has_claude_pro (src/hooks/
-// notifs/useCanSwitchToExistingSubscription.tsx). The C++ side has
+// SLOT FALLBACK (intentional). The C++ side has
 // is_claude_ai_subscriber() (src/bridge/bridge_enabled.cppm) but no
 // has_claude_max/has_claude_pro profile-tier query. Until that producer
 // exists this slot is the honest injection point.

@@ -74,75 +74,58 @@ namespace fs = std::filesystem;
         "synthetic_output",
         "todo_write",
     };
-    // TS REF: src/tools.ts:199 (isBashToolDisabled)
     if constexpr (features::kBashToolEnabled) {
         names.push_back("Bash");
     }
-    // TS REF: src/tools.ts:203 (hasEmbeddedSearchTools)
     if constexpr (!features::kEmbeddedSearchTools) {
         names.push_back("Glob");
         names.push_back("Grep");
     }
-    // TS REF: src/tools.ts:227 (isWorktreeModeEnabled)
     if constexpr (features::kWorktreeMode) {
         names.push_back("enter_worktree");
         names.push_back("exit_worktree");
     }
-    // TS REF: src/tools.ts:226 (ENABLE_LSP_TOOL)
     if constexpr (features::kEnableLspTool) {
         names.push_back("lsp");
     }
-    // TS REF: src/tools.ts:152-157 (PowerShell)
     if constexpr (features::kPowerShellTool) {
         names.push_back("powershell");
     }
-    // TS REF: src/tools.ts:36-38 (AGENT_TRIGGERS_REMOTE)
     // so it is registered unconditionally.  Runtime behavior is controlled by
     // LOOM_REMOTE_TRIGGER_COMMAND env var.
-    // TS REF: src/tools.ts:16-19 (REPLTool)
     // In CPP, "repl" delegates to execute_script() which has a working
     // implementation, so it is registered unconditionally.
     names.push_back("repl");
-    // TS REF: src/tools.ts:29-34 (AGENT_TRIGGERS)
     // In CPP, schedule_cron has a working implementation (loom.tools.cron),
     // so it is registered unconditionally.
     names.push_back("schedule_cron");
-    // TS REF: src/tools.ts:252-254 (isScriptToolEnabled)
     if constexpr (features::kScriptToolEnabled) {
         names.push_back("script");
     }
-    // TS REF: src/tools.ts:25-28 (SleepTool)
     if constexpr (features::kEnableSleepTool) {
         names.push_back("sleep");
     }
-    // TS REF: src/tools.ts:220-222 (isTodoV2Enabled)
     if constexpr (features::kTodoV2) {
         for (const auto* t : {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
             names.push_back(t);
         }
     }
-    // TS REF: src/tools.ts:230-232 (isAgentSwarmsEnabled)
     if constexpr (features::kAgentSwarmsEnabled) {
         names.push_back("team_create");
         names.push_back("team_delete");
     }
-    // TS REF: src/tools.ts:246 (NODE_ENV==='test')
     if constexpr (features::kTestingPermissionTool) {
         names.push_back("testing");
     }
-    // TS REF: src/tools.ts:251 (isToolSearchEnabledOptimistic)
     if constexpr (features::kToolSearch) {
         names.push_back("tool_search");
     }
-    // TS REF: src/tools.ts:217 (TungstenTool)
     // In CPP, tungsten has a working implementation (loom.tools.tungsten_tool),
     // so it is registered unconditionally.
     names.push_back("tungsten");
-    // TS REF: src/tools.ts:117-119 (WEB_BROWSER_TOOL)
     if constexpr (features::kWebBrowserTool) {
         names.push_back("web_browser");
     }
-    // TS REF: src/tools.ts:129-134 (WORKFLOW_SCRIPTS)
     if constexpr (features::kWorkflowScripts) {
         names.push_back("workflow");
     }

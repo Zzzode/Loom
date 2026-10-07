@@ -13,6 +13,109 @@ import std;
 
 namespace loom::ui {
 
+namespace {
+
+// Normalize a footnote label per CommonMark §4.3: case-fold, collapse
+// whitespace runs to a single space, trim.  Used to match [^ref] tokens
+// against [^label]: definitions.
+[[nodiscard]] std::string normalize_label(std::string_view label) {
+    std::string result;
+    bool last_was_space = false;
+    for (char c : label) {
+        if (c == ' ' || c == '\t' || c == '\n' || c == '\r') {
+            if (!last_was_space && !result.empty()) {
+                result += ' ';
+                last_was_space = true;
+            }
+        } else {
+            result += static_cast<char>(
+                std::tolower(static_cast<unsigned char>(c)));
+            last_was_space = false;
+        }
+    }
+    while (!result.empty() && result.back() == ' ') {
+        result.pop_back();
+    }
+    return result;
+}
+
+// Recursively collect all footnote reference labels from inline tokens
+// (including nested emphasis children).  Labels are appended to `order`
+// on first reference only (dedup via `seen`), preserving the GFM-mandated
+// reference order for the footnotes section.
+void collect_footnote_refs(const std::vector<InlineToken>& tokens,
+                           std::vector<std::string>& order,
+                           std::set<std::string>& seen) {
+    for (const auto& tok : tokens) {
+        if (tok.kind == InlineTokenKind::FootnoteRef) {
+            std::string label = normalize_label(tok.text);
+            if (seen.insert(label).second) {
+                order.push_back(std::move(label));
+            }
+        }
+        if (!tok.children.empty()) {
+            collect_footnote_refs(tok.children, order, seen);
+        }
+    }
+}
+
+// Recursively collect all footnote reference labels from a block tree
+// (including blockquote sub_blocks and list items).
+void collect_footnote_refs(const std::vector<BlockToken>& blocks,
+                           std::vector<std::string>& order,
+                           std::set<std::string>& seen) {
+    for (const auto& block : blocks) {
+        collect_footnote_refs(block.inlines, order, seen);
+        if (!block.sub_blocks.empty()) {
+            collect_footnote_refs(block.sub_blocks, order, seen);
+        }
+        for (const auto& item : block.list_items) {
+            collect_footnote_refs(item, order, seen);
+        }
+    }
+}
+
+// Render one sub-block of a footnote definition.
+//
+// detail::render_block_element() (the shared sub-block dispatcher in
+// markdown_render_impl.cpp) is not reachable from this impl unit — it is
+// not declared in the module interface — so dispatch here to the
+// interface-declared block renderers.  Keep this switch in sync with
+// render_block_element() if block kinds are added.
+[[nodiscard]] Element render_footnote_sub_block(const BlockToken& sub,
+                                                const MarkdownOptions& opts) {
+    switch (sub.kind) {
+        case BlockTokenKind::Paragraph:
+            return detail::render_inlines(sub.inlines, opts);
+        case BlockTokenKind::Heading:
+            return detail::render_heading(sub, opts);
+        case BlockTokenKind::CodeBlock:
+            return detail::render_code_block(sub, opts);
+        case BlockTokenKind::UnorderedList:
+            return detail::render_ulist(sub, opts);
+        case BlockTokenKind::OrderedList:
+            return detail::render_olist(sub, opts);
+        case BlockTokenKind::Blockquote:
+            return detail::render_blockquote(sub, opts);
+        case BlockTokenKind::Table:
+            return detail::render_table(sub, opts);
+        case BlockTokenKind::HorizontalRule:
+            return detail::render_hr(opts);
+        case BlockTokenKind::MathBlock:
+            // Display math: show the raw LaTeX in a distinct color,
+            // matching render_block_element().
+            return text(sub.math_content) | color(Color::CyanLight);
+        case BlockTokenKind::HtmlBlock:
+            return detail::render_html_block(sub, opts);
+        case BlockTokenKind::FootnoteDef:
+            // Nested footnote defs are hoisted, not rendered inline.
+            return text("");
+    }
+    return text("");
+}
+
+} // namespace
+
 [[nodiscard]] Element render_markdown(std::string_view source,
                                       const MarkdownOptions& opts) {
     std::vector<BlockToken> tokens;
@@ -21,7 +124,7 @@ namespace loom::ui {
     if (!detail::has_markdown_syntax(source)) {
         BlockToken tok;
         tok.kind = BlockTokenKind::Paragraph;
-        tok.inlines = {{InlineTokenKind::Text, std::string(source), ""}};
+        tok.inlines = {{InlineTokenKind::Text, std::string(source), "", "", {}}};
         tokens.push_back(std::move(tok));
     } else {
         // Check cache
@@ -35,43 +138,141 @@ namespace loom::ui {
         }
     }
 
-    // Render tokens
+    // Render tokens.  Consecutive blocks are separated by a blank line.
+    // Headings already carry a trailing blank line (render_heading returns
+    // vbox({el, text("")})), so the separator is skipped after a heading
+    // to avoid double-spacing.  Footnote definitions are hoisted to a
+    // footnotes section rendered after the body (GFM semantics) and do
+    // not participate in the block flow.
     Elements elements;
+    std::vector<const BlockToken*> footnotes;
+    bool prev_was_heading = false;
+
     for (const auto& tok : tokens) {
+        if (tok.kind == BlockTokenKind::FootnoteDef) {
+            footnotes.push_back(&tok);
+            continue;
+        }
+
+        // Render the block element first so we can check for empty blocks
+        // (e.g. HTML comments that strip to nothing) and skip them entirely,
+        // avoiding extra blank lines from separators.
+        Element el;
         switch (tok.kind) {
             case BlockTokenKind::Paragraph:
-                elements.push_back(detail::render_inlines(tok.inlines, opts));
+                el = detail::render_inlines(tok.inlines, opts);
                 break;
             case BlockTokenKind::Heading:
-                elements.push_back(detail::render_heading(tok, opts));
+                el = detail::render_heading(tok, opts);
                 break;
             case BlockTokenKind::CodeBlock:
-                elements.push_back(detail::render_code_block(tok, opts));
+                el = detail::render_code_block(tok, opts);
                 break;
             case BlockTokenKind::UnorderedList:
-                elements.push_back(detail::render_ulist(tok, opts));
+                el = detail::render_ulist(tok, opts);
                 break;
             case BlockTokenKind::OrderedList:
-                elements.push_back(detail::render_olist(tok, opts));
+                el = detail::render_olist(tok, opts);
                 break;
             case BlockTokenKind::Blockquote:
-                elements.push_back(detail::render_blockquote(tok, opts));
+                el = detail::render_blockquote(tok, opts);
                 break;
             case BlockTokenKind::Table:
-                elements.push_back(detail::render_table(tok, opts));
+                el = detail::render_table(tok, opts);
                 break;
             case BlockTokenKind::HorizontalRule:
-                elements.push_back(detail::render_hr(opts));
+                el = detail::render_hr(opts);
                 break;
             case BlockTokenKind::MathBlock: {
-                // Display math ($...$).  TS renders via KaTeX → HTML; in a
+                // Display math ($...$).  renders via KaTeX → HTML; in a
                 // terminal we show the raw LaTeX centered and in a distinct
                 // cyan color so it's visually recognized as a formula block.
                 Element math_el = text(tok.math_content) |
                                   color(Color::CyanLight);
-                elements.push_back(
-                    hbox({filler(), std::move(math_el), filler()}));
+                el = hbox({filler(), std::move(math_el), filler()});
                 break;
+            }
+            case BlockTokenKind::HtmlBlock:
+                // HTML blocks render as plain text in the terminal (no HTML
+                // rendering capability).  Strip tags for a cleaner display.
+                el = detail::render_html_block(tok, opts);
+                break;
+            case BlockTokenKind::FootnoteDef:
+                // Collected above; unreachable here.
+                break;
+        }
+
+        // Skip empty blocks (e.g. HTML comments that strip to nothing)
+        if (detail::is_empty_block(el)) {
+            continue;
+        }
+
+        if (!elements.empty() && !prev_was_heading) {
+            elements.push_back(text(""));
+        }
+        elements.push_back(std::move(el));
+        prev_was_heading = (tok.kind == BlockTokenKind::Heading);
+    }
+
+    // Footnotes section: a rule followed by the collected definitions,
+    // mirroring the HTML serializer's hoisted footnotes section.  Only
+    // definitions that have a matching [^label] reference are rendered
+    // (GFM semantics — orphan definitions are not displayed), and they
+    // are ordered by first reference (not source order), matching the
+    // HTML serializer's <ol> in the footnotes section.
+    if (!footnotes.empty()) {
+        std::vector<std::string> ref_order;
+        std::set<std::string> seen;
+        collect_footnote_refs(tokens, ref_order, seen);
+
+        // Build a lookup from normalized label to definition.
+        std::map<std::string, const BlockToken*> defs_by_label;
+        for (const auto* fn : footnotes) {
+            defs_by_label.emplace(normalize_label(fn->footnote_label), fn);
+        }
+
+        // Filter to referenced definitions, in reference order.
+        std::vector<const BlockToken*> visible;
+        for (const auto& label : ref_order) {
+            auto it = defs_by_label.find(label);
+            if (it != defs_by_label.end()) {
+                visible.push_back(it->second);
+            }
+        }
+
+        if (!visible.empty()) {
+            if (!elements.empty() && !prev_was_heading) {
+                elements.push_back(text(""));
+            }
+            elements.push_back(detail::render_hr(opts));
+
+            for (std::size_t i = 0; i < visible.size(); ++i) {
+                const auto* fn = visible[i];
+                if (i > 0) {
+                    elements.push_back(text(""));
+                }
+                Elements entry_parts;
+                if (fn->sub_blocks.empty()) {
+                    // Definition with no content: the label alone.
+                    entry_parts.push_back(
+                        text(std::string("[^") + fn->footnote_label + "]: "));
+                } else {
+                    // Label prefix on the same line as the first sub-block,
+                    // matching the list-item prefix pattern (hbox of prefix +
+                    // rendered content); remaining sub-blocks stack below.
+                    entry_parts.push_back(hbox({
+                        text(std::string("[^") + fn->footnote_label + "]: "),
+                        render_footnote_sub_block(fn->sub_blocks[0], opts)}));
+                    for (std::size_t j = 1; j < fn->sub_blocks.size(); ++j) {
+                        entry_parts.push_back(
+                            render_footnote_sub_block(fn->sub_blocks[j], opts));
+                    }
+                }
+                if (entry_parts.size() == 1) {
+                    elements.push_back(std::move(entry_parts[0]));
+                } else {
+                    elements.push_back(vbox(std::move(entry_parts)));
+                }
             }
         }
     }
@@ -110,6 +311,12 @@ Element StreamingMarkdown::update(std::string_view content) {
             parts.push_back(render_markdown(stable_prefix_));
         }
         if (!unstable.empty()) {
+            // Separate the stable prefix from the in-progress suffix with
+            // a blank line, matching the inter-block separator in
+            // render_markdown.
+            if (!parts.empty()) {
+                parts.push_back(text(""));
+            }
             parts.push_back(render_markdown(unstable));
         }
         return vbox(std::move(parts));

@@ -118,6 +118,31 @@ if(NOT DEFINED CMAKE_C_COMPILER AND NOT DEFINED CMAKE_CXX_COMPILER)
     endif()
 endif()
 
+# ─── macOS sysroot alignment ──────────────────────────────────────────────────
+# Homebrew clang defaults to the CommandLineTools SDK, but CMake's find_*
+# locates system packages (CURL, ZLIB) in the Xcode SDK. The path strings
+# differ, so CMake's implicit-include filter does not recognize the Xcode SDK
+# path as implicit and emits `-isystem <xcode-sdk>/usr/include` verbatim. That
+# flag is searched ahead of libc++'s c++/v1, and the SDK ships its own
+# <stddef.h>/<stdio.h>/..., so libc++'s <cstddef> includes the SDK header
+# instead of its own wrapper and trips the _LIBCPP_STDDEF_H self-check. Pin
+# the sysroot so compiler, find_package, and implicit-dir detection all agree
+# (CI passes -isysroot explicitly for the same reason).
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND NOT DEFINED CMAKE_OSX_SYSROOT)
+    execute_process(
+        COMMAND xcrun --show-sdk-path
+        OUTPUT_VARIABLE _loom_sdkroot
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    if(_loom_sdkroot)
+        # Normal variable, not CACHE: a FORCE'd cache entry here corrupts
+        # CMake's compiler-detection try_compile ("compiler not set, after
+        # EnableLanguage").
+        set(CMAKE_OSX_SYSROOT "${_loom_sdkroot}")
+    endif()
+    unset(_loom_sdkroot)
+endif()
+
 if(NOT DEFINED CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS)
     if(DEFINED _loom_llvm_prefix AND EXISTS "${_loom_llvm_prefix}/bin/clang-scan-deps")
         set(CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS

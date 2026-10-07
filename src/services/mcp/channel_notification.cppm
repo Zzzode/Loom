@@ -5,8 +5,6 @@
  *        MCP server that exposes tools for outbound messages and sends
  *        `notifications/loom/channel` notifications for inbound messages.
  *
- *        Faithful C++ port of src/services/mcp/channelNotification.ts (316 lines).
- *
  *        The notification handler wraps inbound content in a <channel> tag and
  *        enqueues it. The model sees where the message came from and decides
  *        which tool to reply with (the channel's MCP tool, SendUserMessage, or
@@ -43,17 +41,14 @@ using loom::utils::plugin_identifier::parse_plugin_identifier;
 // JSON-RPC method constants
 // =========================================================================
 
-// TS REF: src/services/mcp/channelNotification.ts:39
 // Inbound: server → CC — a channel message (user typed something in Slack, etc.)
 inline constexpr std::string_view CHANNEL_MESSAGE_METHOD =
     "notifications/loom/channel";
 
-// TS REF: src/services/mcp/channelNotification.ts:62-63
 // Inbound: server → CC — a structured permission reply (user approved/denied)
 inline constexpr std::string_view CHANNEL_PERMISSION_METHOD =
     "notifications/loom/channel/permission";
 
-// TS REF: src/services/mcp/channelNotification.ts:85-86
 // Outbound: CC → server — ask the human for permission via the channel
 inline constexpr std::string_view CHANNEL_PERMISSION_REQUEST_METHOD =
     "notifications/loom/channel/permission_request";
@@ -62,7 +57,6 @@ inline constexpr std::string_view CHANNEL_PERMISSION_REQUEST_METHOD =
 // Channel notification types
 // =========================================================================
 
-// TS REF: src/services/mcp/channelNotification.ts:37-47
 // Parsed params from a notifications/loom/channel notification
 struct ChannelMessageParams {
     std::string content;
@@ -71,7 +65,6 @@ struct ChannelMessageParams {
     std::optional<std::map<std::string, std::string>> meta;
 };
 
-// TS REF: src/services/mcp/channelNotification.ts:64-72
 // Parsed params from a notifications/loom/channel/permission notification
 struct ChannelPermissionParams {
     std::string request_id;
@@ -79,7 +72,6 @@ struct ChannelPermissionParams {
     std::string behavior;
 };
 
-// TS REF: src/services/mcp/channelNotification.ts:87-95
 // Params CC sends in notifications/loom/channel/permission_request
 struct ChannelPermissionRequestParams {
     std::string request_id;
@@ -138,7 +130,6 @@ using ChannelNotificationHandler = std::function<void(const ChannelNotification&
 // Channel entry types (--channels flag parsing)
 // =========================================================================
 
-// TS REF: src/bootstrap/state.ts:37-39
 // An entry from the user's --channels flag.
 enum class ChannelEntryKind { Plugin, Server };
 
@@ -149,7 +140,6 @@ struct ChannelEntry {
     bool dev = false;                        // --dangerously-load-development-channels
 };
 
-// TS REF: src/services/mcp/channelAllowlist.ts:23-26
 // An entry on the approved-channels allowlist (plugin-only schema).
 struct ChannelAllowlistEntry {
     std::string marketplace;
@@ -163,7 +153,6 @@ enum class AllowlistSource { Org, Ledger };
 // Channel gate result
 // =========================================================================
 
-// TS REF: src/services/mcp/channelNotification.ts:140-153
 // Result of gating a server's channel-notification path.
 enum class ChannelGateAction { Register, Skip };
 
@@ -188,7 +177,6 @@ struct ChannelGateResult {
 // Safe meta key validation
 // =========================================================================
 
-// TS REF: src/services/mcp/channelNotification.ts:104
 // Meta keys become XML attribute NAMES — a crafted key like
 // `x="" injected="y` would break out of the attribute structure. Only
 // accept keys that look like plain identifiers. This is stricter than
@@ -209,7 +197,6 @@ struct ChannelGateResult {
 // XML attribute escaping
 // =========================================================================
 
-// TS REF: src/utils/xml.ts (escapeXmlAttr)
 // Escape a value for safe use inside an XML attribute (double-quoted).
 [[nodiscard]] inline auto escape_xml_attr(std::string_view value) -> std::string {
     std::string result;
@@ -231,7 +218,6 @@ struct ChannelGateResult {
 // Channel message wrapping
 // =========================================================================
 
-// TS REF: src/services/mcp/channelNotification.ts:106-116
 // Wrap a channel message's content in a <channel> tag with source and meta
 // attributes. Returns the wrapped XML string ready to enqueue.
 [[nodiscard]] inline auto wrap_channel_message(
@@ -263,7 +249,6 @@ struct ChannelGateResult {
 // Channel entry matching
 // =========================================================================
 
-// TS REF: src/services/mcp/channelNotification.ts:161-173
 // Match a connected MCP server name against the user's parsed --channels
 // entries. server-kind is exact match on bare name; plugin-kind matches on
 // the second segment of plugin:X:Y. Returns the matching entry so callers
@@ -307,7 +292,6 @@ struct ChannelGateResult {
 // Forward declaration — defined below with the GrowthBook stub section.
 [[nodiscard]] auto get_channel_allowlist() -> std::vector<ChannelAllowlistEntry>;
 
-// TS REF: src/services/mcp/channelNotification.ts:127-138
 // Effective allowlist for the current session. Team/enterprise orgs can set
 // allowedChannelPlugins in managed settings — when set, it REPLACES the
 // GrowthBook ledger (admin owns the trust decision). std::nullopt falls
@@ -326,7 +310,6 @@ struct ChannelGateResult {
 // Channel server gating
 // =========================================================================
 
-// TS REF: src/services/mcp/channelNotification.ts:191-316
 // Gate an MCP server's channel-notification path. Gate order:
 //   capability → runtime gate (tengu_harbor) → auth (OAuth only) →
 //   org policy → session --channels → allowlist.
@@ -356,7 +339,6 @@ struct ChannelGateResult {
     const std::optional<std::vector<ChannelAllowlistEntry>>& org_allowed_plugins,
     const std::optional<std::string>& plugin_source = std::nullopt
 ) -> ChannelGateResult {
-    // TS REF: channelNotification.ts:200-206
     // Channel servers declare `experimental['loom/channel']: {}` (MCP's
     // presence-signal idiom — same as `tools: {}`). Presence in the map
     // covers `{}` and `true`; absent/undefined/explicit-`false` all fail.
@@ -369,7 +351,6 @@ struct ChannelGateResult {
         };
     }
 
-    // TS REF: channelNotification.ts:211-217
     // Overall runtime gate. After capability so normal MCP servers never hit
     // this path. Before auth/policy so the killswitch works regardless of
     // session state.
@@ -381,8 +362,6 @@ struct ChannelGateResult {
         };
     }
 
-    // TS REF: channelNotification.ts:222-228
-    // TS REF: channelNotification.ts:235-245
     // Teams/Enterprise opt-in. Managed orgs must explicitly enable channels.
     // Default OFF — absent or false blocks.
     if (is_managed_org && !managed_channels_enabled) {
@@ -393,7 +372,6 @@ struct ChannelGateResult {
         };
     }
 
-    // TS REF: channelNotification.ts:250-257
     // User-level session opt-in. A server must be explicitly listed in
     // --channels to push inbound this session.
     auto entry = find_channel_entry(server_name, allowed_channels);
@@ -407,7 +385,6 @@ struct ChannelGateResult {
 
     const auto& matched = *entry;
 
-    // TS REF: channelNotification.ts:259-302
     if (matched.kind == ChannelEntryKind::Plugin) {
         // Marketplace verification: the tag is intent (plugin:slack@anthropic),
         // the runtime name is just plugin:slack:X — could be slack@anthropic or
@@ -465,7 +442,6 @@ struct ChannelGateResult {
             }
         }
     } else {
-        // TS REF: channelNotification.ts:303-313
         // server-kind: allowlist schema is {marketplace, plugin} — a server entry
         // can never match. Without this, --channels server:plugin:foo:bar would
         // match a plugin's runtime name and register with no allowlist check.
@@ -492,7 +468,6 @@ struct ChannelGateResult {
 // Notification parameter parsing
 // =========================================================================
 
-// TS REF: src/services/mcp/channelNotification.ts:37-47
 // Parse a notifications/loom/channel notification's params from JSON.
 // Returns std::nullopt if the JSON is malformed or missing required fields.
 [[nodiscard]] inline auto parse_channel_message_params(
@@ -524,7 +499,6 @@ struct ChannelGateResult {
     return params;
 }
 
-// TS REF: src/services/mcp/channelNotification.ts:64-72
 // Parse a notifications/loom/channel/permission notification's params.
 [[nodiscard]] inline auto parse_channel_permission_params(
     const std::string& params_json
@@ -568,7 +542,6 @@ struct ChannelGateResult {
 // ChannelNotificationBus — thread-safe pub/sub for channel events
 // =========================================================================
 
-// TS REF: implied by the subscribe/emit pattern in channelNotification.ts
 // A bus that lets code subscribe to channel notifications per-server,
 // per-type, or globally. Emissions are dispatched synchronously to all
 // matching handlers.
@@ -773,9 +746,8 @@ inline auto emit_server_error(std::string_view server_name, std::string_view err
 // Stub: allowlist source (GrowthBook tengu_harbor_ledger)
 // =========================================================================
 
-// TS REF: src/services/mcp/channelAllowlist.ts:37-44
 // Returns the current channel allowlist from the feature flag.
-// Stubbed to return empty in CPP until GrowthBook integration lands.
+// Stubbed to return empty until GrowthBook integration lands.
 // The real implementation reads tengu_harbor_ledger feature value and
 // validates against ChannelAllowlistSchema.
 [[nodiscard]] inline auto get_channel_allowlist() -> std::vector<ChannelAllowlistEntry> {
@@ -783,7 +755,6 @@ inline auto emit_server_error(std::string_view server_name, std::string_view err
     return {};
 }
 
-// TS REF: src/services/mcp/channelAllowlist.ts:51-53
 // Overall channels on/off. Checked before any per-server gating.
 // Stubbed to return false until GrowthBook integration lands.
 [[nodiscard]] inline auto is_channels_enabled() -> bool {
@@ -856,8 +827,6 @@ auto unsubscribe(int id) -> void {
 // =========================================================================
 
 // Convenience: emit a ResourceListChanged notification
-// TS REF: implied by notifications/resources/list_changed handler in
-// src/services/mcp/connectionManager.ts
 inline auto emit_resource_list_changed(std::string_view server_name) -> void {
     ChannelNotification notif{
         .type = ChannelNotificationType::ResourceListChanged,
@@ -869,8 +838,6 @@ inline auto emit_resource_list_changed(std::string_view server_name) -> void {
 }
 
 // Convenience: emit a PromptListChanged notification
-// TS REF: implied by notifications/prompts/list_changed handler in
-// src/services/mcp/connectionManager.ts
 inline auto emit_prompt_list_changed(std::string_view server_name) -> void {
     ChannelNotification notif{
         .type = ChannelNotificationType::PromptListChanged,
@@ -885,8 +852,7 @@ inline auto emit_prompt_list_changed(std::string_view server_name) -> void {
 // Channel-specific emitters (inbound notifications from channel servers)
 // =========================================================================
 
-// TS REF: src/services/mcp/channelNotification.ts:106-116 + dispatch in
-// src/services/mcp/connectionManager.ts — when a notifications/loom/channel
+// When a notifications/loom/channel
 // notification arrives, the content is wrapped in a <channel> tag and the
 // whole thing is emitted to the bus. Subscribers (e.g. the query engine)
 // read `wrapped` to enqueue the message and `content`/`meta` for detail.
@@ -920,8 +886,7 @@ inline auto emit_channel_message(
     emit_channel_notification(server_name, notif);
 }
 
-// TS REF: src/services/mcp/channelNotification.ts:62-72 + dispatch in
-// src/services/mcp/connectionManager.ts — when a
+// When a
 // notifications/loom/channel/permission notification arrives, the
 // structured permission reply is emitted to the bus. Subscribers match
 // request_id against their pending permission map.
@@ -949,14 +914,9 @@ inline auto emit_channel_permission(
 // Server health monitoring
 // =========================================================================
 
-// TS REF: src/services/mcp/ — health monitoring is distributed across the
-// MCP SDK's transport layer (SSE reconnect with exponential backoff in
-// client.ts) and the connection manager's notification-refresh workers.
-//
-// CPP adds an explicit health monitor because our transport layer is
-// thinner than the TS SDK's. This monitor pings servers that have
-// notifications capability, tracks consecutive failures, and emits
-// ServerError after 3 failures so the UI can show degraded state.
+// An explicit health monitor: pings servers that have notifications
+// capability, tracks consecutive failures, and emits ServerError after
+// 3 failures so the UI can show degraded state.
 
 // Per-server health state tracked by the monitor.
 struct ServerHealthState {
@@ -1228,7 +1188,6 @@ private:
 };
 
 // Get the process-wide singleton health monitor.
-// TS REF: process-wide singleton pattern used by MCP connection manager
 [[nodiscard]] inline auto get_global_health_monitor() -> ChannelHealthMonitor& {
     static ChannelHealthMonitor instance;
     return instance;
@@ -1238,9 +1197,7 @@ private:
 // Integration helpers — wire channel notifications to server lifecycle
 // =========================================================================
 
-// TS REF: src/services/mcp/connectionManager.ts — the TS connection manager
-// emits lifecycle events that the channel notification system hooks into.
-// In CPP we provide explicit integration functions so the connection
+// Explicit integration functions so the connection
 // manager (or any caller) can wire channel notifications to server events.
 
 // Called when an MCP server successfully connects and is initialized.
@@ -1310,9 +1267,7 @@ inline auto on_mcp_server_error(
 // Wire-to-connection-manager convenience helper
 // =========================================================================
 
-// TS REF: src/services/mcp/connectionManager.ts — in TS, the connection
-// manager fires events that the channel notification module subscribes to.
-// In CPP, we provide this helper so callers can wire a McpConnectionManager
+// This helper lets callers wire a McpConnectionManager
 // to the channel notification bus with a single call.
 //
 // Usage:

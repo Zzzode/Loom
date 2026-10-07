@@ -46,9 +46,8 @@ struct APIErrorData {
     std::optional<int> current_attempt;       // N of M
     std::optional<int> max_attempts;
     std::optional<double> retry_after_ms;     // Total backoff duration (ms)
-    /// TS REF: SystemAPIErrorMessage.tsx — sessionExpired prop.  When true,
-    /// the authentication session has expired and the user must clear /
-    /// re-authenticate rather than just retry.
+    /// When true, the authentication session has expired and the user must
+    /// clear / re-authenticate rather than just retry.
     bool session_expired{false};
 
     // Oversized-body warning
@@ -72,8 +71,8 @@ struct APIErrorOptions {
     std::function<void()> on_diagnose;      // Diagnose button
     std::function<void()> on_dismiss;       // Dismiss button
     std::function<void(const std::string&)> on_copy_trace;   // Copy trace id
-    /// TS REF: SystemAPIErrorMessage.tsx — onClearSession prop.  Called when
-    /// the user clicks "Clear session" on a session-expired error card.
+    /// Called when the user clicks "Clear session" on a session-expired
+    /// error card.
     std::function<void()> on_clear_session;
     /// When the error was first displayed (for live countdown).  Set by the
     /// interactive component at construction time; static renders may leave
@@ -198,13 +197,12 @@ struct ErrorPalette {
         }
     }
 
-    // --- Row 3b: retry countdown text (TS REF: SystemAPIErrorMessage.tsx L106) ---
+    // --- Row 3b: retry countdown text ---
     // Shows "Retrying in X seconds… (attempt N/M)" when retry_after_ms is set.
     // The live countdown is computed from error_start_time + retry_after_ms.
     if (e.retry_after_ms && e.current_attempt && e.max_attempts) {
         // Compute remaining seconds from the start time stored in error data.
         // When start_time is not set (static render path), show raw retry_after_ms.
-        // TS REF: SystemAPIErrorMessage.tsx L43-50  retryInSecondsLive = max(0, round((retryInMs - countdownMs) / 1000))
         double remaining_sec = 0.0;
         if (opts.error_start_time) {
             auto now = std::chrono::steady_clock::now();
@@ -216,7 +214,6 @@ struct ErrorPalette {
             remaining_sec = *e.retry_after_ms / 1000.0;
         }
         int secs_int = static_cast<int>(std::round(remaining_sec));
-        // TS REF: L103  retryInSecondsLive === 1 ? "second" : "seconds"
         std::string unit = (secs_int == 1) ? "second" : "seconds";
         std::string countdown_text = std::format(
             " Retrying in {} {}… (attempt {}/{})",
@@ -252,7 +249,6 @@ struct ErrorPalette {
             bts.push_back(text("  "));
         }
         if (opts.on_clear_session && e.session_expired) {
-            // TS REF: sessionExpired → show "Clear session" instead of plain Retry
             bts.push_back(pill_button("c", "Clear session", Color::Yellow));
             bts.push_back(text("  "));
         }
@@ -284,8 +280,7 @@ struct ErrorPalette {
     };
     auto s = std::make_shared<State>();
     s->opts = std::move(options);
-    // TS REF: SystemAPIErrorMessage.tsx L28  useState(0) for countdownMs.
-    // We capture the start time so the renderer can compute live remaining
+    // Capture the start time so the renderer can compute live remaining
     // seconds (remaining = retry_after_ms - (now - error_start_time)).
     if (!s->opts.error_start_time) {
         s->opts.error_start_time = std::chrono::steady_clock::now();
@@ -306,7 +301,6 @@ struct ErrorPalette {
                       return true;
                   }
               }
-              // TS REF: onClearSession — session-expired errors show "Clear session"
               if (event == Event::Character('c') || event == Event::Character('C')) {
                   if (o.on_clear_session && e.session_expired) {
                       o.on_clear_session();

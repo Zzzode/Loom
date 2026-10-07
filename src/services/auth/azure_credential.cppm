@@ -1,8 +1,7 @@
 // Azure DefaultAzureCredential-lite implementation + Foundry endpoint
 // resolution.
 //
-// Faithful to TS upstream's use of @azure/identity DefaultAzureCredential with
-// getBearerTokenProvider using scope="https://cognitiveservices.azure.com/.default".
+// Uses scope="https://cognitiveservices.azure.com/.default".
 //
 // The Azure SDK for C++ (azure-sdk-for-cpp) is intentionally NOT pulled in.
 // Instead we replicate the specific sub-parts of DefaultAzureCredential that
@@ -35,8 +34,8 @@
 // the `azureAuthRefresh` shell script field (future Settings integration).
 //
 // Model IDs map to deployment names that user has set up on Foundry.  We
-// export the same model-ID table as TS configs.ts so callers can look up
-// the default deployment name before the runtime ListDeployments call.
+// export the model-ID table so callers can look up the default deployment
+// name before the runtime ListDeployments call.
 module;
 #include <cstdint>
 #include <ctime>
@@ -452,7 +451,7 @@ private:
 };
 
 // ---------------------------------------------------------------------------
-// Foundry resource + endpoint resolution + TS env var detection helpers.
+// Foundry resource + endpoint resolution + env var detection helpers.
 // ---------------------------------------------------------------------------
 struct FoundryAuthMode {
     bool use_foundry = false;
@@ -480,7 +479,7 @@ struct FoundryAuthMode {
     return m;
 }
 
-// Resolve final base URL per TS SDK rules.
+// Resolve final base URL.
 // Priority: base_url > resource-derived > error.
 // The final path appended by the SDK is /anthropic/v1/messages.
 [[nodiscard]] inline std::string resolve_foundry_base_url(

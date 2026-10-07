@@ -625,37 +625,19 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 }
 
 // ============================================================
-// M6: Faithful TS renderer (AssistantToolUseMessage.tsx parity)
+// M6: Faithful renderer
 // ============================================================
-// Mirrors the TS default branch of AssistantToolUseMessage.tsx.
 // The existing RenderToolUseMessage / ToolUseMessage above are the
 // divergent FTXUI reimplementation (borders, status pills, footers,
-// parameter blocks — all invented chrome not in TS).  The faithful
-// version renders exactly what the TS Ink component does:
-//
-//   <Box flexDirection="row" justifyContent="space-between"
-//        marginTop={addMargin?1:0} width="100%" backgroundColor={bg}>
-//     <Box flexDirection="column">
-//       <Box flexDirection="row" flexWrap="nowrap" minWidth={...}>
-//         {shouldShowDot && <ToolUseLoader .../>}   // ● blinking/solid dot
-//         <Box flexShrink={0}>
-//           <Text bold wrap="truncate-end">
-//             {userFacingToolName}
-//           </Text>
-//         </Box>
-//         {renderedToolUseMessage !== '' && <Box><Text>({msg})</Text></Box>}
-//         {tool.renderToolUseTag?.(input)}
-//       </Box>
-//       {!isResolved && !isQueued && progress/permission/classifier}
-//       {!isResolved && isQueued && queuedMessage}
-//     </Box>
-//   </Box>
+// parameter blocks — all invented chrome).  The faithful version
+// renders exactly: a row with a dot, bold tool name, optional (summary),
+// optional tag, and an optional progress line.
 //
 // No borders, no status pills, no timestamps, no footers, no
 // parameter JSON blocks — just the dot + bold name + (summary) +
 // optional progress line.
 
-/// Status of a faithful tool-use row (matches TS isQueued / isResolved semantics)
+/// Status of a faithful tool-use row
 enum class FaithfulToolStatus : std::uint8_t {
     Queued,     // Not in progress, not resolved → waiting in queue
     Running,    // In progress → show progress + blinking dot
@@ -663,22 +645,20 @@ enum class FaithfulToolStatus : std::uint8_t {
     Error,      // Resolved with error → solid red dot
 };
 
-/// Data for the faithful tool-use renderer.  Mirrors the props that
-/// AssistantToolUseMessage.tsx derives from (param + tools + lookups +
-/// progressMessagesForMessage).  The caller (e.g. repl_screen projection)
-/// is responsible for computing these values from the real tool definition
-/// and execution state — this renderer only paints, matching TS visuals.
+/// Data for the faithful tool-use renderer.  The caller (e.g. repl_screen
+/// projection) is responsible for computing these values from the real tool
+/// definition and execution state — this renderer only paints.
 struct FaithfulToolUseData {
-    std::string user_facing_name;    // tool.userFacingName(input) — bold header
-    std::string message;             // tool.renderToolUseMessage(...) — in parens
-    std::string tag;                 // tool.renderToolUseTag?.(input) — optional
+    std::string user_facing_name;    // tool.user_facing_name(input) — bold header
+    std::string message;             // tool.render_tool_use_message(...) — in parens
+    std::string tag;                 // tool.render_tool_use_tag?.(input) — optional
     std::string progress_text;       // progress line text when Running
     std::string queued_text;         // progress line text when Queued
     std::string input_json;          // MCP tools only: raw JSON shown as "Input:"
     std::string output_text;         // MCP tools only: server response preview
     FaithfulToolStatus status{FaithfulToolStatus::Queued};
     bool should_show_dot = true;     // shouldShowDot prop
-    bool add_margin = true;          // add marginTop=1
+    bool add_margin = true;          // add top margin = 1
     bool is_transparent_wrapper = false;  // tool.isTransparentWrapper
     int spinner_frame = 0;           // drive blink animation
     bool should_animate = true;      // shouldAnimate prop
@@ -686,12 +666,11 @@ struct FaithfulToolUseData {
 };
 
 /// Render a single tool-use header line: [dot] [BoldName] (message) [tag]
-/// This is the equivalent of the first <Box flexDirection="row"> in TS.
 [[nodiscard]] inline Element RenderFaithfulToolHeader(const FaithfulToolUseData& data) {
     Elements row;
 
     // Leading dot (ToolUseLoader).
-    // TS behavior:
+    // Behavior:
     //   Queued/Running (unresolved) → dim, blinks when animated
     //   Resolved success → solid "success" color (green)
     //   Resolved error → solid "error" color (red)
@@ -701,24 +680,24 @@ struct FaithfulToolUseData {
              data.status == FaithfulToolStatus::Running);
 
         // Blink logic: when animating + unresolved + not error, alternate
-        // between BLACK_CIRCLE and space on even/odd frames.  TS uses
-        // useBlink() which toggles at ~500ms; we approximate with frame count.
+        // between BLACK_CIRCLE and space, toggling at ~500ms; spinner_frame
+        // increments every 100ms, so a 500ms toggle means 5 frames on /
+        // 5 frames off.
         const bool blink_off =
             data.should_animate && is_unresolved &&
-            (data.spinner_frame % 2 == 1);  // off every other "tick"
+            (data.spinner_frame % 10 >= 5);  // 500ms on / 500ms off
 
         if (blink_off) {
-            // Space placeholder — maintains 2-cell minWidth like TS minWidth={2}
+            // Space placeholder — maintains 2-cell minWidth
             row.push_back(text("  "));
         } else {
-            // BLACK_CIRCLE = ⏺ (U+23FA).  TS uses "●" (U+25CF BLACK_CIRCLE)
-            // but Ink/Chalk renders it; we use the same visual glyph.
+            // BLACK_CIRCLE = ⏺ (U+23FA); we use the same visual glyph "●".
             std::string glyph = "\xE2\x97\x8F ";  // ● + space (2 cells)
             Color fg = Color{};
             bool is_dim = false;
 
             if (is_unresolved) {
-                is_dim = true;  // dimColor={isUnresolved}
+                is_dim = true;  // dim when unresolved
                 // color=undefined → default text color
             } else if (data.status == FaithfulToolStatus::Error) {
                 fg = Color::Red;  // color="error"
@@ -733,13 +712,12 @@ struct FaithfulToolUseData {
         }
     }
 
-    // Bold user-facing tool name (flexShrink=0, wrap=truncate-end)
+    // Bold user-facing tool name (fixed-width, truncate-end wrap)
     if (!data.user_facing_name.empty()) {
         row.push_back(text(data.user_facing_name) | bold);
     }
 
-    // Rendered message in parens "(message)"
-    // TS: <Text>({renderedToolUseMessage})</Text> — plain, not dim
+    // Rendered message in parens "(message)" — plain, not dim
     if (!data.message.empty()) {
         Elements parts;
         parts.push_back(text(" ("));
@@ -748,8 +726,7 @@ struct FaithfulToolUseData {
         row.push_back(hbox(std::move(parts)));
     }
 
-    // Tool-specific tag (renderToolUseTag)
-    // TS: tool.renderToolUseTag?.(input) — tool decides styling; we render as plain
+    // Tool-specific tag (renderToolUseTag) — tool decides styling; rendered as plain
     if (!data.tag.empty()) {
         row.push_back(text(" "));
         row.push_back(text(data.tag));
@@ -758,11 +735,10 @@ struct FaithfulToolUseData {
     return hbox(std::move(row));
 }
 
-/// Render the full faithful tool-use message.  Mirrors the complete
-/// AssistantToolUseMessage.tsx output including header + Input/Output
+/// Render the full faithful tool-use message, including header + Input/Output
 /// sections + progress/queued line below.
 ///
-/// TS VISUAL STRUCTURE (from user screenshot):
+/// Visual structure:
 ///   ● Z.ai Built-in Tool: analyze_image
 ///     Input:
 ///     {"imageSource":"...","prompt":"..."}
@@ -770,11 +746,10 @@ struct FaithfulToolUseData {
 ///     Executing on server...
 ///     analyze_image_result_summary: [{"text":"..."}]
 ///
-/// Returns a full-width Element (justifyContent: space-between on the
-/// outer row, per TS).
+/// Returns a full-width Element (space-between on the outer row).
 [[nodiscard]] inline Element RenderFaithfulToolUseMessage(const FaithfulToolUseData& data) {
     // Transparent wrapper tools (e.g. TungstenTool, certain agent wrappers)
-    // only show progress — no header.  TS: if (isTransparentWrapper) { ... }
+    // only show progress — no header.
     if (data.is_transparent_wrapper) {
         if (data.status == FaithfulToolStatus::Queued ||
             data.status == FaithfulToolStatus::Success ||
@@ -792,7 +767,7 @@ struct FaithfulToolUseData {
         return text("");
     }
 
-    // If userFacingToolName is empty, return nothing (TS: returns null)
+    // If userFacingToolName is empty, return nothing.
     if (data.user_facing_name.empty()) {
         return text("");
     }
@@ -805,7 +780,7 @@ struct FaithfulToolUseData {
          data.status == FaithfulToolStatus::Error);
 
     // ── Input section (MCP tools only) ────────────────────────────────
-    // TS built-in tools (Bash, Read, Write, Edit, Glob, Grep) NEVER show
+    // Built-in tools (Bash, Read, Write, Edit, Glob, Grep) NEVER show
     // an "Input:" section — the command is already in the header parens.
     // Only MCP/custom tools show their raw JSON parameters here.
     if (data.is_mcp_tool && !data.input_json.empty() && data.input_json != "{}") {
@@ -835,7 +810,7 @@ struct FaithfulToolUseData {
     }
 
     // ── Progress / queued text (only while unresolved) ─────────────────
-    // TS: resolved tools show ONLY the header (green/red dot).  The actual
+    // Resolved tools show ONLY the header (green/red dot).  The actual
     // tool output appears as a separate tool_result row below (rendered via
     // message_tool_result.cppm with the ⎿ MessageResponse connector).
     // Unresolved tools show progress text below the header.
@@ -859,8 +834,8 @@ struct FaithfulToolUseData {
 
     Element body = vbox(std::move(column));
 
-    // Outer container: flexDirection="row", justifyContent="space-between",
-    // width="100%", marginTop={addMargin?1:0}
+    // Outer container: horizontal row, space-between layout,
+    // full width, top margin = (add_margin ? 1 : 0)
     Element outer = hbox({body, filler()}) | flex;
     if (data.add_margin) {
         return vbox({text(""), std::move(outer)});

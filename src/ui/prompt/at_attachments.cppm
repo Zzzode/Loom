@@ -1,8 +1,7 @@
 /// @file at_attachments.cppm
 /// @brief AT-02: materialize @-mention file references into message content
 /// blocks at submit time, so the model actually sees file contents (not the
-/// literal "@path" string the C++ port used to send). Faithful to the @-file
-/// path of TS utils/attachments.ts.
+/// literal "@path" string the C++ port used to send).
 ///
 /// MVP scope: text files with a size guard plus quoted/relative/~/ path
 /// expansion (covers AT-03 quoted and AT-04 path-prefix). Image (ImageBlock),
@@ -24,7 +23,7 @@ namespace fs = std::filesystem;
 namespace core = loom::core;
 
 /// Maximum bytes of a single text file to inline as an attachment. Larger
-/// files are referenced-but-not-inlined (TS uses a token budget; a byte guard
+/// files are referenced-but-not-inlined (a byte guard
 /// is a faithful-enough proxy for the MVP).
 inline constexpr std::size_t kMaxInlineFileBytes = 256 * 1024;
 

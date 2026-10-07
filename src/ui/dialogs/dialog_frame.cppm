@@ -1,14 +1,11 @@
 /// @file dialog_frame.cppm
-/// @brief Reusable DialogFrame component — faithful port of TS PermissionDialog.tsx.
+/// @brief Reusable DialogFrame component — standard permission-style frame.
 ///
 /// MODULE:   loom.ui.dialogs.frame
 /// LICENCE:  Exported.  Imported by all dialog renderers that use the
 ///           standard permission-style frame.
 ///
-/// TS REFERENCE: src/components/permissions/PermissionDialog/PermissionDialog.tsx
-///               src/components/permissions/PermissionDialog/PermissionDialog.css
-///
-/// LAYOUT (faithful to TS):
+/// LAYOUT:
 ///   ╭───────────────────────────────────────────────────╮
 ///   │ Title                            [worker badge]  │
 ///   │ subtitle                                         │
@@ -54,24 +51,24 @@ namespace pc = loom::ui::permissions::components;
 // ============================================================
 
 /// Style variant for the frame border/background.
-/// Faithful to TS dialog color semantics: the overwhelming default is
-/// `Permission` (= TS `color="permission"`, a slate-blue/lavender hue,
-/// shared with the suggestion token).  Info is reserved for auxiliary
-/// blue accents; Danger/Error map to TS `color="error"` (used only by
-/// the Sandbox bypass-permissions dialog).
+/// Dialog color semantics: the overwhelming default is
+/// `Permission` (a slate-blue/lavender hue, shared with the
+/// suggestion token).  Info is reserved for auxiliary blue accents;
+/// Danger/Error map to the error color (used only by the Sandbox
+/// bypass-permissions dialog).
 enum class FrameStyle : std::uint8_t {
-    Permission,     ///< Default dialog frame (TS color="permission")
+    Permission,     ///< Default dialog frame
     Info,          ///< Auxiliary info-blue
     Success,       ///< Green
     Warning,       ///< Yellow/orange
     Danger,        ///< Red (high risk, alias of Error)
-    Error,         ///< TS color="error" — Sandbox bypass dialogs
+    Error,         ///< Sandbox bypass dialogs
     Critical,      ///< Bold red (critical risk)
     Muted,         ///< Dim border
 };
 
 /// Get the border color for a frame style.
-/// Faithful to TS color semantics: Permission/Suggestion share a value.
+/// Color semantics: Permission/Suggestion share a value.
 [[nodiscard]] inline Color frame_border_color(FrameStyle style,
                                               const Theme& theme) {
     switch (style) {
@@ -88,24 +85,23 @@ enum class FrameStyle : std::uint8_t {
 }
 
 // ============================================================
-// PaneVariant — TS Pane.tsx layout mode
+// PaneVariant — layout mode
 // ============================================================
 
 /// Controls how the frame is laid out — matches the two branches of
-/// TS `src/components/design-system/Pane.tsx`.
+/// the Pane component.
 ///
 ///   * `PanelPadded` — non-modal panels (Standalone / Bottom / Overlay
 ///     slots, or dialogs rendered outside a modal centering wrapper).
 ///     Rendering:
-///       `[empty row (paddingTop=1]` → `[Divider(color)]` →
-///       `[content padded with paddingX=2]`
-///     NO rounded corners, NO 4-sided frame — the TS upstream does
-///     Pane.tsx:68 layout: paddingTop(1) + Divider(color) + paddingX(2).
+///       `[empty row (top padding = 1)]` → `[Divider(color)]` →
+///       `[content padded with horizontal padding = 2]`
+///     NO rounded corners, NO 4-sided frame.
 ///
 ///   * `ModalMinimal` — content wrapped inside an outer modal (Modal slot
 ///     centred by dialog_queue_render::RenderModalDialog).
-///     TS Pane renders `if (useIsInsideModal())` branch → no divider,
-///     only `paddingX=1`, no border chrome.
+///     Renders the inside-modal branch → no divider, only horizontal padding = 1,
+///     no border chrome.
 enum class PaneVariant : std::uint8_t {
     PanelPadded = 0,
     ModalMinimal,
@@ -119,7 +115,7 @@ enum class PaneVariant : std::uint8_t {
 struct DialogFrameProps {
     std::string title;
     std::optional<std::string> subtitle;
-    /// Default = Permission — matches TS Dialog.tsx default color="permission".
+    /// Default = Permission — matches the default color="permission".
     FrameStyle style = FrameStyle::Permission;
 
     /// Optional worker badge element (rendered right of title).
@@ -133,14 +129,13 @@ struct DialogFrameProps {
 
     /// Optional explicit border color override.
     /// When set, takes precedence over the `style`-derived border color.
-    /// Matches the TS PermissionDialog `color` prop: free-form theme color key
-    /// that gets resolved to an ANSI color at render time.
+    /// Free-form theme color key that gets resolved to an ANSI color at
+    /// render time.
     std::optional<Color> color_override;
 
     /// Optional explicit title color override.
     /// When set, the title text color is replaced with this value (the default
     /// is theme-inherited / no color wrap, i.e. the terminal foreground).
-    /// Matches the TS PermissionDialog `titleColor` prop.
     std::optional<Color> title_color_override;
 
     /// Horizontal padding inside the content area (cells).
@@ -153,7 +148,7 @@ struct DialogFrameProps {
     bool full_border = true;
 
     /// Whether to use rounded corners.
-    /// @deprecated Kept as a no-op for ABI-compat.  TS Pane.tsx never draws
+    /// @deprecated Kept as a no-op for ABI-compat.  The frame never draws
     ///             a 4-sided border, so the concept of "rounded" does not
     ///             apply.  New callers should leave this at its default.
     bool rounded = true;
@@ -173,7 +168,6 @@ struct DialogFrameProps {
 // ============================================================
 
 /// Build a standard dialog frame with title, subtitle, and content.
-/// Faithful to TS PermissionDialog.tsx.
 [[nodiscard]] inline Element DialogFrame(const DialogFrameProps& props,
                                           const Theme& theme) {
     // Resolve border color: explicit override wins, otherwise derive from FrameStyle.
@@ -223,9 +217,9 @@ struct DialogFrameProps {
     auto header = vbox(header_els);
 
     // ---- Padding for content ----
-    // Faithful to TS Pane.tsx lines 60-66:
-    //   Modal   → paddingX=1 (no divider, no paddingTop)
-    //   Panel   → paddingX=2 (content column)
+    // Layout padding values:
+    //   Modal   → horizontal padding = 1 (no divider, no top padding)
+    //   Panel   → horizontal padding = 2 (content column)
     //
     // `inner_padding_x` adds INSIDE the pane padding so callers that need
     // extra breathing room (e.g. settings tab content) still work.
@@ -264,18 +258,18 @@ struct DialogFrameProps {
     }
 
     // ---- Divider between header and content ----
-    // Pane.tsx:52  <Divider color={color} /> — full width, theme-colored.
-    // In ModalMinimal mode Pane.tsx OMITs the divider (modal content is
+    // Full width, theme-colored divider.
+    // In ModalMinimal mode the divider is omitted (modal content is
     // already visually separated by the outer dbox centering).
     Element divider_row = text("");
     if (props.pane_variant == PaneVariant::PanelPadded) {
         divider_row = pc::ThinDivider(border_col);
     }
 
-    // ---- Assemble body (faithful to TS Pane.tsx vertical column) ----
+    // ---- Assemble body (vertical column layout) ----
     //
     // PanelPadded:
-    //   paddingTop = 1  →  empty row at top
+    //   top padding = 1  →  empty row at top
     //   Divider(color)  →  full width color line
     //   Header          →  title + subtitle h-padded
     //   Divider         →  between header and content (ThinDivider already exists)
@@ -284,14 +278,14 @@ struct DialogFrameProps {
     // ModalMinimal:
     //   Header          →  title + subtitle (no outer padding row)
     //   [no divider]
-    //   Padded content  →  paddingX=1 only
+    //   Padded content  →  horizontal padding = 1 only
     Elements body_els;
     body_els.reserve(8);
 
     if (props.pane_variant == PaneVariant::PanelPadded) {
-        // Pane.tsx:68  paddingTop={1}
+        // top padding row
         body_els.push_back(text(""));
-        // Pane.tsx:52  Divider(color) — the top colored stripe.
+        // Divider(color) — the top colored stripe.
         body_els.push_back(divider_row);
     }
     // Title + subtitle block.
@@ -299,8 +293,7 @@ struct DialogFrameProps {
 
     // ThinDivider between header and content (present in BOTH modes — it
     // demarcates the title area from the body, matching the legacy layout
-    // callers already depend on.  In TS upstream this comes from the
-    // PermissionDialog *content* area, not Pane itself.)
+    // callers already depend on.)
     body_els.push_back(pc::ThinDivider());
 
     // Main body.
@@ -310,10 +303,10 @@ struct DialogFrameProps {
 
     // ---- Apply minimum width, NO 4-sided border, NO rounded corners ----
     //
-    // TS Pane.tsx + PermissionDialog.tsx NEVER apply a 4-sided border or
-    // rounded corners.  The coloured stripe at the top (PanelPadded) + the
-    // inner ThinDivider demarcate the structure.  Minimum width clamp
-    // preserves layout for tiny terminals.
+    // The frame never applies a 4-sided border or rounded corners.  The
+    // coloured stripe at the top (PanelPadded) + the inner ThinDivider
+    // demarcate the structure.  Minimum width clamp preserves layout for
+    // tiny terminals.
     return body | size(WIDTH, GREATER_THAN, 30);
 }
 
@@ -359,7 +352,6 @@ struct DialogFrameProps {
 // ============================================================
 
 /// Render a worker badge (shown in dialog title for worker-initiated requests).
-/// Faithful to TS WorkerBadge component.
 [[nodiscard]] inline Element WorkerBadge(std::string_view worker_id,
                                           const Theme& theme) {
     return hbox({

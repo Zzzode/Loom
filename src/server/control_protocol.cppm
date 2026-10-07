@@ -87,7 +87,7 @@ enum class FastModeState : std::uint8_t {
 
 /// Model usage statistics (whole-struct MOVE — all 8 fields retained, §1.2).
 /// Carried by SDKResultSuccess/SDKResultError.modelUsage (camelCase on the
-/// wire, matching the TS schema and the live emitters).
+/// wire).
 struct ModelUsage {
     int input_tokens = 0;
     int output_tokens = 0;
@@ -1254,8 +1254,7 @@ inline std::expected<AccountInfo, std::string> from_json(std::string_view raw, A
     return AccountInfo_from_json(raw);
 }
 
-// Wire spellings are camelCase, matching the TS ModelUsageSchema
-// (coreSchemas.ts at b69b59b^) and the live emitters — the C++ field names
+// Wire spellings are camelCase — the C++ field names
 // stay snake_case; only the JSON keys differ.
 [[nodiscard]] std::string ModelUsage_to_json(const ModelUsage& v);
 [[nodiscard]] std::expected<ModelUsage, std::string> ModelUsage_from_json(std::string_view raw);

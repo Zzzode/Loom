@@ -1,38 +1,33 @@
 /// =========================================================================
 /// @file prompt_input_footer.cppm
-/// @brief Faithful C++/FTXUI port of TS `PromptInputFooter.tsx` and
-///        `PromptInputFooterLeftSide.tsx` — the area below the prompt input
-///        with left/right columns containing mode indicators, tasks, teams,
-///        hints, and status info.
+/// @brief The area below the prompt input with left/right columns containing
+///        mode indicators, tasks, teams, hints, and status info.
 ///
 /// MODULE:   loom.ui.prompt.prompt_input_footer
 /// LICENCE:  Exported.  Imported by repl_screen.cppm (bottom slot assembly).
 ///
-/// TS REFERENCE STRUCTURE (PromptInputFooter.tsx):
-///   <Box flexDirection="row" justifyContent="space-between">
-///     <Box flexDirection="column">              // Left column
-///       {StatusLine}                             // optional, user-configurable
-///       <PromptInputFooterLeftSide />
-///     </Box>
-///     <Box>                                      // Right column
-///       {Notifications}                          // non-fullscreen only
-///       {undercover}                             // ant-only
-///       <BridgeStatusIndicator />
-///     </Box>
+/// Layout structure:
+///   Horizontal row, space-between layout:
+///     Vertical column:                    // Left column
+///       StatusLine                        // optional, user-configurable
+///       PromptInputFooterLeftSide
+///     Right column:
+///       Notifications                     // non-fullscreen only
+///       undercover                        // ant-only
+///       BridgeStatusIndicator
 ///   </Box>
 ///   {CoordinatorTaskPanel}                      // ant-only
 ///
-/// TS REFERENCE (PromptInputFooterLeftSide.tsx):
+/// Left side contents:
 ///   - Exit message (dim: "Press <key> again to exit")
 ///   - Pasting indicator (dim: "Pasting text…")
 ///   - HistorySearchInput (when isSearching)
 ///   - Vim INSERT badge (dim: "-- INSERT --")
 ///   - ModeIndicator (permission mode, tasks, teams, PR, hints)
 ///
-/// STABLE HEIGHT: In fullscreen the bottom slot is flexShrink:0, so every
+/// STABLE HEIGHT: In fullscreen the bottom slot is fixed-height, so every
 ///   row here is a row stolen from the ScrollBox.  The footer must have a
 ///   STABLE height so it never grows/shrinks and shifts scroll content.
-///   See TS PromptInputFooterLeftSide.tsx comment about stable height.
 /// =========================================================================
 
 module;
@@ -64,32 +59,28 @@ export namespace loom::ui::prompt::footer {
 using namespace ftxui;
 
 // ============================================================
-// Enums (1:1 with TS types)
+// Enums
 // ============================================================
 
 /// Prompt input mode — unified canonical enum from loom::ui::common.
 /// Previously this file defined a local 5-value PromptInputMode:
 ///   {Prompt, Bash, SlashCommand, HistorySearch, PlanMode}
 /// Old→new mapping:
-///   PromptInputMode::Prompt → PromptInputMode::Normal  (TS: 'prompt')
+///   PromptInputMode::Prompt → PromptInputMode::Normal
 /// All other values (Bash, SlashCommand, HistorySearch, PlanMode)
 /// are identical in the unified definition.
-/// TS REF: src/types/textInputTypes.ts:265 (PromptInputMode type)
 using loom::ui::common::PromptInputMode;
 
 /// Vim mode — canonical enum from loom::ui::common (ui_types.cppm).
 /// Previously this file defined a local 4-value enum { Normal, Insert, Visual, None }.
 /// "None" (vim disabled) is now expressed as std::optional<VimMode>{nullopt}.
-/// TS REF: src/types/textInputTypes.ts:222 (public VimMode = 'INSERT'|'NORMAL')
-///          src/hooks/useVimInput.ts (internal state machine with Visual/Replace/etc.)
 using loom::ui::common::VimMode;
 
-/// Permission mode.  Mirrors TS ToolPermissionContext.mode (Tool.ts).
-/// Canonical definition lives in loom::ui::common (ui_types.cppm).
+/// Permission mode.  Canonical definition lives in loom::ui::common (ui_types.cppm).
 using loom::ui::common::PermissionMode;
 
 // ============================================================
-// Permission mode helpers (from TS PermissionMode.ts)
+// Permission mode helpers
 // ============================================================
 
 /// Whether the mode is the default (no special badge shown).
@@ -130,7 +121,7 @@ using loom::ui::common::PermissionMode;
     return Color::GrayLight;
 }
 
-/// Cycle to the next permission mode (TS REF: getNextPermissionMode.ts).
+/// Cycle to the next permission mode.
 /// Order for non-ant users: Default → AcceptEdits → Plan → Default.
 /// AcceptAll is reachable only from Plan when bypass is available (not yet
 /// wired in CPP — included for forward compatibility).
@@ -147,7 +138,6 @@ using loom::ui::common::PermissionMode;
 // ============================================================
 // ModeIndicator
 // ============================================================
-// Mirrors TS ModeIndicator inside PromptInputFooterLeftSide.tsx.
 // Shows permission mode badge, background tasks pill, teams, PR badge,
 // and keyboard hints.
 
@@ -173,7 +163,7 @@ struct ModeIndicatorOptions {
     // Remote / session
     bool is_remote_mode = false;
 
-    // Transcript / brief view modes (TS REF: Messages.tsx isTranscriptMode + isBriefOnly).
+    // Transcript / brief view modes.
     // Shown as pills in the mode indicator row so the user knows which filter
     // is currently active on the message list.
     bool is_transcript_mode = false;
@@ -182,14 +172,14 @@ struct ModeIndicatorOptions {
 
 /// Render the ModeIndicator — permission mode + tasks pill + teams + hints.
 ///
-/// Faithful to TS structure:
-///   modePart (flexShrink:0) · tasksPart (flexShrink:0) · parts (truncate)
+/// Structure:
+///   mode part (fixed-width) · tasks part (fixed-width) · parts (truncate)
 ///
 /// STABLE HEIGHT: always renders exactly 1 row (may show a space when empty
-///   in fullscreen mode — see TS stable-height comment).
+///   in fullscreen mode).
 [[nodiscard]] inline Element RenderModeIndicator(const ModeIndicatorOptions& opts) {
-    // Early return for bash mode (TS: "! for bash mode", colored with
-    // bashBorder token for consistency with prompt prefix + transcript
+    // Early return for bash mode ("! for bash mode", colored with
+    // bash_border token for consistency with prompt prefix + transcript
     // user-bash-input bubble — fixes BUG-3: 3-sites bash-border divergence).
     if (opts.mode == PromptInputMode::Bash) {
         using namespace loom::ui::design;
@@ -198,14 +188,14 @@ struct ModeIndicatorOptions {
              | size(HEIGHT, EQUAL, 1);
     }
 
-    Elements left_parts;   // flexShrink=0 items (mode + tasks pill + teams)
+    Elements left_parts;   // fixed-width items (mode + tasks pill + teams)
     Elements hint_parts;   // truncatable hints
 
     bool has_active_mode = !IsDefaultMode(opts.permission_mode) && !opts.is_remote_mode;
     bool has_background_tasks = opts.background_task_count > 0;
     bool has_teams = opts.teammate_count > 0;
 
-    // Count primary items for hint visibility logic (TS: primaryItemCount)
+    // Count primary items for hint visibility logic
     int primary_item_count = (has_active_mode ? 1 : 0)
                            + (has_background_tasks ? 1 : 0)
                            + (has_teams ? 1 : 0);
@@ -219,7 +209,7 @@ struct ModeIndicatorOptions {
             text(std::string{PermissionModeTitle(opts.permission_mode)})
                 | color(GetModeColor(opts.permission_mode)),
         };
-        // Show cycle hint only when few primary items (TS: shouldShowModeHint)
+        // Show cycle hint only when few primary items
         if (primary_item_count < 2 && opts.show_hint) {
             mode_el.push_back(text(" on") | dim);
             mode_el.push_back(text(" (") | dim);
@@ -261,7 +251,7 @@ struct ModeIndicatorOptions {
         left_parts.push_back(std::move(pill));
     }
 
-    // ── Transcript mode pill (TS REF: Messages.tsx isTranscriptMode L459)
+    // ── Transcript mode pill ─────────────────────────────────────────────
     //    Shown when user pressed Ctrl+O to enter detailed transcript view.
     if (opts.is_transcript_mode) {
         using namespace loom::ui::design;
@@ -272,7 +262,7 @@ struct ModeIndicatorOptions {
         left_parts.push_back(std::move(pill));
     }
 
-    // ── Brief mode pill (TS REF: Messages.tsx isBriefOnly L236)
+    // ── Brief mode pill ──────────────────────────────────────────────────
     //    Shown when user enabled brief-only filter (e.g. via /brief).
     if (opts.is_brief_mode) {
         using namespace loom::ui::design;
@@ -300,7 +290,7 @@ struct ModeIndicatorOptions {
     }
 
     // ── Compose ─────────────────────────────────────────────────────────
-    // Join left_parts with " · " separators (TS Byline style)
+    // Join left_parts with " · " separators (Byline style)
     Elements row_parts;
     for (std::size_t i = 0; i < left_parts.size(); ++i) {
         if (i > 0) row_parts.push_back(text(" · ") | dim);
@@ -316,7 +306,7 @@ struct ModeIndicatorOptions {
     }
 
     // Stable 1-row height.  When empty, render a space so FTXUI reserves
-    // the row (mirrors TS `isFullscreen ? <Text> </Text> : null`).
+    // the row.
     if (row_parts.empty()) {
         return text(" ") | size(HEIGHT, EQUAL, 1);
     }
@@ -358,7 +348,7 @@ struct LeftSideOptions {
 ///   5. ModeIndicator (always shown as baseline)
 ///
 /// STABLE HEIGHT: returns exactly 1 row.  The ModeIndicator always
-///   reserves a row even when empty (see stable-height note in TS).
+///   reserves a row even when empty.
 [[nodiscard]] inline Element RenderLeftSide(const LeftSideOptions& opts) {
     // 1. Exit message — highest priority, replaces everything
     if (opts.exit_message_show) {
@@ -373,16 +363,16 @@ struct LeftSideOptions {
 
     // 3. History search input
     if (opts.is_searching) {
-        // TS HistorySearchInput: "(reverse-i-search)`query':"
+        // HistorySearchInput: "(reverse-i-search)`query':"
         // failed match → red color
         std::string label = "(reverse-i-search)`" + opts.history_query + "':";
         Color c = opts.history_failed_match ? Color::Red : Color::Magenta;
         return hbox({ text(label) | color(c) }) | size(HEIGHT, EQUAL, 1);
     }
 
-    // 4. Vim INSERT badge + mode indicator (both inline in TS)
-    //    TS REF: PromptInputFooterLeftSide.tsx — shows "-- INSERT --" only in
-    //    insert mode (normal/visual show nothing extra in the footer).
+    // 4. Vim INSERT badge + mode indicator
+    //    Shows "-- INSERT --" only in insert mode (normal/visual show
+    //    nothing extra in the footer).
     bool show_vim = opts.vim_mode == VimMode::Insert;
     if (show_vim) {
         return hbox({
@@ -399,9 +389,9 @@ struct LeftSideOptions {
 // ============================================================
 // StatusLine (simplified — user-configurable command output)
 // ============================================================
-// TS StatusLine executes a user-defined shell command and renders ANSI output
-// in the footer's left column.  For the C++ port we provide a minimal
-// placeholder that can be populated by the engine with pre-formatted text.
+// StatusLine executes a user-defined shell command and renders ANSI output
+// in the footer's left column.  We provide a minimal placeholder that can
+// be populated by the engine with pre-formatted text.
 //
 // P0-6: When the user's command returns empty (or no statusLine is
 // configured), a built-in statusline shows folder/git/model/token info.
@@ -455,7 +445,7 @@ struct StatusLineOptions {
     std::string content;     // Status line output text (may contain ANSI codes)
     bool should_display = false;  // True when statusLine is configured in settings
     bool is_fullscreen = true;    // In fullscreen, reserve row even while loading
-    int padding_x = 0;            // Horizontal padding (mirrors TS paddingX)
+    int padding_x = 0;            // Horizontal padding
     // P0-6 builtin statusline: fallback data when content is empty (e.g. user's
     // command returns nothing, or no statusLine configured).  When set and
     // content is empty, RenderBuiltinStatusLine() is used instead of blank
@@ -465,13 +455,12 @@ struct StatusLineOptions {
 
 /// Render the user-configurable StatusLine.
 ///
-/// Faithful to TS StatusLine.tsx:
 ///   - Text may contain ANSI escape codes (SGR) for colored output
-///   - ANSI output keeps its own brightness; TS passes dimColor to the local
-///     Text component, but that component only consumes the `dim` prop
+///   - ANSI output keeps its own brightness; dim is applied to the local
+///     Text component
 ///   - Single line, truncated if too long
 ///   - In fullscreen mode, reserves a row even while loading (stable height)
-///   - Horizontal padding from settings.statusLine.padding (paddingX in TS)
+///   - Horizontal padding from settings.statusLine.padding
 [[nodiscard]] inline Element RenderStatusLine(const StatusLineOptions& opts) {
     if (!opts.should_display) {
         // Not configured — nothing to render (zero height)
@@ -479,7 +468,6 @@ struct StatusLineOptions {
     }
 
     // Fullscreen + no content yet → try builtin statusline, then blank row.
-    // Mirrors TS: isFullscreenEnvEnabled() ? <Text> </Text> : null
     // P0-6: When user's command returns empty (or no command configured),
     // show the built-in statusline with folder/git/model/token info.
     if (opts.content.empty()) {
@@ -495,24 +483,22 @@ struct StatusLineOptions {
 
     // Parse ANSI codes into colored FTXUI elements.
     //
-    // Two faithful-to-TS alignment:
-    //   (1) TS StatusLine.tsx wraps the rendered node in dimColor (SGR 2) so
-    //       user shell colors are always slightly muted.  We apply `dim` here.
-    //   (2) External scripts frequently set their own SGR 48;2 / bgcolor
-    //       (e.g. Flux statusline's 📁 folder pill with a deep-blue pill bg)
-    //       which bleeds through and clashes with our terminal chrome.  We
-    //       force a neutral userMessageBackground RGB(20,20,22) as the row bg
-    //       so the content stays subdued and in-theme.
+    // The rendered node is wrapped in dim (SGR 2) so user shell colors are
+    // always slightly muted.  We
+    // apply `dim` here.  (We deliberately do NOT paint a row background: an
+    // earlier revision forced RGB(20,20,22) to subdue external-script SGR
+    // bgcolor bleed, but that hardcoded strip itself clashed with the
+    // terminal's actual background.  `dim` alone keeps script colors subdued
+    // without painting a background.)
     namespace msgs = loom::ui::messages;
     // ansi_to_ftxui_elements returns its per-line vector type-erased as
     // shared_ptr<void> (see ansi_render.cppm); cast it back and compose.
     auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
         msgs::ansi_to_ftxui_elements(opts.content));
     Element content = vbox(std::move(*ansi_elems))
-                   | dim
-                   | bgcolor(Color::RGB(20, 20, 22));
+                   | dim;
 
-    // Apply horizontal padding (mirrors TS paddingX on the wrapping Box).
+    // Apply horizontal padding.
     // Padding is applied equally on left and right sides.
     if (opts.padding_x > 0) {
         std::string pad_str(static_cast<std::size_t>(opts.padding_x), ' ');
@@ -533,9 +519,8 @@ struct StatusLineOptions {
 // wrapper without Flux running), this built-in statusline provides useful
 // info: folder, git branch, model, context usage, and cost.
 //
-// TS REFERENCE: There is no TS equivalent — this is a CPP-only enhancement
-// for standalone usability.  The visual style is inspired by the user's
-// Flux Island statusline:
+// This is a CPP-only enhancement for standalone usability.  The visual
+// style is inspired by the user's Flux Island statusline:
 //   📁 LOOM/cpp_migration  🌿 master  🤖 GLM-5.2 ▮  14% 28.0K/200.0K  $0.12
 //
 // The user's configured command output takes priority when available.
@@ -590,7 +575,6 @@ struct StatusLineOptions {
     using ftxui::Elements;
     using ftxui::hbox;
     using ftxui::color;
-    using ftxui::bgcolor;
     using ftxui::bold;
     using ftxui::dim;
 
@@ -603,14 +587,12 @@ struct StatusLineOptions {
     auto theme = theme_ns::current_theme();
     const auto& pal = *theme.palette;
 
-    const Color kLoomGold = pal.primary;          // clawd orange/amber
     const Color kFolderColor = pal.muted;            // dim text
     const Color kBranchColor = pal.success;          // green
     const Color kModelColor = pal.info;              // blue/cyan
     const Color kCostColor = pal.success;            // green
     const Color kTasksColor = pal.warning;           // amber
     const Color kAgentColor = pal.info;              // blue/cyan
-    const Color kBgColor = Color::RGB(20, 20, 22);
 
     // Build each segment as its own Elements vector.  Only visible
     // segments are pushed; separators are inserted between adjacent
@@ -663,9 +645,9 @@ struct StatusLineOptions {
         for (int i = filled; i < kBarSegments; ++i) bar += "▯";
 
         // Color: green < 50%, amber 50-80%, red > 80%
-        Color bar_color = Color::RGB(120, 200, 120);  // green
-        if (pct >= 80.0) bar_color = Color::RGB(220, 80, 80);   // red
-        else if (pct >= 50.0) bar_color = kLoomGold;           // amber
+        Color bar_color = pal.success;                  // green
+        if (pct >= 80.0) bar_color = pal.danger;        // red
+        else if (pct >= 50.0) bar_color = pal.warning;  // amber
 
         // Percentage + token counts
         std::string ctx_str = FormatTokensK(data.context_token_count);
@@ -710,8 +692,11 @@ struct StatusLineOptions {
         for (auto& el : segs[i]) parts.push_back(std::move(el));
     }
 
+    // No row background: a hardcoded bgcolor strip clashes with the
+    // terminal's actual background (same lesson as RenderStatusLine above —
+    // an earlier revision forced RGB(20,20,22) here too).  Text colors alone
+    // keep the bar readable without painting a strip.
     return hbox({ text(" "), hbox(std::move(parts)), text(" ") })
-         | bgcolor(kBgColor)
          | size(HEIGHT, EQUAL, 1);
 }
 
@@ -733,13 +718,11 @@ struct BridgeOptions {
 };
 
 /// Render the bridge / remote control status indicator.
-/// Mirrors TS BridgeStatusIndicator in PromptInputFooter.tsx.
 /// Returns empty element when bridge is disabled or status isn't shown.
 [[nodiscard]] inline Element RenderBridgeStatus(const BridgeOptions& opts) {
     if (opts.status == BridgeStatus::Disabled) return text("");
 
     // For implicit (config-driven) remote, only show reconnecting state
-    // (TS: !explicit && status.label !== 'Remote Control reconnecting')
     if (!opts.explicit_remote && opts.status != BridgeStatus::Reconnecting) {
         return text("");
     }
@@ -760,7 +743,7 @@ struct BridgeOptions {
     Element el = text(label) | color(c);
     if (opts.selected) {
         el = el | inverted;
-        // TS: "· Enter to view" when selected
+        // "· Enter to view" when selected
         el = hbox({ std::move(el), text(" · Enter to view") | dim });
     }
     return el;
@@ -769,10 +752,9 @@ struct BridgeOptions {
 // ============================================================
 // Notifications (right column, non-fullscreen only)
 // ============================================================
-// TS REFERENCE: src/components/PromptInput/Notifications.tsx (331 lines)
 //
 // The Notifications component renders ONE notification at a time, chosen by
-// priority.  In TS the full priority chain is:
+// priority.  The full priority chain is:
 //   IdeStatusIndicator (highest)
 //   > notifications.current (dynamic: env-hook, external-editor-hint, etc.)
 //   > overage mode
@@ -785,11 +767,11 @@ struct BridgeOptions {
 //   > MemoryUsageIndicator
 //   > SandboxPromptFooterHint (lowest)
 //
-// For the CPP faithful-port we implement the top user-visible items that
-// have data available.  Items requiring engine wiring (autoUpdater,
-// memory, sandbox) are stubs that render nothing until data is provided.
+// We implement the top user-visible items that have data available.  Items
+// requiring engine wiring (autoUpdater, memory, sandbox) are stubs that
+// render nothing until data is provided.
 
-/// API key verification status.  Mirrors TS VerificationStatus (useApiKeyVerification.ts).
+/// API key verification status.
 enum class ApiKeyStatus {
     Valid,       // verified and working
     Invalid,     // rejected by API
@@ -797,7 +779,7 @@ enum class ApiKeyStatus {
     Unknown,     // not yet checked
 };
 
-/// IDE selection info.  Mirrors TS IDESelection (useIdeSelection.ts).
+/// IDE selection info.
 struct IdeSelectionInfo {
     bool connected = false;
     std::optional<std::string> file_path;     // basename shown in indicator
@@ -807,10 +789,6 @@ struct IdeSelectionInfo {
 // ============================================================
 // Typed notification pill variants (P1: footer-notifications-stub)
 // ============================================================
-// TS REFERENCE:
-//   src/components/AutoUpdater.tsx       – auto-updater status pills
-//   src/hooks/useApiKeyVerification.ts   – apiKeyStatus pill colors
-//   src/components/PromptInput/Notifications.tsx L306-322 – apiKey + verbose
 //
 // These typed pill variants provide structured data for the most common
 // footer notifications.  They are rendered as styled pills (icon + text
@@ -821,8 +799,6 @@ struct IdeSelectionInfo {
 //   AddProRenewalNotification(), AddNewReleaseNotification().
 
 /// Auto-updater install status.
-/// TS REF: src/utils/autoUpdater.ts (InstallStatus type)
-/// TS REF: src/components/AutoUpdater.tsx L176-196 (render logic)
 enum class AutoUpdaterStatus {
     Available,      ///< New version found, not yet installed
     Downloading,    ///< Currently downloading/installing
@@ -831,7 +807,6 @@ enum class AutoUpdaterStatus {
 };
 
 /// Auto-updater notification data.
-/// TS REF: src/components/AutoUpdater.tsx (Props.autoUpdaterResult)
 struct AutoUpdaterData {
     AutoUpdaterStatus status = AutoUpdaterStatus::Available;
     std::string version;          ///< Target version string (e.g. "2.1.57")
@@ -839,7 +814,6 @@ struct AutoUpdaterData {
 };
 
 /// Pro/Team subscription renewal reminder.
-/// TS REF: No direct TS equivalent — CPP enhancement for subscription UX.
 /// Shows a renewal reminder pill when days_remaining < threshold (default 7).
 struct ProRenewalData {
     int days_remaining = 0;       ///< Days until subscription expires
@@ -847,7 +821,6 @@ struct ProRenewalData {
 };
 
 /// New release announcement pill.
-/// TS REF: useUpdateNotification() in src/hooks/useUpdateNotification.ts
 /// Shows "New: vX.Y.Z" gift pill when a new version is announced.
 struct NewReleaseData {
     std::string version;          ///< New version string (e.g. "2.2.0")
@@ -877,18 +850,16 @@ struct PillPayload {
 // ============================================================
 // Notification Queue — priority-based rotating carousel
 // ============================================================
-// TS REFERENCE: src/context/notifications.tsx (the useNotifications hook)
-// TS REFERENCE: src/components/PromptInput/Notifications.tsx L288-292
 //
 // Implements a priority queue of up to 12 notification items that rotate
-// through the "current" slot on a timeout basis.  Faithful to TS:
+// through the "current" slot on a timeout basis.
 //   - Priority ordering: immediate > high > medium > low
-//   - Each item has a timeout (default 8000ms, same as TS DEFAULT_TIMEOUT_MS)
+//   - Each item has a timeout (default 8000ms)
 //   - When current expires, highest-priority item from the queue becomes current
 //   - Queue capped at 12 items; oldest lowest-priority evicted when full
 //   - Items can invalidate others (via invalidates key list)
-//   - Duplicate keys are prevented (dedup, same as TS queuedKeys Set)
-//   - "immediate" priority items replace current right away (TS L80-116)
+//   - Duplicate keys are prevented (dedup)
+//   - "immediate" priority items replace current right away
 //
 // The queue is advanced by QueueAdvance() which should be called from the
 // engine's event-driven update phase (not a constant ticker — ground rule 5).
@@ -896,7 +867,6 @@ struct PillPayload {
 // highest-priority display item.
 
 /// Notification priority levels.
-/// TS REF: src/context/notifications.tsx L5 (Priority type) + L230-235 (PRIORITIES record)
 enum class NotificationPriority {
     Immediate = 0,  ///< Shown immediately, replaces current
     High      = 1,  ///< Next-highest after immediate
@@ -905,13 +875,12 @@ enum class NotificationPriority {
 };
 
 /// A single queued notification item.
-/// TS REF: src/context/notifications.tsx L6-33 (BaseNotification + TextNotification)
 struct NotificationItem {
     std::string key;                              ///< Unique key for dedup/invalidation
     std::string text;                             ///< Display text (plain string, no JSX)
     std::string color;                            ///< "error", "warning", "success", "info", or empty=dim
     NotificationPriority priority = NotificationPriority::Low;  ///< Display priority
-    int timeout_ms = 8000;                        ///< TS DEFAULT_TIMEOUT_MS = 8000
+    int timeout_ms = 8000;                        ///< Display timeout
     std::vector<std::string> invalidates;         ///< Keys this notification invalidates
     PillPayload pill;                             ///< P1: typed pill variant (for styled rendering)
 };
@@ -939,7 +908,7 @@ struct NotificationQueue {
 
 /// Notification data fed into the footer.
 ///
-/// Each field corresponds to one notification type from TS Notifications.tsx.
+/// Each field corresponds to one notification type.
 /// The RenderNotifications() function picks the highest-priority active item.
 struct NotificationData {
     // Auth
@@ -974,19 +943,17 @@ struct NotificationData {
     NotificationQueue queue;
 };
 
-/// IDE status indicator color — matches TS theme.ide rgb(71,130,200).
-/// TS REF: src/utils/theme.ts L125
+/// IDE status indicator color — rgb(71,130,200).
 const Color kIdeColor = Color::RGB(71, 130, 200);
 
 /// Render the IdeStatusIndicator.
-/// TS REF: src/components/IdeStatusIndicator.tsx
 /// Shows "⧉ In <basename>" or "⧉ N lines selected" when IDE is connected
 /// and has a selection.  Returns empty element when nothing to show.
 [[nodiscard]] inline Element RenderIdeStatusIndicator(const IdeSelectionInfo& ide) {
     using ftxui::text;
     if (!ide.connected) return text("");
 
-    // TS: shouldShowIdeSelection = ideStatus === "connected" &&
+    // shouldShowIdeSelection = ideStatus === "connected" &&
     //   (ideSelection?.filePath || (ideSelection?.text && ideSelection.lineCount > 0))
     const bool has_file = ide.file_path.has_value() && !ide.file_path->empty();
     const bool has_text_sel = ide.selected_lines.has_value() && *ide.selected_lines > 0;
@@ -996,7 +963,7 @@ const Color kIdeColor = Color::RGB(71, 130, 200);
     if (has_text_sel) {
         const int n = *ide.selected_lines;
         const std::string unit = (n == 1) ? "line" : "lines";
-        // TS: "⧉ {lineCount} {unit} selected" — color="ide"
+        // "{lineCount} {unit} selected" — color="ide"
         return hbox({
             text("\xE2\xA7\x89 ") | color(kIdeColor),   // ⧉
             text(std::to_string(n) + " " + unit + " selected") | color(kIdeColor),
@@ -1004,12 +971,12 @@ const Color kIdeColor = Color::RGB(71, 130, 200);
     }
 
     if (has_file) {
-        // TS: basename(ideSelection.filePath)
+        // basename(ideSelection.filePath)
         const std::string& path = *ide.file_path;
         auto pos = path.find_last_of("/\\");
         std::string basename = (pos != std::string::npos)
             ? path.substr(pos + 1) : path;
-        // TS: "⧉ In {basename}" — color="ide"
+        // "⧉ In {basename}" — color="ide"
         return hbox({
             text("\xE2\xA7\x89 In ") | color(kIdeColor),   // ⧉ In
             text(basename) | color(kIdeColor),
@@ -1022,20 +989,15 @@ const Color kIdeColor = Color::RGB(71, 130, 200);
 // ============================================================
 // Notification Pill rendering (P1: footer-notifications-stub)
 // ============================================================
-// TS REFERENCE:
-//   src/components/AutoUpdater.tsx L176-196 – pill text + color for each status
-//   src/components/PromptInput/Notifications.tsx L306-322 – apiKey + verbose
-//   src/hooks/useUpdateNotification.ts – new release announcement
 //
 // Each pill: small icon + text, with a colored border or background tint.
-// Faithful to TS: uses the same semantic color tokens (success/warning/error)
-// and emoji icons that render well in modern terminals.
+// Uses the same semantic color tokens (success/warning/error) and emoji
+// icons that render well in modern terminals.
 
 namespace detail {
 
 /// Resolve a semantic color name ("error", "warning", "success", "info")
 /// to an FTXUI Color, using the active theme palette where possible.
-/// TS REF: src/components/design-system/ThemedText.tsx (resolveColor)
 [[nodiscard]] inline Color ResolveSemanticColor(std::string_view color_name) {
     using namespace loom::ui::design;
     const auto& pal = *theme::current_theme().palette;
@@ -1057,8 +1019,6 @@ namespace detail {
 ///   NewRelease: [🎁 New: vX.Y.Z] purple
 ///
 /// Returns empty text("") for PillVariant::None or empty data.
-/// TS REF: src/components/AutoUpdater.tsx L176-196 (auto-updater pills)
-/// TS REF: src/components/PromptInput/Notifications.tsx L306-310 (apiKey error)
 [[nodiscard]] inline Element RenderNotificationPill(const NotificationItem& item) {
     using ftxui::text;
     using ftxui::color;
@@ -1083,7 +1043,6 @@ namespace detail {
             }
 
         case PillVariant::ApiKey: {
-                    //          useApiKeyVerification.ts — VerificationStatus type
             // Icon: 🔑 U+1F511
             const char* kKeyIcon = "\xF0\x9F\x94\x91";   // 🔑
             switch (pill.api_key_status) {
@@ -1112,12 +1071,10 @@ namespace detail {
         }
 
         case PillVariant::AutoUpdater: {
-            // TS REF: src/components/AutoUpdater.tsx L176-196
             //   Downloading: "Auto-updating…" (dim text)
             //   Installed:   "✓ Update installed · Restart to apply" (success)
             //   Error:       "✗ Auto-update failed" (error)
-            //   Available:   "New version vX.Y.Z available" (info, not shown in TS
-            //                but useful for CPP standalone mode)
+            //   Available:   "New version vX.Y.Z available" (info)
             const auto& au = pill.auto_updater;
             switch (au.status) {
                 case AutoUpdaterStatus::Downloading: {
@@ -1154,7 +1111,6 @@ namespace detail {
         }
 
         case PillVariant::ProRenewal: {
-            // TS REF: No direct TS equivalent — CPP enhancement.
             // Shows renewal reminder only when days_remaining < 7.
             // ⏱ U+23F1 — "timer clock"
             const auto& pr = pill.pro_renewal;
@@ -1170,7 +1126,6 @@ namespace detail {
         }
 
         case PillVariant::NewRelease: {
-            // TS REF: src/hooks/useUpdateNotification.ts — updateSemver
             // 🎁 U+1F381 — "gift" for new release announcement
             const auto& nr = pill.new_release;
             if (nr.version.empty()) return text("");
@@ -1185,7 +1140,6 @@ namespace detail {
 }
 
 /// Render the highest-priority active notification.
-/// TS REF: src/components/PromptInput/Notifications.tsx NotificationContent()
 ///
 /// Returns an element (possibly empty text("") if nothing active).
 /// The element is always exactly 1 row high for stable footer height.
@@ -1198,7 +1152,6 @@ namespace detail {
     // Priority chain (highest first):
 
     // 1. Notification queue — current item (rotating carousel)
-    //    TS REF: Notifications.tsx L288-292 (notifications.current render)
     //    The queue's current item has the highest display priority because
     //    it represents time-sensitive dynamic feedback (env-hook, etc.).
     //    P1: When item.pill.variant != None, render as a styled pill via
@@ -1230,7 +1183,6 @@ namespace detail {
     }
 
     // 2. Dynamic notification (env-hook, external-editor hint, etc.)
-    //    TS: notifications.current with text/color
     //    Kept for backward compatibility; prefer using the queue API.
     if (data.dynamic_text && !data.dynamic_text->empty()) {
         Color c = Color::GrayLight;   // default dim
@@ -1247,7 +1199,6 @@ namespace detail {
     }
 
     // 4. Overage mode — "Now using extra usage" (dim)
-    //    TS REF: Notifications.tsx L293-297
     if (data.is_overage_mode) {
         return hbox({ text("Now using extra usage") | dim })
              | size(HEIGHT, EQUAL, 1);
@@ -1256,7 +1207,6 @@ namespace detail {
     // 5. API key invalid/missing — credential problem with the configured
     //    endpoint (error). There is no account login to point the user at, so
     //    the affordance names the configuration instead.
-    //    TS REF: Notifications.tsx L306-310
     if (data.api_key_status == ApiKeyStatus::Invalid
         || data.api_key_status == ApiKeyStatus::Missing)
     {
@@ -1268,14 +1218,12 @@ namespace detail {
     }
 
     // 6. Debug mode — "Debug mode" (warning)
-    //    TS REF: Notifications.tsx L311-315
     if (data.debug_mode) {
         return hbox({ text("Debug mode") | color(Color::Yellow) })
              | size(HEIGHT, EQUAL, 1);
     }
 
     // 7. Verbose token count — "{tokenUsage} tokens" (dim, only when apiKey valid)
-    //    TS REF: Notifications.tsx L316-320
     if (data.verbose && data.api_key_status == ApiKeyStatus::Valid
         && data.token_usage > 0)
     {
@@ -1284,7 +1232,6 @@ namespace detail {
     }
 
     // 8. Auto-updater — styled pill (P1: footer-notifications-stub)
-    //    TS REF: src/components/AutoUpdater.tsx L176-196
     //    Shows download/install status.  Rendered via NotificationItem with
     //    PillVariant::AutoUpdater so it gets the proper icon + color.
     if (data.auto_updater) {
@@ -1312,7 +1259,6 @@ namespace detail {
     }
 
     // 9. New release announcement — purple gift pill (P1: footer-notifications-stub)
-    //    TS REF: src/hooks/useUpdateNotification.ts (updateSemver)
     if (data.new_release && !data.new_release->version.empty()) {
         NotificationItem nr_item;
         nr_item.pill.variant = PillVariant::NewRelease;
@@ -1325,7 +1271,7 @@ namespace detail {
     }
 
     // 10. Pro renewal reminder — orange clock pill (P1: footer-notifications-stub)
-    //    CPP enhancement — no direct TS equivalent.  Shows only when
+    //    CPP enhancement — no direct equivalent.  Shows only when
     //    days_remaining < 7.
     if (data.pro_renewal && data.pro_renewal->days_remaining > 0
         && data.pro_renewal->days_remaining < 7)
@@ -1362,7 +1308,6 @@ namespace detail {
 }
 
 /// Priority value for sorting (lower = higher priority).
-/// TS REF: src/context/notifications.tsx L230-235 (PRIORITIES record)
 [[nodiscard]] inline int PriorityValue(NotificationPriority p) {
     switch (p) {
         case NotificationPriority::Immediate: return 0;
@@ -1374,7 +1319,6 @@ namespace detail {
 }
 
 /// Find the highest-priority item in the queue (lowest PriorityValue).
-/// TS REF: src/context/notifications.tsx L236-239 (getNext function)
 [[nodiscard]] inline std::size_t FindHighestPriorityIndex(
     const std::vector<NotificationItem>& queue)
 {
@@ -1392,17 +1336,14 @@ namespace detail {
 
 /// Add a notification to the queue.
 ///
-/// Faithful to TS addNotification() in notifications.tsx:
 ///   - "immediate" priority → replaces current right away, re-queues previous
 ///   - Other priorities → added to queue (deduped by key)
 ///   - Queue is capped at kMaxItems (12); oldest lowest-priority evicted
 ///   - If item.invalidates is set, matching keys are removed from queue/current
-///
-/// TS REF: src/context/notifications.tsx L78-192
 inline void QueueAddNotification(NotificationQueue& nq,
                                   const NotificationItem& item)
 {
-    // Prevent duplicates — TS uses queuedKeys Set (L173)
+    // Prevent duplicates — dedup by key
     const bool already_in_queue = [&]() {
         for (const auto& q : nq.queue) {
             if (q.key == item.key) return true;
@@ -1413,7 +1354,6 @@ inline void QueueAddNotification(NotificationQueue& nq,
     if (already_in_queue || already_current) return;
 
     // Handle invalidation — remove matching keys from queue and current
-    // TS REF: notifications.tsx L176-186 (invalidatesCurrent + queue filter)
     if (!item.invalidates.empty()) {
         // Check if current is invalidated
         if (nq.current) {
@@ -1437,7 +1377,6 @@ inline void QueueAddNotification(NotificationQueue& nq,
     }
 
     // "immediate" priority → show right now
-    // TS REF: notifications.tsx L80-116
     if (item.priority == NotificationPriority::Immediate) {
         // Re-queue the current item if it's not immediate
         if (nq.current && nq.current->priority != NotificationPriority::Immediate) {
@@ -1476,7 +1415,6 @@ inline void QueueAddNotification(NotificationQueue& nq,
 }
 
 /// Remove a notification by key (from both current and queue).
-/// TS REF: src/context/notifications.tsx L193-213 (removeNotification)
 inline void QueueRemoveNotification(NotificationQueue& nq,
                                      const std::string& key)
 {
@@ -1500,9 +1438,6 @@ inline void QueueRemoveNotification(NotificationQueue& nq,
 /// from a constant-rate ticker (ground rule 5).  The engine drives repaints
 /// on user input, API responses, etc., which is frequent enough that
 /// timeout expiry will be detected within reasonable accuracy.
-///
-/// TS REF: src/context/notifications.tsx L46-77 (processQueue callback)
-/// TS REF: src/context/notifications.tsx L52-68 (setTimeout expiry handler)
 [[nodiscard]] inline bool QueueAdvance(NotificationQueue& nq, double now_sec)
 {
     // If nothing is current, try to pull from queue
@@ -1562,11 +1497,6 @@ QueueGetCurrentDisplay(const NotificationQueue& nq)
 // These helpers construct properly-configured NotificationItems for the
 // most common notification types and add them to the queue.
 //
-// TS REFERENCE:
-//   src/context/notifications.tsx L78-192 (addNotification function)
-//   src/components/AutoUpdater.tsx (auto-updater result → notification)
-//   src/hooks/useUpdateNotification.ts (new version → notification)
-//
 // Each helper:
 //   - Sets a unique key for dedup
 //   - Configures the pill variant with typed data
@@ -1575,7 +1505,6 @@ QueueGetCurrentDisplay(const NotificationQueue& nq)
 
 /// Add an API key status notification pill to the queue.
 ///
-/// TS REF: src/components/PromptInput/Notifications.tsx L306-310
 ///   - Valid:   green check pill (low priority, informational)
 ///   - Invalid: red X pill (immediate priority — user needs to act)
 ///   - Missing: yellow ! pill (immediate priority)
@@ -1619,7 +1548,6 @@ inline void AddApiKeyNotification(NotificationQueue& nq, ApiKeyStatus status) {
 
 /// Add an auto-updater status notification pill to the queue.
 ///
-/// TS REF: src/components/AutoUpdater.tsx L176-196
 ///   - Available:   blue "⬇ New: vX.Y.Z" (medium priority)
 ///   - Downloading: dim "⟳ Auto-updating…" (immediate — user is waiting)
 ///   - Installed:   green "✓ Update installed · Restart to apply" (immediate)
@@ -1670,7 +1598,7 @@ inline void AddAutoUpdaterNotification(NotificationQueue& nq,
 
 /// Add a Pro/Team subscription renewal reminder pill.
 ///
-/// CPP enhancement — no direct TS equivalent.  Shows only when
+/// CPP enhancement — no direct equivalent.  Shows only when
 /// days_remaining < 7 (configurable urgency threshold).
 ///
 ///   - days <= 3:  orange warning (high priority)
@@ -1709,7 +1637,6 @@ inline void AddProRenewalNotification(NotificationQueue& nq,
 
 /// Add a new release announcement pill.
 ///
-/// TS REF: src/hooks/useUpdateNotification.ts (updateSemver)
 /// Shows "🎁 New: vX.Y.Z" in purple/magenta.
 ///
 /// Invalidates any existing "new-release" notification.
@@ -1758,7 +1685,7 @@ struct FooterOptions {
 
 /// Render the full PromptInputFooter with left/right column layout.
 ///
-/// Faithful to TS PromptInputFooter.tsx structure:
+/// Structure:
 ///   Row (space-between):
 ///     Left column (vbox): StatusLine? + LeftSide
 ///     Right column (vbox): Notifications? + undercover? + BridgeStatus
@@ -1782,8 +1709,7 @@ struct FooterOptions {
     Elements left_col;
     left_col.reserve(2);
 
-    // StatusLine (shown only when the caller's TS-equivalent visibility gate
-    // allows it).
+    // StatusLine (shown only when the caller's visibility gate allows it).
     // In fullscreen mode, reserves a blank row even while loading so the
     // footer height never shifts (stable height — same trick as LeftSide).
     // Exit message / pasting / history search affect only LeftSide (below),
@@ -1803,15 +1729,13 @@ struct FooterOptions {
     Element left_el = vbox(std::move(left_col)) | flex;
 
     // ── Right column ───────────────────────────────────────────────────
-    // TS: <Box flexDirection="column" alignItems={isNarrow ? 'flex-start' : 'flex-end'}>
     // Right side is a vertical column: notifications stack on top,
     // undercover + bridge status form a bottom row.
     Elements right_col;
 
     // Notifications (shown in both fullscreen and non-fullscreen in CPP
-    // since we reserve stable height; TS hides in fullscreen to save scroll
-    // rows, but our BuiltinStatusLine already covers the info need).
-    // TS REF: Notifications.tsx — renders NotificationContent as a column.
+    // since we reserve stable height; the BuiltinStatusLine already covers
+    // the info need).
     {
         Element notif_el = RenderNotifications(opts.notification);
         // Check if the notification element has actual content (not just
@@ -1836,7 +1760,7 @@ struct FooterOptions {
 
         if (has_active) {
             right_col.push_back(hbox({
-                filler(),   // right-align (TS: alignItems="flex-end")
+                filler(),   // right-align
                 std::move(notif_el),
             }));
         }
@@ -1870,7 +1794,7 @@ struct FooterOptions {
     const bool has_right = !right_col.empty();
     Element right_el = has_right ? vbox(std::move(right_col)) : text("");
 
-    // TS: outer Box switches row -> column at narrow widths.  The StatusLine
+    // The outer Box switches row -> column at narrow widths.  The StatusLine
     // remains inside the left column, so right-column content top-aligns with
     // the StatusLine row when it is present.
     if (opts.is_narrow) {
@@ -1891,11 +1815,11 @@ struct FooterOptions {
     }
 
     return hbox({
-        text("  "),   // paddingX={2}
+        text("  "),   // horizontal padding = 2
         std::move(left_el),
         filler(),
         std::move(right_el),
-        text("  "),   // paddingX={2}
+        text("  "),   // horizontal padding = 2
     });
 }
 

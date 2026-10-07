@@ -350,7 +350,7 @@ private:
             } else if constexpr (std::is_same_v<T, ToolResultBlock>) {
                 obj.add("type", doc.string("tool_result"));
                 obj.add("tool_use_id", doc.string(value.tool_use_id.value));
-                // TS PARITY: content may be string or array of content items
+                // Content may be string or array of content items
                 if (std::holds_alternative<std::string>(value.content)) {
                     obj.add("content", doc.string(std::get<std::string>(value.content)));
                 } else {
@@ -494,7 +494,7 @@ private:
                 block.get_string("input_json")};
         }
         if (type == "tool_result") {
-            // TS PARITY: content may be string or array of content items
+            // Content may be string or array of content items
             ToolResultBlock trb;
             trb.tool_use_id = ToolUseId{block.get_string("tool_use_id")};
             trb.is_error = block.get("is_error").is_bool() && block.get("is_error").as_bool();

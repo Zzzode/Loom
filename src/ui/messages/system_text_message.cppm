@@ -1,5 +1,5 @@
 /// @file system_text_message.cppm
-/// @brief FTXUI component for system text messages (SystemTextMessage.tsx)
+/// @brief FTXUI component for system text messages
 ///
 /// System messages are small, muted notices about session lifecycle:
 ///   - turn_duration, memory_saved, bridge_status, thinking_summary, etc.
@@ -217,35 +217,26 @@ class SystemTextMessageComponent : public ComponentBase {
     });
 }
 
-// ─── M4: Faithful TS renderers (SystemTextMessage.tsx) ─────────────────
+// ─── M4: Faithful renderers ────────────────────────────────────────────
 //
-// TS system messages are FLAT one-line rows, NOT boxed/collapsing panels.
-// Most app-event subtypes share the shape:
-//   <Box flexDirection="row" marginTop={addMargin?1:0}
-//        backgroundColor={bg} width="100%">
-//     <Box minWidth={2}><Text {color|dimColor}>{GLYPH}</Text></Box>
-//     <Text {color|dimColor}>{content}</Text>
-//   </Box>
-// and the generic info/warning fallback (SystemTextMessageInner) is:
-//   <Box flexDirection="row" marginTop backgroundColor width="100%">
-//     {dot && <Box minWidth={2}><Text color dimColor>{BLACK_CIRCLE}</Text></Box>}
-//     <Box flexDirection="column" width={columns-10}>
-//       <Text color dimColor>{content.trim()}</Text>
-//     </Box>
-//   </Box>
+// System messages are FLAT one-line rows, NOT boxed/collapsing panels.
+// Most app-event subtypes share the shape: a row with an optional top margin,
+// an optional background, a 2-wide glyph cell, and the content text.
+// The generic info/warning fallback adds an optional BLACK_CIRCLE dot and
+// wraps the content in a column.
 //
-// NOTE: TS filters out the LLM system prompt upstream (isMeta / filtering);
-// these renderers handle only the app-event subtypes that survive.
+// NOTE: the LLM system prompt is filtered out upstream; these renderers
+// handle only the app-event subtypes that survive.
 
-/// Glyphs used by TS system subtypes — now imported from loom::ui::design::figures
+/// Glyphs used by system subtypes — now imported from loom::ui::design::figures
 /// (single source of truth).  Historical names mapped as:
 ///   kReferenceMark     → figures::kReferenceMark     (※ U+203B)
 ///   kTeardropAsterisk  → figures::kTeardropAsterisk  (✻ U+273B)
 ///   kSystemBlackCircle → figures::kBlackCircle       (⏺ U+23FA, Darwin)
-/// See figures.cppm §"CC-local figures" for TS REF breadcrumbs.
+/// See figures.cppm §"CC-local figures".
 
 /// Helper: build the canonical system row `[glyph(minWidth=2)] content` with
-/// the TS margin + width semantics.  `glyph_cell` is rendered into a 2-wide
+/// the canonical margin + width semantics.  `glyph_cell` is rendered into a 2-wide
 /// column; `content` is the trimmed single-line message.
 [[nodiscard]] inline Element RenderSystemEventRow(
     Element glyph_cell, Element content, bool add_margin,
@@ -261,7 +252,7 @@ class SystemTextMessageComponent : public ComponentBase {
     return row;
 }
 
-/// away_summary subtype:  `※ <content>` dimColor.
+/// away_summary subtype:  `※ <content>` in dim.
 [[nodiscard]] inline Element RenderSystemAwaySummary(
     const SystemTextMessageData& data, bool add_margin = true) {
     auto glyph = hbox({text(std::string(loom::ui::design::figures::kReferenceMark)),
@@ -270,7 +261,7 @@ class SystemTextMessageComponent : public ComponentBase {
     return RenderSystemEventRow(std::move(glyph), std::move(content), add_margin);
 }
 
-/// scheduled_task_fire / permission_retry subtype:  `✻ <content>` dimColor.
+/// scheduled_task_fire / permission_retry subtype:  `✻ <content>` in dim.
 [[nodiscard]] inline Element RenderSystemTeardropEvent(
     const SystemTextMessageData& data, bool add_margin = true) {
     auto glyph = hbox({text(std::string(loom::ui::design::figures::kTeardropAsterisk)),
@@ -290,7 +281,7 @@ class SystemTextMessageComponent : public ComponentBase {
 
 /// Generic info/warning fallback (SystemTextMessageInner):  `⏺ <content>`
 /// with dot colored for warning, content dim for info.  `columns` defaults to
-/// 80 (the render width); TS wraps at columns-10.
+/// 80 (the render width); wraps at columns-10.
 [[nodiscard]] inline Element RenderSystemGenericEvent(
     const SystemTextMessageData& data, bool add_margin = true,
     int columns = 80) {
@@ -299,7 +290,7 @@ class SystemTextMessageComponent : public ComponentBase {
     auto glyph = hbox({text(std::string(loom::ui::design::figures::kBlackCircle)),
                        text(" ")}) | dim | size(WIDTH, EQUAL, 2);
     std::string content = data.summary.empty() ? data.detail : data.summary;
-    // trim leading/trailing whitespace (TS content.trim())
+    // trim leading/trailing whitespace
     auto b = content.find_first_not_of(" \t\n\r");
     if (b != std::string::npos) {
         auto e = content.find_last_not_of(" \t\n\r");
@@ -311,8 +302,8 @@ class SystemTextMessageComponent : public ComponentBase {
     return RenderSystemEventRow(std::move(glyph), std::move(content_el), add_margin);
 }
 
-/// Top-level faithful dispatcher: pick the row shape by TS subtype.  Returns
-/// an empty element for subtypes TS hides (e.g. "thinking" → null).
+/// Top-level faithful dispatcher: pick the row shape by subtype.  Returns
+/// an empty element for subtypes that are hidden (e.g. "thinking" → null).
 [[nodiscard]] inline Element RenderSystemTextMessageFaithful(
     const SystemTextMessageData& data, bool add_margin = true) {
     switch (data.subtype) {

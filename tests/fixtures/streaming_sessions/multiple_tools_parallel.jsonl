@@ -1,0 +1,17 @@
+{"type":"stream_start","message_id":"msg_parallel_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"tool_use","id":"tu1","name":"Bash","input_json":"{}"}}
+{"type":"content_block_delta","index":0,"delta_text":"{\"command\":\"ctest --preset debug -j8\"}"}
+{"type":"content_block_stop","index":0}
+{"type":"content_block_start","index":1,"block":{"type":"tool_use","id":"tu2","name":"Read","input_json":"{}"}}
+{"type":"content_block_delta","index":1,"delta_text":"{\"file_path\":\"docs/rfcs/0003-streaming-payload-replay-testing.md\"}"}
+{"type":"content_block_stop","index":1}
+{"type":"stream_end","stop_reason":"tool_use","usage":{"input_tokens":148,"output_tokens":42}}
+{"type":"tool_execution_start","tool_use_id":"tu1","tool_name":"Bash","input_json":"{\"command\":\"ctest --preset debug -j8\"}"}
+{"type":"tool_execution_start","tool_use_id":"tu2","tool_name":"Read","input_json":"{\"file_path\":\"docs/rfcs/0003-streaming-payload-replay-testing.md\"}"}
+{"type":"tool_execution_end","tool_use_id":"tu1","result":"100% tests passed, 0 tests failed out of 12\n","is_error":false}
+{"type":"tool_execution_end","tool_use_id":"tu2","result":"# RFC 0003 — Streaming Payload Replay Testing\n\nStatus: draft\n","is_error":false}
+{"type":"__checkpoint__","name":"after_tools"}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"tool_use","content":[{"type":"tool_use","id":"tu1","name":"Bash","input_json":"{\"command\":\"ctest --preset debug -j8\"}"},{"type":"tool_use","id":"tu2","name":"Read","input_json":"{\"file_path\":\"docs/rfcs/0003-streaming-payload-replay-testing.md\"}"}]}}
+{"type":"__checkpoint__","name":"after_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

@@ -1,12 +1,10 @@
 /// @file quick_open.cppm
-/// @brief Quick Open / Command Palette dialog — faithful port of TS
-///        QuickOpen component with fuzzy search, categories, and keyboard nav.
+/// @brief Quick Open / Command Palette dialog with fuzzy search,
+///        categories, and keyboard nav.
 ///
 /// MODULE:   loom.ui.dialogs.quick_open
 /// LICENCE:  Exported.  Imported by default_renderers to register, and
 ///           by dialog_triggers / app code to build item lists.
-///
-/// TS REFERENCE: src/components/QuickOpen/QuickOpen.tsx
 ///
 /// FEATURES:
 ///   - Fuzzy substring matching on label + description
@@ -94,7 +92,6 @@ using QuickOpenItem = dsys::QuickOpenItem;
 // ============================================================
 
 /// Render the QuickOpen dialog using FTXUI + DialogFrame.
-/// Faithful to the TS QuickOpen visual style.
 [[nodiscard]] inline Element RenderQuickOpen(
     const dsys::QuickOpenPayload& p,
     const dsys::DialogRenderContext& ctx)
@@ -106,8 +103,8 @@ using QuickOpenItem = dsys::QuickOpenItem;
     if (selected < 0) selected = 0;
 
     // Max visible items (leave room for search input + divider + padding).
-    // TS REF: FullscreenLayout.tsx L422-426 — use ModalContext dimensions when
-    // available (modal slot).  Fall back to term_rows - 10 for bottom/overlay.
+    // Use ModalContext dimensions when available (modal slot).  Fall back
+    // to term_rows - 10 for bottom/overlay.
     const int visible_rows = ctx.modal_available_rows > 0
         ? ctx.modal_available_rows
         : ctx.term_rows;
@@ -243,7 +240,7 @@ using QuickOpenItem = dsys::QuickOpenItem;
     props.rounded = true;
     props.pane_variant = dframe::PaneVariant::ModalMinimal;
 
-    // TS REF: FullscreenLayout.tsx L422-426 — prefer ModalContext dimensions.
+    // Prefer ModalContext dimensions.
     const int avail_cols = ctx.modal_available_cols > 0
         ? ctx.modal_available_cols
         : ctx.term_cols - 4;
@@ -357,7 +354,6 @@ inline bool HandleQuickOpenEvent(
 // ============================================================
 
 /// Build a default set of quick open items (commands, settings, etc.).
-/// Faithful to TS QuickOpen's default item list.
 [[nodiscard]] inline auto BuildDefaultItems() -> std::vector<QuickOpenItem>
 {
     std::vector<QuickOpenItem> items;

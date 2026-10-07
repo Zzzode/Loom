@@ -3,13 +3,6 @@
 ///
 /// MODULE:   loom.ui.tools.task
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/TaskCreateTool/TaskCreateTool.tsx
-///   src/tools/TaskUpdateTool/TaskUpdateTool.tsx
-///   - userFacingName: "Create task" / "Update task"
-///   - renderToolUseMessage: task subject
-///   - isTransparentWrapper: false
 module;
 
 
@@ -90,7 +83,6 @@ namespace detail {
     ToolUIFunctions fns;
 
     fns.user_facing_name = [](std::string_view) {
-        // TS: TaskCreateTool.userFacingName = "TaskCreate"
         return std::string{"TaskCreate"};
     };
 
@@ -119,8 +111,7 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: TaskCreateTool — renderToolResultMessage shows the created
-    // task's ID and subject.  Output IS visible on screen; index it so
+    // The created task's ID and subject are visible on screen; index it so
     // users can search for task subjects.
     fns.extract_search_text = [](
         std::string_view output_text,
@@ -140,7 +131,6 @@ namespace detail {
     ToolUIFunctions fns;
 
     fns.user_facing_name = [](std::string_view) {
-        // TS: TaskUpdateTool.userFacingName = "TaskUpdate"
         return std::string{"TaskUpdate"};
     };
 
@@ -194,9 +184,8 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: TaskUpdateTool — renderToolResultMessage shows the updated
-    // task status and subject.  Output IS visible on screen; index it so
-    // users can search for task subjects and status changes.
+    // The updated task status and subject are visible on screen; index it
+    // so users can search for task subjects and status changes.
     fns.extract_search_text = [](
         std::string_view output_text,
         std::string_view /*error_text*/) -> std::optional<std::string>

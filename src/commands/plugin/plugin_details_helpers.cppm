@@ -1,10 +1,9 @@
 /// @file plugin_details_helpers.cppm
 /// @brief Shared helper types and pure functions for plugin details views.
 ///
-/// Extracted from src/commands/plugin/pluginDetailsHelpers.tsx.
 /// Contains: InstallablePlugin / PluginDetailsMenuOption types,
 /// extractGitHubRepo(), and buildPluginDetailsMenuOptions().
-/// No React/FTXUI rendering code is included.
+/// No FTXUI rendering code is included.
 
 module;
 
@@ -21,7 +20,7 @@ export namespace loom::commands::plugin {
 // We only need the `source` field here, which is a tagged union.
 // ---------------------------------------------------------------------------
 
-/// Source of a marketplace plugin entry. Mirrors TS: PluginMarketplaceEntry.source
+/// Source of a marketplace plugin entry.
 enum class EntrySourceKind : unsigned char {
     None,        // No source information available
     GitHub,      // `{ source: "github", repo: "owner/repo" }`
@@ -66,7 +65,6 @@ struct PluginDetailsMenuOption {
 
 /// Extract GitHub repo ("owner/repo") from a plugin's entry.source when the
 /// source kind is GitHub. Returns nullopt otherwise.
-/// Mirrors TS: extractGitHubRepo(plugin: InstallablePlugin): string | null
 [[nodiscard]] inline std::optional<std::string> extract_github_repo(
     const InstallablePlugin& plugin)
 {
@@ -85,8 +83,6 @@ struct PluginDetailsMenuOption {
 /// Build the ordered list of context-menu options for the plugin details
 /// screen. Always includes the three install-scope options; conditionally
 /// adds homepage, github, and back options.
-///
-/// Mirrors TS: buildPluginDetailsMenuOptions(hasHomepage, githubRepo)
 [[nodiscard]] inline std::vector<PluginDetailsMenuOption>
 build_plugin_details_menu_options(
     std::optional<std::string_view> has_homepage,

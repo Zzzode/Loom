@@ -13,6 +13,11 @@
 
 #include <cstdlib>
 #include <gtest/gtest.h>
+#ifdef _WIN32
+#  include <process.h>
+#else
+#  include <unistd.h>
+#endif
 
 import std;
 import loom.serdes.json;
@@ -29,12 +34,20 @@ namespace {
 class TempPluginsEnv {
 public:
     TempPluginsEnv() {
-        auto tmpl = std::filesystem::temp_directory_path() / "loom_fix_plugin_XXXXXX";
-        // mkdtemp-safe: create a uniquely named dir manually.
+        // PID + per-process counter: unique across processes. A thread-id
+        // hash + counter collides under ctest -j, because parallel test
+        // processes share the same main-thread hash and each counter starts
+        // at 0 — two processes then pick the same dir and clobber each
+        // other's known_marketplaces.json (the EmptyConfigWhenAbsent /
+        // FetchDirectorySource flake).
         dir_ = std::filesystem::temp_directory_path()
-            / ("loom_fix_plugin_" + std::to_string(std::hash<std::thread::id>{}(
-                  std::this_thread::get_id())) + "_"
-              + std::to_string(counter_++));
+            / ("loom_fix_plugin_"
+#ifdef _WIN32
+               + std::to_string(::_getpid())
+#else
+               + std::to_string(::getpid())
+#endif
+               + "_" + std::to_string(counter_++));
         std::filesystem::create_directories(dir_);
         prev_ = std::getenv("LOOM_PLUGINS_DIR");
         set_env("LOOM_PLUGINS_DIR", dir_.string());

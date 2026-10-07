@@ -32,6 +32,22 @@ jobs:
       # the default predicates while closing the loop).
       - name: Architecture graph check
         run: python3 tools/arch/graph_check.py --target-core8
+      # RFC 0002 F4: UI9 area-level acyclicity — 12 singleton SCCs in strict
+      # rank order.  Prevents the UI area split from silently regressing.
+      - name: UI9 area acyclicity check
+        run: python3 tools/arch/graph_check.py --target-ui9
+      # RFC 0002 F3: store placement, naming, and threading rules.
+      - name: F3 store lint
+        run: python3 tools/arch/graph_check.py --store-lint
+      # TLL graph acyclicity + file-to-library grouping.
+      - name: TLL acyclicity + grouping lint
+        run: python3 tools/arch/graph_check.py --tll-lint
+      # Negative tests: verify the lints themselves catch violations.
+      - name: Arch lint negative tests
+        run: |
+          python3 tools/arch/test_target_ui9.py
+          python3 tools/arch/test_store_lint.py
+          python3 tools/arch/test_tll_lint.py
       # RFC 0001 Phase C ratchet: no interface may grow its semantic inline
       # body count above its frozen snapshot, and a new >100-body god
       # interface fails closed. Baseline: tools/arch/inline_def_baseline.txt.

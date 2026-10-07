@@ -1,0 +1,39 @@
+◆ Loom  · model_api/experimental_0812_256k
+
+█░█░█░█░█  Loom
+░█░█░█░█░  model_api/experimental_0812_256k
+█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+
+● Eager loading resolves all dependencies at startup; lazy loading defers resolution until first use. For a CLI
+  harness, prefer lazy loading with explicit eager loading for hot-path modules.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────────
+ ❯ Try "fix lint errors"
+──────────────────────────────────────────────────────────────────────────────────
+   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

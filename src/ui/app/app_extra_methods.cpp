@@ -27,7 +27,6 @@ module loom.ui.app.app;
 import std;
 
 import loom.query.query_engine;
-import loom.commands.command;
 import loom.session.app_storage;
 
 // ── Imports needed by the 5 methods (not available via the interface) ────
@@ -35,8 +34,6 @@ import loom.process.bash.bash_execution;
 import loom.model.model;
 import loom.constants.constants;
 import loom.scm.git.git;
-import loom.crypto.crypto;
-import loom.platform.clipboard;
 import loom.text.parse_references;
 import loom.ui.messages.collapse_background_bash;
 import loom.ui.features.agents.agent_shared_widgets;
@@ -54,8 +51,7 @@ namespace agent_shared = loom::ui::agents::shared;
 namespace agent_display = loom::tools::agent_display;
 
 // ── project_agent_definition_card (moved out of app.cppm) ───────────────
-// TS REF: src/hooks/unifiedSuggestions.ts:77-108 (agent defs with color +
-//         truncated whenToUse)
+// Agent defs with color + truncated when_to_use.
 agent_cards::AgentCardData project_agent_definition_card(
     const agent_runtime::AgentDefinition& agent) {
     agent_cards::AgentCardData card;
@@ -77,32 +73,30 @@ agent_cards::AgentCardData project_agent_definition_card(
 }
 
 // ── RunLocalBashCommand (moved out of app.cppm) ─────────────────────────
-// TS REF: src/utils/processUserInput/processBashCommand.tsx
+// Run a user-initiated `!` command LOCALLY (never an LLM turn).  It runs
+// the command with the sandbox disabled, renders a <bash-input> user row
+// plus a <bash-stdout>/<bash-stderr> output row, and NEVER sends the
+// command to the model.
 //
-// Run a user-initiated `!` command LOCALLY (never an LLM turn).  TS does
-// BashTool.call({command, dangerouslyDisableSandbox:true}) with
-// shouldQuery:false, renders a <bash-input> user row plus a <bash-stdout>/
-// <bash-stderr> output row, and NEVER sends the command to the model.
-//
-// We mirror that: append the input row immediately (like TS's initial
+// We mirror that: append the input row immediately (like the initial
 // setToolJSX(<BashModeProgress>)), then run `/bin/sh -c` on a worker thread
 // (combined stdout+stderr via popen_spawn, run in the session cwd) and post
 // the output back to the render thread via pending_bash_result_.  The
 // engine / query path is never touched, so no Bash *tool-use* card and no
-// assistant summary are produced — matching the TS transcript exactly.
+// assistant summary are produced — matching the transcript exactly.
 void AppAdapter::RunLocalBashCommand(std::string command) {
     command = trim_ascii_copy(command);
     if (command.empty()) return;
 
     // Show the command row immediately (render thread — HandleSubmit runs
-    // here).  Mirrors TS createUserMessage(`<bash-input>…`).
+    // here).  Mirrors createUserMessage(`<bash-input>…`).
     AppendLocalCommandInputMessage(command);
     this->SyncState();
     PostRenderEvent();
 
     // If a previous bash command is still running, join it first so we
     // don't overlap workers (local `!` commands are strictly sequential in
-    // TS too — the prompt is blocked on the single BashTool.call).
+    // too — the prompt is blocked on the single BashTool.call).
     if (bash_thread_.joinable()) bash_thread_.join();
 
     bash_running_.store(true);
@@ -120,7 +114,6 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
                 return out;
             };
 
-            // TS REF: src/utils/shell/bashProvider.ts:186
             // Write final cwd to a tempfile (not stdout) so command output
             // can't collide with the cwd data.  Use && so pwd -P only runs
             // on success (failed commands shouldn't change cwd).
@@ -227,24 +220,23 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
 }
 
 // ── ApplyMessageCollapsePipeline (moved out of app.cppm) ────────────────
-// TS REF: src/components/Messages.tsx L519-520 — the render `useMemo`
-// applies a chain of collapse passes to the message list before projecting
+// Apply a chain of collapse passes to the message list before projecting
 // rows:
 //   collapseBackgroundBashNotifications(collapseHookSummaries(
 //     collapseTeammateShutdowns(collapseReadSearchGroups(grouped, tools))))
 //
 // We run the same chain here, on the raw conversation, before the
 // per-message projection loop in SyncState()/Render().  Only the passes
-// that have a faithful CPP port are wired so far:
+// that have a faithful port are wired so far:
 //   * collapseBackgroundBashNotifications — DONE (this call).
 //   * collapseHookSummaries / collapseTeammateShutdowns / collapseReadSearch
 //     — pending (need richer SystemMessage / AttachmentMessage types).
-// As each pass lands it slots in here, preserving the TS ordering.
+// As each pass lands it slots in here, preserving the ordering.
 //
 // `fullscreen=true`: the CPP transcript is always the fullscreen-equivalent
-// view (TS gates collapse on isFullscreenEnvEnabled()).  `verbose=false`:
+// view (collapse gated on isFullscreenEnvEnabled()).  `verbose=false`:
 // there is no ctrl+O verbose transcript toggle at this layer yet, so we use
-// the default collapsed presentation (TS shows each item only in verbose).
+// the default collapsed presentation (each item shown only in verbose).
 std::vector<Message> AppAdapter::ApplyMessageCollapsePipeline(
     std::vector<Message> messages) const {
     namespace collapse = loom::ui::messages::collapse;
@@ -266,79 +258,11 @@ std::vector<Message> AppAdapter::ApplyMessageCollapsePipeline(
 // from.  The placeholder "[Image #N]" is inserted synchronously so the
 // user gets instant feedback; the image data fills in shortly after.
 void AppAdapter::SpawnPasteWorker(int id) {
-    // Mark this id as in-flight (main thread — only main thread touches
-    // in_flight_pastes_). Cleared by ProcessCompletedPastes when the
-    // result/failure lands. HandleSubmit consults this set to wait for
-    // images whose placeholder is in the text but whose PNG data hasn't
-    // arrived yet (fast Ctrl+V→Enter race).
-    in_flight_pastes_.insert(id);
-
-    // Testing short-circuit: inject a fake image synchronously, no thread.
-    if (no_real_paste_worker_for_testing_) {
-        ImageBlock ib;
-        ib.media_type = "image/png";
-        ib.data = "iVBORw0KGgo=";
-        ib.size_bytes = 100;
-        ib.file_name = "test_" + std::to_string(id) + ".png";
-        ib.source = ImageBlockSource::Clipboard;
-        {
-            std::lock_guard lk(this->paste_mutex_);
-            this->pending_paste_results_[id] = std::move(ib);
-        }
-        this->PostRenderEvent();
-        return;
-    }
-    // Capture only what the thread needs by value.  `this` is safe
-    // because AppAdapter outlives any paste worker (the app object
-    // lives for the whole session).
-    std::thread([this, id]() {
-        // Skip has_image() — it costs an extra 600ms osascript call.
-        // Just try read_image_png() directly; it returns nullopt if
-        // there's no image in the clipboard.  This cuts total paste
-        // latency from ~1.3s (2 osascript calls) to ~650ms (1 call).
-        auto png = loom::utils::clipboard::read_image_png();
-        if (!png || png->empty()) {
-            // No image in clipboard — try reading plain text instead.
-            // TS REF: PromptInput.tsx onPaste — when the clipboard has
-            // text (not an image), it's inserted as text content.
-            std::string clip_text = loom::utils::clipboard::read_text();
-            if (!clip_text.empty()) {
-                std::lock_guard lk(this->paste_mutex_);
-                this->pending_paste_text_results_[id] = std::move(clip_text);
-            } else {
-                std::lock_guard lk(this->paste_mutex_);
-                this->pending_paste_failures_.insert(id);
-            }
-            // Wake the render thread so ProcessCompletedPastes() runs
-            // and replaces/removes the placeholder.
-            this->PostRenderEvent();
-            return;
-        }
-        // Build the ImageBlock on the worker thread (base64 encode can
-        // be non-trivial for large screenshots).
-        const std::size_t raw_bytes = png->size();
-        auto t = std::chrono::system_clock::to_time_t(
-            std::chrono::system_clock::now());
-        std::tm tm_buf{};
-        localtime_r(&t, &tm_buf);
-        char fname[48];
-        std::strftime(fname, sizeof(fname),
-                      "clipboard %Y%m%d-%H%M%S.png", &tm_buf);
-        ImageBlock ib;
-        ib.media_type = "image/png";
-        ib.data = loom::utils::crypto::base64_encode(
-            png->data(), png->size());
-        ib.size_bytes = raw_bytes;
-        ib.file_name  = std::string(fname);
-        ib.source     = ImageBlockSource::Clipboard;
-
-        {
-            std::lock_guard lk(this->paste_mutex_);
-            this->pending_paste_results_[id] = std::move(ib);
-        }
-        // Wake the render thread to drain the result.
-        this->PostRenderEvent();
-    }).detach();
+    // P4-1b: delegates to PasteCoordinator.  The coordinator owns the
+    // in-flight set, the pending-result maps, and the background thread.
+    // PostRenderEvent is injected as the wake callback.
+    paste_.SpawnPasteWorker(id, [this] { this->PostRenderEvent(); },
+                            no_real_paste_worker_for_testing_);
 }
 
 // ── ProcessCompletedPastes (moved out of app.cppm) ──────────────────────
@@ -351,16 +275,11 @@ void AppAdapter::ProcessCompletedPastes() {
     std::unordered_map<int, ImageBlock> results;
     std::unordered_set<int> failures;
     std::unordered_map<int, std::string> text_results;
-    {
-        std::lock_guard lk(paste_mutex_);
-        results.swap(pending_paste_results_);
-        failures.swap(pending_paste_failures_);
-        text_results.swap(pending_paste_text_results_);
-    }
+    paste_.drain_pending(results, failures, text_results);
     // Successful image pastes: store in pasted_contents_.
     for (auto& [id, ib] : results) {
-        pasted_contents_[id] = std::move(ib);
-        in_flight_pastes_.erase(id);  // main thread
+        paste_.pasted_contents()[id] = std::move(ib);
+        paste_.mark_completed(id);  // main thread
         // Surface the footer "Pasting text…" hint for the async path too.
         screen_state_->pasting_since = std::chrono::steady_clock::now();
     }
@@ -369,13 +288,12 @@ void AppAdapter::ProcessCompletedPastes() {
     // apply truncation (head + [...Truncated text #N] + tail) and store
     // the middle content in pasted_text_contents_ for submit-time
     // expansion.
-    // TS REF: inputPaste.ts maybeTruncateInput
     for (auto& [id, raw_text] : text_results) {
         const std::string placeholder = loom::utils::format_image_ref(id);
         auto& input = screen_state_->input_text;
         auto pos = input.find(placeholder);
         if (pos == std::string::npos) {
-            in_flight_pastes_.erase(id);
+            paste_.mark_completed(id);
             continue;
         }
 
@@ -384,7 +302,6 @@ void AppAdapter::ProcessCompletedPastes() {
         std::string placeholder_content;
         constexpr std::size_t kTruncationThreshold = 10000;
         if (raw_text.size() > kTruncationThreshold) {
-            // TS REF: inputPaste.ts L20-55 maybeTruncateMessageForInput
             const auto trunc_result = loom::utils::maybe_truncate_paste(raw_text, id);
             replacement = trunc_result.truncated_text;
             placeholder_content = trunc_result.placeholder_content;
@@ -417,10 +334,10 @@ void AppAdapter::ProcessCompletedPastes() {
 
         // Store truncated middle content for later expansion.
         if (!placeholder_content.empty()) {
-            pasted_text_contents_[id] = std::move(placeholder_content);
+            paste_.pasted_text_contents()[id] = std::move(placeholder_content);
         }
 
-        in_flight_pastes_.erase(id);
+        paste_.mark_completed(id);
     }
     // Failed pastes: remove the "[Image #N]" placeholder from input_text
     // so the user doesn't submit a dangling ref.  We search for the exact
@@ -450,8 +367,8 @@ void AppAdapter::ProcessCompletedPastes() {
                     screen_state_->input_cursor = cursor;
                 }
             }
-            pasted_contents_.erase(id);  // just in case
-            in_flight_pastes_.erase(id);  // main thread
+            paste_.pasted_contents().erase(id);  // just in case
+            paste_.mark_completed(id);  // main thread
         }
     }
 }

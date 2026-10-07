@@ -1,7 +1,6 @@
 /// @file color.cppm
 /// @brief ColorCommand implementing the /color slash command.
 /// Sets the session color for agents via agent_color_manager.
-/// Faithful port of src/commands/color/color.ts.
 module;
 
 #include <cctype>
@@ -26,12 +25,11 @@ using loom::tools::agent_color_manager::get_agent_color;
 using loom::tools::agent_color_manager::agent_color_name;
 
 /// The agent type key used for the main session color.
-/// TS uses "standaloneAgentContext.color"; CPP maps this to the
-/// "general-purpose" agent type which represents the main conversation agent.
+/// Maps to the "general-purpose" agent type which represents the main
+/// conversation agent.
 inline constexpr std::string_view kSessionAgentType = "general-purpose";
 
 /// Color names that reset to default (no color).
-/// TS REF: src/commands/color/color.ts RESET_ALIASES
 inline constexpr std::array<std::string_view, 5> kResetAliases = {
     "default", "reset", "none", "gray", "grey"
 };
@@ -69,7 +67,7 @@ public:
     }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
-        // Teammate guard: TS REF color.ts — teammates cannot set their own color
+        // Teammate guard: teammates cannot set their own color
         if (loom::tools::agent::utils::current_session_is_teammate()) {
             return CommandResult::fail(
                 "Cannot set color: This session is a swarm teammate. "

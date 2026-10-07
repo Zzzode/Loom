@@ -1,11 +1,6 @@
 /// @file text_input_widget.cppm
 /// @brief Full-featured text input with multi-line editing, vim mode,
-/// placeholder, history, and priority-based
-/// combined highlights.  Migrated from:
-///   src/components/TextInput.tsx          – cursor invert
-///   src/components/BaseTextInput.tsx      – cursor filtering, viewport adjust
-///   src/components/PromptInput/ShimmeredInput.tsx – HighlightedInput segment render
-///   src/utils/textHighlighting.ts         – TextHighlight, segmentTextByHighlights
+/// placeholder, history, and priority-based combined highlights.
 module;
 
 #include <cctype>
@@ -31,7 +26,6 @@ export namespace loom::ui::text_input_widget {
 using namespace ftxui;
 
 // Re-export the canonical TextHighlight type from the highlighting module.
-// TS REF: src/utils/textHighlighting.ts:11-19
 using loom::utils::TextHighlight;
 using loom::utils::TextSegment;
 using loom::utils::segment_text_by_highlights;
@@ -40,7 +34,6 @@ using loom::utils::adjust_highlights_for_viewport;
 using namespace loom::utils::highlight_priority;
 
 // Re-export the combined highlights context and builder from the new module.
-// TS REF: src/components/PromptInput/PromptInput.tsx:601-741
 using loom::ui::prompt::CombinedHighlightContext;
 using loom::ui::prompt::build_combined_highlights;
 
@@ -49,7 +42,6 @@ using loom::ui::prompt::build_combined_highlights;
 // ============================================================
 
 // Canonical VimMode — imported from loom::ui::common (ui_types.cppm).
-// TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
 // This replaces the previous local 5-value enum { Disabled, Normal, Insert,
 // Visual, Command } that conflicted with other implementations.
 // "Disabled" is now expressed as std::optional<VimMode>{nullopt}.
@@ -70,21 +62,17 @@ struct TextInputWidgetOptions {
     /// Vim mode — nullopt = vim disabled (standard editing).
     /// Replaces the previous `bool enable_vim` flag.  When set, the value
     /// indicates the *initial* mode (typically Insert or Normal).
-    /// TS REF: src/types/textInputTypes.ts:222 — VimMode public type.
     std::optional<VimMode> vim_mode;
     bool show_history = true;
     bool reduced_motion = false;
     size_t max_history = 1000;
     /// Highlights from multiple sources (image chips, @-mentions, slash
-    /// commands, btw triggers, etc.).  Combined via priority system —
-    /// TS REF: src/components/PromptInput/PromptInput.tsx:601-741
+    /// commands, btw triggers, etc.).  Combined via priority system.
     std::vector<TextHighlight> highlights;
     /// Flat character offset of the cursor in the full text buffer.
     /// Used for cursor-based highlight filtering.
-    /// TS REF: src/components/BaseTextInput.tsx:93
     std::size_t cursor_offset = 0;
     /// Viewport horizontal scroll offset (for long single-line inputs).
-    /// TS REF: src/components/BaseTextInput.tsx:98
     std::size_t viewport_char_offset = 0;
     std::size_t viewport_char_end = 0;  ///< End of viewport window (0 = full)
 
@@ -97,7 +85,6 @@ struct TextInputWidgetOptions {
     /// is called to produce the full 8-tier highlight vector.  The result
     /// is merged with any manually-provided `highlights` (manual highlights
     /// take priority on overlap via the segmenter's priority resolution).
-    /// TS REF: src/components/PromptInput/PromptInput.tsx:601-741
     std::optional<CombinedHighlightContext> combined_ctx;
 };
 
@@ -137,7 +124,6 @@ public:
 
     /// Compute flat character offset of the cursor in the full text.
     /// Used for highlight cursor filtering.
-    /// TS REF: src/components/BaseTextInput.tsx:93 (cursorOffset)
     [[nodiscard]] std::size_t cursor_flat_offset() const {
         std::size_t offset = 0;
         for (int i = 0; i < cursor_.line; ++i) {
@@ -237,7 +223,6 @@ public:
     }
 
     /// Delete the entire current logical line (for dd vim command).
-    /// TS REF: operators.ts executeLineOp('delete', ...)
     void delete_line() {
         if (lines_.size() == 1) {
             // Single line: just clear content
@@ -284,7 +269,6 @@ private:
 // ============================================================
 
 /// A single part of a line after splitting segments by newlines.
-/// Mirrors TS LinePart in ShimmeredInput.tsx:10-14.
 struct LinePart {
     std::string text;
     std::optional<TextHighlight> highlight;
@@ -292,8 +276,6 @@ struct LinePart {
 };
 
 /// Split segments into per-line parts by breaking on '\n'.
-/// Mirrors TS HighlightedInput segment→lines split logic.
-/// TS REF: src/components/PromptInput/ShimmeredInput.tsx:23-43
 [[nodiscard]] inline std::vector<std::vector<LinePart>> split_segments_into_lines(
     const std::vector<TextSegment>& segments) {
 
@@ -343,7 +325,6 @@ struct LinePart {
 }
 
 /// Apply FTXUI decorators to a line part element based on its highlight.
-/// TS REF: ShimmeredInput.tsx:111-116 (per-part rendering)
 [[nodiscard]] inline Element decorate_line_part(
     const LinePart& part,
     [[maybe_unused]] bool has_shimmer_active = false) {
@@ -354,29 +335,25 @@ struct LinePart {
         const auto& hl = *part.highlight;
 
         // Apply foreground color if specified
-        // TS REF: ShimmeredInput.tsx:115 color={part.highlight?.color}
         if (hl.color) {
             el = el | color(*hl.color);
         }
 
         // Apply dim if set
-        // TS REF: ShimmeredInput.tsx:115 dimColor={part.highlight?.dimColor}
         if (hl.dim) {
             el = el | dim;
         }
 
         // Apply inverse if set (e.g. cursor on [Image #N] chip)
-        // TS REF: ShimmeredInput.tsx:115 inverse={part.highlight?.inverse}
         if (hl.inverse) {
             el = el | inverted;
         }
 
         // Shimmer: if the highlight has shimmer_color, we render with the
         // base color.  Full per-character shimmer animation requires a
-        // 50ms ticker (TS useAnimationFrame); event-driven repaint rule
-        // means we show the static base color here.  The shimmer sweep is
-        // purely cosmetic and the static color is still readable.
-        // TS REF: ShimmeredInput.tsx:112-114 (ShimmerChar per-char loop)
+        // 50ms ticker; event-driven repaint rule means we show the static
+        // base color here.  The shimmer sweep is purely cosmetic and the
+        // static color is still readable.
         if (hl.shimmer_color && !hl.color) {
             el = el | color(*hl.shimmer_color);
         }
@@ -392,14 +369,8 @@ struct LinePart {
 /// Render the text input widget with priority-based highlight support.
 ///
 /// When highlights are present, uses segment_text_by_highlights() to
-/// build non-overlapping styled segments (matching TS HighlightedInput).
+/// build non-overlapping styled segments.
 /// When no highlights are present, falls back to plain text rendering.
-///
-/// TS REF:
-///   - Cursor filtering:  src/components/BaseTextInput.tsx:93
-///   - Viewport adjust:   src/components/BaseTextInput.tsx:98-102
-///   - Segment rendering: src/components/PromptInput/ShimmeredInput.tsx
-///   - Combined builder:  src/components/PromptInput/PromptInput.tsx:601-741
 [[nodiscard]] inline Element RenderTextInputWidget(
     const TextInputWidgetOptions& opts,
     const TextBuffer& buffer,
@@ -417,7 +388,7 @@ struct LinePart {
         }
 
         // Use shared RenderPlaceholder for consistent cursor-invert behavior
-        // when focused + empty (TS renderPlaceholder.ts).
+        // when focused + empty.
         auto rendered = ph::RenderPlaceholder(
             placeholder_sv,
             /*value=*/"",
@@ -441,7 +412,6 @@ struct LinePart {
     std::string full_text = buffer.get_text();
 
     // ── Build combined highlights from 8+ sources ────────────────────────
-    // TS REF: PromptInput.tsx:601-741 combinedHighlights useMemo
     std::vector<TextHighlight> effective_highlights = opts.highlights;
     if (opts.combined_ctx) {
         // Ensure the context's text and cursor reflect the current buffer state.
@@ -457,12 +427,10 @@ struct LinePart {
     }
 
     // ── Build filtered & adjusted highlights ──────────────────────────────
-    // TS REF: BaseTextInput.tsx:93 (cursorFiltered)
     auto cursor_off = buffer.cursor_flat_offset();
     auto cursor_filtered = filter_highlights_at_cursor(
         effective_highlights, cursor_off, focused);
 
-    // TS REF: BaseTextInput.tsx:98-102 (viewport adjustment)
     std::size_t vp_end = opts.viewport_char_end > 0
         ? opts.viewport_char_end
         : full_text.size();
@@ -477,7 +445,6 @@ struct LinePart {
     }
 
     // ── Build segments ────────────────────────────────────────────────────
-    // TS REF: ShimmeredInput.tsx:23 (segmentTextByHighlights)
     auto segments = segment_text_by_highlights(viewport_text, adjusted);
     auto line_parts = split_segments_into_lines(segments);
 
@@ -505,9 +472,6 @@ struct LinePart {
             if (i == cursor_pos.line && focused) {
                 // Find the cursor position within this line's parts and
                 // invert the character under the cursor.
-                // TS REF: BaseTextInput.tsx uses useDeclaredCursor for
-                // terminal cursor positioning; we invert the char here
-                // to match the visual cursor behavior.
                 int col_in_line = cursor_pos.col;
                 bool cursor_rendered = false;
 
@@ -576,7 +540,6 @@ struct LinePart {
     }
 
     // Vim mode indicator
-    // TS REF: src/hooks/useVimInput.ts — mode label shown in statusline/footer.
     if (vim_mode.has_value()) {
         std::string mode_str;
         Color mode_color;
@@ -619,7 +582,7 @@ struct LinePart {
         std::deque<std::string> history;
         size_t history_index = std::string::npos;
         std::chrono::steady_clock::time_point start_time;
-        // Vim operator-pending state (TS REF: src/vim/types.ts CommandState)
+        // Vim operator-pending state
         bool d_pending = false;
         bool y_pending = false;
         bool r_pending = false;
@@ -631,7 +594,6 @@ struct LinePart {
 
     return Renderer([state] {
         // Update cursor_offset in opts for cursor-based highlight filtering.
-        // TS REF: BaseTextInput.tsx:93 (cursorOffset prop passed to TextInput)
         state->opts.cursor_offset = state->buffer.cursor_flat_offset();
 
         // NOTE: combined_ctx.text/cursor are synced inside RenderTextInputWidget
@@ -693,7 +655,7 @@ struct LinePart {
                 state->vim_mode = VimMode::VisualLine;
                 return true;
             }
-            // Ctrl+V = VisualBlock  (TS REF: useVimInput.ts visual-block toggle)
+            // Ctrl+V = VisualBlock
             if (event == Event::Special({'\x16'})) {
                 state->vim_mode = VimMode::VisualBlock;
                 return true;
@@ -725,7 +687,7 @@ struct LinePart {
                 buf.move_end(); return true;
             }
             if (event == Event::Character('w')) {
-                // Word forward: jump to start of next word (TS REF: motions.ts 'w')
+                // Word forward: jump to start of next word
                 int line = buf.cursor().line;
                 int col = buf.cursor().col;
                 auto& cur_line = buf.mutable_line(line);
@@ -744,7 +706,7 @@ struct LinePart {
                 return true;
             }
             if (event == Event::Character('b')) {
-                // Word backward: jump to start of previous word (TS REF: motions.ts 'b')
+                // Word backward: jump to start of previous word
                 int line = buf.cursor().line;
                 int col = buf.cursor().col;
                 if (col > 0) {
@@ -761,7 +723,7 @@ struct LinePart {
                 return true;
             }
             if (event == Event::Character('e')) {
-                // Word end: jump to end of current/next word (TS REF: motions.ts 'e')
+                // Word end: jump to end of current/next word
                 int line = buf.cursor().line;
                 int col = buf.cursor().col;
                 auto& cur_line = buf.mutable_line(line);
@@ -783,7 +745,6 @@ struct LinePart {
                 return true;
             }
             // d = operator-pending (dd = delete current line)
-            // TS REF: transitions.ts — first 'd' enters operator state, second 'd' executes line op
             if (event == Event::Character('d')) {
                 if (state->d_pending) {
                     buf.delete_line();
@@ -808,7 +769,7 @@ struct LinePart {
                 return true;
             }
 
-            // Undo (TS REF: useVimInput.ts u → onUndo)
+            // Undo
             // Widget has no undo stack: u is a no-op (don't clear buffer!)
             if (event == Event::Character('u')) {
                 return true;
@@ -818,13 +779,13 @@ struct LinePart {
                 return true;
             }
 
-            // G = last line (TS REF: transitions.ts 'G')
+            // G = last line
             if (event == Event::Character('G')) {
                 buf.move_bottom();
                 return true;
             }
 
-            // J = join lines (TS REF: transitions.ts 'J')
+            // J = join lines
             if (event == Event::Character('J')) {
                 int cur_line = buf.cursor().line;
                 if (cur_line + 1 < buf.line_count()) {
@@ -847,7 +808,7 @@ struct LinePart {
                 return true;
             }
 
-            // D = delete to end of line (TS REF: transitions.ts 'D')
+            // D = delete to end of line
             if (event == Event::Character('D')) {
                 int line = buf.cursor().line;
                 int col = buf.cursor().col;
@@ -859,7 +820,7 @@ struct LinePart {
                 return true;
             }
 
-            // C = change to end (delete + insert mode) (TS REF: transitions.ts 'C')
+            // C = change to end (delete + insert mode)
             if (event == Event::Character('C')) {
                 int line = buf.cursor().line;
                 int col = buf.cursor().col;
@@ -872,7 +833,7 @@ struct LinePart {
                 return true;
             }
 
-            // r = replace char (TS REF: transitions.ts 'r' → fromReplace)
+            // r = replace char
             if (event == Event::Character('r')) {
                 state->r_pending = true;
                 return true;
@@ -911,7 +872,6 @@ struct LinePart {
                 buf.move_end(); return true;
             }
             // d = delete selection, y = yank selection
-            // TS REF: transitions.ts — visual d/y operate on selected range.
             // Widget has no explicit selection anchor; just exit visual mode.
             if (event == Event::Character('d') || event == Event::Character('y')) {
                 state->vim_mode = VimMode::Normal;
@@ -942,7 +902,7 @@ struct LinePart {
 
         // ── Escape (Insert mode or disabled) ───────────────────────────────
         if (event == Event::Escape) {
-            // Clear any operator-pending state (TS REF: transitions.ts Escape cancels)
+            // Clear any operator-pending state
             state->d_pending = false;
             state->y_pending = false;
             state->r_pending = false;
@@ -954,7 +914,7 @@ struct LinePart {
             return true;
         }
 
-        // ── r-pending: replace char under cursor (TS REF: transitions.ts fromReplace) ──
+        // ── r-pending: replace char under cursor ──
         if (state->r_pending && event.is_character()) {
             char replacement = event.character()[0];
             if (replacement >= 32 && replacement < 127) {

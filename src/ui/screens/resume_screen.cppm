@@ -1,6 +1,5 @@
 /// @file resume_screen.cppm
 /// @brief Conversation resume screen with session picker and preview panel.
-/// Migrated from src/screens/ResumeConversation.tsx (398 lines).
 ///
 /// Covers 5 views:
 ///   1. Welcome empty state  – greeting + Create button + 5 recent quick links.

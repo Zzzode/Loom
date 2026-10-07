@@ -4,14 +4,9 @@
 ///        for LSP diagnostic suggestions, computes acceptance rates, and
 ///        persists feedback to ~/.loom/lsp-passive-feedback.json.
 ///
-/// TS REF: src/services/lsp/passiveFeedback.ts (328 lines)
-///   - The TS module primarily handles diagnostic notification handler
-///     registration (formatDiagnosticsForAttachment,
-///     registerLSPNotificationHandlers). Those formatting helpers live in
-///     diagnostic_registry.cppm in the C++ port.
-///   - This module adds PassiveFeedbackCollector: tracking whether the user
-///     accepted, rejected, or partially-accepted LSP-suggested fixes, with
-///     JSON persistence for cross-session learning.
+/// This module adds PassiveFeedbackCollector: tracking whether the user
+/// accepted, rejected, or partially-accepted LSP-suggested fixes, with
+/// JSON persistence for cross-session learning.
 ///
 /// Architecture:
 ///   1. record_feedback() stores a PassiveFeedbackItem in memory
@@ -94,7 +89,6 @@ void reset_lsp_metrics() {
 // ============================================================================
 
 /// Outcome of an LSP diagnostic suggestion being presented to the user.
-/// TS REF: task spec (PassiveFeedbackType enum)
 enum class PassiveFeedbackType : int {
     Accepted           = 0,  ///< User applied the suggested fix
     Rejected           = 1,  ///< User dismissed the suggestion
@@ -127,7 +121,6 @@ enum class PassiveFeedbackType : int {
 // ============================================================================
 
 /// A single passive feedback record: one user reaction to one diagnostic code.
-/// TS REF: task spec (PassiveFeedbackItem struct)
 struct PassiveFeedbackItem {
     std::string server_name;       ///< LSP server that produced the diagnostic
     std::string uri;               ///< File URI where the diagnostic appeared
@@ -142,9 +135,6 @@ struct PassiveFeedbackItem {
 
 /// Collects, aggregates, and persists passive feedback from user interactions
 /// with LSP diagnostic suggestions. Thread-safe via mutex.
-///
-/// TS REF: task spec (PassiveFeedbackCollector class)
-/// TS REF: src/services/lsp/passiveFeedback.ts - handler registration patterns
 class PassiveFeedbackCollector {
 public:
     // ------------------------------------------------------------------
@@ -281,7 +271,6 @@ public:
 
     /// Export all feedback to a JSON file.
     /// Default path: ~/.loom/lsp-passive-feedback.json
-    /// TS REF: task spec (export_feedback -> persist to ~/.loom/)
     Result<void> export_feedback() const {
         return export_feedback(default_feedback_path());
     }
@@ -337,7 +326,6 @@ public:
 
     /// Import feedback from the default JSON file.
     /// Merges with existing items (does not clear).
-    /// TS REF: task spec (import_feedback)
     Result<void> import_feedback() {
         return import_feedback(default_feedback_path());
     }
@@ -422,11 +410,10 @@ private:
 };
 
 // ============================================================================
-// Handler Registration Result (matching TS passiveFeedback.ts)
+// Handler Registration Result
 // ============================================================================
 
 /// Result of registering diagnostic notification handlers across all servers.
-/// TS REF: src/services/lsp/passiveFeedback.ts:105-114 (HandlerRegistrationResult)
 struct DiagnosticHandlerRegistrationResult {
     size_t total_servers{0};
     size_t success_count{0};
@@ -438,18 +425,15 @@ struct DiagnosticHandlerRegistrationResult {
 /// Subscribe a diagnostics notification sink to publishDiagnostics on every
 /// server owned by the manager.
 ///
-/// IMPORTANT — TS fidelity: src/services/lsp/passiveFeedback.ts:160-200
-/// registers the handler for OBSERVABILITY only (logForDebugging); a
-/// server-pushed publishDiagnostics is NOT a user action and the TS code
-/// records no acceptance/rejection signal from it. The earlier CPP port
-/// invented one Rejected item per code-bearing diagnostic, which polluted
+/// IMPORTANT: the handler is registered for OBSERVABILITY only; a
+/// server-pushed publishDiagnostics is NOT a user action and records no
+/// acceptance/rejection signal. An earlier version invented one Rejected
+/// item per code-bearing diagnostic, which polluted
 /// PassiveFeedbackCollector::get_acceptance_rate() with spurious rejects.
 /// The handler here therefore validates/parses the frame (so malformed
 /// notifications are counted in diagnostic_failures) but records NO
 /// feedback; genuine Accepted/Rejected items must come from explicit
 /// quick-fix user gestures wired separately.
-///
-/// TS REF: src/services/lsp/passiveFeedback.ts:125-328
 inline DiagnosticHandlerRegistrationResult register_lsp_notification_handlers(
     LSPServerManager& manager,
     PassiveFeedbackCollector& feedback
@@ -475,11 +459,11 @@ inline DiagnosticHandlerRegistrationResult register_lsp_notification_handlers(
                     auto diagnostics_node = root.get("diagnostics");
                     if (!uri_node.is_str() || !diagnostics_node.is_arr()) return;
                     // Observability-only: parse to prove the frame is well
-                    // formed (mirrors TS validation) but record no feedback.
+                    // formed but record no feedback.
                     (void)format_diagnostics_for_attachment(root);
                 } catch (...) {
                     // Isolate per-server errors; do not break the notification
-                    // loop. TS REF: passiveFeedback.ts:249-276.
+                    // loop.
                 }
             });
         ++result.success_count;

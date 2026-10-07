@@ -17,8 +17,6 @@ module;
 ///   3. createV2ReplTransport(worker_jwt, worker_epoch)        -> SSE + CCRClient
 ///   4. createTokenRefreshScheduler                             -> proactive /bridge re-call
 ///   5. 401 on SSE -> rebuild transport with fresh /bridge credentials
-///
-/// Migrated from src/bridge/remoteBridgeCore.ts (~1008 lines).
 
 export module loom.bridge.core;
 
@@ -218,8 +216,7 @@ std::optional<T> with_retry(
 /// Fires the refresh callback at (expires_in - refresh_buffer) intervals,
 /// re-scheduling itself after each successful refresh.
 ///
-/// TS REF: src/bridge/jwtUtils.ts:72 createTokenRefreshScheduler. Faithful
-/// details carried over:
+/// Details:
 ///   * the token getter RETURNS the token (an older C++ version returned
 ///     void, so on_refresh always fired with an empty token — the refresh
 ///     was effectively log-only);
@@ -232,12 +229,11 @@ std::optional<T> with_retry(
 ///     cancel/reschedule, so no orphaned timer survives.
 class TokenRefreshScheduler {
 public:
-    /// How long before expiry to fire the refresh (TS TOKEN_REFRESH_BUFFER_MS).
+    /// How long before expiry to fire the refresh.
     static constexpr std::chrono::milliseconds kDefaultRefreshBuffer{std::chrono::minutes{5}};
-    /// Retry delay after a failed/empty token fetch (TS REFRESH_RETRY_DELAY_MS).
+    /// Retry delay after a failed/empty token fetch.
     static constexpr std::chrono::milliseconds kRefreshRetryDelay{std::chrono::milliseconds{60'000}};
-    /// Follow-up refresh interval after a successful refresh
-    /// (TS FALLBACK_REFRESH_INTERVAL_MS).
+    /// Follow-up refresh interval after a successful refresh.
     static constexpr std::chrono::milliseconds kFallbackRefreshInterval{std::chrono::minutes{30}};
     /// Give up after this many consecutive token-fetch failures
     /// (TS MAX_REFRESH_FAILURES).
@@ -332,8 +328,6 @@ public:
     struct Params {
         std::chrono::milliseconds refresh_buffer_ms{kDefaultRefreshBuffer};
         /// Returns the current OAuth access token, or an error string.
-        /// TS REF: jwtUtils.ts:76 `getAccessToken(): string | undefined |
-        /// Promise<string | undefined>`.
         std::function<std::expected<std::string, std::string>(std::string_view)>
             get_access_token_async;
         std::function<void(const std::string&, const std::string&)> on_refresh;
@@ -1408,7 +1402,6 @@ std::unique_ptr<ReplBridgeHandle> init_env_less_bridge_core(EnvLessBridgeParams 
     refresh_params.label = "remote";
     // Source the live OAuth token so the refresh actually carries a
     // credential to the transport (previously on_refresh always got "").
-    // TS REF: jwtUtils.ts:76 getAccessToken.
     if (params.get_access_token) {
         auto getter = params.get_access_token;
         refresh_params.get_access_token_async =
@@ -1422,7 +1415,6 @@ std::unique_ptr<ReplBridgeHandle> init_env_less_bridge_core(EnvLessBridgeParams 
     }
     // Proactive refresh: hand the fresh token to the transport so the SSE
     // read stream and the CCR worker keep authenticating.
-    // TS REF: remoteBridgeCore.ts:317 onRefresh.
     auto* transport_raw = transport.get();
     refresh_params.on_refresh = [transport_raw, session_id](
         const std::string& /*sid*/, const std::string& oauth_token

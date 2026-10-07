@@ -1,14 +1,8 @@
 /// @file tool_ui_web_search.cppm
-/// @brief WebSearch tool UI — userFacingName, renderToolUseMessage, etc.
+/// @brief WebSearch tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.web_search
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/WebSearchTool/WebSearchTool.tsx
-///   - userFacingName: "Search web"
-///   - renderToolUseMessage: query string
-///   - isTransparentWrapper: false
 module;
 
 
@@ -54,7 +48,6 @@ namespace detail {
     ToolUIFunctions fns;
 
     fns.user_facing_name = [](std::string_view) {
-        // TS: WebSearchTool.userFacingName = "Web Search"
         return std::string{"Web Search"};
     };
 
@@ -96,9 +89,7 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: WebSearchTool.ts L229  extractSearchText()
-    //   return ''
-    // renderToolResultMessage shows only "Did N searches in Xs" chrome —
+    // render_tool_result_message shows only "Did N searches in Xs" chrome —
     // the results[] content never appears on screen. Heuristic would index
     // string entries in results[] (phantom match). Nothing to search.
     fns.extract_search_text = [](

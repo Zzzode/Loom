@@ -1,7 +1,6 @@
 /// @file message_advisor.cppm
 /// @brief Advisor/suggestion message rendering  (+ dismiss button)
 ///
-/// Mirrors AdvisorMessage.tsx (157 lines):
 ///   ┌ 💡 Tip ───────────────────────────────────────── [✕] ┐
 ///   │ You can enable auto-save in settings → /config        │
 ///   │   → Configure now                                     │

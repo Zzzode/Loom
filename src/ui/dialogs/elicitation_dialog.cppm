@@ -6,19 +6,13 @@
 ///           simple Band3 Elicitation prompt shown when an MCP server
 ///           asks Loom to gather extra input from the user.
 ///
-/// TS REFERENCE (simple form — "server connect prompt"):
-///   src/components/mcp/ElicitationDialog.tsx
-///     - ElicitationFormDialog render (line ~957): title + subtitle +
-///       body paragraph + Accept/Decline buttons with keyboard shortcuts.
-///     - ElicitationURLDialog render (line ~1140): same DialogFrame but
-///       URL-flavoured subtitle.
-///   This module renders the SIMPLE (non-form, non-URL-resolving) form
+/// This module renders the SIMPLE (non-form, non-URL-resolving) form
 ///   of the prompt — just "Allow connecting to <server name>?" with
 ///   three escape hatches.  Multi-field schemas are handled by the
-///   heavier loom.ui.dialogs.mcp_dialogs module (Faithful port of the
-///   1200-line renderFormFields engine).
+///   heavier loom.ui.dialogs.mcp_dialogs module (the 1200-line
+///   renderFormFields engine).
 ///
-/// VISUAL SPEC (faithful to TS <Dialog color="permission">):
+/// VISUAL SPEC (permission-colored dialog):
 ///   ┌─ MCP Server Request ─────────────────────────────────────┐
 ///   │ "Brave Search" needs additional input                    │ ← subtitle, dim
 ///   ├──────────────────────────────────────────────────────────┤
@@ -71,10 +65,9 @@ using Theme = loom::ui::design::theme::Theme;
 // Renderer
 // ============================================================
 
-/// Render a faithful Elicitation dialog (simple form).
+/// Render the Elicitation dialog (simple form).
 ///
-/// Mirrors the non-field ElicitationDialog render from TS — a
-/// DialogFrame with title/subtitle/body/request-id row / buttons row.
+/// A DialogFrame with title/subtitle/body/request-id row / buttons row.
 [[nodiscard]] inline Element RenderElicitation(
     const dsys::ElicitationPayload& p,
     const dsys::DialogRenderContext& ctx)
@@ -82,7 +75,6 @@ using Theme = loom::ui::design::theme::Theme;
     const auto& theme = ctx.theme;
 
     dframe::DialogFrameProps props;
-    // Matches TS: `Dialog title={`MCP server "${serverName}" requests your input`}`
     // Compressed form for narrow terminals:
     props.title = "MCP Server Request";
     props.subtitle = p.server_name.empty()
@@ -93,7 +85,7 @@ using Theme = loom::ui::design::theme::Theme;
     // Body:
     //   - question: "Allow connecting to <server_name>?"
     //   - blank
-    //   - "Request ID: <id>"  (dim, matches TS request_id row)
+    //   - "Request ID: <id>"  (dim)
     //   - blank
     //   - buttons row
     Elements body;
@@ -149,7 +141,7 @@ using Theme = loom::ui::design::theme::Theme;
 
 /// Handle keyboard events for the simple Elicitation dialog.
 ///
-/// Mappings (faithful to TS ElicitationFormDialog keyboard shortcuts):
+/// Mappings (keyboard shortcuts):
 ///   y / Y / Enter → on_response(approve=true)
 ///   n / N         → on_response(approve=false)
 ///   Esc           → on_cancel (distinct callback; callers typically
@@ -161,7 +153,7 @@ inline bool HandleElicitationEvent(
     dsys::ElicitationPayload& p,
     const Event& event)
 {
-    // y / Y — allow (same as TS `confirm:yes` shortcut)
+    // y / Y — allow
     if (event == Event::Character('y') || event == Event::Character('Y')) {
         if (p.on_response) p.on_response(/*approve=*/true);
         return true;

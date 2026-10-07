@@ -284,13 +284,11 @@ using loom::core::ToolResult;
     if (name == "web_browser") return execute_web_browser(input);
 
     // ── Feature-gated stub tools ──────────────────────────────────────────────
-    // These tools exist in TS (src/tools.ts L16-158) but are gated behind Bun
-    // feature() flags.  In CPP we provide minimal stubs so that when a feature
-    // flag is enabled, the tool is registered and returns a meaningful "not yet
-    // implemented" message rather than crashing.  TS REF: src/tools.ts:195-256
+    // These tools are gated behind feature flags.  We provide minimal stubs so
+    // that when a feature flag is enabled, the tool is registered and returns a
+    // meaningful "not yet implemented" message rather than crashing.
 
     if (name == "push_notification") {
-        // TS REF: src/tools.ts:45-49 (PushNotificationTool)
         auto title = json_string(json, "title").value_or("Notification");
         auto body = json_string(json, "body").value_or("");
         return ToolResult::error(std::format(
@@ -298,51 +296,42 @@ using loom::core::ToolResult;
             title, body));
     }
     if (name == "monitor") {
-        // TS REF: src/tools.ts:39-41 (MonitorTool)
         return ToolResult::error(
             "monitor stub: MonitorTool is not yet implemented in CPP migration");
     }
     if (name == "send_user_file") {
-        // TS REF: src/tools.ts:42-44 (SendUserFileTool)
         auto file_path = json_string(json, "file_path").value_or("");
         return ToolResult::error(std::format(
             "send_user_file stub: file_path=\"{}\" — not yet implemented in CPP migration",
             file_path));
     }
     if (name == "subscribe_pr") {
-        // TS REF: src/tools.ts:50-52 (SubscribePRTool)
         auto pr_url = json_string(json, "pr_url").value_or("");
         return ToolResult::error(std::format(
             "subscribe_pr stub: pr_url=\"{}\" — not yet implemented in CPP migration",
             pr_url));
     }
     if (name == "overflow_test") {
-        // TS REF: src/tools.ts:107-109 (OverflowTestTool)
         return ToolResult::error(
             "overflow_test stub: OverflowTestTool is not yet implemented in CPP migration");
     }
     if (name == "ctx_inspect") {
-        // TS REF: src/tools.ts:110-112 (CtxInspectTool)
         return ToolResult::error(
             "ctx_inspect stub: CtxInspectTool is not yet implemented in CPP migration");
     }
     if (name == "terminal_capture") {
-        // TS REF: src/tools.ts:113-116 (TerminalCaptureTool)
         return ToolResult::error(
             "terminal_capture stub: TerminalCaptureTool is not yet implemented in CPP migration");
     }
     if (name == "snip") {
-        // TS REF: src/tools.ts:123-125 (SnipTool)
         return ToolResult::error(
             "snip stub: SnipTool (history snippet) is not yet implemented in CPP migration");
     }
     if (name == "list_peers") {
-        // TS REF: src/tools.ts:126-128 (ListPeersTool)
         return ToolResult::error(
             "list_peers stub: ListPeersTool is not yet implemented in CPP migration");
     }
     if (name == "verify_plan_execution") {
-        // TS REF: src/tools.ts:91-96 (VerifyPlanExecutionTool)
         return ToolResult::error(
             "verify_plan_execution stub: VerifyPlanExecutionTool is not yet implemented in CPP migration");
     }

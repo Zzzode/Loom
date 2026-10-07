@@ -124,8 +124,8 @@ void QueryEngine::build_and_add_system_prompt() {
     // Auto-memory: inject the file-based memory guidance (teaches the
     // model it can persist memories under the per-project memory dir) and
     // guarantee the directory exists so the model can write without setup.
-    // TS REF: src/memdir/memdir.ts loadMemoryPrompt() (buildMemoryLines)
-    // — it returns guidance only; MEMORY.md content is appended below.
+    // The guidance covers only the memory mechanism; MEMORY.md content is
+    // appended below.
     if (auto auto_mem_dir =
             loom::memdir::get_auto_mem_path(std::filesystem::path(cwd))) {
         std::error_code mkdir_ec;
@@ -139,8 +139,8 @@ void QueryEngine::build_and_add_system_prompt() {
                 ::memdir::join_lines(guidance_lines)));
         }
 
-        // Append the MEMORY.md index contents (loommd.ts injects the
-        // AutoMem entrypoint separately from the guidance prompt).
+        // Append the MEMORY.md index contents (the AutoMem entrypoint is
+        // injected separately from the guidance prompt).
         std::filesystem::path mem_dir_path = *auto_mem_dir;
         std::filesystem::path mem_index_file{mem_dir_path / "MEMORY.md"};
         if (std::filesystem::exists(mem_index_file)) {
@@ -160,8 +160,7 @@ void QueryEngine::build_and_add_system_prompt() {
     // Inject this session's accumulated compaction summary, if a prior
     // run (or an earlier compaction in this run) wrote one. Prevents a
     // resumed/continuation session from starting blind after history was
-    // dropped. TS REF: SessionMemory getSessionMemoryContent used by
-    // sessionMemoryCompact.ts as the compact summary source.
+    // dropped.
     if (auto summary = read_session_summary(cwd); !summary.empty()) {
         constexpr std::size_t kMaxSummaryChars = 12000;
         if (summary.size() > kMaxSummaryChars) {

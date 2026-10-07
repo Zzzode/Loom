@@ -1,0 +1,21 @@
+{"type":"stream_start","message_id":"msg_tool_text_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"tool_use","id":"tu2","name":"Bash","input_json":"{}"}}
+{"type":"content_block_delta","index":0,"delta_text":"{\"command\":\"git status --short\"}"}
+{"type":"content_block_stop","index":0}
+{"type":"stream_end","stop_reason":"tool_use","usage":{"input_tokens":96,"output_tokens":18}}
+{"type":"tool_execution_start","tool_use_id":"tu2","tool_name":"Bash","input_json":"{\"command\":\"git status --short\"}"}
+{"type":"tool_execution_end","tool_use_id":"tu2","result":" M src/CMakeLists.txt\n M src/types/types.cppm\n M src/ui/app/app_handle_submit.cpp\n M tests/CMakeLists.txt\n","is_error":false}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"tool_use","content":[{"type":"tool_use","id":"tu2","name":"Bash","input_json":"{\"command\":\"git status --short\"}"}]}}
+{"type":"__checkpoint__","name":"after_tool_commit"}
+{"type":"stream_start","message_id":"msg_tool_text_2","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"thinking","thinking":"","signature":"sig-tool-text-001"}}
+{"type":"content_block_delta","index":0,"delta_text":"The working tree has four modified files, all in the streaming replay work area."}
+{"type":"content_block_stop","index":0}
+{"type":"content_block_start","index":1,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":1,"delta_text":"Four files are modified: the build glue, the core types, the submit handler, and the test CMake. No untracked files yet, since the fixtures are not written."}
+{"type":"content_block_stop","index":1}
+{"type":"stream_end","stop_reason":"end_turn","usage":{"input_tokens":140,"output_tokens":33}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"end_turn","content":[{"type":"thinking","thinking":"The working tree has four modified files, all in the streaming replay work area.","signature":"sig-tool-text-001"},{"type":"text","text":"Four files are modified: the build glue, the core types, the submit handler, and the test CMake. No untracked files yet, since the fixtures are not written."}]}}
+{"type":"__checkpoint__","name":"after_text_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

@@ -1,11 +1,8 @@
 // Script diagnostics — parsing, formatting, and display helpers for
 // LSP/TypeScript/GCC/Python style compiler diagnostics.
 //
-// Migrated from:
-//   src/tools/ScriptTool/formatDiagnostics.ts  (formatSyntaxError,
-//                                                formatTypeCheckFailure,
-//                                                adjustLineNumbers, etc.)
-// Merged with pre-existing parse + summary formatters that lived here.
+// Includes formatSyntaxError, formatTypeCheckFailure, adjustLineNumbers,
+// etc., merged with pre-existing parse + summary formatters.
 module;
 #include <cctype>
 #include <cstdint>

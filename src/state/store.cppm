@@ -920,18 +920,11 @@ using Middleware = std::function<DispatchFn(DispatchFn next)>;
 
 /// Persistence middleware.
 ///
-/// NOTE: this is an intentional no-op. The TS reference (src/state/store.ts)
-/// does not implement a middleware pipeline at all — its Store is a trivial
-/// getState/setState/subscribe object, and persistence of the few AppState
-/// fields the TS app actually persists happens through targeted global-config
-/// writes in src/state/onChangeAppState.ts, not through a store middleware.
-///
-/// In this C++ port persistence is handled directly by the Store in
-/// notify() (the AppState-typed auto-persist branch below) via the
-/// StatePersistence manager, which is the equivalent of the TS onChange
-/// callback path. This middleware therefore exists only for API parity and
-/// deliberately performs no work; if per-action persistence hooks are ever
-/// needed, dispatch them here.
+/// NOTE: this is an intentional no-op. Persistence is handled directly by
+/// the Store in notify() (the AppState-typed auto-persist branch below) via
+/// the StatePersistence manager. This middleware therefore exists only for
+/// API parity and deliberately performs no work; if per-action persistence
+/// hooks are ever needed, dispatch them here.
 [[nodiscard]] inline Middleware persistence_middleware(
     std::shared_ptr<persistence::StatePersistence> /*persistence*/
 ) {

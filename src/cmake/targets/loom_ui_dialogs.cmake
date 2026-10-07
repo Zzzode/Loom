@@ -26,6 +26,7 @@ target_sources(loom_ui_dialogs
         ui/dialogs/plugin_dialog_renderer.cppm
         ui/dialogs/prompt_dialog.cppm
         ui/dialogs/quick_open.cppm
+        ui/dialogs/session_picker.cppm
         ui/dialogs/settings_dialog.cppm
         ui/dialogs/trust_dialog.cppm
         ui/dialogs/trust_utils.cppm

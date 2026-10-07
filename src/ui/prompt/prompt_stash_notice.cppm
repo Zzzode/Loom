@@ -1,10 +1,9 @@
 /// @file prompt_stash_notice.cppm
 /// @brief Notice when user input is stashed during processing.
-/// TS REF: src/components/PromptInput/PromptInputStashNotice.tsx —
-///   renders "{figures.pointerSmall} Stashed (auto-restores after submit)"
-///   with dimColor when hasStash is true.  The notice sits above the input
-///   area so the user knows their typed text was saved and will be restored
-///   after the current request completes.
+/// Renders "{figures.pointerSmall} Stashed (auto-restores after submit)"
+/// with dim styling when a stash is present.  The notice sits above the input
+/// area so the user knows their typed text was saved and will be restored
+/// after the current request completes.
 module;
 
 
@@ -26,10 +25,6 @@ struct StashNotice {
 };
 
 /// Render the stash notice element.
-/// TS REF: PromptInputStashNotice.tsx —
-///   <Box paddingLeft={2}><Text dimColor>
-///     {figures.pointerSmall} Stashed (auto-restores after submit)
-///   </Text></Box>
 ///
 /// The CPP version also shows the character count in dim text so the user
 /// knows how much was stashed (useful when the stashed input was very long).
@@ -37,9 +32,8 @@ struct StashNotice {
     if (notice.stashed_text.empty()) return text("");
 
     namespace figs = loom::ui::design::figures;
-    // TS REF: figures.pointerSmall = '›' U+203A (kPointerSmall)
     return hbox({
-        text("  ") | dim,  // paddingLeft={2}
+        text("  ") | dim,  // left padding = 2
         text(std::string(figs::kPointerSmall) + " Stashed (auto-restores after submit)")
             | dim,
     });

@@ -36,7 +36,7 @@ struct AppImpl {
     bool vim_enabled_ = false;
     loom::vim::VimStateMachine vim_sm_;
 
-    // Ctrl-C double-press handler (TS useDoublePress, 800ms window).
+    // Ctrl-C double-press handler (800ms window).
     loom::hooks::ExitHandler exit_handler_{loom::hooks::ExitHandlerConfig{
         .require_double_press = true,
         .cleanup_timeout_ms = 5000,

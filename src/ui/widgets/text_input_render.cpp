@@ -67,7 +67,6 @@ Element TextInputImpl::Render() {
     // --- Paste preview confirmation overlay (GAP 1) ---
     // When a large paste (> 10000 chars) is pending confirmation,
     // show the preview box below the input area.
-    // TS REF: inputPaste.ts — PastePreview rendered as overlay.
     if (paste_preview_) {
         Element preview = RenderPastePreviewOverlay();
         return vbox({
@@ -89,15 +88,14 @@ Element TextInputImpl::Render() {
 }
 
 /// Render the paste preview confirmation overlay.
-/// TS REF: inputPaste.ts — shows line count + "(large paste - press Enter
-///   to confirm)" + a 200-char snippet of the truncated content.
+/// Shows line count + "(large paste - press Enter to confirm)" + a
+/// 200-char snippet of the truncated content.
 Element TextInputImpl::RenderPastePreviewOverlay() const {
     if (!paste_preview_) return ftxui::text("");
     return loom::ui::prompt::render_paste_preview(*paste_preview_);
 }
 
 /// Render just the input/caret/multiline/selection area (no dropdown).
-/// Faithful to TS BaseTextInput's declared-cursor body.
 Element TextInputImpl::RenderInputAreaPub() { return RenderInputArea(); }
 
 /// Render a suggestions dropdown from an externally-supplied list.
@@ -138,10 +136,10 @@ Element TextInputImpl::RenderInputArea() {
     int cursor_line = 0, cursor_col = 0;
     compute_cursor_position(cursor_line, cursor_col);
 
-    // TS REF: PromptInput.tsx L581-584 imageRefPositions — parse [Image #N]
-    // refs from the displayed value so we can invert the chip when the
-    // cursor parks at its start (the "selected" state; backspace-delete
-    // is visually obvious because the whole chip is highlighted).
+    // Parse [Image #N] refs from the displayed value so we can invert
+    // the chip when the cursor parks at its start (the "selected"
+    // state; backspace-delete is visually obvious because the whole
+    // chip is highlighted).
     const auto all_refs = loom::utils::parse_references(text_);
     std::vector<loom::utils::ReferenceMatch> image_refs;
     image_refs.reserve(all_refs.size());
@@ -155,11 +153,11 @@ Element TextInputImpl::RenderInputArea() {
         // Line prefix (first line) or indent (subsequent lines).
         // NOTE (P0-1 glyph unification):
         //   The REPL faithful path passes a PER-MODE prefix_color and sets
-        //   prefix_bold=false to match TS PromptInputModeIndicator semantics.
+        //   prefix_bold=false to match the mode-indicator semantics.
         //   Legacy standalone usages keep the historical default (Green+bold)
         //   via fallback.  The default prefix was also changed from "▶ "
         //   (U+25B6, a CPP-only invention) to "❯ " (figures.pointer U+276F),
-        //   matching TS `figures.pointer` exactly.
+        //   matching the canonical pointer glyph exactly.
         if (li == 0) {
             using namespace ftxui;
             Decorator prefix_decor = nothing;
@@ -240,13 +238,13 @@ Element TextInputImpl::RenderInputArea() {
                     std::string after = seg_text.substr(cur_rel_start);
                     if (!before.empty()) line_parts.push_back(ftxui::text(before));
 
-                    // TS REF: PromptInput.tsx L604-616 — invert the entire
-                    // [Image #N] chip when the cursor is parked at its
-                    // start (chip.start is the "selected" state).  This
-                    // makes backspace-to-delete visually obvious because
-                    // the whole chip is highlighted, not just the first
-                    // character.  The cursor_ absolute byte offset is
-                    // compared against ref.index (also absolute bytes).
+                    // Invert the entire [Image #N] chip when the cursor
+                    // is parked at its start (chip.start is the "selected"
+                    // state).  This makes backspace-to-delete visually
+                    // obvious because the whole chip is highlighted, not
+                    // just the first character.  The cursor_ absolute byte
+                    // offset is compared against ref.index (also absolute
+                    // bytes).
                     const loom::utils::ReferenceMatch* chip_at_cursor = nullptr;
                     for (const auto& ref : image_refs) {
                         if (static_cast<int>(ref.index) == cursor_) {
@@ -283,7 +281,7 @@ Element TextInputImpl::RenderInputArea() {
                     } else {
                         // End of line cursor — declared-caret style
                         // (same inverse-glyph pattern used mid-line and in
-                        // TS useDeclaredCursor).  A blank space + inverted
+                        // the declared-cursor pattern).  A blank space + inverted
                         // paints a solid block in fg/bg swap = consistent
                         // visual with the mid-line caret.
                         line_parts.push_back(ftxui::text(
@@ -325,7 +323,7 @@ Element TextInputImpl::RenderInputArea() {
 
         // Empty line placeholder — declared-caret style (same as the
         // mid-line / end-of-line caret: inverted blank space = solid
-        // foreground block, matching TS useDeclaredCursor).
+        // foreground block, matching the declared-cursor pattern).
         if (line_len == 0 && is_cursor_line && !has_selection()) {
             line_parts.push_back(ftxui::text(
                 blink_visible_ ? " " : "") |
@@ -337,11 +335,10 @@ Element TextInputImpl::RenderInputArea() {
     }
 
     // --- Placeholder rendering for empty input ---
-    // Delegated to loom::ui::placeholder::RenderPlaceholder which faithfully
-    // ports TS renderPlaceholder.ts + BaseTextInput.tsx lines 91-112:
-    //   * cursor+focus+terminalFocus → invert(placeholder[0]) + dim(rest)
+    // Delegated to loom::ui::placeholder::RenderPlaceholder:
+    //   * cursor+focus+terminal-focus → invert(placeholder[0]) + dim(rest)
     //   * no cursor / no focus     → dim(full placeholder)
-    //   * value empty + has text   → showPlaceholder = true
+    //   * value empty + has text   → show placeholder
     // Prefix (options_.prefix) is passed through for visual consistency.
     if (lines_elements.size() == 1 && lines[0].empty()) {
         namespace ph = loom::ui::placeholder;

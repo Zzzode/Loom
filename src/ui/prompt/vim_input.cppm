@@ -15,7 +15,7 @@ export module loom.ui.prompt.vim_input;
 
 import std;
 
-import loom.ui.foundation.ui_types;  // TS REF: canonical VimMode lives here
+import loom.ui.foundation.ui_types;  // canonical VimMode lives here
 import loom.vim.vim_controller;  // unified VimController state
 
 export namespace loom::ui::prompt::vim_input {
@@ -34,7 +34,7 @@ using namespace ftxui;
 // The CANONICAL vim editing implementation lives in:
 //   loom::ui::components::TextInputImpl  (text_input.cppm)
 // which uses `std::optional<VimMode> vim_mode` in TextInputOptions and has
-// the full HandleVimEvent() state machine matching TS useVimInput.ts.
+// the full HandleVimEvent() state machine.
 //
 // Do NOT add new text-editing logic here.  Extend TextInputImpl instead.
 // ============================================================
@@ -44,8 +44,6 @@ using namespace ftxui;
 // ============================================================
 
 // Canonical VimMode — imported from loom::ui::common (ui_types.cppm).
-// TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
-//          src/hooks/useVimInput.ts:36 (internal state machine tracks more)
 // This replaces the previous local 6-value enum that was missing VisualBlock.
 using loom::ui::common::VimMode;
 
@@ -144,9 +142,9 @@ struct VimInputOptions {
 // Rendering
 // ============================================================
 
-/// Get the cursor shape for the current mode
-/// TS REF: useVimInput.ts — cursor style changes per mode (block for normal,
-/// bar for insert, underline for replace).
+/// Get the cursor shape for the current mode.
+/// Cursor style changes per mode (block for normal, bar for insert,
+/// underline for replace).
 [[nodiscard]] inline CursorShape cursor_for_mode(VimMode mode) {
     switch (mode) {
         case VimMode::Normal:      return CursorShape::Block;
@@ -161,8 +159,8 @@ struct VimInputOptions {
 }
 
 /// Get mode display label and color.
-/// TS REF: vim mode indicator color coding — green=normal, blue=insert,
-/// magenta=visual, red=replace, yellow=command.
+/// Color coding: green=normal, blue=insert, magenta=visual, red=replace,
+/// yellow=command.
 [[nodiscard]] inline std::pair<std::string, Color> mode_display(VimMode mode) {
     switch (mode) {
         case VimMode::Normal:      return {"NORMAL",      Color::Green};
@@ -373,8 +371,8 @@ struct VimInputOptions {
         }
 
         // --- REPLACE MODE ---
-        // TS REF: useVimInput.ts — Replace mode (R) replaces characters at cursor
-        // until Escape exits back to Normal.
+        // Replace mode (R) replaces characters at cursor until Escape
+        // exits back to Normal.
         if (state->vim.mode == VimMode::Replace) {
             if (event == Event::Escape) {
                 set_mode(VimMode::Normal);
@@ -405,7 +403,7 @@ struct VimInputOptions {
         }
 
         // --- NORMAL / VISUAL MODE ---
-        // TS REF: useVimInput.ts:231 — NORMAL mode handles all vim commands.
+        // NORMAL mode handles all vim commands.
         // Visual modes share motion keys with Normal; Escape exits back to Normal.
         bool is_any_visual = (state->vim.mode == VimMode::Visual ||
                               state->vim.mode == VimMode::VisualLine ||
@@ -507,8 +505,8 @@ struct VimInputOptions {
             }
 
             // Operators: dd (delete line), yy (yank line)
-            // TS REF: useVimInput.ts:257 — operator pending state tracks
-            // the first 'd' or 'y' waiting for a motion or second key.
+            // Operator pending state tracks the first 'd' or 'y' waiting
+            // for a motion or second key.
             if (event == Event::Character('d')) {
                 if (state->vim.pending_operator == "d") {
                     // dd = delete current line

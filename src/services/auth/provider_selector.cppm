@@ -1,19 +1,11 @@
 // Enterprise Auth dispatch (P0-5 BYOC).  Centralized provider detection +
-// credential resolution + auth header attachment, per TS client.ts 4-way
-// branch.
+// credential resolution + auth header attachment, 4-way branch.
 //
-// Provider selection priority (same as `providers.ts::getAPIProvider()`):
+// Provider selection priority:
 //     1. BEDROCK    — LOOM_USE_BEDROCK
 //     2. VERTEX     — LOOM_USE_VERTEX
 //     3. FOUNDRY    — LOOM_USE_FOUNDRY
 //     4. firstParty — default, Messages API
-//
-// Note: upstream TS has a BUG where `client.ts` branches BEDROCK > FOUNDRY >
-// VERTEX while `providers.ts` says BEDROCK > VERTEX > FOUNDRY.  We choose the
-// providers.ts ordering (more "cloud-native providers first") because it is
-// the ordering used by `categorizeRetryableAPIError` and other downstream
-// code that dispatches on `getAPIProvider()`.  If both VERTEX and FOUNDRY are
-// set, VERTEX wins.  The bug is on the TS side and is being tracked there.
 //
 // Authentication per provider:
 //
@@ -68,8 +60,7 @@ enum class EnterpriseProvider {
 
 // ---------------------------------------------------------------------------
 // Detect the active provider from environment variables.  Call once at
-// startup; environment variables are not re-read mid-session (same contract
-// as TS upstream).
+// startup; environment variables are not re-read mid-session.
 // ---------------------------------------------------------------------------
 [[nodiscard]] inline EnterpriseProvider detect_active_provider() {
     using loom::utils::env::is_env_truthy;
@@ -257,7 +248,7 @@ private:
         out.bedrock_path = bedrock_path_for_model(out.model_id, streaming);
         out.endpoint_host = extract_host_from_url(out.base_url);
 
-        // Bearer bypass (highest priority) — TS client.ts L175.
+        // Bearer bypass (highest priority).
         if (bedrock_mode_.bearer_token) {
             out.headers.emplace_back("Authorization",
                                      "Bearer " + *bedrock_mode_.bearer_token);

@@ -1,10 +1,6 @@
 // @file parse_references.cppm
 // @brief Inline-[Image #N] / [Pasted text #N +K lines] / [...Truncated text #N]
 // placeholder parsing and formatting.
-//
-// TS REF: src/history.ts L51-100 (formatPastedTextRef, formatImageRef,
-// parseReferences, expandPastedTextRefs).  Ported 1:1, regex pattern is a
-// character-for-character ECMAScript-mode translation.
 module;
 
 #include <cstddef>
@@ -15,39 +11,32 @@ import std;
 
 export namespace loom::utils {
 
-/// A single placeholder match, 1:1 with TS `{id, match, index}`.  `index` is a
-/// UTF-8 byte offset (same semantics as String.prototype.matchAll index on a
-/// UTF-8 string — TS operates on UTF-16 code units, but for ASCII placeholders
-/// the two offsets are identical so the difference is unobservable here).
+/// A single placeholder match. `index` is a UTF-8 byte offset.
 struct ReferenceMatch {
     int id;
     std::string match;
     std::size_t index;
 };
 
-/// TS REF: src/history.ts L58 formatImageRef
 [[nodiscard]] inline std::string format_image_ref(int id) {
     return std::format("[Image #{}]", id);
 }
 
-/// TS REF: src/history.ts L51 formatPastedTextRef.  numLines == 0 ⇒ no
-/// "+N lines" suffix (TS behaviour: newline count, not line count).
+/// numLines == 0 ⇒ no "+N lines" suffix (newline count, not line count).
 [[nodiscard]] inline std::string format_pasted_text_ref(int id, int num_lines) {
     if (num_lines <= 0) return std::format("[Pasted text #{}]", id);
     return std::format("[Pasted text #{} +{} lines]", id, num_lines);
 }
 
-/// TS REF: src/components/PromptInput/inputPaste.ts L57 formatTruncatedTextRef
 /// Produces "[...Truncated text #N +M lines...]" — the placeholder inserted
 /// between head(500) and tail(500) when a >10K char paste is truncated.
 [[nodiscard]] inline std::string format_truncated_text_ref(int id, int num_lines) {
     return std::format("[...Truncated text #{} +{} lines...]", id, num_lines);
 }
 
-/// TS REF: src/history.ts L47 getPastedTextRefNumLines
 /// Counts newline matches using /\r\n|\r|\n/g semantics — equivalent to the
 /// number of line-BREAK sequences in the text.  For "a\nb\nc" this returns 2
-/// (NOT 3), matching TS's "newline count, not line count" convention.
+/// (NOT 3), following the "newline count, not line count" convention.
 ///
 /// Algorithm: walk the string once, counting each \r\n pair as 1 break, each
 /// standalone \r or \n as 1 break.
@@ -68,20 +57,17 @@ struct ReferenceMatch {
     return count;
 }
 
-/// TS REF: src/history.ts L62 parseReferences
 /// Pattern (ECMAScript, g):
 ///   /\[(Pasted text|Image|\.\.\.Truncated text) #(\d+)(?: \+\d+ lines)?(\.)*\]/g
 /// Returns matches in increasing `index` order; entries with `id <= 0` are
-/// dropped (TS filter semantic at L74).
+/// dropped.
 [[nodiscard]] inline std::vector<ReferenceMatch> parse_references(std::string_view input) {
     // std::basic_regex has no string_view ctor — materialize once.
     const std::string s(input);
     // NOTE: ECMAScript mode is the default; std::regex ECMAScript grammar
-    // supports exactly the features used in the TS pattern (alternation,
+    // supports exactly the features used in the pattern (alternation,
     // capturing groups, non-capturing groups, ?, *, +, \d, character class
-    // escapes on literals).  `\.\.\.` ⇒ `\.\.\.` (literal dots), TS has them
-    // as `...` which are just literal dots inside a [] context, but to stay
-    // character-for-character identical we keep the escapes.
+    // escapes on literals).
     static const std::regex pattern(
         R"(\[(Pasted text|Image|\.\.\.Truncated text) #(\d+)(?: \+\d+ lines)?(\.)*\])",
         std::regex::ECMAScript);
@@ -97,11 +83,10 @@ struct ReferenceMatch {
         try {
             id = std::stoi(m[2].str());
         } catch (...) {
-            // Out of range or empty — skip (TS parseInt returns NaN ⇒ coerced
-            // to 0, then filtered out).
+            // Out of range or empty — skip.
             id = 0;
         }
-        if (id <= 0) continue;  // TS L74: filter(match => match.id > 0)
+        if (id <= 0) continue;
         out.push_back(ReferenceMatch{
             .id = id,
             .match = m[0].str(),
@@ -111,13 +96,11 @@ struct ReferenceMatch {
     return out;
 }
 
-/// TS REF: src/components/PromptInput/inputPaste.ts L20-55 maybeTruncateMessageForInput
-///
 /// If `text.size() > 10000`, truncates to head(500) + [...Truncated text #N +M lines...] +
 /// tail(500).  Returns the display text and the truncated middle content (empty if
 /// no truncation was applied).  `paste_id` is used in the placeholder ref.
 ///
-/// Constants (TS REF: inputPaste.ts L4-5):
+/// Constants:
 ///   TRUNCATION_THRESHOLD = 10000  (chars before truncation kicks in)
 ///   PREVIEW_LENGTH       = 1000   (total chars preserved: 500 head + 500 tail)
 struct TruncatedPasteResult {
@@ -148,12 +131,11 @@ struct TruncatedPasteResult {
     return TruncatedPasteResult{std::move(out), std::move(middle)};
 }
 
-/// TS REF: src/history.ts L81 expandPastedTextRefs
 /// Replace [Pasted text #N] (and [...Truncated text #N]) placeholders with
 /// their stored text content.  [Image #N] refs are left untouched — they
 /// become content blocks, not inline text.  The replacement is done in
 /// reverse match order so earlier byte-offsets stay valid after later
-/// splices (same strategy as TS).
+/// splices.
 ///
 /// The `PastedContent` type is intentionally not imported here — callers pass
 /// a lookup lambda `get_text_content(id)` that returns std::optional<std::string>

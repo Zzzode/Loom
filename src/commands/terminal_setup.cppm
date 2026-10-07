@@ -185,12 +185,11 @@ namespace detail {
     return file_content.find(start_marker) != std::string_view::npos;
 }
 
-/// TS REF: src/commands/terminalSetup/terminalSetup.tsx L54-72 formatPathLink().
 /// Returns an OSC 8 file:// hyperlink wrapping the plain path, or the bare
 /// path when the terminal does not advertise hyperlink support. The gate
-/// lives inside loom::utils::make_hyperlink(), matching the TS early return.
-/// Unlike TS (BEL ST), the helper emits ST as ESC-backslash; both are
-/// legal OSC 8 terminators. The display text is the untouched path so it
+/// lives inside loom::utils::make_hyperlink().
+/// The helper emits ST as ESC-backslash, a legal OSC 8 terminator.
+/// The display text is the untouched path so it
 /// stays human-readable inside the escape sequence.
 [[nodiscard]] inline std::string format_path_link(std::string_view file_path) {
     const std::string url =
@@ -274,7 +273,7 @@ namespace detail {
 }
 
 /// Generate the shell-completion invocation for a given shell kind.
-/// These are placeholders that match the TS completion-cache module's output shape.
+/// These are placeholders for the completion-cache module's output shape.
 [[nodiscard]] inline std::string completion_snippet(ShellKind kind) {
     switch (kind) {
         case ShellKind::Bash: return R"SYS_3(# Completions for loom
@@ -424,7 +423,6 @@ struct ApplyResult {
         if (existing.empty() && fs::file_size(shell.rc_path, ec) > 0) {
             // File exists but we couldn't read it — bail out to avoid corrupting it
             r.succeeded = false;
-            // TS REF: terminalSetup.tsx L237/L436/L495 — bail paths are user-facing and linked.
             r.report = std::format("Failed to read existing rc file: {}",
                                    detail::format_path_link(shell.rc_path));
             return r;
@@ -481,8 +479,7 @@ struct ApplyResult {
         oss << "\nBackup created at:\n"
             << "  " << detail::format_path_link(r.backup_path) << "\n";
     }
-    // TS REF: terminalSetup.tsx never wraps executable instructions — the
-    // `source <rc>` line must stay plain so copy-paste execution works.
+    // The `source <rc>` line must stay plain so copy-paste execution works.
     oss << "\nTo take effect in this shell session run:\n"
         << "  source " << shell.rc_path << "\n"
         << "Or start a new terminal.";

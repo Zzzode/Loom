@@ -1,7 +1,7 @@
 // bash_validation.cppm
 // Aggregate module for BashTool validation concerns.
 //
-// ORIGINAL NOTE (Agent 3 — migration):
+// ORIGINAL NOTE (Agent 3):
 //   This module originally contained empty stub implementations of
 //   validate_mode / validate_paths / validate_read_only / is_destructive_command /
 //   get_destructive_warning.  Those have been replaced by dedicated
@@ -123,8 +123,7 @@ inline EnvelopeResult validate_read_only(std::string_view command) {
 // ── Destructive-command detection (delegates to destructive_command_warning
 //    module which exports the same functions into loom::tools::bash_validation) ──
 
-// ── sed validation (kept as a passthrough — TS version lives in separate
-//    sedValidation.ts which Agent 3 is NOT migrating per task scope) ─────────
+// ── sed validation (kept as a passthrough) ─────────
 
 inline EnvelopeResult validate_sed_command(std::string_view sed_expr) {
     // Conservative: the read-only allowlist only accepts -n print-mode sed.

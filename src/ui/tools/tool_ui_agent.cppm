@@ -1,14 +1,8 @@
 /// @file tool_ui_agent.cppm
-/// @brief Agent tool UI — userFacingName, renderToolUseMessage, etc.
+/// @brief Agent tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.agent
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/AgentTool/AgentTool.tsx
-///   - userFacingName: "Agent"
-///   - renderToolUseMessage: task description
-///   - isTransparentWrapper: false
 module;
 
 
@@ -125,10 +119,9 @@ namespace detail {
 
     fns.is_transparent_wrapper = true;
 
-    // TS REF: AgentTool — renderToolResultMessage shows the agent's final
-    // output text (natural-language summary + tool results).  The output IS
-    // visible on screen, so we index it.  AgentTool produces natural-language
-    // results that users want to search.
+    // The agent's final output text (natural-language summary + tool
+    // results) is visible on screen, so we index it.  The agent produces
+    // natural-language results that users want to search.
     fns.extract_search_text = [](
         std::string_view output_text,
         std::string_view /*error_text*/) -> std::optional<std::string>

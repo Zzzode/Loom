@@ -42,7 +42,7 @@ enum class PermissionToolKind : std::uint8_t {
     _COUNT,
 };
 
-/// Permission prompt subset (TS ToolUseConfirm).  Full shape: UI8/UI9.
+/// Permission prompt subset.  Full shape: UI8/UI9.
 /// Moved here from repl_state.cppm in RFC 0002 F3 (PermissionStore shard).
 struct PermissionRequestInfo {
     std::string tool_name, description;

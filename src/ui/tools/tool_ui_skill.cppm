@@ -1,14 +1,8 @@
 /// @file tool_ui_skill.cppm
-/// @brief Skill tool UI — userFacingName, renderToolUseMessage, etc.
+/// @brief Skill tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.skill
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/SkillTool/SkillTool.tsx
-///   - userFacingName: "Skill"
-///   - renderToolUseMessage: skill name
-///   - isTransparentWrapper: false
 module;
 
 
@@ -100,9 +94,8 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: SkillTool — renderToolResultMessage shows the skill's output
-    // (workflow results, generated text).  The output IS visible on screen,
-    // so we index it for search.
+    // The skill's output (workflow results, generated text) is visible on
+    // screen, so we index it for search.
     fns.extract_search_text = [](
         std::string_view output_text,
         std::string_view /*error_text*/) -> std::optional<std::string>

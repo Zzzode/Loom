@@ -1,0 +1,247 @@
+/// @file screen_normalize.hpp
+/// @brief Screen text normalization for golden snapshot tests.
+///
+/// Consolidates the ANSI-stripping and snapshot-normalization logic that
+/// existed in two copies (test_markdown_render_snapshot.cpp and the
+/// CSI-only strip_ansi in test_ui_helpers.h). Both the markdown snapshot
+/// suite and the streaming replay suite (RFC 0003) use this header so
+/// golden files are produced by one implementation.
+///
+/// All functions are header-only (inline) and depend only on textual
+/// standard-library includes — no module imports — so this header can be
+/// included by any test TU without import-ordering constraints.
+
+#pragma once
+
+#include <cstddef>
+#include <string>
+#include <string_view>
+
+namespace loom::testing {
+
+/// Strip CSI (ESC[...final) and OSC (ESC]...BEL or ESC]...ESC-backslash)
+/// escape sequences from rendered screen text.
+///
+/// This is the OSC-aware version: it handles OSC 8 hyperlink sequences
+/// (ESC ] 8 ; ... BEL) that the CSI-only strip_ansi in test_ui_helpers.h
+/// leaves behind. Ported verbatim from test_markdown_render_snapshot.cpp.
+[[nodiscard]] inline std::string strip_ansi_osc_aware(std::string_view text) {
+    std::string out;
+    out.reserve(text.size());
+    std::size_t i = 0;
+    while (i < text.size()) {
+        if (text[i] == '\x1b' && i + 1 < text.size()) {
+            char next = text[i + 1];
+            if (next == '[') {
+                // CSI: ESC [ ... final byte (0x40-0x7E)
+                i += 2;
+                while (i < text.size() &&
+                       !(text[i] >= 0x40 && text[i] <= 0x7e)) ++i;
+                if (i < text.size()) ++i;  // skip final byte
+                continue;
+            }
+            if (next == ']') {
+                // OSC: ESC ] ... BEL or ESC-backslash
+                i += 2;
+                while (i < text.size()) {
+                    if (text[i] == '\x07') { ++i; break; }
+                    if (text[i] == '\x1b' && i + 1 < text.size() &&
+                        text[i + 1] == '\\') { i += 2; break; }
+                    ++i;
+                }
+                continue;
+            }
+        }
+        out += text[i];
+        ++i;
+    }
+    return out;
+}
+
+/// Normalize rendered screen text for golden snapshot comparison.
+///
+/// Pipeline:
+///   1. Strip ANSI (CSI + OSC) escape sequences.
+///   2. Replace spinner glyphs (the 10 braille frames from
+///      design_figures.cppm kSpinnerFramesBraille) with "<spinner>".
+///   2b. Replace the task-view chrome spinner segment ("<glyph> <verb>…<dots>")
+///       with placeholders — all three parts are non-deterministic.
+///   3. Replace relative timestamps ("just now", "Xs ago", "Xm ago",
+///      "Xh ago", "Xd ago") with "<timestamp>".
+///   4. Trim trailing whitespace per line.
+///   5. Collapse trailing blank lines.
+///
+/// The spinner and timestamp normalization is necessary because both are
+/// wall-clock-driven and non-deterministic in replay (RFC 0003 §7.4).
+[[nodiscard]] inline std::string normalize_screen(std::string_view raw) {
+    std::string clean = strip_ansi_osc_aware(raw);
+
+    // ── Step 2: spinner glyph normalization ────────────────────────────
+    // The 10 braille spinner frames are all 3-byte UTF-8 sequences in the
+    // range E2 A0 8B – E2 A0 8F (see design_figures.cppm). Replace each
+    // with the placeholder "<spinner>" so golden files are deterministic
+    // regardless of which frame the wall-clock ticker selected.
+    {
+        std::string tmp;
+        tmp.reserve(clean.size());
+        for (std::size_t i = 0; i < clean.size();) {
+            if (i + 3 <= clean.size() &&
+                static_cast<unsigned char>(clean[i]) == 0xE2 &&
+                static_cast<unsigned char>(clean[i + 1]) == 0xA0) {
+                switch (static_cast<unsigned char>(clean[i + 2])) {
+                    case 0x8B:  // ⠋ U+280B
+                    case 0x99:  // ⠙ U+2819
+                    case 0xB9:  // ⠹ U+2839
+                    case 0xB8:  // ⠸ U+2838
+                    case 0xBC:  // ⠼ U+283C
+                    case 0xB4:  // ⠴ U+2834
+                    case 0xA6:  // ⠦ U+2826
+                    case 0xA7:  // ⠧ U+2827
+                    case 0x87:  // ⠇ U+2807
+                    case 0x8F:  // ⠏ U+280F
+                        tmp += "<spinner>";
+                        i += 3;
+                        continue;
+                    default:
+                        break;
+                }
+            }
+            tmp += clean[i];
+            ++i;
+        }
+        clean = std::move(tmp);
+    }
+
+    // ── Step 2b: chrome spinner line normalization ────────────────────
+    // The task-view chrome spinner (RenderSpinner in
+    // repl_screen_welcome.cpp) is non-deterministic in three ways:
+    //   - glyph: 8 teardrop-asterisk frames indexed by (wall-clock) frame
+    //   - verb: randomly sampled from SPINNER_VERBS via std::random_device
+    //     whenever spinner_verb is nullopt — which every text
+    //     content_block_delta causes (app_handle_submit.cpp sets it to
+    //     nullopt on entering "Responding" mode)
+    //   - dots: 3-dot blink cycle, also wall-clock-driven
+    // Replace the whole "<glyph> <verb>…<dots>" segment with placeholders.
+    // The two leading spaces (spinner left padding) are left intact.
+    {
+        // Whether s[i..i+3) is one of the 8 teardrop-asterisk glyphs from
+        // RenderSpinner's kGlyphs (✻ ❋ ✦ ✧ ✶ ✷ ✸ ✹).
+        auto is_chrome_glyph = [](const std::string& s, std::size_t i) {
+            if (i + 3 > s.size()) return false;
+            if (static_cast<unsigned char>(s[i]) != 0xE2) return false;
+            const auto b2 = static_cast<unsigned char>(s[i + 1]);
+            const auto b3 = static_cast<unsigned char>(s[i + 2]);
+            // ✻ U+273B, ✦ U+2726, ✧ U+2727, ✶ U+2736, ✷ U+2737,
+            // ✸ U+2738, ✹ U+2739
+            if (b2 == 0x9C && (b3 == 0xBB || b3 == 0xA6 || b3 == 0xA7 ||
+                               b3 == 0xB6 || b3 == 0xB7 || b3 == 0xB8 ||
+                               b3 == 0xB9))
+                return true;
+            // ❋ U+274B
+            if (b2 == 0x9D && b3 == 0x8B)
+                return true;
+            return false;
+        };
+
+        std::string tmp;
+        tmp.reserve(clean.size());
+        for (std::size_t i = 0; i < clean.size();) {
+            // Require the two leading spaces of the spinner padding so a
+            // glyph that happens to appear in message content is not
+            // mistaken for the chrome spinner.
+            if (i >= 2 && clean[i - 1] == ' ' && clean[i - 2] == ' ' &&
+                is_chrome_glyph(clean, i) && i + 3 < clean.size() &&
+                clean[i + 3] == ' ') {
+                // Match: <glyph> <verb>…<dots>
+                std::size_t j = i + 4;  // skip glyph + space
+                const std::size_t verb_start = j;
+                while (j < clean.size() &&
+                       ((clean[j] >= 'A' && clean[j] <= 'Z') ||
+                        (clean[j] >= 'a' && clean[j] <= 'z') ||
+                        clean[j] == '\''))
+                    ++j;
+                // … is U+2026 (E2 80 A6); dots are 1-3 '.' (blink cycle).
+                if (j > verb_start && j + 3 <= clean.size() &&
+                    clean.compare(j, 3, "\xE2\x80\xA6") == 0) {
+                    std::size_t k = j + 3;
+                    while (k < clean.size() && clean[k] == '.') ++k;
+                    if (k > j + 3) {
+                        tmp += "<spinner> <verb>\xE2\x80\xA6.";
+                        i = k;
+                        continue;
+                    }
+                }
+            }
+            tmp += clean[i];
+            ++i;
+        }
+        clean = std::move(tmp);
+    }
+
+    // ── Step 3: timestamp normalization ────────────────────────────────
+    // The UI renders relative timestamps as "just now", "Xs ago",
+    // "Xm ago", "Xh ago", "Xd ago" (message_timestamp.cppm). These are
+    // wall-clock-driven and non-deterministic in replay.
+    {
+        std::string tmp;
+        tmp.reserve(clean.size());
+        for (std::size_t i = 0; i < clean.size();) {
+            // "just now" (8 chars)
+            if (i + 8 <= clean.size() &&
+                clean.compare(i, 8, "just now") == 0) {
+                tmp += "<timestamp>";
+                i += 8;
+                continue;
+            }
+            // "Xs ago" / "Xm ago" / "Xh ago" / "Xd ago"
+            // (1+ digits + unit + " ago" = digits + 5 chars)
+            if (clean[i] >= '0' && clean[i] <= '9') {
+                std::size_t j = i;
+                while (j < clean.size() &&
+                       clean[j] >= '0' && clean[j] <= '9') ++j;
+                if (j + 5 <= clean.size() &&
+                    (clean[j] == 's' || clean[j] == 'm' ||
+                     clean[j] == 'h' || clean[j] == 'd') &&
+                    clean.compare(j + 1, 4, " ago") == 0) {
+                    tmp += "<timestamp>";
+                    i = j + 5;
+                    continue;
+                }
+            }
+            tmp += clean[i];
+            ++i;
+        }
+        clean = std::move(tmp);
+    }
+
+    // ── Steps 4-5: trim trailing whitespace + collapse trailing blanks ─
+    std::string result;
+    std::string line;
+    for (std::size_t i = 0; i < clean.size(); ++i) {
+        if (clean[i] == '\n') {
+            while (!line.empty() &&
+                   (line.back() == ' ' || line.back() == '\t' ||
+                    line.back() == '\r'))
+                line.pop_back();
+            result += line;
+            result += '\n';
+            line.clear();
+        } else {
+            line += clean[i];
+        }
+    }
+    // Last line (Screen::ToString may not end with \n)
+    while (!line.empty() &&
+           (line.back() == ' ' || line.back() == '\t' ||
+            line.back() == '\r'))
+        line.pop_back();
+    result += line;
+
+    // Collapse trailing blank lines
+    while (!result.empty() && result.back() == '\n')
+        result.pop_back();
+
+    return result;
+}
+
+}  // namespace loom::testing

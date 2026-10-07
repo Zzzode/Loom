@@ -1,12 +1,8 @@
 /// @file plugin_manage.cppm
 /// @brief Pure-logic pieces of plugin management and validation.
 ///
-/// Translated from two TS modules:
-///   - ManagePlugins.tsx    (state, filtering, bulk operations on installed
-///                          plugins — all *non-React* parts)
-///   - ValidatePlugin.tsx   (validation output formatting and the
-///                          "validate a path" CLI orchestration — the React
-///                          wrapper is deferred)
+/// Covers installed-plugin list/filter/bulk operations and validation
+/// output formatting plus the "validate a path" CLI orchestration.
 ///
 /// All heavy lifting (manifest validation, plugin enable/disable, etc.) is
 /// delegated to the shared `utils/plugin_*` modules.  This layer only
@@ -32,7 +28,7 @@ namespace fs = std::filesystem;
 using namespace loom::commands::plugin_helpers;
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 1.  Installed-plugin list helpers  (pure data transforms from TS ManagePlugins)
+// 1.  Installed-plugin list helpers
 // ═════════════════════════════════════════════════════════════════════════════
 
 /// A display row for the "Installed" tab.  UI rendering (FTXUI) is Phase 4.
@@ -61,7 +57,7 @@ struct InstalledPluginRow {
     return "unknown";
 }
 
-/// Predicate used by the search filter in ManagePlugins (TS).
+/// Predicate used by the installed-plugin search filter.
 /// Matches against name, marketplace, or description (case-insensitive).
 [[nodiscard]] inline bool row_matches_query(const InstalledPluginRow& row,
                                              std::string_view query) {
@@ -84,10 +80,10 @@ struct BulkActionResult {
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 2.  Validate-plugin CLI formatting  (from TS ValidatePlugin)
+// 2.  Validate-plugin CLI formatting
 // ═════════════════════════════════════════════════════════════════════════════
 
-/// Characters used by the TS code (figures cross/tick/pointer + warning).
+/// Figure characters (cross/tick/pointer + warning).
 /// Using plain ASCII / common Unicode so this module stays header-light.
 inline constexpr std::string_view k_cross    = "\xe2\x9c\x97";   // ✗
 inline constexpr std::string_view k_tick     = "\xe2\x9c\x93";   // ✓
@@ -111,7 +107,7 @@ or .claude-plugin/plugin.json (prefers marketplace if both exist).
 Or from the command line:
   loom plugin validate <path>)";
 
-/// Count-based plural (TS `plural(n, "error")` -> "error" | "errors").
+/// Count-based plural ("error" -> "errors").
 inline std::string plural(std::size_t n, std::string_view noun) {
     std::string s{noun};
     if (n == 1) return s;
@@ -121,9 +117,9 @@ inline std::string plural(std::size_t n, std::string_view noun) {
     return s;
 }
 
-/// Format a ValidationResult (from plugin_validation) into a display string
-/// exactly matching the TS output.  Also returns a suggested process exit
-/// code: 0 = success, 1 = validation errors, 2 = unexpected exception.
+/// Format a ValidationResult (from plugin_validation) into a display string.
+/// Also returns a suggested process exit code: 0 = success,
+/// 1 = validation errors, 2 = unexpected exception.
 struct ValidateOutput {
     std::string text;
     int exit_code = 0;
@@ -208,7 +204,7 @@ struct ValidateOutput {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 3.  Plugin-option target lookup  (from TS PluginOptionsFlow.findPluginOptionsTarget)
+// 3.  Plugin-option target lookup
 // ═════════════════════════════════════════════════════════════════════════════
 
 /// After a successful install, determine which LoadedPlugin corresponds to
@@ -231,7 +227,7 @@ struct ValidateOutput {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 4.  Marketplace add validation  (from TS AddMarketplace.handleAdd)
+// 4.  Marketplace add validation
 // ═════════════════════════════════════════════════════════════════════════════
 
 /// Data-only result of preparing a "parse + add marketplace" flow.
@@ -246,8 +242,7 @@ struct MarketplaceAddPlan {
 };
 
 /// Lightweight input classification — defers to `utils/plugin_marketplace`
-/// for the real parse.  This mirrors the TS `parseMarketplaceInput`
-/// preliminary branch that decides which kind of source the user gave us.
+/// for the real parse. Decides which kind of source the user gave us.
 [[nodiscard]] inline MarketplaceAddPlan classify_marketplace_input(std::string_view input) {
     MarketplaceAddPlan p;
     if (input.empty()) {

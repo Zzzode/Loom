@@ -1,12 +1,8 @@
 /// @file theme_provider.cppm
-/// @brief Lightweight "theme provider" analog of the TS ThemeContext.
-/// TS side reference:
-///   src/components/design-system/ThemeProvider.tsx   – React context +
-///       auto mode driven by an OSC-11 terminal bg watcher
-///   src/components/design-system/ThemedBox.tsx       – resolveColor()
-///   src/components/design-system/ThemedText.tsx      – dimColor → theme.inactive
-///   src/utils/theme.ts                               – ThemeName enum
-/// We intentionally do NOT carry the full 89-field TS Theme struct across the
+/// @brief Lightweight theme provider with a global default and explicit
+/// per-call theme values.
+///
+/// We intentionally do NOT carry the full 89-field theme struct across the
 /// FFI; the Provider here exposes the compact Palette + accessibility flags
 /// that the design primitives actually consume.  Full field access remains
 /// available via the legacy ui/design/themed_text.cppm module.
@@ -74,16 +70,16 @@ struct Theme {
     return &palette::dark;
 }
 
-/// Parse a TS-side ThemeName string ("dark", "light-daltonized", …).
-/// Returns Dark on unrecognized input (matches TS getTheme() fallback).
+/// Parse a theme variant name string ("dark", "light-daltonized", …).
+/// Returns Dark on unrecognized input.
 [[nodiscard]] inline ThemeVariant parse_variant(std::string_view name) noexcept {
     if (name == "dark")                     return ThemeVariant::Dark;
     if (name == "light")                    return ThemeVariant::Light;
     if (name == "dark-daltonized")          return ThemeVariant::DarkDaltonized;
     if (name == "light-daltonized")         return ThemeVariant::LightDaltonized;
     if (name == "monochrome" || name == "ansi") return ThemeVariant::Monochrome;
-    if (name == "light-ansi")               return ThemeVariant::LightAnsi;   // TS REF: src/utils/theme.ts THEME_NAMES
-    if (name == "dark-ansi")                return ThemeVariant::DarkAnsi;    // TS REF: src/utils/theme.ts THEME_NAMES
+    if (name == "light-ansi")               return ThemeVariant::LightAnsi;
+    if (name == "dark-ansi")                return ThemeVariant::DarkAnsi;
     if (name == "auto")                     return ThemeVariant::Auto;
     return ThemeVariant::Dark;
 }
@@ -101,9 +97,7 @@ struct Theme {
     return "dark";
 }
 
-/// Enumerate all concrete theme variant names (TS REF: src/utils/theme.ts
-/// THEME_NAMES = ['dark','light','light-daltonized','dark-daltonized',
-/// 'light-ansi','dark-ansi'] + THEME_SETTINGS adds 'auto').
+/// Enumerate all concrete theme variant names.
 /// Returns a sorted array of all user-selectable theme setting strings.
 [[nodiscard]] inline std::array<std::string_view, 7> all_theme_names() noexcept {
     return {{
@@ -117,11 +111,11 @@ struct Theme {
     }};
 }
 
-// ─── Global mutable provider (replaces React Context) ────────────────────────
+// ─── Global mutable provider ─────────────────────────────────────────────────
 // The design-system primitives are pure functions of `const Theme&`; the
 // provider simply exposes a thread-local default.  Coordinators that need to
-// drive preview themes (ThemeProvider.tsx preview mode) should keep their own
-// `Theme` value and pass it explicitly to each primitive.
+// drive preview themes should keep their own `Theme` value and pass it
+// explicitly to each primitive.
 namespace detail {
 
 struct ThemeHolder {
@@ -162,7 +156,7 @@ inline void set_theme(Theme t) noexcept {
     h.current = std::move(t);
 }
 
-// ─── resolve_color (mirrors ThemedBox.tsx) ───────────────────────────────────
+// ─── resolve_color ───────────────────────────────────────────────────────────
 /// Given a color string of unknown provenance — either a literal form like
 /// "rgb(r,g,b)" / "#RRGGBB" / "ansi:code" / "ansi256(n)" OR a Theme key such
 /// as "loom", "success" — return the corresponding ftxui::Color.  Unknown
@@ -205,7 +199,7 @@ inline void set_theme(Theme t) noexcept {
     }
     if (color.size() >= 5 && color.substr(0, 5) == "ansi:") {
         // ansi:N  —  palette16 index (0..15)
-        // ansi:<name>  —  named palette16 color (TS REF: src/utils/theme.ts ansi:* forms)
+        // ansi:<name>  —  named palette16 color
         auto rest = color.substr(5);
         if (!rest.empty() && rest.front() >= '0' && rest.front() <= '9') {
             int n = 0;
@@ -214,10 +208,10 @@ inline void set_theme(Theme t) noexcept {
             }
             return ftxui::Color{static_cast<ftxui::Color::Palette16>(n & 0xf)};
         }
-        // Named ANSI colors (TS: ansi:black, ansi:redBright, etc.)
-        // FTXUI naming: idx 7 = GrayLight (TS calls "ansi:white"),
-        //               idx 15 = White (TS calls "ansi:whiteBright"),
-        //               *Bright TS names → FTXUI *Light enum values.
+        // Named ANSI colors
+        // FTXUI naming: idx 7 = GrayLight,
+        //               idx 15 = White,
+        //               *Bright names → FTXUI *Light enum values.
         if (rest == "black")       return ftxui::Color{ftxui::Color::Palette16::Black};
         if (rest == "red")         return ftxui::Color{ftxui::Color::Palette16::Red};
         if (rest == "green")       return ftxui::Color{ftxui::Color::Palette16::Green};
@@ -225,7 +219,7 @@ inline void set_theme(Theme t) noexcept {
         if (rest == "blue")        return ftxui::Color{ftxui::Color::Palette16::Blue};
         if (rest == "magenta")     return ftxui::Color{ftxui::Color::Palette16::Magenta};
         if (rest == "cyan")        return ftxui::Color{ftxui::Color::Palette16::Cyan};
-        if (rest == "white")       return ftxui::Color{ftxui::Color::Palette16::GrayLight};  // TS ansi:white = idx 7
+        if (rest == "white")       return ftxui::Color{ftxui::Color::Palette16::GrayLight};
         if (rest == "blackBright") return ftxui::Color{ftxui::Color::Palette16::GrayDark};
         if (rest == "redBright")   return ftxui::Color{ftxui::Color::Palette16::RedLight};
         if (rest == "greenBright") return ftxui::Color{ftxui::Color::Palette16::GreenLight};
@@ -233,7 +227,7 @@ inline void set_theme(Theme t) noexcept {
         if (rest == "blueBright")  return ftxui::Color{ftxui::Color::Palette16::BlueLight};
         if (rest == "magentaBright")return ftxui::Color{ftxui::Color::Palette16::MagentaLight};
         if (rest == "cyanBright")  return ftxui::Color{ftxui::Color::Palette16::CyanLight};
-        if (rest == "whiteBright") return ftxui::Color{ftxui::Color::Palette16::White};      // TS ansi:whiteBright = idx 15
+        if (rest == "whiteBright") return ftxui::Color{ftxui::Color::Palette16::White};
         return ftxui::Color{ftxui::Color::Palette16::GrayLight};  // fallback
     }
     if (color.size() >= 8 && color.substr(0, 7) == "ansi256") {
@@ -244,7 +238,7 @@ inline void set_theme(Theme t) noexcept {
         return ftxui::Color{static_cast<ftxui::Color::Palette256>(n & 0xff)};
     }
 
-    // ── Theme key lookup (subset of the 89 TS fields we actually use) ────
+    // ── Theme key lookup (subset of the theme fields we actually use) ────
     auto& p = *theme.palette;
     if (color == "loom" || color == "loom_body" || color == "primary")
         return p.primary;
@@ -268,7 +262,6 @@ inline void set_theme(Theme t) noexcept {
     if (color == "diffAddedWord") return p.diff_added_word;
     if (color == "diffRemovedWord") return p.diff_removed_word;
     // ── New tokens (GAP: clr-missing-42-tokens-struct + clr-shimmer-tokens-missing)
-    // TS REF: src/utils/theme.ts Theme type full field list
     if (color == "permissionShimmer" || color == "permission_shimmer")
         return p.permission_shimmer;
     if (color == "inactiveShimmer" || color == "inactive_shimmer")
@@ -336,9 +329,8 @@ inline void set_theme(Theme t) noexcept {
     if (color == "rainbow_indigo_shimmer") return p.rainbow_shimmer_stops[5];
     if (color == "rainbow_violet_shimmer") return p.rainbow_shimmer_stops[6];
 
-    // ── Missing TS theme field names (GAP: palette-tokens) ─────────────────
-    // TS REF: src/utils/theme.ts Theme type — 69 fields; these 17 were not
-    // handled above and silently fell through to p.text.
+    // ── Additional theme field names (GAP: palette-tokens) ───────────────
+    // These 17 were not handled above and silently fell through to p.text.
     if (color == "autoAccept" || color == "auto_accept")
         return p.auto_accept;
     if (color == "bashBorder" || color == "bash_border")
@@ -357,7 +349,7 @@ inline void set_theme(Theme t) noexcept {
         return p.rate_limit_empty;
     if (color == "briefLabel" || color == "brief_label")
         return p.brief_label;
-    // Rainbow per-stop base colors (TS: rainbow_red, rainbow_orange, ...)
+    // Rainbow per-stop base colors
     if (color == "rainbow_red")    return p.rainbow[0];
     if (color == "rainbow_orange") return p.rainbow[1];
     if (color == "rainbow_yellow") return p.rainbow[2];
@@ -372,7 +364,7 @@ inline void set_theme(Theme t) noexcept {
 }
 
 // ─── Apply a theme role to a raw ftxui::Component (catch-event-style wrapper)
-// PHASE_5 NOTE: FTXUI does not have a React-style context provider; instead,
+// PHASE_5 NOTE: FTXUI does not have a context-provider pattern; instead,
 // callers can use with_theme_role(comp, role) to wrap a component renderer
 // so that every repaint pulls a fresh color from current_theme().
 [[nodiscard]] inline ftxui::Component with_theme_role(ftxui::Component inner,
@@ -387,9 +379,9 @@ inline void set_theme(Theme t) noexcept {
 }
 
 // ─── surface_box: wrap an element in a chrome-styled border + bg ─────────────
-/// Produces a "surface" container matching TS ThemedBox: border color from
-/// theme.chrome, background from tint(theme.background, 0.02), and the
-/// rounded border style used in the majority of the REPL surfaces.
+/// Produces a "surface" container: border color from theme.chrome,
+/// background from tint(theme.background, 0.02), and the rounded border
+/// style used in the majority of the REPL surfaces.
 [[nodiscard]] inline ftxui::Element surface_box(ftxui::Element inner,
                                                 const Theme& theme,
                                                 tokens::Radius r = tokens::Radius::Rounded,

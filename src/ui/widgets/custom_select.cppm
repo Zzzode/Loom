@@ -2,15 +2,6 @@
 /// @brief Filterable select dropdown with keyboard navigation, multi-select,
 /// inline descriptions, virtual scrolling, search, and grouped rendering.
 ///
-/// Migrated from the TS CustomSelect/ folder (15 files, ~3800 lines):
-///   - select.tsx                 (top-level component, modes & layout)
-///   - use-select-navigation.ts   (reducer-based nav state machine)
-///   - use-select-state.ts        (single-select value + nav composition)
-///   - use-multi-select-state.ts  (multi-select value, a/A, Enter/Space)
-///   - use-select-input.ts        (search input, filter, digit shortcuts)
-///   - select-input-option.tsx    (option renderer with highlight)
-///   - SelectMulti.tsx            (multi-select layout)
-///
 /// NOTES / TODOs (out of scope for UI6, flag for follow-up work):
 ///   - Fuzzy-match: currently "case-insensitive contains"; plug a
 ///     fuzzy-match lib (e.g. libtre, or roll-your-own bitap) in ApplyFilter.
@@ -119,7 +110,7 @@ struct CustomSelectOptions {
     bool disable_selection = false;
 
     /// When true, navigation wraps from last → first and first → last.
-    /// Default false; matches TS use-select-input "onDownFromLastItem"
+    /// Default false; matches use-select-input "onDownFromLastItem"
     /// callback semantics (when provided, wrapping is suppressed).
     bool wrap_navigation = false;
 
@@ -135,7 +126,7 @@ struct CustomSelectOptions {
 
     /// Single: fired on Enter (commit + close).
     /// Multi : fired by the consumer when they're done (the component does
-    ///         NOT force-close on Enter in Multi mode, mirroring TS).
+    ///         NOT force-close on Enter in Multi mode, mirroring).
     std::function<void(const std::string& value)> on_submit_single;
 
     /// Multi: fire when consumer considers selection complete. The
@@ -1072,7 +1063,7 @@ MakeCustomSelect(CustomSelectOptions opts) {
     return {std::move(comp), std::static_pointer_cast<CustomSelectHandle>(impl)};
 }
 
-/// Single-select convenience. Matches TS `select.tsx` default usage.
+/// Single-select convenience.
 /// Caller gets the selected value via on_submit (fired on Enter).
 [[nodiscard]] inline Component MakeSingleSelect(
     std::vector<SelectOption> options,
@@ -1087,7 +1078,7 @@ MakeCustomSelect(CustomSelectOptions opts) {
     return MakeCustomSelect(std::move(opts)).first;
 }
 
-/// Multi-select convenience. Matches TS SelectMulti.tsx usage.
+/// Multi-select convenience.
 /// Caller gets values via on_submit_multi — call handle->Submit() from an
 /// OK button to fire it, or rely on on_change for live updates.
 [[nodiscard]] inline std::pair<Component, std::shared_ptr<CustomSelectHandle>>

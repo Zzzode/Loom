@@ -65,6 +65,39 @@ struct DialogStore {
     // opening. Typed as int to keep the store free of settings_dialog type
     // deps.
     int settings_initial_tab = 0;  // matches SettingsTabId::General = 0
+
+    // ── Dialog queue helpers (P3-3d) ────────────────────────────────────
+    // Thin forwarding wrappers so call sites write
+    //   dialog_store.PushDialog(...)  instead of
+    //   dialog_store.dialog_queue.push(...)
+    // and the queue's internal structure can change without touching 17
+    // call sites.
+
+    /// Push a dialog payload into the appropriate slot. Returns the
+    /// dialog's unique id (same as payload.id).
+    std::string PushDialog(loom::ui::dialogs::system::DialogPayloadVariant payload) {
+        return dialog_queue.push(std::move(payload));
+    }
+
+    /// Pop the top of the modal stack.
+    void PopModal() { dialog_queue.pop_modal(); }
+
+    /// Pop the front of the overlay queue.
+    void PopOverlay() { dialog_queue.pop_overlay(); }
+
+    /// Pop the front of the highest-priority non-suppressed bottom band.
+    void PopBottom(bool is_prompt_input_active,
+                   bool allow_dialogs_with_animation = true) {
+        dialog_queue.pop_bottom(is_prompt_input_active, allow_dialogs_with_animation);
+    }
+
+    /// Remove a dialog by id (cancelled externally).
+    void RemoveDialog(std::string_view id) { dialog_queue.remove(id); }
+
+    /// Peek the top of the modal stack (const).
+    [[nodiscard]] auto PeekModal() const {
+        return dialog_queue.peek_modal();
+    }
 };
 
 }  // namespace loom::ui

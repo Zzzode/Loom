@@ -58,7 +58,6 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
       on_exit_(std::move(on_exit)),
       screen_state_(std::make_shared<repl::ReplScreenState>()) {
     construct_impl(engine, lifecycle_hooks, cmd_registry, storage);
-    construct_teammate();
     construct_settings();
     auto* engine_ = static_cast<loom::core::QueryEngine*>(engine);
     auto* lifecycle_hooks_ =
@@ -77,7 +76,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     current_session_id_ = utils::SessionStorage::generate_session_id();
     session_start_time_ = std::chrono::steady_clock::now();
 
-    // TS REF: sessionStorage.ts recordTranscript + dumpPrompts.ts
+    // Wire session transcript + prompt-dump storage into the engine.
     if (engine_) {
         if (storage_) {
             engine_->set_session_storage(storage_->storage_dir());
@@ -124,6 +123,18 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     this->ProjectSettingsToScreenState();
     this->ProjectRuntimeMetadataToScreenState();
 
+    // Load persisted prompt history into input_history so the up-arrow
+    // recall works across sessions.  Without this, input_history is empty
+    // on startup and the first ArrowUp does nothing (the in-memory deque
+    // is only populated by Enter presses during the current session).
+    // Read persisted history on mount.
+    {
+        auto recent = acsrc::load_recent_prompt_texts(screen_state_->cwd, 100);
+        for (auto& text : recent) {
+            screen_state_->input_history.push_back(std::move(text));
+        }
+    }
+
     // Cache autocomplete suggestions at startup.
     cached_skills_ = acsrc::collect_skill_suggestions(screen_state_->cwd);
     cached_plugin_commands_ = acsrc::collect_plugin_commands(screen_state_->cwd);
@@ -146,14 +157,13 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     cbs.on_submit = [this](const std::string& text, repl::InputMode mode) {
         this->HandleSubmit(text, mode);
     };
-    // Idle Ctrl+C footer key/string (TS useTextInput handleCtrlC projects
-    // pending state with key 'Ctrl-C' via onExitMessage).
+    // Idle Ctrl+C footer key/string.
     set_exit_message_impl("Press Ctrl+C again to exit");
     cbs.on_interrupt = [this]() {
         if (query_running_.load()) {
-            // A running query aborts immediately (TS app:interrupt owned by
-            // useCancelRequest) — never arms the exit double-press and never
-            // leaves a stale footer from a previous idle press.
+            // A running query aborts immediately — never arms the exit
+            // double-press and never leaves a stale footer from a previous
+            // idle press.
             static_cast<loom::core::QueryEngine*>(engine_raw())->abort();
             if (query_thread_.joinable())
                 query_thread_.request_stop();
@@ -162,15 +172,13 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
             screen_state_->exit_message_until.reset();
             return;
         }
-        // TS REF: src/hooks/useTextInput.ts:108-120 handleCtrlC =
-        // useDoublePress(onExitMessage(pending,'Ctrl-C'), onExit, onFirstPress)
-        // with DOUBLE_PRESS_TIMEOUT_MS = 800 (useDoublePress.ts:6).
+        // Ctrl+C is a double-press: first press arms the footer, second
+        // exits (800ms window).
         if (handle_ctrl_c()) {
             if (on_exit_) on_exit_();
             return;
         }
-        // First press: clear non-empty input FIRST (TS onFirstPress:
-        // onChange('') + setOffset(0) + onHistoryReset), then arm footer.
+        // First press: clear non-empty input FIRST, then arm footer.
         if (!screen_state_->input_text.empty()) {
             repl::set_prompt_input_text(screen_state_, {}, 0);
             screen_state_->history_index = std::string::npos;
@@ -183,31 +191,28 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     cbs.on_exit = [this]() {
         if (on_exit_) on_exit_();
     };
-    // TS REF: src/hooks/useGlobalKeybindings.tsx:225-228 handleRedraw ->
-    // ink forceRedraw: ERASE_SCREEN (CSI 2 J) + CURSOR_HOME (CSI H), then
-    // FTXUI repaints the full frame after the consumed keystroke. Input
-    // state must not be mutated.
+    // Force redraw: ERASE_SCREEN (CSI 2 J) + CURSOR_HOME (CSI H), then FTXUI
+    // repaints the full frame after the consumed keystroke. Input state must
+    // not be mutated.
     cbs.on_redraw = [this]() {
         std::fputs("\x1b[2J\x1b[H", stdout);
         std::fflush(stdout);
         this->PostRenderEvent();
     };
-    // TS REF: src/hooks/useTextInput.ts:142-150 — Esc double-press persists
-    // the original value via addToHistory before clearing. Same persistence
-    // call as the submit path (app_handle_submit.cpp:110).
+    // Esc double-press persists the original value before clearing. Same
+    // persistence call as the submit path (app_handle_submit.cpp:110).
     cbs.on_save_to_history = [this](const std::string& text) {
         acsrc::append_prompt_history(text, current_session_id_,
                                      screen_state_->cwd);
     };
     cbs.on_permission_response = [this](bool allowed, std::optional<bool> always) {
-        std::lock_guard lk(permission_mutex_);
-        permission_response_ = allowed;
         if (always && *always && screen_state_->permission_store.permission_request) {
-            always_allowed_tools_.insert(screen_state_->permission_store.permission_request->tool_name);
+            permission_.add_always_allowed(
+                screen_state_->permission_store.permission_request->tool_name);
         }
         screen_state_->permission_store.permission_request.reset();
         screen_state_->mode = repl::ReplMode::Normal;
-        permission_cv_.notify_one();
+        permission_.resolve_permission(allowed);
     };
     cbs.on_dialog_action = [this](repl::ReplMode mode, int action) {
         if (mode == repl::ReplMode::CostThreshold) {
@@ -257,12 +262,11 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         screen_state_->messages_store.unseen_divider.reset();
         screen_state_->messages_store.unseen_message_count = 0;
         screen_state_->messages_store.pill_visible = false;
-        screen_state_->messages_store.scroll_offset = 0;
-        screen_state_->messages_store.scroll_pinned_to_bottom = true;
+        ResetScrollToBottom(screen_state_->messages_store);
         this->SyncState();
     };
 
-    // TS REF: Messages.tsx L703-712 — share StreamingMarkdown instance.
+    // Share the StreamingMarkdown instance with the REPL screen.
     cbs.streaming_md = &streaming_markdown_;
 
     repl_component_ = repl::ReplScreen(screen_state_, std::move(cbs));
@@ -292,7 +296,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                     data.session_cost,
                     std::optional<std::string>{screen_state_->chrome_store.model_display_name},
                     [this] {
-                        screen_state_->dialog_store.dialog_queue.pop_bottom(
+                        screen_state_->dialog_store.PopBottom(
                             /*is_prompt_input_active=*/false);
                         PostRenderEvent();
                     });
@@ -305,30 +309,20 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         [this](const loom::services::mcp::ElicitationRequest& req)
             -> std::expected<std::map<std::string, std::string>, std::string>
         {
-            {
-                std::lock_guard lk(elicitation_mutex_);
-                elicitation_response_.reset();
-                dtrig::PushElicitation(
-                    screen_state_->dialog_store.dialog_queue,
-                    req.server_name,
-                    /*request_id=*/0,
-                    req.message,
-                    [this](bool approve) {
-                        std::lock_guard lk(elicitation_mutex_);
-                        elicitation_response_ = approve;
-                        elicitation_cv_.notify_one();
-                    });
-            }
+            permission_.reset_elicitation_response();
+            dtrig::PushElicitation(
+                screen_state_->dialog_store.dialog_queue,
+                req.server_name,
+                /*request_id=*/0,
+                req.message,
+                [this](bool approve) {
+                    permission_.resolve_elicitation(approve);
+                });
             PostRenderEvent();
 
-            std::unique_lock lk(elicitation_mutex_);
-            elicitation_cv_.wait(lk, [this] {
-                return elicitation_response_.has_value();
-            });
-            bool approved = *elicitation_response_;
-            elicitation_response_.reset();
+            bool approved = permission_.wait_elicitation_response();
 
-            screen_state_->dialog_store.dialog_queue.pop_bottom(
+            screen_state_->dialog_store.PopBottom(
                 /*is_prompt_input_active=*/false);
             PostRenderEvent();
 
@@ -366,8 +360,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         {
             std::string dialog_id;
             {
-                std::lock_guard lk(ask_user_mutex_);
-                ask_user_response_.reset();
+                permission_.reset_ask_user_response();
 
                 dsys::PromptDialogPayload p;
                 p.id = "ask_user_" +
@@ -378,23 +371,16 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                 p.prompt_text = std::string(question);
                 p.default_value = std::move(default_answer);
                 p.on_response = [this](std::optional<std::string> value) {
-                    std::lock_guard lk(ask_user_mutex_);
-                    ask_user_response_ = std::move(value);
-                    ask_user_cv_.notify_one();
+                    permission_.resolve_ask_user(std::move(value));
                 };
                 dialog_id = p.id;
-                screen_state_->dialog_store.dialog_queue.push(std::move(p));
+                screen_state_->dialog_store.PushDialog(std::move(p));
             }
             PostRenderEvent();
 
-            std::unique_lock lk2(ask_user_mutex_);
-            ask_user_cv_.wait(lk2, [this] {
-                return ask_user_response_.has_value();
-            });
-            auto result = *ask_user_response_;
-            ask_user_response_.reset();
+            auto result = permission_.wait_ask_user_response();
 
-            screen_state_->dialog_store.dialog_queue.remove(dialog_id);
+            screen_state_->dialog_store.RemoveDialog(dialog_id);
             PostRenderEvent();
 
             return result;
@@ -402,73 +388,40 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     this->SyncState();
 
-    // ── Statusline worker thread ──────────────────────────────────────
-    statusline_thread_ = std::jthread([this](std::stop_token st) {
-        while (!st.stop_requested()) {
-            std::unique_lock lk(statusline_mutex_);
-            statusline_cv_.wait(lk, [this, &st] {
-                return statusline_dirty_.load() || st.stop_requested();
-            });
-            if (st.stop_requested()) break;
+    // ── Statusline worker thread (P3-1c: StatuslineCoordinator) ──────
+    // The coordinator owns the jthread + debounce/memo state.  Callbacks
+    // bridge back into AppAdapter for context-dependent operations.
+    statusline_.Start(
+        /*get_command=*/[this] {
+            return screen_state_->status_line_command;
+        },
+        /*build_input_json=*/[this] {
+            return BuildStatuslineInputJson();
+        },
+        /*execute_command=*/[this](std::string_view cmd, std::string json,
+                                   int timeout_ms, std::string& output) {
+            return ExecuteStatuslineCommand(cmd, std::move(json), timeout_ms, output);
+        },
+        /*set_status_text=*/[this](std::string text) {
+            screen_state_->status_line_text = std::move(text);
+        },
+        /*post_render=*/[this] {
+            PostRenderEvent();
+        },
+        /*debounce_ms=*/300);
 
-            lk.unlock();
-            std::this_thread::sleep_for(
-                std::chrono::milliseconds(statusline_debounce_ms_));
-            if (st.stop_requested()) break;
-            if (!statusline_dirty_.exchange(false)) continue;
-
-            std::string cmd;
-            {
-                cmd = screen_state_->status_line_command;
-            }
-            if (cmd.empty()) continue;
-
-            statusline_running_.store(true);
-
-            std::string new_json = this->BuildStatuslineInputJson();
-            const auto now = std::chrono::steady_clock::now();
-
-            const bool memo_hit =
-                (cmd == statusline_last_cmd_) &&
-                (new_json == statusline_last_input_json_) &&
-                (statusline_last_run_ !=
-                     std::chrono::steady_clock::time_point{} &&
-                 (now - statusline_last_run_) < std::chrono::seconds(30));
-
-            if (memo_hit) {
-                statusline_running_.store(false);
-                continue;
-            }
-
-            std::string sl_output;
-            const bool sl_ok =
-                this->ExecuteStatuslineCommand(cmd, new_json, 5000, sl_output);
-
-            statusline_running_.store(false);
-
-            statusline_last_cmd_ = cmd;
-            statusline_last_input_json_ = new_json;
-            statusline_last_run_ = now;
-
-            if (sl_ok && !sl_output.empty()) {
-                screen_state_->status_line_text = std::move(sl_output);
-            } else {
-                screen_state_->status_line_text.clear();
-            }
-
-            if (!st.stop_requested()) {
-                PostRenderEvent();
-            }
-        }
-    });
-
-    this->TriggerStatuslineUpdate();
     StartUiAnimationTicker();
 }
 
+// P3-1c: thin wrapper over StatuslineCoordinator.  Kept out of the app.cppm
+// BMI by the inline-def ratchet; 5 impl units call it.
+void AppAdapter::TriggerStatuslineUpdate() {
+    if (screen_state_->status_line_command.empty()) return;
+    statusline_.TriggerUpdate();
+}
+
 // Build the StatusLineCommandInput payload from current engine state.
-// Faithful to TS buildStatusLineCommandInput(); kept out of the
-// app.cppm BMI along with the statusline_runner/model/constants imports.
+// Kept out of the app.cppm BMI along with the statusline_runner/model/constants imports.
 [[nodiscard]] std::string AppAdapter::BuildStatuslineInputJson() {
         namespace sl = loom::utils::statusline;
 
@@ -485,7 +438,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         input.workspace.project_dir = cwd;
         // added_dirs: not easily accessible at the app level; populated by
         // tool permission context when additional directories are configured.
-        // Left empty (empty vector) to match TS semantics for default config.
+        // Left empty (empty vector) to match the default-config semantics.
         input.workspace.added_dirs = {};
 
         // Output style from settings
@@ -540,11 +493,11 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         input.exceeds_200k_tokens =
             (usage.input_tokens + usage.output_tokens) > 200'000;
 
-        // Session name: use session id as identifier (TS uses getCurrentSessionTitle
-        // which derives from first user message; session id is always available)
+        // Session name: use session id as identifier (getCurrentSessionTitle
+        // derives from the first user message; session id is always available)
         input.session_name = current_session_id_;
-        // session_id: TS StatusLineCommandInput.session_id — used by user scripts
-        // for the #hashtag display (e.g. #a1b2c3). Same value as session_name.
+        // session_id: used by user scripts for the #hashtag display
+        // (e.g. #a1b2c3). Same value as session_name.
         input.session_id = current_session_id_;
 
         // Vim mode (optional — only populated if vim enabled)
@@ -554,7 +507,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
         // rate_limits, agent, remote, worktree: not available at the app level
         // (would require additional service wiring). Left unpopulated (nullopt)
-        // which matches TS semantics where undefined fields are omitted from JSON.
+        // which matches the semantics where undefined fields are omitted from JSON.
 
     return sl::to_json(input);
 }
@@ -570,14 +523,6 @@ bool AppAdapter::ExecuteStatuslineCommand(std::string_view command,
     if (!result.success) return false;
     output = std::move(result.output);
     return true;
-}
-
-// RFC 0001 Phase C batch 2: folded from app.cppm into the statusline
-// cluster. Called from three impl units + StartUiAnimationTicker.
-void AppAdapter::TriggerStatuslineUpdate() {
-    if (screen_state_->status_line_command.empty()) return;
-    statusline_dirty_.store(true);
-    statusline_cv_.notify_one();
 }
 
 }  // namespace loom::ui

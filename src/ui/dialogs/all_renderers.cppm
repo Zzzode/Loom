@@ -18,6 +18,7 @@ import loom.ui.dialogs.default_renderers;
 import loom.ui.dialogs.cost_threshold_dialog;
 import loom.ui.dialogs.sandbox_permission;
 import loom.ui.dialogs.quick_open;
+import loom.ui.dialogs.session_picker;
 
 export namespace loom::ui::dialogs::all_renderers {
 
@@ -55,12 +56,16 @@ using loom::ui::dialogs::default_renderers::HandleIdleReturnEvent;
 using loom::ui::dialogs::default_renderers::RenderGenericDialog;
 using loom::ui::dialogs::default_renderers::HandleGenericDialogEvent;
 
-// ── Layer 2: faithful permission-panel modules ───────────────────────────
+// ── Layer 2: permission-panel modules ───────────────────────────────────
 using loom::ui::dialogs::sandbox_permission::RenderDefault;
 using loom::ui::dialogs::sandbox_permission::HandleSandboxPermissionEvent;
 
 // ── Layer 3: quick_open (exact signatures already, direct using) ─────────
 using loom::ui::dialogs::quick_open::RenderQuickOpen;
 using loom::ui::dialogs::quick_open::HandleQuickOpenEvent;
+
+// ── Layer 4: session_picker (standalone /resume picker) ──────────────────
+using loom::ui::dialogs::session_picker::RenderSessionPicker;
+using loom::ui::dialogs::session_picker::HandleSessionPickerEvent;
 
 }  // namespace loom::ui::dialogs::all_renderers

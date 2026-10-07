@@ -568,9 +568,9 @@ public:
             return std::unexpected(LspToolError::FilePathEmpty);
         }
 
-        // Position is required for position-based actions. Mirrors TS schemas.ts
-        // where every operation except workspaceSymbol requires line/character
-        // (workspaceSymbol still carries them in the schema but ignores them).
+        // Position is required for position-based actions. Every operation
+        // except workspaceSymbol requires line/character (workspaceSymbol
+        // still carries them in the schema but ignores them).
         bool needs_position = (request.action == LspAction::Definition
                             || request.action == LspAction::References
                             || request.action == LspAction::Completion

@@ -1,27 +1,9 @@
 /// @file plugin_ui_data.cppm
-/// @brief Pure data-preparation logic extracted from React components in
-///        `src/commands/plugin/`.  No FTXUI / rendering — that is Phase 4.
-///
-/// Components mined for pure functions:
-///   - PluginSettings.tsx     — ViewState, getInitialViewState, getInitialTab,
-///                              error-row builder, extra-marketplace removal plan,
-///                              tab definitions, help text.
-///   - BrowseMarketplace.tsx  — MarketplaceInfo aggregation, back-navigation
-///                              routing logic, install-target pre-computation.
-///   - DiscoverPlugins.tsx    — filtering / popularity-sort / empty-state
-///                              detection plan.
-///   - AddMarketplace.tsx     — input state machine (already mirrored as
-///                              `classify_marketplace_input` in plugin_manage;
-///                              this file keeps higher-level flow data).
-///   - ManageMarketplaces.tsx — marketplace CRUD state transitions.
-///   - PluginOptionsDialog.tsx — option-schema flattening, required-field list.
-///   - PluginOptionsFlow.tsx  — step-list construction (ConfigStep struct +
-///                              build_steps pure helper).
-///   - PluginTrustWarning.tsx — trust-level → display-warning mapping.
-///   - UnifiedInstalledCell.tsx — cell field aggregation.
+/// @brief Pure data-preparation logic for the plugin command UI.
+///        No FTXUI / rendering — that is Phase 4.
 ///
 /// UI rendering annotations throughout use the convention:
-///   // UI: Phase 4 FTXUI -> cpp_migration/src/ui/plugins/<file>
+///   // UI: Phase 4 FTXUI -> src/ui/plugins/<file>
 
 module;
 
@@ -44,12 +26,11 @@ using MarketAct  = loom::commands::plugin::MarketplaceAction;
 using namespace  loom::commands::plugin_helpers;
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 1.  ViewState & routing  (from PluginSettings.tsx)
+// 1.  ViewState & routing
 // ═════════════════════════════════════════════════════════════════════════════
 
-/// Mirrors the TS `ViewState` discriminated union.  Each variant carries just
-/// enough information to drive data preparation — the actual component tree
-/// lives in Phase 4's FTXUI layer.
+/// Each variant carries just enough information to drive data preparation —
+/// the actual component tree lives in Phase 4's FTXUI layer.
 enum class ViewKind : unsigned char {
     Menu,               // Main menu (default when no args match a direct action)
     Help,               // /plugin help
@@ -129,7 +110,7 @@ inline TabId initial_tab_for(ViewKind k) {
 }
 
 /// Translate the output of `parse_plugin_args` into the initial ViewState
-/// the UI should present.  1:1 with TS `getInitialViewState`.
+/// the UI should present.
 [[nodiscard]] inline ViewState get_initial_view_state(const ParsedArgs& cmd) {
     ViewState vs{};
 
@@ -215,9 +196,8 @@ inline TabId initial_tab_for(ViewKind k) {
 }
 
 /// The full help-text block rendered by the `Help` view.
-/// Byte-for-byte match of the TS PluginSettings.tsx help JSX (note: plain
-/// hyphens "-", not em-dashes).  Kept here as a single constant so the UI
-/// layer can display it verbatim.
+/// Uses plain hyphens "-", not em-dashes. Kept here as a single constant
+/// so the UI layer can display it verbatim.
 inline constexpr std::string_view k_plugin_help_text =
 R"(Plugin Command Usage:
 
@@ -253,7 +233,7 @@ Other:
 )";
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 2.  Error-tab row model  (from PluginSettings.tsx buildErrorRows / helpers)
+// 2.  Error-tab row model
 // ═════════════════════════════════════════════════════════════════════════════
 
 /// Action kind attached to an error row so Phase 4 knows what happens when
@@ -364,7 +344,7 @@ template <typename IsInstalledFn, typename PluginEntryRange>
 struct SortedDiscoverListResult {
     std::vector<InstallablePlugin> plugins;
     // true if the result set is empty and the caller should show an
-    // empty-state message (see detectEmptyMarketplaceReason in TS).
+    // empty-state message.
     bool needs_empty_state = false;
     // human-readable empty reason (e.g. "All marketplaces failed to load")
     std::optional<std::string> empty_reason;
@@ -433,11 +413,11 @@ template <typename IsInstalledFn, typename IsBlockedFn, typename InstallCountsMa
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 4.  PluginOptions step builder  (from PluginOptionsFlow.tsx)
+// 4.  PluginOptions step builder
 // ═════════════════════════════════════════════════════════════════════════════
 
-/// A single configuration step the user must complete.  Mirrors the TS
-/// `ConfigStep` struct; Phase 4 instantiates a FTXUI dialog per step.
+/// A single configuration step the user must complete. Phase 4 instantiates
+/// a FTXUI dialog per step.
 struct ConfigStep {
     std::string key;          // "top-level" | "channel:<server>"
     std::string title;        // "Configure my-plugin"
@@ -488,7 +468,7 @@ struct ConfigStep {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 5.  Trust-warning data contract  (from PluginTrustWarning.tsx)
+// 5.  Trust-warning data contract
 // ═════════════════════════════════════════════════════════════════════════════
 
 enum class TrustWarningLevel : unsigned char {
@@ -502,7 +482,7 @@ struct TrustWarningInfo {
     TrustWarningLevel level = TrustWarningLevel::None;
     std::string message;         // header line
     std::vector<std::string> bullets; // per-permission bullets
-    // UI: Phase 4 FTXUI -> cpp_migration/src/ui/plugins/plugin_trust_warning.cppm
+    // UI: Phase 4 FTXUI -> src/ui/plugins/plugin_trust_warning.cppm
 };
 
 /// Map a trust level + permission list → warning info.
@@ -549,7 +529,7 @@ struct InstalledCellData {
     std::size_t tool_count   = 0;
     std::size_t command_count = 0;
     std::optional<std::string> last_updated;
-    // UI: Phase 4 FTXUI -> cpp_migration/src/ui/plugins/unified_installed_cell.cppm
+    // UI: Phase 4 FTXUI -> src/ui/plugins/unified_installed_cell.cppm
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -564,7 +544,6 @@ enum class BrowseView : unsigned char {
 };
 
 /// Compute the *next* view state when the user presses "back" (Esc).
-/// Mirror of BrowseMarketplace handleBack callback (TS).
 [[nodiscard]] inline ViewKind browse_back_destination(
     BrowseView current,
     bool has_target_marketplace_override, // true if routed directly from URL arg

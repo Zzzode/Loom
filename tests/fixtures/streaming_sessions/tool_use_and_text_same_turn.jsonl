@@ -1,0 +1,17 @@
+{"type":"stream_start","message_id":"msg_same_turn_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"thinking","thinking":"","signature":"sig-same-turn-001"}}
+{"type":"content_block_delta","index":0,"delta_text":"The user wants to see the current git status and a summary of what changed."}
+{"type":"content_block_stop","index":0}
+{"type":"content_block_start","index":1,"block":{"type":"tool_use","id":"tu3","name":"Bash","input_json":"{}"}}
+{"type":"content_block_delta","index":1,"delta_text":"{\"command\":\"git status --short\"}"}
+{"type":"content_block_stop","index":1}
+{"type":"content_block_start","index":2,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":2,"delta_text":"I'll check the git status for you. The working tree has changes across the streaming replay test infrastructure."}
+{"type":"content_block_stop","index":2}
+{"type":"stream_end","stop_reason":"tool_use","usage":{"input_tokens":120,"output_tokens":42}}
+{"type":"tool_execution_start","tool_use_id":"tu3","tool_name":"Bash","input_json":"{\"command\":\"git status --short\"}"}
+{"type":"tool_execution_end","tool_use_id":"tu3","result":" M src/CMakeLists.txt\n M tests/CMakeLists.txt\n M src/ui/app/app_handle_submit.cpp\n?? tests/fixtures/streaming_sessions/\n","is_error":false}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"tool_use","content":[{"type":"thinking","thinking":"The user wants to see the current git status and a summary of what changed.","signature":"sig-same-turn-001"},{"type":"tool_use","id":"tu3","name":"Bash","input_json":"{\"command\":\"git status --short\"}"},{"type":"text","text":"I'll check the git status for you. The working tree has changes across the streaming replay test infrastructure."}]}}
+{"type":"__checkpoint__","name":"after_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

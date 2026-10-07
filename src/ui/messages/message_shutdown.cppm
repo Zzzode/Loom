@@ -1,6 +1,5 @@
 // Shutdown message - displayed when the REPL is exiting
 //
-// Mirrors ShutdownMessage.tsx (131 lines):
 //   ─────────── Session ended ───────────
 //   ✓ Session complete · 12 turns · 24k tokens · $0.0312
 //   [Resume session]   [Start new]

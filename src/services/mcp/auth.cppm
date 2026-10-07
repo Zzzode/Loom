@@ -795,7 +795,6 @@ Result<void> perform_mcp_oauth_flow(
                 "XAA server requires an AS client_id. Re-add the MCP server with --client-id."));
         }
 
-        // TS REF: xaa.ts performCrossAppAccess() + xaaIdpLogin.ts acquireIdpIdToken()
         // Get XAA config (IdP + AS credentials). RFC-0001 B followup c17a: the
         // fixed callback port is NOT read from a file here — it is injected by
         // the caller from settings.xaaIdp.callbackPort, the single store

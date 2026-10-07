@@ -295,7 +295,7 @@ inline bool is_unicode_letter(char prev, char next) {
 // Structured patch — Myers O(ND) LCS line-diff.
 // Mirrors `diff.structuredPatch` output shape (hunks with context lines).
 //
-// NOTE: The TS code used the npm `diff` package which also exposes Myers.
+// NOTE: Library diff implementations also expose Myers.
 // We deliberately avoid shelling out to `diff -u` here because:
 //   (a) callers rely on PatchHunk line data to build UI widgets;
 //   (b) subprocess calls are expensive when the model proposes many small
@@ -736,7 +736,7 @@ struct Desanitization {
     std::string_view to;
 };
 
-// Matches DESANITIZATIONS in TS utils.ts exactly.
+// Desanitization table.
 inline constexpr Desanitization kDesanitizations[] = {
     {"<fnr>",           "<function_results>"},
     {"<n>",             "<name>"},
@@ -823,7 +823,7 @@ inline NormalizedFileEditInput normalize_file_edit_input(
         }
     } catch (...) {
         // Treat any I/O problem as "no cached content" and fall through
-        // to original edits, matching TS behaviour (only ENOENT is
+        // to original edits (only ENOENT is
         // explicitly expected, but we don't need to distinguish further).
         file_content = std::nullopt;
     }

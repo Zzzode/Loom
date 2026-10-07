@@ -29,7 +29,7 @@ namespace {
     loom::hooks::ToolPermissionHook* permission_hook,
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks
 ) {
-    // Use the alternate-screen fullscreen like TS (AlternateScreen) - the REPL owns the terminal.
+    // Use the alternate-screen fullscreen - the REPL owns the terminal.
     auto screen = ScreenInteractive::Fullscreen();
 
     // ── macOS/BSD line-discipline workaround: disable VLNEXT ─────────────
@@ -59,6 +59,14 @@ namespace {
     if (have_orig) {
         struct termios t = orig_termios;
         t.c_cc[VLNEXT] = 0;  // 0 == _POSIX_VDISABLE: disable literal-next
+        // Disable XON/XOFF software flow control.  With IXON left on (the
+        // macOS/Linux default), the tty line discipline consumes Ctrl+S
+        // (XOFF) before the process ever sees it — so in-app Ctrl+S bindings
+        // (e.g. /statusline "save") silently never fire.  FTXUI's raw-mode
+        // setup clears only ICANON/ECHO, not IXON, so we do it here.  The
+        // orig_termios snapshot + restore below returns flow control to the
+        // parent shell on exit.
+        t.c_iflag &= ~(IXON | IXOFF);
         (void)tcsetattr(STDIN_FILENO, TCSANOW, &t);
     }
 #endif

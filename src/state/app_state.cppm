@@ -358,7 +358,7 @@ struct AppState {
     // ========================================
     // Additional State Fields
     // ========================================
-    // ... Add more fields as needed from TypeScript version
+    // ... Add more fields as needed
     bool thinking_enabled = true;
     bool prompt_suggestion_enabled = true;
     std::map<std::string, std::string> session_hooks;

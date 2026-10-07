@@ -211,7 +211,6 @@ inline void on_verbose_mode_changed(const AppState&, const AppState&) {
 /// Handler for expanded view changes
 inline void on_expanded_view_changed(const AppState&, const AppState&) {
     // This would persist the expanded view setting to config
-    // Similar to how TypeScript version updates global config
 }
 
 /// Handler for messages changes

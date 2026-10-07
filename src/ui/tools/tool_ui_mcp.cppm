@@ -1,14 +1,8 @@
 /// @file tool_ui_mcp.cppm
-/// @brief MCP tool UI — userFacingName, renderToolUseMessage, etc.
+/// @brief MCP tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.mcp
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/MCPTool/MCPTool.tsx
-///   - userFacingName: server name
-///   - renderToolUseMessage: tool name + args summary
-///   - isTransparentWrapper: false
 module;
 
 
@@ -129,9 +123,8 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: MCPTool — renderToolResultMessage shows MCP tool output
-    // (text content from MCP server responses).  Output IS visible on
-    // screen; index it for search.
+    // MCP tool output (text content from MCP server responses) is visible
+    // on screen; index it for search.
     fns.extract_search_text = [](
         std::string_view output_text,
         std::string_view /*error_text*/) -> std::optional<std::string>

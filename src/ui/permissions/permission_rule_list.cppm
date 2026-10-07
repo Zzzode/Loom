@@ -2,7 +2,6 @@
 /// @brief Three-column permission rule editor (groups | rules table w/ virtual
 /// scroll + batch ops | editor + hit-test firewall).  JSON import/export diff.
 /// All mutations flow through callbacks to loom.security.permissions_engine.
-/// Migrated from src/components/permissions/rules/PermissionRuleList.tsx.
 module;
 
 #include <cctype>
@@ -44,7 +43,7 @@ using eng::PermissionAction;
 using eng::PermissionScope;
 using eng::PermissionRule;
 
-// --- Enums & Types (mirror TS PermissionRuleList + UI9 data contracts) ---
+// --- Enums & Types (mirror PermissionRuleList + UI9 data contracts) ---
 
 /// Batch operation dispatcher (for multi-selected rules)
 enum class BatchOp : std::uint8_t {
@@ -57,7 +56,7 @@ enum class BatchOp : std::uint8_t {
     ExportJson,    // Serialize selected rules to JSON string
 };
 
-/// A single logical group of rules.  Mirrors the TS "rule tabs" (recent /
+/// A single logical group of rules.  Mirrors the "rule tabs" (recent /
 /// allow / ask / deny / workspace / custom x3) — 8 canonical groups total.
 struct RuleGroup {
     std::string id;        // e.g. "g1", "recent", "allow"

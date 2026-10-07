@@ -1,12 +1,10 @@
 /// @file agent_display.cppm
 /// @brief Pure-function data preparation for rendering agent information.
-/// Migrated from src/tools/AgentTool/agentDisplay.ts.
 ///
 /// This module only contains data-structure definitions and pure
 /// computations (sorting, override resolution, model display, labels).
 ///
-/// UI rendering: see cpp_migration/src/ui/agents/ for FTXUI components
-/// (Phase 4 responsibility).
+/// UI rendering lives in src/ui/agents/ (FTXUI components).
 module;
 
 #include <cctype>

@@ -142,9 +142,8 @@ using ParsedMessage = std::variant<
 // Eligible bridge message check (for outbound forwarding)
 // =========================================================================
 
-/// Bridge-eligible message descriptor. Light-weight analog of the
-/// TypeScript Message type — only the fields needed for eligibility
-/// filtering are carried.
+/// Bridge-eligible message descriptor. Light-weight analog that carries
+/// only the fields needed for eligibility filtering.
 struct BridgeEligibleMessage {
     std::string type;                // "user", "assistant", "system"
     std::optional<std::string> subtype;  // e.g. "local_command"

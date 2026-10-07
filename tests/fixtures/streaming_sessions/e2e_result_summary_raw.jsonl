@@ -1,0 +1,19 @@
+{"type":"stream_start","message_id":"msg_raw_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"tool_use","id":"toolu_e2e_1","name":"analyze_image","input_json":"{}"}}
+{"type":"content_block_delta","index":0,"delta_text":"{\"imageSource\":\"https://example.com/img.png\",\"prompt\":\"What is this?\"}"}
+{"type":"content_block_stop","index":0}
+{"type":"stream_end","stop_reason":"tool_use","usage":{"input_tokens":42,"output_tokens":15}}
+{"type":"tool_execution_start","tool_use_id":"toolu_e2e_1","tool_name":"analyze_image","input_json":"{\"imageSource\":\"https://example.com/img.png\",\"prompt\":\"What is this?\"}"}
+{"type":"tool_execution_end","tool_use_id":"toolu_e2e_1","result":"analyze_image_result_summary: [{\"text\": \"The image shows a dark terminal.\"}]","is_error":false}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"tool_use","content":[{"type":"tool_use","id":"toolu_e2e_1","name":"analyze_image","input_json":"{\"imageSource\":\"https://example.com/img.png\",\"prompt\":\"What is this?\"}"}]}}
+{"type":"__commit__","message":{"role":"tool","tool_use_id":"toolu_e2e_1","tool_name":"analyze_image","content":[{"type":"text","text":"analyze_image_result_summary: [{\"text\": \"The image shows a dark terminal.\"}]"}]}}
+{"type":"__checkpoint__","name":"after_tool_result"}
+{"type":"stream_start","message_id":"msg_raw_2","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":0,"delta_text":"This is a screenshot of a dark-themed terminal UI showing a code review platform with bullet points and comment sections."}
+{"type":"content_block_stop","index":0}
+{"type":"stream_end","stop_reason":"end_turn","usage":{"input_tokens":60,"output_tokens":25}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":"This is a screenshot of a dark-themed terminal UI showing a code review platform with bullet points and comment sections."}]}}
+{"type":"__checkpoint__","name":"after_text_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

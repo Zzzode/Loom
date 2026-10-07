@@ -1,7 +1,7 @@
 /// @file permissions_components.cppm
 /// @brief Shared reusable UI widgets for the Permissions subsystem.
 ///
-/// Consolidates 47 small TS widgets (titles, icons, rows, list items,
+/// Consolidates 47 small widgets (titles, icons, rows, list items,
 /// confirmation bars, badges, etc.) into one reusable component library.
 ///
 /// Provides: ToolIcon, ActionIcon, PathLabel (middle-ellipsis), RiskPill,
@@ -283,7 +283,7 @@ enum class RiskLevel : std::uint8_t {
 
 /// A thin horizontal separator (dimmer than ftxui::separator()).
 /// Optional `col` override — when provided, paints the separator in that
-/// color (faithful to TS Pane.tsx:52 Divider(color)).  Defaults to GrayDark
+/// color (faithful to the Divider(color) pattern).  Defaults to GrayDark
 /// for the pre-existing uncoloured in-dialog section separators.
 [[nodiscard]] inline Element ThinDivider(
     std::optional<Color> col = std::nullopt) {

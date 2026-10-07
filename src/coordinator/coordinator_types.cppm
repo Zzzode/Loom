@@ -1,6 +1,5 @@
 /// @file coordinator_types.cppm
 /// @brief Coordinator mode types for multi-agent orchestration.
-/// Migrated from src/coordinator/coordinatorMode.ts (supplements existing coordinator.cppm)
 module;
 
 #include <cstdint>

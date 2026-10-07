@@ -1,14 +1,8 @@
 /// @file tool_ui_web_fetch.cppm
-/// @brief WebFetch tool UI — userFacingName, renderToolUseMessage, etc.
+/// @brief WebFetch tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.web_fetch
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/WebFetchTool/WebFetchTool.tsx
-///   - userFacingName: "Fetch"
-///   - renderToolUseMessage: hostname of the URL
-///   - isTransparentWrapper: false
 module;
 
 #include <cstddef>
@@ -120,10 +114,9 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: WebFetchTool — renderToolResultMessage shows the fetched page
-    // content (markdown-converted HTML).  The output IS visible on screen,
-    // so we index it for search.  No explicit extractSearchText in TS; this
-    // is the faithful default for tools that render their output body.
+    // The fetched page content (markdown-converted HTML) is visible on
+    // screen, so we index it for search.  This is the default for tools
+    // that render their output body.
     fns.extract_search_text = [](
         std::string_view output_text,
         std::string_view /*error_text*/) -> std::optional<std::string>

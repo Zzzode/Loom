@@ -1,15 +1,15 @@
-// BashTool result formatting helpers (migrated from BashToolResultMessage.tsx).
+// BashTool result formatting helpers.
 //
-// ONLY pure functions, types, and string-formatting logic are ported here.
-// The React JSX rendering (Box / Text / OutputLine / KeyboardShortcutHint /
-// collapsed sections, etc.) is deferred to Phase 4 (FTXUI UI layer).
+// ONLY pure functions, types, and string-formatting logic live here.
+// The UI rendering (Box / Text / OutputLine / KeyboardShortcutHint /
+// collapsed sections, etc.) is deferred to the FTXUI UI layer.
 //
 // Source split:
-//   PART A (migrated here) : extractSandboxViolations, extractCwdResetWarning,
+//   PART A (here)          : extractSandboxViolations, extractCwdResetWarning,
 //                            format_exit_code, truncate_output_block,
 //                            format_duration_ms, build_result_header,
 //                            BashResultInfo struct
-//   PART B (Phase 4 only)  : <Box>, <Text>, <OutputLine>, <MessageResponse>,
+//   PART B (UI layer only) : <Box>, <Text>, <OutputLine>, <MessageResponse>,
 //                            <ShellTimeDisplay>, useXXX() hooks
 module;
 
@@ -28,7 +28,7 @@ export namespace loom::tools::bash {
 using std::operator""sv;
 
 // ---------------------------------------------------------------------------
-// Constants (migrated from BashToolResultMessage.tsx + BashTool utils.ts)
+// Constants
 // ---------------------------------------------------------------------------
 
 /// Pattern to match "Shell cwd was reset to <path>" message at line start or
@@ -64,7 +64,7 @@ struct BashResultInfo {
 };
 
 // ---------------------------------------------------------------------------
-// 1. stderr content extraction helpers (PART A of BashToolResultMessage.tsx)
+// 1. stderr content extraction helpers
 // ---------------------------------------------------------------------------
 
 struct ExtractedStderr {
@@ -75,8 +75,6 @@ struct ExtractedStderr {
 
 /// Strip <sandbox_violations>...</sandbox_violations> block from stderr.
 /// Returns cleaned stderr and, if found, the raw violations content.
-///
-/// migrated: extractSandboxViolations() from BashToolResultMessage.tsx
 inline auto extract_sandbox_violations(std::string_view stderr_sv)
     -> std::pair<std::string, std::optional<std::string>>
 {
@@ -96,7 +94,7 @@ inline auto extract_sandbox_violations(std::string_view stderr_sv)
     const auto after_close = close + kSandboxViolationsClose.size();
     if (after_close < stderr_sv.size()) cleaned.append(stderr_sv.substr(after_close));
 
-    // Trim leading/trailing whitespace on cleaned output (like TS .trim())
+    // Trim leading/trailing whitespace on cleaned output
     while (!cleaned.empty() && std::isspace(static_cast<unsigned char>(cleaned.front()))) cleaned.erase(cleaned.begin());
     while (!cleaned.empty() && std::isspace(static_cast<unsigned char>(cleaned.back())))  cleaned.pop_back();
 
@@ -105,8 +103,6 @@ inline auto extract_sandbox_violations(std::string_view stderr_sv)
 
 /// Extract the "Shell cwd was reset to ..." warning line from stderr, removing
 /// it from the cleaned output so it can be rendered with a dedicated style.
-///
-/// migrated: extractCwdResetWarning() from BashToolResultMessage.tsx
 inline auto extract_cwd_reset_warning(std::string_view stderr_sv)
     -> std::pair<std::string, std::optional<std::string>>
 {
@@ -137,7 +133,7 @@ inline auto extract_cwd_reset_warning(std::string_view stderr_sv)
 }
 
 /// Combined extraction pipeline: sandbox -> cwd-reset, in the same order the
-/// TS React component applies them. Returns both cleaned stderr and any
+/// UI layer applies them. Returns both cleaned stderr and any
 /// extracted meta-strings the UI layer needs to render separately.
 inline auto extract_all_stderr_meta(std::string_view stderr_sv) -> ExtractedStderr {
     auto [no_violations, violations] = extract_sandbox_violations(stderr_sv);

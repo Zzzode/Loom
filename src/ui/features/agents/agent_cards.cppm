@@ -1,7 +1,7 @@
 /// @file agent_cards.cppm
 /// @brief Three sizes of agent display cards plus status badges.
 ///
-/// Consolidates card rendering migrated from ~10 of the 26 TS files under
+/// Consolidates card rendering migrated from ~10 of the 26 files under
 /// src/components/agents/ (MiniCard inline, grid Card, LargeCard detail
 /// preview, status-badge helpers, avatar wiring, tool-chips footer).
 ///

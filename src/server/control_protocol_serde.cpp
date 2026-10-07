@@ -1405,7 +1405,7 @@ SDKAssistantMessage_from_json(std::string_view raw) {
     o.add("is_error", doc.boolean(v.is_error));
     o.add("num_turns", doc.number(static_cast<int64_t>(v.num_turns)));
     o.add("result", doc.string(v.result));
-    // stop_reason is required-nullable in the TS schema — always emit.
+    // stop_reason is required-nullable — always emit.
     if (v.stop_reason) o.add("stop_reason", doc.string(*v.stop_reason));
     else o.add("stop_reason", doc.null());
     o.add("total_cost_usd", doc.number(v.total_cost_usd));
@@ -1414,7 +1414,7 @@ SDKAssistantMessage_from_json(std::string_view raw) {
     for (const auto& [k, u] : v.model_usage)
         mu.add(k.c_str(), doc.raw_json(ModelUsage_to_json(u)));
     o.add("modelUsage", std::move(mu));
-    // permission_denials is required in the TS schema — always emit, even
+    // permission_denials is required — always emit, even
     // empty (the live emitters always emit "permission_denials":[]).
     auto pd = doc.array();
     for (const auto& d : v.permission_denials)
@@ -1485,7 +1485,7 @@ SDKResultSuccess_from_json(std::string_view raw) {
     o.add("duration_api_ms", doc.number(v.duration_api_ms));
     o.add("is_error", doc.boolean(v.is_error));
     o.add("num_turns", doc.number(static_cast<int64_t>(v.num_turns)));
-    // stop_reason is required-nullable in the TS schema — always emit.
+    // stop_reason is required-nullable — always emit.
     if (v.stop_reason) o.add("stop_reason", doc.string(*v.stop_reason));
     else o.add("stop_reason", doc.null());
     o.add("total_cost_usd", doc.number(v.total_cost_usd));
@@ -1494,7 +1494,7 @@ SDKResultSuccess_from_json(std::string_view raw) {
     for (const auto& [k, u] : v.model_usage)
         mu.add(k.c_str(), doc.raw_json(ModelUsage_to_json(u)));
     o.add("modelUsage", std::move(mu));
-    // permission_denials / errors are required in the TS schema — always
+    // permission_denials / errors are required — always
     // emit, even empty (the live emitters always emit them).
     auto pd = doc.array();
     for (const auto& d : v.permission_denials)

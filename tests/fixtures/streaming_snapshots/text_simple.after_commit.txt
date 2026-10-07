@@ -1,0 +1,39 @@
+◆ Loom  · model_api/experimental_0812_256k
+
+█░█░█░█░█  Loom
+░█░█░█░█░  model_api/experimental_0812_256k
+█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+
+● The debug build is green: all 312 tests passed in 4.2 seconds. The release build also passes, including the
+  timing-sensitive socket tests.
+
+● The debug build is green: all 312 tests passed in 4.2 seconds. The release build also passes, including the  ▌
+  timing-sensitive socket tests.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <spinner> <verb>….
+──────────────────────────────────────────────────────────────────────────────────
+ ❯ Try "fix lint errors"
+──────────────────────────────────────────────────────────────────────────────────
+   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

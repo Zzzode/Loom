@@ -1,7 +1,7 @@
 /// @file file_index.cppm
 /// @brief AT-01: repo-wide file index for @-mention suggestions. The C++ port
 /// previously listed only the immediate parent directory via directory_iterator,
-/// so "@readme" found nothing unless readme sat in cwd. This mirrors TS, which
+/// so "@readme" found nothing unless readme sat in cwd. This module
 /// fuzzy-matches the whole repo via the file index.
 ///
 /// Backed by `git ls-files` (tracked) + `git ls-files --others --exclude-standard`
@@ -113,8 +113,8 @@ struct CacheEntry {
     push_new(untracked);
 
     // Fallback: if git produced nothing (not a git repo / git missing), walk
-    // the directory tree so @-mentions still work outside a repo (TS parity —
-    // TS @file degrades to an fs scan when there's no repo index). Bounded +
+    // the directory tree so @-mentions still work outside a repo (parity —
+    // @file degrades to an fs scan when there's no repo index). Bounded +
     // skips VCS/build/heavy dirs so a temp/test cwd stays cheap.
     if (merged.empty()) {
         std::error_code ec;

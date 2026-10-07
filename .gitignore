@@ -31,3 +31,6 @@ __pycache__/
 
 # Loom project-local runtime state (agent-runtime, teams, etc.)
 .loom/
+conformance.json
+conformance_report.html
+ext.json

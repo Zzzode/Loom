@@ -816,10 +816,9 @@ void LSPServerManager::register_server_config(
     if (instance) {
         // Hand the shared registry to the instance before it is observable.
         (*instance)->diagnostic_registry = diagnostic_registry_;
-        // TS REF: passiveFeedback.ts registerLSPNotificationHandlers — every
-        // production server gets a publishDiagnostics observer. It is
-        // observability-only (the TS handler logs; a server push is NOT a
-        // user action and must not record acceptance/rejection feedback).
+        // Every production server gets a publishDiagnostics observer. It is
+        // observability-only: a server push is NOT a user action and must not
+        // record acceptance/rejection feedback.
         // Registered here (rather than only on the LspManager singleton) so
         // managers created via create_lsp_server_manager() — the ones LspTool
         // owns — are covered too.

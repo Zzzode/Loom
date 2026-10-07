@@ -1,5 +1,5 @@
 /// @file cost_threshold_dialog.cppm
-/// @brief Faithful port of src/components/CostThresholdDialog.tsx
+/// @brief Cost-threshold confirmation dialog.
 ///
 /// The cost-threshold dialog is a purely informative alert shown when the
 /// session's API spend reaches a pre-configured threshold.
@@ -56,11 +56,10 @@ inline const std::string kDocsUrl = loom::constants::product::doc_url("/docs/en/
 inline constexpr std::string_view kBodyParagraph =
     "Learn more about how to monitor your spending:";
 
-/// Label for the single Select option.  Mirrors TS
-///   options = [{ value: "ok", label: "Got it, thanks!" }]
+/// Label for the single Select option.
 inline constexpr std::string_view kOkButtonLabel = "Got it, thanks!";
 
-/// Mirrors TS CostThresholdDialog Props plus the engine-provided
+/// Payload for the cost-threshold dialog, including the engine-provided
 /// `dollars_spent` / `model_name` context used to interpolate the title.
 ///
 /// P0 CONTRACT — DO NOT add fabricated actions (Continue/Reset/Quit).
@@ -75,10 +74,9 @@ struct CostThresholdPayload {
 };
 
 /// Internal state exposed to callers so that the single-option Select bullet
-/// can be rendered consistently across re-draws.  The TS counterpart uses a
-/// <Select> with a single option; because there is only one option we keep
-/// selected_index fixed at 0 and allow Arrow keys to be no-ops (the index
-/// never leaves [0, 0]).
+/// can be rendered consistently across re-draws.  Because there is only one
+/// option we keep selected_index fixed at 0 and allow Arrow keys to be no-ops
+/// (the index never leaves [0, 0]).
 struct CostThresholdState {
     double dollars_spent = 0.0;
     std::optional<std::string> model_name;
@@ -116,7 +114,7 @@ struct CostThresholdState {
 // Renderer
 // ---------------------------------------------------------------------------
 
-/// Faithful 1:1 render of TS <CostThresholdDialog>.
+/// Render the cost-threshold dialog.
 ///
 ///   ┌──────────────────────────────────────────────────────────┐
 ///   │ You've spent $5 on the API this session.                    │
@@ -147,9 +145,9 @@ struct CostThresholdState {
     }
 
     // ── Single-option CustomSelect clone ────────────────────────
-    //    TS CustomSelect renders a ● bullet for the selected option,
-    //    using the accent color for the selected row.  Because there is
-    //    only one option, selected_index is always 0.
+    //    Renders a ● bullet for the selected option, using the accent
+    //    color for the selected row.  Because there is only one option,
+    //    selected_index is always 0.
     const bool selected = (st.selected_index == 0);
     auto option_row = hbox({
         text(selected ? "● " : "○ ") |
@@ -187,8 +185,7 @@ struct CostThresholdState {
 // Event handler
 // ---------------------------------------------------------------------------
 
-/// Keyboard handler matching the TS <Dialog> + single-option <Select>
-/// contract exactly:
+/// Keyboard handler for the single-option Select contract:
 ///
 ///   Enter  → on_done()    (commit "Got it, thanks!")
 ///   Escape → on_done()    (Dialog.onCancel → onDone)  — NO data-loss quit!
@@ -203,7 +200,7 @@ struct CostThresholdState {
 /// handler and e.g. scrolling the message list while the dialog is open).
 ///
 /// Any other character is also swallowed so that stray keystrokes do not
-/// leak through to the prompt input — the TS dialog has focus.
+/// leak through to the prompt input — the dialog has focus.
 ///
 /// Returns true if the event was consumed.
 inline bool HandleCostThresholdEvent(CostThresholdState& st,
@@ -234,7 +231,7 @@ inline bool HandleCostThresholdEvent(CostThresholdState& st,
                 return true;
             default:
                 // Consume any other character so that stray keystrokes do
-                // not leak through to the prompt input.  The TS dialog has
+                // not leak through to the prompt input.  The dialog has
                 // focus; any key other than the ones explicitly handled
                 // should not do anything destructive.
                 return true;

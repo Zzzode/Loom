@@ -1,5 +1,5 @@
 /// @file assistant_text_message.cppm
-/// @brief FTXUI component for assistant text messages (AssistantTextMessage.tsx)
+/// @brief FTXUI component for assistant text messages
 ///
 /// Visual layout:
 ///   [🤖 assistant  │ model X │ ⏱ HH:MM]
@@ -33,15 +33,15 @@ import loom.ui.messages.message_timestamp;
 import loom.ui.visual.markdown;
 // R7: BLACK_CIRCLE selection recoloring uses palette.suggestion +
 // message_actions_background tokens (not inline RGB) so light/daltonized
-// variants stay faithful.  Figures provides kBullet (U+25CF = TS BLACK_CIRCLE).
+// variants stay faithful.  Figures provides kBullet (U+25CF).
 import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_figures;
 
 // ─── Prompt XML tag stripping (module-internal) ────────────────────────
 // Models sometimes emit prompt scaffolding XML blocks (<commit_analysis>,
 // <context>, <function_analysis>, <pr_analysis>) inside assistant text.
-// These are not user-facing content — strip them before rendering, mirroring
-// the TS stripPromptXMLTags helper (utils/messages.ts), which uses the regex
+// These are not user-facing content — strip them before rendering.
+// The tag stripping uses the regex pattern:
 //   /<(commit_analysis|context|function_analysis|pr_analysis)>.*?<\/\1>\n?/gs
 // Implemented here as a manual scan (no <regex> needed, and faster).
 namespace loom::ui::messages::detail {
@@ -54,7 +54,7 @@ constexpr std::string_view kStrippedPromptTags[] = {
 };
 
 /// Remove <tag>...</tag> blocks for the known prompt-scaffolding tags.
-/// Matches the TS regex semantics: non-greedy, dot matches newlines, trailing
+/// Matches the regex semantics: non-greedy, dot matches newlines, trailing
 /// newline consumed. Returns the cleaned text.
 [[nodiscard]] inline std::string strip_prompt_xml_tags(std::string_view content) {
     std::string result;
@@ -107,14 +107,14 @@ constexpr std::string_view kStrippedPromptTags[] = {
         }
 
         // Skip the entire block (open tag through close tag). Consume one
-        // trailing newline if present (mirrors the \n? in the TS regex).
+        // trailing newline if present (mirrors the \n? in the regex).
         pos = close + close_pat.size();
         if (pos < content.size() && content[pos] == '\n') {
             ++pos;
         }
     }
 
-    // Mirror the TS .trim()
+    // Trim leading/trailing whitespace
     auto b = result.find_first_not_of(" \t\n\r");
     if (b == std::string::npos) return "";
     auto e = result.find_last_not_of(" \t\n\r");
@@ -215,8 +215,7 @@ struct AssistantTextMessageData {
     std::optional<std::string> model_name;
     AssistantMessageKind kind = AssistantMessageKind::Normal;
     bool verbose = false;          // show raw text
-    bool show_dot = true;          // TS BLACK_CIRCLE per text block (MessageRow
-                                   // passes shouldShowDot=true unconditionally)
+    bool show_dot = true;          // show bullet per text block
     bool is_streaming = false;
     std::uint64_t input_tokens = 0;
     std::uint64_t output_tokens = 0;
@@ -352,8 +351,7 @@ class AssistantTextMessageComponent : public ComponentBase {
         constexpr std::size_t kPreviewLines = 20;
 
         if (!raw) {
-            // Strip prompt-scaffolding XML before rendering, mirroring TS
-            // (marked.lexer(stripPromptXMLTags(content))).
+            // Strip prompt-scaffolding XML before rendering.
             std::string content = detail::strip_prompt_xml_tags(data_.content);
 
             // Unescape literal "\n" (two-char backslash-n) into real newlines.
@@ -458,19 +456,10 @@ class AssistantTextMessageComponent : public ComponentBase {
     });
 }
 
-// ─── M4: Faithful TS renderer ──────────────────────────────────────────
-// Mirrors AssistantTextMessage.tsx default branch (the common assistant turn
-// shape).  Markdown rendering itself is M5; M4 nails the message FRAMING:
-//   <Box alignItems="flex-start" flexDirection="row"
-//        justifyContent="space-between" marginTop={addMargin?1:0}
-//        width="100%" backgroundColor={isSelected?bg:undefined}>
-//     <Box flexDirection="row">
-//       {shouldShowDot && <NoSelect minWidth={2}>
-//         <Text color={isSelected?'suggestion':'text'}>{BLACK_CIRCLE}</Text>
-//       </NoSelect>}
-//       <Box flexDirection="column"><Markdown>{text}</Markdown></Box>
-//     </Box>
-//   </Box>
+// ─── M4: Faithful renderer ────────────────────────────────────────────
+// The common assistant turn shape.  Markdown rendering itself is M5; M4 nails
+// the message FRAMING: a row with an optional BLACK_CIRCLE dot, the markdown
+// body, an optional top margin, and a selection background.
 // No header label, no timestamp, no separator, no action buttons, no token
 // footer — the existing divergent Component adds all of those.
 //
@@ -488,16 +477,16 @@ class AssistantTextMessageComponent : public ComponentBase {
     bool add_margin = true,
     bool is_selected = false) {
     // R7: use palette tokens (not inline RGB) so theme variants (light/daltonized
-    // resolve correctly (TS dark default).
+    // resolve correctly.
     namespace thm = loom::ui::design::theme;
     namespace figs = loom::ui::design::figures;
     const auto& pal = *thm::current_theme().palette;
     const Color dot_color = is_selected ? pal.suggestion : pal.text;
     Elements row;
     if (data.show_dot) {
-        // R7: kBullet = U+25CF (●) = TS BLACK_CIRCLE.
+        // R7: kBullet = U+25CF (●).
         // Wrap in size(WIDTH, EQUAL, 2) so the container ALWAYS reserves
-        // exactly 2 cells (TS minWidth=2).  Previously used the wrong glyph
+        // exactly 2 cells.  Previously used the wrong glyph
         // (U+23FA record-circle) and relied on glyph+space content-width (fragile when
         // the string was 2 columns wide — now we guard with an explicit size
         // constraint.
@@ -506,7 +495,7 @@ class AssistantTextMessageComponent : public ComponentBase {
         row.push_back(std::move(glyph));
     }
     row.push_back(std::move(body));
-    // TS parity: streaming assistant message appends a blinking block cursor
+    // Streaming assistant message appends a blinking block cursor
     // (▌) at the end of the text to indicate live generation.  The old
     // "generating…" tail row was removed — the cursor lives inline here.
     if (data.is_streaming) {
@@ -515,8 +504,7 @@ class AssistantTextMessageComponent : public ComponentBase {
 
     Element content = hbox(std::move(row));
     // R7: when selected, wrap the entire row in message_actions_background
-    // (TS: AssistantTextMessage.tsx:229-238 — outer row
-    // backgroundColor = messageActionsBackground.
+    // (the outer row background).
     Element framed = is_selected
         ? hbox({content | bgcolor(pal.message_actions_background) | flex})
         : hbox({content, filler()}) | flex;
@@ -527,12 +515,10 @@ class AssistantTextMessageComponent : public ComponentBase {
 }
 
 /// Convenience overload: body defaults to the markdown-rendered (XML-stripped)
-/// content.  M5 made loom::ui::render_markdown itself TS-faithful (GFM parity
-/// with src/utils/markdown.ts), so this path now renders faithful markdown
-/// in the running app (no separate renderer swap needed).
+/// content.  M5 made loom::ui::render_markdown itself faithful (GFM parity),
+/// so this path now renders faithful markdown in the running app (no separate
+/// renderer swap needed).
 ///
-/// TS REF: Messages.tsx L703-712 — streaming text row uses
-///   <StreamingMarkdown>{streamingText}</StreamingMarkdown>
 /// When `streaming_md` is non-null and data.is_streaming is true, the body
 /// is rendered via StreamingMarkdown::update() (stable-prefix cache, only
 /// re-parses the unstable suffix) instead of full render_markdown().
@@ -546,9 +532,8 @@ class AssistantTextMessageComponent : public ComponentBase {
     // clipped line and markdown line-boundary patterns (* list, headings) fail.
     std::string cleaned = detail::unescape_literal_newlines(
         detail::strip_prompt_xml_tags(data.content));
-    // TS REF: Messages.tsx L703-712 + Markdown.tsx L186-235 — streaming text
-    // uses StreamingMarkdown (stable prefix + unstable suffix) to avoid
-    // re-parsing the entire growing document on every token delta.
+    // Streaming text uses StreamingMarkdown (stable prefix + unstable suffix)
+    // to avoid re-parsing the entire growing document on every token delta.
     Element body = (data.is_streaming && streaming_md)
         ? streaming_md->update(cleaned)
         : ::loom::ui::render_markdown(cleaned);

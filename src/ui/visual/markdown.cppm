@@ -5,11 +5,11 @@
 /// - Full block-level parsing: headings, paragraphs, code fences, lists,
 ///   blockquotes, tables (GFM), horizontal rules
 /// - Inline formatting: bold, italic, inline code, links,
-///   escaped characters (strikethrough intentionally disabled, mirroring TS)
+///   escaped characters (strikethrough intentionally disabled, mirroring)
 /// - Syntax-highlighted code blocks via loom.ui.visual.code_highlight
 /// - LRU token cache for fast re-renders (virtual scrolling)
 /// - Fast-path: skip lexing for plain text with no markdown markers
-/// - Theme-aware coloring with dimColor option
+/// - Theme-aware coloring with dim option
 /// - Streaming Markdown: stable prefix + unstable suffix for live output
 /// - Interactive MarkdownComponent with scroll support
 module;
@@ -58,14 +58,38 @@ enum class InlineTokenKind : std::uint8_t {
     Link,
     Escape,
     Math,       ///< Inline math: $...$ (LaTeX math expression)
+    Image,      ///< Image: ![alt](url "title")
+    Strikethrough,  ///< GFM strikethrough: ~~text~~ or ~text~
+    HtmlRaw,    ///< Raw HTML tag (CommonMark §6.6) — passed through to HTML
+    FootnoteRef,  ///< GFM footnote ref: [^label] (text field = label without '^')
 };
 
 /// An inline formatting token
 struct InlineToken {
     InlineTokenKind kind;
     std::string text;
-    std::string url;  // for links
+    std::string url;    // for links and images
+    std::string title;  // for links and images (link title / image title)
+    // Nested inline tokens for emphasis (Bold/Italic) that contain other
+    // emphasis (e.g. _**text**_ → Italic with a Bold child).  Empty when
+    // the token has no nested emphasis (text holds the raw content).
+    std::vector<InlineToken> children;
 };
+
+// ============================================================
+// Link reference definitions (CommonMark §4.7)
+// ============================================================
+
+/// A parsed link reference definition: [label]: /url "title"
+struct LinkRefDef {
+    std::string url;
+    std::string title;  // empty if no title
+};
+
+/// Case-insensitive map from normalized label → definition.
+/// Labels are normalized per CommonMark: case-folded, whitespace
+/// collapsed, backslash escapes processed.
+using LinkRefMap = std::map<std::string, LinkRefDef>;
 
 /// Block token types
 enum class BlockTokenKind : std::uint8_t {
@@ -78,6 +102,8 @@ enum class BlockTokenKind : std::uint8_t {
     Table,
     HorizontalRule,
     MathBlock,   ///< Block math: $$...$$ (LaTeX display math)
+    HtmlBlock,   ///< HTML block (CommonMark §4.6) — raw HTML passed through
+    FootnoteDef,  ///< GFM footnote definition (hoisted to footnotes section)
 };
 
 /// A block-level markdown token
@@ -91,19 +117,45 @@ struct BlockToken {
     // Table
     std::vector<std::string> table_headers;
     std::vector<std::vector<std::string>> table_rows;
-    // Lists: each item is a vector of inline tokens
-    std::vector<std::vector<InlineToken>> list_items;
+    // GFM table column alignment: 0=none(default ---), 1=left(:---),
+    // 2=center(:---:), 3=right(---:).  Parsed from the separator row's
+    // ':' markers.
+    std::vector<std::int8_t> table_align;
+    // Table: link reference definitions from the enclosing document,
+    // so the HTML serializer can resolve reference links in cells.
+    // Only populated for Table blocks.
+    LinkRefMap table_link_refs;
+    // Lists: each item is a vector of sub-blocks (paragraphs, code blocks,
+    // nested lists, blockquotes, etc.) — CommonMark §5.2.
+    std::vector<std::vector<BlockToken>> list_items;
     // Per-item nesting depth (0 = top-level, 1 = first indent, ...).
-    // Mirrors TS marked's list tokenizer which tracks `item.depth` based on
-    // leading spaces.  Used by render_olist() for depth-based numbering
-    // (Arabic / letters / Roman) and render_ulist() for indentation.
+    // Used by render_olist() for depth-based numbering (Arabic / letters /
+    // Roman) and render_ulist() for indentation.
     std::vector<int> list_depths;
+    // GFM task list items: per-item state.  -1 = not a task item,
+    // 0 = unchecked ([ ]), 1 = checked ([x]).  Empty for non-task lists.
+    std::vector<std::int8_t> task_state;
+    // Ordered list: the starting number (first item's number).
+    // CommonMark §5.2: <ol start="N"> when N != 1.
+    int list_start = 1;
+    // Whether the list is "loose" (has blank lines between or within items).
+    // Loose lists wrap item content in <p> tags; tight lists don't.
+    bool list_loose = false;
     // Paragraph / Heading / Blockquote: inline tokens
     std::vector<InlineToken> inlines;
+    // Blockquote: nested block-level content (recursively parsed).
+    // When non-empty, the renderer emits each sub-block inside the
+    // blockquote element instead of wrapping inlines in a single <p>.
+    std::vector<BlockToken> sub_blocks;
     // Blockquote depth
     int quote_depth = 0;
     // Math block content (LaTeX source for $$...$$ display math)
     std::string math_content;
+    // HTML block content (raw HTML, CommonMark §4.6)
+    std::string html_content;
+    // FootnoteDef: raw label as written in [^label]: (used for href/id).
+    // Definition content is in sub_blocks (parsed via recursive lex_blocks).
+    std::string footnote_label;
 };
 
 // ============================================================
@@ -115,21 +167,59 @@ namespace detail {
 /// Characters that indicate markdown syntax. If none are present, skip
 /// the full lexer and render as a single plain paragraph.
 [[nodiscard]] constexpr bool has_markdown_syntax(std::string_view s) {
+    // Leading tabs or 4+ leading spaces may be indented code blocks.
+    if (!s.empty() && s[0] == '\t') return true;
+    if (s.size() >= 4 && s[0] == ' ' && s[1] == ' ' &&
+        s[2] == ' ' && s[3] == ' ') {
+        return true;
+    }
     // Sample first 500 chars — if markdown exists it's usually early.
     const std::size_t sample_len = std::min(s.size(), std::size_t{500});
     for (std::size_t i = 0; i < sample_len; ++i) {
         char c = s[i];
         if (c == '#' || c == '*' || c == '`' || c == '|' ||
-            c == '[' || c == '>' || c == '-' || c == '_' ||
-            c == '~' || c == '$') {
+            c == '[' || c == ']' || c == '<' || c == '>' || c == '-' ||
+            c == '_' || c == '~' || c == '$' || c == '\\' || c == '\t' ||
+            c == '@') {
             return true;
         }
-        if (c == '\n' && i + 1 < sample_len) {
-            // Check for ordered list start on next line
+        // Ordered list marker: digit(s) followed by . or ) and space
+        if (c >= '0' && c <= '9') {
+            std::size_t j = i;
+            while (j < sample_len && s[j] >= '0' && s[j] <= '9') ++j;
+            if (j < sample_len && (s[j] == '.' || s[j] == ')') &&
+                j + 1 < sample_len && (s[j + 1] == ' ' || s[j + 1] == '\t')) {
+                return true;
+            }
+        }
+        // GFM extended autolinks: bare URLs (www., ://)
+        if (c == 'w' && i + 4 <= sample_len &&
+            s[i + 1] == 'w' && s[i + 2] == 'w' && s[i + 3] == '.') {
+            return true;
+        }
+        if (c == ':' && i + 3 <= sample_len &&
+            s[i + 1] == '/' && s[i + 2] == '/') {
+            return true;
+        }
+        // Potential entity reference: &Name; or &#NNN; / &#xHH;
+        if (c == '&' && i + 1 < sample_len) {
             char n = s[i + 1];
-            if (n >= '0' && n <= '9') return true;
-            // Check for heading / list / blockquote after newline
-            if (n == '#' || n == '-' || n == '*' || n == '>') return true;
+            if ((n >= '0' && n <= '9') || (n >= 'a' && n <= 'z') ||
+                (n >= 'A' && n <= 'Z') || n == '#') {
+                return true;
+            }
+        }
+        if (c == '\n') {
+            // Hard line break: 2+ trailing spaces or backslash before \n
+            if (i >= 2 && s[i - 1] == ' ' && s[i - 2] == ' ') return true;
+            if (i >= 1 && s[i - 1] == '\\') return true;
+            // Check for ordered list start on next line
+            if (i + 1 < sample_len) {
+                char n = s[i + 1];
+                if (n >= '0' && n <= '9') return true;
+                // Check for heading / list / blockquote after newline
+                if (n == '#' || n == '-' || n == '*' || n == '>') return true;
+            }
         }
     }
     // Check for double-newline (paragraph break)
@@ -148,8 +238,18 @@ namespace detail {
 /// Tokenize inline markdown formatting.
 /// Handles: bold (**), italic (*), code (`), links [text](url),
 /// and escaped characters (\*). Strikethrough (~~) is intentionally NOT
-/// handled — see note above matching the TS marked configuration.
-[[nodiscard]] std::vector<InlineToken> tokenize_inline(std::string_view text);
+/// handled — see note above matching the marked configuration.
+/// When link_refs is non-null, reference links ([text], [text][label],
+/// [text][]) are resolved against it (CommonMark §4.7 + §6.6).
+/// When gfm_extensions is false, GFM-only features (extended autolinks)
+/// are disabled (CommonMark mode).
+[[nodiscard]] std::vector<InlineToken> tokenize_inline(
+    std::string_view text, const LinkRefMap* link_refs = nullptr,
+    bool gfm_extensions = true);
+
+/// Normalize a label per CommonMark: Unicode case-fold, collapse whitespace.
+/// Used for footnote label lookup (case-insensitive) and link ref labels.
+[[nodiscard]] std::string normalize_label(std::string_view label);
 
 } // namespace detail
 
@@ -175,7 +275,7 @@ namespace detail {
 
 /// Count leading whitespace characters (spaces + tabs) in a line.
 /// Each 2 spaces or 1 tab counts as one indentation level, matching
-/// the TS marked tokenizer's `indent` calculation.
+/// the marked tokenizer's `indent` calculation.
 [[nodiscard]] int count_list_indent(std::string_view line);
 
 [[nodiscard]] std::optional<std::pair<int, std::string>>
@@ -193,7 +293,14 @@ namespace detail {
 [[nodiscard]] std::vector<std::string> split_lines(std::string_view source);
 
 /// Lex a markdown document into block tokens.
-[[nodiscard]] std::vector<BlockToken> lex_blocks(std::string_view source);
+/// When gfm_extensions is false, GFM-only features (extended autolinks)
+/// are disabled (CommonMark mode).
+/// When in_blockquote is true, setext heading detection is disabled —
+/// a setext underline on a lazy continuation line is paragraph text,
+/// not a heading (CommonMark §4.3 example 93).
+[[nodiscard]] std::vector<BlockToken> lex_blocks(std::string_view source,
+                                                   bool gfm_extensions = true,
+                                                   bool in_blockquote = false);
 
 } // namespace detail
 
@@ -241,7 +348,14 @@ TokenCache& global_token_cache();
 
 namespace detail {
 
-/// TS REF: src/utils/markdown.ts ISSUE_REF_PATTERN and linkifyIssueReferences()
+/// A text segment produced by linkify_issue_references(): plain text with an
+/// optional URL (empty for plain text, non-empty for hyperlinked refs).
+struct TextSegment {
+    std::string text;
+    std::string url;  // empty for plain text
+};
+
+/// Issue reference pattern and linkifyIssueReferences()
 ///
 /// Pattern: owner/repo#123  →  clickable OSC 8 link to GitHub issues page.
 ///
@@ -251,12 +365,38 @@ namespace detail {
 /// rendering is on the hot path for streaming updates).
 ///
 /// @param text  Plain text to scan for issue references.
-/// @param opts  Current markdown options (for dim_color propagation).
-/// @return      Elements vector with plain text segments interspersed with
-///              hyperlinked issue references.
-[[nodiscard]] Elements linkify_issue_references(
-    std::string_view text,
-    const MarkdownOptions& opts);
+/// @return      Text segments: plain text interspersed with hyperlinked
+///              issue references (url non-empty).
+[[nodiscard]] std::vector<TextSegment> linkify_issue_references(
+    std::string_view text);
+
+/// Split text into wrappable segments for flexbox layout.
+///
+/// FTXUI's hbox does NOT wrap — when the total child width exceeds the
+/// available width, box_helper::Compute proportionally shrinks every child,
+/// and Text::Render() truncates at the shrunk boundary, silently swallowing
+/// characters from the middle of inline elements.
+///
+/// This function splits text into segments that flexbox can wrap at:
+///   - ASCII words (runs of half-width, non-space characters) — atomic
+///   - Spaces — breakable points
+///   - Full-width characters (CJK, etc.) — each is its own breakable segment
+///
+/// The caller creates one styled text() element per segment and passes them
+/// to flexbox(), which wraps at segment boundaries.
+///
+/// at_paragraph_start is true only before the first non-space character of
+/// the entire paragraph (shared across all per-token calls).  It
+/// distinguishes a paragraph-leading space (CommonMark trims these — safe
+/// to skip) from an inter-token space (e.g. Text(" end") after
+/// Bold("world")) which must be preserved.
+///
+/// trim_leading_space controls whether paragraph-leading spaces are dropped.
+/// Code spans and other content tokens where spaces are significant pass
+/// false so their leading spaces are preserved.
+[[nodiscard]] std::vector<std::string> split_for_wrapping(
+    std::string_view text, bool& at_paragraph_start,
+    bool trim_leading_space = true);
 
 } // namespace detail
 
@@ -268,14 +408,14 @@ namespace detail {
 
 /// Render inline tokens to FTXUI element with theme colors.
 ///
-/// Mirrors src/utils/markdown.ts formatToken inline cases:
-///   - strong (bold)  -> chalk.bold
-///   - em (italic)    -> chalk.italic
+/// Inline token formatting:
+///   - strong (bold)  -> bold
+///   - em (italic)    -> italic
 ///   - codespan       -> color('permission', theme)  (rgb(87,105,247) on dark)
 ///   - link           -> OSC 8 hyperlink (rendered as underlined text here)
 ///   - text           -> linkifyIssueReferences(text)
-/// Strikethrough (del) is intentionally disabled (TS configureMarked disables
-/// the `del` tokenizer).
+/// Strikethrough (del) is intentionally disabled (the `del` tokenizer is
+/// disabled in the marked configuration).
 [[nodiscard]] Element render_inlines(
     const std::vector<InlineToken>& tokens,
     const MarkdownOptions& opts);
@@ -290,28 +430,29 @@ namespace detail {
 
 /// Render a heading block.
 ///
-/// Mirrors src/utils/markdown.ts formatToken 'heading':
-///   depth 1 (h1) -> chalk.bold.italic.underline(content) + EOL + EOL
-///   depth 2 (h2) -> chalk.bold(content) + EOL + EOL
-///   default (h3+) -> chalk.bold(content) + EOL + EOL
-/// No coloring — chalk applies only bold/italic/underline attributes. The
-/// prior divergent renderer added cyan/white coloring, which TS does not.
+/// Heading formatting:
+///   depth 1 (h1) -> bold + italic + underline(content) + EOL + EOL
+///   depth 2 (h2) -> bold(content) + EOL + EOL
+///   default (h3+) -> bold(content) + EOL + EOL
+/// No coloring — only bold/italic/underline attributes. The
+/// prior divergent renderer added cyan/white coloring, which is not
+/// part of the spec.
 /// The trailing EOL+EOL becomes a blank line under the heading.
 [[nodiscard]] Element render_heading(const BlockToken& tok,
                                      const MarkdownOptions& opts);
 
 /// Render a code block.
 ///
-/// Mirrors src/utils/markdown.ts formatToken 'code':
+/// Code block formatting:
 ///   if (!highlight) return token.text + EOL;
 ///   return highlight.highlight(token.text, {language}) + EOL;
-/// The TS code block is the highlighted text ONLY — no border, no line
+/// The code block is the highlighted text ONLY — no border, no line
 /// numbers, no scroll status bar, no [Copy] tag. cli-highlight emits ANSI
-/// per-line; Ink renders those lines stacked. The prior divergent renderer
+/// per-line; those lines are rendered stacked. The prior divergent renderer
 /// called RenderCodeHighlight, which injected a copy corner tag, a status
 /// bar (`[j/k] scroll [q] close`), and line-number gutters — none of which
-/// appear in TS output. That chrome polluted every fenced code block in
-/// assistant messages.
+/// appear in the terminal-native output. That chrome polluted every fenced
+/// code block in assistant messages.
 ///
 /// We render the existing code_highlight tokenizer's per-line tokens with
 /// show_line_numbers=false and no surrounding frame, preserving the prior
@@ -326,18 +467,18 @@ namespace detail {
 namespace detail {
 
 /// Convert a positive integer to its lowercase alphabetic representation.
-/// Mirrors TS utils/markdown.ts numberToLetter(): 1→"a", 2→"b", ..., 26→"z",
+/// numberToLetter(): 1→"a", 2→"b", ..., 26→"z",
 /// 27→"aa", 28→"ab", etc.
 [[nodiscard]] std::string number_to_letter(int n);
 
 /// Convert a positive integer to its lowercase Roman numeral representation.
-/// Mirrors TS utils/markdown.ts numberToRoman(): 1→"i", 4→"iv", 9→"ix", etc.
+/// numberToRoman(): 1→"i", 4→"iv", 9→"ix", etc.
 /// Returns the Arabic string for values outside the classical range (1–3999).
 [[nodiscard]] std::string number_to_roman(int n);
 
 /// Select the ordered-list number label based on nesting depth.
 ///
-/// Mirrors TS utils/markdown.ts getListNumber(listDepth, orderedListNumber):
+/// getListNumber(listDepth, orderedListNumber):
 ///   depth 0,1 → Arabic numeral
 ///   depth 2   → lowercase letter
 ///   depth 3   → lowercase Roman numeral
@@ -352,51 +493,63 @@ namespace detail {
 
 /// Render an unordered list.
 ///
-/// Mirrors src/utils/markdown.ts: a list_item's text token renders as
+/// A list_item's text token renders as
 ///   `${'  '.repeat(listDepth)}- ${content}${EOL}`
 /// Top-level (listDepth 0) items use `- ` with no leading indent. Nested
 /// items get `'  '.repeat(depth)` indentation prefix. The prior divergent
-/// renderer used a cyan `•` bullet and 2-space indent — neither appears in TS.
+/// renderer used a cyan `•` bullet and 2-space indent — neither is
+/// part of the spec.
 [[nodiscard]] Element render_ulist(const BlockToken& tok,
-                                   const MarkdownOptions& opts);
+                                   const MarkdownOptions& opts,
+                                   int depth = 0);
 
 /// Render an ordered list.
 ///
-/// Mirrors src/utils/markdown.ts getListNumber(listDepth, n):
+/// getListNumber(listDepth, n):
 ///   depth 0,1 → Arabic numeral  ("1.", "2.")
 ///   depth 2   → lowercase letter ("a.", "b.")
 ///   depth 3   → lowercase Roman  ("i.", "ii.")
 ///   depth 4+  → Arabic (wraps)
 ///
 /// Numbering resets per depth level: each time a deeper depth appears,
-/// numbering starts from 1 for that depth. This mirrors how TS marked
+/// numbering starts from 1 for that depth. This mirrors how marked
 /// produces nested `list` tokens each with their own item counter.
 ///
 /// Each item also gets `'  '.repeat(depth)` indentation prefix.
 [[nodiscard]] Element render_olist(const BlockToken& tok,
-                                   const MarkdownOptions& opts);
+                                   const MarkdownOptions& opts,
+                                   int depth = 0);
 
 /// Render a blockquote.
 ///
-/// Mirrors src/utils/markdown.ts 'blockquote':
-///   const bar = chalk.dim(BLOCKQUOTE_BAR)   // ▎ U+258E
+/// Blockquote formatting:
+///   const bar = dim(BLOCKQUOTE_BAR)   // ▎ U+258E
 ///   inner.split(EOL).map(line =>
 ///     stripAnsi(line).trim()
-///       ? `${bar} ${chalk.italic(line)}`
+///       ? `${bar} ${italic(line)}`
 ///       : line)
 /// Each non-blank line is prefixed with a DIM ▎ and the content is italic at
-/// normal brightness (chalk.dim on the bar only, not the text — TS comment
-/// notes dim is nearly invisible on dark themes). The prior divergent
+/// normal brightness (dim on the bar only, not the text — dim is nearly
+/// invisible on dark themes). The prior divergent
 /// renderer used a blue bar, a non-dim content, and a background color —
-/// all absent in TS.
+/// all absent from the spec.
 [[nodiscard]] Element render_blockquote(const BlockToken& tok,
                                         const MarkdownOptions& opts);
 
+/// Render an HTML block as plain text in the terminal (tags stripped).
+[[nodiscard]] Element render_html_block(const BlockToken& tok,
+                                        const MarkdownOptions& opts);
+
+/// Check whether an element is an empty block (e.g. an HTML block that
+/// stripped to nothing).  Used by the block flow to skip empty blocks
+/// entirely, avoiding extra blank lines from separators.
+[[nodiscard]] bool is_empty_block(const Element& el);
+
 /// Render a GFM table using Unicode box-drawing characters, matching the
-/// TS <MarkdownTable> renderer (src/components/MarkdownTable.tsx) non-wrapped
+/// MarkdownTable renderer's non-wrapped
 /// path when columns fit the terminal at ideal width.
 ///
-/// TS emits a fully bordered table:
+/// The output is a fully bordered table:
 ///   ┌──────┬──────┐
 ///   │ hdr1 │ hdr2 │
 ///   ├──────┼──────┤
@@ -407,23 +560,23 @@ namespace detail {
 ///              corners (┌┐└┘ U+250C/10/14/18),
 ///              cross pieces (┬┼┴ U+252C/3C/34, ├┤ U+251C/24).
 ///
-/// Column width = max(stringWidth(header), max(stringWidth(cell))) with a
+/// Column width = max(string_width(header), max(string_width(cell))) with a
 /// minimum of 3. Header cells are bold; data cells are plain.
 ///
 /// The previous divergent renderer emitted a plaintext ASCII pipe table
 /// (`|---|---|`) which leaked literal `---` dashes into the rendered text
 /// (P0 bug: GFM separator line leaked as paragraph content). Using
 /// box-drawing ─ chars instead of ASCII hyphens prevents any spurious
-/// "---" substring match and matches the TS terminal-native output.
+/// "---" substring match and matches the terminal-native output.
 [[nodiscard]] Element render_table(const BlockToken& tok,
                                    const MarkdownOptions& opts);
 
 /// Render a horizontal rule.
 ///
-/// Mirrors src/utils/markdown.ts formatToken 'hr': returns the literal
+/// The 'hr' token returns the literal
 /// string "---" (not a separator/box-drawing line). The prior divergent
 /// renderer used ftxui::separator(), which draws a full-width ── rule —
-/// absent in TS output.
+/// absent from the spec.
 [[nodiscard]] Element render_hr(const MarkdownOptions& opts);
 
 } // namespace detail
@@ -439,6 +592,20 @@ namespace detail {
 
 /// Convenience: render with dim_color = true
 [[nodiscard]] Element render_markdown_dim(std::string_view source);
+
+// ============================================================
+// HTML Serialization (for conformance testing)
+// ============================================================
+
+/// Serialize a markdown document to an HTML string.
+/// Uses the same block lexer + inline tokenizer as the FTXUI renderer,
+/// then walks the AST and emits standard HTML.  Intended for running
+/// CommonMark/GFM conformance test suites — not used in production
+/// rendering (the terminal renderer is the primary output path).
+/// Set gfm_extensions to false for CommonMark-only mode (no extended
+/// autolinks, no GFM-specific features).
+[[nodiscard]] std::string render_markdown_to_html(std::string_view source,
+                                                   bool gfm_extensions = true);
 
 // ============================================================
 // Streaming Markdown

@@ -29,7 +29,7 @@ namespace loom::ui::messages_list {
 
 namespace detail {
 
-/// Count *wrapped* lines for `text` given terminal columns.  Mirrors TS
+/// Count *wrapped* lines for `text` given terminal columns.  Uses a
 /// text-wrap heuristic (hard-break at term_cols, plus existing '\n').  The
 /// result is the maximum vertical space the content COULD take inside a
 /// 36-col reserved left-gutter message envelope; 36 is subtracted from
@@ -125,7 +125,7 @@ namespace detail {
         }
         case S::UserToolResult:
         case S::UserBashOutput: {
-            // TS PARITY (2026-07-05): payload_preview returns just tool_name
+            // payload_preview returns just tool_name
             // (e.g. "Bash") — 1 line.  Actual tool result output can be
             // dozens of lines.  Extract real output from ToolResultOptions.
             if (auto* ropts = std::get_if<ToolResultOptions>(
@@ -268,8 +268,8 @@ namespace detail {
             // active), this is a zero-alloc cache hit.  Otherwise this
             // call computes + caches for future use.
             //
-            // TS REF: Messages.tsx L700  extractSearchText passed to VirtualMessageList
-            //   (the same callback used by build_visible_rows search filter).
+            // The search callback is the same one used by build_visible_rows
+            // search filter.
             const MessageShape shape =
                 vr.row_idx < input.shapes.size()
                     ? input.shapes[vr.row_idx]

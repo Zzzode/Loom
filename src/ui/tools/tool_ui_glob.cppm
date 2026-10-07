@@ -1,14 +1,8 @@
 /// @file tool_ui_glob.cppm
-/// @brief Glob tool UI — userFacingName, renderToolUseMessage, etc.
+/// @brief Glob tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.glob
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/GlobTool/GlobTool.ts
-///   - userFacingName: "Glob"
-///   - renderToolUseMessage: pattern + path summary
-///   - isTransparentWrapper: false
 module;
 
 
@@ -60,7 +54,6 @@ namespace detail {
     ToolUIFunctions fns;
 
     fns.user_facing_name = [](std::string_view) {
-        // TS: GlobTool.userFacingName = "Search" (same as Grep)
         return std::string{"Search"};
     };
 
@@ -113,8 +106,6 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: GlobTool.ts L151  extractSearchText({filenames})
-    //   return filenames.join('\n')
     // Reuses Grep's render — shows filenames.join. durationMs/numFiles
     // are "Found 3 files in 12ms" chrome (under-count, fine).
     fns.extract_search_text = [](

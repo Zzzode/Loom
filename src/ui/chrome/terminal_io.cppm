@@ -1,6 +1,4 @@
 // loom.ui.chrome.terminal_io - ANSI terminal escape sequence parsing and generation
-// Migrated from: src/ink/termio/ (ansi.ts, csi.ts, dec.ts, esc.ts, osc.ts,
-//                                  parser.ts, sgr.ts, tokenize.ts, types.ts)
 //
 // Provides parsing of raw terminal input (escape sequences, CSI codes, SGR
 // attributes), tokenization of ANSI-colored text, and generation of escape

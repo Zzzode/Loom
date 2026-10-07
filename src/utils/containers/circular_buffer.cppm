@@ -64,7 +64,7 @@ public:
         advance_tail();
     }
 
-    // TypeScript-compatible API aliases.
+    // Convenience API aliases.
     void add(const T& value) { push_back(value); }
     void add(T&& value) { push_back(std::move(value)); }
     void add_all(const std::vector<T>& values) {

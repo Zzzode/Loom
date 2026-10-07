@@ -6,7 +6,6 @@
 /// plugin risk summary, and user-facing warning messages.
 ///
 /// Audited against:
-///   - TS src/components/TrustDialog/utils.ts (245 lines)
 ///   - C++ utils/bash_security.cppm (reuses DangerLevel mapping)
 ///   - C++ services/team_memory/secret_scanner.cppm (reuses SecretMatch)
 ///   - C++ commands/plugin/plugin_trust_text.cppm (reuses marketplace allowlist)
@@ -102,7 +101,7 @@ enum class TrustChoice : std::uint8_t {
 };
 
 // =========================================================================
-// Sensitive path registry (translated from TS risk heuristics + industry
+// Sensitive path registry (risk heuristics + industry
 // standard secret-scanning patterns, e.g. trufflehog / gitleaks).
 //
 // NOTE: these regexes match *path names* (file-system paths or URLs).
@@ -337,7 +336,7 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
     // 3. Action-type defaults.
     switch (type) {
         case ActionType::WorkspaceTrust:
-            // TrustDialog.tsx default — 2 buttons, Low tier unless concerns.
+            // Default — 2 buttons, Low tier unless concerns.
             return summary.sensitive_paths.empty() ? RiskLevel::Low : RiskLevel::Medium;
         case ActionType::PluginInstall:
             return summary.first_install ? RiskLevel::Medium : RiskLevel::Low;
@@ -398,7 +397,6 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 [[nodiscard]] inline bool is_known_safe_domain(std::string_view host);
 
 /// Return a short list of 3-5 risk bullet points for the details panel.
-/// Mirrors the warnings shown in TS utils + bash_security explanations.
 [[nodiscard]] inline std::vector<std::string> build_risk_bullets(
     const RiskSummary& summary)
 {
@@ -540,7 +538,6 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 // =========================================================================
 
 /// Format a list of items with proper "and" conjunction.
-/// Direct port of formatListWithAnd() from TS utils.ts.
 [[nodiscard]] inline std::string format_list_with_and(
     const std::vector<std::string>& items,
     std::optional<std::size_t> limit = std::nullopt)

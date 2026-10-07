@@ -1,6 +1,5 @@
 /// @file local_agent_task.cppm
 /// @brief Local agent task implementation with progress tracking and lifecycle management.
-/// Migrated from src/tasks/LocalAgentTask/LocalAgentTask.tsx
 module;
 
 

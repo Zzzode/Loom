@@ -3,8 +3,6 @@
 /// @brief MCP channel permission relay — prompts over channels (Telegram,
 ///        iMessage, Discord) that race against local UI / bridge / classifier.
 ///
-/// TS REF: src/services/mcp/channelPermissions.ts (240 lines)
-///
 /// When CC hits a permission dialog, it ALSO sends the prompt via active
 /// channels and races the reply against local UI / bridge / hooks / classifier.
 /// First resolver wins via claim().
@@ -38,7 +36,6 @@ export namespace loom::services::mcp {
 // Constants
 // ============================================================================
 
-// TS REF: src/services/mcp/channelPermissions.ts:75
 // Reply format spec for channel servers to implement:
 //   /^\s*(y|yes|n|no)\s+([a-km-z]{5})\s*$/i
 // 5 lowercase letters, no 'l' (looks like 1/I). Case-insensitive.
@@ -46,11 +43,9 @@ export namespace loom::services::mcp {
 constexpr std::string_view PERMISSION_REPLY_PATTERN =
     R"(^\s*(y|yes|n|no)\s+([a-km-z]{5})\s*$)";
 
-// TS REF: src/services/mcp/channelPermissions.ts:78
 // 25-letter alphabet: a-z minus 'l' (looks like 1/I). 25^5 ≈ 9.8M space.
 constexpr std::string_view ID_ALPHABET = "abcdefghijkmnopqrstuvwxyz";
 
-// TS REF: src/services/mcp/channelPermissions.ts:85-110
 // Substring blocklist — 5 random letters can spell things. Non-exhaustive,
 // covers the send-to-your-boss-by-accident tier.
 constexpr std::array<std::string_view, 24> ID_AVOID_SUBSTRINGS = {
@@ -64,14 +59,12 @@ constexpr std::array<std::string_view, 24> ID_AVOID_SUBSTRINGS = {
 // Types
 // ============================================================================
 
-// TS REF: src/services/mcp/channelPermissions.ts:40-44
 // Behavior returned by a channel permission response.
 enum class ChannelPermissionBehavior : std::uint8_t {
-    Allow = 0,  // 'allow' in TS
-    Deny  = 1,  // 'deny'  in TS
+    Allow = 0,
+    Deny  = 1,
 };
 
-// TS REF: src/services/mcp/channelPermissions.ts:40-44
 // Response from a channel server resolving a pending permission request.
 struct ChannelPermissionResponse {
     ChannelPermissionBehavior behavior;     ///< Allow or Deny
@@ -82,12 +75,11 @@ struct ChannelPermissionResponse {
 // ChannelPermissionCallbacks
 // ============================================================================
 
-// TS REF: src/services/mcp/channelPermissions.ts:46-61, 209-240
 // Manages pending permission requests keyed by short request ID.
 // Thread-safe: all methods lock the internal mutex.
 //
-// Lifetime: constructed once per session (same as TS replBridgePermissionCallbacks
-// pattern — created in a hook, stable reference stored in AppState).
+// Lifetime: constructed once per session — created in a hook, stable
+// reference stored in AppState.
 class ChannelPermissionCallbacks {
 public:
     using Handler = std::function<void(const ChannelPermissionResponse&)>;
@@ -97,7 +89,6 @@ public:
     ChannelPermissionCallbacks(const ChannelPermissionCallbacks&) = delete;
     ChannelPermissionCallbacks& operator=(const ChannelPermissionCallbacks&) = delete;
 
-    // TS REF: src/services/mcp/channelPermissions.ts:48-51, 216-226
     // Register a resolver for a request ID. Returns unsubscribe function.
     // Lowercases the key so matching is case-insensitive.
     auto on_response(std::string_view request_id, Handler handler)
@@ -113,7 +104,6 @@ public:
         };
     }
 
-    // TS REF: src/services/mcp/channelPermissions.ts:56-60, 228-238
     // Resolve a pending request from a structured channel event.
     // Returns true if the ID was pending (matched against the map).
     // Delete BEFORE calling — if resolver throws or re-enters, the entry
@@ -141,7 +131,6 @@ public:
         return true;
     }
 
-    // TS REF: src/services/mcp/channelPermissions.ts:209-213
     // Number of pending requests (for diagnostics).
     auto pending_count() const -> std::size_t {
         std::lock_guard lock(mutex_);
@@ -166,10 +155,8 @@ private:
 // Factory
 // ============================================================================
 
-// TS REF: src/services/mcp/channelPermissions.ts:209-240
 // Factory for the callbacks object. The pending Map is closed over — NOT
-// module-level, NOT in AppState. Same lifetime pattern as
-// replBridgePermissionCallbacks: constructed once per session inside a hook,
+// module-level, NOT in AppState. Constructed once per session inside a hook,
 // stable reference stored in AppState.
 inline auto create_channel_permission_callbacks()
     -> std::shared_ptr<ChannelPermissionCallbacks>
@@ -181,11 +168,9 @@ inline auto create_channel_permission_callbacks()
 // Feature gate
 // ============================================================================
 
-// TS REF: src/services/mcp/channelPermissions.ts:36-38
 // GrowthBook runtime gate — separate from the channels gate (tengu_harbor)
 // so channels can ship without permission-relay riding along.
-// In CPP: stub returning false (no GrowthBook integration yet).
-// Feature-flag surface can wire this up later.
+// Stubbed to return false until the feature-flag system is wired up.
 inline auto is_channel_permission_relay_enabled() -> bool {
     return false;  // TODO: wire to feature flag system when available
 }
@@ -196,7 +181,6 @@ inline auto is_channel_permission_relay_enabled() -> bool {
 
 namespace detail {
 
-// TS REF: src/services/mcp/channelPermissions.ts:112-128
 // FNV-1a hash → uint32. Not crypto, just a stable short letters-only ID.
 // 32 bits / log2(25) ≈ 6.9 letters of entropy; taking 5 wastes a little,
 // plenty for this use case.
@@ -209,7 +193,6 @@ inline auto fnv1a_hash(std::string_view input) -> std::uint32_t {
     return h;
 }
 
-// TS REF: src/services/mcp/channelPermissions.ts:122-128
 // Base-25 encode a uint32 hash into 5 letters from ID_ALPHABET.
 inline auto base25_encode_5(std::uint32_t hash) -> std::string {
     std::string s;
@@ -221,7 +204,6 @@ inline auto base25_encode_5(std::uint32_t hash) -> std::string {
     return s;
 }
 
-// TS REF: src/services/mcp/channelPermissions.ts:85-110, 144-148
 // Check if the ID contains any blocklisted substring.
 inline auto contains_blocked_substring(std::string_view id) -> bool {
     return std::ranges::any_of(ID_AVOID_SUBSTRINGS, [&](std::string_view bad) {
@@ -231,7 +213,6 @@ inline auto contains_blocked_substring(std::string_view id) -> bool {
 
 } // namespace detail
 
-// TS REF: src/services/mcp/channelPermissions.ts:140-152
 // Short ID from a toolUseID. 5 letters from a 25-char alphabet (a-z minus
 // 'l' — looks like 1/I in many fonts). 25^5 ≈ 9.8M space, birthday
 // collision at 50% needs ~3K simultaneous pending prompts, absurd for a
@@ -257,15 +238,13 @@ inline auto short_request_id(std::string_view tool_use_id) -> std::string {
 // Truncate for preview
 // ============================================================================
 
-// TS REF: src/services/mcp/channelPermissions.ts:160-167
 // Truncate tool input to a phone-sized JSON preview. 200 chars is roughly
 // 3 lines on a narrow phone screen. Full input is in the local terminal
 // dialog; the channel gets a summary so Write(5KB-file) doesn't flood your
 // texts. Server decides whether/how to show it.
 //
-// In TS: jsonStringify(input) then truncate. In CPP: caller passes already-
-// serialized JSON string (since we can't serialize arbitrary types like TS).
-// If json_input is empty or unserializable marker, return fallback.
+// The caller passes an already-serialized JSON string. If json_input is
+// empty or an unserializable marker, return fallback.
 inline auto truncate_for_preview(std::string_view json_input) -> std::string {
     if (json_input.empty()) {
         return "(unserializable)";
@@ -283,7 +262,6 @@ inline auto truncate_for_preview(std::string_view json_input) -> std::string {
 // Filter permission relay clients
 // ============================================================================
 
-// TS REF: src/services/mcp/channelPermissions.ts:177-194
 // Filter MCP clients down to those that can relay permission prompts.
 // Three conditions, ALL required:
 //   1. Connected (state == Ready)
@@ -305,19 +283,12 @@ auto filter_permission_relay_clients(
     std::vector<T> result;
     for (const auto& c : clients) {
         // Condition 1: connected / ready
-        // TS REF: src/services/mcp/channelPermissions.ts:189
-        //   c.type === 'connected'
         if (c.state != ServerState::Ready) continue;
 
         // Condition 2: in allowlist
-        // TS REF: src/services/mcp/channelPermissions.ts:190
-        //   isInAllowlist(c.name)
         if (!is_in_allowlist(c.name)) continue;
 
         // Condition 3: declares BOTH experimental capabilities
-        // TS REF: src/services/mcp/channelPermissions.ts:191-192
-        //   c.capabilities?.experimental?.['loom/channel'] !== undefined &&
-        //   c.capabilities?.experimental?.['loom/channel/permission'] !== undefined
         const auto& exp = c.capabilities.experimental;
         bool has_channel = exp.contains("loom/channel");
         bool has_permission = exp.contains("loom/channel/permission");
@@ -332,7 +303,6 @@ auto filter_permission_relay_clients(
 // Parse permission reply (utility)
 // ============================================================================
 
-// TS REF: src/services/mcp/channelPermissions.ts:75
 // Parse a "yes tbxkq" / "no tbxkq" style reply against PERMISSION_REPLY_RE.
 // Returns the request_id if matched, plus the behavior.
 // Returns nullopt if the reply doesn't match the pattern.
@@ -412,12 +382,10 @@ inline auto parse_permission_reply(std::string_view reply)
 // Channel Permission Store — persistent rules for MCP tool permissions
 // ============================================================================
 //
-// TS REF: src/services/mcp/channelPermissions.ts (240 lines)
-// NOTE: The TS file implements the channel *relay* system (sending prompts
-// over Telegram/Discord). The permission *store* — persistent rules about
-// which MCP servers/tools are Allowed/Denied/Prompt — is a CPP-side
-// extension designed to match the UX described in the MCP security dialog UI
-// and the --allowed-tools CLI surface.
+// The permission *store* — persistent rules about which MCP servers/tools
+// are Allowed/Denied/Prompt — is an extension designed to match the UX
+// described in the MCP security dialog UI and the --allowed-tools CLI
+// surface.
 //
 // Rules are stored in ~/.loom/mcp-channel-permissions.json with a
 // most-specific-wins resolution (Tool > Server > Global > default Prompt).
@@ -426,7 +394,6 @@ inline auto parse_permission_reply(std::string_view reply)
 // Enums
 // ---------------------------------------------------------------------------
 
-// TS REF: conceptual — maps to "allow/deny/prompt" in the permission dialog
 // The effective permission for a tool call: allow it silently, deny it
 // silently, or show a permission prompt to the user.
 enum class ChannelPermission : std::uint8_t {
@@ -435,7 +402,7 @@ enum class ChannelPermission : std::uint8_t {
     Prompt  = 2,  // Show permission dialog (default for unknown tools)
 };
 
-// TS REF: conceptual — scope granularity for permission rules
+// Scope granularity for permission rules
 enum class ChannelPermissionScope : std::uint8_t {
     Global = 0,  // Applies to all servers and all tools
     Server = 1,  // Applies to all tools on a specific server
@@ -446,7 +413,7 @@ enum class ChannelPermissionScope : std::uint8_t {
 // ChannelPermissionRule
 // ---------------------------------------------------------------------------
 
-// TS REF: conceptual — a single persisted permission rule
+// A single persisted permission rule.
 // A rule associates a (scope, server_name?, tool_name?) tuple with a
 // permission decision. Optional fields are empty strings when not set.
 struct ChannelPermissionRule {
@@ -460,7 +427,7 @@ struct ChannelPermissionRule {
 // ChannelPermissionStore
 // ---------------------------------------------------------------------------
 
-// TS REF: conceptual — persistent permission rule store
+// Persistent permission rule store.
 // Manages ChannelPermissionRules with JSON persistence and most-specific-wins
 // resolution. Thread-safe: all public methods lock the internal mutex.
 //
@@ -507,7 +474,6 @@ public:
     // Rule management
     // ------------------------------------------------------------------
 
-    // TS REF: conceptual — checkPermission(server, tool)
     // Resolve the effective permission for a tool on a server using
     // most-specific-wins: Tool > Server > Global > default Prompt.
     [[nodiscard]] ChannelPermission check_permission(
@@ -518,8 +484,7 @@ public:
         return resolve_permission_locked(server_name, tool_name);
     }
 
-    // TS REF: conceptual — getEffectivePermission(server, tool)
-    // Alias for check_permission — matches the TS naming convention.
+    // Alias for check_permission.
     [[nodiscard]] ChannelPermission get_effective_permission(
         std::string_view server_name,
         std::string_view tool_name) const
@@ -527,7 +492,6 @@ public:
         return check_permission(server_name, tool_name);
     }
 
-    // TS REF: conceptual — setPermission(rule)
     // Add or replace a rule. Rules are matched by (scope, server, tool)
     // identity — setting the same identity overwrites the permission.
     // Triggers an implicit save().
@@ -605,7 +569,6 @@ public:
     // File path helper
     // ------------------------------------------------------------------
 
-    // TS REF: ~/.loom/mcp-channel-permissions.json
     // Resolve the path to the permissions JSON file.
     [[nodiscard]] static std::filesystem::path file_path() {
         namespace fs = std::filesystem;
@@ -925,7 +888,6 @@ private:
 // Factory
 // ============================================================================
 
-// TS REF: conceptual — create a loaded ChannelPermissionStore
 // Creates a store and immediately loads rules from disk.
 inline auto create_channel_permission_store()
     -> std::shared_ptr<ChannelPermissionStore>

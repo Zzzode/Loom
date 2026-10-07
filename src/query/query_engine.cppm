@@ -207,8 +207,6 @@ struct QueryEngineConfig {
     /// (e.g. MCP server tools) to be merged with config_.tools when
     /// building the API request body.  Called on every request so
     /// newly-connected MCP servers' tools are picked up immediately.
-    /// TS PARITY: assembleToolPool() merges built-in + mcp.tools; this
-    /// callback is the CPP equivalent of the dynamic MCP portion.
     std::function<std::vector<ToolDefinition>()> dynamic_tools_provider;
     /// Optional callback snapshotting connected MCP tools' verbatim input
     /// schemas as {tool_name -> schema JSON}. Invoked at most once per
@@ -223,10 +221,6 @@ struct QueryEngineConfig {
     /// "mcp__linear", "mcp__linear__*", "Bash(npm install)") applied to
     /// BOTH static and dynamic tools before the request "tools" array is
     /// serialized.
-    // TS PARITY: context.alwaysDenyRules flattened over all sources
-    // (user/project/local/flag/policy/cliArg/command/session — see
-    // permissions.ts:109-114,213-221); matched via
-    // loom::utils::tool_deny_rules before the tools array is serialized.
     std::vector<std::string> always_deny_rules;
     std::vector<std::string> agent_definitions;     // Agent definitions
     std::vector<std::string> fallback_models;       // Fallback models for capacity errors
@@ -249,9 +243,8 @@ struct QueryOptions {
     bool is_meta = false;                           // Whether this is a meta prompt
     // AT-02: materialized @-mention file attachments (TextBlock/ImageBlock/...).
     // stream_query appends these to the user message content after the text
-    // block so the model actually sees file contents — faithful to TS
-    // utils/attachments.ts (the C++ port previously passed "@path" literally,
-    // making @ a no-op for the model).
+    // block so the model actually sees file contents (the engine previously
+    // passed "@path" literally, making @ a no-op for the model).
     std::vector<ContentBlock> attachments;
 };
 
@@ -336,11 +329,28 @@ public:
         std::string_view user_message,
         const QueryOptions& options = {});
 
-    /// Abort any in-flight query (thread-safe)
-    void abort() noexcept { aborted_.store(true); }
+    /// Abort any in-flight query (thread-safe).  Also invokes the
+    /// registered abort callback (if any) so the HTTP layer can shut
+    /// down its socket immediately, rather than waiting for the read
+    /// timeout (up to 120 s).
+    void abort() noexcept {
+        aborted_.store(true);
+        std::function<void()> cb;
+        {
+            std::lock_guard lock(abort_callback_mutex_);
+            cb = abort_callback_;
+        }
+        if (cb) cb();
+    }
 
     /// Reset the abort flag for new queries
     void reset_abort() noexcept { aborted_.store(false); }
+
+    /// Register a callback invoked by abort().  The HTTP layer uses this
+    /// to call httplib::Client::stop() so a blocked read returns
+    /// immediately instead of waiting for the read timeout.
+    /// Body in query_engine_conversation.cpp (inline-def ratchet).
+    void set_abort_callback(std::function<void()> cb);
 
     /// Set an external cancellation predicate for host-driven query control.
     void set_external_abort_callback(std::function<bool()> callback) {
@@ -369,12 +379,11 @@ public:
         lifecycle_hooks_ = hooks;
     }
 
-    /// Configure the user-configured hook path. Mirrors the TS wiring where
-    /// src/services/tools/toolExecution.ts runs PreToolUse/PostToolUse hooks
-    /// from src/utils/hooks.ts (the execution engine) alongside the in-process
-    /// lifecycle event bus. `ctx_template` supplies stable context vars
-    /// (session/conversation ids); per-call context (tool name, payload) is
-    /// merged at dispatch time in execute_single_tool.
+    /// Configure the user-configured hook path. PreToolUse/PostToolUse hooks
+    /// run alongside the in-process lifecycle event bus. `ctx_template`
+    /// supplies stable context vars (session/conversation ids); per-call
+    /// context (tool name, payload) is merged at dispatch time in
+    /// execute_single_tool.
     void set_user_hooks(
         std::vector<loom::utils::hooks_registry::IndividualHookConfig> registry,
         loom::utils::hooks_execution::HookExecutionContext ctx_template) {
@@ -432,6 +441,14 @@ public:
     /// Get session ID
     [[nodiscard]] const SessionId& session_id() const noexcept { return session_id_; }
 
+    /// Set the session ID at runtime (e.g. after resuming a session).
+    /// New turns will append to this session's messages.jsonl file.
+    void set_session_id(std::string id);
+
+    /// Get the sessions directory (nullopt if persistence is disabled).
+    /// Body in query_engine_conversation.cpp (inline-def ratchet).
+    [[nodiscard]] std::optional<std::filesystem::path> sessions_dir() const noexcept;
+
     /// Skills invoked via the skill tool during this session (in-loop dispatch
     /// tracking). Populated by execute_single_tool on each successful skill call.
     [[nodiscard]] std::vector<std::string> discovered_skills() const;
@@ -485,7 +502,6 @@ public:
     /// loom::session::list_recent_sessions. Call once at startup.
     void set_session_storage(std::filesystem::path sessions_dir);
 
-    // TS REF: src/services/api/dumpPrompts.ts
     // Enable full API request/response dump.  Every API call writes:
     //   {"type":"request","timestamp":...,"body":<full request JSON>}
     //   {"type":"response","timestamp":...,"events":[<parsed SSE events>]}
@@ -591,7 +607,7 @@ private:
         std::string_view anchor_id);
 
     /// Read the session's accumulated compaction summary.md (empty when
-    /// absent/unreadable). TS REF: getSessionMemoryContent.
+    /// absent/unreadable).
     [[nodiscard]] std::string read_session_summary(std::string_view cwd) const;
 
     /// Append one compaction summary to the session's summary.md, creating
@@ -776,9 +792,9 @@ private:
     loom::hooks::ToolPermissionHook* permission_hook_ = nullptr;  // Optional permission policy
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks_ = nullptr; // Optional lifecycle hooks
     // User-configured hook path (PreToolUse/PostToolUse via the
-    // loom.hooks.execution engine). Mirrors src/utils/hooks.ts in TS.
-    // When empty/disabled the tool loop is unchanged (parity with TS, which
-    // only runs the pipeline when matching hooks exist).
+    // loom.hooks.execution engine).
+    // When empty/disabled the tool loop is unchanged (the pipeline only
+    // runs when matching hooks exist).
     std::vector<loom::utils::hooks_registry::IndividualHookConfig> user_hooks_;
     loom::utils::hooks_execution::HookExecutionContext user_hooks_ctx_template_;
     bool user_hooks_configured_ = false;
@@ -786,6 +802,8 @@ private:
     TokenUsage cumulative_usage_;              // Session-wide token tracking
     std::atomic<bool> aborted_{false};         // Abort signal for in-flight requests
     std::function<bool()> external_abort_callback_; // Host-provided cancellation predicate
+    std::mutex abort_callback_mutex_;          // Guards abort_callback_
+    std::function<void()> abort_callback_;     // HTTP-layer socket shutdown (set by send_request*)
     mutable std::mutex conversation_mutex_;    // Guards conversation history
     mutable std::mutex state_mutex_;           // Guards mutable state
     std::uint32_t token_budget_ = 0;           // Token budget for auto-continuation (0 = disabled)

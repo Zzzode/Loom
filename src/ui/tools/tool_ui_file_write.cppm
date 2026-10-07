@@ -1,17 +1,8 @@
 /// @file tool_ui_file_write.cppm
-/// @brief FileWrite tool UI — userFacingName, renderToolUseMessage, etc.
-///
-/// Faithful TS port of FileWriteTool UI methods.
+/// @brief FileWrite tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.file_write
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/FileWriteTool/FileWriteTool.tsx
-///   - userFacingName: "Write"
-///   - renderToolUseMessage: file path
-///   - renderToolUseTag: null
-///   - isTransparentWrapper: false
 module;
 
 
@@ -103,8 +94,6 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: FileWriteTool.ts L146  extractSearchText()
-    //   return ''
     // Transcript render shows either content (create, via HighlightedCode)
     // or a structured diff (update). The heuristic's 'content' allowlist key
     // would index the raw content string even in update mode where it's NOT

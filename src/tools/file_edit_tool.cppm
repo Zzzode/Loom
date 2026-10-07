@@ -1,7 +1,6 @@
 // FileEditTool - Edits files using string replacement.
 // Agent 9: audit completed 2026-06-09.
-//   - Rewritten to mirror TS FileEditTool.ts validateInput() branches 1:1
-//     (error codes 0..10 + meta field passthrough).
+//   - Validates input branches 1:1 (error codes 0..10 + meta field passthrough).
 //   - Integrated loom.tools.file_edit_types: ValidationOutcome /
 //     ValidationErrorCode / FileEditInput / FileEditOutput.
 //   - Integrated loom.fs.edit.file_edit: find_actual_string,
@@ -12,8 +11,8 @@
 //     format_tool_result_block, format_edit_preview.
 //   - Integrated loom.tools.sed_edit_parser: try_parse_sed_in_place() now
 //     delegates to parse_sed_edit_command() for real parsing.
-//   - NOTE: React UI components in UI.tsx (JSX renderers) deferred to
-//     Phase 4 / FTXUI. Only the pure text-formatting helpers were ported.
+//   - NOTE: UI rendering is deferred to FTXUI. Only the pure text-formatting
+//     helpers are included.
 module;
 
 #include <cctype>
@@ -49,13 +48,13 @@ using loom::utils::Result;
 namespace fs = std::filesystem;
 
 // =========================================================================
-// Constants (from FileEditTool.ts top-level)
+// Constants
 // =========================================================================
 
-/// V8/Bun string-length guard. TS: MAX_EDIT_FILE_SIZE.
+/// String-length guard.
 inline constexpr std::uint64_t kMaxEditFileSize = 1ULL * 1024 * 1024 * 1024;
 
-/// Structured-patch context lines (matches TS diff display pipeline).
+/// Structured-patch context lines.
 inline constexpr int kPatchContextLines = 3;
 
 // =========================================================================
@@ -587,7 +586,7 @@ public:
             }
         }
 
-        // --- 11. skill discovery (TS REF: FileEditTool.ts L408-422) --------
+        // --- 11. skill discovery --------
         // After editing a file, discover any skill directories it belongs to
         // and activate conditional skills matching its path.
         {

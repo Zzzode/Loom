@@ -34,7 +34,7 @@ using namespace loom::ui::design::theme;
 /// Semantic kind of a Grove node.  Drives the colored kind badge.
 enum class GroveKind { File, Symbol, Concept, Reference, Chunk };
 
-/// A single node in the results hierarchy.  Mirrors TS GroveNode.
+/// A single node in the results hierarchy.  Mirrors GroveNode.
 struct GroveNode {
     std::string id;
     std::string title;
@@ -47,7 +47,7 @@ struct GroveNode {
     std::vector<GroveNode> children;
 };
 
-/// View state for the entire Grove panel.  Mirrors TS GroveViewState.
+/// View state for the entire Grove panel.  Mirrors GroveViewState.
 struct GroveViewState {
     std::vector<GroveNode> roots;
     std::vector<GroveNode> query;

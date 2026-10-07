@@ -186,11 +186,10 @@ struct ServerCapabilities {
     bool prompts = false;
     bool prompts_list_changed = false;
     bool logging = false;
-    // TS REF: src/services/mcp/channelPermissions.ts:191-192
     // Servers declare experimental capabilities like 'loom/channel' and
     // 'loom/channel/permission' to opt into notification relay paths.
     // Value is the raw JSON string (usually "{}" or "true") — presence in
-    // the map is what matters, matching TS `!== undefined` semantics.
+    // the map is what matters.
     std::unordered_map<std::string, std::string> experimental;
 };
 
@@ -231,8 +230,8 @@ struct ToolCallRequest {
 struct ContentItem {
     std::string type = "text";
     std::string text;
-    std::optional<std::string> media_type;  ///< for type="image" (TS: source.media_type)
-    std::optional<std::string> data;        ///< base64 for type="image" (TS: source.data)
+    std::optional<std::string> media_type;  ///< for type="image"
+    std::optional<std::string> data;        ///< base64 for type="image"
 };
 
 struct ToolCallResult {
@@ -350,7 +349,6 @@ inline std::optional<InitializeResult> parse_initialize_result(const std::string
         }
         result.capabilities.logging = caps_node.get("logging").valid();
 
-        // TS REF: src/services/mcp/channelPermissions.ts:191-192
         // Parse experimental capabilities map — presence = opt-in.
         auto exp_node = caps_node.get("experimental");
         if (exp_node.is_obj()) {
@@ -421,8 +419,6 @@ inline std::optional<ToolCallResult> parse_tool_call_result(const std::string& j
                 ci.text = std::string(item.get("text").as_str());
                 result.content.push_back(std::move(ci));
             } else if (type_str == "image") {
-                // TS REF: transformResultContent for image — extracts
-                // source.media_type and source.data from the block.
                 ContentItem ci;
                 ci.type = "image";
                 // Try direct fields first (some MCP servers use flat format)

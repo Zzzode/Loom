@@ -65,12 +65,12 @@ namespace loom::ui {
                     // (emits role="tool" entry); this ensures the
                     // legacy one-entry path doesn't render blank.
                     //
-                    // TS PARITY FIX (2026-07-05): is_tool_use must be
-                    // false for tool results.  The repl_screen dispatcher
-                    // checks is_tool_use FIRST (line 858), so a tool_result
-                    // with is_tool_use=true gets routed to AssistantToolUse
-                    // rendering instead of UserToolResult — the committed
-                    // result card never appears as a separate block.
+                    // is_tool_use must be false for tool results.  The
+                    // repl_screen dispatcher checks is_tool_use FIRST
+                    // (line 858), so a tool_result with is_tool_use=true
+                    // gets routed to AssistantToolUse rendering instead of
+                    // UserToolResult — the committed result card never
+                    // appears as a separate block.
                     if (e.content_preview.empty() && m.content.size() == 1) {
                         e.role = "tool";
                         e.is_tool_use = false;
@@ -89,6 +89,7 @@ namespace loom::ui {
                     e.is_thinking = true;
                     if (e.content_preview.empty())
                         e.content_preview = thk->thinking.substr(0, 200);
+                    e.full_content = thk->thinking;
                 } else if (const auto* tool = std::get_if<ToolUseBlock>(&block)) {
                     e.is_tool_use = true;
                     e.tool_name = tool->name;
@@ -103,23 +104,22 @@ namespace loom::ui {
             }
         } else if constexpr (std::is_same_v<T, ToolResultMessage>) {
             e.role = "tool";
-            // TS PARITY FIX (2026-07-05): is_tool_use=false for tool results.
-            // ToolResultMessage is the committed result (role="tool"), NOT
-            // the tool_use request (role="assistant").  Setting this true
-            // routes the entry to AssistantToolUse rendering in repl_screen,
-            // so the result never appears as its own transcript card.
+            // is_tool_use=false for tool results.  ToolResultMessage is the
+            // committed result (role="tool"), NOT the tool_use request
+            // (role="assistant").  Setting this true routes the entry to
+            // AssistantToolUse rendering in repl_screen, so the result never
+            // appears as its own transcript card.
             e.is_tool_use = false;
             e.tool_status = m.is_error ? "error" : "success";
-            // TS parity: propagate the tool name from the result message so
-            // the renderer can show "Bash" / "Edit" instead of generic "tool".
+            // Propagate the tool name from the result message so the
+            // renderer can show "Bash" / "Edit" instead of generic "tool".
             // The old code left tool_name unset → BuildMessagesList fell back
             // to "tool", making every tool result look anonymous.
             if (!m.tool_name.empty()) {
                 e.tool_name = m.tool_name;
             }
-            // TS PARITY (2026-07-04): collect structured content items so the
-            // faithful renderer can iterate them (text + image separately),
-            // matching TS renderToolResultMessage's Array.isArray branch.
+            // Collect structured content items so the faithful renderer can
+            // iterate them (text + image separately).
             std::vector<loom::core::ToolResultContentItem> content_items;
             for (const auto& block : m.content) {
                 if (const auto* tb = std::get_if<TextBlock>(&block)) {
@@ -156,9 +156,9 @@ namespace loom::ui {
 }
 
 // ============================================================
-// project_messages — TS-faithful projection that splits a single
+// project_messages — projection that splits a single
 // AssistantMessage into MULTIPLE display rows when it mixes a ThinkingBlock
-// with a TextBlock / ToolUseBlock.  TS renders these as separate sibling
+// with a TextBlock / ToolUseBlock.  These render as separate sibling
 // messages (a collapsed `∴ Thinking` row followed by the visible answer /
 // tool-use row); the legacy single-entry projection collapsed them into one
 // thinking row, which hid the visible answer once M4 routed thinking rows
@@ -184,11 +184,8 @@ project_messages(const Message& msg) {
         using T = std::decay_t<decltype(m)>;
 
         if constexpr (std::is_same_v<T, AssistantMessage>) {
-            // TS PARITY FIX (2026-07-04): iterate content blocks in
-            // ORIGINAL ORDER instead of grouping by kind.  TS renders
-            // each block as a separate sibling component via
-            // message.message.content.map((block, i) =>
-            //   <AssistantMessageBlock key={i} block={block} .../>).
+            // Iterate content blocks in ORIGINAL ORDER instead of grouping
+            // by kind — each block becomes a separate sibling row.
             //
             // The old code grouped all text into one accumulator and
             // all tools into a separate vector, then emitted [thinking,
@@ -198,10 +195,9 @@ project_messages(const Message& msg) {
             // response text (text2) appeared glued to the pre-tool
             // announcement (text1) instead of being a separate block.
             //
-            // Consecutive text blocks ARE merged (TS also does this
-            // implicitly since adjacent <Text> nodes render inline),
-            // but any non-text block (thinking, tool_use) flushes the
-            // text accumulator and emits its own row.
+            // Consecutive text blocks ARE merged (adjacent text nodes
+            // render inline), but any non-text block (thinking, tool_use)
+            // flushes the text accumulator and emits its own row.
             std::string text_acc;
 
             auto flush_text = [&] {
@@ -216,8 +212,8 @@ project_messages(const Message& msg) {
 
             for (const auto& block : m.content) {
                 if (const auto* tb = std::get_if<TextBlock>(&block)) {
-                    // Consecutive text blocks merge (TS sibling <Text>
-                    // nodes render inline without separation).
+                    // Consecutive text blocks merge (adjacent text nodes
+                    // render inline without separation).
                     if (!text_acc.empty() && !tb->text.empty() &&
                         tb->text.front() != '\n') {
                         text_acc += '\n';
@@ -230,6 +226,7 @@ project_messages(const Message& msg) {
                     t.role = "assistant";
                     t.is_thinking = true;
                     t.content_preview = thk->thinking.substr(0, 200);
+                    t.full_content = thk->thinking;
                     t.timestamp = now;
                     out.push_back(std::move(t));
                 } else if (const auto* tool =
@@ -240,9 +237,12 @@ project_messages(const Message& msg) {
                     tu.is_tool_use = true;
                     tu.tool_name = tool->name;
                     tu.tool_input_json = tool->input_json;
-                    // Committed tool-use blocks always have a matching result
-                    // in the conversation (they only commit after execution).
-                    // TS resolvedToolUseIDs.has(id) is always true here.
+                    // The AssistantMessage commits before tool execution
+                    // (query_engine_loop.cpp: append_message runs before
+                    // execute_pending_tools), so the tool may still be
+                    // running.  The streaming path shows the live status;
+                    // this committed row is the fallback for when the
+                    // streaming path is not active.
                     tu.tool_status = "success";
                     tu.timestamp = now;
                     out.push_back(std::move(tu));
@@ -254,13 +254,11 @@ project_messages(const Message& msg) {
             }
             flush_text();  // emit any trailing text
         } else if constexpr (std::is_same_v<T, UserMessage>) {
-            // ── TS parity: each ImageBlock in the user message becomes its
-            //    own transcript row (UserImageMessage), interleaved with text
-            //    rows in the same order as m.content.  The TS renderer
-            //    maps every user-pasted attachment to an <UserImageMessage/>
-            //    sibling followed/followed by text rows.
+            // ── Each ImageBlock in the user message becomes its own
+            //    transcript row, interleaved with text rows in the same
+            //    order as m.content.
             std::string text_acc;
-            int img_id_counter = 0;  // TS parity: imageIds assigned per content block order
+            int img_id_counter = 0;  // imageIds assigned per content block order
             auto flush_text = [&] {
                 if (text_acc.empty()) return;
                 repl::MessageDisplayEntry u;
@@ -282,10 +280,9 @@ project_messages(const Message& msg) {
                     img.role = "user";
                     img.is_image = true;
                     img.image_block = *ib;
-                    img.image_display_id = ++img_id_counter;  // TS: imageIds from paste order
+                    img.image_display_id = ++img_id_counter;  // imageIds from paste order
                     img.timestamp = now;
                     // Human-readable preview for list views / debugger tools.
-                    // Mirrors TS format "[Image W×H]" shown in history previews.
                     std::string preview = "[Image";
                     if (ib->width && ib->height) {
                         char buf[48];
@@ -299,35 +296,33 @@ project_messages(const Message& msg) {
                     }
                     preview += "]";
                     img.content_preview = std::move(preview);
-                    img.estimated_height_lines = 2; // compact card: label + optional source (TS parity)
+                    img.estimated_height_lines = 2; // compact card: label + optional source
                     out.push_back(std::move(img));
                 } else if (const auto* trb =
                                std::get_if<ToolResultBlock>(&block)) {
-                    // TS PARITY FIX (2026-07-04): handle ToolResultBlock
-                    // in user messages.  The API returns tool results as
-                    // role=user messages with tool_result content blocks.
-                    // The old code ignored these, so committed tool
-                    // results vanished from the transcript after
-                    // streaming ended (streaming_tools_ was cleared but
-                    // the committed UserMessage with ToolResultBlock
-                    // was never projected).
+                    // Handle ToolResultBlock in user messages.  The API
+                    // returns tool results as role=user messages with
+                    // tool_result content blocks.  The old code ignored
+                    // these, so committed tool results vanished from the
+                    // transcript after streaming ended (streaming_tools_
+                    // was cleared but the committed UserMessage with
+                    // ToolResultBlock was never projected).
                     flush_text();
                     repl::MessageDisplayEntry tr;
                     tr.role = "tool";
-                    // TS PARITY FIX (2026-07-05): is_tool_use=false.
-                    // This is a committed tool result (role="tool"), not
-                    // the assistant's tool_use request.  repl_screen checks
-                    // is_tool_use before role, so true here would swallow
-                    // the result into the tool_use card's Output section
-                    // instead of rendering it as a separate card.
+                    // is_tool_use=false.  This is a committed tool result
+                    // (role="tool"), not the assistant's tool_use request.
+                    // repl_screen checks is_tool_use before role, so true
+                    // here would swallow the result into the tool_use
+                    // card's Output section instead of rendering it as a
+                    // separate card.
                     tr.is_tool_use = false;
                     tr.tool_status = trb->is_error ? "error" : "success";
                     // tool_name not available from ToolResultBlock (it
                     // only has tool_use_id); renderer falls back to
                     // "tool" via m.tool_name.value_or("tool").
                     //
-                    // TS PARITY (2026-07-04): content may be string or
-                    // array of content items.
+                    // Content may be string or array of content items.
                     if (std::holds_alternative<std::string>(trb->content)) {
                         tr.content_preview = std::get<std::string>(trb->content);
                     } else {

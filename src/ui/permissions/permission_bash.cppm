@@ -1,14 +1,10 @@
 /// @file permission_bash.cppm
-/// @brief Faithful C++/FTXUI port of TS BashPermissionRequest.tsx
+/// @brief Faithful C++/FTXUI port of BashPermissionRequest
 ///
 /// MODULE:   loom.ui.permissions.permission_bash
 /// LICENCE:  Exported.  Imported by permission routing & test code.
 ///
-/// TS REFERENCE: src/components/permissions/BashPermissionRequest/BashPermissionRequest.tsx
-///               + bashToolUseOptions.tsx
-///               + PermissionDialog.tsx
-///
-/// LAYOUT (faithful to TS):
+/// LAYOUT (faithful):
 ///   ┌─ Bash command ───────────────────────────────────────┐
 ///   │ {subtitle: classifier status / auto-approved / ...}  │
 ///   │                                                      │
@@ -26,7 +22,7 @@
 ///   │  Esc to cancel · Tab to amend · ctrl+e to explain    │
 ///   └──────────────────────────────────────────────────────┘
 ///
-/// INTERACTIONS (faithful to TS):
+/// INTERACTIONS (faithful):
 ///   - ArrowUp / ArrowDown / j / k : move selection
 ///   - Enter / y : accept selected option
 ///   - n         : reject (select "No" and activate)
@@ -161,11 +157,11 @@ struct PromptState {
 };
 
 // ============================================================
-// Options list (mirrors bashToolUseOptions.tsx)
+// Options list (mirrors bashToolUseOptions)
 // ============================================================
 
 /// Build the list of selectable options from props.
-/// Faithful to bashToolUseOptions() in bashToolUseOptions.tsx.
+/// Faithful to bashToolUseOptions().
 [[nodiscard]] inline std::vector<Option> BuildOptions(const PromptState& st) {
     std::vector<Option> opts;
     const auto& p = st.props;
@@ -182,7 +178,7 @@ struct PromptState {
     // --- Always-allow options (when enabled) ---
     if (p.show_always_allow) {
         if (!p.editable_prefix.empty()) {
-            // Editable prefix option (like TS "yes-prefix-edited")
+            // Editable prefix option (like "yes-prefix-edited")
             Option prefix_opt;
             prefix_opt.value = "yes-prefix-edited";
             prefix_opt.label = "Yes, and don't ask again for";
@@ -191,7 +187,7 @@ struct PromptState {
             prefix_opt.input_placeholder = "command prefix (e.g., npm run:*)";
             opts.push_back(std::move(prefix_opt));
         } else if (p.has_suggestions && !p.suggestions_label.empty()) {
-            // Suggestions-based option (like TS "yes-apply-suggestions")
+            // Suggestions-based option (like "yes-apply-suggestions")
             Option suggest_opt;
             suggest_opt.value = "yes-apply-suggestions";
             suggest_opt.label = p.suggestions_label;
@@ -216,7 +212,7 @@ struct PromptState {
 // ============================================================
 
 /// Render the title bar — "Bash command" or "Bash command (unsandboxed)"
-/// Faithful to TS PermissionDialog title logic.
+/// Faithful to PermissionDialog title logic.
 [[nodiscard]] inline Element RenderTitle(const BashPromptProps& p) {
     std::string title = "Bash command";
     if (p.sandboxing_enabled && !p.is_sandboxed) {
@@ -226,7 +222,7 @@ struct PromptState {
 }
 
 /// Render the subtitle line — classifier status / auto-approved / etc.
-/// Faithful to TS classifierSubtitle logic.
+/// Faithful to classifierSubtitle logic.
 [[nodiscard]] inline Element RenderSubtitle(const BashPromptProps& p) {
     switch (p.classifier_state) {
         case BashPromptProps::ClassifierState::AutoApproved: {
@@ -259,7 +255,7 @@ struct PromptState {
 }
 
 /// Render the command preview with "$ " prefix.
-/// Faithful to TS BashTool.renderToolUseMessage for display.
+/// Faithful to BashTool.render_tool_use_message for display.
 [[nodiscard]] inline Element RenderCommand(const BashPromptProps& p, bool dimmed) {
     const auto display_cmd = truncate_command(p.command, 200);
     auto cmd_el = hbox({
@@ -273,14 +269,14 @@ struct PromptState {
 }
 
 /// Render the description line.
-/// Faithful to TS {toolUseConfirm.description} display.
+/// Faithful to {toolUseConfirm.description} display.
 [[nodiscard]] inline Element RenderDescription(const BashPromptProps& p) {
     if (!p.description || p.description->empty()) return text("");
     return text(*p.description) | dim;
 }
 
 /// Render the permission explainer content.
-/// Faithful to TS PermissionExplainerContent.
+/// Faithful to PermissionExplainerContent.
 [[nodiscard]] inline Element RenderExplainer(const BashPromptProps& p, bool visible) {
     if (!visible) return text("");
     return vbox({
@@ -291,7 +287,7 @@ struct PromptState {
 }
 
 /// Render the rule explanation section.
-/// Faithful to TS PermissionRuleExplanation.
+/// Faithful to PermissionRuleExplanation.
 [[nodiscard]] inline Element RenderRuleExplanation(const BashPromptProps& p) {
     Elements els;
     if (!p.rule_explanation.empty()) {
@@ -310,7 +306,7 @@ struct PromptState {
 }
 
 /// Render the destructive warning banner.
-/// Faithful to TS destructive command warning display.
+/// Faithful to destructive command warning display.
 [[nodiscard]] inline Element RenderDestructiveWarning(const BashPromptProps& p) {
     if (!p.is_destructive) return text("");
     const auto& reason = p.destructive_reason.empty()
@@ -320,7 +316,7 @@ struct PromptState {
 }
 
 /// Render a single option row.
-/// Faithful to TS Select option rendering.
+/// Faithful to Select option rendering.
 [[nodiscard]] inline Element RenderOptionRow(const Option& opt, bool selected) {
     auto marker = selected
         ? text("❯ ") | color(Color::Cyan) | bold
@@ -331,7 +327,7 @@ struct PromptState {
         : text(opt.label);
 
     if (opt.is_input && !opt.input_value.empty()) {
-        // Show label + current value (like TS showLabelWithValue)
+        // Show label + current value (like showLabelWithValue)
         auto value_el = selected
             ? text(opt.input_value) | color(Color::Green)
             : text(opt.input_value) | dim;
@@ -380,7 +376,7 @@ struct PromptState {
 }
 
 /// Render the bottom keyboard hint row.
-/// Faithful to TS bottom hint: "Esc to cancel · Tab to amend · ctrl+e to explain"
+/// Faithful to bottom hint: "Esc to cancel · Tab to amend · ctrl+e to explain"
 [[nodiscard]] inline Element RenderKeyboardHints(
     const BashPromptProps& p,
     bool explainer_visible,
@@ -457,7 +453,7 @@ struct PromptState {
         body_els.push_back(detail::RenderExplainer(p, st->explainer_visible));
     }
 
-    // Debug info (replaces main content when visible, like TS)
+    // Debug info (replaces main content when visible, like)
     if (st->debug_visible && p.debug_mode) {
         body_els.push_back(detail::RenderDebugInfo(p, true));
     } else {
@@ -490,7 +486,7 @@ struct PromptState {
     auto body = vbox(body_els);
 
     // --- Assemble dialog ---
-    // Faithful to TS PermissionDialog: round border, top-only border style
+    // Faithful to PermissionDialog: round border, top-only border style
     auto dialog = window(
         hbox({
             text(" ") | bold,
@@ -514,7 +510,7 @@ struct PromptState {
 // ============================================================
 
 /// Create an interactive Bash permission prompt component.
-/// Faithful to TS BashPermissionRequest component behaviour.
+/// Faithful to BashPermissionRequest component behaviour.
 [[nodiscard]] inline Component MakeBashPermissionPrompt(BashPromptProps props) {
     auto state = std::make_shared<detail::PromptState>();
     state->props = std::move(props);

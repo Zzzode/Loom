@@ -1,0 +1,12 @@
+{"type":"stream_start","message_id":"msg_grace_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"thinking","thinking":"","signature":"sig-grace-001"}}
+{"type":"content_block_delta","index":0,"delta_text":"I need to weigh the trade-offs between the two approaches before recommending one. The first is simpler but slower; the second is faster but adds complexity. Given the constraints, I lean toward the second."}
+{"type":"content_block_stop","index":0}
+{"type":"content_block_start","index":1,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":1,"delta_text":"Answer"}
+{"type":"content_block_stop","index":1}
+{"type":"stream_end","stop_reason":"end_turn","usage":{"input_tokens":58,"output_tokens":11}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"end_turn","content":[{"type":"thinking","thinking":"I need to weigh the trade-offs between the two approaches before recommending one. The first is simpler but slower; the second is faster but adds complexity. Given the constraints, I lean toward the second.","signature":"sig-grace-001"},{"type":"text","text":"Answer"}]}}
+{"type":"__checkpoint__","name":"before_expiry"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

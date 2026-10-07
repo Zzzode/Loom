@@ -47,7 +47,7 @@ struct LocalShellTaskState : loom::core::TaskStateBase {
 }
 
 // ============================================================
-// Agent Task State (from LocalAgentTask/LocalAgentTask.tsx)
+// Agent Task State
 // ============================================================
 
 /// Activity description for a tool use
@@ -135,7 +135,7 @@ struct LocalAgentTaskState : loom::core::TaskStateBase {
 }
 
 // ============================================================
-// Remote Agent Task State (from RemoteAgentTask/RemoteAgentTask.tsx)
+// Remote Agent Task State
 // ============================================================
 
 /// Remote task type variants

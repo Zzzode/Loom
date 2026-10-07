@@ -444,7 +444,7 @@ parse_sed_commands(std::string_view input) {
 }
 
 // ---------------------------------------------------------------------------
-// Public API — SedEditInfo parsers (1:1 TS migration)
+// Public API — SedEditInfo parsers
 // ---------------------------------------------------------------------------
 
 /// Parse the full command into an in-place edit descriptor.
@@ -617,11 +617,11 @@ inline void replace_all_str(std::string& s, std::string_view from, std::string_v
 }
 
 // ---------------------------------------------------------------------------
-// apply_sed_substitution — 1:1 TS migration
+// apply_sed_substitution
 // ---------------------------------------------------------------------------
 
-/// Apply a single substitution to content, mimicking the JS replace() call
-/// semantics of the TS module.  Uses std::regex internally.
+/// Apply a single substitution to content, mimicking JS replace() call
+/// semantics.  Uses std::regex internally.
 [[nodiscard]] inline std::string
 apply_sed_substitution(std::string_view content, const SedEditInfo& info) {
     // Build regex flags

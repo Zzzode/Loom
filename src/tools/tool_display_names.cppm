@@ -1,10 +1,8 @@
 /// Tool identifier → human-readable display name registry.
 ///
-/// Mirrors the small toolName.ts module (which historically only
-/// exported `BASH_TOOL_NAME = 'Bash'`) but expands it to cover every
-/// tool known to the C++ side, so UI components (permission prompts,
-/// tool-use headers, collapse labels, …) can render friendly names
-/// without duplicating the mapping in each caller.
+/// Covers every tool known to the C++ side, so UI components (permission
+/// prompts, tool-use headers, collapse labels, …) can render friendly
+/// names without duplicating the mapping in each caller.
 module;
 
 export module loom.tools.tool_display_names;

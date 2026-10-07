@@ -63,11 +63,11 @@ TEST(AppRuntime, FreshWelcomeAnimationTicksWithoutInputEvents) {
         &storage,
         [] {});
 
-    const auto initial_ticks = app->ui_animation_tick_count_for_testing();
+    const auto initial_ticks = test_seams(app).ui_animation_tick_count_for_testing();
     EXPECT_TRUE(wait_until([&] {
-        return app->ui_animation_tick_count_for_testing() > initial_ticks;
+        return test_seams(app).ui_animation_tick_count_for_testing() > initial_ticks;
     }, std::chrono::milliseconds(300)));
-    EXPECT_FALSE(app->is_query_running_for_testing());
+    EXPECT_FALSE(test_seams(app).is_query_running_for_testing());
 
     fs::remove_all(storage_root);
 }
@@ -96,12 +96,12 @@ TEST(AppRuntime, FreshWelcomeAnimationKeepsTickingAfterStartupWindow) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(3200));
     const auto ticks_after_startup_window =
-        app->ui_animation_tick_count_for_testing();
+        test_seams(app).ui_animation_tick_count_for_testing();
     EXPECT_TRUE(wait_until([&] {
-        return app->ui_animation_tick_count_for_testing() >
+        return test_seams(app).ui_animation_tick_count_for_testing() >
                ticks_after_startup_window;
     }, std::chrono::milliseconds(300)));
-    EXPECT_FALSE(app->is_query_running_for_testing());
+    EXPECT_FALSE(test_seams(app).is_query_running_for_testing());
 
     fs::remove_all(storage_root);
 }
@@ -135,7 +135,7 @@ TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
     // --- Initial render: prompt input with the status bar ---
     app->SyncState();
     auto initial = render_to_plain_text(app->Render(), 120, 28);
-    EXPECT_EQ(app->status_bar_model_for_testing(), "test-model");
+    EXPECT_EQ(test_seams(app).status_bar_model_for_testing(), "test-model");
     EXPECT_NE(initial.find("test-model"), std::string::npos);
     EXPECT_EQ(initial.find("You are Loom"), std::string::npos);
     EXPECT_NE(initial.find("❯"), std::string::npos);
@@ -143,11 +143,11 @@ TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
     // --- /model haiku-runtime: changes model state ---
     app->HandleCommand("/model haiku-runtime");
     EXPECT_EQ(engine.model_params().model, "haiku-runtime");
-    EXPECT_EQ(app->status_bar_model_for_testing(), "haiku-runtime");
+    EXPECT_EQ(test_seams(app).status_bar_model_for_testing(), "haiku-runtime");
 
     // --- /cost: sets status tip (visible via testing accessor) ---
     app->HandleCommand("/cost");
-    auto status_msg = app->status_message_for_testing();
+    auto status_msg = test_seams(app).status_message_for_testing();
     EXPECT_NE(status_msg.find("Cost: $"), std::string::npos);
     EXPECT_NE(status_msg.find("In:"), std::string::npos);
     EXPECT_NE(status_msg.find("Out:"), std::string::npos);
@@ -155,7 +155,7 @@ TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
 
     // --- /clear: clears conversation, status bar retains current model ---
     app->HandleCommand("/clear");
-    EXPECT_EQ(app->status_bar_model_for_testing(), "haiku-runtime");
+    EXPECT_EQ(test_seams(app).status_bar_model_for_testing(), "haiku-runtime");
 
     // --- /exit: triggers on_exit callback ---
     app->HandleCommand("/exit");
@@ -187,22 +187,22 @@ TEST(AppRuntime, SlashInputShowsRegistrySuggestions) {
         [] {});
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("/")));
-    EXPECT_GT(app->autocomplete_suggestion_count_for_testing(), 0u);
-    ASSERT_GT(app->autocomplete_suggestion_count_for_testing(), 1u);
-    EXPECT_EQ(app->autocomplete_index_for_testing(), 0);
+    EXPECT_GT(test_seams(app).autocomplete_suggestion_count_for_testing(), 0u);
+    ASSERT_GT(test_seams(app).autocomplete_suggestion_count_for_testing(), 1u);
+    EXPECT_EQ(test_seams(app).autocomplete_index_for_testing(), 0);
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::ArrowDown));
-    EXPECT_EQ(app->autocomplete_index_for_testing(), 1);
+    EXPECT_EQ(test_seams(app).autocomplete_index_for_testing(), 1);
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
-    EXPECT_EQ(app->autocomplete_index_for_testing(), 0);
+    EXPECT_EQ(test_seams(app).autocomplete_index_for_testing(), 0);
 
     auto slash_rendered = strip_ansi(render_to_plain_text(app->Render(), 120, 32));
     EXPECT_NE(slash_rendered.find("❯ /"), std::string::npos);
     EXPECT_EQ(slash_rendered.find("/ /"), std::string::npos);
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("h")));
-    const auto suggestions = app->autocomplete_suggestions_for_testing();
+    const auto suggestions = test_seams(app).autocomplete_suggestions_for_testing();
     // SL-07: canonical row shows a matched-alias parenthetical (e.g. "/help (h)"
     // when the user typed the alias "h"), so match by substring, not exact element.
     const bool has_help = std::any_of(suggestions.begin(), suggestions.end(),
@@ -239,7 +239,7 @@ TEST(AppRuntime, SkillsDialogDismissOrderDebug) {
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Return));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
 
-    const auto msgs = app->messages_for_testing();
+    const auto msgs = test_seams(app).messages_for_testing();
     EXPECT_FALSE(msgs.empty());
     if (!msgs.empty()) {
         EXPECT_EQ(msgs[0].substr(0, std::string("lc-input").size()), "lc-input")
@@ -252,14 +252,14 @@ TEST(AppRuntime, SkillsDialogDismissOrderDebug) {
         EXPECT_TRUE(app->OnEvent(ftxui::Event::Character(c)));
     }
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Return));
-    for (int i = 0; i < 100 && app->is_query_running_for_testing(); ++i) {
+    for (int i = 0; i < 100 && test_seams(app).is_query_running_for_testing(); ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
     // Trigger a render so Render()/SyncState projects the engine conversation
     // (the hello row lives in engine_->get_conversation(), only reaches
     // screen_state_->messages after a Render pass).
     (void)strip_ansi(render_to_plain_text(app->Render(), 120, 32));
-    const auto msgs2 = app->messages_for_testing();
+    const auto msgs2 = test_seams(app).messages_for_testing();
     // Find positions of lc-input and the user text row.
     int lc_input_pos = -1, user_pos = -1;
     for (int i = 0; i < static_cast<int>(msgs2.size()); ++i) {
@@ -344,13 +344,13 @@ TEST(AppRuntime, BangCommandRunsLocallyNotThroughLLM) {
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Return));
 
     // No LLM query must be started for a local bash command.
-    EXPECT_FALSE(app->is_query_running_for_testing());
+    EXPECT_FALSE(test_seams(app).is_query_running_for_testing());
 
     // Wait for the local bash worker and drain its output row.
-    app->wait_for_local_bash_for_testing();
+    test_seams(app).wait_for_local_bash_for_testing();
     (void)strip_ansi(render_to_plain_text(app->Render(), 120, 32));
 
-    const auto msgs = app->messages_for_testing();
+    const auto msgs = test_seams(app).messages_for_testing();
     int lc_input_pos = -1, lc_output_pos = -1;
     bool saw_assistant_or_tool = false;
     std::string output_row;
@@ -563,9 +563,9 @@ TEST(AppRuntime, ReturnSubmitsAgentSlashSubcommandsWhenCompletionIsVisible) {
         [] {});
 
     ASSERT_TRUE(app->OnEvent(ftxui::Event::Character("/agents list")));
-    ASSERT_GT(app->autocomplete_suggestion_count_for_testing(), 0u);
+    ASSERT_GT(test_seams(app).autocomplete_suggestion_count_for_testing(), 0u);
     ASSERT_TRUE(app->OnEvent(ftxui::Event::Return));
-    EXPECT_TRUE(app->input_text_for_testing().empty());
+    EXPECT_TRUE(test_seams(app).input_text_for_testing().empty());
 
     auto rendered = strip_ansi(render_to_plain_text(app->Render(), 180, 110));
     EXPECT_TRUE(rendered.find("Agents") != std::string::npos ||
@@ -620,7 +620,7 @@ TEST(AppRuntime, DynamicPromptSuggestionsCoverSkillsFilesAndCursorEditing) {
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("/")));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("c")));
-    const auto slash_suggestions = app->autocomplete_suggestions_for_testing();
+    const auto slash_suggestions = test_seams(app).autocomplete_suggestions_for_testing();
     EXPECT_NE(
         std::find(slash_suggestions.begin(), slash_suggestions.end(), "/cpp-review"),
         slash_suggestions.end());
@@ -631,10 +631,10 @@ TEST(AppRuntime, DynamicPromptSuggestionsCoverSkillsFilesAndCursorEditing) {
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
-    EXPECT_TRUE(app->input_text_for_testing().empty());
+    EXPECT_TRUE(test_seams(app).input_text_for_testing().empty());
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("@")));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("s")));
-    const auto at_suggestions = app->autocomplete_suggestions_for_testing();
+    const auto at_suggestions = test_seams(app).autocomplete_suggestions_for_testing();
     EXPECT_TRUE(std::any_of(at_suggestions.begin(), at_suggestions.end(), [](const auto& suggestion) {
         return suggestion.find("src_file.cpp") != std::string::npos;
     }));
@@ -644,18 +644,18 @@ TEST(AppRuntime, DynamicPromptSuggestionsCoverSkillsFilesAndCursorEditing) {
     // varies with the "@s" prefix).
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
     for (int extra_esc = 0;
-         extra_esc < 2 && !app->input_text_for_testing().empty();
+         extra_esc < 2 && !test_seams(app).input_text_for_testing().empty();
          ++extra_esc) {
         EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
     }
-    EXPECT_TRUE(app->input_text_for_testing().empty());
+    EXPECT_TRUE(test_seams(app).input_text_for_testing().empty());
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("a")));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("b")));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::ArrowLeft));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("你")));
-    EXPECT_EQ(app->input_text_for_testing(), "a你b");
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "a你b");
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Backspace));
-    EXPECT_EQ(app->input_text_for_testing(), "ab");
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "ab");
 
     fs::remove_all(storage_root);
     fs::remove_all(cwd_root);
@@ -698,16 +698,16 @@ TEST(AppRuntime, ReturnOnSelectedSlashSuggestionOpensAgentsLocalJsx) {
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("/")));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("a")));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("g")));
-    ASSERT_GT(app->autocomplete_suggestion_count_for_testing(), 0u);
-    const auto suggestions = app->autocomplete_suggestions_for_testing();
+    ASSERT_GT(test_seams(app).autocomplete_suggestion_count_for_testing(), 0u);
+    const auto suggestions = test_seams(app).autocomplete_suggestions_for_testing();
     ASSERT_FALSE(suggestions.empty());
     EXPECT_EQ(suggestions.front(), "/agents");
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Return));
-    EXPECT_TRUE(app->is_agents_view_for_testing());
-    EXPECT_FALSE(app->is_local_jsx_command_for_testing("agents"));
-    EXPECT_TRUE(app->input_text_for_testing().empty());
-    EXPECT_GT(app->agent_card_count_for_testing(), 0u);
+    EXPECT_TRUE(test_seams(app).is_agents_view_for_testing());
+    EXPECT_FALSE(test_seams(app).is_local_jsx_command_for_testing("agents"));
+    EXPECT_TRUE(test_seams(app).input_text_for_testing().empty());
+    EXPECT_GT(test_seams(app).agent_card_count_for_testing(), 0u);
 
     auto rendered = strip_ansi(render_to_plain_text(app->Render(), 140, 40));
     EXPECT_NE(rendered.find("Agents"), std::string::npos);
@@ -780,7 +780,7 @@ TEST(AppRuntime, AgentsLocalJsxArrowKeysSelectProjectAgentAndReturnActs) {
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("a")));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("g")));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Return));
-    ASSERT_TRUE(app->is_agents_view_for_testing());
+    ASSERT_TRUE(test_seams(app).is_agents_view_for_testing());
 
     auto initial = strip_ansi(render_to_plain_text(app->Render(), 120, 36));
     EXPECT_NE(initial.find("› Create new agent"), std::string::npos);
@@ -793,8 +793,8 @@ TEST(AppRuntime, AgentsLocalJsxArrowKeysSelectProjectAgentAndReturnActs) {
     EXPECT_NE(selected.find("› cpp-reviewer"), std::string::npos);
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Return));
-    EXPECT_FALSE(app->is_local_jsx_command_for_testing("agents"));
-    EXPECT_FALSE(app->is_agents_view_for_testing());
+    EXPECT_FALSE(test_seams(app).is_local_jsx_command_for_testing("agents"));
+    EXPECT_FALSE(test_seams(app).is_agents_view_for_testing());
 
     fs::remove_all(storage_root);
     fs::remove_all(home_root);
@@ -841,9 +841,9 @@ TEST(AppRuntime, StatusLineRuntimeSettingsOverrideDiskSettings) {
         &storage,
         [] {});
 
-    EXPECT_TRUE(app->status_line_enabled_for_testing());
-    EXPECT_EQ(app->status_line_command_for_testing(), ":");
-    EXPECT_EQ(app->status_line_padding_for_testing(), 2);
+    EXPECT_TRUE(test_seams(app).status_line_enabled_for_testing());
+    EXPECT_EQ(test_seams(app).status_line_command_for_testing(), ":");
+    EXPECT_EQ(test_seams(app).status_line_padding_for_testing(), 2);
 
     fs::remove_all(storage_root);
     fs::remove_all(home_root);
@@ -891,13 +891,13 @@ TEST(AppRuntime, CtrlCIdleRequiresDoublePressWithinWindow) {
             make_app([&] { exited = true; });
 
         app->OnEvent(ftxui::Event::Character("typed text"));
-        ASSERT_EQ(app->input_text_for_testing(), "typed text");
+        ASSERT_EQ(test_seams(app).input_text_for_testing(), "typed text");
 
         EXPECT_TRUE(app->OnEvent(ftxui::Event::Special("\x03")));
         EXPECT_FALSE(exited)
             << "first idle Ctrl+C must request confirmation, not exit";
         // TS onFirstPress clears non-empty input immediately.
-        EXPECT_TRUE(app->input_text_for_testing().empty());
+        EXPECT_TRUE(test_seams(app).input_text_for_testing().empty());
         const auto armed = strip_ansi(render_to_plain_text(
             app->Render(), 120, 32));
         EXPECT_NE(armed.find("Press Ctrl-C again to exit"),
@@ -963,7 +963,7 @@ TEST(AppRuntime, StreamFallbackErrorIsRendered) {
     ASSERT_TRUE(server.wait_for_requests(2));
     ASSERT_TRUE(wait_until([&] {
         (void)app->Render();
-        return !app->is_query_running_for_testing();
+        return !test_seams(app).is_query_running_for_testing();
     }, std::chrono::seconds(2)));
 
     auto rendered = strip_ansi(render_to_plain_text(app->Render(), 140, 36));
@@ -1011,14 +1011,14 @@ TEST(AppRuntime, CtrlCWhileStreamingQueryCancelsWithoutExiting) {
         auto rendered = render_to_plain_text(app->Render(), 120, 32);
         return rendered.find("partial UI stream") != std::string::npos;
     }, std::chrono::seconds(2)));
-    EXPECT_TRUE(app->is_loading_for_testing());
-    EXPECT_TRUE(app->is_query_running_for_testing());
+    EXPECT_TRUE(test_seams(app).is_loading_for_testing());
+    EXPECT_TRUE(test_seams(app).is_query_running_for_testing());
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Special("\x03")));
     EXPECT_FALSE(exited);
-    EXPECT_TRUE(app->is_loading_for_testing());
-    EXPECT_TRUE(app->is_query_running_for_testing());
-    EXPECT_EQ(app->status_message_for_testing(), "Cancelling...");
+    EXPECT_TRUE(test_seams(app).is_loading_for_testing());
+    EXPECT_TRUE(test_seams(app).is_query_running_for_testing());
+    EXPECT_EQ(test_seams(app).status_message_for_testing(), "Cancelling...");
 
     auto cancelling = render_to_plain_text(app->Render(), 120, 32);
     EXPECT_NE(cancelling.find("Cancelling..."), std::string::npos);
@@ -1027,18 +1027,24 @@ TEST(AppRuntime, CtrlCWhileStreamingQueryCancelsWithoutExiting) {
     server.release_after_cancel();
     EXPECT_TRUE(wait_until([&] {
         (void)app->Render();
-        return !app->is_query_running_for_testing();
+        return !test_seams(app).is_query_running_for_testing();
     }, std::chrono::seconds(3)));
     (void)app->Render();
-    EXPECT_FALSE(app->is_loading_for_testing());
+    EXPECT_FALSE(test_seams(app).is_loading_for_testing());
 
     fs::remove_all(storage_root);
 }
 
 
 
-TEST(AppRuntime, StreamingToolUseShowsSpinnerAndLoadingState) {
-    LocalToolUseMessagesStreamServer server;
+// ESC must interrupt a running streaming query.  The footer advertises
+// "esc to interrupt" while loading (is_loading → ModeIndicatorOptions), so
+// ESC is the discoverable cancel binding the hint promises.  This is the
+// ESC twin of CtrlCWhileStreamingQueryCancelsWithoutExiting: it exercises
+// the repl_screen CatchEvent ESC branch (tool_animating → on_interrupt)
+// rather than the global Ctrl+C shortcut.
+TEST(AppRuntime, EscWhileStreamingQueryInterruptsAndRestoresInput) {
+    LocalChunkedMessagesStreamServer server;
     ASSERT_TRUE(server.valid());
 
     loom::core::ToolRegistry tools;
@@ -1051,111 +1057,405 @@ TEST(AppRuntime, StreamingToolUseShowsSpinnerAndLoadingState) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = fs::temp_directory_path() /
-        ("loom_ui_stream_tool_test_" +
+        ("loom_ui_esc_interrupt_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     loom::utils::SessionStorage storage(storage_root);
 
+    bool exited = false;
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
         &storage,
-        [] {});
-    ReleaseAfterToolPreviewGuard release_guard{server};
+        [&] {
+            exited = true;
+        });
+    ReleaseAfterCancelGuard release_guard{server};
 
-    EXPECT_FALSE(app->is_loading_for_testing());
-    EXPECT_FALSE(app->is_query_running_for_testing());
-
-    app->HandleSubmit("show streaming tool use");
-    ASSERT_TRUE(server.wait_for_tool_delta());
-
-    // While streaming: query is running, spinner is visible, tool name shown in spinner verb
+    app->HandleSubmit("show esc interrupt behavior");
+    ASSERT_TRUE(server.wait_for_first_delta());
     ASSERT_TRUE(wait_until([&] {
-        (void)app->Render();
-        return app->is_query_running_for_testing();
+        auto rendered = render_to_plain_text(app->Render(), 120, 32);
+        return rendered.find("partial UI stream") != std::string::npos;
     }, std::chrono::seconds(2)));
-    EXPECT_TRUE(app->is_loading_for_testing());
-    EXPECT_TRUE(app->is_query_running_for_testing());
+    EXPECT_TRUE(test_seams(app).is_loading_for_testing());
+    EXPECT_TRUE(test_seams(app).is_query_running_for_testing());
 
-    // Rendered output should contain the streamed tool name once the UI has
-    // projected the tool-use delta.
-    std::string during;
-    EXPECT_TRUE(wait_until([&] {
-        during = strip_ansi(render_to_plain_text(app->Render(), 140, 36));
-        return during.find("Bash") != std::string::npos;
-    }, std::chrono::seconds(2)));
-    EXPECT_NE(during.find("Bash"), std::string::npos);
+    // ESC interrupts the running query.  Unlike Ctrl+C (which has an idle
+    // double-press-to-exit binding), ESC must never exit the app — it is
+    // purely the cancel binding.
+    EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
+    EXPECT_FALSE(exited);
+    // Abort is asynchronous: engine->abort() sets the flag, but the HTTP
+    // stream only disconnects on the next chunk (the server is blocked
+    // waiting for release_after_cancel below).  So the query is still
+    // "running" and the spinner still shows "Cancelling...".
+    EXPECT_TRUE(test_seams(app).is_loading_for_testing());
+    EXPECT_TRUE(test_seams(app).is_query_running_for_testing());
+    EXPECT_EQ(test_seams(app).status_message_for_testing(), "Cancelling...");
 
-    server.release_after_preview();
+    auto cancelling = render_to_plain_text(app->Render(), 120, 32);
+    EXPECT_NE(cancelling.find("Cancelling..."), std::string::npos);
+    EXPECT_NE(cancelling.find("partial UI stream"), std::string::npos);
+
+    // Release the server so it sends the "after cancel" chunk; the client's
+    // content_receiver sees should_abort() and disconnects, finishing the query.
+    server.release_after_cancel();
     EXPECT_TRUE(wait_until([&] {
         (void)app->Render();
-        return !app->is_query_running_for_testing();
-    }, std::chrono::seconds(4)));
+        return !test_seams(app).is_query_running_for_testing();
+    }, std::chrono::seconds(3)));
     (void)app->Render();
-    EXPECT_FALSE(app->is_loading_for_testing());
+    EXPECT_FALSE(test_seams(app).is_loading_for_testing());
+
+    // The user's core requirement: after ESC interrupts, input must be
+    // editable again so they can type the next message.
+    (void)app->OnEvent(ftxui::Event::Character('h'));
+    (void)app->OnEvent(ftxui::Event::Character('i'));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "hi");
 
     fs::remove_all(storage_root);
 }
 
 
 
-TEST(AppRuntime, StreamingThinkingShowsSpinnerAndFinalContent) {
-    LocalThinkingMessagesStreamServer server;
-    ASSERT_TRUE(server.valid());
+// Regression guard: the up arrow must recall persisted prompt history after
+// restart.  input_history was in-memory only — populated by Enter presses
+// during the current session, empty on startup — so the first ArrowUp after
+// relaunching loom did nothing.  The AppAdapter constructor now loads
+// persisted history (project-filtered) into input_history.
+TEST(AppRuntime, UpArrowRecallsPersistedHistoryAcrossSessions) {
+    // Override HOME + LOOM_HISTORY_FILE so history resolves to a temp dir.
+    const char* old_home = std::getenv("HOME");
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_uparrow_hist_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(temp_home / ".loom");
+    setenv("HOME", temp_home.string().c_str(), 1);
+    ScopedEnvVar hist_env("LOOM_HISTORY_FILE");
+    hist_env.set((temp_home / ".loom" / "history.jsonl").string());
+
+    // The project cwd determines the history filter.
+    const auto project_cwd = temp_home / "project";
+    fs::create_directories(project_cwd);
+
+    // Write a persisted history entry for this project.
+    {
+        std::ofstream ofs(temp_home / ".loom" / "history.jsonl");
+        ofs << "{\"display\":\"previous prompt\",\"full_text\":\"previous prompt\","
+               "\"timestamp\":1791000000000,\"sessionId\":\"sess-1\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+    }
 
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
-    config.api_key = "test-key";
-    config.base_url = server.base_url();
     config.context_window.auto_compact = false;
-    config.cwd = fs::temp_directory_path().string();
+    config.cwd = project_cwd.string();
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
-    const auto storage_root = fs::temp_directory_path() /
-        ("loom_ui_stream_thinking_test_" +
-         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const auto storage_root = temp_home / "storage";
     loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine,
-        nullptr,
-        &commands,
-        &storage,
-        [] {});
-    ReleaseAfterThinkingPreviewGuard release_guard{server};
+        &engine, nullptr, &commands, &storage, [] {});
 
-    EXPECT_FALSE(app->is_loading_for_testing());
-    EXPECT_FALSE(app->is_query_running_for_testing());
+    // The constructor loads persisted history into input_history.  ArrowUp
+    // recalls the most recent entry — this is the "restart loom, press up"
+    // scenario that was broken (input_history was empty on startup).
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "previous prompt");
 
-    app->HandleSubmit("show streaming thinking");
-    ASSERT_TRUE(server.wait_for_thinking_delta());
-
-    // While streaming: query is running, spinner shows Thinking mode
-    ASSERT_TRUE(wait_until([&] {
-        (void)app->Render();
-        return app->is_query_running_for_testing();
-    }, std::chrono::seconds(2)));
-    EXPECT_TRUE(app->is_loading_for_testing());
-    EXPECT_TRUE(app->is_query_running_for_testing());
-
-    // Rendered output should contain "Thinking" (in spinner line)
-    auto during = render_to_plain_text(app->Render(), 140, 36);
-    EXPECT_NE(during.find("Thinking"), std::string::npos);
-
-    server.release_after_preview();
-    EXPECT_TRUE(wait_until([&] {
-        (void)app->Render();
-        return !app->is_query_running_for_testing();
-    }, std::chrono::seconds(4)));
-    auto done = render_to_plain_text(app->Render(), 140, 36);
-    EXPECT_FALSE(app->is_loading_for_testing());
-    // Final message contains the visible answer text
-    EXPECT_NE(done.find("visible answer after thinking"), std::string::npos);
-
-    fs::remove_all(storage_root);
+    // Restore HOME and clean up.
+    if (old_home) setenv("HOME", old_home, 1);
+    else unsetenv("HOME");
+    fs::remove_all(temp_home);
 }
 
+TEST(AppRuntime, UpArrowNavigatesHistoryPastCommandEntries) {
+    // Regression test: after recalling a command entry (e.g. "/resume"),
+    // the autocomplete popup shows command suggestions and the next
+    // ArrowUp was captured by autocomplete navigation instead of
+    // continuing history navigation.  The fix gives history navigation
+    // priority when history_index != npos (already navigating history).
+    const char* old_home = std::getenv("HOME");
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_uparrow_cmd_hist_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(temp_home / ".loom");
+    setenv("HOME", temp_home.string().c_str(), 1);
+    ScopedEnvVar hist_env("LOOM_HISTORY_FILE");
+    hist_env.set((temp_home / ".loom" / "history.jsonl").string());
+
+    const auto project_cwd = temp_home / "project";
+    fs::create_directories(project_cwd);
+
+    // Four entries, oldest first in the file.  load_recent_prompt_texts
+    // reads newest-first then reverses, so input_history ends up
+    // oldest-first: [0]="first prompt", [1]="/clear", [2]="/resume",
+    // [3]="last prompt".
+    {
+        std::ofstream ofs(temp_home / ".loom" / "history.jsonl");
+        ofs << "{\"display\":\"first prompt\",\"full_text\":\"first prompt\","
+               "\"timestamp\":1791000000000,\"sessionId\":\"sess-1\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+        ofs << "{\"display\":\"/clear\",\"full_text\":\"/clear\","
+               "\"timestamp\":1791000001000,\"sessionId\":\"sess-1\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+        ofs << "{\"display\":\"/resume\",\"full_text\":\"/resume\","
+               "\"timestamp\":1791000002000,\"sessionId\":\"sess-1\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+        ofs << "{\"display\":\"last prompt\",\"full_text\":\"last prompt\","
+               "\"timestamp\":1791000003000,\"sessionId\":\"sess-1\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+    }
+
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = project_cwd.string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = temp_home / "storage";
+    loom::utils::SessionStorage storage(storage_root);
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, &storage, [] {});
+
+    // ArrowUp recalls the newest entry ("last prompt").
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "last prompt");
+
+    // ArrowUp again — must recall "/resume" even though the autocomplete
+    // popup is now showing command suggestions for "/resume".
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "/resume");
+
+    // ArrowUp again — "/clear" is also a command entry.
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "/clear");
+
+    // ArrowUp again — the oldest entry.
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "first prompt");
+
+    // ArrowUp at the oldest entry stays put.
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "first prompt");
+
+    // ArrowDown navigates forward through the same entries.
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowDown));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "/clear");
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowDown));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "/resume");
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowDown));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "last prompt");
+
+    // ArrowDown past the newest entry clears the input.
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowDown));
+    EXPECT_TRUE(test_seams(app).input_text_for_testing().empty());
+
+    // Restore HOME and clean up.
+    if (old_home) setenv("HOME", old_home, 1);
+    else unsetenv("HOME");
+    fs::remove_all(temp_home);
+}
+
+TEST(AppRuntime, UpArrowHistoryPreservesDuplicateEntries) {
+    // Regression test: load_recent_prompt_texts used to dedup by display
+    // text, so the same prompt typed in multiple sessions appeared only
+    // once in Up-arrow recall.  The dedup was removed — duplicates are
+    // now preserved.
+    const char* old_home = std::getenv("HOME");
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_uparrow_dup_hist_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(temp_home / ".loom");
+    setenv("HOME", temp_home.string().c_str(), 1);
+    ScopedEnvVar hist_env("LOOM_HISTORY_FILE");
+    hist_env.set((temp_home / ".loom" / "history.jsonl").string());
+
+    const auto project_cwd = temp_home / "project";
+    fs::create_directories(project_cwd);
+
+    // Three entries: "same prompt" appears twice (sess-1 and sess-3),
+    // with "other prompt" in between (sess-2).  Oldest first in the file.
+    {
+        std::ofstream ofs(temp_home / ".loom" / "history.jsonl");
+        ofs << "{\"display\":\"same prompt\",\"full_text\":\"same prompt\","
+               "\"timestamp\":1791000000000,\"sessionId\":\"sess-1\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+        ofs << "{\"display\":\"other prompt\",\"full_text\":\"other prompt\","
+               "\"timestamp\":1791000001000,\"sessionId\":\"sess-2\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+        ofs << "{\"display\":\"same prompt\",\"full_text\":\"same prompt\","
+               "\"timestamp\":1791000002000,\"sessionId\":\"sess-3\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+    }
+
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = project_cwd.string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = temp_home / "storage";
+    loom::utils::SessionStorage storage(storage_root);
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, &storage, [] {});
+
+    // ArrowUp recalls the newest entry ("same prompt" from sess-3).
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "same prompt");
+
+    // ArrowUp again — "other prompt" from sess-2.
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "other prompt");
+
+    // ArrowUp again — the OLDER "same prompt" from sess-1 must still be
+    // present (previously deduped away).
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "same prompt");
+
+    // Restore HOME and clean up.
+    if (old_home) setenv("HOME", old_home, 1);
+    else unsetenv("HOME");
+    fs::remove_all(temp_home);
+}
+
+TEST(AppRuntime, UpArrowHistoryFindsProjectEntriesBeyondOtherProjects) {
+    // Regression test: read_history_recent used a small batch (max_entries * 2)
+    // which could be entirely filled by newer entries from other projects
+    // (e.g. test runs in temp directories), causing the current project's
+    // entries to be missed entirely — ArrowUp did nothing.  The fix reads
+    // all entries.
+    const char* old_home = std::getenv("HOME");
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_uparrow_batch_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(temp_home / ".loom");
+    setenv("HOME", temp_home.string().c_str(), 1);
+    ScopedEnvVar hist_env("LOOM_HISTORY_FILE");
+    hist_env.set((temp_home / ".loom" / "history.jsonl").string());
+
+    const auto project_cwd = temp_home / "project";
+    fs::create_directories(project_cwd);
+
+    // 3 current-project entries (older) + 300 other-project entries (newer).
+    // The 300 other-project entries would fill a 200-entry batch, hiding
+    // the current project's entries.
+    {
+        std::ofstream ofs(temp_home / ".loom" / "history.jsonl");
+        ofs << "{\"display\":\"my prompt 1\",\"full_text\":\"my prompt 1\","
+               "\"timestamp\":1791000000000,\"sessionId\":\"sess-1\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+        ofs << "{\"display\":\"my prompt 2\",\"full_text\":\"my prompt 2\","
+               "\"timestamp\":1791000001000,\"sessionId\":\"sess-1\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+        ofs << "{\"display\":\"my prompt 3\",\"full_text\":\"my prompt 3\","
+               "\"timestamp\":1791000002000,\"sessionId\":\"sess-1\",\"project\":\""
+            << project_cwd.string() << "\"}\n";
+        for (int i = 0; i < 300; ++i) {
+            ofs << "{\"display\":\"other " << i << "\",\"full_text\":\"other " << i << "\","
+                   "\"timestamp\":" << (1791000003000 + i)
+                << ",\"sessionId\":\"sess-other\",\"project\":\"/tmp/other-project\"}\n";
+        }
+    }
+
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = project_cwd.string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = temp_home / "storage";
+    loom::utils::SessionStorage storage(storage_root);
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, &storage, [] {});
+
+    // ArrowUp must recall the current project's newest entry, not nothing.
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "my prompt 3");
+
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "my prompt 2");
+
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "my prompt 1");
+
+    // Restore HOME and clean up.
+    if (old_home) setenv("HOME", old_home, 1);
+    else unsetenv("HOME");
+    fs::remove_all(temp_home);
+}
+
+TEST(AppRuntime, TabAcceptsNextActionSuggestion) {
+    // Regression test: the next-action suggestion must be accepted into the
+    // input buffer when the user presses Tab (shown as an inline gray
+    // placeholder, not as a popup above the input).
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_tab_suggest_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(temp_home / ".loom");
+
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = temp_home.string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    loom::utils::SessionStorage storage(temp_home / "storage");
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, &storage, [] {});
+
+    // Simulate the PromptSuggestionService having produced a suggestion.
+    test_seams(app).set_next_action_suggestion_for_testing("explain the error above");
+    EXPECT_TRUE(test_seams(app).input_text_for_testing().empty());
+
+    // Tab accepts the suggestion into the input buffer.
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::Tab));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "explain the error above");
+
+    fs::remove_all(temp_home);
+}
+
+TEST(AppRuntime, TabDoesNotAcceptSlashSuggestion) {
+    // Slash-commands are handled by the autocomplete popup, not the inline
+    // next-action suggestion.  Tab must NOT accept a suggestion that starts
+    // with '/'.
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_tab_slash_suggest_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(temp_home / ".loom");
+
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = temp_home.string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    loom::utils::SessionStorage storage(temp_home / "storage");
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, &storage, [] {});
+
+    test_seams(app).set_next_action_suggestion_for_testing("/commit");
+    EXPECT_TRUE(test_seams(app).input_text_for_testing().empty());
+
+    // Tab must NOT accept a slash-command suggestion.
+    app->OnEvent(ftxui::Event::Tab);
+    EXPECT_TRUE(test_seams(app).input_text_for_testing().empty());
+
+    fs::remove_all(temp_home);
+}
 
 
 TEST(AppRuntime, PermissionCallbackRendersAndResolvesUserChoices) {
@@ -1188,7 +1488,7 @@ TEST(AppRuntime, PermissionCallbackRendersAndResolvesUserChoices) {
 
     const bool allow_prompt_shown = wait_until([&] {
         (void)app->Render();
-        return app->has_pending_dialog_for_testing();
+        return test_seams(app).has_pending_dialog_for_testing();
     }, std::chrono::milliseconds(1000));
     EXPECT_TRUE(allow_prompt_shown);
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('y')));
@@ -1206,7 +1506,7 @@ TEST(AppRuntime, PermissionCallbackRendersAndResolvesUserChoices) {
 
     const bool deny_prompt_shown = wait_until([&] {
         (void)app->Render();
-        return app->has_pending_dialog_for_testing();
+        return test_seams(app).has_pending_dialog_for_testing();
     }, std::chrono::milliseconds(1000));
     EXPECT_TRUE(deny_prompt_shown);
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('n')));
@@ -1224,7 +1524,7 @@ TEST(AppRuntime, PermissionCallbackRendersAndResolvesUserChoices) {
 
     const bool always_prompt_shown = wait_until([&] {
         (void)app->Render();
-        return app->has_pending_dialog_for_testing();
+        return test_seams(app).has_pending_dialog_for_testing();
     }, std::chrono::milliseconds(1000));
     EXPECT_TRUE(always_prompt_shown);
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('a')));
@@ -1262,34 +1562,33 @@ TEST(AppRuntime, PermissionCallbackRendersAndResolvesUserChoices) {
 
 
 
-TEST(AppRuntime, RenderMessageHidesCompletedThinkingWhenUnselected) {
+TEST(AppRuntime, RenderMessageShowsCollapsedThinkingWhenUnselected) {
     loom::core::AssistantMessage assistant;
     assistant.content.push_back(loom::core::ThinkingBlock{
         .thinking = "private reasoning preview",
         .signature = "sig-1",
     });
 
-    // TS AssistantThinkingMessage.tsx line 36-38 guard:
-    //   if (hideInTranscript) return null;
-    // For completed + non-expanded + non-selected thinking blocks in REPL
-    // mode, the row vanishes entirely (no collapsed label, no content).
-    // The inline thinking content is also absent (it never leaked out in
-    // collapsed mode anyway).
+    // Completed thinking blocks render as a collapsed summary
+    // (∴ Thinking + first-line summary + ctrl+o hint) that can be
+    // expanded on click.  They are NOT hidden entirely.
     auto rendered = render_to_plain_text(
         loom::ui::RenderMessage(loom::core::Message{std::move(assistant)}), 140, 24);
 
-    EXPECT_EQ(rendered.find("Thinking"), std::string::npos);
-    EXPECT_EQ(rendered.find("private reasoning preview"), std::string::npos);
+    // The collapsed "Thinking" label should be present.
+    EXPECT_NE(rendered.find("Thinking"), std::string::npos);
+    // The summary (first 50 chars of thinking content) should be shown.
+    EXPECT_NE(rendered.find("private reasoning preview"), std::string::npos);
 }
 
 
 
 TEST(AppRuntime, RenderMessageShowsCompletedThinkingWhenExpanded) {
     // Regression safety: transcript mode / explicit expand still renders
-    // the collapsed label + no content preview leakage.
+    // the collapsed label + summary, but no full content leakage.
     loom::core::AssistantMessage assistant;
     assistant.content.push_back(loom::core::ThinkingBlock{
-        .thinking = "some chain-of-thought here",
+        .thinking = "first line of reasoning\nsecond line with private details",
         .signature = "sig-2",
     });
 
@@ -1304,11 +1603,13 @@ TEST(AppRuntime, RenderMessageShowsCompletedThinkingWhenExpanded) {
         loom::ui::repl_screen::RenderMessages(input, /*selected=*/0, 40),
         140, 24);
 
-    // Selected (expanded or at least eligible for label) thinking row
-    // should still surface the "Thinking" label so the user sees where
-    // the hidden thinking block lives.
+    // The "Thinking" label should be present.
     EXPECT_NE(rendered_selected.find("Thinking"), std::string::npos);
-    EXPECT_EQ(rendered_selected.find("some chain-of-thought here"),
+    // The collapsed summary (first line) SHOULD be shown.
+    EXPECT_NE(rendered_selected.find("first line of reasoning"),
+              std::string::npos);
+    // But the full content (second line) must NOT leak.
+    EXPECT_EQ(rendered_selected.find("second line with private details"),
               std::string::npos);
 }
 
@@ -1389,7 +1690,7 @@ TEST(AppRuntime, CollapseBackgroundBashWiredIntoLiveTranscript) {
 
     // Count how many user rows carry a task-notification.  Before the fix this
     // would be 3 (one per notification); wired collapse merges them into 1.
-    const auto msgs = app->messages_for_testing();
+    const auto msgs = test_seams(app).messages_for_testing();
     int user_rows = 0;
     for (const auto& row : msgs) {
         if (row.rfind("user", 0) == 0) ++user_rows;
@@ -1402,7 +1703,10 @@ TEST(AppRuntime, CollapseBackgroundBashWiredIntoLiveTranscript) {
 
 
 
-// Diagnostic: verify exactly 1 blank line between tool_result and assistant text
+// Diagnostic: verify spacing between tool_result and assistant text.
+// Completed thinking blocks now render as collapsed summaries (visible between
+// the tool result and the assistant text), so the gap includes the thinking
+// line plus its margins.
 TEST(AppRuntime, ToolResultToAssistantTextSpacingIsOneLine) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -1473,8 +1777,12 @@ TEST(AppRuntime, ToolResultToAssistantTextSpacingIsOneLine) {
         else if (i >= result_line - 3 && i <= text_line + 1)
             std::cerr << "  L" << i << ": (blank)\n";
     }
-    EXPECT_EQ(gap, 1)
-        << "Expected 1 blank line between tool_result and assistant text, got " << gap;
+    // With completed thinking blocks now visible as collapsed summaries, the
+    // gap between tool_result and assistant text is 3: blank margin, the
+    // collapsed "∴ Thinking" line, and another blank margin.
+    EXPECT_EQ(gap, 3)
+        << "Expected 3 lines (blank + collapsed thinking + blank) between "
+           "tool_result and assistant text, got " << gap;
 
     fs::remove_all(storage_root2);
 }
@@ -1653,10 +1961,10 @@ TEST(AppRuntime, AtHistoryShowsPersistedPrompts) {
     }
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character(' ')));
 
-    ASSERT_GT(app->autocomplete_suggestion_count_for_testing(), 0u)
+    ASSERT_GT(test_seams(app).autocomplete_suggestion_count_for_testing(), 0u)
         << "@history should show persisted prompt suggestions";
 
-    auto suggestions = app->autocomplete_suggestions_for_testing();
+    auto suggestions = test_seams(app).autocomplete_suggestions_for_testing();
     bool found_deploy = std::any_of(suggestions.begin(), suggestions.end(),
         [](const std::string& s) { return s.find("deploy to production") != std::string::npos; });
     bool found_review = std::any_of(suggestions.begin(), suggestions.end(),
@@ -1706,7 +2014,7 @@ TEST(AppRuntime, AtHistoryWithQueryFiltersResults) {
         EXPECT_TRUE(app->OnEvent(ftxui::Event::Character(c)));
     }
 
-    auto suggestions = app->autocomplete_suggestions_for_testing();
+    auto suggestions = test_seams(app).autocomplete_suggestions_for_testing();
     bool found_review = std::any_of(suggestions.begin(), suggestions.end(),
         [](const std::string& s) { return s.find("review the pull request") != std::string::npos; });
     bool found_deploy = std::any_of(suggestions.begin(), suggestions.end(),
@@ -1739,16 +2047,16 @@ TEST(AppRuntime, CtrlREntersHistorySearchMode) {
 
     // Ctrl+R should inject "@history " into the input.
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('\x12')));
-    EXPECT_TRUE(app->input_text_for_testing().starts_with("@history"))
+    EXPECT_TRUE(test_seams(app).input_text_for_testing().starts_with("@history"))
         << "Ctrl+R should set input to '@history ' prefix, got: "
-        << app->input_text_for_testing();
+        << test_seams(app).input_text_for_testing();
 
     // Pressing Ctrl+R again should NOT duplicate the prefix.
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('\x12')));
-    EXPECT_TRUE(app->input_text_for_testing().starts_with("@history"))
+    EXPECT_TRUE(test_seams(app).input_text_for_testing().starts_with("@history"))
         << "second Ctrl+R should keep '@history ' prefix";
     // Count occurrences of "@history" — should be exactly 1.
-    const auto input = app->input_text_for_testing();
+    const auto input = test_seams(app).input_text_for_testing();
     size_t count = 0;
     size_t pos = 0;
     while ((pos = input.find("@history", pos)) != std::string::npos) {
@@ -1836,7 +2144,7 @@ TEST(AppRuntime, AtAgentShowsAgentSuggestions) {
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('l')));
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('o')));
 
-    auto suggestions = app->autocomplete_suggestions_for_testing();
+    auto suggestions = test_seams(app).autocomplete_suggestions_for_testing();
     bool found_loom = std::any_of(suggestions.begin(), suggestions.end(),
         [](const std::string& s) { return s.find("@loom") != std::string::npos; });
     EXPECT_TRUE(found_loom) << "@lo should surface the @loom agent suggestion";
@@ -1874,7 +2182,7 @@ TEST(AppRuntime, TeammateInboxPollDeliversTasksAndFiltersControl) {
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         engine.get(), nullptr, commands.get(), storage.get(), [] {});
 
-    app->configure_teammate_for_testing("worker-a", "alpha");
+    test_seams(app).configure_teammate_for_testing("worker-a", "alpha");
 
     // Leader sends one task and one control message to worker-a's inbox.
     ASSERT_TRUE(tu::send_message(
@@ -1883,17 +2191,17 @@ TEST(AppRuntime, TeammateInboxPollDeliversTasksAndFiltersControl) {
     ASSERT_TRUE(tu::send_message(
         "worker-a", "loom:shutdown approved").has_value());
 
-    app->poll_teammate_inbox_once_for_testing();
+    test_seams(app).poll_teammate_inbox_once_for_testing();
     // Only the task is queued.
-    ASSERT_EQ(app->teammate_pending_count_for_testing(), 1u);
-    const auto prompt = app->pop_teammate_prompt_for_testing();
+    ASSERT_EQ(test_seams(app).teammate_pending_count_for_testing(), 1u);
+    const auto prompt = test_seams(app).pop_teammate_prompt_for_testing();
     EXPECT_NE(prompt.find("<teammate_message teammate_id=\""), std::string::npos);
     EXPECT_NE(prompt.find("please run the build"), std::string::npos);
     EXPECT_EQ(prompt.find("loom:shutdown"), std::string::npos);
 
     // A second poll after read-marking delivers nothing (no duplicates).
-    app->poll_teammate_inbox_once_for_testing();
-    EXPECT_EQ(app->teammate_pending_count_for_testing(), 0u);
+    test_seams(app).poll_teammate_inbox_once_for_testing();
+    EXPECT_EQ(test_seams(app).teammate_pending_count_for_testing(), 0u);
 
     fs::remove_all(runtime_dir);
     fs::remove_all(storage_root);
@@ -1976,11 +2284,11 @@ TEST(LiveTeamsUi, SlashTeamsOpensOverviewModal) {
     a.last_output_tail = "TAIL-MARKER-42";
     a.pane_id = "%3";
     std::vector<live::LiveTeammate> teammates{a};
-    app->set_live_teammates_for_testing(&teammates);
-    ASSERT_EQ(app->teams_overview_count_for_testing(), 1);
+    test_seams(app).set_live_teammates_for_testing(&teammates);
+    ASSERT_EQ(test_seams(app).teams_overview_count_for_testing(), 1);
 
-    app->handle_submit_for_testing("/teams");
-    ASSERT_TRUE(app->teams_overview_open_for_testing());
+    test_seams(app).handle_submit_for_testing("/teams");
+    ASSERT_TRUE(test_seams(app).teams_overview_open_for_testing());
 
     const auto txt = strip_ansi(
         render_to_plain_text(app->Render(), 140, 40));
@@ -1991,7 +2299,7 @@ TEST(LiveTeamsUi, SlashTeamsOpensOverviewModal) {
     // Unhandled Escape falls through to DispatchDialogQueueEvents' modal
     // fallback, which pops the stack.
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
-    EXPECT_FALSE(app->teams_overview_open_for_testing());
+    EXPECT_FALSE(test_seams(app).teams_overview_open_for_testing());
 
     app.reset();
     std::error_code ec;
@@ -2040,13 +2348,13 @@ TEST(LiveTeamsUi, TeammatePermissionRequestRoutesThroughToolPermission) {
     request.tool_use_id = "toolu_perm_1";
     request.description = R"({"command":"rm -rf build"})";
     request.input_json = R"({"command":"rm -rf build"})";
-    app->enqueue_teammate_permission_for_testing(&request, "alpha");
+    test_seams(app).enqueue_teammate_permission_for_testing(&request, "alpha");
 
     // The queued request drains on the next Custom event into the existing
     // ToolPermission overlay (Band3), and the event is consumed like the
     // pane-teammate prompt drain.
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Custom));
-    EXPECT_TRUE(app->has_pending_dialog_for_testing());
+    EXPECT_TRUE(test_seams(app).has_pending_dialog_for_testing());
 
     // Render surfaces the worker identity + tool name in the dialog.
     const auto txt = strip_ansi(
@@ -2057,7 +2365,7 @@ TEST(LiveTeamsUi, TeammatePermissionRequestRoutesThroughToolPermission) {
     // Approve ('y'): the stage-A success response is written to the worker's
     // mailbox and the overlay is dismissed.
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('y')));
-    EXPECT_EQ(app->pending_teammate_permission_count_for_testing(), 0u);
+    EXPECT_EQ(test_seams(app).pending_teammate_permission_count_for_testing(), 0u);
 
     auto worker_inbox = loom::utils::read_inbox(
         "worker-a", std::optional<std::string_view>{"alpha"});

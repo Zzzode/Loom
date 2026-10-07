@@ -33,7 +33,7 @@ using namespace ftxui;
 // UI4/UI5: message list.  Delegates to messages_list.cppm (UI21).
 // `spinner_frame` drives the tool-use header spinner animation (fix #10).
 // `unseen_divider` is the optional in-transcript "N new messages" anchor
-// set by useUnseenDivider (FullscreenLayout.tsx L86-190); nullopt when
+// set by the unseen-divider tracker; nullopt when
 // pinned to bottom or the session has no scroll-away yet.
 [[nodiscard]] Element RenderMessages(
     const std::vector<MessageDisplayEntry>& entries,
@@ -46,9 +46,9 @@ using namespace ftxui;
     const std::unordered_set<std::string>& expanded_keys,
     bool is_transcript_mode,
     bool show_all_in_transcript,
-    // TS REF: Messages.tsx L382-389 + L395-419  isStreamingThinkingVisible.
+    // isStreamingThinkingVisible.
     // When true, build_visible_rows hides ALL completed thinking rows so
-    // only the streaming-thinking tail is visible (TS lastThinkingBlockId
+    // only the streaming-thinking tail is visible (lastThinkingBlockId
     // = 'streaming').
     bool streaming_thinking_globally_visible,
     // GAP 3: msg-system-api-error-retry — callback for the Retry button on
@@ -56,15 +56,19 @@ using namespace ftxui;
     // clickable Retry pill that invokes this to re-send the last user message.
     std::function<void()> on_retry,
     // P2 gap api-error-retry: callback for "Clear session" button on
-    // session-expired error cards.  TS REF: SystemAPIErrorMessage.tsx
-    //   onClearSession prop — invoked when auth has expired and user
-    //   chooses to clear the session to re-authenticate.
+    // session-expired error cards.  onClearSession prop — invoked when
+    // auth has expired and user chooses to clear the session to
+    // re-authenticate.
     std::function<void()> on_clear_session,
-    // TS REF: Messages.tsx L703-712 + Markdown.tsx L186-235 — StreamingMarkdown
-    // stable-prefix cache for the streaming-text tail row.  When non-null,
+    // StreamingMarkdown stable-prefix cache for the streaming-text tail
+    // row.  When non-null,
     // RenderAssistantTextMessageFaithful uses update() instead of full
     // render_markdown() for is_streaming rows.
-    ::loom::ui::StreamingMarkdown* streaming_md) {
+    ::loom::ui::StreamingMarkdown* streaming_md,
+    // Optional mouse hit-testing tracker for click-to-expand rows.
+    loom::ui::messages_list::RowClickTracker* row_click_tracker,
+    // Optional store for virtual-list scroll bounds.
+    MessagesStore* store) {
     // NOTE: We no longer early-return on empty entries.  The leading_element
     // (welcome/logo card) must always be rendered inside the yframe so it
     // scrolls with messages.  The messages_list handles empty rows gracefully
@@ -79,7 +83,7 @@ using namespace ftxui;
     input.unseen_divider = std::move(unseen_divider);
 
     for (const auto& m : entries) {
-        // TS REF: Messages.tsx L549-553  uuid → 24-char prefix anchor.
+        // uuid → 24-char prefix anchor.
         // Populated parallel to rows/shapes; empty strings are harmless
         // (find_divider_before_visible_index skips them).
         input.uuids.push_back(m.id);
@@ -123,8 +127,7 @@ using namespace ftxui;
             input.rows.push_back(std::move(opts));
         } else if (m.role == "user") {
             if (m.is_image && m.image_block) {
-                // TS parity: each user-attached image is its own UserImage row.
-                // See TS src/components/UserImageMessage.tsx full file.
+                // Each user-attached image is its own UserImage row.
                 // The data flow is: project_messages() → is_image=true +
                 // image_block; we translate the block metadata into
                 // image::ImageMessageData which message_image.cppm already
@@ -135,7 +138,7 @@ using namespace ftxui;
                 const auto& ib = *m.image_block;
                 d.timestamp = m.timestamp;
                 d.media_type = ib.media_type;
-                // TS parity: [Image #N] label — use the display id assigned
+                // [Image #N] label — use the display id assigned
                 // by project_messages from content-block order (matches
                 // user's paste order shown in the input placeholder).
                 if (m.image_display_id) {
@@ -179,9 +182,10 @@ using namespace ftxui;
             if (m.is_thinking) {
                 input.shapes.push_back(messages::MessageShape::AssistantThinking);
                 messages::thinking_message::ThinkingMessageOptions opts;
-                opts.data.raw_text = m.content_preview;
+                opts.data.raw_text = m.full_content.empty()
+                    ? m.content_preview : m.full_content;
                 // Static / unselected view must render the collapsed "Thinking"
-                // label (TS: AssistantThinkingMessage.tsx collapsed state)
+                // label (collapsed state)
                 // rather than hiding the row.  The messages-list fast path
                 // hides rows where thinking is neither selected nor "active".
                 if (m.thinking_active) {
@@ -235,14 +239,13 @@ using namespace ftxui;
             // through the rich SystemAPIError card (severity borders + pills)
             // instead of the plain SystemText glyph.  The Retry button calls
             // on_retry to re-send the last user message.
-            // TS REF: SystemAPIErrorMessage.tsx — rich error card with retry.
             namespace aem = loom::ui::messages::api_error_message;
             aem::APIErrorData err_data;
             err_data.message = m.content_preview;
             err_data.provider = "API";
             err_data.severity = aem::ErrorSeverity::Error;
             // P2 gap api-error-retry: thread retry metadata from the entry.
-            // TS REF: SystemAPIErrorMessage.tsx — retryInMs, retryAttempt,
+            // retryInMs, retryAttempt,
             //   maxRetries, sessionExpired destructured from message prop.
             err_data.retry_after_ms   = m.retry_after_ms;
             err_data.current_attempt  = m.retry_attempt;
@@ -263,7 +266,7 @@ using namespace ftxui;
             // (RenderSystemTextMessageFaithful dispatches per subtype) shows
             // the right glyph (※ away_summary / ✻ event / ⏺ generic).  When
             // the engine hasn't set system_subtype we derive a best-effort
-            // subtype from the preview text — same labels TS SystemTextMessage
+            // subtype from the preview text — same labels SystemTextMessage
             // keys on (turn_duration / memory_saved / etc.).
             auto derive_subtype = [](const std::string& s,
                 const std::optional<std::string>& hint) {
@@ -278,7 +281,7 @@ using namespace ftxui;
                     if (*hint == "model_switch")    return ST::ModelSwitch;
                     if (*hint == "background_task") return ST::BackgroundTask;
                 }
-                // Heuristic fallback: scan preview text for TS-style keywords.
+                // Heuristic fallback: scan preview text for keywords.
                 if (s.find("away for") != std::string::npos ||
                     s.find("Welcome back") != std::string::npos)
                     return ST::AwaySummary;
@@ -311,7 +314,7 @@ using namespace ftxui;
         input.selected_row_idx = static_cast<std::size_t>(sel);
 
     const auto N = entries.size();
-    // TS REF: Messages.tsx L703-719 — streaming text + streaming thinking
+    // Streaming text + streaming thinking
     // tails are rendered after all committed messages.  The tail row is
     // whichever comes last: a streaming text entry (is_streaming) or an
     // active thinking entry (thinking_active, set while streaming or
@@ -324,16 +327,16 @@ using namespace ftxui;
     input.scroll_offset = std::max(0, offs);
     input.viewport_rows = std::max(1, vlines);
     input.is_brief_mode = is_brief_mode;
-    // TS REF: Messages.tsx L382-389 + L395-419 — thread isStreamingThinkingVisible
+    // Thread isStreamingThinkingVisible
     // to the messages list so it can hide ALL completed thinking rows when
     // the streaming-thinking tail is on screen.
     input.streaming_thinking_globally_visible = streaming_thinking_globally_visible;
-    // TS REF: Messages.tsx L459 (isTranscriptMode) + L223 (showAllInTranscript).
+    // is_transcript_mode + show_all_in_transcript.
     // In transcript mode the 3-tier filter shows all message types; cap at
     // 30 unless show_all_in_transcript lifts it.
     input.is_transcript_mode     = is_transcript_mode;
     input.show_all_in_transcript = show_all_in_transcript;
-    // TS REF: Messages.tsx expandedKeys (L563) — user-expanded rows show
+    // expanded_keys — user-expanded rows show
     // verbose full content.  Passed by copy (cheap for small sets).
     input.expanded_keys = expanded_keys;
     // GAP 3: thread on_retry through to the messages list so SystemAPIError
@@ -342,25 +345,39 @@ using namespace ftxui;
     // P2 gap api-error-retry: thread on_clear_session for session-expired
     // error cards.
     input.on_clear_session = on_clear_session;
-    // TS REF: Messages.tsx L703-712 + Markdown.tsx L186-235 — thread the
-    // shared StreamingMarkdown instance so the streaming-text tail row uses
+    // Thread the shared StreamingMarkdown instance so the streaming-text
+    // tail row uses
     // stable-prefix caching instead of full re-parse per token.
     input.streaming_md = streaming_md;
+    input.row_click_tracker = row_click_tracker;
     namespace ml = loom::ui::messages_list;
-    // TS REF: FullscreenLayout <Box flexGrow={1} /> at the bottom of the
-    // message list — absorbs remaining viewport space so short content stays
+    // A flex-grow filler at the bottom of the
+    // message list absorbs remaining viewport space so short content stays
     // compact at the top (logo + messages adjacent, no blank gap between).
     // Without this filler, the yframe viewport is full-height but the inner
     // vbox is content-sized; when pin-to-bottom is off, FTXUI top-aligns the
     // inner vbox which is correct, but the filler ensures the scroll
     // indicator reflects "content fits" rather than "content is short".
-    return ml::render_messages_list_view(
-        std::move(input),
+    auto element = ml::render_messages_list_view(
+        input,
         static_cast<std::size_t>(spinner_frame),
         ml::kMaxRenderedLastN,
-        {filler()},  // trailing_elements — elastic spacer (TS flexGrow={1})
+        {filler()},  // trailing_elements — elastic spacer (flex-grow)
         true,        // wrap_in_yframe
-        std::move(leading_elements)) | flex;
+        std::move(leading_elements));
+    // Propagate virtual-list geometry to the store so ScrollTranscript uses
+    // exact jh.total() instead of the EstimateTranscriptRows heuristic.
+    // This eliminates the "first few wheel-up events from bottom have no
+    // effect" dead-zone caused by heuristic overestimation.
+    if (store) {
+        if (input.virtual_jh_out) {
+            store->virtual_list_active = true;
+            store->virtual_jh = std::move(*input.virtual_jh_out);
+        } else {
+            store->virtual_list_active = false;
+        }
+    }
+    return std::move(element) | flex;
 }
 
 }  // namespace loom::ui::repl_screen

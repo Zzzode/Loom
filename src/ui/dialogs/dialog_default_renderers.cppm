@@ -6,7 +6,7 @@
 ///           default set of dialog renderers.
 ///
 /// Each renderer uses DialogFrame for consistent styling (faithful
-/// to TS PermissionDialog visual language).  These are default
+/// to the permission dialog visual language).  These are default
 /// implementations that can be overridden by registering custom renderers.
 ///
 /// Renderers provided here:
@@ -36,6 +36,7 @@ import loom.ui.permissions.single_prompt;
 import loom.ui.permissions.components;
 import loom.ui.foundation.theme_provider;
 import loom.ui.dialogs.cost_threshold_dialog;
+import loom.ui.dialogs.session_picker;
 
 export namespace loom::ui::dialogs::default_renderers {
 
@@ -82,7 +83,7 @@ inline void SyncPayloadToState(const dsys::ToolPermissionPayload& p,
     st.sandbox_toggle = p.initial_sandbox_toggle;
 }
 
-/// Emit a decision exactly once per prompt.  Enforces the TS contract:
+/// Emit a decision exactly once per prompt.  Enforces the contract:
 /// on_abort wins over on_response if set, and once the guard fires any
 /// subsequent decision key is swallowed.  Returns true on the first
 /// successful emission; subsequent calls or a missing callback return false
@@ -109,7 +110,7 @@ inline bool EmitDecision(dsys::ToolPermissionPayload& p,
     }
 
     if (d == sp::Decision::AlwaysAllow && !p.can_always_allow) {
-        // "Always allow" disabled — treat as AllowOnce (matches TS guard).
+        // "Always allow" disabled — treat as AllowOnce.
         d = sp::Decision::AllowOnce;
     }
 
@@ -148,7 +149,7 @@ inline sp::Decision FocusToDecision(int focused_button)
 
 /// ToolPermission event handler — shared-state aware.
 ///
-/// Keyboard layout (faithful TS single-prompt):
+/// Keyboard layout (single-prompt):
 ///   y / Y      → Allow once
 ///   n / N      → Deny
 ///   a / A      → Always allow (respects p.can_always_allow)
@@ -161,7 +162,7 @@ inline sp::Decision FocusToDecision(int focused_button)
 ///   Return     → Activate focused button
 ///   Esc        → on_abort first; otherwise on_response(Abort)
 ///
-/// Implements the TS one-shot guard via PromptState::callback_fired so
+/// Implements the one-shot guard via PromptState::callback_fired so
 /// exactly one terminal callback fires per prompt lifetime.
 inline bool HandleToolPermissionEvent(
     dsys::ToolPermissionPayload& p,
@@ -250,8 +251,8 @@ inline bool HandleToolPermissionEvent(
     const dsys::SandboxPermissionPayload& p,
     const dsys::DialogRenderContext& ctx)
 {
-    // Delegate to the faithful renderer port in loom.ui.dialogs.sandbox_permission
-    // (see sandbox_permission.cppm for the 1:1 TS layout).
+    // Delegate to the renderer in loom.ui.dialogs.sandbox_permission.
+    // (see sandbox_permission.cppm for the 1:1 layout).
     return loom::ui::dialogs::sandbox_permission::RenderDefault(p, ctx);
 }
 
@@ -603,10 +604,26 @@ void register_default_renderers(dsys::DialogRendererRegistry& registry) {
         }
     );
 
+    // SessionPicker (/resume standalone fullscreen picker)
+    registry.register_dialog(
+        dsys::DialogType::SessionPicker,
+        [](dsys::DialogPayloadVariant& payload,
+           const dsys::DialogRenderContext& ctx) -> Element {
+            auto* p = std::get_if<dsys::SessionPickerPayload>(&payload);
+            if (!p) return text("");
+            return loom::ui::dialogs::session_picker::RenderSessionPicker(*p, ctx);
+        },
+        [](dsys::DialogPayloadVariant& payload, const Event& event) -> bool {
+            auto* p = std::get_if<dsys::SessionPickerPayload>(&payload);
+            if (!p) return false;
+            return loom::ui::dialogs::session_picker::HandleSessionPickerEvent(*p, event);
+        }
+    );
+
     // ─── M8 unimplemented chrome dialogs ────────────────────────────────────────────
     //
     // DialogPayloadVariant holds concrete payloads for the following dialog types (see
-    // dialog_system.h / cpp_migration DialogType enum):
+    // dialog_system.h / DialogType enum):
     //   ManagedSettingsSecurity, FeedbackSurvey, GlobalSearch,
     //   HistorySearch, PluginDialog, DiffDialog
     //

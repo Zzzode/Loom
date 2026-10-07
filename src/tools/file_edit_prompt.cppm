@@ -80,19 +80,19 @@ inline std::string get_edit_tool_description(
 }
 
 // ===========================================================================
-// UI-formatting pure functions (extracted from UI.tsx — React components
-// are deferred to Phase 4 / FTXUI, so we only port the non-JSX helpers).
+// UI-formatting pure functions (FTXUI components are deferred, so we only
+// include the non-rendering helpers).
 // ===========================================================================
 
-/// userFacingName() from UI.tsx. Decides between "Update"/"Create"/
+/// Decides between "Update"/"Create"/
 /// "Updated plan" for the activity log header.
 ///
-/// NOTE: the full TS impl also checks getPlansDirectory(); callers that
+/// NOTE: the full implementation also checks the plans directory; callers that
 /// need that can pass the plans_dir prefix explicitly. When empty, we
 /// just fall back to "Update" semantics.
 inline std::string user_facing_name(
-    const FileEditInput* input,      // may be null (== undefined in TS)
-    std::string_view plans_dir_prefix = {}  // getPlansDirectory() result
+    const FileEditInput* input,      // may be null
+    std::string_view plans_dir_prefix = {}  // plans directory result
 ) {
     if (!input) return "Update";
     if (!plans_dir_prefix.empty() &&
@@ -103,7 +103,7 @@ inline std::string user_facing_name(
     return "Update";
 }
 
-/// getToolUseSummary() from UI.tsx. Returns a display path for the
+/// Returns a display path for the
 /// activity sidebar (we just return the string form of the path; actual
 /// display-path shortening lives in utils/fs/file.cppm).
 inline std::string get_tool_use_summary(const FileEditInput* input) {
@@ -111,8 +111,7 @@ inline std::string get_tool_use_summary(const FileEditInput* input) {
     return input->file_path.string();
 }
 
-/// mapToolResultToToolResultBlockParam() from FileEditTool.ts. Returns
-/// the human-readable success line sent back to the model as the
+/// Returns the human-readable success line sent back to the model as the
 /// tool_result content.
 inline std::string format_tool_result_block(
     const FileEditOutput& out,
@@ -135,14 +134,12 @@ inline std::string format_tool_result_block(
 }
 
 // ===========================================================================
-// Helpers that shipped with the original cpp_migration prompt file — kept
-// for backwards compat, but rewritten to operate on the migrated
-// FileEditInput / FileEditOutput types rather than the old EditOperation.
+// Helpers kept for backwards compat, operating on the FileEditInput /
+// FileEditOutput types rather than the old EditOperation.
 // ===========================================================================
 
 /// Format a unified-diff style preview for an edit (used by permission /
-/// rejection UI builders). Mirrors format_edit_preview() in the original
-/// prompt.cppm but takes the migrated FileEditInput type.
+/// rejection UI builders). Takes the FileEditInput type.
 inline std::string format_edit_preview(
     const FileEditInput& op,
     int context_lines = 3

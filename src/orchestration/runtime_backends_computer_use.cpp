@@ -27,8 +27,7 @@ namespace loom::tools::detail {
 
 namespace {
 
-/// Name of the conventional computer-use MCP server. TS REF:
-/// src/utils/computerUse/common.ts:4 COMPUTER_USE_MCP_SERVER_NAME.
+/// Name of the conventional computer-use MCP server.
 constexpr std::string_view kComputerUseMcpServerName = "computer-use";
 
 } // namespace
@@ -182,8 +181,6 @@ struct ComputerUseCommandBackendResult {
     };
 }
 
-/// TS REF: src/utils/computerUse/common.ts:59 isComputerUseMCPServer +
-/// src/services/mcp/normalization.ts:17 normalizeNameForMCP.
 [[nodiscard]] std::string normalize_name_for_mcp(std::string name) {
     std::ranges::replace_if(name, [](char c) {
         return !(std::isalnum(static_cast<unsigned char>(c)) || c == '_' || c == '-');
@@ -215,8 +212,6 @@ connected_computer_use_mcp_server() {
     // computer action verbatim (native action names like left_click/key
     // differ from the local adapter's vocabulary, so this check runs BEFORE
     // local action parsing) and preserve its screenshot image block.
-    // TS REF: src/services/mcp/client.ts:924 in-process Computer Use MCP
-    // server; src/utils/computerUse/wrapper.tsx .call() override.
     if (auto server = connected_computer_use_mcp_server()) {
         auto mcp_result = NativeMcpRuntime::instance().call_tool(
             *server, "computer", std::string{input.json()});

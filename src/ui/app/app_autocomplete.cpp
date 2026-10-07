@@ -1,16 +1,19 @@
-// app_autocomplete.cpp — impl unit for AppAdapter methods kept OUT of app.cppm
-// to stay under clang's 2GB source-location budget.
-// Contains: RefreshAutocompleteSuggestions, destructor, Render, OnEvent,
-//           ActiveChild.
+// app_autocomplete.cpp — impl unit for AppAdapter::RefreshAutocompleteSuggestions
+// and its helper token_around_cursor.  Split from the former monolithic
+// app_autocomplete.cpp (P2-1e) to isolate the autocomplete closure from
+// the render/event closure.
 //
-// Other methods were split into separate impl units:
-//   app_constructor.cpp   — constructor
-//   app_handle_submit.cpp — HandleSubmit, HandleCommand
-//   app_agent_menu.cpp    — FormatAgentsMenuOutput, LoadAgentCardsForMenu,
+// Other impl units:
+//   app_render_event.cpp   — ~AppAdapter, Render, OnEvent, ActiveChild
+//   app_text_selection.cpp — SelectionHighlightNode, drag-to-select mouse
+//                           handling, text extraction + clipboard copy
+//   app_constructor.cpp    — constructor
+//   app_handle_submit.cpp  — HandleSubmit, HandleCommand
+//   app_agent_menu.cpp     — FormatAgentsMenuOutput, LoadAgentCardsForMenu,
 //                           SyncState, ConsumePendingResult,
 //                           WaitForInFlightPastes, get_permission_callback,
 //                           trigger_orphan_cleanup_for_testing
-//   app_extra_methods.cpp — RunLocalBashCommand, ProjectRuntimeMetadataToScreenState,
+//   app_extra_methods.cpp  — RunLocalBashCommand, ProjectRuntimeMetadataToScreenState,
 //                           ApplyMessageCollapsePipeline, SpawnPasteWorker,
 //                           ProcessCompletedPastes, project_agent_definition_card
 module;
@@ -23,36 +26,26 @@ module;
 
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
-#include <ftxui/component/mouse.hpp>
-#include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <cstdint>
 
 module loom.ui.app.app;
 
 import std;
-import loom.query.query_engine;
 import loom.commands.registry;
 import loom.commands.command;
-import loom.session.app_storage;
 
-import loom.commands.registry;
 import loom.tools.agent_runtime;
 import loom.ui.features.agents.agent_cards;
 import loom.ui.prompt.autocomplete_sources;
-import loom.ui.foundation.declared_cursor;
 import loom.ui.prompt.file_index;
 import loom.ui.prompt.fuzzy_rank_nucleo;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
-import loom.diagnostics.debug;
-import loom.platform.hyperlink;
-import loom.text.parse_references;
-import loom.fs.path;
-import loom.skills.support;
 import loom.session.app_storage;
-import loom.teams.swarm.pane_observer;
+import loom.skills.support;
+import loom.fs.path;
 
 namespace loom::ui {
 namespace agent_runtime = loom::tools::agent_runtime;
@@ -82,7 +75,7 @@ namespace fidx = loom::ui::prompt::file_index;
     std::size_t end = cursor;
     while (end < input.size() && !ascii_isspace(input[end])) ++end;
 
-    // TS REF: src/hooks/useTypeahead.tsx:272-286 — quoted @ mention detection.
+    // Quoted @ mention detection.
     // If the token starts with @", extend end to include the full quoted content
     // (up to closing quote or end of input). This allows @"path with spaces"
     // to be treated as a single token for autocomplete.
@@ -169,18 +162,9 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     };
 
     if (input.empty()) {
-        // SL-11: empty-prompt deterministic next-action suggestion.
-        // Surface the QueryEnd-generated suggestion as the lone popup
-        // entry while idle (not responding). A non-empty input falls
-        // through and clears next_action_suggestion below.
-        if (!query_running_.load() && screen_state_->next_action_suggestion &&
-            screen_state_->next_action_suggestion->front() != '/') {
-            const auto& text = *screen_state_->next_action_suggestion;
-            add_suggestion(text, "Suggested next action", text,
-                           0, 0, /*submit_on_return=*/false,
-                           /*id=*/"__next_action_suggestion__");
-            restore_index();
-        }
+        // SL-11: the next-action suggestion is shown as an inline placeholder
+        // (via placeholder_cascade L0), NOT as an autocomplete popup entry.
+        // Tab accepts it (see repl_screen_events.cpp).
         return;
     }
     // SL-11: user typed something — retire the next-action suggestion.
@@ -195,8 +179,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     screen_state_->dismissed_autocomplete_for_input.clear();
 
     // SL-03: derive inline argument hint for "/cmd ..." inputs (shown by
-    // TextInputImpl after the prompt). Faithful to TS useTypeahead's
-    // commandArgumentHint (src/hooks/useTypeahead.tsx:729-770).
+    // TextInputImpl after the prompt).
     screen_state_->pending_argument_hint.clear();
     if (input.starts_with('/') && static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
         const auto sp = input.find(' ');
@@ -212,8 +195,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
 
     // SL-05: mid-input slash ghost text — a "/prefix" token appearing
     // mid-input (input doesn't start with '/') completes inline to the
-    // shortest matching command name. Faithful to TS findMidInputSlashCommand
-    // + getBestCommandMatch (src/utils/commandSuggestions.ts:114-195).
+    // shortest matching command name.
     screen_state_->pending_ghost_text.clear();
     if (!input.starts_with('/') && token.text.starts_with('/') &&
         static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
@@ -285,13 +267,32 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         for (const auto& session : *sessions) {
             const auto& id = session.metadata.id;
             const auto& title = session.metadata.title;
+            // Skip empty sessions — they are startup shells with no messages.
+            if (session.metadata.message_count == 0) continue;
             if (!frn::fuzzy_match_nucleo(id, partial) &&
                 !frn::fuzzy_match_nucleo(title, partial)) {
                 continue;
             }
+            // Short ID: UUID → first 8 chars; session_<ts>_<hex> → hex suffix.
+            std::string short_id_str;
+            if (id.starts_with("session_")) {
+                auto pos = id.rfind('_');
+                short_id_str = (pos != std::string::npos && pos + 1 < id.size())
+                    ? id.substr(pos + 1, 8) : id.substr(0, 8);
+            } else {
+                short_id_str = id.substr(0, std::min<std::size_t>(id.size(), 8));
+            }
+            // Use preview as description when title is generic.
+            std::string desc = title.empty() ? "Session" : title;
+            if ((desc.empty() || desc == "Session") && session.preview) {
+                desc = *session.preview;
+                // Collapse newlines for single-line display.
+                for (auto& c : desc) if (c == '\n') c = ' ';
+                if (desc.size() > 60) desc = desc.substr(0, 60) + "…";
+            }
             add_suggestion(
-                id.substr(0, std::min<std::size_t>(id.size(), 8)),
-                title.empty() ? "Session" : title,
+                std::move(short_id_str),
+                std::move(desc),
                 id,
                 token.start,
                 token.end,
@@ -316,7 +317,6 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     }
 
     // @history with-space trigger: user typed "@history <query>"
-    // TS REF: src/hooks/useHistorySearch.ts:151 (Ctrl+R history search)
     if (before_cursor.starts_with("@history ") ||
         before_cursor.starts_with("@history\t")) {
         // Use everything after "@history " as the search query, not just
@@ -377,7 +377,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 if (!def) continue;
                 // SL-02: multi-key match — name (exact/prefix/substring/subseq)
                 // outranks a description-word match, so commands are still
-                // surfaced when the user types a description term (TS Fuse
+                // surfaced when the user types a description term (Fuse
                 // weights descriptionKey×0.5; cpp previously matched name only).
                 int cmd_rank = -1;
                 if (frn::fuzzy_match_nucleo(def->name, query)) {
@@ -392,15 +392,14 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 if (cmd_rank >= 0) {
                     // SL-06: only auto-execute (submit on Enter) commands that
                     // don't require arguments — commands with required args
-                    // expand to "/cmd " so the user can type them. Faithful
-                    // to TS shouldExecute gated on argNames.length.
+                    // expand to "/cmd " so the user can type them. The
+                    // shouldExecute gate is on argNames.length.
                     bool needs_args = false;
                     for (const auto& a : def->args) {
                         if (a.required) { needs_args = true; break; }
                     }
-                    // SL-07: TS shows the matched alias as a parenthetical on
-                    // the CANONICAL row (commandSuggestions.ts:265-287
-                    // createCommandSuggestionItem — aliasText = ` (${alias})`).
+                    // SL-07: show the matched alias as a parenthetical on
+                    // the CANONICAL row.
                     std::string matched_alias;
                     if (!query.empty() && !def->aliases.empty()) {
                         const auto q = lowercase_ascii(query);
@@ -449,7 +448,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             }
             if (skill_rank < 0) continue;
             // SL-04: recency boost — recently-used skills rank higher
-            // (TS getSkillUsageScore). Bounded so fuzzy relevance still wins
+            // (getSkillUsageScore). Bounded so fuzzy relevance still wins
             // on non-empty queries; on empty '/' all skills tie on fuzzy rank
             // so recency dominates, surfacing recent skills first.
             const int recency_bonus = static_cast<int>(
@@ -487,9 +486,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         }
 
         // SL-01: hidden-command exact-name escape hatch — if the user typed
-        // the full name of a hidden command, surface it at the top (TS
-        // commandSuggestions.ts:391-401 hiddenExact). visible_commands()
-        // otherwise hides them entirely.
+        // the full name of a hidden command, surface it at the top.
+        // visible_commands() otherwise hides them entirely.
         if (auto* hidden = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->hidden_command_if_exact(query)) {
             candidates.push_back(SlashCandidate{
                 .display = "/" + hidden->name,
@@ -508,8 +506,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // INF-03: precompute stable name-column width over ALL candidates
         // (not just the visible window) so the description column doesn't
         // jitter as the user filters. Slash names are ASCII, so size() is a
-        // faithful width measure here. Mirrors TS maxColumnWidth over
-        // visible commands (src/hooks/useTypeahead.tsx:380-386).
+        // faithful width measure here.
         {
             int widest = 0;
             for (const auto& c : candidates) {
@@ -532,13 +529,12 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         return;
     }
 
-    // INF-01/AT-08: @ mentions are suppressed in bash mode. Faithful to TS
-    // useTypeahead (the @DM/@file branches are gated on mode !== 'bash');
+    // INF-01/AT-08: @ mentions are suppressed in bash mode (the @DM/@file
+    // branches are gated on non-bash mode);
     // in bash mode we fall through to the $PATH shell-command scan below.
     if (token.text.starts_with('@') &&
         !repl::effective_is_bash(*screen_state_)) {
-        // TS REF: src/hooks/useTypeahead.tsx:123-135 (extractSearchToken) —
-        // strip @" prefix and trailing " for quoted paths.
+        // Strip @" prefix and trailing " for quoted paths.
         std::string raw_query_text(token.text.substr(1));
         const bool is_quoted = !raw_query_text.empty() && raw_query_text.front() == '"';
         if (is_quoted) {
@@ -550,8 +546,6 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         const std::string_view query(raw_query_text);
 
         // ── @history trigger: prompt history search ──────────────────────
-        // TS REF: src/hooks/useHistorySearch.ts:151 (handleStartSearch —
-        //   Ctrl+R enters history search mode with substring matching)
         // When user types @history<query>, surface persisted prompt history.
         if (raw_query_text.starts_with("history")) {
             auto after = std::string_view(raw_query_text).substr(7);
@@ -571,8 +565,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             ? std::filesystem::current_path()
             : std::filesystem::path(screen_state_->cwd);
 
-        // TS REF: src/utils/suggestions/directoryCompletion.ts:55-78
-        // (parsePartialPath) — expand ~ before resolving the directory to scan.
+        // Expand ~ before resolving the directory to scan.
         // The display prefix keeps the original unexpanded form so the user
         // sees @~/Documents not @/home/user/Documents.
         std::filesystem::path raw_path(raw_query_text);
@@ -599,11 +592,10 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         }
 
         // AT-01: bare @-queries (no path separator) fuzzy-match the whole
-        // repo via the file index — TS searches the index, so "@readme"
-        // finds src/readme.md. The directory_iterator block below still
-        // handles explicit path browsing (@src/...).
-        // TS REF: src/utils/suggestions/directoryCompletion.ts:152-162
-        // (isPathLikeToken) — ~/ ./ ../ / all trigger path completion.
+        // repo via the file index, so "@readme" finds src/readme.md. The
+        // directory_iterator block below still handles explicit path
+        // browsing (@src/...).
+        // ~/ ./ ../ / all trigger path completion.
         const bool has_separator = query.find('/') != std::string_view::npos ||
                                    query.find('\\') != std::string_view::npos;
         const bool is_path_like = has_separator ||
@@ -614,9 +606,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
 
         // AT-05: bare-@ teammate DM precedence — when the query has no path
         // separator, teammate (native-agent) DM matches are shown EXCLUSIVELY
-        // before file/agent/mcp, mirroring TS useTypeahead @DM
-        // (src/hooks/useTypeahead.tsx:596-637, startsWith on lowercased name).
-        // With a match we return immediately so the popup is DM-only.
+        // before file/agent/mcp (startsWith on lowercased name). With a
+        // match we return immediately so the popup is DM-only.
         if (bare_query) {
             auto starts_with_ci = [](std::string_view name, std::string_view q) {
                 if (name.size() < q.size()) return false;
@@ -654,7 +645,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
 
         std::error_code ec;
         // AT-06: skip the file index when the query is empty (bare "@") —
-        // TS shows teammates/MCP/agents on an empty @ query, not every file
+        // On an empty @ query, show teammates/MCP/agents, not every file
         // in the repo. With a non-empty query the index fuzzy-matches.
         if (bare_query && !query.empty()) {
             struct RepoCandidate { std::string display; std::string insert; std::string desc; int rank; std::string icon; };
@@ -666,8 +657,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 const bool match_base = frn::fuzzy_match_nucleo(base, query);
                 const bool match_path = !match_base && frn::fuzzy_match_nucleo(rel, query);
                 if (!match_base && !match_path) continue;
-                // TS REF: PromptInputFooterSuggestions.tsx — files get a file
-                // icon. Directories (trailing /) get a directory icon.
+                // Files get a file icon. Directories (trailing /) get a
+                // directory icon.
                 const bool is_dir = !rel.empty() && rel.back() == '/';
                 repos.push_back(RepoCandidate{
                     .display = "@" + rel,
@@ -676,7 +667,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                     .rank = frn::fuzzy_rank_nucleo(base, query) + (match_base ? 0 : 2),
                     .icon = is_dir ? "📁" : "📄",
                 });
-                if (repos.size() >= 50) break;  // TS REF: MAX_UNIFIED_SUGGESTIONS = 15; we cap at 50 for terminal
+                if (repos.size() >= 50) break;  // cap at 50 for terminal
             }
             std::ranges::sort(repos, [](const auto& a, const auto& b) {
                 if (a.rank != b.rank) return a.rank < b.rank;
@@ -697,8 +688,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 if (!frn::fuzzy_match_nucleo(name, leaf)) continue;
                 const bool is_dir = entry.is_directory(ec);
                 auto rel = prefix + name + (is_dir ? "/" : "");
-                // TS REF: useTypeahead.tsx:244-246 (applyDirectoryCompletion) —
-                // directories get "/" suffix so user can continue browsing.
+                // Directories get "/" suffix so user can continue browsing.
                 // Icons: 📄 for files, 📁 for directories.
                 files.push_back(FileCandidate{
                     .display = "@" + rel,
@@ -729,10 +719,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         }
 
         // ── Agent / teammate autocomplete ─────────────────────────────
-        // TS REF: src/hooks/unifiedSuggestions.ts:77-108 (agent defs with
-        //   color + truncated whenToUse)
-        // TS REF: src/hooks/useTypeahead.tsx:604-625 (teammate DMs with
-        //   status, prefix-matched on lowercased name)
+        // Agent defs with color + truncated when_to_use; teammate DMs with
+        // status, prefix-matched on lowercased name.
         // Heavy lifting (fuzzy filter + formatting) lives in build_agent_suggestions()
         // to keep app.cppm under clang's source-location budget.
         for (const auto& sug : acsrc::build_agent_suggestions(
@@ -741,14 +729,11 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 sug.insert_text, sug.replacement_start, sug.replacement_end,
                 sug.submit_on_return, sug.id, sug.icon, sug.color_name);
         }
-        // TS REF: src/hooks/useMcpResourceAutocomplete.ts — MCP server
-        //         resources (list_native_mcp_resources) are collected and
-        //         passed to the unified @-mention autocomplete dropdown
-        //         alongside files, agents, skills, and history.  The
-        //         display name is shown in the picker; insert_text is
-        //         what gets injected into the prompt buffer on accept.
-        //         CPP: collect_mcp_resource_suggestions() → add_suggestion()
-        //         → autocomplete_suggestions vector → RenderPromptSuggestions().
+        // MCP server resources (list_native_mcp_resources) are collected
+        // and passed to the unified @-mention autocomplete dropdown
+        // alongside files, agents, skills, and history.  The display name
+        // is shown in the picker; insert_text is what gets injected into
+        // the prompt buffer on accept.
         for (const auto& resource : acsrc::collect_mcp_resource_suggestions()) {
             if (!frn::fuzzy_match_nucleo(resource.display, query) &&
                 !frn::fuzzy_match_nucleo(resource.insert_text, query)) {
@@ -766,10 +751,9 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         }
 
         // AT-10: @-history session autocomplete — search past sessions by
-        // title/ID. Faithful to TS searchSessionsByCustomTitle
-        // (src/utils/sessionStorage.ts:3066-3107) exposed as an @-mention
-        // source alongside files/agents/MCP. Sessions are sorted by
-        // recency (newest first) per SessionStorage::list_sessions.
+        // title/ID, exposed as an @-mention source alongside
+        // files/agents/MCP. Sessions are sorted by recency (newest first)
+        // per SessionStorage::list_sessions.
         if (static_cast<loom::utils::SessionStorage*>(storage_raw())) {
             auto sessions = static_cast<loom::utils::SessionStorage*>(storage_raw())->list_sessions(30);
             if (sessions) {
@@ -811,9 +795,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         }
 
         // AT-11: @-history prompt autocomplete — show recent prompt history
-        // entries alongside sessions.  Faithful to TS getHistory()
-        // (src/history.ts:190-228) which yields HistoryEntry objects for
-        // the current project, newest-first, deduped by display text.
+        // entries alongside sessions.  Yields HistoryEntry objects for the
+        // current project, newest-first, deduped by display text.
         // The @history with-space trigger (above) shows prompts too, but
         // the bare-@ section surfaces them inline so users can @-mention
         // a recent prompt without typing @history first.
@@ -857,19 +840,16 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         return;
     }
 
-    // INF-01/AT-08: # channels are suppressed in bash mode. Faithful to TS
-    // useTypeahead (the #slack branch is gated on mode === 'prompt'); in
-    // bash mode we fall through to the $PATH shell-command scan below.
+    // INF-01/AT-08: # channels are suppressed in bash mode (the #-channel
+    // branch is gated on prompt mode); in bash mode we fall through to the
+    // $PATH shell-command scan below.
     if (token.text.starts_with('#') &&
         !repl::effective_is_bash(*screen_state_)) {
         const auto query = std::string_view(token.text).substr(1);
-        // TS REF: src/hooks/useMcpResourceAutocomplete.ts — channel-like
-        //         MCP resources (name starts with '#' or uri contains
-        //         "channel"/"slack") are passed to the #-channel autocomplete
-        //         dropdown.  This is how MCP server channels surface in the
-        //         #-mention picker alongside native Slack channels.
-        //         CPP: collect_mcp_resource_suggestions() filters to
-        //         channel_like entries → add_suggestion() → dropdown.
+        // Channel-like MCP resources (name starts with '#' or uri contains
+        // "channel"/"slack") are passed to the #-channel autocomplete
+        // dropdown.  This is how MCP server channels surface in the
+        // #-mention picker alongside native Slack channels.
         for (const auto& resource : acsrc::collect_mcp_resource_suggestions()) {
             if (!resource.channel_like) continue;
             const auto display = resource.display.starts_with("#")
@@ -931,577 +911,5 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     }
 }
 
-// ── Virtual/override methods (moved out of class body to fix vtable crash) ──
-// These were previously defined inline in AppAdapter's class body.  Moving
-// them out makes Render() the key function (first non-inline virtual), so
-// the vtable is emitted in this impl TU rather than in every TU that imports
-// loom.ui.app.  This avoids a clang crash in DefineUsedVTables during app.cppm
-// compilation (exit code 139 in NamespaceDecl::getMostRecentDeclImpl).
-
-AppAdapter::~AppAdapter() {
-    // Unsubscribe from the pane observer before other teardown so a late
-    // capture-pass callback cannot flag/post on a torn-down adapter.
-    if (pane_observer_token_ != 0) {
-        loom::utils::pane_observer::unsubscribe_changed(pane_observer_token_);
-        pane_observer_token_ = 0;
-    }
-    if (leader_inbox_thread_.joinable()) {
-        leader_inbox_thread_.request_stop();
-    }
-    if (query_running_.load() && static_cast<loom::core::QueryEngine*>(engine_raw())) {
-        static_cast<loom::core::QueryEngine*>(engine_raw())->abort();
-    }
-    if (query_thread_.joinable()) query_thread_.request_stop();
-    if (spinner_thread_.joinable()) spinner_thread_.request_stop();
-    if (statusline_thread_.joinable()) statusline_thread_.request_stop();
-    if (bash_thread_.joinable()) bash_thread_.request_stop();
-    {
-        std::lock_guard lk(statusline_mutex_);
-        statusline_dirty_.store(true);
-    }
-    {
-        std::lock_guard lk(permission_mutex_);
-        permission_response_ = false;
-    }
-    {
-        std::lock_guard lk(elicitation_mutex_);
-        elicitation_response_ = false;
-    }
-    {
-        std::lock_guard lk(ask_user_mutex_);
-        ask_user_response_ = std::optional<std::string>{};
-    }
-    statusline_cv_.notify_all();
-    permission_cv_.notify_all();
-    elicitation_cv_.notify_all();
-    ask_user_cv_.notify_all();
-
-    // Unsubscribe from dynamic skill discovery callbacks.
-    if (skills_changed_unsubscribe_) {
-        try { skills_changed_unsubscribe_(); } catch (...) {}
-    }
-}
-
-// RFC 0001 Phase C batch 2: folded from app.cppm — sole callers are the
-// Render() streaming-thinking path below.
-bool AppAdapter::is_streaming_thinking_visible() const {
-    auto now = std::chrono::steady_clock::now();
-    for (const auto& [idx, stp] : streaming_thinking_) {
-        if (!stp.complete) return true;
-        if (stp.streaming_ended_at &&
-            std::chrono::duration_cast<std::chrono::seconds>(
-                now - *stp.streaming_ended_at).count() < 30)
-            return true;
-    }
-    return false;
-}
-
-// AT-09: drain inbound IDE at_mentioned tokens staged by the MCP receive
-// thread into screen_state_->mcp_status_store, then apply them to the
-// prompt. MUST be called on the render thread (the apply mutates
-// input_text/cursor). The staging queue and its mutex live here in the
-// composition layer (RFC 0002 F3: stores hold no locks); the store holds
-// only drained data. Empty-under-the-lock fast path keeps per-frame cost
-// negligible.
-std::size_t AppAdapter::DrainPendingAtMentionInserts() {
-    {
-        std::lock_guard lk(at_mention_mutex_);
-        if (pending_at_mention_inserts_.empty()) return 0;
-        screen_state_->mcp_status_store.pending_at_mention_inserts.swap(
-            pending_at_mention_inserts_);
-    }
-    return repl::ApplyPendingAtMentionInserts(screen_state_);
-}
-
-Element AppAdapter::Render() {
-    this->ProjectRuntimeMetadataToScreenState();
-    ConsumePendingResult();
-    // AT-09: apply any inbound IDE at_mentioned tokens that landed since
-    // the last frame (drained from the AppImpl staging queue on the render
-    // thread for input_text safety).
-    DrainPendingAtMentionInserts();
-
-    const bool qr = query_running_.load();
-    loom::utils::debug("app.render",
-        "Render: query_running={}, messages={}, spinner_mode={}",
-        qr, screen_state_->messages_store.messages.size(),
-        static_cast<int>(screen_state_->task_view_store.spinner_mode));
-
-    if (qr) {
-        std::lock_guard lk(result_mutex_);
-
-        const auto now = std::chrono::system_clock::now();
-        auto messages = static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
-        // TS Messages.tsx:520 collapse chain (background-bash so far).
-        messages = ApplyMessageCollapsePipeline(std::move(messages));
-        screen_state_->messages_store.messages.clear();
-        screen_state_->messages_store.messages.reserve(
-            messages.size() + streaming_tools_.size() +
-            streaming_thinking_.size() + 1);
-
-        // Same uuid-assignment pattern as SyncState above — per-source
-        // Message 24-char prefix shared by all derived sub-rows.
-        auto make_uuid24 = [](std::uint64_t msg_idx, const std::string& seed) {
-            std::uint64_t h = 1469598103934665603ULL;
-            for (char c : seed) { h ^= static_cast<std::uint64_t>(c); h *= 1099511628211ULL; }
-            char buf[32];
-            std::snprintf(buf, sizeof(buf), "msg_%012llx%08llx",
-                          (unsigned long long)msg_idx,
-                          (unsigned long long)(h & 0xFFFFFFFFULL));
-            return std::string(buf, 24);
-        };
-        std::uint64_t tick_msg_idx = 0;
-
-        // Project completed messages (skip system prompt, split mixed assistant).
-        for (const auto& msg : messages) {
-            if (std::holds_alternative<SystemMessage>(msg)) continue;
-            auto projected = project_messages(msg);
-            std::string seed_preview;
-            std::visit([&](const auto& m) {
-                if constexpr (requires{ m.content; }) {
-                    for (const auto& blk : m.content) {
-                        if (const auto* tb = std::get_if<TextBlock>(&blk)) {
-                            seed_preview += tb->text.substr(0, 64);
-                            break;
-                        }
-                    }
-                }
-            }, msg);
-            const std::string u24 = make_uuid24(tick_msg_idx, seed_preview);
-            for (auto& e : projected) {
-                e.id = u24;
-                screen_state_->messages_store.messages.push_back(std::move(e));
-            }
-            ++tick_msg_idx;
-        }
-        AppendLocalMessagesToScreenState();
-        // Restore chronological order (see SyncState). Applied BEFORE the
-        // in-flight streaming projection so streaming rows stay last.
-        std::stable_sort(
-            screen_state_->messages_store.messages.begin(),
-            screen_state_->messages_store.messages.end(),
-            [](const repl::MessageDisplayEntry& a,
-               const repl::MessageDisplayEntry& b) {
-                return a.timestamp < b.timestamp;
-            });
-
-        // ── Faithful live-path: project in-flight content blocks ──
-        // TS renders each content block as a separate message row as it
-        // streams in (thinking → text → tool-use, in block-index order).
-        // We follow the same pattern: collect all active streaming blocks
-        // by their index, then project each into a MessageDisplayEntry
-        // that flows through RenderMessages → render_payload_row → the
-        // matching faithful Element renderer (thinking / tool-use / text).
-        // This way tool-use rows and thinking rows appear progressively
-        // during streaming, not just after the full message completes.
-        bool has_in_flight = !streaming_text_.empty() ||
-                             !streaming_tools_.empty() ||
-                             !streaming_thinking_.empty();
-
-        // If any streaming tool has complete=true (ContentBlockStop received),
-        // the AssistantMessage for this turn was already committed to the
-        // conversation (append_message fires after all blocks finish streaming).
-        // All streaming blocks (text + thinking + tool-use) from this turn
-        // are now duplicates of what the committed path already projected.
-
-        // TS REF: Messages.tsx L382-389 — prune thinking entries whose
-        // 30-second grace period has expired.  Done before has_in_flight
-        // so stale entries don't keep the projection path alive.
-        {
-            auto now = std::chrono::steady_clock::now();
-            std::erase_if(streaming_thinking_,
-                [&now](const auto& p) {
-                    return p.second.complete &&
-                           p.second.streaming_ended_at &&
-                           std::chrono::duration_cast<std::chrono::seconds>(
-                               now - *p.second.streaming_ended_at).count() >= 30;
-                });
-        }
-
-        if (has_in_flight) {
-            bool all_tools_complete = !streaming_tools_.empty() &&
-                std::ranges::all_of(streaming_tools_, [](const auto& p) {
-                    return p.second.complete;
-                });
-            // TS REF: Messages.tsx L382-389 + L714-719 — streaming thinking
-            // tail stays visible for 30s after completion.  Keep projecting
-            // in-flight blocks when thinking is still within the grace
-            // period, even if all tools have completed.
-            bool thinking_visible = is_streaming_thinking_visible();
-            if (all_tools_complete && !thinking_visible) has_in_flight = false;
-        }
-
-        loom::utils::debug("app.render",
-            "  streaming-path: committed_msgs={}, in_flight={} "
-            "(text_len={}, tools={}, thinking={})",
-            screen_state_->messages_store.messages.size(), has_in_flight,
-            streaming_text_.size(), streaming_tools_.size(),
-            streaming_thinking_.size());
-
-        if (has_in_flight) {
-            // Gather block indices (keys of all streaming maps) to sort.
-            std::vector<std::uint32_t> block_indices;
-            for (const auto& [i, _] : streaming_thinking_)
-                block_indices.push_back(i);
-            for (const auto& [i, _] : streaming_tools_)
-                block_indices.push_back(i);
-            // Text block always has index equal to the highest block
-            // index (or 0 if no other blocks).  We track it implicitly.
-            // Assign it a sentinel index for sorting purposes.
-            std::uint32_t text_idx = 0;
-            if (!streaming_text_.empty()) {
-                // Text block index = max of all other indices + 1, or 0.
-                for (std::uint32_t i : block_indices)
-                    if (i > text_idx) text_idx = i;
-                if (!block_indices.empty()) text_idx += 1;
-                block_indices.push_back(text_idx);
-            }
-            std::sort(block_indices.begin(), block_indices.end());
-
-            // Project each block in index order.
-            // All in-flight streaming blocks belong to the same in-progress
-            // source AssistantMessage → share a single 24-char uuid prefix so
-            // the UnseenDivider still lands even when e.g. the first
-            // block is a ThinkingBlock (TS CC-724).
-            const std::string streaming_uuid24 =
-                make_uuid24(tick_msg_idx, "streaming");
-            for (std::uint32_t idx : block_indices) {
-                // Thinking block
-                auto thk = streaming_thinking_.find(idx);
-                if (thk != streaming_thinking_.end()) {
-                    repl::MessageDisplayEntry e;
-                    e.role = "assistant";
-                    e.is_thinking = true;
-                    // TS REF: Messages.tsx L382-389 — active while streaming
-                    // (not complete) or within 30s grace period after
-                    // completion.  thinking_active=true makes the
-                    // faithful renderer show the expanded body rather
-                    // than the collapsed label, and prevents the
-                    // build_visible_rows filter from hiding this row.
-                    {
-                        auto now = std::chrono::steady_clock::now();
-                        bool within_grace = thk->second.streaming_ended_at &&
-                            std::chrono::duration_cast<std::chrono::seconds>(
-                                now - *thk->second.streaming_ended_at).count() < 30;
-                        e.thinking_active = !thk->second.complete || within_grace;
-                    }
-                    e.content_preview = thk->second.text.substr(0, 200);
-                    e.timestamp = now;
-                    e.id = streaming_uuid24;
-                    screen_state_->messages_store.messages.push_back(std::move(e));
-                    continue;
-                }
-                // Tool-use block
-                auto tlu = streaming_tools_.find(idx);
-                if (tlu != streaming_tools_.end()) {
-                    // Once exec_done, the committed conversation already
-                    // contains this tool_use (AssistantMessage was appended
-                    // before execute_pending_tools ran).  Skip it here to
-                    // avoid a duplicate green-dot row in the transcript.
-                    if (tlu->second.exec_done) continue;
-
-                    repl::MessageDisplayEntry e;
-                    e.role = "assistant";
-                    e.is_tool_use = true;
-                    e.tool_name = tlu->second.tool_name;
-                    e.tool_input_json = tlu->second.input_json;
-                    // Status: if tool execution has completed
-                    // (ToolExecutionEnd received), show resolved status
-                    // so the faithful renderer paints a green/red dot
-                    // instead of the animated spinner.  The actual result
-                    // lives in the separate UserToolResult card (committed
-                    // ToolResultMessage), NOT in the tool_use card's
-                    // Output section — TS parity.
-                    //
-                    // We check exec_done (set by ToolExecutionEnd), NOT
-                    // complete (set by ContentBlockStop when input_json
-                    // finishes streaming — happens before execution).
-                    if (tlu->second.exec_done) {
-                        e.tool_status = tlu->second.is_error
-                            ? "error" : "success";
-                    } else {
-                        e.tool_status = "running";
-                    }
-                    e.content_preview = tlu->second.input_json;
-                    // result_preview: ONLY forward while the tool is
-                    // still executing (progress output).  Once exec_done,
-                    // suppress it — the committed ✓ card shows the final
-                    // result, and showing it here too would duplicate
-                    // the output and defeat the "separate result card"
-                    // UX that TS uses (AssistantToolUseMessage +
-                    // UserToolSuccessMessage).
-                    if (!tlu->second.exec_done &&
-                        !tlu->second.result_preview.empty())
-                        e.tool_result_preview = tlu->second.result_preview;
-                    e.is_error = tlu->second.is_error;
-                    e.timestamp = now;
-                    e.id = streaming_uuid24;
-                    screen_state_->messages_store.messages.push_back(std::move(e));
-                    continue;
-                }
-                // Text block (streaming)
-                if (!streaming_text_.empty() && idx == text_idx) {
-                    repl::MessageDisplayEntry e;
-                    e.role = "assistant";
-                    e.content_preview = streaming_text_;
-                    e.is_streaming = true;
-                    e.timestamp = now;
-                    e.id = streaming_uuid24;
-                    screen_state_->messages_store.messages.push_back(std::move(e));
-                    continue;
-                }
-            }
-
-            screen_state_->messages_store.scroll_pinned_to_bottom = true;
-            // Clear unseen divider on repin (TS: onRepin → setDividerIndex(null))
-            screen_state_->messages_store.divider_index.reset();
-            screen_state_->messages_store.unseen_divider.reset();
-            screen_state_->messages_store.unseen_message_count = 0;
-            screen_state_->messages_store.pill_visible = false;
-        }
-    }
-
-    // Reset cursor to hidden each frame (TS Ink default behavior).
-    // Any active declared_cursor decorator on descendant elements can
-    // override this with a physical cursor anchor at the declared position.
-    // This enables IME preedit text to appear inline at the insertion
-    // point and lets screen readers / magnifiers follow the input.
-    namespace dc = loom::ui::common::declared_cursor;
-    // Drain background paste results on every render frame so the user
-    // doesn't need to press another key to see the image data filled in.
-    this->ProcessCompletedPastes();
-    // TS REF: Messages.tsx L382-389 + L395-419 — thread the streaming-
-    // thinking-visible flag to the messages list so it can hide ALL
-    // completed thinking rows when the streaming-thinking tail is on
-    // screen (TS: lastThinkingBlockId = 'streaming').
-    screen_state_->streaming_thinking_globally_visible =
-        is_streaming_thinking_visible();
-    return repl_component_->Render() | dc::cursor_reset();
-}
-
-bool AppAdapter::OnEvent(Event event) {
-    // Drain any background-thread paste results that completed since the
-    // last event.  Must happen on the render thread (we mutate
-    // pasted_contents_ and possibly input_text).
-    this->ProcessCompletedPastes();
-
-    // Pane-teammate inbox delivery: the inbox worker posts Custom events when
-    // tasks arrive. While idle, submit one queued teammate prompt here on the
-    // UI thread. Ignore keyboard/other events and never block a running query.
-    if (event == Event::Custom) {
-        // Event-driven pane-observer wake: the background capture pass flags
-        // this atomic (never touches screen state off-thread). Gated so the
-        // 50ms PostRenderEvent animation traffic does no settings.json I/O.
-        if (pane_snapshot_dirty_.exchange(false,
-                                          std::memory_order_acq_rel)) {
-            ProjectLiveTeammatesToScreenState();
-        }
-        // Leader-side teammate permission requests reuse the existing
-        // ToolPermission dialog (one per Custom event, overlay stays empty).
-        if (drain_one_teammate_permission()) return true;
-        if (running_as_pane_teammate()) {
-            if (drain_one_teammate_prompt()) return true;
-        }
-    }
-
-    // Clipboard image paste (TS chat:imagePaste = ctrl+v / cmd+v).
-    //
-    // NOTE: We detect Ctrl+V via `Event::Character('\x16')` — the same
-    // pattern used by text_input.cppm L586.  `event.input() == "\x16"`
-    // is unreliable because FTXUI normalizes control-character input()
-    // to empty string in some code paths.
-    //
-    // PERFORMANCE NOTE: osascript clipboard reads are offloaded to a
-    // background thread because std::system() + osascript fork + PNG
-    // encoding can take 600ms+ and would block the FTXUI event loop
-    // if done synchronously.  The "[Image #N]" placeholder is inserted
-    // IMMEDIATELY so the user sees instant feedback; the actual image
-    // data fills in asynchronously via ProcessCompletedPastes() (drained
-    // on every OnEvent AND every Render() frame).
-    //
-    // TS REF: src/utils/imagePaste.ts (clipboard read + size-cap)
-    //         + PromptInput.tsx L1151-1183 (onImagePaste → state + placeholder).
-    if (event == Event::Character('\x16') && !query_running_.load()) {
-        // TS REF: PromptInput.tsx L1154-1182
-        //   pasteId = nextPasteIdRef.current++
-        //   setPastedContents(prev => ({...prev, [pasteId]: newContent}))
-        //   insertTextAtCursor(prefix + formatImageRef(pasteId))
-        const int id = next_paste_id_++;
-
-        // Insert " [Image #N]" at cursor IMMEDIATELY (instant feedback).
-        const std::string placeholder = loom::utils::format_image_ref(id);
-        const auto cursor = repl::input_cursor_or_end(*screen_state_);
-        std::string to_insert;
-        if (cursor > 0 && cursor <= screen_state_->input_text.size() &&
-            screen_state_->input_text[cursor - 1] != ' ') {
-            to_insert = " " + placeholder;
-        } else {
-            to_insert = placeholder;
-        }
-        repl::insert_prompt_text(screen_state_, to_insert);
-
-        // Offload the actual clipboard read to a background thread.
-        this->SpawnPasteWorker(id);
-        return true;
-    }
-
-    // ── Ctrl+S: manual stash/unstash (TS chat:stash) ─────────────────
-    // TS REF: PromptInput.tsx L1357-1383 handleStash —
-    //   If input is empty AND stash exists → pop stash (restore text).
-    //   If input is non-empty → stash input and clear input.
-    //   This lets users temporarily put aside a long prompt to run a
-    //   quick command, then restore it.
-    if (event == Event::Character('\x13') && !query_running_.load()) {
-        namespace repl = loom::ui::repl_screen;
-        const auto& input = screen_state_->input_text;
-
-        // Trim check: TS does `input.trim() === ''` to decide pop-vs-push.
-        // An input of only whitespace is treated as "empty" for stash pop.
-        const bool input_has_content = [&] {
-            for (char c : input) {
-                if (!std::isspace(static_cast<unsigned char>(c))) return true;
-            }
-            return false;
-        }();
-
-        if (!input_has_content && repl::HasStashedPrompt(screen_state_)) {
-            // Pop stash: restore stashed text + pasted contents.
-            std::unordered_map<int, ::loom::core::ImageBlock> restored_images;
-            std::unordered_map<int, std::string> restored_texts;
-            repl::RestoreStashedPrompt(screen_state_, &restored_images, &restored_texts);
-            // Merge restored pasted contents back into engine maps.
-            for (auto& [id, img] : restored_images) {
-                pasted_contents_[id] = std::move(img);
-            }
-            for (auto& [id, txt] : restored_texts) {
-                pasted_text_contents_[id] = std::move(txt);
-            }
-            PostRenderEvent();
-            return true;
-        }
-        if (input_has_content) {
-            // Push stash: save current input + referenced pasted contents,
-            // then clear input.
-            const auto refs = loom::utils::parse_references(input);
-            std::unordered_map<int, ::loom::core::ImageBlock> ref_images;
-            std::unordered_map<int, std::string> ref_texts;
-            for (const auto& r : refs) {
-                if (auto it = pasted_contents_.find(r.id);
-                    it != pasted_contents_.end()) {
-                    ref_images[r.id] = it->second;
-                }
-                if (auto it = pasted_text_contents_.find(r.id);
-                    it != pasted_text_contents_.end()) {
-                    ref_texts[r.id] = it->second;
-                }
-            }
-            repl::StashCurrentPrompt(screen_state_,
-                std::move(ref_images), std::move(ref_texts));
-            // Clear input (TS: trackAndSetInput('') + setCursorOffset(0)).
-            repl::set_prompt_input_text(screen_state_, {}, 0);
-            // Clear pasted contents that were only referenced by the
-            // stashed text (orphan cleanup will handle this naturally).
-            PostRenderEvent();
-            return true;
-        }
-        // Empty input with no stash → nothing to do.
-        return false;
-    }
-
-    // ── Markdown hyperlink click-to-open ─────────────────────────────
-    // TS REF: FullscreenLayout.tsx L630-667
-    //   useLayoutEffect(() => {
-    //     ink.onHyperlinkClick = url => {
-    //       if (url.startsWith('file:')) openPath(fileURLToPath(url))
-    //       else openBrowser(url)
-    //     }
-    //   })
-    //
-    // In fullscreen / alternate-screen mode, mouse tracking intercepts
-    // all clicks before the terminal can natively open OSC 8 hyperlinks.
-    // We compensate by detecting left-button releases at pixels that
-    // carry a hyperlink ID (set by FTXUI's `hyperlink(url)` decorator
-    // in markdown.cppm render_inlines → InlineTokenKind::Link).
-    //
-    // The Screen stores hyperlink URLs in hyperlinks_[], indexed by
-    // the uint8_t ID written to Pixel.hyperlink during Render().  We
-    // look up the URL via screen.Hyperlink(id) and route it through
-    // loom::utils::try_open_hyperlink() (file: → open_file_path,
-    // http(s): → open_browser).
-    if (event.is_mouse()) {
-        const auto& mouse = event.mouse();
-        // Left-button release = "click".  Using release (not press)
-        // lets the user cancel by dragging the cursor off the link
-        // before releasing — standard web/desktop link behavior.
-        if (mouse.button == Mouse::Left &&
-            mouse.motion == Mouse::Released) {
-            if (auto* screen = screen_.load(std::memory_order_acquire)) {
-                const int x = mouse.x;
-                const int y = mouse.y;
-                // Bounds check — screen dims may change between render
-                // and event delivery (terminal resize race).
-                if (x >= 0 && x < screen->dimx() &&
-                    y >= 0 && y < screen->dimy()) {
-                    const uint8_t link_id = screen->PixelAt(x, y).hyperlink;
-                    if (link_id != 0) {
-                        // id 0 = no hyperlink (Screen default).
-                        const std::string& url = screen->Hyperlink(link_id);
-                        if (!url.empty()) {
-                            // Fire-and-forget: open the link.  The
-                            // system call (open / xdg-open) returns
-                            // quickly; we don't block on browser
-                            // launch completion.
-                            (void)loom::utils::try_open_hyperlink(url);
-                            return true;  // event consumed
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    const bool handled = repl_component_->OnEvent(event);
-    if (handled) {
-        // SL-11: any accepted keystroke that fills input retires the
-        // next-action suggestion for this turn (RefreshAutocompleteSuggestions
-        // also clears on non-empty input, but this is the unambiguous
-        // reset for the accept-on-Return path).
-        if (!screen_state_->input_text.empty()) {
-            screen_state_->next_action_suggestion.reset();
-        }
-        RefreshAutocompleteSuggestions();
-
-        // TS REF: PromptInput.tsx L1185-1200 — orphan cleanup.
-        // Prune pasted_contents_ entries whose [Image #N] placeholder is
-        // no longer in the input text (covers backspace-over-pill, Ctrl+U,
-        // char-by-char deletion — any edit that drops the ref).
-        // Also prune pasted_text_contents_ entries whose [...Truncated text #N]
-        // ref is no longer in the input (same orphan scenarios for text pastes).
-        if (!pasted_contents_.empty() || !pasted_text_contents_.empty()) {
-            const auto refs = loom::utils::parse_references(screen_state_->input_text);
-            std::unordered_set<int> referenced_ids;
-            for (const auto& r : refs) referenced_ids.insert(r.id);
-            for (auto it = pasted_contents_.begin(); it != pasted_contents_.end(); ) {
-                if (!referenced_ids.contains(it->first)) {
-                    it = pasted_contents_.erase(it);
-                } else {
-                    ++it;
-                }
-            }
-            for (auto it = pasted_text_contents_.begin(); it != pasted_text_contents_.end(); ) {
-                if (!referenced_ids.contains(it->first)) {
-                    it = pasted_text_contents_.erase(it);
-                } else {
-                    ++it;
-                }
-            }
-        }
-    }
-    return handled;
-}
-
-Component AppAdapter::ActiveChild() {
-    return repl_component_;
-}
-
 }  // namespace loom::ui
+

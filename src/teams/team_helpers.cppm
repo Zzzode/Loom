@@ -318,12 +318,11 @@ std::vector<TeammateStatus> get_teammate_statuses(std::string_view team_name);
 
 // ─── Canonical Team Config File (config.json) ───────────────────────────────
 //
-// TS-aligned model for <teams_dir>/<sanitized(team)>/config.json, mirroring
-// src/utils/swarm/teamHelpers.ts and reconnection.ts. This is the canonical
+// Model for <teams_dir>/<sanitized(team)>/config.json. This is the canonical
 // writer; team_create keeps its own narrower flat <name>.json shape, which
 // coexists on disk under a different file name.
 
-/// One member row in a team config.json (TS TeamFile['members'][number]).
+/// One member row in a team config.json.
 struct TeamMemberRecord {
     std::string agent_id;             // JSON "agentId", e.g. "name@team"
     std::string name;                 // JSON "name"

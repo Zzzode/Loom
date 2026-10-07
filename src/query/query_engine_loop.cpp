@@ -23,6 +23,7 @@ namespace loom::core {
 
     // Reset abort flag for new query
     aborted_.store(false);
+    set_abort_callback(nullptr);  // clear any stale socket-shutdown callback
 
     // Check budget first
     if (budget_tracker_.budget_exceeded) {
@@ -83,6 +84,7 @@ void QueryEngine::stream_query(
 
     // Reset abort flag for new query
     aborted_.store(false);
+    set_abort_callback(nullptr);  // clear any stale socket-shutdown callback
     auto query_start_time = std::chrono::steady_clock::now();
 
     // Emit query start hook

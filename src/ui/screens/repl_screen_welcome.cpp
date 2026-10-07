@@ -17,9 +17,7 @@ import loom.ui.screens.repl_state;
 import loom.ui.screens.task_view_store;
 import loom.ui.screens.chrome_store;
 import loom.constants.spinner_verbs;
-import loom.ui.foundation.design_logo;
 import loom.ui.foundation.logo;
-import loom.ui.foundation.logo_v2;
 
 namespace loom::ui::repl_screen {
 using namespace ftxui;
@@ -57,7 +55,7 @@ using namespace ftxui;
          | bgcolor(Color::RGB(20, 20, 22));
 }
 
-// UI19: spinner line shell.  Faithful port of TS Spinner.tsx + BriefSpinner.
+// UI19: spinner line shell.
 // Single loom-gold theme, cycling TEARDROP_ASTERISK glyph, random playful
 // verb sampled from spinner_verbs list, 3-dot blink cadence.
 [[nodiscard]] Element RenderSpinner(
@@ -65,7 +63,6 @@ using namespace ftxui;
     const std::optional<std::string>& tip,
     int frame) {
     if (m == SpinnerMode::Hidden) return text("");
-    // TS Spinner.tsx: defaultColor='loom' (amber/gold), shimmer animation.
     // Single theme token regardless of mode — no per-mode color switch.
     const Color kLoomGold = Color::RGB(217, 154, 56);  // ~loom token
 
@@ -80,22 +77,23 @@ using namespace ftxui;
     // from caller signals first visible frame of a new request).
     if (frame == 1) cached_verb = SPINNER_VERBS[dist(rng)];
 
-    // 3-dot blink cycle: Math.floor(time/300)%3 per TS BriefSpinner.
-    // Frame increments ~per render at ~60Hz; use frame/18 as ~300ms tick.
-    const int dot_idx = std::max(0, frame / 18) % 3;
+    // 3-dot blink cycle: floor(time/300)%3.
+    // Frame is time-based (100 ms/frame); frame/3 = 300 ms per state.
+    const int dot_idx = std::max(0, frame / 3) % 3;
     const std::string dots = std::string(static_cast<std::size_t>(dot_idx + 1), '.') +
                              std::string(static_cast<std::size_t>(3 - dot_idx - 1), ' ');
 
     // SpinnerGlyph cycle (frames of TEARDROP_ASTERISK animation); 8 frames.
+    // Frame is time-based (100 ms/frame); each frame advances one glyph.
     constexpr std::array<std::string_view, 8> kGlyphs = {
         "✻", "❋", "✦", "✧", "✶", "✷", "✸", "✹"
     };
-    const auto glyph = kGlyphs[static_cast<std::size_t>(std::max(0, frame / 6)) % kGlyphs.size()];
+    const auto glyph = kGlyphs[static_cast<std::size_t>(std::max(0, frame)) % kGlyphs.size()];
 
     std::string_view selected_verb = verb ? std::string_view(*verb) : cached_verb;
     std::string label = std::string(selected_verb) + "\xE2\x80\xA6";  // …
     Elements p = {
-        text("  ") | size(WIDTH, EQUAL, 2),  // paddingLeft=2
+        text("  ") | size(WIDTH, EQUAL, 2),  // left padding = 2
         text(std::string(glyph)) | color(kLoomGold),
         text(" "),
         text(label) | color(kLoomGold),
@@ -118,22 +116,6 @@ using namespace ftxui;
     std::string out;
     for (int i = 0; i < count; ++i) out += text;
     return out;
-}
-
-[[nodiscard]] Element RenderLoomMascotMark(Color body, Color bg) {
-    return vbox({
-        hbox({
-            text(" ▐") | color(body),
-            text("▛███▜") | color(body) | bgcolor(bg),
-            text("▌") | color(body),
-        }),
-        hbox({
-            text("▝▜") | color(body),
-            text("█████") | color(body) | bgcolor(bg),
-            text("▛▘") | color(body),
-        }),
-        text("  ▘▘ ▝▝  ") | color(body),
-    });
 }
 
 [[nodiscard]] Element RenderWelcomeFeed(std::string title,
@@ -203,79 +185,37 @@ using namespace ftxui;
     }) | size(WIDTH, EQUAL, width);
 }
 
-[[nodiscard]] Element RenderWelcomeLeftPanel(const ReplScreenState& s,
-                                                    int spinner_frame,
-                                                    int width,
-                                                    Color accent,
-                                                    Color muted,
-                                                    Color text_color,
-                                                    Color bg) {
-    const std::string welcome = loom::ui::logo::format_welcome_message(
-        s.chrome_store.user_display_name);
-    const std::string model_line = !s.chrome_store.model_display_name.empty()
-        ? s.chrome_store.model_display_name
-        : s.settings_model;
-    std::string cwd_line = s.cwd;
-    if (!cwd_line.empty()) {
-        cwd_line = truncate_columns(std::move(cwd_line), std::max(10, width - 2));
-    }
-
-    Elements meta;
-    if (!model_line.empty()) {
-        meta.push_back(text(truncate_columns(model_line, std::max(10, width - 2)))
-            | color(muted) | dim);
-    }
-    if (!cwd_line.empty()) {
-        meta.push_back(text(std::move(cwd_line)) | color(muted) | dim);
-    }
-    if (meta.empty()) meta.push_back(text(""));
-
-    return vbox({
-        text(""),
-        hbox({
-            loom::ui::design::logo::welcome_animated_asterisk(spinner_frame),
-            text(" "),
-            text(welcome) | bold | color(text_color),
-        }) | center,
-        text(""),
-        RenderLoomMascotMark(accent, bg) | center,
-        text(""),
-        vbox(std::move(meta)) | center,
-    }) | size(WIDTH, EQUAL, width) | size(HEIGHT, GREATER_THAN, 9);
-}
-
-// UI0: welcome header.  Faithful to TS LogoV2/CondensedLogo + Opus1mMergeNotice:
-//   Row 1: orange AnimatedLoomMascot + "Loom" bold + "vX.X.X" dim
+// UI0: welcome header.
+//   Row 1: orange weave icon + "Loom" bold + "vX.X.X" dim
 //   Row 2: model · billing_type dim
 //   Row 3: [@agent · ] cwd dim
-//   Row 4: ↑ "Opus now defaults to 1M context" banner
 // Shown only on a fresh idle session (messages empty + spinner hidden).
-// The old ASCII-art bordered card / left-panel / FeedColumn helpers are
-// preserved in this file but no longer called by this renderer.
+// The old ASCII-art bordered card / feed-column helpers are preserved in
+// this file but no longer called by this renderer.
 //
-// P0-4 Faithful dispatch (TS LogoV2.tsx return paths):
+// P0-4 Faithful dispatch:
 //   is_condensed_mode (default)  → CondensedLogo + 10 notices flat stack
 //   force_full_logo + cols<70    → Compact round card + flat notice stack
 //   force_full_logo + cols>=70   → Horizontal left|divider|feed card + stack
 // The caller may set s.debug_* / s.tmux_* / s.sandboxing_enabled fields to
 // drive notice activation; they default to off so the header renders the
-// same minimal 4-row look the TS default-condensed branch produces.
+// same minimal 3-row look as the default-condensed branch.
 [[nodiscard]] Element RenderWelcomeHeader(const ReplScreenState& s,
                                                  int /*spinner_frame*/,
                                                  int term_cols,
                                                  bool force_full_logo) {
-    namespace lv2 = loom::ui::logo_v2;
+    namespace lv2 = loom::ui::logo;
 
     const std::string model_line = !s.chrome_store.model_display_name.empty()
         ? s.chrome_store.model_display_name
         : s.settings_model;
 
-    // Build the LogoV2Options. Defaults mirror the TS LogoV2 component's
-    // initial props (no onboarding, no release-notes → condensed branch).
+    // Build the LogoV2Options. Defaults mirror the component's initial
+    // props (no onboarding, no release-notes → condensed branch).
     lv2::LogoV2Options opts;
     opts.cwd                  = s.cwd;
     opts.billing_type         = s.chrome_store.billing_type;
-    // TS REF: logoV2Utils.ts:259 — agentName from getInitialSettings().agent
+    // Agent name comes from initial settings.
     opts.agent_name           = s.settings_agent_name.empty()
                               ? std::nullopt
                               : std::make_optional(s.settings_agent_name);
@@ -285,24 +225,24 @@ using namespace ftxui;
         : std::make_optional(s.chrome_store.user_display_name);
     opts.org_name             = std::nullopt;
     opts.is_condensed_mode    = !force_full_logo && !s.chrome_store.show_onboarding;
-                                                                          // TS early-return gate (L123):
-                                                                          // isCondensedMode = !hasReleaseNotes
-                                                                          //   && !showOnboarding && !forceFullLogo
-    opts.show_onboarding     = s.chrome_store.show_onboarding;        // TS L56
+                                                                          // Early-return gate: condensed when
+                                                                          // no release notes, no onboarding,
+                                                                          // no full logo.
+    opts.show_onboarding     = s.chrome_store.show_onboarding;
     opts.show_sandbox_status  = false;                    // TODO(engine-wire)
-    opts.show_guest_passes    = s.chrome_store.show_guest_passes_upsell;  // TS L70
-    opts.show_overage_credit  = s.chrome_store.show_overage_credit_upsell; // TS L71
+    opts.show_guest_passes    = s.chrome_store.show_guest_passes_upsell;
+    opts.show_overage_credit  = s.chrome_store.show_overage_credit_upsell;
     opts.is_debug_mode        = false;               // TODO(engine-wire)
     opts.tmux_session         = std::nullopt;        // TODO(engine-wire)
     opts.company_announcement = std::nullopt;        // TODO(engine-wire)
     opts.emergency_tip        = std::nullopt;        // TODO(engine-wire)
-    // StatusNotices: 6 TS definitions (memory/agent/subscriber/apikey/both/
+    // StatusNotices: 6 definitions (memory/agent/subscriber/apikey/both/
     // jetbrains). All stubs inactive until engine wiring provides data.
     opts.status_notices       = {};
 
     // When force_full_logo is set and term_cols >= 70 (horizontal threshold),
     // build feeds for the right column.  The 4-branch feed priority chain
-    // (TS LogoV2.tsx L421) is resolved inside the logo_v2 module when feeds
+    // is resolved inside the logo module when feeds
     // is empty.  We only build explicit feeds for the DEFAULT branch (no
     // onboarding / no guest / no overage) so we can inject real data from
     // s.chrome_store.recent_activity_lines and s.chrome_store.changelog_lines.  For the other branches,

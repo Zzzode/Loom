@@ -94,9 +94,8 @@ using loom::core::ToolResult;
 namespace loom::tools {
 
 // ── MCP tool pool for config.tools ────────────────────────────────────────
-// TS PARITY: assembleToolPool() merges built-in tools with per-server MCP
-// tools so the model can call them directly by short name. Lifted verbatim
-// from runtime_registry_register.cpp.
+// MCP tools are merged with built-in tools so the model can call them
+// directly by short name.
 [[nodiscard]] std::vector<loom::core::ToolDefinition> collect_mcp_tool_definitions() {
     std::vector<loom::core::ToolDefinition> defs;
     auto& runtime = loom::tools::NativeMcpRuntime::instance();

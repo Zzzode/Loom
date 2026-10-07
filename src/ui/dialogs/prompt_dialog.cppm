@@ -1,7 +1,7 @@
 /// @file prompt_dialog.cppm
 /// @brief Generic PromptDialog with FREE-TEXT and SELECT modes.
 ///
-/// TS contract (src/components/PromptDialog/PromptDialog.tsx):
+/// Contract:
 ///   - Two mutually-exclusive modes selected at construction:
 ///       * FREE-TEXT when `options` is empty -> delegates to a TextInput.
 ///       * SELECT when `options` is non-empty  -> vertical list with focused
@@ -44,8 +44,7 @@ using namespace ftxui;
 // Public types
 // =========================================================================
 
-/// A single selectable option in SELECT mode. Mirrors the TS PromptOption
-/// interface: { label: string, key: string, description?: string }.
+/// A single selectable option in SELECT mode: { label, key, description }.
 struct PromptOption {
     std::string label;
     std::string key;
@@ -94,7 +93,7 @@ struct PromptDialogPayload {
 
 namespace detail {
 
-/// Clamp/wrap an index into [0, n).  SELECT mode uses wrap per the TS spec.
+/// Clamp/wrap an index into [0, n).  SELECT mode uses wrap.
 [[nodiscard]] inline int wrap_index(int idx, int n) {
     if (n <= 0) return 0;
     int m = idx % n;

@@ -1,6 +1,5 @@
 /// @file log_selector.cppm
 /// @brief Multi-source log panel (LogSelector).
-/// Migrated from src/components/LogSelector.tsx (~1574 lines).
 ///
 /// Covers 6 tabs in a 3-split layout:
 ///   1. Recent Sessions   – active / pinned sessions, card grid.
@@ -67,8 +66,8 @@ using loom::ui::trust_dialog::MakeTrustDialogComponent;
 // 1. Enums
 // =========================================================================
 
-/// The six sidebar tabs — matches the navigation order of TS LogSelector's
-/// extended view (Recent / Projects / Drafts / Archive / Remote / Trash).
+/// The six sidebar tabs, in navigation order
+/// (Recent / Projects / Drafts / Archive / Remote / Trash).
 enum class Tab : std::uint8_t {
     Recent = 0,
     Projects,
@@ -145,7 +144,7 @@ enum class BatchOp : std::uint8_t {
     Export,
 };
 
-/// Date-range filter preset — matches TS filter chips row.
+/// Date-range filter preset — matches the filter chips row.
 enum class DateRange : std::uint8_t {
     Any = 0,
     Today,
@@ -155,12 +154,10 @@ enum class DateRange : std::uint8_t {
 };
 
 // =========================================================================
-// 2. Data types (mirror TS SessionLogEntry / ProjectEntry)
+// 2. Data types
 // =========================================================================
 
-/// One row of session metadata.  Mirrors the fields of LogOption +
-/// the richer fields exposed by the TS `SessionLogEntry` interface used
-/// internally inside LogSelector.tsx (title, project tag, model, counts,
+/// One row of session metadata (title, project tag, model, counts,
 /// cost, tokens, timestamps, status, pin flag).
 struct SessionLogEntry {
     std::string id;
@@ -806,7 +803,7 @@ struct ChipDef {
     }
 
     // Lazy: trigger fetch-more for Remote tab if cursor falls past
-    // (size - 10).  This matches the TS spec "scroll to N-10 triggers
+    // (size - 10).  This matches the spec "scroll to N-10 triggers
     // on_fetch_more()".
     if (s.tab == Tab::Remote && !s.remote_loading && !s.view.empty()) {
         const auto threshold = (s.view.size() >= 10) ? s.view.size() - 10 : 0;
@@ -1716,8 +1713,7 @@ inline bool HandleEvents(SelectorState& s, Event event) {
 
 /// Build the full LogSelector screen as a self-contained FTXUI component.
 /// All data access flows through the lambdas in `options`; no state is read
-/// from any business module directly (keeps the module UI-only as required
-/// by the P0 migration spec).
+/// from any business module directly (keeps the module UI-only).
 [[nodiscard]] inline Component MakeLogSelector(LogSelectorOptions options)
 {
     auto state = std::make_shared<SelectorState>();

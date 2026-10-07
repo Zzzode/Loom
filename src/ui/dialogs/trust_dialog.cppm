@@ -2,11 +2,6 @@
 /// @brief Multi-tier trust confirmation dialogs (FTXUI Modal).
 ///
 /// Fully audited and completed against:
-///   - TS src/components/TrustDialog/TrustDialog.tsx (289 lines) — the
-///     initial "do you trust this folder" prompt, ported as
-///     MakeWorkspaceTrustDialog / the WorkspaceTrust tier of the dialog.
-///   - TS src/components/TrustDialog/utils.ts (245 lines) — source
-///     detection helpers are re-used via trust_utils.cppm.
 ///   - C++ ui/dialogs/permission_dialog.cppm — 4-button pattern.
 ///   - C++ commands/plugin/plugin_trust.cppm — TrustLevel model reused.
 ///   - C++ commands/plugin/plugin_trust_text.cppm — marketplace allowlist.
@@ -69,11 +64,10 @@ using tu::kHighTierCountdownSeconds;
 using tu::kCriticalConfirmWord;
 
 // =========================================================================
-// Extra TS-aligned types (carried over from original skeleton)
+// Extra types (carried over from original skeleton)
 // =========================================================================
 
 /// Sources of potential security concern detected in workspace.
-/// Mirrors the 8 flags from TS TrustDialog.tsx lines 46-107.
 struct SecuritySources {
     bool has_mcp_servers = false;
     bool has_hooks = false;
@@ -823,8 +817,7 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
 }
 
 /// Back-compat factory: the original two-option workspace trust dialog.
-/// Used by bootstrap before the first query — mirrors the behaviour of
-/// TS TrustDialog.tsx exactly.
+/// Used by bootstrap before the first query.
 [[nodiscard]] inline Component MakeWorkspaceTrustDialog(WorkspaceTrustProps props)
 {
     TrustDialogProps generic;

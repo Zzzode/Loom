@@ -11,11 +11,6 @@
 ///   - src/vim/vim_mode.cppm (6 values)
 ///   - src/hooks/vim_input.cppm (5 values)
 ///   - src/ui/components/text_input.cppm (bool enable_vim — no enum)
-///
-/// TS REF: src/types/textInputTypes.ts:222 — public VimMode type is
-///   'INSERT' | 'NORMAL' (2 values).  Internal vim state machine
-///   (src/vim/transitions.ts, src/vim/operators.ts) tracks richer modes.
-/// TS REF: src/hooks/useVimInput.ts:36 — mode starts at 'INSERT'.
 module;
 
 #include <cstdint>
@@ -28,8 +23,8 @@ export namespace loom::vim {
 
 /// Canonical vim editing mode.
 enum class VimMode : std::uint8_t {
-    Normal,      ///< Navigation / command mode (TS: 'NORMAL').
-    Insert,      ///< Text insertion mode (TS: 'INSERT').  Default on focus.
+    Normal,      ///< Navigation / command mode.
+    Insert,      ///< Text insertion mode.  Default on focus.
     Visual,      ///< Character-wise visual selection (v).
     VisualLine,  ///< Line-wise visual selection (V).
     VisualBlock, ///< Block-wise visual selection (Ctrl+V).
@@ -38,8 +33,7 @@ enum class VimMode : std::uint8_t {
 };
 
 /// Returns true for modes where typed characters are inserted into text
-/// (Insert, Replace).  TS REF: useVimInput.ts:209 — only INSERT mode
-/// passes characters to the base textInput handler.
+/// (Insert, Replace).
 [[nodiscard]] constexpr bool is_editing_mode(VimMode m) noexcept {
     return m == VimMode::Insert || m == VimMode::Replace;
 }
@@ -52,7 +46,6 @@ enum class VimMode : std::uint8_t {
 }
 
 /// Display label for the mode indicator (e.g. "-- NORMAL --", "-- INSERT --").
-/// TS REF: vim mode indicator shown in statusline / footer.
 [[nodiscard]] constexpr std::string_view vim_mode_label(VimMode m) noexcept {
     switch (m) {
         case VimMode::Normal:      return "-- NORMAL --";

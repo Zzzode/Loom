@@ -100,10 +100,10 @@ bool TmuxBackend::kill_pane(const PaneId& pane_id, bool use_external_session) {
 std::optional<std::string> TmuxBackend::capture_pane_text(
     const PaneId& pane_id, int tail_lines, bool use_external_session
 ) {
-    // TODO: external swarm sessions run on a -L loom-swarm-<pid> socket in TS
-    // (constants.ts getSwarmSocketName); the C++ port currently shells out on
-    // the default socket everywhere (see create_pane_external), so honor the
-    // same simplification here until the socket gap is ported.
+    // TODO: external swarm sessions run on a -L loom-swarm-<pid> socket;
+    // the current implementation shells out on the default socket
+    // everywhere (see create_pane_external), so honor the same
+    // simplification here until the socket gap is implemented.
     (void)use_external_session;
     if (pane_id.empty()) return std::nullopt;
     auto result = detail::read_shell_output_with_status(

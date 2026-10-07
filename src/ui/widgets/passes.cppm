@@ -1,7 +1,7 @@
 /// @file passes.cppm
 /// @brief Query progress (passes) panel - shows pass index, description,
 /// history, token consumption and cost during a multi-pass query loop.
-/// Mirrors the TS "Passes" sidebar panel and the /passes command output.
+/// Mirrors the "Passes" sidebar panel and the /passes command output.
 module;
 
 #include <cmath>
@@ -30,7 +30,7 @@ using namespace loom::ui::design::theme;
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
-/// Runtime snapshot of the query pass loop.  Mirrors TS PassesViewState.
+/// Runtime snapshot of the query pass loop.  Mirrors PassesViewState.
 struct PassesViewState {
     int total_passes = 0;
     int current_pass = 0;

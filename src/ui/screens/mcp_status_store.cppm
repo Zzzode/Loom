@@ -37,7 +37,7 @@ struct McpStatusStore {
     /// mutex-protected queue; the UI thread drains
     /// (DrainPendingAtMentionInserts) and then applies
     /// (ApplyPendingAtMentionInserts). Empty in steady state.
-    /// TS REF: useIdeAtMentioned.ts -> inputState.insert at cursor.
+    /// Inserts at the cursor.
     std::vector<std::string> pending_at_mention_inserts;
 };
 

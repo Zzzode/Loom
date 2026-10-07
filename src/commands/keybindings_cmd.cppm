@@ -2,7 +2,6 @@
 /// @brief KeybindingsCommand implementing the /keybindings slash command.
 /// Subcommands: list | search PATTERN | reset | export | set KEY ACTION.
 /// Default (no args): creates keybindings.json template + opens in editor
-///   (mirrors TS src/commands/keybindings/keybindings.ts logic exactly).
 /// Reuses loom.keybindings.* modules — no type redefinition, no custom key table.
 /// UI rendering (FTXUI tables/dialogs) DEFERRED to Phase 4.
 module;
@@ -109,7 +108,7 @@ public:
     }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
-        // Feature gate — matches TS is_keybinding_customization_enabled()
+        // Feature gate
         if (!loom::keybindings::is_keybinding_customization_enabled()) {
             return CommandResult::success(
                 "Keybinding customization is not enabled. "
@@ -285,7 +284,7 @@ private:
 
     // ---- Subcommand executors ---------------------------------------------
 
-    /// Default behavior (no args): exactly mirrors TS keybindings.ts
+    /// Default behavior (no args):
     ///  1. get_keybindings_path()
     ///  2. mkdir -p parent
     ///  3. write template with O_EXCL (wx flag) — fails if exists = EEXIST
@@ -323,7 +322,7 @@ private:
             }
         }
 
-        // Attempt to open in editor. Mirror TS editFileInEditor().
+        // Attempt to open in editor.
         // Use $EDITOR if set; otherwise fall back to a text message.
         std::optional<std::string> editor_error;
         const char* editor_env = std::getenv("EDITOR");
@@ -416,7 +415,7 @@ private:
         auto rows = list_binding_rows();
         auto path = loom::keybindings::get_keybindings_path();
 
-        // Build a JSON export (matches TS export behavior)
+        // Build a JSON export
         std::ostringstream out;
         out << "{\n";
         out << std::format(

@@ -20,7 +20,7 @@ import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
 import loom.ui.prompt.prompt_input;
-import loom.ui.foundation.logo_v2;
+import loom.ui.foundation.logo;
 import loom.ui.chrome.fullscreen_layout;
 import loom.ui.messages.message_image;
 import loom.commands.registry;
@@ -111,7 +111,7 @@ TEST(PromptInput, TypeaheadSuggestsSlashCommandsAndSelection) {
 
 
 TEST(LogoV2, CondensedModeRendersStripPlusNotices) {
-    namespace lv2 = loom::ui::logo_v2;
+    namespace lv2 = loom::ui::logo;
 
     lv2::LogoV2Options opts;
     opts.cwd                = "/home/alice/dev/loom";
@@ -127,9 +127,6 @@ TEST(LogoV2, CondensedModeRendersStripPlusNotices) {
     EXPECT_NE(s.find("Loom Opus 4.8"), std::string::npos);
     EXPECT_NE(s.find("Team Seat"), std::string::npos);
     EXPECT_NE(s.find("/home/alice/dev/loom"), std::string::npos);
-    // Aggregated notice stack — Opus1m always active.
-    EXPECT_NE(s.find("Opus now defaults to 1M context"), std::string::npos);
-    EXPECT_NE(s.find("5x more room, same pricing"), std::string::npos);
     // Condensed path has NO rounded outer border — ╭ (U+256D) would appear if
     // the round-border card was drawn.
     EXPECT_EQ(s.find("\xE2\x95\xAD"), std::string::npos)
@@ -141,7 +138,7 @@ TEST(LogoV2, CondensedModeRendersStripPlusNotices) {
 //     banner + "Welcome to Loom [, {user}]" heading inside a rounded
 //     border, and reports LogoLayoutMode::Compact.
 TEST(LogoV2, CompactModeRendersRoundedBorderCard) {
-    namespace lv2 = loom::ui::logo_v2;
+    namespace lv2 = loom::ui::logo;
 
     lv2::LogoV2Options opts;
     opts.cwd                = "/x";
@@ -164,8 +161,8 @@ TEST(LogoV2, CompactModeRendersRoundedBorderCard) {
     EXPECT_NE(s.find("Welcome back!"), std::string::npos);
     // Model line dim.
     EXPECT_NE(s.find("Loom Sonnet 4.6"), std::string::npos);
-    // Notice stack still rendered AFTER the card.
-    EXPECT_NE(s.find("Opus now defaults to 1M context"), std::string::npos);
+    // The Opus1m upsell banner was removed from the notice stack; no
+    // default-active notices remain, so there is nothing to assert here.
 }
 
 
@@ -173,7 +170,7 @@ TEST(LogoV2, CompactModeRendersRoundedBorderCard) {
 //     feed column, split inside a single rounded border.  Also the welcome
 //     greeting personalises for returning users with a display name set.
 TEST(LogoV2, HorizontalModeSplitsIntoPanels) {
-    namespace lv2 = loom::ui::logo_v2;
+    namespace lv2 = loom::ui::logo;
 
     lv2::LogoV2Options opts;
     opts.cwd                = "/workspace/repo";
@@ -211,7 +208,7 @@ TEST(LogoV2, HorizontalModeSplitsIntoPanels) {
 //     remain invisible when the toggle is false (default). Validates the full
 //     10-deep × 6-status-notices activation tree.
 TEST(LogoV2, EachNoticeActivatorAppearsWhenToggled) {
-    namespace lv2 = loom::ui::logo_v2;
+    namespace lv2 = loom::ui::logo;
 
     // Baseline — every toggle off → no trace of debug/tmux/org/sandbox/guest/
     // overage/status/emergency strings.
@@ -289,7 +286,7 @@ TEST(LogoV2, EachNoticeActivatorAppearsWhenToggled) {
 //     *only* when is_condensed_mode=false; when true always → Condensed
 //     regardless of width.
 TEST(LogoV2, LayoutModeThresholdsMatchTSSpec) {
-    namespace lv2 = loom::ui::logo_v2;
+    namespace lv2 = loom::ui::logo;
 
     lv2::LogoV2Options opts;
     opts.cwd                = "/t";
@@ -320,7 +317,7 @@ TEST(LogoV2, LayoutModeThresholdsMatchTSSpec) {
 //     4 scattered '*' glyphs (asterisk dust baked into the art), and a paws
 //     footer row with "█ █   █ █" clawd feet + ░/▒ planets.
 TEST(LogoV2, WelcomeV2StaticCardMatchesTSSpec) {
-    namespace lv2 = loom::ui::logo_v2;
+    namespace lv2 = loom::ui::logo;
 
     ftxui::Element card = lv2::RenderWelcomeV2();
     std::string s = strip_ansi(render_to_plain_text(card, 120, 20));
@@ -371,7 +368,6 @@ TEST(LogoV2, ReplScreenDefaultWelcomeHeaderStillCondensed) {
     EXPECT_NE(rendered.find("Loom"), std::string::npos);
     EXPECT_NE(rendered.find("GLM-5.2"), std::string::npos);
     EXPECT_NE(rendered.find("/tmp/cpp_migration"), std::string::npos);
-    EXPECT_NE(rendered.find("Opus now defaults to 1M context"), std::string::npos);
     // Round border MUST NOT appear in the default header.
     EXPECT_EQ(rendered.find("\xE2\x95\xAD"), std::string::npos);
     // Feed column hint MUST NOT appear (no forced full logo).
@@ -455,7 +451,7 @@ TEST(LogoV2, ReplScreenForceFullLogoOptsIntoCardMode) {
 //       TS LogoV2.tsx  L331-428  (horizontal + FeedColumn)
 //       TS Feed.tsx    full file (FeedConfig + FeedLine rendering)
 TEST(LogoV2, Logov2RenderModesMissing_Goldens) {
-    namespace lv2 = loom::ui::logo_v2;
+    namespace lv2 = loom::ui::logo;
     using sticky_prompt_test::check_golden;
     using sticky_prompt_test::render_ansi;
 
@@ -678,7 +674,7 @@ TEST(FullscreenLayout, StickyPromptState3_ClickedCollapsed) {
 /// either (a) wrapping the entire ComposeFullscreen() output as a
 /// Component with explicit OnEvent forwarding, or (b) moving
 /// StickyPromptHeader + NewMessagesPill into ReplScreen as Components.
-/// Scheduled for the next cpp-port round.
+/// Scheduled for a follow-up (requires Component event-dispatch rework).
 TEST(FullscreenLayout, DISABLED_StickyPromptClickFiresCallback) {
     using namespace sticky_prompt_test;
     Sp captured{"", 0};
@@ -765,7 +761,7 @@ TEST(FullscreenLayout, DISABLED_StickyPromptClickFiresCallback) {
 /// NewMessagesPill: static rendering only (round-1 landing scope).
 ///
 /// Click-callback behaviour (on_pill_click firing via FTXUI Component event
-/// dispatch) is deferred to the next cpp-port round together with
+/// dispatch) is deferred to a follow-up together with
 /// StickyPromptHeader click — both require moving the Pill from a stateless
 /// Element tree to a proper Component with OnEvent forwarding.
 TEST(FullscreenLayout, NewMessagesPillStaticRender) {
@@ -1158,11 +1154,11 @@ struct PasteTestHarness {
 TEST(ImagePasteSubmit, EmptyTextNoImages_EarlyReturn) {
     PasteTestHarness h;
     auto* a = h.adapter();
-    EXPECT_FALSE(a->is_query_running_for_testing());
+    EXPECT_FALSE(test_seams(a).is_query_running_for_testing());
     // Call HandleSubmit with empty text and no pasted images.
-    a->handle_submit_for_testing("");
+    test_seams(a).handle_submit_for_testing("");
     // Should have returned early; query_running_ stays false.
-    EXPECT_FALSE(a->is_query_running_for_testing());
+    EXPECT_FALSE(test_seams(a).is_query_running_for_testing());
 }
 
 
@@ -1174,8 +1170,8 @@ TEST(ImagePasteSubmit, EmptyTextNoImages_EarlyReturn) {
 TEST(ImagePasteSubmit, TextWithImageRef_HasImagesTrue) {
     PasteTestHarness h;
     auto* a = h.adapter();
-    a->inject_pasted_image_for_testing(1, h.make_test_image(1));
-    EXPECT_EQ(a->pasted_contents_size_for_testing(), 1u);
+    test_seams(a).inject_pasted_image_for_testing(1, h.make_test_image(1));
+    EXPECT_EQ(test_seams(a).pasted_contents_size_for_testing(), 1u);
 
     // Simulate what HandleSubmit does: parse refs from text and check overlap.
     const std::string text = "[Image #1]";
@@ -1186,7 +1182,7 @@ TEST(ImagePasteSubmit, TextWithImageRef_HasImagesTrue) {
     // has_images = any ref in text that also exists in pasted_contents_
     bool has_images = false;
     for (const auto& r : refs) {
-        if (a->has_pasted_content_for_testing(r.id)) { has_images = true; break; }
+        if (test_seams(a).has_pasted_content_for_testing(r.id)) { has_images = true; break; }
     }
     EXPECT_TRUE(has_images);
     // → text.empty() guard would NOT trigger (text is not empty).
@@ -1200,16 +1196,16 @@ TEST(ImagePasteSubmit, TextWithImageRef_HasImagesTrue) {
 TEST(ImagePasteSubmit, ReferencedIdsFilter_OnlyAttachedRefdImages) {
     PasteTestHarness h;
     auto* a = h.adapter();
-    a->inject_pasted_image_for_testing(1, h.make_test_image(1));
-    a->inject_pasted_image_for_testing(2, h.make_test_image(2));
-    ASSERT_EQ(a->pasted_contents_size_for_testing(), 2u);
+    test_seams(a).inject_pasted_image_for_testing(1, h.make_test_image(1));
+    test_seams(a).inject_pasted_image_for_testing(2, h.make_test_image(2));
+    ASSERT_EQ(test_seams(a).pasted_contents_size_for_testing(), 2u);
 
     // Submit text only references [Image #1]; [Image #2] is orphaned.
     const std::string text = "explain [Image #1]";
     auto refs = loom::utils::parse_references(text);
     std::set<int> referenced_ids;
     for (const auto& r : refs) {
-        if (a->has_pasted_content_for_testing(r.id)) referenced_ids.insert(r.id);
+        if (test_seams(a).has_pasted_content_for_testing(r.id)) referenced_ids.insert(r.id);
     }
     // Only image #1 should be in the referenced set.
     EXPECT_EQ(referenced_ids.size(), 1u);
@@ -1223,18 +1219,18 @@ TEST(ImagePasteSubmit, ReferencedIdsFilter_OnlyAttachedRefdImages) {
 TEST(ImagePasteOrphanCleanup, RefMissingFromInput_ImagePruned) {
     PasteTestHarness h;
     auto* a = h.adapter();
-    a->inject_pasted_image_for_testing(1, h.make_test_image(1));
-    ASSERT_EQ(a->pasted_contents_size_for_testing(), 1u);
-    EXPECT_TRUE(a->has_pasted_content_for_testing(1));
+    test_seams(a).inject_pasted_image_for_testing(1, h.make_test_image(1));
+    ASSERT_EQ(test_seams(a).pasted_contents_size_for_testing(), 1u);
+    EXPECT_TRUE(test_seams(a).has_pasted_content_for_testing(1));
 
     // Set input_text WITHOUT the [Image #1] ref — simulates user backspacing
     // over the placeholder.
-    a->set_input_text_for_testing("hello world");
-    a->trigger_orphan_cleanup_for_testing();
+    test_seams(a).set_input_text_for_testing("hello world");
+    test_seams(a).trigger_orphan_cleanup_for_testing();
 
     // Image #1 should have been pruned.
-    EXPECT_EQ(a->pasted_contents_size_for_testing(), 0u);
-    EXPECT_FALSE(a->has_pasted_content_for_testing(1));
+    EXPECT_EQ(test_seams(a).pasted_contents_size_for_testing(), 0u);
+    EXPECT_FALSE(test_seams(a).has_pasted_content_for_testing(1));
 }
 
 
@@ -1243,16 +1239,16 @@ TEST(ImagePasteOrphanCleanup, RefMissingFromInput_ImagePruned) {
 TEST(ImagePasteOrphanCleanup, RefPresentInInput_ImageKept) {
     PasteTestHarness h;
     auto* a = h.adapter();
-    a->inject_pasted_image_for_testing(1, h.make_test_image(1));
-    ASSERT_EQ(a->pasted_contents_size_for_testing(), 1u);
+    test_seams(a).inject_pasted_image_for_testing(1, h.make_test_image(1));
+    ASSERT_EQ(test_seams(a).pasted_contents_size_for_testing(), 1u);
 
     // Set input_text WITH the ref — simulates user still having the placeholder.
-    a->set_input_text_for_testing("look at [Image #1] here");
-    a->trigger_orphan_cleanup_for_testing();
+    test_seams(a).set_input_text_for_testing("look at [Image #1] here");
+    test_seams(a).trigger_orphan_cleanup_for_testing();
 
     // Image #1 should still be there.
-    EXPECT_EQ(a->pasted_contents_size_for_testing(), 1u);
-    EXPECT_TRUE(a->has_pasted_content_for_testing(1));
+    EXPECT_EQ(test_seams(a).pasted_contents_size_for_testing(), 1u);
+    EXPECT_TRUE(test_seams(a).has_pasted_content_for_testing(1));
 }
 
 
@@ -1260,17 +1256,17 @@ TEST(ImagePasteOrphanCleanup, RefPresentInInput_ImageKept) {
 TEST(ImagePasteOrphanCleanup, MultiImagePartialPrune) {
     PasteTestHarness h;
     auto* a = h.adapter();
-    a->inject_pasted_image_for_testing(1, h.make_test_image(1));
-    a->inject_pasted_image_for_testing(2, h.make_test_image(2));
-    ASSERT_EQ(a->pasted_contents_size_for_testing(), 2u);
+    test_seams(a).inject_pasted_image_for_testing(1, h.make_test_image(1));
+    test_seams(a).inject_pasted_image_for_testing(2, h.make_test_image(2));
+    ASSERT_EQ(test_seams(a).pasted_contents_size_for_testing(), 2u);
 
     // Only [Image #1] is referenced; #2 is orphaned.
-    a->set_input_text_for_testing("see [Image #1]");
-    a->trigger_orphan_cleanup_for_testing();
+    test_seams(a).set_input_text_for_testing("see [Image #1]");
+    test_seams(a).trigger_orphan_cleanup_for_testing();
 
-    EXPECT_EQ(a->pasted_contents_size_for_testing(), 1u);
-    EXPECT_TRUE(a->has_pasted_content_for_testing(1));
-    EXPECT_FALSE(a->has_pasted_content_for_testing(2));
+    EXPECT_EQ(test_seams(a).pasted_contents_size_for_testing(), 1u);
+    EXPECT_TRUE(test_seams(a).has_pasted_content_for_testing(1));
+    EXPECT_FALSE(test_seams(a).has_pasted_content_for_testing(2));
 }
 
 
@@ -1281,22 +1277,22 @@ TEST(ImagePasteOrphanCleanup, MultiImagePartialPrune) {
 TEST(ImagePasteSubmit, OrphanedImageNotInReferencedSet) {
     PasteTestHarness h;
     auto* a = h.adapter();
-    a->inject_pasted_image_for_testing(1, h.make_test_image(1));
-    a->inject_pasted_image_for_testing(2, h.make_test_image(2));
+    test_seams(a).inject_pasted_image_for_testing(1, h.make_test_image(1));
+    test_seams(a).inject_pasted_image_for_testing(2, h.make_test_image(2));
 
     // User deletes [Image #2] placeholder → orphan cleanup removes it.
-    a->set_input_text_for_testing("[Image #1]");
-    a->trigger_orphan_cleanup_for_testing();
-    ASSERT_EQ(a->pasted_contents_size_for_testing(), 1u);
-    ASSERT_TRUE(a->has_pasted_content_for_testing(1));
-    ASSERT_FALSE(a->has_pasted_content_for_testing(2));
+    test_seams(a).set_input_text_for_testing("[Image #1]");
+    test_seams(a).trigger_orphan_cleanup_for_testing();
+    ASSERT_EQ(test_seams(a).pasted_contents_size_for_testing(), 1u);
+    ASSERT_TRUE(test_seams(a).has_pasted_content_for_testing(1));
+    ASSERT_FALSE(test_seams(a).has_pasted_content_for_testing(2));
 
     // Now compute referenced-ids from the submit text (same as HandleSubmit).
     const std::string text = "[Image #1]";
     auto refs = loom::utils::parse_references(text);
     std::set<int> attached_ids;
     for (const auto& r : refs) {
-        if (a->has_pasted_content_for_testing(r.id)) attached_ids.insert(r.id);
+        if (test_seams(a).has_pasted_content_for_testing(r.id)) attached_ids.insert(r.id);
     }
     // Only image #1 would be attached; #2 was orphaned and removed.
     EXPECT_EQ(attached_ids.size(), 1u);
@@ -1343,10 +1339,10 @@ TEST(ImagePasteCtrlV, OnEventCtrlV_InsertsPlaceholderImmediately) {
     PasteTestHarness h;
     auto* a = h.adapter();
     // Don't spawn a real clipboard-reading thread (lifetime hazard in tests).
-    a->set_no_real_paste_worker_for_testing(true);
-    ASSERT_EQ(a->input_text_for_testing(), "");
-    ASSERT_EQ(a->pasted_contents_size_for_testing(), 0u);
-    ASSERT_FALSE(a->is_query_running_for_testing());
+    test_seams(a).set_no_real_paste_worker_for_testing(true);
+    ASSERT_EQ(test_seams(a).input_text_for_testing(), "");
+    ASSERT_EQ(test_seams(a).pasted_contents_size_for_testing(), 0u);
+    ASSERT_FALSE(test_seams(a).is_query_running_for_testing());
 
     // Simulate pressing Ctrl+V.  This is what FTXUI delivers when the user
     // presses ctrl+v in a terminal (terminal sends \x16, FTXUI parses it as
@@ -1360,7 +1356,7 @@ TEST(ImagePasteCtrlV, OnEventCtrlV_InsertsPlaceholderImmediately) {
 
     // Placeholder should be in the input text NOW (synchronously inserted
     // before the background paste worker even starts).
-    const std::string text = a->input_text_for_testing();
+    const std::string text = test_seams(a).input_text_for_testing();
     EXPECT_NE(text.find("[Image #1]"), std::string::npos)
         << "Ctrl+V event should insert [Image #1] placeholder immediately. "
         << "Got input_text='" << text << "'";
@@ -1373,10 +1369,10 @@ TEST(ImagePasteCtrlV, OnEventCtrlV_InsertsPlaceholderImmediately) {
 TEST(ImagePasteCtrlV, OnEventCtrlV_CharacterForm_AlsoInsertsPlaceholder) {
     PasteTestHarness h;
     auto* a = h.adapter();
-    a->set_no_real_paste_worker_for_testing(true);
+    test_seams(a).set_no_real_paste_worker_for_testing(true);
     a->OnEvent(ftxui::Event::Character('\x16'));
 
-    const std::string text = a->input_text_for_testing();
+    const std::string text = test_seams(a).input_text_for_testing();
     EXPECT_NE(text.find("[Image #1]"), std::string::npos)
         << "Event::Character('\\x16') should also insert placeholder. "
         << "Got input_text='" << text << "'";
@@ -1390,21 +1386,21 @@ TEST(ImagePasteCtrlV, OnEventCtrlV_CharacterForm_AlsoInsertsPlaceholder) {
 TEST(ImagePasteCtrlV, PasteResultDrainsIntoPastedContentsOnNextEvent) {
     PasteTestHarness h;
     auto* a = h.adapter();
-    a->set_no_real_paste_worker_for_testing(true);
+    test_seams(a).set_no_real_paste_worker_for_testing(true);
 
     // Ctrl+V → placeholder + pending result (not yet in pasted_contents_).
     a->OnEvent(ftxui::Event::Special("\x16"));
-    ASSERT_NE(a->input_text_for_testing().find("[Image #1]"), std::string::npos);
-    ASSERT_EQ(a->pasted_contents_size_for_testing(), 0u)
+    ASSERT_NE(test_seams(a).input_text_for_testing().find("[Image #1]"), std::string::npos);
+    ASSERT_EQ(test_seams(a).pasted_contents_size_for_testing(), 0u)
         << "result should still be pending, not drained, right after Ctrl+V";
 
     // Any subsequent event triggers ProcessCompletedPastes at the top of
     // OnEvent, draining the pending result into pasted_contents_.
     a->OnEvent(ftxui::Event::Custom);
-    EXPECT_EQ(a->pasted_contents_size_for_testing(), 1u)
+    EXPECT_EQ(test_seams(a).pasted_contents_size_for_testing(), 1u)
         << "pending paste result should drain into pasted_contents_ on the "
         << "next OnEvent tick — this is what HandleSubmit's wait relies on";
-    EXPECT_TRUE(a->has_pasted_content_for_testing(1));
+    EXPECT_TRUE(test_seams(a).has_pasted_content_for_testing(1));
 }
 
 

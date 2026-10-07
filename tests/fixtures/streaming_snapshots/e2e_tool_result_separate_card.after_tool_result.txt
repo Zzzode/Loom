@@ -1,0 +1,39 @@
+◆ Loom  · model_api/experimental_0812_256k
+
+█░█░█░█░█  Loom
+░█░█░█░█░  model_api/experimental_0812_256k
+█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+
+● Analyze Image ("imageSource":"https://example.com/img.png","prompt":"What is this image?")
+  Input:
+  {"imageSource":"https://example.com/img.png","prompt":"What is this image?"}
+  ⎿ analyze_image_result_summary: [{"text": "The image is a solid black square with no visible content, text, UI elemen
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ✻ analyze_image….
+──────────────────────────────────────────────────────────────────────────────────
+ ❯ Try "fix lint errors"
+──────────────────────────────────────────────────────────────────────────────────
+   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

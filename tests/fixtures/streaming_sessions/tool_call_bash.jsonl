@@ -1,0 +1,13 @@
+{"type":"stream_start","message_id":"msg_tool_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"tool_use","id":"tu1","name":"Bash","input_json":"{}"}}
+{"type":"content_block_delta","index":0,"delta_text":"{\"command\":\"ls -la"}
+{"type":"content_block_delta","index":0,"delta_text":" tests/fixtures\",\"timeout"}
+{"type":"content_block_delta","index":0,"delta_text":"\":5000}"}
+{"type":"content_block_stop","index":0}
+{"type":"stream_end","stop_reason":"tool_use","usage":{"input_tokens":120,"output_tokens":24}}
+{"type":"tool_execution_start","tool_use_id":"tu1","tool_name":"Bash","input_json":"{\"command\":\"ls -la tests/fixtures\",\"timeout\":5000}"}
+{"type":"tool_execution_progress","tool_use_id":"tu1","partial_result":"total 24\ndrwxr-xr-x  4 loom  staff   128 Oct  7 10:00 .\ndrwxr-xr-x 62 loom  staff  1984 Oct  7 09:58 .."}
+{"type":"tool_execution_end","tool_use_id":"tu1","result":"total 24\ndrwxr-xr-x  4 loom  staff   128 Oct  7 10:00 .\ndrwxr-xr-x 62 loom  staff  1984 Oct  7 09:58 ..\n-rw-r--r--  1 loom  staff   412 Oct  7 10:00 text_simple.jsonl\n-rw-r--r--  1 loom  staff   987 Oct  7 10:00 thinking_then_text.jsonl","is_error":false}
+{"type":"__checkpoint__","name":"after_tool_result"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

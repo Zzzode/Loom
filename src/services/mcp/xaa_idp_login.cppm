@@ -2,8 +2,6 @@
 /// @brief XAA IdP Login: acquires an OIDC id_token from an enterprise IdP via
 ///        authorization_code + PKCE flow, then caches it by IdP issuer.
 ///
-/// TS REF: src/services/mcp/xaaIdpLogin.ts
-///
 /// This is the "one browser pop" in the XAA value prop: one IdP login → N silent
 /// MCP server auths. The id_token is cached in secure storage and reused until
 /// expiry.
@@ -50,14 +48,12 @@ namespace fs = std::filesystem;
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
-// TS REF: xaaIdpLogin.ts:51
 inline constexpr int kIdpLoginTimeoutMs = 5 * 60 * 1000;      // 5 minutes
 inline constexpr int kIdpRequestTimeoutMs = 30000;             // 30 seconds
 inline constexpr int kIdTokenExpiryBufferS = 60;               // 1 minute safety margin
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-/// TS REF: xaaIdpLogin.ts:55-76 IdpLoginOptions
 struct IdpLoginOptions {
     std::string idp_issuer;
     std::string idp_client_id;
@@ -67,7 +63,6 @@ struct IdpLoginOptions {
     bool skip_browser_open = false;
 };
 
-/// TS REF: OIDC discovery metadata (subset used by XAA)
 struct OidcMetadata {
     std::string issuer;
     std::string authorization_endpoint;
@@ -109,7 +104,6 @@ struct XaaLoginResult {
 
 // ─── Issuer Key Normalization ─────────────────────────────────────────────
 
-/// TS REF: xaaIdpLogin.ts:84-93 issuerKey()
 /// Normalize an IdP issuer URL for use as a cache key.
 [[nodiscard]] inline std::string issuer_key(std::string_view issuer) {
     // Try to parse as URL and normalize (lowercase host, strip trailing slash)
@@ -139,8 +133,6 @@ struct XaaLoginResult {
 
 namespace detail {
 
-/// TS REF: xaa.ts:91-97 redactTokens()
-///
 /// Redacts sensitive token values from debug output. Works on both parsed and
 /// raw string bodies.
 ///
@@ -161,7 +153,6 @@ namespace detail {
         std::regex_constants::format_default);
 }
 
-/// TS REF: xaaIdpLogin.ts:27 getSecureStorage()
 /// Storage path for XAA IdP tokens: ~/.config/loom/xaa/idp_tokens.json
 [[nodiscard]] inline fs::path idp_token_storage_path() {
     const char* home = std::getenv("HOME");
@@ -194,7 +185,6 @@ inline void ensure_owner_only_store_dir(const fs::path& file_path) {
                     ec);
 }
 
-/// TS REF: xaaIdpLogin.ts:99-107 getCachedIdpIdToken()
 /// Read cached id_token for the given IdP issuer from secure storage.
 /// Returns nullopt if missing or within expiry buffer.
 struct CachedIdpToken {
@@ -238,7 +228,6 @@ struct CachedIdpToken {
     return cached;
 }
 
-/// TS REF: xaaIdpLogin.ts:109-123 saveIdpIdToken()
 inline void write_cached_idp_token(
     std::string_view idp_issuer,
     std::string_view id_token,
@@ -284,7 +273,6 @@ inline void write_cached_idp_token(
                                          loom::utils::AtomicMode::OwnerOnly);
 }
 
-/// TS REF: xaaIdpLogin.ts:143-150 clearIdpIdToken()
 inline void remove_cached_idp_token(std::string_view idp_issuer) {
     auto path = idp_token_storage_path();
     if (!fs::exists(path)) return;
@@ -307,7 +295,6 @@ inline void remove_cached_idp_token(std::string_view idp_issuer) {
                                          loom::utils::AtomicMode::OwnerOnly);
 }
 
-/// TS REF: xaaIdpLogin.ts:159-172 saveIdpClientSecret() / 177-181 getIdpClientSecret()
 inline void write_idp_client_secret(
     std::string_view idp_issuer,
     std::string_view client_secret) {
@@ -366,7 +353,7 @@ inline void write_idp_client_secret(
     return val;
 }
 
-/// TS REF: xaaIdpLogin.ts — clear client secret entry for an issuer.
+/// Clear client secret entry for an issuer.
 inline void remove_idp_client_secret(std::string_view idp_issuer) {
     auto path = idp_token_storage_path();
     if (!fs::exists(path)) return;
@@ -393,7 +380,6 @@ inline void remove_idp_client_secret(std::string_view idp_issuer) {
 
 // ─── Public IdP token storage API ─────────────────────────────────────────
 
-/// TS REF: xaaIdpLogin.ts:99-107
 [[nodiscard]] inline std::optional<std::string> get_cached_idp_id_token(
     std::string_view idp_issuer) {
     auto cached = detail::read_cached_idp_token(idp_issuer);
@@ -401,7 +387,6 @@ inline void remove_idp_client_secret(std::string_view idp_issuer) {
     return cached->id_token;
 }
 
-/// TS REF: xaaIdpLogin.ts:133-141 saveIdpIdTokenFromJwt()
 /// Save an externally-obtained id_token. Parses JWT exp for TTL.
 /// Returns the computed expiresAt in ms.
 inline int64_t save_idp_id_token_from_jwt(
@@ -417,18 +402,15 @@ inline int64_t save_idp_id_token_from_jwt(
     return expires_at_ms;
 }
 
-/// TS REF: xaaIdpLogin.ts:143-150
 inline void clear_idp_id_token(std::string_view idp_issuer) {
     detail::remove_cached_idp_token(idp_issuer);
 }
 
-/// TS REF: xaaIdpLogin.ts:177-181 getIdpClientSecret()
 [[nodiscard]] inline std::optional<std::string> get_idp_client_secret(
     std::string_view idp_issuer) {
     return detail::read_idp_client_secret(idp_issuer);
 }
 
-/// TS REF: xaaIdpLogin.ts:159-172 saveIdpClientSecret()
 inline void save_idp_client_secret(
     std::string_view idp_issuer,
     std::string_view client_secret) {
@@ -442,7 +424,6 @@ inline void clear_idp_client_secret(std::string_view idp_issuer) {
 
 // ─── JWT Utilities ────────────────────────────────────────────────────────
 
-/// TS REF: xaaIdpLogin.ts:252-263 jwtExp()
 /// Decode the exp claim from a JWT without verifying its signature.
 /// Returns nullopt if parsing fails or exp is absent.
 [[nodiscard]] inline std::optional<int64_t> jwt_exp(std::string_view jwt) {
@@ -509,8 +490,6 @@ struct ParsedUrl {
 
 } // namespace detail
 
-/// TS REF: xaaIdpLogin.ts:202-237 discoverOidc()
-///
 /// OIDC Discovery §4.1: {issuer}/.well-known/openid-configuration
 /// Path APPEND, not replace — trailing-slash base + relative path is correct.
 [[nodiscard]] inline Result<OidcMetadata> discover_oidc(
@@ -589,7 +568,7 @@ struct ParsedUrl {
 
 namespace detail {
 
-/// TS REF: standard URL percent-encoding
+/// Standard URL percent-encoding.
 [[nodiscard]] inline std::string url_encode(std::string_view value) {
     static constexpr char hex[] = "0123456789ABCDEF";
     std::string encoded;
@@ -846,8 +825,6 @@ private:
 
 // ─── Main: acquireIdpIdToken ──────────────────────────────────────────────
 
-/// TS REF: xaaIdpLogin.ts:401-487 acquireIdpIdToken()
-///
 /// Acquire an id_token from the IdP: return cached if valid, otherwise run
 /// the full OIDC authorization_code + PKCE flow (one browser pop).
 [[nodiscard]] inline Result<std::string> acquire_idp_id_token(
@@ -1064,7 +1041,7 @@ private:
 
 // ─── Backward-Compatible Wrapper ──────────────────────────────────────────
 
-/// TS REF: xaaIdpLogin.ts acquireIdpIdToken() — convenience wrapper for the
+/// Convenience wrapper for the
 /// /mcp xaa login command which just does the IdP login and caches the id_token.
 ///
 /// This is called from mcp_cmd.cppm's execute_xaa_login(). The full MCP flow

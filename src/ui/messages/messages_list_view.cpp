@@ -4,6 +4,7 @@
 module;
 
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/box.hpp>
 #include <ftxui/screen/color.hpp>
 
 module loom.ui.messages.messages_list;
@@ -14,6 +15,45 @@ import loom.ui.messages.message_row;
 import loom.ui.messages.virtual_list;
 
 namespace loom::ui::messages_list {
+
+// ============================================================
+// RowClickTracker bodies (inline-def ratchet) — declarations in
+// messages_list.cppm.  Used by the render path (begin/track/end) and by
+// repl_screen_events.cpp (hit_test) via messages_store.
+// ============================================================
+
+void RowClickTracker::begin_frame() noexcept { cursor = 0; }
+
+auto RowClickTracker::track_row(std::string expand_key) -> Box& {
+    if (cursor < boxes.size()) {
+        expand_keys[cursor] = std::move(expand_key);
+        Box& b = *boxes[cursor];
+        ++cursor;
+        return b;
+    }
+    expand_keys.push_back(std::move(expand_key));
+    boxes.push_back(std::make_unique<Box>());
+    Box& b = *boxes.back();
+    ++cursor;
+    return b;
+}
+
+void RowClickTracker::end_frame() noexcept {
+    if (cursor < expand_keys.size()) {
+        expand_keys.erase(expand_keys.begin() + cursor, expand_keys.end());
+        boxes.erase(boxes.begin() + cursor, boxes.end());
+    }
+}
+
+auto RowClickTracker::hit_test(int x, int y) const noexcept
+    -> std::optional<std::string> {
+    for (std::size_t i = 0; i < boxes.size(); ++i) {
+        if (boxes[i] && boxes[i]->Contain(x, y)) {
+            return expand_keys[i];
+        }
+    }
+    return std::nullopt;
+}
 
 [[nodiscard]] auto render_messages_list_virtual(
     const MessagesListInput& input_const,
@@ -36,7 +76,6 @@ namespace loom::ui::messages_list {
     const int term_cols_est = 120;   // safe default; most terminals ≥ 80
     auto virt_rows = visible_rows_to_virtual(visible, input, term_cols_est);
 
-    // TS REF: Messages.tsx L549-553  compute dividerBeforeIndex.
     const std::size_t divider_before_vi =
         detail::find_divider_before_visible_index(input, visible);
     const bool has_divider =
@@ -62,7 +101,7 @@ namespace loom::ui::messages_list {
     }
 
     // ── Pre-compute add_margin for each visible row using the same
-    //    turn-state machine as the static path (TS visual parity). ──
+    //    turn-state machine as the static path. ──
     std::vector<bool> add_margin_for_vi(visible.size(), true);
     {
         bool next_add_margin = true;
@@ -97,21 +136,16 @@ namespace loom::ui::messages_list {
                     : (is_turn_boundary ? true : next_add_margin);
                 prev_was_user = is_user_row;
 
-                // TS REF: Messages.tsx L714-719 — streaming thinking tail has
-                // addMargin={false}.  When this is the last visible row and
-                // it's a thinking block while streaming thinking is globally
-                // visible, force 0 top margin (flush against preceding row).
-                if (shape == S::AssistantThinking &&
-                    vi == visible.size() - 1 &&
-                    input.streaming_thinking_globally_visible) {
-                    add_margin_for_vi[vi] = false;
-                }
+                // Note: the streaming thinking tail is forced flush
+                // against the preceding user message, but that
+                // looks cramped — the thinking block needs visual separation
+                // from the user's message, so we keep the margin.
 
                 if (is_turn_boundary) {
                     next_add_margin = !is_user_row;
                 } else if (is_tool_result) {
-                    // TS: after a tool result, the next assistant response
-                    // starts a new visual group with marginTop=1.
+                    // After a tool result, the next assistant response
+                    // starts a new visual group with top margin = 1.
                     next_add_margin = true;
                 } else {
                     next_add_margin = false;
@@ -161,12 +195,11 @@ namespace loom::ui::messages_list {
                     add_margin);
             }
 
-            // TS REF: Messages.tsx L631-635  insert divider BEFORE the row
-            // whose visible index matches dividerBeforeIndex.  In the
-            // virtual path this callback's `row_index` is the global index
-            // into the full rows[] array (0..rows.size()-1), which maps
-            // 1:1 to visible[] because visible_rows_to_virtual preserves
-            // order with no dropping.
+            // Insert divider BEFORE the row whose visible index matches
+            // dividerBeforeIndex.  In the virtual path this callback's
+            // `row_index` is the global index into the full rows[] array
+            // (0..rows.size()-1), which maps 1:1 to visible[] because
+            // visible_rows_to_virtual preserves order with no dropping.
             if (has_divider && row_index == divider_before_vi) {
                 return vbox({
                     detail::render_unseen_divider(input.unseen_divider->count),
@@ -177,8 +210,8 @@ namespace loom::ui::messages_list {
         };
 
     // ── Wire 2-tier search engine into virtual list state ──────────────
-    // TS REF: Messages.tsx L700  extractSearchText passed to VirtualMessageList
-    //   (the same callback used by build_visible_rows search filter).
+    // The search callback is the same one used by build_visible_rows search
+    // filter.
     //
     // When input.search_query is non-empty, run the search engine over the
     // virtual rows.  This populates state.search_matches + prefixSum so
@@ -193,7 +226,7 @@ namespace loom::ui::messages_list {
     }
 
     // Wire search_step callback so scroll_keys FSM n/N keys can navigate
-    // between search matches.  TS REF: VirtualMessageList.tsx L762 search_step
+    // between search matches.
     state.callbacks.search_step =
         [&state](int delta) -> int {
             if (state.search_matches.empty()) return -1;
@@ -205,6 +238,16 @@ namespace loom::ui::messages_list {
         };
 
     Element body = vl::render_list_as_elements(state);
+    // yframe needs focusPosition to know where to scroll.  Without it,
+    // yframe shows the top of the body (the top spacer), not the visible
+    // rows — the user sees blank space instead of scrolled content.
+    if (state.scroll_top > 0) {
+        body = std::move(body)
+             | focusPosition(0, state.scroll_top + state.viewport_rows / 2);
+    }
+    // Expose the exact geometry so the caller can set virtual_jh for
+    // precise scroll bounds (eliminates the EstimateTranscriptRows dead-zone).
+    input_const.virtual_jh_out = state.jh;
     return body | yframe | vscroll_indicator | flex;
 }
 
@@ -220,10 +263,10 @@ namespace loom::ui::messages_list {
 ///        yframe | vscroll_indicator | flex.  When false, returns just the
 ///        bare vbox of rows — the caller is responsible for wrapping in a
 ///        yframe (used by RenderReplScreen which wraps Logo + messages +
-///        filler + Spinner in ONE yframe, matching TS ScrollBox).
+///        filler + Spinner in ONE yframe).
 /// @param trailing_elements Optional elements to append after the message rows
 ///        INSIDE the yframe.  Used by RenderReplScreen to inject the elastic
-///        filler (TS <Box flexGrow={1} />) so it absorbs remaining viewport
+///        filler so it absorbs remaining viewport
 ///        space without competing with yframe|flex for parent allocation.
 ///        Golden tests leave this empty.
 [[nodiscard]] auto render_messages_list_view(
@@ -234,12 +277,26 @@ namespace loom::ui::messages_list {
     bool wrap_in_yframe,
     Elements leading_elements) -> Element
 {
+    // RAII guard: reset the row-click tracker at frame start and trim
+    // excess boxes at frame end (every return path).  Without the trim,
+    // stale boxes from a previous frame would cause false hit-test hits.
+    struct FrameGuard {
+        RowClickTracker* t;
+        explicit FrameGuard(RowClickTracker* p) : t(p) {
+            if (t) t->begin_frame();
+        }
+        ~FrameGuard() { if (t) t->end_frame(); }
+    };
+    FrameGuard frame_guard(input_const.row_click_tracker);
+
     // P0-3 virtual path: for *large* transcripts, delegate to the
     // windowed renderer so 100k+ messages cost O(viewport) per paint,
-    // not O(N).  The threshold is slightly higher than `render_last_n`
-    // so small chats that fit entirely inside the Last-N cap still use
-    // the simpler, turn-state-machine-correct legacy path.
-    constexpr std::size_t kBigChatThreshold = kMaxRenderedLastN + 10;
+    // not O(N).  The threshold equals `render_last_n` so the virtual
+    // path kicks in exactly when the static path would start capping
+    // — this eliminates the 80-89 message dead zone where the static
+    // path rendered only the last 80 messages and the user could not
+    // scroll to older ones.
+    constexpr std::size_t kBigChatThreshold = kMaxRenderedLastN;
     // Build visible just to get the size check — cheap O(N) walk, the
     // virtual path would rebuild it anyway.
     {
@@ -284,7 +341,6 @@ namespace loom::ui::messages_list {
 
     // ---- Unseen divider anchor: compute BEFORE the last-N slice so the
     //      visible-index comparison is still correct after slicing with start.
-    // TS REF: Messages.tsx L549-553  dividerBeforeIndex = useMemo prefix match
     const std::size_t divider_before_vi =
         detail::find_divider_before_visible_index(input, visible);
     const bool has_divider =
@@ -300,34 +356,31 @@ namespace loom::ui::messages_list {
     Elements rows;
     rows.reserve(visible.size() - start + 3 + leading_elements.size());
     // Prepend caller-supplied leading elements (e.g. welcome/logo card) INSIDE
-    // the yframe so they scroll naturally with message content.  TS parity:
-    // LogoV2 is the first child of VirtualMessageList scrollback.
+    // the yframe so they scroll naturally with message content.
     for (auto& el : leading_elements) {
         rows.push_back(std::move(el));
     }
-    // ── TS PARITY (2026-07-05): Per-message addMargin ──────────────────────
-    // TS REF: MessageRow.tsx  addMargin = !hasMetadata.
-    //   hasMetadata = isTranscriptMode && type==="assistant" && has-text &&
+    // ── Per-message add-margin ─────────────────────────────────────────────
+    // add_margin = !has_metadata.
+    //   has_metadata = is_transcript_mode && type=="assistant" && has-text &&
     //                 (timestamp || model)
-    // In REPL mode (isTranscriptMode=false), hasMetadata is ALWAYS false →
-    // addMargin=true for every message.  Each leaf component applies
-    // marginTop={addMargin ? 1 : 0}.
+    // In REPL mode (is_transcript_mode=false), has_metadata is ALWAYS false →
+    // add_margin=true for every message.  Each leaf component applies
+    // top margin = (add_margin ? 1 : 0).
     //
-    // EXCEPTIONS (matching TS):
-    //   1. UserToolResultMessage — does NOT receive addMargin prop, 0 marginTop.
+    // EXCEPTIONS:
+    //   1. UserToolResultMessage — does NOT receive add_margin, 0 top margin.
     //      Tool results sit flush against the preceding tool_use message.
-    //   2. User continuations (isUserContinuation in TS) — user images
-    //      following another user block suppress marginTop (⎿ connector).
+    //   2. User continuations — user images following another user block
+    //      suppress top margin (⎿ connector).
     //
     // This replaces the previous "turn-boundary" model which incorrectly
     // suppressed margins on ALL assistant blocks after a user row, causing:
     //   - User→assistant text gap = 0 (too small)
     //   - Inconsistent spacing when tool results were present vs absent.
-    bool prev_was_user = false;    // for user-turn continuation ⎿ connector (TS parity)
+    bool prev_was_user = false;    // for user-turn continuation ⎿ connector
     for (std::size_t vi = start; vi < visible.size(); ++vi) {
-        // TS REF: Messages.tsx L631-635  if (index === dividerBeforeIndex)
-        //   insert <Box marginTop={1}><Divider title="N new messages" color="inactive"/></Box>
-        // BEFORE rendering the row itself.
+        // Insert the unseen divider BEFORE rendering the row itself.
         if (has_divider && vi == divider_before_vi) {
             rows.push_back(
                 detail::render_unseen_divider(input.unseen_divider->count));
@@ -350,29 +403,23 @@ namespace loom::ui::messages_list {
                  shape == S::UserPrompt ||
                  shape == S::UserCommand ||
                  shape == S::UserImage);
-            // TS: UserToolResultMessage has 0 marginTop (no addMargin prop).
+            // UserToolResultMessage has 0 top margin (no add_margin flag).
             // Also include UserBashOutput and UserLocalCommandOutput as
             // tool-result-like rows that sit flush.
             const bool is_tool_result =
                 (shape == S::UserToolResult ||
                  shape == S::UserBashOutput);
 
-            // TS PARITY: compute addMargin per-row, not per-turn.
+            // Compute add_margin per-row, not per-turn.
             //   - User rows: first user in turn → true, continuation → false (⎿)
             //   - Tool result rows: false (flush against preceding tool_use)
-            //   - All other rows: true (TS: !hasMetadata = true in REPL mode)
+            //   - All other rows: true
             bool row_add_margin = is_user_row
                 ? !prev_was_user
                 : (is_tool_result ? false : true);
-            // TS REF: Messages.tsx L714-719 — streaming thinking tail has
-            // addMargin={false} (sits flush against preceding row).  When
-            // this is the last visible row and it's a thinking block while
-            // streaming thinking is globally visible, force 0 top margin.
-            if (shape == S::AssistantThinking &&
-                vi == visible.size() - 1 &&
-                input.streaming_thinking_globally_visible) {
-                row_add_margin = false;
-            }
+            // Note: the streaming thinking tail is forced flush,
+            // but that looks cramped — keep the margin for visual
+            // separation from the preceding user message.
             prev_was_user = is_user_row;
 
             rows.push_back(detail::render_payload_row(
@@ -389,7 +436,7 @@ namespace loom::ui::messages_list {
     // Append caller-supplied trailing elements (e.g. elastic filler) INSIDE
     // the yframe so they share the viewport and don't compete with yframe|flex
     // for parent space.  Golden tests pass empty; RenderReplScreen passes the
-    // filler()|flex (TS <Box flexGrow={1} /> equivalent).
+    // filler()|flex (elastic filler equivalent).
     for (auto& el : trailing_elements) {
         rows.push_back(std::move(el));
     }
@@ -409,20 +456,19 @@ namespace loom::ui::messages_list {
     }
 
     // ── Pin-to-bottom: only apply when content exceeds viewport ─────────
-    // TS REF: FullscreenLayout stickyScroll — when content fits in the
-    // viewport, the entire content is visible (no scrolling needed).  In
-    // FTXUI, applying focusPositionRelative(0,1) on a child that is SHORTER
-    // than the yframe viewport causes the child to be BOTTOM-ALIGNED in
-    // the viewport, leaving blank space above the content.  This is the
-    // root cause of the "large blank area below logo" bug: with 1-2
-    // messages and pin_to_bottom=true, the messages were pushed to the
+    // When content fits in the viewport, the entire content is visible (no
+    // scrolling needed).  In FTXUI, applying focusPositionRelative(0,1) on a
+    // child that is SHORTER than the yframe viewport causes the child to be
+    // BOTTOM-ALIGNED in the viewport, leaving blank space above the content.
+    // This is the root cause of the "large blank area below logo" bug: with
+    // 1-2 messages and pin_to_bottom=true, the messages were pushed to the
     // bottom of the yframe viewport.
     //
     // Fix: estimate total content height using the same row-height estimator
     // that drives the virtual scroll (P0-3).  Only apply focusPositionRelative
     // when the estimated content height exceeds viewport_rows.  When content
     // fits, the yframe shows the content top-aligned by default — matching
-    // TS behavior where short content is top-aligned and no scrolling occurs.
+    // behavior where short content is top-aligned and no scrolling occurs.
     const int vp = std::max(1, input.viewport_rows);
     int estimated_total_lines = 0;
     for (const auto& vr : visible) {

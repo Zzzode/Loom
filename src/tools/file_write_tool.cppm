@@ -281,7 +281,6 @@ private:
             
             output.bytes_written = input.content.size();
 
-            // TS REF: src/tools/FileWriteTool/FileWriteTool.ts L234-245
             // After writing a file, discover any skill directories it belongs to
             // and activate conditional skills matching its path.
             {

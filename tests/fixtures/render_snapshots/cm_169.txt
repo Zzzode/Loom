@@ -1,0 +1,6 @@
+import Text.HTML.TagSoup
+
+main :: IO ()
+main = print $ parseTags tags
+
+okay

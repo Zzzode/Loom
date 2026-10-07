@@ -35,7 +35,7 @@ namespace brief_detail {
     return false;
 }
 
-/// Returns true if the tool name triggers dropTextInBriefTurns (TS: dropTextToolNames).
+/// Returns true if the tool name triggers dropTextInBriefTurns.
 [[nodiscard]] bool is_drop_text_tool_name(std::string_view name) {
     for (auto tn : kDropTextToolNames) {
         if (name == tn) return true;
@@ -61,7 +61,6 @@ namespace brief_detail {
 }  // namespace brief_detail
 
 /// Returns true if the row at index `i` should be VISIBLE in brief mode.
-/// TS REF: Messages.tsx filterForBriefTool (lines 93-158).
 auto passes_brief_filter(
     MessageShape shape,
     const MessageRowPayload& payload) -> bool {
@@ -69,7 +68,7 @@ auto passes_brief_filter(
     namespace bd = brief_detail;
 
     switch (shape) {
-        // System rows: always visible (TS: system messages must stay visible
+        // System rows: always visible (system messages must stay visible
         // for user feedback; api_metrics subtype dropped but not tagged in CPP)
         case S::SystemText:
         case S::SystemRateLimit:
@@ -122,7 +121,7 @@ auto passes_brief_filter(
 }
 
 // ---------------------------------------------------------------------------
-// dropTextInBriefTurns (TS REF: Messages.tsx L169-206).
+// dropTextInBriefTurns.
 //
 // In default mode (neither transcript nor brief-only), drops assistant TEXT
 // rows in turns that called a Brief/SendUserMessage/SendUserFile tool.  The
@@ -154,7 +153,6 @@ auto passes_brief_filter(
     for (std::size_t i = 0; i < N; ++i) {
         const auto sh = shapes[i];
         // Real user message (non-tool_result) → advance turn counter.
-        // TS REF: L188  msg.type === 'user' && block?.type !== 'tool_result' && !msg.isMeta
         const bool is_real_user =
             (sh == S::UserText || sh == S::UserPrompt || sh == S::UserCommand ||
              sh == S::UserBashInput || sh == S::UserBashOutput ||
@@ -190,7 +188,7 @@ auto passes_brief_filter(
 }
 
 // ---------------------------------------------------------------------------
-// Expand-key computation (TS REF: Messages.tsx expandKey L725-727)
+// Expand-key computation
 //
 // For tool_use and tool_result rows, returns the tool_name so a tool_use
 // and its corresponding tool_result share the same key and expand together.
@@ -208,12 +206,11 @@ auto passes_brief_filter(
         auto name = bd::extract_tool_name(payload);
         if (!name.empty()) return std::string(name);
     }
-    // Fallback: use uuid (first 24 chars to match TS deriveUUID prefix)
+    // Fallback: use uuid (first 24 chars to match deriveUUID prefix)
     if (!uuid.empty()) return std::string(uuid.substr(0, 24));
     return {};
 }
 
-/// TS REF: Messages.tsx isItemClickable (L582-594).
 /// Returns true if the row supports click-to-expand: tool results that are
 /// truncated, collapsed read/search groups, or advisor tool results.
 [[nodiscard]] bool is_row_clickable(
@@ -225,10 +222,14 @@ auto passes_brief_filter(
     // Collapsed content groups: always clickable
     if (shape == S::SystemCollapsedContent) return true;
 
-    // Tool results: clickable if the result is marked truncated
+    // Tool results: clickable if they have content to expand/collapse.
+    // The UI truncates long output to 10 lines by default, so any tool
+    // result with content is potentially expandable.
     if (shape == S::UserToolResult) {
         if (auto* opts = std::get_if<::loom::ui::messages::ToolResultOptions>(&payload)) {
-            return opts->is_truncated;
+            return opts->is_truncated ||
+                   (opts->output && !opts->output->empty()) ||
+                   (opts->content_items && !opts->content_items->empty());
         }
     }
 
@@ -238,6 +239,17 @@ auto passes_brief_filter(
         if (auto* opts = std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(&payload)) {
             return opts->call.result_preview.has_value() &&
                    !opts->call.result_preview->empty();
+        }
+    }
+
+    // Thinking blocks: clickable if they have content to expand.
+    // Redacted thinking is excluded — the placeholder has nothing to reveal.
+    if (shape == S::AssistantThinking) {
+        if (auto* opts = std::get_if<
+                ::loom::ui::messages::thinking_message::ThinkingMessageOptions>(
+                &payload)) {
+            return !opts->data.raw_text.empty() ||
+                   !opts->data.sections.empty();
         }
     }
 
@@ -263,7 +275,7 @@ namespace detail {
 
 /// Lower-case a UTF-8 string in place.  Only touches ASCII letters because
 /// MessageRowPayload text fields are overwhelmingly English / path literals
-/// (same strategy as TS renderableSearchText → toLowerCase).
+/// (same strategy as renderableSearchText → toLowerCase).
 auto lowered(std::string s) -> std::string {
     for (auto& c : s) {
         if (c >= 'A' && c <= 'Z') c = static_cast<char>(c + ('a' - 'A'));
@@ -274,17 +286,6 @@ auto lowered(std::string s) -> std::string {
 // =========================================================================
 // 2c)  Cached lowered search text accessor
 // =========================================================================
-// TS REF: Messages.tsx L649-676
-//   const searchTextCache = useRef(new WeakMap<RenderableMessage, string>());
-//   const extractSearchText = useCallback((msg) => {
-//     const cached = searchTextCache.current.get(msg);
-//     if (cached !== undefined) return cached;
-//     let text = renderableSearchText(msg);
-//     // ... tool.extractSearchText override ...
-//     const lowered = text.toLowerCase();
-//     searchTextCache.current.set(msg, lowered);
-//     return lowered;
-//   }, [...]);
 //
 // Returns the LOWERED rich searchable text for row_idx, using the per-row
 // cache on MessagesListInput.  First call computes + caches; subsequent
@@ -311,7 +312,7 @@ auto lowered(std::string s) -> std::string {
     }
 
     // Cache miss: compute + store.  extract_search_text does the 2-tier
-    // lookup (tool.extractSearchText preferred, renderableSearchText
+    // lookup (tool-owned extract_search_text preferred, payload_preview
     // fallback); we lower once here and cache the result.
     std::string lowered_text = detail::lowered(
         detail::extract_search_text(input.rows[row_idx], shape));
@@ -319,9 +320,8 @@ auto lowered(std::string s) -> std::string {
     return lowered_text;
 }
 
-/// Returns true for message SHAPEs that belong to each filter category.
-/// Mirrors the TS Messages.tsx category switches (system / tool_use /
-/// tool_result / thinking / compacted).
+/// Returns true for message SHAPEs that belong to each filter category
+/// (system / tool_use / tool_result / thinking / compacted).
 auto shape_category(MessageShape s) -> std::string_view {
     switch (s) {
         // system family
@@ -384,7 +384,6 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
 
     // ---- Step 0b : pre-compute dropTextInBriefTurns mask for default mode.
     //              Only needed when NOT in transcript mode AND NOT in brief mode.
-    //              TS REF: Messages.tsx L510-514 (3-tier briefFiltered logic).
     std::vector<bool> drop_text_keep_mask;
     const bool apply_drop_text = !input.is_transcript_mode && !input.is_brief_mode;
     if (apply_drop_text && N > 0) {
@@ -394,7 +393,7 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
     // ---- Step 1 : mark rows that pass (filters AND search AND 3-tier filter).
     //              Separately build a "row visible" bitmask so Step 2 can use it.
     //
-    // 3-tier filter (TS REF: Messages.tsx L505-514):
+    // 3-tier filter:
     //   Tier 1 (transcript mode): show ALL message types — bypass brief/dropText.
     //   Tier 2 (brief-only):     only brief tool chain + user input + system.
     //   Tier 3 (default):        drop assistant text in turns that called Brief
@@ -405,27 +404,24 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
         if (!detail::passes_filters(input.shapes[i], input.filters)) continue;
 
         // Tier 1: transcript mode — skip brief/dropText filters entirely.
-        // TS REF: L514  !isTranscriptMode ? ... : messagesToShowNotTruncated
         if (!input.is_transcript_mode) {
             if (input.is_brief_mode) {
                 // Tier 2: brief-only — filterForBriefTool.
-                // TS REF: L514  isBriefOnly ? filterForBriefTool(...)
                 if (i < input.rows.size() &&
                     !passes_brief_filter(input.shapes[i], input.rows[i])) {
                     continue;
                 }
             } else if (apply_drop_text && i < drop_text_keep_mask.size()) {
                 // Tier 3: default — dropTextInBriefTurns.
-                // TS REF: L514  dropTextInBriefTurns(messagesToShowNotTruncated, ...)
                 if (!drop_text_keep_mask[i]) continue;
             }
         }
 
         if (do_search) {
-            // TS REF: Messages.tsx L650-676  2-tier search text extraction
-            //   with WeakMap cache.  Use cached accessor: first call computes
-            //   + caches lowered rich text; subsequent calls (visible_rows_to_virtual
-            //   scroll_search) hit the cache with zero alloc.
+            // 2-tier search text extraction with cache.  Use cached accessor:
+            // first call computes + caches lowered rich text; subsequent calls
+            // (visible_rows_to_virtual scroll_search) hit the cache with zero
+            // alloc.
             const std::string hay = detail::get_cached_lowered_search_text(
                 input, i, input.shapes[i]);
             if (hay.find(needle) == std::string::npos) continue;
@@ -453,7 +449,7 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
             for (std::size_t r = s; r < e; ++r) {
                 if (!row_passes[r]) continue;
                 ++vcount;
-                // Tool-turn heuristics (same as TS collapsed_content_message):
+                // Tool-turn heuristics (same as collapsed_content_message):
                 //   AssistantToolUse / AssistantGroupedTools each count as one
                 //   "tool turn" inside the collapsed window.
                 if (r < input.shapes.size()) {
@@ -519,9 +515,11 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
         }
         // 2) rows inside an active group are skipped
         if (consumed_by_group[i]) continue;
-        // 3) skip hidden thinking rows entirely (TS returns null → zero height;
+        // 3) skip hidden thinking rows entirely (returns null → zero height;
         //    FTXUI vbox always allocates 1 line per child, so we must not emit them).
         //    Keep them visible if selected (user expanded) or streaming tail.
+        //    Completed thinking rows are NOT hidden here — they render as a
+        //    collapsed "∴ Thought for Xs" summary that can be expanded on click.
         if (i < input.shapes.size()) {
             const auto shape = input.shapes[i];
             if (shape == MessageShape::AssistantThinking ||
@@ -531,16 +529,9 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
                 const bool is_streaming = (i == input.streaming_tail_row &&
                     input.streaming_tail_row < input.rows.size());
                 if (!is_selected_row && !is_streaming) {
-                    // TS REF: Messages.tsx L395-419 — when streaming thinking
-                    // is globally visible, hide ALL completed thinking rows
-                    // (TS: lastThinkingBlockId = 'streaming' means no
-                    // completed thinking block matches → all are hidden).
+                    // During the streaming grace period, hide ALL completed
+                    // thinking rows — only the streaming-tail row is visible.
                     if (input.streaming_thinking_globally_visible) continue;
-                    if (auto* opts = std::get_if<thinking_message::ThinkingMessageOptions>(
-                            &input.rows[i])) {
-                        using TM = thinking_message::ThinkingState;
-                        if (opts->data.state == TM::Complete) continue;
-                    }
                 }
             }
         }
@@ -552,7 +543,7 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
         });
     }
 
-    // ---- Step 4 : transcript-mode cap (TS REF: Messages.tsx L515-516, L276).
+    // ---- Step 4 : transcript-mode cap.
     //              When is_transcript_mode and NOT show_all_in_transcript, cap
     //              visible rows to last kMaxMessagesInTranscriptMode (30).
     //              Prepend a TranscriptCapDivider showing how many were hidden.

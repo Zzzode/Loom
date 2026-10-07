@@ -92,14 +92,14 @@ void AppAdapter::OpenAgentsMenu() {
     }
 
     /// Rebuild live_teammates from native store + pane observer, then open
-    /// the TeamsView modal (TS PromptInput.tsx 'teams' footer action).
+    /// the TeamsView modal ('teams' footer action).
 void AppAdapter::OpenTeamsOverview() {
         ProjectLiveTeammatesToScreenState();
         screen_state_->task_view_store.teams_overview_selected_index = 0;
         loom::ui::dialogs::triggers::PushTeamsView(
             screen_state_->dialog_store.dialog_queue,
             [this] {
-                screen_state_->dialog_store.dialog_queue.pop_modal();
+                screen_state_->dialog_store.PopModal();
                 PostRenderEvent();
             });
         PostRenderEvent();
@@ -146,8 +146,7 @@ bool AppAdapter::HandleLocalJsxEvent(const Event& ev) {
                     screen_state_->task_view_store.agent_cards[agent_index].id;
             }
             ClearActiveLocalJsxCommand();
-            screen_state_->messages_store.scroll_offset = 0;
-            screen_state_->messages_store.scroll_pinned_to_bottom = true;
+            ResetScrollToBottom(screen_state_->messages_store);
             HandleCommand(command);
             PostRenderEvent();
             return true;
@@ -274,8 +273,8 @@ void AppAdapter::LoadAgentCardsForMenu() {
 void AppAdapter::SyncState() {
     auto messages = static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
 
-    // Bridge / remote-control footer projection (TS PromptInputFooter
-    // reads replBridge* from AppState).
+    // Bridge / remote-control footer projection (reads replBridge* from
+    // AppState).
     if (has_app_store()) {
         const auto b = bridge_state();
         screen_state_->bridge_enabled        = b.enabled;
@@ -285,7 +284,7 @@ void AppAdapter::SyncState() {
         screen_state_->bridge_reconnecting   = b.reconnecting;
     }
 
-    // TS Messages.tsx:520 collapse chain (background-bash so far).
+    // Collapse chain for background-bash and similar collapsible rows.
     messages = ApplyMessageCollapsePipeline(std::move(messages));
     loom::utils::debug("app.sync",
         "SyncState: engine has {} messages", messages.size());
@@ -394,7 +393,7 @@ void AppAdapter::ConsumePendingResult() {
     }
 
     if (query_running_.load()) return;
-    if (screen_state_->task_view_store.spinner_mode == repl::SpinnerMode::Hidden) return;
+    if (!repl::IsToolAnimating(screen_state_->task_view_store)) return;
 
     loom::utils::debug("app.consume",
         "ConsumePendingResult firing — spinner_mode={}, calling SyncState",
@@ -425,7 +424,7 @@ void AppAdapter::ConsumePendingResult() {
         }
         screen_state_->messages_store.messages.push_back(std::move(error_entry));
     }
-    screen_state_->task_view_store.spinner_mode = repl::SpinnerMode::Hidden;
+    repl::SetSpinner(screen_state_->task_view_store, repl::SpinnerMode::Hidden);
     screen_state_->task_view_store.spinner_verb = std::nullopt;
     screen_state_->task_view_store.spinner_tip = std::nullopt;
     streaming_text_.clear();
@@ -467,7 +466,7 @@ void AppAdapter::WaitForInFlightPastes(const std::string& text) {
         this->ProcessCompletedPastes();
         bool still_waiting = false;
         for (int id : needed) {
-            if (in_flight_pastes_.contains(id)) {
+            if (paste_.is_in_flight(id)) {
                 still_waiting = true;
                 break;
             }
@@ -481,116 +480,80 @@ void AppAdapter::WaitForInFlightPastes(const std::string& text) {
 // ── get_permission_callback (moved out to remove dialogs.system/triggers) ─
 std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permission_callback() {
     return [this](std::string_view tool_name, std::string_view tool_args) -> bool {
+        // Fast path: always-allowed tools skip the dialog entirely.
+        if (permission_.is_always_allowed(tool_name))
+            return true;
+
+        // Computer-use actions get their own panel: approving one hands
+        // the model real screen/mouse/keyboard control, so the concrete
+        // action (click/type/scroll + target) must be shown, not a bare
+        // tool name.
+        auto respond_cb = [this, tool_name = std::string(tool_name)](
+            dsys::ToolPermissionPayload::Decision decision,
+            bool /*sandbox*/)
         {
-            std::lock_guard lk(permission_mutex_);
-            if (always_allowed_tools_.contains(std::string(tool_name)))
-                return true;
-
-            // Computer-use actions get their own panel: approving one hands
-            // the model real screen/mouse/keyboard control, so the concrete
-            // action (click/type/scroll + target) must be shown, not a bare
-            // tool name. TS REF: ComputerUseApproval.tsx.
-            auto respond_cb = [this, tool_name = std::string(tool_name)](
-                dsys::ToolPermissionPayload::Decision decision,
-                bool /*sandbox*/)
-            {
-                std::lock_guard lk(permission_mutex_);
-                bool allowed =
-                    (decision == dsys::ToolPermissionPayload::Decision::AllowOnce ||
-                     decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow);
-                if (decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow) {
-                    always_allowed_tools_.insert(tool_name);
-                }
-                screen_state_->dialog_store.dialog_queue.pop_overlay();
-                permission_response_ = allowed;
-                permission_cv_.notify_one();
-            };
-            auto abort_cb = [this] {
-                std::lock_guard lk(permission_mutex_);
-                screen_state_->dialog_store.dialog_queue.pop_overlay();
-                permission_response_ = false;
-                permission_cv_.notify_one();
-            };
-
-            if (auto cu_options =
-                    cperm::options_from_tool_input(tool_args)) {
-                namespace sp = loom::ui::permissions::single_prompt;
-                sp::DetailComputerUse detail;
-                detail.action_label =
-                    std::string(cperm::action_description(cu_options->action));
-                detail.target_app = cu_options->target_app;
-                detail.coordinates = cu_options->coordinates;
-                detail.text_to_type = cu_options->text_to_type;
-                detail.first_use_in_session =
-                    !computer_use_seen_in_session_;
-                computer_use_seen_in_session_ = true;
-                dtrig::PushToolPermissionDetailed(
-                    screen_state_->dialog_store.dialog_queue,
-                    std::string(tool_name),
-                    std::format("Loom wants to control your screen: {}",
-                                cperm::action_description(cu_options->action)),
-                    sp::ActionKind::Execute,
-                    sp::ToolDetail{std::move(detail)},
-                    respond_cb, abort_cb,
-                    /*can_always_allow=*/true);
-                permission_response_.reset();
-                PostRenderEvent();
-
-                std::unique_lock lk(permission_mutex_);
-                permission_cv_.wait(lk, [this] { return permission_response_.has_value(); });
-                bool allowed = *permission_response_;
-                permission_response_.reset();
-                return allowed;
+            bool allowed =
+                (decision == dsys::ToolPermissionPayload::Decision::AllowOnce ||
+                 decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow);
+            if (decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow) {
+                permission_.add_always_allowed(tool_name);
             }
+            screen_state_->dialog_store.PopOverlay();
+            permission_.resolve_permission(allowed);
+        };
+        auto abort_cb = [this] {
+            screen_state_->dialog_store.PopOverlay();
+            permission_.resolve_permission(false);
+        };
 
-            dtrig::PushToolPermission(
+        if (auto cu_options =
+                cperm::options_from_tool_input(tool_args)) {
+            namespace sp = loom::ui::permissions::single_prompt;
+            sp::DetailComputerUse detail;
+            detail.action_label =
+                std::string(cperm::action_description(cu_options->action));
+            detail.target_app = cu_options->target_app;
+            detail.coordinates = cu_options->coordinates;
+            detail.text_to_type = cu_options->text_to_type;
+            detail.first_use_in_session =
+                permission_.take_computer_use_first_use();
+            dtrig::PushToolPermissionDetailed(
                 screen_state_->dialog_store.dialog_queue,
                 std::string(tool_name),
-                std::string(tool_args),
-                /*on_response=*/[this, tool_name = std::string(tool_name)](
-                    dsys::ToolPermissionPayload::Decision decision,
-                    bool /*sandbox*/)
-                {
-                    std::lock_guard lk(permission_mutex_);
-                    bool allowed =
-                        (decision == dsys::ToolPermissionPayload::Decision::AllowOnce ||
-                         decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow);
-                    if (decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow) {
-                        always_allowed_tools_.insert(tool_name);
-                    }
-                    screen_state_->dialog_store.dialog_queue.pop_overlay();
-                    permission_response_ = allowed;
-                    permission_cv_.notify_one();
-                },
-                /*on_abort=*/[this] {
-                    std::lock_guard lk(permission_mutex_);
-                    screen_state_->dialog_store.dialog_queue.pop_overlay();
-                    permission_response_ = false;
-                    permission_cv_.notify_one();
-                },
+                std::format("Loom wants to control your screen: {}",
+                            cperm::action_description(cu_options->action)),
+                sp::ActionKind::Execute,
+                sp::ToolDetail{std::move(detail)},
+                respond_cb, abort_cb,
                 /*can_always_allow=*/true);
-
-            permission_response_.reset();
+            permission_.reset_permission_response();
+            PostRenderEvent();
+            return permission_.wait_permission_response();
         }
-        PostRenderEvent();
 
-        std::unique_lock lk(permission_mutex_);
-        permission_cv_.wait(lk, [this] { return permission_response_.has_value(); });
-        bool allowed = *permission_response_;
-        permission_response_.reset();
-        return allowed;
+        dtrig::PushToolPermission(
+            screen_state_->dialog_store.dialog_queue,
+            std::string(tool_name),
+            std::string(tool_args),
+            /*on_response=*/respond_cb,
+            /*on_abort=*/abort_cb,
+            /*can_always_allow=*/true);
+
+        permission_.reset_permission_response();
+        PostRenderEvent();
+        return permission_.wait_permission_response();
     };
 }
 
 // ── trigger_orphan_cleanup_for_testing (moved out for parse_references) ──
 void AppAdapter::trigger_orphan_cleanup_for_testing() {
-    if (pasted_contents_.empty()) return;
+    if (paste_.pasted_contents().empty()) return;
     const auto refs = loom::utils::parse_references(screen_state_->input_text);
     std::unordered_set<int> referenced_ids;
     for (const auto& r : refs) referenced_ids.insert(r.id);
-    for (auto it = pasted_contents_.begin(); it != pasted_contents_.end(); ) {
+    for (auto it = paste_.pasted_contents().begin(); it != paste_.pasted_contents().end(); ) {
         if (!referenced_ids.contains(it->first)) {
-            it = pasted_contents_.erase(it);
+            it = paste_.pasted_contents().erase(it);
         } else {
             ++it;
         }

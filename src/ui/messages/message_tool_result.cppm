@@ -83,20 +83,19 @@ using namespace ftxui;
 }
 
 // ─── JSON text-payload unwrapper ────────────────────────────────────────
-// TS REF: src/tools/MCPTool/UI.tsx tryUnwrapTextPayload (line 327)
 //
 // MCP tools sometimes return results as a JSON object like:
 //   {"analysis":"The image shows...\\n\\n---\\n\\nDetails..."}
 //   {"text":"The image shows...","confidence":"high"}
 //
-// TS behavior: only processes content that STARTS with '{' (JSON object),
+// Only processes content that STARTS with '{' (JSON object),
 // max 4 keys at top level, finds one "dominant" string value (>200 chars
 // or contains \n and >50 chars).  Returns the dominant string for display
 // via OutputLine (NOT markdown — tool output is always plain/ANSI).
 //
 // IMPORTANT: content like "analyze_image_result_summary: [{\"text\":\"...\"}]"
 // does NOT start with '{', so this function returns nullopt and the raw
-// content is displayed (matches TS screenshot behavior).
+// content is displayed.
 namespace detail {
 
 /// Extract a JSON-escaped string value starting at position `pos` in `s`.
@@ -129,20 +128,20 @@ namespace detail {
     return result;  // unterminated string — return what we have
 }
 
-/// TS-faithful tryUnwrapTextPayload: only matches '{' at start, max 4 keys,
+/// tryUnwrapTextPayload: only matches '{' at start, max 4 keys,
 /// finds dominant string value.  Returns the extracted text or nullopt.
 [[nodiscard]] std::optional<std::string> try_unwrap_text_payload(std::string_view s) {
     // Trim leading whitespace
     auto start = s.find_first_not_of(" \t\n\r");
     if (start == std::string_view::npos) return std::nullopt;
 
-    // TS: only processes JSON objects starting with '{'
+    // Only processes JSON objects starting with '{'
     // Arrays like [{"text":"..."}] or prefixes like "result: [{...}]" are
     // NOT unwrapped — raw content is shown instead.
     if (s[start] != '{') return std::nullopt;
 
     // Known keys that typically hold natural-language text payloads.
-    // TS looks for ANY string value that is "dominant" (large enough),
+    // Looks for ANY string value that is "dominant" (large enough),
     // not just specific key names — but we prioritize known text keys.
     static constexpr std::string_view kTextKeys[] = {
         "text", "messages", "content", "analysis",
@@ -152,7 +151,7 @@ namespace detail {
 
     // Scan for key-value patterns: "key":"value"  inside the JSON object.
     // We try each known key; if none match, we also try a generic scan for
-    // any large string value (TS: "dominant string" detection).
+    // any large string value ("dominant string" detection).
     std::string best_value;
     for (auto key : kTextKeys) {
         std::string pat = "\"";
@@ -171,7 +170,7 @@ namespace detail {
                 std::size_t extract_pos = after_key;
                 std::string extracted = extract_json_string(s, extract_pos);
 
-                // TS: dominant string = >200 chars OR (contains \n AND >50 chars)
+                // Dominant string = >200 chars OR (contains \n AND >50 chars)
                 if (extracted.size() > best_value.size() &&
                     (extracted.size() > 200 ||
                      (extracted.find('\n') != std::string::npos && extracted.size() > 50))) {
@@ -194,8 +193,8 @@ namespace detail {
 /// followed by a JSON array containing one object with a "text" key.
 /// The inner text is a JSON-encoded string with \n, \", \\ escapes.
 ///
-/// TS has no explicit handler for this format (it falls through to
-/// OutputLine raw display), but the TS MCP SDK's JSON-RPC parser already
+/// There is no explicit handler for this format (it falls through to
+/// OutputLine raw display), but the MCP SDK's JSON-RPC parser already
 /// decodes the outer transport layer, so the escapes may be partially
 /// decoded before reaching the UI.  Our CPP MCP client preserves the raw
 /// text, so we need this extraction step.
@@ -241,10 +240,9 @@ namespace detail {
 } // namespace detail
 
 /// Tools whose results are LLM-generated natural language (not raw structured
-/// output).  TS REF: src/components/ToolResult.tsx — AgentTool, BriefTool,
-/// ExitPlanModeTool all use <Markdown> for their results.  NOTE: MCP tools
-/// (like analyze_image) do NOT get markdown — they use MCPTextOutput →
-/// OutputLine (plain ANSI text only).
+/// output).  AgentTool, BriefTool, ExitPlanModeTool all render their results
+/// as markdown.  NOTE: MCP tools (like analyze_image) do NOT get markdown —
+/// they use MCPTextOutput → OutputLine (plain ANSI text only).
 [[nodiscard]] inline bool tool_produces_natural_language(std::string_view tool_name) {
     using namespace std::string_view_literals;
     static constexpr std::string_view kNL[] = {
@@ -275,7 +273,7 @@ struct ToolResultOptions {
     std::optional<double> duration_ms;
     bool is_truncated{false};
     bool is_transcript_mode{false};
-    /// TS PARITY (2026-07-04): structured content items from MCP results.
+    /// Structured content items from MCP results.
     /// When present, the faithful renderer iterates these instead of the
     /// flattened `output` string.
     std::optional<std::vector<loom::core::ToolResultContentItem>> content_items;
@@ -321,29 +319,28 @@ struct ToolResultOptions {
     return vbox(elements);
 }
 
-// ─── Faithful TS renderer (UserToolResultMessage.tsx) ──────────────────────
-// Mirrors the TS UserToolResultMessage dispatcher and its four sub-renderers
-// (UserToolCanceledMessage, UserToolRejectMessage, UserToolErrorMessage,
-// UserToolSuccessMessage) plus their shared MessageResponse envelope.
+// ─── Faithful renderer ──────────────────────────────────────────────────
+// The dispatcher and its four sub-renderers (Canceled, Rejected, Error,
+// Success) plus their shared MessageResponse envelope.
 //
-// DISPATCH TABLE (matches TS if-chain order):
+// DISPATCH TABLE:
 //   1. content starts with CANCEL_MESSAGE  → Canceled  (InterruptedByUser)
 //   2. content starts with REJECT_MESSAGE
 //      or content == INTERRUPT_MESSAGE    → Rejected
 //   3. is_error                           → Error
 //   4. otherwise                           → Success
 //
-// Each sub-renderer falls back to the generic TS fallback component output when
-// the tool-specific renderer is unavailable (tool renderers not ported yet).
+// Each sub-renderer falls back to the generic fallback component output when
+// the tool-specific renderer is unavailable.
 //
-// Visual chrome matches TS exactly:
+// Visual chrome:
 //   • MessageResponse prefix: "  ⎿  " (dim, left-gutter style)
 //   • Canceled/Rejected: single-line dim "Interrupted" / "Tool use rejected"
 //   • Error: red "Error: ..." text inside MessageResponse, +N lines hint
 //   • Success: tool output body (dim, ANSI-aware), no MessageResponse wrapper
 //     because success output renders as part of the message body directly.
 
-/// Kind of tool result — mirrors TS dispatch semantics.
+/// Kind of tool result.
 enum class ToolResultKind {
     Success,          // normal successful tool result (default)
     Error,            // is_error = true (generic error fallback)
@@ -354,7 +351,7 @@ enum class ToolResultKind {
     ClassifierDenied, // auto-mode classifier denied the tool
 };
 
-/// Faithful data model — mirrors the TS UserToolResultMessage props shape.
+/// Faithful data model.
 struct ToolResultFaithfulData {
     std::string tool_name;
     ToolResultKind kind{ToolResultKind::Success};
@@ -366,7 +363,7 @@ struct ToolResultFaithfulData {
     ///   other kinds    → unused (text is fixed per kind)
     std::optional<std::string> content;
 
-    /// TS PARITY (2026-07-04): structured content items from MCP results.
+    /// Structured content items from MCP results.
     /// When present, the Success renderer iterates these instead of using
     /// the flattened `content` string.  Each item may be "text" or "image".
     std::optional<std::vector<loom::core::ToolResultContentItem>> content_items;
@@ -381,12 +378,11 @@ struct ToolResultFaithfulData {
 namespace detail {
 
 // ─── MessageResponse envelope helper ───────────────────────────────────────
-// Mirrors TS <MessageResponse> component: a dim "  ⎿  " prefix (left gutter)
-// followed by the response body.  Used for all non-success tool results.
+// A dim "  ⎿  " prefix (left gutter) followed by the response body.
+// Used for all non-success tool results.
 
 [[nodiscard]] inline Element message_response_prefix() {
-    // "  ⎿  " — two spaces + hook symbol + space = 5 columns total,
-    // matching TS {"  "}⎿&nbsp; rendered width.
+    // "  ⎿  " — two spaces + hook symbol + space = 5 columns total.
     return text("  \xe2\x8e\xbf  ") | dim;
 }
 
@@ -395,7 +391,7 @@ namespace detail {
     return hbox({ message_response_prefix(), std::move(body) });
 }
 
-// ─── InterruptedByUser.tsx ─────────────────────────────────────────────────
+// ─── Interrupted-by-user ─────────────────────────────────────────────────
 // "Interrupted · What should Loom do instead?"  (dim text, middot separator)
 
 [[nodiscard]] inline Element render_interrupted_by_user() {
@@ -405,14 +401,14 @@ namespace detail {
     });
 }
 
-// ─── FallbackToolUseRejectedMessage.tsx ───────────────────────────────────
+// ─── Fallback rejected ───────────────────────────────────────────────────
 // MessageResponse + InterruptedByUser (single-line height=1).
 
 [[nodiscard]] inline Element render_fallback_rejected() {
     return wrap_message_response(render_interrupted_by_user());
 }
 
-// ─── RejectedToolUseMessage.tsx ───────────────────────────────────────────
+// ─── Rejected tool use ───────────────────────────────────────────────────
 // "Tool use rejected" (dim, single line inside MessageResponse).
 
 [[nodiscard]] inline Element render_rejected_tool_use() {
@@ -420,7 +416,7 @@ namespace detail {
 }
 
 // ─── Fallback error helpers ───────────────────────────────────────────────
-// Mirrors FallbackToolUseErrorMessage.tsx error-processing pipeline:
+// Error-processing pipeline:
 //   1. extractTag(result, "tool_use_error") ?? result
 //   2. removeSandboxViolationTags
 //   3. strip <error> tags (keep content)
@@ -455,7 +451,6 @@ namespace detail {
 }
 
 /// Remove <sandbox_violation>...</sandbox_violation> tag pairs (keep content).
-/// Mirrors TS removeSandboxViolationTags.
 [[nodiscard]] inline std::string remove_sandbox_tags(std::string_view text) {
     constexpr std::string_view kOpen  = "<sandbox_violation>";
     constexpr std::string_view kClose = "</sandbox_violation>";
@@ -485,7 +480,6 @@ namespace detail {
 }
 
 /// Strip <error> and </error> tags (keep inner content).
-/// Mirrors TS .replace(/<\/?error>/g, "").
 [[nodiscard]] inline std::string strip_error_tags(std::string_view text) {
     constexpr std::string_view kOpen  = "<error>";
     constexpr std::string_view kClose = "</error>";
@@ -556,7 +550,7 @@ constexpr int kMaxRenderedLines = 10;
     return std::string(s.substr(0, pos));
 }
 
-/// Render the fallback error message (FallbackToolUseErrorMessage.tsx).
+/// Render the fallback error message.
 [[nodiscard]] inline Element render_fallback_error(
     std::string_view error_text, bool verbose) {
     std::string extracted = extract_tag(error_text, "tool_use_error");
@@ -609,16 +603,15 @@ constexpr int kMaxRenderedLines = 10;
     return wrap_message_response(std::move(body));
 }
 
-// ─── RejectedPlanMessage.tsx ──────────────────────────────────────────────
+// ─── Rejected plan ───────────────────────────────────────────────────────
 // "User rejected Loom's plan:" label + plan content in a round-border box
 // with planMode color (purple).
 
 [[nodiscard]] inline Element render_rejected_plan(
     std::string_view plan_content) {
-    // TS renders plan as Markdown inside a round-border box.  Markdown for
-    // plan content isn't ported yet, so we render plain text inside a
-    // ROUNDED-border box with plan-mode color.  padding(0,1,0,1) gives 1
-    // cell of horizontal padding (left+right) matching TS paddingX={1}.
+    // Render plan as plain text inside a ROUNDED-border box with plan-mode
+    // color.  padding(0,1,0,1) gives 1 cell of horizontal padding
+    // (left+right).
     //
     // Split plan content on newlines so multi-line plans render correctly.
     Elements plan_lines;
@@ -650,16 +643,10 @@ constexpr int kMaxRenderedLines = 10;
 } // namespace detail
 
 // ─── Faithful top-level dispatcher ────────────────────────────────────────
-/// Matches UserToolResultMessage.tsx if-chain exactly:
-///   Canceled → Rejected → Error → Success
+/// Dispatch order: Canceled → Rejected → Error → Success
 ///
-/// Each branch renders the same visual chrome as its TS counterpart using
-/// the fallback components (tool-specific renderers are not yet ported).
-///
-/// `add_margin` (TS REF: UserToolResultMessage → MessageRow marginTop=1)
-/// controls the blank separator line above tool result rows.  TS always
-/// gives tool results marginTop=1 (they never have metadata), so this
-/// defaults true; the caller threads the turn-boundary-computed value.
+/// `add_margin` controls the blank separator line above tool result rows.
+/// Defaults true; the caller threads the turn-boundary-computed value.
 [[nodiscard]] inline Element RenderToolResultMessageFaithful(
     const ToolResultFaithfulData& data, bool add_margin = true) {
     using K = ToolResultKind;
@@ -706,7 +693,7 @@ constexpr int kMaxRenderedLines = 10;
         }
 
         case K::Success: {
-            // TS: UserToolSuccessMessage renders tool.renderToolResultMessage()
+            // UserToolSuccessMessage renders tool.render_tool_result_message()
             // directly — NO "✓ tool_name" header.  The result body is wrapped in
             // <MessageResponse> (⎿ connector) by the tool's own renderer.
             // For BashTool: stdout wrapped in MessageResponse.
@@ -724,6 +711,28 @@ constexpr int kMaxRenderedLines = 10;
             Elements elems;
 
             if (has_content_items) {
+                // Line-count truncation: when not verbose, show at most
+                // kMaxRenderedLines (10) with a "+N lines" hint.  Matches
+                // the flat-content path below.
+                int total_lines = 0;
+                for (const auto& item : *data.content_items) {
+                    if (item.type == "text") {
+                        std::string tc = item.text;
+                        if (auto unwrapped = detail::try_unwrap_text_payload(tc))
+                            tc = std::move(*unwrapped);
+                        while (!tc.empty() &&
+                               (tc.back() == '\n' || tc.back() == '\r'))
+                            tc.pop_back();
+                        if (tc.empty()) continue;
+                        total_lines += detail::count_newlines(tc) + 1;
+                    } else if (item.type == "image") {
+                        total_lines += 1;
+                    }
+                }
+                int plus_lines = total_lines - detail::kMaxRenderedLines;
+                int lines_budget = data.verbose ? total_lines
+                                                : detail::kMaxRenderedLines;
+
                 for (const auto& item : *data.content_items) {
                     if (item.type == "text") {
                         std::string text_content = item.text;
@@ -736,6 +745,17 @@ constexpr int kMaxRenderedLines = 10;
                                (text_content.back() == '\n' || text_content.back() == '\r'))
                             text_content.pop_back();
                         if (text_content.empty()) continue;
+                        // Truncate this item if it would exceed the budget.
+                        if (!data.verbose && plus_lines > 0) {
+                            int item_lines = detail::count_newlines(text_content) + 1;
+                            if (item_lines > lines_budget) {
+                                text_content = detail::take_first_lines(
+                                    text_content, lines_budget);
+                                lines_budget = 0;
+                            } else {
+                                lines_budget -= item_lines;
+                            }
+                        }
                         auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
                             ansi_to_ftxui_elements(text_content));
                         elems.push_back(detail::wrap_message_response(
@@ -743,7 +763,19 @@ constexpr int kMaxRenderedLines = 10;
                     } else if (item.type == "image") {
                         elems.push_back(detail::wrap_message_response(
                             text("[Image]") | dim));
+                        if (!data.verbose && plus_lines > 0)
+                            --lines_budget;
                     }
+                }
+                // "+N lines (ctrl+o to see all)" hint when truncated.
+                if (!data.verbose && plus_lines > 0) {
+                    std::string hint = "\xe2\x80\xa6 +";
+                    hint += std::to_string(plus_lines);
+                    hint += " line";
+                    if (plus_lines != 1) hint += 's';
+                    hint += " (ctrl+o to see all)";
+                    elems.push_back(detail::wrap_message_response(
+                        text(std::move(hint)) | dim));
                 }
             } else {
                 std::string output = *data.content;
@@ -754,19 +786,46 @@ constexpr int kMaxRenderedLines = 10;
                 if (output.size() > kMaxLen) {
                     output = output.substr(0, kMaxLen) + "\xE2\x80\xA6";
                 }
-                // Render each line with ⎿ prefix (MessageResponse style)
+                // Line-count truncation: when not verbose, show at most
+                // kMaxRenderedLines (10) with a "+N lines" hint.  Matches
+                // Claude Code / Codex behaviour where long tool output
+                // (e.g. Read of a large file) is collapsed by default.
+                int total_lines = detail::count_newlines(output) + 1;
+                int plus_lines = total_lines - detail::kMaxRenderedLines;
+                std::string display_output;
+                if (data.verbose || plus_lines <= 0) {
+                    display_output = output;
+                } else {
+                    display_output = detail::take_first_lines(
+                        output, detail::kMaxRenderedLines);
+                }
+                // Collect all lines into a single vbox, then wrap once so
+                // the ⎿ connector appears only on the first line (not on
+                // every line).
+                Elements line_elems;
                 std::size_t line_start = 0;
-                while (line_start < output.size()) {
-                    auto nl = output.find('\n', line_start);
+                while (line_start < display_output.size()) {
+                    auto nl = display_output.find('\n', line_start);
                     std::string_view line = (nl == std::string::npos)
-                        ? std::string_view(output).substr(line_start)
-                        : std::string_view(output).substr(line_start, nl - line_start);
+                        ? std::string_view(display_output).substr(line_start)
+                        : std::string_view(display_output).substr(line_start, nl - line_start);
                     auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
                         ansi_to_ftxui_elements(line));
-                    elems.push_back(detail::wrap_message_response(
-                        vbox(std::move(*ansi_elems))));
+                    line_elems.push_back(vbox(std::move(*ansi_elems)));
                     if (nl == std::string::npos) break;
                     line_start = nl + 1;
+                }
+                elems.push_back(detail::wrap_message_response(
+                    vbox(std::move(line_elems))));
+                // "+N lines (ctrl+o to see all)" hint when truncated.
+                if (!data.verbose && plus_lines > 0) {
+                    std::string hint = "\xe2\x80\xa6 +";
+                    hint += std::to_string(plus_lines);
+                    hint += " line";
+                    if (plus_lines != 1) hint += 's';
+                    hint += " (ctrl+o to see all)";
+                    elems.push_back(detail::wrap_message_response(
+                        text(std::move(hint)) | dim));
                 }
             }
 

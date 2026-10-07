@@ -25,6 +25,15 @@ target_sources(loom_ui_app
         # Imports cc.serdes.json + cc.hooks.execution; loom_ui_app links
         # loom_utils and loom_hooks PUBLIC, so deps are satisfied.
         ui/app/statusline_runner.cppm
+        # P3-1c: async statusline worker (jthread + debounce/memo state)
+        # extracted from AppAdapter.
+        ui/app/statusline_coordinator.cppm
+        # P3-1a: teammate inbox/permission state extracted from AppAdapter.
+        ui/app/teammate_coordinator.cppm
+        # P4-1b: async clipboard paste state + worker extracted from AppAdapter.
+        ui/app/paste_coordinator.cppm
+        # P4-1d: tool-permission + MCP-elicitation blocking-response state.
+        ui/app/permission_coordinator.cppm
 )
 # Module implementation units for cc.ui.app.app_dialog_registration — one per
 # dialog-renderer aggregator, so no single TU imports more than one aggregator's
@@ -33,6 +42,8 @@ target_sources(loom_ui_app
 # See app_dialog_registration.cppm / *_impl.cpp for the rationale.
 target_sources(loom_ui_app PRIVATE
     ui/app/app_autocomplete.cpp
+    ui/app/app_render_event.cpp
+    ui/app/app_text_selection.cpp
     ui/app/app_extra_methods.cpp
     ui/app/app_constructor.cpp
     ui/app/app_handle_submit.cpp
@@ -54,6 +65,10 @@ target_sources(loom_ui_app PRIVATE
     ui/app/app_store_bridge.cpp
     ui/app/app_run.cpp
     ui/app/app_team.cpp
+    # P3-1a: TeammateCoordinator impl unit (owns the inbox/permission PIMPL).
+    ui/app/teammate_coordinator.cpp
+    # P4-1b: PasteCoordinator impl unit (SpawnPasteWorker background thread).
+    ui/app/paste_coordinator.cpp
     ui/app/app_settings.cpp
     # Module implementation units for cc.ui.app.app (RFC 0001 Phase C
     # batch 1): env/text/UTF helpers + skills-menu formatting, moved out of

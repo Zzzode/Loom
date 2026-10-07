@@ -32,13 +32,13 @@ template <typename T>
     return result;
 }
 
-// TypeScript-compatible alias for utils/set.ts difference(a, b).
+// Alias for set difference(a, b).
 template <typename T>
 [[nodiscard]] std::set<T> difference(const std::set<T>& a, const std::set<T>& b) {
     return set_difference(a, b);
 }
 
-// TypeScript-compatible intersects(a, b): true when the sets share at least one element.
+// intersects(a, b): true when the sets share at least one element.
 template <typename T>
 [[nodiscard]] bool intersects(const std::set<T>& a, const std::set<T>& b) {
     if (a.empty() || b.empty()) return false;
@@ -50,7 +50,7 @@ template <typename T>
     return false;
 }
 
-// TypeScript-compatible every(a, b): true when every item in a is present in b.
+// every(a, b): true when every item in a is present in b.
 template <typename T>
 [[nodiscard]] bool every(const std::set<T>& a, const std::set<T>& b) {
     for (const auto& item : a) {
@@ -59,7 +59,7 @@ template <typename T>
     return true;
 }
 
-// TypeScript utils/set.ts exports union(a, b); `union` is a C++ keyword, so expose union_sets.
+// `union` is a C++ keyword, so expose union_sets.
 template <typename T>
 [[nodiscard]] std::set<T> union_sets(const std::set<T>& a, const std::set<T>& b) {
     return set_union(a, b);

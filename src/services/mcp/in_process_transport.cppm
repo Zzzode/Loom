@@ -5,15 +5,13 @@ module;
 /// @file in_process_transport.cppm
 /// @brief In-process linked transport pair for MCP servers/clients.
 ///
-/// Mirrors src/services/mcp/InProcessTransport.ts. A linked pair lets an MCP
+/// A linked pair lets an MCP
 /// server and client run in the same process without spawning a subprocess:
 /// `send()` on one side is delivered to the peer's `on_message` handler, and
 /// `close()` on either side fans out to both sides' `on_close` handlers.
 ///
-/// The TS original defers delivery via queueMicrotask() to bound stack depth
-/// on synchronous request/response cycles. The C++ port delivers synchronously
-/// (no microtask scheduler in the migration); this is acceptable parity because
-/// the only observable difference is stack depth under deeply nested sends,
+/// Delivery is synchronous: the only observable difference from a deferred
+/// queueMicrotask() approach is stack depth under deeply nested sends,
 /// which the MCP message loop does not drive.
 export module loom.services.mcp.in_process_transport;
 
@@ -22,7 +20,7 @@ export namespace loom::services::mcp {
 
 /// A JSON-RPC message carried over the in-process transport. The raw JSON body
 /// is passed through unchanged so callers can parse it with their own JSON
-/// library (matches the opaque JSONRPCMessage contract in the TS SDK).
+/// library (the body is passed through opaque).
 struct InProcessMessage {
     std::string body_json;  // raw JSON-RPC message payload
 };
@@ -37,7 +35,7 @@ struct InProcessTransportState {
     std::shared_ptr<InProcessTransportState> peer;  // cycles broken explicitly on close
 };
 
-/// One half of a linked transport pair. Mirrors InProcessTransport in TS:
+/// One half of a linked transport pair:
 /// send() throws when closed, otherwise forwards to the peer's on_message;
 /// close() marks both sides closed and invokes on_close on both.
 class InProcessTransport {
@@ -46,7 +44,7 @@ public:
     explicit InProcessTransport(std::shared_ptr<InProcessTransportState> state)
         : state_(std::move(state)) {}
 
-    /// No-op start, parity with TS (async start() resolves immediately).
+    /// No-op start (an async start would resolve immediately).
     std::expected<void, std::string> start() { return {}; }
 
     /// Deliver a message to the peer's on_message handler. Errors if this
@@ -102,13 +100,13 @@ public:
         return {};
     }
 
-    /// Wire the message-delivery handler on this side. Mirrors `onmessage =`.
+    /// Wire the message-delivery handler on this side.
     void on_message(std::function<void(const InProcessMessage&)> handler) {
         std::lock_guard lock(state_->mutex);
         state_->on_message = std::move(handler);
     }
 
-    /// Wire the close-notification handler on this side. Mirrors `onclose =`.
+    /// Wire the close-notification handler on this side.
     void on_close(std::function<void()> handler) {
         std::lock_guard lock(state_->mutex);
         state_->on_close = std::move(handler);
@@ -124,7 +122,7 @@ private:
 };
 
 /// A pair of linked transports: messages sent on `first` are delivered to
-/// `second.on_message`, and vice-versa. Parity with createLinkedTransportPair.
+/// `second.on_message`, and vice-versa.
 struct LinkedTransportPair {
     InProcessTransport first;   // typically the client side
     InProcessTransport second;  // typically the server side

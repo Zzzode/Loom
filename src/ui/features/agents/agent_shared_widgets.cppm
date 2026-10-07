@@ -1,7 +1,7 @@
 /// @file agent_shared_widgets.cppm
 /// @brief Shared reusable UI widgets for the Agents subsystem.
 ///
-/// Consolidates small shared components migrated from 26 TS files under
+/// Consolidates small shared components migrated from 26 files under
 /// src/components/agents/:
 ///   - AgentAvatar              (hash-color + initial badge + emoji marker)
 ///   - StatusDot                (colored status indicator dot)

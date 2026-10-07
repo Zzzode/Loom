@@ -1,12 +1,9 @@
 /// @file ink_utils.cppm
-/// @brief Ink-style terminal UI utilities for LOOM.
-/// Migrates: src/ink/ utility files
-///   - wrap-text.ts, wrapAnsi.ts, colorize.ts, styles.ts,
-///     searchHighlight.ts, selection.ts, tabstops.ts,
-///     supports-hyperlinks.ts, clearTerminal.ts, log-update.ts,
-///     hit-test.ts, focus.ts, constants.ts, node-cache.ts,
-///     squash-text-nodes.ts, parse-keypress.ts,
-///     terminal-querier.ts, terminal-focus-state.ts
+/// @brief Terminal UI utilities for LOOM (text wrapping, ANSI handling,
+/// colorize, styles, search highlight, selection, tabstops, hyperlink
+/// support, terminal clear, log-update, hit-testing, focus, constants,
+/// node cache, text-node squashing, keypress parsing, terminal querying,
+/// and terminal focus state).
 module;
 
 #include <cstdint>

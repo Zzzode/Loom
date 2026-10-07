@@ -46,9 +46,6 @@ inline void set_file_access_hook(FileAccessHook hook) {
 
 /// Notify the file-access hook (if registered). Called by file tools
 /// after successful read/write/edit operations.
-/// TS REF: src/tools/FileReadTool/FileReadTool.ts L579-590
-///          src/tools/FileWriteTool/FileWriteTool.ts L234-245
-///          src/tools/FileEditTool/FileEditTool.ts L408-422
 inline void notify_file_access(
     const std::filesystem::path& file_path,
     const std::filesystem::path& cwd)

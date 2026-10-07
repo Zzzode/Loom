@@ -1,0 +1,39 @@
+◆ Loom  · model_api/experimental_0812_256k
+
+█░█░█░█░█  Loom
+░█░█░█░█░  model_api/experimental_0812_256k
+█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+
+● Analyze Image ("imageSource":"https://example.com/img.png","prompt":"Describe this image in det…)
+  Input:
+  {"imageSource":"https://example.com/img.png","prompt":"Describe this image in detail"}
+
+● This is a screenshot of a dark-themed terminal UI showing a code review platform with bullet points and comment
+  sections.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────────
+ ❯ Try "fix lint errors"
+──────────────────────────────────────────────────────────────────────────────────
+   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

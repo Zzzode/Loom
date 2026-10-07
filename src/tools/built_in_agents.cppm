@@ -13,12 +13,11 @@ export namespace loom::tools::built_in_agents {
 using loom::tools::agent_runtime::AgentDefinition;
 
 // ---------------------------------------------------------------------------
-// Prompt constants — migrated verbatim from TS source.
-// R"(...)" delimiters preserve newlines and backslashes exactly as in the
-// original TypeScript template literals.
+// Prompt constants.
+// R"(...)" delimiters preserve newlines and backslashes exactly.
 // ---------------------------------------------------------------------------
 
-// --- generalPurposeAgent.ts ---
+// --- General-purpose agent ---
 inline constexpr std::string_view kGeneralPurposeSharedPrefix =
     R"(You are an agent for Loom, a personal AI coding assistant. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done.)";
 
@@ -37,7 +36,7 @@ Guidelines:
 - NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested.)";
 
 // Note: absolute-path + emoji guidance is appended at runtime by
-// enhance_system_prompt_with_env_details (mirrors TS enhanceSystemPromptWithEnvDetails).
+// enhance_system_prompt_with_env_details.
 [[nodiscard]] inline std::string get_general_purpose_system_prompt() {
     return std::format(
         "{} When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.\n\n{}",
@@ -49,8 +48,8 @@ Guidelines:
 inline constexpr std::string_view kGeneralPurposeWhenToUse =
     R"(General-purpose agent for researching complex questions, searching for code, and executing multi-step tasks. When you are searching for a keyword or file and are not confident that you will find the right match in the first few tries use this agent to perform the search for you.)";
 
-// --- exploreAgent.ts ---
-// Tool name constants (same as TS — see BashTool/toolName.js, FileReadTool/prompt.js, etc.)
+// --- Explore agent ---
+// Tool name constants.
 inline constexpr std::string_view kBashToolName = "Bash";
 inline constexpr std::string_view kFileReadToolName = "Read";
 inline constexpr std::string_view kFileEditToolName = "Edit";
@@ -63,7 +62,7 @@ inline constexpr std::string_view kAgentToolName = "Agent";
 inline constexpr std::string_view kWebFetchToolName = "WebFetch";
 inline constexpr std::string_view kWebSearchToolName = "WebSearch";
 
-// In the C++ migration we don't yet differentiate "embedded search tools"
+// We don't yet differentiate "embedded search tools"
 // (ant-native bfs/ugrep) from the dedicated Glob/Grep tools. We use the
 // dedicated-tool variant here (consistent with external build paths). A future
 // ant-native port can branch on the USER_TYPE / embedded-tools build flag.
@@ -124,7 +123,7 @@ inline constexpr std::string_view kExploreWhenToUse =
 
 inline constexpr int kExploreAgentMinQueries = 3;
 
-// --- planAgent.ts ---
+// --- Plan agent ---
 [[nodiscard]] inline std::string get_plan_v2_system_prompt() {
     const std::string search_tools_hint = kHasEmbeddedSearchTools
         ? std::format("`find`, `grep`, and {}", kFileReadToolName)
@@ -190,7 +189,7 @@ REMEMBER: You can ONLY explore and plan. You CANNOT and MUST NOT write, edit, or
 inline constexpr std::string_view kPlanWhenToUse =
     R"(Software architect agent for designing implementation plans. Use this when you need to plan the implementation strategy for a task. Returns step-by-step plans, identifies critical files, and considers architectural trade-offs.)";
 
-// --- statuslineSetup.ts ---
+// --- Statusline setup agent ---
 inline constexpr std::string_view kStatuslineSystemPrompt =
     R"SYS_2(You are a status line setup agent for Loom. Your job is to create or update the statusLine command in the user's Loom settings.
 
@@ -319,7 +318,7 @@ Guidelines:
 inline constexpr std::string_view kStatuslineSetupWhenToUse =
     R"(Use this agent to configure the user's Loom status line setting.)";
 
-// --- verificationAgent.ts ---
+// --- Verification agent ---
 [[nodiscard]] inline std::string get_verification_system_prompt() {
     return std::format(R"(You are a verification specialist. Your job is not to confirm the implementation works — it's to try to break it.
 
@@ -452,7 +451,7 @@ inline constexpr std::string_view kVerificationWhenToUse =
 inline constexpr std::string_view kVerificationCriticalReminder =
     R"(CRITICAL: This is a VERIFICATION-ONLY task. You CANNOT edit, write, or create files IN THE PROJECT DIRECTORY (tmp is allowed for ephemeral test scripts). You MUST end with VERDICT: PASS, VERDICT: FAIL, or VERDICT: PARTIAL.)";
 
-// --- loomCodeGuideAgent.ts ---
+// --- Loom code guide agent ---
 // No documentation host is shipped with this build; see the note in
 // loom.constants.prompts. Empty values keep the prompt template intact
 // without advertising URLs that do not resolve.
@@ -461,8 +460,8 @@ inline constexpr std::string_view kCdpDocsMapUrl = "";
 inline constexpr std::string_view kLoomAccentCodeGuideAgentType = "loom-guide";
 
 // The isUsing3PServices check (Bedrock/Vertex/Foundry) routes users to
-// issues-explainer rather than /feedback. For the C++ migration we default to
-// the direct-service branch; ant-native builds can override via a build flag.
+// issues-explainer rather than /feedback. We default to the direct-service
+// branch; ant-native builds can override via a build flag.
 inline constexpr bool kIsUsing3PServices = false;
 inline constexpr std::string_view kIssuesExplainer = "";
 
@@ -780,15 +779,15 @@ inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
 }
 
 // ---------------------------------------------------------------------------
-// Feature-flag helpers — mirror TS builtInAgents.ts
+// Feature-flag helpers.
 // ---------------------------------------------------------------------------
 
-// TS: feature('BUILTIN_EXPLORE_PLAN_AGENTS')  gate + GrowthBook tengu_amber_stoat.
-// In the C++ migration we expose this as env-variable override (consistent with
-// the rest of agent_runtime feature-gating pattern):
+// feature('BUILTIN_EXPLORE_PLAN_AGENTS') gate + GrowthBook tengu_amber_stoat.
+// We expose this as env-variable override (consistent with the rest of
+// agent_runtime feature-gating pattern):
 //   LOOM_ENABLE_EXPLORE_PLAN_AGENTS=1  OR  BUILTIN_EXPLORE_PLAN_AGENTS
-// Default: enabled in 3P (non-ant) builds to match TS default true for
-// Bedrock/Vertex. Ant-native builds opt-in via explicit GrowthBook flag port.
+// Default: enabled in 3P (non-ant) builds. Ant-native builds opt-in via
+// explicit GrowthBook flag.
 [[nodiscard]] inline bool are_explore_plan_agents_enabled() {
 #if defined(ANT_NATIVE_BUILD)
     const auto& env_truthy = loom::tools::agent_runtime::env_truthy;
@@ -817,7 +816,6 @@ using loom::tools::agent_runtime::is_sdk_entrypoint;
 
 // ---------------------------------------------------------------------------
 // Coordinator mode: worker agent definition.
-// Migrated from TS coordinator/workerAgent.ts — getCoordinatorAgents().
 // ---------------------------------------------------------------------------
 
 inline constexpr std::string_view kCoordinatorWorkerSystemPrompt =

@@ -1,14 +1,6 @@
 /// @file text_highlighting.cppm
 /// @brief Text highlighting utilities: substring/regex match coloring plus
 /// the priority-based segment system used by the prompt input widget.
-///
-/// TS REF (authority):
-///   src/utils/textHighlighting.ts  – TextHighlight type, segmentTextByHighlights(),
-///       HighlightSegmenter class, TextSegment type.
-///   src/components/BaseTextInput.tsx – cursor filtering + viewport offset adjustment.
-///   src/components/PromptInput/ShimmeredInput.tsx – HighlightedInput rendering.
-///   src/components/PromptInput/PromptInput.tsx – combinedHighlights builder
-///       (12+ sources with priority ordering).
 module;
 
 #include <cstddef>
@@ -34,26 +26,23 @@ export namespace loom::utils {
 using ftxui::Color;
 
 // ============================================================
-// TextHighlight & TextSegment — mirror TS textHighlighting.ts
+// TextHighlight & TextSegment
 // ============================================================
 
 /// A highlight annotation for a range of the input text.
-/// Uses flat character offsets (start/end) into the full text buffer,
-/// matching the TS TextHighlight type exactly.
-/// TS REF: src/utils/textHighlighting.ts:11-19
+/// Uses flat character offsets (start/end) into the full text buffer.
 struct TextHighlight {
     std::size_t start = 0;       ///< Inclusive character offset
     std::size_t end = 0;         ///< Exclusive character offset
     std::optional<Color> color;  ///< Foreground color (undefined = default)
-    bool dim = false;            ///< TS dimColor — render dimmed
-    bool inverse = false;        ///< TS inverse — invert fg/bg (cursor chip)
-    std::optional<Color> shimmer_color;  ///< TS shimmerColor — animated sweep
+    bool dim = false;            ///< Render dimmed
+    bool inverse = false;        ///< Invert fg/bg (cursor chip)
+    std::optional<Color> shimmer_color;  ///< Animated sweep
     std::int32_t priority = 0;   ///< Higher = wins overlap resolution
 };
 
 /// A contiguous segment of text with an optional highlight.
 /// Produced by segmentTextByHighlights().
-/// TS REF: src/utils/textHighlighting.ts:21-25
 struct TextSegment {
     std::string text;
     std::size_t start = 0;
@@ -66,12 +55,10 @@ struct TextSegment {
 
 /// Split `text` into non-overlapping segments respecting highlight priorities.
 ///
-/// Algorithm (matches TS segmentTextByHighlights exactly):
+/// Algorithm:
 /// 1. Sort highlights by (start ascending, priority descending)
 /// 2. Walk sorted highlights, skip any that overlap an already-claimed range
 /// 3. Produce TextSegment[] covering the full text
-///
-/// TS REF: src/utils/textHighlighting.ts:27-60
 [[nodiscard]] inline std::vector<TextSegment> segment_text_by_highlights(
     std::string_view text,
     const std::vector<TextHighlight>& highlights) {
@@ -82,7 +69,6 @@ struct TextSegment {
 
     // Sort by start position, then by priority descending so that
     // higher-priority highlights at the same position win.
-    // TS REF: textHighlighting.ts:35-38
     std::vector<TextHighlight> sorted = highlights;
     std::sort(sorted.begin(), sorted.end(),
         [](const TextHighlight& a, const TextHighlight& b) {
@@ -91,7 +77,7 @@ struct TextSegment {
         });
 
     // Resolve overlaps: keep a highlight only if its range does not overlap
-    // any already-claimed range.  TS REF: textHighlighting.ts:40-57
+    // any already-claimed range.
     std::vector<TextHighlight> resolved;
     std::vector<std::pair<std::size_t, std::size_t>> used_ranges;
 
@@ -100,7 +86,7 @@ struct TextSegment {
 
         bool overlaps = false;
         for (const auto& [rstart, rend] : used_ranges) {
-            // TS overlap check: textHighlighting.ts:46-51
+            // Overlap check
             bool case1 = (hl.start >= rstart && hl.start < rend);
             bool case2 = (hl.end > rstart && hl.end <= rend);
             bool case3 = (hl.start <= rstart && hl.end >= rend);
@@ -117,7 +103,6 @@ struct TextSegment {
     }
 
     // Build segments by walking through resolved highlights.
-    // TS REF: textHighlighting.ts:62-162 (HighlightSegmenter)
     std::vector<TextSegment> segments;
     std::size_t pos = 0;
 
@@ -155,14 +140,12 @@ struct TextSegment {
 }
 
 // ============================================================
-// Cursor filtering & viewport adjustment — mirror BaseTextInput
+// Cursor filtering & viewport adjustment
 // ============================================================
 
 /// Filter highlights that contain the cursor position so the character
 /// under the cursor is never styled (except dim highlights, which always
-/// show).  Mirrors TS BaseTextInput.tsx:93 cursorFiltered logic.
-///
-/// TS REF: src/components/BaseTextInput.tsx:93
+/// show).
 [[nodiscard]] inline std::vector<TextHighlight> filter_highlights_at_cursor(
     const std::vector<TextHighlight>& highlights,
     std::size_t cursor_offset,
@@ -186,9 +169,6 @@ struct TextSegment {
 /// Adjust highlight offsets for a viewport window (when the input text is
 /// scrolled horizontally).  Highlights outside the window are dropped;
 /// those inside have their start/end rebased to viewport-relative offsets.
-/// Mirrors TS BaseTextInput.tsx:98-102.
-///
-/// TS REF: src/components/BaseTextInput.tsx:98-102
 [[nodiscard]] inline std::vector<TextHighlight> adjust_highlights_for_viewport(
     const std::vector<TextHighlight>& highlights,
     std::size_t viewport_char_offset,
@@ -214,12 +194,11 @@ struct TextSegment {
 }
 
 // ============================================================
-// Priority constants — mirror PromptInput.tsx combinedHighlights
+// Priority constants
 // ============================================================
 
-/// Priority values used by the combined highlights builder in
-/// PromptInput.tsx.  Higher values win overlap resolution.
-/// TS REF: src/components/PromptInput/PromptInput.tsx:601-741
+/// Priority values used by the combined highlights builder.
+/// Higher values win overlap resolution.
 namespace highlight_priority {
     inline constexpr std::int32_t SlashCommand    = 5;   // /command blue
     inline constexpr std::int32_t TokenBudget     = 5;   // token budget blue

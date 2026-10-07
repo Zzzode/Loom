@@ -603,9 +603,17 @@ def tll_lint_check(units):
     self_loops = sorted(t for t, deps in graph.items() if t in deps)
 
     # Rule (b): file->lib grouping.
-    area_targets = {t[len(UI_AREA_TARGET_PREFIX):]: t
-                    for t in filesets
-                    if t.startswith(UI_AREA_TARGET_PREFIX)}
+    # Map area name → set of targets that may own its modules.
+    # Handles sub-libraries (e.g. loom_ui_messages_core and
+    # loom_ui_messages_renderers both own loom.ui.messages.* modules).
+    area_to_targets: dict[str, set[str]] = {}
+    for t in filesets:
+        if t.startswith(UI_AREA_TARGET_PREFIX):
+            remainder = t[len(UI_AREA_TARGET_PREFIX):]
+            area_name = remainder.split("_")[0]
+            area_to_targets.setdefault(area_name, set()).add(t)
+    # Backward-compat: area_targets maps area → primary target (first sorted).
+    area_targets = {a: sorted(ts)[0] for a, ts in area_to_targets.items()}
     src_resolved = pathlib.Path(SRC).resolve()
 
     def _norm_listed(p: str) -> str:
@@ -626,7 +634,8 @@ def tll_lint_check(units):
             if t == "loom_ui" or t.startswith(UI_AREA_TARGET_PREFIX):
                 for f in fs:
                     ownership.setdefault(f, set()).add(t)
-        # File-side: a split-area module must be homed in its area library.
+        # File-side: a split-area module must be homed in its area library
+        # (or a sub-library thereof — e.g. loom_ui_messages_core).
         for u in units:
             if not u.path.endswith(".cppm"):
                 continue
@@ -638,22 +647,23 @@ def tll_lint_check(units):
                     src_resolved).as_posix()
             except ValueError:
                 continue
-            expected = UI_AREA_TARGET_PREFIX + area.split(".")[2]
-            if expected not in norm_filesets:
+            area_key = area.split(".")[2]
+            valid = area_to_targets.get(area_key, set())
+            if not valid:
                 continue  # area not split yet — the file stays in loom_ui
             owners = ownership.get(rel, set())
-            if expected not in owners:
+            if not (owners & valid):
                 grouping.append(
-                    f"{rel} ({u.module}) must be in {expected}'s "
-                    f"CXX_MODULES FILE_SET (found in: "
+                    f"{rel} ({u.module}) must be in a loom_ui_{area_key}* "
+                    f"FILE_SET (found in: "
                     f"{sorted(owners) if owners else 'no loom_ui* target'})")
-            for t in sorted(owners - {expected}):
+            for t in sorted(owners - valid):
                 grouping.append(
                     f"{rel} ({u.module}) is listed in {t}'s FILE_SET but "
-                    f"its area is {area} (only {expected} may own it)")
-        # Target-side: a loom_ui_<area> FILE_SET must not list another area's
-        # module (catches a not-yet-split area's file misplaced into a
-        # split library, which the file-side check cannot see).
+                    f"its area is {area} (only loom_ui_{area_key}* may own it)")
+        # Target-side: a loom_ui_<area>* FILE_SET must not list another
+        # area's module (catches a not-yet-split area's file misplaced into
+        # a split library, which the file-side check cannot see).
         module_by_path: dict[str, str] = {}
         for u in units:
             if not u.path.endswith(".cppm"):
@@ -664,17 +674,19 @@ def tll_lint_check(units):
             except ValueError:
                 continue
             module_by_path[rel] = u.module
-        for area, t in sorted(area_targets.items()):
-            for f in sorted(norm_filesets.get(t, ())):
-                mod = module_by_path.get(f)
-                if mod is None:
-                    continue
-                fa = ui9_area_of(mod)
-                if fa is not None and fa != "loom.ui." + area:
-                    grouping.append(
-                        f"{t} lists {f} which declares {mod} (area {fa}); "
-                        f"a loom_ui_<area> FILE_SET may list only "
-                        f"loom.ui.{area}.* modules")
+        for area_key, targets in sorted(area_to_targets.items()):
+            expected_area = "loom.ui." + area_key
+            for t in sorted(targets):
+                for f in sorted(norm_filesets.get(t, ())):
+                    mod = module_by_path.get(f)
+                    if mod is None:
+                        continue
+                    fa = ui9_area_of(mod)
+                    if fa is not None and fa != expected_area:
+                        grouping.append(
+                            f"{t} lists {f} which declares {mod} (area {fa}); "
+                            f"a loom_ui_{area_key}* FILE_SET may list only "
+                            f"{expected_area}.* modules")
 
     passes = not sccs and not self_loops and not grouping
     return {

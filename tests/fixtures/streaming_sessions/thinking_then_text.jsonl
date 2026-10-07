@@ -1,0 +1,12 @@
+{"type":"stream_start","message_id":"msg_think_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"thinking","thinking":"","signature":"sig-think-001"}}
+{"type":"content_block_delta","index":0,"delta_text":"The user wants a concise summary. I will keep it to one sentence."}
+{"type":"content_block_stop","index":0}
+{"type":"content_block_start","index":1,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":1,"delta_text":"The streaming replay harness injects events directly into the App handler, bypassing HTTP and SSE entirely."}
+{"type":"content_block_stop","index":1}
+{"type":"stream_end","stop_reason":"end_turn","usage":{"input_tokens":42,"output_tokens":31}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"end_turn","content":[{"type":"thinking","thinking":"The user wants a concise summary. I will keep it to one sentence.","signature":"sig-think-001"},{"type":"text","text":"The streaming replay harness injects events directly into the App handler, bypassing HTTP and SSE entirely."}]}}
+{"type":"__checkpoint__","name":"after_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

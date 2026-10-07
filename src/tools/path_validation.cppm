@@ -5,8 +5,7 @@
 //   * Detects dangerous removal paths (rm -rf /, etc.)
 //   * Handles command-wrapper stripping (timeout, nice, stdbuf, env, time, nohup)
 //
-// Ported from src/tools/BashTool/pathValidation.ts (1300+ lines).  This
-// module contains the PUBLIC API surface (types + exported functions).  The
+// This module contains the PUBLIC API surface (types + exported functions).  The
 // 800+ line path-extractor table (cd/find/grep/rg/sed/jq/...) is intentionally
 // kept as a single lookup table with per-command lambdas so call sites can
 // validate paths without re-parsing shell syntax.

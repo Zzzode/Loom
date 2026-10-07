@@ -9,7 +9,7 @@ import std;
 
 import loom.ui.prompt.prompt_input;
 import loom.ui.foundation.ui_types;  // unified PromptInputMode canonical enum
-import loom.ui.prompt.mode_indicator;  // TS REF: PromptInputModeIndicator.tsx — 3-way prefix glyph
+import loom.ui.prompt.mode_indicator;  // 3-way prefix glyph
 
 export namespace loom::ui::prompt {
 
@@ -123,8 +123,7 @@ struct PromptInputFullProps {
     loom::ui::HistoryManager* history;
     loom::ui::Typeahead* typeahead;
     // Canonical vim mode (replaces loom::ui::VimHandler* pointer).
-    // TS REF: src/types/textInputTypes.ts:222 — VimMode type.
-    // vim_mode = Insert is the default (matches TS useVimInput initial state).
+    // vim_mode = Insert is the default.
     loom::ui::common::VimMode vim_mode = loom::ui::common::VimMode::Insert;
 
     // Context
@@ -201,8 +200,8 @@ struct PromptInputFullProps {
 //
 // NOTE (glyph unification, audit round7 prefix-glyph-no-unified-impl):
 //   This is a CPP-ONLY status BADGE row ("[PLAN]/[FAST]/[N]" + permission
-//   lock emoji).  It is NOT the prompt PREFIX glyph — TS's
-//   PromptInputModeIndicator only ever emits '❯' or '!' at the prefix
+//   lock emoji).  It is NOT the prompt PREFIX glyph — the mode
+//   indicator only ever emits '❯' or '!' at the prefix
 //   position (the prefix glyph is rendered by repl_screen using
 //   loom::ui::design::figures::kPointerPrefix / kBashPrefix).
 //   These badges are supplementary chrome retained for the interactive UX;
@@ -237,7 +236,7 @@ struct PromptInputFullProps {
         // Unified enum fallthrough — modes that don't render a badge here:
         // Bash (rendered as '!' prefix glyph, not a badge),
         // FileRef / Agent / BgRun / MCP (prefix-triggered, surfaced elsewhere),
-        // OrphanedPermission / TaskNotification (TS: fall through to pointer),
+        // OrphanedPermission / TaskNotification (fall through to pointer),
         // Search (handled by HistorySearch above), Normal (no badge).
         default: break;
     }
@@ -333,14 +332,14 @@ struct PromptInputFullProps {
         }
     }
 
-    // Prompt prefix glyph (TS REF: PromptInputModeIndicator.tsx — 3-way render)
-    //   1. viewingAgentName set  → ❯ with agent theme color
-    //   2. mode === 'bash'       → !  with bashBorder color
-    //   3. otherwise             → ❯ with teammate color (if swarms) or default
-    // CPP: active_agent maps to TS "viewingAgentName" (tints ❯ with that
+    // Prompt prefix glyph — 3-way render:
+    //   1. viewing-agent name set  → ❯ with agent theme color
+    //   2. mode == Bash            → !  with bash-border color
+    //   3. otherwise               → ❯ with teammate color (if swarms) or default
+    // active_agent maps to the viewing-agent-name concept (tints ❯ with that
     // agent's color).  teammate_color comes from running_teammates[0].color
-    // (TS getTeammateColor() — only active when swarms enabled).  When neither
-    // is set, the prefix uses the terminal's default text color.
+    // (only active when swarms enabled).  When neither is set, the prefix
+    // uses the terminal's default text color.
     {
         std::optional<std::string_view> viewing_agent_color = std::nullopt;
         if (props.active_agent.has_value() && !props.active_agent->color.empty()) {

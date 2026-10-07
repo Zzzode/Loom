@@ -2,7 +2,6 @@
 /// @brief Full-featured text input component with multi-line editing,
 /// selection, undo/redo stack, cursor blink, line numbers,
 /// IME-ready glyph handling, and clipboard paste.
-/// Migrated from PromptInput/PromptInput.tsx + inputPaste.ts.
 ///
 /// RFC 0001 Phase C batch 8: the editor bodies live in four module
 /// implementation units — text_input_buffer.cpp (editing/history/paste
@@ -62,7 +61,7 @@ struct Suggestion {
     std::optional<Color> color_hint;
 };
 
-/// Permission / tool permission mode (subset of TS PermissionMode)
+/// Permission / tool permission mode (subset of PermissionMode)
 enum class PermissionMode : std::uint8_t {
     Default,      // Confirm each tool call
     AutoApprove,  // Auto-approve safe tools
@@ -118,20 +117,18 @@ struct PromptContext {
 /// Configurable options for the Prompt TextInput component
 struct TextInputOptions {
     std::string placeholder = "Type your message here...";
-    // TS REF: src/components/PromptInput/PromptInputModeIndicator.tsx:54 —
-    // the default prompt prefix is `figures.pointer` ('❯' U+276F) + space, NOT
-    // the CPP-only "▶ " (U+25B6) invention.  See the glyph-unification note at
-    // the render site (~line 1033) and the shared constant
+    // The default prompt prefix is `figures.pointer` ('❯' U+276F) + space,
+    // NOT the CPP-only "▶ " (U+25B6) invention.  See the glyph-unification
+    // note at the render site (~line 1033) and the shared constant
     // loom::ui::design::figures::kPointerPrefix.  The faithful REPL path in
     // repl_screen.cppm overrides this per-mode, but standalone TextInputImpl
-    // callers (dialogs, widgets) inherit this default, so it MUST match TS.
+    // callers (dialogs, widgets) inherit this default, so it MUST match the
+    // canonical pointer glyph.
     std::string prefix = "❯ ";
     bool multiline = true;
     bool show_line_numbers = true;
     /// Vim mode: nullopt = vim disabled (standard readline bindings),
     /// otherwise vim is active in the given mode (Normal, Insert, Visual, etc.).
-    /// TS REF: src/types/textInputTypes.ts:222 — VimMode = 'INSERT'|'NORMAL'.
-    /// TS REF: src/hooks/useVimInput.ts:36 — mode starts at 'INSERT' when enabled.
     /// Replaces the previous bool enable_vim flag.
     std::optional<loom::ui::common::VimMode> vim_mode;
     bool show_history = true;
@@ -154,17 +151,16 @@ struct TextInputOptions {
     /// Explicit color for the prefix glyph.  Empty = use the default
     /// (historically Color::Green + bold — see below).  Set from the caller
     /// when the prefix needs to change per mode, e.g. bash mode renders the
-    /// prefix with the TS `bashBorder` accent instead of theme.text.
+    /// prefix with the `bash_border` accent instead of theme.text.
     std::optional<ftxui::Color> prefix_color;
     /// When set, overrides the default `bold` applied to the prefix.
     /// Default = true (kept for back-compat with callers that don't set
-    /// prefix_color).  The REPL faithful path sets this false because TS
-    /// renders the prefix glyph at normal weight; bold mapping causes some
+    /// prefix_color).  The REPL faithful path sets this false because the
+    /// prefix glyph renders at normal weight; bold mapping causes some
     /// terminals to swap pure white for bright-green/cyan.
     bool prefix_bold = true;
 
     /// Whether the terminal itself has focus (not just the widget).
-    /// TS REF: src/hooks/renderPlaceholder.ts terminalFocus prop.
     /// Controls whether the first-character cursor inversion is applied.
     /// FTXUI cannot detect terminal focus natively, so this defaults true.
     bool terminal_focus = true;
@@ -184,17 +180,16 @@ struct TextInputOptions {
     /// Optional: called when a large paste (>10K chars) is confirmed and
     /// truncated.  Receives the paste-id and the truncated middle content
     /// so the caller can store it for later expansion (e.g. expand_pasted_text_refs
-    /// at submit time).  TS REF: inputPaste.ts maybeTruncateInput — stores
-    /// {id, type: 'text', content: placeholderContent} in pastedContents.
+    /// at submit time).  Stores {id, type: 'text', content: placeholderContent}
+    /// in pastedContents.
     std::function<void(int id, const std::string& placeholder_content)> on_paste_truncated;
     /// Optional: character-level input filter. Return true to allow the char.
     /// Applied before insertion; multi-byte UTF-8 sequences pass the first byte.
     std::function<bool(char)> input_filter;
     /// Optional: called when the user presses Shift+Tab to cycle permission
     /// modes.  When set, TabReverse (shift+tab) is consumed by this callback
-    /// instead of navigating history.  TS REF:
-    /// src/components/PromptInput/PromptInput.tsx:1667 — 'chat:cycleMode'
-    /// shortcut bound to shift+tab calls handleCycleMode().
+    /// instead of navigating history.  The 'chat:cycleMode' shortcut is bound
+    /// to shift+tab and calls handleCycleMode().
     std::function<void()> on_permission_cycle;
 
     /// Maximum number of visible suggestions in the dropdown.
@@ -216,7 +211,7 @@ struct BufferSnapshot {
 /// A UTF-8 compatible string index helper (byte -> glyph offset).
 /// For the renderer we keep byte-indexed buffers but must guard against
 /// breaking multibyte sequences when the cursor moves. This is a minimal
-/// approximation; a full ICU layer is out of scope for the migration.
+/// approximation; a full ICU layer is out of scope for now.
 ///
 /// RFC 0001 Phase C batch 8: declarations stay exported here; the bodies
 /// moved to text_input_buffer.cpp (the render unit calls
@@ -313,8 +308,6 @@ public:
 
     // ------------------------------------------------------------
     // Vim mode accessors
-    // TS REF: src/hooks/useVimInput.ts:310-315 — VimInputState exposes
-    //   mode + setMode for external mode indicator display.
     // ------------------------------------------------------------
     /// Current vim mode (only meaningful when options_.vim_mode is set).
     [[nodiscard]] loom::ui::common::VimMode vim_mode() const {
@@ -413,8 +406,6 @@ public:
     [[nodiscard]] bool HasPastePreview() const { return paste_preview_.has_value(); }
 
     /// Confirm the pending paste preview: insert the truncated content.
-    /// TS REF: inputPaste.ts — confirmed large pastes are truncated to
-    ///   head 500 + placeholder + tail 500 before insertion.
     /// If the preview carries placeholder_content (truncated middle), emit
     /// it via on_paste_truncated so the caller can store it for later
     /// expansion at submit time (expand_pasted_text_refs).
@@ -426,8 +417,8 @@ public:
     }
 
     /// Render the paste preview confirmation overlay.
-    /// TS REF: inputPaste.ts — shows line count + "(large paste - press Enter
-    ///   to confirm)" + a 200-char snippet of the truncated content.
+    /// Shows line count + "(large paste - press Enter to confirm)" + a
+    /// 200-char snippet of the truncated content.
     [[nodiscard]] Element RenderPastePreviewOverlay() const;
 
     /// Caller-side: force a blink refresh (useful on frame tick).
@@ -439,13 +430,13 @@ public:
     // The full Render() returns input area + suggestions dropdown combined.
     // Live prompt screens (repl_screen.cppm) need to drive the CARET /
     // MULTI-LINE / SELECTION painter as a standalone primitive so they can
-    // prepend a TS-style prompt glyph (figures.pointer "❯") and re-colour
+    // prepend a prompt-style prompt glyph (figures.pointer "❯") and re-colour
     // it per input mode — without re-implementing the cursor/selection
     // layout (which is exactly the shelfware gap M3 closes).  These thin
     // wrappers expose the existing private renderers without leaking any
     // other internals.
     /// Render just the input/caret/multiline/selection area (no dropdown).
-    /// Faithful to TS BaseTextInput's declared-cursor body.
+    /// Declared-cursor body rendering.
     Element RenderInputAreaPub();
     /// Render a suggestions dropdown from an externally-supplied list.
     /// `selected` is clamped to [0, suggestions.size()-1]; -1 disables.
@@ -499,7 +490,6 @@ private:
 
     // ------------------------------------------------------------
     // Vim mode event handling (bodies in text_input_vim.cpp)
-    // TS REF: src/hooks/useVimInput.ts:175-295 — handleVimInput()
     //
     // Dispatches keys based on the current vim_.mode.
     // Returns true if the event was consumed (vim handled it),
@@ -516,36 +506,32 @@ private:
     // Helper: yy — yank current line
     void vim_yank_line();
 
-    // Helper: e — word end motion (TS REF: motions.ts 'e' → endOfVimWord)
+    // Helper: e — word end motion
     void vim_word_end_motion(bool extend_selection);
 
-    // Helper: D / C — delete from cursor to end of line (TS REF: operators.ts
-    //   executeOperatorMotion('delete', '$', ...) → deletes to end of logical line)
+    // Helper: D / C — delete from cursor to end of line
+    //   (deletes to end of logical line)
     void vim_delete_to_end();
 
-    // Helper: J — join current line with next (TS REF: operators.ts executeJoin)
+    // Helper: J — join current line with next
     // Replaces the newline between lines with a single space.
     void vim_join_lines();
 
-    // Helper: o — open new line below (TS REF: operators.ts executeOpenLine('below'))
+    // Helper: o — open new line below
     void vim_open_line_below();
 
-    // Helper: O — open new line above (TS REF: operators.ts executeOpenLine('above'))
+    // Helper: O — open new line above
     void vim_open_line_above();
 
-    // Helper: ~ — toggle case of char under cursor (TS REF: operators.ts
-    //   executeToggleCase)
+    // Helper: ~ — toggle case of char under cursor
     void vim_toggle_case();
 
-    // TS REF: src/components/PromptInput/useMaybeTruncateInput.ts — the hook
-    //   that watches the entire input value and truncates it when it exceeds
-    //   TRUNCATION_THRESHOLD (10 000 chars), regardless of how it got there
-    //   (paste, set_text, accumulated typing, etc.).
+    // Watches the entire input value and truncates it when it exceeds
+    // TRUNCATION_THRESHOLD (10 000 chars), regardless of how it got there
+    // (paste, set_text, accumulated typing, etc.).
     //
-    //   Only applies once per "input session" (has_applied_truncation_ guard).
-    //   The guard is reset when the input is cleared (submit / clear),
-    //   matching the TS useEffect that resets hasAppliedTruncationToInput
-    //   when input === ''.
+    // Only applies once per "input session" (has_applied_truncation_ guard).
+    // The guard is reset when the input is cleared (submit / clear).
     //
     //   Returns true if truncation was applied (text_ was modified).
     //   On truncation: stores the elided middle content via on_paste_truncated
@@ -579,22 +565,20 @@ private:
     size_t search_selected_;
     bool paste_burst_in_progress_;
     int next_paste_id_{1};  ///< Monotonic counter for [...Truncated text #N] refs
-    // TS REF: src/components/PromptInput/useMaybeTruncateInput.ts L21-22
-    //   hasAppliedTruncationToInput — guards against re-truncating the same
-    //   input session.  Reset when text is cleared (submit / clear()).
+    // Guards against re-truncating the same input session.
+    // Reset when text is cleared (submit / clear()).
     bool has_applied_truncation_{false};
 
     // ============================================================
     // Paste preview (GAP 1: paste-text-truncation-10k-threshold)
-    // TS REF: inputPaste.ts — when paste > 10000
-    //   chars, show a confirmation overlay instead of inserting directly.
-    //   Enter confirms (insert truncated), Esc cancels.
+    // When paste > 10000 chars, show a confirmation overlay instead
+    // of inserting directly.  Enter confirms (insert truncated), Esc
+    // cancels.
     // ============================================================
     std::optional<loom::ui::prompt::PastePreview> paste_preview_;
 
     // ============================================================
     // Vim mode state (unified VimController from loom.vim.vim_controller)
-    // TS REF: src/hooks/useVimInput.ts — vim state machine wrapping text input
     // ============================================================
     loom::vim::VimController vim_;
 };

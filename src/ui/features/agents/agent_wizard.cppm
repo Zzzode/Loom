@@ -2,13 +2,9 @@
 /// @brief Agent creation/edit wizard. 4 agent-specific steps built on top of
 /// the UI11 loom.ui.dialogs.wizard_dialog framework.
 ///
-/// Replaces the old 6-step skeleton (same filename) and consolidates migration
-/// of:
-///   - src/components/agents/AgentEditor.tsx        (~700 lines, 4-tab editor)
-///   - src/components/agents/ColorPicker.tsx        (avatar color)
-///   - src/components/agents/ModelSelector.tsx      (model dropdown)
-///   - src/components/agents/ToolSelector.tsx       (L+R tools picker, ~1,600)
-///   - new-agent-creation/* subfolder              (4-step wizard flow)
+/// Replaces the old 6-step skeleton (same filename) and consolidates the
+/// agent editor, color picker, model selector, and tool selector into a
+/// single wizard flow.
 ///
 /// 4 Steps (UI11 WizardComponent + 4 WizardStep entries):
 ///   Step 1: Basic         — name (required), short description,
@@ -128,7 +124,7 @@ struct WizardDraft {
 };
 
 // ============================================================
-// Canonical tool list (mirrors TS ToolSelector's all-tools registry).
+// Canonical tool list (mirrors ToolSelector's all-tools registry).
 // Kept here so Step 2 can populate Available → Selected without pulling in
 // the full tools/ registry header.
 // ============================================================

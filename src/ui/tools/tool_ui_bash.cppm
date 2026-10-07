@@ -1,19 +1,9 @@
 
 /// @file tool_ui_bash.cppm
-/// @brief Bash tool UI — userFacingName, renderToolUseMessage, etc.
-///
-/// Faithful TS port of BashTool.tsx UI methods.
+/// @brief Bash tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.bash
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/BashTool/BashTool.tsx
-///   - userFacingName = "Run"
-///   - renderToolUseMessage = truncates command to ~60 chars
-///   - renderToolUseProgressMessage = last output line
-///   - renderToolUseTag = null (no tag)
-///   - isTransparentWrapper = false
 module;
 
 export module loom.ui.tools.bash;
@@ -29,13 +19,12 @@ using namespace loom::ui::tools;
 namespace detail {
 
 /// Truncate a bash command for display, preserving the end (head ellipsis).
-/// TS uses MAX_COMMAND_DISPLAY_CHARS (60) for inline summary.
+/// Uses a 60-char limit for inline summary.
 [[nodiscard]] inline std::string truncate_command(std::string_view cmd,
                                                    std::size_t max_len = 60) {
     if (cmd.size() <= max_len) return std::string(cmd);
 
     // Head ellipsis: show the *end* of the command (most relevant part)
-    // TS: headEllipsisCommand or similar
     std::string_view tail = cmd.substr(cmd.size() - max_len + 1);
     return "\xE2\x80\xA6" + std::string(tail);  // … + tail
 }
@@ -140,9 +129,8 @@ namespace detail {
     ToolUIFunctions fns;
 
     fns.user_facing_name = [](std::string_view input_json) {
-        // TS: default = "Bash", sandbox mode = "SandboxedBash",
-        // sed edits delegate to fileEditUserFacingName ("Update").
-        // Faithful port: default to "Bash" (sandbox detection TBD).
+        // Default to "Bash" (sandbox detection TBD).  Sed edits would
+        // delegate to the file-edit user-facing name ("Update").
         (void)input_json;
         return std::string{"Bash"};
     };
@@ -162,9 +150,8 @@ namespace detail {
 
     fns.progress = [](std::string_view input_json,
                        std::string_view partial_result) {
-        // TS: renderToolUseProgressMessage(progressMessagesForMessage, ...)
-        //   if (!lastProgress || !lastProgress.data) return "Running…";
-        //   else return ShellProgressMessage (last line of output)
+        // If no progress data, return "Running…"; otherwise return the
+        // last line of output (ShellProgressMessage).
         std::string last_line = detail::last_output_line(partial_result);
         if (!last_line.empty()) {
             return last_line;
@@ -180,9 +167,7 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: BashTool.tsx L549  extractSearchText({stdout, stderr})
-    //   return stderr ? `${stdout}\n${stderr}` : stdout;
-    // BashToolResultMessage shows <OutputLine content={stdout}> + stderr.
+    // BashToolResultMessage shows stdout + stderr.
     // UI never shows persistedOutputPath, backgroundInfo — model-facing.
     fns.extract_search_text = [](
         std::string_view output_text,

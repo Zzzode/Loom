@@ -219,19 +219,19 @@ struct DeclaredMarketplace {
 [[nodiscard]] std::map<std::string, DeclaredMarketplace> get_declared_marketplaces();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Marketplace manager implementation (ported from marketplaceManager.ts).
+// Marketplace manager implementation.
 //
-// Ports the USED subset: known_marketplaces.json config load/save, git-clone
-// fetch for github/git sources, URL fetch via curl, file/dir source reads,
-// add/remove with cache cleanup. git source variants (sparse checkout, SSH
-// detection, submodule recursion) and settings-layer (extraKnownMarketplaces)
-// writes are intentionally out of scope for the C++ CLI's headless install
-// path; they return honest errors rather than fake success. The TS parity
-// goal is preserved for the happy path.
+// Implements the used subset: known_marketplaces.json config load/save,
+// git-clone fetch for github/git sources, URL fetch via curl, file/dir
+// source reads, add/remove with cache cleanup. git source variants (sparse
+// checkout, SSH detection, submodule recursion) and settings-layer
+// (extraKnownMarketplaces) writes are intentionally out of scope for the
+// CLI's headless install path; they return honest errors rather than fake
+// success.
 // ─────────────────────────────────────────────────────────────────────────────
 namespace detail {
 
-// ~/.loom/plugins — mirrors pluginDirectories.getPluginsDirectory() in TS.
+// ~/.loom/plugins — the plugins directory.
 inline std::filesystem::path get_plugins_directory() {
     if (const char* override = std::getenv("LOOM_PLUGINS_DIR"); override && *override) {
         return std::filesystem::path(override);
@@ -442,7 +442,7 @@ to_marketplace(const loom::utils::json::JsonDoc& doc) {
             if (auto n = entry.get("name"); n.valid() && n.is_str()) {
                 pe.name = std::string(n.as_str());
             } else {
-                return; // skip entries without a name (TS schema rejects these)
+                return; // skip entries without a name
             }
             if (auto d = entry.get("description"); d.valid() && d.is_str())
                 pe.description = std::string(d.as_str());
@@ -611,7 +611,7 @@ fetch_marketplace(std::string_view name) {
     // git/github: clone or pull into <cache>/<name>.
     if (auto git = detail::resolve_git_url(source)) {
         std::filesystem::path cache_path = detail::get_marketplaces_cache_dir() / std::string(name);
-        // Try incremental pull first; on failure, rm + fresh clone (TS parity).
+        // Try incremental pull first; on failure, rm + fresh clone.
         std::error_code exists_ec;
         if (std::filesystem::exists(cache_path, exists_ec)
             && std::filesystem::is_directory(cache_path, exists_ec)) {

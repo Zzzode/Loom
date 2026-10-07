@@ -134,10 +134,10 @@ auto js_string_escape(std::string_view s) -> std::string {
 }
 
 /// Generate the inline node script that uses the TypeScript compiler API
-/// and prints JSON diagnostics to stdout.  Mirrors runScriptTypeCheck in TS.
+/// and prints JSON diagnostics to stdout.
 auto generate_runner_script(const TypecheckOptions& opts) -> std::string {
     // We produce a self-contained node script.  The source code is embedded
-    // as a JS string literal so we avoid writing two temp files (the .ts +
+    // as a JS string literal so we avoid writing two temp files (the source +
     // a separate runner).  We use dynamic import() so the script works
     // whether run via `bun` or `node`.
     return std::format(R"js(

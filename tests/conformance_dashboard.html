@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Markdown Conformance Dashboard</title>
+<style>
+:root {
+  --bg: #f8f9fa;
+  --card: #ffffff;
+  --text: #1a1a2e;
+  --text-muted: #6c757d;
+  --border: #dee2e6;
+  --green: #28a745;
+  --green-bg: #d4edda;
+  --yellow: #ffc107;
+  --yellow-bg: #fff3cd;
+  --red: #dc3545;
+  --red-bg: #f8d7da;
+  --blue: #007bff;
+  --blue-bg: #d1ecf1;
+  --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --text: #e4e6eb;
+    --text-muted: #8b8fa3;
+    --border: #2d3140;
+    --green: #3fb950;
+    --green-bg: #1a3a2a;
+    --yellow: #d29922;
+    --yellow-bg: #3a2f1a;
+    --red: #f85149;
+    --red-bg: #3a1f22;
+    --blue: #58a6ff;
+    --blue-bg: #1a2f3f;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+h1 { font-size: 1.5rem; margin-bottom: 4px; }
+.subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; }
+
+/* File picker */
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 48px;
+  text-align: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 24px;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--blue);
+  background: var(--blue-bg);
+}
+.drop-zone p { font-size: 1.1rem; }
+.drop-zone .hint { font-size: 0.85rem; margin-top: 8px; }
+#file-input { display: none; }
+
+/* Summary cards */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.card h2 { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 8px; }
+.card .rate { font-size: 2.5rem; font-weight: 700; line-height: 1; }
+.card .rate.green { color: var(--green); }
+.card .rate.yellow { color: var(--yellow); }
+.card .rate.red { color: var(--red); }
+.card .detail { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; }
+.card .floor {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.floor.ok { background: var(--green-bg); color: var(--green); }
+.floor.warn { background: var(--yellow-bg); color: var(--yellow); }
+
+/* Section chart */
+.section { margin-bottom: 32px; }
+.section h3 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.bar-label {
+  width: 220px;
+  min-width: 120px;
+  font-size: 0.82rem;
+  text-align: right;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bar-track {
+  flex: 1;
+  height: 20px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+.bar-fill.green { background: var(--green); }
+.bar-fill.yellow { background: var(--yellow); }
+.bar-fill.red { background: var(--red); }
+.bar-count {
+  width: 60px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+/* Failures */
+.failure-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.failure-header {
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  user-select: none;
+}
+.failure-header:hover { background: var(--bg); }
+.failure-header .ex {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--red);
+  min-width: 70px;
+}
+.failure-header .sec { font-size: 0.9rem; flex: 1; }
+.failure-header .arrow {
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  font-size: 0.8rem;
+}
+.failure-card[open] .arrow { transform: rotate(90deg); }
+.failure-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+}
+.failure-body h4 {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 12px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.failure-body pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.failure-body pre.expected { border-left: 3px solid var(--green); }
+.failure-body pre.actual { border-left: 3px solid var(--red); }
+.failure-body pre.markdown { border-left: 3px solid var(--blue); }
+
+/* Category badge */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+.badge.fixture { background: var(--yellow-bg); color: var(--yellow); }
+.badge.tradeoff { background: var(--red-bg); color: var(--red); }
+
+/* All cases browser */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.filter-btn:hover { border-color: var(--blue); }
+.filter-btn.active {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+#case-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+#case-search:focus { outline: none; border-color: var(--blue); }
+.case-row {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 3px;
+  overflow: hidden;
+  background: var(--card);
+}
+.case-header {
+  padding: 7px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+  font-size: 0.85rem;
+}
+.case-header:hover { background: var(--bg); }
+.case-status { font-weight: 700; min-width: 18px; text-align: center; }
+.case-status.pass { color: var(--green); }
+.case-status.fail { color: var(--red); }
+.case-example {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  min-width: 55px;
+}
+.case-section { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.case-suite {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.case-body {
+  display: none;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+.case-row.open .case-body { display: block; }
+.case-body h4 {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 10px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.case-body h4:first-child { margin-top: 0; }
+.case-body pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 0;
+}
+.case-body pre.markdown { border-left: 3px solid var(--blue); }
+.case-body pre.expected { border-left: 3px solid var(--green); }
+.case-body pre.actual { border-left: 3px solid var(--red); }
+
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<h1>Markdown Conformance Dashboard</h1>
+<p class="subtitle" id="timestamp"></p>
+
+<div class="drop-zone" id="drop-zone">
+  <p>Drop <code>conformance.json</code> here or click to browse</p>
+  <p class="hint">Run: <code>./build/debug/tests/test_markdown_conformance --conformance-json conformance.json</code></p>
+  <input type="file" id="file-input" accept=".json">
+</div>
+
+<div id="dashboard" class="hidden">
+  <div class="cards" id="cards"></div>
+  <div id="sections"></div>
+  <div id="failures"></div>
+  <div class="section" id="cases-section">
+    <h3>All test cases <span id="cases-count" style="font-weight:400;color:var(--text-muted)"></span></h3>
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="passed">✓ Passed</button>
+      <button class="filter-btn" data-filter="failed">✗ Failed</button>
+      <input type="text" id="case-search" placeholder="Search example # or section…">
+    </div>
+    <div id="cases-list"></div>
+  </div>
+</div>
+
+<script>
+// ── Failure categorization ──────────────────────────────────────────
+// Mirrors docs/dev/markdown-conformance.md "Failure categorization".
+const CATEGORIES = {
+  279: { cat: 'fixture', label: 'Spec fixture format stale' },
+  280: { cat: 'fixture', label: 'Spec fixture format stale' },
+  619: { cat: 'fixture', label: 'Spec fixture self-contradiction' },
+  620: { cat: 'fixture', label: 'Spec fixture self-contradiction' },
+  652: { cat: 'tradeoff', label: 'Tagfilter trade-off (net −3)' },
+  22:  { cat: 'tradeoff', label: 'Tagfilter trade-off (net −3)' },
+};
+
+function rateClass(rate) {
+  if (rate >= 100) return 'green';
+  if (rate >= 95) return 'yellow';
+  return 'red';
+}
+
+function barClass(rate) {
+  if (rate >= 100) return 'green';
+  if (rate >= 90) return 'yellow';
+  return 'red';
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ── Render ──────────────────────────────────────────────────────────
+
+function render(data) {
+  document.getElementById('timestamp').textContent =
+    'Generated: ' + (data.timestamp || 'unknown');
+
+  // Summary cards
+  const cardsEl = document.getElementById('cards');
+  cardsEl.innerHTML = data.suites.map(s => {
+    const rate = s.total ? (100 * s.passed / s.total) : 0;
+    const cls = rateClass(rate);
+    const floorOk = s.passed >= s.floor;
+    return `
+      <div class="card">
+        <h2>${escapeHtml(s.name)}</h2>
+        <div class="rate ${cls}">${rate.toFixed(1)}%</div>
+        <div class="detail">${s.passed} / ${s.total} passed · ${s.failed} failed</div>
+        <span class="floor ${floorOk ? 'ok' : 'warn'}">
+          floor: ${s.floor} ${floorOk ? '✓' : '✗'}
+        </span>
+      </div>`;
+  }).join('');
+
+  // Section breakdown (only suites with failures)
+  const sectionsEl = document.getElementById('sections');
+  sectionsEl.innerHTML = data.suites
+    .filter(s => s.failed > 0)
+    .map(s => {
+      const entries = Object.entries(s.by_section)
+        .map(([name, st]) => ({
+          name,
+          passed: st.passed,
+          total: st.total,
+          rate: st.total ? (100 * st.passed / st.total) : 100,
+        }))
+        .sort((a, b) => a.rate - b.rate || a.name.localeCompare(b.name));
+
+      // Show only sections with failures, or all if suite is 100%
+      const weak = entries.filter(e => e.passed < e.total);
+      const shown = weak.length > 0 ? weak : entries;
+
+      return `
+        <div class="section">
+          <h3>${escapeHtml(s.name)} — sections with failures</h3>
+          ${shown.map(e => `
+            <div class="bar-row">
+              <div class="bar-label" title="${escapeHtml(e.name)}">${escapeHtml(e.name)}</div>
+              <div class="bar-track">
+                <div class="bar-fill ${barClass(e.rate)}" style="width:${e.rate}%"></div>
+              </div>
+              <div class="bar-count">${e.passed}/${e.total}</div>
+            </div>`).join('')}
+        </div>`;
+    }).join('');
+
+  // Failures
+  const failuresEl = document.getElementById('failures');
+  const allFailures = data.suites
+    .filter(s => s.failures.length > 0)
+    .map(s => ({ suite: s.name, failures: s.failures }));
+
+  if (allFailures.length === 0) {
+    failuresEl.innerHTML = '<p style="color:var(--green);font-weight:600">All tests passed! 🎉</p>';
+  } else {
+    failuresEl.innerHTML = allFailures.map(({ suite, failures }) => `
+      <div class="section">
+        <h3>${escapeHtml(suite)} — ${failures.length} failure${failures.length > 1 ? 's' : ''}</h3>
+        ${failures.map(f => {
+          const cat = CATEGORIES[f.example];
+          const badge = cat
+            ? `<span class="badge ${cat.cat}">${escapeHtml(cat.label)}</span>`
+            : '';
+          return `
+            <details class="failure-card">
+              <summary class="failure-header">
+                <span class="ex">ex ${f.example}</span>
+                <span class="sec">${escapeHtml(f.section)}${badge}</span>
+                <span class="arrow">▶</span>
+              </summary>
+              <div class="failure-body">
+                <h4>Markdown input</h4>
+                <pre class="markdown">${escapeHtml(f.markdown)}</pre>
+                <h4>Expected (spec)</h4>
+                <pre class="expected">${escapeHtml(f.expected)}</pre>
+                <h4>Actual (Loom)</h4>
+                <pre class="actual">${escapeHtml(f.actual)}</pre>
+              </div>
+            </details>`;
+        }).join('')}
+      </div>`).join('');
+  }
+
+  document.getElementById('drop-zone').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+
+  // All cases browser
+  collectCases(data);
+  renderCases();
+}
+
+// ── All cases browser ───────────────────────────────────────────────
+
+let allCases = [];
+let currentFiltered = [];
+let caseFilter = 'all';
+let caseSearch = '';
+
+function collectCases(data) {
+  allCases = [];
+  for (const s of data.suites) {
+    if (!s.cases) continue;
+    for (const c of s.cases) {
+      allCases.push({ ...c, suite: s.name });
+    }
+  }
+}
+
+function renderCases() {
+  const el = document.getElementById('cases-list');
+  const search = caseSearch.toLowerCase().trim();
+  currentFiltered = allCases.filter(c => {
+    if (caseFilter === 'passed' && !c.passed) return false;
+    if (caseFilter === 'failed' && c.passed) return false;
+    if (search && !String(c.example).includes(search) &&
+        !c.section.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  document.getElementById('cases-count').textContent =
+    '(' + currentFiltered.length + '/' + allCases.length + ')';
+
+  let html = '';
+  for (let i = 0; i < currentFiltered.length; i++) {
+    const c = currentFiltered[i];
+    const cls = c.passed ? 'pass' : 'fail';
+    const icon = c.passed ? '✓' : '✗';
+    html += '<div class="case-row" data-idx="' + i + '">' +
+      '<div class="case-header">' +
+      '<span class="case-status ' + cls + '">' + icon + '</span>' +
+      '<span class="case-example">ex ' + c.example + '</span>' +
+      '<span class="case-section">' + escapeHtml(c.section) + '</span>' +
+      '<span class="case-suite">' + escapeHtml(c.suite) + '</span>' +
+      '</div><div class="case-body"></div></div>';
+  }
+  el.innerHTML = html;
+}
+
+// Expand/collapse (event delegation)
+document.getElementById('cases-list').addEventListener('click', e => {
+  const row = e.target.closest('.case-row');
+  if (!row) return;
+  const body = row.querySelector('.case-body');
+  if (row.classList.contains('open')) {
+    row.classList.remove('open');
+    body.innerHTML = '';
+  } else {
+    const c = currentFiltered[parseInt(row.dataset.idx)];
+    if (c) {
+      body.innerHTML =
+        '<h4>Markdown input</h4><pre class="markdown">' + escapeHtml(c.markdown) + '</pre>' +
+        '<h4>Expected (spec)</h4><pre class="expected">' + escapeHtml(c.expected) + '</pre>' +
+        '<h4>Actual (Loom)</h4><pre class="actual">' + escapeHtml(c.actual) + '</pre>';
+    }
+    row.classList.add('open');
+  }
+});
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    caseFilter = btn.dataset.filter;
+    renderCases();
+  });
+});
+
+// Search
+document.getElementById('case-search').addEventListener('input', e => {
+  caseSearch = e.target.value;
+  renderCases();
+});
+
+// ── File loading ────────────────────────────────────────────────────
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) loadFile(file);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) loadFile(fileInput.files[0]);
+});
+
+function loadFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      render(data);
+    } catch (err) {
+      alert('Failed to parse JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+</script>
+</body>
+</html>

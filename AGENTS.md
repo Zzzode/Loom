@@ -6,9 +6,8 @@ working in this repository.
 ## What this is
 
 **Loom** — a C++23 CLI agent harness. A single self-contained project: no
-TypeScript, no Bun, no npm. The tree was ported from a TypeScript codebase that
-has since been deleted; `docs/decisions/design-decisions.md` records the design
-intent that used to live there.
+TypeScript, no Bun, no npm. `docs/decisions/design-decisions.md` records the
+design decisions behind the tree.
 
 ## Build and test
 
@@ -47,10 +46,10 @@ This box uses Homebrew LLVM 23.1.2, which fixes two LLVM 22 defects:
 - **Optimizer SIGSEGV** — the LLVM 22 optimizer crashed on this tree at `-O2`,
   forcing `-O0 -DNDEBUG` for release. LLVM 23 builds and tests clean at `-O2`.
 
-**If configuration fails with a FetchContent download error**, `.deps-cache/`
-is missing or incomplete. It holds the six pinned dependency archives; this box
-has no github.com access, so they cannot be re-fetched. `CMakeLists.txt` probes
-for `.deps-cache/<dep>-src/` automatically — no flags needed when it is present.
+**If configuration fails with a FetchContent download error**, check network
+connectivity. `CMakeLists.txt` also probes for `.deps-cache/<dep>-src/` as an
+optional offline cache — no flags needed when it is present, but the directory
+is machine-local and gitignored; absent it, FetchContent clones from GitHub.
 
 ## Architecture
 
@@ -103,7 +102,7 @@ cycle-free. Two caveats from the single-target era still hold:
 | `src/query/wire_*.cppm` | The wire-protocol seam. `wire_protocol.cppm` defines `WireBackend`; `wire_messages.cppm` and `wire_openai.cppm` implement it. The engine builds a vendor-neutral `RequestInput` and never serializes a wire format itself. |
 | `src/tools/` | Tool implementations, each with its input schema, permission model, and execution. |
 | `src/commands/` | Slash commands. Registered via `command_registry_init_*.cpp`. |
-| `src/ui/` | FTXUI interface. **Not Ink, not React** — do not port React idioms into it. Cut by responsibility: `foundation/` (tokens, theme, figures, primitives), `chrome/` (layout, renderer, terminal I/O), `widgets/` (reusable controls), `visual/` (markdown/diff rendering), `messages/`, `dialogs/`, `permissions/`, `prompt/`, `screens/`, `features/{agents,teams,tasks,plugins,mcp}/`, `tools/` (tool-UI registry), and `app/` (the top-level app orchestrator shards). Twelve `loom_ui_<area>` targets aggregated by the `loom_ui` INTERFACE library — see the build-layout note above. |
+| `src/ui/` | FTXUI interface — do not port web/React idioms into it. Cut by responsibility: `foundation/` (tokens, theme, figures, primitives), `chrome/` (layout, renderer, terminal I/O), `widgets/` (reusable controls), `visual/` (markdown/diff rendering), `messages/`, `dialogs/`, `permissions/`, `prompt/`, `screens/`, `features/{agents,teams,tasks,plugins,mcp}/`, `tools/` (tool-UI registry), and `app/` (the top-level app orchestrator shards). Twelve `loom_ui_<area>` targets aggregated by the `loom_ui` INTERFACE library — see the build-layout note above. |
 | `src/services/` | External integrations: MCP, LSP, API clients, plugins. |
 | `src/state/` | AppState store and reducers. |
 | `src/constants/paths.cppm` | **The single source for config/memory path resolution.** Both cascades live here; delegate to it rather than hardcoding paths. |
@@ -159,6 +158,11 @@ tool output, and wrong tool status. See `.agents/skills/debug-session/SKILL.md`.
 ## Conventions
 
 - **All code comments and docs in English.**
+- **RFC-driven development.** All new feature work starts with an RFC in
+  `docs/rfcs/` (KEP-style, lint-checked). The RFC is the design record: it
+  captures motivation, architecture, invariant catalogs, migration plans, and
+  review gates. Do not begin implementing a feature until its RFC has passed
+  agent-run review. Bug fixes and small refactors do not need an RFC.
 - **Reviews are agent-run, never user-run.** Every review in this project —
   code review, design review, RFC stage gates, production-readiness review,
   approve/request-changes — is performed by Claude agents, not the user. Do
@@ -190,8 +194,10 @@ side silently breaks the other rather than failing to compile. Examples:
 `docs/decisions/design-decisions.md` catalogues these — consult it before
 changing a wire shape, a registry key, or a tag format.
 
-## Historical documents
+## Documentation
 
-`docs/` holds audit reports and plans written while the TypeScript reference
-tree still existed. They contain paths that no longer resolve, and are kept
-unedited as records of what was found. `docs/README.md` says which are current.
+- `docs/README.md` — docs index: structure, naming conventions, what is current.
+- `docs/dev/` — developer guides (conformance suite, error-handling conventions).
+- `docs/design/` — design documents and rationale (dialog system, no-DI ADR).
+- `docs/rfcs/` — RFCs (KEP-style, lint-checked).
+- `docs/decisions/` — decision registers (design-decisions.md — read this first).

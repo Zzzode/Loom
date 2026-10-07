@@ -36,12 +36,11 @@ struct McpResourceSuggestionData {
     bool channel_like = false;
 };
 
-// TS REF: src/hooks/useTypeahead.tsx:593-636 — DM/teammate + named agent
-//   autocomplete: typing @name shows teammate / subagent suggestions with
-//   status.  TS also surfaces agent *definitions* (agentType + whenToUse +
-//   color) via unifiedSuggestions.ts:77-108, merged with file/MCP results.
-//   We combine both into a single flat list so the REPL autocomplete layer
-//   can rank them uniformly.
+// DM/teammate + named agent autocomplete: typing @name shows teammate /
+// subagent suggestions with status.  Agent definitions (agent_type +
+// when_to_use + color) are merged with file/MCP results.  We combine both
+// into a single flat list so the REPL autocomplete layer can rank them
+// uniformly.
 struct AgentSuggestionData {
     std::string name;                     // agent type or teammate name
     std::string description;              // short "when to use" or status text
@@ -51,10 +50,9 @@ struct AgentSuggestionData {
     bool is_subagent = false;             // true for native-agent records
 };
 
-// TS REF: src/history.ts:190-228 — getHistory() yields HistoryEntry objects
-//   for the current project, newest-first, deduped by display text, capped
-//   at MAX_HISTORY_ITEMS (100).  Ctrl+R search (useHistorySearch.ts:73-117)
-//   does a case-sensitive substring match via lastIndexOf.
+// getHistory() yields HistoryEntry objects for the current project,
+// newest-first, deduped by display text, capped at MAX_HISTORY_ITEMS (100).
+// Ctrl+R search does a case-sensitive substring match via lastIndexOf.
 struct HistorySuggestionData {
     std::string prompt_text;              // the matched prompt (first line)
     std::string full_text;                // full multi-line prompt text
@@ -82,8 +80,6 @@ struct HistorySuggestionData {
 // ── Agent / teammate autocomplete ────────────────────────────────────────
 // Collects all available agent definitions + native agent (teammate) records
 // into a single list.  `cwd` is used to resolve project-level agent defs.
-// TS REF: src/hooks/unifiedSuggestions.ts:77-108 (agent defs with color)
-// TS REF: src/hooks/useTypeahead.tsx:604-625 (teammates + agentNameRegistry)
 [[nodiscard]] std::vector<AgentSuggestionData> collect_agent_suggestions(
     std::string_view cwd);
 
@@ -92,19 +88,24 @@ struct HistorySuggestionData {
 // match, case-insensitive).  Returns up to `max_entries` results, sorted
 // reverse-chronologically (newest first).  When `query` is empty, returns the
 // most recent entries.
-// TS REF: src/history.ts:190 (getHistory, project-filtered, newest-first)
-// TS REF: src/hooks/useHistorySearch.ts:73-117 (substring match via lastIndexOf)
 [[nodiscard]] std::vector<HistorySuggestionData> collect_history_suggestions(
     std::string_view query,
     std::size_t max_entries = 50);
 
 // Append a prompt entry to the persisted history file.  Called on submit so
 // that subsequent @history / Ctrl+R searches can find it.
-// TS REF: src/history.ts:355 (addToPromptHistory — appends to history.jsonl)
 void append_prompt_history(
     std::string_view prompt_text,
     std::string_view session_id,
     std::string_view project_path);
+
+// Load recent prompt texts from the persisted history file for the given
+// project, in chronological order (oldest first, newest last).  Used to
+// populate the in-memory input_history on startup so the up-arrow recall
+// works across sessions.  Dedups by display text.
+[[nodiscard]] std::vector<std::string> load_recent_prompt_texts(
+    std::string_view project_path,
+    std::size_t max_entries = 100);
 
 // ── Pre-formatted suggestions (to keep app.cppm under source-loc budget) ──
 // A suggestion ready for add_suggestion(); mirrors AutocompleteSuggestion fields
@@ -124,7 +125,6 @@ struct FormattedSuggestion {
 // Build @history suggestions with display truncation + relative-time formatting.
 // `query` is the search term (empty = show recent).  `replacement_start`/`end`
 // are passed through verbatim (caller knows cursor/token positions).
-// TS REF: src/hooks/useHistorySearch.ts:151 (Ctrl+R history search)
 [[nodiscard]] std::vector<FormattedSuggestion> build_history_suggestions(
     std::string_view query,
     std::size_t replacement_start,
@@ -133,8 +133,6 @@ struct FormattedSuggestion {
 
 // Build agent/teammate suggestions, pre-filtered by fuzzy match on `query`.
 // Returns only agents whose name matches the fuzzy scorer.
-// TS REF: src/hooks/unifiedSuggestions.ts:77-108 (agent defs with color)
-// TS REF: src/hooks/useTypeahead.tsx:604-625 (teammate DMs with status)
 [[nodiscard]] std::vector<FormattedSuggestion> build_agent_suggestions(
     std::string_view cwd,
     std::string_view query,

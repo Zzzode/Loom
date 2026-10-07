@@ -1,14 +1,13 @@
 // AWS Signature Version 4 (SigV4) self-contained signer + credential chain.
 //
-// Faithful to the TS upstream's use of @smithy/signature-v4 via the Bedrock
-// SDK.  Service name for Bedrock Runtime is "bedrock".  Signing algorithm is
+// Service name for Bedrock Runtime is "bedrock".  Signing algorithm is
 // AWS4-HMAC-SHA256.  All rules (canonical request construction, string to
 // sign, signature derivation, signed header ordering) match the AWS SigV4
 // spec exactly so requests are byte-for-byte identical to what AWS SDKs
 // produce — essential because AWS enforces strict byte-level signature
 // validation.
 //
-// Credential chain (same priority as TS upstream):
+// Credential chain (priority order):
 //   1. Static credentials from caller (handed via `AwsCredentials` struct).
 //   2. Environment variables AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY /
 //      AWS_SESSION_TOKEN.
@@ -21,9 +20,9 @@
 //      GET /latest/meta-data/iam/security-credentials/<role>.  TTL 6h.
 //
 // Provider call sites (MessagesClient / QueryEngine) are responsible for
-// calling `refresh_aws_credentials()` (the shell hooks equivalent of TS
-// `refreshAndGetAwsCredentials()`) before signing, if user scripts need to
-// run first.  This module does NOT spawn user shells.
+// calling `refresh_aws_credentials()` (the shell-hooks equivalent) before
+// signing, if user scripts need to run first.  This module does NOT spawn
+// user shells.
 module;
 #include <cstdlib>
 #include <cstdint>
@@ -447,12 +446,11 @@ struct SignedRequest {
 }
 
 // ---------------------------------------------------------------------------
-// Credential chain (lite implementation — same priority as TS upstream).
+// Credential chain (lite implementation).
 // We intentionally do NOT attempt STS AssumeRole, SSO OIDC, credential_process
-// — those require network calls and/or external binaries, and TS upstream
-// covers them via the user-facing awsAuthRefresh / awsCredentialExport shell
-// hooks.  The C++ chain covers the 90% "it just works on laptop / CI / EC2"
-// case.
+// — those require network calls and/or external binaries, and are covered
+// via the user-facing awsAuthRefresh / awsCredentialExport shell hooks.  This
+// chain covers the 90% "it just works on laptop / CI / EC2" case.
 // ---------------------------------------------------------------------------
 
 // Build a credentials struct by inspecting env vars first (highest priority
@@ -663,7 +661,7 @@ resolve_default_credentials() {
     return std::nullopt;
 }
 
-// TS client.ts priority for region:
+// Priority for region:
 //   AWS_REGION > AWS_DEFAULT_REGION > "us-east-1"
 [[nodiscard]] inline std::string resolve_region() {
     using loom::utils::env::get_env;
@@ -672,7 +670,7 @@ resolve_default_credentials() {
     return "us-east-1";
 }
 
-// Check for the three test-hook env vars that correspond to TS upstream
+// Check for the three test-hook env vars:
 //   LOOM_USE_BEDROCK        (truthy = use Bedrock provider)
 //   LOOM_SKIP_BEDROCK_AUTH  (truthy = skip SigV4, no-op creds)
 //   AWS_BEARER_TOKEN_BEDROCK       (non-empty = inject Authorization: Bearer, skip SigV4)

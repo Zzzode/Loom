@@ -292,17 +292,25 @@ and `wire_openai.cppm` implement it. The engine builds a vendor-neutral
 
 For contributors — build details, conventions, the cross-module coupling
 hazards this code is unusually prone to, and the debug-trace locations — see
-`AGENTS.md`. Design intent inherited from the original TypeScript
-implementation is recorded in `docs/decisions/design-decisions.md`.
+`AGENTS.md`. Design decisions are recorded in
+`docs/decisions/design-decisions.md`.
 
 ## Documentation
 
 - [`AGENTS.md`](AGENTS.md) — contributor guide: build, architecture,
   conventions, hazards. (`CLAUDE.md` is a symlink to it.)
-- [`docs/README.md`](docs/README.md) — docs index: what is current, what is
-  historical.
+- [`docs/README.md`](docs/README.md) — docs index: structure, naming
+  conventions, what is current.
 - [`docs/decisions/design-decisions.md`](docs/decisions/design-decisions.md) —
   design decisions and cross-module couplings. Read this first.
+- [`docs/dev/markdown-conformance.md`](docs/dev/markdown-conformance.md) —
+  CommonMark + GFM conformance suite guide (99.6% baseline).
+- [`docs/dev/error-handling-conventions.md`](docs/dev/error-handling-conventions.md) —
+  `std::expected` / `Result<T>` error-handling conventions.
+- [`docs/design/why-no-di.md`](docs/design/why-no-di.md) — ADR #1: no runtime
+  DI container.
+- [`docs/design/dialog-system.md`](docs/design/dialog-system.md) — dialog
+  framework architecture.
 - [`docs/rfcs/0001-module-architecture-target.md`](docs/rfcs/0001-module-architecture-target.md)
   — the module-architecture RFC (implemented).
 - [`docs/rfcs/0002-ui-state-sharding-and-ui9-break.md`](docs/rfcs/0002-ui-state-sharding-and-ui9-break.md)

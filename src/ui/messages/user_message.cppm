@@ -6,7 +6,6 @@ import std;
 // RenderUserPromptMessage so the divergent-envelope path (UserMessageData
 // payloads — teammate / plan / agent-notify / memory / resource) also caps
 // displayed text at 10_000 chars.
-// TS REF: src/components/messages/UserPromptMessage.tsx lines 28-70.
 import loom.ui.messages.user_text_message;
 
 export namespace loom::ui::messages {
@@ -77,7 +76,7 @@ inline std::string render_attachments(const std::vector<MessageAttachment>& atta
 // ─── Rendering functions ─────────────────────────────────────────────
 
 inline std::string render_user_message(const UserMessageData& data) {
-    // Truncate long pastes for display (TS REF: UserPromptMessage.tsx lines 64-70).
+    // Truncate long pastes for display.
     // The divergent-envelope path (UserMessageData) must apply the same 10K cap
     // as the faithful RenderUserPromptMessage path.
     std::string result = TruncateUserPromptText(data.content);

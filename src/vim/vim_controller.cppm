@@ -6,10 +6,6 @@
 /// operators, yank registers, and linewise flags.  Replaces the scattered
 /// vim_mode_current_ / vim_pending_operator_ / vim_yank_register_ fields
 /// that previously lived in each consumer independently.
-///
-/// TS REF: src/hooks/useVimInput.ts:36 — VimInputState tracks mode, registers,
-///   pending operators, and undo history for the vim input hook.
-/// TS REF: src/vim/transitions.ts — mode transitions and operator pending.
 module;
 
 #include <cstdint>

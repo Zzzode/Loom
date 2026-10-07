@@ -1,7 +1,6 @@
 /// @file structured_diff.cppm
 /// @brief Structured diff rendering with word-level highlighting, syntax
-/// coloring, and hunk navigation. Migrated from StructuredDiff/colorDiff.ts
-/// and diff/DiffDetailView.tsx.
+/// coloring, and hunk navigation.
 module;
 
 #include <cstdint>
@@ -107,7 +106,7 @@ struct StructuredDiffOptions {
 // NOTE: A full AST-based structural diff is out of scope (TODO: wire up the
 //       LSP-based syntax tree when it becomes available). In the meantime we
 //       use a lightweight heuristic that matches the strategy described in
-//       StructuredDiff/Fallback.tsx:
+//       the fallback tokenizer:
 //         • empty-line-separated logical segments
 //         • indentation-based depth boundaries
 //         • comment / import / class / function sentinels
@@ -267,7 +266,7 @@ struct BlockDiffStatus {
 };
 
 /// Render the N-files-changed summary bar used at the top of a structured
-/// diff view (matches the DiffDetailView sub-title pattern in TS).
+/// diff view (matches the DiffDetailView sub-title pattern in).
 [[nodiscard]] inline Element RenderSummaryBar(
     int files_changed,
     int additions,
@@ -378,8 +377,8 @@ struct BlockDiffStatus {
 }
 
 /// Annotate a sequence of hunks with per-line word_changes by pairing
-/// consecutive Remove/Add lines within the same hunk (fallback strategy
-/// from StructuredDiff/Fallback.tsx, CHANGE_THRESHOLD = 0.4).
+/// consecutive Remove/Add lines within the same hunk (fallback strategy,
+/// CHANGE_THRESHOLD = 0.4).
 constexpr double kChangeThreshold = 0.4;
 
 inline void annotate_word_changes(std::vector<StructuredPatchHunk>& hunks) {
@@ -410,7 +409,7 @@ inline void annotate_word_changes(std::vector<StructuredPatchHunk>& hunks) {
 }
 
 // ============================================================
-// Color Module Availability (from colorDiff.ts)
+// Color Module Availability
 // ============================================================
 
 /// Check if the color diff module is available

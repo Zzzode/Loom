@@ -94,7 +94,7 @@ struct McpServerStatus {
     bool enabled = true;           // whether the server should auto-connect
 };
 
-/// XAA IdP connection state (mirrors the TS settings.xaaIdp + keychain state).
+/// XAA IdP connection state (mirrors the settings.xaaIdp + keychain state).
 struct XaaIdpStatus {
     bool configured = false;
     std::string issuer;
@@ -487,7 +487,7 @@ private:
     }
 
     /// Add a new MCP server configuration.
-    /// Supports TS-compatible options:
+    /// Supports the following options:
     ///   --scope/-s (local|user|project)
     ///   --transport/-t (stdio|sse|http)
     ///   --env/-e KEY=VALUE (for stdio)
@@ -642,7 +642,7 @@ private:
         }
         normalize_transport(config);
 
-        // ---- XAA fail-fast validation (matches TS addCommand.ts exactly) -----
+        // ---- XAA fail-fast validation -----
         if (request_xaa) {
             const char* enable_env = std::getenv("LOOM_ENABLE_XAA");
             if (!enable_env || (std::string_view(enable_env) != "1")) {

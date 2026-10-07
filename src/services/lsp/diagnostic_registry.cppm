@@ -4,9 +4,6 @@
 ///        diagnostics received asynchronously from LSP servers via
 ///        textDocument/publishDiagnostics notifications.
 ///
-/// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts (386 lines)
-/// TS REF: src/services/lsp/passiveFeedback.ts (328 lines, diagnostic formatting)
-///
 /// Architecture:
 ///   1. LSP server sends publishDiagnostics notification
 ///   2. set_diagnostics() stores per-server, per-URI diagnostics
@@ -39,8 +36,6 @@ using loom::utils::Result;
 // ============================================================================
 
 /// LSP diagnostic severity levels.
-/// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:91-103 (severityToNumber)
-/// TS REF: src/services/lsp/passiveFeedback.ts:18-35 (mapLSPSeverity)
 enum class DiagnosticSeverity : int {
     Error       = 1,  // LSP severity 1
     Warning     = 2,  // LSP severity 2
@@ -49,7 +44,6 @@ enum class DiagnosticSeverity : int {
 };
 
 /// Map a raw LSP severity number to our DiagnosticSeverity enum.
-/// TS REF: src/services/lsp/passiveFeedback.ts:18-35 (mapLSPSeverity)
 [[nodiscard]] inline DiagnosticSeverity map_lsp_severity(int lsp_severity) {
     switch (lsp_severity) {
         case 1: return DiagnosticSeverity::Error;
@@ -61,13 +55,11 @@ enum class DiagnosticSeverity : int {
 }
 
 /// Map a DiagnosticSeverity to a sortable number (lower = more severe).
-/// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:91-103 (severityToNumber)
 [[nodiscard]] inline int severity_to_number(DiagnosticSeverity s) {
     return static_cast<int>(s);
 }
 
 /// Map a DiagnosticSeverity to its canonical string name.
-/// TS REF: src/services/lsp/passiveFeedback.ts:18-35 (mapLSPSeverity returns string)
 [[nodiscard]] inline std::string_view severity_to_string(DiagnosticSeverity s) {
     switch (s) {
         case DiagnosticSeverity::Error:   return "Error";
@@ -83,21 +75,18 @@ enum class DiagnosticSeverity : int {
 // ============================================================================
 
 /// A position within a text document (0-based line + character).
-/// TS REF: src/services/lsp/passiveFeedback.ts:67-85 (range in diagnostic map)
 struct DiagnosticPosition {
     int64_t line{0};
     int64_t character{0};
 };
 
 /// A range within a text document (start inclusive, end exclusive).
-/// TS REF: src/services/lsp/passiveFeedback.ts:76-85
 struct DiagnosticRange {
     DiagnosticPosition start;
     DiagnosticPosition end;
 };
 
 /// Related diagnostic information (cross-reference to another location).
-/// TS REF: LSP spec - DiagnosticRelatedInformation
 struct DiagnosticRelatedInfo {
     std::string uri;
     DiagnosticRange range;
@@ -109,8 +98,6 @@ struct DiagnosticRelatedInfo {
 // ============================================================================
 
 /// A single LSP diagnostic entry.
-/// TS REF: src/services/lsp/passiveFeedback.ts:63-92 (diagnostic mapping)
-/// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:110-124 (createDiagnosticKey fields)
 struct Diagnostic {
     std::string uri;                    ///< File URI (file://...) or plain path
     DiagnosticRange range;             ///< Position range in the document
@@ -121,7 +108,6 @@ struct Diagnostic {
     std::vector<DiagnosticRelatedInfo> related_info;  ///< Related info locations
 
     /// Create a stable dedup key from diagnostic content.
-    /// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:110-124 (createDiagnosticKey)
     [[nodiscard]] std::string dedup_key() const {
         // Build a deterministic key from the fields that define "same diagnostic".
         // Using yyjson for canonical serialization would be heavier; a manual
@@ -142,7 +128,6 @@ struct Diagnostic {
 // ============================================================================
 
 /// A group of diagnostics for a single file URI.
-/// TS REF: src/services/lsp/diagnosticTracking.ts - DiagnosticFile type
 struct DiagnosticFile {
     std::string uri;
     std::vector<Diagnostic> diagnostics;
@@ -153,7 +138,6 @@ struct DiagnosticFile {
 // ============================================================================
 
 /// A pending LSP diagnostic notification awaiting delivery as an attachment.
-/// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:12-21 (PendingLSPDiagnostic)
 struct PendingLSPDiagnostic {
     std::string server_name;           ///< Server that sent the diagnostic
     std::vector<DiagnosticFile> files; ///< Diagnostic files
@@ -166,7 +150,6 @@ struct PendingLSPDiagnostic {
 // ============================================================================
 
 /// Result of registering diagnostic notification handlers across servers.
-/// TS REF: src/services/lsp/passiveFeedback.ts:105-114 (HandlerRegistrationResult)
 struct HandlerRegistrationResult {
     size_t total_servers{0};
     size_t success_count{0};
@@ -180,15 +163,12 @@ struct HandlerRegistrationResult {
 // ============================================================================
 
 /// Maximum diagnostics per file in a single delivery batch.
-/// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:42
 constexpr size_t MAX_DIAGNOSTICS_PER_FILE = 10;
 
 /// Maximum total diagnostics across all files in a single delivery batch.
-/// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:43
 constexpr size_t MAX_TOTAL_DIAGNOSTICS = 30;
 
 /// Maximum files to track for cross-turn deduplication (prevents unbounded growth).
-/// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:46
 constexpr size_t MAX_DELIVERED_FILES = 500;
 
 // ============================================================================
@@ -201,8 +181,6 @@ constexpr size_t MAX_DELIVERED_FILES = 500;
 /// and provides volume-limited batches for delivery as conversation
 /// attachments. Follows the same pattern as AsyncHookRegistry for consistent
 /// async attachment delivery.
-///
-/// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts (entire module)
 class DiagnosticRegistry {
 public:
     // ------------------------------------------------------------------
@@ -211,7 +189,6 @@ public:
 
     /// Set (replace) diagnostics for a given server and URI.
     /// Called when a textDocument/publishDiagnostics notification arrives.
-    /// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:65-85 (registerPendingLSPDiagnostic)
     void set_diagnostics(
         std::string_view server_name,
         std::string_view uri,
@@ -268,7 +245,6 @@ public:
     }
 
     /// Get all diagnostics for a specific server name.
-    /// TS REF: task spec - get_diagnostics_by_server()
     std::vector<Diagnostic> get_diagnostics_by_server(std::string_view server_name) const {
         std::lock_guard lock(mutex_);
         std::vector<Diagnostic> result;
@@ -314,7 +290,6 @@ public:
     // ------------------------------------------------------------------
 
     /// Clear all diagnostics for a specific URI across all servers.
-    /// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:372-379 (clearDeliveredDiagnosticsForFile)
     void clear_diagnostics(std::string_view uri) {
         std::lock_guard lock(mutex_);
         for (auto& [server_name, uri_map] : diagnostics_by_server_) {
@@ -332,7 +307,6 @@ public:
 
     /// Clear all pending diagnostics (for shutdown or testing).
     /// Does NOT clear cross-turn dedup tracking.
-    /// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:346-351 (clearAllLSPDiagnostics)
     void clear_all_pending() {
         std::lock_guard lock(mutex_);
         pending_diagnostics_.clear();
@@ -340,7 +314,6 @@ public:
 
     /// Reset ALL state including cross-turn dedup tracking.
     /// Used on session reset or for testing.
-    /// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:357-363 (resetAllLSPDiagnosticState)
     void reset_all_state() {
         std::lock_guard lock(mutex_);
         pending_diagnostics_.clear();
@@ -354,7 +327,6 @@ public:
 
     /// Retrieve and mark-as-sent all pending diagnostics, with deduplication
     /// and volume limiting. Returns empty vector if nothing is pending.
-    /// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:193-338 (checkForLSPDiagnostics)
     std::vector<std::pair<std::string, std::vector<DiagnosticFile>>>
     check_for_pending() {
         std::lock_guard lock(mutex_);
@@ -436,7 +408,6 @@ public:
     // ------------------------------------------------------------------
 
     /// Get total diagnostic count across all files and servers.
-    /// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:384-386 (getPendingLSPDiagnosticCount)
     size_t get_diagnostic_count() const {
         std::lock_guard lock(mutex_);
         size_t count = 0;
@@ -480,7 +451,6 @@ public:
     )>;
 
     /// Register a callback invoked when diagnostics change for a server/URI.
-    /// TS REF: task spec - on_diagnostics_changed()
     void on_diagnostics_changed(ChangeCallback callback) {
         std::lock_guard lock(mutex_);
         change_callback_ = std::move(callback);
@@ -492,7 +462,6 @@ private:
     // ------------------------------------------------------------------
 
     /// Deduplicate diagnostic files: within-batch + cross-turn.
-    /// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:136-184 (deduplicateDiagnosticFiles)
     std::vector<DiagnosticFile> deduplicate_files(
         const std::vector<DiagnosticFile>& all_files
     ) const {
@@ -533,7 +502,6 @@ private:
     }
 
     /// Evict oldest entries from delivered_keys_ if over capacity.
-    /// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:46,54-56 (LRU max)
     void evict_delivered_if_needed() {
         // Simple FIFO eviction: erase oldest inserted keys until under limit.
         // We use an unordered_map so "oldest" is arbitrary; for correctness
@@ -570,7 +538,6 @@ private:
         pending_diagnostics_;
 
     /// Cross-turn deduplication: uri -> set of delivered diagnostic keys.
-    /// TS REF: src/services/lsp/LSPDiagnosticRegistry.ts:53-56 (deliveredDiagnostics LRU)
     std::unordered_map<std::string, std::set<std::string>> delivered_keys_;
 
     /// Monotonically increasing ID for pending diagnostics.
@@ -586,7 +553,6 @@ private:
 
 /// Convert LSP PublishDiagnosticsParams JSON to DiagnosticFile[].
 /// Handles both file:// URIs and plain paths.
-/// TS REF: src/services/lsp/passiveFeedback.ts:43-100 (formatDiagnosticsForAttachment)
 [[nodiscard]] inline std::vector<DiagnosticFile> format_diagnostics_for_attachment(
     loom::utils::json::JsonVal params_root
 ) {
@@ -599,7 +565,6 @@ private:
     std::string uri{uri_node.as_str()};
 
     // Handle file:// URIs: strip prefix to get filesystem path
-    // TS REF: src/services/lsp/passiveFeedback.ts:50-52 (fileURLToPath)
     if (uri.starts_with("file://")) {
         uri = uri.substr(7);  // remove "file://"
         // URL decoding would be ideal; for now we leave as-is since LSP
@@ -664,8 +629,6 @@ private:
 /// Serialize registry diagnostics into the JSON array shape consumed by
 /// lsp_tool.cppm parse_diagnostics: every element carries a NUMERIC severity
 /// (1-4), range.start/end line/character, message, optional source/code.
-/// TS REF: src/services/lsp/passiveFeedback.ts:63-92 (field mapping)
-/// TS REF: src/tools/LSPTool/... (parse_diagnostics requires a JSON array)
 [[nodiscard]] inline std::string diagnostics_to_json_array(
     const std::vector<Diagnostic>& diags
 ) {

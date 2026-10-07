@@ -8,8 +8,7 @@ module;
 #include <cstdint>
 #include <cerrno>
 // POSIX headers for crash-safe atomic writes (fsync the temp file and its
-// parent directory before rename, mirroring the TS reference's pattern in
-// utils/statsCache.ts which calls handle.sync() + fs.rename()).
+// parent directory before rename).
 #include <fcntl.h>
 #include <cstddef>
 

@@ -1,11 +1,9 @@
 // markdown_linkify_impl.cpp - impl unit for loom.ui.visual.markdown (RFC 0001
 // Phase C batch 6). Holds linkify_issue_references(): owner/repo#123 ->
-// FTXUI OSC 8 hyperlink elements. Moved out of the interface BMI.
+// TextSegment with URL. Moved out of the interface BMI.
 module;
 
 #include <cctype>
-
-#include <ftxui/dom/elements.hpp>
 
 module loom.ui.visual.markdown;
 
@@ -14,19 +12,16 @@ import std;
 namespace loom::ui {
 namespace detail {
 
-[[nodiscard]] Elements linkify_issue_references(
-    std::string_view text,
-    const MarkdownOptions& opts) {
+[[nodiscard]] std::vector<TextSegment> linkify_issue_references(
+    std::string_view text) {
 
-    Elements result;
+    std::vector<TextSegment> result;
     std::string buffer;
     buffer.reserve(text.size());
 
     auto flush_buffer = [&]() {
         if (!buffer.empty()) {
-            Element el = ftxui::text(std::move(buffer));
-            if (opts.dim_color) el = el | dim;
-            result.push_back(std::move(el));
+            result.push_back({std::move(buffer), ""});
             buffer.clear();
         }
     };
@@ -159,16 +154,14 @@ namespace detail {
         }
         flush_buffer();
 
-        // Build the hyperlink.
+        // Build the hyperlink segment.
         std::string repo_str(text.substr(o, num_end - o));
         std::string url = "https://github.com/" +
                           std::string(text.substr(o, slash_pos - o)) +
                           "/issues/" +
                           std::string(text.substr(num_start, num_len));
 
-        Element link_el = ftxui::text(repo_str) | hyperlink(url) | underlined;
-        if (opts.dim_color) link_el = link_el | dim;
-        result.push_back(std::move(link_el));
+        result.push_back({std::move(repo_str), std::move(url)});
 
         i = num_end;
     }

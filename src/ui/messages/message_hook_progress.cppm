@@ -1,7 +1,6 @@
 /// @file message_hook_progress.cppm
 /// @brief Hook execution progress message rendering  (+ spinner + percent)
 ///
-/// Mirrors HookProgressMessage.tsx (115 lines):
 ///   ⏳ Running hooks...  [████████░░] 60%
 ///   ◐ pre-run / load-config     120ms
 ///   ● pre-run / validate         34ms

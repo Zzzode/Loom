@@ -1256,7 +1256,7 @@ private:
                 }
             }
             // permissions.deny — raw rules surfaced to the engine pre-request
-            // tool filter (TS permissions.ts alwaysDenyRules). Non-string
+            // tool filter (alwaysDenyRules). Non-string
             // elements are skipped defensively.
             if (auto deny = perms.get("deny"); deny.is_arr()) {
                 settings_.permissions.deny_rules.clear();

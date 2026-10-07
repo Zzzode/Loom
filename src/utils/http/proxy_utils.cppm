@@ -123,7 +123,7 @@ struct TargetHost {
 
 // Resolve proxy configuration from environment variables
 inline std::optional<ProxyConfig> resolve_proxy() {
-    // Match TS behavior: lowercase variants take precedence, then uppercase.
+    // Lowercase variants take precedence, then uppercase.
     const char* proxy_url = nullptr;
 
     if (!proxy_url) proxy_url = std::getenv("https_proxy");

@@ -333,7 +333,6 @@ using UnsubscribeFn = std::function<void()>;
 using ChangeCallback = std::function<void(SettingSource)>;
 
 /// Watches settings files for changes and notifies subscribers.
-/// Port of changeDetector.ts with chokidar-equivalent logic.
 class ChangeDetector {
 public:
     /// Timing constants (overridable for testing)

@@ -69,8 +69,7 @@ bool MessagesListComponent::OnEvent(Event event) {
         // ------ When the search Input owns focus, let it handle events --
         // ------ When the search Input owns focus, let it handle events --
         // Mouse events bypass the search-focus gate: clicking a message row
-        // should work even when the search box has keyboard focus.  TS REF:
-        //   VirtualMessageList.tsx onClickK fires regardless of search state.
+        // should work even when the search box has keyboard focus.
         if (search_focused && !event.is_mouse()) {
             bool handled = search_input_->OnEvent(event);
             // Sync the (possibly-changed) query to the filter layer
@@ -114,7 +113,6 @@ bool MessagesListComponent::OnEvent(Event event) {
                     cbs_.on_toggle_compact_group(vr->group_idx);
                 return true;
             }
-            // TS REF: Messages.tsx onItemClick (L564-571)
             // Space on a clickable/expanded payload row toggles verbose expansion.
             if (vr->kind == VisibleRow::Kind::Payload) {
                 auto idx = vr->row_idx;
@@ -146,7 +144,6 @@ bool MessagesListComponent::OnEvent(Event event) {
                     cbs_.on_toggle_compact_group(vr->group_idx);
                 return true;
             }
-            // TS REF: Messages.tsx cursor.expanded (L624)
             // Enter on a clickable/expanded payload row toggles verbose expansion
             // (takes priority over copy for tool rows with truncated output).
             if (vr->kind == VisibleRow::Kind::Payload) {
@@ -178,11 +175,9 @@ bool MessagesListComponent::OnEvent(Event event) {
         if (event == Event::Character('d')) return fire_action(ActionKind::Delete);
 
         // ------ Mouse: click to expand / select row -------------------
-        // TS REF: Messages.tsx onItemClick (L564-571) +
-        //   VirtualMessageList.tsx onClickK (L847-850) + onEnterK/onLeaveK
-        //   (L851-856).  Each message row is a "clickable cell"; left-click
-        //   toggles verbose expansion for truncated tool outputs / collapsed
-        //   groups, and moves the keyboard cursor to that row.
+        // Each message row is a "clickable cell"; left-click toggles verbose
+        // expansion for truncated tool outputs / collapsed groups, and moves
+        // the keyboard cursor to that row.
         if (event.is_mouse()) {
             const auto& m = event.mouse();
             const int mx = m.x;
@@ -203,7 +198,6 @@ bool MessagesListComponent::OnEvent(Event event) {
 
             // Hover tracking: update hovered_vi_ on every mouse event so
             // visual feedback (underline / cursor hint) follows the cursor.
-            // TS REF: VirtualMessageList.tsx onEnterK/onLeaveK hover state.
             if (hovered_vi_ != hit_vi) {
                 hovered_vi_ = hit_vi;
                 // Returning true would consume the event and prevent the
@@ -327,7 +321,6 @@ Element MessagesListComponent::Render() {
             auto virt_rows = visible_rows_to_virtual(
                 visible_rows_, input_, term_cols_est);
 
-            // TS REF: Messages.tsx L549-553  compute dividerBeforeIndex.
             const std::size_t divider_before_vi =
                 detail::find_divider_before_visible_index(input_, visible_rows_);
             const bool has_divider =
@@ -408,13 +401,11 @@ Element MessagesListComponent::Render() {
                     }
 
                     // Track this virtual row's screen box for mouse
-                    // click-to-expand.  TS REF: VirtualMessageList.tsx
-                    //   measureRef + onClickK hit-testing.
+                    // click-to-expand.
                     Box& vbox_ref = push_tracked(row_index);
 
-                    // TS REF: Messages.tsx L631-635  insert divider BEFORE
-                    // the target row.  row_index is 0..rows.size()-1, which
-                    // maps 1:1 to visible_rows_[] order.
+                    // Insert divider BEFORE the target row.  row_index is
+                    // 0..rows.size()-1, which maps 1:1 to visible_rows_[] order.
                     if (has_divider && row_index == divider_before_vi) {
                         return vbox({
                             detail::render_unseen_divider(
@@ -435,7 +426,7 @@ Element MessagesListComponent::Render() {
             }
             // If a row is selected, try to keep it inside the rendered
             // window (pure "last-N" would push it out of view).  This
-            // mirrors TS VirtualMessageList behaviour for non-virtual mode.
+            // mirrors the virtual list behaviour for non-virtual mode.
             if (selected_visible_index_.has_value()) {
                 const std::size_t sv = *selected_visible_index_;
                 if (sv < start) start = sv;
@@ -443,7 +434,6 @@ Element MessagesListComponent::Render() {
                     start = sv - kMaxRenderedLastN + 1;
             }
 
-            // TS REF: Messages.tsx L549-553  compute dividerBeforeIndex.
             const std::size_t divider_before_vi =
                 detail::find_divider_before_visible_index(input_, visible_rows_);
             const bool has_divider =
@@ -453,12 +443,12 @@ Element MessagesListComponent::Render() {
             Elements rows;
             rows.reserve(visible_rows_.size() - start + 3);
             // Same turn-state machine as render_messages_list_view() — only
-            // the FIRST row of a user/assistant turn owns its marginTop;
+            // the FIRST row of a user/assistant turn owns its top margin;
             // sibling assistant blocks share it.
             bool next_add_margin = true;
             bool prev_was_user = false;
             for (std::size_t vi = start; vi < visible_rows_.size(); ++vi) {
-                // TS REF: Messages.tsx L631-635  insert divider BEFORE row.
+                // Insert divider BEFORE row.
                 if (has_divider && vi == divider_before_vi) {
                     rows.push_back(
                         detail::render_unseen_divider(
@@ -471,8 +461,7 @@ Element MessagesListComponent::Render() {
                     *selected_visible_index_ == vi;
 
                 // Track this row's screen box for mouse click-to-expand.
-                // TS REF: VirtualMessageList.tsx VirtualItem — each item has
-                //   a measured Box used for onClick hit-testing.
+                // Each item has a measured Box used for click hit-testing.
                 Box& row_box = push_tracked(vi);
 
                 if (vr.kind == VisibleRow::Kind::Payload) {
@@ -492,7 +481,7 @@ Element MessagesListComponent::Render() {
                          shape == S::UserPrompt ||
                          shape == S::UserCommand ||
                          shape == S::UserImage);
-                    // TS VISUAL PARITY (2026-07-04): tool results are part of
+                    // Tool results are part of
                     // the assistant's visual turn — same as static path above.
                     const bool is_tool_result = (shape == S::UserToolResult);
                     const bool is_same_turn_as_assistant =
@@ -578,10 +567,9 @@ auto MessagesListComponent::filter_hash() const -> std::uint64_t {
         h |= std::uint64_t(input_.filters.show_tool_out  ? 1u : 0u) << 2;
         h |= std::uint64_t(input_.filters.show_thinking  ? 1u : 0u) << 3;
         h |= std::uint64_t(input_.filters.show_compact   ? 1u : 0u) << 4;
-        // TS REF: Messages.tsx L758-763  unseenDivider stability guard — when
-        // firstUnseenUuid + count are unchanged, REPL skips re-render work.
-        // We include both "present?" bit and count in the hash so either
-        // change triggers a rebuild.
+        // unseenDivider stability guard — when firstUnseenUuid + count are
+        // unchanged, skip re-render work.  We include both "present?" bit
+        // and count in the hash so either change triggers a rebuild.
         h |= std::uint64_t(input_.unseen_divider.has_value() ? 1u : 0u) << 5;
         h |= (std::uint64_t(input_.unseen_divider.has_value()
                             ? (input_.unseen_divider->count & 0xFFFFF)
@@ -597,7 +585,7 @@ auto MessagesListComponent::filter_hash() const -> std::uint64_t {
 void MessagesListComponent::move_selection(int delta) {
         if (visible_rows_.empty()) return;
         std::size_t idx = selected_visible_index_.value_or(visible_rows_.size() - 1);
-        // Wrap with saturation (TS behaviour: stop at boundaries, no cycle)
+        // Wrap with saturation (stop at boundaries, no cycle)
         if (delta > 0) {
             if (idx + 1 >= visible_rows_.size()) return;
             idx += 1;

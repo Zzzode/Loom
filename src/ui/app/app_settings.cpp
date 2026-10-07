@@ -9,7 +9,6 @@ import std;
 
 import loom.config.settings_manager;
 import loom.config.config;             // ConfigManager for statusLine.segments
-import loom.ui.prompt.prompt_input_footer;  // StatusBarSegments
 
 namespace loom::ui {
 

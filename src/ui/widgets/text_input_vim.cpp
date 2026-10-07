@@ -22,7 +22,6 @@ namespace ui::components {
 
     // ------------------------------------------------------------
     // Vim mode event handling
-    // TS REF: src/hooks/useVimInput.ts:175-295 — handleVimInput()
     //
     // Dispatches keys based on the current vim_.mode.
     // Returns true if the event was consumed (vim handled it),
@@ -38,7 +37,6 @@ namespace ui::components {
                                 vim_.mode == VimMode::VisualBlock);
 
         // --- Escape: mode-dependent cancel / switch ---
-        // TS REF: useVimInput.ts:192-201
         if (event == Event::Escape) {
             // Always clear pending multi-key states on Escape
             vim_.pending_g = false;
@@ -73,13 +71,11 @@ namespace ui::components {
         }
 
         // --- Enter: pass through to base handler (submission works from any mode) ---
-        // TS REF: useVimInput.ts:204-207
         if (event == Event::Return) {
             return false;  // let base handler process Enter (submit / newline)
         }
 
         // --- INSERT / REPLACE mode: pass text input to base handler ---
-        // TS REF: useVimInput.ts:209-228
         if (vim_.mode == VimMode::Insert ||
             vim_.mode == VimMode::Replace) {
             return false;  // fall through to standard readline handler
@@ -100,7 +96,6 @@ namespace ui::components {
         }
 
         // --- NORMAL / VISUAL mode: vim command dispatch ---
-        // TS REF: useVimInput.ts:231+ (NORMAL mode command handling)
 
         // Arrow keys → vim motions in normal mode, extend selection in visual
         if (event == Event::ArrowLeft || event == Event::Character('h')) {
@@ -275,7 +270,6 @@ namespace ui::components {
         }
 
         // u = undo, Ctrl+R = redo (normal mode)
-        // TS REF: useVimInput.ts:165-167 (u → onUndo)
         if (vim_.mode == VimMode::Normal) {
             if (event == Event::Character('u')) {
                 undo(); changed = true; goto after_vim;
@@ -285,16 +279,15 @@ namespace ui::components {
             }
         }
 
-        // ── Additional TS-faithful Normal-mode commands ────────────────
-        // TS REF: src/vim/transitions.ts — handleNormalInput() covers
-        //   D, C, Y, J, G, o, O, r, ~, e, gg, etc.
+        // ── Additional Normal-mode commands ─────────────────────────────
+        // Covers D, C, Y, J, G, o, O, r, ~, e, gg, etc.
         if (vim_.mode == VimMode::Normal) {
-            // e = end of word (TS REF: motions.ts — 'e' case)
+            // e = end of word
             if (event == Event::Character('e')) {
                 vim_word_end_motion(false); return true;
             }
 
-            // G = last line, or count=NG = goto line N (TS REF: transitions.ts 'G')
+            // G = last line, or count=NG = goto line N
             if (event == Event::Character('G')) {
                 int n = (int)text_.size();
                 // Jump to end (last line start)
@@ -305,19 +298,19 @@ namespace ui::components {
                 return true;
             }
 
-            // g = pending "gg" / "gj" / "gk" (TS REF: transitions.ts fromG)
+            // g = pending "gg" / "gj" / "gk"
             if (event == Event::Character('g')) {
                 vim_.pending_g = true;
                 return true;
             }
 
-            // D = delete to end of line (TS REF: transitions.ts 'D' → executeOperatorMotion('delete','$',1,ctx))
+            // D = delete to end of line
             if (event == Event::Character('D')) {
                 vim_delete_to_end();
                 changed = true; goto after_vim;
             }
 
-            // C = change to end of line (TS REF: transitions.ts 'C' → delete '$' + enterInsert)
+            // C = change to end of line
             if (event == Event::Character('C')) {
                 vim_delete_to_end();
                 vim_.mode = VimMode::Insert;
@@ -325,19 +318,19 @@ namespace ui::components {
                 changed = true; goto after_vim;
             }
 
-            // Y = yank line (TS REF: transitions.ts 'Y' → executeLineOp('yank',count,ctx))
+            // Y = yank line
             if (event == Event::Character('Y')) {
                 vim_yank_line();
                 return true;
             }
 
-            // J = join lines (TS REF: transitions.ts 'J' → executeJoin)
+            // J = join lines
             if (event == Event::Character('J')) {
                 vim_join_lines();
                 changed = true; goto after_vim;
             }
 
-            // o = open line below (TS REF: transitions.ts 'o' → executeOpenLine('below'))
+            // o = open line below
             if (event == Event::Character('o')) {
                 vim_open_line_below();
                 vim_.mode = VimMode::Insert;
@@ -345,7 +338,7 @@ namespace ui::components {
                 changed = true; goto after_vim;
             }
 
-            // O = open line above (TS REF: transitions.ts 'O' → executeOpenLine('above'))
+            // O = open line above
             if (event == Event::Character('O')) {
                 vim_open_line_above();
                 vim_.mode = VimMode::Insert;
@@ -353,14 +346,14 @@ namespace ui::components {
                 changed = true; goto after_vim;
             }
 
-            // r = replace single char (TS REF: transitions.ts 'r' → fromReplace state)
+            // r = replace single char
             // Simplified: r{char} replaces the char under cursor
             if (event == Event::Character('r')) {
                 vim_.pending_replace = true;
                 return true;
             }
 
-            // ~ = toggle case (TS REF: transitions.ts '~' → executeToggleCase)
+            // ~ = toggle case
             // Simplified: toggle case of char under cursor
             if (event == Event::Character('~')) {
                 vim_toggle_case();
@@ -369,7 +362,7 @@ namespace ui::components {
         }
 
         // Handle pending 'g' (gg / gj / gk)
-        // TS REF: transitions.ts fromG — 'gg' → first line / goto count, 'gj'/'gk' → display lines
+        // 'gg' → first line / goto count, 'gj'/'gk' → display lines
         if (vim_.pending_g && vim_.mode == VimMode::Normal) {
             if (event == Event::Character('g')) {
                 // gg = first line
@@ -394,7 +387,6 @@ namespace ui::components {
         }
 
         // Handle pending 'r' (replace single char)
-        // TS REF: transitions.ts fromReplace — executeReplace(input, count, ctx)
         if (vim_.pending_replace && vim_.mode == VimMode::Normal) {
             if (event.is_character() && event.character().size() == 1) {
                 char replacement = event.character()[0];
@@ -511,7 +503,7 @@ namespace ui::components {
         vim_.yank_is_linewise = had_newline;
     }
 
-    // Helper: e — word end motion (TS REF: motions.ts 'e' → endOfVimWord)
+    // Helper: e — word end motion
     void TextInputImpl::vim_word_end_motion(bool extend_selection) {
         int n = (int)text_.size();
         int pos = cursor_;
@@ -525,8 +517,8 @@ namespace ui::components {
         apply_move(std::clamp(pos, 0, n - 1), extend_selection);
     }
 
-    // Helper: D / C — delete from cursor to end of line (TS REF: operators.ts
-    //   executeOperatorMotion('delete', '$', ...) → deletes to end of logical line)
+    // Helper: D / C — delete from cursor to end of line
+    //   (deletes to end of logical line)
     void TextInputImpl::vim_delete_to_end() {
         push_undo();
         int line_end = cursor_;
@@ -540,7 +532,7 @@ namespace ui::components {
         }
     }
 
-    // Helper: J — join current line with next (TS REF: operators.ts executeJoin)
+    // Helper: J — join current line with next
     // Replaces the newline between lines with a single space.
     void TextInputImpl::vim_join_lines() {
         int n = (int)text_.size();
@@ -561,7 +553,7 @@ namespace ui::components {
         recompute_derived();
     }
 
-    // Helper: o — open new line below (TS REF: operators.ts executeOpenLine('below'))
+    // Helper: o — open new line below
     void TextInputImpl::vim_open_line_below() {
         push_undo();
         // Move to end of current line, then insert newline
@@ -573,7 +565,7 @@ namespace ui::components {
         recompute_derived();
     }
 
-    // Helper: O — open new line above (TS REF: operators.ts executeOpenLine('above'))
+    // Helper: O — open new line above
     void TextInputImpl::vim_open_line_above() {
         push_undo();
         // Move to start of current line, then insert newline before
@@ -585,8 +577,7 @@ namespace ui::components {
         recompute_derived();
     }
 
-    // Helper: ~ — toggle case of char under cursor (TS REF: operators.ts
-    //   executeToggleCase)
+    // Helper: ~ — toggle case of char under cursor
     void TextInputImpl::vim_toggle_case() {
         if (cursor_ >= (int)text_.size()) return;
         unsigned char c = static_cast<unsigned char>(text_[cursor_]);

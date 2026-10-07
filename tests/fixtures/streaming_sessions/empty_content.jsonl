@@ -1,0 +1,9 @@
+{"type":"stream_start","message_id":"msg_empty_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":0,"delta_text":""}
+{"type":"content_block_stop","index":0}
+{"type":"stream_end","stop_reason":"end_turn","usage":{"input_tokens":8,"output_tokens":0}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":""}]}}
+{"type":"__checkpoint__","name":"after_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

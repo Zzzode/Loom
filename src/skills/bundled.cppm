@@ -2,47 +2,6 @@ module;
 
 #include <cstdio>
 
-// ============================================================================
-// Bundled skills registry audit (Phase 2, Agent S2 + S4):
-//   Source of truth: src/skills/bundled/index.ts (17 skills + 4 conditional)
-//   Audit baseline  : 2026-06-09, S2 + S4 commits
-//
-//   Legend: OK migrated & registered   IN imported from root module
-//           RT partial (runtime impl only)  DF deferred
-//
-//   batch.cppm                    OK migrated (Phase 0)  make_batch_skill()
-//   loom_api.cppm               RT bundled/ has impl + IN root SkillDefinition
-//   loom_api_content.cppm       IN S1 migrated (root: make_loom_api_content_skill)
-//   loom_in_chrome.cppm         OK (S2, this commit)  make_loom_in_chrome_skill()
-//   debug.cppm                    OK (S4, THIS commit)  runtime impl in bundled/debug
-//                                 + SkillDefinition here delegates to submodule
-//   index                         -> THIS FILE (aggregator)
-//   keybindings (bundled)         OK (S2, this commit)  make_keybindings_help_skill()
-//                                 NOTE: root keybindings.cppm = simple shortcut sheet
-//                                       bundled keybindings.cppm   = full customization guide
-//   loop.cppm                     OK (S4, THIS commit)  runtime impl in bundled/loop
-//                                 + SkillDefinition here delegates to submodule
-//   lorem_ipsum.cppm              IN root: make_lorem_ipsum_skill()
-//   remember.cppm                 RT bundled/ has impl + IN root SkillDefinition
-//   simplify.cppm                 RT bundled/ has impl + IN root SkillDefinition
-//   skillify.cppm                 OK (S4, THIS commit)  BUNDLED: full 4-phase interview
-//                                 NOTE: root skillify.cppm = simplified stub;
-//                                       bundled skillify.cppm = TS-parity full flow
-//   stuck.cppm                    OK migrated (Phase 0)  runtime impl in bundled/stuck
-//                                 + self-unstuck definition here + /stuck adapter
-//   update_config.cppm            OK (S4, THIS commit)  BUNDLED: full TS prompt w/ hooks docs
-//                                 Config I/O 100% delegates to loom.config modules
-//                                 NOTE: root update_config.cppm = simplified stub
-//   verify.cppm                   OK migrated (Phase 0)  make_verify_skill()
-//   verify_content.cppm           IN S1 migrated (root: make_verify_content_skill)
-//
-// Conditional (feature-flag gated in TS, unregistered here pending flags):
-//   dream.ts                      DF DEFER: requires KAIROS feature flag + prompt design
-//   hunter.ts                     DF DEFER: requires REVIEW_ARTIFACT + review design
-//   runSkillGenerator.ts          DF DEFER: requires RUN_SKILL_GENERATOR feature
-//
-// Missing total: 3 (all feature-flag conditional)
-// ============================================================================
 /// @file bundled.cppm
 /// @brief Built-in skill definitions with structured workflow steps.
 /// Provides predefined skills: update-config, keybindings, keybindings-help,
@@ -67,11 +26,10 @@ import loom.skills.load_skills_dir;
 // ---------------------------------------------------------------------------
 // Root-level skill modules (imported + re-registered in BundledSkills)
 //
-// S4 audit result: skillify and update_config have significant content
-// differences between root (simplified stubs) and bundled (TS-parity full).
-// We still import the root modules so they remain available separately;
-// the BundledSkills registry below uses the BUNDLED submodule versions
-// (make_bundled_*_skill factories) for TS parity.
+// skillify and update_config have significant content differences between
+// root (simplified stubs) and bundled (full). We still import the root
+// modules so they remain available separately; the BundledSkills registry
+// below uses the BUNDLED submodule versions (make_bundled_*_skill factories).
 // ---------------------------------------------------------------------------
 import loom.skills.loom_api;
 import loom.skills.loom_api_content;
@@ -82,7 +40,7 @@ import loom.skills.verify_content;
 import loom.skills.keybindings; // NOTE: simple shortcut sheet, separate from keybindings-help
 
 // ---------------------------------------------------------------------------
-// Bundled sub-modules (runtime impls from cpp_migration/src/skills/bundled/)
+// Bundled sub-modules (runtime impls)
 // ---------------------------------------------------------------------------
 import loom.skills.bundled.stuck;      // runtime: detect_stuck_pattern, get_stuck_skill_manifest
 import loom.skills.bundled.loom_in_chrome;
@@ -95,10 +53,10 @@ import loom.skills.bundled.debug;
 // loop:     structured iteration w/ stop_condition (regex/implicit),
 //           max_iter, sleep, timeout (delegates to query_engine; NO popen)
 import loom.skills.bundled.loop;
-// skillify: full TS-parity 4-phase meta-skill creator
+// skillify: full 4-phase meta-skill creator
 //           (session analysis → interview → SKILL.md → confirm+write)
 import loom.skills.bundled.skillify;
-// update-config: full TS-parity settings + hooks docs + 7-step
+// update-config: full settings + hooks docs + 7-step
 //                hook verification flow (config I/O → loom.config modules)
 import loom.skills.bundled.update_config;
 
@@ -143,23 +101,19 @@ export namespace loom::skills {
 
 // --- Skillify (S4: bundled version supersedes root stub) -------------------
 /// Skillify meta-skill — capture a session's repeatable workflow as a
-/// reusable SKILL.md file.  Full TS-parity 4-phase flow:
+/// reusable SKILL.md file.  Full 4-phase flow:
 ///   Phase 1: Session analysis (steps, artifacts, user corrections)
 ///   Phase 2: 4-round structured user interview via AskUserQuestion
 ///   Phase 3: SKILL.md generation with YAML frontmatter + step annotations
 ///   Phase 4: Render for review → confirm → write → register
 /// IMPLEMENTATION: loom.skills.bundled.skillify.  Skill file discovery and
 /// registration delegate to loom.skills.load_skills_dir (no duplicate parser).
-///
-/// TS parity: src/skills/bundled/skillify.ts is the only skillify impl in TS
-/// (no root-level stub exists upstream). The C++ root-level stub was removed
-/// as dead code; the BUNDLED registry uses the full TS-parity version below.
 [[nodiscard]] inline SkillDefinition make_skillify_skill() {
     return loom::skills::bundled::make_bundled_skillify_skill();
 }
 
 // --- Update-Config (S4: bundled version supersedes root stub) --------------
-/// Update-Config skill — modify settings.json with full TS-parity guidance:
+/// Update-Config skill — modify settings.json with full guidance:
 ///   - Settings schema reference (permissions, env, model, MCP, plugins, ...)
 ///   - Hooks documentation: events, matchers, command/prompt/agent hook types
 ///   - 7-step Hook Verification Flow (dedup → construct → pipe-test →
@@ -168,11 +122,6 @@ export namespace loom::skills {
 /// IMPLEMENTATION: loom.skills.bundled.update_config.  All config I/O delegates
 /// 100% to loom.config.config::ConfigManager and loom.config.feature_flags::
 /// FeatureFlagManager — NEVER reads/writes raw JSON files here.
-///
-/// TS parity: src/skills/bundled/updateConfig.ts is the only update-config
-/// impl in TS (no root-level stub exists upstream). The C++ root-level stub
-/// was removed as dead code; the BUNDLED registry uses the full TS-parity
-/// version below.
 [[nodiscard]] inline SkillDefinition make_update_config_skill() {
     return loom::skills::bundled::make_bundled_update_config_skill();
 }
@@ -257,7 +206,7 @@ export namespace loom::skills {
 /// Self-unstuck strategies - "I, the agent, am stuck on this task".
 ///
 /// NOTE: This used to be registered as "stuck" (v1.0).  The /stuck slash
-/// command in TS is about DIAGNOSING OTHER CLAUDE CODE SESSIONS on the
+/// command is about DIAGNOSING OTHER CLAUDE CODE SESSIONS on the
 /// same machine (see loom::skills::bundled::make_stuck_skill imported from
 /// loom.skills.bundled.stuck).  We keep the generic self-unstuck advice
 /// under a separate discoverable name so neither behaviour is lost.
@@ -345,7 +294,6 @@ and loom::skills::bundled::suggest_unstuck_action(context).
 // --- Phase 2, S2 additions --------------------------------------------------
 
 /// Loom in Chrome skill - browser automation via Chrome extension MCP
-/// Mirrors src/skills/bundled/loomInChrome.ts.
 [[nodiscard]] inline SkillDefinition make_loom_in_chrome_skill() {
     return SkillDefinition{
         .name = "loom-in-chrome",
@@ -431,8 +379,8 @@ public:
         // --- Registration order: dependency-first per audit header ---
 
         // 1. Config / infrastructure
-        // S4 audit: bundled update-config (full TS-parity w/ hooks docs) supersedes
-        // the root-level simplified stub.  Config I/O delegates to loom.config.*
+        // bundled update-config (full, with hooks docs) supersedes the
+        // root-level simplified stub.  Config I/O delegates to loom.config.*
         // modules, no raw JSON readers.
         skills_.push_back(make_update_config_skill());
 
@@ -453,7 +401,7 @@ public:
         // delegates all execution to ToolDelegates (Bash/Script/FileEdit).
         skills_.push_back(make_debug_skill());
         skills_.push_back(loom::skills::simplify::make_simplify_skill());
-        // S4 skillify: full TS-parity 4-phase meta-skill creator.
+        // skillify: full 4-phase meta-skill creator.
         // Skill file discovery delegates to loom.skills.load_skills_dir.
         skills_.push_back(make_skillify_skill());
         skills_.push_back(make_self_unstuck_skill());
@@ -471,8 +419,8 @@ public:
         skills_.push_back(loom::skills::loom_api_content::make_loom_api_content_skill());
         skills_.push_back(make_loom_in_chrome_skill());
 
-        // Deferred(feature-flag): Register the following only when feature flags become
-        // available in C++ runtime (mirrors TS index.ts feature() gating):
+        // Deferred(feature-flag): Register the following only when feature flags
+        // become available in the runtime:
         //   - dream          (KAIROS || KAIROS_DREAM)
         //   - hunter         (REVIEW_ARTIFACT)
         //   - runSkillGenerator (RUN_SKILL_GENERATOR)
@@ -544,8 +492,6 @@ inline std::size_t register_all_bundled_skills(SkillExecutor& executor) {
 
 // =========================================================================
 // SkillRegistry integration — register bundled skills at static-init time
-// TS REF: Bundled skills are registered alongside dynamically-loaded skills
-//          in the unified command/skill system.
 // =========================================================================
 
 namespace detail {

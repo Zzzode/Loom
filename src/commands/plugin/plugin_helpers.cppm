@@ -1,11 +1,8 @@
 /// @file plugin_helpers.cppm
 /// @brief Shared pure helpers for the plugin command system.
 ///
-/// Consolidates three TS modules:
-///   - PluginErrors.tsx          (formatErrorMessage, getErrorGuidance)
-///   - pluginDetailsHelpers.tsx  (InstallablePlugin, extractGitHubRepo,
-///                                buildPluginDetailsMenuOptions)
-///   - usePagination.ts         (PaginationState helper class — no React hooks)
+/// Consolidates plugin error formatting, plugin-details helpers, and a
+/// pagination state helper class.
 ///
 /// All functions are pure: no filesystem, no global state.
 
@@ -21,11 +18,11 @@ import std;
 export namespace loom::commands::plugin_helpers {
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 1.  Plugin Error Formatting  (from PluginErrors.tsx)
+// 1.  Plugin Error Formatting
 // ═════════════════════════════════════════════════════════════════════════════
 
-/// Mirrors TS `PluginError.type` discriminant — kept in the commands layer
-/// so we can format errors without importing the full plugin type system.
+/// Kept in the commands layer so we can format errors without importing
+/// the full plugin type system.
 /// The actual error struct lives in `loom.plugins.plugin_validation`; this enum
 /// is the wire-compatible subset we need for display.
 enum class ErrorKind : unsigned char {
@@ -56,8 +53,7 @@ enum class ErrorKind : unsigned char {
     GenericError,
 };
 
-/// A display-ready plugin error.  Field presence mirrors the TS union so the
-/// switch-ladder below maps 1:1 to the original.
+/// A display-ready plugin error.
 struct DisplayPluginError {
     ErrorKind type = ErrorKind::GenericError;
 
@@ -117,7 +113,6 @@ struct DisplayPluginError {
 };
 
 /// Produce a one-line human-readable description of a plugin error.
-/// Exact translation of `formatErrorMessage` (TS).
 [[nodiscard]] inline std::string format_error_message(const DisplayPluginError& e) {
     using K = ErrorKind;
     switch (e.type) {
@@ -204,7 +199,6 @@ struct DisplayPluginError {
 }
 
 /// Optional follow-up hint string.  Returns nullopt when no guidance applies.
-/// Exact translation of `getErrorGuidance` (TS).
 [[nodiscard]] inline std::optional<std::string> get_error_guidance(const DisplayPluginError& e) {
     using K = ErrorKind;
     switch (e.type) {
@@ -289,7 +283,7 @@ struct DisplayPluginError {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 2.  Plugin Details Helpers  (from pluginDetailsHelpers.tsx)
+// 2.  Plugin Details Helpers
 // ═════════════════════════════════════════════════════════════════════════════
 
 /// A plugin available for installation from some marketplace.
@@ -344,11 +338,10 @@ struct DetailsMenuOption {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 3.  Pagination  (from usePagination.ts)
+// 3.  Pagination
 // ═════════════════════════════════════════════════════════════════════════════
 
-/// Hook-free pagination state.  The original `usePagination` is a React hook;
-/// this is its imperative state machine.  Call `set_selected(new_index)`
+/// Imperative pagination state machine.  Call `set_selected(new_index)`
 /// whenever the user moves the cursor, then query `visible_range()` /
 /// `scroll_position()` for layout.
 class Pagination {
@@ -403,7 +396,7 @@ public:
     }
     [[nodiscard]] std::size_t page_size()     const { return max_; }
 
-    // Page compatibility values (backwards-compatible with the TS API)
+    // Page compatibility values
     [[nodiscard]] std::size_t total_pages()   const {
         return std::max<std::size_t>(1, (total_ + max_ - 1) / max_);
     }

@@ -1,6 +1,6 @@
 /// @file lsp_recommendation_menu.cppm
 /// @brief LSP plugin recommendation menu - browse, filter and install
-/// recommended LSP servers from the marketplace.  Mirrors the TS
+/// recommended LSP servers from the marketplace.  Mirrors the
 /// `/plugin browse` LSP-recommendation sub-panel and the hooks that
 /// surface "Recommended LSP" entries when an unhandled language is
 /// detected in the workspace.
@@ -42,7 +42,7 @@ enum class RecommendReason {
     SimilarToInstalled,
 };
 
-/// A single LSP plugin recommendation entry.  Mirrors TS
+/// A single LSP plugin recommendation entry.  Mirrors
 /// LspPluginRecommendation.
 struct LspPluginRecommendation {
     std::string plugin_id;

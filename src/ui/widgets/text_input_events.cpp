@@ -34,8 +34,8 @@ bool TextInputImpl::HandleEvent(Event event) {
     // --- Paste preview confirmation (GAP 1) ---
     // When a large paste (> 10000 chars) is pending, Enter confirms
     // and Esc cancels.  All other keys are ignored until resolved.
-    // TS REF: inputPaste.ts — user must confirm before large paste is
-    // injected into the input buffer.
+    // The user must confirm before a large paste is injected into the
+    // input buffer.
     if (paste_preview_) {
         if (event == Event::Return) {
             ConfirmPaste();
@@ -49,9 +49,6 @@ bool TextInputImpl::HandleEvent(Event event) {
     }
 
     // --- Vim mode dispatch (canonical VimMode from loom::ui::common) ---
-    // TS REF: src/hooks/useVimInput.ts:175 — handleVimInput dispatches
-    //   keys based on current vim mode before base textInput handler.
-    // TS REF: src/types/textInputTypes.ts:222 — VimMode = 'INSERT'|'NORMAL'
     if (options_.vim_mode.has_value()) {
         return HandleVimEvent(event);
     }
@@ -116,10 +113,10 @@ bool TextInputImpl::HandleEvent(Event event) {
             return true;
         }
         if (event == Event::TabReverse) {
-            // TS REF: PromptInput.tsx:1667 — shift+tab ('chat:cycleMode') cycles
-            // permission modes, not history.  When the caller provides an
-            // on_permission_cycle callback, prefer it over history navigation.
-            // This makes the footer's "(shift+tab to cycle)" hint truthful.
+            // Shift+tab cycles permission modes, not history.  When the
+            // caller provides an on_permission_cycle callback, prefer it
+            // over history navigation.  This makes the footer's
+            // "(shift+tab to cycle)" hint truthful.
             if (options_.on_permission_cycle) {
                 options_.on_permission_cycle();
                 return true;
@@ -186,7 +183,7 @@ bool TextInputImpl::HandleEvent(Event event) {
             return true;
         }
         // Plain Enter: heuristic — on single-line buffer submit,
-        // otherwise insert newline (matches TS behaviour)
+        // otherwise insert newline (matches behaviour)
         int nlines = count_lines();
         if (nlines == 1) {
             submit_internal(/*hard=*/true);

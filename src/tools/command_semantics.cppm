@@ -1,12 +1,12 @@
 // Command semantics - command type classification + exit-code interpretation
 //
-// Combines two related concerns that live in separate TS source files:
+// Combines two related concerns:
 //   - Permission/type classification (Read/Write/Execute/Network/Destructive)
 //     used by bash_permissions / bash_security layers.
 //   - Exit-code semantic interpretation (grep exit 1 == no-match, not error)
 //     used by BashTool to build return_code_interpretation messages.
 //
-// NOTE: React JSX rendering of result cards is deferred to Phase 4 (FTXUI).
+// NOTE: UI rendering of result cards is deferred to the FTXUI layer.
 module;
 
 #include <unistd.h>

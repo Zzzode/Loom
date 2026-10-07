@@ -490,7 +490,6 @@ public:
                 // and no input_schema. Only when the caller asked for the
                 // native shape (RequestInput::native_computer_tool); otherwise
                 // it is an ordinary function tool.
-                // TS REF: Anthropic computer_20241022 tool spec.
                 const bool is_native_computer =
                     input.native_computer_tool && tool.name == "computer_use";
                 tool_obj.add("name",

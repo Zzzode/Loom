@@ -29,7 +29,7 @@ using namespace ftxui;
 
 /// Build the REPL screen as an FTXUI Component.
 /// Engine updates the externally-held state between frames.
-/// Event tiers (TS global+command keybindings):
+/// Event tiers (global+command keybindings):
 ///   Dialog(Esc/y/n/a/c/r/q) > Global(Ctrl+C/D/L/O) > Input(Enter/
 ///     Ctrl+J/Tab/Shift+Tab/Up/Down/Esc/printable/Backspace)
 [[nodiscard]] Component ReplScreen(
@@ -78,7 +78,7 @@ using namespace ftxui;
     // Standalone > Modal > Overlay > Bottom.  This block runs FIRST
     // so that a ToolPermission overlay consumes y/n/a before the
     // legacy in_dialog / input paths see it.
-    bool tool_animating = state->task_view_store.spinner_mode != SpinnerMode::Hidden;
+    bool tool_animating = IsToolAnimating(state->task_view_store);
     if (dialog_queue_render::DispatchDialogQueueEvents(
             *state, ev, state->is_prompt_input_active,
             /*allow_dialogs_with_animation=*/!tool_animating)) {
@@ -93,7 +93,7 @@ using namespace ftxui;
     const bool in_dialog = !is_panel(state->mode);
 
     // 0) Dialog queue — takes priority over legacy ReplMode dialogs
-    //    (M7.5: migration path from ReplMode to DialogQueue).
+    //    (M7.5: transition path from ReplMode to DialogQueue).
     //    NOTE: has_standalone/modal/overlay/bottom are checked inline
     //    inside DispatchDialogQueueEvents() (called above), so this
     //    block is intentionally empty — the dedicated per-slot helper
@@ -109,10 +109,10 @@ using namespace ftxui;
         if (state->mode == ReplMode::TrustDialog) {
             return dialog_router::forward_trust_dialog(state, cb, ev);
         }
-        // Ctrl+L is a GLOBAL redraw (TS defaultBindings.ts:42, global
-        // context) — it must work even while a tool-permission panel/dialog
-        // is open, so handle it before forwarding the event to any panel
-        // (which otherwise unconditionally consumes it).
+        // Ctrl+L is a GLOBAL redraw (global context) — it must work even
+        // while a tool-permission panel/dialog is open, so handle it before
+        // forwarding the event to any panel (which otherwise unconditionally
+        // consumes it).
         if (ev == Event::Character('\x0C')) {
             if (cb->on_redraw) cb->on_redraw();
             return true;
@@ -215,26 +215,21 @@ using namespace ftxui;
     if (ev == Event::Character('\x04'))
         { if (cb->on_exit) cb->on_exit(); return true; }
     // Ctrl+L: force terminal redraw WITHOUT mutating input.
-    // TS REF: src/keybindings/defaultBindings.ts:42 'ctrl+l' -> 'app:redraw'
-    //   (Global context, so it works while dialogs are open too) and
-    //   useGlobalKeybindings.tsx:225-228 handleRedraw -> ink forceRedraw,
-    //   which writes ERASE_SCREEN (CSI 2 J = '\x1b[2J') + CURSOR_HOME
-    //   (CSI H = '\x1b[H') and repaints the current content; input_text,
-    //   cursor and autocomplete suggestions are never touched.
+    // Writes ERASE_SCREEN (CSI 2 J = '\x1b[2J') + CURSOR_HOME
+    // (CSI H = '\x1b[H') and repaints the current content; input_text,
+    // cursor and autocomplete suggestions are never touched.
     if (ev == Event::Character('\x0C')) {
         if (cb->on_redraw) cb->on_redraw();
         return true;
     }
-    // Ctrl+O: toggle transcript mode (TS: app:toggleTranscript, global context).
+    // Ctrl+O: toggle transcript mode (global context).
     // In transcript mode the message list shows ALL message types (bypassing
     // brief/dropText filters), capped at last 30 unless show_all_in_transcript.
-    // TS REF: Messages.tsx L459 (isTranscriptMode = screen === 'transcript')
-    //         + REPL.tsx Ctrl+O → setScreen('transcript') toggle.
     if (!in_dialog && ev == Event::Character('\x0F')) {
         state->is_transcript_mode = !state->is_transcript_mode;
         // When exiting transcript mode, also reset show_all_in_transcript
-        // so re-entering starts from the capped default (TS: showAllInTranscript
-        // defaults false — user must press Ctrl+E each session to lift the cap).
+        // so re-entering starts from the capped default (it defaults false —
+        // user must press Ctrl+E each session to lift the cap).
         if (!state->is_transcript_mode) {
             state->show_all_in_transcript = false;
         }
@@ -243,11 +238,8 @@ using namespace ftxui;
 
     // Ctrl+R: enter history search mode by injecting "@history " into input.
     // This triggers the @history autocomplete branch in RefreshAutocompleteSuggestions
-    // which reads persisted prompt history from ~/.loom/history.jsonl.
-    // TS REF: src/hooks/useHistorySearch.ts:151 (handleStartSearch — Ctrl+R enters
-    //   history search mode with substring matching against persisted history)
-    // TS REF: src/components/PromptInput/PromptInput.tsx — Ctrl+R keyboard shortcut
-    //   dispatches 'chat:openHistorySearch' which opens the HistorySearchDialog.
+    // which reads persisted prompt history from ~/.loom/history.jsonl, with
+    // substring matching against persisted history.
     if (!in_dialog && ev == Event::Character('\x12')) {
         if (!state->input_text.starts_with("@history")) {
             state->input_text = "@history ";
@@ -263,10 +255,9 @@ using namespace ftxui;
 
     // Ctrl+E: dual behavior depending on mode.
     //   - In transcript mode: toggle show_all_in_transcript (lift/restore 30-msg cap).
-    //     TS: transcript:toggleShowAll (Transcript context, defaultBindings L163).
     //   - Otherwise: toggle expand/collapse of all tool rows in visible transcript.
-    //     TS REF: Messages.tsx expandedKeys (L563) — user can expand tool results
-    //     to see full output.  This shortcut toggles ALL tool rows at once.
+    //     The user can expand tool results to see full output; this shortcut
+    //     toggles ALL tool rows at once.
     if (!in_dialog && ev == Event::Character('\x05')) {
         if (state->is_transcript_mode) {
             // Transcript mode: lift or restore the 30-message cap.
@@ -286,8 +277,7 @@ using namespace ftxui;
         return true;
     }
 
-    // Ctrl+S: stash / restore prompt (TS: 'chat:stash' action, defaultBindings L85).
-    // TS REF: src/components/PromptInput/PromptInput.tsx:1356-1383 — handleStash():
+    // Ctrl+S: stash / restore prompt.
     //   - If input is empty and stashedPrompt exists → pop stash (restore)
     //   - If input is non-empty → push stash (save text + cursorOffset + pastedContents),
     //     clear input, clear pastedContents.
@@ -338,6 +328,22 @@ using namespace ftxui;
         if (ev.mouse().button == Mouse::WheelDown) {
             return ScrollTranscript(state, 3);
         }
+        // Left-click released on a clickable row (thinking block):
+        // toggle expand/collapse.  The tracker is populated during render
+        // with screen-space boxes of clickable rows.
+        if (ev.mouse().button == Mouse::Left &&
+            ev.mouse().motion == Mouse::Released) {
+            auto key = state->messages_store.row_click_tracker.hit_test(
+                ev.mouse().x, ev.mouse().y);
+            if (key) {
+                if (state->expanded_keys.count(*key)) {
+                    state->expanded_keys.erase(*key);
+                } else {
+                    state->expanded_keys.insert(*key);
+                }
+                return true;
+            }
+        }
     }
     if (!in_dialog && state->autocomplete_suggestions.empty()) {
         const int page = std::max(1, state->messages_store.viewport_height_lines / 2);
@@ -364,15 +370,11 @@ using namespace ftxui;
                     .submit_on_return;
             auto accepted = accept_selected_prompt_suggestion(state);
             if (submit && accepted && cb->on_submit) {
-                // TS REF: src/components/PromptInput/inputModes.ts:23-29
-                //   (getValueFromInput)
                 // Strip '!' mode prefix from accepted value before engine.
                 namespace figs = loom::ui::design::figures;
                 std::string submit_text =
                     std::string(figs::strip_mode_prefix(*accepted));
                 cb->on_submit(submit_text, state->prompt_store.input_mode);
-                // TS REF: src/components/PromptInput/inputModes.ts:4-14
-                //   (prependModeCharacterToInput) + REPL.tsx:3318
                 // History stores the mode-prefixed form for round-trip
                 // mode detection on recall.  If the user toggled bash via
                 // bare '!' (input_text has NO '!'), prepend it.  If the
@@ -399,23 +401,19 @@ using namespace ftxui;
                 state->input_cursor = std::string::npos;
                 state->is_prompt_input_active = false;
                 // GAP 2: auto-restore stashed prompt after submit completes.
-                // TS REF: REPL.tsx L3344-3348 — restore stashedPrompt when
-                // the input is cleared by a non-slash-command submit.
+                // Restore stashedPrompt when the input is cleared by a
+                // non-slash-command submit.
                 RestoreStashedPrompt(state);
             }
             return true;
         }
         if (ev == Event::Return && !state->input_text.empty()) {
-            // TS REF: src/components/PromptInput/inputModes.ts:23-29 (getValueFromInput)
             // Strip the '!' mode prefix before passing to engine.
-            // History keeps the prefix for round-tripping
-            // (prependModeCharacterToInput semantics in inputModes.ts:4-14).
+            // History keeps the prefix for round-tripping.
             namespace figs = loom::ui::design::figures;
             std::string submit_text =
                 std::string(figs::strip_mode_prefix(state->input_text));
             if (cb->on_submit) cb->on_submit(submit_text, state->prompt_store.input_mode);
-            // TS REF: src/components/PromptInput/inputModes.ts:4-14
-            //   (prependModeCharacterToInput) + REPL.tsx:3318
             // History stores the mode-prefixed form for round-trip
             // mode detection on arrow-up recall.  If the user toggled
             // bash via bare '!' (input_text has NO '!'), prepend it.
@@ -444,8 +442,8 @@ using namespace ftxui;
             state->autocomplete_index = -1;
             state->is_prompt_input_active = false;
             // GAP 2: auto-restore stashed prompt after submit.
-            // TS REF: REPL.tsx L3344-3348 — restore stashedPrompt when
-            // the input is cleared by a non-slash-command submit.
+            // Restore stashedPrompt when the input is cleared by a
+            // non-slash-command submit.
             RestoreStashedPrompt(state);
             return true; }
         // Ctrl+Enter -> newline (Ctrl+J in terminals)
@@ -463,7 +461,7 @@ using namespace ftxui;
             // AT-07: complete to the common prefix of all visible suggestion
             // insert_texts when it strictly extends what's typed (e.g. "@sr"
             // with {@src/readme, @src/main} → "@src/"); otherwise accept the
-            // selected suggestion. Faithful to TS typeahead Tab behavior.
+            // selected suggestion.
             const auto& sugg = state->autocomplete_suggestions;
             std::string common = sugg[0].insert_text;
             for (int k = 1; k < asn && !common.empty(); ++k) {
@@ -491,14 +489,27 @@ using namespace ftxui;
             }
             return true;
         }
+        // Tab without autocomplete suggestions → accept the inline
+        // next-action suggestion (shown as gray placeholder text).
+        if (ev == Event::Tab && asn == 0 &&
+            state->next_action_suggestion.has_value() &&
+            !state->next_action_suggestion->empty() &&
+            state->next_action_suggestion->front() != '/') {
+            state->input_text = *state->next_action_suggestion;
+            state->input_cursor = state->input_text.size();
+            state->is_prompt_input_active = true;
+            state->last_keystroke = std::chrono::steady_clock::now();
+            // Clear the suggestion — it's been accepted into the input.
+            state->next_action_suggestion.reset();
+            return true;
+        }
         // Shift+Tab (ISO backtab) = \x1B[Z
         if (ev.input() == "\x1B[Z" && asn > 0) {
             state->autocomplete_index = state->autocomplete_index < 0 ? asn - 1
                 : (state->autocomplete_index - 1 + asn) % asn; return true; }
         // Shift+Tab without suggestions → cycle permission mode.
-        // TS REF: PromptInput.tsx:1667 'chat:cycleMode' shortcut → handleCycleMode
-        // → cyclePermissionMode().  The footer renders "(shift+tab to cycle)"
-        // when a non-default permission mode is active; this makes it actually work.
+        // The footer renders "(shift+tab to cycle)" when a non-default
+        // permission mode is active; this makes it actually work.
         if ((ev.input() == "\x1B[Z" || ev == Event::TabReverse) && asn == 0) {
             namespace pif = loom::ui::prompt::footer;
             state->permission_mode = pif::GetNextPermissionMode(state->permission_mode);
@@ -507,39 +518,21 @@ using namespace ftxui;
             }
             return true;
         }
-        // Up / Down navigate visible autocomplete suggestions before history.
-        if (ev == Event::ArrowUp && asn > 0) {
-            state->autocomplete_index = state->autocomplete_index <= 0 ? asn - 1
-                : state->autocomplete_index - 1; return true; }
-        if (ev == Event::ArrowDown && asn > 0) {
-            state->autocomplete_index = state->autocomplete_index < 0 ||
-                state->autocomplete_index >= asn - 1
-                ? 0 : state->autocomplete_index + 1; return true; }
-        // Ctrl+N (\x0e) / Ctrl+P (\x10) navigate autocomplete suggestions.
-        // TS REF: src/hooks/useTypeahead.tsx:1344-1353 (raw ctrl+n/ctrl+p
-        //   dispatched to handleAutocompleteNext/Previous) and
-        //   :1242-1255 — next wraps selected>=length-1 -> 0; previous wraps
-        //   selected<=0 -> length-1. Both early-return when suggestions are
-        //   empty (and when a chord is pending — the CPP port has no chord
-        //   system, so that gate is omitted). When asn==0 the event
-        //   intentionally falls through (TS readline cursor/history movement
-        //   is not implemented in this port).
-        if (ev == Event::Character('\x0e') && asn > 0) {
-            state->autocomplete_index = state->autocomplete_index < 0 ||
-                state->autocomplete_index >= asn - 1
-                ? 0 : state->autocomplete_index + 1; return true; }
-        if (ev == Event::Character('\x10') && asn > 0) {
-            state->autocomplete_index = state->autocomplete_index <= 0 ? asn - 1
-                : state->autocomplete_index - 1; return true; }
-        // Up (history back) / Down (history forward)
-        if (ev == Event::ArrowUp && state->input_text.empty()
-            && !state->input_history.empty()) {
+        // Up (history back) / Down (history forward) — take priority over
+        // autocomplete navigation when the user is already navigating
+        // history (history_index != npos).  Without this, recalling a
+        // command entry (e.g. "/resume") triggers command autocomplete,
+        // and the next ArrowUp is captured by the autocomplete popup
+        // instead of continuing to the next older entry.
+        if (ev == Event::ArrowUp && !state->input_history.empty()
+            && (state->history_index != std::string::npos
+                || state->input_text.empty())) {
             state->history_index = state->history_index == std::string::npos
                 ? state->input_history.size() - 1
-                : std::max<std::size_t>(0, state->history_index - 1);
+                : (state->history_index > 0
+                       ? state->history_index - 1
+                       : 0);
             state->input_text = state->input_history[state->history_index];
-            // TS REF: src/components/PromptInput/inputModes.ts:16-21
-            //   (getModeFromInput)
             // Sync input_mode from the recalled entry's leading char so that
             // the prefix glyph stays correct after the user clears the text.
             {
@@ -561,8 +554,7 @@ using namespace ftxui;
                 state->input_cursor = std::string::npos;
             } else {
                 state->input_text = state->input_history[++state->history_index];
-                // TS REF: inputModes.ts:16-21 (getModeFromInput) — sync mode
-                // from the recalled entry's leading prefix character.
+                // Sync mode from the recalled entry's leading prefix character.
                 {
                     namespace figs = loom::ui::design::figures;
                     state->prompt_store.input_mode =
@@ -574,12 +566,43 @@ using namespace ftxui;
                 state->input_cursor = state->input_text.size(); }
             state->is_prompt_input_active = true;
             state->last_keystroke = std::chrono::steady_clock::now(); return true; }
+        // Up / Down navigate visible autocomplete suggestions (only when
+        // not already navigating history — the history handlers above
+        // take priority in that case).
+        if (ev == Event::ArrowUp && asn > 0) {
+            state->autocomplete_index = state->autocomplete_index <= 0 ? asn - 1
+                : state->autocomplete_index - 1; return true; }
+        if (ev == Event::ArrowDown && asn > 0) {
+            state->autocomplete_index = state->autocomplete_index < 0 ||
+                state->autocomplete_index >= asn - 1
+                ? 0 : state->autocomplete_index + 1; return true; }
+        // Ctrl+N (\x0e) / Ctrl+P (\x10) navigate autocomplete suggestions:
+        // next wraps selected>=length-1 -> 0; previous wraps selected<=0 ->
+        // length-1. Both early-return when suggestions are empty. When
+        // asn==0 the event intentionally falls through.
+        if (ev == Event::Character('\x0e') && asn > 0) {
+            state->autocomplete_index = state->autocomplete_index < 0 ||
+                state->autocomplete_index >= asn - 1
+                ? 0 : state->autocomplete_index + 1; return true; }
+        if (ev == Event::Character('\x10') && asn > 0) {
+            state->autocomplete_index = state->autocomplete_index <= 0 ? asn - 1
+                : state->autocomplete_index - 1; return true; }
         // Esc
         if (ev == Event::Escape) {
-            // TS REF: PromptInput.tsx:1904 — Escape at cursor 0 exits any
-            // special (bash) mode.  Runs first and does NOT itself consume the
-            // event, so the existing autocomplete/selection/clear-text
-            // priorities below still apply exactly as before.
+            // ESC interrupts a running query — the footer advertises
+            // "esc to interrupt" while loading.  Ctrl+C also interrupts
+            // via the global shortcut above; ESC is the discoverable
+            // binding the hint promises.  tool_animating is the UI's
+            // "query is running" flag (spinner_mode != Hidden), kept in
+            // sync with query_running_ by app_handle_submit.
+            if (tool_animating) {
+                if (cb->on_interrupt) cb->on_interrupt();
+                return true;
+            }
+            // Escape at cursor 0 exits any special (bash) mode.  Runs first
+            // and does NOT itself consume the event, so the existing
+            // autocomplete/selection/clear-text priorities below still apply
+            // exactly as before.
             const bool mode_exited = exit_input_mode_if_at_start(state);
             if (!state->autocomplete_suggestions.empty()) {
                 // INF-05: remember the dismissed input so a later non-mutating
@@ -590,12 +613,10 @@ using namespace ftxui;
             if (state->messages_store.selected_message_idx >= 0)
                 { state->messages_store.selected_message_idx = -1; return true; }
             // Esc double-press to clear non-empty input.
-            // TS REF: src/hooks/useTextInput.ts:126-153 (handleEscape) +
-            // src/hooks/useDoublePress.ts:6 DOUBLE_PRESS_TIMEOUT_MS = 800.
-            // The autocomplete dismiss above mirrors PromptInput.tsx
-            // disableEscapeDoublePress = suggestions.length>0: while the
-            // popup is open the first Esc dismisses instead of arming, so
-            // clearing takes Esc (dismiss) + Esc (arm) + Esc (clear).
+            // Esc double-press to clear non-empty input (800ms timeout).
+            // While the autocomplete popup is open the first Esc dismisses
+            // instead of arming, so clearing takes Esc (dismiss) + Esc (arm)
+            // + Esc (clear).
             if (!state->input_text.empty()) {
                 namespace pif = loom::ui::prompt::footer;
                 const auto now_dp = std::chrono::steady_clock::now();
@@ -606,8 +627,8 @@ using namespace ftxui;
                 if (armed) {
                     // Second press inside the window: clear timer state,
                     // remove the hint immediately, persist BEFORE clearing
-                    // (TS addToHistory(originalValue) guarded by trim()!==''),
-                    // then clear text/offset/history.
+                    // (guarded by non-empty text), then clear
+                    // text/offset/history.
                     state->escape_pending_since.reset();
                     pif::QueueRemoveNotification(
                         state->footer_notification_queue,
@@ -635,10 +656,10 @@ using namespace ftxui;
                 state->escape_pending_since = now_dp;
                 pif::NotificationItem item;
                 item.key = "escape-again-to-clear";
-                item.text = "Esc again to clear";  // TS exact string
+                item.text = "Esc again to clear";
                 item.color = "";
                 item.priority = pif::NotificationPriority::Immediate;
-                item.timeout_ms = 1000;            // TS timeoutMs: 1000
+                item.timeout_ms = 1000;
                 pif::QueueRemoveNotification(
                     state->footer_notification_queue,
                     "escape-again-to-clear");
@@ -646,9 +667,9 @@ using namespace ftxui;
                     state->footer_notification_queue, item);
                 return true;
             }
-            // Empty input: TS handleEscape's setPending callback early-
-            // returns (no arming, no notification). The mode-exit (bash ->
-            // prompt) above still coexists when it happened.
+            // Empty input: the escape handler early-returns (no arming, no
+            // notification). The mode-exit (bash -> prompt) above still
+            // coexists when it happened.
             // Only the mode-exit happened (empty input, no popup/selection):
             // still consume the event so the reset is reflected.
             if (mode_exited) return true; }
@@ -674,13 +695,11 @@ using namespace ftxui;
         }
         if (ev == Event::Delete) {
             if (delete_prompt_text(state)) return true;
-            // At cursor 0 with nothing to delete: exit bash/special mode
-            // (TS parity, PromptInput.tsx:1904 lists key.delete).
+            // At cursor 0 with nothing to delete: exit bash/special mode.
             if (exit_input_mode_if_at_start(state)) return true;
         }
         // Ctrl+U (\x15): kill from cursor to start of line.  When the cursor is
-        // already at position 0 (nothing to kill) this exits bash/special mode
-        // instead (TS parity, PromptInput.tsx:1904 lists `key.ctrl && char==='u'`).
+        // already at position 0 (nothing to kill) this exits bash/special mode.
         if (ev == Event::Character("\x15")) {
             const auto cursor = input_cursor_or_end(*state);
             if (cursor > 0) {
@@ -706,22 +725,22 @@ using namespace ftxui;
                 if (is_printable) {
                     namespace figs = loom::ui::design::figures;
 
-                    // Footer "Pasting text…" feedback (TS usePasteHandler.ts):
-                    // terminals deliver a paste as one multi-char batch, while
-                    // a single CJK keystroke is at most 4 UTF-8 bytes. Stamp
-                    // the burst time; the footer hides the hint 100ms later.
+                    // Footer "Pasting text…" feedback: terminals deliver a
+                    // paste as one multi-char batch, while a single CJK
+                    // keystroke is at most 4 UTF-8 bytes. Stamp the burst
+                    // time; the footer hides the hint 100ms later.
                     if (ch.size() > 4) {
                         state->pasting_since =
                             std::chrono::steady_clock::now();
                     }
-                    // ── P0-1: TS-equivalent single-char mode interception ──
+                    // ── P0-1: single-char mode interception ──
                     //
-                    // TS PromptInput.tsx lines 869-901: when the user types a
-                    // single '!' with cursor at offset 0 into an EMPTY input
-                    // buffer, that's a MODE TRANSITION — NOT a character to
-                    // store.  The '!' is swallowed, InputMode flips, and the
-                    // prefix glyph changes without the text ever landing in
-                    // the input state (so history persists cleanly).
+                    // When the user types a single '!' with cursor at offset
+                    // 0 into an EMPTY input buffer, that's a MODE TRANSITION
+                    // — NOT a character to store.  The '!' is swallowed,
+                    // InputMode flips, and the prefix glyph changes without
+                    // the text ever landing in the input state (so history
+                    // persists cleanly).
                     //
                     // All other cases (multi-byte paste of "!cmd", cursor
                     // nonzero, typing '!' into existing text) → fall through
@@ -747,14 +766,14 @@ using namespace ftxui;
                         state->dismissed_autocomplete_for_input.clear();
                         return true;
                     }
-                    // ── P0-1: TS-equivalent multi-char "!cmd" interception ──
+                    // ── P0-1: multi-char "!cmd" interception ──
                     //
-                    // TS PromptInput.tsx lines 878-886: when "!cmd" lands as a
-                    // single multi-char insertion at cursor-0 into an EMPTY
-                    // input (IME composition, bracketed paste, or any path
-                    // that bypasses the single-char-by-single-char typing
-                    // flow), the '!' is stripped, inputMode flips to 'bash',
-                    // and the clean "cmd" text is stored — NOT "!cmd".
+                    // When "!cmd" lands as a single multi-char insertion at
+                    // cursor-0 into an EMPTY input (IME composition, bracketed
+                    // paste, or any path that bypasses the
+                    // single-char-by-single-char typing flow), the '!' is
+                    // stripped, the mode flips to Bash, and the clean
+                    // "cmd" text is stored — NOT "!cmd".
                     //
                     // Without this, the user sees "! !cmd" visually (prefix
                     // glyph + text both carrying '!') because the single-char
@@ -783,9 +802,9 @@ using namespace ftxui;
         // UTF-8, so a plain pop_back() would leave a partial/invalid sequence.
         if (ev == Event::Backspace) {
             if (backspace_prompt_text(state)) return true;
-            // At cursor 0 (nothing to erase): exit bash/special mode (TS parity,
-            // PromptInput.tsx:1904).  This is the fix for being unable to leave
-            // bash mode after a bare '!' left the buffer empty.
+            // At cursor 0 (nothing to erase): exit bash/special mode.  This
+            // is the fix for being unable to leave bash mode after a bare '!'
+            // left the buffer empty.
             if (exit_input_mode_if_at_start(state)) return true;
         }
     }

@@ -829,7 +829,6 @@ private:
     // not just the explicit screenshot action — the model is blind to the
     // result of a click/keystroke otherwise. Attach a full-screen capture to
     // a successful input action's result.
-    // TS REF: every computer tool_use result is followed by a screenshot image.
     [[nodiscard]] ActionResult with_post_action_frame(ActionResult result) {
         if (!result.success || result.screenshot.has_value()) return result;
         if (auto frame = screen_.capture_screen(); frame) {

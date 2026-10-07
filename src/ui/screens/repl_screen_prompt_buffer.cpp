@@ -109,15 +109,15 @@ std::size_t ApplyPendingAtMentionInserts(
 }
 
 // ── Stashed prompt restore (GAP 2) ──────────────────────────────────────
-// TS REF: src/screens/REPL.tsx L1373-1377 — stashedPrompt state:
+// stashedPrompt state:
 //   {text, cursorOffset, pastedContents}.  When the user has typed input
 //   and a background agent finishes or a permission request interrupts, the
 //   current input is stashed so it can be restored after the request
 //   completes.  Restore at:
-//     - TS L3251-3255 (after local-jsx result returns)
-//     - TS L3344-3348 (on submit when not slash-command)
-//     - TS L3527-3531 (after handlePromptSubmit for slash/loading)
-//   The stash notice (PromptInputStashNotice.tsx) renders
+//     - after local-jsx result returns
+//     - on submit when not slash-command
+//     - after handlePromptSubmit for slash/loading
+//   The stash notice renders
 //   "{figures.pointerSmall} Stashed (auto-restores after submit)" when
 //   hasStash is true.
 
@@ -180,9 +180,8 @@ bool backspace_prompt_text(const std::shared_ptr<ReplScreenState>& state) {
     return true;
 }
 
-// TS REF: src/components/PromptInput/PromptInput.tsx:1904-1908 —
-//   `if (cursorOffset === 0 && (key.escape || key.backspace || key.delete ||
-//        (key.ctrl && char === 'u'))) { onModeChange('prompt'); }`
+// When cursorOffset === 0 and (key.escape || key.backspace || key.delete ||
+//      (key.ctrl && char === 'u')), the mode changes back to 'prompt':
 //
 // When the caret is at the very start of the buffer, Backspace/Escape/Delete/
 // Ctrl+U exit any special input mode (Bash) back to Prompt.  This is what lets
@@ -196,7 +195,7 @@ bool exit_input_mode_if_at_start(const std::shared_ptr<ReplScreenState>& state) 
     state->prompt_store.input_mode = InputMode::Normal;
     state->is_prompt_input_active = true;
     state->last_keystroke = std::chrono::steady_clock::now();
-    // Mode change alters the autocomplete provider context (TS parity with the
+    // Mode change alters the autocomplete provider context (parity with the
     // char-handler mode toggle) — drop any dismissed-suggestion memory.
     state->dismissed_autocomplete_for_input.clear();
     return true;
@@ -227,11 +226,9 @@ void move_prompt_cursor_right(const std::shared_ptr<ReplScreenState>& state) {
     state->last_keystroke = std::chrono::steady_clock::now();
 }
 
-// ─── Effective bash-mode detection (TS getInputMode equivalent) ──────────
+// ─── Effective bash-mode detection ───────────────────────────────────
 //
-// TS PromptInput.tsx computes `inputMode = getInputMode(value)` on every
-// render, where getInputMode checks the first character of the text value.
-// This means the mode is TEXT-DERIVED: pasting "!ls" or typing '!' into
+// The effective mode is TEXT-DERIVED: pasting "!ls" or typing '!' into
 // non-empty input immediately flips the effective mode to Bash, even though
 // the user never pressed bare-'!' to toggle.  The state-mode toggle
 // (s.prompt_store.input_mode) only matters when the input buffer is empty — it persists
@@ -239,7 +236,7 @@ void move_prompt_cursor_right(const std::shared_ptr<ReplScreenState>& state) {
 //
 // Use this helper for ALL behavioural gates (autocomplete, @-mention
 // suppression, shell-command $PATH scan) and for the prefix/border
-// rendering to stay faithful to TS semantics.
+// rendering to keep the semantics consistent.
 [[nodiscard]] bool effective_is_bash(const ReplScreenState& s) {
     if (!s.input_text.empty() && s.input_text.front() == '!') return true;
     return s.prompt_store.input_mode == InputMode::Bash;

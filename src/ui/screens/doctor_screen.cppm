@@ -1,6 +1,5 @@
 /// @file doctor_screen.cppm
 /// @brief Doctor diagnostics screen with check results and fix suggestions.
-/// Migrated from src/screens/Doctor.tsx (574 lines, React/Ink -> FTXUI)
 ///
 /// Screen flow (state machine):
 ///   Splash   -> Running (live progress) -> Results (per-check table)
@@ -38,7 +37,7 @@ import std;
 import loom.serdes.json;
 
 // Design-system tokens (shared with other screens)
-// Palette matches Pane / design-system/Pane.tsx + Doctor severity colors.
+// Palette matches the design-system Pane tokens + Doctor severity colors.
 namespace loom::ui::doctor_screen::ds {
 using namespace ftxui;
 const Color BG_DARK       = Color::Grey23;
@@ -127,7 +126,7 @@ struct CheckResult {
     std::chrono::milliseconds elapsed{0}; // Execution wall-time
 };
 
-/// Version/dist-tag information (see Doctor.tsx DistTagsDisplay)
+/// Version/dist-tag information for the installation under check.
 struct VersionInfo {
     std::string current_version;
     std::string installation_type; // "npm", "native", "package manager"
@@ -149,7 +148,7 @@ struct ContextNotice {
     std::vector<std::string> details;
 };
 
-/// Stale-lock / PID-lock info (from Doctor.tsx VersionLockInfo)
+/// Stale-lock / PID-lock info for the installation under check.
 struct VersionLockInfo {
     bool enabled = false;
     int lock_count = 0;
@@ -978,7 +977,7 @@ RunAllChecks(const DoctorContext& ctx) {
         }
     }
 
-    // Context notices (from TS: unreachable rules, plugin errors, etc.)
+    // Context notices (unreachable rules, plugin errors, etc.)
     if (!model.notices.empty()) {
         lines.push_back(separator());
         lines.push_back(text(" Additional notices ") | bold | color(Color::Yellow));
@@ -1262,7 +1261,7 @@ namespace detail {
                     } else {
                         // All done.  Populate notices from results and proceed to Results.
                         rt->state = ScreenState::Results;
-                        // Derive contextual notices (mirrors TS: unreachable rules, MCP warnings, etc.)
+                        // Derive contextual notices (unreachable rules, MCP warnings, etc.)
                         rt->model.notices.clear();
                         auto& perm = rt->model.results[static_cast<std::size_t>(CheckId::PermissionIntegrity)];
                         if (perm.severity != DiagnosticSeverity::Ok) {

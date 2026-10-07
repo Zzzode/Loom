@@ -92,8 +92,8 @@ struct BrowsePanelInputs {
 
 namespace detail {
 
-/// Render a single plugin row (simple vertical list, matching TS
-/// DiscoverPlugins.tsx).  Each row shows a radio-select indicator, the
+/// Render a single plugin row (simple vertical list).  Each row shows a
+/// radio-select indicator, the
 /// plugin name + marketplace, install count, and a truncated description.
 [[nodiscard]] inline Element RenderPluginRow(
     const PluginCardData& card,
@@ -230,8 +230,8 @@ struct BrowseState {
     int               selected_index = 0;
 };
 
-/// Build a simple vertical plugin list for the current page (matching TS
-/// DiscoverPlugins.tsx layout: radio indicator, name + marketplace,
+/// Build a simple vertical plugin list for the current page (radio
+/// indicator, name + marketplace,
 /// install count, truncated description).
 [[nodiscard]] inline Element RenderPluginList(
     BrowseState& s)

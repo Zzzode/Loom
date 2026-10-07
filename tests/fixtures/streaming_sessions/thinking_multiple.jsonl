@@ -1,0 +1,15 @@
+{"type":"stream_start","message_id":"msg_think_multi_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"thinking","thinking":"","signature":"sig-think-multi-001"}}
+{"type":"content_block_delta","index":0,"delta_text":"First, I need to check whether the fixture directory already exists."}
+{"type":"content_block_stop","index":0}
+{"type":"content_block_start","index":1,"block":{"type":"thinking","thinking":"","signature":"sig-think-multi-002"}}
+{"type":"content_block_delta","index":1,"delta_text":"It does not, so I will create the directory and all nine fixtures in one pass."}
+{"type":"content_block_stop","index":1}
+{"type":"content_block_start","index":2,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":2,"delta_text":"Created the streaming_sessions directory and authored all nine Phase 1 fixtures."}
+{"type":"content_block_stop","index":2}
+{"type":"stream_end","stop_reason":"end_turn","usage":{"input_tokens":47,"output_tokens":36}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"end_turn","content":[{"type":"thinking","thinking":"First, I need to check whether the fixture directory already exists.","signature":"sig-think-multi-001"},{"type":"thinking","thinking":"It does not, so I will create the directory and all nine fixtures in one pass.","signature":"sig-think-multi-002"},{"type":"text","text":"Created the streaming_sessions directory and authored all nine Phase 1 fixtures."}]}}
+{"type":"__checkpoint__","name":"after_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

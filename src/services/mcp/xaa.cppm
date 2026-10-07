@@ -5,8 +5,6 @@
 ///   1. RFC 8693 Token Exchange at the IdP: id_token → ID-JAG
 ///   2. RFC 7523 JWT Bearer Grant at the AS: ID-JAG → access_token
 ///
-/// TS REF: src/services/mcp/xaa.ts
-///
 /// Spec refs:
 ///   - ID-JAG (IETF draft): https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/
 ///   - MCP ext-auth (SEP-990): https://github.com/modelcontextprotocol/ext-auth
@@ -39,10 +37,9 @@ namespace fs = std::filesystem;
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
-// TS REF: xaa.ts:29
 inline constexpr int kXaaRequestTimeoutMs = 30000;
 
-// TS REF: xaa.ts:31-34 — grant type and token type URNs
+// Grant type and token type URNs
 inline constexpr std::string_view kTokenExchangeGrant =
     "urn:ietf:params:oauth:grant-type:token-exchange";
 inline constexpr std::string_view kJwtBearerGrant =
@@ -54,8 +51,6 @@ inline constexpr std::string_view kIdTokenType =
 
 // ─── Error Types ──────────────────────────────────────────────────────────
 
-/// TS REF: xaa.ts:77-84 XaaTokenExchangeError
-///
 /// Thrown when the IdP token-exchange leg fails. Carries should_clear_id_token
 /// so callers can decide whether to drop the cached id_token based on OAuth
 /// error semantics:
@@ -73,8 +68,6 @@ public:
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-/// TS REF: xaa.ts:402-415 XaaConfig
-///
 /// Config needed to run the full XAA orchestrator.
 /// Mirrors the conformance test context shape.
 struct XaaConfig {
@@ -96,13 +89,11 @@ struct XaaConfig {
     std::optional<std::string> scope;
 };
 
-/// TS REF: xaa.ts:126-129 ProtectedResourceMetadata
 struct ProtectedResourceMetadata {
     std::string resource;
     std::vector<std::string> authorization_servers;
 };
 
-/// TS REF: xaa.ts:167-172 AuthorizationServerMetadata
 struct AuthorizationServerMetadata {
     std::string issuer;
     std::string token_endpoint;
@@ -110,7 +101,6 @@ struct AuthorizationServerMetadata {
     std::optional<std::vector<std::string>> token_endpoint_auth_methods_supported;
 };
 
-/// TS REF: xaa.ts:214-219 JwtAuthGrantResult
 struct JwtAuthGrantResult {
     /// The ID-JAG (Identity Assertion Authorization Grant)
     std::string jwt_auth_grant;
@@ -118,7 +108,6 @@ struct JwtAuthGrantResult {
     std::optional<std::string> scope;
 };
 
-/// TS REF: xaa.ts:312-318 XaaTokenResult
 struct XaaTokenResult {
     std::string access_token;
     std::string token_type = "Bearer";
@@ -127,7 +116,6 @@ struct XaaTokenResult {
     std::optional<std::string> refresh_token;
 };
 
-/// TS REF: xaa.ts:320-328 XaaResult
 struct XaaResult : XaaTokenResult {
     /// The AS issuer URL discovered via PRM. Callers must persist this as
     /// discovery_state.authorization_server_url for refresh and revocation.
@@ -138,8 +126,6 @@ struct XaaResult : XaaTokenResult {
 
 namespace detail {
 
-/// TS REF: xaa.ts:61-67 normalizeUrl()
-///
 /// RFC 8414 §3.3 / RFC 9728 §3.3 identifier comparison. Roundtrip through
 /// URL parsing to apply RFC 3986 §6.2.2 syntax-based normalization (lowercases
 /// scheme+host, drops default port), then strip trailing slash.
@@ -182,8 +168,6 @@ namespace detail {
     return scheme + "://" + host + path;
 }
 
-/// TS REF: xaa.ts:94 redactTokens() overload for unknown types
-///
 /// RFC-0001 followup c20: the string-view redact_tokens() moved to
 /// xaa_idp_login.cppm (detail::redact_tokens) so the C1 OIDC-login leg and
 /// this module's C2 leg share one helper; it is visible here via the
@@ -267,8 +251,6 @@ struct FormPostResult {
 
 // ─── Layer 2: PRM Discovery ───────────────────────────────────────────────
 
-/// TS REF: xaa.ts:135-165 discoverProtectedResource()
-///
 /// RFC 9728 PRM discovery: GET {serverUrl}/.well-known/oauth-protected-resource
 /// Plus RFC 9728 §3.3 resource-mismatch validation (mix-up protection).
 [[nodiscard]] inline Result<ProtectedResourceMetadata> discover_protected_resource(
@@ -348,8 +330,6 @@ struct FormPostResult {
 
 // ─── Layer 2: AS Metadata Discovery ───────────────────────────────────────
 
-/// TS REF: xaa.ts:178-210 discoverAuthorizationServer()
-///
 /// AS metadata discovery via RFC 8414 + OIDC fallback.
 /// Plus RFC 8414 §3.3 issuer-mismatch validation (mix-up protection).
 [[nodiscard]] inline Result<AuthorizationServerMetadata> discover_authorization_server(
@@ -442,8 +422,6 @@ struct FormPostResult {
 
 // ─── Layer 2: Token Exchange (id_token → ID-JAG) ──────────────────────────
 
-/// TS REF: xaa.ts:233-310 requestJwtAuthorizationGrant()
-///
 /// RFC 8693 Token Exchange at the IdP: id_token → ID-JAG.
 /// Validates issued_token_type is id-jag.
 [[nodiscard]] inline Result<JwtAuthGrantResult> request_jwt_authorization_grant(
@@ -534,8 +512,6 @@ struct FormPostResult {
 
 // ─── Layer 2: JWT Bearer Grant (ID-JAG → access_token) ────────────────────
 
-/// TS REF: xaa.ts:337-394 exchangeJwtAuthGrant()
-///
 /// RFC 7523 JWT Bearer Grant at the AS: ID-JAG → access_token.
 /// auth_method defaults to client_secret_basic (SEP-990 conformance test
 /// requires this). Only set client_secret_post if AS explicitly requires it.
@@ -617,8 +593,6 @@ struct FormPostResult {
 
 // ─── Layer 3: Orchestrator ────────────────────────────────────────────────
 
-/// TS REF: xaa.ts:426-511 performCrossAppAccess()
-///
 /// Full XAA flow: PRM → AS metadata → token-exchange → jwt-bearer → access_token.
 /// Thin composition of the four Layer-2 ops.
 ///
@@ -630,7 +604,7 @@ struct FormPostResult {
     const XaaConfig& config,
     std::string_view server_name = "xaa") {
 
-    (void)server_name;  // Used for logging in TS, we skip for now
+    (void)server_name;  // Reserved for future logging
 
     // 1. Discover Protected Resource Metadata (RFC 9728)
     auto prm = discover_protected_resource(server_url);
@@ -826,7 +800,7 @@ namespace detail {
         return std::nullopt;
     }
 
-    // TS REF: xaaIdpLogin.ts — if idp_client_id is not separately configured,
+    // If idp_client_id is not separately configured,
     // fall back to using client_id for both AS and IdP (common in test setups).
     if (config.idp_client_id.empty()) {
         config.idp_client_id = config.client_id;
@@ -852,8 +826,6 @@ namespace detail {
 
 } // namespace detail
 
-/// TS REF: xaaIdpLogin.ts:47-49 getXaaIdpSettings() equivalent
-///
 /// Get XAA configuration for a specific MCP server.
 /// Reads from ~/.loom/xaa-idp.txt (file-based config for now).
 [[nodiscard]] inline std::optional<XaaConfig> get_xaa_config(
@@ -864,8 +836,8 @@ namespace detail {
 
 // ─── Public API: authenticate_xaa ────────────────────────────────────────
 
-/// TS REF: composed flow — authenticate_xaa() is the CPP entry point that
-/// composes acquire_idp_id_token() + perform_cross_app_access() into a single
+/// authenticate_xaa() composes acquire_idp_id_token() +
+/// perform_cross_app_access() into a single
 /// call that returns an access_token ready for MCP use.
 ///
 /// Flow:
@@ -944,7 +916,6 @@ namespace detail {
 
 // ─── Convenience: is_xaa_enabled ─────────────────────────────────────────
 
-/// TS REF: xaaIdpLogin.ts:32-34 isXaaEnabled()
 [[nodiscard]] inline bool is_xaa_enabled() {
     const char* enabled = std::getenv("LOOM_ENABLE_XAA");
     return enabled && std::string_view(enabled) == "1";
@@ -952,8 +923,6 @@ namespace detail {
 
 // ─── Logout / Token Revocation ────────────────────────────────────────────
 
-/// TS REF: implied by clearIdpIdToken + potential revocation endpoint call
-///
 /// Clear XAA tokens for the given IdP issuer.
 /// If revocation_endpoint is available, POST to it.
 inline void logout_xaa(std::string_view idp_issuer,

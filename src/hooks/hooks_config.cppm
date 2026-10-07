@@ -117,11 +117,10 @@ private:
 
 inline std::vector<IndividualHookConfig>
 HooksConfigManager::get_all_hooks() const {
-    // TS REF: hooksConfigManager.ts getHooks()
     // Returns all hooks from all sources (user settings, project settings,
     // skill hooks, plugin hooks).  The full loading pipeline (settings file
     // parsing, skill frontmatter scanning, plugin hook registration) is not
-    // yet ported, so this returns the cached set which is empty until
+    // yet implemented, so this returns the cached set which is empty until
     // hooks are loaded.  The UI handles an empty list gracefully.
     std::shared_lock lock(mutex_);
     if (cached_hooks_) return *cached_hooks_;

@@ -205,12 +205,11 @@ get_auto_mem_entrypoint(const std::filesystem::path& project_root) {
 // ============================================================================
 // Session memory (summary.md) for context compaction
 //
-// TS REF: src/utils/permissions/filesystem.ts:262 getSessionMemoryDir /
-// :269 getSessionMemoryPath — <config_home>/projects/<sanitized-cwd>/
-// <sessionId>/session-memory/summary.md. Unlike the long-term auto-memory
-// above, this file is scoped to one session and accumulates the summaries
-// produced at each compaction so resumed/continuation runs do not start
-// blind after old messages are dropped.
+// <config_home>/projects/<sanitized-cwd>/<sessionId>/session-memory/summary.md.
+// Unlike the long-term auto-memory above, this file is scoped to one
+// session and accumulates the summaries produced at each compaction so
+// resumed/continuation runs do not start blind after old messages are
+// dropped.
 // ============================================================================
 
 /// Per-project projects key (same sanitization as the auto-memory key, but

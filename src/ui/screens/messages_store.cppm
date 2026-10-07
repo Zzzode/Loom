@@ -34,6 +34,11 @@ export namespace loom::ui::repl_screen {
 /// Moved here from repl_state.cppm in RFC 0002 F3 (MessagesStore shard).
 struct MessageDisplayEntry {
     std::string id, role, content_preview;
+    /// Full untruncated content for thinking entries.  content_preview is
+    /// truncated to 200 chars for search/display, but the thinking renderer
+    /// needs the full text — populate this alongside content_preview for
+    /// thinking rows.
+    std::string full_content;
     bool is_streaming = false, is_thinking = false, is_tool_use = false;
     /// True when the thinking block is still being streamed (or the entry
     /// is a static projection that should render the collapsed "Thinking"
@@ -49,13 +54,13 @@ struct MessageDisplayEntry {
     /// should be routed through MessageShape::UserImage (instead of
     /// UserText).  Populated by project_messages when splitting a single
     /// UserMessage with mixed text+image content into multiple sibling
-    /// display rows (TS parity: each <UserImageMessage/> is its own row).
+    /// display rows (each <UserImageMessage/> is its own row).
     bool is_image = false;
     std::optional<::loom::core::ImageBlock> image_block;
     /// Display ID for user-attached images (shown as "[Image #N]").
     /// Populated by project_messages when splitting a UserMessage with
-    /// image content blocks into individual display rows (TS parity:
-    /// Message.tsx assigns imageIds from message.imagePasteIds).
+    /// image content blocks into individual display rows
+    /// (imageIds assigned from message.imagePasteIds).
     std::optional<int> image_display_id;
     std::optional<std::string> tool_name, tool_status;
     /// Parsed tool input JSON for tool-use entries.  Threaded into
@@ -68,7 +73,7 @@ struct MessageDisplayEntry {
     /// BuildMessagesList to drive ToolUIRegistry.progress() and the
     /// result-preview block in faithful tool-use renderers.
     std::optional<std::string> tool_result_preview;
-    /// TS PARITY (2026-07-04): structured content items from tool results
+    /// Structured content items from tool results
     /// (e.g. MCP tools returning mixed text+image).  When present, the
     /// faithful tool-result renderer iterates these instead of the
     /// flattened content_preview string.
@@ -85,15 +90,15 @@ struct MessageDisplayEntry {
     std::optional<std::string> system_subtype;
 
     // ── P2 gap api-error-retry: retry metadata for SystemAPIError cards ──
-    /// TS REF: SystemAPIErrorMessage.tsx — retryInMs.  Backoff duration in
+    /// retryInMs.  Backoff duration in
     /// milliseconds before the next auto-retry.  Used for the live countdown.
     std::optional<double> retry_after_ms;
-    /// TS REF: SystemAPIErrorMessage.tsx — retryAttempt.  Current attempt
+    /// retryAttempt.  Current attempt
     /// number (1-based, shown as "attempt N/M").
     std::optional<int> retry_attempt;
-    /// TS REF: SystemAPIErrorMessage.tsx — maxRetries.  Total allowed attempts.
+    /// maxRetries.  Total allowed attempts.
     std::optional<int> max_retries;
-    /// TS REF: SystemAPIErrorMessage.tsx — sessionExpired.  When true, the
+    /// sessionExpired.  When true, the
     /// auth session has expired; show "Clear session" button instead of Retry.
     bool session_expired{false};
 };
@@ -114,8 +119,8 @@ struct MessagesStore {
     bool scroll_pinned_to_bottom = true;
 
     /// Index into messages[] where the unseen divider anchor sits.
-    /// Set on FIRST scroll-away from bottom (TS REF: useUnseenDivider
-    /// dividerIndex).  nullopt = pinned to bottom (no divider).  Cleared
+    /// Set on FIRST scroll-away from bottom (the unseen-divider
+    /// anchor).  nullopt = pinned to bottom (no divider).  Cleared
     /// on repin (scroll-to-bottom, submit, or /clear).
     std::optional<std::size_t> divider_index;
     /// Snapshot of messages.size() at the time of first scroll-away.
@@ -133,41 +138,52 @@ struct MessagesStore {
         virtual_list_state;
 
     // M1 (FullscreenLayout slot-system chrome): scroll-derived chrome state.
-    //   sticky_prompt — std::nullopt = at bottom (TS null).  Value present =
+    //   sticky_prompt — std::nullopt = at bottom (null).  Value present =
     //     scrolled up; the inner .text is shown as a breadcrumb header and
     //     .scroll_target_row is the absolute transcript row to jump to on
-    //     click (maps to TS `stickyPrompt = {text, scrollTo}`).
+    //     click.
     //   sticky_prompt_clicked — set to true by the header's click handler
-    //     BEFORE the actual scroll happens; corresponds to the TS literal
-    //     sentinel stickyPrompt === 'clicked'.  It hides the header this
+    //     BEFORE the actual scroll happens; hides the header this
     //     frame so the prompt line rises to absolute row 0 of the scroll
-    //     viewport (the padCollapsed mechanic already strips paddingTop=1
-    //     whenever sticky_prompt is set, so the only delta is hiding the
-    //     header row).  Reset to false by any subsequent scroll event that
-    //     writes a fresh sticky_prompt (StickyTracker emits every
+    //     viewport (the collapsed-padding mechanic already strips the top
+    //     padding whenever sticky_prompt is set, so the only delta is hiding
+    //     the header row).  Reset to false by any subsequent scroll event that
+    //     writes a fresh sticky_prompt (the tracker emits every
     //     viewport-top change while unpinned).
     //   unseen_message_count — count of assistant turns added below the fold
-    //     while unpinned; drives the "N new messages" pill label (TS
-    //     `newMessageCount` + `useUnseenDivider`).  The pill itself only
+    //     while unpinned; drives the "N new messages" pill label.
+    //     The pill itself only
     //     renders when pill_visible is true (engine snapshots the divider).
-    //   pill_visible — TS `pillVisible` (useSyncExternalStore against the
+    //   pill_visible — whether the pill is shown (subscribed against the
     //     scroll handle).  Defaults false so chrome stays dormant until the
     //     engine wires real scroll-observe state.
-    // TS REF: FullscreenLayout.tsx lines 293 (useState) + 339-351 (3-state
-    //        discriminant + padCollapsed logic).
+    // 3-state discriminant + collapsed-padding logic.
     std::optional<::loom::ui::layout::fullscreen::StickyPrompt> sticky_prompt;
     bool sticky_prompt_clicked = false;
     int unseen_message_count = 0;
     bool pill_visible = false;
 
-    // TS REF: Messages.tsx L240 (unseenDivider prop) +
-    //        FullscreenLayout.tsx L224-256 (UnseenDivider + computeUnseenDivider).
+    // unseenDivider prop + UnseenDivider + computeUnseenDivider.
     // Populated by App::UpdateScreen from scroll state + messages[].  The
     // engine sets `first_unseen_uuid_prefix` to the 24-char prefix (or full
     // uuid) of messages[dividerIndex] after skipping progress + null-rendering
     // attachments (CC-724).  `count` is Math.max(1, countUnseenAssistantTurns(…)).
     // nullopt = no divider (pinned to bottom, dividerIndex=null, empty session).
     std::optional<::loom::ui::messages_list::UnseenDivider> unseen_divider;
+
+    /// Mouse hit-testing tracker for click-to-expand rows (thinking blocks).
+    /// The renderer (RenderMessages → render_messages_list_view) populates
+    /// this with screen-space boxes each frame; the event handler
+    /// (repl_screen_events.cpp) uses hit_test() to map a click → row index.
+    ::loom::ui::messages_list::RowClickTracker row_click_tracker;
 };
+
+/// Reset scroll to the bottom (pinned).  Replaces the 4-line
+/// scroll_offset=0 + scroll_pinned_to_bottom=true block that was
+/// previously copy-pasted at 4+ call sites.
+inline void ResetScrollToBottom(MessagesStore& store) {
+    store.scroll_offset = 0;
+    store.scroll_pinned_to_bottom = true;
+}
 
 }  // namespace loom::ui

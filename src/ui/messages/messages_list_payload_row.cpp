@@ -12,6 +12,7 @@ module loom.ui.messages.messages_list;
 
 import std;
 
+import loom.ui.foundation.clock;
 import loom.ui.messages.message_row;
 import loom.ui.messages.user_text_message;
 import loom.ui.messages.local_command_output_message;
@@ -28,6 +29,48 @@ namespace loom::ui::messages_list {
 
 namespace detail {
 
+// Per-row "grace period" after streaming ends: the thinking block stays
+// expanded for this long before collapsing, so the user has time to read
+// the reasoning instead of it vanishing instantly.
+//
+// Maps row_idx → steady_clock timestamp of the last frame where the row
+// was the streaming tail.  Entries older than the grace period are pruned
+// on access.
+inline constexpr auto kThinkingCollapseGrace = std::chrono::seconds(3);
+inline std::unordered_map<std::size_t, std::chrono::steady_clock::time_point>
+    thinking_stream_last_seen;
+
+/// Return true if the thinking row at `row_idx` was the streaming tail
+/// within the grace period — i.e. it should stay expanded even though
+/// `is_streaming_tail` is now false.
+[[nodiscard]] inline bool was_recently_streaming(std::size_t row_idx) {
+    auto it = thinking_stream_last_seen.find(row_idx);
+    if (it == thinking_stream_last_seen.end()) return false;
+    auto elapsed = clock::steady_now() - it->second;
+    if (elapsed >= kThinkingCollapseGrace) {
+        thinking_stream_last_seen.erase(it);
+        return false;
+    }
+    return true;
+}
+
+/// Record that the thinking row at `row_idx` is currently the streaming
+/// tail (called every frame while streaming).
+inline void mark_streaming(std::size_t row_idx) {
+    thinking_stream_last_seen[row_idx] = clock::steady_now();
+}
+
+}  // namespace detail
+
+// RFC 0003: test seam — clear the process-global grace map so replay
+// fixtures don't leak streaming state across tests. Declared in
+// messages_list.cppm; the map lives in detail above.
+void clear_thinking_stream_last_seen_for_testing() {
+    detail::thinking_stream_last_seen.clear();
+}
+
+namespace detail {
+
 auto render_payload_row(const MessagesListInput& input,
                                std::size_t row_idx,
                                bool is_selected,
@@ -41,7 +84,7 @@ auto render_payload_row(const MessagesListInput& input,
     const auto& payload  = input.rows[row_idx];
 
     // Helper: returns true for shapes that belong to the same assistant
-    // "turn group" (i.e. multiple content blocks inside one TS assistant
+    // "turn group" (i.e. multiple content blocks inside one assistant
     // message: thinking, text, tool_use, redacted_thinking, grouped_tools).
     // Used by the caller to decide whether add_margin should be true (first
     // block of a turn) or false (same-turn siblings).
@@ -49,10 +92,10 @@ auto render_payload_row(const MessagesListInput& input,
 
     // ── LIVE-PATH FAITHFUL RENDER (M4 + M6) ───────────────────────────────
     // The five core message types (user/assistant/thinking/system/tool-use)
-    // are routed THROUGH THE FAITHFUL TS-MIRRORING Element renderers
+    // are routed THROUGH THE FAITHFUL Element renderers
     // (RenderUserPromptMessage, RenderAssistantTextMessageFaithful,
     // RenderThinkingMessageFaithful, RenderSystemTextMessageFaithful,
-    // RenderFaithfulToolUseMessage).  These emit the exact TS
+    // RenderFaithfulToolUseMessage).  These emit the exact
     // components/messages/* shapes the running user sees:
     //   * user     → `❯ <text>` full-width, userMessageBackground tint
     //   * assistant→ `[dot?] <markdown body>` flex-start, no header chrome
@@ -60,7 +103,7 @@ auto render_payload_row(const MessagesListInput& input,
     //   * system   → `※ / ✻ / ⏺ <content>` flat one-line event row
     //   * tool-use → `[●] <BoldName> (summary)` + progress/queued line below
     // The divergent RenderMessageRowByType / render_message_envelope path
-    // (avatar column + role pill + top accent border) is NOT faithful to TS —
+    // (avatar column + role pill + top accent border) is NOT faithful —
     // it added invented chrome.  We therefore BYPASS it for these core types
     // and emit the faithful Element directly.  Sub-types not yet ported still
     // flow through the divergent envelope+dispatch path below.
@@ -73,11 +116,11 @@ auto render_payload_row(const MessagesListInput& input,
         auto* d = std::get_if<UserTextMessageData>(&payload);
         if (d) {
             // Bridge the row-data variant to the faithful fn's args.  The
-            // streaming/selection state isn't part of the TS bubble (the
+            // streaming/selection state isn't part of the bubble (the
             // spinner is rendered separately as the streaming-tail cursor
-            // below the row), so we render the canonical TS shape.  When a
+            // below the row), so we render the canonical shape.  When a
             // command_name chip is set, route through the slash-command shape.
-            // add_margin is threaded for TS faithfulness (marginTop={addMargin?1:0}).
+            // add_margin is threaded for faithfulness (top margin = add_margin ? 1 : 0).
             const UserTextMessageData fd = *d;
             Element el = (shape == S::UserCommand || fd.command_name)
                 ? RenderUserCommandMessage(fd, /*is_selected=*/is_selected, /*add_margin=*/add_margin)
@@ -145,16 +188,16 @@ auto render_payload_row(const MessagesListInput& input,
     else if (shape == S::AssistantText) {
         auto* d = std::get_if<AssistantTextMessageData>(&payload);
         if (d) {
-            // TS shouldShowDot is ALWAYS true for every AssistantTextMessage
+            // show_dot is ALWAYS true for every AssistantTextMessage
             // block within a turn (B4), regardless of streaming state. The
             // streaming-tail-only override below is REMOVED — the payload's
             // own show_dot field (defaulted true in AssistantTextMessageData)
             // now governs. Selection recolors the dot via is_selected below.
             const AssistantTextMessageData& fd = *d;
-            // TS REF: Messages.tsx L703-712 — streaming text row uses
-            // StreamingMarkdown (stable-prefix cache).  Thread the shared
-            // instance from the input so RenderAssistantTextMessageFaithful
-            // can call streaming_md->update() instead of full render_markdown.
+            // Streaming text row uses StreamingMarkdown (stable-prefix cache).
+            // Thread the shared instance from the input so
+            // RenderAssistantTextMessageFaithful can call streaming_md->update()
+            // instead of full render_markdown.
             Element el = RenderAssistantTextMessageFaithful(
                 fd, add_margin, /*is_selected=*/is_selected,
                 /*streaming_md=*/input.streaming_md);
@@ -165,45 +208,49 @@ auto render_payload_row(const MessagesListInput& input,
     else if (shape == S::AssistantThinking || shape == S::AssistantRedactedThinking) {
         auto* o = std::get_if<thinking_message::ThinkingMessageOptions>(&payload);
         if (o) {
-            // TS AssistantThinkingMessage.tsx line 36-38 guard:
-            //   if (hideInTranscript) return null;
-            // hideInTranscript = ThinkingState::Complete && !isTranscriptMode &&
-            //                    !verbose, which in the REPL faithful path maps to
-            //   complete && NOT (row selected for expand  OR  is the active
-            //   streaming tail block).
-            // Rows hidden here still contribute their turn-group side effects
-            // (add_margin state) so sibling assistant text blocks inside the
-            // same turn correctly inherit add_margin=false.
-            using TM = messages::thinking_message::ThinkingState;
-            const bool is_complete = o->data.state == TM::Complete;
-            const bool selected_or_active = is_selected || is_streaming_tail;
-            if (is_complete && !selected_or_active) {
-                (void)add_margin; (void)frame_count;
-                // Should not reach here — build_visible_rows filters these out.
-                // Defensive fallback if it somehow does.
-                return text("");
-            }
+            // Completed thinking rows render as a collapsed "∴ Thought for
+            // Xs" summary (RenderThinkingMessageCollapsed) that can be
+            // expanded on click.  They are NOT hidden here — the filter in
+            // messages_list_filter.cpp only hides them during the streaming
+            // grace period (streaming_thinking_globally_visible).
+            //
             // NOTE: `is_selected` (row navigation highlight) does NOT mean
-            // "expanded" in the TS sense.  Expansion requires an explicit
+            // "expanded".  Expansion requires an explicit
             // user gesture (Ctrl+O / Enter) via the interactive Component
             // path.  On this plain-Element render path, selected merely
             // lifts the "hide on complete" guard so the collapsed label is
             // visible.  `is_transcript_mode` (full thinking content) is
             // driven by the user's Ctrl+O transcript toggle.
             //
-            // TS REF: Messages.tsx L714-719 — streaming thinking tail is
-            // ALWAYS expanded (isTranscriptMode={true}).  When this row is
-            // the streaming tail OR thinking is globally visible (meaning
-            // a streaming-thinking tail exists somewhere), force transcript
-            // mode so the full body is shown rather than the collapsed
+            // Streaming thinking tail is ALWAYS expanded (transcript mode).
+            // When this row is the streaming tail OR thinking is globally
+            // visible (meaning a streaming-thinking tail exists somewhere),
+            // force transcript mode so the full body is shown rather than
+            // the collapsed
             // "∴ Thinking (ctrl+o to expand)" label.
             const bool thinking_force_expanded = is_streaming_tail ||
-                input.streaming_thinking_globally_visible;
+                input.streaming_thinking_globally_visible ||
+                was_recently_streaming(row_idx);
+            if (is_streaming_tail) mark_streaming(row_idx);
             Element el = thinking_message::RenderThinkingMessageFaithful(
                 o->data,
                 /*is_transcript_mode=*/input.is_transcript_mode || thinking_force_expanded,
                 /*verbose=*/is_row_expanded(input, row_idx),
                 /*add_margin=*/add_margin);
+            // Track clickable (non-redacted, non-empty) thinking blocks for
+            // mouse hit-testing.  The repl screen's event handler uses the
+            // tracker to map a click → expand-key toggle.
+            if (shape == S::AssistantThinking && input.row_click_tracker &&
+                (!o->data.raw_text.empty() || !o->data.sections.empty())) {
+                std::string_view uuid = (row_idx < input.uuids.size())
+                    ? std::string_view(input.uuids[row_idx])
+                    : std::string_view{};
+                auto key = compute_expand_key(shape, payload, uuid);
+                if (!key.empty()) {
+                    Box& box = input.row_click_tracker->track_row(std::move(key));
+                    el = std::move(el) | reflect(box);
+                }
+            }
             (void)frame_count;
             return el;
         }
@@ -220,7 +267,7 @@ auto render_payload_row(const MessagesListInput& input,
         auto* opts = std::get_if<ToolResultOptions>(&payload);
         if (opts) {
             // Bridge ToolResultOptions (divergent model) → ToolResultFaithfulData
-            // (faithful TS-equivalent model).  The divergent struct carries both
+            // (faithful model).  The divergent struct carries both
             // an `output` field (main content, possibly ANSI) and a separate
             // `error_message` field; the faithful renderer uses a single
             // `content` field plus a `kind` enum that drives dispatch.
@@ -228,7 +275,6 @@ auto render_payload_row(const MessagesListInput& input,
             fd.tool_name = opts->tool_name;
             fd.duration_ms = opts->duration_ms;
             fd.is_truncated = opts->is_truncated;
-            // TS REF: Messages.tsx L624 verbose={verbose || isItemExpanded(msg)}
             fd.verbose = is_row_expanded(input, row_idx);
 
             using DS = ToolResultStatus;   // divergent status
@@ -262,6 +308,21 @@ auto render_payload_row(const MessagesListInput& input,
             }
 
             Element el = RenderToolResultMessageFaithful(fd, add_margin);
+            // Track clickable tool result rows for mouse hit-testing.
+            // The event handler toggles the expand key on click, which
+            // expands/collapses the truncated output.
+            if (input.row_click_tracker &&
+                ((opts->output && !opts->output->empty()) ||
+                 (opts->content_items && !opts->content_items->empty()))) {
+                std::string_view uuid = (row_idx < input.uuids.size())
+                    ? std::string_view(input.uuids[row_idx])
+                    : std::string_view{};
+                auto key = compute_expand_key(shape, payload, uuid);
+                if (!key.empty()) {
+                    Box& box = input.row_click_tracker->track_row(std::move(key));
+                    el = std::move(el) | reflect(box);
+                }
+            }
             (void)frame_count; (void)is_streaming_tail;
             return el;
         }
@@ -271,8 +332,8 @@ auto render_payload_row(const MessagesListInput& input,
         if (opts) {
             // Bridge ToolUseRenderOptions → FaithfulToolUseData via
             // the tool UI registry.  Each registered tool provides its
-            // own userFacingName / message / tag / progress / queued
-            // functions (matching TS tool-class UI methods).
+            // own user_facing_name / message / tag / progress / queued
+            // functions (matching tool-class UI methods).
             //
             // Falls back to the generic renderer for unregistered tools.
             using namespace loom::ui::tools;
@@ -330,7 +391,7 @@ auto render_payload_row(const MessagesListInput& input,
             fd.should_animate = (opts->call.status == TS::Running);
 
             // ── MCP-only Input/Output sections ──
-            // TS built-in tools (Bash, Read, Write, Edit, Glob, Grep) NEVER
+            // Built-in tools (Bash, Read, Write, Edit, Glob, Grep) NEVER
             // show Input:/Output: sections — the command is in the header
             // parens and the result appears as a separate tool_result row.
             // Only MCP/unregistered tools show raw JSON parameters inline.
@@ -347,18 +408,18 @@ auto render_payload_row(const MessagesListInput& input,
         }
     }
     else if (shape == S::UserImage) {
-        // Faithful render: TS UserImageMessage — each user-attached image is
-        // its own transcript row.  Render directly via message_image::render
-        // (stateless Element) wrapped in user-message chrome for visual
-        // consistency with RenderUserPromptMessage: full-width,
-        // userMessageBackground tint, marginTop={addMargin?1:0}.
+        // Faithful render: each user-attached image is its own transcript
+        // row.  Render directly via message_image::render (stateless Element)
+        // wrapped in user-message chrome for visual consistency with
+        // RenderUserPromptMessage: full-width, userMessageBackground tint,
+        // top margin = (add_margin ? 1 : 0).
         //
-        // TS REF: UserImageMessage.tsx — the [Image #N] label lives inside
-        // the user message bubble; in CPP we project images as separate rows
-        // (one per attachment) so each gets its own user-styled card.
+        // The [Image #N] label lives inside the user message bubble; we
+        // project images as separate rows (one per attachment) so each gets
+        // its own user-styled card.
         auto* d = std::get_if<image::ImageMessageData>(&payload);
         if (d) {
-            // TS dark: userMessageBackground = rgb(55, 55, 55)
+            // userMessageBackground = rgb(55, 55, 55)
             // (matches RenderUserPromptMessage kUserBg).
             const Color kUserBg = Color::RGB(55, 55, 55);
 
@@ -374,11 +435,11 @@ auto render_payload_row(const MessagesListInput& input,
                 });
                 return vbox({text(""), std::move(content)});
             }
-            // TS PARITY: UserImageMessage.tsx — when addMargin is false (image
-            // is a continuation within the same user turn), wrap in
-            // <MessageResponse> which prepends "  ⎿  " (U+23BF connector).
-            // NO background tint — only the primary user text bubble gets
-            // userMessageBackground; continuation blocks are plain.
+            // When add_margin is false (image is a continuation within the
+            // same user turn), wrap in a MessageResponse which prepends
+            // "  ⎿  " (U+23BF connector).  NO background tint — only the
+            // primary user text bubble gets userMessageBackground;
+            // continuation blocks are plain.
             return hbox({
                 text("  \xe2\x8e\xbf  ") | dim,
                 std::move(body),

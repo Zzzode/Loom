@@ -152,9 +152,8 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
     }
 
     // permissions.deny: string array of raw deny rules surfaced to the engine
-    // as alwaysDenyRules. TS key is exactly "deny" under "permissions"; no
+    // as alwaysDenyRules. The key is exactly "deny" under "permissions"; no
     // other key names are accepted.
-    // TS REF: settings sources -> permissions.ts:109-114,213-221.
     if (auto perms = root.get("permissions"); perms.is_obj()) {
         if (auto deny = perms.get("deny"); deny.is_arr()) {
             deny.iter([&](auto item) {

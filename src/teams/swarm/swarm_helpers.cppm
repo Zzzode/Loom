@@ -502,22 +502,21 @@ private:
 };
 
 // ============================================================================
-// PermissionSync — Synchronized permission prompts (from permissionSync.ts)
+// PermissionSync — Synchronized permission prompts
 // ============================================================================
 //
-// Protocol shape is frozen to match the live TypeScript mailbox path
-// (src/utils/teammateMailbox.ts createPermissionRequestMessage/
-// createPermissionResponseMessage and src/utils/swarm/permissionSync.ts
+// Protocol shape is frozen to match the live mailbox path
+// (createPermissionRequestMessage/createPermissionResponseMessage and
 // sendPermissionRequestViaMailbox/sendPermissionResponseViaMailbox).
-// The older TS pending/resolved DIRECTORY protocol (~/.loom/teams/<t>/
-// permissions/{pending,resolved}) is deliberately not ported: request payloads
-// live only as the "text" envelope of messages in the existing mailbox tree
-// ($LOOM_TEAM_RUNTIME_DIR/<sanitized team>/inboxes/<agent>.json).
+// The older pending/resolved DIRECTORY protocol (~/.loom/teams/<t>/
+// permissions/{pending,resolved}) is deliberately not implemented: request
+// payloads live only as the "text" envelope of messages in the existing mailbox
+// tree ($LOOM_TEAM_RUNTIME_DIR/<sanitized team>/inboxes/<agent>.json).
 //
-// TODO(teams): sandbox_permission_request/response (permissionSync.ts:805-928)
-// and plan_approval_request/response (teammateMailbox.ts:684-711) variants are
-// deferred — no C++ worker-side sandbox network broker/plan gate emits them
-// yet; those messages use the same inbox envelope when added.
+// TODO(teams): sandbox_permission_request/response and
+// plan_approval_request/response variants are deferred — no worker-side
+// sandbox network broker/plan gate emits them yet; those messages use the
+// same inbox envelope when added.
 
 /// Permission request message envelope (worker -> leader).
 /// Field names match the SDK `can_use_tool` snake_case shape.
@@ -552,7 +551,7 @@ struct SwarmPermissionResponseMessage {
 /// request_and_await on its query thread.
 class PermissionSync {
 public:
-    /// "perm-<unixms>-<7 base36 chars>" (permissionSync.ts generateRequestId).
+    /// "perm-<unixms>-<7 base36 chars>".
     [[nodiscard]] static std::string generate_request_id();
 
     /// Serialize a request to the exact JSON text stored in the mailbox

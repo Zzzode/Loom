@@ -140,7 +140,7 @@ namespace detail {
     return PermissionAction::Allow;
 }
 
-/// Build default dangerous paths list (same as TS dangerous defaults).
+/// Build default dangerous paths list (same as dangerous defaults).
 [[nodiscard]] inline std::vector<DangerousPathRow> DefaultDangerousPaths() {
     return {
         { "/etc/passwd",          "Contains system user accounts (readable)" },

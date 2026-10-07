@@ -556,7 +556,6 @@ public:
 
     // Leader-exit cleanup: kill every teammate pane this executor spawned so a
     // torn-down team doesn't leave orphan interactive shells.
-    // TS REF: PaneBackendExecutor.ts registerCleanup → killPane loop.
     ~PaneBackendExecutor() override;
 
     void kill_all_spawned();
@@ -859,9 +858,8 @@ namespace detail {
 
 // ── Pure tmux argv builders (external swarm session re-attach) ──────────────
 //
-// These build command vectors for the TS TmuxBackend.ts external-session flow
-// (createExternalSwarmSession / createTeammatePaneExternal) without executing
-// anything, so the re-attach policy is unit-testable.
+// These build command vectors for the external-session flow
+// without executing anything, so the re-attach policy is unit-testable.
 
 struct TmuxArgv {
     std::string program = "tmux";
@@ -906,8 +904,7 @@ struct ExternalSessionPlan {
     std::string window_target;
 };
 
-/// Pure re-attach policy, mirroring TmuxBackend.ts createExternalSwarmSession
-/// (lines 467-546) and createTeammatePaneExternal (lines 635-701). A fresh
+/// Pure re-attach policy. A fresh
 /// session/window always yields one unused pane (reuse_first_pane); an
 /// existing window only hands out pane 0 when it is still the sole pane, so a
 /// leader restart with live teammate panes splits instead of hijacking pane 0.

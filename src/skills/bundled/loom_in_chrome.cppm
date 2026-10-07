@@ -1,7 +1,7 @@
 /// @file loom_in_chrome.cppm
 /// @brief Loom in Chrome skill - Chrome extension integration and browser automation.
 /// Detects Chrome-extension related user queries and injects install/debug workflow prompts.
-/// Mirrors src/skills/bundled/loomInChrome.ts + src/utils/loomInChrome/*.
+/// Mirrors the loomInChrome skill content.
 module;
 #include <cstdlib>
 #include <cstdio>
@@ -31,7 +31,7 @@ constexpr const char* CHROME_EXTENSION_RECONNECT_URL =
 constexpr const char* NATIVE_HOST_IDENTIFIER =
     "com.anthropic.loom_code_browser_extension";
 
-/// Base Chrome system prompt (kept in sync with src/utils/loomInChrome/prompt.ts)
+/// Base Chrome system prompt.
 /// The full prompt is injected when the skill is triggered.
 inline const char* BASE_CHROME_PROMPT = R"(# Loom in Chrome browser automation
 
@@ -167,7 +167,7 @@ inline std::string detect_platform() {
 } // namespace detail
 
 // ---------------------------------------------------------------------------
-// Auto-enable detection (mirrors setup.ts:shouldAutoEnableClaudeInChrome)
+// Auto-enable detection
 // ---------------------------------------------------------------------------
 
 /// Determine whether the Loom in Chrome skill should be auto-enabled.
@@ -230,8 +230,7 @@ inline void open_chrome_reconnect() {
 // ---------------------------------------------------------------------------
 
 /// Build the human-readable troubleshooting checklist for when the extension
-/// is installed but not responding. Mirrors the debugging flow described in
-/// the TS skill description.
+/// is installed but not responding.
 inline std::string build_troubleshooting_checklist() {
     std::ostringstream oss;
     oss << "## Loom in Chrome — Troubleshooting Checklist\n\n"

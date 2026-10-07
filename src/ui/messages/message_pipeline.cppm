@@ -1,17 +1,16 @@
 /// @file message_pipeline.cppm
-/// @brief Faithful 7-stage message pipeline (TS QueryEngine → messagesSlice
-///        → useMessages port).  Transforms raw engine StreamEvents into a
-///        render-ready list of VisibleRows, applying the same transforms the
-///        TS React chain does via 7 sequential stages.
+/// @brief Faithful 7-stage message pipeline.  Transforms raw engine
+///        StreamEvents into a render-ready list of VisibleRows, applying
+///        the same transforms via 7 sequential stages.
 ///
-/// TS REFERENCE (port location + intent):
-///   Stage 1 EVENT_DEDUP        → src/state/messagesSlice.ts:230 dedupEvents
-///   Stage 2 STREAM_NORMALIZE   → QueryEngine.ts → onEvent() delta flattening
-///   Stage 3 CONTENT_BLOCK_MERGE → messagesSlice.ts buildTurns()
-///   Stage 4 USER_INPUT_FILTER  → messagesSlice.ts extractTags()
-///   Stage 5 TOOL_RESULT_AUGMENT→ messagesSlice.ts augmentToolResult()
-///   Stage 6 HIDE_POLICY        → messagesSlice.ts applyHideInTranscript()
-///   Stage 7 VISIBLE_INDEX      → useMessages.ts buildVisibleRows()
+/// Pipeline stages:
+///   Stage 1 EVENT_DEDUP        → dedup per-block-index event lifecycle
+///   Stage 2 STREAM_NORMALIZE   → onEvent() delta flattening
+///   Stage 3 CONTENT_BLOCK_MERGE → buildTurns()
+///   Stage 4 USER_INPUT_FILTER  → extractTags()
+///   Stage 5 TOOL_RESULT_AUGMENT→ augmentToolResult()
+///   Stage 6 HIDE_POLICY        → applyHideInTranscript()
+///   Stage 7 VISIBLE_INDEX      → buildVisibleRows()
 ///
 /// CPP mapping:
 ///   Stages 2 and 3 are driven by app.cppm's on_event lambda; this module
@@ -28,11 +27,12 @@
 ///     otherwise the user sees raw XML.  Today user_bash_input_message.cppm
 ///     does the strip locally but user_text_message.cppm has no equivalent.
 ///   * Stage 5 (tool augment): QueryEngine::stream_tool returns just `result`
-///     + `is_error`; TS additionally surfaces `truncated: bool`, `error_code`,
-///     and a short `preview: string` used by the compact tool-use card.
-///   * Stage 6 (hide policy): So far we only hide completed thinking; TS also
-///     hides compacted conversation turns, LLM-generated tool internals, and
-///     silent bridge tool calls in the non-expanded transcript.
+///     + `is_error`; the pipeline additionally surfaces `truncated: bool`,
+///     `error_code`, and a short `preview: string` used by the compact
+///     tool-use card.
+///   * Stage 6 (hide policy): So far we only hide completed thinking; the
+///     pipeline also hides compacted conversation turns, LLM-generated tool
+///     internals, and silent bridge tool calls in the non-expanded transcript.
 ///   * Stage 7 (visible index): P0-3 VirtualMessageList needs a cheap
 ///     `size_t visible_index -> (row_idx, sub_idx)` mapping to render only
 ///     the on-screen slice.  We compute it once here instead of per-frame in
@@ -63,7 +63,7 @@ namespace figs = loom::ui::design::figures;
 
 /// Opaque tag describing the CLASS of structural row emitted by Stage 4
 /// (user-input filter).  Render sites switch on this to pick the right
-/// component — exactly matching TS: messagesSlice.ts → `<MessageRow>` dispatcher.
+/// component — the render-layer dispatcher.
 enum class UserRowKind : std::uint8_t {
     kPlainText = 0,           // literal user text, no tags
     kBashInput = 1,           // <bash-input> wrapped text → RenderUserBashInput
@@ -81,14 +81,12 @@ struct FilteredUserRow {
     std::string quoted_reply;          // if kind == kQuotedReply: the quoted block
     std::string attachment_ref;        // if kind == kAttachment: raw "@ref"
     std::string tool_name;             // if kind == kToolInvocation: the "name" part
-    bool is_transcript_only = false;   // TS `showInTranscript` override
+    bool is_transcript_only = false;   // showInTranscript override
 };
 
 // ─── Stage 1 Dedup: DedupTracker ───────────────────────────────────────────
 /// Tracks per-index event lifecycle transitions (Start → Delta* → Stop) for
 /// each ContentBlock index, plus per tool_use_id for execution events.
-///
-/// TS EQUIVALENT: messagesSlice.ts `dedupEvents` reducer (lines ~230-310).
 ///
 /// CORE INVARIANT: A given `index: size_t` transitions exactly once:
 ///   NotSeen ──Start──► Open ──Delta*──► Stopped (terminal)
@@ -156,7 +154,7 @@ class DedupTracker {
     }
 
     /// ToolExecutionStart / Progress / End use tool_use_id keys.  Return true
-    /// when the execution event is novel.  TS: progress events are always
+    /// when the execution event is novel.  Progress events are always
     /// accepted; only the Start/End pair is one-shot.
     [[nodiscard]] bool should_accept_exec_start(std::string_view tool_use_id) {
         // A tool that has already been `End`ed cannot restart its Start.
@@ -196,12 +194,12 @@ class DedupTracker {
 
 // ─── Stage 4 USER_INPUT_FILTER: ExtractTag + classify ───────────────────────
 //
-// PRINCIPLE: TS messagesSlice.extractTags runs BEFORE a user utterance is
+// PRINCIPLE: extractTags runs BEFORE a user utterance is
 // appended to the conversation state, so the transcript never sees the raw
 // XML wrappers.  The `<bash-input>` tag specifically is added by the shell
 // input mode (not typed by the user) and must be peeled off before display.
 //
-// SUPPORTED TAGS (TS full set, faithful):
+// SUPPORTED TAGS (full set, faithful):
 //   <bash-input>   INPUT   </bash-input>    → kind kBashInput
 //   <quoted-reply> QUOTE   </quoted-reply>  → kind kQuotedReply (quote + rest)
 //   <tool:NAME>    RESULT  </tool:NAME>     → kind kToolInvocation
@@ -211,13 +209,13 @@ class DedupTracker {
 //   <at-tool>NAME</at-tool>                 → kind kAttachment "@tool:NAME"
 //   plain text with no tags                 → kind kPlainText
 //
-// Nested tags are flattened left-to-right per TS behavior.
+// Nested tags are flattened left-to-right.
 
 /// Extract the inner content of the first `<tagName>…</tagName>` pair in
 /// `text`.  Returns std::nullopt if the tag is not found.
 ///
-/// Faithful to TS messages.ts extractTag(text, tagName) — same case-sensitive
-/// matching, same greedy-but-balanced semantics (tagName must match exactly).
+/// Same case-sensitive matching, same greedy-but-balanced semantics
+/// (tagName must match exactly).
 [[nodiscard]] inline std::optional<std::string> extract_tag(
     std::string_view text, std::string_view tag_name) noexcept
 {
@@ -231,7 +229,7 @@ class DedupTracker {
     const auto content_start = start + open.size();
     const auto end = text.find(close, content_start);
     if (end == std::string_view::npos) {
-        // Unterminated: TS returns raw text after the opening tag.
+        // Unterminated: return raw text after the opening tag.
         return std::string(text.substr(content_start));
     }
     return std::string(text.substr(content_start, end - content_start));
@@ -289,8 +287,6 @@ match_tool_tag(std::string_view text) noexcept {
 
 /// Stage 4 ENTRY POINT: take raw user input (possibly with XML tags) and
 /// split into a list of classified display rows.
-///
-/// TS: messagesSlice.ts → `prepareUserText(text) -> StagedUserMessage`.
 ///
 /// Typical input → output examples:
 ///   "!ls -la"                          → [{kPlainText, "!ls -la"}]
@@ -351,7 +347,7 @@ match_tool_tag(std::string_view text) noexcept {
     }
 
     // 3) <tool:NAME> … </tool:NAME> — can appear multiple times, once per tool
-    //    block in a user-pasted message.  TS supports one per utterance; we
+    //    block in a user-pasted message.  One per utterance; we
     //    support many for robustness.
     for (;;) {
         auto tool_match = match_tool_tag(working);
@@ -442,11 +438,10 @@ match_tool_tag(std::string_view text) noexcept {
 //   * preview     : string (first 200 chars / first non-empty line, collapse WS)
 //
 // NOTE: These are display-only fields; the engine preserves the FULL result
-// text in its conversation memory regardless of truncation here.  Faithful
-// to TS ToolResult.tsx line ~80 truncation + compact-preview logic.
+// text in its conversation memory regardless of truncation here.
 
-inline constexpr std::size_t kMaxToolPreviewBytes = 4096;   // TS: 4 * 1024
-inline constexpr std::size_t kMaxCompactPreviewChars = 200; // TS: compactCard preview
+inline constexpr std::size_t kMaxToolPreviewBytes = 4096;   // 4 * 1024
+inline constexpr std::size_t kMaxCompactPreviewChars = 200; // compactCard preview
 
 struct AugmentedToolResult {
     bool        truncated   = false;
@@ -455,7 +450,7 @@ struct AugmentedToolResult {
 };
 
 /// Extract a numeric error code from the beginning of a tool result.
-/// TS: ToolResult.tsx → parseErrorCode().  Recognised patterns:
+/// Recognised patterns:
 ///   "Error 42: ..."            → 42
 ///   "Exit code: 127"           → 127
 ///   "[exit_code=1]"            → 1
@@ -510,7 +505,7 @@ struct AugmentedToolResult {
 }
 
 /// Build the compact one-line preview used on collapsed tool cards.
-/// TS: ToolResult.tsx → compactPreview = take(firstNonEmptyLine, 200 chars)
+/// compactPreview = take(firstNonEmptyLine, 200 chars)
 [[nodiscard]] inline std::string build_compact_preview(std::string_view result) noexcept {
     if (result.empty()) return {};
     std::string_view v = result;
@@ -560,11 +555,11 @@ struct AugmentedToolResult {
 //
 // Determine whether a given (payload_shape, data_summary, flags) tuple should
 // be HIDDEN from the default transcript.  The rule set is copied verbatim
-// from TS messagesSlice.applyHideInTranscript():
+// from messagesSlice.applyHideInTranscript():
 //
 //   * Completed assistant thinking block → hidden
 //     (unless user selected it or is the streaming tail)
-//   * Redacted thinking blocks → hidden (always — TS never shows them)
+//   * Redacted thinking blocks → hidden (always — never shown)
 //   * Silent bridge tool executions (zero-char preview + no error) → hidden
 //     (these are auto-spawned setup tools the user never asked to see)
 //   * Compacted conversation turns (from `/compact`) → hidden
@@ -590,7 +585,7 @@ struct HideContext {
 [[nodiscard]] inline bool should_hide_row(PayloadShape shape,
                                           const HideContext& ctx) noexcept
 {
-    // 1) Redacted anything: redacted thinking is hidden in the TS UI.
+    // 1) Redacted anything: redacted thinking is hidden in the UI.
     //    Redacted text is currently shown via RedactedTextMessage; no change.
     if (shape == PayloadShape::kAssistantRedactedThinking) return true;
 
@@ -603,7 +598,7 @@ struct HideContext {
     //    "N messages compacted" row elsewhere; the underlying pieces are hidden.
     if (ctx.is_compacted_turn) return true;
 
-    // 4) Silent bridge tool calls.  TS distinguishes them via
+    // 4) Silent bridge tool calls.  Distinguished via
     //    toolUse.silent = true; we approximate via `is_silent_bridge_call`.
     if ((shape == PayloadShape::kAssistantToolUse ||
          shape == PayloadShape::kAssistantToolResult) &&

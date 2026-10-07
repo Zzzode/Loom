@@ -30,7 +30,6 @@ using loom::services::lsp::ScopedLspServerConfig;
 struct LSPServerInstance;
 
 /// Server lifecycle state.
-/// TS REF: src/services/lsp/LSPServerInstance.ts (server.state field)
 enum class ServerInstanceState {
     Starting,  ///< Server process launched, initialize in progress
     Ready,     ///< Initialize handshake completed, ready for requests
@@ -58,8 +57,7 @@ struct LSPServerInstance {
     // diagnostics_json_for_uri serializes from it.
     std::shared_ptr<DiagnosticRegistry> diagnostic_registry;
 
-    // External notification handler (TS serverInstance.onNotification analog).
-    // TS REF: src/services/lsp/passiveFeedback.ts:161-162
+    // External notification handler.
     using NotificationHandler = std::function<void(
         std::string_view method, std::string_view params_json)>;
     uint64_t on_notification(std::string method, NotificationHandler handler);
@@ -291,12 +289,10 @@ Result<T> LSPServerInstance::send_request(const std::string& method, const std::
             loom::utils::ErrorCode::timeout,
             "Timed out waiting for matching LSP response"));
     }
-    // Guard against silent default-construct no-ops for unsupported T. The TS
-    // sendRequest<T> (LSPServerInstance.ts:355-410) returns the typed result
-    // from client.sendRequest; today the C++ port only materialises T=std::string
-    // (lsp_tool.cppm send_request + LSPServerInstance::start initialise). Any
-    // future T must grow a branch above; failing to compile is preferable to
-    // silently returning T{}.
+    // Guard against silent default-construct no-ops for unsupported T.
+    // Today only T=std::string is materialised (lsp_tool.cppm send_request +
+    // LSPServerInstance::start initialise). Any future T must grow a branch
+    // above; failing to compile is preferable to silently returning T{}.
     static_assert(std::is_same_v<T, std::string>,
         "LSPServerInstance::send_request currently only supports T=std::string; "
         "add a matching `if constexpr` branch for new types instead of relying "
@@ -605,7 +601,6 @@ void LSPServerInstance::handle_notification(const std::string& json) {
     // (b) Dispatch external handlers for EVERY notification, isolating
     // per-handler exceptions so one failing subscriber cannot break the
     // notification loop.
-    // TS REF: src/services/lsp/passiveFeedback.ts:249-276
     auto params_node = root.get("params");
     std::string params_string = params_node.valid() ? params_node.to_string() : std::string{"{}"};
     // Snapshot handlers under the lock; registration can happen concurrently.

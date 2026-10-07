@@ -24,7 +24,14 @@ import loom.ui.screens.messages_store;   // MessageDisplayEntry (project_message
 import loom.ui.prompt.autocomplete_sources;
 // P0-2: 7-stage message pipeline utilities (dedup / tag filter / tool augment).
 import loom.ui.messages.message_pipeline;
-import loom.ui.dialogs.system;
+// P3-1c: async statusline worker (jthread + debounce/memo state).
+import loom.ui.app.statusline_coordinator;  // arch-check: keep-import (member)
+// P3-1a: teammate inbox/permission state (PIMPL + self-contained methods).
+import loom.ui.app.teammate_coordinator;  // arch-check: keep-import (member)
+// P4-1b: async clipboard paste state + worker.
+import loom.ui.app.paste_coordinator;  // arch-check: keep-import (member)
+// P4-1d: tool-permission + elicitation + ask-user blocking-response state.
+import loom.ui.app.permission_coordinator;  // arch-check: keep-import (member)
 
 export namespace loom::ui {
 
@@ -38,15 +45,6 @@ struct AppImpl;
 // cleanup — without AppImpl being complete there.
 struct AppImplDeleter {
     void operator()(AppImpl* p) const noexcept;
-};
-
-// Nested PIMPL for the teammate inbox/permission cluster. The backing struct
-// lives entirely in app_team.cpp (a plain impl unit), keeping swarm_helpers /
-// team_helpers / swarm_backends out of both this interface and the :impl
-// partition.
-struct TeammateState;
-struct TeammateStateDeleter {
-    void operator()(TeammateState* p) const noexcept;
 };
 
 // Nested PIMPL for settings (disk load + file-watch). Defined in
@@ -126,9 +124,9 @@ struct AutocompleteToken {
 [[nodiscard]] repl::MessageDisplayEntry project_message(const Message& msg);
 
 // ============================================================
-// project_messages — TS-faithful projection that splits a single
+// project_messages — projection that splits a single
 // AssistantMessage into MULTIPLE display rows when it mixes a ThinkingBlock
-// with a TextBlock / ToolUseBlock.  TS renders these as separate sibling
+// with a TextBlock / ToolUseBlock.  These render as separate sibling
 // messages (a collapsed `∴ Thinking` row followed by the visible answer /
 // tool-use row); the legacy single-entry projection collapsed them into one
 // thinking row, which hid the visible answer once M4 routed thinking rows
@@ -152,9 +150,15 @@ project_messages(const Message& msg);
 // ============================================================
 
 class AppAdapter : public ComponentBase {
+    // P5: testing seams are private; AppTestingSeams (in
+    // loom.ui.app.testing_seams) is the only caller.
+    friend struct AppTestingSeams;
+
 private:
     std::unique_ptr<AppImpl, AppImplDeleter> impl_;
-    std::unique_ptr<TeammateState, TeammateStateDeleter> teammate_;
+    // P3-1a: teammate inbox/permission cluster.  Owns the PIMPL that
+    // used to live here as unique_ptr<TeammateState, TeammateStateDeleter>.
+    TeammateCoordinator teammate_;
     std::unique_ptr<SettingsState, SettingsStateDeleter> settings_;
     // Defined in the :impl partition where AppImpl is complete. The out-of-line
     // constructor body calls this; teardown goes through AppImplDeleter, so
@@ -164,7 +168,6 @@ private:
     // loom.session.app_storage), keeping those closures out of this BMI.
     void construct_impl(void* engine, void* lifecycle_hooks,
                         void* cmd_registry, void* storage);
-    void construct_teammate();
     void construct_settings();
     [[nodiscard]] void* engine_raw() const noexcept;
     [[nodiscard]] void* lifecycle_hooks_raw() const noexcept;
@@ -188,9 +191,9 @@ private:
     // Async query state
     std::jthread query_thread_;
     std::jthread spinner_thread_;
-    // Local '!' bash command worker (TS processBashCommand.tsx). Runs the
-    // command outside the LLM turn (shouldQuery:false), so it uses its own
-    // thread rather than query_thread_ and never sets query_running_.
+    // Local '!' bash command worker. Runs the command outside the LLM turn
+    // (shouldQuery:false), so it uses its own thread rather than query_thread_
+    // and never sets query_running_.
     std::jthread bash_thread_;
     std::atomic<bool> bash_running_{false};
     std::atomic<bool> query_running_{false};
@@ -221,46 +224,20 @@ private:
     std::unordered_set<std::string> seen_leader_permission_ids_;
     /// P2 gap api-error-retry: last user-submitted message text.  Used by
     /// the Retry button on SystemAPIError cards to re-send the same query.
-    /// TS REF: SystemAPIErrorMessage.tsx onRetry → re-submits last prompt.
+    /// The Retry handler re-submits this text.
     std::string last_submitted_text_;
     // Cached autocomplete data (loaded once at startup to avoid repeated disk I/O
-    // on every keystroke — TS memoizes these in useTypeahead).
+    // on every keystroke — these are memoized).
     std::vector<acsrc::SkillSuggestionData> cached_skills_;
     std::vector<acsrc::PluginCommandSuggestionData> cached_plugin_commands_;
     std::atomic<std::uint64_t> ui_animation_tick_count_{0};
     std::mutex result_mutex_;
     std::optional<std::string> pending_error_;
-    // Pasted clipboard images keyed by paste-id (TS pastedContents: Record).
-    // Each ctrl+v image paste assigns a monotonically-increasing id and
-    // inserts "[Image #N]" into input_text at the cursor.  Orphan cleanup
-    // (see OnEvent + HandleSubmit) prunes entries whose placeholder is no
-    // longer in the text.  TS REF: PromptInput.tsx L144 + L1151-1200.
-    std::unordered_map<int, ImageBlock> pasted_contents_;
-    // Pasted clipboard TEXT content keyed by paste-id.  When a >10K char
-    // text paste is truncated, the middle (elided) content is stored here
-    // so that HandleSubmit can expand [...Truncated text #N] refs back to
-    // the full text before sending to the model.
-    // TS REF: inputPaste.ts maybeTruncateInput — stores {id, type: 'text',
-    //   content: placeholderContent} in pastedContents.
-    std::unordered_map<int, std::string> pasted_text_contents_;
-    int next_paste_id_ = 1;
-    // Async paste: the placeholder "[Image #N]" is inserted into input_text
-    // immediately on Ctrl+v (instant UI feedback), and the actual clipboard
-    // read (osascript + PNG encode) runs on a background thread.  Results
-    // are posted back via these queues and drained on the next OnEvent.
-    std::mutex paste_mutex_;
-    std::unordered_map<int, ImageBlock> pending_paste_results_;  // bg→UI
-    std::unordered_set<int> pending_paste_failures_;             // bg→UI
-    // Async text paste results: raw clipboard text keyed by paste-id.
-    // Posted by SpawnPasteWorker when the clipboard has no image but does
-    // have text.  ProcessCompletedPastes replaces the "[Image #N]"
-    // placeholder with the text (truncating if >10K).
-    std::unordered_map<int, std::string> pending_paste_text_results_;  // bg→UI
-    // Track ids whose SpawnPasteWorker thread is still in flight (read hasn't
-    // posted to pending_paste_results_/failures_ yet). HandleSubmit waits on
-    // these so a fast Ctrl+V→Enter doesn't submit before the image data lands
-    // (which would send a text-only message with [Image #N] refs but no PNG).
-    std::unordered_set<int> in_flight_pastes_;
+    // P4-1b: async clipboard paste state + worker extracted to
+    // PasteCoordinator.  AppAdapter keeps ProcessCompletedPastes and
+    // WaitForInFlightPastes (they need screen_state_) and accesses the
+    // coordinator's state through its accessors.
+    PasteCoordinator paste_;
     // Local '!' bash command output posted back from bash_thread_ (bg→UI),
     // drained on the render thread in ConsumePendingResult().  Mirrors the
     // pending_paste_results_ handoff pattern so local_command_messages_ /
@@ -281,9 +258,9 @@ private:
     std::mutex at_mention_mutex_;
     std::vector<std::string> pending_at_mention_inserts_;  // bg→UI
     std::string streaming_text_;
-    /// TS REF: Markdown.tsx L186-235 — StreamingMarkdown stable-prefix cache
-    /// for the streaming-text tail row.  Reset alongside streaming_text_ so
-    /// each new model response starts with a fresh stable prefix.  Used by
+    /// StreamingMarkdown stable-prefix cache for the streaming-text tail
+    /// row.  Reset alongside streaming_text_ so each new model response
+    /// starts with a fresh stable prefix.  Used by
     /// RenderAssistantTextMessageFaithful via MessagesListInput.streaming_md.
     ::loom::ui::StreamingMarkdown streaming_markdown_;
     struct StreamingToolPreview {
@@ -300,10 +277,8 @@ private:
         bool exec_done = false;      ///< ToolExecutionEnd: tool has finished executing
         bool is_error = false;
     };
-    // TS REF: src/utils/messages.ts L2921-2925  StreamingThinking type
-    //   { thinking, isStreaming, streamingEndedAt }
-    // streaming_ended_at enables the 30s grace period after thinking stops
-    // (TS REF: Messages.tsx L382-389  isStreamingThinkingVisible).
+    // StreamingThinking preview { text, complete, streaming_ended_at }.
+    // streaming_ended_at enables the 30s grace period after thinking stops.
     struct StreamingThinkingPreview {
         std::string text;
         bool complete = false;
@@ -312,10 +287,9 @@ private:
     std::map<std::uint32_t, StreamingToolPreview> streaming_tools_;
     std::map<std::uint32_t, StreamingThinkingPreview> streaming_thinking_;
 
-    // TS REF: Messages.tsx L382-389  isStreamingThinkingVisible useMemo.
     // Returns true when any streaming thinking block is still being streamed,
     // OR when a recently-completed thinking block is within the 30-second
-    // grace period (TS: Date.now() - streamingEndedAt < 30000).
+    // grace period.
     // Drives G3 (hide all completed thinking when streaming visible) and
     // keeps the tail visible after ContentBlockStop fires.
     // Body in app_autocomplete.cpp (RFC 0001 Phase C batch 2).
@@ -325,27 +299,32 @@ private:
     loom::ui::messages::pipeline::DedupTracker event_dedup_;
     std::atomic<ScreenInteractive*> screen_{nullptr};
 
-    // Permission confirmation
-    std::mutex permission_mutex_;
-    std::condition_variable permission_cv_;
-    std::optional<bool> permission_response_;
-    std::set<std::string> always_allowed_tools_;
-    /// Whether any computer-use action has been approved/asked this session —
-    /// drives the "first computer use in this session" warning in the panel.
-    bool computer_use_seen_in_session_ = false;
+    // ── Text selection (drag-to-select) ──────────────────────────────────
+    // Left-click drag in the transcript selects text; release auto-copies
+    // to clipboard via OSC 52.  Three-state machine: Idle → Potential
+    // (press recorded, drag not yet confirmed) → Dragging (moved > 3px).
+    // Clicks without drag pass through to existing handlers (hyperlink,
+    // click-to-expand) which all listen on Released events.
+    struct TextSelection {
+        bool active = false;     // true once drag threshold exceeded
+        bool potential = false;  // true after press, before threshold
+        int start_x = 0, start_y = 0;
+        int end_x = 0, end_y = 0;
+    };
+    TextSelection text_selection_;
 
-    // MCP Elicitation (synchronous dialog response pattern,
-    // same as tool permission — blocks worker thread on UI response).
-    std::mutex elicitation_mutex_;
-    std::condition_variable elicitation_cv_;
-    std::optional<bool> elicitation_response_;
+    // ── Drag-to-select text selection (body in app_text_selection.cpp) ──
+    // Handle mouse drag events for text selection. Returns true if the
+    // event was consumed (drag active or completed).
+    bool HandleTextSelectionMouse(Event event);
+    // Wrap an Element with the selection-highlight node when a drag is
+    // active.  Returns the element unchanged otherwise.
+    Element ApplySelectionHighlight(Element el);
 
-    // Ask-user prompt (same synchronous dialog response pattern).
-    // Used by the ask_user_question tool to show a PromptDialog instead
-    // of falling back to stdio.
-    std::mutex ask_user_mutex_;
-    std::condition_variable ask_user_cv_;
-    std::optional<std::optional<std::string>> ask_user_response_;
+    // P4-1d: tool-permission + MCP-elicitation + ask-user blocking-response
+    // state extracted to PermissionCoordinator.  AppAdapter keeps the dialog
+    // display logic and calls the coordinator's reset/wait/resolve methods.
+    PermissionCoordinator permission_;
 
     // Vim mode — state lives in AppImpl (:impl partition). Accessors keep the
     // VimMode/VimStateMachine types out of this interface.
@@ -383,21 +362,11 @@ private:
     // Redux-like AppState store moved into AppImpl (:impl partition).
     // Access via has_app_store/app_store_raw/bridge_state.
 
-    // Statusline runner — async execution of user-configurable shell command.
-    // Triggered on mount, after messages change, and when settings change.
-    // Faithful to TS StatusLine.tsx's debounced doUpdate() pattern.
-    std::jthread statusline_thread_;
-    std::atomic<bool> statusline_dirty_{false};
-    std::atomic<bool> statusline_running_{false};
-    std::mutex statusline_mutex_;
-    std::condition_variable statusline_cv_;
-    int statusline_debounce_ms_ = 300;  // TS: 300ms debounce
-    // Memo cache: skip re-exec when command + JSON input are identical and
-    // last run was < 30s ago.  Matches TS StatusLine.tsx memo dependency tuple
-    // (lastAssistantMessageId, permissionMode, vimMode, mainLoopModel).
-    std::string statusline_last_cmd_;
-    std::string statusline_last_input_json_;
-    std::chrono::steady_clock::time_point statusline_last_run_{};
+    // P3-1c: async statusline worker (jthread + debounce/memo state).
+    // Owns the thread, atomics, mutex, cv, and memo cache that used to live
+    // here as 9 separate fields.  Callbacks are injected in construct().
+    StatuslineCoordinator statusline_;
+
     // P0-6 builtin statusline: git branch detection cache.  We only re-run
     // `git rev-parse --abbrev-ref HEAD` when the cwd changes (cd events are
     // rare).  This avoids spawning a subprocess on every render tick.
@@ -413,6 +382,10 @@ private:
     // Phase C batch 2). Private member; callable from member functions in
     // any impl unit (private access holds within member functions).
     void PostRenderEvent();
+
+    // Stream-event handler — body in app_handle_submit.cpp. The query
+    // thread's on_event callback and the test seam both delegate here.
+    void handle_stream_event(const core::StreamEvent& ev);
 
     // AT-09: drain the MCP at_mentioned staging queue (at_mention_mutex_ /
     // pending_at_mention_inserts_) into screen_state_->mcp_status_store on
@@ -446,19 +419,17 @@ private:
     void AppendLocalCommandMessage(std::string message, bool is_error = false);
 
 
-    // TS REF: src/utils/processUserInput/processBashCommand.tsx
+    // Run a user-initiated `!` command LOCALLY (never an LLM turn).  It runs
+    // the command with the sandbox disabled, renders a <bash-input> user row
+    // plus a <bash-stdout>/<bash-stderr> output row, and NEVER sends the
+    // command to the model.
     //
-    // Run a user-initiated `!` command LOCALLY (never an LLM turn).  TS does
-    // BashTool.call({command, dangerouslyDisableSandbox:true}) with
-    // shouldQuery:false, renders a <bash-input> user row plus a <bash-stdout>/
-    // <bash-stderr> output row, and NEVER sends the command to the model.
-    //
-    // We mirror that: append the input row immediately (like TS's initial
-    // setToolJSX(<BashModeProgress>)), then run `/bin/sh -c` on a worker thread
+    // Append the input row immediately, then run `/bin/sh -c` on a worker
+    // thread
     // (combined stdout+stderr via popen_spawn, run in the session cwd) and post
     // the output back to the render thread via pending_bash_result_.  The
     // engine / query path is never touched, so no Bash *tool-use* card and no
-    // assistant summary are produced — matching the TS transcript exactly.
+    // assistant summary are produced — matching the transcript exactly.
     void RunLocalBashCommand(std::string command);
 
     void ClearActiveLocalJsxCommand();
@@ -522,15 +493,15 @@ public:
     void ProjectRuntimeMetadataToScreenState();
 
     /// Project settings from SettingsManager into screen_state_.
-    /// Mirrors how the TS engine projects AppState.settings into the REPL
+    /// Projects the settings subset into the REPL
     /// screen's model/status-line fields.  Only the subset needed by the
     /// renderer is projected — the engine owns the full settings object.
     void ProjectSettingsToScreenState();
 
     /// Trigger an async statusline update (debounced).
-    /// Faithful to TS scheduleUpdate() — sets a dirty flag and wakes the
-    /// worker thread; the actual command runs after the debounce period.
-    /// Body in app_constructor.cpp (RFC 0001 Phase C batch 2).
+    /// P3-1c: delegates to StatuslineCoordinator.  Kept as a thin wrapper
+    /// because 5 impl units call it.
+    /// Body in app_constructor.cpp (inline-def ratchet).
     void TriggerStatuslineUpdate();
 
     // Build the statusline JSON payload / execute the user command.
@@ -542,24 +513,23 @@ public:
                                   int timeout_ms,
                                   std::string& output);
 
-    // TS REF: src/components/Messages.tsx L519-520 — the render `useMemo`
-    // applies a chain of collapse passes to the message list before projecting
+    // Apply a chain of collapse passes to the message list before projecting
     // rows:
     //   collapseBackgroundBashNotifications(collapseHookSummaries(
     //     collapseTeammateShutdowns(collapseReadSearchGroups(grouped, tools))))
     //
     // We run the same chain here, on the raw conversation, before the
     // per-message projection loop in SyncState()/Render().  Only the passes
-    // that have a faithful CPP port are wired so far:
+    // that have a faithful port are wired so far:
     //   * collapseBackgroundBashNotifications — DONE (this call).
     //   * collapseHookSummaries / collapseTeammateShutdowns / collapseReadSearch
     //     — pending (need richer SystemMessage / AttachmentMessage types).
-    // As each pass lands it slots in here, preserving the TS ordering.
+    // As each pass lands it slots in here, preserving the ordering.
     //
     // `fullscreen=true`: the CPP transcript is always the fullscreen-equivalent
-    // view (TS gates collapse on isFullscreenEnvEnabled()).  `verbose=false`:
+    // view (collapse gated on isFullscreenEnvEnabled()).  `verbose=false`:
     // there is no ctrl+O verbose transcript toggle at this layer yet, so we use
-    // the default collapsed presentation (TS shows each item only in verbose).
+    // the default collapsed presentation (each item shown only in verbose).
     [[nodiscard]] std::vector<Message> ApplyMessageCollapsePipeline(
         std::vector<Message> messages) const;
 
@@ -599,6 +569,9 @@ public:
     // terminal raw-mode state corruption that can take seconds to recover
     // from.  The placeholder "[Image #N]" is inserted synchronously so the
     // user gets instant feedback; the image data fills in shortly after.
+    //
+    // P4-1b: delegates to PasteCoordinator::SpawnPasteWorker with a
+    // PostRenderEvent callback.
     void SpawnPasteWorker(int id);
 
     /// Drain background paste results onto pasted_contents_ (render thread).
@@ -619,19 +592,40 @@ public:
     /// HandleSubmit reads it immediately after this returns.
     void WaitForInFlightPastes(const std::string& text);
 
+    [[nodiscard]] std::function<bool(std::string_view, std::string_view)> get_permission_callback();
+
+private:
     // ── Teammate inbox test seams (bodies in the :team partition) ─────────
     void configure_teammate_for_testing(std::string agent_name, std::string team);
     void poll_teammate_inbox_once_for_testing();
     [[nodiscard]] std::size_t teammate_pending_count_for_testing();
     [[nodiscard]] std::string pop_teammate_prompt_for_testing();
 
-    [[nodiscard]] std::function<bool(std::string_view, std::string_view)> get_permission_callback();
-
     // ── Test seams ──────────────────────────────────────────────────────
     // Bodies in app_testing_seams.cpp (RFC 0002 F3 Finalize) — the inline
     // ratchet (inline_def_check.py) re-freezes at the single composition
     // body (set_screen). Private access holds within member functions.
     [[nodiscard]] bool is_query_running_for_testing() const noexcept;
+
+    /// Inject a stream event directly into the App's event handler.
+    /// Bypasses the query thread, HTTP, and wire layers. For testing only.
+    void inject_stream_event_for_testing(const core::StreamEvent& ev);
+
+    /// Set query_running_ for testing. When true, Render() projects streaming
+    /// state. When false, the next Render() takes the idle path
+    /// (ConsumePendingResult → SyncState), clearing streaming state. Also sets
+    /// the spinner to Requesting (matching HandleSubmit) so the idle path fires
+    /// on __end_query__ even for fixtures with no content events.
+    void set_query_running_for_testing(bool running);
+
+    /// Clear the streaming-thinking preview map so
+    /// is_streaming_thinking_visible() returns false. For testing only —
+    /// lets the 3s collapse grace (was_recently_streaming in
+    /// messages_list_payload_row.cpp) become the deciding factor for a
+    /// committed thinking row without waiting out the 30s streaming
+    /// grace, which would otherwise keep the row hidden via the
+    /// streaming_thinking_globally_visible filter (RFC 0003 §8.3).
+    void clear_streaming_thinking_for_testing();
 
     // Drive a prompt submission through the full HandleSubmit path (slash /
     // bash / LLM routing) exactly as the Enter key would.
@@ -693,12 +687,16 @@ public:
     /// without going through the text input component).
     void set_input_text_for_testing(std::string text);
 
+    /// Set the next-action suggestion directly (for testing Tab-to-accept
+    /// without running the full PromptSuggestionService).
+    void set_next_action_suggestion_for_testing(std::string suggestion);
+
     /// Expose HandleSubmit for direct test invocation (the real submit path
     /// goes through the text input component's on_submit callback).
     void handle_submit_for_testing(std::string text);
 
-    /// Run the orphan-cleanup logic (TS PromptInput.tsx L1185-1200 useEffect)
-    /// against the current screen_state_->input_text.  For testing only.
+    /// Run the orphan-cleanup logic against the current
+    /// screen_state_->input_text.  For testing only.
     void trigger_orphan_cleanup_for_testing();
 
     [[nodiscard]] bool is_agents_view_for_testing() const noexcept;
@@ -725,6 +723,95 @@ public:
     void enqueue_teammate_permission_for_testing(void* request, std::string team);
     [[nodiscard]] std::size_t pending_teammate_permission_count_for_testing();
 };
+
+// ============================================================
+// P5: Testing seam accessor
+// ============================================================
+// AppTestingSeams is the ONLY caller of AppAdapter's private *_for_testing
+// methods (granted via friend declaration above).  Production code never
+// uses this struct — it exists so tests can drive the app without exposing
+// 38 testing methods on AppAdapter's public API.
+//
+// Bodies live in app_testing_seams.cpp (inline-def ratchet); the struct
+// stays here because tests construct it via the test_seams() factories.
+//
+// Usage in tests:
+//   test_seams(app).submit_for_testing("hello");
+//   EXPECT_TRUE(test_seams(app).is_query_running_for_testing());
+
+struct AppTestingSeams {
+    AppAdapter* app;
+
+    // ── Teammate inbox seams ──────────────────────────────────────
+    void configure_teammate_for_testing(std::string agent_name, std::string team);
+    void poll_teammate_inbox_once_for_testing();
+    [[nodiscard]] std::size_t teammate_pending_count_for_testing();
+    [[nodiscard]] std::string pop_teammate_prompt_for_testing();
+
+    // ── Query / loading state ──────────────────────────────────────
+    [[nodiscard]] bool is_query_running_for_testing() const noexcept;
+    void submit_for_testing(const std::string& text);
+    [[nodiscard]] bool is_local_bash_running_for_testing() const noexcept;
+    void wait_for_local_bash_for_testing();
+    [[nodiscard]] bool is_loading_for_testing() const noexcept;
+    void inject_stream_event_for_testing(const loom::core::StreamEvent& ev);
+    void set_query_running_for_testing(bool running);
+    void clear_streaming_thinking_for_testing();
+
+    // ── Animation / statusline ─────────────────────────────────────
+    [[nodiscard]] std::uint64_t ui_animation_tick_count_for_testing() const noexcept;
+    [[nodiscard]] std::string status_message_for_testing() const;
+    [[nodiscard]] bool status_line_enabled_for_testing() const noexcept;
+    [[nodiscard]] std::string status_line_command_for_testing() const;
+    [[nodiscard]] int status_line_padding_for_testing() const noexcept;
+    [[nodiscard]] std::string status_bar_model_for_testing() const;
+
+    // ── Autocomplete ───────────────────────────────────────────────
+    [[nodiscard]] std::size_t autocomplete_suggestion_count_for_testing() const noexcept;
+    [[nodiscard]] std::vector<std::string> autocomplete_suggestions_for_testing() const;
+    [[nodiscard]] int autocomplete_index_for_testing() const noexcept;
+
+    // ── Messages / input ───────────────────────────────────────────
+    [[nodiscard]] std::vector<std::string> messages_for_testing() const;
+    [[nodiscard]] std::string input_text_for_testing() const;
+
+    // ── Paste ──────────────────────────────────────────────────────
+    [[nodiscard]] std::size_t pasted_contents_size_for_testing() const noexcept;
+    [[nodiscard]] bool has_pasted_content_for_testing(int id) const noexcept;
+    void inject_pasted_image_for_testing(int id, loom::core::ImageBlock ib);
+    void set_no_real_paste_worker_for_testing(bool v);
+
+    // ── Input / submit ─────────────────────────────────────────────
+    void set_input_text_for_testing(std::string text);
+    void set_next_action_suggestion_for_testing(std::string suggestion);
+    void handle_submit_for_testing(std::string text);
+    void trigger_orphan_cleanup_for_testing();
+
+    // ── Agents view ────────────────────────────────────────────────
+    [[nodiscard]] bool is_agents_view_for_testing() const noexcept;
+    [[nodiscard]] bool is_local_jsx_command_for_testing(
+        std::string_view command_name) const noexcept;
+    [[nodiscard]] int active_agents_selection_position_for_testing() const noexcept;
+    [[nodiscard]] std::size_t agent_card_count_for_testing() const noexcept;
+
+    // ── Dialogs / teams ────────────────────────────────────────────
+    [[nodiscard]] bool has_pending_dialog_for_testing() const noexcept;
+    void set_live_teammates_for_testing(void* v);
+    [[nodiscard]] bool teams_overview_open_for_testing() const;
+    [[nodiscard]] int teams_overview_count_for_testing() const noexcept;
+
+    // ── Teammate permissions ───────────────────────────────────────
+    void enqueue_teammate_permission_for_testing(void* request, std::string team);
+    [[nodiscard]] std::size_t pending_teammate_permission_count_for_testing();
+};
+
+/// Factory: create an AppTestingSeams proxy from a Component (shared_ptr
+/// to ComponentBase — dynamic_casts to AppAdapter).  Accepts const& so
+/// shared_ptr<AppAdapter> temporaries bind via the implicit conversion.
+[[nodiscard]] AppTestingSeams test_seams(const ftxui::Component& app);
+
+/// Factory: create an AppTestingSeams proxy from an AppAdapter pointer.
+[[nodiscard]] AppTestingSeams test_seams(AppAdapter* app);
 
 // ============================================================
 // Main Application Runner

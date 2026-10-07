@@ -87,8 +87,7 @@ struct ToolUseBlock {
 };
 
 /// A single content item within a tool result.
-/// TS REF: ContentBlockParam for tool_result content arrays — supports
-/// {type:"text", text} and {type:"image", source:{media_type, data, type:"base64"}}.
+/// Supports {type:"text", text} and {type:"image", source:{media_type, data, type:"base64"}}.
 struct ToolResultContentItem {
     std::string type;        ///< "text" or "image"
     std::string text;        ///< text content (for type="text")
@@ -97,8 +96,7 @@ struct ToolResultContentItem {
 };
 
 /// Represents the result of a tool execution.
-/// TS REF: ToolResultBlockParam — content is `string | ContentBlockParam[]`.
-/// We support both: a plain string for simple results, or a vector of
+/// Content can be a plain string for simple results, or a vector of
 /// ToolResultContentItem for structured MCP results with mixed text+image.
 struct ToolResultBlock {
     ToolUseId tool_use_id;

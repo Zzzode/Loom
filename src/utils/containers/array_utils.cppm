@@ -35,7 +35,7 @@ template <typename T>
     return result;
 }
 
-// TypeScript-compatible alias for unique().
+// Alias for unique().
 template <typename T>
 [[nodiscard]] std::vector<T> uniq(const std::vector<T>& vec) {
     return unique(vec);

@@ -1,27 +1,17 @@
-# Design decisions that survive the TypeScript reference tree
+# Design decisions and cross-module couplings
 
-**What this is.** `cpp_migration/src` is a C++23 port of the TypeScript tree at `src/`.
-That TS tree is being deleted on **2026-09-21**. The C++ tree carries ~1399 `TS REF: <path>:<line>`
-breadcrumbs; the overwhelming majority are pure navigational pointers whose entire content is
-"the TS file said this at line N" — worthless the moment `src/` is gone.
+**What this is.** A register of non-obvious decisions, constraints, and
+cross-module couplings in the C++ tree — the things a maintainer cannot
+re-derive from the code alone: *why* the code is shaped this way, *what
+silently breaks if you change it*, and *which other file you must change in
+lockstep*.
 
-This document extracts the minority: comments that record a **decision** or a **non-obvious
-constraint** — the things a maintainer cannot re-derive from the C++ code alone, and could not
-recover from the TS tree even before it was deleted, because they are about *why* the C++ differs,
-*what silently breaks if you change it*, and *which other file you must change in lockstep*.
+**How to read an entry.** Every bullet stands alone. Where a historical
+reference matters for the meaning, it is kept in prose; otherwise the pointer
+is dropped.
 
-**How to read an entry.** Every bullet is rewritten to stand alone. Where the TS file name matters
-for the meaning ("the TS helper did X"), it is kept in prose; otherwise the pointer is dropped.
-Nothing here requires the deleted tree.
-
-**Excluded.** Pure file/line pointers with no stated reason; ordinary validation text
-("must not be empty"); and the self-documenting `TS REFERENCE:` header blocks, which are listed in
-the appendix instead of transcribed.
-
-**Provenance.** Extracted by grepping `cpp_migration/src` for `TS REF` plus the marker vocabulary
-(`deliberately`, `intentional`, `divergence`, `replaces the previous`, `must not`, `cannot`,
-`NOTE:`, `CROSS-MODULE`, `contract`, `silent`, `coupling`, `workaround`, `because`, …) and then
-reading 10-20 lines of surrounding context for each candidate.
+**Excluded.** Pure file/line pointers with no stated reason, and ordinary
+validation text ("must not be empty").
 
 ---
 
@@ -31,7 +21,7 @@ promoted to the repository root in the same series of commits, so
 `cpp_migration/src/...` reads as `src/...` from then on.
 
 
-## A. Intentional divergence — the C++ deliberately differs from TS, and says why
+## A. Intentional divergence — deliberate design choices and their rationale
 
 ### A.1 — Vim mode / input mode consolidation
 
@@ -2678,6 +2668,58 @@ promoted to the repository root in the same series of commits, so
 - **`cpp_migration/src/cli/handlers/agents.cppm:118`** — A stale PID file is removed rather than treated
   as a live session.
 
+- **`src/ui/visual/code_highlight.cppm` (`ColoredTextLine`)** and
+  **`src/ui/visual/markdown_render_impl.cpp:286-289`** — FTXUI `hbox({text(...) | color(...), ...})`
+  **swallows characters from the middle of overwidth lines**. When the children's total width exceeds
+  the allocated width, `box_helper::Compute` routes to `ComputeShrinkHard`, which scales every
+  non-shrinkable child down proportionally — each `text()` token is truncated at its own right edge,
+  so characters vanish from throughout the line (e.g. `"this is a very long code line"` renders as
+  `"thi is a ver lon cod lin"`). This is invisible at construction time (the element tree looks
+  correct) and only manifests at render time on narrow terminals. Two safe alternatives:
+  - **Wrapping content** (paragraphs): use `flexbox(elements, FlexboxConfig())` — it wraps to the
+    next line instead of shrinking. This is what `render_inlines` uses.
+  - **Non-wrapping content** (code lines): use `colored_text_line(segments)` (the `ColoredTextLine`
+    node in `code_highlight.cppm`), which keeps every segment full-width and truncates only at the
+    box's right edge — characters are lost only at the end, never from the middle.
+  Do not re-introduce `hbox` for multi-token colored text lines.
+
+- **`src/ui/visual/markdown_render_impl.cpp` (`split_for_wrapping`)** —
+  `split_for_wrapping` takes a `bool& at_paragraph_start` parameter that is
+  **shared across all per-token calls** in `render_inlines_to_elements` (and
+  its recursive calls for nested emphasis). It is `true` only before the
+  first non-space character of the entire paragraph. This distinguishes a
+  paragraph-leading space (CommonMark trims these — safe to skip) from an
+  inter-token space (e.g. `Text(" end")` after `Bold("world")`) which must
+  be preserved. Do not reset the flag per-token — doing so silently drops
+  spaces between inline-formatted words, producing `"worldend"` instead of
+  `"world end"`.
+
+- **`src/ui/visual/markdown_render_impl.cpp` (`HardBreakNode`)** — Hard
+  breaks (CommonMark §6.1: two+ trailing spaces or backslash before `\n`)
+  are signaled by a zero-size `HardBreakNode` marker inserted into the
+  element stream. `render_inlines` detects it via `dynamic_cast` and splits
+  the flexbox row at that point. **Decorators must not be applied to
+  `HardBreakNode` markers** — a decorator wraps the node, hiding it from
+  the `dynamic_cast`, and the hard break is silently dropped. The
+  Bold/Italic children loops skip styling for `HardBreakNode` elements.
+
+- **`src/ui/visual/markdown_render_impl.cpp` (`BlockquoteBar`)** — The
+  blockquote bar (`▎`) is rendered by a custom `BlockquoteBar` Node that
+  draws the bar on **every row** of its box. A plain
+  `hbox({text("▎ "), content})` only shows the bar on the first line
+  because `Text::Render` draws at `box_.y_min` only. Do not re-introduce
+  the hbox pattern for blockquotes.
+
+- **`src/ui/visual/markdown_api_impl.cpp` (`render_markdown`)** — Block-level
+  elements are separated by blank lines (`text("")`), **except after
+  headings** — `render_heading` already appends a trailing blank line via
+  `vbox({el, text("")})`, so a separator after a heading would double-space
+  it. The `prev_was_heading` flag tracks this. Footnote definitions are
+  collected during the block loop and rendered in a footnotes section at
+  the end; **only definitions with a matching `[^label]` reference are
+  rendered** (GFM semantics — orphan definitions are not displayed,
+  matching the HTML serializer).
+
 ---
 
 ## C. Cross-module / cross-file coupling — change one, silently break the other
@@ -3511,12 +3553,13 @@ unchecked and will drift silently. Worth knowing they exist:
 
 ---
 
-## Appendix — files containing self-documenting `TS REFERENCE:` blocks
+## Appendix — files containing self-documenting faithful-features blocks
 
-These 25 files (34 blocks total) carry a `TS REFERENCE:` header that already contains a FAITHFUL
-FEATURES / KEY BEHAVIOR list. They **self-document** — the TS-side intent is written out in place — so
-they are listed here rather than transcribed. If the TS tree's deletion raises a question about one of
-these modules, the answer is almost certainly in its own header.
+These 25 files (34 blocks total) carry a header that already contains a
+FAITHFUL FEATURES / KEY BEHAVIOR list. They **self-document** — the design
+intent is written out in place — so they are listed here rather than
+transcribed. If a question arises about one of these modules, the answer is
+almost certainly in its own header.
 
 ```
 cpp_migration/src/ui/dialogs/about_dialog.cppm
@@ -3546,13 +3589,13 @@ cpp_migration/src/ui/tools/tool_ui_web_search.cppm
 cpp_migration/src/utils/statusline_runner.cppm
 ```
 
-Three additional files carry a **`FAITHFUL FEATURES`** / **`KEY BEHAVIOR`** list without the
-`TS REFERENCE:` label. Same rationale — self-documenting, listed not transcribed:
+Three additional files carry a **`FAITHFUL FEATURES`** / **`KEY BEHAVIOR`** list.
+Same rationale — self-documenting, listed not transcribed:
 
 ```
-cpp_migration/src/ui/permissions/permission_file_edit.cppm   (FAITHFUL FEATURES, 1:1 with TS)
-cpp_migration/src/ui/permissions/permission_file_write.cppm  (FAITHFUL FEATURES, 1:1 with TS)
-cpp_migration/src/utils/statusline_runner.cppm               (KEY BEHAVIOR, matching TS)
+cpp_migration/src/ui/permissions/permission_file_edit.cppm   (FAITHFUL FEATURES)
+cpp_migration/src/ui/permissions/permission_file_write.cppm  (FAITHFUL FEATURES)
+cpp_migration/src/utils/statusline_runner.cppm               (KEY BEHAVIOR)
 ```
 
 Note: `tool_ui_registry.cppm` and `prompt_input_footer.cppm` appear in **both** the appendix (for their
@@ -3563,11 +3606,10 @@ see D.1 and A.10). Their headers are self-sufficient; the body entries are extra
 
 ## Method note
 
-Candidate generation: `grep -rn "TS REF" cpp_migration/src` (1399 hits) plus marker-vocabulary greps
+Candidate generation: marker-vocabulary greps over the source tree
 (`deliberately`, `intentional`, `divergence`, `replaces the previous`, `must not`, `cannot`,
 `NOTE:`, `IMPORTANT:`, `CROSS-MODULE`, `contract`, `silent`, `coupling`, `workaround`, `because`,
-`TS vs CPP`, `DIFFERENCE:`, `fabricated`, `migrated edge case`, `SLOT FALLBACK`, `TS PARITY FIX`),
+`DIFFERENCE:`, `fabricated`, `migrated edge case`, `SLOT FALLBACK`),
 yielding ~1480 raw candidate comment lines. Pure file/line pointers and ordinary validation strings
 were filtered out mechanically; every remaining candidate was then read with 10-20 lines of
-surrounding context before being kept or dropped. Findings were rewritten to stand alone: a bullet is
-only included if it is intelligible without the deleted TS file.
+surrounding context before being kept or dropped. Findings were rewritten to stand alone.

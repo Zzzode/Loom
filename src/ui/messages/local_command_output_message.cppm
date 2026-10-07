@@ -279,20 +279,13 @@ struct LocalCommandOptions {
 }
 
 // ============================================================
-// Faithful renderer — matches TS UserLocalCommandOutputMessage.tsx
+// Faithful renderer
 // ============================================================
 
 // Render cloud-launch content (diamond-prefixed: ◇ or ◆).
-// TS REF: src/components/messages/UserLocalCommandOutputMessage.tsx:88-166 (CloudLaunchContent)
-// TS structure:
-//   <Text color="background">{diamond} </Text>   // hidden diamond
-//   <Text bold>{label}</Text>                     // bold command name
-//   {suffix && <Text dimColor>{suffix}</Text>}    // dim " · extra"
-//   {rest && (                                    // body after \n
-//     <Box flexDirection="row">
-//       <Text dimColor>{"  ⎿  "}</Text>
-//       <Text dimColor>{rest}</Text>
-//     </Box>)}
+// Structure: a hidden diamond, a bold command name, an optional dim " · extra"
+// suffix, and an optional body after \n rendered as a dim "  ⎿  " prefix
+// followed by the rest text.
 [[nodiscard]] inline Element RenderCloudLaunchFaithful(
     const std::vector<OutputLine>& lines) {
     if (lines.empty()) return text("") | dim;
@@ -301,7 +294,7 @@ struct LocalCommandOptions {
     const std::string& first_text = lines[0].text;
 
     // Extract diamond (first UTF-8 char, ◇=U+25C7 or ◆=U+25C6, both 3 bytes in UTF-8).
-    // Diamond is hidden in TS (color="background"), so we only skip its bytes.
+    // Diamond is hidden, so we only skip its bytes.
     std::string after_diamond;
     if (first_text.size() >= 3 &&
         (static_cast<unsigned char>(first_text[0]) == 0xE2)) {
@@ -332,7 +325,6 @@ struct LocalCommandOptions {
     // Parse label and suffix (separator: " · " middle dot = UTF-8 C2 B7 + space)
     std::string label = header_part;
     std::string suffix;
-    // TS: header.indexOf(" \xB7 ") — middle dot U+00B7 = UTF-8 "\xC2\xB7"
     const std::string mid_dot = " \xC2\xB7 ";  // " · "
     auto sep_pos = header_part.find(mid_dot);
     if (sep_pos != std::string::npos) {
@@ -342,12 +334,9 @@ struct LocalCommandOptions {
 
     // Build header line
     Elements header_parts;
-    // TS: <Text color="background">{diamond} </Text> — diamond is hidden (background color).
-    // FTXUI has no Color::Background; the diamond is intentionally invisible, so omit it.
-    // TS: <Text bold>{label}</Text>
+    // The diamond is intentionally invisible (background color), so omit it.
     header_parts.push_back(text(label) | bold);
     if (!suffix.empty()) {
-        // TS: <Text dimColor>{suffix}</Text>
         header_parts.push_back(text(suffix) | dim);
     }
 
@@ -355,8 +344,7 @@ struct LocalCommandOptions {
 
     // Build body rest
     if (!rest_part.empty()) {
-        // Trim trailing whitespace per TS: children.slice(nl + 1).trim()
-        // Simple trim
+        // Trim trailing whitespace
         auto start = rest_part.find_first_not_of(" \t\n\r");
         auto end = rest_part.find_last_not_of(" \t\n\r");
         if (start != std::string::npos) {
@@ -379,28 +367,26 @@ struct LocalCommandOptions {
 
 [[nodiscard]] inline Element RenderLocalCommandOutputFaithful(
     const LocalCommandOptions& opts) {
-    // TS REF: src/components/messages/UserLocalCommandOutputMessage.tsx:12-54
     // Faithful variant: no line numbers, no borders, just ⎿ prefix + ANSI passthrough.
-    // TS extracts <local-command-stdout> / <local-command-stderr> blocks; each
-    // non-empty trimmed block renders as IndentedContent.
+    // Extracts <local-command-stdout> / <local-command-stderr> blocks; each
+    // non-empty trimmed block renders as indented content.
     //
-    // TS IndentedContent (normal path):
-    //   <Text dimColor>{"  ⎿  "}</Text>          ← dim prefix only
-    //   <Markdown>{children}</Markdown>          ← ANSI passthrough, NOT dim
+    // IndentedContent (normal path):
+    //   dim "  ⎿  " prefix only
+    //   ANSI passthrough body, NOT dim
     //
-    // TS does NOT dim content body and does NOT color stderr red in normal path.
+    // Does NOT dim content body and does NOT color stderr red in normal path.
 
     const auto& lines = opts.data.lines;
 
-    // TS REF: src/components/messages/UserLocalCommandOutputMessage.tsx:24-33
-    // If neither stdout nor stderr, show NO_CONTENT_MESSAGE = "(no content)" dimColor.
+    // If neither stdout nor stderr, show "(no content)" in dim.
     if (lines.empty()) {
         return text("(no content)") | dim;
     }
 
     // Check for cloud-launch diamond prefix on first output line.
-    // TS REF: src/components/messages/UserLocalCommandOutputMessage.tsx:60-70
-    // (IndentedContent startsWith DIAMOND_OPEN / DIAMOND_FILLED check)
+    // Check for cloud-launch diamond prefix on first output line.
+    // (startsWith DIAMOND_OPEN / DIAMOND_FILLED check)
     if (!lines.empty()) {
         const auto& t = lines[0].text;
         if (t.size() >= 3 && static_cast<unsigned char>(t[0]) == 0xE2 &&
@@ -411,12 +397,11 @@ struct LocalCommandOptions {
     }
 
     // Normal path: build content lines, each rendered via paragraph (ANSI passthrough).
-    // TS REF: src/components/messages/UserLocalCommandOutputMessage.tsx:71-87
     Elements content;
     content.reserve(lines.size());
     for (const auto& line : lines) {
-        // TS does NOT dim content and does NOT color stderr.
-        // paragraph() = ANSI passthrough, equivalent to TS <Markdown>.
+        // Does NOT dim content and does NOT color stderr.
+        // paragraph() = ANSI passthrough.
         content.push_back(paragraph(line.text.empty() ? " " : line.text));
     }
 

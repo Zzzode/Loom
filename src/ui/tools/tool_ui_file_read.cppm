@@ -1,17 +1,8 @@
 /// @file tool_ui_file_read.cppm
-/// @brief FileRead tool UI — userFacingName, renderToolUseMessage, etc.
-///
-/// Faithful TS port of ReadTool UI methods.
+/// @brief FileRead tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.file_read
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/ReadTool/ReadTool.tsx
-///   - userFacingName: "Read"
-///   - renderToolUseMessage: file path (+ line range if specified)
-///   - renderToolUseTag: null
-///   - isTransparentWrapper: false
 module;
 
 #include <cctype>
@@ -166,8 +157,6 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: FileReadTool.ts L414  extractSearchText()
-    //   return ''
     // Transcript render shows only metadata: "Read foo.ts" or
     // "Read image (42KB)". Never the content itself. The model-facing
     // serialization sends content + CYBER_RISK_MITIGATION_REMINDER + line

@@ -31,13 +31,12 @@ import loom.ui.prompt.placeholder_cascade;
 namespace loom::ui::repl_screen {
 using namespace ftxui;
 
-// ─── Placeholder cascade (TS REF: usePromptInputPlaceholder.ts + PromptInput.tsx) ──
+// ─── Placeholder cascade ──
 //
-// Faithful port of the TS contextual placeholder system.  Priority order:
+// The contextual placeholder system.  Priority order:
 //
 //   1. Input non-empty          → std::nullopt (no placeholder)
-//   2. AI prompt suggestion     → next_action_suggestion (override layer from
-//                                  PromptInput.tsx line 2014)
+//   2. AI prompt suggestion     → next_action_suggestion (override layer)
 //   3. Viewing teammate         → "Message @{name}..."
 //   4. Queued commands hint     → "Press up to edit queued messages"
 //                                  (shown ≤3 times, only if editable queued cmds exist)
@@ -79,8 +78,8 @@ using namespace ftxui;
 // (cursor tracking, selection, vim modes, autocomplete, multiline, masking)
 // and was flagged 0/25 faithful by the 1:1 audit.  We now delegate the
 // caret/multiline/selection painting to a TextInputImpl that is SYNCED from
-// ReplScreenState each render — mirroring TS BaseTextInput.tsx's
-// useDeclaredCursor (which parks the real terminal cursor at the insertion
+// ReplScreenState each render — mirroring the declared-cursor pattern
+// (which parks the real terminal cursor at the insertion
 // point and lets screen readers follow the input).
 //
 // The pure-function signature `Element RenderPromptInput(const
@@ -90,104 +89,101 @@ using namespace ftxui;
 // is used purely as a render primitive here — it is rebuilt per-frame from
 // the projection, never as the interactive event target.
 //
-// Rendered faithful to TS BaseTextInput.tsx:
-//   * TS prompt glyph figures.pointer "❯" (green) for normal mode,
+// Rendered faithfully:
+//   * Prompt glyph figures.pointer "❯" (green) for normal mode,
 //     "!" (red) for bash, "❮" (yellow/magenta) for vim Normal/Visual —
 //     driven by s.prompt_store.input_mode.
 //   * DECLARED CARET at the insertion point: TextInputImpl.Render() draws an
-//     inverted glyph at the cursor offset (TS parks the real terminal cursor
-//     there via useDeclaredCursor; we render a visible caret that lands on
+//     inverted glyph at the cursor offset (the real terminal cursor is parked
+//     there; we render a visible caret that lands on
 //     the same byte offset).  Multi-line content lays out as a vbox.
-//   * Contextual placeholder when empty (TS renderPlaceholder), styled dim.
-//   * Selection highlight (TS HighlightedInput path) — provided by the real
+//   * Contextual placeholder when empty, styled dim.
+//   * Selection highlight — provided by the real
 //     impl when a selection range is set.
-//   * Vim-mode badge (-- INSERT -- / -- NORMAL -- / -- VISUAL --) like TS,
+//   * Vim-mode badge (-- INSERT -- / -- NORMAL -- / -- VISUAL --),
 //     driven by the existing vim_input::mode_display() helper.
-//   * Prompt chrome uses top and bottom horizontal rules, matching TS
-//     borderStyle="round" with left/right borders disabled.
+//   * Prompt chrome uses top and bottom horizontal rules,
+//     rounded border with left/right borders disabled.
 [[nodiscard]] Element RenderPromptInput(const ReplScreenState& s,
                                                   int term_cols) {
     namespace uic   = ::ui::components;
     namespace vim   = loom::ui::prompt::vim_input;
     namespace figs  = loom::ui::design::figures;
 
-    // --- 1. Prompt glyph + accent colour (TS faithfulness, unified) ---------
+    // --- 1. Prompt glyph + accent colour (unified) ---------
     //
-    // REFERENCE (TS files):
-    //   PromptInputModeIndicator.tsx + inputModes.ts + theme.ts
-    //
-    // SEMANTICS (simplified from TS — the CPP InputMode enum is kept
+    // SEMANTICS (simplified — the CPP InputMode enum is kept
     // intact for backward compat with autocomplete gates in app.cppm,
-    // but the PREFIX GLYPH COLLAPSES to exactly TWO visual variants per TS,
-    // with priority matching PromptInputModeIndicator.tsx line 82):
+    // but the PREFIX GLYPH COLLAPSES to exactly TWO visual variants,
+    // with priority as follows):
     //
-    //   PRIORITY 1 — viewingAgentName set:
+    //   PRIORITY 1 — viewing-agent name set:
     //                                        glyph = kPointer     "❯"
     //                                        color = teammate_prefix_color
     //                                                or palette.text
     //   PRIORITY 2 — mode == Bash (no viewing agent):
     //                                        glyph = kBashGlyph   "!"
-    //                                        color = bashBorder  rgb(255,0,135)
+    //                                        color = bash_border  rgb(255,0,135)
     //   PRIORITY 3 — ALL OTHER modes:     glyph = kPointer     "❯"
     //                                        color = teammate_prefix_color
     //                                                or palette.text
     //                 (teammate_prefix_color is the engine-resolved
-    //                 AGENT_COLOR_TO_THEME_COLOR for both the viewing-agent
+    //                 engine-resolved agent color for both the viewing-agent
     //                 path and the swarms-enabled default path)
     //
     // The old CPP-only per-mode glyphs (Slash "/", History "?", Plan "▣",
     // VimNormal "❮", VimVisual "❮", Permission "!", Task "*") are ELIMINATED
-    // from the prefix position per TS:
-    //   - Slash / History are routing semantics, not visual glyphs — TS's
-    //     PromptInputModeIndicator falls through to ❯ even for those.
+    // from the prefix position:
+    //   - Slash / History are routing semantics, not visual glyphs — the
+    //     mode indicator falls through to ❯ even for those.
     //   - Vim mode is shown as a SEPARATE badge below the prefix (the
     //     "-- INSERT --" / "-- NORMAL --" row rendered later in this fn).
     //   - Plan mode is shown as a badge in the footer (StatusLine) or as a
     //     bubble marker, never as a replacement prefix glyph.
     //   - OrphanedPermission / TaskNotification fall through to the default
-    //     "❯" pointer per TS.
+    //     "❯" pointer.
     //
-    // Fetch the currently active palette via the theme provider (TS ThemeContext
+    // Fetch the currently active palette via the theme provider (ThemeContext
     // equivalent).  This respects ThemeVariant::Dark / Light / Daltonized /
     // Monochrome plus the force_monochrome a11y flag.  theme::current_theme()
     // is a cheap value copy (2 pointers + 3 booleans) with a short mutex grab.
     namespace thm = loom::ui::design::theme;
     namespace tok = loom::ui::design::tokens;
     const tok::Palette& pal = *thm::current_theme().palette;
-    // TS getInputMode(value) equivalent: text-derived when text is present,
+    // Text-derived mode when text is present, state-toggle when empty.
     // state-toggle when empty.  See effective_is_bash() for rationale.
     const bool is_bash_mode = effective_is_bash(s);
     std::string prefix_str;     // passed into TextInputOptions.prefix;
     Color       prefix_color;   // applied to the prefix inside renderInputArea.
 
     // Step 1a: pick glyph.
-    // Priority (TS REF: PromptInputModeIndicator.tsx line 82):
-    //   1. viewingAgentName set  → ❯ (always, regardless of bash mode)
-    //   2. mode === 'bash'       → !
-    //   3. otherwise             → ❯
+    // Priority:
+    //   1. viewing-agent name set  → ❯ (always, regardless of bash mode)
+    //   2. mode == Bash            → !
+    //   3. otherwise               → ❯
     // When a viewing agent is active, the prefix is ALWAYS ❯ (never !),
-    // matching TS where `viewingAgentName ?` is checked BEFORE
-    // `mode === 'bash'`.
+    // matching the ordering where the viewing-agent check is evaluated
+    // BEFORE the bash-mode check.
     const bool has_viewing_agent = s.prompt_store.viewing_agent_name.has_value()
         && !s.prompt_store.viewing_agent_name->empty();
     const bool show_bash_glyph = is_bash_mode && !has_viewing_agent;
     prefix_str += show_bash_glyph
         ? std::string(figs::kBashGlyph)
         : std::string(figs::kPointer);
-    prefix_str += " ";   // trailing NBSP/space — 2 display cells total (TS).
+    prefix_str += " ";   // trailing NBSP/space — 2 display cells total.
 
     // Step 1b: pick color.
     //
     // Priority matches the glyph selection above:
-    //   1. viewingAgentName set  → teammate_prefix_color (engine-resolved
+    //   1. viewing-agent name set  → teammate_prefix_color (engine-resolved
     //                               agent color) or palette.text
-    //   2. bash mode (no viewing agent) → bashBorder
+    //   2. bash mode (no viewing agent) → bash_border
     //   3. otherwise             → teammate_prefix_color or palette.text
     //
-    // Bash mode always uses bashBorder (TS: dark rgb(255,0,135), daltonized
+    // Bash mode always uses bash_border (dark rgb(255,0,135), daltonized
     // blue variants, light same).  All other modes: use the teammate color if
-    // the engine has supplied one via s.prompt_store.teammate_prefix_color (TS
-    // AGENT_COLOR_TO_THEME_COLOR map in agentColorManager.ts), otherwise fall
+    // the engine has supplied one via s.prompt_store.teammate_prefix_color
+    // (the engine-resolved agent-color map), otherwise fall
     // through to palette.text (dark: pure white, light: pure black).
     if (show_bash_glyph) {
         prefix_color = pal.bash_border;
@@ -202,7 +198,7 @@ using namespace ftxui;
 
     // --- 2. Sync a TextInputImpl from the projection --------------------
     uic::TextInputOptions opts;
-    // Compute contextual placeholder via the TS-faithful cascade.
+    // Compute contextual placeholder via the cascade.
     // If the cascade returns nullopt (no condition matched), fall back to
     // the static input_placeholder string for backward compatibility with
     // standalone TextInputImpl usage.
@@ -234,7 +230,7 @@ using namespace ftxui;
     Element input_area = impl->RenderInputAreaPub();
 
     // --- 3b. Declared cursor (IME / accessibility) ----------------------
-    // Faithful port of TS useDeclaredCursor: park the real terminal cursor at
+    // Park the real terminal cursor at
     // the insertion point so IME preedit renders inline and screen readers /
     // magnifiers can follow the input.
     //
@@ -272,7 +268,7 @@ using namespace ftxui;
     Elements box_body;
 
     // --- 4. Vim-mode badge (-- INSERT -- / -- NORMAL -- / -- VISUAL --) -
-    // Faithful to TS: drawn as a separate row (NOT a prefix glyph swap),
+    // Drawn as a separate row (NOT a prefix glyph swap),
     // dim+bold, per-mode color (see vim_input.cppm mode_display).
     std::optional<std::pair<std::string, Color>> vim_badge;
     if (s.prompt_store.input_mode == InputMode::VimInsert)
@@ -289,7 +285,7 @@ using namespace ftxui;
     }
 
     // --- 4b. Stash notice (GAP 2: stashed-prompt-restore-logic-missing) ---
-    // TS REF: PromptInputStashNotice.tsx — renders
+    // Renders
     //   "{figures.pointerSmall} Stashed (auto-restores after submit)"
     //   when hasStash is true.  Shown above the input area so the user knows
     //   their typed input was saved and will be restored after the current
@@ -299,13 +295,13 @@ using namespace ftxui;
         psn::StashNotice notice;
         notice.stashed_text = s.prompt_store.stashed_prompt->text;
         notice.char_count = s.prompt_store.stashed_prompt->text.size();
-        // TS REF: <Box paddingLeft={2}> — render_stash_notice handles the
-        // 2-space left padding internally, matching TS paddingLeft={2}.
+        // render_stash_notice handles the
+        // 2-space left padding internally.
         box_body.push_back(psn::render_stash_notice(notice));
     }
 
     // --- 5. Compose -----------------------------------------------------
-    // Per TS layout: a leading space (`text(" ")`) followed by the
+    // Layout: a leading space (`text(" ")`) followed by the
     // TextInputImpl's rendered output (which itself is `prefix_glyph + space
     // + text`).  The leading space was originally introduced so the glyph
     // doesn't hug the left edge; we keep it for visual parity.
@@ -316,23 +312,21 @@ using namespace ftxui;
 
     auto content = vbox(std::move(box_body));
 
-    // TS PromptInput.tsx:2237/2268: <Box borderStyle="round" borderLeft={false}
-    // borderRight={false} borderBottom>.  Ink defaults borderTop to TRUE when
-    // borderStyle is set (render-background.js: `borderTop !== false ? 1 : 0`).
-    // The top border may carry `borderText` (fast-mode cooldown), but normally
+    // The prompt frame uses a round border with left/right/bottom disabled.
+    // The top border may carry a title (fast-mode cooldown), but normally
     // it's just a plain horizontal rule — the prompt glyph `❯` lives INSIDE the
     // input area as the TextInput prefix, NOT in the border.
     //
-    // FTXUI separator() renders as box-drawing characters, matching Ink's
-    // border lines.  Both top and bottom rules use the mode-appropriate
-    // border colour: bashBorder in Bash mode (TS: rgb(255,0,135) pink),
-    // promptBorder otherwise (TS: grey).
+    // FTXUI separator() renders as box-drawing characters for the border
+    // lines.  Both top and bottom rules use the mode-appropriate
+    // border colour: bash_border in Bash mode (rgb(255,0,135) pink),
+    // prompt_border otherwise (grey).
     const Color frame_color = is_bash_mode ? pal.bash_border : pal.prompt_border;
     Element top_rule    = separator() | color(frame_color);
     Element bottom_rule = separator() | color(frame_color);
 
     // ── Declared cursor (IME / accessibility) ──────────────────────────────
-    // Faithful port of TS useDeclaredCursor: park the real terminal cursor at
+    // Park the real terminal cursor at
     // the insertion point so IME preedit renders inline and screen readers /
     // magnifiers can follow the input.
     //
@@ -355,7 +349,7 @@ using namespace ftxui;
     }) | size(WIDTH, EQUAL, std::max(term_cols, 40));
 
     // Apply declared_cursor so the hidden native cursor parks at the caret
-    // position (TS: useDeclaredCursor).  This overrides cursor_reset()'s
+    // position.  This overrides cursor_reset()'s
     // bottom-right parking.  Shape=Hidden because the visible caret is drawn
     // by TextInputImpl itself (inverted glyph), not the terminal cursor.
     return std::move(result) | dc::declared_cursor(
@@ -369,17 +363,17 @@ using namespace ftxui;
     return text;
 }
 
-/// TS REF: PromptInputFooterSuggestions.tsx — renders autocomplete suggestion
+/// Renders autocomplete suggestion
 /// items in a vertical list.
 ///
-/// Two rendering modes (matching TS):
+/// Two rendering modes:
 ///   - Non-fullscreen (inline in footer): adaptive maxVisibleItems =
 ///     min(6, max(1, term_rows - 3)), items bottom-aligned (flex-end).
 ///   - Fullscreen (overlay portal): floating overlay above the prompt with
 ///     opaque background, OVERLAY_MAX_ITEMS = 5, no flex-end alignment.
 ///
-/// TS REF: FullscreenLayout.tsx L591-607 — overlay uses position="absolute"
-/// bottom="100%" opaque={true} to escape the bottom-slot overflowY:hidden clip.
+/// The overlay uses absolute positioning
+/// at the bottom, opaque, to escape the bottom-slot overflow clip.
 /// In FTXUI there's no CSS overflow clip, so we render inline but apply
 /// overlay visual styling (background + top border) when is_overlay=true.
 ///
@@ -391,9 +385,9 @@ using namespace ftxui;
                                                      int term_rows) {
     if (s.autocomplete_suggestions.empty()) return Element{};
 
-    // TS REF: PromptInputFooterSuggestions.tsx L224 — maxVisibleItems differs
-    // between overlay (fixed 5) and inline (adaptive to terminal height).
-    constexpr int kOverlayMaxItems = 5;  // TS: OVERLAY_MAX_ITEMS
+    // maxVisibleItems differs between overlay (fixed 5) and inline
+    // (adaptive to terminal height).
+    constexpr int kOverlayMaxItems = 5;
     const int kInlineMaxItems = std::min(6, std::max(1, term_rows - 3));
     const int kMaxVisibleItems = is_overlay ? kOverlayMaxItems : kInlineMaxItems;
 
@@ -415,8 +409,8 @@ using namespace ftxui;
     } else {
         for (int i = start; i < end; ++i) {
             const auto& item = s.autocomplete_suggestions[static_cast<std::size_t>(i)];
-            // TS REF: PromptInputFooterSuggestions.tsx — icon takes display width
-            // before the label. Add icon width to the name column so labels
+            // The icon takes display width before the label. Add icon width
+            // to the name column so labels
             // align vertically when some rows have icons and others don't.
             const int icon_w = item.icon.empty() ? 0 : string_width(item.icon) + 1;
             widest = std::max(
@@ -439,10 +433,8 @@ using namespace ftxui;
 
         // Build the label: optional colored dot + icon + display_text,
         // padded to name_width.
-        // TS REF: PromptInputFooterSuggestions.tsx renderRow — icon glyph then
-        // the label, both styled together.
-        // TS REF: src/hooks/unifiedSuggestions.ts:77-108 — agent defs include
-        //   a color field used to tint the avatar dot.
+        // The icon glyph then the label, both styled together.
+        // Agent defs include a color field used to tint the avatar dot.
         Elements label_parts;
         int used = 0;
         // Colored dot for agent/teammate suggestions.
@@ -472,7 +464,7 @@ using namespace ftxui;
         Element name = hbox(std::move(label_parts));
         Element detail = text(truncate_columns(item.description, desc_width));
         if (is_selected) {
-            // TS REF: selected item uses suggestion color (lavender in dark).
+            // Selected item uses suggestion color (lavender in dark).
             name = name | color(pal.suggestion) | bold;
             detail = detail | color(pal.suggestion);
         } else {
@@ -485,8 +477,8 @@ using namespace ftxui;
             std::move(detail),
             filler(),
         });
-        // TS REF: FullscreenLayout.tsx L607 — overlay items get the surface
-        // background so the floating list doesn't show messages through it.
+        // Overlay items get the surface background so the floating list
+        // doesn't show messages through it.
         if (is_overlay && is_selected) {
             row_el = row_el | bgcolor(pal.message_actions_background);
         }
@@ -495,17 +487,17 @@ using namespace ftxui;
 
     Element content = vbox(std::move(rows));
 
-    // TS REF: FullscreenLayout.tsx L607 — overlay wrapper:
-    //   <Box position="absolute" bottom="100%" ... opaque={true}>
+    // Overlay wrapper:
+    //   Absolute-positioned, anchored to the bottom, opaque.
     // In FTXUI we apply: background fill + top separator line to visually
     // separate the floating overlay from scrollback messages above it.
     if (is_overlay) {
-        // Build a top separator line using the chrome color (TS border-top
+        // Build a top separator line using the chrome color (border-top
         // equivalent).  The separator spans the full width so the overlay
         // reads as a distinct floating panel.
         Element top_sep = separator() | color(pal.chrome);
         content = vbox({
-            text("") | size(HEIGHT, EQUAL, 1),  // marginTop=1 above overlay
+            text("") | size(HEIGHT, EQUAL, 1),  // top margin = 1 above overlay
             top_sep,
             hbox({text("  "), content, filler()}) | bgcolor(pal.background),
         });

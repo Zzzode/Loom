@@ -162,7 +162,7 @@ auto accent_top_color(const RenderEnvelopeOptions& o) -> Color {
 }
 
 /// Spinner glyph — canonical 10-frame braille spinner.
-/// TS REF: SpinnerGlyph.tsx (GAP 4: fig-spinner-frame-inconsistency)
+/// (GAP 4: fig-spinner-frame-inconsistency)
 ///   Previously used 10 asterisk-based frames; now unified to the canonical
 ///   braille set from loom::ui::design::figures::kSpinnerFrames so all spinners
 ///   in the app animate consistently.
@@ -267,24 +267,19 @@ auto spinner_glyph(std::size_t frame) -> const char* {
 namespace detail {
 
 // ─── UnseenDivider helpers ────────────────────────────────────────────────
-// TS REF: Messages.tsx L549-553 (prefix match), L631-635 (divider render)
-// + FullscreenLayout.tsx L224-256 (UnseenDivider type + computeUnseenDivider)
 
-/// Return the 24-char prefix of s (or whole s if shorter).  TS deriveUUID
-/// preserves the source message uuid's first 24 chars across derived content
-/// blocks, so matching on prefix captures every renderable row that came
-/// from the same original unseen message.
+/// Return the 24-char prefix of s (or whole s if shorter).  Derived content
+/// blocks preserve the source message uuid's first 24 chars, so matching on
+/// prefix captures every renderable row that came from the same original
+/// unseen message.
 [[nodiscard]] auto uuid_prefix24(std::string_view s) -> std::string_view {
     return s.substr(0, std::min<std::size_t>(s.size(), 24));
 }
 
-/// TS REF: Messages.tsx L549-553  useUnseenDivider → dividerBeforeIndex
+/// Two-tier search (tolerates synthetic uuid padding):
 ///
-/// Two-tier search (matches TS semantics + tolerates synthetic uuid padding):
-///
-///   WEAK (TS baseline):  first VisibleRow whose payload-row uuid matches
-///       the divider anchor on the first 24 chars.  This is the exact TS
-///       algorithm: `row.uuid.substring(0,24) === firstUnseenUuid.substring(0,24)`.
+///   WEAK (baseline):  first VisibleRow whose payload-row uuid matches
+///       the divider anchor on the first 24 chars.
 ///
 ///   STRONG (disambiguation):  when the divider anchor contains extra
 ///       zero-padding chars that push the distinguishing index digit past
@@ -297,7 +292,7 @@ namespace detail {
 ///       over any WEAK match.
 ///
 /// CompactGroup rows NEVER match (they carry no uuid — the first payload row
-/// of the post-divider section will match instead, which is the correct TS
+/// of the post-divider section will match instead, which is the correct
 /// behaviour: a divider placed inside a collapsed group still shows up, and
 /// clicking "expand" reveals the group contents with the divider still
 /// sitting before the exact row that was unseen).
@@ -329,7 +324,7 @@ namespace detail {
         const std::string& row_uuid = input.uuids[vr.row_idx];
         if (row_uuid.empty()) continue;   // empty uuid never matches anything
 
-        // --- Weak path: 24-char prefix equality (TS baseline). ---
+        // --- Weak path: 24-char prefix equality. ---
         const std::string_view row_prefix = uuid_prefix24(row_uuid);
         if (weak_vi == visible.size() && row_prefix == tgt_prefix) {
             weak_vi = vi;
@@ -339,7 +334,7 @@ namespace detail {
         // Skip if either string is too short to meaningfully compare (the
         // weak path handles synthetic short-uuids like "loc_42" correctly
         // via direct 24-char equality, since both sides are short and a
-        // 24-char "substring" of a 6-char string is the whole 6 chars).
+        // 24-char slice of a 6-char string is the whole 6 chars).
         if (strong_vi < visible.size()) continue;
         if (row_uuid.size() < 8 || core.size() < 8) continue;
 
@@ -358,20 +353,16 @@ namespace detail {
     return visible.size();
 }
 
-/// TS REF: Messages.tsx L631-635
-///   <Box marginTop={1}>
-///     <Divider title={`${count} new ${plural(count, 'message')}`}
-///              width={columns} color="inactive" />
-///   </Box>
+/// Render the "N new messages" divider.
 ///
-/// color="inactive" → Role::Muted.  marginTop=1 → separatorEmpty() line above.
+/// inactive colour → Role::Muted.  Top margin = 1 → separatorEmpty() line above.
 /// The divider itself is a left-titled separator: "─── N new messages ──────"
 /// with the title in bold/muted and lines in muted/subtle.
 [[nodiscard]] auto render_unseen_divider(std::size_t count) -> Element {
     using namespace palette;
     using namespace ftxui;
 
-    // TS plural helper: "message" + (count === 1 ? "" : "s")
+    // Plural helper: "message" + (count === 1 ? "" : "s")
     const std::string title =
         std::to_string(count) + " new message" + (count == 1 ? "" : "s");
     const Color line_color = muted_fg();
@@ -391,18 +382,14 @@ namespace detail {
         text(" "),
     }));
     // Fill the remainder with dashes.  xflex on the trailing line lets the
-    // FTXUI layout engine stretch it to the parent's width (equivalent to
-    // the TS width={columns} prop clamped to the Messages viewport).
+    // FTXUI layout engine stretch it to the parent's width.
     parts.push_back(text(long_line) | xflex | color(line_color));
     return vbox({
-        separatorEmpty(),                                    // marginTop={1}
+        separatorEmpty(),
         hbox(std::move(parts)) | color(line_color),
     });
 }
 
-/// TS REF: Messages.tsx L682
-///   <Divider title={`${toggleShowAllShortcut} to show ${chalk.bold(hiddenMessageCount_0)} previous messages`} />
-///
 /// Renders a muted separator: "─── N older messages hidden · Ctrl+E to show all ───"
 /// Inserted at the top of the visible list when transcript mode caps at 30.
 [[nodiscard]] auto render_transcript_cap_divider(std::size_t hidden_count) -> Element {

@@ -1,12 +1,11 @@
 /// @file live_teammates.cppm
 /// @brief Live leader-side teammates strip + TeamsView modal body.
 ///
-/// Faithful port of the TS live teams surface:
-///   - src/components/teams/CoordinatorAgentStatus.tsx AgentLine
-///     (per-teammate live status dot + output tail, pinned above the prompt)
-///   - src/components/teams/TeamStatus.tsx footer count (the "N teams" pill
-///     stays owned by prompt_input_footer; this module only renders rows)
-///   - src/components/teams/TeamsDialog.tsx TeamDetailView (roster modal)
+/// Renders the live teams surface:
+///   - Per-teammate live status dot + output tail, pinned above the prompt
+///   - Footer count (the "N teams" pill stays owned by prompt_input_footer;
+///     this module only renders rows)
+///   - TeamDetailView roster modal
 ///
 /// All state is state-owned by ReplScreenState (live_teammates vector +
 /// teams_overview_selected_index). The functions here are pure Element
@@ -142,7 +141,7 @@ namespace thm = loom::ui::design::theme;
     return vbox(std::move(rows));
 }
 
-/// TeamsView modal body (TS TeamsDialog.tsx TeamDetailView). Selection index
+/// TeamsView modal body (TeamsDialog TeamDetailView). Selection index
 /// lives in the queue-owned payload; it is clamped here for rendering only.
 /// The borrowed state pointer never escapes this call.
 [[nodiscard]] inline Element RenderTeamsOverview(

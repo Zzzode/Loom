@@ -3,16 +3,14 @@
 /// @brief Messages list container + single-message envelope wrapper.
 ///
 /// UI21 RESPONSIBILITY — "List container + single-message envelope" (REPL main path P0 blocker)
-///   MIGRATION SOURCES:
-///     - src/components/Messages.tsx  (834 LOC)
-///         * build_visible_rows : O(N) filter + search + compact-group collapsing
-///         * selection / streaming-tail cursor / last-N render cap
-///         * keyboard nav (j/k, g/G, / search, c/r/d actions, Space toggle)
-///         * yframe scroll + vscroll_indicator, empty-state rendering
-///     - src/components/Message.tsx   (626 LOC)
-///         * render_message_envelope: avatar column + role pill + timestamp
-///           + status badge + dismiss + per-role accent border (Top)
-///         * variant dispatch to RenderMessageRowByType (UI4 message_row)
+///   Responsibilities:
+///     - build_visible_rows : O(N) filter + search + compact-group collapsing
+///     - selection / streaming-tail cursor / last-N render cap
+///     - keyboard nav (j/k, g/G, / search, c/r/d actions, Space toggle)
+///     - yframe scroll + vscroll_indicator, empty-state rendering
+///     - render_message_envelope: avatar column + role pill + timestamp
+///       + status badge + dismiss + per-role accent border (Top)
+///     - variant dispatch to RenderMessageRowByType (UI4 message_row)
 ///
 /// DEPENDENCIES (STRICT — no type/color duplication):
 ///   import loom.ui.messages.message_row;
@@ -74,7 +72,7 @@
 /// │    └─ inner = RenderMessageRowByType payload dispatch                │
 /// └───────────────────────────────────────────────────────────────────────┘
 ///
-/// CAPS  (kept consistent with TS Messages.tsx semantics):
+/// CAPS:
 ///   * MAX_ROWS_RENDERED_LAST_N = 80
 ///       -> non-virtualized "last-N" window for render.  The UI22
 ///          VirtualScroll wrapper is expected to bump this to 200+.
@@ -168,7 +166,7 @@ struct Filters {
 };
 
 // ---------------------------------------------------------------------------
-// Brief-mode filter (TS REF: Messages.tsx filterForBriefTool + dropTextInBriefTurns)
+// Brief-mode filter
 //
 // When is_brief_mode is true, only show:
 //   1. System messages (except api_metrics subtype — not available in CPP so
@@ -183,13 +181,11 @@ struct Filters {
 // ---------------------------------------------------------------------------
 namespace brief_detail {
 
-/// Tool names that constitute the "brief" tool chain.  Matches TS
-/// briefToolNames = [BRIEF_TOOL_NAME, SEND_USER_FILE_TOOL_NAME].
+/// Tool names that constitute the "brief" tool chain.
 inline constexpr std::string_view kBriefToolNames[] = {
     "Brief", "SendUserMessage", "SendUserFile"
 };
 
-/// TS REF: Messages.tsx L513  dropTextToolNames = [BRIEF_TOOL_NAME].
 /// For dropTextInBriefTurns (default mode, not brief-only), only turns that
 /// called Brief or SendUserMessage should have their assistant text dropped.
 /// SendUserFile delivers a file without replacement text, so dropping text
@@ -200,7 +196,7 @@ inline constexpr std::string_view kDropTextToolNames[] = {
 
 [[nodiscard]] bool is_brief_tool_name(std::string_view name);
 
-/// Returns true if the tool name triggers dropTextInBriefTurns (TS: dropTextToolNames).
+/// Returns true if the tool name triggers dropTextInBriefTurns.
 [[nodiscard]] bool is_drop_text_tool_name(std::string_view name);
 
 /// Extract tool_name from a MessageRowPayload if it is a tool_use or
@@ -210,13 +206,12 @@ inline constexpr std::string_view kDropTextToolNames[] = {
 }  // namespace brief_detail
 
 /// Returns true if the row at index `i` should be VISIBLE in brief mode.
-/// TS REF: Messages.tsx filterForBriefTool (lines 93-158).
 auto passes_brief_filter(
     MessageShape shape,
     const MessageRowPayload& payload) -> bool;
 
 // ---------------------------------------------------------------------------
-// dropTextInBriefTurns (TS REF: Messages.tsx L169-206).
+// dropTextInBriefTurns.
 //
 // In default mode (neither transcript nor brief-only), drops assistant TEXT
 // rows in turns that called a Brief/SendUserMessage/SendUserFile tool.  The
@@ -234,7 +229,7 @@ auto passes_brief_filter(
     const std::vector<MessageRowPayload>& payloads);
 
 // ---------------------------------------------------------------------------
-// Expand-key computation (TS REF: Messages.tsx expandKey L725-727)
+// Expand-key computation
 //
 // For tool_use and tool_result rows, returns the tool_name so a tool_use
 // and its corresponding tool_result share the same key and expand together.
@@ -245,30 +240,60 @@ auto passes_brief_filter(
     const MessageRowPayload& payload,
     std::string_view uuid);
 
-/// TS REF: Messages.tsx isItemClickable (L582-594).
 /// Returns true if the row supports click-to-expand: tool results that are
 /// truncated, collapsed read/search groups, or advisor tool results.
 [[nodiscard]] bool is_row_clickable(
     MessageShape shape,
     const MessageRowPayload& payload);
 
-/// TS REF: src/components/FullscreenLayout.tsx L224-227
-///   export type UnseenDivider = {
-///     firstUnseenUuid: Message['uuid'];
-///     count: number;
-///   };
 /// In-transcript "N new messages" divider anchor + count.  When set, the
 /// renderer inserts a muted separator line BEFORE the first renderable row
 /// whose uuid shares the 24-char prefix with firstUnseenUuid.
 struct UnseenDivider {
     /// UUID (or 24-char prefix) of the first message that arrived after the
     /// user scrolled away from the tail.  The render side matches on the
-    /// first 24 chars (TS: deriveUUID preserves the source message's 24-char
-    /// prefix across derived content blocks so grouped rows still match).
+    /// first 24 chars (the prefix is preserved across derived content blocks
+    /// so grouped rows still match).
     std::string first_unseen_uuid_prefix;
     /// Number of new assistant turns (floors at 1 if any unseen content
-    /// exists, matching TS Math.max(1, countUnseenAssistantTurns(...))).
+    /// exists).
     std::size_t count = 0;
+};
+
+// ---------------------------------------------------------------------------
+// Row-click tracking (mouse hit-testing for click-to-expand)
+//
+// The pure-function render path (render_messages_list_view) doesn't have a
+// Component to hold state, so callers that want mouse click-to-expand pass
+// a RowClickTracker pointer through MessagesListInput.  The renderer calls
+// begin_frame() + track_row() during Render() (attaching reflect() boxes to
+// clickable rows), and the event handler calls hit_test() to map a mouse
+// click to an expand key that can be toggled in expanded_keys.
+//
+// Boxes are reused across frames (same pattern as MessagesListComponent's
+// tracked_boxes_) because the previous frame's element tree still holds
+// Box& references via reflect() — destroying them before the old tree is
+// replaced would be use-after-free.
+// ---------------------------------------------------------------------------
+struct RowClickTracker {
+    std::vector<std::unique_ptr<Box>> boxes;
+    std::vector<std::string>          expand_keys;  // parallel to boxes
+    std::size_t                       cursor = 0;
+
+    /// Reset the per-frame cursor.  Call once at the start of each render.
+    void begin_frame() noexcept;
+
+    /// Record a clickable row by its expand key and return a Box& for the
+    /// renderer to attach via reflect().  Reuses existing boxes across
+    /// frames.
+    [[nodiscard]] auto track_row(std::string expand_key) -> Box&;
+
+    /// Trim excess boxes from previous frames.  Call at the end of render.
+    void end_frame() noexcept;
+
+    /// Return the expand key at screen position (x, y), or nullopt.
+    [[nodiscard]] auto hit_test(int x, int y) const noexcept
+        -> std::optional<std::string>;
 };
 
 struct MessagesListInput {
@@ -276,7 +301,7 @@ struct MessagesListInput {
     /// Parallel to `rows`.  The dispatcher needs both shape and payload.
     std::vector<MessageShape>       shapes;
     /// Parallel to `rows`.  Used by the UnseenDivider prefix-match anchor
-    /// (TS: firstUnseenUuid 24-char match).  Empty strings are allowed —
+    /// (24-char prefix match).  Empty strings are allowed —
     /// rows without a uuid simply never match the divider anchor.
     std::vector<std::string>        uuids;
 
@@ -297,28 +322,22 @@ struct MessagesListInput {
     int                             scroll_offset = 0;
     int                             viewport_rows = 40;
 
-    /// TS REF: Messages.tsx isBriefOnly prop (L236, L510-514).
     /// When true, only brief-tool calls + their results + real user input
     /// are shown; assistant text, thinking, and non-brief tools are hidden.
     bool                            is_brief_mode = false;
 
-    /// TS REF: Messages.tsx isTranscriptMode (L459, screen === 'transcript').
     /// When true, bypass brief/dropText filters and show ALL message types.
     /// Capped at last 30 messages unless show_all_in_transcript is also true.
     bool                            is_transcript_mode = false;
 
-    /// TS REF: Messages.tsx showAllInTranscript prop (L223, L467, L515-516).
     /// When true AND is_transcript_mode, lifts the 30-message cap so ALL
     /// messages are rendered.  Toggled by user (Ctrl+E in transcript mode).
     bool                            show_all_in_transcript = false;
 
-    /// TS REF: Messages.tsx L382-389 + L395-419  isStreamingThinkingVisible.
     /// When true, build_visible_rows hides ALL completed thinking rows —
-    /// only the streaming-thinking tail stays visible (TS: lastThinkingBlockId
-    /// = 'streaming' → every completed thinking block fails the match).
+    /// only the streaming-thinking tail stays visible.
     bool                            streaming_thinking_globally_visible = false;
 
-    /// TS REF: Messages.tsx L703-712 + Markdown.tsx L186-235  StreamingMarkdown.
     /// Optional pointer to a shared StreamingMarkdown instance used for the
     /// streaming-text tail row.  When set and the row's is_streaming=true,
     /// render_payload_row passes this to RenderAssistantTextMessageFaithful
@@ -326,25 +345,26 @@ struct MessagesListInput {
     /// Nullptr = not streaming / use plain render_markdown.
     ::loom::ui::StreamingMarkdown*    streaming_md = nullptr;
 
-    /// TS REF: Messages.tsx expandedKeys (L563) + expandKey (L725-727).
+    /// Optional pointer to a RowClickTracker that the renderer populates
+    /// with screen-space boxes of clickable rows (thinking blocks, etc.).
+    /// The event handler uses it to map mouse clicks → row indices for
+    /// click-to-expand.  Nullptr = no mouse tracking (golden tests, dialogs).
+    RowClickTracker*                row_click_tracker = nullptr;
+
     /// Set of "expand keys" that the user has clicked/pressed-Enter on to
     /// reveal full content.  Keys are tool_name strings for tool_use/tool_result
     /// rows (so a tool_use and its tool_result expand together), or uuid
     /// prefixes for other row types.  Empty = nothing expanded.
     std::unordered_set<std::string> expanded_keys;
 
-    /// TS REF: Messages.tsx L240 (unseenDivider prop) + L549-553 (prefix match).
     /// When set, a colored divider line is inserted before the matching row.
     std::optional<UnseenDivider>    unseen_divider;
 
-    /// TS REF: Messages.tsx L649  searchTextCache = useRef(new WeakMap<RenderableMessage, string>())
-    ///
     /// Per-row cache of lowered searchable text.  Indexed by row_idx (parallel
     /// to rows[]).  `mutable` so the cache can be populated through const-ref
     /// accessors (visible_rows_to_virtual takes `const MessagesListInput&`).
     ///
-    /// Cache invalidation: messages are append-only and immutable (TS:
-    /// RenderableMessage WeakMap keys GC with the message object).  In CPP
+    /// Cache invalidation: messages are append-only and immutable.  In C++
     /// the cache vector grows to match rows.size() on first access; entries
     /// are never invalidated because row content never changes after
     /// projection.
@@ -353,12 +373,17 @@ struct MessagesListInput {
     /// GAP 3: msg-system-api-error-retry — callback for the "Retry" button
     /// on SystemAPIError rows.  When set, the API error card renders a
     /// clickable Retry pill that invokes this to re-send the last user
-    /// message.  TS REF: SystemAPIErrorMessage.tsx — retry button re-sends.
+    /// message.
     std::function<void()> on_retry;
     /// P2 gap api-error-retry: callback for "Clear session" button on
     /// session-expired SystemAPIError rows.
-    /// TS REF: SystemAPIErrorMessage.tsx onClearSession prop.
     std::function<void()> on_clear_session;
+
+    /// Output: when the virtual (windowed) render path is used, the renderer
+    /// populates this with the JumpHandle (exact prefix-sum geometry) so the
+    /// caller can set MessagesStore::virtual_jh for precise scroll bounds.
+    /// Mutable because render_messages_list_view takes a const-ref input.
+    mutable std::optional<virtual_list::JumpHandle> virtual_jh_out;
 };
 
 enum class ActionKind { Copy, Regenerate, Delete };
@@ -369,7 +394,6 @@ struct MessagesListCallbacks {
     std::function<void(std::size_t)>                       on_toggle_compact_group;
     std::function<void(std::size_t, std::size_t)>          on_click_attachment;
     std::function<void(const std::string&)>                on_search_changed;
-    /// TS REF: Messages.tsx onItemClick (L564-571).
     /// Called when the user presses Enter/Space on a clickable row to toggle
     /// its expanded state.  The key is the expandKey (tool_name for tool rows,
     /// uuid for others) so tool_use + tool_result expand together.
@@ -393,7 +417,7 @@ namespace detail {
 
 /// Lower-case a UTF-8 string in place.  Only touches ASCII letters because
 /// MessageRowPayload text fields are overwhelmingly English / path literals
-/// (same strategy as TS renderableSearchText → toLowerCase).
+/// (same strategy as renderableSearchText → toLowerCase).
 auto lowered(std::string s) -> std::string;
 
 auto payload_preview(const MessageRowPayload& p) -> std::string;
@@ -401,9 +425,6 @@ auto payload_preview(const MessageRowPayload& p) -> std::string;
 // =========================================================================
 // 2b)  extract_search_text — RICH searchable text for indexing (Tier 2)
 // =========================================================================
-// TS REF: src/utils/transcriptSearch.ts  renderableSearchText() + toolUseSearchText()
-//       + src/Tool.ts L599  extractSearchText?(out: Output): string
-//       + src/components/Messages.tsx L650-676  2-tier extractSearchText callback
 //
 // Two-tier search text extraction:
 //   Tier 1 (toy):    payload_preview() — short display-friendly summaries
@@ -414,7 +435,7 @@ auto payload_preview(const MessageRowPayload& p) -> std::string;
 //                    non-tool message types.
 //
 // For tool-result messages, the per-tool registry lookup provides precise
-// tool-owned extraction (matching what renderToolResultMessage shows).
+// tool-owned extraction (matching what render_tool_result_message shows).
 // Tools that don't show content on screen (FileRead, FileWrite, WebSearch)
 // return "" to avoid phantom matches.
 
@@ -422,14 +443,12 @@ namespace search_detail {
 
 /// Extract a string field value from a JSON object string.
 /// Lightweight — no full JSON parser needed for known field names.
-/// TS REF: transcriptSearch.ts toolUseSearchText() — extracts known input fields.
 [[nodiscard]] std::string extract_json_field(
     std::string_view json, std::string_view field_name);
 
 /// Extract searchable text from a tool-use input JSON string.
-/// Mirrors TS toolUseSearchText() — known field names that renderToolUseMessage
+/// Extracts known field names that render_tool_use_message
 /// shows as the primary argument (command, pattern, file_path, etc.).
-/// TS REF: src/utils/transcriptSearch.ts L134-164  toolUseSearchText(input)
 [[nodiscard]] std::string tool_use_search_text(std::string_view input_json);
 
 } // namespace search_detail
@@ -437,9 +456,6 @@ namespace search_detail {
 /// Rich searchable text for indexing.  Returns detailed content from tool
 /// results (file contents, bash output, grep matches) for search matching.
 /// Falls back to payload_preview() for non-tool message types.
-///
-/// TS REF: src/components/Messages.tsx L650-676
-///   2-tier: renderableSearchText(msg) then tool.extractSearchText?(out)
 ///
 /// @param p       The message row payload variant.
 /// @param shape   The message shape (for dispatch optimization).
@@ -451,17 +467,6 @@ namespace search_detail {
 // =========================================================================
 // 2c)  Cached lowered search text accessor
 // =========================================================================
-// TS REF: Messages.tsx L649-676
-//   const searchTextCache = useRef(new WeakMap<RenderableMessage, string>());
-//   const extractSearchText = useCallback((msg) => {
-//     const cached = searchTextCache.current.get(msg);
-//     if (cached !== undefined) return cached;
-//     let text = renderableSearchText(msg);
-//     // ... tool.extractSearchText override ...
-//     const lowered = text.toLowerCase();
-//     searchTextCache.current.set(msg, lowered);
-//     return lowered;
-//   }, [...]);
 //
 // Returns the LOWERED rich searchable text for row_idx, using the per-row
 // cache on MessagesListInput.  First call computes + caches; subsequent
@@ -475,9 +480,8 @@ namespace search_detail {
     std::size_t row_idx,
     MessageShape shape) -> std::string;
 
-/// Returns true for message SHAPEs that belong to each filter category.
-/// Mirrors the TS Messages.tsx category switches (system / tool_use /
-/// tool_result / thinking / compacted).
+/// Returns true for message SHAPEs that belong to each filter category
+/// (system / tool_use / tool_result / thinking / compacted).
 auto shape_category(MessageShape s) -> std::string_view;
 
 auto passes_filters(MessageShape s, const Filters& f) -> bool;
@@ -488,7 +492,6 @@ auto passes_filters(MessageShape s, const Filters& f) -> bool;
 // 3)  Visible-row representation
 // =========================================================================
 
-/// TS REF: Messages.tsx L276  MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE = 30.
 /// When is_transcript_mode=true and show_all_in_transcript=false, only the
 /// last this-many visible rows are rendered.  A divider row shows how many
 /// older messages were hidden.
@@ -538,12 +541,12 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow>;
 //   • Thinking (compact)                   →  1 line  (hidden when complete)
 //   • Compact group row                    →  1 line
 //
-// TS useVirtualScroll.ts DEFAULT_ESTIMATE = 3 (per-message) — our VisibleRow
+// The default per-message estimate is 3 lines; our VisibleRow
 // is *finer-grained* so we target mean ≈ 2.2 lines / VisibleRow.
 
 namespace detail {
 
-/// Count *wrapped* lines for `text` given terminal columns.  Mirrors TS
+/// Count *wrapped* lines for `text` given terminal columns.  Uses a
 /// text-wrap heuristic (hard-break at term_cols, plus existing '\n').  The
 /// result is the maximum vertical space the content COULD take inside a
 /// 36-col reserved left-gutter message envelope; 36 is subtracted from
@@ -589,7 +592,7 @@ namespace detail {
 // =========================================================================
 //
 // Threshold kVirtualThreshold (default 80) matches the legacy Last-N cap
-// AND TS VirtualMessageList.  Below threshold we still render everything
+// AND VirtualMessageList.  Below threshold we still render everything
 // via render_messages_list_view (simple, deterministic, no overscan).
 // At/above threshold, this function:
 //   (1) converts visible_rows → virtual rows (with height estimates)
@@ -609,9 +612,9 @@ inline constexpr std::size_t kVirtualThreshold = 80;
     int scroll_top_lines) -> Element;
 
 // =========================================================================
-// 5)  Message envelope  (Message.tsx migration — role chrome + avatar)
+// 5)  Message envelope  (role chrome + avatar)
 // =========================================================================
-/// Mirrors Message.tsx: the outer per-message chrome that wraps
+/// The outer per-message chrome that wraps
 /// RenderMessageRowByType's inner output.  Layout:
 ///
 ///   ┌─────────────────────────────────────────────────────────┐
@@ -623,7 +626,7 @@ inline constexpr std::size_t kVirtualThreshold = 80;
 ///   │            │                                            │
 ///   └────────────┴────────────────────────────────────────────┘
 ///
-/// Status badge values (mirror TS MessageRow props):
+/// Status badge values:
 ///   "running" → cyan spinner dot
 ///   "error"   → red pill
 ///   "done"    → green check
@@ -664,22 +667,17 @@ auto spinner_glyph(std::size_t frame) -> const char*;
 namespace detail {
 
 // ─── UnseenDivider helpers ────────────────────────────────────────────────
-// TS REF: Messages.tsx L549-553 (prefix match), L631-635 (divider render)
-// + FullscreenLayout.tsx L224-256 (UnseenDivider type + computeUnseenDivider)
 
-/// Return the 24-char prefix of s (or whole s if shorter).  TS deriveUUID
+/// Return the 24-char prefix of s (or whole s if shorter).  The prefix
 /// preserves the source message uuid's first 24 chars across derived content
 /// blocks, so matching on prefix captures every renderable row that came
 /// from the same original unseen message.
 [[nodiscard]] auto uuid_prefix24(std::string_view s) -> std::string_view;
 
-/// TS REF: Messages.tsx L549-553  useUnseenDivider → dividerBeforeIndex
+/// Two-tier search (tolerates synthetic uuid padding):
 ///
-/// Two-tier search (matches TS semantics + tolerates synthetic uuid padding):
-///
-///   WEAK (TS baseline):  first VisibleRow whose payload-row uuid matches
-///       the divider anchor on the first 24 chars.  This is the exact TS
-///       algorithm: `row.uuid.substring(0,24) === firstUnseenUuid.substring(0,24)`.
+///   WEAK (baseline):  first VisibleRow whose payload-row uuid matches
+///       the divider anchor on the first 24 chars.
 ///
 ///   STRONG (disambiguation):  when the divider anchor contains extra
 ///       zero-padding chars that push the distinguishing index digit past
@@ -692,7 +690,7 @@ namespace detail {
 ///       over any WEAK match.
 ///
 /// CompactGroup rows NEVER match (they carry no uuid — the first payload row
-/// of the post-divider section will match instead, which is the correct TS
+/// of the post-divider section will match instead, which is the correct
 /// behaviour: a divider placed inside a collapsed group still shows up, and
 /// clicking "expand" reveals the group contents with the divider still
 /// sitting before the exact row that was unseen).
@@ -700,20 +698,13 @@ namespace detail {
     const MessagesListInput& input,
     const std::vector<VisibleRow>& visible) -> std::size_t;
 
-/// TS REF: Messages.tsx L631-635
-///   <Box marginTop={1}>
-///     <Divider title={`${count} new ${plural(count, 'message')}`}
-///              width={columns} color="inactive" />
-///   </Box>
+/// Renders the unseen divider: a left-titled separator with a margin
+/// line above.
 ///
-/// color="inactive" → Role::Muted.  marginTop=1 → separatorEmpty() line above.
 /// The divider itself is a left-titled separator: "─── N new messages ──────"
 /// with the title in bold/muted and lines in muted/subtle.
 [[nodiscard]] auto render_unseen_divider(std::size_t count) -> Element;
 
-/// TS REF: Messages.tsx L682
-///   <Divider title={`${toggleShowAllShortcut} to show ${chalk.bold(hiddenMessageCount_0)} previous messages`} />
-///
 /// Renders a muted separator: "─── N older messages hidden · Ctrl+E to show all ───"
 /// Inserted at the top of the visible list when transcript mode caps at 30.
 [[nodiscard]] auto render_transcript_cap_divider(std::size_t hidden_count) -> Element;
@@ -752,10 +743,10 @@ constexpr std::size_t kMaxRenderedLastN = 80;   // last-N render cap
 ///        yframe | vscroll_indicator | flex.  When false, returns just the
 ///        bare vbox of rows — the caller is responsible for wrapping in a
 ///        yframe (used by RenderReplScreen which wraps Logo + messages +
-///        filler + Spinner in ONE yframe, matching TS ScrollBox).
+///        filler + Spinner in ONE yframe).
 /// @param trailing_elements Optional elements to append after the message rows
 ///        INSIDE the yframe.  Used by RenderReplScreen to inject the elastic
-///        filler (TS <Box flexGrow={1} />) so it absorbs remaining viewport
+///        filler so it absorbs remaining viewport
 ///        space without competing with yframe|flex for parent allocation.
 ///        Golden tests leave this empty.
 [[nodiscard]] auto render_messages_list_view(
@@ -833,8 +824,6 @@ class MessagesListComponent final : public ComponentBase {
     std::uint64_t        last_filter_hash_ = std::uint64_t(-1);
 
     // ── Mouse click-to-expand tracking ──────────────────────────────────
-    // TS REF: Messages.tsx onItemClick (L564-571) + VirtualMessageList.tsx
-    //   onClickK/onEnterK/onLeaveK (L847-856).
     // Each frame, Render() records the screen box of every visible row via
     // reflect().  OnEvent() uses these to map a mouse click → visible row,
     // then toggles its expansion (same logic as Space/Enter keys).
@@ -850,6 +839,14 @@ class MessagesListComponent final : public ComponentBase {
 [[nodiscard]] auto MakeMessagesList(
     MessagesListInput input,
     MessagesListCallbacks callbacks = {}) -> Component;
+
+// =========================================================================
+// Test seams
+// =========================================================================
+// RFC 0003: clear the process-global thinking-stream grace map
+// (messages_list_payload_row.cpp) so streaming-replay fixtures don't leak
+// state across tests. For testing only.
+void clear_thinking_stream_last_seen_for_testing();
 
 } // namespace loom::ui::messages_list
 

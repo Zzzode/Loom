@@ -1,0 +1,6 @@
+{"type":"stream_start","message_id":"msg_interrupt_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":0,"delta_text":"Hello "}
+{"type":"content_block_delta","index":0,"delta_text":"wor"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_interrupt"}

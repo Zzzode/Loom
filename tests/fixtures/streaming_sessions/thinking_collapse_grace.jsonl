@@ -1,0 +1,9 @@
+{"type":"stream_start","message_id":"msg_collapse_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"thinking","thinking":"","signature":"sig-collapse-001"}}
+{"type":"content_block_delta","index":0,"delta_text":"I should consider the edge cases before settling on an implementation. The boundary conditions matter most here."}
+{"type":"content_block_stop","index":0}
+{"type":"stream_end","stop_reason":"end_turn","usage":{"input_tokens":25,"output_tokens":18}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"end_turn","content":[{"type":"thinking","thinking":"I should consider the edge cases before settling on an implementation. The boundary conditions matter most here.","signature":"sig-collapse-001"}]}}
+{"type":"__checkpoint__","name":"after_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

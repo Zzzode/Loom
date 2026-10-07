@@ -1,0 +1,12 @@
+{"type":"stream_start","message_id":"msg_cjk_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"thinking","thinking":"","signature":"sig-cjk-001"}}
+{"type":"content_block_delta","index":0,"delta_text":"用户要求测试中日韩文字与表情符号的渲染。我需要确认终端能正确处理多字节字符的宽度计算。"}
+{"type":"content_block_stop","index":0}
+{"type":"content_block_start","index":1,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":1,"delta_text":"你好世界！🎉 This is a test of CJK and emoji rendering. 漢字と絵文字のテスト。한글과 이모지 테스트. 🚀✨"}
+{"type":"content_block_stop","index":1}
+{"type":"stream_end","stop_reason":"end_turn","usage":{"input_tokens":36,"output_tokens":28}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"end_turn","content":[{"type":"thinking","thinking":"用户要求测试中日韩文字与表情符号的渲染。我需要确认终端能正确处理多字节字符的宽度计算。","signature":"sig-cjk-001"},{"type":"text","text":"你好世界！🎉 This is a test of CJK and emoji rendering. 漢字と絵文字のテスト。한글과 이모지 테스트. 🚀✨"}]}}
+{"type":"__checkpoint__","name":"after_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

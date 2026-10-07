@@ -2,7 +2,6 @@
 /// @brief Main REPL screen skeleton: enums, state, layout orchestration,
 ///        dialog routing, and event binding.  Rendering sub-modules delegate
 ///        to dedicated UIx agents (see ownership matrix below).
-/// Migrated from src/screens/REPL.tsx (5005 lines)
 ///
 /// =========================================================
 /// PHASE 4 COMPONENT MATRIX — Sub-Component -> Agent Ownership
@@ -109,7 +108,6 @@ using namespace ftxui;
 // (bodies in repl_screen_scroll.cpp)
 // =========================================================
 
-// TS REF: FullscreenLayout.tsx countUnseenAssistantTurns / computeUnseenDivider.
 namespace unseen_detail {
 
 /// Whether an assistant entry has visible text content.
@@ -154,7 +152,16 @@ ComputeUnseenDivider(const ReplScreenState& s);
     // Clear-session callback for session-expired error cards.
     std::function<void()> on_clear_session = nullptr,
     // StreamingMarkdown stable-prefix cache for the streaming-text tail row.
-    ::loom::ui::StreamingMarkdown* streaming_md = nullptr);
+    ::loom::ui::StreamingMarkdown* streaming_md = nullptr,
+    // Optional mouse hit-testing tracker for click-to-expand rows.
+    // When set, the renderer populates it with screen-space boxes of
+    // clickable rows (thinking blocks) each frame.
+    loom::ui::messages_list::RowClickTracker* row_click_tracker = nullptr,
+    // Optional store for virtual-list scroll bounds.  When set and the
+    // virtual render path is used, the renderer populates virtual_jh
+    // (exact geometry) and virtual_list_active so ScrollTranscript uses
+    // precise bounds instead of the EstimateTranscriptRows heuristic.
+    MessagesStore* store = nullptr);
 
 /// Count '\n'-separated lines in text (minimum 1).
 [[nodiscard]] int CountTextLines(std::string_view text);
@@ -172,7 +179,6 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
 // Legacy ASCII-art welcome helpers (preserved, no longer called by
 // RenderWelcomeHeader; bodies in repl_screen_welcome.cpp).
 // =========================================================
-[[nodiscard]] Element RenderLoomMascotMark(Color body, Color bg);
 [[nodiscard]] Element RenderWelcomeFeed(std::string title,
                                         std::string message,
                                         int width,
@@ -186,13 +192,6 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
                                           int width,
                                           int title_width,
                                           Color accent);
-[[nodiscard]] Element RenderWelcomeLeftPanel(const ReplScreenState& s,
-                                             int spinner_frame,
-                                             int width,
-                                             Color accent,
-                                             Color muted,
-                                             Color text_color,
-                                             Color bg);
 
 // UI0: welcome header — LogoV2 3-mode dispatch (condensed / compact /
 // horizontal) on a fresh idle session.
@@ -256,7 +255,7 @@ bool delete_prompt_text(const std::shared_ptr<ReplScreenState>& state);
 void move_prompt_cursor_left(const std::shared_ptr<ReplScreenState>& state);
 void move_prompt_cursor_right(const std::shared_ptr<ReplScreenState>& state);
 
-// Text-derived bash mode (TS getInputMode equivalent).
+// Text-derived bash mode (text-prefixed-with-! detection).
 [[nodiscard]] bool effective_is_bash(const ReplScreenState& s);
 
 // =========================================================

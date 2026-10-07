@@ -22,7 +22,12 @@ target_sources(loom_ui_visual
 # public API + StreamingMarkdown / interactive component vtable anchor.
 # Moved from loom_ui unchanged; they implement the cc.ui.visual.markdown
 # module interface owned by this target.
+#
+# code_highlight_impl.cpp implements the cc.ui.visual.code_highlight module
+# interface: the ColoredTextLine Node + colored_text_line() factory body
+# (inline-def ratchet).
 target_sources(loom_ui_visual PRIVATE
+    ui/visual/code_highlight_impl.cpp
     ui/visual/markdown_lexer_impl.cpp
     ui/visual/markdown_cache_impl.cpp
     ui/visual/markdown_linkify_impl.cpp
@@ -30,6 +35,8 @@ target_sources(loom_ui_visual PRIVATE
     ui/visual/markdown_render_impl.cpp
     ui/visual/markdown_api_impl.cpp
     ui/visual/markdown_component_impl.cpp
+    # HTML serializer for CommonMark/GFM conformance testing.
+    ui/visual/markdown_html_impl.cpp
 )
 # External deps only: cc.types.types (code_highlight), cc.fs.edit.file_edit /
 # cc.text.string_utils (structured_diff, file_edit_tool_diff), and FTXUI

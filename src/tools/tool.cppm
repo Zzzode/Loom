@@ -221,9 +221,9 @@ public:
     [[nodiscard]] Result<ToolResult> execute(std::string_view name, const ToolInput& input) {
         auto* tool = get(name);
         if (!tool) {
-            // TS PARITY FALLBACK: if the tool is not registered (e.g. an
-            // MCP server tool like "analyze_image"), try the missing-tool
-            // handler which can route it to a connected MCP server.
+            // Fallback: if the tool is not registered (e.g. an MCP server
+            // tool like "analyze_image"), try the missing-tool handler which
+            // can route it to a connected MCP server.
             if (missing_tool_handler_) {
                 return missing_tool_handler_(name, input);
             }
@@ -279,14 +279,10 @@ public:
     /// `Result<ToolResult>` if the fallback could execute the tool,
     /// or `std::unexpected` with a `ToolNotFound` error otherwise.
     ///
-    /// TS PARITY: In TS, `assembleToolPool` merges built-in tools with
-    /// `mcp.tools` (dynamically registered per-server tools).  When the
-    /// model calls an MCP tool by its short name (e.g. "analyze_image"),
-    /// `findToolByName` locates it in the merged pool.  In CPP, MCP
-    /// server tools are NOT individually registered — only the generic
-    /// "mcp" wrapper is.  This fallback bridges the gap: if a tool is
-    /// not found, we try to route it to a connected MCP server that
-    /// exposes a tool with the same name.
+    /// MCP tools are not individually registered — only the generic "mcp"
+    /// wrapper is.  This fallback bridges the gap: if a tool is not found,
+    /// we try to route it to a connected MCP server that exposes a tool
+    /// with the same name.
     using MissingToolHandler = std::function<Result<ToolResult>(
         std::string_view tool_name, const ToolInput& input)>;
 

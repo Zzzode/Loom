@@ -169,7 +169,7 @@ void append_merged_user_message(std::vector<Message>& messages, Message message)
 // Filters out assistant messages that contain `tool_use` blocks for which NO
 // matching `tool_result` block exists in the transcript.
 //
-// Mirrors TS filterIncompleteToolCalls in runAgent.ts. This is stricter than
+// This is stricter than
 // filter_resume_unresolved_tool_use_messages (which only drops an assistant
 // message when ALL of its tool_uses are unresolved): here a single orphaned
 // tool_use is enough to exclude the entire assistant message, because the
@@ -267,10 +267,9 @@ void apply_resume_content_replacements(
 ) {
     auto messages = fork_context_messages_from_entries(entries);
     // migrated edge case: drop assistant messages with any tool_use that
-    // never received a tool_result (mirrors TS filterUnresolvedToolUses in
-    // resumeAgent). filter_resume_unresolved_tool_use_messages handles the
-    // case where an assistant message's tool_uses are *all* unresolved;
-    // filter_incomplete_tool_calls is stricter and drops an assistant
+    // never received a tool_result. filter_resume_unresolved_tool_use_messages
+    // handles the case where an assistant message's tool_uses are *all*
+    // unresolved; filter_incomplete_tool_calls is stricter and drops an assistant
     // whenever *any* tool_use lacks a result.
     messages = filter_incomplete_tool_calls(std::move(messages));
     messages = filter_resume_unresolved_tool_use_messages(std::move(messages));

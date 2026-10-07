@@ -1,18 +1,15 @@
 /// @file verify_content.cppm
 /// @brief "verify" content skill — smokescreen runtime verification: rebuild
 ///        the project, run it against representative inputs, compare real
-///        output against the user's original claim. This is the C++ port of
-///        `src/skills/bundled/verifyContent.ts` + the registration logic in
-///        `src/skills/bundled/verify.ts`.
+///        output against the user's original claim.
 ///
-/// The TS `/verify` skill is intentionally narrow in scope:
+/// The /verify skill is intentionally narrow in scope:
 ///   * it runs **the project itself** (not the test suite)
 ///   * it focuses on CLI binaries or HTTP servers
 ///   * it produces a side-by-side "expected vs. observed" report
 ///
-/// This module keeps that shape. UI components (React renderers in the TS
-/// source) are intentionally omitted per the Phase 2 scope — those are a
-/// Phase 4 concern.
+/// This module keeps that shape. UI components are intentionally omitted
+/// per the Phase 2 scope — those are a Phase 4 concern.
 module;
 
 #include <cctype>
@@ -26,13 +23,13 @@ import loom.skills.skill;
 export namespace loom::skills::verify_content {
 
 // ============================================================
-// Pure helpers (ported from the TS skill body). These have no side-effects
+// Pure helpers. These have no side-effects
 // — they only format strings and classify inputs. Any real execution is
 // delegated to loom.tools.bash at the call site.
 // ============================================================
 
 /// Strip HTML `<!-- comments -->` (same pipeline used in loom_api_content).
-/// The TS verify SKILL.md uses comments for editorial notes that must never
+/// The verify SKILL.md uses comments for editorial notes that must never
 /// reach the LLM prompt.
 [[nodiscard]] inline std::string strip_html_comments(std::string text) {
     static const std::regex html_comment(R"(<!--[\s\S]*?-->\n?)");
@@ -47,7 +44,7 @@ export namespace loom::skills::verify_content {
 /// Detect whether the project appears to be a CLI app vs. an HTTP server
 /// vs. unknown. Scans the provided list of top-level filenames / markers
 /// (caller typically passes entries from `std::filesystem::directory_iterator`
-/// on the project root). Classification matches TS verify/examples routing:
+/// on the project root). Classification matches the verify/examples routing:
 ///   * package.json with "bin" → CLI (with a fallback: any "cli" substring
 ///     in entrypoint names)
 ///   * server.{ts,js,py,go,rb,java} or start-server script → HTTP server
@@ -125,8 +122,7 @@ struct EntryInfo {
 }
 
 // ============================================================
-// Prompt fragments. These are ported from the two TS verify/examples/*.md
-// placeholders plus the structural sections in the TS `getPromptForCommand`.
+// Prompt fragments.
 // Each fragment is a self-contained markdown block.
 // ============================================================
 
@@ -260,7 +256,7 @@ constexpr std::string_view EVIDENCE_RULES = R"raw(
 
 // ============================================================
 // build_prompt() — assembles the fragments above based on project kind and
-// optional user args. Port of TS `getPromptForCommand`:
+// optional user args:
 //   SKILL_BODY.trimStart() -> if args -> append "## User Request\n\n<args>"
 // ============================================================
 [[nodiscard]] inline std::string build_prompt(

@@ -3,11 +3,10 @@
 ///
 /// The C++ yoga module is a small single-pass flexbox (see the module-level
 /// header in yoga.cppm for the exact supported subset). These tests pin the
-/// behaviour that IS implemented so that future partial ports do not silently
+/// behaviour that IS implemented so that future changes do not silently
 /// regress it. They deliberately avoid flex-wrap / absolute positioning /
 /// measure / gap / percent — those features are not implemented and no caller
-/// in the C++ migration exercises them (the UI renders via FTXUI, not via
-/// compute_layout). See migration-audit-report.md finding H5.
+/// exercises them (the UI renders via FTXUI, not via compute_layout).
 
 #include <gtest/gtest.h>
 

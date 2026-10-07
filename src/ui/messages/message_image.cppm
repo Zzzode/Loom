@@ -8,10 +8,8 @@
 ///   │  📁 photo.png                        │
 ///   └──────────────────────────────────────┘
 ///
-/// TS REF: src/components/messages/UserImageMessage.tsx
-///   TS renders just `[Image #N]` as a clickable hyperlink.  The CPP port
-///   adds supplementary metadata (dimensions, file size, source) below the
-///   label for better UX — the label itself is TS-faithful.
+/// Renders just `[Image #N]` as a clickable hyperlink, plus supplementary
+/// metadata (dimensions, file size, source) below the label for better UX.
 ///
 /// Features:
 ///   - Terminal hyperlinks (OSC 8) when supported → click to open file
@@ -122,17 +120,16 @@ inline void resolve_from_store(ImageMessageData& data) {
 // ============================================================
 
 /// Render a stateless image message element (for list previews etc.)
-/// TS REF: src/components/messages/UserImageMessage.tsx
-///   TS: `const label = imageId ? \`[Image #${imageId}]\` : "[Image]"`
-///   rendered as <Text>{label}</Text> optionally wrapped in <Link url={...}>.
 ///
-/// TS VISUAL PARITY (2026-07-04): TS renders just 1 line for image attachments.
-/// The CPP port previously added 3 extra lines (meta, source, alt/base64) which
-/// made the card too tall and caused "间距很大" (user report).  We now keep
+/// The label is `[Image #N]` (or `[Image]` when no id), optionally wrapped
+/// in a hyperlink when supported.
+///
+/// Visual parity: renders just 1 line for image attachments.  The card
+/// previously added 3 extra lines (meta, source, alt/base64) which made
+/// the card too tall and caused "间距很大" (user report).  We now keep
 /// the card compact: label + inline meta on one line, source only for files.
 [[nodiscard]] inline Element render(const ImageMessageData& data) {
-    // --- Primary label: [Image #N] (TS-faithful) ---
-    // TS REF: UserImageMessage.tsx L26
+    // --- Primary label: [Image #N] ---
     std::string label = "[Image";
     if (data.image_id) {
         label += " #" + *data.image_id;
@@ -162,7 +159,7 @@ inline void resolve_from_store(ImageMessageData& data) {
     if ((data.source_type == ImageSource::File ||
          data.source_type == ImageSource::StoreId) &&
         !data.source.empty() && supports_hyperlinks()) {
-        // TS REF: UserImageMessage.tsx L30 — clickable Link when supported
+        // Clickable Link when supported
         std::string file_url = "file://" + data.source;
         label_el = hbox({
             text("\xf0\x9f\x96\xbc ") | color(Color::BlueLight),

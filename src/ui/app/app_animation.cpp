@@ -34,15 +34,16 @@ namespace repl = loom::ui::repl_screen;
 void AppAdapter::StartUiAnimationTicker() {
     spinner_thread_ = std::jthread([this](std::stop_token st) {
         constexpr auto kTick = std::chrono::milliseconds(50);
-        // TS is event-driven: Ink re-renders only on state changes, never
-        // on a fixed timer.  This ticker exists solely to advance ANIMATIONS
-        // (the welcome-intro asterisk hue sweep, the query spinner).  Once
-        // the welcome intro has played (asterisk_sweep_ms × sweep_count =
-        // 1500 × 2 = 3000ms ≈ 60 ticks) the screen is static, so we stop
-        // forcing re-renders at idle — FTXUI otherwise re-emits the whole
-        // frame + cursor-move sequences 20×/s, which flickers on terminals
-        // that paint hidden-cursor movement.  Event-driven re-renders
-        // (input, queries, statusline, cost hooks) still work normally.
+        // The UI is event-driven: re-renders happen only on state changes,
+        // never on a fixed timer.  This ticker exists solely to advance
+        // ANIMATIONS (the welcome-intro asterisk hue sweep, the query
+        // spinner).  Once the welcome intro has played (asterisk_sweep_ms ×
+        // sweep_count = 1500 × 2 = 3000ms ≈ 60 ticks) the screen is static,
+        // so we stop forcing re-renders at idle — FTXUI otherwise re-emits
+        // the whole frame + cursor-move sequences 20×/s, which flickers on
+        // terminals that paint hidden-cursor movement.  Event-driven
+        // re-renders (input, queries, statusline, cost hooks) still work
+        // normally.
         constexpr int kWelcomeIntroTicks = 80;  // 80 × 50ms = 4s (3s sweep + margin)
         int query_statusline_tick = 0;
         int welcome_render_ticks = 0;
@@ -54,7 +55,7 @@ void AppAdapter::StartUiAnimationTicker() {
             const bool welcome_active =
                 screen_state_ &&
                 screen_state_->messages_store.messages.empty() &&
-                screen_state_->task_view_store.spinner_mode == repl::SpinnerMode::Hidden;
+                !repl::IsToolAnimating(screen_state_->task_view_store);
             if (!welcome_active) welcome_render_ticks = 0;
 
             // Re-render only while an animation is actually advancing:

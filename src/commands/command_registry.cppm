@@ -123,7 +123,7 @@ public:
         ctx.raw_input = parsed->raw;
 
         if (parsed->name == "help" && ctx.args.empty()) {
-            // TS REF: commands.ts help handler — must return "UI:help" metadata
+            // The help handler must return "UI:help" metadata
             // so the app shell opens the HelpView dialog.
             auto help = CommandResult::success(registry_.generate_help());
             help.metadata = "UI:help";

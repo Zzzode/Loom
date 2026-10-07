@@ -7,9 +7,6 @@
 ///
 /// MODULE:   loom.ui.tools.generic
 /// LICENCE:  Exported.  Imported by tool_ui_registry and as fallback.
-///
-/// TS REFERENCE:
-///   Default tool behavior when no specialized UI is provided.
 module;
 
 #include <cctype>

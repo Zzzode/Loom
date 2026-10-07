@@ -1,8 +1,7 @@
 // @file clipboard.cppm
-// @brief System clipboard image detection + read (macOS).  Faithful to TS
-// src/utils/imagePaste.ts hasImageInClipboard / getImageFromClipboard, minus
-// the native NSPasteboard fast-path (we use the osascript fallback, which TS
-// also falls through to).  Linux/Windows return false/nullopt (TS parity).
+// @brief System clipboard image detection + read (macOS). Uses the
+// osascript fallback for clipboard access. Linux/Windows return
+// false/nullopt.
 module;
 
 #include <cerrno>
@@ -110,9 +109,8 @@ inline int run_detached(const std::string& cmd) noexcept {
 ///   4. If not PNG, convert via `sips -s format png` (macOS built-in)
 ///   5. Return PNG bytes, or nullopt on any failure
 ///
-/// TS REF: src/utils/imagePaste.ts — the native NSPasteboard path handles
-/// arbitrary pasteboard types; this is our osascript-only equivalent for when
-/// `«class PNGf»` is absent but HTML with a data URL is present.
+/// This is the osascript-only equivalent for when `«class PNGf»` is
+/// absent but HTML with a data URL is present.
 [[nodiscard]] inline std::optional<std::vector<std::uint8_t>>
 extract_png_from_html_clipboard() {
 #if defined(__APPLE__)
@@ -284,10 +282,8 @@ extract_png_from_html_clipboard() {
 /// Returns the clipboard text or "" if empty / unavailable.  Uses
 /// run_detached() to isolate from loom's raw-mode terminal.
 ///
-/// TS REF: src/utils/imagePaste.ts — the TS side reads text via the same
-/// NSPasteboard APIs; on macOS `pbpaste` is the shell equivalent.
-/// Off-macOS: returns "" (TS parity — text paste only supported on macOS
-/// via the native clipboard bridge).
+/// On macOS `pbpaste` is the shell equivalent.
+/// Off-macOS: returns "" (text paste only supported on macOS).
 [[nodiscard]] inline std::string read_text() {
 #if defined(__APPLE__)
     namespace fs = std::filesystem;

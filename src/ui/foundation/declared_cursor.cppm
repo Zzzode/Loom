@@ -1,22 +1,19 @@
 /// @file declared_cursor.cppm
 /// @brief Declared cursor support for IME / accessibility.
 ///
-/// Faithful C++ port of the TS `useDeclaredCursor` hook +
-/// `CursorDeclarationContext` system.  Components "declare" where the text
-/// cursor should be parked after each frame, and the real terminal cursor
-/// is positioned there so IME preedit text renders inline and screen
-/// readers / magnifiers can follow the input.
+/// Components "declare" where the text cursor should be parked after each
+/// frame, and the real terminal cursor is positioned there so IME preedit
+/// text renders inline and screen readers / magnifiers can follow the input.
 ///
-/// Unlike the React hook pattern (which relies on context + layout effects),
-/// the FTXUI port is a DOM decorator node: wrap any element with
+/// The FTXUI implementation is a DOM decorator node: wrap any element with
 /// `declared_cursor(active, rel_x, rel_y, shape)` and, during the render
 /// pass, the node will call `screen.SetCursor()` with the absolute screen
 /// coordinates of the cursor (box origin + relative offset).
 ///
-/// The "conditional clear" sibling-handoff safety from TS is NOT needed in
-/// FTXUI because every component re-renders every frame in tree order —
-/// the last `SetCursor` call wins deterministically, and inactive callers
-/// simply skip the call rather than actively clearing.
+/// The "conditional clear" sibling-handoff safety is NOT needed in FTXUI
+/// because every component re-renders every frame in tree order — the last
+/// `SetCursor` call wins deterministically, and inactive callers simply
+/// skip the call rather than actively clearing.
 module;
 
 
@@ -40,7 +37,7 @@ namespace detail {
 // Apply this at the root of the render tree to ensure the terminal cursor
 // starts hidden each frame — then any `declared_cursor` decorator on a child
 // can override the physical cursor position and shape.  The prompt input keeps
-// that native cursor hidden and draws its own visible caret, matching TS Ink.
+// that native cursor hidden and draws its own visible caret.
 class CursorResetNode : public Node {
 public:
     explicit CursorResetNode(Element child)
@@ -73,8 +70,8 @@ public:
 // Custom DOM node that captures its box (like `reflect`) and, during
 // Render(), sets the screen cursor to the declared position if active.
 //
-// This is the FTXUI equivalent of the TS `useDeclaredCursor` hook combined
-// with the `CursorDeclarationContext` setter — it turns a relative cursor
+// This is the FTXUI equivalent of a declared-cursor hook combined
+// with the cursor-declaration setter — it turns a relative cursor
 // position into an absolute screen coordinate and applies it.
 class DeclaredCursorNode : public Node {
 public:

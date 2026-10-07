@@ -340,7 +340,6 @@ private:
     [[nodiscard]] static Result<CommandResult> reload_skills() {
         // Invalidate the unified SkillRegistry cache so subsequent
         // all_skills() / autocomplete queries rebuild from scratch.
-        // TS REF: src/commands.ts L538 — clearSkillCaches() called on reload.
         loom::skills::SkillRegistry::instance().invalidate();
         loom::skills::clear_skill_caches();
 

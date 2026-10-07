@@ -101,13 +101,12 @@ struct LocationLink {
 // Local LSP diagnostic transport struct. Renamed from `Diagnostic` to avoid
 // colliding with loom.services.lsp.diagnostic_registry's exported
 // loom::services::lsp::Diagnostic (both modules export into the same namespace).
-// TS REF: vscode-languageserver-protocol Diagnostic (raw client-side shape)
 struct LspClientDiagnostic {
     Range range;
     int32_t severity = 1; // 1: Error, 2: Warning, 3: Info, 4: Hint
     std::optional<int64_t> code;
-    // Raw code text exactly as published (LSP allows string OR number codes;
-    // TS preserves it via String(code)). Preferred over `code` when present.
+    // Raw code text exactly as published (LSP allows string OR number codes).
+    // Preferred over `code` when present.
     std::optional<std::string> code_text;
     std::optional<std::string> code_description;
     std::optional<std::string> source;
@@ -712,7 +711,7 @@ public:
 
     // Inject the shared LSP diagnostic registry. When set, incoming
     // publishDiagnostics notifications are upserted/cleared there in addition
-    // to the legacy callback. TS REF: src/services/lsp/manager.ts:188-191
+    // to the legacy callback.
     void set_diagnostic_registry(std::shared_ptr<DiagnosticRegistry> registry) {
         diagnostic_registry_ = std::move(registry);
     }
@@ -1487,14 +1486,12 @@ private:
             }
 
             // Parse source (optional)
-            // TS REF: src/services/lsp/passiveFeedback.ts:71,86
             auto source_node = diag_node.get("source");
             if (source_node.is_str()) {
                 diag.source = std::string(source_node.as_str());
             }
 
             // Parse code (string-or-number; null/absent leaves it unset).
-            // TS REF: src/services/lsp/passiveFeedback.ts:87-90 (String(code))
             auto code_node = diag_node.get("code");
             if (code_node.is_num()) {
                 diag.code = code_node.as_int();
@@ -1502,7 +1499,7 @@ private:
             } else if (code_node.is_str()) {
                 // Preserve non-numeric string codes verbatim ("TS2345",
                 // "strictNullChecks"); populate numeric code only when the
-                // string is actually numeric (matches TS String(code)).
+                // string is actually numeric.
                 diag.code_text = std::string(code_node.as_str());
                 try {
                     diag.code = static_cast<int64_t>(std::stoll(*diag.code_text));
@@ -1527,7 +1524,6 @@ private:
 
         // Route into the shared stateful registry (LSP full-replacement
         // semantics: an empty diagnostics array clears the URI).
-        // TS REF: src/services/lsp/passiveFeedback.ts:194-205
         if (diagnostic_registry_) {
             if (diagnostics.empty()) {
                 diagnostic_registry_->clear_diagnostics(uri);

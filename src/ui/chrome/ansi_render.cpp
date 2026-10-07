@@ -41,7 +41,7 @@ using namespace ftxui;
 // Decorators applied per-run: bold / dim / underlined / inverted /
 // strikethrough.  FTXUI has no `italic` decorator, so SGR code 3 is parsed
 // (state tracked) but produces no visual change.  Non-SGR escapes (other CSI,
-// OSC, plain ESC) are dropped, matching Ink's Text-node behavior.
+// OSC, plain ESC) are dropped, matching Text-node behavior.
 [[nodiscard]] Color sgr_color_value_to_ftxui(
     const loom::ui::termio::ColorValue& cv) {
     using namespace loom::ui::termio;

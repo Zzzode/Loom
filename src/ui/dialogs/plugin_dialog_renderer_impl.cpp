@@ -68,7 +68,7 @@ struct PluginDialogHolder : public ComponentBase {
 /// formatted as "plugins-dialog:<suffix>" where <suffix> is the metadata tag
 /// produced by triggers.cppm (e.g. "discover-plugins",
 /// "browse-marketplace:acme-marketplace", "manage-plugins?action=uninstall").
-/// 1:1 with TS getInitialViewState + the triggers.cppm metadata mapping.
+/// 1:1 with the triggers.cppm metadata mapping.
 [[nodiscard]] ui::ViewState derive_initial_view(std::string_view id) {
     ui::ViewState vs{};
 
@@ -114,7 +114,7 @@ struct PluginDialogHolder : public ComponentBase {
     if (suffix == "manage-marketplaces") { vs.kind = ui::ViewKind::ManageMarketplaces; return vs; }
     if (suffix == "add-marketplace")     { vs.kind = ui::ViewKind::AddMarketplace;   return vs; }
 
-    // Fallback: no recognized suffix → Discover tab (TS has no card dashboard).
+    // Fallback: no recognized suffix → Discover tab.
     vs.kind = ui::ViewKind::DiscoverPlugins;
     return vs;
 }

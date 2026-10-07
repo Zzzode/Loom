@@ -1,13 +1,13 @@
 /// =========================================================================
 /// @file scroll_keybindings.cppm
 /// @brief Unified scroll-key FSM for all long lists (messages, tasks,
-///        kanban, agent browse, plugins).  Mirrors TS ScrollKeybindingHandler.
+///        kanban, agent browse, plugins).
 ///
 /// MODULE:   loom.ui.messages.scroll_keys
 /// LICENCE:  Exported.  VirtualMessageList, TasksList, KanbanList all import.
 ///
 /// ┌─────────────────────────────────────────────────────────────────────┐
-/// │  KEY MAP  (strict alignment with TS ScrollKeybindingHandler)       │
+/// │  KEY MAP                                                            │
 /// ├─────────────────────────────────────────────────────────────────────┤
 /// │  j   /  Down    / Ctrl+N       →  Down1                            │
 /// │  k   /  Up      / Ctrl+P       →  Up1                              │
@@ -27,7 +27,7 @@
 /// └─────────────────────────────────────────────────────────────────────┘
 ///
 /// ┌─────────────────────────────────────────────────────────────────────┐
-/// │  FOCUS PRIORITY (strict alignment with TS focus-domain rules)      │
+/// │  FOCUS PRIORITY                                                     │
 /// ├─────────────────────────────────────────────────────────────────────┤
 /// │  1) PromptInput has cursor     → only PgUp/PgDn                    │
 /// │  2) SearchInput focused        → only Esc / Enter / Ctrl+Enter     │
@@ -55,7 +55,7 @@ export namespace loom::ui::messages::scroll_keys {
 // ─── Constants ──────────────────────────────────────────────────────────────
 // Frame counter → ms approximations (at FTXUI's 60fps nominal rate).
 // Actual frame rate can drift but the windowing only needs *approximate*
-// thresholds for double-key recognition; the TS code uses 500ms / 800ms.
+// thresholds for double-key recognition (500ms / 800ms).
 inline constexpr int kFramesPerSecond     = 60;
 inline constexpr int kGgDoubleKeyFrames   = 30;    //  30f ≈ 500ms
 inline constexpr int kDigitPrefixFrames   = 48;    //  48f ≈ 800ms
@@ -83,7 +83,7 @@ enum class FocusDomain : std::uint8_t {
   Dialog          // modal dialog
 };
 
-/// Mirrors TS `ScrollBoxHandle`'s observable state — enough for FSM math.
+/// Observable scroll state — enough for FSM math.
 struct ScrollState {
   int scroll_top    = 0;     // 0-based, units = terminal rows
   int viewport_rows = 40;
@@ -141,7 +141,7 @@ struct FSMContext {
 // ─── Focus-domain gate (pure function, testable) ────────────────────────────
 
 /// Pure predicate: should a scroll-key handler even *look* at `event` given
-/// the current focus domain?  Mirrors TS rules.
+/// the current focus domain?
 [[nodiscard]] inline bool
 ShouldHandleScrollKey(FocusDomain domain, ftxui::Event const &event) noexcept {
   using ftxui::Event;
@@ -169,8 +169,7 @@ ShouldHandleScrollKey(FocusDomain domain, ftxui::Event const &event) noexcept {
 
     case FocusDomain::PromptInput: {
       // Prompt has the cursor → ONLY PgUp/PgDn are scoped to scroll.
-      // (TS uses these for prompt-history browsing; they still map to
-      // scroll:pageUp/scroll:pageDown via the keybinding registry.)
+      // (They still map to scroll:pageUp/scroll:pageDown.)
       return event == Event::PageUp || event == Event::PageDown;
     }
 
@@ -222,7 +221,7 @@ inline void apply_scroll_to(ScrollState &s, ScrollCallbacks const &cb,
   if (cb.scroll_to) cb.scroll_to(target_line);
 }
 
-/// Apply a relative delta using jumpBy-semantics (mirrors TS jumpBy).
+/// Apply a relative delta using jumpBy-semantics.
 /// Returns the resulting sticky state: true iff view reached bottom.
 [[nodiscard]] inline bool
 apply_scroll_by(ScrollState &s, ScrollCallbacks const &cb, int delta) noexcept {

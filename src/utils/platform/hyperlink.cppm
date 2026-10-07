@@ -44,7 +44,6 @@ namespace detail {
 
 /// Open a URL (http:// or https://) in the system default browser.
 ///
-/// TS REF: src/utils/browser.ts openBrowser()
 ///   - macOS:   `open <url>`
 ///   - Linux:   `xdg-open <url>`  (respects $BROWSER when set)
 ///   - Windows: `rundll32 url.dll,FileProtocolHandler <url>`
@@ -55,7 +54,7 @@ namespace detail {
 ///             performed here — callers should route non-http URLs
 ///             through try_open_hyperlink() which dispatches by scheme.
 [[nodiscard]] inline bool open_browser(const std::string& url) {
-    // TS REF: browser.ts L46-64 — respects $BROWSER env var on non-Windows.
+    // Respects $BROWSER env var on non-Windows.
     const char* browser_env = std::getenv("BROWSER");
     const std::string quoted = detail::shell_quote(url);
 
@@ -81,7 +80,6 @@ namespace detail {
 
 /// Open a local file path using the system default handler.
 ///
-/// TS REF: src/utils/browser.ts openPath()
 ///   - macOS:   `open <path>`
 ///   - Linux:   `xdg-open <path>`
 ///   - Windows: `explorer <path>`
@@ -108,15 +106,12 @@ namespace detail {
 
 /// Convert a file:// URL to a local filesystem path.
 ///
-/// TS REF: FullscreenLayout.tsx L630-667 — uses Node.js fileURLToPath(url).
-///
 /// Handles:
 ///   - `file:///absolute/path`       → `/absolute/path`
 ///   - `file://localhost/absolute/path` → `/absolute/path`
 ///   - `file:///path:line`           → `/path`  (line suffix stripped)
 ///
-/// Returns std::nullopt for malformed URLs (instead of throwing, since
-/// the TS code catches and silently ignores fileURLToPath errors).
+/// Returns std::nullopt for malformed URLs (instead of throwing).
 [[nodiscard]] inline std::optional<fs::path> file_url_to_path(const std::string& url) {
     // Must start with "file:"
     if (!url.starts_with("file:")) return std::nullopt;
@@ -161,8 +156,6 @@ namespace detail {
 
 /// Convert a local filesystem path to a file:// URL.
 ///
-/// TS REF: Node `url.pathToFileURL(p).href` used by
-/// src/commands/terminalSetup/terminalSetup.tsx formatPathLink() L69.
 /// POSIX: "file://" + absolute path, per-byte percent-encoded except
 /// '/' and the empirically-verified Node v22 safe set
 /// A-Za-z0-9 ! $ & ' ( ) * + , - . : ; = @ _
@@ -202,31 +195,21 @@ namespace detail {
 
 /// Attempt to open a hyperlink URL, routing by scheme.
 ///
-/// TS REF: FullscreenLayout.tsx L630-667
-///   if (url.startsWith('file:')) {
-///     try { void openPath(fileURLToPath(url)) } catch {}
-///   } else {
-///     void openBrowser(url)
-///   }
-///
 /// - `file://` URLs are converted to paths and opened with the
 ///   system file handler (open / xdg-open / explorer).
 /// - `http://` and `https://` URLs are opened in the browser.
-/// - Other schemes are silently ignored (returns false) — matching
-///   TS behavior where openBrowser rejects non-http(s) protocols.
+/// - Other schemes are silently ignored (returns false).
 ///
 /// Returns true if the open command succeeded.
 [[nodiscard]] inline bool try_open_hyperlink(const std::string& url) {
     if (url.starts_with("file:")) {
-        // TS REF: FullscreenLayout.tsx L633-637 — malformed file URLs
-        // cause fileURLToPath to throw; caught and ignored silently.
+        // Malformed file URLs are silently ignored.
         auto path = file_url_to_path(url);
         if (!path) return false;
         return open_file_path(*path);
     }
 
-    // Only http/https for browser open (security: TS openBrowser validates
-    // protocol via validateUrl() — rejects non-http(s)).
+    // Only http/https for browser open (security: rejects non-http(s)).
     if (url.starts_with("http://") || url.starts_with("https://")) {
         return open_browser(url);
     }
@@ -251,11 +234,10 @@ namespace detail {
 /// decide whether to use OSC 8 or plain-text fallback in contexts where
 /// raw bytes are written directly (e.g. statusline, tool output formatting).
 bool supports_hyperlinks() {
-    // TS REF: src/ink/supports-hyperlinks.ts. The supports-hyperlinks
-    // library covers iTerm.app/Apple_Terminal/WezTerm/vscode/WT_SESSION and
-    // VTE>=5000; on top of that TS whitelists additional terminals via
-    // TERM_PROGRAM AND LC_TERMINAL (the latter survives inside tmux, which
-    // overwrites TERM_PROGRAM), plus TERM containing "kitty".
+    // The supports-hyperlinks library covers iTerm.app/Apple_Terminal/WezTerm/
+    // vscode/WT_SESSION and VTE>=5000; on top of that, additional terminals
+    // are whitelisted via TERM_PROGRAM AND LC_TERMINAL (the latter survives
+    // inside tmux, which overwrites TERM_PROGRAM), plus TERM containing "kitty".
     static constexpr std::string_view kAdditional[] = {
         "ghostty", "Hyper", "kitty", "alacritty", "iTerm.app", "iTerm2",
     };
@@ -283,7 +265,7 @@ bool supports_hyperlinks() {
         } catch (...) {}
     }
 
-    // TS ADDITIONAL_HYPERLINK_TERMINALS via TERM_PROGRAM / LC_TERMINAL.
+    // Additional hyperlink terminals via TERM_PROGRAM / LC_TERMINAL.
     if (listed(term_program)) return true;
     if (listed(std::getenv("LC_TERMINAL"))) return true;
 
@@ -327,8 +309,7 @@ std::string make_hyperlink(std::string_view url, std::string_view text) {
 /// Display text: filename[:line]
 /// URL: file://<absolute-path>[:line]
 std::string make_file_link(fs::path file, std::optional<int> line) {
-    // TS REF: Node pathToFileURL via terminalSetup.tsx formatPathLink() L69 —
-    // percent-encodes spaces/special chars so OSC8 URLs survive terminals that
+    // Percent-encodes spaces/special chars so OSC8 URLs survive terminals that
     // split links at whitespace.
     std::string url = path_to_file_url(file);
     if (line.has_value()) {

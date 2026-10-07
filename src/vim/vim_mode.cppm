@@ -8,8 +8,6 @@ import loom.vim.vim_types;  // canonical VimMode (lives in loom_vim to avoid cir
 export namespace loom::vim {
 
 // Canonical VimMode — defined in loom.vim.vim_types (same loom::vim namespace).
-// TS REF: src/types/textInputTypes.ts:222 (public type = 'INSERT'|'NORMAL')
-//          src/hooks/useVimInput.ts (internal state machine tracks more)
 // This replaces the previous local 6-value enum { Normal,Insert,Visual,
 // VisualLine,Command,Replace } that was missing VisualBlock.
 using loom::vim::VimMode;  // re-export for external consumers
@@ -42,7 +40,6 @@ public:
     }
 
     // Get the status line text for current mode
-    // TS REF: vim mode indicator shown in footer / statusline.
     [[nodiscard]] auto get_status_line() const -> std::string {
         switch (mode_) {
             case VimMode::Normal:      return "-- NORMAL --";

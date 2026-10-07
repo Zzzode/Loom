@@ -197,22 +197,22 @@ inline constexpr std::array MARKETPLACE_ONLY_MANIFEST_FIELDS = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Manifest validation implementation (ported from validatePlugin.ts)
+// Manifest validation implementation.
 //
-// The TS original uses Zod schemas; this C++ port mirrors the same happy-path
-// checks (file existence/JSON parse, path-traversal scan, required `name`,
-// marketplace-only-field warnings) using the yyjson-backed loom.serdes.json
-// module. Fields that the TS schema would reject (wrong types, missing required
-// keys) surface as ValidationError entries. Anything not ported (deep schema
-// constraints, hooks/frontmatter validation) is reported honestly as an error
-// rather than fake success, so callers cannot be silently misled.
+// Mirrors the same happy-path checks (file existence/JSON parse,
+// path-traversal scan, required `name`, marketplace-only-field warnings)
+// using the yyjson-backed loom.serdes.json module. Fields that the schema
+// would reject (wrong types, missing required keys) surface as ValidationError
+// entries. Anything not implemented (deep schema constraints, hooks/frontmatter
+// validation) is reported honestly as an error rather than fake success, so
+// callers cannot be silently misled.
 // ─────────────────────────────────────────────────────────────────────────────
 namespace detail {
 
 using loom::utils::json::JsonDoc;
 using loom::utils::json::JsonVal;
 
-// Read a file into a string; distinguish ENOENT/EISDIR/other (TS parity).
+// Read a file into a string; distinguish ENOENT/EISDIR/other.
 inline std::expected<std::string, std::string>
 read_file_contents(const std::filesystem::path& p) {
     std::error_code ec;

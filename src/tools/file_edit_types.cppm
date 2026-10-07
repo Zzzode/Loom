@@ -1,5 +1,5 @@
-// FileEditTool types — migrated from src/tools/FileEditTool/types.ts + constants.ts
-// Agent 9: audit completed 2026-06-09. All TS types / error codes / constants ported.
+// FileEditTool types
+// Agent 9: audit completed 2026-06-09.
 module;
 #include <unistd.h>
 #include <cstdint>
@@ -11,31 +11,30 @@ import std;
 export namespace loom::tools::file_edit {
 
 // ===========================================================================
-// Constants from constants.ts
+// Constants
 // ===========================================================================
 
-/// Tool name registered with the tool registry (= FILE_EDIT_TOOL_NAME in TS)
+/// Tool name registered with the tool registry.
 inline constexpr std::string_view kToolName = "Edit";
 
 /// Permission pattern for granting session-level access to the project's
-/// .loom/ folder (= LOOM_FOLDER_PERMISSION_PATTERN in TS)
+/// .loom/ folder.
 inline constexpr std::string_view kLoomFolderPermissionPattern = "/.loom/**";
 
 /// Permission pattern for granting session-level access to the global
-/// ~/.loom/ folder (= GLOBAL_LOOM_FOLDER_PERMISSION_PATTERN in TS)
+/// ~/.loom/ folder.
 inline constexpr std::string_view kGlobalLoomFolderPermissionPattern = "~/.loom/**";
 
 /// Thrown when the file on disk changed between the read-time stamp check
-/// and the actual write (= FILE_UNEXPECTEDLY_MODIFIED_ERROR in TS)
+/// and the actual write.
 inline constexpr std::string_view kFileUnexpectedlyModifiedError =
     "File has been unexpectedly modified. Read it again before attempting to write it.";
 
 // ===========================================================================
-// Validation error codes from FileEditTool.ts validateInput() branches
+// Validation error codes.
 // ===========================================================================
 
-/// Error codes produced by the input validator. Each maps to a specific
-/// rejection branch in the TS FileEditTool.validateInput() method.
+/// Error codes produced by the input validator.
 enum class ValidationErrorCode : int {
     Ok                      = 0,   // no error
     OldEqualsNew            = 1,   // old_string == new_string

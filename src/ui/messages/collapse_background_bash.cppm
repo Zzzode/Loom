@@ -1,27 +1,21 @@
 /// @file collapse_background_bash.cppm
-/// @brief Faithful port of TS `collapseBackgroundBashNotifications`
-///        (src/utils/collapseBackgroundBashNotifications.ts).
+/// @brief Collapse consecutive completed background-bash task-notifications
+///        into a single synthetic notification.
 ///
 /// Collapses consecutive *completed* background-bash task-notifications into a
 /// single synthetic "N background commands completed" notification, so a burst
 /// of finished background shells doesn't flood the transcript.  Failed/killed
 /// tasks and agent/workflow notifications are left individually visible.
 ///
-/// This is one of the four collapse passes chained in TS Messages.tsx:520
-///   collapseBackgroundBashNotifications(collapseHookSummaries(
-///     collapseTeammateShutdowns(collapseReadSearchGroups(grouped, tools))))
+/// This is one of the four collapse passes chained in the message pipeline
 /// and is part of the confirmed P0 gap `msg-pipeline-missing` (audit round7).
 ///
-/// TS REFERENCE (port verbatim): src/utils/collapseBackgroundBashNotifications.ts
-///
-/// TAG-FORMAT NOTE (TS vs CPP divergence — intentional):
-///   TS constants/xml.ts uses HYPHENATED tag names ('task-notification',
-///   'status', 'summary').  The CPP engine, however, emits UNDERSCORED tags
-///   — see local_agent_task.cppm:435 / local_shell_task.cppm and
-///   runtime_registry.cppm:766 which all write "<task_notification>",
-///   "<status>", "<summary>".  To collapse the messages the CPP tree actually
-///   produces, we match the CPP wire format (underscore).  The constants below
-///   are the single source of truth for that decision.
+/// TAG-FORMAT NOTE:
+///   The engine emits UNDERSCORED tags — see local_agent_task.cppm:435 /
+///   local_shell_task.cppm and runtime_registry.cppm:766 which all write
+///   "<task_notification>", "<status>", "<summary>".  To collapse the messages
+///   the CPP tree actually produces, we match the CPP wire format (underscore).
+///   The constants below are the single source of truth for that decision.
 // ────────────────────────────────────────────────────────────────────────
 module;
 
@@ -37,14 +31,11 @@ export namespace loom::ui::messages::collapse {
 
 namespace pipeline = loom::ui::messages::pipeline;
 
-// TS REF: constants/xml.ts TASK_NOTIFICATION_TAG / STATUS_TAG / SUMMARY_TAG.
 // CPP wire format is underscored (see file header TAG-FORMAT NOTE).
 inline constexpr std::string_view kTaskNotificationTag = "task_notification";
 inline constexpr std::string_view kStatusTag           = "status";
 inline constexpr std::string_view kSummaryTag          = "summary";
 
-// TS REF: src/tasks/LocalShellTask/LocalShellTask.tsx:23
-//   `export const BACKGROUND_BASH_SUMMARY_PREFIX = 'Background command '`
 // Mirrored locally (must equal loom::tasks::BACKGROUND_BASH_SUMMARY_PREFIX in
 // tasks/local_shell_task.cppm:31) rather than imported, so the UI-messages
 // layer stays free of the loom.tasks.* / bash-execution module graph.  If the
@@ -52,27 +43,26 @@ inline constexpr std::string_view kSummaryTag          = "summary";
 inline constexpr std::string_view kBackgroundBashSummaryPrefix = "Background command ";
 
 /// Read the first text content block of a message, if any.
-/// TS: `msg.message.content[0]` where `content[0]?.type === 'text'`.
 [[nodiscard]] inline std::optional<std::string_view> first_text_block(
     const loom::core::Message& msg) noexcept {
     const auto* user = std::get_if<loom::core::UserMessage>(&msg);
-    if (user == nullptr) return std::nullopt;          // TS: msg.type !== 'user'
-    if (user->content.empty()) return std::nullopt;    // TS: content[0] undefined
+    if (user == nullptr) return std::nullopt;
+    if (user->content.empty()) return std::nullopt;
     const auto* text = std::get_if<loom::core::TextBlock>(&user->content.front());
-    if (text == nullptr) return std::nullopt;          // TS: content[0].type !== 'text'
+    if (text == nullptr) return std::nullopt;
     return std::string_view(text->text);
 }
 
-/// TS REF: isCompletedBackgroundBash(msg).  A user message whose first text
-/// block is a task-notification with <status>completed</status> and a
-/// <summary> beginning with BACKGROUND_BASH_SUMMARY_PREFIX (i.e. a bash-kind
-/// LocalShellTask completion, not an agent/workflow/monitor notification).
+/// A user message whose first text block is a task-notification with
+/// <status>completed</status> and a <summary> beginning with
+/// BACKGROUND_BASH_SUMMARY_PREFIX (i.e. a bash-kind LocalShellTask completion,
+/// not an agent/workflow/monitor notification).
 [[nodiscard]] inline bool is_completed_background_bash(
     const loom::core::Message& msg) {
     const auto text = first_text_block(msg);
     if (!text.has_value()) return false;
-    // TS: content.text.includes(`<${TASK_NOTIFICATION_TAG}`)  (no '>' — an
-    // opening tag with attributes still matches).
+    // Match the opening tag (no '>' — an opening tag with attributes still
+    // matches).
     if (text->find(std::string("<") + std::string(kTaskNotificationTag)) ==
         std::string_view::npos) {
         return false;
@@ -86,7 +76,6 @@ inline constexpr std::string_view kBackgroundBashSummaryPrefix = "Background com
 }
 
 /// Build the synthetic merged notification text for `count` collapsed bashes.
-/// TS REF: the template literal at collapseBackgroundBashNotifications.ts:71.
 [[nodiscard]] inline std::string make_collapsed_notification_text(int count) {
     const std::string open_notif  = "<" + std::string(kTaskNotificationTag) + ">";
     const std::string close_notif = "</" + std::string(kTaskNotificationTag) + ">";
@@ -99,9 +88,9 @@ inline constexpr std::string_view kBackgroundBashSummaryPrefix = "Background com
     return open_notif + status + summary + close_notif;
 }
 
-/// Faithful port of TS collapseBackgroundBashNotifications(messages, verbose).
+/// Collapse background bash completion notifications.
 ///
-/// `fullscreen` mirrors TS `isFullscreenEnvEnabled()` — the collapse only runs
+/// `fullscreen` — the collapse only runs
 /// in the fullscreen transcript (the classic scrollback shows each completion).
 /// `verbose` is the ctrl+O pass-through: when true, every completion is shown.
 [[nodiscard]] inline std::vector<loom::core::Message>
@@ -109,9 +98,7 @@ collapse_background_bash_notifications(
     const std::vector<loom::core::Message>& messages,
     bool fullscreen,
     bool verbose) {
-    // TS: `if (!isFullscreenEnvEnabled()) return messages;`
     if (!fullscreen) return messages;
-    // TS: `if (verbose) return messages;`
     if (verbose) return messages;
 
     std::vector<loom::core::Message> result;
@@ -133,7 +120,7 @@ collapse_background_bash_notifications(
             } else {
                 // Synthesize a task-notification that the existing
                 // UserAgentNotificationMessage renderer already understands —
-                // no new renderer needed (TS parity).  Preserve the first
+                // no new renderer needed.  Preserve the first
                 // message's id/timestamp; replace only its text content.
                 auto synthetic = std::get<loom::core::UserMessage>(messages[run_start]);
                 synthetic.content.clear();

@@ -1,12 +1,7 @@
 /// @file component_primitives.cppm
 /// @brief Low-level UI building blocks built on FTXUI Elements.
-/// TS-side references audited:
-///   src/components/design-system/{Divider,ThemedBox,ThemedText}.tsx
-///   src/components/Spinner/SpinnerGlyph.tsx    — braille spinner frames
-///   src/components/Spinner/FlashingChar.tsx    — color interpolation shimmer
-///   src/utils/theme.ts                         — semantic roles used here
-/// N/A during audit: src/components/design-system/StatusBadge.tsx (not
-/// present); the equivalent here is `status_pill()` using the same Role enum.
+/// The equivalent of a status-badge component is `status_pill()` using
+/// the same Role enum.
 module;
 
 #include <cmath>
@@ -30,7 +25,7 @@ using namespace loom::ui::design::theme;
 
 // ─── heading / subheading / caption ──────────────────────────────────────────
 /// Large heading.  On a TTY "size" maps to bold/dim + separator decoration,
-/// since we cannot scale the font itself.  Mirrors TS ThemedText + separator.
+/// since we cannot scale the font itself.  Mirrors ThemedText + separator.
 [[nodiscard]] inline ftxui::Element heading(std::string_view label,
                                             TextSize size,
                                             const Theme& theme) {
@@ -70,7 +65,7 @@ using namespace loom::ui::design::theme;
 
 // ─── pill ────────────────────────────────────────────────────────────────────
 /// Rounded pill badge with optional count suffix.  Used by agent avatars,
-/// turn-durations, background task footer pills (see pillLabel.ts).
+/// turn-durations, background task footer pills.
 [[nodiscard]] inline ftxui::Element pill(std::string_view label,
                                          Role role,
                                          const Theme& theme,
@@ -87,7 +82,7 @@ using namespace loom::ui::design::theme;
 }
 
 // ─── kbd ─────────────────────────────────────────────────────────────────────
-/// Render a keyboard-shortcut hint (⌘K style).  Mirrors Ink <Kbd>.
+/// Render a keyboard-shortcut hint (⌘K style).
 [[nodiscard]] inline ftxui::Element kbd(std::string_view label) {
     using namespace ftxui;
     return hbox({
@@ -116,8 +111,8 @@ using namespace loom::ui::design::theme;
 }
 
 // ─── divider ─────────────────────────────────────────────────────────────────
-/// Mirrors Divider.tsx: either a light '─' line or heavy '━' bar, with an
-/// optional centered title.  Heavy bar is taken from ui/components/figures.
+/// Either a light '─' line or heavy '━' bar, with an optional centered
+/// title.  Heavy bar is taken from ui/components/figures.
 [[nodiscard]] inline ftxui::Element divider(bool heavy = false,
                                             std::string_view title = {},
                                             ftxui::Color line_color = ftxui::Color::Default) {
@@ -151,8 +146,8 @@ using namespace loom::ui::design::theme;
 }
 
 // ─── spinner (braille glyph) ─────────────────────────────────────────────────
-/// Mirrors SpinnerGlyph.tsx braille spinner.  10 frames; pass an external
-/// frame counter so the caller can control the tick rate.
+/// Braille spinner.  10 frames; pass an external frame counter so the
+/// caller can control the tick rate.
 inline constexpr std::array<std::string_view, 10> k_spinner_frames = {
     "⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"
 };
@@ -164,7 +159,7 @@ inline constexpr std::array<std::string_view, 10> k_spinner_frames = {
     using namespace ftxui;
     auto base = theme.color_for(role);
     if (stall) {
-        // stalled → interpolate toward TS ERROR_RED rgb(171,43,63)
+        // stalled → interpolate toward ERROR_RED rgb(171,43,63)
         base = interpolate(base, Color::RGB(171, 43, 63), 0.75);
     }
     if (theme.a11y.reduced_motion) {
@@ -174,7 +169,7 @@ inline constexpr std::array<std::string_view, 10> k_spinner_frames = {
     return text(std::string(k_spinner_frames[idx])) | color(base);
 }
 
-// ─── flashing_char (mirrors FlashingChar.tsx) ────────────────────────────────
+// ─── flashing_char ───────────────────────────────────────────────────────────
 /// Single character shimmering between two role colors.  `flash_opacity` ∈
 /// [0,1] drives the interpolation.
 [[nodiscard]] inline ftxui::Element flashing_char(char ch,
@@ -208,7 +203,7 @@ inline constexpr std::array<std::string_view, 10> k_spinner_frames = {
 }
 
 // ─── status_pill ─────────────────────────────────────────────────────────────
-/// String-based status → pill.  Mirrors the ad-hoc status badge used in TS
+/// String-based status → pill.  Mirrors the ad-hoc status badge used in
 /// sidebar panels and agent heads.
 [[nodiscard]] inline ftxui::Element status_pill(std::string_view status,
                                                 const Theme& theme) {
@@ -267,7 +262,7 @@ private:
     return ftxui::Make<SpinnerBase>(role, std::move(theme), label);
 }
 
-// ─── shimmer line (mirrors ui/prompt/shimmer.tsx) ────────────────────────────
+// ─── shimmer line ────────────────────────────────────────────────────────────
 /// A single-line shimmer used for thinking / loading placeholders.  Draws a
 /// gradient line from role → shimmer role using repeating "▓" blocks.
 [[nodiscard]] inline ftxui::Element shimmer_line(Role role,

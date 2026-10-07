@@ -49,7 +49,7 @@ using namespace ftxui;
 //     standalone > modal > overlay > bottom
 //   with appropriate typing/animation suppression checks.
 //
-// Suppression rules (mirror TS REPL.tsx):
+// Suppression rules:
 //   - is_prompt_input_active = typing in progress → Bands 2..6 hidden
 //   - is_tool_animation_active = JSX tool animation running → Band3 hidden
 
@@ -71,9 +71,6 @@ namespace dialog_queue_render {
 namespace dsys = dsys_fw;
 
 /// Build the render-time width/height context for the registry.
-/// TS REF: FullscreenLayout.tsx L422-426 — ModalContext provides
-///   rows = terminalRows - MODAL_TRANSCRIPT_PEEK - 1
-///   cols = columns - 4
 /// When `is_modal` is true, the context's `modal_available_cols/rows`
 /// are populated using the same formula so modal renderers can size
 /// content to the actual available pane area.
@@ -86,9 +83,6 @@ namespace dsys = dsys_fw;
     c.term_rows  = term_h;
     c.repl_state = repl_state;
     if (is_modal) {
-        // TS REF: FullscreenLayout.tsx L423-424
-        //   rows: terminalRows - MODAL_TRANSCRIPT_PEEK - 1
-        //   columns: columns - 4
         // MODAL_TRANSCRIPT_PEEK = 2 (fullscreen_layout.cppm kModalTranscriptPeek)
         // The -1 accounts for the ▔ divider row.
         constexpr int kModalTranscriptPeek =
@@ -112,8 +106,6 @@ namespace dsys = dsys_fw;
 }
 
 /// Modal dialog (stack top): rendered full-width dbox above the rest.
-/// TS REF: FullscreenLayout.tsx L422-426 — wraps modal content in
-///   <ModalContext value={{rows: ..., columns: ..., scrollRef: ...}}>
 /// Computes modal-available dimensions (cols-4, rows-PEEK-1) and passes
 /// them via DialogRenderContext.modal_available_cols/rows so renderers
 /// can use actual pane geometry instead of hardcoded fallbacks.
@@ -123,11 +115,11 @@ namespace dsys = dsys_fw;
     if (!peek) return Element{};
     dsys::DialogPayloadVariant& payload = peek->get();
     if (std::holds_alternative<std::monostate>(payload)) return Element{};
-    // is_modal=true → populate modal_available_cols/rows from TS formula.
+    // is_modal=true → populate modal_available_cols/rows.
     auto ctx = MakeContext(w, h, /*is_modal=*/true, &s);
     auto el = s.dialog_store.dialog_renderers.render(payload, ctx);
     if (!el) return Element{};
-    // Clamp modal content to its available height (TS maxHeight enforcement).
+    // Clamp modal content to its available height.
     if (ctx.modal_available_rows > 0) {
         el = std::move(el) | size(HEIGHT, LESS_THAN, ctx.modal_available_rows);
     }
@@ -171,8 +163,8 @@ namespace dsys = dsys_fw;
 }
 
 /// Bottom slot: banner-style dialogs pushed to the bottom of the screen.
-/// TS REF: FullscreenLayout.tsx L414 — bottom slot wraps content in
-///   maxHeight="50%" (half the terminal rows).  Pass actual dimensions.
+/// Wraps content in max-height = 50% (half the terminal rows).  Pass
+/// actual dimensions.
 [[nodiscard]] Element RenderBottomDialog(
     ReplScreenState& s,
     bool is_prompt_input_active,
@@ -264,7 +256,6 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
 /// Convenience: combine Overlay + Modal + Bottom into a single dbox
 /// that callers can overlay onto the base chrome.  Standalone is handled
 /// separately (full-takeover, replaces the entire render).
-/// TS REF: FullscreenLayout.tsx L422-426 — passes actual terminal dims.
 [[nodiscard]] Element LayerAllDialogs(
     Element base_chrome,
     ReplScreenState& s,

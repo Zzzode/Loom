@@ -1,7 +1,7 @@
 /// @file oauth_port.cppm
 /// @brief OAuth callback port management for MCP auth
 ///
-/// Mirrors src/services/mcp/oauthPort.ts: picks a random port in the
+/// Picks a random port in the
 /// dynamic/private range, bind-probes it for availability, retries up to 100
 /// times, and falls back to a fixed port. Honors the MCP_OAUTH_CALLBACK_PORT
 /// environment override. RFC 8252 §7.3 (Native Apps): loopback redirect URIs
@@ -25,16 +25,16 @@ export namespace loom::services::mcp {
 // behavior is discoverable even though the happy path no longer uses it.
 inline constexpr uint16_t kDefaultOAuthPort = 8912;
 
-// RFC 6056 ephemeral/dynamic port range. Windows reserves 49152-65535, so the
-// TS original uses 39152-49151 there; we use the non-Windows range and do not
-// branch on platform (C++ migration does not currently detect Windows).
+// RFC 6056 ephemeral/dynamic port range. Windows reserves 49152-65535, so
+// Windows would use 39152-49151; we use the non-Windows range and do not
+// branch on platform (Windows detection not yet implemented).
 inline constexpr uint16_t kRedirectPortRangeStart = 49152;
 inline constexpr uint16_t kRedirectPortRangeEnd = 65535;
 inline constexpr uint16_t kRedirectPortFallback = 3118;
 inline constexpr int kRedirectPortMaxAttempts = 100;
 
 /// Build a redirect URI on localhost with the given port and a fixed
-/// `/callback` path (parity with buildRedirectUri in oauthPort.ts).
+/// `/callback` path.
 [[nodiscard]] inline std::string build_redirect_uri(uint16_t port = kRedirectPortFallback) {
     return "http://localhost:" + std::to_string(port) + "/callback";
 }
@@ -62,7 +62,7 @@ namespace detail {
 }
 
 /// Bind-probe a single TCP port: open a listening socket, succeed if bind
-/// works, always close. Mirrors the createServer().listen() check in TS.
+/// works, always close.
 [[nodiscard]] inline bool is_port_available(uint16_t port) noexcept {
     int fd = ::socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) return false;
@@ -81,7 +81,7 @@ namespace detail {
 
 /// Find an available port for the OAuth redirect.
 ///
-/// Order (matches findAvailablePort in oauthPort.ts):
+/// Order:
 ///   1. MCP_OAUTH_CALLBACK_PORT env override, if set and > 0.
 ///   2. A random port in [kRedirectPortRangeStart, kRedirectPortRangeEnd],
 ///      bind-probed, retried up to kRedirectPortMaxAttempts times.

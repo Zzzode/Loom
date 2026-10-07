@@ -1,11 +1,10 @@
 /// @file code_highlight.cppm
 /// @brief Syntax-highlighted code rendering with theme support and line
-/// numbers. Migrated from HighlightedCode/ and StructuredDiff/colorDiff.ts.
+/// numbers.
 /// PARTIAL: the UI27 HighlightedCode Fallback (a 6-rule heuristic regex
-///   colorizer — comment > string > keyword/type > number > function —
-///   matching TS Fallback.tsx line-for-line) was an unreferenced faithful
-///   port and was removed with it (RFC-0001 B18). The
-///   `if (!shiki_available)` branch in RenderCodeBlock is the integration
+///   colorizer — comment > string > keyword/type > number > function)
+///   was an unreferenced faithful port and was removed with it (RFC-0001 B18).
+///   The `if (!shiki_available)` branch in RenderCodeBlock is the integration
 ///   point if the fallback is ever reintroduced.
 module;
 
@@ -16,6 +15,8 @@ module;
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/screen/screen.hpp>
+#include <ftxui/screen/string.hpp>
 #include <cstddef>
 
 export module loom.ui.visual.code_highlight;
@@ -269,7 +270,7 @@ get_syntax_theme(const std::string& name) {
 // NOTE: A full LSP-backed syntax highlighter is out of scope here
 //       (Deferred: integrate with cc/utils/cli_highlight / the HL module
 //       once it is exposed). The heuristic keyword + string + number
-//       + comment tokenizer below mirrors HighlightedCode/Fallback.tsx:
+//       + comment tokenizer below mirrors the fallback tokenizer:
 //       it gives users reasonable, deterministic coloring across 8
 //       common languages without pulling in grammars worth of code.
 // ===========================================================================
@@ -868,33 +869,54 @@ inline void apply_semantic_overlay(HighlightResult& result, const SemanticTokenL
 // Element Rendering
 // ============================================================
 
+/// A colored text segment for colored_text_line().
+struct ColoredSegment {
+    std::string text;
+    Color foreground = Color::Default;
+    Color background = Color::Default;
+};
+
+/// Render a single line of colored text segments. Unlike an hbox of
+/// `text(...) | color(...)`, an overwidth line truncates at the right edge
+/// instead of shrinking every segment proportionally (which swallowed
+/// characters from the middle of tokens).
+///
+/// The ColoredTextLine Node (detail::ColoredTextLine) and this factory body
+/// live in code_highlight_impl.cpp (inline-def ratchet).
+[[nodiscard]] Element colored_text_line(
+    std::vector<ColoredSegment> segments);
+
 /// Render a single highlighted line
 [[nodiscard]] inline Element RenderHighlightedLine(
     const HighlightedLine& line, const SyntaxTheme& theme,
     bool show_line_nums, bool is_highlighted, int gutter_width) {
 
-    Elements parts;
+    std::vector<ColoredSegment> segments;
 
     // Line number gutter
     if (show_line_nums) {
         auto num_str = std::format("{:>{}}", line.line_number, gutter_width);
-        parts.push_back(
-            text(num_str + " ") | color(theme.line_number)
-            | bgcolor(theme.gutter_bg));
-        parts.push_back(text(" "));
+        segments.push_back(ColoredSegment{
+            .text = num_str + " ",
+            .foreground = theme.line_number,
+            .background = theme.gutter_bg,
+        });
+        segments.push_back(ColoredSegment{.text = " "});
     }
 
     // Tokens
     if (line.tokens.empty()) {
-        parts.push_back(text(" "));
+        segments.push_back(ColoredSegment{.text = " "});
     } else {
         for (const auto& tok : line.tokens) {
-            auto el = text(tok.text) | color(token_color(tok.type, theme));
-            parts.push_back(el);
+            segments.push_back(ColoredSegment{
+                .text = tok.text,
+                .foreground = token_color(tok.type, theme),
+            });
         }
     }
 
-    auto result = hbox(parts);
+    auto result = colored_text_line(std::move(segments));
 
     // Background for diff lines
     if (line.is_diff_added) {

@@ -1,5 +1,5 @@
 /// @file user_text_message.cppm
-/// @brief FTXUI component for user text messages (UserTextMessage.tsx)
+/// @brief FTXUI component for user text messages
 ///
 /// Visual layout:
 ///   ┌── Right-aligned (user side)
@@ -25,7 +25,7 @@ export module loom.ui.messages.user_text_message;
 import std;
 
 import loom.ui.messages.message_timestamp;
-// P0-1: Unified prompt / user-message glyph source (TS figures.pointer).
+// P0-1: Unified prompt / user-message glyph source.
 // Eliminates the local `kFiguresPointer` duplicate that diverged from the
 // prompt prefix's UTF-8 byte sequence in CPP Round 1-6.
 import loom.ui.foundation.design_figures;
@@ -47,7 +47,6 @@ struct UserTextMessageData {
 };
 
 // ─── User-prompt text truncation ────────────────────────────────────────
-// TS REF: src/components/messages/UserPromptMessage.tsx lines 28-70.
 // Hard-caps display text at 10_000 chars: head 2500 + separator + tail 2500.
 // Critical for perf: pasting a 100 KB file into the prompt would otherwise
 // force FTXUI to lay out thousands of lines on every keystroke.
@@ -57,7 +56,6 @@ inline constexpr std::size_t kTruncateHeadChars = 2'500;
 inline constexpr std::size_t kTruncateTailChars = 2'500;
 
 /// Count occurrences of `ch` in `text` starting at byte position `start`.
-/// TS REF: src/utils/stringUtils.ts countCharInString (lines 54-66).
 [[nodiscard]] inline std::size_t CountCharFrom(std::string_view text,
                                                 char ch,
                                                 std::size_t start) {
@@ -76,8 +74,6 @@ inline constexpr std::size_t kTruncateTailChars = 2'500;
 /// tail 2500, where the separator shows the count of hidden lines:
 ///   "\n… +N lines …\n"
 /// (U+2026 HORIZONTAL ELLIPSIS, UTF-8 \xe2\x80\xa6).
-///
-/// TS REF: UserPromptMessage.tsx lines 64-70 (useMemo displayText).
 [[nodiscard]] inline std::string TruncateUserPromptText(std::string_view text) {
     using namespace truncate_detail;
     if (text.size() <= kMaxDisplayChars) return std::string(text);
@@ -217,8 +213,8 @@ class UserTextMessageComponent : public ComponentBase {
             }));
         }
 
-        // Main body — truncated for long pastes (TS REF: UserPromptMessage.tsx
-        // lines 64-70).  SplitLines handles both natural \n in user input and
+        // Main body — truncated for long pastes.  SplitLines handles both
+        // natural \n in user input and
         // the truncation separator "\n… +N lines …\n".
         std::string display_body = TruncateUserPromptText(data_.content);
         auto lines = SplitLines(display_body);
@@ -274,36 +270,26 @@ class UserTextMessageComponent : public ComponentBase {
     });
 }
 
-// ─── M4: Faithful TS renderers ─────────────────────────────────────────
-// Mirrors UserPromptMessage.tsx + HighlightedThinkingText.tsx (the non-brief
-// layout path).  TS renders:
-//   <Box flexDirection="column" marginTop={addMargin?1:0}
-//        backgroundColor={isSelected?messageActionsBackground:userMessageBackground}
-//        paddingRight={1}>
-//     <HighlightedThinkingText text={displayText} .../>
-//   </Box>
-// and HighlightedThinkingText (no triggers) emits a single <Text> row:
-//   <Text color={subtle}>{figures.pointer} </Text><Text color="text">{text}</Text>
-// figures.pointer is U+276F "❯".  No timestamp / role label in the non-brief
-// path — that only appears in the brief/chat layout.
+// ─── M4: Faithful renderers ────────────────────────────────────────────
+// The non-brief layout path: a full-width, left-aligned row with a `❯`
+// (subtle) prefix followed by the prompt text, optional top margin, and a
+// background that swaps on selection.  No timestamp / role label in the
+// non-brief path — that only appears in the brief/chat layout.
 //
 // NOTE: The glyph itself lives in loom.ui.foundation.design_figures::kPointer — the
 // authoritative source used by the prompt prefix, user messages, and plugin
 // manager.  Use `namespace figs = loom::ui::design::figures;` below.
 
-/// Faithful render of a user prompt message (UserPromptMessage.tsx ->
-/// HighlightedThinkingText non-brief path).  Full-width, left-aligned, with a
-/// `❯` (subtle) prefix followed by the prompt text.  is_selected swaps the
-/// prefix + bg color to the TS `messageActionsBackground` / `suggestion` tokens.
+/// Faithful render of a user prompt message.  Full-width, left-aligned, with
+/// a `❯` (subtle) prefix followed by the prompt text.  is_selected swaps the
+/// prefix + bg color to the messageActionsBackground / suggestion tokens.
 ///
-/// `add_margin` (TS REF: marginTop={addMargin ? 1 : 0}) controls the blank
-/// separator line above the message.  In TS this is `!hasMetadata`; since
-/// hasMetadata is always false for user messages (it requires type==="assistant"),
-/// add_margin is effectively always true in normal REPL use.  We still thread
-/// the parameter for faithfulness and transcript-mode correctness.
+/// `add_margin` controls the blank separator line above the message.  It is
+/// effectively always true in normal REPL use.  We still thread the parameter
+/// for faithfulness and transcript-mode correctness.
 ///
 /// FTXUI NOTES:
-///   - `text()` does NOT auto-wrap (unlike Ink <Text>).
+///   - `text()` does NOT auto-wrap.
 ///   - `paragraphAlignLeft()` only wraps at word boundaries; long unbroken
 ///     strings (base64, minified code) would overflow the screen.
 ///   - We use manual character-level wrapping via WrapToWidth() to guarantee
@@ -311,7 +297,7 @@ class UserTextMessageComponent : public ComponentBase {
 [[nodiscard]] inline Element RenderUserPromptMessage(const UserTextMessageData& data,
                                                      bool is_selected = false,
                                                      bool add_margin = true) {
-    // TS palette tokens (dark mode, from src/utils/theme.ts):
+    // Palette tokens (dark mode):
     //   subtle                      = rgb( 80, 80, 80)  — pointer glyph prefix
     //   suggestion                  = rgb(177,185,249)  — pointer glyph (selected)
     //   text                        = rgb(250,250,252)  — body foreground (default)
@@ -330,7 +316,7 @@ class UserTextMessageComponent : public ComponentBase {
     const Decorator prefix_style =
         data.is_transcript_mode ? (dim | color(prefix_color)) : color(prefix_color);
 
-    // Truncate long text (TS REF: UserPromptMessage.tsx lines 64-70).
+    // Truncate long text.
     // Result may contain \n separators from the truncation or natural user
     // input newlines.
     std::string display_text = TruncateUserPromptText(data.content);
@@ -354,7 +340,7 @@ class UserTextMessageComponent : public ComponentBase {
     }
 
     // Wrap each logical line and build visual line elements.
-    // Available width = terminal - prefix(2) - paddingRight(1) - 1 safety = 76.
+    // Available width = terminal - prefix(2) - right-padding(1) - 1 safety = 76.
     // But we use kPromptWrapWidth=78 and let the trailing space handle overflow.
     const std::size_t wrap_w = wrap_detail::kPromptWrapWidth - 2;  // -2 for "❯ "
 
@@ -373,7 +359,7 @@ class UserTextMessageComponent : public ComponentBase {
                 row.push_back(text("  ") | prefix_style);
             }
             row.push_back(text(std::move(wline)) | body_style);
-            // paddingRight={1} — trailing space so bg reaches the right edge.
+            // right padding = 1 — trailing space so bg reaches the right edge.
             row.push_back(text(" ") | color(kText));
 
             Element line_el = hbox(std::move(row));
@@ -396,7 +382,7 @@ class UserTextMessageComponent : public ComponentBase {
     }
 
     if (add_margin) return vbox({text(""), std::move(body)});
-    // TS PARITY: continuation within same user turn (e.g. after an image),
+    // Continuation within same user turn (e.g. after an image),
     // <MessageResponse> prepends "  ⎿  " (U+23BF connector).
     return hbox({
         text("  \xe2\x8e\xbf  ") | dim,
@@ -404,34 +390,32 @@ class UserTextMessageComponent : public ComponentBase {
     });
 }
 
-/// Faithful render of a slash-command user message (UserCommandMessage.tsx):
-///   <Box marginTop={addMargin?1:0} backgroundColor="userMessageBackground" paddingRight={1}>
-///     <Text><Text color="subtle">{figures.pointer} </Text>
-///           <Text color="text">/{command args}</Text></Text>
-///   </Box>
+/// Faithful render of a slash-command user message:
+///   A row with optional top margin, a userMessageBackground chip background,
+///   a subtle `❯` pointer prefix, and the `/command args` text.
 ///
-/// `add_margin` (TS REF: marginTop={addMargin ? 1 : 0}) controls the blank
-/// separator line above the message.  Threaded for faithfulness; always true
-/// in normal REPL use for the same reason as RenderUserPromptMessage.
+/// `add_margin` controls the blank separator line above the message.
+/// Threaded for faithfulness; always true in normal REPL use for the same
+/// reason as RenderUserPromptMessage.
 [[nodiscard]] inline Element RenderUserCommandMessage(const UserTextMessageData& data,
                                                       bool is_selected = false,
                                                       bool add_margin = true) {
-    (void)is_selected;  // TS: selection never affects the command chip tint.
-    // TS palette tokens (dark mode, src/utils/theme.ts):
+    (void)is_selected;  // Selection never affects the command chip tint.
+    // Palette tokens (dark mode):
     //   subtle                      = rgb( 80, 80, 80)  — pointer glyph prefix
     //   text                        = rgb(255,255,255)  — body foreground
     //   userMessageBackground       = rgb( 55, 55, 55)  — chip background
-    // NOTE: TS B5 UserCommandMessage ALWAYS renders backgroundColor=
-    // userMessageBackground — no bgcolor swap on selection. Selection affects
-    // BLACK_CIRCLE color in assistant rows and the isSelected context, NOT
-    // this chip's tint (unlike UserPromptMessage which swaps to messageAct-
-    // ionsBackground). Hence bg = kUserBg regardless of is_selected.
+    // NOTE: the command chip ALWAYS renders with userMessageBackground — no
+    // bgcolor swap on selection. Selection affects BLACK_CIRCLE color in
+    // assistant rows and the isSelected context, NOT this chip's tint (unlike
+    // UserPromptMessage which swaps to messageActionsBackground). Hence
+    // bg = kUserBg regardless of is_selected.
     const Color kUserBg       = Color::RGB( 55,  55,  55);
     const Color kSubtle       = Color::RGB( 80,  80,  80);
-    // TS UserCommandMessage.tsx B5: the ❯ prefix always uses the "subtle"
-    // token (rgb(80,80,80)).  Selection only affects the BLACK_CIRCLE color
-    // of the assistant row, never the user command chip tint — unlike
-    // UserPromptMessage which swaps both the prefix and the background.
+    // The ❯ prefix always uses the "subtle" token (rgb(80,80,80)).
+    // Selection only affects the BLACK_CIRCLE color of the assistant row,
+    // never the user command chip tint — unlike UserPromptMessage which
+    // swaps both the prefix and the background.
     const Color prefix_color = kSubtle;
 
     std::string body = data.command_name
@@ -440,13 +424,13 @@ class UserTextMessageComponent : public ComponentBase {
     // Faithful foregrounds (match theme.text + theme.subtle tokens exactly).
     // Explicit colors avoid FTXUI default-fg drift when wrapped in bgcolor().
     const Color kText = Color::RGB(250, 250, 252);
-    // TS: paddingRight=1 only — no flex, so the chip collapses to content
+    // right padding = 1 only — no flex, so the chip collapses to content
     // width instead of stretching to terminal width (F8 compact chip).
     Element row = hbox({
         text(std::string(loom::ui::design::figures::kPointer)) | color(prefix_color),
         text(" ") | color(prefix_color),
         text(body) | color(kText),
-        text(" ") | color(kText),  // paddingRight=1
+        text(" ") | color(kText),  // right padding = 1
     });
     if (data.is_transcript_mode) {
         if (add_margin) return vbox({text(""), row});

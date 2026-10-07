@@ -1,6 +1,5 @@
 /// @file hooks_ui.cppm
 /// @brief Hook execution display, hook config editor, hook status indicators.
-/// Migrated from src/components/hooks/ (all files)
 module;
 
 #include <cstdint>
@@ -78,7 +77,7 @@ struct HookExecResult {
 };
 
 // ============================================================
-// Mode State (migrated from HooksConfigMenu.tsx ModeState)
+// Mode State
 // ============================================================
 
 /// Navigation mode for the hooks config menu

@@ -1,20 +1,12 @@
 /// =========================================================================
 /// @file permission_file_edit.cppm
-/// @brief Faithful C++/FTXUI port of TS FileEditPermissionRequest +
+/// @brief Faithful C++/FTXUI port of FileEditPermissionRequest +
 ///        FileEditToolDiff + FilePermissionDialog.
 ///
 /// MODULE:   loom.ui.permissions.permission_file_edit
 /// LICENCE:  Exported.  Callers instantiate via MakeFileEditPermissionPrompt.
 ///
-/// TS REFERENCE (3 files, ~380 lines total):
-///   src/components/permissions/FileEditPermissionRequest/
-///       FileEditPermissionRequest.tsx  — top-level component
-///   src/components/FileEditToolDiff.tsx  — diff preview (shared)
-///   src/components/permissions/FilePermissionDialog/
-///       FilePermissionDialog.tsx         — shared dialog shell + options
-///       permissionOptions.tsx            — option builder
-///
-/// FAITHFUL FEATURES (1:1 with TS, same pattern as FileWrite):
+/// FAITHFUL FEATURES (same pattern as FileWrite):
 ///   • Title: "Edit file"
 ///   • Subtitle: relative path (dimmed)
 ///   • Symlink warning banner (yellow) when path resolves through a symlink
@@ -62,7 +54,7 @@ namespace fe = loom::utils::file_edit;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-/// Decision returned by the prompt (1:1 with TS PermissionOption type).
+/// Decision returned by the prompt (1:1 with PermissionOption type).
 enum class Decision : std::uint8_t {
     AllowOnce,    ///< Allow only this edit (accept-once)
     AllowSession, ///< Allow all edits session-wide (accept-session)
@@ -70,7 +62,7 @@ enum class Decision : std::uint8_t {
     Abort,        ///< Escape / abort the whole operation
 };
 
-/// Scope for session-level allow (mirrors TS accept-session scope).
+/// Scope for session-level allow (mirrors accept-session scope).
 enum class SessionScope : std::uint8_t {
     Default,          ///< Normal directory-wide session allow
     LoomFolder,     ///< Project .loom/ folder special case
@@ -130,7 +122,7 @@ struct FileEditPermissionProps {
 // ─── Option builder ────────────────────────────────────────────────────────
 //
 // Same logic as FileWrite, but with edit-specific wording.
-// Mirrors TS getFilePermissionOptions() with operationType='write'.
+// Mirrors getFilePermissionOptions() with operationType='write'.
 
 namespace detail {
 
@@ -268,7 +260,7 @@ inline std::vector<Option> build_options(
 // ─── Content area ──────────────────────────────────────────────────────────
 //
 // Dashed-border box with structured diff via FileEditToolDiff.
-// Mirrors TS FileEditToolDiff rendering.
+// Mirrors FileEditToolDiff rendering.
 
 /// Render the content preview area.
 /// Uses the faithful FileEditToolDiff component (shared module).
@@ -367,7 +359,7 @@ struct PromptState {
     body_els.push_back(content_box);
     body_els.push_back(text(""));
 
-    // Question + options in paddingX=1 container
+    // Question + options in horizontal-padding=1 container
     Elements padded_els;
     padded_els.push_back(question_el);
     padded_els.push_back(text(""));
@@ -423,7 +415,7 @@ struct PromptState {
 
 /// Create an interactive file edit permission prompt component.
 ///
-/// Keyboard shortcuts (faithful to TS FilePermissionDialog + Select):
+/// Keyboard shortcuts (faithful to FilePermissionDialog + Select):
 ///   ↑ / ↓ / j / k  = Navigate options
 ///   Enter          = Confirm selected option
 ///   y / Y          = Quick accept (AllowOnce)

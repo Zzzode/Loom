@@ -1,6 +1,5 @@
 /// @file skill_keybindings.cppm
 /// @brief Bundled keybindings-help skill - comprehensive customization guide.
-/// Mirrors src/skills/bundled/keybindings.ts.
 /// DIFFERS from root-level loom.skills.keybindings (a simple shortcut reference sheet):
 ///   - Root  : name="keybindings"       — simple keyboard cheat-sheet (static)
 ///   - Here : name="keybindings-help"  — full customization workflow with
@@ -19,13 +18,13 @@ import loom.skills.load_skills_dir;
 export namespace loom::skills::bundled {
 
 // ---------------------------------------------------------------------------
-// Static reference data (kept in sync with TS keybindings/schema.ts +
-// keybindings/defaultBindings.ts + keybindings/reservedShortcuts.ts).
+// Static reference data (kept in sync with the keybindings schema +
+// default bindings and reserved shortcuts).
 // When the C++ side gains access to the live schema, these tables can be
 // generated dynamically from the source of truth.
 // ---------------------------------------------------------------------------
 
-/// All binding contexts (exact names from KEYBINDING_CONTEXTS in schema.ts)
+/// All binding contexts
 inline const char* KNOWN_CONTEXTS[][2] = {
     {"Global",          "Applies everywhere unless overridden by a specific context"},
     {"Chat",            "Main chat input pane"},
@@ -152,7 +151,7 @@ inline std::string markdown_table(
     return oss.str();
 }
 
-/// Infer context name from action name prefix (mirrors TS inference logic)
+/// Infer context name from action name prefix
 inline std::string infer_context_from_action(std::string_view action) {
     auto colon = action.find(':');
     if (colon == std::string_view::npos) return "Unknown";
@@ -207,7 +206,7 @@ inline std::string generate_reserved_shortcuts() {
 
     oss << "### Terminal reserved (errors/warnings)\n";
     for (const auto& s : TERMINAL_RESERVED) {
-        // The 3rd column in TS stores severity; here we stored it as part of .reason
+        // The 3rd column stores severity; here we stored it as part of .reason
         oss << "- `" << s.key << "` — " << s.reason << "\n";
     }
     oss << "\n";
@@ -220,7 +219,7 @@ inline std::string generate_reserved_shortcuts() {
 }
 
 // ---------------------------------------------------------------------------
-// Prompt sections (kept in sync with TS SECTION_* constants)
+// Prompt sections
 // ---------------------------------------------------------------------------
 
 inline const char* SECTION_INTRO = R"(# Keybindings Skill
@@ -424,7 +423,7 @@ inline std::string build_keybindings_help_prompt(
 }
 
 // ---------------------------------------------------------------------------
-// Feature-gate check (mirrors TS isKeybindingCustomizationEnabled)
+// Feature-gate check
 // ---------------------------------------------------------------------------
 
 /// Returns whether keybinding customization is enabled.

@@ -11,17 +11,22 @@
 add_library(loom_ui_foundation)
 target_sources(loom_ui_foundation
     PUBLIC FILE_SET CXX_MODULES FILES
+        ui/foundation/clock.cppm
         ui/foundation/component_primitives.cppm
         ui/foundation/components_figures.cppm
         ui/foundation/declared_cursor.cppm
         ui/foundation/design_figures.cppm
-        ui/foundation/design_logo.cppm
         ui/foundation/design_tokens.cppm
         ui/foundation/feature_dialog_protocol.cppm
         ui/foundation/logo.cppm
-        ui/foundation/logo_v2.cppm
         ui/foundation/theme_provider.cppm
         ui/foundation/ui_types.cppm
+)
+# clock.cpp is the impl unit for loom.ui.foundation.clock (RFC 0003 §8.3):
+# the steady_now() override storage and bodies live here, not in the .cppm,
+# so the inline-def ratchet sees zero inline bodies in the interface.
+target_sources(loom_ui_foundation PRIVATE
+    ui/foundation/clock.cpp
 )
 # External deps only: cc.vim.vim_types (ui_types.cppm) + FTXUI. loom_std's
 # `import std;` BMI arrives via the directory-level link_libraries(loom_std).

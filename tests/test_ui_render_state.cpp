@@ -20,7 +20,6 @@ import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
 import loom.ui.prompt.prompt_input;
 import loom.ui.prompt.prompt_input_footer;
-import loom.ui.foundation.logo_v2;
 import loom.ui.chrome.fullscreen_layout;
 import loom.ui.chrome.panels;
 import loom.ui.messages.message_image;
@@ -31,7 +30,6 @@ import loom.ui.foundation.design_figures;
 import loom.ui.foundation.theme_provider;
 import loom.ui.widgets.components;
 import loom.ui.widgets.all_components;
-import loom.ui.messages.messages;
 import loom.ui.messages.message_pipeline;
 import loom.ui.messages.messages_list;
 import loom.ui.messages.message_row;
@@ -354,15 +352,22 @@ TEST(ReplScreen, MouseWheelScrollsTranscript) {
     }
     state->messages_store.messages.push_back(std::move(message));
 
+    // Fresh state: scroll_pinned_to_bottom=true, scroll_offset=0.
+    // 40 lines + 1 margin = 41 rows; viewport=8; max_offset=33.
     auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
     ftxui::Mouse wheel;
-    wheel.button = ftxui::Mouse::WheelDown;
 
+    // WheelUp from pinned-to-bottom must scroll UP (away from bottom).
+    // Before the fix, scroll_offset stayed 0 and the view never moved.
+    wheel.button = ftxui::Mouse::WheelUp;
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
     EXPECT_GT(state->messages_store.scroll_offset, 0);
     EXPECT_FALSE(state->messages_store.scroll_pinned_to_bottom);
 
-    wheel.button = ftxui::Mouse::WheelUp;
+    // WheelDown scrolls back toward the bottom.
+    const int after_up = state->messages_store.scroll_offset;
+    wheel.button = ftxui::Mouse::WheelDown;
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
-    EXPECT_EQ(state->messages_store.scroll_offset, 0);
+    EXPECT_GT(state->messages_store.scroll_offset, after_up);
+    EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
 }

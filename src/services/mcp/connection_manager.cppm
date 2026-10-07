@@ -649,11 +649,9 @@ private:
         } else if (notification.method == "at_mentioned") {
             // IDE at-mention: forward the raw params to whichever UI responder
             // has registered (see loom.services.mcp.at_mention_handler). This is
-            // the JSON-RPC inbound dispatch point that useIdeAtMentioned.ts
-            // hooks via client.setNotificationHandler on the TS side.
+            // the JSON-RPC inbound dispatch point.
             dispatch_at_mention(server_name, notification.params_json);
         } else if (notification.method == "notifications/loom/channel") {
-            // TS REF: src/services/mcp/channelNotification.ts:37-47
             // Channel server pushed an inbound message (e.g. user typed in
             // Slack). Parse params, wrap in <channel> tag, emit to the
             // channel notification bus so subscribers (query engine, UI)
@@ -665,7 +663,6 @@ private:
                 emit_channel_message(server_name, params->content, params->meta);
             }
         } else if (notification.method == "notifications/loom/channel/permission") {
-            // TS REF: src/services/mcp/channelNotification.ts:62-72
             // Channel server sent a structured permission reply (the human
             // approved/denied a tool call via the channel). Parse and emit
             // to the bus — subscribers match request_id against pending

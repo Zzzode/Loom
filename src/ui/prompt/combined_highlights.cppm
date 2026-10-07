@@ -1,8 +1,7 @@
 /// @file combined_highlights.cppm
 /// @brief 7-tier combined highlights builder for the prompt input widget.
 ///
-/// Assembles TextHighlight annotations from 7 sources in priority order,
-/// mirroring the TS combinedHighlights useMemo in PromptInput.tsx:601-741.
+/// Assembles TextHighlight annotations from 7 sources in priority order.
 ///
 /// Sources (highest priority first):
 ///   1. History search highlights (priority 20)
@@ -12,17 +11,6 @@
 ///   5. Slash command (priority 5)
 ///   6. Token budget (priority 5)
 ///   7. Member mention (priority 5)
-///
-/// TS REF (authority):
-///   src/components/PromptInput/PromptInput.tsx:601-741 (combinedHighlights builder)
-///   src/utils/thinking.ts:60-86 (RAINBOW_COLORS, getRainbowColor)
-///   src/utils/sideQuestion.ts:16-41 (findBtwTriggerPositions)
-///   src/utils/suggestions/commandSuggestions.ts:552-567 (findSlashCommandPositions)
-///   src/utils/tokenBudget.ts:31-50 (findTokenBudgetPositions)
-///   src/utils/ultraplan/keyword.ts (findUltraplanTriggerPositions, findUltrareviewTriggerPositions)
-///   src/buddy/useBuddyNotification.tsx:79-97 (findBuddyTriggerPositions)
-///   src/history.ts:62-75 (parseReferences)
-///   src/components/PromptInput/PromptInput.tsx:541-579 (memberMentionHighlights)
 module;
 
 #include <cstddef>
@@ -50,76 +38,60 @@ using loom::utils::parse_references;
 // ============================================================
 
 /// Input context for build_combined_highlights().
-/// Mirrors the closure variables captured by the TS combinedHighlights useMemo.
 struct CombinedHighlightContext {
     /// The full displayed text (may include history-nav overlay).
-    /// TS REF: PromptInput.tsx:518 displayedValue
     std::string_view text;
 
     /// Flat character offset of the cursor in the full text buffer.
-    /// TS REF: PromptInput.tsx cursorOffset
     std::size_t cursor_offset = 0;
 
-    // ── Feature gates (mirror TS feature() / isEnabled() calls) ──────────
+    // ── Feature gates ─────────────────────────────────────────────────────
 
     /// When true, "ultrathink" keyword gets rainbow per-char highlighting.
-    /// TS REF: thinking.ts:19 isUltrathinkEnabled()
     bool ultrathink_enabled = false;
 
     /// When true, "ultraplan" keyword gets rainbow per-char highlighting.
-    /// TS REF: PromptInput.tsx:701 feature('ULTRAPLAN')
     bool ultraplan_enabled = false;
 
     /// When true, "ultrareview" keyword gets rainbow per-char highlighting.
-    /// TS REF: PromptInput.tsx:716 (always checked, no feature gate in TS)
+    /// Always checked, no feature gate.
     bool ultrareview_enabled = true;
 
     /// When true, "/buddy" keyword gets rainbow per-char highlighting.
-    /// TS REF: useBuddyNotification.tsx:83 feature('BUDDY')
     bool buddy_enabled = false;
 
     /// When true, "+500k" token budget shorthand gets highlighted.
-    /// TS REF: PromptInput.tsx:534 feature('TOKEN_BUDGET')
     bool token_budget_enabled = false;
 
     // ── History search state ──────────────────────────────────────────────
 
     /// True when the user is navigating history (up/down arrow or ctrl+r).
-    /// TS REF: PromptInput.tsx isSearchingHistory
     bool is_searching_history = false;
 
     /// The history search query string (for highlighting matched terms).
-    /// TS REF: PromptInput.tsx historyQuery
     std::string_view history_query;
 
     /// True when a history match was found (highlight the matched range).
-    /// TS REF: PromptInput.tsx historyMatch
     bool history_match_found = false;
 
     /// True when history search failed (no match — don't highlight).
-    /// TS REF: PromptInput.tsx historyFailedMatch
     bool history_failed_match = false;
 
     // ── Member mentions ───────────────────────────────────────────────────
 
     /// List of known team member names for @mention highlighting.
     /// Each entry: {name, color} — color is the FTXUI Color to use.
-    /// TS REF: PromptInput.tsx:541-579 memberMentionHighlights
     std::vector<std::pair<std::string, Color>> team_members;
 
     /// When true, @mention highlighting is active (agent swarms enabled).
-    /// TS REF: PromptInput.tsx:546 isAgentSwarmsEnabled()
     bool agent_swarms_enabled = false;
 };
 
 // ============================================================
-// Rainbow color palette — mirror TS RAINBOW_COLORS
+// Rainbow color palette
 // ============================================================
 
 /// 7-color rainbow cycle for per-character shimmer highlighting.
-/// TS REF: src/utils/thinking.ts:60-68 RAINBOW_COLORS
-///   ['rainbow_red', 'rainbow_orange', 'rainbow_yellow',
-///    'rainbow_green', 'rainbow_blue', 'rainbow_indigo', 'rainbow_violet']
 ///
 /// We map these theme tokens to the closest FTXUI palette colors.
 /// FTXUI v5 has no named Orange, so we use RGB for orange/indigo.
@@ -134,7 +106,7 @@ inline const std::array<Color, 7> RAINBOW_COLORS = {
 };
 
 /// Shimmer variant of the rainbow colors — slightly brighter for the
-/// animated sweep highlight.  TS REF: thinking.ts:70-78 RAINBOW_SHIMMER_COLORS
+/// animated sweep highlight.
 inline const std::array<Color, 7> RAINBOW_SHIMMER_COLORS = {
     Color::RedLight,
     Color::RGB(255, 200, 100),           // shimmer orange
@@ -148,7 +120,6 @@ inline const std::array<Color, 7> RAINBOW_SHIMMER_COLORS = {
 /// Get the rainbow color for a given character index within a trigger word.
 /// @param char_index  Position within the trigger (0 = first char).
 /// @param shimmer     If true, return the brighter shimmer variant.
-/// TS REF: src/utils/thinking.ts:80-86 getRainbowColor()
 [[nodiscard]] inline Color get_rainbow_color(
     std::size_t char_index,
     bool shimmer = false) {
@@ -157,19 +128,16 @@ inline const std::array<Color, 7> RAINBOW_SHIMMER_COLORS = {
 }
 
 // ============================================================
-// Trigger detection helpers — mirror TS find*TriggerPositions
+// Trigger detection helpers
 // ============================================================
 
 /// A detected trigger position in the text.
-/// TS REF: thinking.ts:36-58 findThinkingTriggerPositions return type
 struct TriggerPosition {
     std::size_t start = 0;
     std::size_t end = 0;
 };
 
 /// Find all occurrences of a word-boundary keyword in the text.
-/// Mirrors TS findThinkingTriggerPositions / findBtwTriggerPositions.
-/// TS REF: thinking.ts:36-58, sideQuestion.ts:22-41
 [[nodiscard]] inline std::vector<TriggerPosition> find_keyword_triggers(
     std::string_view text,
     const std::string& keyword_pattern,
@@ -203,10 +171,9 @@ struct TriggerPosition {
 }
 
 /// Find "/btw" at the start of the text (case-insensitive, word boundary).
-/// TS REF: sideQuestion.ts:16 BTW_PATTERN = /^\/btw\b/gi
 [[nodiscard]] inline std::vector<TriggerPosition> find_btw_triggers(
     std::string_view text) {
-    // TS pattern: /^\/btw\b/gi — anchored to start, case-insensitive
+    // Pattern: /^\/btw\b/gi — anchored to start, case-insensitive
     std::vector<TriggerPosition> positions;
     if (text.empty()) return positions;
 
@@ -226,7 +193,6 @@ struct TriggerPosition {
 }
 
 /// Find /command patterns in the text: /word at start or after whitespace.
-/// TS REF: commandSuggestions.ts:552-567 findSlashCommandPositions
 ///   regex: /(^|[\s])(\/[a-zA-Z][a-zA-Z0-9:\-_]*)/g
 [[nodiscard]] inline std::vector<TriggerPosition> find_slash_command_triggers(
     std::string_view text) {
@@ -255,7 +221,6 @@ struct TriggerPosition {
 }
 
 /// Find token budget shorthand patterns: +500k, +2m, +1b at start or end.
-/// TS REF: tokenBudget.ts:1-8 (SHORTHAND_START_RE, SHORTHAND_END_RE)
 ///   /^\s*\+(\d+(?:\.\d+)?)\s*(k|m|b)\b/i
 ///   /\s\+(\d+(?:\.\d+)?)\s*(k|m|b)\s*[.!?]?\s*$/i
 [[nodiscard]] inline std::vector<TriggerPosition> find_token_budget_triggers(
@@ -308,7 +273,7 @@ struct TriggerPosition {
 }
 
 /// Find @name mentions matching known team members.
-/// TS REF: PromptInput.tsx:557 regex /(^|\s)@([\w-]+)/g
+/// Regex: /(^|\s)@([\w-]+)/g
 /// Returns vector of {start, end, color}.
 struct MentionHighlight {
     std::size_t start;
@@ -356,8 +321,6 @@ struct MentionHighlight {
 
 /// Build per-character rainbow highlights for a trigger word range.
 /// Each character gets its own TextHighlight with cycling rainbow colors.
-/// TS REF: PromptInput.tsx:686-698 (thinkTriggers loop), 700-713 (ultraplan),
-///         715-726 (ultrareview), 728-739 (buddy)
 inline void add_rainbow_shimmer_highlights(
     std::vector<TextHighlight>& highlights,
     const std::vector<TriggerPosition>& triggers) {
@@ -386,11 +349,8 @@ inline void add_rainbow_shimmer_highlights(
 ///
 /// Priority resolution is handled downstream by segment_text_by_highlights(),
 /// which sorts by (start, priority desc) and drops overlaps.  Here we simply
-/// push all detected highlights into the vector in source-priority order
-/// (matching TS push order is not semantically required since the segmenter
-/// re-sorts, but we keep the same order for auditability).
+/// push all detected highlights into the vector in source-priority order.
 ///
-/// TS REF: src/components/PromptInput/PromptInput.tsx:601-741
 [[nodiscard]] inline std::vector<TextHighlight> build_combined_highlights(
     const CombinedHighlightContext& ctx) {
 
@@ -400,7 +360,6 @@ inline void add_rainbow_shimmer_highlights(
     auto refs = parse_references(ctx.text);
 
     // ── 1. Image chip highlights (inverse when cursor at chip.start) ────
-    // TS REF: PromptInput.tsx:606-616
     // Invert the [Image #N] chip when the cursor is at chip.start (the
     // "selected" state) so backspace-to-delete is visually obvious.
     for (const auto& ref : refs) {
@@ -424,7 +383,6 @@ inline void add_rainbow_shimmer_highlights(
     }
 
     // ── 2. History search highlights ────────────────────────────────────
-    // TS REF: PromptInput.tsx:617-624
     // When navigating history and a match is found, highlight the query
     // portion of the displayed text.
     if (ctx.is_searching_history && ctx.history_match_found &&
@@ -433,7 +391,7 @@ inline void add_rainbow_shimmer_highlights(
         highlights.push_back(TextHighlight{
             .start = ctx.cursor_offset,
             .end = ctx.cursor_offset + query_len,
-            .color = Color::Yellow,   // TS 'warning' = yellow
+            .color = Color::Yellow,
             .dim = false,
             .inverse = false,
             .shimmer_color = std::nullopt,
@@ -442,13 +400,12 @@ inline void add_rainbow_shimmer_highlights(
     }
 
     // ── 3. Btw trigger highlights (solid yellow) ────────────────────────
-    // TS REF: PromptInput.tsx:627-634
     auto btw_triggers = find_btw_triggers(ctx.text);
     for (const auto& trigger : btw_triggers) {
         highlights.push_back(TextHighlight{
             .start = trigger.start,
             .end = trigger.end,
-            .color = Color::Yellow,   // TS 'warning' = yellow
+            .color = Color::Yellow,
             .dim = false,
             .inverse = false,
             .shimmer_color = std::nullopt,
@@ -457,13 +414,12 @@ inline void add_rainbow_shimmer_highlights(
     }
 
     // ── 4. Slash command highlights (blue) ──────────────────────────────
-    // TS REF: PromptInput.tsx:637-644
     auto slash_triggers = find_slash_command_triggers(ctx.text);
     for (const auto& trigger : slash_triggers) {
         highlights.push_back(TextHighlight{
             .start = trigger.start,
             .end = trigger.end,
-            .color = Color::Blue,     // TS 'suggestion' = blue
+            .color = Color::Blue,
             .dim = false,
             .inverse = false,
             .shimmer_color = std::nullopt,
@@ -472,14 +428,13 @@ inline void add_rainbow_shimmer_highlights(
     }
 
     // ── 5. Token budget highlights (blue) ───────────────────────────────
-    // TS REF: PromptInput.tsx:647-654
     if (ctx.token_budget_enabled) {
         auto budget_triggers = find_token_budget_triggers(ctx.text);
         for (const auto& trigger : budget_triggers) {
             highlights.push_back(TextHighlight{
                 .start = trigger.start,
                 .end = trigger.end,
-                .color = Color::Blue,   // TS 'suggestion' = blue
+                .color = Color::Blue,
                 .dim = false,
                 .inverse = false,
                 .shimmer_color = std::nullopt,
@@ -489,7 +444,6 @@ inline void add_rainbow_shimmer_highlights(
     }
 
     // ── 6. Member mention highlights (team member color) ─────────────────
-    // TS REF: PromptInput.tsx:665-672
     if (ctx.agent_swarms_enabled && !ctx.team_members.empty()) {
         auto mentions = find_member_mentions(ctx.text, ctx.team_members);
         for (const auto& mention : mentions) {
@@ -506,30 +460,25 @@ inline void add_rainbow_shimmer_highlights(
     }
 
     // ── 7. Rainbow shimmer highlights for ultrathink ────────────────────
-    // TS REF: PromptInput.tsx:686-698
     if (ctx.ultrathink_enabled) {
         auto think_triggers = find_keyword_triggers(ctx.text, "ultrathink");
         add_rainbow_shimmer_highlights(highlights, think_triggers);
     }
 
     // ── 8. Rainbow shimmer highlights for ultraplan ─────────────────────
-    // TS REF: PromptInput.tsx:700-713
     if (ctx.ultraplan_enabled) {
         auto ultraplan_triggers = find_keyword_triggers(ctx.text, "ultraplan");
         add_rainbow_shimmer_highlights(highlights, ultraplan_triggers);
     }
 
     // ── 9. Rainbow shimmer highlights for ultrareview ──────────────────
-    // TS REF: PromptInput.tsx:715-726
     if (ctx.ultrareview_enabled) {
         auto ultrareview_triggers = find_keyword_triggers(ctx.text, "ultrareview");
         add_rainbow_shimmer_highlights(highlights, ultrareview_triggers);
     }
 
     // ── 10. Rainbow shimmer highlights for /buddy ───────────────────────
-    // TS REF: PromptInput.tsx:728-739
     if (ctx.buddy_enabled) {
-        // TS pattern: /\/buddy\b/g
         try {
             std::regex re(R"(\/buddy\b)", std::regex::ECMAScript);
             std::string s(ctx.text);

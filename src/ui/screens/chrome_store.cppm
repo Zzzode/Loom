@@ -20,7 +20,7 @@ import std;
 
 export namespace loom::ui::repl_screen {
 
-/// Status bar projection.  Mirrors TS REPL top status line.
+/// Status bar projection.  Mirrors the REPL top status line.
 /// Moved here from repl_state.cppm in RFC 0002 F3 (ChromeStore shard).
 struct StatusBarData {
     std::string model_name;
@@ -42,12 +42,12 @@ struct StatusBarData {
 /// store landed, so it is not duplicated here. UI-thread-affined plain
 /// data — see the file header for the threading and import rules.
 struct ChromeStore {
-    /// Status bar projection (TS REPL top status line).
+    /// Status bar projection (REPL top status line).
     StatusBarData status_bar;
 
     // ── Welcome-header data (shown when messages is empty) ──────────────
     std::string model_display_name;
-    // TS LogoV2/CondensedLogo row 2 separator billing_type token (e.g.
+    // LogoV2/CondensedLogo row 2 separator billing_type token (e.g.
     // "API Usage Billing" / "Team Seat" / "Rate Limited").  Empty = row 2
     // shows only the model name without " · <billing>" suffix.
     std::string billing_type;
@@ -67,15 +67,15 @@ struct ChromeStore {
     // new). Empty vectors fall back to placeholders defined in RenderWelcomeHeader.
     std::vector<std::string> recent_activity_lines;
     std::vector<std::string> changelog_lines;
-    // TS REF: LogoV2.tsx L56 shouldShowProjectOnboarding() — when true, the
+    // When true, the
     // horizontal-layout feed column shows [ProjectOnboarding, RecentActivity]
     // instead of [RecentActivity, What'sNew].  Also prevents condensed mode
-    // (TS isCondensedMode = !hasReleaseNotes && !showOnboarding && !forceFull).
+    // (condensed = no release notes, no onboarding, no force-full).
     bool show_onboarding = false;
-    // TS REF: LogoV2.tsx L70 useShowGuestPassesUpsell() — when true and no
+    // When true and no
     // onboarding, feed shows [RecentActivity, GuestPasses] instead of default.
     bool show_guest_passes_upsell = false;
-    // TS REF: LogoV2.tsx L71 useShowOverageCreditUpsell() — when true and no
+    // When true and no
     // onboarding/guest-passes, feed shows [RecentActivity, OverageCredit].
     bool show_overage_credit_upsell = false;
 };

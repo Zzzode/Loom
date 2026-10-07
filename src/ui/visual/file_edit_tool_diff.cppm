@@ -1,9 +1,9 @@
 /// @file file_edit_tool_diff.cppm
-/// @brief Faithful port of FileEditToolDiff.tsx — renders a preview of a file
+/// @brief Renders a preview of a file
 ///        edit operation with structured diff hunks, word-level highlighting,
 ///        a dashed top/bottom frame, and ellipsis separators between hunks.
 ///
-/// Visual structure (matching TS):
+/// Visual structure:
 ///   ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄  (dashed separator, subtle color)
 ///   @@ -10,7 +10,7 @@ function foo() {      (hunk header, cyan)
 ///    function foo() {                      (context line, dim)
@@ -15,9 +15,7 @@
 ///   ...
 ///   ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄  (dashed separator)
 ///
-/// The component corresponds to the React component in
-///   src/components/FileEditToolDiff.tsx
-/// which composes:
+/// The component composes:
 ///   - DiffFrame         (dashed border wrapper)
 ///   - StructuredDiffList (hunks + "..." separators)
 ///   - StructuredDiff    (per-hunk color diff)
@@ -45,29 +43,28 @@ namespace fe = ::loom::utils::file_edit;
 
 // ─── Props / types ───────────────────────────────────────────────────────────
 
-/// Input props for FileEditToolDiff — matches TS FileEditToolDiffProps.
+/// Input props for FileEditToolDiff — matches FileEditToolDiffProps.
 struct FileEditToolDiffProps {
     std::string file_path;
     std::vector<fe::FileEdit> edits;
 };
 
-/// Computed diff data ready for rendering — matches TS DiffData.
+/// Computed diff data ready for rendering — matches DiffData.
 struct DiffData {
     std::vector<sd::StructuredPatchHunk> patch;
     std::optional<std::string> first_line;
     std::optional<std::string> file_content;
 };
 
-/// Subtle border color matching TS `subtle` theme token
+/// Subtle border color matching `subtle` theme token
 /// (rgb(175,175,175) in dark theme — mapped to ANSI gray-light).
 const Color kSubtleColor = Color::GrayLight;
 
 // ─── DiffFrame ───────────────────────────────────────────────────────────────
 /// Wraps content in a dashed top/bottom frame with subtle color.
-/// Mirrors TS:
-///   <Box borderColor="subtle" borderStyle="dashed" borderLeft={false} borderRight={false}>
-///     {placeholder ? <Text dimColor>…</Text> : children}
-///   </Box>
+/// Mirrors:
+///   Dashed top/bottom borders in subtle colour, no left/right borders.
+///   Placeholder shows dim "…", otherwise children.
 [[nodiscard]] Element diff_frame(Element content, bool placeholder = false) {
     auto top = separatorDashed() | color(kSubtleColor);
     auto bot = separatorDashed() | color(kSubtleColor);
@@ -85,8 +82,8 @@ const Color kSubtleColor = Color::GrayLight;
 
 // ─── StructuredDiffList ──────────────────────────────────────────────────────
 /// Renders a list of hunks with dimmed "..." separators between them.
-/// Mirrors TS StructuredDiffList which uses intersperse(hunks, …) with
-/// <Text dimColor>...</Text> separators.
+/// Mirrors StructuredDiffList which uses intersperse(hunks, …) with
+/// dim "..." separators.
 [[nodiscard]] Element structured_diff_list(
     const std::vector<sd::StructuredPatchHunk>& hunks,
     const sd::DiffSyntaxTheme& theme,
@@ -129,11 +126,11 @@ const Color kSubtleColor = Color::GrayLight;
     return vbox(std::move(elements));
 }
 
-// ─── Helpers: edit normalization (mirrors TS normalizeEdit) ──────────────────
+// ─── Helpers: edit normalization (mirrors normalizeEdit) ──────────────────
 
 /// Normalize an edit: find the actual old_string in file content (handling
 /// curly-quote normalization etc.) and preserve quote style in new_string.
-/// Mirrors TS normalizeEdit() in FileEditToolDiff.tsx.
+/// Mirrors normalizeEdit().
 [[nodiscard]] inline fe::FileEdit normalize_edit(
     std::string_view file_content,
     const fe::FileEdit& edit)
@@ -152,7 +149,7 @@ const Color kSubtleColor = Color::GrayLight;
 // ─── Diff data computation ───────────────────────────────────────────────────
 
 /// Compute structured patch hunks from file content + edits.
-/// Mirrors the core of TS loadDiffData() — the synchronous computation part.
+/// Mirrors the core of loadDiffData() — the synchronous computation part.
 /// Returns the structured diff hunks with word-level annotations, plus the
 /// first line of the file for shebang-based language detection.
 [[nodiscard]] inline std::expected<DiffData, std::string> compute_diff_data(
@@ -186,7 +183,7 @@ const Color kSubtleColor = Color::GrayLight;
         sh.old_lines = ph.old_lines;
         sh.new_start = ph.new_start;
         sh.new_lines = ph.new_lines;
-        // header: intentionally left empty (TS uses StructuredDiff which
+        // header: intentionally left empty (uses StructuredDiff which
         // generates the @@ line from start/line counts — we do the same via
         // RenderHunkHeader which builds it from old_start/old_lines/etc.)
 
@@ -233,7 +230,7 @@ const Color kSubtleColor = Color::GrayLight;
 // ─── Main entry point: render from file content + edits ─────────────────────
 
 /// Render the full FileEditToolDiff component from raw file content + edits.
-/// This is the synchronous equivalent of TS FileEditToolDiff (without Suspense).
+/// This is the synchronous equivalent of FileEditToolDiff (without Suspense).
 ///
 /// @param props        file_path + edits to show
 /// @param file_content current content of the file

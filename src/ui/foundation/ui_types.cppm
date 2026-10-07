@@ -1,12 +1,8 @@
 /// @file ui_types.cppm
 /// @brief Common UI type definitions and constants.
 ///
-/// Consolidates pure type/const exports from the following TS files
-/// (all <= 100 lines, no JSX rendering, no side effects):
-///   - Source: src/components/agents/types.ts (27 lines → merged here)
-///   - Source: src/components/Spinner/teammateSelectHint.ts (1 line → merged here)
-///   - Source: src/components/PromptInput/inputModes.ts (33 lines → merged here)
-///   - Source: src/components/messages/nullRenderingAttachments.ts (70 lines → merged here)
+/// Consolidates pure type/const exports (all <= 100 lines, no JSX
+/// rendering, no side effects).
 module;
 
 #include <cstdint>
@@ -24,12 +20,12 @@ import loom.vim.vim_types;
 export namespace loom::ui::common {
 
 // ============================================================
-// From: src/components/Spinner/teammateSelectHint.ts
+// Teammate select hint
 // ============================================================
 constexpr std::string_view kTeammateSelectHint = "shift + ↑/↓ to select";
 
 // ============================================================
-// From: src/components/agents/types.ts
+// Agent types
 // ============================================================
 namespace agents {
 
@@ -71,26 +67,25 @@ struct AgentValidationResult {
 } // namespace agents
 
 // ============================================================
-// From: src/components/PromptInput/inputModes.ts
-// Also: src/types/textInputTypes.ts (PromptInputMode type)
+// PromptInputMode
 //
 // UNIFIED CANONICAL ENUM — replaces incompatible definitions scattered
 // across the codebase (text_input.cppm, prompt_input_full.cppm,
 // prompt_input_footer.cppm, repl_screen.cppm,
 // and the previous 3-value stub here).
 //
-// TS REF: src/types/textInputTypes.ts:265 — TS PromptInputMode is only
+// PromptInputMode is only
 //   'bash' | 'prompt' | 'orphaned-permission' | 'task-notification' (4 values).
 // The CPP port historically mixed orthogonal concepts (vim mode, plan mode,
 // history search, prefix-triggered modes) into the same enum.  This unified
 // definition preserves the full union so existing switch statements compile,
-// but callers should treat vim/plan/search as LAYERED state (TS parity:
-// VimMode is a separate type, plan mode is a separate flag).
+// but callers should treat vim/plan/search as LAYERED state (VimMode is a
+// separate type, plan mode is a separate flag).
 // ============================================================
 enum class PromptInputMode {
-    Normal,             ///< Default prompt (TS: 'prompt').  Also used by
+    Normal,             ///< Default prompt.  Also used by
                         ///  modules that historically called this 'Prompt'.
-    Bash,               ///< Shell-first (leading '!').  TS: 'bash'.
+    Bash,               ///< Shell-first (leading '!').
     SlashCommand,       ///< Slash-command mode (leading '/').  text_input
                         ///  called this 'Command'.
     HistorySearch,      ///< Ctrl+R reverse history search.
@@ -102,20 +97,20 @@ enum class PromptInputMode {
     VimNormal,          ///< Vim normal mode.
     VimInsert,          ///< Vim insert mode.
     VimVisual,          ///< Vim visual mode.
-    OrphanedPermission, ///< Orphaned permission prompt.  TS: 'orphaned-permission'.
-    TaskNotification,   ///< Task notification overlay.  TS: 'task-notification'.
+    OrphanedPermission, ///< Orphaned permission prompt.
+    TaskNotification,   ///< Task notification overlay.
     FastMode,           ///< Fast mode (CPP extension).
     Search,             ///< Generic search mode (text_input.cppm used this
                         ///  separately from HistorySearch).
 };
 
-// NOTE: inputModes.ts helpers (prependModeCharacterToInput, getModeFromInput,
+// NOTE: prompt-mode helpers (prependModeCharacterToInput, getModeFromInput,
 // getValueFromInput, isInputModeCharacter) live in loom::ui::design::figures —
 // that module is the single source of truth for prompt-prefix glyphs and
 // mode-detection utilities.  See figures.cppm PromptMode enum + 4 functions.
 
 // ============================================================
-// From: src/components/messages/nullRenderingAttachments.ts
+// Null-rendering attachment types
 // ============================================================
 namespace attachment_filter {
 
@@ -157,7 +152,7 @@ constexpr std::array<std::string_view, 49> kNullRenderingTypes = {{
     "current_session_memory",
     "compaction_reminder",
     "date_change",
-    // Extra entries to maintain parity with TS array length:
+    // Extra entries to maintain array-length parity:
     "agent_invite",
     "session_state",
     "permission_prompt",
@@ -185,8 +180,7 @@ constexpr std::array<std::string_view, 49> kNullRenderingTypes = {{
 } // namespace attachment_filter
 
 // ============================================================
-// From: src/components/PromptInput/PromptInputFooter.tsx (PermissionMode)
-// From: src/types/queryOptions.ts (EffortLevel)
+// PermissionMode + EffortLevel
 //
 // UNIFIED CANONICAL ENUMS — previously duplicated in:
 //   - prompt_input_full.cppm (PermissionMode + EffortLevel)
@@ -194,7 +188,6 @@ constexpr std::array<std::string_view, 49> kNullRenderingTypes = {{
 // ============================================================
 
 /// Permission mode for tool execution.
-/// TS REF: src/types/Tool.ts — ToolPermissionContext.mode
 enum class PermissionMode {
     Default,        ///< default — confirm each tool use
     AcceptEdits,    ///< 🔓 auto-accept file edits
@@ -203,7 +196,6 @@ enum class PermissionMode {
 };
 
 /// Effort level for query execution.
-/// TS REF: src/types/queryOptions.ts — effort option
 enum class EffortLevel {
     Low,
     Medium,
@@ -223,10 +215,6 @@ enum class EffortLevel {
 //   - src/vim/vim_mode.cppm (6 values)
 //   - src/hooks/vim_input.cppm (5 values)
 //   - src/ui/components/text_input.cppm (bool enable_vim)
-//
-// TS REF: src/types/textInputTypes.ts:222 — public VimMode type is
-//   'INSERT' | 'NORMAL'.  Internal state machine tracks richer modes.
-// TS REF: src/hooks/useVimInput.ts:36 — mode starts at 'INSERT'.
 // ============================================================
 using loom::vim::VimMode;
 using loom::vim::is_editing_mode;

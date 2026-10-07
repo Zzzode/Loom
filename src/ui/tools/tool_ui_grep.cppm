@@ -1,14 +1,8 @@
 /// @file tool_ui_grep.cppm
-/// @brief Grep tool UI — userFacingName, renderToolUseMessage, etc.
+/// @brief Grep tool UI — user-facing name, tool-use message rendering, etc.
 ///
 /// MODULE:   loom.ui.tools.grep
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
-///
-/// TS REFERENCE:
-///   src/tools/GrepTool/GrepTool.tsx
-///   - userFacingName: "Search"
-///   - renderToolUseMessage: pattern + path summary
-///   - isTransparentWrapper: false
 module;
 
 
@@ -125,9 +119,6 @@ namespace detail {
 
     fns.is_transparent_wrapper = false;
 
-    // TS REF: GrepTool.ts L250  extractSearchText({mode, content, filenames})
-    //   if (mode === 'content' && content) return content
-    //   return filenames.join('\n')
     // SearchResultSummary shows content (mode=content) or filenames.join.
     // numFiles/numLines/numMatches are chrome — fine to skip.
     fns.extract_search_text = [](

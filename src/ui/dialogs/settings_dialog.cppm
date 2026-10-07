@@ -1,8 +1,8 @@
 /// @file settings_dialog.cppm
 /// @brief Settings interface with tabbed navigation (General, Model, API,
 /// Permissions, Tools, MCP, LSP, Bridge, Hooks, Privacy, About, Status, Usage).
-/// Migrated from Settings.tsx, Config.tsx, Status.tsx. Config read/write is
-/// delegated 100% to ConfigManager (loom.config.config) — no direct JSON I/O.
+/// Config read/write is delegated 100% to ConfigManager (loom.config.config)
+/// — no direct JSON I/O.
 module;
 
 #include <ctime>
@@ -868,17 +868,17 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 
 [[nodiscard]] inline Element RenderAboutTab() {
     return vbox({
-        RenderTabHeader("About", "Loom native migration"),
+        RenderTabHeader("About", "Loom native"),
         SettingRow(
             "Runtime",
             text(" C++23 modules ") | color(Color::Cyan),
-            "Native CLI implementation with CMake/CTest migration gates",
+            "Native CLI implementation with CMake/CTest gates",
             false,
             false),
         SettingRow(
             "Version",
             text(" 1.0.0 ") | color(Color::Yellow),
-            "Project version from cpp_migration/CMakeLists.txt",
+            "Project version from CMakeLists.txt",
             false,
             false),
     });

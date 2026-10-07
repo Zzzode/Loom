@@ -52,6 +52,14 @@ function(loom_test_target_enable_modules _name)
     endif()
 endfunction()
 
+# Custom test main: scrubs terminal-identifying env vars (TERM_PROGRAM,
+# LC_TERMINAL, WT_SESSION, VTE_VERSION) so golden snapshots are deterministic
+# across developer machines — OSC 8 hyperlink emission is gated on these.
+# Golden binaries link this instead of GTest::gtest_main.
+add_library(loom_test_main STATIC loom_test_main.cpp)
+target_link_libraries(loom_test_main PUBLIC GTest::gtest)
+set_target_properties(loom_test_main PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+
 
 add_executable(test_utils
     test_utils.cpp
@@ -220,7 +228,8 @@ set(_ui_test_libs
     PRIVATE
         loom_core
         loom_ui           # defense-in-depth: UI modules must be discoverable
-        GTest::gtest_main
+        GTest::gtest
+        loom_test_main    # deterministic terminal env for golden snapshots
 )
 
 add_executable(test_ui_light test_ui_light.cpp test_ui_helpers.h)
@@ -247,6 +256,106 @@ target_link_libraries(test_ui_dialogs ${_ui_test_libs})
 gtest_discover_tests(test_ui_dialogs DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 # ---------------------------------------------------------------------------
+# RFC 0003: streaming payload replay harness smoke tests. Loads JSONL event
+# fixtures, injects them into AppAdapter's event handler via test seams, and
+# verifies the harness produces checkpoint snapshots. Golden comparison is
+# Phase 2; Phase 1 only asserts the harness runs end-to-end.
+# ---------------------------------------------------------------------------
+add_executable(test_streaming_replay test_streaming_replay.cpp)
+target_link_libraries(test_streaming_replay ${_ui_test_libs})
+gtest_discover_tests(test_streaming_replay DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# ---------------------------------------------------------------------------
+# RFC 0003 Phase 4: App-side E2E tests migrated to fixture-driven streaming
+# replay. Each test loads a JSONL fixture, injects events into AppAdapter's
+# event handler via test seams, and asserts on the rendered screen via golden
+# snapshots + targeted substring checks. Replaces the slow HTTP-mock-server
+# E2E tests that exercised the same App-side rendering paths.
+# ---------------------------------------------------------------------------
+add_executable(test_streaming_migration test_streaming_migration.cpp)
+target_link_libraries(test_streaming_migration ${_ui_test_libs})
+gtest_discover_tests(test_streaming_migration DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# ---------------------------------------------------------------------------
+# CommonMark 0.31.2 + GFM conformance suites against the markdown parser's
+# HTML serializer (render_markdown_to_html).  Fixtures: 652 CommonMark +
+# 672 GFM-core + 30 GFM-extension examples under tests/fixtures/.  Floors
+# in the test file are the baseline; they catch regressions, and get raised
+# as parser fixes land.
+# ---------------------------------------------------------------------------
+add_executable(test_markdown_conformance test_markdown_conformance.cpp)
+target_link_libraries(test_markdown_conformance
+    PRIVATE
+        loom_ui
+        loom_utils
+        GTest::gtest
+        # No loom_test_main: this test has its own main() to support
+        # --conformance-json <path> for the HTML dashboard.
+)
+gtest_discover_tests(test_markdown_conformance DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# ---------------------------------------------------------------------------
+# FTXUI terminal renderer tests for the markdown module.  The conformance
+# suite above tests the HTML serializer; this tests the production renderer
+# the terminal UI uses (character swallowing, line wrapping, CJK width).
+# ---------------------------------------------------------------------------
+add_executable(test_markdown_render test_markdown_render.cpp)
+target_link_libraries(test_markdown_render
+    PRIVATE
+        loom_ui
+        loom_utils
+        GTest::gtest
+        loom_test_main
+)
+gtest_discover_tests(test_markdown_render DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# ---------------------------------------------------------------------------
+# Text-content property tests for the FTXUI terminal renderer, driven by the
+# CommonMark + GFM conformance fixtures.  Verifies the renderer doesn't drop
+# or mangle content (word-level containment, not exact match).
+# ---------------------------------------------------------------------------
+add_executable(test_markdown_render_conformance test_markdown_render_conformance.cpp)
+target_link_libraries(test_markdown_render_conformance
+    PRIVATE
+        loom_ui
+        loom_utils
+        GTest::gtest
+        loom_test_main
+)
+gtest_discover_tests(test_markdown_render_conformance DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# ---------------------------------------------------------------------------
+# Style and layout tests for the FTXUI terminal markdown renderer.  Layer 2
+# (style) verifies bold/dim/hyperlink/strikethrough/color flags via PixelAt;
+# Layer 3 (layout) verifies wrapping, indentation, blockquote borders, code
+# block non-wrapping, and table alignment.
+# ---------------------------------------------------------------------------
+add_executable(test_markdown_render_styles test_markdown_render_styles.cpp)
+target_link_libraries(test_markdown_render_styles
+    PRIVATE
+        loom_ui
+        loom_utils
+        GTest::gtest
+        loom_test_main
+)
+gtest_discover_tests(test_markdown_render_styles DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# ---------------------------------------------------------------------------
+# Layer 5: golden file snapshot tests for the FTXUI terminal markdown renderer.
+# Exact-match snapshots (ANSI-stripped) of each construct at 80 columns.
+# Regenerate with: LOOM_UPDATE_SNAPSHOTS=1 ctest -R MarkdownRenderSnapshot
+# ---------------------------------------------------------------------------
+add_executable(test_markdown_render_snapshot test_markdown_render_snapshot.cpp)
+target_link_libraries(test_markdown_render_snapshot
+    PRIVATE
+        loom_ui
+        loom_utils
+        GTest::gtest
+        loom_test_main
+)
+gtest_discover_tests(test_markdown_render_snapshot DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# ---------------------------------------------------------------------------
 # M7 Dialog #1 (ToolPermission) renderer + event handler regression suite.
 # Faithful-port contract: keyboard mapping, golden chrome, and queue
 # suppression policy are all covered here so any UI drift is caught in CI.
@@ -256,7 +365,8 @@ target_link_libraries(test_dialog_toolpermission
     PRIVATE
         loom_core
         loom_ui
-        GTest::gtest_main
+        GTest::gtest
+        loom_test_main
 )
 gtest_discover_tests(test_dialog_toolpermission
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -271,7 +381,8 @@ target_link_libraries(test_dialog_system
     PRIVATE
         loom_core
         loom_ui                  # cc.ui.dialogs.* + cc.ui.design.theme
-        GTest::gtest_main
+        GTest::gtest
+        loom_test_main
 )
 loom_test_target_enable_modules(test_dialog_system)
 gtest_discover_tests(test_dialog_system
@@ -404,7 +515,8 @@ target_link_libraries(test_sdk_control_golden
     PRIVATE
         loom_core            # cc.server.server_main + cc.bridge.bridge_messaging BMIs
         loom_utils           # cc.serdes.json
-        GTest::gtest_main
+        GTest::gtest
+        loom_test_main
 )
 gtest_discover_tests(test_sdk_control_golden
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -689,6 +801,8 @@ foreach(_loom_test IN ITEMS
     test_ui_messages
     test_ui_runtime
     test_ui_dialogs
+    test_streaming_replay
+    test_streaming_migration
     test_dialog_system
     test_f2_composition_root
     test_tasks

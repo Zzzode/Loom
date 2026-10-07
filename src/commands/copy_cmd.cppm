@@ -169,6 +169,40 @@ struct CopyTarget {
 };
 
 // ============================================================
+// OSC 52 clipboard (shared utility)
+// ============================================================
+
+/// Copy text to the terminal clipboard via OSC 52 escape sequence.
+/// Works in most modern terminals, including over SSH.  Extracted from
+/// CopyCommand::copy_osc52 so that drag-to-select (app_autocomplete.cpp)
+/// can reuse the same base64 + escape-sequence logic.
+inline VoidResult copy_to_clipboard_osc52(std::string_view content) {
+    static constexpr std::array<char, 64> b64_table = {
+        'A','B','C','D','E','F','G','H','I','J','K','L','M',
+        'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+        'a','b','c','d','e','f','g','h','i','j','k','l','m',
+        'n','o','p','q','r','s','t','u','v','w','x','y','z',
+        '0','1','2','3','4','5','6','7','8','9','+','/'
+    };
+    std::string b64;
+    b64.reserve(((content.size() + 2) / 3) * 4);
+    auto src = reinterpret_cast<const unsigned char*>(content.data());
+    auto len = content.size();
+    for (std::size_t i = 0; i < len; i += 3) {
+        uint32_t triple = static_cast<uint32_t>(src[i]) << 16;
+        if (i + 1 < len) triple |= static_cast<uint32_t>(src[i + 1]) << 8;
+        if (i + 2 < len) triple |= static_cast<uint32_t>(src[i + 2]);
+        b64 += b64_table[(triple >> 18) & 0x3F];
+        b64 += b64_table[(triple >> 12) & 0x3F];
+        b64 += (i + 1 < len) ? b64_table[(triple >> 6) & 0x3F] : '=';
+        b64 += (i + 2 < len) ? b64_table[triple & 0x3F] : '=';
+    }
+    std::fprintf(stdout, "\033]52;c;%s\a", b64.c_str());
+    std::fflush(stdout);
+    return {};
+}
+
+// ============================================================
 // CopyCommand
 // ============================================================
 
@@ -387,29 +421,7 @@ private:
     }
 
     [[nodiscard]] static VoidResult copy_osc52(const std::string& content) {
-        static constexpr std::array<char, 64> b64_table = {
-            'A','B','C','D','E','F','G','H','I','J','K','L','M',
-            'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-            'a','b','c','d','e','f','g','h','i','j','k','l','m',
-            'n','o','p','q','r','s','t','u','v','w','x','y','z',
-            '0','1','2','3','4','5','6','7','8','9','+','/'
-        };
-        std::string b64;
-        b64.reserve(((content.size() + 2) / 3) * 4);
-        auto src = reinterpret_cast<const unsigned char*>(content.data());
-        auto len = content.size();
-        for (std::size_t i = 0; i < len; i += 3) {
-            uint32_t triple = static_cast<uint32_t>(src[i]) << 16;
-            if (i + 1 < len) triple |= static_cast<uint32_t>(src[i + 1]) << 8;
-            if (i + 2 < len) triple |= static_cast<uint32_t>(src[i + 2]);
-            b64 += b64_table[(triple >> 18) & 0x3F];
-            b64 += b64_table[(triple >> 12) & 0x3F];
-            b64 += (i + 1 < len) ? b64_table[(triple >> 6) & 0x3F] : '=';
-            b64 += (i + 2 < len) ? b64_table[triple & 0x3F] : '=';
-        }
-        std::fprintf(stdout, "\033]52;c;%s\a", b64.c_str());
-        std::fflush(stdout);
-        return {};
+        return copy_to_clipboard_osc52(content);
     }
 
     [[nodiscard]] static VoidResult copy_native(const std::string& content) {

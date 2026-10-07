@@ -66,7 +66,6 @@ namespace json = loom::utils::json;
     // team_create (not just the --team-name launch flag); without this,
     // the live teammate projection / pane observer / leader permission
     // inbox never activate because get_team_name() stays empty.
-    // TS REF: TeamCreateTool sets setLeaderTeamName + AppState.teamContext.
     if (std::getenv("LOOM_TEAM_NAME") == nullptr &&
         !(*result)->name.empty()) {
         ::setenv("LOOM_TEAM_NAME", (*result)->name.c_str(), 1);

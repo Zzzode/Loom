@@ -760,7 +760,7 @@ struct PluginDialogComponent : public ComponentBase {
     auto state = std::make_shared<PluginDialogState>();
     state->inputs = std::move(inputs);
     state->active_kind = state->inputs.initial_view.kind;
-    // TS reference has no 5-card dashboard — it goes straight to tab navigation.
+    // No 5-card dashboard — goes straight to tab navigation.
     // Normalize legacy menu view-kinds to the Discover tab.
     if (state->active_kind == ViewKind::Menu) {
         state->active_kind = ViewKind::DiscoverPlugins;

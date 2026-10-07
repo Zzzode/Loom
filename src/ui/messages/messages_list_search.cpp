@@ -147,7 +147,6 @@ namespace search_detail {
 
 /// Extract a string field value from a JSON object string.
 /// Lightweight — no full JSON parser needed for known field names.
-/// TS REF: transcriptSearch.ts toolUseSearchText() — extracts known input fields.
 [[nodiscard]] std::string extract_json_field(
     std::string_view json, std::string_view field_name)
 {
@@ -173,9 +172,8 @@ namespace search_detail {
 }
 
 /// Extract searchable text from a tool-use input JSON string.
-/// Mirrors TS toolUseSearchText() — known field names that renderToolUseMessage
-/// shows as the primary argument (command, pattern, file_path, etc.).
-/// TS REF: src/utils/transcriptSearch.ts L134-164  toolUseSearchText(input)
+/// Known field names that render as the primary argument (command, pattern,
+/// file_path, etc.).
 [[nodiscard]] std::string tool_use_search_text(std::string_view input_json) {
     if (input_json.empty()) return {};
     const std::string_view known_fields[] = {
@@ -197,7 +195,7 @@ namespace search_detail {
             result += val;
         }
     }
-    // Also try to extract arrays (args[], files[]) — TS joins with space.
+    // Also try to extract arrays (args[], files[]) — joined with space.
     const std::string_view array_fields[] = {
         "\"args\"",   // Tmux, Tungsten
         "\"files\"",  // SendUserFile
@@ -237,8 +235,7 @@ namespace search_detail {
 /// results (file contents, bash output, grep matches) for search matching.
 /// Falls back to payload_preview() for non-tool message types.
 ///
-/// TS REF: src/components/Messages.tsx L650-676
-///   2-tier: renderableSearchText(msg) then tool.extractSearchText?(out)
+/// 2-tier: payload_preview() then tool-owned extract_search_text.
 ///
 /// @param p       The message row payload variant.
 /// @param shape   The message shape (for dispatch optimization).
@@ -250,8 +247,8 @@ namespace search_detail {
     using S = MessageShape;
 
     // ── Tool RESULT messages (UserToolResult) ──────────────────────────
-    // TS: if msg.type === 'user' && msg.toolUseResult, look up tool by name
-    // and call tool.extractSearchText(out).  Prefer that over the heuristic.
+    // For tool result messages, look up the tool by name and call its
+    // extract_search_text.  Prefer that over the heuristic.
     if (shape == S::UserToolResult) {
         if (auto* opts = std::get_if<::loom::ui::messages::ToolResultOptions>(&p)) {
             // Build the rich output text from ToolResultOptions fields.
@@ -276,7 +273,7 @@ namespace search_detail {
                     : std::string_view{};
 
             // Tier 2: try tool-owned extractSearchText from registry.
-            // TS REF: Messages.tsx L660-666  findRenderableToolByName + extractSearchText
+            // Try tool-owned extract_search_text from registry.
             const auto& reg = loom::ui::tools::global_tool_ui_registry();
             const auto* ui = reg.find(opts->tool_name);
             if (ui && ui->extract_search_text) {
@@ -302,7 +299,7 @@ namespace search_detail {
     }
 
     // ── Tool USE messages (AssistantToolUse, AssistantGroupedTools) ────
-    // TS: toolUseSearchText(b.input) — extracts command/pattern/path from
+    // Extract command/pattern/path from
     // the tool's input JSON so users can search for "grep" or "file_path".
     if (shape == S::AssistantToolUse) {
         if (auto* opts = std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(&p)) {
@@ -333,7 +330,7 @@ namespace search_detail {
     }
 
     // ── Bash I/O (UserBashInput, UserBashOutput) ───────────────────────
-    // TS: user message content blocks include bash stdin/stdout as text.
+    // User message content blocks include bash stdin/stdout as text.
     if (shape == S::UserBashInput || shape == S::UserBashOutput) {
         if (auto* entry = std::get_if<BashIOEntry>(&p)) {
             return entry->content;
@@ -357,19 +354,19 @@ namespace search_detail {
     }
 
     // ── Thinking messages ──────────────────────────────────────────────
-    // TS: thinking blocks are hidden by hidePastThinking in transcript mount.
+    // Thinking blocks are hidden by hidePastThinking in transcript mount.
     // Only index thinking when it's the active streaming tail (not past).
     if (shape == S::AssistantThinking || shape == S::AssistantRedactedThinking) {
         if (auto* opts = std::get_if<thinking_message::ThinkingMessageOptions>(&p)) {
             using TM = thinking_message::ThinkingState;
             if (opts->data.state == TM::Complete) {
                 // Completed thinking is hidden in transcript — don't index it
-                // (TS: hidePastThinking = true for completed blocks).
+                // (hidePastThinking = true for completed blocks).
                 return {};
             }
             // Active thinking: index the thinking text so users can search
             // for what the model is currently thinking about.
-            // TS: thinking blocks contain text content that users may want to find.
+            // Thinking blocks contain text content that users may want to find.
             std::string thinking_text = opts->data.raw_text;
             for (const auto& section : opts->data.sections) {
                 if (!section.content.empty()) {

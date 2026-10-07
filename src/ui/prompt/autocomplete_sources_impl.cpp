@@ -53,8 +53,6 @@ std::vector<SkillSuggestionData> collect_skill_suggestions(std::string_view cwd)
     // Use the unified SkillRegistry which merges bundled + statically-loaded
     // (managed/user/project/additional-dir/legacy-commands) + dynamically-
     // discovered skills from get_skill_dir_commands() + get_dynamic_skills().
-    // TS REF: src/ui/components/Autocomplete.tsx uses getSkillDirCommands()
-    //          + bundled skills for the unified skill picker.
     auto& registry = loom::skills::SkillRegistry::instance();
     auto all_skills = registry.all_skills(fs::path(std::string(cwd)));
 
@@ -119,9 +117,9 @@ std::string skill_invocation_prompt(
     const SkillSuggestionData& skill,
     std::string_view user_text) {
     // SL-12: inline-substitute the $ARGUMENTS placeholder with the user's args,
-    // faithful to TS skill invocation — skill content declares $ARGUMENTS where
-    // the user's input should flow in. When present, the args are inlined and
-    // no separate "User request" block is appended.
+    // skill content declares $ARGUMENTS where the user's input should flow
+    // in. When present, the args are inlined and no separate "User request"
+    // block is appended.
     std::string content = skill.content;
     bool has_placeholder = false;
     const std::string args(user_text);
@@ -246,13 +244,12 @@ std::vector<McpResourceSuggestionData> collect_mcp_resource_suggestions() {
 // ============================================================
 // Agent / teammate autocomplete source
 // ============================================================
-// TS REF: src/hooks/unifiedSuggestions.ts:77-108 — generateAgentSuggestions()
-//   builds AgentSuggestionSource[] from AgentDefinition[] with color +
-//   truncated whenToUse description.  Filtered by case-insensitive substring
-//   match on agentType or displayText.
-// TS REF: src/hooks/useTypeahead.tsx:604-625 — DM teammate suggestions from
-//   state.teamContext.teammates + state.agentNameRegistry, prefix-matched on
-//   lowercased name, with status appended to description.
+// generateAgentSuggestions() builds AgentSuggestionSource[] from
+// AgentDefinition[] with color + truncated when_to_use description.  Filtered
+// by case-insensitive substring match on agent type or display text.
+// DM teammate suggestions from the teammate context and
+// agent-name registry, prefix-matched on lowercased name, with status
+// appended to description.
 std::vector<AgentSuggestionData> collect_agent_suggestions(std::string_view cwd) {
     std::vector<AgentSuggestionData> result;
     std::unordered_set<std::string> seen_names;
@@ -265,7 +262,7 @@ std::vector<AgentSuggestionData> collect_agent_suggestions(std::string_view cwd)
         if (agent.agent_type.empty()) continue;
         if (!seen_names.insert(agent.agent_type).second) continue;
 
-        // Truncate description to ~60 chars, matching TS truncateDescription.
+        // Truncate description to ~60 chars.
         std::string desc = agent.when_to_use;
         if (desc.size() > 60) {
             desc = desc.substr(0, 57) + "...";
@@ -297,8 +294,8 @@ std::vector<AgentSuggestionData> collect_agent_suggestions(std::string_view cwd)
     }
 
     // (2) Native agent records (live teammates / named sub-agents)
-    // TS REF: useTypeahead.tsx:616-625 — named agents from agentNameRegistry
-    //   show "send message · <status>" description.
+    // Named agents from the agent-name registry show "send message · <status>"
+    // description.
     for (const auto& record : agent_runtime::load_all_native_agent_records()) {
         auto name = record.name.value_or(record.agent_id);
         if (name.empty()) continue;
@@ -321,7 +318,7 @@ std::vector<AgentSuggestionData> collect_agent_suggestions(std::string_view cwd)
         });
     }
 
-    // Sort: teammates first (they're the DM priority per TS useTypeahead.tsx
+    // Sort: teammates first (they're the DM priority).
     // AT-05 bare-@ teammate exclusivity), then alphabetically by name.
     std::ranges::sort(result, [](const auto& a, const auto& b) {
         if (a.is_subagent != b.is_subagent) return a.is_subagent > b.is_subagent;
@@ -336,9 +333,8 @@ std::vector<AgentSuggestionData> collect_agent_suggestions(std::string_view cwd)
 // ============================================================
 namespace {
 
-// TS REF: src/history.ts:115 — history stored at {getConfigHomeDir()}/history.jsonl
-//   We use ~/.loom/history.jsonl to match the CPP migration's data layout
-//   (sessions/, dump-prompts/ etc. already live under ~/.loom/).
+// History stored at ~/.loom/history.jsonl (sessions/, dump-prompts/ etc.
+// already live under ~/.loom/).
 [[nodiscard]] fs::path prompt_history_file_path() {
     if (const char* env = std::getenv("LOOM_HISTORY_FILE"); env && *env) {
         return fs::path{env};
@@ -349,8 +345,8 @@ namespace {
     return fs::path{".loom"} / "history.jsonl";
 }
 
-// TS REF: src/history.ts:219-225 — LogEntry { display, pastedContents, timestamp,
-//   project, sessionId }.  We keep a minimal subset for the autocomplete source.
+// LogEntry { display, pastedContents, timestamp, project, sessionId }.
+// We keep a minimal subset for the autocomplete source.
 struct PromptHistoryEntry {
     std::string display;       // first line of prompt (for display)
     std::string full_text;     // complete prompt text
@@ -400,15 +396,15 @@ struct PromptHistoryEntry {
 }
 
 // Read the history JSONL file in reverse (newest-first), yielding parsed
-// entries.  Faithful to TS readLinesReverse() pattern.
+// entries.
 [[nodiscard]] std::vector<PromptHistoryEntry> read_history_recent(std::size_t max_entries) {
     const auto path = prompt_history_file_path();
     std::error_code ec;
     if (!fs::exists(path, ec) || !fs::is_regular_file(path, ec)) return {};
 
-    // TS REF: src/utils/fsOperations.ts:722 — readLinesReverse reads in 4KB
-    // chunks from the end.  For simplicity we read the whole file and reverse
-    // iterate; prompt history is capped at a few KB so this is fine.
+    // readLinesReverse reads in 4KB chunks from the end.  For simplicity we
+    // read the whole file and reverse iterate; prompt history is capped at
+    // a few KB so this is fine.
     std::ifstream ifs(path);
     if (!ifs) return {};
 
@@ -462,7 +458,7 @@ void append_prompt_history(
         std::chrono::system_clock::now().time_since_epoch()).count();
 
     // Build JSON line manually to avoid heavy JSON doc construction.
-    // TS REF: src/history.ts — JSONL format with escaped display text.
+    // JSONL format with escaped display text.
     auto escape_json = [](std::string_view s) -> std::string {
         std::string out;
         out.reserve(s.size() + 8);
@@ -487,10 +483,9 @@ void append_prompt_history(
         escape_json(std::string(session_id)),
         escape_json(std::string(project_path)));
 
-    // TS REF: src/history.ts:308-314 — file lock protects concurrent writes.
-    // We use a simple static mutex for in-process serialization; cross-process
-    // locking is out of scope for the migration (matches the CPP "best-effort"
-    // approach used elsewhere for file writes).
+    // File lock protects concurrent writes.  We use a simple static mutex
+    // for in-process serialization; cross-process locking is out of scope
+    // (matches the "best-effort" approach used elsewhere for file writes).
     static std::mutex write_mu;
     std::lock_guard lk(write_mu);
 
@@ -499,20 +494,52 @@ void append_prompt_history(
     ofs << json_line << '\n';
 }
 
-// TS REF: src/history.ts:190-228 — getHistory() yields entries for the current
-//   project only, current session first, then other sessions, newest-first,
-//   deduped by display, capped at MAX_HISTORY_ITEMS (100).
-// TS REF: src/hooks/useHistorySearch.ts:73-117 — search does a case-sensitive
-//   substring match via lastIndexOf.  We use case-insensitive to match the
-//   user expectation of a search box (TS's case-sensitivity is arguably a bug
-//   — the HistorySearchDialog uses case-insensitive matching).
+// Load recent prompt texts for the given project, oldest-first (chronological).
+// read_history_recent returns newest-first, so we collect then reverse to
+// match input_history's expected order (oldest at front, newest at back —
+// up arrow navigates from back to front).  No dedup: the same prompt typed
+// in different sessions (or multiple times in the same session) appears as
+// multiple entries, matching user expectation that Up-arrow recall shows
+// the full history.
+std::vector<std::string> load_recent_prompt_texts(
+    std::string_view project_path,
+    std::size_t max_entries)
+{
+    // Read all entries — read_history_recent already loads the entire file
+    // into memory, and a small batch (max_entries * 2) can miss the current
+    // project's entries when many newer entries from other projects (e.g.
+    // test runs in temp directories) fill the batch.
+    auto entries = read_history_recent(std::numeric_limits<std::size_t>::max());
+
+    std::vector<std::string> result;
+    result.reserve(std::min(max_entries, entries.size()));
+
+    // read_history_recent returns newest-first; collect matching entries.
+    for (const auto& entry : entries) {
+        if (!project_path.empty() && entry.project != project_path) continue;
+        result.push_back(entry.full_text);
+        if (result.size() >= max_entries) break;
+    }
+
+    // Reverse to oldest-first (chronological) for input_history.
+    std::reverse(result.begin(), result.end());
+    return result;
+}
+
+// getHistory() yields entries for the current project only, current session
+// first, then other sessions, newest-first, deduped by display, capped at
+// MAX_HISTORY_ITEMS (100).
+// Search does a case-sensitive substring match via lastIndexOf.  We use
+// case-insensitive to match the user expectation of a search box (the
+// HistorySearchDialog uses case-insensitive matching).
 std::vector<HistorySuggestionData> collect_history_suggestions(
     std::string_view query,
     std::size_t max_entries)
 {
-    // Read a generous batch from disk so we can filter + dedup.
-    constexpr std::size_t kReadBatch = 200;
-    auto entries = read_history_recent(kReadBatch);
+    // Read all entries — same rationale as load_recent_prompt_texts:
+    // a small batch can miss the current project's entries when newer
+    // entries from other projects fill the batch.
+    auto entries = read_history_recent(std::numeric_limits<std::size_t>::max());
 
     // Build lowercase query once.
     std::string query_lower;
@@ -551,7 +578,7 @@ std::vector<HistorySuggestionData> collect_history_suggestions(
             }
         }
 
-        // Dedup by display text (TS getHistory dedup semantics).
+        // Dedup by display text.
         if (!seen_display.insert(entry.display).second) continue;
 
         result.push_back(HistorySuggestionData{

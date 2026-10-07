@@ -153,7 +153,7 @@ requires requires (PayloadT& x) {
 } && (!requires (PayloadT& x) { x.initial_sandbox_toggle; })
 {
     // ── Focus navigation (ArrowUp/Down, j/k) ──────────────────────────────
-    // TS parity: the bottom-slot SandboxPermission dialog has selectable
+    // The bottom-slot SandboxPermission dialog has selectable
     // options (Yes / YesAlways / No) navigable via arrow keys and Vim
     // hjkl.  focused_index tracks which option is highlighted; Enter
     // confirms the focused option.

@@ -407,7 +407,6 @@ private:
                 );
             }
 
-            // TS REF: src/tools/FileReadTool/FileReadTool.ts L579-590
             // After reading a file, discover any skill directories it belongs to
             // and activate conditional skills matching its path.
             auto discover_skills_for_file = [&]() {

@@ -1,7 +1,6 @@
 // loom.services.mcp.at_mention_handler — inbound "at_mentioned" notification
-// dispatch. Faithful counterpart of TS useIdeAtMentioned.ts, which registers
-// a notification handler on the IDE MCP client. In C++ the single inbound
-// dispatch path lives in McpConnectionManager::handle_server_notification
+// dispatch. The single inbound dispatch path lives in
+// McpConnectionManager::handle_server_notification
 // (services/mcp/connection_manager.cppm); when it sees method == "at_mentioned"
 // it calls dispatch_at_mention() here, which forwards to whichever UI
 // responder has been registered. The responder is set by AppAdapter
@@ -9,9 +8,9 @@
 // AppAdapter's mutex-guarded pending_at_mention_inserts_ staging queue
 // (drained on the render thread into the MCP status store).
 //
-// Line numbers arrive from the IDE 0-based (per TS useIdeAtMentioned.ts which
-// adds +1). We normalise to 1-based inside dispatch_at_mention so the
-// responder always sees 1-based values, matching TS onAtMentioned output.
+// Line numbers arrive from the IDE 0-based (the IDE client sends 0-based
+// values). We normalise to 1-based inside dispatch_at_mention so the
+// responder always sees 1-based values.
 module;
 
 export module loom.services.mcp.at_mention_handler;
@@ -22,8 +21,7 @@ import loom.serdes.json;
 
 export namespace loom::services::mcp {
 
-// Parsed at_mentioned payload (line numbers are 1-based after normalisation,
-// matching TS IDEAtMentioned.lineStart/lineEnd).
+// Parsed at_mentioned payload (line numbers are 1-based after normalisation).
 struct AtMentionNotification {
     std::string server_name;
     std::string file_path;
@@ -77,7 +75,7 @@ auto set_at_mention_responder(AtMentionResponder responder) -> void {
 
 // Called by McpConnectionManager::handle_server_notification when method ==
 // "at_mentioned". server_name is the MCP server that sent the notification
-// (the IDE client on TS); params_json is the raw JSON-RPC params object.
+// (the IDE client); params_json is the raw JSON-RPC params object.
 auto dispatch_at_mention(const std::string& server_name,
                          const std::optional<std::string>& params_json) -> void {
     AtMentionResponder active;
@@ -94,13 +92,12 @@ auto dispatch_at_mention(const std::string& server_name,
     if (auto fp = detail::get_string_field(params, "filePath")) {
         n.file_path = std::move(*fp);
     } else {
-        // Without a filePath the at-mention is malformed; drop it (TS parity:
-        // the schema is zod-validated and would reject this).
+        // Without a filePath the at-mention is malformed; drop it.
         return;
     }
 
     if (auto ls = detail::get_int_field(params, "lineStart")) {
-        // IDE sends 0-based; normalise to 1-based (TS adds +1).
+        // IDE sends 0-based; normalise to 1-based.
         n.line_start = *ls + 1;
     }
     if (auto le = detail::get_int_field(params, "lineEnd")) {
@@ -111,7 +108,7 @@ auto dispatch_at_mention(const std::string& server_name,
         active(n);
     } catch (...) {
         // Swallow responder errors so a buggy UI hook cannot take down the
-        // MCP receive thread. TS wraps the handler in try/catch + logError.
+        // MCP receive thread.
     }
 }
 

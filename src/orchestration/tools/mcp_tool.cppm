@@ -72,7 +72,7 @@ struct McpToolRequest {
 
 struct McpToolResult {
     std::string content;                          ///< flattened text (backward compat)
-    std::vector<loom::services::mcp::ContentItem> content_items;  ///< structured content (TS parity)
+    std::vector<loom::services::mcp::ContentItem> content_items;  ///< structured content
     std::string content_type;  // "text", "image", "resource"
     bool is_error{false};
     // migrated: integrate collapse decision
@@ -1000,8 +1000,8 @@ public:
         config_signature_ = signature(servers);
         configured_servers_ = std::move(servers);
         manager_->set_configuration(make_native_config(configured_servers_));
-        // TS PARITY: MCP servers auto-connect on startup so their tools
-        // are available for assembleToolPool / config.tools.  Fire in a
+        // MCP servers auto-connect on startup so their tools
+        // are available for the tool pool.  Fire in a
         // DETACHED background thread so we don't block the main thread
         // (each connect_server has a 30s timeout — synchronous would
         // freeze the UI on startup).  The dynamic_tools_provider in
@@ -1161,7 +1161,7 @@ public:
         auto result = manager_->call_tool(std::string(server_name), request);
         if (!result) return std::unexpected(map_native_error(result.error()));
 
-        // TS PARITY (2026-07-04): preserve the structured ContentItem
+        // Preserve the structured ContentItem
         // array instead of flattening to a single string.  MCP servers may
         // return mixed text+image content blocks; flattening loses images
         // and concatenates text blocks with "\n" which then needs the

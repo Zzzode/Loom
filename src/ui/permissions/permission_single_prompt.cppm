@@ -104,7 +104,6 @@ struct DetailGeneric {
 };
 /// Computer-use (screen/mouse/keyboard) action. Rendered with an explicit
 /// warning banner because approving it hands the model real input control.
-/// TS REF: src/components/permissions/ComputerUseApproval/ComputerUseApproval.tsx
 struct DetailComputerUse {
     std::string action_label;         // e.g. "Click on screen"
     std::optional<std::string> target_app;
@@ -335,7 +334,7 @@ struct PromptState {
     bool always_allow_checkbox = false;
     bool sandbox_toggle = false;
     int  focused_button = 0;   // 0=Allow once  1=Deny  2=Always allow  3=Always deny
-    // One-shot guard: TS contract fires EXACTLY ONE terminal callback per prompt.
+    // One-shot guard: contract fires EXACTLY ONE terminal callback per prompt.
     // Priority 1) on_abort (if present), 2) else on_decide(...). NEVER both.
     bool callback_fired = false;
 };
@@ -468,7 +467,7 @@ struct PromptState {
     auto emit = [state](Decision d) {
         if (state->callback_fired) return;
         state->callback_fired = true;
-        // TS contract: one-shot. For Abort, prefer on_abort when present; else
+        // contract: one-shot. For Abort, prefer on_abort when present; else
         // fall back to on_decide(Abort). For all other decisions, use on_decide.
         if (d == Decision::Abort && state->props.on_abort) {
             state->props.on_abort();

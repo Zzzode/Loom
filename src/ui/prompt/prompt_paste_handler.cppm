@@ -1,11 +1,6 @@
 /// @file prompt_paste_handler.cppm
 /// @brief Multi-line paste detection and handling UI, including image paste
 /// chip rendering helpers.
-///
-/// TS REF: src/components/PromptInput/inputPaste.ts (text paste truncation)
-///         src/components/PromptInput/PromptInput.tsx L581-616 (image chip
-///         detection + cursor-at-start inversion)
-///         src/utils/imagePaste.ts (clipboard image read)
 module;
 #include <unistd.h>
 #include <cstddef>
@@ -19,7 +14,6 @@ import std;
 
 import loom.text.parse_references;
 // OS clipboard image read (macOS osascript «class PNGf»).
-// TS REF: src/utils/imagePaste.ts getImageFromClipboard / hasImageInClipboard
 import loom.platform.clipboard;
 
 export namespace loom::ui::prompt {
@@ -37,9 +31,8 @@ struct PastePreview {
 };
 
 /// Render a text paste confirmation preview box.
-/// TS REF: inputPaste.ts maybeTruncateMessageForInput — the preview shows
-/// line count and a content snippet so the user can confirm before the
-/// full text is injected.
+/// The preview shows line count and a content snippet so the user can
+/// confirm before the full text is injected.
 [[nodiscard]] inline Element render_paste_preview(const PastePreview& preview) {
     std::vector<Element> elements;
     elements.push_back(text(std::format("Pasted {} lines", preview.line_count)) | bold);
@@ -55,10 +48,9 @@ struct PastePreview {
 
 /// @brief Display metadata for a single [Image #N] chip in the prompt.
 ///
-/// Mirrors the TS ReferenceMatch (history.ts parseReferences) but adds
-/// display-oriented fields used by the FTXUI renderer.  `start` and `end`
-/// are UTF-8 byte offsets within the input text (same semantics as
-/// String.prototype.matchAll index on ASCII placeholders).
+/// Mirrors the ReferenceMatch (parseReferences) but adds display-oriented
+/// fields used by the FTXUI renderer.  `start` and `end` are UTF-8 byte
+/// offsets within the input text.
 struct ImageChipInfo {
     int id;                  ///< Paste id (e.g. 1 for [Image #1])
     std::size_t start;       ///< Byte offset of '[' in the input text
@@ -69,13 +61,6 @@ struct ImageChipInfo {
 /// Parse all [Image #N] references from `text` and return display-ready
 /// chip info.  Non-image refs (Pasted text #N, ...Truncated text #N) are
 /// filtered out.
-///
-/// TS REF: PromptInput.tsx L581-584
-///   const imageRefPositions = useMemo(() =>
-///     parseReferences(displayedValue)
-///       .filter(r => r.match.startsWith('[Image'))
-///       .map(r => ({ start: r.index, end: r.index + r.match.length })),
-///     [displayedValue]);
 [[nodiscard]] inline std::vector<ImageChipInfo> collect_image_chips(
     std::string_view text) {
     const auto refs = loom::utils::parse_references(text);
@@ -97,27 +82,23 @@ struct ImageChipInfo {
 ///
 /// When `inverted` is true the chip is drawn with foreground/background
 /// swapped — the visual "selected" state that appears when the cursor
-/// parks at the chip's start position (TS REF: PromptInput.tsx L604-616,
-/// inverse: true highlight applied when cursorOffset === ref.start).
+/// parks at the chip's start position (inverse: true highlight applied
+/// when cursorOffset === ref.start).
 ///
-/// No bold is applied — TS only sets `inverse: true` on the highlight,
-/// which maps to ANSI reverse video (SGR 7).  The inversion alone is
-/// sufficient to make the chip visually distinct.
+/// No bold is applied — only `inverse: true` on the highlight, which maps
+/// to ANSI reverse video (SGR 7).  The inversion alone is sufficient to
+/// make the chip visually distinct.
 ///
 /// @param label   The chip text, e.g. "[Image #1]" (from format_image_ref
 ///                or collect_image_chips label field).
 /// @param inverted  When true, swap fg/bg (cursor-at-start selected state).
 /// @param chip_color  Foreground colour (default white for dark themes).
-///
-/// TS REF: ShimmeredInput.tsx L115
-///   <Text ... inverse={part.highlight?.inverse}><Ansi>{part.text}</Ansi></Text>
 [[nodiscard]] inline Element render_image_chip(
     std::string_view label,
     bool is_inverted = false,
     Color chip_color = Color::White) {
-    // FTXUI's `inverted` maps to ANSI SGR 7 (reverse video), exactly what
-    // chalk.inverse produces in the TS reference.  No bold — TS doesn't
-    // apply it to image chips.
+    // FTXUI's `inverted` maps to ANSI SGR 7 (reverse video).  No bold is
+    // applied to image chips.
     Decorator decor = color(chip_color);
     if (is_inverted) {
         decor = decor | ftxui::inverted;
@@ -147,17 +128,13 @@ enum class PasteKind {
 
 /// Heuristic: determine if `clipboard_text` looks like an image file path
 /// that was pasted as text (e.g. dragging a file into the terminal).
-/// Matches the TS regex IMAGE_EXTENSION_REGEX from imagePaste.ts L270:
-///   /\.(png|jpe?g|gif|webp)$/i
-///
-/// TS REF: imagePaste.ts isImageFilePath()
+/// Matches the regex /\.(png|jpe?g|gif|webp)$/i
 [[nodiscard]] inline bool is_image_file_path(std::string_view text) {
     // Find the last dot
     const auto dot = text.rfind('.');
     if (dot == std::string_view::npos) return false;
     auto ext = text.substr(dot + 1);
-    // Case-insensitive compare for png/jpg/jpeg/gif/webp
-    // (TS regex uses /i flag)
+    // Case-insensitive compare for png/jpg/jpeg/gif/webp (regex /i flag)
     auto to_lower = [](char c) -> char {
         return (c >= 'A' && c <= 'Z') ? static_cast<char>(c + 32) : c;
     };
@@ -172,7 +149,6 @@ enum class PasteKind {
 // ── Image magic-byte detection ──────────────────────────────────────────
 
 /// Image format detected from magic-byte signature.
-/// Mirrors TS ImageMediaType from imageResizer.ts L22.
 enum class ImageFormat {
     PNG,   ///< \x89\x50\x4e\x47 (89 50 4E 47)
     JPEG,  ///< \xff\xd8\xff      (FF D8 FF)
@@ -184,8 +160,7 @@ enum class ImageFormat {
 /// Returns nullopt if the buffer is too short (< 4 bytes) or no known
 /// signature matches.
 ///
-/// Signature table (TS REF: imageResizer.ts detectImageFormatFromBuffer
-/// L769-812 — character-for-character port):
+/// Signature table:
 ///   PNG:  bytes[0..3] == 0x89 0x50 0x4E 0x47
 ///   JPEG: bytes[0..2] == 0xFF 0xD8 0xFF
 ///   GIF:  bytes[0..2] == 0x47 0x49 0x46  ("GIF8" prefix)
@@ -200,20 +175,20 @@ detect_image_magic_bytes(std::string_view buffer) {
     const auto* bytes = reinterpret_cast<const std::uint8_t*>(buffer.data());
     const auto size   = buffer.size();
 
-    // PNG: 89 50 4E 47 — TS REF L773-779
+    // PNG: 89 50 4E 47
     if (bytes[0] == 0x89 && bytes[1] == 0x50 &&
         bytes[2] == 0x4E && bytes[3] == 0x47) {
         return ImageFormat::PNG;
     }
-    // JPEG: FF D8 FF — TS REF L783-785
+    // JPEG: FF D8 FF
     if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) {
         return ImageFormat::JPEG;
     }
-    // GIF: 47 49 46 ("GIF87a" / "GIF89a") — TS REF L788-790
+    // GIF: 47 49 46 ("GIF87a" / "GIF89a")
     if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) {
         return ImageFormat::GIF;
     }
-    // WebP: "RIFF" at offset 0, "WEBP" at offset 8 — TS REF L793-808
+    // WebP: "RIFF" at offset 0, "WEBP" at offset 8
     if (size >= 12 &&
         bytes[0] == 0x52 && bytes[1] == 0x49 &&
         bytes[2] == 0x46 && bytes[3] == 0x46 &&
@@ -235,10 +210,6 @@ detect_image_magic_bytes(std::string_view buffer) {
 ///   3. is_image_file_path — pasted text looks like /path/to/photo.png
 ///   4. Text — plain text paste (possibly multi-line)
 ///   5. Empty — nothing usable
-///
-/// TS REF: imagePaste.ts isImageFilePath() + PromptInput.tsx onPaste
-/// dispatch logic — the TS side checks hasImageInClipboard() before the
-/// text paste path, which maps to has_image_data here.
 [[nodiscard]] inline PasteKind classify_paste_kind(
     std::string_view text_buffer,
     bool has_image_data) {
@@ -266,7 +237,7 @@ detect_image_magic_bytes(std::string_view buffer) {
 /// Thin wrapper around loom::utils::clipboard::read_image_png().  Returns
 /// nullopt off-macOS or on failure.
 ///
-/// Implementation (TS REF: imagePaste.ts getImageFromClipboard L124-242):
+/// Implementation:
 ///   - Runs osascript to extract «class PNGf» from NSPasteboard into a
 ///     temp file via run_detached() (fork+setsid+exec isolates osascript
 ///     from loom's raw-mode terminal — see clipboard.cppm gotcha).
@@ -286,11 +257,10 @@ read_clipboard_image_png() {
 /// app pastes raw JPEG without converting), the bytes are returned.
 /// Returns nullopt when no JPEG is available.
 ///
-/// TS REF parity: imagePaste.ts getImageFromClipboard() — TS always
-/// returns PNG from osascript; JPEG handling is only via the HTML
-/// fallback (which also converts to PNG via sips on the TS side).  This
-/// helper exists for API completeness and future cross-platform support
-/// (Linux xclip can return image/jpeg directly).
+/// osascript «class PNGf» always returns PNG; JPEG handling is only via
+/// the HTML fallback (which also converts to PNG via sips).  This helper
+/// exists for API completeness and future cross-platform support (Linux
+/// xclip can return image/jpeg directly).
 [[nodiscard]] inline std::optional<std::vector<std::uint8_t>>
 read_clipboard_image_jpeg() {
     auto bytes = loom::utils::clipboard::read_image_png();
@@ -314,21 +284,12 @@ read_clipboard_image_jpeg() {
 /// tells the user they can press the paste keybinding to attach the
 /// image as an [Image #N] reference.
 ///
-/// TS REF: useClipboardImageHint.ts L56-61
-///   addNotification({
-///     key: 'clipboard-image-hint',
-///     text: `Image in clipboard · ${getShortcutDisplay(
-///             'chat:imagePaste', 'Chat', 'ctrl+v')} to paste`,
-///     priority: 'immediate',
-///     timeoutMs: 8000,
-///   })
-///
 /// @param shortcut  Keybinding display string (default "Ctrl+V").  Pass
 ///                  the platform-appropriate string from the keybinding
 ///                  system (e.g. "⌘V" on macOS when resolved).
 [[nodiscard]] inline Element render_clipboard_image_hint(
     std::string_view shortcut = "Ctrl+V") {
-    // \xC2\xB7 = UTF-8 middle dot (·), matching the TS separator.
+    // \xC2\xB7 = UTF-8 middle dot (·).
     auto hint = std::format("Image in clipboard \xC2\xB7 {} to paste", shortcut);
     return text(hint) | dim;
 }
@@ -337,9 +298,8 @@ read_clipboard_image_jpeg() {
 /// happening on a background thread while the [Image #N] placeholder is
 /// already visible in the input).
 ///
-/// TS REF: PromptInput.tsx L1151-1183 — onImagePaste inserts the placeholder
-/// synchronously (instant feedback) while the actual clipboard read runs
-/// async via getImageFromClipboard().
+/// onImagePaste inserts the placeholder synchronously (instant feedback)
+/// while the actual clipboard read runs async.
 struct ImagePasteInFlight {
     int id;                  ///< Paste id matching the [Image #N] placeholder
     std::string placeholder; ///< The "[Image #N]" text inserted into input

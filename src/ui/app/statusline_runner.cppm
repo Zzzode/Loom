@@ -1,18 +1,12 @@
 /// @file statusline_runner.cppm
-/// @brief StatusLine command execution — faithful port of TS StatusLine.tsx
-///        executeStatusLineCommand() + buildStatusLineCommandInput().
+/// @brief StatusLine command execution (execute + build input).
 ///
 /// The statusline is a user-configurable shell command that receives a
 /// JSON blob on stdin (StatusLineCommandInput) and prints text (optionally
 /// with ANSI color codes) to stdout.  The output is rendered in the footer
 /// area on the left side.
 ///
-/// TS REFERENCE:
-///   - src/components/StatusLine.tsx  (buildStatusLineCommandInput + rendering)
-///   - src/utils/hooks.ts             (executeStatusLineCommand)
-///   - src/types/statusLine.d.ts      (StatusLineCommandInput type)
-///
-/// KEY BEHAVIOR (matching TS):
+/// KEY BEHAVIOR:
 ///   - JSON input is written to stdin followed by a newline
 ///   - Command runs via bash -c (user's shell command)
 ///   - Default timeout: 5000 ms (short — statusline must be snappy)
@@ -42,12 +36,12 @@ namespace hooks_ns = loom::utils::hooks_execution;
 namespace json_ns  = loom::utils::json;
 
 // =========================================================================
-// StatusLineCommandInput (mirrors TS type)
+// StatusLineCommandInput
 // =========================================================================
 // Rich context passed to the statusline command as JSON on stdin.
 // Only the fields the C++ engine can populate are included; the rest are
 // omitted (missing optional fields are simply absent from the JSON object,
-// matching TS semantics where undefined fields are not serialized).
+// matching the semantics where undefined fields are not serialized).
 
 struct StatusLineModelInfo {
     std::string id;
@@ -115,12 +109,12 @@ struct StatusLineRateLimits {
 };
 
 /// Full input payload sent to the statusline command.
-/// Mirrors TS StatusLineCommandInput — all fields are optional-ish; only
-/// populated fields appear in the serialized JSON.
+/// All fields are optional-ish; only populated fields appear in the
+/// serialized JSON.
 struct StatusLineCommandInput {
-    // Base hook input fields (TS: createBaseHookInput)
+    // Base hook input fields
     std::optional<std::string> session_name;
-    std::optional<std::string> session_id;  ///< TS: session_id (6-digit hashtag in statusline)
+    std::optional<std::string> session_id;  ///< session_id (6-digit hashtag in statusline)
 
     // Model info
     StatusLineModelInfo model;
@@ -161,7 +155,7 @@ struct StatusLineCommandInput {
 // =========================================================================
 
 /// Serialize a StatusLineCommandInput to a JSON string.
-/// Faithful to TS: only populated optional fields are included.
+/// Only populated optional fields are included.
 [[nodiscard]] inline std::string to_json(const StatusLineCommandInput& input) {
     json_ns::JsonMutDoc doc;
     auto root = doc.object();
@@ -172,7 +166,7 @@ struct StatusLineCommandInput {
         root.add("session_name", doc.string(*input.session_name));
     }
 
-    // session_id (optional — TS uses this for the #hashtag display)
+    // session_id (optional — used for the #hashtag display)
     if (input.session_id && !input.session_id->empty()) {
         root.add("session_id", doc.string(*input.session_id));
     }
@@ -319,10 +313,10 @@ struct StatusLineResult {
 ///
 /// @param command  Shell command string (passed to bash -c)
 /// @param input    StatusLineCommandInput data serialized as JSON on stdin
-/// @param timeout_ms Timeout in milliseconds (default 5000, matching TS)
+/// @param timeout_ms Timeout in milliseconds (default 5000)
 /// @returns StatusLineResult with output text on success.
 ///
-/// Faithful to TS executeStatusLineCommand:
+/// Executes the statusline command:
 ///   - Runs command via bash -c
 ///   - Writes JSON input to stdin
 ///   - Trims output and removes blank lines
@@ -341,7 +335,7 @@ struct StatusLineResult {
 
     auto t0 = steady_clock::now();
 
-    // Run via bash -c, matching TS execCommandHook shell behavior.
+    // Run via bash -c, matching execCommandHook shell behavior.
     auto cmd_result = hooks_ns::CommandHookRunner::run_raw(
         "bash", {"-c", std::string(command)},
         timeout_ms, {},
@@ -360,8 +354,8 @@ struct StatusLineResult {
     }
 
     // Process output: trim, split by lines, skip blank lines, rejoin.
-    // Mirrors TS:
-    //   result.stdout.trim().split('\n').flatMap(line => line.trim() || []).join('\n')
+    // Spec: result.stdout.trim().split('\n')
+    //         .flatMap(line => line.trim() || []).join('\n')
     std::string out = cmd_result.out;
 
     // Trim leading whitespace

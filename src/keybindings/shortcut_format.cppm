@@ -1,9 +1,8 @@
 /// @file shortcut_format.cppm
 /// @brief Shortcut display text retrieval for non-UI contexts.
-/// Migrated from src/keybindings/shortcutFormat.ts
 ///
 /// Provides get_shortcut_display() for use in non-UI contexts (commands,
-/// services, etc.) where a React-like hook is not appropriate. This module
+/// services, etc.) where a UI hook is not appropriate. This module
 /// is kept separate from shortcut_display.cppm to avoid pulling in
 /// observer/UI dependencies when not needed.
 module;

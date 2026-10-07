@@ -2,25 +2,6 @@
 /// @brief Rich skills directory loading: YAML frontmatter, MDX, params, hooks,
 ///        gitignore filtering, realpath dedup, managed-settings policy gate,
 ///        MCP skill builder registration, dynamic skills registry.
-///
-/// TS REF: src/skills/loadSkillsDir.ts (1086 lines)
-///
-/// Key functions ported faithfully:
-///   - parseFrontMatter()           → parse_frontmatter_rich()
-///   - parseSkillFrontmatterFields() → parse_skill_frontmatter_fields()
-///   - createSkillCommand()          → create_skill_command()
-///   - loadSkillsFromSkillsDir()     → load_skills_from_skills_dir()
-///   - loadSkillsFromCommandsDir()   → load_skills_from_commands_dir()
-///   - getSkillDirCommands()         → get_skill_dir_commands()
-///   - getFileIdentity()             → get_file_identity()
-///   - parseHooksFromFrontmatter()   → parse_hooks_from_frontmatter()
-///   - parseSkillPaths()             → parse_skill_paths()
-///   - discoverSkillDirsForPaths()   → discover_skill_dirs_for_paths()
-///   - addSkillDirectories()         → add_skill_directories()
-///   - getDynamicSkills()            → get_dynamic_skills()
-///   - activateConditionalSkillsForPaths() → activate_conditional_skills_for_paths()
-///   - onDynamicSkillsLoaded()       → on_dynamic_skills_loaded()
-///   - clearSkillCaches()            → clear_skill_caches()
 module;
 
 #include <cctype>
@@ -57,7 +38,6 @@ using loom::utils::log::log_error;
 
 // =========================================================================
 // LoadedFrom enum
-// TS REF: src/skills/loadSkillsDir.ts:67-74
 // =========================================================================
 
 /// Where a skill was loaded from
@@ -72,7 +52,6 @@ enum class LoadedFrom {
 
 // =========================================================================
 // SettingSource enum
-// TS REF: src/utils/settings/constants.ts
 // =========================================================================
 
 /// Source of a setting/skill
@@ -85,7 +64,6 @@ enum class SettingSource {
 
 // =========================================================================
 // FrontmatterShell
-// TS REF: src/utils/frontmatterParser.ts:339
 // =========================================================================
 
 /// Shell for !`cmd` and ```! block execution in skill .md content
@@ -96,7 +74,6 @@ enum class FrontmatterShell {
 
 // =========================================================================
 // FrontmatterData
-// TS REF: src/utils/frontmatterParser.ts:10-59
 // =========================================================================
 
 /// Rich frontmatter data extracted from YAML between --- delimiters
@@ -127,7 +104,6 @@ struct FrontmatterData {
 
 // =========================================================================
 // ParsedSkillFrontmatterFields
-// TS REF: src/skills/loadSkillsDir.ts:185-265 (parseSkillFrontmatterFields return)
 // =========================================================================
 
 /// All frontmatter fields parsed and validated for a skill
@@ -152,11 +128,9 @@ struct ParsedSkillFrontmatterFields {
 
 // =========================================================================
 // SkillCommand
-// TS REF: src/skills/loadSkillsDir.ts:316-401 (Command type for skills)
 // =========================================================================
 
 /// A fully-loaded skill command ready for registration in the command system.
-/// Mirrors the TS `Command` type for prompt-type skills.
 struct SkillCommand {
     std::string type = "prompt";             // Always "prompt" for skills
     std::string name;                        // Unique skill name
@@ -186,8 +160,7 @@ struct SkillCommand {
     std::optional<std::string> hooks_json;   // Hooks settings
     std::optional<FrontmatterShell> shell;
 
-    // The markdown content of the skill (loaded lazily in TS, but we keep it
-    // here for simpler CPP execution flow)
+    // The markdown content of the skill (kept here for simpler execution flow)
     std::string markdown_content;
 
     /// Get the user-facing display name
@@ -196,7 +169,6 @@ struct SkillCommand {
     }
 
     /// Generate the prompt content for this skill with argument substitution.
-    /// TS REF: src/skills/loadSkillsDir.ts:344-399 (getPromptForCommand)
     std::string get_prompt_for_command(
         std::optional<std::string_view> args,
         const std::optional<std::string>& session_id = std::nullopt,
@@ -252,7 +224,6 @@ struct SkillCommand {
 
 // =========================================================================
 // SkillWithPath - internal tracking type for dedup
-// TS REF: src/skills/loadSkillsDir.ts:127-131
 // =========================================================================
 
 namespace detail {
@@ -264,7 +235,6 @@ struct SkillWithPath {
 
 // =========================================================================
 // Utility: getConfigHomeDir
-// TS REF: src/utils/envUtils.ts:7 (getConfigHomeDir)
 // =========================================================================
 
 /// Get the Loom config home directory (~/.loom)
@@ -283,13 +253,12 @@ std::string get_config_home_dir() {
 
 // =========================================================================
 // Utility: getManagedFilePath
-// TS REF: src/utils/settings/managedPath.ts:8 (getManagedFilePath)
 // =========================================================================
 
 /// Get the managed file path (stub - returns empty string)
 std::string get_managed_file_path() {
-    // In the TS implementation, this resolves to a managed-settings directory.
-    // For CPP, we return a stub path. Callers should check for empty string.
+    // Resolves to a managed-settings directory. Returns a stub path; callers
+    // should check for empty string.
     const char* managed = std::getenv("LOOM_MANAGED_SETTINGS_PATH");
     if (managed && managed[0] != '\0') {
         return std::string(managed);
@@ -299,7 +268,6 @@ std::string get_managed_file_path() {
 
 // =========================================================================
 // Utility: getAdditionalDirectoriesForLoomMd
-// TS REF: src/bootstrap/state.ts:1670
 // =========================================================================
 
 /// Get additional directories for Loom MD (from --add-dir flags)
@@ -325,7 +293,6 @@ std::vector<std::string> get_additional_directories_for_loom_md() {
 
 // =========================================================================
 // Utility: isSettingSourceEnabled
-// TS REF: src/utils/settings/constants.ts:174
 // =========================================================================
 
 /// Check if a setting source is enabled
@@ -347,19 +314,17 @@ bool is_setting_source_enabled(SettingSource source) {
 
 // =========================================================================
 // Utility: isRestrictedToPluginOnly
-// TS REF: src/utils/settings/pluginOnlyPolicy.ts:19
 // =========================================================================
 
 /// Check if a surface is restricted to plugin-only skills
 bool is_restricted_to_plugin_only(std::string_view /*surface*/) {
-    // TS REF: checks pluginOnlyPolicy setting. For CPP, we check an env var.
+    // Checks the pluginOnlyPolicy setting via an env var.
     return loom::utils::is_env_truthy(
         std::getenv("LOOM_PLUGIN_ONLY_SKILLS"));
 }
 
 // =========================================================================
 // Utility: getSkillsPath
-// TS REF: src/skills/loadSkillsDir.ts:78-94
 // =========================================================================
 
 /// Returns a loom config directory path for a given source
@@ -381,12 +346,11 @@ std::string get_skills_path(SettingSource source, std::string_view dir) {
 
 // =========================================================================
 // Utility: getProjectDirsUpToHome
-// TS REF: src/utils/markdownConfigLoader.ts:234-280
 // =========================================================================
 
 /// Traverse from cwd up to git root (or home), collecting .loom/subdir dirs.
-/// TS REF: getProjectDirsUpToHome() walks up to git root to prevent parent
-/// directory skills from leaking into projects.
+/// Walks up to git root to prevent parent directory skills from leaking
+/// into projects.
 std::vector<std::string> get_project_dirs_up_to_home(
     std::string_view subdir, const fs::path& cwd)
 {
@@ -436,12 +400,11 @@ std::vector<std::string> get_project_dirs_up_to_home(
 
 // =========================================================================
 // Utility: getFileIdentity
-// TS REF: src/skills/loadSkillsDir.ts:118-124
 // =========================================================================
 
 /// Get a unique identifier for a file by resolving symlinks to canonical path.
 /// Returns nullopt if the file doesn't exist or can't be resolved.
-/// TS REF: Uses realpath() to handle symlinks and inode-0 filesystems.
+/// Uses realpath() to handle symlinks and inode-0 filesystems.
 std::optional<std::string> get_file_identity(const fs::path& file_path) {
     std::error_code ec;
     auto canonical = fs::canonical(file_path, ec);
@@ -451,7 +414,6 @@ std::optional<std::string> get_file_identity(const fs::path& file_path) {
 
 // =========================================================================
 // Utility: extractDescriptionFromMarkdown
-// TS REF: src/utils/markdownConfigLoader.ts:52-69
 // =========================================================================
 
 /// Extract a description from markdown content (first non-empty line,
@@ -494,7 +456,6 @@ std::string extract_description_from_markdown(
 
 // =========================================================================
 // Utility: parseBooleanFrontmatter
-// TS REF: src/utils/frontmatterParser.ts:332-334
 // =========================================================================
 
 /// Parse a boolean frontmatter value. Only true/"true" returns true.
@@ -506,7 +467,6 @@ bool parse_boolean_frontmatter(const std::optional<std::string>& value) {
 
 // =========================================================================
 // Utility: parseShellFrontmatter
-// TS REF: src/utils/frontmatterParser.ts:351-370
 // =========================================================================
 
 /// Parse and validate the shell: frontmatter field.
@@ -537,7 +497,6 @@ std::optional<FrontmatterShell> parse_shell_frontmatter(
 
 // =========================================================================
 // Utility: parseEffortValue
-// TS REF: src/utils/effort.ts (parseEffortValue)
 // =========================================================================
 
 /// Parse an effort value from frontmatter ('low','medium','high','max' or int)
@@ -576,7 +535,6 @@ std::optional<loom::utils::EffortLevel> parse_effort_value(
 
 // =========================================================================
 // Utility: splitPathInFrontmatter
-// TS REF: src/utils/frontmatterParser.ts:189-232
 // =========================================================================
 
 /// Split comma-separated paths, respecting brace patterns.
@@ -671,7 +629,6 @@ std::vector<std::string> split_path_in_frontmatter(
 
 // =========================================================================
 // Utility: parseSlashCommandToolsFromFrontmatter
-// TS REF: src/utils/markdownConfigLoader.ts:132-140
 // =========================================================================
 
 /// Parse allowed-tools from frontmatter (string or array)
@@ -713,7 +670,6 @@ std::vector<std::string> parse_slash_command_tools_from_frontmatter(
 
 // =========================================================================
 // Utility: parseArgumentNames (from frontmatter)
-// TS REF: src/utils/argumentSubstitution.ts:parseArgumentNames
 // =========================================================================
 
 /// Parse argument names from frontmatter (string or array)
@@ -740,7 +696,6 @@ std::vector<std::string> parse_argument_names_from_frontmatter(
 
 // =========================================================================
 // Utility: parseUserSpecifiedModel
-// TS REF: src/utils/model/model.ts (parseUserSpecifiedModel)
 // =========================================================================
 
 /// Parse a user-specified model from frontmatter. Returns nullopt for 'inherit'.
@@ -754,7 +709,6 @@ std::optional<std::string> parse_user_specified_model(
 
 // =========================================================================
 // Rich frontmatter parsing
-// TS REF: src/utils/frontmatterParser.ts:parseFrontmatter + YAML parsing
 // =========================================================================
 
 namespace detail {
@@ -780,7 +734,6 @@ std::optional<std::string> yaml_to_string(const YamlValue& val) {
 
 /// Parse rich frontmatter from a markdown file.
 /// Uses the YAML parser for full YAML support (arrays, nested objects).
-/// TS REF: src/utils/frontmatterParser.ts:130-175 (parseFrontmatter)
 FrontmatterData parse_frontmatter_rich(std::string_view content) {
     FrontmatterData data;
 
@@ -894,7 +847,6 @@ FrontmatterData parse_frontmatter_rich(std::string_view content) {
 
 // =========================================================================
 // parseHooksFromFrontmatter
-// TS REF: src/skills/loadSkillsDir.ts:136-153
 // =========================================================================
 
 /// Parse and validate hooks from frontmatter.
@@ -916,7 +868,6 @@ std::optional<std::string> parse_hooks_from_frontmatter(
 
 // =========================================================================
 // parseSkillPaths
-// TS REF: src/skills/loadSkillsDir.ts:159-178
 // =========================================================================
 
 /// Parse paths frontmatter from a skill, using the same format as LOOM.md rules.
@@ -949,7 +900,6 @@ std::optional<std::vector<std::string>> parse_skill_paths(const FrontmatterData&
 
 // =========================================================================
 // parseSkillFrontmatterFields
-// TS REF: src/skills/loadSkillsDir.ts:185-265
 // =========================================================================
 
 /// Parse all skill frontmatter fields. Caller supplies resolved name.
@@ -1040,12 +990,10 @@ ParsedSkillFrontmatterFields parse_skill_frontmatter_fields(
 
 // =========================================================================
 // createSkillCommand
-// TS REF: src/skills/loadSkillsDir.ts:270-401
 // =========================================================================
 
 /// Create a SkillCommand from parsed data.
-/// TS REF: createSkillCommand() builds the Command object with all fields
-/// and the getPromptForCommand closure.
+/// Builds the SkillCommand with all fields and the prompt-generation logic.
 SkillCommand create_skill_command(
     std::string_view skill_name,
     const ParsedSkillFrontmatterFields& fields,
@@ -1092,7 +1040,6 @@ SkillCommand create_skill_command(
 
 // =========================================================================
 // loadSkillsFromSkillsDir
-// TS REF: src/skills/loadSkillsDir.ts:407-480
 // =========================================================================
 
 /// Load skills from a /skills/ directory path.
@@ -1171,7 +1118,6 @@ std::vector<detail::SkillWithPath> load_skills_from_skills_dir(
 
 // =========================================================================
 // Legacy /commands/ loader helpers
-// TS REF: src/skills/loadSkillsDir.ts:482-623
 // =========================================================================
 
 namespace detail {
@@ -1189,7 +1135,6 @@ bool is_skill_file(const fs::path& file_path) {
 }
 
 /// Build namespace from nested directory structure.
-/// TS REF: buildNamespace() at loadSkillsDir.ts:523-534
 std::string build_namespace(const fs::path& target_dir, const fs::path& base_dir) {
     auto norm_base = base_dir;
     if (norm_base.has_filename() && norm_base.filename() == ".") {
@@ -1241,7 +1186,6 @@ std::string get_regular_command_name(
 
 // =========================================================================
 // loadSkillsFromCommandsDir
-// TS REF: src/skills/loadSkillsDir.ts:566-623
 // =========================================================================
 
 /// Load skills from legacy /commands/ directories.
@@ -1352,8 +1296,6 @@ std::vector<detail::SkillWithPath> load_skills_from_commands_dir(
 
 // =========================================================================
 // Dynamic skills state
-// TS REF: src/skills/loadSkillsDir.ts:820-832 (dynamicSkillDirs, dynamicSkills,
-//          conditionalSkills, activatedConditionalSkillNames)
 // =========================================================================
 
 namespace detail {
@@ -1389,7 +1331,6 @@ inline SkillDirCache& skill_dir_cache() {
 
 // =========================================================================
 // isPathGitignored
-// TS REF: src/utils/git/gitignore.ts (isPathGitignored)
 // =========================================================================
 
 /// Check if a directory path is gitignored relative to a repo root.
@@ -1405,12 +1346,11 @@ bool is_path_gitignored(const fs::path& path, const fs::path& repo_root) {
 
 // =========================================================================
 // getSkillDirCommands
-// TS REF: src/skills/loadSkillsDir.ts:638-804
 // =========================================================================
 
 /// Load all skills from /skills/ and legacy /commands/ directories.
 /// This is the main entry point for skill discovery.
-/// TS REF: getSkillDirCommands() is memoized on cwd.
+/// Results are memoized on cwd.
 ///
 /// Acquires dynamic_state().mutex (outer) + skill_dir_cache().mutex (inner),
 /// then delegates to get_skill_dir_commands_locked().  Callers that already
@@ -1529,7 +1469,7 @@ std::vector<SkillCommand> get_skill_dir_commands_locked(const fs::path& cwd) {
     }
 
     // Deduplicate by resolved path (handles symlinks)
-    // TS REF: getFileIdentity() + seenFileIds map
+    // Deduplicate by resolved file identity (seenFileIds map)
     std::map<std::string, SettingSource> seen_file_ids;
     std::vector<SkillCommand> deduplicated_skills;
 
@@ -1593,7 +1533,6 @@ std::vector<SkillCommand> get_skill_dir_commands_locked(const fs::path& cwd) {
 
 // =========================================================================
 // clearSkillCaches
-// TS REF: src/skills/loadSkillsDir.ts:806-811
 // =========================================================================
 
 /// Clear all skill caches (call when directories change)
@@ -1611,7 +1550,6 @@ void clear_skill_caches() {
 
 // =========================================================================
 // onDynamicSkillsLoaded
-// TS REF: src/skills/loadSkillsDir.ts:839-851
 // =========================================================================
 
 /// Register a callback to be invoked when dynamic skills are loaded.
@@ -1657,7 +1595,6 @@ inline void emit_skills_loaded() {
 
 // =========================================================================
 // discoverSkillDirsForPaths
-// TS REF: src/skills/loadSkillsDir.ts:861-915
 // =========================================================================
 
 /// Discover skill directories by walking up from file paths to cwd.
@@ -1725,7 +1662,6 @@ std::vector<fs::path> discover_skill_dirs_for_paths(
 
 // =========================================================================
 // addSkillDirectories
-// TS REF: src/skills/loadSkillsDir.ts:923-975
 // =========================================================================
 
 /// Load skills from the given directories and merge into dynamic skills map.
@@ -1785,7 +1721,6 @@ void add_skill_directories(const std::vector<fs::path>& dirs) {
 
 // =========================================================================
 // getDynamicSkills
-// TS REF: src/skills/loadSkillsDir.ts:981-983
 // =========================================================================
 
 /// Get all dynamically discovered skills (caller holds dynamic_state().mutex).
@@ -1808,7 +1743,6 @@ std::vector<SkillCommand> get_dynamic_skills() {
 
 // =========================================================================
 // activateConditionalSkillsForPaths
-// TS REF: src/skills/loadSkillsDir.ts:997-1058
 // =========================================================================
 
 // Forward declaration (defined after clearDynamicSkills)
@@ -1876,7 +1810,6 @@ std::vector<std::string> activate_conditional_skills_for_paths(
 
 // =========================================================================
 // getConditionalSkillCount
-// TS REF: src/skills/loadSkillsDir.ts:1063-1065
 // =========================================================================
 
 /// Get the number of pending conditional skills (for testing/debugging)
@@ -1888,7 +1821,6 @@ std::size_t get_conditional_skill_count() {
 
 // =========================================================================
 // clearDynamicSkills
-// TS REF: src/skills/loadSkillsDir.ts:1070-1075
 // =========================================================================
 
 /// Clear dynamic skill state (for testing)
@@ -1950,7 +1882,6 @@ bool matches_simple_glob(const std::string& path, const std::string& pattern) {
 
 // =========================================================================
 // Backwards-compatible aliases (for tests)
-// TS REF: src/skills/loadSkillsDir.ts:814-816
 // =========================================================================
 
 /// Alias for get_skill_dir_commands (backwards compatible with tests)
@@ -1965,8 +1896,6 @@ void clear_command_caches() {
 
 // =========================================================================
 // MCP skill builder registration
-// TS REF: src/skills/loadSkillsDir.ts:1083-1086
-//         (registerMCPSkillBuilders call at module bottom)
 //
 // The MCP skill builder registration is handled at module load time
 // via the static initializer below. It passes the create_skill_command
@@ -1982,9 +1911,7 @@ struct McpSkillBuilderRegistrar {
     McpSkillBuilderRegistrar() {
         // The MCP skill builder module already has its own registration
         // mechanism. Here we ensure the function pointers are available.
-        // In the TS code, this is:
-        //   registerMCPSkillBuilders({ createSkillCommand, parseSkillFrontmatterFields })
-        // For CPP, we log that the builders are ready.
+        // We log that the builders are ready.
         debug("[skills] MCP skill builders registered");
     }
 };
@@ -1996,11 +1923,10 @@ inline McpSkillBuilderRegistrar g_mcp_registrar;
 
 // =========================================================================
 // estimateSkillFrontmatterTokens
-// TS REF: src/skills/loadSkillsDir.ts:100-105
 // =========================================================================
 
 /// Estimate token count for a skill based on frontmatter only
-/// (name, description, whenToUse). Rough estimation for CPP.
+/// (name, description, whenToUse). Rough estimation.
 std::size_t estimate_skill_frontmatter_tokens(const SkillCommand& skill) {
     std::string frontmatter_text = skill.name;
     if (!skill.description.empty()) frontmatter_text += " " + skill.description;
@@ -2012,7 +1938,6 @@ std::size_t estimate_skill_frontmatter_tokens(const SkillCommand& skill) {
 
 // =========================================================================
 // getSkillsSearchPaths
-// TS REF: src/skills/loadSkillsDir.ts (skillDirs computation)
 // =========================================================================
 
 /// Return the standard skill search paths (~/.loom/skills + ./.loom/skills).
@@ -2070,16 +1995,15 @@ std::optional<SkillManifest> find_skill_by_name(std::string_view name) {
 
 // =========================================================================
 // SkillCommand → SkillDefinition converter
-// TS REF: Bridges the rich SkillCommand (from load_skills_dir) into the
-//          simpler SkillDefinition used by SkillExecutor, autocomplete,
-//          and the /skills slash command.
+// Bridges the rich SkillCommand (from load_skills_dir) into the simpler
+// SkillDefinition used by SkillExecutor, autocomplete, and the /skills
+// slash command.
 // =========================================================================
 
 /// Convert a rich SkillCommand (from directory scanning) into a
 /// SkillDefinition for registration in the legacy skill system.
-/// TS REF: The TS code registers skills as Command objects which flow
-///          into the prompt builder; CPP has two parallel types — this
-///          converter lets the rich parser feed the simpler consumers.
+/// Two parallel types exist — this converter lets the rich parser feed
+/// the simpler consumers.
 SkillDefinition skill_command_to_definition(const SkillCommand& cmd) {
     SkillDefinition def;
     def.name = cmd.name;
@@ -2102,8 +2026,6 @@ SkillDefinition skill_command_to_definition(const SkillCommand& cmd) {
 
 // =========================================================================
 // SkillRegistry — unified skill registry (bundled + static + dynamic)
-// TS REF: src/skills/loadSkillsDir.ts (getSkillDirCommands memoized cache
-//          + dynamicSkills map + conditionalSkills map)
 //
 // This is the single entry point for all skill consumers.  It merges:
 //   1. Bundled skills (static built-ins from bundled.cppm)
@@ -2156,7 +2078,7 @@ public:
     /// Discover skill directories for the given file paths and load any
     /// new skills found.  Calls discover_skill_dirs_for_paths() +
     /// add_skill_directories() internally.
-    /// TS REF: Called by file-operation hooks (Read/Write/Edit) in TS.
+    /// Called by file-operation hooks (Read/Write/Edit).
     void discover_for_paths(
         const std::vector<fs::path>& file_paths,
         const fs::path& cwd = fs::current_path())
@@ -2274,10 +2196,6 @@ private:
 // Register the file-access hook so that file tools (loom_tools) can trigger
 // skill discovery without depending on loom_skills (avoiding circular dep).
 // This is called once during static initialization or app startup.
-//
-// TS REF: FileReadTool/FileWriteTool/FileEditTool call discoverSkillDirsForPaths
-//          + addSkillDirectories + activateConditionalSkillsForPaths after
-//          file operations.
 
 namespace detail {
 

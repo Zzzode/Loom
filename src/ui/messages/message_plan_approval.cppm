@@ -1,7 +1,6 @@
 /// @file message_plan_approval.cppm
 /// @brief Plan approval message rendering  (+ Approve / Modify / Reject buttons)
 ///
-/// Mirrors PlanApprovalMessage.tsx (221 lines):
 ///   ┌ Proposed plan: Refactor billing module ─────── [PENDING] ┐
 ///   │ 1. Read the existing billing code                        │
 ///   │ 2. Extract interfaces (Invoice, Payment)                 │

@@ -1,24 +1,19 @@
 /// @file placeholder_cascade.cppm
 /// @brief 4-tier memoized placeholder cascade: mode-specific → skill hint → default.
 ///
-/// Faithful TS→CPP port of:
-///   - src/components/PromptInput/usePromptInputPlaceholder.ts (76 lines)
-///   - src/hooks/renderPlaceholder.ts (51 lines)
-///   - src/components/PromptInput/PromptInput.tsx line 2014 (AI suggestion override)
+/// Cascade priority:
+///   L1. input non-empty                             → undefined
+///   L2. viewing-agent name                          → "Message @{name}..." (trunc 20)
+///   L3. editable queued cmds + shown < 3            → "Press up to edit queued messages"
+///   L4. submit_count < 1 + suggestions enabled      → example-command cache
 ///
-/// TS cascade priority:
-///   L1. input !== ''                              → undefined
-///   L2. viewingAgentName                          → "Message @{name}..." (trunc 20)
-///   L3. editable queued cmds + shown < 3          → "Press up to edit queued messages"
-///   L4. submitCount < 1 + suggestions enabled     → getExampleCommandFromCache()
+/// Plus the AI-suggestion layer (applied before L2 in our merged logic):
+///   L0. prompt-suggestion enabled + suggestion set → suggestion (AI override)
 ///
-/// Plus PromptInput.tsx layer (applied before L2 in our merged logic):
-///   L0. showPromptSuggestion && promptSuggestion  → promptSuggestion (AI override)
-///
-/// Rendering (renderPlaceholder.ts):
-///   - cursor + focus + terminalFocus      → invert(placeholder[0]) + dim(rest)
-///   - no cursor / no focus                → dim(full placeholder)
-///   - value.length === 0 && placeholder   → showPlaceholder = true
+/// Rendering:
+///   - cursor + focus + terminal-focus      → invert(placeholder[0]) + dim(rest)
+///   - no cursor / no focus                  → dim(full placeholder)
+///   - empty value + placeholder set         → show placeholder
 
 module;
 
@@ -34,20 +29,17 @@ export namespace loom::ui::placeholder {
 
 using namespace ftxui;
 
-// ── Constants (TS REF: usePromptInputPlaceholder.ts) ──────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────
 
 /// Maximum teammate/agent display name length before truncation.
-/// TS REF: usePromptInputPlaceholder.ts:23 MAX_TEAMMATE_NAME_LENGTH = 20
 inline constexpr int kMaxTeammateNameLength = 20;
 
 /// Number of times the queue hint can be shown before being suppressed.
-/// TS REF: usePromptInputPlaceholder.ts:22 NUM_TIMES_QUEUE_HINT_SHOWN = 3
 inline constexpr int kQueueHintMaxShowCount = 3;
 
 /// Example commands for the onboarding placeholder (L4 of cascade).
-/// TS REF: src/utils/exampleCommands.ts getExampleCommandFromCache()
-/// The TS version samples from git history; we use a static list sufficient
-/// for the placeholder UX without requiring git access at render time.
+/// We use a static list sufficient for the placeholder UX without requiring
+/// git access at render time.
 inline constexpr std::array<std::string_view, 6> kExampleCommands = {
     "fix lint errors",
     "how do I log an error?",
@@ -80,18 +72,16 @@ struct PlaceholderContext {
     int submit_count = 0;
 
     /// How many times the "Press up to edit queued messages" hint has been shown.
-    /// Capped at kQueueHintMaxShowCount (3) in TS.
+    /// Capped at kQueueHintMaxShowCount (3).
     int queued_hint_shown_count = 0;
 
     /// True when the command queue holds user-editable pending commands.
-    /// TS REF: isQueuedCommandEditable check.
     bool has_editable_queued = false;
 
     /// Whether prompt suggestions (AI next-action hints) are enabled.
-    /// Maps to TS AppState.promptSuggestionEnabled.
     bool prompt_suggestion_enabled = true;
 
-    /// AI-generated next-action suggestion text (PromptInput.tsx:2014 layer).
+    /// AI-generated next-action suggestion text (L0 override layer).
     /// Applied as L0 override when:
     ///   - input_mode == Normal
     ///   - non-empty and does not start with '/'
@@ -108,8 +98,7 @@ struct PlaceholderContext {
 
 /// Pick an example command string.  Uses a deterministic index based on
 /// submit_count so the example changes occasionally but doesn't flicker
-/// on every re-render.  TS REF: getExampleCommandFromCache uses memoize()
-/// to sample once per session; we approximate with submit_count modulo.
+/// on every re-render.  We approximate with submit_count modulo.
 [[nodiscard]] inline std::string GetExamplePlaceholder(int submit_count) {
     const std::size_t idx =
         static_cast<std::size_t>(submit_count) % kExampleCommands.size();
@@ -118,23 +107,15 @@ struct PlaceholderContext {
 
 /// Compute the contextual placeholder via the 4-tier cascade + AI override.
 /// Returns std::nullopt when no placeholder should be shown.
-///
-/// TS REF: usePromptInputPlaceholder.ts (useMemo cascade)
-/// TS REF: PromptInput.tsx:2014 (showPromptSuggestion ? promptSuggestion : defaultPlaceholder)
 [[nodiscard]] inline std::optional<std::string> ComputePlaceholder(
     const PlaceholderContext& ctx) {
 
     // ── L1: input non-empty → no placeholder ──────────────────────────────
-    // TS REF: usePromptInputPlaceholder.ts:33-35
     if (!ctx.input_text.empty()) return std::nullopt;
 
     // ── L0 (AI suggestion override, applied before cascade tiers) ─────────
-    // TS REF: PromptInput.tsx:2014
-    //   const placeholder = showPromptSuggestion && promptSuggestion
-    //       ? promptSuggestion
-    //       : defaultPlaceholder;
-    // where showPromptSuggestion = mode === 'prompt' && suggestions.length === 0
-    //   && promptSuggestion && !viewingAgentTaskId
+    // AI-suggestion override fires when: mode is Normal, no autocomplete
+    //   suggestions, a next-action suggestion is set, and no viewing agent.
     // NOTE: next_action_suggestion starting with '/' is a slash-command
     // suggestion handled by autocomplete separately — don't use as placeholder.
     if (ctx.input_mode == loom::ui::common::PromptInputMode::Normal &&
@@ -147,7 +128,6 @@ struct PlaceholderContext {
     }
 
     // ── L2: viewing teammate → "Message @{name}..." ──────────────────────
-    // TS REF: usePromptInputPlaceholder.ts:38-44
     if (ctx.viewing_agent_name.has_value() &&
         !ctx.viewing_agent_name->empty()) {
         std::string display_name(*ctx.viewing_agent_name);
@@ -159,18 +139,15 @@ struct PlaceholderContext {
     }
 
     // ── L3: queued commands hint ─────────────────────────────────────────
-    // TS REF: usePromptInputPlaceholder.ts:49-55
     if (ctx.has_editable_queued &&
         ctx.queued_hint_shown_count < kQueueHintMaxShowCount) {
         return "Press up to edit queued messages";
     }
 
     // ── L4: onboarding example ───────────────────────────────────────────
-    // TS REF: usePromptInputPlaceholder.ts:60-66
-    // NOTE: TS also checks !proactiveModule?.isProactiveActive() — we omit
-    // the proactive-mode gate here because the CPP engine controls this via
-    // prompt_suggestion_enabled (set false in proactive mode) which is
-    // equivalent in effect.
+    // NOTE: the proactive-mode gate is omitted here because the engine
+    // controls this via prompt_suggestion_enabled (set false in proactive
+    // mode) which is equivalent in effect.
     if (ctx.submit_count < 1 && ctx.prompt_suggestion_enabled) {
         return GetExamplePlaceholder(ctx.submit_count);
     }
@@ -207,8 +184,6 @@ struct RenderedPlaceholder {
 
 /// Render a placeholder string with the declared-cursor visual treatment.
 ///
-/// TS REF: src/hooks/renderPlaceholder.ts
-///
 /// @param placeholder  The placeholder text (may be empty/nullopt).
 /// @param value        Current input value (placeholder only shown when empty).
 /// @param show_cursor  Whether the cursor block should be visible.
@@ -225,8 +200,6 @@ struct RenderedPlaceholder {
     std::string_view prefix = "",
     std::optional<Color> prefix_color = std::nullopt) {
 
-    // TS REF: renderPlaceholder.ts:45
-    //   const showPlaceholder = value.length === 0 && Boolean(placeholder)
     const bool has_text = placeholder.has_value() && !placeholder->empty();
     const bool show_placeholder = value.empty() && has_text;
 
@@ -246,9 +219,7 @@ struct RenderedPlaceholder {
         ph_parts.push_back(std::move(prefix_el));
     }
 
-    // TS REF: renderPlaceholder.ts:27-43
     if (show_cursor && focused && terminal_focus) {
-        // TS REF: renderPlaceholder.ts:36-41
         // Invert first character (declared cursor) + dim the rest.
         const auto [first_ch, byte_len] = FirstUtf8Codepoint(*placeholder);
         if (!first_ch.empty()) {
@@ -265,7 +236,6 @@ struct RenderedPlaceholder {
                                color(Color::White));
         }
     } else {
-        // TS REF: renderPlaceholder.ts:33
         // No cursor / not focused: dim the full placeholder text.
         ph_parts.push_back(ftxui::text(std::string(*placeholder)) | dim);
     }

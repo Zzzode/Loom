@@ -1,7 +1,6 @@
 /// @file message_rate_limit.cppm
 /// @brief Rate limit warning message rendering  (+ interactive component)
 ///
-/// Mirrors RateLimitMessage.tsx (160 lines):
 ///   ⚠️ Rate limit reached (429)  ▸ 12s remaining   [Retry now] [Options]
 ///   model: <model-id>
 module;

@@ -247,7 +247,7 @@ private:
 };
 
 // =========================================================================
-// Hook Command Types (from hooksSettings.ts / settings/types.ts)
+// Hook Command Types
 // =========================================================================
 
 /// Types of hook commands

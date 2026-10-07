@@ -1,6 +1,5 @@
 /// @file core_types.cppm
 /// @brief SDK Core Types - common serializable types for both SDK consumers and builders.
-/// Migrated from src/entrypoints/sdk/coreTypes.ts and coreTypes.generated.ts
 ///
 /// Types are derived from Zod schemas in core_schemas.cppm.
 module;

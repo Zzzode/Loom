@@ -1,10 +1,8 @@
 /// @file pagination_util.cppm
 /// @brief Pure pagination state machine for scrollable list UIs.
 ///
-/// Extracted from src/commands/plugin/usePagination.ts.
-/// The React hooks (useCallback/useMemo/useRef) are removed; the windowing
-/// logic, scroll-offset tracking, and navigation helpers are retained
-/// as a side-effect-free class usable by any rendering layer
+/// The windowing logic, scroll-offset tracking, and navigation helpers
+/// are retained as a side-effect-free class usable by any rendering layer
 /// (FTXUI / CLI / tests).
 
 module;
@@ -22,7 +20,6 @@ export namespace loom::commands::plugin {
 constexpr std::size_t DEFAULT_MAX_VISIBLE = 5;
 
 /// Result of a pagination state snapshot.
-/// Mirrors the return-value shape of TS: usePagination().
 struct PaginationSnapshot {
     std::size_t current_page = 0;
     std::size_t total_pages = 1;
@@ -42,8 +39,7 @@ struct PaginationSnapshot {
 };
 
 /// Pure state-machine implementing the pagination window.
-/// React hooks (`useRef`, `useMemo`, `useCallback`) from the original TS are
-/// replaced by internal member fields and member functions.
+/// State is held in internal member fields and member functions.
 class Paginator {
 public:
     /// Initialize with the number of items and visible window size.
@@ -141,7 +137,7 @@ public:
 
     // -- Snapshot -------------------------------------------------------------
 
-    /// Build the full snapshot (matching the React hook's return value).
+    /// Build the full snapshot.
     [[nodiscard]] PaginationSnapshot snapshot() const {
         PaginationSnapshot s{
             .current_page = current_page(),

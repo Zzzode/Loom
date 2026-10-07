@@ -1,0 +1,14 @@
+{"type":"stream_start","message_id":"msg_think_long_1","model":"test-model"}
+{"type":"content_block_start","index":0,"block":{"type":"thinking","thinking":"","signature":"sig-think-long-001"}}
+{"type":"content_block_delta","index":0,"delta_text":"The user is asking about the trade-offs between eager and lazy loading in a module-based architecture. I should explain that eager loading resolves every dependency at startup, which makes failures surface early and keeps the dependency graph easy to reason about, while lazy loading defers resolution until a module is first used, which improves cold-start latency for large trees. "}
+{"type":"content_block_delta","index":0,"delta_text":"The core trade-off is predictability versus startup cost: eager loading pays for modules that may never be touched, but lazy loading can fail mid-session if a deferred dependency is missing. "}
+{"type":"content_block_delta","index":0,"delta_text":"For a CLI agent harness where every invocation is a fresh process, cold-start matters, so lazy loading is generally the better default, with explicit eager loading reserved for modules on the hot path."}
+{"type":"content_block_stop","index":0}
+{"type":"content_block_start","index":1,"block":{"type":"text","text":""}}
+{"type":"content_block_delta","index":1,"delta_text":"Eager loading resolves all dependencies at startup; lazy loading defers resolution until first use. For a CLI harness, prefer lazy loading with explicit eager loading for hot-path modules."}
+{"type":"content_block_stop","index":1}
+{"type":"stream_end","stop_reason":"end_turn","usage":{"input_tokens":58,"output_tokens":120}}
+{"type":"__commit__","message":{"role":"assistant","model":"test-model","stop_reason":"end_turn","content":[{"type":"thinking","thinking":"The user is asking about the trade-offs between eager and lazy loading in a module-based architecture. I should explain that eager loading resolves every dependency at startup, which makes failures surface early and keeps the dependency graph easy to reason about, while lazy loading defers resolution until a module is first used, which improves cold-start latency for large trees. The core trade-off is predictability versus startup cost: eager loading pays for modules that may never be touched, but lazy loading can fail mid-session if a deferred dependency is missing. For a CLI agent harness where every invocation is a fresh process, cold-start matters, so lazy loading is generally the better default, with explicit eager loading reserved for modules on the hot path.","signature":"sig-think-long-001"},{"type":"text","text":"Eager loading resolves all dependencies at startup; lazy loading defers resolution until first use. For a CLI harness, prefer lazy loading with explicit eager loading for hot-path modules."}]}}
+{"type":"__checkpoint__","name":"after_commit"}
+{"type":"__end_query__"}
+{"type":"__checkpoint__","name":"after_end_query"}

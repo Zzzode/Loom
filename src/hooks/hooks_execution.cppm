@@ -526,7 +526,7 @@ struct CommandHookRunner {
                 written += static_cast<std::size_t>(n);
                 remaining -= static_cast<std::size_t>(n);
             }
-            // Write newline to match TS behavior (jsonInput + '\n')
+            // Write newline (jsonInput + '\n')
             if (remaining == 0) {
                 ::write(parent_stdin_w.fd, "\n", 1);
             }

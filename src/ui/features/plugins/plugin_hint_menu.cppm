@@ -2,7 +2,7 @@
 /// @brief "Recommended for you" plugin hint panel - surfaces proactive
 /// suggestions for plugins based on workspace usage evidence, with
 /// estimated step-savings, Install / Dismiss / Learn-more actions.
-/// Mirrors TS `hooks/plugin_recommendation` and the marketplace banner
+/// Mirrors the `hooks/plugin_recommendation` pattern and the marketplace banner
 /// cards shown at the top of the `/plugin` browse view.
 module;
 
@@ -33,7 +33,7 @@ using namespace loom::ui::design::theme;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-/// A single proactive plugin recommendation.  Mirrors TS PluginHint.
+/// A single proactive plugin recommendation.  Mirrors PluginHint.
 struct PluginHint {
     std::string plugin_id;
     std::string display_name;

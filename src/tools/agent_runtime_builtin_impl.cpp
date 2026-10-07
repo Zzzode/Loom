@@ -18,7 +18,6 @@ import loom.serdes.yaml;
 namespace loom::tools::agent_runtime {
 
 // --- built-in agent system prompt and configuration constants -------------
-// Migrated from src/tools/AgentTool/built-in/*.ts (Agent 1 migration).
 //
 // Inline implementations live here (rather than in built_in_agents.cppm) to
 // avoid a circular module import: built_in_agents.cppm already imports
@@ -29,7 +28,7 @@ namespace loom::tools::agent_runtime {
 
 namespace builtin_detail {
 
-// Tool-name constants aligned with the TS prompt strings.
+// Tool-name constants.
 inline constexpr std::string_view kBash = "Bash";
 inline constexpr std::string_view kRead = "Read";
 inline constexpr std::string_view kEdit = "Edit";

@@ -1,9 +1,12 @@
 ---
 rfc: 5
 title: Property-Based Fuzz Testing of Streaming Event Sequences
-status: provisional
+status: accepted
 owners: "@Zzzode"
-reviewers: []
+reviewers:
+  - agent:design-review-r1 (request-changes: 12 findings, 3 high)
+  - agent:design-review-r2 (request-changes: 7 findings, 2 medium)
+  - agent:design-review-r3 (approve: all findings addressed)
 created: 2026-10-07
 last-reviewed: 2026-10-07
 tracking: local
@@ -70,47 +73,90 @@ properties that must hold on every valid event sequence.
 ### Architecture
 
 ```
-EventSequenceGenerator
+EventSequenceGenerator (rapidcheck)
   ├── generates: StreamStart → [ContentBlockStart → Delta* → Stop]* → StreamEnd
-  ├── respects: block index ordering, valid block types, state machine
-  ├── configurable: max blocks, max deltas, error injection, tool calls
-  └── seeded: deterministic with --seed, random by default
+  ├── respects: DedupTracker-accepted transitions (including out-of-order)
+  ├── configurable: max blocks, max deltas, error injection, tool calls,
+  │                 out-of-order probability, multi-commit sequences
+  ├── text lengths: mix of short + 40–500 chars (exercises INV-02/03/04/05)
+  ├── id correlation: ToolUseBlock.id ↔ ToolExecutionStart/End.tool_use_id
+  └── seeded: deterministic with fixed seed (ctest), random (standalone)
 
 StreamReplayHarness (existing, RFC 0003)
   ├── injects generated events into AppAdapter
   ├── simulates __commit__ and __end_query__
-  └── captures screens at checkpoints
+  ├── fresh App per iteration (avoids seen_tool_use_ids_ leakage)
+  └── captures screens at checkpoints only (not per-step)
 
 InvariantChecker (existing, RFC 0003)
   ├── INV-01: no crash
-  ├── INV-02: thinking not truncated
-  ├── INV-03: no duplicate content (≤2 occurrences)
-  ├── INV-04: streaming text cleared after end_query
+  ├── INV-02: thinking not truncated (needs ≥50-char thinking text)
+  ├── INV-03: no duplicate content (≤2 occurrences, needs ≥40-char text)
+  ├── INV-04: streaming text cleared after end_query (needs ≥40-char text)
   ├── INV-05: no empty tool blocks
-  ├── INV-06: tool result before assistant text
-  └── INV-07: collapsed label after grace expiry (with clock seam)
+  ├── INV-06: tool result before assistant text (needs multi-commit)
+  └── INV-07: collapsed label after grace expiry (skipped — clock-dependent)
 
-Shrinker
-  ├── takes a failing sequence
-  ├── removes events one at a time (delta debugging)
-  └── produces the minimal reproducing sequence
+State-level invariants (new, via streaming_state_snapshot_for_testing())
+  ├── streaming_tools_[i].complete transitions at most once
+  ├── streaming_text_ never contains text from a tool/thinking index
+  └── streaming_thinking_[i].complete transitions at most once
+
+rapidcheck built-in shrinking
+  ├── automatically shrinks failing sequences
+  └── produces minimal reproducing input
 ```
 
 ### Event sequence generator
 
-The generator produces sequences that respect the streaming state machine:
+The generator produces sequences that the `DedupTracker` accepts — this
+includes both well-formed sequences and out-of-order transitions that the
+tracker tolerates. The key insight is that "valid" means "accepted by
+DedupTracker", not "well-formed lifecycle": the tracker accepts
+delta-before-start, stop-without-start, and post-error events, and these
+are exactly the transitions that trigger the semantic quirks listed below.
 
+**Well-formed sequence (the common case):**
 1. `StreamStart` (always first)
 2. Zero or more content blocks, each:
    - `ContentBlockStart` (with a valid `ContentBlock` variant)
    - Zero or more `ContentBlockDelta`
    - `ContentBlockStop`
-3. Optionally: `ToolExecutionStart` / `ToolExecutionProgress` /
-   `ToolExecutionEnd` (for tool_use blocks)
+3. Optionally: `ToolExecutionStart` / `ToolExecutionEnd` (for tool_use blocks)
 4. Optionally: `StreamError` (mid-stream error, terminal)
 5. `StreamEnd` (always last, unless error)
 6. `__commit__` (simulated engine commit with the assembled message)
 7. `__end_query__`
+
+**Out-of-order transitions (generator knobs, default 10% probability each):**
+- `delta_before_start`: emit a `ContentBlockDelta` for an index that has not
+  seen a `ContentBlockStart` yet (DedupTracker promotes to Open and accepts)
+- `stop_without_start`: emit a `ContentBlockStop` for an index that has not
+  seen a `ContentBlockStart` (accepted; index marked Stopped, poisoning
+  subsequent Starts)
+- `post_error_events`: emit 0–3 events after `StreamError` (the handler sets
+  `pending_error_` but does not stop processing)
+- `duplicate_stream_start`: emit a second `StreamStart` mid-sequence
+  (simulates reconnect; `clear_indices()` resets block indices but
+  `seen_tool_use_ids_` persists)
+
+**Multi-commit sequences:**
+The generator can produce 1–3 query rounds in a single sequence. Each round
+has its own `StreamStart` → blocks → `StreamEnd` → `__commit__` →
+`__end_query__`. This exercises INV-06 (tool result committed in an earlier
+round than assistant text).
+
+**Text length distribution:**
+- 50% short (1–39 chars) — exercises normal rendering
+- 30% medium (40–99 chars) — exercises INV-03/04/05 thresholds
+- 20% long (100–500 chars) — exercises INV-02 (≥50-char thinking) and
+  wrap/truncation paths
+
+**Tool-use-id correlation:**
+When a `ToolUseBlock` is generated, its `id` field is used as the
+`tool_use_id` in the corresponding `ToolExecutionStart` and
+`ToolExecutionEnd` events. Without this correlation, the handler's id-match
+loop silently no-ops and tool invariants never fire.
 
 Generator knobs:
 - `max_blocks` (default 5)
@@ -118,24 +164,41 @@ Generator knobs:
 - `error_probability` (default 0.05)
 - `tool_call_probability` (default 0.3)
 - `thinking_probability` (default 0.3)
+- `out_of_order_probability` (default 0.10)
+- `max_rounds` (default 3, for multi-commit sequences)
 
 ### Shrinking
 
-When an invariant fails, the shrinker reduces the sequence:
-1. Remove events one at a time (binary search / delta debugging)
-2. Simplify block content (shorten text, remove thinking)
-3. Remove entire blocks
-4. The result is the minimal sequence that still triggers the failure
+rapidcheck provides built-in shrinking: when a property fails, it
+automatically reduces the generated input to the minimal reproducing case.
+This is a key reason for choosing rapidcheck over a custom generator —
+shrinking structured event sequences (removing events, simplifying text,
+shortening sequences) is handled by the library, not by hand-written delta
+debugging.
+
+The shrunk result is saved as a JSONL fixture (see "Findings serialization"
+below) for manual review and commit.
 
 ### Integration
 
 Two modes:
 
-1. **ctest mode** (`test_streaming_fuzz`): runs a fixed number of iterations
-   (default 100) with a fixed seed. Fast (<1s), deterministic, runs in CI.
-2. **Standalone mode** (`loom-fuzz`): runs indefinitely (or until
+1. **ctest mode** (`test_streaming_fuzz`): a GTest test that runs a fixed
+   number of iterations (default 100) with a fixed seed. Uses
+   `RC_GTEST_PROP` for rapidcheck/GTest integration. Fast, deterministic,
+   runs in CI.
+
+2. **Standalone mode** (`loom-fuzz`): a plain `main()` rapidcheck driver
+   (no libFuzzer, no sanitizer) that runs indefinitely (or until
    `--max-iterations`) with a random seed. For local exploration. Findings
    are written to `tests/fixtures/streaming_sessions/fuzz_<hash>.jsonl`.
+
+The standalone mode is a simple `main()` that configures `rc::Config`
+(seed, max iterations) and calls the same property function as the ctest
+mode. It does **not** use `-fsanitize=fuzzer` — libFuzzer supplies its own
+`main()` and drives byte-level mutations, which is incompatible with
+rapidcheck's structured generators. Coverage-guided fuzzing (libFuzzer)
+is deferred to a future enhancement (see Alternative A3).
 
 ### Detailed design
 
@@ -146,7 +209,7 @@ testing library. Rationale:
 - Actively maintained (last push 2026-10-05), BSD-2-Clause license
 - C++23-compatible, FetchContent-friendly
 - Built-in shrinking (the key differentiator from raw fuzzing)
-- GTest integration (`rapidcheck::gtest`, `RC_GTEST_PROP`) — the project
+- GTest integration (`rapidcheck_gtest`, `RC_GTEST_PROP`) — the project
   already uses GTest
 - Rich generator combinators for building structured event sequences
 
@@ -162,15 +225,21 @@ FetchContent_Declare(
 )
 set(RC_ENABLE_TESTS OFF CACHE INTERNAL "")
 set(RC_ENABLE_EXAMPLES OFF CACHE INTERNAL "")
+set(RC_ENABLE_GTEST ON CACHE INTERNAL "")  # enables rapidcheck_gtest target
 # ... wrap in CMAKE_CXX_SCAN_FOR_MODULES OFF + CMAKE_COMPILE_WARNING_AS_ERROR OFF
 FetchContent_MakeAvailable(rapidcheck)
 ```
+
+The GTest integration target is `rapidcheck_gtest` (not `rapidcheck::gtest`),
+which provides `RC_GTEST_PROP`. Add `rapidcheck` to the `.deps-cache`
+mechanism in the root `CMakeLists.txt` for offline/restricted-network builds.
 
 #### Generator design
 
 The generator produces `StreamEvent` sequences directly in C++ (bypassing
 the JSONL parsing layer). It respects the `DedupTracker` state machine
-(`src/ui/messages/message_pipeline.cppm` lines 98–193):
+(`src/ui/messages/message_pipeline.cppm` lines 98–193), including
+out-of-order transitions that the tracker accepts:
 
 **Per-block-index lifecycle:**
 ```
@@ -188,19 +257,90 @@ NotSeen ──Start──► Open ──Delta*──► Stopped (terminal)
 **Per-tool-use-id lifecycle:**
 - `should_accept_exec_start(id)`: first mention → accept; else drop
 - `should_accept_exec_end(id)`: first `"end:<id>"` → accept; else drop
-- `ToolExecutionProgress`: no dedup, always accepted
+- `ToolExecutionProgress`: no dedup, always accepted (but never emitted by
+  the live engine — only in hand-authored fixtures)
 
 **Reset semantics:**
 - `StreamStart` calls `clear_indices()` (not `clear()`) — block indices
   reset per stream, tool-use-id dedup persists across streams within a turn
 
 The generator uses rapidcheck's `rc::gen` combinators to produce sequences
-that respect these rules. Generator knobs:
-- `max_blocks` (default 5)
-- `max_deltas_per_block` (default 10)
-- `error_probability` (default 0.05)
-- `tool_call_probability` (default 0.3)
-- `thinking_probability` (default 0.3)
+that respect these rules. See "Event sequence generator" above for the
+full sequence shape, out-of-order knobs, multi-commit support, text-length
+distribution, and tool-use-id correlation.
+
+#### State snapshot seam
+
+State-level invariants need read access to `streaming_tools_`,
+`streaming_thinking_`, and `streaming_text_`, which are private
+(`src/ui/app/app.cppm:260-288`). The existing testing seams
+(`app_testing_seams.cpp`) only inject/set/clear — there is no snapshot
+accessor.
+
+A new seam `streaming_state_snapshot_for_testing()` returns a struct with
+the fields needed for state-level invariants:
+
+```cpp
+struct StreamingStateSnapshot {
+    struct ToolEntry {
+        std::string tool_use_id;
+        std::string tool_name;
+        bool complete;
+        bool is_error;
+    };
+    struct ThinkingEntry {
+        int index;
+        bool complete;
+    };
+    std::vector<ToolEntry> tools;
+    std::vector<ThinkingEntry> thinking;
+    std::string streaming_text;
+};
+```
+
+This seam is added to `AppTestingSeams` and used by the fuzzer's
+state-level invariant checks. It is also useful for the existing replay
+tests.
+
+#### Performance: screen invariants at checkpoints only
+
+`play_with_invariants` performs a full 120×40 FTXUI render after every
+step when a checker is installed (`streaming_replay.hpp:649-658`). At
+~60 steps/sequence × 100 iterations that is ~6,000 full renders — roughly
+17× the per-step render count of the entire existing 27-fixture suite.
+
+Merely skipping screen-invariant checks inside the callback does NOT
+prevent the render — the harness renders unconditionally before invoking
+the callback. A harness modification is required:
+
+**New method `play_with_split_invariants`** (added to `StreamReplayHarness`):
+takes two callbacks:
+- `state_check` (per-step): called after every event for state-level
+  invariants (via `streaming_state_snapshot_for_testing()`). Does NOT
+  render the screen.
+- `screen_check` (checkpoint-only): called only at `__checkpoint__` steps
+  (after `__commit__` and after `__end_query__`). Renders the screen and
+  runs screen-text invariants.
+
+This reduces renders from ~6,000 to ~200 per 100-iteration run (2
+checkpoints × 100 iterations), comparable to the existing fixture suite.
+
+The existing `play_with_invariants` is unchanged — existing fixtures and
+tests continue to use it.
+
+#### Findings serialization
+
+When a property fails, rapidcheck shrinks the input to the minimal
+reproducing sequence. The fuzzer then serializes this sequence to JSONL
+using a `StreamEvent → JSON` serializer that also handles `__commit__` and
+`__end_query__` pseudo-events (mirroring the wire shape in
+`streaming_replay.hpp:211-425`), writing to
+`tests/fixtures/streaming_sessions/fuzz_<hash>.jsonl`.
+
+This serializer is also used by RFC 0004's `loom record` command — the two
+RFCs share the same serialization code. If RFC 0004 lands first, the fuzzer
+reuses its serializer; if RFC 0005 lands first, the recorder reuses the
+fuzzer's.
 
 #### Known semantic quirks (fuzz targets)
 
@@ -220,11 +360,37 @@ that the fuzzer should target:
    subsequent events.
 
 These are not crashes — they are semantic bugs that the invariant checker
-may or may not catch. The fuzzer should additionally assert **state-level
-invariants** directly on `AppAdapter`:
-- Every `streaming_tools_[i].complete` transition happens at most once
-- `streaming_text_` never contains text from a tool/thinking index
-- `streaming_thinking_[i].complete` transitions at most once
+may or may not catch. The fuzzer additionally asserts **state-level
+invariants** on the `StreamingStateSnapshot` (see "State snapshot seam"
+above):
+- Every `tools[i].complete` transition happens at most once
+- `streaming_text` never contains text from a tool/thinking index
+- Every `thinking[i].complete` transition happens at most once
+
+#### Known-quirk policy for ctest mode
+
+The state-level invariant "`streaming_text` never contains text from a
+tool/thinking index" fires on quirk #1 (delta-before-start for tool/thinking
+blocks), which the generator explicitly targets via the
+`delta_before_start` knob. If ctest mode runs all invariants on
+out-of-order sequences, the test fails on known quirks — not new bugs.
+
+**ctest mode runs two test cases:**
+
+1. **Well-formed sequences** (out-of-order knobs disabled:
+   `out_of_order_probability = 0.0`): all invariants (INV-01–06 +
+   state-level). This verifies the pipeline is correct on valid input.
+   Clean pass expected.
+
+2. **Out-of-order sequences** (all knobs at default): INV-01 (no crash)
+   only. This verifies the pipeline doesn't crash on weird-but-accepted
+   input. Clean pass expected (the known quirks are semantic, not crashes).
+
+**Standalone mode** runs all invariants on all sequences. Known quirks
+(documented above) are filtered from findings — only previously-unknown
+invariant failures are reported. This prevents re-finding the four known
+quirks on every run while still catching NEW instances (e.g., a new type
+of misclassification not covered by the known-quirk list).
 
 #### Integration with existing infrastructure
 
@@ -233,10 +399,17 @@ The fuzzer reuses:
   via `test_seams(&app).inject_stream_event_for_testing(ev)`, manages
   `query_running_`, simulates `__commit__` and `__end_query__`
 - **`InvariantChecker`** (`tests/invariant_checker.hpp`): INV-01 through
-  INV-07, checked after every event
+  INV-07, checked at checkpoints (not per-step — see "Performance" above)
 - **`AppTestingSeams`** (`src/ui/app/app_testing_seams.cpp`): provides
   `inject_stream_event_for_testing()`, `set_query_running_for_testing()`,
-  `clear_streaming_thinking_for_testing()`
+  `clear_streaming_thinking_for_testing()`, and the new
+  `streaming_state_snapshot_for_testing()`
+
+**Fresh App per iteration**: the harness never calls `event_dedup_.clear()`
+between plays (only `StreamStart`'s `clear_indices()` runs, which preserves
+`seen_tool_use_ids_`). Reusing one `App` across fuzz iterations would leak
+tool-use-id dedup state. The fuzzer constructs a fresh `App` (and fresh
+`StreamReplayHarness`) for each iteration.
 
 The fuzzer generates `StreamEvent` values, wraps them in `ReplayStep`
 vectors, and plays them through `StreamReplayHarness::play_with_invariants()`.
@@ -247,17 +420,29 @@ Two targets:
 
 1. **`test_streaming_fuzz`** (ctest mode): a GTest test that runs a fixed
    number of iterations (default 100) with a fixed seed. Uses
-   `RC_GTEST_PROP` for rapidcheck/GTest integration. Fast (<1s),
-   deterministic, runs in CI.
+   `RC_GTEST_PROP` for rapidcheck/GTest integration. Registered via
+   `gtest_discover_tests` (matching the project's existing GTest pattern,
+   e.g., `tests/CMakeLists.txt:266`). Deterministic, runs in CI.
 
-2. **`loom-fuzz`** (standalone mode): a libFuzzer-compatible binary that
-   runs indefinitely (or until `--max-iterations`) with a random seed.
-   For local exploration. Findings are written to
-   `tests/fixtures/streaming_sessions/fuzz_<hash>.jsonl`.
+2. **`loom-fuzz`** (standalone mode): a plain `main()` rapidcheck driver
+   (no `-fsanitize=fuzzer`, no libFuzzer) that runs indefinitely (or until
+   `--max-iterations`) with a random seed. Configured via `rc::Config`
+   (seed, max iterations, test timeout). For local exploration. Findings
+   are written to `tests/fixtures/streaming_sessions/fuzz_<hash>.jsonl`.
 
-Both targets link `loom_core`, `loom_ui`, `rapidcheck`, and GTest (same as
-`test_streaming_replay`). The existing `tests/fuzz/CMakeLists.txt` pattern
-(`-fsanitize=fuzzer`) is used for the standalone target.
+Both targets link `loom_core`, `loom_ui`, `rapidcheck`, `rapidcheck_gtest`,
+and GTest (same as `test_streaming_replay`). The standalone target does
+**not** link `-fsanitize=fuzzer` — libFuzzer supplies its own `main()` and
+drives byte-level mutations, which is incompatible with rapidcheck's
+structured generators.
+
+**Relationship to existing fuzz infrastructure**: the project already has
+`tests/fuzz/CMakeLists.txt` with two `-fsanitize=fuzzer` targets gated on
+`ENABLE_FUZZING` (`tests/CMakeLists.txt:691-695`). Those targets do
+byte-level mutation of wire-protocol inputs — a different engine and a
+different purpose. The new `loom-fuzz` is a structured-generator driver
+for event-sequence space; it is always built (not gated on `ENABLE_FUZZING`)
+because it has no sanitizer dependency and runs as a normal ctest in CI.
 
 #### ctest integration
 
@@ -265,21 +450,23 @@ Both targets link `loom_core`, `loom_ui`, `rapidcheck`, and GTest (same as
 # tests/CMakeLists.txt
 add_executable(test_streaming_fuzz test_streaming_fuzz.cpp)
 target_link_libraries(test_streaming_fuzz PRIVATE
-    loom_core loom_ui GTest::gtest loom_test_main rapidcheck)
-add_test(NAME StreamingFuzz COMMAND test_streaming_fuzz)
+    loom_core loom_ui GTest::gtest loom_test_main
+    rapidcheck rapidcheck_gtest)
+gtest_discover_tests(test_streaming_fuzz)
 ```
 
-The fixed seed is hardcoded (or via `--seed` flag) so CI runs are
-reproducible. The iteration count is configurable via `--iterations`.
+The fixed seed is hardcoded in the test (via `rc::Config::seed`) so CI
+runs are reproducible. The iteration count is set via `rc::Config::maxSuccess`
+(default 100).
 
 ## Phases and graduation criteria
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| A | rapidcheck integration + generator | FetchContent + StreamEvent generator respecting DedupTracker state machine | proposed | Generator produces 1000 valid sequences that replay without harness errors |
-| B | Invariant integration | Wire generator → StreamReplayHarness → InvariantChecker + state-level invariants | proposed | 1000 generated sequences pass INV-01–07 + state invariants; any failure is shrunk and reported |
-| C | ctest + standalone integration | test_streaming_fuzz target + loom-fuzz binary | proposed | `ctest -R StreamingFuzz` passes (fixed seed, 100 iterations); `loom-fuzz --max-iterations 10000` runs clean |
-| D | Bug hunt | Long-running fuzz session + triage findings | proposed | At least one previously-unknown semantic bug found, shrunk, and filed as a fixture |
+| A | rapidcheck integration + generator + serializer | FetchContent (with `RC_ENABLE_GTEST=ON`) + StreamEvent generator respecting DedupTracker (including out-of-order) + StreamEvent→JSONL serializer + `streaming_state_snapshot_for_testing()` seam | proposed | Generator produces 1000 sequences that replay without harness errors; serializer round-trips through `streaming_replay.hpp` parser |
+| B | Invariant integration | Wire generator → StreamReplayHarness → InvariantChecker (at checkpoints) + state-level invariants (via snapshot seam) + fresh App per iteration | proposed | 1000 generated sequences pass INV-01–06 + state invariants; any failure is shrunk and serialized to JSONL |
+| C | ctest + standalone integration | `test_streaming_fuzz` target (gtest_discover_tests, fixed seed, 100 iterations, two test cases: well-formed + out-of-order) + `loom-fuzz` plain main() driver (rc::Config, random seed) | proposed | `ctest -R StreamingFuzz` passes (fixed seed, 100 iterations, both test cases); `loom-fuzz --max-iterations 10000` runs clean; ctest time measured and within budget |
+| D | Bug hunt | Long-running fuzz session + triage findings | proposed | ≥1M iterations run; any findings triaged, shrunk, and filed as fixtures (or documented as known quirks) |
 
 ## Production Readiness Review
 
@@ -297,9 +484,10 @@ TBD — to be filled before `implementable` gate.
   ctest mode; findings are saved as deterministic fixtures.
 - The generator may produce sequences that are technically valid but
   unrealistic. Mitigation: generator knobs bias toward realistic patterns
-  (thinking → tool_use → text, etc.).
-- Shrinking adds complexity. Mitigation: start with a simple delta-debugging
-  shrinker; sophisticated shrinking is a future enhancement.
+  (thinking → tool_use → text, etc.) while also exploring out-of-order
+  transitions that trigger known quirks.
+- rapidcheck adds a dependency. Mitigation: FetchContent with pinned commit,
+  disabled tests/examples, and `.deps-cache` support for offline builds.
 
 ## Alternatives considered
 
@@ -324,12 +512,14 @@ sequence space is better explored by a generator than by byte-level mutation;
 shrinking is harder. **Deferred** — generator-based fuzzing is simpler and
 more targeted; coverage guidance is a future enhancement.
 
-### A4. rapidcheck (C++ property-based testing library)
+### A4. Custom generator (no library)
 
-**Pros**: mature, well-tested, built-in shrinking, CMake integration.
-**Cons**: adds a dependency; may not perfectly fit the event sequence
-generator model. **Considered** — evaluate in Phase A; if rapidcheck's
-generator model fits, use it; otherwise, implement a custom generator.
+**Pros**: no dependency; full control over generator behavior.
+**Cons**: no built-in shrinking (the key differentiator from raw fuzzing);
+must implement generator combinators, shrinking, and seed management by
+hand. **Rejected** — rapidcheck provides all of these out of the box, is
+actively maintained, and integrates with the project's existing GTest
+setup.
 
 ## Testing and verification plan
 
@@ -337,8 +527,10 @@ generator model fits, use it; otherwise, implement a custom generator.
 - Standalone `loom-fuzz` binary for long-running exploration
 - Deliberately inject a bug (e.g., revert one of the three original fixes)
   and verify the fuzzer finds and shrinks it
-- Expected ctest total: TBD
+- Expected ctest total: ~2020 (2014 existing + ~6 new: 2 fuzz properties
+  + serializer round-trip + generator validation + state snapshot seam tests)
 - Dual preset `-Werror`; serial ctest
+- ctest time budget measured in Phase C; iteration count adjusted if needed
 
 ## Documentation impact
 
@@ -354,11 +546,14 @@ generator model fits, use it; otherwise, implement a custom generator.
 | Use rapidcheck or a custom generator? | @Zzzode | rapidcheck — only actively-maintained, C++23-compatible, FetchContent-friendly option with built-in shrinking |
 | How to handle INV-07 (clock-dependent) in fuzzing? | @Zzzode | Skip INV-07 in fuzzing (it requires clock manipulation); the clock-seam tests (ThinkingGraceExpiry, ThinkingCollapseGrace) already cover it |
 | Should fuzz findings be auto-committed as fixtures? | @Zzzode | No — findings are written to `tests/fixtures/streaming_sessions/fuzz_<hash>.jsonl` for manual review and commit |
-| What iteration count for ctest mode? | @Zzzode | 100 iterations with fixed seed (<1s, deterministic); standalone mode runs until `--max-iterations` or indefinitely |
-| Should the fuzzer generate invalid sequences too? | @Zzzode | No — the generator respects the DedupTracker state machine; invalid-sequence handling is tested by the existing `duplicate_events` and `stream_interrupted` fixtures |
+| What iteration count for ctest mode? | @Zzzode | 100 iterations with fixed seed via `rc::Config::maxSuccess`; standalone mode runs until `--max-iterations` or indefinitely |
+| Should the fuzzer generate invalid sequences too? | @Zzzode | The generator produces DedupTracker-*accepted* sequences, including out-of-order transitions (delta-before-start, stop-without-start, post-error) that trigger the known quirks. Sequences the tracker *rejects* (e.g., start-after-stop) are not generated — they are dropped by the tracker and cannot reach the handler. |
 
 ## Implementation History
 
 | Date | Phase | Event | Commit / PR | Evidence (metrics, test totals) |
 |---|---|---|---|---|
 | 2026-10-07 | — | RFC opened (provisional) |  | — |
+| 2026-10-07 | — | Design review R1: request-changes (12 findings, 3 high) |  | Engine incompatibility, generator reach, state read path |
+| 2026-10-07 | — | Design review R2: request-changes (7 findings, 2 medium) |  | Harness render behavior, invariant/quirk contradiction |
+| 2026-10-07 | — | Design review R3: approve → status accepted |  | All 19 findings addressed across 2 rounds |

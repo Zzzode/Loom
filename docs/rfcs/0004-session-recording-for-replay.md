@@ -84,12 +84,13 @@ recorded fixtures are wire-agnostic and directly replayable.
 
 Two modes:
 
-1. **`loom record`** — starts a new session with recording enabled. When the
-   session ends (or the user presses a key), the fixture is written to
-   `tests/fixtures/streaming_sessions/recorded_<timestamp>.jsonl`.
-2. **`loom record <session-id>`** — converts an existing session's traces
-   (`messages.jsonl` + `dump-prompts/`) into a replay fixture. This is
-   useful when a bug was encountered in a previous session.
+1. **`loom record`** — starts a new session with recording enabled. The
+   recorder taps into the live event stream and writes the fixture when the
+   session ends. Output: `~/.loom/recordings/recorded_<timestamp>.jsonl`
+   (with `--install` flag to copy into `tests/fixtures/streaming_sessions/`).
+2. **`loom record <session-id>`** — converts an existing session's streaming
+   trace into a replay fixture. This requires always-on streaming event
+   capture (see Phase C), which is a separate concern from live recording.
 
 ### Fixture format
 
@@ -97,6 +98,7 @@ Recorded fixtures use the exact RFC 0003 JSONL format (§6 of RFC 0003):
 - `stream_start`, `content_block_start`, `content_block_delta`,
   `content_block_stop`, `stream_end`, `stream_error`
 - `tool_execution_start`, `tool_execution_progress`, `tool_execution_end`
+  (engine-internal events, captured during live tool execution)
 - `__commit__` (captured from engine commits)
 - `__end_query__` (captured when the query thread finishes)
 - `__checkpoint__` (inserted at key moments: after commit, after end_query)
@@ -112,15 +114,104 @@ The recorder redacts:
 
 ### Detailed design
 
-TBD — pending codebase research.
+#### Tap point
+
+The recorder taps into the event stream inside
+`query_engine_http.cpp:stream_single_api_call()` (line 285). The existing
+`content_receiver` callback feeds raw bytes to `SseEventDecoder`, which
+emits `SseEvent{type, data}` structs. The `parse_sse_event` lambda
+(lines 365–522) maps these to `core::StreamEvent` variants and calls
+`options.on_event`. The recorder wraps `options.on_event`:
+
+```cpp
+// query_engine_http.cpp — inside stream_single_api_call()
+auto original_on_event = options.on_event;
+StreamRecorder recorder(output_path);
+options.on_event = [&recorder, original_on_event](const StreamEvent& ev) {
+    recorder.record_event(ev);
+    if (original_on_event) original_on_event(ev);
+};
+```
+
+This captures the exact same events the UI sees, at the same boundary where
+the replay harness injects them.
+
+#### Serialization
+
+The recorder needs a `StreamEvent → JSON` serializer that is the inverse of
+the fixture parser in `streaming_replay.hpp` (lines 211–305). Each
+`StreamEvent` variant maps to a JSONL line:
+
+| StreamEvent | JSON `"type"` | Key fields |
+|---|---|---|
+| `StreamStart` | `stream_start` | `message_id`, `model` |
+| `ContentBlockStart` | `content_block_start` | `index`, `block` (ContentBlock) |
+| `ContentBlockDelta` | `content_block_delta` | `index`, `delta_text` |
+| `ContentBlockStop` | `content_block_stop` | `index` |
+| `ToolExecutionStart` | `tool_execution_start` | `tool_use_id`, `tool_name`, `input_json` |
+| `ToolExecutionProgress` | `tool_execution_progress` | `tool_use_id`, `partial_result` |
+| `ToolExecutionEnd` | `tool_execution_end` | `tool_use_id`, `result`, `is_error` |
+| `StreamEnd` | `stream_end` | `stop_reason`, `usage` |
+| `StreamError` | `stream_error` | `error_type`, `message` |
+
+The `ContentBlock` variant serializes using the same `"type"` discriminator
+as the fixture parser (`text`, `thinking`, `tool_use`, `tool_result`,
+`image`, `document`).
+
+#### Commit and end-query
+
+After the stream completes, the assembled `result.message` is serialized as
+a `__commit__` line. The existing `message_to_jsonl_()` function
+(`query_engine_conversation.cpp` line 162) already serializes messages to
+JSON; the recorder wraps it in the `{"type":"__commit__","message":{...}}`
+envelope with the `role` field.
+
+After the query thread finishes (or the user exits the session), the
+recorder appends `{"type":"__end_query__"}` and closes the file.
+
+#### Checkpoints
+
+The recorder inserts `__checkpoint__` lines at key moments:
+- After each `__commit__`: `{"type":"__checkpoint__","name":"after_commit_N"}`
+- After `__end_query__`: `{"type":"__checkpoint__","name":"after_end_query"}`
+
+#### Multi-turn sessions
+
+A single live session may contain multiple query rounds (user submits,
+assistant responds, user submits again). The recorder captures all rounds
+in a single fixture. Each round starts with a `StreamStart` and ends with
+`__end_query__`. The replay harness already supports multi-turn fixtures
+(see `multi_turn_with_thinking.jsonl`).
+
+#### CLI integration
+
+`loom record` is a CLI flag, not a slash command. The main entry point
+(`src/main.cpp`) checks for the `record` flag and enables the recorder
+before starting the TUI. When the session ends, the recorder writes the
+fixture and prints the output path.
+
+#### Output location
+
+Default: `~/.loom/recordings/recorded_<timestamp>.jsonl`. With `--install`:
+copies the fixture to `tests/fixtures/streaming_sessions/` and prints the
+fixture name for use in tests.
+
+#### Redaction
+
+The recorder applies redaction before writing:
+- Text blocks matching configurable patterns (e.g., API key patterns) are
+  replaced with `<redacted>`.
+- Tool results from configurable tool names (e.g., `Bash` with sensitive
+  commands) are truncated or redacted.
+- Redaction rules are configured via `settings.json` under a `record` key.
 
 ## Phases and graduation criteria
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| A | Recorder core | Event tap + JSONL writer + redaction | proposed | A recorded fixture replays through StreamReplayHarness with zero edits |
-| B | `loom record` command | CLI integration + session lifecycle | proposed | `loom record` produces a valid fixture from a live session |
-| C | Trace conversion | `loom record <session-id>` from existing traces | proposed | A fixture from `messages.jsonl` + `dump-prompts/` replays correctly |
+| A | Recorder core | StreamEvent→JSON serializer + event tap in stream_single_api_call + JSONL writer + checkpoints | proposed | A recorded fixture replays through StreamReplayHarness with zero edits; serializer is the inverse of streaming_replay.hpp parser |
+| B | CLI integration | `loom record` flag + output to ~/.loom/recordings/ + `--install` flag + redaction rules | proposed | `loom record` produces a valid fixture from a live session; `--install` copies to fixtures dir |
+| C | Always-on streaming trace | Capture streaming events in every session (not just record mode) + `loom record <session-id>` conversion | proposed | A fixture from a previous session's streaming trace replays correctly |
 
 ## Production Readiness Review
 
@@ -183,9 +274,10 @@ recording at the `core::StreamEvent` boundary is simpler and more reliable.
 
 | Question | Owner | Resolved by |
 |---|---|---|
-| Should recording be a compile-time flag or runtime toggle? | TBD | Phase A design |
-| How to handle multi-turn sessions in a single fixture? | TBD | Phase A design |
-| Should recorded fixtures be auto-committed or gitignored? | TBD | Phase B design |
+| Should recording be a compile-time flag or runtime toggle? | @Zzzode | Runtime CLI flag (`loom record`) — zero overhead when absent |
+| How to handle multi-turn sessions in a single fixture? | @Zzzode | Capture all rounds in one fixture; each round starts with StreamStart (matches existing multi_turn_with_thinking.jsonl pattern) |
+| Should recorded fixtures be auto-committed or gitignored? | @Zzzode | Default to `~/.loom/recordings/`; `--install` flag copies to fixtures dir for explicit commit |
+| Should `loom record <session-id>` convert existing traces? | @Zzzode | Deferred to Phase C — existing traces (messages.jsonl, dump-prompts) don't capture streaming events; requires always-on capture |
 
 ## Implementation History
 

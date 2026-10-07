@@ -54,6 +54,8 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0001-module-architecture-target.md`](rfcs/0001-module-architecture-target.md) | **Implemented.** Target module architecture: declaration-only interfaces, `import std;`, breaking UI9/Core8 SCCs, dissolving `loom.utils`, UI state sharding. |
 | [`rfcs/0002-ui-state-sharding-and-ui9-break.md`](rfcs/0002-ui-state-sharding-and-ui9-break.md) | **Implemented.** Sever the 9-area UI SCC via type sinks, registry inversion, and `ReplScreenState` sharding; split `loom_ui` into ~12 acyclic libraries. |
 | [`rfcs/0003-streaming-payload-replay-testing.md`](rfcs/0003-streaming-payload-replay-testing.md) | **Implemented.** Streaming payload replay testing: JSONL event fixtures, replay harness, golden snapshots, invariant checker, clock seam for grace-period tests. |
+| [`rfcs/0004-session-recording-for-replay.md`](rfcs/0004-session-recording-for-replay.md) | **Provisional.** `loom record` command: capture live API sessions as JSONL replay fixtures compatible with the RFC 0003 harness. |
+| [`rfcs/0005-property-based-fuzz-testing.md`](rfcs/0005-property-based-fuzz-testing.md) | **Provisional.** Property-based fuzz testing: generate random valid streaming event sequences, run through the invariant checker (INV-01–07). |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

@@ -232,6 +232,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
     acsrc::append_prompt_history(text, current_session_id_, screen_state_->cwd);
 
     query_running_.store(true);
+    screen_state_->query_running = true;
     last_submitted_text_ = text;
     repl::SetSpinner(screen_state_->task_view_store, repl::SpinnerMode::Requesting);
     screen_state_->task_view_store.spinner_verb = "Thinking";
@@ -239,6 +240,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
         std::lock_guard lk(result_mutex_);
         pending_error_.reset();
         streaming_text_.clear();
+        streaming_text_index_.reset();
         streaming_markdown_.reset();
         streaming_tools_.clear();
         streaming_thinking_.clear();
@@ -283,6 +285,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
         static_cast<loom::core::QueryEngine*>(engine_raw())->stream_query(materialized.text, opts);
 
         query_running_.store(false);
+        screen_state_->query_running = false;
         PostRenderEvent();
     });
 }
@@ -298,6 +301,7 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
         if constexpr (std::is_same_v<T, core::StreamStart>) {
             std::lock_guard lk(result_mutex_);
             streaming_text_.clear();
+            streaming_text_index_.reset();
             streaming_markdown_.reset();
             streaming_tools_.clear();
             streaming_thinking_.clear();
@@ -329,8 +333,14 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
                     .text = thinking->thinking,
                     .complete = false,
                     .streaming_ended_at = std::nullopt,
+                    .streaming_started_at = clock::steady_now(),
                 };
                 repl::SetSpinner(screen_state_->task_view_store, repl::SpinnerMode::Thinking);
+            } else if (std::get_if<core::TextBlock>(&e.block)) {
+                // Track the text block's actual index so the streaming
+                // projection places it in the correct order (the model can
+                // emit text before tool_use: thinking → text → tool_use).
+                streaming_text_index_ = e.index;
             }
         } else if constexpr (std::is_same_v<T, core::ContentBlockDelta>) {
             apply_event = event_dedup_.should_accept_delta(e.index);
@@ -355,6 +365,15 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
                 thinking->second.complete = true;
                 thinking->second.streaming_ended_at =
                     clock::steady_now();
+                // Cache the duration so committed thinking entries (which
+                // lack timing info) can show "∴ Thought for Xs".
+                if (thinking->second.streaming_started_at) {
+                    auto dur = std::chrono::duration_cast<
+                        std::chrono::milliseconds>(
+                            *thinking->second.streaming_ended_at -
+                            *thinking->second.streaming_started_at);
+                    thinking_duration_cache_[thinking->second.text] = dur;
+                }
             }
         } else if constexpr (std::is_same_v<T, core::ToolExecutionStart>) {
             apply_event = event_dedup_.should_accept_exec_start(e.tool_use_id);

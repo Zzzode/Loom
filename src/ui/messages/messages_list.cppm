@@ -334,9 +334,16 @@ struct MessagesListInput {
     /// messages are rendered.  Toggled by user (Ctrl+E in transcript mode).
     bool                            show_all_in_transcript = false;
 
-    /// When true, build_visible_rows hides ALL completed thinking rows —
-    /// only the streaming-thinking tail stays visible.
-    bool                            streaming_thinking_globally_visible = false;
+    /// When true, skips chain compression (Step 2.5) entirely.  Used by
+    /// tests that need to verify individual tool/thinking row rendering.
+    /// Production code always leaves this false.
+    bool                            disable_chain_compression = false;
+
+    /// True while a query is actively streaming.  When set, the last
+    /// compressible chain renders as a LIVE status row (spinner + elapsed
+    /// timer + tool activity) instead of a static summary.  Synced from
+    /// AppAdapter::query_running_ via ReplScreenState.
+    bool                            query_running = false;
 
     /// Optional pointer to a shared StreamingMarkdown instance used for the
     /// streaming-text tail row.  When set and the row's is_streaming=true,
@@ -498,10 +505,12 @@ auto passes_filters(MessageShape s, const Filters& f) -> bool;
 constexpr std::size_t kMaxMessagesInTranscriptMode = 30;
 
 /// A single row that render_messages_list_view / the Component will emit.
-/// Either a real payload row, a compact-group synthetic row, or a transcript-
-/// cap divider ("N older messages hidden — Ctrl+E to show all").
+/// Either a real payload row, a compact-group synthetic row, a compressed-
+/// chain synthetic row (thinking + tool calls collapsed to one summary
+/// line), or a transcript-cap divider ("N older messages hidden — Ctrl+E
+/// to show all").
 struct VisibleRow {
-    enum class Kind { Payload, CompactGroup, TranscriptCapDivider };
+    enum class Kind { Payload, CompactGroup, TranscriptCapDivider, CompressedChain };
 
     Kind kind = Kind::Payload;
 
@@ -511,12 +520,27 @@ struct VisibleRow {
     // For Kind::CompactGroup — index into compact_boundary_groups, plus stats
     std::size_t group_idx       = 0;
     std::size_t group_count     = 0;   // number of original rows in group
-    std::size_t tool_turns      = 0;
+    std::size_t tool_turns      = 0;   // tool calls in group/chain
     std::size_t additions       = 0;
     std::size_t deletions       = 0;
 
     // For Kind::TranscriptCapDivider — number of messages hidden by the cap.
+    // For Kind::CompressedChain — group_count = thinking blocks in chain,
+    // tool_turns = tool calls in chain, chain_tool_breakdown = per-tool-type
+    // counts, chain_thinking_duration = total thinking time, chain_is_live =
+    // true while the query is still streaming (renders as a live status row).
     std::size_t hidden_count    = 0;
+
+    // For Kind::CompressedChain — rich summary data.
+    bool                            chain_is_live = false;
+    std::chrono::milliseconds       chain_thinking_duration{0};
+    std::vector<std::pair<std::string, std::size_t>> chain_tool_breakdown = {};
+    /// UUID of the chain's anchor row (first row in the chain).
+    /// Used as the expand/collapse key: "chain:" + chain_uuid.
+    std::string                     chain_uuid = {};
+    /// True when this chain header represents an expanded chain (the
+    /// individual rows follow as payload).  Clicking the header collapses.
+    bool                            chain_is_expanded = false;
 };
 // =========================================================================
 // 4)  build_visible_rows  —  pure O(N) over input.rows
@@ -720,8 +744,22 @@ auto render_payload_row(const MessagesListInput& input,
                         std::size_t frame_count,
                         bool add_margin) -> Element;
 
+/// Return true if the thinking row at `row_idx` was the streaming tail
+/// within the 3s collapse grace — i.e. it should still be rendered
+/// expanded.  Defined in messages_list_payload_row.cpp; called by
+/// estimate_row_height (messages_list_geometry.cpp) to size expanded
+/// thinking rows correctly in the virtual-list geometry.
+[[nodiscard]] bool was_recently_streaming(std::size_t row_idx);
+
 auto render_compact_group_row(const VisibleRow& vr,
                               bool is_selected) -> Element;
+
+/// Render a compressed thinking+tool chain as a single dim summary line.
+/// Live chains (query still streaming) show a spinner + elapsed timer +
+/// present-continuous tool activity; static chains show "Thought for X, …".
+auto render_compressed_chain_row(const VisibleRow& vr,
+                                 bool is_selected,
+                                 std::size_t frame_count = 0) -> Element;
 
 /// Returns a lowercase copy of the search query (if any) — used to highlight
 /// matched substrings in render output.  (Currently used for the empty-state

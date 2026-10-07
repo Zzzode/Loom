@@ -42,8 +42,10 @@ inline std::unordered_map<std::size_t, std::chrono::steady_clock::time_point>
 
 /// Return true if the thinking row at `row_idx` was the streaming tail
 /// within the grace period — i.e. it should stay expanded even though
-/// `is_streaming_tail` is now false.
-[[nodiscard]] inline bool was_recently_streaming(std::size_t row_idx) {
+/// `is_streaming_tail` is now false.  Declared in messages_list.cppm so
+/// estimate_row_height (messages_list_geometry.cpp) can size expanded
+/// thinking rows correctly in the virtual-list geometry.
+[[nodiscard]] bool was_recently_streaming(std::size_t row_idx) {
     auto it = thinking_stream_last_seen.find(row_idx);
     if (it == thinking_stream_last_seen.end()) return false;
     auto elapsed = clock::steady_now() - it->second;
@@ -210,26 +212,20 @@ auto render_payload_row(const MessagesListInput& input,
         if (o) {
             // Completed thinking rows render as a collapsed "∴ Thought for
             // Xs" summary (RenderThinkingMessageCollapsed) that can be
-            // expanded on click.  They are NOT hidden here — the filter in
-            // messages_list_filter.cpp only hides them during the streaming
-            // grace period (streaming_thinking_globally_visible).
+            // expanded on click.
             //
             // NOTE: `is_selected` (row navigation highlight) does NOT mean
             // "expanded".  Expansion requires an explicit
             // user gesture (Ctrl+O / Enter) via the interactive Component
-            // path.  On this plain-Element render path, selected merely
-            // lifts the "hide on complete" guard so the collapsed label is
-            // visible.  `is_transcript_mode` (full thinking content) is
+            // path.  `is_transcript_mode` (full thinking content) is
             // driven by the user's Ctrl+O transcript toggle.
             //
             // Streaming thinking tail is ALWAYS expanded (transcript mode).
-            // When this row is the streaming tail OR thinking is globally
-            // visible (meaning a streaming-thinking tail exists somewhere),
-            // force transcript mode so the full body is shown rather than
-            // the collapsed
+            // When this row is the streaming tail OR was recently streaming
+            // (within the 3s collapse grace), force transcript mode so the
+            // full body is shown rather than the collapsed
             // "∴ Thinking (ctrl+o to expand)" label.
             const bool thinking_force_expanded = is_streaming_tail ||
-                input.streaming_thinking_globally_visible ||
                 was_recently_streaming(row_idx);
             if (is_streaming_tail) mark_streaming(row_idx);
             Element el = thinking_message::RenderThinkingMessageFaithful(

@@ -146,12 +146,6 @@ struct ReplScreenState {
     /// Toggled by the user (e.g., via /brief command or status bar click).
     bool is_brief_mode = false;
 
-    /// isStreamingThinkingVisible.
-    /// When true, ALL completed thinking blocks are hidden
-    /// (lastThinkingBlockId = 'streaming').  Set by app.cppm when any streaming
-    /// thinking entry is active or within its 30s grace period.
-    bool streaming_thinking_globally_visible = false;
-
     /// is_transcript_mode (transcript screen).
     /// When true, the message list shows the FULL transcript (all message
     /// types visible, bypassing brief/dropText filters).  Capped at last 30
@@ -164,6 +158,15 @@ struct ReplScreenState {
     /// and ALL messages are rendered.  Toggled by Ctrl+E while in transcript
     /// mode (transcript:toggleShowAll shortcut, Transcript context).
     bool show_all_in_transcript = false;
+
+    /// Test-only: when true, messages list skips chain compression (Step 2.5).
+    /// Production code always leaves this false.
+    bool disable_chain_compression = false;
+
+    /// Production: true while a query is actively streaming.  Synced from
+    /// AppAdapter::query_running_.  When set, the last compressible chain
+    /// renders as a live status row (spinner + elapsed timer + tool activity).
+    bool query_running = false;
 
     // Input
     std::string input_text;

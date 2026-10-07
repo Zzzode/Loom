@@ -2,7 +2,7 @@
 /// @brief Injectable steady-clock seam (RFC 0003 §8.3).
 ///
 /// The streaming UI has two grace periods that read the wall clock:
-///   - the 30s thinking grace (is_streaming_thinking_visible, Render prune,
+///   - the 3s thinking grace (is_streaming_thinking_visible, Render prune,
 ///     thinking projection in app_render_event.cpp; streaming_ended_at write
 ///     in app_handle_submit.cpp), and
 ///   - the 3s collapse grace (was_recently_streaming / mark_streaming in

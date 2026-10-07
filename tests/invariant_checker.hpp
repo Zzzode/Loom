@@ -30,9 +30,11 @@
 /// Screen-text grounding (from the committed golden snapshots under
 /// tests/fixtures/streaming_snapshots/):
 ///   * The expanded thinking label is "∴ Thinking…" where … is U+2026
-///     (NOT three ASCII dots). It is visible only while a thinking row is
-///     the streaming tail; once a text block streams (or after
-///     __end_query__) the thinking rows are hidden and the label is absent.
+///     (NOT three ASCII dots). It is visible while a thinking row is the
+///     streaming tail and for 3s after (the collapse grace,
+///     was_recently_streaming); once the grace expires the row collapses
+///     to the "∴ Thought for Xs <summary> (ctrl+o to expand)" label and
+///     the expanded label is absent. Thinking rows are never hidden.
 ///   * The streaming assistant-text row carries a block cursor "▌" (U+25AC)
 ///     at its end; the committed row does not. The cursor BLINKS and is
 ///     non-deterministic — it is present in some golden snapshots and
@@ -115,10 +117,10 @@ public:
     //
     // MANUAL — not run by the automatic check() loop above, because it
     // requires clock manipulation (set_steady_now_for_testing) between
-    // renders. A test calls this AFTER advancing the clock past the 30s
-    // thinking grace and re-rendering:
+    // renders. A test calls this AFTER advancing the clock past the 3s
+    // collapse grace and re-rendering:
     //
-    //   loom::ui::clock::set_steady_now_for_testing(t0 + 31s);
+    //   loom::ui::clock::set_steady_now_for_testing(t0 + 4s);
     //   auto screen = harness.render_now();
     //   EXPECT_TRUE(
     //       loom::testing::InvariantChecker::check_inv07_grace_expiry(
@@ -129,9 +131,9 @@ public:
     [[nodiscard]] static std::string check_inv07_grace_expiry(
         std::string_view screen) {
         // The collapsed label is marked by the " (ctrl+o to expand)" hint,
-        // which RenderThinkingMessageCollapsed emits exclusively. During
-        // the grace period the committed thinking row is hidden by the
-        // filter, so the hint is absent; after expiry it must appear.
+        // which RenderThinkingMessageCollapsed emits exclusively. Within
+        // the 3s collapse grace the thinking row is still expanded, so the
+        // hint is absent; after expiry it must appear.
         if (screen.find(kCollapsedThinkingHint) ==
             std::string_view::npos) {
             return "INV-07: collapsed thinking label (\" (ctrl+o to "

@@ -42,6 +42,7 @@ void AppAdapter::inject_stream_event_for_testing(const core::StreamEvent& ev) {
 
 void AppAdapter::set_query_running_for_testing(bool running) {
     query_running_.store(running);
+    screen_state_->query_running = running;
     if (running) {
         repl::SetSpinner(screen_state_->task_view_store, repl::SpinnerMode::Requesting);
         screen_state_->task_view_store.spinner_verb = "Thinking";
@@ -280,6 +281,10 @@ std::vector<std::string> AppTestingSeams::messages_for_testing() const {
 
 std::string AppTestingSeams::input_text_for_testing() const {
     return app->input_text_for_testing();
+}
+
+void AppTestingSeams::set_disable_chain_compression_for_testing(bool v) {
+    app->screen_state_->disable_chain_compression = v;
 }
 
 std::size_t AppTestingSeams::pasted_contents_size_for_testing() const noexcept {

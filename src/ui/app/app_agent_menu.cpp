@@ -318,6 +318,14 @@ void AppAdapter::SyncState() {
         const std::string u24 = make_uuid24(msg_idx, seed_preview);
         for (auto& e : projected) {
             e.id = u24;
+            // Enrich committed thinking entries with cached duration.
+            if (e.is_thinking && e.thinking_duration.count() == 0 &&
+                !e.full_content.empty()) {
+                auto it = thinking_duration_cache_.find(e.full_content);
+                if (it != thinking_duration_cache_.end()) {
+                    e.thinking_duration = it->second;
+                }
+            }
             screen_state_->messages_store.messages.push_back(std::move(e));
         }
         ++msg_idx;
@@ -428,6 +436,7 @@ void AppAdapter::ConsumePendingResult() {
     screen_state_->task_view_store.spinner_verb = std::nullopt;
     screen_state_->task_view_store.spinner_tip = std::nullopt;
     streaming_text_.clear();
+    streaming_text_index_.reset();
     streaming_markdown_.reset();
     streaming_tools_.clear();
 

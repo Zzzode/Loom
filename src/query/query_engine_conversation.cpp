@@ -176,6 +176,13 @@ void QueryEngine::append_message(Message msg) {
     bool should_compact = false;
     std::string persist_json;
     bool do_persist = false;
+    // RFC 0004: copy for the commit callback (fired outside the lock,
+    // before the message is moved into conversation_). Only copied when
+    // recording is active — zero overhead otherwise.
+    std::optional<Message> commit_copy;
+    if (on_commit_callback_) {
+        commit_copy = msg;
+    }
     {
         std::lock_guard lock(conversation_mutex_);
         // Serialize for disk persistence BEFORE moving (if enabled).
@@ -190,6 +197,12 @@ void QueryEngine::append_message(Message msg) {
             context_utilization() > config_.context_window.compaction_threshold) {
             should_compact = true;
         }
+    }
+    // RFC 0004: fire commit callback outside the conversation lock so
+    // JSON serialization and file I/O don't block the engine critical
+    // section. Covers ALL commits including native agent notifications.
+    if (commit_copy) {
+        on_commit_callback_(*commit_copy);
     }
     // Persist transcript line (outside the conversation lock; ofstream is
     // not part of the engine critical section). SystemMessage serializes

@@ -4,7 +4,7 @@
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
 
-● Bash (git status --short)
+<dot> Thought, ran 1 shell command  (click to expand)
 
 ● I'll check the git status for you. The working tree has changes across the streaming replay test infrastructure.
 

@@ -72,6 +72,10 @@ namespace detail {
         // Collapsed "📦 27 messages collapsed (📦 8 tool turns, +++12 ---7)"
         return 1;
     }
+    if (vr.kind == K::CompressedChain) {
+        // 1-line top margin + 1-line summary
+        return 2;
+    }
     if (vr.kind == K::TranscriptCapDivider) {
         // "─── N older messages hidden · Ctrl+E to show all ───"
         return 1;
@@ -89,12 +93,45 @@ namespace detail {
     int content_lines = 1;
     switch (shape) {
         case S::AssistantThinking:
-        case S::AssistantRedactedThinking:
-            // Collapsed label: "∴ Thinking (ctrl+o to expand)".  If expanded
-            // the caller will have already split thinking into multiple rows
-            // outside our view; 2 lines covers label + separator.
-            content_lines = 2;
+        case S::AssistantRedactedThinking: {
+            // Collapsed thinking renders a 1-line label ("∴ Thought for
+            // Xs <summary> (ctrl+o to expand)").  Expanded thinking
+            // (streaming tail, within the 3s collapse grace, or transcript
+            // mode) renders the full body — potentially dozens of lines.
+            // Estimate from the actual content when expanded so the
+            // virtual-list JumpHandle geometry matches the rendered height;
+            // a 2-line estimate for a 30-line expanded row causes the
+            // visible slice + spacers to be wildly wrong (content
+            // overlapping / "compressed" during streaming).
+            const bool is_expanded =
+                (vr.row_idx == input.streaming_tail_row) ||
+                input.is_transcript_mode ||
+                was_recently_streaming(vr.row_idx);
+            if (is_expanded) {
+                if (auto* opts = std::get_if<thinking_message::ThinkingMessageOptions>(
+                        &input.rows[vr.row_idx])) {
+                    std::string full_text = opts->data.raw_text;
+                    if (full_text.empty() && !opts->data.sections.empty()) {
+                        for (const auto& s : opts->data.sections) {
+                            if (!full_text.empty()) full_text.push_back('\n');
+                            full_text += s.content;
+                        }
+                    }
+                    if (!full_text.empty()) {
+                        // label (1) + body + top/bottom margin (2)
+                        content_lines =
+                            estimate_content_lines(full_text, term_cols, 4) + 3;
+                    } else {
+                        content_lines = 2;
+                    }
+                } else {
+                    content_lines = 2;
+                }
+            } else {
+                content_lines = 2;
+            }
             break;
+        }
         case S::AssistantToolUse:
         case S::AssistantGroupedTools: {
             if (auto* topts = std::get_if<tool_use_message::ToolUseRenderOptions>(
@@ -237,9 +274,11 @@ namespace detail {
 
         // Encode kind into backend_index MSBs for round-trip via
         // decode_virtual_backend_index.  Bit 63 = CompactGroup,
-        // bit 62 = TranscriptCapDivider, neither = Payload.
+        // bit 62 = TranscriptCapDivider, bit 61 = CompressedChain,
+        // neither = Payload.
         constexpr std::uint64_t kGroupBit  = std::uint64_t(1) << 63;
         constexpr std::uint64_t kCapBit    = std::uint64_t(1) << 62;
+        constexpr std::uint64_t kChainBit  = std::uint64_t(1) << 61;
         std::uint64_t backend;
         int type_hint;
 
@@ -249,6 +288,9 @@ namespace detail {
         } else if (vr.kind == VisibleRow::Kind::TranscriptCapDivider) {
             backend   = kCapBit | static_cast<std::uint64_t>(vr.hidden_count);
             type_hint = 2;
+        } else if (vr.kind == VisibleRow::Kind::CompressedChain) {
+            backend   = kChainBit | static_cast<std::uint64_t>(vr.group_count);
+            type_hint = 3;
         } else {
             backend   = static_cast<std::uint64_t>(vr.row_idx);
             type_hint = 0;
@@ -292,6 +334,7 @@ namespace detail {
 {
     constexpr std::uint64_t kGroupBit = std::uint64_t(1) << 63;
     constexpr std::uint64_t kCapBit   = std::uint64_t(1) << 62;
+    constexpr std::uint64_t kChainBit = std::uint64_t(1) << 61;
     if ((backend_index & kGroupBit) != 0) {
         out.kind      = VisibleRow::Kind::CompactGroup;
         out.group_idx = backend_index & (~kGroupBit);
@@ -303,6 +346,13 @@ namespace detail {
         out.hidden_count = backend_index & (~kCapBit);
         out.row_idx      = 0;
         out.group_idx    = 0;
+        return true;
+    }
+    if ((backend_index & kChainBit) != 0) {
+        out.kind        = VisibleRow::Kind::CompressedChain;
+        out.group_count = backend_index & (~kChainBit);
+        out.row_idx     = 0;
+        out.group_idx   = 0;
         return true;
     }
     out.kind    = VisibleRow::Kind::Payload;

@@ -11,6 +11,8 @@ target_sources(loom_query
         # cc.sdk.harness (rank 16) wrap the same assembly without an upward
         # edge. Bodies in query_assembly.cpp (impl unit), not the BMI.
         query/query_assembly.cppm
+        # RFC 0004: StreamEvent/ContentBlock/Message → JSONL fixture serializer
+        query/fixture_serializer.cppm
 )
 # RFC 0001 Phase C batch 5 — query_engine module implementation units. Never
 # add these to the FILE_SET CXX_MODULES list above: they are module impl
@@ -32,6 +34,8 @@ target_sources(loom_query
         # cc.query.assembly implementation unit (PIMPL special members +
         # resolve_engine_config + assemble bodies).
         query/query_assembly.cpp
+        # RFC 0004: fixture serializer implementation unit
+        query/fixture_serializer.cpp
 )
 # RFC 0001 cc-sdk phase 3 (§2.1, §5.6): loom_orchestration is the only
 # genuinely new PUBLIC dep — loom_tools/loom_hooks/loom_session/loom_memdir/

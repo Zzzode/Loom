@@ -354,14 +354,14 @@ namespace search_detail {
     }
 
     // ── Thinking messages ──────────────────────────────────────────────
-    // Thinking blocks are hidden by hidePastThinking in transcript mount.
-    // Only index thinking when it's the active streaming tail (not past).
+    // Completed thinking renders as a collapsed "∴ Thought for Xs" summary
+    // (expandable via ctrl+o). Only index the active streaming tail so
+    // search doesn't surface matches buried inside collapsed blocks.
     if (shape == S::AssistantThinking || shape == S::AssistantRedactedThinking) {
         if (auto* opts = std::get_if<thinking_message::ThinkingMessageOptions>(&p)) {
             using TM = thinking_message::ThinkingState;
             if (opts->data.state == TM::Complete) {
-                // Completed thinking is hidden in transcript — don't index it
-                // (hidePastThinking = true for completed blocks).
+                // Completed thinking is collapsed — don't index its body.
                 return {};
             }
             // Active thinking: index the thinking text so users can search

@@ -1599,8 +1599,12 @@ TEST(AppRuntime, RenderMessageShowsCompletedThinkingWhenExpanded) {
     // visible list manually via repl_screen::RenderMessages with selected=0.
     auto input = loom::ui::project_messages(
         loom::core::Message{std::move(assistant)});
+    // Pass disable_chain_compression=true so the thinking block renders
+    // individually (collapsed label) rather than being compressed into a
+    // chain summary line.
     auto rendered_selected = render_to_plain_text(
-        loom::ui::repl_screen::RenderMessages(input, /*selected=*/0, 40),
+        loom::ui::repl_screen::RenderMessages(input, /*selected=*/0, 40,
+            0, true, 0, std::nullopt, {}, false, {}, false, false, true),
         140, 24);
 
     // The "Thinking" label should be present.
@@ -1722,13 +1726,13 @@ TEST(AppRuntime, ToolResultToAssistantTextSpacingIsOneLine) {
     loom::core::AssistantMessage a1;
     a1.content.push_back(loom::core::ThinkingBlock{.thinking = "let me check", .signature = ""});
     a1.content.push_back(loom::core::ToolUseBlock{
-        .id = loom::core::ToolUseId{"tu1"}, .name = "Bash",
-        .input_json = R"({"command":"date"})"});
+        .id = loom::core::ToolUseId{"tu1"}, .name = "Edit",
+        .input_json = R"({"file_path":"test.txt"})"});
     engine.append_message_for_testing(loom::core::Message{std::move(a1)});
 
     loom::core::ToolResultMessage tr;
     tr.tool_use_id = loom::core::ToolUseId{"tu1"};
-    tr.tool_name = "Bash";
+    tr.tool_name = "Edit";
     tr.content.push_back(loom::core::TextBlock{"2026-07-08 Wednesday\n"});
     engine.append_message_for_testing(loom::core::Message{std::move(tr)});
 
@@ -1745,6 +1749,10 @@ TEST(AppRuntime, ToolResultToAssistantTextSpacingIsOneLine) {
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
+    // Disable chain compression so the thinking block renders individually
+    // (collapsed label) — this test verifies spacing around the collapsed
+    // thinking row, not chain compression.
+    loom::ui::test_seams(app).set_disable_chain_compression_for_testing(true);
     app->SyncState();
 
     auto rendered = strip_ansi(render_to_plain_text(app->Render(), 120, 40));

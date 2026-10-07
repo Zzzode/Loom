@@ -46,11 +46,8 @@ using namespace ftxui;
     const std::unordered_set<std::string>& expanded_keys,
     bool is_transcript_mode,
     bool show_all_in_transcript,
-    // isStreamingThinkingVisible.
-    // When true, build_visible_rows hides ALL completed thinking rows so
-    // only the streaming-thinking tail is visible (lastThinkingBlockId
-    // = 'streaming').
-    bool streaming_thinking_globally_visible,
+    bool disable_chain_compression,
+    bool query_running,
     // GAP 3: msg-system-api-error-retry — callback for the Retry button on
     // SystemAPIError rich cards.  When set, the API error card renders a
     // clickable Retry pill that invokes this to re-send the last user message.
@@ -184,10 +181,13 @@ using namespace ftxui;
                 messages::thinking_message::ThinkingMessageOptions opts;
                 opts.data.raw_text = m.full_content.empty()
                     ? m.content_preview : m.full_content;
-                // Static / unselected view must render the collapsed "Thinking"
-                // label (collapsed state)
-                // rather than hiding the row.  The messages-list fast path
-                // hides rows where thinking is neither selected nor "active".
+                // Thread the thinking duration so the collapsed label shows
+                // "∴ Thought for Xs" instead of a generic "Thinking".
+                opts.data.duration = m.thinking_duration;
+                // Static / unselected view renders the collapsed "Thinking"
+                // label (collapsed state) — the row is never hidden. The
+                // 3s collapse grace (was_recently_streaming) keeps a
+                // just-finished thinking row expanded before it collapses.
                 if (m.thinking_active) {
                     opts.data.state =
                         messages::thinking_message::ThinkingState::Active;
@@ -318,8 +318,8 @@ using namespace ftxui;
     // tails are rendered after all committed messages.  The tail row is
     // whichever comes last: a streaming text entry (is_streaming) or an
     // active thinking entry (thinking_active, set while streaming or
-    // within 30s grace).  The tail row drives the "Running" status badge
-    // and keeps thinking rows visible in build_visible_rows.
+    // within 3s grace).  The tail row drives the "Running" status badge
+    // and keeps thinking rows expanded while streaming.
     bool has_streaming = !entries.empty() &&
         (entries.back().is_streaming || entries.back().thinking_active);
     input.streaming_tail_row = has_streaming ? N - 1 : N;
@@ -327,15 +327,13 @@ using namespace ftxui;
     input.scroll_offset = std::max(0, offs);
     input.viewport_rows = std::max(1, vlines);
     input.is_brief_mode = is_brief_mode;
-    // Thread isStreamingThinkingVisible
-    // to the messages list so it can hide ALL completed thinking rows when
-    // the streaming-thinking tail is on screen.
-    input.streaming_thinking_globally_visible = streaming_thinking_globally_visible;
     // is_transcript_mode + show_all_in_transcript.
     // In transcript mode the 3-tier filter shows all message types; cap at
     // 30 unless show_all_in_transcript lifts it.
     input.is_transcript_mode     = is_transcript_mode;
     input.show_all_in_transcript = show_all_in_transcript;
+    input.disable_chain_compression = disable_chain_compression;
+    input.query_running = query_running;
     // expanded_keys — user-expanded rows show
     // verbose full content.  Passed by copy (cheap for small sets).
     input.expanded_keys = expanded_keys;

@@ -113,6 +113,12 @@ bool MessagesListComponent::OnEvent(Event event) {
                     cbs_.on_toggle_compact_group(vr->group_idx);
                 return true;
             }
+            // CompressedChain: toggle expand/collapse.
+            if (vr->kind == VisibleRow::Kind::CompressedChain) {
+                if (cbs_.on_toggle_expand && !vr->chain_uuid.empty())
+                    cbs_.on_toggle_expand("chain:" + vr->chain_uuid);
+                return true;
+            }
             // Space on a clickable/expanded payload row toggles verbose expansion.
             if (vr->kind == VisibleRow::Kind::Payload) {
                 auto idx = vr->row_idx;
@@ -142,6 +148,12 @@ bool MessagesListComponent::OnEvent(Event event) {
             if (vr->kind == VisibleRow::Kind::CompactGroup) {
                 if (cbs_.on_toggle_compact_group)
                     cbs_.on_toggle_compact_group(vr->group_idx);
+                return true;
+            }
+            // CompressedChain: toggle expand/collapse.
+            if (vr->kind == VisibleRow::Kind::CompressedChain) {
+                if (cbs_.on_toggle_expand && !vr->chain_uuid.empty())
+                    cbs_.on_toggle_expand("chain:" + vr->chain_uuid);
                 return true;
             }
             // Enter on a clickable/expanded payload row toggles verbose expansion
@@ -219,6 +231,14 @@ bool MessagesListComponent::OnEvent(Event event) {
                     commit_selection(vi);
                     if (cbs_.on_toggle_compact_group)
                         cbs_.on_toggle_compact_group(vr.group_idx);
+                    return true;
+                }
+
+                // Compressed chain: toggle expand/collapse + select.
+                if (vr.kind == VisibleRow::Kind::CompressedChain) {
+                    commit_selection(vi);
+                    if (cbs_.on_toggle_expand && !vr.chain_uuid.empty())
+                        cbs_.on_toggle_expand("chain:" + vr.chain_uuid);
                     return true;
                 }
 
@@ -382,6 +402,8 @@ Element MessagesListComponent::Render() {
                                 else if (ref.kind == VisibleRow::Kind::CompactGroup &&
                                          ref.group_idx == ml_row.group_idx)
                                     is_selected = true;
+                                else if (ref.kind == VisibleRow::Kind::CompressedChain)
+                                    is_selected = true;
                             }
                         }
                     }
@@ -391,6 +413,10 @@ Element MessagesListComponent::Render() {
                     if (ml_row.kind == VisibleRow::Kind::CompactGroup) {
                         row_el = detail::render_compact_group_row(ml_row,
                                                                   is_selected);
+                    } else if (ml_row.kind == VisibleRow::Kind::CompressedChain) {
+                        row_el = detail::render_compressed_chain_row(ml_row,
+                                                                     is_selected,
+                                                                     fc);
                     } else if (ml_row.kind == VisibleRow::Kind::TranscriptCapDivider) {
                         row_el = detail::render_transcript_cap_divider(
                             ml_row.hidden_count);
@@ -509,6 +535,13 @@ Element MessagesListComponent::Render() {
                     rows.push_back(
                         detail::render_transcript_cap_divider(vr.hidden_count)
                         | reflect(row_box));
+                    next_add_margin = true;
+                } else if (vr.kind == VisibleRow::Kind::CompressedChain) {
+                    Element chain_el =
+                        detail::render_compressed_chain_row(vr, is_selected, frame_count_)
+                        | reflect(row_box);
+                    // Top margin for visual separation from preceding row.
+                    rows.push_back(vbox({text(""), std::move(chain_el)}));
                     next_add_margin = true;
                 } else {
                     rows.push_back(

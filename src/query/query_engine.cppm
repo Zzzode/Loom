@@ -246,6 +246,13 @@ struct QueryOptions {
     // block so the model actually sees file contents (the engine previously
     // passed "@path" literally, making @ a no-op for the model).
     std::vector<ContentBlock> attachments;
+    // RFC 0004: called inside append_message for every committed message,
+    // including native agent notification commits. Fires outside
+    // conversation_mutex_ on a pre-move copy.
+    std::optional<std::function<void(const Message&)>> on_commit;
+    // RFC 0004: called when stream_query returns (including early returns),
+    // via RAII scope guard.
+    std::optional<std::function<void()>> on_end_query;
 };
 
 // ============================================================
@@ -805,6 +812,11 @@ private:
     std::mutex abort_callback_mutex_;          // Guards abort_callback_
     std::function<void()> abort_callback_;     // HTTP-layer socket shutdown (set by send_request*)
     mutable std::mutex conversation_mutex_;    // Guards conversation history
+    // RFC 0004: set at stream_query entry from QueryOptions::on_commit,
+    // cleared via RAII on exit. Fired inside append_message (outside the
+    // lock, on a pre-move copy) so it covers ALL commits including native
+    // agent notifications. Empty when recording is inactive.
+    std::function<void(const Message&)> on_commit_callback_;
     mutable std::mutex state_mutex_;           // Guards mutable state
     std::uint32_t token_budget_ = 0;           // Token budget for auto-continuation (0 = disabled)
 

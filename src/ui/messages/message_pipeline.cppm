@@ -1,7 +1,6 @@
 /// @file message_pipeline.cppm
-/// @brief Faithful 7-stage message pipeline.  Transforms raw engine
-///        StreamEvents into a render-ready list of VisibleRows, applying
-///        the same transforms via 7 sequential stages.
+/// @brief Faithful message-pipeline helpers.  Transforms raw engine
+///        StreamEvents into render-ready shapes via pure helper functions.
 ///
 /// Pipeline stages:
 ///   Stage 1 EVENT_DEDUP        → dedup per-block-index event lifecycle
@@ -9,12 +8,10 @@
 ///   Stage 3 CONTENT_BLOCK_MERGE → buildTurns()
 ///   Stage 4 USER_INPUT_FILTER  → extractTags()
 ///   Stage 5 TOOL_RESULT_AUGMENT→ augmentToolResult()
-///   Stage 6 HIDE_POLICY        → applyHideInTranscript()
-///   Stage 7 VISIBLE_INDEX      → buildVisibleRows()
 ///
 /// CPP mapping:
 ///   Stages 2 and 3 are driven by app.cppm's on_event lambda; this module
-///   provides pure helpers for Stages 1/4/5/6/7 plus a PipelineState struct
+///   provides pure helpers for Stages 1/4/5 plus a PipelineState struct
 ///   that app.cppm instantiates once per query thread.
 ///
 /// WHY A SEPARATE MODULE (P0-2 BLOCKER justifications):
@@ -30,13 +27,6 @@
 ///     + `is_error`; the pipeline additionally surfaces `truncated: bool`,
 ///     `error_code`, and a short `preview: string` used by the compact
 ///     tool-use card.
-///   * Stage 6 (hide policy): So far we only hide completed thinking; the
-///     pipeline also hides compacted conversation turns, LLM-generated tool
-///     internals, and silent bridge tool calls in the non-expanded transcript.
-///   * Stage 7 (visible index): P0-3 VirtualMessageList needs a cheap
-///     `size_t visible_index -> (row_idx, sub_idx)` mapping to render only
-///     the on-screen slice.  We compute it once here instead of per-frame in
-///     messages_list.cppm.
 // ────────────────────────────────────────────────────────────────────────
 module;
 
@@ -549,109 +539,6 @@ struct AugmentedToolResult {
     a.error_code = is_error ? parse_error_code(full_result) : 0;
     a.preview    = build_compact_preview(full_result);
     return a;
-}
-
-// ─── Stage 6 HIDE_POLICY ───────────────────────────────────────────────────
-//
-// Determine whether a given (payload_shape, data_summary, flags) tuple should
-// be HIDDEN from the default transcript.  The rule set is copied verbatim
-// from messagesSlice.applyHideInTranscript():
-//
-//   * Completed assistant thinking block → hidden
-//     (unless user selected it or is the streaming tail)
-//   * Redacted thinking blocks → hidden (always — never shown)
-//   * Silent bridge tool executions (zero-char preview + no error) → hidden
-//     (these are auto-spawned setup tools the user never asked to see)
-//   * Compacted conversation turns (from `/compact`) → hidden
-//
-// Returns true when the row SHOULD BE hidden.
-
-enum class PayloadShape : std::uint8_t {
-    kUserPrompt, kUserCommand, kUserBash,
-    kAssistantText, kAssistantThinking, kAssistantRedactedThinking,
-    kAssistantToolResult, kAssistantToolUse, kAssistantGroupedTools,
-    kSystemText, kLocalCommand,
-};
-
-struct HideContext {
-    bool is_complete          = false;
-    bool is_selected          = false;
-    bool is_streaming_tail    = false;
-    bool is_compacted_turn    = false;
-    bool is_silent_bridge_call = false;   // zero-char tool result, no error, is tool_use
-    bool is_redacted          = false;
-};
-
-[[nodiscard]] inline bool should_hide_row(PayloadShape shape,
-                                          const HideContext& ctx) noexcept
-{
-    // 1) Redacted anything: redacted thinking is hidden in the UI.
-    //    Redacted text is currently shown via RedactedTextMessage; no change.
-    if (shape == PayloadShape::kAssistantRedactedThinking) return true;
-
-    // 2) Completed thinking: hidden unless user is interacting with it.
-    if (shape == PayloadShape::kAssistantThinking) {
-        return ctx.is_complete && !ctx.is_selected && !ctx.is_streaming_tail;
-    }
-
-    // 3) Compacted turns (via /compact).  These are summarised by a single
-    //    "N messages compacted" row elsewhere; the underlying pieces are hidden.
-    if (ctx.is_compacted_turn) return true;
-
-    // 4) Silent bridge tool calls.  Distinguished via
-    //    toolUse.silent = true; we approximate via `is_silent_bridge_call`.
-    if ((shape == PayloadShape::kAssistantToolUse ||
-         shape == PayloadShape::kAssistantToolResult) &&
-        ctx.is_silent_bridge_call)
-    {
-        return true;
-    }
-
-    // Default: visible.
-    return false;
-}
-
-// ─── Stage 7 VISIBLE_INDEX ──────────────────────────────────────────────────
-//
-// Given `(row_count, filter_fn)` produce a `vector<size_t>` of length
-// `num_visible`, where out[k] = the original row_index that should appear
-// at screen-row k.  P0-3 VirtualMessageList uses this for O(visible)-per-frame
-// rendering instead of O(all_rows).
-//
-// `filter_fn(row_idx)` returns true when the row is VISIBLE.  We intentionally
-// don't use should_hide_row here to keep the fn signature cheap (no payload
-// copy into a HideContext — the caller already has the visibility boolean).
-//
-// Exposed as a pure function so the test suite can exercise the gap-edge
-// cases (all-hidden, first-row-hidden, every-other-row-hidden, etc.) even
-// without a full render environment.
-
-/// Build the visible-index map.  Output length equals the number of rows
-/// for which `filter_fn(idx)` returned true.
-template <typename FilterFn>
-[[nodiscard]] inline std::vector<std::size_t> build_visible_index(
-    std::size_t row_count, FilterFn&& filter_fn)
-{
-    std::vector<std::size_t> out;
-    out.reserve(row_count);
-    for (std::size_t idx = 0; idx < row_count; ++idx) {
-        if (filter_fn(idx)) out.push_back(idx);
-    }
-    return out;
-}
-
-/// Given a visible_index of length V and a screen viewport [first, first+count),
-/// clamp the window and return (safe_first, safe_count).  Empty index → (0, 0).
-[[nodiscard]] inline std::pair<std::size_t, std::size_t> clamp_viewport(
-    std::size_t num_visible,
-    std::size_t viewport_first,
-    std::size_t viewport_count) noexcept
-{
-    if (num_visible == 0 || viewport_count == 0) return {0, 0};
-    const std::size_t first = std::min(viewport_first, num_visible - 1);
-    const std::size_t count = std::min<std::size_t>(
-        viewport_count, num_visible - first);
-    return {first, count};
 }
 
 }  // namespace loom::ui::messages::pipeline

@@ -4,15 +4,15 @@
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
 
-● Bash (git status --short)
+<dot> Thought, ran 1 shell command  (click to expand)
 
 ● Four files are modified: the build glue, the core types, the submit handler, and the test CMake. No untracked files
   yet, since the fixtures are not written.
 
+<dot> Thought  (click to expand)
+
 ● Four files are modified: the build glue, the core types, the submit handler, and the test CMake. No untracked files
   yet, since the fixtures are not written.
-
-
 
 
 

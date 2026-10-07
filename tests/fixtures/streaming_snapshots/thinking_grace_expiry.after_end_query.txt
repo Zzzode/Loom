@@ -4,12 +4,12 @@
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
 
+∴ Thinking…
+  I need to weigh the trade-offs between the two approaches before recommending one. The first is simpler but slower;
+  the second is faster but adds complexity. Given the constraints, I lean toward the second.
+
+
 ● Answer
-
-
-
-
-
 
 
 

@@ -460,6 +460,147 @@ auto render_compact_group_row(const VisibleRow& vr,
     });
 }
 
+/// Format a thinking duration as "Xs" or "Xm Ys".
+[[nodiscard]] auto format_chain_duration(std::chrono::milliseconds d)
+    -> std::string {
+    auto secs = std::chrono::duration_cast<std::chrono::seconds>(d).count();
+    if (secs < 60) return std::to_string(secs) + "s";
+    auto mins = secs / 60;
+    secs %= 60;
+    return std::to_string(mins) + "m " + std::to_string(secs) + "s";
+}
+
+/// Map a tool name + count to a human-readable phrase.
+/// live=true → present continuous ("running 1 shell command")
+/// live=false → past tense ("ran 1 shell command")
+[[nodiscard]] auto tool_phrase(
+    std::string_view name, std::size_t count, bool live) -> std::string {
+    const auto plural = count == 1 ? "" : "s";
+    if (name == "Bash") {
+        return live
+            ? "running " + std::to_string(count) + " shell command" + plural
+            : "ran " + std::to_string(count) + " shell command" + plural;
+    }
+    if (name == "Read") {
+        return live
+            ? "reading " + std::to_string(count) + " file" + plural
+            : "read " + std::to_string(count) + " file" + plural;
+    }
+    if (name == "Grep" || name == "Glob") {
+        return live
+            ? "searching for " + std::to_string(count) + " pattern" + plural
+            : "searched for " + std::to_string(count) + " pattern" + plural;
+    }
+    if (name == "Edit") {
+        return live
+            ? "editing " + std::to_string(count) + " file" + plural
+            : "edited " + std::to_string(count) + " file" + plural;
+    }
+    if (name == "Write") {
+        return live
+            ? "writing " + std::to_string(count) + " file" + plural
+            : "wrote " + std::to_string(count) + " file" + plural;
+    }
+    if (name == "WebSearch") {
+        return live
+            ? "searching the web"
+            : "searched the web " + std::to_string(count) + " time" + plural;
+    }
+    if (name == "WebFetch") {
+        return live
+            ? "fetching " + std::to_string(count) + " URL" + plural
+            : "fetched " + std::to_string(count) + " URL" + plural;
+    }
+    // Default: "N <tool> calls"
+    return std::to_string(count) + " " + std::string(name) +
+           (count == 1 ? " call" : " calls");
+}
+
+auto render_compressed_chain_row(const VisibleRow& vr,
+                                        bool is_selected,
+                                        std::size_t frame_count) -> Element
+{
+    const bool live = vr.chain_is_live;
+    std::ostringstream label;
+
+    // Thinking duration.
+    const bool has_thinking = vr.group_count > 0;
+    const bool has_duration = vr.chain_thinking_duration.count() > 0;
+    if (has_thinking) {
+        if (live) {
+            label << "Thinking";
+            if (has_duration) {
+                label << " for "
+                      << format_chain_duration(vr.chain_thinking_duration);
+            }
+        } else {
+            label << "Thought";
+            if (has_duration) {
+                label << " for "
+                      << format_chain_duration(vr.chain_thinking_duration);
+            }
+        }
+    }
+
+    // Tool breakdown.
+    if (!vr.chain_tool_breakdown.empty()) {
+        if (has_thinking) {
+            label << ", ";
+        }
+        bool first = true;
+        for (const auto& [name, count] : vr.chain_tool_breakdown) {
+            if (!first) label << ", ";
+            label << tool_phrase(name, count, live);
+            first = false;
+        }
+    }
+
+    // Fallback for chains with no thinking or tools (shouldn't normally
+    // happen — the filter requires at least one).
+    if (!has_thinking && vr.chain_tool_breakdown.empty()) {
+        if (live) {
+            label << "Working…";
+        } else {
+            label << "Worked";
+        }
+    }
+
+    // Live status gets an ellipsis to indicate ongoing activity.
+    if (live) label << "…";
+
+    // Expand/collapse hint.
+    const bool expanded = vr.chain_is_expanded;
+    label << (expanded ? "  (click to collapse)" : "  (click to expand)");
+
+    Element body = text(label.str())
+        | color(palette::muted_fg()) | dim;
+    if (is_selected) {
+        body = std::move(body) | inverted | bgcolor(palette::selected_bg());
+    }
+    // Block-level presentation: ● origin dot + label at the left margin
+    // (same alignment as user/assistant messages).
+    //
+    // Collapsed chains render as a plain line — no background, no separator.
+    // Expanded chain headers get a gray background to visually group the
+    // expanded content that follows.
+    //
+    // Live chains blink the ● dot (like Bash tool calls: ~500ms on/off)
+    // instead of showing a spinner glyph.
+    const bool blink_off = live && (frame_count % 10 >= 5);
+    Element dot = text(blink_off ? " " : "●")
+                  | dim | color(Color::GrayDark);
+    Element row = hbox({
+        std::move(dot),
+        text(" "),
+        std::move(body),
+        filler(),
+    });
+    if (expanded) {
+        return std::move(row) | bgcolor(Color::RGB(30, 32, 40));
+    }
+    return row;
+}
+
 /// Returns a lowercase copy of the search query (if any) — used to highlight
 /// matched substrings in render output.  (Currently used for the empty-state
 /// copy; real per-row substring highlighting is a UI17 deliverable.)

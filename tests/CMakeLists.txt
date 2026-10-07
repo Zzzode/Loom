@@ -277,6 +277,17 @@ target_link_libraries(test_streaming_migration ${_ui_test_libs})
 gtest_discover_tests(test_streaming_migration DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 # ---------------------------------------------------------------------------
+# RFC 0004: fixture serializer round-trip tests. Serializes StreamEvent /
+# ContentBlock / Message values to JSONL, parses them back with the
+# streaming_replay.hpp parser, serializes again, and asserts the two JSON
+# strings are identical (lossless round-trip). Guards against drift between
+# the recorder serializer and the replay parser.
+# ---------------------------------------------------------------------------
+add_executable(test_fixture_serializer test_fixture_serializer.cpp)
+target_link_libraries(test_fixture_serializer ${_ui_test_libs})
+gtest_discover_tests(test_fixture_serializer DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# ---------------------------------------------------------------------------
 # CommonMark 0.31.2 + GFM conformance suites against the markdown parser's
 # HTML serializer (render_markdown_to_html).  Fixtures: 652 CommonMark +
 # 672 GFM-core + 30 GFM-extension examples under tests/fixtures/.  Floors
@@ -803,6 +814,7 @@ foreach(_loom_test IN ITEMS
     test_ui_dialogs
     test_streaming_replay
     test_streaming_migration
+    test_fixture_serializer
     test_dialog_system
     test_f2_composition_root
     test_tasks

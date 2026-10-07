@@ -4,9 +4,9 @@
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
 
+<dot> Thought  (click to expand)
+
 ● The streaming replay harness injects events directly into the App handler, bypassing HTTP and SSE entirely.
-
-
 
 
 

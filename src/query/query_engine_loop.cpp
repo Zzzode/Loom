@@ -71,6 +71,20 @@ namespace loom::core {
 void QueryEngine::stream_query(
     std::string_view user_message,
     const QueryOptions& options) {
+    // RFC 0004: install the commit callback and ensure on_end_query fires
+    // on ALL exit paths (including the budget-exceeded early return below)
+    // via RAII. The commit callback is cleared on scope exit so subsequent
+    // headless query() calls on the same engine instance don't fire it.
+    on_commit_callback_ = options.on_commit.value_or(std::function<void(const Message&)>{});
+    struct EndQueryGuard {
+        const QueryOptions& opts;
+        QueryEngine& engine;
+        ~EndQueryGuard() {
+            engine.on_commit_callback_ = {};
+            if (opts.on_end_query) (*opts.on_end_query)();
+        }
+    } end_query_guard{options, *this};
+
     if (budget_tracker_.budget_exceeded) {
         if (options.on_event) {
             StreamError err{"budget_exceeded",

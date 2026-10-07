@@ -187,9 +187,8 @@ using namespace ftxui;
         s.expanded_keys,
         s.is_transcript_mode,
         s.show_all_in_transcript,
-        // isStreamingThinkingVisible.
-        // Threaded from app.cppm's is_streaming_thinking_visible() helper.
-        s.streaming_thinking_globally_visible,
+        s.disable_chain_compression,
+        s.query_running,
         on_retry,
         // P2 gap api-error-retry: thread on_clear_session for session-expired
         // error cards.

@@ -320,13 +320,15 @@ TEST(StreamingReplay, DuplicateEvents) {
 
 // ── Grace-expiry test (RFC 0003 §8.3, INV-07) ────────────────────────
 //
-// The 30s thinking grace period keeps the committed thinking row HIDDEN
-// while the streaming-thinking tail is still "visible" (within grace).
-// Once the clock advances past the grace, the committed row appears as a
-// collapsed "∴ Thinking (ctrl+o to expand)" label. This test pins the
-// clock, replays the fixture, then advances the clock and re-renders —
-// it cannot use play_fixture() because it needs the clock seam and a
-// re-render after play() returns.
+// Completed thinking rows are NEVER hidden — the old 30s hide filter was
+// removed. Instead the 3s collapse grace (was_recently_streaming in
+// messages_list_payload_row.cpp) keeps a just-finished thinking row
+// EXPANDED for 3s after it stops being the streaming tail, then collapses
+// it to the "∴ Thought for Xs <summary> (ctrl+o to expand)" label.
+//
+// This test pins the clock, replays the fixture, then advances the clock
+// and re-renders — it cannot use play_fixture() because it needs the
+// clock seam and a re-render after play() returns.
 
 namespace {
 
@@ -349,8 +351,8 @@ constexpr std::string_view kCollapsedThinkingHint = " (ctrl+o to expand)";
 TEST(StreamingReplay, ThinkingGraceExpiry) {
     // Pin the clock to a fixed instant so every replay event (including
     // the ContentBlockStop that writes streaming_ended_at) is timestamped
-    // at t0. Advancing to t0 + 31s then simulates grace expiry without
-    // sleeping.
+    // at t0. Advancing to t0 + 4s then simulates collapse-grace expiry
+    // without sleeping.
     const auto t0 = std::chrono::steady_clock::time_point{
         std::chrono::seconds(1'000'000)};
 
@@ -370,6 +372,11 @@ TEST(StreamingReplay, ThinkingGraceExpiry) {
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
+    // Disable chain compression so the grace-period behavior (expanded →
+    // collapsed thinking row) is tested without chain compression hiding
+    // the thinking row entirely.
+    loom::ui::test_seams(app).set_disable_chain_compression_for_testing(true);
+
     auto steps = loom::testing::load_fixture("thinking_grace_expiry");
     loom::testing::InvariantChecker checker(steps);
     loom::testing::StreamReplayHarness harness(*app, engine);
@@ -384,32 +391,30 @@ TEST(StreamingReplay, ThinkingGraceExpiry) {
     expect_streaming_snapshot("thinking_grace_expiry", "after_end_query",
                               snapshots.at("after_end_query"));
 
-    // Within the 30s grace (clock still at t0): the committed thinking row
-    // is hidden by the filter, so the collapsed-label hint must be absent.
-    EXPECT_EQ(snapshots.at("before_expiry").find(kCollapsedThinkingHint),
-              std::string::npos)
-        << "collapsed thinking label should be hidden during the grace "
-           "period";
-    EXPECT_EQ(snapshots.at("after_end_query").find(kCollapsedThinkingHint),
-              std::string::npos)
-        << "collapsed thinking label should be hidden during the grace "
-           "period (post __end_query__)";
+    // After __end_query__ the idle path (SyncState) projects committed
+    // rows only — the in-flight streaming projection is gone. The
+    // committed thinking row was the streaming tail while it streamed
+    // (mark_streaming recorded t0), so within the 3s collapse grace it
+    // stays EXPANDED: the "∴ Thinking…" label is present and the
+    // collapsed-label hint is absent. Clear the in-flight preview map so
+    // it cannot shadow the committed row.
+    loom::ui::test_seams(app).clear_streaming_thinking_for_testing();
+    const std::string within_grace = harness.render_now();
+    EXPECT_NE(within_grace.find(kExpandedThinkingLabel), std::string::npos)
+        << "thinking row should stay expanded within the 3s collapse grace";
+    EXPECT_EQ(within_grace.find(kCollapsedThinkingHint), std::string::npos)
+        << "collapsed thinking label should be absent within the 3s grace";
 
-    // Advance the clock past the 30s grace and re-render: the committed
-    // thinking row now appears as a collapsed label (INV-07).
+    // Advance the clock past the 3s collapse grace and re-render: the row
+    // collapses to the "∴ Thought for Xs <summary> (ctrl+o to expand)"
+    // label (INV-07).
     loom::ui::clock::set_steady_now_for_testing(
-        t0 + std::chrono::seconds(31));
+        t0 + std::chrono::seconds(4));
     const std::string after_expiry = harness.render_now();
-
-    // INV-07: collapsed label present after grace expiry.
-    EXPECT_TRUE(
-        loom::testing::InvariantChecker::check_inv07_grace_expiry(
-            after_expiry).empty());
-    // The expanded streaming-thinking label must be gone once the grace
-    // has expired (the streaming row is no longer projected).
-    EXPECT_EQ(after_expiry.find(kExpandedThinkingLabel),
-              std::string::npos)
-        << "expanded thinking label should be gone after grace expiry";
+    EXPECT_NE(after_expiry.find(kCollapsedThinkingHint), std::string::npos)
+        << "thinking row should collapse after the 3s grace";
+    EXPECT_EQ(after_expiry.find(kExpandedThinkingLabel), std::string::npos)
+        << "expanded thinking label should be gone after collapse";
 
     // Clear the clock override so it cannot leak into later tests.
     loom::ui::clock::set_steady_now_for_testing(std::nullopt);
@@ -426,12 +431,12 @@ TEST(StreamingReplay, ThinkingGraceExpiry) {
 // messages_list_payload_row.cpp) keeps a thinking row EXPANDED for 3s after
 // it stops being the streaming tail, via the was_recently_streaming() map.
 //
-// The 30s streaming grace (streaming_thinking_globally_visible) would
-// otherwise shadow it: it hides the committed thinking row for 30s — far
-// longer than the 3s collapse window — so the collapse transition would
-// never be observable. This test therefore clears the streaming-thinking
-// map (clear_streaming_thinking_for_testing) right after the fixture plays,
-// flipping globally_visible to false so the 3s collapse grace becomes the
+// The in-flight streaming projection (streaming_thinking_ in
+// app_render_event.cpp) would otherwise shadow it: it re-projects the
+// thinking block as an expanded "∴ Thinking…" row while the query is still
+// running. This test therefore clears the streaming-thinking map
+// (clear_streaming_thinking_for_testing) right after the fixture plays, so
+// the committed row takes over and the 3s collapse grace becomes the
 // deciding factor. The clock is pinned so the mark_streaming() timestamps
 // and the was_recently_streaming() checks are deterministic.
 //
@@ -461,11 +466,16 @@ TEST(StreamingReplay, ThinkingCollapseGrace) {
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
+    // Disable chain compression so the grace-period behavior (expanded →
+    // collapsed thinking row) is tested without chain compression hiding
+    // the thinking row entirely.
+    loom::ui::test_seams(app).set_disable_chain_compression_for_testing(true);
+
     // thinking_collapse_grace is a thinking-only fixture: while the
     // thinking block streams it is the sole row (row 0, streaming tail), so
     // mark_streaming(0) records t0. After __commit__ + __end_query__ the
     // committed thinking row is also at row 0, letting was_recently_streaming
-    // govern it once the 30s streaming grace is cleared below.
+    // govern it once the in-flight streaming projection is cleared below.
     auto steps = loom::testing::load_fixture("thinking_collapse_grace");
     loom::testing::InvariantChecker checker(steps);
     loom::testing::StreamReplayHarness harness(*app, engine);
@@ -480,11 +490,12 @@ TEST(StreamingReplay, ThinkingCollapseGrace) {
     expect_streaming_snapshot("thinking_collapse_grace", "after_end_query",
                               snapshots.at("after_end_query"));
 
-    // The 30s streaming grace would keep the committed thinking row hidden
-    // for 30s. Clear the streaming-thinking map so globally_visible becomes
-    // false and the 3s collapse grace (was_recently_streaming) governs the
-    // committed row instead. The row was marked at t0 while it was the
-    // streaming tail, so it stays expanded within the 3s window.
+    // The in-flight streaming projection would keep re-projecting the
+    // thinking block as an expanded row while the query is still running.
+    // Clear the streaming-thinking map so the committed thinking row takes
+    // over and the 3s collapse grace (was_recently_streaming) governs it
+    // instead. The row was marked at t0 while it was the streaming tail,
+    // so it stays expanded within the 3s window.
     loom::ui::test_seams(app).clear_streaming_thinking_for_testing();
 
     // Within the 3s collapse grace (clock still at t0): the committed

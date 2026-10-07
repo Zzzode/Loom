@@ -371,7 +371,13 @@ project_messages(const Message& msg) {
 // ============================================================
 
 [[nodiscard]] Element RenderMessage(const Message& msg) {
-    return repl::RenderMessages(project_messages(msg), -1, 40);
+    // Single-message render: disable chain compression.  Chain compression
+    // is a list-level feature that collapses consecutive thinking+tool
+    // rows; a single message has no chain to compress, and callers expect
+    // to see the message's own rendering (e.g. a thinking block's collapsed
+    // label) rather than a chain summary.
+    return repl::RenderMessages(project_messages(msg), -1, 40,
+        0, true, 0, std::nullopt, {}, false, {}, false, false, true);
 }
 
 }  // namespace loom::ui

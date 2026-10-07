@@ -80,6 +80,11 @@ struct MessageDisplayEntry {
     std::optional<std::vector<::loom::core::ToolResultContentItem>> tool_result_content_items;
     std::optional<std::string> agent_display_name, agent_color_name;
     std::chrono::system_clock::time_point timestamp;
+    /// Thinking duration in milliseconds (populated for thinking entries).
+    /// Computed from streaming start/end times; carried over to committed
+    /// entries so the collapsed "∴ Thought for Xs" label survives the
+    /// streaming→committed transition.
+    std::chrono::milliseconds thinking_duration{0};
     int estimated_height_lines = 3;
     /// M4 live-path: system-row subtype hint.  When set on a `system` entry,
     /// RenderMessages routes the row through the matching faithful

@@ -143,19 +143,17 @@ ComputeUnseenDivider(const ReplScreenState& s) {
         // scroll bounds (fixes "can't scroll to latest message" bug).
         int content_lines = 0;
         if (entry.is_tool_use) {
-            // Tool-use card: header + input JSON + optional result preview.
-            std::string combined;
-            if (entry.tool_input_json && !entry.tool_input_json->empty()) {
-                combined += *entry.tool_input_json;
-            }
-            if (entry.tool_result_preview && !entry.tool_result_preview->empty()) {
-                if (!combined.empty()) combined += '\n';
-                combined += *entry.tool_result_preview;
-            }
-            if (combined.empty()) combined = entry.content_preview;
-            content_lines = CountTextLines(combined);
-            // Cap input lines at 8 (collapsed args show first few) + 2 for chrome
-            content_lines = std::min(content_lines, 8) + 3;
+            // Resolved tools render as 1 line (header only); running/pending
+            // as 2 lines (header + progress).  Mirrors estimate_row_height in
+            // messages_list_geometry.cpp.  The previous min(CountTextLines, 8)
+            // + 3 estimate overestimated resolved tools by 3+ lines each,
+            // causing a scroll dead-zone from bottom (N tools × 3 lines ÷
+            // 3 lines/notch = N dead wheel notches).
+            const std::string& status = entry.tool_status.value_or("pending");
+            const bool is_resolved =
+                (status == "success" || status == "error" ||
+                 status == "cancelled");
+            content_lines = is_resolved ? 1 : 2;
         } else if (entry.tool_result_content_items &&
                    !entry.tool_result_content_items->empty()) {
             // Structured tool result (MCP): concatenate text items.
@@ -173,13 +171,32 @@ ComputeUnseenDivider(const ReplScreenState& s) {
             content_lines += 2;  // header + status row
         } else if (entry.is_image) {
             content_lines = 4;  // label + metadata rows (no fake thumbnail)
+        } else if (entry.is_thinking) {
+            // Expanded thinking (streaming or within the 3s collapse grace)
+            // renders the full body — potentially dozens of lines.  Collapsed
+            // thinking renders a 1-line label.  Use full_content for an
+            // accurate estimate so scroll bounds (max_offset) match the
+            // rendered height; a 2-line estimate for a 30-line expanded row
+            // makes max_offset far too small, clamping scroll-away and
+            // causing content to jump during streaming.
+            if (entry.thinking_active) {
+                const std::string& text = entry.full_content.empty()
+                    ? entry.content_preview
+                    : entry.full_content;
+                content_lines = CountTextLines(text) + 3;  // label + body + margins
+            } else {
+                content_lines = 2;  // collapsed label + separator
+            }
         } else {
             content_lines = CountTextLines(entry.content_preview);
         }
         rows += content_lines;
         // Message list inserts one empty separator after each rendered row
-        // (top margin from add_margin=true).  Tool results skip this (flush).
-        rows += 1;
+        // (top margin from add_margin=true).  Tool results skip this (flush
+        // against the preceding tool_use row).
+        if (entry.role != "tool") {
+            rows += 1;
+        }
     }
     return rows;
 }

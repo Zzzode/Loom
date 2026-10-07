@@ -160,16 +160,26 @@ auto RowClickTracker::hit_test(int x, int y) const noexcept
 
     // ── render_row callback: translate virtual back to messages_list VR
     state.callbacks.render_row =
-        [frame_count, &input, divider_before_vi, has_divider,
+        [frame_count, &input, &visible, divider_before_vi, has_divider,
          &add_margin_for_vi]
         (size_t row_index, const vl::VisibleRow& vr)
             -> ftxui::Element
         {
-            VisibleRow ml_row{};
-            if (!decode_virtual_backend_index(vr.backend_index, ml_row)) {
+            // Use the original VisibleRow from the visible vector — the
+            // backend_index bit-pack loses CompressedChain rich data (tool
+            // breakdown, thinking duration, live flag).  Fall back to
+            // decode only if the index is out of bounds (shouldn't happen).
+            const VisibleRow* ml_row_ptr = nullptr;
+            VisibleRow decoded{};
+            if (row_index < visible.size()) {
+                ml_row_ptr = &visible[row_index];
+            } else if (decode_virtual_backend_index(vr.backend_index, decoded)) {
+                ml_row_ptr = &decoded;
+            } else {
                 return text("") | size(HEIGHT, EQUAL,
                     std::max(1, vr.estimated_height_lines));
             }
+            const VisibleRow& ml_row = *ml_row_ptr;
             // is_selected: only Payload rows can be selected.
             bool is_selected = false;
             if (ml_row.kind == VisibleRow::Kind::Payload &&
@@ -187,6 +197,18 @@ auto RowClickTracker::hit_test(int x, int y) const noexcept
             Element row_el;
             if (ml_row.kind == VisibleRow::Kind::CompactGroup) {
                 row_el = detail::render_compact_group_row(ml_row, is_selected);
+            } else if (ml_row.kind == VisibleRow::Kind::CompressedChain) {
+                row_el = detail::render_compressed_chain_row(ml_row, is_selected, frame_count);
+                // Track clickable compressed chains for mouse hit-testing.
+                if (input.row_click_tracker && !ml_row.chain_uuid.empty()) {
+                    Box& box = input.row_click_tracker->track_row(
+                        "chain:" + ml_row.chain_uuid);
+                    row_el = std::move(row_el) | reflect(box);
+                }
+                // Top margin for visual separation from preceding row.
+                if (add_margin) {
+                    row_el = vbox({text(""), std::move(row_el)});
+                }
             } else if (ml_row.kind == VisibleRow::Kind::TranscriptCapDivider) {
                 row_el = detail::render_transcript_cap_divider(ml_row.hidden_count);
             } else {
@@ -427,6 +449,17 @@ auto RowClickTracker::hit_test(int x, int y) const noexcept
         } else if (vr.kind == VisibleRow::Kind::TranscriptCapDivider) {
             // "─── N older messages hidden · Ctrl+E to show all ───"
             rows.push_back(detail::render_transcript_cap_divider(vr.hidden_count));
+        } else if (vr.kind == VisibleRow::Kind::CompressedChain) {
+            // compressed thinking+tool chain — top margin for visual separation
+            Element chain_el = detail::render_compressed_chain_row(
+                vr, is_selected, frame_count);
+            // Track clickable compressed chains for mouse hit-testing.
+            if (input.row_click_tracker && !vr.chain_uuid.empty()) {
+                Box& box = input.row_click_tracker->track_row(
+                    "chain:" + vr.chain_uuid);
+                chain_el = std::move(chain_el) | reflect(box);
+            }
+            rows.push_back(vbox({text(""), std::move(chain_el)}));
         } else {
             // compact group row — renders its own header/spacing
             rows.push_back(detail::render_compact_group_row(vr, is_selected));

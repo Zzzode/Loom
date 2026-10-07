@@ -144,9 +144,10 @@ ComputeUnseenDivider(const ReplScreenState& s);
     const std::unordered_set<std::string>& expanded_keys = {},
     bool is_transcript_mode = false,
     bool show_all_in_transcript = false,
-    // When true, build_visible_rows hides ALL completed thinking rows so
-    // only the streaming-thinking tail is visible.
-    bool streaming_thinking_globally_visible = false,
+    // Test-only: skip chain compression when true.
+    bool disable_chain_compression = false,
+    // Production: true while a query is actively streaming.
+    bool query_running = false,
     // Retry callback for SystemAPIError rich cards.
     std::function<void()> on_retry = nullptr,
     // Clear-session callback for session-expired error cards.

@@ -92,13 +92,16 @@ AppAdapter::~AppAdapter() {
 
 // RFC 0001 Phase C batch 2: folded from app.cppm — sole callers are the
 // Render() streaming-thinking path below.
+// The grace period is 3s, matching kThinkingCollapseGrace in
+// messages_list_payload_row.cpp — after this the in-flight projection
+// path is deactivated and the committed row takes over (collapsed).
 bool AppAdapter::is_streaming_thinking_visible() const {
     auto now = clock::steady_now();
     for (const auto& [idx, stp] : streaming_thinking_) {
         if (!stp.complete) return true;
         if (stp.streaming_ended_at &&
             std::chrono::duration_cast<std::chrono::seconds>(
-                now - *stp.streaming_ended_at).count() < 30)
+                now - *stp.streaming_ended_at).count() < 3)
             return true;
     }
     return false;
@@ -142,8 +145,11 @@ Element AppAdapter::Render() {
         auto messages = static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
         // Collapse chain for background-bash and similar collapsible rows.
         messages = ApplyMessageCollapsePipeline(std::move(messages));
-        screen_state_->messages_store.messages.clear();
-        screen_state_->messages_store.messages.reserve(
+        // Build the new message list in a local vector, then swap at the
+        // end.  This prevents a one-frame blank screen: the store is
+        // never observed in a cleared-but-not-yet-rebuilt state.
+        std::vector<repl::MessageDisplayEntry> new_messages;
+        new_messages.reserve(
             messages.size() + streaming_tools_.size() +
             streaming_thinking_.size() + 1);
 
@@ -178,16 +184,42 @@ Element AppAdapter::Render() {
             const std::string u24 = make_uuid24(tick_msg_idx, seed_preview);
             for (auto& e : projected) {
                 e.id = u24;
-                screen_state_->messages_store.messages.push_back(std::move(e));
+                // Enrich committed thinking entries with cached duration.
+                // ThinkingBlock in the core types has no timing info, so
+                // the duration was cached when the streaming block completed.
+                if (e.is_thinking && e.thinking_duration.count() == 0 &&
+                    !e.full_content.empty()) {
+                    auto it = thinking_duration_cache_.find(e.full_content);
+                    if (it != thinking_duration_cache_.end()) {
+                        e.thinking_duration = it->second;
+                    }
+                }
+                new_messages.push_back(std::move(e));
             }
             ++tick_msg_idx;
         }
-        AppendLocalMessagesToScreenState();
+        // Append local-command messages (same logic as
+        // AppendLocalMessagesToScreenState, but into the local vector).
+        {
+            static std::uint64_t s_local_seq = 0;
+            for (auto it = local_command_messages_.begin();
+                 it != local_command_messages_.end(); ++it) {
+                if (it->id.empty()) {
+                    char buf[32];
+                    std::snprintf(buf, sizeof(buf), "loc_%016llx",
+                                  (unsigned long long)s_local_seq++);
+                    it->id = std::string(buf, 24);
+                }
+            }
+            new_messages.insert(new_messages.end(),
+                                local_command_messages_.begin(),
+                                local_command_messages_.end());
+        }
         // Restore chronological order (see SyncState). Applied BEFORE the
         // in-flight streaming projection so streaming rows stay last.
         std::stable_sort(
-            screen_state_->messages_store.messages.begin(),
-            screen_state_->messages_store.messages.end(),
+            new_messages.begin(),
+            new_messages.end(),
             [](const repl::MessageDisplayEntry& a,
                const repl::MessageDisplayEntry& b) {
                 return a.timestamp < b.timestamp;
@@ -212,7 +244,7 @@ Element AppAdapter::Render() {
         // All streaming blocks (text + thinking + tool-use) from this turn
         // are now duplicates of what the committed path already projected.
 
-        // Prune thinking entries whose 30-second grace period has expired.
+        // Prune thinking entries whose 3-second grace period has expired.
         // Done before has_in_flight so stale entries don't keep the
         // projection path alive.
         {
@@ -222,7 +254,7 @@ Element AppAdapter::Render() {
                     return p.second.complete &&
                            p.second.streaming_ended_at &&
                            std::chrono::duration_cast<std::chrono::seconds>(
-                               now - *p.second.streaming_ended_at).count() >= 30;
+                               now - *p.second.streaming_ended_at).count() >= 3;
                 });
         }
 
@@ -231,10 +263,10 @@ Element AppAdapter::Render() {
                 std::ranges::all_of(streaming_tools_, [](const auto& p) {
                     return p.second.complete;
                 });
-            // The streaming thinking tail stays visible for 30s after
-            // completion.  Keep projecting in-flight blocks when thinking
-            // is still within the grace period, even if all tools have
-            // completed.
+            // The streaming thinking tail stays visible for 3s after
+            // completion (matching the collapse grace).  Keep projecting
+            // in-flight blocks when thinking is still within the grace
+            // period, even if all tools have completed.
             bool thinking_visible = is_streaming_thinking_visible();
             if (all_tools_complete && !thinking_visible) has_in_flight = false;
             // Once all tool blocks have stopped (ContentBlockStop received),
@@ -243,7 +275,10 @@ Element AppAdapter::Render() {
             // runs before execute_pending_tools).  The streaming text is
             // now a duplicate of the committed row — clear it so the
             // thinking grace period doesn't keep the text row alive.
-            if (all_tools_complete) streaming_text_.clear();
+            if (all_tools_complete) {
+                streaming_text_.clear();
+                streaming_text_index_.reset();
+            }
         }
 
         loom::utils::debug("app.render",
@@ -260,15 +295,21 @@ Element AppAdapter::Render() {
                 block_indices.push_back(i);
             for (const auto& [i, _] : streaming_tools_)
                 block_indices.push_back(i);
-            // Text block always has index equal to the highest block
-            // index (or 0 if no other blocks).  We track it implicitly.
-            // Assign it a sentinel index for sorting purposes.
+            // Text block: use the actual block index tracked from
+            // ContentBlockStart.  The model can emit text before tool_use
+            // (thinking → text → tool_use), so assuming text has the highest
+            // index would place it after the tools, causing the chain
+            // compression to briefly include tools in the wrong chain.
             std::uint32_t text_idx = 0;
             if (!streaming_text_.empty()) {
-                // Text block index = max of all other indices + 1, or 0.
-                for (std::uint32_t i : block_indices)
-                    if (i > text_idx) text_idx = i;
-                if (!block_indices.empty()) text_idx += 1;
+                if (streaming_text_index_) {
+                    text_idx = *streaming_text_index_;
+                } else {
+                    // Fallback: max of all other indices + 1, or 0.
+                    for (std::uint32_t i : block_indices)
+                        if (i > text_idx) text_idx = i;
+                    if (!block_indices.empty()) text_idx += 1;
+                }
                 block_indices.push_back(text_idx);
             }
             std::sort(block_indices.begin(), block_indices.end());
@@ -287,23 +328,31 @@ Element AppAdapter::Render() {
                     repl::MessageDisplayEntry e;
                     e.role = "assistant";
                     e.is_thinking = true;
-                    // Active while streaming (not complete) or within 30s
-                    // grace period after completion.  thinking_active=true
-                    // makes the faithful renderer show the expanded body
-                    // rather than the collapsed label, and prevents the
-                    // build_visible_rows filter from hiding this row.
+                    // Active while streaming (not complete) or within the
+                    // 3s grace period after completion (entries are pruned
+                    // at 3s above, so this is always true for live entries).
+                    // thinking_active=true makes the faithful renderer show
+                    // the expanded body rather than the collapsed label, and
+                    // marks this row as the streaming tail.
                     {
                         auto now = clock::steady_now();
                         bool within_grace = thk->second.streaming_ended_at &&
                             std::chrono::duration_cast<std::chrono::seconds>(
-                                now - *thk->second.streaming_ended_at).count() < 30;
+                                now - *thk->second.streaming_ended_at).count() < 3;
                         e.thinking_active = !thk->second.complete || within_grace;
+                        // Compute thinking duration for the collapsed label.
+                        if (thk->second.streaming_started_at) {
+                            auto end = thk->second.streaming_ended_at.value_or(now);
+                            e.thinking_duration = std::chrono::duration_cast<
+                                std::chrono::milliseconds>(
+                                    end - *thk->second.streaming_started_at);
+                        }
                     }
                     e.content_preview = thk->second.text.substr(0, 200);
                     e.full_content = thk->second.text;
                     e.timestamp = now;
                     e.id = streaming_uuid24;
-                    screen_state_->messages_store.messages.push_back(std::move(e));
+                    new_messages.push_back(std::move(e));
                     continue;
                 }
                 // Tool-use block
@@ -351,7 +400,7 @@ Element AppAdapter::Render() {
                     e.is_error = tlu->second.is_error;
                     e.timestamp = now;
                     e.id = streaming_uuid24;
-                    screen_state_->messages_store.messages.push_back(std::move(e));
+                    new_messages.push_back(std::move(e));
                     continue;
                 }
                 // Text block (streaming)
@@ -362,7 +411,7 @@ Element AppAdapter::Render() {
                     e.is_streaming = true;
                     e.timestamp = now;
                     e.id = streaming_uuid24;
-                    screen_state_->messages_store.messages.push_back(std::move(e));
+                    new_messages.push_back(std::move(e));
                     continue;
                 }
             }
@@ -381,6 +430,10 @@ Element AppAdapter::Render() {
                 screen_state_->messages_store.pill_visible = false;
             }
         }
+
+        // Atomically replace the store contents — never leaves the store
+        // in a cleared-but-empty state that would flash a blank screen.
+        screen_state_->messages_store.messages.swap(new_messages);
     }
 
     // Reset cursor to hidden each frame.
@@ -392,11 +445,6 @@ Element AppAdapter::Render() {
     // Drain background paste results on every render frame so the user
     // doesn't need to press another key to see the image data filled in.
     this->ProcessCompletedPastes();
-    // Thread the streaming-thinking-visible flag to the messages list so
-    // it can hide ALL completed thinking rows when the streaming-thinking
-    // tail is on screen.
-    screen_state_->streaming_thinking_globally_visible =
-        is_streaming_thinking_visible();
     auto el = repl_component_->Render() | dc::cursor_reset();
     // Drag-to-select: paint the selection rectangle's background after
     // the normal render pass.  SelectionHighlightNode (defined in

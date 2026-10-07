@@ -4,10 +4,10 @@
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
 
-● Bash (ctest --preset debug -j8)
+<dot> Thinking, running 1 shell command…  (click to expand)
 
-∴ Thinking…
-  I should run the debug test suite to confirm the refactor did not break anything.
+
+
 
 
 

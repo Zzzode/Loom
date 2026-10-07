@@ -3,8 +3,8 @@
 █░█░█░█░█  Loom
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
-  ⎿  Analysis complete. The chart shows a steady upward trend.
-  ⎿  [Image]
+
+<dot> Working……  (click to expand)
 
 
 

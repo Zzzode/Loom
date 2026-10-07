@@ -33,7 +33,9 @@ using namespace ftxui;
 // ============================================================
 
 /// Threshold (seconds) after which active thinking shows a "still thinking"
-/// banner.  Streaming thinking stays visible for 30s after streaming ends.
+/// banner.  (Separately, the in-flight thinking projection stays visible for
+/// 3s after streaming ends — the collapse grace — before the row collapses
+/// to its summary label.)
 inline constexpr int kThinkingTimeoutSeconds = 30;
 
 // ============================================================

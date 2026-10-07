@@ -8,8 +8,8 @@
   I should consider the edge cases before settling on an implementation. The boundary conditions matter most here.
 
 
-
-
+∴ Thinking…
+  I should consider the edge cases before settling on an implementation. The boundary conditions matter most here.
 
 
 

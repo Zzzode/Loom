@@ -21,6 +21,8 @@ import loom.ui.messages.virtual_list;
 import loom.ui.messages.messages_list;
 import loom.ui.messages.message_row;
 import loom.ui.messages.thinking_message;
+import loom.ui.messages.tool_use_message;
+import loom.ui.messages.message_tool_result;
 import loom.ui.messages.user_text_message;
 import loom.ui.messages.assistant_text_message;
 import loom.ui.messages.message_image;
@@ -238,104 +240,6 @@ TEST(MessagePipeline, ToolAugment_PreviewTruncatesTo200Codepoints) {
     EXPECT_LE(a.preview.size(), 200u + 10u);
     EXPECT_NE(a.preview.find(loom::ui::design::figures::kEllipsis), std::string::npos)
         << "long preview should end with … ellipsis";
-}
-
-// ── Stage 6 HIDE_POLICY ────────────────────────────────────────────────────
-TEST(MessagePipeline, HidePolicy_HidesCompletedThinkingWhenUnselected) {
-    pl::HideContext ctx{
-        .is_complete = true,
-        .is_selected = false,
-        .is_streaming_tail = false,
-    };
-    EXPECT_TRUE(pl::should_hide_row(pl::PayloadShape::kAssistantThinking, ctx));
-
-    ctx.is_selected = true;
-    EXPECT_FALSE(pl::should_hide_row(pl::PayloadShape::kAssistantThinking, ctx));
-
-    ctx.is_selected = false;
-    ctx.is_streaming_tail = true;
-    EXPECT_FALSE(pl::should_hide_row(pl::PayloadShape::kAssistantThinking, ctx));
-
-    ctx.is_streaming_tail = false;
-    ctx.is_complete = false;
-    EXPECT_FALSE(pl::should_hide_row(pl::PayloadShape::kAssistantThinking, ctx));
-}
-
-TEST(MessagePipeline, HidePolicy_AlwaysHidesRedactedThinking) {
-    pl::HideContext ctx{};
-    // Redacted thinking is ALWAYS hidden, regardless of context.
-    EXPECT_TRUE(pl::should_hide_row(pl::PayloadShape::kAssistantRedactedThinking, ctx));
-    ctx.is_selected = true;
-    EXPECT_TRUE(pl::should_hide_row(pl::PayloadShape::kAssistantRedactedThinking, ctx));
-}
-
-TEST(MessagePipeline, HidePolicy_HidesCompactedTurnsAndSilentBridgeToolUses) {
-    pl::HideContext ctx{};
-    // UserPrompt is never hidden by default.
-    EXPECT_FALSE(pl::should_hide_row(pl::PayloadShape::kUserPrompt, ctx));
-
-    // Turn compacted → every shape inside is hidden.
-    ctx.is_compacted_turn = true;
-    EXPECT_TRUE(pl::should_hide_row(pl::PayloadShape::kAssistantText, ctx));
-    EXPECT_TRUE(pl::should_hide_row(pl::PayloadShape::kAssistantToolResult, ctx));
-    EXPECT_TRUE(pl::should_hide_row(pl::PayloadShape::kSystemText, ctx));
-    ctx.is_compacted_turn = false;
-
-    // Silent bridge tool call (no error, zero-note preview) → hidden.
-    ctx.is_silent_bridge_call = true;
-    EXPECT_TRUE(pl::should_hide_row(pl::PayloadShape::kAssistantToolUse, ctx));
-    EXPECT_TRUE(pl::should_hide_row(pl::PayloadShape::kAssistantToolResult, ctx));
-    ctx.is_silent_bridge_call = false;
-    EXPECT_FALSE(pl::should_hide_row(pl::PayloadShape::kAssistantToolUse, ctx));
-}
-
-// ── Stage 7 VISIBLE_INDEX ──────────────────────────────────────────────────
-TEST(MessagePipeline, VisibleIndex_EmptyInput) {
-    auto idx = pl::build_visible_index(0, [](std::size_t){ return true; });
-    EXPECT_TRUE(idx.empty());
-}
-
-TEST(MessagePipeline, VisibleIndex_AllRowsVisible) {
-    auto idx = pl::build_visible_index(5, [](std::size_t){ return true; });
-    ASSERT_EQ(idx.size(), 5u);
-    for (std::size_t i = 0; i < 5; ++i) EXPECT_EQ(idx[i], i);
-}
-
-TEST(MessagePipeline, VisibleIndex_EveryOtherRowHidden) {
-    auto idx = pl::build_visible_index(6, [](std::size_t i){ return i % 2 == 0; });
-    ASSERT_EQ(idx.size(), 3u);
-    EXPECT_EQ(idx[0], 0u);
-    EXPECT_EQ(idx[1], 2u);
-    EXPECT_EQ(idx[2], 4u);
-}
-
-TEST(MessagePipeline, VisibleIndex_FirstRowsHiddenPreservesOrder) {
-    // First 10 hidden, then 10 visible, then 5 hidden.
-    auto idx = pl::build_visible_index(25, [](std::size_t i){
-        return i >= 10 && i < 20;
-    });
-    ASSERT_EQ(idx.size(), 10u);
-    for (std::size_t i = 0; i < 10; ++i) EXPECT_EQ(idx[i], 10u + i);
-}
-
-TEST(MessagePipeline, VisibleIndex_ClampViewport) {
-    // 10 visible: V[0..9]
-    const auto [f1, c1] = pl::clamp_viewport(10, 0, 5);
-    EXPECT_EQ(f1, 0u);
-    EXPECT_EQ(c1, 5u);
-
-    // Overflow: ask for 5 starting at 8 → [8,9] only (count=2)
-    const auto [f2, c2] = pl::clamp_viewport(10, 8, 5);
-    EXPECT_EQ(f2, 8u);
-    EXPECT_EQ(c2, 2u);
-
-    // Empty visible list → no rows.
-    const auto [f3, c3] = pl::clamp_viewport(0, 0, 10);
-    EXPECT_EQ(c3, 0u);
-
-    // Zero viewport count → nothing rendered.
-    const auto [f4, c4] = pl::clamp_viewport(100, 50, 0);
-    EXPECT_EQ(c4, 0u);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1293,6 +1197,507 @@ TEST(MessagesList, UnseenDivider_AnchorWithEmptyUuidEntries_NoCrash) {
     // Divider title for count=1 MUST appear.
     EXPECT_NE(snap.find("1 new message"), std::string::npos);
     (void)snap;
+}
+
+// =============================================================================
+// Chain compression: thinking + non-update tool calls → 1 summary line
+//
+// Between assistant text blocks, consecutive thinking blocks and non-update
+// tool calls (Bash, Read, Grep, …) are compressed into a single
+// "∴ Thinking + N tool calls" row.  Update tools (Edit/Write) stop
+// compression and are shown individually.  The streaming tail and thinking
+// within the 3s collapse grace are never compressed.
+// =============================================================================
+
+namespace chain_compression_test {
+
+namespace ml = loom::ui::messages_list;
+using loom::ui::messages::thinking_message::ThinkingMessageOptions;
+using loom::ui::messages::thinking_message::ThinkingState;
+using loom::ui::messages::tool_use_message::ToolUseRenderOptions;
+using loom::ui::messages::tool_use_message::ToolStatus;
+using loom::ui::messages::ToolResultOptions;
+using loom::ui::messages::AssistantTextMessageData;
+using loom::ui::messages::UserTextMessageData;
+using loom::ui::messages::MessageRowPayload;
+using ml::MessagesListInput;
+using ml::MessageShape;
+
+[[nodiscard]] ThinkingMessageOptions make_thinking(std::string text) {
+    ThinkingMessageOptions opts;
+    opts.data.raw_text = std::move(text);
+    opts.data.state = ThinkingState::Complete;
+    opts.data.duration = std::chrono::milliseconds(500);
+    return opts;
+}
+
+[[nodiscard]] ToolUseRenderOptions make_tool_use(
+    std::string name, ToolStatus status = ToolStatus::Success) {
+    ToolUseRenderOptions opts;
+    opts.call.tool_name = std::move(name);
+    opts.call.status = status;
+    opts.call.raw_parameters = "{}";
+    return opts;
+}
+
+[[nodiscard]] ToolResultOptions make_tool_result(std::string name) {
+    ToolResultOptions opts;
+    opts.tool_name = std::move(name);
+    return opts;
+}
+
+[[nodiscard]] AssistantTextMessageData make_text(std::string content) {
+    return AssistantTextMessageData{
+        .content = std::move(content),
+        .model_name = std::nullopt,
+        .is_streaming = false,
+    };
+}
+
+/// Build a MessagesListInput from (shape, payload) pairs.
+/// streaming_tail_row is set to rows.size() (not streaming).
+[[nodiscard]] MessagesListInput make_input(
+    std::vector<std::pair<MessageShape, MessageRowPayload>> rows) {
+    MessagesListInput in;
+    in.streaming_tail_row = rows.size();
+    for (auto& [shape, payload] : rows) {
+        in.shapes.push_back(shape);
+        in.rows.push_back(std::move(payload));
+        in.uuids.emplace_back();
+    }
+    return in;
+}
+
+/// Count visible rows of a given kind.
+[[nodiscard]] std::size_t count_kind(
+    const std::vector<loom::ui::messages_list::VisibleRow>& rows,
+    loom::ui::messages_list::VisibleRow::Kind kind) {
+    std::size_t n = 0;
+    for (const auto& r : rows) {
+        if (r.kind == kind) ++n;
+    }
+    return n;
+}
+
+/// The CompressedChain kind value, derived from build_visible_rows' return
+/// type to work around the name-lookup conflict with
+/// loom::ui::messages::VisibleRow (exported via `using namespace messages;`
+/// in messages_list.cppm).
+[[nodiscard]] auto compressed_chain_kind() {
+    static MessagesListInput dummy;
+    auto v = build_visible_rows(dummy);
+    return decltype(v)::value_type::Kind::CompressedChain;
+}
+
+[[nodiscard]] auto payload_kind() {
+    static MessagesListInput dummy;
+    auto v = build_visible_rows(dummy);
+    return decltype(v)::value_type::Kind::Payload;
+}
+
+}  // namespace chain_compression_test
+
+/// Basic compression: thinking + tool_use + tool_result → 1 CompressedChain.
+TEST(MessagesList, ChainCompression_BasicThinkingPlusTool) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("I should check the file.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Read")},
+        {MessageShape::UserToolResult, make_tool_result("Read")},
+    });
+    auto visible = build_visible_rows(in);
+    // 3 rows compressed into 1 CompressedChain.
+    ASSERT_EQ(visible.size(), 1u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].group_count, 1u);   // 1 thinking block
+    EXPECT_EQ(visible[0].tool_turns, 1u);     // 1 tool call
+}
+
+/// Multiple thinking blocks + tool calls compressed together.
+TEST(MessagesList, ChainCompression_MultipleThinkingAndTools) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("First thought.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+        {MessageShape::AssistantThinking, make_thinking("Second thought.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Grep")},
+        {MessageShape::UserToolResult, make_tool_result("Grep")},
+    });
+    auto visible = build_visible_rows(in);
+    ASSERT_EQ(visible.size(), 1u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].group_count, 2u);   // 2 thinking blocks
+    EXPECT_EQ(visible[0].tool_turns, 2u);     // 2 tool calls
+}
+
+/// Update tool (Edit) stops compression — the thinking before it is NOT
+/// compressed (lone thinking, no tools), and the Edit is shown.
+TEST(MessagesList, ChainCompression_UpdateToolStopsCompression) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("I need to edit.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Edit")},
+        {MessageShape::UserToolResult, make_tool_result("Edit")},
+    });
+    auto visible = build_visible_rows(in);
+    // Lone thinking (compressed chain) + Edit tool_use + Edit tool_result.
+    // The Edit tool stops the chain, so the thinking is its own chain.
+    ASSERT_EQ(visible.size(), 3u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());  // thinking (compressed)
+    EXPECT_EQ(visible[1].kind, payload_kind());  // Edit tool_use
+    EXPECT_EQ(visible[2].kind, payload_kind());  // Edit tool_result
+}
+
+/// Assistant text stops compression — the lone thinking before text IS
+/// compressed (no tools needed).  The text block is shown individually.
+TEST(MessagesList, ChainCompression_AssistantTextStopsCompression) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("Thinking...")},
+        {MessageShape::AssistantText, make_text("Here is my answer.")},
+    });
+    auto visible = build_visible_rows(in);
+    // Thinking (compressed chain) + text (payload) = 2 visible rows.
+    ASSERT_EQ(visible.size(), 2u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].group_count, 1u);  // 1 thinking
+    EXPECT_EQ(visible[0].tool_turns, 0u);   // no tools
+    EXPECT_EQ(visible[1].kind, payload_kind());
+}
+
+/// Two separate chains separated by assistant text.
+TEST(MessagesList, ChainCompression_TwoChainsSeparatedByText) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("First.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+        {MessageShape::AssistantText, make_text("Middle text.")},
+        {MessageShape::AssistantThinking, make_thinking("Second.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Read")},
+        {MessageShape::UserToolResult, make_tool_result("Read")},
+    });
+    auto visible = build_visible_rows(in);
+    // Chain1 (3 rows) + text (1 row) + Chain2 (3 rows) = 3 visible rows.
+    ASSERT_EQ(visible.size(), 3u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].group_count, 1u);   // 1 thinking
+    EXPECT_EQ(visible[0].tool_turns, 1u);
+    EXPECT_EQ(visible[1].kind, payload_kind());
+    EXPECT_EQ(visible[2].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[2].group_count, 1u);   // 1 thinking
+    EXPECT_EQ(visible[2].tool_turns, 1u);
+}
+
+/// Streaming tail is never compressed.
+TEST(MessagesList, ChainCompression_StreamingTailIncludedInChain) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("First.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+        {MessageShape::AssistantThinking, make_thinking("Streaming...")},
+    });
+    // Row 3 is the streaming tail — it IS included in the chain now.
+    in.streaming_tail_row = 3;
+    auto visible = build_visible_rows(in);
+    // All 4 rows compressed into one chain.
+    ASSERT_EQ(visible.size(), 1u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].group_count, 2u);   // 2 thinking
+    EXPECT_EQ(visible[0].tool_turns, 1u);    // 1 tool call
+    // Not live because query_running defaults to false.
+    EXPECT_FALSE(visible[0].chain_is_live);
+}
+
+/// When query_running is true and the chain includes the streaming tail,
+/// the chain is marked as live (renders as a live status row).
+TEST(MessagesList, ChainCompression_LiveStatusWhenQueryRunning) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("First.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+        {MessageShape::AssistantThinking, make_thinking("Streaming...")},
+    });
+    in.streaming_tail_row = 3;
+    in.query_running = true;
+    auto visible = build_visible_rows(in);
+    ASSERT_EQ(visible.size(), 1u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_TRUE(visible[0].chain_is_live);
+}
+
+/// When query_running is true but the chain does NOT include the streaming
+/// tail (e.g. an earlier chain separated by text), it is not live.
+TEST(MessagesList, ChainCompression_EarlierChainNotLive) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("First.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+        {MessageShape::AssistantText, make_text("Done.")},
+        {MessageShape::AssistantThinking, make_thinking("Second.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Read")},
+    });
+    // Streaming tail is row 5 (the last tool use).
+    in.streaming_tail_row = 5;
+    in.query_running = true;
+    auto visible = build_visible_rows(in);
+    // Two chains: rows 0-2 (before text) and rows 4-5 (after text).
+    // The first chain is NOT live (doesn't include streaming tail).
+    // The second chain IS live (includes streaming tail).
+    bool found_live = false;
+    bool found_nonlive = false;
+    for (const auto& vr : visible) {
+        if (vr.kind == compressed_chain_kind()) {
+            if (vr.chain_is_live) found_live = true;
+            else found_nonlive = true;
+        }
+    }
+    EXPECT_TRUE(found_live);
+    EXPECT_TRUE(found_nonlive);
+}
+
+/// Transcript mode skips compression entirely.
+TEST(MessagesList, ChainCompression_TranscriptModeSkipsCompression) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("First.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+    });
+    in.is_transcript_mode = true;
+    auto visible = build_visible_rows(in);
+    // No compression in transcript mode.
+    EXPECT_EQ(count_kind(visible, compressed_chain_kind()), 0u);
+    EXPECT_EQ(visible.size(), 3u);
+}
+
+/// Search mode skips compression entirely.
+TEST(MessagesList, ChainCompression_SearchModeSkipsCompression) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("First.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+    });
+    in.search_query = "Bash";
+    auto visible = build_visible_rows(in);
+    // No compression in search mode.
+    EXPECT_EQ(count_kind(visible, compressed_chain_kind()), 0u);
+}
+
+/// Lone thinking block (no tool calls) is NOT compressed — it renders as a
+/// regular collapsed thinking row ("∴ Thought for Xs"), visually part of the
+/// assistant's turn.  A bare "Thought" summary line floating before the
+/// assistant text looks disconnected from the message flow.
+/// Lone thinking blocks ARE compressed — the user prefers the summary line
+/// over the full thinking content.
+TEST(MessagesList, ChainCompression_SingleThinkingCompressed) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("Just thinking.")},
+    });
+    auto visible = build_visible_rows(in);
+    ASSERT_EQ(visible.size(), 1u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].group_count, 1u);  // 1 thinking
+    EXPECT_EQ(visible[0].tool_turns, 0u);   // no tools
+}
+
+/// Chain with only thinking blocks (no tool calls) — compressed.
+TEST(MessagesList, ChainCompression_ThinkingOnlyChain) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("First.")},
+        {MessageShape::AssistantThinking, make_thinking("Second.")},
+    });
+    auto visible = build_visible_rows(in);
+    // Both thinking blocks compressed into 1 chain row.
+    ASSERT_EQ(visible.size(), 1u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].group_count, 2u);  // 2 thinking
+    EXPECT_EQ(visible[0].tool_turns, 0u);   // no tools
+}
+
+/// Chain stops at a non-compressible visible row (user text).
+TEST(MessagesList, ChainCompression_UserTextStopsChain) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("Thinking.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+        {MessageShape::UserText, UserTextMessageData{
+            .content = "User reply",
+            .quoted_reply = std::nullopt,
+            .command_name = std::nullopt}},
+        {MessageShape::AssistantThinking, make_thinking("After user.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Read")},
+        {MessageShape::UserToolResult, make_tool_result("Read")},
+    });
+    auto visible = build_visible_rows(in);
+    // Chain1 (3) + user text (1) + Chain2 (3) = 3 visible rows.
+    ASSERT_EQ(visible.size(), 3u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[1].kind, payload_kind());
+    EXPECT_EQ(visible[2].kind, compressed_chain_kind());
+}
+
+/// Write tool also stops compression (is_file_edit_tool matches "write").
+/// The Write tool_use AND its tool_result are both shown individually.
+/// The lone thinking before the Write IS compressed (no tools needed).
+TEST(MessagesList, ChainCompression_WriteToolStopsCompression) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("Need to write.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Write")},
+        {MessageShape::UserToolResult, make_tool_result("Write")},
+        {MessageShape::AssistantThinking, make_thinking("After write.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+    });
+    auto visible = build_visible_rows(in);
+    // Lone thinking (compressed chain) + Write tool_use + Write tool_result
+    // + Chain2 (thinking + Bash + Bash result = 3 rows compressed).
+    ASSERT_EQ(visible.size(), 4u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());  // thinking (compressed)
+    EXPECT_EQ(visible[1].kind, payload_kind());  // Write tool_use
+    EXPECT_EQ(visible[2].kind, payload_kind());  // Write tool_result
+    EXPECT_EQ(visible[3].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[3].group_count, 1u);       // 1 thinking
+    EXPECT_EQ(visible[3].tool_turns, 1u);
+}
+
+/// Pure tool chain (no thinking): consecutive tool calls are compressed.
+TEST(MessagesList, ChainCompression_PureToolChain) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+        {MessageShape::AssistantToolUse, make_tool_use("Read")},
+        {MessageShape::UserToolResult, make_tool_result("Read")},
+    });
+    auto visible = build_visible_rows(in);
+    // 4 rows compressed into 1 CompressedChain (0 thinking, 2 tool calls).
+    ASSERT_EQ(visible.size(), 1u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].group_count, 0u);   // no thinking
+    EXPECT_EQ(visible[0].tool_turns, 2u);     // 2 tool calls
+}
+
+/// A single tool call (tool_use + tool_result = 2 rows) is compressed.
+TEST(MessagesList, ChainCompression_SingleToolCallCompressed) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+    });
+    auto visible = build_visible_rows(in);
+    ASSERT_EQ(visible.size(), 1u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].group_count, 0u);
+    EXPECT_EQ(visible[0].tool_turns, 1u);
+}
+
+/// Update tool (Edit) and its result are both shown individually; the
+/// following non-update tool chain is compressed separately.
+TEST(MessagesList, ChainCompression_UpdateToolResultNotCompressed) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantToolUse, make_tool_use("Edit")},
+        {MessageShape::UserToolResult, make_tool_result("Edit")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+    });
+    auto visible = build_visible_rows(in);
+    // Edit tool_use + Edit result (both payload) + Bash chain (compressed).
+    ASSERT_EQ(visible.size(), 3u);
+    EXPECT_EQ(visible[0].kind, payload_kind());  // Edit tool_use
+    EXPECT_EQ(visible[1].kind, payload_kind());  // Edit tool_result
+    EXPECT_EQ(visible[2].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[2].group_count, 0u);
+    EXPECT_EQ(visible[2].tool_turns, 1u);
+}
+
+/// Expand/collapse: the CompressedChain row carries the anchor UUID so the
+/// click tracker can build the "chain:<uuid>" key.  When that key is in
+/// expanded_keys, the chain emits a header row (chain_is_expanded=true,
+/// "click to collapse") followed by the individual payload rows.
+TEST(MessagesList, ChainCompression_ExpandedChainShowsIndividualRows) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("I should check the file.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Read")},
+        {MessageShape::UserToolResult, make_tool_result("Read")},
+    });
+    in.uuids[0] = "test-uuid-abc";
+
+    // Collapsed: 1 CompressedChain carrying the anchor UUID.
+    auto collapsed = build_visible_rows(in);
+    ASSERT_EQ(collapsed.size(), 1u);
+    EXPECT_EQ(collapsed[0].kind, compressed_chain_kind());
+    EXPECT_EQ(collapsed[0].chain_uuid, "test-uuid-abc");
+    EXPECT_FALSE(collapsed[0].chain_is_expanded);
+
+    // Expanded: 1 CompressedChain header + 3 payload rows.
+    in.expanded_keys.insert("chain:test-uuid-abc");
+    auto visible = build_visible_rows(in);
+    ASSERT_EQ(visible.size(), 4u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].chain_uuid, "test-uuid-abc");
+    EXPECT_TRUE(visible[0].chain_is_expanded);
+    EXPECT_EQ(visible[1].kind, payload_kind());
+    EXPECT_EQ(visible[1].row_idx, 0u);
+    EXPECT_EQ(visible[2].kind, payload_kind());
+    EXPECT_EQ(visible[2].row_idx, 1u);
+    EXPECT_EQ(visible[3].kind, payload_kind());
+    EXPECT_EQ(visible[3].row_idx, 2u);
+}
+
+/// Expanding one chain does not affect a separate chain later in the list.
+TEST(MessagesList, ChainCompression_ExpandOneChainLeavesOtherCompressed) {
+    using namespace chain_compression_test;
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("First.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Read")},
+        {MessageShape::UserToolResult, make_tool_result("Read")},
+        {MessageShape::AssistantText, make_text("Here is what I found.")},
+        {MessageShape::AssistantThinking, make_thinking("Second.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+    });
+    in.uuids[0] = "chain-a";
+    in.uuids[4] = "chain-b";
+
+    // Collapsed: 2 CompressedChains + 1 text payload.
+    auto collapsed = build_visible_rows(in);
+    ASSERT_EQ(collapsed.size(), 3u);
+    EXPECT_EQ(collapsed[0].kind, compressed_chain_kind());
+    EXPECT_EQ(collapsed[0].chain_uuid, "chain-a");
+    EXPECT_EQ(collapsed[1].kind, payload_kind());
+    EXPECT_EQ(collapsed[1].row_idx, 3u);
+    EXPECT_EQ(collapsed[2].kind, compressed_chain_kind());
+    EXPECT_EQ(collapsed[2].chain_uuid, "chain-b");
+
+    // Expand only chain-a: header + 3 payload rows + text + chain-b.
+    in.expanded_keys.insert("chain:chain-a");
+    auto visible = build_visible_rows(in);
+    ASSERT_EQ(visible.size(), 6u);
+    EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[0].chain_uuid, "chain-a");
+    EXPECT_TRUE(visible[0].chain_is_expanded);
+    EXPECT_EQ(visible[1].kind, payload_kind());
+    EXPECT_EQ(visible[1].row_idx, 0u);
+    EXPECT_EQ(visible[2].kind, payload_kind());
+    EXPECT_EQ(visible[2].row_idx, 1u);
+    EXPECT_EQ(visible[3].kind, payload_kind());
+    EXPECT_EQ(visible[3].row_idx, 2u);
+    EXPECT_EQ(visible[4].kind, payload_kind());
+    EXPECT_EQ(visible[4].row_idx, 3u);
+    EXPECT_EQ(visible[5].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[5].chain_uuid, "chain-b");
 }
 
 // =============================================================================

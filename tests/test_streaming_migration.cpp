@@ -57,6 +57,12 @@ namespace fs = std::filesystem;
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine, nullptr, &commands, &storage, [] {});
 
+    // StreamingMigration tests verify individual row rendering (tool result
+    // cards, ⎿ connectors, raw result formats) — bypass chain compression
+    // so those rows remain visible.
+    loom::ui::test_seams(app.get())
+        .set_disable_chain_compression_for_testing(true);
+
     auto steps = loom::testing::load_fixture(fixture_name);
     loom::testing::InvariantChecker checker(steps);
     loom::testing::StreamReplayHarness harness(*app, engine);

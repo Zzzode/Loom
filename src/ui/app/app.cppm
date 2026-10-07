@@ -258,6 +258,11 @@ private:
     std::mutex at_mention_mutex_;
     std::vector<std::string> pending_at_mention_inserts_;  // bg→UI
     std::string streaming_text_;
+    /// Block index of the streaming text block.  The text block's index is
+    /// not implied by its position — the model can emit text before tool_use
+    /// (thinking → text → tool_use).  Tracking the actual index ensures the
+    /// streaming projection places text in the correct order.
+    std::optional<std::uint32_t> streaming_text_index_;
     /// StreamingMarkdown stable-prefix cache for the streaming-text tail
     /// row.  Reset alongside streaming_text_ so each new model response
     /// starts with a fresh stable prefix.  Used by
@@ -277,21 +282,33 @@ private:
         bool exec_done = false;      ///< ToolExecutionEnd: tool has finished executing
         bool is_error = false;
     };
-    // StreamingThinking preview { text, complete, streaming_ended_at }.
-    // streaming_ended_at enables the 30s grace period after thinking stops.
+    // StreamingThinking preview { text, complete, streaming_ended_at,
+    // streaming_started_at }.  streaming_ended_at enables the 3s grace
+    // period after thinking stops (matching kThinkingCollapseGrace in
+    // messages_list_payload_row.cpp).  streaming_started_at enables
+    // duration computation for the collapsed "∴ Thought for Xs" label.
     struct StreamingThinkingPreview {
         std::string text;
         bool complete = false;
         std::optional<std::chrono::steady_clock::time_point> streaming_ended_at;
+        std::optional<std::chrono::steady_clock::time_point> streaming_started_at;
     };
     std::map<std::uint32_t, StreamingToolPreview> streaming_tools_;
     std::map<std::uint32_t, StreamingThinkingPreview> streaming_thinking_;
 
+    // Cache of thinking durations, keyed by thinking text content.
+    // Populated when a streaming thinking block completes (ContentBlockStop);
+    // consumed when projecting committed thinking entries (which lack timing
+    // info because ThinkingBlock in the core types has no duration field).
+    std::unordered_map<std::string, std::chrono::milliseconds>
+        thinking_duration_cache_;
+
     // Returns true when any streaming thinking block is still being streamed,
-    // OR when a recently-completed thinking block is within the 30-second
+    // OR when a recently-completed thinking block is within the 3-second
     // grace period.
-    // Drives G3 (hide all completed thinking when streaming visible) and
-    // keeps the tail visible after ContentBlockStop fires.
+    // Keeps the in-flight thinking projection (and its streaming tail)
+    // alive for 3s after ContentBlockStop fires, so the just-finished
+    // thinking row stays expanded before collapsing to the summary label.
     // Body in app_autocomplete.cpp (RFC 0001 Phase C batch 2).
     bool is_streaming_thinking_visible() const;
     // P0-2 Stage 1: per-turn dedup tracker for ContentBlock index transitions.
@@ -620,11 +637,10 @@ private:
 
     /// Clear the streaming-thinking preview map so
     /// is_streaming_thinking_visible() returns false. For testing only —
-    /// lets the 3s collapse grace (was_recently_streaming in
-    /// messages_list_payload_row.cpp) become the deciding factor for a
-    /// committed thinking row without waiting out the 30s streaming
-    /// grace, which would otherwise keep the row hidden via the
-    /// streaming_thinking_globally_visible filter (RFC 0003 §8.3).
+    /// deactivates the in-flight projection path so the committed thinking
+    /// row takes over immediately, letting the 3s collapse grace
+    /// (was_recently_streaming in messages_list_payload_row.cpp) become
+    /// the deciding factor (RFC 0003 §8.3).
     void clear_streaming_thinking_for_testing();
 
     // Drive a prompt submission through the full HandleSubmit path (slash /
@@ -774,6 +790,8 @@ struct AppTestingSeams {
     // ── Messages / input ───────────────────────────────────────────
     [[nodiscard]] std::vector<std::string> messages_for_testing() const;
     [[nodiscard]] std::string input_text_for_testing() const;
+    /// Test-only: skip chain compression in the messages list.
+    void set_disable_chain_compression_for_testing(bool v);
 
     // ── Paste ──────────────────────────────────────────────────────
     [[nodiscard]] std::size_t pasted_contents_size_for_testing() const noexcept;

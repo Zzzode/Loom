@@ -4,9 +4,9 @@
 ░█░█░█░█░  model_api/experimental_0812_256k
 █░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
 
-● Bash (ctest --preset debug -j8)
+<dot> running 1 shell command, reading 1 file…  (click to expand)
 
-● Read (docs/rfcs/0003-streaming-payload-replay-testing.md)
+
 
 
 

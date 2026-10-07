@@ -366,12 +366,101 @@ auto passes_filters(MessageShape s, const Filters& f) -> bool {
 
 } // namespace detail
 
+// Shapes that can participate in a compressed chain: thinking blocks,
+// tool calls, tool results, grouped tools, bash I/O.  Everything else
+// (user messages, assistant text, system rows, update tools) stops the chain.
+[[nodiscard]] auto is_chain_compressible(MessageShape sh) -> bool {
+    return sh == MessageShape::AssistantThinking ||
+           sh == MessageShape::AssistantRedactedThinking ||
+           sh == MessageShape::AssistantToolUse ||
+           sh == MessageShape::AssistantGroupedTools ||
+           sh == MessageShape::UserToolResult ||
+           sh == MessageShape::UserBashInput ||
+           sh == MessageShape::UserBashOutput;
+}
+
+// Returns true if the row is an update tool (Edit/Write) — either the
+// tool_use itself or its tool_result.  Update tools are never compressed;
+// they stop the chain and are shown individually.
+[[nodiscard]] auto is_update_tool_row(
+    MessageShape sh, const MessageRowPayload& payload) -> bool {
+    if (sh == MessageShape::AssistantToolUse) {
+        return tool_use_message::is_file_edit_tool(
+            brief_detail::extract_tool_name(payload));
+    }
+    if (sh == MessageShape::AssistantGroupedTools) {
+        if (auto* grp = std::get_if<
+                tool_use_message::GroupedToolsOptions>(&payload)) {
+            for (const auto& call : grp->calls) {
+                if (tool_use_message::is_file_edit_tool(call.tool_name))
+                    return true;
+            }
+        }
+        return false;
+    }
+    if (sh == MessageShape::UserToolResult) {
+        return tool_use_message::is_file_edit_tool(
+            brief_detail::extract_tool_name(payload));
+    }
+    return false;
+}
+
+// Extract the static thinking duration from a ThinkingMessageOptions payload.
+[[nodiscard]] auto extract_thinking_duration(
+    const MessageRowPayload& p) -> std::chrono::milliseconds {
+    if (auto* opts = std::get_if<
+            thinking_message::ThinkingMessageOptions>(&p)) {
+        return opts->data.duration;
+    }
+    return {};
+}
+
+// Extract the wall-clock thinking start time (zero = not set).
+[[nodiscard]] auto extract_thinking_start(
+    const MessageRowPayload& p) -> std::chrono::steady_clock::time_point {
+    if (auto* opts = std::get_if<
+            thinking_message::ThinkingMessageOptions>(&p)) {
+        return opts->data.thinking_start_time;
+    }
+    return {};
+}
+
+// Add one tool call to the breakdown vector (increment count or append).
+void add_tool_to_breakdown(
+    std::vector<std::pair<std::string, std::size_t>>& breakdown,
+    std::string_view name) {
+    if (name.empty()) return;
+    for (auto& [n, c] : breakdown) {
+        if (n == name) { ++c; return; }
+    }
+    breakdown.emplace_back(std::string(name), 1);
+}
+
+// Count tool calls in a row and add them to the breakdown.
+void count_row_tools(
+    MessageShape sh, const MessageRowPayload& payload,
+    std::vector<std::pair<std::string, std::size_t>>& breakdown) {
+    if (sh == MessageShape::AssistantToolUse) {
+        add_tool_to_breakdown(breakdown,
+            brief_detail::extract_tool_name(payload));
+    } else if (sh == MessageShape::AssistantGroupedTools) {
+        if (auto* grp = std::get_if<
+                tool_use_message::GroupedToolsOptions>(&payload)) {
+            for (const auto& call : grp->calls) {
+                add_tool_to_breakdown(breakdown, call.tool_name);
+            }
+        }
+    }
+}
+
 // =========================================================================
 // 4)  build_visible_rows  —  pure O(N) over input.rows
 // =========================================================================
 /// Step 1 : per-row filter + search (Filters + search_query)
 /// Step 2 : if show_compact, collapse compact_boundary_groups into a
 ///          single "CompactGroup" visible row each.
+/// Step 2.5: compress thinking + non-update-tool chains into a single
+///          "CompressedChain" summary row (skipped in transcript/search mode).
 ///
 /// Complexity guarantee: exactly ONE linear pass over input.rows plus ONE
 /// pass over compact_boundary_groups (sorted).  Uses a std::vector<bool>
@@ -486,6 +575,242 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
         }
     }
 
+    // ---- Step 2.5 : chain compression (thinking + tool calls → 1 summary line)
+    //
+    // Consecutive compressible rows (thinking, tool_use, tool_result, grouped
+    // tools, bash I/O) are compressed into a single summary row.  The chain
+    // does NOT need to start at a thinking block — pure tool sequences are
+    // compressed too.  Only three things stop a chain and are shown
+    // individually:
+    //   • user messages (any User* shape)
+    //   • assistant text (AssistantText)
+    //   • update tools (Edit/Write, via is_file_edit_tool)
+    // The streaming tail IS included in the chain — during streaming the
+    // chain renders as a live status row (spinner + elapsed timer + tool
+    // activity).  Skipped entirely in transcript mode and search mode.
+    std::vector<bool> consumed_by_chain(N, false);
+    // Rows in an expanded chain: skipped by the Step 2.5 outer loop (so they
+    // are not re-compressed as smaller chains) but still emitted as payload
+    // in Step 3 (unlike consumed_by_chain, which hides them).
+    std::vector<bool> chain_expanded(N, false);
+    struct ChainInfo {
+        std::size_t thinking_count = 0;
+        std::size_t tool_turns = 0;
+        std::chrono::milliseconds thinking_duration{0};
+        std::chrono::steady_clock::time_point earliest_start{};
+        std::vector<std::pair<std::string, std::size_t>> tool_counts;
+        bool is_live = false;
+        std::string uuid;  // anchor row UUID, for expand/collapse key
+        bool is_expanded = false;  // true → header + individual rows
+    };
+    std::vector<std::optional<ChainInfo>> start_to_chain(N);
+
+    if (!input.is_transcript_mode && !do_search && !input.disable_chain_compression) {
+        const auto now = std::chrono::steady_clock::now();
+
+        // Find the last user prompt (non-tool-result user message).
+        // Chains after this index are part of the current streaming
+        // response and stay live until a non-compressible block arrives.
+        // Tool results (UserToolResult, UserBashOutput, …) are part of
+        // the current response, not a new one — they must NOT reset the
+        // last-user-prompt index.
+        std::size_t last_user_prompt = N;  // N = no user prompt found
+        for (std::size_t r = 0; r < N && r < input.shapes.size(); ++r) {
+            const auto sh = input.shapes[r];
+            if (sh == MessageShape::UserText ||
+                sh == MessageShape::UserPrompt ||
+                sh == MessageShape::UserCommand ||
+                sh == MessageShape::UserImage ||
+                sh == MessageShape::UserPlan ||
+                sh == MessageShape::UserResourceUpdate ||
+                sh == MessageShape::UserMemoryInput ||
+                sh == MessageShape::UserChannel ||
+                sh == MessageShape::UserAgentNotification ||
+                sh == MessageShape::UserTeammate ||
+                sh == MessageShape::UserAttachments) {
+                last_user_prompt = r;
+            }
+        }
+
+        for (std::size_t i = 0; i < N; ++i) {
+            if (!row_passes[i] || consumed_by_group[i] || consumed_by_chain[i]
+                || chain_expanded[i])
+                continue;
+            if (i >= input.shapes.size()) continue;
+
+            const auto shape = input.shapes[i];
+            // Chain can start at ANY compressible row.
+            if (!is_chain_compressible(shape)) continue;
+
+            // Update tools (Edit/Write) are never compressed.
+            if (i < input.rows.size() &&
+                is_update_tool_row(shape, input.rows[i])) continue;
+
+            // Scan forward to find the chain end.
+            std::size_t chain_end = i + 1;
+            std::size_t tool_turns = 0;
+            std::size_t thinking_count = 0;
+            std::size_t visible_count = 1;  // the anchor row
+            std::chrono::milliseconds thinking_duration{0};
+            std::chrono::steady_clock::time_point earliest_start{};
+            std::vector<std::pair<std::string, std::size_t>> tool_counts;
+
+            // Count the anchor row.
+            if (shape == MessageShape::AssistantThinking ||
+                shape == MessageShape::AssistantRedactedThinking) {
+                ++thinking_count;
+                if (i < input.rows.size()) {
+                    thinking_duration += extract_thinking_duration(input.rows[i]);
+                    auto ts = extract_thinking_start(input.rows[i]);
+                    if (ts.time_since_epoch().count() != 0 &&
+                        (earliest_start.time_since_epoch().count() == 0 ||
+                         ts < earliest_start)) {
+                        earliest_start = ts;
+                    }
+                }
+            }
+            if (shape == MessageShape::AssistantToolUse ||
+                shape == MessageShape::AssistantGroupedTools) {
+                ++tool_turns;
+                if (i < input.rows.size())
+                    count_row_tools(shape, input.rows[i], tool_counts);
+            }
+
+            while (chain_end < N) {
+                if (!row_passes[chain_end] || consumed_by_group[chain_end]) {
+                    ++chain_end;  // skip invisible / group-consumed rows
+                    continue;
+                }
+                if (chain_end >= input.shapes.size()) break;
+
+                const auto sh = input.shapes[chain_end];
+
+                // Assistant text stops the chain (shown individually).
+                if (sh == MessageShape::AssistantText) break;
+
+                // Update tools (Edit/Write) and their results stop the chain.
+                if (chain_end < input.rows.size() &&
+                    is_update_tool_row(sh, input.rows[chain_end])) break;
+
+                // Compressible shapes: thinking, tool_use, tool_result,
+                // grouped tools, bash I/O.
+                if (is_chain_compressible(sh)) {
+                    ++visible_count;
+                    if (sh == MessageShape::AssistantThinking ||
+                        sh == MessageShape::AssistantRedactedThinking) {
+                        ++thinking_count;
+                        if (chain_end < input.rows.size()) {
+                            thinking_duration += extract_thinking_duration(
+                                input.rows[chain_end]);
+                            auto ts = extract_thinking_start(input.rows[chain_end]);
+                            if (ts.time_since_epoch().count() != 0 &&
+                                (earliest_start.time_since_epoch().count() == 0 ||
+                                 ts < earliest_start)) {
+                                earliest_start = ts;
+                            }
+                        }
+                    }
+                    if (sh == MessageShape::AssistantToolUse ||
+                        sh == MessageShape::AssistantGroupedTools) {
+                        ++tool_turns;
+                        if (chain_end < input.rows.size())
+                            count_row_tools(sh, input.rows[chain_end], tool_counts);
+                    }
+                    ++chain_end;
+                } else {
+                    // Non-compressible visible row (user, system, …) stops chain.
+                    break;
+                }
+            }
+
+            // Compress chains with ≥1 visible row.  Lone thinking blocks
+            // (no tools) are compressed too — the user prefers the summary
+            // line over the full thinking content.
+            //
+            // If the user has expanded this chain (key "chain:<uuid>" in
+            // expanded_keys), skip compression — the individual rows render
+            // as payload rows instead.
+            if (visible_count >= 1) {
+                // Get the anchor row's UUID for the expand/collapse key.
+                std::string chain_uuid;
+                if (i < input.uuids.size()) {
+                    chain_uuid = input.uuids[i];
+                }
+                const std::string expand_key = "chain:" + chain_uuid;
+                const bool is_expanded =
+                    input.expanded_keys.count(expand_key) > 0;
+
+                if (!is_expanded) {
+                    for (std::size_t r = i; r < chain_end; ++r) {
+                        if (row_passes[r] && !consumed_by_group[r]) {
+                            consumed_by_chain[r] = true;
+                        }
+                    }
+                    // A chain is "live" while the query is streaming AND the
+                    // chain is part of the current response (anchor after
+                    // the last user prompt, or no user prompt at all —
+                    // tests and single-response sessions).  The chain stays
+                    // live until a non-compressible block (text, update
+                    // tool) arrives after it — that block becomes chain_end,
+                    // and the chain goes static.  Between blocks (no
+                    // streaming tail), the chain stays live ONLY if no
+                    // non-compressible block has arrived yet (chain_end == N),
+                    // preventing two thinking chains from showing as active
+                    // simultaneously.
+                    const bool in_current_response =
+                        (last_user_prompt == N) || (i > last_user_prompt);
+                    const bool is_live = input.query_running &&
+                        in_current_response &&
+                        (chain_end == N ||
+                         input.streaming_tail_row < chain_end);
+                    // For live chains, the elapsed time ticks up in real time;
+                    // for static chains, use the summed thinking duration.
+                    auto elapsed = thinking_duration;
+                    if (is_live && earliest_start.time_since_epoch().count() != 0) {
+                        elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            now - earliest_start);
+                    }
+                    start_to_chain[i] = ChainInfo{
+                        .thinking_count   = thinking_count,
+                        .tool_turns       = tool_turns,
+                        .thinking_duration = elapsed,
+                        .earliest_start   = earliest_start,
+                        .tool_counts      = std::move(tool_counts),
+                        .is_live          = is_live,
+                        .uuid             = std::move(chain_uuid),
+                    };
+                } else {
+                    // Expanded chain: emit a header row (so the user can
+                    // click to collapse) and mark the individual rows as
+                    // chain_expanded (visible in Step 3, not re-compressed
+                    // by the outer loop).
+                    for (std::size_t r = i; r < chain_end; ++r) {
+                        if (row_passes[r] && !consumed_by_group[r]) {
+                            chain_expanded[r] = true;
+                        }
+                    }
+                    // Same live criterion as collapsed chains.
+                    const bool expanded_in_current =
+                        (last_user_prompt == N) || (i > last_user_prompt);
+                    const bool expanded_is_live = input.query_running &&
+                        expanded_in_current &&
+                        (chain_end == N ||
+                         input.streaming_tail_row < chain_end);
+                    start_to_chain[i] = ChainInfo{
+                        .thinking_count   = thinking_count,
+                        .tool_turns       = tool_turns,
+                        .thinking_duration = thinking_duration,
+                        .earliest_start   = earliest_start,
+                        .tool_counts      = tool_counts,
+                        .is_live          = expanded_is_live,
+                        .uuid             = chain_uuid,
+                        .is_expanded      = true,
+                    };
+                }
+            }
+        }
+    }
+
     // ---- Step 3 : linear merge walk.
     // Groups may arrive in any order but *typically* are sorted; we walk
     // rows in ascending order and insert a group row exactly when we cross
@@ -513,29 +838,28 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
             });
             continue;
         }
-        // 2) rows inside an active group are skipped
-        if (consumed_by_group[i]) continue;
-        // 3) skip hidden thinking rows entirely (returns null → zero height;
-        //    FTXUI vbox always allocates 1 line per child, so we must not emit them).
-        //    Keep them visible if selected (user expanded) or streaming tail.
-        //    Completed thinking rows are NOT hidden here — they render as a
-        //    collapsed "∴ Thought for Xs" summary that can be expanded on click.
-        if (i < input.shapes.size()) {
-            const auto shape = input.shapes[i];
-            if (shape == MessageShape::AssistantThinking ||
-                shape == MessageShape::AssistantRedactedThinking) {
-                const bool is_selected_row = input.selected_row_idx.has_value() &&
-                    *input.selected_row_idx == i;
-                const bool is_streaming = (i == input.streaming_tail_row &&
-                    input.streaming_tail_row < input.rows.size());
-                if (!is_selected_row && !is_streaming) {
-                    // During the streaming grace period, hide ALL completed
-                    // thinking rows — only the streaming-tail row is visible.
-                    if (input.streaming_thinking_globally_visible) continue;
-                }
-            }
+        // 1b) emit compressed-chain header at the chain start boundary.
+        // For collapsed chains the rows below are consumed_by_chain and
+        // skipped by check (2); for expanded chains the header is followed
+        // by the individual payload rows.
+        if (start_to_chain[i].has_value()) {
+            const auto& c = *start_to_chain[i];
+            out.push_back(VisibleRow{
+                .kind        = VisibleRow::Kind::CompressedChain,
+                .group_count = c.thinking_count,
+                .tool_turns  = c.tool_turns,
+                .chain_is_live = c.is_live,
+                .chain_thinking_duration = c.thinking_duration,
+                .chain_tool_breakdown = c.tool_counts,
+                .chain_uuid  = c.uuid,
+                .chain_is_expanded = c.is_expanded,
+            });
+            if (!c.is_expanded) continue;
         }
-        // 4) regular payload row
+        // 2) rows inside an active group or chain are skipped
+        if (consumed_by_group[i]) continue;
+        if (consumed_by_chain[i]) continue;
+        // 3) regular payload row
         if (!row_passes[i]) continue;
         out.push_back(VisibleRow{
             .kind    = VisibleRow::Kind::Payload,
@@ -556,6 +880,7 @@ auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
         capped.push_back(VisibleRow{
             .kind         = VisibleRow::Kind::TranscriptCapDivider,
             .hidden_count = hidden,
+            .chain_uuid   = {},
         });
         // Copy last kMax rows from the full output.
         const auto start = out.end() - static_cast<std::ptrdiff_t>(kMaxMessagesInTranscriptMode);

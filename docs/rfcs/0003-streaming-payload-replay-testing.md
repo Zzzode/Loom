@@ -624,20 +624,27 @@ post-query. The catalog:
   ticker; in replay the glyph is non-deterministic. Spinner glyphs are
   normalized to `<spinner>` in golden output instead.
 
-### 8.3 Clock seam (deferred)
+### 8.3 Clock seam
 
 The 30s thinking grace period (`is_streaming_thinking_visible()`) and the
 3s collapse grace (`kThinkingCollapseGrace` in `messages_list_payload_row.cpp`)
 both call `std::chrono::steady_clock::now()` directly. Testing grace expiry
 without sleeping requires an injectable clock.
 
-This is a moderate refactoring (replace direct `steady_clock::now()` calls
-with a `Clock` abstraction or a `now_for_testing` setter). It is **deferred
-to a follow-up** — the initial fixture library avoids grace-expiry scenarios.
-When the clock seam lands, add:
-- `thinking_grace_expiry` fixture (thinking completes → 30s passes →
-  collapsed label appears from committed message)
-- INV-07: completed thinking shows collapsed label after grace expiry
+**Implemented** as `loom.ui.foundation.clock`: a `steady_now()` function with
+a process-global `set_steady_now_for_testing()` override. Seven
+`steady_clock::now()` call sites were migrated to `clock::steady_now()`.
+When the override is unset, behavior is identical to direct
+`steady_clock::now()` calls. The following grace-expiry tests were added:
+
+- `thinking_grace_expiry` fixture + `ThinkingGraceExpiry` test: thinking
+  completes → 30s passes → collapsed label appears from committed message
+  (INV-07)
+- `thinking_collapse_grace` fixture + `ThinkingCollapseGrace` test: 3s
+  collapse grace keeps a thinking row expanded, then collapses it
+- `ClockResetBetweenFixtures` test: the harness clears the clock override
+  at the start of every `play()` so simulated time cannot leak across
+  fixtures
 
 ## 9. Phases and graduation criteria
 
@@ -680,7 +687,7 @@ When the clock seam lands, add:
      (`messages_list_filter.cpp:534`), while the streaming-tail thinking
      row is visible (expanded). The snapshot asserts this grace-period
      behavior. The collapsed-label assertion (after grace expiry) is
-     deferred to the clock-seam follow-up (§8.3).
+     covered by the clock-seam tests (§8.3).
 
 **Gate**: all 9 fixtures pass with golden snapshots + invariants.
 
@@ -709,7 +716,8 @@ for HTTP mock server tests).
 
 1. Author the 7 Phase 2 fixtures (§6.3) as edge cases are discovered.
 2. Add new invariants as new bug classes are found.
-3. When the clock seam lands (§8.3), add grace-expiry fixtures and INV-07.
+3. ~~When the clock seam lands (§8.3), add grace-expiry fixtures and INV-07.~~
+   Done — see §8.3 for the clock seam and grace-expiry tests.
 
 **Gate**: ongoing — fixtures and invariants grow with the codebase.
 

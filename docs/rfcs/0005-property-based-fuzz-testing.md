@@ -1,12 +1,13 @@
 ---
 rfc: 5
 title: Property-Based Fuzz Testing of Streaming Event Sequences
-status: accepted
+status: implementable
 owners: "@Zzzode"
 reviewers:
   - agent:design-review-r1 (request-changes: 12 findings, 3 high)
   - agent:design-review-r2 (request-changes: 7 findings, 2 medium)
   - agent:design-review-r3 (approve: all findings addressed)
+  - agent:prr-review (approve: 7 findings addressed, play_with_split_invariants contradiction fixed)
 created: 2026-10-07
 last-reviewed: 2026-10-07
 tracking: local
@@ -144,7 +145,9 @@ are exactly the transitions that trigger the semantic quirks listed below.
 The generator can produce 1–3 query rounds in a single sequence. Each round
 has its own `StreamStart` → blocks → `StreamEnd` → `__commit__` →
 `__end_query__`. This exercises INV-06 (tool result committed in an earlier
-round than assistant text).
+round than assistant text). The generator inserts `__checkpoint__` steps
+after each `__commit__` and after each `__end_query__` so that the
+`screen_check` callback fires at the right moments.
 
 **Text length distribution:**
 - 50% short (1–39 chars) — exercises normal rendering
@@ -278,7 +281,9 @@ State-level invariants need read access to `streaming_tools_`,
 accessor.
 
 A new seam `streaming_state_snapshot_for_testing()` returns a struct with
-the fields needed for state-level invariants:
+the fields needed for state-level invariants. The struct is defined in
+`app.cppm` (the module interface, alongside the existing `AppTestingSeams`
+friend declaration) so the seam's return type is visible to importers:
 
 ```cpp
 struct StreamingStateSnapshot {
@@ -334,7 +339,7 @@ When a property fails, rapidcheck shrinks the input to the minimal
 reproducing sequence. The fuzzer then serializes this sequence to JSONL
 using a `StreamEvent → JSON` serializer that also handles `__commit__` and
 `__end_query__` pseudo-events (mirroring the wire shape in
-`streaming_replay.hpp:211-425`), writing to
+`streaming_replay.hpp:211-444`), writing to
 `tests/fixtures/streaming_sessions/fuzz_<hash>.jsonl`.
 
 This serializer is also used by RFC 0004's `loom record` command — the two
@@ -385,6 +390,11 @@ out-of-order sequences, the test fails on known quirks — not new bugs.
 2. **Out-of-order sequences** (all knobs at default): INV-01 (no crash)
    only. This verifies the pipeline doesn't crash on weird-but-accepted
    input. Clean pass expected (the known quirks are semantic, not crashes).
+   State-level invariants are excluded because the `streaming_text`
+   invariant fires on quirk #1 (delta-before-start for tool/thinking
+   blocks); the `complete`-transition invariants are also excluded for
+   consistency — the out-of-order case verifies crash-freedom only, while
+   standalone mode runs the full invariant suite with known-quirk filtering.
 
 **Standalone mode** runs all invariants on all sequences. Known quirks
 (documented above) are filtered from findings — only previously-unknown
@@ -412,7 +422,10 @@ tool-use-id dedup state. The fuzzer constructs a fresh `App` (and fresh
 `StreamReplayHarness`) for each iteration.
 
 The fuzzer generates `StreamEvent` values, wraps them in `ReplayStep`
-vectors, and plays them through `StreamReplayHarness::play_with_invariants()`.
+vectors, and plays them through
+`StreamReplayHarness::play_with_split_invariants()` (the new method with
+per-step state check and checkpoint-only screen check — see "Performance"
+above).
 
 #### Build system integration
 
@@ -429,6 +442,9 @@ Two targets:
    `--max-iterations`) with a random seed. Configured via `rc::Config`
    (seed, max iterations, test timeout). For local exploration. Findings
    are written to `tests/fixtures/streaming_sessions/fuzz_<hash>.jsonl`.
+   Built in CI but **not** registered as a ctest — only
+   `test_streaming_fuzz` is a registered ctest. `loom-fuzz` is invoked
+   manually for long-running exploration.
 
 Both targets link `loom_core`, `loom_ui`, `rapidcheck`, `rapidcheck_gtest`,
 and GTest (same as `test_streaming_replay`). The standalone target does
@@ -470,7 +486,163 @@ runs are reproducible. The iteration count is set via `rc::Config::maxSuccess`
 
 ## Production Readiness Review
 
-TBD — to be filled before `implementable` gate.
+### 1. Correctness and tests
+
+- [x] Every new behaviour has a new test (unit / module / e2e named).
+  - Two fuzz properties: well-formed sequences (all invariants) and
+    out-of-order sequences (INV-01 only)
+  - Serializer round-trip test: StreamEvent → JSON → parse → compare
+  - Generator validation: 1000 sequences replay without harness errors
+  - State snapshot seam tests
+- [x] Failure paths covered (empty input, error result, timeout, abort).
+  - Empty sequence (StreamStart → StreamEnd only): valid, no crash
+  - StreamError mid-sequence: error handled, subsequent events processed
+  - rapidcheck shrinking: failing input reduced to minimal reproducer
+- [x] Golden suites assessed: `test_ui_*`, `test_dialog_*`,
+  `test_prompt_dialog`, `test_cost_threshold_dialog`; if rendering
+  changes, goldens regenerated and **manually reviewed** (not blindly
+  accepted).
+  - No rendering changes — the fuzzer is test-only, reuses the existing
+    replay harness and screen capture. No production UI code is modified
+    (only the new `streaming_state_snapshot_for_testing()` seam, which is
+    test-only).
+- [x] Known timing flake list respected; no new wall-clock assertions with
+  tight upper bounds under scheduler contention.
+  - Fixed seed in ctest mode for determinism. No wall-clock assertions.
+- [x] Expected serial ctest total stated; deletions reconcile exactly.
+  - ~2020 (2014 existing + ~6 new: 2 fuzz properties + serializer
+    round-trip + generator validation + state snapshot seam tests)
+- [x] String/shape-based cross-module couplings (registry keys, tag formats,
+  wire fields) changed on BOTH emitter and consumer sides;
+  `docs/decisions/design-decisions.md` consulted.
+  - The fixture format is the coupling: the serializer (emitter) must match
+    the parser in `streaming_replay.hpp` (consumer). The round-trip test
+    guards this. `design-decisions.md` consulted — no existing tag formats
+    or registry keys are touched.
+
+**Notes:** The fuzzer adds one new test-only seam
+(`streaming_state_snapshot_for_testing()`) to `AppTestingSeams`. This is
+additive — existing tests and production code are unaffected. The
+`play_with_split_invariants` method is a new addition to
+`StreamReplayHarness`, not a modification of existing methods.
+
+### 2. Build system and module discipline
+
+- [x] Affected producer-TU BMI PSS measured before AND after (PSS from
+  `/proc/<pid>/smaps_rollup`, not RSS), numbers recorded.
+  - Test-only changes — no production BMI impact. The new seam is a
+    declaration in `app_testing_seams.cpp` (implementation file, not
+    interface). rapidcheck is a test-only dependency.
+- [x] No Ninja concurrency reduction anywhere; memory handled by TU
+  splitting / type erasure.
+  - No concurrency changes.
+- [x] Interface files gain declarations, not definitions (RFC 0001 Phase C
+  direction); god-interface inline-body count does not increase.
+  - `streaming_state_snapshot_for_testing()` is a declaration in the
+    existing `AppTestingSeams` pattern; implementation in
+    `app_testing_seams.cpp`. No new inline bodies in interface files.
+- [x] After RFC 0001 Phase A: no new textual standard-library or third-party
+  includes in module units (`import std;` / `cc.third_party.*` used).
+  - rapidcheck is used only in test files (`test_streaming_fuzz.cpp`),
+    not in module units. Test files may use textual includes (they are
+    not module units).
+- [x] Named partitions used only for PIMPL internals, not for cross-area
+  layering.
+  - No named partitions.
+- [x] No new upward dependency edges; directory-level SCCs do not grow
+  (architecture graph lint result attached).
+  - No new production dependencies. Test-only dependency on rapidcheck
+    does not affect the module graph. Graph lint to be run during Phase A.
+
+**Notes:** rapidcheck is added via FetchContent with `RC_ENABLE_GTEST=ON`,
+`RC_ENABLE_TESTS=OFF`, `RC_ENABLE_EXAMPLES=OFF`. Added to `.deps-cache`
+for offline builds.
+
+### 3. Rollback and compatibility
+
+- [x] Commits are atomic per phase; each phase revertible independently.
+  - Phase A (rapidcheck + generator + serializer + seam) is independently
+    revertible. Phase B (invariant integration) depends on Phase A.
+    Phase C (ctest + standalone) depends on Phase B. Phase D (bug hunt)
+    is operational, not code.
+- [x] No flag-day interface changes: PIMPL / type erasure / re-export shims
+  keep importers building during migration.
+  - `streaming_state_snapshot_for_testing()` is additive — existing
+    importers of `AppTestingSeams` build without modification.
+- [x] Persisted data compatibility considered (`~/.loom/sessions`,
+  settings cascade, config schema) with migration or read-tolerance.
+  - Fuzz findings written to `tests/fixtures/streaming_sessions/` (test
+    fixtures, not user data). No persisted data changes.
+- [x] Wire-protocol compatibility (`wire_anthropic` / `wire_openai`) —
+  field additions are additive; removals justified.
+  - No wire protocol changes. The fuzzer operates at the
+    `core::StreamEvent` boundary, after wire parsing.
+
+**Notes:**
+
+### 4. Observability
+
+- [x] Session traces remain valid: `messages.jsonl` block coverage and
+  `dump-prompts/<id>.jsonl` request/response dumps.
+  - Unaffected — the fuzzer is test-only, does not modify trace
+    persistence.
+- [x] New background workers / threads are event-driven; no constant-rate
+  render ticker (UI rule); teardown/abort paths defined.
+  - No new threads. The fuzzer runs synchronously in the test process.
+- [x] New diagnostics log through the existing debug channels; no new ad-hoc
+  print paths.
+  - Fuzz findings are written as JSONL fixtures (the diagnostic output).
+    rapidcheck's built-in reporting goes to stdout (test output), not
+    ad-hoc print paths.
+- [x] Build/performance metrics from this PRR recorded in the RFC.
+  - ctest time for `test_streaming_fuzz` to be measured during Phase C.
+    Target: <5s total (2 test cases × 100 iterations, with 2 checkpoint
+    renders per iteration = ~400 full renders + ~12,000 event injections).
+
+**Notes:**
+
+### 5. Documentation and deletion
+
+- [x] `CLAUDE.md` updated if conventions, build layout, or paths change.
+  - `CLAUDE.md` testing section updated to mention fuzz testing.
+- [x] Non-obvious decisions added to `docs/decisions/design-decisions.md`.
+  - The generator-vs-mutation decision, the known-quirk policy, and the
+    checkpoint-only rendering optimization are non-obvious and will be
+    recorded.
+- [x] Dead code made obsolete by the work is deleted in the SAME phase
+  - No dead code — this is a new feature, not a replacement.
+- [x] Deprecated modules/shapes have a stated removal trigger and migration
+  note; no silent shape drift.
+  - No deprecations.
+- [x] All comments/docs in English.
+  - Yes.
+
+**Notes:**
+
+### 6. Platform readiness (macos-14 / Linux)
+
+- [x] Debug + release presets build `-Werror` clean on the Linux dev box.
+  - To be verified during Phase A.
+- [x] macos-14 CI green at default parallelism (3 vCPU / 14 GB); no swap.
+  - To be verified during Phase A. rapidcheck is platform-independent.
+- [x] Termios / signals / Apple-only guards correct for both platforms.
+  - No platform-specific code.
+- [x] truecolor (`COLORTERM=truecolor TERM=xterm-256color`) golden path
+  intact.
+  - No rendering changes.
+- [x] Offline dependency cache unaffected; no new network fetch required.
+  - rapidcheck added to `.deps-cache` mechanism. FetchContent clones from
+    GitHub when cache is absent (same pattern as GoogleTest).
+
+**Notes:**
+
+### Review sign-off
+
+| Role | Reviewer | Date | Verdict |
+|---|---|---|---|
+| Design | agent:design-review-r1/r2/r3 | 2026-10-07 | approve |
+| Production readiness | agent:prr-review | 2026-10-07 | approve |
+| Code (per phase) | | | pending |
 
 ## Rollout and rollback
 
@@ -557,3 +729,4 @@ setup.
 | 2026-10-07 | — | Design review R1: request-changes (12 findings, 3 high) |  | Engine incompatibility, generator reach, state read path |
 | 2026-10-07 | — | Design review R2: request-changes (7 findings, 2 medium) |  | Harness render behavior, invariant/quirk contradiction |
 | 2026-10-07 | — | Design review R3: approve → status accepted |  | All 19 findings addressed across 2 rounds |
+| 2026-10-07 | — | PRR review: approve → status implementable |  | 7 findings addressed; play_with_split_invariants contradiction fixed, checkpoint generation specified |

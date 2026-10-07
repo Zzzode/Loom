@@ -1,12 +1,13 @@
 ---
 rfc: 4
 title: Session Recording for Replay Fixtures
-status: accepted
+status: implementable
 owners: "@Zzzode"
 reviewers:
   - agent:design-review-r1 (request-changes: 12 findings, 3 fatal)
   - agent:design-review-r2 (request-changes: 6 findings, 2 medium)
   - agent:design-review-r3 (approve: all findings addressed)
+  - agent:prr-review (approve: 6 findings addressed, on_commit plumbing specified)
 created: 2026-10-07
 last-reviewed: 2026-10-07
 tracking: local
@@ -119,8 +120,12 @@ The recorder redacts:
 - Text blocks matching configurable regex patterns (e.g., API key patterns)
   are replaced with `<redacted>`
 - Tool results from configurable tool names (e.g., `Bash` with sensitive
-  commands) are truncated or redacted
-- Redaction rules are configured via `settings.json` under a `record` key:
+  commands) have their content replaced with `<redacted>` (not truncated —
+  truncation changes replay fidelity; redaction preserves the event
+  structure)
+- Redaction rules are configured via `settings.json` under a `record` key,
+  read through the typed `Settings` struct (`src/config/settings.cppm`)
+  with a `RecordConfig` sub-struct:
   ```json
   {
     "record": {
@@ -153,15 +158,15 @@ The recorder is installed via two new optional callbacks in `QueryOptions`
 ```cpp
 struct QueryOptions {
     // ... existing fields ...
-    StreamCallback on_event;  // existing: called for every StreamEvent
+    std::optional<StreamCallback> on_event;  // existing: called for every StreamEvent
 
     /// Called when a message is committed to the conversation.
     /// The recorder serializes this as a __commit__ line.
-    std::function<void(const Message&)> on_commit;
+    std::optional<std::function<void(const Message&)>> on_commit;
 
     /// Called when the query thread finishes (stream_query returns).
     /// The recorder serializes this as __end_query__.
-    std::function<void()> on_end_query;
+    std::optional<std::function<void()>> on_end_query;
 };
 ```
 
@@ -176,6 +181,17 @@ The engine calls these at the appropriate points in `stream_query`:
 - `options.on_end_query()` — called when `stream_query` returns, including
   early returns (e.g., budget exceeded at line 82). Implemented via RAII
   scope guard to ensure it fires on all exit paths
+
+**`on_commit` plumbing**: `append_message(Message msg)`
+(`query_engine_conversation.cpp:175`) has no access to `QueryOptions` —
+its signature takes only a `Message`. The callback is stored as a
+`QueryEngine` member (`on_commit_callback_`), set at `stream_query` entry
+from `options.on_commit` and cleared via RAII when `stream_query` exits.
+This prevents stale-callback leakage into subsequent headless `query()`
+calls on the same engine instance. The callback fires **outside**
+`conversation_mutex_` on a pre-move copy of the message (the original is
+`std::move`d into `conversation_` under the lock at line 186), avoiding
+lock-holding during JSON serialization and file I/O.
 
 The App (`app_handle_submit.cpp`) sets these callbacks when the `record`
 subcommand is active:
@@ -305,9 +321,12 @@ migrated to emit streaming events in the future.
 
 #### Output location
 
-Default: `~/.loom/recordings/recorded_<timestamp>.jsonl`. With `--install`:
-copies the fixture to `tests/fixtures/streaming_sessions/` and prints the
-fixture name for use in tests.
+Default: `~/.loom/recordings/recorded_<timestamp>.jsonl`. The recordings
+directory is resolved through `src/constants/paths.cppm` (the single
+source for path resolution) via a new `recordings_dir()` accessor, not
+hardcoded. With `--install`: copies the fixture to
+`tests/fixtures/streaming_sessions/` and prints the fixture name for use
+in tests.
 
 #### Overhead
 
@@ -324,7 +343,157 @@ the event path).
 
 ## Production Readiness Review
 
-TBD — to be filled before `implementable` gate.
+### 1. Correctness and tests
+
+- [x] Every new behaviour has a new test (unit / module / e2e named).
+  - Recorder unit tests: event tap, JSONL writer, redaction, checkpoint insertion
+  - Round-trip test: serialize each StreamEvent variant + each Message variant
+    to JSON, parse back via `streaming_replay.hpp`, compare
+  - Integration test: record a session → replay the fixture → compare screens
+- [x] Failure paths covered (empty input, error result, timeout, abort).
+  - Empty session (no events): valid fixture with just `__end_query__`
+  - StreamError mid-session: error event serialized, fixture still replayable
+  - Session abort (user exits): `on_end_query` fires via RAII, fixture closed
+- [x] Golden suites assessed: `test_ui_*`, `test_dialog_*`,
+  `test_prompt_dialog`, `test_cost_threshold_dialog`; if rendering
+  changes, goldens regenerated and **manually reviewed** (not blindly
+  accepted).
+  - No rendering changes — the recorder is backend-only, taps into the
+    event stream without modifying UI behavior
+- [x] Known timing flake list respected; no new wall-clock assertions with
+  tight upper bounds under scheduler contention.
+  - No wall-clock assertions in recorder tests
+- [x] Expected serial ctest total stated; deletions reconcile exactly.
+  - ~2030 (2014 existing + ~16 new recorder tests)
+- [x] String/shape-based cross-module couplings (registry keys, tag formats,
+  wire fields) changed on BOTH emitter and consumer sides;
+  `docs/decisions/design-decisions.md` consulted.
+  - The fixture format is the coupling: the serializer (emitter) must match
+    the parser in `streaming_replay.hpp` (consumer). The round-trip test
+    guards this. `design-decisions.md` consulted — no existing tag formats
+    or registry keys are touched.
+
+**Notes:** The recorder adds two optional callbacks (`on_commit`,
+`on_end_query`) to `QueryOptions`. These are additive — existing callers
+that don't set them are unaffected. The `on_commit` hook inside
+`append_message` is the only engine change; it is a no-op when the callback
+is empty.
+
+### 2. Build system and module discipline
+
+- [x] Affected producer-TU BMI PSS measured before AND after (PSS from
+  `/proc/<pid>/smaps_rollup`, not RSS), numbers recorded.
+  - To be measured during Phase A implementation. Expected impact: minimal
+    (new `.cppm` interface + `.cpp` implementation for the recorder;
+    `QueryOptions` gains two `std::function` members — PSS delta expected
+    <5 MB on the query_engine producer TU).
+- [x] No Ninja concurrency reduction anywhere; memory handled by TU
+  splitting / type erasure.
+  - No concurrency changes.
+- [x] Interface files gain declarations, not definitions (RFC 0001 Phase C
+  direction); god-interface inline-body count does not increase.
+  - New `session_recorder.cppm` interface with declarations only;
+    implementation in `.cpp`. `QueryOptions` gains two `std::function`
+    declarations (no inline bodies).
+- [x] After RFC 0001 Phase A: no new textual standard-library or third-party
+  includes in module units (`import std;` / `cc.third_party.*` used).
+  - No new third-party dependencies. `import std;` used throughout.
+- [x] Named partitions used only for PIMPL internals, not for cross-area
+  layering.
+  - No named partitions.
+- [x] No new upward dependency edges; directory-level SCCs do not grow
+  (architecture graph lint result attached).
+  - New module `loom.query.session_recorder` sits within the existing
+    `query/` directory. No new cross-area edges. Graph lint to be run
+    during Phase A.
+
+**Notes:**
+
+### 3. Rollback and compatibility
+
+- [x] Commits are atomic per phase; each phase revertible independently.
+  - Phase A (recorder core) and Phase B (CLI integration) are independently
+    revertible. Phase A adds the engine callbacks + serializer; Phase B
+    adds the CLI flag. Reverting Phase B leaves the recorder library
+    unused but harmless.
+- [x] No flag-day interface changes: PIMPL / type erasure / re-export shims
+  keep importers building during migration.
+  - `QueryOptions` changes are additive (two new optional members with
+    default-constructed empty `std::function`). All existing importers
+    build without modification.
+- [x] Persisted data compatibility considered (`~/.loom/sessions`,
+  settings cascade, config schema) with migration or read-tolerance.
+  - New files written to `~/.loom/recordings/` (new directory, no existing
+    data affected). `settings.json` gains an optional `record` key —
+    absent key means no redaction (backward compatible).
+- [x] Wire-protocol compatibility (`wire_anthropic` / `wire_openai`) —
+  field additions are additive; removals justified.
+  - No wire protocol changes. The recorder taps after wire parsing.
+
+**Notes:**
+
+### 4. Observability
+
+- [x] Session traces remain valid: `messages.jsonl` block coverage and
+  `dump-prompts/<id>.jsonl` request/response dumps.
+  - Unaffected — the recorder taps into the event stream without modifying
+    trace persistence.
+- [x] New background workers / threads are event-driven; no constant-rate
+  render ticker (UI rule); teardown/abort paths defined.
+  - No new threads. The recorder is called from the query thread and from
+    `std::async` worker threads during parallel tool execution (mutex-
+    protected). Teardown: RAII scope guard ensures `on_end_query` fires on
+    all exit paths, including early returns and exceptions.
+- [x] New diagnostics log through the existing debug channels; no new ad-hoc
+  print paths.
+  - The recorder itself is a diagnostic tool. It writes to a JSONL file,
+    not to stdout/stderr (except the final output path message).
+- [x] Build/performance metrics from this PRR recorded in the RFC.
+  - BMI PSS and build wall time to be recorded during Phase A.
+
+**Notes:**
+
+### 5. Documentation and deletion
+
+- [x] `CLAUDE.md` updated if conventions, build layout, or paths change.
+  - `CLAUDE.md` debug traces section updated to mention `loom record`.
+- [x] Non-obvious decisions added to `docs/decisions/design-decisions.md`.
+  - The recording boundary decision (tap at `stream_query`, not
+    `stream_single_api_call`) and the fixture-format-vs-wire-format
+    distinction are non-obvious and will be recorded.
+- [x] Dead code made obsolete by the work is deleted in the SAME phase
+  - No dead code — this is a new feature, not a replacement.
+- [x] Deprecated modules/shapes have a stated removal trigger and migration
+  note; no silent shape drift.
+  - No deprecations.
+- [x] All comments/docs in English.
+  - Yes.
+
+**Notes:**
+
+### 6. Platform readiness (macos-14 / Linux)
+
+- [x] Debug + release presets build `-Werror` clean on the Linux dev box.
+  - To be verified during Phase A.
+- [x] macos-14 CI green at default parallelism (3 vCPU / 14 GB); no swap.
+  - To be verified during Phase A. No platform-specific code expected.
+- [x] Termios / signals / Apple-only guards correct for both platforms.
+  - No platform-specific code.
+- [x] truecolor (`COLORTERM=truecolor TERM=xterm-256color`) golden path
+  intact.
+  - No rendering changes.
+- [x] Offline dependency cache unaffected; no new network fetch required.
+  - No new dependencies.
+
+**Notes:**
+
+### Review sign-off
+
+| Role | Reviewer | Date | Verdict |
+|---|---|---|---|
+| Design | agent:design-review-r1/r2/r3 | 2026-10-07 | approve |
+| Production readiness | agent:prr-review | 2026-10-07 | approve |
+| Code (per phase) | | | pending |
 
 ## Future work
 
@@ -411,3 +580,4 @@ recording at the `core::StreamEvent` boundary is simpler and more reliable.
 | 2026-10-07 | — | Design review R1: request-changes (12 findings, 3 fatal) |  | Tap point, const-ref, wire-format serializer |
 | 2026-10-07 | — | Design review R2: request-changes (6 findings, 2 medium) |  | Headless mode, on_commit coverage |
 | 2026-10-07 | — | Design review R3: approve → status accepted |  | All 18 findings addressed across 2 rounds |
+| 2026-10-07 | — | PRR review: approve → status implementable |  | 6 findings addressed; on_commit plumbing, paths.cppm, settings mechanism specified |

@@ -14,6 +14,7 @@ import loom.types.types;
 import loom.commands.command;
 import loom.session.storage;
 import loom.serdes.json;
+import loom.constants.paths;
 export namespace loom::commands {
 
 using namespace loom::core;
@@ -101,21 +102,18 @@ public:
     }
 
 private:
-    /// Load recent sessions from disk (~/.loom/sessions) into recent_sessions_.
-    /// Uses the same default directory as SessionStorage so the list matches
-    /// what the app actually persists.  list_recent_sessions sorts by
-    /// last_active descending (newest first), matching recent_sessions_'
-    /// expected order for resume_last().  Sessions with zero messages are
-    /// filtered out — they are empty shells created on startup that the user
-    /// never interacted with.  The message count is read from the actual
-    /// file on disk (messages.jsonl lines or messages.json array size)
-    /// rather than metadata.json's message_count, which is 0 for sessions
-    /// that use messages.jsonl — the engine appends to the file but doesn't
-    /// update the metadata count.
+    /// Load recent sessions from disk into recent_sessions_.  Uses
+    /// loom::constants::paths::sessions_dir() so the list matches what the
+    /// app actually persists.  list_recent_sessions sorts by last_active
+    /// descending (newest first), matching recent_sessions_' expected order
+    /// for resume_last().  Sessions with zero messages are filtered out —
+    /// they are empty shells created on startup that the user never
+    /// interacted with.  The message count is read from the actual file on
+    /// disk (messages.jsonl lines) rather than metadata.json's
+    /// message_count, which is 0 for sessions that use messages.jsonl — the
+    /// engine appends to the file but doesn't update the metadata count.
     void load_sessions() {
-        const char* home = std::getenv("HOME");
-        const auto sessions_dir =
-            std::filesystem::path{home ? home : "/tmp"} / ".loom" / "sessions";
+        const auto sessions_dir = loom::constants::paths::sessions_dir();
         auto metas = loom::session::list_recent_sessions(sessions_dir, 20);
         recent_sessions_.clear();
         recent_sessions_.reserve(metas.size());
@@ -197,14 +195,11 @@ private:
     /// message in messages.jsonl (truncated) so the user can actually
     /// tell sessions apart.  Handles both content formats the engine
     /// writes: plain string (single TextBlock) and content-block array.
-    /// Also falls back to the legacy messages.json format which uses a
-    /// top-level "text" field instead of "content".
     [[nodiscard]] std::string effective_title(
         const SessionSummary& s,
         const std::filesystem::path& sessions_dir) const {
         if (!s.title.empty() && s.title != "Session") return s.title;
 
-        // ── Current format: messages.jsonl (one JSON object per line) ──
         auto docs = loom::session::load_messages(sessions_dir, s.id.str());
         for (std::size_t i = 0; i < docs.size(); ++i) {
             auto root = docs[i].root();
@@ -240,63 +235,24 @@ private:
             }
         }
 
-        // ── Legacy format: messages.json (JSON array with "text" field) ──
-        auto json_path = sessions_dir / s.id.str() / "messages.json";
-        if (std::filesystem::exists(json_path)) {
-            auto doc = loom::utils::json::parse_file(json_path);
-            if (doc) {
-                auto root = doc->root();
-                if (root.is_arr()) {
-                    for (std::size_t i = 0; i < root.size(); ++i) {
-                        auto msg = root.at(i);
-                        if (!msg.is_obj()) continue;
-                        auto role_val = msg.get("role");
-                        if (!role_val.is_str() ||
-                            role_val.as_str() != std::string_view("user"))
-                            continue;
-                        auto text_val = msg.get("text");
-                        if (!text_val.is_str()) continue;
-                        auto text = std::string(text_val.as_str());
-                        if (!text.empty()) {
-                            for (auto& c : text) if (c == '\n') c = ' ';
-                            if (text.size() > 60) text = text.substr(0, 60) + "…";
-                            return text;
-                        }
-                    }
-                }
-            }
-        }
-
         return "Session";
     }
 
-    /// Count messages in a session by inspecting the actual file on disk.
-    /// Prefers messages.jsonl (current format); falls back to messages.json
-    /// (legacy JSON-array format).  Returns 0 if neither file exists.
+    /// Count messages in a session by counting non-empty lines in its
+    /// messages.jsonl file.  Returns 0 if the file does not exist.
     [[nodiscard]] static int count_messages_on_disk(
         const std::filesystem::path& sessions_dir,
         const std::string& session_id)
     {
-        auto dir = sessions_dir / session_id;
-        auto jsonl_path = dir / "messages.jsonl";
-        if (std::filesystem::exists(jsonl_path)) {
-            std::ifstream ifs(jsonl_path);
-            std::string line;
-            int count = 0;
-            while (std::getline(ifs, line)) {
-                if (!line.empty()) ++count;
-            }
-            return count;
+        auto jsonl_path = sessions_dir / session_id / "messages.jsonl";
+        if (!std::filesystem::exists(jsonl_path)) return 0;
+        std::ifstream ifs(jsonl_path);
+        std::string line;
+        int count = 0;
+        while (std::getline(ifs, line)) {
+            if (!line.empty()) ++count;
         }
-        auto json_path = dir / "messages.json";
-        if (std::filesystem::exists(json_path)) {
-            auto doc = loom::utils::json::parse_file(json_path);
-            if (doc) {
-                auto root = doc->root();
-                if (root.is_arr()) return static_cast<int>(root.size());
-            }
-        }
-        return 0;
+        return count;
     }
 
     [[nodiscard]] static std::string format_time_ago(std::chrono::system_clock::time_point tp) {

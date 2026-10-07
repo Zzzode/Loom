@@ -28,7 +28,6 @@ import loom.commands.registry;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
 import loom.services.api.session_ingress;
-import loom.session.app_storage;
 import loom.serdes.json;
 import loom.net.http.http;
 import loom.teams.swarm.backends;
@@ -49,7 +48,7 @@ extern "C" [[nodiscard]] int loom_ui_run_app_bridge(
     loom::core::QueryEngine* engine,
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
     loom::commands::AppCommandRegistry* cmd_registry,
-    loom::utils::SessionStorage* storage,
+    const std::filesystem::path* sessions_dir,
     loom::hooks::ToolPermissionHook* permission_hook
 );
 
@@ -710,6 +709,22 @@ auto load_config() -> loom::core::QueryEngineConfig {
         config.base_url = url;
     } else if (const auto& file_url = file_config.settings().network.base_url) {
         config.base_url = *file_url;
+    }
+
+    // Propagate config-file network settings to env vars so all code paths
+    // reading them (notably the sub-agent's MessagesClient, which checks
+    // LOOM_BASE_URL / LOOM_API_KEY only — see build_client_config in
+    // services/api/bootstrap.cppm) pick up file-configured values. Env vars
+    // already set take precedence — never override them.
+    if (std::getenv("LOOM_BASE_URL") == nullptr) {
+        if (const auto& file_url = file_config.settings().network.base_url) {
+            ::setenv("LOOM_BASE_URL", file_url->c_str(), 0);
+        }
+    }
+    if (std::getenv("LOOM_API_KEY") == nullptr) {
+        if (const auto& file_key = file_config.settings().network.api_key) {
+            ::setenv("LOOM_API_KEY", file_key->c_str(), 0);
+        }
     }
 
     // Model: env var first, then config file
@@ -1996,8 +2011,6 @@ int main(int argc, const char* argv[]) {
     // Initialize command registry with all migrated commands
     auto cmd_registry = loom::commands::AppCommandRegistry{};
 
-    // Initialize session storage
-    auto storage = loom::utils::SessionStorage{};
     auto conversation_store = loom::core::ConversationStore(conversation_store_path(opts).string());
 
     // A resumed/continued session keeps its id so its persisted
@@ -2043,7 +2056,7 @@ int main(int argc, const char* argv[]) {
         if (opts.use_simple_ui) {
             return run_simple_ui(&engine, cmd_registry);
         } else {
-            return loom_ui_run_app_bridge(&engine, &lifecycle_hooks, &cmd_registry, &storage, &permission_hook);
+            return loom_ui_run_app_bridge(&engine, &lifecycle_hooks, &cmd_registry, nullptr, &permission_hook);
         }
     } catch (const std::exception& e) {
         std::println(stderr, "UI startup failed: {}", e.what());

@@ -15,7 +15,6 @@ import std;
 
 import loom.query.query_engine;
 import loom.commands.registry;
-import loom.session.app_storage;
 import loom.hooks.tool_permissions;
 import loom.hooks.lifecycle_hooks;
 
@@ -25,7 +24,7 @@ namespace {
 [[nodiscard]] int RunApp(
     core::QueryEngine& engine,
     loom::commands::AppCommandRegistry& cmd_registry,
-    utils::SessionStorage& storage,
+    const std::filesystem::path* sessions_dir,
     loom::hooks::ToolPermissionHook* permission_hook,
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks
 ) {
@@ -77,7 +76,8 @@ namespace {
         &engine,
         lifecycle_hooks,
         &cmd_registry,
-        &storage,
+        sessions_dir ? std::optional<std::filesystem::path>{*sessions_dir}
+                     : std::nullopt,
         [&screen, &should_exit]() {
             should_exit = true;
             screen.Exit();
@@ -119,10 +119,10 @@ extern "C" int loom_ui_run_app_bridge(
     loom::core::QueryEngine* engine,
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
     loom::commands::AppCommandRegistry* cmd_registry,
-    loom::utils::SessionStorage* storage,
+    const std::filesystem::path* sessions_dir,
     loom::hooks::ToolPermissionHook* permission_hook
 ) {
-    return loom::ui::RunApp(*engine, *cmd_registry, *storage, permission_hook, lifecycle_hooks);
+    return loom::ui::RunApp(*engine, *cmd_registry, sessions_dir, permission_hook, lifecycle_hooks);
 }
 
 }  // namespace loom::ui

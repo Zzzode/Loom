@@ -110,6 +110,13 @@ inline constexpr std::array<std::string_view, 3> kMemoryFileCandidates = {
     return home_dir() / kConfigDirName;
 }
 
+/// The directory where session transcripts (messages.jsonl) and metadata
+/// are persisted: <config-write>/sessions.  This is the single resolution
+/// point — callers must not hardcode ~/.loom/sessions themselves.
+[[nodiscard]] inline std::filesystem::path sessions_dir() {
+    return config_home_write() / "sessions";
+}
+
 /// Every config-directory candidate that exists, highest priority first.
 /// Use this when the caller wants to read from ALL of them (e.g. skill
 /// discovery, where a user may legitimately have skills in more than one

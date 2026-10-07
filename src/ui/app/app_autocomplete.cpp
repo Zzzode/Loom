@@ -43,7 +43,7 @@ import loom.ui.prompt.fuzzy_rank_nucleo;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
-import loom.session.app_storage;
+import loom.session.storage;
 import loom.skills.support;
 import loom.fs.path;
 
@@ -261,14 +261,15 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     };
 
     auto add_session_suggestions = [&](std::string_view partial) {
-        if (!static_cast<loom::utils::SessionStorage*>(storage_raw())) return;
-        auto sessions = static_cast<loom::utils::SessionStorage*>(storage_raw())->list_sessions(50);
-        if (!sessions) return;
-        for (const auto& session : *sessions) {
-            const auto& id = session.metadata.id;
-            const auto& title = session.metadata.title;
+        auto metas = loom::session::list_recent_sessions(sessions_dir(), 50);
+        for (const auto& m : metas) {
+            const auto& id = m.session_id;
+            const auto& title = m.title.value_or("");
             // Skip empty sessions — they are startup shells with no messages.
-            if (session.metadata.message_count == 0) continue;
+            // Count from the file on disk: metadata.message_count is 0 for
+            // sessions that use messages.jsonl (the engine appends without
+            // updating the metadata count).
+            if (count_session_messages(sessions_dir(), id) == 0) continue;
             if (!frn::fuzzy_match_nucleo(id, partial) &&
                 !frn::fuzzy_match_nucleo(title, partial)) {
                 continue;
@@ -282,13 +283,10 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             } else {
                 short_id_str = id.substr(0, std::min<std::size_t>(id.size(), 8));
             }
-            // Use preview as description when title is generic.
+            // Use the first user message as description when title is generic.
             std::string desc = title.empty() ? "Session" : title;
-            if ((desc.empty() || desc == "Session") && session.preview) {
-                desc = *session.preview;
-                // Collapse newlines for single-line display.
-                for (auto& c : desc) if (c == '\n') c = ' ';
-                if (desc.size() > 60) desc = desc.substr(0, 60) + "…";
+            if (desc.empty() || desc == "Session") {
+                desc = first_user_message_as_title(sessions_dir(), id);
             }
             add_suggestion(
                 std::move(short_id_str),
@@ -753,44 +751,44 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // AT-10: @-history session autocomplete — search past sessions by
         // title/ID, exposed as an @-mention source alongside
         // files/agents/MCP. Sessions are sorted by recency (newest first)
-        // per SessionStorage::list_sessions.
-        if (static_cast<loom::utils::SessionStorage*>(storage_raw())) {
-            auto sessions = static_cast<loom::utils::SessionStorage*>(storage_raw())->list_sessions(30);
-            if (sessions) {
-                for (const auto& session : *sessions) {
-                    const auto& id = session.metadata.id;
-                    const auto& title = session.metadata.title;
-                    const std::string short_id =
-                        id.substr(0, std::min<std::size_t>(id.size(), 8));
-                    const std::string display_label =
-                        title.empty() ? short_id : title;
+        // per loom::session::list_recent_sessions.
+        {
+            auto metas = loom::session::list_recent_sessions(sessions_dir(), 30);
+            for (const auto& m : metas) {
+                const auto& id = m.session_id;
+                const auto& title = m.title.value_or("");
+                const std::string short_id =
+                    id.substr(0, std::min<std::size_t>(id.size(), 8));
+                const std::string display_label =
+                    title.empty() ? short_id : title;
 
-                    if (!frn::fuzzy_match_nucleo(display_label, query) &&
-                        !frn::fuzzy_match_nucleo(id, query) &&
-                        !frn::fuzzy_match_nucleo(short_id, query)) {
-                            continue;
-                        }
-
-                    // Build description: "Session" + short-ID hint + msg count
-                    std::string desc = "Session";
-                    if (!title.empty() && title != short_id) {
-                        desc += " · " + short_id;
-                    }
-                    if (session.metadata.message_count > 0) {
-                        desc += std::format(
-                            " ({} msgs)", session.metadata.message_count);
+                if (!frn::fuzzy_match_nucleo(display_label, query) &&
+                    !frn::fuzzy_match_nucleo(id, query) &&
+                    !frn::fuzzy_match_nucleo(short_id, query)) {
+                        continue;
                     }
 
-                    add_suggestion(
-                        "@" + display_label,
-                        std::move(desc),
-                        "@" + id,
-                        token.start,
-                        token.end,
-                        /*submit_on_return=*/false,
-                        /*id=*/"session:" + id,
-                        /*icon=*/"🕘");
+                // Build description: "Session" + short-ID hint + msg count.
+                // Count from the file on disk: metadata.message_count is 0
+                // for sessions that use messages.jsonl.
+                const int msg_count = count_session_messages(sessions_dir(), id);
+                std::string desc = "Session";
+                if (!title.empty() && title != short_id) {
+                    desc += " · " + short_id;
                 }
+                if (msg_count > 0) {
+                    desc += std::format(" ({} msgs)", msg_count);
+                }
+
+                add_suggestion(
+                    "@" + display_label,
+                    std::move(desc),
+                    "@" + id,
+                    token.start,
+                    token.end,
+                    /*submit_on_return=*/false,
+                    /*id=*/"session:" + id,
+                    /*icon=*/"🕘");
             }
         }
 

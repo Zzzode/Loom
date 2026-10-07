@@ -93,6 +93,17 @@ namespace acsrc = loom::ui::autocomplete_sources;
     std::string_view description);
 [[nodiscard]] std::string lowercase_ascii(std::string_view value);
 
+// Session-transcript helpers shared between the session picker
+// (app_handle_submit.cpp) and autocomplete (app_autocomplete.cpp).  Both read
+// messages.jsonl only — the legacy messages.json format is no longer
+// supported.  Bodies in app_handle_submit.cpp.
+[[nodiscard]] int count_session_messages(
+    const std::filesystem::path& sessions_dir,
+    const std::string& session_id);
+[[nodiscard]] std::string first_user_message_as_title(
+    const std::filesystem::path& sessions_dir,
+    const std::string& session_id);
+
 
 struct AutocompleteToken {
     std::size_t start = 0;
@@ -164,15 +175,18 @@ private:
     // constructor body calls this; teardown goes through AppImplDeleter, so
     // neither impl unit needs AppImpl's layout.
     // Stored type-erased as void* in AppImpl; each impl unit casts back
-    // after importing the owning module (loom.query/loom.hooks/loom.commands/
-    // loom.session.app_storage), keeping those closures out of this BMI.
+    // after importing the owning module (loom.query/loom.hooks/loom.commands),
+    // keeping those closures out of this BMI.  The sessions directory is
+    // NOT type-erased: it is a standard fs::path resolved once in
+    // construct_impl and exposed via sessions_dir().
     void construct_impl(void* engine, void* lifecycle_hooks,
-                        void* cmd_registry, void* storage);
+                        void* cmd_registry,
+                        std::optional<std::filesystem::path> sessions_dir);
     void construct_settings();
     [[nodiscard]] void* engine_raw() const noexcept;
     [[nodiscard]] void* lifecycle_hooks_raw() const noexcept;
     [[nodiscard]] void* cmd_registry_raw() const noexcept;
-    [[nodiscard]] void* storage_raw() const noexcept;
+    [[nodiscard]] std::filesystem::path sessions_dir() const noexcept;
 
     std::function<void()> on_exit_;
 
@@ -499,7 +513,8 @@ public:
     ~AppAdapter() override;
 
     AppAdapter(void* engine, void* lifecycle_hooks,
-               void* cmd_registry, void* storage,
+               void* cmd_registry,
+               std::optional<std::filesystem::path> sessions_dir,
                std::function<void()> on_exit);
 
     void HandleSubmit(const std::string& text,
@@ -508,6 +523,12 @@ public:
     void HandleCommand(std::string_view cmd);
 
     void ProjectRuntimeMetadataToScreenState();
+
+    /// Project the AI-managed todo list (TodoWriteTool singleton) into
+    /// screen_state_->todo_store. Called from SyncState and Render, matching
+    /// the ProjectRuntimeMetadataToScreenState wiring. The tool owns its own
+    /// mutex; this is a lean copy (max 10 items) per call.
+    void ProjectTodosToScreenState();
 
     /// Project settings from SettingsManager into screen_state_.
     /// Projects the settings subset into the REPL

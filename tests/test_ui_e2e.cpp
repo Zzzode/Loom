@@ -20,7 +20,6 @@ import loom.ui.messages.message_image;
 import loom.commands.registry;
 import loom.query.query_engine;
 import loom.tools.tool;
-import loom.session.app_storage;
 
 namespace {
 namespace fs = std::filesystem;
@@ -212,10 +211,9 @@ TEST(E2E_Gate, StartupScreenHasAllElements) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_e2e_gate_startup_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // Render at a realistic terminal size
     auto rendered = strip_ansi(render_to_plain_text(app->Render(), 120, 36));
@@ -283,10 +281,9 @@ TEST(E2E_Gate, McpToolsIncludedInApiRequestBody) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_e2e_gate_apibody_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     app->HandleSubmit("test");
 

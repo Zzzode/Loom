@@ -2081,36 +2081,3 @@ TEST(ResumeCommand, TitleExtractionHandlesArrayContent) {
     else unsetenv("HOME");
     fs::remove_all(temp_home);
 }
-
-TEST(ResumeCommand, TitleExtractionHandlesLegacyMessagesJson) {
-    // Legacy sessions store messages in messages.json (a JSON array with
-    // "text" fields) instead of messages.jsonl.  The title extractor
-    // must fall back to this format when messages.jsonl is absent.
-    const char* old_home = std::getenv("HOME");
-    const auto temp_home = fs::temp_directory_path() /
-        ("loom_resume_legacy_test_" +
-         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    fs::create_directories(temp_home / ".loom" / "sessions");
-    setenv("HOME", temp_home.string().c_str(), 1);
-
-    {
-        const auto dir = temp_home / ".loom" / "sessions" / "legacy-uuid-001";
-        fs::create_directories(dir);
-        std::ofstream(dir / "metadata.json")
-            << R"({"id":"legacy-uuid-001","title":"Session","model":"test","message_count":2})";
-        // Legacy format: JSON array with "text" field (not "content").
-        std::ofstream(dir / "messages.json")
-            << R"([{"role":"user","text":"你好世界"},)"
-            << R"({"role":"assistant","text":"你好！有什么可以帮你的？"}])";
-    }
-
-    loom::commands::ResumeCommand cmd;
-    auto listed = cmd.execute(ctx({"list"}));
-    ASSERT_TRUE(listed.has_value());
-    EXPECT_NE(listed->message.find("你好世界"), std::string::npos)
-        << listed->message;
-
-    if (old_home) setenv("HOME", old_home, 1);
-    else unsetenv("HOME");
-    fs::remove_all(temp_home);
-}

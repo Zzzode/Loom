@@ -31,7 +31,6 @@
 import std;
 import loom.commands.registry;
 import loom.tools.tool;
-import loom.session.app_storage;
 
 namespace {
 
@@ -52,10 +51,9 @@ namespace fs = std::filesystem;
         ("loom_streaming_migration_" + std::string(fixture_name) + "_" +
          std::to_string(
              std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // StreamingMigration tests verify individual row rendering (tool result
     // cards, ⎿ connectors, raw result formats) — bypass chain compression

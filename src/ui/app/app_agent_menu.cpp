@@ -19,14 +19,12 @@ module loom.ui.app.app;
 import std;
 import loom.query.query_engine;
 import loom.commands.command;
-import loom.session.app_storage;
 
 // ── Base imports (shared with app_autocomplete.cpp) ─────────────────────
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
 import loom.ui.screens.task_view_store;
-import loom.session.app_storage;
 import loom.text.parse_references;
 import loom.diagnostics.debug;
 import loom.tools.agent_runtime;
@@ -367,6 +365,7 @@ void AppAdapter::SyncState() {
     }
 
     this->ProjectRuntimeMetadataToScreenState();
+    this->ProjectTodosToScreenState();
 
     // Live teams projection (native store + pane observer). Runs on the same
     // event-driven cadence as every other SyncState projection — no separate
@@ -440,24 +439,12 @@ void AppAdapter::ConsumePendingResult() {
     streaming_markdown_.reset();
     streaming_tools_.clear();
 
-    if (static_cast<loom::utils::SessionStorage*>(storage_raw())) {
-        std::vector<loom::utils::Message> storage_msgs;
-        for (const auto& msg : static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation()) {
-            std::visit([&storage_msgs](const auto& m) {
-                using T = std::decay_t<decltype(m)>;
-                std::string text;
-                for (const auto& block : m.content) {
-                    if (const auto* tb = std::get_if<loom::core::TextBlock>(&block))
-                        text += tb->text;
-                }
-                if constexpr (std::is_same_v<T, loom::core::UserMessage>)
-                    storage_msgs.push_back(loom::utils::UserMessage{{loom::utils::TextBlock{text}}});
-                else if constexpr (std::is_same_v<T, loom::core::AssistantMessage>)
-                    storage_msgs.push_back(loom::utils::AssistantMessage{{loom::utils::TextBlock{text}}});
-            }, msg);
-        }
-        (void)static_cast<loom::utils::SessionStorage*>(storage_raw())->save_session(current_session_id_, "Session", storage_msgs);
-    }
+    // The engine persists every message incrementally to messages.jsonl
+    // (with full thinking/tool_use/tool_result blocks) via
+    // QueryEngine::append_message().  No separate save step is needed — and
+    // the old text-only save that downgraded rich messages to plain text was
+    // removed, since it made resume fall back to a degraded transcript with
+    // no chain compression or tool calls.
 
     this->TriggerStatuslineUpdate();
 }

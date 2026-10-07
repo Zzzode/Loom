@@ -18,6 +18,7 @@ import std;
 import loom.ui.app.app;
 import loom.vim.vim_mode;
 import loom.hooks.exit_handler;
+import loom.constants.paths;
 
 namespace loom::ui {
 
@@ -27,7 +28,10 @@ struct AppImpl {
     void* engine_ = nullptr;
     void* lifecycle_hooks_ = nullptr;
     void* cmd_registry_ = nullptr;
-    void* storage_ = nullptr;
+
+    // Resolved sessions directory (never empty): the override passed to the
+    // constructor, or loom::constants::paths::sessions_dir() by default.
+    std::filesystem::path sessions_dir_;
 
     // Redux-like AppState store, type-erased (factory in app_store_bridge.cpp).
     std::shared_ptr<void> app_store_;
@@ -103,16 +107,19 @@ void AppImplDeleter::operator()(AppImpl* p) const noexcept {
 void* AppAdapter::engine_raw() const noexcept { return impl_ ? impl_->engine_ : nullptr; }
 void* AppAdapter::lifecycle_hooks_raw() const noexcept { return impl_ ? impl_->lifecycle_hooks_ : nullptr; }
 void* AppAdapter::cmd_registry_raw() const noexcept { return impl_ ? impl_->cmd_registry_ : nullptr; }
-void* AppAdapter::storage_raw() const noexcept { return impl_ ? impl_->storage_ : nullptr; }
+std::filesystem::path AppAdapter::sessions_dir() const noexcept {
+    return impl_ ? impl_->sessions_dir_ : loom::constants::paths::sessions_dir();
+}
 
 // Construct the backing state. Called from the out-of-line constructor.
 void AppAdapter::construct_impl(void* engine, void* lifecycle_hooks,
-                                void* cmd_registry, void* storage) {
+                                void* cmd_registry,
+                                std::optional<std::filesystem::path> sessions_dir) {
     impl_.reset(new AppImpl());
     impl_->engine_ = engine;
     impl_->lifecycle_hooks_ = lifecycle_hooks;
     impl_->cmd_registry_ = cmd_registry;
-    impl_->storage_ = storage;
+    impl_->sessions_dir_ = sessions_dir.value_or(loom::constants::paths::sessions_dir());
     impl_->app_store_ = create_typed_app_store();
 }
 

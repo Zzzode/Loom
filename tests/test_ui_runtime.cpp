@@ -22,7 +22,6 @@ import loom.ui.messages.message_image;
 import loom.commands.registry;
 import loom.query.query_engine;
 import loom.tools.tool;
-import loom.session.app_storage;
 import loom.teams.team_helpers;
 import loom.teams.swarm.helpers;
 import loom.constants.constants;
@@ -54,13 +53,12 @@ TEST(AppRuntime, FreshWelcomeAnimationTicksWithoutInputEvents) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_welcome_animation_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     const auto initial_ticks = test_seams(app).ui_animation_tick_count_for_testing();
@@ -85,13 +83,12 @@ TEST(AppRuntime, FreshWelcomeAnimationKeepsTickingAfterStartupWindow) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_welcome_animation_long_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     std::this_thread::sleep_for(std::chrono::milliseconds(3200));
@@ -120,14 +117,13 @@ TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_app_runtime_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     bool exited = false;
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [&] {
             exited = true;
         });
@@ -177,13 +173,12 @@ TEST(AppRuntime, SlashInputShowsRegistrySuggestions) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_slash_suggestions_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("/")));
@@ -227,10 +222,9 @@ TEST(AppRuntime, SkillsDialogDismissOrderDebug) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_skills_order_dbg_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('/')));
     for (char c : std::string("skills")) {
@@ -289,13 +283,12 @@ TEST(AppRuntime, CommandResultMessagesRenderInTranscript) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_command_result_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     app->HandleCommand("/help");
@@ -331,10 +324,9 @@ TEST(AppRuntime, BangCommandRunsLocallyNotThroughLLM) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_bang_local_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // Type "!" (enters bash mode) then the command, then Enter.
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("!")));
@@ -413,13 +405,12 @@ TEST(AppRuntime, SkillsCommandRendersInlineOutputAndRejectsListSubcommand) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_skills_menu_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     app->HandleCommand("/skills");
@@ -490,13 +481,12 @@ TEST(AppRuntime, SkillsCommandInlineOutputScrollsWithTranscript) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_skills_scroll_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     app->HandleCommand("/skills");
@@ -553,13 +543,12 @@ TEST(AppRuntime, ReturnSubmitsAgentSlashSubcommandsWhenCompletionIsVisible) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_slash_subcommand_return_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     ASSERT_TRUE(app->OnEvent(ftxui::Event::Character("/agents list")));
@@ -609,13 +598,12 @@ TEST(AppRuntime, DynamicPromptSuggestionsCoverSkillsFilesAndCursorEditing) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_dynamic_suggestions_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("/")));
@@ -686,13 +674,12 @@ TEST(AppRuntime, ReturnOnSelectedSlashSuggestionOpensAgentsLocalJsx) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_slash_agents_accept_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("/")));
@@ -767,13 +754,12 @@ TEST(AppRuntime, AgentsLocalJsxArrowKeysSelectProjectAgentAndReturnActs) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_agents_nav_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character("/")));
@@ -832,13 +818,12 @@ TEST(AppRuntime, StatusLineRuntimeSettingsOverrideDiskSettings) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_statusline_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     EXPECT_TRUE(test_seams(app).status_line_enabled_for_testing());
@@ -871,23 +856,19 @@ TEST(AppRuntime, CtrlCIdleRequiresDoublePressWithinWindow) {
             ("loom_ui_interrupt_test_" +
              std::to_string(std::chrono::steady_clock::now()
                                 .time_since_epoch().count()));
-        auto storage =
-            std::make_unique<loom::utils::SessionStorage>(storage_root);
         loom::core::QueryEngine* engine_ptr = engine.get();
         loom::commands::AppCommandRegistry* commands_ptr = commands.get();
-        loom::utils::SessionStorage* storage_ptr = storage.get();
         auto app = ftxui::Make<loom::ui::AppAdapter>(
-            engine_ptr, nullptr, commands_ptr, storage_ptr,
+            engine_ptr, nullptr, commands_ptr, storage_root,
             std::move(on_exit));
         return std::tuple(std::move(app), std::move(engine),
-                          std::move(commands), std::move(storage),
-                          storage_root);
+                          std::move(commands), storage_root);
     };
 
     // ── Double press inside the window exits ──────────────────────────
     {
         bool exited = false;
-        auto [app, engine, commands, storage, storage_root] =
+        auto [app, engine, commands, storage_root] =
             make_app([&] { exited = true; });
 
         app->OnEvent(ftxui::Event::Character("typed text"));
@@ -913,7 +894,7 @@ TEST(AppRuntime, CtrlCIdleRequiresDoublePressWithinWindow) {
     // ── Expired first press re-arms instead of exiting ────────────────
     {
         bool exited = false;
-        auto [app, engine, commands, storage, storage_root] =
+        auto [app, engine, commands, storage_root] =
             make_app([&] { exited = true; });
 
         EXPECT_TRUE(app->OnEvent(ftxui::Event::Special("\x03")));
@@ -950,13 +931,12 @@ TEST(AppRuntime, StreamFallbackErrorIsRendered) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_stream_error_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
 
     app->HandleSubmit("你好");
@@ -992,14 +972,13 @@ TEST(AppRuntime, CtrlCWhileStreamingQueryCancelsWithoutExiting) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_stream_cancel_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     bool exited = false;
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [&] {
             exited = true;
         });
@@ -1059,14 +1038,13 @@ TEST(AppRuntime, EscWhileStreamingQueryInterruptsAndRestoresInput) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_esc_interrupt_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     bool exited = false;
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [&] {
             exited = true;
         });
@@ -1155,10 +1133,9 @@ TEST(AppRuntime, UpArrowRecallsPersistedHistoryAcrossSessions) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = temp_home / "storage";
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // The constructor loads persisted history into input_history.  ArrowUp
     // recalls the most recent entry — this is the "restart loom, press up"
@@ -1218,10 +1195,9 @@ TEST(AppRuntime, UpArrowNavigatesHistoryPastCommandEntries) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = temp_home / "storage";
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // ArrowUp recalls the newest entry ("last prompt").
     ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
@@ -1302,10 +1278,9 @@ TEST(AppRuntime, UpArrowHistoryPreservesDuplicateEntries) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = temp_home / "storage";
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // ArrowUp recalls the newest entry ("same prompt" from sess-3).
     ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
@@ -1373,10 +1348,9 @@ TEST(AppRuntime, UpArrowHistoryFindsProjectEntriesBeyondOtherProjects) {
 
     loom::commands::AppCommandRegistry commands;
     const auto storage_root = temp_home / "storage";
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // ArrowUp must recall the current project's newest entry, not nothing.
     ASSERT_TRUE(app->OnEvent(ftxui::Event::ArrowUp));
@@ -1410,10 +1384,9 @@ TEST(AppRuntime, TabAcceptsNextActionSuggestion) {
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
-    loom::utils::SessionStorage storage(temp_home / "storage");
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, temp_home / "storage", [] {});
 
     // Simulate the PromptSuggestionService having produced a suggestion.
     test_seams(app).set_next_action_suggestion_for_testing("explain the error above");
@@ -1442,10 +1415,9 @@ TEST(AppRuntime, TabDoesNotAcceptSlashSuggestion) {
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
-    loom::utils::SessionStorage storage(temp_home / "storage");
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, temp_home / "storage", [] {});
 
     test_seams(app).set_next_action_suggestion_for_testing("/commit");
     EXPECT_TRUE(test_seams(app).input_text_for_testing().empty());
@@ -1469,13 +1441,12 @@ TEST(AppRuntime, PermissionCallbackRendersAndResolvesUserChoices) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_permission_dialog_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
         &engine,
         nullptr,
         &commands,
-        &storage,
+        storage_root,
         [] {});
     auto permission_callback = app->get_permission_callback();
 
@@ -1671,7 +1642,6 @@ TEST(AppRuntime, CollapseBackgroundBashWiredIntoLiveTranscript) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_collapse_wire_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     // Append 3 consecutive completed background-bash notifications (CPP wire
     // format: underscored tags) directly to the engine conversation.
@@ -1689,7 +1659,7 @@ TEST(AppRuntime, CollapseBackgroundBashWiredIntoLiveTranscript) {
     engine.append_message_for_testing(make_bash_notif("\"c\""));
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
     app->SyncState();
 
     // Count how many user rows carry a task-notification.  Before the fix this
@@ -1745,10 +1715,9 @@ TEST(AppRuntime, ToolResultToAssistantTextSpacingIsOneLine) {
     const auto storage_root2 = fs::temp_directory_path() /
         ("loom_spacing_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root2);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root2, [] {});
     // Disable chain compression so the thinking block renders individually
     // (collapsed label) — this test verifies spacing around the collapsed
     // thinking row, not chain compression.
@@ -1957,10 +1926,9 @@ TEST(AppRuntime, AtHistoryShowsPersistedPrompts) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_app_hist_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // Type "@history " — should trigger history suggestions.
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('@')));
@@ -2007,10 +1975,9 @@ TEST(AppRuntime, AtHistoryWithQueryFiltersResults) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_app_hist_filter_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // Type "@history review" — should only show "review the pull request".
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('@')));
@@ -2048,10 +2015,9 @@ TEST(AppRuntime, CtrlREntersHistorySearchMode) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_app_ctrlr_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // Ctrl+R should inject "@history " into the input.
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('\x12')));
@@ -2097,10 +2063,9 @@ TEST(AppRuntime, SubmitPersistsPromptToHistory) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_app_submit_hist_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // Type a unique prompt and submit.
     const std::string unique_prompt = "unique_persist_test_prompt_xyz";
@@ -2142,10 +2107,9 @@ TEST(AppRuntime, AtAgentShowsAgentSuggestions) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_app_at_agent_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // Type "@lo" — should show agent suggestions matching "lo".
     EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('@')));
@@ -2186,9 +2150,8 @@ TEST(AppRuntime, TeammateInboxPollDeliversTasksAndFiltersControl) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ti_storage_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    auto storage = std::make_unique<loom::utils::SessionStorage>(storage_root);
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        engine.get(), nullptr, commands.get(), storage.get(), [] {});
+        engine.get(), nullptr, commands.get(), storage_root, [] {});
 
     test_seams(app).configure_teammate_for_testing("worker-a", "alpha");
 
@@ -2279,9 +2242,8 @@ TEST(LiveTeamsUi, SlashTeamsOpensOverviewModal) {
         ("loom_teams_modal_" +
          std::to_string(std::chrono::steady_clock::now()
                             .time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     namespace live = loom::ui::teams::live;
     live::LiveTeammate a;
@@ -2344,9 +2306,8 @@ TEST(LiveTeamsUi, TeammatePermissionRequestRoutesThroughToolPermission) {
         ("loom_teams_perm_storage_" +
          std::to_string(std::chrono::steady_clock::now()
                             .time_since_epoch().count()));
-    auto storage = std::make_unique<loom::utils::SessionStorage>(storage_root);
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        engine.get(), nullptr, commands.get(), storage.get(), [] {});
+        engine.get(), nullptr, commands.get(), storage_root, [] {});
 
     sh::SwarmPermissionRequestMessage request;
     request.type = "permission_request";

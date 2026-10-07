@@ -26,7 +26,6 @@ import loom.ui.messages.message_image;
 import loom.commands.registry;
 import loom.query.query_engine;
 import loom.tools.tool;
-import loom.session.app_storage;
 import loom.text.parse_references;
 import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.design_figures;
@@ -1110,7 +1109,6 @@ struct PasteTestHarness {
     std::unique_ptr<loom::core::QueryEngine> engine;
     loom::commands::AppCommandRegistry commands;
     std::filesystem::path storage_root;
-    std::unique_ptr<loom::utils::SessionStorage> storage;
     ftxui::Component app;  // actually loom::ui::AppAdapter*
 
     loom::ui::AppAdapter* adapter() {
@@ -1125,9 +1123,8 @@ struct PasteTestHarness {
         storage_root = std::filesystem::temp_directory_path() /
             ("loom_paste_test_" +
              std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-        storage = std::make_unique<loom::utils::SessionStorage>(storage_root);
         app = ftxui::Make<loom::ui::AppAdapter>(
-            engine.get(), nullptr, &commands, storage.get(), [] {});
+            engine.get(), nullptr, &commands, storage_root, [] {});
         adapter()->SyncState();
     }
 

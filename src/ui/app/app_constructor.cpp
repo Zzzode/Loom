@@ -22,7 +22,7 @@ import std;
 import loom.ui.prompt.autocomplete_sources;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
-import loom.session.app_storage;
+import loom.crypto.crypto;
 
 // ── Constructor-only imports (moved out of app_autocomplete.cpp) ────────
 import loom.hooks.cost_hook;
@@ -52,17 +52,17 @@ namespace dsys = loom::ui::dialogs::system;
 
 // ── Constructor (moved out of app_autocomplete.cpp to reduce import closure) ──
 AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
-                       void* cmd_registry, void* storage,
+                       void* cmd_registry,
+                       std::optional<std::filesystem::path> sessions_dir,
                        std::function<void()> on_exit)
     : impl_(nullptr),
       on_exit_(std::move(on_exit)),
       screen_state_(std::make_shared<repl::ReplScreenState>()) {
-    construct_impl(engine, lifecycle_hooks, cmd_registry, storage);
+    construct_impl(engine, lifecycle_hooks, cmd_registry, std::move(sessions_dir));
     construct_settings();
     auto* engine_ = static_cast<loom::core::QueryEngine*>(engine);
     auto* lifecycle_hooks_ =
         static_cast<loom::hooks::LifecycleHookRegistry*>(lifecycle_hooks);
-    auto* storage_ = static_cast<loom::utils::SessionStorage*>(storage);
 
     // ── M7: Register default dialog renderers in the registry ────
     loom::ui::dialogs::default_renderers::register_default_renderers(
@@ -73,16 +73,18 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         wire_prompt_suggestion_hook(lifecycle_hooks_, engine_, screen_state_);
     }
 
-    current_session_id_ = utils::SessionStorage::generate_session_id();
+    current_session_id_ = loom::utils::crypto::generate_uuid();
     session_start_time_ = std::chrono::steady_clock::now();
 
-    // Wire session transcript + prompt-dump storage into the engine.
+    // Wire session transcript + prompt-dump storage into the engine.  The
+    // engine appends every message to messages.jsonl under sessions_dir()
+    // (full thinking/tool_use/tool_result blocks), so resume restores the
+    // rich transcript with chain compression intact.
     if (engine_) {
-        if (storage_) {
-            engine_->set_session_storage(storage_->storage_dir());
-            auto dump_dir = storage_->storage_dir().parent_path() / "dump-prompts";
-            engine_->set_dump_prompts_dir(std::move(dump_dir));
-        }
+        engine_->set_session_id(current_session_id_);
+        engine_->set_session_storage(this->sessions_dir());
+        auto dump_dir = this->sessions_dir().parent_path() / "dump-prompts";
+        engine_->set_dump_prompts_dir(std::move(dump_dir));
     }
 
     // Register all built-in tool UI renderers in the global registry.

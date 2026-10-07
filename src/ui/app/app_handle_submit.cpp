@@ -77,48 +77,32 @@ static std::string format_session_age(std::chrono::system_clock::time_point tp) 
     return std::format("{}d ago", hours / 24);
 }
 
-/// Count messages in a session by inspecting the actual file on disk.
-/// Prefers messages.jsonl (current format); falls back to messages.json
-/// (legacy JSON-array format).  Returns 0 if neither file exists.
-static int count_session_messages(
+/// Count messages in a session by counting non-empty lines in its
+/// messages.jsonl file.  Returns 0 if the file does not exist.
+[[nodiscard]] int count_session_messages(
     const std::filesystem::path& sessions_dir,
     const std::string& session_id)
 {
-    auto dir = sessions_dir / session_id;
-    auto jsonl_path = dir / "messages.jsonl";
-    if (std::filesystem::exists(jsonl_path)) {
-        std::ifstream ifs(jsonl_path);
-        std::string line;
-        int count = 0;
-        while (std::getline(ifs, line)) {
-            if (!line.empty()) ++count;
-        }
-        return count;
+    auto jsonl_path = sessions_dir / session_id / "messages.jsonl";
+    if (!std::filesystem::exists(jsonl_path)) return 0;
+    std::ifstream ifs(jsonl_path);
+    std::string line;
+    int count = 0;
+    while (std::getline(ifs, line)) {
+        if (!line.empty()) ++count;
     }
-    auto json_path = dir / "messages.json";
-    if (std::filesystem::exists(json_path)) {
-        auto doc = loom::utils::json::parse_file(json_path);
-        if (doc) {
-            auto root = doc->root();
-            if (root.is_arr()) return static_cast<int>(root.size());
-        }
-    }
-    return 0;
+    return count;
 }
 
 /// Extract the first user message text from a session's messages.jsonl
 /// as a display title.  Handles both content formats the engine writes:
 ///   - plain string (single TextBlock):  {"role":"user","content":"hello"}
 ///   - content-block array (multi-block): {"role":"user","content":[{"type":"text","text":"hello"}]}
-/// Also falls back to the legacy messages.json format which uses a
-/// top-level "text" field instead of "content":
-///   [{"role":"user","text":"hello"}, ...]
 /// Returns "Session" if no user message with text is found.
-static std::string first_user_message_as_title(
+[[nodiscard]] std::string first_user_message_as_title(
     const std::filesystem::path& sessions_dir,
     const std::string& session_id)
 {
-    // ── Current format: messages.jsonl (one JSON object per line) ──
     auto docs = loom::session::load_messages(sessions_dir, session_id);
     for (std::size_t i = 0; i < docs.size(); ++i) {
         auto root = docs[i].root();
@@ -153,33 +137,6 @@ static std::string first_user_message_as_title(
             for (auto& c : text) if (c == '\n') c = ' ';
             if (text.size() > 60) text = text.substr(0, 60) + "…";
             return text;
-        }
-    }
-
-    // ── Legacy format: messages.json (JSON array with "text" field) ──
-    auto json_path = sessions_dir / session_id / "messages.json";
-    if (std::filesystem::exists(json_path)) {
-        auto doc = loom::utils::json::parse_file(json_path);
-        if (doc) {
-            auto root = doc->root();
-            if (root.is_arr()) {
-                for (std::size_t i = 0; i < root.size(); ++i) {
-                    auto msg = root.at(i);
-                    if (!msg.is_obj()) continue;
-                    auto role_val = msg.get("role");
-                    if (!role_val.is_str() ||
-                        role_val.as_str() != std::string_view("user"))
-                        continue;
-                    auto text_val = msg.get("text");
-                    if (!text_val.is_str()) continue;
-                    auto text = std::string(text_val.as_str());
-                    if (!text.empty()) {
-                        for (auto& c : text) if (c == '\n') c = ' ';
-                        if (text.size() > 60) text = text.substr(0, 60) + "…";
-                        return text;
-                    }
-                }
-            }
         }
     }
 
@@ -630,9 +587,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                     auto* engine = static_cast<loom::core::QueryEngine*>(engine_raw());
                     auto sessions_dir = engine && engine->sessions_dir()
                         ? *engine->sessions_dir()
-                        : (std::filesystem::path{
-                               std::getenv("HOME") ? std::getenv("HOME") : "/tmp"}
-                           / ".loom" / "sessions");
+                        : this->sessions_dir();
 
                     if (*result->metadata == "UI:resume") {
                         // ── Open the interactive session picker dialog ──
@@ -680,50 +635,13 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                         std::string("UI:resume:").size());
                     std::vector<loom::core::Message> messages;
 
-                    // Try messages.jsonl first (current format).
+                    // Load messages.jsonl (the current format).
                     auto docs = loom::session::load_messages(sessions_dir, session_id);
                     messages.reserve(docs.size());
                     for (std::size_t i = 0; i < docs.size(); ++i) {
                         auto parsed = loom::query::parse_session_message_value(
                             docs[i].root(), i);
                         if (parsed) messages.push_back(std::move(*parsed));
-                    }
-
-                    // Fall back to legacy messages.json (JSON array with
-                    // "text" field instead of "content").
-                    if (messages.empty()) {
-                        auto json_path = sessions_dir / session_id / "messages.json";
-                        if (std::filesystem::exists(json_path)) {
-                            auto doc = loom::utils::json::parse_file(json_path);
-                            if (doc) {
-                                auto root = doc->root();
-                                if (root.is_arr()) {
-                                    for (std::size_t i = 0; i < root.size(); ++i) {
-                                        auto msg = root.at(i);
-                                        if (!msg.is_obj()) continue;
-                                        auto role_val = msg.get("role");
-                                        if (!role_val.is_str()) continue;
-                                        auto text_val = msg.get("text");
-                                        if (!text_val.is_str()) continue;
-                                        auto text = std::string(text_val.as_str());
-                                        auto role = std::string(role_val.as_str());
-                                        if (role == "assistant") {
-                                            loom::core::AssistantMessage am{};
-                                            am.id.value = "restored_" + std::to_string(i);
-                                            am.timestamp = std::chrono::system_clock::now();
-                                            am.content.push_back(loom::core::TextBlock{text});
-                                            messages.push_back(loom::core::Message{std::move(am)});
-                                        } else if (role == "user" || role == "system") {
-                                            loom::core::UserMessage um{};
-                                            um.id.value = "restored_" + std::to_string(i);
-                                            um.timestamp = std::chrono::system_clock::now();
-                                            um.content.push_back(loom::core::TextBlock{text});
-                                            messages.push_back(loom::core::Message{std::move(um)});
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
 
                     engine->restore_conversation(std::move(messages));

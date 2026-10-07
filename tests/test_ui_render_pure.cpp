@@ -22,7 +22,6 @@ import loom.ui.screens.messages_store;
 import loom.commands.registry;
 import loom.query.query_engine;
 import loom.tools.tool;
-import loom.session.app_storage;
 import loom.ui.foundation.design_figures;
 import loom.ui.foundation.theme_provider;
 import loom.ui.widgets.all_components;
@@ -119,9 +118,8 @@ TEST(ReplScreen, ShiftReturnInsertsNewlineForBothTerminalEncodings) {
              std::to_string(std::chrono::steady_clock::now()
                                 .time_since_epoch().count()) +
              (seq[3] == '1' ? "_csiu" : "_kitty"));
-        loom::utils::SessionStorage storage(storage_root);
         auto app = ftxui::Make<loom::ui::AppAdapter>(
-            &engine, nullptr, &commands, &storage, [] {});
+            &engine, nullptr, &commands, storage_root, [] {});
 
         app->OnEvent(ftxui::Event::Character('a'));
         app->OnEvent(ftxui::Event::Special(seq));

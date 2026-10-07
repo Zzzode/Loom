@@ -23,7 +23,6 @@
 import std;
 import loom.commands.registry;
 import loom.tools.tool;
-import loom.session.app_storage;
 
 namespace {
 
@@ -44,10 +43,9 @@ namespace fs = std::filesystem;
         ("loom_streaming_replay_" + std::string(fixture_name) + "_" +
          std::to_string(
              std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     auto steps = loom::testing::load_fixture(fixture_name);
     loom::testing::InvariantChecker checker(steps);
@@ -367,10 +365,9 @@ TEST(StreamingReplay, ThinkingGraceExpiry) {
         ("loom_grace_expiry_" +
          std::to_string(
              std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // Disable chain compression so the grace-period behavior (expanded →
     // collapsed thinking row) is tested without chain compression hiding
@@ -461,10 +458,9 @@ TEST(StreamingReplay, ThinkingCollapseGrace) {
         ("loom_collapse_grace_" +
          std::to_string(
              std::chrono::steady_clock::now().time_since_epoch().count()));
-    loom::utils::SessionStorage storage(storage_root);
 
     auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, &storage, [] {});
+        &engine, nullptr, &commands, storage_root, [] {});
 
     // Disable chain compression so the grace-period behavior (expanded →
     // collapsed thinking row) is tested without chain compression hiding

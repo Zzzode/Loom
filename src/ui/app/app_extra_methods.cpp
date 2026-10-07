@@ -27,7 +27,6 @@ module loom.ui.app.app;
 import std;
 
 import loom.query.query_engine;
-import loom.session.app_storage;
 
 // ── Imports needed by the 5 methods (not available via the interface) ────
 import loom.process.bash.bash_execution;
@@ -37,7 +36,9 @@ import loom.scm.git.git;
 import loom.text.parse_references;
 import loom.ui.messages.collapse_background_bash;
 import loom.ui.features.agents.agent_shared_widgets;
+import loom.ui.features.todos.todo_panel;
 import loom.tools.agent_display;
+import loom.tools.todo_write;
 
 // ── Imports available via the interface but needed for namespace aliases ─
 import loom.tools.agent_runtime;
@@ -217,6 +218,48 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
             last_branch_cwd_.empty() ? "." : last_branch_cwd_);
     }
     screen_state_->chrome_store.git_branch = cached_git_branch_;
+}
+
+// ── ProjectTodosToScreenState ───────────────────────────────────────────
+// Project the AI-managed todo list (TodoWriteTool singleton) into the
+// screen-state TodoStore. The tool owns its own mutex; get_sorted_items()
+// returns a pre-sorted copy (in_progress > pending > completed, then by
+// priority), so the store needs no re-sort. Max 10 items — the per-call copy
+// is trivial. Called from SyncState and Render, matching the
+// ProjectRuntimeMetadataToScreenState wiring.
+void AppAdapter::ProjectTodosToScreenState() {
+    namespace tw = loom::tools;
+    using Status = todos::TodoDisplayItem::Status;
+    using Priority = todos::TodoDisplayItem::Priority;
+
+    auto map_status = [](tw::TodoStatus s) -> Status {
+        switch (s) {
+            case tw::TodoStatus::InProgress: return Status::InProgress;
+            case tw::TodoStatus::Completed:  return Status::Completed;
+            case tw::TodoStatus::Pending:    return Status::Pending;
+        }
+        return Status::Pending;
+    };
+    auto map_priority = [](tw::Priority p) -> Priority {
+        switch (p) {
+            case tw::Priority::High:   return Priority::High;
+            case tw::Priority::Low:    return Priority::Low;
+            case tw::Priority::Medium: return Priority::Medium;
+        }
+        return Priority::Medium;
+    };
+
+    auto items = tw::todo_write_store().get_sorted_items();
+    auto& out = screen_state_->todo_store.items;
+    out.clear();
+    out.reserve(items.size());
+    for (const auto& it : items) {
+        out.push_back(todos::TodoDisplayItem{
+            .content = it.content,
+            .status = map_status(it.status),
+            .priority = map_priority(it.priority),
+        });
+    }
 }
 
 // ── ApplyMessageCollapsePipeline (moved out of app.cppm) ────────────────

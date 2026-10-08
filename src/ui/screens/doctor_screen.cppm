@@ -35,26 +35,11 @@ export module loom.ui.screens.doctor_screen;
 import std;
 
 import loom.serdes.json;
-
-// Design-system tokens (shared with other screens)
-// Palette matches the design-system Pane tokens + Doctor severity colors.
-namespace loom::ui::doctor_screen::ds {
-using namespace ftxui;
-const Color BG_DARK       = Color::Grey23;
-const Color SURFACE       = Color::Grey27;
-const Color BORDER_OK     = Color::Green;
-const Color BORDER_WARN   = Color::Yellow;
-const Color BORDER_ERR    = Color::Red;
-const Color ACCENT        = Color::Cyan;
-const Color TEXT_MUTED    = Color::Grey70;
-const Color SPARQL_OK     = Color::Green;
-const Color SPARQL_WARN   = Color::Yellow;
-const Color SPARQL_ERR    = Color::Red;
-} // namespace loom::ui::doctor_screen::ds
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
 
 export namespace loom::ui::doctor_screen {
 using namespace ftxui;
-using namespace ds;
 
 // ============================================================
 // Enums
@@ -801,13 +786,14 @@ RunAllChecks(const DoctorContext& ctx) {
 
 // --- Splash / Header -----------------------------------------------------
 [[nodiscard]] inline Element RenderSplashHeader(const VersionInfo& v, bool started) {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements lines = {
         hbox({
             text(" 🩺 ") | bold | color(Color::GreenLight),
             text("Doctor  —  ") | bold | color(Color::White),
             text("Loom installation self-check") | color(Color::Cyan),
             filler(),
-            text(started ? "  [running]" : "  [idle]") | dim | color(started ? Color::Cyan : TEXT_MUTED),
+            text(started ? "  [running]" : "  [idle]") | dim | color(started ? Color::Cyan : palette.muted),
         }),
         separator(),
         hbox({ text("  Version:      ") | dim, text(v.current_version)        | color(Color::Cyan) }),
@@ -818,7 +804,7 @@ RunAllChecks(const DoctorContext& ctx) {
             ? hbox({ text("  Pkg manager:  ") | dim, text(*v.package_manager)     | color(Color::Yellow) })
             : text(""),
         v.config_install_method
-            ? hbox({ text("  Installer:    ") | dim, text(*v.config_install_method) | color(TEXT_MUTED) })
+            ? hbox({ text("  Installer:    ") | dim, text(*v.config_install_method) | color(palette.muted) })
             : text(""),
     };
     return vbox(std::move(lines));
@@ -897,6 +883,7 @@ RunAllChecks(const DoctorContext& ctx) {
     const DoctorDataModel& model,
     const std::array<bool, kCheckCount>& expanded)
 {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements lines;
     lines.push_back(RenderSplashHeader(model.version, false));
     lines.push_back(separator());
@@ -926,7 +913,7 @@ RunAllChecks(const DoctorContext& ctx) {
         const bool ex = expanded[i];
         lines.push_back(hbox({
             text(" "),
-            text(ex ? "▼ " : "▶ ") | color(TEXT_MUTED),
+            text(ex ? "▼ " : "▶ ") | color(palette.muted),
             text(glyph) | color(col), text(" "),
             text(def.name) | bold | color(Color::White),
             filler(),
@@ -1009,6 +996,7 @@ struct SummaryUIState {
     const SummaryUIState& ui,
     int focused_button)   // 0 = Fix all, 1 = Rerun, 2 = Back to REPL
 {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     auto s = ComputeScore(model.results);
 
     Elements lines;
@@ -1031,13 +1019,13 @@ struct SummaryUIState {
     lines.push_back(hbox({
         text("  "),
         text(std::format("{}✓ ", s.ok))  | bold | color(Color::Green),
-        text("passed  ")                 | color(TEXT_MUTED),
+        text("passed  ")                 | color(palette.muted),
         text(std::format("{}ℹ ", s.info)) | bold | color(Color::Blue),
-        text("info  ")                   | color(TEXT_MUTED),
+        text("info  ")                   | color(palette.muted),
         text(std::format("{}⚠ ", s.warn)) | bold | color(Color::Yellow),
-        text("warnings  ")               | color(TEXT_MUTED),
+        text("warnings  ")               | color(palette.muted),
         text(std::format("{}✗ ", s.err))  | bold | color(Color::Red),
-        text("failed")                   | color(TEXT_MUTED),
+        text("failed")                   | color(palette.muted),
     }));
 
     if (model.locks.enabled) {
@@ -1061,7 +1049,7 @@ struct SummaryUIState {
         }));
         for (std::size_t i = 0; i < ui.fix_log_lines.size(); ++i) {
             const bool current = i + 1 == ui.fix_step;
-            const Color c = i < ui.fix_step ? Color::Green : (current ? Color::Cyan : TEXT_MUTED);
+            const Color c = i < ui.fix_step ? Color::Green : (current ? Color::Cyan : palette.muted);
             std::string prefix = i < ui.fix_step ? "  ✓ " : (current ? "  ➜ " : "    ");
             lines.push_back(hbox({ text(prefix) | color(c), text(ui.fix_log_lines[i]) | color(c) }));
         }
@@ -1080,9 +1068,9 @@ struct SummaryUIState {
     auto btn = [&](int idx, std::string_view label, Color col) -> Element {
         const bool focus = focused_button == idx;
         return hbox({
-            text(focus ? "< " : "[ ") | ftxui::color(focus ? col : TEXT_MUTED),
-            text(std::string(label)) | (focus ? bold : ftxui::color(col)) | ftxui::color(focus ? col : TEXT_MUTED),
-            text(focus ? " >" : " ]") | ftxui::color(focus ? col : TEXT_MUTED),
+            text(focus ? "< " : "[ ") | ftxui::color(focus ? col : palette.muted),
+            text(std::string(label)) | (focus ? bold : ftxui::color(col)) | ftxui::color(focus ? col : palette.muted),
+            text(focus ? " >" : " ]") | ftxui::color(focus ? col : palette.muted),
         });
     };
 

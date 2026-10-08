@@ -943,9 +943,6 @@ struct NotificationData {
     NotificationQueue queue;
 };
 
-/// IDE status indicator color — rgb(71,130,200).
-const Color kIdeColor = Color::RGB(71, 130, 200);
-
 /// Render the IdeStatusIndicator.
 /// Shows "⧉ In <basename>" or "⧉ N lines selected" when IDE is connected
 /// and has a selection.  Returns empty element when nothing to show.
@@ -959,14 +956,16 @@ const Color kIdeColor = Color::RGB(71, 130, 200);
     const bool has_text_sel = ide.selected_lines.has_value() && *ide.selected_lines > 0;
 
     if (!has_file && !has_text_sel) return text("");
+    const auto ide_color = loom::ui::design::theme::current_theme().color_for(
+        loom::ui::design::tokens::Role::Ide);
 
     if (has_text_sel) {
         const int n = *ide.selected_lines;
         const std::string unit = (n == 1) ? "line" : "lines";
         // "{lineCount} {unit} selected" — color="ide"
         return hbox({
-            text("\xE2\xA7\x89 ") | color(kIdeColor),   // ⧉
-            text(std::to_string(n) + " " + unit + " selected") | color(kIdeColor),
+            text("\xE2\xA7\x89 ") | color(ide_color),   // ⧉
+            text(std::to_string(n) + " " + unit + " selected") | color(ide_color),
         });
     }
 
@@ -978,8 +977,8 @@ const Color kIdeColor = Color::RGB(71, 130, 200);
             ? path.substr(pos + 1) : path;
         // "⧉ In {basename}" — color="ide"
         return hbox({
-            text("\xE2\xA7\x89 In ") | color(kIdeColor),   // ⧉ In
-            text(basename) | color(kIdeColor),
+            text("\xE2\xA7\x89 In ") | color(ide_color),   // ⧉ In
+            text(basename) | color(ide_color),
         });
     }
 
@@ -1175,7 +1174,7 @@ namespace detail {
                 if (item.color == "error")        c = Color::Red;
                 else if (item.color == "warning") c = Color::Yellow;
                 else if (item.color == "success") c = Color::Green;
-                else if (item.color == "info")    c = kIdeColor;
+                else if (item.color == "info")    c = loom::ui::design::theme::current_theme().color_for(loom::ui::design::tokens::Role::Ide);
                 return hbox({ text(item.text) | color(c) })
                      | size(HEIGHT, EQUAL, 1);
             }

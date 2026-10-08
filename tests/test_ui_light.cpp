@@ -25,6 +25,7 @@ import loom.ui.foundation.declared_cursor;
 import loom.ui.chrome.panels;
 import loom.ui.visual.markdown;
 import loom.ui.prompt.prompt_input_footer;
+import loom.ui.prompt.combined_highlights;
 import loom.ui.prompt.placeholder_cascade;
 import loom.ui.foundation.design_figures;
 import loom.constants.constants;
@@ -1891,4 +1892,41 @@ TEST(BashModePrefix, ModeResetAfterSubmit) {
     PromptInputMode mode_after_submit = PromptInputMode::Normal;
     EXPECT_EQ(mode_after_submit, PromptInputMode::Normal);
     EXPECT_NE(mode_after_submit, PromptInputMode::Bash);
+}
+
+TEST(CombinedHighlights, RainbowTracksCurrentTheme) {
+    namespace theme = loom::ui::design::theme;
+    const auto original = theme::current_theme();
+    for (const auto variant : {theme::ThemeVariant::Dark,
+                               theme::ThemeVariant::Light,
+                               theme::ThemeVariant::Monochrome}) {
+        const auto* palette = theme::palette_for_variant(variant);
+        theme::set_theme(theme::Theme{.variant = variant, .palette = palette});
+        for (std::size_t i = 0; i < 14; ++i) {
+            EXPECT_EQ(loom::ui::prompt::get_rainbow_color(i),
+                      palette->rainbow[i % palette->rainbow.size()]);
+            EXPECT_EQ(loom::ui::prompt::get_rainbow_color(i, true),
+                      palette->rainbow_shimmer_stops[i % palette->rainbow_shimmer_stops.size()]);
+        }
+    }
+    theme::set_theme(original);
+}
+
+TEST(PromptInputFooter, IdeIndicatorTracksCurrentTheme) {
+    namespace theme = loom::ui::design::theme;
+    const auto original = theme::current_theme();
+    loom::ui::prompt::footer::IdeSelectionInfo ide;
+    ide.connected = true;
+    ide.selected_lines = 3;
+    for (const auto variant : {theme::ThemeVariant::Dark,
+                               theme::ThemeVariant::Light,
+                               theme::ThemeVariant::Monochrome}) {
+        const auto* palette = theme::palette_for_variant(variant);
+        theme::set_theme(theme::Theme{.variant = variant, .palette = palette});
+        auto screen = ftxui::Screen::Create(
+            ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
+        ftxui::Render(screen, loom::ui::prompt::footer::RenderIdeStatusIndicator(ide));
+        EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, palette->ide);
+    }
+    theme::set_theme(original);
 }

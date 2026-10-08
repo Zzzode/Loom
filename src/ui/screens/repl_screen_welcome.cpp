@@ -18,6 +18,7 @@ import loom.ui.screens.task_view_store;
 import loom.ui.screens.chrome_store;
 import loom.constants.spinner_verbs;
 import loom.ui.foundation.logo;
+import loom.ui.foundation.theme_provider;
 
 namespace loom::ui::repl_screen {
 using namespace ftxui;
@@ -25,14 +26,15 @@ using namespace ftxui;
 // UI1: status bar — delegates to loom.ui.components.status_line.
 // For now we provide a semantic assembler that status_line will style.
 [[nodiscard]] Element RenderStatusBar(const StatusBarData& d) {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements L = { text(" ") };
-    L.push_back(text(d.model_name) | bold | color(Color::Cyan));
-    if (d.is_fast_mode)  L.push_back(text(" fast") | color(Color::Yellow) | dim);
-    if (d.is_auto_mode)  L.push_back(text(" [auto]") | color(Color::Magenta));
+    L.push_back(text(d.model_name) | bold | color(palette.info));
+    if (d.is_fast_mode)  L.push_back(text(" fast") | color(palette.fast_mode) | dim);
+    if (d.is_auto_mode)  L.push_back(text(" [auto]") | color(palette.auto_accept));
     if (d.agent_name)   { L.push_back(text(" @") | dim);
-        L.push_back(text(*d.agent_name) | color(Color::Blue)); }
+        L.push_back(text(*d.agent_name) | color(palette.info)); }
     if (d.effort_level) L.push_back(text(" [" + *d.effort_level + "]") | dim);
-    if (d.is_brief_mode)L.push_back(text(" [brief]") | dim | color(Color::GrayLight));
+    if (d.is_brief_mode)L.push_back(text(" [brief]") | dim | color(palette.brief_label));
     Elements R;
     if (d.context_token_count > 0) {
         R.push_back(text(std::format("ctx:{}", d.context_token_count)) | dim);
@@ -40,17 +42,18 @@ using namespace ftxui;
     if (d.input_tokens || d.output_tokens) R.push_back(
         text(std::format("{}v {}^", d.input_tokens, d.output_tokens)) | dim);
     if (d.cost_usd) { R.push_back(text(" ") | dim); R.push_back(
-        text(std::format("${:.4f}", *d.cost_usd)) | dim | color(Color::Green)); }
+        text(std::format("${:.4f}", *d.cost_usd)) | dim | color(palette.success)); }
     if (d.swarm_session_count > 0) {
         R.push_back(text(" | ") | dim);
         R.push_back(text(std::format("{} swarm", d.swarm_session_count))
-                        | dim | color(Color::Magenta)); }
+                        | dim | color(palette.auto_accept)); }
     if (d.session_name) { R.push_back(text(" | ") | dim);
         R.push_back(text(*d.session_name) | dim); }
     if (d.bridge_connected) {
         R.push_back(text(" | ") | dim);
-        R.push_back(text("<-> bridge") | color(Color::Cyan) | dim); }
+        R.push_back(text("<-> bridge") | color(palette.info) | dim); }
     R.push_back(text(" "));
+    // TODO(token): status_bar_background (RGB 20, 20, 22).
     return hbox({ hbox(L), filler(), hbox(R) })
          | bgcolor(Color::RGB(20, 20, 22));
 }
@@ -64,7 +67,8 @@ using namespace ftxui;
     int frame) {
     if (m == SpinnerMode::Hidden) return text("");
     // Single theme token regardless of mode — no per-mode color switch.
-    const Color kLoomGold = Color::RGB(217, 154, 56);  // ~loom token
+    // TODO(token): spinner_gold (RGB 217, 154, 56).
+    const Color kLoomGold = Color::RGB(217, 154, 56);
 
     // Pick a random playful verb once "per mount".  We don't track mount
     // state here, so hash the mode + pid and sample the verbs list.

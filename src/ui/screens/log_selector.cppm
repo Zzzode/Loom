@@ -49,6 +49,7 @@ import std;
 import loom.ui.dialogs.trust_dialog;
 import loom.ui.dialogs.trust_utils;
 import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
 
 export namespace loom::ui::screens::log_selector {
 
@@ -358,13 +359,6 @@ inline ftxui::Decorator padding(int horizontal, int vertical) {
 //    log_selector remains a self-contained P0 module.
 // =========================================================================
 namespace ui19_style {
-    const Color kGreen  = Color::Green;
-    const Color kBlue   = Color::Blue;
-    const Color kCyan   = Color::Cyan;
-    const Color kYellow = Color::Yellow;
-    const Color kRed    = Color::Red;
-    const Color kDim    = Color::GrayLight;
-    const Color kFg     = Color::White;
 
     /// Identical Element layout to resume_screen::RenderSessionCard.
     /// Uses SessionLogEntry instead of SessionMetaRow — fields are 1:1.
@@ -372,61 +366,62 @@ namespace ui19_style {
         const SessionLogEntry& r,
         bool selected, bool hovered, bool pinned)
     {
+        const auto& palette = *loom::ui::design::theme::current_theme().palette;
         Elements left_col;
         const std::string title = truncate(r.title, 45);
         left_col.push_back(hbox({
             text(std::string(pinned ? "📌" : "📝") + " ") | dim,
-            text(title) | (selected ? (bold | color(kGreen))
-                                    : (bold | color(kFg))),
+            text(title) | (selected ? (bold | color(palette.success))
+                                    : (bold | color(palette.text))),
         }));
         left_col.push_back(hbox({
             text("    ") | dim,
-            text(truncate(r.preview_summary, 60)) | dim | color(kDim),
+            text(truncate(r.preview_summary, 60)) | dim | color(palette.muted),
         }));
         const std::string model = r.model ? *r.model : std::string{"(model)"};
         left_col.push_back(hbox({
             text("    ") | dim,
             text("🧠 ") | dim,
-            text(truncate(model, 28)) | dim | color(kCyan),
+            text(truncate(model, 28)) | dim | color(palette.info),
             text("  ") | dim,
             text("⏱ ") | dim,
-            text(format_relative(r.updated)) | dim | color(kDim),
+            text(format_relative(r.updated)) | dim | color(palette.muted),
         }));
 
         Elements right_col;
         right_col.push_back(hbox({
-            text(format_absolute(r.updated)) | dim | color(kDim),
+            text(format_absolute(r.updated)) | dim | color(palette.muted),
             text("  ") | dim,
-            text(std::to_string(r.msg_count)) | bold | color(kCyan),
-            text(" msg") | dim | color(kDim),
+            text(std::to_string(r.msg_count)) | bold | color(palette.info),
+            text(" msg") | dim | color(palette.muted),
         }));
         {
             Elements row;
             if (r.cost_usd > 0) {
                 row.push_back(text(std::format("${:.2f}", r.cost_usd))
-                    | color(kGreen) | dim);
+                    | color(palette.success) | dim);
                 row.push_back(text("  ") | dim);
             }
-            row.push_back(text(std::to_string(r.turns)) | dim | color(kDim));
-            row.push_back(text(" turns") | dim | color(kDim));
+            row.push_back(text(std::to_string(r.turns)) | dim | color(palette.muted));
+            row.push_back(text(" turns") | dim | color(palette.muted));
             right_col.push_back(hbox(std::move(row)));
         }
         if (r.project) {
             right_col.push_back(hbox({
                 text("🏷 ") | dim,
-                text(truncate(*r.project, 20)) | dim | color(kYellow),
+                text(truncate(*r.project, 20)) | dim | color(palette.warning),
             }));
         }
         if (hovered) {
             right_col.push_back(text(""));
             right_col.push_back(hbox({
-                text("[a]rchive  ") | dim | color(kYellow),
-                text("[d]el  ") | dim | color(kRed),
-                text("[p]in  ") | dim | color(kCyan),
+                text("[a]rchive  ") | dim | color(palette.warning),
+                text("[d]el  ") | dim | color(palette.danger),
+                text("[p]in  ") | dim | color(palette.info),
             }));
         } else {
             right_col.push_back(hbox({ text("") }));
-            right_col.push_back(hbox({ text("···") | dim | color(kDim) }));
+            right_col.push_back(hbox({ text("···") | dim | color(palette.muted) }));
         }
 
         Element card = hbox({
@@ -437,14 +432,14 @@ namespace ui19_style {
 
         if (selected) {
             card = card | bgcolor(Color::RGB(25, 30, 45))
-                        | borderStyled(kGreen);
+                        | borderStyled(palette.success);
         } else {
             card = card | borderLight;
         }
 
         const std::string chev = selected ? " ❯ " : "   ";
         return hbox({
-            text(chev) | color(selected ? kGreen : Color::Default),
+            text(chev) | color(selected ? palette.success : Color::Default),
             card | flex,
         });
     }

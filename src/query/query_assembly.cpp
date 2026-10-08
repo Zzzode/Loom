@@ -49,6 +49,108 @@ namespace fs = std::filesystem;
     return check;
 }
 
+// ── Content-block parsing helpers (session resume) ─────────────────────
+// The JSONL format (written by QueryEngine::append_message_to_json) stores
+// content as either a plain string (single text block) or an array of
+// typed block objects: text / thinking / tool_use / tool_result / image /
+// document.  The resume parser must round-trip all of them — the original
+// implementation only read content-as-string and silently dropped every
+// multi-block message (thinking + tool_use chains vanished on resume).
+
+/// Parse one content-block JSON object into a ContentBlock.
+/// Returns nullopt for unknown types (skipped, not fatal).
+[[nodiscard]] std::optional<loom::core::ContentBlock> parse_content_block(
+    loom::utils::json::JsonVal block)
+{
+    if (!block.is_obj()) return std::nullopt;
+    auto type_val = block.get("type");
+    if (!type_val.is_str()) return std::nullopt;
+    const auto type = std::string(type_val.as_str());
+
+    if (type == "text") {
+        auto tv = block.get("text");
+        if (!tv.is_str()) return std::nullopt;
+        return loom::core::TextBlock{std::string(tv.as_str())};
+    }
+    if (type == "thinking") {
+        auto tv = block.get("thinking");
+        if (!tv.is_str()) return std::nullopt;
+        auto sv = block.get("signature");
+        return loom::core::ThinkingBlock{
+            .thinking  = std::string(tv.as_str()),
+            .signature = sv.is_str() ? std::string(sv.as_str()) : ""};
+    }
+    if (type == "tool_use") {
+        auto id_val   = block.get("id");
+        auto name_val = block.get("name");
+        if (!id_val.is_str() || !name_val.is_str()) return std::nullopt;
+        // input is a JSON object; re-serialize to the input_json string.
+        std::string input_json;
+        if (auto iv = block.get("input"); iv.valid()) {
+            input_json = iv.to_string();
+        }
+        return loom::core::ToolUseBlock{
+            .id         = loom::core::ToolUseId{std::string(id_val.as_str())},
+            .name       = std::string(name_val.as_str()),
+            .input_json = std::move(input_json)};
+    }
+    if (type == "image" || type == "document") {
+        auto src = block.get("source");
+        if (!src.is_obj()) return std::nullopt;
+        auto mv = src.get("media_type");
+        auto dv = src.get("data");
+        if (!mv.is_str() || !dv.is_str()) return std::nullopt;
+        if (type == "image") {
+            loom::core::ImageBlock img;
+            img.media_type = std::string(mv.as_str());
+            img.data       = std::string(dv.as_str());
+            return img;
+        }
+        return loom::core::DocumentBlock{
+            .media_type = std::string(mv.as_str()),
+            .data       = std::string(dv.as_str())};
+    }
+    return std::nullopt;  // unknown block type — skip
+}
+
+/// Parse the `content` field of a tool_result object (string or array of
+/// text/image items) into ContentBlocks.
+[[nodiscard]] std::vector<loom::core::ContentBlock> parse_tool_result_content(
+    loom::utils::json::JsonVal cv)
+{
+    std::vector<loom::core::ContentBlock> blocks;
+    if (cv.is_str()) {
+        blocks.push_back(loom::core::TextBlock{std::string(cv.as_str())});
+        return blocks;
+    }
+    if (!cv.is_arr()) return blocks;
+    for (std::size_t i = 0; i < cv.size(); ++i) {
+        auto item = cv.at(i);
+        if (!item.is_obj()) continue;
+        auto tv = item.get("type");
+        if (!tv.is_str()) continue;
+        const auto t = std::string(tv.as_str());
+        if (t == "text") {
+            auto txt = item.get("text");
+            if (txt.is_str())
+                blocks.push_back(loom::core::TextBlock{std::string(txt.as_str())});
+        } else if (t == "image") {
+            auto src = item.get("source");
+            if (src.is_obj()) {
+                auto mv = src.get("media_type");
+                auto dv = src.get("data");
+                if (mv.is_str() && dv.is_str()) {
+                    loom::core::ImageBlock img;
+                    img.media_type = std::string(mv.as_str());
+                    img.data       = std::string(dv.as_str());
+                    blocks.push_back(std::move(img));
+                }
+            }
+        }
+    }
+    return blocks;
+}
+
 } // namespace
 
 // Rank-10 seed-line parser. The server's prior_message_lines are the
@@ -64,6 +166,11 @@ namespace fs = std::filesystem;
 // can parse session messages without a loom.server import. Defined here in
 // namespace loom::query (NOT the anonymous namespace above) so the exported
 // declaration links.
+//
+// content format: a plain string (single text block) OR an array of typed
+// block objects (text / thinking / tool_use / tool_result / image /
+// document).  ToolResultMessage is serialized as role="user" with a
+// tool_result object as the first array element.
 [[nodiscard]] std::optional<loom::core::Message> parse_session_message_value(
     loom::utils::json::JsonVal root,
     std::size_t index
@@ -71,10 +178,9 @@ namespace fs = std::filesystem;
     if (!root.valid() || !root.is_obj()) return std::nullopt;
     auto role_val = root.get("role");
     auto content_val = root.get("content");
-    if (!role_val.is_str() || !content_val.is_str()) return std::nullopt;
+    if (!role_val.is_str() || !content_val.valid()) return std::nullopt;
 
     const auto role = std::string(role_val.as_str());
-    const auto content = std::string(content_val.as_str());
 
     std::string id;
     auto id_val = root.get("id");
@@ -85,21 +191,84 @@ namespace fs = std::filesystem;
     }
     const auto timestamp = std::chrono::system_clock::now();
 
+    // ── content as string: single text block ──
+    if (content_val.is_str()) {
+        const auto content = std::string(content_val.as_str());
+        if (role == "assistant") {
+            loom::core::AssistantMessage msg{};
+            msg.id.value = id;
+            msg.timestamp = timestamp;
+            msg.content.push_back(loom::core::TextBlock{content});
+            auto model = root.get("model");
+            if (model.valid() && model.is_str())
+                msg.model = std::string(model.as_str());
+            return loom::core::Message{std::move(msg)};
+        }
+        if (role == "user" || role == "system") {
+            loom::core::UserMessage msg{};
+            msg.id.value = id;
+            msg.timestamp = timestamp;
+            msg.content.push_back(loom::core::TextBlock{content});
+            return loom::core::Message{std::move(msg)};
+        }
+        return std::nullopt;
+    }
+
+    // ── content as array: full content blocks ──
+    if (!content_val.is_arr() || content_val.size() == 0) return std::nullopt;
+
+    // ToolResultMessage is serialized as role="user" with a tool_result
+    // object as the first element of the content array.
+    if (role == "user") {
+        auto first = content_val.at(0);
+        if (first.is_obj()) {
+            auto ftype = first.get("type");
+            if (ftype.is_str() &&
+                std::string(ftype.as_str()) == "tool_result")
+            {
+                loom::core::ToolResultMessage trm{};
+                trm.id.value = id;
+                trm.timestamp = timestamp;
+                if (auto tv = first.get("tool_use_id"); tv.is_str())
+                    trm.tool_use_id =
+                        loom::core::ToolUseId{std::string(tv.as_str())};
+                if (auto ev = first.get("is_error"); ev.is_bool())
+                    trm.is_error = ev.as_bool();
+                if (auto cv = first.get("content"); cv.valid())
+                    trm.content = parse_tool_result_content(cv);
+                // Document blocks may follow the tool_result object.
+                for (std::size_t i = 1; i < content_val.size(); ++i) {
+                    if (auto blk = parse_content_block(content_val.at(i)))
+                        trm.content.push_back(std::move(*blk));
+                }
+                return loom::core::Message{std::move(trm)};
+            }
+        }
+    }
+
+    // Regular content blocks (thinking, tool_use, text, image, document).
+    std::vector<loom::core::ContentBlock> blocks;
+    for (std::size_t i = 0; i < content_val.size(); ++i) {
+        if (auto blk = parse_content_block(content_val.at(i)))
+            blocks.push_back(std::move(*blk));
+    }
+    if (blocks.empty()) return std::nullopt;
+
     if (role == "assistant") {
         loom::core::AssistantMessage msg{};
         msg.id.value = id;
         msg.timestamp = timestamp;
-        msg.content.push_back(loom::core::TextBlock{content});
+        msg.content = std::move(blocks);
         auto model = root.get("model");
-        if (model.valid() && model.is_str()) msg.model = std::string(model.as_str());
+        if (model.valid() && model.is_str())
+            msg.model = std::string(model.as_str());
         return loom::core::Message{std::move(msg)};
     }
-
     if (role == "user" || role == "system") {
         loom::core::UserMessage msg{};
         msg.id.value = id;
         msg.timestamp = timestamp;
-        msg.content.push_back(loom::core::TextBlock{content});
+        msg.content = std::move(blocks);
         return loom::core::Message{std::move(msg)};
     }
 

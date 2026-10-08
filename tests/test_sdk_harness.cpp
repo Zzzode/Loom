@@ -264,7 +264,86 @@ TEST(SdkHarness, ResumeRestoresConversation) {
     fs::remove_all(sessions_dir);
 }
 
-// §4.4: the PermissionCallback is invoked for a tool that requires
+// §4.4: resume restores multi-block messages (thinking + tool_use + text)
+// and tool_result messages.  Regression test: the original
+// parse_session_message_value only read content-as-string and silently
+// dropped every multi-block message, so thinking/tool_use chains vanished
+// on resume (the UI showed only plain text, no chain compression).
+TEST(SdkHarness, ResumeRestoresMultiBlockMessages) {
+    auto sessions_dir = fs::temp_directory_path() /
+        ("loom_harness_resume_multi_" + std::to_string(::getpid()));
+    fs::create_directories(sessions_dir);
+    const std::string session_id = "resume-multi-block";
+
+    // User message (plain string content).
+    ASSERT_TRUE(loom::session::append_message(
+        sessions_dir, session_id,
+        R"({"id":"msg_1","role":"user","content":"Do the thing"})"));
+
+    // Assistant message with thinking + tool_use + text (array content).
+    ASSERT_TRUE(loom::session::append_message(
+        sessions_dir, session_id,
+        std::string(R"({"id":"msg_2","role":"assistant","content":[)")
+            + R"({"type":"thinking","thinking":"I should use Bash","signature":"sig1"},)"
+            + R"({"type":"tool_use","id":"tu_1","name":"Bash","input":{"command":"ls"}},)"
+            + R"({"type":"text","text":"Running ls..."}])"
+            + R"(,"model":"loom-test"})"));
+
+    // Tool result message (role="user" with tool_result object).
+    ASSERT_TRUE(loom::session::append_message(
+        sessions_dir, session_id,
+        R"({"id":"msg_3","role":"user","content":[)"
+        R"({"type":"tool_result","tool_use_id":"tu_1","is_error":false,)"
+        R"("content":"file1.txt\nfile2.txt"}]})"));
+
+    loom::sdk::HarnessConfig config;
+    config.model = "loom-test";
+    config.api_key_provider = [] { return "sk-test"; };
+    config.sessions_dir = sessions_dir;
+    loom::sdk::Harness harness(std::move(config));
+
+    auto resumed = harness.resume(session_id);
+    ASSERT_TRUE(resumed.has_value()) << resumed.error().format();
+
+    auto conv = harness.conversation();
+    ASSERT_EQ(conv.size(), 3u);
+
+    // Message 0: user text.
+    ASSERT_TRUE(std::holds_alternative<loom::core::UserMessage>(conv[0]));
+    const auto& um = std::get<loom::core::UserMessage>(conv[0]);
+    ASSERT_EQ(um.content.size(), 1u);
+    EXPECT_TRUE(std::holds_alternative<loom::core::TextBlock>(um.content[0]));
+
+    // Message 1: assistant with thinking + tool_use + text.
+    ASSERT_TRUE(std::holds_alternative<loom::core::AssistantMessage>(conv[1]));
+    const auto& am = std::get<loom::core::AssistantMessage>(conv[1]);
+    ASSERT_EQ(am.content.size(), 3u);
+    EXPECT_TRUE(std::holds_alternative<loom::core::ThinkingBlock>(am.content[0]));
+    EXPECT_TRUE(std::holds_alternative<loom::core::ToolUseBlock>(am.content[1]));
+    EXPECT_TRUE(std::holds_alternative<loom::core::TextBlock>(am.content[2]));
+    // Verify thinking content survived.
+    const auto& thk = std::get<loom::core::ThinkingBlock>(am.content[0]);
+    EXPECT_EQ(thk.thinking, "I should use Bash");
+    EXPECT_EQ(thk.signature, "sig1");
+    // Verify tool_use fields survived.
+    const auto& tu = std::get<loom::core::ToolUseBlock>(am.content[1]);
+    EXPECT_EQ(tu.name, "Bash");
+    EXPECT_EQ(tu.id.value, "tu_1");
+    // Verify model survived.
+    EXPECT_EQ(am.model, "loom-test");
+
+    // Message 2: tool result.
+    ASSERT_TRUE(std::holds_alternative<loom::core::ToolResultMessage>(conv[2]));
+    const auto& trm = std::get<loom::core::ToolResultMessage>(conv[2]);
+    EXPECT_EQ(trm.tool_use_id.value, "tu_1");
+    EXPECT_FALSE(trm.is_error);
+    ASSERT_EQ(trm.content.size(), 1u);
+    ASSERT_TRUE(std::holds_alternative<loom::core::TextBlock>(trm.content[0]));
+    EXPECT_EQ(std::get<loom::core::TextBlock>(trm.content[0]).text,
+              "file1.txt\nfile2.txt");
+
+    fs::remove_all(sessions_dir);
+}
 // permission. A mock permission-gated tool is registered via the
 // register_extra_tools seam; the canned first response calls it, the
 // callback allows it, and the second response completes the turn.

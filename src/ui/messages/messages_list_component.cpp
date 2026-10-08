@@ -374,39 +374,31 @@ Element MessagesListComponent::Render() {
             const auto sel_copy = selected_visible_index_;
             const std::size_t fc = frame_count_;
             const MessagesListInput& in_ref = input_;
-            (void)vis_rows_copy;  // unused when render_row cb is trivial
             state.callbacks.render_row =
                 [&push_tracked, fc, &in_ref, &vis_rows_copy, sel_copy,
                  divider_before_vi, has_divider]
                 (size_t row_index, const vl::VisibleRow& vr) -> Element
                 {
-                    VisibleRow ml_row{};
-                    if (!decode_virtual_backend_index(vr.backend_index, ml_row)) {
+                    // Use the original VisibleRow from visible_rows_ — the
+                    // backend_index bit-pack loses CompressedChain rich data
+                    // (tool breakdown, thinking duration, live flag, UUID).
+                    // Fall back to decode only if the index is out of bounds
+                    // (shouldn't happen).
+                    const VisibleRow* ml_row_ptr = nullptr;
+                    VisibleRow decoded{};
+                    if (row_index < vis_rows_copy.size()) {
+                        ml_row_ptr = &vis_rows_copy[row_index];
+                    } else if (decode_virtual_backend_index(vr.backend_index, decoded)) {
+                        ml_row_ptr = &decoded;
+                    } else {
                         return text("") | size(HEIGHT, EQUAL,
                             std::max(1, vr.estimated_height_lines));
                     }
-                    // Selection check: compare against visible index by
-                    // searching the round-tripped ml_row in vis_rows_copy.
-                    // Linear scan is fine because vis_rows_copy items past
-                    // the threshold are only rendered inside the window
-                    // (~60 rows per pass after overscan).
-                    bool is_selected = false;
-                    if (sel_copy.has_value()) {
-                        const size_t sv = *sel_copy;
-                        if (sv < vis_rows_copy.size()) {
-                            const auto& ref = vis_rows_copy[sv];
-                            if (ref.kind == ml_row.kind) {
-                                if (ref.kind == VisibleRow::Kind::Payload &&
-                                    ref.row_idx == ml_row.row_idx)
-                                    is_selected = true;
-                                else if (ref.kind == VisibleRow::Kind::CompactGroup &&
-                                         ref.group_idx == ml_row.group_idx)
-                                    is_selected = true;
-                                else if (ref.kind == VisibleRow::Kind::CompressedChain)
-                                    is_selected = true;
-                            }
-                        }
-                    }
+                    const VisibleRow& ml_row = *ml_row_ptr;
+                    // Selection check: the selected visible index maps 1:1
+                    // to row_index (virt_rows preserves visible_rows_ order).
+                    bool is_selected = sel_copy.has_value() &&
+                        *sel_copy == row_index;
                     // turn-margin add_margin is always true in virtual
                     // path (see comments in render_messages_list_virtual).
                     Element row_el;

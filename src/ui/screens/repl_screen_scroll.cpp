@@ -138,38 +138,19 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     return static_cast<int>(std::count(text.begin(), text.end(), '\n')) + 1;
 }
 
-/// Wrapping-aware line count: counts visual lines after hard-wrap at
-/// `content_cols`, plus explicit '\n' breaks.  Mirrors the heuristic in
-/// messages_list_geometry.cpp's estimate_content_lines so the static-path
-/// scroll bounds agree with the virtual-path JumpHandle geometry.
-[[nodiscard]] int CountWrappedLines(std::string_view text, int content_cols) {
-    if (text.empty()) return 1;
-    const int cols = std::max(20, content_cols);
-    int lines = 1;
-    int current = 0;
-    for (char c : text) {
-        if (c == '\n') {
-            ++lines;
-            current = 0;
-            continue;
-        }
-        ++current;
-        if (current > cols) {
-            ++lines;
-            current = 0;
-        }
-    }
-    return lines;
-}
-
 [[nodiscard]] int EstimateTranscriptRows(
     const std::vector<MessageDisplayEntry>& entries,
-    int term_cols) {
-    // Content area width after the message envelope gutter (avatar + padding).
-    // Matches the default envelope_gutter_cols=36 in estimate_row_height.
-    const int content_cols = std::max(20, term_cols - 36);
-    // Tool results and thinking blocks use a narrower gutter (4 cols).
-    const int wide_content_cols = std::max(20, term_cols - 4);
+    int /*term_cols*/) {
+    // NOTE: We deliberately use CountTextLines (newline-only) rather than a
+    // wrapping-aware counter here.  content_preview carries the FULL
+    // untruncated text for assistant/user rows, so a wrapping-aware count
+    // would infl max_offset far past the actual rendered height (markdown
+    // rendering, envelope gutters, and FTXUI layout all reduce the real
+    // line count).  An over-inflated max_offset makes focusPosition target
+    // a non-existent child and freezes the scroll entirely.  The virtual
+    // path (visible > 80 rows) uses estimate_row_height which is capped and
+    // envelope-aware; this static-path heuristic just needs to stay in the
+    // same ballpark, not be exact.
     int rows = 0;
     for (const auto& entry : entries) {
         // content_preview for tool entries is often
@@ -202,7 +183,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                     full += "[Image]";
                 }
             }
-            content_lines = CountWrappedLines(full, wide_content_cols);
+            content_lines = CountTextLines(full);
             content_lines += 2;  // header + status row
         } else if (entry.is_image) {
             content_lines = 4;  // label + metadata rows (no fake thumbnail)
@@ -218,12 +199,12 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                 const std::string& text = entry.full_content.empty()
                     ? entry.content_preview
                     : entry.full_content;
-                content_lines = CountWrappedLines(text, wide_content_cols) + 3;  // label + body + margins
+                content_lines = CountTextLines(text) + 3;  // label + body + margins
             } else {
                 content_lines = 2;  // collapsed label + separator
             }
         } else {
-            content_lines = CountWrappedLines(entry.content_preview, content_cols);
+            content_lines = CountTextLines(entry.content_preview);
         }
         rows += content_lines;
         // Message list inserts one empty separator after each rendered row

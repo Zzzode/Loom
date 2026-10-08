@@ -168,8 +168,9 @@ ComputeUnseenDivider(const ReplScreenState& s);
 [[nodiscard]] int CountTextLines(std::string_view text);
 
 /// Estimate rendered transcript height for the non-virtual scroll path.
-/// `term_cols` enables wrapping-aware line counting so long paragraphs
-/// contribute their visual wrapped height instead of just '\n' count.
+/// `term_cols` is accepted for API stability but currently unused —
+/// content_preview carries full untruncated text, so a wrapping-aware
+/// count would over-inflate max_offset past the actual rendered height.
 [[nodiscard]] int EstimateTranscriptRows(
     const std::vector<MessageDisplayEntry>& entries,
     int term_cols = 80);

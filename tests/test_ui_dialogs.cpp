@@ -24,8 +24,6 @@ import loom.ui.permissions.rule_list;
 import loom.ui.permissions.single_prompt;
 import loom.ui.permissions.components;
 import loom.ui.dialogs.mcp_dialogs;
-import loom.ui.features.plugins.lsp_recommendation_menu;
-import loom.ui.features.plugins.plugin_hint_menu;
 import loom.security.permissions_engine;
 import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_tokens;

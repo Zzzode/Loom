@@ -85,6 +85,11 @@ struct MessageDisplayEntry {
     /// entries so the collapsed "∴ Thought for Xs" label survives the
     /// streaming→committed transition.
     std::chrono::milliseconds thinking_duration{0};
+    /// Wall-clock start time of the thinking block (steady_clock).
+    /// Populated for streaming thinking entries so the chain compressor's
+    /// live elapsed timer (now - earliest_start) can tick in real time.
+    /// Zero = not set (committed entries use thinking_duration instead).
+    std::chrono::steady_clock::time_point thinking_start_time{};
     int estimated_height_lines = 3;
     /// M4 live-path: system-row subtype hint.  When set on a `system` entry,
     /// RenderMessages routes the row through the matching faithful

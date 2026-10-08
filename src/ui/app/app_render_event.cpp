@@ -430,6 +430,10 @@ Element AppAdapter::Render() {
                             e.thinking_duration = std::chrono::duration_cast<
                                 std::chrono::milliseconds>(
                                     end - *thk->second.streaming_started_at);
+                            // Wall-clock start for the chain compressor's
+                            // live elapsed timer (ticks in real time while
+                            // the query is running).
+                            e.thinking_start_time = *thk->second.streaming_started_at;
                         }
                     }
                     e.content_preview = thk->second.text.substr(0, 200);

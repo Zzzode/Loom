@@ -249,6 +249,9 @@ bool same_projected_source(const MessageDisplayEntry& a,
                 // Thread the thinking duration so the collapsed label shows
                 // "∴ Thought for Xs" instead of a generic "Thinking".
                 opts.data.duration = m.thinking_duration;
+                // Thread the wall-clock start time so the chain compressor's
+                // live elapsed timer ticks in real time during streaming.
+                opts.data.thinking_start_time = m.thinking_start_time;
                 // Static / unselected view renders the collapsed "Thinking"
                 // label (collapsed state) — the row is never hidden. The
                 // 3s collapse grace (was_recently_streaming) keeps a

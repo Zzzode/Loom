@@ -13,6 +13,7 @@ module loom.ui.messages.messages_list;
 import std;
 
 import loom.ui.foundation.clock;
+import loom.ui.foundation.theme_provider;  // user_message_background token
 import loom.ui.messages.message_row;
 import loom.ui.messages.user_text_message;
 import loom.ui.messages.local_command_output_message;
@@ -415,9 +416,8 @@ auto render_payload_row(const MessagesListInput& input,
         // its own user-styled card.
         auto* d = std::get_if<image::ImageMessageData>(&payload);
         if (d) {
-            // userMessageBackground = rgb(55, 55, 55)
-            // (matches RenderUserPromptMessage kUserBg).
-            const Color kUserBg = Color::RGB(55, 55, 55);
+            const Color kUserBg = loom::ui::design::theme::current_theme()
+                                      .palette->user_message_background;
 
             Element body = image::render(*d);
 

@@ -361,12 +361,10 @@ TEST(ReplScreen, MouseWheelScrollsTranscript) {
     EXPECT_GT(state->messages_store.scroll_offset, 0);
     EXPECT_FALSE(state->messages_store.scroll_pinned_to_bottom);
 
-    // WheelDown scrolls back toward the bottom.  On repin, scroll_offset
-    // returns to the 0 sentinel (matching ResetScrollToBottom semantics) so
-    // the static renderer uses focusPositionRelative and follows the bottom
-    // during streaming.
+    // WheelDown scrolls back toward the bottom.
+    const int after_up = state->messages_store.scroll_offset;
     wheel.button = ftxui::Mouse::WheelDown;
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
-    EXPECT_EQ(state->messages_store.scroll_offset, 0);
+    EXPECT_GT(state->messages_store.scroll_offset, after_up);
     EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
 }

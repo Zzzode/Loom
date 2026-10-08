@@ -88,7 +88,6 @@ using namespace ftxui;
     if (term_cols <= 0) term_cols = 80;
     if (term_rows <= 0) term_rows = 24;
     s.messages_store.viewport_height_lines = std::max(1, term_rows - 5);
-    s.messages_store.viewport_width_cols = term_cols;
 
     // Time-based spinner frame: 100 ms per frame (10 fps), matching the
     // reference.  Previously this was a per-render counter, which made the
@@ -502,7 +501,7 @@ using namespace ftxui;
             total = s.messages_store.virtual_jh.total();
         } else {
             const auto& vm = BuildVisibleMessages(s);
-            total = EstimateTranscriptRows(vm, s.messages_store.viewport_width_cols);
+            total = EstimateTranscriptRows(vm);
         }
         int max_top = std::max(0, total - viewport);
         // When pinned to bottom, scroll_offset is 0 but the view is at
@@ -524,8 +523,7 @@ using namespace ftxui;
             int old_top = std::clamp(current, 0, max_top);
             int target  = std::clamp(old_top + delta, 0, max_top);
             if (target != old_top) {
-                // scroll_offset=0 is the pinned sentinel — see ScrollTranscript.
-                s.messages_store.scroll_offset = (target >= max_top) ? 0 : target;
+                s.messages_store.scroll_offset = target;
                 s.messages_store.scroll_pinned_to_bottom = (target >= max_top);
                 if (s.messages_store.virtual_list_state) {
                     namespace vl = loom::ui::messages::virtual_list;
@@ -554,13 +552,12 @@ using namespace ftxui;
             total = s.messages_store.virtual_jh.total();
         } else {
             const auto& vm = BuildVisibleMessages(s);
-            total = EstimateTranscriptRows(vm, s.messages_store.viewport_width_cols);
+            total = EstimateTranscriptRows(vm);
         }
         int max_top = std::max(0, total - viewport);
         int old_top = std::clamp(s.messages_store.scroll_offset, 0, max_top);
         if (max_top != old_top) {
-            // scroll_offset=0 is the pinned sentinel — see ScrollTranscript.
-            s.messages_store.scroll_offset = 0;
+            s.messages_store.scroll_offset = max_top;
             if (s.messages_store.virtual_list_state) {
                 namespace vl = loom::ui::messages::virtual_list;
                 s.messages_store.virtual_list_state->scroll_top = max_top;

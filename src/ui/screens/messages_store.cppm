@@ -134,11 +134,6 @@ struct MessagesStore {
     // ── Scroll / transcript chrome ──────────────────────────────────────
     int scroll_offset = 0, selected_message_idx = -1;
     int viewport_height_lines = 40;
-    /// Terminal column count, probed once per frame alongside
-    /// viewport_height_lines.  Used for wrapping-aware transcript row
-    /// estimation so long paragraphs count their visual wrapped lines,
-    /// not just '\n' separators.
-    int viewport_width_cols = 80;
     bool scroll_pinned_to_bottom = true;
 
     /// Index into messages[] where the unseen divider anchor sits.

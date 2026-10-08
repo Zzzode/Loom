@@ -139,18 +139,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 }
 
 [[nodiscard]] int EstimateTranscriptRows(
-    const std::vector<MessageDisplayEntry>& entries,
-    int /*term_cols*/) {
-    // NOTE: We deliberately use CountTextLines (newline-only) rather than a
-    // wrapping-aware counter here.  content_preview carries the FULL
-    // untruncated text for assistant/user rows, so a wrapping-aware count
-    // would infl max_offset far past the actual rendered height (markdown
-    // rendering, envelope gutters, and FTXUI layout all reduce the real
-    // line count).  An over-inflated max_offset makes focusPosition target
-    // a non-existent child and freezes the scroll entirely.  The virtual
-    // path (visible > 80 rows) uses estimate_row_height which is capped and
-    // envelope-aware; this static-path heuristic just needs to stay in the
-    // same ballpark, not be exact.
+    const std::vector<MessageDisplayEntry>& entries) {
     int rows = 0;
     for (const auto& entry : entries) {
         // content_preview for tool entries is often
@@ -258,15 +247,9 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
         target = std::clamp(target, 0, max_top);
         if (target == old_top) return false;
 
-        // Use scroll_offset=0 as the "pinned to bottom" sentinel (matching
-        // ResetScrollToBottom semantics).  Setting offset=max_top here would
-        // make the static renderer prioritize the stale absolute focusPosition
-        // over pin_to_bottom's focusPositionRelative, causing the view to
-        // drift during streaming instead of following the bottom.
-        const bool now_pinned = (target >= max_top);
-        state->messages_store.scroll_offset = now_pinned ? 0 : target;
+        state->messages_store.scroll_offset = target;
         const bool was_pinned = state->messages_store.scroll_pinned_to_bottom;
-        state->messages_store.scroll_pinned_to_bottom = now_pinned;
+        state->messages_store.scroll_pinned_to_bottom = (target >= max_top);
 
         // On FIRST scroll-away from bottom, snapshot message count as
         // divider_index.  On repin, clear.
@@ -292,9 +275,8 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
 
     const auto& visible_messages = BuildVisibleMessages(*state);
     if (visible_messages.empty()) return false;
-    const int term_cols = std::max(20, state->messages_store.viewport_width_cols);
     const int max_offset =
-        std::max(0, EstimateTranscriptRows(visible_messages, term_cols) - viewport_rows);
+        std::max(0, EstimateTranscriptRows(visible_messages) - viewport_rows);
     if (max_offset == 0) return false;
 
     // When pinned to bottom, scroll_offset is 0 but the view is visually
@@ -305,13 +287,9 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
         ? max_offset
         : std::clamp(state->messages_store.scroll_offset, 0, max_offset);
     const int next = std::clamp(base + delta, 0, max_offset);
-    // scroll_offset=0 is the "pinned" sentinel — see the virtual-path comment
-    // above.  Setting offset=max_offset on repin makes the static renderer
-    // use a stale absolute focusPosition instead of following the bottom.
-    const bool now_pinned = (next >= max_offset);
-    state->messages_store.scroll_offset = now_pinned ? 0 : next;
+    state->messages_store.scroll_offset = next;
     const bool was_pinned = state->messages_store.scroll_pinned_to_bottom;
-    state->messages_store.scroll_pinned_to_bottom = now_pinned;
+    state->messages_store.scroll_pinned_to_bottom = next >= max_offset;
     if (was_pinned && !state->messages_store.scroll_pinned_to_bottom) {
         state->messages_store.divider_index = state->messages_store.messages.size();
         state->messages_store.message_count_at_scroll_away = state->messages_store.messages.size();

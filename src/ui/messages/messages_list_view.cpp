@@ -72,10 +72,10 @@ namespace {
              | yframe | vscroll_indicator;
     }
 
-    // Build virtual rows.  Use the real terminal column count for
-    // wrapping-aware row-height estimation so the JumpHandle geometry
-    // matches the rendered content.
-    const int term_cols_est = std::max(20, input.term_cols);
+    // Build virtual rows.  Use viewport_rows + 80 as a proxy for terminal
+    // height (the caller knows viewport_rows; width defaults are fine since
+    // content estimates already clip generously to 20-120 range).
+    const int term_cols_est = 120;   // safe default; most terminals ≥ 80
     auto virt_rows = visible_rows_to_virtual(visible, input, term_cols_est);
 
     const std::size_t divider_before_vi =
@@ -507,7 +507,7 @@ namespace {
     int estimated_total_lines = 0;
     for (const auto& vr : visible) {
         estimated_total_lines +=
-            detail::estimate_row_height(vr, input, std::max(20, input.term_cols));
+            detail::estimate_row_height(vr, input, /*term_cols=*/80);
     }
     // NOTE: leading elements (logo card) are intentionally NOT included in
     // the pin-to-bottom estimate.  Pin-to-bottom should engage when MESSAGES
@@ -520,18 +520,22 @@ namespace {
     // to the bottom and creating a large blank area below the logo.
     const bool content_exceeds_viewport = estimated_total_lines > vp;
 
-    if (input.scroll_offset > 0) {
-        list = std::move(list)
-             | focusPosition(0, input.scroll_offset + vp / 2);
-    } else if (input.pin_to_bottom && visible.size() > 1 &&
-               content_exceeds_viewport) {
-        // Multiple messages AND content exceeds viewport — scroll to show the
-        // bottom (latest messages).  The `visible.size() > 1` guard preserves
-        // single-tall-message behavior (e.g. /help output) where showing the
-        // top is more useful.  The `content_exceeds_viewport` guard prevents
-        // the FTXUI bottom-alignment blank-space artifact when short content
+    if (input.pin_to_bottom && visible.size() > 1 &&
+        content_exceeds_viewport) {
+        // Pinned to bottom: use focusPositionRelative so the view follows
+        // the bottom during streaming.  This takes priority over
+        // scroll_offset — when pinned, scroll_offset may hold a stale
+        // absolute position from a prior scroll, and using it would cause
+        // the view to drift instead of following new content.
+        // The visible.size()>1 guard preserves single-tall-message behavior
+        // (e.g. /help output) where showing the top is more useful on
+        // initial render.  The content_exceeds_viewport guard prevents the
+        // FTXUI bottom-alignment blank-space artifact when short content
         // fits in the viewport (the "large blank area below logo" bug).
         list = std::move(list) | focusPositionRelative(0, 1);
+    } else if (input.scroll_offset > 0) {
+        list = std::move(list)
+             | focusPosition(0, input.scroll_offset + vp / 2);
     }
     if (visible.empty()) {
         return std::move(list) | yframe | vscroll_indicator | flex;

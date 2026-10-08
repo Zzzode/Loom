@@ -19,7 +19,6 @@ target_sources(loom_ui_chrome
         ui/chrome/text_measure.cppm
         ui/chrome/terminal_io.cppm
         ui/chrome/ansi_render.cppm
-        ui/chrome/terminal.cppm
 )
 # Module implementation unit for cc.ui.chrome.ansi_render (RFC 0002
 # phase F1 row 8): the ANSI/SGR -> FTXUI bodies, extracted verbatim

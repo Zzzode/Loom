@@ -114,9 +114,6 @@ struct TempCwdGuard {
 }
 
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// loom.ui.chrome.terminal: FTXUI terminal controller and common widgets
-// ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(WizardDialog, RendersStepFactoryContent) {
     using namespace loom::ui::wizard_dialog;

@@ -1,5 +1,5 @@
 /// @file test_ui_light.cpp
-/// @brief Split from test_ui.cpp - Components, Markdown, Panels, PromptInputFooter, StatusLine, Terminal (SLOC budget fix)
+/// @brief Split from test_ui.cpp - Components, Markdown, Panels, PromptInputFooter, StatusLine (SLOC budget fix)
 
 #include <cstdlib>
 
@@ -15,7 +15,6 @@
 #include "test_ui_helpers.h"
 
 import std;
-import loom.ui.chrome.terminal;
 import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_tokens;
 import loom.ui.widgets.components;
@@ -36,75 +35,6 @@ namespace {
 namespace fs = std::filesystem;
 }
 
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// loom.ui.chrome.terminal: FTXUI terminal controller and common widgets
-// ═══════════════════════════════════════════════════════════════════════════════
-
-TEST(Terminal, ColorThemesAreConstructible) {
-    auto dark = loom::ui::ColorTheme::dark();
-    auto light = loom::ui::ColorTheme::light();
-
-    (void)dark;
-    (void)light;
-    SUCCEED();
-}
-
-TEST(Terminal, DefaultKeyBindingsContainCoreActions) {
-    auto bindings = loom::ui::default_key_bindings();
-
-    EXPECT_FALSE(bindings.empty());
-    EXPECT_TRUE(std::any_of(bindings.begin(), bindings.end(), [](const auto& binding) {
-        return binding.action == loom::ui::KeyAction::Submit;
-    }));
-    EXPECT_TRUE(std::any_of(bindings.begin(), bindings.end(), [](const auto& binding) {
-        return binding.action == loom::ui::KeyAction::Interrupt;
-    }));
-}
-
-TEST(Terminal, SpinnerRendersWhenActive) {
-    loom::ui::Spinner spinner("Working");
-    EXPECT_FALSE(spinner.is_active());
-
-    spinner.start();
-    EXPECT_TRUE(spinner.is_active());
-    expect_element(spinner.render(loom::ui::ColorTheme::dark()));
-
-    spinner.stop();
-    EXPECT_FALSE(spinner.is_active());
-}
-
-TEST(Terminal, TerminalUIExposesControlAPI) {
-    loom::ui::TerminalUI ui;
-    bool submitted = false;
-    bool interrupted = false;
-
-    ui.set_on_submit([&](std::string) { submitted = true; });
-    ui.set_on_interrupt([&] { interrupted = true; });
-    ui.update_status(loom::ui::StatusBarData{.model_name = "test-model", .input_tokens = 1, .output_tokens = 2, .cost_usd = 0.0, .session_id = std::nullopt});
-    ui.show_spinner("Testing");
-    ui.hide_spinner();
-
-    EXPECT_FALSE(submitted);
-    EXPECT_FALSE(interrupted);
-}
-
-TEST(Terminal, StatusBarRendersTokensAndCost) {
-    loom::ui::StatusBarData data{
-        .model_name = "loom-test",
-        .input_tokens = 123,
-        .output_tokens = 45,
-        .cost_usd = 0.0123,
-        .session_id = std::optional<std::string>{"session-1"},
-    };
-
-    auto rendered = render_to_plain_text(loom::ui::render_status_bar(data, loom::ui::ColorTheme::dark()), 90, 5);
-
-    EXPECT_NE(rendered.find("loom-test"), std::string::npos);
-    EXPECT_NE(rendered.find("123"), std::string::npos);
-    EXPECT_NE(rendered.find("45"), std::string::npos);
-    EXPECT_NE(rendered.find("$0.0123"), std::string::npos);
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // loom.ui.widgets.components: reusable FTXUI render helpers

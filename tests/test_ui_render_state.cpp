@@ -44,9 +44,6 @@ namespace fs = std::filesystem;
 }
 
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// loom.ui.chrome.terminal: FTXUI terminal controller and common widgets
-// ═══════════════════════════════════════════════════════════════════════════════
 
 
 

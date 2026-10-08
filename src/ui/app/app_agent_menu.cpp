@@ -2,7 +2,7 @@
 // app_autocomplete.cpp to stay under clang's 2GB source-location budget.
 //
 // Contains: FormatAgentsMenuOutput, LoadAgentCardsForMenu, SyncState,
-//           ConsumePendingResult, WaitForInFlightPastes,
+//           ConsumePendingResult, DrainCompletedPastesAndSubmit,
 //           get_permission_callback, trigger_orphan_cleanup_for_testing.
 //
 // Splitting these out removes agent_display + agent_cards + dialogs.triggers
@@ -269,6 +269,7 @@ void AppAdapter::LoadAgentCardsForMenu() {
 
 // ── SyncState (moved out to remove debug import) ─────────────────────────
 void AppAdapter::SyncState() {
+    conversation_projection_dirty_.store(true);
     auto messages = static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
 
     // Bridge / remote-control footer projection (reads replBridge* from
@@ -448,28 +449,39 @@ void AppAdapter::ConsumePendingResult() {
     this->TriggerStatuslineUpdate();
 }
 
-// ── WaitForInFlightPastes (moved out to remove parse_references import) ──
-void AppAdapter::WaitForInFlightPastes(const std::string& text) {
+// Submissions wait for clipboard completion through the worker's Custom event.
+bool AppAdapter::HasInFlightPasteReferences(const std::string& text) const {
     const auto refs = loom::utils::parse_references(text);
-    if (refs.empty()) return;
-    std::unordered_set<int> needed;
-    for (const auto& r : refs) needed.insert(r.id);
+    return std::ranges::any_of(refs, [this](const auto& r) {
+        return paste_.is_in_flight(r.id);
+    });
+}
 
-    const auto deadline =
-        std::chrono::steady_clock::now() + std::chrono::seconds(3);
-    while (std::chrono::steady_clock::now() < deadline) {
-        this->ProcessCompletedPastes();
-        bool still_waiting = false;
-        for (int id : needed) {
-            if (paste_.is_in_flight(id)) {
-                still_waiting = true;
-                break;
-            }
-        }
-        if (!still_waiting) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+void AppAdapter::DrainCompletedPastesAndSubmit() {
+    if (!pending_paste_submission_) {
+        ProcessCompletedPastes();
+        return;
     }
-    this->ProcessCompletedPastes();
+    // Complete text/failure replacements in the submitted snapshot while
+    // preserving the draft the user may already be editing.
+    auto draft_cursor = screen_state_->input_cursor;
+    screen_state_->input_text.swap(pending_paste_submission_->text);
+    screen_state_->input_cursor = std::string::npos;
+    std::unordered_set<int> needed;
+    for (const auto& ref : loom::utils::parse_references(screen_state_->input_text))
+        needed.insert(ref.id);
+    paste_.set_pending_drain_ids(std::move(needed));
+    ProcessCompletedPastes();
+    paste_.set_pending_drain_ids(std::nullopt);
+    screen_state_->input_text.swap(pending_paste_submission_->text);
+    screen_state_->input_cursor = draft_cursor;
+    if (HasInFlightPasteReferences(pending_paste_submission_->text) &&
+        std::chrono::steady_clock::now() < pending_paste_submission_->deadline) return;
+    auto submission = std::move(*pending_paste_submission_);
+    pending_paste_submission_.reset();
+    paste_submission_deadline_ms_.store(0);
+    HandleSubmit(submission.text, submission.mode, /*wait_for_pastes=*/false);
+    ProcessCompletedPastes();
 }
 
 // ── get_permission_callback (moved out to remove dialogs.system/triggers) ─

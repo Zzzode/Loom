@@ -149,7 +149,7 @@ using namespace ftxui;
     // scrolls out of the visible viewport naturally.
     Elements L;
     Elements scroll_rows; scroll_rows.reserve(2);
-    const auto visible_messages = BuildVisibleMessages(s);
+    const auto& visible_messages = BuildVisibleMessages(s);
 
     // ── Welcome / logo card (passed as leading element inside yframe) ───
     // LogoV2 welcome card is the first element
@@ -490,7 +490,7 @@ using namespace ftxui;
             namespace vl = loom::ui::messages::virtual_list;
             total = s.messages_store.virtual_jh.total();
         } else {
-            const auto vm = BuildVisibleMessages(s);
+            const auto& vm = BuildVisibleMessages(s);
             total = EstimateTranscriptRows(vm);
         }
         int max_top = std::max(0, total - viewport);
@@ -541,7 +541,7 @@ using namespace ftxui;
             namespace vl = loom::ui::messages::virtual_list;
             total = s.messages_store.virtual_jh.total();
         } else {
-            const auto vm = BuildVisibleMessages(s);
+            const auto& vm = BuildVisibleMessages(s);
             total = EstimateTranscriptRows(vm);
         }
         int max_top = std::max(0, total - viewport);

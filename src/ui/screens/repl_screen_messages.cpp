@@ -30,6 +30,46 @@ import loom.ui.messages.api_error_message;
 namespace loom::ui::repl_screen {
 using namespace ftxui;
 
+namespace {
+// Exact comparisons keep in-place streaming/status changes visible without
+// relying on IDs, lengths, hashes, or append-only source rows.
+bool same_projected_source(const MessageDisplayEntry& a,
+                           const MessageDisplayEntry& b) {
+    const auto fields = [](const MessageDisplayEntry& m) {
+        return std::tie(m.id, m.role, m.content_preview, m.full_content,
+            m.is_streaming, m.is_thinking, m.is_tool_use, m.thinking_active,
+            m.is_local_command_input, m.is_local_command_output,
+            m.is_local_jsx_output, m.is_compact_boundary, m.is_error,
+            m.is_image, m.image_display_id, m.tool_name, m.tool_status,
+            m.tool_input_json, m.tool_result_preview, m.agent_display_name,
+            m.agent_color_name, m.timestamp, m.thinking_duration,
+            m.estimated_height_lines, m.system_subtype, m.retry_after_ms,
+            m.retry_attempt, m.max_retries, m.session_expired);
+    };
+    if (fields(a) != fields(b)) return false;
+    if (a.image_block.has_value() != b.image_block.has_value()) return false;
+    if (a.image_block) {
+        const auto image_fields = [](const ::loom::core::ImageBlock& image) {
+            return std::tie(image.media_type, image.width,
+                image.height, image.size_bytes, image.file_name,
+                image.source_path, image.source);
+        };
+        if (image_fields(*a.image_block) != image_fields(*b.image_block))
+            return false;
+    }
+    if (a.tool_result_content_items.has_value() !=
+        b.tool_result_content_items.has_value()) return false;
+    if (a.tool_result_content_items) {
+        return std::ranges::equal(*a.tool_result_content_items,
+            *b.tool_result_content_items, [](const auto& x, const auto& y) {
+                return std::tie(x.type, x.text, x.media_type, x.data) ==
+                       std::tie(y.type, y.text, y.media_type, y.data);
+            });
+    }
+    return true;
+}
+}  // namespace
+
 // UI4/UI5: message list.  Delegates to messages_list.cppm (UI21).
 // `spinner_frame` drives the tool-use header spinner animation (fix #10).
 // `unseen_divider` is the optional in-transcript "N new messages" anchor
@@ -73,35 +113,60 @@ using namespace ftxui;
 
     namespace ml = loom::ui::messages_list;
     namespace image = loom::ui::messages::image;
-    ml::MessagesListInput input;
+    ml::MessagesListInput transient_input;
+    auto& input = store ? store->render_input : transient_input;
+    const bool transcript_changed = store &&
+        store->render_sources_transcript_mode != is_transcript_mode;
+    const auto cached_count = store ? store->render_sources.size() : 0;
+    if (input.rows.size() > entries.size()) {
+        input.rows.resize(entries.size());
+        input.shapes.resize(entries.size());
+        input.uuids.resize(entries.size());
+        input.lowered_search_cache.resize(entries.size());
+    }
     input.rows.reserve(entries.size());
     input.shapes.reserve(entries.size());
     input.uuids.reserve(entries.size());
     input.unseen_divider = std::move(unseen_divider);
+    input.selected_row_idx.reset();
+    input.virtual_jh_out.reset();
+    if (store) store->render_sources.resize(entries.size());
 
-    for (const auto& m : entries) {
+    for (std::size_t index = 0; index < entries.size(); ++index) {
+        const auto& m = entries[index];
+        if (store && index < cached_count && !transcript_changed &&
+            same_projected_source(m, store->render_sources[index])) {
+            // Callbacks can change independently of the source message.
+            if (auto* error = std::get_if<messages::api_error_message::APIErrorOptions>(
+                    &input.rows[index])) {
+                error->on_retry = on_retry;
+                error->on_clear_session = on_clear_session;
+            }
+            continue;
+        }
+        ml::MessagesListInput projected;
         // uuid → 24-char prefix anchor.
         // Populated parallel to rows/shapes; empty strings are harmless
         // (find_divider_before_visible_index skips them).
-        input.uuids.push_back(m.id);
+        projected.uuids.push_back(m.id);
         if (m.is_local_command_input) {
-            input.shapes.push_back(messages::MessageShape::UserCommand);
-            input.rows.push_back(messages::UserTextMessageData{
+            projected.shapes.push_back(messages::MessageShape::UserCommand);
+            projected.rows.push_back(messages::UserTextMessageData{
                 .content = m.content_preview,
                 .timestamp = m.timestamp,
                 .quoted_reply = std::nullopt,
                 .is_transcript_mode = is_transcript_mode,
                 .command_name = std::nullopt});
         } else if (m.is_local_jsx_output) {
-            input.shapes.push_back(messages::MessageShape::UserLocalJsxOutput);
-            input.rows.push_back(messages::UserTextMessageData{
+            projected.shapes.push_back(messages::MessageShape::UserLocalJsxOutput);
+            projected.rows.push_back(messages::UserTextMessageData{
                 .content = m.content_preview,
                 .timestamp = m.timestamp,
                 .quoted_reply = std::nullopt,
                 .is_transcript_mode = is_transcript_mode,
                 .command_name = std::nullopt});
         } else if (m.is_local_command_output) {
-            input.shapes.push_back(messages::MessageShape::UserLocalCommandOutput);
+            projected.shapes.push_back(messages::MessageShape::UserLocalCommandOutput);
             messages::local_cmd::LocalCommandOptions opts;
             opts.show_line_numbers = false;
             opts.data.exit_code = m.is_error ? 1 : 0;
@@ -121,7 +186,7 @@ using namespace ftxui;
                 if (nl == std::string::npos) break;
                 start = nl + 1;
             }
-            input.rows.push_back(std::move(opts));
+            projected.rows.push_back(std::move(opts));
         } else if (m.role == "user") {
             if (m.is_image && m.image_block) {
                 // Each user-attached image is its own UserImage row.
@@ -164,11 +229,11 @@ using namespace ftxui;
                 // The base64 PNG prefix "iVBORw0KGgo..." rendered as "Alt: ..."
                 // is worse than useless — wastes a line and confuses users.
                 // Removed 2026-07-04 per spacing bug report.
-                input.shapes.push_back(messages::MessageShape::UserImage);
-                input.rows.push_back(std::move(d));
+                projected.shapes.push_back(messages::MessageShape::UserImage);
+                projected.rows.push_back(std::move(d));
             } else {
-                input.shapes.push_back(messages::MessageShape::UserText);
-                input.rows.push_back(messages::UserTextMessageData{
+                projected.shapes.push_back(messages::MessageShape::UserText);
+                projected.rows.push_back(messages::UserTextMessageData{
                     .content = m.content_preview,
                     .timestamp = m.timestamp,
                     .quoted_reply = std::nullopt,
@@ -177,7 +242,7 @@ using namespace ftxui;
             }
         } else if (m.role == "assistant") {
             if (m.is_thinking) {
-                input.shapes.push_back(messages::MessageShape::AssistantThinking);
+                projected.shapes.push_back(messages::MessageShape::AssistantThinking);
                 messages::thinking_message::ThinkingMessageOptions opts;
                 opts.data.raw_text = m.full_content.empty()
                     ? m.content_preview : m.full_content;
@@ -192,9 +257,9 @@ using namespace ftxui;
                     opts.data.state =
                         messages::thinking_message::ThinkingState::Active;
                 }
-                input.rows.push_back(std::move(opts));
+                projected.rows.push_back(std::move(opts));
             } else if (m.is_tool_use) {
-                input.shapes.push_back(messages::MessageShape::AssistantToolUse);
+                projected.shapes.push_back(messages::MessageShape::AssistantToolUse);
                 messages::tool_use_message::ToolUseRenderOptions opts;
                 opts.call.tool_name = m.tool_name.value_or("tool");
                 // Fix #8/#9: thread the real parsed tool input + status from
@@ -212,18 +277,18 @@ using namespace ftxui;
                 opts.call.parameters_language = "json";
                 opts.call.status = messages::tool_use_message::parse_tool_status(
                     m.tool_status.value_or("pending"));
-                input.rows.push_back(std::move(opts));
+                projected.rows.push_back(std::move(opts));
             } else {
-                input.shapes.push_back(messages::MessageShape::AssistantText);
-                input.rows.push_back(messages::AssistantTextMessageData{
+                projected.shapes.push_back(messages::MessageShape::AssistantText);
+                projected.rows.push_back(messages::AssistantTextMessageData{
                     .content = m.content_preview,
                     .timestamp = m.timestamp,
                     .model_name = std::nullopt,
                     .is_streaming = m.is_streaming});
             }
         } else if (m.role == "tool") {
-            input.shapes.push_back(messages::MessageShape::UserToolResult);
-            input.rows.push_back(messages::ToolResultOptions{
+            projected.shapes.push_back(messages::MessageShape::UserToolResult);
+            projected.rows.push_back(messages::ToolResultOptions{
                 .tool_name = m.tool_name.value_or("tool"),
                 .status = m.is_error
                     ? messages::ToolResultStatus::Error
@@ -258,10 +323,10 @@ using namespace ftxui;
             // Wired through ReplScreenCallbacks.on_clear_session below.
             err_opts.on_clear_session = on_clear_session;
             err_opts.show_buttons = true;
-            input.shapes.push_back(messages::MessageShape::SystemAPIError);
-            input.rows.push_back(std::move(err_opts));
+            projected.shapes.push_back(messages::MessageShape::SystemAPIError);
+            projected.rows.push_back(std::move(err_opts));
         } else {
-            input.shapes.push_back(messages::MessageShape::SystemText);
+            projected.shapes.push_back(messages::MessageShape::SystemText);
             // Bridge the system-row subtype so the LIVE faithful renderer
             // (RenderSystemTextMessageFaithful dispatches per subtype) shows
             // the right glyph (※ away_summary / ✻ event / ⏺ generic).  When
@@ -301,14 +366,36 @@ using namespace ftxui;
                     return ST::ModelSwitch;
                 return ST::Plain;
             };
-            input.rows.push_back(messages::SystemTextMessageData{
+            projected.rows.push_back(messages::SystemTextMessageData{
                 .subtype = derive_subtype(m.content_preview, m.system_subtype),
                 .summary = m.content_preview,
                 .detail = {},
                 .timestamp = m.timestamp,
                 .is_transcript_mode = is_transcript_mode});
         }
+
+        if (index < input.rows.size()) {
+            input.rows[index] = std::move(projected.rows.front());
+            input.shapes[index] = projected.shapes.front();
+            input.uuids[index] = std::move(projected.uuids.front());
+        } else {
+            input.rows.push_back(std::move(projected.rows.front()));
+            input.shapes.push_back(projected.shapes.front());
+            input.uuids.push_back(std::move(projected.uuids.front()));
+        }
+        if (index < input.lowered_search_cache.size())
+            input.lowered_search_cache[index].reset();
+        if (store) {
+            auto& cached_source = store->render_sources[index];
+            cached_source = m;
+            if (cached_source.image_block) {
+                // Image rows consume metadata only. Release the base64 buffer
+                // rather than retaining another copy in the render cache.
+                std::string{}.swap(cached_source.image_block->data);
+            }
+        }
     }
+    if (store) store->render_sources_transcript_mode = is_transcript_mode;
 
     if (sel >= 0)
         input.selected_row_idx = static_cast<std::size_t>(sel);

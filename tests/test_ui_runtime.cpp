@@ -16,6 +16,7 @@
 
 import std;
 import loom.ui.app.app;
+import loom.ui.app.paste_coordinator;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
 import loom.ui.messages.message_image;
@@ -570,6 +571,8 @@ TEST(AppRuntime, DynamicPromptSuggestionsCoverSkillsFilesAndCursorEditing) {
     const auto cwd_root = fs::temp_directory_path() /
         ("loom_ui_dynamic_suggestions_cwd_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    ScopedEnvVar native_runtime_guard("LOOM_AGENT_RUNTIME_DIR");
+    native_runtime_guard.set((cwd_root / ".loom" / "agent-runtime").string());
     const auto skills_dir = cwd_root / ".loom" / "skills" / "cpp-review";
     fs::create_directories(skills_dir);
     {
@@ -2347,4 +2350,250 @@ TEST(LiveTeamsUi, TeammatePermissionRequestRoutesThroughToolPermission) {
     std::error_code ec;
     fs::remove_all(runtime_dir, ec);
     fs::remove_all(storage_root, ec);
+}
+
+namespace {
+
+struct DirectoryCompletionCacheApp {
+    static fs::path create_root() {
+        const auto path = fs::temp_directory_path() /
+            ("loom_directory_completion_cache_" +
+             std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        fs::create_directories(path);
+        return path;
+    }
+
+    static loom::core::QueryEngineConfig config_for(const fs::path& cwd) {
+        loom::core::QueryEngineConfig config;
+        config.context_window.auto_compact = false;
+        config.cwd = cwd.string();
+        return config;
+    }
+
+    fs::path root = create_root();
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngine engine{config_for(root), tools};
+    loom::commands::AppCommandRegistry commands;
+    std::shared_ptr<loom::ui::AppAdapter> app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, root / "storage", [] {});
+
+    ~DirectoryCompletionCacheApp() {
+        app.reset();
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
+
+    void complete(std::string text) {
+        ASSERT_FALSE(text.empty());
+        const auto final_character = text.substr(text.size() - 1);
+        text.pop_back();
+        test_seams(app).set_input_text_for_testing(std::move(text));
+        ASSERT_TRUE(app->OnEvent(ftxui::Event::Character(final_character)));
+    }
+
+    std::vector<std::string> suggestions() const {
+        return test_seams(app).autocomplete_suggestions_for_testing();
+    }
+};
+
+} // namespace
+
+TEST(AppRuntime, DirectoryCompletionCacheFiltersCurrentInputAndReplacementRange) {
+    DirectoryCompletionCacheApp ctx;
+    fs::create_directories(ctx.root / "alpha");
+    fs::create_directories(ctx.root / "beta");
+    ctx.complete("/add-dir alph");
+    EXPECT_EQ(ctx.suggestions(), (std::vector<std::string>{"alpha/"}));
+
+    // Query filtering and token ranges are rebuilt even when sources are cached.
+    ctx.complete("/add-dir be");
+    ASSERT_EQ(ctx.suggestions(), (std::vector<std::string>{"beta/"}));
+    EXPECT_TRUE(ctx.app->OnEvent(ftxui::Event::Tab));
+    EXPECT_EQ(test_seams(ctx.app).input_text_for_testing(), "/add-dir beta/");
+}
+
+TEST(AppRuntime, DirectoryCompletionCacheReusesSourceUntilExpiredRefresh) {
+    DirectoryCompletionCacheApp ctx;
+    fs::create_directories(ctx.root / "alpha");
+    fs::create_directories(ctx.root / "beta");
+    ctx.complete("/add-dir al");
+    ASSERT_EQ(ctx.suggestions(), (std::vector<std::string>{"alpha/"}));
+
+    fs::remove(ctx.root / "beta");
+    fs::create_directories(ctx.root / "bravo");
+    ctx.complete("/add-dir b");
+    EXPECT_EQ(ctx.suggestions(), (std::vector<std::string>{"beta/"}));
+
+    // No constant-frequency refresh is needed: the first completion request
+    // after the TTL and input pause observes the changed filesystem.
+    std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+    ctx.complete("/add-dir br");
+    EXPECT_EQ(ctx.suggestions(), (std::vector<std::string>{"bravo/"}));
+}
+
+TEST(AppRuntime, DirectoryCompletionCacheInvalidatesParentAndWorkingDirectory) {
+    DirectoryCompletionCacheApp ctx;
+    fs::create_directories(ctx.root / "left" / "alpha");
+    fs::create_directories(ctx.root / "right" / "beta");
+    ctx.complete("/add-dir left/a");
+    EXPECT_EQ(ctx.suggestions(), (std::vector<std::string>{"left/alpha/"}));
+    ctx.complete("/add-dir right/b");
+    EXPECT_EQ(ctx.suggestions(), (std::vector<std::string>{"right/beta/"}));
+
+    // A relative parent must resolve against the new cwd immediately, even
+    // while the old parent directory's cached source is still within its TTL.
+    fs::create_directories(ctx.root / "other" / "left" / "alpine");
+    ctx.engine.set_working_directory((ctx.root / "other").string());
+    ctx.app->SyncState();
+    ctx.complete("/add-dir left/al");
+    ASSERT_EQ(ctx.suggestions(), (std::vector<std::string>{"left/alpine/"}));
+    EXPECT_TRUE(ctx.app->OnEvent(ftxui::Event::Tab));
+    EXPECT_EQ(test_seams(ctx.app).input_text_for_testing(), "/add-dir left/alpine/");
+}
+
+TEST(PasteCoordinator, SubmissionDrainPreservesNewDraftResults) {
+    loom::ui::PasteCoordinator coordinator;
+    const int submitted_id = coordinator.allocate_paste_id();
+    const int draft_id = coordinator.allocate_paste_id();
+    coordinator.SpawnPasteWorker(submitted_id, [] {}, true);
+    coordinator.SpawnPasteWorker(draft_id, [] {}, true);
+
+    std::unordered_map<int, loom::core::ImageBlock> images;
+    std::unordered_set<int> failures;
+    std::unordered_map<int, std::string> texts;
+    coordinator.set_pending_drain_ids(std::unordered_set<int>{submitted_id});
+    coordinator.drain_pending(images, failures, texts);
+    ASSERT_EQ(images.size(), 1u);
+    EXPECT_TRUE(images.contains(submitted_id));
+    EXPECT_FALSE(images.contains(draft_id));
+    EXPECT_TRUE(failures.empty());
+    EXPECT_TRUE(texts.empty());
+    coordinator.mark_completed(submitted_id);
+    EXPECT_TRUE(coordinator.is_in_flight(draft_id));
+
+    // Draining the submitted snapshot again must leave the draft result
+    // queued; the normal draft drain receives it exactly once afterward.
+    images.clear();
+    coordinator.drain_pending(images, failures, texts);
+    EXPECT_TRUE(images.empty());
+    coordinator.set_pending_drain_ids(std::nullopt);
+    coordinator.drain_pending(images, failures, texts);
+    ASSERT_EQ(images.size(), 1u);
+    EXPECT_TRUE(images.contains(draft_id));
+    coordinator.mark_completed(draft_id);
+    EXPECT_FALSE(coordinator.has_in_flight());
+    images.clear();
+    coordinator.drain_pending(images, failures, texts);
+    EXPECT_TRUE(images.empty());
+}
+
+TEST(AppRuntime, QueryWithoutStreamEventsDoesNotDriveRenderTicker) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, std::nullopt, [] {});
+    test_seams(app).set_query_running_for_testing(true);
+    (void)app->Render();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    const auto ticks = test_seams(app).ui_animation_tick_count_for_testing();
+    std::this_thread::sleep_for(std::chrono::milliseconds(160));
+    EXPECT_EQ(test_seams(app).ui_animation_tick_count_for_testing(), ticks);
+    test_seams(app).set_query_running_for_testing(false);
+}
+
+TEST(AppRuntime, CommittedProjectionRefreshesSameIdContentAndSessionReset) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, std::nullopt, [] {});
+    loom::core::AssistantMessage message;
+    message.id.value = "stable-source";
+    message.timestamp = std::chrono::system_clock::now();
+    message.content.push_back(loom::core::TextBlock{"first"});
+    engine.restore_conversation({message});
+    test_seams(app).set_query_running_for_testing(true);
+    (void)app->Render();
+    const auto first = test_seams(app).messages_for_testing();
+    ASSERT_EQ(first.size(), 1u);
+    EXPECT_NE(first[0].find("first"), std::string::npos);
+    (void)app->Render();
+    EXPECT_EQ(test_seams(app).messages_for_testing(), first);
+    std::get<loom::core::TextBlock>(message.content[0]).text = "other";
+    engine.restore_conversation({message});
+    test_seams(app).notify_conversation_changed_for_testing();
+    (void)app->Render();
+    const auto changed = test_seams(app).messages_for_testing();
+    ASSERT_EQ(changed.size(), 1u);
+    EXPECT_NE(changed[0].find("other"), std::string::npos);
+    engine.clear_conversation();
+    test_seams(app).notify_conversation_changed_for_testing();
+    (void)app->Render();
+    EXPECT_TRUE(test_seams(app).messages_for_testing().empty());
+    test_seams(app).set_query_running_for_testing(false);
+}
+
+TEST(AppRuntime, DeferredPasteSubmissionConsumesAttachmentAndPreservesNewDraft) {
+    LocalChunkedMessagesStreamServer server;
+    ASSERT_TRUE(server.valid());
+    const auto root = DirectoryCompletionCacheApp::create_root();
+    ScopedEnvVar history_env("LOOM_HISTORY_FILE");
+    history_env.set((root / "history.jsonl").string());
+    loom::core::ToolRegistry tools;
+    auto config = DirectoryCompletionCacheApp::config_for(root);
+    config.api_key = "test-key";
+    config.base_url = server.base_url();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, root / "storage", [] {});
+    ReleaseAfterCancelGuard release_guard{server};
+    test_seams(app).set_no_real_paste_worker_for_testing(true);
+
+    // The fake worker queues a result without a render/event drain, retaining
+    // the same in-flight state as a clipboard worker that has just completed.
+    ASSERT_TRUE(app->OnEvent(ftxui::Event::Character('\x16')));
+    const auto submitted = test_seams(app).input_text_for_testing();
+    ASSERT_EQ(submitted, "[Image #1]");
+    ASSERT_FALSE(test_seams(app).has_pasted_content_for_testing(1));
+    const auto started = std::chrono::steady_clock::now();
+    test_seams(app).handle_submit_for_testing(submitted);
+    EXPECT_LT(std::chrono::steady_clock::now() - started,
+              std::chrono::milliseconds(500));
+    EXPECT_FALSE(test_seams(app).is_query_running_for_testing());
+
+    // A new draft and its already-completed image must survive consuming the
+    // pending submission's references on the worker completion event.
+    test_seams(app).set_input_text_for_testing("next draft [Image #99]");
+    loom::core::ImageBlock draft_image;
+    draft_image.media_type = "image/png";
+    draft_image.data = "new-draft-image";
+    test_seams(app).inject_pasted_image_for_testing(99, std::move(draft_image));
+    (void)app->OnEvent(ftxui::Event::Custom);
+    EXPECT_FALSE(test_seams(app).has_pasted_content_for_testing(1));
+    EXPECT_TRUE(test_seams(app).has_pasted_content_for_testing(99));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "next draft [Image #99]");
+    ASSERT_TRUE(server.wait_for_first_delta());
+    const auto body = server.last_body();
+    ASSERT_TRUE(body.has_value());
+    EXPECT_NE(body->find("iVBORw0KGgo="), std::string::npos);
+    EXPECT_EQ(body->find("new-draft-image"), std::string::npos);
+
+    server.release_after_cancel();
+    ASSERT_TRUE(wait_until([&] {
+        (void)app->Render();
+        return !test_seams(app).is_query_running_for_testing();
+    }, std::chrono::seconds(3)));
+    EXPECT_EQ(test_seams(app).input_text_for_testing(), "next draft [Image #99]");
+    EXPECT_TRUE(test_seams(app).has_pasted_content_for_testing(99));
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(root, ec);
 }

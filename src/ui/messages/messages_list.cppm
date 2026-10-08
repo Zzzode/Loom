@@ -552,7 +552,7 @@ struct VisibleRow {
 /// Complexity guarantee: exactly ONE linear pass over input.rows plus ONE
 /// pass over compact_boundary_groups (sorted).  Uses a std::vector<bool>
 /// membership table for O(1) "is this row inside a compact group?" lookups.
-auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow>;
+auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRow>;
 
 // =========================================================================
 // 3b) Estimated row height + VisibleRow → virtual_list::VisibleRow converter

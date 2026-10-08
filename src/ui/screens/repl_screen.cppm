@@ -125,8 +125,8 @@ namespace unseen_detail {
 [[nodiscard]] std::optional<::loom::ui::messages_list::UnseenDivider>
 ComputeUnseenDivider(const ReplScreenState& s);
 
-/// Project state.messages_store.messages, appending the active local-jsx command rows.
-[[nodiscard]] std::vector<MessageDisplayEntry> BuildVisibleMessages(
+/// Borrow store rows; append active local-jsx rows in store-owned scratch storage.
+[[nodiscard]] const std::vector<MessageDisplayEntry>& BuildVisibleMessages(
     const ReplScreenState& s);
 
 // UI4/UI5: message list.  Delegates to messages_list.cppm (UI21).

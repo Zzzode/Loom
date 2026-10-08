@@ -51,15 +51,31 @@ public:
 
     [[nodiscard]] std::mutex& paste_mutex() noexcept { return paste_mutex_; }
 
-    /// Swap out all pending results/failures (render thread drains them).
+    // Restrict one UI-thread drain to a submission snapshot. Draft results
+    // stay queued until the submission has consumed its own references.
+    void set_pending_drain_ids(std::optional<std::unordered_set<int>> ids) {
+        pending_drain_ids_ = std::move(ids);
+    }
+
+    /// Swap out pending results/failures (render thread drains them).
     void drain_pending(
         std::unordered_map<int, loom::core::ImageBlock>& results,
         std::unordered_set<int>& failures,
         std::unordered_map<int, std::string>& text_results) {
         std::lock_guard lk(paste_mutex_);
-        results.swap(pending_paste_results_);
-        failures.swap(pending_paste_failures_);
-        text_results.swap(pending_paste_text_results_);
+        if (!pending_drain_ids_) {
+            results.swap(pending_paste_results_);
+            failures.swap(pending_paste_failures_);
+            text_results.swap(pending_paste_text_results_);
+            return;
+        }
+        for (int id : *pending_drain_ids_) {
+            if (auto node = pending_paste_results_.extract(id); !node.empty())
+                results.insert(std::move(node));
+            if (pending_paste_failures_.erase(id)) failures.insert(id);
+            if (auto node = pending_paste_text_results_.extract(id); !node.empty())
+                text_results.insert(std::move(node));
+        }
     }
 
     // ── Pasted content (render-thread-only, no lock needed) ───────────
@@ -99,6 +115,8 @@ private:
     std::unordered_map<int, loom::core::ImageBlock> pending_paste_results_;
     std::unordered_set<int> pending_paste_failures_;
     std::unordered_map<int, std::string> pending_paste_text_results_;
+
+    std::optional<std::unordered_set<int>> pending_drain_ids_; // UI-thread-only
 
     // In-flight tracking (main-thread-only).
     std::unordered_set<int> in_flight_pastes_;

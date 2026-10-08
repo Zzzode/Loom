@@ -245,11 +245,28 @@ private:
     std::vector<acsrc::SkillSuggestionData> cached_skills_;
     std::vector<acsrc::PluginCommandSuggestionData> cached_plugin_commands_;
     std::atomic<std::uint64_t> ui_animation_tick_count_{0};
+    std::atomic<bool> welcome_animation_active_{true};
+    std::atomic<std::int64_t> thinking_collapse_deadline_ms_{0};
+    std::atomic<std::int64_t> paste_submission_deadline_ms_{0};
+    std::atomic<bool> conversation_projection_dirty_{true};
+    struct CachedMessageProjection {
+        Message source;
+        std::vector<repl::MessageDisplayEntry> rows;
+    };
+    std::vector<CachedMessageProjection> committed_projection_cache_;
+    std::size_t committed_row_count_ = 0;
+    std::uint64_t committed_source_count_ = 0;
+    struct PendingPasteSubmission {
+        std::string text;
+        repl::InputMode mode;
+        std::chrono::steady_clock::time_point deadline;
+    };
+    std::optional<PendingPasteSubmission> pending_paste_submission_;
     std::mutex result_mutex_;
     std::optional<std::string> pending_error_;
     // P4-1b: async clipboard paste state + worker extracted to
     // PasteCoordinator.  AppAdapter keeps ProcessCompletedPastes and
-    // WaitForInFlightPastes (they need screen_state_) and accesses the
+    // DrainCompletedPastesAndSubmit (they need screen_state_) and accesses the
     // coordinator's state through its accessors.
     PasteCoordinator paste_;
     // Local '!' bash command output posted back from bash_thread_ (bg→UI),
@@ -404,9 +421,8 @@ private:
     std::string last_branch_cwd_;
     std::string cached_git_branch_;
 
-    // Animation ticker — body in app_animation.cpp (RFC 0001 Phase C
-    // batch 2). The jthread lambda moves verbatim: same `this` capture,
-    // same stop_token loop, same TriggerStatuslineUpdate() call.
+    // Advance the bounded welcome intro and post one-shot expiry events.
+    // Query spinner frames advance through stream/commit-driven renders.
     void StartUiAnimationTicker();
 
     // Post(Event::Custom) helper — body in app_animation.cpp (RFC 0001
@@ -518,7 +534,8 @@ public:
                std::function<void()> on_exit);
 
     void HandleSubmit(const std::string& text,
-                      repl::InputMode submit_mode = repl::InputMode::Normal);
+                      repl::InputMode submit_mode = repl::InputMode::Normal,
+                      bool wait_for_pastes = true);
 
     void HandleCommand(std::string_view cmd);
 
@@ -613,16 +630,9 @@ public:
     /// with the actual text (truncating if >10K chars).
     void ProcessCompletedPastes();
 
-    /// Block (main thread, brief) until every [Image #N] referenced in `text`
-    /// that still has an in-flight paste worker has either landed in
-    /// pasted_contents_ / pending_paste_results_ / pending_paste_failures_.
-    /// This closes the Ctrl+V→Enter race where a fast submit would snapshot
-    /// pasted_contents_ before the PNG data arrived.
-    ///
-    /// Bounded wait (default ~3s) so a stuck/leaked worker never wedges the UI.
-    /// Drains completed results on each tick so pasted_contents_ is fresh when
-    /// HandleSubmit reads it immediately after this returns.
-    void WaitForInFlightPastes(const std::string& text);
+    /// Check whether submission must resume on a clipboard completion event.
+    bool HasInFlightPasteReferences(const std::string& text) const;
+    void DrainCompletedPastesAndSubmit();
 
     [[nodiscard]] std::function<bool(std::string_view, std::string_view)> get_permission_callback();
 
@@ -787,6 +797,7 @@ struct AppTestingSeams {
     [[nodiscard]] bool is_loading_for_testing() const noexcept;
     void inject_stream_event_for_testing(const loom::core::StreamEvent& ev);
     void set_query_running_for_testing(bool running);
+    void notify_conversation_changed_for_testing();
     void clear_streaming_thinking_for_testing();
 
     // ── Animation / statusline ─────────────────────────────────────

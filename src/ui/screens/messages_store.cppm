@@ -118,6 +118,14 @@ struct MessagesStore {
     /// Per-row rendering delegated to message_row.cppm (UI4/UI5).
     std::vector<MessageDisplayEntry> messages;
 
+    /// Scratch rows used only while a local command overlay is active.
+    mutable std::vector<MessageDisplayEntry> local_overlay_rows;
+
+    /// Retained view payloads. Only changed source rows are projected again.
+    ::loom::ui::messages_list::MessagesListInput render_input;
+    std::vector<MessageDisplayEntry> render_sources;
+    bool render_sources_transcript_mode = false;
+
     // ── Scroll / transcript chrome ──────────────────────────────────────
     int scroll_offset = 0, selected_message_idx = -1;
     int viewport_height_lines = 40;

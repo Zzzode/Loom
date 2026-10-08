@@ -97,10 +97,15 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     return ud;
 }
 
-[[nodiscard]] std::vector<MessageDisplayEntry> BuildVisibleMessages(
+[[nodiscard]] const std::vector<MessageDisplayEntry>& BuildVisibleMessages(
     const ReplScreenState& s) {
-    auto entries = s.messages_store.messages;
-    if (!s.active_local_jsx_command) return entries;
+    if (!s.active_local_jsx_command) {
+        // Closing the overlay releases its owned transcript payloads.
+        s.messages_store.local_overlay_rows.clear();
+        return s.messages_store.messages;
+    }
+    auto& entries = s.messages_store.local_overlay_rows;
+    entries = s.messages_store.messages;
 
     MessageDisplayEntry command;
     command.role = "user";
@@ -268,7 +273,7 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
         return true;
     }
 
-    const auto visible_messages = BuildVisibleMessages(*state);
+    const auto& visible_messages = BuildVisibleMessages(*state);
     if (visible_messages.empty()) return false;
     const int max_offset =
         std::max(0, EstimateTranscriptRows(visible_messages) - viewport_rows);

@@ -197,7 +197,16 @@ using namespace ftxui;
     // and the declared cursor lands at the right screen column.)
 
     // --- 2. Sync a TextInputImpl from the projection --------------------
-    uic::TextInputOptions opts;
+    if (!s.prompt_render_input) {
+        uic::TextInputOptions initial;
+        initial.multiline = true;
+        initial.show_line_numbers = false;
+        initial.enable_undo_redo = false;
+        initial.cursor_blink_ms = 0;
+        initial.show_history = false;
+        s.prompt_render_input = std::make_shared<uic::TextInputImpl>(initial);
+    }
+    uic::RenderOptions opts;
     // Compute contextual placeholder via the cascade.
     // If the cascade returns nullopt (no condition matched), fall back to
     // the static input_placeholder string for backward compatibility with
@@ -209,21 +218,15 @@ using namespace ftxui;
     }
     opts.prefix       = std::move(prefix_str);   // ← RENDERED INSIDE now (BUG-2 fix)
     opts.prefix_color = prefix_color;            // ← new field: explicit color for prefix
-    opts.multiline    = true;
-    opts.show_line_numbers = false;
-    opts.enable_undo_redo   = false;
-    opts.cursor_blink_ms    = 0;   // deterministic snapshot (no flicker)
-    opts.show_history       = false;
     opts.argument_hint      = s.pending_argument_hint;  // SL-03
     opts.inline_ghost_text = s.pending_ghost_text;      // SL-05
-    auto impl = std::make_shared<uic::TextInputImpl>(std::move(opts));
-    impl->set_text(s.input_text);  // parks cursor at end of buffer
+    const auto& impl = s.prompt_render_input;
+    impl->update_render_options(opts);
+    if (impl->text() != s.input_text) impl->set_text(s.input_text);
     const auto cursor = input_cursor_or_end(s);
-    const auto end = s.input_text.size();
-    if (cursor < end) {
-        impl->move_cursor(
-            -static_cast<int>(end - cursor),
-            /*extend_selection=*/false);
+    const auto cursor_delta = static_cast<int>(cursor) - impl->cursor();
+    if (cursor_delta != 0) {
+        impl->move_cursor(cursor_delta, /*extend_selection=*/false);
     }
 
     // --- 3. Render the input area from the REAL component ---------------

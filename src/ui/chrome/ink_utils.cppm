@@ -9,9 +9,9 @@ module;
 #include <cstdint>
 #include <cstddef>
 #include <cstdlib>
+#include <ftxui/component/screen_interactive.hpp>
 
 #ifndef _WIN32
-#include <sys/ioctl.h>
 #include <unistd.h>
 #else
 #include <windows.h>
@@ -524,22 +524,12 @@ inline auto get_focus_state() -> FocusState {
     };
 }
 
-/// Queries the terminal for its current size (width, height in columns/rows).
+/// Returns the size already tracked by the active FTXUI screen.
 inline auto query_terminal_size() -> std::pair<int, int> {
-#ifndef _WIN32
-    struct winsize ws{};
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_col > 0 && ws.ws_row > 0) {
-        return {static_cast<int>(ws.ws_col), static_cast<int>(ws.ws_row)};
+    if (const auto* screen = ftxui::ScreenInteractive::Active();
+        screen != nullptr && screen->dimx() > 0 && screen->dimy() > 0) {
+        return {screen->dimx(), screen->dimy()};
     }
-#else
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (GetConsoleScreenBufferInfo(h, &csbi)) {
-        int cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-        int rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-        if (cols > 0 && rows > 0) return {cols, rows};
-    }
-#endif
 
     // Fallback: check COLUMNS and LINES env vars
     const char* cols_env = std::getenv("COLUMNS");

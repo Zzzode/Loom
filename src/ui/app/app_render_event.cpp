@@ -13,7 +13,7 @@
 //   app_handle_submit.cpp  — HandleSubmit, HandleCommand
 //   app_agent_menu.cpp     — FormatAgentsMenuOutput, LoadAgentCardsForMenu,
 //                           SyncState, ConsumePendingResult,
-//                           WaitForInFlightPastes, get_permission_callback,
+//                           DrainCompletedPastesAndSubmit, get_permission_callback,
 //                           trigger_orphan_cleanup_for_testing
 //   app_extra_methods.cpp  — RunLocalBashCommand, ProjectRuntimeMetadataToScreenState,
 //                           ApplyMessageCollapsePipeline, SpawnPasteWorker,
@@ -43,6 +43,7 @@ import loom.ui.foundation.declared_cursor;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
+import loom.ui.screens.task_view_store;
 import loom.diagnostics.debug;
 import loom.platform.hyperlink;
 import loom.text.parse_references;
@@ -56,6 +57,60 @@ agent_cards::AgentCardData project_agent_definition_card(
     const agent_runtime::AgentDefinition& agent);
 
 namespace repl = loom::ui::repl_screen;
+
+namespace {
+// Compare projection inputs exactly; hashes alone could hide a changed row.
+bool same_projection_block(const ContentBlock& a, const ContentBlock& b) {
+    if (a.index() != b.index()) return false;
+    return std::visit([&b](const auto& x) {
+        using T = std::decay_t<decltype(x)>;
+        const auto& y = std::get<T>(b);
+        if constexpr (std::is_same_v<T, TextBlock>) return x.text == y.text;
+        else if constexpr (std::is_same_v<T, ThinkingBlock>)
+            return x.thinking == y.thinking && x.signature == y.signature;
+        else if constexpr (std::is_same_v<T, ToolUseBlock>)
+            return x.id == y.id && x.name == y.name && x.input_json == y.input_json;
+        else if constexpr (std::is_same_v<T, ToolResultBlock>) {
+            if (x.tool_use_id != y.tool_use_id || x.is_error != y.is_error ||
+                x.content.index() != y.content.index()) return false;
+            if (auto text = std::get_if<std::string>(&x.content))
+                return *text == std::get<std::string>(y.content);
+            const auto& xi = std::get<std::vector<ToolResultContentItem>>(x.content);
+            const auto& yi = std::get<std::vector<ToolResultContentItem>>(y.content);
+            return xi.size() == yi.size() && std::equal(xi.begin(), xi.end(), yi.begin(),
+                [](const auto& l, const auto& r) {
+                    return l.type == r.type && l.text == r.text &&
+                           l.media_type == r.media_type && l.data == r.data;
+                });
+        } else if constexpr (std::is_same_v<T, ImageBlock>)
+            return x.media_type == y.media_type && x.data == y.data &&
+                   x.width == y.width && x.height == y.height &&
+                   x.size_bytes == y.size_bytes && x.file_name == y.file_name &&
+                   x.source_path == y.source_path && x.source == y.source;
+        else return x.media_type == y.media_type && x.data == y.data;
+    }, a);
+}
+
+bool same_projection_message(const Message& a, const Message& b) {
+    if (a.index() != b.index()) return false;
+    return std::visit([&b](const auto& x) {
+        using T = std::decay_t<decltype(x)>;
+        const auto& y = std::get<T>(b);
+        if (x.id != y.id || x.timestamp != y.timestamp ||
+            x.content.size() != y.content.size() ||
+            !std::equal(x.content.begin(), x.content.end(), y.content.begin(),
+                        same_projection_block)) return false;
+        if constexpr (std::is_same_v<T, ToolUseMessage>)
+            return x.tool_name == y.tool_name && x.tool_input_json == y.tool_input_json;
+        if constexpr (std::is_same_v<T, ToolResultMessage>)
+            return x.tool_use_id == y.tool_use_id && x.tool_name == y.tool_name &&
+                   x.is_error == y.is_error;
+        if constexpr (std::is_same_v<T, AssistantMessage>)
+            return x.stop_reason == y.stop_reason && x.model == y.model;
+        return true;
+    }, a);
+}
+} // namespace
 
 // ── Virtual/override methods (moved out of class body to fix vtable crash) ──
 // These were previously defined inline in AppAdapter's class body.  Moving
@@ -132,6 +187,10 @@ Element AppAdapter::Render() {
     // thread for input_text safety).
     DrainPendingAtMentionInserts();
 
+    welcome_animation_active_.store(
+        screen_state_->messages_store.messages.empty() &&
+        !query_running_.load() &&
+        !repl::IsToolAnimating(screen_state_->task_view_store));
     const bool qr = query_running_.load();
     loom::utils::debug("app.render",
         "Render: query_running={}, messages={}, spinner_mode={}",
@@ -142,17 +201,11 @@ Element AppAdapter::Render() {
         std::lock_guard lk(result_mutex_);
 
         const auto now = std::chrono::system_clock::now();
-        auto messages = static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
-        // Collapse chain for background-bash and similar collapsible rows.
-        messages = ApplyMessageCollapsePipeline(std::move(messages));
-        // Build the new message list in a local vector, then swap at the
-        // end.  This prevents a one-frame blank screen: the store is
-        // never observed in a cleared-but-not-yet-rebuilt state.
-        std::vector<repl::MessageDisplayEntry> new_messages;
-        new_messages.reserve(
-            messages.size() + streaming_tools_.size() +
-            streaming_thinking_.size() + 1);
-
+        auto& new_messages = screen_state_->messages_store.messages;
+        // Completed rows remain in place between engine commits. Only the
+        // in-flight tail is regenerated for stream events or UI input.
+        const bool committed_dirty = conversation_projection_dirty_.exchange(false);
+        if (!committed_dirty) new_messages.resize(committed_row_count_);
         // Same uuid-assignment pattern as SyncState above — per-source
         // Message 24-char prefix shared by all derived sub-rows.
         auto make_uuid24 = [](std::uint64_t msg_idx, const std::string& seed) {
@@ -164,66 +217,85 @@ Element AppAdapter::Render() {
                           (unsigned long long)(h & 0xFFFFFFFFULL));
             return std::string(buf, 24);
         };
-        std::uint64_t tick_msg_idx = 0;
+        std::uint64_t tick_msg_idx = committed_source_count_;
+        if (committed_dirty) {
+            auto messages = static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
+            messages = ApplyMessageCollapsePipeline(std::move(messages));
+            new_messages.clear();
+            new_messages.reserve(messages.size() + streaming_tools_.size() + streaming_thinking_.size() + 1);
+            tick_msg_idx = 0;
+            std::size_t source_index = 0;
 
-        // Project completed messages (skip system prompt, split mixed assistant).
-        for (const auto& msg : messages) {
-            if (std::holds_alternative<SystemMessage>(msg)) continue;
-            auto projected = project_messages(msg);
-            std::string seed_preview;
-            std::visit([&](const auto& m) {
-                if constexpr (requires{ m.content; }) {
-                    for (const auto& blk : m.content) {
-                        if (const auto* tb = std::get_if<TextBlock>(&blk)) {
-                            seed_preview += tb->text.substr(0, 64);
-                            break;
+            // Project completed messages (skip system prompt, split mixed assistant).
+            for (const auto& msg : messages) {
+                if (std::holds_alternative<SystemMessage>(msg)) continue;
+                if (source_index == committed_projection_cache_.size()) {
+                    committed_projection_cache_.push_back({msg, project_messages(msg)});
+                } else if (!same_projection_message(
+                               committed_projection_cache_[source_index].source, msg)) {
+                    committed_projection_cache_[source_index] = {msg, project_messages(msg)};
+                }
+                const auto& projected = committed_projection_cache_[source_index++].rows;
+                std::string seed_preview;
+                std::visit([&](const auto& m) {
+                    if constexpr (requires{ m.content; }) {
+                        for (const auto& blk : m.content) {
+                            if (const auto* tb = std::get_if<TextBlock>(&blk)) {
+                                seed_preview += tb->text.substr(0, 64);
+                                break;
+                            }
                         }
                     }
+                }, msg);
+                const std::string u24 = make_uuid24(tick_msg_idx, seed_preview);
+                for (const auto& cached_row : projected) {
+                    auto e = cached_row;
+                    e.id = u24;
+                    // Enrich committed thinking entries with cached duration.
+                    // ThinkingBlock in the core types has no timing info, so
+                    // the duration was cached when the streaming block completed.
+                    if (e.is_thinking && e.thinking_duration.count() == 0 &&
+                        !e.full_content.empty()) {
+                        auto it = thinking_duration_cache_.find(e.full_content);
+                        if (it != thinking_duration_cache_.end()) {
+                            e.thinking_duration = it->second;
+                        }
+                    }
+                    new_messages.push_back(std::move(e));
                 }
-            }, msg);
-            const std::string u24 = make_uuid24(tick_msg_idx, seed_preview);
-            for (auto& e : projected) {
-                e.id = u24;
-                // Enrich committed thinking entries with cached duration.
-                // ThinkingBlock in the core types has no timing info, so
-                // the duration was cached when the streaming block completed.
-                if (e.is_thinking && e.thinking_duration.count() == 0 &&
-                    !e.full_content.empty()) {
-                    auto it = thinking_duration_cache_.find(e.full_content);
-                    if (it != thinking_duration_cache_.end()) {
-                        e.thinking_duration = it->second;
+                ++tick_msg_idx;
+            }
+            committed_projection_cache_.resize(source_index);
+            // Append local-command messages (same logic as
+            // AppendLocalMessagesToScreenState, but into the local vector).
+            {
+                static std::uint64_t s_local_seq = 0;
+                for (auto it = local_command_messages_.begin();
+                     it != local_command_messages_.end(); ++it) {
+                    if (it->id.empty()) {
+                        char buf[32];
+                        std::snprintf(buf, sizeof(buf), "loc_%016llx",
+                                      (unsigned long long)s_local_seq++);
+                        it->id = std::string(buf, 24);
                     }
                 }
-                new_messages.push_back(std::move(e));
+                new_messages.insert(new_messages.end(),
+                                    local_command_messages_.begin(),
+                                    local_command_messages_.end());
             }
-            ++tick_msg_idx;
-        }
-        // Append local-command messages (same logic as
-        // AppendLocalMessagesToScreenState, but into the local vector).
-        {
-            static std::uint64_t s_local_seq = 0;
-            for (auto it = local_command_messages_.begin();
-                 it != local_command_messages_.end(); ++it) {
-                if (it->id.empty()) {
-                    char buf[32];
-                    std::snprintf(buf, sizeof(buf), "loc_%016llx",
-                                  (unsigned long long)s_local_seq++);
-                    it->id = std::string(buf, 24);
-                }
-            }
-            new_messages.insert(new_messages.end(),
-                                local_command_messages_.begin(),
-                                local_command_messages_.end());
-        }
-        // Restore chronological order (see SyncState). Applied BEFORE the
-        // in-flight streaming projection so streaming rows stay last.
-        std::stable_sort(
-            new_messages.begin(),
-            new_messages.end(),
-            [](const repl::MessageDisplayEntry& a,
-               const repl::MessageDisplayEntry& b) {
+            // Restore chronological order (see SyncState). Applied BEFORE the
+            // in-flight streaming projection so streaming rows stay last.
+            const auto chronological = [](const repl::MessageDisplayEntry& a,
+                                          const repl::MessageDisplayEntry& b) {
                 return a.timestamp < b.timestamp;
-            });
+            };
+            if (!std::is_sorted(new_messages.begin(), new_messages.end(), chronological)) {
+                std::stable_sort(new_messages.begin(), new_messages.end(), chronological);
+            }
+
+            committed_source_count_ = tick_msg_idx;
+            committed_row_count_ = new_messages.size();
+        }
 
         // ── Faithful live-path: project in-flight content blocks ──
         // Each content block renders as a separate message row as it
@@ -257,6 +329,17 @@ Element AppAdapter::Render() {
                                now - *p.second.streaming_ended_at).count() >= 3;
                 });
         }
+
+        // Re-arm only the next thinking grace transition after an expired one.
+        std::int64_t next_collapse = 0;
+        for (const auto& [index, thinking] : streaming_thinking_) {
+            (void)index;
+            if (!thinking.complete || !thinking.streaming_ended_at) continue;
+            const auto due = std::chrono::duration_cast<std::chrono::milliseconds>(
+                thinking.streaming_ended_at->time_since_epoch()).count() + 3000;
+            if (next_collapse == 0 || due < next_collapse) next_collapse = due;
+        }
+        thinking_collapse_deadline_ms_.store(next_collapse);
 
         if (has_in_flight) {
             bool all_tools_complete = !streaming_tools_.empty() &&
@@ -431,9 +514,7 @@ Element AppAdapter::Render() {
             }
         }
 
-        // Atomically replace the store contents — never leaves the store
-        // in a cleared-but-empty state that would flash a blank screen.
-        screen_state_->messages_store.messages.swap(new_messages);
+        // The UI thread owns the store, so no whole-transcript swap is needed.
     }
 
     // Reset cursor to hidden each frame.
@@ -444,7 +525,7 @@ Element AppAdapter::Render() {
     namespace dc = loom::ui::common::declared_cursor;
     // Drain background paste results on every render frame so the user
     // doesn't need to press another key to see the image data filled in.
-    this->ProcessCompletedPastes();
+    this->DrainCompletedPastesAndSubmit();
     auto el = repl_component_->Render() | dc::cursor_reset();
     // Drag-to-select: paint the selection rectangle's background after
     // the normal render pass.  SelectionHighlightNode (defined in
@@ -455,10 +536,11 @@ Element AppAdapter::Render() {
 }
 
 bool AppAdapter::OnEvent(Event event) {
+    if (event == Event::Return && pending_paste_submission_) return true;
     // Drain any background-thread paste results that completed since the
     // last event.  Must happen on the render thread (we mutate
     // paste_.pasted_contents() and possibly input_text).
-    this->ProcessCompletedPastes();
+    this->DrainCompletedPastesAndSubmit();
 
     // Pane-teammate inbox delivery: the inbox worker posts Custom events when
     // tasks arrive. While idle, submit one queued teammate prompt here on the
@@ -659,6 +741,10 @@ bool AppAdapter::OnEvent(Event event) {
             const auto refs = loom::utils::parse_references(screen_state_->input_text);
             std::unordered_set<int> referenced_ids;
             for (const auto& r : refs) referenced_ids.insert(r.id);
+            if (pending_paste_submission_) {
+                for (const auto& r : loom::utils::parse_references(
+                         pending_paste_submission_->text)) referenced_ids.insert(r.id);
+            }
             for (auto it = paste_.pasted_contents().begin(); it != paste_.pasted_contents().end(); ) {
                 if (!referenced_ids.contains(it->first)) {
                     it = paste_.pasted_contents().erase(it);

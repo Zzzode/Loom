@@ -26,6 +26,10 @@ import loom.ui.foundation.design_figures;
 import loom.ui.foundation.theme_provider;
 import loom.ui.widgets.all_components;
 import loom.ui.messages.user_text_message;
+import loom.ui.messages.api_error_message;
+import loom.ui.messages.message_tool_result;
+import loom.ui.messages.message_image;
+import loom.types.types;
 import loom.ui.foundation.declared_cursor;
 
 namespace {
@@ -795,4 +799,214 @@ TEST(ReplScreen, UserPromptTruncationRenderedInMessage) {
     EXPECT_NE(rendered.find("MARKER_T"), std::string::npos);
     // Truncation separator visible.
     EXPECT_NE(rendered.find("lines \xe2\x80\xa6"), std::string::npos);
+}
+
+TEST(ReplScreen, VisibleTranscriptBorrowsStoreWithoutLocalOverlay) {
+    namespace repl = loom::ui::repl_screen;
+    repl::ReplScreenState state;
+    repl::MessageDisplayEntry entry;
+    entry.role = "user";
+    entry.content_preview = "original message";
+    state.messages_store.messages.push_back(entry);
+
+    EXPECT_EQ(&repl::BuildVisibleMessages(state), &state.messages_store.messages);
+    state.active_local_jsx_command = true;
+    state.active_local_jsx_command_name = "help";
+    state.active_local_jsx_content = "help output";
+    const auto& overlay = repl::BuildVisibleMessages(state);
+    ASSERT_EQ(overlay.size(), 3u);
+    EXPECT_EQ(overlay.front().content_preview, "original message");
+    EXPECT_TRUE(overlay[1].is_local_command_input);
+    EXPECT_TRUE(overlay[2].is_local_jsx_output);
+    EXPECT_EQ(state.messages_store.messages.size(), 1u);
+    state.active_local_jsx_command = false;
+    EXPECT_EQ(&repl::BuildVisibleMessages(state), &state.messages_store.messages);
+    EXPECT_TRUE(state.messages_store.local_overlay_rows.empty());
+}
+
+TEST(ReplScreen, RetainedMessagePayloadTracksMutationsModesAndSessionReset) {
+    namespace repl = loom::ui::repl_screen;
+    repl::MessagesStore store;
+    repl::MessageDisplayEntry entry;
+    entry.id = "one";
+    entry.role = "user";
+    entry.content_preview = std::string(128, 'a');
+    store.messages.push_back(entry);
+    const auto render = [&](bool transcript = false) {
+        return strip_ansi(render_to_plain_text(
+            repl::RenderMessages(store.messages, -1, 40, 0, true, 0,
+                std::nullopt, {}, false, {}, transcript, false, true, false,
+                nullptr, nullptr, nullptr, nullptr, &store), 160, 16));
+    };
+
+    render();
+    const auto* retained = std::get<loom::ui::messages::UserTextMessageData>(
+        store.render_input.rows.front()).content.data();
+    render();
+    EXPECT_EQ(retained, std::get<loom::ui::messages::UserTextMessageData>(
+        store.render_input.rows.front()).content.data());
+    // Same ID and same length must still invalidate an in-place edit.
+    store.messages.front().content_preview = std::string(128, 'b');
+    EXPECT_NE(render().find(std::string(32, 'b')), std::string::npos);
+    EXPECT_EQ(std::get<loom::ui::messages::UserTextMessageData>(
+        store.render_input.rows.front()).content, std::string(128, 'b'));
+    render(true);
+    EXPECT_TRUE(std::get<loom::ui::messages::UserTextMessageData>(
+        store.render_input.rows.front()).is_transcript_mode);
+
+    entry.id = "two";
+    entry.content_preview = "second session row";
+    store.messages.push_back(entry);
+    render(true);
+    ASSERT_EQ(store.render_input.rows.size(), 2u);
+    store.messages.erase(store.messages.begin());
+    EXPECT_NE(render().find("second session row"), std::string::npos);
+    ASSERT_EQ(store.render_input.rows.size(), 1u);
+    EXPECT_EQ(store.render_input.uuids.front(), "two");
+    store.messages.clear();
+    render();
+    EXPECT_TRUE(store.render_input.rows.empty());
+    EXPECT_TRUE(store.render_sources.empty());
+}
+
+TEST(ReplScreen, RetainedMessagePayloadInvalidatesSearchText) {
+    namespace repl = loom::ui::repl_screen;
+    repl::MessagesStore store;
+    repl::MessageDisplayEntry entry;
+    entry.id = "stream";
+    entry.role = "user";
+    entry.content_preview = "alpha";
+    store.messages.push_back(entry);
+    store.render_input.search_query = "alpha";
+    const auto render = [&] {
+        return strip_ansi(render_to_plain_text(
+            repl::RenderMessages(store.messages, -1, 40, 0, true, 0,
+                std::nullopt, {}, false, {}, false, false, true, false,
+                nullptr, nullptr, nullptr, nullptr, &store), 120, 16));
+    };
+    EXPECT_NE(render().find("alpha"), std::string::npos);
+    store.messages.front().content_preview = "bravo";
+    EXPECT_EQ(render().find("bravo"), std::string::npos);
+    store.render_input.search_query = "bravo";
+    EXPECT_NE(render().find("bravo"), std::string::npos);
+}
+
+TEST(ReplScreen, RetainedMessagePayloadRefreshesStructuredResultsAndCallbacks) {
+    namespace repl = loom::ui::repl_screen;
+    repl::MessagesStore store;
+    repl::MessageDisplayEntry result;
+    result.id = "result";
+    result.role = "tool";
+    result.tool_result_content_items.emplace();
+    result.tool_result_content_items->push_back(
+        ::loom::core::ToolResultContentItem{.type = "text", .text = "alpha",
+            .media_type = {}, .data = {}});
+    store.messages.push_back(result);
+    repl::MessageDisplayEntry error;
+    error.id = "error";
+    error.role = "system";
+    error.is_error = true;
+    error.content_preview = "retry needed";
+    store.messages.push_back(error);
+    int retried = 0;
+    const auto render = [&](std::function<void()> retry) {
+        (void)repl::RenderMessages(store.messages, -1, 40, 0, true, 0,
+            std::nullopt, {}, false, {}, false, false, true, false,
+            std::move(retry), nullptr, nullptr, nullptr, &store);
+    };
+    render([&] { retried = 1; });
+    store.messages.front().tool_result_content_items->front().text = "bravo";
+    render([&] { retried = 2; });
+    const auto& items = std::get<loom::ui::messages::ToolResultOptions>(
+        store.render_input.rows.front()).content_items;
+    ASSERT_TRUE(items.has_value());
+    ASSERT_EQ(items->size(), 1u);
+    EXPECT_EQ(items->front().text, "bravo");
+    std::get<loom::ui::messages::api_error_message::APIErrorOptions>(
+        store.render_input.rows.back()).on_retry();
+    EXPECT_EQ(retried, 2);
+}
+
+TEST(ReplScreen, RetainedImagePayloadCachesMetadataWithoutBase64) {
+    namespace repl = loom::ui::repl_screen;
+    namespace image = loom::ui::messages::image;
+    repl::MessagesStore store;
+    repl::MessageDisplayEntry entry;
+    entry.id = "image";
+    entry.role = "user";
+    entry.is_image = true;
+    entry.image_display_id = 1;
+    entry.image_block.emplace();
+    entry.image_block->media_type = "image/png";
+    entry.image_block->data = std::string(1'000'000, 'a');
+    entry.image_block->width = 320;
+    entry.image_block->height = 240;
+    entry.image_block->file_name = std::string(64, 'f');
+    store.messages.push_back(std::move(entry));
+    const auto render = [&] {
+        (void)repl::RenderMessages(store.messages, -1, 40, 0, true, 0,
+            std::nullopt, {}, false, {}, false, false, true, false,
+            nullptr, nullptr, nullptr, nullptr, &store);
+    };
+    render();
+    ASSERT_TRUE(store.render_sources.front().image_block.has_value());
+    EXPECT_TRUE(store.render_sources.front().image_block->data.empty());
+    EXPECT_LT(store.render_sources.front().image_block->data.capacity(), 100u);
+    EXPECT_EQ(store.messages.front().image_block->data.size(), 1'000'000u);
+    const auto* retained_name = std::get<image::ImageMessageData>(
+        store.render_input.rows.front()).file_name.data();
+    // Updating only binary content does not change the displayed image row.
+    store.messages.front().image_block->data.assign(1'000'000, 'b');
+    render();
+    EXPECT_EQ(retained_name, std::get<image::ImageMessageData>(
+        store.render_input.rows.front()).file_name.data());
+    store.messages.front().image_block->width = 640;
+    store.messages.front().image_block->file_name = "changed.png";
+    render();
+    EXPECT_EQ(std::get<image::ImageMessageData>(
+        store.render_input.rows.front()).width, 640u);
+    EXPECT_EQ(std::get<image::ImageMessageData>(
+        store.render_input.rows.front()).file_name, "changed.png");
+    EXPECT_TRUE(store.render_sources.front().image_block->data.empty());
+    EXPECT_LT(store.render_sources.front().image_block->data.capacity(), 100u);
+}
+
+TEST(ReplScreen, HeldPromptInputUpdatesRenderedProjectionAndCursor) {
+    namespace repl = loom::ui::repl_screen;
+    repl::ReplScreenState state;
+    state.input_text = "hello";
+    state.input_cursor = 2;
+    const auto render = [&] {
+        return strip_ansi(render_to_plain_text(
+            repl::RenderPromptInput(state, 80), 80, 8));
+    };
+    EXPECT_NE(render().find("❯ hello"), std::string::npos);
+    ASSERT_TRUE(state.prompt_render_input);
+    const auto* retained = state.prompt_render_input.get();
+    EXPECT_EQ(retained->cursor(), 2);
+    render();
+    EXPECT_EQ(state.prompt_render_input.get(), retained);
+
+    state.input_text = "!ls";
+    state.input_cursor = state.input_text.size();
+    state.prompt_store.input_mode = repl::InputMode::Bash;
+    state.pending_ghost_text = " --all";
+    auto bash = render();
+    EXPECT_EQ(state.prompt_render_input.get(), retained);
+    EXPECT_NE(bash.find("! "), std::string::npos);
+    EXPECT_NE(bash.find("ls"), std::string::npos);
+    EXPECT_NE(bash.find("--all"), std::string::npos);
+    EXPECT_EQ(retained->cursor(), 3);
+
+    state.input_text.clear();
+    state.input_cursor = 0;
+    state.prompt_store.input_mode = repl::InputMode::Normal;
+    state.pending_ghost_text.clear();
+    state.prompt_store.input_placeholder = "updated placeholder";
+    state.prompt_store.prompt_suggestion_enabled = false;
+    auto empty = render();
+    EXPECT_EQ(state.prompt_render_input.get(), retained);
+    EXPECT_NE(empty.find("updated placeholder"), std::string::npos);
+    EXPECT_EQ(empty.find("--all"), std::string::npos);
+    EXPECT_EQ(retained->cursor(), 0);
 }

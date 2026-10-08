@@ -5,7 +5,6 @@ export module loom.query.fixture_serializer;
 import std;
 
 import loom.types.types;
-import loom.serdes.json;
 
 export namespace loom::core {
 

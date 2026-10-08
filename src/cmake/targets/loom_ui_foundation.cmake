@@ -13,7 +13,6 @@ target_sources(loom_ui_foundation
     PUBLIC FILE_SET CXX_MODULES FILES
         ui/foundation/clock.cppm
         ui/foundation/component_primitives.cppm
-        ui/foundation/components_figures.cppm
         ui/foundation/declared_cursor.cppm
         ui/foundation/design_figures.cppm
         ui/foundation/design_tokens.cppm

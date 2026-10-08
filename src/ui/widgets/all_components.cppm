@@ -8,7 +8,6 @@ export module loom.ui.widgets.all_components;
 import std;
 
 // Import and re-export all new components
-export import loom.ui.foundation.components_figures;
 export import loom.ui.widgets.fast_icon;
 export import loom.ui.widgets.pr_badge;
 export import loom.ui.widgets.spinner;

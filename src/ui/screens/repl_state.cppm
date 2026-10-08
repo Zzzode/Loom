@@ -35,6 +35,7 @@ import loom.ui.screens.permission_store;           // PermissionStore / Permissi
 import loom.ui.screens.dialog_store;               // DialogStore / dialog handles
 import loom.ui.screens.mcp_status_store;           // McpStatusStore
 import loom.ui.screens.chrome_store;               // ChromeStore / StatusBarData
+import loom.ui.screens.todo_store;                 // TodoStore (todo-list panel)
 import loom.ui.features.agents.agent_cards;        // AgentCardData
 import loom.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
 import loom.ui.widgets.text_input;
@@ -189,6 +190,10 @@ struct ReplScreenState {
     // StatusBarData status_bar projection) lives in
     // loom.ui.screens.chrome_store (ChromeStore).
     ChromeStore chrome_store;
+
+    // RFC 0002 F3: todo-list panel state (the AI-managed task list, populated
+    // via the todo_write tool) lives in loom.ui.screens.todo_store (TodoStore).
+    TodoStore todo_store;
 
     // ── P1 Footer notifications ──────────────────────────────────────
     // These fields drive the right-column notification area.

@@ -20,6 +20,7 @@ import loom.platform.terminal_helpers;
 import loom.ui.chrome.fullscreen_layout;
 import loom.ui.foundation.logo;
 import loom.ui.features.teams.live_teammates;
+import loom.ui.features.todos.todo_panel;
 import loom.ui.prompt.prompt_input_footer;
 import loom.ui.messages.virtual_list;
 import loom.ui.visual.markdown;
@@ -324,6 +325,15 @@ using namespace ftxui;
         L.push_back(text(""));   // top margin = 1
         if (IsToolAnimating(s.task_view_store)) {
             L.push_back(hbox({spinner_chrome, filler()}) | flex_shrink);
+        }
+        // Todo list panel: the AI-managed task list (populated via the
+        // todo_write tool), pinned just above the prompt input. Pure render
+        // of state-owned data — same pattern as the live teammate strip.
+        if (!s.todo_store.items.empty()) {
+            L.push_back(hbox({
+                todos::RenderTodoPanel(s.todo_store.items, term_cols),
+                filler(),
+            }) | flex_shrink);
         }
         // Live teammate strip (AgentLine list):
         // one status + output-tail row per teammate, pinned just above the

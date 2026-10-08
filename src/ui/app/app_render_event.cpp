@@ -181,6 +181,7 @@ std::size_t AppAdapter::DrainPendingAtMentionInserts() {
 
 Element AppAdapter::Render() {
     this->ProjectRuntimeMetadataToScreenState();
+    this->ProjectTodosToScreenState();
     ConsumePendingResult();
     // AT-09: apply any inbound IDE at_mentioned tokens that landed since
     // the last frame (drained from the AppImpl staging queue on the render

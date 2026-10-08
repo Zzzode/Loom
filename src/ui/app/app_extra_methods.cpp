@@ -34,6 +34,8 @@ import loom.model.model;
 import loom.scm.git.git;
 import loom.text.parse_references;
 import loom.ui.features.agents.agent_shared_widgets;
+import loom.ui.features.todos.todo_panel;       // TodoDisplayItem
+import loom.tools.todo_write;                    // todo_write_store()
 import loom.tools.agent_display;
 
 // ── Imports available via the interface but needed for namespace aliases ─
@@ -214,6 +216,46 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
             last_branch_cwd_.empty() ? "." : last_branch_cwd_);
     }
     screen_state_->chrome_store.git_branch = cached_git_branch_;
+}
+
+// ── ProjectTodosToScreenState ───────────────────────────────────────────
+// Read the TodoWriteTool singleton and project its items into the screen
+// state's TodoStore so the todo panel (pinned above the prompt) renders
+// the AI-managed task list. Called from Render() every frame.
+void AppAdapter::ProjectTodosToScreenState() {
+    const auto items = loom::tools::todo_write_store().get_sorted_items();
+    auto& out = screen_state_->todo_store.items;
+    out.clear();
+    out.reserve(items.size());
+    for (const auto& item : items) {
+        todos::TodoDisplayItem display;
+        display.content = item.content;
+        switch (item.status) {
+            case loom::tools::TodoStatus::InProgress:
+                display.status = todos::TodoDisplayItem::Status::InProgress;
+                break;
+            case loom::tools::TodoStatus::Completed:
+                display.status = todos::TodoDisplayItem::Status::Completed;
+                break;
+            case loom::tools::TodoStatus::Pending:
+            default:
+                display.status = todos::TodoDisplayItem::Status::Pending;
+                break;
+        }
+        switch (item.priority) {
+            case loom::tools::Priority::High:
+                display.priority = todos::TodoDisplayItem::Priority::High;
+                break;
+            case loom::tools::Priority::Low:
+                display.priority = todos::TodoDisplayItem::Priority::Low;
+                break;
+            case loom::tools::Priority::Medium:
+            default:
+                display.priority = todos::TodoDisplayItem::Priority::Medium;
+                break;
+        }
+        out.push_back(std::move(display));
+    }
 }
 
 // ── ApplyMessageCollapsePipeline (moved out of app.cppm) ────────────────

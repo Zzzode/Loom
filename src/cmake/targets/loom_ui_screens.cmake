@@ -27,6 +27,7 @@ target_sources(loom_ui_screens
         ui/screens/dialog_store.cppm          # RFC 0002 F3: DialogStore (overlay dialogs / inline panels / M7 dialog queue shard)
         ui/screens/mcp_status_store.cppm      # RFC 0002 F3: McpStatusStore (MCP at-mention drained-queue shard)
         ui/screens/chrome_store.cppm          # RFC 0002 F3: ChromeStore (chrome/welcome-header/status-bar projection shard)
+        ui/screens/todo_store.cppm            # RFC 0002 F3: TodoStore (todo-list panel state shard)
         ui/screens/repl_selectors.cppm        # Cross-store selectors (HasAnyDialogOpen, etc.)
         ui/screens/repl_screen.cppm
         ui/screens/resume_screen.cppm

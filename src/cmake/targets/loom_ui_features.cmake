@@ -23,6 +23,7 @@ target_sources(loom_ui_features
         ui/features/plugins/plugin_marketplace_browse.cppm
         ui/features/plugins/plugin_settings_dialog.cppm
         ui/features/teams/live_teammates.cppm
+        ui/features/todos/todo_panel.cppm
 )
 # loom.ui.foundation.* (design_tokens / theme_provider / component_primitives /
 # feature_dialog_protocol) and loom.ui.widgets.* (spinner_animations /

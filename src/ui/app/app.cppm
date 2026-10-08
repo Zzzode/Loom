@@ -541,6 +541,10 @@ public:
 
     void ProjectRuntimeMetadataToScreenState();
 
+    /// Project the AI-managed todo list (TodoWriteTool singleton) into
+    /// screen_state_->todo_store so the todo panel renders above the prompt.
+    void ProjectTodosToScreenState();
+
     /// Project settings from SettingsManager into screen_state_.
     /// Projects the settings subset into the REPL
     /// screen's model/status-line fields.  Only the subset needed by the

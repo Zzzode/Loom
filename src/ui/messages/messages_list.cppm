@@ -27,8 +27,7 @@
 ///   out of this interface's BMI.
 ///
 ///   Palette lookups go through the small inline helpers `palette::*()`
-///   (raw ftxui::Color) so that swapping in real design tokens is a
-///   one-line grep — nothing else changes.
+///   which read from the current theme's palette tokens.
 /// =========================================================================
 ///
 /// ┌───────────────────────────────────────────────────────────────────────┐
@@ -106,39 +105,40 @@ import loom.ui.messages.virtual_list;   // P0-3: VirtualMessageList types + fact
 // messages_list_payload_row.cpp (faithful dispatch) — keeping them out of
 // this interface's BMI.
 import loom.ui.visual.markdown;   // arch-check: keep-import — StreamingMarkdown* member (global-qualified; checker sees only unqualified uses)
+import loom.ui.foundation.theme_provider;  // palette tokens for role colors
 // =========================================================================
-// Small palette helpers — tokens placeholders (swap for loom.ui.foundation.design_tokens)
+// Palette helpers — read from the current theme's palette tokens.
 // =========================================================================
-// Each lookup returns an ftxui::Color.  Kept in a single namespace so the
-// grep-replace for real tokens is mechanical.
 
 namespace loom::ui::messages_list::palette {
 
+namespace thm = loom::ui::design::theme;
+
 using ftxui::Color;
 
-inline auto role_bg_user()        -> Color { return Color::RGB(30, 41, 59); } // TODO(token): message_role_user_background
-inline auto role_bg_assistant()   -> Color { return Color::RGB(30, 41, 59); } // TODO(token): message_role_assistant_background
-inline auto role_bg_system()      -> Color { return Color::RGB(30, 30, 36); } // TODO(token): message_role_system_background
-inline auto role_bg_tool()        -> Color { return Color::RGB(24, 40, 40); } // TODO(token): message_role_tool_background
-inline auto role_bg_thinking()    -> Color { return Color::RGB(34, 30, 48); } // TODO(token): message_role_thinking_background
+inline auto role_bg_user()        -> Color { return thm::current_theme().palette->role_bg_user; }
+inline auto role_bg_assistant()   -> Color { return thm::current_theme().palette->role_bg_assistant; }
+inline auto role_bg_system()      -> Color { return thm::current_theme().palette->role_bg_system; }
+inline auto role_bg_tool()        -> Color { return thm::current_theme().palette->role_bg_tool; }
+inline auto role_bg_thinking()    -> Color { return thm::current_theme().palette->role_bg_thinking; }
 
-inline auto role_pill_user()      -> Color { return Color::RGB(59, 130, 246); } // TODO(token): message_role_user_pill
-inline auto role_pill_assistant() -> Color { return Color::RGB(168, 85, 247); } // TODO(token): message_role_assistant_pill
-inline auto role_pill_system()    -> Color { return Color::RGB(234, 179,  8); } // TODO(token): message_role_system_pill
-inline auto role_pill_tool()      -> Color { return Color::RGB(20, 184, 166); } // TODO(token): message_role_tool_pill
-inline auto role_pill_thinking()  -> Color { return Color::RGB(139, 92, 246); } // TODO(token): message_role_thinking_pill
+inline auto role_pill_user()      -> Color { return thm::current_theme().palette->role_pill_user; }
+inline auto role_pill_assistant() -> Color { return thm::current_theme().palette->role_pill_assistant; }
+inline auto role_pill_system()    -> Color { return thm::current_theme().palette->role_pill_system; }
+inline auto role_pill_tool()      -> Color { return thm::current_theme().palette->role_pill_tool; }
+inline auto role_pill_thinking()  -> Color { return thm::current_theme().palette->role_pill_thinking; }
 
 inline auto accent_top_user()     -> Color { return role_pill_user(); }
 inline auto accent_top_assistant()-> Color { return role_pill_assistant(); }
 inline auto accent_top_system()   -> Color { return role_pill_system(); }
 inline auto accent_top_tool()     -> Color { return role_pill_tool(); }
-inline auto accent_top_error()    -> Color { return Color::RGB(239, 68, 68); } // TODO(token): message_error_accent
-inline auto accent_top_redacted() -> Color { return Color::RGB(107, 114, 128); } // TODO(token): message_redacted_accent
+inline auto accent_top_error()    -> Color { return thm::current_theme().palette->message_error_accent; }
+inline auto accent_top_redacted() -> Color { return thm::current_theme().palette->message_redacted_accent; }
 
-inline auto selected_bg()         -> Color { return Color::RGB(30, 64, 175); } // TODO(token): message_list_selected_background
-inline auto muted_fg()            -> Color { return Color::RGB(156, 163, 175); } // TODO(token): message_list_muted_foreground
-inline auto empty_state_fg()      -> Color { return Color::RGB(107, 114, 128); } // TODO(token): message_list_empty_state_foreground
-inline auto streaming_fg()        -> Color { return Color::RGB(34, 211, 238); } // TODO(token): message_list_streaming_foreground
+inline auto selected_bg()         -> Color { return thm::current_theme().palette->message_list_selected_bg; }
+inline auto muted_fg()            -> Color { return thm::current_theme().palette->message_list_muted_fg; }
+inline auto empty_state_fg()      -> Color { return thm::current_theme().palette->message_list_empty_state_fg; }
+inline auto streaming_fg()        -> Color { return thm::current_theme().palette->message_list_streaming_fg; }
 
 } // namespace loom::ui::messages_list::palette
 

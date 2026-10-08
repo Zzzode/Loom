@@ -258,6 +258,27 @@ struct Palette {
     // ─── Welcome screen tokens ────────────────────────────────────────────
     ftxui::Color status_bar_background;   // welcome screen status bar fill
     ftxui::Color spinner_gold;            // welcome spinner / logo glyph gold
+
+    // ─── Message list role tokens (GAP: clr-missing-role-tokens) ──────────
+    // Background tints for the role badge in the message list header.
+    ftxui::Color role_bg_user;            // user role badge background
+    ftxui::Color role_bg_assistant;       // assistant role badge background
+    ftxui::Color role_bg_system;          // system role badge background
+    ftxui::Color role_bg_tool;            // tool role badge background
+    ftxui::Color role_bg_thinking;        // thinking role badge background
+    // Pill (accent bar) colors for the role badge.
+    ftxui::Color role_pill_user;          // user role accent pill
+    ftxui::Color role_pill_assistant;     // assistant role accent pill
+    ftxui::Color role_pill_system;        // system role accent pill
+    ftxui::Color role_pill_tool;          // tool role accent pill
+    ftxui::Color role_pill_thinking;      // thinking role accent pill
+    // Message list accents.
+    ftxui::Color message_error_accent;    // error message accent
+    ftxui::Color message_redacted_accent; // redacted message accent
+    ftxui::Color message_list_selected_bg; // selected row background
+    ftxui::Color message_list_muted_fg;   // muted foreground text
+    ftxui::Color message_list_empty_state_fg; // empty-state hint text
+    ftxui::Color message_list_streaming_fg;   // streaming indicator text
 };
 
 // ─── Concrete palettes ───────────────────────────────────────────────────────
@@ -407,6 +428,23 @@ inline const Palette& dark() noexcept {
     .icon_accent           = CLAWDED,                            // = primary
     .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
     .spinner_gold          = ftxui::Color::RGB(217, 154,  56),
+    // ── Message list role tokens ──
+    .role_bg_user            = ftxui::Color::RGB( 30,  41,  59),
+    .role_bg_assistant       = ftxui::Color::RGB( 30,  41,  59),
+    .role_bg_system          = ftxui::Color::RGB( 30,  30,  36),
+    .role_bg_tool            = ftxui::Color::RGB( 24,  40,  40),
+    .role_bg_thinking        = ftxui::Color::RGB( 34,  30,  48),
+    .role_pill_user          = ftxui::Color::RGB( 59, 130, 246),
+    .role_pill_assistant     = ftxui::Color::RGB(168,  85, 247),
+    .role_pill_system        = ftxui::Color::RGB(234, 179,   8),
+    .role_pill_tool          = ftxui::Color::RGB( 20, 184, 166),
+    .role_pill_thinking      = ftxui::Color::RGB(139,  92, 246),
+    .message_error_accent    = ftxui::Color::RGB(239,  68,  68),
+    .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
+    .message_list_selected_bg   = ftxui::Color::RGB( 30,  64, 175),
+    .message_list_muted_fg      = ftxui::Color::RGB(156, 163, 175),
+    .message_list_empty_state_fg = ftxui::Color::RGB(107, 114, 128),
+    .message_list_streaming_fg  = ftxui::Color::RGB( 34, 211, 238),
 };
     return p;
 }
@@ -524,6 +562,23 @@ inline const Palette& light() noexcept {
     .icon_accent           = CLAWDED,                            // = primary
     .status_bar_background = ftxui::Color::RGB(240, 240, 240),
     .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
+    // ── Message list role tokens ──
+    .role_bg_user            = ftxui::Color::RGB(219, 234, 254),
+    .role_bg_assistant       = ftxui::Color::RGB(237, 233, 254),
+    .role_bg_system          = ftxui::Color::RGB(243, 244, 246),
+    .role_bg_tool            = ftxui::Color::RGB(204, 251, 241),
+    .role_bg_thinking        = ftxui::Color::RGB(237, 233, 254),
+    .role_pill_user          = ftxui::Color::RGB( 37,  99, 235),
+    .role_pill_assistant     = ftxui::Color::RGB(147,  51, 234),
+    .role_pill_system        = ftxui::Color::RGB(202, 138,   4),
+    .role_pill_tool          = ftxui::Color::RGB( 13, 148, 136),
+    .role_pill_thinking      = ftxui::Color::RGB(124,  58, 237),
+    .message_error_accent    = ftxui::Color::RGB(220,  38,  38),
+    .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
+    .message_list_selected_bg   = ftxui::Color::RGB(191, 219, 254),
+    .message_list_muted_fg      = ftxui::Color::RGB(107, 114, 128),
+    .message_list_empty_state_fg = ftxui::Color::RGB(156, 163, 175),
+    .message_list_streaming_fg  = ftxui::Color::RGB(  8, 145, 178),
 };
     return p;
 }
@@ -640,6 +695,23 @@ inline const Palette& dark_daltonized() noexcept {
     .icon_accent           = ftxui::Color::RGB(255, 153,  51),  // = primary (loom daltonized)
     .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
     .spinner_gold          = ftxui::Color::RGB(217, 154,  56),
+    // ── Message list role tokens ──
+    .role_bg_user            = ftxui::Color::RGB( 30,  41,  59),
+    .role_bg_assistant       = ftxui::Color::RGB( 30,  41,  59),
+    .role_bg_system          = ftxui::Color::RGB( 30,  30,  36),
+    .role_bg_tool            = ftxui::Color::RGB( 24,  40,  40),
+    .role_bg_thinking        = ftxui::Color::RGB( 34,  30,  48),
+    .role_pill_user          = ftxui::Color::RGB( 59, 130, 246),
+    .role_pill_assistant     = ftxui::Color::RGB(168,  85, 247),
+    .role_pill_system        = ftxui::Color::RGB(234, 179,   8),
+    .role_pill_tool          = ftxui::Color::RGB( 20, 184, 166),
+    .role_pill_thinking      = ftxui::Color::RGB(139,  92, 246),
+    .message_error_accent    = ftxui::Color::RGB(255, 159,  67),
+    .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
+    .message_list_selected_bg   = ftxui::Color::RGB( 30,  64, 175),
+    .message_list_muted_fg      = ftxui::Color::RGB(156, 163, 175),
+    .message_list_empty_state_fg = ftxui::Color::RGB(107, 114, 128),
+    .message_list_streaming_fg  = ftxui::Color::RGB( 34, 211, 238),
 };
     return p;
 }
@@ -751,6 +823,23 @@ inline const Palette& light_daltonized() noexcept {
     .icon_accent           = ftxui::Color::RGB(255, 153,  51),  // = primary (loom daltonized)
     .status_bar_background = ftxui::Color::RGB(240, 240, 240),
     .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
+    // ── Message list role tokens ──
+    .role_bg_user            = ftxui::Color::RGB(219, 234, 254),
+    .role_bg_assistant       = ftxui::Color::RGB(237, 233, 254),
+    .role_bg_system          = ftxui::Color::RGB(243, 244, 246),
+    .role_bg_tool            = ftxui::Color::RGB(204, 251, 241),
+    .role_bg_thinking        = ftxui::Color::RGB(237, 233, 254),
+    .role_pill_user          = ftxui::Color::RGB( 37,  99, 235),
+    .role_pill_assistant     = ftxui::Color::RGB(147,  51, 234),
+    .role_pill_system        = ftxui::Color::RGB(202, 138,   4),
+    .role_pill_tool          = ftxui::Color::RGB( 13, 148, 136),
+    .role_pill_thinking      = ftxui::Color::RGB(124,  58, 237),
+    .message_error_accent    = ftxui::Color::RGB(234,  88,  12),
+    .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
+    .message_list_selected_bg   = ftxui::Color::RGB(191, 219, 254),
+    .message_list_muted_fg      = ftxui::Color::RGB(107, 114, 128),
+    .message_list_empty_state_fg = ftxui::Color::RGB(156, 163, 175),
+    .message_list_streaming_fg  = ftxui::Color::RGB(  8, 145, 178),
 };
     return p;
 }
@@ -871,7 +960,24 @@ inline const Palette& light_ansi() noexcept {
     .icon_muted            = ftxui::Color{ftxui::Color::Palette16::GrayDark},     // = muted
     .icon_accent           = ftxui::Color{ftxui::Color::Palette16::RedLight},    // = primary
     .status_bar_background = ftxui::Color::RGB(240, 240, 240),
-    .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
+    .spinner_gold          = ftxui::Color::RGB(153, 153, 153),
+    // ── Message list role tokens ──
+    .role_bg_user            = ftxui::Color::RGB(219, 234, 254),
+    .role_bg_assistant       = ftxui::Color::RGB(237, 233, 254),
+    .role_bg_system          = ftxui::Color::RGB(243, 244, 246),
+    .role_bg_tool            = ftxui::Color::RGB(204, 251, 241),
+    .role_bg_thinking        = ftxui::Color::RGB(237, 233, 254),
+    .role_pill_user          = ftxui::Color::RGB( 37,  99, 235),
+    .role_pill_assistant     = ftxui::Color::RGB(147,  51, 234),
+    .role_pill_system        = ftxui::Color::RGB(202, 138,   4),
+    .role_pill_tool          = ftxui::Color::RGB( 13, 148, 136),
+    .role_pill_thinking      = ftxui::Color::RGB(124,  58, 237),
+    .message_error_accent    = ftxui::Color::RGB(220,  38,  38),
+    .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
+    .message_list_selected_bg   = ftxui::Color::RGB(191, 219, 254),
+    .message_list_muted_fg      = ftxui::Color::RGB(107, 114, 128),
+    .message_list_empty_state_fg = ftxui::Color::RGB(156, 163, 175),
+    .message_list_streaming_fg  = ftxui::Color::RGB(  8, 145, 178),
 };
     return p;
 }
@@ -992,6 +1098,23 @@ inline const Palette& dark_ansi() noexcept {
     .icon_accent           = ftxui::Color{ftxui::Color::Palette16::RedLight},    // = primary
     .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
     .spinner_gold          = ftxui::Color::RGB(217, 154,  56),
+    // ── Message list role tokens ──
+    .role_bg_user            = ftxui::Color::RGB( 30,  41,  59),
+    .role_bg_assistant       = ftxui::Color::RGB( 30,  41,  59),
+    .role_bg_system          = ftxui::Color::RGB( 30,  30,  36),
+    .role_bg_tool            = ftxui::Color::RGB( 24,  40,  40),
+    .role_bg_thinking        = ftxui::Color::RGB( 34,  30,  48),
+    .role_pill_user          = ftxui::Color::RGB( 59, 130, 246),
+    .role_pill_assistant     = ftxui::Color::RGB(168,  85, 247),
+    .role_pill_system        = ftxui::Color::RGB(234, 179,   8),
+    .role_pill_tool          = ftxui::Color::RGB( 20, 184, 166),
+    .role_pill_thinking      = ftxui::Color::RGB(139,  92, 246),
+    .message_error_accent    = ftxui::Color::RGB(239,  68,  68),
+    .message_redacted_accent = ftxui::Color::RGB(107, 114, 128),
+    .message_list_selected_bg   = ftxui::Color::RGB( 30,  64, 175),
+    .message_list_muted_fg      = ftxui::Color::RGB(156, 163, 175),
+    .message_list_empty_state_fg = ftxui::Color::RGB(107, 114, 128),
+    .message_list_streaming_fg  = ftxui::Color::RGB( 34, 211, 238),
 };
     return p;
 }
@@ -1105,7 +1228,24 @@ inline const Palette& monochrome() noexcept {
     .icon_muted            = ftxui::Color::GrayDark,
     .icon_accent           = ftxui::Color::White,
     .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
-    .spinner_gold          = ftxui::Color::RGB(153, 153, 153),
+    .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
+    // ── Message list role tokens ──
+    .role_bg_user            = ftxui::Color::RGB( 50,  50,  50),
+    .role_bg_assistant       = ftxui::Color::RGB( 50,  50,  50),
+    .role_bg_system          = ftxui::Color::RGB( 40,  40,  40),
+    .role_bg_tool            = ftxui::Color::RGB( 45,  45,  45),
+    .role_bg_thinking        = ftxui::Color::RGB( 55,  55,  55),
+    .role_pill_user          = ftxui::Color::RGB(200, 200, 200),
+    .role_pill_assistant     = ftxui::Color::RGB(200, 200, 200),
+    .role_pill_system        = ftxui::Color::RGB(180, 180, 180),
+    .role_pill_tool          = ftxui::Color::RGB(180, 180, 180),
+    .role_pill_thinking      = ftxui::Color::RGB(200, 200, 200),
+    .message_error_accent    = ftxui::Color::RGB(220, 220, 220),
+    .message_redacted_accent = ftxui::Color::RGB(140, 140, 140),
+    .message_list_selected_bg   = ftxui::Color::RGB( 70,  70,  70),
+    .message_list_muted_fg      = ftxui::Color::RGB(150, 150, 150),
+    .message_list_empty_state_fg = ftxui::Color::RGB(130, 130, 130),
+    .message_list_streaming_fg  = ftxui::Color::RGB(200, 200, 200),
 };
     return p;
 }

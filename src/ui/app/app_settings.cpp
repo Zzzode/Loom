@@ -9,6 +9,7 @@ import std;
 
 import loom.config.settings_manager;
 import loom.config.config;             // ConfigManager for statusLine.segments
+import loom.ui.foundation.theme_provider;
 
 namespace loom::ui {
 
@@ -129,6 +130,19 @@ void AppAdapter::ProjectSettingsToScreenState() {
     // fallback pattern (repl_screen_dialog_panels.cpp).
     static thread_local loom::core::ConfigManager bar_cfg;
     (void)bar_cfg.load(loom::core::LoadOptions{.quiet = true});
+
+    // ── Color theme ──────────────────────────────────────────────────────
+    // LOOM_THEME env var overrides the config file; both default to "auto"
+    // (currently equivalent to dark, pending OSC-11 detection).
+    {
+        std::string theme_name = bar_cfg.settings().display.theme;
+        if (auto env = first_non_empty_env({"LOOM_THEME", "LOOM_THEME"})) {
+            theme_name = *env;
+        }
+        loom::ui::design::theme::set_theme(
+            loom::ui::design::theme::parse_variant(theme_name));
+    }
+
     const auto& sl = bar_cfg.settings().status_line;
     screen_state_->status_bar_enabled = sl.enabled.value_or(true);
     auto& segs = screen_state_->status_bar_segments;

@@ -53,9 +53,8 @@ using namespace ftxui;
         R.push_back(text(" | ") | dim);
         R.push_back(text("<-> bridge") | color(palette.info) | dim); }
     R.push_back(text(" "));
-    // TODO(token): status_bar_background (RGB 20, 20, 22).
     return hbox({ hbox(L), filler(), hbox(R) })
-         | bgcolor(Color::RGB(20, 20, 22));
+         | bgcolor(palette.status_bar_background);
 }
 
 // UI19: spinner line shell.
@@ -67,8 +66,8 @@ using namespace ftxui;
     int frame) {
     if (m == SpinnerMode::Hidden) return text("");
     // Single theme token regardless of mode — no per-mode color switch.
-    // TODO(token): spinner_gold (RGB 217, 154, 56).
-    const Color kLoomGold = Color::RGB(217, 154, 56);
+    const Color kLoomGold =
+        loom::ui::design::theme::current_theme().palette->spinner_gold;
 
     // Pick a random playful verb once "per mount".  We don't track mount
     // state here, so hash the mode + pid and sample the verbs list.

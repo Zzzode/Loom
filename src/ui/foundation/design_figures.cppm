@@ -55,21 +55,6 @@ inline constexpr char           kBashModeChar      = '!';                     //
 // routing, Ctrl+R overlay, vim status bar).  From this commit on, the
 // prompt glyph only has TWO rendered variants: kPointer vs kBashGlyph.
 //
-// The CPP-only "extra" indicator glyphs are retained below as kExtra* so call sites that still reference them (vim status bar,
-// plan badge) continue to compile, but they are never used as the prompt
-// prefix — only as badge / status-row content.
-
-// Plan badge glyph (CPP extension, not a prompt prefix). U+25A3 = "▣".
-inline constexpr std::string_view kExtraPlanGlyph     = "\xE2\x96\xA3";
-// Vim reverse pointer (CPP extension). U+276E = "❮".
-inline constexpr std::string_view kExtraVimReverse    = "\xE2\x9D\xAE";
-// Task-notification star (CPP extension). U+002A = "*".
-inline constexpr std::string_view kExtraTaskStar       = "*";
-// Orphaned-permission bang (CPP extension — visually overlaps kBashGlyph
-// but semantically different for routing). Kept identical so we have a
-// grep-able symbol name.
-inline constexpr std::string_view kExtraPermissionBang = "!";
-
 // ─── npm::figures defaults (common glyphs, ported verbatim) ────────────
 inline constexpr std::string_view kTick        = "\xE2\x9C\x94";  // ✔ U+2714 (success)
 inline constexpr std::string_view kCross       = "\xE2\x9C\x98";  // ✘ U+2718 (error)
@@ -80,7 +65,6 @@ inline constexpr std::string_view kCircle      = "\xE2\x97\xAF";  // ◯ U+25EF 
 inline constexpr std::string_view kEllipsis    = "\xE2\x80\xA6";  // … U+2026 (figures.ellipsis — THREE DOTS leader)
 inline constexpr std::string_view kCheckboxOn  = "\xE2\x98\x92";  // ☒ U+2612 (figures.checkboxOn)
 inline constexpr std::string_view kCheckboxOff = "\xE2\x98\x90";  // ☐ U+2610 (figures.checkboxOff)
-inline constexpr std::string_view kHamburger   = "\xE2\x98\xB0";  // ☰ U+2630 (figures.hamburger — three bars)
 inline constexpr std::string_view kBullet      = "\xE2\x97\x8F";  // ● U+25CF (figures.bullet)
 inline constexpr std::string_view kArrowDown   = "\xE2\x86\x93";  // ↓ U+2193 (figures.arrowDown — new-messages pill caret)
 // Additional npm-figures glyphs used throughout the UI for status
@@ -184,8 +168,6 @@ inline constexpr std::string_view kBridgeFailedIndicator = "\xC3\x97";  // × U+
 // ─── Message connector / separator glyphs ──────────────────────────────
 // ⌐ U+2310 "REVERSED NOT SIGN"
 //     Rendered vertically aligned between tool-use row and tool-result row.
-inline constexpr std::string_view kConnector = "\xE2\x8C\x90";    // ⌐ (1 cell)
-
 // ─── Spinner frames ────────────────────────────────────────────────────
 // BRIDGE_SPINNER_FRAMES (8 braille dots sweeping from top-left to
 // bottom-right).  Used for:
@@ -282,11 +264,6 @@ enum class PromptMode : int {
 
 // ─── Platform fallback for BLACK_CIRCLE ────────────────────────────────
 // On macOS / Linux we use the Unicode glyph; on Windows we fall back to '*'.
-// This build targets Darwin (loom); Windows support is gated behind a
-// build-time macro; callers that want the fallback behaviour should branch
-// on `#ifdef _WIN32` themselves.
-inline constexpr std::string_view kCircleBlack = "\xE2\x97\x8F";  // ● U+25CF (same as kBullet — alias for grep clarity)
-
 // ─── Unicode support detection ──────────────────────────────────────────
 // Determines whether the terminal supports Unicode glyphs. On non-Windows,
 // returns true unless TERM == "linux" (kernel console lacks Unicode).
@@ -330,32 +307,17 @@ namespace fallback {
     inline constexpr std::string_view kSquareSmallFilled = "\xE2\x96\xA0";  // ■ U+25A0 BLACK SQUARE
     inline constexpr std::string_view kCircle      = "( )";            // ASCII ( )
     inline constexpr std::string_view kCircleFilled = "(*)";           // ASCII (*)
-    inline constexpr std::string_view kCircleDotted = "( )";           // ASCII ( )
     inline constexpr std::string_view kCircleDouble = "( )";           // ASCII ( )
-    inline constexpr std::string_view kCircleCircle = "\xE2\x97\x8B";  // ○ U+25CB
-    inline constexpr std::string_view kCircleCross = "\xC3\x97";      // × U+00D7
-    inline constexpr std::string_view kCirclePipe  = "\xE2\x94\x82";  // │ U+2502
     inline constexpr std::string_view kRadioOn     = "(*)";           // alias kCircleFilled
     inline constexpr std::string_view kRadioOff    = "( )";           // alias kCircle
     inline constexpr std::string_view kCheckboxOn  = "[\xC3\x97]";    // [×] ASCII brackets + ×
     inline constexpr std::string_view kCheckboxOff = "[ ]";            // ASCII [ ]
-    inline constexpr std::string_view kCheckboxCircleOn = "\xC3\x97"; // ×
-    inline constexpr std::string_view kCheckboxCircleOff = "( )";     // ASCII ( )
     inline constexpr std::string_view kPointer     = ">";              // ASCII greater-than
     inline constexpr std::string_view kTriangleUpOutline = "\xE2\x88\x86";  // ∆ U+2206 INCREMENT
-    inline constexpr std::string_view kTriangleLeft = "\xE2\x97\x84";  // ◄ U+25C4 BLACK LEFT-POINTING POINTER
     inline constexpr std::string_view kTriangleRight = "\xE2\x96\xBA"; // ► U+25BA BLACK RIGHT-POINTING POINTER
     inline constexpr std::string_view kLozenge     = "\xE2\x99\xA6";  // ♦ U+2666 BLACK DIAMOND SUIT
-    inline constexpr std::string_view kLozengeOutline = "\xE2\x97\x8A"; // ◊ U+25CA LOZENGE
-    inline constexpr std::string_view kHamburger   = "\xE2\x89\xA1";  // ≡ U+2261 IDENTICAL TO
-    inline constexpr std::string_view kSmiley      = "\xE2\x98\xBA";  // ☺ U+263A WHITE SMILING FACE
-    inline constexpr std::string_view kMustache    = "\xE2\x94\x8C\xE2\x94\x80\xE2\x94\x90";  // ┌─┐
     inline constexpr std::string_view kStar        = "\xE2\x9C\xB6";  // ✶ U+2736 SIX POINTED BLACK STAR
     inline constexpr std::string_view kPlay        = "\xE2\x96\xBA";  // ► U+25BA (alias kTriangleRight)
-    inline constexpr std::string_view kNodejs      = "\xE2\x99\xA6";  // ♦ U+2666 (alias kLozenge)
-    inline constexpr std::string_view kOneSeventh  = "1/7";            // ASCII fraction
-    inline constexpr std::string_view kOneNinth    = "1/9";            // ASCII fraction
-    inline constexpr std::string_view kOneTenth    = "1/10";           // ASCII fraction
 }  // namespace fallback
 
 // ─── Figures glyph set accessor ────────────────────────────────────────

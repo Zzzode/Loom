@@ -23,6 +23,7 @@ module loom.ui.app.app;
 import std;
 
 import loom.commands.copy_cmd;           // copy_to_clipboard_osc52
+import loom.platform.clipboard;           // clipboard::write_text (native fallback)
 import loom.ui.foundation.theme_provider; // current_theme().palette
 import loom.ui.prompt.prompt_input_footer; // NotificationQueue / NotificationItem
 
@@ -156,6 +157,18 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
 
     if (mouse.button == Mouse::Left &&
         mouse.motion == Mouse::Released) {
+        // No-motion fallback: terminals that don't deliver mode-1003 motion
+        // events (e.g. macOS Terminal.app, tmux without `mouse on`) only
+        // send press + release. Detect the drag by displacement on release.
+        if (!text_selection_.active && text_selection_.potential) {
+            const int dx = mouse.x - text_selection_.start_x;
+            const int dy = mouse.y - text_selection_.start_y;
+            if (dx * dx + dy * dy > 9) {  // 3px threshold
+                text_selection_.active = true;
+                text_selection_.end_x = mouse.x;
+                text_selection_.end_y = mouse.y;
+            }
+        }
         if (text_selection_.active) {
             // Extract text from screen and copy to clipboard.
             if (auto* screen = screen_.load(std::memory_order_acquire)) {
@@ -164,7 +177,10 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
                     text_selection_.start_x, text_selection_.start_y,
                     text_selection_.end_x, text_selection_.end_y);
                 if (!text.empty()) {
+                    // OSC 52 (terminals that support it) + native clipboard
+                    // (pbcopy/xclip/wl-copy) as a guaranteed fallback.
                     (void)loom::commands::copy_to_clipboard_osc52(text);
+                    (void)loom::utils::clipboard::write_text(text);
                     NotifyCopyComplete(
                         screen_state_->footer_notification_queue,
                         text.size());

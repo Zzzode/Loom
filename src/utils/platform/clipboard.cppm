@@ -16,6 +16,7 @@ export module loom.platform.clipboard;
 import std;
 
 import loom.crypto.crypto;
+import loom.process.bash.bash_execution;   // exec_write (pbcopy / xclip / wl-copy)
 
 export namespace loom::utils::clipboard {
 
@@ -308,6 +309,32 @@ extract_png_from_html_clipboard() {
 #else
     return "";
 #endif
+}
+
+/// Write plain text to the system clipboard (macOS: `pbcopy`, Linux:
+/// `wl-copy` / `xclip`, Windows: `clip.exe`).  Uses exec_write() to pipe
+/// the text to the command's stdin.  Returns true on success.
+///
+/// This is the native-clipboard fallback for OSC 52: some terminals (e.g.
+/// macOS Terminal.app) do not support the OSC 52 clipboard sequence, so
+/// drag-to-select copies via both paths to guarantee delivery.
+[[nodiscard]] inline bool write_text(std::string_view text) noexcept {
+    const char* cmd = nullptr;
+#if defined(__APPLE__)
+    cmd = "pbcopy";
+#elif defined(_WIN32)
+    cmd = "clip.exe";
+#elif defined(__linux__)
+    if (std::getenv("WAYLAND_DISPLAY") != nullptr) {
+        cmd = "wl-copy";
+    } else {
+        cmd = "xclip -selection clipboard";
+    }
+#else
+    return false;
+#endif
+    auto wr = loom::utils::bash::exec_write(cmd, text);
+    return wr && *wr == 0;
 }
 
 }  // namespace loom::utils::clipboard

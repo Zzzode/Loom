@@ -93,8 +93,7 @@ target_sources(loom_ui_app PRIVATE
 # feature_dialog_protocol), loom.ui.prompt.* (at_attachments /
 # autocomplete_sources / file_index / fuzzy_rank_nucleo /
 # prompt_input_footer), loom.ui.permissions.* (permission_computer_use /
-# single_prompt), loom.ui.messages.* (collapse_background_bash /
-# message_pipeline), loom.ui.features.* (agent_cards / agent_shared_widgets /
+# single_prompt), loom.ui.messages.* (message_pipeline), loom.ui.features.* (agent_cards / agent_shared_widgets /
 # live_teammates), loom.ui.dialogs.* (system / per-renderer registries /
 # trust_dialog / trust_utils / triggers / feature_wizard_adapter /
 # elicitation / plugin_dialog_renderer), and loom.ui.screens.* (repl_screen /

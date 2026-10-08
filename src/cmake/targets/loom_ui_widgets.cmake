@@ -42,7 +42,7 @@ target_sources(loom_ui_widgets PRIVATE
     ui/widgets/text_input_vim.cpp
     ui/widgets/text_input_render.cpp
 )
-# loom.ui.foundation.* (components_figures / component_primitives /
+# loom.ui.foundation.* (component_primitives /
 # design_tokens / design_figures / theme_provider / ui_types),
 # loom.ui.visual.markdown (components), and loom.ui.prompt.* (text_input +
 # text_input_widget: prompt_paste_handler / placeholder_cascade /

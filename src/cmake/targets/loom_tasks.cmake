@@ -10,4 +10,4 @@ target_sources(loom_tasks
         tasks/task_utils.cppm
         tasks/types.cppm
 )
-target_link_libraries(loom_tasks PUBLIC loom_utils loom_types loom_state loom_coordinator loom_hooks)
+target_link_libraries(loom_tasks PUBLIC loom_utils loom_types loom_state loom_coordinator loom_hooks loom_constants)

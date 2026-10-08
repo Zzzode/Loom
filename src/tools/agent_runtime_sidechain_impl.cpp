@@ -8,9 +8,12 @@ module loom.tools.agent_runtime;
 
 import std;
 
+import loom.constants.xml;
 import loom.serdes.json;
 
 namespace loom::tools::agent_runtime {
+
+namespace xml = loom::constants::xml;
 
 namespace {
 
@@ -36,30 +39,29 @@ inline constexpr std::string_view kForkSubagentType = "fork";
 
     std::string result_section;
     if (record.output && !record.output->empty()) {
-        result_section = std::format("\n<result>{}</result>", xml_escape(*record.output));
+        result_section = std::format("\n<{}>{}</{}>",
+            xml::RESULT_TAG, xml_escape(*record.output), xml::RESULT_TAG);
     } else if (record.error && !record.error->empty()) {
-        result_section = std::format("\n<result>{}</result>", xml_escape(*record.error));
+        result_section = std::format("\n<{}>{}</{}>",
+            xml::RESULT_TAG, xml_escape(*record.error), xml::RESULT_TAG);
     }
     std::string worktree_section;
     if (record.worktree_path && !record.worktree_path->empty()) {
-        worktree_section += std::format("\n<worktree_path>{}</worktree_path>", xml_escape(*record.worktree_path));
+        worktree_section += std::format("\n<{}>{}</{}>",
+            xml::WORKTREE_PATH_TAG, xml_escape(*record.worktree_path), xml::WORKTREE_PATH_TAG);
     }
     if (record.worktree_branch && !record.worktree_branch->empty()) {
-        worktree_section += std::format("\n<worktree_branch>{}</worktree_branch>", xml_escape(*record.worktree_branch));
+        worktree_section += std::format("\n<{}>{}</{}>",
+            xml::WORKTREE_BRANCH_TAG, xml_escape(*record.worktree_branch), xml::WORKTREE_BRANCH_TAG);
     }
     return std::format(
-        "<task_notification>\n"
-        "<task_id>{}</task_id>\n"
-        "<output_file>{}</output_file>\n"
-        "<status>{}</status>\n"
-        "<summary>{}</summary>{}{}\n"
-        "</task_notification>",
-        xml_escape(record.agent_id),
-        xml_escape(native_agent_output_file(record)),
-        xml_escape(*status),
-        xml_escape(summary),
-        result_section,
-        worktree_section);
+        "<{}>\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>{}{}\n</{}>",
+        xml::TASK_NOTIFICATION_TAG,
+        xml::TASK_ID_TAG, xml_escape(record.agent_id), xml::TASK_ID_TAG,
+        xml::OUTPUT_FILE_TAG, xml_escape(native_agent_output_file(record)), xml::OUTPUT_FILE_TAG,
+        xml::STATUS_TAG, xml_escape(*status), xml::STATUS_TAG,
+        xml::SUMMARY_TAG, xml_escape(summary), xml::SUMMARY_TAG,
+        result_section, worktree_section, xml::TASK_NOTIFICATION_TAG);
 }
 void write_json_string_array(std::ostream& out, std::string_view name, const std::vector<std::string>& values) {
     out << R"(,")" << name << R"(":[)";

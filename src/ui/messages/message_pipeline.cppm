@@ -41,6 +41,7 @@ export module loom.ui.messages.message_pipeline;
 import std;
 
 import loom.ui.foundation.design_figures;
+import loom.ui.messages.xml_tags;
 
 export namespace loom::ui::messages::pipeline {
 
@@ -201,29 +202,7 @@ class DedupTracker {
 //
 // Nested tags are flattened left-to-right.
 
-/// Extract the inner content of the first `<tagName>…</tagName>` pair in
-/// `text`.  Returns std::nullopt if the tag is not found.
-///
-/// Same case-sensitive matching, same greedy-but-balanced semantics
-/// (tagName must match exactly).
-[[nodiscard]] inline std::optional<std::string> extract_tag(
-    std::string_view text, std::string_view tag_name) noexcept
-{
-    if (tag_name.empty()) return std::nullopt;
-    // Build <tag> and </tag> needles
-    const std::string open  = std::string("<") + std::string(tag_name) + ">";
-    const std::string close = std::string("</") + std::string(tag_name) + ">";
-
-    const auto start = text.find(open);
-    if (start == std::string_view::npos) return std::nullopt;
-    const auto content_start = start + open.size();
-    const auto end = text.find(close, content_start);
-    if (end == std::string_view::npos) {
-        // Unterminated: return raw text after the opening tag.
-        return std::string(text.substr(content_start));
-    }
-    return std::string(text.substr(content_start, end - content_start));
-}
+using xml_tags::extract_tag;
 
 /// Strip ALL instances of `<tag_name>…</tag_name>` from `text`, in place.
 /// Used to peel off processed envelope tags so downstream tags match cleanly.

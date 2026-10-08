@@ -116,29 +116,29 @@ namespace loom::ui::messages_list::palette {
 
 using ftxui::Color;
 
-inline auto role_bg_user()        -> Color { return Color::RGB(30, 41, 59); }
-inline auto role_bg_assistant()   -> Color { return Color::RGB(30, 41, 59); }
-inline auto role_bg_system()      -> Color { return Color::RGB(30, 30, 36); }
-inline auto role_bg_tool()        -> Color { return Color::RGB(24, 40, 40); }
-inline auto role_bg_thinking()    -> Color { return Color::RGB(34, 30, 48); }
+inline auto role_bg_user()        -> Color { return Color::RGB(30, 41, 59); } // TODO(token): message_role_user_background
+inline auto role_bg_assistant()   -> Color { return Color::RGB(30, 41, 59); } // TODO(token): message_role_assistant_background
+inline auto role_bg_system()      -> Color { return Color::RGB(30, 30, 36); } // TODO(token): message_role_system_background
+inline auto role_bg_tool()        -> Color { return Color::RGB(24, 40, 40); } // TODO(token): message_role_tool_background
+inline auto role_bg_thinking()    -> Color { return Color::RGB(34, 30, 48); } // TODO(token): message_role_thinking_background
 
-inline auto role_pill_user()      -> Color { return Color::RGB(59, 130, 246); }   // blue-500
-inline auto role_pill_assistant() -> Color { return Color::RGB(168, 85, 247); }   // purple-500
-inline auto role_pill_system()    -> Color { return Color::RGB(234, 179,  8); }   // yellow-500
-inline auto role_pill_tool()      -> Color { return Color::RGB(20, 184, 166); }   // teal-500
-inline auto role_pill_thinking()  -> Color { return Color::RGB(139, 92, 246); }   // violet-500
+inline auto role_pill_user()      -> Color { return Color::RGB(59, 130, 246); } // TODO(token): message_role_user_pill
+inline auto role_pill_assistant() -> Color { return Color::RGB(168, 85, 247); } // TODO(token): message_role_assistant_pill
+inline auto role_pill_system()    -> Color { return Color::RGB(234, 179,  8); } // TODO(token): message_role_system_pill
+inline auto role_pill_tool()      -> Color { return Color::RGB(20, 184, 166); } // TODO(token): message_role_tool_pill
+inline auto role_pill_thinking()  -> Color { return Color::RGB(139, 92, 246); } // TODO(token): message_role_thinking_pill
 
 inline auto accent_top_user()     -> Color { return role_pill_user(); }
 inline auto accent_top_assistant()-> Color { return role_pill_assistant(); }
 inline auto accent_top_system()   -> Color { return role_pill_system(); }
 inline auto accent_top_tool()     -> Color { return role_pill_tool(); }
-inline auto accent_top_error()    -> Color { return Color::RGB(239, 68, 68); }    // red-500
-inline auto accent_top_redacted() -> Color { return Color::RGB(107, 114, 128); }  // gray-500
+inline auto accent_top_error()    -> Color { return Color::RGB(239, 68, 68); } // TODO(token): message_error_accent
+inline auto accent_top_redacted() -> Color { return Color::RGB(107, 114, 128); } // TODO(token): message_redacted_accent
 
-inline auto selected_bg()         -> Color { return Color::RGB(30, 64, 175); }    // blue-800
-inline auto muted_fg()            -> Color { return Color::RGB(156, 163, 175); }  // gray-400
-inline auto empty_state_fg()      -> Color { return Color::RGB(107, 114, 128); }  // gray-500
-inline auto streaming_fg()        -> Color { return Color::RGB(34, 211, 238); }  // cyan-400
+inline auto selected_bg()         -> Color { return Color::RGB(30, 64, 175); } // TODO(token): message_list_selected_background
+inline auto muted_fg()            -> Color { return Color::RGB(156, 163, 175); } // TODO(token): message_list_muted_foreground
+inline auto empty_state_fg()      -> Color { return Color::RGB(107, 114, 128); } // TODO(token): message_list_empty_state_foreground
+inline auto streaming_fg()        -> Color { return Color::RGB(34, 211, 238); } // TODO(token): message_list_streaming_foreground
 
 } // namespace loom::ui::messages_list::palette
 

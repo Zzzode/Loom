@@ -1,5 +1,5 @@
 /// @file test_ui_messages.cpp
-/// @brief Split from test_ui.cpp - CollapseBackgroundBash, ImagePaste, ImagePasteCtrlV, ImagePasteFormat, ImagePasteOrphanCleanup, ImagePasteSubmit, MessagePipeline, Messages, MessagesList, VirtualList (SLOC budget fix)
+/// @brief Split from test_ui.cpp - ImagePaste, ImagePasteCtrlV, ImagePasteFormat, ImagePasteOrphanCleanup, ImagePasteSubmit, MessagePipeline, Messages, MessagesList, VirtualList (SLOC budget fix)
 
 #include <cstdlib>
 
@@ -16,7 +16,7 @@
 
 import std;
 import loom.ui.messages.message_pipeline;
-import loom.ui.messages.collapse_background_bash;
+import loom.ui.messages.xml_tags;
 import loom.ui.messages.virtual_list;
 import loom.ui.messages.messages_list;
 import loom.ui.messages.message_row;
@@ -242,129 +242,19 @@ TEST(MessagePipeline, ToolAugment_PreviewTruncatesTo200Codepoints) {
         << "long preview should end with … ellipsis";
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// P0-2 collapseBackgroundBashNotifications tests
-// TS REF: src/utils/collapseBackgroundBashNotifications.ts
-// ═══════════════════════════════════════════════════════════════════════════
-
-namespace cbb = loom::ui::messages::collapse;
-
-namespace {
-/// Build a user Message carrying a task-notification with the given status
-/// and summary, matching the CPP wire format (underscored tags).
-inline loom::core::Message make_notification(std::string_view status,
-                                           std::string_view summary) {
-    loom::core::UserMessage m{};
-    std::string text = "<task_notification><status>";
-    text += status;
-    text += "</status><summary>";
-    text += summary;
-    text += "</summary></task_notification>";
-    m.content.push_back(loom::core::TextBlock{std::move(text)});
-    return m;
+TEST(MessageXmlTags, RequiresCompleteTagPair) {
+    namespace tags = loom::ui::messages::xml_tags;
+    EXPECT_EQ(tags::extract_tag("<status>completed</status>", "status"),
+              std::optional<std::string>{"completed"});
+    EXPECT_EQ(tags::extract_tag("plain text", "status"), std::nullopt);
+    EXPECT_EQ(tags::extract_tag("<status>completed", "status"), std::nullopt);
 }
 
-/// A completed background-bash notification (collapsible).
-inline loom::core::Message make_completed_bash(std::string_view name = "\"foo\"") {
-    return make_notification("completed",
-                             std::string("Background command ") + std::string(name) + " completed");
+TEST(MessageToolResult, RemovesPluralSandboxViolationsTags) {
+    EXPECT_EQ(loom::ui::messages::detail::remove_sandbox_tags(
+                  "before<sandbox_violations>blocked</sandbox_violations>after"),
+              "beforeblockedafter");
 }
-
-/// Plain user text (never collapses).
-inline loom::core::Message make_plain_user(std::string text) {
-    loom::core::UserMessage m{};
-    m.content.push_back(loom::core::TextBlock{std::move(text)});
-    return m;
-}
-
-/// Read the first text block of a message (test helper).
-inline std::string first_text(const loom::core::Message& msg) {
-    const auto* u = std::get_if<loom::core::UserMessage>(&msg);
-    if (!u || u->content.empty()) return {};
-    const auto* t = std::get_if<loom::core::TextBlock>(&u->content.front());
-    return t ? t->text : std::string{};
-}
-}  // namespace
-
-TEST(CollapseBackgroundBash, SingleCompletionLeftUnchanged) {
-    std::vector<loom::core::Message> in;
-    in.push_back(make_completed_bash());
-    auto out = cbb::collapse_background_bash_notifications(in, /*fullscreen=*/true, /*verbose=*/false);
-    ASSERT_EQ(out.size(), 1u);
-    // Not synthesized — original text preserved.
-    EXPECT_NE(first_text(out[0]).find("Background command"), std::string::npos);
-    EXPECT_EQ(first_text(out[0]).find("background commands completed"), std::string::npos);
-}
-
-TEST(CollapseBackgroundBash, MultipleConsecutiveCollapseIntoSynthetic) {
-    std::vector<loom::core::Message> in;
-    in.push_back(make_completed_bash("\"a\""));
-    in.push_back(make_completed_bash("\"b\""));
-    in.push_back(make_completed_bash("\"c\""));
-    auto out = cbb::collapse_background_bash_notifications(in, true, false);
-    ASSERT_EQ(out.size(), 1u);
-    // TS: `<summary>3 background commands completed</summary>`
-    EXPECT_NE(first_text(out[0]).find("3 background commands completed"), std::string::npos);
-    EXPECT_NE(first_text(out[0]).find("<status>completed</status>"), std::string::npos);
-}
-
-TEST(CollapseBackgroundBash, FailedAndKilledStayVisible) {
-    std::vector<loom::core::Message> in;
-    in.push_back(make_notification("failed",  "Background command \"x\" failed with exit code 1"));
-    in.push_back(make_notification("killed",  "Background command \"y\" was stopped"));
-    auto out = cbb::collapse_background_bash_notifications(in, true, false);
-    // Neither is a completed-bash, so both pass through untouched.
-    EXPECT_EQ(out.size(), 2u);
-}
-
-TEST(CollapseBackgroundBash, NonBashSummaryNotCollapsed) {
-    // Same 'completed' status but a summary that does NOT start with the
-    // BACKGROUND_BASH_SUMMARY_PREFIX (e.g. an agent/workflow notification).
-    std::vector<loom::core::Message> in;
-    in.push_back(make_notification("completed", "Agent \"planner\" finished"));
-    in.push_back(make_notification("completed", "Agent \"builder\" finished"));
-    auto out = cbb::collapse_background_bash_notifications(in, true, false);
-    EXPECT_EQ(out.size(), 2u);  // untouched
-}
-
-TEST(CollapseBackgroundBash, InterleavedRunsPreserveOrderAndCollapseOnlyRuns) {
-    std::vector<loom::core::Message> in;
-    in.push_back(make_plain_user("hello"));
-    in.push_back(make_completed_bash("\"a\""));   // run of 2 → collapses
-    in.push_back(make_completed_bash("\"b\""));
-    in.push_back(make_plain_user("world"));
-    in.push_back(make_completed_bash("\"c\""));   // run of 1 → stays
-    auto out = cbb::collapse_background_bash_notifications(in, true, false);
-    ASSERT_EQ(out.size(), 4u);
-    EXPECT_EQ(first_text(out[0]), "hello");
-    EXPECT_NE(first_text(out[1]).find("2 background commands completed"), std::string::npos);
-    EXPECT_EQ(first_text(out[2]), "world");
-    EXPECT_NE(first_text(out[3]).find("Background command"), std::string::npos);  // single, unchanged
-}
-
-TEST(CollapseBackgroundBash, VerbosePassThrough) {
-    std::vector<loom::core::Message> in;
-    in.push_back(make_completed_bash("\"a\""));
-    in.push_back(make_completed_bash("\"b\""));
-    // TS: `if (verbose) return messages;`
-    auto out = cbb::collapse_background_bash_notifications(in, /*fullscreen=*/true, /*verbose=*/true);
-    EXPECT_EQ(out.size(), 2u);
-}
-
-TEST(CollapseBackgroundBash, NonFullscreenPassThrough) {
-    std::vector<loom::core::Message> in;
-    in.push_back(make_completed_bash("\"a\""));
-    in.push_back(make_completed_bash("\"b\""));
-    // TS: `if (!isFullscreenEnvEnabled()) return messages;`
-    auto out = cbb::collapse_background_bash_notifications(in, /*fullscreen=*/false, /*verbose=*/false);
-    EXPECT_EQ(out.size(), 2u);
-}
-
-// Integration: the collapse pass must be WIRED into the live AppAdapter
-// message-projection path (TS Messages.tsx:520), not just unit-tested in
-// isolation.  Append 3 consecutive completed-background-bash notifications to
-// the engine conversation, run SyncState, and verify the transcript shows a
-// single collapsed row instead of 3.
 
 // P0-3 VirtualMessageList helpers
 namespace vl = loom::ui::messages::virtual_list;

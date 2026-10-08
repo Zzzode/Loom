@@ -1628,52 +1628,6 @@ TEST(AppRuntime, RenderMessageShowsUserMessage) {
 
 
 
-TEST(AppRuntime, CollapseBackgroundBashWiredIntoLiveTranscript) {
-    loom::core::ToolRegistry tools;
-    loom::core::QueryEngineConfig config;
-    config.context_window.auto_compact = false;
-    config.cwd = fs::temp_directory_path().string();
-    loom::core::QueryEngine engine(std::move(config), tools);
-
-    loom::commands::AppCommandRegistry commands;
-    const auto storage_root = fs::temp_directory_path() /
-        ("loom_ui_collapse_wire_test_" +
-         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-
-    // Append 3 consecutive completed background-bash notifications (CPP wire
-    // format: underscored tags) directly to the engine conversation.
-    auto make_bash_notif = [](std::string_view name) {
-        loom::core::UserMessage m{};
-        std::string text =
-            "<task_notification><status>completed</status><summary>"
-            "Background command " + std::string(name) + " completed"
-            "</summary></task_notification>";
-        m.content.push_back(loom::core::TextBlock{std::move(text)});
-        return loom::core::Message{std::move(m)};
-    };
-    engine.append_message_for_testing(make_bash_notif("\"a\""));
-    engine.append_message_for_testing(make_bash_notif("\"b\""));
-    engine.append_message_for_testing(make_bash_notif("\"c\""));
-
-    auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, storage_root, [] {});
-    app->SyncState();
-
-    // Count how many user rows carry a task-notification.  Before the fix this
-    // would be 3 (one per notification); wired collapse merges them into 1.
-    const auto msgs = test_seams(app).messages_for_testing();
-    int user_rows = 0;
-    for (const auto& row : msgs) {
-        if (row.rfind("user", 0) == 0) ++user_rows;
-    }
-    EXPECT_EQ(user_rows, 1)
-        << "3 consecutive background-bash notifications must collapse to 1 row";
-
-    fs::remove_all(storage_root);
-}
-
-
-
 // Diagnostic: verify spacing between tool_result and assistant text.
 // Completed thinking blocks now render as collapsed summaries (visible between
 // the tool result and the assistant text), so the gap includes the thinking

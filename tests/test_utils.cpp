@@ -29,7 +29,6 @@ import loom.text.semantic_number;
 import loom.ui.chrome.terminal_io;
 import loom.commands.review.review_remote;
 import loom.security.query_guard;
-import loom.ui.messages.collapse_notifications;
 import loom.agent.agent_id;
 import loom.security.auto_mode_denials;
 import loom.diagnostics.activity_manager;
@@ -45,7 +44,6 @@ import loom.types.wire.content_array;
 import loom.containers.object_group_by;
 import loom.process.timeouts;
 import loom.parsing.cli.slash_command_parsing;
-import loom.ui.messages.collapse_read_search;
 import loom.containers.set_utils;
 import loom.text.words;
 import loom.diagnostics.fps_tracker;
@@ -430,44 +428,6 @@ TEST(SetUtilsCompat, DifferenceIntersectsEveryAndUnionMatchTypeScriptHelpers) {
     EXPECT_EQ(loom::utils::union_sets(a, b), (std::set<std::string>{"alpha", "beta", "delta", "gamma"}));
 }
 
-TEST(CollapseReadSearchSummary, BuildsActiveAndCompletedSummaryText) {
-    EXPECT_EQ(
-        loom::utils::collapse_read_search::get_search_read_summary_text(3, 2, true, 1),
-        "Searching for 3 patterns, reading 2 files, REPL'ing 1 time…");
-    EXPECT_EQ(
-        loom::utils::collapse_read_search::get_search_read_summary_text(1, 1, false, 2),
-        "Searched for 1 pattern, read 1 file, REPL'd 2 times");
-}
-
-TEST(CollapseReadSearchSummary, PutsMemoryAndListOperationsInTypeScriptOrder) {
-    loom::utils::collapse_read_search::MemoryCounts memory_counts{
-        .memory_search_count = 1,
-        .memory_read_count = 2,
-        .memory_write_count = 1,
-    };
-
-    EXPECT_EQ(
-        loom::utils::collapse_read_search::get_search_read_summary_text(
-            1, 0, true, 0, memory_counts, 2),
-        "Recalling 2 memories, searching memories, writing 1 memory, searching for 1 pattern, listing 2 directories…");
-}
-
-TEST(CollapseReadSearchSummary, IncludesTeamMemorySummaryPartsInTypeScriptOrder) {
-    loom::utils::collapse_read_search::MemoryCounts memory_counts{
-        .memory_search_count = 1,
-        .memory_read_count = 1,
-        .memory_write_count = 0,
-        .team_memory_search_count = 1,
-        .team_memory_read_count = 2,
-        .team_memory_write_count = 1,
-    };
-
-    EXPECT_EQ(
-        loom::utils::collapse_read_search::get_search_read_summary_text(
-            0, 1, false, 0, memory_counts),
-        "Recalled 1 memory, searched memories, recalled 2 team memories, searched team memories, wrote 1 team memory, read 1 file");
-}
-
 TEST(Memdir, TeamMemoryCanBeEnabledAtRuntime) {
     ScopedEnvVar disable_auto("LOOM_DISABLE_AUTO_MEMORY");
     ScopedEnvVar enable_team("LOOM_ENABLE_TEAM_MEMORY");
@@ -494,32 +454,6 @@ TEST(Memdir, TeamMemoryCanBeEnabledAtRuntime) {
 
     loom_sync_url.unset();
     EXPECT_FALSE(memdir::is_team_memory_enabled());
-}
-
-TEST(CollapseReadSearchSummary, SummarizesTrailingSearchReadActivities) {
-    using loom::utils::collapse_read_search::RecentActivity;
-    const std::vector<RecentActivity> activities = {
-        {.activity_description = "Edited file"},
-        {.activity_description = "Grep", .is_search = true},
-        {.activity_description = "Read", .is_read = true},
-        {.activity_description = "Glob", .is_search = true},
-    };
-
-    EXPECT_EQ(
-        loom::utils::collapse_read_search::summarize_recent_activities(activities),
-        "Searching for 2 patterns, reading 1 file…");
-}
-
-TEST(CollapseReadSearchSummary, FallsBackToMostRecentDescription) {
-    using loom::utils::collapse_read_search::RecentActivity;
-
-    EXPECT_EQ(loom::utils::collapse_read_search::summarize_recent_activities({}), std::nullopt);
-    EXPECT_EQ(
-        loom::utils::collapse_read_search::summarize_recent_activities({
-            RecentActivity{.activity_description = "Ran command"},
-            RecentActivity{},
-        }),
-        std::optional<std::string>{"Ran command"});
 }
 
 TEST(WordsSlug, ExposesTypeScriptWordTablesAndDeterministicSlugAssembly) {
@@ -1795,55 +1729,6 @@ TEST(QueryGuard, EnforcesDispatchingRunningGenerationTransitions) {
     unsubscribe();
     EXPECT_TRUE(guard.reserve());
     EXPECT_EQ(notifications, 7);
-}
-
-TEST(CollapseNotifications, MergesAdjacentHookSummariesByLabel) {
-    using namespace loom::utils::collapse_notifications;
-
-    std::vector<HookSummaryMessage> messages = {
-        {.hook_label = "PostToolUse", .hook_count = 1, .hook_infos = {"a"}, .hook_errors = {}, .prevented_continuation = false, .has_output = false, .total_duration_ms = 10},
-        {.hook_label = "PostToolUse", .hook_count = 2, .hook_infos = {"b", "c"}, .hook_errors = {"err"}, .prevented_continuation = true, .has_output = true, .total_duration_ms = 25},
-        {.hook_label = "Stop", .hook_count = 1, .hook_infos = {"d"}, .hook_errors = {}, .prevented_continuation = false, .has_output = false, .total_duration_ms = 5},
-    };
-
-    auto collapsed = collapse_hook_summaries(messages);
-    ASSERT_EQ(collapsed.size(), 2u);
-    EXPECT_EQ(collapsed[0].hook_label, "PostToolUse");
-    EXPECT_EQ(collapsed[0].hook_count, 3);
-    EXPECT_EQ(collapsed[0].hook_infos, (std::vector<std::string>{"a", "b", "c"}));
-    EXPECT_EQ(collapsed[0].hook_errors, (std::vector<std::string>{"err"}));
-    EXPECT_TRUE(collapsed[0].prevented_continuation);
-    EXPECT_TRUE(collapsed[0].has_output);
-    EXPECT_EQ(collapsed[0].total_duration_ms, 25);
-    EXPECT_EQ(collapsed[1].hook_label, "Stop");
-}
-
-TEST(CollapseNotifications, MergesTeammateShutdownRunsAndBackgroundBashCompletions) {
-    using namespace loom::utils::collapse_notifications;
-
-    std::vector<TeammateShutdownMessage> teammate_messages = {
-        {.uuid = "u1", .timestamp_ms = 100, .is_shutdown = true},
-        {.uuid = "u2", .timestamp_ms = 101, .is_shutdown = true},
-        {.uuid = "u3", .timestamp_ms = 102, .is_shutdown = false},
-        {.uuid = "u4", .timestamp_ms = 103, .is_shutdown = true},
-    };
-    auto teammates = collapse_teammate_shutdowns(teammate_messages);
-    ASSERT_EQ(teammates.size(), 3u);
-    EXPECT_TRUE(teammates[0].is_batch);
-    EXPECT_EQ(teammates[0].count, 2);
-    EXPECT_EQ(teammates[0].uuid, "u1");
-    EXPECT_FALSE(teammates[1].is_shutdown);
-    EXPECT_FALSE(teammates[2].is_batch);
-
-    const std::string bash1 = "<task-notification><status>completed</status><summary>Background command \"ls\" completed</summary></task-notification>";
-    const std::string bash2 = "<task-notification><summary>Background command \"pwd\" completed</summary><status>completed</status></task-notification>";
-    const std::string failed = "<task-notification><status>failed</status><summary>Background command \"bad\" failed</summary></task-notification>";
-    auto collapsed = collapse_background_bash_notifications({bash1, bash2, failed}, true, false);
-    ASSERT_EQ(collapsed.size(), 2u);
-    EXPECT_EQ(collapsed[0], "<task-notification><status>completed</status><summary>2 background commands completed</summary></task-notification>");
-    EXPECT_EQ(collapsed[1], failed);
-    EXPECT_EQ(collapse_background_bash_notifications({bash1, bash2}, true, true).size(), 2u);
-    EXPECT_EQ(collapse_background_bash_notifications({bash1, bash2}, false, false).size(), 2u);
 }
 
 TEST(AgentId, FormatsAndParsesAgentAndRequestIds) {

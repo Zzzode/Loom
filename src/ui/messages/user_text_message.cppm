@@ -25,6 +25,7 @@ export module loom.ui.messages.user_text_message;
 import std;
 
 import loom.ui.messages.message_timestamp;
+import loom.ui.foundation.theme_provider;
 // P0-1: Unified prompt / user-message glyph source.
 // Eliminates the local `kFiguresPointer` duplicate that diverged from the
 // prompt prefix's UTF-8 byte sequence in CPP Round 1-6.
@@ -297,17 +298,12 @@ class UserTextMessageComponent : public ComponentBase {
 [[nodiscard]] inline Element RenderUserPromptMessage(const UserTextMessageData& data,
                                                      bool is_selected = false,
                                                      bool add_margin = true) {
-    // Palette tokens (dark mode):
-    //   subtle                      = rgb( 80, 80, 80)  — pointer glyph prefix
-    //   suggestion                  = rgb(177,185,249)  — pointer glyph (selected)
-    //   text                        = rgb(250,250,252)  — body foreground (default)
-    //   userMessageBackground       = rgb( 55, 55, 55)  — bubble background
-    //   messageActionsBackground    = rgb( 44, 50, 62)  — bubble bg (selected)
-    const Color kText        = Color::RGB(250, 250, 252);
-    const Color kUserBg      = Color::RGB( 55,  55,  55);
-    const Color kUserBgSel   = Color::RGB( 44,  50,  62);
-    const Color kSubtle      = Color::RGB( 80,  80,  80);
-    const Color kSuggestion  = Color::RGB(177, 185, 249);
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    const Color kText = pal.text;
+    const Color kUserBg = pal.user_message_background;
+    const Color kUserBgSel = pal.message_actions_background;
+    const Color kSubtle = pal.subtle;
+    const Color kSuggestion = pal.suggestion;
 
     const Color prefix_color  = is_selected ? kSuggestion : kSubtle;
     const Color bg            = is_selected ? kUserBgSel : kUserBg;
@@ -401,18 +397,12 @@ class UserTextMessageComponent : public ComponentBase {
                                                       bool is_selected = false,
                                                       bool add_margin = true) {
     (void)is_selected;  // Selection never affects the command chip tint.
-    // Palette tokens (dark mode):
-    //   subtle                      = rgb( 80, 80, 80)  — pointer glyph prefix
-    //   text                        = rgb(255,255,255)  — body foreground
-    //   userMessageBackground       = rgb( 55, 55, 55)  — chip background
-    // NOTE: the command chip ALWAYS renders with userMessageBackground — no
-    // bgcolor swap on selection. Selection affects BLACK_CIRCLE color in
-    // assistant rows and the isSelected context, NOT this chip's tint (unlike
-    // UserPromptMessage which swaps to messageActionsBackground). Hence
-    // bg = kUserBg regardless of is_selected.
-    const Color kUserBg       = Color::RGB( 55,  55,  55);
-    const Color kSubtle       = Color::RGB( 80,  80,  80);
-    // The ❯ prefix always uses the "subtle" token (rgb(80,80,80)).
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    // The command chip always keeps the user-message background regardless
+    // of selection.
+    const Color kUserBg = pal.user_message_background;
+    const Color kSubtle = pal.subtle;
+    // The pointer always uses the subtle token.
     // Selection only affects the BLACK_CIRCLE color of the assistant row,
     // never the user command chip tint — unlike UserPromptMessage which
     // swaps both the prefix and the background.
@@ -421,9 +411,7 @@ class UserTextMessageComponent : public ComponentBase {
     std::string body = data.command_name
         ? ("/" + *data.command_name)
         : data.content;
-    // Faithful foregrounds (match theme.text + theme.subtle tokens exactly).
-    // Explicit colors avoid FTXUI default-fg drift when wrapped in bgcolor().
-    const Color kText = Color::RGB(250, 250, 252);
+    const Color kText = pal.text;
     // right padding = 1 only — no flex, so the chip collapses to content
     // width instead of stretching to terminal width (F8 compact chip).
     Element row = hbox({

@@ -21,6 +21,7 @@ export module loom.tools.bash_result_formatting;
 
 import std;
 
+import loom.constants.xml;
 import loom.text.format;
 
 export namespace loom::tools::bash {
@@ -36,9 +37,9 @@ using std::operator""sv;
 constexpr std::string_view kShellCwdResetPatternLiteral =
     "(?:^|\\n)(Shell cwd was reset to .+)$";
 
-/// Sandbox-violations XML-ish tag boundaries as produced by the sandbox layer.
-constexpr std::string_view kSandboxViolationsOpen  = "<sandbox_violations>";
-constexpr std::string_view kSandboxViolationsClose = "</sandbox_violations>";
+/// Sandbox-violations tag name as produced by the sandbox layer.
+constexpr std::string_view kSandboxViolationsTag =
+    loom::constants::xml::SANDBOX_VIOLATIONS_TAG;
 
 // ---------------------------------------------------------------------------
 // BashResultInfo — structured view of a BashTool execution result.
@@ -78,20 +79,22 @@ struct ExtractedStderr {
 inline auto extract_sandbox_violations(std::string_view stderr_sv)
     -> std::pair<std::string, std::optional<std::string>>
 {
-    const auto open  = stderr_sv.find(kSandboxViolationsOpen);
-    const auto close = stderr_sv.find(kSandboxViolationsClose);
+    const std::string open_tag = std::format("<{}>", kSandboxViolationsTag);
+    const std::string close_tag = std::format("</{}>", kSandboxViolationsTag);
+    const auto open  = stderr_sv.find(open_tag);
+    const auto close = stderr_sv.find(close_tag);
     if (open == std::string_view::npos || close == std::string_view::npos || close < open) {
         return { std::string(stderr_sv), std::nullopt };
     }
 
-    const auto content_start = open + kSandboxViolationsOpen.size();
+    const auto content_start = open + open_tag.size();
     std::string violations(stderr_sv.substr(content_start, close - content_start));
 
     // Reassemble stderr without the <sandbox_violations>...</sandbox_violations> span
     std::string cleaned;
     cleaned.reserve(stderr_sv.size());
     cleaned.append(stderr_sv.substr(0, open));
-    const auto after_close = close + kSandboxViolationsClose.size();
+    const auto after_close = close + close_tag.size();
     if (after_close < stderr_sv.size()) cleaned.append(stderr_sv.substr(after_close));
 
     // Trim leading/trailing whitespace on cleaned output

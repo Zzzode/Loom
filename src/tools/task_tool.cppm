@@ -7,8 +7,11 @@ export module loom.tools.task;
 import std;
 
 import loom.tools.agent_runtime;
+import loom.constants.xml;
 
 export namespace loom::tools {
+
+namespace xml = loom::constants::xml;
 
 // Task execution status
 enum class TaskStatus {
@@ -286,19 +289,16 @@ inline TaskStore& global_task_store() {
         ? std::optional<std::string>{*record.output}
         : record.error;
     return std::format(
-        "<task_notification>\n"
-        "<task_id>{}</task_id>\n"
-        "<output_file>{}</output_file>\n"
-        "<status>{}</status>\n"
-        "<summary>{}</summary>{}\n"
-        "</task_notification>",
-        xml_escape_task_text(record.agent_id),
-        xml_escape_task_text(output_file),
-        xml_escape_task_text(*status),
-        xml_escape_task_text(native_task_description(record)),
+        "<{}>\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>{}\n</{}>",
+        xml::TASK_NOTIFICATION_TAG,
+        xml::TASK_ID_TAG, xml_escape_task_text(record.agent_id), xml::TASK_ID_TAG,
+        xml::OUTPUT_FILE_TAG, xml_escape_task_text(output_file), xml::OUTPUT_FILE_TAG,
+        xml::STATUS_TAG, xml_escape_task_text(*status), xml::STATUS_TAG,
+        xml::SUMMARY_TAG, xml_escape_task_text(native_task_description(record)), xml::SUMMARY_TAG,
         result && !result->empty()
-            ? std::format("\n<result>{}</result>", xml_escape_task_text(*result))
-            : std::string{});
+            ? std::format("\n<{}>{}</{}>", xml::RESULT_TAG, xml_escape_task_text(*result), xml::RESULT_TAG)
+            : std::string{},
+        xml::TASK_NOTIFICATION_TAG);
 }
 
 [[nodiscard]] inline std::string native_task_full_output(const agent_runtime::NativeAgentRecord& record) {

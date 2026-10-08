@@ -120,6 +120,7 @@ target_link_libraries(loom_tools
     PUBLIC
         loom_utils
         loom_types
+        loom_constants
         loom_skills_core
         loom_tasks
         loom_teams

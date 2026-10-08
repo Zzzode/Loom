@@ -18,7 +18,6 @@ target_sources(loom_ui_messages_core
 target_link_libraries(loom_ui_messages_core
     PUBLIC
         loom_ui_foundation
-        loom_constants
         loom_types
         loom_utils
         ftxui::dom

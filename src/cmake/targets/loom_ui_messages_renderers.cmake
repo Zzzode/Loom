@@ -42,6 +42,7 @@ target_link_libraries(loom_ui_messages_renderers
         loom_ui_visual
         loom_ui_chrome
         loom_ui_widgets
+        loom_constants
         loom_types
         loom_utils
         ftxui::screen

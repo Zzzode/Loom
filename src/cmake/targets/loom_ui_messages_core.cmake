@@ -1,7 +1,7 @@
 # ─── loom_ui_messages_core: shared message types and predicates ─────────────
 # The cc.ui.messages.* core sub-library: shared row components, timestamp
-# formatting, row predicates, and the notification/read-search collapse
-# passes.  Split from loom_ui_messages (P2-2a) so a renderer .cppm edit
+# formatting, row predicates, and XML-like message parsing. Split from
+# loom_ui_messages (P2-2a) so a renderer .cppm edit
 # no longer cascades through the core BMI.
 #
 # Messages is UI9_RANK 7: this sub-library may link lower-ranked areas
@@ -13,14 +13,12 @@ target_sources(loom_ui_messages_core
         ui/messages/message_components.cppm
         ui/messages/message_timestamp.cppm
         ui/messages/message_predicates.cppm
-        # RFC 0001 Phase D B5a: moved from loom_utils (src/utils/messages/).
-        # Pure leaves (import std only); test-only importers.
-        ui/messages/collapse_notifications.cppm
-        ui/messages/collapse_read_search.cppm
+        ui/messages/xml_tags.cppm
 )
 target_link_libraries(loom_ui_messages_core
     PUBLIC
         loom_ui_foundation
+        loom_constants
         loom_types
         loom_utils
         ftxui::dom

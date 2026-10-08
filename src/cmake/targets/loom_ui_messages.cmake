@@ -15,7 +15,6 @@ target_sources(loom_ui_messages
         ui/messages/message_row.cppm
         ui/messages/messages_list.cppm
         ui/messages/message_pipeline.cppm
-        ui/messages/collapse_background_bash.cppm
         ui/messages/scroll_keybindings.cppm
         ui/messages/virtual_message_list.cppm
 )

@@ -12,8 +12,11 @@ import loom.tools.agent_runtime;
 import loom.tools.team;
 import loom.tools.runtime_team_shared;
 import loom.serdes.json;
+import loom.constants.xml;
 
 namespace loom::tools::detail {
+
+namespace xml = loom::constants::xml;
 
 namespace fs = std::filesystem;
 
@@ -134,30 +137,29 @@ void add_unique_artifact_path(std::vector<fs::path>& paths, fs::path path) {
 
     std::string result_section;
     if (record.output && !record.output->empty()) {
-        result_section = std::format("\n<result>{}</result>", escape_xml_text(*record.output));
+        result_section = std::format("\n<{}>{}</{}>",
+            xml::RESULT_TAG, escape_xml_text(*record.output), xml::RESULT_TAG);
     } else if (record.error && !record.error->empty()) {
-        result_section = std::format("\n<result>{}</result>", escape_xml_text(*record.error));
+        result_section = std::format("\n<{}>{}</{}>",
+            xml::RESULT_TAG, escape_xml_text(*record.error), xml::RESULT_TAG);
     }
     std::string worktree_section;
     if (record.worktree_path && !record.worktree_path->empty()) {
-        worktree_section += std::format("\n<worktree_path>{}</worktree_path>", escape_xml_text(*record.worktree_path));
+        worktree_section += std::format("\n<{}>{}</{}>",
+            xml::WORKTREE_PATH_TAG, escape_xml_text(*record.worktree_path), xml::WORKTREE_PATH_TAG);
     }
     if (record.worktree_branch && !record.worktree_branch->empty()) {
-        worktree_section += std::format("\n<worktree_branch>{}</worktree_branch>", escape_xml_text(*record.worktree_branch));
+        worktree_section += std::format("\n<{}>{}</{}>",
+            xml::WORKTREE_BRANCH_TAG, escape_xml_text(*record.worktree_branch), xml::WORKTREE_BRANCH_TAG);
     }
     return std::format(
-        "<task_notification>\n"
-        "<task_id>{}</task_id>\n"
-        "<output_file>{}</output_file>\n"
-        "<status>{}</status>\n"
-        "<summary>{}</summary>{}{}\n"
-        "</task_notification>",
-        escape_xml_text(record.agent_id),
-        escape_xml_text(loom::tools::detail::native_agent_output_file(record)),
-        escape_xml_text(*status),
-        escape_xml_text(summary),
-        result_section,
-        worktree_section);
+        "<{}>\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>{}{}\n</{}>",
+        xml::TASK_NOTIFICATION_TAG,
+        xml::TASK_ID_TAG, escape_xml_text(record.agent_id), xml::TASK_ID_TAG,
+        xml::OUTPUT_FILE_TAG, escape_xml_text(loom::tools::detail::native_agent_output_file(record)), xml::OUTPUT_FILE_TAG,
+        xml::STATUS_TAG, escape_xml_text(*status), xml::STATUS_TAG,
+        xml::SUMMARY_TAG, escape_xml_text(summary), xml::SUMMARY_TAG,
+        result_section, worktree_section, xml::TASK_NOTIFICATION_TAG);
 }
 
 [[nodiscard]] std::string format_native_agent_task_output(const agent_runtime::NativeAgentRecord& record) {

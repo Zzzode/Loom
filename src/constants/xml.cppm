@@ -31,18 +31,22 @@ inline constexpr std::array<std::string_view, 6> TERMINAL_OUTPUT_TAGS = {
 
 inline constexpr std::string_view TICK_TAG = "tick";
 
-// Task notification tags
-inline constexpr std::string_view TASK_NOTIFICATION_TAG = "task-notification";
-inline constexpr std::string_view TASK_ID_TAG = "task-id";
-inline constexpr std::string_view TOOL_USE_ID_TAG = "tool-use-id";
-inline constexpr std::string_view TASK_TYPE_TAG = "task-type";
-inline constexpr std::string_view OUTPUT_FILE_TAG = "output-file";
+// Task notification tags. The task protocol uses underscored tag names.
+inline constexpr std::string_view TASK_NOTIFICATION_TAG = "task_notification";
+inline constexpr std::string_view TASK_ID_TAG = "task_id";
+inline constexpr std::string_view TOOL_USE_ID_TAG = "tool_use_id";
+inline constexpr std::string_view TASK_TYPE_TAG = "task_type";
+inline constexpr std::string_view OUTPUT_FILE_TAG = "output_file";
 inline constexpr std::string_view STATUS_TAG = "status";
 inline constexpr std::string_view SUMMARY_TAG = "summary";
+inline constexpr std::string_view RESULT_TAG = "result";
 inline constexpr std::string_view REASON_TAG = "reason";
 inline constexpr std::string_view WORKTREE_TAG = "worktree";
-inline constexpr std::string_view WORKTREE_PATH_TAG = "worktreePath";
-inline constexpr std::string_view WORKTREE_BRANCH_TAG = "worktreeBranch";
+inline constexpr std::string_view WORKTREE_PATH_TAG = "worktree_path";
+inline constexpr std::string_view WORKTREE_BRANCH_TAG = "worktree_branch";
+
+// Sandbox result tags
+inline constexpr std::string_view SANDBOX_VIOLATIONS_TAG = "sandbox_violations";
 
 // Ultraplan/review tags
 inline constexpr std::string_view ULTRAPLAN_TAG = "ultraplan";

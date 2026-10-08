@@ -9,8 +9,11 @@ import std;
 
 import loom.tasks.task;
 import loom.tasks.types;
+import loom.constants.xml;
 
 export namespace loom::tasks {
+
+namespace xml = loom::constants::xml;
 
 // ============================================================
 // Constants
@@ -410,27 +413,27 @@ inline void queue_pending_message(
     }
     
     std::string tool_use_line = tool_use_id 
-        ? std::format("\n<tool_use_id>{}</tool_use_id>", escape_xml_text(*tool_use_id)) 
+        ? std::format("\n<{}>{}</{}>", xml::TOOL_USE_ID_TAG, escape_xml_text(*tool_use_id), xml::TOOL_USE_ID_TAG)
         : "";
     std::string result_section = final_message 
-        ? std::format("\n<result>{}</result>", escape_xml_text(*final_message)) 
+        ? std::format("\n<{}>{}</{}>", xml::RESULT_TAG, escape_xml_text(*final_message), xml::RESULT_TAG)
         : "";
     std::string worktree_section = worktree_path
-        ? std::format("\n<worktree><worktree_path>{}</worktree_path>{}</worktree>",
-            escape_xml_text(*worktree_path),
-            worktree_branch ? std::format("<worktree_branch>{}</worktree_branch>", escape_xml_text(*worktree_branch)) : "")
+        ? std::format("\n<{}><{}>{}</{}>{}</{}>",
+            xml::WORKTREE_TAG,
+            xml::WORKTREE_PATH_TAG, escape_xml_text(*worktree_path), xml::WORKTREE_PATH_TAG,
+            worktree_branch ? std::format("<{}>{}</{}>", xml::WORKTREE_BRANCH_TAG, escape_xml_text(*worktree_branch), xml::WORKTREE_BRANCH_TAG) : "",
+            xml::WORKTREE_TAG)
         : "";
     
     return std::format(
-        "<task_notification>\n"
-        "<task_id>{}</task_id>{}\n"
-        "<output_file>{}</output_file>\n"
-        "<status>{}</status>\n"
-        "<summary>{}</summary>{}{}\n"
-        "</task_notification>",
-        escaped_task_id, tool_use_line,
-        escape_xml_text(output_file.value_or("")),
-        escaped_status, summary, result_section, worktree_section
+        "<{}>\n<{}>{}</{}>{}\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>{}{}\n</{}>",
+        xml::TASK_NOTIFICATION_TAG,
+        xml::TASK_ID_TAG, escaped_task_id, xml::TASK_ID_TAG, tool_use_line,
+        xml::OUTPUT_FILE_TAG, escape_xml_text(output_file.value_or("")), xml::OUTPUT_FILE_TAG,
+        xml::STATUS_TAG, escaped_status, xml::STATUS_TAG,
+        xml::SUMMARY_TAG, summary, xml::SUMMARY_TAG, result_section, worktree_section,
+        xml::TASK_NOTIFICATION_TAG
     );
 }
 

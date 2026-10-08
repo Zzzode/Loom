@@ -34,7 +34,6 @@ import loom.model.model;
 import loom.constants.constants;
 import loom.scm.git.git;
 import loom.text.parse_references;
-import loom.ui.messages.collapse_background_bash;
 import loom.ui.features.agents.agent_shared_widgets;
 import loom.tools.agent_display;
 
@@ -238,9 +237,6 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
 // the default collapsed presentation (each item shown only in verbose).
 std::vector<Message> AppAdapter::ApplyMessageCollapsePipeline(
     std::vector<Message> messages) const {
-    namespace collapse = loom::ui::messages::collapse;
-    messages = collapse::collapse_background_bash_notifications(
-        messages, /*fullscreen=*/true, /*verbose=*/false);
     return messages;
 }
 

@@ -13,11 +13,13 @@ export module loom.ui.messages.message_tool_result;
 import std;
 
 import loom.types.types;
+import loom.constants.xml;
 // RFC 0002 F1 row 8: the ANSI/SGR -> FTXUI helpers (sgr_color_value_to_ftxui,
 // apply_sgr_run, ansi_to_ftxui_elements) moved to the chrome leaf
 // loom.ui.chrome.ansi_render; messages -> chrome is downward-legal.
 import loom.ui.chrome.ansi_render;
 import loom.ui.messages.message_components;  // for padding() Decorator
+import loom.ui.messages.xml_tags;
 import loom.ui.visual.markdown;                     // render_markdown() for natural-language tool results
 
 export namespace loom::ui::messages {
@@ -425,56 +427,33 @@ namespace detail {
 //   6. else if startsWith "Error: " or "Cancelled: " → keep
 //   7. else → "Error: " + trimmed
 
-/// Extract inner content of the first <tag>...</tag> pair.
-/// If the tag is not found, returns the full input.
-[[nodiscard]] inline std::string extract_tag(
-    std::string_view text, std::string_view tag) {
-    std::string open;
-    open.reserve(tag.size() + 2);
-    open += '<';
-    open.append(tag.data(), tag.size());
-    open += '>';
-    std::string close;
-    close.reserve(tag.size() + 3);
-    close += "</";
-    close.append(tag.data(), tag.size());
-    close += '>';
-
-    auto start = text.find(open);
-    if (start == std::string_view::npos) return std::string(text);
-    start += open.size();
-
-    auto end = text.find(close, start);
-    if (end == std::string_view::npos)
-        return std::string(text.substr(start));
-    return std::string(text.substr(start, end - start));
-}
-
-/// Remove <sandbox_violation>...</sandbox_violation> tag pairs (keep content).
+/// Remove sandbox-violations tag pairs while preserving their content.
 [[nodiscard]] inline std::string remove_sandbox_tags(std::string_view text) {
-    constexpr std::string_view kOpen  = "<sandbox_violation>";
-    constexpr std::string_view kClose = "</sandbox_violation>";
+    const std::string open = std::format(
+        "<{}>", loom::constants::xml::SANDBOX_VIOLATIONS_TAG);
+    const std::string close = std::format(
+        "</{}>", loom::constants::xml::SANDBOX_VIOLATIONS_TAG);
 
     std::string result;
     result.reserve(text.size());
     std::size_t pos = 0;
 
     while (pos < text.size()) {
-        auto open = text.find(kOpen, pos);
-        if (open == std::string_view::npos) {
+        auto open_pos = text.find(open, pos);
+        if (open_pos == std::string_view::npos) {
             result.append(text.substr(pos));
             break;
         }
-        result.append(text.substr(pos, open - pos));
-        pos = open + kOpen.size();
+        result.append(text.substr(pos, open_pos - pos));
+        pos = open_pos + open.size();
 
-        auto close = text.find(kClose, pos);
-        if (close == std::string_view::npos) {
+        auto close_pos = text.find(close, pos);
+        if (close_pos == std::string_view::npos) {
             result.append(text.substr(pos));
             break;
         }
-        result.append(text.substr(pos, close - pos));
-        pos = close + kClose.size();
+        result.append(text.substr(pos, close_pos - pos));
+        pos = close_pos + close.size();
     }
     return result;
 }
@@ -553,7 +532,8 @@ constexpr int kMaxRenderedLines = 10;
 /// Render the fallback error message.
 [[nodiscard]] inline Element render_fallback_error(
     std::string_view error_text, bool verbose) {
-    std::string extracted = extract_tag(error_text, "tool_use_error");
+    std::string extracted = xml_tags::extract_tag(error_text, "tool_use_error")
+        .value_or(std::string(error_text));
     std::string without_sandbox = remove_sandbox_tags(extracted);
     std::string without_error = strip_error_tags(without_sandbox);
     trim_string(without_error);

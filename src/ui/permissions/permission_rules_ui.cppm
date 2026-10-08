@@ -126,7 +126,7 @@ namespace detail {
         auto header = vbox({
             hbox({
                 text(" Permission Rules ")
-                    | bold | color(dt::palette::dark.primary),
+                    | bold | color(dt::palette::dark().primary),
                 filler(),
                 text("[1/2/3/4] jump  [Left/Right] switch tab  [Esc] close")
                     | dim,
@@ -139,7 +139,7 @@ namespace detail {
             header,
             pc::ThinDivider(),
             inner->Render() | yflex_grow,
-        }) | yflex_grow | borderLight | color(dt::palette::dark.primary);
+        }) | yflex_grow | borderLight | color(dt::palette::dark().primary);
     }) | CatchEvent([active](Event e) -> bool {
         // Global tab-switching keys.
         if (e == Event::ArrowRight || e == Event::Character('l')

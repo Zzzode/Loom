@@ -12,6 +12,9 @@ export module loom.ui.foundation.logo;
 
 import std;
 
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
+
 export namespace loom::ui::logo {
 
 using ftxui::bold;
@@ -64,18 +67,13 @@ struct LogoDisplayData {
     const LogoDisplayData& data, int term_cols) -> ftxui::Element {
     using namespace ftxui;
 
-    // Dark theme tokens — exact hex matches.
-    const Color kText  (255, 255, 255);   // theme.text → #FFFFFF
-    const Color kMuted (153, 153, 153);   // dim → theme.inactive #999999
-    // Loom brand icon colour — the canonical loom_body orange (== CLAWDED
-    // #D77757 in design_tokens.cppm).  Hardcoded rather than read from the
-    // palette token because the `inline const Palette` variables in
-    // design_tokens.cppm have dynamic initialization (Color::RGB is not
-    // constexpr) and importing TUs emit a zero-initialized COMDAT copy that
-    // the linker may pick, so current_theme().palette->loom_body resolves to
-    // Color::Default.  Until that root cause is fixed, brand colours in this
-    // file use the same named-constant pattern as kText/kMuted above.
-    const Color kLoomBody (215, 119, 87);
+    // Theme tokens.  The palette accessors are function-local statics, so
+    // they are immune to the inline-variable static-init-order fiasco that
+    // previously forced hardcoded brand colors here.
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    const Color kText  = pal.text;
+    const Color kMuted = pal.muted;
+    const Color kLoomBody = pal.loom_body;
     const Color icon_color = kLoomBody;
 
     // --- Loom brand icon: plain-weave (over-under fabric) 9 cols × 3 rows.
@@ -267,13 +265,15 @@ struct LogoV2Options {
 
 namespace detail {
 
-// Exact hex matches from darkTheme tokens
-inline const Color kWarningColor(255, 193,   7);   // theme.warning #FFC107
-inline const Color kIdeColor    ( 71, 130, 200);   // theme.ide     #4782C8
-inline const Color kLoomAccent      (215, 119,  87);   // theme.loom / loom_body #D77757
-inline const Color kLoomMascotBody   (215, 119,  87);   // theme.loom_body (== loom in dark)
-inline const Color kLoomMascotBackground(0, 0, 0);      // clawd_background #000000
-inline const Color kMuted       (153, 153, 153);   // theme.inactive / dim #999999
+// Theme-backed brand colors.  Accessors (not constants) so they track the
+// active theme; the underlying palettes are function-local statics, immune
+// to the static-init-order fiasco that previously forced hardcoded values.
+inline const Color& kWarningColor()       { return loom::ui::design::theme::current_theme().palette->warning; }
+inline const Color& kIdeColor()           { return loom::ui::design::theme::current_theme().palette->ide; }
+inline const Color& kLoomAccent()         { return loom::ui::design::theme::current_theme().palette->loom_body; }
+inline const Color& kLoomMascotBody()     { return loom::ui::design::theme::current_theme().palette->loom_body; }
+inline const Color& kLoomMascotBackground() { return loom::ui::design::theme::current_theme().palette->clawd_background; }
+inline const Color& kMuted()              { return loom::ui::design::theme::current_theme().palette->muted; }
 
 // Padding-left 2 columns.
 [[nodiscard]] inline auto pad2(Element e) -> Element {
@@ -283,14 +283,10 @@ inline const Color kMuted       (153, 153, 153);   // theme.inactive / dim #9999
 // Loom brand icon: plain-weave (over-under fabric) 9 cols × 3 rows.
 // A weaving metaphor for "Loom" — alternating █ (U+2588 full block) and
 // ░ (U+2591 light shade), with row 2 inverted so it reads as woven
-// over-under.  Rendered in kLoomMascotBody, the canonical loom_body orange
-// (== CLAWDED #D77757).  Hardcoded rather than read from the palette token
-// because the `inline const Palette` variables in design_tokens.cppm have
-// dynamic initialization (Color::RGB is not constexpr) and importing TUs
-// emit a zero-initialized COMDAT copy that the linker may pick, so
-// current_theme().palette->loom_body resolves to Color::Default.
+// over-under.  Rendered in kLoomMascotBody(), the canonical loom_body
+// orange (== CLAWDED #D77757), read from the active theme's palette.
 [[nodiscard]] inline auto make_weave_icon() -> Element {
-  const Color icon_color = kLoomMascotBody;
+  const Color icon_color = kLoomMascotBody();
   const std::string_view row_a = "\xE2\x96\x88\xE2\x96\x91\xE2\x96\x88\xE2\x96\x91"
                                  "\xE2\x96\x88\xE2\x96\x91\xE2\x96\x88\xE2\x96\x91"
                                  "\xE2\x96\x88";  // █░█░█░█░█
@@ -315,8 +311,8 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
   } else {
     using namespace detail;
     return pad2(hbox({
-      text("\xE2\x9A\xA1 ") | color(kLoomAccent) | bold,   // ⚡ U+26A1
-      text("Channels beta: join live conversations") | color(kMuted) | dim,
+      text("\xE2\x9A\xA1 ") | color(kLoomAccent()) | bold,   // ⚡ U+26A1
+      text("Channels beta: join live conversations") | color(kMuted()) | dim,
     }));
   }
 }
@@ -330,12 +326,12 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
   using namespace detail;
   Elements lines;
   lines.push_back(hbox({
-    text("Debug mode enabled") | color(kWarningColor),
+    text("Debug mode enabled") | color(kWarningColor()),
   }));
   lines.push_back(hbox({
     text("Logging to: "),
     text(o.debug_log_to_stderr ? "stderr" : o.debug_log_path),
-  }) | dim | color(kMuted));
+  }) | dim | color(kMuted()));
   return pad2(vbox(std::move(lines)));
 }
 
@@ -349,8 +345,8 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
   if (!o.emergency_tip.has_value()) return Element();
   using namespace detail;
   return pad2(hbox({
-    text("\xE2\x9A\xA0 ") | color(kWarningColor),                 // ⚠
-    text(*o.emergency_tip) | dim | color(kMuted),
+    text("\xE2\x9A\xA0 ") | color(kWarningColor()),                 // ⚠
+    text(*o.emergency_tip) | dim | color(kMuted()),
   }));
 }
 
@@ -362,7 +358,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
   lines.push_back(hbox({
     text("tmux session: "),
     text(*o.tmux_session),
-  }) | dim | color(kMuted));
+  }) | dim | color(kMuted()));
   if (o.tmux_prefix.has_value()) {
     const std::string prefix = *o.tmux_prefix;
     std::string detach_msg =
@@ -370,7 +366,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
             ? "Detach: " + prefix + " " + prefix
                   + " d (press prefix twice - Loom uses " + prefix + ")"
             : "Detach: " + prefix + " d";
-    lines.push_back(text(std::move(detach_msg)) | dim | color(kMuted));
+    lines.push_back(text(std::move(detach_msg)) | dim | color(kMuted()));
   }
   return pad2(vbox(std::move(lines)));
 }
@@ -388,7 +384,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
       text("Message from "),
       text(*o.org_name),
       text(":"),
-    }) | dim | color(kMuted));
+    }) | dim | color(kMuted()));
   }
   lines.push_back(text(*o.company_announcement));
   return pad2(vbox(std::move(lines)));
@@ -401,9 +397,9 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
   if (!o.show_sandbox_status) return Element();
   using namespace detail;
   return pad2(hbox({
-    text("\xE2\x9A\xA0 ") | color(kWarningColor),
+    text("\xE2\x9A\xA0 ") | color(kWarningColor()),
     text("Your bash commands will be sandboxed. Disable with /sandbox.")
-      | color(kWarningColor),
+      | color(kWarningColor()),
   }));
 }
 
@@ -417,15 +413,15 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
   brackets.reserve(static_cast<std::size_t>(count * 3));
   for (int i = 0; i < count; ++i) {
     if (i > 0) brackets.push_back(text(" "));
-    brackets.push_back(text("[") | color(kMuted) | dim);
-    brackets.push_back(text("\xE2\x9C\xBB") | color(kLoomAccent) | bold); // ✻
-    brackets.push_back(text("]") | color(kMuted) | dim);
+    brackets.push_back(text("[") | color(kMuted()) | dim);
+    brackets.push_back(text("\xE2\x9C\xBB") | color(kLoomAccent()) | bold); // ✻
+    brackets.push_back(text("]") | color(kMuted()) | dim);
   }
   return pad2(hbox({
     hbox(std::move(brackets)),
     text("  "),
     text(std::to_string(count) + " guest passes at /passes")
-      | dim | color(kMuted),
+      | dim | color(kMuted()),
   }));
 }
 
@@ -437,13 +433,13 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
   using namespace detail;
   return pad2(vbox({
     hbox({
-      text("\xE2\x9A\xA0 ") | color(kWarningColor),
-      text("Nearing monthly credit limit") | color(kWarningColor),
+      text("\xE2\x9A\xA0 ") | color(kWarningColor()),
+      text("Nearing monthly credit limit") | color(kWarningColor()),
     }),
     hbox({
       text(" "),
       text("Visit /billing to see your usage · upgrades available")
-        | dim | color(kMuted),
+        | dim | color(kMuted()),
     }),
   }));
 }
@@ -456,7 +452,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
   Elements out;
   out.reserve(o.status_notices.size());
   for (const auto& n : o.status_notices) {
-    const auto& col = n.is_warning ? kWarningColor : kIdeColor;
+    const auto& col = n.is_warning ? kWarningColor() : kIdeColor();
     out.push_back(pad2(hbox({
       text(n.glyph.empty() ? std::string("\xE2\x9A\xA0 ") : (n.glyph + " "))
           | color(col),
@@ -704,13 +700,13 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
   // Leading spaces.
   parts.push_back(text(std::string(static_cast<std::size_t>(leading_spaces), ' ')));
   // Left shoulder: ▗ in loom_body foreground, no bg.
-  parts.push_back(text("\xE2\x96\x97") | color(kLoomMascotBody));  // ▗ U+2597
+  parts.push_back(text("\xE2\x96\x97") | color(kLoomMascotBody()));  // ▗ U+2597
   // Body cavity: fg = clawd_background, bg = loom_body.
   //   Content: " " + "▗" + "     " + "▖" + " "
   parts.push_back(text(" \xE2\x96\x97     \xE2\x96\x96 ")
-                  | color(kLoomMascotBackground) | bgcolor(kLoomMascotBody));
+                  | color(kLoomMascotBackground()) | bgcolor(kLoomMascotBody()));
   // Right shoulder: ▖ in loom_body foreground, no bg.
-  parts.push_back(text("\xE2\x96\x96") | color(kLoomMascotBody));  // ▖ U+2596
+  parts.push_back(text("\xE2\x96\x96") | color(kLoomMascotBody()));  // ▖ U+2596
 
   // Suffix: optionally with a bold '*' at a given column.
   if (suffix_bold_star_col.has_value() && *suffix_bold_star_col >= 0
@@ -748,14 +744,14 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
   Elements parts;
   parts.push_back(text(std::string(static_cast<std::size_t>(leading_spaces), ' ')));
   // 9 spaces with background colour loom_body — solid orange bar.
-  parts.push_back(text("         ") | bgcolor(kLoomMascotBody));
+  parts.push_back(text("         ") | bgcolor(kLoomMascotBody()));
 
   if (suffix_dim_star_col.has_value() && *suffix_dim_star_col >= 0) {
     const int col = *suffix_dim_star_col;
     if (col < static_cast<int>(suffix.size())) {
       parts.push_back(text(std::string(suffix.substr(0, static_cast<std::size_t>(col)))));
       parts.push_back(text(std::string(suffix.substr(static_cast<std::size_t>(col), 1)))
-                      | dim | color(kMuted));
+                      | dim | color(kMuted()));
       parts.push_back(text(std::string(suffix.substr(static_cast<std::size_t>(col + 1)))));
     } else {
       parts.push_back(text(std::string(suffix)));
@@ -795,13 +791,13 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
 
   return hbox({
     text(e7),                                           // 7 × …
-    text(" ") | bgcolor(kLoomMascotBody),                    // paw 1 (bg)
+    text(" ") | bgcolor(kLoomMascotBody()),                    // paw 1 (bg)
     text(" "),                                          // gap
-    text(" ") | bgcolor(kLoomMascotBody),                    // paw 2 (bg)
+    text(" ") | bgcolor(kLoomMascotBody()),                    // paw 2 (bg)
     text("   "),                                        // 3-space inter-paw gap
-    text(" ") | bgcolor(kLoomMascotBody),                    // paw 3 (bg)
+    text(" ") | bgcolor(kLoomMascotBody()),                    // paw 3 (bg)
     text(" "),                                          // gap
-    text(" ") | bgcolor(kLoomMascotBody),                    // paw 4 (bg)
+    text(" ") | bgcolor(kLoomMascotBody()),                    // paw 4 (bg)
     text(std::move(trail)),                             // trailing …
   });
 }
@@ -831,7 +827,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
 
   return hbox({
     text(e7),
-    text(paws) | color(kLoomMascotBody),
+    text(paws) | color(kLoomMascotBody()),
     text(std::move(trail)),
   });
 }
@@ -859,7 +855,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
                          theme == WelcomeV2Theme::AppleTerminalLight);
 
   // --- Common header (all themes): t0 ---
-  Element header = text("Welcome to Loom        ") | color(kLoomAccent);
+  Element header = text("Welcome to Loom        ") | color(kLoomAccent());
 
   Elements art;
   art.reserve(18);
@@ -883,7 +879,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
       std::string_view row = kWelcomeV2LightRows[9];
       constexpr std::size_t kDimBytes = 39;
       art.push_back(hbox({
-        text(std::string(row.substr(0, kDimBytes))) | dim | color(kMuted),
+        text(std::string(row.substr(0, kDimBytes))) | dim | color(kMuted()),
         text(std::string(row.substr(kDimBytes))),
       }));
     }
@@ -894,7 +890,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
       std::string_view row = kWelcomeV2LightRows[10];
       constexpr std::size_t kDimBytes = 55;
       art.push_back(hbox({
-        text(std::string(row.substr(0, kDimBytes))) | dim | color(kMuted),
+        text(std::string(row.substr(0, kDimBytes))) | dim | color(kMuted()),
         text(std::string(row.substr(kDimBytes))),
       }));
     }
@@ -935,7 +931,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
           "      \xE2\x96\x92 \xE2\x96\x92\xE2\x96\x92";
       art.push_back(hbox({
         text("      "),
-        text(clawd_top) | color(kLoomMascotBody),
+        text(clawd_top) | color(kLoomMascotBody()),
         text(light_suffix12),
       }));
 
@@ -948,7 +944,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
           "         \xE2\x96\x92\xE2\x96\x92 ";
       art.push_back(hbox({
         text("      "),
-        text(clawd_mid) | color(kLoomMascotBody) | bgcolor(kLoomMascotBackground),
+        text(clawd_mid) | color(kLoomMascotBody()) | bgcolor(kLoomMascotBackground()),
         text(light_suffix13),
       }));
 
@@ -958,7 +954,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
           "          \xE2\x96\x92   ";
       art.push_back(hbox({
         text("      "),
-        text(clawd_top) | color(kLoomMascotBody),
+        text(clawd_top) | color(kLoomMascotBody()),
         text(light_suffix14),
       }));
     }
@@ -993,7 +989,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
     //   t10: "          ░░░░░░░░              "
     //   t11: "        ░░░░░░░░░░░░░░░░        "
     for (std::size_t i : {9u, 10u, 11u}) {
-      art.push_back(text(std::string(kWelcomeV2DarkRows[i])) | dim | color(kMuted));
+      art.push_back(text(std::string(kWelcomeV2DarkRows[i])) | dim | color(kMuted()));
     }
 
     if (is_apple) {
@@ -1008,7 +1004,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
       // t12: 54 spaces + dim '*' + "  "
       art.push_back(hbox({
         text("                                                      "),
-        text("*") | dim | color(kMuted),
+        text("*") | dim | color(kMuted()),
         text(" "),
       }));
 
@@ -1042,7 +1038,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
       //   body_pos:  byte offset of body within row (always 6 = 6 spaces)
       //   body_len:  byte length of body (9 █ = 27 bytes, or 11-char body w/ spaces)
       //   star_mode: how to render '*' in the suffix: 0=dim, 1=bold, 2=normal
-      //   body_bg:   if true, apply bgcolor(kLoomMascotBackground) to body
+      //   body_bg:   if true, apply bgcolor(kLoomMascotBackground()) to body
       auto render_dark_clawd_row =
           [&](std::string_view row, std::size_t body_pos, std::size_t body_len,
               int star_mode, bool body_bg) -> Element {
@@ -1053,8 +1049,8 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
         std::string body(row.substr(body_pos, body_len));
         std::string suffix(row.substr(body_pos + body_len));
 
-        auto body_el = text(body) | color(kLoomMascotBody);
-        if (body_bg) body_el = body_el | bgcolor(kLoomMascotBackground);
+        auto body_el = text(body) | color(kLoomMascotBody());
+        if (body_bg) body_el = body_el | bgcolor(kLoomMascotBackground());
 
         // Find '*' in suffix and apply styling
         auto star_pos = suffix.find('*');
@@ -1067,7 +1063,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
 
         Element star_el;
         switch (star_mode) {
-          case 0: star_el = text("*") | dim | color(kMuted); break;
+          case 0: star_el = text("*") | dim | color(kMuted()); break;
           case 1: star_el = text("*") | ftxui::bold; break;
           default: star_el = text("*"); break;
         }
@@ -1213,7 +1209,7 @@ namespace detail {
 
   // Title row: bold + loom color.
   Element title_el = text(truncate_str(cfg.title, actual_width))
-                   | bold | color(kLoomAccent);
+                   | bold | color(kLoomAccent());
 
   // Body rows.
   int max_ts = 0;
@@ -1226,7 +1222,7 @@ namespace detail {
   Elements body;
   if (cfg.lines.empty() && cfg.empty_message.has_value()) {
     body.push_back(text(truncate_str(*cfg.empty_message, actual_width))
-                   | dim | color(kMuted));
+                   | dim | color(kMuted()));
   } else {
     body.reserve(cfg.lines.size() + (cfg.footer ? 1 : 0));
     const int text_width = std::max(10,
@@ -1240,7 +1236,7 @@ namespace detail {
           ts += std::string(static_cast<std::size_t>(
               max_ts - static_cast<int>(ts.size())), ' ');
         }
-        row_parts.push_back(text(ts) | dim | color(kMuted));
+        row_parts.push_back(text(ts) | dim | color(kMuted()));
         row_parts.push_back(text("  "));  // gap
       }
       row_parts.push_back(text(truncate_str(l.text, text_width)));
@@ -1293,7 +1289,7 @@ struct RenderedFeedColumn {
       // Divider in loom colour, width = actual_width — 1-row horizontal
       // divider of actual_width chars in loom accent colour.
       // Using FTXUI separator() styled with the loom colour.
-      rows.push_back(ftxui::separator() | color(kLoomAccent)
+      rows.push_back(ftxui::separator() | color(kLoomAccent())
                    | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, actual_width));
     }
   }
@@ -1389,9 +1385,9 @@ inline constexpr int kContentPadding  = 2;
   // Title sits on the top border, inset by offset=1.
   Element border_title = hbox({
       // offset=1: 1 leading space, then the title text.
-      text(" ") | color(kLoomAccent),
-      text("Loom") | color(kLoomAccent) | bold,
-      text(" ") | color(kLoomAccent),
+      text(" ") | color(kLoomAccent()),
+      text("Loom") | color(kLoomAccent()) | bold,
+      text(" ") | color(kLoomAccent()),
   });
 
   // --- Loom brand icon (9 cols × 3 rows): plain-weave, centered. ---
@@ -1438,15 +1434,15 @@ inline constexpr int kContentPadding  = 2;
     text(welcome_effective) | bold | ftxui::center,
     text(""),                        // top margin = 1 (weave icon wrapped in it)
     make_weave_icon(),
-    text(model_display) | dim | color(kMuted) | ftxui::center,
-    text(billing_display) | dim | color(kMuted) | ftxui::center,
-    text(cwd_line)      | dim | color(kMuted) | ftxui::center,
+    text(model_display) | dim | color(kMuted()) | ftxui::center,
+    text(billing_display) | dim | color(kMuted()) | ftxui::center,
+    text(cwd_line)      | dim | color(kMuted()) | ftxui::center,
   }) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, inner_width);
 
   // ftxui::window(title, body) — border-embedded title with
-  // top-start alignment. Border colour = loom (kLoomAccent).
+  // top-start alignment. Border colour = loom (kLoomAccent()).
   Element card = window(std::move(border_title), std::move(inner))
-               | color(kLoomAccent);
+               | color(kLoomAccent());
 
   return card | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, card_width);
 }
@@ -1577,8 +1573,8 @@ inline constexpr int kContentPadding  = 2;
   //   " {loom-accent Loom} "
   //   offset=3 → title starts at column 3 from the left border corner.
   Element border_title = hbox({
-      text("   ") | color(kLoomAccent),                // offset=3 leading spaces
-      text("Loom") | color(kLoomAccent) | bold,
+      text("   ") | color(kLoomAccent()),                // offset=3 leading spaces
+      text("Loom") | color(kLoomAccent()) | bold,
   });
 
   // --- Loom brand icon (9 cols × 3 rows): plain-weave, centered. ---
@@ -1594,9 +1590,9 @@ inline constexpr int kContentPadding  = 2;
       make_weave_icon(),
       ftxui::vbox({
           text(truncate_str(model_line_full, left_width - 2))
-              | dim | color(kMuted),
+              | dim | color(kMuted()),
           text(truncate_str(cwd_line_full, left_width - 2))
-              | dim | color(kMuted),
+              | dim | color(kMuted()),
       }) | ftxui::center,
   }) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, left_width)
      | ftxui::size(ftxui::HEIGHT, ftxui::GREATER_THAN, 9);
@@ -1605,10 +1601,10 @@ inline constexpr int kContentPadding  = 2;
   //   Full-height, single-line border in loom accent colour,
   //   dimmed, with top/bottom/left borders disabled.
   // This is a single full-height vertical rule in the accent colour (or a
-  // dimmed variant). We approximate with 9 rows of "│" in kLoomAccent, sized to
+  // dimmed variant). We approximate with 9 rows of "│" in kLoomAccent(), sized to
   // the minimum of the left panel (GREATER_THAN 9).
   Element divider =
-      vbox(Elements(9, text("\xE2\x94\x82") | color(kLoomAccent)))
+      vbox(Elements(9, text("\xE2\x94\x82") | color(kLoomAccent())))
       | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, kDividerWidth)
       | ftxui::size(ftxui::HEIGHT, ftxui::GREATER_THAN, 9);
 
@@ -1733,7 +1729,7 @@ inline constexpr int kContentPadding  = 2;
   // Wrap inner_row in window() with the border title —
   // rounded border + loom accent colour + border title text.
   Element outer = ftxui::window(std::move(border_title), std::move(inner_row))
-                | color(kLoomAccent);
+                | color(kLoomAccent());
 
   return { std::move(outer), left_width, right_width };
 }

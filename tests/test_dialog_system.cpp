@@ -103,7 +103,7 @@ std::string render_to_ansi(ftxui::Element element, int width, int height) {
     using ThemeVariant = loom::ui::design::theme::ThemeVariant;
     return Theme{
         ThemeVariant::Light,
-        &loom::ui::design::tokens::palette::light,
+        &loom::ui::design::tokens::palette::light(),
     };
 }
 

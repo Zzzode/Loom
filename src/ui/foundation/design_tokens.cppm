@@ -255,6 +255,9 @@ struct Palette {
     ftxui::Color icon_default;            // default icon color — alias for text
     ftxui::Color icon_muted;              // muted icon color — alias for muted
     ftxui::Color icon_accent;             // accent icon color — alias for primary
+    // ─── Welcome screen tokens ────────────────────────────────────────────
+    ftxui::Color status_bar_background;   // welcome screen status bar fill
+    ftxui::Color spinner_gold;            // welcome spinner / logo glyph gold
 };
 
 // ─── Concrete palettes ───────────────────────────────────────────────────────
@@ -266,7 +269,8 @@ namespace palette {
 inline const auto CLAWDED      = ftxui::Color::RGB(215, 119,  87);
 inline const auto CLAWDED_SHIM = ftxui::Color::RGB(235, 159, 127);
 
-inline const Palette dark = {
+inline const Palette& dark() noexcept {
+    static const Palette p = {
     .primary             = CLAWDED,
     .primary_shimmer     = CLAWDED_SHIM,
     .info                = ftxui::Color::RGB(177, 185, 249),
@@ -401,9 +405,14 @@ inline const Palette dark = {
     .icon_default          = ftxui::Color::RGB(255, 255, 255),  // = text (white on dark)
     .icon_muted            = ftxui::Color::RGB(153, 153, 153),  // = muted
     .icon_accent           = CLAWDED,                            // = primary
+    .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
+    .spinner_gold          = ftxui::Color::RGB(217, 154,  56),
 };
+    return p;
+}
 
-inline const Palette light = {
+inline const Palette& light() noexcept {
+    static const Palette p = {
     .primary             = CLAWDED,
     .primary_shimmer     = ftxui::Color::RGB(245, 149, 117),
     // (clr-light-palette-17-p1).  `info` carries the permission/suggestion
@@ -430,7 +439,7 @@ inline const Palette light = {
     .user_message_background        = ftxui::Color::RGB(240, 240, 240),
     .user_message_background_hover  = ftxui::Color::RGB(252, 252, 252),
     .message_actions_background     = ftxui::Color::RGB(232, 236, 244),
-    .rainbow              = dark.rainbow,
+    .rainbow              = dark().rainbow,
     .rainbow_shimmer     = ftxui::Color::RGB(120,  80, 200),
     //   diffAdded=rgb(105,219,124)  diffRemoved=rgb(255,168,180)
     //   diffAddedWord=rgb(47,157,68)  diffRemovedWord=rgb(209,69,75)
@@ -454,7 +463,7 @@ inline const Palette light = {
     .prompt_border_shimmer  = ftxui::Color::RGB(183, 183, 183),
     .fast_mode_shimmer      = ftxui::Color::RGB(255, 150,  50),
     .loom_blue_shimmer    = ftxui::Color::RGB(117, 135, 255),
-    .rainbow_shimmer_stops  = dark.rainbow_shimmer_stops,         // identical across all themes
+    .rainbow_shimmer_stops  = dark().rainbow_shimmer_stops,         // identical across all themes
     // ── Loom blue system spinner ──
     .loom_blue           = ftxui::Color::RGB( 87, 105, 247),
     // ── Mode colors ──
@@ -513,11 +522,16 @@ inline const Palette light = {
     .icon_default          = ftxui::Color::RGB(  0,   0,   0),  // = text (black on light)
     .icon_muted            = ftxui::Color::RGB(102, 102, 102),  // = muted
     .icon_accent           = CLAWDED,                            // = primary
+    .status_bar_background = ftxui::Color::RGB(240, 240, 240),
+    .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
 };
+    return p;
+}
 
 // Daltonized variants (deuteranopia-safe) use EXPLICIT rgb() literals,
 // NOT a matrix approximation — ported verbatim here (clr-daltonized-27-p1).
-inline const Palette dark_daltonized = {
+inline const Palette& dark_daltonized() noexcept {
+    static const Palette p = {
     .primary             = ftxui::Color::RGB(255, 153,  51),
     .primary_shimmer     = ftxui::Color::RGB(255, 183, 101),  // loomShimmer
     // info/suggestion/permission all = rgb(153,204,255) light blue.
@@ -530,19 +544,19 @@ inline const Palette dark_daltonized = {
     .suggestion          = ftxui::Color::RGB(153, 204, 255),
     .text                = ftxui::Color::RGB(255, 255, 255),
     .inverse_text        = ftxui::Color::RGB(  0,   0,   0),
-    .background          = dark.background,
-    .chrome              = dark.chrome,
+    .background          = dark().background,
+    .chrome              = dark().chrome,
     .rate_limit_fill     = ftxui::Color::RGB(153, 204, 255),
     .rate_limit_empty    = ftxui::Color::RGB( 69,  92, 115),
     .brief_label         = ftxui::Color::RGB(255, 153,  51),
     // Daltonized: reuse dark-daltonized base bubble chromes (same
     // userMessageBackground/messageActionsBackground as dark).
-    .user_message_background        = dark.user_message_background,
-    .user_message_background_hover  = dark.user_message_background_hover,
-    .message_actions_background     = dark.message_actions_background,
+    .user_message_background        = dark().user_message_background,
+    .user_message_background_hover  = dark().user_message_background_hover,
+    .message_actions_background     = dark().message_actions_background,
     // daltonized — alias the corrected dark gradient (clr-rainbow-28-p1).
-    .rainbow = dark.rainbow,
-    .rainbow_shimmer     = dark.rainbow_shimmer,
+    .rainbow = dark().rainbow,
+    .rainbow_shimmer     = dark().rainbow_shimmer,
     //   diffAdded=rgb(0,68,102)  diffRemoved=rgb(102,0,0)
     //   diffAddedWord=rgb(0,119,179)  diffRemovedWord=rgb(179,0,0)
     .diff_added          = ftxui::Color::RGB(  0,  68, 102),
@@ -565,7 +579,7 @@ inline const Palette dark_daltonized = {
     .prompt_border_shimmer  = ftxui::Color::RGB(166, 166, 166),
     .fast_mode_shimmer      = ftxui::Color::RGB(255, 165,  70),
     .loom_blue_shimmer    = ftxui::Color::RGB(183, 224, 255),
-    .rainbow_shimmer_stops  = dark.rainbow_shimmer_stops,         // identical across all themes
+    .rainbow_shimmer_stops  = dark().rainbow_shimmer_stops,         // identical across all themes
     // ── Loom blue system spinner ──
     .loom_blue           = ftxui::Color::RGB(153, 204, 255),
     // ── Mode colors ──
@@ -624,9 +638,14 @@ inline const Palette dark_daltonized = {
     .icon_default          = ftxui::Color::RGB(255, 255, 255),  // = text (white on dark)
     .icon_muted            = ftxui::Color::RGB(153, 153, 153),  // = muted
     .icon_accent           = ftxui::Color::RGB(255, 153,  51),  // = primary (loom daltonized)
+    .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
+    .spinner_gold          = ftxui::Color::RGB(217, 154,  56),
 };
+    return p;
+}
 
-inline const Palette light_daltonized = {
+inline const Palette& light_daltonized() noexcept {
+    static const Palette p = {
     .primary             = ftxui::Color::RGB(255, 153,  51),  // loom (deuteranopia)
     .primary_shimmer     = ftxui::Color::RGB(255, 183, 101),  // loomShimmer
     .info                = ftxui::Color::RGB( 51, 102, 255),  // permission/suggestion
@@ -638,16 +657,16 @@ inline const Palette light_daltonized = {
     .suggestion          = ftxui::Color::RGB( 51, 102, 255),
     .text                = ftxui::Color::RGB(  0,   0,   0),
     .inverse_text        = ftxui::Color::RGB(255, 255, 255),
-    .background          = light.background,
-    .chrome              = light.chrome,
+    .background          = light().background,
+    .chrome              = light().chrome,
     .rate_limit_fill     = ftxui::Color::RGB( 51, 102, 255),
     .rate_limit_empty    = ftxui::Color::RGB( 23,  46, 114),
     .brief_label         = ftxui::Color::RGB(255, 153,  51),
-    .user_message_background        = light.user_message_background,
-    .user_message_background_hover  = light.user_message_background_hover,
-    .message_actions_background     = light.message_actions_background,
-    .rainbow             = dark.rainbow,   // identical across all themes
-    .rainbow_shimmer     = light.rainbow_shimmer,
+    .user_message_background        = light().user_message_background,
+    .user_message_background_hover  = light().user_message_background_hover,
+    .message_actions_background     = light().message_actions_background,
+    .rainbow             = dark().rainbow,   // identical across all themes
+    .rainbow_shimmer     = light().rainbow_shimmer,
     // Light-daltonized diffs: light blue / light red (deuteranopia-safe).
     //   diffAdded=rgb(153,204,255)  diffRemoved=rgb(255,204,204)
     //   diffAddedWord=rgb(51,102,204)  diffRemovedWord=rgb(153,51,51)
@@ -671,7 +690,7 @@ inline const Palette light_daltonized = {
     .prompt_border_shimmer  = ftxui::Color::RGB(183, 183, 183),
     .fast_mode_shimmer      = ftxui::Color::RGB(255, 150,  50),
     .loom_blue_shimmer    = ftxui::Color::RGB(101, 152, 255),
-    .rainbow_shimmer_stops  = dark.rainbow_shimmer_stops,         // identical across all themes
+    .rainbow_shimmer_stops  = dark().rainbow_shimmer_stops,         // identical across all themes
     // ── Loom blue system spinner ──
     .loom_blue           = ftxui::Color::RGB( 51, 102, 255),
     // ── Mode colors ──
@@ -723,19 +742,24 @@ inline const Palette light_daltonized = {
     .border_default        = ftxui::Color::RGB(153, 153, 153),  // = prompt_border
     .border_accent         = ftxui::Color::RGB( 51, 102, 255),  // = permission
     .border_error          = ftxui::Color::RGB(204,   0,   0),  // = danger
-    .surface_hover         = light.surface_hover,               // = user_message_background_hover
-    .surface_selected      = light.surface_selected,            // = message_actions_background
+    .surface_hover         = light().surface_hover,               // = user_message_background_hover
+    .surface_selected      = light().surface_selected,            // = message_actions_background
     .surface_bash          = ftxui::Color::RGB(250, 245, 250),  // = bash_message_background
     .surface_memory        = ftxui::Color::RGB(230, 245, 250),  // = memory_background
     .icon_default          = ftxui::Color::RGB(  0,   0,   0),  // = text (black on light)
     .icon_muted            = ftxui::Color::RGB(102, 102, 102),  // = muted
     .icon_accent           = ftxui::Color::RGB(255, 153,  51),  // = primary (loom daltonized)
+    .status_bar_background = ftxui::Color::RGB(240, 240, 240),
+    .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
 };
+    return p;
+}
 
 // ── Light ANSI palette ──
 // Uses only the 16 standard ANSI palette16 colors for terminals without
 // true-color support.  ansi:* names mapped to ftxui::Color::Palette16.
-inline const Palette light_ansi = {
+inline const Palette& light_ansi() noexcept {
+    static const Palette p = {
     .primary             = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .primary_shimmer     = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     .info                = ftxui::Color{ftxui::Color::Palette16::Blue},
@@ -846,11 +870,16 @@ inline const Palette light_ansi = {
     .icon_default          = ftxui::Color{ftxui::Color::Palette16::Black},        // = text (black on light)
     .icon_muted            = ftxui::Color{ftxui::Color::Palette16::GrayDark},     // = muted
     .icon_accent           = ftxui::Color{ftxui::Color::Palette16::RedLight},    // = primary
+    .status_bar_background = ftxui::Color::RGB(240, 240, 240),
+    .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
 };
+    return p;
+}
 
 // ── Dark ANSI palette ──
 // Uses only the 16 standard ANSI palette16 colors.
-inline const Palette dark_ansi = {
+inline const Palette& dark_ansi() noexcept {
+    static const Palette p = {
     .primary             = ftxui::Color{ftxui::Color::Palette16::RedLight},
     .primary_shimmer     = ftxui::Color{ftxui::Color::Palette16::YellowLight},
     .info                = ftxui::Color{ftxui::Color::Palette16::BlueLight},
@@ -961,10 +990,15 @@ inline const Palette dark_ansi = {
     .icon_default          = ftxui::Color{ftxui::Color::Palette16::White},     // = text (white on dark)
     .icon_muted            = ftxui::Color{ftxui::Color::Palette16::GrayLight},         // = muted
     .icon_accent           = ftxui::Color{ftxui::Color::Palette16::RedLight},    // = primary
+    .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
+    .spinner_gold          = ftxui::Color::RGB(217, 154,  56),
 };
+    return p;
+}
 
 // Monochrome palette: for reduced-color / braille-only terminals.
-inline const Palette monochrome = {
+inline const Palette& monochrome() noexcept {
+    static const Palette p = {
     .primary             = ftxui::Color::White,
     .primary_shimmer     = ftxui::Color::GrayLight,
     .info                = ftxui::Color::GrayLight,
@@ -1070,7 +1104,11 @@ inline const Palette monochrome = {
     .icon_default          = ftxui::Color::White,
     .icon_muted            = ftxui::Color::GrayDark,
     .icon_accent           = ftxui::Color::White,
+    .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
+    .spinner_gold          = ftxui::Color::RGB(153, 153, 153),
 };
+    return p;
+}
 
 } // namespace palette
 

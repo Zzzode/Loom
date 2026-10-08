@@ -930,7 +930,7 @@ namespace render {
 
 [[nodiscard]] inline Element RenderRuleList(std::shared_ptr<RuleListState> st) {
     auto top = hbox({
-        text(" 🛡 Permission Rule List ") | bold | color(dt::palette::dark.primary),
+        text(" 🛡 Permission Rule List ") | bold | color(dt::palette::dark().primary),
         filler(),
         text(" [Esc] close ") | dim,
     });

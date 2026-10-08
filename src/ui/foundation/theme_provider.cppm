@@ -45,7 +45,7 @@ struct Accessibility {
 // ─── Theme handle (value type; cheap to copy) ────────────────────────────────
 struct Theme {
     ThemeVariant variant = ThemeVariant::Dark;
-    const Palette* palette = &palette::dark;   // never null
+    const Palette* palette = &palette::dark();   // never null
     Accessibility a11y{};
 
     /// Convenience: resolve a semantic role through this theme's palette.
@@ -59,15 +59,15 @@ struct Theme {
 /// pointer lives for the duration of the program.
 [[nodiscard]] inline const Palette* palette_for_variant(ThemeVariant v) noexcept {
     switch (v) {
-        case ThemeVariant::Dark:            return &palette::dark;
-        case ThemeVariant::Light:           return &palette::light;
-        case ThemeVariant::DarkDaltonized:  return &palette::dark_daltonized;
-        case ThemeVariant::LightDaltonized: return &palette::light_daltonized;
-        case ThemeVariant::Monochrome:      return &palette::monochrome;
-        case ThemeVariant::LightAnsi:       return &palette::light_ansi;
-        case ThemeVariant::DarkAnsi:        return &palette::dark_ansi;
+        case ThemeVariant::Dark:            return &palette::dark();
+        case ThemeVariant::Light:           return &palette::light();
+        case ThemeVariant::DarkDaltonized:  return &palette::dark_daltonized();
+        case ThemeVariant::LightDaltonized: return &palette::light_daltonized();
+        case ThemeVariant::Monochrome:      return &palette::monochrome();
+        case ThemeVariant::LightAnsi:       return &palette::light_ansi();
+        case ThemeVariant::DarkAnsi:        return &palette::dark_ansi();
     }
-    return &palette::dark;
+    return &palette::dark();
 }
 
 /// Parse a theme variant name string ("dark", "light-daltonized", …).
@@ -143,7 +143,7 @@ inline void set_theme(ThemeVariant v, Accessibility a = {}) noexcept {
     std::lock_guard lk(h.mu);
     h.current.variant = v;
     if (a.force_monochrome) {
-        h.current.palette = &palette::monochrome;
+        h.current.palette = &palette::monochrome();
     } else {
         h.current.palette = palette_for_variant(v);
     }

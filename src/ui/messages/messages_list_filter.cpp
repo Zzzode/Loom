@@ -465,7 +465,7 @@ void count_row_tools(
 /// Complexity guarantee: exactly ONE linear pass over input.rows plus ONE
 /// pass over compact_boundary_groups (sorted).  Uses a std::vector<bool>
 /// membership table for O(1) "is this row inside a compact group?" lookups.
-auto build_visible_rows(MessagesListInput& input) -> std::vector<VisibleRow> {
+auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRow> {
     const auto N = input.rows.size();
     // ---- Step 0 : pre-compute lowered search needle (empty = skip search)
     const std::string needle = detail::lowered(input.search_query);

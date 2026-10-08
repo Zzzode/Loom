@@ -22,7 +22,6 @@ target_sources(loom_ui_prompt
         ui/prompt/placeholder_cascade.cppm
         ui/prompt/prompt_input.cppm
         ui/prompt/prompt_input_footer.cppm
-        ui/prompt/prompt_input_full.cppm
         ui/prompt/prompt_paste_handler.cppm
         ui/prompt/prompt_stash_notice.cppm
         ui/prompt/vim_input.cppm

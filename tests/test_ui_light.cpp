@@ -21,12 +21,11 @@ import loom.ui.widgets.components;
 import loom.ui.widgets.all_components;
 import loom.ui.widgets.passes;
 import loom.ui.features.grove;
-import loom.ui.features.plugins.lsp_recommendation_menu;
-import loom.ui.features.plugins.plugin_hint_menu;
 import loom.ui.foundation.declared_cursor;
 import loom.ui.chrome.panels;
 import loom.ui.visual.markdown;
 import loom.ui.prompt.prompt_input_footer;
+import loom.ui.prompt.combined_highlights;
 import loom.ui.prompt.placeholder_cascade;
 import loom.ui.foundation.design_figures;
 import loom.constants.constants;
@@ -981,140 +980,6 @@ TEST(Components, GroveBuildTreeReturnsComponent) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// loom.ui.components.lsp_recommendation_menu — LSP plugin rec menu
-// ═══════════════════════════════════════════════════════════════════════════════
-
-TEST(Components, LspRecRatingStarsZero) {
-    using namespace loom::ui::components::lsp_rec_menu;
-    auto stars = rating_stars(0.0);
-    EXPECT_EQ(stars, "☆☆☆☆☆");
-}
-
-TEST(Components, LspRecRatingStarsFive) {
-    using namespace loom::ui::components::lsp_rec_menu;
-    auto stars = rating_stars(5.0);
-    EXPECT_EQ(stars, "★★★★★");
-}
-
-TEST(Components, LspRecFormatInstallsSmall) {
-    using namespace loom::ui::components::lsp_rec_menu;
-    EXPECT_EQ(format_installs(42), "42");
-}
-
-TEST(Components, LspRecFormatInstallsThousands) {
-    using namespace loom::ui::components::lsp_rec_menu;
-    EXPECT_EQ(format_installs(1500), "1.5k");
-}
-
-TEST(Components, LspRecUniqueLanguagesEmpty) {
-    using namespace loom::ui::components::lsp_rec_menu;
-    std::vector<LspPluginRecommendation> recs;
-    auto langs = unique_languages(recs);
-    EXPECT_TRUE(langs.empty());
-}
-
-TEST(Components, LspRecUniqueLanguagesDedupes) {
-    using namespace loom::ui::components::lsp_rec_menu;
-    LspPluginRecommendation a{}, b{};
-    a.language_ids = {"python"};
-    b.language_ids = {"python"};
-    std::vector<LspPluginRecommendation> recs{a, b};
-    auto langs = unique_languages(recs);
-    EXPECT_EQ(langs.size(), 1u);
-    EXPECT_EQ(langs[0], "python");
-}
-
-TEST(Components, BuildLspRecommendationMenuReturnsComponent) {
-    using namespace loom::ui::components::lsp_rec_menu;
-    LspRecMenuState state;
-    LspPluginRecommendation rec;
-    rec.plugin_id = "pylsp";
-    rec.display_name = "Python LSP";
-    rec.description = "Python language server";
-    rec.language_ids = {"python"};
-    rec.install_count = 10000;
-    rec.rating = 4.5;
-    rec.reason = RecommendReason::PopularInCategory;
-    state.items.push_back(rec);
-    auto on_install = [](int) {};
-    auto on_skip = [](int) {};
-    auto menu = BuildLspRecommendationMenu(state, on_install, on_skip);
-    EXPECT_NE(menu, nullptr);
-    auto tree = menu->Render();
-    EXPECT_NE(tree, nullptr);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(20));
-    ftxui::Render(screen, tree);
-    EXPECT_FALSE(screen.ToString().empty());
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// loom.ui.features.plugins.plugin_hint_menu — Plugin hint menu
-// ═══════════════════════════════════════════════════════════════════════════════
-
-TEST(Components, PluginHintDefaultConstructs) {
-    using namespace loom::ui::components::plugin_hint_menu;
-    PluginHint hint{};
-    EXPECT_TRUE(hint.plugin_id.empty());
-    EXPECT_TRUE(hint.display_name.empty());
-    EXPECT_TRUE(hint.hint_reason.empty());
-}
-
-TEST(Components, BuildPluginHintMenuEmptyState) {
-    using namespace loom::ui::components::plugin_hint_menu;
-    PluginHintMenuState state;
-    auto on_install = [](int) {};
-    auto on_dismiss = [](int) {};
-    auto on_learn_more = [](int) {};
-    auto menu = BuildPluginHintMenu(state, on_install, on_dismiss, on_learn_more);
-    EXPECT_NE(menu, nullptr);
-}
-
-TEST(Components, BuildPluginHintMenuWithHints) {
-    using namespace loom::ui::components::plugin_hint_menu;
-    PluginHintMenuState state;
-    PluginHint h1;
-    h1.plugin_id = "python-plugin";
-    h1.display_name = "Python Plugin";
-    h1.hint_reason = "You use Python files";
-    state.hints.push_back(h1);
-
-    PluginHint h2;
-    h2.plugin_id = "rust-plugin";
-    h2.display_name = "Rust Plugin";
-    h2.hint_reason = "You use Rust files";
-    state.hints.push_back(h2);
-
-    auto on_install = [](int) {};
-    auto on_dismiss = [](int) {};
-    auto on_learn_more = [](int) {};
-    auto menu = BuildPluginHintMenu(state, on_install, on_dismiss, on_learn_more);
-    EXPECT_NE(menu, nullptr);
-    auto rendered = render_to_plain_text(menu->Render(), 80, 15);
-    EXPECT_FALSE(rendered.empty());
-}
-
-TEST(Components, PluginHintMenuUpdateState) {
-    using namespace loom::ui::components::plugin_hint_menu;
-    PluginHintMenuState state;
-    auto on_install = [](int) {};
-    auto on_dismiss = [](int) {};
-    auto on_learn_more = [](int) {};
-    auto menu = BuildPluginHintMenu(state, on_install, on_dismiss, on_learn_more);
-    ASSERT_NE(menu, nullptr);
-
-    PluginHintMenuState new_state;
-    PluginHint h;
-    h.plugin_id = "new-plugin";
-    h.display_name = "New Plugin";
-    h.hint_reason = "A new hint appeared";
-    new_state.hints.push_back(h);
-
-    auto rendered_before = render_to_plain_text(menu->Render(), 80, 10);
-    EXPECT_FALSE(rendered_before.empty());
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // loom.ui.foundation.design_figures: Glyph byte-sequence fidelity tests
 // TS REF: src/constants/figures.ts + node_modules/figures/index.js
 // Every glyph's exact UTF-8 bytes must match the TS reference so that golden
@@ -2027,4 +1892,41 @@ TEST(BashModePrefix, ModeResetAfterSubmit) {
     PromptInputMode mode_after_submit = PromptInputMode::Normal;
     EXPECT_EQ(mode_after_submit, PromptInputMode::Normal);
     EXPECT_NE(mode_after_submit, PromptInputMode::Bash);
+}
+
+TEST(CombinedHighlights, RainbowTracksCurrentTheme) {
+    namespace theme = loom::ui::design::theme;
+    const auto original = theme::current_theme();
+    for (const auto variant : {theme::ThemeVariant::Dark,
+                               theme::ThemeVariant::Light,
+                               theme::ThemeVariant::Monochrome}) {
+        const auto* palette = theme::palette_for_variant(variant);
+        theme::set_theme(theme::Theme{.variant = variant, .palette = palette});
+        for (std::size_t i = 0; i < 14; ++i) {
+            EXPECT_EQ(loom::ui::prompt::get_rainbow_color(i),
+                      palette->rainbow[i % palette->rainbow.size()]);
+            EXPECT_EQ(loom::ui::prompt::get_rainbow_color(i, true),
+                      palette->rainbow_shimmer_stops[i % palette->rainbow_shimmer_stops.size()]);
+        }
+    }
+    theme::set_theme(original);
+}
+
+TEST(PromptInputFooter, IdeIndicatorTracksCurrentTheme) {
+    namespace theme = loom::ui::design::theme;
+    const auto original = theme::current_theme();
+    loom::ui::prompt::footer::IdeSelectionInfo ide;
+    ide.connected = true;
+    ide.selected_lines = 3;
+    for (const auto variant : {theme::ThemeVariant::Dark,
+                               theme::ThemeVariant::Light,
+                               theme::ThemeVariant::Monochrome}) {
+        const auto* palette = theme::palette_for_variant(variant);
+        theme::set_theme(theme::Theme{.variant = variant, .palette = palette});
+        auto screen = ftxui::Screen::Create(
+            ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
+        ftxui::Render(screen, loom::ui::prompt::footer::RenderIdeStatusIndicator(ide));
+        EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, palette->ide);
+    }
+    theme::set_theme(original);
 }

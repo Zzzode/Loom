@@ -18,8 +18,6 @@ target_sources(loom_ui_features
         ui/features/agents/agent_wizard.cppm
         ui/features/grove.cppm
         ui/features/hooks_ui.cppm
-        ui/features/plugins/lsp_recommendation_menu.cppm
-        ui/features/plugins/plugin_hint_menu.cppm
         ui/features/plugins/plugin_install_flow.cppm
         ui/features/plugins/plugin_manage_panel.cppm
         ui/features/plugins/plugin_marketplace_browse.cppm

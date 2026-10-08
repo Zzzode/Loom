@@ -55,16 +55,18 @@ auto RowClickTracker::hit_test(int x, int y) const noexcept
     return std::nullopt;
 }
 
-[[nodiscard]] auto render_messages_list_virtual(
+namespace {
+// The static threshold check and the windowed renderer share one projection.
+[[nodiscard]] auto render_messages_list_virtual_rows(
     const MessagesListInput& input_const,
+    const std::vector<VisibleRow>& visible,
     std::size_t frame_count,
     int viewport_rows,
     int scroll_top_lines) -> Element
 {
     namespace vl = loom::ui::messages::virtual_list;
 
-    MessagesListInput input = input_const;
-    auto visible = build_visible_rows(input);
+    const auto& input = input_const;
     if (visible.empty()) {
         return vbox({ detail::render_empty_state(input.search_query) })
              | yframe | vscroll_indicator;
@@ -273,6 +275,19 @@ auto RowClickTracker::hit_test(int x, int y) const noexcept
     return body | yframe | vscroll_indicator | flex;
 }
 
+}  // namespace
+
+[[nodiscard]] auto render_messages_list_virtual(
+    const MessagesListInput& input,
+    std::size_t frame_count,
+    int viewport_rows,
+    int scroll_top_lines) -> Element
+{
+    auto visible = build_visible_rows(input);
+    return render_messages_list_virtual_rows(
+        input, visible, frame_count, viewport_rows, scroll_top_lines);
+}
+
 // =========================================================================
 // 7)  STATIC RENDER  (render_messages_list_view)
 // =========================================================================
@@ -319,30 +334,16 @@ auto RowClickTracker::hit_test(int x, int y) const noexcept
     // path rendered only the last 80 messages and the user could not
     // scroll to older ones.
     constexpr std::size_t kBigChatThreshold = kMaxRenderedLastN;
-    // Build visible just to get the size check — cheap O(N) walk, the
-    // virtual path would rebuild it anyway.
-    {
-        MessagesListInput probe = input_const;
-        const std::size_t n_visible = build_visible_rows(probe).size();
-        if (n_visible > kBigChatThreshold) {
-            // NOTE: virtual path doesn't support trailing_elements yet — the
-            // filler would need to be appended inside the virtual renderer's
-            // yframe.  For now, trailing elements are dropped on the virtual
-            // path (only relevant for 90+ messages where the filler is
-            // invisible anyway).
-            (void)trailing_elements;
-            return render_messages_list_virtual(
-                input_const,
-                frame_count,
-                /*viewport_rows=*/std::max(1, input_const.viewport_rows),
-                /*scroll_top_lines=*/std::max(0, input_const.scroll_offset));
-        }
-    }
-
-    // build_visible_rows takes a non-const ref (it mutates nothing, but the
-    // signature allows future precomputation caching) — copy-on-write.
-    MessagesListInput input = input_const;
+    const auto& input = input_const;
     auto visible = build_visible_rows(input);
+    if (visible.size() > kBigChatThreshold) {
+        // The filler is outside the visible window for large transcripts.
+        (void)trailing_elements;
+        return render_messages_list_virtual_rows(
+            input, visible, frame_count,
+            std::max(1, input.viewport_rows),
+            std::max(0, input.scroll_offset));
+    }
 
     if (visible.empty()) {
         // No messages: show leading elements (e.g. welcome/logo card) if

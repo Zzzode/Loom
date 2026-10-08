@@ -11,7 +11,7 @@
 //   app_handle_submit.cpp  — HandleSubmit, HandleCommand
 //   app_agent_menu.cpp     — FormatAgentsMenuOutput, LoadAgentCardsForMenu,
 //                           SyncState, ConsumePendingResult,
-//                           WaitForInFlightPastes, get_permission_callback,
+//                           DrainCompletedPastesAndSubmit, get_permission_callback,
 //                           trigger_orphan_cleanup_for_testing
 //   app_extra_methods.cpp  — RunLocalBashCommand, ProjectRuntimeMetadataToScreenState,
 //                           ApplyMessageCollapsePipeline, SpawnPasteWorker,
@@ -58,6 +58,174 @@ namespace repl = loom::ui::repl_screen;
 namespace acsrc = loom::ui::autocomplete_sources;
 namespace frn = loom::ui::prompt::fuzzy_rank_nucleo;
 namespace fidx = loom::ui::prompt::file_index;
+
+namespace {
+
+// Cache source data rather than filtered suggestions: cursor replacement ranges
+// and fuzzy matches must always reflect the latest input. Each source retains
+// at most eight contexts; thread-local ownership keeps UI instances on different
+// event-loop threads independent without locking around filesystem reads.
+template <typename T>
+class CompletionSourceCache {
+    using Clock = std::chrono::steady_clock;
+    struct Entry {
+        T value;
+        Clock::time_point refreshed;
+        Clock::time_point accessed;
+    };
+    std::unordered_map<std::string, Entry> entries_;
+
+public:
+    template <typename Loader>
+    const T& get(std::string key, Loader&& load) {
+        const auto now = Clock::now();
+        auto it = entries_.find(key);
+        if (it == entries_.end()) {
+            // Load before eviction so an unsuccessful loader preserves the cache.
+            auto value = load();
+            if (entries_.size() >= 8) {
+                auto oldest = std::ranges::min_element(entries_, {},
+                    [](const auto& item) { return item.second.accessed; });
+                entries_.erase(oldest);
+            }
+            it = entries_.emplace(std::move(key), Entry{
+                std::move(value), now, now}).first;
+        } else {
+            const auto age = now - it->second.refreshed;
+            const auto quiet = now - it->second.accessed;
+            // Debounce expired-source refreshes during rapid input. Refresh on
+            // the first request after a pause, or after five seconds even when
+            // typing continues. No background timer or stale filtered rows.
+            if (age >= std::chrono::seconds(1) &&
+                (quiet >= std::chrono::milliseconds(150) ||
+                 age >= std::chrono::seconds(5))) {
+                it->second.value = load();
+                it->second.refreshed = now;
+            }
+            it->second.accessed = now;
+        }
+        return it->second.value;
+    }
+};
+
+struct CompletionDirectoryEntry {
+    std::string name;
+    bool is_directory = false;
+};
+
+const std::vector<CompletionDirectoryEntry>& completion_directory_entries(
+    const std::filesystem::path& cwd,
+    const std::filesystem::path& directory) {
+    static thread_local CompletionSourceCache<
+        std::vector<CompletionDirectoryEntry>> cache;
+    const auto parent = directory.lexically_normal();
+    // Include cwd even for absolute paths: changing projects invalidates the
+    // active context, while different leaf queries reuse the same source list.
+    return cache.get(cwd.string() + "\n" + parent.string(), [&] {
+        std::vector<CompletionDirectoryEntry> entries;
+        std::error_code ec;
+        for (auto it = std::filesystem::directory_iterator(parent, ec);
+             !ec && it != std::filesystem::directory_iterator();
+             it.increment(ec)) {
+            const bool is_directory = it->is_directory(ec);
+            if (ec) ec.clear();
+            entries.push_back({it->path().filename().string(), is_directory});
+        }
+        return entries;
+    });
+}
+
+// Cache the whole PATH source, rather than each PATH directory separately:
+// long PATH lists must not churn the eight-context directory cache per keypress.
+const std::vector<std::string>& completion_shell_commands(
+    const std::filesystem::path& cwd,
+    std::string_view path_text) {
+    static thread_local CompletionSourceCache<std::vector<std::string>> cache;
+    return cache.get(cwd.string() + "\n" + std::string(path_text), [&] {
+        std::vector<std::string> names;
+        std::unordered_set<std::string> seen;
+        auto paths = path_text;
+        while (!paths.empty()) {
+            const auto sep = paths.find(':');
+            const auto current = paths.substr(0, sep);
+            if (sep == std::string_view::npos) paths = {};
+            else paths.remove_prefix(sep + 1);
+            if (current.empty()) continue;
+            std::filesystem::path dir{std::string(current)};
+            if (dir.is_relative()) dir = cwd / dir;
+            for (const auto& entry : completion_directory_entries(cwd, dir)) {
+                if (seen.insert(entry.name).second) names.push_back(entry.name);
+            }
+        }
+        return names;
+    });
+}
+
+struct CompletionTeammateEntry {
+    std::string name;
+    std::string status;
+    std::string color;
+};
+
+std::string completion_agent_context(std::string_view cwd) {
+    const char* home = std::getenv("HOME");
+    const char* config = std::getenv("LOOM_CONFIG_DIR");
+    return std::format("{}\n{}\n{}\n{}", cwd,
+        agent_runtime::runtime_state_dir().string(),
+        home ? home : "", config ? config : "");
+}
+
+const std::vector<CompletionTeammateEntry>& completion_native_agents(
+    std::string_view cwd) {
+    static thread_local CompletionSourceCache<
+        std::vector<CompletionTeammateEntry>> cache;
+    return cache.get(completion_agent_context(cwd), [] {
+        std::vector<CompletionTeammateEntry> entries;
+        for (const auto& record : agent_runtime::load_all_native_agent_records()) {
+            entries.push_back({
+                record.name.value_or(record.agent_id),
+                std::string(agent_runtime::native_agent_status_name(record.status)),
+                record.teammate_color.value_or("")});
+        }
+        return entries;
+    });
+}
+
+const std::vector<acsrc::FormattedSuggestion>& completion_agent_suggestions(
+    std::string_view cwd) {
+    static thread_local CompletionSourceCache<
+        std::vector<acsrc::FormattedSuggestion>> cache;
+    return cache.get(completion_agent_context(cwd), [&] {
+        return acsrc::build_agent_suggestions(cwd, "", 0, 0);
+    });
+}
+
+struct CompletionSessionEntry {
+    loom::session::SessionMetadata metadata;
+    int message_count = 0;
+    std::string fallback_title;
+};
+
+const std::vector<CompletionSessionEntry>& completion_session_entries(
+    const std::filesystem::path& directory) {
+    static thread_local CompletionSourceCache<
+        std::vector<CompletionSessionEntry>> cache;
+    return cache.get(directory.lexically_normal().string(), [&] {
+        std::vector<CompletionSessionEntry> entries;
+        for (auto metadata : loom::session::list_recent_sessions(directory, 50)) {
+            const int count = count_session_messages(directory, metadata.session_id);
+            std::string fallback;
+            if (count > 0 &&
+                (metadata.title.value_or("").empty() || metadata.title == "Session")) {
+                fallback = first_user_message_as_title(directory, metadata.session_id);
+            }
+            entries.push_back({std::move(metadata), count, std::move(fallback)});
+        }
+        return entries;
+    });
+}
+
+}  // namespace
 
 // RFC 0001 Phase C batch 2: folded from app.cppm — sole caller is
 // RefreshAutocompleteSuggestions below. Plain (non-inline) definition;
@@ -227,15 +395,11 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             : std::string{};
         const auto leaf = raw.filename().string();
 
-        std::error_code ec;
-        if (!std::filesystem::is_directory(parent, ec)) return;
-
         struct DirCandidate { std::string display; std::string insert; int rank; };
         std::vector<DirCandidate> dirs;
-        for (const auto& entry : std::filesystem::directory_iterator(parent, ec)) {
-            if (ec) break;
-            if (!entry.is_directory(ec)) continue;
-            const auto name = entry.path().filename().string();
+        for (const auto& entry : completion_directory_entries(base, parent)) {
+            if (!entry.is_directory) continue;
+            const auto& name = entry.name;
             if (!frn::fuzzy_match_nucleo(name, leaf)) continue;
             auto insert = prefix + name + "/";
             dirs.push_back(DirCandidate{
@@ -261,15 +425,15 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     };
 
     auto add_session_suggestions = [&](std::string_view partial) {
-        auto metas = loom::session::list_recent_sessions(sessions_dir(), 50);
-        for (const auto& m : metas) {
+        for (const auto& entry : completion_session_entries(sessions_dir())) {
+            const auto& m = entry.metadata;
             const auto& id = m.session_id;
             const auto& title = m.title.value_or("");
             // Skip empty sessions — they are startup shells with no messages.
             // Count from the file on disk: metadata.message_count is 0 for
             // sessions that use messages.jsonl (the engine appends without
             // updating the metadata count).
-            if (count_session_messages(sessions_dir(), id) == 0) continue;
+            if (entry.message_count == 0) continue;
             if (!frn::fuzzy_match_nucleo(id, partial) &&
                 !frn::fuzzy_match_nucleo(title, partial)) {
                 continue;
@@ -286,7 +450,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             // Use the first user message as description when title is generic.
             std::string desc = title.empty() ? "Session" : title;
             if (desc.empty() || desc == "Session") {
-                desc = first_user_message_as_title(sessions_dir(), id);
+                desc = entry.fallback_title;
             }
             add_suggestion(
                 std::move(short_id_str),
@@ -619,15 +783,14 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             };
             struct DmCandidate { std::string display; std::string insert; std::string desc; std::string color; };
             std::vector<DmCandidate> dms;
-            for (const auto& record : agent_runtime::load_all_native_agent_records()) {
-                const auto name = record.name.value_or(record.agent_id);
+            for (const auto& record : completion_native_agents(screen_state_->cwd)) {
+                const auto& name = record.name;
                 if (!starts_with_ci(name, query)) continue;
                 dms.push_back(DmCandidate{
                     .display = "@" + std::string(name),
                     .insert = "@" + std::string(name) + " ",
-                    .desc = "Teammate · " +
-                            std::string(agent_runtime::native_agent_status_name(record.status)),
-                    .color = record.teammate_color.value_or(""),
+                    .desc = "Teammate · " + record.status,
+                    .color = record.color,
                 });
             }
             if (!dms.empty()) {
@@ -641,7 +804,6 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             }
         }
 
-        std::error_code ec;
         // AT-06: skip the file index when the query is empty (bare "@") —
         // On an empty @ query, show teammates/MCP/agents, not every file
         // in the repo. With a non-empty query the index fuzzy-matches.
@@ -676,15 +838,14 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                                std::move(r.insert), token.start, token.end,
                                false, "", std::move(r.icon));
             }
-        } else if (std::filesystem::is_directory(parent, ec)) {
+        } else {
             struct FileCandidate { std::string display; std::string insert; std::string desc; int rank; std::string icon; };
             std::vector<FileCandidate> files;
-            for (const auto& entry : std::filesystem::directory_iterator(parent, ec)) {
-                if (ec) break;
-                const auto name = entry.path().filename().string();
+            for (const auto& entry : completion_directory_entries(base, parent)) {
+                const auto& name = entry.name;
                 if (name.starts_with(".")) continue;
                 if (!frn::fuzzy_match_nucleo(name, leaf)) continue;
-                const bool is_dir = entry.is_directory(ec);
+                const bool is_dir = entry.is_directory;
                 auto rel = prefix + name + (is_dir ? "/" : "");
                 // Directories get "/" suffix so user can continue browsing.
                 // Icons: 📄 for files, 📁 for directories.
@@ -719,12 +880,13 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // ── Agent / teammate autocomplete ─────────────────────────────
         // Agent defs with color + truncated when_to_use; teammate DMs with
         // status, prefix-matched on lowercased name.
-        // Heavy lifting (fuzzy filter + formatting) lives in build_agent_suggestions()
-        // to keep app.cppm under clang's source-location budget.
-        for (const auto& sug : acsrc::build_agent_suggestions(
-                 screen_state_->cwd, query, token.start, token.end)) {
+        // Cache source formatting; filter names and apply the current token
+        // replacement range on every input event.
+        for (const auto& sug : completion_agent_suggestions(screen_state_->cwd)) {
+            if (!frn::fuzzy_match_nucleo(
+                    std::string_view(sug.display_text).substr(1), query)) continue;
             add_suggestion(sug.display_text, sug.description,
-                sug.insert_text, sug.replacement_start, sug.replacement_end,
+                sug.insert_text, token.start, token.end,
                 sug.submit_on_return, sug.id, sug.icon, sug.color_name);
         }
         // MCP server resources (list_native_mcp_resources) are collected
@@ -753,8 +915,11 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // files/agents/MCP. Sessions are sorted by recency (newest first)
         // per loom::session::list_recent_sessions.
         {
-            auto metas = loom::session::list_recent_sessions(sessions_dir(), 30);
-            for (const auto& m : metas) {
+            const auto& entries = completion_session_entries(sessions_dir());
+            const auto limit = std::min<std::size_t>(entries.size(), 30);
+            for (std::size_t i = 0; i < limit; ++i) {
+                const auto& entry = entries[i];
+                const auto& m = entry.metadata;
                 const auto& id = m.session_id;
                 const auto& title = m.title.value_or("");
                 const std::string short_id =
@@ -771,7 +936,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 // Build description: "Session" + short-ID hint + msg count.
                 // Count from the file on disk: metadata.message_count is 0
                 // for sessions that use messages.jsonl.
-                const int msg_count = count_session_messages(sessions_dir(), id);
+                const int msg_count = entry.message_count;
                 std::string desc = "Session";
                 if (!title.empty() && title != short_id) {
                     desc += " · " + short_id;
@@ -872,36 +1037,19 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     }
 
     if (repl::effective_is_bash(*screen_state_) && !token.text.empty()) {
-        std::unordered_set<std::string> seen;
         if (const char* path_env = std::getenv("PATH")) {
-            std::string_view paths(path_env);
-            while (!paths.empty()) {
-                auto sep = paths.find(':');
-                auto current = sep == std::string_view::npos
-                    ? paths
-                    : paths.substr(0, sep);
-                if (sep == std::string_view::npos) paths = {};
-                else paths.remove_prefix(sep + 1);
-
-                std::error_code ec;
-                std::filesystem::path dir{std::string(current)};
-                if (!std::filesystem::is_directory(dir, ec)) continue;
-                for (const auto& entry : std::filesystem::directory_iterator(dir, ec)) {
-                    if (ec) break;
-                    auto name = entry.path().filename().string();
-                    if (seen.contains(name) || !frn::fuzzy_match_nucleo(name, token.text)) continue;
-                    seen.insert(name);
-                    add_suggestion(
-                        name,
-                        "Shell command",
-                        name + " ",
-                        token.start,
-                        token.end,
-                        false,
-                        "",
-                        "▶_");
-                    if (screen_state_->autocomplete_suggestions.size() >= 50) break;
-                }
+            const auto base = std::filesystem::current_path();
+            for (const auto& name : completion_shell_commands(base, path_env)) {
+                if (!frn::fuzzy_match_nucleo(name, token.text)) continue;
+                add_suggestion(
+                    name,
+                    "Shell command",
+                    name + " ",
+                    token.start,
+                    token.end,
+                    false,
+                    "",
+                    "▶_");
                 if (screen_state_->autocomplete_suggestions.size() >= 50) break;
             }
         }
@@ -910,4 +1058,3 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
 }
 
 }  // namespace loom::ui
-

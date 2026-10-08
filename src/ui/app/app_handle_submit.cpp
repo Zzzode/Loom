@@ -145,9 +145,16 @@ static std::string format_session_age(std::chrono::system_clock::time_point tp) 
 
 // ── HandleSubmit (moved out of app_autocomplete.cpp to reduce import closure) ──
 void AppAdapter::HandleSubmit(const std::string& text,
-                              repl::InputMode submit_mode) {
-    // ── Wait for in-flight image pastes before snapshotting ──────────
-    this->WaitForInFlightPastes(text);
+                              repl::InputMode submit_mode,
+                              bool wait_for_pastes) {
+    if (wait_for_pastes && HasInFlightPasteReferences(text)) {
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+        pending_paste_submission_ = PendingPasteSubmission{text, submit_mode, deadline};
+        paste_submission_deadline_ms_.store(
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                deadline.time_since_epoch()).count());
+        return;
+    }
 
     // Parse [Image #N] / [...Truncated text #N] refs in the submitted text.
     const auto refs = loom::utils::parse_references(text);
@@ -204,6 +211,9 @@ void AppAdapter::HandleSubmit(const std::string& text,
         event_dedup_.clear();
     }
 
+    conversation_projection_dirty_.store(true);
+    welcome_animation_active_.store(false);
+
     // Snapshot only still-referenced images for this submission.
     std::vector<ImageBlock> attachments;
     attachments.reserve(referenced_ids.size());
@@ -212,7 +222,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
             attachments.push_back(std::move(it->second));
         }
     }
-    paste_.pasted_contents().clear();
+    for (int id : referenced_ids) paste_.pasted_contents().erase(id);
 
     // Expand [...Truncated text #N] refs into their full text.
     std::string expanded_text = loom::utils::expand_pasted_text_refs(
@@ -221,13 +231,18 @@ void AppAdapter::HandleSubmit(const std::string& text,
             if (it != paste_.pasted_text_contents().end()) return it->second;
             return std::nullopt;
         });
-    paste_.pasted_text_contents().clear();
+    for (const auto& ref : refs) paste_.pasted_text_contents().erase(ref.id);
 
     query_thread_ = std::jthread([this, text = std::move(expanded_text), attachments = std::move(attachments)](std::stop_token st) {
         core::QueryOptions opts;
         for (const auto& img : attachments) {
             opts.attachments.push_back(img);
         }
+        opts.on_commit = [this](const Message&) {
+            conversation_projection_dirty_.store(true);
+            TriggerStatuslineUpdate();
+            PostRenderEvent();
+        };
         opts.on_event = [this, &st](const core::StreamEvent& ev) {
             if (st.stop_requested()) return;
             handle_stream_event(ev);
@@ -322,6 +337,11 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
                 thinking->second.complete = true;
                 thinking->second.streaming_ended_at =
                     clock::steady_now();
+                const auto due = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    thinking->second.streaming_ended_at->time_since_epoch()).count() + 3000;
+                auto scheduled = thinking_collapse_deadline_ms_.load();
+                while ((scheduled == 0 || due < scheduled) &&
+                       !thinking_collapse_deadline_ms_.compare_exchange_weak(scheduled, due)) {}
                 // Cache the duration so committed thinking entries (which
                 // lack timing info) can show "∴ Thought for Xs".
                 if (thinking->second.streaming_started_at) {
@@ -376,6 +396,7 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
     }, ev);
 
     if (apply_event) {
+        TriggerStatuslineUpdate();
         PostRenderEvent();
     }
 }

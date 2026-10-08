@@ -41,6 +41,7 @@ void AppAdapter::inject_stream_event_for_testing(const core::StreamEvent& ev) {
 }
 
 void AppAdapter::set_query_running_for_testing(bool running) {
+    conversation_projection_dirty_.store(true);
     query_running_.store(running);
     screen_state_->query_running = running;
     if (running) {
@@ -225,6 +226,10 @@ void AppTestingSeams::wait_for_local_bash_for_testing() {
 
 bool AppTestingSeams::is_loading_for_testing() const noexcept {
     return app->is_loading_for_testing();
+}
+
+void AppTestingSeams::notify_conversation_changed_for_testing() {
+    app->conversation_projection_dirty_.store(true);
 }
 
 void AppTestingSeams::inject_stream_event_for_testing(const loom::core::StreamEvent& ev) {

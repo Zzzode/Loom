@@ -629,6 +629,9 @@ public:
                     // Simulate the engine appending a committed message
                     // (Path B: streaming ↔ committed interaction).
                     engine_.append_message_for_testing(*step.message);
+                    // A live query's on_commit callback invalidates projection.
+                    loom::ui::test_seams(&app_)
+                        .notify_conversation_changed_for_testing();
                     break;
 
                 case ReplayStepKind::EndQuery:

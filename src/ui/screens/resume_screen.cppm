@@ -30,6 +30,9 @@ export module loom.ui.screens.resume_screen;
 
 import std;
 
+import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
+
 // ---------------------------------------------------------------------------
 // Cross-module imports
 // ---------------------------------------------------------------------------
@@ -64,13 +67,6 @@ class ResumeScreenImpl;
 // Design tokens  (aligned with Doctor screen UI18)
 // ===========================================================================
 namespace token {
-    const Color kAccentGreen  = Color::Green;
-    const Color kAccentBlue   = Color::Blue;
-    const Color kAccentCyan   = Color::Cyan;
-    const Color kAccentYellow = Color::Yellow;
-    const Color kAccentRed    = Color::Red;
-    const Color kDim          = Color::GrayLight;
-    const Color kFg           = Color::White;
 
     constexpr std::string_view kIconWelcome    = "👋";
     constexpr std::string_view kIconSession    = "📝";
@@ -418,12 +414,13 @@ struct FilteredIndex {
     const std::vector<SessionMetaRow>& recent_sessions,   // 0..5
     bool show_quick_picks)
 {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements body;
 
     // Big title
     body.push_back(hbox({
         text("  ") | color(Color::Default),
-        text("👋 Welcome back!") | bold | color(token::kAccentGreen)
+        text("👋 Welcome back!") | bold | color(palette.success)
             | size(HEIGHT, EQUAL, 1),
         filler(),
     }) | size(HEIGHT, EQUAL, 2));
@@ -435,22 +432,22 @@ struct FilteredIndex {
 
     // Primary button: Create new
     body.push_back(hbox({
-        text("▶ ") | color(token::kAccentGreen),
-        text("[Enter] ") | bold | color(token::kAccentCyan),
+        text("▶ ") | color(palette.success),
+        text("[Enter] ") | bold | color(palette.info),
         text("Create new conversation")
-            | bold | color(token::kAccentGreen),
+            | bold | color(palette.success),
     }));
     body.push_back(text(""));
 
     // Secondary actions
     body.push_back(hbox({
         text("  ⬇ ") | dim,
-        text("[I] ") | color(token::kAccentCyan) | dim,
+        text("[I] ") | color(palette.info) | dim,
         text("Import conversation") | dim,
     }));
     body.push_back(hbox({
         text("  📂 ") | dim,
-        text("[B] ") | color(token::kAccentCyan) | dim,
+        text("[B] ") | color(palette.info) | dim,
         text("Browse history ") | dim,
         text(show_quick_picks ? "(show all)" : "(no sessions yet)") | dim,
     }));
@@ -460,7 +457,7 @@ struct FilteredIndex {
     if (show_quick_picks && !recent_sessions.empty()) {
         body.push_back(hbox({
             text(" ── ") | dim,
-            text("Recent") | bold | color(token::kAccentBlue),
+            text("Recent") | bold | color(palette.info),
             text(" ─────────────────────────────────") | dim,
         }));
         body.push_back(text(""));
@@ -471,19 +468,19 @@ struct FilteredIndex {
                 ? std::format("[{}]", idx + 1)
                 : "[·]";
             body.push_back(hbox({
-                text(" " + hotkey + " ") | color(token::kAccentCyan) | dim,
+                text(" " + hotkey + " ") | color(palette.info) | dim,
                 text(std::string{token::kIconSession} + " ") | dim,
-                text(truncate(r.title, 40)) | color(token::kFg),
+                text(truncate(r.title, 40)) | color(palette.text),
                 filler(),
                 text(format_relative_time(r.last_active_at))
-                    | dim | color(token::kDim),
+                    | dim | color(palette.muted),
                 text("  " + std::to_string(r.message_count) + " msg")
-                    | dim | color(token::kDim),
+                    | dim | color(palette.muted),
             }));
             body.push_back(hbox({
                 text("      ") | dim,
                 text(truncate(r.last_message_summary, 60))
-                    | dim | color(token::kDim),
+                    | dim | color(palette.muted),
             }));
             body.push_back(text(""));
             ++idx;
@@ -525,6 +522,7 @@ struct RowViewState {
     const SessionMetaRow& r,
     const RowViewState& vs)
 {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements left_col;
 
     // Row 1: icon + title (bold, >30 → ellipsis)
@@ -532,15 +530,15 @@ struct RowViewState {
     left_col.push_back(hbox({
         text(std::string{token::kIconSession} + " ") | dim,
         text(title)
-            | (vs.selected ? (bold | color(token::kAccentGreen))
-                           : (bold | color(token::kFg))),
+            | (vs.selected ? (bold | color(palette.success))
+                           : (bold | color(palette.text))),
     }));
 
     // Row 2: last-message summary (gray)
     left_col.push_back(hbox({
         text("    ") | dim,
         text(truncate(r.last_message_summary, 60))
-            | dim | color(token::kDim),
+            | dim | color(palette.muted),
     }));
 
     // Row 3: model + last active
@@ -550,11 +548,11 @@ struct RowViewState {
     left_col.push_back(hbox({
         text("    ") | dim,
         text(std::string{token::kIconModel} + " ") | dim,
-        text(truncate(model_txt, 28)) | dim | color(token::kAccentCyan),
+        text(truncate(model_txt, 28)) | dim | color(palette.info),
         text("  ") | dim,
         text(std::string{token::kIconClock} + " ") | dim,
         text(format_relative_time(r.last_active_at))
-            | dim | color(token::kDim),
+            | dim | color(palette.muted),
     }));
 
     Elements right_col;
@@ -562,10 +560,10 @@ struct RowViewState {
     // Right top: absolute date + message count
     right_col.push_back(hbox({
         text(format_absolute_time(r.last_active_at))
-            | dim | color(token::kDim),
+            | dim | color(palette.muted),
         text("  ") | dim,
-        text(std::to_string(r.message_count)) | bold | color(token::kAccentCyan),
-        text(" msg") | dim | color(token::kDim),
+        text(std::to_string(r.message_count)) | bold | color(palette.info),
+        text(" msg") | dim | color(palette.muted),
     }));
 
     // Right mid: cost + turns
@@ -573,11 +571,11 @@ struct RowViewState {
         Elements row;
         if (r.total_cost_usd) {
             row.push_back(text(std::format("${:.2f}", *r.total_cost_usd))
-                | color(token::kAccentGreen) | dim);
+                | color(palette.success) | dim);
             row.push_back(text("  ") | dim);
         }
-        row.push_back(text(std::to_string(r.turn_count)) | dim | color(token::kDim));
-        row.push_back(text(" turns") | dim | color(token::kDim));
+        row.push_back(text(std::to_string(r.turn_count)) | dim | color(palette.muted));
+        row.push_back(text(" turns") | dim | color(palette.muted));
         right_col.push_back(hbox(std::move(row)));
     }
 
@@ -585,23 +583,23 @@ struct RowViewState {
     if (vs.hovered) {
         right_col.push_back(text("") | dim);
         right_col.push_back(hbox({
-            text("[E] ") | color(token::kAccentCyan) | dim,
+            text("[E] ") | color(palette.info) | dim,
             text(std::string{token::kIconEdit} + " edit")
-                | dim | color(token::kAccentCyan),
+                | dim | color(palette.info),
             text("  ") | dim,
-            text("[Del] ") | color(token::kAccentRed) | dim,
+            text("[Del] ") | color(palette.danger) | dim,
             text(std::string{token::kIconDelete} + " delete")
-                | dim | color(token::kAccentRed),
+                | dim | color(palette.danger),
             text("  ") | dim,
-            text("[S] ") | color(token::kAccentYellow) | dim,
+            text("[S] ") | color(palette.warning) | dim,
             text(std::string{token::kIconShare} + " share")
-                | dim | color(token::kAccentYellow),
+                | dim | color(palette.warning),
         }));
     } else {
         // Faint hint that hover actions exist
         right_col.push_back(text("") | dim);
         right_col.push_back(hbox({
-            text("···") | dim | color(token::kDim),
+            text("···") | dim | color(palette.muted),
         }));
     }
 
@@ -613,7 +611,7 @@ struct RowViewState {
     }) | padding(1);
 
     if (vs.selected) {
-        card = card | bgcolor(Color::RGB(25, 30, 45)) | borderStyled(token::kAccentGreen);
+        card = card | bgcolor(Color::RGB(25, 30, 45)) | borderStyled(palette.success);
     } else {
         card = card | borderLight;
     }
@@ -621,7 +619,7 @@ struct RowViewState {
     // Selection chevron on the far left.
     const std::string chevron = vs.selected ? " ❯ " : "   ";
     return hbox({
-        text(chevron) | color(vs.selected ? token::kAccentGreen : Color::Default),
+        text(chevron) | color(vs.selected ? palette.success : Color::Default),
         card | flex,
     });
 }
@@ -636,20 +634,21 @@ struct RowViewState {
     std::size_t total_count,
     std::size_t filtered_count)
 {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     // Search field
     Element search = hbox({
         text(search_focused ? " / " : " 🔍 ")
-            | color(search_focused ? token::kAccentCyan : token::kDim),
+            | color(search_focused ? palette.info : palette.muted),
         query.empty()
             ? text("Search sessions...") | dim
-            : text(std::string{query}) | color(token::kFg),
+            : text(std::string{query}) | color(palette.text),
         text("│") | (search_focused ? blink : nothing),
     }) | borderLight | flex;
 
     // Sort dropdown label
     Element sort_el = hbox({
         text(std::string{token::kIconSort} + " ") | dim,
-        text(std::string{to_string(sort)}) | bold | color(token::kAccentBlue),
+        text(std::string{to_string(sort)}) | bold | color(palette.info),
         text(" [T]") | dim,
     }) | borderLight;
 
@@ -658,7 +657,7 @@ struct RowViewState {
         text(std::string{token::kIconFilter} + " ") | dim,
         text(current_project_only ? "Current project" : "All projects")
             | bold
-            | color(current_project_only ? token::kAccentYellow : token::kAccentCyan),
+            | color(current_project_only ? palette.warning : palette.info),
         text(" [P]") | dim,
     }) | borderLight;
 
@@ -667,14 +666,14 @@ struct RowViewState {
         text(std::string{token::kIconModel} + " ") | dim,
         text(model_filter.empty() ? std::string{"any model"}
                                   : std::string{model_filter})
-            | color(model_filter.empty() ? token::kDim : token::kAccentCyan),
+            | color(model_filter.empty() ? palette.muted : palette.info),
         text(" [M]") | dim,
     }) | borderLight;
 
     // Counter
     Element counter = hbox({
         text(std::format("{} / {} ", filtered_count, total_count))
-            | dim | color(token::kDim),
+            | dim | color(palette.muted),
         text(std::string{token::kIconMsg}) | dim,
     }) | borderLight;
 
@@ -703,9 +702,10 @@ struct RowViewState {
     bool current_project_only,
     std::string_view model_filter)
 {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements cards;
     cards.push_back(hbox({
-        text(" Resume Conversation ") | bold | color(token::kAccentGreen),
+        text(" Resume Conversation ") | bold | color(palette.success),
         filler(),
         text("[Esc] cancel  [Enter] open  [Space] preview") | dim,
     }));
@@ -733,13 +733,13 @@ struct RowViewState {
 
     cards.push_back(separator());
     cards.push_back(hbox({
-        text(" ↑/↓ j/k") | bold | color(token::kAccentCyan), text(" select "),
-        text("PgUp/Dn") | bold | color(token::kAccentCyan), text(" page "),
-        text("G/gg")    | bold | color(token::kAccentCyan), text(" jump "),
-        text("/")       | bold | color(token::kAccentCyan), text(" search "),
-        text("E")       | bold | color(token::kAccentCyan), text("dit "),
-        text("Del")     | bold | color(token::kAccentRed),  text("elete "),
-        text("Esc")     | bold | color(token::kAccentCyan), text(" back"),
+        text(" ↑/↓ j/k") | bold | color(palette.info), text(" select "),
+        text("PgUp/Dn") | bold | color(palette.info), text(" page "),
+        text("G/gg")    | bold | color(palette.info), text(" jump "),
+        text("/")       | bold | color(palette.info), text(" search "),
+        text("E")       | bold | color(palette.info), text("dit "),
+        text("Del")     | bold | color(palette.danger),  text("elete "),
+        text("Esc")     | bold | color(palette.info), text(" back"),
     }) | dim);
 
     return vbox(std::move(cards))
@@ -774,6 +774,7 @@ struct RoleBadge {
 [[nodiscard]] inline Element RenderPreviewMessage(const Message& msg,
                                                   std::size_t max_chars = 120)
 {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     const Role r = loom::core::get_role(msg);
     const auto badge = role_badge(r);
 
@@ -811,7 +812,7 @@ struct RoleBadge {
         text(" " + std::string{badge.icon} + " ") | color(badge.colour),
         text(std::string{badge.label}) | bold | color(badge.colour),
         text(" │ ") | dim,
-        paragraph(truncate(clean, max_chars)) | color(token::kFg)
+        paragraph(truncate(clean, max_chars)) | color(palette.text)
             | size(WIDTH, LESS_THAN, 80),
     });
 }
@@ -822,16 +823,17 @@ struct RoleBadge {
     const std::vector<Message>& preview_msgs,  // up to 10 most recent
     int primary_selection) // 0=Open  1=Resume  2=Cancel
 {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements body;
 
     // ── Header ─────────────────────────────────────────────────────
     body.push_back(hbox({
         text(std::string{token::kIconSession} + " ") | dim,
-        text(row.title) | bold | color(token::kAccentGreen),
+        text(row.title) | bold | color(palette.success),
         filler(),
         text("#") | dim,
         text(row.session_id.substr(0, 10))
-            | color(token::kAccentCyan) | dim,
+            | color(palette.info) | dim,
     }));
     body.push_back(separator());
 
@@ -840,41 +842,41 @@ struct RoleBadge {
 
     meta_rows.push_back(hbox({
         text(" Created:   ") | dim,
-        text(format_absolute_time(row.created_at)) | color(token::kFg),
+        text(format_absolute_time(row.created_at)) | color(palette.text),
         filler(),
         text(std::string{token::kIconClock} + " ") | dim,
         text("Last active: ") | dim,
         text(format_relative_time(row.last_active_at))
-            | color(token::kAccentCyan),
+            | color(palette.info),
     }));
     meta_rows.push_back(hbox({
         text(" Messages:  ") | dim,
-        text(std::to_string(row.message_count)) | bold | color(token::kAccentCyan),
+        text(std::to_string(row.message_count)) | bold | color(palette.info),
         text("   ") | dim,
         text("Turns: ") | dim,
-        text(std::to_string(row.turn_count)) | color(token::kFg),
+        text(std::to_string(row.turn_count)) | color(palette.text),
         filler(),
         text(std::string{token::kIconCost} + " ") | dim,
         text(row.total_cost_usd
                  ? std::format("${:.3f}", *row.total_cost_usd)
                  : std::string{"—"})
-            | color(row.total_cost_usd ? token::kAccentGreen : token::kDim),
+            | color(row.total_cost_usd ? palette.success : palette.muted),
     }));
     meta_rows.push_back(hbox({
         text(" Model:     ") | dim,
         text(row.model_name ? *row.model_name : std::string{"(unknown)"})
-            | color(token::kAccentCyan),
+            | color(palette.info),
         filler(),
         text("Tokens: ") | dim,
         text(row.total_tokens
                  ? std::format("{}k", (*row.total_tokens + 500) / 1000)
                  : std::string{"—"})
-            | color(token::kDim),
+            | color(palette.muted),
     }));
     if (!row.project_path.empty()) {
         meta_rows.push_back(hbox({
             text(" Project:   ") | dim,
-            text(row.project_path) | dim | color(token::kDim),
+            text(row.project_path) | dim | color(palette.muted),
         }));
     }
     body.push_back(vbox(std::move(meta_rows)) | borderLight);
@@ -884,7 +886,7 @@ struct RoleBadge {
     // ── Message preview (most recent 10) ──────────────────────────
     body.push_back(hbox({
         text(std::string{token::kIconMsg} + " ") | dim,
-        text("Preview") | bold | color(token::kAccentBlue),
+        text("Preview") | bold | color(palette.info),
         text(" (last " + std::to_string(preview_msgs.size()) + " messages)") | dim,
     }));
     body.push_back(text(""));
@@ -916,11 +918,11 @@ struct RoleBadge {
     };
 
     body.push_back(hbox({
-        btn(0, token::kIconOpen,   "Open full",    token::kAccentBlue),
+        btn(0, token::kIconOpen,   "Open full",    palette.info),
         text("  ") | dim,
-        btn(1, token::kIconResume, "Resume",       token::kAccentGreen),
+        btn(1, token::kIconResume, "Resume",       palette.success),
         text("  ") | dim,
-        btn(2, token::kIconCancel, "Cancel",       token::kAccentRed),
+        btn(2, token::kIconCancel, "Cancel",       palette.danger),
         filler(),
         text(" [Enter] confirm  [Esc] back") | dim,
     }));
@@ -938,24 +940,25 @@ struct RoleBadge {
     std::string_view draft,
     bool has_error)
 {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(hbox({
-        text(std::string{token::kIconEdit} + " ") | color(token::kAccentCyan),
-        text("Rename conversation") | bold | color(token::kAccentCyan),
+        text(std::string{token::kIconEdit} + " ") | color(palette.info),
+        text("Rename conversation") | bold | color(palette.info),
     }));
     body.push_back(separator());
 
     body.push_back(hbox({
         text(" Session: ") | dim,
-        text(truncate(row.session_id, 14)) | dim | color(token::kDim),
+        text(truncate(row.session_id, 14)) | dim | color(palette.muted),
         filler(),
         text(" (" + std::to_string(row.message_count) + " messages)") | dim,
     }));
     body.push_back(text(""));
-    body.push_back(text(" Current: ") | dim | color(token::kDim));
+    body.push_back(text(" Current: ") | dim | color(palette.muted));
     body.push_back(hbox({
         text("  » ") | dim,
-        text(row.title) | color(token::kFg),
+        text(row.title) | color(palette.text),
     }));
     body.push_back(text(""));
     body.push_back(text(" New title:") | bold);
@@ -964,23 +967,23 @@ struct RoleBadge {
                                             : std::string{draft};
     body.push_back(hbox({
         text("  ") | dim,
-        text(shown) | (draft.empty() ? dim : color(token::kAccentGreen)),
-        text("│") | blink | color(token::kAccentCyan),
+        text(shown) | (draft.empty() ? dim : color(palette.success)),
+        text("│") | blink | color(palette.info),
     }) | borderLight);
 
     if (has_error) {
         body.push_back(text("") | dim);
         body.push_back(hbox({
-            text(" ⚠ ") | color(token::kAccentRed),
-            text("Title must not be empty.") | color(token::kAccentRed),
+            text(" ⚠ ") | color(palette.danger),
+            text("Title must not be empty.") | color(palette.danger),
         }));
     }
 
     body.push_back(separator());
     body.push_back(hbox({
-        text(" Enter") | bold | color(token::kAccentGreen),
+        text(" Enter") | bold | color(palette.success),
         text(" save  "),
-        text("Esc") | bold | color(token::kAccentRed),
+        text("Esc") | bold | color(palette.danger),
         text(" cancel  "),
         text("Tab") | bold | dim,
         text(" reset to current"),
@@ -1062,11 +1065,12 @@ struct RoleBadge {
     // Loading state
     bool loading)
 {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
     // Loading overlay (top-level)
     if (loading) {
         return vbox({
             text("") | dim,
-            text(" Loading conversations…") | color(token::kAccentCyan),
+            text(" Loading conversations…") | color(palette.info),
             text("") | dim,
         }) | borderRounded;
     }

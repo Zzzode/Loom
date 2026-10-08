@@ -37,6 +37,7 @@ import loom.ui.screens.mcp_status_store;           // McpStatusStore
 import loom.ui.screens.chrome_store;               // ChromeStore / StatusBarData
 import loom.ui.features.agents.agent_cards;        // AgentCardData
 import loom.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
+import loom.ui.widgets.text_input;
 import loom.ui.visual.markdown;                    // arch-check: keep-import (StreamingMarkdown ptr field)
 
 export namespace loom::ui::repl_screen {
@@ -117,6 +118,8 @@ using InputMode = loom::ui::common::PromptInputMode;
 /// Lean orchestration state.  Full app state lives in services/; the
 /// engine writes computed projections into this struct between frames.
 struct ReplScreenState {
+    // Render-only editor core is retained across frames; screen state owns it.
+    mutable std::shared_ptr<::ui::components::TextInputImpl> prompt_render_input;
     ReplMode mode = ReplMode::Normal;
     // RFC 0002 F3: prompt-input state (input mode, stashed prompt,
     // placeholder cascade inputs, teammate prefix color) lives in

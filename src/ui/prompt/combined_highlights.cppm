@@ -22,6 +22,8 @@ export module loom.ui.prompt.combined_highlights;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 import loom.parsing.highlight.text_highlighting;
 import loom.text.parse_references;
 
@@ -91,39 +93,15 @@ struct CombinedHighlightContext {
 // Rainbow color palette
 // ============================================================
 
-/// 7-color rainbow cycle for per-character shimmer highlighting.
-///
-/// We map these theme tokens to the closest FTXUI palette colors.
-/// FTXUI v5 has no named Orange, so we use RGB for orange/indigo.
-inline const std::array<Color, 7> RAINBOW_COLORS = {
-    Color::Red,                          // rainbow_red
-    Color::RGB(255, 165, 0),             // rainbow_orange
-    Color::Yellow,                       // rainbow_yellow
-    Color::Green,                        // rainbow_green
-    Color::Blue,                         // rainbow_blue
-    Color::RGB(75, 0, 130),              // rainbow_indigo (indigo approx)
-    Color::Magenta,                      // rainbow_violet
-};
-
-/// Shimmer variant of the rainbow colors — slightly brighter for the
-/// animated sweep highlight.
-inline const std::array<Color, 7> RAINBOW_SHIMMER_COLORS = {
-    Color::RedLight,
-    Color::RGB(255, 200, 100),           // shimmer orange
-    Color::YellowLight,
-    Color::GreenLight,
-    Color::BlueLight,
-    Color::RGB(130, 100, 200),           // shimmer indigo
-    Color::MagentaLight,
-};
-
 /// Get the rainbow color for a given character index within a trigger word.
 /// @param char_index  Position within the trigger (0 = first char).
 /// @param shimmer     If true, return the brighter shimmer variant.
 [[nodiscard]] inline Color get_rainbow_color(
     std::size_t char_index,
     bool shimmer = false) {
-    const auto& palette = shimmer ? RAINBOW_SHIMMER_COLORS : RAINBOW_COLORS;
+    const auto* theme_palette = loom::ui::design::theme::current_theme().palette;
+    const auto& palette = shimmer ? theme_palette->rainbow_shimmer_stops
+                                  : theme_palette->rainbow;
     return palette[char_index % palette.size()];
 }
 

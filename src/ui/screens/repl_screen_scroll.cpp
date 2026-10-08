@@ -138,8 +138,38 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     return static_cast<int>(std::count(text.begin(), text.end(), '\n')) + 1;
 }
 
+/// Wrapping-aware line count: counts visual lines after hard-wrap at
+/// `content_cols`, plus explicit '\n' breaks.  Mirrors the heuristic in
+/// messages_list_geometry.cpp's estimate_content_lines so the static-path
+/// scroll bounds agree with the virtual-path JumpHandle geometry.
+[[nodiscard]] int CountWrappedLines(std::string_view text, int content_cols) {
+    if (text.empty()) return 1;
+    const int cols = std::max(20, content_cols);
+    int lines = 1;
+    int current = 0;
+    for (char c : text) {
+        if (c == '\n') {
+            ++lines;
+            current = 0;
+            continue;
+        }
+        ++current;
+        if (current > cols) {
+            ++lines;
+            current = 0;
+        }
+    }
+    return lines;
+}
+
 [[nodiscard]] int EstimateTranscriptRows(
-    const std::vector<MessageDisplayEntry>& entries) {
+    const std::vector<MessageDisplayEntry>& entries,
+    int term_cols) {
+    // Content area width after the message envelope gutter (avatar + padding).
+    // Matches the default envelope_gutter_cols=36 in estimate_row_height.
+    const int content_cols = std::max(20, term_cols - 36);
+    // Tool results and thinking blocks use a narrower gutter (4 cols).
+    const int wide_content_cols = std::max(20, term_cols - 4);
     int rows = 0;
     for (const auto& entry : entries) {
         // content_preview for tool entries is often
@@ -172,7 +202,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                     full += "[Image]";
                 }
             }
-            content_lines = CountTextLines(full);
+            content_lines = CountWrappedLines(full, wide_content_cols);
             content_lines += 2;  // header + status row
         } else if (entry.is_image) {
             content_lines = 4;  // label + metadata rows (no fake thumbnail)
@@ -188,12 +218,12 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                 const std::string& text = entry.full_content.empty()
                     ? entry.content_preview
                     : entry.full_content;
-                content_lines = CountTextLines(text) + 3;  // label + body + margins
+                content_lines = CountWrappedLines(text, wide_content_cols) + 3;  // label + body + margins
             } else {
                 content_lines = 2;  // collapsed label + separator
             }
         } else {
-            content_lines = CountTextLines(entry.content_preview);
+            content_lines = CountWrappedLines(entry.content_preview, content_cols);
         }
         rows += content_lines;
         // Message list inserts one empty separator after each rendered row
@@ -247,9 +277,15 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
         target = std::clamp(target, 0, max_top);
         if (target == old_top) return false;
 
-        state->messages_store.scroll_offset = target;
+        // Use scroll_offset=0 as the "pinned to bottom" sentinel (matching
+        // ResetScrollToBottom semantics).  Setting offset=max_top here would
+        // make the static renderer prioritize the stale absolute focusPosition
+        // over pin_to_bottom's focusPositionRelative, causing the view to
+        // drift during streaming instead of following the bottom.
+        const bool now_pinned = (target >= max_top);
+        state->messages_store.scroll_offset = now_pinned ? 0 : target;
         const bool was_pinned = state->messages_store.scroll_pinned_to_bottom;
-        state->messages_store.scroll_pinned_to_bottom = (target >= max_top);
+        state->messages_store.scroll_pinned_to_bottom = now_pinned;
 
         // On FIRST scroll-away from bottom, snapshot message count as
         // divider_index.  On repin, clear.
@@ -275,8 +311,9 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
 
     const auto& visible_messages = BuildVisibleMessages(*state);
     if (visible_messages.empty()) return false;
+    const int term_cols = std::max(20, state->messages_store.viewport_width_cols);
     const int max_offset =
-        std::max(0, EstimateTranscriptRows(visible_messages) - viewport_rows);
+        std::max(0, EstimateTranscriptRows(visible_messages, term_cols) - viewport_rows);
     if (max_offset == 0) return false;
 
     // When pinned to bottom, scroll_offset is 0 but the view is visually
@@ -287,9 +324,13 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
         ? max_offset
         : std::clamp(state->messages_store.scroll_offset, 0, max_offset);
     const int next = std::clamp(base + delta, 0, max_offset);
-    state->messages_store.scroll_offset = next;
+    // scroll_offset=0 is the "pinned" sentinel — see the virtual-path comment
+    // above.  Setting offset=max_offset on repin makes the static renderer
+    // use a stale absolute focusPosition instead of following the bottom.
+    const bool now_pinned = (next >= max_offset);
+    state->messages_store.scroll_offset = now_pinned ? 0 : next;
     const bool was_pinned = state->messages_store.scroll_pinned_to_bottom;
-    state->messages_store.scroll_pinned_to_bottom = next >= max_offset;
+    state->messages_store.scroll_pinned_to_bottom = now_pinned;
     if (was_pinned && !state->messages_store.scroll_pinned_to_bottom) {
         state->messages_store.divider_index = state->messages_store.messages.size();
         state->messages_store.message_count_at_scroll_away = state->messages_store.messages.size();

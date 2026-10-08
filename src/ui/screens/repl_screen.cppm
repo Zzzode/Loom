@@ -168,8 +168,11 @@ ComputeUnseenDivider(const ReplScreenState& s);
 [[nodiscard]] int CountTextLines(std::string_view text);
 
 /// Estimate rendered transcript height for the non-virtual scroll path.
+/// `term_cols` enables wrapping-aware line counting so long paragraphs
+/// contribute their visual wrapped height instead of just '\n' count.
 [[nodiscard]] int EstimateTranscriptRows(
-    const std::vector<MessageDisplayEntry>& entries);
+    const std::vector<MessageDisplayEntry>& entries,
+    int term_cols = 80);
 
 /// Wheel / PageUp / PageDown scroll against the virtual JumpHandle or the
 /// crude row estimator; maintains the unseen-divider snapshot.

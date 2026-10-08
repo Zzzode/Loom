@@ -416,6 +416,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
     input.pin_to_bottom = pinned;
     input.scroll_offset = std::max(0, offs);
     input.viewport_rows = std::max(1, vlines);
+    input.term_cols = store ? std::max(20, store->viewport_width_cols) : 80;
     input.is_brief_mode = is_brief_mode;
     // is_transcript_mode + show_all_in_transcript.
     // In transcript mode the 3-tier filter shows all message types; cap at

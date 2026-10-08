@@ -321,6 +321,10 @@ struct MessagesListInput {
     bool                            pin_to_bottom = false;
     int                             scroll_offset = 0;
     int                             viewport_rows = 40;
+    /// Terminal column count for wrapping-aware row-height estimation.
+    /// Set from the probed terminal size; defaults to 80 when unavailable
+    /// (golden tests, dialogs).
+    int                             term_cols = 80;
 
     /// When true, only brief-tool calls + their results + real user input
     /// are shown; assistant text, thinking, and non-brief tools are hidden.

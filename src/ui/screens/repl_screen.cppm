@@ -176,6 +176,10 @@ ComputeUnseenDivider(const ReplScreenState& s);
 bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
                       int delta);
 
+/// Re-pin the transcript to its visual tail and clear pending-new-message
+/// chrome.  Used by both the pill click and future keyboard affordances.
+void JumpTranscriptToBottom(ReplScreenState& state);
+
 // =========================================================
 // Legacy ASCII-art welcome helpers (preserved, no longer called by
 // RenderWelcomeHeader; bodies in repl_screen_welcome.cpp).

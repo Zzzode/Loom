@@ -302,4 +302,30 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
     return true;
 }
 
+void JumpTranscriptToBottom(ReplScreenState& state) {
+    const int viewport_rows = std::max(
+        1, state.messages_store.viewport_height_lines);
+    const int total_lines = state.messages_store.virtual_list_active
+        ? state.messages_store.virtual_jh.total()
+        : EstimateTranscriptRows(BuildVisibleMessages(state));
+    const int max_top = std::max(0, total_lines - viewport_rows);
+    const int old_top = state.messages_store.scroll_pinned_to_bottom
+        ? max_top
+        : std::clamp(state.messages_store.scroll_offset, 0, max_top);
+
+    state.messages_store.scroll_offset = max_top;
+    if (state.messages_store.virtual_list_state) {
+        namespace vl = loom::ui::messages::virtual_list;
+        state.messages_store.virtual_list_state->scroll_top = max_top;
+        vl::update_sticky_after_scroll(
+            *state.messages_store.virtual_list_state, old_top);
+    }
+
+    state.messages_store.scroll_pinned_to_bottom = true;
+    state.messages_store.pill_visible = false;
+    state.messages_store.unseen_message_count = 0;
+    state.messages_store.divider_index.reset();
+    state.messages_store.unseen_divider.reset();
+}
+
 }  // namespace loom::ui::repl_screen

@@ -333,6 +333,12 @@ using namespace ftxui;
         // with screen-space boxes of clickable rows.
         if (ev.mouse().button == Mouse::Left &&
             ev.mouse().motion == Mouse::Released) {
+            if (state->messages_store.pill_visible &&
+                state->messages_store.new_messages_pill_box.Contain(
+                    ev.mouse().x, ev.mouse().y)) {
+                JumpTranscriptToBottom(*state);
+                return true;
+            }
             auto key = state->messages_store.row_click_tracker.hit_test(
                 ev.mouse().x, ev.mouse().y);
             if (key) {

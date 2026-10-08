@@ -217,9 +217,14 @@ struct FullscreenLayoutSlots {
     int term_cols{80};
     int term_rows{24};
 
-    /// Callback fired when the user "clicks" the pill — scroll-to-bottom.
-    /// When set, the pill is rendered as an interactive Button (FTXUI
-    /// Component) instead of a static Element, so mouse clicks dispatch.
+    /// Screen-space hit target for the new-messages pill.  The REPL owns
+    /// event dispatch, so this stateless layout only reflects its rendered
+    /// bounds into caller-owned storage.
+    Box* pill_hit_box{nullptr};
+
+    /// Legacy source-compatible marker for callers that style the pill as
+    /// actionable.  Actual event dispatch belongs to the owning REPL
+    /// Component and uses `pill_hit_box`.
     std::function<void()> on_pill_click{};
 };
 
@@ -333,7 +338,7 @@ class StickyPromptHeaderComponent : public ComponentBase {
 /// caller wraps this element in vbox({filler(), pill}) inside a dbox to
 /// achieve the same overlay anchoring (see ComposeFullscreen).
 [[nodiscard]] inline Element NewMessagesPill(int count, bool actionable,
-                                             std::function<void()> on_click) {
+                                             Box* hit_box = nullptr) {
     // count > 0 → "N new message(s)"; 0 → "Jump to bottom".
     std::string label = count > 0
         ? std::to_string(count) + " new message" + (count == 1 ? "" : "s")
@@ -349,60 +354,17 @@ class StickyPromptHeaderComponent : public ComponentBase {
         pal, Role::UserMessageBackgroundHover);
     const Color fg = loom::ui::design::tokens::token_by_role(pal, Role::Subtle);
 
-    // If a click callback is supplied, render as an interactive Component
-    // (Button pattern via a small OnEvent wrapper) so mouse events fire.
-    if (on_click) {
-        class PillComponent : public ComponentBase {
-         public:
-            PillComponent(std::string label, Color bg_n, Color bg_h,
-                          Color fg, std::function<void()> cb)
-                : label_(std::move(label)), bg_n_(bg_n), bg_h_(bg_h),
-                  fg_(fg), cb_(std::move(cb)) {}
-            Element Render() override {
-                const Color bg = hovered_ ? bg_h_ : bg_n_;
-                return hbox({
-                    filler(),
-                    text(" " + label_ + " ") | color(fg_) | bgcolor(bg),
-                    filler(),
-                }) | reflect(box_) | size(HEIGHT, EQUAL, 1);
-            }
-            bool OnEvent(Event ev) override {
-                if (ev.is_mouse()) {
-                    const auto& m = ev.mouse();
-                    const bool inside = box_.Contain(m.x, m.y);
-                    // Mirror StickyPromptHeader hover logic (see note there).
-                    if (inside != hovered_) {
-                        hovered_ = inside;
-                        return true;
-                    }
-                    if (!inside) return false;
-                    if (m.button == Mouse::Left && m.motion == Mouse::Released) {
-                        hovered_ = false;
-                        if (cb_) cb_();
-                        return true;
-                    }
-                }
-                return ComponentBase::OnEvent(std::move(ev));
-            }
-         private:
-            std::string label_;
-            Color bg_n_, bg_h_, fg_;
-            std::function<void()> cb_;
-            bool hovered_ = false;
-            Box box_;
-        };
-        (void)actionable;
-        return CompEl(Make<PillComponent>(std::move(label), bg_normal,
-                                          bg_hover, fg, std::move(on_click)));
-    }
-
-    // Stateless fallback: render as plain text with actionable background.
+    // This Element is rendered inside a stateless tree, so an embedded FTXUI
+    // Component would not receive events.  Reflect the bounds and let the
+    // owning ReplScreen Component perform hit-testing in its OnEvent path.
     const Color bg = actionable ? bg_hover : bg_normal;
-    return hbox({
+    Element pill = hbox({
         filler(),
         text(" " + label + " ") | color(fg) | bgcolor(bg),
         filler(),
     }) | size(HEIGHT, EQUAL, 1);
+    if (hit_box) pill = std::move(pill) | reflect(*hit_box);
+    return pill;
 }
 
 /// Modal pane: a bottom-anchored box with a ▔ top divider and the modal
@@ -568,8 +530,9 @@ class StickyPromptHeaderComponent : public ComponentBase {
                 filler(),
                 NewMessagesPill(
                     s.new_message_count,
-                    /*actionable=*/static_cast<bool>(s.on_pill_click),
-                    std::move(s.on_pill_click)),
+                    /*actionable=*/s.pill_hit_box != nullptr ||
+                        static_cast<bool>(s.on_pill_click),
+                    s.pill_hit_box),
             }));
         }
 

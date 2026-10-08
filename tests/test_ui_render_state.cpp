@@ -368,3 +368,78 @@ TEST(ReplScreen, MouseWheelScrollsTranscript) {
     EXPECT_GT(state->messages_store.scroll_offset, after_up);
     EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
 }
+
+TEST(ReplScreen, MouseWheelScrollsVirtualTranscript) {
+    namespace repl = loom::ui::repl_screen;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    // More than kBigChatThreshold entries selects the long-session virtual
+    // transcript renderer used by resumed histories.
+    for (int i = 0; i < 100; ++i) {
+        repl::MessageDisplayEntry message;
+        message.id = std::format("virtual-wheel-{:03}", i);
+        message.role = "assistant";
+        message.content_preview = std::format("virtual message {:03}", i);
+        state->messages_store.messages.push_back(std::move(message));
+    }
+
+    auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
+                                        ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen, component->Render());
+    ASSERT_TRUE(state->messages_store.virtual_list_active);
+    ASSERT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+
+    ftxui::Mouse wheel;
+    wheel.button = ftxui::Mouse::WheelUp;
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
+    EXPECT_FALSE(state->messages_store.scroll_pinned_to_bottom);
+
+    wheel.button = ftxui::Mouse::WheelDown;
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
+    EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+}
+
+TEST(ReplScreen, NewMessagesPillClickRePinsTranscript) {
+    namespace repl = loom::ui::repl_screen;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    state->messages_store.scroll_pinned_to_bottom = false;
+    state->messages_store.scroll_offset = 0;
+    state->messages_store.divider_index = 0;
+    state->messages_store.pill_visible = true;
+    state->messages_store.unseen_message_count = 7;
+
+    // More than kBigChatThreshold entries exercises the virtualized transcript
+    // path used by resumed long sessions.
+    for (int i = 0; i < 100; ++i) {
+        repl::MessageDisplayEntry message;
+        message.id = std::format("pill-click-{:02}", i);
+        message.role = "assistant";
+        message.content_preview = std::string(80, 'x');
+        state->messages_store.messages.push_back(std::move(message));
+    }
+
+    auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
+                                        ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen, component->Render());
+
+    ASSERT_TRUE(state->messages_store.virtual_list_active);
+    const auto& box = state->messages_store.new_messages_pill_box;
+    ASSERT_LE(box.x_min, box.x_max);
+    ASSERT_LE(box.y_min, box.y_max);
+
+    ftxui::Mouse click;
+    click.button = ftxui::Mouse::Left;
+    click.motion = ftxui::Mouse::Released;
+    click.x = (box.x_min + box.x_max) / 2;
+    click.y = (box.y_min + box.y_max) / 2;
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", click)));
+
+    EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+    EXPECT_FALSE(state->messages_store.pill_visible);
+    EXPECT_EQ(state->messages_store.unseen_message_count, 0);
+    EXPECT_FALSE(state->messages_store.divider_index.has_value());
+    EXPECT_FALSE(state->messages_store.unseen_divider.has_value());
+}

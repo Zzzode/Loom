@@ -475,6 +475,7 @@ using namespace ftxui;
     slots.pill_visible          = s.messages_store.pill_visible;
     slots.hide_pill             = false;
     slots.new_message_count     = s.messages_store.unseen_message_count;
+    slots.pill_hit_box          = &s.messages_store.new_messages_pill_box;
 
     // on_sticky_click: the click handler sets the 'clicked' sentinel
     // (a stable state update that reacts before the scroll side-effects
@@ -540,38 +541,6 @@ using namespace ftxui;
         // that moves the viewport will write a new sticky_prompt and
         // clear sticky_prompt_clicked.  We therefore do NOT clear the
         // flag ourselves here.
-    };
-
-    // on_pill_click: clicking the "N new messages" pill
-    // re-pins to the bottom.  Same lifetime reasoning as on_sticky_click.
-    slots.on_pill_click = [&s] {
-        int viewport = std::max(1, s.messages_store.viewport_height_lines);
-        int total;
-        if (s.messages_store.virtual_list_active) {
-            namespace vl = loom::ui::messages::virtual_list;
-            total = s.messages_store.virtual_jh.total();
-        } else {
-            const auto& vm = BuildVisibleMessages(s);
-            total = EstimateTranscriptRows(vm);
-        }
-        int max_top = std::max(0, total - viewport);
-        int old_top = std::clamp(s.messages_store.scroll_offset, 0, max_top);
-        if (max_top != old_top) {
-            s.messages_store.scroll_offset = max_top;
-            if (s.messages_store.virtual_list_state) {
-                namespace vl = loom::ui::messages::virtual_list;
-                s.messages_store.virtual_list_state->scroll_top = max_top;
-                vl::update_sticky_after_scroll(*s.messages_store.virtual_list_state, old_top);
-            }
-        }
-        // Always re-pin + clear the pill + divider on click, even if the
-        // view was already at the bottom (max_top == old_top) — the pill
-        // should never persist after being clicked.
-        s.messages_store.scroll_pinned_to_bottom = true;
-        s.messages_store.pill_visible = false;
-        s.messages_store.unseen_message_count = 0;
-        s.messages_store.divider_index.reset();
-        s.messages_store.unseen_divider.reset();
     };
 
     Element base = fl::ComposeFullscreen(std::move(slots));

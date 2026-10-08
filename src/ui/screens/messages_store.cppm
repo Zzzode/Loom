@@ -14,6 +14,8 @@
 // StickyPrompt) recreate no up-edge.
 module;
 
+#include <ftxui/screen/box.hpp>
+
 export module loom.ui.screens.messages_store;
 
 import std;
@@ -180,6 +182,10 @@ struct MessagesStore {
     bool sticky_prompt_clicked = false;
     int unseen_message_count = 0;
     bool pill_visible = false;
+
+    /// Bounds reflected by FullscreenLayout for the floating "new messages"
+    /// pill.  ReplScreen owns event dispatch and uses this box for hit-testing.
+    ftxui::Box new_messages_pill_box;
 
     // unseenDivider prop + UnseenDivider + computeUnseenDivider.
     // Populated by App::UpdateScreen from scroll state + messages[].  The

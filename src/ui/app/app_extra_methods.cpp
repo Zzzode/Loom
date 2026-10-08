@@ -31,7 +31,6 @@ import loom.query.query_engine;
 // ── Imports needed by the 5 methods (not available via the interface) ────
 import loom.process.bash.bash_execution;
 import loom.model.model;
-import loom.constants.constants;
 import loom.scm.git.git;
 import loom.text.parse_references;
 import loom.ui.features.agents.agent_shared_widgets;

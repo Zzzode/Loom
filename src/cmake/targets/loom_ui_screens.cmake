@@ -56,8 +56,8 @@ target_sources(loom_ui_screens PRIVATE
 # loom.ui.chrome.* (fullscreen_layout / ink_utils), loom.ui.prompt.*
 # (prompt_input_footer / vim_input / prompt_stash_notice /
 # placeholder_cascade), loom.ui.widgets.text_input, loom.ui.permissions.*
-# (single_prompt / permission_bash / permission_file_edit /
-# permission_file_write), loom.ui.messages.* (message_row / messages_list /
+# (single_prompt / permission_computer_use / rule_list /
+# scope_editor / components), loom.ui.messages.* (message_row / messages_list /
 # virtual_list / per-type renderers / message_tool_result),
 # loom.ui.features.* (agent_cards / live_teammates / agent_wizard), and
 # loom.ui.dialogs.* (system / trust_dialog / trust_utils / settings_dialog /

@@ -1,10 +1,12 @@
 # ─── loom_ui_permissions: UI permission prompts (RFC 0002 F4) ───────────────
-# The loom.ui.permissions.* area library: the permission prompt renderers
-# (bash, computer-use, file edit, file write), the permission rule list and
-# scope editor, the single-prompt flow, the shared permission components,
-# the rules UI, and the shell helpers. Split out of the single loom_ui target
-# so a body edit in this area recompiles only this area's objects (its own
-# CXX.dd dyndep file), not the whole loom_ui closure.
+# The loom.ui.permissions.* area library: the unified single-prompt flow
+# (single_prompt), the permission rule list and scope editor, the shared
+# permission components, the computer-use prompt, the rules UI, and the
+# shell helpers. The legacy per-tool prompts (bash / file_edit / file_write)
+# were deleted — single_prompt covers all tool types via ToolDetail variants.
+# Split out of the single loom_ui target so a body edit in this area
+# recompiles only this area's objects (its own CXX.dd dyndep file), not the
+# whole loom_ui closure.
 #
 # Grouped by MODULE-NAME area (export module loom.ui.permissions.*), not by
 # directory — name/path decoupling means the grouping rule is stated, not
@@ -14,10 +16,7 @@
 add_library(loom_ui_permissions)
 target_sources(loom_ui_permissions
     PUBLIC FILE_SET CXX_MODULES FILES
-        ui/permissions/permission_bash.cppm
         ui/permissions/permission_computer_use.cppm
-        ui/permissions/permission_file_edit.cppm
-        ui/permissions/permission_file_write.cppm
         ui/permissions/permission_rules_ui.cppm
         ui/permissions/permission_shell_helpers.cppm
         ui/permissions/permissions_components.cppm

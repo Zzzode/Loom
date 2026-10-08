@@ -14,6 +14,7 @@
 #pragma once
 
 #include <cstddef>
+#include <filesystem>
 #include <string>
 #include <string_view>
 
@@ -381,6 +382,91 @@ namespace loom::testing {
             }
         }
         clean = std::move(tmp);
+    }
+
+    // ── Step 3c: temp-directory path normalization ────────────────────
+    // Golden snapshots were recorded on macOS, where the harness cwd is
+    // fs::temp_directory_path() = "/var/folders/<xx>/<…>/T/".  Replay on
+    // Linux uses "/tmp/".  Replace both forms (and the folder-pill footer
+    // stem derived from them) with "<tmpdir>" so snapshots are portable
+    // without touching rendered content.  Applied to both the golden text
+    // and the actual render, so the substitution is symmetric.
+    {
+        // macOS NSTemporaryDirectory: /var/folders/<xx>/<…>/T
+        const std::string mac_prefix = "/var/folders/";
+        std::size_t pos = 0;
+        while ((pos = clean.find(mac_prefix, pos)) != std::string::npos) {
+            const std::size_t end =
+                clean.find_first_of(" \t\n\r\"'", pos);
+            const std::size_t stop =
+                (end == std::string::npos) ? clean.size() : end;
+            const std::string seg = clean.substr(pos, stop - pos);
+            if (seg.find("/T/") != std::string::npos ||
+                (seg.size() >= 2 && seg.substr(seg.size() - 2) == "/T")) {
+                clean.replace(pos, stop - pos, "<tmpdir>");
+                pos += 8;  // strlen("<tmpdir>")
+            } else {
+                pos = stop;
+            }
+        }
+        // Runtime temp dir (Linux: /tmp).  Boundary-checked so sibling
+        // strings like "/tmp_backup" are left alone.
+        try {
+            const std::string tmp =
+                std::filesystem::temp_directory_path().string();
+            std::size_t p = 0;
+            while ((p = clean.find(tmp, p)) != std::string::npos) {
+                const std::size_t after = p + tmp.size();
+                const bool boundary =
+                    after >= clean.size() || clean[after] == '/' ||
+                    clean[after] == ' ' || clean[after] == '\t' ||
+                    clean[after] == '\n' || clean[after] == '\r' ||
+                    clean[after] == '"' || clean[after] == '\'';
+                if (boundary) {
+                    clean.replace(p, tmp.size(), "<tmpdir>");
+                    p += 8;
+                } else {
+                    p = after;
+                }
+            }
+        } catch (...) {
+            // temp_directory_path() can throw on unusual platforms; the
+            // macOS pass above still applies.
+        }
+        // Folder-pill stem.  The prompt footer renders the cwd's last 2
+        // path components as "📁 <stem>" (GetLastPathComponents in
+        // prompt_input_footer.cppm).  For the harness temp cwd this is
+        // "tmp" on Linux and "<hash>/T" on macOS — a derived rendering the
+        // full-path passes above do not touch.  Normalize both forms so
+        // the footer matches across platforms.  Only stems that are
+        // exactly "tmp" or end with "/T" (the macOS NSTemporaryDirectory
+        // tail) are replaced, so a real project cwd's folder pill is left
+        // alone.
+        {
+            const std::string folder_prefix = "\xF0\x9F\x93\x81 ";  // 📁 + SP
+            std::size_t p = 0;
+            while ((p = clean.find(folder_prefix, p)) !=
+                   std::string::npos) {
+                const std::size_t stem_start = p + folder_prefix.size();
+                std::size_t stem_end = stem_start;
+                while (stem_end < clean.size() && clean[stem_end] != ' ' &&
+                       clean[stem_end] != '\n' && clean[stem_end] != '\r')
+                    ++stem_end;
+                const std::string stem =
+                    clean.substr(stem_start, stem_end - stem_start);
+                const bool is_temp_stem =
+                    stem == "tmp" ||
+                    (stem.size() >= 2 &&
+                     stem.substr(stem.size() - 2) == "/T");
+                if (is_temp_stem) {
+                    clean.replace(stem_start, stem_end - stem_start,
+                                  "<tmpdir>");
+                    p = stem_start + 8;  // strlen("<tmpdir>")
+                } else {
+                    p = stem_end;
+                }
+            }
+        }
     }
 
     // ── Steps 4-5: trim trailing whitespace + collapse trailing blanks ─

@@ -123,6 +123,13 @@ void expect_streaming_snapshot(std::string_view fixture_name,
     if (!expected.empty() && expected.back() == '\n')
         expected.pop_back();
 
+    // Re-normalize the golden with the current normalize_screen so goldens
+    // written by older builds (before temp-path / folder-pill normalization
+    // was added) still match.  normalize_screen is idempotent for
+    // already-normalized content, and the actual render is normalized by
+    // the harness before it reaches us.
+    expected = loom::testing::normalize_screen(expected);
+
     EXPECT_EQ(expected, actual_text)
         << "Snapshot mismatch for: " << fixture_name << "." << checkpoint_name
         << "\nIf this is intentional, regenerate with:\n"

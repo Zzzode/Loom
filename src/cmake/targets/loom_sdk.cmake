@@ -10,7 +10,7 @@ target_sources(loom_sdk
         # entrypoint. Bodies in harness.cpp (impl unit), not the BMI.
         sdk/harness.cppm
 )
-# RFC 0001 cc-sdk phase 3 (§2.2): the harness wraps cc.query.assembly (the
+# RFC 0001 cc-sdk phase 3 (§2.2): the harness wraps loom.query.assembly (the
 # extracted engine recipe), so loom_sdk links loom_query — the first engine
 # linkage in the SDK closure. This is downward (16 -> 10) and phase 3 (the
 # harness). loom_query PUBLICly links loom_tools/loom_hooks/loom_session/loom_memdir/

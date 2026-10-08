@@ -1,12 +1,12 @@
 # ─── loom_ui_permissions: UI permission prompts (RFC 0002 F4) ───────────────
-# The cc.ui.permissions.* area library: the permission prompt renderers
+# The loom.ui.permissions.* area library: the permission prompt renderers
 # (bash, computer-use, file edit, file write), the permission rule list and
 # scope editor, the single-prompt flow, the shared permission components,
 # the rules UI, and the shell helpers. Split out of the single loom_ui target
 # so a body edit in this area recompiles only this area's objects (its own
 # CXX.dd dyndep file), not the whole loom_ui closure.
 #
-# Grouped by MODULE-NAME area (export module cc.ui.permissions.*), not by
+# Grouped by MODULE-NAME area (export module loom.ui.permissions.*), not by
 # directory — name/path decoupling means the grouping rule is stated, not
 # inferred from the tree. Permissions is UI9_RANK 6: it may link
 # lower-ranked areas (visual/tools rank 1, foundation rank 2, chrome
@@ -25,9 +25,9 @@ target_sources(loom_ui_permissions
         ui/permissions/permission_rule_list.cppm
         ui/permissions/permission_single_prompt.cppm
 )
-# cc.ui.foundation.* (design_tokens), cc.ui.visual.* (code_highlight /
-# file_edit_tool_diff / structured_diff), and cc.ui.widgets.custom_select.
-# External deps: cc.types.types, cc.utils.* (file_edit / json /
+# loom.ui.foundation.* (design_tokens), loom.ui.visual.* (code_highlight /
+# file_edit_tool_diff / structured_diff), and loom.ui.widgets.custom_select.
+# External deps: loom.types.types, loom.utils.* (file_edit / json /
 # permissions_engine), and FTXUI (component / dom / screen headers).
 # loom_std's `import std;` BMI arrives via the directory-level
 # link_libraries(loom_std). Over-linking is safe (and matches the previous

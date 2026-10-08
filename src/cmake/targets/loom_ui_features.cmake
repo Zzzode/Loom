@@ -1,12 +1,12 @@
 # ─── loom_ui_features: UI feature panels (RFC 0002 F4) ──────────────────────
-# The cc.ui.features.* area library: the agent cards / shared widgets /
+# The loom.ui.features.* area library: the agent cards / shared widgets /
 # wizard, the grove animation, the hooks UI, the plugin menus and panels
 # (recommendation, hint, install flow, manage, marketplace browse,
 # settings), and the live-teammates panel. Split out of the single loom_ui
 # target so a body edit in this area recompiles only this area's objects
 # (its own CXX.dd dyndep file), not the whole loom_ui closure.
 #
-# Grouped by MODULE-NAME area (export module cc.ui.features.*), not by
+# Grouped by MODULE-NAME area (export module loom.ui.features.*), not by
 # directory — name/path decoupling means the grouping rule is stated, not
 # inferred from the tree. Features is UI9_RANK 8: it may link lower-ranked
 # areas (foundation rank 2, widgets rank 5) and never a higher-ranked one.
@@ -24,10 +24,10 @@ target_sources(loom_ui_features
         ui/features/plugins/plugin_settings_dialog.cppm
         ui/features/teams/live_teammates.cppm
 )
-# cc.ui.foundation.* (design_tokens / theme_provider / component_primitives /
-# feature_dialog_protocol) and cc.ui.widgets.* (spinner_animations /
-# custom_select). External deps: cc.tools.agent_color_manager,
-# cc.teams.swarm.backends, cc.types.types, cc.commands.plugin_*
+# loom.ui.foundation.* (design_tokens / theme_provider / component_primitives /
+# feature_dialog_protocol) and loom.ui.widgets.* (spinner_animations /
+# custom_select). External deps: loom.tools.agent_color_manager,
+# loom.teams.swarm.backends, loom.types.types, loom.commands.plugin_*
 # (details_helpers / trust_text / ui_data / pagination_util / helpers), and
 # FTXUI (component / dom / screen headers). loom_std's `import std;` BMI
 # arrives via the directory-level link_libraries(loom_std). Over-linking is

@@ -1,7 +1,7 @@
 # ─── loom_ui: Terminal UI (RFC 0002 F4 aggregate) ──────────────────────────────
-# All twelve cc.ui.<area> module areas live in their own libraries
+# All twelve loom.ui.<area> module areas live in their own libraries
 # (loom_ui_<area>), grouped by MODULE-NAME area (export module
-# cc.ui.<area>.*), not by directory — name/path decoupling means the
+# loom.ui.<area>.*), not by directory — name/path decoupling means the
 # grouping rule is stated, not inferred from the tree. loom_ui is a
 # source-less INTERFACE aggregate linking them PUBLIC so the upper layers
 # (loom, loom_server, the tests, …) keep a single loom_ui link edge. The
@@ -32,7 +32,7 @@ target_link_libraries(loom_ui
         loom_query
         loom_commands
         # RFC-0001 B15: the at_attachments/autocomplete impl TUs that import
-        # cc.orchestration.tools.mcp live in loom_ui_prompt; loom_orchestration
+        # loom.orchestration.tools.mcp live in loom_ui_prompt; loom_orchestration
         # also arrives transitively via loom_ui_prompt, but is kept explicit
         # (over-linking is safe).
         loom_orchestration
@@ -42,8 +42,8 @@ target_link_libraries(loom_ui
         loom_session
         loom_history
         loom_skills            # SkillRegistry::on_skills_changed for dynamic skill refresh
-        # loom_ui consumed cc.services.* transitively via loom_hooks; the explicit
-        # link is correct (no cycle: loom_services never imports cc.ui.*).
+        # loom_ui consumed loom.services.* transitively via loom_hooks; the explicit
+        # link is correct (no cycle: loom_services never imports loom.ui.*).
         loom_services
         ftxui::screen
         ftxui::dom

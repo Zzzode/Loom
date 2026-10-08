@@ -122,13 +122,13 @@ target_link_libraries(loom_commands
         loom_state
         loom_tools
         # RFC-0001 B15: mcp_cmd / mcp.core_settings_loader import the lifted
-        # cc.orchestration.tools.mcp; color.cppm imports cc.orchestration.agent.utils.
+        # loom.orchestration.tools.mcp; color.cppm imports loom.orchestration.agent.utils.
         loom_orchestration
         # RFC-0001 Phase D B5c: plugin_cmd / plugin_manage / plugin_helpers
-        # import the cc.plugins.* modules (lifecycle/manager/marketplace/
+        # import the loom.plugins.* modules (lifecycle/manager/marketplace/
         # validation), now homed in loom_plugins.
         loom_plugins
-        # RFC-0001 Phase D B5d: insights.cppm imports cc.session.list_sessions,
+        # RFC-0001 Phase D B5d: insights.cppm imports loom.session.list_sessions,
         # now homed in loom_session.
         loom_session
         loom_vim

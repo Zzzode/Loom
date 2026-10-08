@@ -70,7 +70,7 @@ target_link_libraries(loom_services
         loom_constants
         loom_config
         # RFC-0001 Phase D B5c: mcp/channel_notification imports
-        # cc.plugins.plugin_identifier, now homed in loom_plugins.
+        # loom.plugins.plugin_identifier, now homed in loom_plugins.
         loom_plugins
         CURL::libcurl
         yyjson

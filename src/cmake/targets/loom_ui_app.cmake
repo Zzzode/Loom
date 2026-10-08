@@ -1,14 +1,14 @@
 # ─── loom_ui_app: UI composition root (RFC 0002 F4) ─────────────────────
-# The cc.ui.app.* area library: the App composition root (app.cppm), its
+# The loom.ui.app.* area library: the App composition root (app.cppm), its
 # :impl partition (app_impl.cppm), the dialog-renderer registration
 # aggregator (app_dialog_registration.cppm) plus its impl units, and the
-# cc.ui.app.app impl TUs (env/text/UTF helpers, skills-menu formatting,
+# loom.ui.app.app impl TUs (env/text/UTF helpers, skills-menu formatting,
 # animation ticker + render-event post, local-command / local-JSX rows,
 # the AppAdapter *_for_testing seams, …). Split out of the single loom_ui
 # target so a body edit in this area recompiles only this area's objects
 # (its own CXX.dd dyndep file), not the whole loom_ui closure.
 #
-# Grouped by MODULE-NAME area (export module cc.ui.app.*), not by
+# Grouped by MODULE-NAME area (export module loom.ui.app.*), not by
 # directory — name/path decoupling means the grouping rule is stated, not
 # inferred from the tree. App is UI9_RANK 11 (the composition root): it
 # may link every lower-ranked area (visual/tools rank 1, foundation rank 2,
@@ -22,7 +22,7 @@ target_sources(loom_ui_app
         ui/app/app_impl.cppm
         ui/app/app_dialog_registration.cppm
         # RFC 0001 Phase D B5a: moved from loom_utils (src/utils/statusline/).
-        # Imports cc.serdes.json + cc.hooks.execution; loom_ui_app links
+        # Imports loom.serdes.json + loom.hooks.execution; loom_ui_app links
         # loom_utils and loom_hooks PUBLIC, so deps are satisfied.
         ui/app/statusline_runner.cppm
         # P3-1c: async statusline worker (jthread + debounce/memo state)
@@ -35,7 +35,7 @@ target_sources(loom_ui_app
         # P4-1d: tool-permission + MCP-elicitation blocking-response state.
         ui/app/permission_coordinator.cppm
 )
-# Module implementation units for cc.ui.app.app_dialog_registration — one per
+# Module implementation units for loom.ui.app.app_dialog_registration — one per
 # dialog-renderer aggregator, so no single TU imports more than one aggregator's
 # closure (importing all four at once crashes Clang codegen). This keeps the
 # ~44 dialog implementations out of app.cppm's BMI (source-location budget).
@@ -55,7 +55,7 @@ target_sources(loom_ui_app PRIVATE
     ui/app/app_dialog_registration_all.cpp
     ui/app/app_dialog_registration_hooks.cpp
     ui/app/app_dialog_registration_teams.cpp
-    # Module implementation unit for cc.ui.app.app_dialog_registration
+    # Module implementation unit for loom.ui.app.app_dialog_registration
     # (RFC 0002 F2 row 6): the feature-dialog factory registration (agent
     # wizard, plugin install wizard, plugin trust dialog). The concrete
     # static_pointer_cast of the erased request lives ONLY here, so the
@@ -70,40 +70,40 @@ target_sources(loom_ui_app PRIVATE
     # P4-1b: PasteCoordinator impl unit (SpawnPasteWorker background thread).
     ui/app/paste_coordinator.cpp
     ui/app/app_settings.cpp
-    # Module implementation units for cc.ui.app.app (RFC 0001 Phase C
+    # Module implementation units for loom.ui.app.app (RFC 0001 Phase C
     # batch 1): env/text/UTF helpers + skills-menu formatting, moved out of
     # app.cppm for edit isolation. Textual-std (LLVM #184957) — see the
     # header comment in each file and CMakeLists.txt:283-292.
     ui/app/app_helpers.cpp
     ui/app/app_skills_menu.cpp
-    # Module implementation units for cc.ui.app.app (RFC 0001 Phase C
+    # Module implementation units for loom.ui.app.app (RFC 0001 Phase C
     # batch 2): animation ticker + render-event post, local-command /
     # local-JSX rows. Textual-std (LLVM #184957) — see the header comment
     # in each file and CMakeLists.txt:283-292.
     ui/app/app_animation.cpp
     ui/app/app_local_command.cpp
-    # Module implementation unit for cc.ui.app.app (RFC 0002 F3 Finalize):
+    # Module implementation unit for loom.ui.app.app (RFC 0002 F3 Finalize):
     # the 28 AppAdapter *_for_testing seam bodies, moved out of app.cppm so
     # the inline-def ratchet re-freezes at the single composition body
     # (set_screen). Textual-std (LLVM #184957) — see the header comment.
     ui/app/app_testing_seams.cpp
 )
-# cc.ui.app.* imports cc.ui.tools.init, cc.ui.visual.markdown,
-# cc.ui.foundation.* (declared_cursor / design_figures /
-# feature_dialog_protocol), cc.ui.prompt.* (at_attachments /
+# loom.ui.app.* imports loom.ui.tools.init, loom.ui.visual.markdown,
+# loom.ui.foundation.* (declared_cursor / design_figures /
+# feature_dialog_protocol), loom.ui.prompt.* (at_attachments /
 # autocomplete_sources / file_index / fuzzy_rank_nucleo /
-# prompt_input_footer), cc.ui.permissions.* (permission_computer_use /
-# single_prompt), cc.ui.messages.* (collapse_background_bash /
-# message_pipeline), cc.ui.features.* (agent_cards / agent_shared_widgets /
-# live_teammates), cc.ui.dialogs.* (system / per-renderer registries /
+# prompt_input_footer), loom.ui.permissions.* (permission_computer_use /
+# single_prompt), loom.ui.messages.* (collapse_background_bash /
+# message_pipeline), loom.ui.features.* (agent_cards / agent_shared_widgets /
+# live_teammates), loom.ui.dialogs.* (system / per-renderer registries /
 # trust_dialog / trust_utils / triggers / feature_wizard_adapter /
-# elicitation / plugin_dialog_renderer), and cc.ui.screens.* (repl_screen /
+# elicitation / plugin_dialog_renderer), and loom.ui.screens.* (repl_screen /
 # repl_state / doctor_dialog_registration / the seven F3 stores). External
-# deps: cc.commands.*, cc.constants.constants, cc.hooks.*, cc.query.
-# query_engine, cc.services.* (mcp at_mention / elicitation /
-# prompt_suggestion), cc.skills.load_skills_dir, cc.state.* (app_state /
-# store), cc.tools.* (agent_display / agent_runtime / ask_user),
-# cc.types.*, cc.utils.*, cc.vim.vim_mode, and FTXUI (component / dom /
+# deps: loom.commands.*, loom.constants.constants, loom.hooks.*, loom.query.
+# query_engine, loom.services.* (mcp at_mention / elicitation /
+# prompt_suggestion), loom.skills.load_skills_dir, loom.state.* (app_state /
+# store), loom.tools.* (agent_display / agent_runtime / ask_user),
+# loom.types.*, loom.utils.*, loom.vim.vim_mode, and FTXUI (component / dom /
 # screen headers). loom_std's `import std;` BMI arrives via the
 # directory-level link_libraries(loom_std). Over-linking is safe (and matches
 # the previous loom_ui.cmake behaviour).

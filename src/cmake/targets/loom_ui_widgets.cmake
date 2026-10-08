@@ -1,5 +1,5 @@
 # ─── loom_ui_widgets: UI widgets (RFC 0002 F4) ───────────────────────────────
-# The cc.ui.widgets.* area library: reusable FTXUI controls — the component
+# The loom.ui.widgets.* area library: reusable FTXUI controls — the component
 # umbrella (all_components), the shared component helpers, custom select,
 # dev bar, fast icon, passes, PR badge, spinner (+ animations), stats,
 # tag tabs, and the text input (interface + buffer/events/vim/render impl
@@ -7,7 +7,7 @@
 # recompiles only this area's objects (its own CXX.dd dyndep file), not the
 # whole loom_ui closure.
 #
-# Grouped by MODULE-NAME area (export module cc.ui.widgets.*), not by
+# Grouped by MODULE-NAME area (export module loom.ui.widgets.*), not by
 # directory — name/path decoupling means the grouping rule is stated, not
 # inferred from the tree. Widgets is UI9_RANK 5: it may link lower-ranked
 # areas (visual/tools rank 1, foundation rank 2, chrome rank 3, prompt
@@ -29,7 +29,7 @@ target_sources(loom_ui_widgets
         ui/widgets/text_input.cppm
         ui/widgets/text_input_widget.cppm
 )
-# Module implementation units for cc.ui.widgets.text_input
+# Module implementation units for loom.ui.widgets.text_input
 # (RFC 0001 Phase C batch 8): editing/history/paste core, readline
 # event dispatch + reverse search, vim dispatch/operators, and the
 # FTXUI renderers + TextInput() factory. Bodies in the impl units keep
@@ -42,12 +42,12 @@ target_sources(loom_ui_widgets PRIVATE
     ui/widgets/text_input_vim.cpp
     ui/widgets/text_input_render.cpp
 )
-# cc.ui.foundation.* (components_figures / component_primitives /
+# loom.ui.foundation.* (components_figures / component_primitives /
 # design_tokens / design_figures / theme_provider / ui_types),
-# cc.ui.visual.markdown (components), and cc.ui.prompt.* (text_input +
+# loom.ui.visual.markdown (components), and loom.ui.prompt.* (text_input +
 # text_input_widget: prompt_paste_handler / placeholder_cascade /
-# combined_highlights). External deps: cc.types.types, cc.utils.*
-# (parse_references / text_highlighting), cc.vim.vim_controller, and
+# combined_highlights). External deps: loom.types.types, loom.utils.*
+# (parse_references / text_highlighting), loom.vim.vim_controller, and
 # FTXUI (component / dom / screen headers). loom_std's `import std;` BMI
 # arrives via the directory-level link_libraries(loom_std). Over-linking
 # is safe (and matches the previous loom_ui.cmake behaviour).

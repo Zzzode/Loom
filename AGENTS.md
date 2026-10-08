@@ -172,7 +172,7 @@ tool output, and wrong tool status. See `.agents/skills/debug-session/SKILL.md`.
   address or explicitly rebut their findings, and record the agent identity
   as the reviewer. Proceed through gates on the agents' verdict.
 - **`-Werror` is on** (`-Wall -Wextra -Wpedantic`). New warnings fail the build.
-- **No hardcoded RGB** — use palette/design tokens (`src/ui/design/`).
+- **No hardcoded RGB** — use palette/design tokens (`src/ui/foundation/design_tokens.cppm`).
 - **No constant-frequency render ticker** — the FTXUI UI is event-driven.
 - **FTXUI components must be held by state**, not reconstructed per render.
 - **Every change builds debug *and* release, with ctest green**, before committing.

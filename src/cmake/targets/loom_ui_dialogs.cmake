@@ -1,5 +1,5 @@
 # ─── loom_ui_dialogs: UI dialogs (RFC 0002 F4) ─────────────────────────────
-# The cc.ui.dialogs.* area library: the dialog system and frame, the
+# The loom.ui.dialogs.* area library: the dialog system and frame, the
 # default / bottom-band / modal renderer registries, the per-dialog
 # renderers (hooks, plugin, trust, wizard, settings, prompt, quick-open,
 # cost-threshold, sandbox-permission, elicitation, MCP), the trust utils,
@@ -8,7 +8,7 @@
 # recompiles only this area's objects (its own CXX.dd dyndep file), not the
 # whole loom_ui closure.
 #
-# Grouped by MODULE-NAME area (export module cc.ui.dialogs.*), not by
+# Grouped by MODULE-NAME area (export module loom.ui.dialogs.*), not by
 # directory — name/path decoupling means the grouping rule is stated, not
 # inferred from the tree. Dialogs is UI9_RANK 9: it may link lower-ranked
 # areas (foundation rank 2, widgets rank 5, permissions rank 6, features
@@ -46,24 +46,24 @@ target_sources(loom_ui_dialogs
         # sources that exist AND contain real implementations.  Registration
         # lives in register_default_renderers() in default_renderers.cppm.
 )
-# Module implementation units for cc.ui.dialogs.hooks_renderer and
-# cc.ui.dialogs.plugin_dialog_renderer: the renderer bodies, kept out of
+# Module implementation units for loom.ui.dialogs.hooks_renderer and
+# loom.ui.dialogs.plugin_dialog_renderer: the renderer bodies, kept out of
 # the interface BMIs for edit isolation. Moved from loom_ui unchanged; they
 # implement the module interfaces owned by this target.
 target_sources(loom_ui_dialogs PRIVATE
     ui/dialogs/hooks_dialog_renderer_impl.cpp
     ui/dialogs/plugin_dialog_renderer_impl.cpp
 )
-# cc.ui.foundation.* (design_tokens / theme_provider / component_primitives
-# / feature_dialog_protocol), cc.ui.widgets.custom_select,
-# cc.ui.permissions.* (single_prompt / components), and cc.ui.features.*
+# loom.ui.foundation.* (design_tokens / theme_provider / component_primitives
+# / feature_dialog_protocol), loom.ui.widgets.custom_select,
+# loom.ui.permissions.* (single_prompt / components), and loom.ui.features.*
 # (hooks_ui + the plugin menus/panels the plugin dialog embeds). External
-# deps: cc.commands.plugin_* (details_helpers / error_formatting / helpers
+# deps: loom.commands.plugin_* (details_helpers / error_formatting / helpers
 # / pagination_util / trust_text / ui_data / manage_plugins / plugin_trust),
-# cc.config.config, cc.constants.product, cc.plugins.plugin,
-# cc.services.team_memory.secret_scanner, cc.tools.registry, cc.types.types,
-# cc.utils.* (bash_security / plugin_marketplace), cc.hooks.config /
-# cc.hooks.registry (hooks dialog config + registry), and FTXUI
+# loom.config.config, loom.constants.product, loom.plugins.plugin,
+# loom.services.team_memory.secret_scanner, loom.tools.registry, loom.types.types,
+# loom.utils.* (bash_security / plugin_marketplace), loom.hooks.config /
+# loom.hooks.registry (hooks dialog config + registry), and FTXUI
 # (component / dom / screen headers).
 # loom_std's `import std;` BMI arrives via the directory-level
 # link_libraries(loom_std). Over-linking is safe (and matches the previous

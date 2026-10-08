@@ -14,7 +14,7 @@ target_sources(loom_plugins
         plugins/plugin_validation.cppm
         plugins/plugin_versioning.cppm
 )
-# RFC 0001 Phase D B5g: plugin_identifier imports cc.config.settings_sources
+# RFC 0001 Phase D B5g: plugin_identifier imports loom.config.settings_sources
 # (moved to loom_config in this batch), so loom_plugins links loom_config. Acyclic:
 # loom_plugins -> loom_config -> loom_utils.
 target_link_libraries(loom_plugins PUBLIC loom_utils loom_types loom_config yyjson uv_a)

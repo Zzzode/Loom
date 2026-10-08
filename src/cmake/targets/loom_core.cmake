@@ -17,7 +17,7 @@ target_link_libraries(loom_core
         loom_tasks
         loom_tools
         # RFC-0001 B15: test_fix_lsp_tool links loom_core ONLY and imports
-        # cc.orchestration.tools.lsp; the aggregator must carry it.
+        # loom.orchestration.tools.lsp; the aggregator must carry it.
         loom_orchestration
         loom_commands
         loom_services

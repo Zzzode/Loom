@@ -15,8 +15,8 @@ target_sources(loom_skills
         skills/keybindings.cppm
         skills/load_skills_dir.cppm
         # RFC 0001 Phase D B5e: moved from loom_utils (src/utils/skills/).
-        # loom_hints.cppm declares cc.skills.hints (was cc.utils.loom_code_hints);
-        # skill_usage.cppm declares cc.skills.support (was cc.utils.skill_usage).
+        # loom_hints.cppm declares loom.skills.hints (was loom.utils.loom_code_hints);
+        # skill_usage.cppm declares loom.skills.support (was loom.utils.skill_usage).
         skills/loom_hints.cppm
         skills/lorem_ipsum.cppm
         skills/mcp_skill_builders.cppm
@@ -32,11 +32,11 @@ target_sources(loom_skills PRIVATE
 )
 # RFC-0001 B15: the load_skills_dir loom_tools edge left with the lifted agent
 # subtree (the skill executor now lives in loom_orchestration); no skills
-# module imports cc.tools.* anymore.
+# module imports loom.tools.* anymore.
 target_link_libraries(loom_skills
     PUBLIC
         loom_utils
-        loom_config           # skills/bundled/* import cc.config.config (was
+        loom_config           # skills/bundled/* import loom.config.config (was
                             # transitive via loom_tools PUBLIC before B15).
         loom_skills_core
         yyjson

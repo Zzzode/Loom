@@ -8,7 +8,7 @@ target_sources(loom_tools
         tools/agent_memory_snapshot.cppm
         tools/agent_types.cppm
         # RFC-0001 B14 — agent worktree cleanup leaf (runtime_team_shared
-        # imports this instead of the lifted cc.orchestration.agent facade).
+        # imports this instead of the lifted loom.orchestration.agent facade).
         tools/agent_worktree.cppm
         tools/ask_user_tool.cppm
         tools/bash_permissions.cppm
@@ -27,7 +27,7 @@ target_sources(loom_tools
         tools/glob_tool.cppm
         tools/grep_tool.cppm
         # RFC-0001 B11 — image codec callback leaf (loom_orchestration installs
-        # the concrete cc.services.image-backed implementation).
+        # the concrete loom.services.image-backed implementation).
         tools/image_codec_port.cppm
         tools/mcp_classify.cppm
         tools/notebook_tool.cppm
@@ -87,7 +87,7 @@ target_sources(loom_tools
 )
 # RFC 0001 Phase C — runtime_registry module implementation units. Never add
 # these to the FILE_SET CXX_MODULES list above: they are module impl units
-# (`module cc.tools.runtime_registry;`), not interface units.
+# (`module loom.tools.runtime_registry;`), not interface units.
 target_sources(loom_tools
     PRIVATE
         tools/runtime_registry_json.cpp
@@ -98,22 +98,22 @@ target_sources(loom_tools
         tools/runtime_registry_team_dispatch.cpp
         tools/runtime_registry_register.cpp
         # RFC-0001 B15 — unified runtime-backends seam slots
-        # (`module cc.tools.runtime_backends.port;`).
+        # (`module loom.tools.runtime_backends.port;`).
         tools/runtime_backends_port.cpp
         # RFC 0001 Phase C batch 3 — agent_runtime module implementation units
-        # (`module cc.tools.agent_runtime;`); same PRIVATE-only discipline.
+        # (`module loom.tools.agent_runtime;`); same PRIVATE-only discipline.
         tools/agent_runtime_text_impl.cpp
         tools/agent_runtime_yaml_impl.cpp
         tools/agent_runtime_json_impl.cpp
         tools/agent_runtime_builtin_impl.cpp
         tools/agent_runtime_sidechain_impl.cpp
         tools/agent_runtime_store_impl.cpp
-        # RFC-0001 B14 — cc.tools.agent_worktree implementation unit.
+        # RFC-0001 B14 — loom.tools.agent_worktree implementation unit.
         tools/agent_worktree.cpp
 )
 # RFC-0001 B15 final link set: the lifted agent/mcp/lsp/computer-use TUs
-# left for loom_orchestration; zero remaining cc.tools.* modules import
-# cc.services.* / cc.config.* / cc.hooks.* (grep-verified on the spike
+# left for loom_orchestration; zero remaining loom.tools.* modules import
+# loom.services.* / loom.config.* / loom.hooks.* (grep-verified on the spike
 # tree). The 3 loom_skills_core edges are the skills file_access.port
 # contracts.
 target_link_libraries(loom_tools

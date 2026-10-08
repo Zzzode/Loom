@@ -1,10 +1,10 @@
 # ─── loom_ui_foundation: UI foundation (RFC 0002 F4) ────────────────────────────
-# The cc.ui.foundation.* area library: design tokens, theme, figures, glyphs,
+# The loom.ui.foundation.* area library: design tokens, theme, figures, glyphs,
 # component primitives, and the feature-dialog protocol leaf. Split out of the
 # single loom_ui target so a body edit in this area recompiles only this area's
 # objects (its own CXX.dd dyndep file), not the whole loom_ui closure.
 #
-# Grouped by MODULE-NAME area (export module cc.ui.foundation.*), not by
+# Grouped by MODULE-NAME area (export module loom.ui.foundation.*), not by
 # directory — name/path decoupling means the grouping rule is stated, not
 # inferred from the tree. Foundation is UI9_RANK 2 (a leaf; only visual/tools
 # rank lower), so it links no other loom_ui_<area> library.
@@ -28,7 +28,7 @@ target_sources(loom_ui_foundation
 target_sources(loom_ui_foundation PRIVATE
     ui/foundation/clock.cpp
 )
-# External deps only: cc.vim.vim_types (ui_types.cppm) + FTXUI. loom_std's
+# External deps only: loom.vim.vim_types (ui_types.cppm) + FTXUI. loom_std's
 # `import std;` BMI arrives via the directory-level link_libraries(loom_std).
 # Over-linking is safe (and matches the previous loom_ui.cmake behaviour).
 target_link_libraries(loom_ui_foundation

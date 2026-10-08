@@ -12,7 +12,7 @@ target_sources(loom_state
 )
 # RFC 0001 Phase C batch 10 — selectors module implementation units. Never
 # add these to the FILE_SET CXX_MODULES list above: they are module impl
-# units (`module cc.state.selectors;`), not interface units.
+# units (`module loom.state.selectors;`), not interface units.
 target_sources(loom_state
     PRIVATE
         state/selectors_core.cpp

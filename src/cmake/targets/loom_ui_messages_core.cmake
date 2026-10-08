@@ -1,5 +1,5 @@
 # ─── loom_ui_messages_core: shared message types and predicates ─────────────
-# The cc.ui.messages.* core sub-library: shared row components, timestamp
+# The loom.ui.messages.* core sub-library: shared row components, timestamp
 # formatting, row predicates, and XML-like message parsing. Split from
 # loom_ui_messages (P2-2a) so a renderer .cppm edit
 # no longer cascades through the core BMI.

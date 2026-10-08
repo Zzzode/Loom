@@ -1,5 +1,5 @@
 # ─── loom_ui_messages_renderers: per-type message renderers ─────────────────
-# The cc.ui.messages.* renderers sub-library: the 24 per-type faithful
+# The loom.ui.messages.* renderers sub-library: the 24 per-type faithful
 # renderers (assistant / user / tool-use / thinking / error / image /
 # attachment / ...).  Split from loom_ui_messages (P2-2a) so a body edit
 # in one renderer recompiles only that renderer's object, not the

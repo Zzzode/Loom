@@ -1,10 +1,10 @@
 # ─── loom_ui_messages: UI message framework (RFC 0002 F4, P2-2a split) ──────
-# The cc.ui.messages.* framework sub-library: the message row dispatch hub,
+# The loom.ui.messages.* framework sub-library: the message row dispatch hub,
 # the messages list + virtual list, the message pipeline and collapse passes,
 # and scroll keybindings.  Split from the former monolithic target so a
 # renderer .cppm edit no longer cascades through the framework BMI.
 #
-# Grouped by MODULE-NAME area (export module cc.ui.messages.*), not by
+# Grouped by MODULE-NAME area (export module loom.ui.messages.*), not by
 # directory — name/path decoupling means the grouping rule is stated, not
 # inferred from the tree. Messages is UI9_RANK 7: it may link lower-ranked
 # areas (visual/tools rank 1, foundation rank 2, chrome rank 3,
@@ -18,7 +18,7 @@ target_sources(loom_ui_messages
         ui/messages/scroll_keybindings.cppm
         ui/messages/virtual_message_list.cppm
 )
-# Module implementation units for cc.ui.messages.messages_list
+# Module implementation units for loom.ui.messages.messages_list
 # (RFC 0001 Phase C batch 7): filter/brief logic, the ~20-module
 # std::visit search closure (isolated on purpose), row geometry,
 # envelope/divider chrome, the heavy payload_row faithful-dispatch TU,
@@ -27,7 +27,7 @@ target_sources(loom_ui_messages
 # this target.
 #
 # P2-2b: message_row_dispatch.cpp is the impl unit for
-# cc.ui.messages.message_row — the 228-line RenderMessageRowByType body
+# loom.ui.messages.message_row — the 228-line RenderMessageRowByType body
 # moved out of the .cppm BMI.
 target_sources(loom_ui_messages PRIVATE
     ui/messages/message_row_dispatch.cpp
@@ -39,10 +39,10 @@ target_sources(loom_ui_messages PRIVATE
     ui/messages/messages_list_view.cpp
     ui/messages/messages_list_component.cpp
 )
-# cc.ui.foundation.* (design_tokens / design_figures / theme_provider),
-# cc.ui.visual.* (code_highlight / markdown), cc.ui.tools.* (registry /
-# generic), cc.ui.chrome.* (layout / ansi_render), and
-# cc.ui.widgets.spinner. External deps: cc.types.types, cc.utils.*
+# loom.ui.foundation.* (design_tokens / design_figures / theme_provider),
+# loom.ui.visual.* (code_highlight / markdown), loom.ui.tools.* (registry /
+# generic), loom.ui.chrome.* (layout / ansi_render), and
+# loom.ui.widgets.spinner. External deps: loom.types.types, loom.utils.*
 # (image_store / hyperlink), and FTXUI (component / dom / screen headers).
 # loom_std's `import std;` BMI arrives via the directory-level
 # link_libraries(loom_std). Over-linking is safe (and matches the previous

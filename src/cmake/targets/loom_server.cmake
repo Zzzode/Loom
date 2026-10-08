@@ -10,10 +10,10 @@ target_sources(loom_server
         server/control_protocol_serde.cpp
 )
 # RFC-0001 cc-sdk phase 3 (§2.1): loom_query is PUBLIC — server_main.cppm and
-# the test_services TU import cc.server.server_routes, whose module interface
-# imports cc.query.assembly (the extracted engine recipe); consumers need its
+# the test_services TU import loom.server.server_routes, whose module interface
+# imports loom.query.assembly (the extracted engine recipe); consumers need its
 # BMI on their compile line. loom_orchestration stays PUBLIC because
-# cc.query.assembly's BMI imports cc.orchestration.runtime_backends (also
+# loom.query.assembly's BMI imports loom.orchestration.runtime_backends (also
 # transitive via loom_query, linked direct for BMI propagation).
 target_link_libraries(loom_server PUBLIC
     loom_utils

@@ -1,5 +1,5 @@
 # ─── loom_ui_screens: UI screens (RFC 0002 F4) ─────────────────────────────
-# The cc.ui.screens.* area library: the REPL screen and its projection
+# The loom.ui.screens.* area library: the REPL screen and its projection
 # impl units, the resume / doctor / log-selector screens, the doctor
 # dialog registration, the ReplScreenState shard, and the seven F3 stores
 # (messages, prompt, task-view, permission, dialog, mcp-status, chrome).
@@ -7,7 +7,7 @@
 # recompiles only this area's objects (its own CXX.dd dyndep file), not the
 # whole loom_ui closure.
 #
-# Grouped by MODULE-NAME area (export module cc.ui.screens.*), not by
+# Grouped by MODULE-NAME area (export module loom.ui.screens.*), not by
 # directory — name/path decoupling means the grouping rule is stated, not
 # inferred from the tree. Screens is UI9_RANK 10: it may link lower-ranked
 # areas (visual rank 1, foundation rank 2, chrome rank 3, prompt rank 4,
@@ -32,7 +32,7 @@ target_sources(loom_ui_screens
         ui/screens/resume_screen.cppm
         ui/screens/log_selector.cppm              # UI23 — LogSelector (1574 → 1730 loc)
 )
-# Module implementation units for cc.ui.screens.repl_screen
+# Module implementation units for loom.ui.screens.repl_screen
 # (RFC 0001 Phase C batch 9): message-row projection, unseen-divider /
 # scroll bounds, prompt buffer mutation, welcome/spinner, prompt
 # rendering, dialog-queue slots, full-screen layout, agents menu,
@@ -51,19 +51,19 @@ target_sources(loom_ui_screens PRIVATE
     ui/screens/repl_screen_dialog_panels.cpp
     ui/screens/repl_screen_events.cpp
 )
-# cc.ui.visual.markdown (StreamingMarkdown ptr field), cc.ui.foundation.*
+# loom.ui.visual.markdown (StreamingMarkdown ptr field), loom.ui.foundation.*
 # (design tokens / figures / logo / theme / ui_types / declared_cursor),
-# cc.ui.chrome.* (fullscreen_layout / ink_utils), cc.ui.prompt.*
+# loom.ui.chrome.* (fullscreen_layout / ink_utils), loom.ui.prompt.*
 # (prompt_input_footer / vim_input / prompt_stash_notice /
-# placeholder_cascade), cc.ui.widgets.text_input, cc.ui.permissions.*
+# placeholder_cascade), loom.ui.widgets.text_input, loom.ui.permissions.*
 # (single_prompt / permission_bash / permission_file_edit /
-# permission_file_write), cc.ui.messages.* (message_row / messages_list /
+# permission_file_write), loom.ui.messages.* (message_row / messages_list /
 # virtual_list / per-type renderers / message_tool_result),
-# cc.ui.features.* (agent_cards / live_teammates / agent_wizard), and
-# cc.ui.dialogs.* (system / trust_dialog / trust_utils / settings_dialog /
-# cost_threshold_dialog). External deps: cc.config.config,
-# cc.constants.spinner_verbs, cc.session.history, cc.tools.agent_display,
-# cc.types.types, cc.serdes.json / terminal_helpers, and FTXUI
+# loom.ui.features.* (agent_cards / live_teammates / agent_wizard), and
+# loom.ui.dialogs.* (system / trust_dialog / trust_utils / settings_dialog /
+# cost_threshold_dialog). External deps: loom.config.config,
+# loom.constants.spinner_verbs, loom.session.history, loom.tools.agent_display,
+# loom.types.types, loom.serdes.json / terminal_helpers, and FTXUI
 # (component / dom / screen headers). loom_std's `import std;` BMI arrives
 # via the directory-level link_libraries(loom_std). Over-linking is safe
 # (and matches the previous loom_ui.cmake behaviour).

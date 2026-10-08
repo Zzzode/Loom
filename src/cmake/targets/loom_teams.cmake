@@ -1,9 +1,9 @@
 # ─── loom_teams: Team/swarm runtime (RFC 0001 Phase D B6) ─────────────────────
 # Created in B6: the six teams/swarm primaries (plus nine implementation
 # units) moved out of loom_utils (src/utils/teams/, src/utils/swarm/) into
-# their own target. Module names renamed cc.utils.* -> cc.teams.*. The
-# modules import only loom_utils-resident modules (cc.serdes.json,
-# cc.fs.atomic_replace, cc.process.bash.bash_execution) plus std, so
+# their own target. Module names renamed loom.utils.* -> loom.teams.*. The
+# modules import only loom_utils-resident modules (loom.serdes.json,
+# loom.fs.atomic_replace, loom.process.bash.bash_execution) plus std, so
 # loom_teams links loom_utils PUBLIC and there is no teams->tools/services edge.
 add_library(loom_teams)
 target_sources(loom_teams

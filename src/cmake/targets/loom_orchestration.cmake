@@ -24,7 +24,7 @@ target_sources(loom_orchestration
 )
 target_sources(loom_orchestration
     PRIVATE
-        # cc.orchestration.agent.utils implementation units.
+        # loom.orchestration.agent.utils implementation units.
         orchestration/agent/agent_sub_utils_json.cpp
         orchestration/agent/agent_sub_utils_config.cpp
         orchestration/agent/agent_sub_utils_tools_mcp.cpp
@@ -32,10 +32,10 @@ target_sources(loom_orchestration
         orchestration/agent/agent_sub_utils_teammates.cpp
         orchestration/agent/agent_sub_utils_messages.cpp
         orchestration/agent/agent_sub_utils_budget.cpp
-        # cc.orchestration.tools.mcp slot storage (loader B4 / snapshots B6).
+        # loom.orchestration.tools.mcp slot storage (loader B4 / snapshots B6).
         orchestration/tools/mcp_core_settings_loader.cpp
         orchestration/tools/mcp_snapshots_sink.cpp
-        # cc.orchestration.runtime_backends implementation units.
+        # loom.orchestration.runtime_backends implementation units.
         orchestration/runtime_backends_lsp.cpp
         orchestration/runtime_backends_mcp.cpp
         orchestration/runtime_backends_computer_use.cpp

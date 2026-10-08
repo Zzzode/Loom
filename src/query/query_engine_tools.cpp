@@ -295,6 +295,19 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         (*options.on_event)(ev);
     }
 
+    // Surface tool failures as a persistent system error message (not just
+    // the transient tool-preview card). The model still receives the error
+    // as a tool_result and can recover; this ensures the user sees the
+    // failure even if the model gives up without another tool call.
+    if (result_msg.is_error && options.on_event) {
+        StreamError err;
+        err.error_type = "tool_error";
+        err.message = std::format("Tool '{}' failed: {}",
+            tool_use.name,
+            output_preview.substr(0, 200));
+        (*options.on_event)(err);
+    }
+
     // Emit post-tool-use lifecycle event
     if (lifecycle_hooks_) {
         auto exec_end = std::chrono::steady_clock::now();

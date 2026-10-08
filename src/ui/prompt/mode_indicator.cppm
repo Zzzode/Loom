@@ -13,7 +13,7 @@
 ///
 /// This module provides TWO rendering paths:
 ///   - render_prefix_glyph_ansi()  → ANSI-escaped string (for string-based
-///                                    renderers like render_prompt_input_full)
+///                                    string-based renderers)
 ///   - render_prefix_glyph_element() → ftxui::Element (for FTXUI component
 ///                                      renderers like RenderPromptInput)
 ///
@@ -64,7 +64,7 @@ inline constexpr const char* kBashBorderAnsi = "\033[38;5;198m";
 // ─── Default text color reset ────────────────────────────────────────────
 inline constexpr const char* kAnsiReset = "\033[0m";
 
-// ─── String-based prefix renderer (for render_prompt_input_full) ─────────
+// ─── String-based prefix renderer ────────────────────────────────────────────
 //
 // Returns the ANSI-escaped prefix string: glyph + space + color reset.
 // e.g. "\033[92m❯ \033[0m"  (green-tinted pointer)

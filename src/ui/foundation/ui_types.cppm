@@ -70,7 +70,7 @@ struct AgentValidationResult {
 // PromptInputMode
 //
 // UNIFIED CANONICAL ENUM — replaces incompatible definitions scattered
-// across the codebase (text_input.cppm, prompt_input_full.cppm,
+// across the codebase (text_input.cppm,
 // prompt_input_footer.cppm, repl_screen.cppm,
 // and the previous 3-value stub here).
 //
@@ -183,7 +183,6 @@ constexpr std::array<std::string_view, 49> kNullRenderingTypes = {{
 // PermissionMode + EffortLevel
 //
 // UNIFIED CANONICAL ENUMS — previously duplicated in:
-//   - prompt_input_full.cppm (PermissionMode + EffortLevel)
 //   - prompt_input_footer.cppm (PermissionMode)
 // ============================================================
 

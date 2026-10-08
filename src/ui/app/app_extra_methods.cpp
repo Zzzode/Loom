@@ -218,23 +218,12 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
 }
 
 // ── ApplyMessageCollapsePipeline (moved out of app.cppm) ────────────────
-// Apply a chain of collapse passes to the message list before projecting
-// rows:
-//   collapseBackgroundBashNotifications(collapseHookSummaries(
-//     collapseTeammateShutdowns(collapseReadSearchGroups(grouped, tools))))
-//
-// We run the same chain here, on the raw conversation, before the
-// per-message projection loop in SyncState()/Render().  Only the passes
-// that have a faithful port are wired so far:
-//   * collapseBackgroundBashNotifications — DONE (this call).
-//   * collapseHookSummaries / collapseTeammateShutdowns / collapseReadSearch
-//     — pending (need richer SystemMessage / AttachmentMessage types).
-// As each pass lands it slots in here, preserving the ordering.
-//
-// `fullscreen=true`: the CPP transcript is always the fullscreen-equivalent
-// view (collapse gated on isFullscreenEnvEnabled()).  `verbose=false`:
-// there is no ctrl+O verbose transcript toggle at this layer yet, so we use
-// the default collapsed presentation (each item shown only in verbose).
+// Formerly applied a chain of collapse passes (background-bash, hook
+// summaries, teammate shutdowns, read-search groups) to the message list
+// before projecting rows.  All collapse passes were removed because the
+// engine no longer emits their summary formats — the function is retained
+// as a pass-through so call sites stay stable.  If a future collapse pass
+// is needed, slot it in here.
 std::vector<Message> AppAdapter::ApplyMessageCollapsePipeline(
     std::vector<Message> messages) const {
     return messages;

@@ -71,7 +71,7 @@ using namespace ftxui;
     return ph::ComputePlaceholder(ctx);
 }
 
-// UI2: prompt input shell.  Full feature parity in prompt_input_full.cppm.
+// UI2: prompt input shell.
 //
 // M3 — WIRED TO THE REAL COMPONENT.  Previously this was a ~90-line
 // hand-rolled body that IGNORED the real ui::components::TextInputImpl

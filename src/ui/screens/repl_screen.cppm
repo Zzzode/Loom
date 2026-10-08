@@ -21,7 +21,7 @@
 ///   status bar   -> loom.ui.prompt.prompt_input_footer (UI1, user-configurable command output)
 ///   spinner      -> loom.ui.components.spinner_widget (UI19)
 ///   msg list     -> loom.ui.messages.messages (RenderMessages wrapper, UI4/5)
-///   prompt input -> loom.ui.prompt.prompt_input_full (UI2)
+///   prompt input -> loom.ui.prompt.* (UI2)
 ///   dialogs      -> loom.ui.dialogs.* (DialogQueue 4-slot system, UI8-UI11/UI16)
 ///
 /// RFC 0001 Phase C batch 9: every body lives in ten module implementation
@@ -72,7 +72,7 @@ import loom.ui.features.agents.agent_cards;
 //                  sandbox_dialog,settings_dialog,model_picker,
 //                  ide_dialogs,plugin_dialog,
 //                  feedback_survey,config_dialog,mcp_dialogs}
-//   loom.ui.prompt.{prompt_input_full,autocomplete,vim_input}
+//   loom.ui.prompt.{autocomplete,vim_input}
 //   loom.ui.messages.{assistant_message,user_message,structured_diff}
 //   loom.ui.components.{custom_select,diff_view,spinner_widget,
 //                     file_tree,text_input_widget,notification,

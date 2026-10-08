@@ -25,6 +25,12 @@ target_sources(loom_ui_permissions
         ui/permissions/permission_rule_list.cppm
         ui/permissions/permission_single_prompt.cppm
 )
+# Module implementation unit for loom.ui.permissions.rule_list: 61 function
+# bodies moved out of the primary interface to keep the declarations-only
+# BMI cheap (fan-out = 1 on a body edit).
+target_sources(loom_ui_permissions PRIVATE
+    ui/permissions/permission_rule_list.cpp
+)
 # loom.ui.foundation.* (design_tokens), loom.ui.visual.* (code_highlight /
 # file_edit_tool_diff / structured_diff), and loom.ui.widgets.custom_select.
 # External deps: loom.types.types, loom.utils.* (file_edit / json /

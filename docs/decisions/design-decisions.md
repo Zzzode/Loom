@@ -131,18 +131,19 @@ promoted to the repository root in the same series of commits, so
 
 ### A.3 — Wiring the client-side SSE / streaming events
 
-- **`cpp_migration/src/ui/messages/collapse_background_bash.cppm:17-24`** — **TAG-FORMAT NOTE
-  (TS vs CPP divergence — intentional).** The TS constants module uses **hyphenated** XML tag names
-  (`task-notification`, `status`, `summary`). The C++ engine however *emits* **underscored** tags —
-  see `local_agent_task.cppm:435`, `local_shell_task.cppm`, and `runtime_registry.cppm:766`, which
-  all write `<task_notification>`, `<status>`, `<summary>`. To collapse the messages the C++ tree
-  actually produces, this module matches the **C++ wire format (underscore)**. The constants here
-  are declared the single source of truth for that decision — so if the emitters are ever changed
-  to hyphenated tags, *this* file must change with them, and vice versa.
+- **`src/constants/xml.cppm`** — **TAG-FORMAT NOTE (TS vs CPP divergence — intentional).** The TS
+  constants module uses **hyphenated** XML tag names (`task-notification`, `status`, `summary`). The
+  C++ engine however *emits* **underscored** tags — see `local_agent_task.cppm`,
+  `agent_runtime_sidechain_impl.cpp`, `runtime_registry_native_agents.cpp`, and `task_tool.cppm`,
+  which all write `<task_notification>`, `<status>`, `<summary>`. The constants in `xml.cppm`
+  (e.g. `TASK_NOTIFICATION_TAG = "task_notification"`) are the single source of truth for the
+  C++ wire format — so if the emitters are ever changed to hyphenated tags, *this* file must
+  change with them, and vice versa.
 
-- **`cpp_migration/src/ui/messages/collapse_background_bash.cppm:44-48`** — The three tag constants
-  (`kTaskNotificationTag = "task_notification"`, `kStatusTag = "status"`, `kSummaryTag = "summary"`)
-  are the concrete form of the decision above.
+- **`src/ui/messages/xml_tags.cppm`** — The shared `extract_tag()` helper that parses the
+  underscored tag envelopes the producers emit. Complete-pair matching only: an unterminated
+  tag returns `std::nullopt` (not raw tail text), so malformed input renders as plain text
+  rather than being greedily swallowed.
 
 - **`cpp_migration/src/services/api/sse_client.cppm:506-509`** — `on_final` is **deliberately not
   fired** on the `message_stop` SSE event. It is fired exactly once by `PostMessagesStream` when
@@ -2726,13 +2727,14 @@ promoted to the repository root in the same series of commits, so
 
 ### C.1 — Tag formats and string protocols shared across modules
 
-- **`cpp_migration/src/ui/messages/collapse_background_bash.cppm:17-24`** — The tag-format contract: the
-  **producers** are `local_agent_task.cppm:435`, `local_shell_task.cppm`, and `runtime_registry.cppm:766`
-  (which write `<task_notification>`, `<status>`, `<summary>` — **underscored**), and the **consumer** is
-  this collapse pass. Changing the emitters' spelling silently stops collapsing.
+- **`src/constants/xml.cppm`** — The tag-format contract: the **producers** are
+  `local_agent_task.cppm`, `agent_runtime_sidechain_impl.cpp`, `runtime_registry_native_agents.cpp`,
+  and `task_tool.cppm` (which write `<task_notification>`, `<status>`, `<summary>` — **underscored**),
+  and the **consumers** are `xml_tags.cppm` (shared `extract_tag`) and `bash_result_formatting.cppm`
+  (sandbox-violations extraction). Changing the emitters' spelling silently breaks parsing.
 
-- **`cpp_migration/src/ui/messages/collapse_background_bash.cppm:44-48`** — The consumer-side constants
-  that must match those producers.
+- **`src/ui/messages/xml_tags.cppm`** — The shared consumer-side `extract_tag()` that must match
+  the producer constants in `xml.cppm`.
 
 - **`cpp_migration/src/tools/runtime_registry.cppm:450-453`** — `parse_lsp_action`'s action strings
   **mirror `lsp_action_name()` in `lsp_tool.cppm`**. Without them, `execute_lsp_tool` **silently falls
@@ -3210,11 +3212,10 @@ duplicating prose. Entries marked **(new)** are decisions recorded *only* here.
 
 ### D.1 — Named divergence blocks (the loudest markers)
 
-- **`cpp_migration/src/ui/messages/collapse_background_bash.cppm:15-24`** — **(new)** The only block in
-  the tree that uses the exact phrase **`TAG-FORMAT NOTE (TS vs CPP divergence — intentional)`**. It is
-  the clearest worked example of the pattern: name the TS behaviour, name the CPP behaviour, name *who
-  produces the CPP format*, then declare the constants below the single source of truth for the
-  decision. Worth preserving as the template.
+- **`src/constants/xml.cppm`** — **(new)** The block that records the **`TAG-FORMAT NOTE
+  (TS vs CPP divergence — intentional)`** pattern. It is the clearest worked example: name the TS
+  behaviour, name the CPP behaviour, name *who produces the CPP format*, then declare the constants
+  as the single source of truth for the decision. Worth preserving as the template.
 
 - **`cpp_migration/src/state/store.cppm:944-956`** — `NOTE: this is an intentional no-op.` See B.7.
 

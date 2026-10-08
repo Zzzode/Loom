@@ -196,6 +196,20 @@ struct TextInputOptions {
     size_t max_visible_suggestions = 8;
 };
 
+/// Render-only option fields for TextInputImpl::update_render_options().
+/// Carries just the fields that the REPL faithful path re-projects per
+/// frame (prefix, placeholder, ghost text, prefix styling) — deliberately
+/// not the full TextInputOptions, since callbacks and edit state must not
+/// be reset on a render update.
+struct RenderOptions {
+    std::string placeholder = "Type your message here...";
+    std::string prefix = "❯ ";
+    std::string inline_ghost_text;
+    std::string argument_hint;
+    std::optional<ftxui::Color> prefix_color;
+    bool prefix_bold = true;
+};
+
 // ============================================================
 // Internal: Undo / Redo snapshot
 // ============================================================
@@ -278,6 +292,20 @@ public:
     void set_text(const std::string& t);
     const std::string& text() const { return text_; }
     int cursor() const { return cursor_; }
+
+    /// Update render-only option fields in place (placeholder, prefix,
+    /// ghost text, prefix styling).  Lets a caller hold one TextInputImpl
+    /// and re-project the prompt per frame instead of reconstructing the
+    /// component.  Does NOT touch text, cursor, history, undo state, vim
+    /// state, or any callback — edit/event semantics are unchanged.
+    void update_render_options(const RenderOptions& opts) noexcept {
+        options_.placeholder       = opts.placeholder;
+        options_.prefix            = opts.prefix;
+        options_.inline_ghost_text = opts.inline_ghost_text;
+        options_.argument_hint     = opts.argument_hint;
+        options_.prefix_color      = opts.prefix_color;
+        options_.prefix_bold       = opts.prefix_bold;
+    }
 
     // ------------------------------------------------------------
     // Cursor display position (for declared cursor / IME support)

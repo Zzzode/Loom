@@ -67,12 +67,16 @@ void AppAdapter::AppendLocalCommandInputMessage(std::string command) {
     local_command_messages_.push_back(std::move(entry));
 }
 
-void AppAdapter::AppendLocalCommandMessage(std::string message, bool is_error) {
+void AppAdapter::AppendLocalCommandMessage(std::string message, bool is_error,
+                                           bool as_system) {
     if (message.empty()) return;
     repl::MessageDisplayEntry entry;
     entry.role = "system";
     entry.content_preview = std::move(message);
-    entry.is_local_command_output = true;
+    // as_system=true renders as SystemText (⏺ glyph, no ⎿ prefix) —
+    // appropriate for status messages like "Resuming session" that are
+    // not terminal output.
+    entry.is_local_command_output = !as_system;
     entry.is_error = is_error;
     entry.timestamp = std::chrono::system_clock::now();
     local_command_messages_.push_back(std::move(entry));

@@ -646,7 +646,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                                     this->HandleCommand("/resume " + id);
                                 }
                             });
-                        AppendLocalCommandMessage(result->message, false);
+                        AppendLocalCommandMessage(result->message, false, true);
                         PostRenderEvent();
                         return;
                     }
@@ -675,7 +675,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                     screen_state_->messages_store.pill_visible = false;
                     ResetScrollToBottom(screen_state_->messages_store);
                     this->SyncState();
-                    AppendLocalCommandMessage(result->message, false);
+                    AppendLocalCommandMessage(result->message, false, true);
                     PostRenderEvent();
                     return;
                 }

@@ -463,7 +463,8 @@ private:
 
     void AppendLocalCommandInputMessage(std::string command);
 
-    void AppendLocalCommandMessage(std::string message, bool is_error = false);
+    void AppendLocalCommandMessage(std::string message, bool is_error = false,
+                                   bool as_system = false);
 
 
     // Run a user-initiated `!` command LOCALLY (never an LLM turn).  It runs

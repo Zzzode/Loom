@@ -524,12 +524,6 @@ public:
 
     void ProjectRuntimeMetadataToScreenState();
 
-    /// Project the AI-managed todo list (TodoWriteTool singleton) into
-    /// screen_state_->todo_store. Called from SyncState and Render, matching
-    /// the ProjectRuntimeMetadataToScreenState wiring. The tool owns its own
-    /// mutex; this is a lean copy (max 10 items) per call.
-    void ProjectTodosToScreenState();
-
     /// Project settings from SettingsManager into screen_state_.
     /// Projects the settings subset into the REPL
     /// screen's model/status-line fields.  Only the subset needed by the

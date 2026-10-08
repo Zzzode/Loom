@@ -365,7 +365,6 @@ void AppAdapter::SyncState() {
     }
 
     this->ProjectRuntimeMetadataToScreenState();
-    this->ProjectTodosToScreenState();
 
     // Live teams projection (native store + pane observer). Runs on the same
     // event-driven cadence as every other SyncState projection — no separate

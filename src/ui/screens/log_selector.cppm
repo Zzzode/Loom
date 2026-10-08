@@ -431,7 +431,7 @@ namespace ui19_style {
         }) | padding(1);
 
         if (selected) {
-            card = card | bgcolor(Color::RGB(25, 30, 45))
+            card = card | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1)
                         | borderStyled(palette.success);
         } else {
             card = card | borderLight;
@@ -670,7 +670,7 @@ inline void SelectorState_rebuild_project_cursor(SelectorState& /*s*/) {
             text(std::string{r.hotkey}) | bold | color(Color::Cyan),
             text("]") | dim,
         });
-        if (sel) line = line | bgcolor(Color::RGB(25, 30, 45));
+        if (sel) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
         items.push_back(line | size(WIDTH, EQUAL, 28));
     }
 
@@ -749,7 +749,7 @@ struct ChipDef {
                                       ? Color::GrayLight
                                       : Color::Cyan),
         });
-        if (focus) chip = chip | bold | bgcolor(Color::RGB(25, 30, 45))
+        if (focus) chip = chip | bold | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1)
                                 | borderStyled(Color::Green);
         else        chip = chip | borderLight;
         chip = chip | padding(0, 1);
@@ -901,7 +901,7 @@ struct ChipDef {
                 text("  "),
                 text(format_relative(p.last_activity)) | dim,
             });
-            if (header_focus) hdr = hdr | bgcolor(Color::RGB(25, 30, 45));
+            if (header_focus) hdr = hdr | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
             cards.push_back(hdr | padding(0, 1));
         }
         ++flat_index;
@@ -1160,7 +1160,7 @@ struct ChipDef {
         text("│") | blink | color(Color::Cyan),
     });
     if (s.import_error) field = field | borderStyled(Color::Red)
-                                       | bgcolor(Color::RGB(40, 15, 15));
+                                       | bgcolor(loom::ui::design::theme::current_theme().palette->danger_tint_bg);
     else                field = field | borderLight;
     body.push_back(field | padding(1));
     if (s.import_error) {

@@ -22,6 +22,8 @@ module;
 
 export module loom.ui.permissions.components;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.security.permissions_engine;
@@ -523,7 +525,7 @@ struct CheckboxState {
             text("⚠ ") | color(Color::Yellow) | bold,
             text(std::string{reason}) | color(Color::Yellow) | bold,
         }),
-    }) | borderStyled(Color::Yellow) | bgcolor(Color::RGB(40, 30, 0));
+    }) | borderStyled(Color::Yellow) | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg);
 }
 
 } // namespace loom::ui::permissions::components

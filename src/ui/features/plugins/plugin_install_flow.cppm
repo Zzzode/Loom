@@ -22,6 +22,8 @@ module;
 
 export module loom.ui.features.plugins.plugin_install_flow;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.commands.plugin_ui_data;
@@ -210,7 +212,7 @@ namespace detail {
                 text("  " + std::string{it.subtitle}) | dim,
             }) | flex,
         });
-        if (sel) row = row | bgcolor(Color::RGB(20, 30, 50));
+        if (sel) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
         rows.push_back(std::move(row));
         if (i + 1 < 4) rows.push_back(separator() | dim);
     }
@@ -363,7 +365,7 @@ namespace detail {
             text(std::string{pt::trust_warning_header()}) | bold | color(Color::Yellow),
         }),
         paragraph("   " + pt::build_trust_warning_text()) | dim | color(Color::GrayLight),
-    }) | border | color(Color::Yellow) | bgcolor(Color::RGB(25, 20, 5)));
+    }) | border | color(Color::Yellow) | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg));
 
     return vbox(std::move(rows));
 }

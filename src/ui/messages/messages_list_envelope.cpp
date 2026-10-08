@@ -9,6 +9,8 @@ module;
 
 module loom.ui.messages.messages_list;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.ui.messages.message_row;
@@ -450,7 +452,7 @@ auto render_compact_group_row(const VisibleRow& vr,
     label << "(Space / Enter to expand)";
 
     Element body = text(label.str())
-        | color(palette::muted_fg()) | bgcolor(Color::RGB(20, 22, 28));
+        | color(palette::muted_fg()) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
     if (is_selected) {
         body = std::move(body) | inverted | bgcolor(palette::selected_bg());
     }
@@ -596,7 +598,7 @@ auto render_compressed_chain_row(const VisibleRow& vr,
         filler(),
     });
     if (expanded) {
-        return std::move(row) | bgcolor(Color::RGB(30, 32, 40));
+        return std::move(row) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
     }
     return row;
 }

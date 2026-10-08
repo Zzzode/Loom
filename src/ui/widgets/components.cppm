@@ -11,6 +11,8 @@ module;
 
 export module loom.ui.widgets.components;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 export namespace loom::ui {
@@ -120,7 +122,7 @@ struct PermissionPromptData {
                        | ftxui::color(ftxui::Color::Yellow));
 
     return ftxui::vbox(elements) | ftxui::borderDouble
-           | ftxui::bgcolor(ftxui::Color::RGB(40, 30, 0));
+           | ftxui::bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg);
 }
 
 // ============================================================

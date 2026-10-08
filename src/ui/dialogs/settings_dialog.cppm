@@ -15,6 +15,8 @@ module;
 
 export module loom.ui.dialogs.settings_dialog;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.types.types;
@@ -727,7 +729,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                 text("  "),
                 text(cmd) | color(Color::Cyan) | dim,
             });
-            if (sel) row = row | bgcolor(Color::RGB(30, 40, 55));
+            if (sel) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
             body.push_back(row);
         }
     }

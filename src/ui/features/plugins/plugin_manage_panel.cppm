@@ -17,6 +17,8 @@ module;
 
 export module loom.ui.features.plugins.plugin_manage_panel;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.commands.plugin_ui_data;
@@ -126,7 +128,7 @@ namespace detail {
         text("  Sort:") | dim,
         text(" " + std::string{sort_label} + " ") | color(Color::Magenta) | borderLight | dim,
         text("  "),
-        text(" [+] Install ") | bold | color(Color::Green) | bgcolor(Color::RGB(20, 40, 20)),
+        text(" [+] Install ") | bold | color(Color::Green) | bgcolor(loom::ui::design::theme::current_theme().palette->success_tint_bg),
         text(" "),
         text(std::format("{}/{}", visible_count, total_count)) | dim,
     }) | padding(0, 1, 0, 0);
@@ -182,7 +184,7 @@ namespace detail {
     });
 
     if (selected) {
-        line = line | bgcolor(Color::RGB(25, 35, 55));
+        line = line | bgcolor(loom::ui::design::theme::current_theme().palette->info_tint_bg);
     }
     return line;
 }

@@ -13,6 +13,8 @@ module;
 
 export module loom.ui.messages.collapsed_content_message;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.ui.visual.code_highlight;
@@ -215,7 +217,7 @@ struct Aggregates {
         });
 
         if (expanded) {
-            row = row | bgcolor(Color::RGB(18, 22, 32));
+            row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
         }
         rows.push_back(std::move(row));
 

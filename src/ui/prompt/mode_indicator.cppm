@@ -29,6 +29,8 @@ module;
 #include <ftxui/component/component.hpp>
 export module loom.ui.prompt.mode_indicator;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.ui.foundation.design_figures;
@@ -163,7 +165,7 @@ inline constexpr const char* kAnsiReset = "\033[0m";
         el = el | color(*viewing_agent_color);
     } else if (show_bash) {
         // bash_border — hot pink rgb(255,0,135).
-        el = el | color(Color::RGB(255, 0, 135));
+        el = el | color(loom::ui::design::theme::current_theme().palette->accent_pink);
     } else if (teammate_color.has_value()) {
         el = el | color(*teammate_color);
     }

@@ -30,6 +30,8 @@ module;
 
 export module loom.ui.dialogs.plugin_dialog;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.commands.plugin_ui_data;
@@ -205,7 +207,7 @@ namespace detail {
     return hbox({
         text(" "),
         text(std::string{1, c}) | bold | color(name_color(name))
-             | bgcolor(Color::RGB(20, 20, 35)),
+             | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3),
         text(" "),
     });
 }
@@ -249,7 +251,7 @@ namespace detail {
         parts.push_back(text("[" + *row.scope + "] ") | dim | color(Color::Cyan));
     }
     auto line = hbox(std::move(parts));
-    if (selected) line = line | bgcolor(Color::RGB(30, 20, 20));
+    if (selected) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->danger_tint_bg);
 
     Elements sub{line};
     if (!row.message.empty()) {
@@ -412,7 +414,7 @@ namespace detail {
     for (const auto& [label, id] : k_tabs) {
         const bool active = (id == active_tab);
         auto bit = text(" " + std::string{label} + " ");
-        if (active) bit = bit | bold | bgcolor(Color::RGB(30, 40, 60)) | color(Color::Cyan);
+        if (active) bit = bit | bold | bgcolor(loom::ui::design::theme::current_theme().palette->info_tint_bg) | color(Color::Cyan);
         else        bit = bit | dim;
         tab_bits.push_back(std::move(bit));
     }
@@ -427,7 +429,7 @@ namespace detail {
         top_bar,
         separator() | color(Color::Magenta),
         std::move(sub_view) | flex,
-    }) | borderDouble | bgcolor(Color::RGB(12, 12, 20));
+    }) | borderDouble | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
 }
 
 // =========================================================================

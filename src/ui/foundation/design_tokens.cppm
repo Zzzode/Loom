@@ -279,6 +279,47 @@ struct Palette {
     ftxui::Color message_list_muted_fg;   // muted foreground text
     ftxui::Color message_list_empty_state_fg; // empty-state hint text
     ftxui::Color message_list_streaming_fg;   // streaming indicator text
+
+    // ─── Surface tint tokens (GAP: clr-hardcoded-surface-tints) ───────────
+    // Dark blue-gray backgrounds for selected rows, cards, and panels.
+    // Each is a step on the surface-tint scale from darkest to lightest.
+    ftxui::Color surface_tint_1;  // card / selected-row background (darkest)
+    ftxui::Color surface_tint_2;  // selected-row background (dialogs)
+    ftxui::Color surface_tint_3;  // selected-row background (plugins)
+    ftxui::Color surface_tint_4;  // selected-row background (agents)
+    ftxui::Color surface_tint_5;  // surface background (lightest)
+
+    // ─── Status tint background tokens (GAP: clr-hardcoded-status-tints) ──
+    // Dark status-colored backgrounds for badges, pills, and tinted panels.
+    ftxui::Color success_tint_bg;  // dark green background
+    ftxui::Color danger_tint_bg;   // dark red background
+    ftxui::Color warning_tint_bg;  // dark amber background
+    ftxui::Color info_tint_bg;     // dark blue background
+
+    // ─── Accent tokens (GAP: clr-hardcoded-accents) ───────────────────────
+    ftxui::Color accent_green;   // green dot / success accent
+    ftxui::Color accent_purple;  // purple accent
+    ftxui::Color accent_pink;    // pink accent (mode indicator)
+
+    // ─── Stats heat-gradient tokens (GAP: clr-hardcoded-stats-gradient) ──
+    // 5-step green heat gradient for the stats widget.
+    ftxui::Color stats_green_1;  // coolest
+    ftxui::Color stats_green_2;
+    ftxui::Color stats_green_3;
+    ftxui::Color stats_green_4;
+    ftxui::Color stats_green_5;  // hottest
+
+    // ─── Permission rule list tokens (GAP: clr-hardcoded-perm-rule-list) ──
+    // Background tints for the permission rule list entries.
+    ftxui::Color perm_rule_bg;         // base rule background
+    ftxui::Color perm_rule_bg_alt;     // alternate / highlighted background
+    ftxui::Color perm_rule_bg_hover;   // hover background
+    ftxui::Color perm_rule_bg_selected; // selected background
+    ftxui::Color perm_rule_bg_info;    // info-tinted background
+    ftxui::Color perm_rule_bg_dark;    // dark background
+    ftxui::Color perm_rule_bg_darker;  // darker background
+    ftxui::Color perm_rule_bg_active;  // active background
+    ftxui::Color perm_rule_bg_accent;  // accent-tinted background
 };
 
 // ─── Concrete palettes ───────────────────────────────────────────────────────
@@ -445,6 +486,32 @@ inline const Palette& dark() noexcept {
     .message_list_muted_fg      = ftxui::Color::RGB(156, 163, 175),
     .message_list_empty_state_fg = ftxui::Color::RGB(107, 114, 128),
     .message_list_streaming_fg  = ftxui::Color::RGB( 34, 211, 238),
+    .surface_tint_1           = ftxui::Color::RGB( 25,  30,  45),
+    .surface_tint_2           = ftxui::Color::RGB( 30,  40,  55),
+    .surface_tint_3           = ftxui::Color::RGB( 20,  30,  50),
+    .surface_tint_4           = ftxui::Color::RGB( 25,  35,  50),
+    .surface_tint_5           = ftxui::Color::RGB( 20,  30,  55),
+    .success_tint_bg          = ftxui::Color::RGB( 16,  36,  24),
+    .danger_tint_bg           = ftxui::Color::RGB( 40,  16,  20),
+    .warning_tint_bg          = ftxui::Color::RGB( 40,  30,   0),
+    .info_tint_bg             = ftxui::Color::RGB( 30,  40,  60),
+    .accent_green             = ftxui::Color::RGB( 80, 200, 120),
+    .accent_purple            = ftxui::Color::RGB(120,  80, 120),
+    .accent_pink              = ftxui::Color::RGB(255,   0, 135),
+    .stats_green_1            = ftxui::Color::RGB( 60, 100,  60),
+    .stats_green_2            = ftxui::Color::RGB( 80, 140,  80),
+    .stats_green_3            = ftxui::Color::RGB(100, 180, 100),
+    .stats_green_4            = ftxui::Color::RGB(120, 220, 120),
+    .stats_green_5            = ftxui::Color::RGB(140, 255, 140),
+    .perm_rule_bg             = ftxui::Color::RGB( 18,  18,  22),
+    .perm_rule_bg_alt         = ftxui::Color::RGB( 40,  40,  46),
+    .perm_rule_bg_hover       = ftxui::Color::RGB( 28,  34,  46),
+    .perm_rule_bg_selected    = ftxui::Color::RGB( 30,  32,  36),
+    .perm_rule_bg_info        = ftxui::Color::RGB( 28,  48,  62),
+    .perm_rule_bg_dark        = ftxui::Color::RGB( 26,  28,  32),
+    .perm_rule_bg_darker      = ftxui::Color::RGB( 20,  20,  24),
+    .perm_rule_bg_active      = ftxui::Color::RGB( 30,  32,  42),
+    .perm_rule_bg_accent      = ftxui::Color::RGB( 20,  28,  48),
 };
     return p;
 }
@@ -579,6 +646,32 @@ inline const Palette& light() noexcept {
     .message_list_muted_fg      = ftxui::Color::RGB(107, 114, 128),
     .message_list_empty_state_fg = ftxui::Color::RGB(156, 163, 175),
     .message_list_streaming_fg  = ftxui::Color::RGB(  8, 145, 178),
+    .surface_tint_1           = ftxui::Color::RGB(230, 235, 245),
+    .surface_tint_2           = ftxui::Color::RGB(225, 232, 242),
+    .surface_tint_3           = ftxui::Color::RGB(235, 238, 248),
+    .surface_tint_4           = ftxui::Color::RGB(232, 236, 245),
+    .surface_tint_5           = ftxui::Color::RGB(235, 238, 248),
+    .success_tint_bg          = ftxui::Color::RGB(220, 245, 225),
+    .danger_tint_bg           = ftxui::Color::RGB(250, 225, 228),
+    .warning_tint_bg          = ftxui::Color::RGB(250, 240, 210),
+    .info_tint_bg             = ftxui::Color::RGB(225, 235, 250),
+    .accent_green             = ftxui::Color::RGB( 80, 200, 120),
+    .accent_purple            = ftxui::Color::RGB(120,  80, 120),
+    .accent_pink              = ftxui::Color::RGB(255,   0, 135),
+    .stats_green_1            = ftxui::Color::RGB( 60, 100,  60),
+    .stats_green_2            = ftxui::Color::RGB( 80, 140,  80),
+    .stats_green_3            = ftxui::Color::RGB(100, 180, 100),
+    .stats_green_4            = ftxui::Color::RGB(120, 220, 120),
+    .stats_green_5            = ftxui::Color::RGB(140, 255, 140),
+    .perm_rule_bg             = ftxui::Color::RGB(240, 240, 242),
+    .perm_rule_bg_alt         = ftxui::Color::RGB(220, 220, 225),
+    .perm_rule_bg_hover       = ftxui::Color::RGB(230, 235, 245),
+    .perm_rule_bg_selected    = ftxui::Color::RGB(228, 230, 234),
+    .perm_rule_bg_info        = ftxui::Color::RGB(225, 240, 250),
+    .perm_rule_bg_dark        = ftxui::Color::RGB(232, 234, 238),
+    .perm_rule_bg_darker      = ftxui::Color::RGB(238, 238, 242),
+    .perm_rule_bg_active      = ftxui::Color::RGB(228, 230, 240),
+    .perm_rule_bg_accent      = ftxui::Color::RGB(235, 238, 248),
 };
     return p;
 }
@@ -712,6 +805,32 @@ inline const Palette& dark_daltonized() noexcept {
     .message_list_muted_fg      = ftxui::Color::RGB(156, 163, 175),
     .message_list_empty_state_fg = ftxui::Color::RGB(107, 114, 128),
     .message_list_streaming_fg  = ftxui::Color::RGB( 34, 211, 238),
+    .surface_tint_1           = ftxui::Color::RGB( 25,  30,  45),
+    .surface_tint_2           = ftxui::Color::RGB( 30,  40,  55),
+    .surface_tint_3           = ftxui::Color::RGB( 20,  30,  50),
+    .surface_tint_4           = ftxui::Color::RGB( 25,  35,  50),
+    .surface_tint_5           = ftxui::Color::RGB( 20,  30,  55),
+    .success_tint_bg          = ftxui::Color::RGB( 16,  36,  24),
+    .danger_tint_bg           = ftxui::Color::RGB( 40,  16,  20),
+    .warning_tint_bg          = ftxui::Color::RGB( 40,  30,   0),
+    .info_tint_bg             = ftxui::Color::RGB( 30,  40,  60),
+    .accent_green             = ftxui::Color::RGB( 80, 200, 120),
+    .accent_purple            = ftxui::Color::RGB(120,  80, 120),
+    .accent_pink              = ftxui::Color::RGB(255,   0, 135),
+    .stats_green_1            = ftxui::Color::RGB( 60, 100,  60),
+    .stats_green_2            = ftxui::Color::RGB( 80, 140,  80),
+    .stats_green_3            = ftxui::Color::RGB(100, 180, 100),
+    .stats_green_4            = ftxui::Color::RGB(120, 220, 120),
+    .stats_green_5            = ftxui::Color::RGB(140, 255, 140),
+    .perm_rule_bg             = ftxui::Color::RGB( 18,  18,  22),
+    .perm_rule_bg_alt         = ftxui::Color::RGB( 40,  40,  46),
+    .perm_rule_bg_hover       = ftxui::Color::RGB( 28,  34,  46),
+    .perm_rule_bg_selected    = ftxui::Color::RGB( 30,  32,  36),
+    .perm_rule_bg_info        = ftxui::Color::RGB( 28,  48,  62),
+    .perm_rule_bg_dark        = ftxui::Color::RGB( 26,  28,  32),
+    .perm_rule_bg_darker      = ftxui::Color::RGB( 20,  20,  24),
+    .perm_rule_bg_active      = ftxui::Color::RGB( 30,  32,  42),
+    .perm_rule_bg_accent      = ftxui::Color::RGB( 20,  28,  48),
 };
     return p;
 }
@@ -840,6 +959,32 @@ inline const Palette& light_daltonized() noexcept {
     .message_list_muted_fg      = ftxui::Color::RGB(107, 114, 128),
     .message_list_empty_state_fg = ftxui::Color::RGB(156, 163, 175),
     .message_list_streaming_fg  = ftxui::Color::RGB(  8, 145, 178),
+    .surface_tint_1           = ftxui::Color::RGB(230, 235, 245),
+    .surface_tint_2           = ftxui::Color::RGB(225, 232, 242),
+    .surface_tint_3           = ftxui::Color::RGB(235, 238, 248),
+    .surface_tint_4           = ftxui::Color::RGB(232, 236, 245),
+    .surface_tint_5           = ftxui::Color::RGB(235, 238, 248),
+    .success_tint_bg          = ftxui::Color::RGB(220, 245, 225),
+    .danger_tint_bg           = ftxui::Color::RGB(250, 225, 228),
+    .warning_tint_bg          = ftxui::Color::RGB(250, 240, 210),
+    .info_tint_bg             = ftxui::Color::RGB(225, 235, 250),
+    .accent_green             = ftxui::Color::RGB( 80, 200, 120),
+    .accent_purple            = ftxui::Color::RGB(120,  80, 120),
+    .accent_pink              = ftxui::Color::RGB(255,   0, 135),
+    .stats_green_1            = ftxui::Color::RGB( 60, 100,  60),
+    .stats_green_2            = ftxui::Color::RGB( 80, 140,  80),
+    .stats_green_3            = ftxui::Color::RGB(100, 180, 100),
+    .stats_green_4            = ftxui::Color::RGB(120, 220, 120),
+    .stats_green_5            = ftxui::Color::RGB(140, 255, 140),
+    .perm_rule_bg             = ftxui::Color::RGB(240, 240, 242),
+    .perm_rule_bg_alt         = ftxui::Color::RGB(220, 220, 225),
+    .perm_rule_bg_hover       = ftxui::Color::RGB(230, 235, 245),
+    .perm_rule_bg_selected    = ftxui::Color::RGB(228, 230, 234),
+    .perm_rule_bg_info        = ftxui::Color::RGB(225, 240, 250),
+    .perm_rule_bg_dark        = ftxui::Color::RGB(232, 234, 238),
+    .perm_rule_bg_darker      = ftxui::Color::RGB(238, 238, 242),
+    .perm_rule_bg_active      = ftxui::Color::RGB(228, 230, 240),
+    .perm_rule_bg_accent      = ftxui::Color::RGB(235, 238, 248),
 };
     return p;
 }
@@ -978,6 +1123,32 @@ inline const Palette& light_ansi() noexcept {
     .message_list_muted_fg      = ftxui::Color::RGB(107, 114, 128),
     .message_list_empty_state_fg = ftxui::Color::RGB(156, 163, 175),
     .message_list_streaming_fg  = ftxui::Color::RGB(  8, 145, 178),
+    .surface_tint_1           = ftxui::Color::GrayDark,
+    .surface_tint_2           = ftxui::Color::GrayDark,
+    .surface_tint_3           = ftxui::Color::GrayDark,
+    .surface_tint_4           = ftxui::Color::GrayDark,
+    .surface_tint_5           = ftxui::Color::GrayDark,
+    .success_tint_bg          = ftxui::Color::GrayDark,
+    .danger_tint_bg           = ftxui::Color::GrayDark,
+    .warning_tint_bg          = ftxui::Color::GrayDark,
+    .info_tint_bg             = ftxui::Color::GrayDark,
+    .accent_green             = ftxui::Color::White,
+    .accent_purple            = ftxui::Color::White,
+    .accent_pink              = ftxui::Color::White,
+    .stats_green_1            = ftxui::Color::GrayDark,
+    .stats_green_2            = ftxui::Color::GrayDark,
+    .stats_green_3            = ftxui::Color::GrayLight,
+    .stats_green_4            = ftxui::Color::GrayLight,
+    .stats_green_5            = ftxui::Color::White,
+    .perm_rule_bg             = ftxui::Color::GrayDark,
+    .perm_rule_bg_alt         = ftxui::Color::GrayDark,
+    .perm_rule_bg_hover       = ftxui::Color::GrayLight,
+    .perm_rule_bg_selected    = ftxui::Color::GrayLight,
+    .perm_rule_bg_info        = ftxui::Color::GrayDark,
+    .perm_rule_bg_dark        = ftxui::Color::GrayDark,
+    .perm_rule_bg_darker      = ftxui::Color::Black,
+    .perm_rule_bg_active      = ftxui::Color::GrayLight,
+    .perm_rule_bg_accent      = ftxui::Color::GrayDark,
 };
     return p;
 }
@@ -1115,6 +1286,32 @@ inline const Palette& dark_ansi() noexcept {
     .message_list_muted_fg      = ftxui::Color::RGB(156, 163, 175),
     .message_list_empty_state_fg = ftxui::Color::RGB(107, 114, 128),
     .message_list_streaming_fg  = ftxui::Color::RGB( 34, 211, 238),
+    .surface_tint_1           = ftxui::Color{ftxui::Color::Palette16::GrayDark},
+    .surface_tint_2           = ftxui::Color{ftxui::Color::Palette16::GrayDark},
+    .surface_tint_3           = ftxui::Color{ftxui::Color::Palette16::Black},
+    .surface_tint_4           = ftxui::Color{ftxui::Color::Palette16::GrayDark},
+    .surface_tint_5           = ftxui::Color{ftxui::Color::Palette16::Black},
+    .success_tint_bg          = ftxui::Color{ftxui::Color::Palette16::Green},
+    .danger_tint_bg           = ftxui::Color{ftxui::Color::Palette16::Red},
+    .warning_tint_bg          = ftxui::Color{ftxui::Color::Palette16::Yellow},
+    .info_tint_bg             = ftxui::Color{ftxui::Color::Palette16::Blue},
+    .accent_green             = ftxui::Color{ftxui::Color::Palette16::GreenLight},
+    .accent_purple            = ftxui::Color{ftxui::Color::Palette16::Magenta},
+    .accent_pink              = ftxui::Color{ftxui::Color::Palette16::MagentaLight},
+    .stats_green_1            = ftxui::Color{ftxui::Color::Palette16::Green},
+    .stats_green_2            = ftxui::Color{ftxui::Color::Palette16::Green},
+    .stats_green_3            = ftxui::Color{ftxui::Color::Palette16::GreenLight},
+    .stats_green_4            = ftxui::Color{ftxui::Color::Palette16::GreenLight},
+    .stats_green_5            = ftxui::Color{ftxui::Color::Palette16::GreenLight},
+    .perm_rule_bg             = ftxui::Color{ftxui::Color::Palette16::GrayDark},
+    .perm_rule_bg_alt         = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .perm_rule_bg_hover       = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .perm_rule_bg_selected    = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .perm_rule_bg_info        = ftxui::Color{ftxui::Color::Palette16::Blue},
+    .perm_rule_bg_dark        = ftxui::Color{ftxui::Color::Palette16::GrayDark},
+    .perm_rule_bg_darker      = ftxui::Color{ftxui::Color::Palette16::Black},
+    .perm_rule_bg_active      = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .perm_rule_bg_accent      = ftxui::Color{ftxui::Color::Palette16::Blue},
 };
     return p;
 }
@@ -1246,6 +1443,32 @@ inline const Palette& monochrome() noexcept {
     .message_list_muted_fg      = ftxui::Color::RGB(150, 150, 150),
     .message_list_empty_state_fg = ftxui::Color::RGB(130, 130, 130),
     .message_list_streaming_fg  = ftxui::Color::RGB(200, 200, 200),
+    .surface_tint_1           = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .surface_tint_2           = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .surface_tint_3           = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .surface_tint_4           = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .surface_tint_5           = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .success_tint_bg          = ftxui::Color{ftxui::Color::Palette16::Green},
+    .danger_tint_bg           = ftxui::Color{ftxui::Color::Palette16::Red},
+    .warning_tint_bg          = ftxui::Color{ftxui::Color::Palette16::Yellow},
+    .info_tint_bg             = ftxui::Color{ftxui::Color::Palette16::Blue},
+    .accent_green             = ftxui::Color{ftxui::Color::Palette16::Green},
+    .accent_purple            = ftxui::Color{ftxui::Color::Palette16::Magenta},
+    .accent_pink              = ftxui::Color{ftxui::Color::Palette16::Magenta},
+    .stats_green_1            = ftxui::Color{ftxui::Color::Palette16::Green},
+    .stats_green_2            = ftxui::Color{ftxui::Color::Palette16::Green},
+    .stats_green_3            = ftxui::Color{ftxui::Color::Palette16::GreenLight},
+    .stats_green_4            = ftxui::Color{ftxui::Color::Palette16::GreenLight},
+    .stats_green_5            = ftxui::Color{ftxui::Color::Palette16::GreenLight},
+    .perm_rule_bg             = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .perm_rule_bg_alt         = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .perm_rule_bg_hover       = ftxui::Color{ftxui::Color::Palette16::White},
+    .perm_rule_bg_selected    = ftxui::Color{ftxui::Color::Palette16::White},
+    .perm_rule_bg_info        = ftxui::Color{ftxui::Color::Palette16::Blue},
+    .perm_rule_bg_dark        = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .perm_rule_bg_darker      = ftxui::Color{ftxui::Color::Palette16::GrayLight},
+    .perm_rule_bg_active      = ftxui::Color{ftxui::Color::Palette16::White},
+    .perm_rule_bg_accent      = ftxui::Color{ftxui::Color::Palette16::Blue},
 };
     return p;
 }

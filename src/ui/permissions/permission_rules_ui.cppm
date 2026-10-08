@@ -14,6 +14,8 @@ module;
 
 export module loom.ui.permissions.permission_rules_ui;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.ui.permissions.rule_list;
@@ -85,7 +87,7 @@ namespace detail {
         auto label = hbox(std::move(label_parts));
         auto cell = hbox({text(" "), std::move(label), text(" ")})
                   | (sel ? (bold | color(accent) |
-                            bgcolor(Color::RGB(20, 30, 55)) | underlined)
+                            bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_5) | underlined)
                          : dim);
         bits.push_back(std::move(cell));
         if (i + 1 < kPermTabNames.size())

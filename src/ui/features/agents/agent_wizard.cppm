@@ -42,6 +42,8 @@ module;
 
 export module loom.ui.features.agents.agent_wizard;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.ui.foundation.feature_dialog_protocol;
@@ -221,8 +223,8 @@ inline std::vector<SelectOption> canonical_role_options() {
                 hbox({
                     text(" " + draft->name + " ")
                         | bgcolor(draft->name.empty()
-                                      ? Color::RGB(70, 40, 40)
-                                      : Color::RGB(30, 40, 55)),
+                                      ? loom::ui::design::theme::current_theme().palette->danger_tint_bg
+                                      : loom::ui::design::theme::current_theme().palette->surface_tint_2),
                 }) | borderLight
                   | color(draft->name.empty() ? Color::Red : Color::Cyan) | flex,
                 draft->name.empty() ? text(" required!") | color(Color::Red) : text(""),
@@ -542,7 +544,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                 hbox({
                     text(" │") | dim | color(Color::Cyan),
                     prompt_input->Render()
-                        | bgcolor(Color::RGB(20, 25, 35))
+                        | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3)
                         | size(HEIGHT, LESS_THAN, 10) | flex | borderLight,
                 }),
                 text(std::format("  {} chars", draft->system_prompt.size())) | dim,
@@ -664,7 +666,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                          ? "Ready to save. Press Enter → update agent registry."
                          : "Ready to create. Press Enter → write to agent registry.")
                     | color(Color::Green) | bold,
-            }) | bgcolor(Color::RGB(20, 50, 30)) | borderLight | color(Color::Green);
+            }) | bgcolor(loom::ui::design::theme::current_theme().palette->success_tint_bg) | borderLight | color(Color::Green);
         } else {
             banner = hbox({
                 text(" ! ") | color(Color::Yellow) | bold,
@@ -675,7 +677,7 @@ inline std::vector<SelectOption> canonical_role_options() {
                           ? "Tick the confirmation box to proceed."
                           : ""))
                     | color(Color::Yellow),
-            }) | bgcolor(Color::RGB(60, 50, 15)) | borderLight | color(Color::Yellow);
+            }) | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg) | borderLight | color(Color::Yellow);
         }
 
         return vbox({

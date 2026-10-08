@@ -11,6 +11,8 @@ module;
 
 export module loom.ui.features.hooks_ui;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 export namespace loom::ui::hooks_ui {
@@ -185,7 +187,7 @@ using HooksMenuMode = std::variant<
 
     auto el = vbox(result_parts);
     if (selected) {
-        el = el | bgcolor(Color::RGB(25, 30, 45));
+        el = el | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
     }
     return el;
 }
@@ -220,7 +222,7 @@ struct HookEventSummary {
                 ev.matcher_count, ev.hook_count)) | dim,
         });
 
-        if (sel) row = row | bgcolor(Color::RGB(25, 30, 45));
+        if (sel) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
         items.push_back(row);
     }
 

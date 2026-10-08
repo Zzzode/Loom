@@ -34,6 +34,8 @@ module;
 
 export module loom.ui.dialogs.mcp_dialogs;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 export namespace loom::ui::mcp_dialogs {
@@ -391,7 +393,7 @@ namespace ElicitFocus {
     auto name_el  = text(" " + s.name) | (selected ? bold : nothing);
     auto tools_el = text(std::format(" ({} tools)", s.tool_count)) | dim;
     auto line = hbox({text(" "), state_el, name_el, tools_el, filler()});
-    if (selected) line = line | bgcolor(Color::RGB(30, 40, 55));
+    if (selected) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
     return line;
 }
 
@@ -430,7 +432,7 @@ namespace ElicitFocus {
                 text(" (via " + as.agent_name + ")") | dim,
                 filler(),
             });
-            if (idx == selected) line = line | bgcolor(Color::RGB(30, 40, 55));
+            if (idx == selected) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
             items.push_back(line);
             ++idx;
         }
@@ -455,7 +457,7 @@ namespace ElicitFocus {
             : text(" ✗ ") | color(Color::Red);
         auto name = text(tool.name) | (sel ? bold : nothing);
         auto line = hbox({en, name, filler()});
-        if (sel) line = line | bgcolor(Color::RGB(30, 40, 55));
+        if (sel) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
         items.push_back(line);
     }
     return vbox(items);

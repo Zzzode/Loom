@@ -611,7 +611,7 @@ struct RowViewState {
     }) | padding(1);
 
     if (vs.selected) {
-        card = card | bgcolor(Color::RGB(25, 30, 45)) | borderStyled(palette.success);
+        card = card | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1) | borderStyled(palette.success);
     } else {
         card = card | borderLight;
     }
@@ -913,7 +913,7 @@ struct RoleBadge {
             text(std::string{label}) | (sel ? (bold | color(c)) : dim),
             text(" "),
         };
-        return hbox(std::move(p)) | (sel ? bgcolor(Color::RGB(20, 28, 38))
+        return hbox(std::move(p)) | (sel ? bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3)
                                          : nothing);
     };
 

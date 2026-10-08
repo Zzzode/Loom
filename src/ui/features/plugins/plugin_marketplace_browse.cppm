@@ -18,6 +18,8 @@ module;
 
 export module loom.ui.features.plugins.plugin_marketplace_browse;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.types.types;
@@ -148,7 +150,7 @@ namespace detail {
     });
 
     if (selected) {
-        row = row | bgcolor(Color::RGB(20, 30, 50));
+        row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
     }
     return row;
 }
@@ -157,11 +159,11 @@ namespace detail {
 [[nodiscard]] inline Element RenderSubTabBar(SubTab active) {
     auto browse = text(" 🔍 Browse ")
         | (active == SubTab::Browse
-               ? (bold | color(Color::Cyan) | bgcolor(Color::RGB(20, 30, 50)))
+               ? (bold | color(Color::Cyan) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3))
                : dim);
     auto discover = text(" ✨ Discover ")
         | (active == SubTab::Discover
-               ? (bold | color(Color::Yellow) | bgcolor(Color::RGB(40, 30, 15)))
+               ? (bold | color(Color::Yellow) | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg))
                : dim);
     return hbox({
         std::move(browse),

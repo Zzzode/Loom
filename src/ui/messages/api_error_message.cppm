@@ -14,6 +14,8 @@ module;
 
 export module loom.ui.messages.api_error_message;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 export namespace loom::ui::messages::api_error_message {
@@ -108,14 +110,14 @@ struct ErrorPalette {
     switch (resolve_severity(e)) {
         case ErrorSeverity::Warning:
             return {Color::Orange1, Color::Orange1, Color::Yellow,
-                    Color::RGB(40, 25, 0), "⚠"};
+                    loom::ui::design::theme::current_theme().palette->warning_tint_bg, "⚠"};
         case ErrorSeverity::Critical:
             return {Color::DeepPink1Bis, Color::Red1, Color::Red1,
-                    Color::RGB(40, 0, 10), "✖"};
+                    loom::ui::design::theme::current_theme().palette->danger_tint_bg, "✖"};
         case ErrorSeverity::Error:
         default:
             return {Color::Red, Color::Red, Color::RedLight,
-                    Color::RGB(40, 0, 0), "✗"};
+                    loom::ui::design::theme::current_theme().palette->danger_tint_bg, "✗"};
     }
 }
 

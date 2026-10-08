@@ -5,6 +5,8 @@ module;
 
 export module loom.ui.widgets.stats;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 export namespace ui::components {
@@ -75,11 +77,11 @@ ftxui::Element RenderActivityHeatmap(const std::vector<DailyActivity>& activity)
         Color heat_color;
         switch (intensity) {
             case 0: heat_color = Color::RGB(40, 40, 40); break;
-            case 1: heat_color = Color::RGB(60, 100, 60); break;
-            case 2: heat_color = Color::RGB(80, 140, 80); break;
-            case 3: heat_color = Color::RGB(100, 180, 100); break;
-            case 4: heat_color = Color::RGB(120, 220, 120); break;
-            default: heat_color = Color::RGB(140, 255, 140); break;
+            case 1: heat_color = loom::ui::design::theme::current_theme().palette->stats_green_1; break;
+            case 2: heat_color = loom::ui::design::theme::current_theme().palette->stats_green_2; break;
+            case 3: heat_color = loom::ui::design::theme::current_theme().palette->stats_green_3; break;
+            case 4: heat_color = loom::ui::design::theme::current_theme().palette->stats_green_4; break;
+            default: heat_color = loom::ui::design::theme::current_theme().palette->stats_green_5; break;
         }
         rows.push_back(text("■") | color(heat_color));
     }

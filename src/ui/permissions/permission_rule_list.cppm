@@ -20,6 +20,8 @@ module;
 
 export module loom.ui.permissions.rule_list;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.security.permissions_engine;
@@ -344,7 +346,7 @@ namespace render {
         std::string left_pad = focus ? "▶ " : "  ";
         auto badge = text(std::format(" {}/{} ", en, tot))
                    | color(Color::GrayDark)
-                   | bgcolor(Color::RGB(40, 40, 46));
+                   | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg_alt);
 
         Elements cells = {
             text(left_pad),
@@ -358,7 +360,7 @@ namespace render {
         auto row = hbox(std::move(cells))
                  | size(WIDTH, EQUAL, detail::kLeftColWidth - 2);
         if (focus)  row = row | inverted | ftxui::focus;
-        if (active) row = row | bgcolor(Color::RGB(28, 34, 46));
+        if (active) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg_hover);
         rows.push_back(std::move(row));
     }
 
@@ -394,7 +396,7 @@ inline Element RulesHeader() {
         text(" Scope ") | bold | size(WIDTH, EQUAL, kSc),
         text(" Pri ") | bold | size(WIDTH, EQUAL, kPrio),
         text(" Source ") | bold | xflex_grow,
-    }) | bgcolor(Color::RGB(30, 32, 36));
+    }) | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg_selected);
 }
 
 [[nodiscard]] inline Element RuleRow(const RuleEntry& r, std::size_t row_num,
@@ -457,7 +459,7 @@ inline Element RulesHeader() {
     auto row = hbox(std::move(cells));
     if (!r.enabled) row = row | dim;
     if (editing)   row = row | color(Color::CyanLight);
-    if (selected)  row = row | bgcolor(Color::RGB(28, 48, 62));
+    if (selected)  row = row | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg_info);
     if (hovered)   row = row | inverted | focus;
     return row;
 }
@@ -843,7 +845,7 @@ namespace render {
         text(" [n/i/e/d] trigger • [Tab] cycle focus ") | dim
     );
     return hbox(std::move(cells))
-         | bgcolor(Color::RGB(26, 28, 32))
+         | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg_dark)
          | borderDashed | color(Color::GrayDark);
 }
 
@@ -1836,25 +1838,25 @@ namespace ui_tabs_detail {
         case eng::PermissionAction::Deny:
             label = "DENY"; c = Color::Red; break;
     }
-    return text(std::format(" {} ", label)) | color(c) | bgcolor(Color::RGB(20,20,24)) | bold;
+    return text(std::format(" {} ", label)) | color(c) | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg_darker) | bold;
 }
 
 [[nodiscard]] inline Element WorkspacePolicyBadge(peng::WorkspaceEntry::Policy p,
                                                   bool is_default) {
     if (is_default) {
         return text(" DEFAULT ") | color(Color::GrayLight)
-               | bgcolor(Color::RGB(40,40,46)) | dim;
+               | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg_alt) | dim;
     }
     switch (p) {
         case peng::WorkspaceEntry::Policy::Allow:
             return text(" ALLOW ") | color(Color::Green)
-                   | bgcolor(Color::RGB(16,36,24)) | bold;
+                   | bgcolor(loom::ui::design::theme::current_theme().palette->success_tint_bg) | bold;
         case peng::WorkspaceEntry::Policy::Deny:
             return text(" DENY ") | color(Color::Red)
-                   | bgcolor(Color::RGB(40,16,20)) | bold;
+                   | bgcolor(loom::ui::design::theme::current_theme().palette->danger_tint_bg) | bold;
         case peng::WorkspaceEntry::Policy::Default:
             return text(" DEFAULT ") | color(Color::GrayLight)
-                   | bgcolor(Color::RGB(40,40,46)) | dim;
+                   | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg_alt) | dim;
     }
     return text("");
 }
@@ -2102,7 +2104,7 @@ enum class PermTab : std::uint8_t {
                     std::move(reason),
                     std::move(btns),
                 });
-                if (sel) row = row | bgcolor(Color::RGB(30, 32, 42));
+                if (sel) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg_active);
                 if (d.resolved) row = row | dim;
                 lines.push_back(std::move(row));
                 if (i + 1 < n) lines.push_back(separator() | dim);
@@ -2289,7 +2291,7 @@ enum class PermTab : std::uint8_t {
                     std::move(def_el),
                     CompEl(std::move(btn)),
                 });
-                if (sel) row = row | bgcolor(Color::RGB(20, 28, 48));
+                if (sel) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg_accent);
                 lines.push_back(std::move(row));
                 if (i + 1 < n) lines.push_back(separator() | dim);
             }
@@ -2662,7 +2664,7 @@ using namespace rl_anon_2; // unnamed
                              desc->empty() ? std::string{""} : *desc))
                 | color(Color::GrayLight) | dim,
             text("}") | dim,
-        }) | bgcolor(Color::RGB(18, 18, 22)) | borderLight;
+        }) | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg) | borderLight;
 
         // Per-field error lines (red inline).
         auto err_tool = errors->tool_pattern.empty()
@@ -2834,14 +2836,14 @@ using namespace rl_anon_2; // unnamed
                 text(" tool: ") | dim | size(WIDTH, EQUAL, 10),
                 text(std::format(" {} ", r.tool_pattern))
                     | color(Color::MagentaLight)
-                    | bgcolor(Color::RGB(18, 18, 22)),
+                    | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg),
             }),
             hbox({
                 text(" path: ") | dim | size(WIDTH, EQUAL, 10),
                 text(std::format(" {} ",
                                  r.path_pattern.value_or("(none)")))
                     | color(Color::CyanLight)
-                    | bgcolor(Color::RGB(18, 18, 22)),
+                    | bgcolor(loom::ui::design::theme::current_theme().palette->perm_rule_bg),
             }),
             separator() | dim,
             // Description block

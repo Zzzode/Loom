@@ -17,6 +17,8 @@ module;
 
 export module loom.ui.features.plugins.plugin_settings_dialog;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.types.types;
@@ -132,7 +134,7 @@ namespace detail {
         filler(),
         std::move(val),
     });
-    if (selected) row = row | bgcolor(Color::RGB(20, 30, 50));
+    if (selected) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
     Elements out{std::move(row)};
     if (!hint.empty()) {
         out.push_back(paragraph("   " + std::string{hint}) | dim);
@@ -146,7 +148,7 @@ namespace detail {
     for (unsigned i = 0; i < 4; ++i) {
         const bool sel = (i == (unsigned)active);
         bits.push_back(text(" " + std::string{k_settings_tab_names[i]} + " ")
-            | (sel ? (bold | color(Color::Blue) | bgcolor(Color::RGB(20, 30, 55)))
+            | (sel ? (bold | color(Color::Blue) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_5))
                    : dim));
         if (i + 1 < 4) bits.push_back(text("│") | dim);
     }
@@ -179,7 +181,7 @@ namespace detail {
                  | color(selected_row == 1 ? Color::White : Color::GrayLight),
             filler(),
             text(" [" + g.default_install_scope + "] ") | bold | color(Color::Yellow),
-        }) | (selected_row == 1 ? bgcolor(Color::RGB(40, 35, 10)) : nothing),
+        }) | (selected_row == 1 ? bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg) : nothing),
         paragraph("   New plugin installations use this scope unless overridden.") | dim,
         separator() | dim,
         BoolToggleRow("Allow unverified plugins",
@@ -230,7 +232,7 @@ namespace detail {
         text(" "),
         text("[" + std::to_string(p.keybindings.size()) + " key]") | dim,
     });
-    if (selected) row = row | bgcolor(Color::RGB(20, 35, 50));
+    if (selected) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->info_tint_bg);
     return row;
 }
 
@@ -299,7 +301,7 @@ namespace detail {
         filler(),
         text(display_value) | color(selected ? Color::White : Color::CyanLight),
     });
-    if (selected) row = row | bgcolor(Color::RGB(10, 35, 25));
+    if (selected) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->success_tint_bg);
     return row;
 }
 
@@ -366,7 +368,7 @@ namespace detail {
         text(" "),
         text(kb.scope) | dim | color(scope_c),
     });
-    if (selected) row = row | bgcolor(Color::RGB(35, 30, 10));
+    if (selected) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg);
     return row;
 }
 
@@ -511,7 +513,7 @@ struct SettingsState {
             }),
             separator() | color(Color::Blue),
             std::move(body) | flex,
-        }) | borderDouble | bgcolor(Color::RGB(10, 15, 25));
+        }) | borderDouble | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
 
     }) | CatchEvent([state, option_input](Event event) -> bool {
         // Tab switching: 1/2/3/4 digits OR Ctrl+[ Left / Right arrows

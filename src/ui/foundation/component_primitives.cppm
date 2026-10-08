@@ -36,7 +36,7 @@ using namespace loom::ui::design::theme;
             return vbox({
                 body | bold,
                 separator()
-                    | color(Color::RGB(120, 80, 120))
+                    | color(loom::ui::design::theme::current_theme().palette->accent_purple)
                     | color(theme.palette->primary),
             });
         case TextSize::Title:
@@ -160,7 +160,7 @@ inline constexpr std::array<std::string_view, 10> k_spinner_frames = {
     auto base = theme.color_for(role);
     if (stall) {
         // stalled → interpolate toward ERROR_RED rgb(171,43,63)
-        base = interpolate(base, Color::RGB(171, 43, 63), 0.75);
+        base = interpolate(base, loom::ui::design::theme::current_theme().palette->danger, 0.75);
     }
     if (theme.a11y.reduced_motion) {
         return text("●") | color(base);

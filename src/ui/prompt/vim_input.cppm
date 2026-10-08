@@ -13,6 +13,8 @@ module;
 
 export module loom.ui.prompt.vim_input;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.ui.foundation.ui_types;  // canonical VimMode lives here
@@ -218,7 +220,7 @@ struct VimInputOptions {
         } else if (i < len) {
             std::string ch(1, state.text[i]);
             if (sel_start >= 0 && i >= sel_start && i <= sel_end) {
-                text_parts.push_back(text(ch) | bgcolor(Color::RGB(60, 60, 120)));
+                text_parts.push_back(text(ch) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2));
             } else {
                 text_parts.push_back(text(ch));
             }

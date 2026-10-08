@@ -23,6 +23,8 @@ module;
 
 export module loom.ui.widgets.custom_select;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 
@@ -1031,7 +1033,7 @@ private:
         }
 
         Element row = hbox(std::move(parts));
-        if (hovered) row = row | bgcolor(Color::RGB(25, 35, 50));
+        if (hovered) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_4);
         return row;
     }
 };

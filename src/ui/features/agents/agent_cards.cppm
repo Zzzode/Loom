@@ -31,6 +31,8 @@ module;
 
 export module loom.ui.features.agents.agent_cards;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.ui.features.agents.agent_shared_widgets;
@@ -181,7 +183,7 @@ enum class CardSize {
         desc | size(WIDTH, LESS_THAN, 60) | flex,
     });
 
-    if (selected) row = row | bgcolor(Color::RGB(25, 35, 50));
+    if (selected) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_4);
     return row;
 }
 
@@ -246,7 +248,7 @@ enum class CardSize {
         footer,
     }) | borderRounded | size(WIDTH, GREATER_THAN, 32);
 
-    if (selected) box = box | bgcolor(Color::RGB(25, 35, 50));
+    if (selected) box = box | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_4);
 
     // Colorize the border with the agent color if available.
     if (!agent.agent_type.empty()) {
@@ -399,7 +401,7 @@ enum class CardSize {
         footer,
     }) | borderRounded;
 
-    if (selected) box = box | bgcolor(Color::RGB(25, 35, 50));
+    if (selected) box = box | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_4);
 
     if (!agent.agent_type.empty()) {
         auto opt = loom::tools::agent_color_manager::get_agent_color(agent.agent_type);

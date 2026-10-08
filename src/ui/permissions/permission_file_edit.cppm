@@ -39,6 +39,8 @@ module;
 
 export module loom.ui.permissions.permission_file_edit;
 
+import loom.ui.foundation.theme_provider;
+
 import std;
 
 import loom.ui.visual.file_edit_tool_diff;
@@ -306,7 +308,7 @@ struct PromptState {
     Element header_right = filler();
     if (p.has_worker_badge && !p.worker_name.empty()) {
         header_right = hbox({
-            text(" ● ") | color(Color::RGB(80, 200, 120)),
+            text(" ● ") | color(loom::ui::design::theme::current_theme().palette->accent_green),
             text(p.worker_name) | dim | color(Color::GrayLight),
         });
     }

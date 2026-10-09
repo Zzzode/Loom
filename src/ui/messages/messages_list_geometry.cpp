@@ -79,29 +79,169 @@ constexpr int kMaxRowHeight = 1000;
 /// trailing blank runs are stripped.  Leading spaces on continuation
 /// lines are stripped.  Matches the Markdown renderer's
 /// split_on_hard_breaks (called per paragraph by the lexer).
+///
+/// Code-block aware: fenced (```/~~~) and indented (4+ spaces after blank
+/// line) code blocks preserve line breaks (joined with \n, not space) so
+/// the estimator counts each code line as a separate row — matching the
+/// renderer's render_code_block which emits one vbox row per source line.
 [[nodiscard]] auto normalize_markdown_breaks(std::string_view text)
     -> std::string {
     std::string result;
     result.reserve(text.size());
     std::size_t pos = 0;
     bool seen_content = false;
+    // Tracks whether the previous line was blank (paragraph boundary).
+    // Used to detect indented code blocks, which CommonMark requires to
+    // be preceded by a blank line (cannot interrupt a paragraph).
+    bool after_blank = false;
+    // Fenced code block state: when non-zero, we are inside a fenced code
+    // block delimited by this many backticks or tildes.
+    int fence_len = 0;
+    char fence_char = '\0';
+    // Indented code block state.
+    bool in_indented_code = false;
+
+    // Helper: check if a line is a fenced code opener.  Returns fence_len
+    // (>=3) and sets fc/fname, or 0 if not an opener.
+    auto detect_fence = [](std::string_view line, char& fc) -> int {
+        std::size_t lead = 0;
+        while (lead < line.size() && line[lead] == ' ' && lead < 3)
+            ++lead;
+        if (lead >= line.size()) return 0;
+        const char c = line[lead];
+        if (c != '`' && c != '~') return 0;
+        std::size_t len = 0;
+        while (lead + len < line.size() && line[lead + len] == c)
+            ++len;
+        if (len < 3) return 0;
+        // For backtick fences, info string must not contain backtick.
+        if (c == '`') {
+            for (std::size_t k = lead + len; k < line.size(); ++k) {
+                if (line[k] == '`') return 0;
+            }
+        }
+        fc = c;
+        return static_cast<int>(len);
+    };
+
+    // Helper: check if a line is a closing fence for the given char/len.
+    auto is_closing_fence = [](std::string_view line, char fc, int fl) -> bool {
+        std::size_t lead = 0;
+        while (lead < line.size() && line[lead] == ' ' && lead < 3)
+            ++lead;
+        if (lead >= line.size() || line[lead] != fc) return false;
+        std::size_t len = 0;
+        while (lead + len < line.size() && line[lead + len] == fc)
+            ++len;
+        return len >= static_cast<std::size_t>(fl);
+    };
+
+    // Helper: count leading spaces.
+    auto leading_spaces = [](std::string_view line) -> int {
+        int n = 0;
+        while (n < static_cast<int>(line.size()) && line[n] == ' ')
+            ++n;
+        return n;
+    };
+
+    // Helper: is line blank (empty or whitespace-only).
+    auto is_blank_line = [](std::string_view line) -> bool {
+        for (char c : line) {
+            if (c != ' ' && c != '\t') return false;
+        }
+        return true;
+    };
+
     while (pos < text.size()) {
         const std::size_t nl = text.find('\n', pos);
         std::string_view line = (nl == std::string_view::npos)
             ? text.substr(pos)
             : text.substr(pos, nl - pos);
+        const bool last_line = (nl == std::string_view::npos);
 
-        bool is_blank = true;
-        for (char c : line) {
-            if (c != ' ' && c != '\t') { is_blank = false; break; }
+        // ── Fenced code block ──────────────────────────────────────────
+        if (fence_len > 0) {
+            if (is_closing_fence(line, fence_char, fence_len)) {
+                fence_len = 0;
+                fence_char = '\0';
+                after_blank = false;
+            } else {
+                if (!result.empty() && result.back() != '\n')
+                    result += '\n';
+                result += line;
+                seen_content = true;
+                after_blank = false;
+            }
+            if (last_line) break;
+            pos = nl + 1;
+            continue;
         }
 
-        if (is_blank) {
-            if (nl == std::string_view::npos) break;
+        // ── Indented code block ────────────────────────────────────────
+        if (in_indented_code) {
+            if (is_blank_line(line)) {
+                // Peek ahead: include blank only if next non-blank line
+                // is also indented (part of the code block).
+                std::size_t peek = last_line ? std::string_view::npos
+                                              : nl + 1;
+                bool include_blank = false;
+                bool end_code = false;
+                while (peek < text.size()) {
+                    const std::size_t pnl = text.find('\n', peek);
+                    std::string_view pline = (pnl == std::string_view::npos)
+                        ? text.substr(peek)
+                        : text.substr(peek, pnl - peek);
+                    if (!is_blank_line(pline)) {
+                        if (leading_spaces(pline) >= 4)
+                            include_blank = true;
+                        else
+                            end_code = true;
+                        break;
+                    }
+                    peek = (pnl == std::string_view::npos)
+                        ? std::string_view::npos : pnl + 1;
+                }
+                if (peek == std::string_view::npos)
+                    end_code = true;
+
+                if (end_code) {
+                    // End code block.  The blank line is a paragraph
+                    // boundary — fall through to normal blank handling.
+                    in_indented_code = false;
+                    after_blank = true;
+                    // Reprocess this line as a normal blank line.
+                } else if (include_blank) {
+                    result += '\n';
+                    if (last_line) break;
+                    pos = nl + 1;
+                    continue;
+                } else {
+                    // Blank at end of code block — end it.
+                    in_indented_code = false;
+                    after_blank = true;
+                    // Reprocess as normal blank.
+                }
+            } else if (leading_spaces(line) >= 4) {
+                result += '\n';
+                result += line.substr(4);
+                seen_content = true;
+                after_blank = false;
+                if (last_line) break;
+                pos = nl + 1;
+                continue;
+            } else {
+                // End of code block — reprocess as normal line.
+                in_indented_code = false;
+                after_blank = false;
+                // Fall through to normal line handling.
+            }
+        }
+
+        // ── Blank line ─────────────────────────────────────────────────
+        if (is_blank_line(line)) {
+            if (last_line) break;
             if (!seen_content) {
                 pos = nl + 1;
-                while (pos < text.size() && text[pos] == ' ')
-                    ++pos;
                 continue;
             }
             while (!result.empty() && result.back() == ' ')
@@ -113,16 +253,50 @@ constexpr int kMaxRowHeight = 1000;
                 result[result.size() - 2] != '\n') {
                 result += '\n';
             }
+            after_blank = true;
             pos = nl + 1;
-            while (pos < text.size() && text[pos] == ' ')
-                ++pos;
             continue;
         }
 
         seen_content = true;
 
+        // ── Fenced code block opener ───────────────────────────────────
+        {
+            char fc = '\0';
+            int fl = detect_fence(line, fc);
+            if (fl > 0) {
+                fence_len = fl;
+                fence_char = fc;
+                after_blank = false;
+                if (last_line) break;
+                pos = nl + 1;
+                continue;
+            }
+        }
+
+        // ── Indented code block start (4+ spaces after blank) ──────────
+        if (after_blank && leading_spaces(line) >= 4) {
+            in_indented_code = true;
+            after_blank = false;
+            if (!result.empty() && result.back() != '\n')
+                result += '\n';
+            result += line.substr(4);
+            if (last_line) break;
+            pos = nl + 1;
+            continue;
+        }
+
+        // ── Normal line (soft/hard break) ──────────────────────────────
+        after_blank = false;
+
+        // Strip leading spaces for paragraph continuation (CommonMark
+        // trims paragraph indentation).  This runs AFTER the indented
+        // code block check so code blocks can see the indentation.
+        while (!line.empty() && line[0] == ' ')
+            line.remove_prefix(1);
+
         bool hard = false;
-        if (nl != std::string_view::npos) {
+        if (!last_line) {
             if (line.size() >= 2 &&
                 line[line.size() - 1] == ' ' &&
                 line[line.size() - 2] == ' ') {
@@ -137,7 +311,7 @@ constexpr int kMaxRowHeight = 1000;
 
         result += line;
 
-        if (nl != std::string_view::npos) {
+        if (!last_line) {
             if (hard) {
                 result += '\n';
             } else {
@@ -146,8 +320,6 @@ constexpr int kMaxRowHeight = 1000;
                 result += ' ';
             }
             pos = nl + 1;
-            while (pos < text.size() && text[pos] == ' ')
-                ++pos;
         } else {
             break;
         }

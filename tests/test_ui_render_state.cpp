@@ -638,3 +638,65 @@ TEST(ReplScreen, VirtualVisibleRowsToVirtualRespectsTermCols) {
     EXPECT_GT(virt_40[0].estimated_height_lines, virt_120[0].estimated_height_lines)
         << "40-col virtual estimate should exceed 120-col";
 }
+
+// ── Code block height estimation tests ──────────────────────────────────
+// These verify that the normalizer preserves line breaks in fenced and
+// indented code blocks so the estimator counts each code line as a separate
+// row — matching the renderer's render_code_block (one vbox row per line).
+
+TEST(ReplScreen, WordWrapFencedCodeBlockPreservesLines) {
+    namespace repl = loom::ui::repl_screen;
+    // Fenced code block: each line must count as a separate row, not be
+    // joined with spaces (soft-break).
+    const std::string text =
+        "```python\n"
+        "def hello():\n"
+        "    print(\"hello\")\n"
+        "```";
+    const int lines = repl::CountWordWrappedLines(text, 80);
+    // 2 code lines → 2 rows (fence delimiters not counted).
+    EXPECT_EQ(lines, 2);
+}
+
+TEST(ReplScreen, WordWrapIndentedCodeBlockPreservesLines) {
+    namespace repl = loom::ui::repl_screen;
+    // Indented code block after blank line: each line must count as a
+    // separate row, not be joined with spaces.
+    const std::string text =
+        "Some text.\n"
+        "\n"
+        "    code line 1\n"
+        "    code line 2\n"
+        "    code line 3\n"
+        "\n"
+        "More text.";
+    const int lines = repl::CountWordWrappedLines(text, 80);
+    // "Some text." (1) + blank (1) + 3 code lines + blank (1) + "More text." (1)
+    // = 7 lines minimum.  Without the fix, code lines would be joined to ~3.
+    EXPECT_GE(lines, 6);
+}
+
+TEST(ReplScreen, WordWrapFencedCodeBlockWithWrappingContent) {
+    namespace repl = loom::ui::repl_screen;
+    // Long code lines should still wrap at the content width.
+    std::string text = "```\n";
+    for (int i = 0; i < 20; ++i) text += "word ";
+    text += "\n```";
+    const int lines = repl::CountWordWrappedLines(text, 40);
+    // 20 "word " = 100 chars → at 40 cols wraps to ~3 lines.
+    EXPECT_GE(lines, 2);
+    EXPECT_LE(lines, 5);
+}
+
+TEST(ReplScreen, WordWrapIndentedCodeBlockNoFalsePositiveInParagraph) {
+    namespace repl = loom::ui::repl_screen;
+    // 4-space indent WITHOUT a preceding blank line is paragraph continuation,
+    // NOT a code block (CommonMark: indented code blocks cannot interrupt
+    // a paragraph).  The soft-break join with space still applies.
+    const std::string text =
+        "First line\n"
+        "    continued with indent";
+    const int lines = repl::CountWordWrappedLines(text, 80);
+    // Soft break → joined with space → 1 line at 80 cols.
+    EXPECT_EQ(lines, 1);
+}

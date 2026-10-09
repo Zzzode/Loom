@@ -187,54 +187,202 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 /// The Markdown lexer splits text into block tokens on blank lines, then
 /// calls split_on_hard_breaks per paragraph.  This normalizer replicates
 /// that two-level structure so the line count matches the rendered height.
+///
+/// Code-block aware: fenced (```/~~~) and indented (4+ spaces after blank
+/// line) code blocks preserve line breaks (joined with \n, not space) so
+/// the estimator counts each code line as a separate row — matching the
+/// renderer's render_code_block which emits one vbox row per source line.
 [[nodiscard]] std::string NormalizeMarkdownBreaks(std::string_view text) {
     std::string result;
     result.reserve(text.size());
     std::size_t pos = 0;
     bool seen_content = false;
+    bool after_blank = false;
+    int fence_len = 0;
+    char fence_char = '\0';
+    bool in_indented_code = false;
+
+    auto detect_fence = [](std::string_view line, char& fc) -> int {
+        std::size_t lead = 0;
+        while (lead < line.size() && line[lead] == ' ' && lead < 3)
+            ++lead;
+        if (lead >= line.size()) return 0;
+        const char c = line[lead];
+        if (c != '`' && c != '~') return 0;
+        std::size_t len = 0;
+        while (lead + len < line.size() && line[lead + len] == c)
+            ++len;
+        if (len < 3) return 0;
+        if (c == '`') {
+            for (std::size_t k = lead + len; k < line.size(); ++k) {
+                if (line[k] == '`') return 0;
+            }
+        }
+        fc = c;
+        return static_cast<int>(len);
+    };
+
+    auto is_closing_fence = [](std::string_view line, char fc, int fl) -> bool {
+        std::size_t lead = 0;
+        while (lead < line.size() && line[lead] == ' ' && lead < 3)
+            ++lead;
+        if (lead >= line.size() || line[lead] != fc) return false;
+        std::size_t len = 0;
+        while (lead + len < line.size() && line[lead + len] == fc)
+            ++len;
+        return len >= static_cast<std::size_t>(fl);
+    };
+
+    auto leading_spaces = [](std::string_view line) -> int {
+        int n = 0;
+        while (n < static_cast<int>(line.size()) && line[n] == ' ')
+            ++n;
+        return n;
+    };
+
+    auto is_blank_line = [](std::string_view line) -> bool {
+        for (char c : line) {
+            if (c != ' ' && c != '\t') return false;
+        }
+        return true;
+    };
+
     while (pos < text.size()) {
         const std::size_t nl = text.find('\n', pos);
         std::string_view line = (nl == std::string_view::npos)
             ? text.substr(pos)
             : text.substr(pos, nl - pos);
+        const bool last_line = (nl == std::string_view::npos);
 
-        // Check if this is a blank line (empty or whitespace-only).
-        bool is_blank = true;
-        for (char c : line) {
-            if (c != ' ' && c != '\t') { is_blank = false; break; }
+        // ── Fenced code block ──────────────────────────────────────────
+        if (fence_len > 0) {
+            if (is_closing_fence(line, fence_char, fence_len)) {
+                fence_len = 0;
+                fence_char = '\0';
+                after_blank = false;
+            } else {
+                if (!result.empty() && result.back() != '\n')
+                    result += '\n';
+                result += line;
+                seen_content = true;
+                after_blank = false;
+            }
+            if (last_line) break;
+            pos = nl + 1;
+            continue;
         }
 
-        if (is_blank) {
-            if (nl == std::string_view::npos) break;  // trailing blank
-            if (!seen_content) {
-                // Leading blank run — lexer skips it.
+        // ── Indented code block ────────────────────────────────────────
+        if (in_indented_code) {
+            if (is_blank_line(line)) {
+                std::size_t peek = last_line ? std::string_view::npos
+                                              : nl + 1;
+                bool include_blank = false;
+                bool end_code = false;
+                while (peek < text.size()) {
+                    const std::size_t pnl = text.find('\n', peek);
+                    std::string_view pline = (pnl == std::string_view::npos)
+                        ? text.substr(peek)
+                        : text.substr(peek, pnl - peek);
+                    if (!is_blank_line(pline)) {
+                        if (leading_spaces(pline) >= 4)
+                            include_blank = true;
+                        else
+                            end_code = true;
+                        break;
+                    }
+                    peek = (pnl == std::string_view::npos)
+                        ? std::string_view::npos : pnl + 1;
+                }
+                if (peek == std::string_view::npos)
+                    end_code = true;
+
+                if (end_code) {
+                    in_indented_code = false;
+                    after_blank = true;
+                } else if (include_blank) {
+                    result += '\n';
+                    if (last_line) break;
+                    pos = nl + 1;
+                    continue;
+                } else {
+                    in_indented_code = false;
+                    after_blank = true;
+                }
+            } else if (leading_spaces(line) >= 4) {
+                result += '\n';
+                result += line.substr(4);
+                seen_content = true;
+                after_blank = false;
+                if (last_line) break;
                 pos = nl + 1;
-                while (pos < text.size() && text[pos] == ' ')
-                    ++pos;
+                continue;
+            } else {
+                in_indented_code = false;
+                after_blank = false;
+            }
+        }
+
+        // ── Blank line ─────────────────────────────────────────────────
+        if (is_blank_line(line)) {
+            if (last_line) break;
+            if (!seen_content) {
+                pos = nl + 1;
                 continue;
             }
-            // Paragraph boundary: collapse consecutive blanks into one.
             while (!result.empty() && result.back() == ' ')
                 result.pop_back();
             if (!result.empty() && result.back() != '\n')
                 result += '\n';
-            // Only add separator if we don't already have \n\n.
             if (result.size() < 2 ||
                 result[result.size() - 1] != '\n' ||
                 result[result.size() - 2] != '\n') {
                 result += '\n';
             }
+            after_blank = true;
             pos = nl + 1;
-            while (pos < text.size() && text[pos] == ' ')
-                ++pos;
             continue;
         }
 
         seen_content = true;
 
-        // Regular line: check for hard break markers.
+        // ── Fenced code block opener ───────────────────────────────────
+        {
+            char fc = '\0';
+            int fl = detect_fence(line, fc);
+            if (fl > 0) {
+                fence_len = fl;
+                fence_char = fc;
+                after_blank = false;
+                if (last_line) break;
+                pos = nl + 1;
+                continue;
+            }
+        }
+
+        // ── Indented code block start (4+ spaces after blank) ──────────
+        if (after_blank && leading_spaces(line) >= 4) {
+            in_indented_code = true;
+            after_blank = false;
+            if (!result.empty() && result.back() != '\n')
+                result += '\n';
+            result += line.substr(4);
+            if (last_line) break;
+            pos = nl + 1;
+            continue;
+        }
+
+        // ── Normal line (soft/hard break) ──────────────────────────────
+        after_blank = false;
+
+        // Strip leading spaces for paragraph continuation (CommonMark
+        // trims paragraph indentation).  This runs AFTER the indented
+        // code block check so code blocks can see the indentation.
+        while (!line.empty() && line[0] == ' ')
+            line.remove_prefix(1);
+
         bool hard = false;
-        if (nl != std::string_view::npos) {
+        if (!last_line) {
             if (line.size() >= 2 &&
                 line[line.size() - 1] == ' ' &&
                 line[line.size() - 2] == ' ') {
@@ -249,25 +397,19 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 
         result += line;
 
-        if (nl != std::string_view::npos) {
+        if (!last_line) {
             if (hard) {
                 result += '\n';
             } else {
-                // Soft break: strip trailing spaces, append space.
                 while (!result.empty() && result.back() == ' ')
                     result.pop_back();
                 result += ' ';
             }
             pos = nl + 1;
-            // Skip leading spaces on the continuation line (CommonMark
-            // trims paragraph indentation — matches split_on_hard_breaks).
-            while (pos < text.size() && text[pos] == ' ')
-                ++pos;
         } else {
             break;
         }
     }
-    // Strip trailing blank-line separator (lexer skips trailing blanks).
     while (result.size() >= 2 &&
            result[result.size() - 1] == '\n' &&
            result[result.size() - 2] == '\n') {

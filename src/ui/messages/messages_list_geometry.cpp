@@ -61,6 +61,55 @@ namespace detail {
     return std::clamp(lines, 1, 80);
 }
 
+/// Word-boundary wrap variant of estimate_content_lines.  Matches the
+/// Markdown renderer's flexbox word-wrap (atomic words, break at spaces);
+/// produces >= estimate_content_lines for the same text.  Used for
+/// AssistantText where the faithful renderer wraps at word boundaries.
+[[nodiscard]] auto estimate_content_lines_word(
+    std::string_view text,
+    int term_cols,
+    int envelope_gutter_cols) -> int {
+    const int content_cols =
+        std::max(20, term_cols - envelope_gutter_cols);
+    int lines = 0;
+    std::size_t pos = 0;
+    while (pos < text.size()) {
+        std::size_t nl = text.find('\n', pos);
+        if (nl == std::string_view::npos) nl = text.size();
+        const std::string_view line = text.substr(pos, nl - pos);
+
+        int current = 0;
+        std::size_t i = 0;
+        bool has_content = false;
+        while (i < line.size()) {
+            while (i < line.size() && line[i] == ' ') ++i;
+            if (i >= line.size()) break;
+            std::size_t word_end = i;
+            while (word_end < line.size() && line[word_end] != ' ') ++word_end;
+            const int word_len = static_cast<int>(word_end - i);
+            if (word_len > content_cols) {
+                if (current > 0) { ++lines; current = 0; }
+                lines += (word_len + content_cols - 1) / content_cols;
+            } else {
+                if (current > 0 && current + 1 + word_len > content_cols) {
+                    ++lines;
+                    current = word_len;
+                } else {
+                    if (current > 0) current += 1;
+                    current += word_len;
+                }
+            }
+            has_content = true;
+            i = word_end;
+        }
+        if (current > 0 || !has_content) ++lines;
+
+        pos = nl + 1;
+    }
+    if (!text.empty() && text.back() == '\n') ++lines;
+    return std::clamp(lines, 1, 80);
+}
+
 /// Estimate visual height for one messages_list::VisibleRow.  Adds 1 line
 /// for the envelope's top-accent + role-header row and 1 for trailing
 /// separator (except for 1-line rows where it collapses).
@@ -252,10 +301,11 @@ namespace detail {
             break;
         case S::AssistantText:
             // Faithful renderer reserves 2 cols for the "●" bullet glyph;
-            // the body wraps at term_cols-2.  The legacy 36-col avatar
-            // gutter in the default case is from the divergent envelope
-            // path that AssistantText bypasses.
-            content_lines = 1 + estimate_content_lines(preview, term_cols, 2);
+            // the body wraps at term_cols-2 via Markdown flexbox
+            // word-boundary wrapping.  Use the word-wrap estimator (not
+            // hard-wrap) to match — hard-wrap underestimates for text
+            // with spaces, making the last line unreachable at bottom.
+            content_lines = 1 + estimate_content_lines_word(preview, term_cols, 2);
             break;
         default:
             content_lines = 1 + estimate_content_lines(preview, term_cols, 36);

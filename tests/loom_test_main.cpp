@@ -9,6 +9,11 @@
 // these vars explicitly (see test_commands.cpp), so scrubbing the inherited
 // environment only changes the default.
 //
+// COLORTERM is forced to "truecolor" so FTXUI always emits 24-bit RGB escape
+// sequences (38;2;R;G;B) rather than quantizing to the 256-color palette
+// (38;5;N) on terminals that don't advertise truecolor support (e.g. tmux
+// without COLORTERM set). Golden snapshots are captured in truecolor mode.
+//
 // We also redirect LOOM_HISTORY_FILE to a temp file so that tests creating
 // an AppAdapter (which can write to the prompt history via submit or Esc
 // double-press) don't pollute the developer's real ~/.loom/history.jsonl.
@@ -19,6 +24,7 @@
 #include <cstdlib>
 #include <filesystem>
 
+#include <ftxui/screen/terminal.hpp>
 #include <gtest/gtest.h>
 
 namespace {
@@ -29,12 +35,18 @@ void scrub_terminal_env() {
     ::_putenv_s("LC_TERMINAL", "");
     ::_putenv_s("WT_SESSION", "");
     ::_putenv_s("VTE_VERSION", "");
+    ::_putenv_s("COLORTERM", "truecolor");
 #else
     ::unsetenv("TERM_PROGRAM");
     ::unsetenv("LC_TERMINAL");
     ::unsetenv("WT_SESSION");
     ::unsetenv("VTE_VERSION");
+    ::setenv("COLORTERM", "truecolor", 1);
 #endif
+    // Force FTXUI into truecolor mode.  COLORTERM alone is not enough because
+    // Terminal::ColorSupport() caches its result on first call, which can
+    // happen during static initialization before main() runs.
+    ftxui::Terminal::SetColorSupport(ftxui::Terminal::Color::TrueColor);
 }
 
 } // namespace

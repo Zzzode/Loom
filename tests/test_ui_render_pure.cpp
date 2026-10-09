@@ -164,8 +164,14 @@ TEST(ReplScreen, WelcomeHeaderWidthAndColorTrackTerminal) {
     // Faithful condensed logo uses the brand accent (same as TS
     // LogoV2's Loom icon accent RGB(215,119,87) = #D77757) on the weave
     // glyph, instead of the old primary-palette border decoration.  The
-    // accent must appear somewhere in the rendered header.
-    const ftxui::Color kBrandAccent(215, 119, 87);
+    // accent must appear somewhere in the rendered header.  Compare against
+    // the theme's actual color rather than a freshly-constructed Color:
+    // FTXUI quantizes Color::RGB at construction time based on the global
+    // color-support mode, and design tokens are constructed during static
+    // init (before loom_test_main forces TrueColor), so a new Color(215,119,87)
+    // would be TrueColor while the theme's copy is Palette256 — the == would
+    // fail despite being the same visual color.
+    const ftxui::Color kBrandAccent = thm::current_theme().palette->loom_body;
     bool has_brand_accent_pixel = false;
     for (int y = 0; y < 16 && !has_brand_accent_pixel; ++y) {
         for (int x = 0; x < 200; ++x) {

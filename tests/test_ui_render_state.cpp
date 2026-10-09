@@ -443,3 +443,87 @@ TEST(ReplScreen, NewMessagesPillClickRePinsTranscript) {
     EXPECT_FALSE(state->messages_store.divider_index.has_value());
     EXPECT_FALSE(state->messages_store.unseen_divider.has_value());
 }
+
+// ── CommonMark soft/hard break normalization tests ──────────────────────
+// These verify that CountWordWrappedLines matches the Markdown renderer's
+// split_on_hard_breaks semantics: soft breaks join with space, hard breaks
+// force a new line, blank lines are paragraph boundaries, and continuation
+// indentation is stripped.
+
+TEST(ReplScreen, WordWrapSoftBreakJoinsWithSpace) {
+    namespace repl = loom::ui::repl_screen;
+    // "a\nb" — soft break → joined with space → 1 line at 80 cols
+    EXPECT_EQ(repl::CountWordWrappedLines("a\nb", 80), 1);
+}
+
+TEST(ReplScreen, WordWrapHardBreakSpacesForcesNewLine) {
+    namespace repl = loom::ui::repl_screen;
+    // "a  \nb" — hard break (two trailing spaces) → 2 lines
+    EXPECT_EQ(repl::CountWordWrappedLines("a  \nb", 80), 2);
+}
+
+TEST(ReplScreen, WordWrapHardBreakBackslashForcesNewLine) {
+    namespace repl = loom::ui::repl_screen;
+    // "a\\\nb" — hard break (trailing backslash) → 2 lines
+    EXPECT_EQ(repl::CountWordWrappedLines("a\\\nb", 80), 2);
+}
+
+TEST(ReplScreen, WordWrapParagraphBoundaryCountsBlankLine) {
+    namespace repl = loom::ui::repl_screen;
+    // "a\n\nb" — paragraph boundary → 3 lines (a, blank, b)
+    EXPECT_EQ(repl::CountWordWrappedLines("a\n\nb", 80), 3);
+}
+
+TEST(ReplScreen, WordWrapContinuationIndentStripped) {
+    namespace repl = loom::ui::repl_screen;
+    // "a\n   b" — leading spaces on continuation line stripped → 1 line
+    EXPECT_EQ(repl::CountWordWrappedLines("a\n   b", 80), 1);
+}
+
+TEST(ReplScreen, WordWrapMultipleParagraphs) {
+    namespace repl = loom::ui::repl_screen;
+    // Two paragraphs with soft breaks within each
+    const std::string text = "first para line one\nfirst para line two\n\n"
+                             "second para line one\nsecond para line two";
+    // At 80 cols: para1 = 1 line (joined), blank = 1, para2 = 1 line → 3
+    EXPECT_EQ(repl::CountWordWrappedLines(text, 80), 3);
+}
+
+TEST(ReplScreen, WordWrapParagraphWithHardBreak) {
+    namespace repl = loom::ui::repl_screen;
+    // Paragraph with a hard break inside, then a new paragraph
+    const std::string text = "line one  \nline two\n\nsecond paragraph";
+    // line one (hard break) = 1, line two = 1, blank = 1, second = 1 → 4
+    EXPECT_EQ(repl::CountWordWrappedLines(text, 80), 4);
+}
+
+TEST(ReplScreen, WordWrapLongParagraphLastLineReachable) {
+    namespace repl = loom::ui::repl_screen;
+    // 200 "word " at 40 cols — the last line must be counted so the
+    // scroll offset can reach it (regression: hard-wrap underestimated).
+    std::string text;
+    for (int i = 0; i < 200; ++i) text += "word ";
+    text += "THEEND";
+    const int lines = repl::CountWordWrappedLines(text, 40);
+    // 200 "word " = 1000 chars + "THEEND" = 1006 chars
+    // At 40 cols, word-wrap gives ~29 lines (each line fits ~8 "word " tokens)
+    EXPECT_GE(lines, 25);
+    EXPECT_LE(lines, 35);
+}
+
+TEST(ReplScreen, EstimateTranscriptRowsAssistantParagraphs) {
+    namespace repl = loom::ui::repl_screen;
+    // Assistant message with two paragraphs — the blank line must count
+    // as a separator so max_offset is large enough to reach the end.
+    std::vector<repl::MessageDisplayEntry> entries;
+    repl::MessageDisplayEntry msg;
+    msg.role = "assistant";
+    msg.content_preview = "First paragraph with enough text to wrap at 40 cols.\n\n"
+                          "Second paragraph also with enough text to wrap at 40 cols.";
+    entries.push_back(std::move(msg));
+
+    const int estimate = repl::EstimateTranscriptRows(entries, 40);
+    // At 40 cols: para1 wraps to ~2 lines, blank = 1, para2 wraps to ~2 lines
+    // + 1 separator = ~6 rows.  Must be >= 5 (not collapsed to 2-3).
+    EXPECT_GE(estimate, 5);
+}

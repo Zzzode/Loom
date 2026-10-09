@@ -63,7 +63,9 @@ namespace detail {
 
 /// Normalize text according to CommonMark soft/hard break rules (§6.1):
 /// "  \n" or "\\\n" → hard break; regular "\n" → soft break (joined with
-/// space).  Matches the Markdown renderer's split_on_hard_breaks.
+/// space); blank line → paragraph boundary (preserved as \n\n).  Leading
+/// spaces on continuation lines are stripped.  Matches the Markdown
+/// renderer's split_on_hard_breaks (called per paragraph by the lexer).
 [[nodiscard]] auto normalize_markdown_breaks(std::string_view text)
     -> std::string {
     std::string result;
@@ -74,6 +76,24 @@ namespace detail {
         std::string_view line = (nl == std::string_view::npos)
             ? text.substr(pos)
             : text.substr(pos, nl - pos);
+
+        // Blank line (empty or whitespace-only) = paragraph boundary.
+        bool is_blank = true;
+        for (char c : line) {
+            if (c != ' ' && c != '\t') { is_blank = false; break; }
+        }
+
+        if (is_blank && nl != std::string_view::npos) {
+            while (!result.empty() && result.back() == ' ')
+                result.pop_back();
+            if (!result.empty() && result.back() != '\n')
+                result += '\n';
+            result += '\n';
+            pos = nl + 1;
+            while (pos < text.size() && text[pos] == ' ')
+                ++pos;
+            continue;
+        }
 
         bool hard = false;
         if (nl != std::string_view::npos) {
@@ -100,6 +120,8 @@ namespace detail {
                 result += ' ';
             }
             pos = nl + 1;
+            while (pos < text.size() && text[pos] == ' ')
+                ++pos;
         } else {
             break;
         }

@@ -178,8 +178,14 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 /// - "  \n" (two+ trailing spaces) → hard break (strip spaces, keep \n)
 /// - "\\\n" (trailing backslash) → hard break (remove backslash, keep \n)
 /// - Regular "\n" → soft break (strip trailing spaces, join with space)
-/// Returns text with \n only at hard break points, matching the Markdown
-/// renderer's split_on_hard_breaks semantics.
+/// - Blank line (empty or whitespace-only) → paragraph boundary
+///   (preserved as \n\n so the word-wrapper counts the separator)
+/// - Leading spaces on continuation lines are stripped (matches
+///   split_on_hard_breaks in markdown_render_impl.cpp)
+///
+/// The Markdown lexer splits text into block tokens on blank lines, then
+/// calls split_on_hard_breaks per paragraph.  This normalizer replicates
+/// that two-level structure so the line count matches the rendered height.
 [[nodiscard]] std::string NormalizeMarkdownBreaks(std::string_view text) {
     std::string result;
     result.reserve(text.size());
@@ -190,6 +196,31 @@ ComputeUnseenDivider(const ReplScreenState& s) {
             ? text.substr(pos)
             : text.substr(pos, nl - pos);
 
+        // Check if this is a blank line (empty or whitespace-only).
+        // Blank lines are paragraph boundaries — the lexer splits on
+        // them and the renderer inserts a blank line between blocks.
+        bool is_blank = true;
+        for (char c : line) {
+            if (c != ' ' && c != '\t') { is_blank = false; break; }
+        }
+
+        if (is_blank && nl != std::string_view::npos) {
+            // Paragraph boundary: strip trailing space from a previous
+            // soft break, then ensure a blank line separates paragraphs.
+            while (!result.empty() && result.back() == ' ')
+                result.pop_back();
+            if (!result.empty() && result.back() != '\n')
+                result += '\n';
+            result += '\n';
+            pos = nl + 1;
+            // Skip leading spaces on the continuation line (CommonMark
+            // trims paragraph indentation).
+            while (pos < text.size() && text[pos] == ' ')
+                ++pos;
+            continue;
+        }
+
+        // Regular line: check for hard break markers.
         bool hard = false;
         if (nl != std::string_view::npos) {
             if (line.size() >= 2 &&
@@ -216,6 +247,10 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                 result += ' ';
             }
             pos = nl + 1;
+            // Skip leading spaces on the continuation line (CommonMark
+            // trims paragraph indentation — matches split_on_hard_breaks).
+            while (pos < text.size() && text[pos] == ' ')
+                ++pos;
         } else {
             break;
         }

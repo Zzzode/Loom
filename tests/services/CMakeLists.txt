@@ -1,20 +1,35 @@
 # services/ — service layer tests
 #
-# test_services.cpp is a 556KB monolith (250 tests) covering MCP, config,
-# API client, LSP, server, XAA auth, and more. It is being split into
-# domain-specific files. Until the split is complete, the original file
-# remains here alongside the already-separated targets.
+# The former 556KB monolith test_services.cpp (250 tests) has been split
+# into domain-specific files below. Each target links the same set of
+# libraries as the original monolith.
 
-add_executable(test_services test_services.cpp)
-target_link_libraries(test_services
-    PRIVATE
-        loom_core
-        loom_cli
-        loom_utils
-        loom_teams           # loom.teams.team_helpers
-        GTest::gtest_main
-)
-gtest_discover_tests(test_services DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+# Helper function: create a test target with the standard service-layer link set
+function(add_loom_service_test name)
+    add_executable(${name} ${name}.cpp)
+    target_link_libraries(${name}
+        PRIVATE
+            loom_core
+            loom_cli
+            loom_utils
+            loom_teams           # loom.teams.team_helpers
+            GTest::gtest_main
+    )
+    gtest_discover_tests(${name} DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+endfunction()
+
+add_loom_service_test(test_mcp_types)
+add_loom_service_test(test_mcp_client)
+add_loom_service_test(test_mcp_auth)
+add_loom_service_test(test_channel_permission)
+add_loom_service_test(test_config)
+add_loom_service_test(test_api)
+add_loom_service_test(test_lsp)
+add_loom_service_test(test_server)
+add_loom_service_test(test_query_engine_svc)
+add_loom_service_test(test_session)
+add_loom_service_test(test_team_security)
+add_loom_service_test(test_misc_services)
 
 
 # Phase 3-E2E: SSE Mock + WithRetry unit tests

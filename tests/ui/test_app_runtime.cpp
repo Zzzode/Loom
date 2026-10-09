@@ -1,5 +1,7 @@
-/// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, LogoV2, PromptInput, ReplScreen (SLOC budget fix)
+/// @file test_app_runtime.cpp
+/// @brief AppRuntime integration tests: welcome animation, slash commands,
+/// streaming, history, permissions, thinking, tool use, autocomplete.
+/// Split from test_ui_runtime.cpp (SLOC budget).
 
 #include <cstdlib>
 
@@ -31,7 +33,9 @@ import loom.ui.features.teams.live_teammates;
 
 namespace {
 namespace fs = std::filesystem;
+namespace acsrc = loom::ui::autocomplete_sources;
 }
+
 
 
 
@@ -68,8 +72,6 @@ TEST(AppRuntime, FreshWelcomeAnimationTicksWithoutInputEvents) {
     fs::remove_all(storage_root);
 }
 
-
-
 TEST(AppRuntime, FreshWelcomeAnimationKeepsTickingAfterStartupWindow) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -100,8 +102,6 @@ TEST(AppRuntime, FreshWelcomeAnimationKeepsTickingAfterStartupWindow) {
 
     fs::remove_all(storage_root);
 }
-
-
 
 TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
     loom::core::ToolRegistry tools;
@@ -158,8 +158,6 @@ TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
     fs::remove_all(storage_root);
 }
 
-
-
 TEST(AppRuntime, SlashInputShowsRegistrySuggestions) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -207,8 +205,6 @@ TEST(AppRuntime, SlashInputShowsRegistrySuggestions) {
 
     fs::remove_all(storage_root);
 }
-
-
 
 TEST(AppRuntime, SkillsDialogDismissOrderDebug) {
     loom::core::ToolRegistry tools;
@@ -268,8 +264,6 @@ TEST(AppRuntime, SkillsDialogDismissOrderDebug) {
     fs::remove_all(storage_root);
 }
 
-
-
 TEST(AppRuntime, CommandResultMessagesRenderInTranscript) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -304,13 +298,6 @@ TEST(AppRuntime, CommandResultMessagesRenderInTranscript) {
     fs::remove_all(storage_root);
 }
 
-
-
-// TS REF: src/utils/processUserInput/processBashCommand.tsx — a `!`-prefixed
-// command runs LOCALLY (BashTool.call, shouldQuery:false) and renders
-// <bash-input>/<bash-stdout> local-command rows.  It must NOT be sent to the
-// LLM (no Bash tool-use card, no assistant summary).  This is the fix for the
-// reported bug where `!ls -la` rendered as an LLM Bash tool call.
 TEST(AppRuntime, BangCommandRunsLocallyNotThroughLLM) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -366,8 +353,6 @@ TEST(AppRuntime, BangCommandRunsLocallyNotThroughLLM) {
 
     fs::remove_all(storage_root);
 }
-
-
 
 TEST(AppRuntime, SkillsCommandRendersInlineOutputAndRejectsListSubcommand) {
     const auto cwd_root = fs::temp_directory_path() /
@@ -443,8 +428,6 @@ TEST(AppRuntime, SkillsCommandRendersInlineOutputAndRejectsListSubcommand) {
     fs::remove_all(cwd_root);
 }
 
-
-
 TEST(AppRuntime, SkillsCommandInlineOutputScrollsWithTranscript) {
     const auto cwd_root = fs::temp_directory_path() /
         ("loom_ui_skills_scroll_cwd_" +
@@ -507,8 +490,6 @@ TEST(AppRuntime, SkillsCommandInlineOutputScrollsWithTranscript) {
     fs::remove_all(cwd_root);
 }
 
-
-
 TEST(AppRuntime, ReturnSubmitsAgentSlashSubcommandsWhenCompletionIsVisible) {
     const auto cwd_root = fs::temp_directory_path() /
         ("loom_ui_slash_subcommand_return_cwd_" +
@@ -564,8 +545,6 @@ TEST(AppRuntime, ReturnSubmitsAgentSlashSubcommandsWhenCompletionIsVisible) {
     fs::remove_all(home_root);
     fs::remove_all(cwd_root);
 }
-
-
 
 TEST(AppRuntime, DynamicPromptSuggestionsCoverSkillsFilesAndCursorEditing) {
     const auto cwd_root = fs::temp_directory_path() /
@@ -649,8 +628,6 @@ TEST(AppRuntime, DynamicPromptSuggestionsCoverSkillsFilesAndCursorEditing) {
     fs::remove_all(cwd_root);
 }
 
-
-
 TEST(AppRuntime, ReturnOnSelectedSlashSuggestionOpensAgentsLocalJsx) {
     const auto home_root = fs::temp_directory_path() /
         ("loom_ui_slash_agents_home_" +
@@ -719,8 +696,6 @@ TEST(AppRuntime, ReturnOnSelectedSlashSuggestionOpensAgentsLocalJsx) {
     fs::remove_all(cwd_root);
 }
 
-
-
 TEST(AppRuntime, AgentsLocalJsxArrowKeysSelectProjectAgentAndReturnActs) {
     const auto home_root = fs::temp_directory_path() /
         ("loom_ui_agents_nav_home_" +
@@ -787,8 +762,6 @@ TEST(AppRuntime, AgentsLocalJsxArrowKeysSelectProjectAgentAndReturnActs) {
     fs::remove_all(cwd_root);
 }
 
-
-
 TEST(AppRuntime, StatusLineRuntimeSettingsOverrideDiskSettings) {
     const auto home_root = fs::temp_directory_path() /
         ("loom_ui_statusline_home_" +
@@ -833,8 +806,6 @@ TEST(AppRuntime, StatusLineRuntimeSettingsOverrideDiskSettings) {
     fs::remove_all(storage_root);
     fs::remove_all(home_root);
 }
-
-
 
 TEST(AppRuntime, CtrlCIdleRequiresDoublePressWithinWindow) {
     // TS REF: src/hooks/useTextInput.ts:108-120 handleCtrlC =
@@ -913,8 +884,6 @@ TEST(AppRuntime, CtrlCIdleRequiresDoublePressWithinWindow) {
     }
 }
 
-
-
 TEST(AppRuntime, StreamFallbackErrorIsRendered) {
     LocalErrorMessagesStreamServer server;
     ASSERT_TRUE(server.valid());
@@ -953,8 +922,6 @@ TEST(AppRuntime, StreamFallbackErrorIsRendered) {
 
     fs::remove_all(storage_root);
 }
-
-
 
 TEST(AppRuntime, CtrlCWhileStreamingQueryCancelsWithoutExiting) {
     LocalChunkedMessagesStreamServer server;
@@ -1014,14 +981,6 @@ TEST(AppRuntime, CtrlCWhileStreamingQueryCancelsWithoutExiting) {
     fs::remove_all(storage_root);
 }
 
-
-
-// ESC must interrupt a running streaming query.  The footer advertises
-// "esc to interrupt" while loading (is_loading → ModeIndicatorOptions), so
-// ESC is the discoverable cancel binding the hint promises.  This is the
-// ESC twin of CtrlCWhileStreamingQueryCancelsWithoutExiting: it exercises
-// the repl_screen CatchEvent ESC branch (tool_animating → on_interrupt)
-// rather than the global Ctrl+C shortcut.
 TEST(AppRuntime, EscWhileStreamingQueryInterruptsAndRestoresInput) {
     LocalChunkedMessagesStreamServer server;
     ASSERT_TRUE(server.valid());
@@ -1095,13 +1054,6 @@ TEST(AppRuntime, EscWhileStreamingQueryInterruptsAndRestoresInput) {
     fs::remove_all(storage_root);
 }
 
-
-
-// Regression guard: the up arrow must recall persisted prompt history after
-// restart.  input_history was in-memory only — populated by Enter presses
-// during the current session, empty on startup — so the first ArrowUp after
-// relaunching loom did nothing.  The AppAdapter constructor now loads
-// persisted history (project-filtered) into input_history.
 TEST(AppRuntime, UpArrowRecallsPersistedHistoryAcrossSessions) {
     // Override HOME + LOOM_HISTORY_FILE so history resolves to a temp dir.
     const char* old_home = std::getenv("HOME");
@@ -1429,7 +1381,6 @@ TEST(AppRuntime, TabDoesNotAcceptSlashSuggestion) {
     fs::remove_all(temp_home);
 }
 
-
 TEST(AppRuntime, PermissionCallbackRendersAndResolvesUserChoices) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -1531,8 +1482,6 @@ TEST(AppRuntime, PermissionCallbackRendersAndResolvesUserChoices) {
     fs::remove_all(storage_root);
 }
 
-
-
 TEST(AppRuntime, RenderMessageShowsCollapsedThinkingWhenUnselected) {
     loom::core::AssistantMessage assistant;
     assistant.content.push_back(loom::core::ThinkingBlock{
@@ -1551,8 +1500,6 @@ TEST(AppRuntime, RenderMessageShowsCollapsedThinkingWhenUnselected) {
     // The summary (first 50 chars of thinking content) should be shown.
     EXPECT_NE(rendered.find("private reasoning preview"), std::string::npos);
 }
-
-
 
 TEST(AppRuntime, RenderMessageShowsCompletedThinkingWhenExpanded) {
     // Regression safety: transcript mode / explicit expand still renders
@@ -1588,8 +1535,6 @@ TEST(AppRuntime, RenderMessageShowsCompletedThinkingWhenExpanded) {
               std::string::npos);
 }
 
-
-
 TEST(AppRuntime, RenderMessageShowsToolUseContent) {
     loom::core::AssistantMessage assistant;
     assistant.content.push_back(loom::core::ToolUseBlock{
@@ -1604,8 +1549,6 @@ TEST(AppRuntime, RenderMessageShowsToolUseContent) {
     EXPECT_NE(rendered.find("Bash"), std::string::npos);
 }
 
-
-
 TEST(AppRuntime, RenderMessageShowsAssistantText) {
     loom::core::AssistantMessage assistant;
     assistant.content.push_back(loom::core::TextBlock{"visible assistant answer"});
@@ -1615,8 +1558,6 @@ TEST(AppRuntime, RenderMessageShowsAssistantText) {
 
     EXPECT_NE(rendered.find("visible assistant answer"), std::string::npos);
 }
-
-
 
 TEST(AppRuntime, RenderMessageShowsUserMessage) {
     loom::core::UserMessage user;
@@ -1628,13 +1569,6 @@ TEST(AppRuntime, RenderMessageShowsUserMessage) {
     EXPECT_NE(rendered.find("hello world"), std::string::npos);
 }
 
-
-
-
-// Diagnostic: verify spacing between tool_result and assistant text.
-// Completed thinking blocks now render as collapsed summaries (visible between
-// the tool result and the assistant text), so the gap includes the thinking
-// line plus its margins.
 TEST(AppRuntime, ToolResultToAssistantTextSpacingIsOneLine) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -1718,147 +1652,6 @@ TEST(AppRuntime, ToolResultToAssistantTextSpacingIsOneLine) {
     fs::remove_all(storage_root2);
 }
 
-
-
-/// E2E Gate #1: Startup screen must show logo, statusline, and prompt.
-/// Regression guard for "statusline disappeared" bug.
-
-// ============================================================
-// @agent + @history autocomplete sources
-// ============================================================
-
-namespace acsrc = loom::ui::autocomplete_sources;
-
-/// Round-trip: append_prompt_history writes a JSONL line, then
-/// collect_history_suggestions reads it back (newest-first) and matches
-/// by substring query.  Uses LOOM_HISTORY_FILE env var to isolate
-/// the test from the real ~/.loom/history.jsonl.
-TEST(AutocompleteSources, AppendAndReadHistoryRoundTrip) {
-    const auto hist_path = fs::temp_directory_path() /
-        ("loom_hist_roundtrip_" +
-         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) +
-         ".jsonl");
-    ScopedEnvVar env("LOOM_HISTORY_FILE");
-    env.set(hist_path.string());
-
-    // Empty file => empty results.
-    auto empty = acsrc::collect_history_suggestions("", 50);
-    EXPECT_TRUE(empty.empty());
-
-    // Append three prompts (chronological order: oldest first).
-    acsrc::append_prompt_history("fix the flaky test", "sess-aaa", "/proj");
-    acsrc::append_prompt_history("refactor auth module", "sess-bbb", "/proj");
-    acsrc::append_prompt_history("write a unit test", "sess-ccc", "/proj");
-
-    // Empty query => all entries, newest first ("write a unit test" first).
-    auto all = acsrc::collect_history_suggestions("", 50);
-    ASSERT_EQ(all.size(), 3u);
-    EXPECT_EQ(all[0].prompt_text, "write a unit test");
-    EXPECT_EQ(all[1].prompt_text, "refactor auth module");
-    EXPECT_EQ(all[2].prompt_text, "fix the flaky test");
-
-    // Substring query "test" matches two entries (newest first).
-    auto matched = acsrc::collect_history_suggestions("test", 50);
-    ASSERT_EQ(matched.size(), 2u);
-    EXPECT_EQ(matched[0].prompt_text, "write a unit test");
-    EXPECT_EQ(matched[1].prompt_text, "fix the flaky test");
-
-    // Case-insensitive: "AUTH" should match "refactor auth module".
-    auto ci = acsrc::collect_history_suggestions("AUTH", 50);
-    ASSERT_EQ(ci.size(), 1u);
-    EXPECT_EQ(ci[0].prompt_text, "refactor auth module");
-
-    // Cap at max_entries: request 1, get 1 (newest).
-    auto capped = acsrc::collect_history_suggestions("", 1);
-    ASSERT_EQ(capped.size(), 1u);
-    EXPECT_EQ(capped[0].prompt_text, "write a unit test");
-
-    // Dedup by display: append a duplicate of an existing prompt.
-    acsrc::append_prompt_history("write a unit test", "sess-ddd", "/proj");
-    auto deduped = acsrc::collect_history_suggestions("test", 50);
-    ASSERT_EQ(deduped.size(), 2u) << "duplicate display should be deduped";
-
-    fs::remove(hist_path);
-}
-
-
-
-/// build_history_suggestions produces FormattedSuggestion entries with
-/// truncated display + relative-time description.
-TEST(AutocompleteSources, BuildHistorySuggestionsFormatting) {
-    const auto hist_path = fs::temp_directory_path() /
-        ("loom_hist_fmt_" +
-         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) +
-         ".jsonl");
-    ScopedEnvVar env("LOOM_HISTORY_FILE");
-    env.set(hist_path.string());
-
-    // Long prompt (>80 chars) should be truncated in display.
-    acsrc::append_prompt_history(
-        "this is a very long prompt that exceeds eighty characters in display "
-        "length and should be truncated with ellipsis", "sess-xyz", "/proj");
-
-    auto sugs = acsrc::build_history_suggestions("", 0, 5, 50);
-    ASSERT_EQ(sugs.size(), 1u);
-    EXPECT_LE(sugs[0].display_text.size(), 83u)  // 80 + "..."
-        << "display should be truncated to ~80 chars";
-    EXPECT_EQ(sugs[0].display_text.back(), '.')
-        << "truncated display should end with '...'";
-    // insert_text is the FULL prompt (not truncated).
-    EXPECT_GT(sugs[0].insert_text.size(), sugs[0].display_text.size());
-    EXPECT_EQ(sugs[0].replacement_start, 0u);
-    EXPECT_EQ(sugs[0].replacement_end, 5u);
-    EXPECT_FALSE(sugs[0].submit_on_return);
-    EXPECT_EQ(sugs[0].id.substr(0, 8), "history:");
-
-    fs::remove(hist_path);
-}
-
-
-
-/// build_agent_suggestions returns agent/teammate suggestions with the
-/// color_name field populated from agent.color / record.teammate_color.
-/// At minimum the built-in "loom" agent should be present.
-TEST(AutocompleteSources, BuildAgentSuggestionsHasColors) {
-    auto agents = acsrc::collect_agent_suggestions("");
-    ASSERT_FALSE(agents.empty())
-        << "expected at least one built-in agent definition";
-
-    // The default "loom" agent should exist (catch-all).
-    auto it = std::find_if(agents.begin(), agents.end(),
-        [](const auto& a) { return a.name == "loom"; });
-    ASSERT_NE(it, agents.end()) << "built-in 'loom' agent not found";
-
-    // build_agent_suggestions with empty query returns all agents (fuzzy
-    // match passes for everything when query is empty).
-    auto sugs = acsrc::build_agent_suggestions("", "", 0, 7);
-    ASSERT_FALSE(sugs.empty());
-    bool found_loom = false;
-    for (const auto& s : sugs) {
-        EXPECT_FALSE(s.display_text.empty());
-        EXPECT_TRUE(s.display_text.starts_with("@"))
-            << "display should start with @";
-        EXPECT_EQ(s.replacement_start, 0u);
-        EXPECT_EQ(s.replacement_end, 7u);
-        EXPECT_FALSE(s.submit_on_return);
-        if (s.display_text == "@loom") {
-            found_loom = true;
-            EXPECT_FALSE(s.icon.empty()) << "loom agent should have an icon";
-            EXPECT_FALSE(s.id.empty());
-        }
-    }
-    EXPECT_TRUE(found_loom) << "@loom suggestion not found in results";
-
-    // Fuzzy filter: query "xyz" should match nothing (no agent named xyz).
-    auto filtered = acsrc::build_agent_suggestions("", "xyz_nonexistent", 0, 3);
-    EXPECT_TRUE(filtered.empty());
-}
-
-
-
-/// Typing "@history " in the prompt triggers history suggestions from the
-/// persisted history file.  We pre-populate the history file, then type
-/// "@history " and verify suggestions appear.
 TEST(AppRuntime, AtHistoryShowsPersistedPrompts) {
     const auto hist_path = fs::temp_directory_path() /
         ("loom_app_hist_" +
@@ -1906,9 +1699,6 @@ TEST(AppRuntime, AtHistoryShowsPersistedPrompts) {
     fs::remove(hist_path);
 }
 
-
-
-/// Typing "@history deploy" filters history by the substring "deploy".
 TEST(AppRuntime, AtHistoryWithQueryFiltersResults) {
     const auto hist_path = fs::temp_directory_path() /
         ("loom_app_hist_filter_" +
@@ -1955,10 +1745,6 @@ TEST(AppRuntime, AtHistoryWithQueryFiltersResults) {
     fs::remove(hist_path);
 }
 
-
-
-/// Ctrl+R (\\x12) injects "@history " into the input, triggering history
-/// search mode.  The input text should start with "@history ".
 TEST(AppRuntime, CtrlREntersHistorySearchMode) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -1996,10 +1782,6 @@ TEST(AppRuntime, CtrlREntersHistorySearchMode) {
     fs::remove_all(storage_root);
 }
 
-
-
-/// Submitting a prompt persists it to history, so subsequent @history
-/// searches can find it.  Verifies the end-to-end persistence wiring.
 TEST(AppRuntime, SubmitPersistsPromptToHistory) {
     const auto hist_path = fs::temp_directory_path() /
         ("loom_app_submit_hist_" +
@@ -2047,10 +1829,6 @@ TEST(AppRuntime, SubmitPersistsPromptToHistory) {
     fs::remove(hist_path, ec);
 }
 
-
-
-/// Typing "@" followed by agent name characters should show agent
-/// suggestions.  At minimum "@cl" should match the "loom" agent.
 TEST(AppRuntime, AtAgentShowsAgentSuggestions) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -2078,11 +1856,6 @@ TEST(AppRuntime, AtAgentShowsAgentSuggestions) {
     fs::remove_all(storage_root);
 }
 
-
-
-// A pane teammate's filesystem inbox poll delivers addressed task messages
-// (wrapped in the teammate_message XML tag) to the prompt queue, filters
-// control messages, and dedupes across repeated polls.
 TEST(AppRuntime, TeammateInboxPollDeliversTasksAndFiltersControl) {
     namespace tu = loom::utils;
 
@@ -2130,180 +1903,6 @@ TEST(AppRuntime, TeammateInboxPollDeliversTasksAndFiltersControl) {
 
     fs::remove_all(runtime_dir);
     fs::remove_all(storage_root);
-}
-
-
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Live teams UI (stage C): live teammate strip + TeamsView modal + /teams.
-// ═══════════════════════════════════════════════════════════════════════════
-
-TEST(LiveTeamsUi, StripRendersNameStatusAndTail) {
-    namespace repl = loom::ui::repl_screen;
-    namespace live = loom::ui::teams::live;
-
-    repl::ReplScreenState s;
-    s.chrome_store.model_display_name = "M";
-    s.cwd = "/tmp/x";
-
-    live::LiveTeammate a;
-    a.agent_id = "a1";
-    a.name = "alice";
-    a.color = "cyan";
-    a.status = "running";
-    a.last_output_tail = "BUILD TARGET widgets OK";
-    a.pane_id = "%3";
-
-    live::LiveTeammate b;
-    b.agent_id = "a2";
-    b.name = "bob";
-    b.color = "red";
-    b.status = "idle";
-    b.last_output_tail = "waiting for review";
-    b.pane_id = "%4";
-
-    s.task_view_store.live_teammates = {a, b};
-    s.task_view_store.teammate_count = 2;
-
-    const auto txt = strip_ansi(
-        render_to_plain_text(repl::RenderReplScreen(s), 140, 40));
-    EXPECT_NE(txt.find("alice"), std::string::npos);
-    EXPECT_NE(txt.find("running"), std::string::npos);
-    EXPECT_NE(txt.find("BUILD TARGET widgets OK"), std::string::npos);
-    EXPECT_NE(txt.find("bob"), std::string::npos);
-    EXPECT_NE(txt.find("idle"), std::string::npos);
-    // Footer pill (prompt_input_footer ModeIndicator label "N teams").
-    EXPECT_NE(txt.find("2 teams"), std::string::npos);
-
-    repl::ReplScreenState empty;
-    empty.cwd = "/tmp/x";
-    const auto none = strip_ansi(
-        render_to_plain_text(repl::RenderReplScreen(empty), 140, 40));
-    EXPECT_EQ(none.find("@alice"), std::string::npos);
-    EXPECT_EQ(none.find("teams"), std::string::npos);
-}
-
-
-
-TEST(LiveTeamsUi, SlashTeamsOpensOverviewModal) {
-    loom::core::ToolRegistry tools;
-    loom::core::QueryEngineConfig config;
-    config.context_window.auto_compact = false;
-    config.cwd = fs::temp_directory_path().string();
-    loom::core::QueryEngine engine(std::move(config), tools);
-    loom::commands::AppCommandRegistry commands;
-    const auto storage_root = fs::temp_directory_path() /
-        ("loom_teams_modal_" +
-         std::to_string(std::chrono::steady_clock::now()
-                            .time_since_epoch().count()));
-    auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, storage_root, [] {});
-
-    namespace live = loom::ui::teams::live;
-    live::LiveTeammate a;
-    a.agent_id = "a1";
-    a.name = "alice";
-    a.color = "cyan";
-    a.status = "running";
-    a.last_output_tail = "TAIL-MARKER-42";
-    a.pane_id = "%3";
-    std::vector<live::LiveTeammate> teammates{a};
-    test_seams(app).set_live_teammates_for_testing(&teammates);
-    ASSERT_EQ(test_seams(app).teams_overview_count_for_testing(), 1);
-
-    test_seams(app).handle_submit_for_testing("/teams");
-    ASSERT_TRUE(test_seams(app).teams_overview_open_for_testing());
-
-    const auto txt = strip_ansi(
-        render_to_plain_text(app->Render(), 140, 40));
-    EXPECT_NE(txt.find("alice"), std::string::npos);
-    EXPECT_NE(txt.find("TAIL-MARKER-42"), std::string::npos);
-    EXPECT_NE(txt.find("Esc close"), std::string::npos);
-
-    // Unhandled Escape falls through to DispatchDialogQueueEvents' modal
-    // fallback, which pops the stack.
-    EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
-    EXPECT_FALSE(test_seams(app).teams_overview_open_for_testing());
-
-    app.reset();
-    std::error_code ec;
-    fs::remove_all(storage_root, ec);
-}
-
-
-
-// Leader-side: a queued stage-A permission_request surfaces through the
-// existing ToolPermission overlay; approving replies via PermissionSync into
-// the worker mailbox (no second dialog path).
-TEST(LiveTeamsUi, TeammatePermissionRequestRoutesThroughToolPermission) {
-    namespace sh = loom::utils::swarm_helpers;
-
-    const auto runtime_dir = fs::temp_directory_path() /
-        ("loom_teams_perm_" +
-         std::to_string(std::chrono::steady_clock::now()
-                            .time_since_epoch().count()));
-    fs::remove_all(runtime_dir);
-    ScopedEnvVar runtime_guard("LOOM_TEAM_RUNTIME_DIR");
-    runtime_guard.set(runtime_dir.string());
-    ScopedEnvVar team_guard("LOOM_TEAM_NAME");
-    team_guard.set("alpha");
-    ScopedEnvVar agent_guard("LOOM_AGENT_NAME");
-    agent_guard.unset();  // this process is the LEADER, not a pane teammate
-
-    loom::core::ToolRegistry tools;
-    loom::core::QueryEngineConfig config;
-    config.context_window.auto_compact = false;
-    config.cwd = fs::temp_directory_path().string();
-    auto engine = std::make_unique<loom::core::QueryEngine>(std::move(config), tools);
-    auto commands = std::make_unique<loom::commands::AppCommandRegistry>();
-    const auto storage_root = fs::temp_directory_path() /
-        ("loom_teams_perm_storage_" +
-         std::to_string(std::chrono::steady_clock::now()
-                            .time_since_epoch().count()));
-    auto app = ftxui::Make<loom::ui::AppAdapter>(
-        engine.get(), nullptr, commands.get(), storage_root, [] {});
-
-    sh::SwarmPermissionRequestMessage request;
-    request.type = "permission_request";
-    request.request_id = sh::PermissionSync::generate_request_id();
-    request.agent_id = "worker-a";
-    request.tool_name = "Bash";
-    request.tool_use_id = "toolu_perm_1";
-    request.description = R"({"command":"rm -rf build"})";
-    request.input_json = R"({"command":"rm -rf build"})";
-    test_seams(app).enqueue_teammate_permission_for_testing(&request, "alpha");
-
-    // The queued request drains on the next Custom event into the existing
-    // ToolPermission overlay (Band3), and the event is consumed like the
-    // pane-teammate prompt drain.
-    EXPECT_TRUE(app->OnEvent(ftxui::Event::Custom));
-    EXPECT_TRUE(test_seams(app).has_pending_dialog_for_testing());
-
-    // Render surfaces the worker identity + tool name in the dialog.
-    const auto txt = strip_ansi(
-        render_to_plain_text(app->Render(), 140, 40));
-    EXPECT_NE(txt.find("worker-a"), std::string::npos);
-    EXPECT_NE(txt.find("Bash"), std::string::npos);
-
-    // Approve ('y'): the stage-A success response is written to the worker's
-    // mailbox and the overlay is dismissed.
-    EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('y')));
-    EXPECT_EQ(test_seams(app).pending_teammate_permission_count_for_testing(), 0u);
-
-    auto worker_inbox = loom::utils::read_inbox(
-        "worker-a", std::optional<std::string_view>{"alpha"});
-    ASSERT_TRUE(worker_inbox.has_value()) << worker_inbox.error();
-    ASSERT_EQ(worker_inbox->size(), 1u);
-    const auto response =
-        sh::PermissionSync::parse_response((*worker_inbox)[0].text);
-    ASSERT_TRUE(response.has_value());
-    EXPECT_EQ(response->subtype, "success");
-    EXPECT_EQ(response->request_id, request.request_id);
-
-    app.reset();
-    std::error_code ec;
-    fs::remove_all(runtime_dir, ec);
-    fs::remove_all(storage_root, ec);
 }
 
 namespace {
@@ -2403,42 +2002,6 @@ TEST(AppRuntime, DirectoryCompletionCacheInvalidatesParentAndWorkingDirectory) {
     ASSERT_EQ(ctx.suggestions(), (std::vector<std::string>{"left/alpine/"}));
     EXPECT_TRUE(ctx.app->OnEvent(ftxui::Event::Tab));
     EXPECT_EQ(test_seams(ctx.app).input_text_for_testing(), "/add-dir left/alpine/");
-}
-
-TEST(PasteCoordinator, SubmissionDrainPreservesNewDraftResults) {
-    loom::ui::PasteCoordinator coordinator;
-    const int submitted_id = coordinator.allocate_paste_id();
-    const int draft_id = coordinator.allocate_paste_id();
-    coordinator.SpawnPasteWorker(submitted_id, [] {}, true);
-    coordinator.SpawnPasteWorker(draft_id, [] {}, true);
-
-    std::unordered_map<int, loom::core::ImageBlock> images;
-    std::unordered_set<int> failures;
-    std::unordered_map<int, std::string> texts;
-    coordinator.set_pending_drain_ids(std::unordered_set<int>{submitted_id});
-    coordinator.drain_pending(images, failures, texts);
-    ASSERT_EQ(images.size(), 1u);
-    EXPECT_TRUE(images.contains(submitted_id));
-    EXPECT_FALSE(images.contains(draft_id));
-    EXPECT_TRUE(failures.empty());
-    EXPECT_TRUE(texts.empty());
-    coordinator.mark_completed(submitted_id);
-    EXPECT_TRUE(coordinator.is_in_flight(draft_id));
-
-    // Draining the submitted snapshot again must leave the draft result
-    // queued; the normal draft drain receives it exactly once afterward.
-    images.clear();
-    coordinator.drain_pending(images, failures, texts);
-    EXPECT_TRUE(images.empty());
-    coordinator.set_pending_drain_ids(std::nullopt);
-    coordinator.drain_pending(images, failures, texts);
-    ASSERT_EQ(images.size(), 1u);
-    EXPECT_TRUE(images.contains(draft_id));
-    coordinator.mark_completed(draft_id);
-    EXPECT_FALSE(coordinator.has_in_flight());
-    images.clear();
-    coordinator.drain_pending(images, failures, texts);
-    EXPECT_TRUE(images.empty());
 }
 
 TEST(AppRuntime, QueryWithoutStreamEventsDoesNotDriveRenderTicker) {
@@ -2551,3 +2114,4 @@ TEST(AppRuntime, DeferredPasteSubmissionConsumesAttachmentAndPreservesNewDraft) 
     std::error_code ec;
     fs::remove_all(root, ec);
 }
+

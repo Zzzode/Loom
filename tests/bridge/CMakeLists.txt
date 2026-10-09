@@ -1,18 +1,47 @@
 # bridge/ — bridge daemon + SDK protocol tests
+#
+# test_bridge.cpp was split into three domain-specific TUs sharing
+# tests/support/bridge_test_helpers.hpp (on the include path via
+# LOOM_TEST_SUPPORT_DIR in tests/CMakeLists.txt).
 
-add_executable(test_bridge test_bridge.cpp)
-target_link_libraries(test_bridge
-    PRIVATE
-        loom_core
-        loom_daemon
-        GTest::gtest_main
+set(_bridge_test_libs
+    loom_core
+    loom_daemon
+    GTest::gtest_main
 )
-add_dependencies(test_bridge loom)
-target_compile_definitions(test_bridge
+
+add_executable(test_bridge_transport
+    test_bridge_transport.cpp
+    ${LOOM_TEST_SUPPORT_DIR}/bridge_test_helpers.hpp)
+target_link_libraries(test_bridge_transport PRIVATE ${_bridge_test_libs})
+add_dependencies(test_bridge_transport loom)
+target_compile_definitions(test_bridge_transport
     PRIVATE
         LOOM_NATIVE_BINARY_PATH="$<TARGET_FILE:loom>"
 )
-gtest_discover_tests(test_bridge DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+gtest_discover_tests(test_bridge_transport DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_bridge_api
+    test_bridge_api.cpp
+    ${LOOM_TEST_SUPPORT_DIR}/bridge_test_helpers.hpp)
+target_link_libraries(test_bridge_api PRIVATE ${_bridge_test_libs})
+add_dependencies(test_bridge_api loom)
+target_compile_definitions(test_bridge_api
+    PRIVATE
+        LOOM_NATIVE_BINARY_PATH="$<TARGET_FILE:loom>"
+)
+gtest_discover_tests(test_bridge_api DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_bridge_daemon
+    test_bridge_daemon.cpp
+    ${LOOM_TEST_SUPPORT_DIR}/bridge_test_helpers.hpp)
+target_link_libraries(test_bridge_daemon PRIVATE ${_bridge_test_libs})
+add_dependencies(test_bridge_daemon loom)
+target_compile_definitions(test_bridge_daemon
+    PRIVATE
+        LOOM_NATIVE_BINARY_PATH="$<TARGET_FILE:loom>"
+)
+gtest_discover_tests(test_bridge_daemon DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 
 # ---------------------------------------------------------------------------

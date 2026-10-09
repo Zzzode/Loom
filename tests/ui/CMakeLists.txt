@@ -21,7 +21,7 @@ target_link_libraries(test_ui_messages ${_ui_test_libs})
 gtest_discover_tests(test_ui_messages DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 add_executable(test_ui_runtime
-    test_ui_runtime.cpp
+    test_app_runtime.cpp
     test_ui_render.cpp
     test_ui_render_state.cpp
     test_ui_render_pure.cpp
@@ -30,6 +30,10 @@ add_executable(test_ui_runtime
     ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_ui_runtime ${_ui_test_libs})
 gtest_discover_tests(test_ui_runtime DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_ui_features test_ui_features.cpp ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
+target_link_libraries(test_ui_features ${_ui_test_libs})
+gtest_discover_tests(test_ui_features DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 add_executable(test_ui_dialogs test_ui_dialogs.cpp ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_ui_dialogs ${_ui_test_libs})
@@ -143,18 +147,55 @@ gtest_discover_tests(test_dialog_toolpermission
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 # ---------------------------------------------------------------------------
-# M7 Dialog System core — payload serde, DialogQueue, DialogRendererRegistry,
-# Elicitation/SandboxPermission/SettingsView routing tests
+# M7 Dialog System — split into 4 TUs by domain (SLOC budget)
+# test_dialog_core: DialogSystem, DialogQueue, DialogRendererRegistry,
+#   DialogFrame, DefaultRenderers, FullDialogRegistry
+# test_dialog_triggers: DialogTriggers, QuickOpen
+# test_dialog_renderers: DialogRenderers, SandboxPermissionEvents, ReplScreenIntegration
+# test_session_picker: SessionPicker
 # ---------------------------------------------------------------------------
-add_executable(test_dialog_system test_dialog_system.cpp)
-target_link_libraries(test_dialog_system
+add_executable(test_dialog_core test_dialog_core.cpp)
+target_link_libraries(test_dialog_core
     PRIVATE
         loom_core
-        loom_ui                  # loom.ui.dialogs.* + loom.ui.design.theme
+        loom_ui
         GTest::gtest
         loom_test_main
 )
-gtest_discover_tests(test_dialog_system
+gtest_discover_tests(test_dialog_core
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_dialog_triggers test_dialog_triggers.cpp)
+target_link_libraries(test_dialog_triggers
+    PRIVATE
+        loom_core
+        loom_ui
+        GTest::gtest
+        loom_test_main
+)
+gtest_discover_tests(test_dialog_triggers
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_dialog_renderers test_dialog_renderers.cpp)
+target_link_libraries(test_dialog_renderers
+    PRIVATE
+        loom_core
+        loom_ui
+        GTest::gtest
+        loom_test_main
+)
+gtest_discover_tests(test_dialog_renderers
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_session_picker test_session_picker.cpp)
+target_link_libraries(test_session_picker
+    PRIVATE
+        loom_core
+        loom_ui
+        GTest::gtest
+        loom_test_main
+)
+gtest_discover_tests(test_session_picker
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 # ---------------------------------------------------------------------------

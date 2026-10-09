@@ -5,7 +5,7 @@
 #   support/            — shared test headers (test_ui_helpers.h, etc.)
 #   core/               — engine, state, bootstrap, config tests
 #   tools/              — tool implementation tests (test_tools.cpp split)
-#   services/           — service layer tests (test_services.cpp split)
+#   services/           — service layer tests (split into domain files)
 #   ui/                 — FTXUI interface tests (dialogs, streaming, markdown)
 #   bridge/             — bridge daemon + SDK protocol tests
 #   commands/           — slash command tests

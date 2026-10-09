@@ -1,7 +1,7 @@
 ---
 rfc: 7
 title: Native Text Selection and Reliable Clipboard Copy
-status: accepted
+status: implementable
 owners: "@Zzzode"
 reviewers:
   - "Dev-0 (agent)"
@@ -1281,7 +1281,7 @@ Phase 3 should evaluate whether to upstream this patch.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| 1 | Copy pipeline reliability | ClipboardCoordinator, ClipboardJob, posix_spawn, SIGPIPE, SSH detection, Linux backend detection, threshold fix, dead code removal | proposed | All new unit tests pass; serial ctest green (debug + release); golden snapshots regenerated and reviewed; BMI PSS before/after recorded; `inline_def_check.py` no increase; `graph_check.py --target-ui9` passes; no stdout/stderr pollution from worker |
+| 1 | Copy pipeline reliability | ClipboardCoordinator, ClipboardJob, posix_spawn, SIGPIPE, SSH detection, Linux backend detection, threshold fix, dead code removal | proposed | All new unit tests pass; serial ctest green (debug + release); golden snapshots regenerated and reviewed; BMI PSS before/after recorded; `inline_def_check.py` no increase; default `graph_check.py` passes; no stdout/stderr pollution from worker |
 | 2 | Default native selection + config fallback | TrackMouse(false) before Loop, mouseMode config, status bar label, settings_home_read(), ConfigManager read/write split, MCP fallback, user docs | proposed | PTY byte-level test confirms DECSET absent at startup; ~/.agents fallback test passes; MCP fallback mutation tests pass; serial ctest green (debug + release); golden snapshots regenerated; documentation gate satisfied (CLAUDE.md, design-decisions.md, user docs); BMI PSS before/after recorded |
 | 3 | F2 runtime toggle (DEFERRED) | sigwait thread, runtime mouse-mode toggle | deferred | Follow-up RFC required; needs FTXUI public lifecycle API |
 | 4 | Selection quality | D-5 linear vs rectangle, D-6 empty lines, CJK/emoji, same-coordinate click, cancel/blur | proposed | No regression in Phase 1/2 tests; UX testing in Ghostty/iTerm2/tmux; selection extraction tests pass |
@@ -1747,7 +1747,7 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 - [x] Interface files gain declarations, not definitions — **evidence:** §11.1 PRIVATE `.cpp` implementation files for ClipboardCoordinator/ClipboardJob
 - [x] No new textual standard-library or third-party includes in module units — **evidence:** all new code uses `import std;`
 - [x] Named partitions used only for PIMPL internals, not for cross-area layering — **evidence:** no partitions used
-- [x] No new upward dependency edges; directory-level SCCs do not grow — **evidence:** McpPhysicalSource/McpMutationOutcome in `loom.config.config` (not commands) to avoid config → commands upward dependency; `graph_check.py --target-ui9` to be run at graduation
+- [x] No new upward dependency edges; directory-level SCCs do not grow — **evidence:** McpPhysicalSource/McpMutationOutcome in `loom.config.config` (not commands) to avoid config → commands upward dependency; default `graph_check.py` required for all phases, `--target-ui9` additionally for Phase 2 (per §11.1)
 
 **Notes:** BMI PSS measurement plan in §11.1; fan-out and inline ratchet in §11.1.
 
@@ -1794,7 +1794,7 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 | Role | Reviewer | Date | Verdict |
 |---|---|---|---|
 | Design | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | approve (v7.12) |
-| Production readiness | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | pending (round 3) |
+| Production readiness | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | approve (round 4) |
 | Code (per phase) | Assigned by lead at phase start (independent agent, not the phase implementer) | — | pending |
 
 ### PRR Q&A (supplementary)
@@ -1847,10 +1847,9 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 **Rationale for McpPhysicalSource/McpMutationOutcome in `loom_config`:** The MCP scope/owner/remove APIs (`mcp_scope_paths()`, `mcp_owner_`, `find_mcp_server_files()`) are ConfigManager members in `config.cppm`. Placing the shared descriptor/outcome types in the commands layer would force `loom_config` to upward-depend on `loom_commands`, violating the DAG. The types live in `loom.config.config`; the commands layer (`loom.commands.mcp_cmd`) consumes them.
 
 **BMI PSS measurement plan:**
-- **Before (baseline):** Record BMI PSS (from `/proc/<pid>/smaps_rollup` `Pss:`) for actual `.cppm` producer TUs: `config.cppm`, `clipboard.cppm`, `paths.cppm`, `mcp_cmd.cppm`, and the two new `clipboard_coordinator.cppm` / `clipboard_job.cppm`. `app_run.cpp` is a PRIVATE `.cpp` implementation (not a BMI producer) — if measured, it is listed separately as regular compile PSS, not BMI PSS.
-- **After (graduation):** Re-measure the same TUs. Expected delta: negligible (new function in existing module + new structs; no interface changes to existing functions).
+- **Before (baseline):** Record BMI PSS (from `/proc/<pid>/smaps_rollup` `Pss:`) for actual `.cppm` producer TUs: `config.cppm`, `clipboard.cppm`, `paths.cppm`, `mcp_cmd.cppm`. The two new `clipboard_coordinator.cppm` / `clipboard_job.cppm` do not exist before implementation — their "before" is N/A; only "after" is measured. `app_run.cpp` is a PRIVATE `.cpp` implementation (not a BMI producer) — if measured, it is listed separately as regular compile PSS, not BMI PSS.
+- **After (graduation):** Re-measure the same TUs. Existing producers: before/after delta recorded. New modules: after-only PSS recorded. Expected delta for existing producers: negligible (new function in existing module + new structs).
 - **Fan-out:** `settings_home_read()` is a new function in `paths.cppm` — importers of `loom.constants.paths` recompile. `McpPhysicalSource`/`McpMutationOutcome` are new structs in `config.cppm` — importers of `loom.config.config` recompile. The MCP mutation return type changes (§5.9): `mcp remove`/`enable`/`disable` return `McpMutationOutcome` instead of the existing `McpRemoveOutcome`/bulk writer. This is a **breaking interface change** — all callers of MCP mutators are updated in the same commit. The CLI rendering layer (`mcp_cmd.cppm`) is the only caller.
-- **Graph gate:** Every phase requires `python3 tools/arch/graph_check.py` (default, all areas) to pass. Phase 2 additionally runs `--target-ui9` (UI area check).
 - **Inline ratchet:** `python3 tools/arch/inline_def_check.py` baseline recorded before Phase 1; graduation requires no increase in inline-body count for affected TUs.
 - **Graduation record:** Before/after PSS values, measurement commands, TU list, default `graph_check.py` output, `inline_def_check.py` output, and fan-out count saved to the Implementation History.
 - **macOS-14 concurrency:** `cmake --build --preset debug -j$(sysctl -n hw.ncpu)` wall time measured before and after; no degradation beyond noise (±10%).
@@ -1967,7 +1966,7 @@ New test cases in existing files (`test_ui_messages.cpp`, `paths_cascade_test.cp
 
 **Serial ctest:** `ctest --preset debug -j1` and `ctest --preset release -j1` must pass. Parallel ctest may have known flakes (ServerMain.DirectConnect*).
 
-**CI architecture-lint expectations:** `graph_check.py --target-ui9` passes (no new cycles); `inline_def_check.py` no increase in inline-body count for affected TUs.
+**CI architecture-lint expectations:** Default `python3 tools/arch/graph_check.py` passes for all phases; Phase 2 additionally runs `--target-ui9`. `inline_def_check.py` no increase in inline-body count for affected TUs.
 
 ## 15. Documentation impact
 
@@ -1996,6 +1995,7 @@ New test cases in existing files (`test_ui_messages.cpp`, `paths_cascade_test.cp
 | 2026-10-09 | — | Design review rounds 1-12 (v1 through v7.12) | — | Both Dev-0 and Dev-2 APPROVE (design gate passed) |
 | 2026-10-10 | — | PRR round 1 (Dev-0: P0+3P1, Dev-2: 3P1+3P2) | 6f17705 | All findings fixed |
 | 2026-10-10 | — | PRR round 2 (Dev-0: P0+4P1, Dev-2: 3P1+1P2) | 6ada84b, 7745969 | All findings fixed |
-| 2026-10-10 | — | PRR round 3 (restructured to implementable template) | f321f4c | Pending Dev-0/Dev-2 verdict |
+| 2026-10-10 | — | PRR round 3 (restructured to implementable template) | f321f4c | All findings fixed |
+| 2026-10-10 | — | PRR round 4 (BMI scope, test CMake, Phase 5 removal, P2 fixes) | 10d8620 | Both Dev-0 and Dev-2 APPROVE; status → implementable |
 
 > **Design review history (v1–v7.12):** 12 rounds of design review between Dev-0, Dev-2, and Dev-1 (author). All P0/P1 findings addressed. Both Dev-0 and Dev-2 APPROVED v7.12 (design gate). Full review log is in the git history of this file (see commits from 2026-10-09 through 2026-10-10).

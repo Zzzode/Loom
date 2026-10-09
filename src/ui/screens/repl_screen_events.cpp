@@ -322,11 +322,12 @@ using namespace ftxui;
     }
 
     if (!in_dialog && ev.is_mouse()) {
-        if (ev.mouse().button == Mouse::WheelUp) {
-            return ScrollTranscript(state, -3);
-        }
-        if (ev.mouse().button == Mouse::WheelDown) {
-            return ScrollTranscript(state, 3);
+        if (ev.mouse().button == Mouse::WheelUp ||
+            ev.mouse().button == Mouse::WheelDown) {
+            const int stride = WheelStride(
+                state->messages_store.viewport_height_lines);
+            const int dir = (ev.mouse().button == Mouse::WheelUp) ? -1 : 1;
+            return ScrollTranscript(state, dir * stride);
         }
         // Left-click released on a clickable row (thinking block):
         // toggle expand/collapse.  The tracker is populated during render

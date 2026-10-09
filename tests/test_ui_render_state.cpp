@@ -786,3 +786,24 @@ TEST(ReplScreen, WordWrapIndentedCodeBlockAtDocumentStart) {
     // 2 code lines → 2 rows.
     EXPECT_EQ(lines, 2);
 }
+
+// ── Adaptive wheel stride tests ─────────────────────────────────────────
+
+TEST(ReplScreen, WheelStrideScalesWithViewport) {
+    namespace repl = loom::ui::repl_screen;
+    // 10% of viewport height, clamped to [3, 15].
+    EXPECT_EQ(repl::WheelStride(8), 3);    // 8/10=0 → min 3
+    EXPECT_EQ(repl::WheelStride(30), 3);   // 30/10=3 → min 3
+    EXPECT_EQ(repl::WheelStride(40), 4);   // 40/10=4
+    EXPECT_EQ(repl::WheelStride(60), 6);   // 60/10=6
+    EXPECT_EQ(repl::WheelStride(100), 10); // 100/10=10
+    EXPECT_EQ(repl::WheelStride(150), 15); // 150/10=15 → max 15
+    EXPECT_EQ(repl::WheelStride(200), 15); // 200/10=20 → clamped to 15
+}
+
+TEST(ReplScreen, WheelStrideHandlesZero) {
+    namespace repl = loom::ui::repl_screen;
+    // viewport_height_lines=0 before first render → clamp to 1 → stride 3.
+    EXPECT_EQ(repl::WheelStride(0), 3);
+    EXPECT_EQ(repl::WheelStride(-1), 3);
+}

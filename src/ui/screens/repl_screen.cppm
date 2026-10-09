@@ -191,6 +191,11 @@ ComputeUnseenDivider(const ReplScreenState& s);
 bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
                       int delta);
 
+/// Adaptive wheel scroll stride: 10% of viewport height, clamped to
+/// [3, 15].  A fixed ±3 feels sluggish on tall terminals; scaling with
+/// the viewport keeps the scroll proportional.
+[[nodiscard]] int WheelStride(int viewport_height_lines);
+
 /// Re-pin the transcript to its visual tail and clear pending-new-message
 /// chrome.  Used by both the pill click and future keyboard affordances.
 void JumpTranscriptToBottom(ReplScreenState& state);

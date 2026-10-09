@@ -644,6 +644,14 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     return rows;
 }
 
+[[nodiscard]] int WheelStride(int viewport_height_lines) {
+    constexpr int kMinStride = 3;
+    constexpr int kMaxStride = 15;
+    constexpr int kViewportDivisor = 10;  // 10% of viewport height
+    const int vp = std::max(1, viewport_height_lines);
+    return std::clamp(vp / kViewportDivisor, kMinStride, kMaxStride);
+}
+
 bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
                              int delta) {
     if (!state || delta == 0) return false;

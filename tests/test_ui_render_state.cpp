@@ -444,6 +444,52 @@ TEST(ReplScreen, NewMessagesPillClickRePinsTranscript) {
     EXPECT_FALSE(state->messages_store.unseen_divider.has_value());
 }
 
+TEST(ReplScreen, NewMessagesPillKeyboardShortcutRePinsTranscript) {
+    namespace repl = loom::ui::repl_screen;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    state->messages_store.scroll_pinned_to_bottom = false;
+    state->messages_store.scroll_offset = 0;
+    state->messages_store.divider_index = 0;
+    state->messages_store.pill_visible = true;
+    state->messages_store.unseen_message_count = 7;
+
+    for (int i = 0; i < 100; ++i) {
+        repl::MessageDisplayEntry message;
+        message.id = std::format("pill-kbd-{:02}", i);
+        message.role = "assistant";
+        message.content_preview = std::string(80, 'x');
+        state->messages_store.messages.push_back(std::move(message));
+    }
+
+    auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
+                                        ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen, component->Render());
+    ASSERT_TRUE(state->messages_store.virtual_list_active);
+
+    // Ctrl+Down is the keyboard equivalent of clicking the pill.
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::ArrowDownCtrl));
+
+    EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+    EXPECT_FALSE(state->messages_store.pill_visible);
+    EXPECT_EQ(state->messages_store.unseen_message_count, 0);
+    EXPECT_FALSE(state->messages_store.divider_index.has_value());
+    EXPECT_FALSE(state->messages_store.unseen_divider.has_value());
+}
+
+TEST(ReplScreen, CtrlDownNoOpWhenPinnedToBottom) {
+    namespace repl = loom::ui::repl_screen;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    // Already pinned to bottom — Ctrl+Down should not consume the event.
+    state->messages_store.scroll_pinned_to_bottom = true;
+
+    auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
+    EXPECT_FALSE(component->OnEvent(ftxui::Event::ArrowDownCtrl));
+    EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+}
+
 // ── CommonMark soft/hard break normalization tests ──────────────────────
 // These verify that CountWordWrappedLines matches the Markdown renderer's
 // split_on_hard_breaks semantics: soft breaks join with space, hard breaks

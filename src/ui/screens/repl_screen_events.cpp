@@ -302,6 +302,19 @@ using namespace ftxui;
         return true;
     }
 
+    // Ctrl+Down: jump transcript to bottom (re-pin).  This is the keyboard
+    // equivalent of clicking the NewMessagesPill — the pill is a stateless
+    // Element with no focus path, so without this shortcut the only way to
+    // dismiss it is via mouse.  Works whenever the transcript is scrolled
+    // away from the tail, not just when the pill is visible.
+    if (!in_dialog && ev == Event::ArrowDownCtrl) {
+        if (!state->messages_store.scroll_pinned_to_bottom) {
+            JumpTranscriptToBottom(*state);
+            return true;
+        }
+        return false;  // already at bottom — don't consume
+    }
+
     if (!in_dialog &&
         state->active_local_jsx_command &&
         cb->on_local_jsx_event &&

@@ -63,37 +63,51 @@ namespace detail {
 
 /// Normalize text according to CommonMark soft/hard break rules (§6.1):
 /// "  \n" or "\\\n" → hard break; regular "\n" → soft break (joined with
-/// space); blank line → paragraph boundary (preserved as \n\n).  Leading
-/// spaces on continuation lines are stripped.  Matches the Markdown
-/// renderer's split_on_hard_breaks (called per paragraph by the lexer).
+/// space); blank line → paragraph boundary (collapsed to \n\n).  Leading/
+/// trailing blank runs are stripped.  Leading spaces on continuation
+/// lines are stripped.  Matches the Markdown renderer's
+/// split_on_hard_breaks (called per paragraph by the lexer).
 [[nodiscard]] auto normalize_markdown_breaks(std::string_view text)
     -> std::string {
     std::string result;
     result.reserve(text.size());
     std::size_t pos = 0;
+    bool seen_content = false;
     while (pos < text.size()) {
         const std::size_t nl = text.find('\n', pos);
         std::string_view line = (nl == std::string_view::npos)
             ? text.substr(pos)
             : text.substr(pos, nl - pos);
 
-        // Blank line (empty or whitespace-only) = paragraph boundary.
         bool is_blank = true;
         for (char c : line) {
             if (c != ' ' && c != '\t') { is_blank = false; break; }
         }
 
-        if (is_blank && nl != std::string_view::npos) {
+        if (is_blank) {
+            if (nl == std::string_view::npos) break;
+            if (!seen_content) {
+                pos = nl + 1;
+                while (pos < text.size() && text[pos] == ' ')
+                    ++pos;
+                continue;
+            }
             while (!result.empty() && result.back() == ' ')
                 result.pop_back();
             if (!result.empty() && result.back() != '\n')
                 result += '\n';
-            result += '\n';
+            if (result.size() < 2 ||
+                result[result.size() - 1] != '\n' ||
+                result[result.size() - 2] != '\n') {
+                result += '\n';
+            }
             pos = nl + 1;
             while (pos < text.size() && text[pos] == ' ')
                 ++pos;
             continue;
         }
+
+        seen_content = true;
 
         bool hard = false;
         if (nl != std::string_view::npos) {
@@ -125,6 +139,12 @@ namespace detail {
         } else {
             break;
         }
+    }
+    while (result.size() >= 2 &&
+           result[result.size() - 1] == '\n' &&
+           result[result.size() - 2] == '\n') {
+        result.pop_back();
+        result.pop_back();
     }
     return result;
 }

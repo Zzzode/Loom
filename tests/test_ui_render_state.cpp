@@ -497,6 +497,31 @@ TEST(ReplScreen, WordWrapParagraphWithHardBreak) {
     EXPECT_EQ(repl::CountWordWrappedLines(text, 80), 4);
 }
 
+TEST(ReplScreen, WordWrapConsecutiveBlankLinesCollapsed) {
+    namespace repl = loom::ui::repl_screen;
+    // "a\n\n\nb" — consecutive blanks collapse to one paragraph boundary
+    // → 3 lines (a, blank, b), not 4
+    EXPECT_EQ(repl::CountWordWrappedLines("a\n\n\nb", 80), 3);
+}
+
+TEST(ReplScreen, WordWrapLeadingBlankStripped) {
+    namespace repl = loom::ui::repl_screen;
+    // "\na" — leading blank run is stripped by the lexer
+    EXPECT_EQ(repl::CountWordWrappedLines("\na", 80), 1);
+}
+
+TEST(ReplScreen, WordWrapBlankOnlyReturnsOne) {
+    namespace repl = loom::ui::repl_screen;
+    // "\n" — only a blank line, lexer produces no paragraphs
+    EXPECT_EQ(repl::CountWordWrappedLines("\n", 80), 1);
+}
+
+TEST(ReplScreen, WordWrapTrailingBlankStripped) {
+    namespace repl = loom::ui::repl_screen;
+    // "a\n\n" — trailing blank run is stripped by the lexer
+    EXPECT_EQ(repl::CountWordWrappedLines("a\n\n", 80), 1);
+}
+
 TEST(ReplScreen, WordWrapLongParagraphLastLineReachable) {
     namespace repl = loom::ui::repl_screen;
     // 200 "word " at 40 cols — the last line must be counted so the

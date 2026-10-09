@@ -179,7 +179,8 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 /// - "\\\n" (trailing backslash) → hard break (remove backslash, keep \n)
 /// - Regular "\n" → soft break (strip trailing spaces, join with space)
 /// - Blank line (empty or whitespace-only) → paragraph boundary
-///   (preserved as \n\n so the word-wrapper counts the separator)
+///   (collapsed to exactly \n\n; consecutive blanks produce one boundary)
+/// - Leading/trailing blank runs are stripped (lexer skips them)
 /// - Leading spaces on continuation lines are stripped (matches
 ///   split_on_hard_breaks in markdown_render_impl.cpp)
 ///
@@ -190,6 +191,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     std::string result;
     result.reserve(text.size());
     std::size_t pos = 0;
+    bool seen_content = false;
     while (pos < text.size()) {
         const std::size_t nl = text.find('\n', pos);
         std::string_view line = (nl == std::string_view::npos)
@@ -197,28 +199,38 @@ ComputeUnseenDivider(const ReplScreenState& s) {
             : text.substr(pos, nl - pos);
 
         // Check if this is a blank line (empty or whitespace-only).
-        // Blank lines are paragraph boundaries — the lexer splits on
-        // them and the renderer inserts a blank line between blocks.
         bool is_blank = true;
         for (char c : line) {
             if (c != ' ' && c != '\t') { is_blank = false; break; }
         }
 
-        if (is_blank && nl != std::string_view::npos) {
-            // Paragraph boundary: strip trailing space from a previous
-            // soft break, then ensure a blank line separates paragraphs.
+        if (is_blank) {
+            if (nl == std::string_view::npos) break;  // trailing blank
+            if (!seen_content) {
+                // Leading blank run — lexer skips it.
+                pos = nl + 1;
+                while (pos < text.size() && text[pos] == ' ')
+                    ++pos;
+                continue;
+            }
+            // Paragraph boundary: collapse consecutive blanks into one.
             while (!result.empty() && result.back() == ' ')
                 result.pop_back();
             if (!result.empty() && result.back() != '\n')
                 result += '\n';
-            result += '\n';
+            // Only add separator if we don't already have \n\n.
+            if (result.size() < 2 ||
+                result[result.size() - 1] != '\n' ||
+                result[result.size() - 2] != '\n') {
+                result += '\n';
+            }
             pos = nl + 1;
-            // Skip leading spaces on the continuation line (CommonMark
-            // trims paragraph indentation).
             while (pos < text.size() && text[pos] == ' ')
                 ++pos;
             continue;
         }
+
+        seen_content = true;
 
         // Regular line: check for hard break markers.
         bool hard = false;
@@ -255,6 +267,13 @@ ComputeUnseenDivider(const ReplScreenState& s) {
             break;
         }
     }
+    // Strip trailing blank-line separator (lexer skips trailing blanks).
+    while (result.size() >= 2 &&
+           result[result.size() - 1] == '\n' &&
+           result[result.size() - 2] == '\n') {
+        result.pop_back();
+        result.pop_back();
+    }
     return result;
 }
 
@@ -272,6 +291,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 [[nodiscard]] int CountWordWrappedLines(std::string_view text, int term_cols) {
     if (text.empty()) return 1;
     const std::string normalized = NormalizeMarkdownBreaks(text);
+    if (normalized.empty()) return 1;  // e.g. "\n" → stripped to empty
     const int cols = std::max(20, term_cols);
     int lines = 0;
     std::size_t pos = 0;

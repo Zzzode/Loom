@@ -164,6 +164,12 @@ ComputeUnseenDivider(const ReplScreenState& s) {
         lines += std::max(1, visual);
         pos = nl + 1;
     }
+    // If text ends with '\n', the trailing empty segment wasn't counted
+    // by the loop (pos == text.size() exits before processing it).
+    // "\n" → 2 lines, "\n\n" → 3 lines, "a\n" → 2 lines.
+    if (!text.empty() && text.back() == '\n') {
+        lines += 1;
+    }
     // Cap: 500 visual lines per message is 10-25 viewport heights, more
     // than enough for scrolling while preventing the freeze regression
     // caused by uncapped counting on full untruncated content_preview.

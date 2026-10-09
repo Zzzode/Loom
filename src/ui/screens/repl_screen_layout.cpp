@@ -209,7 +209,9 @@ using namespace ftxui;
         // Mouse hit-testing tracker for click-to-expand thinking blocks.
         &s.messages_store.row_click_tracker,
         // Store for virtual-list scroll bounds (exact geometry).
-        &s.messages_store));
+        &s.messages_store,
+        // Real terminal width for the virtual-path height estimator.
+        term_cols));
     // Spinner lives in the chrome BETWEEN messages list and prompt input
     // (BriefSpinner top margin = 1, NOT a message row inside scroll content).
     Element spinner_chrome = text("");

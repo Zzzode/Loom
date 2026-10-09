@@ -30,6 +30,16 @@ namespace loom::ui::messages_list {
 
 namespace detail {
 
+/// Per-content-block height cap.  A single paragraph or code block longer
+/// than this is clipped — the virtual list's overscan covers the gap during
+/// scroll.  500 lines covers realistic code blocks and pastes while
+/// preventing pathological geometry from a 100K-char single-line blob.
+constexpr int kMaxContentLines = 500;
+
+/// Per-row total height cap (content + envelope header + separator).
+/// Generous enough for the largest realistic message rows.
+constexpr int kMaxRowHeight = 1000;
+
 /// Count *wrapped* lines for `text` given terminal columns.  Uses a
 /// text-wrap heuristic (hard-break at term_cols, plus existing '\n').  The
 /// result is the maximum vertical space the content COULD take inside a
@@ -55,10 +65,10 @@ namespace detail {
             current = 0;
         }
     }
-    // Clip to [1, 80] — rows taller than 80 are reported as 80 (overscan
-    // covers the difference during actual scroll; FTXUI will size to real
-    // content at paint time).
-    return std::clamp(lines, 1, 80);
+    // Clip to [1, kMaxContentLines] — rows taller than the cap are reported
+    // as the cap (overscan covers the difference during actual scroll;
+    // FTXUI will size to real content at paint time).
+    return std::clamp(lines, 1, kMaxContentLines);
 }
 
 /// Normalize text according to CommonMark soft/hard break rules (§6.1):
@@ -200,7 +210,7 @@ namespace detail {
     // spaces, so a trailing \n only comes from a hard break at EOF — and
     // render_inlines() does not push an empty row after a trailing
     // HardBreakNode.
-    return std::clamp(lines, 1, 80);
+    return std::clamp(lines, 1, kMaxContentLines);
 }
 
 /// Estimate visual height for one messages_list::VisibleRow.  Adds 1 line
@@ -435,7 +445,7 @@ namespace detail {
         default:
             content_lines += 1;
     }
-    return std::clamp(content_lines, 1, 120);
+    return std::clamp(content_lines, 1, kMaxRowHeight);
 }
 
 } // namespace detail

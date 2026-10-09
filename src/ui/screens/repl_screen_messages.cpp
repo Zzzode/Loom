@@ -105,7 +105,9 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // Optional mouse hit-testing tracker for click-to-expand rows.
     loom::ui::messages_list::RowClickTracker* row_click_tracker,
     // Optional store for virtual-list scroll bounds.
-    MessagesStore* store) {
+    MessagesStore* store,
+    // Terminal column width for the virtual-path height estimator.
+    int term_cols) {
     // NOTE: We no longer early-return on empty entries.  The leading_element
     // (welcome/logo card) must always be rendered inside the yframe so it
     // scrolls with messages.  The messages_list handles empty rows gracefully
@@ -416,6 +418,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
     input.pin_to_bottom = pinned;
     input.scroll_offset = std::max(0, offs);
     input.viewport_rows = std::max(1, vlines);
+    input.term_cols = term_cols;
     input.is_brief_mode = is_brief_mode;
     // is_transcript_mode + show_all_in_transcript.
     // In transcript mode the 3-tier filter shows all message types; cap at

@@ -72,10 +72,9 @@ namespace {
              | yframe | vscroll_indicator;
     }
 
-    // Build virtual rows.  Use viewport_rows + 80 as a proxy for terminal
-    // height (the caller knows viewport_rows; width defaults are fine since
-    // content estimates already clip generously to 20-120 range).
-    const int term_cols_est = 120;   // safe default; most terminals ≥ 80
+    // Build virtual rows.  Use the real terminal width from the caller so
+    // narrow terminals don't underestimate wrapped line counts.
+    const int term_cols_est = input.term_cols;
     auto virt_rows = visible_rows_to_virtual(visible, input, term_cols_est);
 
     const std::size_t divider_before_vi =
@@ -507,7 +506,7 @@ namespace {
     int estimated_total_lines = 0;
     for (const auto& vr : visible) {
         estimated_total_lines +=
-            detail::estimate_row_height(vr, input, /*term_cols=*/80);
+            detail::estimate_row_height(vr, input, input.term_cols);
     }
     // NOTE: leading elements (logo card) are intentionally NOT included in
     // the pin-to-bottom estimate.  Pin-to-bottom should engage when MESSAGES

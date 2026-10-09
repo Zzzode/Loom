@@ -321,6 +321,10 @@ struct MessagesListInput {
     bool                            pin_to_bottom = false;
     int                             scroll_offset = 0;
     int                             viewport_rows = 40;
+    /// Terminal column width used by the virtual-path height estimator.
+    /// Set by the caller from query_terminal_size(); defaults to 80 for
+    /// tests and dialogs that don't track real terminal dimensions.
+    int                             term_cols = 80;
 
     /// When true, only brief-tool calls + their results + real user input
     /// are shown; assistant text, thinking, and non-brief tools are hidden.

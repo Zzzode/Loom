@@ -337,7 +337,7 @@ Element MessagesListComponent::Render() {
             // Build virtual rows from cached visible_rows_.  Use
             // viewport_rows from input (default 40) as the window height.
             namespace vl = loom::ui::messages::virtual_list;
-            const int term_cols_est = 120;
+            const int term_cols_est = input_.term_cols;
             auto virt_rows = visible_rows_to_virtual(
                 visible_rows_, input_, term_cols_est);
 

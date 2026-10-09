@@ -162,7 +162,10 @@ ComputeUnseenDivider(const ReplScreenState& s);
     // virtual render path is used, the renderer populates virtual_jh
     // (exact geometry) and virtual_list_active so ScrollTranscript uses
     // precise bounds instead of the EstimateTranscriptRows heuristic.
-    MessagesStore* store = nullptr);
+    MessagesStore* store = nullptr,
+    // Terminal column width for the virtual-path height estimator.
+    // Defaults to 80 for tests/dialogs; production passes the real width.
+    int term_cols = 80);
 
 /// Count '\n'-separated lines in text (minimum 1).
 [[nodiscard]] int CountTextLines(std::string_view text);

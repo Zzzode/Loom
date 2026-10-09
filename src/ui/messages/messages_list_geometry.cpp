@@ -61,22 +61,70 @@ namespace detail {
     return std::clamp(lines, 1, 80);
 }
 
+/// Normalize text according to CommonMark soft/hard break rules (§6.1):
+/// "  \n" or "\\\n" → hard break; regular "\n" → soft break (joined with
+/// space).  Matches the Markdown renderer's split_on_hard_breaks.
+[[nodiscard]] auto normalize_markdown_breaks(std::string_view text)
+    -> std::string {
+    std::string result;
+    result.reserve(text.size());
+    std::size_t pos = 0;
+    while (pos < text.size()) {
+        const std::size_t nl = text.find('\n', pos);
+        std::string_view line = (nl == std::string_view::npos)
+            ? text.substr(pos)
+            : text.substr(pos, nl - pos);
+
+        bool hard = false;
+        if (nl != std::string_view::npos) {
+            if (line.size() >= 2 &&
+                line[line.size() - 1] == ' ' &&
+                line[line.size() - 2] == ' ') {
+                hard = true;
+                while (!line.empty() && line.back() == ' ')
+                    line.remove_suffix(1);
+            } else if (!line.empty() && line.back() == '\\') {
+                hard = true;
+                line.remove_suffix(1);
+            }
+        }
+
+        result += line;
+
+        if (nl != std::string_view::npos) {
+            if (hard) {
+                result += '\n';
+            } else {
+                while (!result.empty() && result.back() == ' ')
+                    result.pop_back();
+                result += ' ';
+            }
+            pos = nl + 1;
+        } else {
+            break;
+        }
+    }
+    return result;
+}
+
 /// Word-boundary wrap variant of estimate_content_lines.  Matches the
-/// Markdown renderer's flexbox word-wrap (atomic words, break at spaces);
-/// produces >= estimate_content_lines for the same text.  Used for
-/// AssistantText where the faithful renderer wraps at word boundaries.
+/// Markdown renderer's flexbox word-wrap (atomic words, break at spaces)
+/// with CommonMark soft/hard break semantics; produces >=
+/// estimate_content_lines for the same text.  Used for AssistantText
+/// where the faithful renderer wraps at word boundaries.
 [[nodiscard]] auto estimate_content_lines_word(
     std::string_view text,
     int term_cols,
     int envelope_gutter_cols) -> int {
+    const std::string normalized = normalize_markdown_breaks(text);
     const int content_cols =
         std::max(20, term_cols - envelope_gutter_cols);
     int lines = 0;
     std::size_t pos = 0;
-    while (pos < text.size()) {
-        std::size_t nl = text.find('\n', pos);
-        if (nl == std::string_view::npos) nl = text.size();
-        const std::string_view line = text.substr(pos, nl - pos);
+    while (pos < normalized.size()) {
+        std::size_t nl = normalized.find('\n', pos);
+        if (nl == std::string_view::npos) nl = normalized.size();
+        const std::string_view line(normalized.data() + pos, nl - pos);
 
         int current = 0;
         std::size_t i = 0;
@@ -106,7 +154,7 @@ namespace detail {
 
         pos = nl + 1;
     }
-    if (!text.empty() && text.back() == '\n') ++lines;
+    if (!normalized.empty() && normalized.back() == '\n') ++lines;
     return std::clamp(lines, 1, 80);
 }
 
@@ -260,6 +308,13 @@ namespace detail {
                 content_lines = estimate_content_lines(preview, term_cols, 4);
             }
             break;
+        case S::UserLocalJsxOutput:
+            // JSX overlay output (e.g. /skills, /agents) renders each line
+            // as a separate text() row — one display row per \n.  The
+            // payload is UserTextMessageData whose content_preview carries
+            // the full text, so estimate_content_lines counts correctly.
+            content_lines = estimate_content_lines(preview, term_cols, 0);
+            break;
         case S::SystemText:
         case S::SystemRateLimit:
         case S::SystemPlanApproval:
@@ -311,14 +366,27 @@ namespace detail {
             content_lines = 1 + estimate_content_lines(preview, term_cols, 36);
             break;
     }
-    // +1 line for envelope header (avatar + role pill) unless content is
-    // already collapsed / system-style which shares headers.
+    // +1 line for envelope header (avatar + role pill) unless the shape
+    // uses the faithful renderer which bypasses that envelope entirely.
     switch (shape) {
         case S::AssistantThinking:
         case S::AssistantRedactedThinking:
+        case S::AssistantText:
+        case S::UserText:
+        case S::UserPrompt:
+        case S::UserCommand:
+        case S::UserLocalJsxOutput:
+        case S::SystemText:
+        case S::SystemRateLimit:
+        case S::SystemPlanApproval:
+        case S::SystemHookProgress:
+        case S::SystemShutdown:
+        case S::SystemAdvisor:
+        case S::SystemTaskAssignment:
+        case S::SystemAPIError:
         case S::SystemCompactBoundary:
         case S::SystemCollapsedContent:
-            break;   // no header row added
+            break;   // faithful renderer: no avatar/role-pill header
         default:
             content_lines += 1;
     }

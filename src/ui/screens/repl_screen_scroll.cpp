@@ -174,21 +174,76 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     return lines;
 }
 
+/// Normalize text according to CommonMark soft/hard break rules (§6.1):
+/// - "  \n" (two+ trailing spaces) → hard break (strip spaces, keep \n)
+/// - "\\\n" (trailing backslash) → hard break (remove backslash, keep \n)
+/// - Regular "\n" → soft break (strip trailing spaces, join with space)
+/// Returns text with \n only at hard break points, matching the Markdown
+/// renderer's split_on_hard_breaks semantics.
+[[nodiscard]] std::string NormalizeMarkdownBreaks(std::string_view text) {
+    std::string result;
+    result.reserve(text.size());
+    std::size_t pos = 0;
+    while (pos < text.size()) {
+        const std::size_t nl = text.find('\n', pos);
+        std::string_view line = (nl == std::string_view::npos)
+            ? text.substr(pos)
+            : text.substr(pos, nl - pos);
+
+        bool hard = false;
+        if (nl != std::string_view::npos) {
+            if (line.size() >= 2 &&
+                line[line.size() - 1] == ' ' &&
+                line[line.size() - 2] == ' ') {
+                hard = true;
+                while (!line.empty() && line.back() == ' ')
+                    line.remove_suffix(1);
+            } else if (!line.empty() && line.back() == '\\') {
+                hard = true;
+                line.remove_suffix(1);
+            }
+        }
+
+        result += line;
+
+        if (nl != std::string_view::npos) {
+            if (hard) {
+                result += '\n';
+            } else {
+                // Soft break: strip trailing spaces, append space.
+                while (!result.empty() && result.back() == ' ')
+                    result.pop_back();
+                result += ' ';
+            }
+            pos = nl + 1;
+        } else {
+            break;
+        }
+    }
+    return result;
+}
+
 /// Count visual lines after word-boundary wrapping at term_cols.
 /// Unlike CountWrappedLines (hard character wrap), this matches the
 /// Markdown renderer's flexbox word-boundary wrapping: words are atomic
 /// and lines break at spaces.  Produces >= CountWrappedLines for the same
 /// text because it never breaks mid-word, which is the underestimate that
 /// made long paragraphs unreachable at the bottom.
+///
+/// Text is first normalized via NormalizeMarkdownBreaks so that soft
+/// breaks (regular \n) are joined with spaces and only hard breaks
+/// (two trailing spaces or backslash) force a new line — matching the
+/// Markdown renderer's CommonMark §6.1 semantics.
 [[nodiscard]] int CountWordWrappedLines(std::string_view text, int term_cols) {
     if (text.empty()) return 1;
+    const std::string normalized = NormalizeMarkdownBreaks(text);
     const int cols = std::max(20, term_cols);
     int lines = 0;
     std::size_t pos = 0;
-    while (pos < text.size()) {
-        std::size_t nl = text.find('\n', pos);
-        if (nl == std::string_view::npos) nl = text.size();
-        const std::string_view line = text.substr(pos, nl - pos);
+    while (pos < normalized.size()) {
+        std::size_t nl = normalized.find('\n', pos);
+        if (nl == std::string_view::npos) nl = normalized.size();
+        const std::string_view line(normalized.data() + pos, nl - pos);
 
         // Greedy word-pack: split into words (runs of non-space) and
         // pack into lines of at most `cols` characters.
@@ -221,7 +276,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 
         pos = nl + 1;
     }
-    if (!text.empty() && text.back() == '\n') {
+    if (!normalized.empty() && normalized.back() == '\n') {
         lines += 1;
     }
     return lines;
@@ -307,15 +362,34 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                     ::loom::ui::messages::TruncateUserPromptText(
                         entry.content_preview);
                 content_lines = CountWrappedLines(truncated, wrap_cols);
-            } else {
+            } else if (entry.is_local_command_output ||
+                       entry.is_local_jsx_output) {
+                // Local command output (e.g. /help, /theme list) and JSX
+                // overlay output (e.g. /skills, /agents) render every line
+                // as a separate text() row — one display row per \n.  These
+                // entries carry role="system" (set in app_local_command.cpp
+                // and BuildVisibleMessages), so this check must precede the
+                // system flat-row branch below.
+                content_lines = CountWrappedLines(entry.content_preview,
+                                                  wrap_cols);
+            } else if (entry.role == "assistant") {
                 // Assistant text renders through Markdown flexbox, which
-                // wraps at word boundaries (atomic words, break at spaces).
-                // CountWrappedLines does hard character wrapping and
-                // underestimates for text with spaces — e.g. 200 "word "
-                // at 40 cols: hard-wrap gives 27 lines, word-wrap gives
-                // 29, making the last line unreachable at the bottom.
+                // wraps at word boundaries (atomic words, break at spaces)
+                // with CommonMark soft/hard break semantics.  Hard character
+                // wrapping underestimates for text with spaces — e.g.
+                // 200 "word " at 40 cols: hard-wrap gives 27 lines,
+                // word-wrap gives 29, making the last line unreachable.
                 content_lines = CountWordWrappedLines(entry.content_preview,
                                                       wrap_cols);
+            } else if (entry.role == "system") {
+                // System messages render as flat text() rows — no Markdown
+                // wrapping, always 1 line (long content overflows the
+                // terminal but doesn't add vertical space).
+                content_lines = 1;
+            } else {
+                // Other roles: hard-wrap estimate is a safe default.
+                content_lines = CountWrappedLines(entry.content_preview,
+                                                  wrap_cols);
             }
         }
         rows += content_lines;

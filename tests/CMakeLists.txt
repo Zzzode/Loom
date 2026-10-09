@@ -25,13 +25,13 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 include(GoogleTest)
 
 
-# NOTE: The test TUs below import C++20 named modules (`import cc.xxx.yyy;`)
+# NOTE: The test TUs below import C++20 named modules (`import loom.xxx.yyy;`)
 # extensively, so CMAKE_CXX_SCAN_FOR_MODULES MUST remain ON at directory scope.
 # Only the googletest vendor targets (which do not export or import modules)
 # have scanning explicitly disabled via set_target_properties below.  Module
 # scanning was previously disabled at directory scope under the incorrect
 # assumption that tests did not import modules — that caused every test TU to
-# fail with "fatal error: module 'cc.*' not found" because BMI discovery was
+# fail with "fatal error: module 'loom.*' not found" because BMI discovery was
 # skipped even though the libraries were built correctly.
 set(LOOM_TEST_DISCOVERY_TIMEOUT 30 CACHE STRING "Timeout in seconds for GoogleTest discovery")
 
@@ -44,20 +44,12 @@ foreach(_gt_target IN ITEMS gtest gtest_main gmock gmock_main)
     endif()
 endforeach()
 
-# Helper: mark a test executable target as C++-module-importing so that CMake
-# scans its TUs for `import` statements and propagates upstream BMI files.
-function(loom_test_target_enable_modules _name)
-    if(TARGET ${_name})
-        set_target_properties(${_name} PROPERTIES CXX_SCAN_FOR_MODULES ON)
-    endif()
-endfunction()
-
 # Custom test main: scrubs terminal-identifying env vars (TERM_PROGRAM,
 # LC_TERMINAL, WT_SESSION, VTE_VERSION) so golden snapshots are deterministic
 # across developer machines — OSC 8 hyperlink emission is gated on these.
 # Golden binaries link this instead of GTest::gtest_main.
 add_library(loom_test_main STATIC loom_test_main.cpp)
-target_link_libraries(loom_test_main PUBLIC GTest::gtest)
+target_link_libraries(loom_test_main PUBLIC GTest::gtest ftxui::screen)
 set_target_properties(loom_test_main PROPERTIES CXX_SCAN_FOR_MODULES OFF)
 
 
@@ -72,11 +64,11 @@ add_executable(test_utils
 target_link_libraries(test_utils
     PRIVATE
         loom_core
-        loom_utils           # all 50+ cc.utils.* imports
-        loom_ui              # cc.ui.terminal_io
-        loom_plugins         # cc.plugins.marketplace
+        loom_utils           # all 50+ loom.utils.* imports
+        loom_ui              # loom.ui.terminal_io
+        loom_plugins         # loom.plugins.marketplace
         loom_memdir
-        loom_commands        # cc.commands.review.review_remote (parse_pr_input)
+        loom_commands        # loom.commands.review.review_remote (parse_pr_input)
         GTest::gtest_main
 )
 gtest_discover_tests(test_utils DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -86,11 +78,11 @@ add_executable(test_core test_core.cpp)
 target_link_libraries(test_core
     PRIVATE
         loom_core
-        loom_types           # import cc.types.types
-        loom_config          # import cc.config.*
-        loom_constants       # import cc.constants.constants
-        loom_coordinator     # import cc.coordinator.types
-        loom_tasks           # import cc.tasks.task_graph
+        loom_types           # import loom.types.types
+        loom_config          # import loom.config.*
+        loom_constants       # import loom.constants.constants
+        loom_coordinator     # import loom.coordinator.types
+        loom_tasks           # import loom.tasks.task_graph
         GTest::gtest_main
 )
 gtest_discover_tests(test_core DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -100,14 +92,14 @@ add_executable(test_state test_state.cpp)
 target_link_libraries(test_state
     PRIVATE
         loom_core
-        loom_state           # all cc.state.* imports
-        loom_session         # cc.session.history
-        loom_types           # cc.types.types
-        loom_cli             # cc.cli.update
-        loom_constants       # cc.constants.prompts
-        loom_services        # cc.services.mcp.*
-        loom_hooks           # cc.hooks.tool_permissions
-        loom_ui              # cc.ui.repl_screen / cc.ui.* (broad coverage)
+        loom_state           # all loom.state.* imports
+        loom_session         # loom.session.history
+        loom_types           # loom.types.types
+        loom_cli             # loom.cli.update
+        loom_constants       # loom.constants.prompts
+        loom_services        # loom.services.mcp.*
+        loom_hooks           # loom.hooks.tool_permissions
+        loom_ui              # loom.ui.repl_screen / loom.ui.* (broad coverage)
         GTest::gtest_main
 )
 gtest_discover_tests(test_state DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -119,11 +111,11 @@ add_executable(test_tools test_tools.cpp test_runtime_backends_install.cpp)
 target_link_libraries(test_tools
     PRIVATE
         loom_core
-        loom_tools           # all 40+ cc.tools.* imports
-        loom_orchestration   # RFC-0001 B11: cc.orchestration.runtime_backends
-        loom_hooks           # cc.hooks.tool_permissions
-        loom_services        # cc.services.api.client, cc.services.mcp.*
-        loom_utils           # cc.utils.* helpers
+        loom_tools           # all 40+ loom.tools.* imports
+        loom_orchestration   # RFC-0001 B11: loom.orchestration.runtime_backends
+        loom_hooks           # loom.hooks.tool_permissions
+        loom_services        # loom.services.api.client, loom.services.mcp.*
+        loom_utils           # loom.utils.* helpers
         GTest::gtest_main
 )
 gtest_discover_tests(test_tools DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -133,8 +125,8 @@ add_executable(test_hooks test_hooks.cpp)
 target_link_libraries(test_hooks
     PRIVATE
         loom_core
-        loom_hooks           # all cc.hooks.* imports
-        loom_utils           # cc.serdes.json
+        loom_hooks           # all loom.hooks.* imports
+        loom_utils           # loom.serdes.json
         GTest::gtest_main
 )
 gtest_discover_tests(test_hooks DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -146,7 +138,7 @@ target_link_libraries(test_services
         loom_core
         loom_cli
         loom_utils
-        loom_teams           # cc.teams.team_helpers
+        loom_teams           # loom.teams.team_helpers
         GTest::gtest_main
 )
 gtest_discover_tests(test_services DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -160,7 +152,7 @@ target_link_libraries(test_sse_mock
         loom_core
         loom_services
         loom_utils
-        loom_cli             # cc.cli.sse_transport (TLS SSE tests)
+        loom_cli             # loom.cli.sse_transport (TLS SSE tests)
         httplib::httplib
         OpenSSL::SSL
         OpenSSL::Crypto
@@ -172,7 +164,7 @@ add_executable(test_wire_backends test_wire_backends.cpp)
 target_link_libraries(test_wire_backends
     PRIVATE
         loom_core
-        loom_query           # cc.query.wire_protocol + backend implementations
+        loom_query           # loom.query.wire_protocol + backend implementations
         loom_utils
         loom_types
         loom_tools
@@ -184,7 +176,7 @@ add_executable(test_with_retry test_with_retry.cpp)
 target_link_libraries(test_with_retry
     PRIVATE
         loom_core
-        loom_services            # cc.services.api.with_retry*, cc.services.oauth
+        loom_services            # loom.services.api.with_retry*, loom.services.oauth
         loom_utils
         GTest::gtest_main
 )
@@ -222,7 +214,7 @@ gtest_discover_tests(test_mcp_stdio DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIME
 
 # ── test_ui split into 4 TUs to stay under clang's 31-bit SourceLocation budget ──
 # (2.14GB hard limit; original 43 imports in one TU overflowed at 99%).
-# Each TU imports only the cc.* modules its tests actually need.
+# Each TU imports only the loom.* modules its tests actually need.
 
 set(_ui_test_libs
     PRIVATE
@@ -391,11 +383,10 @@ add_executable(test_dialog_system test_dialog_system.cpp)
 target_link_libraries(test_dialog_system
     PRIVATE
         loom_core
-        loom_ui                  # cc.ui.dialogs.* + cc.ui.design.theme
+        loom_ui                  # loom.ui.dialogs.* + loom.ui.design.theme
         GTest::gtest
         loom_test_main
 )
-loom_test_target_enable_modules(test_dialog_system)
 gtest_discover_tests(test_dialog_system
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
@@ -409,10 +400,9 @@ add_executable(test_f2_composition_root test_f2_composition_root.cpp)
 target_link_libraries(test_f2_composition_root
     PRIVATE
         loom_core
-        loom_ui                  # cc.ui.dialogs.* + cc.ui.screens.* + cc.ui.app.*
+        loom_ui                  # loom.ui.dialogs.* + loom.ui.screens.* + loom.ui.app.*
         GTest::gtest_main
 )
-loom_test_target_enable_modules(test_f2_composition_root)
 gtest_discover_tests(test_f2_composition_root
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
@@ -449,9 +439,9 @@ add_executable(test_tasks test_tasks.cpp)
 target_link_libraries(test_tasks
     PRIVATE
         loom_core
-        loom_tasks               # cc.tasks.*
-        loom_tools               # cc.tools.agent_* / team / spawn_multi_agent
-        loom_utils               # cc.utils.* helpers (cc.teams.swarm.* arrives via loom_tools)
+        loom_tasks               # loom.tasks.*
+        loom_tools               # loom.tools.agent_* / team / spawn_multi_agent
+        loom_utils               # loom.utils.* helpers (loom.teams.swarm.* arrives via loom_tools)
         GTest::gtest_main
 )
 gtest_discover_tests(test_tasks DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -461,9 +451,9 @@ add_executable(test_commands test_commands.cpp)
 target_link_libraries(test_commands
     PRIVATE
         loom_core
-        loom_commands            # cc.commands.*
-        loom_query               # cc.query.query_engine
-        loom_types               # cc.types.types
+        loom_commands            # loom.commands.*
+        loom_query               # loom.query.query_engine
+        loom_types               # loom.types.types
         GTest::gtest_main
 )
 gtest_discover_tests(test_commands DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -475,8 +465,8 @@ add_executable(test_statusline test_statusline.cpp)
 target_link_libraries(test_statusline
     PRIVATE
         loom_core
-        loom_commands            # cc.commands.statusline
-        loom_utils               # cc.serdes.json (statusline_runner now in loom_ui_app)
+        loom_commands            # loom.commands.statusline
+        loom_utils               # loom.serdes.json (statusline_runner now in loom_ui_app)
         GTest::gtest_main
 )
 gtest_discover_tests(test_statusline DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -489,11 +479,11 @@ add_executable(test_bootstrap test_bootstrap.cpp)
 target_link_libraries(test_bootstrap
     PRIVATE
         loom_core
-        loom_bootstrap           # cc.bootstrap.interactive
-        loom_history             # cc.history
-        loom_task_types          # cc.task_types
-        loom_state               # cc.state.teammate_view_helpers
-        loom_utils               # cc.serdes.json
+        loom_bootstrap           # loom.bootstrap.interactive
+        loom_history             # loom.history
+        loom_task_types          # loom.task_types
+        loom_state               # loom.state.teammate_view_helpers
+        loom_utils               # loom.serdes.json
         GTest::gtest_main
 )
 gtest_discover_tests(test_bootstrap DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -516,16 +506,16 @@ gtest_discover_tests(test_bridge DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT
 
 # ---------------------------------------------------------------------------
 # loom_sdk phases 2-3 (RFC 0001): golden wire-compatibility gate for the
-# hand-rolled control protocol spoken by cc.server.server_main and
-# cc.bridge.bridge_messaging. Freezes the exact JSON for every spoken control
+# hand-rolled control protocol spoken by loom.server.server_main and
+# loom.bridge.bridge_messaging. Freezes the exact JSON for every spoken control
 # subtype under tests/golden/sdk_control/ before the ser/de rewire (design
 # §4.2 S6). UPDATE_GOLDENS=1 rewrites the fixtures.
 # ---------------------------------------------------------------------------
 add_executable(test_sdk_control_golden test_sdk_control_golden.cpp)
 target_link_libraries(test_sdk_control_golden
     PRIVATE
-        loom_core            # cc.server.server_main + cc.bridge.bridge_messaging BMIs
-        loom_utils           # cc.serdes.json
+        loom_core            # loom.server.server_main + loom.bridge.bridge_messaging BMIs
+        loom_utils           # loom.serdes.json
         GTest::gtest
         loom_test_main
 )
@@ -540,7 +530,7 @@ add_executable(test_sdk_serde test_sdk_serde.cpp)
 target_link_libraries(test_sdk_serde
     PRIVATE
         loom_sdk
-        loom_server          # cc.server.control_protocol BMIs
+        loom_server          # loom.server.control_protocol BMIs
         GTest::gtest_main
 )
 gtest_discover_tests(test_sdk_serde
@@ -560,7 +550,7 @@ gtest_discover_tests(test_sdk_convergence
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 # ---------------------------------------------------------------------------
-# loom_sdk phases 2-3 (RFC 0001): first-consumer gate for cc.sdk.harness
+# loom_sdk phases 2-3 (RFC 0001): first-consumer gate for loom.sdk.harness
 # (design §4.4). Runs a Harness against a loopback HTTP server serving
 # canned Anthropic responses — the real transport with zero external calls.
 # Links loom_sdk (the harness) + loom_query (engine/assembly BMIs the test
@@ -582,7 +572,7 @@ add_executable(test_skills test_skills.cpp)
 target_link_libraries(test_skills
     PRIVATE
         loom_core
-        loom_skills              # cc.skills.skill, cc.skills.bundled
+        loom_skills              # loom.skills.skill, loom.skills.bundled
         loom_skills_core
         GTest::gtest_main
 )
@@ -596,7 +586,7 @@ add_subdirectory(benchmarks)
 # Phase 3-B/C: tools_smoke + tools_e2e
 #
 # These two executables exercise the real bash fork/exec and filesystem
-# primitives in cc.tools.bash.impl / cc.tools.files.impl with real shell
+# primitives in loom.tools.bash.impl / loom.tools.files.impl with real shell
 # and filesystem side-effects.  Instead of linking through `loom_tools`
 # (which transitively pulls in loom_services and can be broken by unrelated
 # module scan issues like services/api/sse_client.ddi) we build them via
@@ -692,6 +682,13 @@ set_target_properties(phase3_permission_smoke PROPERTIES
 add_test(NAME Phase3_Permission_Smoke COMMAND phase3_permission_smoke)
 set_tests_properties(Phase3_Permission_Smoke PROPERTIES TIMEOUT 10 LABELS "phase3;permission;hooks")
 
+# ---------------------------------------------------------------------------
+# Smoke tests for the loom executable itself (--dry-run, --version).  Kept in
+# its own subdirectory: it uses a cmake -P script runner with SKIP_RETURN_CODE
+# rather than GoogleTest discovery.
+# ---------------------------------------------------------------------------
+add_subdirectory(smoke)
+
 # Phase 3-E2E: end-to-end integration tests (3 binaries, plain .cpp main,
 # no GoogleTest dep — keep them lightweight).
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/e2e/CMakeLists.txt)
@@ -709,7 +706,7 @@ endif()
 # Migration fix-batch regression suites (test_fix_*)
 # ===========================================================================
 
-# B2: cc.hooks.execution wired into QueryEngine tool-call dispatch
+# B2: loom.hooks.execution wired into QueryEngine tool-call dispatch
 add_executable(test_fix_hooks_integration test_fix_hooks_integration.cpp)
 target_link_libraries(test_fix_hooks_integration
     PRIVATE
@@ -776,7 +773,7 @@ target_link_libraries(test_fix_notifs
         loom_core
         loom_hooks
         loom_services
-        loom_orchestration   # RFC-0001 B15: cc.orchestration.mcp_connectivity + tools.mcp
+        loom_orchestration   # RFC-0001 B15: loom.orchestration.mcp_connectivity + tools.mcp
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_notifs DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
@@ -790,52 +787,3 @@ target_link_libraries(test_fix_misc_low
         GTest::gtest_main
 )
 gtest_discover_tests(test_fix_misc_low DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ── Mark ALL test executables as module-importing so CMake scans them for
-#    `import cc.*` statements and propagates upstream BMI files.  Any
-#    individual target that truly does not import modules (e.g. a legacy
-#    pre-module TU) can override with:
-#        set_target_properties(<name> PROPERTIES CXX_SCAN_FOR_MODULES OFF)
-#    after this block.
-foreach(_loom_test IN ITEMS
-    test_utils
-    test_core
-    test_state
-    test_tools
-    test_hooks
-    test_services
-    test_sse_mock
-    test_with_retry
-    test_enterprise_auth
-    test_mcp_stdio
-    test_ui_light
-    test_ui_messages
-    test_ui_runtime
-    test_ui_dialogs
-    test_streaming_replay
-    test_streaming_migration
-    test_fixture_serializer
-    test_dialog_system
-    test_f2_composition_root
-    test_tasks
-    test_commands
-    test_statusline
-    test_bootstrap
-    test_bridge
-    test_sdk_control_golden
-    test_skills
-    phase3_permission_smoke
-    bench_core
-    test_fix_hooks_integration
-    test_fix_query_engine
-    test_fix_state
-    test_fix_plugin
-    test_fix_yoga
-    test_fix_lsp_tool
-    test_fix_notifs
-    test_fix_misc_low
-)
-    if(TARGET ${_loom_test})
-        set_target_properties(${_loom_test} PROPERTIES CXX_SCAN_FOR_MODULES ON)
-    endif()
-endforeach()

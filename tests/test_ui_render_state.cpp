@@ -522,6 +522,15 @@ TEST(ReplScreen, WordWrapTrailingBlankStripped) {
     EXPECT_EQ(repl::CountWordWrappedLines("a\n\n", 80), 1);
 }
 
+TEST(ReplScreen, WordWrapHardBreakAtEofNoExtraLine) {
+    namespace repl = loom::ui::repl_screen;
+    // "a  \n" — hard break at EOF: renderer ends the row but does not
+    // create an extra empty row.  Estimator must not add a phantom line.
+    EXPECT_EQ(repl::CountWordWrappedLines("a  \n", 80), 1);
+    // "a\\\n" — same for backslash hard break.
+    EXPECT_EQ(repl::CountWordWrappedLines("a\\\n", 80), 1);
+}
+
 TEST(ReplScreen, WordWrapLongParagraphLastLineReachable) {
     namespace repl = loom::ui::repl_screen;
     // 200 "word " at 40 cols — the last line must be counted so the

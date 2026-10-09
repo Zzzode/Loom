@@ -331,9 +331,10 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 
         pos = nl + 1;
     }
-    if (!normalized.empty() && normalized.back() == '\n') {
-        lines += 1;
-    }
+    // No trailing-\n extra line: the normalizer already converts soft
+    // breaks to spaces, so a trailing \n only comes from a hard break at
+    // EOF — and render_inlines() does not push an empty row after a
+    // trailing HardBreakNode (markdown_render_impl.cpp:582-584).
     return lines;
 }
 

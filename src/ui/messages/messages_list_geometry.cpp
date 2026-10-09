@@ -196,7 +196,10 @@ namespace detail {
 
         pos = nl + 1;
     }
-    if (!normalized.empty() && normalized.back() == '\n') ++lines;
+    // No trailing-\n extra line: the normalizer converts soft breaks to
+    // spaces, so a trailing \n only comes from a hard break at EOF — and
+    // render_inlines() does not push an empty row after a trailing
+    // HardBreakNode.
     return std::clamp(lines, 1, 80);
 }
 

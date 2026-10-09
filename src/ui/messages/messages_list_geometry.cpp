@@ -291,6 +291,9 @@ constexpr int kMaxRowHeight = 1000;
             continue;
         }
 
+        // Capture first-content state before seen_content is set, so
+        // the indented-code check below can detect document-start blocks.
+        const bool first_content = !seen_content;
         seen_content = true;
 
         // ── Fenced code block opener ───────────────────────────────────
@@ -311,8 +314,10 @@ constexpr int kMaxRowHeight = 1000;
             }
         }
 
-        // ── Indented code block start (4+ spaces after blank) ──────────
-        if (after_blank && leading_spaces(line) >= 4) {
+        // ── Indented code block start (4+ spaces after blank or at
+        // document start — CommonMark: indented code may begin the
+        // document when no paragraph is open) ──────────────────────
+        if ((after_blank || first_content) && leading_spaces(line) >= 4) {
             in_indented_code = true;
             after_blank = false;
             if (!result.empty() && result.back() != '\n')

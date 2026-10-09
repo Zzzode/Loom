@@ -771,3 +771,18 @@ TEST(ReplScreen, WordWrapFencedCodeBlockClosingFenceWithTail) {
     // block and "line two line three" joins → 3.
     EXPECT_EQ(lines, 4);
 }
+
+TEST(ReplScreen, WordWrapIndentedCodeBlockAtDocumentStart) {
+    namespace repl = loom::ui::repl_screen;
+    // Indented code block at the very start of the document (no preceding
+    // blank line, no prose) must be detected: CommonMark allows indented
+    // code blocks to begin the document when no paragraph is open.
+    // Without the first_content check, the 4-space indent is stripped and
+    // the lines are soft-joined → 1 line instead of 2.
+    const std::string text =
+        "    code one\n"
+        "    code two";
+    const int lines = repl::CountWordWrappedLines(text, 80);
+    // 2 code lines → 2 rows.
+    EXPECT_EQ(lines, 2);
+}

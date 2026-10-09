@@ -19,6 +19,7 @@ import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
 import loom.ui.messages.messages_list;
 import loom.ui.messages.virtual_list;
+import loom.ui.messages.user_text_message;
 
 namespace loom::ui::repl_screen {
 
@@ -140,10 +141,10 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 
 /// Count visual lines after wrapping at term_cols.  Unlike CountTextLines
 /// (newline-only), this accounts for long paragraphs that wrap across
-/// multiple terminal rows.  The result is capped to prevent extreme
-/// overestimation on very long messages (content_preview carries the FULL
-/// untruncated text, so an uncapped count would inflate max_offset past
-/// the actual rendered height and cause scroll dead-zones).
+/// multiple terminal rows.  Callers that render truncated text (e.g.
+/// UserTextMessage's 2500+2500 head/tail truncation) must apply the same
+/// truncation before calling this, so the estimate matches the rendered
+/// height.
 [[nodiscard]] int CountWrappedLines(std::string_view text, int term_cols) {
     if (text.empty()) return 1;
     const int cols = std::max(20, term_cols);
@@ -170,10 +171,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     if (!text.empty() && text.back() == '\n') {
         lines += 1;
     }
-    // Cap: 500 visual lines per message is 10-25 viewport heights, more
-    // than enough for scrolling while preventing the freeze regression
-    // caused by uncapped counting on full untruncated content_preview.
-    return std::min(lines, 500);
+    return lines;
 }
 
 [[nodiscard]] int EstimateTranscriptRows(
@@ -233,12 +231,29 @@ ComputeUnseenDivider(const ReplScreenState& s) {
         } else {
             // UserTextMessage wraps at a fixed 76 cols (kPromptWrapWidth=78
             // minus 2 for the "❯ " prefix) regardless of terminal width.
-            // Using term_cols here would underestimate on wide terminals
-            // (e.g. 120 cols → estimate 10 lines vs actual 16 for a
-            // 1200-byte message), making max_offset too small and
-            // preventing scroll-to-bottom.
-            const int wrap_cols = (entry.role == "user") ? 76 : term_cols;
-            content_lines = CountWrappedLines(entry.content_preview, wrap_cols);
+            // Assistant text reserves 2 cols for the "●" bullet glyph, so
+            // the body wraps at term_cols-2.  Using term_cols here would
+            // underestimate on narrow terminals (e.g. 40 cols → estimate
+            // 25 lines vs actual 27 for a 1000-char message), making
+            // max_offset too small and preventing scroll-to-bottom.
+            const int wrap_cols = (entry.role == "user")
+                ? 76
+                : std::max(20, term_cols - 2);
+            if (entry.role == "user") {
+                // UserTextMessage truncates content > 10K chars to
+                // head 2500 + separator + tail 2500 before rendering.
+                // Apply the same truncation here so the estimate matches
+                // the actual rendered height — otherwise a 100K-char paste
+                // counts 1300+ lines while rendering only ~68, creating a
+                // scroll dead-zone.
+                const std::string truncated =
+                    ::loom::ui::messages::TruncateUserPromptText(
+                        entry.content_preview);
+                content_lines = CountWrappedLines(truncated, wrap_cols);
+            } else {
+                content_lines = CountWrappedLines(entry.content_preview,
+                                                  wrap_cols);
+            }
         }
         rows += content_lines;
         // Message list inserts one empty separator after each rendered row

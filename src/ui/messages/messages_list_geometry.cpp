@@ -24,6 +24,7 @@ import loom.ui.messages.tool_use_message;
 import loom.ui.messages.message_tool_result;
 import loom.ui.messages.local_command_output_message;
 import loom.ui.messages.thinking_message;
+import loom.ui.messages.user_text_message;
 
 namespace loom::ui::messages_list {
 
@@ -231,6 +232,25 @@ namespace detail {
             break;
         case S::UserAttachments:
             content_lines = 3;   // grid header + 1 row of thumbs
+            break;
+        case S::UserText:
+        case S::UserPrompt:
+        case S::UserCommand: {
+            // UserTextMessage wraps at a fixed 76 cols and truncates
+            // content > 10K chars to head 2500 + tail 2500 before
+            // rendering.  Apply the same truncation and wrap width so
+            // the virtual-list estimate matches the rendered height.
+            const std::string truncated =
+                ::loom::ui::messages::TruncateUserPromptText(preview);
+            content_lines = 1 + estimate_content_lines(truncated, 76, 0);
+            break;
+        }
+        case S::AssistantText:
+            // Faithful renderer reserves 2 cols for the "●" bullet glyph;
+            // the body wraps at term_cols-2.  The legacy 36-col avatar
+            // gutter in the default case is from the divergent envelope
+            // path that AssistantText bypasses.
+            content_lines = 1 + estimate_content_lines(preview, term_cols, 2);
             break;
         default:
             content_lines = 1 + estimate_content_lines(preview, term_cols, 36);

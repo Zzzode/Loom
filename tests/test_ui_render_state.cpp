@@ -561,3 +561,80 @@ TEST(ReplScreen, EstimateTranscriptRowsAssistantParagraphs) {
     // + 1 separator = ~6 rows.  Must be >= 5 (not collapsed to 2-3).
     EXPECT_GE(estimate, 5);
 }
+
+// ── Virtual path term_cols threading tests ──────────────────────────────
+// These verify that the virtual-path height estimator respects the real
+// terminal width: a long paragraph must produce a taller estimate at 40 cols
+// than at 120 cols.  Regression: the virtual path hardcoded term_cols=120,
+// causing scroll-bounds underestimation on narrow terminals.
+
+TEST(ReplScreen, VirtualEstimateRowHeightRespectsTermCols) {
+    namespace ml = loom::ui::messages_list;
+
+    // A paragraph long enough to wrap at both 40 and 120 cols.
+    std::string text;
+    for (int i = 0; i < 30; ++i) text += "hello world ";
+    // ~360 chars → at 120 cols wraps to ~3 lines, at 40 cols wraps to ~9.
+
+    ml::MessagesListInput input;
+    ml::AssistantTextMessageData data;
+    data.content = text;
+    input.rows.push_back(ml::MessageRowPayload{std::move(data)});
+    input.shapes.push_back(ml::MessageShape::AssistantText);
+
+    auto visible = ml::build_visible_rows(input);
+    ASSERT_EQ(visible.size(), 1u);
+
+    const int est_40  = ml::detail::estimate_row_height(visible[0], input, 40);
+    const int est_120 = ml::detail::estimate_row_height(visible[0], input, 120);
+
+    // Narrow terminal must produce a taller (or equal) estimate.
+    EXPECT_GT(est_40, est_120)
+        << "40-col estimate should exceed 120-col for wrapping text";
+}
+
+TEST(ReplScreen, VirtualEstimateRowHeightSameForShortText) {
+    namespace ml = loom::ui::messages_list;
+
+    // Short text that fits on one line at any width ≥ 20.
+    ml::MessagesListInput input;
+    ml::AssistantTextMessageData data;
+    data.content = "short";
+    input.rows.push_back(ml::MessageRowPayload{std::move(data)});
+    input.shapes.push_back(ml::MessageShape::AssistantText);
+
+    auto visible = ml::build_visible_rows(input);
+    ASSERT_EQ(visible.size(), 1u);
+
+    const int est_40  = ml::detail::estimate_row_height(visible[0], input, 40);
+    const int est_120 = ml::detail::estimate_row_height(visible[0], input, 120);
+
+    // Both should be equal (1 content line + envelope header).
+    EXPECT_EQ(est_40, est_120);
+}
+
+TEST(ReplScreen, VirtualVisibleRowsToVirtualRespectsTermCols) {
+    namespace ml = loom::ui::messages_list;
+
+    // A paragraph long enough to wrap differently at 40 vs 120 cols.
+    std::string text;
+    for (int i = 0; i < 30; ++i) text += "hello world ";
+
+    ml::MessagesListInput input;
+    ml::AssistantTextMessageData data;
+    data.content = text;
+    input.rows.push_back(ml::MessageRowPayload{std::move(data)});
+    input.shapes.push_back(ml::MessageShape::AssistantText);
+
+    auto visible = ml::build_visible_rows(input);
+    ASSERT_EQ(visible.size(), 1u);
+
+    auto virt_40  = ml::visible_rows_to_virtual(visible, input, 40);
+    auto virt_120 = ml::visible_rows_to_virtual(visible, input, 120);
+    ASSERT_EQ(virt_40.size(), 1u);
+    ASSERT_EQ(virt_120.size(), 1u);
+
+    // The virtual row's estimated height must reflect the terminal width.
+    EXPECT_GT(virt_40[0].estimated_height_lines, virt_120[0].estimated_height_lines)
+        << "40-col virtual estimate should exceed 120-col";
+}

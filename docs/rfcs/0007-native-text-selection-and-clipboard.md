@@ -1284,7 +1284,7 @@ Phase 3 should evaluate whether to upstream this patch.
 | 1 | Copy pipeline reliability | ClipboardCoordinator, ClipboardJob, posix_spawn, SIGPIPE, SSH detection, Linux backend detection, threshold fix, dead code removal | proposed | All new unit tests pass; serial ctest green (debug + release); golden snapshots regenerated and reviewed; BMI PSS before/after recorded; `inline_def_check.py` no increase; `graph_check.py --target-ui9` passes; no stdout/stderr pollution from worker |
 | 2 | Default native selection + config fallback | TrackMouse(false) before Loop, mouseMode config, status bar label, settings_home_read(), ConfigManager read/write split, MCP fallback, user docs | proposed | PTY byte-level test confirms DECSET absent at startup; ~/.agents fallback test passes; MCP fallback mutation tests pass; serial ctest green (debug + release); golden snapshots regenerated; documentation gate satisfied (CLAUDE.md, design-decisions.md, user docs); BMI PSS before/after recorded |
 | 3 | F2 runtime toggle (DEFERRED) | sigwait thread, runtime mouse-mode toggle | deferred | Follow-up RFC required; needs FTXUI public lifecycle API |
-| 4 | Selection quality | Multi-click word/line selection, drag threshold tuning | proposed | No regression in Phase 1/2 tests; UX testing in Ghostty/iTerm2/tmux |
+| 4 | Selection quality | D-5 linear vs rectangle, D-6 empty lines, CJK/emoji, same-coordinate click, cancel/blur | proposed | No regression in Phase 1/2 tests; UX testing in Ghostty/iTerm2/tmux; selection extraction tests pass |
 | 5 | Documentation | Developer docs, architecture docs | proposed | All docs updated; no TODO(rfc) remaining |
 
 ### Phase 1 — Copy pipeline reliability (P0)
@@ -1733,63 +1733,65 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 
 ### 11.0 PRR checklist
 
+**Convention:** `[x]` = current evidence (verified in this RFC or codebase). `[ ]` = graduation condition (plan defined in this RFC, to be measured/verified at phase graduation).
+
 #### 1. Correctness and tests
 
-- [x] Every new behaviour has a new test (unit / module / e2e named) — see §11.2 test mapping (13 test targets)
-- [x] Failure paths covered (empty input, error result, timeout, abort) — §5.5 cancel/reap/start, §11.2 wall-clock policy
-- [x] Golden suites assessed: `test_ui_*`, `test_dialog_*`, `test_prompt_dialog`, `test_cost_threshold_dialog`; status bar footer changes require golden regeneration, reviewed in same commit
-- [x] Known timing flake list respected; no new wall-clock assertions with tight upper bounds — deterministic deadline tests via `steady_clock` seam, loose 10s integration watchdog
-- [x] Expected serial ctest total stated; deletions reconcile exactly — §11.2 baseline from clean build, zero NOT_BUILT placeholders
-- [x] String/shape-based cross-module couplings changed on BOTH emitter and consumer sides; `docs/decisions/design-decisions.md` consulted — §5.9 shared-change gate
+- [ ] Every new behaviour has a new test (unit / module / e2e named) — **graduation:** §11.2 test mapping (13 test targets) defines which tests to write
+- [ ] Failure paths covered (empty input, error result, timeout, abort) — **graduation:** §5.5 cancel/reap/start, §11.2 wall-clock policy
+- [ ] Golden suites assessed: `test_ui_*`, `test_dialog_*`, `test_prompt_dialog`, `test_cost_threshold_dialog`; status bar footer changes require golden regeneration, reviewed in same commit — **graduation:** §11.2 golden policy
+- [x] Known timing flake list respected; no new wall-clock assertions with tight upper bounds — **evidence:** deterministic deadline tests via `steady_clock` seam, loose 10s integration watchdog (§11.2)
+- [x] Expected serial ctest total stated; deletions reconcile exactly — **evidence:** §11.2 baseline policy (clean build, zero NOT_BUILT)
+- [x] String/shape-based cross-module couplings changed on BOTH emitter and consumer sides; `docs/decisions/design-decisions.md` consulted — **evidence:** §5.9 shared-change gate
 
 **Notes:** Test mapping in §11.2; golden policy in §11.2; ctest reconciliation in §11.2.
 
 #### 2. Build system and module discipline
 
-- [x] Affected producer-TU BMI PSS measured before AND after — §11.1 measurement plan (baseline before Phase 1, graduation after)
-- [x] No Ninja concurrency reduction anywhere; memory handled by TU splitting / type erasure — §11.1 no concurrency degradation
-- [x] Interface files gain declarations, not definitions — §11.1 PRIVATE `.cpp` implementation files for ClipboardCoordinator/ClipboardJob
-- [x] No new textual standard-library or third-party includes in module units — all new code uses `import std;`
-- [x] Named partitions used only for PIMPL internals, not for cross-area layering — no partitions used
-- [x] No new upward dependency edges; directory-level SCCs do not grow — §11.1 `graph_check.py --target-ui9` passes; McpPhysicalSource/McpMutationOutcome in `loom.config.config` (not commands) to avoid config → commands upward dependency
+- [ ] Affected producer-TU BMI PSS measured before AND after — **graduation:** §11.1 measurement plan (baseline before Phase 1, graduation after)
+- [ ] No Ninja concurrency reduction anywhere; memory handled by TU splitting / type erasure — **graduation:** §11.1 no concurrency degradation
+- [x] Interface files gain declarations, not definitions — **evidence:** §11.1 PRIVATE `.cpp` implementation files for ClipboardCoordinator/ClipboardJob
+- [x] No new textual standard-library or third-party includes in module units — **evidence:** all new code uses `import std;`
+- [x] Named partitions used only for PIMPL internals, not for cross-area layering — **evidence:** no partitions used
+- [x] No new upward dependency edges; directory-level SCCs do not grow — **evidence:** McpPhysicalSource/McpMutationOutcome in `loom.config.config` (not commands) to avoid config → commands upward dependency; `graph_check.py --target-ui9` to be run at graduation
 
 **Notes:** BMI PSS measurement plan in §11.1; fan-out and inline ratchet in §11.1.
 
 #### 3. Rollback and compatibility
 
-- [x] Commits are atomic per phase; each phase revertible independently — §11.4 rollback table
-- [x] No flag-day interface changes: PIMPL / type erasure / re-export shims keep importers building during migration — MCP mutator return type change is breaking but updated in same commit (only caller is `mcp_cmd.cppm`)
-- [x] Persisted data compatibility considered (`~/.loom/sessions`, settings cascade, config schema) with migration or read-tolerance — §5.3 config fallback, §10 migration plan; `~/.loom` takeover is one-way by design
-- [x] Wire-protocol compatibility — no wire changes in this RFC
+- [ ] Commits are atomic per phase; each phase revertible independently — **graduation:** §11.4 rollback table
+- [x] No flag-day interface changes: PIMPL / type erasure / re-export shims keep importers building during migration — **evidence:** MCP mutator return type change is breaking but updated in same commit (only caller is `mcp_cmd.cppm`)
+- [x] Persisted data compatibility considered (`~/.loom/sessions`, settings cascade, config schema) with migration or read-tolerance — **evidence:** §5.3 config fallback, §10 migration plan; `~/.loom` takeover is one-way by design
+- [x] Wire-protocol compatibility — **evidence:** no wire changes in this RFC
 
 **Notes:** Rollback table in §11.4; migration plan in §10.
 
 #### 4. Observability
 
-- [x] Session traces remain valid: `messages.jsonl` block coverage and `dump-prompts/<id>.jsonl` request/response dumps — no changes to session storage
-- [x] New background workers / threads are event-driven; no constant-rate render ticker; teardown/abort paths defined — ClipboardCoordinator is event-driven (queue + owner thread); shutdown linearized (stop accepting → discard pending → cancel/reap → exit)
-- [x] New diagnostics log through the existing debug channels; no new ad-hoc print paths — owner thread posts metadata to thread-safe queue; UI thread drains and writes to `log::add_to_in_memory_errors()` (existing in-memory buffer); worker never writes to stdout/stderr or directly to the unlocked buffer
-- [x] Build/performance metrics from this PRR recorded in the RFC — §11.1 BMI PSS plan, §11.3 platform evidence
+- [x] Session traces remain valid: `messages.jsonl` block coverage and `dump-prompts/<id>.jsonl` request/response dumps — **evidence:** no changes to session storage
+- [x] New background workers / threads are event-driven; no constant-rate render ticker; teardown/abort paths defined — **evidence:** ClipboardCoordinator is event-driven (queue + owner thread); shutdown linearized (stop accepting → discard pending → cancel/reap → exit)
+- [x] New diagnostics log through the existing debug channels; no new ad-hoc print paths — **evidence:** owner thread posts metadata to thread-safe queue; UI thread drains and writes to `log::add_to_in_memory_errors()` (existing in-memory buffer); worker never writes to stdout/stderr or directly to the unlocked buffer
+- [ ] Build/performance metrics from this PRR recorded in the RFC — **graduation:** §11.1 BMI PSS plan, §11.3 platform evidence
 
 **Notes:** Diagnostics sink: owner thread → thread-safe queue → UI thread → `log::add_to_in_memory_errors()` (`src/utils/diagnostics/log.cppm:95`). The in-memory buffer is an unlocked static vector — only the UI thread writes/reads it. Shutdown: owner stops accepting, discards pending, cancels/reaps, exits — no callback to destroyed UI. Status bar four-state feedback is the user-facing diagnostic. Acceptance: no stdout/stderr pollution, no selected text in logs, session traces valid.
 
 #### 5. Documentation and deletion
 
-- [x] `CLAUDE.md` updated if conventions, build layout, or paths change — Phase 2 documentation gate (§5.9, Phase 2 rollback)
-- [x] Non-obvious decisions added to `docs/decisions/design-decisions.md` — Phase 2 documentation gate
-- [x] Dead code made obsolete by the work is deleted in the SAME phase — §5.8 dead code removal (Phase 1)
-- [x] Deprecated modules/shapes have a stated removal trigger and migration note — F2 runtime toggle deferred to follow-up RFC; old mouse-mode functions deleted (§5.8)
-- [x] All comments/docs in English — project rule
+- [ ] `CLAUDE.md` updated if conventions, build layout, or paths change — **graduation:** Phase 2 documentation gate (§5.9, Phase 2 rollback)
+- [ ] Non-obvious decisions added to `docs/decisions/design-decisions.md` — **graduation:** Phase 2 documentation gate
+- [ ] Dead code made obsolete by the work is deleted in the SAME phase — **graduation:** §5.8 dead code removal (Phase 1)
+- [x] Deprecated modules/shapes have a stated removal trigger and migration note — **evidence:** F2 runtime toggle deferred to follow-up RFC; old mouse-mode functions deleted (§5.8)
+- [x] All comments/docs in English — **evidence:** project rule
 
 **Notes:** Documentation gate in Phase 2 rollback section; dead code removal in §5.8.
 
 #### 6. Platform readiness (macos-14 / Linux)
 
-- [x] Debug + release presets build `-Werror` clean on the Linux dev box — §11.3 platform evidence
-- [x] macos-14 CI green at default parallelism (3 vCPU / 14 GB); no swap — §11.1 macOS-14 concurrency wall time measurement
-- [x] Termios / signals / Apple-only guards correct for both platforms — §5.5 pipe+fcntl (macOS) / pipe2 (Linux); POSIX_SPAWN_SETSIGMASK; §11.3
-- [x] truecolor (`COLORTERM=truecolor TERM=xterm-256color`) golden path intact — §11.3 truecolor golden; `loom_test_main` sets `COLORTERM=truecolor`
-- [x] Offline dependency cache unaffected; no new network fetch required — §11.3 offline dep cache
+- [ ] Debug + release presets build `-Werror` clean on the Linux dev box — **graduation:** §11.3 platform evidence
+- [ ] macos-14 CI green at default parallelism (3 vCPU / 14 GB); no swap — **graduation:** §11.1 macOS-14 concurrency wall time measurement
+- [x] Termios / signals / Apple-only guards correct for both platforms — **evidence:** §5.5 pipe+fcntl (macOS) / pipe2 (Linux); POSIX_SPAWN_SETSIGMASK
+- [ ] truecolor (`COLORTERM=truecolor TERM=xterm-256color`) golden path intact — **graduation:** §11.3 truecolor golden; `loom_test_main` sets `COLORTERM=truecolor`
+- [ ] Offline dependency cache unaffected; no new network fetch required — **graduation:** §11.3 offline dep cache
 
 **Notes:** Platform evidence matrix in §11.3; macOS pipe+fcntl path in §5.5.
 

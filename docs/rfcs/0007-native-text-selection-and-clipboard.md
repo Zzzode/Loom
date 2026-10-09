@@ -1193,9 +1193,8 @@ compatibility risks, and per-change rollback/verification.
 | Changed API | Callers | Compatibility risk |
 |-------------|---------|--------------------|
 | `ConfigManager::user_path_` → split into `user_read_path_` / `user_write_path_` | `load()`, `save_user()`, `set_user_setting()`, `find_mcp_server_files()`, MCP mutators, `tier_files_changed()`, `user_config_path()` | Low — internal field; callers updated to use the appropriate path. No public API change. |
-| New `settings_home_read()` helper | `ConfigManager` default constructor + `load()` re-resolution | Low — new file in `src/constants/paths.cppm`; no existing caller modified. |
-| New `McpPhysicalSource` struct | MCP enumeration, owner map, physical-name bookkeeping | Low — new struct; existing `McpStorageScope` retained for scope enum. |
-| New `McpMutationOutcome` / `McpMutationEntry` | MCP `remove`/`enable`/`disable` (named and all) | Medium — changes the return type of MCP mutators. CLI rendering updated. Existing callers (`mcp_cmd.cppm`) updated in the same commit. |
+| New `settings_home_read()` helper | `ConfigManager` default constructor + `load()` re-resolution | Low — new function in existing module (`loom.constants.paths`); no existing caller modified. |
+| New `McpPhysicalSource` / `McpMutationOutcome` / `McpMutationEntry` structs | MCP `remove`/`enable`/`disable` (named and all) in `mcp_cmd.cppm` | Medium — changes the return type of MCP mutators. CLI rendering updated. The structs live in `loom.config.config` (co-located with `mcp_scope_paths()`, `mcp_owner_`, `find_mcp_server_files()` which are ConfigManager members). The commands layer (`loom.commands.mcp_cmd`) consumes them — no upward dependency. |
 | MCP mutation semantics (fallback read-only) | `mcp add/remove/enable/disable` | Medium — behavior change: fallback entries become read-only. Users who previously wrote to `~/.agents` via MCP commands will now get "read-only fallback" rejection. Migration: `mcp add` creates `~/.loom` shadow. |
 
 **Per-change rollback and verification:**
@@ -1204,7 +1203,7 @@ compatibility risks, and per-change rollback/verification.
 |--------|----------------------|----------|--------------|
 | `settings_home_read()` helper | Own commit (new file + unit tests) | Revert commit; `ConfigManager` falls back to `config_home_read()` | Unit tests: file-level resolver, LOOM_CONFIG_DIR override, unparseable file |
 | `ConfigManager` read/write split | Own commit (field split + caller updates + tests) | Revert commit; single `user_path_` restored | Unit tests: read/write split, same-instance takeover, failed-write-no-rebind, constructor modes |
-| `McpPhysicalSource` + `McpMutationOutcome` | Own commit (new structs + MCP CLI updates + tests) | Revert commit; MCP mutators return to existing `McpRemoveOutcome`/bulk writer | Unit tests: per-entry status (Modified/Unchanged/SkippedReadOnly/WriteFailed/NotFound), aggregate helpers, empty-collection semantics |
+| `McpPhysicalSource` + `McpMutationOutcome` | Own commit (new structs in `config.cppm` + MCP CLI updates in `mcp_cmd.cppm` + tests) | Revert commit; MCP mutators return to existing `McpRemoveOutcome`/bulk writer | Unit tests: per-entry status (Modified/Unchanged/SkippedReadOnly/WriteFailed/NotFound), aggregate helpers, empty-collection semantics |
 | MCP fallback read-only semantics | Same commit as above (depends on outcome model) | Same as above | Unit tests: fallback-only remove/enable/disable, no-scope multi-layer, explicit --scope, all fallback, mixed |
 
 **Local alternative considered:** Limit Phase 2 to mouseMode's minimal config
@@ -1217,11 +1216,14 @@ contain sensitive auth tokens). Both are bug fixes, not new features.
 
 **Graph/build impact:** No new dependencies. `settings_home_read()` is a
 new function in an existing module (`loom.constants.paths`). The
-`McpPhysicalSource`/`McpMutationOutcome` structs are new types in existing
-MCP modules. No new textual third-party includes. No SCC growth (new types
-are leaf-level, no cycles introduced). BMI PSS impact: negligible (new
-function + new structs in existing modules; no interface changes to
-existing functions).
+`McpPhysicalSource`/`McpMutationOutcome` structs are new types in
+`loom.config.config` (co-located with the ConfigManager MCP APIs that
+produce them). The commands layer consumes them — no upward dependency
+from config to commands. No new textual third-party includes. No SCC
+growth (new types are leaf-level, no cycles introduced). BMI PSS impact:
+negligible (new function + new structs in existing modules; the only
+interface change is the MCP mutator return type, which is a breaking
+change updated in the same commit).
 
 ## 6. Alternatives considered
 
@@ -1744,10 +1746,10 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 | Golden snapshot impact? | Status bar gains `mouse_mode_label`; goldens regenerated in Phase 2. |
 | Truecolor golden impact? | Status bar label uses existing design tokens. No new colors. Goldens regenerated. |
 | termios/platform impact? | Phase 2: `TrackMouse(false)` affects only DEC private modes, not termios. Phase 1: no termios changes. |
-| Diagnostics? | Clipboard worker logs via a thread-safe queue marshaled to the UI thread (the only thread that writes to the terminal). The UI thread formats and writes to the existing application log channel. Fields: backend name, result status, duration, byte count. Never selected text content. Never to `~/.loom/dump-prompts/` (that directory is for query engine API dumps). The worker thread NEVER writes to stdout/stderr directly — this preserves the terminal-output ownership invariant (§5.2). |
+| Diagnostics? | **User-facing:** the status bar four-state feedback (Copying/Copied/Failed/OSC 52) is the diagnostic — no additional log output needed for users. **Developer-facing:** error-level events (backend not found, spawn failure, timeout, kill failure) are recorded via `log::add_to_in_memory_errors()` (existing in-memory buffer, `src/utils/diagnostics/log.cppm:95`), which the UI can surface on demand. The worker thread NEVER writes to stdout/stderr — this preserves the terminal-output ownership invariant (§5.2). Fields: backend name, result status, duration, byte count. Never selected text content. Never to `~/.loom/dump-prompts/` (that directory is for query engine API dumps). Acceptance: no stdout/stderr pollution from clipboard worker, no selected text in any log, session traces (`messages.jsonl`) remain valid. |
 | Build system? | No new dependencies. `posix_spawn`/`pipe`/`fcntl`/`kill` are POSIX (Linux/macOS). Windows existing path uses `_popen`/`_pclose` (unchanged). |
 | Signal safety? | **Loom's own** signal handlers set atomic flags only; no Loom signal handler writes to stdout. FTXUI's internal signal handlers (installed by `Install()`) restore terminal state on SIGTSTP/SIGINT — this is FTXUI's behavior, not Loom's, and is unaffected by this RFC. The clipboard worker thread blocks SIGPIPE via `pthread_sigmask` (thread-local, not inherited by children due to `POSIX_SPAWN_SETSIGMASK`). |
-| `abort()` / SIGKILL? | `abort()` does not run `atexit` handlers. SIGKILL cannot be caught. Two cases: (1) **mouseMode=false (default):** `TrackMouse(false)` suppresses DECSET at startup — no mouse tracking was ever enabled, so there is no mouse-tracking state to clean up. (2) **mouseMode=true:** DECSET `?1000h`/`?1003h`/`?1015h`/`?1006h` was sent at startup; an abnormal exit leaves mouse tracking enabled. The terminal's own reset (`reset` command or terminal restart) clears it. In both cases, the alternate screen buffer may also be affected — same recovery. Documented limitation. |
+| `abort()` / SIGKILL? | `abort()` does not run `atexit` handlers. SIGKILL cannot be caught. Terminal state that may be left behind: (1) **mouseMode=false (default):** Loom did not enable mouse tracking — but the terminal may have pre-existing mouse tracking from a previous application that crashed; `TrackMouse(false)` cannot clear it. (2) **mouseMode=true:** DECSET `?1000h`/`?1003h`/`?1015h`/`?1006h` was sent at startup; abnormal exit leaves mouse tracking enabled. (3) **termios:** FTXUI's `Install()` sets raw mode; abnormal exit may leave the terminal in raw mode (no line buffering, no echo). (4) **cursor:** cursor may remain hidden if FTXUI hid it. Recovery for all cases: terminal's own reset (`reset` command or terminal restart). Documented limitation. |
 | Multi-threaded fork safety? | Using `posix_spawn` (not `fork()`), which is async-signal-safe and does not inherit locks. Project already uses this pattern (`bash_execution.cppm`). |
 
 ### 11.1 Build and architecture contract (Dev-2 PRR R1, Dev-0 PRR P1-1)
@@ -1756,19 +1758,26 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 
 | New code | Target | Module | File |
 |----------|--------|--------|------|
-| `ClipboardCoordinator` | `loom_utils_platform` | `loom.utils.platform` | `src/utils/platform/clipboard_coordinator.cppm` |
-| `ClipboardJob` | `loom_utils_platform` | `loom.utils.platform` | `src/utils/platform/clipboard_job.cppm` |
-| `JobInput` / `CancellationState` | `loom_utils_platform` | `loom.utils.platform` | Same file as `ClipboardJob` |
+| `ClipboardCoordinator` (declaration) | `loom_utils` | `loom.platform.clipboard_coordinator` | `src/utils/platform/clipboard_coordinator.cppm` |
+| `ClipboardCoordinator` (implementation) | `loom_utils` | — (PRIVATE `.cpp`) | `src/utils/platform/clipboard_coordinator.cpp` |
+| `ClipboardJob` (declaration) | `loom_utils` | `loom.platform.clipboard_job` | `src/utils/platform/clipboard_job.cppm` |
+| `ClipboardJob` (implementation) | `loom_utils` | — (PRIVATE `.cpp`) | `src/utils/platform/clipboard_job.cpp` |
+| `JobInput` / `CancellationState` | `loom_utils` | `loom.platform.clipboard_job` | Same `.cppm` as `ClipboardJob` |
 | `settings_home_read()` | `loom_constants` | `loom.constants.paths` | `src/constants/paths.cppm` (new function in existing module) |
-| `McpPhysicalSource` / `McpMutationOutcome` | `loom_commands` | `loom.commands.mcp` | `src/commands/mcp_cmd.cppm` (new structs in existing module) |
-| `TrackMouse(false)` call | `loom_ui_app` | `loom.ui.app` | `src/ui/app/app_run.cpp` (one line before `Loop()`) |
+| `McpPhysicalSource` / `McpMutationOutcome` | `loom_config` | `loom.config.config` | `src/config/config.cppm` (new structs in existing module — co-located with `mcp_scope_paths()`, `mcp_owner_`, `find_mcp_server_files()` which are ConfigManager members at `config.cppm:757/:834/:1032`) |
+| `TrackMouse(false)` call | `loom_ui_app` | — (`.cpp`, no module export) | `src/ui/app/app_run.cpp` (one line before `Loop()`) |
 | `mouseMode` config | `loom_config` | `loom.config.config` | `src/config/config.cppm` (new field + parse) |
+
+**Rationale for McpPhysicalSource/McpMutationOutcome in `loom_config`:** The MCP scope/owner/remove APIs (`mcp_scope_paths()`, `mcp_owner_`, `find_mcp_server_files()`) are ConfigManager members in `config.cppm`. Placing the shared descriptor/outcome types in the commands layer would force `loom_config` to upward-depend on `loom_commands`, violating the DAG. The types live in `loom.config.config`; the commands layer (`loom.commands.mcp_cmd`) consumes them.
 
 **BMI PSS measurement plan:**
 - **Before (baseline):** Record BMI PSS (from `/proc/<pid>/smaps_rollup` `Pss:`) for affected producer TUs: `config.cppm`, `clipboard.cppm`, `app_run.cpp`, `mcp_cmd.cppm`, `paths.cppm`.
 - **After (graduation):** Re-measure the same TUs. Expected delta: negligible (new function in existing module + new structs; no interface changes to existing functions).
-- **Fan-out:** `settings_home_read()` is a new function in `paths.cppm` — importers of `loom.constants.paths` recompile. `McpPhysicalSource`/`McpMutationOutcome` are new structs in `mcp_cmd.cppm` — importers of `loom.commands.mcp` recompile. No existing function signatures change.
+- **Fan-out:** `settings_home_read()` is a new function in `paths.cppm` — importers of `loom.constants.paths` recompile. `McpPhysicalSource`/`McpMutationOutcome` are new structs in `config.cppm` — importers of `loom.config.config` recompile. The MCP mutation return type changes (§5.9): `mcp remove`/`enable`/`disable` return `McpMutationOutcome` instead of the existing `McpRemoveOutcome`/bulk writer. This is a **breaking interface change** — all callers of MCP mutators are updated in the same commit. The CLI rendering layer (`mcp_cmd.cppm`) is the only caller.
 - **Inline ratchet:** `inline_def_check.py` baseline recorded before Phase 1; graduation requires no increase in inline-body count for affected TUs.
+- **macOS-14 concurrency:** `cmake --build --preset debug -j$(sysctl -n hw.ncpu)` wall time measured before and after; no degradation beyond noise (±10%).
+- **Body-edit fan-out:** Each new `.cpp` implementation file compiles independently; body edits to `clipboard_coordinator.cpp` or `clipboard_job.cpp` recompile only that TU (not the BMI closure).
+- **Graph/inline acceptance:** `graph_check.py --target-ui9` passes (no new cycles); `inline_def_check.py` no increase; no new textual third-party includes.
 - **No concurrency degradation:** No new global locks; `ClipboardCoordinator` uses a dedicated background thread + thread-safe queue (no contention with UI thread).
 
 ### 11.2 Test mapping and acceptance signals (Dev-0 PRR P1-1, Dev-2 PRR R3)
@@ -1777,19 +1786,19 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 
 | New behavior | Test file | Test type |
 |-------------|-----------|-----------|
-| ClipboardCoordinator cancel/reap/start serialization | `tests/utils/platform/test_clipboard_coordinator.cpp` (new) | Unit |
-| ClipboardJob spawn/write/wait/kill | `tests/utils/platform/test_clipboard_job.cpp` (new) | Unit |
-| SIGPIPE handling (worker block + child empty mask) | `tests/utils/platform/test_clipboard_sigpipe.cpp` (new) | Integration |
-| SSH detection (skip native tools) | `tests/utils/platform/test_clipboard_ssh.cpp` (new) | Unit |
-| Linux backend detection (xclip/wl-copy, xsel excluded) | `tests/utils/platform/test_clipboard_backends.cpp` (new) | Unit |
-| Threshold fix (dx²+dy² > 0) | `tests/ui/messages/test_text_selection.cpp` (existing, new cases) | Unit |
-| `settings_home_read()` file-level resolver | `tests/constants/test_paths_settings.cpp` (new) | Unit |
-| ConfigManager read/write split | `tests/config/test_config_read_write_split.cpp` (new) | Unit |
+| ClipboardCoordinator cancel/reap/start serialization | `tests/utils/test_clipboard_coordinator.cpp` (new) | Unit |
+| ClipboardJob spawn/write/wait/kill | `tests/utils/test_clipboard_job.cpp` (new) | Unit |
+| SIGPIPE handling (worker block + child empty mask) | `tests/utils/test_clipboard_sigpipe.cpp` (new) | Integration |
+| SSH detection (skip native tools) | `tests/utils/test_clipboard_ssh.cpp` (new) | Unit |
+| Linux backend detection (xclip/wl-copy, xsel excluded) | `tests/utils/test_clipboard_backends.cpp` (new) | Unit |
+| Threshold fix (dx²+dy² > 0) | `tests/ui/test_ui_messages.cpp` (existing, new cases) | Unit |
+| `settings_home_read()` file-level resolver | `tests/utils/paths_cascade_test.cpp` (existing, new cases) | Unit |
+| ConfigManager read/write split | `tests/services/test_config.cpp` (existing, new cases) | Unit |
 | MCP fallback mutation semantics | `tests/commands/test_mcp_fallback.cpp` (new) | Unit |
-| Mouse tracking OFF at startup (DECSET absent) | `tests/ui/app/test_app_mouse_tracking.cpp` (new) | PTY byte-level |
-| ~/.agents fallback (mouseMode loaded) | `tests/ui/app/test_app_mouse_tracking.cpp` (new) | PTY byte-level |
-| Status bar label (Copying/Copied/Failed/OSC 52) | `tests/ui/runtime/test_status_bar.cpp` (existing, new cases) | Golden snapshot |
-| Cascade priority (LOOM_CONFIG_DIR + tiers) | `tests/ui/app/test_app_mouse_tracking.cpp` (new) | PTY byte-level |
+| Mouse tracking OFF at startup (DECSET absent) | `tests/ui/test_app_runtime.cpp` (existing, new cases) | PTY byte-level |
+| ~/.agents fallback (mouseMode loaded) | `tests/ui/test_app_runtime.cpp` (existing, new cases) | PTY byte-level |
+| Status bar label (Copying/Copied/Failed/OSC 52) | `tests/commands/test_statusline.cpp` (existing, new cases) | Golden snapshot |
+| Cascade priority (LOOM_CONFIG_DIR + tiers) | `tests/ui/test_app_runtime.cpp` (existing, new cases) | PTY byte-level |
 
 **Wall-clock assertion policy (Dev-2 PRR R3):**
 - **Deterministic deadline tests:** Use a `steady_clock` seam (injectable clock) to test deadline selection and logical branching. No real wall-clock assertions.
@@ -1801,9 +1810,15 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 - **Phase 2:** Status bar gains `mouse_mode_label`; goldens regenerated. Two-phase truecolor golden review: Phase 1 (footer states) + Phase 2 (mouse mode label).
 
 **ctest count reconciliation:**
-- **Baseline (debug):** 649 tests (as of 2026-10-10, HEAD `598726d`).
+- **Baseline:** No hardcoded baseline number. At Phase 1 start, run a clean debug build (`cmake --preset debug && cmake --build --preset debug -j8`) and enumerate `ctest --preset debug -N`. The baseline is valid only if zero `*_NOT_BUILT` placeholders exist. Record the total as the phase baseline.
 - **Expected delta:** +15–25 new tests (from the mapping above). Exact count reconciled at each phase graduation.
 - **Serial ctest is the signal:** `ctest --preset debug -j1` must pass. Parallel ctest may have known flakes (ServerMain.DirectConnect*).
+
+**Test CMake integration:**
+New test files are added to existing directory CMakeLists.txt files (no new directory hierarchy):
+- `tests/utils/test_clipboard_*.cpp` → added to `tests/utils/CMakeLists.txt` (existing target: `test_utils` or per-file target, following the existing pattern)
+- `tests/commands/test_mcp_fallback.cpp` → added to `tests/commands/CMakeLists.txt`
+- New test cases in existing files (`test_ui_messages.cpp`, `paths_cascade_test.cpp`, `test_config.cpp`, `test_app_runtime.cpp`, `test_statusline.cpp`) → no CMake changes needed (already registered)
 
 ### 11.3 Platform evidence (Dev-0 PRR P1-1)
 
@@ -1821,8 +1836,8 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 | Phase | Atomic commit boundary | Revert steps | Verification |
 |-------|----------------------|--------------|--------------|
 | Phase 1 | One commit: ClipboardCoordinator + ClipboardJob + posix_spawn pipeline + threshold fix + dead code removal + tests | `git revert <phase1-commit>` | Copy behavior returns to synchronous `exec_write`; mouse tracking unchanged; ctest green |
-| Phase 2 | Commits per §5.9 shared-change gate (settings_home_read → ConfigManager split → MCP model → TrackMouse(false) + mouseMode + status bar) | `git revert <phase2-commits>` in reverse order | Mouse tracking returns to default-on; `~/.loom` takeover persists (documented limitation); ctest green |
-| Phase 3 (MCP) | One commit: McpPhysicalSource + McpMutationOutcome + CLI updates + tests | `git revert <phase3-commit>` | MCP mutators return to existing `McpRemoveOutcome`/bulk writer; ctest green |
+| Phase 2 (config + MCP) | Commits per §5.9 shared-change gate (settings_home_read → ConfigManager split → McpPhysicalSource/McpMutationOutcome in config → MCP CLI updates) | `git revert <phase2-commits>` in reverse order | ConfigManager returns to single `user_path_`; MCP mutators return to existing `McpRemoveOutcome`/bulk writer; ctest green |
+| Phase 2 (mouse tracking) | One commit: TrackMouse(false) + mouseMode config + status bar label + user docs | `git revert <phase2-mouse-commit>` | Mouse tracking returns to default-on; `~/.loom` takeover persists (documented limitation); ctest green |
 
 ## 12. Open Questions
 

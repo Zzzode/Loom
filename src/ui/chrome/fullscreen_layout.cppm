@@ -222,6 +222,11 @@ struct FullscreenLayoutSlots {
     /// bounds into caller-owned storage.
     Box* pill_hit_box{nullptr};
 
+    /// Screen-space Box of the scrollable transcript area.  The layout
+    /// reflects its rendered bounds here so the caller can use the actual
+    /// height (not a fixed term_rows−N estimate) for scroll bounds.
+    Box* scrollable_box{nullptr};
+
     /// Legacy source-compatible marker for callers that style the pill as
     /// actionable.  Actual event dispatch belongs to the owning REPL
     /// Component and uses `pill_hit_box`.
@@ -358,12 +363,17 @@ class StickyPromptHeaderComponent : public ComponentBase {
     // Component would not receive events.  Reflect the bounds and let the
     // owning ReplScreen Component perform hit-testing in its OnEvent path.
     const Color bg = actionable ? bg_hover : bg_normal;
+    Element label_el = text(" " + label + " ") | color(fg) | bgcolor(bg);
+    // Reflect only the label element's bounds, not the full-width hbox —
+    // the filler() on both sides would otherwise make the hit box span
+    // the entire terminal width, causing clicks on empty space to trigger
+    // a repin.
+    if (hit_box) label_el = std::move(label_el) | reflect(*hit_box);
     Element pill = hbox({
         filler(),
-        text(" " + label + " ") | color(fg) | bgcolor(bg),
+        std::move(label_el),
         filler(),
     }) | size(HEIGHT, EQUAL, 1);
-    if (hit_box) pill = std::move(pill) | reflect(*hit_box);
     return pill;
 }
 
@@ -475,7 +485,11 @@ class StickyPromptHeaderComponent : public ComponentBase {
 
     // 3. The scrollable transcript — fills remaining height.
     if (s.scrollable) {
-        scroll_children.push_back(std::move(s.scrollable) | flex);
+        Element scroll_el = std::move(s.scrollable) | flex;
+        if (s.scrollable_box) {
+            scroll_el = std::move(scroll_el) | reflect(*s.scrollable_box);
+        }
+        scroll_children.push_back(std::move(scroll_el));
     } else {
         scroll_children.push_back(filler());
     }

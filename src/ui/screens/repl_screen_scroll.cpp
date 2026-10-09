@@ -138,8 +138,37 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     return static_cast<int>(std::count(text.begin(), text.end(), '\n')) + 1;
 }
 
+/// Count visual lines after wrapping at term_cols.  Unlike CountTextLines
+/// (newline-only), this accounts for long paragraphs that wrap across
+/// multiple terminal rows.  The result is capped to prevent extreme
+/// overestimation on very long messages (content_preview carries the FULL
+/// untruncated text, so an uncapped count would inflate max_offset past
+/// the actual rendered height and cause scroll dead-zones).
+[[nodiscard]] int CountWrappedLines(std::string_view text, int term_cols) {
+    if (text.empty()) return 1;
+    const int cols = std::max(20, term_cols);
+    int lines = 0;
+    std::size_t pos = 0;
+    while (pos < text.size()) {
+        std::size_t nl = text.find('\n', pos);
+        if (nl == std::string_view::npos) nl = text.size();
+        const std::size_t line_len = nl - pos;
+        // Use byte count as a proxy for display width.  This overestimates
+        // for multi-byte UTF-8 (CJK chars are 3 bytes but 2 columns), but
+        // overestimation is safer than underestimation for scroll bounds —
+        // it just means the user can scroll slightly past the content.
+        lines += static_cast<int>((line_len + static_cast<std::size_t>(cols) - 1)
+                                  / static_cast<std::size_t>(cols));
+        pos = nl + 1;
+    }
+    // Cap: 500 visual lines per message is 10-25 viewport heights, more
+    // than enough for scrolling while preventing the freeze regression
+    // caused by uncapped counting on full untruncated content_preview.
+    return std::min(lines, 500);
+}
+
 [[nodiscard]] int EstimateTranscriptRows(
-    const std::vector<MessageDisplayEntry>& entries) {
+    const std::vector<MessageDisplayEntry>& entries, int term_cols) {
     int rows = 0;
     for (const auto& entry : entries) {
         // content_preview for tool entries is often
@@ -172,7 +201,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                     full += "[Image]";
                 }
             }
-            content_lines = CountTextLines(full);
+            content_lines = CountWrappedLines(full, term_cols);
             content_lines += 2;  // header + status row
         } else if (entry.is_image) {
             content_lines = 4;  // label + metadata rows (no fake thumbnail)
@@ -188,12 +217,12 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                 const std::string& text = entry.full_content.empty()
                     ? entry.content_preview
                     : entry.full_content;
-                content_lines = CountTextLines(text) + 3;  // label + body + margins
+                content_lines = CountWrappedLines(text, term_cols) + 3;  // label + body + margins
             } else {
                 content_lines = 2;  // collapsed label + separator
             }
         } else {
-            content_lines = CountTextLines(entry.content_preview);
+            content_lines = CountWrappedLines(entry.content_preview, term_cols);
         }
         rows += content_lines;
         // Message list inserts one empty separator after each rendered row
@@ -276,7 +305,8 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
     const auto& visible_messages = BuildVisibleMessages(*state);
     if (visible_messages.empty()) return false;
     const int max_offset =
-        std::max(0, EstimateTranscriptRows(visible_messages) - viewport_rows);
+        std::max(0, EstimateTranscriptRows(visible_messages,
+                     state->messages_store.viewport_width_cols) - viewport_rows);
     if (max_offset == 0) return false;
 
     // When pinned to bottom, scroll_offset is 0 but the view is visually
@@ -307,7 +337,8 @@ void JumpTranscriptToBottom(ReplScreenState& state) {
         1, state.messages_store.viewport_height_lines);
     const int total_lines = state.messages_store.virtual_list_active
         ? state.messages_store.virtual_jh.total()
-        : EstimateTranscriptRows(BuildVisibleMessages(state));
+        : EstimateTranscriptRows(BuildVisibleMessages(state),
+            state.messages_store.viewport_width_cols);
     const int max_top = std::max(0, total_lines - viewport_rows);
     const int old_top = state.messages_store.scroll_pinned_to_bottom
         ? max_top

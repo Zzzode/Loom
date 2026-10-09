@@ -187,6 +187,18 @@ struct MessagesStore {
     /// pill.  ReplScreen owns event dispatch and uses this box for hit-testing.
     ftxui::Box new_messages_pill_box;
 
+    /// Bounds reflected by FullscreenLayout for the scrollable transcript
+    /// area.  Used to compute the actual viewport height for scroll bounds,
+    /// replacing the fixed term_rows−5 estimate that didn't account for
+    /// variable chrome (spinner, suggestions, todo panel, teammates strip).
+    ftxui::Box scrollable_box;
+
+    /// Terminal column count, probed once per frame alongside
+    /// viewport_height_lines.  Used for wrapping-aware transcript row
+    /// estimation in the static path so long paragraphs count their visual
+    /// wrapped lines, not just '\n' separators.
+    int viewport_width_cols = 80;
+
     // unseenDivider prop + UnseenDivider + computeUnseenDivider.
     // Populated by App::UpdateScreen from scroll state + messages[].  The
     // engine sets `first_unseen_uuid_prefix` to the 24-char prefix (or full

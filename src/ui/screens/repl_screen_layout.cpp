@@ -87,7 +87,17 @@ using namespace ftxui;
     auto [term_cols, term_rows] = loom::ui::ink_utils::query_terminal_size();
     if (term_cols <= 0) term_cols = 80;
     if (term_rows <= 0) term_rows = 24;
-    s.messages_store.viewport_height_lines = std::max(1, term_rows - 5);
+    // Use the actual scrollable area height from the previous frame's
+    // render (captured via reflect in ComposeFullscreen).  This accounts
+    // for variable chrome (spinner, suggestions, todo panel, teammates
+    // strip, status line) that the old term_rows−5 estimate missed.
+    // Fall back to term_rows−5 on the first frame (before any render).
+    const auto& sb = s.messages_store.scrollable_box;
+    const bool have_measured = sb.y_max >= sb.y_min && sb.y_min >= 0;
+    s.messages_store.viewport_height_lines = have_measured
+        ? std::max(1, sb.y_max - sb.y_min + 1)
+        : std::max(1, term_rows - 5);
+    s.messages_store.viewport_width_cols = term_cols;
 
     // Time-based spinner frame: 100 ms per frame (10 fps), matching the
     // reference.  Previously this was a per-render counter, which made the
@@ -476,6 +486,7 @@ using namespace ftxui;
     slots.hide_pill             = false;
     slots.new_message_count     = s.messages_store.unseen_message_count;
     slots.pill_hit_box          = &s.messages_store.new_messages_pill_box;
+    slots.scrollable_box        = &s.messages_store.scrollable_box;
 
     // on_sticky_click: the click handler sets the 'clicked' sentinel
     // (a stable state update that reacts before the scroll side-effects
@@ -502,7 +513,7 @@ using namespace ftxui;
             total = s.messages_store.virtual_jh.total();
         } else {
             const auto& vm = BuildVisibleMessages(s);
-            total = EstimateTranscriptRows(vm);
+            total = EstimateTranscriptRows(vm, s.messages_store.viewport_width_cols);
         }
         int max_top = std::max(0, total - viewport);
         // When pinned to bottom, scroll_offset is 0 but the view is at

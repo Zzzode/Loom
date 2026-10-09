@@ -228,6 +228,10 @@ ComputeUnseenDivider(const ReplScreenState& s) {
             } else {
                 content_lines = 2;  // collapsed label + separator
             }
+        } else if (entry.is_local_command_input) {
+            // Local command input renders as a compact 1-line chip
+            // ("/command args") — no truncation, no wrapping.
+            content_lines = 1;
         } else {
             // UserTextMessage wraps at a fixed 76 cols (kPromptWrapWidth=78
             // minus 2 for the "❯ " prefix) regardless of terminal width.

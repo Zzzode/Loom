@@ -234,8 +234,7 @@ namespace detail {
             content_lines = 3;   // grid header + 1 row of thumbs
             break;
         case S::UserText:
-        case S::UserPrompt:
-        case S::UserCommand: {
+        case S::UserPrompt: {
             // UserTextMessage wraps at a fixed 76 cols and truncates
             // content > 10K chars to head 2500 + tail 2500 before
             // rendering.  Apply the same truncation and wrap width so
@@ -245,6 +244,12 @@ namespace detail {
             content_lines = 1 + estimate_content_lines(truncated, 76, 0);
             break;
         }
+        case S::UserCommand:
+            // Compact 1-line chip ("/command args") — no truncation,
+            // no wrapping.  RenderUserCommandMessage collapses to
+            // content width.
+            content_lines = 1;
+            break;
         case S::AssistantText:
             // Faithful renderer reserves 2 cols for the "●" bullet glyph;
             // the body wraps at term_cols-2.  The legacy 36-col avatar

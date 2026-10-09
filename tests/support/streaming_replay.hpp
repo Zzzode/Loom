@@ -472,7 +472,7 @@ namespace detail {
 [[nodiscard]] inline std::vector<ReplayStep> load_fixture(
     std::string_view fixture_name) {
 
-    const auto path = fs::path(__FILE__).parent_path() / "fixtures" /
+    const auto path = fs::path(LOOM_TESTS_DIR) / "fixtures" /
                       "streaming_sessions" /
                       (std::string(fixture_name) + ".jsonl");
 

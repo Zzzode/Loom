@@ -60,9 +60,8 @@ namespace {
 // ---------------------------------------------------------------------------
 
 std::string golden_dir() {
-    std::string f = __FILE__;
-    auto pos = f.find_last_of('/');
-    return f.substr(0, pos + 1) + "golden/sdk_control/";
+    
+    return std::string(LOOM_TESTS_DIR) + "/golden/sdk_control/";
 }
 
 /// The initialize control_response carries the bridge process pid — the one

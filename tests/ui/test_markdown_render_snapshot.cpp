@@ -123,7 +123,7 @@ constexpr int kSnapshotHeight = 500;
 // ── Golden file path ────────────────────────────────────────────────
 
 [[nodiscard]] fs::path golden_path(std::string_view name) {
-    return fs::path(__FILE__).parent_path() / "fixtures" /
+    return fs::path(LOOM_TESTS_DIR) / "fixtures" /
            "render_snapshots" / (std::string(name) + ".txt");
 }
 
@@ -211,7 +211,7 @@ constexpr std::array<SnapshotCase, 4> kCases = {{
 void run_conformance_snapshot(const char* fixture_name,
                                std::string_view prefix) {
     const auto path =
-        fs::path(__FILE__).parent_path() / "fixtures" / fixture_name;
+        fs::path(LOOM_TESTS_DIR) / "fixtures" / fixture_name;
     auto doc = loom::utils::json::parse_file_string(path.string());
     if (!doc) {
         FAIL() << "Failed to load fixture " << fixture_name;

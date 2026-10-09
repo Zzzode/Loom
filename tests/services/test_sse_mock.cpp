@@ -299,8 +299,7 @@ namespace {
 // Resolve tests/fixtures/<name> relative to THIS file so the test works
 // regardless of ctest's working directory.
 std::string sse_fixture_path(const char* name) {
-    std::filesystem::path here(__FILE__);
-    return (here.parent_path() / "fixtures" / name).string();
+    return (std::filesystem::path(LOOM_TESTS_DIR) / "fixtures" / name).string();
 }
 
 // Self-signed fixture certificate is issued for IP 127.0.0.1; pointing the

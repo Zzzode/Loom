@@ -46,8 +46,7 @@ namespace {
 // test_sse_mock.cpp).
 
 [[nodiscard]] std::string fixture_path(const char* name) {
-    std::filesystem::path here(__FILE__);
-    return (here.parent_path() / "fixtures" / name).string();
+    return (std::filesystem::path(LOOM_TESTS_DIR) / "fixtures" / name).string();
 }
 
 // ── HTML normalization ──────────────────────────────────────────────

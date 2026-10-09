@@ -329,11 +329,9 @@ inline std::string render_component_to_text(ftxui::Component c, int w = 120, int
 /// Golden snapshot helpers — shared across test files.
 namespace sticky_prompt_test {
 
-/// Resolve tests/golden/ relative to THIS file's location.
+// Resolve tests/golden/ relative to LOOM_TESTS_DIR (defined via CMake).
 inline std::string golden_dir() {
-    std::string f = __FILE__;
-    auto pos = f.find_last_of('/');
-    return f.substr(0, pos + 1) + "golden/";
+    return std::string(LOOM_TESTS_DIR) + "/golden/";
 }
 inline std::string normalize_line_endings(std::string_view s) {
     std::string out;

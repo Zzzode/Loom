@@ -96,7 +96,7 @@ void expect_checkpoints(
 
 [[nodiscard]] fs::path streaming_golden_path(std::string_view fixture_name,
                                              std::string_view checkpoint_name) {
-    return fs::path(__FILE__).parent_path() / "fixtures" /
+    return fs::path(LOOM_TESTS_DIR) / "fixtures" /
            "streaming_snapshots" /
            (std::string(fixture_name) + "." +
             std::string(checkpoint_name) + ".txt");

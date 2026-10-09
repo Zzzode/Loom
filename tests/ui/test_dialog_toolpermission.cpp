@@ -101,8 +101,7 @@ std::string normalize_line_endings(std::string s) {
 std::string golden_dir() {
     // __FILE__ resolves to cpp_migration/tests/test_dialog_toolpermission.cpp
     // so strip the filename + append "golden/".
-    fs::path here(__FILE__);
-    fs::path dir = here.parent_path() / "golden";
+    fs::path dir = fs::path(LOOM_TESTS_DIR) / "golden";
     std::error_code ec;
     fs::create_directories(dir, ec);
     return dir.string() + (dir.native().ends_with('/') ? "" : "/");

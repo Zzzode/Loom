@@ -92,7 +92,7 @@ fs::path golden_dir() {
 #ifdef LOOM_TESTS_ROOT
     return fs::path(LOOM_TESTS_ROOT) / "golden";
 #else
-    return fs::path(__FILE__).parent_path() / "golden";
+    return fs::path(LOOM_TESTS_DIR) / "golden";
 #endif
 }
 

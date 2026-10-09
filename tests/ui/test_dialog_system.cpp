@@ -50,9 +50,8 @@ namespace dialog_test_golden {
 
 /// Directory holding golden snapshot files (derived from __FILE__).
 std::string golden_dir() {
-    std::string f = __FILE__;
-    auto pos = f.find_last_of('/');
-    return f.substr(0, pos + 1) + "golden/";
+    
+    return std::string(LOOM_TESTS_DIR) + "/golden/";
 }
 
 /// Normalize line endings to LF-only for cross-platform robustness.

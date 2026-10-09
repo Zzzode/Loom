@@ -1,5 +1,18 @@
 # LOOM Test Suite
-
+#
+# Structure:
+#   loom_test_main.cpp  — shared test main (env scrubbing, history redirect)
+#   support/            — shared test headers (test_ui_helpers.h, etc.)
+#   core/               — engine, state, bootstrap, config tests
+#   tools/              — tool implementation tests (test_tools.cpp split)
+#   services/           — service layer tests (test_services.cpp split)
+#   ui/                 — FTXUI interface tests (dialogs, streaming, markdown)
+#   bridge/             — bridge daemon + SDK protocol tests
+#   commands/           — slash command tests
+#   utils/              — utility tests (test_utils.cpp split)
+#   query/              — query engine, hooks, wire backend tests
+#   fixtures/ golden/   — test data (not CMake targets)
+#   smoke/ e2e/ fuzz/ benchmarks/ — specialized test suites
 
 include(FetchContent)
 
@@ -52,537 +65,30 @@ add_library(loom_test_main STATIC loom_test_main.cpp)
 target_link_libraries(loom_test_main PUBLIC GTest::gtest ftxui::screen)
 set_target_properties(loom_test_main PROPERTIES CXX_SCAN_FOR_MODULES OFF)
 
+# Shared test support headers (test_ui_helpers.h, invariant_checker.hpp, etc.)
+set(LOOM_TEST_SUPPORT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/support)
+include_directories(${LOOM_TEST_SUPPORT_DIR})
 
-add_executable(test_utils
-    test_utils.cpp
-    utils/io_shell_memory_test.cpp
-    utils/paths_cascade_test.cpp
-    utils/permissions_test.cpp
-    utils/settings_validation_test.cpp
-    services/analytics_test.cpp
-)
-target_link_libraries(test_utils
-    PRIVATE
-        loom_core
-        loom_utils           # all 50+ loom.utils.* imports
-        loom_ui              # loom.ui.terminal_io
-        loom_plugins         # loom.plugins.marketplace
-        loom_memdir
-        loom_commands        # loom.commands.review.review_remote (parse_pr_input)
-        GTest::gtest_main
-)
-gtest_discover_tests(test_utils DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-add_executable(test_core test_core.cpp)
-target_link_libraries(test_core
-    PRIVATE
-        loom_core
-        loom_types           # import loom.types.types
-        loom_config          # import loom.config.*
-        loom_constants       # import loom.constants.constants
-        loom_coordinator     # import loom.coordinator.types
-        loom_tasks           # import loom.tasks.task_graph
-        GTest::gtest_main
-)
-gtest_discover_tests(test_core DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-add_executable(test_state test_state.cpp)
-target_link_libraries(test_state
-    PRIVATE
-        loom_core
-        loom_state           # all loom.state.* imports
-        loom_session         # loom.session.history
-        loom_types           # loom.types.types
-        loom_cli             # loom.cli.update
-        loom_constants       # loom.constants.prompts
-        loom_services        # loom.services.mcp.*
-        loom_hooks           # loom.hooks.tool_permissions
-        loom_ui              # loom.ui.repl_screen / loom.ui.* (broad coverage)
-        GTest::gtest_main
-)
-gtest_discover_tests(test_state DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-# RFC-0001 B15: the second TU performs the pre-main install_runtime_backends
-# slot assignment (module TU; scanned by clang-scan-deps like every source).
-add_executable(test_tools test_tools.cpp test_runtime_backends_install.cpp)
-target_link_libraries(test_tools
-    PRIVATE
-        loom_core
-        loom_tools           # all 40+ loom.tools.* imports
-        loom_orchestration   # RFC-0001 B11: loom.orchestration.runtime_backends
-        loom_hooks           # loom.hooks.tool_permissions
-        loom_services        # loom.services.api.client, loom.services.mcp.*
-        loom_utils           # loom.utils.* helpers
-        GTest::gtest_main
-)
-gtest_discover_tests(test_tools DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-add_executable(test_hooks test_hooks.cpp)
-target_link_libraries(test_hooks
-    PRIVATE
-        loom_core
-        loom_hooks           # all loom.hooks.* imports
-        loom_utils           # loom.serdes.json
-        GTest::gtest_main
-)
-gtest_discover_tests(test_hooks DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-add_executable(test_services test_services.cpp)
-target_link_libraries(test_services
-    PRIVATE
-        loom_core
-        loom_cli
-        loom_utils
-        loom_teams           # loom.teams.team_helpers
-        GTest::gtest_main
-)
-gtest_discover_tests(test_services DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+# Absolute path to the tests/ source directory, for tests that locate
+# golden/ and fixtures/ via __FILE__-relative paths. After the domain
+# restructuring, test files live in subdirectories (ui/, bridge/, ...),
+# so __FILE__-relative paths no longer resolve to the shared golden/
+# and fixtures/ directories.
+add_compile_definitions(LOOM_TESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 # ---------------------------------------------------------------------------
-# Phase 3-E2E: SSE Mock + WithRetry unit tests
+# Domain test suites (each subdirectory has its own CMakeLists.txt)
 # ---------------------------------------------------------------------------
-add_executable(test_sse_mock test_sse_mock.cpp)
-target_link_libraries(test_sse_mock
-    PRIVATE
-        loom_core
-        loom_services
-        loom_utils
-        loom_cli             # loom.cli.sse_transport (TLS SSE tests)
-        httplib::httplib
-        OpenSSL::SSL
-        OpenSSL::Crypto
-        GTest::gtest_main
-)
-gtest_discover_tests(test_sse_mock DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-add_executable(test_wire_backends test_wire_backends.cpp)
-target_link_libraries(test_wire_backends
-    PRIVATE
-        loom_core
-        loom_query           # loom.query.wire_protocol + backend implementations
-        loom_utils
-        loom_types
-        loom_tools
-        GTest::gtest_main
-)
-gtest_discover_tests(test_wire_backends DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-add_executable(test_with_retry test_with_retry.cpp)
-target_link_libraries(test_with_retry
-    PRIVATE
-        loom_core
-        loom_services            # loom.services.api.with_retry*, loom.services.oauth
-        loom_utils
-        GTest::gtest_main
-)
-gtest_discover_tests(test_with_retry DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+add_subdirectory(core)
+add_subdirectory(tools)
+add_subdirectory(services)
+add_subdirectory(ui)
+add_subdirectory(bridge)
+add_subdirectory(commands)
+add_subdirectory(utils)
+add_subdirectory(query)
 
 # ---------------------------------------------------------------------------
-# Phase P0-5: Enterprise Auth (SigV4 / GCP ADC / Azure DefaultAzureCredential
-# / Provider selector).  Link OpenSSL::Crypto for the GCP service-account
-# RS256 self-signed JWT signer.
-# ---------------------------------------------------------------------------
-add_executable(test_enterprise_auth test_enterprise_auth.cpp)
-target_link_libraries(test_enterprise_auth
-    PRIVATE
-        loom_core
-        loom_services
-        loom_utils
-        httplib::httplib
-        OpenSSL::Crypto
-        GTest::gtest_main
-)
-gtest_discover_tests(test_enterprise_auth DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# Phase 3-D: MCP stdio transport + mock echo server
-# ---------------------------------------------------------------------------
-add_executable(test_mcp_stdio test_mcp_stdio.cpp)
-target_link_libraries(test_mcp_stdio
-    PRIVATE
-        loom_core
-        loom_services
-        loom_utils
-        GTest::gtest_main
-)
-gtest_discover_tests(test_mcp_stdio DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ── test_ui split into 4 TUs to stay under clang's 31-bit SourceLocation budget ──
-# (2.14GB hard limit; original 43 imports in one TU overflowed at 99%).
-# Each TU imports only the loom.* modules its tests actually need.
-
-set(_ui_test_libs
-    PRIVATE
-        loom_core
-        loom_ui           # defense-in-depth: UI modules must be discoverable
-        GTest::gtest
-        loom_test_main    # deterministic terminal env for golden snapshots
-)
-
-add_executable(test_ui_light test_ui_light.cpp test_ui_helpers.h)
-target_link_libraries(test_ui_light ${_ui_test_libs})
-gtest_discover_tests(test_ui_light DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-add_executable(test_ui_messages test_ui_messages.cpp test_ui_helpers.h)
-target_link_libraries(test_ui_messages ${_ui_test_libs})
-gtest_discover_tests(test_ui_messages DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-add_executable(test_ui_runtime
-    test_ui_runtime.cpp
-    test_ui_render.cpp
-    test_ui_render_state.cpp
-    test_ui_render_pure.cpp
-    test_ui_paste.cpp
-    test_ui_e2e.cpp
-    test_ui_helpers.h)
-target_link_libraries(test_ui_runtime ${_ui_test_libs})
-gtest_discover_tests(test_ui_runtime DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-add_executable(test_ui_dialogs test_ui_dialogs.cpp test_ui_helpers.h)
-target_link_libraries(test_ui_dialogs ${_ui_test_libs})
-gtest_discover_tests(test_ui_dialogs DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# RFC 0003: streaming payload replay harness smoke tests. Loads JSONL event
-# fixtures, injects them into AppAdapter's event handler via test seams, and
-# verifies the harness produces checkpoint snapshots. Golden comparison is
-# Phase 2; Phase 1 only asserts the harness runs end-to-end.
-# ---------------------------------------------------------------------------
-add_executable(test_streaming_replay test_streaming_replay.cpp)
-target_link_libraries(test_streaming_replay ${_ui_test_libs})
-gtest_discover_tests(test_streaming_replay DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# RFC 0003 Phase 4: App-side E2E tests migrated to fixture-driven streaming
-# replay. Each test loads a JSONL fixture, injects events into AppAdapter's
-# event handler via test seams, and asserts on the rendered screen via golden
-# snapshots + targeted substring checks. Replaces the slow HTTP-mock-server
-# E2E tests that exercised the same App-side rendering paths.
-# ---------------------------------------------------------------------------
-add_executable(test_streaming_migration test_streaming_migration.cpp)
-target_link_libraries(test_streaming_migration ${_ui_test_libs})
-gtest_discover_tests(test_streaming_migration DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# RFC 0004: fixture serializer round-trip tests. Serializes StreamEvent /
-# ContentBlock / Message values to JSONL, parses them back with the
-# streaming_replay.hpp parser, serializes again, and asserts the two JSON
-# strings are identical (lossless round-trip). Guards against drift between
-# the recorder serializer and the replay parser.
-# ---------------------------------------------------------------------------
-add_executable(test_fixture_serializer test_fixture_serializer.cpp)
-target_link_libraries(test_fixture_serializer ${_ui_test_libs})
-gtest_discover_tests(test_fixture_serializer DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# CommonMark 0.31.2 + GFM conformance suites against the markdown parser's
-# HTML serializer (render_markdown_to_html).  Fixtures: 652 CommonMark +
-# 672 GFM-core + 30 GFM-extension examples under tests/fixtures/.  Floors
-# in the test file are the baseline; they catch regressions, and get raised
-# as parser fixes land.
-# ---------------------------------------------------------------------------
-add_executable(test_markdown_conformance test_markdown_conformance.cpp)
-target_link_libraries(test_markdown_conformance
-    PRIVATE
-        loom_ui
-        loom_utils
-        GTest::gtest
-        # No loom_test_main: this test has its own main() to support
-        # --conformance-json <path> for the HTML dashboard.
-)
-gtest_discover_tests(test_markdown_conformance DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# FTXUI terminal renderer tests for the markdown module.  The conformance
-# suite above tests the HTML serializer; this tests the production renderer
-# the terminal UI uses (character swallowing, line wrapping, CJK width).
-# ---------------------------------------------------------------------------
-add_executable(test_markdown_render test_markdown_render.cpp)
-target_link_libraries(test_markdown_render
-    PRIVATE
-        loom_ui
-        loom_utils
-        GTest::gtest
-        loom_test_main
-)
-gtest_discover_tests(test_markdown_render DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# Text-content property tests for the FTXUI terminal renderer, driven by the
-# CommonMark + GFM conformance fixtures.  Verifies the renderer doesn't drop
-# or mangle content (word-level containment, not exact match).
-# ---------------------------------------------------------------------------
-add_executable(test_markdown_render_conformance test_markdown_render_conformance.cpp)
-target_link_libraries(test_markdown_render_conformance
-    PRIVATE
-        loom_ui
-        loom_utils
-        GTest::gtest
-        loom_test_main
-)
-gtest_discover_tests(test_markdown_render_conformance DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# Style and layout tests for the FTXUI terminal markdown renderer.  Layer 2
-# (style) verifies bold/dim/hyperlink/strikethrough/color flags via PixelAt;
-# Layer 3 (layout) verifies wrapping, indentation, blockquote borders, code
-# block non-wrapping, and table alignment.
-# ---------------------------------------------------------------------------
-add_executable(test_markdown_render_styles test_markdown_render_styles.cpp)
-target_link_libraries(test_markdown_render_styles
-    PRIVATE
-        loom_ui
-        loom_utils
-        GTest::gtest
-        loom_test_main
-)
-gtest_discover_tests(test_markdown_render_styles DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# Layer 5: golden file snapshot tests for the FTXUI terminal markdown renderer.
-# Exact-match snapshots (ANSI-stripped) of each construct at 80 columns.
-# Regenerate with: LOOM_UPDATE_SNAPSHOTS=1 ctest -R MarkdownRenderSnapshot
-# ---------------------------------------------------------------------------
-add_executable(test_markdown_render_snapshot test_markdown_render_snapshot.cpp)
-target_link_libraries(test_markdown_render_snapshot
-    PRIVATE
-        loom_ui
-        loom_utils
-        GTest::gtest
-        loom_test_main
-)
-gtest_discover_tests(test_markdown_render_snapshot DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# M7 Dialog #1 (ToolPermission) renderer + event handler regression suite.
-# Faithful-port contract: keyboard mapping, golden chrome, and queue
-# suppression policy are all covered here so any UI drift is caught in CI.
-# ---------------------------------------------------------------------------
-add_executable(test_dialog_toolpermission test_dialog_toolpermission.cpp)
-target_link_libraries(test_dialog_toolpermission
-    PRIVATE
-        loom_core
-        loom_ui
-        GTest::gtest
-        loom_test_main
-)
-gtest_discover_tests(test_dialog_toolpermission
-    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-# ---------------------------------------------------------------------------
-# M7 Dialog System core — payload serde, DialogQueue, DialogRendererRegistry,
-# Elicitation/SandboxPermission/SettingsView routing tests
-# ---------------------------------------------------------------------------
-add_executable(test_dialog_system test_dialog_system.cpp)
-target_link_libraries(test_dialog_system
-    PRIVATE
-        loom_core
-        loom_ui                  # loom.ui.dialogs.* + loom.ui.design.theme
-        GTest::gtest
-        loom_test_main
-)
-gtest_discover_tests(test_dialog_system
-    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-# ---------------------------------------------------------------------------
-# RFC 0002 F2 composition-root tests — doctor renderer through the registry
-# (screens-side registration) and wizard/trust flows through the
-# feature_dialog_protocol leaf (composition-root factory registration).
-# ---------------------------------------------------------------------------
-add_executable(test_f2_composition_root test_f2_composition_root.cpp)
-target_link_libraries(test_f2_composition_root
-    PRIVATE
-        loom_core
-        loom_ui                  # loom.ui.dialogs.* + loom.ui.screens.* + loom.ui.app.*
-        GTest::gtest_main
-)
-gtest_discover_tests(test_f2_composition_root
-    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-# ---------------------------------------------------------------------------
-# M7 Dialog #3 (PromptDialog SELECT/FORM) renderer + event handling tests
-# ---------------------------------------------------------------------------
-add_executable(test_prompt_dialog test_prompt_dialog.cpp)
-target_link_libraries(test_prompt_dialog
-    PRIVATE
-        loom_core
-        loom_ui
-        GTest::gtest_main
-)
-gtest_discover_tests(test_prompt_dialog
-    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-# ---------------------------------------------------------------------------
-# M7 Dialog #5 (CostThreshold) — enum Action, callback wiring, visual goldens
-# ---------------------------------------------------------------------------
-add_executable(test_cost_threshold_dialog test_cost_threshold_dialog.cpp)
-target_link_libraries(test_cost_threshold_dialog
-    PRIVATE
-        loom_core
-        loom_ui
-        GTest::gtest_main
-)
-gtest_discover_tests(test_cost_threshold_dialog
-    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-add_executable(test_tasks test_tasks.cpp)
-target_link_libraries(test_tasks
-    PRIVATE
-        loom_core
-        loom_tasks               # loom.tasks.*
-        loom_tools               # loom.tools.agent_* / team / spawn_multi_agent
-        loom_utils               # loom.utils.* helpers (loom.teams.swarm.* arrives via loom_tools)
-        GTest::gtest_main
-)
-gtest_discover_tests(test_tasks DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-add_executable(test_commands test_commands.cpp)
-target_link_libraries(test_commands
-    PRIVATE
-        loom_core
-        loom_commands            # loom.commands.*
-        loom_query               # loom.query.query_engine
-        loom_types               # loom.types.types
-        GTest::gtest_main
-)
-gtest_discover_tests(test_commands DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# Statusline (commands + utils/statusline_runner) unit tests
-# ---------------------------------------------------------------------------
-add_executable(test_statusline test_statusline.cpp)
-target_link_libraries(test_statusline
-    PRIVATE
-        loom_core
-        loom_commands            # loom.commands.statusline
-        loom_utils               # loom.serdes.json (statusline_runner now in loom_ui_app)
-        GTest::gtest_main
-)
-gtest_discover_tests(test_statusline DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-# ---------------------------------------------------------------------------
-# P1-05 / P1-06: history, task_types, teammate_view_helpers, interactive_helpers
-# ---------------------------------------------------------------------------
-add_executable(test_bootstrap test_bootstrap.cpp)
-target_link_libraries(test_bootstrap
-    PRIVATE
-        loom_core
-        loom_bootstrap           # loom.bootstrap.interactive
-        loom_history             # loom.history
-        loom_task_types          # loom.task_types
-        loom_state               # loom.state.teammate_view_helpers
-        loom_utils               # loom.serdes.json
-        GTest::gtest_main
-)
-gtest_discover_tests(test_bootstrap DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-add_executable(test_bridge test_bridge.cpp)
-target_link_libraries(test_bridge
-    PRIVATE
-        loom_core
-        loom_daemon
-        GTest::gtest_main
-)
-add_dependencies(test_bridge loom)
-target_compile_definitions(test_bridge
-    PRIVATE
-        LOOM_NATIVE_BINARY_PATH="$<TARGET_FILE:loom>"
-)
-gtest_discover_tests(test_bridge DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-# ---------------------------------------------------------------------------
-# loom_sdk phases 2-3 (RFC 0001): golden wire-compatibility gate for the
-# hand-rolled control protocol spoken by loom.server.server_main and
-# loom.bridge.bridge_messaging. Freezes the exact JSON for every spoken control
-# subtype under tests/golden/sdk_control/ before the ser/de rewire (design
-# §4.2 S6). UPDATE_GOLDENS=1 rewrites the fixtures.
-# ---------------------------------------------------------------------------
-add_executable(test_sdk_control_golden test_sdk_control_golden.cpp)
-target_link_libraries(test_sdk_control_golden
-    PRIVATE
-        loom_core            # loom.server.server_main + loom.bridge.bridge_messaging BMIs
-        loom_utils           # loom.serdes.json
-        GTest::gtest
-        loom_test_main
-)
-gtest_discover_tests(test_sdk_control_golden
-    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# loom_sdk phases 2-3 (RFC 0001): round-trip ser/de tests for every moved
-# control DTO (design §4.2). Links loom_sdk + loom_server per the design.
-# ---------------------------------------------------------------------------
-add_executable(test_sdk_serde test_sdk_serde.cpp)
-target_link_libraries(test_sdk_serde
-    PRIVATE
-        loom_sdk
-        loom_server          # loom.server.control_protocol BMIs
-        GTest::gtest_main
-)
-gtest_discover_tests(test_sdk_serde
-    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# loom_sdk phases 2-3 (RFC 0001): compile-time guards that the SDK island's
-# CONVERGE aliases point at the canonical types (design §4.2).
-# ---------------------------------------------------------------------------
-add_executable(test_sdk_convergence test_sdk_convergence.cpp)
-target_link_libraries(test_sdk_convergence
-    PRIVATE
-        loom_sdk
-        GTest::gtest_main
-)
-gtest_discover_tests(test_sdk_convergence
-    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# loom_sdk phases 2-3 (RFC 0001): first-consumer gate for loom.sdk.harness
-# (design §4.4). Runs a Harness against a loopback HTTP server serving
-# canned Anthropic responses — the real transport with zero external calls.
-# Links loom_sdk (the harness) + loom_query (engine/assembly BMIs the test
-# references directly) + httplib (the loopback server).
-# ---------------------------------------------------------------------------
-add_executable(test_sdk_harness test_sdk_harness.cpp)
-target_link_libraries(test_sdk_harness
-    PRIVATE
-        loom_sdk
-        loom_query
-        httplib::httplib
-        GTest::gtest_main
-)
-gtest_discover_tests(test_sdk_harness
-    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-
-add_executable(test_skills test_skills.cpp)
-target_link_libraries(test_skills
-    PRIVATE
-        loom_core
-        loom_skills              # loom.skills.skill, loom.skills.bundled
-        loom_skills_core
-        GTest::gtest_main
-)
-gtest_discover_tests(test_skills DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# ---------------------------------------------------------------------------
-# Google Benchmark micro-benchmark suite
-# ---------------------------------------------------------------------------
-add_subdirectory(benchmarks)
-
 # Phase 3-B/C: tools_smoke + tools_e2e
 #
 # These two executables exercise the real bash fork/exec and filesystem
@@ -599,6 +105,7 @@ add_subdirectory(benchmarks)
 # Both binaries land in ${CMAKE_BINARY_DIR}:
 #   ${CMAKE_BINARY_DIR}/tools_smoke  — fine-grained CHECK assertions
 #   ${CMAKE_BINARY_DIR}/tools_e2e    — Bash × File cross-tool scenario
+# ---------------------------------------------------------------------------
 set(LOOM_TOOLS_STANDALONE_BUILDER
     "${CMAKE_CURRENT_SOURCE_DIR}/../scripts/build_tools_standalone.bash")
 
@@ -613,8 +120,8 @@ add_custom_command(
             bash "${LOOM_TOOLS_STANDALONE_BUILDER}" all
     DEPENDS
         "${LOOM_TOOLS_STANDALONE_BUILDER}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools_smoke.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools_e2e.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/tools_smoke.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/tools_e2e.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/tools/bash/impl_bash.cppm"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/tools/files/impl_files.cppm"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.."
@@ -683,9 +190,9 @@ add_test(NAME Phase3_Permission_Smoke COMMAND phase3_permission_smoke)
 set_tests_properties(Phase3_Permission_Smoke PROPERTIES TIMEOUT 10 LABELS "phase3;permission;hooks")
 
 # ---------------------------------------------------------------------------
-# Smoke tests for the loom executable itself (--dry-run, --version).  Kept in
-# its own subdirectory: it uses a cmake -P script runner with SKIP_RETURN_CODE
-# rather than GoogleTest discovery.
+# Smoke tests for the loom executable itself.  Kept in its own subdirectory:
+# it uses a cmake -P script runner with SKIP_RETURN_CODE rather than
+# GoogleTest discovery.
 # ---------------------------------------------------------------------------
 add_subdirectory(smoke)
 
@@ -702,88 +209,5 @@ if(ENABLE_FUZZING)
   add_subdirectory(fuzz)
 endif()
 
-# ===========================================================================
-# Migration fix-batch regression suites (test_fix_*)
-# ===========================================================================
-
-# B2: loom.hooks.execution wired into QueryEngine tool-call dispatch
-add_executable(test_fix_hooks_integration test_fix_hooks_integration.cpp)
-target_link_libraries(test_fix_hooks_integration
-    PRIVATE
-        loom_core
-        GTest::gtest_main
-)
-gtest_discover_tests(test_fix_hooks_integration DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# B1-qe-tests: QueryEngine coverage (output_config, fallback models, memory, skills)
-add_executable(test_fix_query_engine test_fix_query_engine.cpp)
-target_link_libraries(test_fix_query_engine
-    PRIVATE
-        loom_core
-        GTest::gtest_main
-)
-gtest_discover_tests(test_fix_query_engine DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# state-layer: M2 fsync atomic write + M1 undo/redo regression
-add_executable(test_fix_state test_fix_state.cpp)
-target_link_libraries(test_fix_state
-    PRIVATE
-        loom_core
-        loom_state
-        loom_utils
-        GTest::gtest_main
-)
-gtest_discover_tests(test_fix_state DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# plugin-H1-H2: marketplace fetch/add/remove + manifest validation
-add_executable(test_fix_plugin test_fix_plugin.cpp)
-target_link_libraries(test_fix_plugin
-    PRIVATE
-        loom_core
-        loom_utils
-        loom_plugins
-        GTest::gtest_main
-)
-gtest_discover_tests(test_fix_plugin DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# H5: yoga layout engine subset regression (documentation-only fix, 18 tests)
-add_executable(test_fix_yoga test_fix_yoga.cpp)
-target_link_libraries(test_fix_yoga
-    PRIVATE
-        loom_core
-        GTest::gtest_main
-)
-gtest_discover_tests(test_fix_yoga DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# M4 + M11: LSP action parity + send_request<T> static_assert
-add_executable(test_fix_lsp_tool test_fix_lsp_tool.cpp)
-target_link_libraries(test_fix_lsp_tool
-    PRIVATE
-        loom_core
-        GTest::gtest_main
-)
-gtest_discover_tests(test_fix_lsp_tool DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# M6: API stubs -> real HTTP (first_token_date, ultrareview_quota, overage_credit)
-
-# M7: notification backend wiring (mcp connectivity + teammate shutdowns)
-add_executable(test_fix_notifs test_fix_notifs.cpp)
-target_link_libraries(test_fix_notifs
-    PRIVATE
-        loom_core
-        loom_hooks
-        loom_services
-        loom_orchestration   # RFC-0001 B15: loom.orchestration.mcp_connectivity + tools.mcp
-        GTest::gtest_main
-)
-gtest_discover_tests(test_fix_notifs DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
-
-# misc-low: oauth_port bind-probe, secret_scanner gitleaks, in_process_transport, PKCE CSPRNG
-add_executable(test_fix_misc_low test_fix_misc_low.cpp)
-target_link_libraries(test_fix_misc_low
-    PRIVATE
-        loom_core
-        loom_services
-        GTest::gtest_main
-)
-gtest_discover_tests(test_fix_misc_low DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+# Google Benchmark micro-benchmark suite
+add_subdirectory(benchmarks)

@@ -336,9 +336,9 @@ TEST(E2E_Gate, ConnectorCharacterIsCorrectCodepoint) {
     const std::string wrong_connector = "\xe2\x8f\xbf";    // U+23FF ⏿
 
     // Resolve project root relative to this test file (tests/test_ui.cpp)
-    const std::string test_file = __FILE__;
-    const auto test_dir = test_file.substr(0, test_file.find_last_of('/'));
-    const auto project_root = test_dir.substr(0, test_dir.find_last_of('/'));
+    // Project root is one level above LOOM_TESTS_DIR
+    
+    const auto project_root = std::string(LOOM_TESTS_DIR) + "/..";
 
     // Check all message rendering source files for the correct connector bytes
     // (RFC 0001 Phase C batch 7: the messages_list connector now lives in its

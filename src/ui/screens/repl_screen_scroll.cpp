@@ -153,12 +153,15 @@ ComputeUnseenDivider(const ReplScreenState& s) {
         std::size_t nl = text.find('\n', pos);
         if (nl == std::string_view::npos) nl = text.size();
         const std::size_t line_len = nl - pos;
-        // Use byte count as a proxy for display width.  This overestimates
-        // for multi-byte UTF-8 (CJK chars are 3 bytes but 2 columns), but
-        // overestimation is safer than underestimation for scroll bounds —
-        // it just means the user can scroll slightly past the content.
-        lines += static_cast<int>((line_len + static_cast<std::size_t>(cols) - 1)
-                                  / static_cast<std::size_t>(cols));
+        // Each logical line counts at least 1, even empty ones ("\n" → 2
+        // lines, "\n\n" → 3 lines).  Use byte count as a proxy for display
+        // width — overestimates for multi-byte UTF-8 (CJK chars are 3 bytes
+        // but 2 columns), but overestimation is safer than underestimation
+        // for scroll bounds.
+        const int visual = static_cast<int>(
+            (line_len + static_cast<std::size_t>(cols) - 1)
+            / static_cast<std::size_t>(cols));
+        lines += std::max(1, visual);
         pos = nl + 1;
     }
     // Cap: 500 visual lines per message is 10-25 viewport heights, more
@@ -222,7 +225,14 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                 content_lines = 2;  // collapsed label + separator
             }
         } else {
-            content_lines = CountWrappedLines(entry.content_preview, term_cols);
+            // UserTextMessage wraps at a fixed 76 cols (kPromptWrapWidth=78
+            // minus 2 for the "❯ " prefix) regardless of terminal width.
+            // Using term_cols here would underestimate on wide terminals
+            // (e.g. 120 cols → estimate 10 lines vs actual 16 for a
+            // 1200-byte message), making max_offset too small and
+            // preventing scroll-to-bottom.
+            const int wrap_cols = (entry.role == "user") ? 76 : term_cols;
+            content_lines = CountWrappedLines(entry.content_preview, wrap_cols);
         }
         rows += content_lines;
         // Message list inserts one empty separator after each rendered row

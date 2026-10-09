@@ -191,7 +191,10 @@ struct MessagesStore {
     /// area.  Used to compute the actual viewport height for scroll bounds,
     /// replacing the fixed term_rows−5 estimate that didn't account for
     /// variable chrome (spinner, suggestions, todo panel, teammates strip).
-    ftxui::Box scrollable_box;
+    /// Initialized with y_min=-1 as an "unmeasured" sentinel — the default
+    /// FTXUI Box {0,0,0,0} would otherwise pass the validity check and
+    /// produce a 1-row viewport on the first frame.
+    ftxui::Box scrollable_box{.x_min = 0, .x_max = 0, .y_min = -1, .y_max = -1};
 
     /// Terminal column count, probed once per frame alongside
     /// viewport_height_lines.  Used for wrapping-aware transcript row

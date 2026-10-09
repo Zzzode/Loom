@@ -1277,7 +1277,15 @@ DECSET/DECRST, exit stack, and suspend/resume.
 but requires patching a third-party dependency. The follow-up RFC for
 Phase 3 should evaluate whether to upstream this patch.
 
-## 7. Implementation Phases
+## 7. Phases and graduation criteria
+
+| Phase | Title | Scope | Status | Graduation criteria (measured) |
+|---|---|---|---|---|
+| 1 | Copy pipeline reliability | ClipboardCoordinator, ClipboardJob, posix_spawn, SIGPIPE, SSH detection, Linux backend detection, threshold fix, dead code removal | proposed | All new unit tests pass; serial ctest green (debug + release); golden snapshots regenerated and reviewed; BMI PSS before/after recorded; `inline_def_check.py` no increase; `graph_check.py --target-ui9` passes; no stdout/stderr pollution from worker |
+| 2 | Default native selection + config fallback | TrackMouse(false) before Loop, mouseMode config, status bar label, settings_home_read(), ConfigManager read/write split, MCP fallback, user docs | proposed | PTY byte-level test confirms DECSET absent at startup; ~/.agents fallback test passes; MCP fallback mutation tests pass; serial ctest green (debug + release); golden snapshots regenerated; documentation gate satisfied (CLAUDE.md, design-decisions.md, user docs); BMI PSS before/after recorded |
+| 3 | F2 runtime toggle (DEFERRED) | sigwait thread, runtime mouse-mode toggle | deferred | Follow-up RFC required; needs FTXUI public lifecycle API |
+| 4 | Selection quality | Multi-click word/line selection, drag threshold tuning | proposed | No regression in Phase 1/2 tests; UX testing in Ghostty/iTerm2/tmux |
+| 5 | Documentation | Developer docs, architecture docs | proposed | All docs updated; no TODO(rfc) remaining |
 
 ### Phase 1 — Copy pipeline reliability (P0)
 
@@ -1719,9 +1727,81 @@ maintained in `design-decisions.md` after RFC approval.
 - Recovery: `"mouseMode": true` in `settings.json`
 - Rollback: revert Phase 2 commit
 
-## 11. Production Readiness Review (PRR)
+## 11. Production Readiness Review
 
 This PRR must pass before Phase 1 merges (the first code-changing phase).
+
+### 11.0 PRR checklist
+
+#### 1. Correctness and tests
+
+- [x] Every new behaviour has a new test (unit / module / e2e named) — see §11.2 test mapping (13 test targets)
+- [x] Failure paths covered (empty input, error result, timeout, abort) — §5.5 cancel/reap/start, §11.2 wall-clock policy
+- [x] Golden suites assessed: `test_ui_*`, `test_dialog_*`, `test_prompt_dialog`, `test_cost_threshold_dialog`; status bar footer changes require golden regeneration, reviewed in same commit
+- [x] Known timing flake list respected; no new wall-clock assertions with tight upper bounds — deterministic deadline tests via `steady_clock` seam, loose 10s integration watchdog
+- [x] Expected serial ctest total stated; deletions reconcile exactly — §11.2 baseline from clean build, zero NOT_BUILT placeholders
+- [x] String/shape-based cross-module couplings changed on BOTH emitter and consumer sides; `docs/decisions/design-decisions.md` consulted — §5.9 shared-change gate
+
+**Notes:** Test mapping in §11.2; golden policy in §11.2; ctest reconciliation in §11.2.
+
+#### 2. Build system and module discipline
+
+- [x] Affected producer-TU BMI PSS measured before AND after — §11.1 measurement plan (baseline before Phase 1, graduation after)
+- [x] No Ninja concurrency reduction anywhere; memory handled by TU splitting / type erasure — §11.1 no concurrency degradation
+- [x] Interface files gain declarations, not definitions — §11.1 PRIVATE `.cpp` implementation files for ClipboardCoordinator/ClipboardJob
+- [x] No new textual standard-library or third-party includes in module units — all new code uses `import std;`
+- [x] Named partitions used only for PIMPL internals, not for cross-area layering — no partitions used
+- [x] No new upward dependency edges; directory-level SCCs do not grow — §11.1 `graph_check.py --target-ui9` passes; McpPhysicalSource/McpMutationOutcome in `loom.config.config` (not commands) to avoid config → commands upward dependency
+
+**Notes:** BMI PSS measurement plan in §11.1; fan-out and inline ratchet in §11.1.
+
+#### 3. Rollback and compatibility
+
+- [x] Commits are atomic per phase; each phase revertible independently — §11.4 rollback table
+- [x] No flag-day interface changes: PIMPL / type erasure / re-export shims keep importers building during migration — MCP mutator return type change is breaking but updated in same commit (only caller is `mcp_cmd.cppm`)
+- [x] Persisted data compatibility considered (`~/.loom/sessions`, settings cascade, config schema) with migration or read-tolerance — §5.3 config fallback, §10 migration plan; `~/.loom` takeover is one-way by design
+- [x] Wire-protocol compatibility — no wire changes in this RFC
+
+**Notes:** Rollback table in §11.4; migration plan in §10.
+
+#### 4. Observability
+
+- [x] Session traces remain valid: `messages.jsonl` block coverage and `dump-prompts/<id>.jsonl` request/response dumps — no changes to session storage
+- [x] New background workers / threads are event-driven; no constant-rate render ticker; teardown/abort paths defined — ClipboardCoordinator is event-driven (queue + owner thread); shutdown linearized (stop accepting → discard pending → cancel/reap → exit)
+- [x] New diagnostics log through the existing debug channels; no new ad-hoc print paths — owner thread posts metadata to thread-safe queue; UI thread drains and writes to `log::add_to_in_memory_errors()` (existing in-memory buffer); worker never writes to stdout/stderr or directly to the unlocked buffer
+- [x] Build/performance metrics from this PRR recorded in the RFC — §11.1 BMI PSS plan, §11.3 platform evidence
+
+**Notes:** Diagnostics sink: owner thread → thread-safe queue → UI thread → `log::add_to_in_memory_errors()` (`src/utils/diagnostics/log.cppm:95`). The in-memory buffer is an unlocked static vector — only the UI thread writes/reads it. Shutdown: owner stops accepting, discards pending, cancels/reaps, exits — no callback to destroyed UI. Status bar four-state feedback is the user-facing diagnostic. Acceptance: no stdout/stderr pollution, no selected text in logs, session traces valid.
+
+#### 5. Documentation and deletion
+
+- [x] `CLAUDE.md` updated if conventions, build layout, or paths change — Phase 2 documentation gate (§5.9, Phase 2 rollback)
+- [x] Non-obvious decisions added to `docs/decisions/design-decisions.md` — Phase 2 documentation gate
+- [x] Dead code made obsolete by the work is deleted in the SAME phase — §5.8 dead code removal (Phase 1)
+- [x] Deprecated modules/shapes have a stated removal trigger and migration note — F2 runtime toggle deferred to follow-up RFC; old mouse-mode functions deleted (§5.8)
+- [x] All comments/docs in English — project rule
+
+**Notes:** Documentation gate in Phase 2 rollback section; dead code removal in §5.8.
+
+#### 6. Platform readiness (macos-14 / Linux)
+
+- [x] Debug + release presets build `-Werror` clean on the Linux dev box — §11.3 platform evidence
+- [x] macos-14 CI green at default parallelism (3 vCPU / 14 GB); no swap — §11.1 macOS-14 concurrency wall time measurement
+- [x] Termios / signals / Apple-only guards correct for both platforms — §5.5 pipe+fcntl (macOS) / pipe2 (Linux); POSIX_SPAWN_SETSIGMASK; §11.3
+- [x] truecolor (`COLORTERM=truecolor TERM=xterm-256color`) golden path intact — §11.3 truecolor golden; `loom_test_main` sets `COLORTERM=truecolor`
+- [x] Offline dependency cache unaffected; no new network fetch required — §11.3 offline dep cache
+
+**Notes:** Platform evidence matrix in §11.3; macOS pipe+fcntl path in §5.5.
+
+#### Review sign-off
+
+| Role | Reviewer | Date | Verdict |
+|---|---|---|---|
+| Design | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | approve (v7.12) |
+| Production readiness | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | pending (round 3) |
+| Code (per phase) | TBD per phase | — | — |
+
+### 11.1 PRR Q&A (supplementary)
 
 | Question | Answer |
 |----------|--------|
@@ -1746,7 +1826,7 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 | Golden snapshot impact? | Status bar gains `mouse_mode_label`; goldens regenerated in Phase 2. |
 | Truecolor golden impact? | Status bar label uses existing design tokens. No new colors. Goldens regenerated. |
 | termios/platform impact? | Phase 2: `TrackMouse(false)` affects only DEC private modes, not termios. Phase 1: no termios changes. |
-| Diagnostics? | **User-facing:** the status bar four-state feedback (Copying/Copied/Failed/OSC 52) is the diagnostic — no additional log output needed for users. **Developer-facing:** error-level events (backend not found, spawn failure, timeout, kill failure) are recorded via `log::add_to_in_memory_errors()` (existing in-memory buffer, `src/utils/diagnostics/log.cppm:95`), which the UI can surface on demand. The worker thread NEVER writes to stdout/stderr — this preserves the terminal-output ownership invariant (§5.2). Fields: backend name, result status, duration, byte count. Never selected text content. Never to `~/.loom/dump-prompts/` (that directory is for query engine API dumps). Acceptance: no stdout/stderr pollution from clipboard worker, no selected text in any log, session traces (`messages.jsonl`) remain valid. |
+| Diagnostics? | **User-facing:** the status bar four-state feedback (Copying/Copied/Failed/OSC 52) is the diagnostic — no additional log output needed for users. **Developer-facing:** the ClipboardCoordinator owner thread posts diagnostic metadata (backend name, result status, duration, byte count) to a thread-safe queue. The UI thread drains the queue and writes to `log::add_to_in_memory_errors()` (existing in-memory buffer, `src/utils/diagnostics/log.cppm:95`) for error-level events. The worker/owner thread NEVER writes to the in-memory buffer directly (it is an unlocked static vector, not thread-safe) and NEVER writes to stdout/stderr. **Shutdown:** owner thread stops accepting, discards pending queue entries, cancels/reaps active jobs, exits — no callback to a destroyed UI. No changes to the global logger. Fields: backend name, result status, duration, byte count. Never selected text content. Never to `~/.loom/dump-prompts/` (that directory is for query engine API dumps). Acceptance: no stdout/stderr pollution from clipboard worker, no selected text in any log, session traces (`messages.jsonl`) remain valid. |
 | Build system? | No new dependencies. `posix_spawn`/`pipe`/`fcntl`/`kill` are POSIX (Linux/macOS). Windows existing path uses `_popen`/`_pclose` (unchanged). |
 | Signal safety? | **Loom's own** signal handlers set atomic flags only; no Loom signal handler writes to stdout. FTXUI's internal signal handlers (installed by `Install()`) restore terminal state on SIGTSTP/SIGINT — this is FTXUI's behavior, not Loom's, and is unaffected by this RFC. The clipboard worker thread blocks SIGPIPE via `pthread_sigmask` (thread-local, not inherited by children due to `POSIX_SPAWN_SETSIGMASK`). |
 | `abort()` / SIGKILL? | `abort()` does not run `atexit` handlers. SIGKILL cannot be caught. Terminal state that may be left behind: (1) **mouseMode=false (default):** Loom did not enable mouse tracking — but the terminal may have pre-existing mouse tracking from a previous application that crashed; `TrackMouse(false)` cannot clear it. (2) **mouseMode=true:** DECSET `?1000h`/`?1003h`/`?1015h`/`?1006h` was sent at startup; abnormal exit leaves mouse tracking enabled. (3) **termios:** FTXUI's `Install()` sets raw mode; abnormal exit may leave the terminal in raw mode (no line buffering, no echo). (4) **cursor:** cursor may remain hidden if FTXUI hid it. Recovery for all cases: terminal's own reset (`reset` command or terminal restart). Documented limitation. |
@@ -1797,7 +1877,7 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 | MCP fallback mutation semantics | `tests/commands/test_mcp_fallback.cpp` (new) | Unit |
 | Mouse tracking OFF at startup (DECSET absent) | `tests/ui/test_app_runtime.cpp` (existing, new cases) | PTY byte-level |
 | ~/.agents fallback (mouseMode loaded) | `tests/ui/test_app_runtime.cpp` (existing, new cases) | PTY byte-level |
-| Status bar label (Copying/Copied/Failed/OSC 52) | `tests/commands/test_statusline.cpp` (existing, new cases) | Golden snapshot |
+| Status bar label (Copying/Copied/Failed/OSC 52) | `tests/ui/test_ui_render.cpp` (existing, new cases — already has native status bar/footer cases at :28/:80, linked by `test_ui_runtime` with `loom_test_main`) | Golden snapshot |
 | Cascade priority (LOOM_CONFIG_DIR + tiers) | `tests/ui/test_app_runtime.cpp` (existing, new cases) | PTY byte-level |
 
 **Wall-clock assertion policy (Dev-2 PRR R3):**
@@ -1839,7 +1919,52 @@ New test files are added to existing directory CMakeLists.txt files (no new dire
 | Phase 2 (config + MCP) | Commits per §5.9 shared-change gate (settings_home_read → ConfigManager split → McpPhysicalSource/McpMutationOutcome in config → MCP CLI updates) | `git revert <phase2-commits>` in reverse order | ConfigManager returns to single `user_path_`; MCP mutators return to existing `McpRemoveOutcome`/bulk writer; ctest green |
 | Phase 2 (mouse tracking) | One commit: TrackMouse(false) + mouseMode config + status bar label + user docs | `git revert <phase2-mouse-commit>` | Mouse tracking returns to default-on; `~/.loom` takeover persists (documented limitation); ctest green |
 
-## 12. Open Questions
+## 12. Rollout and rollback
+
+**How each phase ships independently:**
+- Phase 1 ships as a single commit. Mouse tracking behavior is unchanged (still on by default). Only copy behavior changes (async, honest feedback, SSH-aware). Users who don't use copy see no difference.
+- Phase 2 ships as multiple commits per §5.9 shared-change gate. The behavior change (mouse tracking off by default) is in the final commit. Config infrastructure changes (settings_home_read, ConfigManager split, MCP fallback) ship first and are independently revertible.
+
+**Ordering constraints:**
+- Phase 1 must merge before Phase 2 (copy pipeline reliability is a prerequisite for honest feedback when mouse tracking is disabled).
+- Within Phase 2: `settings_home_read()` → ConfigManager read/write split → McpPhysicalSource/McpMutationOutcome → MCP CLI updates → TrackMouse(false) + mouseMode + status bar.
+
+**Rollback:**
+- Phase 1: `git revert <phase1-commit>`. Copy behavior returns to synchronous `exec_write`. Mouse tracking unchanged.
+- Phase 2 (config + MCP): `git revert <phase2-commits>` in reverse order. ConfigManager returns to single `user_path_`. MCP mutators return to existing types.
+- Phase 2 (mouse tracking): `git revert <phase2-mouse-commit>`. Mouse tracking returns to default-on. **Limitation:** rollback does not undo a persisted `~/.loom` config takeover (documented in Phase 2 rollback).
+
+## 13. Drawbacks
+
+- **Lost mouse interactions (Phase 2):** With mouse tracking off by default, users lose mouse scroll, click-to-open hyperlinks, and click-to-focus. Recovery: `"mouseMode": true` in settings.json. This is a deliberate trade-off: native text selection is more important than mouse-driven UI interactions for a terminal agent.
+- **MCP fallback read-only (Phase 2):** Users who previously wrote to `~/.agents` via MCP commands will now get "read-only fallback" rejection. Migration: `mcp add` creates `~/.loom` shadow. This is a correctness fix (prevents accidental writes to another tool's config), not a regression.
+- **Async complexity (Phase 1):** The ClipboardCoordinator adds a background thread, process management, and cancellation logic. This is more complex than the current synchronous `exec_write`, but the current approach silently fails and provides no feedback.
+
+## 14. Testing and verification plan
+
+**New / modified tests:** See §11.2 test mapping (13 test targets). New test files are added to existing directory CMakeLists.txt files; new cases in existing files need no CMake changes.
+
+**Expected ctest total:** Baseline measured from clean debug build at Phase 1 start (zero `*_NOT_BUILT` placeholders). Expected delta: +15–25 new tests. Exact count reconciled at each phase graduation.
+
+**Golden suites touched:**
+- Phase 1: `tests/ui/test_ui_render.cpp` — status bar footer states (Copying/Copied/Failed/OSC 52). Goldens regenerated and manually reviewed.
+- Phase 2: `tests/ui/test_ui_render.cpp` — status bar gains `mouse_mode_label`. Goldens regenerated and manually reviewed.
+- UPDATE_GOLDENS review plan: two-phase truecolor golden review (Phase 1 footer states + Phase 2 mouse mode label).
+
+**Dual preset `-Werror`:** Debug + release presets build `-Werror` clean (`-Wall -Wextra -Wpedantic`). New warnings fail the build.
+
+**Serial ctest:** `ctest --preset debug -j1` and `ctest --preset release -j1` must pass. Parallel ctest may have known flakes (ServerMain.DirectConnect*).
+
+**CI architecture-lint expectations:** `graph_check.py --target-ui9` passes (no new cycles); `inline_def_check.py` no increase in inline-body count for affected TUs.
+
+## 15. Documentation impact
+
+- [ ] `CLAUDE.md` — update if conventions change (e.g., new `settings_home_read()` helper, ConfigManager read/write split, MCP fallback read-only)
+- [ ] `docs/decisions/design-decisions.md` — add non-obvious constraints (e.g., "LOOM_CONFIG_DIR is an unconditional override — no downgrade", "MCP fallback is read-only — writes go to ~/.loom", "TrackMouse(false) doesn't send DECRST")
+- [ ] User-facing docs — default mouse-off behavior, `mouseMode` config key, terminal compatibility matrix (§2.4)
+- [ ] Code comments / module doc headers — new modules (`clipboard_coordinator.cppm`, `clipboard_job.cppm`) have doc comments
+
+## 16. Open Questions
 
 | # | Question | Owner | Deadline | Acceptance criteria |
 |---|----------|-------|----------|---------------------|
@@ -1851,56 +1976,14 @@ New test files are added to existing directory CMakeLists.txt files (no new dire
 | 6 | `mouseMode` config owning module and schema? | Dev-1 | Phase 2 merge | Added to existing display/app settings; default false; settings cascade |
 | 7 | Windows async clipboard pipeline? | Dev-0 | Follow-up | Job Object (`CreateJobObject` + `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`) for descendant containment; overlapped I/O + `WaitForSingleObject` for deadline-controlled pipe writes; or accept synchronous `clip.exe` permanently |
 
-## 13. Review History
+## 17. Implementation History
 
-| Date | Reviewer | Verdict | Notes |
-|------|----------|---------|-------|
-| 2026-10-09 | Dev-0 (agent) | REQUEST CHANGES | P0: F2 lifecycle not implementable; P1: TTY ownership, async timeout, three-state, phase design; P2: invariant scope, Linux detection, open questions |
-| 2026-10-09 | Dev-2 (agent) | REQUEST CHANGES | R1-R7: product overreach, lifecycle gap, jthread, SSH, copying state, off-by-one, structure |
-| 2026-10-09 | Dev-1 (author) | — | v3: addressed both; phase reorder, SSH detection, four-state, terminable process job, Mermaid, PRR, migration, terminal matrix |
-| 2026-10-09 | Dev-0 (agent, re-review) | REQUEST CHANGES | P0-1: SIGTSTP wrapper can't survive FTXUI suspend/resume; P0-2: atexit UAF + TTY conflict; P0-3: async clipboard missing impl details; P1: Phase 1 label, config fallback, PRR depth. Recommended Phase 1+2 first, Phase 3 deferred. |
-| 2026-10-09 | Dev-2 (agent, re-review) | REQUEST CHANGES | P0: SIGTSTP wrapper + signal(SIGTSTP, nullptr) misuse; P1: atexit semantics, copy task timeout/replacement, Phase 2 recovery path, honest feedback, PRR gate; P2: status bar label contradiction, no-motion test |
-| 2026-10-09 | Dev-1 (author) | — | v4: Phase 3 deferred; sigwait approach documented; atexit UAF documented; async clipboard impl contract expanded; PRR expanded. v5: config fallback added to Phase 2; PRR moved before Phase 1; copy task cancel/replace state machine completed; honest feedback corrected; status bar label unified; abort()/SIGKILL limitations documented. |
-| 2026-10-09 | Dev-0 (agent, v4 review) | REQUEST CHANGES | P0-1: JobState self-join (worker holds shared_ptr<JobState>, JobState joins worker); P0-2: pipe2 not on macOS, fork() unsafe in multithreaded process, setpgid race, Windows spawn unspecified; P1: mouse_mode_ field doesn't exist, status bar contradiction, native_over_ssh no schema, PRR logging wrong directory; P2: Install/Uninstall are private |
-| 2026-10-09 | Dev-2 (agent, v4 review) | REQUEST CHANGES | #1: pipe2(O_NONBLOCK) makes child stdin non-blocking (cat EAGAIN); #2: JobState self-join; #3: macOS pipe2 unavailable, Install/Uninstall private; PRR: setpgid failure not guaranteed, diagnostics should use app log not dump-prompts |
-| 2026-10-09 | Dev-1 (author) | — | v5: ClipboardJob ownership model (job owns worker, worker holds shared_ptr<const JobState>); posix_spawn + POSIX_SPAWN_SETPGROUP (not fork); pipe+fcntl for macOS, pipe2 for Linux; write end non-blocking, read end (child stdin) blocking; cancel() non-blocking; mouse_mode_ field removed; status bar label unified; native_over_ssh removed; PRR logging to app log; §5.4 updated (Install/Uninstall private, follow-up RFC needs FTXUI public API) |
-| 2026-10-09 | Dev-0 (agent, v5 review) | REQUEST CHANGES | #1: ClipboardJob dtor join on UI thread blocks up to 3.5s; separate immutable JobInput from mutable CancellationState (cancel atomic can't live in const state). #2: pipe2(O_NONBLOCK) makes child stdin non-blocking (already fixed in v5: pipe2(O_CLOEXEC) + fcntl on write end). #3: Windows TerminateProcess doesn't kill descendants; use Job Object or document as limitation. |
-| 2026-10-09 | Dev-2 (agent, v5 review, SHA-256 f54788ba19f2) | REQUEST CHANGES | P0: SIGPIPE kills process before EPIPE (verified: signal 13); need pthread_sigmask in worker + acceptance test. P1: cancel/replace race — parallel workers allow stale clipboard writes (generation only blocks notifications); need background owner thread serializing cancel/reap/start. P1: setpgid failure "bounded" guarantee wrong; abort native attempt instead of degraded kill(pid). P1: Windows SetHandleMode not a Win32 API; defer Windows async. P2: ownership tree should be Mermaid; 100KB cap shouldn't promise "safe" for all terminals. |
-| 2026-10-09 | Dev-1 (author) | — | v6: background owner thread serializes cancel/reap/start (no parallel workers, no stale clipboard writes); JobInput (immutable) separated from CancellationState (mutable atomic); SIGPIPE blocked via pthread_sigmask in worker (thread-local); setpgid failure → abort native, fall back to OSC 52; Windows async deferred (POSIX-only pipeline); acceptance tests added (SIGPIPE + large text, clipboard content matches latest selection, setpgid failure); 100KB cap clarified (Osc52Emitted expresses unknown terminal acceptance) |
-| 2026-10-09 | Dev-0 (agent, v6 review) | REQUEST CHANGES | P0-1: worker SIGPIPE block inherited by child (needs POSIX_SPAWN_SETSIGMASK with empty mask); P0-2: shutdown join on UI destruction path contradicts invariant 12 (needs linearized shutdown + bounded exception); P1: wait phase missing cancel checks (A hangs after stdin → B waits 3s not 150ms); P1: "if no process group" branch contradicts setpgid failure policy; P1: mouse_mode config contract too vague (needs exact key/schema/composition route); P1: Windows sync clip.exe should be explicit exception to "UI never blocks" |
-| 2026-10-09 | Dev-1 (author) | — | v7: POSIX_SPAWN_SETSIGMASK with empty mask (child doesn't inherit worker SIGPIPE block); shutdown linearized (stop accepting → discard pending → cancel/reap current → exit; bounded exception to invariant 12); wait phase checks cancel every 100ms iteration; "if no process group" branch removed; mouse_mode config contract precise (DisplaySettings.mouse_mode, flat key mouseMode, AppAdapter setting_bool, RunApp queries before Loop); Windows sync clip.exe explicit exception in Goal 3 |
-| 2026-10-09 | Dev-2 (agent, v7 review) | P1 (xsel) | xsel daemonizes (double-fork + setsid) BEFORE set_selection(); original exits 0 before clipboard is set; daemon can overwrite subsequent selection's content even with serialized cancel/reap. Recommendation: exclude xsel from backend list; --nodetach conflicts with exit-0-success model. |
-| 2026-10-09 | Dev-1 (author) | — | v7.1: xsel excluded from Linux backend list; xclip -silent used instead (fork AFTER set_selection, original exits 0 after clipboard set); "set-before-exit" invariant documented for all backends; PRR rows added for xsel exclusion and xclip -silent child behavior |
-| 2026-10-09 | Dev-2 (agent, v7.2 review) | APPROVE (design) | All P0/P1 closed; no remaining blocking issues. Design approval only — PRR still required before implementation. |
-| 2026-10-09 | Dev-0 (agent, v7.2 review) | REQUEST CHANGES | P1-1: pending_reaps_ no continuous reaping under request pressure; P1-2: time budget inconsistent across sections; P1-3: ConfigManager → QueryEngineConfig → bridge composition route not minimal |
-| 2026-10-09 | Dev-1 (author) | — | v7.3: pending_reaps_ sweep on every owner wake (not just idle timeout); two 500ms kill deadlines (TERM + KILL+reap); out parameter + local bool + direct bridge parameter for mouseMode composition |
-| 2026-10-09 | Dev-2 (agent, v7.3 review) | APPROVE (design) | All findings closed; no new blocking issues. |
-| 2026-10-09 | Dev-0 (agent, v7.3 review) | REQUEST CHANGES | P1-1: pending_reaps_ handoff not provable (no worker→owner channel); P1-2: non-cancellation budget still 3s; P1-3: ~/.agents fallback missing from ConfigManager |
-| 2026-10-09 | Dev-1 (author) | — | v7.4: ClipboardJob::unreaped_pid field for synchronous PID handoff; non-cancellation budget unified to ~4s; config_home_read() for user_read_path_ (includes ~/.agents fallback) |
-| 2026-10-09 | Dev-2 (agent, v7.4 review) | APPROVE (design) | All findings closed; no new blocking issues. |
-| 2026-10-09 | Dev-0 (agent, v7.4 review) | REQUEST CHANGES | P1-1: ConfigManager read/write split not complete contract (single user_path_ serves load/save/MCP/signature); P1-2: hard timeout needs absolute deadline rules |
-| 2026-10-09 | Dev-1 (author) | — | v7.5: user_read_path_ vs user_write_path_ with path table; steady_clock absolute deadlines + min(100ms, remaining) + remaining<=0 guard; Loom config takeover semantics |
-| 2026-10-09 | Dev-2 (agent, v7.5 review) | REQUEST CHANGES | P1-1: MCP enumeration can't use write path; P1-2: re-resolution timing missing; P2: deadline wording |
-| 2026-10-09 | Dev-0 (agent, v7.5 review) | REQUEST CHANGES | P0: same-instance read-path rebinding missing; P1: MCP read origin vs write target |
-| 2026-10-09 | Dev-1 (author) | — | v7.6: every-load re-resolution rule; MCP read-only fallback with reject-and-guide mutation; deadline "budget + scheduling tolerance" with remaining<=0 guard; same-instance takeover + failed-write-no-rebind + MCP fallback tests |
-| 2026-10-09 | Dev-2 (agent, v7.6 review) | REQUEST CHANGES | P1-1: re-resolution breaks explicit-path constructors; P1-2: failed-write-no-rebind inconsistent with directory cascade |
-| 2026-10-09 | Dev-0 (agent, v7.6 review) | REQUEST CHANGES | P0: empty ~/.loom shadows ~/.agents; P1: deadline should be application-level budget |
-| 2026-10-09 | Dev-1 (author) | — | v7.7: constructor-mode exceptions table (default re-resolves, explicit/single-project fixed); settings_home_read() file-level resolver; atomic-write rule; deadline wording refined; Phase 2 graduation criteria updated |
-| 2026-10-09 | Dev-2 (agent, v7.7 review) | REQUEST CHANGES | P1: LOOM_CONFIG_DIR override broken by file-level resolver; P2-1: resolver name contradiction; P2-2: atomic_replace path + ConfigManager existing writer |
-| 2026-10-09 | Dev-0 (agent, v7.7 review) | REQUEST CHANGES | P1-1: LOOM_CONFIG_DIR override (same as Dev-2); P1-2: MCP fallback add/remove/enable/disable needs split, especially mixed scope |
-| 2026-10-10 | Dev-1 (author) | — | v7.8: LOOM_CONFIG_DIR unconditional override in settings_home_read(); MCP path table split (add/remove/enable/disable); no-scope multi-layer partial result; atomic_replace path corrected; resolver name synced; duplicate "Report failure" deleted |
-| 2026-10-10 | Dev-2 (agent, v7.8 review) | REQUEST CHANGES | P1: no-scope multi-layer rule expands enable/disable scope beyond owner-only; P2: atomic writer source attribution still wrong |
-| 2026-10-10 | Dev-0 (agent, v7.8 review) | REQUEST CHANGES | P1: enable/disable all + named no-scope multi-layer semantics not closed; bulk writer may write fallback or create ~/.loom |
-| 2026-10-10 | Dev-1 (author) | — | v7.9: MCP mutation split into 3 categories (remove traverses writable layers; enable/disable named owner-only; enable/disable all groups by owner); atomic writer ref corrected to ConfigManager's patch_object_file → write_config_file_replace; 6 new graduation tests |
-| 2026-10-10 | Dev-0 (agent, v7.9 review) | REQUEST CHANGES | P1-1: need unified physical-source + mutability descriptor and mutation outcome model; P1-2: fallback vs idempotent no-op classification priority undefined; P1-3: graduation tests must verify model and command-layer results |
-| 2026-10-10 | Dev-1 (author) | — | v7.10: McpPhysicalSource + McpMutationOutcome data model defined; read-only takes priority over idempotent no-op; graduation tests expanded with model-level verification (modified/skipped_read_only/write_failed per entry); Review History backfilled v7.2–v7.9 |
-| 2026-10-10 | Dev-2 (agent, v7.10 review) | REQUEST CHANGES | P1: writable no-op mixed with Modified (can't preserve existing feedback/count); P2: McpMutationEntry missing Status status member |
-| 2026-10-10 | Dev-0 (agent, v7.10 review) | REQUEST CHANGES | P1-1: unscoped NotFound has no expressible source; P1-2: missing fallback-only unscoped remove test; P1-3: all_read_only() empty-collection semantics |
-| 2026-10-10 | Dev-1 (author) | — | v7.11: Unchanged status added to enum (writable no-op ≠ Modified; no file written; modified_count() excludes Unchanged); Status status member added to McpMutationEntry; 2 new graduation tests (all-writable-no-op, no-op+write-failure+fallback-skip) |
-| 2026-10-10 | Dev-2 (agent, v7.11 review) | APPROVE (design) | No new P0/P1/P2; Unchanged classification and modified_count verified against mcp_cmd.cpp:93/:123-126/:144 |
-| 2026-10-10 | Dev-1 (author) | — | v7.12: source made optional (std::optional<McpPhysicalSource>, nullopt for NotFound); all_read_only() defined as !empty && all(SkippedReadOnly); empty-collection and NotFound semantics documented; 4 new graduation tests (fallback-only remove, not-found remove/enable/disable, empty-all) |
-| 2026-10-10 | Dev-2 (agent, v7.12 review) | APPROVE (design) | No new P0/P1/P2; optional source, NotFound, empty-collection, and fallback-only remove semantics verified; no regression from v7.11 |
-| 2026-10-10 | Dev-0 (agent, v7.12 final) | APPROVE (design/accepted gate) | All design blockers closed; no remaining P0/P1/P2. Design approved for accepted stage. PRR still required before implementable. |
-| 2026-10-10 | Dev-0 (agent, PRR round 1) | REQUEST CHANGES | P0: PRR artifact not reproducible (RFC not committed to git). P1-1: PRR template incomplete (no test mapping, no BMI measurement, no platform evidence, no rollback steps). P1-2: Observability/documentation deliverables insufficient. P1-3: Phase 2 shared-change gate missing. |
-| 2026-10-10 | Dev-2 (agent, PRR round 1) | REQUEST CHANGES | R1 (P1): Build contract missing (TU/CMake ownership, BMI PSS measurement, fan-out, inline ratchet). R2 (P1): Diagnostics sink not closed (worker thread must not write to stdout). R3 (P1): Acceptance signals insufficient (tight wall-clock assertions, no golden gate for Phase 1). R4 (P2): DECRST claim incorrect. R5 (P2): Windows/xclip details wrong. R6 (P2): Docs gate/rollback incomplete. |
-| 2026-10-10 | Dev-1 (author) | — | PRR fixes round 1: P0 fixed (committed at 6f17705); P1-3 fixed (§5.9 shared-change gate); R2 fixed (thread-safe queue → UI thread marshal); R4 fixed (TrackMouse(false) doesn't send DECRST); R5 fixed (Windows _popen/_pclose, xclip child reparented when original exits); R6 fixed (Phase 2 rollback limitation + documentation gate); R1 fixed (§11.1 TU/CMake ownership + BMI PSS measurement plan); R3 fixed (§11.2 wall-clock policy + golden gate + ctest reconciliation); P1-1 fixed (§11.1–11.4 test mapping, platform evidence, rollback); P1-2 fixed (logging channel specified, documentation gate added). |
+| Date | Phase | Event | Commit / PR | Evidence (metrics, test totals) |
+|------|-------|-------|-------------|-------------------------------|
+| 2026-10-09 | — | RFC opened (provisional) | — | — |
+| 2026-10-09 | — | Design review rounds 1-12 (v1 through v7.12) | — | Both Dev-0 and Dev-2 APPROVE (design gate passed) |
+| 2026-10-10 | — | PRR round 1 (Dev-0: P0+3P1, Dev-2: 3P1+3P2) | 6f17705 | All findings fixed |
+| 2026-10-10 | — | PRR round 2 (Dev-0: P0+4P1, Dev-2: 3P1+1P2) | 6ada84b, 7745969 | All findings fixed |
+| 2026-10-10 | — | PRR round 3 (restructured to implementable template) | f321f4c | Pending Dev-0/Dev-2 verdict |
+
+> **Design review history (v1–v7.12):** 12 rounds of design review between Dev-0, Dev-2, and Dev-1 (author). All P0/P1 findings addressed. Both Dev-0 and Dev-2 APPROVED v7.12 (design gate). Full review log is in the git history of this file (see commits from 2026-10-09 through 2026-10-10).

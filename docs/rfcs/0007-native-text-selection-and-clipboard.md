@@ -1285,7 +1285,8 @@ Phase 3 should evaluate whether to upstream this patch.
 | 2 | Default native selection + config fallback | TrackMouse(false) before Loop, mouseMode config, status bar label, settings_home_read(), ConfigManager read/write split, MCP fallback, user docs | proposed | PTY byte-level test confirms DECSET absent at startup; ~/.agents fallback test passes; MCP fallback mutation tests pass; serial ctest green (debug + release); golden snapshots regenerated; documentation gate satisfied (CLAUDE.md, design-decisions.md, user docs); BMI PSS before/after recorded |
 | 3 | F2 runtime toggle (DEFERRED) | sigwait thread, runtime mouse-mode toggle | deferred | Follow-up RFC required; needs FTXUI public lifecycle API |
 | 4 | Selection quality | D-5 linear vs rectangle, D-6 empty lines, CJK/emoji, same-coordinate click, cancel/blur | proposed | No regression in Phase 1/2 tests; UX testing in Ghostty/iTerm2/tmux; selection extraction tests pass |
-| 5 | Documentation | Developer docs, architecture docs | proposed | All docs updated; no TODO(rfc) remaining |
+
+> **Note:** Documentation is not a separate phase. All documentation (CLAUDE.md, design-decisions.md, user docs) ships with Phase 2 as part of its graduation criteria and documentation gate (see Phase 2 rollback section).
 
 ### Phase 1 — Copy pipeline reliability (P0)
 
@@ -1580,7 +1581,7 @@ The user must manually remove `~/.loom/settings.json` to restore
 migration by design (Loom manages its own config directory).
 
 **Documentation gate (same phase, Dev-2 PRR R6):** The following docs
-ship with Phase 2, not deferred to Phase 5:
+ship with Phase 2, not deferred to a separate documentation phase:
 - `CLAUDE.md` updated if conventions change (e.g., new `settings_home_read()`
   helper, ConfigManager read/write split)
 - `docs/decisions/design-decisions.md` updated with non-obvious constraints
@@ -1638,13 +1639,6 @@ alternative approach).
 
 **Rollback:** Revert the Phase 4 commit. Selection quality returns to
 Phase 2 behavior.
-
-### Phase 5 — Documentation (P2)
-
-- [ ] `docs/decisions/design-decisions.md`: record the mouse-tracking
-      default-off decision and the terminal-compatibility matrix
-- [ ] User docs: terminal-specific copy instructions (Ghostty, iTerm2,
-      tmux, etc.)
 
 ## 8. Invariants
 
@@ -1801,9 +1795,9 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 |---|---|---|---|
 | Design | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | approve (v7.12) |
 | Production readiness | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | pending (round 3) |
-| Code (per phase) | TBD per phase | — | — |
+| Code (per phase) | Assigned by lead at phase start (independent agent, not the phase implementer) | — | pending |
 
-### 11.1 PRR Q&A (supplementary)
+### PRR Q&A (supplementary)
 
 | Question | Answer |
 |----------|--------|
@@ -1853,13 +1847,14 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 **Rationale for McpPhysicalSource/McpMutationOutcome in `loom_config`:** The MCP scope/owner/remove APIs (`mcp_scope_paths()`, `mcp_owner_`, `find_mcp_server_files()`) are ConfigManager members in `config.cppm`. Placing the shared descriptor/outcome types in the commands layer would force `loom_config` to upward-depend on `loom_commands`, violating the DAG. The types live in `loom.config.config`; the commands layer (`loom.commands.mcp_cmd`) consumes them.
 
 **BMI PSS measurement plan:**
-- **Before (baseline):** Record BMI PSS (from `/proc/<pid>/smaps_rollup` `Pss:`) for affected producer TUs: `config.cppm`, `clipboard.cppm`, `app_run.cpp`, `mcp_cmd.cppm`, `paths.cppm`.
+- **Before (baseline):** Record BMI PSS (from `/proc/<pid>/smaps_rollup` `Pss:`) for actual `.cppm` producer TUs: `config.cppm`, `clipboard.cppm`, `paths.cppm`, `mcp_cmd.cppm`, and the two new `clipboard_coordinator.cppm` / `clipboard_job.cppm`. `app_run.cpp` is a PRIVATE `.cpp` implementation (not a BMI producer) — if measured, it is listed separately as regular compile PSS, not BMI PSS.
 - **After (graduation):** Re-measure the same TUs. Expected delta: negligible (new function in existing module + new structs; no interface changes to existing functions).
 - **Fan-out:** `settings_home_read()` is a new function in `paths.cppm` — importers of `loom.constants.paths` recompile. `McpPhysicalSource`/`McpMutationOutcome` are new structs in `config.cppm` — importers of `loom.config.config` recompile. The MCP mutation return type changes (§5.9): `mcp remove`/`enable`/`disable` return `McpMutationOutcome` instead of the existing `McpRemoveOutcome`/bulk writer. This is a **breaking interface change** — all callers of MCP mutators are updated in the same commit. The CLI rendering layer (`mcp_cmd.cppm`) is the only caller.
-- **Inline ratchet:** `inline_def_check.py` baseline recorded before Phase 1; graduation requires no increase in inline-body count for affected TUs.
+- **Graph gate:** Every phase requires `python3 tools/arch/graph_check.py` (default, all areas) to pass. Phase 2 additionally runs `--target-ui9` (UI area check).
+- **Inline ratchet:** `python3 tools/arch/inline_def_check.py` baseline recorded before Phase 1; graduation requires no increase in inline-body count for affected TUs.
+- **Graduation record:** Before/after PSS values, measurement commands, TU list, default `graph_check.py` output, `inline_def_check.py` output, and fan-out count saved to the Implementation History.
 - **macOS-14 concurrency:** `cmake --build --preset debug -j$(sysctl -n hw.ncpu)` wall time measured before and after; no degradation beyond noise (±10%).
 - **Body-edit fan-out:** Each new `.cpp` implementation file compiles independently; body edits to `clipboard_coordinator.cpp` or `clipboard_job.cpp` recompile only that TU (not the BMI closure).
-- **Graph/inline acceptance:** `graph_check.py --target-ui9` passes (no new cycles); `inline_def_check.py` no increase; no new textual third-party includes.
 - **No concurrency degradation:** No new global locks; `ClipboardCoordinator` uses a dedicated background thread + thread-safe queue (no contention with UI thread).
 
 ### 11.2 Test mapping and acceptance signals (Dev-0 PRR P1-1, Dev-2 PRR R3)
@@ -1897,10 +1892,25 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 - **Serial ctest is the signal:** `ctest --preset debug -j1` must pass. Parallel ctest may have known flakes (ServerMain.DirectConnect*).
 
 **Test CMake integration:**
-New test files are added to existing directory CMakeLists.txt files (no new directory hierarchy):
-- `tests/utils/test_clipboard_*.cpp` → added to `tests/utils/CMakeLists.txt` (existing target: `test_utils` or per-file target, following the existing pattern)
-- `tests/commands/test_mcp_fallback.cpp` → added to `tests/commands/CMakeLists.txt`
-- New test cases in existing files (`test_ui_messages.cpp`, `paths_cascade_test.cpp`, `test_config.cpp`, `test_app_runtime.cpp`, `test_statusline.cpp`) → no CMake changes needed (already registered)
+New test files follow the existing per-file executable pattern in `tests/utils/CMakeLists.txt` and `tests/commands/CMakeLists.txt`:
+
+| New test file | CMakeLists.txt | Target executable | Link libraries |
+|---------------|----------------|-------------------|----------------|
+| `tests/utils/test_clipboard_coordinator.cpp` | `tests/utils/CMakeLists.txt` | `test_clipboard_coordinator` | `${LOOM_UTILS_TEST_LIBS}` (loom_core, loom_utils, loom_ui, loom_plugins, loom_memdir, loom_commands, GTest::gtest_main) |
+| `tests/utils/test_clipboard_job.cpp` | `tests/utils/CMakeLists.txt` | `test_clipboard_job` | `${LOOM_UTILS_TEST_LIBS}` |
+| `tests/utils/test_clipboard_sigpipe.cpp` | `tests/utils/CMakeLists.txt` | `test_clipboard_sigpipe` | `${LOOM_UTILS_TEST_LIBS}` |
+| `tests/utils/test_clipboard_ssh.cpp` | `tests/utils/CMakeLists.txt` | `test_clipboard_ssh` | `${LOOM_UTILS_TEST_LIBS}` |
+| `tests/utils/test_clipboard_backends.cpp` | `tests/utils/CMakeLists.txt` | `test_clipboard_backends` | `${LOOM_UTILS_TEST_LIBS}` |
+| `tests/commands/test_mcp_fallback.cpp` | `tests/commands/CMakeLists.txt` | `test_mcp_fallback` | loom_core, loom_commands, loom_query, loom_types, GTest::gtest_main |
+
+Each new target follows the existing pattern:
+```cmake
+add_executable(test_clipboard_coordinator test_clipboard_coordinator.cpp)
+target_link_libraries(test_clipboard_coordinator PRIVATE ${LOOM_UTILS_TEST_LIBS})
+gtest_discover_tests(test_clipboard_coordinator DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+```
+
+New test cases in existing files (`test_ui_messages.cpp`, `paths_cascade_test.cpp`, `test_config.cpp`, `test_app_runtime.cpp`, `test_ui_render.cpp`) need no CMake changes (already registered).
 
 ### 11.3 Platform evidence (Dev-0 PRR P1-1)
 

@@ -700,3 +700,74 @@ TEST(ReplScreen, WordWrapIndentedCodeBlockNoFalsePositiveInParagraph) {
     // Soft break → joined with space → 1 line at 80 cols.
     EXPECT_EQ(lines, 1);
 }
+
+// ── Code block boundary tests (P0 from Dev-0 review of b255155) ─────────
+// The lexer flushes the paragraph before a fenced opener and emits code
+// blocks as separate tokens; the renderer inserts a blank separator row
+// between consecutive blocks.  The normalizer must replicate this so the
+// height estimate counts the separator row — otherwise the last line is
+// unreachable.
+
+TEST(ReplScreen, WordWrapFencedCodeBlockOpenerSeparator) {
+    namespace repl = loom::ui::repl_screen;
+    // Prose before a fenced opener must produce a block separator row.
+    // Without the opener boundary, "before" and "code" are joined by
+    // soft-break → 2 lines instead of 3.
+    const std::string text =
+        "before\n"
+        "```\n"
+        "code\n"
+        "```";
+    const int lines = repl::CountWordWrappedLines(text, 80);
+    // "before" (1) + separator (1) + "code" (1) = 3.
+    EXPECT_EQ(lines, 3);
+}
+
+TEST(ReplScreen, WordWrapFencedCodeBlockClosingSeparator) {
+    namespace repl = loom::ui::repl_screen;
+    // Prose after a closing fence must produce a block separator row.
+    // Without the closing boundary, "code" and "after" are joined on
+    // the same line → 1 line, making the last line unreachable.
+    const std::string text =
+        "```\n"
+        "code\n"
+        "```\n"
+        "after";
+    const int lines = repl::CountWordWrappedLines(text, 80);
+    // "code" (1) + separator (1) + "after" (1) = 3.
+    EXPECT_EQ(lines, 3);
+}
+
+TEST(ReplScreen, WordWrapIndentedCodeBlockEndsAtProse) {
+    namespace repl = loom::ui::repl_screen;
+    // An indented code block followed by non-indented prose must produce
+    // a block separator.  Without it, "code" and "after" are joined.
+    const std::string text =
+        "\n"
+        "    code\n"
+        "after";
+    const int lines = repl::CountWordWrappedLines(text, 80);
+    // "code" (1) + separator (1) + "after" (1) = 3.
+    EXPECT_EQ(lines, 3);
+}
+
+TEST(ReplScreen, WordWrapFencedCodeBlockClosingFenceWithTail) {
+    namespace repl = loom::ui::repl_screen;
+    // A closing fence with non-whitespace tail is NOT a closing fence
+    // (CommonMark §4.5: "the closing code fence may be followed only by
+    // spaces").  The line and everything after it stay in the code block.
+    // Without the tail check, the fence closes early, the remaining lines
+    // are soft-break joined → 3 lines instead of 4.
+    const std::string text =
+        "```\n"
+        "code\n"
+        "```not a close\n"
+        "line two\n"
+        "line three\n"
+        "```";
+    const int lines = repl::CountWordWrappedLines(text, 80);
+    // 3 code lines: "code", "```not a close", "line two", "line three"
+    // — wait, that's 4.  Without the tail check the fake close ends the
+    // block and "line two line three" joins → 3.
+    EXPECT_EQ(lines, 4);
+}

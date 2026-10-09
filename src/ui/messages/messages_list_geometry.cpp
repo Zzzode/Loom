@@ -133,7 +133,13 @@ constexpr int kMaxRowHeight = 1000;
         std::size_t len = 0;
         while (lead + len < line.size() && line[lead + len] == fc)
             ++len;
-        return len >= static_cast<std::size_t>(fl);
+        if (len < static_cast<std::size_t>(fl)) return false;
+        // The closing fence may be followed only by spaces (CommonMark
+        // §4.5); a non-whitespace tail means the line is code content.
+        for (std::size_t k = lead + len; k < line.size(); ++k) {
+            if (line[k] != ' ' && line[k] != '\t') return false;
+        }
+        return true;
     };
 
     // Helper: count leading spaces.
@@ -152,6 +158,22 @@ constexpr int kMaxRowHeight = 1000;
         return true;
     };
 
+    // Ensure the result ends with a \n\n block boundary, matching the
+    // lexer's flush_paragraph() before a fenced opener and the renderer's
+    // blank separator row between consecutive block tokens.
+    auto ensure_block_boundary = [&]() {
+        if (!seen_content || result.empty()) return;
+        while (!result.empty() && result.back() == ' ')
+            result.pop_back();
+        if (!result.empty() && result.back() != '\n')
+            result += '\n';
+        if (result.size() < 2 ||
+            result[result.size() - 1] != '\n' ||
+            result[result.size() - 2] != '\n') {
+            result += '\n';
+        }
+    };
+
     while (pos < text.size()) {
         const std::size_t nl = text.find('\n', pos);
         std::string_view line = (nl == std::string_view::npos)
@@ -164,7 +186,10 @@ constexpr int kMaxRowHeight = 1000;
             if (is_closing_fence(line, fence_char, fence_len)) {
                 fence_len = 0;
                 fence_char = '\0';
-                after_blank = false;
+                after_blank = true;
+                // Block separator after the code block (renderer inserts
+                // a blank row between consecutive block tokens).
+                ensure_block_boundary();
             } else {
                 if (!result.empty() && result.back() != '\n')
                     result += '\n';
@@ -230,9 +255,13 @@ constexpr int kMaxRowHeight = 1000;
                 pos = nl + 1;
                 continue;
             } else {
-                // End of code block — reprocess as normal line.
+                // End of code block — non-indented content starts a new
+                // block.  The lexer emits the code block and the following
+                // paragraph as separate tokens; the renderer inserts a
+                // blank separator row.
                 in_indented_code = false;
                 after_blank = false;
+                ensure_block_boundary();
                 // Fall through to normal line handling.
             }
         }
@@ -241,6 +270,10 @@ constexpr int kMaxRowHeight = 1000;
         if (is_blank_line(line)) {
             if (last_line) break;
             if (!seen_content) {
+                // Leading blank can precede an indented code block
+                // (CommonMark: indented code blocks may start at the
+                // beginning of the document).
+                after_blank = true;
                 pos = nl + 1;
                 continue;
             }
@@ -265,6 +298,10 @@ constexpr int kMaxRowHeight = 1000;
             char fc = '\0';
             int fl = detect_fence(line, fc);
             if (fl > 0) {
+                // Block separator before the code block: the lexer flushes
+                // the current paragraph before a fenced opener, and the
+                // renderer inserts a blank separator row between blocks.
+                ensure_block_boundary();
                 fence_len = fl;
                 fence_char = fc;
                 after_blank = false;

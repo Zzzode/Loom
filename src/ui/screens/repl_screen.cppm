@@ -167,9 +167,15 @@ ComputeUnseenDivider(const ReplScreenState& s);
 /// Count '\n'-separated lines in text (minimum 1).
 [[nodiscard]] int CountTextLines(std::string_view text);
 
-/// Count visual lines after wrapping at term_cols, capped to prevent
-/// extreme overestimation on very long messages.
+/// Count visual lines after hard character wrapping at term_cols.
+/// Callers that render truncated text must apply the same truncation
+/// before calling.
 [[nodiscard]] int CountWrappedLines(std::string_view text, int term_cols);
+
+/// Count visual lines after word-boundary wrapping at term_cols.
+/// Matches the Markdown renderer's flexbox word-wrap (atomic words,
+/// break at spaces); produces >= CountWrappedLines for the same text.
+[[nodiscard]] int CountWordWrappedLines(std::string_view text, int term_cols);
 
 /// Estimate rendered transcript height for the non-virtual scroll path.
 /// `term_cols` enables wrapping-aware line counting so long paragraphs

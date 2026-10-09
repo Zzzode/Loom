@@ -174,6 +174,59 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     return lines;
 }
 
+/// Count visual lines after word-boundary wrapping at term_cols.
+/// Unlike CountWrappedLines (hard character wrap), this matches the
+/// Markdown renderer's flexbox word-boundary wrapping: words are atomic
+/// and lines break at spaces.  Produces >= CountWrappedLines for the same
+/// text because it never breaks mid-word, which is the underestimate that
+/// made long paragraphs unreachable at the bottom.
+[[nodiscard]] int CountWordWrappedLines(std::string_view text, int term_cols) {
+    if (text.empty()) return 1;
+    const int cols = std::max(20, term_cols);
+    int lines = 0;
+    std::size_t pos = 0;
+    while (pos < text.size()) {
+        std::size_t nl = text.find('\n', pos);
+        if (nl == std::string_view::npos) nl = text.size();
+        const std::string_view line = text.substr(pos, nl - pos);
+
+        // Greedy word-pack: split into words (runs of non-space) and
+        // pack into lines of at most `cols` characters.
+        int current = 0;
+        std::size_t i = 0;
+        bool has_content = false;
+        while (i < line.size()) {
+            while (i < line.size() && line[i] == ' ') ++i;
+            if (i >= line.size()) break;
+            std::size_t word_end = i;
+            while (word_end < line.size() && line[word_end] != ' ') ++word_end;
+            const int word_len = static_cast<int>(word_end - i);
+            if (word_len > cols) {
+                // Overlong atomic segment: hard-break (matches flexbox).
+                if (current > 0) { ++lines; current = 0; }
+                lines += (word_len + cols - 1) / cols;
+            } else {
+                if (current > 0 && current + 1 + word_len > cols) {
+                    ++lines;
+                    current = word_len;
+                } else {
+                    if (current > 0) current += 1;
+                    current += word_len;
+                }
+            }
+            has_content = true;
+            i = word_end;
+        }
+        if (current > 0 || !has_content) ++lines;
+
+        pos = nl + 1;
+    }
+    if (!text.empty() && text.back() == '\n') {
+        lines += 1;
+    }
+    return lines;
+}
+
 [[nodiscard]] int EstimateTranscriptRows(
     const std::vector<MessageDisplayEntry>& entries, int term_cols) {
     int rows = 0;
@@ -255,8 +308,14 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                         entry.content_preview);
                 content_lines = CountWrappedLines(truncated, wrap_cols);
             } else {
-                content_lines = CountWrappedLines(entry.content_preview,
-                                                  wrap_cols);
+                // Assistant text renders through Markdown flexbox, which
+                // wraps at word boundaries (atomic words, break at spaces).
+                // CountWrappedLines does hard character wrapping and
+                // underestimates for text with spaces — e.g. 200 "word "
+                // at 40 cols: hard-wrap gives 27 lines, word-wrap gives
+                // 29, making the last line unreachable at the bottom.
+                content_lines = CountWordWrappedLines(entry.content_preview,
+                                                      wrap_cols);
             }
         }
         rows += content_lines;

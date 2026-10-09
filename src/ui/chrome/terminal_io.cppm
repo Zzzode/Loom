@@ -743,15 +743,10 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
 // Terminal Modes
 // ============================================================================
 
-/// Enable mouse tracking (SGR pixel mode, DEC 1003 + 1006)
-[[nodiscard]] inline auto enable_mouse_tracking() -> std::string {
-    return "\033[?1003h\033[?1006h";
-}
-
-/// Disable mouse tracking
-[[nodiscard]] inline auto disable_mouse_tracking() -> std::string {
-    return "\033[?1006l\033[?1003l";
-}
+// RFC 0007 D-7: enable_mouse_tracking() / disable_mouse_tracking() deleted
+// (dead code — never called). FTXUI's ScreenInteractive manages mouse tracking
+// internally via TrackMouse(). If the deferred F2 runtime toggle (Phase 3)
+// is implemented, these can be restored with all four DEC modes.
 
 /// Enter alternate screen buffer (DEC 1049)
 [[nodiscard]] inline auto enter_alternate_screen() -> std::string {

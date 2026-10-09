@@ -70,3 +70,24 @@ add_executable(test_utils
 )
 target_link_libraries(test_utils PRIVATE ${LOOM_UTILS_TEST_LIBS})
 gtest_discover_tests(test_utils DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# RFC 0007 Phase 1: clipboard copy pipeline tests.
+add_executable(test_clipboard_coordinator test_clipboard_coordinator.cpp)
+target_link_libraries(test_clipboard_coordinator PRIVATE ${LOOM_UTILS_TEST_LIBS})
+gtest_discover_tests(test_clipboard_coordinator DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_clipboard_job test_clipboard_job.cpp)
+target_link_libraries(test_clipboard_job PRIVATE ${LOOM_UTILS_TEST_LIBS})
+gtest_discover_tests(test_clipboard_job DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_clipboard_sigpipe test_clipboard_sigpipe.cpp)
+target_link_libraries(test_clipboard_sigpipe PRIVATE ${LOOM_UTILS_TEST_LIBS})
+gtest_discover_tests(test_clipboard_sigpipe DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_clipboard_ssh test_clipboard_ssh.cpp)
+target_link_libraries(test_clipboard_ssh PRIVATE ${LOOM_UTILS_TEST_LIBS})
+gtest_discover_tests(test_clipboard_ssh DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_clipboard_backends test_clipboard_backends.cpp)
+target_link_libraries(test_clipboard_backends PRIVATE ${LOOM_UTILS_TEST_LIBS})
+gtest_discover_tests(test_clipboard_backends DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

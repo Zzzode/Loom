@@ -197,8 +197,14 @@ inline VoidResult copy_to_clipboard_osc52(std::string_view content) {
         b64 += (i + 1 < len) ? b64_table[(triple >> 6) & 0x3F] : '=';
         b64 += (i + 2 < len) ? b64_table[triple & 0x3F] : '=';
     }
-    std::fprintf(stdout, "\033]52;c;%s\a", b64.c_str());
-    std::fflush(stdout);
+    if (std::fprintf(stdout, "\033]52;c;%s\a", b64.c_str()) < 0) {
+        return std::unexpected(Error::make(
+            ErrorCode::InternalError, "OSC 52: fprintf failed"));
+    }
+    if (std::fflush(stdout) != 0) {
+        return std::unexpected(Error::make(
+            ErrorCode::InternalError, "OSC 52: fflush failed"));
+    }
     return {};
 }
 

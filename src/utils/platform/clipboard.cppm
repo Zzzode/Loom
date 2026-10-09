@@ -16,6 +16,7 @@ export module loom.platform.clipboard;
 import std;
 
 import loom.crypto.crypto;
+import loom.platform.find_executable;       // find_executable (PATH + X_OK)
 import loom.process.bash.bash_execution;   // exec_write (pbcopy / xclip / wl-copy)
 
 export namespace loom::utils::clipboard {
@@ -335,6 +336,82 @@ extract_png_from_html_clipboard() {
 #endif
     auto wr = loom::utils::bash::exec_write(cmd, text);
     return wr && *wr == 0;
+}
+
+// ── SSH detection (D-3) ─────────────────────────────────────────────────
+
+/// True if Loom is running over SSH. When SSH_CONNECTION or SSH_TTY is set,
+/// native clipboard tools (xclip, wl-copy) would write to the REMOTE
+/// machine's clipboard, not the user's local machine. On SSH sessions, the
+/// native path is skipped and the copy pipeline goes directly to OSC 52.
+[[nodiscard]] inline bool is_ssh_session() noexcept {
+    return std::getenv("SSH_CONNECTION") != nullptr ||
+           std::getenv("SSH_TTY") != nullptr;
+}
+
+// ── Linux backend detection (D-3) ───────────────────────────────────────
+
+/// Resolved native clipboard backend.
+struct BackendInfo {
+    std::string path;                ///< Absolute path to the backend executable.
+    std::vector<std::string> argv;   ///< argv[0] = backend name, rest = args.
+};
+
+/// Resolve the native clipboard backend for the current platform.
+///
+/// Linux: PATH + X_OK lookup, order: wl-copy (if WAYLAND_DISPLAY) → xclip.
+/// macOS: pbcopy (always available on macOS).
+/// Windows: nullopt (async pipeline is POSIX-only; use write_text() instead).
+///
+/// Returns nullopt if:
+///   - Running over SSH (native tools would write to the remote clipboard)
+///   - No backend found in PATH
+///
+/// xsel is EXCLUDED: it daemonizes (double-fork + setsid) BEFORE calling
+/// set_selection(), so the original process exits 0 before the clipboard is
+/// set — a daemonized descendant can overwrite a subsequent selection's
+/// content even with serialized cancel/reap.
+[[nodiscard]] inline std::optional<BackendInfo>
+resolve_native_backend() noexcept {
+#if defined(__APPLE__)
+    if (is_ssh_session()) return std::nullopt;
+    // pbcopy is always available on macOS.
+    auto path = loom::utils::find_executable("pbcopy");
+    if (!path) return std::nullopt;
+    return BackendInfo{
+        .path = path->string(),
+        .argv = {"pbcopy"},
+    };
+#elif defined(__linux__)
+    if (is_ssh_session()) return std::nullopt;
+
+    // Wayland: wl-copy.
+    if (std::getenv("WAYLAND_DISPLAY") != nullptr) {
+        auto path = loom::utils::find_executable("wl-copy");
+        if (path) {
+            return BackendInfo{
+                .path = path->string(),
+                .argv = {"wl-copy"},
+            };
+        }
+    }
+
+    // X11: xclip -selection clipboard -silent.
+    // -silent is the default (fork after setting clipboard); -quiet would
+    // stay in the foreground. The original exits 0 after the clipboard is
+    // set, which is what makes the owner-thread serialization correct.
+    auto xclip = loom::utils::find_executable("xclip");
+    if (xclip) {
+        return BackendInfo{
+            .path = xclip->string(),
+            .argv = {"xclip", "-selection", "clipboard", "-silent"},
+        };
+    }
+
+    return std::nullopt;
+#else
+    return std::nullopt;
+#endif
 }
 
 }  // namespace loom::utils::clipboard

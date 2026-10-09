@@ -186,6 +186,41 @@ int AppAdapter::teams_overview_count_for_testing() const noexcept {
     return static_cast<int>(screen_state_->task_view_store.live_teammates.size());
 }
 
+bool AppAdapter::text_selection_active_for_testing() const noexcept {
+    return text_selection_.active;
+}
+
+bool AppAdapter::text_selection_potential_for_testing() const noexcept {
+    return text_selection_.potential;
+}
+
+void AppAdapter::inject_copy_result_for_testing(
+    std::uint64_t generation,
+    loom::utils::clipboard::CopyResult result,
+    std::string text) {
+    std::lock_guard lock(copy_result_mutex_);
+    pending_copy_result_ = PendingCopyResult{
+        .generation = generation,
+        .result = std::move(result),
+        .text = std::make_shared<const std::string>(std::move(text)),
+    };
+}
+
+void AppAdapter::drain_copy_result_for_testing() {
+    DrainCopyResult();
+}
+
+std::string AppAdapter::footer_notification_text_for_testing() const {
+    if (screen_state_->footer_notification_queue.current) {
+        return screen_state_->footer_notification_queue.current->text;
+    }
+    return {};
+}
+
+void AppAdapter::set_copy_generation_for_testing(std::uint64_t gen) {
+    copy_generation_.store(gen, std::memory_order_release);
+}
+
 // ============================================================
 // AppTestingSeams proxy bodies (P5) — declarations in app.cppm.
 // Each forwards to the matching AppAdapter private *_for_testing method;
@@ -363,6 +398,34 @@ void AppTestingSeams::enqueue_teammate_permission_for_testing(void* request, std
 
 std::size_t AppTestingSeams::pending_teammate_permission_count_for_testing() {
     return app->pending_teammate_permission_count_for_testing();
+}
+
+bool AppTestingSeams::text_selection_active_for_testing() const noexcept {
+    return app->text_selection_active_for_testing();
+}
+
+bool AppTestingSeams::text_selection_potential_for_testing() const noexcept {
+    return app->text_selection_potential_for_testing();
+}
+
+void AppTestingSeams::inject_copy_result_for_testing(
+    std::uint64_t generation,
+    loom::utils::clipboard::CopyResult result,
+    std::string text) {
+    app->inject_copy_result_for_testing(
+        generation, std::move(result), std::move(text));
+}
+
+void AppTestingSeams::drain_copy_result_for_testing() {
+    app->drain_copy_result_for_testing();
+}
+
+std::string AppTestingSeams::footer_notification_text_for_testing() const {
+    return app->footer_notification_text_for_testing();
+}
+
+void AppTestingSeams::set_copy_generation_for_testing(std::uint64_t gen) {
+    app->set_copy_generation_for_testing(gen);
 }
 
 AppTestingSeams test_seams(const ftxui::Component& app) {

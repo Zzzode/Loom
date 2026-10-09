@@ -6,7 +6,12 @@
 // Contains: SelectionHighlightNode (custom FTXUI Node),
 //           ExtractSelectedText, NotifyCopyComplete,
 //           AppAdapter::HandleTextSelectionMouse,
-//           AppAdapter::ApplySelectionHighlight.
+//           AppAdapter::ApplySelectionHighlight,
+//           AppAdapter::DrainCopyResult.
+//
+// RFC 0007 Phase 1: copy pipeline restructured to use ClipboardCoordinator
+// (async, SSH-aware, honest four-state feedback). Threshold fixed (D-4).
+// Release endpoint updated when selection is active (D-8).
 module;
 
 #include <algorithm>
@@ -23,7 +28,8 @@ module loom.ui.app.app;
 import std;
 
 import loom.commands.copy_cmd;           // copy_to_clipboard_osc52
-import loom.platform.clipboard;           // clipboard::write_text (native fallback)
+import loom.diagnostics.debug;            // debug() (filtered by namespace)
+import loom.diagnostics.log;              // log::add_to_in_memory_errors
 import loom.ui.foundation.theme_provider; // current_theme().palette
 import loom.ui.prompt.prompt_input_footer; // NotificationQueue / NotificationItem
 
@@ -100,17 +106,56 @@ private:
     return result;
 }
 
-/// Enqueue a "Copied N bytes" footer notification.
+/// Enqueue a "Copied N bytes (backend)" footer notification.
 static void NotifyCopyComplete(
     loom::ui::prompt::footer::NotificationQueue& queue,
-    std::size_t bytes) {
+    std::size_t bytes, std::string_view backend) {
     namespace pif = loom::ui::prompt::footer;
     pif::NotificationItem item;
     item.key = "text-selection-copied";
-    item.text = std::format("Copied {} bytes", bytes);
+    item.text = std::format("Copied {} bytes ({})", bytes, backend);
     item.color = "";
     item.priority = pif::NotificationPriority::Immediate;
     item.timeout_ms = 2000;
+    pif::QueueAddNotification(queue, item);
+}
+
+/// Enqueue a "Copying..." footer notification.
+static void NotifyCopying(
+    loom::ui::prompt::footer::NotificationQueue& queue) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::NotificationItem item;
+    item.key = "text-selection-copying";
+    item.text = "Copying...";
+    item.color = "";
+    item.priority = pif::NotificationPriority::Immediate;
+    item.timeout_ms = 2000;
+    pif::QueueAddNotification(queue, item);
+}
+
+/// Enqueue a "Copy requested via terminal" footer notification (OSC 52).
+static void NotifyOsc52Emitted(
+    loom::ui::prompt::footer::NotificationQueue& queue) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::NotificationItem item;
+    item.key = "text-selection-osc52";
+    item.text = "Copy requested via terminal (OSC 52)";
+    item.color = "";
+    item.priority = pif::NotificationPriority::Immediate;
+    item.timeout_ms = 2000;
+    pif::QueueAddNotification(queue, item);
+}
+
+/// Enqueue a "Copy failed" footer notification.
+static void NotifyCopyFailed(
+    loom::ui::prompt::footer::NotificationQueue& queue) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::NotificationItem item;
+    item.key = "text-selection-failed";
+    item.text = "Copy failed — select text in terminal and use Ctrl+Shift+C";
+    item.color = "";
+    item.priority = pif::NotificationPriority::Immediate;
+    item.timeout_ms = 4000;
     pif::QueueAddNotification(queue, item);
 }
 
@@ -146,7 +191,9 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
             text_selection_.end_y = mouse.y;
             const int dx = mouse.x - text_selection_.start_x;
             const int dy = mouse.y - text_selection_.start_y;
-            if (dx * dx + dy * dy > 9) {  // 3px threshold
+            // RFC 0007 D-4: threshold is dx²+dy² > 0 (any displacement
+            // beyond the starting cell), not > 9 (3 cells).
+            if (dx * dx + dy * dy > 0) {
                 text_selection_.active = true;
                 PostRenderEvent();
             }
@@ -163,11 +210,18 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
         if (!text_selection_.active && text_selection_.potential) {
             const int dx = mouse.x - text_selection_.start_x;
             const int dy = mouse.y - text_selection_.start_y;
-            if (dx * dx + dy * dy > 9) {  // 3px threshold
+            // RFC 0007 D-4: threshold is dx²+dy² > 0.
+            if (dx * dx + dy * dy > 0) {
                 text_selection_.active = true;
-                text_selection_.end_x = mouse.x;
-                text_selection_.end_y = mouse.y;
             }
+        }
+        // RFC 0007 D-8: always update the release endpoint when selection
+        // is active, even if the endpoint was already set during motion.
+        // This ensures the final position is captured on terminals that
+        // deliver release events with updated coordinates.
+        if (text_selection_.active) {
+            text_selection_.end_x = mouse.x;
+            text_selection_.end_y = mouse.y;
         }
         if (text_selection_.active) {
             // Extract text from screen and copy to clipboard.
@@ -177,13 +231,33 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
                     text_selection_.start_x, text_selection_.start_y,
                     text_selection_.end_x, text_selection_.end_y);
                 if (!text.empty()) {
-                    // OSC 52 (terminals that support it) + native clipboard
-                    // (pbcopy/xclip/wl-copy) as a guaranteed fallback.
-                    (void)loom::commands::copy_to_clipboard_osc52(text);
-                    (void)loom::utils::clipboard::write_text(text);
-                    NotifyCopyComplete(
-                        screen_state_->footer_notification_queue,
-                        text.size());
+                    // RFC 0007 Phase 1: async copy pipeline.
+                    // Advance generation counter for stale-result detection.
+                    auto gen = copy_generation_.fetch_add(
+                        1, std::memory_order_acq_rel) + 1;
+
+                    // Show "Copying..." immediately.
+                    NotifyCopying(screen_state_->footer_notification_queue);
+
+                    // Post async native clipboard copy.
+                    auto text_ptr = std::make_shared<const std::string>(
+                        std::move(text));
+                    [[maybe_unused]] auto posted_gen = clipboard_coordinator_.post({
+                        .text = text_ptr,
+                        .on_complete = [this, gen, text_ptr](
+                            loom::utils::clipboard::CopyResult result) {
+                            // Store result for UI thread to drain.
+                            {
+                                std::lock_guard lock(copy_result_mutex_);
+                                pending_copy_result_ = PendingCopyResult{
+                                    .generation = gen,
+                                    .result = std::move(result),
+                                    .text = text_ptr,
+                                };
+                            }
+                            PostRenderEvent();
+                        },
+                    });
                 }
             }
             text_selection_.potential = false;
@@ -196,6 +270,64 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
     }
 
     return false;
+}
+
+void AppAdapter::DrainCopyResult() {
+    // Drain pending clipboard copy result from the worker thread.
+    std::optional<PendingCopyResult> pending;
+    {
+        std::lock_guard lock(copy_result_mutex_);
+        pending = std::move(pending_copy_result_);
+        pending_copy_result_.reset();
+    }
+    if (!pending) return;
+
+    // Stale result? Discard (a newer selection was posted).
+    auto current_gen = copy_generation_.load(std::memory_order_acquire);
+    if (pending->generation != current_gen) return;
+
+    // RFC 0007 §11.0 item 4: diagnostics — log backend/status/duration/bytes
+    // to the in-memory error buffer for failures, and to the debug channel
+    // for all results. Never logs selected text content.
+    const auto& r = pending->result;
+    loom::utils::debug("clipboard",
+        "copy result: backend={} status={} bytes={} duration={}ms detail={}",
+        r.backend_name,
+        r.status == loom::utils::clipboard::CopyResult::Status::NativeCopied
+            ? "copied" : "failed",
+        r.bytes_sent,
+        r.duration.count(),
+        r.error_detail);
+    if (r.status == loom::utils::clipboard::CopyResult::Status::NativeFailed) {
+        loom::utils::log::add_to_in_memory_errors(std::format(
+            "clipboard copy failed: backend={} bytes={} duration={}ms detail={}",
+            r.backend_name, r.bytes_sent, r.duration.count(),
+            r.error_detail));
+    }
+
+    auto& queue = screen_state_->footer_notification_queue;
+    const auto byte_count = pending->text ? pending->text->size() : 0;
+
+    if (r.status ==
+        loom::utils::clipboard::CopyResult::Status::NativeCopied) {
+        // Native clipboard succeeded.
+        NotifyCopyComplete(queue, byte_count, r.backend_name);
+    } else {
+        // Native failed or unsupported (SSH/no backend) — try OSC 52.
+        // OSC 52 is written on the UI thread (terminal-output ownership
+        // invariant: only the UI thread writes to stdout/stderr).
+        if (pending->text) {
+            auto osc52 = loom::commands::copy_to_clipboard_osc52(
+                *pending->text);
+            if (osc52) {
+                NotifyOsc52Emitted(queue);
+            } else {
+                NotifyCopyFailed(queue);
+            }
+        } else {
+            NotifyCopyFailed(queue);
+        }
+    }
 }
 
 }  // namespace loom::ui

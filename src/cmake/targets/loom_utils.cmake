@@ -41,6 +41,8 @@ target_sources(loom_utils
         utils/git/gitignore.cppm
         utils/crypto/hash.cppm
         utils/platform/clipboard.cppm
+        utils/platform/clipboard_job.cppm
+        utils/platform/clipboard_coordinator.cppm
         utils/http/http.cppm
         utils/http/http_encoding.cppm
         utils/platform/hyperlink.cppm
@@ -99,6 +101,8 @@ target_sources(loom_utils
         utils/serdes/json_mut_doc.cpp
         utils/serdes/json_iter.cpp
         utils/serdes/json_builders.cpp
+        utils/platform/clipboard_job.cpp
+        utils/platform/clipboard_coordinator.cpp
 )
 target_link_libraries(loom_utils
     PUBLIC

@@ -32,6 +32,8 @@ import loom.ui.app.teammate_coordinator;  // arch-check: keep-import (member)
 import loom.ui.app.paste_coordinator;  // arch-check: keep-import (member)
 // P4-1d: tool-permission + elicitation + ask-user blocking-response state.
 import loom.ui.app.permission_coordinator;  // arch-check: keep-import (member)
+// RFC 0007 Phase 1: async clipboard copy coordinator.
+import loom.platform.clipboard_coordinator;  // arch-check: keep-import (member)
 
 export namespace loom::ui {
 
@@ -361,6 +363,31 @@ private:
     };
     TextSelection text_selection_;
 
+    // Generation counter for stale-result detection: advanced on each copy
+    // request post; re-checked in the result callback to discard stale
+    // notifications from superseded selections.
+    std::atomic<std::uint64_t> copy_generation_{0};
+    // Pending copy result from the worker thread, drained on the UI thread.
+    // The worker stores the result + generation here and calls PostRenderEvent;
+    // the UI thread drains it in DrainCopyResult() (called from OnEvent/Render).
+    struct PendingCopyResult {
+        std::uint64_t generation = 0;
+        loom::utils::clipboard::CopyResult result;
+        std::shared_ptr<const std::string> text;  // for OSC 52 fallback
+    };
+    std::mutex copy_result_mutex_;
+    std::optional<PendingCopyResult> pending_copy_result_;
+
+    // RFC 0007 Phase 1: async clipboard copy coordinator.
+    // The UI thread posts copy requests; the coordinator's owner thread
+    // serializes cancel/reap/start of clipboard backend jobs. The destructor
+    // calls shutdown() (bounded ~1.1s worst case) — the only blocking wait
+    // on the UI thread, and explicitly a shutdown-path exception.
+    // Declared AFTER copy_result_mutex_/pending_copy_result_ so that the
+    // coordinator's destructor (which joins the worker) runs before the
+    // mutex/optional are destroyed (defense-in-depth, P2-3).
+    loom::utils::clipboard::ClipboardCoordinator clipboard_coordinator_;
+
     // ── Drag-to-select text selection (body in app_text_selection.cpp) ──
     // Handle mouse drag events for text selection. Returns true if the
     // event was consumed (drag active or completed).
@@ -368,6 +395,9 @@ private:
     // Wrap an Element with the selection-highlight node when a drag is
     // active.  Returns the element unchanged otherwise.
     Element ApplySelectionHighlight(Element el);
+    // RFC 0007 Phase 1: drain pending clipboard copy results from the
+    // worker thread onto the UI thread. Called from OnEvent/Render.
+    void DrainCopyResult();
 
     // P4-1d: tool-permission + MCP-elicitation + ask-user blocking-response
     // state extracted to PermissionCoordinator.  AppAdapter keeps the dialog
@@ -768,6 +798,19 @@ private:
     // without a real tmux worker mailbox).
     void enqueue_teammate_permission_for_testing(void* request, std::string team);
     [[nodiscard]] std::size_t pending_teammate_permission_count_for_testing();
+
+    // RFC 0007: text selection state for threshold/unit tests.
+    [[nodiscard]] bool text_selection_active_for_testing() const noexcept;
+    [[nodiscard]] bool text_selection_potential_for_testing() const noexcept;
+
+    // RFC 0007: copy result pipeline for stale-result/OSC 52 tests.
+    void inject_copy_result_for_testing(
+        std::uint64_t generation,
+        loom::utils::clipboard::CopyResult result,
+        std::string text);
+    void drain_copy_result_for_testing();
+    [[nodiscard]] std::string footer_notification_text_for_testing() const;
+    void set_copy_generation_for_testing(std::uint64_t gen);
 };
 
 // ============================================================
@@ -852,6 +895,23 @@ struct AppTestingSeams {
     // ── Teammate permissions ───────────────────────────────────────
     void enqueue_teammate_permission_for_testing(void* request, std::string team);
     [[nodiscard]] std::size_t pending_teammate_permission_count_for_testing();
+
+    // ── Text selection (RFC 0007) ──────────────────────────────────
+    [[nodiscard]] bool text_selection_active_for_testing() const noexcept;
+    [[nodiscard]] bool text_selection_potential_for_testing() const noexcept;
+
+    // ── Copy result pipeline (RFC 0007) ────────────────────────────
+    /// Inject a pending copy result as if the worker thread posted it.
+    void inject_copy_result_for_testing(
+        std::uint64_t generation,
+        loom::utils::clipboard::CopyResult result,
+        std::string text);
+    /// Drain pending copy results on the UI thread.
+    void drain_copy_result_for_testing();
+    /// Get the current footer notification text (empty if none).
+    [[nodiscard]] std::string footer_notification_text_for_testing() const;
+    /// Set the copy generation counter (for stale-result discard tests).
+    void set_copy_generation_for_testing(std::uint64_t gen);
 };
 
 /// Factory: create an AppTestingSeams proxy from a Component (shared_ptr

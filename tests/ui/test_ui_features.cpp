@@ -29,6 +29,7 @@ import loom.teams.swarm.helpers;
 import loom.constants.constants;
 import loom.ui.prompt.autocomplete_sources;
 import loom.ui.features.teams.live_teammates;
+import loom.platform.clipboard_coordinator;  // CopyResult (re-exported)
 
 namespace {
 namespace fs = std::filesystem;
@@ -352,3 +353,204 @@ TEST(PasteCoordinator, SubmissionDrainPreservesNewDraftResults) {
     EXPECT_TRUE(images.empty());
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// RFC 0007 D-4: text selection threshold fix (dx²+dy² > 0, not > 9)
+// ═══════════════════════════════════════════════════════════════════════════
+
+TEST(TextSelectionThreshold, OneCellDisplacementActivatesSelection) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_sel_threshold_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // FTXUI 5.x Mouse field order:
+    //   Button, Motion, shift, meta, control, x, y
+    // Motion events are encoded as Pressed with different coordinates.
+
+    // Initial press at (5, 5) — sets potential, not active.
+    auto press = ftxui::Mouse{
+        ftxui::Mouse::Button::Left,
+        ftxui::Mouse::Motion::Pressed,
+        /*shift=*/false, /*meta=*/false, /*control=*/false,
+        /*x=*/5, /*y=*/5,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", press));
+    EXPECT_TRUE(test_seams(app).text_selection_potential_for_testing());
+    EXPECT_FALSE(test_seams(app).text_selection_active_for_testing());
+
+    // Motion to (6, 5) — 1-cell displacement. With the old threshold
+    // (dx²+dy² > 9), this would NOT activate. With the D-4 fix (> 0),
+    // it must activate.
+    auto motion = ftxui::Mouse{
+        ftxui::Mouse::Button::Left,
+        ftxui::Mouse::Motion::Pressed,
+        /*shift=*/false, /*meta=*/false, /*control=*/false,
+        /*x=*/6, /*y=*/5,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", motion));
+    EXPECT_TRUE(test_seams(app).text_selection_active_for_testing());
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+TEST(TextSelectionThreshold, SameCoordinateDoesNotActivateSelection) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_sel_same_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Press at (10, 10).
+    auto press = ftxui::Mouse{
+        ftxui::Mouse::Button::Left,
+        ftxui::Mouse::Motion::Pressed,
+        false, false, false,
+        10, 10,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", press));
+    EXPECT_TRUE(test_seams(app).text_selection_potential_for_testing());
+
+    // Motion to same coordinate (10, 10) — zero displacement, must not
+    // activate even with the > 0 threshold.
+    auto same = ftxui::Mouse{
+        ftxui::Mouse::Button::Left,
+        ftxui::Mouse::Motion::Pressed,
+        false, false, false,
+        10, 10,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", same));
+    EXPECT_FALSE(test_seams(app).text_selection_active_for_testing());
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RFC 0007 Phase 1: copy result pipeline tests
+// ═══════════════════════════════════════════════════════════════════════════
+
+TEST(CopyResultPipeline, StaleResultIsDiscarded) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_stale_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    namespace clip = loom::utils::clipboard;
+
+    // Set generation to 1 (simulating a newer selection after the result).
+    test_seams(app).set_copy_generation_for_testing(1);
+
+    // Inject a stale result (generation 0).
+    clip::CopyResult result;
+    result.status = clip::CopyResult::Status::NativeCopied;
+    result.backend_name = "xclip";
+    result.bytes_sent = 42;
+    test_seams(app).inject_copy_result_for_testing(
+        0, std::move(result), "stale text");
+
+    // Drain — the stale result should be discarded (no notification).
+    test_seams(app).drain_copy_result_for_testing();
+    EXPECT_TRUE(test_seams(app).footer_notification_text_for_testing().empty())
+        << "stale result should not produce a notification";
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+TEST(CopyResultPipeline, NativeCopiedShowsCopiedNotification) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_copied_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    namespace clip = loom::utils::clipboard;
+
+    // Generation 0 matches the initial copy_generation_ (0).
+    clip::CopyResult result;
+    result.status = clip::CopyResult::Status::NativeCopied;
+    result.backend_name = "xclip";
+    result.bytes_sent = 42;
+    test_seams(app).inject_copy_result_for_testing(
+        0, std::move(result), "test text");
+
+    test_seams(app).drain_copy_result_for_testing();
+    auto notification = test_seams(app).footer_notification_text_for_testing();
+    EXPECT_NE(notification.find("Copied"), std::string::npos)
+        << "native copy success should show 'Copied' notification, got: "
+        << notification;
+    EXPECT_NE(notification.find("xclip"), std::string::npos)
+        << "notification should include backend name";
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+TEST(CopyResultPipeline, NativeFailedFallsBackToOsc52) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_osc52_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    namespace clip = loom::utils::clipboard;
+
+    // Generation 0 matches.
+    clip::CopyResult result;
+    result.status = clip::CopyResult::Status::NativeFailed;
+    result.backend_name = "xclip";
+    result.error_detail = "backend exited with status 1";
+    test_seams(app).inject_copy_result_for_testing(
+        0, std::move(result), "test text");
+
+    test_seams(app).drain_copy_result_for_testing();
+    auto notification = test_seams(app).footer_notification_text_for_testing();
+    EXPECT_NE(notification.find("OSC 52"), std::string::npos)
+        << "native failure should fall back to OSC 52, got: " << notification;
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}

@@ -93,11 +93,11 @@ main() {
   precompile_modules
   local what="${1:-all}"
   case "${what}" in
-    smoke)   build_target tools_smoke "${TESTS}/tools_smoke.cpp" ;;
-    e2e)     build_target tools_e2e   "${TESTS}/tools_e2e.cpp"   ;;
+    smoke)   build_target tools_smoke "${TESTS}/tools/tools_smoke.cpp" ;;
+    e2e)     build_target tools_e2e   "${TESTS}/tools/tools_e2e.cpp"   ;;
     all|*)
-      build_target tools_smoke "${TESTS}/tools_smoke.cpp"
-      build_target tools_e2e   "${TESTS}/tools_e2e.cpp"
+      build_target tools_smoke "${TESTS}/tools/tools_smoke.cpp"
+      build_target tools_e2e   "${TESTS}/tools/tools_e2e.cpp"
       ;;
   esac
 }

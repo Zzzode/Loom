@@ -1281,7 +1281,7 @@ Phase 3 should evaluate whether to upstream this patch.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| 1 | Copy pipeline reliability | ClipboardCoordinator, ClipboardJob, posix_spawn, SIGPIPE, SSH detection, Linux backend detection, threshold fix, dead code removal | proposed | All new unit tests pass; serial ctest green (debug + release); golden snapshots regenerated and reviewed; BMI PSS before/after recorded; `inline_def_check.py` no increase; default `graph_check.py` passes; no stdout/stderr pollution from worker |
+| 1 | Copy pipeline reliability | ClipboardCoordinator, ClipboardJob, posix_spawn, SIGPIPE, SSH detection, Linux backend detection, threshold fix, dead code removal | graduated | All new unit tests pass; serial ctest green (debug + release); golden snapshots regenerated and reviewed; BMI PSS before/after recorded; `inline_def_check.py` no increase; default `graph_check.py` passes; no stdout/stderr pollution from worker |
 | 2 | Default native selection + config fallback | TrackMouse(false) before Loop, mouseMode config, status bar label, settings_home_read(), ConfigManager read/write split, MCP fallback, user docs | proposed | PTY byte-level test confirms DECSET absent at startup; ~/.agents fallback test passes; MCP fallback mutation tests pass; serial ctest green (debug + release); golden snapshots regenerated; documentation gate satisfied (CLAUDE.md, design-decisions.md, user docs); BMI PSS before/after recorded |
 | 3 | F2 runtime toggle (DEFERRED) | sigwait thread, runtime mouse-mode toggle | deferred | Follow-up RFC required; needs FTXUI public lifecycle API |
 | 4 | Selection quality | D-5 linear vs rectangle, D-6 empty lines, CJK/emoji, same-coordinate click, cancel/blur | proposed | No regression in Phase 1/2 tests; UX testing in Ghostty/iTerm2/tmux; selection extraction tests pass |
@@ -1731,9 +1731,9 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 
 #### 1. Correctness and tests
 
-- [ ] Every new behaviour has a new test (unit / module / e2e named) — **graduation:** §11.2 test mapping (13 test targets) defines which tests to write
-- [ ] Failure paths covered (empty input, error result, timeout, abort) — **graduation:** §5.5 cancel/reap/start, §11.2 wall-clock policy
-- [ ] Golden suites assessed: `test_ui_*`, `test_dialog_*`, `test_prompt_dialog`, `test_cost_threshold_dialog`; status bar footer changes require golden regeneration, reviewed in same commit — **graduation:** §11.2 golden policy
+- [x] Every new behaviour has a new test (unit / module / e2e named) — **evidence:** 28 new tests across 7 test targets (§11.2 mapping); all pass in debug + release serial ctest
+- [x] Failure paths covered (empty input, error result, timeout, abort) — **evidence:** timeout (3s write+wait deadline), cancel (SIGTERM→SIGKILL), abort (shutdown during active copy), SSH skip, no-backend Unsupported; tested in test_clipboard_job/sigpipe/ssh/backends/coordinator
+- [x] Golden suites assessed: `test_ui_*`, `test_dialog_*`, `test_prompt_dialog`, `test_cost_threshold_dialog`; status bar footer changes require golden regeneration, reviewed in same commit — **evidence:** 72/72 golden snapshots pass; Phase 1 does not change default UI (mouse tracking unchanged), no regeneration needed
 - [x] Known timing flake list respected; no new wall-clock assertions with tight upper bounds — **evidence:** deterministic deadline tests via `steady_clock` seam, loose 10s integration watchdog (§11.2)
 - [x] Expected serial ctest total stated; deletions reconcile exactly — **evidence:** §11.2 baseline policy (clean build, zero NOT_BUILT)
 - [x] String/shape-based cross-module couplings changed on BOTH emitter and consumer sides; `docs/decisions/design-decisions.md` consulted — **evidence:** §5.9 shared-change gate
@@ -1742,8 +1742,8 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 
 #### 2. Build system and module discipline
 
-- [ ] Affected producer-TU BMI PSS measured before AND after — **graduation:** §11.1 measurement plan (baseline before Phase 1, graduation after)
-- [ ] No Ninja concurrency reduction anywhere; memory handled by TU splitting / type erasure — **graduation:** §11.1 no concurrency degradation
+- [x] Affected producer-TU BMI PSS measured before AND after — **evidence:** clipboard.cppm 499KB→685KB (+37%); config/paths/mcp_cmd unchanged; new modules: job 393KB, coordinator 85KB (§11.1, Implementation History)
+- [x] No Ninja concurrency reduction anywhere; memory handled by TU splitting / type erasure — **evidence:** no concurrency changes; debug -j8 build clean
 - [x] Interface files gain declarations, not definitions — **evidence:** §11.1 PRIVATE `.cpp` implementation files for ClipboardCoordinator/ClipboardJob
 - [x] No new textual standard-library or third-party includes in module units — **evidence:** all new code uses `import std;`
 - [x] Named partitions used only for PIMPL internals, not for cross-area layering — **evidence:** no partitions used
@@ -1753,7 +1753,7 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 
 #### 3. Rollback and compatibility
 
-- [ ] Commits are atomic per phase; each phase revertible independently — **graduation:** §11.4 rollback table
+- [x] Commits are atomic per phase; each phase revertible independently — **evidence:** Phase 1 ships as single commit (§11.4 rollback table)
 - [x] No flag-day interface changes: PIMPL / type erasure / re-export shims keep importers building during migration — **evidence:** MCP mutator return type change is breaking but updated in same commit (only caller is `mcp_cmd.cppm`)
 - [x] Persisted data compatibility considered (`~/.loom/sessions`, settings cascade, config schema) with migration or read-tolerance — **evidence:** §5.3 config fallback, §10 migration plan; `~/.loom` takeover is one-way by design
 - [x] Wire-protocol compatibility — **evidence:** no wire changes in this RFC
@@ -1765,7 +1765,7 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 - [x] Session traces remain valid: `messages.jsonl` block coverage and `dump-prompts/<id>.jsonl` request/response dumps — **evidence:** no changes to session storage
 - [x] New background workers / threads are event-driven; no constant-rate render ticker; teardown/abort paths defined — **evidence:** ClipboardCoordinator is event-driven (queue + owner thread); shutdown linearized (stop accepting → discard pending → cancel/reap → exit)
 - [x] New diagnostics log through the existing debug channels; no new ad-hoc print paths — **evidence:** owner thread posts metadata to thread-safe queue; UI thread drains and writes to `log::add_to_in_memory_errors()` (existing in-memory buffer); worker never writes to stdout/stderr or directly to the unlocked buffer
-- [ ] Build/performance metrics from this PRR recorded in the RFC — **graduation:** §11.1 BMI PSS plan, §11.3 platform evidence
+- [x] Build/performance metrics from this PRR recorded in the RFC — **evidence:** BMI PSS (§11.1), serial ctest debug+release 2113/2113, graph_check 0 cycles, inline_def_check no new violations, golden 72/72 (Implementation History)
 
 **Notes:** Diagnostics sink: owner thread → thread-safe queue → UI thread → `log::add_to_in_memory_errors()` (`src/utils/diagnostics/log.cppm:95`). The in-memory buffer is an unlocked static vector — only the UI thread writes/reads it. Shutdown: owner stops accepting, discards pending, cancels/reaps, exits — no callback to destroyed UI. Status bar four-state feedback is the user-facing diagnostic. Acceptance: no stdout/stderr pollution, no selected text in logs, session traces valid.
 
@@ -1773,7 +1773,7 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 
 - [ ] `CLAUDE.md` updated if conventions, build layout, or paths change — **graduation:** Phase 2 documentation gate (§5.9, Phase 2 rollback)
 - [ ] Non-obvious decisions added to `docs/decisions/design-decisions.md` — **graduation:** Phase 2 documentation gate
-- [ ] Dead code made obsolete by the work is deleted in the SAME phase — **graduation:** §5.8 dead code removal (Phase 1)
+- [x] Dead code made obsolete by the work is deleted in the SAME phase — **evidence:** terminal_io.cppm enable_mouse_tracking()/disable_mouse_tracking() removed (§5.8)
 - [x] Deprecated modules/shapes have a stated removal trigger and migration note — **evidence:** F2 runtime toggle deferred to follow-up RFC; old mouse-mode functions deleted (§5.8)
 - [x] All comments/docs in English — **evidence:** project rule
 
@@ -1781,11 +1781,11 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 
 #### 6. Platform readiness (macos-14 / Linux)
 
-- [ ] Debug + release presets build `-Werror` clean on the Linux dev box — **graduation:** §11.3 platform evidence
+- [x] Debug + release presets build `-Werror` clean on the Linux dev box — **evidence:** both presets build with zero warnings on Linux dev box
 - [ ] macos-14 CI green at default parallelism (3 vCPU / 14 GB); no swap — **graduation:** §11.1 macOS-14 concurrency wall time measurement
 - [x] Termios / signals / Apple-only guards correct for both platforms — **evidence:** §5.5 pipe+fcntl (macOS) / pipe2 (Linux); POSIX_SPAWN_SETSIGMASK
-- [ ] truecolor (`COLORTERM=truecolor TERM=xterm-256color`) golden path intact — **graduation:** §11.3 truecolor golden; `loom_test_main` sets `COLORTERM=truecolor`
-- [ ] Offline dependency cache unaffected; no new network fetch required — **graduation:** §11.3 offline dep cache
+- [x] truecolor (`COLORTERM=truecolor TERM=xterm-256color`) golden path intact — **evidence:** 72/72 golden snapshots pass; `loom_test_main` sets `COLORTERM=truecolor`
+- [x] Offline dependency cache unaffected; no new network fetch required — **evidence:** no new dependencies; no new network fetch required
 
 **Notes:** Platform evidence matrix in §11.3; macOS pipe+fcntl path in §5.5.
 
@@ -1795,7 +1795,7 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 |---|---|---|---|
 | Design | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | approve (v7.12) |
 | Production readiness | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | approve (round 4) |
-| Code (per phase) | Assigned by lead at phase start (independent agent, not the phase implementer) | — | pending |
+| Code (Phase 1) | Independent review agent (a49e1b5) | 2026-10-10 | approve (round 3) |
 
 ### PRR Q&A (supplementary)
 
@@ -1867,7 +1867,8 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 | SIGPIPE handling (worker block + child empty mask) | `tests/utils/test_clipboard_sigpipe.cpp` (new) | Integration |
 | SSH detection (skip native tools) | `tests/utils/test_clipboard_ssh.cpp` (new) | Unit |
 | Linux backend detection (xclip/wl-copy, xsel excluded) | `tests/utils/test_clipboard_backends.cpp` (new) | Unit |
-| Threshold fix (dx²+dy² > 0) | `tests/ui/test_ui_messages.cpp` (existing, new cases) | Unit |
+| Threshold fix (dx²+dy² > 0) | `tests/ui/test_ui_features.cpp` (existing, new cases) | Unit |
+| Copy result pipeline (stale discard, OSC 52 fallback, native copied) | `tests/ui/test_ui_features.cpp` (existing, new cases) | Unit |
 | `settings_home_read()` file-level resolver | `tests/utils/paths_cascade_test.cpp` (existing, new cases) | Unit |
 | ConfigManager read/write split | `tests/services/test_config.cpp` (existing, new cases) | Unit |
 | MCP fallback mutation semantics | `tests/commands/test_mcp_fallback.cpp` (new) | Unit |
@@ -1997,5 +1998,6 @@ New test cases in existing files (`test_ui_messages.cpp`, `paths_cascade_test.cp
 | 2026-10-10 | — | PRR round 2 (Dev-0: P0+4P1, Dev-2: 3P1+1P2) | 6ada84b, 7745969 | All findings fixed |
 | 2026-10-10 | — | PRR round 3 (restructured to implementable template) | f321f4c | All findings fixed |
 | 2026-10-10 | — | PRR round 4 (BMI scope, test CMake, Phase 5 removal, P2 fixes) | 10d8620 | Both Dev-0 and Dev-2 APPROVE; status → implementable |
+| 2026-10-10 | 1 | Phase 1 implemented (copy pipeline reliability) | — | 28 new tests (6 job, 5 coordinator, 2 sigpipe, 5 ssh, 5 backends, 2 threshold, 3 copy-result-pipeline); serial ctest debug 2113/2113 (2115 total, 2 disabled), release 2113/2113; graph_check 0 cycles; inline_def_check no new violations; BMI PSS: clipboard 499KB→685KB (+37%), config/paths/mcp_cmd unchanged, new: job 393KB, coordinator 85KB; golden 72/72; no stdout/stderr pollution; code review round 1: REQUEST_CHANGES (1P1+3P2+5P3), all fixed; round 2: SSH env var fix in FakeSlowBackend; round 3: APPROVE (1 P3 nit, fixed) |
 
 > **Design review history (v1–v7.12):** 12 rounds of design review between Dev-0, Dev-2, and Dev-1 (author). All P0/P1 findings addressed. Both Dev-0 and Dev-2 APPROVED v7.12 (design gate). Full review log is in the git history of this file (see commits from 2026-10-09 through 2026-10-10).

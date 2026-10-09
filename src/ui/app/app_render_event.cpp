@@ -139,6 +139,10 @@ AppAdapter::~AppAdapter() {
     // P4-1d: unblock all pending permission/elicitation/ask-user waits.
     permission_.abort_all();
 
+    // RFC 0007 Phase 1: shutdown the clipboard coordinator — cancels any
+    // active job, joins the owner thread. Bounded to ~1.1s worst case.
+    clipboard_coordinator_.shutdown();
+
     // Unsubscribe from dynamic skill discovery callbacks.
     if (skills_changed_unsubscribe_) {
         try { skills_changed_unsubscribe_(); } catch (...) {}
@@ -531,6 +535,8 @@ Element AppAdapter::Render() {
     // Drain background paste results on every render frame so the user
     // doesn't need to press another key to see the image data filled in.
     this->DrainCompletedPastesAndSubmit();
+    // RFC 0007 Phase 1: drain pending clipboard copy results.
+    this->DrainCopyResult();
     auto el = repl_component_->Render() | dc::cursor_reset();
     // Drag-to-select: paint the selection rectangle's background after
     // the normal render pass.  SelectionHighlightNode (defined in
@@ -546,6 +552,8 @@ bool AppAdapter::OnEvent(Event event) {
     // last event.  Must happen on the render thread (we mutate
     // paste_.pasted_contents() and possibly input_text).
     this->DrainCompletedPastesAndSubmit();
+    // RFC 0007 Phase 1: drain pending clipboard copy results.
+    this->DrainCopyResult();
 
     // Pane-teammate inbox delivery: the inbox worker posts Custom events when
     // tasks arrive. While idle, submit one queued teammate prompt here on the

@@ -31,9 +31,11 @@ namespace loom::ui::messages_list {
 namespace detail {
 
 /// Per-content-block height cap.  A single paragraph or code block longer
-/// than this is clipped — the virtual list's overscan covers the gap during
-/// scroll.  500 lines covers realistic code blocks and pastes while
-/// preventing pathological geometry from a 100K-char single-line blob.
+/// than this is reported at the cap — the virtual list's JumpHandle geometry
+/// will underestimate the row, but the real renderer still paints full
+/// content when the row enters the viewport slice.  500 lines covers
+/// realistic code blocks and pastes while preventing pathological geometry
+/// from a 100K-char single-line blob.
 constexpr int kMaxContentLines = 500;
 
 /// Per-row total height cap (content + envelope header + separator).
@@ -66,8 +68,8 @@ constexpr int kMaxRowHeight = 1000;
         }
     }
     // Clip to [1, kMaxContentLines] — rows taller than the cap are reported
-    // as the cap (overscan covers the difference during actual scroll;
-    // FTXUI will size to real content at paint time).
+    // as the cap.  The real renderer still paints full content when the row
+    // enters the viewport; only the JH scroll geometry is underestimated.
     return std::clamp(lines, 1, kMaxContentLines);
 }
 

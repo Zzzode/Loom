@@ -249,75 +249,72 @@ enum class VirtualRendererMode : std::uint8_t {
 };
 ```
 
-### 5.3 Mode passing through MessagesListInput
+### 5.3 Decision logic and same-frame scroll reset
 
-The mode is passed to the view through `MessagesListInput` and written back
-through a `mutable` output field — the same pattern as `virtual_jh_out`
-(`messages_list.cppm:397`).
-
-Add to `MessagesListInput`:
-
-```cpp
-/// Previous frame's renderer mode.  Set by the caller (screens layer)
-/// from MessagesStore.  Defaults to Static for stateless callers
-/// (golden tests, dialogs, first render).
-VirtualRendererMode prev_virtual_mode = VirtualRendererMode::Static;
-
-/// This frame's renderer mode, computed by the view from
-/// prev_virtual_mode + visible.size().  The caller reads this after
-/// render returns and stores it in MessagesStore.
-mutable VirtualRendererMode next_virtual_mode = VirtualRendererMode::Static;
-```
-
-The view's decision logic (`messages_list_view.cpp`):
+The view computes `next_virtual_mode` from `prev_virtual_mode` +
+`visible.size()`. Critically, when the mode switches and the user is not
+pinned to bottom, the view **resets the scroll to bottom for this frame** —
+before building the Element. This ensures the first frame of the new mode
+already uses the bottom-anchored scroll position, not the old coordinate
+system's stale offset.
 
 ```cpp
+// Pseudocode — actual implementation in messages_list_view.cpp
 const auto visible_count = visible.size();
 const auto prev_mode = input.prev_virtual_mode;
-
-VirtualRendererMode next_mode;
-switch (prev_mode) {
-    case VirtualRendererMode::Static:
-        next_mode = (visible_count > kVirtualEnterThreshold)
-                    ? VirtualRendererMode::Virtual
-                    : VirtualRendererMode::Static;
-        break;
-    case VirtualRendererMode::Virtual:
-        next_mode = (visible_count < kVirtualExitThreshold)
-                    ? VirtualRendererMode::Static
-                    : VirtualRendererMode::Virtual;
-        break;
-}
-
+const auto next_mode = decide_virtual_renderer_mode(prev_mode, visible_count);
 input.next_virtual_mode = next_mode;
 
-if (next_mode != prev_mode) {
-    debug("messages.virtual", "mode switch {} → {} at visible={}",
-          static_cast<int>(prev_mode), static_cast<int>(next_mode),
-          visible_count);
-}
+const bool mode_switched = (next_mode != prev_mode);
+const bool reset_to_bottom = mode_switched && !input.pin_to_bottom;
 
 if (next_mode == VirtualRendererMode::Virtual) {
     (void)trailing_elements;
-    return render_messages_list_virtual_rows(...);
+    // ... build virtual rows ...
+    if (input.pin_to_bottom || reset_to_bottom) {
+        state.scroll_top = state.jh.total() - state.viewport_rows;
+        state.sticky_bottom = true;
+    } else {
+        state.scroll_top = std::max(0, scroll_top_lines);
+    }
+    return render_list_as_elements(...);
 }
-// static path...
+// static path:
+// ... build vbox ...
+if ((input.pin_to_bottom || reset_to_bottom) &&
+    visible.size() > 1 && content_exceeds_viewport) {
+    list = std::move(list) | focusPositionRelative(0, 1);  // bottom
+} else if (input.scroll_offset > 0) {
+    list = std::move(list) | focusPosition(0, input.scroll_offset + vp / 2);
+}
 ```
 
-The caller (`repl_screen_messages.cpp`) reads `next_virtual_mode` after
-render and stores it:
+The `decide_virtual_renderer_mode` helper is a `constexpr` pure function
+in `messages_list.cppm`:
 
 ```cpp
-auto element = ml::render_messages_list_view(input, ...);
-if (store) {
-    store->virtual_renderer_mode = input.next_virtual_mode;
-    // existing virtual_list_active / virtual_jh propagation...
+[[nodiscard]] constexpr auto decide_virtual_renderer_mode(
+    VirtualRendererMode prev,
+    std::size_t visible) noexcept -> VirtualRendererMode
+{
+    switch (prev) {
+        case VirtualRendererMode::Static:
+            return (visible > kVirtualEnterThreshold)
+                ? VirtualRendererMode::Virtual
+                : VirtualRendererMode::Static;
+        case VirtualRendererMode::Virtual:
+            return (visible < kVirtualExitThreshold)
+                ? VirtualRendererMode::Static
+                : VirtualRendererMode::Virtual;
+    }
+    return VirtualRendererMode::Static;
 }
 ```
 
-**Stateless callers** (golden tests, dialogs that don't set
-`prev_virtual_mode`) always default to Static. This is correct: stateless
-callers have no persistent state, so hysteresis doesn't apply.
+**Stateless callers** (golden tests, dialogs) default to
+`prev_virtual_mode = Static`. The view decides the mode from this default —
+no pre-decision step is needed. The hysteresis is a no-op for stateless
+callers because they always start from Static.
 
 **The interactive `MessagesListComponent` is excluded** — it is dead code
 (§5.6) and is deleted in this RFC.
@@ -427,10 +424,10 @@ fixing one path while leaving a public API with the same defect.
 
 ### 5.7 Frame telemetry
 
-The mode-decision logic is in the view (`messages_list_view.cpp`), but the
-**transition telemetry is emitted by the caller** (`repl_screen_messages.cpp`)
-at the commit point. This ensures the mode state, counter, and log line are
-the same UI-thread linearization point:
+The view does NOT emit telemetry. Transition telemetry is emitted by the
+caller (`repl_screen_messages.cpp`) at the commit point — after the view
+returns and the mode is committed to the store. This ensures the mode
+state, counter, and log line are the same UI-thread linearization point:
 
 ```cpp
 // repl_screen_messages.cpp, after render_messages_list_view returns:
@@ -442,14 +439,16 @@ if (next_mode != prev_mode) {
     debug("messages.virtual",
           "mode switch {} → {} at visible={}, count={}",
           static_cast<int>(prev_mode), static_cast<int>(next_mode),
-          visible_count, store->virtual_mode_switch_count);
+          input.visible_count_out, store->virtual_mode_switch_count);
 }
 ```
 
-The view does NOT emit telemetry — it only computes `next_virtual_mode`.
-The debug channel is `messages.virtual`. The call fires **only on mode
-transitions** (`next_mode != prev_mode`), not every frame — so the per-call
-mutex acquisition in `debug()` (`debug.cppm:54`) is rare and negligible.
+The view writes `visible_count_out` (a `mutable` field on
+`MessagesListInput`) so the caller can log the visible count without
+calling `build_visible_rows` again. The debug channel is
+`messages.virtual`. The call fires **only on mode transitions**
+(`next_mode != prev_mode`), not every frame — so the per-call mutex
+acquisition in `debug()` (`debug.cppm:54`) is rare and negligible.
 
 **Verification requires stderr redirection.** `loom::utils::debug()` writes
 to `std::cerr` (`debug.cppm:55-60`). If stderr shares the TTY with the TUI,
@@ -494,8 +493,8 @@ confined to:
 
 | File | Change |
 |------|--------|
-| `src/ui/messages/messages_list.cppm` | Add `VirtualRendererMode` enum, `kVirtualEnterThreshold`, `kVirtualExitThreshold`; add `prev_virtual_mode` / `next_virtual_mode` to `MessagesListInput`; remove `kVirtualThreshold`, `MessagesListComponent`, `MakeMessagesList` |
-| `src/ui/messages/messages_list_view.cpp` | Hysteresis decision logic; write `next_virtual_mode`; telemetry |
+| `src/ui/messages/messages_list.cppm` | Add `VirtualRendererMode` enum, `decide_virtual_renderer_mode()` helper, `kVirtualEnterThreshold`, `kVirtualExitThreshold`; add `prev_virtual_mode` / `next_virtual_mode` / `visible_count_out` to `MessagesListInput`; remove `kVirtualThreshold`, `MessagesListComponent`, `MakeMessagesList` |
+| `src/ui/messages/messages_list_view.cpp` | Hysteresis decision via helper; same-frame scroll reset on unpinned switch; write `next_virtual_mode` + `visible_count_out` |
 | `src/ui/screens/messages_store.cppm` | Add `virtual_renderer_mode` + `virtual_mode_switch_count` fields |
 | `src/ui/screens/repl_screen_messages.cpp` | Set `input.prev_virtual_mode` from store; read `input.next_virtual_mode` after render; increment switch counter |
 | `src/ui/app/app_handle_submit.cpp` | Call `reset_virtual_renderer_state()` in slash `/clear` handler (:414-422) and session restore handler (:668-677) |
@@ -529,7 +528,7 @@ default (Static) mode at ≤ 80 are unaffected.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |-------|-------|-------|--------|-------------------------------|
-| A | Hysteresis + telemetry + dead code deletion | Constants, mode type, MessagesStore fields, decision logic, telemetry, delete MessagesListComponent, reset on clear/restore | proposed | All tests pass (debug + release serial ctest); regression tests prove G1/G2/G5; `graph_check.py --target-ui9 --store-lint` 0 violations; no new `kVirtualThreshold` references; BMI PSS of `messages_store.cppm` before/after recorded in Implementation History (measure: `grep -c "import loom.ui.screens.messages_store" src/**/*.cppm` for fan-out count) |
+| A | Hysteresis + telemetry + dead code deletion | Constants, mode type, MessagesStore fields, decision helper, same-frame scroll reset, telemetry, delete MessagesListComponent, reset on clear/restore | proposed | All tests pass (debug + release serial ctest); regression tests prove G1/G2/G5; `graph_check.py --target-ui9 --store-lint` 0 violations; no new `kVirtualThreshold` references; BMI PSS of `messages_store.cppm` before/after recorded in Implementation History; importer count before/after recorded |
 
 **Follow-up (separate RFC):** Option C — unify static and virtual renderer
 paths so the virtual path also renders leading/trailing elements in a
@@ -552,11 +551,21 @@ field carry over; only the view's internal branching changes.
 
 ## 8. Rollout and rollback
 
-- **Rollout:** Single commit. No feature flag (the fix is a correctness
-  improvement to an internal renderer decision; no user-visible config).
-- **Rollback:** `git revert` the commit. The mode falls back to the
-  stateless `visible.size() > 80` check. `MessagesListComponent` is
-  restored from git history. No data migration needed.
+- **Rollout:** Two commits to enable baseline comparison (§5.7):
+  1. **Commit 1 (telemetry + dead code deletion):** Add the
+     `messages.virtual` debug channel, `visible_count_out` field,
+     `decide_virtual_renderer_mode` helper, and delete
+     `MessagesListComponent`. Keep the old stateless threshold.
+  2. **Commit 2 (hysteresis):** Change the decision logic to the
+     hysteresis band, add `prev_virtual_mode`/`next_virtual_mode` to
+     `MessagesListInput`, add MessagesStore fields, add reset calls to
+     clear/restore handlers.
+  No feature flag (the fix is a correctness improvement to an internal
+  renderer decision; no user-visible config).
+- **Rollback:** Revert commit 2 (hysteresis). The mode falls back to the
+  stateless `visible.size() > 80` check. Commit 1 (telemetry + deletion)
+  can remain — it is independently useful and has no behavior change.
+  `MessagesListComponent` is restored from git history if needed.
 - **Ordering:** No dependencies on other RFCs. Can land independently.
 
 ## 9. Drawbacks
@@ -586,18 +595,17 @@ field carry over; only the view's internal branching changes.
    this repo), it would break. The component is restored by reverting the
    commit.
 
-5. **Scroll coordinate-system mismatch on mode switch (known issue).**
+5. **Scroll coordinate-system mismatch on mode switch (mitigated).**
    `scroll_offset` in `MessagesStore` is shared between two incompatible
    coordinate systems: the virtual path uses JumpHandle prefix-sum visual
    lines (`repl_screen_scroll.cpp:664-696`); the static path uses
    `EstimateTranscriptRows` heuristic yframe coordinates
-   (`repl_screen_scroll.cpp:722-749`). When the mode switches,
-   `scroll_offset` is not converted — a value written by one path is
-   interpreted by the other. The hysteresis band reduces switch frequency
-   (and thus how often this is hit) but does not eliminate the jump on
-   switch. Fixing this requires a unified scroll coordinate system, which
-   is part of Option C (path unification, follow-up RFC). This RFC
-   documents the issue; it does not fix it.
+   (`repl_screen_scroll.cpp:722-749`). This RFC mitigates the mismatch by
+   resetting unpinned scroll to bottom **in the same frame** as the mode
+   switch (§5.3) — the first frame of the new mode already uses the
+   bottom-anchored position, not the old coordinate system's stale offset.
+   Pinned-to-bottom state is preserved (both paths handle it natively).
+   A full fix (unified scroll coordinate system) is Option C territory.
 
 ## 10. Alternatives considered
 
@@ -690,7 +698,7 @@ sequences:
 | Test | Scenario | Expected |
 |------|----------|----------|
 | `VirtualThreshold.StreamingOscillation` | Entries added 75→82→78→85→72 across 5 frames | Mode: Static→Virtual(82)→Virtual(78)→Virtual(85)→Virtual(72); no flip-flop |
-| `VirtualThreshold.SelectionSurvivesSwitch` | `selected_row_idx` set; mode switches Static→Virtual | Selection row index preserved (may need re-mapping) |
+| `VirtualThreshold.SelectionSurvivesSwitch` | `selected_row_idx` set; mode switches Static→Virtual | Selection row index preserved (same row identity in both paths) |
 | `VirtualThreshold.SearchSurvivesSwitch` | `search_query` non-empty; mode switches | Search state preserved; both paths have search support |
 | `VirtualThreshold.UnseenDividerSurvivesSwitch` | Unseen divider active; mode switches | Divider anchor preserved across switch |
 | `VirtualThreshold.ScrollDuringSwitch` | Scroll events arrive between frames during mode switch | No crash; unpinned scroll reset to bottom (predictable degradation) |
@@ -713,23 +721,25 @@ sequences:
   (`ServerMain.DirectConnect*`, `Tools.RuntimeTeamCreate*`,
   `HooksIntegrationTest.BlockingHookFiresOnEveryToolCall`) re-run in
   isolation if they fail under parallel load
-- `graph_check.py --target-ui9` — 0 cycles
-- BMI PSS: measure `messages_list.cppm` and `messages_store.cppm`
-  producer PSS before/after; delta < 5%
+- `graph_check.py --target-ui9 --store-lint` — 0 violations
+- BMI PSS: measure `messages_store.cppm` producer PSS before/after using
+  the project's BMI measurement tooling; record values in Implementation
+  History
+- Importer count: `grep -rc "import loom.ui.screens.messages_store" src/
+  --include="*.cppm" --include="*.cpp" | grep -v ":0" | wc -l` before/
+  after; record in Implementation History
 - Inline ratchet: no new inline violations
 
 ### 11.4 PTY + telemetry verification (post-merge)
 
-1. Build with RFC changes
-2. Run a long task: `LOOM_DEBUG=messages.virtual loom 2>/tmp/loom-debug.log`
+1. Build commit 1 (telemetry + deletion, old stateless threshold)
+2. Run a long task: `LOOM_DEBUG=messages.virtual loom 2>/tmp/baseline.log`
 3. PTY captures stdout (UI output) only
-4. Verify in `/tmp/loom-debug.log`:
-   - Mode switches occur only at threshold crossings (enter at > 80, exit
-     at < 60)
-   - No oscillation (no repeated enter/exit within the [60, 80] band)
-   - Counter increments match actual mode transitions
-5. Baseline comparison: revert RFC, repeat, compare switch count
-6. If the user still sees flicker with zero mode switches in the log, the
+4. Build commit 2 (hysteresis)
+5. Run the same task: `LOOM_DEBUG=messages.virtual loom 2>/tmp/with-hysteresis.log`
+6. Compare `mode switch` count in both logs. The hysteresis build should
+   show zero switches for entry sequences that stay within [60, 80].
+7. If the user still sees flicker with zero mode switches in the log, the
    threshold is exonerated and the cause lies elsewhere (e.g., LOOM_DEBUG
    stderr pollution, viewport height lag). stderr pollution and mode
    switches can co-occur — they are separately excluded/correlated, not

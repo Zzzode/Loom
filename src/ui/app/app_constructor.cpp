@@ -268,6 +268,8 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         reset_virtual_renderer_state(screen_state_->messages_store);
         this->SyncState();
     };
+    // Retain a copy so tests can trigger the session-expired card path.
+    clear_session_callback_ = cbs.on_clear_session;
 
     // Share the StreamingMarkdown instance with the REPL screen.
     cbs.streaming_md = &streaming_markdown_;

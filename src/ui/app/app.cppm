@@ -195,6 +195,9 @@ private:
     std::shared_ptr<repl::ReplScreenState> screen_state_;
     Component repl_component_;
     std::vector<repl::MessageDisplayEntry> local_command_messages_;
+    /// Retained copy of the on_clear_session callback so tests can trigger
+    /// the session-expired card's "Clear session" button path directly.
+    std::function<void()> clear_session_callback_;
 
     std::string current_session_id_;
 
@@ -825,6 +828,8 @@ private:
     virtual_mode_switch_count_for_testing() const noexcept;
     [[nodiscard]] bool
     force_bottom_after_mode_switch_for_testing() const noexcept;
+    /// Trigger the on_clear_session callback (session-expired card path).
+    void trigger_clear_session_for_testing();
 };
 
 // ============================================================
@@ -940,6 +945,8 @@ struct AppTestingSeams {
     /// Persistent bottom-anchor flag after a mode-switch scroll reset.
     [[nodiscard]] bool
     force_bottom_after_mode_switch_for_testing() const noexcept;
+    /// Trigger the on_clear_session callback (session-expired card path).
+    void trigger_clear_session_for_testing();
 };
 
 /// Factory: create an AppTestingSeams proxy from a Component (shared_ptr

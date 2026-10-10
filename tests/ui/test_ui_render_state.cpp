@@ -867,7 +867,8 @@ TEST(ReplScreen, WheelStrideHandlesZero) {
 // ── RFC 0008: Virtual renderer hysteresis lifecycle tests ──────────────
 // These tests exercise the full ReplScreen::Render() → RenderMessages →
 // render_messages_list_view path, asserting on persistent MessagesStore
-// state (mode, counter, force_bottom flag) after each frame.
+// state (mode, counter, force_bottom flag) AND rendered screen content
+// after each frame.
 
 namespace {
 
@@ -885,12 +886,45 @@ void AddTestMessages(rs::MessagesStore& store, int count,
     }
 }
 
-/// Render one frame through the full ReplScreen pipeline.
-void RenderFrame(const std::shared_ptr<rs::ReplScreenState>& state) {
+/// Render one frame through the full ReplScreen pipeline and return the
+/// stripped screen text for visual assertions.
+std::string RenderFrame(const std::shared_ptr<rs::ReplScreenState>& state) {
     auto component = rs::ReplScreen(state, rs::ReplScreenCallbacks{});
     auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
                                         ftxui::Dimension::Fixed(40));
     ftxui::Render(screen, component->Render());
+    return strip_ansi(screen.ToString());
+}
+
+/// Create a ReplScreen component for event-driven tests (wheel, click).
+[[nodiscard]] ftxui::Component
+MakeComponent(const std::shared_ptr<rs::ReplScreenState>& state) {
+    return rs::ReplScreen(state, rs::ReplScreenCallbacks{});
+}
+
+/// Render through an existing component and return stripped screen text.
+std::string RenderThrough(const ftxui::Component& component) {
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
+                                        ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen, component->Render());
+    return strip_ansi(screen.ToString());
+}
+
+/// Build a single tall local-command-output message with `lines` lines.
+/// The last line contains `tail_marker` for visual bottom-anchor assertions.
+rs::MessageDisplayEntry MakeTallMessage(int lines, std::string_view id,
+                                        std::string_view tail_marker) {
+    rs::MessageDisplayEntry message;
+    message.id = id;
+    message.role = "user";
+    message.is_local_command_output = true;
+    std::string content;
+    for (int i = 0; i < lines - 1; ++i) {
+        content += std::format("output line {:03}\n", i);
+    }
+    content += tail_marker;
+    message.content_preview = std::move(content);
+    return message;
 }
 
 }  // namespace
@@ -1072,4 +1106,94 @@ TEST(ReplScreen, VirtualModeSwitchCountTracksMultipleTransitions) {
     EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 3u);
     EXPECT_EQ(state->messages_store.virtual_renderer_mode,
               VirtualRendererMode::Virtual);
+}
+
+// ── Visual bottom-anchor assertions (Dev-0/Dev-2 P1: store state alone
+//     cannot prove the screen is scrolled to bottom) ───────────────────
+
+TEST(ReplScreen, VirtualToStaticSingleTallMessageShowsTail) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    state->messages_store.virtual_renderer_mode =
+        VirtualRendererMode::Virtual;
+    state->messages_store.scroll_pinned_to_bottom = false;
+    // Single tall message: 200 lines of local command output.
+    state->messages_store.messages.push_back(
+        MakeTallMessage(200, "tall-001", "TAIL_MARKER"));
+
+    // Frame 1: Virtual→Static switch (visible=1 < 60). Unpinned →
+    // scroll_was_reset_to_bottom → force_bottom_after_mode_switch = true.
+    auto text = RenderFrame(state);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Static);
+    EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
+    EXPECT_TRUE(state->messages_store.force_bottom_after_mode_switch);
+    // The tail must be visible on the switch frame.
+    EXPECT_NE(text.find("TAIL_MARKER"), std::string::npos);
+
+    // Frame 2: no input, force_bottom still active → tail stays visible.
+    text = RenderFrame(state);
+    EXPECT_NE(text.find("TAIL_MARKER"), std::string::npos);
+
+    // Frame 3: still anchored.
+    text = RenderFrame(state);
+    EXPECT_NE(text.find("TAIL_MARKER"), std::string::npos);
+}
+
+TEST(ReplScreen, StaticToVirtualSwitchShowsTail) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    AddTestMessages(state->messages_store, 81, "tail-visible");
+
+    // Frame 1: Static→Virtual switch.
+    auto text = RenderFrame(state);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Virtual);
+    // Last message must be visible (pinned to bottom by default).
+    EXPECT_NE(text.find("tail-visible message 080"), std::string::npos);
+
+    // Frame 2: still virtual, still pinned → tail visible.
+    text = RenderFrame(state);
+    EXPECT_NE(text.find("tail-visible message 080"), std::string::npos);
+}
+
+TEST(ReplScreen, WheelUpMovesScreenAwayFromBottom) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    // Use Virtual mode (100 messages) so the virtual list's line-level
+    // scroll handles wheel events correctly. The static path's
+    // focusPosition(0, scroll_offset) cannot scroll within a single
+    // tall message (only 1 child element).
+    auto state = std::make_shared<repl::ReplScreenState>();
+    state->messages_store.virtual_renderer_mode =
+        VirtualRendererMode::Virtual;
+    AddTestMessages(state->messages_store, 100, "wheel-away");
+
+    auto component = MakeComponent(state);
+    auto text = RenderThrough(component);
+    ASSERT_TRUE(state->messages_store.virtual_list_active);
+    ASSERT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+    // Last message visible when pinned.
+    ASSERT_NE(text.find("wheel-away message 099"), std::string::npos);
+
+    // Wheel up repeatedly → scroll away from bottom.
+    ftxui::Mouse wheel;
+    wheel.button = ftxui::Mouse::WheelUp;
+    for (int i = 0; i < 20; ++i) {
+        component->OnEvent(ftxui::Event::Mouse("", wheel));
+    }
+    EXPECT_FALSE(state->messages_store.scroll_pinned_to_bottom);
+
+    // Next frame: last message must NOT be visible (user scrolled up).
+    text = RenderThrough(component);
+    EXPECT_EQ(text.find("wheel-away message 099"), std::string::npos);
+
+    // One more frame: position preserved (no snap-back to bottom).
+    text = RenderThrough(component);
+    EXPECT_EQ(text.find("wheel-away message 099"), std::string::npos);
 }

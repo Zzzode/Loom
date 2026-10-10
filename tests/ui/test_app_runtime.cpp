@@ -2149,3 +2149,93 @@ TEST(AppRuntime, VirtualRendererStateResetOnSlashClear) {
     fs::remove_all(storage_root);
 }
 
+TEST(AppRuntime, VirtualRendererStateResetOnCallbackClear) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_ui_vr_cb_clear_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Simulate a long session that switched to Virtual mode.
+    test_seams(app).set_virtual_renderer_state_for_testing(
+        /*is_virtual=*/true, /*switch_count=*/5, /*force_bottom=*/true);
+    ASSERT_TRUE(test_seams(app).virtual_renderer_is_virtual_for_testing());
+
+    // Trigger the on_clear_session callback (session-expired card path).
+    test_seams(app).trigger_clear_session_for_testing();
+
+    EXPECT_FALSE(test_seams(app).virtual_renderer_is_virtual_for_testing());
+    EXPECT_EQ(test_seams(app).virtual_mode_switch_count_for_testing(), 0u);
+    EXPECT_FALSE(test_seams(app).force_bottom_after_mode_switch_for_testing());
+
+    fs::remove_all(storage_root);
+}
+
+TEST(AppRuntime, VirtualRendererStateResetOnSessionRestore) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_ui_vr_restore_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(storage_root);
+
+    // Point LOOM_CONFIG_DIR at the temp dir so the resume command's
+    // load_sessions() and the AppAdapter's sessions_dir() resolve to the
+    // same path (<storage_root>/sessions).
+    const char* old_config_dir = std::getenv("LOOM_CONFIG_DIR");
+    setenv("LOOM_CONFIG_DIR", storage_root.c_str(), 1);
+
+    // Create a minimal session fixture: metadata.json + one messages.jsonl line.
+    // list_recent_sessions() requires metadata.json to discover the session.
+    const auto session_id = "sess-vr-test";
+    const auto session_dir = storage_root / "sessions" / session_id;
+    fs::create_directories(session_dir);
+    {
+        std::ofstream meta(session_dir / "metadata.json");
+        meta << R"({"session_id":")" << session_id << R"(","title":"Test Session",)"
+             << R"("created_at":)" << std::time(nullptr) << ","
+             << R"("last_active":)" << std::time(nullptr) << ","
+             << R"("message_count":1,"cwd":"/tmp","model":"test"})" << "\n";
+    }
+    {
+        std::ofstream ofs(session_dir / "messages.jsonl");
+        ofs << R"({"role":"user","content":"hello","id":"msg_001"})" << "\n";
+    }
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, std::nullopt, [] {});
+
+    // Simulate a long session that switched to Virtual mode.
+    test_seams(app).set_virtual_renderer_state_for_testing(
+        /*is_virtual=*/true, /*switch_count=*/7, /*force_bottom=*/true);
+    ASSERT_TRUE(test_seams(app).virtual_renderer_is_virtual_for_testing());
+
+    // /resume restores the session and resets virtual renderer state.
+    app->HandleCommand(std::string("/resume ") + session_id);
+
+    EXPECT_FALSE(test_seams(app).virtual_renderer_is_virtual_for_testing());
+    EXPECT_EQ(test_seams(app).virtual_mode_switch_count_for_testing(), 0u);
+    EXPECT_FALSE(test_seams(app).force_bottom_after_mode_switch_for_testing());
+
+    // Restore LOOM_CONFIG_DIR.
+    if (old_config_dir) {
+        setenv("LOOM_CONFIG_DIR", old_config_dir, 1);
+    } else {
+        unsetenv("LOOM_CONFIG_DIR");
+    }
+    fs::remove_all(storage_root);
+}
+

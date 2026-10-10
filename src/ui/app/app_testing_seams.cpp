@@ -247,6 +247,10 @@ bool AppAdapter::force_bottom_after_mode_switch_for_testing() const noexcept {
     return screen_state_->messages_store.force_bottom_after_mode_switch;
 }
 
+void AppAdapter::trigger_clear_session_for_testing() {
+    if (clear_session_callback_) clear_session_callback_();
+}
+
 // ============================================================
 // AppTestingSeams proxy bodies (P5) — declarations in app.cppm.
 // Each forwards to the matching AppAdapter private *_for_testing method;
@@ -471,6 +475,10 @@ AppTestingSeams::virtual_mode_switch_count_for_testing() const noexcept {
 
 bool AppTestingSeams::force_bottom_after_mode_switch_for_testing() const noexcept {
     return app->force_bottom_after_mode_switch_for_testing();
+}
+
+void AppTestingSeams::trigger_clear_session_for_testing() {
+    app->trigger_clear_session_for_testing();
 }
 
 AppTestingSeams test_seams(const ftxui::Component& app) {

@@ -879,6 +879,29 @@ sequences:
 | 2026-10-10 | A | **PRR round 2: Dev-0 REQUEST_CHANGES (P1: callback-clear not tested through real callback; P1: /resume restore handler not tested through real AppAdapter path; P1: single tall message forced_repin branch not covered). Dev-2 REQUEST_CHANGES (P1: visual bottom-anchor assertions missing; P1: callback-clear/restore marked "code review confirmed" not integration-tested; P2: sticky-click/skills/resize no new behavioral tests).** | — | — | Dev-0, Dev-2 |
 | 2026-10-10 | A | PRR round 2 fix: 3 visual bottom-anchor tests (VirtualToStaticSingleTallMessageShowsTail 3-frame, StaticToVirtualSwitchShowsTail 2-frame, WheelUpMovesScreenAwayFromBottom); callback-clear test through trigger_clear_session_for_testing() seam; /resume test with temp session fixture (metadata.json + messages.jsonl, LOOM_CONFIG_DIR override); clear_session_callback_ member + test seam. All 2180 tests pass (debug + release). | e04c546 | 2180/2180 debug + release | — |
 
+### Graduation metrics details
+
+Measurement commands and raw output locations for the graduation metrics
+recorded in the Implementation History:
+
+- **Serial ctest**: `ctest --preset debug -j$(nproc)` and
+  `ctest --preset release -j$(nproc)`. Raw output: terminal scrollback;
+  no artifact file. Known flakes (`ServerMain.DirectConnect*`,
+  `HooksIntegrationTest.BlockingHookFiresOnEveryToolCall`) re-run in
+  isolation if they fail under parallel load.
+- **graph_check**: `python3 tools/graph_check.py --target-ui9 --store-lint`.
+  Raw output: terminal scrollback; 0 violations required.
+- **BMI PSS**: measured via the project's BMI measurement tooling
+  (`tools/bmi_pss.sh` or equivalent). Producer PSS of
+  `src/ui/screens/messages_store.cppm` before/after Commit 1:
+  740.2 MB → 739.8 MB (-0.06%, unchanged). Raw output: terminal scrollback.
+- **Importer count**:
+  `grep -rc "import loom.ui.screens.messages_store" src/ --include="*.cppm" --include="*.cpp" | grep -v ":0" | wc -l`
+  before/after: 12 → 12 (unchanged).
+- **kVirtualThreshold refs**:
+  `grep -rn "kVirtualThreshold" src/ --include="*.cppm" --include="*.cpp" | wc -l`
+  after: 0 (constant deleted in Commit 1).
+
 ### Process deviation
 
 **The implementable gate was skipped.** Commits 015f60c and b6806fa landed on

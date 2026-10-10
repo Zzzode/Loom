@@ -58,7 +58,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0005-property-based-fuzz-testing.md`](rfcs/0005-property-based-fuzz-testing.md) | **Implementable.** Property-based fuzz testing: generate random valid streaming event sequences, run through the invariant checker (INV-01–07). |
 | [`rfcs/0006-design-system-governance.md`](rfcs/0006-design-system-governance.md) | **Provisional.** Design system governance: token lint, hard-coded color sweep, transparent canvas + OSC-11 auto theme, surface vocabulary, emoji/motion policy. |
 | [`rfcs/0007-native-text-selection-and-clipboard.md`](rfcs/0007-native-text-selection-and-clipboard.md) | **Implementable.** Reliable copy pipeline (four-state feedback, terminable async, SSH-aware), native text selection by default (mouse tracking off). F2 runtime toggle deferred to follow-up RFC (FTXUI lifecycle). |
-| [`rfcs/0008-virtual-renderer-threshold-hysteresis.md`](rfcs/0008-virtual-renderer-threshold-hysteresis.md) | **Accepted.** Hysteresis band for the static↔virtual message-list renderer threshold (enter > 80, exit < 60) to prevent mode oscillation at the boundary. Field flicker benefit pending PTY verification (§11.4). |
+| [`rfcs/0008-virtual-renderer-threshold-hysteresis.md`](rfcs/0008-virtual-renderer-threshold-hysteresis.md) | **Implementable.** Hysteresis band for the static↔virtual message-list renderer threshold (enter > 80, exit < 60) to prevent mode oscillation at the boundary. Field flicker benefit pending PTY verification (§11.4). |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

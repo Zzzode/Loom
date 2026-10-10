@@ -33,6 +33,7 @@ import loom.constants.constants;
 import loom.text.parse_references;
 import loom.ui.widgets.components;
 import loom.ui.widgets.all_components;
+import loom.ui.screens.messages_store;  // MessagesStore, reset_virtual_renderer_state
 import loom.types.types;
 
 namespace {
@@ -1773,4 +1774,138 @@ TEST(MessagesList, RowClickTracker_ReusesBoxesAcrossFrames) {
     auto hit = tracker.hit_test(5, 2);
     ASSERT_TRUE(hit.has_value());
     EXPECT_EQ(*hit, "key-b");
+}
+
+// =========================================================================
+// RFC 0008: Virtual renderer threshold hysteresis
+// =========================================================================
+
+TEST(VirtualThreshold, HysteresisBand) {
+    using namespace loom::ui::messages_list;
+    // Static→Virtual at >80
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Static, 79),
+              VirtualRendererMode::Static);
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Static, 80),
+              VirtualRendererMode::Static);
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Static, 81),
+              VirtualRendererMode::Virtual);
+    // Virtual→Static only at <60
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Virtual, 80),
+              VirtualRendererMode::Virtual);
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Virtual, 70),
+              VirtualRendererMode::Virtual);
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Virtual, 60),
+              VirtualRendererMode::Virtual);
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Virtual, 59),
+              VirtualRendererMode::Static);
+    // Oscillation scenario: 79→81→79→78→72 stays Virtual after entering
+    auto mode = VirtualRendererMode::Static;
+    mode = decide_virtual_renderer_mode(mode, 79);
+    EXPECT_EQ(mode, VirtualRendererMode::Static);
+    mode = decide_virtual_renderer_mode(mode, 81);
+    EXPECT_EQ(mode, VirtualRendererMode::Virtual);
+    mode = decide_virtual_renderer_mode(mode, 79);
+    EXPECT_EQ(mode, VirtualRendererMode::Virtual);  // stays Virtual in band
+    mode = decide_virtual_renderer_mode(mode, 78);
+    EXPECT_EQ(mode, VirtualRendererMode::Virtual);
+    mode = decide_virtual_renderer_mode(mode, 72);
+    EXPECT_EQ(mode, VirtualRendererMode::Virtual);
+    // Finally exits at <60
+    mode = decide_virtual_renderer_mode(mode, 59);
+    EXPECT_EQ(mode, VirtualRendererMode::Static);
+}
+
+TEST(VirtualThreshold, StrictBoundaries) {
+    using namespace loom::ui::messages_list;
+    // Enter: >80 not >=80
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Static, 80),
+              VirtualRendererMode::Static);
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Static, 81),
+              VirtualRendererMode::Virtual);
+    // Exit: <60 not <=60
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Virtual, 60),
+              VirtualRendererMode::Virtual);
+    EXPECT_EQ(decide_virtual_renderer_mode(VirtualRendererMode::Virtual, 59),
+              VirtualRendererMode::Static);
+}
+
+TEST(VirtualThreshold, StreamingOscillation) {
+    using namespace loom::ui::messages_list;
+    // Simulate streaming: entries added 75→82→78→85→72 across 5 frames.
+    // Without hysteresis this would flip Static→Virtual→Static→Virtual→Static.
+    // With hysteresis: Static→Virtual(82)→Virtual(78)→Virtual(85)→Virtual(72).
+    auto mode = VirtualRendererMode::Static;
+    const std::size_t frames[] = {75, 82, 78, 85, 72};
+    const VirtualRendererMode expected[] = {
+        VirtualRendererMode::Static,
+        VirtualRendererMode::Virtual,
+        VirtualRendererMode::Virtual,
+        VirtualRendererMode::Virtual,
+        VirtualRendererMode::Virtual,
+    };
+    for (std::size_t i = 0; i < 5; ++i) {
+        mode = decide_virtual_renderer_mode(mode, frames[i]);
+        EXPECT_EQ(mode, expected[i]) << "frame " << i;
+    }
+}
+
+TEST(VirtualThreshold, ResetVirtualRendererState) {
+    namespace rs = loom::ui::repl_screen;
+    using namespace loom::ui::messages_list;
+    rs::MessagesStore store;
+    store.virtual_renderer_mode = VirtualRendererMode::Virtual;
+    store.virtual_mode_switch_count = 42;
+    store.force_bottom_after_mode_switch = true;
+
+    rs::reset_virtual_renderer_state(store);
+
+    EXPECT_EQ(store.virtual_renderer_mode, VirtualRendererMode::Static);
+    EXPECT_EQ(store.virtual_mode_switch_count, 0u);
+    EXPECT_FALSE(store.force_bottom_after_mode_switch);
+}
+
+TEST(VirtualThreshold, ClearRepinState) {
+    namespace rs = loom::ui::repl_screen;
+    using namespace loom::ui::messages_list;
+    rs::MessagesStore store;
+    store.divider_index = 5;
+    store.unseen_divider = UnseenDivider{};
+    store.unseen_message_count = 7;
+    store.pill_visible = true;
+
+    rs::ClearRepinState(store);
+
+    EXPECT_FALSE(store.divider_index.has_value());
+    EXPECT_FALSE(store.unseen_divider.has_value());
+    EXPECT_EQ(store.unseen_message_count, 0);
+    EXPECT_FALSE(store.pill_visible);
+}
+
+TEST(VirtualThreshold, ForceBottomFlagLifecycle) {
+    namespace rs = loom::ui::repl_screen;
+    using namespace loom::ui::messages_list;
+    rs::MessagesStore store;
+
+    // Initially false
+    EXPECT_FALSE(store.force_bottom_after_mode_switch);
+
+    // Simulate forced repin (mode switch with scroll reset)
+    store.force_bottom_after_mode_switch = true;
+    store.scroll_pinned_to_bottom = true;
+    EXPECT_TRUE(store.force_bottom_after_mode_switch);
+
+    // User scrolls away → flag cleared
+    store.scroll_pinned_to_bottom = false;
+    store.force_bottom_after_mode_switch = false;
+    EXPECT_FALSE(store.force_bottom_after_mode_switch);
+
+    // Re-pin doesn't resurrect the flag
+    store.scroll_pinned_to_bottom = true;
+    EXPECT_FALSE(store.force_bottom_after_mode_switch);
+
+    // /clear resets everything
+    store.force_bottom_after_mode_switch = true;
+    rs::reset_virtual_renderer_state(store);
+    EXPECT_FALSE(store.force_bottom_after_mode_switch);
+    EXPECT_EQ(store.virtual_renderer_mode, VirtualRendererMode::Static);
 }

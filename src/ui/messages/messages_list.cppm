@@ -60,11 +60,6 @@
 /// │    ├─ used by dialog builders that just want the visual list        │
 /// │    └─ frame_count drives blink + spinner glyph                       │
 /// │                                                                      │
-/// │  MakeMessagesList(input, callbacks) -> Component                     │
-/// │    ├─ FULLY INTERACTIVE variant                                      │
-/// │    ├─ keyboard nav + embedded search Input + action hotkeys          │
-/// │    └─ delegates per-row rendering to envelope + UI4 dispatch        │
-/// │                                                                      │
 /// │  render_message_envelope(...) -> Element                             │
 /// │    ├─ 36-col avatar column + role pill + timestamp + status badge   │
 /// │    ├─ per-role top accent border                                     │
@@ -270,10 +265,10 @@ struct UnseenDivider {
 // clickable rows), and the event handler calls hit_test() to map a mouse
 // click to an expand key that can be toggled in expanded_keys.
 //
-// Boxes are reused across frames (same pattern as MessagesListComponent's
-// tracked_boxes_) because the previous frame's element tree still holds
-// Box& references via reflect() — destroying them before the old tree is
-// replaced would be use-after-free.
+// Boxes are reused across frames (same pattern as the former
+// MessagesListComponent's tracked_boxes_) because the previous frame's
+// element tree still holds Box& references via reflect() — destroying
+// them before the old tree is replaced would be use-after-free.
 // ---------------------------------------------------------------------------
 struct RowClickTracker {
     std::vector<std::unique_ptr<Box>> boxes;

@@ -2115,3 +2115,37 @@ TEST(AppRuntime, DeferredPasteSubmissionConsumesAttachmentAndPreservesNewDraft) 
     fs::remove_all(root, ec);
 }
 
+// ── RFC 0008: Virtual renderer state reset on /clear ──────────────────
+
+TEST(AppRuntime, VirtualRendererStateResetOnSlashClear) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_ui_vr_clear_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Simulate a long session that switched to Virtual mode.
+    test_seams(app).set_virtual_renderer_state_for_testing(
+        /*is_virtual=*/true, /*switch_count=*/3, /*force_bottom=*/true);
+    ASSERT_TRUE(test_seams(app).virtual_renderer_is_virtual_for_testing());
+    ASSERT_EQ(test_seams(app).virtual_mode_switch_count_for_testing(), 3u);
+    ASSERT_TRUE(test_seams(app).force_bottom_after_mode_switch_for_testing());
+
+    // /clear resets the virtual renderer state.
+    app->HandleCommand("/clear");
+
+    EXPECT_FALSE(test_seams(app).virtual_renderer_is_virtual_for_testing());
+    EXPECT_EQ(test_seams(app).virtual_mode_switch_count_for_testing(), 0u);
+    EXPECT_FALSE(test_seams(app).force_bottom_after_mode_switch_for_testing());
+
+    fs::remove_all(storage_root);
+}
+

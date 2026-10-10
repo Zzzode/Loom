@@ -816,6 +816,15 @@ private:
     void drain_copy_result_for_testing();
     [[nodiscard]] std::string footer_notification_text_for_testing() const;
     void set_copy_generation_for_testing(std::uint64_t gen);
+
+    // ── Virtual renderer hysteresis (RFC 0008) ─────────────────────
+    void set_virtual_renderer_state_for_testing(
+        bool is_virtual, std::uint64_t switch_count, bool force_bottom);
+    [[nodiscard]] bool virtual_renderer_is_virtual_for_testing() const noexcept;
+    [[nodiscard]] std::uint64_t
+    virtual_mode_switch_count_for_testing() const noexcept;
+    [[nodiscard]] bool
+    force_bottom_after_mode_switch_for_testing() const noexcept;
 };
 
 // ============================================================
@@ -917,6 +926,20 @@ struct AppTestingSeams {
     [[nodiscard]] std::string footer_notification_text_for_testing() const;
     /// Set the copy generation counter (for stale-result discard tests).
     void set_copy_generation_for_testing(std::uint64_t gen);
+
+    // ── Virtual renderer hysteresis (RFC 0008) ─────────────────────
+    /// Set the persistent virtual renderer state (mode, counter, flag).
+    void set_virtual_renderer_state_for_testing(
+        bool is_virtual, std::uint64_t switch_count,
+        bool force_bottom);
+    /// True when the renderer is in Virtual mode.
+    [[nodiscard]] bool virtual_renderer_is_virtual_for_testing() const noexcept;
+    /// Number of Static↔Virtual mode switches since last reset.
+    [[nodiscard]] std::uint64_t
+    virtual_mode_switch_count_for_testing() const noexcept;
+    /// Persistent bottom-anchor flag after a mode-switch scroll reset.
+    [[nodiscard]] bool
+    force_bottom_after_mode_switch_for_testing() const noexcept;
 };
 
 /// Factory: create an AppTestingSeams proxy from a Component (shared_ptr

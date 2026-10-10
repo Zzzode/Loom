@@ -21,6 +21,7 @@ import loom.types.types;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.task_view_store;
 import loom.ui.screens.messages_store;
+import loom.ui.messages.messages_list;  // VirtualRendererMode
 import loom.ui.screens.dialog_store;
 import loom.ui.screens.chrome_store;
 
@@ -219,6 +220,31 @@ std::string AppAdapter::footer_notification_text_for_testing() const {
 
 void AppAdapter::set_copy_generation_for_testing(std::uint64_t gen) {
     copy_generation_.store(gen, std::memory_order_release);
+}
+
+// ── Virtual renderer hysteresis (RFC 0008) ─────────────────────────────
+
+void AppAdapter::set_virtual_renderer_state_for_testing(
+    bool is_virtual, std::uint64_t switch_count, bool force_bottom) {
+    auto& ms = screen_state_->messages_store;
+    ms.virtual_renderer_mode = is_virtual
+        ? loom::ui::messages_list::VirtualRendererMode::Virtual
+        : loom::ui::messages_list::VirtualRendererMode::Static;
+    ms.virtual_mode_switch_count = switch_count;
+    ms.force_bottom_after_mode_switch = force_bottom;
+}
+
+bool AppAdapter::virtual_renderer_is_virtual_for_testing() const noexcept {
+    return screen_state_->messages_store.virtual_renderer_mode ==
+           loom::ui::messages_list::VirtualRendererMode::Virtual;
+}
+
+std::uint64_t AppAdapter::virtual_mode_switch_count_for_testing() const noexcept {
+    return screen_state_->messages_store.virtual_mode_switch_count;
+}
+
+bool AppAdapter::force_bottom_after_mode_switch_for_testing() const noexcept {
+    return screen_state_->messages_store.force_bottom_after_mode_switch;
 }
 
 // ============================================================
@@ -426,6 +452,25 @@ std::string AppTestingSeams::footer_notification_text_for_testing() const {
 
 void AppTestingSeams::set_copy_generation_for_testing(std::uint64_t gen) {
     app->set_copy_generation_for_testing(gen);
+}
+
+void AppTestingSeams::set_virtual_renderer_state_for_testing(
+    bool is_virtual, std::uint64_t switch_count, bool force_bottom) {
+    app->set_virtual_renderer_state_for_testing(
+        is_virtual, switch_count, force_bottom);
+}
+
+bool AppTestingSeams::virtual_renderer_is_virtual_for_testing() const noexcept {
+    return app->virtual_renderer_is_virtual_for_testing();
+}
+
+std::uint64_t
+AppTestingSeams::virtual_mode_switch_count_for_testing() const noexcept {
+    return app->virtual_mode_switch_count_for_testing();
+}
+
+bool AppTestingSeams::force_bottom_after_mode_switch_for_testing() const noexcept {
+    return app->force_bottom_after_mode_switch_for_testing();
 }
 
 AppTestingSeams test_seams(const ftxui::Component& app) {

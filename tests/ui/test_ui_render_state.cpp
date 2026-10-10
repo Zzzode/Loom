@@ -373,7 +373,7 @@ TEST(ReplScreen, MouseWheelScrollsVirtualTranscript) {
     namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    // More than kBigChatThreshold entries selects the long-session virtual
+    // >80 entries triggers the virtual renderer (RFC 0008 hysteresis).
     // transcript renderer used by resumed histories.
     for (int i = 0; i < 100; ++i) {
         repl::MessageDisplayEntry message;
@@ -415,7 +415,7 @@ TEST(ReplScreen, NewMessagesPillClickRePinsTranscript) {
     state->messages_store.virtual_renderer_mode =
         loom::ui::messages_list::VirtualRendererMode::Virtual;
 
-    // More than kBigChatThreshold entries exercises the virtualized transcript
+    // >80 entries exercises the virtualized transcript
     // path used by resumed long sessions.
     for (int i = 0; i < 100; ++i) {
         repl::MessageDisplayEntry message;
@@ -862,4 +862,214 @@ TEST(ReplScreen, WheelStrideHandlesZero) {
     // viewport_height_lines=0 before first render → clamp to 1 → stride 3.
     EXPECT_EQ(repl::WheelStride(0), 3);
     EXPECT_EQ(repl::WheelStride(-1), 3);
+}
+
+// ── RFC 0008: Virtual renderer hysteresis lifecycle tests ──────────────
+// These tests exercise the full ReplScreen::Render() → RenderMessages →
+// render_messages_list_view path, asserting on persistent MessagesStore
+// state (mode, counter, force_bottom flag) after each frame.
+
+namespace {
+
+namespace rs = loom::ui::repl_screen;
+
+/// Add `count` assistant messages with unique IDs to the store.
+void AddTestMessages(rs::MessagesStore& store, int count,
+                     std::string_view prefix) {
+    for (int i = 0; i < count; ++i) {
+        rs::MessageDisplayEntry message;
+        message.id = std::format("{}-{:03}", prefix, i);
+        message.role = "assistant";
+        message.content_preview = std::format("{} message {:03}", prefix, i);
+        store.messages.push_back(std::move(message));
+    }
+}
+
+/// Render one frame through the full ReplScreen pipeline.
+void RenderFrame(const std::shared_ptr<rs::ReplScreenState>& state) {
+    auto component = rs::ReplScreen(state, rs::ReplScreenCallbacks{});
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
+                                        ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen, component->Render());
+}
+
+}  // namespace
+
+TEST(ReplScreen, VirtualModeSwitchStaticToVirtualThroughRender) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    AddTestMessages(state->messages_store, 81, "enter");
+
+    RenderFrame(state);
+
+    // Mode switched Static→Virtual, counter incremented.
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
+    EXPECT_TRUE(state->messages_store.virtual_list_active);
+    // Pinned (default) → no scroll reset → force_bottom NOT set.
+    EXPECT_FALSE(state->messages_store.force_bottom_after_mode_switch);
+}
+
+TEST(ReplScreen, VirtualModeSwitchVirtualToStaticThroughRender) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    state->messages_store.virtual_renderer_mode =
+        VirtualRendererMode::Virtual;
+    AddTestMessages(state->messages_store, 59, "exit");
+
+    RenderFrame(state);
+
+    // Mode switched Virtual→Static, counter incremented.
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Static);
+    EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
+    EXPECT_FALSE(state->messages_store.virtual_list_active);
+}
+
+TEST(ReplScreen, VirtualHysteresisBandThroughRender) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+
+    // Frame 1: 81 messages → Static→Virtual.
+    AddTestMessages(state->messages_store, 81, "band");
+    RenderFrame(state);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
+
+    // Frame 2: reduce to 79 (inside band [60,80]) → stays Virtual.
+    state->messages_store.messages.resize(79);
+    RenderFrame(state);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
+
+    // Frame 3: reduce to 59 (< 60) → Virtual→Static.
+    state->messages_store.messages.resize(59);
+    RenderFrame(state);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Static);
+    EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 2u);
+}
+
+TEST(ReplScreen, VirtualModeSwitchNotPinnedResetsScrollToBottom) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    // User scrolled up → not pinned, pill visible.
+    state->messages_store.scroll_pinned_to_bottom = false;
+    state->messages_store.scroll_offset = 5;
+    state->messages_store.pill_visible = true;
+    state->messages_store.unseen_message_count = 3;
+    state->messages_store.divider_index = 10;
+    AddTestMessages(state->messages_store, 81, "reset");
+
+    RenderFrame(state);
+
+    // Mode switched.
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Virtual);
+    // Scroll was reset to bottom (same-frame reset).
+    EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+    // Pill / divider state cleared by ClearRepinState.
+    EXPECT_FALSE(state->messages_store.pill_visible);
+    EXPECT_EQ(state->messages_store.unseen_message_count, 0);
+    EXPECT_FALSE(state->messages_store.divider_index.has_value());
+    // Force-bottom flag set for subsequent frames.
+    EXPECT_TRUE(state->messages_store.force_bottom_after_mode_switch);
+}
+
+TEST(ReplScreen, VirtualModeSwitchPinnedDoesNotSetForceBottom) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    // Pinned (default) — mode switch should NOT set force_bottom.
+    AddTestMessages(state->messages_store, 81, "pinned");
+
+    RenderFrame(state);
+
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Virtual);
+    EXPECT_FALSE(state->messages_store.force_bottom_after_mode_switch);
+}
+
+TEST(ReplScreen, ForceBottomFlagClearedOnWheelScrollAway) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    state->messages_store.virtual_renderer_mode =
+        VirtualRendererMode::Virtual;
+    state->messages_store.force_bottom_after_mode_switch = true;
+    AddTestMessages(state->messages_store, 100, "wheel");
+
+    auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
+                                        ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen, component->Render());
+    ASSERT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+    ASSERT_TRUE(state->messages_store.force_bottom_after_mode_switch);
+
+    // Wheel up → scroll away → flag cleared.
+    ftxui::Mouse wheel;
+    wheel.button = ftxui::Mouse::WheelUp;
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
+    EXPECT_FALSE(state->messages_store.scroll_pinned_to_bottom);
+    EXPECT_FALSE(state->messages_store.force_bottom_after_mode_switch);
+}
+
+TEST(ReplScreen, ForceBottomFlagSurvivesNewContent) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    state->messages_store.virtual_renderer_mode =
+        VirtualRendererMode::Virtual;
+    state->messages_store.force_bottom_after_mode_switch = true;
+    AddTestMessages(state->messages_store, 81, "survive");
+
+    // Render with flag set.
+    RenderFrame(state);
+    EXPECT_TRUE(state->messages_store.force_bottom_after_mode_switch);
+
+    // Add more content (simulating streaming) and render again.
+    AddTestMessages(state->messages_store, 10, "survive-new");
+    RenderFrame(state);
+    // Flag should survive — it's only cleared by explicit pin=false events.
+    EXPECT_TRUE(state->messages_store.force_bottom_after_mode_switch);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Virtual);
+}
+
+TEST(ReplScreen, VirtualModeSwitchCountTracksMultipleTransitions) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+
+    // Static→Virtual (81 messages).
+    AddTestMessages(state->messages_store, 81, "count");
+    RenderFrame(state);
+    EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
+
+    // Virtual→Static (59 messages).
+    state->messages_store.messages.resize(59);
+    RenderFrame(state);
+    EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 2u);
+
+    // Static→Virtual again (81 messages).
+    AddTestMessages(state->messages_store, 22, "count-more");
+    RenderFrame(state);
+    EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 3u);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Virtual);
 }

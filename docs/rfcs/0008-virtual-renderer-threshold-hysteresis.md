@@ -258,6 +258,11 @@ before building the Element. This ensures the first frame of the new mode
 already uses the bottom-anchored scroll position, not the old coordinate
 system's stale offset.
 
+The view also outputs a `scroll_was_reset_to_bottom` flag so the caller
+can persist the new scroll state. Without this, the next frame would
+revert to the old `scroll_offset` (which is in the old coordinate system)
+because `mode_switched` would be false.
+
 ```cpp
 // Pseudocode — actual implementation in messages_list_view.cpp
 const auto visible_count = visible.size();
@@ -267,12 +272,13 @@ input.next_virtual_mode = next_mode;
 
 const bool mode_switched = (next_mode != prev_mode);
 const bool reset_to_bottom = mode_switched && !input.pin_to_bottom;
+input.scroll_was_reset_to_bottom = reset_to_bottom;
 
 if (next_mode == VirtualRendererMode::Virtual) {
     (void)trailing_elements;
     // ... build virtual rows ...
     if (input.pin_to_bottom || reset_to_bottom) {
-        state.scroll_top = state.jh.total() - state.viewport_rows;
+        state.scroll_top = std::max(0, state.jh.total() - state.viewport_rows);
         state.sticky_bottom = true;
     } else {
         state.scroll_top = std::max(0, scroll_top_lines);
@@ -281,11 +287,41 @@ if (next_mode == VirtualRendererMode::Virtual) {
 }
 // static path:
 // ... build vbox ...
-if ((input.pin_to_bottom || reset_to_bottom) &&
-    visible.size() > 1 && content_exceeds_viewport) {
-    list = std::move(list) | focusPositionRelative(0, 1);  // bottom
+if (reset_to_bottom) {
+    // Unconditional: mode switch + not pinned → bottom for this frame.
+    // Not guarded by content-size checks — even a single tall message
+    // or content that fits the viewport must use bottom anchoring.
+    list = std::move(list) | focusPositionRelative(0, 1);
+} else if (input.pin_to_bottom && visible.size() > 1 &&
+           content_exceeds_viewport) {
+    list = std::move(list) | focusPositionRelative(0, 1);
 } else if (input.scroll_offset > 0) {
     list = std::move(list) | focusPosition(0, input.scroll_offset + vp / 2);
+}
+```
+
+The caller (`repl_screen_messages.cpp`) persists the reset after render:
+
+```cpp
+auto element = ml::render_messages_list_view(input, ...);
+if (store) {
+    if (input.next_virtual_mode != store->virtual_renderer_mode) {
+        store->virtual_renderer_mode = input.next_virtual_mode;
+        ++store->virtual_mode_switch_count;
+        debug("messages.virtual", ...);
+    }
+    if (input.scroll_was_reset_to_bottom) {
+        // Persist bottom-anchored state so the next frame stays at bottom.
+        // Without this, the next frame would use the old scroll_offset
+        // (in the old coordinate system) because mode_switched=false.
+        // Reuse the existing repin path: ResetScrollToBottom + clear
+        // divider/unseen/pill state (same as user-initiated repin).
+        ResetScrollToBottom(store->messages_store);
+        store->messages_store.divider_index.reset();
+        store->messages_store.unseen_divider.reset();
+        store->messages_store.pill_visible = false;
+    }
+    // existing virtual_list_active / virtual_jh propagation...
 }
 ```
 
@@ -493,8 +529,8 @@ confined to:
 
 | File | Change |
 |------|--------|
-| `src/ui/messages/messages_list.cppm` | Add `VirtualRendererMode` enum, `decide_virtual_renderer_mode()` helper, `kVirtualEnterThreshold`, `kVirtualExitThreshold`; add `prev_virtual_mode` / `next_virtual_mode` / `visible_count_out` to `MessagesListInput`; remove `kVirtualThreshold`, `MessagesListComponent`, `MakeMessagesList` |
-| `src/ui/messages/messages_list_view.cpp` | Hysteresis decision via helper; same-frame scroll reset on unpinned switch; write `next_virtual_mode` + `visible_count_out` |
+| `src/ui/messages/messages_list.cppm` | Add `VirtualRendererMode` enum, `decide_virtual_renderer_mode()` helper, `kVirtualEnterThreshold`, `kVirtualExitThreshold`; add `prev_virtual_mode` / `next_virtual_mode` / `visible_count_out` / `scroll_was_reset_to_bottom` to `MessagesListInput`; remove `kVirtualThreshold`, `MessagesListComponent`, `MakeMessagesList` |
+| `src/ui/messages/messages_list_view.cpp` | Hysteresis decision via helper; same-frame scroll reset on unpinned switch (unconditional in static path); write `next_virtual_mode` + `visible_count_out` + `scroll_was_reset_to_bottom` |
 | `src/ui/screens/messages_store.cppm` | Add `virtual_renderer_mode` + `virtual_mode_switch_count` fields |
 | `src/ui/screens/repl_screen_messages.cpp` | Set `input.prev_virtual_mode` from store; read `input.next_virtual_mode` after render; increment switch counter |
 | `src/ui/app/app_handle_submit.cpp` | Call `reset_virtual_renderer_state()` in slash `/clear` handler (:414-422) and session restore handler (:668-677) |
@@ -672,6 +708,10 @@ entry-count sequences.
 | `VirtualThreshold.ExactBoundary60` | prev=Virtual, exactly 60 | Mode stays Virtual (< 60 is strict) |
 | `VirtualThreshold.PinToBottomPreserved` | Pinned state at both transitions | Pin-to-bottom flag unchanged across mode switch |
 | `VirtualThreshold.UnpinnedScrollResetToBottom` | Unpinned (scrolled up) at mode switch | Scroll position reset to bottom (predictable degradation) |
+| `VirtualThreshold.ResetPersistsAcrossFrames` | Mode switch → render another frame with no new input → append content | Tail stays visible across frames; pin_to_bottom persisted by caller |
+| `VirtualThreshold.WheelUpAfterReset` | Mode switch with reset → wheel-up | Scroll starts from new path's bottom, not old coordinate system |
+| `VirtualThreshold.VirtualToSingleTallMessage` | Virtual→Static with 1 tall message, old offset > 0 | Static path uses bottom anchor (not guarded by content-size checks) |
+| `VirtualThreshold.VirtualToFitsViewport` | Virtual→Static, content fits viewport, old offset > 0 | Static path uses bottom anchor (not guarded by content-exceeds-viewport) |
 | `VirtualThreshold.SwitchCounterIncrements` | Two mode transitions | Counter = 2 |
 
 **AppAdapter lifecycle tests** in `tests/ui/test_app_runtime.cpp`:
@@ -687,6 +727,7 @@ enum assignment.
 | `VirtualThreshold.ResizePreservesMode` | Virtual mode → resize → 70 entries | Mode stays Virtual |
 | `VirtualThreshold.SyncStatePreservesMode` | Virtual mode → SyncState → 70 entries | Mode stays Virtual |
 | `VirtualThreshold.ClearResetsCounter` | Virtual mode with counter=2 → `/clear` | Counter is 0 after clear |
+| `VirtualThreshold.ResetPersistsAcrossFrames` | Unpinned, non-zero offset, active unseen pill; Static→Virtual and Virtual→Static | Switch frame at bottom; **next frame still at bottom**; `scroll_pinned_to_bottom=true`; offset follows pinned convention; divider/pill cleared (same as user repin) |
 
 #### Dynamic multi-frame tests
 

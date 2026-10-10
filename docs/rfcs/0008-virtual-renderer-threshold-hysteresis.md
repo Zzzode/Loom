@@ -894,26 +894,40 @@ sequences:
 | 2026-10-10 | A | PRR round 2 fix: 3 visual bottom-anchor tests (VirtualToStaticSingleTallMessageShowsTail 3-frame, StaticToVirtualSwitchShowsTail 2-frame, WheelUpMovesScreenAwayFromBottom); callback-clear test through trigger_clear_session_for_testing() seam; /resume test with temp session fixture (metadata.json + messages.jsonl, LOOM_CONFIG_DIR override); clear_session_callback_ member + test seam. All 2180 tests pass (debug + release). | e04c546 | 2180/2180 debug + release | — |
 | 2026-10-10 | A | **PRR round 3: Dev-0 REQUEST_CHANGES (P1: LOOM_CONFIG_DIR not exception/assert-safe, getenv pointer invalidated by setenv). Dev-2 REQUEST_CHANGES (P1: unpinned Static→Virtual first-frame visual assertion missing; P1: rollback plan incomplete — test/seam commits depend on Commit 2 interfaces; P1: graduation metrics commands/paths inconsistent).** | — | — | Dev-0, Dev-2 |
 | 2026-10-10 | A | PRR round 3 fix: EnvironmentGuard + TempDirGuard RAII structs for /resume test (Dev-0 P1); StaticToVirtualUnpinnedSwitchResetsToBottom test (Dev-2 P1); rollback plan updated to reverse-order revert including test/seam commits (Dev-2 P1); graduation metrics commands corrected to tools/arch/ paths, ctest labeled as parallel not serial, PSS scope clarified (Dev-2 P1). | 9eb2d87 + cce4c89 + docs | 2180/2180 debug + release | — |
+| 2026-10-10 | A | **PRR round 4: Dev-0 REQUEST_CHANGES (P1: serial ctest not completed; P1: BMI PSS final scope incomplete — messages_store.cppm and messages_list.cppm need baseline vs final measurement). Dev-2 REQUEST_CHANGES (P1: same serial ctest + BMI PSS gaps).** | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | A | PRR round 4 fix: serial ctest debug 2181/2181 + release 2181/2181 (graduation gate); BMI PSS measured at baseline (59c2b8b) vs final (1d02517) for messages_store.cppm (748.0→747.2 MB) and messages_list.cppm (1739.8→1696.2 MB); raw JSON artifacts recorded. | docs only | 2181/2181 serial debug + release | — |
 
 ### Graduation metrics details
 
 Measurement commands and raw output locations for the graduation metrics
 recorded in the Implementation History:
 
-- **ctest (parallel)**: `ctest --preset debug -j$(nproc)` and
-  `ctest --preset release -j$(nproc)`. Raw output: terminal scrollback;
-  no artifact file. Known flakes (`ServerMain.DirectConnect*`,
+- **ctest (serial, graduation gate)**: `ctest --preset debug -j1` and
+  `ctest --preset release -j1`. Results: debug 2181/2181 passed,
+  release 2181/2181 passed. Raw output: terminal scrollback;
+  no artifact file.
+- **ctest (parallel, supplementary)**: `ctest --preset debug -j$(nproc)` and
+  `ctest --preset release -j$(nproc)`. Results: 2181/2181 both.
+  Known flakes (`ServerMain.DirectConnect*`,
   `HooksIntegrationTest.BlockingHookFiresOnEveryToolCall`) re-run in
   isolation if they fail under parallel load.
 - **graph_check**: `python3 tools/arch/graph_check.py --target-ui9 --store-lint`.
   Raw output: terminal scrollback; 0 violations required.
-- **BMI PSS**: `python3 tools/arch/measure_bmi.py src/ui/screens/messages_store.cppm`.
-  Producer PSS of `messages_store.cppm` before/after Commit 1 (015f60c):
-  740.2 MB → 739.8 MB (-0.06%, unchanged). Raw output: terminal scrollback.
-  Note: this measurement covers Commit 1 (telemetry + deletion) only;
-  Commit 2 (hysteresis) added fields to MessagesStore but the PSS impact
-  was not re-measured (the fields are small bools/uint64_t and the
-  interface change is additive).
+- **BMI PSS**: `python3 tools/arch/measure_bmi.py --json --out <artifact> <source>`.
+  Measured at baseline (59c2b8b, before Commit 1) and final Phase A head
+  (1d02517), same toolchain (Homebrew LLVM 23.1.2, debug preset, direct mode):
+
+  | Producer | Baseline (59c2b8b) | Final (1d02517) | Delta |
+  |----------|-------------------|-----------------|-------|
+  | `messages_store.cppm` | 748.0 MB | 747.2 MB | -0.8 MB (-0.1%) |
+  | `messages_list.cppm` | 1739.8 MB | 1696.2 MB | -43.6 MB (-2.5%) |
+
+  Raw JSON artifacts: `/tmp/bmi-baseline-messages-store.json`,
+  `/tmp/bmi-final-messages-store.json`,
+  `/tmp/bmi-baseline-messages-list.json`,
+  `/tmp/bmi-final-messages-list.json`.
+  The `messages_list.cppm` decrease is from deleting MessagesListComponent
+  (Commit 1) and simplifying the interface.
 - **Importer count**:
   `grep -rc "import loom.ui.screens.messages_store" src/ --include="*.cppm" --include="*.cpp" | grep -v ":0" | wc -l`
   before/after: 12 → 12 (unchanged).
@@ -931,9 +945,11 @@ not a deliberate bypass. Recovery: the PRR is being conducted retroactively
 (this section). PRR round 1 findings were addressed in 1d06ca4 + 803e3f6;
 PRR round 2 findings (visual assertions, callback-clear, /resume tests) were
 addressed in e04c546; PRR round 3 findings (RAII guard, unpinned visual test,
-rollback plan, metrics corrections) were addressed in 9eb2d87 + cce4c89.
-The RFC status will be updated to `implementable` only after Dev-0 and Dev-2
-approve the PRR. The two-commit rollout structure (Commit 1 = telemetry +
-deletion, Commit 2 = hysteresis) preserves the rollback path, but the complete
-rollback now requires reverse-order revert of test/seam commits as documented
-in §8.
+rollback plan, metrics corrections) were addressed in 9eb2d87 + cce4c89;
+PRR round 4 findings (serial ctest, BMI PSS final scope) were addressed by
+running the graduation gate measurements and recording them in the
+Graduation metrics details section. The RFC status will be updated to
+`implementable` only after Dev-0 and Dev-2 approve the PRR. The two-commit
+rollout structure (Commit 1 = telemetry + deletion, Commit 2 = hysteresis)
+preserves the rollback path, but the complete rollback now requires
+reverse-order revert of test/seam commits as documented in §8.

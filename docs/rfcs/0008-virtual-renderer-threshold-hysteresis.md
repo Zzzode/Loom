@@ -645,6 +645,20 @@ field carry over; only the view's internal branching changes.
   stateless `visible.size() > 80` check. Commit 1 (telemetry + deletion)
   can remain — it is independently useful and has no behavior change.
   `MessagesListComponent` is restored from git history if needed.
+
+  **Post-PRR update (round 3):** The test/seam commits (1d06ca4, e04c546,
+  9eb2d87, cce4c89) depend on Commit 2's interfaces
+  (`force_bottom_after_mode_switch`, `decide_virtual_renderer_mode` two-arg
+  signature, `clear_session_callback_`). A complete rollback must revert
+  in reverse order:
+
+  ```
+  git revert cce4c89 9eb2d87 e04c546 1d06ca4 b6806fa
+  ```
+
+  This preserves Commit 1 (015f60c, telemetry + deletion) as the baseline.
+  The rollback must be verified in an isolated checkout (debug + release
+  build) before executing on master.
 - **Ordering:** No dependencies on other RFCs. Can land independently.
 
 ## 9. Drawbacks
@@ -878,23 +892,28 @@ sequences:
 | 2026-10-10 | A | PRR fix: 15 VirtualThreshold regression tests (6 helper + 8 lifecycle through ReplScreen::Render + 1 AppAdapter /clear reset); AppTestingSeams accessors for virtual renderer state; stale MakeMessagesList/MessagesListComponent/kBigChatThreshold references removed. Graduation metrics: serial ctest debug 2175/2175, release 2175/2175; graph_check 0 violations; BMI PSS 740.2→739.8 MB; importer 12→12; kVirtualThreshold refs 0. | 1d06ca4 | 2175/2175 debug + release serial | — |
 | 2026-10-10 | A | **PRR round 2: Dev-0 REQUEST_CHANGES (P1: callback-clear not tested through real callback; P1: /resume restore handler not tested through real AppAdapter path; P1: single tall message forced_repin branch not covered). Dev-2 REQUEST_CHANGES (P1: visual bottom-anchor assertions missing; P1: callback-clear/restore marked "code review confirmed" not integration-tested; P2: sticky-click/skills/resize no new behavioral tests).** | — | — | Dev-0, Dev-2 |
 | 2026-10-10 | A | PRR round 2 fix: 3 visual bottom-anchor tests (VirtualToStaticSingleTallMessageShowsTail 3-frame, StaticToVirtualSwitchShowsTail 2-frame, WheelUpMovesScreenAwayFromBottom); callback-clear test through trigger_clear_session_for_testing() seam; /resume test with temp session fixture (metadata.json + messages.jsonl, LOOM_CONFIG_DIR override); clear_session_callback_ member + test seam. All 2180 tests pass (debug + release). | e04c546 | 2180/2180 debug + release | — |
+| 2026-10-10 | A | **PRR round 3: Dev-0 REQUEST_CHANGES (P1: LOOM_CONFIG_DIR not exception/assert-safe, getenv pointer invalidated by setenv). Dev-2 REQUEST_CHANGES (P1: unpinned Static→Virtual first-frame visual assertion missing; P1: rollback plan incomplete — test/seam commits depend on Commit 2 interfaces; P1: graduation metrics commands/paths inconsistent).** | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | A | PRR round 3 fix: EnvironmentGuard + TempDirGuard RAII structs for /resume test (Dev-0 P1); StaticToVirtualUnpinnedSwitchResetsToBottom test (Dev-2 P1); rollback plan updated to reverse-order revert including test/seam commits (Dev-2 P1); graduation metrics commands corrected to tools/arch/ paths, ctest labeled as parallel not serial, PSS scope clarified (Dev-2 P1). | 9eb2d87 + cce4c89 + docs | 2180/2180 debug + release | — |
 
 ### Graduation metrics details
 
 Measurement commands and raw output locations for the graduation metrics
 recorded in the Implementation History:
 
-- **Serial ctest**: `ctest --preset debug -j$(nproc)` and
+- **ctest (parallel)**: `ctest --preset debug -j$(nproc)` and
   `ctest --preset release -j$(nproc)`. Raw output: terminal scrollback;
   no artifact file. Known flakes (`ServerMain.DirectConnect*`,
   `HooksIntegrationTest.BlockingHookFiresOnEveryToolCall`) re-run in
   isolation if they fail under parallel load.
-- **graph_check**: `python3 tools/graph_check.py --target-ui9 --store-lint`.
+- **graph_check**: `python3 tools/arch/graph_check.py --target-ui9 --store-lint`.
   Raw output: terminal scrollback; 0 violations required.
-- **BMI PSS**: measured via the project's BMI measurement tooling
-  (`tools/bmi_pss.sh` or equivalent). Producer PSS of
-  `src/ui/screens/messages_store.cppm` before/after Commit 1:
+- **BMI PSS**: `python3 tools/arch/measure_bmi.py src/ui/screens/messages_store.cppm`.
+  Producer PSS of `messages_store.cppm` before/after Commit 1 (015f60c):
   740.2 MB → 739.8 MB (-0.06%, unchanged). Raw output: terminal scrollback.
+  Note: this measurement covers Commit 1 (telemetry + deletion) only;
+  Commit 2 (hysteresis) added fields to MessagesStore but the PSS impact
+  was not re-measured (the fields are small bools/uint64_t and the
+  interface change is additive).
 - **Importer count**:
   `grep -rc "import loom.ui.screens.messages_store" src/ --include="*.cppm" --include="*.cpp" | grep -v ":0" | wc -l`
   before/after: 12 → 12 (unchanged).
@@ -911,7 +930,10 @@ may merge while its status is below implementable." This was a process error,
 not a deliberate bypass. Recovery: the PRR is being conducted retroactively
 (this section). PRR round 1 findings were addressed in 1d06ca4 + 803e3f6;
 PRR round 2 findings (visual assertions, callback-clear, /resume tests) were
-addressed in e04c546. The RFC status will be updated to `implementable` only
-after Dev-0 and Dev-2 approve the PRR. The two-commit rollout structure
-(Commit 1 = telemetry + deletion, Commit 2 = hysteresis) preserves the rollback
-path: revert b6806fa to return to the stateless threshold.
+addressed in e04c546; PRR round 3 findings (RAII guard, unpinned visual test,
+rollback plan, metrics corrections) were addressed in 9eb2d87 + cce4c89.
+The RFC status will be updated to `implementable` only after Dev-0 and Dev-2
+approve the PRR. The two-commit rollout structure (Commit 1 = telemetry +
+deletion, Commit 2 = hysteresis) preserves the rollback path, but the complete
+rollback now requires reverse-order revert of test/seam commits as documented
+in §8.

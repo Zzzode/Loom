@@ -772,3 +772,5 @@ sequences:
 | 2026-10-10 | — | Revision 3: dynamic tests, scroll coord mismatch doc, BMI fan-out, PSS metric fix, virtual_list_active derivation, residual oscillation, INV-1 placement note, PRR wording, baseline two-commit method | 39d978e | — | — |
 | 2026-10-10 | — | Design review round 3: Dev-0 REQUEST_CHANGES (2 P0 + 2 P1), Dev-2 1 P1 + 3 P2. All addressed in rev 4. | — | — | Dev-0, Dev-2 |
 | 2026-10-10 | — | Revision 4: second clear path + shared reset helper, unpinned scroll reset to bottom, telemetry at caller commit point, internal API boundary, test split (view vs AppAdapter), evidence/golden/PTY wording fixes | 20f9843 | — | — |
+| 2026-10-10 | — | Design review round 4: Dev-0 P0 (scroll reset timing), Dev-2 P1 (same) + 3 P2. All addressed in rev 5. | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | — | Revision 5: same-frame scroll reset inside view (before Element build), decide_virtual_renderer_mode() helper, visible_count_out field, two-commit rollout, PSS/importer separation, SelectionSurvivesSwitch acceptance criteria | 9edaeaf | — | — |

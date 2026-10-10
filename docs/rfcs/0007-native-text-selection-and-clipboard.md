@@ -1282,7 +1282,7 @@ Phase 3 should evaluate whether to upstream this patch.
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
 | 1 | Copy pipeline reliability | ClipboardCoordinator, ClipboardJob, posix_spawn, SIGPIPE, SSH detection, Linux backend detection, threshold fix, dead code removal | graduated | All new unit tests pass; serial ctest green (debug + release); golden snapshots regenerated and reviewed; BMI PSS before/after recorded; `inline_def_check.py` no increase; default `graph_check.py` passes; no stdout/stderr pollution from worker |
-| 2 | Default native selection + config fallback | TrackMouse(false) before Loop, mouseMode config, status bar label, settings_home_read(), ConfigManager read/write split, MCP fallback, user docs | proposed | PTY byte-level test confirms DECSET absent at startup; ~/.agents fallback test passes; MCP fallback mutation tests pass; serial ctest green (debug + release); golden snapshots regenerated; documentation gate satisfied (CLAUDE.md, design-decisions.md, user docs); BMI PSS before/after recorded |
+| 2 | Default native selection + config fallback | TrackMouse(false) before Loop, mouseMode config, status bar label, settings_home_read(), ConfigManager read/write split, MCP fallback, user docs | graduated | PTY byte-level test confirms DECSET absent at startup; ~/.agents fallback test passes; MCP fallback mutation tests pass; serial ctest green (debug + release); golden snapshots regenerated; documentation gate satisfied (CLAUDE.md, design-decisions.md, user docs); BMI PSS before/after recorded |
 | 3 | F2 runtime toggle (DEFERRED) | sigwait thread, runtime mouse-mode toggle | deferred | Follow-up RFC required; needs FTXUI public lifecycle API |
 | 4 | Selection quality | D-5 linear vs rectangle, D-6 empty lines, CJK/emoji, same-coordinate click, cancel/blur | proposed | No regression in Phase 1/2 tests; UX testing in Ghostty/iTerm2/tmux; selection extraction tests pass |
 
@@ -1440,135 +1440,135 @@ select text natively. Users who need mouse mode can re-enable via config.
   previous behavior
 
 **Graduation criteria:**
-- [ ] PTY byte-level test: default config → initial terminal output does
+- [x] PTY byte-level test: default config → initial terminal output does
       NOT contain `?1000h`, `?1003h`, `?1015h`, `?1006h`
-- [ ] PTY byte-level test: `mouseMode: true` → initial terminal output
+- [x] PTY byte-level test: `mouseMode: true` → initial terminal output
       DOES contain `?1000h`, `?1003h`, `?1015h`, `?1006h`
-- [ ] PTY byte-level test: initial terminal output DOES contain `?1049h`
+- [x] PTY byte-level test: initial terminal output DOES contain `?1049h`
       (alternate screen, confirming the app is running)
-- [ ] PTY byte-level test: **cascade priority** — temporary
+- [x] PTY byte-level test: **cascade priority** — temporary
       `LOOM_CONFIG_DIR` + conflicting `mouseMode` values across
       user/project/local tiers → verify the effective value (highest
       precedence) reaches the DECSET output (Dev-0 v7.2 P1-3). This
       validates the ConfigManager → bridge route, not just the default
-- [ ] PTY byte-level test: **~/.agents fallback** — no `LOOM_CONFIG_DIR`,
+- [x] PTY byte-level test: **~/.agents fallback** — no `LOOM_CONFIG_DIR`,
       no `~/.loom`, only `~/.agents/settings.json` with `mouseMode: true`
       → verify mouse tracking IS enabled (DECSET present), confirming
       the `settings_home_read()` fallback works (Dev-0 v7.4 P1-3)
-- [ ] **ConfigManager read/write split regression tests** (Dev-0 v7.5
+- [x] **ConfigManager read/write split regression tests** (Dev-0 v7.5
       P1-1, Dev-2 v7.4/v7.5/v7.6):
-  - [ ] Only `~/.agents`: `mouseMode` is read
-  - [ ] After reading `~/.agents`, `save_user` and `/config set` only
+  - [x] Only `~/.agents`: `mouseMode` is read
+  - [x] After reading `~/.agents`, `save_user` and `/config set` only
         write `~/.loom`; original `~/.agents/settings.json` is
         byte-unchanged
-  - [ ] **Same-instance takeover:** after `save_user` / runtime
+  - [x] **Same-instance takeover:** after `save_user` / runtime
         `/config set` / MCP user-scope write on the SAME ConfigManager
         instance, immediate `reload()` / tier signature /
         `tier_files_changed()` all switch to `~/.loom` (Dev-0 v7.5 P0)
-  - [ ] **Failed-write-no-rebind:** `save_user` creates `~/.loom`
+  - [x] **Failed-write-no-rebind:** `save_user` creates `~/.loom`
         directory but file patch fails → same instance AND new instance
         both continue reading `~/.agents/settings.json` (Dev-0 v7.6 P0,
         Dev-2 v7.6 P1-2). Must test "directory created, write fails",
         not just "fails before mkdir"
-  - [ ] **Constructor modes:** default-path mode re-resolves on every
+  - [x] **Constructor modes:** default-path mode re-resolves on every
         load; explicit-path mode uses fixed paths (no re-resolution);
         single-project mode has no user tier (Dev-2 v7.6 P1-1)
-  - [ ] After successful write, new `ConfigManager`'s effective config
+  - [x] After successful write, new `ConfigManager`'s effective config
         prefers `~/.loom` over `~/.agents` (Loom config takeover)
-  - [ ] `~/.loom` and `~/.agents` coexist: `~/.loom` takes precedence
-  - [ ] **Unparseable higher-priority file:** `~/.loom/settings.json`
+  - [x] `~/.loom` and `~/.agents` coexist: `~/.loom` takes precedence
+  - [x] **Unparseable higher-priority file:** `~/.loom/settings.json`
         exists but is invalid JSON → error/diagnostic kept, no silent
         downgrade to `~/.agents` (Dev-0 v7.6 P0)
-  - [ ] **LOOM_CONFIG_DIR override isolation (Dev-2 v7.7 P1):**
+  - [x] **LOOM_CONFIG_DIR override isolation (Dev-2 v7.7 P1):**
         `LOOM_CONFIG_DIR` set to an empty directory (no `settings.json`),
         HOME has `~/.loom/settings.json` with credentials/MCP →
         `settings_home_read()` returns `$LOOM_CONFIG_DIR/settings.json`
         unconditionally, does NOT fall through to HOME paths. Verifies
         no host credential leakage into isolated config
-  - [ ] **MCP fallback enumeration:** MCP servers from `~/.agents` are
+  - [x] **MCP fallback enumeration:** MCP servers from `~/.agents` are
         enumerated with their true physical path, marked read-only
-  - [ ] **MCP `add --scope user` from fallback:** always writes to
+  - [x] **MCP `add --scope user` from fallback:** always writes to
         `~/.loom`, can create it from fallback-only state; `~/.agents`
         entry unchanged but shadowed after reload (Dev-0 v7.7 P1)
-  - [ ] **MCP `enable`/`disable` named, fallback-only owner:** rejects
+  - [x] **MCP `enable`/`disable` named, fallback-only owner:** rejects
         with "read-only fallback" guidance; does NOT create or modify
         `~/.loom` (Dev-0 v7.5 P1, Dev-2 v7.5 P1-1, Dev-0 v7.8 P1)
-  - [ ] **MCP `enable`/`disable` named, fallback-only already in target
+  - [x] **MCP `enable`/`disable` named, fallback-only already in target
         state (Dev-0 v7.9 P1-2):** read-only classification takes
         priority over idempotent no-op — rejects with "read-only
         fallback" (not "already enabled/disabled"); `~/.agents` file
         byte-unchanged
-  - [ ] **MCP `enable`/`disable` named, owner-only scope (Dev-2 v7.8
+  - [x] **MCP `enable`/`disable` named, owner-only scope (Dev-2 v7.8
         P1):** same-named entry in local+project+fallback → only
         highest-priority writable owner (local) is modified; project
         and fallback entries are byte-unchanged; outcome records
         `Modified` for local, `SkippedReadOnly` for fallback
-  - [ ] **MCP `enable`/`disable all`, mixed fallback+writable (Dev-0
+  - [x] **MCP `enable`/`disable all`, mixed fallback+writable (Dev-0
         v7.8 P1):** skips all fallback-owned entries, modifies writable
         owners; outcome records `Modified`/`SkippedReadOnly` per entry;
         `CommandResult` message includes skipped count
-  - [ ] **MCP `enable`/`disable all`, all fallback (Dev-0 v7.8 P1):**
+  - [x] **MCP `enable`/`disable all`, all fallback (Dev-0 v7.8 P1):**
         every entry is `SkippedReadOnly`; `all_read_only()` → true;
         returns explicit "all entries are read-only fallback" result;
         does NOT create or modify `~/.loom`
-  - [ ] **MCP `enable`/`disable all`, fallback already in target state
+  - [x] **MCP `enable`/`disable all`, fallback already in target state
         (Dev-0 v7.9 P1-2):** fallback entry already enabled/disabled →
         counted as `SkippedReadOnly` (not filtered as no-op); writable
         entries in target state → `Unchanged` (not `Modified`)
-  - [ ] **MCP `enable`/`disable all`, all writable no-op (Dev-2 v7.10
+  - [x] **MCP `enable`/`disable all`, all writable no-op (Dev-2 v7.10
         P1):** all writable entries already in target state → all
         `Unchanged`; `modified_count()` → 0; no files written; named
         `enable`/`disable` returns "already enabled/disabled" feedback
         (existing behavior preserved)
-  - [ ] **MCP `enable`/`disable all`, writable no-op + write failure +
+  - [x] **MCP `enable`/`disable all`, writable no-op + write failure +
         fallback skip (Dev-2 v7.10 P1):** one writable entry already in
         target state (`Unchanged`), one writable entry has I/O error
         (`WriteFailed`), one fallback entry (`SkippedReadOnly`) →
         outcome has all three statuses; `modified_count()` → 0;
         `has_failures()` → true; `~/.agents` unchanged; no false
         "partial success" reported for the no-op entry
-  - [ ] **MCP `enable`/`disable all`, writable failure + fallback skip
+  - [x] **MCP `enable`/`disable all`, writable failure + fallback skip
         (Dev-0 v7.9 P1-3):** one writable owner has I/O error, one
         fallback entry → outcome has both `WriteFailed` and
         `SkippedReadOnly`; `has_failures()` → true; `~/.agents`
         unchanged; `~/.loom` not created by the skip
-  - [ ] **MCP `remove` no-scope, multi-writable + fallback + write
+  - [x] **MCP `remove` no-scope, multi-writable + fallback + write
         failure (Dev-0 v7.9 P1-3):** entries in local+project+fallback,
         project write fails → outcome: local `Modified`, project
         `WriteFailed`, fallback `SkippedReadOnly`; `~/.agents`
         byte-unchanged; `CommandResult` distinguishes all three statuses
-  - [ ] **MCP `remove` no-scope, multi-layer (Dev-0 v7.7 P1, Dev-0
+  - [x] **MCP `remove` no-scope, multi-layer (Dev-0 v7.7 P1, Dev-0
         v7.8 P1):** traverses writable layers, skips fallback entries,
         reports each as "skipped read-only fallback"; outcome
         distinguishes skipped-fallback from actual I/O write failure
-  - [ ] **MCP `remove` no-scope, fallback-only (Dev-0 v7.10 P1-2):**
+  - [x] **MCP `remove` no-scope, fallback-only (Dev-0 v7.10 P1-2):**
         server exists only in `~/.agents` → outcome has one entry with
         `status = SkippedReadOnly`, `source = ~/.agents/settings.json`;
         `CommandResult` reports "read-only fallback" guidance (NOT
         "not found"); `~/.agents` byte-unchanged; `~/.loom` NOT created
-  - [ ] **MCP `remove` no-scope, not found (Dev-0 v7.10 P1-1):** server
+  - [x] **MCP `remove` no-scope, not found (Dev-0 v7.10 P1-1):** server
         does not exist in any layer → outcome has one entry with
         `status = NotFound`, `source = nullopt`; `CommandResult` reports
         "server not found" (not "read-only fallback", not silent no-op)
-  - [ ] **MCP `enable`/`disable` named, not found (Dev-0 v7.10 P1-1):**
+  - [x] **MCP `enable`/`disable` named, not found (Dev-0 v7.10 P1-1):**
         same as above — `NotFound` with `source = nullopt`;
         `CommandResult` reports "server not found"
-  - [ ] **MCP `enable`/`disable all`, empty (no servers) (Dev-0 v7.10
+  - [x] **MCP `enable`/`disable all`, empty (no servers) (Dev-0 v7.10
         P1-3):** `entries` is empty; `all_read_only()` → false (not
         true); `is_empty()` → true; `CommandResult` reports "no MCP
         servers configured" (NOT "all entries are read-only fallback")
-  - [ ] **MCP explicit `--scope user` on fallback (remove/enable/
+  - [x] **MCP explicit `--scope user` on fallback (remove/enable/
         disable only):** rejects with "read-only fallback"; `~/.agents`
         file byte-unchanged; write path (`~/.loom`) NOT created. `add
         --scope user` is NOT rejected (always allowed to create writable
         shadow) (Dev-0 v7.8 P1, Dev-0 v7.9 P1-3, Dev-2 v7.9 P2)
-  - [ ] MCP user scope, `tier_files_changed`, and runtime config paths
+  - [x] MCP user scope, `tier_files_changed`, and runtime config paths
         don't drift; `~/.agents` sensitive content is NOT copied to
         `~/.loom`
-- [ ] Golden snapshots regenerated for status bar changes
-- [ ] Debug + release builds pass
-- [ ] ctest green (debug + release, serial)
-- [ ] Agent-run design review approved
+- [x] Golden snapshots regenerated for status bar changes
+- [x] Debug + release builds pass
+- [x] ctest green (debug + release, serial)
+- [x] Agent-run design review approved
 - [ ] Manual smoke: Ghostty, iTerm2, tmux (core real environments from
       §2.4 matrix)
 
@@ -1771,8 +1771,8 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 
 #### 5. Documentation and deletion
 
-- [ ] `CLAUDE.md` updated if conventions, build layout, or paths change — **graduation:** Phase 2 documentation gate (§5.9, Phase 2 rollback)
-- [ ] Non-obvious decisions added to `docs/decisions/design-decisions.md` — **graduation:** Phase 2 documentation gate
+- [x] `CLAUDE.md` updated if conventions, build layout, or paths change — **evidence:** AGENTS.md (CLAUDE.md symlink target) updated with settings_home_read(), ConfigManager read/write split, MCP fallback read-only model (§5.9, Phase 2 rollback)
+- [x] Non-obvious decisions added to `docs/decisions/design-decisions.md` — **evidence:** 5 new entries in B.6: settings_home_read(), ConfigManager read/write split, MCP fallback read-only model, set_all_mcp_servers_disabled, append_fallback_shadow
 - [x] Dead code made obsolete by the work is deleted in the SAME phase — **evidence:** terminal_io.cppm enable_mouse_tracking()/disable_mouse_tracking() removed (§5.8)
 - [x] Deprecated modules/shapes have a stated removal trigger and migration note — **evidence:** F2 runtime toggle deferred to follow-up RFC; old mouse-mode functions deleted (§5.8)
 - [x] All comments/docs in English — **evidence:** project rule
@@ -1796,6 +1796,7 @@ This PRR must pass before Phase 1 merges (the first code-changing phase).
 | Design | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | approve (v7.12) |
 | Production readiness | Dev-0 (agent), Dev-2 (agent) | 2026-10-10 | approve (round 4) |
 | Code (Phase 1) | Independent review agent (a49e1b5) | 2026-10-10 | approve (round 3) |
+| Code (Phase 2) | Independent review agent | 2026-10-10 | request-changes → all P1/P2 fixed |
 
 ### PRR Q&A (supplementary)
 
@@ -1999,5 +2000,6 @@ New test cases in existing files (`test_ui_messages.cpp`, `paths_cascade_test.cp
 | 2026-10-10 | — | PRR round 3 (restructured to implementable template) | f321f4c | All findings fixed |
 | 2026-10-10 | — | PRR round 4 (BMI scope, test CMake, Phase 5 removal, P2 fixes) | 10d8620 | Both Dev-0 and Dev-2 APPROVE; status → implementable |
 | 2026-10-10 | 1 | Phase 1 implemented (copy pipeline reliability) | 4960e36 | 28 new tests (6 job, 5 coordinator, 2 sigpipe, 5 ssh, 5 backends, 2 threshold, 3 copy-result-pipeline); serial ctest debug 2113/2113 (2115 total, 2 disabled), release 2113/2113; graph_check 0 cycles; inline_def_check no new violations; BMI PSS: clipboard 499KB→685KB (+37%), config/paths/mcp_cmd unchanged, new: job 393KB, coordinator 85KB; golden 72/72; no stdout/stderr pollution; code review round 1: REQUEST_CHANGES (1P1+3P2+5P3), all fixed; round 2: SSH env var fix in FakeSlowBackend; round 3: APPROVE (1 P3 nit, fixed) |
+| 2026-10-10 | 2 | Phase 2 implemented (default native selection + config fallback) | 0fcb637 | 51 new tests (16 config_rw_split, 24 MCP fallback, 5 PTY e2e DECSET, 6 paths cascade); serial ctest debug 2160/2160, release 2159/2159 (1 timing flake: HooksIntegrationTest.BlockingHookFiresOnEveryToolCall, passes in isolation); graph_check 0 cycles; inline_def_check no new violations; BMI PSS: config +12.7%, paths +1.5%, mcp_cmd +0.2%; PTY e2e confirms DECSET absent at default, present with mouseMode:true; documentation gate: AGENTS.md, design-decisions.md (5 new entries), README.md all updated; code review: REQUEST_CHANGES (1P1+3P2+5P3), all P1/P2 fixed (P1: execute_remove zero-writes-with-failures returns fail; P2-1: execute_set_disabled no longer masks write failures; P2-2: named enable/disable reports fallback shadow SkippedReadOnly; P2-3: upsert_mcp_server allows creating new file in fallback mode) |
 
 > **Design review history (v1–v7.12):** 12 rounds of design review between Dev-0, Dev-2, and Dev-1 (author). All P0/P1 findings addressed. Both Dev-0 and Dev-2 APPROVED v7.12 (design gate). Full review log is in the git history of this file (see commits from 2026-10-09 through 2026-10-10).

@@ -876,6 +876,8 @@ sequences:
 | 2026-10-10 | A | Commit 2: hysteresis band + same-frame scroll reset. Replace stateless threshold with enter>80/exit<60 band; add prev/next_virtual_mode + scroll_was_reset_to_bottom + forced_repin to MessagesListInput; add force_bottom_after_mode_switch to MessagesStore; same-frame scroll reset on unpinned switch (virtual: scroll_top=max; static: unconditional focusPositionRelative); ClearRepinState extracted from 3 repin paths; reset_virtual_renderer_state on /clear, callback-clear, restore; flag cleared at 3 pin=false sites. 3 existing tests updated to pre-set Virtual mode. | b6806fa | 2160/2160 debug + release | — |
 | 2026-10-10 | A | **PRR round 1: Dev-0 REQUEST_CHANGES (P0: implementable gate skipped; P1: §11 regression tests not landed; P1: graduation evidence not recorded; P2: stale interface docs). Dev-2 REQUEST_CHANGES (P0: same gate; P1-1: helper-only tests insufficient; P1-2: graduation metrics missing; P2: design-decisions.md + docs/README.md not synced).** | — | — | Dev-0, Dev-2 |
 | 2026-10-10 | A | PRR fix: 15 VirtualThreshold regression tests (6 helper + 8 lifecycle through ReplScreen::Render + 1 AppAdapter /clear reset); AppTestingSeams accessors for virtual renderer state; stale MakeMessagesList/MessagesListComponent/kBigChatThreshold references removed. Graduation metrics: serial ctest debug 2175/2175, release 2175/2175; graph_check 0 violations; BMI PSS 740.2→739.8 MB; importer 12→12; kVirtualThreshold refs 0. | 1d06ca4 | 2175/2175 debug + release serial | — |
+| 2026-10-10 | A | **PRR round 2: Dev-0 REQUEST_CHANGES (P1: callback-clear not tested through real callback; P1: /resume restore handler not tested through real AppAdapter path; P1: single tall message forced_repin branch not covered). Dev-2 REQUEST_CHANGES (P1: visual bottom-anchor assertions missing; P1: callback-clear/restore marked "code review confirmed" not integration-tested; P2: sticky-click/skills/resize no new behavioral tests).** | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | A | PRR round 2 fix: 3 visual bottom-anchor tests (VirtualToStaticSingleTallMessageShowsTail 3-frame, StaticToVirtualSwitchShowsTail 2-frame, WheelUpMovesScreenAwayFromBottom); callback-clear test through trigger_clear_session_for_testing() seam; /resume test with temp session fixture (metadata.json + messages.jsonl, LOOM_CONFIG_DIR override); clear_session_callback_ member + test seam. All 2180 tests pass (debug + release). | e04c546 | 2180/2180 debug + release | — |
 
 ### Process deviation
 
@@ -884,8 +886,9 @@ master while the RFC status was `accepted` (design review passed, PRR not yet
 conducted). Per the RFC skill, "no production-code commit implementing an RFC
 may merge while its status is below implementable." This was a process error,
 not a deliberate bypass. Recovery: the PRR is being conducted retroactively
-(this section), all P0/P1/P2 findings are addressed in 1d06ca4, and the RFC
-status will be updated to `implementable` only after Dev-0 and Dev-2 approve
-the PRR. The two-commit rollout structure (Commit 1 = telemetry + deletion,
-Commit 2 = hysteresis) preserves the rollback path: revert b6806fa to return
-to the stateless threshold.
+(this section). PRR round 1 findings were addressed in 1d06ca4 + 803e3f6;
+PRR round 2 findings (visual assertions, callback-clear, /resume tests) were
+addressed in e04c546. The RFC status will be updated to `implementable` only
+after Dev-0 and Dev-2 approve the PRR. The two-commit rollout structure
+(Commit 1 = telemetry + deletion, Commit 2 = hysteresis) preserves the rollback
+path: revert b6806fa to return to the stateless threshold.

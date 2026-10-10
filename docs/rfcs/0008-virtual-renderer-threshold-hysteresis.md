@@ -293,7 +293,7 @@ if (reset_to_bottom) {
     // or content that fits the viewport must use bottom anchoring.
     list = std::move(list) | focusPositionRelative(0, 1);
 } else if (input.pin_to_bottom &&
-           (input.forced_repin ||  // bypass single-message guard after repin
+           (input.forced_repin ||  // persistent bypass after mode-switch repin
             (visible.size() > 1 && content_exceeds_viewport))) {
     list = std::move(list) | focusPositionRelative(0, 1);
 } else if (input.scroll_offset > 0) {
@@ -301,30 +301,43 @@ if (reset_to_bottom) {
 }
 ```
 
-The `forced_repin` field on `MessagesListInput` is set by the caller on the
-frame **after** a forced repin. It bypasses the existing
-`visible.size() > 1` guard (which is designed for initial render of single
-tall messages like /help output, where showing the top is more useful).
-Without this bypass, a Virtual→Static switch with a single tall message
-would show bottom on the switch frame (via `reset_to_bottom`) but jump
-back to top on the next frame (because the `visible.size() > 1` guard
-blocks the `pin_to_bottom` bottom anchor).
+The `forced_repin` field on `MessagesListInput` is set by the caller on
+**every frame** while a persistent post-repin bottom-anchor is active.
+It bypasses the existing `visible.size() > 1` guard (which is designed for
+initial render of single tall messages like /help output, where showing
+the top is more useful). Without this bypass, a Virtual→Static switch with
+a single tall message would show bottom on the switch frame (via
+`reset_to_bottom`) but jump back to top on every subsequent frame (because
+the `visible.size() > 1` guard blocks the `pin_to_bottom` bottom anchor).
 
-The caller manages the flag lifecycle:
+The caller manages the persistent flag lifecycle:
 
 ```cpp
 // repl_screen_messages.cpp, after render_messages_list_view returns:
 if (input.scroll_was_reset_to_bottom) {
-    // Persist bottom-anchored state so the next frame stays at bottom.
+    // Persist bottom-anchored state so subsequent frames stay at bottom.
     // Reuse the same state transition as user-initiated repin.
     ResetScrollToBottom(*store);
     ClearRepinState(*store);  // shared helper (see below)
-    store->forced_repin_pending = true;  // bypass single-message guard next frame
+    store->force_bottom_after_mode_switch = true;  // persistent, not one-frame
 }
-// On the next frame, before calling the view:
-input.forced_repin = store->forced_repin_pending;
-store->forced_repin_pending = false;  // one-frame flag
+// On EVERY frame, before calling the view:
+input.forced_repin = store->force_bottom_after_mode_switch
+                  && store->scroll_pinned_to_bottom;
 ```
+
+**Flag clearing conditions** — `force_bottom_after_mode_switch` is set to
+`false` when:
+
+| Event | Location | Mechanism |
+|-------|----------|-----------|
+| User scrolls away from bottom | `repl_screen_scroll.cpp` (wheel/scroll handlers that set `scroll_pinned_to_bottom = false`) | Clear alongside the pin flag |
+| Slash `/clear` | `app_handle_submit.cpp:414-422` | `reset_virtual_renderer_state()` |
+| Callback clear (session-expired card) | `app_constructor.cpp:260-268` | `reset_virtual_renderer_state()` |
+| Session restore | `app_handle_submit.cpp:668-677` | `reset_virtual_renderer_state()` |
+
+The flag is **not** cleared on resize, SyncState, or new content arrival —
+the user is still pinned and wants to see the bottom.
 
 **Shared `ClearRepinState` helper:** The existing repin paths
 (`repl_screen_scroll.cpp:701-709` and `:741-747`) each clear
@@ -333,31 +346,6 @@ store->forced_repin_pending = false;  // one-frame flag
 `ClearRepinState(MessagesStore&)` helper is extracted in the screens area
 and called by all three sites (two existing + one new). This ensures the
 forced repin clears exactly the same state as a user-initiated repin.
-
-The caller (`repl_screen_messages.cpp`) persists the reset after render:
-
-```cpp
-auto element = ml::render_messages_list_view(input, ...);
-if (store) {
-    if (input.next_virtual_mode != store->virtual_renderer_mode) {
-        store->virtual_renderer_mode = input.next_virtual_mode;
-        ++store->virtual_mode_switch_count;
-        debug("messages.virtual", ...);
-    }
-    if (input.scroll_was_reset_to_bottom) {
-        // Persist bottom-anchored state so the next frame stays at bottom.
-        // Without this, the next frame would use the old scroll_offset
-        // (in the old coordinate system) because mode_switched=false.
-        // Reuse the existing repin path: ResetScrollToBottom + clear
-        // divider/unseen/pill state (same as user-initiated repin).
-        ResetScrollToBottom(store->messages_store);
-        store->messages_store.divider_index.reset();
-        store->messages_store.unseen_divider.reset();
-        store->messages_store.pill_visible = false;
-    }
-    // existing virtual_list_active / virtual_jh propagation...
-}
-```
 
 The `decide_virtual_renderer_mode` helper is a `constexpr` pure function
 in `messages_list.cppm`:
@@ -406,10 +394,13 @@ VirtualRendererMode virtual_renderer_mode = VirtualRendererMode::Static;
 /// mode change (not every frame).
 std::uint32_t virtual_mode_switch_count = 0;
 
-/// One-frame flag: set by the caller after a forced repin (mode switch
-/// with scroll reset), consumed by the next frame's view to bypass the
-/// `visible.size() > 1` guard for single tall messages.  UI-thread-affined.
-bool forced_repin_pending = false;
+/// Persistent bottom-anchor after a mode-switch forced repin.
+/// Set to true when a mode switch triggers a scroll reset to bottom.
+/// While true and scroll_pinned_to_bottom is true, the view bypasses
+/// the `visible.size() > 1` guard so single tall messages stay at bottom.
+/// Cleared when the user scrolls away from bottom, or on /clear/restore.
+/// UI-thread-affined.
+bool force_bottom_after_mode_switch = false;
 ```
 
 The existing `virtual_list_active` bool is kept for scroll-path consumers
@@ -444,7 +435,8 @@ convention. The implementer must not move the mode write to a stream
 callback or background event handler.
 
 **INV-2: Initial mode is always Static.** The following events reset
-`virtual_renderer_mode` to Static and `virtual_mode_switch_count` to 0:
+`virtual_renderer_mode` to Static, `virtual_mode_switch_count` to 0, and
+`force_bottom_after_mode_switch` to false:
 
 | Event | Reset location | Mechanism |
 |-------|---------------|-----------|
@@ -457,7 +449,8 @@ callback or background event handler.
 To avoid duplicating field assignments across three call sites, a
 `reset_virtual_renderer_state()` helper is added to `MessagesStore` (or as
 a free function in the screens area). It resets `virtual_renderer_mode =
-Static` and `virtual_mode_switch_count = 0`. All three call sites (slash
+Static`, `virtual_mode_switch_count = 0`, and
+`force_bottom_after_mode_switch = false`. All three call sites (slash
 clear, callback clear, restore) call this helper alongside their existing
 divider/scroll resets.
 
@@ -570,9 +563,9 @@ confined to:
 |------|--------|
 | `src/ui/messages/messages_list.cppm` | Add `VirtualRendererMode` enum, `decide_virtual_renderer_mode()` helper, `kVirtualEnterThreshold`, `kVirtualExitThreshold`; add `prev_virtual_mode` / `next_virtual_mode` / `visible_count_out` / `scroll_was_reset_to_bottom` / `forced_repin` to `MessagesListInput`; remove `kVirtualThreshold`, `MessagesListComponent`, `MakeMessagesList` |
 | `src/ui/messages/messages_list_view.cpp` | Hysteresis decision via helper; same-frame scroll reset on unpinned switch (unconditional in static path); bypass `visible.size() > 1` guard when `forced_repin`; write `next_virtual_mode` + `visible_count_out` + `scroll_was_reset_to_bottom` |
-| `src/ui/screens/messages_store.cppm` | Add `virtual_renderer_mode` + `virtual_mode_switch_count` + `forced_repin_pending` fields; add `reset_virtual_renderer_state()` helper |
-| `src/ui/screens/repl_screen_messages.cpp` | Set `input.prev_virtual_mode` + `input.forced_repin` from store; read `input.next_virtual_mode` + `input.scroll_was_reset_to_bottom` after render; commit mode/counter/telemetry; on reset: `ResetScrollToBottom` + `ClearRepinState` + set `forced_repin_pending` |
-| `src/ui/screens/repl_screen_scroll.cpp` | Extract `ClearRepinState(MessagesStore&)` shared helper from existing repin paths (:701-709, :741-747) |
+| `src/ui/screens/messages_store.cppm` | Add `virtual_renderer_mode` + `virtual_mode_switch_count` + `force_bottom_after_mode_switch` fields; add `reset_virtual_renderer_state()` helper |
+| `src/ui/screens/repl_screen_messages.cpp` | Set `input.prev_virtual_mode` + `input.forced_repin` (persistent while pinned) from store; read `input.next_virtual_mode` + `input.scroll_was_reset_to_bottom` after render; commit mode/counter/telemetry; on reset: `ResetScrollToBottom` + `ClearRepinState` + set `force_bottom_after_mode_switch` |
+| `src/ui/screens/repl_screen_scroll.cpp` | Extract `ClearRepinState(MessagesStore&)` shared helper from existing repin paths (:701-709, :741-747); clear `force_bottom_after_mode_switch` when user scrolls away from bottom |
 | `src/ui/app/app_handle_submit.cpp` | Call `reset_virtual_renderer_state()` in slash `/clear` handler (:414-422) and session restore handler (:668-677) |
 | `src/ui/app/app_constructor.cpp` | Call `reset_virtual_renderer_state()` in `cbs.on_clear_session` (:260-268) |
 | `src/cmake/targets/loom_ui_messages.cmake` | Remove `messages_list_component.cpp` entry |
@@ -767,7 +760,12 @@ enum assignment.
 | `VirtualThreshold.ResizePreservesMode` | Virtual mode → resize → 70 entries | Mode stays Virtual |
 | `VirtualThreshold.SyncStatePreservesMode` | Virtual mode → SyncState → 70 entries | Mode stays Virtual |
 | `VirtualThreshold.ClearResetsCounter` | Virtual mode with counter=2 → `/clear` | Counter is 0 after clear |
-| `VirtualThreshold.ResetPersistsAcrossFrames` | Unpinned, non-zero offset, active unseen pill; Static→Virtual and Virtual→Static | Switch frame at bottom; **next frame still at bottom**; `scroll_pinned_to_bottom=true`; offset follows pinned convention; divider/pill cleared (same as user repin) |
+| `VirtualThreshold.ResetPersistsAcrossFrames` | Unpinned, non-zero offset, active unseen pill; Static→Virtual and Virtual→Static; **3 consecutive frames with no new input** | Switch frame at bottom; **frames 2 and 3 still at bottom**; `scroll_pinned_to_bottom=true`; `force_bottom_after_mode_switch=true`; offset follows pinned convention; divider/pill cleared (same as user repin) |
+| `VirtualThreshold.ForceBottomClearedOnScrollAway` | After forced repin (flag=true, pinned); user wheel-up (pin→false) | Flag cleared to false; user can stay at scrolled position; subsequent frames do NOT force bottom |
+| `VirtualThreshold.ForceBottomClearedOnClear` | After forced repin (flag=true); slash `/clear` | Flag cleared to false; mode reset to Static |
+| `VirtualThreshold.ForceBottomClearedOnRestore` | After forced repin (flag=true); session restore | Flag cleared to false; mode reset to Static |
+| `VirtualThreshold.ForceBottomSurvivesResize` | After forced repin (flag=true); resize event | Flag stays true; bottom anchor preserved |
+| `VirtualThreshold.ForceBottomSurvivesNewContent` | After forced repin (flag=true, pinned); new content arrives | Flag stays true; bottom anchor preserved (user is still pinned) |
 
 #### Dynamic multi-frame tests
 
@@ -781,7 +779,7 @@ sequences:
 | `VirtualThreshold.StreamingOscillation` | Entries added 75→82→78→85→72 across 5 frames | Mode: Static→Virtual(82)→Virtual(78)→Virtual(85)→Virtual(72); no flip-flop |
 | `VirtualThreshold.SelectionSurvivesSwitch` | `selected_row_idx` set; mode switches Static→Virtual | Selection row index preserved (same row identity in both paths) |
 | `VirtualThreshold.SearchSurvivesSwitch` | `search_query` non-empty; mode switches | Search state preserved; both paths have search support |
-| `VirtualThreshold.UnseenDividerSurvivesSwitchPinned` | Unseen divider active; **pinned**; mode switches | Divider anchor preserved across switch (no reset when pinned) |
+| `VirtualThreshold.UnseenDividerSurvivesSwitchPinned` | Unseen divider active; **pinned**; mode switches | Divider anchor preserved across switch (no reset when pinned). **Scope:** pure-view test only; production layout also clears stale dividers when pinned (`repl_screen_layout.cpp:123-131`) — that path is unchanged and not re-tested here. |
 | `VirtualThreshold.UnseenDividerClearedOnReset` | Unseen divider active; **unpinned**; mode switches (triggers reset) | Divider/pill cleared (same semantics as user repin — see `ResetPersistsAcrossFrames`) |
 | `VirtualThreshold.ScrollDuringSwitch` | Scroll events arrive between frames during mode switch | No crash; unpinned scroll reset to bottom (predictable degradation) |
 
@@ -859,4 +857,6 @@ sequences:
 | 2026-10-10 | — | Design review round 5: Dev-0 P0 (repin not persisted), Dev-2 2 P1 (same + static guard). All addressed in rev 6. | — | — | Dev-0, Dev-2 |
 | 2026-10-10 | — | Revision 6: scroll_was_reset_to_bottom output field, caller persists repin (ResetScrollToBottom + divider/pill clear), static reset unconditional, std::max(0,...) for virtual, cross-two-frame integration test | 9704ce1 | — | — |
 | 2026-10-10 | — | Design review round 6: Dev-0 P0 (caller store hierarchy + unseen_message_count + shared repin helper), Dev-2 P1 (single tall message second-frame jump) + P2 (test conflict). All addressed in rev 7. | — | — | Dev-0, Dev-2 |
-| 2026-10-10 | — | Revision 7: forced_repin flag (bypass single-message guard), ClearRepinState shared helper, caller pseudocode store hierarchy fix, unseen_message_count in repin, UnseenDivider test split (pinned vs unpinned) | — | — | — |
+| 2026-10-10 | — | Revision 7: forced_repin flag (bypass single-message guard), ClearRepinState shared helper, caller pseudocode store hierarchy fix, unseen_message_count in repin, UnseenDivider test split (pinned vs unpinned) | 589d414 | — | — |
+| 2026-10-10 | — | Design review round 7: Dev-0 P0 (one-frame flag only delays 1 frame + old caller pseudocode not deleted), Dev-2 P1 (same one-frame issue) + P2 (pinned-divider test scope). All addressed in rev 8. | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | — | Revision 8: replace one-frame forced_repin_pending with persistent force_bottom_after_mode_switch (active while pinned, cleared on scroll-away/clear/restore); delete old caller pseudocode with store->messages_store; 3+ frame persistence tests; scroll-away/clear/restore exit tests; pinned-divider test scope note | — | — | — |

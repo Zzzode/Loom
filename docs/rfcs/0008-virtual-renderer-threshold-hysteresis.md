@@ -1,7 +1,7 @@
 ---
 rfc: 8
 title: Virtual Renderer Threshold Hysteresis
-status: provisional
+status: accepted
 owners: "@Zzzode"
 reviewers:
   - "Dev-0 (agent)"
@@ -331,13 +331,23 @@ input.forced_repin = store->force_bottom_after_mode_switch
 
 | Event | Location | Mechanism |
 |-------|----------|-----------|
-| User scrolls away from bottom | `repl_screen_scroll.cpp` (wheel/scroll handlers that set `scroll_pinned_to_bottom = false`) | Clear alongside the pin flag |
+| User scrolls away from bottom (wheel/scroll) | `repl_screen_scroll.cpp` (wheel/scroll handlers that set `scroll_pinned_to_bottom = false`) | Clear alongside the pin flag |
+| User scrolls away from bottom (layout scroll) | `repl_screen_layout.cpp:542` (sets `scroll_pinned_to_bottom = (target >= max_top)`) | Clear when the assignment evaluates to `false` |
+| Skills menu opens | `app_skills_menu.cpp:150` (sets `scroll_pinned_to_bottom = false`) | Clear alongside the pin flag |
 | Slash `/clear` | `app_handle_submit.cpp:414-422` | `reset_virtual_renderer_state()` |
 | Callback clear (session-expired card) | `app_constructor.cpp:260-268` | `reset_virtual_renderer_state()` |
 | Session restore | `app_handle_submit.cpp:668-677` | `reset_virtual_renderer_state()` |
 
 The flag is **not** cleared on resize, SyncState, or new content arrival —
 the user is still pinned and wants to see the bottom.
+
+**Implementation note:** To avoid drift between the three direct
+`scroll_pinned_to_bottom = false` assignment sites and the force-bottom
+flag, the implementer should either (a) extract a shared
+`SetScrollPinnedToBottom(MessagesStore&, bool)` setter that clears
+`force_bottom_after_mode_switch` when transitioning to `false`, or (b)
+add the flag clear at each of the three sites listed above. Option (a) is
+preferred to prevent future drift if new pin-clearing sites are added.
 
 **Shared `ClearRepinState` helper:** The existing repin paths
 (`repl_screen_scroll.cpp:701-709` and `:741-747`) each clear
@@ -859,4 +869,6 @@ sequences:
 | 2026-10-10 | — | Design review round 6: Dev-0 P0 (caller store hierarchy + unseen_message_count + shared repin helper), Dev-2 P1 (single tall message second-frame jump) + P2 (test conflict). All addressed in rev 7. | — | — | Dev-0, Dev-2 |
 | 2026-10-10 | — | Revision 7: forced_repin flag (bypass single-message guard), ClearRepinState shared helper, caller pseudocode store hierarchy fix, unseen_message_count in repin, UnseenDivider test split (pinned vs unpinned) | 589d414 | — | — |
 | 2026-10-10 | — | Design review round 7: Dev-0 P0 (one-frame flag only delays 1 frame + old caller pseudocode not deleted), Dev-2 P1 (same one-frame issue) + P2 (pinned-divider test scope). All addressed in rev 8. | — | — | Dev-0, Dev-2 |
-| 2026-10-10 | — | Revision 8: replace one-frame forced_repin_pending with persistent force_bottom_after_mode_switch (active while pinned, cleared on scroll-away/clear/restore); delete old caller pseudocode with store->messages_store; 3+ frame persistence tests; scroll-away/clear/restore exit tests; pinned-divider test scope note | — | — | — |
+| 2026-10-10 | — | Revision 8: replace one-frame forced_repin_pending with persistent force_bottom_after_mode_switch (active while pinned, cleared on scroll-away/clear/restore); delete old caller pseudocode with store->messages_store; 3+ frame persistence tests; scroll-away/clear/restore exit tests; pinned-divider test scope note | 6d4a409 | — | — |
+| 2026-10-10 | — | **Design review round 8: Dev-0 APPROVE, Dev-2 APPROVE.** Design gate PASSED. Dev-0 non-blocking P1: cover repl_screen_layout.cpp:542 + app_skills_menu.cpp:150 pin-clearing sites (addressed in rev 9). | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | — | Revision 9: add repl_screen_layout.cpp:542 + app_skills_menu.cpp:150 to flag clearing table; add shared setter implementation note; status → accepted | — | — | — |

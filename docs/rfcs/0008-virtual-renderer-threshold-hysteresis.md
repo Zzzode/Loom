@@ -815,3 +815,5 @@ sequences:
 | 2026-10-10 | — | Revision 4: second clear path + shared reset helper, unpinned scroll reset to bottom, telemetry at caller commit point, internal API boundary, test split (view vs AppAdapter), evidence/golden/PTY wording fixes | 20f9843 | — | — |
 | 2026-10-10 | — | Design review round 4: Dev-0 P0 (scroll reset timing), Dev-2 P1 (same) + 3 P2. All addressed in rev 5. | — | — | Dev-0, Dev-2 |
 | 2026-10-10 | — | Revision 5: same-frame scroll reset inside view (before Element build), decide_virtual_renderer_mode() helper, visible_count_out field, two-commit rollout, PSS/importer separation, SelectionSurvivesSwitch acceptance criteria | 9edaeaf | — | — |
+| 2026-10-10 | — | Design review round 5: Dev-0 P0 (repin not persisted), Dev-2 2 P1 (same + static guard). All addressed in rev 6. | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | — | Revision 6: scroll_was_reset_to_bottom output field, caller persists repin (ResetScrollToBottom + divider/pill clear), static reset unconditional, std::max(0,...) for virtual, cross-two-frame integration test | 9704ce1 | — | — |

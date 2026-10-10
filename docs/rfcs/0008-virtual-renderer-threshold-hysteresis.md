@@ -760,3 +760,5 @@ sequences:
 | 2026-10-10 | — | Revision 2: all P0/P1 addressed (state passing, G5 scope, reset lifecycle, dead code deletion, telemetry, motivation) | d26735e | — | — |
 | 2026-10-10 | — | Design review round 2: build/perf agent (1 P0 + 4 P1 + 6 P2), correctness agent (3 P1 + 7 P2). Most already fixed in rev 2; new findings addressed in rev 3. | — | — | build/perf agent, correctness agent |
 | 2026-10-10 | — | Revision 3: dynamic tests, scroll coord mismatch doc, BMI fan-out, PSS metric fix, virtual_list_active derivation, residual oscillation, INV-1 placement note, PRR wording, baseline two-commit method | 39d978e | — | — |
+| 2026-10-10 | — | Design review round 3: Dev-0 REQUEST_CHANGES (2 P0 + 2 P1), Dev-2 1 P1 + 3 P2. All addressed in rev 4. | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | — | Revision 4: second clear path + shared reset helper, unpinned scroll reset to bottom, telemetry at caller commit point, internal API boundary, test split (view vs AppAdapter), evidence/golden/PTY wording fixes | 20f9843 | — | — |

@@ -119,6 +119,16 @@ config directory would interleave two tools' state. Both cascades are
 implemented in `src/constants/paths.cppm` — eight call sites previously
 reimplemented the lookup and silently drifted.
 
+For `settings.json` specifically, use **`settings_home_read()`** (file-level
+resolver), not `config_home_read()` (directory-level). The file-level cascade
+checks file existence at each step: `$LOOM_CONFIG_DIR/settings.json`
+(unconditional) → `~/.loom/settings.json` → `~/.agents/settings.json` →
+`config_home_write()/settings.json`. `ConfigManager` splits read and write
+paths: `user_read_path_` (from `settings_home_read()`) vs `user_write_path_`
+(from `config_home_write()`). In default-path mode the read path is
+re-resolved on every `load()` so a same-instance write that creates
+`~/.loom/settings.json` takes over from the `~/.agents` fallback.
+
 MCP server config (`loom mcp add/remove/enable/disable`) lives in THREE
 physical JSON files, highest precedence first; same-named entries overlay
 per entry across the files, and `--scope` patches exactly one file in place:
@@ -126,6 +136,15 @@ per entry across the files, and `--scope` patches exactly one file in place:
     local    <project>/.loom/settings.local.json  (gitignored; derived next to the project file)
     project  <project>/.loom/settings.json         (VCS-tracked)
     user     $LOOM_CONFIG_DIR/settings.json, else ~/.loom/settings.json
+
+When the user read path falls back to `~/.agents/settings.json` (no
+`~/.loom/settings.json` exists), the user tier is **read-only**: MCP
+`remove`/`enable`/`disable` on fallback-owned entries are skipped with
+`SkippedReadOnly` status (never silently written to `~/.agents` or
+side-effect-created into `~/.loom`). `mcp add --scope user` is always
+allowed — it creates `~/.loom/settings.json` and shadows the fallback on
+next load. The fallback state is exposed via `ConfigManager::is_user_fallback()`
+and `is_scope_writable()`.
 
 A non-JSON/key=value user/local file is tolerated (zero entries + one
 warning); a full save to the project file never copies user/local-only

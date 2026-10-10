@@ -110,6 +110,44 @@ inline constexpr std::array<std::string_view, 3> kMemoryFileCandidates = {
     return home_dir() / kConfigDirName;
 }
 
+/// The user-level settings.json path to READ from, resolved by FILE existence
+/// (not directory existence).
+///
+/// This is distinct from config_home_read(), which is a directory-level
+/// resolver: it selects `~/.loom` if the directory exists, even if
+/// `settings.json` doesn't. That causes a failure mode: `save_user` creates
+/// the `~/.loom` directory, then the file patch fails; the next `load()`
+/// selects the empty `~/.loom` directory, silently dropping the `~/.agents`
+/// config. This function checks the settings file itself.
+///
+/// Resolution order:
+///   1. $LOOM_CONFIG_DIR/settings.json — unconditional override (even if the
+///      file does not exist; no downgrade to HOME paths, preserving isolated
+///      config semantics).
+///   2. ~/.loom/settings.json — if the FILE exists.
+///   3. ~/.agents/settings.json — if the FILE exists (interop fallback).
+///   4. config_home_write()/settings.json — preferred write path when no
+///      settings file exists yet.
+///
+/// Unparseable higher-priority files are NOT silently downgraded: the file
+/// is returned and the caller surfaces the parse error.
+[[nodiscard]] inline std::filesystem::path settings_home_read() {
+    if (const char* env = std::getenv("LOOM_CONFIG_DIR"); env && *env) {
+        return std::filesystem::path{env} / "settings.json";
+    }
+    const auto home = home_dir();
+    std::error_code ec;
+    auto loom_settings = home / kConfigDirName / "settings.json";
+    if (std::filesystem::exists(loom_settings, ec)) {
+        return loom_settings;
+    }
+    auto agents_settings = home / ".agents" / "settings.json";
+    if (std::filesystem::exists(agents_settings, ec)) {
+        return agents_settings;
+    }
+    return config_home_write() / "settings.json";
+}
+
 /// The directory where session transcripts (messages.jsonl) and metadata
 /// are persisted: <config-write>/sessions.  This is the single resolution
 /// point — callers must not hardcode ~/.loom/sessions themselves.

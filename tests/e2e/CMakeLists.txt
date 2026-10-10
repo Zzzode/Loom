@@ -46,3 +46,20 @@ target_compile_features(e2e_bash_file PRIVATE cxx_std_20)
 target_link_libraries(e2e_bash_file PRIVATE Threads::Threads)
 add_test(NAME E2E_Bash_File COMMAND e2e_bash_file)
 set_tests_properties(E2E_Bash_File PROPERTIES TIMEOUT 30)
+
+# ─── E2E-4: PTY DECSET byte-level tests ─────────────────────────────────────
+# Spawn loom in a real PTY (forkpty) and verify the terminal DECSET escape
+# sequences emitted by FTXUI Install() at startup, based on the mouseMode
+# config setting (RFC 0007 Phase 2).
+add_executable(e2e_pty_decset e2e_pty_decset.cpp)
+set_target_properties(e2e_pty_decset PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+target_compile_features(e2e_pty_decset PRIVATE cxx_std_20)
+target_link_libraries(e2e_pty_decset PRIVATE Threads::Threads util)
+if(TARGET loom)
+  add_dependencies(e2e_pty_decset loom)
+endif()
+add_test(NAME E2E_Pty_Decset COMMAND e2e_pty_decset)
+set_tests_properties(E2E_Pty_Decset PROPERTIES
+    TIMEOUT 60
+    ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+    SKIP_RETURN_CODE 125)

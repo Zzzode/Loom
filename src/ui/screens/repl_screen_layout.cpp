@@ -292,6 +292,7 @@ using namespace ftxui;
         builtin_data.agent_name = s.chrome_store.status_bar.agent_name.value_or("");
         builtin_data.segments = s.status_bar_segments;
         builtin_data.status_bar_enabled = s.status_bar_enabled;
+        builtin_data.mouse_mode_label = s.chrome_store.status_bar.mouse_mode_label;
 
         pif::StatusLineOptions status_line_opts;
         status_line_opts.content = s.status_line_text;

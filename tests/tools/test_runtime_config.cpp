@@ -394,7 +394,7 @@ TEST(RuntimeConfigTool, ListPayloadShape) {
     RtConfigJson parsed(result->content.front().text);
     ASSERT_TRUE(parsed.root.is_obj());
     const auto specs = parsed.root.get("specs");
-    EXPECT_EQ(specs.get("writable").size(), 7u);
+    EXPECT_EQ(specs.get("writable").size(), 8u);
     EXPECT_EQ(specs.get("read_only").size(), 9u);
     EXPECT_GE(specs.get("blocked").size(), 9u);
     EXPECT_EQ(specs.get("null_clear_keys").size(), 2u);

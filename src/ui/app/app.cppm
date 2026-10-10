@@ -582,6 +582,11 @@ public:
     /// renderer is projected — the engine owns the full settings object.
     void ProjectSettingsToScreenState();
 
+    /// RFC 0007 Phase 2: set the persistent mouse-mode hint in the status
+    /// bar. Called once at startup from RunApp with the config-derived
+    /// mouse_mode value.
+    void set_mouse_mode_label(bool mouse_mode);
+
     /// Trigger an async statusline update (debounced).
     /// P3-1c: delegates to StatuslineCoordinator.  Kept as a thin wrapper
     /// because 5 impl units call it.

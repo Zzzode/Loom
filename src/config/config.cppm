@@ -127,6 +127,7 @@ struct DisplaySettings {
     std::string theme = "auto";               // Color theme (auto, dark, light)
     bool verbose = false;                      // Flat key: verbose
     bool vim_mode = false;                     // Flat key: vimMode
+    bool mouse_mode = false;                   // Flat key: mouseMode (RFC 0007 Phase 2)
 };
 
 /// Network and API connection settings
@@ -184,13 +185,69 @@ enum class McpStorageScope : std::uint8_t {
     Local  = 2, // <project>/.loom/settings.local.json (gitignored)
 };
 
-/// Outcome of a best-effort cross-file MCP server removal (D3). The command
-/// renders three cases from {touched, failed}: absent everywhere (both
-/// empty), >=1 write succeeded (touched non-empty), present but every write
-/// failed (touched empty, failed non-empty).
-struct McpRemoveOutcome {
-    std::vector<std::filesystem::path> touched;
-    std::vector<std::filesystem::path> failed;
+// ── MCP fallback mutation model (RFC 0007 Phase 2) ──────────────────────
+//
+// When the user-tier READ path (~/.agents/settings.json) differs from the
+// WRITE path (~/.loom/settings.json), the user tier is a READ-ONLY
+// FALLBACK.  MCP entries that live only in the fallback file cannot be
+// mutated in place; the mutation commands must skip them and report
+// SkippedReadOnly so the caller can render "read-only fallback" guidance.
+//
+// The types below are the per-entry outcome model consumed by the commands
+// layer (loom.commands.mcp_cmd).  They live in loom.config.config (not
+// commands) to avoid a config → commands upward dependency.
+
+/// Physical source of an MCP server entry — which tier file it lives in
+/// and whether that file is writable.
+struct McpPhysicalSource {
+    McpStorageScope scope;
+    std::filesystem::path path;
+    bool writable;
+};
+
+/// Status of a single MCP mutation entry.
+enum class McpMutationStatus : std::uint8_t {
+    Modified,        ///< Writable owner was patched successfully
+    Unchanged,       ///< Writable owner already in target state (no-op)
+    SkippedReadOnly, ///< Fallback entry, skipped (not writable)
+    WriteFailed,     ///< Writable owner had I/O error
+    NotFound,        ///< Server not found in any layer
+};
+
+/// One entry in an MCP mutation outcome.
+struct McpMutationEntry {
+    std::string server_name;
+    std::optional<McpPhysicalSource> source; // nullopt for NotFound
+    McpMutationStatus status = McpMutationStatus::NotFound;
+    std::string detail; // error message or empty
+};
+
+/// Outcome of an MCP mutation (remove/enable/disable, named or all).
+struct McpMutationOutcome {
+    std::vector<McpMutationEntry> entries;
+
+    [[nodiscard]] std::size_t modified_count() const {
+        return static_cast<std::size_t>(std::ranges::count_if(
+            entries, [](const McpMutationEntry& e) {
+                return e.status == McpMutationStatus::Modified;
+            }));
+    }
+
+    [[nodiscard]] bool has_failures() const {
+        return std::ranges::any_of(entries, [](const McpMutationEntry& e) {
+            return e.status == McpMutationStatus::WriteFailed;
+        });
+    }
+
+    /// True when every entry is SkippedReadOnly (empty → false).
+    [[nodiscard]] bool all_read_only() const {
+        return !entries.empty() &&
+               std::ranges::all_of(entries, [](const McpMutationEntry& e) {
+                   return e.status == McpMutationStatus::SkippedReadOnly;
+               });
+    }
+
+    [[nodiscard]] bool is_empty() const { return entries.empty(); }
 };
 
 // ============================================================
@@ -322,7 +379,15 @@ class ConfigManager {
     }
 
     Settings settings_;                     // Resolved effective settings
-    std::filesystem::path user_path_;       // Path to user config file (empty in 1-arg ctor)
+    // RFC 0007 Phase 2: read/write path split. The READ path follows the
+    // full cascade ($LOOM_CONFIG_DIR > ~/.loom > ~/.agents) via
+    // settings_home_read(); the WRITE path is always ~/.loom (or
+    // $LOOM_CONFIG_DIR), never ~/.agents. In default-path mode the read
+    // path is re-resolved on every load() so a same-instance write that
+    // creates ~/.loom/settings.json is picked up on the next load.
+    std::filesystem::path user_read_path_;   // Path to read user config from
+    std::filesystem::path user_write_path_;  // Path to write user config to
+    bool default_path_mode_ = false;         // true: re-resolve read path on load()
     std::filesystem::path project_path_;    // Path to project config file
     std::filesystem::path local_path_;      // Path to local (gitignored) config file
     bool dirty_ = false;                   // Whether unsaved changes exist
@@ -387,7 +452,9 @@ class ConfigManager {
 public:
     /// Initialize with default settings
     ConfigManager()
-        : user_path_(loom::constants::paths::config_home_write() / "settings.json")
+        : user_read_path_(loom::constants::paths::settings_home_read())
+        , user_write_path_(loom::constants::paths::config_home_write() / "settings.json")
+        , default_path_mode_(true)
         , project_path_(default_project_config_path())
         , local_path_(derive_local_config_path(default_project_config_path())) {}
 
@@ -402,7 +469,8 @@ public:
     ConfigManager(std::filesystem::path user,
                   std::filesystem::path project,
                   std::filesystem::path local)
-        : user_path_(std::move(user))
+        : user_read_path_(user)
+        , user_write_path_(std::move(user))
         , project_path_(std::move(project))
         , local_path_(std::move(local)) {}
 
@@ -420,6 +488,14 @@ public:
         const bool quiet = options.has_value() && options->quiet;
         // Start with defaults
         settings_ = Settings{};
+
+        // RFC 0007 Phase 2: in default-path mode, re-resolve the user-tier
+        // READ path on every load() so a same-instance write that creates
+        // ~/.loom/settings.json is picked up on the next load (same-instance
+        // takeover). Explicit-path and single-project modes use fixed paths.
+        if (default_path_mode_) {
+            user_read_path_ = loom::constants::paths::settings_home_read();
+        }
 
         // Reset the per-tier MCP bookkeeping used by overlay merge and §B.
         mcp_owner_.clear();
@@ -444,8 +520,8 @@ public:
         // project parse errors stay HARD failures (those files are
         // only ever written as JSON by Loom); user/local parse errors are
         // tolerated per §A.
-        if (!user_path_.empty()) {
-            if (auto result = load_tier(user_path_, McpStorageScope::User, true, quiet);
+        if (!user_read_path_.empty()) {
+            if (auto result = load_tier(user_read_path_, McpStorageScope::User, true, quiet);
                 !result && result.error().code != ErrorCode::ConfigNotFound) {
                 return std::unexpected(result.error());
             }
@@ -538,23 +614,23 @@ public:
 
     /// Persist the current settings to the USER tier file
     /// (~/.loom/settings.json).  Uses the same fragment-patch mechanism as
-    /// save() but targets user_path_ instead of project_path_.  Used by
+    /// save() but targets user_write_path_ instead of project_path_.  Used by
     /// the /statusline dialog so segment toggles land in the user's
     /// global settings rather than a project-local file.
     [[nodiscard]] VoidResult save_user() {
-        if (user_path_.empty()) {
+        if (user_write_path_.empty()) {
             return std::unexpected(Error::make(
                 ErrorCode::ConfigWriteError,
                 "No user configuration file is configured for writes"));
         }
 
         // Fail closed on a symlinked leaf before touching anything.
-        if (auto link_error = symlinked_leaf_error(user_path_)) {
+        if (auto link_error = symlinked_leaf_error(user_write_path_)) {
             return std::unexpected(*link_error);
         }
 
         // Ensure parent directory exists
-        auto parent = user_path_.parent_path();
+        auto parent = user_write_path_.parent_path();
         if (!parent.empty()) {
             std::error_code ec;
             std::filesystem::create_directories(parent, ec);
@@ -570,9 +646,9 @@ public:
         const Error strict_error = Error::make(
             ErrorCode::ConfigParseError,
             std::format("{} is not valid JSON; repair or move it aside before "
-                        "saving configuration", user_path_.string()));
+                        "saving configuration", user_write_path_.string()));
         SalvageResult salvage_out = SalvageResult::Untouched;
-        auto patched = patch_object_file(user_path_,
+        auto patched = patch_object_file(user_write_path_,
             [&](loom::utils::json::JsonMutVal& root,
                 loom::utils::json::JsonMutDoc& doc) -> VoidResult {
                 return apply_save_fragments(root, doc, frag);
@@ -586,9 +662,9 @@ public:
 
         // Refresh the user-tier signature so tier_files_changed() doesn't
         // mistake our own write for an external edit.
-        if (!user_path_.empty()) {
+        if (!user_read_path_.empty()) {
             tier_signatures_[scope_index(McpStorageScope::User)] =
-                tier_signature(user_path_);
+                tier_signature(user_read_path_);
         }
         return {};
     }
@@ -672,7 +748,7 @@ public:
 
     /// Path of the USER tier file this manager writes settings into.
     [[nodiscard]] const std::filesystem::path& user_config_path() const noexcept {
-        return user_path_;
+        return user_write_path_;
     }
 
     /// Whether the USER tier file existed but was not a parseable JSON
@@ -703,8 +779,8 @@ public:
     /// signatures; load() and save() own that, so a transient external change
     /// is not masked.
     [[nodiscard]] bool tier_files_changed() const {
-        return (!user_path_.empty()
-                && tier_signature(user_path_) != tier_signatures_[scope_index(McpStorageScope::User)])
+        return (!user_read_path_.empty()
+                && tier_signature(user_read_path_) != tier_signatures_[scope_index(McpStorageScope::User)])
             || tier_signature(project_path_) != tier_signatures_[scope_index(McpStorageScope::Project)]
             || tier_signature(local_path_) != tier_signatures_[scope_index(McpStorageScope::Local)];
     }
@@ -750,16 +826,72 @@ public:
         return std::nullopt;
     }
 
+    /// True when the user tier is a read-only fallback: the READ path
+    /// (~/.agents/settings.json) differs from the WRITE path
+    /// (~/.loom/settings.json).  In this state MCP entries that live only
+    /// in the fallback file cannot be mutated in place.
+    [[nodiscard]] bool is_user_fallback() const noexcept {
+        return default_path_mode_ && !user_read_path_.empty() &&
+               user_read_path_ != user_write_path_;
+    }
+
+    /// True if the given scope's file is writable.  The user tier is
+    /// read-only when it is a fallback; local and project are always
+    /// writable.
+    [[nodiscard]] bool is_scope_writable(McpStorageScope scope) const noexcept {
+        return scope != McpStorageScope::User || !is_user_fallback();
+    }
+
+    /// The physical source for a server in a given scope, or nullopt if the
+    /// server is not physically present in that scope's file.
+    [[nodiscard]] std::optional<McpPhysicalSource>
+    mcp_source_in_scope(std::string_view name, McpStorageScope scope) const {
+        if (!mcp_physical_names_[scope_index(scope)].contains(std::string(name)))
+            return std::nullopt;
+        auto path = mcp_read_path_for_scope(scope);
+        if (path.empty()) return std::nullopt;
+        return McpPhysicalSource{
+            .scope = scope,
+            .path = std::move(path),
+            .writable = is_scope_writable(scope),
+        };
+    }
+
     /// The configured (scope, path) pairs in lowest-to-highest precedence.
     /// The user tier is omitted when its path is empty (1-arg ctor); missing
     /// files are included (callers tolerate absence).
     [[nodiscard]] std::vector<std::pair<McpStorageScope, std::filesystem::path>>
     mcp_scope_paths() const {
         std::vector<std::pair<McpStorageScope, std::filesystem::path>> result;
-        if (!user_path_.empty()) result.emplace_back(McpStorageScope::User, user_path_);
+        if (!user_read_path_.empty()) result.emplace_back(McpStorageScope::User, user_read_path_);
         result.emplace_back(McpStorageScope::Project, project_path_);
         result.emplace_back(McpStorageScope::Local, local_path_);
         return result;
+    }
+
+    /// RFC 0007 Phase 2: if a same-named entry also exists in the read-only
+    /// user-tier fallback, append a SkippedReadOnly entry so the caller knows
+    /// the shadow exists (and is byte-unchanged).  No-op when the target scope
+    /// IS the user tier, when the user tier is writable, or when the server is
+    /// not physically present in the fallback file.
+    void append_fallback_shadow(McpMutationOutcome& outcome,
+                                std::string_view name,
+                                McpStorageScope target_scope) const {
+        if (target_scope == McpStorageScope::User) return;
+        if (is_scope_writable(McpStorageScope::User)) return;
+        if (!mcp_physical_names_[scope_index(McpStorageScope::User)]
+                .contains(std::string(name)))
+            return;
+        outcome.entries.push_back(McpMutationEntry{
+            .server_name = std::string(name),
+            .source = McpPhysicalSource{
+                .scope = McpStorageScope::User,
+                .path = mcp_read_path_for_scope(McpStorageScope::User),
+                .writable = false,
+            },
+            .status = McpMutationStatus::SkippedReadOnly,
+            .detail = "read-only fallback shadow",
+        });
     }
 
     /// Insert-or-update one server in exactly the file backing `scope`.
@@ -776,11 +908,20 @@ public:
                             mcp_scope_label(scope))));
         }
         if (mcp_tier_unparseable_[scope_index(scope)]) {
-            return std::unexpected(Error::make(
-                ErrorCode::ConfigParseError,
-                std::format("{} is not valid JSON; move it aside first "
-                            "(use 'loom mcp' to edit MCP configuration)",
-                            path->string())));
+            // RFC 0007 Phase 2: in fallback mode the unparseable flag
+            // reflects the READ path (~/.agents).  When the write path
+            // (~/.loom) does not exist yet, the write is creating a new
+            // file — the read-path's unparseability is irrelevant.
+            const bool fallback_creating_new =
+                scope == McpStorageScope::User && is_user_fallback() &&
+                !std::filesystem::exists(*path);
+            if (!fallback_creating_new) {
+                return std::unexpected(Error::make(
+                    ErrorCode::ConfigParseError,
+                    std::format("{} is not valid JSON; move it aside first "
+                                "(use 'loom mcp' to edit MCP configuration)",
+                                path->string())));
+            }
         }
         if (server.name.empty()) {
             return std::unexpected(Error::make(
@@ -829,46 +970,115 @@ public:
     /// `name` ON DISK (D3), or restricted to one tier when `scope` is given.
     /// Presence is verified from the files themselves rather than the
     /// post-load cache, so the call is re-runnable/idempotent within one
-    /// instance. Returns touched/failed path lists; an absent name yields
-    /// empty lists.
-    [[nodiscard]] Result<McpRemoveOutcome>
+    /// instance.
+    ///
+    /// RFC 0007 Phase 2: when the user tier is a read-only fallback
+    /// (~/.agents → ~/.loom split), entries that live only in the fallback
+    /// file are reported as SkippedReadOnly, not patched.  Writable scopes
+    /// are patched via their WRITE path (never the fallback read path).
+    /// An absent name yields a single NotFound entry.
+    [[nodiscard]] Result<McpMutationOutcome>
     remove_mcp_server(std::string_view name,
                       std::optional<McpStorageScope> scope = std::nullopt) {
-        McpRemoveOutcome outcome;
+        McpMutationOutcome outcome;
+
+        // Build candidate list from READ paths (for disk-presence checks).
         std::vector<std::pair<McpStorageScope, std::filesystem::path>> candidates;
         if (scope) {
-            if (const auto* path = path_for_scope(*scope);
-                path != nullptr && !path->empty()) {
-                candidates.emplace_back(*scope, *path);
+            for (const auto& [s, p] : mcp_scope_paths()) {
+                if (s == *scope) {
+                    candidates.emplace_back(s, p);
+                    break;
+                }
             }
         } else {
-            for (const auto& [candidate_scope, path] : mcp_scope_paths()) {
-                candidates.emplace_back(candidate_scope, path);
-            }
+            candidates = mcp_scope_paths();
         }
 
         std::vector<McpStorageScope> changed_tiers;
-        for (const auto& [candidate_scope, path] : candidates) {
-            if (!file_contains_mcp_server(path, name)) {
+        for (const auto& [candidate_scope, read_path] : candidates) {
+            if (!file_contains_mcp_server(read_path, name)) {
                 continue;
             }
-            auto patched = patch_mcp_file(path,
+
+            // Read-only fallback: skip, do not touch the file.
+            if (!is_scope_writable(candidate_scope)) {
+                outcome.entries.push_back(McpMutationEntry{
+                    .server_name = std::string(name),
+                    .source = McpPhysicalSource{
+                        .scope = candidate_scope,
+                        .path = read_path,
+                        .writable = false,
+                    },
+                    .status = McpMutationStatus::SkippedReadOnly,
+                    .detail = "read-only fallback",
+                });
+                continue;
+            }
+
+            // Writable: patch the WRITE path (same as read path for
+            // non-fallback scopes).
+            const auto* write_path = path_for_scope(candidate_scope);
+            if (write_path == nullptr || write_path->empty()) {
+                outcome.entries.push_back(McpMutationEntry{
+                    .server_name = std::string(name),
+                    .source = McpPhysicalSource{
+                        .scope = candidate_scope,
+                        .path = read_path,
+                        .writable = true,
+                    },
+                    .status = McpMutationStatus::WriteFailed,
+                    .detail = "no config file configured for scope",
+                });
+                continue;
+            }
+
+            auto patched = patch_mcp_file(*write_path,
                 [&](loom::utils::json::JsonMutVal& servers,
                     loom::utils::json::JsonMutDoc&) -> VoidResult {
                     (void)servers.remove(name);
                     return {};
                 });
             if (patched) {
-                outcome.touched.push_back(path);
+                outcome.entries.push_back(McpMutationEntry{
+                    .server_name = std::string(name),
+                    .source = McpPhysicalSource{
+                        .scope = candidate_scope,
+                        .path = *write_path,
+                        .writable = true,
+                    },
+                    .status = McpMutationStatus::Modified,
+                    .detail = "",
+                });
                 const auto tier = scope_index(candidate_scope);
                 mcp_physical_names_[tier].erase(std::string(name));
                 std::erase_if(mcp_file_servers_[tier],
                     [&](const McpServerConfig& entry) { return entry.name == name; });
                 changed_tiers.push_back(candidate_scope);
             } else {
-                outcome.failed.push_back(path);
+                outcome.entries.push_back(McpMutationEntry{
+                    .server_name = std::string(name),
+                    .source = McpPhysicalSource{
+                        .scope = candidate_scope,
+                        .path = *write_path,
+                        .writable = true,
+                    },
+                    .status = McpMutationStatus::WriteFailed,
+                    .detail = patched.error().message,
+                });
             }
         }
+
+        // Server not found in any layer.
+        if (outcome.entries.empty()) {
+            outcome.entries.push_back(McpMutationEntry{
+                .server_name = std::string(name),
+                .source = std::nullopt,
+                .status = McpMutationStatus::NotFound,
+                .detail = "",
+            });
+        }
+
         // Recompute owner + merged entry once from the post-removal
         // physical sets; failed tiers still hold the name on disk and so
         // keep it effective. Without this, a same-instance save() would
@@ -942,42 +1152,234 @@ public:
 
     /// Set only the "disabled" flag on the entry, in place, preserving every
     /// sibling and unknown key. With no scope the highest-precedence owner
-    /// file is patched; with a scope, that file alone is patched and an
-    /// absent entry there is an error.
-    [[nodiscard]] VoidResult
+    /// file is patched; with a scope, that file alone is patched.
+    ///
+    /// RFC 0007 Phase 2: returns a McpMutationOutcome with per-entry status.
+    /// A read-only fallback owner is reported as SkippedReadOnly, not patched.
+    [[nodiscard]] McpMutationOutcome
     set_mcp_server_disabled(std::string_view name, bool disabled,
                             std::optional<McpStorageScope> scope = std::nullopt) {
+        McpMutationOutcome outcome;
         McpStorageScope target_scope = McpStorageScope::User;
         if (scope) {
             target_scope = *scope;
             if (!mcp_physical_names_[scope_index(target_scope)]
                     .contains(std::string(name))) {
-                return std::unexpected(Error::make(
-                    ErrorCode::NotFound,
-                    std::format("MCP server '{}' not found in the {} config",
-                                name, mcp_scope_label(target_scope))));
+                outcome.entries.push_back(McpMutationEntry{
+                    .server_name = std::string(name),
+                    .source = std::nullopt,
+                    .status = McpMutationStatus::NotFound,
+                    .detail = std::format("not found in the {} config",
+                                          mcp_scope_label(target_scope)),
+                });
+                return outcome;
             }
         } else {
             auto owner = mcp_owner_.find(std::string(name));
             if (owner == mcp_owner_.end()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::NotFound,
-                    std::format("MCP server '{}' not found", name)));
+                outcome.entries.push_back(McpMutationEntry{
+                    .server_name = std::string(name),
+                    .source = std::nullopt,
+                    .status = McpMutationStatus::NotFound,
+                    .detail = "",
+                });
+                return outcome;
             }
             target_scope = owner->second;
         }
 
+        // Read-only fallback: skip, do not touch the file.
+        if (!is_scope_writable(target_scope)) {
+            outcome.entries.push_back(McpMutationEntry{
+                .server_name = std::string(name),
+                .source = McpPhysicalSource{
+                    .scope = target_scope,
+                    .path = mcp_read_path_for_scope(target_scope),
+                    .writable = false,
+                },
+                .status = McpMutationStatus::SkippedReadOnly,
+                .detail = "read-only fallback",
+            });
+            return outcome;
+        }
+
         const auto* path = path_for_scope(target_scope);
         if (path == nullptr || path->empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::ConfigWriteError,
-                std::format("No config file is configured for the '{}' scope",
-                            mcp_scope_label(target_scope))));
+            outcome.entries.push_back(McpMutationEntry{
+                .server_name = std::string(name),
+                .source = std::nullopt,
+                .status = McpMutationStatus::WriteFailed,
+                .detail = std::format("no config file configured for the '{}' scope",
+                                      mcp_scope_label(target_scope)),
+            });
+            return outcome;
         }
+
+        // Check if already in target state (idempotent no-op).
+        auto& retained = mcp_file_servers_[scope_index(target_scope)];
+        auto existing = std::ranges::find(retained, std::string(name),
+                                          &McpServerConfig::name);
+        const bool already = (existing != retained.end() &&
+                              existing->disabled.value_or(false) == disabled);
+        if (already) {
+            outcome.entries.push_back(McpMutationEntry{
+                .server_name = std::string(name),
+                .source = McpPhysicalSource{
+                    .scope = target_scope,
+                    .path = *path,
+                    .writable = true,
+                },
+                .status = McpMutationStatus::Unchanged,
+                .detail = "",
+            });
+            append_fallback_shadow(outcome, name, target_scope);
+            return outcome;
+        }
+
         const std::string owned_name(name);
-        return set_mcp_servers_disabled_in(target_scope,
-                                           std::span<const std::string>(&owned_name, 1),
-                                           disabled);
+        auto patched = set_mcp_servers_disabled_in(
+            target_scope,
+            std::span<const std::string>(&owned_name, 1),
+            disabled);
+        if (patched) {
+            outcome.entries.push_back(McpMutationEntry{
+                .server_name = std::string(name),
+                .source = McpPhysicalSource{
+                    .scope = target_scope,
+                    .path = *path,
+                    .writable = true,
+                },
+                .status = McpMutationStatus::Modified,
+                .detail = "",
+            });
+        } else {
+            outcome.entries.push_back(McpMutationEntry{
+                .server_name = std::string(name),
+                .source = McpPhysicalSource{
+                    .scope = target_scope,
+                    .path = *path,
+                    .writable = true,
+                },
+                .status = McpMutationStatus::WriteFailed,
+                .detail = patched.error().message,
+            });
+        }
+        append_fallback_shadow(outcome, name, target_scope);
+        return outcome;
+    }
+
+    /// Enable/disable ALL merged MCP servers, respecting read-only fallback.
+    /// Returns one McpMutationEntry per server with its mutation status.
+    /// Writable owners that are already in the target state are Unchanged;
+    /// fallback owners are SkippedReadOnly; writable owners that need
+    /// changing are grouped by scope and patched in one write per file.
+    [[nodiscard]] McpMutationOutcome
+    set_all_mcp_servers_disabled(bool disabled) {
+        McpMutationOutcome outcome;
+
+        // Group names by writable scope for batch patching.
+        std::map<McpStorageScope, std::vector<std::string>> to_patch;
+
+        for (const auto& server : settings_.mcp_servers) {
+            const auto& name = server.name;
+            auto owner_it = mcp_owner_.find(name);
+            if (owner_it == mcp_owner_.end()) {
+                outcome.entries.push_back(McpMutationEntry{
+                    .server_name = name,
+                    .source = std::nullopt,
+                    .status = McpMutationStatus::NotFound,
+                    .detail = "",
+                });
+                continue;
+            }
+            const auto owner = owner_it->second;
+
+            // Read-only fallback: skip.
+            if (!is_scope_writable(owner)) {
+                outcome.entries.push_back(McpMutationEntry{
+                    .server_name = name,
+                    .source = McpPhysicalSource{
+                        .scope = owner,
+                        .path = mcp_read_path_for_scope(owner),
+                        .writable = false,
+                    },
+                    .status = McpMutationStatus::SkippedReadOnly,
+                    .detail = "read-only fallback",
+                });
+                continue;
+            }
+
+            // Check if already in target state.
+            auto& retained = mcp_file_servers_[scope_index(owner)];
+            auto existing = std::ranges::find(retained, name,
+                                              &McpServerConfig::name);
+            const bool already = (existing != retained.end() &&
+                                  existing->disabled.value_or(false) == disabled);
+            if (already) {
+                const auto* path = path_for_scope(owner);
+                outcome.entries.push_back(McpMutationEntry{
+                    .server_name = name,
+                    .source = McpPhysicalSource{
+                        .scope = owner,
+                        .path = path ? *path : std::filesystem::path{},
+                        .writable = true,
+                    },
+                    .status = McpMutationStatus::Unchanged,
+                    .detail = "",
+                });
+                continue;
+            }
+
+            to_patch[owner].push_back(name);
+        }
+
+        // Patch each writable scope in one write per file.
+        for (auto& [scope, names] : to_patch) {
+            const auto* path = path_for_scope(scope);
+            if (path == nullptr || path->empty()) {
+                for (const auto& name : names) {
+                    outcome.entries.push_back(McpMutationEntry{
+                        .server_name = name,
+                        .source = std::nullopt,
+                        .status = McpMutationStatus::WriteFailed,
+                        .detail = std::format("no config file for '{}' scope",
+                                              mcp_scope_label(scope)),
+                    });
+                }
+                continue;
+            }
+
+            auto patched = set_mcp_servers_disabled_in(scope, names, disabled);
+            if (patched) {
+                for (const auto& name : names) {
+                    outcome.entries.push_back(McpMutationEntry{
+                        .server_name = name,
+                        .source = McpPhysicalSource{
+                            .scope = scope,
+                            .path = *path,
+                            .writable = true,
+                        },
+                        .status = McpMutationStatus::Modified,
+                        .detail = "",
+                    });
+                }
+            } else {
+                for (const auto& name : names) {
+                    outcome.entries.push_back(McpMutationEntry{
+                        .server_name = name,
+                        .source = McpPhysicalSource{
+                            .scope = scope,
+                            .path = *path,
+                            .writable = true,
+                        },
+                        .status = McpMutationStatus::WriteFailed,
+                        .detail = patched.error().message,
+                    });
+                }
+            }
+        }
+
+        return outcome;
     }
 
     /// Set only the "disabled" flag on several entries that all live in the
@@ -1470,6 +1872,10 @@ private:
         if (auto v = root.get("vimMode"); v.is_bool()) {
             settings_.display.vim_mode = v.as_bool();
         }
+        // mouseMode (RFC 0007 Phase 2)
+        if (auto v = root.get("mouseMode"); v.is_bool()) {
+            settings_.display.mouse_mode = v.as_bool();
+        }
 
         // apiKey
         if (auto v = root.get("apiKey"); v.is_str()) {
@@ -1608,6 +2014,7 @@ private:
         std::string theme;
         std::string verbose;
         std::string vim_mode;
+        std::string mouse_mode;  // RFC 0007 Phase 2
         // network (flat camelCase; apiKey/baseUrl are NOT saved — credentials
         // are user-tier only, never written to the VCS-tracked project file)
         std::string timeout_seconds;
@@ -1701,6 +2108,8 @@ private:
             settings_.display.verbose ? "true" : "false";
         frag.vim_mode =
             settings_.display.vim_mode ? "true" : "false";
+        frag.mouse_mode =
+            settings_.display.mouse_mode ? "true" : "false";
 
         frag.timeout_seconds =
             std::to_string(settings_.network.timeout_seconds);
@@ -1861,6 +2270,8 @@ private:
                                 frag.verbose); !r) return r;
         if (auto r = patch_leaf(root, "vimMode",
                                 frag.vim_mode); !r) return r;
+        if (auto r = patch_leaf(root, "mouseMode",
+                                frag.mouse_mode); !r) return r;
 
         // network — flat camelCase at root (apiKey/baseUrl NOT saved:
         // credentials are user-tier only, never written to VCS-tracked file)
@@ -2165,11 +2576,23 @@ private:
     [[nodiscard]] const std::filesystem::path*
     path_for_scope(McpStorageScope scope) const noexcept {
         switch (scope) {
-            case McpStorageScope::User:    return &user_path_;
+            case McpStorageScope::User:    return &user_write_path_;
             case McpStorageScope::Project: return &project_path_;
             case McpStorageScope::Local:   return &local_path_;
         }
         return nullptr;
+    }
+
+    /// The READ path for a scope's MCP config file.  For the User scope in
+    /// fallback mode this is the fallback file (e.g. ~/.agents/settings.json),
+    /// NOT the write path (~/.loom/settings.json).  Used for
+    /// McpPhysicalSource::path so the source reflects the true physical file.
+    [[nodiscard]] std::filesystem::path
+    mcp_read_path_for_scope(McpStorageScope scope) const noexcept {
+        if (scope == McpStorageScope::User)    return user_read_path_;
+        if (scope == McpStorageScope::Project) return project_path_;
+        if (scope == McpStorageScope::Local)   return local_path_;
+        return {};
     }
 
     /// Mutator receives the mcpServers object (created if absent) and the
@@ -2630,9 +3053,9 @@ private:
     /// c23: snapshot all three tier signatures after a successful load(), so
     /// tier_files_changed() has a baseline to compare against.
     void record_tier_signatures() {
-        if (!user_path_.empty()) {
+        if (!user_read_path_.empty()) {
             tier_signatures_[scope_index(McpStorageScope::User)] =
-                tier_signature(user_path_);
+                tier_signature(user_read_path_);
         }
         tier_signatures_[scope_index(McpStorageScope::Project)] =
             tier_signature(project_path_);
@@ -3029,7 +3452,7 @@ private:
         const McpStorageScope target_scope =
             target_is_local ? McpStorageScope::Local
             : (path == project_path_) ? McpStorageScope::Project
-            : (path == user_path_) ? McpStorageScope::User
+            : (path == user_read_path_ || path == user_write_path_) ? McpStorageScope::User
             : McpStorageScope::User;
         // The exact pre-extraction inline parse-failure error: same code and
         // literal, path interpolated here so the C6-pinned refusal text
@@ -3460,11 +3883,11 @@ inline void ConfigManager::migrate_legacy_config() {
 
 [[nodiscard]] inline std::span<const UserSettingSpec>
 ConfigManager::user_setting_specs() noexcept {
-    // The CLOSED projected set: 7 writable server-direct-query scalars
+    // The CLOSED projected set: 8 writable server-direct-query scalars
     // followed by the 9 read-only metadata keys. Flat camelCase keys at
     // root level (unified settings.json format); section is "" for root.
     static constexpr UserSettingSpec specs[] = {
-        // ── writable (7) ──
+        // ── writable (8) ──
         {"model",            "", "model",
          UserSettingKind::String,    true, true, "string", "LOOM_MODEL",
          "LLM model to use"},
@@ -3486,6 +3909,9 @@ ConfigManager::user_setting_specs() noexcept {
         {"maxRetries",       "", "maxRetries",
          UserSettingKind::UInteger,  true, false, "integer", "",
          "Max retry attempts"},
+        {"mouseMode",        "", "mouseMode",
+         UserSettingKind::Boolean,   true, false, "boolean", "",
+         "Enable in-app mouse tracking (disables native text selection)"},
         // ── read-only metadata (9) ──
         {"showThinking",     "", "showThinking",
          UserSettingKind::Boolean,   false, false, "boolean", "",
@@ -3736,7 +4162,7 @@ ConfigManager::set_user_setting(std::string_view dotted,
             std::format("'{}' is not writable through this tool; no runtime "
                         "component consumes this setting.", dotted)));
     }
-    if (user_path_.empty()) {
+    if (user_write_path_.empty()) {
         return std::unexpected(Error::make(
             ErrorCode::ConfigWriteError,
             "No user configuration file is configured for writes"));
@@ -3766,7 +4192,7 @@ ConfigManager::set_user_setting(std::string_view dotted,
     }
 
     UserSettingSetOutcome outcome;
-    outcome.path = user_path_;
+    outcome.path = user_write_path_;
     outcome.value_token = coerced.token;
 
     // Env-shadow disclosure (D2): computed straight from the environment
@@ -3792,10 +4218,10 @@ ConfigManager::set_user_setting(std::string_view dotted,
     const Error strict_error = Error::make(
         ErrorCode::ConfigParseError,
         std::format("{} is not valid JSON; repair or move it aside before "
-                    "changing configuration settings", user_path_.string()));
+                    "changing configuration settings", user_write_path_.string()));
     SalvageResult salvage_out = SalvageResult::Untouched;
     auto patched = patch_object_file(
-        user_path_,
+        user_write_path_,
         [&](loom::utils::json::JsonMutVal& root,
             loom::utils::json::JsonMutDoc& doc) -> VoidResult {
             // raw_json("null") yields a valid JSON-null value that

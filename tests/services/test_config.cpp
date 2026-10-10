@@ -676,7 +676,7 @@ TEST(ConfigManagerUserSettings, ReadOnlyProjectionAndListShape) {
     EXPECT_EQ(settings.root.get("permissions").get("allow_network").get("value").as_bool(), false);
 
     auto list = c13_parse(loom::core::ConfigManager::serialize_user_setting_specs_json());
-    EXPECT_EQ(list.root.get("writable").size(), 7u);
+    EXPECT_EQ(list.root.get("writable").size(), 8u);
     EXPECT_EQ(list.root.get("read_only").size(), 9u);
     EXPECT_GE(list.root.get("blocked").size(), 9u);
     // Enumeration metadata survives into the list payload.
@@ -1105,7 +1105,7 @@ TEST(ConfigManagerUserSettings, SilentLoadSalvageClearsFlagAndReloadWarning) {
 
 TEST(ConfigManagerUserSettings, SpecTableIsClosed) {
     const auto specs = loom::core::ConfigManager::user_setting_specs();
-    EXPECT_EQ(specs.size(), 16u);
+    EXPECT_EQ(specs.size(), 17u);
     int writable = 0;
     for (const auto& spec : specs) {
         // Flat keys (section == "") have key == leaf; nested keys have
@@ -1119,7 +1119,7 @@ TEST(ConfigManagerUserSettings, SpecTableIsClosed) {
         }
         if (spec.writable) ++writable;
     }
-    EXPECT_EQ(writable, 7);
+    EXPECT_EQ(writable, 8);
     EXPECT_NE(loom::core::ConfigManager::find_user_setting("temperature"),
               nullptr);
     EXPECT_EQ(loom::core::ConfigManager::find_user_setting("nope.nope"),
@@ -2543,7 +2543,7 @@ TEST(ConfigManagerC13e, SaveAndPatchesContendOnSameFile) {
 
     // Manager whose SAVE target is the same file the patchers write:
     // save() writes project_path_; set_user_setting writes
-    // user_path_ — point both at one path.
+    // user_write_path_ — point both at one path.
     auto make_aligned = [&] {
         return loom::core::ConfigManager(p.project_path, p.project_path,
                                        p.project_path.string() + ".local");

@@ -81,103 +81,130 @@ McpCommand::execute_set_disabled(std::span<const std::string> args,
         return CommandResult::fail("'all' cannot be combined with --scope");
     }
 
-    const auto& merged = config_manager_.settings().mcp_servers;
-    std::map<McpStorageScope, std::vector<std::string>> names_by_scope;
-    std::map<McpStorageScope, std::filesystem::path> path_by_scope;
-    for (const auto& [scope, path] : config_manager_.mcp_scope_paths()) {
-        path_by_scope[scope] = path;
-    }
-
+    // Delegate to ConfigManager — the fallback-aware outcome model handles
+    // read-only skips, idempotent no-ops, and per-entry status.
+    loom::core::McpMutationOutcome outcome;
     if (all) {
-        for (const auto& server : merged) {
-            if (server.disabled.value_or(false) == disabled) continue;
-            auto owner = config_manager_.mcp_server_owner(server.name);
-            if (!owner) continue;
-            names_by_scope[*owner].push_back(server.name);
-        }
-        if (names_by_scope.empty()) {
-            return CommandResult::success(disabled
-                ? std::string("All MCP servers are already disabled")
-                : std::string("All MCP servers are already enabled"));
-        }
+        outcome = config_manager_.set_all_mcp_servers_disabled(disabled);
     } else {
-        auto it = std::ranges::find_if(merged,
-            [&](const auto& s) { return s.name == name; });
-        if (it == merged.end()) {
-            return CommandResult::fail(
-                std::format("MCP server '{}' not found", name));
-        }
-        if (*parsed_scope) {
-            // Explicit scope: the name must physically be in that file.
-            auto files = config_manager_.find_mcp_server_files(name);
-            bool present = std::ranges::any_of(files,
-                [&](const auto& f) { return f.first == **parsed_scope; });
-            if (!present) {
-                return CommandResult::fail(std::format(
-                    "MCP server '{}' not found in the '{}' scope",
-                    name, scope_label));
-            }
-            names_by_scope[**parsed_scope].push_back(name);
-        } else {
-            // Preserve the idempotent "already enabled/disabled" wording.
-            if (it->disabled.value_or(false) == disabled) {
-                return CommandResult::success(disabled
-                    ? std::format("MCP server '{}' is already disabled", name)
-                    : std::format("MCP server '{}' is already enabled", name));
-            }
-            auto owner = config_manager_.mcp_server_owner(name);
-            if (!owner) {
-                return CommandResult::fail(
-                    std::format("MCP server '{}' not found", name));
-            }
-            names_by_scope[*owner].push_back(name);
+        outcome = config_manager_.set_mcp_server_disabled(
+            name, disabled, *parsed_scope);
+    }
+
+    // Categorize entries.
+    std::size_t modified = 0;
+    std::size_t unchanged = 0;
+    std::size_t skipped = 0;
+    std::vector<std::string> failed_names;
+    std::vector<std::string> skipped_names;
+    std::vector<std::string> not_found_names;
+    for (const auto& entry : outcome.entries) {
+        switch (entry.status) {
+            using enum loom::core::McpMutationStatus;
+            case Modified:        ++modified; break;
+            case Unchanged:       ++unchanged; break;
+            case SkippedReadOnly:
+                ++skipped;
+                skipped_names.push_back(entry.server_name);
+                break;
+            case WriteFailed:
+                failed_names.push_back(entry.server_name);
+                break;
+            case NotFound:
+                not_found_names.push_back(entry.server_name);
+                break;
         }
     }
 
-    // Patch each distinct owner file once; collect file-level failures.
-    std::vector<std::filesystem::path> failed_files;
-    std::size_t changed = 0;
-    for (const auto& [scope, names] : names_by_scope) {
-        auto result = config_manager_.set_mcp_servers_disabled_in(
-            scope, std::span<const std::string>(names), disabled);
-        if (result) {
-            changed += names.size();
-        } else if (auto found = path_by_scope.find(scope);
-                   found != path_by_scope.end()) {
-            failed_files.push_back(found->second);
+    auto join_str = [](const std::vector<std::string>& items) {
+        std::string joined;
+        for (std::size_t i = 0; i < items.size(); ++i) {
+            if (i) joined += ", ";
+            joined += items[i];
         }
+        return joined;
+    };
+
+    // ── Render ──────────────────────────────────────────────────────────
+
+    // Named server, not found.
+    if (!all && modified == 0 && unchanged == 0 && skipped == 0 &&
+        failed_names.empty() && !not_found_names.empty()) {
+        if (!scope_label.empty()) {
+            return CommandResult::fail(std::format(
+                "MCP server '{}' not found in the '{}' scope",
+                name, scope_label));
+        }
+        return CommandResult::fail(
+            std::format("MCP server '{}' not found", name));
     }
 
-    if (changed == 0) {
-        std::string paths;
-        for (std::size_t i = 0; i < failed_files.size(); ++i) {
-            if (i) paths += ", ";
-            paths += failed_files[i].string();
-        }
+    // All servers, empty config.
+    if (all && outcome.is_empty()) {
+        return CommandResult::success("No MCP servers configured");
+    }
+
+    // All servers, all already in target state (no fallback entries).
+    if (all && modified == 0 && skipped == 0 && failed_names.empty() &&
+        unchanged > 0) {
+        return CommandResult::success(disabled
+            ? std::string("All MCP servers are already disabled")
+            : std::string("All MCP servers are already enabled"));
+    }
+
+    // Named server, already in target state.
+    if (!all && modified == 0 && skipped == 0 && failed_names.empty() &&
+        unchanged > 0) {
+        return CommandResult::success(disabled
+            ? std::format("MCP server '{}' is already disabled", name)
+            : std::format("MCP server '{}' is already enabled", name));
+    }
+
+    // All entries are read-only fallback.
+    if (modified == 0 && unchanged == 0 && failed_names.empty() &&
+        skipped > 0) {
         return CommandResult::fail(std::format(
-            "Could not {} MCP server(s); failed to write: {}",
-            disabled ? "disable" : "enable", paths));
+            "All MCP servers are in a read-only fallback config. "
+            "Use 'mcp add --scope user' to create writable shadows, "
+            "then {} them. Skipped: {}",
+            disabled ? "disable" : "enable",
+            join_str(skipped_names)));
     }
 
-    if (auto synced = reload_and_sync(); !synced) {
-        return std::unexpected(synced.error());
+    // Only reload/sync when at least one file actually changed.
+    if (modified > 0) {
+        if (auto synced = reload_and_sync(); !synced) {
+            return std::unexpected(synced.error());
+        }
     }
 
+    // Build the result message.
     std::string out;
     if (all) {
         out = std::format(
             "{} {} MCP server(s); takes effect on next start",
-            disabled ? "Disabled" : "Enabled", changed);
+            disabled ? "Disabled" : "Enabled", modified);
     } else {
         out = std::format(
             "MCP server '{}' {}; takes effect on next start",
             name, disabled ? "disabled" : "enabled");
     }
-    if (!failed_files.empty()) {
-        out += "\nWarning: some files could not be written:";
-        for (const auto& path : failed_files) {
-            out += std::format("\n  {}", path.string());
-        }
+
+    if (!skipped_names.empty()) {
+        out += std::format(
+            "\nSkipped (read-only fallback): {}",
+            join_str(skipped_names));
+    }
+    if (!failed_names.empty()) {
+        out += std::format(
+            "\nWarning: could not write: {}",
+            join_str(failed_names));
+    }
+
+    // If nothing was modified, it's a failure — even if some entries were
+    // skipped (read-only fallback) or had write failures.
+    if (modified == 0) {
+        return CommandResult::fail(std::move(out));
     }
     return CommandResult::success(std::move(out));
 }

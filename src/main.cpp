@@ -49,7 +49,8 @@ extern "C" [[nodiscard]] int loom_ui_run_app_bridge(
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
     loom::commands::AppCommandRegistry* cmd_registry,
     const std::filesystem::path* sessions_dir,
-    loom::hooks::ToolPermissionHook* permission_hook
+    loom::hooks::ToolPermissionHook* permission_hook,
+    bool mouse_mode
 );
 
 /**
@@ -678,7 +679,7 @@ int run_runtime_tool_once(const CliOptions& opts) {
 /**
  * Load engine configuration from environment and defaults
  */
-auto load_config() -> loom::core::QueryEngineConfig {
+auto load_config(bool& mouse_mode) -> loom::core::QueryEngineConfig {
     loom::core::QueryEngineConfig config;
 
     // Load config file (~/.loom/settings.json) as a fallback for credentials
@@ -687,6 +688,11 @@ auto load_config() -> loom::core::QueryEngineConfig {
     if (auto result = file_config.load(loom::core::LoadOptions{.quiet = true}); !result) {
         // Non-fatal: env vars may still provide everything needed.
     }
+
+    // RFC 0007 Phase 2: read mouseMode from the effective config (respects
+    // LOOM_CONFIG_DIR and the full three-tier cascade). Read once at startup;
+    // FTXUI does not support runtime mouse-mode toggling.
+    mouse_mode = file_config.settings().display.mouse_mode;
 
     // API key: env var first, then config file
     if (const char* key = std::getenv("LOOM_API_KEY")) {
@@ -1905,7 +1911,8 @@ int main(int argc, const char* argv[]) {
         return run_bridge_daemon_once(opts);
     }
 
-    auto config = load_config();
+    bool mouse_mode = false;
+    auto config = load_config(mouse_mode);
     // permissions.deny from --settings feeds the pre-request tool filter.
     // TS reads the permission context live; the CPP engine snapshots config at
     // construction, so this must be set before the engine is created.
@@ -2056,7 +2063,7 @@ int main(int argc, const char* argv[]) {
         if (opts.use_simple_ui) {
             return run_simple_ui(&engine, cmd_registry);
         } else {
-            return loom_ui_run_app_bridge(&engine, &lifecycle_hooks, &cmd_registry, nullptr, &permission_hook);
+            return loom_ui_run_app_bridge(&engine, &lifecycle_hooks, &cmd_registry, nullptr, &permission_hook, mouse_mode);
         }
     } catch (const std::exception& e) {
         std::println(stderr, "UI startup failed: {}", e.what());

@@ -299,6 +299,77 @@ TEST(PathsReadWriteSplit, ExplicitOverrideDirectsBothReadAndWrite) {
         << "an explicit override is a deliberate choice, so it wins for both";
 }
 
+// ---------------------------------------------------------------------------
+// settings_home_read(): file-level settings.json resolver
+// ---------------------------------------------------------------------------
+
+TEST(PathsSettingsHomeRead, PrefersDotLoomSettingsFileWhenBothExist) {
+    TempHome home;
+    home.make_config_dir(".loom");
+    home.make_config_dir(".agents");
+    std::ofstream(home.at(".loom") / "settings.json") << "{}";
+    std::ofstream(home.at(".agents") / "settings.json") << "{}";
+    EXPECT_EQ(loom::constants::paths::settings_home_read(),
+              home.at(".loom") / "settings.json");
+}
+
+TEST(PathsSettingsHomeRead, FallsToDotAgentsWhenDotLoomSettingsAbsent) {
+    TempHome home;
+    home.make_config_dir(".agents");
+    std::ofstream(home.at(".agents") / "settings.json") << "{}";
+    EXPECT_EQ(loom::constants::paths::settings_home_read(),
+              home.at(".agents") / "settings.json");
+}
+
+// The key distinction from config_home_read(): the ~/.loom DIRECTORY may
+// exist (e.g., save_user created it) but settings.json may not (file patch
+// failed). settings_home_read() must fall through to ~/.agents rather than
+// silently dropping the fallback config.
+TEST(PathsSettingsHomeRead, DotLoomDirExistsButNoSettingsFileFallsToDotAgents) {
+    TempHome home;
+    home.make_config_dir(".loom");  // directory exists, but no settings.json
+    home.make_config_dir(".agents");
+    std::ofstream(home.at(".agents") / "settings.json") << "{}";
+    EXPECT_EQ(loom::constants::paths::settings_home_read(),
+              home.at(".agents") / "settings.json")
+        << "directory-level existence must not shadow the file-level fallback";
+}
+
+TEST(PathsSettingsHomeRead, ReturnsWritePathWhenNoSettingsFileExists) {
+    TempHome home;
+    EXPECT_EQ(loom::constants::paths::settings_home_read(),
+              home.at(".loom") / "settings.json")
+        << "preferred write path when no settings file exists yet";
+}
+
+// LOOM_CONFIG_DIR is an unconditional override — no downgrade to HOME paths.
+TEST(PathsSettingsHomeRead, LoomConfigDirOverrideIsUnconditional) {
+    TempHome home;
+    home.make_config_dir(".loom");
+    std::ofstream(home.at(".loom") / "settings.json") << "{}";
+    auto elsewhere = home.at("isolated");
+    fs::create_directories(elsewhere);
+    ::setenv("LOOM_CONFIG_DIR", elsewhere.c_str(), 1);
+    // No settings.json in the override dir, but it must still be returned.
+    EXPECT_EQ(loom::constants::paths::settings_home_read(),
+              elsewhere / "settings.json")
+        << "LOOM_CONFIG_DIR must not fall through to HOME paths";
+}
+
+// LOOM_CONFIG_DIR override must not leak host credentials: even when
+// ~/.agents/settings.json exists, the override wins.
+TEST(PathsSettingsHomeRead, LoomConfigDirOverrideDoesNotLeakHostConfig) {
+    TempHome home;
+    home.make_config_dir(".agents");
+    std::ofstream(home.at(".agents") / "settings.json") << "{}";
+    auto isolated = home.at("isolated");
+    fs::create_directories(isolated);
+    ::setenv("LOOM_CONFIG_DIR", isolated.c_str(), 1);
+    EXPECT_EQ(loom::constants::paths::settings_home_read(),
+              isolated / "settings.json")
+        << "host ~/.agents must not leak into an isolated config";
+}
+
 // user_memory_path reads across the cascade (finding an interop memory) but
 // must fall back to the WRITE dir when nothing exists, so we do not seed a
 // new memory file inside ~/.agents.

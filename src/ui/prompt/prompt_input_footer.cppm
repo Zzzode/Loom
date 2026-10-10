@@ -427,6 +427,7 @@ struct BuiltinStatusLineData {
     std::string agent_name;         ///< Current agent display name
     StatusBarSegments segments;     ///< Per-segment enable mask
     bool status_bar_enabled = true; ///< Master switch (false = hide entirely)
+    std::string mouse_mode_label;   ///< RFC 0007 Phase 2: mouse-mode hint (empty = hidden)
 };
 
 /// Extract the last N path components for display.
@@ -682,6 +683,16 @@ struct StatusLineOptions {
         segs.push_back({
             text("👤 ") | dim | color(kAgentColor),
             text(data.agent_name) | dim | color(kAgentColor),
+        });
+    }
+
+    // ── 🖱 Mouse mode hint (RFC 0007 Phase 2) ───────────────
+    // Persistent label: "Select text to copy" (native) or
+    // "Mouse mode: drag to select" (config). Empty = hidden.
+    if (!data.mouse_mode_label.empty()) {
+        segs.push_back({
+            text("🖱 ") | dim | color(kFolderColor),
+            text(data.mouse_mode_label) | dim | color(kFolderColor),
         });
     }
 

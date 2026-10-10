@@ -32,6 +32,9 @@ struct StatusBarData {
     int swarm_session_count = 0;
     bool bridge_connected = false;
     std::optional<std::string> current_path;
+    // RFC 0007 Phase 2: persistent mouse-mode hint shown in the status bar.
+    // Empty = hidden (e.g., before the label is set at startup).
+    std::string mouse_mode_label;
 };
 
 /// RFC 0002 F3 store — chrome / welcome-header / status-bar projection

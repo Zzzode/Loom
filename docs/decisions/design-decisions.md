@@ -1878,6 +1878,40 @@ promoted to the repository root in the same series of commits, so
   `operator==`, so shutdown handlers are unregistered by **priority matching** — registering two
   handlers with the same priority makes removal ambiguous.
 
+- **`src/constants/paths.cppm:134` (`settings_home_read()`)** — The **file-level** settings.json
+  resolver, distinct from `config_home_read()` which is a **directory-level** cascade.
+  `config_home_read()` returns `~/.agents` as a directory even when `~/.loom` exists; callers
+  resolving `settings.json` need the file-level cascade: `$LOOM_CONFIG_DIR/settings.json`
+  (unconditional) → `~/.loom/settings.json` (file exists) → `~/.agents/settings.json` (file exists)
+  → `config_home_write()/settings.json`. The `$LOOM_CONFIG_DIR` branch is **unconditional** — when
+  the override is set, a missing file means empty config, not a reason to fall through.
+
+- **`src/config/config.cppm:388-390` (ConfigManager read/write split)** — `user_read_path_` (from
+  `settings_home_read()`) and `user_write_path_` (from `config_home_write() / "settings.json"`) are
+  **separate fields**. In default-path mode (`default_path_mode_ = true`), the read path is
+  re-resolved on every `load()` so a same-instance write that creates `~/.loom/settings.json`
+  takes over from `~/.agents/settings.json` on the next load. The write path **never** points at
+  `~/.agents` — writing into another tool's config directory would interleave two tools' state.
+
+- **`src/config/config.cppm:202-248` (MCP fallback read-only model)** — When
+  `default_path_mode_ && user_read_path_ != user_write_path_` (i.e., reading from
+  `~/.agents/settings.json`, writing to `~/.loom/settings.json`), the user tier is a **READ-ONLY
+  FALLBACK**. MCP entries in the fallback file cannot be mutated by `remove`/`enable`/`disable`;
+  they are reported as `SkippedReadOnly` in `McpMutationOutcome`. The `McpPhysicalSource` struct
+  records the true physical path and writability so the CLI can render "read-only fallback"
+  guidance. `is_user_fallback()` and `is_scope_writable()` are the single decision points.
+  `upsert_mcp_server` with `--scope user` is **always allowed** (it creates `~/.loom/settings.json`
+  and shadows the fallback on next load), but mutating fallback-owned entries is skipped — the
+  fallback file is never modified, and `~/.loom` is not created as a side effect of a failed
+  mutation.
+
+- **`src/config/config.cppm` (`set_all_mcp_servers_disabled`)** — The `all` case iterates merged
+  servers, groups writable owners by scope, and patches each scope **once** (not once per server).
+  Fallback-owned entries are `SkippedReadOnly`; already-in-target-state entries are `Unchanged`.
+  The outcome model (`McpMutationOutcome`) replaces the former `McpRemoveOutcome` so that
+  per-entry status (Modified / Unchanged / SkippedReadOnly / WriteFailed / NotFound) is available
+  to the CLI layer for precise feedback.
+
 ### B.7 — Cross-module action-ordinal coupling
 
 - **`cpp_migration/src/commands/compact.cppm:29-36`** — `ACTION_ADD_NOTIFICATION = 18` is the **ordinal

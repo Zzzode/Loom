@@ -203,6 +203,100 @@ c6_json_keys(loom::utils::json::JsonVal object) {
     return keys;
 }
 
+// ── McpMutationOutcome helpers (RFC 0007 Phase 2) ──────────────────────
+
+[[nodiscard]] std::size_t
+mcp_count_status(const loom::core::McpMutationOutcome& outcome,
+                 loom::core::McpMutationStatus status) {
+    return static_cast<std::size_t>(std::ranges::count_if(
+        outcome.entries,
+        [&](const loom::core::McpMutationEntry& e) {
+            return e.status == status;
+        }));
+}
+
+[[nodiscard]] bool
+mcp_has_status(const loom::core::McpMutationOutcome& outcome,
+               loom::core::McpMutationStatus status) {
+    return mcp_count_status(outcome, status) > 0;
+}
+
+[[nodiscard]] const std::filesystem::path*
+mcp_first_path_with_status(const loom::core::McpMutationOutcome& outcome,
+                           loom::core::McpMutationStatus status) {
+    for (const auto& e : outcome.entries) {
+        if (e.status == status && e.source) return &e.source->path;
+    }
+    return nullptr;
+}
+
+// ── TempHome: RAII helper for MCP fallback tests (RFC 0007 Phase 2) ─────
+//
+// Sets HOME to a temp directory and unsets LOOM_CONFIG_DIR so the
+// ConfigManager default constructor resolves the user-tier READ path via
+// settings_home_read() and the WRITE path via config_home_write().  A
+// separate "work" subdirectory is used as CWD so the project path
+// (<cwd>/.loom/settings.json) never collides with the user write path
+// (~/.loom/settings.json) — a collision that would silently disable the
+// fallback mid-test.
+
+class TempHome {
+public:
+    TempHome() {
+        root_ = fs::temp_directory_path() /
+                ("loom-mcp-fb-" + std::to_string(::getpid()) + "-" +
+                 std::to_string(counter_++));
+        fs::create_directories(root_);
+        if (const char* prev = std::getenv("HOME")) prev_home_ = prev;
+        if (const char* prev = std::getenv("LOOM_CONFIG_DIR")) prev_config_ = prev;
+        ::unsetenv("LOOM_CONFIG_DIR");
+        ::setenv("HOME", root_.c_str(), 1);
+    }
+    ~TempHome() {
+        if (prev_home_) ::setenv("HOME", prev_home_->c_str(), 1);
+        else ::unsetenv("HOME");
+        if (prev_config_) ::setenv("LOOM_CONFIG_DIR", prev_config_->c_str(), 1);
+        else ::unsetenv("LOOM_CONFIG_DIR");
+        std::error_code ec;
+        fs::remove_all(root_, ec);
+    }
+    TempHome(const TempHome&) = delete;
+    TempHome& operator=(const TempHome&) = delete;
+
+    void write_agents(std::string_view json) {
+        auto dir = root_ / ".agents";
+        fs::create_directories(dir);
+        std::ofstream(dir / "settings.json") << json;
+    }
+    void write_loom(std::string_view json) {
+        auto dir = root_ / ".loom";
+        fs::create_directories(dir);
+        std::ofstream(dir / "settings.json") << json;
+    }
+    [[nodiscard]] fs::path agents_path() const { return root_ / ".agents" / "settings.json"; }
+    [[nodiscard]] fs::path loom_path() const { return root_ / ".loom" / "settings.json"; }
+    [[nodiscard]] bool loom_exists() const { return fs::exists(root_ / ".loom" / "settings.json"); }
+    [[nodiscard]] fs::path root() const { return root_; }
+
+    /// Create (if needed) and return the "work" subdirectory used as CWD.
+    [[nodiscard]] fs::path work_dir() {
+        auto dir = root_ / "work";
+        fs::create_directories(dir);
+        return dir;
+    }
+
+    /// The project settings path under the work directory.
+    [[nodiscard]] fs::path project_path() {
+        return work_dir() / ".loom" / "settings.json";
+    }
+
+private:
+    fs::path root_;
+    std::optional<std::string> prev_home_;
+    std::optional<std::string> prev_config_;
+    static inline int counter_ = 0;
+};
+
 } // namespace
 
 TEST(McpConfigParser, ParsesJsonFieldsAndExplicitTransports) {
@@ -1185,14 +1279,15 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
         ASSERT_TRUE(manager.load().has_value());
         auto outcome = manager.remove_mcp_server("dup");
         ASSERT_TRUE(outcome.has_value());
-        EXPECT_EQ(outcome->touched.size(), 2u);
-        EXPECT_TRUE(outcome->failed.empty());
+        EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::Modified), 2u);
+        EXPECT_FALSE(mcp_has_status(*outcome, loom::core::McpMutationStatus::WriteFailed));
 
         // Idempotent re-run: nothing present anymore.
         auto again = manager.remove_mcp_server("dup");
         ASSERT_TRUE(again.has_value());
-        EXPECT_TRUE(again->touched.empty());
-        EXPECT_TRUE(again->failed.empty());
+        EXPECT_FALSE(mcp_has_status(*again, loom::core::McpMutationStatus::Modified));
+        EXPECT_FALSE(mcp_has_status(*again, loom::core::McpMutationStatus::WriteFailed));
+        EXPECT_TRUE(mcp_has_status(*again, loom::core::McpMutationStatus::NotFound));
     }
     {
         loom::core::ConfigManager reloaded(user_path, project_path, local_path);
@@ -1211,8 +1306,10 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
         auto outcome = manager.remove_mcp_server(
             "s", loom::core::McpStorageScope::Project);
         ASSERT_TRUE(outcome.has_value());
-        EXPECT_EQ(outcome->touched.size(), 1u);
-        EXPECT_EQ(outcome->touched[0], project_path);
+        EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::Modified), 1u);
+        const auto* path = mcp_first_path_with_status(*outcome, loom::core::McpMutationStatus::Modified);
+        ASSERT_NE(path, nullptr);
+        EXPECT_EQ(*path, project_path);
     }
     {
         loom::core::ConfigManager reloaded(user_path, project_path, local_path);
@@ -1221,14 +1318,18 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
         EXPECT_EQ(reloaded.settings().mcp_servers[0].name, "s");  // survives in user
     }
 
-    // Unknown names: empty outcome both unscoped and scoped.
+    // Unknown names: NotFound outcome both unscoped and scoped.
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        EXPECT_TRUE(manager.remove_mcp_server("ghost")->touched.empty());
+        auto ghost = manager.remove_mcp_server("ghost");
+        ASSERT_TRUE(ghost.has_value());
+        EXPECT_FALSE(mcp_has_status(*ghost, loom::core::McpMutationStatus::Modified));
+        EXPECT_TRUE(mcp_has_status(*ghost, loom::core::McpMutationStatus::NotFound));
         auto scoped = manager.remove_mcp_server("ghost", loom::core::McpStorageScope::Local);
         ASSERT_TRUE(scoped.has_value());
-        EXPECT_TRUE(scoped->touched.empty());
+        EXPECT_FALSE(mcp_has_status(*scoped, loom::core::McpMutationStatus::Modified));
+        EXPECT_TRUE(mcp_has_status(*scoped, loom::core::McpMutationStatus::NotFound));
     }
 
     // Removing the last entry drops mcpServers but keeps sibling sections.
@@ -1239,8 +1340,10 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.remove_mcp_server(
-            "last", loom::core::McpStorageScope::Project).has_value());
+        auto removed = manager.remove_mcp_server(
+            "last", loom::core::McpStorageScope::Project);
+        ASSERT_TRUE(removed.has_value());
+        EXPECT_TRUE(mcp_has_status(*removed, loom::core::McpMutationStatus::Modified));
         auto parsed = loom::utils::json::parse_file(project_path);
         ASSERT_TRUE(parsed.has_value());
         EXPECT_FALSE(parsed->root().has("mcpServers"));
@@ -1281,8 +1384,10 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFiles) {
         ASSERT_TRUE(manager.load().has_value());
 
         // Unknown sibling key survives a disable/enable round trip.
-        ASSERT_TRUE(manager.set_mcp_server_disabled("px", true).has_value());
-        ASSERT_TRUE(manager.set_mcp_server_disabled("px", false).has_value());
+        auto px_disable = manager.set_mcp_server_disabled("px", true);
+        EXPECT_TRUE(mcp_has_status(px_disable, loom::core::McpMutationStatus::Modified));
+        auto px_enable = manager.set_mcp_server_disabled("px", false);
+        EXPECT_TRUE(mcp_has_status(px_enable, loom::core::McpMutationStatus::Modified));
         auto project_doc = loom::utils::json::parse_file(project_path);
         ASSERT_TRUE(project_doc.has_value());
         const auto px = project_doc->root().get("mcpServers").get("px");
@@ -1290,13 +1395,16 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFiles) {
         EXPECT_FALSE(px.get("disabled").as_bool());
 
         // Project owner patches project; local bytes untouched.
-        ASSERT_TRUE(manager.set_mcp_server_disabled("pon", true).has_value());
+        auto pon_disable = manager.set_mcp_server_disabled("pon", true);
+        EXPECT_TRUE(mcp_has_status(pon_disable, loom::core::McpMutationStatus::Modified));
         EXPECT_EQ(c6_read_file(local_path), local_before);
 
-        // Unknown name and wrong-scope name are errors.
-        EXPECT_FALSE(manager.set_mcp_server_disabled("zzz", true).has_value());
-        EXPECT_FALSE(manager.set_mcp_server_disabled(
-            "pon", true, loom::core::McpStorageScope::Local).has_value());
+        // Unknown name and wrong-scope name are NotFound.
+        auto zzz = manager.set_mcp_server_disabled("zzz", true);
+        EXPECT_TRUE(mcp_has_status(zzz, loom::core::McpMutationStatus::NotFound));
+        auto pon_local = manager.set_mcp_server_disabled(
+            "pon", true, loom::core::McpStorageScope::Local);
+        EXPECT_TRUE(mcp_has_status(pon_local, loom::core::McpMutationStatus::NotFound));
     }
     EXPECT_NE(c6_read_file(project_path), project_before);
 
@@ -1460,10 +1568,14 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
         ASSERT_TRUE(manager.load().has_value());
         auto outcome = manager.remove_mcp_server("dup");
         ASSERT_TRUE(outcome.has_value());
-        EXPECT_EQ(outcome->touched.size(), 1u);
-        EXPECT_EQ(outcome->touched[0], project_path);
-        EXPECT_EQ(outcome->failed.size(), 1u);
-        EXPECT_EQ(outcome->failed[0], user_path);
+        EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::Modified), 1u);
+        const auto* touched_path = mcp_first_path_with_status(*outcome, loom::core::McpMutationStatus::Modified);
+        ASSERT_NE(touched_path, nullptr);
+        EXPECT_EQ(*touched_path, project_path);
+        EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::WriteFailed), 1u);
+        const auto* failed_path = mcp_first_path_with_status(*outcome, loom::core::McpMutationStatus::WriteFailed);
+        ASSERT_NE(failed_path, nullptr);
+        EXPECT_EQ(*failed_path, user_path);
 
         fs::permissions(ro, fs::perms::owner_all, fs::perm_options::replace);
     }
@@ -1484,8 +1596,8 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
         ASSERT_TRUE(manager.load().has_value());
         auto outcome = manager.remove_mcp_server("dup");
         ASSERT_TRUE(outcome.has_value());
-        EXPECT_TRUE(outcome->touched.empty());
-        EXPECT_EQ(outcome->failed.size(), 2u);
+        EXPECT_FALSE(mcp_has_status(*outcome, loom::core::McpMutationStatus::Modified));
+        EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::WriteFailed), 2u);
 
         fs::permissions(ro2, fs::perms::owner_all, fs::perm_options::replace);
     }
@@ -1603,7 +1715,7 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
         auto removed = manager.remove_mcp_server(
             "p1", loom::core::McpStorageScope::Project);
         ASSERT_TRUE(removed.has_value());
-        EXPECT_EQ(removed->touched.size(), 1u);
+        EXPECT_EQ(mcp_count_status(*removed, loom::core::McpMutationStatus::Modified), 1u);
         EXPECT_TRUE(std::ranges::none_of(manager.settings().mcp_servers,
             [](const auto& s) { return s.name == "p1"; }));
         ASSERT_TRUE(manager.save().has_value());
@@ -1804,8 +1916,9 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
                                               make_cfg("p2")).has_value());
         EXPECT_EQ(mode_of(project_path),
                   fs::perms::owner_read | fs::perms::owner_write);
-        ASSERT_TRUE(manager.set_mcp_server_disabled(
-            "p1", true, loom::core::McpStorageScope::Project).has_value());
+        auto p1_disable = manager.set_mcp_server_disabled(
+            "p1", true, loom::core::McpStorageScope::Project);
+        EXPECT_TRUE(mcp_has_status(p1_disable, loom::core::McpMutationStatus::Modified));
         EXPECT_EQ(mode_of(project_path),
                   fs::perms::owner_read | fs::perms::owner_write);
     }
@@ -1861,6 +1974,590 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     EXPECT_TRUE(local_doc->root().get("mcpServers").has("l2"));
 
     fs::remove_all(root);
+}
+
+// ============================================================================
+// RFC 0007 Phase 2: MCP fallback read-only model tests
+//
+// When the user-tier READ path (~/.agents/settings.json) differs from the
+// WRITE path (~/.loom/settings.json), the user tier is a READ-ONLY
+// FALLBACK.  MCP entries that live only in the fallback file cannot be
+// mutated in place; the mutation commands must skip them and report
+// SkippedReadOnly so the caller can render "read-only fallback" guidance.
+// ============================================================================
+
+// ── Fallback detection ──────────────────────────────────────────────────
+
+TEST(McpFallback, FallbackDetection) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    EXPECT_TRUE(cm.is_user_fallback());
+    EXPECT_FALSE(cm.is_scope_writable(loom::core::McpStorageScope::User));
+    EXPECT_TRUE(cm.is_scope_writable(loom::core::McpStorageScope::Project));
+    EXPECT_TRUE(cm.is_scope_writable(loom::core::McpStorageScope::Local));
+}
+
+TEST(McpFallback, NoFallbackWhenLoomExists) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node"}}})JSON");
+    home.write_loom(R"JSON({"mcpServers": {"loom-srv": {"command": "node"}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    EXPECT_FALSE(cm.is_user_fallback());
+    EXPECT_TRUE(cm.is_scope_writable(loom::core::McpStorageScope::User));
+}
+
+// ── Fallback enumeration ────────────────────────────────────────────────
+
+TEST(McpFallback, FallbackEnumeration) {
+    TempHome home;
+    home.write_agents(R"JSON({
+  "mcpServers": {
+    "fb1": {"command": "node", "args": ["fb1.js"]},
+    "fb2": {"command": "node", "args": ["fb2.js"]}
+  }
+})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    // Both servers are read from the fallback.
+    ASSERT_EQ(cm.settings().mcp_servers.size(), 2u);
+    std::set<std::string> names;
+    for (const auto& s : cm.settings().mcp_servers) names.insert(s.name);
+    EXPECT_EQ(names, (std::set<std::string>{"fb1", "fb2"}));
+
+    // find_mcp_server_files returns the ~/.agents path.
+    const auto files = cm.find_mcp_server_files("fb1");
+    ASSERT_EQ(files.size(), 1u);
+    EXPECT_EQ(files[0].first, loom::core::McpStorageScope::User);
+    EXPECT_EQ(files[0].second, home.agents_path());
+}
+
+// ── remove_mcp_server ───────────────────────────────────────────────────
+
+TEST(McpFallback, RemoveFallbackOnly) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb-only": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    const std::string before = c6_read_file(home.agents_path());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.remove_mcp_server("fb-only");
+    ASSERT_TRUE(outcome.has_value());
+    EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::SkippedReadOnly), 1u);
+    EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::Modified), 0u);
+
+    // The fallback file is byte-unchanged.
+    EXPECT_EQ(c6_read_file(home.agents_path()), before);
+    // ~/.loom/settings.json is NOT created.
+    EXPECT_FALSE(home.loom_exists());
+}
+
+TEST(McpFallback, RemoveFallbackOnlyExplicitScope) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb-only": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    const std::string before = c6_read_file(home.agents_path());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.remove_mcp_server("fb-only", loom::core::McpStorageScope::User);
+    ASSERT_TRUE(outcome.has_value());
+    EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::SkippedReadOnly), 1u);
+
+    EXPECT_EQ(c6_read_file(home.agents_path()), before);
+    EXPECT_FALSE(home.loom_exists());
+}
+
+TEST(McpFallback, RemoveNotFound) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"exists": {"command": "node"}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.remove_mcp_server("ghost");
+    ASSERT_TRUE(outcome.has_value());
+    EXPECT_TRUE(mcp_has_status(*outcome, loom::core::McpMutationStatus::NotFound));
+    ASSERT_EQ(outcome->entries.size(), 1u);
+    EXPECT_EQ(outcome->entries[0].source, std::nullopt);
+}
+
+TEST(McpFallback, RemoveMultiLayerWritableAndFallback) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"dup": {"command": "node", "args": ["agents.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    // Write a project file with the same server name.
+    c6_write_file(home.project_path(),
+                  R"JSON({"mcpServers": {"dup": {"command": "node", "args": ["project.js"]}}})JSON");
+
+    const std::string agents_before = c6_read_file(home.agents_path());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.remove_mcp_server("dup");
+    ASSERT_TRUE(outcome.has_value());
+    // Project file is modified; fallback is skipped.
+    EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::Modified), 1u);
+    EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::SkippedReadOnly), 1u);
+
+    // The fallback file is byte-unchanged.
+    EXPECT_EQ(c6_read_file(home.agents_path()), agents_before);
+}
+
+// ── set_mcp_server_disabled ─────────────────────────────────────────────
+
+TEST(McpFallback, EnableFallbackOnly) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    const std::string before = c6_read_file(home.agents_path());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.set_mcp_server_disabled("fb", true);
+    EXPECT_TRUE(mcp_has_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly));
+    EXPECT_FALSE(mcp_has_status(outcome, loom::core::McpMutationStatus::Modified));
+
+    EXPECT_EQ(c6_read_file(home.agents_path()), before);
+    EXPECT_FALSE(home.loom_exists());
+}
+
+TEST(McpFallback, EnableFallbackOnlyAlreadyDisabled) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "disabled": true}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    // Already disabled — but read-only takes priority over no-op.
+    auto outcome = cm.set_mcp_server_disabled("fb", true);
+    EXPECT_TRUE(mcp_has_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly));
+    EXPECT_FALSE(mcp_has_status(outcome, loom::core::McpMutationStatus::Unchanged));
+}
+
+TEST(McpFallback, EnableNotFound) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"exists": {"command": "node"}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.set_mcp_server_disabled("ghost", true);
+    EXPECT_TRUE(mcp_has_status(outcome, loom::core::McpMutationStatus::NotFound));
+}
+
+// ── set_all_mcp_servers_disabled ────────────────────────────────────────
+
+TEST(McpFallback, EnableAllMixedFallbackAndWritable) {
+    TempHome home;
+    home.write_agents(R"JSON({
+  "mcpServers": {
+    "fb1": {"command": "node", "args": ["fb1.js"]},
+    "fb2": {"command": "node", "args": ["fb2.js"]}
+  }
+})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    // Write a project file with two writable servers.
+    c6_write_file(home.project_path(), R"JSON({
+  "mcpServers": {
+    "wr1": {"command": "node", "args": ["wr1.js"]},
+    "wr2": {"command": "node", "args": ["wr2.js"]}
+  }
+})JSON");
+
+    const std::string agents_before = c6_read_file(home.agents_path());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.set_all_mcp_servers_disabled(true);
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly), 2u);
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::Modified), 2u);
+
+    // The fallback file is byte-unchanged.
+    EXPECT_EQ(c6_read_file(home.agents_path()), agents_before);
+}
+
+TEST(McpFallback, EnableAllAllFallback) {
+    TempHome home;
+    home.write_agents(R"JSON({
+  "mcpServers": {
+    "fb1": {"command": "node", "args": ["fb1.js"]},
+    "fb2": {"command": "node", "args": ["fb2.js"]}
+  }
+})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.set_all_mcp_servers_disabled(true);
+    EXPECT_TRUE(outcome.all_read_only());
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly), 2u);
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::Modified), 0u);
+}
+
+TEST(McpFallback, EnableAllEmpty) {
+    TempHome home;
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.set_all_mcp_servers_disabled(true);
+    EXPECT_TRUE(outcome.is_empty());
+    EXPECT_FALSE(outcome.all_read_only());
+}
+
+TEST(McpFallback, EnableAllWritableNoOp) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    // Write a project file with a server that is already disabled.
+    c6_write_file(home.project_path(),
+                  R"JSON({"mcpServers": {"wr": {"command": "node", "disabled": true}}})JSON");
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.set_all_mcp_servers_disabled(true);
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::Unchanged), 1u);
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly), 1u);
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::Modified), 0u);
+}
+
+// ── upsert_mcp_server on fallback ───────────────────────────────────────
+
+TEST(McpFallback, AddUserScopeFromFallback) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    const std::string agents_before = c6_read_file(home.agents_path());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+    ASSERT_TRUE(cm.is_user_fallback());
+
+    // Add is always allowed — writes to the WRITE path (~/.loom).
+    loom::core::McpServerConfig cfg;
+    cfg.name = "new-srv";
+    cfg.transport = "stdio";
+    cfg.command = "node";
+    cfg.args = {"new.js"};
+    cfg.config_scope = "user";
+    auto result = cm.upsert_mcp_server(loom::core::McpStorageScope::User, cfg);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    // ~/.loom/settings.json is created; ~/.agents is untouched.
+    EXPECT_TRUE(home.loom_exists());
+    EXPECT_EQ(c6_read_file(home.agents_path()), agents_before);
+
+    // Same-instance takeover: the next load() switches the read path to
+    // ~/.loom, so the fallback state is gone.
+    ASSERT_TRUE(cm.load().has_value());
+    EXPECT_FALSE(cm.is_user_fallback());
+}
+
+TEST(McpFallback, SensitiveContentNotCopied) {
+    TempHome home;
+    home.write_agents(R"JSON({
+  "mcpServers": {
+    "secret-srv": {
+      "type": "http",
+      "url": "https://secret.example.com/mcp",
+      "headers": {"Authorization": "Bearer secret"}
+    }
+  }
+})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+    ASSERT_TRUE(cm.is_user_fallback());
+
+    // Add a new server to the user tier.
+    loom::core::McpServerConfig cfg;
+    cfg.name = "new-srv";
+    cfg.transport = "stdio";
+    cfg.command = "node";
+    cfg.args = {"new.js"};
+    cfg.config_scope = "user";
+    auto result = cm.upsert_mcp_server(loom::core::McpStorageScope::User, cfg);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    // ~/.loom/settings.json must NOT contain the fallback's secret.
+    ASSERT_TRUE(home.loom_exists());
+    const std::string content = c6_read_file(home.loom_path());
+    EXPECT_EQ(content.find("secret"), std::string::npos);
+    EXPECT_EQ(content.find("Authorization"), std::string::npos);
+    EXPECT_EQ(content.find("secret-srv"), std::string::npos);
+}
+
+TEST(McpFallback, ExplicitScopeUserOnFallback) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    const std::string before = c6_read_file(home.agents_path());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.set_mcp_server_disabled("fb", true, loom::core::McpStorageScope::User);
+    EXPECT_TRUE(mcp_has_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly));
+
+    EXPECT_EQ(c6_read_file(home.agents_path()), before);
+    EXPECT_FALSE(home.loom_exists());
+}
+
+// ── Fallback source path ────────────────────────────────────────────────
+
+TEST(McpFallback, FallbackSourcePath) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.remove_mcp_server("fb");
+    ASSERT_TRUE(outcome.has_value());
+    ASSERT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::SkippedReadOnly), 1u);
+    ASSERT_EQ(outcome->entries.size(), 1u);
+    ASSERT_NE(outcome->entries[0].source, std::nullopt);
+    // The source path is the true physical fallback path (~/.agents).
+    EXPECT_EQ(outcome->entries[0].source->path, home.agents_path());
+    EXPECT_FALSE(outcome->entries[0].source->writable);
+}
+
+TEST(McpFallback, EnableFallbackSourcePath) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.set_mcp_server_disabled("fb", true);
+    ASSERT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly), 1u);
+    ASSERT_EQ(outcome.entries.size(), 1u);
+    ASSERT_NE(outcome.entries[0].source, std::nullopt);
+    // The source path must be the READ path (~/.agents), not the write path
+    // (~/.loom) — the whole point of McpPhysicalSource is to tell the CLI
+    // which file was skipped.
+    EXPECT_EQ(outcome.entries[0].source->path, home.agents_path());
+    EXPECT_FALSE(outcome.entries[0].source->writable);
+}
+
+TEST(McpFallback, EnableAllFallbackSourcePath) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb1": {"command": "node", "args": ["a.js"]}, "fb2": {"command": "node", "args": ["b.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+
+    auto outcome = cm.set_all_mcp_servers_disabled(true);
+    ASSERT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly), 2u);
+    for (const auto& entry : outcome.entries) {
+        ASSERT_NE(entry.source, std::nullopt);
+        EXPECT_EQ(entry.source->path, home.agents_path());
+        EXPECT_FALSE(entry.source->writable);
+    }
+}
+
+TEST(McpFallback, McpSourceInScopeReturnsReadPath) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+    ASSERT_TRUE(cm.is_user_fallback());
+
+    auto source = cm.mcp_source_in_scope("fb", loom::core::McpStorageScope::User);
+    ASSERT_NE(source, std::nullopt);
+    EXPECT_EQ(source->path, home.agents_path());
+    EXPECT_FALSE(source->writable);
+    EXPECT_EQ(source->scope, loom::core::McpStorageScope::User);
+}
+
+// Owner-only scope: same-named server in local+project+fallback.
+// Only the highest-priority writable owner (local) is modified; the
+// fallback shadow is reported as SkippedReadOnly (RFC §5.3, Dev-2 v7.8 P1).
+TEST(McpFallback, EnableNamedOwnerOnlyScope) {
+    TempHome home;
+    // Same server "dup" in all three tiers.
+    home.write_agents(R"JSON({"mcpServers": {"dup": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    // Write project and local files.
+    auto proj_dir = home.work_dir() / ".loom";
+    fs::create_directories(proj_dir);
+    std::ofstream(proj_dir / "settings.json")
+        << R"JSON({"mcpServers": {"dup": {"command": "node", "args": ["proj.js"]}}})JSON";
+    std::ofstream(proj_dir / "settings.local.json")
+        << R"JSON({"mcpServers": {"dup": {"command": "node", "args": ["local.js"]}}})JSON";
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+    ASSERT_TRUE(cm.is_user_fallback());
+
+    // Record original bytes for byte-unchanged checks.
+    const auto agents_orig = c6_read_file(home.agents_path());
+    const auto proj_orig = c6_read_file(proj_dir / "settings.json");
+
+    auto outcome = cm.set_mcp_server_disabled("dup", true);
+    // Two entries: local owner Modified + fallback shadow SkippedReadOnly.
+    ASSERT_EQ(outcome.entries.size(), 2u);
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::Modified), 1u);
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly), 1u);
+
+    // Find the Modified entry and verify it's the local scope.
+    const auto& modified_entry = *std::ranges::find_if(
+        outcome.entries, [](const auto& e) {
+            return e.status == loom::core::McpMutationStatus::Modified;
+        });
+    EXPECT_EQ(modified_entry.source->scope, loom::core::McpStorageScope::Local);
+
+    // Find the SkippedReadOnly entry and verify it's the fallback.
+    const auto& skipped_entry = *std::ranges::find_if(
+        outcome.entries, [](const auto& e) {
+            return e.status == loom::core::McpMutationStatus::SkippedReadOnly;
+        });
+    EXPECT_EQ(skipped_entry.source->scope, loom::core::McpStorageScope::User);
+    EXPECT_EQ(skipped_entry.source->path, home.agents_path());
+
+    // Project and fallback files must be byte-unchanged.
+    EXPECT_EQ(c6_read_file(home.agents_path()), agents_orig)
+        << "~/.agents must be byte-unchanged";
+    EXPECT_EQ(c6_read_file(proj_dir / "settings.json"), proj_orig)
+        << "project file must be byte-unchanged (only local owner is modified)";
+
+    // Local file must now contain "disabled": true.
+    auto local_content = c6_read_file(proj_dir / "settings.local.json");
+    EXPECT_NE(local_content.find("\"disabled\""), std::string::npos)
+        << "local file should have disabled field added";
+    EXPECT_NE(local_content.find("true"), std::string::npos)
+        << "local file should have disabled: true";
+}
+
+// Write failure + fallback skip: project directory is read-only, so the
+// writable owner's patch fails with WriteFailed; fallback entries are
+// SkippedReadOnly.  (Dev-0 v7.9 P1-3, Dev-2 v7.10 P1)
+TEST(McpFallback, EnableAllWriteFailureAndFallbackSkip) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    // Write a project file with a writable server.
+    auto loom_dir = home.work_dir() / ".loom";
+    fs::create_directories(loom_dir);
+    std::ofstream(loom_dir / "settings.json")
+        << R"JSON({"mcpServers": {"wr": {"command": "node", "args": ["wr.js"]}}})JSON";
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+    ASSERT_TRUE(cm.is_user_fallback());
+
+    // Make the project directory read-only so the patch fails.
+    fs::permissions(loom_dir, fs::perms::owner_read | fs::perms::owner_exec |
+                               fs::perms::group_read | fs::perms::group_exec |
+                               fs::perms::others_read | fs::perms::others_exec,
+                    fs::perm_options::replace);
+
+    auto outcome = cm.set_all_mcp_servers_disabled(true);
+
+    // Restore permissions so TempHome destructor can clean up.
+    fs::permissions(loom_dir, fs::perms::owner_all | fs::perms::group_all |
+                               fs::perms::others_all,
+                    fs::perm_options::replace);
+
+    // The writable server "wr" should have WriteFailed.
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::WriteFailed), 1u);
+    // The fallback server "fb" should have SkippedReadOnly.
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly), 1u);
+    EXPECT_TRUE(outcome.has_failures());
+    // No server should have been Modified.
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::Modified), 0u);
+    // ~/.agents must be byte-unchanged.
+    EXPECT_EQ(c6_read_file(home.agents_path()),
+              std::string(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON"));
+}
+
+// Writable no-op + write failure + fallback skip: all three statuses in one
+// outcome.  A local-scope server already disabled (Unchanged), a project-scope
+// server that needs patching but the directory is read-only (WriteFailed),
+// and a fallback server (SkippedReadOnly).  (Dev-2 v7.10 P1)
+TEST(McpFallback, EnableAllNoOpPlusWriteFailurePlusFallbackSkip) {
+    TempHome home;
+    home.write_agents(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON");
+    CurrentPathGuard cwd_guard(home.work_dir());
+
+    auto loom_dir = home.work_dir() / ".loom";
+    fs::create_directories(loom_dir);
+    // Project server: enabled, needs to be disabled.
+    std::ofstream(loom_dir / "settings.json")
+        << R"JSON({"mcpServers": {"fail": {"command": "node", "args": ["p.js"]}}})JSON";
+    // Local server: already disabled (no-op).
+    std::ofstream(loom_dir / "settings.local.json")
+        << R"JSON({"mcpServers": {"noop": {"command": "node", "args": ["l.js"], "disabled": true}}})JSON";
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+    ASSERT_TRUE(cm.is_user_fallback());
+
+    // Make the .loom directory read-only so the project patch fails.
+    fs::permissions(loom_dir, fs::perms::owner_read | fs::perms::owner_exec |
+                               fs::perms::group_read | fs::perms::group_exec |
+                               fs::perms::others_read | fs::perms::others_exec,
+                    fs::perm_options::replace);
+
+    auto outcome = cm.set_all_mcp_servers_disabled(true);
+
+    // Restore permissions so TempHome destructor can clean up.
+    fs::permissions(loom_dir, fs::perms::owner_all | fs::perms::group_all |
+                               fs::perms::others_all,
+                    fs::perm_options::replace);
+
+    // All three statuses must be present.
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::Unchanged), 1u)
+        << "local server already disabled → Unchanged";
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::WriteFailed), 1u)
+        << "project server patch failed → WriteFailed";
+    EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly), 1u)
+        << "fallback server → SkippedReadOnly";
+    EXPECT_EQ(outcome.modified_count(), 0u);
+    EXPECT_TRUE(outcome.has_failures());
+    // ~/.agents must be byte-unchanged.
+    EXPECT_EQ(c6_read_file(home.agents_path()),
+              std::string(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON"));
 }
 
 // End of file

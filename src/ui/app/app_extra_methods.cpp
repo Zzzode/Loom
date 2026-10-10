@@ -218,6 +218,12 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
     screen_state_->chrome_store.git_branch = cached_git_branch_;
 }
 
+// ── set_mouse_mode_label (RFC 0007 Phase 2) ────────────────────────────
+void AppAdapter::set_mouse_mode_label(bool mouse_mode) {
+    screen_state_->chrome_store.status_bar.mouse_mode_label =
+        mouse_mode ? "Mouse mode: drag to select" : "Select text to copy";
+}
+
 // ── ProjectTodosToScreenState ───────────────────────────────────────────
 // Read the TodoWriteTool singleton and project its items into the screen
 // state's TodoStore so the todo panel (pinned above the prompt) renders

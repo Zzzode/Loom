@@ -165,6 +165,7 @@ flag payload:
   "theme": "auto",
   "verbose": false,
   "vimMode": false,
+  "mouseMode": false,
   "mcpServers": { ... },
   "permissions": { "deny": [...] }
 }
@@ -192,6 +193,40 @@ user     $LOOM_CONFIG_DIR/settings.json, else ~/.loom/settings.json
 Same-named entries overlay per entry across the files; `--scope` patches
 exactly one file in place. A full save to the project file never copies
 user/local-only entries — which may carry Authorization headers — into VCS.
+
+When the user read path falls back to `~/.agents/settings.json` (no
+`~/.loom/settings.json` exists), the user tier is **read-only**: MCP
+`remove`/`enable`/`disable` on fallback-owned entries are skipped. Use
+`loom mcp add --scope user` to create a writable `~/.loom/settings.json`
+that shadows the fallback.
+
+### Text selection and clipboard
+
+By default, Loom does **not** enable terminal mouse tracking, so your
+terminal's native text selection (click-drag) works without modifier keys.
+Selected text is auto-copied according to your terminal's configuration
+(e.g., Ghostty `copy-on-select`, iTerm2 "Applications in terminal may access
+clipboard").
+
+Set `"mouseMode": true` in `settings.json` to enable FTXUI mouse tracking
+(for in-app scrolling and clicking). In mouse mode, hold the terminal's
+bypass key (Shift on most terminals, Option on iTerm2) to select text
+natively.
+
+| Terminal | Native selection (default) | Auto-copy target | Bypass key (mouse mode) |
+|----------|---------------------------|------------------|-------------------------|
+| iTerm2 | ✓ | CLIPBOARD | Option+drag |
+| Ghostty | ✓ | PRIMARY (default); CLIPBOARD via `copy-on-select=clipboard` | Shift+drag |
+| Terminal.app | ✓ | None (Cmd+C) | Fn+drag |
+| Alacritty | ✓ | None (config) | Shift+drag |
+| Kitty | ✓ | PRIMARY; CLIPBOARD via config | Shift+drag |
+| WezTerm | ✓ | CLIPBOARD + PRIMARY | Shift+drag |
+| tmux | ✓ (own copy-mode) | Depends on config | Outer terminal's bypass key |
+| VS Code | ✓ | None (config) | Shift / Alt / Option |
+
+Over SSH, native clipboard tools (xclip, wl-copy) write to the remote
+machine's clipboard. Loom detects SSH and skips the native path by default;
+OSC 52 (terminal passthrough) still works if your terminal supports it.
 
 ## Slash commands
 

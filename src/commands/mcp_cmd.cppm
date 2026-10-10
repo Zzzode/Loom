@@ -769,6 +769,21 @@ private:
             return std::unexpected(outcome.error());
         }
 
+        // Categorize entries.
+        std::vector<std::filesystem::path> touched;
+        std::vector<std::filesystem::path> failed;
+        std::vector<std::filesystem::path> skipped;
+        for (const auto& entry : outcome->entries) {
+            if (!entry.source) continue;
+            switch (entry.status) {
+                using enum loom::core::McpMutationStatus;
+                case Modified:        touched.push_back(entry.source->path); break;
+                case WriteFailed:     failed.push_back(entry.source->path); break;
+                case SkippedReadOnly: skipped.push_back(entry.source->path); break;
+                default: break;
+            }
+        }
+
         auto join_paths = [](const std::vector<std::filesystem::path>& paths) {
             std::string joined;
             for (std::size_t i = 0; i < paths.size(); ++i) {
@@ -778,7 +793,8 @@ private:
             return joined;
         };
 
-        if (outcome->touched.empty() && outcome->failed.empty()) {
+        // Not found anywhere.
+        if (touched.empty() && failed.empty() && skipped.empty()) {
             if (!scope_label.empty()) {
                 return CommandResult::fail(std::format(
                     "MCP server '{}' not found in the '{}' scope", name, scope_label));
@@ -787,25 +803,50 @@ private:
                 std::format("MCP server '{}' not found", name));
         }
 
-        if (outcome->touched.empty()) {
-            // Present in one or more files, but EVERY write failed.
+        // All entries are read-only fallback.
+        if (touched.empty() && failed.empty() && !skipped.empty()) {
             return CommandResult::fail(std::format(
+                "MCP server '{}' is in a read-only fallback config ({}). "
+                "Use 'mcp add --scope user' to create a writable shadow, "
+                "then remove it.",
+                name, join_paths(skipped)));
+        }
+
+        // Zero writes succeeded with write failures.
+        if (touched.empty() && !failed.empty()) {
+            std::string msg = std::format(
                 "MCP server '{}' was found but could not be removed; "
                 "failed to write: {}",
-                name, join_paths(outcome->failed)));
+                name, join_paths(failed));
+            if (!skipped.empty()) {
+                msg += std::format(
+                    "\nSkipped (read-only fallback): {}", join_paths(skipped));
+            }
+            return CommandResult::fail(std::move(msg));
         }
 
         // Only reload/sync when at least one file actually changed.
-        if (auto synced = reload_and_sync(); !synced) {
-            return std::unexpected(synced.error());
+        if (!touched.empty()) {
+            if (auto synced = reload_and_sync(); !synced) {
+                return std::unexpected(synced.error());
+            }
         }
 
-        std::string out = std::format(
-            "Removed MCP server '{}' from: {}", name, join_paths(outcome->touched));
-        if (!outcome->failed.empty()) {
+        std::string out;
+        if (!touched.empty()) {
+            out = std::format(
+                "Removed MCP server '{}' from: {}", name, join_paths(touched));
+        }
+        if (!failed.empty()) {
+            if (!out.empty()) out += "\n";
             out += std::format(
-                "\nWarning: the name remains in these files (could not write): {}",
-                join_paths(outcome->failed));
+                "Warning: the name remains in these files (could not write): {}",
+                join_paths(failed));
+        }
+        if (!skipped.empty()) {
+            if (!out.empty()) out += "\n";
+            out += std::format(
+                "Skipped (read-only fallback): {}", join_paths(skipped));
         }
         return CommandResult::success(std::move(out));
     }

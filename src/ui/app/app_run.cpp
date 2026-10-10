@@ -26,10 +26,20 @@ namespace {
     loom::commands::AppCommandRegistry& cmd_registry,
     const std::filesystem::path* sessions_dir,
     loom::hooks::ToolPermissionHook* permission_hook,
-    loom::hooks::LifecycleHookRegistry* lifecycle_hooks
+    loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
+    bool mouse_mode
 ) {
     // Use the alternate-screen fullscreen - the REPL owns the terminal.
     auto screen = ScreenInteractive::Fullscreen();
+
+    // RFC 0007 Phase 2: disable FTXUI mouse tracking by default so the
+    // terminal's native text selection works. When mouse_mode is true (config
+    // "mouseMode": true), FTXUI keeps tracking and the in-app drag-to-select
+    // handler is active. TrackMouse() must be called before Loop() (FTXUI
+    // reads the flag in Install(), which Loop() calls).
+    if (!mouse_mode) {
+        screen.TrackMouse(false);
+    }
 
     // ── macOS/BSD line-discipline workaround: disable VLNEXT ─────────────
     // VLNEXT (the "literal-next" char, Ctrl+V by default) is processed by the
@@ -86,6 +96,9 @@ namespace {
 
     app->set_screen(&screen);
 
+    // RFC 0007 Phase 2: set the persistent mouse-mode hint in the status bar.
+    app->set_mouse_mode_label(mouse_mode);
+
     if (permission_hook && !permission_hook->is_auto_approve_mode()) {
         auto ui_callback = app->get_permission_callback();
         permission_hook->set_ask_user_fn(
@@ -120,9 +133,10 @@ extern "C" int loom_ui_run_app_bridge(
     loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
     loom::commands::AppCommandRegistry* cmd_registry,
     const std::filesystem::path* sessions_dir,
-    loom::hooks::ToolPermissionHook* permission_hook
+    loom::hooks::ToolPermissionHook* permission_hook,
+    bool mouse_mode
 ) {
-    return loom::ui::RunApp(*engine, *cmd_registry, sessions_dir, permission_hook, lifecycle_hooks);
+    return loom::ui::RunApp(*engine, *cmd_registry, sessions_dir, permission_hook, lifecycle_hooks, mouse_mode);
 }
 
 }  // namespace loom::ui

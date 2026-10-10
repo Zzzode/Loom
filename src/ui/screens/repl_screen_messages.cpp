@@ -26,6 +26,7 @@ import loom.ui.messages.tool_use_message;
 import loom.ui.messages.message_tool_result;
 import loom.ui.messages.local_command_output_message;
 import loom.ui.messages.api_error_message;
+import loom.diagnostics.debug;  // debug() (filtered by namespace)
 
 namespace loom::ui::repl_screen {
 using namespace ftxui;
@@ -461,6 +462,21 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // This eliminates the "first few wheel-up events from bottom have no
     // effect" dead-zone caused by heuristic overestimation.
     if (store) {
+        // RFC 0008: mode-decision telemetry. The view writes visible_count_out;
+        // the caller computes the mode and logs transitions. Commit 1 uses the
+        // stateless threshold (visible > 80); Commit 2 adds hysteresis.
+        const auto prev_mode = store->virtual_renderer_mode;
+        const auto next_mode = ml::decide_virtual_renderer_mode(
+            input.visible_count_out);
+        if (next_mode != prev_mode) {
+            store->virtual_renderer_mode = next_mode;
+            ++store->virtual_mode_switch_count;
+            loom::utils::debug("messages.virtual",
+                  "mode switch {} → {} at visible={}, count={}",
+                  static_cast<int>(prev_mode), static_cast<int>(next_mode),
+                  input.visible_count_out,
+                  store->virtual_mode_switch_count);
+        }
         if (input.virtual_jh_out) {
             store->virtual_list_active = true;
             store->virtual_jh = std::move(*input.virtual_jh_out);

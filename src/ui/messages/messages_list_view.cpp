@@ -335,6 +335,7 @@ namespace {
     constexpr std::size_t kBigChatThreshold = kMaxRenderedLastN;
     const auto& input = input_const;
     auto visible = build_visible_rows(input);
+    input.visible_count_out = visible.size();
     if (visible.size() > kBigChatThreshold) {
         // The filler is outside the visible window for large transcripts.
         (void)trailing_elements;

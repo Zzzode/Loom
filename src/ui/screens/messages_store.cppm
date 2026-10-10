@@ -157,6 +157,19 @@ struct MessagesStore {
     std::shared_ptr<loom::ui::messages::virtual_list::VirtualListState>
         virtual_list_state;
 
+    /// Hysteresis state for the virtual renderer threshold (RFC 0008).
+    /// Persisted across frames so the mode does not oscillate when
+    /// visible.size() fluctuates within the hysteresis band.
+    /// Updated ONLY by the UI thread after completing a list render
+    /// (repl_screen_messages.cpp reads input.next_virtual_mode).
+    ::loom::ui::messages_list::VirtualRendererMode virtual_renderer_mode =
+        ::loom::ui::messages_list::VirtualRendererMode::Static;
+
+    /// Cumulative mode transitions this session.  UI-thread-affined.
+    /// Resets on /clear and fresh session.  Increments only on actual
+    /// mode change (not every frame).
+    std::uint32_t virtual_mode_switch_count = 0;
+
     // M1 (FullscreenLayout slot-system chrome): scroll-derived chrome state.
     //   sticky_prompt — std::nullopt = at bottom (null).  Value present =
     //     scrolled up; the inner .text is shown as a breadcrumb header and

@@ -395,6 +395,12 @@ struct MessagesListInput {
     /// caller can set MessagesStore::virtual_jh for precise scroll bounds.
     /// Mutable because render_messages_list_view takes a const-ref input.
     mutable std::optional<virtual_list::JumpHandle> virtual_jh_out;
+
+    /// Output: the number of visible rows after filtering/compression.
+    /// Populated by render_messages_list_view so the caller can log
+    /// telemetry and (in Commit 2) feed the hysteresis decision.
+    /// Mutable because render_messages_list_view takes a const-ref input.
+    mutable std::size_t visible_count_out = 0;
 };
 
 enum class ActionKind { Copy, Regenerate, Delete };
@@ -631,7 +637,22 @@ namespace detail {
 // Accepts an optional `scroll_top_lines` value so ReplScreen's existing
 // scroll_offset plumbing can still drive the initial window position.
 
+/// Which renderer path the message list used this frame.
+/// Static = render_messages_list_view (all rows, leading/trailing elements).
+/// Virtual = render_messages_list_virtual_rows (windowed, O(viewport)).
+enum class VirtualRendererMode { Static, Virtual };
+
 inline constexpr std::size_t kVirtualThreshold = 80;
+
+/// Decide the renderer mode for this frame.
+/// Commit 1: stateless threshold (visible > 80 → Virtual).
+/// Commit 2 (RFC 0008): hysteresis band (enter > 80, exit < 60).
+[[nodiscard]] constexpr auto decide_virtual_renderer_mode(
+    std::size_t visible) noexcept -> VirtualRendererMode
+{
+    return visible > kVirtualThreshold ? VirtualRendererMode::Virtual
+                                       : VirtualRendererMode::Static;
+}
 
 [[nodiscard]] auto render_messages_list_virtual(
     const MessagesListInput& input_const,
@@ -800,89 +821,6 @@ constexpr std::size_t kMaxRenderedLastN = 80;   // last-N render cap
     Elements leading_elements = {}) -> Element;
 
 // =========================================================================
-// 8)  INTERACTIVE COMPONENT  (MakeMessagesList)
-// =========================================================================
-/// Full FTXUI Component.  Implements:
-///   • j / k / Ctrl+N / Ctrl+P  — move selection up / down
-///   • g / Home  — first row ;  G / End  — last row
-///   • /         — focus embedded search box
-///   • Escape    — clear search query, then (if already clear) deselect
-///   • Enter     — "default action" on selected row = Copy
-///   • c         — copy ;  r — regenerate ;  d — delete
-///   • Space     — toggle compact-group expand/collapse (if on a group row)
-///
-/// The search Input widget is rendered in a fixed header row stacked ABOVE
-/// the scrolling vbox — exactly the same layout pattern as UI6.
-
-class MessagesListComponent final : public ComponentBase {
-  public:
-    MessagesListComponent(MessagesListInput input,
-                          MessagesListCallbacks callbacks);
-
-    // ── Event handling ────────────────────────────────────────────────
-    bool OnEvent(Event event) override;
-
-    // ── Rendering ------------------------------------------------------
-    Element Render() override;
-
-    // ── Public setters — callers use these between frames to feed
-    //    streaming deltas, filter toggles, etc. --------------------------
-
-    void set_input(MessagesListInput next);
-
-    auto& input()       noexcept { return input_; }
-    auto& input() const noexcept { return input_; }
-
-  private:
-    // ── Internals ------------------------------------------------------
-    void rebuild_visible_cache();
-
-    auto filter_hash() const -> std::uint64_t;
-
-    void move_selection(int delta);
-
-    void move_selection_to(std::size_t abs_idx);
-
-    void commit_selection(std::size_t visible_idx);
-
-    auto current_visible_row() -> const VisibleRow*;
-
-    auto fire_action(ActionKind k) -> bool;
-
-    // ── Members --------------------------------------------------------
-    MessagesListInput    input_;
-    MessagesListCallbacks cbs_;
-
-    Component            search_input_;
-    std::string          live_search_query_;
-
-    std::vector<VisibleRow> visible_rows_;
-    std::optional<std::size_t> selected_visible_index_;
-    std::size_t          frame_count_ = 0;
-
-    // Change-detection cache keys
-    std::size_t          last_rows_size_   = std::size_t(-1);
-    std::string          last_search_;
-    std::uint64_t        last_filter_hash_ = std::uint64_t(-1);
-
-    // ── Mouse click-to-expand tracking ──────────────────────────────────
-    // Each frame, Render() records the screen box of every visible row via
-    // reflect().  OnEvent() uses these to map a mouse click → visible row,
-    // then toggles its expansion (same logic as Space/Enter keys).
-    //
-    // tracked_boxes_ uses unique_ptr<Box> because reflect() takes a Box&
-    // and vector<Box> reallocation would invalidate references during the
-    // row-building loop (push_back may grow the vector).
-    std::vector<std::size_t>        tracked_vi_;       // visible index per row
-    std::vector<std::unique_ptr<Box>> tracked_boxes_;  // screen boxes (parallel)
-    std::optional<std::size_t>      hovered_vi_;       // mouse-hovered row index
-};
-
-[[nodiscard]] auto MakeMessagesList(
-    MessagesListInput input,
-    MessagesListCallbacks callbacks = {}) -> Component;
-
-// =========================================================================
 // Test seams
 // =========================================================================
 // RFC 0003: clear the process-global thinking-stream grace map
@@ -891,40 +829,3 @@ class MessagesListComponent final : public ComponentBase {
 void clear_thinking_stream_last_seen_for_testing();
 
 } // namespace loom::ui::messages_list
-
-// =========================================================================
-// REPL integration note:
-//   In repl_screen.cppm's `RenderMessages` / `MakeReplScreen` the call site
-//   uses this shape/payload API once the engine owns the parallel vectors:
-//
-//     import loom.ui.messages.messages_list;
-//     using loom::ui::messages_list::MakeMessagesList;
-//     using loom::ui::messages_list::MessagesListInput;
-//     using loom::ui::messages_list::MessagesListCallbacks;
-//
-//     MessagesListInput in;
-//     in.rows   = engine.message_payloads();   // vector<MessageRowPayload>
-//     in.shapes = engine.message_shapes();     // vector<MessageShape>
-//     in.selected_row_idx     = state.selected_message_idx >= 0 ?
-//                                 std::optional(state.selected_message_idx) :
-//                                 std::nullopt;
-//     in.streaming_tail_row   = engine.is_streaming() ?
-//                                 (in.rows.empty() ? 0 : in.rows.size() - 1)
-//                               : in.rows.size();   // "not streaming" sentinel
-//     in.compact_boundary_groups = engine.compact_groups();
-//     in.filters              = {state.show_system, state.show_tool_in, …};
-//     in.search_query         = state.search_query;
-//     in.jump_to_row_on_init  = state.jump_row;
-//
-//     MessagesListCallbacks cb{
-//         .on_select = [](size_t i){ state.selected_message_idx = int(i); },
-//         .on_action = [](size_t i, ActionKind k){ engine.on_row_action(i,k); },
-//         .on_toggle_compact_group  = [](size_t g){ engine.toggle_group(g); },
-//         .on_click_attachment      = … ,
-//         .on_search_changed        = [&](auto& q){ state.search_query = q; },
-//     };
-//     auto list = MakeMessagesList(std::move(in), std::move(cb));
-//
-//   Use Render() in the non-interactive path:
-//     auto elm = loom::ui::messages_list::render_messages_list_view(in, n, 80);
-// =========================================================================

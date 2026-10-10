@@ -22,7 +22,7 @@ target_sources(loom_ui_messages
 # (RFC 0001 Phase C batch 7): filter/brief logic, the ~20-module
 # std::visit search closure (isolated on purpose), row geometry,
 # envelope/divider chrome, the heavy payload_row faithful-dispatch TU,
-# static/virtual view builders, and the component vtable anchor. Moved
+# and static/virtual view builders. Moved
 # from loom_ui unchanged; they implement the module interface owned by
 # this target.
 #
@@ -37,7 +37,6 @@ target_sources(loom_ui_messages PRIVATE
     ui/messages/messages_list_envelope.cpp
     ui/messages/messages_list_payload_row.cpp
     ui/messages/messages_list_view.cpp
-    ui/messages/messages_list_component.cpp
 )
 # loom.ui.foundation.* (design_tokens / design_figures / theme_provider),
 # loom.ui.visual.* (code_highlight / markdown), loom.ui.tools.* (registry /

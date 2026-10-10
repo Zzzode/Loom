@@ -296,6 +296,38 @@ struct RowClickTracker {
         -> std::optional<std::string>;
 };
 
+/// Which renderer path the message list used this frame.
+/// Static = render_messages_list_view (all rows, leading/trailing elements).
+/// Virtual = render_messages_list_virtual_rows (windowed, O(viewport)).
+enum class VirtualRendererMode { Static, Virtual };
+
+/// Enter virtual mode when visible entries exceed this threshold.
+inline constexpr std::size_t kVirtualEnterThreshold = 80;
+
+/// Exit virtual mode only when visible entries drop below this threshold.
+/// The 20-entry hysteresis band (60–80) prevents mode oscillation when
+/// visible.size() fluctuates near the boundary during streaming.
+inline constexpr std::size_t kVirtualExitThreshold = 60;
+
+static_assert(kVirtualExitThreshold < kVirtualEnterThreshold,
+              "Hysteresis band requires exit < enter");
+
+/// Decide the renderer mode for this frame using the hysteresis band.
+/// Static→Virtual when visible > kVirtualEnterThreshold.
+/// Virtual→Static when visible < kVirtualExitThreshold.
+/// Within the band, the previous mode is retained (no oscillation).
+[[nodiscard]] constexpr auto decide_virtual_renderer_mode(
+    VirtualRendererMode prev,
+    std::size_t visible) noexcept -> VirtualRendererMode
+{
+    if (prev == VirtualRendererMode::Virtual) {
+        return visible < kVirtualExitThreshold ? VirtualRendererMode::Static
+                                               : VirtualRendererMode::Virtual;
+    }
+    return visible > kVirtualEnterThreshold ? VirtualRendererMode::Virtual
+                                            : VirtualRendererMode::Static;
+}
+
 struct MessagesListInput {
     std::vector<MessageRowPayload> rows;
     /// Parallel to `rows`.  The dispatcher needs both shape and payload.
@@ -401,6 +433,29 @@ struct MessagesListInput {
     /// telemetry and (in Commit 2) feed the hysteresis decision.
     /// Mutable because render_messages_list_view takes a const-ref input.
     mutable std::size_t visible_count_out = 0;
+
+    /// Input: the renderer mode from the previous frame.
+    /// Set by the caller from MessagesStore::virtual_renderer_mode.
+    /// Used by the hysteresis decision to retain mode within the band.
+    VirtualRendererMode prev_virtual_mode = VirtualRendererMode::Static;
+
+    /// Output: the renderer mode decided for this frame.
+    /// Populated by render_messages_list_view via the hysteresis helper.
+    /// The caller commits this to MessagesStore after render.
+    /// Mutable because render_messages_list_view takes a const-ref input.
+    mutable VirtualRendererMode next_virtual_mode = VirtualRendererMode::Static;
+
+    /// Output: true when a mode switch triggered a same-frame scroll reset
+    /// to bottom (only when the user was NOT pinned). The caller persists
+    /// the reset to MessagesStore after render.
+    /// Mutable because render_messages_list_view takes a const-ref input.
+    mutable bool scroll_was_reset_to_bottom = false;
+
+    /// Input: when true, bypass the `visible.size() > 1` guard in the
+    /// static path so a single tall message stays anchored at bottom.
+    /// Set by the caller from MessagesStore::force_bottom_after_mode_switch
+    /// (persistent while pinned, cleared on scroll-away/clear/restore).
+    bool forced_repin = false;
 };
 
 enum class ActionKind { Copy, Regenerate, Delete };
@@ -625,34 +680,9 @@ namespace detail {
 // 3c) Render path: P0-3 VirtualMessageList when visible_rows > threshold
 // =========================================================================
 //
-// Threshold kVirtualThreshold (default 80) matches the legacy Last-N cap
-// AND VirtualMessageList.  Below threshold we still render everything
-// via render_messages_list_view (simple, deterministic, no overscan).
-// At/above threshold, this function:
-//   (1) converts visible_rows → virtual rows (with height estimates)
-//   (2) calls render_list_as_elements (spacer+slice+spacer, O(visible) not O(N))
-//   (3) forwards render_row back to messages_list's per-row envelope renderer
-//
-// Returns a fully-rendered FTXUI Element (yframe + vscroll_indicator applied).
-// Accepts an optional `scroll_top_lines` value so ReplScreen's existing
-// scroll_offset plumbing can still drive the initial window position.
-
-/// Which renderer path the message list used this frame.
-/// Static = render_messages_list_view (all rows, leading/trailing elements).
-/// Virtual = render_messages_list_virtual_rows (windowed, O(viewport)).
-enum class VirtualRendererMode { Static, Virtual };
-
-inline constexpr std::size_t kVirtualThreshold = 80;
-
-/// Decide the renderer mode for this frame.
-/// Commit 1: stateless threshold (visible > 80 → Virtual).
-/// Commit 2 (RFC 0008): hysteresis band (enter > 80, exit < 60).
-[[nodiscard]] constexpr auto decide_virtual_renderer_mode(
-    std::size_t visible) noexcept -> VirtualRendererMode
-{
-    return visible > kVirtualThreshold ? VirtualRendererMode::Virtual
-                                       : VirtualRendererMode::Static;
-}
+// Threshold hysteresis (RFC 0008): enter virtual at visible > 80,
+// exit at visible < 60.  The 20-entry band prevents mode oscillation
+// when visible.size() fluctuates near the boundary during streaming.
 
 [[nodiscard]] auto render_messages_list_virtual(
     const MessagesListInput& input_const,

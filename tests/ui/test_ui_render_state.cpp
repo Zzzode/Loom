@@ -409,6 +409,11 @@ TEST(ReplScreen, NewMessagesPillClickRePinsTranscript) {
     state->messages_store.divider_index = 0;
     state->messages_store.pill_visible = true;
     state->messages_store.unseen_message_count = 7;
+    // RFC 0008: pre-set Virtual mode so the hysteresis decision doesn't
+    // trigger a mode-switch reset_to_bottom (which would clear the pill
+    // before the test can click it).
+    state->messages_store.virtual_renderer_mode =
+        loom::ui::messages_list::VirtualRendererMode::Virtual;
 
     // More than kBigChatThreshold entries exercises the virtualized transcript
     // path used by resumed long sessions.
@@ -453,6 +458,11 @@ TEST(ReplScreen, NewMessagesPillKeyboardShortcutRePinsTranscript) {
     state->messages_store.divider_index = 0;
     state->messages_store.pill_visible = true;
     state->messages_store.unseen_message_count = 7;
+    // RFC 0008: pre-set Virtual mode so the hysteresis decision doesn't
+    // trigger a mode-switch reset_to_bottom (which would clear the pill
+    // before the test can use the keyboard shortcut).
+    state->messages_store.virtual_renderer_mode =
+        loom::ui::messages_list::VirtualRendererMode::Virtual;
 
     for (int i = 0; i < 100; ++i) {
         repl::MessageDisplayEntry message;

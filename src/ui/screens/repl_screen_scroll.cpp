@@ -702,11 +702,12 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
         if (was_pinned && !state->messages_store.scroll_pinned_to_bottom) {
             state->messages_store.divider_index = state->messages_store.messages.size();
             state->messages_store.message_count_at_scroll_away = state->messages_store.messages.size();
+            // RFC 0008: user scrolled away — release the persistent
+            // bottom-anchor so the view no longer bypasses the
+            // visible.size()>1 guard.
+            state->messages_store.force_bottom_after_mode_switch = false;
         } else if (!was_pinned && state->messages_store.scroll_pinned_to_bottom) {
-            state->messages_store.divider_index.reset();
-            state->messages_store.unseen_divider.reset();
-            state->messages_store.unseen_message_count = 0;
-            state->messages_store.pill_visible = false;
+            ClearRepinState(state->messages_store);
         }
 
         // If we are maintaining a live VirtualListState (Component-mode
@@ -740,11 +741,12 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
     if (was_pinned && !state->messages_store.scroll_pinned_to_bottom) {
         state->messages_store.divider_index = state->messages_store.messages.size();
         state->messages_store.message_count_at_scroll_away = state->messages_store.messages.size();
+        // RFC 0008: user scrolled away — release the persistent
+        // bottom-anchor so the view no longer bypasses the
+        // visible.size()>1 guard.
+        state->messages_store.force_bottom_after_mode_switch = false;
     } else if (!was_pinned && state->messages_store.scroll_pinned_to_bottom) {
-        state->messages_store.divider_index.reset();
-        state->messages_store.unseen_divider.reset();
-        state->messages_store.unseen_message_count = 0;
-        state->messages_store.pill_visible = false;
+        ClearRepinState(state->messages_store);
     }
     return true;
 }
@@ -770,10 +772,7 @@ void JumpTranscriptToBottom(ReplScreenState& state) {
     }
 
     state.messages_store.scroll_pinned_to_bottom = true;
-    state.messages_store.pill_visible = false;
-    state.messages_store.unseen_message_count = 0;
-    state.messages_store.divider_index.reset();
-    state.messages_store.unseen_divider.reset();
+    ClearRepinState(state.messages_store);
 }
 
 }  // namespace loom::ui::repl_screen

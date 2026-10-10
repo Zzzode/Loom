@@ -538,8 +538,14 @@ using namespace ftxui;
             int old_top = std::clamp(current, 0, max_top);
             int target  = std::clamp(old_top + delta, 0, max_top);
             if (target != old_top) {
+                const bool was_pinned = s.messages_store.scroll_pinned_to_bottom;
                 s.messages_store.scroll_offset = target;
                 s.messages_store.scroll_pinned_to_bottom = (target >= max_top);
+                // RFC 0008: release the persistent bottom-anchor when the
+                // user scrolls away from bottom.
+                if (was_pinned && !s.messages_store.scroll_pinned_to_bottom) {
+                    s.messages_store.force_bottom_after_mode_switch = false;
+                }
                 if (s.messages_store.virtual_list_state) {
                     namespace vl = loom::ui::messages::virtual_list;
                     s.messages_store.virtual_list_state->scroll_top = target;

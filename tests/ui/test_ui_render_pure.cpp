@@ -28,6 +28,7 @@ import loom.ui.widgets.all_components;
 import loom.ui.messages.user_text_message;
 import loom.ui.messages.api_error_message;
 import loom.ui.messages.message_tool_result;
+import loom.ui.messages.messages_list;  // VirtualRendererMode
 import loom.ui.messages.message_image;
 import loom.types.types;
 import loom.ui.foundation.declared_cursor;
@@ -365,8 +366,13 @@ TEST(ReplScreen, VirtualTranscriptScrollOffsetMovesContent) {
     repl::ReplScreenState state;
     state.messages_store.viewport_height_lines = 8;
     state.messages_store.scroll_pinned_to_bottom = false;
+    // RFC 0008: pre-set Virtual mode so the hysteresis decision doesn't
+    // trigger a mode-switch reset_to_bottom (which would override the
+    // scroll_offset being tested).
+    state.messages_store.virtual_renderer_mode =
+        loom::ui::messages_list::VirtualRendererMode::Virtual;
 
-    // 100 assistant messages — exceeds kBigChatThreshold (80), so the
+    // 100 assistant messages — exceeds kVirtualEnterThreshold (80), so the
     // virtual windowed renderer is used.
     for (int i = 0; i < 100; ++i) {
         repl::MessageDisplayEntry msg;
@@ -381,7 +387,10 @@ TEST(ReplScreen, VirtualTranscriptScrollOffsetMovesContent) {
                              state.messages_store.selected_message_idx,
                              state.messages_store.viewport_height_lines,
                              state.messages_store.scroll_offset,
-                             state.messages_store.scroll_pinned_to_bottom),
+                             state.messages_store.scroll_pinned_to_bottom,
+                             0, std::nullopt, {}, false, {}, false, false,
+                             false, false, nullptr, nullptr, nullptr, nullptr,
+                             &state.messages_store),
         120,
         20));
     EXPECT_NE(top.find("vmsg-000"), std::string::npos) << top;
@@ -394,7 +403,10 @@ TEST(ReplScreen, VirtualTranscriptScrollOffsetMovesContent) {
                              state.messages_store.selected_message_idx,
                              state.messages_store.viewport_height_lines,
                              state.messages_store.scroll_offset,
-                             state.messages_store.scroll_pinned_to_bottom),
+                             state.messages_store.scroll_pinned_to_bottom,
+                             0, std::nullopt, {}, false, {}, false, false,
+                             false, false, nullptr, nullptr, nullptr, nullptr,
+                             &state.messages_store),
         120,
         20));
     EXPECT_EQ(scrolled.find("vmsg-000"), std::string::npos) << scrolled;

@@ -265,6 +265,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         screen_state_->messages_store.unseen_message_count = 0;
         screen_state_->messages_store.pill_visible = false;
         ResetScrollToBottom(screen_state_->messages_store);
+        reset_virtual_renderer_state(screen_state_->messages_store);
         this->SyncState();
     };
 

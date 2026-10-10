@@ -148,6 +148,9 @@ void AppAdapter::OpenSkillsMenu() {
         FormatSkillsMenuOutput(std::move(skills));
     screen_state_->messages_store.scroll_offset = 0;
     screen_state_->messages_store.scroll_pinned_to_bottom = false;
+    // RFC 0008: opening the skills menu scrolls away from bottom;
+    // release the persistent bottom-anchor.
+    screen_state_->messages_store.force_bottom_after_mode_switch = false;
     PostRenderEvent();
 }
 

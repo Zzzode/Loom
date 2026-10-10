@@ -443,6 +443,14 @@ bool same_projected_source(const MessageDisplayEntry& a,
     input.streaming_md = streaming_md;
     input.row_click_tracker = row_click_tracker;
     namespace ml = loom::ui::messages_list;
+    // RFC 0008: feed the hysteresis decision with the previous mode from
+    // the store, and pass the persistent bottom-anchor flag so the view
+    // bypasses the visible.size()>1 guard for single tall messages.
+    if (store) {
+        input.prev_virtual_mode = store->virtual_renderer_mode;
+        input.forced_repin = store->force_bottom_after_mode_switch
+                          && store->scroll_pinned_to_bottom;
+    }
     // A flex-grow filler at the bottom of the
     // message list absorbs remaining viewport space so short content stays
     // compact at the top (logo + messages adjacent, no blank gap between).
@@ -462,12 +470,11 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // This eliminates the "first few wheel-up events from bottom have no
     // effect" dead-zone caused by heuristic overestimation.
     if (store) {
-        // RFC 0008: mode-decision telemetry. The view writes visible_count_out;
-        // the caller computes the mode and logs transitions. Commit 1 uses the
-        // stateless threshold (visible > 80); Commit 2 adds hysteresis.
+        // RFC 0008: commit the hysteresis decision and emit telemetry.
+        // The view computes next_virtual_mode via the hysteresis helper;
+        // the caller commits it to the store and logs transitions.
         const auto prev_mode = store->virtual_renderer_mode;
-        const auto next_mode = ml::decide_virtual_renderer_mode(
-            input.visible_count_out);
+        const auto next_mode = input.next_virtual_mode;
         if (next_mode != prev_mode) {
             store->virtual_renderer_mode = next_mode;
             ++store->virtual_mode_switch_count;
@@ -476,6 +483,14 @@ bool same_projected_source(const MessageDisplayEntry& a,
                   static_cast<int>(prev_mode), static_cast<int>(next_mode),
                   input.visible_count_out,
                   store->virtual_mode_switch_count);
+        }
+        // RFC 0008: persist the same-frame scroll reset. The view reset
+        // to bottom before building the Element; the caller commits the
+        // pinned state so the next frame reads the new coordinate system.
+        if (input.scroll_was_reset_to_bottom) {
+            ResetScrollToBottom(*store);
+            ClearRepinState(*store);
+            store->force_bottom_after_mode_switch = true;
         }
         if (input.virtual_jh_out) {
             store->virtual_list_active = true;

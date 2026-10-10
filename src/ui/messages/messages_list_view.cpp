@@ -62,7 +62,8 @@ namespace {
     const std::vector<VisibleRow>& visible,
     std::size_t frame_count,
     int viewport_rows,
-    int scroll_top_lines) -> Element
+    int scroll_top_lines,
+    bool reset_to_bottom = false) -> Element
 {
     namespace vl = loom::ui::messages::virtual_list;
 
@@ -93,7 +94,7 @@ namespace {
     state.rows                  = std::move(virt_rows);
     state.jh                    = vl::build_geometry(std::span{state.rows});
     // Initial scroll window
-    if (input.pin_to_bottom) {
+    if (input.pin_to_bottom || reset_to_bottom) {
         const int max = std::max(0, state.jh.total() - state.viewport_rows);
         state.scroll_top    = max;
         state.sticky_bottom = true;
@@ -327,22 +328,34 @@ namespace {
 
     // P0-3 virtual path: for *large* transcripts, delegate to the
     // windowed renderer so 100k+ messages cost O(viewport) per paint,
-    // not O(N).  The threshold equals `render_last_n` so the virtual
-    // path kicks in exactly when the static path would start capping
-    // — this eliminates the 80-89 message dead zone where the static
-    // path rendered only the last 80 messages and the user could not
-    // scroll to older ones.
-    constexpr std::size_t kBigChatThreshold = kMaxRenderedLastN;
+    // not O(N).  RFC 0008: the threshold now uses a hysteresis band
+    // (enter > 80, exit < 60) to prevent mode oscillation when
+    // visible.size() fluctuates near the boundary during streaming.
     const auto& input = input_const;
     auto visible = build_visible_rows(input);
     input.visible_count_out = visible.size();
-    if (visible.size() > kBigChatThreshold) {
+
+    // RFC 0008: hysteresis decision. The caller passes the previous mode
+    // from MessagesStore; the helper retains mode within the band.
+    const auto prev_mode = input.prev_virtual_mode;
+    const auto next_mode = decide_virtual_renderer_mode(
+        prev_mode, visible.size());
+    input.next_virtual_mode = next_mode;
+    const bool mode_switched = (next_mode != prev_mode);
+    // Same-frame scroll reset: when the mode switches and the user is NOT
+    // pinned, reset to bottom so the first frame in the new mode shows the
+    // latest content (the old scroll_offset is in the old coordinate system).
+    const bool reset_to_bottom = mode_switched && !input.pin_to_bottom;
+    input.scroll_was_reset_to_bottom = reset_to_bottom;
+
+    if (next_mode == VirtualRendererMode::Virtual) {
         // The filler is outside the visible window for large transcripts.
         (void)trailing_elements;
         return render_messages_list_virtual_rows(
             input, visible, frame_count,
             std::max(1, input.viewport_rows),
-            std::max(0, input.scroll_offset));
+            std::max(0, input.scroll_offset),
+            reset_to_bottom);
     }
 
     if (visible.empty()) {
@@ -520,8 +533,14 @@ namespace {
     // to the bottom and creating a large blank area below the logo.
     const bool content_exceeds_viewport = estimated_total_lines > vp;
 
-    if (input.pin_to_bottom && visible.size() > 1 &&
-        content_exceeds_viewport) {
+    if (reset_to_bottom) {
+        // RFC 0008: mode switch + not pinned → bottom for this frame.
+        // Unconditional: even a single tall message or content that fits
+        // the viewport must use bottom anchoring after a mode switch.
+        list = std::move(list) | focusPositionRelative(0, 1);
+    } else if (input.pin_to_bottom &&
+               (input.forced_repin ||  // persistent bypass after mode-switch repin
+                (visible.size() > 1 && content_exceeds_viewport))) {
         // Pinned to bottom: use focusPositionRelative so the view follows
         // the bottom during streaming.  This takes priority over
         // scroll_offset — when pinned, scroll_offset may hold a stale
@@ -529,7 +548,9 @@ namespace {
         // the view to drift instead of following new content.
         // The visible.size()>1 guard preserves single-tall-message behavior
         // (e.g. /help output) where showing the top is more useful on
-        // initial render.  The content_exceeds_viewport guard prevents the
+        // initial render.  forced_repin bypasses this guard after a
+        // mode-switch repin so a single tall message stays at bottom.
+        // The content_exceeds_viewport guard prevents the
         // FTXUI bottom-alignment blank-space artifact when short content
         // fits in the viewport (the "large blank area below logo" bug).
         list = std::move(list) | focusPositionRelative(0, 1);

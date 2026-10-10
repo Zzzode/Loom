@@ -148,7 +148,8 @@ struct MessagesStore {
     std::size_t message_count_at_scroll_away = 0;
 
     // P0-3 VirtualMessageList — the imperative handle exposed by the windowed
-    // renderer when the current visible count crosses kVirtualThreshold.
+    // renderer when the current visible count crosses the hysteresis
+    // threshold (RFC 0008: enter > 80, exit < 60).
     // `virtual_list_active` is set per-frame by RenderMessages; when true,
     // ScrollTranscript uses JumpToVisualLine() which runs O(log N) binary
     // search against the JumpHandle instead of the crude EstimateTranscriptRows.
@@ -169,6 +170,14 @@ struct MessagesStore {
     /// Resets on /clear and fresh session.  Increments only on actual
     /// mode change (not every frame).
     std::uint32_t virtual_mode_switch_count = 0;
+
+    /// Persistent bottom-anchor after a mode-switch forced repin (RFC 0008).
+    /// Set to true when a mode switch triggers a scroll reset to bottom.
+    /// While true and scroll_pinned_to_bottom is true, the view bypasses
+    /// the `visible.size() > 1` guard so single tall messages stay at bottom.
+    /// Cleared when the user scrolls away from bottom, or on /clear/restore.
+    /// UI-thread-affined.
+    bool force_bottom_after_mode_switch = false;
 
     // M1 (FullscreenLayout slot-system chrome): scroll-derived chrome state.
     //   sticky_prompt — std::nullopt = at bottom (null).  Value present =
@@ -236,6 +245,27 @@ struct MessagesStore {
 inline void ResetScrollToBottom(MessagesStore& store) {
     store.scroll_offset = 0;
     store.scroll_pinned_to_bottom = true;
+}
+
+/// Clear the repin state (divider, unseen divider, unseen count, pill).
+/// Extracted from the two existing repin paths in repl_screen_scroll.cpp
+/// so user-initiated repin and forced repin (RFC 0008 mode switch) clear
+/// exactly the same state.
+inline void ClearRepinState(MessagesStore& store) {
+    store.divider_index.reset();
+    store.unseen_divider.reset();
+    store.unseen_message_count = 0;
+    store.pill_visible = false;
+}
+
+/// Reset the virtual renderer hysteresis state (RFC 0008).
+/// Called on /clear, callback-clear, and session restore to ensure
+/// the next render starts from Static mode with a fresh counter.
+inline void reset_virtual_renderer_state(MessagesStore& store) {
+    store.virtual_renderer_mode =
+        ::loom::ui::messages_list::VirtualRendererMode::Static;
+    store.virtual_mode_switch_count = 0;
+    store.force_bottom_after_mode_switch = false;
 }
 
 }  // namespace loom::ui

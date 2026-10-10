@@ -419,6 +419,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
         screen_state_->messages_store.unseen_message_count = 0;
         screen_state_->messages_store.pill_visible = false;
         ResetScrollToBottom(screen_state_->messages_store);
+        reset_virtual_renderer_state(screen_state_->messages_store);
         this->SyncState();
         return;
     }
@@ -674,6 +675,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                     screen_state_->messages_store.unseen_message_count = 0;
                     screen_state_->messages_store.pill_visible = false;
                     ResetScrollToBottom(screen_state_->messages_store);
+                    reset_virtual_renderer_state(screen_state_->messages_store);
                     this->SyncState();
                     AppendLocalCommandMessage(result->message, false, true);
                     PostRenderEvent();

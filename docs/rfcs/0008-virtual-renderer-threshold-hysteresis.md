@@ -1,7 +1,7 @@
 ---
 rfc: 8
 title: Virtual Renderer Threshold Hysteresis
-status: accepted
+status: implementable
 owners: "@Zzzode"
 reviewers:
   - "Dev-0 (agent)"
@@ -607,7 +607,7 @@ default (Static) mode at ≤ 80 are unaffected.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |-------|-------|-------|--------|-------------------------------|
-| A | Hysteresis + telemetry + dead code deletion | Constants, mode type, MessagesStore fields, decision helper, same-frame scroll reset, telemetry, delete MessagesListComponent, reset on clear/restore | complete (015f60c + b6806fa) | All tests pass (debug + release serial ctest); regression tests prove G1/G2/G5; `graph_check.py --target-ui9 --store-lint` 0 violations; no new `kVirtualThreshold` references; BMI PSS of `messages_store.cppm` before/after recorded in Implementation History; importer count before/after recorded |
+| A | Hysteresis + telemetry + dead code deletion | Constants, mode type, MessagesStore fields, decision helper, same-frame scroll reset, telemetry, delete MessagesListComponent, reset on clear/restore | complete (015f60c + b6806fa); PRR APPROVED (round 5, Dev-0 + Dev-2) | All tests pass (debug + release serial ctest); regression tests prove G1/G2/G5; `graph_check.py --target-ui9 --store-lint` 0 violations; no new `kVirtualThreshold` references; BMI PSS of `messages_store.cppm` and `messages_list.cppm` before/after recorded in Implementation History; importer count before/after recorded |
 
 **Follow-up (separate RFC):** Option C — unify static and virtual renderer
 paths so the virtual path also renders leading/trailing elements in a
@@ -896,6 +896,7 @@ sequences:
 | 2026-10-10 | A | PRR round 3 fix: EnvironmentGuard + TempDirGuard RAII structs for /resume test (Dev-0 P1); StaticToVirtualUnpinnedSwitchResetsToBottom test (Dev-2 P1); rollback plan updated to reverse-order revert including test/seam commits (Dev-2 P1); graduation metrics commands corrected to tools/arch/ paths, ctest labeled as parallel not serial, PSS scope clarified (Dev-2 P1). | 9eb2d87 + cce4c89 + docs | 2180/2180 debug + release | — |
 | 2026-10-10 | A | **PRR round 4: Dev-0 REQUEST_CHANGES (P1: serial ctest not completed; P1: BMI PSS final scope incomplete — messages_store.cppm and messages_list.cppm need baseline vs final measurement). Dev-2 REQUEST_CHANGES (P1: same serial ctest + BMI PSS gaps).** | — | — | Dev-0, Dev-2 |
 | 2026-10-10 | A | PRR round 4 fix: serial ctest debug 2181/2181 + release 2181/2181 (graduation gate); BMI PSS measured at baseline (59c2b8b) vs final (1d02517) for messages_store.cppm (748.0→747.2 MB) and messages_list.cppm (1739.8→1696.2 MB); raw JSON artifacts recorded. | docs only | 2181/2181 serial debug + release | — |
+| 2026-10-10 | A | **PRR round 5: Dev-2 APPROVE, Dev-0 APPROVE.** PRR PASSED. All blocking findings closed across rounds 1–5. Dev-2 non-blocking P2: baseline JSON git_head metadata shows calling repo HEAD (1d02517), not target worktree SHA (59c2b8b) — noted below. | — | — | Dev-0, Dev-2 |
 
 ### Graduation metrics details
 
@@ -928,6 +929,16 @@ recorded in the Implementation History:
   `/tmp/bmi-final-messages-list.json`.
   The `messages_list.cppm` decrease is from deleting MessagesListComponent
   (Commit 1) and simplifying the interface.
+
+  **Metadata note (Dev-2 P2):** The baseline JSON files' `repo.git_head`
+  field shows `1d02517` (the calling repo's HEAD) rather than the actual
+  baseline checkout SHA (`59c2b8b`). This is a limitation of
+  `measure_bmi.py`: it records the calling repo's HEAD, not the target
+  worktree's HEAD. The actual baseline checkout was `59c2b8b` in a
+  temporary worktree at `/tmp/loom-baseline` with `--build-dir
+  /tmp/loom-baseline/build/debug`. The source and build paths in the JSON
+  correctly point to the baseline worktree. Do not interpret the
+  `repo.git_head` field as the baseline SHA.
 - **Importer count**:
   `grep -rc "import loom.ui.screens.messages_store" src/ --include="*.cppm" --include="*.cpp" | grep -v ":0" | wc -l`
   before/after: 12 → 12 (unchanged).
@@ -941,15 +952,15 @@ recorded in the Implementation History:
 master while the RFC status was `accepted` (design review passed, PRR not yet
 conducted). Per the RFC skill, "no production-code commit implementing an RFC
 may merge while its status is below implementable." This was a process error,
-not a deliberate bypass. Recovery: the PRR is being conducted retroactively
+not a deliberate bypass. Recovery: the PRR was conducted retroactively
 (this section). PRR round 1 findings were addressed in 1d06ca4 + 803e3f6;
 PRR round 2 findings (visual assertions, callback-clear, /resume tests) were
 addressed in e04c546; PRR round 3 findings (RAII guard, unpinned visual test,
 rollback plan, metrics corrections) were addressed in 9eb2d87 + cce4c89;
 PRR round 4 findings (serial ctest, BMI PSS final scope) were addressed by
 running the graduation gate measurements and recording them in the
-Graduation metrics details section. The RFC status will be updated to
-`implementable` only after Dev-0 and Dev-2 approve the PRR. The two-commit
-rollout structure (Commit 1 = telemetry + deletion, Commit 2 = hysteresis)
-preserves the rollback path, but the complete rollback now requires
+Graduation metrics details section. **PRR round 5: Dev-0 APPROVE, Dev-2
+APPROVE.** The RFC status has been updated from `accepted` to `implementable`.
+The two-commit rollout structure (Commit 1 = telemetry + deletion, Commit 2 =
+hysteresis) preserves the rollback path, but the complete rollback now requires
 reverse-order revert of test/seam commits as documented in §8.

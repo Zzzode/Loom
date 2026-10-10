@@ -141,7 +141,7 @@ This RFC fixes that defect and adds telemetry to verify the on-site link.
 
 | Metric | Current | Target | How measured |
 |--------|---------|--------|-------------|
-| Mode switches for entry sequences staying in [60, 80] | Unbounded (oscillation at 80) | 0 (hysteresis band) | `messages.virtual` debug channel, stderr redirected to file |
+| Mode switches for 79↔81 entry sequence | 2+ switches (79→81 enters, 81→79 exits, repeat) | 1 switch (enters Virtual at 81, stays Virtual at 79) | `messages.virtual` debug channel, stderr redirected to file |
 | Leading/trailing elements after virtual switch | Lost | Lost (unchanged — Option C follow-up) | Renderer-parity tests (future RFC) |
 | Full-viewport repaints per frame | 1 (FTXUI architecture) | 1 (unchanged — out of scope) | FTXUI source |
 
@@ -169,9 +169,14 @@ This RFC fixes that defect and adds telemetry to verify the on-site link.
 - G5. Regression tests prove the hysteresis decision logic: 79→81→79 stays
   virtual until < 60; 60→59 returns to static; mode state survives
   `/clear` → Static, session restore → Static, and resize → unchanged.
-  Pin/scroll numeric state is preserved across mode switches. This RFC
-  does **not** promise cross-mode visual parity (leading/trailing
-  preservation) — that is Option C territory.
+  Pin-to-bottom state is preserved across mode switches. **Unpinned scroll
+  continuity is explicitly excluded from Phase A** — the two renderer
+  paths use incompatible scroll coordinate systems (JumpHandle visual
+  lines vs EstimateTranscriptRows heuristic), and preserving the raw
+  `scroll_offset` integer does not preserve the visual scroll position.
+  On mode switch, if not pinned to bottom, the scroll position is reset
+  to bottom (predictable degradation). Cross-mode scroll continuity is
+  Option C territory (unified coordinate system).
 
 ## 4. Non-Goals
 
@@ -372,9 +377,17 @@ callback or background event handler.
 | Event | Reset location | Mechanism |
 |-------|---------------|-----------|
 | First render (fresh store) | `messages_store.cppm` default member init | `= VirtualRendererMode::Static` |
-| `/clear` | `app_handle_submit.cpp:414-422` (clear handler) | Explicit `store.virtual_renderer_mode = Static; store.virtual_mode_switch_count = 0;` added alongside existing divider/scroll resets |
-| Session restore (runtime) | `app_handle_submit.cpp:668-677` (restore handler) | Explicit reset added alongside existing restore logic |
+| Slash `/clear` | `app_handle_submit.cpp:414-422` (clear handler) | Calls `reset_virtual_renderer_state()` |
+| Callback clear (session-expired card) | `app_constructor.cpp:260-268` (`cbs.on_clear_session`) | Calls `reset_virtual_renderer_state()` |
+| Session restore (runtime) | `app_handle_submit.cpp:668-677` (restore handler) | Calls `reset_virtual_renderer_state()` |
 | Session restore (startup) | Fresh `MessagesStore` construction | Default init |
+
+To avoid duplicating field assignments across three call sites, a
+`reset_virtual_renderer_state()` helper is added to `MessagesStore` (or as
+a free function in the screens area). It resets `virtual_renderer_mode =
+Static` and `virtual_mode_switch_count = 0`. All three call sites (slash
+clear, callback clear, restore) call this helper alongside their existing
+divider/scroll resets.
 
 **Resize does NOT reset the mode.** Resize is not a new list lifecycle;
 forcing a > 80 virtual list back to static on resize would re-introduce
@@ -414,12 +427,29 @@ fixing one path while leaving a public API with the same defect.
 
 ### 5.7 Frame telemetry
 
-Add a `debug("messages.virtual", ...)` call at the mode-decision site in
-`messages_list_view.cpp`. The debug channel is `messages.virtual`. The
-call fires **only on mode transitions** (`next_mode != prev_mode`), not
-every frame — so the per-call mutex acquisition in `debug()`
-(`debug.cppm:54`) is rare and negligible. No new per-frame debug call is
-added.
+The mode-decision logic is in the view (`messages_list_view.cpp`), but the
+**transition telemetry is emitted by the caller** (`repl_screen_messages.cpp`)
+at the commit point. This ensures the mode state, counter, and log line are
+the same UI-thread linearization point:
+
+```cpp
+// repl_screen_messages.cpp, after render_messages_list_view returns:
+const auto prev_mode = store->virtual_renderer_mode;
+const auto next_mode = input.next_virtual_mode;
+if (next_mode != prev_mode) {
+    store->virtual_renderer_mode = next_mode;
+    ++store->virtual_mode_switch_count;
+    debug("messages.virtual",
+          "mode switch {} → {} at visible={}, count={}",
+          static_cast<int>(prev_mode), static_cast<int>(next_mode),
+          visible_count, store->virtual_mode_switch_count);
+}
+```
+
+The view does NOT emit telemetry — it only computes `next_virtual_mode`.
+The debug channel is `messages.virtual`. The call fires **only on mode
+transitions** (`next_mode != prev_mode`), not every frame — so the per-call
+mutex acquisition in `debug()` (`debug.cppm:54`) is rare and negligible.
 
 **Verification requires stderr redirection.** `loom::utils::debug()` writes
 to `std::cerr` (`debug.cppm:55-60`). If stderr shares the TTY with the TUI,
@@ -468,7 +498,8 @@ confined to:
 | `src/ui/messages/messages_list_view.cpp` | Hysteresis decision logic; write `next_virtual_mode`; telemetry |
 | `src/ui/screens/messages_store.cppm` | Add `virtual_renderer_mode` + `virtual_mode_switch_count` fields |
 | `src/ui/screens/repl_screen_messages.cpp` | Set `input.prev_virtual_mode` from store; read `input.next_virtual_mode` after render; increment switch counter |
-| `src/ui/app/app_handle_submit.cpp` | Reset mode + counter in `/clear` handler (:414-422) and session restore handler (:668-677) |
+| `src/ui/app/app_handle_submit.cpp` | Call `reset_virtual_renderer_state()` in slash `/clear` handler (:414-422) and session restore handler (:668-677) |
+| `src/ui/app/app_constructor.cpp` | Call `reset_virtual_renderer_state()` in `cbs.on_clear_session` (:260-268) |
 | `src/cmake/targets/loom_ui_messages.cmake` | Remove `messages_list_component.cpp` entry |
 
 No wire-protocol, persisted-shape, or config changes.
@@ -483,14 +514,16 @@ cost. The `VirtualRendererMode` enum is defined in `messages_list.cppm`
 (5 direct importers), which `messages_store.cppm` already imports — no new
 module edge is added.
 
-**Golden impact:** Mode selection changes at the 80-entry boundary. Golden
-tests that exercise exactly 80 visible entries with a persistent
-`prev_virtual_mode` may produce different output (static vs virtual).
-Golden tests that use the default (Static) `prev_virtual_mode` are
-unaffected — they always take the static path at ≤ 80. Golden tests must
-be reviewed for any that construct > 80 visible entries; if found, their
-output is expected to change (virtual path) and must be re-baselined with
-`UPDATE_GOLDENS=1`.
+**Golden impact:** Mode selection changes only for sessions with history
+that cross from > 80 into the [60, 80] band. In the old stateless code,
+> 80 was already Virtual — so golden tests with > 80 entries and default
+(Static) `prev_virtual_mode` are unaffected (they enter Virtual at > 80 in
+both old and new code). The change is in the 60–80 band with history:
+previously Virtual, now stays Virtual (previously would have exited to
+Static at ≤ 80). Golden tests that construct > 80 entries with a
+persisted Virtual mode may produce different output and must be reviewed
+and re-baselined with `UPDATE_GOLDENS=1` if needed. Golden tests with
+default (Static) mode at ≤ 80 are unaffected.
 
 ## 6. Phases and graduation criteria
 
@@ -508,7 +541,7 @@ field carry over; only the view's internal branching changes.
 
 | Question | Answer |
 |----------|--------|
-| Is the change backward-compatible? | Yes — no persisted state, no config, no wire changes. `MessagesListComponent` deletion is safe (zero callers). |
+| Is the change backward-compatible? | Yes — no persisted state, no config, no wire changes. `MessagesListComponent`/`MakeMessagesList` is an exported module interface but Loom does not install its own modules (only tree-sitter headers are installed, per `src/CMakeLists.txt:77-78`), so it is an internal API with no supported out-of-tree consumers. Deletion is safe. |
 | Is there a rollback story? | Yes — revert the commit. The mode falls back to stateless `visible.size() > 80`. `MessagesListComponent` would need to be restored from git history if any out-of-tree caller exists (none found). |
 | Are there new failure modes? | Mode could get "stuck" in virtual if visible count stays in [60, 80]. In this band the static path would render logo + filler + all rows, so this is the acknowledged cost of hysteresis — stability over visual completeness. The virtual path is still correct (O(viewport) rows, no last-N cap); it just lacks leading/trailing elements. |
 | Is telemetry safe? | Yes — counts and mode names only, no message content. Requires stderr redirection to avoid TTY pollution. |
@@ -586,8 +619,9 @@ performance benefit of the virtual renderer for sessions between 80 and
 Make the virtual path also render leading/trailing elements in a unified
 content coordinate system. This eliminates the structural difference
 between paths, making mode switches invisible. **Deferred to a follow-up
-RFC** — larger change, needs renderer-parity tests first, and the
-hysteresis band is a sufficient incident fix. This RFC's design is
+RFC** — larger change, needs renderer-parity tests first. This RFC limits
+threshold oscillation; the field flicker benefit remains unverified until
+telemetry data is collected post-merge. This RFC's design is
 forward-compatible with Option C.
 
 ### D. Do nothing
@@ -614,8 +648,11 @@ effort. **Rejected** — delete per project convention.
 
 ### 11.1 New regression tests
 
-Tests live in `tests/ui/test_ui_messages.cpp` (existing file for message
-list view tests).
+Tests are split across two files by what they verify:
+
+**Pure view/decision-logic tests** in `tests/ui/test_ui_messages.cpp`:
+These test the hysteresis decision function directly with controlled
+entry-count sequences.
 
 | Test | Scenario | Expected |
 |------|----------|----------|
@@ -623,29 +660,40 @@ list view tests).
 | `VirtualThreshold.ReturnsToStaticBelowExit` | prev=Virtual, 81→60→59 | Mode stays Virtual at 60, returns to Static at 59 |
 | `VirtualThreshold.InitialModeIsStatic` | Default-constructed input, empty list | Mode is Static |
 | `VirtualThreshold.StatelessCallerDefaultsStatic` | No prev_virtual_mode set, 100 entries | Mode is Virtual (enters at > 80 from Static default) |
-| `VirtualThreshold.ClearResetsMode` | Virtual mode → /clear → 70 entries | Mode is Static after clear; stays Static at 70 |
-| `VirtualThreshold.SessionRestoreResetsMode` | Virtual mode → restore 70 entries | Mode is Static after restore; stays Static at 70 |
-| `VirtualThreshold.ResizePreservesMode` | Virtual mode → resize → 70 entries | Mode stays Virtual |
-| `VirtualThreshold.SyncStatePreservesMode` | Virtual mode → SyncState → 70 entries | Mode stays Virtual |
 | `VirtualThreshold.ExactBoundary80` | prev=Static, exactly 80 | Mode stays Static (> 80 is strict) |
 | `VirtualThreshold.ExactBoundary60` | prev=Virtual, exactly 60 | Mode stays Virtual (< 60 is strict) |
-| `VirtualThreshold.PinScrollNumericStatePreserved` | Pinned + scrolled states at both transitions | Numeric pin/scroll values unchanged across mode switch |
-| `VirtualThreshold.SwitchCounterIncrements` | Two mode transitions | Counter = 2; resets to 0 on /clear |
+| `VirtualThreshold.PinToBottomPreserved` | Pinned state at both transitions | Pin-to-bottom flag unchanged across mode switch |
+| `VirtualThreshold.UnpinnedScrollResetToBottom` | Unpinned (scrolled up) at mode switch | Scroll position reset to bottom (predictable degradation) |
+| `VirtualThreshold.SwitchCounterIncrements` | Two mode transitions | Counter = 2 |
 
-#### Dynamic multi-frame tests
-
-The tests above are single-frame decision-logic tests. The production
-oscillation scenario is dynamic: streaming deltas, chain merges, and
-projection rebuilds change `visible.size()` across consecutive frames.
-Additional tests in `tests/ui/test_ui_messages.cpp`:
+**AppAdapter lifecycle tests** in `tests/ui/test_app_runtime.cpp`:
+These call the real `/clear`, callback-clear, and restore handlers to
+verify the mode is reset through the actual code paths, not just manual
+enum assignment.
 
 | Test | Scenario | Expected |
 |------|----------|----------|
-| `VirtualThreshold.StreamingOscillation` | Simulate streaming: entries added 75→82→78→85→72 across 5 frames | Mode: Static→Virtual(82)→Virtual(78)→Virtual(85)→Virtual(72); no flip-flop |
-| `VirtualThreshold.SelectionSurvivesSwitch` | `selected_row_idx` set; mode switches Static→Virtual | Selection row index preserved (may need re-mapping if row indexing differs) |
+| `VirtualThreshold.SlashClearResetsMode` | Virtual mode → slash `/clear` → 70 entries | Mode is Static after clear; stays Static at 70 |
+| `VirtualThreshold.CallbackClearResetsMode` | Virtual mode → `cbs.on_clear_session()` → 70 entries | Mode is Static after callback clear; stays Static at 70 |
+| `VirtualThreshold.SessionRestoreResetsMode` | Virtual mode → restore 70 entries | Mode is Static after restore; stays Static at 70 |
+| `VirtualThreshold.ResizePreservesMode` | Virtual mode → resize → 70 entries | Mode stays Virtual |
+| `VirtualThreshold.SyncStatePreservesMode` | Virtual mode → SyncState → 70 entries | Mode stays Virtual |
+| `VirtualThreshold.ClearResetsCounter` | Virtual mode with counter=2 → `/clear` | Counter is 0 after clear |
+
+#### Dynamic multi-frame tests
+
+The production oscillation scenario is dynamic — streaming deltas, chain
+merges, and projection rebuilds change `visible.size()` across consecutive
+frames. These tests in `tests/ui/test_ui_messages.cpp` simulate multi-frame
+sequences:
+
+| Test | Scenario | Expected |
+|------|----------|----------|
+| `VirtualThreshold.StreamingOscillation` | Entries added 75→82→78→85→72 across 5 frames | Mode: Static→Virtual(82)→Virtual(78)→Virtual(85)→Virtual(72); no flip-flop |
+| `VirtualThreshold.SelectionSurvivesSwitch` | `selected_row_idx` set; mode switches Static→Virtual | Selection row index preserved (may need re-mapping) |
 | `VirtualThreshold.SearchSurvivesSwitch` | `search_query` non-empty; mode switches | Search state preserved; both paths have search support |
-| `VirtualThreshold.UnseenDividerSurvivesSwitch` | Unseen divider active; mode switches | Divider anchor preserved across coordinate-system switch |
-| `VirtualThreshold.ScrollDuringSwitch` | Scroll events arrive between frames during mode switch | No crash; scroll position is in a valid (possibly imprecise) state; documented as known issue (§9.5) |
+| `VirtualThreshold.UnseenDividerSurvivesSwitch` | Unseen divider active; mode switches | Divider anchor preserved across switch |
+| `VirtualThreshold.ScrollDuringSwitch` | Scroll events arrive between frames during mode switch | No crash; unpinned scroll reset to bottom (predictable degradation) |
 
 ### 11.2 Existing tests
 
@@ -681,8 +729,11 @@ Additional tests in `tests/ui/test_ui_messages.cpp`:
    - No oscillation (no repeated enter/exit within the [60, 80] band)
    - Counter increments match actual mode transitions
 5. Baseline comparison: revert RFC, repeat, compare switch count
-6. If LOOM_DEBUG is the on-site flicker cause, telemetry will show zero
-   mode switches during the flicker, exonerating the threshold
+6. If the user still sees flicker with zero mode switches in the log, the
+   threshold is exonerated and the cause lies elsewhere (e.g., LOOM_DEBUG
+   stderr pollution, viewport height lag). stderr pollution and mode
+   switches can co-occur — they are separately excluded/correlated, not
+   mutually exclusive.
 
 ## 12. Documentation impact
 
@@ -706,3 +757,6 @@ Additional tests in `tests/ui/test_ui_messages.cpp`:
 |------|-------|-------------|--------|-------|--------|
 | 2026-10-10 | — | RFC drafted (provisional) | 49d31f8 | — | — |
 | 2026-10-10 | — | Design review round 1: Dev-0 REQUEST_CHANGES (3 P0 + 2 P1), Dev-2 REQUEST_CHANGES (5 P1 + 4 P2) | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | — | Revision 2: all P0/P1 addressed (state passing, G5 scope, reset lifecycle, dead code deletion, telemetry, motivation) | d26735e | — | — |
+| 2026-10-10 | — | Design review round 2: build/perf agent (1 P0 + 4 P1 + 6 P2), correctness agent (3 P1 + 7 P2). Most already fixed in rev 2; new findings addressed in rev 3. | — | — | build/perf agent, correctness agent |
+| 2026-10-10 | — | Revision 3: dynamic tests, scroll coord mismatch doc, BMI fan-out, PSS metric fix, virtual_list_active derivation, residual oscillation, INV-1 placement note, PRR wording, baseline two-commit method | 39d978e | — | — |

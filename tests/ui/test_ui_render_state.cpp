@@ -1161,6 +1161,29 @@ TEST(ReplScreen, StaticToVirtualSwitchShowsTail) {
     EXPECT_NE(text.find("tail-visible message 080"), std::string::npos);
 }
 
+TEST(ReplScreen, StaticToVirtualUnpinnedSwitchResetsToBottom) {
+    namespace repl = loom::ui::repl_screen;
+    using loom::ui::messages_list::VirtualRendererMode;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    AddTestMessages(state->messages_store, 81, "unpinned-tail");
+    // User has scrolled up (not pinned to bottom).
+    state->messages_store.scroll_pinned_to_bottom = false;
+
+    // Frame 1: Static→Virtual switch. Unpinned → same-frame scroll reset
+    // to bottom → force_bottom_after_mode_switch = true.
+    auto text = RenderFrame(state);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
+              VirtualRendererMode::Virtual);
+    EXPECT_TRUE(state->messages_store.force_bottom_after_mode_switch);
+    // Last message must be visible despite being unpinned before switch.
+    EXPECT_NE(text.find("unpinned-tail message 080"), std::string::npos);
+
+    // Frame 2: force_bottom still active → tail stays visible.
+    text = RenderFrame(state);
+    EXPECT_NE(text.find("unpinned-tail message 080"), std::string::npos);
+}
+
 TEST(ReplScreen, WheelUpMovesScreenAwayFromBottom) {
     namespace repl = loom::ui::repl_screen;
     using loom::ui::messages_list::VirtualRendererMode;

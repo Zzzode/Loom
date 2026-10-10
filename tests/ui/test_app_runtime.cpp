@@ -34,6 +34,49 @@ import loom.ui.features.teams.live_teammates;
 namespace {
 namespace fs = std::filesystem;
 namespace acsrc = loom::ui::autocomplete_sources;
+
+/// RAII guard for environment variables (Dev-0 P1: getenv() pointer can be
+/// invalidated by setenv(); ASSERT/exception must not skip restore).
+struct EnvironmentGuard {
+    std::string name;
+    std::optional<std::string> previous;
+
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
+        if (const char* existing = std::getenv(name.c_str())) {
+            previous = existing;
+        }
+        setenv(name.c_str(), value.c_str(), 1);
+    }
+
+    ~EnvironmentGuard() {
+        if (previous) {
+            setenv(name.c_str(), previous->c_str(), 1);
+        } else {
+            unsetenv(name.c_str());
+        }
+    }
+
+    EnvironmentGuard(const EnvironmentGuard&) = delete;
+    EnvironmentGuard& operator=(const EnvironmentGuard&) = delete;
+};
+
+/// RAII guard for temp directory cleanup.
+struct TempDirGuard {
+    fs::path path;
+
+    explicit TempDirGuard(fs::path p) : path(std::move(p)) {
+        fs::create_directories(path);
+    }
+
+    ~TempDirGuard() {
+        std::error_code ec;
+        fs::remove_all(path, ec);
+    }
+
+    TempDirGuard(const TempDirGuard&) = delete;
+    TempDirGuard& operator=(const TempDirGuard&) = delete;
+};
 }
 
 
@@ -2190,13 +2233,11 @@ TEST(AppRuntime, VirtualRendererStateResetOnSessionRestore) {
     const auto storage_root = fs::temp_directory_path() /
         ("loom_ui_vr_restore_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    fs::create_directories(storage_root);
 
-    // Point LOOM_CONFIG_DIR at the temp dir so the resume command's
-    // load_sessions() and the AppAdapter's sessions_dir() resolve to the
-    // same path (<storage_root>/sessions).
-    const char* old_config_dir = std::getenv("LOOM_CONFIG_DIR");
-    setenv("LOOM_CONFIG_DIR", storage_root.c_str(), 1);
+    // RAII: temp dir cleanup + LOOM_CONFIG_DIR restore, even on ASSERT/exception.
+    TempDirGuard temp_dir(storage_root);
+    EnvironmentGuard config_dir_guard(
+        "LOOM_CONFIG_DIR", storage_root.string());
 
     // Create a minimal session fixture: metadata.json + one messages.jsonl line.
     // list_recent_sessions() requires metadata.json to discover the session.
@@ -2229,13 +2270,5 @@ TEST(AppRuntime, VirtualRendererStateResetOnSessionRestore) {
     EXPECT_FALSE(test_seams(app).virtual_renderer_is_virtual_for_testing());
     EXPECT_EQ(test_seams(app).virtual_mode_switch_count_for_testing(), 0u);
     EXPECT_FALSE(test_seams(app).force_bottom_after_mode_switch_for_testing());
-
-    // Restore LOOM_CONFIG_DIR.
-    if (old_config_dir) {
-        setenv("LOOM_CONFIG_DIR", old_config_dir, 1);
-    } else {
-        unsetenv("LOOM_CONFIG_DIR");
-    }
-    fs::remove_all(storage_root);
 }
 

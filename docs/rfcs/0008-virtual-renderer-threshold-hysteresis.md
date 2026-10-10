@@ -292,13 +292,47 @@ if (reset_to_bottom) {
     // Not guarded by content-size checks — even a single tall message
     // or content that fits the viewport must use bottom anchoring.
     list = std::move(list) | focusPositionRelative(0, 1);
-} else if (input.pin_to_bottom && visible.size() > 1 &&
-           content_exceeds_viewport) {
+} else if (input.pin_to_bottom &&
+           (input.forced_repin ||  // bypass single-message guard after repin
+            (visible.size() > 1 && content_exceeds_viewport))) {
     list = std::move(list) | focusPositionRelative(0, 1);
 } else if (input.scroll_offset > 0) {
     list = std::move(list) | focusPosition(0, input.scroll_offset + vp / 2);
 }
 ```
+
+The `forced_repin` field on `MessagesListInput` is set by the caller on the
+frame **after** a forced repin. It bypasses the existing
+`visible.size() > 1` guard (which is designed for initial render of single
+tall messages like /help output, where showing the top is more useful).
+Without this bypass, a Virtual→Static switch with a single tall message
+would show bottom on the switch frame (via `reset_to_bottom`) but jump
+back to top on the next frame (because the `visible.size() > 1` guard
+blocks the `pin_to_bottom` bottom anchor).
+
+The caller manages the flag lifecycle:
+
+```cpp
+// repl_screen_messages.cpp, after render_messages_list_view returns:
+if (input.scroll_was_reset_to_bottom) {
+    // Persist bottom-anchored state so the next frame stays at bottom.
+    // Reuse the same state transition as user-initiated repin.
+    ResetScrollToBottom(*store);
+    ClearRepinState(*store);  // shared helper (see below)
+    store->forced_repin_pending = true;  // bypass single-message guard next frame
+}
+// On the next frame, before calling the view:
+input.forced_repin = store->forced_repin_pending;
+store->forced_repin_pending = false;  // one-frame flag
+```
+
+**Shared `ClearRepinState` helper:** The existing repin paths
+(`repl_screen_scroll.cpp:701-709` and `:741-747`) each clear
+`divider_index`, `unseen_divider`, `unseen_message_count`, and
+`pill_visible`. To avoid drift between user repin and forced repin, a
+`ClearRepinState(MessagesStore&)` helper is extracted in the screens area
+and called by all three sites (two existing + one new). This ensures the
+forced repin clears exactly the same state as a user-initiated repin.
 
 The caller (`repl_screen_messages.cpp`) persists the reset after render:
 
@@ -371,6 +405,11 @@ VirtualRendererMode virtual_renderer_mode = VirtualRendererMode::Static;
 /// Resets on /clear and fresh session.  Increments only on actual
 /// mode change (not every frame).
 std::uint32_t virtual_mode_switch_count = 0;
+
+/// One-frame flag: set by the caller after a forced repin (mode switch
+/// with scroll reset), consumed by the next frame's view to bypass the
+/// `visible.size() > 1` guard for single tall messages.  UI-thread-affined.
+bool forced_repin_pending = false;
 ```
 
 The existing `virtual_list_active` bool is kept for scroll-path consumers
@@ -529,10 +568,11 @@ confined to:
 
 | File | Change |
 |------|--------|
-| `src/ui/messages/messages_list.cppm` | Add `VirtualRendererMode` enum, `decide_virtual_renderer_mode()` helper, `kVirtualEnterThreshold`, `kVirtualExitThreshold`; add `prev_virtual_mode` / `next_virtual_mode` / `visible_count_out` / `scroll_was_reset_to_bottom` to `MessagesListInput`; remove `kVirtualThreshold`, `MessagesListComponent`, `MakeMessagesList` |
-| `src/ui/messages/messages_list_view.cpp` | Hysteresis decision via helper; same-frame scroll reset on unpinned switch (unconditional in static path); write `next_virtual_mode` + `visible_count_out` + `scroll_was_reset_to_bottom` |
-| `src/ui/screens/messages_store.cppm` | Add `virtual_renderer_mode` + `virtual_mode_switch_count` fields |
-| `src/ui/screens/repl_screen_messages.cpp` | Set `input.prev_virtual_mode` from store; read `input.next_virtual_mode` after render; increment switch counter |
+| `src/ui/messages/messages_list.cppm` | Add `VirtualRendererMode` enum, `decide_virtual_renderer_mode()` helper, `kVirtualEnterThreshold`, `kVirtualExitThreshold`; add `prev_virtual_mode` / `next_virtual_mode` / `visible_count_out` / `scroll_was_reset_to_bottom` / `forced_repin` to `MessagesListInput`; remove `kVirtualThreshold`, `MessagesListComponent`, `MakeMessagesList` |
+| `src/ui/messages/messages_list_view.cpp` | Hysteresis decision via helper; same-frame scroll reset on unpinned switch (unconditional in static path); bypass `visible.size() > 1` guard when `forced_repin`; write `next_virtual_mode` + `visible_count_out` + `scroll_was_reset_to_bottom` |
+| `src/ui/screens/messages_store.cppm` | Add `virtual_renderer_mode` + `virtual_mode_switch_count` + `forced_repin_pending` fields; add `reset_virtual_renderer_state()` helper |
+| `src/ui/screens/repl_screen_messages.cpp` | Set `input.prev_virtual_mode` + `input.forced_repin` from store; read `input.next_virtual_mode` + `input.scroll_was_reset_to_bottom` after render; commit mode/counter/telemetry; on reset: `ResetScrollToBottom` + `ClearRepinState` + set `forced_repin_pending` |
+| `src/ui/screens/repl_screen_scroll.cpp` | Extract `ClearRepinState(MessagesStore&)` shared helper from existing repin paths (:701-709, :741-747) |
 | `src/ui/app/app_handle_submit.cpp` | Call `reset_virtual_renderer_state()` in slash `/clear` handler (:414-422) and session restore handler (:668-677) |
 | `src/ui/app/app_constructor.cpp` | Call `reset_virtual_renderer_state()` in `cbs.on_clear_session` (:260-268) |
 | `src/cmake/targets/loom_ui_messages.cmake` | Remove `messages_list_component.cpp` entry |
@@ -741,7 +781,8 @@ sequences:
 | `VirtualThreshold.StreamingOscillation` | Entries added 75→82→78→85→72 across 5 frames | Mode: Static→Virtual(82)→Virtual(78)→Virtual(85)→Virtual(72); no flip-flop |
 | `VirtualThreshold.SelectionSurvivesSwitch` | `selected_row_idx` set; mode switches Static→Virtual | Selection row index preserved (same row identity in both paths) |
 | `VirtualThreshold.SearchSurvivesSwitch` | `search_query` non-empty; mode switches | Search state preserved; both paths have search support |
-| `VirtualThreshold.UnseenDividerSurvivesSwitch` | Unseen divider active; mode switches | Divider anchor preserved across switch |
+| `VirtualThreshold.UnseenDividerSurvivesSwitchPinned` | Unseen divider active; **pinned**; mode switches | Divider anchor preserved across switch (no reset when pinned) |
+| `VirtualThreshold.UnseenDividerClearedOnReset` | Unseen divider active; **unpinned**; mode switches (triggers reset) | Divider/pill cleared (same semantics as user repin — see `ResetPersistsAcrossFrames`) |
 | `VirtualThreshold.ScrollDuringSwitch` | Scroll events arrive between frames during mode switch | No crash; unpinned scroll reset to bottom (predictable degradation) |
 
 ### 11.2 Existing tests
@@ -817,3 +858,5 @@ sequences:
 | 2026-10-10 | — | Revision 5: same-frame scroll reset inside view (before Element build), decide_virtual_renderer_mode() helper, visible_count_out field, two-commit rollout, PSS/importer separation, SelectionSurvivesSwitch acceptance criteria | 9edaeaf | — | — |
 | 2026-10-10 | — | Design review round 5: Dev-0 P0 (repin not persisted), Dev-2 2 P1 (same + static guard). All addressed in rev 6. | — | — | Dev-0, Dev-2 |
 | 2026-10-10 | — | Revision 6: scroll_was_reset_to_bottom output field, caller persists repin (ResetScrollToBottom + divider/pill clear), static reset unconditional, std::max(0,...) for virtual, cross-two-frame integration test | 9704ce1 | — | — |
+| 2026-10-10 | — | Design review round 6: Dev-0 P0 (caller store hierarchy + unseen_message_count + shared repin helper), Dev-2 P1 (single tall message second-frame jump) + P2 (test conflict). All addressed in rev 7. | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | — | Revision 7: forced_repin flag (bypass single-message guard), ClearRepinState shared helper, caller pseudocode store hierarchy fix, unseen_message_count in repin, UnseenDivider test split (pinned vs unpinned) | — | — | — |

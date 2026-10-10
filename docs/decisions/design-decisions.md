@@ -1357,6 +1357,27 @@ promoted to the repository root in the same series of commits, so
   2026-06-15. **Do not revive the unused prototype**; re-introduce a dependency-injection abstraction
   only when an actual consumer needs it.
 
+- **`src/ui/messages/messages_list_view.cpp:335-345`** — The static↔virtual renderer switch uses a
+  **hysteresis band** (RFC 0008): enter virtual at `visible.size() > 80` (`kVirtualEnterThreshold`),
+  exit at `< 60` (`kVirtualExitThreshold`). The 20-entry band prevents oscillation when the visible
+  count fluctuates near the boundary during streaming. The previous stateless `> 80` check flipped
+  modes on every frame that crossed the threshold. The decision is made by
+  `decide_virtual_renderer_mode(prev, visible)` (constexpr, pure) and committed by the caller
+  (`repl_screen_messages.cpp`), not by the view itself.
+
+- **`src/ui/messages/messages_list_component.cpp`** — **Deleted** (RFC 0008 Commit 1, -664 lines).
+  `MessagesListComponent` / `MakeMessagesList` had zero callers in production or tests. The
+  interactive list it provided (keyboard nav + embedded search) is not used — the REPL screen drives
+  the messages list through `render_messages_list_view` directly. Do not revive without a concrete
+  consumer.
+
+- **`src/ui/screens/messages_store.cppm`** — `force_bottom_after_mode_switch` is a **persistent**
+  flag (RFC 0008) set after a mode-switch scroll reset. While true AND pinned, the static renderer
+  bypasses the `visible.size() > 1` guard so a single tall message still scrolls to bottom. It is
+  cleared at exactly three pin=false sites (wheel scroll-away, layout scroll-away, skills menu
+  open) plus `/clear`, callback-clear, and session restore. Do not add new pin=false paths without
+  clearing this flag.
+
 ---
 
 ## B. Non-obvious constraints — a rule a future maintainer would violate without knowing

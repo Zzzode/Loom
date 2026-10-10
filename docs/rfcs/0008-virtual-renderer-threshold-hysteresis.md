@@ -874,3 +874,18 @@ sequences:
 | 2026-10-10 | — | Revision 9: add repl_screen_layout.cpp:542 + app_skills_menu.cpp:150 to flag clearing table; add shared setter implementation note; status → accepted | dc9a1fd | — | — |
 | 2026-10-10 | A | Commit 1: telemetry + dead code deletion. Delete MessagesListComponent (-664 lines, zero callers); add VirtualRendererMode enum + decide_virtual_renderer_mode helper (stateless threshold); add visible_count_out + virtual_renderer_mode + virtual_mode_switch_count; add messages.virtual debug telemetry. No behavior change. | 015f60c | 2160/2160 debug | — |
 | 2026-10-10 | A | Commit 2: hysteresis band + same-frame scroll reset. Replace stateless threshold with enter>80/exit<60 band; add prev/next_virtual_mode + scroll_was_reset_to_bottom + forced_repin to MessagesListInput; add force_bottom_after_mode_switch to MessagesStore; same-frame scroll reset on unpinned switch (virtual: scroll_top=max; static: unconditional focusPositionRelative); ClearRepinState extracted from 3 repin paths; reset_virtual_renderer_state on /clear, callback-clear, restore; flag cleared at 3 pin=false sites. 3 existing tests updated to pre-set Virtual mode. | b6806fa | 2160/2160 debug + release | — |
+| 2026-10-10 | A | **PRR round 1: Dev-0 REQUEST_CHANGES (P0: implementable gate skipped; P1: §11 regression tests not landed; P1: graduation evidence not recorded; P2: stale interface docs). Dev-2 REQUEST_CHANGES (P0: same gate; P1-1: helper-only tests insufficient; P1-2: graduation metrics missing; P2: design-decisions.md + docs/README.md not synced).** | — | — | Dev-0, Dev-2 |
+| 2026-10-10 | A | PRR fix: 15 VirtualThreshold regression tests (6 helper + 8 lifecycle through ReplScreen::Render + 1 AppAdapter /clear reset); AppTestingSeams accessors for virtual renderer state; stale MakeMessagesList/MessagesListComponent/kBigChatThreshold references removed. Graduation metrics: serial ctest debug 2175/2175, release 2175/2175; graph_check 0 violations; BMI PSS 740.2→739.8 MB; importer 12→12; kVirtualThreshold refs 0. | 1d06ca4 | 2175/2175 debug + release serial | — |
+
+### Process deviation
+
+**The implementable gate was skipped.** Commits 015f60c and b6806fa landed on
+master while the RFC status was `accepted` (design review passed, PRR not yet
+conducted). Per the RFC skill, "no production-code commit implementing an RFC
+may merge while its status is below implementable." This was a process error,
+not a deliberate bypass. Recovery: the PRR is being conducted retroactively
+(this section), all P0/P1/P2 findings are addressed in 1d06ca4, and the RFC
+status will be updated to `implementable` only after Dev-0 and Dev-2 approve
+the PRR. The two-commit rollout structure (Commit 1 = telemetry + deletion,
+Commit 2 = hysteresis) preserves the rollback path: revert b6806fa to return
+to the stateless threshold.

@@ -14,7 +14,7 @@ module;
 /// Flow:
 ///   1. POST /v1/code/sessions              (OAuth, no env_id) -> session.id
 ///   2. POST /v1/code/sessions/{id}/bridge  (OAuth)            -> worker_jwt, expires_in, api_base_url, worker_epoch
-///   3. createV2ReplTransport(worker_jwt, worker_epoch)        -> SSE + CCRClient
+///   3. ReplTransport(session_url, worker_jwt, session_id, worker_epoch) -> SSE + CCRClient
 ///   4. createTokenRefreshScheduler                             -> proactive /bridge re-call
 ///   5. 401 on SSE -> rebuild transport with fresh /bridge credentials
 
@@ -45,7 +45,7 @@ using loom::core::Result;
 //
 // These previously lived in bridge/init.cppm and reached this module only
 // transitively through `import loom.bridge.init`. init.cppm was a dead
-// duplicate of the v1 daemon loop (the live one is daemon/daemon_server.cppm)
+// duplicate of the daemon loop (the live one is daemon/daemon_server.cppm)
 // with zero production importers, so the types it actually owned moved here
 // — this module is their only remaining consumer.
 
@@ -155,12 +155,12 @@ EnvLessBridgeConfig get_env_less_bridge_config() {
 enum class ConnectCause { initial, proactive_refresh, auth_401_recovery };
 
 // =========================================================================
-// build_ccr_v2_sdk_url — build the v2 session URL
+// build_worker_session_url — build the worker session URL
 // =========================================================================
 
-/// Build a CCR v2 session URL from the API base URL and session ID.
+/// Build a CCR worker session URL from the API base URL and session ID.
 /// Returns an HTTP(S) URL pointing at /v1/code/sessions/{id}.
-[[nodiscard]] inline std::string build_ccr_v2_sdk_url(
+[[nodiscard]] inline std::string build_worker_session_url(
     std::string_view api_base_url,
     std::string_view session_id
 ) {
@@ -398,12 +398,11 @@ private:
 // =========================================================================
 
 /// Wraps an HTTP EventSource connection for Server-Sent Events.
-/// The v2 transport uses SSE for the read stream (server -> REPL).
+/// The REPL transport uses SSE for the read stream (server -> REPL).
 ///
 /// Delegates to the real loom::cli::SSETransport implementation (W3C SSE parsing,
-/// reconnect with exponential backoff, Last-Event-ID resume). The public API
-/// (connect / disconnect / is_connected / on_event / on_error) is preserved so
-/// callers (ReplV2Transport) are unaffected.
+/// reconnect with exponential backoff, Last-Event-ID resume). Adapts the
+/// transport callbacks and drains its bounded event queue for ReplTransport.
 class SseConnection {
     std::string url_;
     std::string token_;
@@ -502,18 +501,17 @@ public:
 };
 
 // =========================================================================
-// CcrV2Client — v2 worker connection (delegates to loom::cli::CcrClient)
+// CcrWorkerClient — worker connection (delegates to loom::cli::CcrClient)
 // =========================================================================
 
-/// CCR v2 client for worker connections.
+/// CCR client for worker connections.
 /// Handles /worker/register (session handshake), heartbeats, and event posting.
 ///
 /// Delegates the real HTTP write path to loom::cli::CcrClient, which performs
 /// authenticated POSTs to ${session_url}/sessions/{id}/messages with reconnect
-/// support. The public API (register_worker / start_session / report_state /
-/// write / write_batch / close) is preserved so callers (ReplV2Transport) are
-/// unaffected.
-class CcrV2Client {
+/// support. Owns the worker credential, registration state, and state-event
+/// reporting used by ReplTransport.
+class CcrWorkerClient {
     std::string session_url_;
     std::string ingress_token_;
     std::string session_id_;
@@ -539,7 +537,7 @@ public:
         int64_t initial_sequence_num = 0;
     };
 
-    explicit CcrV2Client(Params params)
+    explicit CcrWorkerClient(Params params)
         : session_url_(std::move(params.session_url))
         , ingress_token_(std::move(params.ingress_token))
         , session_id_(std::move(params.session_id))
@@ -679,14 +677,14 @@ public:
 };
 
 // =========================================================================
-// ReplV2Transport — combined SSE read + CCRClient write
+// ReplTransport — combined SSE read + CCRClient write
 // =========================================================================
 
-/// The v2 REPL transport combines an SSE read stream (server -> REPL)
+/// The REPL transport combines an SSE read stream (server -> REPL)
 /// with a CCRClient write path (REPL -> server).
-class ReplV2Transport {
+class ReplTransport {
     SseConnection sse_;
-    std::unique_ptr<CcrV2Client> ccr_client_;
+    std::unique_ptr<CcrWorkerClient> ccr_client_;
     std::string session_id_;
     std::atomic<bool> connected_{false};
 
@@ -700,7 +698,7 @@ public:
     /// Callback: transport closed. Parameter: close code (0 = unknown).
     std::function<void(int)> on_close;
 
-    explicit ReplV2Transport(
+    explicit ReplTransport(
         const std::string& session_url,
         const std::string& ingress_token,
         const std::string& session_id,
@@ -708,12 +706,12 @@ public:
     )
         : session_id_(session_id)
     {
-        CcrV2Client::Params params;
+        CcrWorkerClient::Params params;
         params.session_url = session_url;
         params.ingress_token = ingress_token;
         params.session_id = session_id;
         params.epoch = epoch;
-        ccr_client_ = std::make_unique<CcrV2Client>(std::move(params));
+        ccr_client_ = std::make_unique<CcrWorkerClient>(std::move(params));
     }
 
     /// Connect: register the worker, open the SSE read stream.
@@ -806,12 +804,12 @@ int64_t archive_session(
 // EnvLessReplBridgeHandle — concrete ReplBridgeHandle for the env-less path
 // =========================================================================
 
-/// Concrete bridge handle for the env-less (v2) bridge. Owns the transport,
+/// Concrete bridge handle for the env-less bridge. Owns the transport,
 /// token refresh scheduler, dedup sets, flush gate, and cleanup logic.
 class EnvLessReplBridgeHandle final : public ReplBridgeHandle {
     std::string session_id_;
     std::string session_ingress_url_;
-    std::unique_ptr<ReplV2Transport> transport_;
+    std::unique_ptr<ReplTransport> transport_;
     std::unique_ptr<TokenRefreshScheduler> refresh_scheduler_;
 
     BridgeState state_{BridgeState::Ready};
@@ -838,7 +836,7 @@ public:
     EnvLessReplBridgeHandle(
         std::string session_id,
         std::string session_ingress_url,
-        std::unique_ptr<ReplV2Transport> transport,
+        std::unique_ptr<ReplTransport> transport,
         std::unique_ptr<TokenRefreshScheduler> refresh,
         EnvLessBridgeParams params,
         EnvLessBridgeConfig cfg,
@@ -1190,9 +1188,9 @@ private:
     void rebuild_transport(const RemoteCredentials& fresh) {
         if (transport_) transport_->close();
 
-        auto session_url = build_ccr_v2_sdk_url(fresh.api_base_url, session_id_);
+        auto session_url = build_worker_session_url(fresh.api_base_url, session_id_);
 
-        transport_ = std::make_unique<ReplV2Transport>(
+        transport_ = std::make_unique<ReplTransport>(
             session_url, fresh.worker_jwt, session_id_, fresh.worker_epoch);
 
         wire_transport_callbacks();
@@ -1322,7 +1320,7 @@ std::optional<std::string> create_code_session(
 /// 1. Fetches OAuth access token
 /// 2. Creates a code session (POST /v1/code/sessions)
 /// 3. Fetches bridge credentials (POST /v1/code/sessions/{id}/bridge)
-/// 4. Builds v2 transport (SSE + CCRClient)
+/// 4. Builds the REPL transport (SSE + CCRClient)
 /// 5. Starts token refresh scheduler
 /// 6. Wires ingress message handlers
 /// 7. Returns a ReplBridgeHandle unique_ptr
@@ -1390,10 +1388,10 @@ std::unique_ptr<ReplBridgeHandle> init_env_less_bridge_core(EnvLessBridgeParams 
         {"expires_in", std::to_string(credentials->expires_in)},
     });
 
-    // -- 4. Build v2 transport --
-    auto session_url = build_ccr_v2_sdk_url(credentials->api_base_url, session_id);
+    // -- 4. Build REPL transport --
+    auto session_url = build_worker_session_url(credentials->api_base_url, session_id);
 
-    auto transport = std::make_unique<ReplV2Transport>(
+    auto transport = std::make_unique<ReplTransport>(
         session_url, credentials->worker_jwt, session_id, credentials->worker_epoch);
 
     // -- 5. Token refresh scheduler --

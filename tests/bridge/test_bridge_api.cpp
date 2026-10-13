@@ -15,6 +15,7 @@
 import std;
 import loom.bridge.api;
 import loom.bridge.config;
+import loom.bridge.core;
 import loom.bridge.messages;
 import loom.bridge.session_id_compat;
 import loom.bridge.transport;
@@ -31,6 +32,37 @@ TEST(BridgeApi, ValidatesSafeIdsAndNormalizesSessionIds) {
     auto generated = loom::bridge::generate_session_id();
     EXPECT_EQ(generated.size(), 36u);
     EXPECT_EQ(generated.rfind("ses_", 0), 0u);
+}
+
+TEST(BridgeCore, WorkerSessionUrlPreservesProtocolPathAndNormalizesBase) {
+    EXPECT_EQ(loom::bridge::build_worker_session_url("https://ingress.example.test", "session_1"),
+              "https://ingress.example.test/v1/code/sessions/session_1");
+    EXPECT_EQ(loom::bridge::build_worker_session_url("https://ingress.example.test///", "session_1"),
+              "https://ingress.example.test/v1/code/sessions/session_1");
+    EXPECT_EQ(loom::bridge::build_worker_session_url("http://127.0.0.1:1234/proxy/", "session_1"),
+              "http://127.0.0.1:1234/proxy/v1/code/sessions/session_1");
+}
+
+TEST(BridgeCore, WorkerClientAndReplTransportStartDisconnected) {
+    loom::bridge::CcrWorkerClient::Params params;
+    params.session_url = loom::bridge::build_worker_session_url("https://ingress.example.test", "session_1");
+    params.session_id = "session_1";
+    loom::bridge::CcrWorkerClient client(std::move(params));
+    EXPECT_FALSE(client.is_registered());
+    auto registration = client.register_worker();
+    ASSERT_FALSE(registration.has_value());
+    EXPECT_EQ(registration.error(), "Authentication token cannot be empty");
+    EXPECT_FALSE(client.is_registered());
+    auto write = client.write(R"({"type":"state","state":"idle"})");
+    ASSERT_FALSE(write.has_value());
+    EXPECT_EQ(write.error(), "CCR client not registered");
+
+    loom::bridge::ReplTransport transport(
+        loom::bridge::build_worker_session_url("https://ingress.example.test", "session_1"),
+        "", "session_1", 42);
+    EXPECT_FALSE(transport.is_connected());
+    EXPECT_FALSE(transport.connect().has_value());
+    EXPECT_FALSE(transport.is_connected());
 }
 
 TEST(BridgeApi, RejectsUnsafeIdsBeforeNetworkCalls) {
@@ -105,7 +137,7 @@ TEST(BridgeApi, ParsesRegistrationPollAndLifecycleResponsesFromServer) {
     EXPECT_EQ(*(*work)->data_id, "session_1");
 
     auto worker_registration = client.register_worker(
-        server.base_url() + "/v1/code/sessions/session_1",
+        loom::bridge::build_worker_session_url(server.base_url() + "///", "session_1"),
         "session-token-from-secret");
     ASSERT_TRUE(worker_registration.has_value()) << worker_registration.error().format();
     EXPECT_EQ(worker_registration->worker_epoch, 42);

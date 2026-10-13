@@ -61,7 +61,8 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0007-native-text-selection-and-clipboard.md`](rfcs/0007-native-text-selection-and-clipboard.md) | **Implementable.** Reliable copy pipeline (four-state feedback, terminable async, SSH-aware), Historical native-selection default revised by RFC 0010; original reliability and lifecycle rationale retained. |
 | [`rfcs/0008-virtual-renderer-threshold-hysteresis.md`](rfcs/0008-virtual-renderer-threshold-hysteresis.md) | **Implementable.** Hysteresis band for the static↔virtual message-list renderer threshold (enter > 80, exit < 60) to prevent mode oscillation at the boundary. Field flicker benefit pending PTY verification (§11.4). |
 | [`rfcs/0009-optional-interactive-tool-round-budget.md`](rfcs/0009-optional-interactive-tool-round-budget.md) | **Implemented.** Optional interactive tool-round budgets with committed-progress continuation; no implicit interactive limit. |
-| [`rfcs/0010-in-app-selection-copy.md`](rfcs/0010-in-app-selection-copy.md) | **Implemented.** Clipboard infrastructure owns OSC 52; default in-app selection automatically copies with accurate inline feedback. |
+| [`rfcs/0010-in-app-selection-copy.md`](rfcs/0010-in-app-selection-copy.md) | **Implemented.** Default in-app selection automatically copies with accurate inline feedback; OSC ownership is refined by RFC 0011. |
+| [`rfcs/0011-common-osc-protocol.md`](rfcs/0011-common-osc-protocol.md) | **Implemented.** Centralize Loom-owned OSC encoding and separate protocol, terminal output, platform capabilities and UI. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

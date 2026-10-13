@@ -1,7 +1,7 @@
 /// @file ink_utils.cppm
 /// @brief Terminal UI utilities for LOOM (text wrapping, ANSI handling,
-/// colorize, styles, search highlight, selection, tabstops, hyperlink
-/// support, terminal clear, log-update, hit-testing, focus, constants,
+/// colorize, styles, search highlight, selection, tabstops, terminal clear,
+/// log-update, hit-testing, focus, constants,
 /// node cache, text-node squashing, keypress parsing, terminal querying,
 /// and terminal focus state).
 module;
@@ -413,56 +413,6 @@ inline auto expand_tabs(std::string_view text, int tab_width = 8) -> std::string
             ++col;
         }
     }
-    return result;
-}
-
-/// Checks if the terminal supports OSC 8 hyperlinks.
-inline auto supports_hyperlinks() -> bool {
-    // Check common terminal programs known to support hyperlinks
-    const char* term_program = std::getenv("TERM_PROGRAM");
-    if (term_program) {
-        std::string_view tp{term_program};
-        if (tp == "iTerm.app" || tp == "WezTerm" || tp == "Hyper") return true;
-    }
-
-    // VTE-based terminals (GNOME Terminal, etc.) version >= 50.0
-    const char* vte_version = std::getenv("VTE_VERSION");
-    if (vte_version) {
-        int version = std::atoi(vte_version);
-        if (version >= 5000) return true;
-    }
-
-    // Kitty terminal
-    const char* term = std::getenv("TERM");
-    if (term) {
-        std::string_view t{term};
-        if (t.find("kitty") != std::string_view::npos) return true;
-    }
-
-    // Windows Terminal
-    const char* wt_session = std::getenv("WT_SESSION");
-    if (wt_session && wt_session[0] != '\0') return true;
-
-    // COLORTERM=truecolor is a good proxy for modern terminals
-    const char* colorterm = std::getenv("COLORTERM");
-    if (colorterm) {
-        std::string_view ct{colorterm};
-        if (ct == "truecolor" || ct == "24bit") return true;
-    }
-
-    return false;
-}
-
-/// Creates an OSC 8 hyperlink escape sequence.
-inline auto make_hyperlink(std::string_view url, std::string_view text) -> std::string {
-    // OSC 8 ; params ; uri ST  text  OSC 8 ; ; ST
-    std::string result;
-    result.reserve(url.size() + text.size() + 20);
-    result += "\033]8;;";
-    result += url;
-    result += "\033\\";
-    result += text;
-    result += "\033]8;;\033\\";
     return result;
 }
 

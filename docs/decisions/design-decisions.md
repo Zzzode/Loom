@@ -3679,12 +3679,13 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   toggle is immediate and best-effort; an FTXUI reinstall can restore tracking.
   Use explicit false when persistent native selection is required. This
   revises RFC 0007's default-mode decision without changing settings precedence.
-- **Ownership:** `loom::utils::clipboard::emit_osc52` owns OSC 52 encoding and
-  emission in `loom_utils`; it reuses `loom.crypto.crypto` and returns a
-  `loom::utils::VoidResult`. Do not import `loom.types.types` into this utility:
-  `loom_types` already depends on `loom_utils`. UI selection and `/copy` call
-  the same infrastructure primitive; command errors are translated at the
-  command boundary. Only the UI thread emits terminal bytes during interaction.
+- **Ownership:** RFC 0010 initially centralized OSC 52 in
+  `loom::utils::clipboard::emit_osc52`. RFC 0011 replaces that helper with pure
+  generation in `loom.terminal.osc` and delivery in `loom.terminal.output`, both
+  in `loom_utils`. Keep error types in `loom.utils.error`; `loom_types` already
+  depends on `loom_utils`. UI selection and `/copy` use the same protocol/output
+  APIs; command errors are translated at the command boundary. Only the UI
+  thread emits terminal bytes during interaction.
 - **Honest feedback:** the existing native coordinator remains asynchronous,
   deadline-controlled and SSH-aware. Only successful native completion sets
   confirmed-copy state. OSC 52 write/flush success means a request was sent,
@@ -3700,3 +3701,33 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   before pending results are drained. A late result may not emit OSC 52 or
   restore feedback for dismissed text. Existing coordinator cancellation and
   child-process ownership remain unchanged.
+
+
+## Common OSC protocol ownership (RFC 0011)
+
+- **Protocol:** `loom.terminal.osc` under `src/utils/terminal/` is the sole
+  owner of Loom-generated OSC 2 titles, OSC 8 links and OSC 52 clipboard
+  requests. Its functions return bytes and never read environment variables,
+  call native tools or write to a terminal. Interface units hold declarations;
+  implementation units hold encoding and validation.
+- **Wire compatibility:** title and hyperlink sequences retain ST
+  (ESC-backslash); clipboard requests retain selector `c`, Base64 and BEL.
+  Title/URI protocol fields reject C0 and DEL; display text is opaque and
+  clipboard text is arbitrary bytes encoded as Base64. No generic arbitrary
+  OSC command service is exposed.
+- **Output:** `loom.terminal.output::write_control_sequence` owns byte-range
+  stdout writes and flush errors. It does not schedule work or interpret OSC.
+  UI callers must serialize delivery with rendering on the UI thread; a
+  successful write remains a terminal request rather than clipboard acceptance.
+- **Capabilities:** native clipboard backends/coordinator remain in platform
+  modules. Platform hyperlink retains the single capability implementation,
+  URL/file conversion and OS openers; rejected URI generation uses its existing
+  plain-text fallback. The unused ink_utils encoder/detector and terminal_io
+  title generator are removed, with their protocol features tested centrally.
+- **FTXUI:** the renderer's own hyperlink decorator/encoder stays intact because
+  its registered pixel link IDs power Loom's mouse click routing. Input OSC
+  parsers and stripping belong to their parsing/rendering owners and are not
+  merged into the output protocol module.
+- **Dependencies:** `loom.terminal` has rank 2 in graph_check, just like other
+  utility domains. Adding a public module never bypasses graph validation by
+  leaving its area unclassified.

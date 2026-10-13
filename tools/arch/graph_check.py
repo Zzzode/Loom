@@ -109,7 +109,7 @@ TARGET_RANK = {
     "loom.parsing": 2, "loom.platform": 2, "loom.process": 2, "loom.prompt": 2,
     "loom.scm": 2, "loom.security": 2,
     "loom.serdes": 2,
-    "loom.text": 2,
+    "loom.text": 2, "loom.terminal": 2,
     "loom.vim": 3,
     "loom.hooks": 4,
     "loom.skills": 5,

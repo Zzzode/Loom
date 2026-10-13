@@ -104,6 +104,7 @@ cycle-free. Two caveats from the single-target era still hold:
 | `src/commands/` | Slash commands. Registered via `command_registry_init_*.cpp`. |
 | `src/ui/` | FTXUI interface — do not port web/React idioms into it. Cut by responsibility: `foundation/` (tokens, theme, figures, primitives), `chrome/` (layout, renderer, terminal I/O), `widgets/` (reusable controls), `visual/` (markdown/diff rendering), `messages/`, `dialogs/`, `permissions/`, `prompt/`, `screens/`, `features/{agents,teams,tasks,plugins,mcp}/`, `tools/` (tool-UI registry), and `app/` (the top-level app orchestrator shards). Twelve `loom_ui_<area>` targets aggregated by the `loom_ui` INTERFACE library — see the build-layout note above. |
 | `src/services/` | External integrations: MCP, LSP, API clients, plugins. |
+| `src/utils/terminal/` | Loom-owned OSC protocol generation (`loom.terminal.osc`) and stdout delivery (`loom.terminal.output`). Protocol code is pure; callers own output serialization. Platform clipboard backends and hyperlink capability decisions remain in `utils/platform/`; FTXUI owns its rendered hyperlink registry. |
 | `src/state/` | AppState store and reducers. |
 | `src/constants/paths.cppm` | **The single source for config/memory path resolution.** Both cascades live here; delegate to it rather than hardcoding paths. |
 | `benchmarks/pare/` | Benchmark case data. The `pare-benchmark` binary reads the JSON by CWD-relative path. |

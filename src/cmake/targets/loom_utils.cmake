@@ -78,6 +78,8 @@ target_sources(loom_utils
         utils/text/string.cppm
         utils/text/string_utils.cppm
         utils/platform/terminal_helpers.cppm
+        utils/terminal/osc.cppm
+        utils/terminal/output.cppm
         utils/parsing/text_highlighting.cppm
         utils/process/timeouts.cppm
         utils/model/token_budget.cppm
@@ -101,7 +103,8 @@ target_sources(loom_utils
         utils/serdes/json_mut_doc.cpp
         utils/serdes/json_iter.cpp
         utils/serdes/json_builders.cpp
-        utils/platform/clipboard.cpp
+        utils/terminal/osc.cpp
+        utils/terminal/output.cpp
         utils/platform/clipboard_job.cpp
         utils/platform/clipboard_coordinator.cpp
 )

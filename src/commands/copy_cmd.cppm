@@ -15,7 +15,8 @@ import loom.text.parse_int;
 import loom.types.types;
 import loom.commands.command;
 import loom.process.bash.bash_execution;
-import loom.platform.clipboard;
+import loom.terminal.osc;
+import loom.terminal.output;
 
 export namespace loom::commands {
 
@@ -385,7 +386,8 @@ private:
     [[nodiscard]] static VoidResult copy_to_clipboard(
         const std::string& content, ClipboardMethod method) {
         if (method == ClipboardMethod::OSC52) {
-            auto emitted = loom::utils::clipboard::emit_osc52(content);
+            auto emitted = loom::terminal::output::write_control_sequence(
+                loom::terminal::osc::clipboard_request(content));
             if (!emitted) {
                 return std::unexpected(Error::make(
                     ErrorCode::InternalError, emitted.error().message()));

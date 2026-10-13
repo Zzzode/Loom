@@ -12,6 +12,10 @@ tracking: local
 
 # RFC 0010 — In-App Selection Copy and Clipboard Infrastructure
 
+RFC 0011 refines the OSC ownership established here: sequence generation now
+belongs to `loom.terminal.osc`, and stdout delivery to `loom.terminal.output`.
+The selection, backend routing, default and feedback decisions remain intact.
+
 ## Summary
 
 Make in-app text selection with automatic clipboard copy the default. Move

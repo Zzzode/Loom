@@ -731,15 +731,6 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
 }
 
 // ============================================================================
-// OSC (Operating System Commands)
-// ============================================================================
-
-/// Set terminal window title via OSC 2
-[[nodiscard]] inline auto set_title(std::string_view title) -> std::string {
-    return "\033]2;" + std::string{title} + "\033\\";
-}
-
-// ============================================================================
 // Terminal Modes
 // ============================================================================
 

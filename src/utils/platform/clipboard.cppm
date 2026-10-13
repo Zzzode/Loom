@@ -1,5 +1,5 @@
 // @file clipboard.cppm
-// @brief Native clipboard access and OSC 52 terminal clipboard requests.
+// @brief Native clipboard access; terminal requests belong to loom.terminal.osc.
 // Image reads use osascript on macOS; text backends are platform-specific.
 module;
 
@@ -15,16 +15,10 @@ export module loom.platform.clipboard;
 import std;
 
 import loom.crypto.crypto;
-import loom.utils.error;
 import loom.platform.find_executable;       // find_executable (PATH + X_OK)
 import loom.process.bash.bash_execution;   // exec_write (pbcopy / xclip / wl-copy)
 
 export namespace loom::utils::clipboard {
-
-/// Emit an OSC 52 clipboard request and flush it to stdout. Success confirms
-/// terminal delivery only; terminal clipboard acceptance cannot be verified.
-/// The caller must serialize this with terminal rendering on the UI thread.
-[[nodiscard]] loom::utils::VoidResult emit_osc52(std::string_view text);
 
 // ── osascript invocation gotcha (macOS) ─────────────────────────────────
 // loom runs the terminal in raw mode (FTXUI termios: ICANON/ECHO off).

@@ -27,7 +27,8 @@ module loom.ui.app.app;
 
 import std;
 
-import loom.platform.clipboard;           // emit_osc52
+import loom.terminal.osc;                 // clipboard_request
+import loom.terminal.output;              // write_control_sequence
 import loom.diagnostics.debug;            // debug() (filtered by namespace)
 import loom.diagnostics.log;              // log::add_to_in_memory_errors
 import loom.ui.foundation.theme_provider; // current_theme().palette
@@ -336,8 +337,8 @@ void AppAdapter::DrainCopyResult() {
         // OSC 52 is written on the UI thread (terminal-output ownership
         // invariant: only the UI thread writes to stdout/stderr).
         if (pending->text) {
-            auto osc52 = loom::utils::clipboard::emit_osc52(
-                *pending->text);
+            auto osc52 = loom::terminal::output::write_control_sequence(
+                loom::terminal::osc::clipboard_request(*pending->text));
             if (osc52) {
                 text_selection_.copy_feedback = "Copy sent to terminal · paste to verify";
             } else {

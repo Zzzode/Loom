@@ -7,6 +7,7 @@ module;
 export module loom.platform.hyperlink;
 
 import std;
+import loom.terminal.osc;
 
 export namespace loom::utils {
 
@@ -284,6 +285,7 @@ bool supports_hyperlinks() {
 ///   \e]8;;url\e\\text\e]8;;\e\\
 ///
 /// Otherwise returns plain `text` with no escape sequences.
+/// A URI containing protocol control characters also falls back to plain text.
 ///
 /// NOTE: When FTXUI's `hyperlink(url)` decorator is available, prefer
 /// that — it registers the URL with the Screen so pixel-level click
@@ -295,13 +297,8 @@ std::string make_hyperlink(std::string_view url, std::string_view text) {
         return std::string(text);
     }
 
-    std::string result;
-    result += "\x1b]8;;";
-    result += url;
-    result += "\x1b\\";
-    result += text;
-    result += "\x1b]8;;\x1b\\";
-    return result;
+    auto encoded = loom::terminal::osc::hyperlink(url, text);
+    return encoded ? std::move(*encoded) : std::string(text);
 }
 
 /// Create a file:// hyperlink with optional line number.

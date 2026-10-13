@@ -273,6 +273,17 @@ TEST(TerminalSetupCommand, PathToFileUrlEncodingAndHyperlinkGate) {
     }
 }
 
+TEST(TerminalSetupCommand, RejectedHyperlinkUriFallsBackToPlainText) {
+    EnvironmentGuard term_program("TERM_PROGRAM", "vscode");
+    const std::string label = "visible label";
+    for (const char control : {'\033', '\a', '\0', '\177'}) {
+        std::string uri = "https://example.com/";
+        uri.push_back(control);
+        uri += "suffix";
+        EXPECT_EQ(loom::utils::make_hyperlink(uri, label), label);
+    }
+}
+
 // ── ResumeCommand ──────────────────────────────────────────────────────────
 // Regression guard: /resume must list sessions from disk.  The command's
 // recent_sessions_ was only ever populated via set_recent_sessions(), which

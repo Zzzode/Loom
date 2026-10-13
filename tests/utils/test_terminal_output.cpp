@@ -1,5 +1,5 @@
-/// @file test_clipboard_osc52.cpp
-/// @brief Exact bytes and output failures for terminal clipboard requests.
+/// @file test_terminal_output.cpp
+/// @brief Length-aware stdout delivery and write/flush error reporting.
 
 #include <cstdio>
 #include <cstdlib>
@@ -8,10 +8,10 @@
 #include <unistd.h>
 
 import std;
-import loom.platform.clipboard;
+import loom.terminal.output;
 import loom.utils.error;
 
-namespace clip = loom::utils::clipboard;
+namespace output = loom::terminal::output;
 
 namespace {
 
@@ -28,7 +28,7 @@ public:
     }
 
     ~StdoutCapture() {
-        // A failed flush must not replay pending OSC bytes to the real terminal.
+        // Discard failed buffered bytes before restoring the real terminal.
         if (std::ferror(stdout)) {
             (void)std::freopen("/dev/null", "w", stdout);
         } else {
@@ -71,16 +71,14 @@ private:
     bool ready_ = false;
 };
 
-void expect_request(std::string_view text, std::string_view encoded) {
+void expect_output(std::string_view bytes) {
     StdoutCapture capture;
     ASSERT_TRUE(capture.ready());
-    const auto result = clip::emit_osc52(text);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(capture.bytes(), "\033]52;c;" + std::string(encoded) + "\a");
+    ASSERT_TRUE(output::write_control_sequence(bytes).has_value());
+    EXPECT_EQ(capture.bytes(), bytes);
 }
 
-// Buffer modes are changed only in the death-test child, so the test runner's
-// stdout mode is preserved. The RAII guard restores stdout and its error state.
+// Buffer-mode changes stay in the death-test child, preserving the runner.
 void expect_output_failure(bool buffered, std::string_view message) {
     bool expected_failure = false;
     {
@@ -89,7 +87,7 @@ void expect_output_failure(bool buffered, std::string_view message) {
         if (std::setvbuf(stdout, nullptr, buffered ? _IOFBF : _IONBF, BUFSIZ) != 0) {
             std::_Exit(3);
         }
-        const auto result = clip::emit_osc52("test");
+        const auto result = output::write_control_sequence("\033]52;c;dGVzdA==\a");
         expected_failure = !result.has_value() &&
             result.error().code() == loom::utils::ErrorCode::io_error &&
             result.error().message() == message;
@@ -99,24 +97,22 @@ void expect_output_failure(bool buffered, std::string_view message) {
 
 }  // namespace
 
-TEST(ClipboardOsc52, EmptyText) { expect_request("", ""); }
-TEST(ClipboardOsc52, OneBytePadding) { expect_request("a", "YQ=="); }
-TEST(ClipboardOsc52, TwoBytePadding) { expect_request("ab", "YWI="); }
-TEST(ClipboardOsc52, ThreeBytesWithoutPadding) { expect_request("abc", "YWJj"); }
-TEST(ClipboardOsc52, Utf8Text) { expect_request("中文🙂", "5Lit5paH8J+Zgg=="); }
-TEST(ClipboardOsc52, EmbeddedNull) {
-    expect_request(std::string_view("a\0b", 3), "YQBi");
+TEST(TerminalOutput, EmptyBytes) { expect_output(std::string_view{}); }
+TEST(TerminalOutput, ExactControlBytes) { expect_output("\033]52;c;YQ==\a"); }
+TEST(TerminalOutput, EmbeddedNullIsNotTruncated) {
+    expect_output(std::string_view("a\0b", 3));
 }
-TEST(ClipboardOsc52, ControlsAreEncodedRatherThanEmitted) {
-    expect_request("\033]52;c;\a\n\r\t", "G101MjtjOwcKDQk=");
+TEST(TerminalOutput, WritesOnlyStringViewRange) {
+    const std::string bytes = "prefix\033]2;Loom\033\\suffix";
+    expect_output(std::string_view(bytes).substr(6, 10));
 }
 
-TEST(ClipboardOsc52DeathTest, ReportsWriteFailure) {
-    EXPECT_EXIT(expect_output_failure(false, "OSC 52: fprintf failed"),
+// These two cases migrate the old OSC 52 emission failure coverage.
+TEST(TerminalOutputDeathTest, ReportsWriteFailure) {
+    EXPECT_EXIT(expect_output_failure(false, "Terminal output: fwrite failed"),
                 testing::ExitedWithCode(0), "");
 }
-
-TEST(ClipboardOsc52DeathTest, ReportsFlushFailure) {
-    EXPECT_EXIT(expect_output_failure(true, "OSC 52: fflush failed"),
+TEST(TerminalOutputDeathTest, ReportsFlushFailure) {
+    EXPECT_EXIT(expect_output_failure(true, "Terminal output: fflush failed"),
                 testing::ExitedWithCode(0), "");
 }

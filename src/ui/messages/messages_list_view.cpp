@@ -4,6 +4,7 @@
 module;
 
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
 #include <ftxui/screen/box.hpp>
 #include <ftxui/screen/color.hpp>
 
@@ -56,6 +57,36 @@ auto RowClickTracker::hit_test(int x, int y) const noexcept
 }
 
 namespace {
+// reflect() clips boxes to the viewport. Keep raw row boxes so selection
+// anchors survive both offscreen movement and estimated virtual spacers.
+class SelectionRowGeometryNode final : public Node {
+public:
+    SelectionRowGeometryNode(Element child, std::shared_ptr<SelectionRowGeometry> output)
+        : Node({std::move(child)}), output_(std::move(output)) {}
+    void ComputeRequirement() override {
+        Node::ComputeRequirement();
+        requirement_ = children_[0]->requirement();
+    }
+    void SetBox(Box box) override {
+        Node::SetBox(box);
+        output_->box = box;
+        // yframe can allocate an extra flex row to a different slice on
+        // each scroll. That trailing padding is not part of a message.
+        output_->box.y_max = box.y_min + requirement_.min_y - 1;
+        children_[0]->SetBox(box);
+    }
+private:
+    std::shared_ptr<SelectionRowGeometry> output_;
+};
+
+Element capture_selection_row(Element row, const MessagesListInput& input, int index) {
+    if (!input.selection_rows) return row;
+    auto geometry = std::make_shared<SelectionRowGeometry>();
+    geometry->index = index;
+    input.selection_rows->push_back(geometry);
+    return std::make_shared<SelectionRowGeometryNode>(std::move(row), std::move(geometry));
+}
+
 // The static threshold check and the windowed renderer share one projection.
 [[nodiscard]] auto render_messages_list_virtual_rows(
     const MessagesListInput& input_const,
@@ -225,12 +256,12 @@ namespace {
             // (0..rows.size()-1), which maps 1:1 to visible[] because
             // visible_rows_to_virtual preserves order with no dropping.
             if (has_divider && row_index == divider_before_vi) {
-                return vbox({
+                row_el = vbox({
                     detail::render_unseen_divider(input.unseen_divider->count),
                     std::move(row_el),
                 });
             }
-            return row_el;
+            return capture_selection_row(std::move(row_el), input, static_cast<int>(row_index));
         };
 
     // ── Wire 2-tier search engine into virtual list state ──────────────
@@ -272,7 +303,9 @@ namespace {
     // Expose the exact geometry so the caller can set virtual_jh for
     // precise scroll bounds (eliminates the EstimateTranscriptRows dead-zone).
     input_const.virtual_jh_out = state.jh;
-    return body | yframe | vscroll_indicator | flex;
+    body = std::move(body) | yframe;
+    if (input.viewport_box) body = std::move(body) | reflect(*input.viewport_box);
+    return std::move(body) | vscroll_indicator | flex;
 }
 
 }  // namespace
@@ -283,6 +316,7 @@ namespace {
     int viewport_rows,
     int scroll_top_lines) -> Element
 {
+    if (input.selection_rows) input.selection_rows->clear();
     auto visible = build_visible_rows(input);
     return render_messages_list_virtual_rows(
         input, visible, frame_count, viewport_rows, scroll_top_lines);
@@ -314,6 +348,7 @@ namespace {
     bool wrap_in_yframe,
     Elements leading_elements) -> Element
 {
+    if (input_const.selection_rows) input_const.selection_rows->clear();
     // RAII guard: reset the row-click tracker at frame start and trim
     // excess boxes at frame end (every return path).  Without the trim,
     // stale boxes from a previous frame would cause false hit-test hits.
@@ -366,13 +401,19 @@ namespace {
             all_leading.push_back(detail::render_empty_state(input.search_query));
             Element content = vbox(std::move(all_leading));
             if (!wrap_in_yframe) return content;
-            return content | yframe | vscroll_indicator;
+            content = capture_selection_row(std::move(content), input, -1);
+            content = std::move(content) | yframe;
+            if (input.viewport_box) content = std::move(content) | reflect(*input.viewport_box);
+            return std::move(content) | vscroll_indicator;
         }
         Element empty = vbox({
             detail::render_empty_state(input.search_query),
         });
         if (!wrap_in_yframe) return empty;
-        return empty | yframe | vscroll_indicator;
+        empty = capture_selection_row(std::move(empty), input, -1);
+        empty = std::move(empty) | yframe;
+        if (input.viewport_box) empty = std::move(empty) | reflect(*input.viewport_box);
+        return std::move(empty) | vscroll_indicator;
     }
 
     // ---- Unseen divider anchor: compute BEFORE the last-N slice so the
@@ -394,7 +435,7 @@ namespace {
     // Prepend caller-supplied leading elements (e.g. welcome/logo card) INSIDE
     // the yframe so they scroll naturally with message content.
     for (auto& el : leading_elements) {
-        rows.push_back(std::move(el));
+        rows.push_back(capture_selection_row(std::move(el), input, -1));
     }
     // ── Per-message add-margin ─────────────────────────────────────────────
     // add_margin = !has_metadata.
@@ -416,12 +457,6 @@ namespace {
     //   - Inconsistent spacing when tool results were present vs absent.
     bool prev_was_user = false;    // for user-turn continuation ⎿ connector
     for (std::size_t vi = start; vi < visible.size(); ++vi) {
-        // Insert the unseen divider BEFORE rendering the row itself.
-        if (has_divider && vi == divider_before_vi) {
-            rows.push_back(
-                detail::render_unseen_divider(input.unseen_divider->count));
-        }
-
         const auto& vr = visible[vi];
         const bool is_selected =
             input.selected_row_idx.has_value() &&
@@ -478,6 +513,12 @@ namespace {
             // compact group row — renders its own header/spacing
             rows.push_back(detail::render_compact_group_row(vr, is_selected));
         }
+        if (has_divider && vi == divider_before_vi) {
+            rows.back() = vbox({
+                detail::render_unseen_divider(input.unseen_divider->count),
+                std::move(rows.back())});
+        }
+        rows.back() = capture_selection_row(std::move(rows.back()), input, static_cast<int>(vi));
     }
 
     // Append caller-supplied trailing elements (e.g. elastic filler) INSIDE
@@ -558,10 +599,9 @@ namespace {
         list = std::move(list)
              | focusPosition(0, input.scroll_offset + vp / 2);
     }
-    if (visible.empty()) {
-        return std::move(list) | yframe | vscroll_indicator | flex;
-    }
-    return std::move(list) | yframe | vscroll_indicator | flex;
+    list = std::move(list) | yframe;
+    if (input.viewport_box) list = std::move(list) | reflect(*input.viewport_box);
+    return std::move(list) | vscroll_indicator | flex;
 }
 
 } // namespace loom::ui::messages_list

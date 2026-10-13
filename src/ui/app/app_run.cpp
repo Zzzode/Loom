@@ -7,6 +7,7 @@ module;
 #include <termios.h>  // tcgetattr/tcsetattr/termios/VLNEXT
 #include <cerrno>
 #include <csignal>
+#include <cstdio>
 
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/loop.hpp>
@@ -28,6 +29,34 @@ namespace {
 static_assert(std::atomic<bool>::is_always_lock_free);
 std::atomic<bool> hangup_relay_active{false};
 void (*terminal_exit_signal_handler)(int) = nullptr;
+
+// Declared before the app: flush pending terminal input only after its workers
+// and FTXUI's input reader have stopped, immediately before the shell resumes.
+class ParentTerminalGuard {
+public:
+    ParentTerminalGuard(const termios& original, bool have_original)
+        : original_(original), have_original_(have_original) {}
+    void BeginUi(bool track_mouse) {
+        ui_started_ = true;
+        reset_mouse_ = track_mouse;
+    }
+    ~ParentTerminalGuard() {
+        if (reset_mouse_) {
+            std::fputs("\x1b[?1000l\x1b[?1003l\x1b[?1006l\x1b[?1015l", stdout);
+            std::fflush(stdout);
+        }
+        if (have_original_) {
+            // TCSANOW preserves mouse reports queued after the reader stopped.
+            // They belong to this UI, never to the parent shell's next command.
+            (void)tcsetattr(STDIN_FILENO, ui_started_ ? TCSAFLUSH : TCSANOW, &original_);
+        }
+    }
+private:
+    termios original_ {};
+    bool have_original_;
+    bool ui_started_ = false;
+    bool reset_mouse_ = false;
+};
 
 void HandleTerminalHangup(int) {
     const int saved_errno = errno;
@@ -114,8 +143,9 @@ private:
     // independent of the osascript/clipboard path (setsid/closefrom there
     // remain good hygiene but were NOT the cause of keystroke loss).
 #if defined(__APPLE__) || defined(__linux__)
-    struct termios orig_termios;
+    struct termios orig_termios {};
     const bool have_orig = (tcgetattr(STDIN_FILENO, &orig_termios) == 0);
+    ParentTerminalGuard terminal_guard(orig_termios, have_orig);
     if (have_orig) {
         struct termios t = orig_termios;
         t.c_cc[VLNEXT] = 0;  // 0 == _POSIX_VDISABLE: disable literal-next
@@ -174,7 +204,10 @@ private:
 
     app->SyncState();
 
-    try {
+    {
+#if defined(__APPLE__) || defined(__linux__)
+        terminal_guard.BeginUi(mouse_mode);
+#endif
         ftxui::Loop loop(&screen, app);
 #if defined(__APPLE__) || defined(__linux__)
         hangup_guard = std::make_unique<TerminalHangupGuard>();
@@ -190,21 +223,7 @@ private:
 #if defined(__APPLE__) || defined(__linux__)
         hangup_guard->Deactivate();
 #endif
-    } catch (...) {
-#if defined(__APPLE__) || defined(__linux__)
-        if (have_orig) (void)tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
-#endif
-        throw;
     }
-
-    // Restore the parent shell's original termios (FTXUI's on_exit restored
-    // what IT read, which carries VLNEXT=0; re-apply the true original so
-    // Ctrl+V lnext works again in the user's shell after loom exits).
-#if defined(__APPLE__) || defined(__linux__)
-    if (have_orig) {
-        (void)tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
-    }
-#endif
 
     return should_exit ? 0 : 1;
 }

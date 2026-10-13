@@ -60,7 +60,9 @@ private:
 // Exact comparisons keep in-place streaming/status changes visible without
 // relying on IDs, lengths, hashes, or append-only source rows.
 bool same_projected_source(const MessageDisplayEntry& a,
-                           const MessageDisplayEntry& b) {
+                           const MessageDisplayEntry& b,
+                           bool include_timestamp = true) {
+    if (include_timestamp && a.timestamp != b.timestamp) return false;
     const auto fields = [](const MessageDisplayEntry& m) {
         return std::tie(m.id, m.role, m.content_preview, m.full_content,
             m.is_streaming, m.is_thinking, m.is_tool_use, m.thinking_active,
@@ -68,7 +70,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
             m.is_local_jsx_output, m.is_compact_boundary, m.is_error,
             m.is_image, m.image_display_id, m.tool_name, m.tool_status,
             m.tool_input_json, m.tool_result_preview, m.agent_display_name,
-            m.agent_color_name, m.timestamp, m.thinking_duration,
+            m.agent_color_name, m.thinking_duration,
             m.estimated_height_lines, m.system_subtype, m.retry_after_ms,
             m.retry_attempt, m.max_retries, m.session_expired,
             m.is_model_error, m.can_retry, m.can_continue);
@@ -148,6 +150,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
     const bool transcript_changed = store &&
         store->render_sources_transcript_mode != is_transcript_mode;
     const auto cached_count = store ? store->render_sources.size() : 0;
+    bool projection_changed = transcript_changed || cached_count != entries.size();
     if (input.rows.size() > entries.size()) {
         input.rows.resize(entries.size());
         input.shapes.resize(entries.size());
@@ -174,6 +177,15 @@ bool same_projected_source(const MessageDisplayEntry& a,
             }
             continue;
         }
+        // Streaming assistant text receives a fresh timestamp on every
+        // redraw. Its faithful REPL renderer does not display that timestamp,
+        // so it must not cancel a selection in either mode. Other row shapes
+        // keep the full comparison for timestamps they may display.
+        const bool include_selection_timestamp = m.role != "assistant" ||
+            m.is_thinking || m.is_tool_use || m.is_local_command_input ||
+            m.is_local_command_output || m.is_local_jsx_output;
+        projection_changed = projection_changed || !store || index >= cached_count ||
+            !same_projected_source(m, store->render_sources[index], include_selection_timestamp);
         ml::MessagesListInput projected;
         // uuid → 24-char prefix anchor.
         // Populated parallel to rows/shapes; empty strings are harmless
@@ -432,7 +444,10 @@ bool same_projected_source(const MessageDisplayEntry& a,
             }
         }
     }
-    if (store) store->render_sources_transcript_mode = is_transcript_mode;
+    if (store) {
+        store->render_sources_transcript_mode = is_transcript_mode;
+        if (projection_changed) ++store->selection_revision;
+    }
 
     if (sel >= 0)
         input.selected_row_idx = static_cast<std::size_t>(sel);
@@ -472,6 +487,8 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // tail row can reuse frames whose content has not changed.
     input.streaming_md = streaming_md;
     input.row_click_tracker = row_click_tracker;
+    input.selection_rows = store ? &store->selection_rows : nullptr;
+    input.viewport_box = store ? &store->selection_viewport_box : nullptr;
     namespace ml = loom::ui::messages_list;
     // RFC 0008: feed the hysteresis decision with the previous mode from
     // the store, and pass the persistent bottom-anchor flag so the view

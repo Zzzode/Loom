@@ -279,6 +279,87 @@ std::optional<std::string> first_system_prompt_text(const std::vector<loom::core
 // (2 already-covered seams, re-asserted here for a standalone target)
 // ===========================================================================
 
+TEST(QueryEngineFix, AbortBeforeCallbackRegistrationIsReplayed) {
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), registry);
+
+    int calls = 0;
+    engine.abort();
+    engine.set_abort_callback([&] { ++calls; });
+    EXPECT_EQ(calls, 1);
+    engine.set_abort_callback(nullptr);
+}
+
+TEST(QueryEngineFix, AbortAfterCallbackRegistrationInvokesCallback) {
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), registry);
+
+    int calls = 0;
+    engine.set_abort_callback([&] { ++calls; });
+    EXPECT_EQ(calls, 0);
+    engine.abort();
+    EXPECT_EQ(calls, 1);
+    engine.set_abort_callback(nullptr);
+}
+
+TEST(QueryEngineFix, ExternalAbortBeforeCallbackRegistrationIsReplayed) {
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), registry);
+
+    int calls = 0;
+    engine.set_external_abort_callback([&] {
+        // The host predicate can reenter registration as well as the callback.
+        engine.set_abort_callback(nullptr);
+        return true;
+    });
+    engine.set_abort_callback([&] { ++calls; });
+    EXPECT_EQ(calls, 1);
+    engine.set_abort_callback(nullptr);
+}
+
+TEST(QueryEngineFix, ReplayedAbortCallbackCanClearItself) {
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), registry);
+
+    int calls = 0;
+    engine.abort();
+    engine.set_abort_callback([&] {
+        ++calls;
+        engine.set_abort_callback(nullptr);
+    });
+    EXPECT_EQ(calls, 1);
+    engine.abort();
+    EXPECT_EQ(calls, 1);
+}
+
+TEST(QueryEngineFix, ClearingAbortCallbackDoesNotReplayIt) {
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), registry);
+
+    int calls = 0;
+    engine.set_abort_callback([&] { ++calls; });
+    engine.abort();
+    ASSERT_EQ(calls, 1);
+    engine.set_abort_callback(nullptr);
+    engine.abort();
+    EXPECT_EQ(calls, 1);
+}
+
 TEST(QueryEngineFix, OutputConfigInjectsResponseSchemaAndTaskBudget) {
     loom::core::ToolRegistry registry;
     loom::core::QueryEngineConfig config;

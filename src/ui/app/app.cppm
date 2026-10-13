@@ -394,8 +394,8 @@ private:
 
     // ── Text selection (drag-to-select) ──────────────────────────────────
     // Left-click drag in the transcript selects text; release auto-copies
-    // to clipboard via OSC 52.  Three-state machine: Idle → Potential
-    // (press recorded, drag not yet confirmed) → Dragging (moved > 3px).
+    // through the clipboard coordinator. Three-state machine: Idle → Potential
+    // (press recorded, drag not yet confirmed) → Dragging (moved by any cell).
     // Clicks without drag pass through to existing handlers (hyperlink,
     // click-to-expand) which all listen on Released events.
     struct TextSelection {
@@ -406,6 +406,19 @@ private:
         std::optional<std::string> copy_feedback; // Confirmed copy or unconfirmed terminal request.
         int start_x = 0, start_y = 0;
         int end_x = 0, end_y = 0;
+        // Transcript endpoints are content rows; other selections use screen
+        // rows. Retain only frames visited during this selection gesture.
+        struct TranscriptRows {
+            std::map<std::pair<int, int>, std::vector<std::string>> cells;
+            std::map<int, int> heights;
+            int width = 0;
+            bool invalid = false;
+        };
+        std::shared_ptr<TranscriptRows> rows;
+        std::pair<int, int> start_row{}, end_row{};
+        bool virtual_mode = false;
+        int content_height = 0;
+        std::uint64_t source_revision = 0;
     };
     TextSelection text_selection_;
     // ScreenInteractive clears its pixels after flushing each frame. Keep the

@@ -72,11 +72,12 @@ public:
                            std::shared_ptr<ftxui::Screen> frame,
                            bool active,
                            int sel_x0, int sel_y0, int sel_x1, int sel_y1,
-                           ftxui::Color bg_color)
+                           ftxui::Color bg_color,
+                           std::function<void(ftxui::Screen&)> on_render = {})
         : ftxui::Node(ftxui::Elements{std::move(child)}),
           frame_(std::move(frame)), active_(active),
           x0_(sel_x0), y0_(sel_y0), x1_(sel_x1), y1_(sel_y1),
-          bg_color_(bg_color) {}
+          bg_color_(bg_color), on_render_(std::move(on_render)) {}
 
     void ComputeRequirement() override {
         ftxui::Node::ComputeRequirement();
@@ -94,6 +95,10 @@ public:
         // delivered without an intervening render or motion event.
         ftxui::Node::Render(screen);
         if (frame_) *frame_ = screen;
+        if (on_render_) {
+            on_render_(screen);
+            return;
+        }
         if (!active_) return;
         const auto range = NormalizeSelection(screen, x0_, y0_, x1_, y1_);
         for (int y = range.y0; y <= range.y1; ++y) {
@@ -109,6 +114,7 @@ private:
     bool active_;
     int x0_, y0_, x1_, y1_;
     ftxui::Color bg_color_;
+    std::function<void(ftxui::Screen&)> on_render_;
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -151,24 +157,203 @@ private:
 
 // ── AppAdapter member functions ────────────────────────────────────────
 
+// Map to a stable rendered row and a line within it. Virtual windows use
+// estimated spacers; the screen-space origin of the whole list is insufficient.
+static std::optional<std::pair<int, int>> TranscriptPosition(
+    const repl::MessagesStore& store, int screen_y) {
+    const auto& viewport = store.selection_viewport_box;
+    const int y = std::clamp(screen_y, viewport.y_min, viewport.y_max);
+    std::optional<std::pair<int, int>> result;
+    int best_distance = std::numeric_limits<int>::max();
+    for (const auto& row : store.selection_rows) {
+        const auto& box = row->box;
+        if (box.y_max < box.y_min) continue;
+        const int row_y = std::clamp(y, box.y_min, box.y_max);
+        const int distance = std::abs(row_y - y);
+        if (distance < best_distance) {
+            result = {row->index, row_y - box.y_min};
+            best_distance = distance;
+        }
+    }
+    return result;
+}
+
+// Retain rendered cells, including empty wide-glyph continuation cells. Cache
+// only row pixels in the transcript viewport; never pinned chrome or spacers.
+static void CacheTranscriptRows(const ftxui::Screen& screen,
+                                const repl::MessagesStore& store,
+                                auto& rows) {
+    if (rows.width != 0 && rows.width != screen.dimx()) {
+        rows.invalid = true;
+        return;
+    }
+    rows.width = screen.dimx();
+    const auto& viewport = store.selection_viewport_box;
+    for (const auto& row : store.selection_rows) {
+        const auto& box = row->box;
+        const int height = std::max(0, box.y_max - box.y_min + 1);
+        auto [it, inserted] = rows.heights.try_emplace(row->index, height);
+        if (!inserted && it->second != height) {
+            rows.invalid = true;
+            return;
+        }
+        for (int y = std::max({0, viewport.y_min, box.y_min});
+             y <= std::min({screen.dimy() - 1, viewport.y_max, box.y_max}); ++y) {
+            auto& cells = rows.cells[{row->index, y - box.y_min}];
+            cells.assign(screen.dimx(), " ");
+            for (int x = std::max({0, viewport.x_min, box.x_min});
+                 x <= std::min({screen.dimx() - 1, viewport.x_max, box.x_max}); ++x)
+                cells[x] = screen.PixelAt(x, y).character;
+        }
+    }
+}
+
+struct TranscriptRange {
+    int x0, x1;
+    std::pair<int, int> y0, y1;
+};
+
+static TranscriptRange NormalizeTranscriptSelection(
+    const auto& rows, int x0, std::pair<int, int> y0,
+    int x1, std::pair<int, int> y1) {
+    if (std::tie(y0, x0) > std::tie(y1, x1)) {
+        std::swap(x0, x1);
+        std::swap(y0, y1);
+    }
+    x0 = std::clamp(x0, 0, rows.width - 1);
+    x1 = std::clamp(x1, 0, rows.width - 1);
+    if (auto it = rows.cells.find(y0); it != rows.cells.end() &&
+        x0 > 0 && it->second[x0].empty()) --x0;
+    if (auto it = rows.cells.find(y1); it != rows.cells.end() &&
+        x1 + 1 < rows.width && it->second[x1 + 1].empty()) ++x1;
+    return {x0, x1, y0, y1};
+}
+
+static std::optional<std::string> ExtractTranscriptText(
+    const auto& rows, int x0, std::pair<int, int> y0,
+    int x1, std::pair<int, int> y1) {
+    if (rows.invalid || rows.width == 0) return std::nullopt;
+    const auto range = NormalizeTranscriptSelection(rows, x0, y0, x1, y1);
+    std::string result;
+    bool first = true;
+    for (int index = range.y0.first; index <= range.y1.first; ++index) {
+        const auto height = rows.heights.find(index);
+        if (height == rows.heights.end()) return std::nullopt;
+        const int begin = index == range.y0.first ? range.y0.second : 0;
+        const int end = index == range.y1.first ? range.y1.second : height->second - 1;
+        for (int y = begin; y <= end; ++y) {
+            const std::pair key{index, y};
+            const auto it = rows.cells.find(key);
+            // Never report a successful copy of an incomplete selection.
+            if (it == rows.cells.end()) return std::nullopt;
+            const int sx = key == range.y0 ? range.x0 : 0;
+            const int ex = key == range.y1 ? range.x1 : rows.width - 1;
+            std::string line;
+            for (int x = sx; x <= ex; ++x) line += it->second[x];
+            while (!line.empty() && (line.back() == ' ' || line.back() == '\t'))
+                line.pop_back();
+            if (!first) result += '\n';
+            first = false;
+            result += line;
+        }
+    }
+    return result;
+}
+
 Element AppAdapter::ApplySelectionHighlight(Element el) {
     if (screen_.load(std::memory_order_acquire) && !text_selection_frame_) {
         text_selection_frame_ = std::make_shared<ftxui::Screen>(0, 0);
     }
+    if (text_selection_.rows && text_selection_.rows->invalid)
+        ClearTextSelection();
     if (!text_selection_.active && !text_selection_frame_) return el;
     namespace theme = loom::ui::design::theme;
-    const auto& pal = *theme::current_theme().palette;
+    const auto bg = theme::current_theme().palette->selection_bg;
+    std::function<void(ftxui::Screen&)> on_render;
+    if (text_selection_.rows) {
+        // Capture state by value and shared ownership, so returned nodes do
+        // not retain an AppAdapter pointer. Geometry is read after layout.
+        on_render = [state = screen_state_, sel = text_selection_, bg](
+                        ftxui::Screen& screen) {
+            const auto& store = state->messages_store;
+            const int height = store.virtual_list_active
+                ? store.virtual_jh.total()
+                : store.rendered_content_height_lines.value_or(0);
+            if (sel.virtual_mode != store.virtual_list_active ||
+                sel.source_revision != store.selection_revision ||
+                sel.content_height != height ||
+                sel.rows->width != screen.dimx()) {
+                sel.rows->invalid = true;
+                return;
+            }
+            if (sel.potential) CacheTranscriptRows(screen, store, *sel.rows);
+            if (!sel.active || sel.rows->invalid) return;
+            const auto range = NormalizeTranscriptSelection(*sel.rows,
+                sel.start_x, sel.start_row, sel.end_x, sel.end_row);
+            const auto& viewport = store.selection_viewport_box;
+            for (const auto& row : store.selection_rows) {
+                const auto& box = row->box;
+                for (int y = std::max({0, viewport.y_min, box.y_min});
+                     y <= std::min({screen.dimy() - 1, viewport.y_max, box.y_max}); ++y) {
+                    const std::pair key{row->index, y - box.y_min};
+                    if (key < range.y0 || key > range.y1) continue;
+                    const int sx = key == range.y0 ? range.x0 : 0;
+                    const int ex = key == range.y1 ? range.x1 : screen.dimx() - 1;
+                    for (int x = std::max({sx, viewport.x_min, box.x_min});
+                         x <= std::min({ex, viewport.x_max, box.x_max}); ++x)
+                        screen.PixelAt(x, y).background_color = bg;
+                }
+            }
+        };
+    }
     return std::make_shared<SelectionHighlightNode>(
-        std::move(el),
-        text_selection_frame_, text_selection_.active,
+        std::move(el), text_selection_frame_, text_selection_.active,
         text_selection_.start_x, text_selection_.start_y,
         text_selection_.end_x, text_selection_.end_y,
-        pal.selection_bg);
+        bg, std::move(on_render));
 }
 
 bool AppAdapter::HandleTextSelectionMouse(Event event) {
     if (!event.is_mouse() || !mouse_mode_ || !mouse_tracking_on_) return false;
     const auto& mouse = event.mouse();
+    if (text_selection_.rows && text_selection_.rows->invalid)
+        ClearTextSelection();
+    auto update_endpoint = [&] {
+        text_selection_.end_x = mouse.x;
+        text_selection_.end_y = mouse.y;
+        if (text_selection_.rows) {
+            if (auto row = TranscriptPosition(screen_state_->messages_store, mouse.y))
+                text_selection_.end_row = *row;
+        }
+    };
+    auto displaced = [&] {
+        return text_selection_.start_x != text_selection_.end_x ||
+            (text_selection_.rows
+                ? text_selection_.start_row != text_selection_.end_row
+                : text_selection_.start_y != text_selection_.end_y);
+    };
+
+    if (text_selection_.rows &&
+        (mouse.button == Mouse::WheelUp || mouse.button == Mouse::WheelDown)) {
+        // Let the existing screen handler own scroll bounds, stride and repin.
+        // Render each accepted wheel step into an offscreen buffer so batched
+        // mouse reports cannot skip rows before the interactive loop redraws.
+        const bool handled = repl_component_->OnEvent(event);
+        if (handled && text_selection_frame_) {
+            auto frame = ftxui::Screen::Create(
+                ftxui::Dimension::Fixed(text_selection_frame_->dimx()),
+                ftxui::Dimension::Fixed(text_selection_frame_->dimy()));
+            ftxui::Render(frame, Render());
+            if (text_selection_.rows && text_selection_.rows->invalid) {
+                ClearTextSelection();
+            } else if (text_selection_.potential) {
+                update_endpoint();
+                text_selection_.active = displaced();
+            }
+            PostRenderEvent();
+        }
+        return handled;
+    }
 
     if (mouse.button == Mouse::Left &&
         mouse.motion == Mouse::Pressed) {
@@ -183,19 +368,31 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
         if (!text_selection_.potential && !text_selection_.active) {
             // Initial press — record position, don't consume.
             text_selection_.potential = true;
+            const auto& store = screen_state_->messages_store;
+            if (text_selection_frame_ &&
+                screen_state_->dialog_store.dialog_queue.empty() &&
+                store.selection_viewport_box.Contain(mouse.x, mouse.y) &&
+                TranscriptPosition(store, mouse.y)) {
+                text_selection_.rows = std::make_shared<TextSelection::TranscriptRows>();
+                text_selection_.virtual_mode = store.virtual_list_active;
+                text_selection_.source_revision = store.selection_revision;
+                text_selection_.content_height = store.virtual_list_active
+                    ? store.virtual_jh.total()
+                    : store.rendered_content_height_lines.value_or(0);
+                CacheTranscriptRows(*text_selection_frame_, store, *text_selection_.rows);
+                text_selection_.start_row = text_selection_.end_row =
+                    *TranscriptPosition(store, mouse.y);
+            }
             text_selection_.start_x = text_selection_.end_x = mouse.x;
             text_selection_.start_y = text_selection_.end_y = mouse.y;
             return false;
         }
         if (text_selection_.potential) {
             // Motion event (FTXUI encodes motion as Pressed).
-            text_selection_.end_x = mouse.x;
-            text_selection_.end_y = mouse.y;
-            const int dx = mouse.x - text_selection_.start_x;
-            const int dy = mouse.y - text_selection_.start_y;
+            update_endpoint();
             // RFC 0007 D-4: threshold is dx²+dy² > 0 (any displacement
             // beyond the starting cell), not > 9 (3 cells).
-            if (dx * dx + dy * dy > 0) {
+            if (displaced()) {
                 text_selection_.active = true;
                 PostRenderEvent();
             }
@@ -210,10 +407,9 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
         // events (e.g. macOS Terminal.app, tmux without `mouse on`) only
         // send press + release. Detect the drag by displacement on release.
         if (!text_selection_.active && text_selection_.potential) {
-            const int dx = mouse.x - text_selection_.start_x;
-            const int dy = mouse.y - text_selection_.start_y;
+            update_endpoint();
             // RFC 0007 D-4: threshold is dx²+dy² > 0.
-            if (dx * dx + dy * dy > 0) {
+            if (displaced()) {
                 text_selection_.active = true;
             }
         }
@@ -222,18 +418,24 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
         // This ensures the final position is captured on terminals that
         // deliver release events with updated coordinates.
         if (text_selection_.active) {
-            text_selection_.end_x = mouse.x;
-            text_selection_.end_y = mouse.y;
+            update_endpoint();
         }
         if (text_selection_.active) {
             // Extract the displayed frame, not ScreenInteractive's cleared
             // working buffer, and copy to clipboard.
             if (auto* screen = text_selection_frame_.get()) {
-                std::string text = ExtractSelectedText(
-                    screen,
-                    text_selection_.start_x, text_selection_.start_y,
-                    text_selection_.end_x, text_selection_.end_y);
-                if (!text.empty()) {
+                const auto selected = text_selection_.rows
+                    ? ExtractTranscriptText(*text_selection_.rows,
+                        text_selection_.start_x, text_selection_.start_row,
+                        text_selection_.end_x, text_selection_.end_row)
+                    : std::optional{ExtractSelectedText(screen,
+                        text_selection_.start_x, text_selection_.start_y,
+                        text_selection_.end_x, text_selection_.end_y)};
+                if (!selected) {
+                    text_selection_.copy_feedback = "Copy failed · select again";
+                }
+                if (selected && !selected->empty()) {
+                    std::string text = *selected;
                     text_selection_.copied = false;
                     text_selection_.copy_feedback = "Copying…";
                     // RFC 0007 Phase 1: async copy pipeline.
@@ -281,6 +483,7 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
 void AppAdapter::ClearTextSelection() {
     // A cleared/replaced selection must not emit a late OSC 52 fallback.
     copy_generation_.fetch_add(1, std::memory_order_acq_rel);
+    text_selection_.rows.reset();
     text_selection_.active = false;
     text_selection_.potential = false;
     text_selection_.copied = false;
@@ -290,6 +493,8 @@ void AppAdapter::ClearTextSelection() {
 }
 
 void AppAdapter::DrainCopyResult() {
+    if (text_selection_.rows && text_selection_.rows->invalid)
+        ClearTextSelection();
     // Drain pending clipboard copy result from the worker thread.
     std::optional<PendingCopyResult> pending;
     {

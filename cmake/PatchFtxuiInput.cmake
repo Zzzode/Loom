@@ -1,0 +1,22 @@
+# FTXUI 5 treats an Escape immediately followed by another escape sequence
+# as one special event, losing the key and leaking the sequence's parameters.
+# Apply this narrow parser fix to fetched and offline sources alike.
+set(_loom_ftxui_parser "${ftxui_SOURCE_DIR}/src/ftxui/component/terminal_input_parser.cpp")
+file(READ "${_loom_ftxui_parser}" _loom_ftxui_input)
+set(_loom_ftxui_old "void TerminalInputParser::Add(char c) {\n  pending_ += c;")
+set(_loom_ftxui_new "void TerminalInputParser::Add(char c) {\n  // A second escape starts a new sequence after a standalone Escape key.\n  if (c == '\\x1B' && pending_ == \"\\x1B\") {\n    Send(SPECIAL);\n  }\n  pending_ += c;")
+string(FIND "${_loom_ftxui_input}" "${_loom_ftxui_new}" _loom_ftxui_applied)
+if(_loom_ftxui_applied EQUAL -1)
+    string(FIND "${_loom_ftxui_input}" "${_loom_ftxui_old}" _loom_ftxui_expected)
+    if(_loom_ftxui_expected EQUAL -1)
+        message(FATAL_ERROR "FTXUI input parser changed; review the Escape sequence fix.")
+    endif()
+    string(REPLACE "${_loom_ftxui_old}" "${_loom_ftxui_new}" _loom_ftxui_input "${_loom_ftxui_input}")
+    file(WRITE "${_loom_ftxui_parser}" "${_loom_ftxui_input}")
+endif()
+unset(_loom_ftxui_parser)
+unset(_loom_ftxui_input)
+unset(_loom_ftxui_old)
+unset(_loom_ftxui_new)
+unset(_loom_ftxui_applied)
+unset(_loom_ftxui_expected)

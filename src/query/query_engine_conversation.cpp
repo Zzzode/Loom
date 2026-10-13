@@ -40,8 +40,13 @@ void QueryEngine::set_session_id(std::string id) {
 }
 
 void QueryEngine::set_abort_callback(std::function<void()> cb) {
-    std::lock_guard lock(abort_callback_mutex_);
-    abort_callback_ = std::move(cb);
+    std::function<void()> pending;
+    {
+        std::lock_guard lock(abort_callback_mutex_);
+        abort_callback_ = std::move(cb);
+        pending = abort_callback_;
+    }
+    if (pending && should_abort()) pending();
 }
 
 std::optional<std::filesystem::path> QueryEngine::sessions_dir() const noexcept {

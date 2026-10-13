@@ -68,7 +68,7 @@ set_tests_properties(E2E_Pty_Decset PROPERTIES
 add_executable(e2e_pty_shutdown e2e_pty_shutdown.cpp)
 set_target_properties(e2e_pty_shutdown PROPERTIES CXX_SCAN_FOR_MODULES OFF)
 target_compile_features(e2e_pty_shutdown PRIVATE cxx_std_20)
-target_link_libraries(e2e_pty_shutdown PRIVATE Threads::Threads util)
+target_link_libraries(e2e_pty_shutdown PRIVATE Threads::Threads util OpenSSL::SSL OpenSSL::Crypto)
 if(TARGET loom)
   add_dependencies(e2e_pty_shutdown loom)
 endif()
@@ -129,3 +129,54 @@ foreach(_pty_direct_source IN ITEMS file settings cli)
       ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
       SKIP_RETURN_CODE 125)
 endforeach()
+
+# Drag selection travels through real SGR input and flushed ANSI frames.
+# Clipboard commands are isolated fixture executables; no host clipboard writes.
+foreach(_pty_selection_case IN ITEMS
+    basic wide release-only streaming streaming-transcript wrap-down wrap-up wrap-batched code-down code-up)
+  add_test(NAME E2E_Pty_Selection_${_pty_selection_case}
+      COMMAND e2e_pty_shutdown selection-${_pty_selection_case})
+  set_tests_properties(E2E_Pty_Selection_${_pty_selection_case} PROPERTIES
+      TIMEOUT 30
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
+# Esc is cancellation, and a mouse report in the same stdin write must not
+# swallow it or reach the next prompt. Loom inherits SIGPIPE's default action.
+foreach(_pty_escape_case IN ITEMS
+    idle stream tool selection idle-sgr idle-urxvt stream-sgr stream-urxvt)
+  add_test(NAME E2E_Pty_Escape_${_pty_escape_case}
+      COMMAND e2e_pty_shutdown escape-${_pty_escape_case})
+  set_tests_properties(E2E_Pty_Escape_${_pty_escape_case} PROPERTIES
+      TIMEOUT 30
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
+# Real zsh consumes stdin after Loom exits. Reports are queued while tracking
+# is still enabled; the emulator never emits reports after receiving reset.
+foreach(_pty_handoff_case IN ITEMS ctrl-d exit term hup)
+  add_test(NAME E2E_Pty_Handoff_${_pty_handoff_case}
+      COMMAND e2e_pty_shutdown handoff-${_pty_handoff_case})
+  set_tests_properties(E2E_Pty_Handoff_${_pty_handoff_case} PROPERTIES
+      TIMEOUT 30
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
+if(APPLE)
+  # The test CA interposer only installs the existing fixture certificate in
+  # SSL_new's client context. Verification stays enabled and system trust is
+  # untouched; socket creation, cancellation, and signals use product code.
+  add_library(e2e_tls_test_ca SHARED tls_test_ca.cpp)
+  set_target_properties(e2e_tls_test_ca PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+  target_compile_features(e2e_tls_test_ca PRIVATE cxx_std_20)
+  target_link_libraries(e2e_tls_test_ca PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+  add_dependencies(e2e_pty_shutdown e2e_tls_test_ca)
+  add_test(NAME E2E_Pty_Escape_TLS COMMAND e2e_pty_shutdown escape-tls)
+  set_tests_properties(E2E_Pty_Escape_TLS PROPERTIES
+      TIMEOUT 30
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN};LOOM_PTY_TLS_CA_LIBRARY=$<TARGET_FILE:e2e_tls_test_ca>;LOOM_PTY_TLS_CA_CERT=${CMAKE_CURRENT_SOURCE_DIR}/../fixtures/sse_cert.pem;LOOM_PTY_TLS_CA_KEY=${CMAKE_CURRENT_SOURCE_DIR}/../fixtures/sse_key.pem"
+      SKIP_RETURN_CODE 125)
+endif()

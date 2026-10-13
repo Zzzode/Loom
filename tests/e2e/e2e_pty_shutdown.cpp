@@ -14,6 +14,8 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <map>
+#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -21,6 +23,8 @@
 #include <thread>
 #include <utility>
 #include <vector>
+
+#include <openssl/ssl.h>
 
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -31,6 +35,7 @@
 #include <pty.h>
 #endif
 #include <signal.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <termios.h>
@@ -53,8 +58,14 @@ std::string read_file(const fs::path& path) {
 std::string escape_json(const std::string& value) {
     std::string result;
     for (char ch : value) {
-        if (ch == '"' || ch == '\\') result += '\\';
-        result += ch;
+        switch (ch) {
+        case '\n': result += "\\n"; break;
+        case '\r': result += "\\r"; break;
+        case '\t': result += "\\t"; break;
+        default:
+            if (ch == '"' || ch == '\\') result += '\\';
+            result += ch;
+        }
     }
     return result;
 }
@@ -100,9 +111,15 @@ bool send_all(int fd, const std::string& bytes) {
 class ModelServer {
 public:
     ModelServer(bool background, bool permission, const fs::path& target, bool direct = false,
-                std::string recovery = {})
+                std::string recovery = {}, std::string answer = {}, bool tls = false)
         : background_(background), permission_(permission), direct_(direct), target_(target),
-          recovery_(std::move(recovery)) {
+          recovery_(std::move(recovery)), answer_(std::move(answer)) {
+        if (tls) {
+            tls_context_.reset(SSL_CTX_new(TLS_server_method()));
+            require(tls_context_ != nullptr, "TLS server context unavailable");
+            require(SSL_CTX_use_certificate_file(tls_context_.get(), ::getenv("LOOM_PTY_TLS_CA_CERT"), SSL_FILETYPE_PEM) == 1, "TLS fixture certificate invalid");
+            require(SSL_CTX_use_PrivateKey_file(tls_context_.get(), ::getenv("LOOM_PTY_TLS_CA_KEY"), SSL_FILETYPE_PEM) == 1, "TLS fixture private key invalid");
+        }
         listener_ = ::socket(AF_INET, SOCK_STREAM, 0);
         require(listener_ >= 0, "socket failed");
         ::fcntl(listener_, F_SETFD, FD_CLOEXEC);
@@ -139,11 +156,12 @@ public:
         for (int fd : sockets_) ::close(fd);
         ::close(listener_);
     }
-    std::string url() const { return "http://127.0.0.1:" + std::to_string(port_); }
+    std::string url() const { return std::string(tls_context_ ? "https://127.0.0.1:" : "http://127.0.0.1:") + std::to_string(port_); }
     std::atomic<int> parked{0};
     std::atomic<int> closed{0};
     std::atomic<int> requests{0};
     std::atomic<bool> retry_fault{true};
+    std::atomic<bool> selection_grow{false};
     std::vector<std::string> request_bodies() {
         std::lock_guard lock(mutex_);
         return request_bodies_;
@@ -154,11 +172,30 @@ public:
     }
 private:
     void serve(int fd) {
+        std::unique_ptr<SSL, decltype(&SSL_free)> tls(nullptr, SSL_free);
+        if (tls_context_) {
+            tls.reset(SSL_new(tls_context_.get()));
+            if (!tls || SSL_set_fd(tls.get(), fd) != 1 || SSL_accept(tls.get()) != 1) return;
+        }
+        auto read_bytes = [&](char* bytes, std::size_t size) -> ssize_t {
+            return tls ? SSL_read(tls.get(), bytes, static_cast<int>(size)) : ::recv(fd, bytes, size, 0);
+        };
+        auto send_bytes = [&](const std::string& bytes) {
+            if (!tls) return send_all(fd, bytes);
+            std::size_t offset = 0;
+            while (offset < bytes.size()) {
+                const int count = SSL_write(tls.get(), bytes.data() + offset,
+                                            static_cast<int>(bytes.size() - offset));
+                if (count <= 0) return false;
+                offset += static_cast<std::size_t>(count);
+            }
+            return true;
+        };
         std::string request;
         std::array<char, 8192> buffer{};
         std::size_t body_end = std::string::npos;
         while (body_end == std::string::npos || request.size() < body_end) {
-            const auto count = ::recv(fd, buffer.data(), buffer.size(), 0);
+            const auto count = read_bytes(buffer.data(), buffer.size());
             if (count <= 0) return;
             request.append(buffer.data(), static_cast<std::size_t>(count));
             const auto headers_end = request.find("\r\n\r\n");
@@ -174,6 +211,31 @@ private:
             request_bodies_.push_back(request.substr(request.find("\r\n\r\n") + 4));
         }
         const int index = requests.fetch_add(1);
+        if (!answer_.empty()) {
+            if (recovery_ == "selection-streaming") {
+                const auto body = message_start() +
+                    event("content_block_start", R"({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}})") +
+                    event("content_block_delta", "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + escape_json(answer_) + "\"}}");
+                if (!send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n" + body)) return;
+                ++parked;
+                for (;;) {
+                    if (selection_grow.exchange(false)) {
+                        if (!send_bytes(event("content_block_delta",
+                            R"({"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" UPDATED"}})"))) break;
+                    }
+                    pollfd descriptor{fd, POLLIN, 0};
+                    if (::poll(&descriptor, 1, 20) > 0 && read_bytes(buffer.data(), buffer.size()) <= 0) break;
+                }
+                ++closed;
+                closed_cv_.notify_all();
+                return;
+            }
+            const auto body = text_response(answer_);
+            send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
+                std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            ::shutdown(fd, SHUT_WR);
+            return;
+        }
         if (recovery_.starts_with("round-")) {
             const int rounds = recovery_ == "round-unbounded" ? 22 : recovery_ == "round-budget" ? 3 : 1;
             std::string body;
@@ -189,7 +251,7 @@ private:
             } else {
                 body = text_response("PTY round-budget complete");
             }
-            send_all(fd, "HTTP/1.1 " + status + "\r\nContent-Type: " + content_type +
+            send_bytes("HTTP/1.1 " + status + "\r\nContent-Type: " + content_type +
                 "\r\nContent-Length: " + std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
             ::shutdown(fd, SHUT_WR);
             return;
@@ -219,18 +281,16 @@ private:
                     ? resumed_responses_.fetch_add(1) != 0 : index >= 3;
                 body = text_response(follow_up ? "PTY follow-up complete" : "PTY recovery complete");
             }
-            send_all(fd, "HTTP/1.1 " + status + "\r\nContent-Type: " + content_type +
+            send_bytes("HTTP/1.1 " + status + "\r\nContent-Type: " + content_type +
                 "\r\nContent-Length: " + std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
             ::shutdown(fd, SHUT_WR);
             return;
         }
         if (direct_) {
-            const auto body = message_start() +
-                event("content_block_start", R"({"type":"content_block_start","index":0,"content_block":{"type":"text","text":"direct model probe complete"}})") +
-                event("content_block_stop", R"({"type":"content_block_stop","index":0})") +
-                event("message_delta", R"({"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":5}})") +
-                event("message_stop", R"({"type":"message_stop"})");
-            send_all(fd, "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " + std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            // Emit the answer through the same text deltas as the interactive
+            // fixture, so the real streaming UI receives visible content.
+            const auto body = text_response("direct model probe complete");
+            send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " + std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
             ::shutdown(fd, SHUT_WR);
             return;
         }
@@ -239,27 +299,29 @@ private:
                 ? "{\"file_path\":\"" + escape_json(target_.string()) + "\",\"content\":\"must not execute\"}"
                 : "{\"description\":\"PTY lifecycle probe\",\"prompt\":\"PTY child stream\",\"name\":\"pty-agent\",\"run_in_background\":" + std::string(background_ ? "true" : "false") + "}";
             const auto body = tool_response(permission_ ? "Write" : "Agent", input);
-            send_all(fd, "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " + std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " + std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
             ::shutdown(fd, SHUT_WR);
             return;
         }
         const auto prefix = message_start() + event("content_block_start", R"({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}})") +
             event("content_block_delta", R"({"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"parked streaming response"}})");
-        if (!send_all(fd, "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n" + prefix)) return;
+        if (!send_bytes("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n" + prefix)) return;
         ++parked;
         // EOF is the gate: a cancelled producer must close its real TCP socket.
-        while (::recv(fd, buffer.data(), buffer.size(), 0) > 0) {}
+        while (read_bytes(buffer.data(), buffer.size()) > 0) {}
         {
             std::lock_guard lock(mutex_);
             ++closed;
         }
         closed_cv_.notify_all();
     }
+    std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)> tls_context_{nullptr, SSL_CTX_free};
     bool background_;
     bool permission_;
     bool direct_;
     fs::path target_;
     std::string recovery_;
+    std::string answer_;
     std::atomic<int> resumed_responses_{0};
     int listener_ = -1;
     unsigned short port_ = 0;
@@ -302,6 +364,10 @@ std::string terminal_text(const std::string& raw) {
 
 struct ModelOptions {
     bool direct = false;
+    bool capture_clipboard = false;
+    bool shell_handoff = false;
+    std::string handoff_helper;
+    bool tls = false;
     std::string file_model;
     std::string environment_model = "pty-test-model";
     std::string settings_model;
@@ -341,7 +407,14 @@ ModelOptions model_options(const std::string& scenario) {
 class Terminal {
 public:
     Terminal(const std::string& binary, const fs::path& root, const std::string& url,
-             const ModelOptions& options) : root_(root) {
+             const ModelOptions& options) : root_(root), shell_handoff_(options.shell_handoff) {
+        if (options.tls) {
+            require(::getenv("LOOM_PTY_TLS_CA_CERT") && ::getenv("LOOM_PTY_TLS_CA_KEY"),
+                    "TLS fixture certificate paths unavailable");
+#if defined(__APPLE__)
+            require(::getenv("LOOM_PTY_TLS_CA_LIBRARY") != nullptr, "TLS test CA library unavailable");
+#endif
+        }
         std::vector<std::string> arguments{binary};
         if (options.direct) {
             arguments.insert(arguments.end(), {"--run-runtime-tool", "Agent", "--runtime-tool-input",
@@ -356,6 +429,24 @@ public:
             arguments.push_back(options.cli_model);
         }
         arguments.insert(arguments.end(), options.extra_arguments.begin(), options.extra_arguments.end());
+        if (options.shell_handoff) {
+            const auto shell = ::access("/bin/zsh", X_OK) == 0 ? "/bin/zsh" : "/usr/bin/zsh";
+            require(::access(shell, X_OK) == 0, "zsh unavailable for shell handoff");
+            std::vector<std::string> wrapped{shell, "-f", "-c", R"zsh(
+"$@" < /dev/tty &
+loom_pid=$!
+wait "$loom_pid"
+loom_status=$?
+printf '%s' "$loom_status" > "$PTY_HANDOFF_DIR/loom.status"
+printf '\nPTY-SHELL-READY\n'
+IFS= read -r shell_line
+printf '%s' "$shell_line" > "$PTY_HANDOFF_DIR/shell-input.txt"
+printf '\nPTY-SHELL-RECEIVED\n'
+)zsh", "zsh"};
+            wrapped.insert(wrapped.end(), {options.handoff_helper, "--shell-loom-child"});
+            wrapped.insert(wrapped.end(), arguments.begin(), arguments.end());
+            arguments = std::move(wrapped);
+        }
         std::vector<char*> argv;
         for (auto& argument : arguments) argv.push_back(argument.data());
         argv.push_back(nullptr);
@@ -376,6 +467,15 @@ public:
         if (pid_ == 0) {
             ::chdir(root.c_str());
             ::setenv("TERM", "xterm-256color", 1);
+            if (options.capture_clipboard) {
+                const char* inherited = ::getenv("PATH");
+                const auto path = (root / "clipboard-bin").string() + ":" +
+                    (inherited ? inherited : "/usr/bin:/bin");
+                ::setenv("PATH", path.c_str(), 1);
+                ::setenv("PTY_CLIPBOARD_FILE", (root / "clipboard.txt").c_str(), 1);
+                ::unsetenv("SSH_CONNECTION");
+                ::unsetenv("SSH_TTY");
+            }
             ::setenv("HOME", root.c_str(), 1);
             ::setenv("LOOM_CONFIG_DIR", (root / "config").c_str(), 1);
             ::setenv("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").c_str(), 1);
@@ -396,7 +496,19 @@ public:
             ::unsetenv("LOOM_AGENTS_JSON");
             ::unsetenv("LOOM_NON_INTERACTIVE");
             ::unsetenv("LOOM_SIMPLE_UI");
-            ::execv(binary.c_str(), argv.data());
+            ::setenv("PTY_HANDOFF_DIR", root.c_str(), 1);
+            // The server ignores SIGPIPE; the real application must inherit
+            // the user's default signal disposition for cancellation tests.
+            ::signal(SIGPIPE, SIG_DFL);
+            if (options.tls) {
+                ::setenv("LOOM_PTY_TLS_CA_FILE", ::getenv("LOOM_PTY_TLS_CA_CERT"), 1);
+#if defined(__APPLE__)
+                ::setenv("DYLD_INSERT_LIBRARIES", ::getenv("LOOM_PTY_TLS_CA_LIBRARY"), 1);
+#else
+                ::setenv("SSL_CERT_FILE", ::getenv("LOOM_PTY_TLS_CA_CERT"), 1);
+#endif
+            }
+            ::execv(arguments.front().c_str(), argv.data());
             ::_exit(127);
         }
         ::fcntl(master_, F_SETFL, ::fcntl(master_, F_GETFL) | O_NONBLOCK);
@@ -409,7 +521,10 @@ public:
         ::close(master_);
         master_ = -1;
         if (!exited_) {
-            ::kill(pid_, SIGKILL);
+            if (shell_handoff_) {
+                ::kill(-pid_, SIGCONT);
+                ::kill(-pid_, SIGKILL);
+            } else ::kill(pid_, SIGKILL);
             const auto deadline = Clock::now() + 5s;
             for (;;) {
                 const auto waited = ::waitpid(pid_, nullptr, WNOHANG);
@@ -423,7 +538,42 @@ public:
         }
     }
     void input(const std::string& bytes) { require(::write(master_, bytes.data(), bytes.size()) == static_cast<ssize_t>(bytes.size()), "PTY input failed"); }
-    void signal(int number) { require(::kill(pid_, number) == 0, "signal failed"); }
+    void signal(int number) {
+        const auto child = shell_handoff_ ? static_cast<pid_t>(std::stoi(read_file(root_ / "loom.pid"))) : pid_;
+        require(::kill(child, number) == 0, "signal failed");
+    }
+    bool mode_enabled(int mode) const {
+        const auto prefix = "\x1b[?" + std::to_string(mode);
+        const auto enabled = output.rfind(prefix + 'h');
+        const auto disabled = output.rfind(prefix + 'l');
+        return enabled != std::string::npos && (disabled == std::string::npos || enabled > disabled);
+    }
+    void resize(unsigned short columns, unsigned short rows) {
+        winsize dimensions{};
+        dimensions.ws_col = columns;
+        dimensions.ws_row = rows;
+        require(::ioctl(master_, TIOCSWINSZ, &dimensions) == 0, "PTY resize failed");
+        signal(SIGWINCH);
+    }
+    void prepare_transcript_shortcut() {
+        // On macOS, IEXTEN + VDISCARD can consume Ctrl+O before FTXUI receives
+        // it. Isolate that separate driver issue only for the transcript case;
+        // verify_exit still requires Loom to restore the original attributes.
+        termios attributes{};
+        require(::tcgetattr(master_, &attributes) == 0, "transcript terminal attributes unavailable");
+        std::ofstream(root_ / "transcript-driver.txt")
+            << "original VDISCARD=" << static_cast<unsigned>(attributes.c_cc[VDISCARD])
+            << "\noriginal IEXTEN=" << ((attributes.c_lflag & IEXTEN) != 0)
+            << "\nfixture VDISCARD=" << static_cast<unsigned>(_POSIX_VDISABLE) << '\n';
+        attributes.c_cc[VDISCARD] = _POSIX_VDISABLE;
+        require(::tcsetattr(master_, TCSANOW, &attributes) == 0, "could not isolate transcript control-key driver");
+    }
+    std::string process_state() const {
+        if (!exited_) return "alive";
+        if (WIFEXITED(status_)) return "exit=" + std::to_string(WEXITSTATUS(status_));
+        if (WIFSIGNALED(status_)) return "signal=" + std::to_string(WTERMSIG(status_));
+        return "status=" + std::to_string(status_);
+    }
     bool alive() { pump(); return !exited_; }
     bool permission_visible() const {
         const auto text = terminal_text(output);
@@ -441,14 +591,17 @@ public:
         return false;
     }
     bool installed() const { return output.find("\x1b[?1049h") != std::string::npos && output.find("\x1b[?25") != std::string::npos; }
-    std::string latest_frame_text() const {
-        // FTXUI terminates each flushed full-screen frame with NUL. Historical
-        // output and a partial streaming frame cannot prove the input is idle.
+    // FTXUI terminates each flushed full-screen frame with NUL.
+    std::string latest_frame() const {
         const auto end = output.rfind('\0');
         if (end == std::string::npos) return {};
         const auto previous = end == 0 ? std::string::npos : output.rfind('\0', end - 1);
         const auto start = previous == std::string::npos ? 0 : previous + 1;
-        return terminal_text(output.substr(start, end - start));
+        return output.substr(start, end - start);
+    }
+    std::string latest_frame_text() const {
+        // Complete frames exclude historical output and partial stream data.
+        return terminal_text(latest_frame());
     }
     bool idle_response_visible(const std::string& response) const {
         const auto frame = latest_frame_text();
@@ -486,6 +639,7 @@ private:
         if (!exited_ && ::waitpid(pid_, &status_, WNOHANG) == pid_) exited_ = true;
     }
     fs::path root_;
+    bool shell_handoff_ = false;
     int master_ = -1;
     pid_t pid_ = -1;
     bool exited_ = false;
@@ -736,7 +890,541 @@ void run_round_budget_cli_case(const std::string& binary, const fs::path& root) 
     }
 }
 
-void run_case(const std::string& binary, const std::string& scenario, const fs::path& root) {
+// Decode actual ANSI frames into terminal cells. The fixture owns a fixed
+// 120 x 40 PTY, so mouse reports and highlight assertions use physical cells.
+struct TerminalCell {
+    std::string text = " ";
+    std::string background;
+};
+struct TerminalFrame {
+    std::array<std::array<TerminalCell, 120>, 40> cells{};
+    std::string row(int y) const {
+        std::string result;
+        for (const auto& cell : cells.at(y)) result += cell.text;
+        while (!result.empty() && result.back() == ' ') result.pop_back();
+        return result;
+    }
+    std::pair<int, int> find(const std::string& label) const {
+        for (int y = 0; y < 40; ++y) {
+            for (int x = 0; x < 120; ++x) {
+                std::string value;
+                for (int next = x; next < 120 && value.size() < label.size(); ++next)
+                    value += cells[y][next].text;
+                if (value == label) return {x, y};
+            }
+        }
+        throw std::runtime_error("visible frame lacks " + label);
+    }
+};
+
+TerminalFrame decode_frame(const std::string& bytes) {
+    TerminalFrame frame;
+    int x = 0, y = 0;
+    std::string background;
+    for (std::size_t i = 0; i < bytes.size();) {
+        const auto ch = static_cast<unsigned char>(bytes[i]);
+        if (ch == 0x1b && i + 1 < bytes.size()) {
+            if (bytes[i + 1] == '[') {
+                auto end = i + 2;
+                while (end < bytes.size() && !(bytes[end] >= '@' && bytes[end] <= '~')) ++end;
+                if (end == bytes.size()) break;
+                const auto params = bytes.substr(i + 2, end - i - 2);
+                std::vector<int> values;
+                std::size_t start = 0;
+                while (start <= params.size()) {
+                    const auto semi = params.find(';', start);
+                    const auto value = params.substr(start, semi - start);
+                    values.push_back(value.empty() ? 0 : std::atoi(value.c_str()));
+                    if (semi == std::string::npos) break;
+                    start = semi + 1;
+                }
+                const auto amount = std::max(1, values.front());
+                switch (bytes[end]) {
+                case 'A': y = std::max(0, y - amount); break;
+                case 'B': y = std::min(39, y + amount); break;
+                case 'C': x = std::min(119, x + amount); break;
+                case 'D': x = std::max(0, x - amount); break;
+                case 'H': case 'f':
+                    y = std::clamp(amount - 1, 0, 39);
+                    x = values.size() > 1 ? std::clamp(values[1] - 1, 0, 119) : 0;
+                    break;
+                case 'm':
+                    for (std::size_t n = 0; n < values.size(); ++n) {
+                        if (values[n] == 0 || values[n] == 49) background.clear();
+                        else if (values[n] >= 40 && values[n] <= 47)
+                            background = std::to_string(values[n]);
+                        else if (values[n] >= 100 && values[n] <= 107)
+                            background = std::to_string(values[n]);
+                        else if (values[n] == 38 || values[n] == 48) {
+                            const bool bg = values[n] == 48;
+                            const auto count = n + 1 < values.size() && values[n + 1] == 2 ? 4U : 2U;
+                            if (n + count < values.size()) {
+                                if (bg) {
+                                    background = "48";
+                                    for (std::size_t k = 1; k <= count; ++k)
+                                        background += ";" + std::to_string(values[n + k]);
+                                }
+                                n += count;
+                            }
+                        }
+                    }
+                    break;
+                default: break;
+                }
+                i = end + 1;
+                continue;
+            }
+            if (bytes[i + 1] == ']') {
+                i += 2;
+                while (i < bytes.size() && bytes[i] != '\a' &&
+                       !(bytes[i] == '\x1b' && i + 1 < bytes.size() && bytes[i + 1] == '\\')) ++i;
+                i += i < bytes.size() && bytes[i] == '\x1b' ? 2 : 1;
+                continue;
+            }
+            i += 2;
+            continue;
+        }
+        if (ch == '\r') { x = 0; ++i; continue; }
+        if (ch == '\n') { y = std::min(39, y + 1); ++i; continue; }
+        if (ch < 32 || ch == 127) { ++i; continue; }
+        const std::size_t length = ch < 0x80 ? 1 : ch < 0xe0 ? 2 : ch < 0xf0 ? 3 : 4;
+        const auto glyph = bytes.substr(i, length);
+        // Most fixture content is ASCII; the wide-glyph case and FTXUI chrome
+        // require CJK/emoji widths to retain physical mouse coordinates.
+        unsigned codepoint = ch & (length == 1 ? 0x7f : length == 2 ? 0x1f : length == 3 ? 0x0f : 0x07);
+        for (std::size_t n = 1; n < length && i + n < bytes.size(); ++n)
+            codepoint = (codepoint << 6) | (static_cast<unsigned char>(bytes[i + n]) & 0x3f);
+        const int width = (codepoint >= 0x1100 && codepoint <= 0x115f) ||
+            (codepoint >= 0x2e80 && codepoint <= 0xa4cf) ||
+            (codepoint >= 0xac00 && codepoint <= 0xd7a3) ||
+            (codepoint >= 0xf900 && codepoint <= 0xfaff) || codepoint >= 0x1f300 ? 2 : 1;
+        if (x < 120) frame.cells[y][x] = {glyph, background};
+        if (width == 2 && x + 1 < 120) frame.cells[y][x + 1] = {"", background};
+        x += width;
+        i += length;
+    }
+    return frame;
+}
+
+std::string mouse_report(int button, std::pair<int, int> position, bool release = false) {
+    return "\x1b[<" + std::to_string(button) + ';' + std::to_string(position.first + 1) + ';' +
+        std::to_string(position.second + 1) + (release ? "m" : "M");
+}
+
+void install_clipboard_capture(const fs::path& root) {
+    fs::create_directories(root / "clipboard-bin");
+    for (const auto& name : {"pbcopy", "wl-copy", "xclip"}) {
+        const auto path = root / "clipboard-bin" / name;
+        std::ofstream(path) << "#!/bin/sh\n/bin/cat > \"${PTY_CLIPBOARD_FILE}.pending\"\n"
+            "/bin/mv \"${PTY_CLIPBOARD_FILE}.pending\" \"${PTY_CLIPBOARD_FILE}\"\n";
+        fs::permissions(path, fs::perms::owner_all);
+    }
+}
+
+std::string selection_label(char prefix, int number) {
+    const auto digits = std::to_string(number);
+    return std::string(1, prefix) + std::string(3 - digits.size(), '0') + digits;
+}
+
+void run_selection_case(const std::string& binary, const std::string& scenario, const fs::path& root) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
+    install_clipboard_capture(root);
+    const bool streaming = scenario.starts_with("selection-streaming");
+    const bool transcript = scenario == "selection-streaming-transcript";
+    const bool wide = scenario == "selection-wide";
+    const bool release_only = scenario == "selection-release-only";
+    const bool basic = scenario == "selection-basic" || streaming || wide || release_only;
+    const bool code = scenario.find("code") != std::string::npos;
+    const bool reverse = scenario.ends_with("-up");
+    const bool batched = scenario == "selection-wrap-batched";
+    const char prefix = code ? 'C' : 'P';
+    const int count = code ? 100 : 1000;
+    std::string answer = basic ? "PTYSELECT start alpha beta gamma 中文选择 甲乙丙丁 end" : "";
+    if (!basic) {
+        if (code) answer += "```text\n";
+        for (int n = 0; n < count; ++n) {
+            answer += selection_label(prefix, n);
+            answer += code ? " fixture code line\n" : " ";
+        }
+        if (code) answer += "```";
+    }
+    std::ofstream(root / "answer.txt") << answer;
+    ModelServer server(false, false, root / "unused.txt", false, streaming ? "selection-streaming" : "", answer);
+    ModelOptions options;
+    options.capture_clipboard = true;
+    Terminal terminal(binary, root, server.url(), options);
+    server.start();
+    require(terminal.wait([&] { return terminal.installed(); }), "terminal installation not observed");
+    terminal.input("Return the selection fixture\r");
+    const auto tail = basic ? answer : selection_label(prefix, count - 1);
+    require(terminal.wait([&] {
+        return streaming ? server.parked.load() == 1 && terminal.latest_frame_text().find(tail) != std::string::npos
+                         : terminal.idle_response_visible(tail);
+    }), "selection response not rendered");
+    if (transcript) {
+        terminal.prepare_transcript_shortcut();
+        // The user-message background disappears in transcript mode. Its real
+        // ANSI cells prove Ctrl+O reached the handler rather than a timer redraw.
+        const auto before_mode = decode_frame(terminal.latest_frame());
+        const auto user_position = before_mode.find("Return the selection fixture");
+        const auto user_background = before_mode.cells[user_position.second][user_position.first].background;
+        terminal.input("\x0f");
+        require(terminal.wait([&] {
+            const auto candidate = decode_frame(terminal.latest_frame());
+            const auto user = candidate.find("Return the selection fixture");
+            return candidate.cells[user.second][user.first].background != user_background &&
+                terminal.latest_frame_text().find(tail) != std::string::npos;
+        }), "real Ctrl+O did not change the user-message transcript background");
+        // Ctrl+E lifts the transcript's message cap after mode entry is proved.
+        const auto before = terminal.output.rfind('\0');
+        terminal.input("\x05");
+        require(terminal.wait([&] {
+            return terminal.output.rfind('\0') > before &&
+                terminal.latest_frame_text().find(tail) != std::string::npos;
+        }), "real Ctrl+E did not redraw the paused transcript response");
+    }
+
+    auto baseline = decode_frame(terminal.latest_frame());
+    std::ofstream(root / "baseline.txt") << terminal.latest_frame_text();
+    if (basic) {
+        const auto start = baseline.find(wide ? "甲乙丙丁" : "alpha");
+        terminal.input(mouse_report(0, start) + mouse_report(0, start, true));
+        const auto click_output = terminal.output.size();
+        terminal.input(mouse_report(35, {start.first + 1, start.second}));
+        require(terminal.wait([&] { return terminal.output.size() > click_output; }), "same-cell click did not redraw");
+        require(!fs::exists(root / "clipboard.txt"), "same-cell click unexpectedly copied text");
+        const auto finish = std::pair{start.first + (wide ? 3 : 4), start.second};
+        terminal.input(mouse_report(0, start));
+        if (!release_only) {
+            terminal.input(mouse_report(32, finish));
+            require(terminal.wait([&] {
+                const auto frame = decode_frame(terminal.latest_frame());
+                return frame.cells[start.second][start.first].background != baseline.cells[start.second][start.first].background;
+            }), "real SGR drag produced no selected-cell background highlight");
+            const auto frame = decode_frame(terminal.latest_frame());
+            const auto bg = frame.cells[start.second][start.first].background;
+            for (int x = start.first; x <= finish.first; ++x)
+                require(frame.cells[start.second][x].background == bg, "drag highlight skipped a selected physical cell");
+            for (int x : {start.first - 1, finish.first + 1})
+                require(frame.cells[start.second][x].background == baseline.cells[start.second][x].background,
+                        "drag highlight included an unselected adjacent cell");
+        }
+        terminal.input(mouse_report(0, finish, true));
+        require(terminal.wait([&] { return fs::exists(root / "clipboard.txt"); }), "mouse release produced no native clipboard payload");
+        require(read_file(root / "clipboard.txt") == (wide ? "甲乙" : "alpha"), "single-line drag copied wrong bytes");
+        require(terminal.wait([&] { return terminal.latest_frame_text().find("chars to clipboard") != std::string::npos; }),
+                "native backend success feedback not rendered");
+        std::ofstream(root / "selected.raw", std::ios::binary) << terminal.latest_frame();
+        std::ofstream(root / "copied.txt") << read_file(root / "clipboard.txt");
+        std::ofstream(root / "expected.txt") << (wide ? "甲乙" : "alpha");
+        if (streaming) {
+            fs::remove(root / "clipboard.txt");
+            terminal.input(mouse_report(0, start) + mouse_report(32, finish));
+            require(terminal.wait([&] {
+                const auto frame = decode_frame(terminal.latest_frame());
+                return frame.cells[start.second][start.first].background != baseline.cells[start.second][start.first].background;
+            }), "second paused-stream drag did not highlight");
+            server.selection_grow = true;
+            require(terminal.wait([&] {
+                const auto frame = decode_frame(terminal.latest_frame());
+                return terminal.latest_frame_text().find("UPDATED") != std::string::npos &&
+                    frame.cells[start.second][start.first].background == baseline.cells[start.second][start.first].background;
+            }), "growing streaming content did not cancel the stale highlighted selection");
+            std::ofstream(root / "growth.raw", std::ios::binary) << terminal.latest_frame();
+            terminal.input(mouse_report(0, finish, true));
+            const auto settled = Clock::now() + 250ms;
+            require(terminal.wait([&] { return Clock::now() >= settled; }), "terminal closed while checking stale release");
+            require(!fs::exists(root / "clipboard.txt"), "stale selection copied after streaming text changed");
+        }
+    } else {
+        // Collect each physical fixture row before selection. This independent
+        // oracle checks the exact rendered payload, including wrap indentation.
+        std::map<int, std::string> rendered_rows;
+        auto collect = [&] {
+            baseline = decode_frame(terminal.latest_frame());
+            for (int y = 0; y < 40; ++y) {
+                const auto row = baseline.row(y);
+                const auto label = row.find(prefix);
+                if (label == std::string::npos || label + 4 > row.size() ||
+                    !std::isdigit(static_cast<unsigned char>(row[label + 1])) ||
+                    !std::isdigit(static_cast<unsigned char>(row[label + 2])) ||
+                    !std::isdigit(static_cast<unsigned char>(row[label + 3]))) continue;
+                rendered_rows[std::stoi(row.substr(label + 1, 3))] = row;
+            }
+        };
+        auto visible = [&](const std::string& label) {
+            return terminal.latest_frame_text().find(label) != std::string::npos;
+        };
+        auto wheel = [&](bool up, std::pair<int, int> position = {110, 15}, int reports = 1) {
+            const auto before = terminal.output.rfind('\0');
+            std::string input;
+            for (int n = 0; n < reports; ++n) input += mouse_report(up ? 64 : 65, position);
+            terminal.input(input);
+            require(terminal.wait([&] { return terminal.output.rfind('\0') > before; }),
+                    "wheel step did not produce a complete terminal frame");
+        };
+        collect();
+        for (int steps = 0; !visible(selection_label(prefix, 0)); ++steps) {
+            require(steps < 100, "could not scroll fixture start into view");
+            wheel(true);
+            collect();
+        }
+        const auto head = selection_label(prefix, 0);
+        std::string expected;
+        for (const auto& [number, row] : rendered_rows) {
+            auto text = row;
+            if (number == 0) text.erase(0, text.find(head));
+            const auto last = text.find(tail);
+            if (last != std::string::npos)
+                text.resize(last + tail.size() + (code ? std::string_view(" fixture code line").size() : 0));
+            if (!expected.empty()) expected += '\n';
+            expected += text;
+        }
+        // Ensure the baseline oracle itself has every original token in order.
+        std::size_t token_position = 0;
+        for (int n = 0; n < count; ++n) {
+            token_position = expected.find(selection_label(prefix, n), token_position);
+            require(token_position != std::string::npos, "baseline oracle skipped fixture token " + std::to_string(n));
+            token_position += 4;
+        }
+        std::ofstream(root / "expected.txt") << expected;
+        if (reverse) {
+            for (int steps = 0; !visible(tail); ++steps) {
+                require(steps < 100, "could not return fixture end into view");
+                wheel(false);
+            }
+        }
+        baseline = decode_frame(terminal.latest_frame());
+        auto start = baseline.find(reverse ? tail : head);
+        if (reverse) start.first += code ? 21 : 3;
+        terminal.input(mouse_report(0, start));
+        const auto initial_finish = std::pair{start.first + (reverse ? -1 : 1), start.second};
+        terminal.input(mouse_report(32, initial_finish));
+        std::string selection_background;
+        require(terminal.wait([&] {
+            const auto frame = decode_frame(terminal.latest_frame());
+            selection_background = frame.cells[start.second][start.first].background;
+            return selection_background != baseline.cells[start.second][start.first].background;
+        }), "wrapped/code same-screen drag produced no ANSI highlight");
+        const auto target = reverse ? head : tail;
+        int steps = 0;
+        for (; !visible(target); ++steps) {
+            require(steps < 100, "selected wheel did not reach the opposite endpoint");
+            wheel(reverse, {reverse ? 0 : 119, reverse ? 3 : 32}, batched ? 4 : 1);
+            auto frame = decode_frame(terminal.latest_frame());
+            int first_row = -1, last_row = -1;
+            for (int y = 0; y < 40; ++y) {
+                const auto row = frame.row(y);
+                const auto marker = row.find(prefix);
+                if (marker != std::string::npos && marker + 4 <= row.size() &&
+                    std::isdigit(static_cast<unsigned char>(row[marker + 1])) &&
+                    std::isdigit(static_cast<unsigned char>(row[marker + 2])) &&
+                    std::isdigit(static_cast<unsigned char>(row[marker + 3]))) {
+                    if (first_row == -1) first_row = y;
+                    last_row = y;
+                }
+            }
+            require(first_row >= 0 && last_row >= 0, "scrolled frame has no fixture rows");
+            const auto endpoint = std::pair{reverse ? 0 : 119, reverse ? first_row : last_row};
+            const auto before = terminal.output.rfind('\0');
+            terminal.input(mouse_report(32, endpoint));
+            require(terminal.wait([&] {
+                if (terminal.output.rfind('\0') <= before) return false;
+                const auto candidate = decode_frame(terminal.latest_frame());
+                const auto row = candidate.row(endpoint.second);
+                const auto marker = row.find(prefix);
+                return marker < 120 && candidate.cells[endpoint.second][marker].background == selection_background;
+            }), "drag motion after wheel did not highlight its current endpoint");
+            frame = decode_frame(terminal.latest_frame());
+            for (int y = first_row; y <= last_row; ++y) {
+                const auto row = frame.row(y);
+                const auto marker = row.find(prefix);
+                const bool anchor_visible = row.find(reverse ? tail : head) != std::string::npos;
+                const int begin = !reverse && anchor_visible ? start.first : 0;
+                const int end = reverse && anchor_visible ? start.first : static_cast<int>(row.size()) - 1;
+                for (int x = begin; x <= end && x < 120; ++x)
+                    require(frame.cells[y][x].background == selection_background,
+                            "scrolled selection lost or misplaced ANSI highlight at " +
+                            std::to_string(x) + "," + std::to_string(y) + " (row " +
+                            (marker == std::string::npos ? "blank" : row.substr(marker, 4)) + ")");
+            }
+        }
+        require(steps > 0 && !visible(reverse ? tail : head),
+                "long selection never moved its start offscreen");
+        auto finish = decode_frame(terminal.latest_frame()).find(target);
+        if (!reverse) finish.first += code ? 21 : 3;
+        terminal.input(mouse_report(0, finish, true));
+        require(terminal.wait([&] { return fs::exists(root / "clipboard.txt"); }), "long selection produced no native clipboard payload");
+        require(read_file(root / "clipboard.txt") == expected, "long selection clipboard bytes differ from complete rendered baseline");
+        require(terminal.wait([&] { return terminal.latest_frame_text().find("chars to clipboard") != std::string::npos; }),
+                "long selection native success feedback not rendered");
+        std::ofstream(root / "selected.raw", std::ios::binary) << terminal.latest_frame();
+        std::ofstream(root / "copied.txt") << read_file(root / "clipboard.txt");
+    }
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+}
+
+void run_escape_case(const std::string& binary, const std::string& scenario, const fs::path& root) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
+    const bool tls = scenario == "escape-tls";
+    if (tls)
+        require(::getenv("LOOM_PTY_TLS_CA_CERT") && ::getenv("LOOM_PTY_TLS_CA_KEY"),
+                "TLS fixture certificate paths unavailable");
+    const bool streaming = scenario.starts_with("escape-stream") || tls;
+    const bool tool = scenario.starts_with("escape-tool");
+    const bool selection = scenario.starts_with("escape-selection");
+    const auto answer = std::string("PTY ESC alpha beta gamma response");
+    ModelServer server(false, false, root / "unused.txt", false,
+        streaming ? "selection-streaming" : "", tool ? "" : answer, tls);
+    ModelOptions options;
+    options.capture_clipboard = selection;
+    options.tls = tls;
+    if (selection) install_clipboard_capture(root);
+    Terminal terminal(binary, root, server.url(), options);
+    server.start();
+    require(terminal.wait([&] { return terminal.installed() && !terminal.latest_frame().empty(); }),
+            "initial complete terminal frame unavailable");
+    std::pair<int, int> anchor{};
+    std::string before_background;
+    if (!scenario.starts_with("escape-idle")) {
+        terminal.input("Return the Esc probe\r");
+        if (tool) {
+            require(terminal.wait([&] { return terminal.permission_visible(); }), "Agent permission unavailable");
+            terminal.input("y");
+            require(terminal.wait([&] {
+                return server.parked.load() == 1 &&
+                    compact_json(read_file(root / "runtime" / "pty-agent.json")).find("\"status\":\"running\"") != std::string::npos;
+            }), "actual Agent execution did not start");
+        } else {
+            require(terminal.wait([&] {
+                return streaming ? server.parked.load() == 1 && terminal.latest_frame_text().find(answer) != std::string::npos
+                                 : terminal.idle_response_visible(answer);
+            }), "Esc probe response unavailable");
+        }
+        if (selection) {
+            const auto frame = decode_frame(terminal.latest_frame());
+            anchor = frame.find("alpha");
+            before_background = frame.cells[anchor.second][anchor.first].background;
+            terminal.input(mouse_report(0, anchor) + mouse_report(32, {anchor.first + 4, anchor.second}));
+            require(terminal.wait([&] {
+                return decode_frame(terminal.latest_frame()).cells[anchor.second][anchor.first].background != before_background;
+            }), "active drag highlight unavailable before Esc");
+        }
+    }
+    std::ofstream(root / "before-escape.raw", std::ios::binary) << terminal.latest_frame();
+    const auto before = terminal.output.size();
+    const auto requests_before_escape = server.requests.load();
+    auto input = std::string("\x1b");
+    if (scenario.ends_with("-urxvt")) input += "\x1b[39;74;83M";
+    if (scenario.ends_with("-sgr")) input += "\x1b[<35;74;23M";
+    terminal.input(input);
+    const auto settle = Clock::now() + 700ms;
+    terminal.wait([&] { return Clock::now() >= settle; }, 2s);
+    const bool alive = terminal.alive();
+    const auto suffix = terminal.output.substr(before);
+    std::ofstream(root / "escape-result.txt") << "after single Esc: " << terminal.process_state()
+        << "\nalternate-screen teardown=" << (suffix.find("\x1b[?1049l") != std::string::npos)
+        << "\nmouse1003 teardown=" << (suffix.find("\x1b[?1003l") != std::string::npos)
+        << "\nmouse1006 teardown=" << (suffix.find("\x1b[?1006l") != std::string::npos) << '\n';
+    std::cout << scenario << " after single Esc: " << terminal.process_state()
+              << " alt teardown=" << (suffix.find("\x1b[?1049l") != std::string::npos)
+              << " mouse teardown=" << (suffix.find("\x1b[?1003l") != std::string::npos) << '\n';
+    require(alive, "single Esc unexpectedly ended Loom: " + terminal.process_state());
+    require(suffix.find("\x1b[?1049l") == std::string::npos &&
+            suffix.find("\x1b[?1003l") == std::string::npos &&
+            suffix.find("\x1b[?1006l") == std::string::npos,
+            "Esc uninstalled terminal modes while the app should remain interactive");
+    if (streaming || tool) {
+        require(terminal.wait([&] {
+            return server.closed.load() == server.parked.load() && terminal.idle_response_visible("");
+        }), "single Esc did not cancel the active request and return idle: " + terminal.process_state());
+        require(server.requests.load() == requests_before_escape,
+                "cancellation issued another model POST without a new prompt");
+    }
+
+    if (selection) {
+        require(decode_frame(terminal.latest_frame()).cells[anchor.second][anchor.first].background == before_background,
+                "Esc did not clear active drag highlight");
+        terminal.input(mouse_report(0, {anchor.first + 4, anchor.second}, true));
+        require(!fs::exists(root / "clipboard.txt"), "Esc-cancelled drag copied text");
+    }
+    std::ofstream(root / "after-escape.raw", std::ios::binary) << terminal.latest_frame();
+    const auto requests = server.requests.load();
+    terminal.input("Continue after one Esc\r");
+    require(terminal.wait([&] { return server.requests.load() > requests; }), "Loom did not accept new input after Esc");
+    const auto bodies = server.request_bodies();
+    const auto messages = request_messages(bodies.back());
+    require(messages.find("\"content\":\"Continue after one Esc\"") != std::string::npos ||
+            messages.find("\"text\":\"Continue after one Esc\"") != std::string::npos,
+            "mouse report bytes contaminated the follow-up user prompt");
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+    std::cout << "final deliberate Ctrl+D: " << terminal.process_state() << '\n';
+}
+
+void run_handoff_case(const std::string& binary, const std::string& scenario, const fs::path& root, const std::string& harness) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":true,"permissionMode":"default","extendedThinking":false})";
+    ModelServer server(false, false, root / "unused.txt", false, {}, "PTY shell response");
+    ModelOptions options;
+    options.shell_handoff = true;
+    options.handoff_helper = harness;
+    Terminal terminal(binary, root, server.url(), options);
+    server.start();
+    require(terminal.wait([&] {
+        return terminal.installed() && !terminal.latest_frame().empty() && fs::exists(root / "loom.pid");
+    }), "Loom shell child did not install its terminal");
+    require(terminal.mode_enabled(1003) && terminal.mode_enabled(1006), "terminal emulator mouse tracking not enabled");
+    // Freeze the consumer while tracking remains enabled. These reports are
+    // queued before exit, not fabricated after the emulator receives reset.
+    terminal.signal(SIGSTOP);
+    require(terminal.wait([&] { return fs::exists(root / "loom.stopped"); }),
+            "Loom did not stop before queuing terminal reports");
+    require(terminal.mode_enabled(1003) && terminal.mode_enabled(1006),
+            "emulator received mouse reset before the queued input");
+    std::string pending;
+    if (scenario == "handoff-ctrl-d") pending += '\x04';
+    if (scenario == "handoff-exit") pending += "/exit\r";
+    for (int n = 0; n < 20; ++n) pending += "\x1b[<35;74;23M";
+    terminal.input(pending);
+    if (scenario == "handoff-term") terminal.signal(SIGTERM);
+    if (scenario == "handoff-hup") terminal.signal(SIGHUP);
+    terminal.signal(SIGCONT);
+    require(terminal.wait([&] { return terminal.output.find("PTY-SHELL-READY") != std::string::npos; }), "zsh did not regain the terminal");
+    for (const int mode : {1000, 1002, 1003, 1006, 1015})
+        require(!terminal.mode_enabled(mode), "mouse tracking remained enabled at shell handoff");
+    terminal.input("shell-handoff-ok\r");
+    require(terminal.wait([&] { return fs::exists(root / "shell-input.txt"); }), "real zsh did not read the follow-up line");
+    const auto received = read_file(root / "shell-input.txt");
+    std::cout << "shell received " << received.size() << " bytes, loom status " << read_file(root / "loom.status") << '\n';
+    std::ofstream(root / "handoff-result.txt")
+        << "reports queued before mouse reset=20\nactual Loom exit=" << read_file(root / "loom.actual-status")
+        << "\nzsh observed Loom exit=" << read_file(root / "loom.status")
+        << "\nshell input bytes=" << received.size() << "\nmouse modes disabled=1000,1002,1003,1006,1015\n";
+    require(read_file(root / "loom.actual-status") == read_file(root / "loom.status"),
+            "zsh observed a different Loom termination status");
+    require(read_file(root / "loom.status") == (scenario == "handoff-term" || scenario == "handoff-hup" ? "1" : "0"), "unexpected actual Loom exit status");
+    require(received == "shell-handoff-ok", "queued mouse reports leaked into the real zsh consumer (" + std::to_string(received.size()) + " bytes)");
+    terminal.verify_exit(0);
+}
+
+void run_case(const std::string& binary, const std::string& scenario, const fs::path& root,
+              const std::string& harness) {
+    if (scenario.starts_with("escape-")) {
+        run_escape_case(binary, scenario, root);
+        return;
+    }
+    if (scenario.starts_with("handoff-")) {
+        run_handoff_case(binary, scenario, root, harness);
+        return;
+    }
+    if (scenario.starts_with("selection-")) {
+        run_selection_case(binary, scenario, root);
+        return;
+    }
     if (scenario == "round-cli") {
         run_round_budget_cli_case(binary, root);
         return;
@@ -829,6 +1517,32 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
 } // namespace
 
 int main(int argc, char** argv) {
+    if (argc >= 3 && std::string_view(argv[1]) == "--shell-loom-child") {
+        const fs::path directory(::getenv("PTY_HANDOFF_DIR"));
+        const pid_t child = ::fork();
+        if (child < 0) return 126;
+        if (child == 0) {
+            ::signal(SIGPIPE, SIG_DFL);
+            ::execv(argv[2], argv + 2);
+            ::_exit(127);
+        }
+        std::ofstream(directory / "loom.pid") << child;
+        int status = 0;
+        for (;;) {
+            if (::waitpid(child, &status, WUNTRACED) < 0) {
+                if (errno == EINTR) continue;
+                return 126;
+            }
+            if (WIFSTOPPED(status)) {
+                std::ofstream(directory / "loom.stopped") << WSTOPSIG(status);
+                continue;
+            }
+            break;
+        }
+        const int code = WIFEXITED(status) ? WEXITSTATUS(status) : 128 + WTERMSIG(status);
+        std::ofstream(directory / "loom.actual-status") << code;
+        return code;
+    }
     ::signal(SIGPIPE, SIG_IGN);
     if (argc != 2) return 2;
     const char* binary = ::getenv("LOOM_BINARY");
@@ -841,17 +1555,32 @@ int main(int argc, char** argv) {
     const char* directory = ::mkdtemp(pattern.data());
     if (!directory) return 1;
     const fs::path root(directory);
+    if (scenario.starts_with("handoff-") && ::access("/bin/zsh", X_OK) != 0 && ::access("/usr/bin/zsh", X_OK) != 0) {
+        std::error_code ignored;
+        fs::remove_all(root, ignored);
+        return 125;
+    }
     int result = 0;
     try {
         fs::create_directories(root / "config");
-        run_case(binary, argv[1], root);
+        run_case(binary, argv[1], root, fs::absolute(argv[0]).string());
         std::cout << "PASS " << argv[1] << '\n';
     } catch (const std::exception& error) {
         std::cerr << "FAIL " << argv[1] << ": " << error.what() << '\n';
         result = 1;
     }
     std::error_code ignored;
-    if (result == 0) fs::remove_all(root, ignored);
+    if (result == 0) {
+        if (const char* evidence = ::getenv("LOOM_PTY_EVIDENCE_DIR"); evidence && (scenario.starts_with("selection-") || scenario.starts_with("escape-") || scenario.starts_with("handoff-"))) {
+            const auto destination = fs::path(evidence) / scenario;
+            fs::create_directories(destination);
+            for (const auto& entry : fs::directory_iterator(root)) {
+                if (entry.path().extension() == ".raw" || entry.path().extension() == ".txt")
+                    fs::copy_file(entry.path(), destination / entry.path().filename(), fs::copy_options::overwrite_existing);
+            }
+        }
+        fs::remove_all(root, ignored);
+    }
     else std::cerr << "Diagnostic directory: " << root << '\n';
     return result;
 }

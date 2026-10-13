@@ -323,6 +323,11 @@ static_assert(kVirtualExitThreshold < kVirtualEnterThreshold,
                                             : VirtualRendererMode::Static;
 }
 
+struct SelectionRowGeometry {
+    int index = 0;
+    Box box{};
+};
+
 struct MessagesListInput {
     std::vector<MessageRowPayload> rows;
     /// Parallel to `rows`.  The dispatcher needs both shape and payload.
@@ -388,6 +393,11 @@ struct MessagesListInput {
     /// The event handler uses it to map mouse clicks → row indices for
     /// click-to-expand.  Nullptr = no mouse tracking (golden tests, dialogs).
     RowClickTracker*                row_click_tracker = nullptr;
+
+    /// Optional raw row boxes for selection. Virtual prefix sums estimate
+    /// heights, so a selection is anchored by visible row index + local line.
+    std::vector<std::shared_ptr<SelectionRowGeometry>>* selection_rows = nullptr;
+    Box* viewport_box = nullptr;
 
     /// Set of "expand keys" that the user has clicked/pressed-Enter on to
     /// reveal full content.  Keys are tool_name strings for tool_use/tool_result

@@ -31,6 +31,7 @@ import loom.ui.screens.messages_store;
 import loom.ui.messages.message_image;
 import loom.commands.registry;
 import loom.query.query_engine;
+import loom.types.types;
 import loom.tools.tool;
 import loom.teams.team_helpers;
 import loom.teams.swarm.helpers;
@@ -852,6 +853,304 @@ TEST_P(TextSelectionInteractiveCopy, CopiesDisplayedTextAfterFrameIsCleared) {
 
 INSTANTIATE_TEST_SUITE_P(
     RenderedFrames, TextSelectionInteractiveCopy, testing::Values(0, 1, 2));
+
+// Exercise both static and virtual transcripts, forward/reverse drags and
+// returning to an earlier viewport without releasing the button.
+class TextSelectionScrollCopy : public testing::TestWithParam<int> {};
+
+TEST_P(TextSelectionScrollCopy, CopiesRowsAcrossBatchedWheelEvents) {
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_selection_scroll_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(storage_root);
+    const auto copied_file = storage_root / "copied.txt";
+    for (const auto* name : {"pbcopy", "xclip", "wl-copy"}) {
+        const auto backend = storage_root / name;
+        std::ofstream script(backend);
+        script << "#!/bin/sh\n/bin/cat > \"$LOOM_SELECTION_COPY_FILE\"\n";
+        script.close();
+        fs::permissions(backend, fs::perms::owner_all);
+    }
+    ScopedEnvVar path_env("PATH");
+    path_env.set(storage_root.string() + ":" +
+                 (std::getenv("PATH") ? std::getenv("PATH") : ""));
+    ScopedEnvVar output_env("LOOM_SELECTION_COPY_FILE");
+    output_env.set(copied_file.string());
+    ScopedEnvVar ssh_connection("SSH_CONNECTION");
+    ScopedEnvVar ssh_tty("SSH_TTY");
+    ssh_connection.unset();
+    ssh_tty.unset();
+
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    const bool virtual_list = GetParam() >= 3 && GetParam() < 6;
+    const int direction = GetParam() % 3;
+    const int row_count = virtual_list ? 100 : 45;
+    std::vector<std::string> labels;
+    std::string long_content = "```text\n";
+    for (int i = 0; i < row_count; ++i) {
+        labels.push_back(std::format("scroll-row-{:03}-中文🙂", i));
+        if (GetParam() >= 6) {
+            long_content += labels.back() + "\n";
+            continue;
+        }
+        loom::core::AssistantMessage message;
+        // Code blocks retain one rendered row per label and preserve spaces.
+        message.content.push_back(loom::core::TextBlock{
+            "```text\n" + labels.back() + "\n```"});
+        engine.append_message_for_testing(std::move(message));
+    }
+    if (GetParam() >= 6) {
+        loom::core::AssistantMessage message;
+        message.content.push_back(loom::core::TextBlock{long_content + "```"});
+        engine.append_message_for_testing(std::move(message));
+    }
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+    app->SyncState();
+    auto screen = ftxui::ScreenInteractive::FixedSize(100, 22);
+    app->set_screen(&screen);
+    auto draw = [&] {
+        screen.Clear();
+        ftxui::Render(screen, app->Render());
+    };
+    draw();
+    draw(); // settle measured viewport height
+    const auto state = test_seams(app).screen_state_for_testing();
+    ASSERT_EQ(state->messages_store.virtual_list_active, virtual_list);
+    auto mouse = [&](ftxui::Mouse::Button button, ftxui::Mouse::Motion motion,
+                     int x, int y) {
+        return app->OnEvent(ftxui::Event::Mouse("", {
+            button, motion, false, false, false, x, y}));
+    };
+    // Start away from either boundary. Wheel events deliberately arrive
+    // without intervening external renders, as in an interactive event batch.
+    for (int i = 0; i < (direction == 1 ? 5 : 36); ++i)
+        mouse(ftxui::Mouse::WheelUp, ftxui::Mouse::Pressed, 5, 5);
+    draw();
+    // Find a complete label in the transcript viewport.
+    struct Hit { int index, x, y, end_x; };
+    auto find_label = [&](bool last) -> std::optional<Hit> {
+        std::optional<Hit> hit;
+        const auto box = state->messages_store.selection_viewport_box;
+        for (int y = box.y_min; y <= box.y_max; ++y) {
+            for (int index = 0; index < row_count; ++index) {
+                for (int x = 0; x < screen.dimx(); ++x) {
+                    std::string candidate;
+                    for (int end = x; end < screen.dimx(); ++end) {
+                        candidate += screen.PixelAt(end, y).character;
+                        if (candidate == labels[index]) {
+                            hit = Hit{index, x, y, end};
+                            if (!last) return hit;
+                            break;
+                        }
+                        if (!labels[index].starts_with(candidate)) break;
+                    }
+                }
+            }
+        }
+        return hit;
+    };
+    auto start = find_label(direction == 1);
+    ASSERT_TRUE(start);
+    mouse(ftxui::Mouse::Left, ftxui::Mouse::Pressed,
+          direction == 1 ? start->end_x : start->x, start->y);
+    const auto button = direction == 1
+        ? ftxui::Mouse::WheelUp : ftxui::Mouse::WheelDown;
+    const auto viewport = state->messages_store.selection_viewport_box;
+    const int wheel_y = (viewport.y_min + viewport.y_max) / 2;
+    for (int i = 0; i < 18; ++i)
+        mouse(button, ftxui::Mouse::Pressed, start->x, wheel_y);
+    if (direction == 2) {
+        // Reverse scrolling before release; cached rows must be replaced,
+        // never duplicated or appended in traversal order.
+        for (int i = 0; i < 4; ++i)
+            mouse(ftxui::Mouse::WheelUp, ftxui::Mouse::Pressed, start->x, wheel_y);
+    }
+    draw();
+    ASSERT_TRUE(test_seams(app).text_selection_active_for_testing());
+    // Wheel events alone extend the visible highlight without a motion report.
+    auto wheel_end = find_label(direction == 1);
+    ASSERT_TRUE(wheel_end);
+    EXPECT_NE(screen.PixelAt(wheel_end->x, wheel_end->y).background_color,
+              screen.PixelAt(wheel_end->x, screen.dimy() - 1).background_color);
+    auto end = find_label(direction != 1);
+    ASSERT_TRUE(end);
+    ASSERT_GT(std::abs(end->index - start->index), 3);
+    mouse(ftxui::Mouse::Left, ftxui::Mouse::Pressed,
+          direction == 1 ? end->x : end->end_x, end->y);
+    draw();
+    // Every label already traversed in this viewport is highlighted, while
+    // fixed chrome outside it keeps its original background.
+    EXPECT_NE(screen.PixelAt(end->x, end->y).background_color,
+              screen.PixelAt(end->x, screen.dimy() - 1).background_color);
+    screen.Clear(); // extraction must not use ScreenInteractive's live pixels
+    mouse(ftxui::Mouse::Left, ftxui::Mouse::Released,
+          direction == 1 ? end->x : end->end_x, end->y);
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    std::string copied;
+    while (std::chrono::steady_clock::now() < deadline) {
+        (void)app->Render();
+        std::ifstream file(copied_file);
+        copied.assign(std::istreambuf_iterator<char>(file), {});
+        if (test_seams(app).text_selection_copied_for_testing()) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    EXPECT_TRUE(test_seams(app).text_selection_copied_for_testing())
+        << test_seams(app).copy_feedback_for_testing().value_or("");
+    const int first = std::min(start->index, end->index);
+    const int last = std::max(start->index, end->index);
+    auto offset = std::size_t{0};
+    for (int i = first; i <= last; ++i) {
+        const auto pos = copied.find(labels[i], offset);
+        ASSERT_NE(pos, std::string::npos) << "missing row " << i << " in " << copied;
+        EXPECT_EQ(copied.find(labels[i], pos + labels[i].size()), std::string::npos);
+        offset = pos + labels[i].size();
+    }
+    EXPECT_TRUE(copied.starts_with(labels[first])) << copied;
+    EXPECT_TRUE(copied.ends_with(labels[last])) << copied;
+    app->set_screen(nullptr);
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    TranscriptFrames, TextSelectionScrollCopy, testing::Values(0, 1, 2, 3, 4, 5, 6, 7, 8));
+
+class TextSelectionInvalidation : public testing::TestWithParam<bool> {};
+
+TEST_P(TextSelectionInvalidation, CancelsBeforeCopyWhenGeometryOrSourceChanges) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::core::AssistantMessage message;
+    message.content.push_back(loom::core::TextBlock{"resize-selection-probe"});
+    engine.append_message_for_testing(std::move(message));
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_selection_resize_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+    app->SyncState();
+    auto screen = ftxui::ScreenInteractive::FixedSize(100, 22);
+    app->set_screen(&screen);
+    ftxui::Render(screen, app->Render());
+    const auto state = test_seams(app).screen_state_for_testing();
+    const auto& viewport = state->messages_store.selection_viewport_box;
+    ASSERT_FALSE(state->messages_store.selection_rows.empty());
+    const auto& row = state->messages_store.selection_rows.back()->box;
+    const int y = std::clamp(row.y_min, viewport.y_min, viewport.y_max);
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Pressed,
+        false, false, false, 5, y}));
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Pressed,
+        false, false, false, 6, y}));
+    ASSERT_TRUE(test_seams(app).text_selection_active_for_testing());
+    if (GetParam()) {
+        // Same-length source replacement must invalidate cells even when
+        // the projected row count, viewport and total height are unchanged.
+        auto conversation = engine.get_conversation();
+        bool edited = false;
+        for (auto& entry : conversation) {
+            if (auto* assistant = std::get_if<loom::core::AssistantMessage>(&entry)) {
+                std::get<loom::core::TextBlock>(assistant->content.front()).text =
+                    "edited-selection-probe";
+                edited = true;
+                break;
+            }
+        }
+        ASSERT_TRUE(edited);
+        engine.restore_conversation(std::move(conversation));
+        app->SyncState();
+        ASSERT_TRUE(test_seams(app).text_selection_active_for_testing());
+        screen.Clear();
+        ftxui::Render(screen, app->Render());
+    } else {
+        auto resized = ftxui::Screen::Create(
+            ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(22));
+        ftxui::Render(resized, app->Render());
+    }
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Released,
+        false, false, false, 6, y}));
+    EXPECT_FALSE(test_seams(app).text_selection_active_for_testing());
+    EXPECT_FALSE(test_seams(app).text_selection_potential_for_testing());
+    EXPECT_FALSE(test_seams(app).copy_feedback_for_testing());
+    app->set_screen(nullptr);
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    WidthAndSource, TextSelectionInvalidation, testing::Values(false, true));
+
+class TextSelectionStreaming : public testing::TestWithParam<bool> {};
+
+TEST_P(TextSelectionStreaming, StableStreamingTextRemainsSelectedAcrossRedraws) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_selection_stream_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+    app->SyncState();
+    if (GetParam()) app->OnEvent(ftxui::Event::Character('\x0f'));
+    EXPECT_EQ(test_seams(app).screen_state_for_testing()->is_transcript_mode, GetParam());
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamStart{
+        .message_id = loom::core::MessageId{"selection-stream"}, .model = "test"});
+    test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockStart{
+        .index = 0, .block = loom::core::TextBlock{.text = ""}});
+    test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockDelta{
+        .index = 0, .delta_text = "stable streaming selection probe"});
+    auto screen = ftxui::ScreenInteractive::FixedSize(120, 40);
+    app->set_screen(&screen);
+    ftxui::Render(screen, app->Render());
+    const auto state = test_seams(app).screen_state_for_testing();
+    auto row = std::ranges::find_if(state->messages_store.selection_rows,
+        [](const auto& geometry) { return geometry->index == 0; });
+    ASSERT_NE(row, state->messages_store.selection_rows.end());
+    const int y = (*row)->box.y_max;
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Pressed,
+        false, false, false, 5, y}));
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Pressed,
+        false, false, false, 12, y}));
+    EXPECT_TRUE(test_seams(app).text_selection_active_for_testing());
+    // No new bytes arrive. Redraws only regenerate transient timestamps.
+    for (int i = 0; i < 3; ++i) {
+        screen.Clear();
+        ftxui::Render(screen, app->Render());
+        app->OnEvent(ftxui::Event::Custom);
+    }
+    EXPECT_TRUE(test_seams(app).text_selection_active_for_testing());
+    EXPECT_TRUE(test_seams(app).text_selection_potential_for_testing());
+    test_seams(app).set_query_running_for_testing(false);
+    app->set_screen(nullptr);
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    ReplAndTranscript, TextSelectionStreaming, testing::Values(false, true));
+
 #endif
 
 TEST(CopyResultPipeline, StaleResultIsDiscarded) {

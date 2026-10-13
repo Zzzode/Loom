@@ -25,6 +25,20 @@ namespace loom::core {
 
 namespace {
 
+// OpenSSL can write a TLS close-notify after stop() has shut down the
+// connection. Keep the resulting EPIPE local to the request instead of
+// terminating the process before the UI restores the terminal.
+void suppress_socket_sigpipe(httplib::Client& client) {
+#ifdef SO_NOSIGPIPE
+    client.set_socket_options([](::socket_t socket) {
+        const int enabled = 1;
+        ::setsockopt(socket, SOL_SOCKET, SO_NOSIGPIPE, &enabled, sizeof(enabled));
+    });
+#else
+    (void)client;
+#endif
+}
+
 // TU-local replacement for the former QueryEngine::add_beta_headers private
 // member. Demoted to a free function so <httplib.h> never needs to name a
 // type in the class definition; both call sites (send_request and
@@ -121,6 +135,9 @@ void add_beta_headers(httplib::Headers& headers,
 [[nodiscard]] Result<QueryEngine::ApiCallResult> QueryEngine::send_request(
     const QueryOptions& options,
     bool is_retry_after_compact) {
+    if (should_abort()) {
+        return std::unexpected(Error::make(ErrorCode::InternalError, "Query aborted"));
+    }
     replay_snip_boundaries();
     apply_time_based_microcompact();
     apply_tool_result_budget();
@@ -151,6 +168,7 @@ void add_beta_headers(httplib::Headers& headers,
     // Create HTTP client (shared_ptr so abort_callback_ can safely call
     // cli->stop() from the main thread even after this function returns).
     auto cli = std::make_shared<httplib::Client>(endpoint->client_base_url);
+    suppress_socket_sigpipe(*cli);
     cli->set_connection_timeout(api_config_.timeout);
     cli->set_read_timeout(api_config_.timeout);
     cli->set_write_timeout(api_config_.timeout);
@@ -159,6 +177,10 @@ void add_beta_headers(httplib::Headers& headers,
     // the blocking Post() immediately instead of waiting for the read
     // timeout (up to 120 s).
     set_abort_callback([cli]() { cli->stop(); });
+    if (should_abort()) {
+        set_abort_callback(nullptr);
+        return std::unexpected(Error::make(ErrorCode::InternalError, "Query aborted"));
+    }
     auto res = cli->Post(endpoint->path, headers, body, "application/json");
     set_abort_callback(nullptr);
 
@@ -335,6 +357,7 @@ void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
     // Create HTTP client (shared_ptr so abort_callback_ can safely call
     // cli->stop() from the main thread even after this function returns).
     auto cli = std::make_shared<httplib::Client>(endpoint->client_base_url);
+    suppress_socket_sigpipe(*cli);
     cli->set_connection_timeout(api_config_.timeout);
     cli->set_read_timeout(api_config_.timeout);
     cli->set_write_timeout(api_config_.timeout);
@@ -550,12 +573,28 @@ void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
     // the blocking send() immediately instead of waiting for the read
     // timeout (up to 120 s).
     set_abort_callback([cli]() { cli->stop(); });
+    if (should_abort()) {
+        set_abort_callback(nullptr);
+        result.failed = true;
+        return result;
+    }
     bool ok = cli->send(req, res, err);
     set_abort_callback(nullptr);
+
+    // A user cancellation is complete once the interrupted send returns.
+    // Do not restart that request through the non-streaming fallback.
+    if (should_abort()) {
+        result.failed = true;
+        return result;
+    }
 
     if (!ok || (res.status >= 400 && blocks.empty())) {
         // If streaming failed and we got nothing, fall back to non-streaming
         auto fallback = send_request(options);
+        if (should_abort()) {
+            result.failed = true;
+            return result;
+        }
         if (fallback) {
             result.message = std::move(fallback->message);
             result.usage = fallback->usage;

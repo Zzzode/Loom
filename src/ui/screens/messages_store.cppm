@@ -152,6 +152,13 @@ struct MessagesStore {
     /// Post-layout height of the static transcript, including collapsed rows
     /// and leading chrome. Unset before layout or while virtualization is active.
     std::optional<int> rendered_content_height_lines;
+    /// Actual yframe geometry from the last rendered frame. An invalid
+    /// viewport means no transcript has been laid out yet.
+    std::vector<std::shared_ptr<loom::ui::messages_list::SelectionRowGeometry>>
+        selection_rows;
+    /// Invalidates cached selection cells when projected message sources change.
+    std::uint64_t selection_revision = 0;
+    ftxui::Box selection_viewport_box{.x_min = 0, .x_max = -1, .y_min = 0, .y_max = -1};
 
     /// Index into messages[] where the unseen divider anchor sits.
     /// Set on FIRST scroll-away from bottom (the unseen-divider

@@ -357,7 +357,7 @@ constexpr auto try_start_native_agent_resume = &runtime_message_delivery::try_st
 // team_create / team_delete branches extracted to
 // runtime_registry_team_dispatch.cpp.
 [[nodiscard]] Result<ToolResult> execute_team_create_runtime_tool(
-    std::string_view json,
+    const ToolInput& input,
     ToolRegistry* registry
 );
 
@@ -379,6 +379,8 @@ struct RuntimeToolOptions {
     // RuntimeToolOptions{...} sites); register_runtime_tools falls back to
     // the process slot loom::tools::agent_tool_factory().
     AgentToolFactory agent_tool_factory = {};
+    // Resolved session model for calls outside a QueryEngine execution.
+    std::string default_model = {};
 };
 
 [[nodiscard]] std::vector<std::string> runtime_tool_names();

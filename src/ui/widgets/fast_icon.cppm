@@ -6,6 +6,8 @@ export module loom.ui.widgets.fast_icon;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.foundation.design_figures;
 
 export namespace ui::components {
@@ -15,6 +17,7 @@ struct FastIconOptions {
 };
 
 ftxui::Element FastIcon(const FastIconOptions& options = {}) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     namespace figs = loom::ui::design::figures;
 
@@ -22,7 +25,7 @@ ftxui::Element FastIcon(const FastIconOptions& options = {}) {
         return text(std::string(figs::kLightningBolt)) | dim;
     }
 
-    return text(std::string(figs::kLightningBolt)) | color(Color::Yellow);
+    return text(std::string(figs::kLightningBolt)) | color(pal.fast_mode);
 }
 
 std::string GetFastIconString(bool apply_color = true, bool cooldown = false) {

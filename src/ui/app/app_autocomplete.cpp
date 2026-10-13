@@ -32,6 +32,8 @@ module;
 module loom.ui.app.app;
 
 import std;
+
+import loom.ui.foundation.design_figures;
 import loom.commands.registry;
 import loom.commands.command;
 
@@ -797,7 +799,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 for (auto& d : dms) {
                     add_suggestion(std::move(d.display), std::move(d.desc),
                                    std::move(d.insert), token.start, token.end,
-                                   false, "", "👤", std::move(d.color));
+                                   false, "", std::string{loom::ui::design::figures::kCircle}, std::move(d.color));
                 }
                 restore_index();
                 return;  // exclusive: bare-@ with teammate match shows DMs only
@@ -825,7 +827,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                     .insert = "@" + rel + " ",
                     .desc = is_dir ? "Directory" : "File",
                     .rank = frn::fuzzy_rank_nucleo(base, query) + (match_base ? 0 : 2),
-                    .icon = is_dir ? "📁" : "📄",
+                    .icon = is_dir ? std::string{loom::ui::design::figures::kSquareSmall} : std::string{loom::ui::design::figures::kSquareSmall},
                 });
                 if (repos.size() >= 50) break;  // cap at 50 for terminal
             }
@@ -856,7 +858,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                         : "@" + rel,
                     .desc = is_dir ? "Directory" : "File",
                     .rank = frn::fuzzy_rank_nucleo(name, leaf),
-                    .icon = is_dir ? "📁" : "📄",
+                    .icon = is_dir ? std::string{loom::ui::design::figures::kSquareSmall} : std::string{loom::ui::design::figures::kSquareSmall},
                 });
                 if (files.size() >= 50) break;  // cap at 50 results
             }
@@ -907,7 +909,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 token.end,
                 false,
                 "",
-                "🔌");
+                std::string{loom::ui::design::figures::kSquareSmallFilled});
         }
 
         // AT-10: @-history session autocomplete — search past sessions by
@@ -953,7 +955,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                     token.end,
                     /*submit_on_return=*/false,
                     /*id=*/"session:" + id,
-                    /*icon=*/"🕘");
+                    /*icon=*/std::string{loom::ui::design::figures::kEllipsis});
             }
         }
 
@@ -995,7 +997,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                     token.end,
                     /*submit_on_return=*/false,
                     /*id=*/"prompt-history:" + std::to_string(entry.timestamp_ms),
-                    /*icon=*/"📝");
+                    /*icon=*/std::string{loom::ui::design::figures::kSquareSmall});
             }
         }
 
@@ -1030,7 +1032,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 token.end,
                 false,
                 "",
-                "💬");
+                std::string{loom::ui::design::figures::kBullet});
         }
         restore_index();
         return;

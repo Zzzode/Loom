@@ -3,7 +3,7 @@
   [1mFollow-up question[22m                                                                                
                                                                                                     
   [2m[38;2;102;102;102m[49mLoom needs clarification                                                                        [22m[39m[49m  
-[90m[49m────────────────────────────────────────────────────────────────────────────────────────────────────[39m[49m
+[38;2;153;153;153m[49m────────────────────────────────────────────────────────────────────────────────────────────────────[39m[49m
    You asked for unit tests, but didn't specify a test framework. Which framework should I use?     
    (leave blank for project default)                                                                
                                                                                                     

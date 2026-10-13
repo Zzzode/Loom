@@ -2,17 +2,17 @@
 
 █░█░█░█░█  Loom
 ░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+█░█░█░█░█  <tmpdir>
 
-<dot> Thought, ran 1 shell command  (click to expand)
+<dot> Thought, ran 1 shell command                                                                           [Show details]
 
 ● All 12 debug tests passed in 4.2 seconds, including the timing-sensitive ServerMain socket tests. The refactor is
   safe to commit.
 
-<dot> Thought  (click to expand)
+<dot> Thinking…                                                                                              [Show details]
 
-● All 12 debug tests passed in 4.2 seconds, including the timing-sensitive ServerMain socket tests. The refactor is  ▌
-  safe to commit.
+
+
 
 
 
@@ -36,4 +36,4 @@
 ──────────────────────────────────────────────────────────────────────────────────
  ❯ Try "fix lint errors"
 ──────────────────────────────────────────────────────────────────────────────────
-   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K
+   <tmpdir>  ctx ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

@@ -26,12 +26,109 @@ import loom.ui.chrome.panels;
 import loom.ui.visual.markdown;
 import loom.ui.prompt.prompt_input_footer;
 import loom.ui.prompt.combined_highlights;
+import loom.parsing.highlight.text_highlighting;
 import loom.ui.prompt.placeholder_cascade;
 import loom.ui.foundation.design_figures;
 import loom.constants.constants;
 
 namespace {
 namespace fs = std::filesystem;
+struct RestoreUiTheme {
+    loom::ui::design::theme::Theme original = loom::ui::design::theme::current_theme();
+    ~RestoreUiTheme() { loom::ui::design::theme::set_theme(original); }
+};
+}
+
+TEST(PromptInputFooter, PermissionModesFollowThemeAndKeepReadableLabels) {
+    namespace pif = loom::ui::prompt::footer;
+    namespace theme = loom::ui::design::theme;
+    using Mode = loom::ui::common::PermissionMode;
+    namespace figs = loom::ui::design::figures;
+    RestoreUiTheme restore;
+    for (const auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+            theme::ThemeVariant::LightAnsi}) {
+        theme::set_theme(variant);
+        const auto& pal = *theme::current_theme().palette;
+        for (const auto mode : {Mode::AcceptEdits, Mode::AcceptAll, Mode::Plan}) {
+            const auto expected = mode == Mode::AcceptEdits ? pal.auto_accept
+                : mode == Mode::AcceptAll ? pal.danger : pal.plan_mode;
+            pif::ModeIndicatorOptions opts;
+            opts.permission_mode = mode;
+            opts.show_hint = false;
+            auto screen = ftxui::Screen::Create(
+                ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
+            ftxui::Render(screen, pif::RenderModeIndicator(opts));
+            EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, expected);
+            const auto text = strip_ansi(screen.ToString());
+            const auto symbol = mode == Mode::AcceptEdits ? figs::kPointerSmall
+                : mode == Mode::AcceptAll ? figs::kCircleFilled : figs::kEllipsis;
+            EXPECT_NE(text.find(symbol), std::string::npos);
+            EXPECT_NE(text.find(pif::PermissionModeTitle(mode)), std::string::npos);
+            EXPECT_EQ(text.find("\xf0"), std::string::npos);
+        }
+    }
+}
+
+TEST(StatusLine, BuiltinUsesTextLabelsWithoutDecorativeEmoji) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::BuiltinStatusLineData data;
+    data.cwd = "/tmp/project";
+    data.git_branch = "feature";
+    data.model_name = "test-model";
+    data.agent_name = "worker";
+    data.task_count = 2;
+    data.context_token_count = 28000;
+    data.context_window_size = 200000;
+    data.cost_usd = 0.1234;
+    data.mouse_mode_label = "Select text to copy";
+    data.segments.tasks = true;
+    data.segments.agent = true;
+    const auto text = strip_ansi(render_to_plain_text(
+        pif::RenderBuiltinStatusLine(data), 200, 1));
+    for (const auto label : {"tmp/project", "git feature", "model test-model",
+            "agent worker", "2 teams", "ctx ", "28.0K/200.0K", "$0.1234", "Select text to copy"}) {
+        EXPECT_NE(text.find(label), std::string::npos) << label;
+    }
+    EXPECT_EQ(text.find("\xf0"), std::string::npos);
+}
+
+TEST(PromptInputFooter, BridgeAndNotificationsFollowCurrentTheme) {
+    namespace pif = loom::ui::prompt::footer;
+    namespace theme = loom::ui::design::theme;
+    RestoreUiTheme restore;
+    for (const auto variant : {theme::ThemeVariant::Light,
+            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::Monochrome}) {
+        theme::set_theme(variant);
+        const auto& pal = *theme::current_theme().palette;
+        for (const auto status : {pif::BridgeStatus::Connected,
+                pif::BridgeStatus::Disconnected, pif::BridgeStatus::Reconnecting}) {
+            pif::BridgeOptions opts;
+            opts.status = status;
+            opts.explicit_remote = true;
+            auto screen = ftxui::Screen::Create(
+                ftxui::Dimension::Fixed(50), ftxui::Dimension::Fixed(1));
+            ftxui::Render(screen, pif::RenderBridgeStatus(opts));
+            const auto expected = status == pif::BridgeStatus::Connected ? pal.success
+                : status == pif::BridgeStatus::Disconnected ? pal.danger : pal.warning;
+            EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, expected);
+        }
+        for (const auto role : {"error", "warning", "success", "info"}) {
+            pif::NotificationData data;
+            pif::NotificationItem item;
+            item.text = "Notice";
+            item.color = role;
+            data.queue.current = item;
+            auto screen = ftxui::Screen::Create(
+                ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
+            ftxui::Render(screen, pif::RenderNotifications(data));
+            const auto expected = std::string_view(role) == "error" ? pal.danger
+                : std::string_view(role) == "warning" ? pal.warning
+                : std::string_view(role) == "success" ? pal.success : pal.info;
+            EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, expected);
+        }
+    }
 }
 
 
@@ -1929,4 +2026,28 @@ TEST(PromptInputFooter, IdeIndicatorTracksCurrentTheme) {
         EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, palette->ide);
     }
     theme::set_theme(original);
+}
+
+TEST(TextHighlighting, CanonicalSegmentsPreserveTextAndResolveSameStartPriority) {
+    loom::utils::TextHighlight low;
+    low.start = 2;
+    low.end = 6;
+    low.priority = 1;
+    low.dim = true;
+    auto high = low;
+    high.end = 4;
+    high.priority = 2;
+    high.dim = false;
+    high.inverse = true;
+    const auto segments = loom::utils::segment_text_by_highlights("abcdefgh", {low, high});
+    ASSERT_EQ(segments.size(), 3u);
+    EXPECT_EQ(segments[0].text, "ab");
+    EXPECT_FALSE(segments[0].highlight);
+    EXPECT_EQ(segments[1].text, "cd");
+    EXPECT_EQ(segments[1].start, 2u);
+    ASSERT_TRUE(segments[1].highlight);
+    EXPECT_TRUE(segments[1].highlight->inverse);
+    EXPECT_FALSE(segments[1].highlight->dim);
+    EXPECT_EQ(segments[2].text, "efgh");
+    EXPECT_FALSE(segments[2].highlight);
 }

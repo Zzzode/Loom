@@ -14,6 +14,10 @@ export module loom.ui.messages.message_rate_limit;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.messages.message_components;
 
 export namespace loom::ui::messages {
@@ -25,8 +29,8 @@ using namespace ftxui;
     std::vector<Element> elements;
 
     auto header = info.is_hard_limit
-        ? text("Rate limit reached") | bold | color(Color::Red)
-        : text("Approaching rate limit") | bold | color(Color::Yellow);
+        ? text("Rate limit reached") | bold | color(loom::ui::design::theme::current_theme().palette->danger)
+        : text("Approaching rate limit") | bold | color(loom::ui::design::theme::current_theme().palette->warning);
     elements.push_back(header);
 
     elements.push_back(text("  Model: " + info.model) | dim);
@@ -61,7 +65,7 @@ class RateLimitMessageComponent : public ComponentBase {
         if (on_retry_) {
             retry_btn_ = Button(" Retry now ", [this] {
                 if (on_retry_) on_retry_();
-            }) | color(Color::Green) | bold;
+            }) | bold;
             Add(retry_btn_);
         }
         if (on_options_) {
@@ -73,10 +77,10 @@ class RateLimitMessageComponent : public ComponentBase {
     }
 
     Element Render() override {
-        const Color accent = info_.is_hard_limit ? Color::Red : Color::Yellow;
+        const Color accent = info_.is_hard_limit ? loom::ui::design::theme::current_theme().palette->danger : loom::ui::design::theme::current_theme().palette->warning;
 
         auto icon = hbox({
-            text(info_.is_overloaded ? "🔥 " : "⚠️ "),
+            text(info_.is_overloaded ? (std::string(loom::ui::design::figures::kWarning) + " ") : (std::string(loom::ui::design::figures::kWarning) + " ")),
             text(" "),
             text(info_.is_hard_limit ? "Rate limit reached (429)"
                                      : "Approaching rate limit")
@@ -105,7 +109,7 @@ class RateLimitMessageComponent : public ComponentBase {
         }();
 
         // Action bar
-        Element retry_el = retry_btn_ ? retry_btn_->Render() : text("");
+        Element retry_el = retry_btn_ ? retry_btn_->Render() | color(loom::ui::design::theme::current_theme().palette->success) : text("");
         Element options_el = options_btn_ ? options_btn_->Render() : text("");
         auto actions = hbox({
             retry_el, text("  "),

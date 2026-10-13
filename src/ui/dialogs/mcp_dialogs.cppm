@@ -2,7 +2,7 @@
 /// @brief MCP (Model Context Protocol) server management dialogs —
 ///        settings list panel + elicitation form renderer.
 ///
-/// Elicitation 2.0 payload contract (replaces the 2-button stub):
+/// Elicitation payload contract:
 ///   ElicitationPayload { schema?, values_buffer, validation_errors,
 ///                        focused_field, on_response(ElicitationResult),
 ///                        on_cancel() }
@@ -13,11 +13,7 @@
 /// Select with 800ms typeahead / boolean Space-toggle / URL braille
 /// spinner / CheckboxGrid multi-select / DateTime). Tab / Shift+Tab
 /// walks fields; Accept / Decline buttons submit.  Else → generic
-/// Yes/No URL stub (backward compat for 2-button callers).
-///
-/// Backward compat: on_response(bool) adapters are provided so that
-/// existing ElicitationDialogProps-style callers continue to compile
-/// with their existing bool callback signature.
+/// Yes/No URL confirmation.
 module;
 
 #include <cctype>
@@ -37,6 +33,7 @@ export module loom.ui.dialogs.mcp_dialogs;
 import loom.ui.foundation.theme_provider;
 
 import std;
+import loom.ui.foundation.design_figures;
 
 export namespace loom::ui::mcp_dialogs {
 using namespace ftxui;
@@ -211,16 +208,10 @@ using ElicitValue = std::variant<
 }
 
 // ============================================================
-// Elicitation 2.0 payload + result (SPEC-COMPLIANT)
+// Elicitation payload + result
 // ============================================================
 
-enum class ElicitAction {
-    submit,   // deprecated in new API; use ElicitationResult::action
-    cancel,
-    dismiss,
-};
-
-/// New result struct (per spec).
+/// Structured response with typed field values.
 struct ElicitationResult {
     /// One of: "approve", "decline", "cancel".
     std::string action;
@@ -259,37 +250,12 @@ struct ElicitationPayload {
     // ----------------------------------------------------------------
     // Callbacks
     // ----------------------------------------------------------------
-    /// Structured response callback (NEW).  Receives per-field values.
+    /// Structured response callback. Receives per-field values.
     std::function<void(ElicitationResult)> on_response;
 
     /// Cancel shortcut (Esc or Cancel button).  Defaults to firing
-    /// on_response({action="cancel",{}}) if left empty.
+    /// on_response with action="cancel" and current field values if left empty.
     std::function<void()> on_cancel;
-
-    // ----------------------------------------------------------------
-    // Backward-compat helpers (old bool signature).
-    // Setting either of these wires on_response internally so the new
-    // callback path is always the single source of truth.
-    void set_bool_response(std::function<void(bool approve)> cb) {
-        on_response = [cb = std::move(cb)](ElicitationResult r) {
-            if (!cb) return;
-            cb(r.action == "approve");
-        };
-    }
-    void set_old_action_response(
-        std::function<void(ElicitAction, std::map<std::string, std::string>)> cb)
-    {
-        on_response = [cb = std::move(cb)](ElicitationResult r) {
-            if (!cb) return;
-            ElicitAction a = ElicitAction::dismiss;
-            if (r.action == "approve") a = ElicitAction::submit;
-            else if (r.action == "decline") a = ElicitAction::cancel;
-            else if (r.action == "cancel") a = ElicitAction::cancel;
-            std::map<std::string, std::string> flat;
-            for (const auto& [k, v] : r.content) flat.emplace(k, elicit_to_string(v));
-            cb(a, std::move(flat));
-        };
-    }
 
     // ----------------------------------------------------------------
     // Helpers to initialize defaults from `fields`.
@@ -323,47 +289,6 @@ struct ElicitationPayload {
     }
 };
 
-/// Legacy props type (backward-compat typedef).
-struct ElicitationDialogProps {
-    std::string server_name;
-    std::string message;
-    std::vector<ElicitFieldSchema> fields;
-    std::function<void(ElicitAction, std::map<std::string, std::string>)> on_response;
-    std::optional<std::string> url;
-
-    // Extra constructor-style entry point for the pre-existing 2-button
-    // stub consumer that only has a bool callback.
-    static ElicitationDialogProps from_bool_cb(
-        std::string server_name,
-        std::string message,
-        std::function<void(bool approve)> cb)
-    {
-        ElicitationDialogProps p;
-        p.server_name = std::move(server_name);
-        p.message     = std::move(message);
-        p.on_response = [cb = std::move(cb)](ElicitAction a, auto&&) {
-            if (cb) cb(a == ElicitAction::submit);
-        };
-        return p;
-    }
-
-    /// Promote legacy props to the new payload (canonical path).
-    [[nodiscard]] ElicitationPayload to_payload() const {
-        ElicitationPayload p;
-        p.server_name = server_name;
-        p.message     = message;
-        p.fields      = fields;
-        p.url         = url;
-        if (!fields.empty()) {
-            // Presence of a non-empty field list implicitly enables FORM mode.
-            p.schema = ElicitationPayload::SchemaOpaque{"{}"};
-        }
-        p.seed_defaults_from_fields();
-        if (on_response) p.set_old_action_response(on_response);
-        return p;
-    }
-};
-
 // ============================================================
 // Rendered dialog action focus slot IDs (when focused_field < 0)
 // ============================================================
@@ -379,21 +304,23 @@ namespace ElicitFocus {
 // ============================================================
 
 [[nodiscard]] inline Element RenderConnectionState(McpConnectionState state) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (state) {
-        case McpConnectionState::connected:    return text("●") | color(Color::Green);
-        case McpConnectionState::connecting:   return text("○") | color(Color::Yellow);
-        case McpConnectionState::disconnected: return text("○") | color(Color::GrayDark);
-        case McpConnectionState::error:        return text("●") | color(Color::Red);
+        case McpConnectionState::connected:    return text(std::string{loom::ui::design::figures::kTick}) | color(pal.success);
+        case McpConnectionState::connecting:   return text(std::string{loom::ui::design::figures::kRefreshArrow}) | color(pal.warning);
+        case McpConnectionState::disconnected: return text(std::string{loom::ui::design::figures::kCircle}) | color(pal.muted);
+        case McpConnectionState::error:        return text(std::string{loom::ui::design::figures::kCross}) | color(pal.danger);
     }
     return text("?");
 }
 
 [[nodiscard]] inline Element RenderServerListItem(const McpServerInfo& s, bool selected) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto state_el = RenderConnectionState(s.state);
     auto name_el  = text(" " + s.name) | (selected ? bold : nothing);
     auto tools_el = text(std::format(" ({} tools)", s.tool_count)) | dim;
     auto line = hbox({text(" "), state_el, name_el, tools_el, filler()});
-    if (selected) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
+    if (selected) line = line | bgcolor(pal.surface_tint_2);
     return line;
 }
 
@@ -402,6 +329,7 @@ namespace ElicitFocus {
     const std::vector<AgentMcpServerInfo>& agent_servers,
     int selected)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements items;
     int idx = 0;
     const std::vector<McpConfigScope> scope_order = {
@@ -432,7 +360,7 @@ namespace ElicitFocus {
                 text(" (via " + as.agent_name + ")") | dim,
                 filler(),
             });
-            if (idx == selected) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
+            if (idx == selected) line = line | bgcolor(pal.surface_tint_2);
             items.push_back(line);
             ++idx;
         }
@@ -450,28 +378,30 @@ namespace ElicitFocus {
     }));
     items.push_back(separator());
     for (int i = 0; i < static_cast<int>(srv.tools.size()); ++i) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto& tool = srv.tools[i];
         bool sel = (i == selected_tool);
         auto en  = tool.enabled
-            ? text(" ✓ ") | color(Color::Green)
-            : text(" ✗ ") | color(Color::Red);
+            ? text(" ✓ ") | color(pal.success)
+            : text(" ✗ ") | color(pal.danger);
         auto name = text(tool.name) | (sel ? bold : nothing);
         auto line = hbox({en, name, filler()});
-        if (sel) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
+        if (sel) line = line | bgcolor(pal.surface_tint_2);
         items.push_back(line);
     }
     return vbox(items);
 }
 
 [[nodiscard]] inline Element RenderToolDetailView(const McpTool& tool) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
-        hbox({text(" ⚙ ") | color(Color::Cyan), text(tool.name) | bold}),
+        hbox({text(" " + std::string{loom::ui::design::figures::kDiamond} + " ") | color(pal.info), text(tool.name) | bold}),
         separator(),
         text(""),
         hbox({text("  Server: "), text(tool.server_name) | dim}),
         hbox({text("  Status: "),
               text(tool.enabled ? "Enabled" : "Disabled")
-              | color(tool.enabled ? Color::Green : Color::Red)}),
+              | color(tool.enabled ? pal.success : pal.danger)}),
         text(""),
         text("  Description:") | bold,
         paragraph("  " + tool.description) | dim,
@@ -485,6 +415,7 @@ namespace ElicitFocus {
     int selected,
     std::optional<int> active_server_idx)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Element content;
     switch (view) {
         case McpViewType::list:
@@ -518,13 +449,13 @@ namespace ElicitFocus {
             break;
     }
     auto hints = hbox({
-        text(" Enter") | color(Color::Cyan), text(": select  "),
-        text("Esc")    | color(Color::Cyan), text(": back  "),
-        text("r")      | color(Color::Cyan), text(": reconnect"),
+        text(" Enter") | color(pal.info), text(": select  "),
+        text("Esc")    | color(pal.info), text(": back  "),
+        text("r")      | color(pal.info), text(": reconnect"),
     }) | dim;
     auto body = vbox({content | flex, separator(), hints});
-    return window(text(" MCP Servers ") | bold | color(Color::Blue), body)
-         | color(Color::Blue);
+    return window(text(" MCP Servers ") | bold | color(pal.info), body)
+         | color(pal.info);
 }
 
 // ============================================================
@@ -532,11 +463,8 @@ namespace ElicitFocus {
 // ============================================================
 
 [[nodiscard]] inline std::string BrailleSpinnerFrame(std::uint64_t tick) {
-    static constexpr const char* kFrames[] = {
-        "\xE2\xA0\x81", "\xE2\xA0\x82", "\xE2\xA0\x84", "\xE2\xA0\x80",
-        "\xE2\xA0\x40", "\xE2\xA0\x20", "\xE2\xA0\x10", "\xE2\xA0\x80",
-    };
-    return kFrames[tick % (sizeof(kFrames) / sizeof(kFrames[0]))];
+    return std::string{loom::ui::design::figures::kSpinnerFrames[
+        tick % loom::ui::design::figures::kSpinnerFrameCount]};
 }
 
 // ----------------------------------------------------------------
@@ -556,6 +484,7 @@ template <typename FocusFn>
     bool focused,
     FocusFn&& focused_decorator)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements row;
     auto label_txt = text("  " + field.title + (field.required ? " *" : "") + ": ")
                    | (field.required ? bold : nothing);
@@ -573,7 +502,7 @@ template <typename FocusFn>
             bool b = std::holds_alternative<bool>(value) && std::get<bool>(value);
             val_el = hbox({
                 text(b ? "[x]" : "[ ]")
-                    | color(b ? Color::Green : Color::GrayDark)
+                    | color(b ? pal.success : pal.muted)
                     | bold,
                 text(" " + (b ? field.bool_true_label
                               : field.bool_false_label)) | dim,
@@ -583,7 +512,7 @@ template <typename FocusFn>
         case ElicitFieldType::enum_select: {
             auto s = elicit_display(value);
             val_el = hbox({
-                text("▼ ") | color(Color::Cyan),
+                text("▼ ") | color(pal.info),
                 text(s.empty() ? "(select one)" : s)
                     | (s.empty() ? dim : nothing),
             });
@@ -593,9 +522,10 @@ template <typename FocusFn>
             if (auto* m = std::get_if<ElicitMulti>(&value); m && !m->empty()) {
                 Elements chips;
                 for (size_t i = 0; i < m->size(); ++i) {
+                    const auto& pal = *loom::ui::design::theme::current_theme().palette;
                     if (i) chips.push_back(text(", "));
                     chips.push_back(text((*m)[i])
-                                     | color(Color::Cyan) | inverted);
+                                     | color(pal.info) | inverted);
                 }
                 val_el = hbox(chips);
             } else {
@@ -629,10 +559,11 @@ template <typename FocusFn>
     std::uint64_t spinner_tick,
     bool url_resolving)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements items;
     if (!p.server_name.empty()) {
         items.push_back(hbox({
-            text(" " + p.server_name) | bold | color(Color::Yellow),
+            text(" " + p.server_name) | bold | color(pal.warning),
             text(" requests input:") | dim,
         }));
     }
@@ -641,15 +572,15 @@ template <typename FocusFn>
     }
     if (p.url && url_resolving) {
         items.push_back(hbox({
-            text(" " + BrailleSpinnerFrame(spinner_tick)) | color(Color::Cyan),
+            text(" " + BrailleSpinnerFrame(spinner_tick)) | color(pal.info),
             text(" resolving ") | dim,
-            text(*p.url) | color(Color::Cyan),
+            text(*p.url) | color(pal.info),
             filler(),
         }));
     } else if (p.url) {
         items.push_back(hbox({
             text(" URL: ") | dim,
-            text(*p.url) | color(Color::Cyan),
+            text(*p.url) | color(pal.info),
             filler(),
         }));
     }
@@ -657,21 +588,26 @@ template <typename FocusFn>
 
     const int n = static_cast<int>(p.fields.size());
     for (int i = 0; i < n; ++i) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto& field = p.fields[i];
         const bool focused = (p.focused_field == i);
         ElicitValue val = ElicitNull{};
         if (auto it = p.values_buffer.find(field.name);
             it != p.values_buffer.end()) val = it->second;
         auto row = RenderElicitField(field, val, focused,
-            [](Element e) { return e | inverted | color(Color::Cyan); });
+            [](Element e) {
+                const auto& pal = *loom::ui::design::theme::current_theme().palette;
+                return e | inverted | color(pal.info);
+            });
         items.push_back(std::move(row.body));
         // Per-field error line (if any)
         if (auto eit = p.validation_errors.find(field.name);
             eit != p.validation_errors.end() && !eit->second.empty())
         {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             items.push_back(hbox({
-                text("    ! ") | color(Color::Red) | bold,
-                text(eit->second) | color(Color::Red),
+                text("    ! ") | color(pal.danger) | bold,
+                text(eit->second) | color(pal.danger),
             }));
         }
         // Enum popup overlay (inline menu)
@@ -683,9 +619,9 @@ template <typename FocusFn>
                 if (ei < 0 || ei >= static_cast<int>(field.enum_values.size())) continue;
                 const bool sel = (local_idx == enum_popup_selected);
                 auto mark = text(sel ? " > " : "   ")
-                          | color(sel ? Color::Yellow : Color::GrayDark);
+                          | color(sel ? pal.warning : pal.muted);
                 auto label = text(field.enum_values[ei])
-                           | (sel ? (bold | color(Color::Yellow)) : nothing);
+                           | (sel ? (bold | color(pal.warning)) : nothing);
                 popup_rows.push_back(hbox({mark, label}));
                 ++local_idx;
                 if (local_idx > 8) break;
@@ -693,7 +629,7 @@ template <typename FocusFn>
             if (popup_rows.size() == 1) {
                 popup_rows.push_back(text("   (no matches)") | dim);
             }
-            items.push_back(vbox(popup_rows) | border | color(Color::Cyan));
+            items.push_back(vbox(popup_rows) | border | color(pal.info));
         }
         // CheckboxGrid for multi_select (always rendered as a compact
         // grid of checkable labels under the field line).
@@ -705,16 +641,17 @@ template <typename FocusFn>
             Elements grid_rows;
             Elements cur;
             for (size_t k = 0; k < field.enum_values.size(); ++k) {
+                const auto& pal = *loom::ui::design::theme::current_theme().palette;
                 const auto& label = field.enum_values[k];
                 bool on = std::find(chosen.begin(), chosen.end(), label) != chosen.end();
                 auto chip = hbox({
                     focused ? text("[") : text(" "),
-                    text(on ? "x" : " ") | color(on ? Color::Green : Color::GrayDark),
+                    text(on ? "x" : " ") | color(on ? pal.success : pal.muted),
                     focused ? text("] ") : text("  "),
                     text(label),
                     text("   "),
                 });
-                if (focused) chip = chip | (on ? (bold | color(Color::Green)) : nothing);
+                if (focused) chip = chip | (on ? (bold | color(pal.success)) : nothing);
                 cur.push_back(std::move(chip));
                 if ((k + 1) % static_cast<size_t>(cols) == 0) {
                     grid_rows.push_back(hbox(cur));
@@ -739,9 +676,9 @@ template <typename FocusFn>
             text(" "),
         }) | border | color(c);
     };
-    auto accept_btn = mk_btn("Approve ↵",   Color::Green,  ElicitFocus::kAccept);
-    auto decline_btn= mk_btn("Decline D",   Color::Red,    ElicitFocus::kDecline);
-    auto cancel_btn = mk_btn("Cancel Esc",  Color::GrayDark, ElicitFocus::kCancel);
+    auto accept_btn = mk_btn("Approve ↵",   pal.success,  ElicitFocus::kAccept);
+    auto decline_btn= mk_btn("Decline D",   pal.danger,    ElicitFocus::kDecline);
+    auto cancel_btn = mk_btn("Cancel Esc",  pal.muted, ElicitFocus::kCancel);
     items.push_back(hbox({
         filler(),
         accept_btn,
@@ -754,17 +691,17 @@ template <typename FocusFn>
     // Hints
     items.push_back(text(""));
     items.push_back(hbox({
-        text(" Tab")    | color(Color::Cyan), text(": next field  "),
-        text("S-Tab")   | color(Color::Cyan), text(": prev  "),
-        text("Space")   | color(Color::Cyan), text(": bool/select  "),
-        text("Enter")   | color(Color::Cyan), text(": enum open / submit  "),
+        text(" Tab")    | color(pal.info), text(": next field  "),
+        text("S-Tab")   | color(pal.info), text(": prev  "),
+        text("Space")   | color(pal.info), text(": bool/select  "),
+        text("Enter")   | color(pal.info), text(": enum open / submit  "),
     }) | dim);
 
     auto body  = vbox(items);
     auto title = std::string(" ") + (p.server_name.empty() ? "MCP" : p.server_name)
                + " — Input Required ";
-    return window(text(title) | bold | color(Color::Yellow), body)
-         | color(Color::Yellow) | size(WIDTH, LESS_THAN, 80);
+    return window(text(title) | bold | color(pal.warning), body)
+         | color(pal.warning) | size(WIDTH, LESS_THAN, 80);
 }
 
 // ----------------------------------------------------------------
@@ -776,6 +713,7 @@ template <typename FocusFn>
     std::uint64_t spinner_tick,
     bool url_resolving)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements items;
     items.push_back(hbox({
         text(" " + (p.server_name.empty() ? "MCP Server" : p.server_name)) | bold,
@@ -784,15 +722,15 @@ template <typename FocusFn>
     if (!p.message.empty()) items.push_back(paragraph("  " + p.message));
     if (p.url && url_resolving) {
         items.push_back(hbox({
-            text(" " + BrailleSpinnerFrame(spinner_tick)) | color(Color::Cyan),
+            text(" " + BrailleSpinnerFrame(spinner_tick)) | color(pal.info),
             text(" resolving ") | dim,
-            text(*p.url) | color(Color::Cyan),
+            text(*p.url) | color(pal.info),
             filler(),
         }));
     } else if (p.url) {
         items.push_back(hbox({
             text(" URL: ") | dim,
-            text(*p.url) | color(Color::Cyan),
+            text(*p.url) | color(pal.info),
             filler(),
         }));
     }
@@ -808,18 +746,18 @@ template <typename FocusFn>
     };
     items.push_back(hbox({
         filler(),
-        mk("Approve ↵", Color::Green, approved_highlight),
+        mk("Approve ↵", pal.success, approved_highlight),
         text("   "),
-        mk("Decline Esc", Color::Red, !approved_highlight),
+        mk("Decline Esc", pal.danger, !approved_highlight),
         filler(),
     }));
-    return window(text(" MCP Elicitation ") | bold | color(Color::Blue),
+    return window(text(" MCP Elicitation ") | bold | color(pal.info),
                   vbox(items) | size(WIDTH, GREATER_THAN, 44))
-         | color(Color::Blue);
+         | color(pal.info);
 }
 
 /// Dispatch: form vs stub (the single public renderer that takes the
-/// new ElicitationPayload).
+/// ElicitationPayload).
 [[nodiscard]] inline Element RenderElicitationPayload(
     const ElicitationPayload& p,
     int button_focus = ElicitFocus::kOnButtons,
@@ -837,18 +775,6 @@ template <typename FocusFn>
                                      spinner_tick, url_resolving);
     }
     return RenderElicitationStub(p, stub_approve_focus, spinner_tick, url_resolving);
-}
-
-/// Legacy facade (re-exported so old consumers still compile).
-[[nodiscard]] inline Element RenderElicitationDialog(
-    const ElicitationDialogProps& props,
-    const std::map<std::string, std::string>& field_values,
-    int focused_field)
-{
-    ElicitationPayload p = props.to_payload();
-    p.focused_field = focused_field;
-    for (const auto& [k, v] : field_values) p.values_buffer[k] = v;
-    return RenderElicitationPayload(p);
 }
 
 // ============================================================
@@ -935,7 +861,7 @@ inline std::vector<int> EnumTypeahead(const ElicitFieldSchema& field,
 }
 
 // ----------------------------------------------------------------
-// Elicitation interactive component (NEW, payload-based).
+// Elicitation interactive component.
 // ----------------------------------------------------------------
 struct ElicitationInteractiveState {
     ElicitationPayload payload;
@@ -965,8 +891,7 @@ struct ElicitationInteractiveState {
     // Multi-select checkbox navigation (col within focused multi field)
     int multi_selected_col = 0;
 
-    // Flag that the old bool adapter has approved / declined (used by
-    // the 2-button stub so Tab focuses the correct option).
+    // Highlight the approve option in the URL confirmation renderer.
     bool stub_approve_focus = true;
 
     void fire_response(std::string action) {
@@ -1141,7 +1066,7 @@ struct ElicitationInteractiveState {
 };
 
 // ----------------------------------------------------------------
-// The public interactive component (accepts the new payload).
+// The public interactive component.
 // ----------------------------------------------------------------
 [[nodiscard]] inline Component ElicitationDialogComponent(ElicitationPayload payload) {
     struct Impl : public ComponentBase {
@@ -1340,25 +1265,6 @@ struct ElicitationInteractiveState {
         }
     };
     return Make<Impl>(std::move(payload));
-}
-
-// Legacy entry point: accept ElicitationDialogProps and adapt.
-[[nodiscard]] inline Component ElicitationDialogComponent(
-    ElicitationDialogProps props)
-{
-    return ElicitationDialogComponent(props.to_payload());
-}
-
-// Extra-compat: for 2-button stub callers that pass only
-// on_response(bool approve), we provide a factory overload.
-[[nodiscard]] inline Component ElicitationDialogSimple(
-    std::string server_name,
-    std::string message,
-    std::function<void(bool approve)> on_approve)
-{
-    ElicitationDialogProps p = ElicitationDialogProps::from_bool_cb(
-        std::move(server_name), std::move(message), std::move(on_approve));
-    return ElicitationDialogComponent(std::move(p));
 }
 
 } // namespace loom::ui::mcp_dialogs

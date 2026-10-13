@@ -16,6 +16,8 @@ export namespace loom::core {
 /// JSON-based tool input wrapping raw parameter data
 struct ToolInput {
     std::string raw_json;   // Raw JSON string of parameters
+    // Internal execution context; never serialized as model-supplied input.
+    std::optional<std::string> parent_model = std::nullopt;
 
     /// Get the raw JSON as string view
     [[nodiscard]] std::string_view json() const noexcept { return raw_json; }

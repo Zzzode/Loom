@@ -1,5 +1,5 @@
 /// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, LogoV2, PromptInput, ReplScreen (SLOC budget fix)
+/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput, ReplScreen (SLOC budget fix)
 
 #include <cstdlib>
 
@@ -16,6 +16,7 @@
 
 import std;
 import loom.ui.app.app;
+import loom.ui.app.paste_coordinator;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
@@ -33,6 +34,85 @@ import loom.ui.foundation.theme_provider;
 
 namespace {
 namespace fs = std::filesystem;
+struct RestoreLogoTheme {
+    loom::ui::design::theme::Theme original = loom::ui::design::theme::current_theme();
+    ~RestoreLogoTheme() noexcept { loom::ui::design::theme::set_theme(original); }
+};
+}
+
+TEST(PasteCoordinator, StopWaitsForActiveReadsAndCompletionCallbacks) {
+    std::promise<void> readers_started;
+    std::promise<void> release_readers;
+    auto released = release_readers.get_future().share();
+    auto started = readers_started.get_future();
+    std::atomic<int> reads{0};
+    std::atomic<int> callbacks{0};
+    loom::ui::PasteCoordinator paste([&]() -> std::optional<std::vector<std::uint8_t>> {
+        if (reads.fetch_add(1) == 1) readers_started.set_value();
+        released.wait();
+        return std::vector<std::uint8_t>{1, 2, 3};
+    });
+    paste.SpawnPasteWorker(1, [&] { ++callbacks; });
+    paste.SpawnPasteWorker(2, [&] { ++callbacks; });
+    EXPECT_EQ(started.wait_for(std::chrono::seconds(2)), std::future_status::ready);
+
+    std::promise<void> stopping;
+    auto stopping_started = stopping.get_future();
+    auto shutdown = std::async(std::launch::async, [&] {
+        stopping.set_value();
+        paste.Stop();
+    });
+    stopping_started.wait();
+    EXPECT_EQ(shutdown.wait_for(std::chrono::milliseconds(20)), std::future_status::timeout);
+    EXPECT_EQ(callbacks.load(), 0);
+    release_readers.set_value();
+    shutdown.get();
+    EXPECT_EQ(callbacks.load(), 2);
+
+    std::unordered_map<int, loom::core::ImageBlock> images;
+    std::unordered_set<int> failures;
+    std::unordered_map<int, std::string> texts;
+    paste.drain_pending(images, failures, texts);
+    ASSERT_EQ(images.size(), 2u);
+    EXPECT_EQ(images.at(1).data, "AQID");
+    EXPECT_EQ(images.at(2).size_bytes, 3u);
+    EXPECT_TRUE(failures.empty());
+    EXPECT_TRUE(texts.empty());
+
+    paste.Stop();
+    paste.SpawnPasteWorker(3, [&] { ++callbacks; }, true);
+    EXPECT_FALSE(paste.is_in_flight(3));
+    EXPECT_EQ(callbacks.load(), 2);
+}
+
+TEST(PasteCoordinator, DestructorWaitsForActiveReadAndOwnerCallback) {
+    std::promise<void> reader_started;
+    auto started = reader_started.get_future();
+    std::promise<void> release_reader;
+    auto released = release_reader.get_future().share();
+    std::atomic<bool> callback_finished{false};
+    auto paste = std::make_unique<loom::ui::PasteCoordinator>(
+        [&]() -> std::optional<std::vector<std::uint8_t>> {
+            reader_started.set_value();
+            released.wait();
+            return std::vector<std::uint8_t>{1};
+        });
+    paste->SpawnPasteWorker(1, [&] { callback_finished.store(true); });
+    EXPECT_EQ(started.wait_for(std::chrono::seconds(2)), std::future_status::ready);
+
+    std::promise<void> destroying;
+    auto destroying_started = destroying.get_future();
+    auto destruction = std::async(std::launch::async,
+        [paste = std::move(paste), &destroying]() mutable {
+            destroying.set_value();
+            paste.reset();
+        });
+    destroying_started.wait();
+    EXPECT_EQ(destruction.wait_for(std::chrono::milliseconds(20)), std::future_status::timeout);
+    EXPECT_FALSE(callback_finished.load());
+    release_reader.set_value();
+    destruction.get();
+    EXPECT_TRUE(callback_finished.load());
 }
 
 
@@ -106,17 +186,17 @@ TEST(PromptInput, TypeaheadSuggestsSlashCommandsAndSelection) {
 }
 
 
-TEST(LogoV2, CondensedModeRendersStripPlusNotices) {
-    namespace lv2 = loom::ui::logo;
+TEST(Logo, CondensedModeRendersStripPlusNotices) {
+    namespace logo = loom::ui::logo;
 
-    lv2::LogoV2Options opts;
+    logo::LogoOptions opts;
     opts.cwd                = "/home/alice/dev/loom";
     opts.billing_type       = "Team Seat";
     opts.model_display_name = "Loom Opus 4.8";
     opts.is_condensed_mode  = true;   // default / early-return branch
 
     std::string s = strip_ansi(render_to_plain_text(
-        lv2::render_logo_v2(opts, /*cols=*/120), 120, 20));
+        logo::render_logo(opts, /*cols=*/120), 120, 20));
 
     // CondensedLogo triad.
     EXPECT_NE(s.find("Loom"), std::string::npos);
@@ -133,17 +213,17 @@ TEST(LogoV2, CondensedModeRendersStripPlusNotices) {
 // T2: Compact card mode (cols<70, !is_condensed_mode) renders the welcome
 //     banner + "Welcome to Loom [, {user}]" heading inside a rounded
 //     border, and reports LogoLayoutMode::Compact.
-TEST(LogoV2, CompactModeRendersRoundedBorderCard) {
-    namespace lv2 = loom::ui::logo;
+TEST(Logo, CompactModeRendersRoundedBorderCard) {
+    namespace logo = loom::ui::logo;
 
-    lv2::LogoV2Options opts;
+    logo::LogoOptions opts;
     opts.cwd                = "/x";
     opts.model_display_name = "Loom Sonnet 4.6";
     opts.is_condensed_mode  = false;    // ← enables card mode
     opts.username           = std::nullopt;
 
-    auto result = lv2::RenderLogoV2(opts, /*cols=*/60);
-    EXPECT_EQ(result.mode, lv2::LogoLayoutMode::Compact);
+    auto result = logo::RenderLogo(opts, /*cols=*/60);
+    EXPECT_EQ(result.mode, logo::LogoLayoutMode::Compact);
 
     // Wide viewport so the full notice stack renders unclipped.  The 60-col
     // card + padding + notices land between rows 12..40; use 120 rows to be
@@ -165,10 +245,10 @@ TEST(LogoV2, CompactModeRendersRoundedBorderCard) {
 // T3: Horizontal mode (cols>=70) renders the left panel | vertical divider |
 //     feed column, split inside a single rounded border.  Also the welcome
 //     greeting personalises for returning users with a display name set.
-TEST(LogoV2, HorizontalModeSplitsIntoPanels) {
-    namespace lv2 = loom::ui::logo;
+TEST(Logo, HorizontalModeSplitsIntoPanels) {
+    namespace logo = loom::ui::logo;
 
-    lv2::LogoV2Options opts;
+    logo::LogoOptions opts;
     opts.cwd                = "/workspace/repo";
     opts.billing_type       = "API Usage";
     opts.model_display_name = "Loom Opus 4.8";
@@ -176,8 +256,8 @@ TEST(LogoV2, HorizontalModeSplitsIntoPanels) {
     opts.username           = std::string("bob");
     opts.org_name           = std::string("Acme Corp");
 
-    auto result = lv2::RenderLogoV2(opts, /*cols=*/100);
-    EXPECT_EQ(result.mode, lv2::LogoLayoutMode::Horizontal);
+    auto result = logo::RenderLogo(opts, /*cols=*/100);
+    EXPECT_EQ(result.mode, logo::LogoLayoutMode::Horizontal);
     // Layout output reports meaningful widths.
     EXPECT_GE(result.left_width, 34);
     EXPECT_LE(result.left_width, 50);
@@ -203,18 +283,18 @@ TEST(LogoV2, HorizontalModeSplitsIntoPanels) {
 // T4: Notice activators each cause their body to appear when toggled, and
 //     remain invisible when the toggle is false (default). Validates the full
 //     10-deep × 6-status-notices activation tree.
-TEST(LogoV2, EachNoticeActivatorAppearsWhenToggled) {
-    namespace lv2 = loom::ui::logo;
+TEST(Logo, EachNoticeActivatorAppearsWhenToggled) {
+    namespace logo = loom::ui::logo;
 
     // Baseline — every toggle off → no trace of debug/tmux/org/sandbox/guest/
     // overage/status/emergency strings.
-    lv2::LogoV2Options opts;
+    logo::LogoOptions opts;
     opts.cwd                = "/t";
     opts.model_display_name = "M";
     opts.is_condensed_mode  = true;
 
     auto base = strip_ansi(render_to_plain_text(
-        lv2::render_logo_v2(opts, 120), 120, 16));
+        logo::render_logo(opts, 120), 120, 16));
     EXPECT_EQ(base.find("Debug mode enabled"), std::string::npos);
     EXPECT_EQ(base.find("tmux session:"), std::string::npos);
     EXPECT_EQ(base.find("Message from "), std::string::npos);
@@ -226,7 +306,7 @@ TEST(LogoV2, EachNoticeActivatorAppearsWhenToggled) {
     // Activate each notice in turn, re-render, confirm its marker shows up.
     opts.is_debug_mode = true;
     opts.debug_log_to_stderr = true;
-    auto t = strip_ansi(render_to_plain_text(lv2::render_logo_v2(opts, 120), 120, 16));
+    auto t = strip_ansi(render_to_plain_text(logo::render_logo(opts, 120), 120, 16));
     EXPECT_NE(t.find("Debug mode enabled"), std::string::npos);
     EXPECT_NE(t.find("Logging to: stderr"), std::string::npos);
     opts.is_debug_mode = false;
@@ -234,35 +314,35 @@ TEST(LogoV2, EachNoticeActivatorAppearsWhenToggled) {
     opts.tmux_session = std::string("my-session");
     opts.tmux_prefix = std::string("Ctrl+b");
     opts.tmux_prefix_conflicts = true;
-    t = strip_ansi(render_to_plain_text(lv2::render_logo_v2(opts, 120), 120, 16));
+    t = strip_ansi(render_to_plain_text(logo::render_logo(opts, 120), 120, 16));
     EXPECT_NE(t.find("tmux session: my-session"), std::string::npos);
     EXPECT_NE(t.find("Detach: Ctrl+b Ctrl+b d"), std::string::npos);
     opts.tmux_session.reset();
 
     opts.company_announcement = std::string("Free credits this Friday!");
     opts.org_name = std::string("Acme");
-    t = strip_ansi(render_to_plain_text(lv2::render_logo_v2(opts, 120), 120, 16));
+    t = strip_ansi(render_to_plain_text(logo::render_logo(opts, 120), 120, 16));
     EXPECT_NE(t.find("Message from Acme:"), std::string::npos);
     EXPECT_NE(t.find("Free credits this Friday!"), std::string::npos);
     opts.company_announcement.reset();
 
     opts.show_sandbox_status = true;
-    t = strip_ansi(render_to_plain_text(lv2::render_logo_v2(opts, 120), 120, 16));
+    t = strip_ansi(render_to_plain_text(logo::render_logo(opts, 120), 120, 16));
     EXPECT_NE(t.find("bash commands will be sandboxed"), std::string::npos);
     opts.show_sandbox_status = false;
 
     opts.show_guest_passes = true;
-    t = strip_ansi(render_to_plain_text(lv2::render_logo_v2(opts, 120), 120, 16));
+    t = strip_ansi(render_to_plain_text(logo::render_logo(opts, 120), 120, 16));
     EXPECT_NE(t.find("guest passes at /passes"), std::string::npos);
     opts.show_guest_passes = false;
 
     opts.show_overage_credit = true;
-    t = strip_ansi(render_to_plain_text(lv2::render_logo_v2(opts, 120), 120, 16));
+    t = strip_ansi(render_to_plain_text(logo::render_logo(opts, 120), 120, 16));
     EXPECT_NE(t.find("Nearing monthly credit limit"), std::string::npos);
     opts.show_overage_credit = false;
 
     opts.emergency_tip = std::string("provider outage — use /model to switch");
-    t = strip_ansi(render_to_plain_text(lv2::render_logo_v2(opts, 120), 120, 16));
+    t = strip_ansi(render_to_plain_text(logo::render_logo(opts, 120), 120, 16));
     EXPECT_NE(t.find("provider outage \xE2\x80\x94 use /model to switch"), std::string::npos)
         << "emergency tip body should appear verbatim";
     opts.emergency_tip.reset();
@@ -272,7 +352,7 @@ TEST(LogoV2, EachNoticeActivatorAppearsWhenToggled) {
         {"\xE2\x9A\xA0", "Large memory files in context: 2 files > 2MB", true},
         {"\xE2\x86\x91", "JetBrains plugin update available", false},
     };
-    t = strip_ansi(render_to_plain_text(lv2::render_logo_v2(opts, 120), 120, 16));
+    t = strip_ansi(render_to_plain_text(logo::render_logo(opts, 120), 120, 16));
     EXPECT_NE(t.find("Large memory files in context"), std::string::npos);
     EXPECT_NE(t.find("JetBrains plugin update available"), std::string::npos);
 }
@@ -281,75 +361,75 @@ TEST(LogoV2, EachNoticeActivatorAppearsWhenToggled) {
 // T5: Column-based threshold mapping. cols<70 → Compact; cols≥70 → Horizontal
 //     *only* when is_condensed_mode=false; when true always → Condensed
 //     regardless of width.
-TEST(LogoV2, LayoutModeThresholdsMatchTSSpec) {
-    namespace lv2 = loom::ui::logo;
+TEST(Logo, LayoutModeThresholdsMatchTSSpec) {
+    namespace logo = loom::ui::logo;
 
-    lv2::LogoV2Options opts;
+    logo::LogoOptions opts;
     opts.cwd                = "/t";
     opts.model_display_name = "M";
 
     // Always Condensed when the gate is true.
     opts.is_condensed_mode = true;
     for (int cols : {30, 69, 70, 150}) {
-        auto r = lv2::RenderLogoV2(opts, cols);
-        EXPECT_EQ(r.mode, lv2::LogoLayoutMode::Condensed) << "cols=" << cols;
+        auto r = logo::RenderLogo(opts, cols);
+        EXPECT_EQ(r.mode, logo::LogoLayoutMode::Condensed) << "cols=" << cols;
     }
 
     // Card branch honours column thresholds.
     opts.is_condensed_mode = false;
-    EXPECT_EQ(lv2::RenderLogoV2(opts, 30).mode, lv2::LogoLayoutMode::Compact);
-    EXPECT_EQ(lv2::RenderLogoV2(opts, 69).mode, lv2::LogoLayoutMode::Compact);
-    EXPECT_EQ(lv2::RenderLogoV2(opts, 70).mode, lv2::LogoLayoutMode::Horizontal);
-    EXPECT_EQ(lv2::RenderLogoV2(opts, 120).mode, lv2::LogoLayoutMode::Horizontal);
+    EXPECT_EQ(logo::RenderLogo(opts, 30).mode, logo::LogoLayoutMode::Compact);
+    EXPECT_EQ(logo::RenderLogo(opts, 69).mode, logo::LogoLayoutMode::Compact);
+    EXPECT_EQ(logo::RenderLogo(opts, 70).mode, logo::LogoLayoutMode::Horizontal);
+    EXPECT_EQ(logo::RenderLogo(opts, 120).mode, logo::LogoLayoutMode::Horizontal);
     // Helper constexpr matches the dispatch.
-    EXPECT_EQ(lv2::layout_mode_from_cols(69), lv2::LogoLayoutMode::Compact);
-    EXPECT_EQ(lv2::layout_mode_from_cols(70), lv2::LogoLayoutMode::Horizontal);
+    EXPECT_EQ(logo::layout_mode_from_cols(69), logo::LogoLayoutMode::Compact);
+    EXPECT_EQ(logo::layout_mode_from_cols(70), logo::LogoLayoutMode::Horizontal);
 }
 
 
-// T6: WelcomeV2 static 58-col card renders EXACTLY: width capped to 58 cols,
+// T6: Welcome static 58-col card renders EXACTLY: width capped to 58 cols,
 //     shows "Welcome to Loom v<ver>" in the header, contains the
 //     ellipsis separator row (…), the 3-row █████████ clawd body, at least
 //     4 scattered '*' glyphs (asterisk dust baked into the art), and a paws
 //     footer row with "█ █   █ █" clawd feet + ░/▒ planets.
-TEST(LogoV2, WelcomeV2StaticCardMatchesTSSpec) {
-    namespace lv2 = loom::ui::logo;
+TEST(Logo, WelcomeStaticCardMatchesTSSpec) {
+    namespace logo = loom::ui::logo;
 
-    ftxui::Element card = lv2::RenderWelcomeV2();
+    ftxui::Element card = logo::RenderWelcome();
     std::string s = strip_ansi(render_to_plain_text(card, 120, 20));
 
     // Header row.
     EXPECT_NE(s.find("Welcome to Loom"), std::string::npos);
-    // Ellipsis ruler (U+2026 repeated). TS WELCOME_V2_WIDTH=58, but the string
+    // Ellipsis ruler (U+2026 repeated). TS WELCOME_WIDTH=58, but the string
     // literal stores 58 × … = 58 × 3 bytes = 174 bytes; look for one '…'.
     EXPECT_NE(s.find("\xE2\x80\xA6"), std::string::npos)
-        << "WelcomeV2 t1 row must contain ellipsis ruler chars";
+        << "Welcome t1 row must contain ellipsis ruler chars";
     // Loom mascot body: 3 rows of █ chars start, 2nd row contains ▄ (U+2584) segments.
     EXPECT_NE(s.find("\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88"), std::string::npos)
-        << "WelcomeV2 t12-t14 rows must contain clawd ███ body";
+        << "Welcome t12-t14 rows must contain clawd ███ body";
     EXPECT_NE(s.find("\xE2\x96\x84"), std::string::npos)
-        << "WelcomeV2 t13 clawd row must contain ▄ segments";
-    // Scattered '*' asterisk dust.  TS WelcomeV2.tsx explicitly places 6 '*'
+        << "Welcome t13 clawd row must contain ▄ segments";
+    // Scattered '*' asterisk dust.  The welcome artwork explicitly places 6 '*'
     // glyphs at fixed (row,col) coordinates; we require at least 4 present.
     int asterisk_count = 0;
     for (char c : s) if (c == '*') ++asterisk_count;
     EXPECT_GE(asterisk_count, 4)
-        << "WelcomeV2 art contains baked asterisk dust; got " << asterisk_count;
+        << "Welcome art contains baked asterisk dust; got " << asterisk_count;
     // Footer paws: "█ █   █ █" + ░ + ▓ gradient planets.
     // Dark theme uses ░ (light shade) + ▓ (dark shade) + █ (full block)
-    // for the planet gradient (TS WelcomeV2.tsx L119-149 dark branch).
+    // for the planet gradient (the dark welcome artwork).
     // ▒ (medium shade) only appears in the Light theme (TS L70-101).
     EXPECT_NE(s.find("\xE2\x96\x91"), std::string::npos)
-        << "WelcomeV2 must render ░ chevron/planet shading (dark theme)";
+        << "Welcome must render ░ chevron/planet shading (dark theme)";
     EXPECT_NE(s.find("\xE2\x96\x93"), std::string::npos)
-        << "WelcomeV2 must render ▓ dark-shade planet gradient (dark theme)";
+        << "Welcome must render ▓ dark-shade planet gradient (dark theme)";
 }
 
 
 // T7: ReplScreen → RenderWelcomeHeader default call path is still the
 //     condensed strip (no force_full_logo = unchanged behaviour for empty
 //     sessions). Tests regression against the Phase-2 WelcomeHeader contract.
-TEST(LogoV2, ReplScreenDefaultWelcomeHeaderStillCondensed) {
+TEST(Logo, ReplScreenDefaultWelcomeHeaderStillCondensed) {
     namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
@@ -371,9 +451,9 @@ TEST(LogoV2, ReplScreenDefaultWelcomeHeaderStillCondensed) {
 }
 
 
-// T8: force_full_logo=true drives LogoV2's card layout path from the
+// T8: force_full_logo=true drives Logo's card layout path from the
 //     ReplScreen-level wrapper, regardless of ReplScreenState contents.
-TEST(LogoV2, ReplScreenForceFullLogoOptsIntoCardMode) {
+TEST(Logo, ReplScreenForceFullLogoOptsIntoCardMode) {
     namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
@@ -436,40 +516,87 @@ TEST(LogoV2, ReplScreenForceFullLogoOptsIntoCardMode) {
 }
 
 
-// T9: Golden-snapshot rendering for gap #logov2-render-modes-missing — exercises
-//     the new Compact (60 cols) and Horizontal (100 cols with FeedColumn)
-//     render paths.  Identical options to the semantic tests above so the
-//     snapshots exactly pin the expected output (including ANSI colour codes).
-//     Set UPDATE_GOLDENS=1 to regenerate.
-//
-//     Faithful reference:
-//       TS LogoV2.tsx  L253-330  (compact)
-//       TS LogoV2.tsx  L331-428  (horizontal + FeedColumn)
-//       TS Feed.tsx    full file (FeedConfig + FeedLine rendering)
-TEST(LogoV2, Logov2RenderModesMissing_Goldens) {
-    namespace lv2 = loom::ui::logo;
+TEST(Logo, ColorsFollowSemanticTokensAcrossThemesAndLayouts) {
+    namespace logo = loom::ui::logo;
+    namespace theme = loom::ui::design::theme;
+    RestoreLogoTheme restore;
+    logo::LogoOptions opts;
+    opts.cwd = "/workspace";
+    opts.model_display_name = "MODEL";
+    for (auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+             theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+             theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+             theme::ThemeVariant::LightAnsi}) {
+        theme::set_theme(variant);
+        const auto& palette = *theme::current_theme().palette;
+        for (int width : {60, 100, 120}) {
+            SCOPED_TRACE(std::string(theme::variant_name(variant)) + " width=" + std::to_string(width));
+            opts.is_condensed_mode = width == 120;
+            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                               ftxui::Dimension::Fixed(40));
+            ftxui::Render(screen, logo::RenderLogo(opts, width).root);
+            bool found_border = false, found_weave = false, found_model = false, found_title = false;
+            for (int y = 0; y < 40; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    const auto& pixel = screen.PixelAt(x, y);
+                    if (pixel.character == "╭") {
+                        found_border = true;
+                        EXPECT_EQ(pixel.foreground_color, palette.loom_body);
+                    }
+                    if (pixel.character == "█" || pixel.character == "░") {
+                        found_weave = true;
+                        EXPECT_EQ(pixel.foreground_color, palette.loom_body);
+                    }
+                    if (pixel.character == "M") {
+                        found_model = true;
+                        EXPECT_EQ(pixel.foreground_color, palette.muted);
+                    }
+                    if (pixel.character == "L" && pixel.bold) {
+                        found_title = true;
+                        EXPECT_EQ(pixel.foreground_color,
+                                  opts.is_condensed_mode ? palette.text : palette.loom_body);
+                    }
+                }
+            }
+            EXPECT_EQ(found_border, !opts.is_condensed_mode);
+            EXPECT_TRUE(found_weave);
+            EXPECT_TRUE(found_model);
+            EXPECT_TRUE(found_title);
+        }
+    }
+}
+
+// Pin the complete ANSI output of compact and horizontal layouts to the
+// explicit 16-color theme. RGB tokens can be quantized before test main
+// establishes truecolor support, so ambient terminal colors are unsuitable
+// as a golden fixture. The semantic test above covers all theme variants.
+// Set UPDATE_GOLDENS=1 to regenerate only these snapshots.
+TEST(Logo, RenderModes_Goldens) {
+    namespace logo = loom::ui::logo;
+    RestoreLogoTheme restore;
+    loom::ui::design::theme::set_theme(loom::ui::design::theme::ThemeVariant::DarkAnsi);
     using sticky_prompt_test::check_golden;
     using sticky_prompt_test::render_ansi;
 
     // ---- 9a: 60-col compact mode (no feeds, rounded border card) ----
     {
-        lv2::LogoV2Options opts;
+        logo::LogoOptions opts;
         opts.cwd                = "/x";
         opts.model_display_name = "Loom Sonnet 4.6";
         opts.is_condensed_mode  = false;
         opts.username           = std::nullopt;
 
-        auto result = lv2::RenderLogoV2(opts, /*cols=*/60);
-        ASSERT_EQ(result.mode, lv2::LogoLayoutMode::Compact);
+        auto result = logo::RenderLogo(opts, /*cols=*/60);
+        ASSERT_EQ(result.mode, logo::LogoLayoutMode::Compact);
 
         // 40 rows: rounded card (~16 rows) + 10-deep notice stack + margin.
         std::string snap = render_ansi(std::move(result.root), /*w=*/60, /*h=*/40);
-        check_golden("logov2_render_modes_missing_compact_60cols", snap);
+        check_golden("logo_render_modes_compact_60cols", snap);
     }
 
     // ---- 9b: 100-col horizontal mode with 2 explicit feeds + divider ----
     {
-        lv2::LogoV2Options opts;
+        logo::LogoOptions opts;
         opts.cwd                = "/workspace/repo";
         opts.billing_type       = "API Usage";
         opts.model_display_name = "Loom Opus 4.8";
@@ -478,38 +605,38 @@ TEST(LogoV2, Logov2RenderModesMissing_Goldens) {
         opts.org_name           = std::string("Acme Corp");
 
         // Feed 1: Recent activity (with timestamps, faithful to Feed.tsx).
-        lv2::FeedConfig recent;
+        logo::FeedConfig recent;
         recent.title = "Recent activity";
         recent.lines = {
-            lv2::FeedLine{ "Implemented bash Ctrl+R history search", "09:14" },
-            lv2::FeedLine{ "Refactored virtual list height engine",   "08:42" },
-            lv2::FeedLine{ "Merged PR #482 enterprise auth 3-mode",    "yesterday" },
+            logo::FeedLine{ "Implemented bash Ctrl+R history search", "09:14" },
+            logo::FeedLine{ "Refactored virtual list height engine",   "08:42" },
+            logo::FeedLine{ "Merged PR #482 enterprise auth 3-mode",    "yesterday" },
         };
 
         // Feed 2: What's new (no timestamps, has footer dim line).
-        lv2::FeedConfig whats_new;
+        logo::FeedConfig whats_new;
         whats_new.title  = "What\xE2\x80\x99s new";   // 's U+2019 apostrophe
         whats_new.lines  = {
-            lv2::FeedLine{ .text = "Paste images with Ctrl+V into prompt",
+            logo::FeedLine{ .text = "Paste images with Ctrl+V into prompt",
                            .timestamp = std::nullopt },
-            lv2::FeedLine{ .text = "LogoV2: compact + horizontal card modes",
+            logo::FeedLine{ .text = "Logo: compact + horizontal card modes",
                            .timestamp = std::nullopt },
-            lv2::FeedLine{ .text = "Sandbox bash commands via /sandbox toggle",
+            logo::FeedLine{ .text = "Sandbox bash commands via /sandbox toggle",
                            .timestamp = std::nullopt },
         };
         whats_new.footer = "Full changelog at /changelog";
 
-        std::vector<lv2::FeedConfig> feeds;
+        std::vector<logo::FeedConfig> feeds;
         feeds.push_back(std::move(recent));
         feeds.push_back(std::move(whats_new));
 
-        auto result = lv2::RenderLogoV2(opts, /*cols=*/100, std::move(feeds));
-        ASSERT_EQ(result.mode, lv2::LogoLayoutMode::Horizontal);
+        auto result = logo::RenderLogo(opts, /*cols=*/100, std::move(feeds));
+        ASSERT_EQ(result.mode, logo::LogoLayoutMode::Horizontal);
 
         // 32 rows: 9-row card body + 2 feed titles + 6 feed rows + 2 dividers
         //        + 1 footer + notice stack margin.
         std::string snap = render_ansi(std::move(result.root), /*w=*/100, /*h=*/32);
-        check_golden("logov2_render_modes_missing_horizontal_100cols", snap);
+        check_golden("logo_render_modes_horizontal_100cols", snap);
     }
 }
 
@@ -524,8 +651,8 @@ TEST(LogoV2, Logov2RenderModesMissing_Goldens) {
 namespace sticky_prompt_test {
 
 // golden_dir / normalize_line_endings / check_golden / render_ansi are
-// defined EARLIER in this file (see pre-LogoV2 sticky_prompt_test block)
-// so that both LogoV2 and FullscreenLayout tests share one definition.
+// defined EARLIER in this file (see pre-Logo sticky_prompt_test block)
+// so that both Logo and FullscreenLayout tests share one definition.
 
 using fl = loom::ui::layout::fullscreen::FullscreenLayoutSlots;
 using Sp = loom::ui::layout::fullscreen::StickyPrompt;
@@ -1047,20 +1174,13 @@ TEST(ImagePaste, ClipboardImageCard_RendersClipboardIconAndFilename) {
     EXPECT_NE(snap.find("Describe these images:"), std::string::npos);
     EXPECT_NE(snap.find("Also see this one:"), std::string::npos);
 
-    // Clipboard icon (📎 U+1F4CE = "\xF0\x9F\x93\x8E") appears exactly once
-    // (second row; first image was source=Clipboard, second was source=File).
-    std::size_t clip_pos = snap.find("\xF0\x9F\x93\x8E");
-    EXPECT_NE(clip_pos, std::string::npos)
-        << "clipboard image row should show the 📎 icon";
-    // Filename for image #1 must appear AFTER the clip icon.
-    std::size_t fn1 = snap.find("screenshot_a.png");
+    // Source labels distinguish clipboard and file attachments without emoji.
+    const auto clip_pos = snap.find("clipboard");
+    EXPECT_NE(clip_pos, std::string::npos);
+    const auto fn1 = snap.find("screenshot_a.png");
     EXPECT_NE(fn1, std::string::npos);
-    EXPECT_GT(fn1, clip_pos) << "filename should follow the clipboard icon";
-
-    // File icon (📁 U+1F4C1 = "\xF0\x9F\x93\x81") is what message_image.cppm
-    // emits for source=File.
-    EXPECT_NE(snap.find("\xF0\x9F\x93\x81"), std::string::npos)
-        << "file-sourced image row should show the 📁 icon";
+    EXPECT_GT(fn1, clip_pos) << "filename should follow the clipboard source label";
+    EXPECT_NE(snap.find("file"), std::string::npos);
     EXPECT_NE(snap.find("IMG_1234.jpg"), std::string::npos);
 
     // Dimension text "1024×768" (× = U+00D7 = UTF-8 "\xC3\x97").

@@ -22,6 +22,8 @@ import loom.ui.foundation.theme_provider;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 import loom.types.types;
 import loom.commands.plugin_ui_data;
 import loom.commands.plugin_helpers;
@@ -102,6 +104,7 @@ namespace detail {
     bool selected,
     bool is_installing)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // Radio indicator: ◉ selected for install, ○ not selected, … installing.
     std::string radio_utf8;
     if (is_installing) {
@@ -109,7 +112,7 @@ namespace detail {
     } else if (card.base.is_installed) {
         radio_utf8 = "◉";  // ◉
     } else {
-        radio_utf8 = "○";  // ○
+        radio_utf8 = std::string(loom::ui::design::figures::kEffortLow);  // ○
     }
 
     // Selection pointer (▶ when selected, space otherwise).
@@ -117,18 +120,18 @@ namespace detail {
 
     // Name + marketplace + install count (same line).
     Elements name_line{
-        text(pointer) | color(selected ? Color::Cyan : Color::GrayDark),
-        text(radio_utf8 + " ") | color(Color::GrayLight),
-        text(card.name) | bold | color(selected ? Color::Cyan : Color::White),
+        text(pointer) | color(selected ? pal.info : pal.muted),
+        text(radio_utf8 + " ") | color(pal.muted),
+        text(card.name) | bold | color(selected ? pal.info : pal.text),
     };
     if (!card.author.empty()) {
-        name_line.push_back(text(" · ") | dim | color(Color::GrayLight));  // ·
-        name_line.push_back(text(card.author) | dim | color(Color::GrayLight));
+        name_line.push_back(text(" · ") | dim | color(pal.muted));  // ·
+        name_line.push_back(text(card.author) | dim | color(pal.muted));
     }
     if (card.install_count > 0) {
-        name_line.push_back(text(" · ") | dim | color(Color::GrayLight));
+        name_line.push_back(text(" · ") | dim | color(pal.muted));
         name_line.push_back(text(std::to_string(card.install_count) + " installs")
-                           | dim | color(Color::GrayLight));
+                           | dim | color(pal.muted));
     }
 
     // Description on next line (indented 4, dim, truncated to ~60 chars).
@@ -141,7 +144,7 @@ namespace detail {
         if (desc.size() > max_len) {
             desc = desc.substr(0, max_len - 1) + "…";  // …
         }
-        desc_el = text("    " + desc) | dim | color(Color::GrayLight);
+        desc_el = text("    " + desc) | dim | color(pal.muted);
     }
 
     auto row = vbox({
@@ -150,20 +153,21 @@ namespace detail {
     });
 
     if (selected) {
-        row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
+        row = row | bgcolor(pal.surface_tint_3);
     }
     return row;
 }
 
 /// Sub-tab bar (Browse / Discover).
 [[nodiscard]] inline Element RenderSubTabBar(SubTab active) {
-    auto browse = text(" 🔍 Browse ")
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    auto browse = text(" Browse ")
         | (active == SubTab::Browse
-               ? (bold | color(Color::Cyan) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3))
+               ? (bold | color(pal.info) | bgcolor(pal.surface_tint_3))
                : dim);
-    auto discover = text(" ✨ Discover ")
+    auto discover = text(" Discover ")
         | (active == SubTab::Discover
-               ? (bold | color(Color::Yellow) | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg))
+               ? (bold | color(pal.warning) | bgcolor(pal.warning_tint_bg))
                : dim);
     return hbox({
         std::move(browse),
@@ -177,27 +181,28 @@ namespace detail {
 [[nodiscard]] inline Element RenderMarketSelector(
     const std::vector<MarketplaceInfo>& markets, int selected)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements bits;
     if (markets.empty()) {
         bits.push_back(text(" No marketplaces configured — add one in Settings")
-                       | color(Color::Yellow) | dim);
+                       | color(pal.warning) | dim);
     } else {
         const int safe = std::clamp(selected, 0, (int)markets.size() - 1);
         const auto& m = markets[safe];
-        bits.push_back(text(" 🛒  ") | dim);
-        bits.push_back(text(m.name) | bold | color(Color::Magenta));
+        bits.push_back(text(" " + std::string(loom::ui::design::figures::kDiamond) + "  ") | dim);
+        bits.push_back(text(m.name) | bold | color(pal.primary));
         bits.push_back(text(std::format(" ({} plugins, {} installed)",
                                        m.total_plugins, m.installed_count))
                        | dim);
         if (m.source_display) {
             bits.push_back(text("  ·  ") | dim);
-            bits.push_back(text(*m.source_display) | color(Color::BlueLight) | dim);
+            bits.push_back(text(*m.source_display) | color(pal.info) | dim);
         }
         if (m.warning) {
             bits.push_back(text(""));
             bits.push_back(hbox({
-                text("  ⚠ "),
-                text(*m.warning) | color(Color::Red) | dim,
+                text("  " + std::string(loom::ui::design::figures::kWarning) + " "),
+                text(*m.warning) | color(pal.danger) | dim,
             }));
         }
     }
@@ -206,7 +211,7 @@ namespace detail {
     if (markets.size() > 1) {
         bits.push_back(filler());
         bits.push_back(text(std::format("[← {}/{} →]", selected + 1, markets.size()))
-                       | dim | color(Color::Cyan));
+                       | dim | color(pal.info));
     }
     return hbox(std::move(bits));
 }
@@ -238,6 +243,7 @@ struct BrowseState {
 [[nodiscard]] inline Element RenderPluginList(
     BrowseState& s)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const bool is_discover = (s.active_subtab == SubTab::Discover);
     const auto& cards = is_discover
         ? s.inputs.discover_cards
@@ -252,7 +258,7 @@ struct BrowseState {
         return vbox({
             text("") | size(HEIGHT, EQUAL, 3),
             hbox({filler(),
-                text(" 🔍 ") | color(Color::Yellow) | dim,
+                text(" " + std::string(loom::ui::design::figures::kInfo) + " ") | color(pal.warning) | dim,
                 text(s.inputs.discover_empty_reason.value_or(
                          "No plugins to show right now.")) | dim,
                 filler()}),
@@ -272,7 +278,7 @@ struct BrowseState {
     // Scroll up indicator
     Elements list_rows;
     if (snap.scroll_position.can_scroll_up) {
-        list_rows.push_back(text(" ↑ more above") | dim | color(Color::GrayLight));
+        list_rows.push_back(text(" ↑ more above") | dim | color(pal.muted));
     }
 
     // Plugin rows
@@ -285,7 +291,7 @@ struct BrowseState {
 
     // Scroll down indicator
     if (snap.scroll_position.can_scroll_down) {
-        list_rows.push_back(text(" ↓ more below") | dim | color(Color::GrayLight));
+        list_rows.push_back(text(" ↓ more below") | dim | color(pal.muted));
     }
 
     // Footer: pagination + keyboard hints
@@ -296,11 +302,11 @@ struct BrowseState {
                          cards.size() == 1 ? "" : "s")) | dim,
         filler(),
         text(" ↑↓/hjkl select  ") | dim,
-        text("⏎") | bold | color(Color::Cyan) | dim,
+        text("⏎") | bold | color(pal.info) | dim,
         text(" install  ") | dim,
-        text("Tab") | bold | color(Color::Cyan) | dim,
+        text("Tab") | bold | color(pal.info) | dim,
         text(" subtab  ") | dim,
-        text("i") | bold | color(Color::Cyan) | dim,
+        text("i") | bold | color(pal.info) | dim,
         text("nstall") | dim,
     });
 
@@ -327,6 +333,7 @@ struct BrowseState {
     }
 
     return Renderer([state]() -> Element {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         auto sub_tab_bar = detail::RenderSubTabBar(state->active_subtab);
         Element market_header;
         if (state->active_subtab == SubTab::Browse) {
@@ -335,7 +342,7 @@ struct BrowseState {
         } else {
             std::size_t total = state->inputs.discover_cards.size();
             market_header = hbox({
-                text(" ✨  All Marketplaces") | bold | color(Color::Yellow),
+                text(" All Marketplaces") | bold | color(pal.info),
                 filler(),
                 text(std::format("{} trending plugin{}", total, total == 1 ? "" : "s")) | dim,
             });

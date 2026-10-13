@@ -9,6 +9,8 @@ export module loom.ui.widgets.tag_tabs;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 export namespace loom::ui::components {
 
 struct Tab {
@@ -26,13 +28,14 @@ struct TagTabsOptions {
 };
 
 ftxui::Element TagTabs(const TagTabsOptions& options) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     
     std::vector<Element> elements;
     
     // Resume label
     if (options.show_resume_label) {
-        elements.push_back(text("Resume") | color(Color::CyanLight) | dim);
+        elements.push_back(text("Resume") | color(pal.info) | dim);
         elements.push_back(text("  "));
     }
     
@@ -68,7 +71,7 @@ ftxui::Element TagTabs(const TagTabsOptions& options) {
         
         auto label = text(display_text);
         if (i == options.active_tab) {
-            label = label | bold | color(Color::White) | bgcolor(Color::Cyan) | inverted;
+            label = label | bold | color(pal.text) | bgcolor(pal.surface_selected);
         } else {
             label = label | dim;
         }
@@ -99,6 +102,7 @@ ftxui::Component TagTabsComponent(const TagTabsOptions& options) {
     auto on_change = options.on_tab_change;
     
     auto renderer = Renderer([tabs, state] {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         std::vector<Element> tab_elements;
         
         for (size_t i = 0; i < tabs.size(); ++i) {
@@ -106,7 +110,7 @@ ftxui::Component TagTabsComponent(const TagTabsOptions& options) {
             auto label = text(display_text);
             
             if (static_cast<int>(i) == *state) {
-                label = label | bold | color(Color::White) | bgcolor(Color::Cyan) | inverted;
+                label = label | bold | color(pal.text) | bgcolor(pal.surface_selected);
             }
             
             tab_elements.push_back(hbox({text(" "), label, text(" ")}) | borderEmpty);

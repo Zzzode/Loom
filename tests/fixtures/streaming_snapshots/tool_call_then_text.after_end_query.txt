@@ -2,9 +2,9 @@
 
 █░█░█░█░█  Loom
 ░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+█░█░█░█░█  <tmpdir>
 
-<dot> Thought, ran 1 shell command  (click to expand)
+<dot> Thought, ran 1 shell command                                                                           [Show details]
 
 ● Four files are modified: the build glue, the core types, the submit handler, and the test CMake. No untracked files
   yet, since the fixtures are not written.
@@ -36,4 +36,4 @@
 ──────────────────────────────────────────────────────────────────────────────────
  ❯ Try "fix lint errors"
 ──────────────────────────────────────────────────────────────────────────────────
-   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K
+   <tmpdir>  ctx ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

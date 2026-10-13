@@ -317,18 +317,22 @@ void AppAdapter::SyncState() {
         const std::string u24 = make_uuid24(msg_idx, seed_preview);
         for (auto& e : projected) {
             e.id = u24;
-            // Enrich committed thinking entries with cached duration.
+            // Enrich committed thinking entries with cached duration
+            // and start time (so the chain compressor's live elapsed
+            // timer keeps ticking from the original streaming start).
             if (e.is_thinking && e.thinking_duration.count() == 0 &&
                 !e.full_content.empty()) {
                 auto it = thinking_duration_cache_.find(e.full_content);
                 if (it != thinking_duration_cache_.end()) {
-                    e.thinking_duration = it->second;
+                    e.thinking_duration = it->second.duration;
+                    e.thinking_start_time = it->second.start_time;
                 }
             }
             screen_state_->messages_store.messages.push_back(std::move(e));
         }
         ++msg_idx;
     }
+    reconcile_tool_result_statuses(screen_state_->messages_store.messages);
     AppendLocalMessagesToScreenState();
     std::stable_sort(
         screen_state_->messages_store.messages.begin(),
@@ -374,7 +378,7 @@ void AppAdapter::SyncState() {
 
     // Notify cost hook subscribers (drives CostThreshold dialog, etc.).
     loom::hooks::update_cost(loom::hooks::CostUpdate{
-        .session_cost = static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd,
+        .session_cost = screen_state_->chrome_store.status_bar.cost_usd.value_or(0.0),
         .monthly_cost = 0.0,
         .input_tokens = screen_state_->chrome_store.status_bar.input_tokens,
         .output_tokens = screen_state_->chrome_store.status_bar.output_tokens,
@@ -383,14 +387,43 @@ void AppAdapter::SyncState() {
 
 // ── ConsumePendingResult (moved out to remove debug import) ──────────────
 void AppAdapter::ConsumePendingResult() {
+    screen_state_->query_running = query_running_.load();
+    {
+        std::optional<PendingSpinner> spinner;
+        bool reset_markdown = false;
+        {
+            std::lock_guard lk(result_mutex_);
+            spinner.swap(pending_spinner_);
+            reset_markdown = std::exchange(pending_markdown_reset_, false);
+        }
+        if (reset_markdown) streaming_markdown_.reset();
+        if (spinner && screen_state_->query_running) {
+            repl::SetSpinner(screen_state_->task_view_store, spinner->mode);
+            screen_state_->task_view_store.spinner_verb = std::move(spinner->verb);
+        }
+    }
+    if (!screen_state_->query_running && statusline_update_pending_.exchange(false)) {
+        TriggerStatuslineUpdate();
+    }
+    if (auto text = statusline_.TakeResult()) {
+        screen_state_->status_line_text = std::move(*text);
+    }
     // Drain a completed local '!' bash command first.
     {
         std::optional<PendingBashResult> bash_res;
-        {
+        if (!screen_state_->query_running) {
             std::lock_guard lk(bash_result_mutex_);
             bash_res.swap(pending_bash_result_);
         }
-        if (bash_res.has_value()) {
+        if (bash_res && bash_res->session_id == current_session_id_) {
+            if (!bash_res->cwd.empty()) {
+                std::error_code ec;
+                std::filesystem::current_path(bash_res->cwd, ec);
+                if (!ec) {
+                    screen_state_->cwd = bash_res->cwd;
+                    static_cast<loom::core::QueryEngine*>(engine_raw())->set_working_directory(bash_res->cwd);
+                }
+            }
             AppendLocalCommandMessage(
                 bash_res->output.empty()
                     ? std::string("(no output)")
@@ -412,23 +445,21 @@ void AppAdapter::ConsumePendingResult() {
     pending_error_.reset();
 
     this->SyncState();
-    if (pending_error && !pending_error->empty()) {
+    if (pending_error && !pending_error->message.empty()) {
         repl::MessageDisplayEntry error_entry;
         error_entry.role = "system";
-        error_entry.content_preview = "Error: " + *pending_error;
+        error_entry.content_preview = pending_error->message;
         error_entry.is_error = true;
         error_entry.timestamp = std::chrono::system_clock::now();
         error_entry.id = "err_00000000000000000000";
-        error_entry.retry_after_ms = 3000.0;
-        error_entry.retry_attempt  = 1;
-        error_entry.max_retries    = 3;
-        const auto& err = *pending_error;
-        if (err.find("401") != std::string::npos ||
-            err.find("unauthorized") != std::string::npos ||
-            err.find("session") != std::string::npos ||
-            err.find("expired") != std::string::npos) {
-            error_entry.session_expired = true;
-        }
+        const auto& type = pending_error->type;
+        error_entry.can_continue = type == "tool_round_limit";
+        error_entry.is_error = !error_entry.can_continue;
+        error_entry.is_model_error = type != "budget_exceeded" &&
+            type != "invalid_retry" && type != "hook_stop" && type != "tool_round_limit";
+        error_entry.can_retry = type == "api_error" || type == "overloaded_error" ||
+            type == "rate_limit_error" || type == "network_error" ||
+            type == "transport_error";
         screen_state_->messages_store.messages.push_back(std::move(error_entry));
     }
     repl::SetSpinner(screen_state_->task_view_store, repl::SpinnerMode::Hidden);
@@ -436,6 +467,8 @@ void AppAdapter::ConsumePendingResult() {
     screen_state_->task_view_store.spinner_tip = std::nullopt;
     streaming_text_.clear();
     streaming_text_index_.reset();
+    streaming_finalizing_ = false;
+    streaming_message_committed_ = false;
     streaming_markdown_.reset();
     streaming_tools_.clear();
 
@@ -486,69 +519,70 @@ void AppAdapter::DrainCompletedPastesAndSubmit() {
 
 // ── get_permission_callback (moved out to remove dialogs.system/triggers) ─
 std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permission_callback() {
-    return [this](std::string_view tool_name, std::string_view tool_args) -> bool {
+    return [this, dispatch = ui_dispatcher(), permission = permission_](
+        std::string_view tool_name, std::string_view tool_args) -> bool {
         // Fast path: always-allowed tools skip the dialog entirely.
-        if (permission_.is_always_allowed(tool_name))
+        if (permission->is_always_allowed(tool_name))
             return true;
 
-        // Computer-use actions get their own panel: approving one hands
-        // the model real screen/mouse/keyboard control, so the concrete
-        // action (click/type/scroll + target) must be shown, not a bare
-        // tool name.
-        auto respond_cb = [this, tool_name = std::string(tool_name)](
-            dsys::ToolPermissionPayload::Decision decision,
-            bool /*sandbox*/)
-        {
-            bool allowed =
-                (decision == dsys::ToolPermissionPayload::Decision::AllowOnce ||
-                 decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow);
-            if (decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow) {
-                permission_.add_always_allowed(tool_name);
-            }
-            screen_state_->dialog_store.PopOverlay();
-            permission_.resolve_permission(allowed);
-        };
-        auto abort_cb = [this] {
-            screen_state_->dialog_store.PopOverlay();
-            permission_.resolve_permission(false);
-        };
+        permission->reset_permission_response();
+        dispatch([this, permission, tool_name = std::string(tool_name),
+                  tool_args = std::string(tool_args)] {
+            // Computer-use actions get their own panel: approving one hands
+            // the model real screen/mouse/keyboard control, so the concrete
+            // action (click/type/scroll + target) must be shown, not a bare
+            // tool name.
+            auto respond_cb = [this, permission, tool_name](
+                dsys::ToolPermissionPayload::Decision decision,
+                bool /*sandbox*/)
+            {
+                bool allowed =
+                    (decision == dsys::ToolPermissionPayload::Decision::AllowOnce ||
+                     decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow);
+                if (decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow) {
+                    permission->add_always_allowed(tool_name);
+                }
+                permission->resolve_permission(allowed);
+                screen_state_->dialog_store.PopOverlay();
+            };
+            auto abort_cb = [this, permission] {
+                permission->resolve_permission(false);
+                screen_state_->dialog_store.PopOverlay();
+            };
 
-        if (auto cu_options =
-                cperm::options_from_tool_input(tool_args)) {
-            namespace sp = loom::ui::permissions::single_prompt;
-            sp::DetailComputerUse detail;
-            detail.action_label =
-                std::string(cperm::action_description(cu_options->action));
-            detail.target_app = cu_options->target_app;
-            detail.coordinates = cu_options->coordinates;
-            detail.text_to_type = cu_options->text_to_type;
-            detail.first_use_in_session =
-                permission_.take_computer_use_first_use();
-            dtrig::PushToolPermissionDetailed(
+            if (auto cu_options =
+                    cperm::options_from_tool_input(tool_args)) {
+                namespace sp = loom::ui::permissions::single_prompt;
+                sp::DetailComputerUse detail;
+                detail.action_label =
+                    std::string(cperm::action_description(cu_options->action));
+                detail.target_app = cu_options->target_app;
+                detail.coordinates = cu_options->coordinates;
+                detail.text_to_type = cu_options->text_to_type;
+                detail.first_use_in_session =
+                    permission->take_computer_use_first_use();
+                dtrig::PushToolPermissionDetailed(
+                    screen_state_->dialog_store.dialog_queue,
+                    std::string(tool_name),
+                    std::format("Loom wants to control your screen: {}",
+                                cperm::action_description(cu_options->action)),
+                    sp::ActionKind::Execute,
+                    sp::ToolDetail{std::move(detail)},
+                    respond_cb, abort_cb,
+                    /*can_always_allow=*/true);
+                return;
+            }
+
+            dtrig::PushToolPermission(
                 screen_state_->dialog_store.dialog_queue,
                 std::string(tool_name),
-                std::format("Loom wants to control your screen: {}",
-                            cperm::action_description(cu_options->action)),
-                sp::ActionKind::Execute,
-                sp::ToolDetail{std::move(detail)},
-                respond_cb, abort_cb,
+                std::string(tool_args),
+                /*on_response=*/respond_cb,
+                /*on_abort=*/abort_cb,
                 /*can_always_allow=*/true);
-            permission_.reset_permission_response();
-            PostRenderEvent();
-            return permission_.wait_permission_response();
-        }
 
-        dtrig::PushToolPermission(
-            screen_state_->dialog_store.dialog_queue,
-            std::string(tool_name),
-            std::string(tool_args),
-            /*on_response=*/respond_cb,
-            /*on_abort=*/abort_cb,
-            /*can_always_allow=*/true);
-
-        permission_.reset_permission_response();
-        PostRenderEvent();
-        return permission_.wait_permission_response();
+        });
+        return permission->wait_permission_response();
     };
 }
 

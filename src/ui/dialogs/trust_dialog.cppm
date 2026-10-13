@@ -37,6 +37,8 @@ module;
 export module loom.ui.dialogs.trust_dialog;
 
 import std;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.theme_provider;
 
 import loom.ui.dialogs.trust_utils;
 import loom.plugins.plugin;
@@ -120,23 +122,24 @@ struct TrustDialogProps {
 namespace detail {
 
 [[nodiscard]] inline Color risk_color(tu::RiskLevel level) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (level) {
-        case tu::RiskLevel::Low:      return Color::Green;
-        case tu::RiskLevel::Medium:   return Color::Yellow;
-        case tu::RiskLevel::High:     return Color::Orange1;
-        case tu::RiskLevel::Critical: return Color::Red;
+        case tu::RiskLevel::Low:      return pal.success;
+        case tu::RiskLevel::Medium:   return pal.warning;
+        case tu::RiskLevel::High:     return pal.danger;
+        case tu::RiskLevel::Critical: return pal.danger;
     }
-    return Color::White;
+    return pal.text;
 }
 
 [[nodiscard]] inline std::string_view risk_icon(tu::RiskLevel level) {
     switch (level) {
-        case tu::RiskLevel::Low:      return "ℹ️ ";
-        case tu::RiskLevel::Medium:   return "⚠️ ";
-        case tu::RiskLevel::High:     return "🔶 ";
-        case tu::RiskLevel::Critical: return "🛑 ";
+        case tu::RiskLevel::Low:      return loom::ui::design::figures::kInfo;
+        case tu::RiskLevel::Medium:   return loom::ui::design::figures::kWarning;
+        case tu::RiskLevel::High:     return loom::ui::design::figures::kWarning;
+        case tu::RiskLevel::Critical: return loom::ui::design::figures::kCross;
     }
-    return "• ";
+    return loom::ui::design::figures::kBullet;
 }
 
 [[nodiscard]] inline bool has_any_concerns(const SecuritySources& src) {
@@ -175,7 +178,7 @@ namespace detail {
         ? tu::get_risk_title(level)
         : std::string{custom_title};
     return hbox({
-        text(std::string{detail::risk_icon(level)}),
+        text(std::string{detail::risk_icon(level)} + " "),
         text(title) | bold | color(detail::risk_color(level)),
     }) | borderEmpty;
 }
@@ -184,8 +187,9 @@ namespace detail {
 [[nodiscard]] inline Element RenderSummary(const tu::RiskSummary& summary,
                                            tu::RiskLevel level)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return paragraph(tu::get_trust_message(level, summary))
-         | color(Color::White) | size(WIDTH, LESS_THAN, 78);
+         | color(pal.text) | size(WIDTH, LESS_THAN, 78);
 }
 
 /// Render the plugin info panel (name, version, author, homepage, etc.)
@@ -194,10 +198,11 @@ namespace detail {
                                                bool has_signature,
                                                const std::string& marketplace_domain)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
         text("Plugin: ") | bold,
-        text(def.name) | color(Color::Cyan),
+        text(def.name) | color(pal.info),
         text("  v" + def.version) | dim,
     }));
     if (!def.author.empty()) {
@@ -212,25 +217,25 @@ namespace detail {
     if (def.homepage) {
         rows.push_back(hbox({
             text("Homepage: ") | bold,
-            text(*def.homepage) | underlined | color(Color::Cyan),
+            text(*def.homepage) | underlined | color(pal.info),
         }));
     }
     rows.push_back(hbox({
         text("Install type: ") | bold,
         text(is_update ? "UPDATE" : "NEW INSTALL")
-            | color(is_update ? Color::Yellow : Color::Green),
+            | color(is_update ? pal.warning : pal.success),
         text("  • Signed: ") | bold,
         text(has_signature ? "yes" : "NO")
-            | color(has_signature ? Color::Green : Color::Red),
+            | color(has_signature ? pal.success : pal.danger),
     }));
     if (!marketplace_domain.empty()) {
         const bool safe = tu::is_known_safe_domain(marketplace_domain);
         rows.push_back(hbox({
             text("Marketplace: ") | bold,
             text(marketplace_domain)
-                | color(safe ? Color::White : Color::Yellow),
+                | color(safe ? pal.text : pal.warning),
             text(safe ? "  [trusted]" : "  [NOT OFFICIAL — verify source]")
-                | color(safe ? Color::Green : Color::Red),
+                | color(safe ? pal.success : pal.danger),
         }));
     }
     return vbox(std::move(rows)) | borderLight;
@@ -240,10 +245,11 @@ namespace detail {
 [[nodiscard]] inline Element RenderSensitivePaths(
     const std::vector<SensitiveMatch>& matches)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (matches.empty()) return text("");
 
     Elements rows;
-    rows.push_back(text(" Sensitive paths detected:") | bold | color(Color::Red));
+    rows.push_back(text(" Sensitive paths detected:") | bold | color(pal.danger));
     for (const auto& m : matches) {
         rows.push_back(hbox({
             text("  ‣ ") | color(detail::risk_color(m.severity)),
@@ -276,6 +282,7 @@ namespace detail {
     std::string_view workspace_path,
     const SecuritySources& src)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements parts;
     parts.push_back(hbox({
         text("Accessing workspace: ") | dim,
@@ -292,10 +299,10 @@ namespace detail {
     if (detail::has_any_concerns(src)) {
         parts.push_back(text(""));
         auto concerns = detail::list_concerns(src);
-        parts.push_back(text(" Detected:") | bold | color(Color::Yellow));
+        parts.push_back(text(" Detected:") | bold | color(pal.warning));
         for (const auto& c : concerns) {
             parts.push_back(hbox({
-                text("  • ") | color(Color::Yellow),
+                text("  • ") | color(pal.warning),
                 text(c),
             }));
         }
@@ -373,7 +380,7 @@ struct DialogState {
     const int n = static_cast<int>(labels.size());
     for (int i = 0; i < n; ++i) {
         const bool is_sel = (i == selected);
-        auto label = text((is_sel ? "▶ " : "  ") + labels[i] + " ");
+        auto label = text((is_sel ? (std::string{loom::ui::design::figures::kPlay} + " ") : "  ") + labels[i] + " ");
         if (is_sel) label = label | bold | color(detail::risk_color(level));
         if (allow_disabled && i == 0 && level == tu::RiskLevel::High) {
             // High tier: primary Allow is dimmed until countdown expires.
@@ -387,38 +394,40 @@ struct DialogState {
 
 /// Render the countdown bar for High tier.
 [[nodiscard]] inline Element RenderCountdown(const DialogState& s) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (!s.countdown_active) return text("");
     if (s.countdown_remaining <= 0) {
         return hbox({
-            text(" ✓ ") | color(Color::Green),
-            text("You may now proceed.") | color(Color::Green) | dim,
+            text(" ✓ ") | color(pal.success),
+            text("You may now proceed.") | color(pal.success) | dim,
         });
     }
     return hbox({
-        text(" ⏳ ") | color(Color::Orange1),
+        text((" " + std::string{loom::ui::design::figures::kEllipsis} + " ")) | color(pal.warning),
         text(std::format(
             "Please review carefully. Allow enabled in {} second{}…",
             s.countdown_remaining,
-            s.countdown_remaining == 1 ? "" : "s")) | color(Color::Orange1),
+            s.countdown_remaining == 1 ? "" : "s")) | color(pal.warning),
     });
 }
 
 /// Render the critical-tier checkbox + YES input.
 [[nodiscard]] inline Element RenderCriticalGates(const DialogState& s) {
-    const Color gate = s.understand_risk ? Color::Green : Color::Red;
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    const Color gate = s.understand_risk ? loom::ui::design::theme::current_theme().palette->success : loom::ui::design::theme::current_theme().palette->danger;
     Elements parts;
     parts.push_back(hbox({
         text(s.understand_risk ? "☑ " : "☐ ") | bold | color(gate),
         text("I understand the risk of proceeding.")
-            | color(s.understand_risk ? Color::White : Color::Red),
+            | color(s.understand_risk ? pal.text : pal.danger),
     }));
     if (s.show_second_confirm || s.understand_risk) {
         parts.push_back(hbox({
             text(" Type ") | dim,
-            text(std::string{tu::kCriticalConfirmWord}) | bold | color(Color::Red),
+            text(std::string{tu::kCriticalConfirmWord}) | bold | color(pal.danger),
             text(" to confirm: ") | dim,
             text(s.yes_input.empty() ? std::string{"(empty)"} : s.yes_input)
-                | color(s.yes_input == tu::kCriticalConfirmWord ? Color::Green : Color::Red),
+                | color(s.yes_input == tu::kCriticalConfirmWord ? pal.success : pal.danger),
             text("│") | blink,
         }));
         parts.push_back(text(
@@ -434,6 +443,7 @@ struct DialogState {
 [[nodiscard]] inline Element RenderTrustDialogFull(
     const std::shared_ptr<DialogState>& s)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const auto level = s->props.forced_level;
     const auto& summary = s->props.summary;
     const auto labels = tier_button_labels(level, !s->props.paths.empty());
@@ -502,7 +512,7 @@ struct DialogState {
     // Medium tier: "always allow" checkbox (also shown for High)
     if (level == tu::RiskLevel::Medium || level == tu::RiskLevel::High) {
         body.push_back(hbox({
-            text(s->always_allow ? "☑ " : "☐ ") | color(Color::Cyan),
+            text(s->always_allow ? "☑ " : "☐ ") | color(pal.info),
             text("Remember this decision for future prompts") | dim,
         }));
         body.push_back(text(""));
@@ -516,7 +526,7 @@ struct DialogState {
     body.push_back(RenderButtonRow(labels, s->selected, level, allow_disabled));
     body.push_back(text(""));
     body.push_back(hbox({
-        text("Security guide") | color(Color::Cyan) | underlined,
+        text("Security guide") | color(pal.info) | underlined,
     }) | dim);
     body.push_back(hbox({
         text("Enter") | bold,
@@ -535,7 +545,7 @@ struct DialogState {
     return window(
         hbox({
             text(" ") | ftxui::color(col),
-            text(std::string{detail::risk_icon(level)}),
+            text(std::string{detail::risk_icon(level)} + " "),
             text(tu::get_risk_title(level)) | bold | ftxui::color(col),
             text(" "),
         }),

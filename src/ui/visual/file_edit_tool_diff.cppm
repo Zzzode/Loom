@@ -30,6 +30,7 @@ module;
 export module loom.ui.visual.file_edit_tool_diff;
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 import loom.fs.edit.file_edit;
 import loom.text.string_utils;
@@ -58,7 +59,6 @@ struct DiffData {
 
 /// Subtle border color matching `subtle` theme token
 /// (rgb(175,175,175) in dark theme — mapped to ANSI gray-light).
-const Color kSubtleColor = Color::GrayLight;
 
 // ─── DiffFrame ───────────────────────────────────────────────────────────────
 /// Wraps content in a dashed top/bottom frame with subtle color.
@@ -66,8 +66,8 @@ const Color kSubtleColor = Color::GrayLight;
 ///   Dashed top/bottom borders in subtle colour, no left/right borders.
 ///   Placeholder shows dim "…", otherwise children.
 [[nodiscard]] Element diff_frame(Element content, bool placeholder = false) {
-    auto top = separatorDashed() | color(kSubtleColor);
-    auto bot = separatorDashed() | color(kSubtleColor);
+    auto top = separatorDashed() | color(loom::ui::design::theme::current_theme().palette->border_subtle);
+    auto bot = separatorDashed() | color(loom::ui::design::theme::current_theme().palette->border_subtle);
 
     if (placeholder) {
         content = text("…") | dim;
@@ -251,7 +251,7 @@ const Color kSubtleColor = Color::GrayLight;
     auto data = compute_diff_data(props.file_path, file_content, props.edits);
     if (!data.has_value()) {
         // Fallback: show error message inside frame
-        return diff_frame(text("  " + data.error()) | color(Color::Red) | dim);
+        return diff_frame(text("  " + data.error()) | color(loom::ui::design::theme::current_theme().palette->danger) | dim);
     }
 
     auto theme_val = theme.value_or(sd::default_theme());

@@ -188,7 +188,7 @@ using loom::core::ToolResult;
     if (name == "script") return execute_script(input);
     if (name == "send_message") {
         return runtime_message_delivery::execute_send_message(
-            json, registry, &native_agent_status_is_terminal);
+            json, registry, &native_agent_status_is_terminal, input.parent_model);
     }
     if (name == "shared") {
         auto key = json_string(json, "key");
@@ -237,7 +237,7 @@ using loom::core::ToolResult;
         return ToolResult::success(json_string(json, "content").or_else([&] { return json_string(json, "text"); }).value_or(std::string(json)));
     }
     if (name.starts_with("task_")) return execute_task_tool(name, input);
-    if (name == "team_create") return execute_team_create_runtime_tool(json, registry);
+    if (name == "team_create") return execute_team_create_runtime_tool(input, registry);
     if (name == "team_delete") return execute_team_delete_runtime_tool(json);
     if (name == "testing") {
         auto command = json_string(json, "command").value_or("ctest --output-on-failure");

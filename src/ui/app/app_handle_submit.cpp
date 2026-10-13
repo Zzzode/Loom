@@ -146,8 +146,9 @@ static std::string format_session_age(std::chrono::system_clock::time_point tp) 
 // ── HandleSubmit (moved out of app_autocomplete.cpp to reduce import closure) ──
 void AppAdapter::HandleSubmit(const std::string& text,
                               repl::InputMode submit_mode,
-                              bool wait_for_pastes) {
-    if (wait_for_pastes && HasInFlightPasteReferences(text)) {
+                              bool wait_for_pastes,
+                              bool retry_request) {
+    if (!retry_request && wait_for_pastes && HasInFlightPasteReferences(text)) {
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
         pending_paste_submission_ = PendingPasteSubmission{text, submit_mode, deadline};
         paste_submission_deadline_ms_.store(
@@ -157,7 +158,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
     }
 
     // Parse [Image #N] / [...Truncated text #N] refs in the submitted text.
-    const auto refs = loom::utils::parse_references(text);
+    const auto refs = loom::utils::parse_references(retry_request ? std::string{} : text);
     std::unordered_set<int> referenced_ids;
     int n_images = 0;
     for (const auto& r : refs) {
@@ -167,17 +168,20 @@ void AppAdapter::HandleSubmit(const std::string& text,
         }
     }
     const bool has_images = n_images > 0;
-    if (text.empty() && !has_images) return;
+    if (!retry_request && text.empty() && !has_images) return;
 
-    if (text.starts_with('/')) {
+    if (!retry_request && text.starts_with('/')) {
         this->HandleCommand(text);
         return;
     }
 
+    // The query worker owns the engine's mutable state until completion.
+    if (query_running_.load()) return;
+
     // P0-1: bash (!) routing.
     const bool bash_by_mode   = submit_mode == repl::InputMode::Bash;
     const bool bash_by_prefix = text.starts_with('!');
-    if (bash_by_mode || bash_by_prefix) {
+    if (!retry_request && (bash_by_mode || bash_by_prefix)) {
         const std::string stripped(
             bash_by_prefix ? std::string(figs::strip_mode_prefix(text))
                            : text);
@@ -188,12 +192,16 @@ void AppAdapter::HandleSubmit(const std::string& text,
         return;
     }
 
-    if (query_running_.load()) return;
+    if (query_thread_.joinable()) query_thread_.join();
+    // Consume the previous turn before starting another one, so a pending
+    // completion/error cannot overwrite the new turn's UI state.
+    ConsumePendingResult();
 
-    screen_state_->prompt_store.submit_count++;
-
-    // Persist to prompt history so @history / Ctrl+R can find this prompt.
-    acsrc::append_prompt_history(text, current_session_id_, screen_state_->cwd);
+    if (!retry_request) {
+        screen_state_->prompt_store.submit_count++;
+        // A request retry keeps the original prompt and attachments in history.
+        acsrc::append_prompt_history(text, current_session_id_, screen_state_->cwd);
+    }
 
     query_running_.store(true);
     screen_state_->query_running = true;
@@ -203,8 +211,12 @@ void AppAdapter::HandleSubmit(const std::string& text,
     {
         std::lock_guard lk(result_mutex_);
         pending_error_.reset();
+        pending_spinner_.reset();
+        pending_markdown_reset_ = false;
         streaming_text_.clear();
         streaming_text_index_.reset();
+        streaming_finalizing_ = false;
+        streaming_message_committed_ = false;
         streaming_markdown_.reset();
         streaming_tools_.clear();
         streaming_thinking_.clear();
@@ -225,7 +237,7 @@ void AppAdapter::HandleSubmit(const std::string& text,
     for (int id : referenced_ids) paste_.pasted_contents().erase(id);
 
     // Expand [...Truncated text #N] refs into their full text.
-    std::string expanded_text = loom::utils::expand_pasted_text_refs(
+    std::string expanded_text = retry_request ? std::string{} : loom::utils::expand_pasted_text_refs(
         text, [this](int id) -> std::optional<std::string> {
             auto it = paste_.pasted_text_contents().find(id);
             if (it != paste_.pasted_text_contents().end()) return it->second;
@@ -233,15 +245,15 @@ void AppAdapter::HandleSubmit(const std::string& text,
         });
     for (const auto& ref : refs) paste_.pasted_text_contents().erase(ref.id);
 
-    query_thread_ = std::jthread([this, text = std::move(expanded_text), attachments = std::move(attachments)](std::stop_token st) {
+    query_thread_ = std::jthread([this, text = std::move(expanded_text), attachments = std::move(attachments), cwd = screen_state_->cwd, retry_request, tool_round_budget = tool_round_budget_](std::stop_token st) {
         core::QueryOptions opts;
+        opts.max_tool_rounds = tool_round_budget;
+        opts.resume_from_conversation = retry_request;
         for (const auto& img : attachments) {
             opts.attachments.push_back(img);
         }
-        opts.on_commit = [this](const Message&) {
-            conversation_projection_dirty_.store(true);
-            TriggerStatuslineUpdate();
-            PostRenderEvent();
+        opts.on_commit = [this](const Message& message) {
+            handle_committed_message(message);
         };
         opts.on_event = [this, &st](const core::StreamEvent& ev) {
             if (st.stop_requested()) return;
@@ -249,17 +261,34 @@ void AppAdapter::HandleSubmit(const std::string& text,
         };
 
         // AT-02: materialize @-mention file references into content blocks.
-        auto materialized = atatt::materialize_at_mentions(text, screen_state_->cwd);
-        for (auto& b : materialized.blocks) {
-            opts.attachments.push_back(std::move(b));
+        auto* engine = static_cast<loom::core::QueryEngine*>(engine_raw());
+        if (retry_request) {
+            engine->stream_query({}, opts);
+        } else {
+            auto materialized = atatt::materialize_at_mentions(text, cwd);
+            for (auto& b : materialized.blocks) {
+                opts.attachments.push_back(std::move(b));
+            }
+            engine->stream_query(materialized.text, opts);
         }
 
-        static_cast<loom::core::QueryEngine*>(engine_raw())->stream_query(materialized.text, opts);
-
         query_running_.store(false);
-        screen_state_->query_running = false;
         PostRenderEvent();
     });
+}
+
+void AppAdapter::handle_committed_message(const Message& message) {
+    {
+        std::lock_guard lk(result_mutex_);
+        if (std::holds_alternative<core::AssistantMessage>(message)) {
+            streaming_message_committed_ = true;
+        }
+        // Publish the commit and its projection invalidation together, so
+        // Render cannot remove a live row before projecting its replacement.
+        conversation_projection_dirty_.store(true);
+    }
+    statusline_update_pending_.store(true);
+    PostRenderEvent();
 }
 
 // ── Stream-event handler (extracted from the on_event lambda so tests can
@@ -274,7 +303,9 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
             std::lock_guard lk(result_mutex_);
             streaming_text_.clear();
             streaming_text_index_.reset();
-            streaming_markdown_.reset();
+            streaming_finalizing_ = false;
+            streaming_message_committed_ = false;
+            pending_markdown_reset_ = true;
             streaming_tools_.clear();
             streaming_thinking_.clear();
             event_dedup_.clear_indices();
@@ -297,9 +328,9 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
                     .truncated = false,
                     .complete = false,
                     .is_error = false,
+                    .streaming_started_at = clock::steady_now(),
                 };
-                repl::SetSpinner(screen_state_->task_view_store, repl::SpinnerMode::ToolUse);
-                screen_state_->task_view_store.spinner_verb = tool->name;
+                pending_spinner_ = PendingSpinner{repl::SpinnerMode::ToolUse, tool->name};
             } else if (const auto* thinking = std::get_if<core::ThinkingBlock>(&e.block)) {
                 streaming_thinking_[e.index] = StreamingThinkingPreview{
                     .text = thinking->thinking,
@@ -307,7 +338,7 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
                     .streaming_ended_at = std::nullopt,
                     .streaming_started_at = clock::steady_now(),
                 };
-                repl::SetSpinner(screen_state_->task_view_store, repl::SpinnerMode::Thinking);
+                pending_spinner_ = PendingSpinner{repl::SpinnerMode::Thinking, std::nullopt};
             } else if (std::get_if<core::TextBlock>(&e.block)) {
                 // Track the text block's actual index so the streaming
                 // projection places it in the correct order (the model can
@@ -324,8 +355,7 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
                 thinking->second.text += e.delta_text;
             } else {
                 streaming_text_ += e.delta_text;
-                repl::SetSpinner(screen_state_->task_view_store, repl::SpinnerMode::Responding);
-                screen_state_->task_view_store.spinner_verb = std::nullopt;
+                pending_spinner_ = PendingSpinner{repl::SpinnerMode::Responding, std::nullopt};
             }
         } else if constexpr (std::is_same_v<T, core::ContentBlockStop>) {
             apply_event = event_dedup_.should_accept_stop(e.index);
@@ -342,14 +372,19 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
                 auto scheduled = thinking_collapse_deadline_ms_.load();
                 while ((scheduled == 0 || due < scheduled) &&
                        !thinking_collapse_deadline_ms_.compare_exchange_weak(scheduled, due)) {}
-                // Cache the duration so committed thinking entries (which
-                // lack timing info) can show "∴ Thought for Xs".
+                // Cache the timing so committed thinking entries (which
+                // lack timing info) can show "∴ Thought for Xs" and the
+                // chain compressor's live elapsed timer survives the
+                // streaming→committed transition.
                 if (thinking->second.streaming_started_at) {
                     auto dur = std::chrono::duration_cast<
                         std::chrono::milliseconds>(
                             *thinking->second.streaming_ended_at -
                             *thinking->second.streaming_started_at);
-                    thinking_duration_cache_[thinking->second.text] = dur;
+                    thinking_duration_cache_[thinking->second.text] = ThinkingTiming{
+                        .duration = dur,
+                        .start_time = *thinking->second.streaming_started_at,
+                    };
                 }
             }
         } else if constexpr (std::is_same_v<T, core::ToolExecutionStart>) {
@@ -390,13 +425,26 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
                 }
             }
         } else if constexpr (std::is_same_v<T, core::StreamError>) {
+            if (e.error_type == "tool_error") {
+                apply_event = false;
+                return;
+            }
             std::lock_guard lk(result_mutex_);
-            pending_error_ = e.message;
+            pending_error_ = PendingError{
+                .type = e.error_type,
+                .message = e.message,
+            };
+        } else if constexpr (std::is_same_v<T, core::StreamEnd>) {
+            // Finish live styling but keep the body visible until the
+            // engine publishes its committed replacement.
+            std::lock_guard lk(result_mutex_);
+            pending_error_.reset();
+            streaming_finalizing_ = true;
         }
     }, ev);
 
     if (apply_event) {
-        TriggerStatuslineUpdate();
+        statusline_update_pending_.store(true);
         PostRenderEvent();
     }
 }
@@ -411,6 +459,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
         if (on_exit_) on_exit_();
         return;
     }
+    if (query_running_.load()) return;
     if (normalized == "/clear") {
         static_cast<loom::core::QueryEngine*>(engine_raw())->clear_conversation();
         local_command_messages_.clear();
@@ -642,9 +691,12 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                         dtrig::PushSessionPicker(
                             screen_state_->dialog_store.dialog_queue,
                             std::move(entries),
-                            [this](const std::string& id) {
+                            [this, sessions_dir = std::move(sessions_dir)](
+                                const std::string& id) {
                                 if (!id.empty()) {
-                                    this->HandleCommand("/resume " + id);
+                                    this->ResumeSessionFromDirectory(
+                                        sessions_dir, id,
+                                        std::format("Resuming session: {}", id));
                                 }
                             });
                         AppendLocalCommandMessage(result->message, false, true);
@@ -655,30 +707,8 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                     // ── Direct resume: "UI:resume:<session_id>" ──
                     auto session_id = result->metadata->substr(
                         std::string("UI:resume:").size());
-                    std::vector<loom::core::Message> messages;
-
-                    // Load messages.jsonl (the current format).
-                    auto docs = loom::session::load_messages(sessions_dir, session_id);
-                    messages.reserve(docs.size());
-                    for (std::size_t i = 0; i < docs.size(); ++i) {
-                        auto parsed = loom::query::parse_session_message_value(
-                            docs[i].root(), i);
-                        if (parsed) messages.push_back(std::move(*parsed));
-                    }
-
-                    engine->restore_conversation(std::move(messages));
-                    engine->set_session_id(session_id);
-                    // Refresh the transcript to show the restored messages.
-                    local_command_messages_.clear();
-                    screen_state_->messages_store.divider_index.reset();
-                    screen_state_->messages_store.unseen_divider.reset();
-                    screen_state_->messages_store.unseen_message_count = 0;
-                    screen_state_->messages_store.pill_visible = false;
-                    ResetScrollToBottom(screen_state_->messages_store);
-                    reset_virtual_renderer_state(screen_state_->messages_store);
-                    this->SyncState();
-                    AppendLocalCommandMessage(result->message, false, true);
-                    PostRenderEvent();
+                    this->ResumeSessionFromDirectory(
+                        sessions_dir, session_id, result->message);
                     return;
                 }
                 auto enqueue_fn = [this](std::string_view c) {
@@ -704,6 +734,50 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
     } else {
         AppendLocalCommandMessage("Command registry is not available.", true);
     }
+}
+
+bool AppAdapter::ResumeSessionFromDirectory(
+    const std::filesystem::path& sessions_dir,
+    std::string_view session_id,
+    std::string_view status_message)
+{
+    auto* engine = static_cast<loom::core::QueryEngine*>(engine_raw());
+    if (!engine || !loom::session::load_session_metadata(sessions_dir, session_id)) {
+        AppendLocalCommandMessage(
+            std::format("Session '{}' not found. Use /resume to list available sessions.",
+                        session_id),
+            true, true);
+        PostRenderEvent();
+        return false;
+    }
+
+    std::vector<loom::core::Message> messages;
+    auto docs = loom::session::load_messages(sessions_dir, session_id);
+    messages.reserve(docs.size());
+    for (std::size_t i = 0; i < docs.size(); ++i) {
+        if (auto parsed = loom::query::parse_session_message_value(
+                docs[i].root(), i)) {
+            messages.push_back(std::move(*parsed));
+        }
+    }
+
+    engine->restore_conversation(std::move(messages));
+    engine->set_session_id(std::string(session_id));
+    current_session_id_ = std::string(session_id);
+    session_start_time_ = std::chrono::steady_clock::now();
+
+    // Refresh the transcript to show the restored messages.
+    local_command_messages_.clear();
+    screen_state_->messages_store.divider_index.reset();
+    screen_state_->messages_store.unseen_divider.reset();
+    screen_state_->messages_store.unseen_message_count = 0;
+    screen_state_->messages_store.pill_visible = false;
+    ResetScrollToBottom(screen_state_->messages_store);
+    reset_virtual_renderer_state(screen_state_->messages_store);
+    this->SyncState();
+    AppendLocalCommandMessage(std::string(status_message), false, true);
+    PostRenderEvent();
+    return true;
 }
 
 }  // namespace loom::ui

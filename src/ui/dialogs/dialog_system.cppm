@@ -1089,15 +1089,16 @@ private:
     /// Shows a placeholder so the UI never goes blank.
     [[nodiscard]] Element render_fallback(const DialogPayloadVariant& payload,
                                           const DialogRenderContext& /*ctx*/) const {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         auto type_name = std::string{dialog_type_name(type_of(payload))};
         return window(
-            text(" " + type_name + " ") | bold | color(Color::Yellow),
+            text(" " + type_name + " ") | bold | color(pal.warning),
             vbox({
                 text("Dialog not implemented yet") | dim | center,
                 text(""),
                 text("Press Esc to close") | dim | center,
             })
-        ) | color(Color::Yellow);
+        ) | color(pal.warning);
     }
 };
 

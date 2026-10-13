@@ -51,6 +51,7 @@ import loom.ui.chrome.ansi_render;
 import loom.ui.foundation.design_tokens;
 // P0-1: active theme provider for bash-border consistency (BUG-3 fix).
 import loom.ui.foundation.theme_provider;
+import loom.ui.foundation.design_figures;
 // Unified canonical PromptInputMode enum (replaces local 5-value definition).
 import loom.ui.foundation.ui_types;
 
@@ -88,13 +89,14 @@ using loom::ui::common::PermissionMode;
     return m == PermissionMode::Default;
 }
 
-/// Symbol emoji for the permission mode.
+/// Compact text symbols supplement the permission mode label.
 [[nodiscard]] inline std::string_view PermissionModeSymbol(PermissionMode m) {
+    namespace figs = loom::ui::design::figures;
     switch (m) {
         case PermissionMode::Default:    return "";
-        case PermissionMode::AcceptEdits: return "\xF0\x9F\x94\x93";   // 🔓
-        case PermissionMode::AcceptAll:   return "\xF0\x94\x93\x93";   // 🔓🔓 (2 chars)
-        case PermissionMode::Plan:        return "\xF0\x9F\x93\x8B";   // 📋
+        case PermissionMode::AcceptEdits: return figs::kPointerSmall;
+        case PermissionMode::AcceptAll:   return figs::kCircleFilled;
+        case PermissionMode::Plan:        return figs::kEllipsis;
     }
     return "";
 }
@@ -112,13 +114,14 @@ using loom::ui::common::PermissionMode;
 
 /// Color for the permission mode badge text.
 [[nodiscard]] inline Color GetModeColor(PermissionMode m) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (m) {
-        case PermissionMode::Default:     return Color::GrayLight;
-        case PermissionMode::AcceptEdits: return Color::Yellow;
-        case PermissionMode::AcceptAll:   return Color::Red;
-        case PermissionMode::Plan:        return Color::Magenta;
+        case PermissionMode::Default:     return pal.muted;
+        case PermissionMode::AcceptEdits: return pal.auto_accept;
+        case PermissionMode::AcceptAll:   return pal.danger;
+        case PermissionMode::Plan:        return pal.plan_mode;
     }
-    return Color::GrayLight;
+    return pal.muted;
 }
 
 /// Cycle to the next permission mode.
@@ -178,6 +181,7 @@ struct ModeIndicatorOptions {
 /// STABLE HEIGHT: always renders exactly 1 row (may show a space when empty
 ///   in fullscreen mode).
 [[nodiscard]] inline Element RenderModeIndicator(const ModeIndicatorOptions& opts) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // Early return for bash mode ("! for bash mode", colored with
     // bash_border token for consistency with prompt prefix + transcript
     // user-bash-input bubble — fixes BUG-3: 3-sites bash-border divergence).
@@ -224,7 +228,7 @@ struct ModeIndicatorOptions {
         std::string label = std::format("{} task{}",
             opts.background_task_count,
             opts.background_task_count == 1 ? "" : "s");
-        Color c = opts.tasks_selected ? Color::Cyan : Color::Cyan;
+        Color c = pal.info;
         Element pill = hbox({
             text(label) | color(c) | (opts.tasks_selected ? inverted : nothing),
         });
@@ -244,7 +248,7 @@ struct ModeIndicatorOptions {
         std::string label = std::format("{} team{}",
             opts.teammate_count,
             opts.teammate_count == 1 ? "" : "s");
-        Color c = opts.teams_selected ? Color::Magenta : Color::Magenta;
+        Color c = pal.primary;
         Element pill = hbox({
             text(label) | color(c) | (opts.teams_selected ? inverted : nothing),
         });
@@ -350,6 +354,7 @@ struct LeftSideOptions {
 /// STABLE HEIGHT: returns exactly 1 row.  The ModeIndicator always
 ///   reserves a row even when empty.
 [[nodiscard]] inline Element RenderLeftSide(const LeftSideOptions& opts) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // 1. Exit message — highest priority, replaces everything
     if (opts.exit_message_show) {
         std::string msg = "Press " + opts.exit_message_key + " again to exit";
@@ -366,7 +371,7 @@ struct LeftSideOptions {
         // HistorySearchInput: "(reverse-i-search)`query':"
         // failed match → red color
         std::string label = "(reverse-i-search)`" + opts.history_query + "':";
-        Color c = opts.history_failed_match ? Color::Red : Color::Magenta;
+        Color c = opts.history_failed_match ? pal.danger : pal.primary;
         return hbox({ text(label) | color(c) }) | size(HEIGHT, EQUAL, 1);
     }
 
@@ -405,13 +410,13 @@ namespace fs = std::filesystem;
 /// Per-segment enable mask for the built-in status bar. Each bool controls
 /// one segment; defaults match the "default" preset.
 struct StatusBarSegments {
-    bool cwd = true;       // 📁 last 2 path components
-    bool git = true;       // 🌿 branch name
-    bool model = true;     // 🤖 model display name
+    bool cwd = true;       // last 2 path components
+    bool git = true;       // git branch name
+    bool model = true;     // model display name
     bool tokens = true;    // ▮ context usage bar + percentage
     bool cost = true;      // $ session cost
-    bool tasks = false;    // ⚙ N teams
-    bool agent = false;    // 👤 current agent name
+    bool tasks = false;    // N teams
+    bool agent = false;    // current agent name
 };
 
 struct BuiltinStatusLineData {
@@ -522,7 +527,7 @@ struct StatusLineOptions {
 //
 // This is a CPP-only enhancement for standalone usability.  The visual
 // style is inspired by the user's Flux Island statusline:
-//   📁 LOOM/cpp_migration  🌿 master  🤖 GLM-5.2 ▮  14% 28.0K/200.0K  $0.12
+//   LOOM/cpp_migration  git master  model GLM-5.2  ctx ▮ 14% 28.0K/200.0K  $0.12
 //
 // The user's configured command output takes priority when available.
 //
@@ -600,28 +605,27 @@ struct StatusLineOptions {
     // visible ones so there are never dangling gaps.
     std::vector<Elements> segs;
 
-    // ── 📁 Folder pill ──────────────────────────────────────
+    // ── Folder pill ──────────────────────────────────────
     if (data.segments.cwd) {
         std::string folder_display = GetLastPathComponents(data.cwd, 2);
         if (folder_display.empty()) folder_display = "~";
         segs.push_back({
-            text("📁 ") | dim | color(kFolderColor),
             text(folder_display) | dim | color(kFolderColor),
         });
     }
 
-    // ── 🌿 Git branch pill ──────────────────────────────────
+    // ── Git branch pill ──────────────────────────────────
     if (data.segments.git && !data.git_branch.empty()) {
         segs.push_back({
-            text("🌿 ") | dim | color(kBranchColor),
+            text("git ") | dim | color(kBranchColor),
             text(data.git_branch) | dim | color(kBranchColor),
         });
     }
 
-    // ── 🤖 Model pill ───────────────────────────────────────
+    // ── Model pill ───────────────────────────────────────
     if (data.segments.model && !data.model_name.empty()) {
         segs.push_back({
-            text("🤖 ") | dim | color(kModelColor),
+            text("model ") | dim | color(kModelColor),
             text(data.model_name) | bold | color(kModelColor),
         });
     }
@@ -654,6 +658,7 @@ struct StatusLineOptions {
         std::string ctx_str = FormatTokensK(data.context_token_count);
         std::string win_str = FormatTokensK(data.context_window_size);
         segs.push_back({
+            text("ctx ") | dim,
             text(bar) | color(bar_color),
             text(std::format(" {}% {}/{}",
                               pct_int, ctx_str, win_str)) | dim,
@@ -669,29 +674,27 @@ struct StatusLineOptions {
         });
     }
 
-    // ── ⚙ Tasks pill ────────────────────────────────────────
+    // ── Tasks pill ────────────────────────────────────────
     if (data.segments.tasks && data.task_count > 0) {
         segs.push_back({
-            text("⚙ ") | dim | color(kTasksColor),
             text(std::format("{} teams", data.task_count))
                 | dim | color(kTasksColor),
         });
     }
 
-    // ── 👤 Agent pill ───────────────────────────────────────
+    // ── Agent pill ───────────────────────────────────────
     if (data.segments.agent && !data.agent_name.empty()) {
         segs.push_back({
-            text("👤 ") | dim | color(kAgentColor),
+            text("agent ") | dim | color(kAgentColor),
             text(data.agent_name) | dim | color(kAgentColor),
         });
     }
 
-    // ── 🖱 Mouse mode hint (RFC 0007 Phase 2) ───────────────
+    // ── Mouse mode hint (RFC 0007 Phase 2) ───────────────
     // Persistent label: "Select text to copy" (native) or
     // "Mouse mode: drag to select" (config). Empty = hidden.
     if (!data.mouse_mode_label.empty()) {
         segs.push_back({
-            text("🖱 ") | dim | color(kFolderColor),
             text(data.mouse_mode_label) | dim | color(kFolderColor),
         });
     }
@@ -731,6 +734,7 @@ struct BridgeOptions {
 /// Render the bridge / remote control status indicator.
 /// Returns empty element when bridge is disabled or status isn't shown.
 [[nodiscard]] inline Element RenderBridgeStatus(const BridgeOptions& opts) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (opts.status == BridgeStatus::Disabled) return text("");
 
     // For implicit (config-driven) remote, only show reconnecting state
@@ -739,14 +743,14 @@ struct BridgeOptions {
     }
 
     std::string label;
-    Color c = Color::GrayLight;
+    Color c = pal.muted;
     switch (opts.status) {
         case BridgeStatus::Connected:
-            label = "Remote Control"; c = Color::Green; break;
+            label = "Remote Control"; c = pal.success; break;
         case BridgeStatus::Disconnected:
-            label = "Remote disconnected"; c = Color::Red; break;
+            label = "Remote disconnected"; c = pal.danger; break;
         case BridgeStatus::Reconnecting:
-            label = "Remote Control reconnecting"; c = Color::Yellow; break;
+            label = "Remote Control reconnecting"; c = pal.warning; break;
         default:
             return text("");
     }
@@ -1023,10 +1027,10 @@ namespace detail {
 /// Render a styled notification pill from a PillPayload.
 ///
 /// Each pill variant produces a compact 1-row element:
-///   ApiKey:    [🔑 ✓] green  /  [🔑 ✗] red  /  [🔑 !] yellow
-///   AutoUpdater: [⬇ Update available] blue / [⟳ Updating…] dim / [✓ Installed] green / [✗ Failed] red
-///   ProRenewal: [⏱ N days left] orange (only when < 7 days)
-///   NewRelease: [🎁 New: vX.Y.Z] purple
+///   ApiKey:    check/cross/warning + explicit key status
+///   AutoUpdater: availability arrow, updating indicator, installed check, failed cross
+///   ProRenewal: explicit plan renewal reminder (only when < 7 days)
+///   NewRelease: [info New: vX.Y.Z] informational role
 ///
 /// Returns empty text("") for PillVariant::None or empty data.
 [[nodiscard]] inline Element RenderNotificationPill(const NotificationItem& item) {
@@ -1053,24 +1057,22 @@ namespace detail {
             }
 
         case PillVariant::ApiKey: {
-            // Icon: 🔑 U+1F511
-            const char* kKeyIcon = "\xF0\x9F\x94\x91";   // 🔑
             switch (pill.api_key_status) {
                 case ApiKeyStatus::Valid: {
                     // ✓ green — key is working
-                    const std::string label = std::string(kKeyIcon) + " \xE2\x9C\x93 API key OK";
+                    const std::string label = std::string(loom::ui::design::figures::kTick) + " API key OK";
                     return hbox({ text(label) | color(pal.success) | dim })
                          | size(HEIGHT, EQUAL, 1);
                 }
                 case ApiKeyStatus::Invalid: {
                     // ✗ red — key rejected
-                    const std::string label = std::string(kKeyIcon) + " \xE2\x9C\x97 Invalid key";
+                    const std::string label = std::string(loom::ui::design::figures::kCross) + " Invalid key";
                     return hbox({ text(label) | color(pal.danger) })
                          | size(HEIGHT, EQUAL, 1);
                 }
                 case ApiKeyStatus::Missing: {
                     // ! yellow — no key configured
-                    const std::string label = std::string(kKeyIcon) + " ! Not logged in";
+                    const std::string label = std::string(loom::ui::design::figures::kWarning) + " Not logged in";
                     return hbox({ text(label) | color(pal.warning) })
                          | size(HEIGHT, EQUAL, 1);
                 }
@@ -1111,8 +1113,8 @@ namespace detail {
                          | size(HEIGHT, EQUAL, 1);
                 }
                 case AutoUpdaterStatus::Available: {
-                    // ⬇ U+2B07 — "available" (blue download arrow)
-                    std::string label = "\xE2\xAC\x87 New: v" + au.version;
+                    // The existing downward arrow marks update availability.
+                    std::string label = std::string(loom::ui::design::figures::kArrowDown) + " New: v" + au.version;
                     return hbox({ text(label) | color(pal.info) })
                          | size(HEIGHT, EQUAL, 1);
                 }
@@ -1122,11 +1124,10 @@ namespace detail {
 
         case PillVariant::ProRenewal: {
             // Shows renewal reminder only when days_remaining < 7.
-            // ⏱ U+23F1 — "timer clock"
             const auto& pr = pill.pro_renewal;
             if (pr.days_remaining >= 7) return text("");
             const std::string plan = pr.plan_name.empty() ? "Pro" : pr.plan_name;
-            std::string label = "\xE2\x8F\xB1 " + plan + " renews in "
+            std::string label = plan + " renews in "
                               + std::to_string(pr.days_remaining)
                               + (pr.days_remaining == 1 ? " day" : " days");
             // Color: orange/amber for urgency (use warning for < 3 days, info otherwise)
@@ -1136,13 +1137,13 @@ namespace detail {
         }
 
         case PillVariant::NewRelease: {
-            // 🎁 U+1F381 — "gift" for new release announcement
+            // The informational figure marks release availability.
             const auto& nr = pill.new_release;
             if (nr.version.empty()) return text("");
             const std::string label =
-                std::string("\xF0\x9F\x8E\x81 New: v") + nr.version;
-            // Purple/magenta for gift pill (closest ANSI to purple)
-            return hbox({ text(label) | color(Color::Magenta) })
+                (std::string(loom::ui::design::figures::kInfo) + " New: v") + nr.version;
+            // Release availability uses the theme's informational accent.
+            return hbox({ text(label) | color(pal.info) })
                  | size(HEIGHT, EQUAL, 1);
         }
     }
@@ -1154,6 +1155,7 @@ namespace detail {
 /// Returns an element (possibly empty text("") if nothing active).
 /// The element is always exactly 1 row high for stable footer height.
 [[nodiscard]] inline Element RenderNotifications(const NotificationData& data) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using ftxui::text;
     using ftxui::dim;
     using ftxui::color;
@@ -1181,11 +1183,7 @@ namespace detail {
             }
             // Fallback: plain text+color
             if (has_text) {
-                Color c = Color::GrayLight;   // default dim
-                if (item.color == "error")        c = Color::Red;
-                else if (item.color == "warning") c = Color::Yellow;
-                else if (item.color == "success") c = Color::Green;
-                else if (item.color == "info")    c = loom::ui::design::theme::current_theme().color_for(loom::ui::design::tokens::Role::Ide);
+                Color c = detail::ResolveSemanticColor(item.color);
                 return hbox({ text(item.text) | color(c) })
                      | size(HEIGHT, EQUAL, 1);
             }
@@ -1195,9 +1193,8 @@ namespace detail {
     // 2. Dynamic notification (env-hook, external-editor hint, etc.)
     //    Kept for backward compatibility; prefer using the queue API.
     if (data.dynamic_text && !data.dynamic_text->empty()) {
-        Color c = Color::GrayLight;   // default dim
-        if (data.dynamic_color == "error")   c = Color::Red;
-        else if (data.dynamic_color == "warning") c = Color::Yellow;
+        Color c = detail::ResolveSemanticColor(data.dynamic_color
+            ? std::string_view{*data.dynamic_color} : std::string_view{});
         return hbox({ text(*data.dynamic_text) | color(c) })
              | size(HEIGHT, EQUAL, 1);
     }
@@ -1223,13 +1220,13 @@ namespace detail {
         std::string msg = data.is_remote
             ? "Authentication error \xC2\xB7 Try again"   // ·
             : "No API key \xC2\xB7 Set one in /config";  // ·
-        return hbox({ text(msg) | color(Color::Red) })
+        return hbox({ text(msg) | color(pal.danger) })
              | size(HEIGHT, EQUAL, 1);
     }
 
     // 6. Debug mode — "Debug mode" (warning)
     if (data.debug_mode) {
-        return hbox({ text("Debug mode") | color(Color::Yellow) })
+        return hbox({ text("Debug mode") | color(pal.warning) })
              | size(HEIGHT, EQUAL, 1);
     }
 
@@ -1268,7 +1265,7 @@ namespace detail {
         }
     }
 
-    // 9. New release announcement — purple gift pill (P1: footer-notifications-stub)
+    // 9. New release announcement — release gift pill (P1: footer-notifications-stub)
     if (data.new_release && !data.new_release->version.empty()) {
         NotificationItem nr_item;
         nr_item.pill.variant = PillVariant::NewRelease;
@@ -1532,19 +1529,19 @@ inline void AddApiKeyNotification(NotificationQueue& nq, ApiKeyStatus status) {
 
     switch (status) {
         case ApiKeyStatus::Valid:
-            item.text = "\xF0\x9F\x94\x91 \xE2\x9C\x93 API key OK";   // 🔑 ✓
+            item.text = std::string(loom::ui::design::figures::kTick) + " API key OK";
             item.color = "success";
             item.priority = NotificationPriority::Low;
             item.timeout_ms = 5000;   // brief confirmation
             break;
         case ApiKeyStatus::Invalid:
-            item.text = "\xF0\x9F\x94\x91 \xE2\x9C\x97 Invalid key";   // 🔑 ✗
+            item.text = std::string(loom::ui::design::figures::kCross) + " Invalid key";
             item.color = "error";
             item.priority = NotificationPriority::Immediate;
             item.timeout_ms = 15000;  // stays visible longer
             break;
         case ApiKeyStatus::Missing:
-            item.text = "\xF0\x9F\x94\x91 ! Not logged in";   // 🔑 !
+            item.text = std::string(loom::ui::design::figures::kWarning) + " Not logged in";
             item.color = "warning";
             item.priority = NotificationPriority::Immediate;
             item.timeout_ms = 15000;
@@ -1575,7 +1572,7 @@ inline void AddAutoUpdaterNotification(NotificationQueue& nq,
 
     switch (data.status) {
         case AutoUpdaterStatus::Available:
-            item.text = "\xE2\xAC\x87 New: v" + data.version;   // ⬇
+            item.text = std::string(loom::ui::design::figures::kArrowDown) + " New: v" + data.version;
             item.color = "info";
             item.priority = NotificationPriority::Medium;
             item.timeout_ms = 10000;
@@ -1630,8 +1627,8 @@ inline void AddProRenewalNotification(NotificationQueue& nq,
     item.invalidates = { "pro-renewal" };
 
     const std::string plan = data.plan_name.empty() ? "Pro" : data.plan_name;
-    item.text = "\xE2\x8F\xB1 " + plan + " renews in "
-              + std::to_string(data.days_remaining) + "d";   // ⏱
+    item.text = plan + " renews in "
+              + std::to_string(data.days_remaining) + "d";
 
     if (data.days_remaining <= 3) {
         item.color = "warning";
@@ -1647,7 +1644,7 @@ inline void AddProRenewalNotification(NotificationQueue& nq,
 
 /// Add a new release announcement pill.
 ///
-/// Shows "🎁 New: vX.Y.Z" in purple/magenta.
+/// Shows release availability with the informational figure and theme role.
 ///
 /// Invalidates any existing "new-release" notification.
 inline void AddNewReleaseNotification(NotificationQueue& nq,
@@ -1659,8 +1656,8 @@ inline void AddNewReleaseNotification(NotificationQueue& nq,
     item.key = "new-release";
     item.pill.variant = PillVariant::NewRelease;
     item.pill.new_release = data;
-    item.text = "\xF0\x9F\x8E\x81 New: v" + data.version;   // 🎁
-    item.color = "info";   // purple pill uses custom color in renderer
+    item.text = std::string(loom::ui::design::figures::kInfo) + " New: v" + data.version;
+    item.color = "info";   // release availability uses the informational role
     item.priority = NotificationPriority::Medium;
     item.timeout_ms = 12000;
     item.invalidates = { "new-release", "auto-updater" };   // new release supersedes available update

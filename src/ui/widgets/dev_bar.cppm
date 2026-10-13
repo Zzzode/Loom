@@ -6,6 +6,8 @@ export module loom.ui.widgets.dev_bar;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 export namespace ui::components {
 
 struct SlowOperation {
@@ -29,6 +31,7 @@ bool ShouldShowDevBar(bool is_debug_build) {
 } // namespace detail
 
 ftxui::Element DevBar(const DevBarOptions& options = {}) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     
     if (!detail::ShouldShowDevBar(options.show_dev_bar) || options.slow_operations.empty()) {
@@ -53,9 +56,9 @@ ftxui::Element DevBar(const DevBarOptions& options = {}) {
     }
     
     return hbox({
-        text("[DEV] slow sync: ") | color(Color::Yellow) | bold,
-        hbox(elements) | color(Color::Yellow)
-    }) | borderRounded | color(Color::Yellow);
+        text("[DEV] slow sync: ") | color(pal.warning) | bold,
+        hbox(elements) | color(pal.warning)
+    }) | borderRounded | color(pal.warning);
 }
 
 } // namespace ui::components

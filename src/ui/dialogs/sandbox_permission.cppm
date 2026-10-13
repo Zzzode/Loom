@@ -13,6 +13,7 @@ module;
 export module loom.ui.dialogs.sandbox_permission;
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 export namespace loom::ui::dialogs::sandbox_permission {
 
@@ -23,9 +24,10 @@ using namespace ftxui;
 [[nodiscard]] inline Element RenderDefault(
     std::string_view origin,
     bool sandbox_toggle) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto body = vbox({
         text("Network access requested from:"),
-        text(std::string{origin}) | bold | color(Color::Cyan),
+        text(std::string{origin}) | bold | color(pal.info),
         text(""),
         hbox({
             text(sandbox_toggle ? "[x] " : "[  ] "),
@@ -33,14 +35,14 @@ using namespace ftxui;
         }),
         text(""),
         hbox({
-            text(" [y] Allow once ") | color(Color::Green),
-            text(" [a] Always allow ") | color(Color::Cyan),
-            text(" [n] Deny ") | color(Color::Red),
-            text(" [s] Toggle sandbox ") | color(Color::Yellow),
-            text(" [Esc] Abort") | color(Color::GrayDark),
+            text(" [y] Allow once ") | color(pal.success),
+            text(" [a] Always allow ") | color(pal.info),
+            text(" [n] Deny ") | color(pal.danger),
+            text(" [s] Toggle sandbox ") | color(pal.warning),
+            text(" [Esc] Abort") | color(pal.muted),
         }),
     });
-    return window(text(" Sandbox Permission ") | color(Color::Yellow), body);
+    return window(text(" Sandbox Permission ") | color(pal.warning), body);
 }
 
 /// Overload matching the default_renderers delegate signature.
@@ -51,6 +53,7 @@ using namespace ftxui;
 ///   WorkerSandboxPermissionPayload → .description + on_response only (stub chrome)
 [[nodiscard]] inline Element RenderDefault(
     const auto& p, const auto& /*ctx*/) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // ToolPermissionPayload: .origin + .initial_sandbox_toggle
     if constexpr (requires { p.origin; p.initial_sandbox_toggle; }) {
         return RenderDefault(std::string_view{p.origin}, p.initial_sandbox_toggle);
@@ -58,6 +61,7 @@ using namespace ftxui;
     // SandboxPermissionPayload: .host_pattern == origin; no sandbox toggle in
     // bottom variant → sandbox_toggle param is always false for bottom slot.
     else if constexpr (requires { p.host_pattern; }) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         std::string_view origin{p.host_pattern};
         bool managed_only = false;
         if constexpr (requires { p.managed_domains_only; }) {
@@ -65,17 +69,17 @@ using namespace ftxui;
         }
         auto body = vbox({
             text("Network access requested from:"),
-            text(std::string{origin}) | bold | color(Color::Cyan),
+            text(std::string{origin}) | bold | color(pal.info),
             text(""),
             hbox({
-                text(" [y] Allow once ") | color(Color::Green),
+                text(" [y] Allow once ") | color(pal.success),
                 managed_only ? text("") :
-                    text(" [a] Always allow ") | color(Color::Cyan),
-                text(" [n] Deny ") | color(Color::Red),
-                text(" [Esc] Cancel") | color(Color::GrayDark),
+                    text(" [a] Always allow ") | color(pal.info),
+                text(" [n] Deny ") | color(pal.danger),
+                text(" [Esc] Cancel") | color(pal.muted),
             }),
         });
-        return window(text(" Sandbox Permission ") | color(Color::Yellow), body);
+        return window(text(" Sandbox Permission ") | color(pal.warning), body);
     }
     // WorkerSandboxPermissionPayload / unknown: minimal chrome
     else {
@@ -84,16 +88,16 @@ using namespace ftxui;
         else if constexpr (requires { p.description; }) origin = std::string_view{p.description};
         auto body = vbox({
             text("Worker requesting network access:"),
-            text(std::string{origin}) | bold | color(Color::Cyan),
+            text(std::string{origin}) | bold | color(pal.info),
             text(""),
             hbox({
-                text(" [y] Allow ") | color(Color::Green),
-                text(" [a] Always allow ") | color(Color::Cyan),
-                text(" [n] Deny ") | color(Color::Red),
-                text(" [Esc] Cancel") | color(Color::GrayDark),
+                text(" [y] Allow ") | color(pal.success),
+                text(" [a] Always allow ") | color(pal.info),
+                text(" [n] Deny ") | color(pal.danger),
+                text(" [Esc] Cancel") | color(pal.muted),
             }),
         });
-        return window(text(" Sandbox Permission ") | color(Color::Yellow), body);
+        return window(text(" Sandbox Permission ") | color(pal.warning), body);
     }
 }
 

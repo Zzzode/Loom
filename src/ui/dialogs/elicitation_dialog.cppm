@@ -119,15 +119,15 @@ using Theme = loom::ui::design::theme::Theme;
     // --- Buttons row ---
     body.push_back(hbox({
         hbox({
-            text("[y] Allow") | color(Color::Green),
+            text("[y] Allow") | color(theme.palette->success),
         }),
         text("  "),
         hbox({
-            text("[n] Deny") | color(Color::Red),
+            text("[n] Deny") | color(theme.palette->danger),
         }),
         text("  "),
         hbox({
-            text("[Esc] Cancel") | color(Color::GrayDark) | dim,
+            text("[Esc] Cancel") | color(theme.palette->muted) | dim,
         }),
     }));
 

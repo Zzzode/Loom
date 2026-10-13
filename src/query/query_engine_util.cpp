@@ -31,4 +31,8 @@ namespace loom::core {
     return std::format("session_{}_{}", ms, generate_id().substr(0, 8));
 }
 
+void QueryEngine::request_tool_shutdown() noexcept { tool_registry_->request_shutdown(); }
+
+void QueryEngine::shutdown_tools() noexcept { tool_registry_->shutdown(); }
+
 } // namespace loom::core

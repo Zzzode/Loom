@@ -214,6 +214,10 @@ struct ReplScreenState {
     // Items are added via hooks (env-hook, rate-limit warnings, etc.) and
     // rotate through the footer's notification slot on a timeout basis.
     loom::ui::prompt::footer::NotificationQueue footer_notification_queue;
+    /// Inline "copied N chars to clipboard" toast (bottom_float slot).
+    /// Set by AppAdapter::Render from TextSelection state; consumed by
+    /// RenderReplScreen to populate slots.bottom_float.
+    std::optional<std::string> copy_toast_text;
     // Stable per-session welcome-tip index (seeded once from the session id in
     // app.cppm). The renderer mods this by kWelcomeTips.size(). Previously the
     // tip used spinner_frame, which cycled the tip on every mouse-move re-render.
@@ -385,18 +389,21 @@ struct ReplScreenCallbacks {
     /// Called when user cycles permission mode (shift+tab).  handleCycleMode
     /// → cyclePermissionMode().
     std::function<void(loom::ui::prompt::footer::PermissionMode)> on_permission_cycle;
-    /// GAP 3: msg-system-api-error-retry — called when user clicks "Retry"
-    /// on an API error message.  Re-sends the last user message.
-    /// The retry button re-triggers the last user submission.
+    /// Retry a failed model request from committed conversation progress.
     std::function<void()> on_retry;
+    /// Resume committed progress after the optional tool-round budget pauses.
+    std::function<void()> on_continue;
     /// P2 gap api-error-retry: called when user clicks "Clear session"
     /// on a session-expired API error card.  Resets the conversation so
     /// the user can re-authenticate.
     /// onClearSession prop.
     std::function<void()> on_clear_session;
+    /// Called when the user dismisses an API error card (ESC or q).
+    /// Removes the error entry from the message list.
+    std::function<void()> on_dismiss_error;
     /// Shared StreamingMarkdown instance for the streaming-text tail row.
     /// When non-null, RenderMessages threads it to the messages list
-    /// so is_streaming rows use stable-prefix caching.
+    /// so is_streaming rows use repeated-frame caching.
     ::loom::ui::StreamingMarkdown* streaming_md = nullptr;
 };
 

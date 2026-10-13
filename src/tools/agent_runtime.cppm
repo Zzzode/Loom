@@ -678,6 +678,28 @@ bool persist_native_agent_record(const NativeAgentRecord& record);
 
 class NativeAgentStore {
 public:
+    ~NativeAgentStore();
+
+    /// Own background executions until their threads have fully exited.
+    void run_background_agent(std::string agent_id, std::function<void()> execute,
+                              std::stop_token owner = {});
+
+    /// The registry requests its owner token's stop before calling this.
+    /// Only that registry's workers are cancelled and joined.
+    void cancel_and_wait_for_background_agents(std::stop_token owner);
+
+    void begin_execution(std::string_view agent_id, std::stop_token owner = {});
+    // Register the record and its active execution in one critical section.
+    void begin_execution(NativeAgentRecord record, std::stop_token owner = {});
+    void end_execution(std::string_view agent_id);
+
+    /// Drain workers from a host thread without holding the record lock needed by cleanup.
+    /// Calling this from one of this store's workers throws std::logic_error.
+    void wait_for_background_agents();
+
+    /// Publish the final result atomically with the latest cancellation request.
+    void finish_agent(std::string_view agent_id, std::expected<std::string, std::string> result);
+
     void upsert(NativeAgentRecord record);
 
     [[nodiscard]] std::optional<NativeAgentRecord> get(std::string_view agent_id) const;
@@ -736,6 +758,9 @@ public:
         std::optional<std::string> parent_session_id = std::nullopt);
 
 private:
+    void upsert_locked(NativeAgentRecord record);
+    void begin_execution_locked(std::string_view agent_id, std::stop_token owner);
+
     template <typename Fn>
     void update(std::string_view agent_id, Fn&& fn) {
         std::scoped_lock lock(mutex_);
@@ -765,6 +790,19 @@ private:
 
     mutable std::mutex mutex_;
     mutable std::unordered_map<std::string, NativeAgentRecord> records_;
+    struct ActiveExecution {
+        std::size_t count = 0;
+        std::stop_token owner;
+    };
+    std::unordered_map<std::string, ActiveExecution> active_executions_;
+    struct BackgroundWorker {
+        std::stop_token owner;
+        std::shared_ptr<std::atomic<bool>> finished;
+        std::thread thread;
+    };
+    std::mutex workers_mutex_;
+    std::mutex drain_mutex_;
+    std::vector<BackgroundWorker> workers_;
 };
 
 NativeAgentStore& native_agent_store();

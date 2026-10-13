@@ -35,9 +35,7 @@ using namespace loom::ui::design::theme;
         case TextSize::Display:
             return vbox({
                 body | bold,
-                separator()
-                    | color(loom::ui::design::theme::current_theme().palette->accent_purple)
-                    | color(theme.palette->primary),
+                separator() | color(theme.palette->primary),
             });
         case TextSize::Title:
             return vbox({
@@ -101,7 +99,7 @@ using namespace loom::ui::design::theme;
     using namespace ftxui;
     if (count == 0) return text("") | size(WIDTH, EQUAL, 0);
     std::string label = count > 99 ? "99+" : std::format("{}", count);
-    auto fg = Color::White;
+    auto fg = theme.palette->inverse_text;
     auto bg = theme.color_for(role);
     return hbox({
         text(" "),
@@ -115,7 +113,7 @@ using namespace loom::ui::design::theme;
 /// title.  Heavy bar is taken from ui/components/figures.
 [[nodiscard]] inline ftxui::Element divider(bool heavy = false,
                                             std::string_view title = {},
-                                            ftxui::Color line_color = ftxui::Color::Default) {
+                                            ftxui::Color line_color = {}) {
     using namespace ftxui;
     std::string glyph = heavy ? "━" : "─";
     auto line = [&](int n) {
@@ -128,12 +126,13 @@ using namespace loom::ui::design::theme;
     // override with a fallback.  We use Print()=="default" as a proxy since
     // FTXUI Color has no IsNot/operator bool.
     const bool has_color = (line_color.Print(false) != "default");
-    const Color effective_line = has_color ? line_color : Color(Color::GrayDark);
-    const Color effective_title = has_color ? line_color : Color(Color::White);
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    const Color effective_line = has_color ? line_color : pal.border_subtle;
+    const Color effective_title = has_color ? line_color : pal.text;
     if (title.empty()) {
         auto e = ftxui::text(line(40)) | xflex;
         return has_color ? e | ftxui::color(line_color)
-                         : e | ftxui::color(Color::GrayDark);
+                         : e | ftxui::color(pal.border_subtle);
     }
     // centered: ══[ Title ]══════════
     auto label = std::string(" ") + std::string(title) + std::string(" ");

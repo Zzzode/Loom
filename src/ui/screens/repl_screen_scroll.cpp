@@ -582,16 +582,8 @@ ComputeUnseenDivider(const ReplScreenState& s) {
             // ("/command args") — no truncation, no wrapping.
             content_lines = 1;
         } else {
-            // UserTextMessage wraps at a fixed 76 cols (kPromptWrapWidth=78
-            // minus 2 for the "❯ " prefix) regardless of terminal width.
-            // Assistant text reserves 2 cols for the "●" bullet glyph, so
-            // the body wraps at term_cols-2.  Using term_cols here would
-            // underestimate on narrow terminals (e.g. 40 cols → estimate
-            // 25 lines vs actual 27 for a 1000-char message), making
-            // max_offset too small and preventing scroll-to-bottom.
-            const int wrap_cols = (entry.role == "user")
-                ? 76
-                : std::max(20, term_cols - 2);
+            // Assistant text reserves 2 columns for its bullet glyph.
+            const int wrap_cols = std::max(20, term_cols - 2);
             if (entry.role == "user") {
                 // UserTextMessage truncates content > 10K chars to
                 // head 2500 + separator + tail 2500 before rendering.
@@ -602,7 +594,10 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                 const std::string truncated =
                     ::loom::ui::messages::TruncateUserPromptText(
                         entry.content_preview);
-                content_lines = CountWrappedLines(truncated, wrap_cols);
+                content_lines = static_cast<int>(
+                    ::loom::ui::messages::wrap_detail::WrappedPromptLines(
+                        truncated, term_cols -
+                        ::loom::ui::messages::wrap_detail::kPromptChromeColumns).size());
             } else if (entry.is_local_command_output ||
                        entry.is_local_jsx_output) {
                 // Local command output (e.g. /help, /theme list) and JSX
@@ -723,8 +718,10 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
     const auto& visible_messages = BuildVisibleMessages(*state);
     if (visible_messages.empty()) return false;
     const int max_offset =
-        std::max(0, EstimateTranscriptRows(visible_messages,
-                     state->messages_store.viewport_width_cols) - viewport_rows);
+        std::max(0, (state->messages_store.rendered_content_height_lines
+            ? *state->messages_store.rendered_content_height_lines
+            : EstimateTranscriptRows(visible_messages,
+                state->messages_store.viewport_width_cols)) - viewport_rows);
     if (max_offset == 0) return false;
 
     // When pinned to bottom, scroll_offset is 0 but the view is visually
@@ -756,8 +753,10 @@ void JumpTranscriptToBottom(ReplScreenState& state) {
         1, state.messages_store.viewport_height_lines);
     const int total_lines = state.messages_store.virtual_list_active
         ? state.messages_store.virtual_jh.total()
-        : EstimateTranscriptRows(BuildVisibleMessages(state),
-            state.messages_store.viewport_width_cols);
+        : (state.messages_store.rendered_content_height_lines
+            ? *state.messages_store.rendered_content_height_lines
+            : EstimateTranscriptRows(BuildVisibleMessages(state),
+                state.messages_store.viewport_width_cols));
     const int max_top = std::max(0, total_lines - viewport_rows);
     const int old_top = state.messages_store.scroll_pinned_to_bottom
         ? max_top

@@ -27,6 +27,8 @@ import loom.ui.foundation.theme_provider;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 
 export namespace loom::ui::custom_select {
 using namespace ftxui;
@@ -65,7 +67,7 @@ struct SelectOption {
     std::string value;            // Opaque value passed to on_submit / on_change
     std::string description;      // Secondary line (inline or expanded)
     std::string group;            // Group key for Tab-grouping & separators
-    std::string icon;             // Optional 1-2 glyph prefix (e.g. "📁")
+    std::string icon;             // Optional 1-2 glyph prefix (e.g. std::string(loom::ui::design::figures::kTriangleRightSmall))
     bool disabled = false;        // Cannot be selected/focused
     bool dim_description = false; // Render description dimmer than default
 };
@@ -222,6 +224,7 @@ struct GroupMark {
 /// Highlight all case-insensitive matches of `highlight` within `label`.
 [[nodiscard]] inline Element RenderHighlightedLabel(
     const std::string& label, const std::string& highlight) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     if (highlight.empty()) return text(label);
     std::string lower_label = detail::ToLower(label);
@@ -234,7 +237,7 @@ struct GroupMark {
         if (pos > cursor)
             parts.push_back(text(label.substr(cursor, pos - cursor)));
         parts.push_back(text(label.substr(pos, highlight.size()))
-                        | bold | color(Color::Yellow));
+                        | bold | color(pal.warning));
         cursor = pos + highlight.size();
     }
     if (cursor < label.size())
@@ -247,6 +250,7 @@ struct GroupMark {
 /// Characters: │█│░ — visually distinct even on 256-color terminals.
 [[nodiscard]] inline Elements RenderScrollBar(int height, double ratio,
                                               double thumb_ratio) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (height <= 0) return {};
     thumb_ratio = std::clamp(thumb_ratio, 1.0 / std::max(1, height), 1.0);
     ratio = std::clamp(ratio, 0.0, 1.0);
@@ -259,7 +263,7 @@ struct GroupMark {
     for (int i = 0; i < height; ++i) {
         bool in_thumb = (i >= thumb_top && i < thumb_top + thumb_h);
         if (in_thumb)
-            out.push_back(text("█") | color(Color::Cyan));
+            out.push_back(text("█") | color(pal.info));
         else
             out.push_back(text("░") | dim);
     }
@@ -846,6 +850,7 @@ private:
     }
 
     [[nodiscard]] Element RenderList() const {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         int n = FilteredCount();
         int vc = std::max(1, std::min(opts_.visible_count, std::max(1, n)));
 
@@ -873,7 +878,7 @@ private:
             if (!search_text_.empty()) {
                 header_parts.push_back(text("  "));
                 header_parts.push_back(text(std::format("filter: '{}'", search_text_))
-                    | color(Color::Cyan) | dim);
+                    | color(pal.info) | dim);
             }
             body.push_back(hbox(std::move(header_parts)));
             body.push_back(separator());
@@ -881,7 +886,7 @@ private:
 
         if (n == 0) {
             body.push_back(text("  No results, try different keywords")
-                            | color(Color::Yellow) | dim);
+                            | color(pal.warning) | dim);
             // Fill remaining vertical slots
             for (int i = 0; i < vc - 1; ++i)
                 body.push_back(text(""));
@@ -902,8 +907,8 @@ private:
                 if (!prev_group.empty() || fi != start)
                     option_rows.push_back(separator() | dim);
                 option_rows.push_back(hbox({
-                    text(" ◆ ") | color(Color::Blue),
-                    text(opt.group) | bold | color(Color::BlueLight),
+                    text(" " + std::string(loom::ui::design::figures::kDiamond) + " ") | color(pal.info),
+                    text(opt.group) | bold | color(pal.info),
                 }));
                 prev_group = opt.group;
             } else if (opt.group.empty() && !prev_group.empty()) {
@@ -931,7 +936,7 @@ private:
                 !opts_.inline_descriptions &&
                 !opt.description.empty()) {
                 auto desc = text("     " + opt.description)
-                    | color(Color::GrayLight) | dim;
+                    | color(pal.muted) | dim;
                 option_rows.push_back(std::move(desc));
                 if (fi < end - 1) option_rows.push_back(text(""));
             }
@@ -974,7 +979,7 @@ private:
         if (opts_.mode == SelectMode::Multi) {
             int sel = (int)SelectedValues().size();
             footer_bits.push_back(text(std::format("  ·  {} selected", sel))
-                                  | color(Color::Green) | dim);
+                                  | color(pal.success) | dim);
         }
         footer_bits.push_back(text("  ·  ↑↓j/k Nav  ⏎ Select  Space Toggle  "
                                    "a/A All/Invert  / Search  g/G Home/End  "
@@ -989,14 +994,15 @@ private:
     [[nodiscard]] Element RenderOptionRow(const SelectOption& opt,
                                           bool hovered, bool selected,
                                           int display_idx_1based) const {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         Elements parts;
         parts.reserve(8);
 
         // Selection / hover gutter
         if (selected)
-            parts.push_back(text(" ✓ ") | color(Color::Green) | bold);
+            parts.push_back(text(" " + std::string(loom::ui::design::figures::kTick) + " ") | color(pal.success) | bold);
         else if (hovered)
-            parts.push_back(text(" › ") | color(Color::Cyan) | bold);
+            parts.push_back(text(" " + std::string(loom::ui::design::figures::kPointerSmall) + " ") | color(pal.info) | bold);
         else
             parts.push_back(text("   "));
 
@@ -1016,24 +1022,24 @@ private:
         auto label_el = RenderHighlightedLabel(opt.label, search_text_);
         if (opt.disabled) label_el = label_el | dim;
         else if (hovered) label_el = label_el | bold;
-        if (selected) label_el = label_el | color(Color::GreenLight);
+        if (selected) label_el = label_el | color(pal.success);
         parts.push_back(label_el);
 
         // Inline description
         if (opts_.inline_descriptions && !opt.description.empty()) {
             auto desc = text(" — " + opt.description);
             if (opt.dim_description) desc = desc | dim;
-            else desc = desc | color(Color::GrayLight);
+            else desc = desc | color(pal.muted);
             parts.push_back(desc);
         }
 
         // Disabled badge
         if (opt.disabled) {
-            parts.push_back(text("  [disabled]") | color(Color::Red) | dim);
+            parts.push_back(text("  [disabled]") | color(pal.danger) | dim);
         }
 
         Element row = hbox(std::move(parts));
-        if (hovered) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_4);
+        if (hovered) row = row | bgcolor(pal.surface_tint_4);
         return row;
     }
 };

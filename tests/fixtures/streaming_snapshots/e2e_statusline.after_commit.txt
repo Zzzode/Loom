@@ -2,11 +2,11 @@
 
 █░█░█░█░█  Loom
 ░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+█░█░█░█░█  <tmpdir>
 
 ● The debug build is green and all tests pass.
 
-● The debug build is green and all tests pass. ▌
+
 
 
 
@@ -36,4 +36,4 @@
 ──────────────────────────────────────────────────────────────────────────────────
  ❯ Try "fix lint errors"
 ──────────────────────────────────────────────────────────────────────────────────
-   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K
+   <tmpdir>  ctx ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

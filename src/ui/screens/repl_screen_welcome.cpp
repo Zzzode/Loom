@@ -1,6 +1,6 @@
 // repl_screen_welcome.cpp - impl unit for loom.ui.screens.repl_screen
-// (RFC 0001 Phase C batch 9). status bar, spinner, truncate_columns, the preserved legacy welcome
-// helpers and the LogoV2 welcome header.
+// (RFC 0001 Phase C batch 9). Status bar, spinner, truncate_columns,
+// and the Logo welcome header.
 //
 // Phase A (#184957): textual FTXUI GMF headers + `import std;`
 // (the textual FTXUI includes keep the reduced-BMI writer happy).
@@ -115,86 +115,11 @@ using namespace ftxui;
     return text + "…";
 }
 
-[[nodiscard]] std::string repeat_welcome_segment(std::string_view text, int count) {
-    std::string out;
-    for (int i = 0; i < count; ++i) out += text;
-    return out;
-}
-
-[[nodiscard]] Element RenderWelcomeFeed(std::string title,
-                                               std::string message,
-                                               int width,
-                                               Color accent,
-                                               Color muted) {
-    width = std::max(width, 10);
-    Elements rows;
-    rows.push_back(text(std::move(title)) | bold | color(accent));
-    rows.push_back(text(truncate_columns(std::move(message), width)) | color(muted) | dim);
-    return vbox(std::move(rows)) | size(WIDTH, EQUAL, width);
-}
-
-[[nodiscard]] Element RenderWelcomeFeedColumn(int width,
-                                                     Color accent,
-                                                     Color muted) {
-    width = std::max(width, 30);
-    return vbox({
-        RenderWelcomeFeed(
-            "Recent activity",
-            "No recent activity",
-            width,
-            accent,
-            muted),
-        separator() | color(accent),
-        RenderWelcomeFeed(
-            "What's new",
-            "Check the Loom changelog for updates",
-            width,
-            accent,
-            muted),
-    }) | size(WIDTH, EQUAL, width);
-}
-
-[[nodiscard]] Element RenderWelcomeWindow(Element title,
-                                                 Element body,
-                                                 int width,
-                                                 int title_width,
-                                                 Color accent) {
-    width = std::max(width, 4);
-    const int title_offset = std::min(3, std::max(0, width - 2));
-    const int right_rule_width =
-        std::max(0, width - 2 - title_offset - title_width);
-
-    Element top = hbox({
-        text("╭") | color(accent),
-        text(repeat_welcome_segment("─", title_offset)) | color(accent),
-        std::move(title),
-        text(repeat_welcome_segment("─", right_rule_width)) | color(accent),
-        text("╮") | color(accent),
-    });
-    Element middle = hbox({
-        separator() | color(accent),
-        std::move(body) | size(WIDTH, EQUAL, width - 2),
-        separator() | color(accent),
-    });
-    Element bottom = hbox({
-        text("╰") | color(accent),
-        text(repeat_welcome_segment("─", width - 2)) | color(accent),
-        text("╯") | color(accent),
-    });
-    return vbox({
-        std::move(top),
-        std::move(middle),
-        std::move(bottom),
-    }) | size(WIDTH, EQUAL, width);
-}
-
 // UI0: welcome header.
-//   Row 1: orange weave icon + "Loom" bold + "vX.X.X" dim
+//   Row 1: theme-colored weave icon + "Loom" bold
 //   Row 2: model · billing_type dim
 //   Row 3: [@agent · ] cwd dim
 // Shown only on a fresh idle session (messages empty + spinner hidden).
-// The old ASCII-art bordered card / feed-column helpers are preserved in
-// this file but no longer called by this renderer.
 //
 // P0-4 Faithful dispatch:
 //   is_condensed_mode (default)  → CondensedLogo + 10 notices flat stack
@@ -207,15 +132,15 @@ using namespace ftxui;
                                                  int /*spinner_frame*/,
                                                  int term_cols,
                                                  bool force_full_logo) {
-    namespace lv2 = loom::ui::logo;
+    namespace logo = loom::ui::logo;
 
     const std::string model_line = !s.chrome_store.model_display_name.empty()
         ? s.chrome_store.model_display_name
         : s.settings_model;
 
-    // Build the LogoV2Options. Defaults mirror the component's initial
+    // Build the LogoOptions. Defaults mirror the component's initial
     // props (no onboarding, no release-notes → condensed branch).
-    lv2::LogoV2Options opts;
+    logo::LogoOptions opts;
     opts.cwd                  = s.cwd;
     opts.billing_type         = s.chrome_store.billing_type;
     // Agent name comes from initial settings.
@@ -251,12 +176,12 @@ using namespace ftxui;
     // s.chrome_store.recent_activity_lines and s.chrome_store.changelog_lines.  For the other branches,
     // the module builds placeholder feeds until engine wiring provides real
     // onboarding steps / guest pass counts / overage data.
-    std::vector<lv2::FeedConfig> feeds;
+    std::vector<logo::FeedConfig> feeds;
     const bool priority_branch_active = s.chrome_store.show_onboarding
         || s.chrome_store.show_guest_passes_upsell || s.chrome_store.show_overage_credit_upsell;
     if (force_full_logo && !priority_branch_active) {
       {
-        lv2::FeedConfig recent;
+        logo::FeedConfig recent;
         recent.title = "Recent activity";
         if (s.chrome_store.recent_activity_lines.empty()) {
           recent.empty_message =
@@ -264,7 +189,7 @@ using namespace ftxui;
         } else {
           recent.lines.reserve(s.chrome_store.recent_activity_lines.size());
           for (const auto& a : s.chrome_store.recent_activity_lines) {
-            recent.lines.push_back(lv2::FeedLine{
+            recent.lines.push_back(logo::FeedLine{
                 /*text=*/std::string(a),
                 /*timestamp=*/std::nullopt});
           }
@@ -272,21 +197,21 @@ using namespace ftxui;
         feeds.push_back(std::move(recent));
       }
       {
-        lv2::FeedConfig whats_new;
+        logo::FeedConfig whats_new;
         whats_new.title = "What's new";
         if (s.chrome_store.changelog_lines.empty()) {
           whats_new.lines = {
-            lv2::FeedLine{/*text=*/"Paste images into the prompt with Ctrl+V",
+            logo::FeedLine{/*text=*/"Paste images into the prompt with Ctrl+V",
                           /*timestamp=*/std::nullopt},
-            lv2::FeedLine{/*text=*/"3-mode logo: condensed / compact / horizontal",
+            logo::FeedLine{/*text=*/"3-mode logo: condensed / compact / horizontal",
                           /*timestamp=*/std::nullopt},
-            lv2::FeedLine{/*text=*/"Bash sandboxing via /sandbox toggle",
+            logo::FeedLine{/*text=*/"Bash sandboxing via /sandbox toggle",
                           /*timestamp=*/std::nullopt},
           };
         } else {
           whats_new.lines.reserve(s.chrome_store.changelog_lines.size());
           for (const auto& c : s.chrome_store.changelog_lines) {
-            whats_new.lines.push_back(lv2::FeedLine{
+            whats_new.lines.push_back(logo::FeedLine{
                 /*text=*/std::string(c), /*timestamp=*/std::nullopt});
           }
         }
@@ -295,7 +220,7 @@ using namespace ftxui;
       }
     }
 
-    return lv2::render_logo_v2(opts, term_cols, std::move(feeds));
+    return logo::render_logo(opts, term_cols, std::move(feeds));
   }
 
 }  // namespace loom::ui::repl_screen

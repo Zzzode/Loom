@@ -9,6 +9,8 @@ import loom.ui.foundation.theme_provider;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 export namespace ui::components {
 
 struct ModelUsage {
@@ -47,6 +49,7 @@ namespace detail {
 std::vector<std::string> date_range_labels = {"All time", "Last 7 days", "Last 30 days"};
 
 ftxui::Element RenderDateRangeSelector(const StatsOptions& options) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     
     std::vector<Element> elements;
@@ -55,7 +58,7 @@ ftxui::Element RenderDateRangeSelector(const StatsOptions& options) {
             elements.push_back(text(" · ") | dim);
         }
         if (static_cast<int>(i) == options.selected_date_range) {
-            elements.push_back(text(date_range_labels[i]) | bold | color(Color::CyanLight));
+            elements.push_back(text(date_range_labels[i]) | bold | color(pal.info));
         } else {
             elements.push_back(text(date_range_labels[i]) | dim);
         }
@@ -65,6 +68,7 @@ ftxui::Element RenderDateRangeSelector(const StatsOptions& options) {
 }
 
 ftxui::Element RenderActivityHeatmap(const std::vector<DailyActivity>& activity) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     
     if (activity.empty()) {
@@ -76,14 +80,14 @@ ftxui::Element RenderActivityHeatmap(const std::vector<DailyActivity>& activity)
         int intensity = std::min(day.session_count, 5);
         Color heat_color;
         switch (intensity) {
-            case 0: heat_color = Color::RGB(40, 40, 40); break;
-            case 1: heat_color = loom::ui::design::theme::current_theme().palette->stats_green_1; break;
-            case 2: heat_color = loom::ui::design::theme::current_theme().palette->stats_green_2; break;
-            case 3: heat_color = loom::ui::design::theme::current_theme().palette->stats_green_3; break;
-            case 4: heat_color = loom::ui::design::theme::current_theme().palette->stats_green_4; break;
-            default: heat_color = loom::ui::design::theme::current_theme().palette->stats_green_5; break;
+            case 0: heat_color = pal.surface_tint_1; break;
+            case 1: heat_color = pal.stats_green_1; break;
+            case 2: heat_color = pal.stats_green_2; break;
+            case 3: heat_color = pal.stats_green_3; break;
+            case 4: heat_color = pal.stats_green_4; break;
+            default: heat_color = pal.stats_green_5; break;
         }
-        rows.push_back(text("■") | color(heat_color));
+        rows.push_back(text(std::string(loom::ui::design::figures::kSquare)) | color(heat_color));
     }
     
     return hbox({
@@ -95,12 +99,13 @@ ftxui::Element RenderActivityHeatmap(const std::vector<DailyActivity>& activity)
 } // namespace detail
 
 ftxui::Element Stats(const StatsOptions& options) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     
     if (options.active_tab == "Overview") {
         std::vector<Element> elements;
         
-        elements.push_back(text("📊 Stats Overview") | bold | color(Color::CyanLight));
+        elements.push_back(text("Stats Overview") | bold | color(pal.info));
         elements.push_back(separator());
         
         // Activity heatmap
@@ -118,38 +123,38 @@ ftxui::Element Stats(const StatsOptions& options) {
             vbox({
                 hbox({
                     text("Favorite model: ") | dim,
-                    text(options.data.favorite_model) | color(Color::Magenta) | bold
+                    text(options.data.favorite_model) | color(pal.primary) | bold
                 }),
                 hbox({
                     text("Total tokens: ") | dim,
-                    text(std::format("{:L}", options.data.total_tokens)) | color(Color::CyanLight)
+                    text(std::format("{:L}", options.data.total_tokens)) | color(pal.info)
                 }),
                 hbox({
                     text("Total sessions: ") | dim,
-                    text(std::to_string(options.data.total_sessions)) | color(Color::CyanLight)
+                    text(std::to_string(options.data.total_sessions)) | color(pal.info)
                 }),
                 hbox({
                     text("Longest session: ") | dim,
-                    text(options.data.longest_session_duration) | color(Color::CyanLight)
+                    text(options.data.longest_session_duration) | color(pal.info)
                 })
             }) | flex,
             text("  "),
             vbox({
                 hbox({
                     text("Active days: ") | dim,
-                    text(std::format("{}", options.data.active_days)) | color(Color::CyanLight)
+                    text(std::format("{}", options.data.active_days)) | color(pal.info)
                 }),
                 hbox({
                     text("Longest streak: ") | dim,
-                    text(std::format("{} days", options.data.longest_streak)) | color(Color::CyanLight) | bold
+                    text(std::format("{} days", options.data.longest_streak)) | color(pal.info) | bold
                 }),
                 hbox({
                     text("Current streak: ") | dim,
-                    text(std::format("{} days", options.data.current_streak)) | color(Color::Green) | bold
+                    text(std::format("{} days", options.data.current_streak)) | color(pal.success) | bold
                 }),
                 hbox({
                     text("Peak day: ") | dim,
-                    text(options.data.peak_activity_day) | color(Color::CyanLight)
+                    text(options.data.peak_activity_day) | color(pal.info)
                 })
             }) | flex
         }));
@@ -157,7 +162,7 @@ ftxui::Element Stats(const StatsOptions& options) {
         // Fun fact
         if (!options.data.fun_fact.empty()) {
             elements.push_back(text(""));
-            elements.push_back(text("💡 " + options.data.fun_fact) | color(Color::Cyan));
+            elements.push_back(text("Note: " + options.data.fun_fact) | color(pal.info));
         }
         
         elements.push_back(text(""));
@@ -167,7 +172,7 @@ ftxui::Element Stats(const StatsOptions& options) {
     } else { // Models tab
         std::vector<Element> elements;
         
-        elements.push_back(text("🤖 Model Usage") | bold | color(Color::Magenta));
+        elements.push_back(text("Model Usage") | bold | color(pal.primary));
         elements.push_back(separator());
         
         // Date range
@@ -181,16 +186,16 @@ ftxui::Element Stats(const StatsOptions& options) {
                 int total_tokens = usage.input_tokens + usage.output_tokens;
                 elements.push_back(vbox({
                     hbox({
-                        text("● ") | color(Color::Magenta),
-                        text(usage.model_name) | bold | color(Color::White),
+                        text(std::string(loom::ui::design::figures::kBullet) + " ") | color(pal.primary),
+                        text(usage.model_name) | bold | color(pal.text),
                         text("  ") | flex,
-                        text(std::format("{:L} tokens", total_tokens)) | color(Color::GrayLight)
+                        text(std::format("{:L} tokens", total_tokens)) | color(pal.muted)
                     }),
                     hbox({
                         text("  Input: ") | dim,
-                        text(std::format("{:L}", usage.input_tokens)) | color(Color::Cyan),
+                        text(std::format("{:L}", usage.input_tokens)) | color(pal.info),
                         text("  Output: ") | dim,
-                        text(std::format("{:L}", usage.output_tokens)) | color(Color::Green)
+                        text(std::format("{:L}", usage.output_tokens)) | color(pal.success)
                     })
                 }));
                 elements.push_back(text(""));

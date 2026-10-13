@@ -27,6 +27,8 @@ module;
 export module loom.ui.permissions.scope_editor;
 
 import std;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.theme_provider;
 
 import loom.security.permissions_engine;
 import loom.ui.permissions.components;
@@ -126,13 +128,14 @@ namespace detail {
 }
 
 [[nodiscard]] inline Color ActionColor(PermissionAction a) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (a) {
-        case PermissionAction::Allow:   return Color::Green;
-        case PermissionAction::Deny:    return Color::Red;
-        case PermissionAction::Ask:     return Color::Yellow;
-        case PermissionAction::AskOnce: return Color::YellowLight;
+        case PermissionAction::Allow:   return pal.success;
+        case PermissionAction::Deny:    return pal.danger;
+        case PermissionAction::Ask:     return pal.warning;
+        case PermissionAction::AskOnce: return pal.warning;
     }
-    return Color::GrayLight;
+    return pal.text_muted;
 }
 
 /// Convert PathScope -> PermissionAction for rules.
@@ -212,9 +215,10 @@ struct EditorState {
     };
     Elements els;
     for (int i = 0; i < 3; ++i) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         auto t = static_cast<Tab>(i);
         auto el = text(std::format(" {} ", labels[i]));
-        if (t == active) el = el | bold | inverted | color(Color::Cyan);
+        if (t == active) el = el | bold | inverted | color(pal.info);
         else              el = el | dim;
         els.push_back(el);
         if (i < 2) els.push_back(text(" "));
@@ -225,6 +229,7 @@ struct EditorState {
 // --- Tab 1: Allowlist ---
 
 [[nodiscard]] inline Element RenderAllowlistTab(EditorState& st) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     // Column header
     rows.push_back(hbox({
@@ -239,6 +244,7 @@ struct EditorState {
 
     // Rows
     for (std::size_t i = 0; i < st.allowlist.size(); ++i) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto& r = st.allowlist[i];
         bool sel = i == st.al_cursor;
         Elements cells = {
@@ -246,8 +252,8 @@ struct EditorState {
             pc::PathLabel(r.path_pattern, 36) | size(WIDTH, EQUAL, 38),
             text(std::string{pc::MatchStrategyLabel(r.strategy)}) | dim | size(WIDTH, EQUAL, 10),
             pc::PathScopeBadge(r.scope) | size(WIDTH, EQUAL, 8),
-            (r.enabled ? text(" ✓ ") | color(Color::Green) : text("   ") | dim) | size(WIDTH, EQUAL, 4),
-            (r.is_default ? text(" ") : text(" ✕ ") | color(Color::Red) | dim) | size(WIDTH, EQUAL, 4),
+            (r.enabled ? text(" ✓ ") | color(pal.success) : text("   ") | dim) | size(WIDTH, EQUAL, 4),
+            (r.is_default ? text(" ") : text(" ✕ ") | color(pal.danger) | dim) | size(WIDTH, EQUAL, 4),
         };
         auto row = hbox(cells);
         if (sel) row = row | inverted | focus;
@@ -267,15 +273,15 @@ struct EditorState {
             ? std::string{" (type path pattern, Enter to save, Esc to cancel) "}
             : st.new_path_pattern;
         rows.push_back(hbox({
-            text("  +  ") | color(Color::Green) | bold,
-            text(pattern_display) | color(Color::Yellow) | xflex_grow,
+            text("  +  ") | color(pal.success) | bold,
+            text(pattern_display) | color(pal.warning) | xflex_grow,
             text(strat_labels[st.new_strategy_idx]) | dim,
             text(" / ") | dim,
             text(scope_labels[st.new_scope_idx]) | dim,
         }));
     } else {
         rows.push_back(hbox({
-            text(" [a] ") | color(Color::Cyan) | dim,
+            text(" [a] ") | color(pal.info) | dim,
             text("Add entry") | dim,
             filler(),
             text(" [i] import ") | dim,
@@ -289,6 +295,7 @@ struct EditorState {
 // --- Tab 2: Preapproval rules ---
 
 [[nodiscard]] inline Element RenderPreapprovalTab(EditorState& st) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     // Column header
     rows.push_back(hbox({
@@ -303,6 +310,7 @@ struct EditorState {
     rows.push_back(pc::ThinDivider());
 
     for (std::size_t i = 0; i < st.preapprovals.size(); ++i) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto& r = st.preapprovals[i];
         bool sel = i == st.pa_cursor;
         auto time_str = r.time_window.count() > 0
@@ -310,13 +318,13 @@ struct EditorState {
             : std::string{"perm"};
         Elements cells = {
             text(std::format("{:>2}.", i + 1)) | dim | size(WIDTH, EQUAL, 3),
-            text(r.tool_pattern) | color(Color::Magenta) | size(WIDTH, EQUAL, 18),
+            text(r.tool_pattern) | color(pal.primary) | size(WIDTH, EQUAL, 18),
             text(r.action_pattern) | dim | size(WIDTH, EQUAL, 10),
             pc::PathLabel(r.path_pattern, 28) | size(WIDTH, EQUAL, 30),
             text(std::string{detail::ActionLabel(r.action)})
                 | color(detail::ActionColor(r.action)) | size(WIDTH, EQUAL, 8),
             text(std::string{detail::ScopeLabel(r.scope)}) | dim | size(WIDTH, EQUAL, 9),
-            (r.enabled ? text(" ✓ ") | color(Color::Green) : text("   ") | dim) | size(WIDTH, EQUAL, 4),
+            (r.enabled ? text(" ✓ ") | color(pal.success) : text("   ") | dim) | size(WIDTH, EQUAL, 4),
         };
         auto row = hbox(cells);
         if (sel) row = row | inverted | focus;
@@ -328,7 +336,7 @@ struct EditorState {
     }
     rows.push_back(pc::ThinDivider());
     rows.push_back(hbox({
-        text(" [w] ") | color(Color::Cyan) | dim,
+        text(" [w] ") | color(pal.info) | dim,
         text("New-rule wizard") | dim,
         filler(),
         text(" [Enter] edit  [Del] remove") | dim,
@@ -346,7 +354,7 @@ struct EditorState {
         Elements wizard_rows = {
             text("") | size(HEIGHT, EQUAL, 1),
             hbox({
-                text("  ── Add rule wizard ─ Step ") | bold | color(Color::Cyan),
+                text("  ── Add rule wizard ─ Step ") | bold | color(pal.info),
                 text(std::to_string(st.wizard.step + 1)) | bold,
                 text(" / 3") | bold,
             }),
@@ -372,7 +380,7 @@ struct EditorState {
                 : st.wizard.entered_path;
             wizard_rows.push_back(hbox({
                 text("  Path pattern: ") | dim,
-                text(p) | color(Color::Yellow) | xflex_grow,
+                text(p) | color(pal.warning) | xflex_grow,
             }));
             wizard_rows.push_back(text("") | size(HEIGHT, EQUAL, 1));
             wizard_rows.push_back(text("  [Enter] save  [Esc] cancel") | dim);
@@ -386,9 +394,10 @@ struct EditorState {
 // --- Tab 3: Dangerous paths ---
 
 [[nodiscard]] inline Element RenderDangerousTab(EditorState& st) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
-        text(" High-risk default paths") | bold | color(Color::Red),
+        text(" High-risk default paths") | bold | color(pal.danger),
         filler(),
         text(" Two actions per row: [w] = allow in workspace only, [n] = never") | dim,
     }));
@@ -398,13 +407,14 @@ struct EditorState {
         const auto& d = st.dangerous[i];
         bool sel = i == st.dp_cursor;
         auto status_el = [&]() -> Element {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             switch (d.exception) {
                 case DangerousPathRow::ExceptionStatus::None:
                     return text("  ") | dim;
                 case DangerousPathRow::ExceptionStatus::WorkspaceOnly:
-                    return text(" WS ") | color(Color::White) | bgcolor(Color::Blue) | bold;
+                    return text(" WS ") | color(pal.inverse_text) | bgcolor(pal.info) | bold;
                 case DangerousPathRow::ExceptionStatus::Never:
-                    return text(" ✗ ") | color(Color::White) | bgcolor(Color::Red) | bold;
+                    return text(" ✗ ") | color(pal.inverse_text) | bgcolor(pal.danger) | bold;
             }
             return text("");
         }();
@@ -437,6 +447,7 @@ struct EditorState {
 // ============================================================
 
 [[nodiscard]] inline Element RenderScopeEditor(std::shared_ptr<EditorState> st) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto header = RenderTabHeader(st->active_tab);
     Element body;
     switch (st->active_tab) {
@@ -465,9 +476,9 @@ struct EditorState {
     });
 
     return window(
-        text(" 🛡 Permission Scope Editor ") | bold | color(Color::Cyan),
+        text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} + " Permission Scope Editor ")) | bold | color(pal.info),
         full | xflex_grow
-    ) | color(Color::Cyan) | size(WIDTH, LESS_THAN, 120);
+    ) | color(pal.info) | size(WIDTH, LESS_THAN, 120);
 }
 
 // ============================================================

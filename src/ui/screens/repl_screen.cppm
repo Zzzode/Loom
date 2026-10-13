@@ -101,8 +101,6 @@ using namespace ftxui;
 // Column-width truncation helper; also used by the prompt-render unit.
 [[nodiscard]] std::string truncate_columns(std::string text, int max_cols);
 
-[[nodiscard]] std::string repeat_welcome_segment(std::string_view text, int count);
-
 // =========================================================
 // Unseen divider + transcript projection / scroll
 // (bodies in repl_screen_scroll.cpp)
@@ -152,7 +150,7 @@ ComputeUnseenDivider(const ReplScreenState& s);
     std::function<void()> on_retry = nullptr,
     // Clear-session callback for session-expired error cards.
     std::function<void()> on_clear_session = nullptr,
-    // StreamingMarkdown stable-prefix cache for the streaming-text tail row.
+    // StreamingMarkdown repeated-frame cache for the streaming-text tail row.
     ::loom::ui::StreamingMarkdown* streaming_md = nullptr,
     // Optional mouse hit-testing tracker for click-to-expand rows.
     // When set, the renderer populates it with screen-space boxes of
@@ -165,7 +163,9 @@ ComputeUnseenDivider(const ReplScreenState& s);
     MessagesStore* store = nullptr,
     // Terminal column width for the virtual-path height estimator.
     // Defaults to 80 for tests/dialogs; production passes the real width.
-    int term_cols = 80);
+    int term_cols = 80,
+    // Dismiss callback for API error cards (ESC / q).
+    std::function<void()> on_dismiss_error = nullptr);
 
 /// Count '\n'-separated lines in text (minimum 1).
 [[nodiscard]] int CountTextLines(std::string_view text);
@@ -200,25 +200,7 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
 /// chrome.  Used by both the pill click and future keyboard affordances.
 void JumpTranscriptToBottom(ReplScreenState& state);
 
-// =========================================================
-// Legacy ASCII-art welcome helpers (preserved, no longer called by
-// RenderWelcomeHeader; bodies in repl_screen_welcome.cpp).
-// =========================================================
-[[nodiscard]] Element RenderWelcomeFeed(std::string title,
-                                        std::string message,
-                                        int width,
-                                        Color accent,
-                                        Color muted);
-[[nodiscard]] Element RenderWelcomeFeedColumn(int width,
-                                              Color accent,
-                                              Color muted);
-[[nodiscard]] Element RenderWelcomeWindow(Element title,
-                                          Element body,
-                                          int width,
-                                          int title_width,
-                                          Color accent);
-
-// UI0: welcome header — LogoV2 3-mode dispatch (condensed / compact /
+// UI0: welcome header — Logo 3-mode dispatch (condensed / compact /
 // horizontal) on a fresh idle session.
 [[nodiscard]] Element RenderWelcomeHeader(const ReplScreenState& s,
                                           int spinner_frame = 0,
@@ -375,7 +357,9 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
 [[nodiscard]] Element RenderReplScreen(ReplScreenState& s,
     std::function<void()> on_retry = nullptr,
     std::function<void()> on_clear_session = nullptr,
-    ::loom::ui::StreamingMarkdown* streaming_md = nullptr);
+    ::loom::ui::StreamingMarkdown* streaming_md = nullptr,
+    std::function<void()> on_dismiss_error = nullptr,
+    std::function<void()> on_continue = nullptr);
 
 // =========================================================
 // Dialog routing: agent wizard / agents menu / settings / trust /

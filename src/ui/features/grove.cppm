@@ -18,6 +18,8 @@ export module loom.ui.features.grove;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 import loom.ui.foundation.component_primitives;
 import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
@@ -72,21 +74,21 @@ struct GroveViewState {
 }
 
 /// FTXUI color for a node kind badge.
-[[nodiscard]] inline Color kind_color(GroveKind k) noexcept {
+[[nodiscard]] inline Color kind_color(GroveKind k, const Theme& theme = current_theme()) noexcept {
     switch (k) {
-        case GroveKind::File:      return Color::Blue;
-        case GroveKind::Symbol:    return Color::Green;
-        case GroveKind::Concept:   return Color::Magenta;
-        case GroveKind::Reference: return Color::GrayLight;
-        case GroveKind::Chunk:     return Color::Yellow;
+        case GroveKind::File:      return theme.palette->info;
+        case GroveKind::Symbol:    return theme.palette->accent_green;
+        case GroveKind::Concept:   return theme.palette->accent_purple;
+        case GroveKind::Reference: return theme.palette->muted;
+        case GroveKind::Chunk:     return theme.palette->text;
     }
-    return Color::White;
+    return theme.palette->text;
 }
 
 /// Build the colored kind badge pill (5-character wide).
-[[nodiscard]] inline Element kind_badge(GroveKind k) {
+[[nodiscard]] inline Element kind_badge(GroveKind k, const Theme& theme = current_theme()) {
     auto label = std::string(kind_label(k));
-    auto fg = kind_color(k);
+    auto fg = kind_color(k, theme);
     return hbox({
         text(" "),
         text(label) | color(fg) | bold,
@@ -96,12 +98,12 @@ struct GroveViewState {
 }
 
 /// Colored relevance dot: green >0.8, yellow >0.5, else red.
-[[nodiscard]] inline Element relevance_dot(double r) {
-    Color c = Color::Red;
-    if (r > 0.8)      c = Color::Green;
-    else if (r > 0.5) c = Color::Yellow;
+[[nodiscard]] inline Element relevance_dot(double r, const Theme& theme = current_theme()) {
+    Color c = theme.palette->danger;
+    if (r > 0.8)      c = theme.palette->success;
+    else if (r > 0.5) c = theme.palette->warning;
     return hbox({
-        text("■") | color(c),
+        text(std::string(loom::ui::design::figures::kSquare)) | color(c),
     });
 }
 
@@ -170,7 +172,7 @@ class GroveTreeBase : public ftxui::ComponentBase {
 public:
     GroveTreeBase(GroveViewState state,
                   std::function<void(const GroveNode&)> on_select,
-                  Theme theme)
+                  std::optional<Theme> theme = std::nullopt)
         : state_(std::move(state)),
           on_select_(std::move(on_select)),
           theme_(std::move(theme)) {
@@ -205,27 +207,28 @@ public:
 
     Element Render() override {
         using namespace ftxui;
+        const Theme& theme = theme_ ? *theme_ : current_theme();
 
         // ── Header ───────────────────────────────────────────────
         auto grove_badge = hbox({
             text(" "),
             text("GROVE") | bold | inverted,
             text(" "),
-        }) | color(Color::Black) | bgcolor(theme_.palette->primary);
+        }) | color(theme.palette->inverse_text) | bgcolor(theme.palette->primary);
 
         auto count_badge = hbox({
             text(" "),
             text(std::format("{}", state_.total_results)) | bold,
             text(" "),
-        }) | color(theme_.palette->text)
-           | bgcolor(theme_.palette->background);
+        }) | color(theme.palette->text)
+           | bgcolor(theme.palette->background);
 
         auto time_badge = hbox({
             text(" "),
             text(std::format("{}ms", state_.query_time_ms)) | dim,
             text(" "),
-        }) | color(theme_.palette->muted)
-           | bgcolor(theme_.palette->background);
+        }) | color(theme.palette->muted)
+           | bgcolor(theme.palette->background);
 
         auto header = hbox({
             grove_badge,
@@ -240,8 +243,8 @@ public:
         Elements query_rows;
         for (const auto& q : state_.query) {
             query_rows.push_back(hbox({
-                text("  › ") | color(theme_.palette->primary),
-                text(truncate(q.title, 40)) | color(theme_.palette->text) | dim,
+                text("  " + std::string(loom::ui::design::figures::kPointerSmall) + " ") | color(theme.palette->primary),
+                text(truncate(q.title, 40)) | color(theme.palette->text) | dim,
             }));
         }
         Element query_block = query_rows.empty()
@@ -271,29 +274,29 @@ public:
             Element caret = n.children.empty()
                 ? text("  ")
                 : (entry.is_expanded
-                       ? text("▼ ") | color(theme_.palette->subtle)
-                       : text("▶ ") | color(theme_.palette->subtle));
+                       ? text(std::string(loom::ui::design::figures::kTriangleDownSmall) + " ") | color(theme.palette->subtle)
+                       : text(std::string(loom::ui::design::figures::kPlay) + " ") | color(theme.palette->subtle));
 
             // Build the row.
             auto row = hbox({
                 hbox(std::move(indent)),
                 caret,
-                kind_badge(n.kind),
+                kind_badge(n.kind, theme),
                 text(" "),
                 text(truncate(n.title, 32)) | bold
-                    | color(theme_.palette->text),
+                    | color(theme.palette->text),
                 text(" "),
-                relevance_dot(n.relevance),
+                relevance_dot(n.relevance, theme),
                 text(" "),
                 text(truncate(n.snippet, 60)) | dim
-                    | color(theme_.palette->muted) | xflex,
+                    | color(theme.palette->muted) | xflex,
                 text("  "),
-                text(source_ref(n)) | dim | color(theme_.palette->muted),
+                text(source_ref(n)) | dim | color(theme.palette->muted),
             }) | xflex;
 
             // Highlight selected row with an accent background.
             if (is_selected) {
-                row = row | bgcolor(theme_.palette->subtle)
+                row = row | bgcolor(theme.palette->subtle)
                           | focusPositionRelative(0, 0);
                 row = row | inverted;
             }
@@ -305,7 +308,7 @@ public:
         if (rows.empty()) {
             rows.push_back(
                 hbox({ text("  (no results)") | dim
-                                             | color(theme_.palette->muted) })
+                                             | color(theme.palette->muted) })
             );
         }
 
@@ -318,19 +321,19 @@ public:
         int one_based = std::max(0, std::min(selected_ + 1, safe_total));
         auto footer_right = hbox({
             text(std::format("Selected: {}/{}", one_based, safe_total))
-                | dim | color(theme_.palette->muted),
+                | dim | color(theme.palette->muted),
         });
         auto footer = hbox({ filler(), footer_right });
 
         // ── Assemble ─────────────────────────────────────────────
         return vbox({
             header,
-            separator() | color(theme_.palette->subtle),
+            separator() | color(theme.palette->subtle),
             query_block,
             tree_block,
             separator(),
             footer,
-        }) | borderRounded | color(theme_.palette->chrome);
+        }) | borderRounded | color(theme.palette->chrome);
     }
 
     /// Refresh the state snapshot and rebuild the flat index.
@@ -352,7 +355,7 @@ private:
 
     GroveViewState state_;
     std::function<void(const GroveNode&)> on_select_;
-    Theme theme_;
+    std::optional<Theme> theme_;
     std::vector<FlatEntry> flat_;
     int selected_ = 0;
 };
@@ -364,8 +367,7 @@ private:
     const GroveViewState& s,
     std::function<void(const GroveNode&)> on_select = {})
     -> ftxui::Component {
-    Theme theme = current_theme();
-    return ftxui::Make<GroveTreeBase>(s, std::move(on_select), std::move(theme));
+    return ftxui::Make<GroveTreeBase>(s, std::move(on_select));
 }
 
 /// Theme-explicit overload for tests / design previews.

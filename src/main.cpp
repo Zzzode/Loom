@@ -50,7 +50,8 @@ extern "C" [[nodiscard]] int loom_ui_run_app_bridge(
     loom::commands::AppCommandRegistry* cmd_registry,
     const std::filesystem::path* sessions_dir,
     loom::hooks::ToolPermissionHook* permission_hook,
-    bool mouse_mode
+    bool mouse_mode,
+    std::uint32_t tool_round_budget
 );
 
 /**
@@ -94,6 +95,7 @@ struct CliOptions {
     std::optional<std::string> session_id;
     std::optional<std::string> task_id;
     std::optional<std::uint32_t> task_budget;
+    std::optional<std::uint32_t> max_tool_rounds;
     bool continue_session = false;
     std::optional<std::string> resume_session_id;
     std::optional<std::string> session_store_path;
@@ -157,6 +159,9 @@ Options:
                        Max wait for a spawned headless session result (default: 10000)
   --task-budget <tokens>
                        API-side task budget in tokens
+  --max-tool-rounds <N>
+                       Optional interactive round budget (default: unlimited).
+                       Pause with saved progress; Continue grants N more rounds.
   --continue, -c       Continue the active persisted C++ conversation
   --resume [id]        Resume a persisted C++ conversation by ID, or active if omitted
   --session-store <path>
@@ -316,6 +321,21 @@ auto parse_args(int argc, const char* argv[]) -> std::expected<CliOptions, std::
             opts.task_id = std::string(argv[i]);
         } else if (arg.starts_with("--task-id=")) {
             opts.task_id = std::string(arg.substr(std::string_view("--task-id=").size()));
+        } else if (arg == "--max-tool-rounds" || arg.starts_with("--max-tool-rounds=")) {
+            std::string_view value;
+            if (arg == "--max-tool-rounds") {
+                if (++i >= argc) return std::unexpected("--max-tool-rounds requires a value");
+                value = argv[i];
+            } else {
+                value = arg.substr(std::string_view("--max-tool-rounds=").size());
+            }
+            std::uint32_t parsed{};
+            const auto result = std::from_chars(value.data(), value.data() + value.size(), parsed);
+            if (value.empty() || result.ec != std::errc{} ||
+                result.ptr != value.data() + value.size() || parsed == 0) {
+                return std::unexpected("--max-tool-rounds must be a positive integer");
+            }
+            opts.max_tool_rounds = parsed;
         } else if (arg == "--task-budget") {
             if (++i >= argc) {
                 return std::unexpected("--task-budget requires a value");
@@ -454,6 +474,11 @@ auto parse_args(int argc, const char* argv[]) -> std::expected<CliOptions, std::
         }
     }
 
+    if (opts.max_tool_rounds &&
+        (opts.headless || opts.use_simple_ui || opts.server || opts.bridge_daemon ||
+         opts.bridge_daemon_once || opts.runtime_tool_name)) {
+        return std::unexpected("--max-tool-rounds requires interactive mode");
+    }
     return opts;
 }
 
@@ -640,14 +665,26 @@ loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
     return check;
 }
 
-int run_runtime_tool_once(const CliOptions& opts) {
+auto load_config(bool& mouse_mode) -> loom::core::QueryEngineConfig;
+
+int run_runtime_tool_once(
+    const CliOptions& opts,
+    const std::optional<std::string>& settings_model_override
+) {
     if (!opts.runtime_tool_name || opts.runtime_tool_name->empty()) {
         std::println(stderr, "--run-runtime-tool requires a tool name");
         return 1;
     }
+    bool mouse_mode = false;
+    auto config = load_config(mouse_mode);
+    if (opts.model) config.model_params.model = *opts.model;
+    else if (settings_model_override && !settings_model_override->empty()) {
+        config.model_params.model = *settings_model_override;
+    }
     auto tool_registry = loom::core::ToolRegistry{};
     loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
         .parent_permission_mode = parent_permission_mode_from_options(opts),
+        .default_model = config.model_params.model,
     });
     // Fallback: route unregistered tool names to MCP servers.
     // RFC-0001 B15: the fallback (NativeMcpRuntime iteration, last_error,
@@ -689,9 +726,9 @@ auto load_config(bool& mouse_mode) -> loom::core::QueryEngineConfig {
         // Non-fatal: env vars may still provide everything needed.
     }
 
-    // RFC 0007 Phase 2: read mouseMode from the effective config (respects
-    // LOOM_CONFIG_DIR and the full three-tier cascade). Read once at startup;
-    // FTXUI does not support runtime mouse-mode toggling.
+    // Read mouseMode once at startup from the effective three-tier config.
+    // The F2 toggle is temporary and best-effort: an FTXUI reinstall may
+    // restore tracking. Explicit false keeps native selection persistently.
     mouse_mode = file_config.settings().display.mouse_mode;
 
     // API key: env var first, then config file
@@ -1898,7 +1935,7 @@ int main(int argc, const char* argv[]) {
     }
 
     if (opts.runtime_tool_name) {
-        return run_runtime_tool_once(opts);
+        return run_runtime_tool_once(opts, settings_model_override);
     }
 
     if (opts.server) {
@@ -1978,6 +2015,7 @@ int main(int argc, const char* argv[]) {
             return check_agent_tool_permission(permission_hook, tool_name, input_json, tool_use_id);
         },
         .permission_hook_valid_for_background = true,
+        .default_model = config.model_params.model,
     });
 
     // ── MCP tool fallback handler ────────────────────────────────────
@@ -2063,7 +2101,7 @@ int main(int argc, const char* argv[]) {
         if (opts.use_simple_ui) {
             return run_simple_ui(&engine, cmd_registry);
         } else {
-            return loom_ui_run_app_bridge(&engine, &lifecycle_hooks, &cmd_registry, nullptr, &permission_hook, mouse_mode);
+            return loom_ui_run_app_bridge(&engine, &lifecycle_hooks, &cmd_registry, nullptr, &permission_hook, mouse_mode, opts.max_tool_rounds.value_or(0));
         }
     } catch (const std::exception& e) {
         std::println(stderr, "UI startup failed: {}", e.what());

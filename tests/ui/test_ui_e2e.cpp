@@ -1,5 +1,5 @@
 /// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, LogoV2, PromptInput, ReplScreen (SLOC budget fix)
+/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput, ReplScreen (SLOC budget fix)
 
 #include <cstdlib>
 

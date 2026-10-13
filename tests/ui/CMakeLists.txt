@@ -1,5 +1,10 @@
 # ui/ — FTXUI interface tests (dialogs, streaming, markdown, rendering)
 
+find_program(LOOM_UI_LINT_PYTHON NAMES python3 REQUIRED)
+add_test(NAME MessageThemeLint
+    COMMAND "${LOOM_UI_LINT_PYTHON}"
+        "${CMAKE_SOURCE_DIR}/tools/arch/test_message_theme_lint.py")
+
 # ── test_ui split into 4 TUs to stay under clang's 31-bit SourceLocation budget ──
 # (2.14GB hard limit; original 43 imports in one TU overflowed at 99%).
 # Each TU imports only the loom.* modules its tests actually need.
@@ -16,12 +21,13 @@ add_executable(test_ui_light test_ui_light.cpp ${LOOM_TEST_SUPPORT_DIR}/test_ui_
 target_link_libraries(test_ui_light ${_ui_test_libs})
 gtest_discover_tests(test_ui_light DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
-add_executable(test_ui_messages test_ui_messages.cpp ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
+add_executable(test_ui_messages test_ui_messages.cpp test_message_interactions.cpp ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_ui_messages ${_ui_test_libs})
 gtest_discover_tests(test_ui_messages DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 add_executable(test_ui_runtime
     test_app_runtime.cpp
+    test_app_coordinators.cpp
     test_ui_render.cpp
     test_ui_render_state.cpp
     test_ui_render_pure.cpp
@@ -222,4 +228,14 @@ target_link_libraries(test_cost_threshold_dialog
         GTest::gtest_main
 )
 gtest_discover_tests(test_cost_threshold_dialog
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+# Native regressions for semantic colors, held components, and caller overrides.
+add_executable(test_ui_theme_conformance
+    test_theme_messages_prompt.cpp
+    test_theme_dialogs_permissions.cpp
+    test_theme_widgets_features.cpp
+    test_theme_screens_visual.cpp)
+target_link_libraries(test_ui_theme_conformance ${_ui_test_libs})
+gtest_discover_tests(test_ui_theme_conformance
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

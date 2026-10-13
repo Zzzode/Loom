@@ -29,10 +29,10 @@ using loom::core::ToolResult;
 namespace json = loom::utils::json;
 
 [[nodiscard]] Result<ToolResult> execute_team_create_runtime_tool(
-    std::string_view json,
+    const ToolInput& input,
     ToolRegistry* registry
 ) {
-    auto parsed = loom::utils::json::parse(json);
+    auto parsed = loom::utils::json::parse(input.json());
     if (!parsed || !parsed->root().is_obj()) {
         return ToolResult::error("team_create input must be a JSON object");
     }
@@ -131,16 +131,16 @@ namespace json = loom::utils::json;
                         member.agent_id,
                         (*created_team)->name);
                 }();
-            auto started = registry->execute(
-                "Agent",
-                ToolInput::from_json(detail::build_team_member_agent_start_input_json(
-                    member,
-                    (*created_team)->name,
-                    prompt,
-                    options,
-                    default_cwd,
-                    default_mode,
-                    default_isolation)));
+            auto agent_input = ToolInput::from_json(detail::build_team_member_agent_start_input_json(
+                member,
+                (*created_team)->name,
+                prompt,
+                options,
+                default_cwd,
+                default_mode,
+                default_isolation));
+            agent_input.parent_model = input.parent_model;
+            auto started = registry->execute("Agent", agent_input);
             if (!started) {
                 auto error = "failed to start team member " + member.agent_id + ": " + started.error().message;
                 (void)global_team_store().update_member_status((*created_team)->id, member.agent_id, MemberStatus::Error, error);

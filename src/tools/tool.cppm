@@ -188,12 +188,51 @@ class ToolRegistry {
 
 public:
     ToolRegistry() = default;
+    ~ToolRegistry() { shutdown(); }
 
-    // Non-copyable, movable
+    // Bound tools and background executions borrow this registry's address.
     ToolRegistry(const ToolRegistry&) = delete;
     ToolRegistry& operator=(const ToolRegistry&) = delete;
-    ToolRegistry(ToolRegistry&&) = default;
-    ToolRegistry& operator=(ToolRegistry&&) = default;
+    ToolRegistry(ToolRegistry&&) = delete;
+    ToolRegistry& operator=(ToolRegistry&&) = delete;
+
+    [[nodiscard]] std::stop_token background_stop_token() const noexcept {
+        return background_stop_.get_token();
+    }
+
+    /// Bind once before launching background executions. Repeated bindings
+    /// leave the original handler intact. A draining registry rejects binding.
+    bool set_shutdown_handler(std::function<void(std::stop_token)> handler) {
+        std::lock_guard lock(shutdown_mutex_);
+        if (shutdown_started_) return false;
+        if (!shutdown_handler_) shutdown_handler_ = std::move(handler);
+        return true;
+    }
+
+    /// Signal active foreground and background executions before joining the
+    /// foreground caller. Draining remains a separate, quiescent-owner step.
+    void request_shutdown() noexcept { background_stop_.request_stop(); }
+
+    /// The foreground caller must be quiescent. Stop new background work and
+    /// drain existing borrowers while tools and permission callbacks are alive.
+    /// The handler must finish without throwing; destruction cannot proceed
+    /// safely after a failed drain.
+    void shutdown() noexcept {
+        std::unique_lock lock(shutdown_mutex_);
+        if (shutdown_started_) {
+            shutdown_cv_.wait(lock, [this] { return shutdown_finished_; });
+            return;
+        }
+        shutdown_started_ = true;
+        auto handler = std::move(shutdown_handler_);
+        lock.unlock();
+        request_shutdown();
+        if (handler) handler(background_stop_.get_token());
+        lock.lock();
+        shutdown_finished_ = true;
+        lock.unlock();
+        shutdown_cv_.notify_all();
+    }
 
     /// Register a tool by constructing it in-place
     template <Tool T, typename... Args>
@@ -292,6 +331,12 @@ public:
 
 private:
     MissingToolHandler missing_tool_handler_;
+    std::stop_source background_stop_;
+    std::mutex shutdown_mutex_;
+    std::condition_variable shutdown_cv_;
+    std::function<void(std::stop_token)> shutdown_handler_;
+    bool shutdown_started_ = false;
+    bool shutdown_finished_ = false;
 };
 
 } // namespace loom::core

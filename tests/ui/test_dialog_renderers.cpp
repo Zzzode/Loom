@@ -11,6 +11,8 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 
+#include "test_ui_helpers.h"
+
 import std;
 import loom.ui.dialogs.system;
 import loom.ui.dialogs.frame;
@@ -24,6 +26,9 @@ import loom.ui.dialogs.session_picker;
 import loom.ui.dialogs.sandbox_permission;
 import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_tokens;
+import loom.ui.screens.repl_screen;
+import loom.ui.screens.repl_state;
+import loom.ui.screens.task_view_store;
 import loom.constants.product;
 
 namespace {
@@ -741,15 +746,11 @@ TEST(DialogRenderers, Golden_SettingsPanel) {
 }
 
 // ============================================================
-// Step 6B: E2E integration test — ReplScreenState-like struct +
-// queue push/typing suppression with a thin local RenderBottomDialog
-// helper that mirrors repl_screen::dialog_queue_render logic exactly
-// (~15 lines) so no new module import is required.
+// Queue-level typing/animation suppression coverage. The production screen
+// integration tests below also exercise the actual rendering/event callers.
 // ============================================================
 
-/// Minimal replica of ReplScreenState's dialog-relevant fields.
-/// We intentionally do NOT import loom.ui.screens.repl_screen to avoid
-/// build-system churn (CMake INTERFACE→FILE_SET BMI propagation gaps).
+/// Minimal state for the bottom-slot queue policy tests.
 struct MiniReplState {
     dsys::DialogQueue dialog_queue;
     dsys::DialogRendererRegistry dialog_renderers;
@@ -878,6 +879,82 @@ TEST(ReplScreenIntegration, TypingSuppressionSkipsBottomDialogs) {
     el = LocalRenderBottomDialog(s, 100, 40);
     EXPECT_FALSE(el.has_value())
         << "(E) typing+animation both ON must suppress every bottom dialog";
+}
+
+TEST(ReplScreenIntegration, PermissionVisibleAndRespondsWhileQuerySpinnerRuns) {
+    namespace repl = loom::ui::repl_screen;
+    using Decision = dsys::ToolPermissionPayload::Decision;
+
+    for (const auto spinner : {repl::SpinnerMode::Requesting,
+                               repl::SpinnerMode::ToolUse}) {
+        for (const char key : {'y', 'n'}) {
+            SCOPED_TRACE(static_cast<int>(spinner));
+            SCOPED_TRACE(key);
+            auto state = std::make_shared<repl::ReplScreenState>();
+            state->task_view_store.spinner_mode = spinner;
+            drender::register_default_renderers(state->dialog_store.dialog_renderers);
+
+            std::optional<Decision> response;
+            dsys::ToolPermissionPayload permission;
+            permission.id = "spinner-permission";
+            permission.tool_name = "Write";
+            permission.description = "PermissionSpinnerRegression";
+            permission.on_response = [&](Decision decision, bool) {
+                response = decision;
+            };
+            state->dialog_store.dialog_queue.push(
+                dsys::DialogPayloadVariant{std::move(permission)});
+
+            const auto rendered = strip_ansi(dialog_test_golden::render_to_ansi(
+                repl::RenderReplScreen(*state), 120, 40));
+            EXPECT_NE(rendered.find("Allow once"), std::string::npos) << rendered;
+            EXPECT_NE(rendered.find("Deny"), std::string::npos) << rendered;
+
+            auto component = repl::ReplScreen(state, {});
+            EXPECT_TRUE(component->OnEvent(ftxui::Event::Character(key)));
+            ASSERT_TRUE(response.has_value());
+            EXPECT_EQ(*response, key == 'y' ? Decision::AllowOnce : Decision::Deny);
+            EXPECT_TRUE(state->input_text.empty());
+        }
+    }
+}
+
+TEST(ReplScreenIntegration, PermissionSuppressionUsesActualToolAnimation) {
+    namespace repl = loom::ui::repl_screen;
+    using Decision = dsys::ToolPermissionPayload::Decision;
+
+    auto state = std::make_shared<repl::ReplScreenState>();
+    state->task_view_store.spinner_mode = repl::SpinnerMode::Hidden;
+    state->is_tool_animation_active = true;
+    drender::register_default_renderers(state->dialog_store.dialog_renderers);
+
+    bool responded = false;
+    dsys::ToolPermissionPayload permission;
+    permission.id = "animation-permission";
+    permission.tool_name = "Write";
+    permission.description = "PermissionAnimationRegression";
+    permission.on_response = [&](Decision, bool) { responded = true; };
+    state->dialog_store.dialog_queue.push(
+        dsys::DialogPayloadVariant{std::move(permission)});
+
+    const auto hidden = strip_ansi(dialog_test_golden::render_to_ansi(
+        repl::RenderReplScreen(*state), 120, 40));
+    EXPECT_EQ(hidden.find("Allow once"), std::string::npos);
+    auto component = repl::ReplScreen(state, {});
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('n')));
+    EXPECT_FALSE(responded);
+    EXPECT_EQ(state->input_text, "n");
+
+    state->input_text.clear();
+    state->is_prompt_input_active = false;
+    state->is_tool_animation_active = false;
+    const auto visible = strip_ansi(dialog_test_golden::render_to_ansi(
+        repl::RenderReplScreen(*state), 120, 40));
+    EXPECT_NE(visible.find("Allow once"), std::string::npos) << visible;
+    EXPECT_NE(visible.find("Deny"), std::string::npos) << visible;
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('n')));
+    EXPECT_TRUE(responded);
+    EXPECT_TRUE(state->input_text.empty());
 }
 
 

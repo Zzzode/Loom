@@ -1,7 +1,6 @@
 /// @file api_error_message.cppm
-/// @brief API-level error card — severity-coded border colors, error code,
-/// message, monospace copyable trace-id, optional retry countdown, and
-/// Retry / Diagnose / Dismiss action buttons.
+/// @brief Model-request failure with a clear origin, diagnostic details,
+/// and request-scoped recovery actions.
 module;
 
 #include <cstdint>
@@ -17,6 +16,9 @@ export module loom.ui.messages.api_error_message;
 import loom.ui.foundation.theme_provider;
 
 import std;
+import loom.ui.messages.message_components;
+
+import loom.ui.foundation.design_figures;
 
 export namespace loom::ui::messages::api_error_message {
 using namespace ftxui;
@@ -69,7 +71,7 @@ struct APIErrorOptions {
     bool dismissible{true};
     bool copyable_trace{true};
 
-    std::function<void()> on_retry;         // Retry button — re-send last user message
+    std::function<void()> on_retry;         // Retry the failed model request
     std::function<void()> on_diagnose;      // Diagnose button
     std::function<void()> on_dismiss;       // Dismiss button
     std::function<void(const std::string&)> on_copy_trace;   // Copy trace id
@@ -109,15 +111,15 @@ struct ErrorPalette {
 [[nodiscard]] inline ErrorPalette palette(const APIErrorData& e) {
     switch (resolve_severity(e)) {
         case ErrorSeverity::Warning:
-            return {Color::Orange1, Color::Orange1, Color::Yellow,
-                    loom::ui::design::theme::current_theme().palette->warning_tint_bg, "⚠"};
+            return {loom::ui::design::theme::current_theme().palette->warning, loom::ui::design::theme::current_theme().palette->warning, loom::ui::design::theme::current_theme().palette->warning,
+                    loom::ui::design::theme::current_theme().palette->warning_tint_bg, loom::ui::design::figures::kWarning.data()};
         case ErrorSeverity::Critical:
-            return {Color::DeepPink1Bis, Color::Red1, Color::Red1,
-                    loom::ui::design::theme::current_theme().palette->danger_tint_bg, "✖"};
+            return {loom::ui::design::theme::current_theme().palette->danger, loom::ui::design::theme::current_theme().palette->danger, loom::ui::design::theme::current_theme().palette->danger,
+                    loom::ui::design::theme::current_theme().palette->danger_tint_bg, loom::ui::design::figures::kCross.data()};
         case ErrorSeverity::Error:
         default:
-            return {Color::Red, Color::Red, Color::RedLight,
-                    loom::ui::design::theme::current_theme().palette->danger_tint_bg, "✗"};
+            return {loom::ui::design::theme::current_theme().palette->danger, loom::ui::design::theme::current_theme().palette->danger, loom::ui::design::theme::current_theme().palette->danger,
+                    loom::ui::design::theme::current_theme().palette->danger_tint_bg, loom::ui::design::figures::kCross.data()};
     }
 }
 
@@ -128,38 +130,28 @@ struct ErrorPalette {
 /// Render a single "pill" button: [<key> Label]
 [[nodiscard]] inline Element pill_button(const std::string& key_hint,
                                           const std::string& label,
-                                          Color c = Color::White) {
-    return hbox({
-        text("[") | dim,
-        text(key_hint) | color(c) | bold,
-        text(" " + label + "]") | dim,
-    }) | color(c);
+                                          Color c = loom::ui::design::theme::current_theme().palette->text) {
+    return message_key_hint(key_hint, label) | color(c);
 }
 
 /// Render the full error card (static element view)
-[[nodiscard]] inline Element RenderAPIError(const APIErrorOptions& opts) {
+[[nodiscard]] inline Element RenderAPIError(const APIErrorOptions& opts, bool keyboard_interactive = true) {
     const auto& e = opts.error;
     auto p = palette(e);
 
     Elements rows;
 
-    // --- Row 1: status code + provider + severity badge ---
+    // Identify the failing operation before its provider diagnostics.
     {
         Elements parts;
         parts.push_back(text(std::string(" ") + p.badge + " ") | bold | color(p.accent));
-        if (e.http_status) {
-            parts.push_back(
-                text(std::format("HTTP {}", *e.http_status)) | bold | color(p.title));
-            parts.push_back(text("  ·  ") | dim);
-        } else {
-            parts.push_back(text("ERROR") | bold | color(p.title));
-            parts.push_back(text("  ·  ") | dim);
-        }
-        if (!e.provider.empty()) parts.push_back(text(e.provider) | dim);
-        if (!e.error_code.empty()) {
-            if (!e.provider.empty()) parts.push_back(text(" · ") | dim);
-            parts.push_back(text(e.error_code) | color(p.accent) | bold);
-        }
+        parts.push_back(text("Model request failed") | bold | color(p.title));
+        if (e.http_status)
+            parts.push_back(text(std::format(" · HTTP {}", *e.http_status)) | color(p.title));
+        if (!e.provider.empty())
+            parts.push_back(text(" · " + e.provider) | color(loom::ui::design::theme::current_theme().palette->text_muted));
+        if (!e.error_code.empty())
+            parts.push_back(text(" · " + e.error_code) | color(p.accent));
         parts.push_back(filler());
         if (e.current_attempt && e.max_attempts) {
             parts.push_back(text(std::format(" attempt {}/{}",
@@ -169,20 +161,19 @@ struct ErrorPalette {
         rows.push_back(hbox(parts));
     }
 
-    // --- Row 2: separator ---
-    rows.push_back(separator());
-
     // --- Row 3: error message (collapsed / expanded body) ---
     {
         std::string body = e.message.empty()
             ? std::string("(no error message from provider)")
             : e.message;
-        if (e.collapsed && body.size() > e.max_chars_collapsed) {
-            body.resize(e.max_chars_collapsed);
-            body += std::format("… ({} chars hidden, press Enter to expand)",
-                                e.message.size() - e.max_chars_collapsed);
+        const auto hidden_chars = keyboard_interactive && e.collapsed && body.size() > e.max_chars_collapsed
+            ? body.size() - e.max_chars_collapsed : 0;
+        if (hidden_chars > 0) body.resize(e.max_chars_collapsed);
+        rows.push_back(paragraph(" " + body) | color(loom::ui::design::theme::current_theme().palette->text));
+        if (hidden_chars > 0) {
+            rows.push_back(hbox({text(std::format(" … {} chars hidden", hidden_chars)),
+                                 message_key_hint("Enter", "Show more")}));
         }
-        rows.push_back(paragraph(" " + body) | color(Color::GrayLight));
 
         if (e.truncated || e.response_bytes) {
             Elements warn;
@@ -220,56 +211,54 @@ struct ErrorPalette {
         std::string countdown_text = std::format(
             " Retrying in {} {}… (attempt {}/{})",
             secs_int, unit, *e.current_attempt, *e.max_attempts);
-        rows.push_back(text(countdown_text) | dim | color(Color::GrayLight));
+        rows.push_back(text(countdown_text) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted));
     }
     if (opts.show_trace_ids) {
         Elements ids;
         auto add_id = [&](const char* label, const std::string& val) {
             if (val.empty()) return;
             ids.push_back(text(std::format(" {}: ", label)) | dim);
-            ids.push_back(text(val) | color(Color::CyanLight) | bold);
+            ids.push_back(text(val) | color(loom::ui::design::theme::current_theme().palette->text_link) | bold);
         };
         add_id("trace-id",   e.trace_id);
         add_id("request-id", e.request_id);
         if (!ids.empty()) {
-            rows.push_back(separator());
             ids.insert(ids.begin(), text(" ") | dim);
-            if (opts.copyable_trace) {
+            if (keyboard_interactive && opts.copyable_trace && opts.on_copy_trace) {
                 ids.push_back(filler());
-                ids.push_back(text("[t] copy ") | dim | color(Color::GrayDark));
+                ids.push_back(message_key_hint("T", "Copy trace"));
             }
             rows.push_back(hbox(ids));
         }
     }
 
     // --- Row 5: Retry / Diagnose / Dismiss / Clear session action buttons ---
-    if (opts.show_buttons) {
+    if (keyboard_interactive && opts.show_buttons) {
         Elements bts;
         bts.push_back(text(" "));
-        if (opts.on_retry && !e.session_expired) {
-            bts.push_back(pill_button("r", "Retry", Color::Green));
+        if (opts.on_retry && !e.session_expired && e.http_status != 401 && e.http_status != 403) {
+            bts.push_back(pill_button("R", "Retry request", loom::ui::design::theme::current_theme().palette->success));
             bts.push_back(text("  "));
         }
         if (opts.on_clear_session && e.session_expired) {
-            bts.push_back(pill_button("c", "Clear session", Color::Yellow));
+            bts.push_back(pill_button("c", "Clear session", loom::ui::design::theme::current_theme().palette->warning));
             bts.push_back(text("  "));
         }
         if (opts.on_diagnose) {
-            bts.push_back(pill_button("d", "Diagnose", Color::BlueLight));
+            bts.push_back(pill_button("d", "Diagnose", loom::ui::design::theme::current_theme().palette->info));
             bts.push_back(text("  "));
         }
         if (opts.dismissible && opts.on_dismiss) {
-            bts.push_back(pill_button("q", "Dismiss", Color::GrayLight));
+            bts.push_back(pill_button("q", "Dismiss", loom::ui::design::theme::current_theme().palette->text_muted));
         }
-        bts.push_back(filler());
-        bts.push_back(text("enter: expand ") | dim | color(Color::GrayDark));
-        rows.push_back(separator());
-        rows.push_back(hbox(bts));
+        if (e.message.size() > e.max_chars_collapsed) {
+            bts.push_back(filler());
+            bts.push_back(message_key_hint("Enter/Space", e.collapsed ? "Expand" : "Collapse"));
+        }
+        if (bts.size() > 1) rows.push_back(hbox(bts));
     }
 
-    return vbox(rows) | bgcolor(p.body_bg)
-                      | borderRounded
-                      | color(p.border);
+    return vbox(rows);
 }
 
 // ============================================================
@@ -293,12 +282,13 @@ struct ErrorPalette {
               auto& o = s->opts;
               auto& e = o.error;
 
-              if (event == Event::Return || event == Event::Character(' ')) {
+              if ((event == Event::Return || event == Event::Character(' ')) &&
+                  e.message.size() > e.max_chars_collapsed) {
                   e.collapsed = !e.collapsed;
                   return true;
               }
               if (event == Event::Character('r') || event == Event::Character('R')) {
-                  if (o.on_retry && !e.session_expired) {
+                  if (o.on_retry && !e.session_expired && e.http_status != 401 && e.http_status != 403) {
                       o.on_retry();
                       return true;
                   }

@@ -23,6 +23,8 @@ export module loom.ui.prompt.placeholder_cascade;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.foundation.ui_types;  // PromptInputMode
 
 export namespace loom::ui::placeholder {
@@ -224,16 +226,16 @@ struct RenderedPlaceholder {
         const auto [first_ch, byte_len] = FirstUtf8Codepoint(*placeholder);
         if (!first_ch.empty()) {
             ph_parts.push_back(ftxui::text(first_ch) | inverted |
-                               color(Color::White));
+                               color(loom::ui::design::theme::current_theme().palette->text));
             const std::string rest(placeholder->substr(byte_len));
             if (!rest.empty()) {
                 ph_parts.push_back(ftxui::text(rest) | dim |
-                                   color(Color::GrayLight));
+                                   color(loom::ui::design::theme::current_theme().palette->suggestion));
             }
         } else {
             // Empty placeholder with cursor: show solid block.
             ph_parts.push_back(ftxui::text(" ") | inverted |
-                               color(Color::White));
+                               color(loom::ui::design::theme::current_theme().palette->text));
         }
     } else {
         // No cursor / not focused: dim the full placeholder text.

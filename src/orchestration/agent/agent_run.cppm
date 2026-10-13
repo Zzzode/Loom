@@ -89,7 +89,8 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
 
 [[nodiscard]] inline std::expected<AgentExecutionPlan, std::string> build_agent_execution_plan(
     const AgentToolRequest& request,
-    const AgentConfig& config
+    const AgentConfig& config,
+    const std::optional<std::string>& parent_model = std::nullopt
 ) {
     auto normalized_cwd = normalize_agent_cwd(request.cwd);
     if (!normalized_cwd) return std::unexpected(normalized_cwd.error());
@@ -130,7 +131,8 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     plan.description = request.description;
     plan.agent_type = definition.agent_type;
     plan.is_built_in = definition.source == "built-in";
-    plan.model = request.model.value_or(definition_model.value_or(config.default_model));
+    plan.model = request.model.value_or(definition_model.value_or(
+        resolve_agent_model(parent_model).value_or(config.default_model)));
     plan.system_prompt = definition.system_prompt.empty()
         ? built_in_system_prompt(definition.agent_type)
         : definition.system_prompt;

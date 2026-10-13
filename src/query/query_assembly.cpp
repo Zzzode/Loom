@@ -388,6 +388,7 @@ loom::core::Result<AssemblyHandle> assemble(
     // Step 5: ToolRegistry + runtime tools.
     impl->registry = std::make_unique<loom::core::ToolRegistry>();
     loom::tools::RuntimeToolOptions options;
+    options.default_model = config.engine.model_params.model;
     options.parent_permission_mode = std::nullopt;
     if (callbacks.permission_check) {
         options.permission_check = *callbacks.permission_check;

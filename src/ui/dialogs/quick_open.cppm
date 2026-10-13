@@ -96,6 +96,7 @@ using QuickOpenItem = dsys::QuickOpenItem;
     const dsys::QuickOpenPayload& p,
     const dsys::DialogRenderContext& ctx)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto filtered = filter_items(p.items, p.query);
     int count = static_cast<int>(filtered.size());
     int selected = p.selected_index;
@@ -131,6 +132,7 @@ using QuickOpenItem = dsys::QuickOpenItem;
         );
     } else {
         for (int i = start; i < end; ++i) {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             const auto& item = filtered[i];
             bool is_selected = (i == selected);
 
@@ -149,7 +151,7 @@ using QuickOpenItem = dsys::QuickOpenItem;
 
             // Item row
             auto prefix = is_selected
-                ? text("❯ ") | color(Color::Cyan)
+                ? text("❯ ") | color(pal.info)
                 : text("  ");
 
             auto label_el = is_selected
@@ -168,7 +170,7 @@ using QuickOpenItem = dsys::QuickOpenItem;
 
             auto row = hbox(std::move(row_els));
             if (is_selected) {
-                row = row | bgcolor(Color::BlueLight) | color(Color::White);
+                row = row | bgcolor(pal.surface_selected) | color(pal.text);
             }
             list_els.push_back(row);
 
@@ -213,7 +215,7 @@ using QuickOpenItem = dsys::QuickOpenItem;
         : text(p.query) | bold;
 
     auto search_row = hbox({
-        text("❯ ") | color(Color::Cyan),
+        text("❯ ") | color(pal.info),
         query_display,
         filler(),
         text(std::to_string(count) + " results") | dim,
@@ -237,7 +239,6 @@ using QuickOpenItem = dsys::QuickOpenItem;
     props.inner_padding_x = 1;
     props.inner_padding_y = 1;
     props.full_border = true;
-    props.rounded = true;
     props.pane_variant = dframe::PaneVariant::ModalMinimal;
 
     // Prefer ModalContext dimensions.

@@ -17,6 +17,8 @@ export module loom.ui.messages.message_user_command;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 export namespace loom::ui::messages::user_command {
 using namespace ftxui;
 
@@ -35,7 +37,7 @@ struct UserCommandData {
 
     if (data.is_skill_format) {
         elements.push_back(hbox({
-            text("❯ ") | color(Color::GrayDark),
+            text("❯ ") | color(loom::ui::design::theme::current_theme().palette->muted),
             text("Skill(") | dim,
             text(data.command_name) | bold,
             text(")") | dim,
@@ -43,19 +45,19 @@ struct UserCommandData {
     } else {
         // Command line:  $ /name arg1 arg2 ...
         Elements cmd_parts;
-        cmd_parts.push_back(text("$ ") | bold | color(Color::Green));
+        cmd_parts.push_back(text("$ ") | bold | color(loom::ui::design::theme::current_theme().palette->primary));
         cmd_parts.push_back(text("/" + data.command_name)
-                                | bold | color(Color::Green));
+                                | bold | color(loom::ui::design::theme::current_theme().palette->primary));
 
         for (const auto& arg : data.args) {
-            cmd_parts.push_back(text(" " + arg) | color(Color::White));
+            cmd_parts.push_back(text(" " + arg) | color(loom::ui::design::theme::current_theme().palette->text));
         }
         elements.push_back(hbox(cmd_parts));
     }
 
     // Output
     if (data.output && !data.output->empty()) {
-        auto output_color = data.success ? Color::GrayLight : Color::Red;
+        auto output_color = data.success ? loom::ui::design::theme::current_theme().palette->text : loom::ui::design::theme::current_theme().palette->danger;
 
         // Split output into lines, limit display
         std::string_view out = *data.output;
@@ -109,17 +111,17 @@ class UserCommandMessageComponent : public ComponentBase {
         Elements header_parts;
         if (data_.is_skill_format) {
             header_parts.push_back(hbox({
-                text("❯ ") | color(Color::GrayDark),
+                text("❯ ") | color(loom::ui::design::theme::current_theme().palette->muted),
                 text("Skill(") | dim,
                 text(data_.command_name) | bold,
                 text(")") | dim,
             }));
         } else {
-            header_parts.push_back(text("$ ") | bold | color(Color::Green));
+            header_parts.push_back(text("$ ") | bold | color(loom::ui::design::theme::current_theme().palette->primary));
             header_parts.push_back(text("/" + data_.command_name)
-                                       | bold | color(Color::Green));
+                                       | bold | color(loom::ui::design::theme::current_theme().palette->primary));
             for (const auto& a : data_.args)
-                header_parts.push_back(text(" " + a) | color(Color::White));
+                header_parts.push_back(text(" " + a) | color(loom::ui::design::theme::current_theme().palette->text));
         }
 
         auto full_cmd = BuildFullCommand();
@@ -127,12 +129,12 @@ class UserCommandMessageComponent : public ComponentBase {
             hbox(std::move(header_parts)) | flex,
             filler(),
             copy_btn_->Render(),
-        }) | color(Color::GreenLight);
+        }) | color(loom::ui::design::theme::current_theme().palette->primary);
 
         // Output section
         Elements output_rows;
         if (data_.output && !data_.output->empty()) {
-            auto output_color = data_.success ? Color::GrayLight : Color::Red;
+            auto output_color = data_.success ? loom::ui::design::theme::current_theme().palette->text : loom::ui::design::theme::current_theme().palette->danger;
             std::string_view out = *data_.output;
             const int max_lines = show_all_output_ ? INT32_MAX : 10;
             size_t pos = 0;
@@ -166,7 +168,7 @@ class UserCommandMessageComponent : public ComponentBase {
             all.push_back(separatorEmpty());
             all.push_back(vbox(std::move(output_rows)));
         }
-        return vbox(std::move(all)) | borderLight | color(Color::GreenLight);
+        return vbox(std::move(all)) | borderLight | color(loom::ui::design::theme::current_theme().palette->primary);
     }
 
     bool OnEvent(Event event) override {

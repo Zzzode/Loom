@@ -16,6 +16,10 @@ module loom.ui.messages.message_row;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.messages.message_components;
 import loom.ui.messages.message_timestamp;
 
@@ -64,7 +68,7 @@ using namespace ftxui;
     // ---------------------------------------------------------------------
     if (shape == S::UserText) {
         auto data = std::get_if<UserTextMessageData>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for UserText"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for UserText")); });
         return MakeUserTextMessage(*data,
             std::move(callbacks.on_copy),
             std::move(callbacks.on_click));
@@ -72,21 +76,21 @@ using namespace ftxui;
 
     if (shape == S::UserCommand) {
         auto data = std::get_if<user_command::UserCommandData>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for UserCommand"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for UserCommand")); });
         return user_command::MakeUserCommandMessage(*data,
             std::move(callbacks.on_copy));
     }
 
     if (shape == S::UserBashInput || shape == S::UserBashOutput) {
         auto data = std::get_if<BashIOEntry>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for BashIO"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for BashIO")); });
         return ftxui::Renderer([d = *data] { return render_bash_io(d); });
     }
 
     // Faithful: UserLocalCommandOutput — ⎿ prefix + ANSI passthrough, no line numbers, no borders.
     if (shape == S::UserLocalCommandOutput) {
         auto data = std::get_if<local_cmd::LocalCommandOptions>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for LocalCmd"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for LocalCmd")); });
         auto d = *data;
         return ftxui::Renderer([d] {
             return local_cmd::RenderLocalCommandOutputFaithful(d);
@@ -96,7 +100,7 @@ using namespace ftxui;
     // UI5: UserAttachments — card grid with pagination + ASCII thumbnails
     if (shape == S::UserAttachments) {
         auto data = std::get_if<attachment_message::AttachmentGridOptions>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for Attachments"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for Attachments")); });
         return attachment_message::AttachmentGrid(*data);
     }
 
@@ -105,7 +109,7 @@ using namespace ftxui;
         shape == S::UserMemoryInput || shape == S::UserResourceUpdate) {
         // All share the user_message base module.  Add a flavoured prefix.
         auto data = std::get_if<UserMessageData>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for user-flavour"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for user-flavour")); });
         std::string tag;
         switch (shape) {
             case S::UserTeammate:          tag = "[teammate] "; break;
@@ -131,7 +135,7 @@ using namespace ftxui;
         if (!data) {
             return ftxui::Renderer([] {
                 return vbox({
-                    text("⚡ Tool result") | color(Color::Cyan),
+                    text((std::string(loom::ui::design::figures::kLightningBolt) + " Tool result")) | color(loom::ui::design::theme::current_theme().palette->info),
                     text("(detailed view → UI5 message_tool_result)") | dim,
                 });
             });
@@ -144,7 +148,7 @@ using namespace ftxui;
     // ---------------------------------------------------------------------
     if (shape == S::AssistantText) {
         auto data = std::get_if<AssistantTextMessageData>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for AsstText"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for AsstText")); });
         return MakeAssistantTextMessage(*data,
             std::move(callbacks.on_copy),
             std::move(callbacks.on_regenerate),
@@ -156,22 +160,22 @@ using namespace ftxui;
     // ---------------------------------------------------------------------
     if (shape == S::AssistantToolUse) {
         auto data = std::get_if<tool_use_message::ToolUseRenderOptions>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for AsstToolUse"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for AsstToolUse")); });
         return tool_use_message::ToolUseMessage(*data);
     }
     if (shape == S::AssistantGroupedTools) {
         auto data = std::get_if<tool_use_message::GroupedToolsOptions>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for AsstGroupedTools"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for AsstGroupedTools")); });
         return tool_use_message::GroupedToolsComponent(*data);
     }
     if (shape == S::AssistantThinking) {
         auto data = std::get_if<thinking_message::ThinkingMessageOptions>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for AsstThinking"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for AsstThinking")); });
         return thinking_message::ThinkingMessage(*data);
     }
     if (shape == S::AssistantRedactedThinking) {
         auto data = std::get_if<thinking_message::ThinkingMessageOptions>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for RedactedThinking"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for RedactedThinking")); });
         return thinking_message::ThinkingMessage(*data);
     }
 
@@ -180,13 +184,13 @@ using namespace ftxui;
     // ---------------------------------------------------------------------
     if (shape == S::SystemText) {
         auto data = std::get_if<SystemTextMessageData>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for SystemText"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for SystemText")); });
         return MakeSystemTextMessage(*data, std::move(callbacks.on_toggle));
     }
 
     if (shape == S::SystemRateLimit) {
         auto data = std::get_if<RateLimitInfo>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for RateLimit"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for RateLimit")); });
         return MakeRateLimitMessage(*data,
             std::move(callbacks.on_retry),
             std::move(callbacks.on_rate_limit_opts));
@@ -194,7 +198,7 @@ using namespace ftxui;
 
     if (shape == S::SystemPlanApproval) {
         auto data = std::get_if<PlanApprovalOptions>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for PlanApproval"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for PlanApproval")); });
         return MakePlanApprovalMessage(*data,
             std::move(callbacks.on_approve),
             std::move(callbacks.on_modify),
@@ -203,13 +207,13 @@ using namespace ftxui;
 
     if (shape == S::SystemHookProgress) {
         auto data = std::get_if<std::vector<HookProgressEntry>>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for HookProgress"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for HookProgress")); });
         return MakeHookProgressMessage(*data, std::move(callbacks.on_dismiss));
     }
 
     if (shape == S::SystemShutdown) {
         auto data = std::get_if<shutdown::ShutdownMessageData>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for Shutdown"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for Shutdown")); });
         return shutdown::MakeShutdownMessage(*data,
             std::move(callbacks.on_resume),
             std::move(callbacks.on_new_session));
@@ -227,7 +231,7 @@ using namespace ftxui;
 
     if (shape == S::SystemAdvisor) {
         auto data = std::get_if<AdvisorMessage>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for Advisor"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for Advisor")); });
         return MakeAdvisorMessage(*data,
             std::move(callbacks.on_dismiss),
             std::move(callbacks.on_action));
@@ -236,7 +240,7 @@ using namespace ftxui;
     if (shape == S::SystemTaskAssignment) {
         return ftxui::Renderer([] {
             return vbox({
-                text("📋 task assignment") | color(Color::Cyan),
+                text((std::string(loom::ui::design::figures::kSquare) + " task assignment")) | color(loom::ui::design::theme::current_theme().palette->info),
                 text("(rendered by message_task_assignment.cppm)") | dim,
             });
         });
@@ -244,20 +248,20 @@ using namespace ftxui;
 
     if (shape == S::SystemAPIError) {
         auto data = std::get_if<api_error_message::APIErrorOptions>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for API error"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for API error")); });
         return api_error_message::APIErrorMessage(*data);
     }
 
     if (shape == S::SystemCollapsedContent) {
         auto data = std::get_if<collapsed_content::CollapsedContentOptions>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for CollapsedContent"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for CollapsedContent")); });
         return collapsed_content::CollapsedContentMessage(*data);
     }
 
     if (shape == S::UserChannel) {
         return ftxui::Renderer([] {
             return vbox({
-                text("📡 channel message") | color(Color::Magenta),
+                text((std::string(loom::ui::design::figures::kChannelArrow) + " channel message")) | color(loom::ui::design::theme::current_theme().palette->primary),
                 text("(rendered by message_channel.cppm)") | dim,
             });
         });
@@ -265,7 +269,7 @@ using namespace ftxui;
 
     if (shape == S::UserImage) {
         auto data = std::get_if<image::ImageMessageData>(&payload);
-        if (!data) return ftxui::Renderer([=] { return text("⚠ message_row: bad payload for UserImage"); });
+        if (!data) return ftxui::Renderer([=] { return text((std::string(loom::ui::design::figures::kWarning) + " message_row: bad payload for UserImage")); });
         return image::MakeImageMessage(*data,
             std::move(callbacks.on_click),
             std::move(callbacks.on_copy));
@@ -274,7 +278,7 @@ using namespace ftxui;
     // Unknown / future shape
     return ftxui::Renderer([shape] {
         return vbox({
-            text("? " + std::string(MessageShapeToString(shape))) | color(Color::Yellow),
+            text("? " + std::string(MessageShapeToString(shape))) | color(loom::ui::design::theme::current_theme().palette->warning),
             text("(no renderer registered — message_row.cppm needs update)") | dim,
         });
     });

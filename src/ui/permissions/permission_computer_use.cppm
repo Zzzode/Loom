@@ -8,6 +8,7 @@ module;
 export module loom.ui.permissions.permission_computer_use;
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 import loom.types.types;
 import loom.serdes.json;
@@ -105,10 +106,11 @@ options_from_tool_input(std::string_view input_json) {
 
 /// Render computer use permission request
 [[nodiscard]] inline Element render_computer_use_permission(const ComputerUsePermissionOptions& opts) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     std::vector<Element> elements;
 
     elements.push_back(hbox({
-        text("COMPUTER USE") | bold | color(Color::Magenta),
+        text("COMPUTER USE") | bold | color(pal.primary),
         text(": "),
         text(std::string(action_description(opts.action))),
     }));
@@ -126,7 +128,7 @@ options_from_tool_input(std::string_view input_json) {
 
     if (opts.first_use_in_session) {
         elements.push_back(separator());
-        elements.push_back(text("  First computer use in this session") | color(Color::Yellow));
+        elements.push_back(text("  First computer use in this session") | color(pal.warning));
     }
 
     return vbox(elements);

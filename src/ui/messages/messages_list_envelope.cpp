@@ -13,6 +13,7 @@ import loom.ui.foundation.theme_provider;
 
 import std;
 
+import loom.ui.messages.message_components;
 import loom.ui.messages.message_row;
 import loom.ui.messages.message_timestamp;
 import loom.ui.foundation.design_figures;
@@ -39,15 +40,15 @@ auto role_emoji(MessageShape s) -> const char* {
         case MessageShape::UserImage:
         case MessageShape::UserAttachments:
         case MessageShape::UserChannel:
-            return "👤";
+            return loom::ui::design::figures::kPointer.data();
         case MessageShape::AssistantText:
-            return "🤖";
+            return loom::ui::design::figures::kBullet.data();
         case MessageShape::AssistantToolUse:
         case MessageShape::AssistantGroupedTools:
-            return "🛠";
+            return loom::ui::design::figures::kSquare.data();
         case MessageShape::AssistantThinking:
         case MessageShape::AssistantRedactedThinking:
-            return "🌱";
+            return loom::ui::design::figures::kDiamondOpen.data();
         case MessageShape::SystemText:
         case MessageShape::SystemCompactBoundary:
         case MessageShape::SystemAdvisor:
@@ -57,9 +58,9 @@ auto role_emoji(MessageShape s) -> const char* {
         case MessageShape::SystemCollapsedContent:
         case MessageShape::SystemPlanApproval:
         case MessageShape::SystemRateLimit:
-            return "⚙";
+            return loom::ui::design::figures::kInfo.data();
         case MessageShape::SystemAPIError:
-            return "⚠";
+            return loom::ui::design::figures::kWarning.data();
     }
     return "•";
 }
@@ -195,7 +196,7 @@ auto spinner_glyph(std::size_t frame) -> const char* {
     Element avatar = hbox({
         text(" "),
         hbox({ text(emoji), text(" "), text(first_letter) })
-            | bgcolor(pill_col) | color(Color::White) | bold | center,
+            | bgcolor(pill_col) | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bold | center,
         filler(),
     }) | size(WIDTH, EQUAL, 10);   // 10-cell avatar block
 
@@ -203,7 +204,7 @@ auto spinner_glyph(std::size_t frame) -> const char* {
     Elements header_els;
     header_els.push_back(
         hbox({ text(" "), text(label), text(" ") })
-            | color(Color::White) | bgcolor(pill_col) | bold);
+            | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bgcolor(pill_col) | bold);
     header_els.push_back(text("  "));
     header_els.push_back(text(render_timestamp(opts.timestamp)) | color(muted_fg()));
 
@@ -217,12 +218,12 @@ auto spinner_glyph(std::size_t frame) -> const char* {
         }
         case EnvelopeStatusBadge::Done:
             header_els.push_back(hbox({ text("  "),
-                hbox({ text("✓ "), text("done") }) | color(Color::Green) }));
+                hbox({ text((std::string(loom::ui::design::figures::kTick) + " ")), text("done") }) | color(loom::ui::design::theme::current_theme().palette->success) }));
             break;
         case EnvelopeStatusBadge::Error:
             header_els.push_back(hbox({ text("  "),
                 hbox({ text("! "), text("error") })
-                    | color(Color::White) | bgcolor(accent_top_error()) | bold }));
+                    | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bgcolor(accent_top_error()) | bold }));
             break;
         case EnvelopeStatusBadge::Redacted:
             header_els.push_back(hbox({ text("  "),
@@ -233,7 +234,7 @@ auto spinner_glyph(std::size_t frame) -> const char* {
     }
     if (opts.show_dismiss) {
         header_els.push_back(filler());
-        header_els.push_back(text(" ✕") | color(muted_fg()));
+        header_els.push_back(text((" " + std::string(loom::ui::design::figures::kCross))) | color(muted_fg()));
     } else {
         header_els.push_back(filler());
     }
@@ -400,7 +401,7 @@ namespace detail {
 
     const std::string title = std::to_string(hidden_count) +
         " older message" + (hidden_count == 1 ? "" : "s") +
-        " hidden · Ctrl+E to show all";
+        " hidden";
     const Color line_color = muted_fg();
 
     const std::string dash = "─";
@@ -409,11 +410,9 @@ namespace detail {
     for (int i = 0; i < 160; ++i) long_line += dash;
     Elements parts;
     parts.push_back(text("───") | color(line_color));
-    parts.push_back(hbox({
-        text(" "),
-        text(title) | color(line_color),
-        text(" "),
-    }));
+    parts.push_back(text(" " + title) | color(line_color) | xflex);
+    parts.push_back(loom::ui::messages::message_key_hint("Ctrl+E", "Show all messages"));
+    parts.push_back(text(" "));
     parts.push_back(text(long_line) | xflex | color(line_color));
     return vbox({
         separatorEmpty(),
@@ -442,14 +441,14 @@ auto render_compact_group_row(const VisibleRow& vr,
                                      bool is_selected) -> Element
 {
     std::ostringstream label;
-    label << "[📦 " << vr.group_count << " messages collapsed";
+    label << ("[" + std::string(loom::ui::design::figures::kSquare) + " ") << vr.group_count << " messages collapsed";
     if (vr.tool_turns > 0) label << " in " << vr.tool_turns << " tool turns";
     if (vr.additions || vr.deletions) {
         label << ": +" << vr.additions << " add";
         if (vr.deletions) label << ", -" << vr.deletions << " delete";
     }
-    label << "]  ";
-    label << "(Space / Enter to expand)";
+    // This read-only compact summary has no screen-level expand handler.
+    label << "]";
 
     Element body = text(label.str())
         | color(palette::muted_fg()) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
@@ -457,7 +456,7 @@ auto render_compact_group_row(const VisibleRow& vr,
         body = std::move(body) | inverted | bgcolor(palette::selected_bg());
     }
     return vbox({
-        separator() | color(Color::RGB(60, 60, 70)),
+        separator() | color(loom::ui::design::theme::current_theme().palette->border_subtle),
         hbox({ text(" "), std::move(body), filler() }),
     });
 }
@@ -572,10 +571,8 @@ auto render_compressed_chain_row(const VisibleRow& vr,
 
     // Expand/collapse hint.
     const bool expanded = vr.chain_is_expanded;
-    label << (expanded ? "  (click to collapse)" : "  (click to expand)");
-
     Element body = text(label.str())
-        | color(palette::muted_fg()) | dim;
+        | color(palette::muted_fg()) | dim | xflex;
     if (is_selected) {
         body = std::move(body) | inverted | bgcolor(palette::selected_bg());
     }
@@ -590,12 +587,13 @@ auto render_compressed_chain_row(const VisibleRow& vr,
     // instead of showing a spinner glyph.
     const bool blink_off = live && (frame_count % 10 >= 5);
     Element dot = text(blink_off ? " " : "●")
-                  | dim | color(Color::GrayDark);
+                  | dim | color(loom::ui::design::theme::current_theme().palette->muted);
     Element row = hbox({
         std::move(dot),
         text(" "),
         std::move(body),
-        filler(),
+        text(" "),
+        loom::ui::messages::message_action(expanded ? "Hide details" : "Show details"),
     });
     if (expanded) {
         return std::move(row) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
@@ -608,7 +606,7 @@ auto render_compressed_chain_row(const VisibleRow& vr,
 /// copy; real per-row substring highlighting is a UI17 deliverable.)
 auto render_empty_state(const std::string& search_query) -> Element {
     Elements lines = {
-        text("🗑️  No messages match the current filters")
+        text((std::string(loom::ui::design::figures::kInfo) + "  No messages match the current filters"))
             | color(palette::empty_state_fg()) | center | bold,
         separatorEmpty(),
         text("Try clearing filters or search query")

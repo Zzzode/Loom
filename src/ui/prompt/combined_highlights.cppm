@@ -369,7 +369,7 @@ inline void add_rainbow_shimmer_highlights(
         highlights.push_back(TextHighlight{
             .start = ctx.cursor_offset,
             .end = ctx.cursor_offset + query_len,
-            .color = Color::Yellow,
+            .color = loom::ui::design::theme::current_theme().palette->primary,
             .dim = false,
             .inverse = false,
             .shimmer_color = std::nullopt,
@@ -383,7 +383,7 @@ inline void add_rainbow_shimmer_highlights(
         highlights.push_back(TextHighlight{
             .start = trigger.start,
             .end = trigger.end,
-            .color = Color::Yellow,
+            .color = loom::ui::design::theme::current_theme().palette->primary,
             .dim = false,
             .inverse = false,
             .shimmer_color = std::nullopt,
@@ -397,7 +397,7 @@ inline void add_rainbow_shimmer_highlights(
         highlights.push_back(TextHighlight{
             .start = trigger.start,
             .end = trigger.end,
-            .color = Color::Blue,
+            .color = loom::ui::design::theme::current_theme().palette->primary,
             .dim = false,
             .inverse = false,
             .shimmer_color = std::nullopt,
@@ -412,7 +412,7 @@ inline void add_rainbow_shimmer_highlights(
             highlights.push_back(TextHighlight{
                 .start = trigger.start,
                 .end = trigger.end,
-                .color = Color::Blue,
+                .color = loom::ui::design::theme::current_theme().palette->primary,
                 .dim = false,
                 .inverse = false,
                 .shimmer_color = std::nullopt,

@@ -6,8 +6,7 @@
 #
 # Grouped by MODULE-NAME area (export module loom.ui.foundation.*), not by
 # directory — name/path decoupling means the grouping rule is stated, not
-# inferred from the tree. Foundation is UI9_RANK 2 (a leaf; only visual/tools
-# rank lower), so it links no other loom_ui_<area> library.
+# inferred from the tree. Foundation is UI9_RANK 1 (a leaf, alongside tools), so it links no other loom_ui_<area> library.
 add_library(loom_ui_foundation)
 target_sources(loom_ui_foundation
     PUBLIC FILE_SET CXX_MODULES FILES
@@ -26,6 +25,7 @@ target_sources(loom_ui_foundation
 # so the inline-def ratchet sees zero inline bodies in the interface.
 target_sources(loom_ui_foundation PRIVATE
     ui/foundation/clock.cpp
+    ui/foundation/design_tokens.cpp
 )
 # External deps only: loom.vim.vim_types (ui_types.cppm) + FTXUI. loom_std's
 # `import std;` BMI arrives via the directory-level link_libraries(loom_std).

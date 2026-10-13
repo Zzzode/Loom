@@ -19,9 +19,27 @@ import loom.crypto.crypto;
 
 namespace loom::ui {
 
+PasteCoordinator::PasteCoordinator(ImageReader read_image)
+    : read_image_(std::move(read_image)) {}
+
+PasteCoordinator::~PasteCoordinator() {
+    Stop();
+}
+
+void PasteCoordinator::Stop() {
+    stopped_ = true;
+    // Platform clipboard reads do not support cancellation. Join while the
+    // result mutex, storage, and owner callback dependencies are still alive.
+    workers_.clear();
+}
+
 void PasteCoordinator::SpawnPasteWorker(int id,
                                         std::function<void()> post_render,
                                         bool no_real_paste_worker) {
+    if (stopped_) return;
+    std::erase_if(workers_, [](const Worker& worker) {
+        return worker.completed->load(std::memory_order_acquire);
+    });
     // Mark this id as in-flight (main thread — only main thread touches
     // in_flight_pastes_). Cleared by ProcessCompletedPastes when the
     // result/failure lands.
@@ -43,15 +61,13 @@ void PasteCoordinator::SpawnPasteWorker(int id,
         return;
     }
 
-    // Capture only what the thread needs by value.  `this` is safe
-    // because AppAdapter outlives any paste worker (the app object
-    // lives for the whole session).
-    std::thread([this, id, post_render = std::move(post_render)]() {
+    auto completed = std::make_shared<std::atomic<bool>>(false);
+    std::jthread thread([this, id, post_render = std::move(post_render), completed]() {
         // Skip has_image() — it costs an extra 600ms osascript call.
         // Just try read_image_png() directly; it returns nullopt if
         // there's no image in the clipboard.  This cuts total paste
         // latency from ~1.3s (2 osascript calls) to ~650ms (1 call).
-        auto png = loom::utils::clipboard::read_image_png();
+        auto png = read_image_ ? read_image_() : loom::utils::clipboard::read_image_png();
         if (!png || png->empty()) {
             // No image in clipboard — try reading plain text instead.
             std::string clip_text = loom::utils::clipboard::read_text();
@@ -63,6 +79,7 @@ void PasteCoordinator::SpawnPasteWorker(int id,
                 pending_paste_failures_.insert(id);
             }
             post_render();
+            completed->store(true, std::memory_order_release);
             return;
         }
         // Build the loom::core::ImageBlock on the worker thread (base64 encode can
@@ -88,7 +105,9 @@ void PasteCoordinator::SpawnPasteWorker(int id,
             pending_paste_results_[id] = std::move(ib);
         }
         post_render();
-    }).detach();
+        completed->store(true, std::memory_order_release);
+    });
+    workers_.push_back({std::move(thread), std::move(completed)});
 }
 
 }  // namespace loom::ui

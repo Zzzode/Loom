@@ -408,6 +408,73 @@ TEST(MarkdownRender, StreamingMatchesFullRender) {
         << "  full:   " << full_out;
 }
 
+TEST(MarkdownRender, StreamingPrefixesPreserveFullDocumentLayout) {
+    const std::vector<std::vector<std::string>> documents{
+        {"# Heading\n\nBody", "# Heading\n\nBody\n\nTail"},
+        {"1. first\n\n1. second", "1. first\n\n1. second\n\nAfter"},
+        {"- first\n\n  continuation", "- first\n\n  continuation\n\nAfter"},
+        {"~~~\na\n\nb", "~~~\na\n\nb\n~~~\n"},
+        {"  ```\na\n\nb", "  ```\na\n\nb\n  ```\n"},
+        {"````\na\n```\n\nb", "````\na\n```\n\nb\n````\n"},
+        {"[reference][id]", "[reference][id]\n\n[id]: https://example.com"},
+        {"Body[^n]", "Body[^n]\n\n[^n]: Footnote"},
+        {"# Heading\n\n| a | b |\n|---|---|\n| first | second |",
+         "# Heading\n\n| a | b |\n|---|---|\n| first | second |\n| longer | value |"},
+        {"> quote\n> continued", "> quote\n> continued\n\nAfter"}};
+    for (int width : {24, 80}) {
+        for (const auto& prefixes : documents) {
+            StreamingMarkdown streaming;
+            for (const auto& prefix : prefixes) {
+                SCOPED_TRACE(std::to_string(width) + ": " + prefix);
+                auto live = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                                 ftxui::Dimension::Fixed(80));
+                auto final = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                                  ftxui::Dimension::Fixed(80));
+                ftxui::Render(live, streaming.update(prefix));
+                ftxui::Render(final, render_markdown(prefix));
+                // Compare exact rows and styles, not whitespace-normalized text.
+                EXPECT_EQ(live.ToString(), final.ToString());
+            }
+        }
+    }
+}
+
+TEST(MarkdownRender, StreamingLongDocumentKeepsFullLayout) {
+    std::string document;
+    for (int section = 0; section < 120; ++section) {
+        document += "## Section " + std::to_string(section) +
+            "\n\nA completed paragraph with **emphasis**, `inline code`, and words "
+            "that wrap across the terminal viewport. Keep every word readable.\n\n";
+    }
+    StreamingMarkdown streaming;
+    std::int64_t total_us = 0;
+    std::int64_t max_us = 0;
+    int frames = 0;
+    for (std::size_t size = 128; size < document.size(); size += 128) {
+        const auto started = std::chrono::steady_clock::now();
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
+                                           ftxui::Dimension::Fixed(40));
+        ftxui::Render(screen, streaming.update(std::string_view(document).substr(0, size)));
+        const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::steady_clock::now() - started).count();
+        total_us += elapsed;
+        max_us = std::max(max_us, elapsed);
+        ++frames;
+    }
+    auto live = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
+                                     ftxui::Dimension::Fixed(600));
+    auto final = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
+                                      ftxui::Dimension::Fixed(600));
+    ftxui::Render(live, streaming.update(document));
+    ftxui::Render(final, render_markdown(document));
+    EXPECT_EQ(live.ToString(), final.ToString());
+    RecordProperty("streaming_document_bytes", static_cast<int>(document.size()));
+    RecordProperty("streaming_mean_frame_us", static_cast<int>(total_us / frames));
+    RecordProperty("streaming_max_frame_us", static_cast<int>(max_us));
+    std::cout << "Streaming document: " << document.size() << " bytes, " << frames
+              << " frames, mean " << total_us / frames << " us, max " << max_us << " us\n";
+}
+
 TEST(MarkdownRender, StreamingIncrementalNoLoss) {
     // Feeding content in chunks should produce the same final text as
     // feeding the full content at once.
@@ -441,35 +508,23 @@ TEST(MarkdownRender, StreamingIncrementalNoLoss) {
         << "  full:    " << full_out;
 }
 
-TEST(MarkdownRender, StreamingStablePrefix) {
-    // After each chunk, the stable prefix length should be non-decreasing.
-    // The stable prefix covers complete blocks (paragraphs separated by
-    // double newlines); it grows as more block boundaries are seen.
-    std::string full =
-        "First paragraph.\n\nSecond paragraph with **bold** text.\n\nThird.";
-    std::vector<std::string> chunks = {
-        "First paragraph.\n\nSecond paragraph with **bold** text.",
-        "\n\nThird.",
-    };
-
-    StreamingMarkdown sm;
-    std::size_t prev_stable = 0;
-    std::string accumulated;
-    for (const auto& chunk : chunks) {
-        accumulated += chunk;
-        sm.update(accumulated);
-        std::size_t stable = sm.stable_length();
-        EXPECT_GE(stable, prev_stable)
-            << "stable prefix length decreased from " << prev_stable
-            << " to " << stable;
-        prev_stable = stable;
+TEST(MarkdownRender, StreamingRepeatedFramesResizeReplaceAndReset) {
+    StreamingMarkdown streaming;
+    const std::vector<std::string> documents{
+        "# Heading\n\nA long paragraph with **bold text** that wraps repeatedly.",
+        "# Heading\n\nReplacement", ""};
+    for (const auto& document : documents) {
+        for (int width : {24, 80, 24}) {
+            auto live = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                             ftxui::Dimension::Fixed(40));
+            auto final = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                              ftxui::Dimension::Fixed(40));
+            ftxui::Render(live, streaming.update(document));
+            ftxui::Render(final, render_markdown(document));
+            EXPECT_EQ(live.ToString(), final.ToString());
+        }
     }
-    // After the full content, the stable prefix should cover the first
-    // two paragraphs (the double-newline boundaries).
-    EXPECT_GT(sm.stable_length(), 0u)
-        << "stable prefix is empty after full content";
-    // The stable prefix should include the first paragraph boundary.
-    EXPECT_GE(sm.stable_length(),
-              std::string("First paragraph.\n\n").size())
-        << "stable prefix did not advance past the first paragraph boundary";
+    streaming.reset();
+    EXPECT_EQ(render_row(streaming.update(documents.front())),
+              render_row(render_markdown(documents.front())));
 }

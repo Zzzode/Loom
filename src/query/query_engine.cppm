@@ -237,10 +237,13 @@ using StreamCallback = std::function<void(const StreamEvent&)>;
 struct QueryOptions {
     std::optional<StreamCallback> on_event;        // Per-event callback
     bool include_thinking = true;                   // Include thinking in response
-    std::optional<std::uint32_t> max_tool_rounds;  // Limit tool-call iterations
+    // Preserve non-interactive defaults; nullopt disables the streaming budget.
+    std::optional<std::uint32_t> max_tool_rounds{20};
     std::vector<std::string> enabled_tools;        // Subset of tools to enable
     std::optional<std::string> prompt_uuid;        // UUID for this prompt
     bool is_meta = false;                           // Whether this is a meta prompt
+    // Resume a failed or budget-paused request from committed messages/results.
+    bool resume_from_conversation = false;
     // AT-02: materialized @-mention file attachments (TextBlock/ImageBlock/...).
     // stream_query appends these to the user message content after the text
     // block so the model actually sees file contents (the engine previously
@@ -352,6 +355,13 @@ public:
 
     /// Reset the abort flag for new queries
     void reset_abort() noexcept { aborted_.store(false); }
+
+    /// Signal tool cancellation before joining a query blocked inside a tool.
+    void request_tool_shutdown() noexcept;
+
+    /// Called after the query caller has joined, while its UI dependencies
+    /// are still alive. The registry also enforces this barrier on destruction.
+    void shutdown_tools() noexcept;
 
     /// Register a callback invoked by abort().  The HTTP layer uses this
     /// to call httplib::Client::stop() so a blocked read returns

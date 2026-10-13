@@ -32,6 +32,7 @@ module;
 export module loom.ui.dialogs.frame;
 
 import std;
+import loom.ui.foundation.design_figures;
 
 import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_tokens;
@@ -146,12 +147,6 @@ struct DialogFrameProps {
     /// Whether to show a full border or just the top "cap".
     /// Full border = modal panels, top-only = floating overlay dialogs.
     bool full_border = true;
-
-    /// Whether to use rounded corners.
-    /// @deprecated Kept as a no-op for ABI-compat.  The frame never draws
-    ///             a 4-sided border, so the concept of "rounded" does not
-    ///             apply.  New callers should leave this at its default.
-    bool rounded = true;
 
     /// Pane layout mode — see PaneVariant docs.
     /// Callers must set this based on which DialogSlot the content will
@@ -355,7 +350,7 @@ struct DialogFrameProps {
 [[nodiscard]] inline Element WorkerBadge(std::string_view worker_id,
                                           const Theme& theme) {
     return hbox({
-        text("👷 ") | dim,
+        text((std::string{loom::ui::design::figures::kDiamond} + " ")) | dim,
         text(std::string{worker_id}) | bold | color(theme.color_for(Role::Info)) | dim,
     });
 }

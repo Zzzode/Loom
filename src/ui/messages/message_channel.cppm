@@ -8,6 +8,8 @@ export module loom.ui.messages.message_channel;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 export namespace loom::ui::messages {
 
 using namespace ftxui;
@@ -32,12 +34,12 @@ struct ChannelMessageEntry {
 [[nodiscard]] inline Element render_channel_message(const ChannelMessageEntry& entry) {
     auto source_color = [&]() -> Color {
         switch (entry.source) {
-            case ChannelSource::User: return Color::Cyan;
-            case ChannelSource::Assistant: return Color::Green;
-            case ChannelSource::System: return Color::Yellow;
-            case ChannelSource::Tool: return Color::Magenta;
+            case ChannelSource::User: return loom::ui::design::theme::current_theme().palette->brief_label_you;
+            case ChannelSource::Assistant: return loom::ui::design::theme::current_theme().palette->brief_label_loom;
+            case ChannelSource::System: return loom::ui::design::theme::current_theme().palette->info;
+            case ChannelSource::Tool: return loom::ui::design::theme::current_theme().palette->info;
         }
-        return Color::White;
+        return loom::ui::design::theme::current_theme().palette->text;
     }();
 
     auto sender = entry.sender_name.value_or([&]{

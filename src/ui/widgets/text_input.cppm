@@ -25,6 +25,10 @@ export module loom.ui.widgets.text_input;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.foundation.ui_types;  // unified PromptInputMode canonical enum
 import loom.ui.prompt.prompt_paste_handler;  // PastePreview struct (GAP 1)
 import loom.vim.vim_controller;  // unified VimController state container
@@ -149,7 +153,7 @@ struct TextInputOptions {
     /// Optional argument hint shown after a slash command
     std::string argument_hint;
     /// Explicit color for the prefix glyph.  Empty = use the default
-    /// (historically Color::Green + bold — see below).  Set from the caller
+    /// (prompt border token + bold). Set from the caller
     /// when the prefix needs to change per mode, e.g. bash mode renders the
     /// prefix with the `bash_border` accent instead of theme.text.
     std::optional<ftxui::Color> prefix_color;
@@ -244,36 +248,22 @@ namespace suggest_util {
 /// Get the display icon for a suggestion category.
 inline const char* category_icon(SuggestionCategory cat) {
     switch (cat) {
-        case SuggestionCategory::Command:      return "⚡";
-        case SuggestionCategory::File:         return "📄";
-        case SuggestionCategory::Directory:    return "📁";
-        case SuggestionCategory::History:      return "🕘";
-        case SuggestionCategory::Agent:        return "🤖";
-        case SuggestionCategory::MCPResource:  return "🔌";
+        case SuggestionCategory::Command:      return loom::ui::design::figures::kLightningBolt.data();
+        case SuggestionCategory::File:         return loom::ui::design::figures::kSquareSmall.data();
+        case SuggestionCategory::Directory:    return loom::ui::design::figures::kTriangleRightSmall.data();
+        case SuggestionCategory::History:      return loom::ui::design::figures::kRefreshArrow.data();
+        case SuggestionCategory::Agent:        return loom::ui::design::figures::kDiamond.data();
+        case SuggestionCategory::MCPResource:  return loom::ui::design::figures::kCircleDouble.data();
         case SuggestionCategory::Shell:        return "$ ";
         case SuggestionCategory::SlackChannel: return "#";
-        case SuggestionCategory::CustomTitle:  return "◆ ";
+        case SuggestionCategory::CustomTitle:  return loom::ui::design::figures::kDiamond.data();
         case SuggestionCategory::None:         return "";
         default:                               return "";
     }
 }
 
 /// Get the accent color for a suggestion category.
-inline Color category_color(SuggestionCategory cat) {
-    switch (cat) {
-        case SuggestionCategory::Command:      return Color::CyanLight;
-        case SuggestionCategory::File:         return Color::GreenLight;
-        case SuggestionCategory::Directory:    return Color::YellowLight;
-        case SuggestionCategory::History:      return Color::GrayLight;
-        case SuggestionCategory::Agent:        return Color::MagentaLight;
-        case SuggestionCategory::MCPResource:  return Color::BlueLight;
-        case SuggestionCategory::Shell:        return Color::Green;
-        case SuggestionCategory::SlackChannel: return Color::RedLight;
-        case SuggestionCategory::CustomTitle:  return Color::Blue;
-        case SuggestionCategory::None:         return Color::White;
-        default:                               return Color::White;
-    }
-}
+Color category_color(SuggestionCategory cat);
 
 } // namespace suggest_util
 

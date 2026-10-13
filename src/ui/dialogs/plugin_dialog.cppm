@@ -33,6 +33,7 @@ export module loom.ui.dialogs.plugin_dialog;
 import loom.ui.foundation.theme_provider;
 
 import std;
+import loom.ui.foundation.design_figures;
 
 import loom.commands.plugin_ui_data;
 import loom.commands.plugin_helpers;
@@ -168,7 +169,7 @@ struct PluginDialogInputs {
 namespace detail {
 
 /// Render a chip/tag pill.
-[[nodiscard]] inline Element Chip(std::string_view label, Color c = Color::Cyan) {
+[[nodiscard]] inline Element Chip(std::string_view label, Color c = loom::ui::design::theme::current_theme().palette->info) {
     return hbox({
         text(" "),
         text(std::string{label}) | color(c) | dim,
@@ -190,24 +191,20 @@ namespace detail {
     return std::string{s.substr(0, n - 1)} + "…";
 }
 
-/// Pick a deterministic colour for a plugin name (for the letter-icon).
+/// Plugin identity uses the icon accent; warning/error colors describe status only.
 [[nodiscard]] inline Color name_color(std::string_view name) {
-    static const Color palette[] = {
-        Color::Cyan, Color::Magenta, Color::Yellow, Color::Green,
-        Color::Blue, Color::Orange1, Color::RedLight,
-    };
-    std::uint32_t h = 2166136261u;
-    for (char c : name) { h ^= (std::uint8_t)c; h *= 16777619u; }
-    return palette[h % std::size(palette)];
+    (void)name;
+    return loom::ui::design::theme::current_theme().palette->icon_accent;
 }
 
 /// Coloured letter-icon (first char, uppercase).
 [[nodiscard]] inline Element LetterIcon(std::string_view name) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const char c = name.empty() ? '?' : (char)std::toupper((unsigned char)name[0]);
     return hbox({
         text(" "),
         text(std::string{1, c}) | bold | color(name_color(name))
-             | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3),
+             | bgcolor(pal.surface_tint_3),
         text(" "),
     });
 }
@@ -223,14 +220,15 @@ namespace detail {
 
 /// Render the static help block (verbatim k_plugin_help_text).
 [[nodiscard]] inline Element RenderHelp() {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
         hbox({
-            text(" ❔  Plugin Command Help ") | bold | color(Color::Cyan),
+            text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} + "  Plugin Command Help ")) | bold | color(pal.info),
             filler(),
             text("Esc to go back") | dim,
         }),
         separator(),
-        paragraph(std::string{ui::k_plugin_help_text}) | color(Color::GrayLight),
+        paragraph(std::string{ui::k_plugin_help_text}) | color(pal.text_muted),
     }) | borderLight;
 }
 
@@ -238,29 +236,30 @@ namespace detail {
 
 /// Render a single error row.
 [[nodiscard]] inline Element RenderErrorRow(const ErrorRow& row, bool selected) {
-    Color head_color = Color::Red;
-    if (row.action_kind == ErrorActionKind::ManagedOnly) head_color = Color::Yellow;
-    if (row.action_kind == ErrorActionKind::Navigate)    head_color = Color::Orange1;
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    Color head_color = loom::ui::design::theme::current_theme().palette->danger;
+    if (row.action_kind == ErrorActionKind::ManagedOnly) head_color = pal.warning;
+    if (row.action_kind == ErrorActionKind::Navigate)    head_color = pal.warning;
 
     Elements parts{
         text(selected ? "› " : "  ") | color(head_color),
-        text(row.label) | bold | color(selected ? Color::White : Color::GrayLight),
+        text(row.label) | bold | color(selected ? pal.text : pal.text_muted),
         filler(),
     };
     if (row.scope) {
-        parts.push_back(text("[" + *row.scope + "] ") | dim | color(Color::Cyan));
+        parts.push_back(text("[" + *row.scope + "] ") | dim | color(pal.info));
     }
     auto line = hbox(std::move(parts));
-    if (selected) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->danger_tint_bg);
+    if (selected) line = line | bgcolor(pal.danger_tint_bg);
 
     Elements sub{line};
     if (!row.message.empty()) {
-        sub.push_back(paragraph("   " + row.message) | dim | color(Color::GrayLight));
+        sub.push_back(paragraph("   " + row.message) | dim | color(pal.text_muted));
     }
     if (row.guidance) {
         sub.push_back(hbox({
-            text("   💡 "),
-            paragraph(*row.guidance) | dim | color(Color::Yellow),
+            text(("   " + std::string{loom::ui::design::figures::kInfo} + " ")),
+            paragraph(*row.guidance) | dim | color(pal.warning),
         }));
     }
     return vbox(std::move(sub));
@@ -270,10 +269,11 @@ namespace detail {
 [[nodiscard]] inline Element RenderErrorsTab(
     const std::vector<ErrorRow>& rows, int selected)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements items;
     if (rows.empty()) {
-        items.push_back(text(" 🎉  No errors to report. Everything looks good!")
-                        | color(Color::Green) | dim | center);
+        items.push_back(text((" " + std::string{loom::ui::design::figures::kTick} + "  No errors to report. Everything looks good!"))
+                        | color(pal.success) | dim | center);
     } else {
         for (int i = 0; i < (int)rows.size(); ++i) {
             items.push_back(RenderErrorRow(rows[i], i == selected));
@@ -283,7 +283,7 @@ namespace detail {
 
     return vbox({
         hbox({
-            text(" ⚠  Errors & Warnings ") | bold | color(Color::Red),
+            text(" ⚠  Errors & Warnings ") | bold | color(pal.danger),
             filler(),
             text(std::format("{} item{}", (int)rows.size(), rows.size() == 1 ? "" : "s")) | dim,
         }),
@@ -300,23 +300,24 @@ namespace detail {
     const std::optional<std::string>& path, bool ok,
     const std::vector<std::string>& messages)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(hbox({
-        text(" ✅  Manifest Validation ") | bold | color(ok ? Color::Green : Color::Red),
+        text((" " + std::string{loom::ui::design::figures::kTick} + "  Manifest Validation ")) | bold | color(ok ? pal.success : pal.danger),
         filler(),
-        path ? text(*path) | color(Color::Cyan) | underlined : text("(no path)") | dim,
+        path ? text(*path) | color(pal.info) | underlined : text("(no path)") | dim,
     }));
     body.push_back(separator());
 
     if (ok) {
         body.push_back(hbox({
-            text("  ✓ ") | color(Color::Green) | bold,
-            text("Manifest is valid.") | color(Color::Green),
+            text("  ✓ ") | color(pal.success) | bold,
+            text("Manifest is valid.") | color(pal.success),
         }));
     } else {
         body.push_back(hbox({
-            text("  ✗ ") | color(Color::Red) | bold,
-            text("Validation failed:") | color(Color::Red),
+            text("  ✗ ") | color(pal.danger) | bold,
+            text("Validation failed:") | color(pal.danger),
         }));
     }
 
@@ -324,7 +325,7 @@ namespace detail {
     for (const auto& m : messages) {
         msgs.push_back(hbox({
             text("    • ") | dim,
-            paragraph(m) | (ok ? color(Color::GrayLight) : color(Color::RedLight) | dim),
+            paragraph(m) | (ok ? color(pal.text_muted) : color(pal.danger) | dim),
         }));
     }
     body.push_back(vbox(std::move(msgs)) | borderEmpty);
@@ -343,10 +344,11 @@ namespace detail {
     bool value_is_valid,
     std::string_view validation_hint)
 {
-    Color c = value_is_valid ? Color::Green : Color::Yellow;
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    Color c = value_is_valid ? loom::ui::design::theme::current_theme().palette->success : loom::ui::design::theme::current_theme().palette->warning;
     return vbox({
         hbox({
-            text(" ➕  Add Marketplace ") | bold | color(Color::Blue),
+            text((" " + std::string{loom::ui::design::figures::kPointerSmall} + "  Add Marketplace ")) | bold | color(pal.info),
             filler(),
             text("Esc to cancel") | dim,
         }),
@@ -357,7 +359,7 @@ namespace detail {
             text(std::string{current_value.empty() ? "(type here)" : current_value})
                 | color(c),
             text("│") | blink,
-        }) | borderLight | color(value_is_valid ? Color::Green : Color::GrayDark),
+        }) | borderLight | color(value_is_valid ? pal.success : pal.muted),
         text("") | size(HEIGHT, EQUAL, 1),
         paragraph(std::string{validation_hint.empty()
             ? "Paste a marketplace.json URL, a local directory path, or a "
@@ -365,10 +367,10 @@ namespace detail {
             : std::string{validation_hint}}) | dim,
         text(""),
         hbox({
-            detail::Chip("file:", Color::Cyan), text(" "),
-            detail::Chip("http(s)://", Color::Green), text(" "),
-            detail::Chip("github:owner/repo", Color::Blue), text(" "),
-            detail::Chip("local path", Color::Magenta),
+            detail::Chip("file:", pal.info), text(" "),
+            detail::Chip("http(s)://", pal.success), text(" "),
+            detail::Chip("github:owner/repo", pal.info), text(" "),
+            detail::Chip("local path", pal.primary),
         }) | dim,
     });
 }
@@ -379,11 +381,12 @@ namespace detail {
     bool needs_empty,
     const std::optional<std::string>& reason)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (!needs_empty) return text("");
     return vbox({
         text("") | size(HEIGHT, EQUAL, 2),
         hbox({filler(),
-            text(" 🔍 ") | color(Color::Yellow) | dim,
+            text((" " + std::string{loom::ui::design::figures::kInfo} + " ")) | color(pal.warning) | dim,
             text(reason.value_or("No plugins match your filters.")) | dim,
             filler(),
         }),
@@ -403,6 +406,7 @@ namespace detail {
     Element sub_view,
     TabId active_tab)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // Top tab bar (4 tabs)
     static constexpr std::array<std::pair<const char*, TabId>, 4> k_tabs = {{
         {"Discover",     TabId::Discover},
@@ -414,22 +418,22 @@ namespace detail {
     for (const auto& [label, id] : k_tabs) {
         const bool active = (id == active_tab);
         auto bit = text(" " + std::string{label} + " ");
-        if (active) bit = bit | bold | bgcolor(loom::ui::design::theme::current_theme().palette->info_tint_bg) | color(Color::Cyan);
+        if (active) bit = bit | bold | bgcolor(pal.info_tint_bg) | color(pal.info);
         else        bit = bit | dim;
         tab_bits.push_back(std::move(bit));
     }
 
     auto top_bar = hbox({
-        text(" 🧩 ") | color(Color::Magenta),
+        text((" " + std::string{loom::ui::design::figures::kDiamond} + " ")) | color(pal.primary),
         hbox(std::move(tab_bits)),
         filler(),
     });
 
     return vbox({
         top_bar,
-        separator() | color(Color::Magenta),
+        separator() | color(pal.primary),
         std::move(sub_view) | flex,
-    }) | borderDouble | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
+    }) | borderDouble | bgcolor(pal.surface_tint_3);
 }
 
 // =========================================================================

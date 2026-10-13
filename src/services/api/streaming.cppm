@@ -425,6 +425,28 @@ struct StreamState {
 // Main Stream Parser
 // =========================================================================
 
+// Coordinates consumer/client cancellation without detaching network work.
+class StreamTransfer {
+public:
+    template<typename Producer>
+    explicit StreamTransfer(Producer&& producer)
+        : worker_(std::forward<Producer>(producer)) {}
+
+    ~StreamTransfer() { stop_and_join(); }
+
+    void request_stop() noexcept { worker_.request_stop(); }
+
+    void stop_and_join() {
+        request_stop();
+        std::scoped_lock lock(join_mutex_);
+        if (worker_.joinable()) worker_.join();
+    }
+
+private:
+    std::mutex join_mutex_;
+    std::jthread worker_;
+};
+
 class StreamParser {
     struct SharedState {
         explicit SharedState(StreamConfig cfg) : config(std::move(cfg)) {}
@@ -439,11 +461,24 @@ class StreamParser {
         mutable std::mutex mutex;
     };
 
+    struct TransferOwner {
+        explicit TransferOwner(std::shared_ptr<StreamTransfer> request)
+            : transfer(std::move(request)) {}
+        ~TransferOwner() { transfer->stop_and_join(); }
+        std::shared_ptr<StreamTransfer> transfer;
+    };
+
 public:
     explicit StreamParser(StreamConfig config = {})
         : state_(std::make_shared<SharedState>(std::move(config))) {}
 
-    // Factory method for parser setup; MessagesClient owns the HTTP transfer.
+    // Consumer copies share ownership of the transfer; the producer only holds
+    // parser state, so dropping the last consumer stops and joins the request.
+    void own_transfer(std::shared_ptr<StreamTransfer> transfer) {
+        transfer_ = std::make_shared<TransferOwner>(std::move(transfer));
+    }
+
+    // Factory method for parser setup; MessagesClient starts the HTTP transfer.
     static std::optional<StreamParser> create(
         const std::string&,
         const std::string&,
@@ -668,6 +703,7 @@ private:
     }
 
     std::shared_ptr<SharedState> state_;
+    std::shared_ptr<TransferOwner> transfer_;
 };
 
 // =========================================================================

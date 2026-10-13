@@ -92,34 +92,35 @@ struct PassesViewState {
 
 class PassesPanelBase : public ftxui::ComponentBase {
 public:
-    PassesPanelBase(PassesViewState state, Theme theme)
+    PassesPanelBase(PassesViewState state, std::optional<Theme> theme = std::nullopt)
         : state_(std::move(state)), theme_(std::move(theme)),
           start_(std::chrono::steady_clock::now()) {}
 
     Element Render() override {
         using namespace ftxui;
         const auto& s = state_;
+        const Theme& theme = theme_ ? *theme_ : current_theme();
 
         // ── Header badge ─────────────────────────────────────────────
         auto badge = hbox({
             text(" "),
             text("QUERY PROGRESS") | bold | underlined | inverted,
             text(" "),
-        }) | bgcolor(theme_.palette->primary)
-           | color(Color::White)
+        }) | bgcolor(theme.palette->primary)
+           | color(theme.palette->inverse_text)
            | size(WIDTH, EQUAL, 30);
 
         auto header = hbox({ badge | xflex });
 
         // ── Progress gauge ───────────────────────────────────────────
         double pct = progress_pct(s);
-        auto gauge_bar = gauge(pct) | color(theme_.color_for(Role::Primary));
+        auto gauge_bar = gauge(pct) | color(theme.color_for(Role::Primary));
         auto pct_text = text(std::format(" {:3.0f}%", pct * 100.0))
-                        | color(theme_.palette->muted);
+                        | color(theme.palette->muted);
         auto pass_of = text(std::format("  Pass {} of {}",
                                         std::max(s.current_pass, 0),
                                         std::max(s.total_passes, 0)))
-                       | color(theme_.palette->subtle) | bold;
+                       | color(theme.palette->subtle) | bold;
         auto progress_row = hbox({
             gauge_bar | xflex,
             pct_text,
@@ -128,21 +129,21 @@ public:
 
         // ── Current pass card ────────────────────────────────────────
         auto frame = frame_counter();
-        auto thinking = thinking_prefix(s.is_thinking, theme_, frame);
+        auto thinking = thinking_prefix(s.is_thinking, theme, frame);
         std::string name = s.pass_name.empty() ? "(unnamed pass)" : s.pass_name;
-        auto title = text(name) | bold | color(theme_.palette->primary);
+        auto title = text(name) | bold | color(theme.palette->primary);
         std::string desc_text = s.pass_description.empty()
             ? std::string("No description available.")
             : s.pass_description;
         auto desc = paragraphAlignLeft(desc_text)
-                    | color(theme_.palette->muted) | dim;
+                    | color(theme.palette->muted) | dim;
 
         auto current_box = vbox({
             text(""),
             vbox({
                 hbox({ thinking, title }),
                 hbox({ text("   "), desc | xflex }),
-            }) | borderStyled(theme_.color_for(Role::Info)),
+            }) | borderStyled(theme.color_for(Role::Info)),
             text(""),
         });
 
@@ -157,29 +158,29 @@ public:
             ++idx;
             history_rows.push_back(hbox({
                 text(" ") | size(WIDTH, EQUAL, 1),
-                text("•") | color(theme_.palette->subtle),
+                text("•") | color(theme.palette->subtle),
                 text(" "),
-                text(std::format("[{:>3}]", idx)) | color(theme_.palette->muted) | dim,
+                text(std::format("[{:>3}]", idx)) | color(theme.palette->muted) | dim,
                 text(" "),
-                text(entry) | color(theme_.palette->subtle) | dim,
+                text(entry) | color(theme.palette->subtle) | dim,
             }) | xflex);
         }
         if (history_rows.empty()) {
             history_rows.push_back(
                 hbox({ text("  (no pass history yet)") | dim
-                                              | color(theme_.palette->muted) })
+                                              | color(theme.palette->muted) })
             );
         }
 
         auto history_title = hbox({
-            text(" PASS HISTORY ") | bold | color(theme_.palette->subtle),
+            text(" PASS HISTORY ") | bold | color(theme.palette->subtle),
         });
 
         auto history_box = vbox({
             text(""),
             vbox({
                 history_title,
-                separator() | color(theme_.palette->subtle),
+                separator() | color(theme.palette->subtle),
                 vbox(std::move(history_rows)) | yflex,
             }),
             text(""),
@@ -189,9 +190,9 @@ public:
         auto tokens_str = format_tokens(s.tokens_consumed);
         auto cost_str = std::format("${:.4f}", s.pass_cost_usd);
         auto footer_right = hbox({
-            text("T " + tokens_str) | dim | color(theme_.palette->muted),
+            text("T " + tokens_str) | dim | color(theme.palette->muted),
             text("  "),
-            text(cost_str) | dim | color(theme_.palette->muted),
+            text(cost_str) | dim | color(theme.palette->muted),
         });
 
         auto footer = hbox({
@@ -210,7 +211,7 @@ public:
             history_box,
             separator(),
             footer,
-        }) | borderRounded | color(theme_.palette->chrome);
+        }) | borderRounded | color(theme.palette->chrome);
     }
 
     /// Replace the stored state snapshot in-place.
@@ -226,7 +227,7 @@ private:
     }
 
     PassesViewState state_;
-    Theme theme_;
+    std::optional<Theme> theme_;
     std::chrono::steady_clock::time_point start_;
 };
 
@@ -235,8 +236,7 @@ private:
 /// Build the passes panel from a runtime snapshot using the current theme.
 [[nodiscard]] inline auto BuildPassesPanel(const PassesViewState& s)
     -> ftxui::Component {
-    Theme theme = current_theme();
-    return ftxui::Make<PassesPanelBase>(s, std::move(theme));
+    return ftxui::Make<PassesPanelBase>(s);
 }
 
 /// Theme-explicit overload — useful in tests and design previews that do

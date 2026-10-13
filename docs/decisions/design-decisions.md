@@ -3669,3 +3669,34 @@ Candidate generation: marker-vocabulary greps over the source tree
 yielding ~1480 raw candidate comment lines. Pure file/line pointers and ordinary validation strings
 were filtered out mechanically; every remaining candidate was then read with 10-20 lines of
 surrounding context before being kept or dropped. Findings were rewritten to stand alone.
+
+
+## In-app selection and clipboard ownership (RFC 0010)
+
+- **Default mode:** `mouseMode` defaults to `true`, so the application receives
+  drag events and automatically copies selected displayed text on release.
+  Explicit `mouseMode: false` keeps terminal-native selection. The existing F2
+  toggle is immediate and best-effort; an FTXUI reinstall can restore tracking.
+  Use explicit false when persistent native selection is required. This
+  revises RFC 0007's default-mode decision without changing settings precedence.
+- **Ownership:** `loom::utils::clipboard::emit_osc52` owns OSC 52 encoding and
+  emission in `loom_utils`; it reuses `loom.crypto.crypto` and returns a
+  `loom::utils::VoidResult`. Do not import `loom.types.types` into this utility:
+  `loom_types` already depends on `loom_utils`. UI selection and `/copy` call
+  the same infrastructure primitive; command errors are translated at the
+  command boundary. Only the UI thread emits terminal bytes during interaction.
+- **Honest feedback:** the existing native coordinator remains asynchronous,
+  deadline-controlled and SSH-aware. Only successful native completion sets
+  confirmed-copy state. OSC 52 write/flush success means a request was sent,
+  displayed as `Copy sent to terminal · paste to verify`. Copy progress, native
+  confirmation, terminal request and failure share the existing bottom_float
+  copy-feedback surface. No clipboard acceptance acknowledgement is inferred.
+- **Selection geometry:** normalize endpoints in row-major order. Select the
+  first row's tail, full intermediate rows and the last row's prefix. FTXUI
+  represents fullwidth continuations as empty characters; expand both endpoints
+  to complete glyphs so highlighting matches extracted text. Retain leading
+  empty rows and ordinary interior spaces; trim trailing row padding as before.
+- **Stale results:** clearing/replacing selection advances the copy generation
+  before pending results are drained. A late result may not emit OSC 52 or
+  restore feedback for dismissed text. Existing coordinator cancellation and
+  child-process ownership remain unchanged.

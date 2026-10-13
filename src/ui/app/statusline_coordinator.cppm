@@ -1,16 +1,5 @@
-// statusline_coordinator.cppm — P3-1c: async statusline worker extracted
-// from AppAdapter.
-//
-// Owns the jthread + debounce/memo state for the user-configurable
-// statusline command.  Context-dependent operations (building the input
-// JSON, executing the command) are injected as callbacks at Start() time,
-// so the coordinator needs no knowledge of AppAdapter internals.
-//
-// Debounced doUpdate() pattern:
-//   1. TriggerUpdate() sets dirty_ and notifies the cv.
-//   2. The worker wakes, debounces (sleeps debounce_ms), re-checks dirty_.
-//   3. Builds the input JSON, checks the 30s memo cache.
-//   4. Executes the command, updates the status line text, posts a render.
+// statusline_coordinator.cppm — async statusline execution with UI-owned input
+// snapshots and a mutex-protected result handoff.
 
 export module loom.ui.app.statusline_coordinator;
 
@@ -18,146 +7,142 @@ import std;
 
 export namespace loom::ui {
 
-/// Async statusline worker: owns the jthread + debounce/memo state.
-/// AppAdapter constructs this as a member and injects callbacks that
-/// supply the command, build the JSON payload, execute the shell command,
-/// and write the result back to the screen state.
+/// Executes immutable statusline requests off the UI thread. The UI submits
+/// snapshots and drains results; callbacks never read or write screen state.
 class StatuslineCoordinator {
 public:
-    using GetCommandFn      = std::function<std::string()>;
-    using BuildInputJsonFn  = std::function<std::string()>;
-    using ExecuteCommandFn  = std::function<bool(
+    using ExecuteCommandFn = std::function<bool(
         std::string_view cmd, std::string json, int timeout_ms,
         std::string& output)>;
-    using SetStatusTextFn   = std::function<void(std::string)>;
-    using PostRenderFn      = std::function<void()>;
+    using PostRenderFn = std::function<void()>;
 
     StatuslineCoordinator() = default;
     ~StatuslineCoordinator() { Stop(); }
 
-    // Non-copyable, non-movable (owns a jthread).
     StatuslineCoordinator(const StatuslineCoordinator&) = delete;
     StatuslineCoordinator& operator=(const StatuslineCoordinator&) = delete;
 
-    /// Start the worker thread.  Call once from AppAdapter::construct().
-    void Start(GetCommandFn get_command,
-               BuildInputJsonFn build_input_json,
-               ExecuteCommandFn execute_command,
-               SetStatusTextFn set_status_text,
-               PostRenderFn post_render,
+    /// Start on the UI thread, then submit the initial request explicitly.
+    void Start(ExecuteCommandFn execute_command, PostRenderFn post_render,
                int debounce_ms = 300) {
-        get_command_       = std::move(get_command);
-        build_input_json_  = std::move(build_input_json);
-        execute_command_   = std::move(execute_command);
-        set_status_text_   = std::move(set_status_text);
-        post_render_       = std::move(post_render);
-        debounce_ms_       = debounce_ms;
-
-        thread_ = std::jthread([this](std::stop_token st) {
-            while (!st.stop_requested()) {
-                std::unique_lock lk(mutex_);
-                cv_.wait(lk, [this, &st] {
-                    return dirty_.load() || st.stop_requested();
-                });
-                if (st.stop_requested()) break;
-
-                lk.unlock();
-                std::this_thread::sleep_for(
-                    std::chrono::milliseconds(debounce_ms_));
-                if (st.stop_requested()) break;
-                if (!dirty_.exchange(false)) continue;
-
-                std::string cmd = get_command_();
-                if (cmd.empty()) continue;
-
-                running_.store(true);
-
-                std::string new_json = build_input_json_();
-                const auto now = std::chrono::steady_clock::now();
-
-                // Memo cache: skip re-exec when command + JSON are identical
-                // and last run was < 30s ago (memo dependency tuple).
-                const bool memo_hit =
-                    (cmd == last_cmd_) &&
-                    (new_json == last_input_json_) &&
-                    (last_run_ != std::chrono::steady_clock::time_point{} &&
-                     (now - last_run_) < std::chrono::seconds(30));
-
-                if (memo_hit) {
-                    running_.store(false);
-                    continue;
-                }
-
-                std::string sl_output;
-                const bool sl_ok =
-                    execute_command_(cmd, std::move(new_json), 5000, sl_output);
-
-                running_.store(false);
-
-                last_cmd_         = std::move(cmd);
-                last_input_json_  = std::move(new_json);
-                last_run_         = now;
-
-                if (sl_ok && !sl_output.empty()) {
-                    set_status_text_(std::move(sl_output));
-                } else {
-                    set_status_text_({});
-                }
-
-                if (!st.stop_requested()) {
-                    post_render_();
-                }
-            }
-        });
-
-        // Trigger an initial update on mount.
-        TriggerUpdate();
+        execute_command_ = std::move(execute_command);
+        post_render_ = std::move(post_render);
+        debounce_ms_ = debounce_ms;
+        thread_ = std::jthread([this](std::stop_token st) { Run(st); });
     }
 
-    /// Trigger an async statusline update (debounced).
-    /// Safe to call from any thread.
-    void TriggerUpdate() {
-        dirty_.store(true);
+    /// Submit an immutable UI snapshot. A newer request invalidates any
+    /// unconsumed or in-flight result, including when the command is cleared.
+    void TriggerUpdate(std::string command, std::string input_json) {
+        {
+            std::lock_guard lk(mutex_);
+            pending_ = Request{std::move(command), std::move(input_json),
+                               ++generation_};
+            result_.reset();
+        }
         cv_.notify_one();
     }
 
-    /// Request stop and join the worker thread.  Idempotent.
+    /// Drain on the UI thread before applying the text to the screen state.
+    std::optional<std::string> TakeResult() {
+        std::lock_guard lk(mutex_);
+        return std::exchange(result_, std::nullopt);
+    }
+
+    /// Stop wakes a debouncing worker and joins an executing worker before
+    /// any callback or private state can be destroyed. Idempotent.
     void Stop() {
         if (thread_.joinable()) {
-            thread_.request_stop();
             {
                 std::lock_guard lk(mutex_);
-                dirty_.store(true);  // wake the worker so it sees stop
+                thread_.request_stop();
             }
             cv_.notify_all();
             thread_.join();
         }
     }
 
-    /// True when the worker is currently executing a statusline command.
     [[nodiscard]] bool is_running() const noexcept {
         return running_.load();
     }
 
 private:
+    struct Request {
+        std::string command;
+        std::string input_json;
+        std::uint64_t generation;
+    };
+
+    void Run(std::stop_token st) {
+        while (!st.stop_requested()) {
+            Request request;
+            {
+                std::unique_lock lk(mutex_);
+                cv_.wait(lk, [this, &st] {
+                    return pending_.has_value() || st.stop_requested();
+                });
+                if (st.stop_requested()) break;
+                const auto deadline = std::chrono::steady_clock::now() +
+                    std::chrono::milliseconds(debounce_ms_);
+                cv_.wait_until(lk, deadline, [&st] {
+                    return st.stop_requested();
+                });
+                if (st.stop_requested()) break;
+                request = std::move(*pending_);
+                pending_.reset();
+            }
+
+            std::string output;
+            if (!request.command.empty()) {
+                const auto now = std::chrono::steady_clock::now();
+                const bool memo_hit = request.command == last_cmd_ &&
+                    request.input_json == last_input_json_ &&
+                    last_run_ != std::chrono::steady_clock::time_point{} &&
+                    now - last_run_ < std::chrono::seconds(30);
+                if (memo_hit) {
+                    output = last_output_;
+                } else {
+                    running_.store(true);
+                    // Keep the request input intact for the memo dependency
+                    // tuple; ExecuteCommandFn takes its own string by value.
+                    const bool ok = execute_command_(request.command,
+                        request.input_json, 5000, output);
+                    running_.store(false);
+                    if (!ok) output.clear();
+                    last_cmd_ = request.command;
+                    last_input_json_ = request.input_json;
+                    last_output_ = output;
+                    last_run_ = now;
+                }
+            }
+
+            {
+                std::lock_guard lk(mutex_);
+                if (st.stop_requested()) break;
+                if (request.generation != generation_) continue;
+                result_ = std::move(output);
+            }
+            post_render_();
+        }
+    }
+
     std::jthread thread_;
-    std::atomic<bool> dirty_{false};
     std::atomic<bool> running_{false};
     std::mutex mutex_;
     std::condition_variable cv_;
+    std::optional<Request> pending_;
+    std::optional<std::string> result_;
+    std::uint64_t generation_ = 0;
     int debounce_ms_ = 300;
 
-    // Memo cache (30s)
+    // Memo state is worker-owned; both the input tuple and output survive
+    // handoff so a repeated request can publish the cached result.
     std::string last_cmd_;
     std::string last_input_json_;
+    std::string last_output_;
     std::chrono::steady_clock::time_point last_run_{};
-
-    // Callbacks
-    GetCommandFn     get_command_;
-    BuildInputJsonFn build_input_json_;
     ExecuteCommandFn execute_command_;
-    SetStatusTextFn  set_status_text_;
-    PostRenderFn     post_render_;
+    PostRenderFn post_render_;
 };
 
 }  // namespace loom::ui

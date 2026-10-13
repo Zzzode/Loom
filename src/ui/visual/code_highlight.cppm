@@ -22,6 +22,7 @@ module;
 export module loom.ui.visual.code_highlight;
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 import loom.types.types;
 
@@ -121,25 +122,25 @@ struct HighlightedLine {
 /// Color theme for syntax highlighting
 struct SyntaxTheme {
     std::string name;
-    Color plain          = Color::GrayLight;
-    Color keyword        = Color::Magenta;
-    Color string_lit     = Color::Green;
-    Color number         = Color::Cyan;
-    Color comment        = Color::GrayDark;
-    Color op             = Color::White;
-    Color punctuation    = Color::GrayLight;
-    Color function       = Color::Yellow;
-    Color type_name      = Color::Cyan;
-    Color variable       = Color::White;
-    Color constant       = Color::Red;
-    Color preprocessor   = Color::Magenta;
-    Color attribute      = Color::Yellow;
-    Color error          = Color::Red;
-    Color line_number    = Color::GrayDark;
-    Color gutter_bg      = Color::RGB(20, 20, 20);
-    Color bg             = Color::RGB(15, 15, 15);
-    Color added_bg       = Color::RGB(0, 30, 0);
-    Color removed_bg     = Color::RGB(30, 0, 0);
+    Color plain          = loom::ui::design::theme::current_theme().palette->text;
+    Color keyword        = loom::ui::design::theme::current_theme().palette->primary;
+    Color string_lit     = loom::ui::design::theme::current_theme().palette->success;
+    Color number         = loom::ui::design::theme::current_theme().palette->info;
+    Color comment        = loom::ui::design::theme::current_theme().palette->muted;
+    Color op             = loom::ui::design::theme::current_theme().palette->text;
+    Color punctuation    = loom::ui::design::theme::current_theme().palette->text;
+    Color function       = loom::ui::design::theme::current_theme().palette->primary;
+    Color type_name      = loom::ui::design::theme::current_theme().palette->info;
+    Color variable       = loom::ui::design::theme::current_theme().palette->text;
+    Color constant       = loom::ui::design::theme::current_theme().palette->info;
+    Color preprocessor   = loom::ui::design::theme::current_theme().palette->primary;
+    Color attribute      = loom::ui::design::theme::current_theme().palette->primary;
+    Color error          = loom::ui::design::theme::current_theme().palette->danger;
+    Color line_number    = loom::ui::design::theme::current_theme().palette->muted;
+    Color gutter_bg      = loom::ui::design::theme::current_theme().palette->surface_tint_1;
+    Color bg             = loom::ui::design::theme::current_theme().palette->background;
+    Color added_bg       = loom::ui::design::theme::current_theme().palette->success_tint_bg;
+    Color removed_bg     = loom::ui::design::theme::current_theme().palette->danger_tint_bg;
 };
 
 /// Well-known theme names
@@ -178,6 +179,25 @@ struct HighlightResult {
 /// Get a built-in syntax theme
 [[nodiscard]] inline SyntaxTheme get_theme(ThemeName name) {
     SyntaxTheme theme;
+    theme.plain = Color::GrayLight;
+    theme.keyword = Color::Magenta;
+    theme.string_lit = Color::Green;
+    theme.number = Color::Cyan;
+    theme.comment = Color::GrayDark;
+    theme.op = Color::White;
+    theme.punctuation = Color::GrayLight;
+    theme.function = Color::Yellow;
+    theme.type_name = Color::Cyan;
+    theme.variable = Color::White;
+    theme.constant = Color::Red;
+    theme.preprocessor = Color::Magenta;
+    theme.attribute = Color::Yellow;
+    theme.error = Color::Red;
+    theme.line_number = Color::GrayDark;
+    theme.gutter_bg = Color::RGB(20, 20, 20);
+    theme.bg = Color::RGB(15, 15, 15);
+    theme.added_bg = Color::RGB(0, 30, 0);
+    theme.removed_bg = Color::RGB(30, 0, 0);
     switch (name) {
         case ThemeName::Monokai:
             theme.name = "monokai";
@@ -872,8 +892,8 @@ inline void apply_semantic_overlay(HighlightResult& result, const SemanticTokenL
 /// A colored text segment for colored_text_line().
 struct ColoredSegment {
     std::string text;
-    Color foreground = Color::Default;
-    Color background = Color::Default;
+    Color foreground = Color{};
+    Color background = Color{};
 };
 
 /// Render a single line of colored text segments. Unlike an hbox of
@@ -924,7 +944,7 @@ struct ColoredSegment {
     } else if (line.is_diff_removed) {
         result = result | bgcolor(theme.removed_bg);
     } else if (is_highlighted) {
-        result = result | bgcolor(Color::RGB(40, 40, 60));
+        result = result | bgcolor(loom::ui::design::theme::current_theme().palette->surface_selected);
     }
 
     return result;
@@ -939,7 +959,7 @@ constexpr int kFoldShownLines = 200;
 [[nodiscard]] inline Element RenderCodeHighlight(
     const CodeHighlightOptions& opts, const HighlightResult& highlighted) {
 
-    SyntaxTheme theme = opts.theme.value_or(get_theme(ThemeName::Dark));
+    SyntaxTheme theme = opts.theme.value_or(SyntaxTheme{});
 
     int total_lines = static_cast<int>(highlighted.lines.size());
     int gutter_width = (total_lines > 0)
@@ -977,16 +997,16 @@ constexpr int kFoldShownLines = 200;
             filler(),
             text(std::format("Showing first {} of {} lines… ",
                              kFoldShownLines, total_lines))
-               | color(Color::Yellow) | dim,
-            text("[Expand]") | color(Color::Cyan) | bold,
+               | color(loom::ui::design::theme::current_theme().palette->warning) | dim,
+            text("[Expand]") | color(loom::ui::design::theme::current_theme().palette->info) | bold,
             filler(),
             text(" ") | dim,
-        }) | bgcolor(Color::RGB(30, 25, 0)));
+        }) | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg));
     }
 
     // Status bar
     auto status = hbox({
-        text(" " + highlighted.language_detected) | dim | color(Color::Cyan),
+        text(" " + highlighted.language_detected) | dim | color(loom::ui::design::theme::current_theme().palette->info),
         text(std::format("  {}/{} lines",
                          std::min(upper, total_lines), total_lines)) | dim,
         filler(),
@@ -1006,9 +1026,9 @@ constexpr int kFoldShownLines = 200;
     // element above the code body, on a topbar row.
     auto copy_tag = hbox({
         filler(),
-        text(" [Copy] ") | color(Color::GrayDark)
-                        | bgcolor(Color::RGB(40, 40, 40))
-                        | borderStyled(Color::GrayDark),
+        text(" [Copy] ") | color(loom::ui::design::theme::current_theme().palette->muted)
+                        | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1)
+                        | borderStyled(loom::ui::design::theme::current_theme().palette->muted),
     });
 
     return vbox({
@@ -1110,15 +1130,15 @@ struct RenderCodeBlockOptions {
         parts.push_back(text(" ") | dim);
         if (opts.file_path && !opts.file_path->empty()) {
             parts.push_back(text(std::string(*opts.file_path))
-                            | bold | color(Color::Cyan));
+                            | bold | color(loom::ui::design::theme::current_theme().palette->info));
         } else if (!opts.language.empty()) {
             parts.push_back(text(std::string(opts.language))
-                            | bold | color(Color::Cyan));
+                            | bold | color(loom::ui::design::theme::current_theme().palette->info));
         }
         if (opts.show_copy_tag) {
             parts.push_back(filler());
-            parts.push_back(text(" Copy ") | color(Color::GrayDark)
-                                          | bgcolor(Color::RGB(40,40,40)));
+            parts.push_back(text(" Copy ") | color(loom::ui::design::theme::current_theme().palette->muted)
+                                          | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1));
             parts.push_back(text(" "));
         } else {
             parts.push_back(filler());

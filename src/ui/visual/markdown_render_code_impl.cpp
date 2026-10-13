@@ -40,7 +40,8 @@ namespace detail {
         auto highlighted = code_highlight::highlight_source(
             tok.code_content, tok.code_lang);
         auto theme_result = code_highlight::get_syntax_theme(opts.theme_name);
-        auto theme = theme_result ? *theme_result
+        auto theme = opts.theme_name.empty() ? code_highlight::SyntaxTheme{}
+                   : theme_result ? *theme_result
                                   : code_highlight::get_theme(
                                         code_highlight::ThemeName::Dark);
 

@@ -21,6 +21,8 @@ import loom.ui.foundation.theme_provider;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 import loom.commands.plugin_ui_data;
 import loom.commands.plugin_pagination_util;
 import loom.ui.widgets.custom_select;
@@ -107,6 +109,7 @@ namespace detail {
     std::size_t visible_count,
     std::size_t total_count)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     static constexpr const char* filter_labels[] = {
         "All", "Enabled", "Disabled", "By Author"
     };
@@ -117,18 +120,18 @@ namespace detail {
     auto sort_label   = sort_labels[(unsigned)sort];
 
     return hbox({
-        text(" 🔍 ") | dim,
+        text(" " + std::string(loom::ui::design::figures::kInfo) + " ") | dim,
         text(std::string{search_text.empty() ? "Search installed plugins… (press /)"
                                              : search_text})
-             | color(search_text.empty() ? Color::GrayDark : Color::White),
-        text("│") | blink | (search_text.empty() ? dim : color(Color::Cyan)),
+             | color(search_text.empty() ? pal.muted : pal.text),
+        text("│") | blink | (search_text.empty() ? dim : color(pal.info)),
         filler(),
         text("Filter:") | dim,
-        text(" " + std::string{filter_label} + " ") | color(Color::Cyan) | borderLight | dim,
+        text(" " + std::string{filter_label} + " ") | color(pal.info) | borderLight | dim,
         text("  Sort:") | dim,
-        text(" " + std::string{sort_label} + " ") | color(Color::Magenta) | borderLight | dim,
+        text(" " + std::string{sort_label} + " ") | color(pal.primary) | borderLight | dim,
         text("  "),
-        text(" [+] Install ") | bold | color(Color::Green) | bgcolor(loom::ui::design::theme::current_theme().palette->success_tint_bg),
+        text(" [+] Install ") | bold | color(pal.success) | bgcolor(pal.success_tint_bg),
         text(" "),
         text(std::format("{}/{}", visible_count, total_count)) | dim,
     }) | padding(0, 1, 0, 0);
@@ -138,40 +141,41 @@ namespace detail {
 [[nodiscard]] inline Element RenderInstalledRow(
     const InstalledCellData& p, bool selected, bool is_target)
 {
-    auto name_color = p.enabled ? Color::White : Color::GrayDark;
-    auto scope_color = [](std::string_view s) -> Color {
-        if (s == "user")    return Color::Cyan;
-        if (s == "project") return Color::Green;
-        if (s == "local")   return Color::Yellow;
-        if (s == "managed") return Color::Magenta;
-        return Color::GrayDark;
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    auto name_color = p.enabled ? pal.text : pal.muted;
+    auto scope_color = [&pal](std::string_view s) -> Color {
+        if (s == "user")    return pal.info;
+        if (s == "project") return pal.text_accent;
+        if (s == "local")   return pal.text_muted;
+        if (s == "managed") return pal.primary;
+        return pal.muted;
     }(p.scope);
 
     Elements left;
-    left.push_back(text(selected ? "› " : (is_target ? "★ " : "  "))
-                   | color(is_target ? Color::Yellow : Color::Cyan));
+    left.push_back(text(selected ? std::string(loom::ui::design::figures::kPointerSmall) + " " : (is_target ? "★ " : "  "))
+                   | color(is_target ? pal.warning : pal.info));
     // Status dot
-    left.push_back(text(p.enabled ? "● " : "○ ")
-                   | color(p.has_error ? Color::Red : (p.enabled ? Color::Green : Color::GrayDark)));
+    left.push_back(text(p.enabled ? std::string(loom::ui::design::figures::kBullet) + " " : std::string(loom::ui::design::figures::kEffortLow) + " ")
+                   | color(p.has_error ? pal.danger : (p.enabled ? pal.success : pal.muted)));
     // Name + marketplace
-    left.push_back(text(p.name) | bold | color(selected ? Color::White : name_color));
+    left.push_back(text(p.name) | bold | color(selected ? pal.text : name_color));
     left.push_back(text(" @") | dim);
-    left.push_back(text(p.marketplace) | dim | color(Color::Cyan) | dim);
+    left.push_back(text(p.marketplace) | dim | color(pal.info) | dim);
     if (p.version) {
         left.push_back(text("  v" + *p.version) | dim);
     }
     if (p.has_pending_update) {
-        left.push_back(text(" ⬆") | color(Color::Yellow) | bold);
+        left.push_back(text(" " + std::string(loom::ui::design::figures::kArrowUp)) | color(pal.warning) | bold);
     }
     if (p.has_error) {
-        left.push_back(text(" ✗") | color(Color::Red));
+        left.push_back(text(" " + std::string(loom::ui::design::figures::kCross)) | color(pal.danger));
     }
 
     Elements right;
     right.push_back(filler());
     // Tool/command counts
     if (p.tool_count || p.command_count) {
-        right.push_back(text(std::format("🔧{} ⌘{}", p.tool_count, p.command_count)) | dim);
+        right.push_back(text(std::format("{} tools · {} commands", p.tool_count, p.command_count)) | dim);
         right.push_back(text(" "));
     }
     // Scope chip
@@ -184,16 +188,17 @@ namespace detail {
     });
 
     if (selected) {
-        line = line | bgcolor(loom::ui::design::theme::current_theme().palette->info_tint_bg);
+        line = line | bgcolor(pal.info_tint_bg);
     }
     return line;
 }
 
 // Render the detail side-panel for the focused plugin.
 [[nodiscard]] inline Element RenderDetailPane(const InstalledCellData& p) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
-        text(" " + p.name + " ") | bold | color(Color::Cyan),
+        text(" " + p.name + " ") | bold | color(pal.info),
         filler(),
         p.version ? text("v" + *p.version) | dim : text(""),
     }));
@@ -206,16 +211,16 @@ namespace detail {
 
     rows.push_back(hbox({
         text("  Marketplace: ") | dim,
-        text(p.marketplace) | color(Color::Blue),
+        text(p.marketplace) | color(pal.info),
     }));
     rows.push_back(hbox({
         text("  Scope:       ") | dim,
-        text(p.scope) | color(Color::Magenta),
+        text(p.scope) | color(pal.primary),
     }));
     rows.push_back(hbox({
         text("  Status:      ") | dim,
         text(p.enabled ? "● ENABLED" : "○ DISABLED")
-             | color(p.enabled ? Color::Green : Color::GrayDark),
+             | color(p.enabled ? pal.success : pal.muted),
     }));
     if (p.last_updated) {
         rows.push_back(hbox({
@@ -227,26 +232,26 @@ namespace detail {
 
     rows.push_back(hbox({
         text("  Tools: ") | dim,
-        text(std::format("{}", p.tool_count)) | color(Color::Yellow),
+        text(std::format("{}", p.tool_count)) | color(pal.warning),
         text("   Commands: ") | dim,
-        text(std::format("{}", p.command_count)) | color(Color::Yellow),
+        text(std::format("{}", p.command_count)) | color(pal.warning),
         p.has_config_options
-            ? text("   • Has options") | color(Color::Cyan) | dim
+            ? text("   • Has options") | color(pal.info) | dim
             : text(""),
     }));
 
     if (p.has_pending_update) {
         rows.push_back(text(""));
         rows.push_back(hbox({
-            text("  ⬆ ") | color(Color::Yellow) | bold,
-            text("Update available") | color(Color::Yellow),
+            text("  " + std::string(loom::ui::design::figures::kArrowUp) + " ") | color(pal.warning) | bold,
+            text("Update available") | color(pal.warning),
         }));
     }
     if (p.has_error) {
         rows.push_back(text(""));
         rows.push_back(hbox({
-            text("  ✗ ") | color(Color::Red) | bold,
-            text("Plugin has load errors — check the Errors tab") | color(Color::Red) | dim,
+            text("  " + std::string(loom::ui::design::figures::kCross) + " ") | color(pal.danger) | bold,
+            text("Plugin has load errors — check the Errors tab") | color(pal.danger) | dim,
         }));
     }
 
@@ -255,24 +260,24 @@ namespace detail {
     rows.push_back(text(" Actions:") | dim);
     rows.push_back(hbox({
         text(" [") | dim,
-        text("Space") | bold | color(Color::Cyan),
+        text("Space") | bold | color(pal.info),
         text("]") | dim,
         text(p.enabled ? " Disable " : " Enable "),
         text(" [") | dim,
-        text("c") | bold | color(Color::Cyan),
+        text("c") | bold | color(pal.info),
         text("]") | dim,
         text(" Config  "),
         text("[") | dim,
-        text("u") | bold | color(Color::Cyan),
+        text("u") | bold | color(pal.info),
         text("]") | dim,
         text(" Update  "),
         text("[") | dim,
-        text("x") | bold | color(Color::Cyan),
+        text("x") | bold | color(pal.info),
         text("]") | dim,
         text(" Uninstall"),
     }) | dim);
 
-    return vbox(std::move(rows)) | borderLight | color(Color::Cyan);
+    return vbox(std::move(rows)) | borderLight | color(pal.info);
 }
 
 } // namespace detail
@@ -393,6 +398,7 @@ inline void RecomputeFiltered(ManageState& s) {
     });
 
     return Renderer([state, search_with_filter] {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto snap = state->paginator.snapshot();
         auto toolbar = detail::RenderToolbar(
             state->search_text, state->filter, state->sort,
@@ -402,7 +408,7 @@ inline void RecomputeFiltered(ManageState& s) {
         Elements list_rows;
         if (state->filtered_indices.empty()) {
             list_rows.push_back(text("  No plugins match the current filters.")
-                                | color(Color::Yellow) | dim | center);
+                                | color(pal.warning) | dim | center);
         } else {
             for (std::size_t i = snap.start_index; i < snap.end_index; ++i) {
                 const int page_i = (int)(i - snap.start_index);
@@ -426,10 +432,10 @@ inline void RecomputeFiltered(ManageState& s) {
                 | dim,
         };
         if (snap.scroll_position.can_scroll_up)
-            page_bits.push_back(text("PgUp ") | color(Color::Cyan) | dim);
+            page_bits.push_back(text("PgUp ") | color(pal.info) | dim);
         page_bits.push_back(text("|") | dim);
         if (snap.scroll_position.can_scroll_down)
-            page_bits.push_back(text(" PgDn") | color(Color::Cyan) | dim);
+            page_bits.push_back(text(" PgDn") | color(pal.info) | dim);
 
         auto list_panel = vbox({
             toolbar,

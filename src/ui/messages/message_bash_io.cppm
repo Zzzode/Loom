@@ -8,6 +8,8 @@ export module loom.ui.messages.message_bash_io;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 export namespace loom::ui::messages {
 
 using namespace ftxui;
@@ -30,18 +32,18 @@ struct BashIOEntry {
 [[nodiscard]] inline Element render_bash_io(const BashIOEntry& entry) {
     auto stream_color = [&]() -> Color {
         switch (entry.stream) {
-            case BashStream::Stdout: return Color::White;
-            case BashStream::Stderr: return Color::Red;
-            case BashStream::Stdin: return Color::Cyan;
+            case BashStream::Stdout: return loom::ui::design::theme::current_theme().palette->text;
+            case BashStream::Stderr: return loom::ui::design::theme::current_theme().palette->danger;
+            case BashStream::Stdin: return loom::ui::design::theme::current_theme().palette->info;
         }
-        return Color::White;
+        return loom::ui::design::theme::current_theme().palette->text;
     }();
 
     std::vector<Element> elements;
     elements.push_back(text(entry.content) | color(stream_color));
 
     if (entry.exit_code) {
-        auto code_color = *entry.exit_code == 0 ? Color::Green : Color::Red;
+        auto code_color = *entry.exit_code == 0 ? loom::ui::design::theme::current_theme().palette->success : loom::ui::design::theme::current_theme().palette->danger;
         elements.push_back(text(std::format("exit code: {}", *entry.exit_code)) | color(code_color) | dim);
     }
 

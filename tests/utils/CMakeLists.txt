@@ -91,3 +91,7 @@ gtest_discover_tests(test_clipboard_ssh DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_
 add_executable(test_clipboard_backends test_clipboard_backends.cpp)
 target_link_libraries(test_clipboard_backends PRIVATE ${LOOM_UTILS_TEST_LIBS})
 gtest_discover_tests(test_clipboard_backends DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
+
+add_executable(test_clipboard_osc52 test_clipboard_osc52.cpp)
+target_link_libraries(test_clipboard_osc52 PRIVATE ${LOOM_UTILS_TEST_LIBS})
+gtest_discover_tests(test_clipboard_osc52 DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

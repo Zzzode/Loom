@@ -17,6 +17,10 @@ export module loom.ui.messages.message_advisor;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.messages.message_components;
 
 export namespace loom::ui::messages {
@@ -43,12 +47,12 @@ struct AdvisorMessage {
 [[nodiscard]] inline Element render_advisor_message(const AdvisorMessage& msg) {
     auto [prefix, prefix_color] = [&]() -> std::pair<std::string, Color> {
         switch (msg.severity) {
-            case AdvisorSeverity::Info: return {"ℹ", Color::Cyan};
-            case AdvisorSeverity::Suggestion: return {"💡", Color::Green};
-            case AdvisorSeverity::Warning: return {"⚠", Color::Yellow};
-            case AdvisorSeverity::Error: return {"✗", Color::Red};
+            case AdvisorSeverity::Info: return {"ℹ", loom::ui::design::theme::current_theme().palette->info};
+            case AdvisorSeverity::Suggestion: return {loom::ui::design::figures::kInfo.data(), loom::ui::design::theme::current_theme().palette->suggestion};
+            case AdvisorSeverity::Warning: return {loom::ui::design::figures::kWarning.data(), loom::ui::design::theme::current_theme().palette->warning};
+            case AdvisorSeverity::Error: return {loom::ui::design::figures::kCross.data(), loom::ui::design::theme::current_theme().palette->danger};
         }
-        return {"?", Color::White};
+        return {"?", loom::ui::design::theme::current_theme().palette->text};
     }();
 
     std::vector<Element> elements;
@@ -68,12 +72,12 @@ struct AdvisorMessage {
 
 inline auto SeverityPalette(AdvisorSeverity s) -> std::tuple<std::string_view, std::string_view, Color> {
     switch (s) {
-        case AdvisorSeverity::Info:       return {"ℹ",  "Info",     Color::Cyan};
-        case AdvisorSeverity::Suggestion: return {"💡", "Tip",      Color::Green};
-        case AdvisorSeverity::Warning:    return {"⚠️", "Warning",  Color::Yellow};
-        case AdvisorSeverity::Error:      return {"✖",  "Error",    Color::Red};
+        case AdvisorSeverity::Info:       return {"ℹ",  "Info",     loom::ui::design::theme::current_theme().palette->info};
+        case AdvisorSeverity::Suggestion: return {loom::ui::design::figures::kInfo.data(), "Tip",      loom::ui::design::theme::current_theme().palette->suggestion};
+        case AdvisorSeverity::Warning:    return {loom::ui::design::figures::kWarning.data(), "Warning",  loom::ui::design::theme::current_theme().palette->warning};
+        case AdvisorSeverity::Error:      return {loom::ui::design::figures::kCross.data(),  "Error",    loom::ui::design::theme::current_theme().palette->danger};
     }
-    return {"ℹ", "Info", Color::Cyan};
+    return {"ℹ", "Info", loom::ui::design::theme::current_theme().palette->info};
 }
 
 // ─── Interactive component: pill + dismiss + optional action ───────────
@@ -92,17 +96,16 @@ class AdvisorMessageComponent : public ComponentBase {
           dismissed_(false)
     {
         if (on_dismiss_) {
-            dismiss_btn_ = Button(" ✕ ", [this] {
+            dismiss_btn_ = Button((" " + std::string(loom::ui::design::figures::kCross) + " "), [this] {
                 dismissed_ = true;
                 if (on_dismiss_) on_dismiss_();
             }) | dim;
             Add(dismiss_btn_);
         }
         if (on_action_ && msg_.action_label) {
-            auto accent = std::get<2>(SeverityPalette(msg_.severity));
             action_btn_ = Button(" → " + *msg_.action_label + " ", [this] {
                 if (on_action_) on_action_();
-            }) | color(accent);
+            });
             Add(action_btn_);
         }
     }
@@ -126,11 +129,11 @@ class AdvisorMessageComponent : public ComponentBase {
         Elements extras;
         if (msg_.source) {
             extras.push_back(text("  source: " + *msg_.source)
-                                 | dim | color(Color::GrayDark));
+                                 | dim | color(loom::ui::design::theme::current_theme().palette->muted));
         }
         if (msg_.action_label) {
             Element act_el = action_btn_
-                ? action_btn_->Render()
+                ? action_btn_->Render() | color(accent)
                 : text(" → " + *msg_.action_label) | dim | color(accent);
             extras.push_back(hbox({ text("  "), act_el }));
         }
@@ -139,14 +142,6 @@ class AdvisorMessageComponent : public ComponentBase {
         rows.push_back(header);
         for (auto& e : extras) rows.push_back(std::move(e));
 
-        // Light-colored background to make the tip "pop"
-        Color bg = Color::Blue;
-        switch (msg_.severity) {
-            case AdvisorSeverity::Error:   bg = Color(Color::DarkRed); break;
-            case AdvisorSeverity::Warning: bg = Color(Color::Yellow);  break;
-            default: break;
-        }
-        (void)bg;
         return vbox(std::move(rows))
              | borderStyled(BorderStyle::ROUNDED, accent)
              | padding(1);

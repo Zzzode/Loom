@@ -55,6 +55,7 @@ target_sources(loom_services
 )
 target_sources(loom_services
     PRIVATE
+        services/api/client.cpp
         services/mcp/config_impl.cpp
         services/mcp/headers_helper_impl.cpp
         services/mcp/client_stdio_transport.cpp

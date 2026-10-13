@@ -35,6 +35,8 @@ import loom.ui.foundation.theme_provider;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 import loom.ui.features.agents.agent_shared_widgets;
 import loom.tools.agent_color_manager;
 import loom.ui.widgets.spinner_animations;
@@ -83,7 +85,7 @@ struct AgentCardData {
     std::optional<std::string> model_override;
     std::optional<std::string> permission_mode;  ///< "Ask" / "Allow" / "Deny"
 
-    /// Is this a sub-agent (triggers the 🔀 marker on the avatar).
+    /// Is this a sub-agent (triggers the fork marker on the avatar).
     bool is_subagent = false;
 
     /// Last run timestamp (ISO-ish, displayed verbatim).
@@ -106,6 +108,7 @@ enum class CardSize {
 [[nodiscard]] inline Element StatusBadge(
     AgentStatus status, uint32_t frame = 0)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Color c = status_color(status);
     std::string glyph;
 
@@ -114,10 +117,10 @@ enum class CardSize {
             glyph = std::string(loom::ui::components::kDotsAnimation[
                 frame % loom::ui::components::kDotsAnimation.size()]);
             break;
-        case AgentStatus::Idle:      glyph = "●"; break;
-        case AgentStatus::Scheduled: glyph = "●"; break;
-        case AgentStatus::Errored:   glyph = "✗"; break;
-        case AgentStatus::Disabled:  glyph = "○"; break;
+        case AgentStatus::Idle:      glyph = std::string(loom::ui::design::figures::kBullet); break;
+        case AgentStatus::Scheduled: glyph = std::string(loom::ui::design::figures::kBullet); break;
+        case AgentStatus::Errored:   glyph = std::string(loom::ui::design::figures::kCross); break;
+        case AgentStatus::Disabled:  glyph = std::string(loom::ui::design::figures::kEffortLow); break;
     }
 
     std::string label(status_label(status));
@@ -128,7 +131,7 @@ enum class CardSize {
     }) | color(c) | borderLight;
 
     if (status == AgentStatus::Disabled) box = box | dim;
-    if (status == AgentStatus::Errored)  box = box | color(Color::Red);
+    if (status == AgentStatus::Errored)  box = box | color(pal.danger);
     return box;
 }
 
@@ -152,13 +155,14 @@ enum class CardSize {
     bool selected = false,
     uint32_t anim_frame = 0)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // color dot (from agent_type hash)
-    Color accent = Color::GrayLight;
+    Color accent = pal.muted;
     if (!agent.agent_type.empty()) {
         auto opt = loom::tools::agent_color_manager::get_agent_color(agent.agent_type);
         if (opt) accent = shared::agent_color_to_ftxui(*opt);
     }
-    auto color_dot = text(" ● ") | color(accent);
+    auto color_dot = text(" " + std::string(loom::ui::design::figures::kBullet) + " ") | color(accent);
 
     // status dot (spinner if running)
     StatusDotOptions sd_opts;
@@ -183,7 +187,7 @@ enum class CardSize {
         desc | size(WIDTH, LESS_THAN, 60) | flex,
     });
 
-    if (selected) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_4);
+    if (selected) row = row | bgcolor(pal.surface_tint_4);
     return row;
 }
 
@@ -196,6 +200,7 @@ enum class CardSize {
     bool selected = false,
     uint32_t anim_frame = 0)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // --- Header: avatar + name + role + status badge ---
     shared::AvatarOptions av_opts;
     av_opts.name = agent.name;
@@ -231,11 +236,11 @@ enum class CardSize {
 
     // --- Footer: Run / Edit / Delete ---
     auto footer = hbox({
-        FooterButton("Run",  Color::Green),
+        FooterButton("Run",  pal.success),
         text(" "),
-        FooterButton("Edit", Color::Cyan),
+        FooterButton("Edit", pal.info),
         text(" "),
-        FooterButton("Del",  Color::Red),
+        FooterButton("Del",  pal.danger),
         filler(),
         text(std::format("{} runs", agent.stats.run_count)) | dim,
     });
@@ -248,7 +253,7 @@ enum class CardSize {
         footer,
     }) | borderRounded | size(WIDTH, GREATER_THAN, 32);
 
-    if (selected) box = box | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_4);
+    if (selected) box = box | bgcolor(pal.surface_tint_4);
 
     // Colorize the border with the agent color if available.
     if (!agent.agent_type.empty()) {
@@ -268,6 +273,7 @@ enum class CardSize {
     bool selected = false,
     uint32_t anim_frame = 0)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // --- Header: big avatar + name + multi role tags + model override ---
     shared::AvatarOptions av_opts;
     av_opts.name = agent.name;
@@ -290,7 +296,7 @@ enum class CardSize {
     }
     if (agent.model_override) {
         meta_line.push_back(text("  model: ") | dim);
-        meta_line.push_back(text(*agent.model_override) | color(Color::Yellow));
+        meta_line.push_back(text(*agent.model_override) | color(pal.info));
     }
 
     auto header = hbox({
@@ -319,7 +325,7 @@ enum class CardSize {
     tc_opts.collapse_threshold = 10;
     tc_opts.start_collapsed = true;
     auto tools_header = hbox({
-        text("Tools") | bold | color(Color::Magenta),
+        text("Tools") | bold | color(pal.primary),
         filler(),
         text(std::format(" ({})", agent.tools.size())) | dim,
     });
@@ -333,14 +339,14 @@ enum class CardSize {
     std::string pm = agent.permission_mode.value_or("Ask (default)");
     perm_rows.push_back(hbox({
         text("  Default: ") | dim,
-        text(pm) | color(Color::Cyan),
+        text(pm) | color(pal.permission),
     }));
     perm_rows.push_back(hbox({
         text("  Allow tools: ") | dim,
-        text(std::to_string(agent.tools.size()) + " enabled") | color(Color::Green),
+        text(std::to_string(agent.tools.size()) + " enabled") | color(pal.success),
     }));
     auto perms_col = vbox({
-        text("Permissions") | bold | color(Color::Cyan),
+        text("Permissions") | bold | color(pal.permission),
         vbox(std::move(perm_rows)),
     });
 
@@ -356,7 +362,7 @@ enum class CardSize {
     }
     if (env_rows.empty()) env_rows.push_back(text("  (none)") | dim);
     auto env_col = vbox({
-        text("Env vars") | bold | color(Color::Blue),
+        text("Env vars") | bold | color(pal.info),
         vbox(std::move(env_rows)),
     });
 
@@ -368,19 +374,19 @@ enum class CardSize {
 
     // --- Run stats bar ---
     auto stats_bar = hbox({
-        text("Stats  ") | bold | color(Color::Yellow),
+        text("Stats  ") | bold | color(pal.info),
         RunStatsBar(agent.stats),
     });
 
     // --- 4-button footer ---
     auto footer = hbox({
-        FooterButton("▶ Run",   Color::Green),
+        FooterButton("▶ Run",   pal.success),
         text(" "),
-        FooterButton("✎ Edit",  Color::Cyan),
+        FooterButton("✎ Edit",  pal.info),
         text(" "),
-        FooterButton("⎘ Dup",   Color::Yellow),
+        FooterButton("⎘ Dup",   pal.warning),
         text(" "),
-        FooterButton("⌫ Del",   Color::Red),
+        FooterButton("⌫ Del",   pal.danger),
         filler(),
         agent.last_run_at
             ? text("last: " + *agent.last_run_at) | dim
@@ -401,7 +407,7 @@ enum class CardSize {
         footer,
     }) | borderRounded;
 
-    if (selected) box = box | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_4);
+    if (selected) box = box | bgcolor(pal.surface_tint_4);
 
     if (!agent.agent_type.empty()) {
         auto opt = loom::tools::agent_color_manager::get_agent_color(agent.agent_type);

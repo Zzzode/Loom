@@ -16,6 +16,9 @@ export module loom.ui.messages.collapsed_content_message;
 import loom.ui.foundation.theme_provider;
 
 import std;
+import loom.ui.messages.message_components;
+
+import loom.ui.foundation.design_figures;
 
 import loom.ui.visual.code_highlight;
 
@@ -103,8 +106,8 @@ struct Aggregates {
     std::string label = kind.empty() ? std::string("content") : kind;
 
     Elements parts;
-    parts.push_back(text(opts.group_collapsed ? "📦 " : "📂 ") | color(Color::BlueLight));
-    parts.push_back(text(label + " ") | bold | color(Color::BlueLight));
+    parts.push_back(text(opts.group_collapsed ? (std::string(loom::ui::design::figures::kSquare) + " ") : (std::string(loom::ui::design::figures::kTriangleDownSmall) + " ")) | color(loom::ui::design::theme::current_theme().palette->info));
+    parts.push_back(text(label + " ") | bold | color(loom::ui::design::theme::current_theme().palette->info));
 
     // "{N} files"
     if (!kind.empty() && kind.find("Search") == std::string::npos) {
@@ -112,30 +115,29 @@ struct Aggregates {
             text(std::format("{} file{}",
                              format_thousands(agg.entry_count),
                              agg.entry_count == 1 ? "" : "s"))
-            | color(Color::White));
+            | color(loom::ui::design::theme::current_theme().palette->text));
     } else {
         parts.push_back(
             text(std::format("{} result{}",
                              format_thousands(agg.entry_count),
                              agg.entry_count == 1 ? "" : "s"))
-            | color(Color::White));
+            | color(loom::ui::design::theme::current_theme().palette->text));
     }
 
     parts.push_back(text(", ") | dim);
     parts.push_back(
         text(std::format("{} lines", format_thousands(agg.total_lines)))
-        | color(Color::GrayLight));
+        | color(loom::ui::design::theme::current_theme().palette->text_muted));
     if (agg.total_matches > 0) {
         parts.push_back(text(", ") | dim);
         parts.push_back(
             text(std::format("{} matches", format_thousands(agg.total_matches)))
-            | color(Color::GreenLight));
+            | color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     parts.push_back(filler());
-    parts.push_back(text(opts.group_collapsed ? "▸ [enter] expand "
-                                              : "▾ [enter] collapse ")
-                    | dim | color(Color::GrayDark));
+    parts.push_back(message_key_hint(opts.group_collapsed ? "Enter/Space" : "Space",
+                                    opts.group_collapsed ? "Expand" : "Collapse"));
 
     return hbox(parts);
 }
@@ -169,10 +171,10 @@ struct Aggregates {
     {
         auto head = hbox({
             text("  "),
-            text(clamp_width("Kind", KIND_W)) | bold | color(Color::Cyan),
-            text(clamp_width("File path", PATH_W)) | bold | color(Color::Cyan),
-            text(clamp_width("Lines", LINES_W)) | bold | color(Color::Cyan),
-            text(clamp_width("Matches", MATCH_W)) | bold | color(Color::Cyan),
+            text(clamp_width("Kind", KIND_W)) | bold | color(loom::ui::design::theme::current_theme().palette->info),
+            text(clamp_width("File path", PATH_W)) | bold | color(loom::ui::design::theme::current_theme().palette->info),
+            text(clamp_width("Lines", LINES_W)) | bold | color(loom::ui::design::theme::current_theme().palette->info),
+            text(clamp_width("Matches", MATCH_W)) | bold | color(loom::ui::design::theme::current_theme().palette->info),
         });
         rows.push_back(head);
         rows.push_back(separator());
@@ -187,7 +189,7 @@ struct Aggregates {
 
         // Kind column
         Element kind_el = text(clamp_width(entry.kind, KIND_W))
-            | color(Color::MagentaLight);
+            | color(loom::ui::design::theme::current_theme().palette->primary);
         if (expanded) kind_el = kind_el | bold;
 
         // Path
@@ -203,7 +205,7 @@ struct Aggregates {
             matches_el = text(
                 clamp_width(format_thousands(static_cast<std::uint64_t>(
                                 entry.match_lines)), MATCH_W))
-                | color(Color::Green);
+                | color(loom::ui::design::theme::current_theme().palette->success);
         } else {
             matches_el = text(clamp_width("-", MATCH_W)) | dim;
         }
@@ -233,12 +235,12 @@ struct Aggregates {
             auto preview_el = ch::RenderCodeHighlight(ch_opts, hl);
             // indent + wrap
             rows.push_back(hbox({
-                text("      └─ preview ──") | dim | color(Color::GrayDark),
+                text("      └─ preview ──") | dim | color(loom::ui::design::theme::current_theme().palette->muted),
             }));
             rows.push_back(
                 hbox({
                     text("    "),
-                    preview_el | color(Color::GrayDark),
+                    preview_el | color(loom::ui::design::theme::current_theme().palette->muted),
                 }));
         }
     }
@@ -247,16 +249,16 @@ struct Aggregates {
     rows.push_back(separator());
     {
         Elements foot;
-        foot.push_back(text(" [Tab/↑/↓] row  [enter] preview  [←/→] page ") | dim);
+        foot.push_back(hbox({message_key_hint("Tab/↑/↓", "Row"), message_key_hint("Enter", "Preview"), message_key_hint("←/→", "Page")}));
         foot.push_back(filler());
         if (n > static_cast<std::size_t>(psize)) {
             foot.push_back(
                 text(std::format(" rows {}-{} of {}, page {}/{} ",
                                  s + 1, e, n, page + 1, max_page + 1))
-                | dim | color(Color::GrayDark));
+                | dim | color(loom::ui::design::theme::current_theme().palette->muted));
         } else {
             foot.push_back(text(std::format(" {} rows ", n))
-                           | dim | color(Color::GrayDark));
+                           | dim | color(loom::ui::design::theme::current_theme().palette->muted));
         }
         rows.push_back(hbox(foot));
     }
@@ -280,7 +282,7 @@ struct Aggregates {
         content.push_back(RenderFileTable(opts));
     }
 
-    return vbox(content) | borderLight | color(Color::BlueLight);
+    return vbox(content) | borderLight | color(loom::ui::design::theme::current_theme().palette->info);
 }
 
 // ============================================================

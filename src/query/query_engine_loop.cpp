@@ -85,6 +85,19 @@ void QueryEngine::stream_query(
         }
     } end_query_guard{options, *this};
 
+    if (options.resume_from_conversation) {
+        const auto conversation = get_conversation();
+        if (conversation.empty() ||
+            (!std::holds_alternative<UserMessage>(conversation.back()) &&
+             !std::holds_alternative<ToolResultMessage>(conversation.back()))) {
+            if (options.on_event) {
+                (*options.on_event)(StreamError{"invalid_retry",
+                    "There is no unfinished model request to retry"});
+            }
+            return;
+        }
+    }
+
     if (budget_tracker_.budget_exceeded) {
         if (options.on_event) {
             StreamError err{"budget_exceeded",
@@ -110,23 +123,27 @@ void QueryEngine::stream_query(
         });
     }
 
-    auto msg = make_user_message(user_message, options.prompt_uuid);
-    // AT-02: append materialized @-mention attachments so the model sees
-    // the referenced file contents (not the literal "@path" string).
-    for (const auto& block : options.attachments) {
-        msg.content.push_back(block);
+    if (!options.resume_from_conversation) {
+        auto msg = make_user_message(user_message, options.prompt_uuid);
+        // AT-02: append materialized @-mention attachments so the model sees
+        // the referenced file contents (not the literal "@path" string).
+        for (const auto& block : options.attachments) {
+            msg.content.push_back(block);
+        }
+        append_message(Message{std::move(msg)});
     }
-    append_message(Message{std::move(msg)});
 
+    bool request_failed = false;
     std::uint32_t round = 0;
     std::uint32_t continuation_count = 0;
     std::uint32_t max_tokens_retries = 0;
-    const std::uint32_t max_rounds = options.max_tool_rounds.value_or(20);
+    const auto max_rounds = options.max_tool_rounds;
 
-    while (round < max_rounds && !should_abort() && !budget_tracker_.budget_exceeded) {
+    while ((!max_rounds || round < *max_rounds) && !should_abort() && !budget_tracker_.budget_exceeded) {
         // Check stop hooks before each iteration
         if (lifecycle_hooks_) {
             if (auto stop_reason = lifecycle_hooks_->check_stop_hooks()) {
+                request_failed = true;
                 if (options.on_event) {
                     StreamError err{"hook_stop",
                         std::format("Query stopped by hook: {}", *stop_reason)};
@@ -140,6 +157,7 @@ void QueryEngine::stream_query(
         // Stream a single API call
         auto stream_call = stream_single_api_call(options);
         if (stream_call.failed) {
+            request_failed = true;
             break;
         }
         auto& assistant_msg = stream_call.message;
@@ -197,6 +215,15 @@ void QueryEngine::stream_query(
         ++round;
     }
 
+    if (max_rounds && round >= *max_rounds && !should_abort() && !budget_tracker_.budget_exceeded) {
+        request_failed = true;
+        if (options.on_event) {
+            (*options.on_event)(StreamError{"tool_round_limit",
+                std::format("Tool-round budget reached ({}). Progress saved.",
+                            *max_rounds)});
+        }
+    }
+
     if (budget_tracker_.budget_exceeded && options.on_event) {
         (*options.on_event)(StreamError{"budget_exceeded", "Budget limit reached"});
     }
@@ -206,7 +233,7 @@ void QueryEngine::stream_query(
         auto query_duration = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - query_start_time);
         lifecycle_hooks_->emit_query_end(loom::hooks::QueryEndEvent{
-            .success = !budget_tracker_.budget_exceeded,
+            .success = !request_failed && !should_abort() && !budget_tracker_.budget_exceeded,
             .rounds = round,
             .tools_executed = round,  // Approximate
             .duration = query_duration,

@@ -21,6 +21,8 @@ import loom.ui.foundation.theme_provider;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 import loom.types.types;
 import loom.commands.plugin_ui_data;
 
@@ -123,18 +125,19 @@ namespace detail {
 // Render a boolean toggle row.
 [[nodiscard]] inline Element BoolToggleRow(
     std::string_view label, std::string_view hint,
-    bool value, bool selected, Color accent = Color::Cyan)
+    bool value, bool selected, Color accent = loom::ui::design::theme::current_theme().palette->info)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto val = text(value ? " [✓ ON] " : " [  OFF] ")
-        | color(value ? Color::Green : Color::GrayDark) | bold;
+        | color(value ? pal.success : pal.muted) | bold;
     auto row = hbox({
-        text(selected ? "› " : "  ") | color(accent),
+        text(selected ? std::string(loom::ui::design::figures::kPointerSmall) + " " : "  ") | color(accent),
         text(std::string{label}) | bold
-             | color(selected ? Color::White : Color::GrayLight),
+             | color(selected ? pal.text : pal.muted),
         filler(),
         std::move(val),
     });
-    if (selected) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
+    if (selected) row = row | bgcolor(pal.surface_tint_3);
     Elements out{std::move(row)};
     if (!hint.empty()) {
         out.push_back(paragraph("   " + std::string{hint}) | dim);
@@ -144,11 +147,12 @@ namespace detail {
 
 // Render the 4-tab header
 [[nodiscard]] inline Element RenderSettingsTabBar(SettingsTab active) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements bits;
     for (unsigned i = 0; i < 4; ++i) {
         const bool sel = (i == (unsigned)active);
         bits.push_back(text(" " + std::string{k_settings_tab_names[i]} + " ")
-            | (sel ? (bold | color(Color::Blue) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_5))
+            | (sel ? (bold | color(pal.info) | bgcolor(pal.surface_tint_5))
                    : dim));
         if (i + 1 < 4) bits.push_back(text("│") | dim);
     }
@@ -160,11 +164,12 @@ namespace detail {
 [[nodiscard]] inline Element RenderGlobalTab(
     const GlobalPluginSettings& g, int selected_row)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // Rows: auto-update-all, default-scope, allow-unverified,
     //       allow-unsafe, show-trust-warning
     return vbox({
         hbox({
-            text(" 🌐  Global Plugin Settings ") | bold | color(Color::Blue),
+            text(" Global Plugin Settings ") | bold | color(pal.info),
             filler(),
             text("Applies to all plugins") | dim,
         }),
@@ -172,36 +177,36 @@ namespace detail {
         text(""),
         BoolToggleRow("Auto-update all plugins",
             "When enabled, periodically checks for updates and installs them.",
-            g.auto_update_all, selected_row == 0, Color::Green),
+            g.auto_update_all, selected_row == 0, pal.success),
         separator() | dim,
         // Default install scope (pseudo-toggle: cycle through user/project/local)
         hbox({
-            text(selected_row == 1 ? "› " : "  ") | color(Color::Yellow),
+            text(selected_row == 1 ? std::string(loom::ui::design::figures::kPointerSmall) + " " : "  ") | color(pal.warning),
             text("Default install scope") | bold
-                 | color(selected_row == 1 ? Color::White : Color::GrayLight),
+                 | color(selected_row == 1 ? pal.text : pal.muted),
             filler(),
-            text(" [" + g.default_install_scope + "] ") | bold | color(Color::Yellow),
-        }) | (selected_row == 1 ? bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg) : nothing),
+            text(" [" + g.default_install_scope + "] ") | bold | color(pal.warning),
+        }) | (selected_row == 1 ? bgcolor(pal.warning_tint_bg) : nothing),
         paragraph("   New plugin installations use this scope unless overridden.") | dim,
         separator() | dim,
         BoolToggleRow("Allow unverified plugins",
             "Install plugins that are not signed or verified by a trusted marketplace.",
-            g.allow_unverified, selected_row == 2, Color::Orange1),
+            g.allow_unverified, selected_row == 2, pal.warning),
         separator() | dim,
         BoolToggleRow("Allow elevated permissions",
             "Permit plugins to request 'unsafe' permissions (bash, exec, file write).",
-            g.allow_unsafe_permissions, selected_row == 3, Color::Red),
+            g.allow_unsafe_permissions, selected_row == 3, pal.danger),
         separator() | dim,
         BoolToggleRow("Show trust warning on install",
             "Display the security trust dialog before every plugin install/update.",
-            g.show_trust_warning_on_install, selected_row == 4, Color::Cyan),
+            g.show_trust_warning_on_install, selected_row == 4, pal.info),
         text(""),
         separator(),
         hbox({
-            text(" ↑↓/j/k") | bold | color(Color::Cyan), text(" navigate  "),
-            text("Space") | bold | color(Color::Cyan), text(" toggle  "),
-            text("⏎") | bold | color(Color::Cyan), text(" save  "),
-            text("Esc") | bold | color(Color::Cyan), text(" close"),
+            text(" ↑↓/j/k") | bold | color(pal.info), text(" navigate  "),
+            text("Space") | bold | color(pal.info), text(" toggle  "),
+            text("⏎") | bold | color(pal.info), text(" save  "),
+            text("Esc") | bold | color(pal.info), text(" close"),
             filler(),
             text("[Ctrl+S] save all") | dim,
         }) | dim,
@@ -213,17 +218,18 @@ namespace detail {
 [[nodiscard]] inline Element RenderPerPluginRow(
     const PerPluginSettings& p, bool selected, bool is_focus_target)
 {
-    auto enabled_dot = text(p.enabled ? "● " : "○ ")
-        | color(p.enabled ? Color::Green : Color::GrayDark);
-    auto au_dot = text(p.auto_update ? "⬆ " : "  ")
-        | color(p.auto_update ? Color::Yellow : Color::GrayDark);
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    auto enabled_dot = text(p.enabled ? std::string(loom::ui::design::figures::kBullet) + " " : std::string(loom::ui::design::figures::kEffortLow) + " ")
+        | color(p.enabled ? pal.success : pal.muted);
+    auto au_dot = text(p.auto_update ? std::string(loom::ui::design::figures::kArrowUp) + " " : "  ")
+        | color(p.auto_update ? pal.info : pal.muted);
 
     auto row = hbox({
-        text(is_focus_target ? "★ " : (selected ? "› " : "  "))
-            | color(is_focus_target ? Color::Yellow : Color::Cyan),
+        text(is_focus_target ? "★ " : (selected ? std::string(loom::ui::design::figures::kPointerSmall) + " " : "  "))
+            | color(is_focus_target ? pal.warning : pal.info),
         enabled_dot,
         text(p.plugin_id) | bold
-             | color(selected ? Color::White : Color::GrayLight),
+             | color(selected ? pal.text : pal.muted),
         filler(),
         au_dot,
         text(p.auto_update ? "auto-update" : "manual-only") | dim,
@@ -232,7 +238,7 @@ namespace detail {
         text(" "),
         text("[" + std::to_string(p.keybindings.size()) + " key]") | dim,
     });
-    if (selected) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->info_tint_bg);
+    if (selected) row = row | bgcolor(pal.info_tint_bg);
     return row;
 }
 
@@ -241,9 +247,10 @@ namespace detail {
     int selected,
     std::optional<std::string> focus_id)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
-        text(" 🧩  Per-Plugin Toggles ") | bold | color(Color::Magenta),
+        text(" Per-Plugin Toggles ") | bold | color(pal.primary),
         filler(),
         text(std::format("{} plugin{} installed",
                          all.size(), all.size() == 1 ? "" : "s")) | dim,
@@ -273,10 +280,10 @@ namespace detail {
 
     rows.push_back(separator());
     rows.push_back(hbox({
-        text(" ↑↓/j/k") | bold | color(Color::Cyan), text(" navigate  "),
-        text("Space") | bold | color(Color::Cyan), text(" toggle enable  "),
-        text("U") | bold | color(Color::Cyan), text(" toggle auto-update  "),
-        text("→") | bold | color(Color::Cyan), text(" go to options/keys"),
+        text(" ↑↓/j/k") | bold | color(pal.info), text(" navigate  "),
+        text("Space") | bold | color(pal.info), text(" toggle enable  "),
+        text("U") | bold | color(pal.info), text(" toggle auto-update  "),
+        text("→") | bold | color(pal.info), text(" go to options/keys"),
     }) | dim);
     return vbox(std::move(rows));
 }
@@ -286,6 +293,7 @@ namespace detail {
 [[nodiscard]] inline Element RenderOptionRow(
     const PluginOption& opt, bool selected)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     std::string display_value;
     if (opt.is_secret && !opt.current_value.empty()) {
         display_value.assign(opt.current_value.size(), '*');
@@ -293,26 +301,27 @@ namespace detail {
         display_value = opt.current_value.empty() ? "(unset)" : opt.current_value;
     }
     auto row = hbox({
-        text(selected ? "› " : "  ") | color(Color::Green),
+        text(selected ? std::string(loom::ui::design::figures::kPointerSmall) + " " : "  ") | color(pal.success),
         text(opt.name) | bold
-             | color(selected ? Color::White : Color::GrayLight),
-        opt.required ? text(" *") | color(Color::Red) : text(""),
+             | color(selected ? pal.text : pal.muted),
+        opt.required ? text(" *") | color(pal.danger) : text(""),
         text(" [" + opt.type_hint + "]") | dim,
         filler(),
-        text(display_value) | color(selected ? Color::White : Color::CyanLight),
+        text(display_value) | color(selected ? pal.text : pal.info),
     });
-    if (selected) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->success_tint_bg);
+    if (selected) row = row | bgcolor(pal.success_tint_bg);
     return row;
 }
 
 [[nodiscard]] inline Element RenderOptionsTab(
     const PerPluginSettings* focused, int selected_opt)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
-        text(" ⚙  Plugin Options ") | bold | color(Color::Green),
+        text(" Plugin Options ") | bold | color(pal.info),
         filler(),
-        focused ? text(focused->plugin_id) | color(Color::Cyan) | underlined
+        focused ? text(focused->plugin_id) | color(pal.info) | underlined
                 : text("(select a plugin first)") | dim,
     }));
     rows.push_back(separator());
@@ -324,14 +333,14 @@ namespace detail {
         if (!focused->pending_steps.empty()) {
             rows.push_back(vbox({
                 hbox({
-                    text(" 🔔 ") | color(Color::Yellow),
+                    text(" " + std::string(loom::ui::design::figures::kInfo) + " ") | color(pal.warning),
                     text(std::format("{} configuration step{} required before first use",
                                      focused->pending_steps.size(),
                                      focused->pending_steps.size() == 1 ? "" : "s"))
-                        | bold | color(Color::Yellow),
+                        | bold | color(pal.warning),
                 }),
                 paragraph("   These options are required.  Fill them in to enable the plugin.") | dim,
-            }) | borderLight | color(Color::Yellow));
+            }) | borderLight | color(pal.warning));
             rows.push_back(text(""));
         }
 
@@ -344,9 +353,9 @@ namespace detail {
 
     rows.push_back(separator());
     rows.push_back(hbox({
-        text(" ↑↓/j/k") | bold | color(Color::Cyan), text(" navigate  "),
-        text("⏎") | bold | color(Color::Cyan), text(" edit value  "),
-        text("←") | bold | color(Color::Cyan), text(" back to plugins list"),
+        text(" ↑↓/j/k") | bold | color(pal.info), text(" navigate  "),
+        text("⏎") | bold | color(pal.info), text(" edit value  "),
+        text("←") | bold | color(pal.info), text(" back to plugins list"),
     }) | dim);
     return vbox(std::move(rows));
 }
@@ -356,19 +365,20 @@ namespace detail {
 [[nodiscard]] inline Element RenderKeybindingRow(
     const KeybindingEntry& kb, bool selected)
 {
-    auto scope_c = kb.scope == "global" ? Color::Cyan : Color::Magenta;
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    auto scope_c = kb.scope == "global" ? pal.info : pal.primary;
     auto row = hbox({
-        text(selected ? "› " : "  ") | color(Color::Yellow),
-        text(kb.enabled ? "● " : "○ ")
-            | color(kb.enabled ? Color::Green : Color::GrayDark),
+        text(selected ? std::string(loom::ui::design::figures::kPointerSmall) + " " : "  ") | color(pal.info),
+        text(kb.enabled ? std::string(loom::ui::design::figures::kBullet) + " " : std::string(loom::ui::design::figures::kEffortLow) + " ")
+            | color(kb.enabled ? pal.success : pal.muted),
         text(kb.name) | bold
-             | color(selected ? Color::White : Color::GrayLight),
+             | color(selected ? pal.text : pal.muted),
         filler(),
-        text("[" + kb.hotkey + "]") | bold | color(Color::Yellow),
+        text("[" + kb.hotkey + "]") | bold | color(pal.info),
         text(" "),
         text(kb.scope) | dim | color(scope_c),
     });
-    if (selected) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg);
+    if (selected) row = row | bgcolor(pal.info_tint_bg);
     return row;
 }
 
@@ -376,11 +386,12 @@ namespace detail {
     const PerPluginSettings* focused, int selected_kb,
     bool editing_new, std::string_view new_name, std::string_view new_hotkey)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
-        text(" ⌨  Keybindings Editor ") | bold | color(Color::Yellow),
+        text(" Keybindings Editor ") | bold | color(pal.info),
         filler(),
-        focused ? text(focused->plugin_id) | color(Color::Cyan) | underlined
+        focused ? text(focused->plugin_id) | color(pal.info) | underlined
                 : text("(select a plugin first)") | dim,
     }));
     rows.push_back(separator());
@@ -400,27 +411,27 @@ namespace detail {
     // Add-new inline editor
     if (editing_new) {
         rows.push_back(separator());
-        rows.push_back(text(" New keybinding:") | bold | color(Color::Yellow));
+        rows.push_back(text(" New keybinding:") | bold | color(pal.info));
         rows.push_back(hbox({
             text("  name: ") | dim,
             text(std::string{new_name.empty() ? "(type name)" : std::string{new_name}})
-                 | color(new_name.empty() ? Color::GrayDark : Color::White),
-            text("│") | blink | color(Color::Yellow),
+                 | color(new_name.empty() ? pal.muted : pal.text),
+            text("│") | blink | color(pal.info),
             filler(),
             text("hotkey: ") | dim,
             text(std::string{new_hotkey.empty() ? "(press key combo)"
                                                : std::string{new_hotkey}})
-                 | color(new_hotkey.empty() ? Color::GrayDark : Color::Yellow) | bold,
-        }) | borderLight | color(Color::Yellow));
+                 | color(new_hotkey.empty() ? pal.muted : pal.info) | bold,
+        }) | borderLight | color(pal.info));
     }
 
     rows.push_back(separator());
     rows.push_back(hbox({
-        text(" ↑↓/j/k") | bold | color(Color::Cyan), text(" navigate  "),
-        text("A") | bold | color(Color::Cyan), text("dd  "),
-        text("R") | bold | color(Color::Cyan), text("emove  "),
-        text("Space") | bold | color(Color::Cyan), text(" enable/disable  "),
-        text("⏎") | bold | color(Color::Cyan), text(" edit hotkey"),
+        text(" ↑↓/j/k") | bold | color(pal.info), text(" navigate  "),
+        text("A") | bold | color(pal.info), text("dd  "),
+        text("R") | bold | color(pal.info), text("emove  "),
+        text("Space") | bold | color(pal.info), text(" enable/disable  "),
+        text("⏎") | bold | color(pal.info), text(" edit hotkey"),
     }) | dim);
     return vbox(std::move(rows));
 }
@@ -474,6 +485,7 @@ struct SettingsState {
     Component option_input_widget = Input(option_input.get(), "Enter value…");
 
     return Renderer([state] {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         Element body;
         switch (state->active_tab) {
             case SettingsTab::Global:
@@ -507,13 +519,13 @@ struct SettingsState {
 
         return vbox({
             hbox({
-                text(" ⚙  Plugin Settings ") | bold | color(Color::Blue),
+                text(" Plugin Settings ") | bold | color(pal.info),
                 filler(),
                 detail::RenderSettingsTabBar(state->active_tab),
             }),
-            separator() | color(Color::Blue),
+            separator() | color(pal.info),
             std::move(body) | flex,
-        }) | borderDouble | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
+        }) | borderDouble | bgcolor(pal.surface_tint_3);
 
     }) | CatchEvent([state, option_input](Event event) -> bool {
         // Tab switching: 1/2/3/4 digits OR Ctrl+[ Left / Right arrows

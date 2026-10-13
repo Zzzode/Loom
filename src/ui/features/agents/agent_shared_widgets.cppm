@@ -3,7 +3,7 @@
 ///
 /// Consolidates small shared components migrated from 26 files under
 /// src/components/agents/:
-///   - AgentAvatar              (hash-color + initial badge + emoji marker)
+///   - AgentAvatar              (hash-color + initial badge + fork marker)
 ///   - StatusDot                (colored status indicator dot)
 ///   - RoleTags                 (chip row for agent role tags)
 ///   - RunStatsBar              (one-line 3-metric summary)
@@ -27,6 +27,10 @@ module;
 export module loom.ui.features.agents.agent_shared_widgets;
 
 import std;
+
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
 
 import loom.teams.swarm.backends;
 import loom.tools.agent_color_manager;
@@ -59,7 +63,7 @@ enum class AgentStatus : std::uint8_t {
 struct TimelineStep {
     int index = 0;
     std::string tool_name;
-    std::string icon;           // 1-2 glyph prefix, e.g. "📁", "⌘"
+    std::string icon;           // 1-2 glyph prefix, provided by the caller
     std::string status_text;    // "success", "failed", "running", "skipped"
     AgentStatus status = AgentStatus::Idle;
     std::string output_preview; // collapsed by default if >100 chars
@@ -72,29 +76,31 @@ struct TimelineStep {
 
 /// Convert an AgentColor enum value into an FTXUI Color.
 [[nodiscard]] inline Color agent_color_to_ftxui(AgentColor c) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (c) {
-        case AgentColor::Red:     return Color::RGB(220, 80, 80);
-        case AgentColor::Blue:    return Color::RGB(80, 140, 230);
-        case AgentColor::Green:   return Color::RGB(80, 190, 110);
-        case AgentColor::Yellow:  return Color::RGB(230, 200, 80);
-        case AgentColor::Purple:  return Color::RGB(170, 110, 220);
-        case AgentColor::Orange:  return Color::RGB(230, 140, 70);
-        case AgentColor::Pink:    return Color::RGB(230, 130, 180);
-        case AgentColor::Cyan:    return Color::RGB(80, 200, 210);
+        case AgentColor::Red:     return pal.subagent_red;
+        case AgentColor::Blue:    return pal.subagent_blue;
+        case AgentColor::Green:   return pal.subagent_green;
+        case AgentColor::Yellow:  return pal.subagent_yellow;
+        case AgentColor::Purple:  return pal.subagent_purple;
+        case AgentColor::Orange:  return pal.subagent_orange;
+        case AgentColor::Pink:    return pal.subagent_pink;
+        case AgentColor::Cyan:    return pal.subagent_cyan;
     }
-    return Color::GrayLight;
+    return pal.muted;
 }
 
 /// Status → color used for dots and badges.
 [[nodiscard]] inline Color status_color(AgentStatus s) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (s) {
-        case AgentStatus::Idle:      return Color::GrayDark;
-        case AgentStatus::Running:   return Color::RGB(80, 200, 110);   // green
-        case AgentStatus::Scheduled: return Color::RGB(230, 200, 80);   // yellow
-        case AgentStatus::Errored:   return Color::RGB(220, 80, 80);    // red
-        case AgentStatus::Disabled:  return Color::GrayDark;
+        case AgentStatus::Idle:      return pal.muted;
+        case AgentStatus::Running:   return pal.success;   // green
+        case AgentStatus::Scheduled: return pal.warning;   // yellow
+        case AgentStatus::Errored:   return pal.danger;    // red
+        case AgentStatus::Disabled:  return pal.muted;
     }
-    return Color::GrayDark;
+    return pal.muted;
 }
 
 /// Return a short human label for an AgentStatus.
@@ -121,11 +127,12 @@ struct AvatarOptions {
     bool force_general = false;  ///< Treat as main-thread agent (no marker)
 };
 
-/// Render an agent avatar: colored circle + initial letter + emoji marker.
-///   - general-purpose: no emoji marker
-///   - sub-agents:        "🔀" suffix
+/// Render an agent avatar: colored circle + initial letter + fork marker.
+///   - general-purpose: no fork marker
+///   - sub-agents:        fork suffix
 ///   - explicit color override via agent_color_manager
 [[nodiscard]] inline Element AgentAvatar(const AvatarOptions& opts) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // Extract initial character (ASCII-safe fallback).
     char initial = '?';
     if (!opts.name.empty()) {
@@ -134,25 +141,25 @@ struct AvatarOptions {
     }
 
     // Resolve color.
-    Color bg = Color::RGB(60, 60, 80);  // default grey
+    Color bg = pal.surface_tint_4;  // default grey
     std::optional<AgentColor> resolved;
     if (!opts.force_general && !opts.agent_type.empty()) {
         resolved = get_agent_color(opts.agent_type);
         if (resolved) bg = agent_color_to_ftxui(*resolved);
     }
 
-    // Emoji marker: 🔀 for non-general-purpose sub-agents.
+    // Fork marker for non-general-purpose sub-agents.
     bool is_sub = !opts.force_general
                   && !opts.agent_type.empty()
                   && opts.agent_type != "general-purpose";
-    std::string marker = is_sub ? "🔀" : "";
+    std::string marker = is_sub ? std::string(loom::ui::design::figures::kForkGlyph) : "";
 
     // Build the badge. The outer size is controlled by `size_cells`.
     // Minimum 2 cells wide: " A " + optional marker.
     std::string glyph(1, initial);
     Element avatar = text(std::format(" {} ", glyph))
         | bold
-        | color(Color::White)
+        | color(resolved ? pal.inverse_text : pal.text)
         | bgcolor(bg)
         | borderRounded;
 
@@ -189,10 +196,10 @@ struct StatusDotOptions {
                 opts.spinner_frame % loom::ui::components::kDotsAnimation.size()]);
             break;
         }
-        case AgentStatus::Idle:      glyph = "●"; break;
-        case AgentStatus::Scheduled: glyph = "●"; break;
-        case AgentStatus::Errored:   glyph = "●"; break;
-        case AgentStatus::Disabled:  glyph = "○"; break;
+        case AgentStatus::Idle:      glyph = std::string(loom::ui::design::figures::kCircle); break;
+        case AgentStatus::Scheduled: glyph = std::string(loom::ui::design::figures::kEllipsis); break;
+        case AgentStatus::Errored:   glyph = std::string(loom::ui::design::figures::kCross); break;
+        case AgentStatus::Disabled:  glyph = std::string(loom::ui::design::figures::kEffortLow); break;
     }
 
     auto dot = text(" " + glyph + " ") | color(c);
@@ -216,6 +223,7 @@ struct StatusDotOptions {
     const std::vector<std::string>& tags,
     int max_visible = 4)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements chips;
     int count = static_cast<int>(tags.size());
     int shown = std::min(count, max_visible);
@@ -224,9 +232,9 @@ struct StatusDotOptions {
         chips.push_back(
             hbox({
                 text(" "),
-                text(tags[i]) | color(Color::CyanLight) | dim,
+                text(tags[i]) | color(pal.info) | dim,
                 text(" "),
-            }) | borderLight | color(Color::Cyan)
+            }) | borderLight | color(pal.info)
         );
         if (i < shown - 1) chips.push_back(text(" "));
     }
@@ -235,7 +243,7 @@ struct StatusDotOptions {
         int extra = count - max_visible;
         chips.push_back(text(" "));
         chips.push_back(
-            text(std::format(" +{} more ", extra)) | dim | color(Color::GrayDark)
+            text(std::format(" +{} more ", extra)) | dim | color(pal.muted)
         );
     }
 
@@ -257,6 +265,7 @@ struct RunStats {
 
 /// Render:  "12 runs · 3 running · avg $0.024 · 58K tokens"
 [[nodiscard]] inline Element RunStatsBar(const RunStats& stats) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements parts;
 
     parts.push_back(text(std::format("{} ", stats.run_count)) | bold);
@@ -265,13 +274,13 @@ struct RunStats {
     if (stats.running_count > 0) {
         parts.push_back(text(" · ") | dim);
         parts.push_back(text(std::format("{} ", stats.running_count))
-            | color(Color::Green) | bold);
-        parts.push_back(text("running") | dim | color(Color::Green));
+            | color(pal.success) | bold);
+        parts.push_back(text("running") | dim | color(pal.success));
     }
 
     parts.push_back(text(" · ") | dim);
     parts.push_back(text(std::format("avg ${:.3f} ", stats.avg_cost_usd))
-        | color(Color::Yellow));
+        | color(pal.text));
 
     parts.push_back(text(" · ") | dim);
     std::string tokens_str;
@@ -302,6 +311,7 @@ struct ToolChipsOptions {
 
 /// Static (non-interactive) tool-chips element.
 [[nodiscard]] inline Element ToolChipsElement(const ToolChipsOptions& opts) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements chips;
     int count = static_cast<int>(opts.tools.size());
     int visible = (opts.start_collapsed && count > opts.collapse_threshold)
@@ -312,9 +322,9 @@ struct ToolChipsOptions {
         chips.push_back(
             hbox({
                 text(" "),
-                text(opts.tools[i]) | color(Color::MagentaLight),
+                text(opts.tools[i]) | color(pal.primary),
                 text(" "),
-            }) | borderLight | color(Color::Magenta)
+            }) | borderLight | color(pal.primary)
         );
         chips.push_back(text(" "));
     }
@@ -322,7 +332,7 @@ struct ToolChipsOptions {
     if (count > visible) {
         int hidden = count - visible;
         chips.push_back(
-            text(std::format(" +{} tools ", hidden)) | dim | color(Color::GrayDark)
+            text(std::format(" +{} tools ", hidden)) | dim | color(pal.muted)
         );
     }
 
@@ -369,6 +379,7 @@ struct StepTimelineOptions {
 }
 
 [[nodiscard]] inline Element StepTimeline(const StepTimelineOptions& opts) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     constexpr int kShowAllThreshold = 2000;
     constexpr int kLatestWindow    = 500;
 
@@ -383,7 +394,7 @@ struct StepTimelineOptions {
                 text(" ⓘ "),
                 text(std::format(
                     "Showing latest {} of {} steps. Press [v] to view all.",
-                    kLatestWindow, total)) | dim | color(Color::Cyan),
+                    kLatestWindow, total)) | dim | color(pal.info),
             })
         );
         rows.push_back(separator() | dim);
@@ -394,7 +405,7 @@ struct StepTimelineOptions {
         Color c = status_color(step.status);
 
         // Left column: pipe + status dot + index.
-        std::string dot = (step.status == AgentStatus::Running) ? "◐" : "●";
+        std::string dot = (step.status == AgentStatus::Running) ? std::string(loom::ui::design::figures::kEffortMedium) : std::string(loom::ui::design::figures::kBullet);
         auto marker = hbox({
             text(" │") | dim,
             text(std::format("{} ", dot)) | color(c),
@@ -408,8 +419,8 @@ struct StepTimelineOptions {
         auto tool = hbox({
             text(icon),
             text(step.tool_name) | (step.status == AgentStatus::Errored
-                                        ? color(Color::Red)
-                                        : color(Color::CyanLight)),
+                                        ? color(pal.danger)
+                                        : color(pal.info)),
         });
 
         // Duration / status suffix.
@@ -442,7 +453,7 @@ struct StepTimelineOptions {
             for (auto& ln : lines) {
                 rows.push_back(hbox({
                     text(" │    ") | dim,
-                    text(ln) | color(Color::GrayLight) | dim,
+                    text(ln) | color(pal.muted) | dim,
                 }));
             }
             if (truncate) {
@@ -451,7 +462,7 @@ struct StepTimelineOptions {
                     text(std::format(" ... +{} chars (click to expand)",
                                      step.output_preview.size()
                                          - opts.truncate_preview_chars))
-                        | dim | color(Color::GrayDark),
+                        | dim | color(pal.muted),
                 }));
             }
         }

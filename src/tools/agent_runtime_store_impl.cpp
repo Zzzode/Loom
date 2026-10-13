@@ -1,6 +1,6 @@
 // Implementation unit for loom.tools.agent_runtime — the NativeAgentStore
 // out-of-line member functions, the single native_agent_store() singleton
-// definition (Meyers function-local static), and the lifecycle entrypoints
+// definition (process-lifetime storage), and the lifecycle entrypoints
 // runtime_agent_id / run_agent / fork_subagent / resume_agent /
 // get_agent_lifecycle. The private member template NativeAgentStore::update
 // stays defined in the class body in the interface.
@@ -14,8 +14,180 @@ namespace loom::tools::agent_runtime {
 
 namespace fs = std::filesystem;
 
-void NativeAgentStore::upsert(NativeAgentRecord record) {
+namespace {
+thread_local NativeAgentStore* executing_background_store = nullptr;
+}
+
+NativeAgentStore::~NativeAgentStore() {
+    {
         std::scoped_lock lock(mutex_);
+        for (auto& [_, record] : records_) record.cancel_requested = true;
+    }
+    wait_for_background_agents();
+}
+
+void NativeAgentStore::begin_execution(std::string_view agent_id, std::stop_token owner) {
+    std::scoped_lock lock(mutex_);
+    begin_execution_locked(agent_id, owner);
+}
+
+void NativeAgentStore::begin_execution(NativeAgentRecord record, std::stop_token owner) {
+    std::scoped_lock lock(mutex_);
+    const auto agent_id = record.agent_id;
+    upsert_locked(std::move(record));
+    begin_execution_locked(agent_id, owner);
+}
+
+void NativeAgentStore::begin_execution_locked(std::string_view agent_id, std::stop_token owner) {
+    if (owner.stop_requested()) {
+        if (auto it = records_.find(std::string(agent_id)); it != records_.end()) {
+            it->second.cancel_requested = true;
+            // Notification/list polling reloads persisted records. Preserve
+            // rejection intent even though no active execution was admitted.
+            (void)persist_native_agent_record(it->second);
+        }
+        throw std::runtime_error("Agent owner is shutting down");
+    }
+    auto& active = active_executions_[std::string(agent_id)];
+    if (active.count == 0) active.owner = owner;
+    ++active.count;
+}
+
+void NativeAgentStore::end_execution(std::string_view agent_id) {
+    std::scoped_lock lock(mutex_);
+    auto it = active_executions_.find(std::string(agent_id));
+    if (it != active_executions_.end() && --it->second.count == 0) {
+        active_executions_.erase(it);
+    }
+}
+
+void NativeAgentStore::run_background_agent(std::string agent_id,
+    std::function<void()> execute, std::stop_token owner) {
+    std::scoped_lock workers_lock(workers_mutex_);
+    for (auto it = workers_.begin(); it != workers_.end();) {
+        if (it->finished->load()) {
+            it->thread.join();
+            it = workers_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    // Allocate before creating a joinable thread: insertion then cannot strand
+    // a thread handle if vector growth fails.
+    workers_.reserve(workers_.size() + 1);
+    auto finished = std::make_shared<std::atomic<bool>>(false);
+    begin_execution(agent_id, owner);
+    try {
+        workers_.push_back(BackgroundWorker{owner, finished, std::thread([this, agent_id, finished, execute = std::move(execute)]() mutable {
+            executing_background_store = this;
+            try {
+                mark_running(agent_id);
+                execute();
+            } catch (const std::exception& error) {
+                finish_agent(agent_id, std::unexpected(std::string(error.what())));
+            } catch (...) {
+                finish_agent(agent_id, std::unexpected(std::string("Background agent execution failed")));
+            }
+            execute = {};
+            end_execution(agent_id);
+            executing_background_store = nullptr;
+            finished->store(true);
+        })});
+    } catch (...) {
+        end_execution(agent_id);
+        throw;
+    }
+}
+
+void NativeAgentStore::finish_agent(
+    std::string_view agent_id,
+    std::expected<std::string, std::string> result
+) {
+    update(agent_id, [&](NativeAgentRecord& record) {
+        if (record.status == NativeAgentStatus::Completed ||
+            record.status == NativeAgentStatus::Failed ||
+            record.status == NativeAgentStatus::Cancelled) return;
+        auto active = active_executions_.find(std::string(agent_id));
+        const bool cancelled = record.cancel_requested ||
+            (active != active_executions_.end() && active->second.owner.stop_requested());
+        record.cancel_requested = cancelled;
+        record.status = cancelled ? NativeAgentStatus::Cancelled
+            : result ? NativeAgentStatus::Completed : NativeAgentStatus::Failed;
+        if (record.status == NativeAgentStatus::Completed) {
+            record.output = std::move(*result);
+            record.error = std::nullopt;
+            record.progress = 1.0;
+            const auto entry = "assistant: " + *record.output;
+            if (!std::ranges::contains(record.transcript, entry)) record.transcript.push_back(entry);
+        } else {
+            record.output = std::nullopt;
+            record.error = result
+                ? std::format("Agent {} cancelled before completion", agent_id)
+                : std::move(result.error());
+            const auto entry = std::string(cancelled ? "system: agent cancelled: " : "system: agent failed: ") + *record.error;
+            if (!std::ranges::contains(record.transcript, entry)) record.transcript.push_back(entry);
+        }
+        record.notification_delivered = false;
+    });
+}
+
+void NativeAgentStore::wait_for_background_agents() {
+    if (executing_background_store == this) {
+        throw std::logic_error("A background agent cannot wait for its own store workers");
+    }
+    std::scoped_lock drain_lock(drain_mutex_);
+    for (;;) {
+        std::vector<BackgroundWorker> workers;
+        {
+            std::scoped_lock lock(workers_mutex_);
+            if (workers_.empty()) return;
+            workers.swap(workers_);
+        }
+        for (auto& worker : workers) worker.thread.join();
+    }
+}
+
+void NativeAgentStore::cancel_and_wait_for_background_agents(std::stop_token owner) {
+    if (executing_background_store == this) {
+        throw std::logic_error("A background agent cannot wait for its own store workers");
+    }
+    {
+        std::scoped_lock lock(mutex_);
+        for (const auto& [id, active] : active_executions_) {
+            if (active.owner == owner) {
+                if (auto record = records_.find(id); record != records_.end() &&
+                    (record->second.status == NativeAgentStatus::Queued ||
+                     record->second.status == NativeAgentStatus::Running)) {
+                    record->second.cancel_requested = true;
+                }
+            }
+        }
+    }
+    std::scoped_lock drain_lock(drain_mutex_);
+    for (;;) {
+        std::vector<BackgroundWorker> workers;
+        {
+            std::scoped_lock lock(workers_mutex_);
+            for (auto it = workers_.begin(); it != workers_.end();) {
+                if (it->owner == owner) {
+                    workers.push_back(std::move(*it));
+                    it = workers_.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        }
+        if (workers.empty()) return;
+        for (auto& worker : workers) worker.thread.join();
+    }
+}
+
+void NativeAgentStore::upsert(NativeAgentRecord record) {
+    std::scoped_lock lock(mutex_);
+    upsert_locked(std::move(record));
+}
+
+void NativeAgentStore::upsert_locked(NativeAgentRecord record) {
         if (!record.transcript_path) {
             record.transcript_path = agent_transcript_path(record.agent_id).string();
         }
@@ -113,13 +285,33 @@ void NativeAgentStore::mark_cancelled(std::string_view agent_id, std::string rea
 }
 
 void NativeAgentStore::request_cancel(std::string_view agent_id, std::string reason) {
-        mark_cancelled(agent_id, std::move(reason));
+        update(agent_id, [&](NativeAgentRecord& record) {
+            if (record.status == NativeAgentStatus::Completed ||
+                record.status == NativeAgentStatus::Failed ||
+                record.status == NativeAgentStatus::Cancelled) return;
+            record.cancel_requested = true;
+            if (active_executions_.contains(record.agent_id) &&
+                (record.status == NativeAgentStatus::Queued ||
+                 record.status == NativeAgentStatus::Running)) {
+                // A stop request acknowledges intent. Only the worker can publish
+                // a terminal status after its hooks and borrowed-state cleanup.
+                return;
+            }
+            record.status = NativeAgentStatus::Cancelled;
+            record.error = std::move(reason);
+            record.output = std::nullopt;
+            record.notification_delivered = false;
+            const auto entry = "system: agent cancelled: " + *record.error;
+            if (!record.error->empty() && !std::ranges::contains(record.transcript, entry)) record.transcript.push_back(entry);
+        });
 }
 
 bool NativeAgentStore::is_cancel_requested(std::string_view agent_id) const {
         std::scoped_lock lock(mutex_);
         auto it = records_.find(std::string(agent_id));
-        return it != records_.end() && it->second.cancel_requested;
+        const auto active = active_executions_.find(std::string(agent_id));
+        return (it != records_.end() && it->second.cancel_requested) ||
+            (active != active_executions_.end() && active->second.owner.stop_requested());
 }
 
 std::vector<std::string> NativeAgentStore::take_pending_task_notifications() {
@@ -143,6 +335,7 @@ std::vector<std::string> NativeAgentStore::take_pending_task_notifications() {
 }
 
 void NativeAgentStore::clear_for_testing() {
+        wait_for_background_agents();
         std::scoped_lock lock(mutex_);
         records_.clear();
 }
@@ -263,8 +456,10 @@ void NativeAgentStore::set_teammate_metadata(
 }
 
 NativeAgentStore& native_agent_store() {
-    static NativeAgentStore store;
-    return store;
+    // Registries own worker shutdown. Keep the store available to registry
+    // callbacks even when static objects are destroyed in a different order.
+    static auto* store = new NativeAgentStore;
+    return *store;
 }
 
 // NOTE: build_fork_child_message and build_worktree_fork_notice live in the

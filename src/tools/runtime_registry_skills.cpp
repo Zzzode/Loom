@@ -105,7 +105,7 @@ namespace fs = std::filesystem;
     if constexpr (features::kEnableSleepTool) {
         names.push_back("sleep");
     }
-    if constexpr (features::kTodoV2) {
+    if constexpr (features::kTaskTools) {
         for (const auto* t : {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
             names.push_back(t);
         }

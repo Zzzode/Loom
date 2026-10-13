@@ -610,13 +610,13 @@ constexpr int kMaxRowHeight = 1000;
             break;
         case S::UserText:
         case S::UserPrompt: {
-            // UserTextMessage wraps at a fixed 76 cols and truncates
-            // content > 10K chars to head 2500 + tail 2500 before
-            // rendering.  Apply the same truncation and wrap width so
-            // the virtual-list estimate matches the rendered height.
+            // Match the user renderer's actual body width and Unicode cells.
             const std::string truncated =
                 ::loom::ui::messages::TruncateUserPromptText(preview);
-            content_lines = 1 + estimate_content_lines(truncated, 76, 0);
+            content_lines = 1 + static_cast<int>(
+                ::loom::ui::messages::wrap_detail::WrappedPromptLines(
+                    truncated, term_cols -
+                    ::loom::ui::messages::wrap_detail::kPromptChromeColumns).size());
             break;
         }
         case S::UserCommand:

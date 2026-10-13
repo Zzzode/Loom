@@ -19,6 +19,10 @@ export module loom.ui.messages.message_hook_progress;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.messages.message_components;
 
 export namespace loom::ui::messages {
@@ -50,13 +54,13 @@ struct HookProgressEntry {
     for (const auto& hook : hooks) {
         auto [indicator, ind_color] = [&]() -> std::pair<std::string, Color> {
             switch (hook.state) {
-                case HookState::Pending: return {"○", Color::GrayDark};
-                case HookState::Running: return {"◐", Color::Yellow};
-                case HookState::Completed: return {"●", Color::Green};
-                case HookState::Failed: return {"✗", Color::Red};
-                case HookState::Skipped: return {"⊘", Color::GrayDark};
+                case HookState::Pending: return {"○", loom::ui::design::theme::current_theme().palette->muted};
+                case HookState::Running: return {"◐", loom::ui::design::theme::current_theme().palette->warning};
+                case HookState::Completed: return {"●", loom::ui::design::theme::current_theme().palette->success};
+                case HookState::Failed: return {loom::ui::design::figures::kCross.data(), loom::ui::design::theme::current_theme().palette->danger};
+                case HookState::Skipped: return {"⊘", loom::ui::design::theme::current_theme().palette->muted};
             }
-            return {"?", Color::White};
+            return {"?", loom::ui::design::theme::current_theme().palette->text};
         }();
 
         std::string suffix;
@@ -68,7 +72,7 @@ struct HookProgressEntry {
         }));
 
         if (hook.error) {
-            elements.push_back(text("    " + *hook.error) | color(Color::Red) | dim);
+            elements.push_back(text("    " + *hook.error) | color(loom::ui::design::theme::current_theme().palette->danger) | dim);
         }
     }
 
@@ -112,7 +116,7 @@ class HookProgressComponent : public ComponentBase {
         : hooks_(std::move(hooks)), on_dismiss_(std::move(on_dismiss))
     {
         if (on_dismiss_) {
-            dismiss_btn_ = Button(" ✕ dismiss ", [this] {
+            dismiss_btn_ = Button((" " + std::string(loom::ui::design::figures::kCross) + " dismiss "), [this] {
                 if (on_dismiss_) on_dismiss_();
             }) | dim;
             Add(dismiss_btn_);
@@ -123,9 +127,8 @@ class HookProgressComponent : public ComponentBase {
         auto s = Summarize(hooks_);
 
         // Header: animated spinner + title + percentage
-        std::string spinner = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
-        const std::size_t tick = tick_count_ % spinner.size();
-        std::string spin_char(1, spinner[tick]);
+        const std::string spin_char{loom::ui::design::figures::spinner_frame_glyph(
+            static_cast<int>(tick_count_ % loom::ui::design::figures::kSpinnerFrameCount))};
 
         // Progress bar: length = 20 chars
         constexpr int kBarWidth = 20;
@@ -140,9 +143,9 @@ class HookProgressComponent : public ComponentBase {
         for (int i = 0; i < kBarWidth - filled; ++i) bar.append(kEmpty);
         bar += "]";
 
-        Color accent = s.failed > 0 ? Color::Red
-                     : s.running > 0 ? Color::Yellow
-                     : Color::Green;
+        Color accent = s.failed > 0 ? loom::ui::design::theme::current_theme().palette->danger
+                     : s.running > 0 ? loom::ui::design::theme::current_theme().palette->warning
+                     : loom::ui::design::theme::current_theme().palette->success;
 
         Element dismiss_el = on_dismiss_ && dismiss_btn_
                                  ? dismiss_btn_->Render()
@@ -166,13 +169,13 @@ class HookProgressComponent : public ComponentBase {
             for (const auto& hook : hooks_) {
                 auto [ind, col] = [&]() -> std::pair<std::string, Color> {
                     switch (hook.state) {
-                        case HookState::Pending:   return {"○", Color::GrayDark};
-                        case HookState::Running:   return {spin_char, Color::Yellow};
-                        case HookState::Completed: return {"●", Color::Green};
-                        case HookState::Failed:    return {"✗", Color::Red};
-                        case HookState::Skipped:   return {"⊘", Color::GrayDark};
+                        case HookState::Pending:   return {"○", loom::ui::design::theme::current_theme().palette->muted};
+                        case HookState::Running:   return {spin_char, loom::ui::design::theme::current_theme().palette->warning};
+                        case HookState::Completed: return {"●", loom::ui::design::theme::current_theme().palette->success};
+                        case HookState::Failed:    return {loom::ui::design::figures::kCross.data(), loom::ui::design::theme::current_theme().palette->danger};
+                        case HookState::Skipped:   return {"⊘", loom::ui::design::theme::current_theme().palette->muted};
                     }
-                    return {"?", Color::White};
+                    return {"?", loom::ui::design::theme::current_theme().palette->text};
                 }();
                 std::string suffix;
                 if (hook.duration_ms)
@@ -180,11 +183,11 @@ class HookProgressComponent : public ComponentBase {
                 rows.push_back(hbox({
                     text(ind) | color(col),
                     text(" " + hook.hook_name) | dim,
-                    text(suffix) | dim | color(Color::GrayDark),
+                    text(suffix) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
                 }));
                 if (hook.error) {
                     rows.push_back(text("    " + *hook.error)
-                                       | color(Color::Red) | dim);
+                                       | color(loom::ui::design::theme::current_theme().palette->danger) | dim);
                 }
             }
         }
@@ -192,7 +195,7 @@ class HookProgressComponent : public ComponentBase {
         auto toggle = text(std::format("  [{}] {} hooks ",
                                        collapsed_ ? "+" : "−",
                                        collapsed_ ? "show" : "hide"))
-                          | dim | color(Color::Cyan);
+                          | dim | color(loom::ui::design::theme::current_theme().palette->info);
 
         Elements all;
         all.push_back(header);

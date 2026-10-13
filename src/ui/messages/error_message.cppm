@@ -2,6 +2,8 @@ export module loom.ui.messages.error_message;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 export namespace loom::ui::messages {
 
 // ─── Error types ─────────────────────────────────────────────────────
@@ -96,10 +98,10 @@ inline std::string render_error_message(
         }
     }
     if (data.suggestion.has_value()) {
-        result += "\n💡 " + *data.suggestion;
+        result += ("\n" + std::string(loom::ui::design::figures::kInfo) + " ") + *data.suggestion;
     }
     if (data.doc_url.has_value()) {
-        result += "\n📖 " + *data.doc_url;
+        result += ("\n" + std::string(loom::ui::design::figures::kInfo) + " ") + *data.doc_url;
     }
     // Retry / clear-session action hints.
     // The interactive FTXUI card (api_error_message.cppm) renders full pill
@@ -145,7 +147,7 @@ inline std::string render_system_message(
 }
 
 inline std::string render_rate_limit_message(int retry_after_seconds) {
-    std::string result = "🕐 Rate limited. ";
+    std::string result = (std::string(loom::ui::design::figures::kCircle) + " Rate limited. ");
     if (retry_after_seconds > 0) {
         result += "Retrying in " + std::to_string(retry_after_seconds) + "s...";
     } else {

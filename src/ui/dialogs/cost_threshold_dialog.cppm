@@ -36,6 +36,7 @@ module;
 export module loom.ui.dialogs.cost_threshold_dialog;
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 import loom.constants.product;
 
@@ -130,6 +131,7 @@ struct CostThresholdState {
 ///
 /// Color: Yellow (warning) — consistent with the unified single renderer.
 [[nodiscard]] inline Element RenderCostThreshold(const CostThresholdState& st) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
 
     // ── Title (Dialog.title) ────────────────────────────────────
@@ -138,7 +140,7 @@ struct CostThresholdState {
     // ── Body paragraph + external link ──────────────────────────
     Elements body_rows;
     body_rows.push_back(text(std::string(kBodyParagraph)));
-    body_rows.push_back(text(std::string(kDocsUrl)) | color(Color::CyanLight));
+    body_rows.push_back(text(std::string(kDocsUrl)) | color(pal.info));
     if (st.model_name && !st.model_name->empty()) {
         body_rows.push_back(
             text("(model: " + *st.model_name + ")") | dim);
@@ -151,9 +153,9 @@ struct CostThresholdState {
     const bool selected = (st.selected_index == 0);
     auto option_row = hbox({
         text(selected ? "● " : "○ ") |
-            (selected ? bold | color(Color::YellowLight) : dim),
+            (selected ? bold | color(pal.warning) : dim),
         text(std::string(kOkButtonLabel)) |
-            (selected ? bold | color(Color::White) : dim),
+            (selected ? bold | color(pal.text) : dim),
     });
 
     // ── Keyboard byline ─────────────────────────────────────────
@@ -167,9 +169,9 @@ struct CostThresholdState {
 
     // ── Assemble inner content ──────────────────────────────────
     auto inner = vbox({
-        text(title) | bold | color(Color::Yellow),
+        text(title) | bold | color(pal.warning),
         separator(),
-        vbox(std::move(body_rows)) | color(Color::GrayLight),
+        vbox(std::move(body_rows)) | color(pal.text_muted),
         separator(),
         std::move(option_row),
         separator(),
@@ -177,8 +179,8 @@ struct CostThresholdState {
     }) | size(WIDTH, GREATER_THAN, 58);
 
     // ── Wrap in titled window ───────────────────────────────────
-    return window(text(" Cost Threshold ") | color(Color::Yellow),
-                  std::move(inner)) | color(Color::Yellow);
+    return window(text(" Cost Threshold ") | color(pal.warning),
+                  std::move(inner)) | color(pal.warning);
 }
 
 // ---------------------------------------------------------------------------

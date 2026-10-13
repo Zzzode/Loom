@@ -15,6 +15,10 @@ export module loom.ui.messages.message_shutdown;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 export namespace loom::ui::messages::shutdown {
 using namespace ftxui;
 
@@ -43,32 +47,32 @@ struct ShutdownMessageData {
     // Reason-specific message
     std::string icon;
     std::string message;
-    Color msg_color = Color::GrayLight;
+    Color msg_color = loom::ui::design::theme::current_theme().palette->text_muted;
 
     switch (data.reason) {
         case ShutdownReason::UserExit:
-            icon = "👋";
+            icon = loom::ui::design::figures::kArrowRight.data();
             message = "Goodbye!";
             break;
         case ShutdownReason::SignalReceived:
-            icon = "⚡";
+            icon = loom::ui::design::figures::kLightningBolt.data();
             message = "Interrupted";
-            msg_color = Color::Yellow;
+            msg_color = loom::ui::design::theme::current_theme().palette->warning;
             break;
         case ShutdownReason::Error:
-            icon = "❌";
+            icon = loom::ui::design::figures::kCross.data();
             message = "Session ended due to error";
-            msg_color = Color::Red;
+            msg_color = loom::ui::design::theme::current_theme().palette->danger;
             break;
         case ShutdownReason::SessionEnd:
-            icon = "✓";
+            icon = loom::ui::design::figures::kTick.data();
             message = "Session complete";
-            msg_color = Color::Green;
+            msg_color = loom::ui::design::theme::current_theme().palette->success;
             break;
         case ShutdownReason::Timeout:
-            icon = "⏰";
+            icon = loom::ui::design::figures::kWarning.data();
             message = "Session timed out";
-            msg_color = Color::Yellow;
+            msg_color = loom::ui::design::theme::current_theme().palette->warning;
             break;
     }
 
@@ -95,7 +99,7 @@ struct ShutdownMessageData {
         if (data.total_cost > 0.0) {
             stats += std::format(" | ${:.4f}", data.total_cost);
         }
-        parts.push_back(text("  [" + stats + "]") | dim | color(Color::GrayDark));
+        parts.push_back(text("  [" + stats + "]") | dim | color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     return vbox(parts);
@@ -118,13 +122,13 @@ class ShutdownMessageComponent : public ComponentBase {
         if (on_resume_) {
             resume_btn_ = Button(" ↻ Resume ", [this] {
                 if (on_resume_) on_resume_();
-            }) | color(Color::Cyan);
+            });
             Add(resume_btn_);
         }
         if (on_new_session_) {
-            new_btn_ = Button(" ✨ New session ", [this] {
+            new_btn_ = Button((" " + std::string(loom::ui::design::figures::kStar) + " New session "), [this] {
                 if (on_new_session_) on_new_session_();
-            }) | color(Color::Green);
+            });
             Add(new_btn_);
         }
     }
@@ -132,9 +136,9 @@ class ShutdownMessageComponent : public ComponentBase {
     Element Render() override {
         // Grey separator line with centered title
         auto divider = hbox({
-            separator() | color(Color::GrayDark),
+            separator() | color(loom::ui::design::theme::current_theme().palette->muted),
             text("── Session ended ──") | center | dim,
-            separator() | color(Color::GrayDark),
+            separator() | color(loom::ui::design::theme::current_theme().palette->muted),
         });
 
         auto body = render(data_);
@@ -142,11 +146,11 @@ class ShutdownMessageComponent : public ComponentBase {
         // Action row
         Elements actions;
         if (resume_btn_) {
-            actions.push_back(resume_btn_->Render());
+            actions.push_back(resume_btn_->Render() | color(loom::ui::design::theme::current_theme().palette->info));
             actions.push_back(text("  "));
         }
         if (new_btn_) {
-            actions.push_back(new_btn_->Render());
+            actions.push_back(new_btn_->Render() | color(loom::ui::design::theme::current_theme().palette->primary));
         }
         auto action_row = actions.empty()
             ? Element{text("")}
@@ -158,7 +162,7 @@ class ShutdownMessageComponent : public ComponentBase {
         rows.push_back(body | center);
         rows.push_back(separatorEmpty());
         rows.push_back(action_row);
-        rows.push_back(separator() | color(Color::GrayDark));
+        rows.push_back(separator() | color(loom::ui::design::theme::current_theme().palette->muted));
 
         return vbox(std::move(rows)) | center;
     }

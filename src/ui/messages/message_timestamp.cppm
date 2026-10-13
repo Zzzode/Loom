@@ -5,6 +5,8 @@ export module loom.ui.messages.message_timestamp;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 export namespace loom::ui::messages {
 
 // Render an absolute timestamp (HH:MM:SS format)
@@ -47,7 +49,7 @@ inline auto render_duration_badge(std::chrono::milliseconds duration) -> std::st
     std::ostringstream out;
     auto ms = duration.count();
 
-    out << "\033[2m⏱ ";
+    out << ("\033[2m" + std::string(loom::ui::design::figures::kCircle) + " ");
     if (ms < 1000) {
         out << ms << "ms";
     } else if (ms < 60000) {

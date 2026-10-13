@@ -21,6 +21,10 @@ export module loom.ui.messages.message_plan_approval;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 import loom.types.types;
 
 export namespace loom::ui::messages {
@@ -56,10 +60,10 @@ struct PlanApprovalOptions {
 
     auto state_indicator = [&]() -> Element {
         switch (opts.state) {
-            case PlanApprovalState::Pending: return text("[PENDING]") | color(Color::Yellow);
-            case PlanApprovalState::Approved: return text("[APPROVED]") | color(Color::Green);
-            case PlanApprovalState::Rejected: return text("[REJECTED]") | color(Color::Red);
-            case PlanApprovalState::Modified: return text("[MODIFIED]") | color(Color::Cyan);
+            case PlanApprovalState::Pending: return text("[PENDING]") | color(loom::ui::design::theme::current_theme().palette->warning);
+            case PlanApprovalState::Approved: return text("[APPROVED]") | color(loom::ui::design::theme::current_theme().palette->success);
+            case PlanApprovalState::Rejected: return text("[REJECTED]") | color(loom::ui::design::theme::current_theme().palette->danger);
+            case PlanApprovalState::Modified: return text("[MODIFIED]") | color(loom::ui::design::theme::current_theme().palette->info);
         }
         return text("");
     }();
@@ -70,13 +74,13 @@ struct PlanApprovalOptions {
     for (std::size_t i = 0; i < opts.steps.size(); ++i) {
         const auto& step = opts.steps[i];
         auto prefix = std::format("{}. ", i + 1);
-        auto style = step.is_risky ? color(Color::Yellow) : nothing;
+        auto style = step.is_risky ? color(loom::ui::design::theme::current_theme().palette->warning) : nothing;
         elements.push_back(text(prefix + step.description) | style);
     }
 
     if (opts.rejection_reason) {
         elements.push_back(separator());
-        elements.push_back(text("Reason: " + *opts.rejection_reason) | color(Color::Red));
+        elements.push_back(text("Reason: " + *opts.rejection_reason) | color(loom::ui::design::theme::current_theme().palette->danger));
     }
 
     return vbox(elements) | border;
@@ -100,12 +104,12 @@ class PlanApprovalComponent : public ComponentBase {
           on_reject_(std::move(on_reject))
     {
         if (opts_.state == PlanApprovalState::Pending) {
-            approve_btn_ = Button("  ✓ Approve  ", [this] {
+            approve_btn_ = Button(("  " + std::string(loom::ui::design::figures::kTick) + " Approve  "), [this] {
                 if (on_approve_) {
                     opts_.state = PlanApprovalState::Approved;
                     on_approve_();
                 }
-            }) | color(Color::Green) | bold;
+            }) | bold;
             Add(approve_btn_);
 
             modify_btn_ = Button("  ✎ Modify  ", [this] {
@@ -113,10 +117,10 @@ class PlanApprovalComponent : public ComponentBase {
                     opts_.state = PlanApprovalState::Modified;
                     on_modify_(opts_.steps);
                 }
-            }) | color(Color::Cyan);
+            });
             Add(modify_btn_);
 
-            reject_btn_ = Button("  ✕ Reject  ", [this] {
+            reject_btn_ = Button(("  " + std::string(loom::ui::design::figures::kCross) + " Reject  "), [this] {
                 if (on_reject_) {
                     opts_.state = PlanApprovalState::Rejected;
                     opts_.rejection_reason = opts_.rejection_reason
@@ -124,7 +128,7 @@ class PlanApprovalComponent : public ComponentBase {
                         : std::optional<std::string>("User rejected plan");
                     on_reject_(*opts_.rejection_reason);
                 }
-            }) | color(Color::Red);
+            });
             Add(reject_btn_);
         }
     }
@@ -134,23 +138,23 @@ class PlanApprovalComponent : public ComponentBase {
         auto state_badge = [&]() -> Element {
             switch (opts_.state) {
                 case PlanApprovalState::Pending:
-                    return hbox({ text("⏳ ") | color(Color::Yellow),
-                                  text(" PENDING ") | color(Color::Yellow) | bold });
+                    return hbox({ text((std::string(loom::ui::design::figures::kCircle) + " ")) | color(loom::ui::design::theme::current_theme().palette->warning),
+                                  text(" PENDING ") | color(loom::ui::design::theme::current_theme().palette->warning) | bold });
                 case PlanApprovalState::Approved:
-                    return hbox({ text("✓ ") | color(Color::Green),
-                                  text(" APPROVED ") | color(Color::Green) | bold });
+                    return hbox({ text((std::string(loom::ui::design::figures::kTick) + " ")) | color(loom::ui::design::theme::current_theme().palette->success),
+                                  text(" APPROVED ") | color(loom::ui::design::theme::current_theme().palette->success) | bold });
                 case PlanApprovalState::Rejected:
-                    return hbox({ text("✕ ") | color(Color::Red),
-                                  text(" REJECTED ") | color(Color::Red) | bold });
+                    return hbox({ text((std::string(loom::ui::design::figures::kCross) + " ")) | color(loom::ui::design::theme::current_theme().palette->danger),
+                                  text(" REJECTED ") | color(loom::ui::design::theme::current_theme().palette->danger) | bold });
                 case PlanApprovalState::Modified:
-                    return hbox({ text("✎ ") | color(Color::Cyan),
-                                  text(" MODIFIED ") | color(Color::Cyan) | bold });
+                    return hbox({ text("✎ ") | color(loom::ui::design::theme::current_theme().palette->info),
+                                  text(" MODIFIED ") | color(loom::ui::design::theme::current_theme().palette->info) | bold });
             }
             return text("");
         }();
 
         auto header = hbox({
-            text("📋 ") | color(Color::Cyan),
+            text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->info),
             text(opts_.plan_title) | bold,
             filler(),
             std::move(state_badge),
@@ -161,13 +165,13 @@ class PlanApprovalComponent : public ComponentBase {
         for (std::size_t i = 0; i < opts_.steps.size(); ++i) {
             const auto& step = opts_.steps[i];
             auto bullet = std::format("{}. ", i + 1);
-            auto risky = step.is_risky ? text(" ⚠️") | color(Color::Yellow) : text("");
+            auto risky = step.is_risky ? text((" " + std::string(loom::ui::design::figures::kWarning))) | color(loom::ui::design::theme::current_theme().palette->warning) : text("");
             auto tool_chip = step.tool_name
-                ? text("  [" + *step.tool_name + "]") | dim | color(Color::GrayDark)
+                ? text("  [" + *step.tool_name + "]") | dim | color(loom::ui::design::theme::current_theme().palette->muted)
                 : text("");
-            Decorator style = step.is_risky ? color(Color::YellowLight) : nothing;
+            Decorator style = step.is_risky ? color(loom::ui::design::theme::current_theme().palette->warning) : nothing;
             steps_rows.push_back(hbox({
-                text(bullet) | bold | color(Color::Cyan),
+                text(bullet) | bold | color(loom::ui::design::theme::current_theme().palette->info),
                 text(step.description) | style,
                 tool_chip,
                 risky,
@@ -180,9 +184,9 @@ class PlanApprovalComponent : public ComponentBase {
         for (const auto& s : opts_.steps) if (s.is_risky) { has_risk = true; break; }
         if (has_risk) {
             risk_rows.push_back(hbox({
-                text("⚠️ ") | color(Color::Yellow),
+                text((std::string(loom::ui::design::figures::kWarning) + " ")) | color(loom::ui::design::theme::current_theme().palette->warning),
                 text("This plan contains risky operations. Please review carefully.")
-                    | color(Color::Yellow) | dim,
+                    | color(loom::ui::design::theme::current_theme().palette->warning) | dim,
             }));
         }
 
@@ -190,16 +194,16 @@ class PlanApprovalComponent : public ComponentBase {
         Elements rejection_rows;
         if (opts_.rejection_reason) {
             rejection_rows.push_back(text("Rejection reason: " + *opts_.rejection_reason)
-                                         | color(Color::Red) | dim);
+                                         | color(loom::ui::design::theme::current_theme().palette->danger) | dim);
         }
 
         // Buttons (only in Pending state)
         Elements actions;
         if (opts_.state == PlanApprovalState::Pending && approve_btn_) {
             actions.push_back(hbox({
-                approve_btn_->Render(), text(" "),
-                modify_btn_->Render(), text(" "),
-                reject_btn_->Render(),
+                approve_btn_->Render() | color(loom::ui::design::theme::current_theme().palette->success), text(" "),
+                modify_btn_->Render() | color(loom::ui::design::theme::current_theme().palette->info), text(" "),
+                reject_btn_->Render() | color(loom::ui::design::theme::current_theme().palette->danger),
             }));
         }
 
@@ -220,7 +224,7 @@ class PlanApprovalComponent : public ComponentBase {
             all.push_back(hbox(std::move(actions)) | center);
         }
 
-        return vbox(std::move(all)) | borderStyled(BorderStyle::ROUNDED, Color::Cyan);
+        return vbox(std::move(all)) | borderStyled(BorderStyle::ROUNDED, loom::ui::design::theme::current_theme().palette->info);
     }
 
     bool OnEvent(Event event) override {

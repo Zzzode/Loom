@@ -44,7 +44,7 @@ no NEW back direction may appear under the declared 12-area total order
 2. **Rank-based order conformance** — a direction `A -> B` with
    `rank(A) < rank(B)` is a back edge; the 5 live back directions (7 module
    edges) are baselined, and ANY other upward edge fails — including a
-   non-SCC-forming one (e.g. `visual -> foundation` passes check 1 — visual
+   non-SCC-forming one (e.g. `tools -> visual` passes check 1 — tools
    is a singleton — but fails check 2). After F2 severs all 5, this enforces
    0 upward edges, machine-enforcing the declared total order.
 

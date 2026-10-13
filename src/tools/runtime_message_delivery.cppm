@@ -476,7 +476,8 @@ build_structured_send_message_payload(
 
 [[nodiscard]] inline std::optional<std::string> try_start_native_agent_resume(
     const NativeAgentRecord& record,
-    ToolRegistry* registry
+    ToolRegistry* registry,
+    const std::optional<std::string>& parent_model = std::nullopt
 ) {
     if (!registry) return "background resume deferred: runtime registry is not attached";
     if (!native_agent_can_resume_locally(record)) {
@@ -486,9 +487,9 @@ build_structured_send_message_payload(
         return "background resume deferred: no API credentials are configured";
     }
 
-    auto started = registry->execute(
-        "Agent",
-        ToolInput::from_json(build_native_agent_resume_input_json(record)));
+    auto input = ToolInput::from_json(build_native_agent_resume_input_json(record));
+    input.parent_model = parent_model;
+    auto started = registry->execute("Agent", input);
     if (!started) {
         auto error = "background resume failed: " + started.error().message;
         agent_runtime::native_agent_store().mark_failed(record.agent_id, error);
@@ -533,7 +534,8 @@ struct DeliveryOutcome {
 [[nodiscard]] inline Result<ToolResult> execute_send_message(
     std::string_view input_json,
     ToolRegistry* registry,
-    bool (*status_is_terminal)(NativeAgentStatus)
+    bool (*status_is_terminal)(NativeAgentStatus),
+    const std::optional<std::string>& parent_model = std::nullopt
 ) {
     auto parsed = json::parse(input_json);
     if (!parsed || !parsed->root().is_obj()) return ToolResult::error("send_message requires a JSON object input");
@@ -675,7 +677,7 @@ struct DeliveryOutcome {
             if (outcome.resumed_terminal_agent) {
                 auto queued_record = loom::tools::agent_runtime::native_agent_store().get(target_agent)
                     .value_or(*recipient_record);
-                outcome.resume_status_note = try_start_native_agent_resume(queued_record, registry);
+                outcome.resume_status_note = try_start_native_agent_resume(queued_record, registry, parent_model);
             }
             loom::tools::agent_runtime::native_agent_store().append_transcript(
                 target_agent,

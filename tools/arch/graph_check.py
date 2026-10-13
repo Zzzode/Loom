@@ -179,9 +179,8 @@ TARGET_AREAS = CORE8 + ["loom.orchestration"]
 # "Back edge" is operational against this table: an area-direction A -> B is
 # a back edge iff UI9_RANK[A] < UI9_RANK[B] (A imports a higher-ranked area).
 # The order is the minimum-FAS order on the live graph (exhaustive 7! search
-# over the 7-area SCC; gate package §0). visual/tools are pure leaves (zero
-# loom.ui imports), so they rank below every importer; their mutual rank is
-# irrelevant. After F2 severs all 5 back directions this table machine-
+# over the 7-area SCC; gate package §0). foundation/tools are leaves; visual resolves semantic colors through
+# foundation, so visual ranks immediately above them. After F2 severs all 5 back directions this table machine-
 # enforces the declared order (0 upward edges allowed).
 UI9_RANK = {
     "loom.ui.app": 11,
@@ -193,8 +192,8 @@ UI9_RANK = {
     "loom.ui.widgets": 5,
     "loom.ui.prompt": 4,
     "loom.ui.chrome": 3,
-    "loom.ui.foundation": 2,
-    "loom.ui.visual": 1,
+    "loom.ui.foundation": 1,
+    "loom.ui.visual": 2,
     "loom.ui.tools": 1,
 }
 
@@ -251,7 +250,7 @@ def ui9_check(deps):
       (b) Rank-based order conformance — under UI9_RANK, a direction
           A -> B with rank(A) < rank(B) is a back edge; any back direction
           not in the baseline (5 today) fails, including a NON-SCC-forming
-          one (e.g. visual -> foundation passes (a) — visual is a
+          one (e.g. tools -> visual passes (a) — visual is a
           singleton — but fails (b)). After F2 severs all 5, this enforces
           0 upward edges.
 

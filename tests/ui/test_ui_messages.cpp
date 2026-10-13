@@ -28,6 +28,7 @@ import loom.ui.messages.assistant_text_message;
 import loom.ui.messages.message_image;
 import loom.ui.visual.markdown;
 import loom.ui.foundation.design_tokens;
+import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_figures;
 import loom.constants.constants;
 import loom.text.parse_references;
@@ -38,6 +39,232 @@ import loom.types.types;
 
 namespace {
 namespace fs = std::filesystem;
+struct RestoreMessageTheme {
+    loom::ui::design::theme::Theme original = loom::ui::design::theme::current_theme();
+    ~RestoreMessageTheme() { loom::ui::design::theme::set_theme(original); }
+};
+}
+
+TEST(Messages, ToolStatusUsesThemeAndRemainsDistinctInMonochrome) {
+    namespace tool = loom::ui::messages::tool_use_message;
+    namespace theme = loom::ui::design::theme;
+    namespace figs = loom::ui::design::figures;
+    RestoreMessageTheme restore;
+    for (const auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+            theme::ThemeVariant::LightAnsi}) {
+        theme::set_theme(variant);
+        const auto& pal = *theme::current_theme().palette;
+        for (const auto status : {tool::FaithfulToolStatus::Queued,
+                tool::FaithfulToolStatus::Success, tool::FaithfulToolStatus::Error}) {
+            tool::FaithfulToolUseData data;
+            data.user_facing_name = "Read";
+            data.status = status;
+            data.should_animate = false;
+            auto screen = ftxui::Screen::Create(
+                ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
+            ftxui::Render(screen, tool::RenderFaithfulToolHeader(data));
+            const auto expected = status == tool::FaithfulToolStatus::Success ? pal.success
+                : status == tool::FaithfulToolStatus::Error ? pal.danger : pal.muted;
+            EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, expected);
+            const auto text = strip_ansi(screen.ToString());
+            if (status == tool::FaithfulToolStatus::Success)
+                EXPECT_NE(text.find(figs::kTick), std::string::npos);
+            if (status == tool::FaithfulToolStatus::Error)
+                EXPECT_NE(text.find(figs::kCross), std::string::npos);
+        }
+    }
+}
+
+TEST(Messages, HeldAssistantComponentUpdatesColorsAfterThemeChange) {
+    namespace msg = loom::ui::messages;
+    namespace theme = loom::ui::design::theme;
+    RestoreMessageTheme restore;
+    theme::set_theme(theme::ThemeVariant::Dark);
+    msg::AssistantTextMessageData data;
+    data.content = "    Zcode";
+    data.verbose = true;
+    data.kind = msg::AssistantMessageKind::RateLimit;
+    auto component = msg::MakeAssistantTextMessage(data, nullptr, nullptr, [] {});
+    for (const auto variant : {theme::ThemeVariant::Light,
+            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkDaltonized}) {
+        theme::set_theme(variant);
+        const auto& pal = *theme::current_theme().palette;
+        auto screen = ftxui::Screen::Create(
+            ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(15));
+        ftxui::Render(screen, component->Render());
+        bool found_button = false;
+        bool found_code = false;
+        bool found_header = false;
+        for (int y = 0; y < 15; ++y) {
+            for (int x = 0; x < 80; ++x) {
+                if (screen.PixelAt(x, y).character == "A") {
+                    EXPECT_EQ(screen.PixelAt(x, y).foreground_color, pal.role_pill_assistant);
+                    found_header = true;
+                }
+                if (screen.PixelAt(x, y).character == "Z") {
+                    EXPECT_EQ(screen.PixelAt(x, y).foreground_color, pal.info);
+                    found_code = true;
+                }
+                if (screen.PixelAt(x, y).character == "R") {
+                    EXPECT_EQ(screen.PixelAt(x, y).foreground_color, pal.warning);
+                    found_button = true;
+                }
+            }
+        }
+        EXPECT_TRUE(found_button);
+        EXPECT_TRUE(found_code);
+        EXPECT_TRUE(found_header);
+        EXPECT_EQ(strip_ansi(screen.ToString()).find("\xf0"), std::string::npos);
+    }
+}
+
+TEST(Messages, AssistantBubbleUsesThemeWithoutEmoji) {
+    namespace msg = loom::ui::messages;
+    namespace theme = loom::ui::design::theme;
+    RestoreMessageTheme restore;
+    msg::AssistantTextMessageData data;
+    data.content = "Body";
+    for (const auto variant : {theme::ThemeVariant::Light,
+            theme::ThemeVariant::Monochrome}) {
+        theme::set_theme(variant);
+        auto screen = ftxui::Screen::Create(
+            ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(10));
+        ftxui::Render(screen, msg::RenderAssistantTextMessageBubble(data));
+        EXPECT_EQ(screen.PixelAt(0, 0).foreground_color,
+                  theme::current_theme().palette->role_pill_assistant);
+        const auto text = strip_ansi(screen.ToString());
+        EXPECT_NE(text.find("Assistant"), std::string::npos);
+        EXPECT_NE(text.find("Body"), std::string::npos);
+        EXPECT_EQ(text.find("\xf0"), std::string::npos);
+    }
+}
+
+namespace {
+std::string prompt_screen_row(const ftxui::Screen& screen, int row) {
+    std::string text;
+    for (int x = 0; x < screen.dimx(); ++x) text += screen.PixelAt(x, row).character;
+    while (!text.empty() && text.back() == ' ') text.pop_back();
+    return text;
+}
+}
+
+TEST(Messages, SubmittedPromptUsesWideTerminalInsteadOfUtf8ByteLimit) {
+    namespace msg = loom::ui::messages;
+    msg::UserTextMessageData data;
+    data.content = "站在全球顶尖 UI/UX 设计师的视角看，你觉得我们现在的 Terminal UI 设计有什么问题吗？";
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
+                                       ftxui::Dimension::Fixed(6));
+    ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data),
+                                      ftxui::text("AFTER")}));
+    EXPECT_EQ(prompt_screen_row(screen, 1),
+              std::string(loom::ui::design::figures::kPointer) + " " + data.content);
+    EXPECT_EQ(prompt_screen_row(screen, 2), "AFTER");
+}
+
+TEST(Messages, SubmittedPromptReflowsRetainedElementAfterTerminalResize) {
+    namespace msg = loom::ui::messages;
+    msg::UserTextMessageData data;
+    data.content = std::string(90, 'x') + "THEEND";
+    auto element = ftxui::vbox({msg::RenderUserPromptMessage(data), ftxui::text("AFTER")});
+    for (int width : {120, 40, 120}) {
+        SCOPED_TRACE(width);
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                           ftxui::Dimension::Fixed(8));
+        ftxui::Render(screen, element);
+        const int body_lines = width == 40 ? 3 : 1;
+        EXPECT_EQ(prompt_screen_row(screen, body_lines + 1), "AFTER");
+        if (width == 120)
+            EXPECT_EQ(prompt_screen_row(screen, 1),
+                      std::string(loom::ui::design::figures::kPointer) + " " + data.content);
+        else
+            EXPECT_NE(prompt_screen_row(screen, 3).find("THEEND"), std::string::npos);
+    }
+}
+
+TEST(Messages, SubmittedPromptPreservesExplicitEmptyAndTrailingLines) {
+    namespace msg = loom::ui::messages;
+    msg::UserTextMessageData data;
+    data.content = "first\n\n第二行\n";
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
+                                       ftxui::Dimension::Fixed(8));
+    ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data),
+                                      ftxui::text("AFTER")}));
+    EXPECT_EQ(prompt_screen_row(screen, 1),
+              std::string(loom::ui::design::figures::kPointer) + " first");
+    EXPECT_TRUE(prompt_screen_row(screen, 2).empty());
+    EXPECT_EQ(prompt_screen_row(screen, 3), "  第二行");
+    EXPECT_TRUE(prompt_screen_row(screen, 4).empty());
+    EXPECT_EQ(prompt_screen_row(screen, 5), "AFTER");
+}
+
+TEST(Messages, SubmittedPromptNarrowWrapPreservesWideAndCombiningGlyphs) {
+    namespace msg = loom::ui::messages;
+    msg::UserTextMessageData data;
+    data.content = "中文abc中文e\xcc\x81xy";
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(10),
+                                       ftxui::Dimension::Fixed(6));
+    ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data),
+                                      ftxui::text("AFTER")}));
+    EXPECT_EQ(prompt_screen_row(screen, 1),
+              std::string(loom::ui::design::figures::kPointer) + " 中文abc");
+    EXPECT_EQ(prompt_screen_row(screen, 2), "  中文e\xcc\x81xy");
+    EXPECT_EQ(prompt_screen_row(screen, 3), "AFTER");
+}
+
+TEST(Messages, SubmittedPromptNestedTranscriptAndContinuationUseAvailableWidth) {
+    namespace msg = loom::ui::messages;
+    msg::UserTextMessageData data;
+    data.content = "中文" + std::string(84, 'x') + "THEEND";
+    for (const bool transcript : {false, true}) {
+        data.is_transcript_mode = transcript;
+        for (const bool margin : {false, true}) {
+            auto element = ftxui::vbox({msg::RenderUserPromptMessage(data, false, margin),
+                                       ftxui::text("AFTER")});
+            for (const int width : {120, 40, 120}) {
+                SCOPED_TRACE(std::format("transcript={}, margin={}, width={}",
+                                        transcript, margin, width));
+                const int columns = width - 3 - (!transcript && !margin ? 5 : 0);
+                const auto lines = msg::wrap_detail::WrappedPromptLines(data.content, columns);
+                auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                                   ftxui::Dimension::Fixed(10));
+                ftxui::Render(screen, element);
+                const int first = margin ? 1 : 0;
+                EXPECT_EQ(prompt_screen_row(screen, first + static_cast<int>(lines.size())),
+                          "AFTER");
+                for (std::size_t i = 0; i < lines.size(); ++i)
+                    EXPECT_NE(prompt_screen_row(screen, first + static_cast<int>(i)).find(lines[i]),
+                              std::string::npos);
+            }
+        }
+    }
+}
+
+TEST(Messages, StreamingCompletionPreservesBodyLayout) {
+    namespace msg = loom::ui::messages;
+    const std::vector<std::string> documents{
+        "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda",
+        "中文输出和 English words 混排，需要保持每一行的位置。再接一段文字。",
+        "# Heading\n\nBody text that wraps at narrow widths.\n\n~~~cpp\nfirst();\n\nsecond();\n~~~\n"};
+    for (int width : {24, 40, 80}) {
+        for (const auto& document : documents) {
+            SCOPED_TRACE(std::to_string(width) + ": " + document);
+            msg::AssistantTextMessageData data;
+            data.content = document;
+            data.is_streaming = true;
+            loom::ui::StreamingMarkdown streaming;
+            auto live = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                             ftxui::Dimension::Fixed(40));
+            ftxui::Render(live, msg::RenderAssistantTextMessageFaithful(
+                data, false, false, &streaming));
+            data.is_streaming = false;
+            auto final = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                              ftxui::Dimension::Fixed(40));
+            ftxui::Render(final, msg::RenderAssistantTextMessageFaithful(data, false));
+            EXPECT_EQ(strip_ansi(live.ToString()), strip_ansi(final.ToString()));
+        }
+    }
 }
 
 
@@ -863,7 +1090,7 @@ TEST(VirtualList, HandleSearchApiParity) {
     EXPECT_FALSE(h.IsSearchActive());
 }
 
-// ── P0-4 LogoV2 + WelcomeV2 + 10-deep notice stack ──────────────────────────
+// ── P0-4 Logo + Welcome + 10-deep notice stack ──────────────────────────
 
 namespace unseen_divider_test {
 
@@ -1908,4 +2135,96 @@ TEST(VirtualThreshold, ForceBottomFlagLifecycle) {
     rs::reset_virtual_renderer_state(store);
     EXPECT_FALSE(store.force_bottom_after_mode_switch);
     EXPECT_EQ(store.virtual_renderer_mode, VirtualRendererMode::Static);
+}
+
+
+TEST(MessagesList, ChainCompression_FailedCommandAndResultStayVisibleWithSuccessfulNeighbors) {
+    using namespace chain_compression_test;
+    auto failed_result = make_tool_result("Bash");
+    failed_result.status = loom::ui::messages::ToolResultStatus::Error;
+    failed_result.output = "bash: syntax error near unexpected token";
+    auto failed_command = make_tool_use("Bash", ToolStatus::Error);
+    failed_command.call.raw_parameters = R"({"command":"broken command"})";
+    auto in = make_input({
+        {MessageShape::AssistantThinking, make_thinking("Inspect sources.")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash")},
+        {MessageShape::UserToolResult, make_tool_result("Bash")},
+        {MessageShape::AssistantToolUse, failed_command},
+        {MessageShape::UserToolResult, failed_result},
+        {MessageShape::AssistantToolUse, make_tool_use("Grep")},
+        {MessageShape::UserToolResult, make_tool_result("Grep")},
+    });
+    // Keep the diagnostics visible during streaming and after the turn ends.
+    for (const bool running : {false, true}) {
+        in.query_running = running;
+        in.streaming_tail_row = running ? 6u : in.rows.size();
+        const auto visible = build_visible_rows(in);
+        ASSERT_EQ(visible.size(), 4u);
+        EXPECT_EQ(visible[0].kind, compressed_chain_kind());
+        EXPECT_EQ(visible[0].tool_turns, 1u);
+        EXPECT_EQ(visible[0].chain_tool_breakdown,
+                  (std::vector<std::pair<std::string, std::size_t>>{{"Bash", 1u}}));
+        EXPECT_EQ(visible[1].kind, payload_kind());
+        EXPECT_EQ(visible[1].row_idx, 3u);
+        EXPECT_EQ(visible[2].kind, payload_kind());
+        EXPECT_EQ(visible[2].row_idx, 4u);
+        EXPECT_EQ(visible[3].kind, compressed_chain_kind());
+        EXPECT_EQ(visible[3].tool_turns, 1u);
+        EXPECT_EQ(visible[3].chain_tool_breakdown,
+                  (std::vector<std::pair<std::string, std::size_t>>{{"Grep", 1u}}));
+    }
+}
+
+TEST(MessagesList, ChainCompression_BriefModeKeepsFailedToolsAndResultsVisible) {
+    using namespace chain_compression_test;
+    auto failure = make_tool_result("Bash");
+    failure.status = loom::ui::messages::ToolResultStatus::Error;
+    failure.output = "Permission denied for tool 'Bash'";
+    auto in = make_input({
+        {MessageShape::AssistantToolUse, make_tool_use("Read")},
+        {MessageShape::UserToolResult, make_tool_result("Read")},
+        {MessageShape::AssistantToolUse, make_tool_use("Bash", ToolStatus::Error)},
+        {MessageShape::UserToolResult, failure},
+        {MessageShape::AssistantToolUse, make_tool_use("Brief")},
+        {MessageShape::UserToolResult, make_tool_result("Brief")},
+    });
+    in.is_brief_mode = true;
+    const auto visible = build_visible_rows(in);
+    ASSERT_EQ(visible.size(), 3u);
+    EXPECT_EQ(visible[0].kind, payload_kind());
+    EXPECT_EQ(visible[0].row_idx, 2u);
+    EXPECT_EQ(visible[1].kind, payload_kind());
+    EXPECT_EQ(visible[1].row_idx, 3u);
+    EXPECT_EQ(visible[2].kind, compressed_chain_kind());
+    EXPECT_EQ(visible[2].tool_turns, 1u);
+    EXPECT_EQ(visible[2].chain_tool_breakdown,
+              (std::vector<std::pair<std::string, std::size_t>>{{"Brief", 1u}}));
+}
+
+TEST(MessagesList, ChainCompression_GroupWithFailedCallStaysVisible) {
+    using namespace chain_compression_test;
+    loom::ui::messages::tool_use_message::GroupedToolsOptions group;
+    group.calls = {
+        make_tool_use("Read").call,
+        make_tool_use("Bash", ToolStatus::Error).call,
+    };
+    auto failure = make_tool_result("Bash");
+    failure.status = loom::ui::messages::ToolResultStatus::Error;
+    auto in = make_input({
+        {MessageShape::AssistantGroupedTools, group},
+        {MessageShape::UserToolResult, failure},
+        {MessageShape::AssistantToolUse, make_tool_use("Brief")},
+        {MessageShape::UserToolResult, make_tool_result("Brief")},
+    });
+    for (const bool brief : {false, true}) {
+        in.is_brief_mode = brief;
+        const auto visible = build_visible_rows(in);
+        ASSERT_EQ(visible.size(), 3u);
+        EXPECT_EQ(visible[0].kind, payload_kind());
+        EXPECT_EQ(visible[0].row_idx, 0u);
+        EXPECT_EQ(visible[1].kind, payload_kind());
+        EXPECT_EQ(visible[1].row_idx, 1u);
+        EXPECT_EQ(visible[2].kind, compressed_chain_kind());
+        EXPECT_EQ(visible[2].tool_turns, 1u);
+    }
 }

@@ -18,6 +18,8 @@ export module loom.ui.dialogs.settings_dialog;
 import loom.ui.foundation.theme_provider;
 
 import std;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.design_tokens;
 
 import loom.types.types;
 import loom.config.config;
@@ -125,7 +127,8 @@ enum class CommandResultDisplay {
 /// Toast — transient short message shown at bottom after save
 struct ToastState {
     std::string message;
-    Color color = Color::Green;
+    Color color{}; // Explicit caller color; default inherits the current success token.
+    std::optional<loom::ui::design::tokens::Role> semantic_role;
     std::chrono::steady_clock::time_point until;
     [[nodiscard]] bool active() const {
         return !message.empty() &&
@@ -170,12 +173,13 @@ struct SettingsDialogOptions {
 // ============================================================
 
 [[nodiscard]] inline std::pair<std::string, Color> health_display(HealthState s) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (s) {
-        case HealthState::OK:       return {"●", Color::Green};
-        case HealthState::Degraded: return {"●", Color::Yellow};
-        case HealthState::Down:     return {"●", Color::Red};
+        case HealthState::OK:       return {std::string{loom::ui::design::figures::kTick}, pal.success};
+        case HealthState::Degraded: return {std::string{loom::ui::design::figures::kWarning}, pal.warning};
+        case HealthState::Down:     return {std::string{loom::ui::design::figures::kCross}, pal.danger};
     }
-    return {"?", Color::White};
+    return {"?", pal.text};
 }
 
 [[nodiscard]] inline std::string format_ts(std::chrono::system_clock::time_point tp) {
@@ -205,9 +209,10 @@ struct SettingsDialogOptions {
     const std::optional<std::string>& description = std::nullopt,
     bool disabled = false,
     bool is_modified = false) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     auto label_el = text(" " + label) | (disabled ? dim : nothing);
-    auto mod_mark = is_modified ? text("*") | color(Color::Yellow) : text(" ");
+    auto mod_mark = is_modified ? text("*") | color(pal.warning) : text(" ");
     auto row = hbox({
         mod_mark,
         label_el | size(WIDTH, EQUAL, 28) | flex_shrink,
@@ -220,7 +225,7 @@ struct SettingsDialogOptions {
     if (description && !description->empty()) {
         result.push_back(hbox({
             text("   ") | dim,
-            text(*description) | dim | color(Color::GrayLight),
+            text(*description) | dim | color(pal.text_muted),
         }));
     }
     return vbox(result);
@@ -359,15 +364,16 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 
 [[nodiscard]] inline Element RenderTabHeader(const std::string& title,
                                              const std::string& subtitle = {}) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements els;
     els.push_back(hbox({
-        text(" " + title + " ") | bold | color(Color::Cyan),
+        text(" " + title + " ") | bold | color(pal.info),
         filler(),
     }));
     if (!subtitle.empty()) {
         els.push_back(hbox({
             text(" "),
-            text(subtitle) | dim | color(Color::GrayLight),
+            text(subtitle) | dim | color(pal.text_muted),
         }));
     }
     els.push_back(separator());
@@ -377,13 +383,14 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 // --- General tab ---
 [[nodiscard]] inline Element RenderGeneralTab(const WorkingSettings& w,
                                               int focus_row) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("General", "Theme, behaviour & defaults"));
 
     // Theme dropdown display
     body.push_back(SettingRow(
         "Theme",
-        text(" [" + w.theme + "] ") | color(Color::Yellow) |
+        text(" [" + w.theme + "] ") | color(pal.warning) |
              (focus_row == 0 ? inverted : nothing),
         "UI color scheme (dark / light / high-contrast / auto)",
         false, focus_row == -2));
@@ -392,7 +399,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Auto mode",
         text(w.auto_mode ? " [ON]  " : " [OFF] ") |
-             color(w.auto_mode ? Color::Green : Color::GrayDark) |
+             color(w.auto_mode ? pal.success : pal.muted) |
              (focus_row == 1 ? inverted : nothing),
         "Automatically continue tool-use chains without confirmations",
         false, focus_row == -2));
@@ -400,7 +407,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     // Effort level
     body.push_back(SettingRow(
         "Effort level",
-        text(" [" + w.effort_level + "] ") | color(Color::Yellow) |
+        text(" [" + w.effort_level + "] ") | color(pal.warning) |
              (focus_row == 2 ? inverted : nothing),
         "Reasoning effort: low / medium / high",
         false, focus_row == -2));
@@ -409,7 +416,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Fast mode",
         text(w.fast_mode ? " [ON]  " : " [OFF] ") |
-             color(w.fast_mode ? Color::Green : Color::GrayDark) |
+             color(w.fast_mode ? pal.success : pal.muted) |
              (focus_row == 3 ? inverted : nothing),
         "Use the faster (cheaper) model when available",
         false, focus_row == -2));
@@ -418,10 +425,10 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Default temperature",
         hbox({
-            gauge(w.default_temperature / 2.0) | color(Color::Cyan) |
+            gauge(w.default_temperature / 2.0) | color(pal.info) |
                 size(WIDTH, EQUAL, 20),
             text(std::format(" {:.2f} ", w.default_temperature)) |
-                color(Color::Cyan) | (focus_row == 4 ? inverted : nothing),
+                color(pal.info) | (focus_row == 4 ? inverted : nothing),
         }),
         "Sampling temperature (0 = deterministic, 2 = maximum randomness)",
         false, focus_row == -2));
@@ -431,21 +438,21 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Show thinking",
         text(w.show_thinking ? " [ON]  " : " [OFF] ") |
-             color(w.show_thinking ? Color::Green : Color::GrayDark) |
+             color(w.show_thinking ? pal.success : pal.muted) |
              (focus_row == 5 ? inverted : nothing),
         "Display thinking blocks in assistant output",
         false, false));
     body.push_back(SettingRow(
         "Token usage display",
         text(w.show_token_usage ? " [ON]  " : " [OFF] ") |
-             color(w.show_token_usage ? Color::Green : Color::GrayDark) |
+             color(w.show_token_usage ? pal.success : pal.muted) |
              (focus_row == 6 ? inverted : nothing),
         "Show token counters after each response",
         false, false));
     body.push_back(SettingRow(
         "Compact mode",
         text(w.compact_mode ? " [ON]  " : " [OFF] ") |
-             color(w.compact_mode ? Color::Green : Color::GrayDark) |
+             color(w.compact_mode ? pal.success : pal.muted) |
              (focus_row == 7 ? inverted : nothing),
         "Minimal output formatting for smaller terminals",
         false, false));
@@ -456,6 +463,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 // --- Model tab ---
 [[nodiscard]] inline Element RenderModelTab(const WorkingSettings& w,
                                             int focus_row) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("Model", "Default model and generation limits"));
 
@@ -463,7 +471,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         "Default model",
         hbox({
             text(" ["),
-            text(w.default_model) | color(Color::Cyan),
+            text(w.default_model) | color(pal.info),
             text("] ▾ ") | dim,
         }) | (focus_row == 0 ? inverted : nothing),
         "Model used for new sessions",
@@ -471,7 +479,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 
     body.push_back(SettingRow(
         "Max output tokens",
-        text(std::format(" {} ", w.max_output_tokens)) | color(Color::Cyan) |
+        text(std::format(" {} ", w.max_output_tokens)) | color(pal.info) |
              (focus_row == 1 ? inverted : nothing),
         "Maximum tokens per assistant turn",
         false, false));
@@ -479,7 +487,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Extended thinking",
         text(w.extended_thinking ? " [ON]  " : " [OFF] ") |
-             color(w.extended_thinking ? Color::Green : Color::GrayDark) |
+             color(w.extended_thinking ? pal.success : pal.muted) |
              (focus_row == 2 ? inverted : nothing),
         "Allocate additional tokens for chain-of-thought reasoning",
         false, false));
@@ -489,13 +497,13 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         "Thinking budget",
         text(w.thinking_budget
             ? std::format(" {} tokens ", *w.thinking_budget)
-            : std::string(" (auto) ")) | color(Color::Cyan) |
+            : std::string(" (auto) ")) | color(pal.info) |
              (focus_row == 3 ? inverted : nothing),
         "Max tokens allocated for chain-of-thought (blank = automatic)",
         false, false));
     body.push_back(SettingRow(
         "Context window size",
-        text(std::format(" {} ", w.context_window_size)) | color(Color::Cyan) |
+        text(std::format(" {} ", w.context_window_size)) | color(pal.info) |
              (focus_row == 4 ? inverted : nothing),
         "Maximum context window tokens",
         false, false));
@@ -503,7 +511,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         "Teammate model",
         text(w.teammate_model.empty()
             ? std::string(" (same as default) ")
-            : " [" + w.teammate_model + "] ") | color(Color::Yellow) |
+            : " [" + w.teammate_model + "] ") | color(pal.warning) |
              (focus_row == 5 ? inverted : nothing),
         "Override model for sub-agent / swarm teammates",
         false, false));
@@ -513,6 +521,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 // --- API tab ---
 [[nodiscard]] inline Element RenderAPITab(const WorkingSettings& w,
                                           int focus_row) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("API", "Endpoints, authentication and timeouts"));
 
@@ -520,7 +529,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     std::string url_display = w.base_url.value_or("(no default — set LOOM_BASE_URL)");
     body.push_back(SettingRow(
         "Base URL",
-        text(" " + url_display + " ") | color(Color::Cyan) |
+        text(" " + url_display + " ") | color(pal.info) |
              (focus_row == 0 ? inverted : nothing),
         "Override the API endpoint (for proxies, self-hosted, etc.)",
         false, false));
@@ -536,14 +545,14 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     }
     body.push_back(SettingRow(
         "API Key",
-        text(" " + key_display + " ") | color(Color::Yellow) |
+        text(" " + key_display + " ") | color(pal.warning) |
              (focus_row == 1 ? inverted : nothing),
         "Stored in user config. Leave blank to use the environment variable",
         false, false));
 
     body.push_back(SettingRow(
         "Timeout (s)",
-        text(std::format(" {} ", w.timeout_seconds)) | color(Color::Cyan) |
+        text(std::format(" {} ", w.timeout_seconds)) | color(pal.info) |
              (focus_row == 2 ? inverted : nothing),
         "Per-request timeout in seconds",
         false, false));
@@ -551,7 +560,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Verify SSL",
         text(w.verify_ssl ? " [ON]  " : " [OFF] ") |
-             color(w.verify_ssl ? Color::Green : Color::Red) |
+             color(w.verify_ssl ? pal.success : pal.danger) |
              (focus_row == 3 ? inverted : nothing),
         "Verify server TLS certificates (disable only for dev proxies)",
         false, false));
@@ -559,13 +568,13 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(separator());
     body.push_back(SettingRow(
         "HTTP proxy",
-        text(w.proxy.value_or("(none)")) | color(Color::Cyan) |
+        text(w.proxy.value_or("(none)")) | color(pal.info) |
              (focus_row == 4 ? inverted : nothing),
         "HTTPS_PROXY / HTTP_PROXY override (env takes precedence)",
         false, false));
     body.push_back(SettingRow(
         "Max retries",
-        text(std::format(" {} ", w.max_retries)) | color(Color::Cyan) |
+        text(std::format(" {} ", w.max_retries)) | color(pal.info) |
              (focus_row == 5 ? inverted : nothing),
         "Number of retry attempts per failed request",
         false, false));
@@ -575,6 +584,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 // --- Permissions tab ---
 [[nodiscard]] inline Element RenderPermissionsTab(const WorkingSettings& w,
                                                   int focus_row) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("Permissions",
         "Default behaviour when tools request access"));
@@ -582,14 +592,14 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Default mode",
         text(" [" + perm_mode_str(w.default_perm) + "] ") |
-             color(Color::Yellow) | (focus_row == 0 ? inverted : nothing),
+             color(pal.warning) | (focus_row == 0 ? inverted : nothing),
         "Ask for confirmation, always allow, or always deny",
         false, false));
 
     body.push_back(SettingRow(
         "Allow Bash",
         text(w.allow_bash ? " [ON]  " : " [OFF] ") |
-             color(w.allow_bash ? Color::Green : Color::GrayDark) |
+             color(w.allow_bash ? pal.success : pal.muted) |
              (focus_row == 1 ? inverted : nothing),
         "Permit shell command execution",
         false, false));
@@ -597,7 +607,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Allow file write",
         text(w.allow_file_write ? " [ON]  " : " [OFF] ") |
-             color(w.allow_file_write ? Color::Green : Color::GrayDark) |
+             color(w.allow_file_write ? pal.success : pal.muted) |
              (focus_row == 2 ? inverted : nothing),
         "Permit file creation and modification",
         false, false));
@@ -605,7 +615,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Allow network",
         text(w.allow_network ? " [ON]  " : " [OFF] ") |
-             color(w.allow_network ? Color::Green : Color::GrayDark) |
+             color(w.allow_network ? pal.success : pal.muted) |
              (focus_row == 3 ? inverted : nothing),
         "Permit outbound HTTP requests (web fetch / search)",
         false, false));
@@ -616,7 +626,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         text(w.allowed_paths.empty()
             ? std::string(" (all) ")
             : std::format(" [{} entries] ", w.allowed_paths.size())) |
-             color(Color::Cyan) | (focus_row == 4 ? inverted : nothing),
+             color(pal.info) | (focus_row == 4 ? inverted : nothing),
         "Whitelisted file paths for tool access",
         false, false));
     body.push_back(SettingRow(
@@ -624,7 +634,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         text(w.denied_paths.empty()
             ? std::string(" (none) ")
             : std::format(" [{} entries] ", w.denied_paths.size())) |
-             color(Color::Cyan) | (focus_row == 5 ? inverted : nothing),
+             color(pal.info) | (focus_row == 5 ? inverted : nothing),
         "Blacklisted file paths for tool access",
         false, false));
     body.push_back(SettingRow(
@@ -632,7 +642,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         text(w.allowed_commands.empty()
             ? std::string(" (all) ")
             : std::format(" [{} entries] ", w.allowed_commands.size())) |
-             color(Color::Cyan) | (focus_row == 6 ? inverted : nothing),
+             color(pal.info) | (focus_row == 6 ? inverted : nothing),
         "Whitelisted shell commands",
         false, false));
     return vbox(body);
@@ -641,27 +651,28 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 // --- Tools tab ---
 [[nodiscard]] inline Element RenderToolsTab(const WorkingSettings& w,
                                             int focus_row) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("Tools", "Enable or disable top-level tools"));
 
     body.push_back(SettingRow(
         "Agent / Sub-agent",
         text(w.enable_agent_tool ? " [ON]  " : " [OFF] ") |
-             color(w.enable_agent_tool ? Color::Green : Color::GrayDark) |
+             color(w.enable_agent_tool ? pal.success : pal.muted) |
              (focus_row == 0 ? inverted : nothing),
         "Allow the assistant to spawn sub-agents for parallel work",
         false, false));
     body.push_back(SettingRow(
         "Web fetch",
         text(w.enable_web_fetch ? " [ON]  " : " [OFF] ") |
-             color(w.enable_web_fetch ? Color::Green : Color::GrayDark) |
+             color(w.enable_web_fetch ? pal.success : pal.muted) |
              (focus_row == 1 ? inverted : nothing),
         "Fetch arbitrary URLs and return their content",
         false, false));
     body.push_back(SettingRow(
         "Web search",
         text(w.enable_web_search ? " [ON]  " : " [OFF] ") |
-             color(w.enable_web_search ? Color::Green : Color::GrayDark) |
+             color(w.enable_web_search ? pal.success : pal.muted) |
              (focus_row == 2 ? inverted : nothing),
         "Run web searches via the configured provider",
         false, false));
@@ -670,21 +681,21 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Bash granular controls",
         text(w.enable_bash_granular ? " [ON]  " : " [OFF] ") |
-             color(w.enable_bash_granular ? Color::Green : Color::GrayDark) |
+             color(w.enable_bash_granular ? pal.success : pal.muted) |
              (focus_row == 3 ? inverted : nothing),
         "Fine-grained per-command permission toggles",
         false, false));
     body.push_back(SettingRow(
         "Glob / Grep safety",
         text(w.enable_glob_grep_safety ? " [ON]  " : " [OFF] ") |
-             color(w.enable_glob_grep_safety ? Color::Green : Color::GrayDark) |
+             color(w.enable_glob_grep_safety ? pal.success : pal.muted) |
              (focus_row == 4 ? inverted : nothing),
         "Restrict search tools to allowed paths only",
         false, false));
     body.push_back(SettingRow(
         "Skill loading",
         text(w.enable_skill_loading ? " [ON]  " : " [OFF] ") |
-             color(w.enable_skill_loading ? Color::Green : Color::GrayDark) |
+             color(w.enable_skill_loading ? pal.success : pal.muted) |
              (focus_row == 5 ? inverted : nothing),
         "Enable the skill system for extensible agent capabilities",
         false, false));
@@ -695,6 +706,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 [[nodiscard]] inline Element RenderMCPTab(const WorkingSettings& w,
                                           int focus_row,
                                           int selected_server) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("MCP",
         "Model Context Protocol servers (managed by services/mcp)"));
@@ -702,7 +714,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Auto-start servers",
         text(w.auto_start_mcp ? " [ON]  " : " [OFF] ") |
-             color(w.auto_start_mcp ? Color::Green : Color::GrayDark) |
+             color(w.auto_start_mcp ? pal.success : pal.muted) |
              (focus_row == 0 ? inverted : nothing),
         "Start configured servers when the REPL launches",
         false, false));
@@ -715,6 +727,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         body.push_back(text("   (none — use /mcp add to configure)") | dim);
     } else {
         for (std::size_t i = 0; i < w.mcp_servers.size(); ++i) {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             const auto& s = w.mcp_servers[i];
             bool sel = (int)i == selected_server;
             auto name = text(" " + s.name) | (sel ? bold : nothing);
@@ -723,29 +736,29 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                            ? (s.url.value_or("(remote)"))
                            : s.command;
             auto row = hbox({
-                sel ? text("›") | color(Color::Cyan) : text(" "),
+                sel ? text("›") | color(pal.info) : text(" "),
                 name | size(WIDTH, EQUAL, 18),
                 transport,
                 text("  "),
-                text(cmd) | color(Color::Cyan) | dim,
+                text(cmd) | color(pal.info) | dim,
             });
-            if (sel) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2);
+            if (sel) row = row | bgcolor(pal.surface_tint_2);
             body.push_back(row);
         }
     }
 
     body.push_back(text(""));
     body.push_back(hbox({
-        text(" [a]") | color(Color::Cyan), text("dd "),
-        text("[r]") | color(Color::Cyan), text("emove "),
-        text("[e]") | color(Color::Cyan), text("dit "),
+        text(" [a]") | color(pal.info), text("dd "),
+        text("[r]") | color(pal.info), text("emove "),
+        text("[e]") | color(pal.info), text("dit "),
     }) | dim);
 
     body.push_back(separator());
     body.push_back(SettingRow(
         "Server lifecycle",
         text(w.auto_start_mcp ? " [auto-managed] " : " [manual] ") |
-             color(Color::Cyan),
+             color(pal.info),
         "MCP servers restart/reconnect automatically when auto-start is ON",
         false, false));
     return vbox(body);
@@ -754,19 +767,20 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 // --- LSP tab ---
 [[nodiscard]] inline Element RenderLSPTab(const WorkingSettings& w,
                                           int focus_row) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("LSP", "Language Server Protocol clients"));
 
     body.push_back(SettingRow(
         "Enable LSP",
         text(w.enable_lsp ? " [ON]  " : " [OFF] ") |
-             color(w.enable_lsp ? Color::Green : Color::GrayDark) |
+             color(w.enable_lsp ? pal.success : pal.muted) |
              (focus_row == 0 ? inverted : nothing),
         "Start LSP clients for detected project languages",
         false, false));
     body.push_back(SettingRow(
         "LSP timeout (s)",
-        text(std::format(" {} ", w.lsp_timeout)) | color(Color::Cyan) |
+        text(std::format(" {} ", w.lsp_timeout)) | color(pal.info) |
              (focus_row == 1 ? inverted : nothing),
         "Per-request timeout for LSP operations",
         false, false));
@@ -778,7 +792,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(separator());
     body.push_back(SettingRow(
         "Per-language LSP config",
-        text(" (delegates to services/lsp registry) ") | color(Color::Cyan),
+        text(" (delegates to services/lsp registry) ") | color(pal.info),
         "Language-specific LSP server configurations managed externally",
         false, false));
     return vbox(body);
@@ -787,6 +801,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 // --- Bridge tab ---
 [[nodiscard]] inline Element RenderBridgeTab(const WorkingSettings& w,
                                              int focus_row) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("Bridge",
         "IDE / editor bridge (VS Code, JetBrains, etc.)"));
@@ -794,20 +809,20 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(SettingRow(
         "Enable bridge",
         text(w.enable_bridge ? " [ON]  " : " [OFF] ") |
-             color(w.enable_bridge ? Color::Green : Color::GrayDark) |
+             color(w.enable_bridge ? pal.success : pal.muted) |
              (focus_row == 0 ? inverted : nothing),
         "Listen for incoming editor connections",
         false, false));
     body.push_back(SettingRow(
         "Outbound-only mode",
         text(w.bridge_outbound_only ? " [ON]  " : " [OFF] ") |
-             color(w.bridge_outbound_only ? Color::Green : Color::GrayDark) |
+             color(w.bridge_outbound_only ? pal.success : pal.muted) |
              (focus_row == 1 ? inverted : nothing),
         "Only allow REPL→editor calls (security hardening)",
         false, false));
     body.push_back(SettingRow(
         "Listen port",
-        text(std::format(" {} ", w.bridge_port)) | color(Color::Cyan) |
+        text(std::format(" {} ", w.bridge_port)) | color(pal.info) |
              (focus_row == 2 ? inverted : nothing),
         "TCP port for the bridge JWT-authenticated server",
         false, false));
@@ -817,7 +832,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         "JWT secret",
         text(w.bridge_jwt_secret.empty()
             ? std::string(" (auto-generated) ")
-            : std::string(" [configured] ")) | color(Color::Yellow) |
+            : std::string(" [configured] ")) | color(pal.warning) |
              (focus_row == 3 ? inverted : nothing),
         "JWT secret for bridge authentication (rotate via CLI)",
         false, false));
@@ -826,24 +841,25 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         text(w.bridge_allowed_origins.empty()
             ? std::string(" (any) ")
             : std::format(" [{} entries] ", w.bridge_allowed_origins.size())) |
-             color(Color::Cyan) | (focus_row == 4 ? inverted : nothing),
+             color(pal.info) | (focus_row == 4 ? inverted : nothing),
         "CORS origin allowlist for bridge connections",
         false, false));
     return vbox(body);
 }
 
 [[nodiscard]] inline Element RenderHooksTab() {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
         RenderTabHeader("Hooks", "Lifecycle hook configuration"),
         SettingRow(
             "Configuration",
-            text(" Managed in settings JSON ") | color(Color::Cyan),
+            text(" Managed in settings JSON ") | color(pal.info),
             "Hook matchers and commands are loaded by the native hook registry",
             false,
             false),
         SettingRow(
             "Runtime",
-            text(" PreToolUse / PostToolUse / Stop ") | color(Color::Green),
+            text(" PreToolUse / PostToolUse / Stop ") | color(pal.success),
             "Hook execution is reported through the lifecycle hook service",
             false,
             false),
@@ -851,17 +867,18 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 }
 
 [[nodiscard]] inline Element RenderPrivacyTab() {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
         RenderTabHeader("Privacy", "Telemetry and data handling"),
         SettingRow(
             "Telemetry",
-            text(" Uses configured analytics sink ") | color(Color::Cyan),
+            text(" Uses configured analytics sink ") | color(pal.info),
             "Respect environment and managed settings opt-out controls",
             false,
             false),
         SettingRow(
             "Secrets",
-            text(" Redacted in UI and logs ") | color(Color::Green),
+            text(" Redacted in UI and logs ") | color(pal.success),
             "API keys and sensitive tokens are never shown as editable sample values",
             false,
             false),
@@ -869,17 +886,18 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 }
 
 [[nodiscard]] inline Element RenderAboutTab() {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
         RenderTabHeader("About", "Loom native"),
         SettingRow(
             "Runtime",
-            text(" C++23 modules ") | color(Color::Cyan),
+            text(" C++23 modules ") | color(pal.info),
             "Native CLI implementation with CMake/CTest gates",
             false,
             false),
         SettingRow(
             "Version",
-            text(" 1.0.0 ") | color(Color::Yellow),
+            text(" 1.0.0 ") | color(pal.warning),
             "Project version from CMakeLists.txt",
             false,
             false),
@@ -918,6 +936,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 
 // --- Usage tab (cards + gauges + table) ---
 [[nodiscard]] inline Element RenderUsageTab(const UsageSnapshot& u) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(RenderTabHeader("Usage",
         "Cost, tokens and request counters (current session)"));
@@ -933,13 +952,13 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 
     Elements cards = {
         card("Total Cost",
-             std::format("${:.4f}", u.total_cost_usd), Color::Green),
+             std::format("${:.4f}", u.total_cost_usd), pal.success),
         card("Input Tokens",
-             std::format("{}", u.total_input_tokens), Color::Cyan),
+             std::format("{}", u.total_input_tokens), pal.info),
         card("Output Tokens",
-             std::format("{}", u.total_output_tokens), Color::Cyan),
+             std::format("{}", u.total_output_tokens), pal.info),
         card("Requests",
-             std::format("{}", u.total_requests), Color::Yellow),
+             std::format("{}", u.total_requests), pal.warning),
     };
     body.push_back(hbox(std::move(cards)));
     body.push_back(text(""));
@@ -955,14 +974,14 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     body.push_back(hbox({
         text(" Daily limit ") | size(WIDTH, EQUAL, 16),
         gauge(std::clamp(u.daily_limit_pct, 0.0, 1.0))
-            | color(u.daily_limit_pct > 0.9 ? Color::Red : Color::Green)
+            | color(u.daily_limit_pct > 0.9 ? pal.danger : pal.success)
             | size(WIDTH, EQUAL, 40),
         text(" " + pct_label(u.daily_limit_pct) + " ") | dim,
     }));
     body.push_back(hbox({
         text(" Rate limit ") | size(WIDTH, EQUAL, 16),
         gauge(std::clamp(u.rate_limit_pct, 0.0, 1.0))
-            | color(u.rate_limit_pct > 0.9 ? Color::Red : Color::Yellow)
+            | color(u.rate_limit_pct > 0.9 ? pal.danger : pal.warning)
             | size(WIDTH, EQUAL, 40),
         text(" " + pct_label(u.rate_limit_pct) + " ") | dim,
     }));
@@ -986,18 +1005,18 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
             body.push_back(hbox({
                 text(" " + r.model_name) | size(WIDTH, EQUAL, 28),
                 text(std::format(" {}", r.requests))
-                    | color(Color::Yellow) | size(WIDTH, EQUAL, 12),
+                    | color(pal.warning) | size(WIDTH, EQUAL, 12),
                 text(std::format(" {}↓ {}↑",
                     r.input_tokens, r.output_tokens))
-                    | color(Color::Cyan) | size(WIDTH, EQUAL, 16),
+                    | color(pal.info) | size(WIDTH, EQUAL, 16),
                 text(std::format(" ${:.4f}", r.cost_usd))
-                    | color(Color::Green) | size(WIDTH, EQUAL, 12),
+                    | color(pal.success) | size(WIDTH, EQUAL, 12),
             }));
         }
     }
     body.push_back(text(""));
     body.push_back(hbox({
-        text(" [r]") | color(Color::Cyan), text("efresh  "),
+        text(" [r]") | color(pal.info), text("efresh  "),
     }) | dim);
 
     return vbox(body);
@@ -1042,6 +1061,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
 
 [[nodiscard]] inline Element RenderFooter(
     const ToastState& toast, bool dirty) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     // Text-style buttons (FTXUI Button() not used — keeps dialog rendering
     // pure-Elements so keyboard dispatch stays in CatchEvent).
@@ -1052,19 +1072,22 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         return el;
     };
 
-    auto save_btn  = style_btn("Save  Ctrl+S", Color::Green, dirty);
-    auto reset_btn = style_btn("Reset  Ctrl+R", Color::Yellow);
-    auto close_btn = style_btn("Close  Esc", Color::Red);
+    auto save_btn  = style_btn("Save  Ctrl+S", pal.success, dirty);
+    auto reset_btn = style_btn("Reset  Ctrl+R", pal.warning);
+    auto close_btn = style_btn("Close  Esc", pal.danger);
 
     auto dirty_marker = dirty
-        ? text(" * unsaved changes") | color(Color::Yellow) | dim
+        ? text(" * unsaved changes") | color(pal.warning) | dim
         : text("");
 
     Element toast_el = text("");
     if (toast.active()) {
         toast_el = hbox({
             text(" "),
-            text(toast.message) | color(toast.color) | bold,
+            text(toast.message) | color(toast.semantic_role
+                ? loom::ui::design::tokens::token_by_role(
+                    *loom::ui::design::theme::current_theme().palette, *toast.semantic_role)
+                : (toast.color == Color{} ? pal.success : toast.color)) | bold,
             filler(),
         });
     }
@@ -1122,14 +1145,15 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
     auto mark = [state]() { state->dirty = true; };
 
     // Helper: set transient toast
-    auto show_toast = [state](std::string msg, Color c = Color::Green) {
+    auto show_toast = [state](std::string msg, loom::ui::design::tokens::Role role = loom::ui::design::tokens::Role::Success) {
         state->toast.message = std::move(msg);
-        state->toast.color = c;
+        state->toast.semantic_role = role;
         state->toast.until = std::chrono::steady_clock::now()
                              + std::chrono::seconds(3);
     };
 
     return Renderer([state] {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         Element content;
         switch (state->selected_tab) {
             case SettingsTabId::General:
@@ -1189,9 +1213,9 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         });
 
         return window(
-            text(" Settings ") | bold | color(Color::Magenta),
+            text(" Settings ") | bold | color(pal.primary),
             hbox({sidebar, body | flex})
-        ) | color(Color::Magenta);
+        ) | color(pal.primary);
     }) | CatchEvent([state, toggle, mark, show_toast](Event event) -> bool {
 
         // --- Global hotkeys ---
@@ -1205,7 +1229,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                 show_toast("✓ Settings saved");
             } else {
                 show_toast("✗ Save failed: " + res.error().message,
-                           Color::Red);
+                           loom::ui::design::tokens::Role::Danger);
             }
             return true;
         }
@@ -1414,7 +1438,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
                         } else {
                             show_toast(
                                 "Set LOOM_API_KEY or run the auth flow",
-                                Color::Yellow);
+                                loom::ui::design::tokens::Role::Warning);
                         }
                         return true;
                     }
@@ -1483,7 +1507,7 @@ inline void apply_to(const WorkingSettings& w, ConfigManager& cfg) {
         // MCP-specific keys
         if (state->selected_tab == SettingsTabId::MCP) {
             if (event == Event::Character('a')) {
-                show_toast("Use /mcp add to configure a server", Color::Yellow);
+                show_toast("Use /mcp add to configure a server", loom::ui::design::tokens::Role::Warning);
                 return true;
             }
             if (event == Event::Character('r')) {

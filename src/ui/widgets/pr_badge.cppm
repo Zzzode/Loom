@@ -6,6 +6,8 @@ export module loom.ui.widgets.pr_badge;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 export namespace ui::components {
 
 enum class PrReviewState {
@@ -25,6 +27,7 @@ struct PrBadgeOptions {
 namespace detail {
 
 std::optional<ftxui::Color> GetPrStatusColor(std::optional<PrReviewState> state) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     
     if (!state) {
@@ -33,13 +36,13 @@ std::optional<ftxui::Color> GetPrStatusColor(std::optional<PrReviewState> state)
     
     switch (*state) {
         case PrReviewState::Approved:
-            return Color::Green;
+            return pal.success;
         case PrReviewState::ChangesRequested:
-            return Color::Red;
+            return pal.danger;
         case PrReviewState::Pending:
-            return Color::Yellow;
+            return pal.warning;
         case PrReviewState::Merged:
-            return Color::Purple;
+            return pal.merged;
         default:
             return std::nullopt;
     }

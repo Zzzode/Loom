@@ -5,7 +5,7 @@
 // dropdown, reverse-search panel, paste-preview overlay, the two public
 // render primitives (RenderInputAreaPub / RenderSuggestionsFromListPub),
 // cursor_display_col, and the free TextInput() component factory.
-// suggest_util::category_icon/category_color stay inline in the primary.
+// suggest_util::category_color is implemented here; category_icon stays inline.
 //
 // Phase A (#184957): textual FTXUI dom/component headers + `import std;`
 // (the textual FTXUI includes keep the reduced-BMI writer happy).
@@ -20,11 +20,31 @@ module loom.ui.widgets.text_input;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.theme_provider;
+
 import loom.text.parse_references;
 import loom.ui.prompt.prompt_paste_handler;
 import loom.ui.prompt.placeholder_cascade;
 
 namespace ui::components {
+
+Color suggest_util::category_color(SuggestionCategory cat) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    switch (cat) {
+        case SuggestionCategory::Command:      return pal.info;
+        case SuggestionCategory::File:         return pal.text;
+        case SuggestionCategory::Directory:    return pal.text;
+        case SuggestionCategory::History:      return pal.muted;
+        case SuggestionCategory::Agent:        return pal.primary;
+        case SuggestionCategory::MCPResource:  return pal.info;
+        case SuggestionCategory::Shell:        return pal.bash_border;
+        case SuggestionCategory::SlackChannel: return pal.info;
+        case SuggestionCategory::CustomTitle:  return pal.info;
+        case SuggestionCategory::None:         return pal.text;
+        default:                               return pal.text;
+    }
+}
 
 // ------------------------------------------------------------
 // Cursor display position (for declared cursor / IME support)
@@ -126,6 +146,7 @@ Element TextInputImpl::RenderSuggestionsFromListPub(const std::vector<Suggestion
 }
 
 Element TextInputImpl::RenderInputArea() {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     Elements lines_elements;
     std::vector<std::string_view> lines = split_lines();
@@ -154,7 +175,7 @@ Element TextInputImpl::RenderInputArea() {
         // NOTE (P0-1 glyph unification):
         //   The REPL faithful path passes a PER-MODE prefix_color and sets
         //   prefix_bold=false to match the mode-indicator semantics.
-        //   Legacy standalone usages keep the historical default (Green+bold)
+        //   Standalone usages resolve the prompt border token with bold
         //   via fallback.  The default prefix was also changed from "▶ "
         //   (U+25B6, a CPP-only invention) to "❯ " (figures.pointer U+276F),
         //   matching the canonical pointer glyph exactly.
@@ -164,9 +185,8 @@ Element TextInputImpl::RenderInputArea() {
             if (options_.prefix_color.has_value()) {
                 prefix_decor = prefix_decor | color(*options_.prefix_color);
             } else {
-                // Historical default: bold green.  New callers should set
-                // prefix_color explicitly instead of relying on this.
-                prefix_decor = prefix_decor | color(Color::Green) | bold;
+                // Resolve the default at render time so held inputs follow theme changes.
+                prefix_decor = prefix_decor | color(pal.prompt_border) | bold;
             }
             if (options_.prefix_bold && !options_.prefix_color.has_value()) {
                 prefix_decor = prefix_decor | bold;
@@ -188,7 +208,7 @@ Element TextInputImpl::RenderInputArea() {
                 std::max(2, (int)std::format("{}", total_lines).size());
             line_parts.push_back(
                 ftxui::text(std::format("{:>{}} ", li + 1, label_width)) |
-                dim | color(Color::GrayDark));
+                dim | color(pal.muted));
         }
 
         const std::string_view& line = lines[li];
@@ -262,7 +282,7 @@ Element TextInputImpl::RenderInputArea() {
                         std::string chip_text = after.substr(0, chip_len);
                         std::string after_chip = after.substr(chip_len);
                         line_parts.push_back(ftxui::text(chip_text) | inverted |
-                                             color(Color::White));
+                                             color(pal.text));
                         if (!after_chip.empty())
                             line_parts.push_back(ftxui::text(after_chip));
                     } else if (!after.empty() && blink_visible_) {
@@ -275,7 +295,7 @@ Element TextInputImpl::RenderInputArea() {
                             ++cc;
                         }
                         line_parts.push_back(ftxui::text(cursor_ch) | inverted |
-                                             color(Color::White));
+                                             color(pal.text));
                         std::string rest = after.substr(cc);
                         if (!rest.empty()) line_parts.push_back(ftxui::text(rest));
                     } else {
@@ -286,18 +306,18 @@ Element TextInputImpl::RenderInputArea() {
                         // visual with the mid-line caret.
                         line_parts.push_back(ftxui::text(
                             blink_visible_ ? " " : "") |
-                            inverted | color(Color::White));
+                            inverted | color(pal.text));
                         if (!after.empty()) line_parts.push_back(ftxui::text(after));
                     }
                 } else if (seg.selected) {
-                    line_parts.push_back(ftxui::text(seg_text) | bgcolor(Color::Blue) |
-                                         color(Color::White));
+                    line_parts.push_back(ftxui::text(seg_text) | bgcolor(pal.selection_bg) |
+                                         color(pal.text));
                 } else {
                     line_parts.push_back(ftxui::text(seg_text));
                 }
             } else if (seg.selected) {
-                line_parts.push_back(ftxui::text(seg_text) | bgcolor(Color::Blue) |
-                                     color(Color::White));
+                line_parts.push_back(ftxui::text(seg_text) | bgcolor(pal.selection_bg) |
+                                     color(pal.text));
             } else {
                 line_parts.push_back(ftxui::text(seg_text));
             }
@@ -309,7 +329,7 @@ Element TextInputImpl::RenderInputArea() {
             !options_.inline_ghost_text.empty() &&
             cursor_col >= line_len) {
             line_parts.push_back(
-                ftxui::text(options_.inline_ghost_text) | dim | color(Color::GrayLight));
+                ftxui::text(options_.inline_ghost_text) | dim | color(pal.muted));
         }
 
         // Argument hint (shown on first line for slash commands)
@@ -317,7 +337,7 @@ Element TextInputImpl::RenderInputArea() {
             // Only show if the first char indicates a command
             if (!text_.empty() && text_[0] == '/') {
                 line_parts.push_back(
-                    ftxui::text("  " + options_.argument_hint) | dim | color(Color::Cyan));
+                    ftxui::text("  " + options_.argument_hint) | dim | color(pal.info));
             }
         }
 
@@ -327,7 +347,7 @@ Element TextInputImpl::RenderInputArea() {
         if (line_len == 0 && is_cursor_line && !has_selection()) {
             line_parts.push_back(ftxui::text(
                 blink_visible_ ? " " : "") |
-                inverted | color(Color::White));
+                inverted | color(pal.text));
         }
 
         lines_elements.push_back(hbox(line_parts));
@@ -358,19 +378,21 @@ Element TextInputImpl::RenderInputArea() {
             /*focused=*/blink_visible_,
             /*terminal_focus=*/options_.terminal_focus,
             /*prefix=*/options_.prefix,
-            /*prefix_color=*/options_.prefix_color);
+            /*prefix_color=*/options_.prefix_color.value_or(pal.prompt_border));
 
         if (rendered.element.has_value()) {
             return *std::move(rendered.element);
         }
-        // Fallback: show an empty prefix line to maintain layout.
-        return ftxui::text(options_.prefix);
+        // Fallback: keep the same prefix color when no placeholder is configured.
+        return ftxui::text(options_.prefix)
+            | color(options_.prefix_color.value_or(pal.prompt_border));
     }
 
     return vbox(lines_elements);
 }
 
 Element TextInputImpl::RenderSuggestionsDropdown() const {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     const size_t visible = std::min(
         options_.max_visible_suggestions,
@@ -387,11 +409,11 @@ Element TextInputImpl::RenderSuggestionsDropdown() const {
 
     // Header
     rows.push_back(hbox({
-        ftxui::text(" 💡 "),
-        ftxui::text("Suggestions") | bold | color(Color::CyanLight),
+        ftxui::text(" " + std::string(loom::ui::design::figures::kInfo) + " "),
+        ftxui::text("Suggestions") | bold | color(pal.info),
         ftxui::text(std::format(" ({} total)", (int)suggestions_.size())) | dim,
     }));
-    rows.push_back(separator() | color(Color::Blue));
+    rows.push_back(separator() | color(pal.border_default));
 
     for (int i = start_idx; i < end_idx; ++i) {
         const auto& s = suggestions_[i];
@@ -416,7 +438,7 @@ Element TextInputImpl::RenderSuggestionsDropdown() const {
         Color accent = s.color_hint.value_or(
             suggest_util::category_color(s.category));
         if (selected) {
-            label_el = label_el | bgcolor(Color::Blue) | color(Color::White) | bold;
+            label_el = label_el | bgcolor(pal.selection_bg) | color(pal.text) | bold;
         } else {
             label_el = label_el | color(accent);
         }
@@ -425,13 +447,13 @@ Element TextInputImpl::RenderSuggestionsDropdown() const {
         // Tag
         if (s.tag.has_value() && !s.tag->empty()) {
             row_parts.push_back(ftxui::text(" "));
-            row_parts.push_back(ftxui::text(*s.tag) | dim | color(Color::Yellow));
+            row_parts.push_back(ftxui::text(*s.tag) | dim | color(pal.warning));
         }
 
         // Description
         if (!s.description.empty()) {
             row_parts.push_back(ftxui::text("  "));
-            row_parts.push_back(ftxui::text(s.description) | dim | color(Color::GrayLight));
+            row_parts.push_back(ftxui::text(s.description) | dim | color(pal.muted));
         }
 
         rows.push_back(hbox(std::move(row_parts)));
@@ -441,25 +463,26 @@ Element TextInputImpl::RenderSuggestionsDropdown() const {
     rows.push_back(separator() | dim);
     rows.push_back(
         ftxui::text("  [↑/↓] navigate    [Tab] cycle    [Enter] accept    [Esc] close")
-            | dim | color(Color::GrayDark));
+            | dim | color(pal.muted));
 
     return vbox(std::move(rows))
          | border
-         | color(Color::Blue);
+         | color(pal.border_default);
 }
 
 Element TextInputImpl::RenderSearchMode() const {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     Elements rows;
 
     // Search prompt line
     {
         Elements parts;
-        parts.push_back(ftxui::text("reverse-i-search: ") | color(Color::Yellow) | bold);
-        parts.push_back(ftxui::text("`" + search_query_ + "`") | color(Color::Cyan));
+        parts.push_back(ftxui::text("reverse-i-search: ") | color(pal.warning) | bold);
+        parts.push_back(ftxui::text("`" + search_query_ + "`") | color(pal.info));
         parts.push_back(ftxui::text("  "));
         if (search_matches_.empty()) {
-            parts.push_back(ftxui::text("(no matches)") | dim | color(Color::Red));
+            parts.push_back(ftxui::text("(no matches)") | dim | color(pal.danger));
         } else {
             parts.push_back(ftxui::text(
                 std::format("{} of {}", (int)search_selected_ + 1, (int)search_matches_.size()))
@@ -473,7 +496,7 @@ Element TextInputImpl::RenderSearchMode() const {
         const std::string& match = search_matches_[search_selected_];
         rows.push_back(separator() | dim);
         rows.push_back(
-            ftxui::text(match) | color(Color::Green)
+            ftxui::text(match) | color(pal.success)
         );
     }
 
@@ -481,9 +504,9 @@ Element TextInputImpl::RenderSearchMode() const {
     rows.push_back(separator() | dim);
     rows.push_back(
         ftxui::text("[Enter] accept  [Esc] cancel  [Ctrl+R] next  [↑/↓] navigate")
-            | dim | color(Color::GrayDark));
+            | dim | color(pal.muted));
 
-    return vbox(std::move(rows)) | border | color(Color::Yellow);
+    return vbox(std::move(rows)) | border | color(pal.warning);
 }
 
 // ============================================================

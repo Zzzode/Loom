@@ -17,6 +17,8 @@ export module loom.ui.widgets.text_input_widget;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 import loom.parsing.highlight.text_highlighting;
 import loom.ui.prompt.combined_highlights;
 import loom.ui.prompt.placeholder_cascade;  // P1: RenderPlaceholder helper
@@ -376,6 +378,7 @@ struct LinePart {
     const TextBuffer& buffer,
     std::optional<VimMode> vim_mode,
     bool focused) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     Elements all_lines;
 
@@ -396,16 +399,16 @@ struct LinePart {
             /*focused=*/focused,
             /*terminal_focus=*/true,
             /*prefix=*/opts.prefix,
-            /*prefix_color=*/Color::Green);
+            /*prefix_color=*/pal.prompt_border);
 
         if (rendered.element.has_value()) {
-            // NOTE: widget historically uses Green + bold for prefix; we
-            // pass Color::Green above.  If the caller wants a different
+            // NOTE: The prefix follows the prompt border token; we
+            // resolve it during each render.  If the caller wants a different
             // prefix color, opts should be extended.
             return *std::move(rendered.element);
         }
         // Fallback: prefix only.
-        return text(opts.prefix) | color(Color::Green) | bold;
+        return text(opts.prefix) | color(pal.prompt_border) | bold;
     }
 
     auto cursor_pos = buffer.cursor();
@@ -454,7 +457,7 @@ struct LinePart {
 
         // Prefix on first line, padding on others
         if (i == 0) {
-            parts.push_back(text(opts.prefix) | color(Color::Green) | bold);
+            parts.push_back(text(opts.prefix) | color(pal.prompt_border) | bold);
         } else if (opts.multiline) {
             parts.push_back(text(std::string(opts.prefix.size(), ' ')));
         }
@@ -462,7 +465,7 @@ struct LinePart {
         // Line numbers
         if (opts.show_line_numbers) {
             parts.push_back(
-                text(std::format("{:3} ", i + 1)) | dim | color(Color::GrayDark));
+                text(std::format("{:3} ", i + 1)) | dim | color(pal.muted));
         }
 
         // Render line content
@@ -545,19 +548,19 @@ struct LinePart {
         Color mode_color;
         switch (*vim_mode) {
             case VimMode::Normal:
-                mode_str = "NORMAL"; mode_color = Color::Blue; break;
+                mode_str = "NORMAL"; mode_color = pal.info; break;
             case VimMode::Insert:
-                mode_str = "INSERT"; mode_color = Color::Green; break;
+                mode_str = "INSERT"; mode_color = pal.auto_accept; break;
             case VimMode::Visual:
-                mode_str = "VISUAL"; mode_color = Color::Magenta; break;
+                mode_str = "VISUAL"; mode_color = pal.primary; break;
             case VimMode::VisualLine:
-                mode_str = "VISUAL LINE"; mode_color = Color::Magenta; break;
+                mode_str = "VISUAL LINE"; mode_color = pal.primary; break;
             case VimMode::VisualBlock:
-                mode_str = "VISUAL BLOCK"; mode_color = Color::Magenta; break;
+                mode_str = "VISUAL BLOCK"; mode_color = pal.primary; break;
             case VimMode::Replace:
-                mode_str = "REPLACE"; mode_color = Color::Red; break;
+                mode_str = "REPLACE"; mode_color = pal.danger; break;
             case VimMode::Command:
-                mode_str = "COMMAND"; mode_color = Color::Yellow; break;
+                mode_str = "COMMAND"; mode_color = pal.warning; break;
         }
         if (!mode_str.empty()) {
             all_lines.push_back(

@@ -1,5 +1,5 @@
 /// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, LogoV2, PromptInput, ReplScreen (SLOC budget fix)
+/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput, ReplScreen (SLOC budget fix)
 
 #include <cstdlib>
 
@@ -163,7 +163,7 @@ TEST(ReplScreen, WelcomeHeaderWidthAndColorTrackTerminal) {
     EXPECT_GE(max_line_width_bytes(wide), 40u);
 
     // Faithful condensed logo uses the brand accent (same as TS
-    // LogoV2's Loom icon accent RGB(215,119,87) = #D77757) on the weave
+    // Logo's Loom icon accent RGB(215,119,87) = #D77757) on the weave
     // glyph, instead of the old primary-palette border decoration.  The
     // accent must appear somewhere in the rendered header.  Compare against
     // the theme's actual color rather than a freshly-constructed Color:
@@ -924,6 +924,8 @@ TEST(ReplScreen, RetainedMessagePayloadRefreshesStructuredResultsAndCallbacks) {
     error.id = "error";
     error.role = "system";
     error.is_error = true;
+    error.is_model_error = true;
+    error.can_retry = true;
     error.content_preview = "retry needed";
     store.messages.push_back(error);
     int retried = 0;

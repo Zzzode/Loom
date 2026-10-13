@@ -1,5 +1,5 @@
 /// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, LogoV2, PromptInput, ReplScreen (SLOC budget fix)
+/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput, ReplScreen (SLOC budget fix)
 
 #include <cstdlib>
 
@@ -281,7 +281,7 @@ TEST(ReplScreen, FreshScreenDoesNotRenderLegacyEmptyState) {
     EXPECT_EQ(rendered.find("/config  -- open settings"), std::string::npos);
 
     // Regression guard (P0 layout): no blank row between the welcome header
-    // and the prompt.  TS LogoV2 has no trailing padding; the header slot
+    // and the prompt.  TS Logo has no trailing padding; the header slot
     // height must stay dynamic.  Previously `size(HEIGHT, EQUAL, 4)` padded
     // a 3-row condensed logo up to 4, leaving a visible blank line above the
     // prompt input (the user-reported "blank line below logo").

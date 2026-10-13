@@ -12,6 +12,7 @@ export module loom.orchestration.agent;
 import std;
 
 import loom.utils.error;
+import loom.config.settings;
 import loom.tools.tool;
 import loom.serdes.json;
 import loom.tools.agent_runtime;
@@ -235,7 +236,24 @@ public:
           current_depth_(current_depth),
           registry_(registry),
           permission_check_(std::move(permission_check)),
-          permission_hook_valid_for_background_(permission_hook_valid_for_background) {}
+          permission_hook_valid_for_background_(permission_hook_valid_for_background) {
+        if (config_.default_model.empty()) {
+            config_.default_model = loom::config::resolve_default_model_from_environment(
+                [](std::string_view name) -> std::optional<std::string> {
+                    const auto key = std::string(name);
+                    if (const char* value = std::getenv(key.c_str()); value && *value) {
+                        return std::string(value);
+                    }
+                    return std::nullopt;
+                });
+        }
+        if (registry_) {
+            auto& store = loom::tools::agent_runtime::native_agent_store();
+            registry_->set_shutdown_handler([&store](std::stop_token owner) {
+                store.cancel_and_wait_for_background_agents(owner);
+            });
+        }
+    }
     
     [[nodiscard]] bool check_permission(const ToolInput& input) const {
         (void)input;
@@ -269,9 +287,11 @@ public:
     /// Get config for creating child agents (depth incremented)
     [[nodiscard]] AgentConfig child_config(
         std::string_view parent_agent_id = {},
-        const std::optional<std::string>& parent_permission_mode = std::nullopt
+        const std::optional<std::string>& parent_permission_mode = std::nullopt,
+        const std::optional<std::string>& parent_model = std::nullopt
     ) const {
         AgentConfig child = config_;
+        if (parent_model) child.default_model = *parent_model;
         // Children inherit tool restrictions
         if (!parent_agent_id.empty()) {
             child.parent_agent_id = std::string(parent_agent_id);
@@ -302,7 +322,7 @@ public:
             return ToolResult::error("Missing required 'prompt' field");
         }
 
-        auto plan = build_agent_execution_plan(*request, config_);
+        auto plan = build_agent_execution_plan(*request, config_, input.parent_model);
         if (!plan) return ToolResult::error(plan.error());
 
         if (!plan->team_name) {
@@ -383,11 +403,7 @@ public:
             return start_background_agent(std::move(*plan));
         }
         
-        upsert_agent_record_for_plan(*plan);
-        // Run the sub-agent loop
-        auto result = run_agent_loop(*plan);
-        (void)cleanup_agent_worktree(plan->agent_id);
-        return result;
+        return run_agent_and_finalize(*plan);
     }
 
 private:
@@ -543,9 +559,7 @@ private:
 
         auto start_hooks = execute_agent_frontmatter_hooks(plan, "SubagentStart");
         if (!start_hooks.ok()) {
-            loom::tools::agent_runtime::native_agent_store().mark_failed(plan.agent_id, *start_hooks.error);
-            update_teammate_completion_status(plan, false, *start_hooks.error);
-            return ToolResult::error(*start_hooks.error);
+            return run_agent_and_finalize(plan, *start_hooks.error);
         }
         if (!start_hooks.output.empty()) {
             loom::tools::agent_runtime::native_agent_store().append_transcript(
@@ -568,54 +582,31 @@ private:
 
         auto config = config_;
         auto depth = current_depth_;
+        // Registry shutdown cancels and drains all workers borrowing its tools
+        // and permission callback before either dependency can be destroyed.
         auto* registry = registry_;
         auto permission_check = permission_hook_valid_for_background_
             ? permission_check_
             : AgentLivePermissionCheckFn{};
         auto permission_hook_valid_for_background = permission_hook_valid_for_background_;
         auto agent_id = plan.agent_id;
-        std::thread([
-            plan = std::move(plan),
-            config = std::move(config),
-            depth,
-            registry,
-            permission_check = std::move(permission_check),
-            permission_hook_valid_for_background,
-            agent_id
-        ]() mutable {
-            loom::tools::agent_runtime::native_agent_store().mark_running(agent_id);
-            AgentTool worker(
-                std::move(config),
+        try {
+            loom::tools::agent_runtime::native_agent_store().run_background_agent(agent_id, [
+                plan,
+                config = std::move(config),
                 depth,
                 registry,
-                std::move(permission_check),
-                permission_hook_valid_for_background);
-            auto result = worker.run_agent_loop(plan);
-            (void)cleanup_agent_worktree(agent_id);
-            if (result && !result->is_error) {
-                auto output = tool_result_content_text(*result);
-                loom::tools::agent_runtime::native_agent_store().mark_completed(agent_id, std::move(output));
-                update_teammate_completion_status(plan, true, tool_result_content_text(*result));
-            } else if (result) {
-                auto error_text = tool_result_content_text(*result);
-                if (auto current = loom::tools::agent_runtime::native_agent_store().get(agent_id);
-                    current && current->status == loom::tools::agent_runtime::NativeAgentStatus::Cancelled) {
-                    update_teammate_completion_status(plan, false, current->error.value_or(error_text));
-                    return;
-                }
-                loom::tools::agent_runtime::native_agent_store().mark_failed(agent_id, error_text);
-                update_teammate_completion_status(plan, false, error_text);
-            } else {
-                auto error_text = result.error().format();
-                if (auto current = loom::tools::agent_runtime::native_agent_store().get(agent_id);
-                    current && current->status == loom::tools::agent_runtime::NativeAgentStatus::Cancelled) {
-                    update_teammate_completion_status(plan, false, current->error.value_or(error_text));
-                    return;
-                }
-                loom::tools::agent_runtime::native_agent_store().mark_failed(agent_id, error_text);
-                update_teammate_completion_status(plan, false, error_text);
-            }
-        }).detach();
+                permission_check = std::move(permission_check),
+                permission_hook_valid_for_background
+            ]() mutable {
+                AgentTool worker(std::move(config), depth, registry,
+                    std::move(permission_check), permission_hook_valid_for_background);
+                (void)worker.run_agent_and_finalize(plan);
+            }, registry->background_stop_token());
+        } catch (const std::exception& error) {
+            return run_agent_and_finalize(plan, std::string(error.what()));
+        }
+
 
         return ToolResult::success(std::format(
             "Started background agent {} ({})\nagentId: {}\noutputFile: {}",
@@ -733,17 +724,19 @@ private:
         }
     }
 
+    /// All executions publish their terminal state after the loop's resources
+    /// and worktree have been cleaned up, then project it to team status.
+    /// Startup failures retain
+    /// their synchronous ToolResult error while using the same cleanup ordering.
+    [[nodiscard]] Result<ToolResult> run_agent_and_finalize(
+        const AgentExecutionPlan& plan,
+        std::optional<std::string> startup_error = std::nullopt);
+
     /// Run the sub-agent's recursive API loop
     [[nodiscard]] Result<ToolResult> run_agent_loop(const AgentExecutionPlan& plan) {
         auto resumed_record = plan.resume_existing
             ? loom::tools::agent_runtime::native_agent_store().get(plan.agent_id)
             : std::optional<loom::tools::agent_runtime::NativeAgentRecord>{};
-        AgentTodoCleanupGuard todo_cleanup{plan.agent_id};
-        AgentShellTaskCleanupGuard shell_task_cleanup{plan.agent_id};
-        AgentMcpCleanupGuard mcp_cleanup{
-            .agent_id = plan.agent_id,
-            .inline_servers = plan.inline_mcp_server_states,
-        };
 
         std::string final_output;
         bool agent_hook_prevented_continuation = false;
@@ -772,7 +765,6 @@ private:
             if (auto hook_error = run_stop_hooks_once(error)) {
                 error += "\nSubagentStop hook failed: " + *hook_error;
             }
-            loom::tools::agent_runtime::native_agent_store().mark_failed(plan.agent_id, error);
             return ToolResult::error(std::move(error));
         };
 
@@ -862,7 +854,6 @@ private:
             }
             const auto reason = std::format("Agent {} cancelled {}", plan.agent_id, phase);
             (void)run_stop_hooks_once(reason);
-            loom::tools::agent_runtime::native_agent_store().mark_cancelled(plan.agent_id, reason);
             return reason;
         };
         auto update_turn_progress = [&](int turn, double phase) {
@@ -1160,6 +1151,7 @@ private:
                         }
                         if (!skip_tool_execution) {
                             auto tool_input = ToolInput::from_json(tool_input_json);
+                            tool_input.parent_model = plan.model;
                             if (auto scope_error = mcp_scope_error_for_plan(tool_input, plan)) {
                                 result_block.text = std::format("[Tool execution error: {}]", *scope_error);
                                 tool_execution_succeeded = false;
@@ -1194,7 +1186,7 @@ private:
                                     result_block.text = std::move(output);
                                 } else if (tu.tool_name == "Agent") {
                                     AgentTool child(
-                                        child_config(plan.agent_id, plan.mode),
+                                        child_config(plan.agent_id, plan.mode, plan.model),
                                         current_depth_ + 1,
                                         registry_,
                                         permission_check_,
@@ -1329,7 +1321,6 @@ private:
         }
 
         if (auto hook_error = run_stop_hooks_once(final_output)) return fail_agent(*hook_error);
-        loom::tools::agent_runtime::native_agent_store().mark_completed(plan.agent_id, final_output);
         
         return ToolResult::success(final_output);
     }

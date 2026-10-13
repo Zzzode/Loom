@@ -379,7 +379,7 @@ struct MessagesListInput {
     /// Optional pointer to a shared StreamingMarkdown instance used for the
     /// streaming-text tail row.  When set and the row's is_streaming=true,
     /// render_payload_row passes this to RenderAssistantTextMessageFaithful
-    /// so the body uses stable-prefix caching instead of full re-parse.
+    /// so the body uses repeated-frame caching instead of full re-parse.
     /// Nullptr = not streaming / use plain render_markdown.
     ::loom::ui::StreamingMarkdown*    streaming_md = nullptr;
 

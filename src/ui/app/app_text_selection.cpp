@@ -4,7 +4,7 @@
 // machine out of the autocomplete/render/event impl units.
 //
 // Contains: SelectionHighlightNode (custom FTXUI Node),
-//           ExtractSelectedText, NotifyCopyComplete,
+//           ExtractSelectedText,
 //           AppAdapter::HandleTextSelectionMouse,
 //           AppAdapter::ApplySelectionHighlight,
 //           AppAdapter::DrainCopyResult.
@@ -27,24 +27,53 @@ module loom.ui.app.app;
 
 import std;
 
-import loom.commands.copy_cmd;           // copy_to_clipboard_osc52
+import loom.platform.clipboard;           // emit_osc52
 import loom.diagnostics.debug;            // debug() (filtered by namespace)
 import loom.diagnostics.log;              // log::add_to_in_memory_errors
 import loom.ui.foundation.theme_provider; // current_theme().palette
-import loom.ui.prompt.prompt_input_footer; // NotificationQueue / NotificationItem
 
 namespace loom::ui {
 
+// Normalize in row-major order, keeping both cells of any selected wide glyph.
+// FTXUI uses an empty character for a wide glyph's continuation; ordinary
+// blank cells contain a space. Highlighting and extraction share this range.
+struct SelectionRange {
+    int x0, y0, x1, y1;
+
+    std::pair<int, int> columns(int y, int width) const {
+        return {y == y0 ? x0 : 0, y == y1 ? x1 : width - 1};
+    }
+};
+
+static SelectionRange NormalizeSelection(
+    const ftxui::Screen& screen, int x0, int y0, int x1, int y1) {
+    if (screen.dimx() == 0 || screen.dimy() == 0) return {0, 0, -1, -1};
+    x0 = std::clamp(x0, 0, screen.dimx() - 1);
+    x1 = std::clamp(x1, 0, screen.dimx() - 1);
+    y0 = std::clamp(y0, 0, screen.dimy() - 1);
+    y1 = std::clamp(y1, 0, screen.dimy() - 1);
+    if (std::tie(y0, x0) > std::tie(y1, x1)) {
+        std::swap(x0, x1);
+        std::swap(y0, y1);
+    }
+    if (x0 > 0 && screen.PixelAt(x0, y0).character.empty()) --x0;
+    if (x1 + 1 < screen.dimx() && screen.PixelAt(x1 + 1, y1).character.empty()) ++x1;
+    return {x0, y0, x1, y1};
+}
+
 // ── Custom FTXUI Node ──────────────────────────────────────────────────
-// Paints the selection rectangle's background after rendering children.
+// Paints the linear selection's background after rendering children.
 // Pattern follows FTXUI's own `inverted` decorator: render children first,
 // then modify pixels in-place.
 class SelectionHighlightNode : public ftxui::Node {
 public:
     SelectionHighlightNode(ftxui::Element child,
+                           std::shared_ptr<ftxui::Screen> frame,
+                           bool active,
                            int sel_x0, int sel_y0, int sel_x1, int sel_y1,
                            ftxui::Color bg_color)
         : ftxui::Node(ftxui::Elements{std::move(child)}),
+          frame_(std::move(frame)), active_(active),
           x0_(sel_x0), y0_(sel_y0), x1_(sel_x1), y1_(sel_y1),
           bg_color_(bg_color) {}
 
@@ -59,13 +88,15 @@ public:
     }
 
     void Render(ftxui::Screen& screen) override {
-        // Render children first, then paint selection background.
+        // Capture pixels before ScreenInteractive::Draw() flushes and clears
+        // them. Capture even before a drag begins, for press/release events
+        // delivered without an intervening render or motion event.
         ftxui::Node::Render(screen);
-        const int sx = std::max(0, std::min(x0_, x1_));
-        const int sy = std::max(0, std::min(y0_, y1_));
-        const int ex = std::min(screen.dimx() - 1, std::max(x0_, x1_));
-        const int ey = std::min(screen.dimy() - 1, std::max(y0_, y1_));
-        for (int y = sy; y <= ey; ++y) {
+        if (frame_) *frame_ = screen;
+        if (!active_) return;
+        const auto range = NormalizeSelection(screen, x0_, y0_, x1_, y1_);
+        for (int y = range.y0; y <= range.y1; ++y) {
+            const auto [sx, ex] = range.columns(y, screen.dimx());
             for (int x = sx; x <= ex; ++x) {
                 screen.PixelAt(x, y).background_color = bg_color_;
             }
@@ -73,6 +104,8 @@ public:
     }
 
 private:
+    std::shared_ptr<ftxui::Screen> frame_;
+    bool active_;
     int x0_, y0_, x1_, y1_;
     ftxui::Color bg_color_;
 };
@@ -83,101 +116,69 @@ private:
 /// Reads rendered pixels directly via Screen::PixelAt, trims trailing
 /// whitespace per line, and joins lines with newlines.
 [[nodiscard]] static std::string ExtractSelectedText(
-    ftxui::Screen* screen, int x0, int y0, int x1, int y1) {
-    const int sx = std::max(0, std::min(x0, x1));
-    const int sy = std::max(0, std::min(y0, y1));
-    const int ex = std::min(screen->dimx() - 1, std::max(x0, x1));
-    const int ey = std::min(screen->dimy() - 1, std::max(y0, y1));
+    const ftxui::Screen* screen, int x0, int y0, int x1, int y1) {
+    const auto range = NormalizeSelection(*screen, x0, y0, x1, y1);
     std::string result;
-    for (int y = sy; y <= ey; ++y) {
+    for (int y = range.y0; y <= range.y1; ++y) {
+        const auto [sx, ex] = range.columns(y, screen->dimx());
         std::string line;
         for (int x = sx; x <= ex; ++x) {
             line += screen->PixelAt(x, y).character;
         }
-        // Trim trailing whitespace (selection rectangles often extend
+        // Trim trailing whitespace (selected rows often extend
         // past the actual text into padding).
         while (!line.empty() &&
                (line.back() == ' ' || line.back() == '\t')) {
             line.pop_back();
         }
-        if (!result.empty()) result += '\n';
+        if (y != range.y0) result += '\n';
         result += line;
     }
     return result;
 }
 
-/// Enqueue a "Copied N bytes (backend)" footer notification.
-static void NotifyCopyComplete(
-    loom::ui::prompt::footer::NotificationQueue& queue,
-    std::size_t bytes, std::string_view backend) {
-    namespace pif = loom::ui::prompt::footer;
-    pif::NotificationItem item;
-    item.key = "text-selection-copied";
-    item.text = std::format("Copied {} bytes ({})", bytes, backend);
-    item.color = "";
-    item.priority = pif::NotificationPriority::Immediate;
-    item.timeout_ms = 2000;
-    pif::QueueAddNotification(queue, item);
-}
-
-/// Enqueue a "Copying..." footer notification.
-static void NotifyCopying(
-    loom::ui::prompt::footer::NotificationQueue& queue) {
-    namespace pif = loom::ui::prompt::footer;
-    pif::NotificationItem item;
-    item.key = "text-selection-copying";
-    item.text = "Copying...";
-    item.color = "";
-    item.priority = pif::NotificationPriority::Immediate;
-    item.timeout_ms = 2000;
-    pif::QueueAddNotification(queue, item);
-}
-
-/// Enqueue a "Copy requested via terminal" footer notification (OSC 52).
-static void NotifyOsc52Emitted(
-    loom::ui::prompt::footer::NotificationQueue& queue) {
-    namespace pif = loom::ui::prompt::footer;
-    pif::NotificationItem item;
-    item.key = "text-selection-osc52";
-    item.text = "Copy requested via terminal (OSC 52)";
-    item.color = "";
-    item.priority = pif::NotificationPriority::Immediate;
-    item.timeout_ms = 2000;
-    pif::QueueAddNotification(queue, item);
-}
-
-/// Enqueue a "Copy failed" footer notification.
-static void NotifyCopyFailed(
-    loom::ui::prompt::footer::NotificationQueue& queue) {
-    namespace pif = loom::ui::prompt::footer;
-    pif::NotificationItem item;
-    item.key = "text-selection-failed";
-    item.text = "Copy failed — select text in terminal and use Ctrl+Shift+C";
-    item.color = "";
-    item.priority = pif::NotificationPriority::Immediate;
-    item.timeout_ms = 4000;
-    pif::QueueAddNotification(queue, item);
+/// Count UTF-8 characters (not bytes) in a string.
+/// Non-continuation bytes (0b10xxxxxx) are skipped; every other byte
+/// starts a new character.
+[[nodiscard]] static std::size_t CountUtf8Chars(std::string_view s) {
+    std::size_t count = 0;
+    for (unsigned char c : s) {
+        if ((c & 0xC0) != 0x80) ++count;
+    }
+    return count;
 }
 
 // ── AppAdapter member functions ────────────────────────────────────────
 
 Element AppAdapter::ApplySelectionHighlight(Element el) {
-    if (!text_selection_.active) return el;
+    if (screen_.load(std::memory_order_acquire) && !text_selection_frame_) {
+        text_selection_frame_ = std::make_shared<ftxui::Screen>(0, 0);
+    }
+    if (!text_selection_.active && !text_selection_frame_) return el;
     namespace theme = loom::ui::design::theme;
     const auto& pal = *theme::current_theme().palette;
     return std::make_shared<SelectionHighlightNode>(
         std::move(el),
+        text_selection_frame_, text_selection_.active,
         text_selection_.start_x, text_selection_.start_y,
         text_selection_.end_x, text_selection_.end_y,
         pal.selection_bg);
 }
 
 bool AppAdapter::HandleTextSelectionMouse(Event event) {
-    if (!event.is_mouse()) return false;
+    if (!event.is_mouse() || !mouse_mode_ || !mouse_tracking_on_) return false;
     const auto& mouse = event.mouse();
 
     if (mouse.button == Mouse::Left &&
         mouse.motion == Mouse::Pressed) {
+        // If a selection is active but the mouse button was released
+        // (potential=false), a new press clears it and starts fresh.
+        // This covers all cases: copy succeeded, copy failed, or the
+        // selection was made without a screen (tests).
+        if (text_selection_.active && !text_selection_.potential) {
+            ClearTextSelection();
+            PostRenderEvent();
+        }
         if (!text_selection_.potential && !text_selection_.active) {
             // Initial press — record position, don't consume.
             text_selection_.potential = true;
@@ -224,20 +225,20 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
             text_selection_.end_y = mouse.y;
         }
         if (text_selection_.active) {
-            // Extract text from screen and copy to clipboard.
-            if (auto* screen = screen_.load(std::memory_order_acquire)) {
+            // Extract the displayed frame, not ScreenInteractive's cleared
+            // working buffer, and copy to clipboard.
+            if (auto* screen = text_selection_frame_.get()) {
                 std::string text = ExtractSelectedText(
                     screen,
                     text_selection_.start_x, text_selection_.start_y,
                     text_selection_.end_x, text_selection_.end_y);
                 if (!text.empty()) {
+                    text_selection_.copied = false;
+                    text_selection_.copy_feedback = "Copying…";
                     // RFC 0007 Phase 1: async copy pipeline.
                     // Advance generation counter for stale-result detection.
                     auto gen = copy_generation_.fetch_add(
                         1, std::memory_order_acq_rel) + 1;
-
-                    // Show "Copying..." immediately.
-                    NotifyCopying(screen_state_->footer_notification_queue);
 
                     // Post async native clipboard copy.
                     auto text_ptr = std::make_shared<const std::string>(
@@ -258,10 +259,14 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
                             PostRenderEvent();
                         },
                     });
+                    // Keep the selection visible. Success feedback is set
+                    // only when the native backend confirms completion.
                 }
             }
             text_selection_.potential = false;
-            text_selection_.active = false;
+            // Don't clear active — the selection stays highlighted after
+            // copy, matching Claude Code's behavior.  Cleared on the next
+            // mouse press or key press.
             PostRenderEvent();
             return true;  // consume — don't trigger click handlers
         }
@@ -270,6 +275,17 @@ bool AppAdapter::HandleTextSelectionMouse(Event event) {
     }
 
     return false;
+}
+
+void AppAdapter::ClearTextSelection() {
+    // A cleared/replaced selection must not emit a late OSC 52 fallback.
+    copy_generation_.fetch_add(1, std::memory_order_acq_rel);
+    text_selection_.active = false;
+    text_selection_.potential = false;
+    text_selection_.copied = false;
+    text_selection_.copied_chars = 0;
+    text_selection_.copy_feedback.reset();
+    screen_state_->copy_toast_text.reset();
 }
 
 void AppAdapter::DrainCopyResult() {
@@ -305,29 +321,44 @@ void AppAdapter::DrainCopyResult() {
             r.error_detail));
     }
 
-    auto& queue = screen_state_->footer_notification_queue;
-    const auto byte_count = pending->text ? pending->text->size() : 0;
-
     if (r.status ==
         loom::utils::clipboard::CopyResult::Status::NativeCopied) {
-        // Native clipboard succeeded.
-        NotifyCopyComplete(queue, byte_count, r.backend_name);
+        if (text_selection_.active && !text_selection_.potential && pending->text) {
+            text_selection_.copied = true;
+            text_selection_.copied_chars = CountUtf8Chars(*pending->text);
+            text_selection_.copy_feedback = std::format(
+                "Copied {} chars to clipboard", text_selection_.copied_chars);
+        }
     } else {
+        // Only native success can confirm clipboard acceptance.
+        text_selection_.copied = false;
         // Native failed or unsupported (SSH/no backend) — try OSC 52.
         // OSC 52 is written on the UI thread (terminal-output ownership
         // invariant: only the UI thread writes to stdout/stderr).
         if (pending->text) {
-            auto osc52 = loom::commands::copy_to_clipboard_osc52(
+            auto osc52 = loom::utils::clipboard::emit_osc52(
                 *pending->text);
             if (osc52) {
-                NotifyOsc52Emitted(queue);
+                text_selection_.copy_feedback = "Copy sent to terminal · paste to verify";
             } else {
-                NotifyCopyFailed(queue);
+                text_selection_.copy_feedback = "Copy failed · try again";
             }
         } else {
-            NotifyCopyFailed(queue);
+            text_selection_.copy_feedback = "Copy failed · try again";
         }
     }
+}
+
+std::string AppTestingSeams::selected_text_for_testing(
+    const ftxui::Screen& screen, int x0, int y0, int x1, int y1) {
+    return ExtractSelectedText(&screen, x0, y0, x1, y1);
+}
+
+ftxui::Element AppTestingSeams::selection_highlight_for_testing(
+    ftxui::Element child, int x0, int y0, int x1, int y1) {
+    return std::make_shared<SelectionHighlightNode>(
+        std::move(child), nullptr, true, x0, y0, x1, y1,
+        loom::ui::design::theme::current_theme().palette->selection_bg);
 }
 
 }  // namespace loom::ui

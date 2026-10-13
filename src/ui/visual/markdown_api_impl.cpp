@@ -1,8 +1,8 @@
 // markdown_api_impl.cpp - impl unit for loom.ui.visual.markdown (RFC 0001
 // Phase C batch 6). Holds the public entry points render_markdown /
 // render_markdown_dim, the cache-management accessors, and the
-// StreamingMarkdown out-of-line members (update, reset, private static
-// find_block_boundary). Default arguments stay on the cppm declarations.
+// StreamingMarkdown out-of-line members (update, reset). Default arguments
+// stay on the cppm declarations.
 module;
 
 #include <ftxui/dom/elements.hpp>
@@ -10,6 +10,7 @@ module;
 module loom.ui.visual.markdown;
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 namespace loom::ui {
 
@@ -104,7 +105,7 @@ void collect_footnote_refs(const std::vector<BlockToken>& blocks,
         case BlockTokenKind::MathBlock:
             // Display math: show the raw LaTeX in a distinct color,
             // matching render_block_element().
-            return text(sub.math_content) | color(Color::CyanLight);
+            return text(sub.math_content) | color(loom::ui::design::theme::current_theme().palette->info);
         case BlockTokenKind::HtmlBlock:
             return detail::render_html_block(sub, opts);
         case BlockTokenKind::FootnoteDef:
@@ -188,7 +189,7 @@ void collect_footnote_refs(const std::vector<BlockToken>& blocks,
                 // terminal we show the raw LaTeX centered and in a distinct
                 // cyan color so it's visually recognized as a formula block.
                 Element math_el = text(tok.math_content) |
-                                  color(Color::CyanLight);
+                                  color(loom::ui::design::theme::current_theme().palette->info);
                 el = hbox({filler(), std::move(math_el), filler()});
                 break;
             }
@@ -291,84 +292,22 @@ void collect_footnote_refs(const std::vector<BlockToken>& blocks,
 }
 
 Element StreamingMarkdown::update(std::string_view content) {
-        // Reset if content was replaced (not a prefix extension)
-        if (!content.starts_with(stable_prefix_)) {
-            stable_prefix_.clear();
-        }
+    const auto* palette = loom::ui::design::theme::current_theme().palette;
+    if (last_render_ && content == last_content_ && palette == last_palette_)
+        return last_render_;
+    // Blank lines are not safe parse boundaries inside lists or fences, and
+    // references may depend on later definitions. Use one document context.
+    last_render_ = render_markdown(content);
+    last_content_ = content;
+    last_palette_ = palette;
+    return last_render_;
+}
 
-        // Find a safe block boundary in the new content
-        std::size_t boundary = find_block_boundary(content);
-
-        // Advance stable prefix
-        if (boundary > stable_prefix_.size()) {
-            stable_prefix_ = std::string(content.substr(0, boundary));
-        }
-
-        std::string_view unstable = content.substr(stable_prefix_.size());
-
-        Elements parts;
-        if (!stable_prefix_.empty()) {
-            parts.push_back(render_markdown(stable_prefix_));
-        }
-        if (!unstable.empty()) {
-            // Separate the stable prefix from the in-progress suffix with
-            // a blank line, matching the inter-block separator in
-            // render_markdown.
-            if (!parts.empty()) {
-                parts.push_back(text(""));
-            }
-            parts.push_back(render_markdown(unstable));
-        }
-        return vbox(std::move(parts));
-    }
-
-void StreamingMarkdown::reset() { stable_prefix_.clear(); }
-
-std::size_t StreamingMarkdown::find_block_boundary(
-    std::string_view content) {
-
-        std::size_t last_good = 0;
-        bool in_code_fence = false;
-
-        std::size_t pos = 0;
-        while (pos < content.size()) {
-            auto nl = content.find('\n', pos);
-            if (nl == std::string_view::npos) break;
-
-            std::string_view line;
-            if (nl > pos) {
-                line = content.substr(pos, nl - pos);
-            }
-
-            if (line.starts_with("```")) {
-                if (in_code_fence) {
-                    // End of code fence — boundary after this line
-                    last_good = nl + 1;
-                    in_code_fence = false;
-                } else {
-                    in_code_fence = true;
-                }
-            }
-
-            // Double newline = paragraph boundary
-            if (nl + 1 < content.size() && content[nl + 1] == '\n') {
-                if (!in_code_fence) {
-                    last_good = nl + 1;
-                }
-            }
-
-            // Horizontal rule = block boundary
-            if (line == "---" || line == "***" || line == "___") {
-                if (!in_code_fence) {
-                    last_good = nl + 1;
-                }
-            }
-
-            pos = nl + 1;
-        }
-
-        return last_good;
-    }
+void StreamingMarkdown::reset() {
+    last_content_.clear();
+    last_render_.reset();
+    last_palette_ = nullptr;
+}
 
 /// Clear the global markdown token cache.
 /// Call this when memory pressure is high or on settings change.

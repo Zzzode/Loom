@@ -67,6 +67,10 @@ export module loom.ui.messages.virtual_list;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.messages.scroll_keys;
 
 // NOTE: The VirtualList module intentionally keeps its own VisibleRow struct.
@@ -628,7 +632,7 @@ loading_pill(std::string const &label) {
   using namespace ftxui;
   return hbox({
     text("  ◷ "),
-    text(label) | color(Color::GrayDark) | dim,
+    text(label) | color(loom::ui::design::theme::current_theme().palette->muted) | dim,
     filler(),
   }) | size(HEIGHT, EQUAL, 1);
 }
@@ -637,11 +641,11 @@ loading_pill(std::string const &label) {
 [[nodiscard]] inline ftxui::Element
 new_messages_pill(int count) {
   using namespace ftxui;
-  std::string label = "⬇ new messages (" + std::to_string(count) + ")";
+  std::string label = std::string(loom::ui::design::figures::kArrowDown) + " new messages (" + std::to_string(count) + ")";
   return hbox({
     filler(),
-    text(label) | color(Color::CyanLight) | bold |
-      bgcolor(Color::Cyan) | dim |
+    text(label) | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bold |
+      bgcolor(loom::ui::design::theme::current_theme().palette->info) | dim |
       size(HEIGHT, EQUAL, 1),
   });
 }

@@ -65,6 +65,8 @@ struct MessageDisplayEntry {
     /// (imageIds assigned from message.imagePasteIds).
     std::optional<int> image_display_id;
     std::optional<std::string> tool_name, tool_status;
+    /// Match committed tool calls and results by identity, not by tool name.
+    std::optional<std::string> tool_use_id;
     /// Parsed tool input JSON for tool-use entries.  Threaded into
     /// ToolUseRenderOptions.raw_parameters (shared G1/G2 contract) instead of
     /// the previous content_preview fallback.  G2 (app.cppm) populates this
@@ -92,6 +94,11 @@ struct MessageDisplayEntry {
     /// live elapsed timer (now - earliest_start) can tick in real time.
     /// Zero = not set (committed entries use thinking_duration instead).
     std::chrono::steady_clock::time_point thinking_start_time{};
+    /// Wall-clock start time of the tool-use block (steady_clock).
+    /// Populated for streaming tool-use entries so the chain compressor's
+    /// live elapsed timer includes tool call time, not just thinking time.
+    /// Zero = not set.
+    std::chrono::steady_clock::time_point tool_start_time{};
     int estimated_height_lines = 3;
     /// M4 live-path: system-row subtype hint.  When set on a `system` entry,
     /// RenderMessages routes the row through the matching faithful
@@ -113,6 +120,11 @@ struct MessageDisplayEntry {
     /// sessionExpired.  When true, the
     /// auth session has expired; show "Clear session" button instead of Retry.
     bool session_expired{false};
+    // Only fatal model request failures expose request-level recovery actions.
+    bool is_model_error{false};
+    bool can_retry{false};
+    /// A completed tool round exhausted the optional interactive budget.
+    bool can_continue{false};
 };
 
 /// RFC 0002 F3 store — message-list, scroll and transcript-chrome state,
@@ -137,6 +149,9 @@ struct MessagesStore {
     int scroll_offset = 0, selected_message_idx = -1;
     int viewport_height_lines = 40;
     bool scroll_pinned_to_bottom = true;
+    /// Post-layout height of the static transcript, including collapsed rows
+    /// and leading chrome. Unset before layout or while virtualization is active.
+    std::optional<int> rendered_content_height_lines;
 
     /// Index into messages[] where the unseen divider anchor sits.
     /// Set on FIRST scroll-away from bottom (the unseen-divider
@@ -208,6 +223,7 @@ struct MessagesStore {
     /// Bounds reflected by FullscreenLayout for the floating "new messages"
     /// pill.  ReplScreen owns event dispatch and uses this box for hit-testing.
     ftxui::Box new_messages_pill_box;
+    ftxui::Box continue_action_box{.x_min = 0, .x_max = -1, .y_min = 0, .y_max = -1};
 
     /// Bounds reflected by FullscreenLayout for the scrollable transcript
     /// area.  Used to compute the actual viewport height for scroll bounds,
@@ -262,6 +278,7 @@ inline void ClearRepinState(MessagesStore& store) {
 /// Called on /clear, callback-clear, and session restore to ensure
 /// the next render starts from Static mode with a fresh counter.
 inline void reset_virtual_renderer_state(MessagesStore& store) {
+    store.rendered_content_height_lines.reset();
     store.virtual_renderer_mode =
         ::loom::ui::messages_list::VirtualRendererMode::Static;
     store.virtual_mode_switch_count = 0;

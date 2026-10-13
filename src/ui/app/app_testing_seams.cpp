@@ -18,6 +18,7 @@ module loom.ui.app.app;
 import std;
 
 import loom.types.types;
+import loom.query.query_engine;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.task_view_store;
 import loom.ui.screens.messages_store;
@@ -28,6 +29,21 @@ import loom.ui.screens.chrome_store;
 namespace loom::ui {
 
 namespace repl = loom::ui::repl_screen;
+
+std::shared_ptr<const repl::ReplScreenState> AppTestingSeams::screen_state_for_testing() const {
+    return app->screen_state_;
+}
+
+std::optional<std::string> AppTestingSeams::copy_feedback_for_testing() const {
+    return app->text_selection_.copy_feedback;
+}
+
+bool AppTestingSeams::stop_background_workers_for_testing() {
+    app->StopBackgroundWorkers();
+    return !app->query_thread_.joinable() && !app->spinner_thread_.joinable() &&
+        !app->bash_thread_.joinable() && !app->leader_inbox_thread_.joinable() &&
+        !app->teammate_.inbox_thread().joinable();
+}
 
 bool AppAdapter::is_query_running_for_testing() const noexcept {
     return query_running_.load();
@@ -195,6 +211,26 @@ bool AppAdapter::text_selection_potential_for_testing() const noexcept {
     return text_selection_.potential;
 }
 
+bool AppAdapter::text_selection_copied_for_testing() const noexcept {
+    return text_selection_.copied;
+}
+
+std::size_t AppAdapter::text_selection_copied_chars_for_testing() const noexcept {
+    return text_selection_.copied_chars;
+}
+
+void AppAdapter::simulate_copy_for_testing(std::size_t chars) {
+    text_selection_.active = true;
+    text_selection_.potential = false;
+    text_selection_.copied = true;
+    text_selection_.copied_chars = chars;
+    text_selection_.copy_feedback = std::format("Copied {} chars to clipboard", chars);
+}
+
+bool AppAdapter::mouse_tracking_on_for_testing() const noexcept {
+    return mouse_tracking_on_;
+}
+
 void AppAdapter::inject_copy_result_for_testing(
     std::uint64_t generation,
     loom::utils::clipboard::CopyResult result,
@@ -294,7 +330,9 @@ bool AppTestingSeams::is_loading_for_testing() const noexcept {
 }
 
 void AppTestingSeams::notify_conversation_changed_for_testing() {
-    app->conversation_projection_dirty_.store(true);
+    const auto messages = static_cast<loom::core::QueryEngine*>(app->engine_raw())->get_conversation();
+    if (!messages.empty()) app->handle_committed_message(messages.back());
+    else app->conversation_projection_dirty_.store(true);
 }
 
 void AppTestingSeams::inject_stream_event_for_testing(const loom::core::StreamEvent& ev) {
@@ -436,6 +474,22 @@ bool AppTestingSeams::text_selection_active_for_testing() const noexcept {
 
 bool AppTestingSeams::text_selection_potential_for_testing() const noexcept {
     return app->text_selection_potential_for_testing();
+}
+
+bool AppTestingSeams::text_selection_copied_for_testing() const noexcept {
+    return app->text_selection_copied_for_testing();
+}
+
+std::size_t AppTestingSeams::text_selection_copied_chars_for_testing() const noexcept {
+    return app->text_selection_copied_chars_for_testing();
+}
+
+void AppTestingSeams::simulate_copy_for_testing(std::size_t chars) {
+    app->simulate_copy_for_testing(chars);
+}
+
+bool AppTestingSeams::mouse_tracking_on_for_testing() const noexcept {
+    return app->mouse_tracking_on_for_testing();
 }
 
 void AppTestingSeams::inject_copy_result_for_testing(

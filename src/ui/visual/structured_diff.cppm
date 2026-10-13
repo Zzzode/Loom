@@ -14,6 +14,7 @@ module;
 export module loom.ui.visual.structured_diff;
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 import loom.fs.edit.file_edit;
 
@@ -76,15 +77,15 @@ struct DiffDetailViewProps {
 /// Syntax theme reference for diff coloring
 struct DiffSyntaxTheme {
     std::string name;
-    Color added_fg        = Color::Green;
-    Color removed_fg      = Color::Red;
-    Color context_fg      = Color::GrayLight;
-    Color added_bg        = Color::RGB(0, 30, 0);
-    Color removed_bg      = Color::RGB(30, 0, 0);
-    Color added_word_bg   = Color::RGB(0, 60, 0);
-    Color removed_word_bg = Color::RGB(60, 0, 0);
-    Color hunk_header_fg  = Color::Cyan;
-    Color line_num_fg     = Color::GrayDark;
+    Color added_fg        = loom::ui::design::theme::current_theme().palette->success;
+    Color removed_fg      = loom::ui::design::theme::current_theme().palette->danger;
+    Color context_fg      = loom::ui::design::theme::current_theme().palette->text;
+    Color added_bg        = loom::ui::design::theme::current_theme().palette->success_tint_bg;
+    Color removed_bg      = loom::ui::design::theme::current_theme().palette->danger_tint_bg;
+    Color added_word_bg   = loom::ui::design::theme::current_theme().palette->surface_tint_3;
+    Color removed_word_bg = loom::ui::design::theme::current_theme().palette->surface_tint_3;
+    Color hunk_header_fg  = loom::ui::design::theme::current_theme().palette->info;
+    Color line_num_fg     = loom::ui::design::theme::current_theme().palette->muted;
 };
 
 /// Options for the structured diff component
@@ -279,11 +280,11 @@ struct BlockDiffStatus {
     els.push_back(text(files_label) | dim);
     if (additions > 0) {
         els.push_back(text(std::format(" +{}", additions))
-                      | color(Color::Green) | bold);
+                      | color(loom::ui::design::theme::current_theme().palette->success) | bold);
     }
     if (deletions > 0) {
         els.push_back(text(std::format(" -{}", deletions))
-                      | color(Color::Red) | bold);
+                      | color(loom::ui::design::theme::current_theme().palette->danger) | bold);
     }
     return hbox(std::move(els));
 }
@@ -424,6 +425,16 @@ get_color_module_unavailable_reason() {
 get_diff_syntax_theme(const std::string& theme_name) {
     DiffSyntaxTheme theme;
     theme.name = theme_name;
+    if (theme_name == "default") return theme;
+    theme.added_fg = Color::Green;
+    theme.removed_fg = Color::Red;
+    theme.context_fg = Color::GrayLight;
+    theme.added_bg = Color::RGB(0, 30, 0);
+    theme.removed_bg = Color::RGB(30, 0, 0);
+    theme.added_word_bg = Color::RGB(0, 60, 0);
+    theme.removed_word_bg = Color::RGB(60, 0, 0);
+    theme.hunk_header_fg = Color::Cyan;
+    theme.line_num_fg = Color::GrayDark;
 
     if (theme_name == "dark" || theme_name == "default") {
         return theme;
@@ -553,7 +564,7 @@ get_diff_syntax_theme(const std::string& theme_name) {
     }
 
     if (selected) {
-        result = result | bgcolor(Color::RGB(40, 40, 60));
+        result = result | bgcolor(loom::ui::design::theme::current_theme().palette->surface_selected);
     }
 
     return result;
@@ -576,7 +587,7 @@ get_diff_syntax_theme(const std::string& theme_name) {
 [[nodiscard]] inline Element RenderUntrackedFile(const std::string& path) {
     return vbox({
         hbox({
-            text(" + ") | color(Color::Green) | bold,
+            text(" + ") | color(loom::ui::design::theme::current_theme().palette->success) | bold,
             text(path) | bold,
             text(" (new file)") | dim,
         }),
@@ -594,7 +605,7 @@ get_diff_syntax_theme(const std::string& theme_name) {
         header_text += " " + hunk.header;
     }
     return text(" " + header_text) | color(theme.hunk_header_fg)
-           | bgcolor(Color::RGB(0, 20, 30));
+           | bgcolor(loom::ui::design::theme::current_theme().palette->info_tint_bg);
 }
 
 /// Render the full structured diff view
@@ -615,7 +626,7 @@ get_diff_syntax_theme(const std::string& theme_name) {
     elements.push_back(hbox({
         text(" ") | dim,
         text(diff.file_path) | bold,
-        diff.is_large_file ? (text(" (large file)") | dim | color(Color::Yellow))
+        diff.is_large_file ? (text(" (large file)") | dim | color(loom::ui::design::theme::current_theme().palette->warning))
                            : text(""),
     }));
     elements.push_back(separator());

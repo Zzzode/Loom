@@ -101,6 +101,7 @@ target_sources(loom_utils
         utils/serdes/json_mut_doc.cpp
         utils/serdes/json_iter.cpp
         utils/serdes/json_builders.cpp
+        utils/platform/clipboard.cpp
         utils/platform/clipboard_job.cpp
         utils/platform/clipboard_coordinator.cpp
 )

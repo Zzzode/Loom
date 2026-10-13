@@ -50,6 +50,10 @@ namespace acsrc = loom::ui::autocomplete_sources;
 namespace dtrig = loom::ui::dialogs::triggers;
 namespace dsys = loom::ui::dialogs::system;
 
+void AppAdapter::set_tool_round_budget(std::optional<std::uint32_t> budget) {
+    tool_round_budget_ = budget;
+}
+
 // ── Constructor (moved out of app_autocomplete.cpp to reduce import closure) ──
 AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                        void* cmd_registry,
@@ -70,7 +74,12 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // ── SL-11: deterministic next-action suggestion on QueryEnd ──
     if (lifecycle_hooks_) {
-        wire_prompt_suggestion_hook(lifecycle_hooks_, engine_, screen_state_);
+        wire_prompt_suggestion_hook(lifecycle_hooks_, engine_,
+            [this, dispatch = ui_dispatcher()](std::optional<std::string> suggestion) {
+                dispatch([this, suggestion = std::move(suggestion)]() mutable {
+                    screen_state_->next_action_suggestion = std::move(suggestion);
+                });
+            });
     }
 
     current_session_id_ = loom::utils::crypto::generate_uuid();
@@ -143,16 +152,18 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // Dynamic skill discovery.
     skills_changed_unsubscribe_ = loom::skills::SkillRegistry::instance().on_skills_changed(
-        [this]() {
-            cached_skills_ = acsrc::collect_skill_suggestions(screen_state_->cwd);
-            PostRenderEvent();
+        [this, dispatch = ui_dispatcher()]() {
+            dispatch([this] {
+                cached_skills_ = acsrc::collect_skill_suggestions(screen_state_->cwd);
+            });
         });
 
     // Re-project settings whenever they change on disk.
-    subscribe_settings_changed([this] {
-        this->ProjectSettingsToScreenState();
-        this->TriggerStatuslineUpdate();
-        PostRenderEvent();
+    subscribe_settings_changed([this, dispatch = ui_dispatcher()] {
+        dispatch([this] {
+            this->ProjectSettingsToScreenState();
+            this->TriggerStatuslineUpdate();
+        });
     });
 
     repl::ReplScreenCallbacks cbs;
@@ -209,12 +220,12 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     };
     cbs.on_permission_response = [this](bool allowed, std::optional<bool> always) {
         if (always && *always && screen_state_->permission_store.permission_request) {
-            permission_.add_always_allowed(
+            permission_->add_always_allowed(
                 screen_state_->permission_store.permission_request->tool_name);
         }
         screen_state_->permission_store.permission_request.reset();
         screen_state_->mode = repl::ReplMode::Normal;
-        permission_.resolve_permission(allowed);
+        permission_->resolve_permission(allowed);
     };
     cbs.on_dialog_action = [this](repl::ReplMode mode, int action) {
         if (mode == repl::ReplMode::CostThreshold) {
@@ -252,8 +263,29 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     // P2 gap api-error-retry: Retry button.
     cbs.on_retry = [this]() {
         if (query_running_.load()) return;
-        if (last_submitted_text_.empty()) return;
-        this->HandleSubmit(last_submitted_text_);
+        const auto& messages = screen_state_->messages_store.messages;
+        if (messages.empty() || !messages.back().is_error ||
+            !messages.back().is_model_error || !messages.back().can_retry) return;
+        const auto conversation =
+            static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
+        if (conversation.empty() ||
+            (!std::holds_alternative<loom::core::UserMessage>(conversation.back()) &&
+             !std::holds_alternative<loom::core::ToolResultMessage>(conversation.back()))) return;
+        this->HandleSubmit(last_submitted_text_, repl::InputMode::Normal, false, true);
+    };
+
+    cbs.on_continue = [this]() {
+        if (query_running_.load() || !screen_state_->input_text.empty() ||
+            screen_state_->mode != repl::ReplMode::Normal ||
+            !screen_state_->dialog_store.dialog_queue.empty()) return;
+        const auto& messages = screen_state_->messages_store.messages;
+        if (messages.empty() || !messages.back().can_continue) return;
+        const auto conversation =
+            static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
+        if (conversation.empty() ||
+            (!std::holds_alternative<loom::core::UserMessage>(conversation.back()) &&
+             !std::holds_alternative<loom::core::ToolResultMessage>(conversation.back()))) return;
+        this->HandleSubmit(last_submitted_text_, repl::InputMode::Normal, false, true);
     };
 
     // P2 gap api-error-retry: Clear-session button.
@@ -270,6 +302,15 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     };
     // Retain a copy so tests can trigger the session-expired card path.
     clear_session_callback_ = cbs.on_clear_session;
+
+    // Dismiss error card: remove the last error entry from the message list.
+    cbs.on_dismiss_error = [this]() {
+        auto& messages = screen_state_->messages_store.messages;
+        if (!query_running_.load() && !messages.empty() &&
+            messages.back().is_model_error) {
+            messages.pop_back();
+        }
+    };
 
     // Share the StreamingMarkdown instance with the REPL screen.
     cbs.streaming_md = &streaming_markdown_;
@@ -289,47 +330,51 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         loom::hooks::set_cost_budget(bt.max_budget_usd);
 
         cost_listener_id_ = loom::hooks::on_cost_update(
-            [this](loom::hooks::CostUpdate data) {
-                if (cost_threshold_shown_) return;
-                auto warning = loom::hooks::check_cost_threshold();
-                if (!warning.has_value()) return;
-                if (!warning->starts_with("Session cost")) return;
+            [this, dispatch = ui_dispatcher()](loom::hooks::CostUpdate data) {
+                dispatch([this, data] {
+                    if (cost_threshold_shown_) return;
+                    auto warning = loom::hooks::check_cost_threshold();
+                    if (!warning.has_value()) return;
+                    if (!warning->starts_with("Session cost")) return;
 
-                cost_threshold_shown_ = true;
-                dtrig::PushCostThreshold(
-                    screen_state_->dialog_store.dialog_queue,
-                    data.session_cost,
-                    std::optional<std::string>{screen_state_->chrome_store.model_display_name},
-                    [this] {
-                        screen_state_->dialog_store.PopBottom(
-                            /*is_prompt_input_active=*/false);
-                        PostRenderEvent();
-                    });
-                PostRenderEvent();
+                    cost_threshold_shown_ = true;
+                    dtrig::PushCostThreshold(
+                        screen_state_->dialog_store.dialog_queue,
+                        data.session_cost,
+                        std::optional<std::string>{screen_state_->chrome_store.model_display_name},
+                        [this] {
+                            screen_state_->dialog_store.PopBottom(
+                                /*is_prompt_input_active=*/false);
+                            PostRenderEvent();
+                        });
+                    PostRenderEvent();
+                });
             });
     }
 
     // ── MCP elicitation responder (M7.5) ────────────────────────────
     loom::services::mcp::set_elicitation_responder(
-        [this](const loom::services::mcp::ElicitationRequest& req)
+        [this, dispatch = ui_dispatcher(), permission = permission_](const loom::services::mcp::ElicitationRequest& req)
             -> std::expected<std::map<std::string, std::string>, std::string>
         {
-            permission_.reset_elicitation_response();
-            dtrig::PushElicitation(
-                screen_state_->dialog_store.dialog_queue,
-                req.server_name,
-                /*request_id=*/0,
-                req.message,
-                [this](bool approve) {
-                    permission_.resolve_elicitation(approve);
-                });
-            PostRenderEvent();
+            permission->reset_elicitation_response();
+            dispatch([this, permission, req] {
+                dtrig::PushElicitation(
+                    screen_state_->dialog_store.dialog_queue,
+                    req.server_name,
+                    /*request_id=*/0,
+                    req.message,
+                    [permission](bool approve) {
+                        permission->resolve_elicitation(approve);
+                    });
+            });
 
-            bool approved = permission_.wait_elicitation_response();
+            bool approved = permission->wait_elicitation_response();
 
-            screen_state_->dialog_store.PopBottom(
-                /*is_prompt_input_active=*/false);
-            PostRenderEvent();
+            dispatch([this] {
+                screen_state_->dialog_store.PopBottom(
+                    /*is_prompt_input_active=*/false);
+            });
 
             if (approved) {
                 return std::map<std::string, std::string>{};
@@ -339,7 +384,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // ── IDE at_mentioned responder (AT-09) ───────────────────────────
     loom::services::mcp::set_at_mention_responder(
-        [this](const loom::services::mcp::AtMentionNotification& n)
+        [this, dispatch = ui_dispatcher()](const loom::services::mcp::AtMentionNotification& n)
             -> void
         {
             if (n.file_path.empty()) return;
@@ -350,22 +395,21 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                     token += "-" + std::to_string(*n.line_end);
                 }
             }
-            {
+            dispatch([this, token = std::move(token)]() mutable {
                 std::lock_guard<std::mutex> lk(at_mention_mutex_);
                 pending_at_mention_inserts_.push_back(std::move(token));
-            }
-            PostRenderEvent();
+            });
         });
 
     // ── Ask-user tool → PromptDialog (M7.5) ────────────────────────
     loom::tools::set_global_ask_user_responder(
-        [this](std::string_view question,
+        [this, dispatch = ui_dispatcher(), permission = permission_](std::string_view question,
                std::optional<std::string> default_answer)
             -> std::optional<std::string>
         {
             std::string dialog_id;
             {
-                permission_.reset_ask_user_response();
+                permission->reset_ask_user_response();
 
                 dsys::PromptDialogPayload p;
                 p.id = "ask_user_" +
@@ -375,18 +419,20 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
                 p.title = "Question";
                 p.prompt_text = std::string(question);
                 p.default_value = std::move(default_answer);
-                p.on_response = [this](std::optional<std::string> value) {
-                    permission_.resolve_ask_user(std::move(value));
+                p.on_response = [permission](std::optional<std::string> value) {
+                    permission->resolve_ask_user(std::move(value));
                 };
                 dialog_id = p.id;
-                screen_state_->dialog_store.PushDialog(std::move(p));
+                dispatch([this, p = std::move(p)]() mutable {
+                    screen_state_->dialog_store.PushDialog(std::move(p));
+                });
             }
-            PostRenderEvent();
 
-            auto result = permission_.wait_ask_user_response();
+            auto result = permission->wait_ask_user_response();
 
-            screen_state_->dialog_store.RemoveDialog(dialog_id);
-            PostRenderEvent();
+            dispatch([this, dialog_id] {
+                screen_state_->dialog_store.RemoveDialog(dialog_id);
+            });
 
             return result;
         });
@@ -397,23 +443,15 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     // The coordinator owns the jthread + debounce/memo state.  Callbacks
     // bridge back into AppAdapter for context-dependent operations.
     statusline_.Start(
-        /*get_command=*/[this] {
-            return screen_state_->status_line_command;
-        },
-        /*build_input_json=*/[this] {
-            return BuildStatuslineInputJson();
-        },
         /*execute_command=*/[this](std::string_view cmd, std::string json,
                                    int timeout_ms, std::string& output) {
             return ExecuteStatuslineCommand(cmd, std::move(json), timeout_ms, output);
         },
-        /*set_status_text=*/[this](std::string text) {
-            screen_state_->status_line_text = std::move(text);
-        },
-        /*post_render=*/[this] {
-            PostRenderEvent();
+        /*post_render=*/[dispatch = ui_dispatcher()] {
+            dispatch({});
         },
         /*debounce_ms=*/300);
+    TriggerStatuslineUpdate();
 
     StartUiAnimationTicker();
 }
@@ -421,8 +459,15 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 // P3-1c: thin wrapper over StatuslineCoordinator.  Kept out of the app.cppm
 // BMI by the inline-def ratchet; 5 impl units call it.
 void AppAdapter::TriggerStatuslineUpdate() {
-    if (screen_state_->status_line_command.empty()) return;
-    statusline_.TriggerUpdate();
+    const auto& command = screen_state_->status_line_command;
+    // Usage/budget belong to the synchronous query worker. Build their
+    // snapshot only after its completion handoff, without widening the
+    // QueryEngine API or reading its mutable counters concurrently.
+    if (!command.empty() && query_running_.load()) {
+        statusline_update_pending_.store(true);
+        return;
+    }
+    statusline_.TriggerUpdate(command, command.empty() ? std::string{} : BuildStatuslineInputJson());
 }
 
 // Build the StatusLineCommandInput payload from current engine state.

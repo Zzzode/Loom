@@ -12,6 +12,8 @@ export module loom.ui.prompt.prompt_paste_handler;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 import loom.text.parse_references;
 // OS clipboard image read (macOS osascript «class PNGf»).
 import loom.platform.clipboard;
@@ -96,7 +98,7 @@ struct ImageChipInfo {
 [[nodiscard]] inline Element render_image_chip(
     std::string_view label,
     bool is_inverted = false,
-    Color chip_color = Color::White) {
+    Color chip_color = loom::ui::design::theme::current_theme().palette->text) {
     // FTXUI's `inverted` maps to ANSI SGR 7 (reverse video).  No bold is
     // applied to image chips.
     Decorator decor = color(chip_color);

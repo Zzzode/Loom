@@ -7,6 +7,10 @@ export module loom.ui.widgets.spinner;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 export namespace ui::components {
 
 enum class SpinnerMode {
@@ -72,17 +76,18 @@ public:
     {}
     
     ftxui::Element Render() {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         using namespace ftxui;
         
         if (options_.mode == SpinnerMode::Idle) {
             return hbox({
-                text("✓") | color(Color::Green),
-                text(" Idle") | color(Color::GrayDark)
+                text(std::string(loom::ui::design::figures::kTick)) | color(pal.success),
+                text(" Idle") | color(pal.muted)
             });
         }
         
         if (options_.reduced_motion) {
-            auto element = text("●") | color(Color::GrayLight);
+            auto element = text(std::string(loom::ui::design::figures::kBullet)) | color(pal.muted);
             if (!options_.message.empty()) {
                 return hbox({
                     element,
@@ -99,7 +104,7 @@ public:
             ? (options_.frame % static_cast<int>(frames_.size()))
             : static_cast<int>((elapsed / 120) % frames_.size());
         
-        auto spinner = text(frames_[frame_index]) | color(Color::CyanLight);
+        auto spinner = text(frames_[frame_index]) | color(pal.info);
         
         if (options_.message.empty()) {
             return spinner;
@@ -107,7 +112,7 @@ public:
         
         return hbox({
             spinner,
-            text(" " + options_.message) | color(Color::White)
+            text(" " + options_.message) | color(pal.text)
         });
     }
     
@@ -130,17 +135,18 @@ ftxui::Component Spinner(const SpinnerOptions& options = {}) {
 }
 
 ftxui::Element SpinnerElement(const SpinnerOptions& options = {}) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
     
     if (options.mode == SpinnerMode::Idle) {
         return hbox({
-            text("✓") | color(Color::Green),
-            text(" Idle") | color(Color::GrayDark)
+            text(std::string(loom::ui::design::figures::kTick)) | color(pal.success),
+            text(" Idle") | color(pal.muted)
         });
     }
     
     if (options.reduced_motion) {
-        auto element = text("●") | color(Color::GrayLight);
+        auto element = text(std::string(loom::ui::design::figures::kBullet)) | color(pal.muted);
         if (!options.message.empty()) {
             return hbox({
                 element,
@@ -154,7 +160,7 @@ ftxui::Element SpinnerElement(const SpinnerOptions& options = {}) {
     auto glyph = options.frame >= 0
         ? detail::SpinnerGlyphAt(options.frame)
         : detail::GetDefaultCharacters()[0];
-    auto spinner = text(glyph) | color(Color::CyanLight);
+    auto spinner = text(glyph) | color(pal.info);
     
     if (options.message.empty()) {
         return spinner;
@@ -162,7 +168,7 @@ ftxui::Element SpinnerElement(const SpinnerOptions& options = {}) {
     
     return hbox({
         spinner,
-        text(" " + options.message) | color(Color::White)
+        text(" " + options.message) | color(pal.text)
     });
 }
 

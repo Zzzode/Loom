@@ -2,9 +2,9 @@
 
 █░█░█░█░█  Loom
 ░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+█░█░█░█░█  <tmpdir>
 
-<dot> Worked  (click to expand)
+<dot> Worked                                                                                                 [Show details]
 
 
 
@@ -36,4 +36,4 @@
 ──────────────────────────────────────────────────────────────────────────────────
  ❯ Try "fix lint errors"
 ──────────────────────────────────────────────────────────────────────────────────
-   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K
+   <tmpdir>  ctx ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

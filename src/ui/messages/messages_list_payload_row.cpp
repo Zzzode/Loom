@@ -11,6 +11,9 @@ module;
 module loom.ui.messages.messages_list;
 
 import std;
+import loom.ui.messages.api_error_message;
+
+import loom.ui.foundation.design_figures;
 
 import loom.ui.foundation.clock;
 import loom.ui.foundation.theme_provider;  // user_message_background token
@@ -81,7 +84,7 @@ auto render_payload_row(const MessagesListInput& input,
                                bool add_margin) -> Element
 {
     if (row_idx >= input.shapes.size() || row_idx >= input.rows.size()) {
-        return text("⚠ bad row_idx") | color(Color::Yellow);
+        return text((std::string(loom::ui::design::figures::kWarning) + " bad row_idx")) | color(loom::ui::design::theme::current_theme().palette->warning);
     }
     MessageShape shape   = input.shapes[row_idx];
     const auto& payload  = input.rows[row_idx];
@@ -153,12 +156,12 @@ auto render_payload_row(const MessagesListInput& input,
 
                 Element row = text(line.empty() ? " " : line);
                 if (line == "Skills" || line == "Agents") {
-                    row = std::move(row) | bold | color(Color::BlueLight);
+                    row = std::move(row) | bold | color(loom::ui::design::theme::current_theme().palette->brief_label_you);
                 } else if (line == "Esc to close" ||
                            line.starts_with("Press ")) {
                     row = std::move(row) | dim;
                 } else if (line.starts_with("› ")) {
-                    row = std::move(row) | bold | color(Color::Cyan);
+                    row = std::move(row) | bold | color(loom::ui::design::theme::current_theme().palette->brief_label_loom);
                 } else if (line.find("─") != std::string::npos) {
                     row = std::move(row) | dim;
                 } else if (line.ends_with("skills") ||
@@ -176,7 +179,7 @@ auto render_payload_row(const MessagesListInput& input,
                         text(line.substr(marker)) | dim,
                     });
                 } else {
-                    row = std::move(row) | color(Color::GrayLight);
+                    row = std::move(row) | color(loom::ui::design::theme::current_theme().palette->muted);
                 }
                 lines.push_back(std::move(row));
 
@@ -197,7 +200,7 @@ auto render_payload_row(const MessagesListInput& input,
             // own show_dot field (defaulted true in AssistantTextMessageData)
             // now governs. Selection recolors the dot via is_selected below.
             const AssistantTextMessageData& fd = *d;
-            // Streaming text row uses StreamingMarkdown (stable-prefix cache).
+            // Streaming text row uses StreamingMarkdown (repeated-frame cache).
             // Thread the shared instance from the input so
             // RenderAssistantTextMessageFaithful can call streaming_md->update()
             // instead of full render_markdown.
@@ -217,8 +220,7 @@ auto render_payload_row(const MessagesListInput& input,
             //
             // NOTE: `is_selected` (row navigation highlight) does NOT mean
             // "expanded".  Expansion requires an explicit
-            // user gesture (Ctrl+O / Enter) via the interactive Component
-            // path.  `is_transcript_mode` (full thinking content) is
+            // row click. `is_transcript_mode` (full thinking content) is
             // driven by the user's Ctrl+O transcript toggle.
             //
             // Streaming thinking tail is ALWAYS expanded (transcript mode).
@@ -233,11 +235,13 @@ auto render_payload_row(const MessagesListInput& input,
                 o->data,
                 /*is_transcript_mode=*/input.is_transcript_mode || thinking_force_expanded,
                 /*verbose=*/is_row_expanded(input, row_idx),
-                /*add_margin=*/add_margin);
+                /*add_margin=*/add_margin,
+                /*can_toggle=*/shape == S::AssistantThinking && input.row_click_tracker);
             // Track clickable (non-redacted, non-empty) thinking blocks for
             // mouse hit-testing.  The repl screen's event handler uses the
             // tracker to map a click → expand-key toggle.
-            if (shape == S::AssistantThinking && input.row_click_tracker &&
+            if (shape == S::AssistantThinking && !input.is_transcript_mode &&
+                !thinking_force_expanded && input.row_click_tracker &&
                 (!o->data.raw_text.empty() || !o->data.sections.empty())) {
                 std::string_view uuid = (row_idx < input.uuids.size())
                     ? std::string_view(input.uuids[row_idx])
@@ -273,6 +277,7 @@ auto render_payload_row(const MessagesListInput& input,
             fd.duration_ms = opts->duration_ms;
             fd.is_truncated = opts->is_truncated;
             fd.verbose = is_row_expanded(input, row_idx);
+            fd.is_transcript_mode = input.is_transcript_mode;
 
             using DS = ToolResultStatus;   // divergent status
             using FK = ToolResultKind;     // faithful kind
@@ -309,8 +314,8 @@ auto render_payload_row(const MessagesListInput& input,
             // The event handler toggles the expand key on click, which
             // expands/collapses the truncated output.
             if (input.row_click_tracker &&
-                ((opts->output && !opts->output->empty()) ||
-                 (opts->content_items && !opts->content_items->empty()))) {
+                ((fd.content && !fd.content->empty()) ||
+                 (fd.content_items && !fd.content_items->empty()))) {
                 std::string_view uuid = (row_idx < input.uuids.size())
                     ? std::string_view(input.uuids[row_idx])
                     : std::string_view{};
@@ -444,14 +449,23 @@ auto render_payload_row(const MessagesListInput& input,
     }
 
     // ── DIVERGENT PATH (sub-types not yet ported to faithful) ───────────
-    // GAP 3: thread on_retry from MessagesListInput so SystemAPIError rows
-    // can render a working Retry pill that re-sends the last user message.
+    // Other message components retain their own action callbacks.
     MessageRowCallbacks cb;
     cb.on_retry = input.on_retry;
     // P2 gap api-error-retry: thread on_clear_session for session-expired
     // error cards.
     cb.on_clear_session = input.on_clear_session;
-    Component inner = RenderMessageRowByType(shape, payload, std::move(cb));
+    // Static REPL rows have no component keyboard focus. Show API errors in
+    // full instead of advertising Enter (which submits the prompt here).
+    Element body;
+    if (shape == S::SystemAPIError) {
+        if (auto* opts = std::get_if<api_error_message::APIErrorOptions>(&payload))
+            return api_error_message::RenderAPIError(*opts, /*keyboard_interactive=*/false);
+    }
+    if (!body) {
+        Component inner = RenderMessageRowByType(shape, payload, std::move(cb));
+        body = inner->Render();
+    }
 
     RenderEnvelopeOptions env_opts{
         .shape          = shape,
@@ -462,7 +476,7 @@ auto render_payload_row(const MessagesListInput& input,
         .is_selected    = is_selected,
         .frame_count    = frame_count,
     };
-    return render_message_envelope(env_opts, inner->Render());
+    return render_message_envelope(env_opts, std::move(body));
 }
 
 } // namespace detail

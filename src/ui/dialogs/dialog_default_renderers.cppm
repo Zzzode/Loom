@@ -308,6 +308,7 @@ inline bool HandleCostThresholdEvent(
     const dsys::IdleReturnPayload& p,
     const dsys::DialogRenderContext& ctx)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     dframe::DialogFrameProps props;
     props.title = "Welcome Back";
     props.subtitle = p.idle_minutes > 0
@@ -318,8 +319,8 @@ inline bool HandleCostThresholdEvent(
         text("Would you like to resume where you left off?") | center,
         text(""),
         hbox({
-            text(" [Enter] Resume") | color(Color::Green),
-            text("  [n] Start new") | color(Color::Cyan),
+            text(" [Enter] Resume") | color(pal.success),
+            text("  [n] Start new") | color(pal.info),
         }) | center,
     });
     return dframe::DialogFrame(props, ctx.theme);
@@ -353,6 +354,7 @@ inline bool HandleIdleReturnEvent(
     const dsys::PromptDialogPayload& p,
     const dsys::DialogRenderContext& ctx)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     dframe::DialogFrameProps props;
     props.title = p.title.empty() ? std::string{"Input Required"} : p.title;
     props.style = dframe::FrameStyle::Permission;
@@ -367,8 +369,8 @@ inline bool HandleIdleReturnEvent(
         value_display,
         text(""),
         hbox({
-            text(" [Enter] Submit") | color(Color::Green),
-            text("  [Esc] Cancel") | color(Color::Red),
+            text(" [Enter] Submit") | color(pal.success),
+            text("  [Esc] Cancel") | color(pal.danger),
         }),
     });
     return dframe::DialogFrame(props, ctx.theme);
@@ -397,6 +399,7 @@ inline bool HandlePromptDialogEvent(
     const dsys::ElicitationPayload& p,
     const dsys::DialogRenderContext& ctx)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     dframe::DialogFrameProps props;
     props.title = "MCP Server Request";
     props.subtitle = std::string{p.server_name + " needs additional input"};
@@ -410,8 +413,8 @@ inline bool HandlePromptDialogEvent(
         }),
         text(""),
         hbox({
-            text(" [Enter] Approve") | color(Color::Green),
-            text("  [Esc] Deny") | color(Color::Red),
+            text(" [Enter] Approve") | color(pal.success),
+            text("  [Esc] Deny") | color(pal.danger),
         }),
     });
     return dframe::DialogFrame(props, ctx.theme);
@@ -446,6 +449,7 @@ inline bool HandleElicitationEvent(
 
     Elements buttons;
     for (size_t i = 0; i < p.buttons.size(); ++i) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         bool is_default = p.default_button.has_value() &&
                          static_cast<int>(i) == *p.default_button;
         auto btn = hbox({
@@ -454,9 +458,9 @@ inline bool HandleElicitationEvent(
             text(" "),
         });
         if (is_default) {
-            btn = btn | borderStyled(Color::Cyan) | color(Color::Cyan);
+            btn = btn | borderStyled(pal.info) | color(pal.info);
         } else {
-            btn = btn | borderStyled(Color::GrayDark);
+            btn = btn | borderStyled(pal.muted);
         }
         if (i > 0) buttons.push_back(text("  "));
         buttons.push_back(btn);

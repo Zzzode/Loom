@@ -66,7 +66,7 @@ namespace loom::testing {
 ///   2. Replace spinner glyphs (the 10 braille frames from
 ///      design_figures.cppm kSpinnerFramesBraille) with "<spinner>".
 ///   2b. Replace the task-view chrome spinner segment ("<glyph> <verb>…<dots>")
-///       with placeholders — all three parts are non-deterministic.
+///       with stable animation; fixed tool names are retained.
 ///   3. Replace relative timestamps ("just now", "Xs ago", "Xm ago",
 ///      "Xh ago", "Xd ago") with "<timestamp>".
 ///   4. Trim trailing whitespace per line.
@@ -159,6 +159,8 @@ namespace loom::testing {
                 while (j < clean.size() &&
                        ((clean[j] >= 'A' && clean[j] <= 'Z') ||
                         (clean[j] >= 'a' && clean[j] <= 'z') ||
+                        (clean[j] >= '0' && clean[j] <= '9') ||
+                        clean[j] == '_' || clean[j] == '-' ||
                         clean[j] == '\''))
                     ++j;
                 // … is U+2026 (E2 80 A6); dots are 1-3 '.' (blink cycle).
@@ -167,7 +169,43 @@ namespace loom::testing {
                     std::size_t k = j + 3;
                     while (k < clean.size() && clean[k] == '.') ++k;
                     if (k > j + 3) {
-                        tmp += "<spinner> <verb>\xE2\x80\xA6.";
+                        const auto label = std::string_view(clean).substr(
+                            verb_start, j - verb_start);
+                        const bool is_tool_label =
+                            label.find_first_of("_0123456789-") !=
+                                std::string_view::npos;
+                        if (is_tool_label) {
+                            // Tool names are meaningful, unlike random verbs.
+                            // Normalize only their animation in the pinned
+                            // chrome immediately above the prompt divider.
+                            const auto line_end = clean.find('\n', k);
+                            const auto divider_end = line_end == std::string::npos
+                                ? std::string::npos : clean.find('\n', line_end + 1);
+                            auto divider = divider_end == std::string::npos
+                                ? std::string_view{} : std::string_view(clean).substr(
+                                    line_end + 1, divider_end - line_end - 1);
+                            while (!divider.empty() &&
+                                   (divider.back() == ' ' || divider.back() == '\r'))
+                                divider.remove_suffix(1);
+                            bool is_prompt_divider = !divider.empty();
+                            for (std::size_t cursor = 0;
+                                 is_prompt_divider && cursor < divider.size(); cursor += 3) {
+                                is_prompt_divider = divider.substr(cursor, 3) == "─";
+                            }
+                            is_prompt_divider = is_prompt_divider &&
+                                clean.compare(divider_end + 1, 5, " ❯ ") == 0;
+                            const bool at_line_start = i == 2 || clean[i - 3] == '\n';
+                            if (!at_line_start || !is_prompt_divider) {
+                                tmp += clean[i];
+                                ++i;
+                                continue;
+                            }
+                            tmp += "✻ ";
+                            tmp += label;
+                            tmp += "\xE2\x80\xA6.";
+                        } else {
+                            tmp += "<spinner> <verb>\xE2\x80\xA6.";
+                        }
                         i = k;
                         continue;
                     }
@@ -201,7 +239,23 @@ namespace loom::testing {
     {
         std::string tmp;
         tmp.reserve(clean.size());
+        std::size_t removed_cells = 0;
+        auto append_thinking = [&](std::size_t begin, std::size_t end,
+                                   std::string_view replacement) {
+            tmp += replacement;
+            removed_cells += end - begin - replacement.size();
+        };
         for (std::size_t i = 0; i < clean.size();) {
+            // The details action is right-aligned. Restore cells removed
+            // from its timing label so debug/release durations cannot move
+            // the action in the normalized snapshot. Other rows retain
+            // their existing normalization.
+            if (clean[i] == '\n') removed_cells = 0;
+            if (clean.compare(i, 14, "[Show details]") == 0 ||
+                clean.compare(i, 14, "[Hide details]") == 0) {
+                tmp.append(removed_cells, ' ');
+                removed_cells = 0;
+            }
             // "Thought for <digits>..." — collapsed row or static chain
             if (i + 12 <= clean.size() &&
                 clean.compare(i, 12, "Thought for ") == 0) {
@@ -212,7 +266,7 @@ namespace loom::testing {
                     // ms form (collapsed row, < 1s)
                     if (j + 2 <= clean.size() &&
                         clean.compare(j, 2, "ms") == 0) {
-                        tmp += "Thought";
+                        append_thinking(i, j + 2, "Thought");
                         i = j + 2;
                         continue;
                     }
@@ -223,7 +277,7 @@ namespace loom::testing {
                                clean[k] >= '0' && clean[k] <= '9') ++k;
                         if (k > j + 1 && k < clean.size() &&
                             clean[k] == 's') {
-                            tmp += "Thought";
+                            append_thinking(i, k + 1, "Thought");
                             i = k + 1;
                             continue;
                         }
@@ -232,7 +286,7 @@ namespace loom::testing {
                     // followed by ", " before the tool breakdown)
                     if (j + 3 <= clean.size() &&
                         clean.compare(j, 3, "s, ") == 0) {
-                        tmp += "Thought, ";
+                        append_thinking(i, j + 3, "Thought, ");
                         i = j + 3;
                         continue;
                     }
@@ -240,7 +294,7 @@ namespace loom::testing {
                     // breakdown — followed by "  " before the expand hint)
                     if (j + 2 <= clean.size() &&
                         clean.compare(j, 2, "s ") == 0) {
-                        tmp += "Thought ";
+                        append_thinking(i, j + 2, "Thought ");
                         i = j + 2;
                         continue;
                     }
@@ -255,13 +309,13 @@ namespace loom::testing {
                        clean[j] >= '0' && clean[j] <= '9') ++j;
                 if (j > i + 13 && j + 3 <= clean.size() &&
                     clean.compare(j, 3, "s, ") == 0) {
-                    tmp += "Thinking, ";
+                    append_thinking(i, j + 3, "Thinking, ");
                     i = j + 3;
                     continue;
                 }
                 if (j > i + 13 && j + 2 <= clean.size() &&
                     clean.compare(j, 2, "s ") == 0) {
-                    tmp += "Thinking ";
+                    append_thinking(i, j + 2, "Thinking ");
                     i = j + 2;
                     continue;
                 }
@@ -272,7 +326,7 @@ namespace loom::testing {
                     static_cast<unsigned char>(clean[j + 1]) == 0xE2 &&
                     static_cast<unsigned char>(clean[j + 2]) == 0x80 &&
                     static_cast<unsigned char>(clean[j + 3]) == 0xA6) {
-                    tmp += "Thinking\xE2\x80\xA6";
+                    append_thinking(i, j + 4, "Thinking\xE2\x80\xA6");
                     i = j + 4;
                     continue;
                 }
@@ -340,7 +394,7 @@ namespace loom::testing {
     // The compressed chain's ● origin dot blinks (~500ms on/off) for
     // live chains.  Normalize both states to "<dot>" so golden files
     // are deterministic.  Only chain header lines (containing
-    // "(click to expand)" or "(click to collapse)") are affected —
+    // the legacy click hints or Show/Hide details action labels) are affected —
     // the ● dot in other contexts (user/assistant messages) is left
     // alone.
     {
@@ -355,7 +409,9 @@ namespace loom::testing {
                     ln.find("(click to expand)") !=
                         std::string_view::npos ||
                     ln.find("(click to collapse)") !=
-                        std::string_view::npos;
+                        std::string_view::npos ||
+                    ln.find("[Show details]") != std::string_view::npos ||
+                    ln.find("[Hide details]") != std::string_view::npos;
                 if (is_chain_header) {
                     // Dot-on: "● " = \xE2\x97\x8F + space (4 bytes)
                     if (ln.size() >= 4 &&
@@ -443,6 +499,9 @@ namespace loom::testing {
         // tail) are replaced, so a real project cwd's folder pill is left
         // alone.
         {
+            const auto is_temp_stem = [](std::string_view stem) {
+                return stem == "tmp" || stem.ends_with("/T");
+            };
             const std::string folder_prefix = "\xF0\x9F\x93\x81 ";  // 📁 + SP
             std::size_t p = 0;
             while ((p = clean.find(folder_prefix, p)) !=
@@ -454,17 +513,75 @@ namespace loom::testing {
                     ++stem_end;
                 const std::string stem =
                     clean.substr(stem_start, stem_end - stem_start);
-                const bool is_temp_stem =
-                    stem == "tmp" ||
-                    (stem.size() >= 2 &&
-                     stem.substr(stem.size() - 2) == "/T");
-                if (is_temp_stem) {
+                if (is_temp_stem(stem)) {
                     clean.replace(stem_start, stem_end - stem_start,
                                   "<tmpdir>");
                     p = stem_start + 8;  // strlen("<tmpdir>")
                 } else {
                     p = stem_end;
                 }
+            }
+            // The plain-path footer is the final row, immediately after a
+            // horizontal divider, with a ten-cell context bar and counts.
+            // Require that full shape so body text resembling a path/label
+            // is not silently hidden by snapshot normalization.
+            const auto is_context_usage = [](std::string_view text) {
+                if (!text.starts_with("  ctx ")) return false;
+                text.remove_prefix(6);
+                for (int i = 0; i < 10; ++i) {
+                    if (!text.starts_with("▮") && !text.starts_with("▯")) return false;
+                    text.remove_prefix(3);
+                }
+                if (!text.starts_with(' ')) return false;
+                text.remove_prefix(1);
+                const auto percent = text.find("% ");
+                if (percent == std::string_view::npos || percent == 0 ||
+                    text.substr(0, percent).find_first_not_of("0123456789") != std::string_view::npos)
+                    return false;
+                text.remove_prefix(percent + 2);
+                auto counts = text.substr(0, text.find("  "));
+                while (!counts.empty() && (counts.back() == ' ' ||
+                        counts.back() == '\t' || counts.back() == '\r'))
+                    counts.remove_suffix(1);
+                const auto slash = counts.find('/');
+                if (slash == std::string_view::npos) return false;
+                const auto is_count = [](std::string_view count) {
+                    if (count.empty()) return false;
+                    if (!count.ends_with('K'))
+                        return count.find_first_not_of("0123456789") == std::string_view::npos;
+                    count.remove_suffix(1);
+                    return !count.empty() &&
+                        count.find_first_not_of("0123456789.") == std::string_view::npos;
+                };
+                return is_count(counts.substr(0, slash)) && is_count(counts.substr(slash + 1));
+            };
+            std::size_t line_start = 0;
+            bool after_divider = false;
+            while (line_start < clean.size()) {
+                auto line_end = clean.find('\n', line_start);
+                if (line_end == std::string::npos) line_end = clean.size();
+                const std::string_view line{clean.data() + line_start,
+                                            line_end - line_start};
+                auto divider = line;
+                while (!divider.empty() && (divider.back() == ' ' ||
+                        divider.back() == '\t' || divider.back() == '\r'))
+                    divider.remove_suffix(1);
+                const bool has_divider = !divider.empty();
+                while (divider.starts_with("─")) divider.remove_prefix(3);
+                const bool is_divider = has_divider && divider.empty();
+                const bool is_final_row =
+                    clean.find_first_not_of(" \t\r\n", line_end) == std::string::npos;
+                if (after_divider && is_final_row && line.starts_with("   ")) {
+                    const auto stem_end = line.find(' ', 3);
+                    if (stem_end != std::string_view::npos &&
+                        is_context_usage(line.substr(stem_end)) &&
+                        is_temp_stem(line.substr(3, stem_end - 3))) {
+                        clean.replace(line_start + 3, stem_end - 3, "<tmpdir>");
+                        line_end = line_start + line.size() - (stem_end - 3) + 8;
+                    }
+                }
+                after_divider = is_divider;
+                line_start = line_end + 1;
             }
         }
     }

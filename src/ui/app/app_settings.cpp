@@ -41,6 +41,11 @@ void AppAdapter::subscribe_settings_changed(std::function<void()> cb) {
             settings_nm::SettingSource) mutable { cb(); });
 }
 
+void AppAdapter::StopSettingsWatcher() {
+    if (settings_ && settings_->unsubscribe) settings_->unsubscribe();
+    settings_.reset();
+}
+
 std::optional<std::string> AppAdapter::setting_string(std::string_view key) const {
     if (!settings_ || !settings_->manager) return std::nullopt;
     auto settings = settings_->manager->get_initial_settings();
@@ -71,6 +76,9 @@ std::string AppAdapter::output_style_setting() const {
 
 void AppAdapter::ProjectSettingsToScreenState() {
     if (!settings_ || !settings_->manager) return;
+    // File-watch notifications do not invalidate SettingsManager's cache.
+    // Reload here, on the UI thread that owns the settings projection.
+    settings_->manager->reset_cache();
 
     // --- default model ---
     screen_state_->settings_model = setting_string("model").value_or(std::string{});

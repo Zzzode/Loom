@@ -22,6 +22,7 @@ import loom.ui.foundation.logo;
 import loom.ui.features.teams.live_teammates;
 import loom.ui.features.todos.todo_panel;
 import loom.ui.prompt.prompt_input_footer;
+import loom.ui.messages.message_components;
 import loom.ui.messages.virtual_list;
 import loom.ui.visual.markdown;
 
@@ -75,14 +76,17 @@ using namespace ftxui;
     /// Fix #7: StatusLine lives inside the prompt footer.
 /// Fix #11: terminal size probed once per frame for adaptive clamping.
 [[nodiscard]] Element RenderReplScreen(ReplScreenState& s,
-    // GAP 3: msg-system-api-error-retry — retry callback threaded through
-    // to RenderMessages so SystemAPIError rows can render a working Retry pill.
+    // Recovery for the current failed model request, owned by screen shortcuts.
     std::function<void()> on_retry,
     // P2 gap api-error-retry: clear-session callback threaded through to
     // RenderMessages for session-expired error cards.
     std::function<void()> on_clear_session,
     // Shared StreamingMarkdown instance for the streaming-text tail row.
-    ::loom::ui::StreamingMarkdown* streaming_md) {
+    ::loom::ui::StreamingMarkdown* streaming_md,
+    // Dismiss callback for API error cards (ESC / q).
+    std::function<void()> on_dismiss_error,
+    std::function<void()> on_continue) {
+    s.messages_store.continue_action_box = {.x_min = 0, .x_max = -1, .y_min = 0, .y_max = -1};
     // Probe terminal size once per frame for adaptive layout (fix #11).
     auto [term_cols, term_rows] = loom::ui::ink_utils::query_terminal_size();
     if (term_cols <= 0) term_cols = 80;
@@ -94,9 +98,15 @@ using namespace ftxui;
     // Fall back to term_rows−5 on the first frame (before any render).
     const auto& sb = s.messages_store.scrollable_box;
     const bool have_measured = sb.y_max >= sb.y_min && sb.y_min >= 0;
-    s.messages_store.viewport_height_lines = have_measured
-        ? std::max(1, sb.y_max - sb.y_min + 1)
-        : std::max(1, term_rows - 5);
+    // Static layout records the message yframe itself, excluding recovery
+    // action rows in the surrounding scrollable slot. Keep that measurement
+    // for both scroll bounds and focus positioning on the next frame.
+    if (!s.messages_store.rendered_content_height_lines ||
+        s.messages_store.virtual_list_active) {
+        s.messages_store.viewport_height_lines = have_measured
+            ? std::max(1, sb.y_max - sb.y_min + 1)
+            : std::max(1, term_rows - 5);
+    }
     s.messages_store.viewport_width_cols = term_cols;
 
     // Time-based spinner frame: 100 ms per frame (10 fps), matching the
@@ -153,7 +163,7 @@ using namespace ftxui;
     //
     // Logo/welcome lives INSIDE the scrollable
     // area, not in a pinned header.  The LogoHeader is a
-    // thin 1-row bar; the full welcome card (LogoV2 condensed / compact) is
+    // thin 1-row bar; the full welcome card (Logo condensed / compact) is
     // rendered inside the VirtualMessageList scrollback.  Putting it here
     // means: (a) blank space appears BELOW messages, not between logo and
     // messages; (b) as messages arrive and pin-to-bottom engages, the logo
@@ -163,7 +173,7 @@ using namespace ftxui;
     const auto& visible_messages = BuildVisibleMessages(s);
 
     // ── Welcome / logo card (passed as leading element inside yframe) ───
-    // LogoV2 welcome card is the first element
+    // Logo welcome card is the first element
     // inside the VirtualMessageList scrollback.  It is ALWAYS present in
     // the scroll content — when messages overflow the viewport and
     // pin-to-bottom engages, the logo scrolls above the visible window but
@@ -211,7 +221,29 @@ using namespace ftxui;
         // Store for virtual-list scroll bounds (exact geometry).
         &s.messages_store,
         // Real terminal width for the virtual-path height estimator.
-        term_cols));
+        term_cols,
+        // Dismiss callback for API error cards (ESC / q).
+        on_dismiss_error));
+    // These error shortcuts belong to the screen, not historical error cards.
+    if (!s.query_running && !s.messages_store.messages.empty() &&
+        s.messages_store.messages.back().is_model_error &&
+        s.messages_store.messages.back().is_error) {
+        Elements actions;
+        if (on_retry && s.input_text.empty() &&
+            s.messages_store.messages.back().can_retry &&
+            !s.messages_store.messages.back().session_expired)
+            actions.push_back(messages::message_key_hint("R", "Retry request"));
+        actions.push_back(messages::message_key_hint("Esc", "Dismiss error"));
+        scroll_rows.push_back(hbox(std::move(actions)));
+    }
+    if (on_continue && s.mode == ReplMode::Normal && s.dialog_store.dialog_queue.empty() &&
+        !s.query_running && s.input_text.empty() &&
+        !s.messages_store.messages.empty() &&
+        s.messages_store.messages.back().can_continue) {
+        scroll_rows.push_back(hbox({
+            messages::message_action("Continue") | reflect(s.messages_store.continue_action_box),
+            text(" "), messages::message_key_hint("C", "Continue from saved progress")}));
+    }
     // Spinner lives in the chrome BETWEEN messages list and prompt input
     // (BriefSpinner top margin = 1, NOT a message row inside scroll content).
     Element spinner_chrome = text("");
@@ -234,11 +266,11 @@ using namespace ftxui;
     // always visible at the top of the terminal.  The full welcome card
     // still lives inside the scrollable area (first child of yframe).
     {
-        namespace lv2 = loom::ui::logo;
+        namespace logo = loom::ui::logo;
         const std::string model_line = !s.chrome_store.model_display_name.empty()
             ? s.chrome_store.model_display_name
             : s.settings_model;
-        slots.header = lv2::render_logo_header_bar(model_line, term_cols);
+        slots.header = logo::render_logo_header_bar(model_line, term_cols);
     }
 
     if (!s.active_local_jsx_command) {
@@ -491,6 +523,15 @@ using namespace ftxui;
     slots.pill_hit_box          = &s.messages_store.new_messages_pill_box;
     slots.scrollable_box        = &s.messages_store.scrollable_box;
 
+    // Inline "copied N chars to clipboard" toast (bottom_float slot).
+    // Set by AppAdapter::Render from TextSelection state.
+    if (s.copy_toast_text) {
+        slots.bottom_float = hbox({
+            text(*s.copy_toast_text) | dim,
+            text("  ")  // right margin
+        });
+    }
+
     // on_sticky_click: the click handler sets the 'clicked' sentinel
     // (a stable state update that reacts before the scroll side-effects
     // fire).  We match that order in C++: (1) flip sticky_prompt_clicked
@@ -515,8 +556,10 @@ using namespace ftxui;
             namespace vl = loom::ui::messages::virtual_list;
             total = s.messages_store.virtual_jh.total();
         } else {
-            const auto& vm = BuildVisibleMessages(s);
-            total = EstimateTranscriptRows(vm, s.messages_store.viewport_width_cols);
+            total = s.messages_store.rendered_content_height_lines
+                ? *s.messages_store.rendered_content_height_lines
+                : EstimateTranscriptRows(BuildVisibleMessages(s),
+                    s.messages_store.viewport_width_cols);
         }
         int max_top = std::max(0, total - viewport);
         // When pinned to bottom, scroll_offset is 0 but the view is at
@@ -576,10 +619,10 @@ using namespace ftxui;
     // terminal dimensions (cols-4, rows-PEEK-1) to modal dialogs.  Pass real
     // term_cols/term_rows here instead of the old hardcoded 120x40 so dialog
     // renderers get accurate viewport geometry.
-    bool tool_animating = IsToolAnimating(s.task_view_store);
     return dialog_queue_render::LayerAllDialogs(
         std::move(base), s, s.is_prompt_input_active,
-        /*allow_dialogs_with_animation=*/!tool_animating, term_cols, term_rows);
+        /*allow_dialogs_with_animation=*/!s.is_tool_animation_active,
+        term_cols, term_rows);
 }
 
 }  // namespace loom::ui::repl_screen

@@ -63,3 +63,69 @@ set_tests_properties(E2E_Pty_Decset PROPERTIES
     TIMEOUT 60
     ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
     SKIP_RETURN_CODE 125)
+
+# Real terminal exit must drain model requests and Agent/permission waiters.
+add_executable(e2e_pty_shutdown e2e_pty_shutdown.cpp)
+set_target_properties(e2e_pty_shutdown PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+target_compile_features(e2e_pty_shutdown PRIVATE cxx_std_20)
+target_link_libraries(e2e_pty_shutdown PRIVATE Threads::Threads util)
+if(TARGET loom)
+  add_dependencies(e2e_pty_shutdown loom)
+endif()
+foreach(_pty_exit_case IN ITEMS
+    idle-ctrl-c idle-sighup
+    foreground-ctrl-d foreground-sigterm
+    background-ctrl-d background-sighup permission-ctrl-d)
+  add_test(NAME E2E_Pty_Shutdown_${_pty_exit_case}
+      COMMAND e2e_pty_shutdown ${_pty_exit_case})
+  set_tests_properties(E2E_Pty_Shutdown_${_pty_exit_case} PROPERTIES
+      TIMEOUT 20
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
+# RFC 0009: the default passes 20 rounds; an explicit budget preserves progress
+# across keyboard/mouse Continue and a subsequent independent API Retry.
+foreach(_pty_round_case IN ITEMS round-unbounded round-budget round-click round-retry round-cli)
+  add_test(NAME E2E_Pty_RoundBudget_${_pty_round_case}
+      COMMAND e2e_pty_shutdown ${_pty_round_case})
+  set_tests_properties(E2E_Pty_RoundBudget_${_pty_round_case} PROPERTIES
+      TIMEOUT 30
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
+# Real Bash errors remain visible and recover inside the original turn; an
+# actual R key retries only the failed request after a committed side effect.
+foreach(_pty_recovery_case IN ITEMS bash-failure permission-denial api-retry api-retry-network)
+  add_test(NAME E2E_Pty_Recovery_${_pty_recovery_case}
+      COMMAND e2e_pty_shutdown ${_pty_recovery_case})
+  set_tests_properties(E2E_Pty_Recovery_${_pty_recovery_case} PROPERTIES
+      TIMEOUT 30
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()
+
+# Parent and delegated Agent requests share the final model after precedence
+# resolution; runtime changes must not leave the registry's startup snapshot.
+foreach(_pty_model_source IN ITEMS file env settings cli runtime)
+  foreach(_pty_model_kind IN ITEMS foreground background)
+    set(_pty_model_case "model-${_pty_model_source}-${_pty_model_kind}-ctrl-d")
+    add_test(NAME E2E_Pty_Model_${_pty_model_source}_${_pty_model_kind}
+        COMMAND e2e_pty_shutdown ${_pty_model_case})
+    set_tests_properties(E2E_Pty_Model_${_pty_model_source}_${_pty_model_kind} PROPERTIES
+        TIMEOUT 20
+        ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+        SKIP_RETURN_CODE 125)
+  endforeach()
+endforeach()
+
+# The direct runtime-tool entry resolves models before registering Agent too.
+foreach(_pty_direct_source IN ITEMS file settings cli)
+  add_test(NAME E2E_Pty_Model_${_pty_direct_source}_direct
+      COMMAND e2e_pty_shutdown model-${_pty_direct_source}-direct)
+  set_tests_properties(E2E_Pty_Model_${_pty_direct_source}_direct PROPERTIES
+      TIMEOUT 20
+      ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
+      SKIP_RETURN_CODE 125)
+endforeach()

@@ -16,4 +16,7 @@ target_sources(loom_config
         config/settings_sources.cppm
         config/settings_validation.cppm
 )
+target_sources(loom_config PRIVATE
+    config/config_user_settings.cpp
+)
 target_link_libraries(loom_config PUBLIC loom_utils loom_types loom_constants)

@@ -97,6 +97,9 @@ TEST(ClipboardBackends, NoBackendReturnsNullopt) {
     EXPECT_FALSE(backend.has_value());
 }
 
+// The wl-copy/xclip resolution paths exist only on Linux; macOS resolves
+// pbcopy unconditionally and never consults PATH for these tools.
+#if defined(__linux__)
 TEST(ClipboardBackends, WaylandPrefersWlCopy) {
     FakeBin bin;
     bin.create("wl-copy");
@@ -128,6 +131,7 @@ TEST(ClipboardBackends, X11UsesXclip) {
     ASSERT_NE(it, backend->argv.end());
     EXPECT_EQ(*(it + 1), "clipboard");
 }
+#endif  // defined(__linux__)
 
 TEST(ClipboardBackends, XselExcluded) {
     // Even if xsel is the only tool available, it must NOT be used.
@@ -142,6 +146,7 @@ TEST(ClipboardBackends, XselExcluded) {
     EXPECT_FALSE(backend.has_value());
 }
 
+#if defined(__linux__)
 TEST(ClipboardBackends, WaylandWithoutWlCopyFallsBackToXclip) {
     FakeBin bin;
     bin.create("xclip");
@@ -154,3 +159,4 @@ TEST(ClipboardBackends, WaylandWithoutWlCopyFallsBackToXclip) {
     ASSERT_TRUE(backend.has_value());
     EXPECT_EQ(backend->argv[0], "xclip");
 }
+#endif  // defined(__linux__)

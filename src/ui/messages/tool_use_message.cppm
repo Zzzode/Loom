@@ -18,12 +18,15 @@ export module loom.ui.messages.tool_use_message;
 import std;
 
 import loom.types.types;
+import loom.ui.foundation.theme_provider;
+import loom.ui.foundation.design_figures;
 import loom.ui.visual.code_highlight;
 // Import the shared spinner via its module-interface name.  The file exports
 // `ui::components` so we alias at the bottom of this file for convenience.
 import loom.ui.widgets.spinner;  // arch-check: keep-import (spinner_ns alias)
 // For unescape_literal_newlines() + ansi_to_ftxui_elements() used by the
 // Output: section to decode JSON-escaped newlines and render ANSI SGR codes.
+import loom.ui.messages.message_components;
 import loom.ui.messages.message_tool_result;
 
 export namespace loom::ui::messages::tool_use_message {
@@ -62,6 +65,9 @@ struct ToolUseCallData {
     std::optional<std::string> result_preview;
     std::optional<std::string> error_message;
     std::chrono::milliseconds duration{0};
+    /// Wall-clock start time (steady_clock) — used by the chain compressor
+    /// to include tool call time in the live elapsed timer.
+    std::chrono::steady_clock::time_point start_time{};
     std::optional<std::string> file_path;
     RetryInfo retry;
     bool args_collapsed = true;
@@ -149,14 +155,15 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 }
 
 [[nodiscard]] inline std::pair<std::string, Color> status_display(ToolStatus status) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (status) {
-        case ToolStatus::Pending:   return {"◯ Pending",   Color::Yellow};
-        case ToolStatus::Running:   return {"⟳ Running",   Color::Cyan};
-        case ToolStatus::Success:   return {"✓ Success",   Color::Green};
-        case ToolStatus::Error:     return {"✗ Failed",    Color::Red};
-        case ToolStatus::Cancelled: return {"⊘ Cancelled", Color::GrayDark};
+        case ToolStatus::Pending:   return {"◯ Pending",   pal.warning};
+        case ToolStatus::Running:   return {"⟳ Running",   pal.info};
+        case ToolStatus::Success:   return {(std::string(loom::ui::design::figures::kTick) + " Success"),   pal.success};
+        case ToolStatus::Error:     return {(std::string(loom::ui::design::figures::kCross) + " Failed"),    pal.danger};
+        case ToolStatus::Cancelled: return {"⊘ Cancelled", pal.muted};
     }
-    return {"?", Color::White};
+    return {"?", pal.text};
 }
 
 /// Parse a status string from the shared projection contract
@@ -171,28 +178,6 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     if (s == "cancelled" || s == "canceled")
                                 return ToolStatus::Cancelled;
     return ToolStatus::Pending;  // "pending" / "" / unknown
-}
-
-[[nodiscard]] inline std::string tool_icon(std::string_view tool_name) {
-    using namespace std::string_view_literals;
-    auto has = [&](std::string_view s) {
-        return std::search(tool_name.begin(), tool_name.end(),
-                           s.begin(), s.end(),
-                           [](char a, char b) {
-                               return std::tolower(static_cast<unsigned char>(a)) ==
-                                      std::tolower(static_cast<unsigned char>(b));
-                           }) != tool_name.end();
-    };
-    if (has("read")) return "📖";
-    if (has("write") || has("edit")) return "✏️";
-    if (has("bash") || has("shell")) return "⚡";
-    if (has("glob")) return "🔍";
-    if (has("grep") || has("search")) return "🔎";
-    if (has("web")) return "🌐";
-    if (has("agent") || has("team")) return "🤝";
-    if (has("mcp")) return "🔌";
-    if (has("skill")) return "🧩";
-    return "🔧";
 }
 
 [[nodiscard]] inline bool is_file_edit_tool(std::string_view tool_name) {
@@ -233,6 +218,7 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 [[nodiscard]] inline Element RenderParameterBlock(const ToolUseCallData& call,
                                                   bool force_collapsed,
                                                   std::size_t collapse_threshold) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const bool oversized = call.raw_parameters.size() > kLargeContentWarnBytes;
     const auto n_keys = call.param_key_count.value_or(
         static_cast<int>(estimate_key_count(call.raw_parameters, call.parameters_language)));
@@ -243,22 +229,22 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 
     // Header row: summary pill + collapse hint
     Elements summary_row = {
-        text("  Args: ") | dim | color(Color::GrayDark),
+        text("  Args: ") | dim | color(pal.muted),
         text(std::format("{{{} keys, {}}}",
                          n_keys, format_bytes(n_bytes)))
-            | color(Color::Cyan) | dim,
+            | color(pal.info) | dim,
     };
 
     if (oversized) {
         summary_row.push_back(filler());
         summary_row.push_back(
-            text(" ⚠ Oversized — write to file to inspect") | color(Color::Orange1) | dim);
+            text((" " + std::string(loom::ui::design::figures::kWarning) + " Oversized — write to file to inspect")) | color(pal.warning) | dim);
     } else if (collapsed) {
         summary_row.push_back(filler());
-        summary_row.push_back(text("▸ Press 'a' to expand ") | dim | color(Color::GrayDark));
+        summary_row.push_back(message_key_hint("A", "Expand args"));
     } else {
         summary_row.push_back(filler());
-        summary_row.push_back(text("▾ Press 'a' to collapse ") | dim | color(Color::GrayDark));
+        summary_row.push_back(message_key_hint("A", "Collapse args"));
     }
 
     Elements body = {hbox(summary_row)};
@@ -284,6 +270,7 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 
 [[nodiscard]] inline Element RenderToolHeader(const ToolUseCallData& call,
                                                int spinner_frame = 0) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto [status_text, status_color] = status_display(call.status);
     Elements left;
 
@@ -307,11 +294,10 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
         left.push_back(text(" "));
     }
 
-    left.push_back(text(tool_icon(call.tool_name) + " ") | dim);
-    left.push_back(text(call.tool_name) | bold | color(Color::Magenta));
+    left.push_back(text(call.tool_name) | bold | color(pal.primary));
 
     if (!call.server_name.empty() && call.server_name != "built-in") {
-        left.push_back(text(" (" + call.server_name + ")") | dim | color(Color::GrayDark));
+        left.push_back(text(" (" + call.server_name + ")") | dim | color(pal.muted));
     }
 
     Elements right;
@@ -326,14 +312,14 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
         right.push_back(text(" "));
         right.push_back(
             text(std::format("retry {}/{}", call.retry.current_attempt, call.retry.max_attempts))
-                | color(Color::Yellow) | dim);
+                | color(pal.warning) | dim);
     }
 
     // Duration
     if (call.duration.count() > 0 || call.status == ToolStatus::Success ||
         call.status == ToolStatus::Error) {
         right.push_back(text(" "));
-        right.push_back(text(format_duration(call.duration)) | color(Color::GrayDark) | dim);
+        right.push_back(text(format_duration(call.duration)) | color(pal.muted) | dim);
     }
 
     return hbox({hbox(left), filler(), hbox(right)});
@@ -344,30 +330,31 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 // ============================================================
 
 [[nodiscard]] inline Element RenderToolFooter(const ToolUseCallData& call, bool has_error = false) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements buttons;
-    auto pill = [](std::string_view label, Color col, bool enabled = true) -> Element {
+    auto pill = [&pal](std::string_view label, Color col, bool enabled = true) -> Element {
         auto el = text(std::format("[{}]", label))
-                  | ftxui::color(enabled ? col : Color::GrayDark)
+                  | ftxui::color(enabled ? col : pal.muted)
                   | dim;
         if (!enabled) el = el | dim;
         return el;
     };
 
     if (has_error || call.status == ToolStatus::Error || call.status == ToolStatus::Cancelled) {
-        buttons.push_back(pill("r Retry", Color::Yellow));
+        buttons.push_back(pill("r Retry", pal.warning));
         buttons.push_back(text(" "));
     }
-    buttons.push_back(pill("c Copy args", Color::Cyan));
+    buttons.push_back(pill("c Copy args", pal.info));
     if (!call.raw_parameters.empty()) {
         // (always available)
     }
     if (call.result_preview || call.status == ToolStatus::Success) {
         buttons.push_back(text(" "));
-        buttons.push_back(pill("C Copy result", Color::Cyan));
+        buttons.push_back(pill("C Copy result", pal.info));
     }
     if (is_file_edit_tool(call.tool_name) && call.file_path) {
         buttons.push_back(text(" "));
-        buttons.push_back(pill("o Open", Color::Blue));
+        buttons.push_back(pill("o Open", pal.text_link));
     }
 
     if (buttons.empty()) return text("");
@@ -381,6 +368,7 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 /// Render a single tool use message.  Returns the Element.
 [[nodiscard]] inline Element RenderToolUseMessage(const ToolUseRenderOptions& opts,
                                                   int spinner_frame = 0) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const auto& call = opts.call;
     auto [_, status_color] = status_display(call.status);
 
@@ -390,8 +378,8 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     // File path indicator
     if (call.file_path) {
         body_parts.push_back(hbox({
-            text("  → ") | color(Color::GrayDark),
-            text(*call.file_path) | color(Color::Cyan) | dim,
+            text("  → ") | color(pal.muted),
+            text(*call.file_path) | color(pal.info) | dim,
         }));
     }
 
@@ -405,7 +393,7 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 
     // Error
     if (call.status == ToolStatus::Error && call.error_message) {
-        body_parts.push_back(separator() | color(Color::Red));
+        body_parts.push_back(separator() | color(pal.danger));
         // word wrap the error manually, keep first 5 lines
         std::string msg = *call.error_message;
         int lines = 0;
@@ -416,15 +404,15 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
             if (nl == std::string::npos) { line = msg.substr(pos); pos = msg.size(); }
             else { line = msg.substr(pos, nl - pos); pos = nl + 1; }
             body_parts.push_back(hbox({
-                text("  ✗ ") | color(Color::Red),
-                text(line) | color(Color::Red),
+                text(("  " + std::string(loom::ui::design::figures::kCross) + " ")) | color(pal.danger),
+                text(line) | color(pal.danger),
             }));
             ++lines;
         }
         if (pos < msg.size()) {
             body_parts.push_back(hbox({
-                text("    ") | color(Color::Red),
-                text("... (truncated)") | color(Color::Red) | dim,
+                text("    ") | color(pal.danger),
+                text("... (truncated)") | color(pal.danger) | dim,
             }));
         }
     } else if (opts.show_result && call.result_preview) {
@@ -438,14 +426,14 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
             if (nl == std::string::npos) { line = preview.substr(pos); pos = preview.size(); }
             else { line = preview.substr(pos, nl - pos); pos = nl + 1; }
             body_parts.push_back(hbox({
-                text("  │ ") | color(Color::GrayDark),
-                text(line) | color(Color::GrayLight),
+                text("  │ ") | color(pal.muted),
+                text(line) | color(pal.text),
             }));
             ++lines;
         }
         if (pos < preview.size()) {
             body_parts.push_back(hbox({
-                text("  ┆ ") | color(Color::GrayDark),
+                text("  ┆ ") | color(pal.muted),
                 text("...") | dim,
             }));
         }
@@ -455,7 +443,7 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     body_parts.push_back(RenderToolFooter(call, /*has_error*/ call.status == ToolStatus::Error));
 
     Color border_color = status_color;
-    if (call.status == ToolStatus::Pending) border_color = Color::Yellow;
+    if (call.status == ToolStatus::Pending) border_color = pal.warning;
 
     auto el = vbox(body_parts) | borderLight | color(border_color);
 
@@ -474,6 +462,7 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 /// Render a grouped tool-use card.  When collapsed only shows counts and
 /// max_visible_preview entries; when expanded renders every call in full.
 [[nodiscard]] inline Element RenderGroupedTools(const GroupedToolsOptions& opts) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (opts.calls.empty()) return text("");
 
     int running = 0, success = 0, error = 0, pending = 0;
@@ -488,34 +477,31 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
         }
         total += c.duration;
     }
-    Color overall_color = Color::GrayDark;
-    if (error > 0) overall_color = Color::Red;
-    else if (running > 0) overall_color = Color::Cyan;
-    else if (success == static_cast<int>(opts.calls.size())) overall_color = Color::Green;
-    else if (pending > 0) overall_color = Color::Yellow;
+    Color overall_color = pal.muted;
+    if (error > 0) overall_color = pal.danger;
+    else if (running > 0) overall_color = pal.info;
+    else if (success == static_cast<int>(opts.calls.size())) overall_color = pal.success;
+    else if (pending > 0) overall_color = pal.warning;
 
     // Header
     Elements header_parts;
     std::string title = opts.group_title.empty()
         ? std::format("{} tool calls", opts.calls.size())
         : opts.group_title;
-    header_parts.push_back(text("🔗 ") | dim);
     header_parts.push_back(text(title) | bold | color(overall_color));
 
     // Status mini-pills
     Elements pills;
-    if (running > 0) pills.push_back(text(std::format(" ⟳{}", running)) | color(Color::Cyan) | dim);
-    if (success > 0) pills.push_back(text(std::format(" ✓{}", success)) | color(Color::Green) | dim);
-    if (error > 0)   pills.push_back(text(std::format(" ✗{}", error))   | color(Color::Red)   | dim);
-    if (pending > 0) pills.push_back(text(std::format(" ◯{}", pending)) | color(Color::Yellow) | dim);
+    if (running > 0) pills.push_back(text(std::format(" ⟳{}", running)) | color(pal.info) | dim);
+    if (success > 0) pills.push_back(text(std::format(" {}{}", loom::ui::design::figures::kTick, success)) | color(pal.success) | dim);
+    if (error > 0)   pills.push_back(text(std::format(" {}{}", loom::ui::design::figures::kCross, error))   | color(pal.danger)   | dim);
+    if (pending > 0) pills.push_back(text(std::format(" ◯{}", pending)) | color(pal.warning) | dim);
     pills.push_back(text(" "));
-    pills.push_back(text(format_duration(total)) | dim | color(Color::GrayDark));
+    pills.push_back(text(format_duration(total)) | dim | color(pal.muted));
 
     header_parts.push_back(filler());
     for (auto& p : pills) header_parts.push_back(std::move(p));
-    header_parts.push_back(text(
-        opts.group_collapsed ? " ▸ [Enter] expand" : " ▾ [Enter] collapse"
-    ) | dim | color(Color::GrayDark));
+    header_parts.push_back(message_key_hint("Enter", opts.group_collapsed ? "Expand" : "Collapse"));
 
     Elements rows = {hbox(header_parts)};
 
@@ -526,21 +512,20 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
             auto [st, sc] = status_display(c.status);
             rows.push_back(hbox({
                 text("   ") | dim,
-                text(st.substr(0, 1)) | color(sc),
+                text(st.substr(0, st.find(' '))) | color(sc),
                 text(" "),
-                text(tool_icon(c.tool_name) + " ") | dim,
-                text(c.tool_name) | color(Color::Magenta) | dim,
-                c.file_path ? text(std::format(" → {}", *c.file_path)) | color(Color::Cyan) | dim
+                text(c.tool_name) | color(pal.primary) | dim,
+                c.file_path ? text(std::format(" → {}", *c.file_path)) | color(pal.info) | dim
                            : text(""),
                 filler(),
-                text(format_duration(c.duration)) | color(Color::GrayDark) | dim,
+                text(format_duration(c.duration)) | color(pal.muted) | dim,
             }));
         }
         int hidden = static_cast<int>(opts.calls.size()) - limit;
         if (hidden > 0) {
             rows.push_back(
                 text(std::format("   … and {} more [expand to see]", hidden))
-                    | color(Color::GrayDark) | dim);
+                    | color(pal.muted) | dim);
         }
     } else {
         for (std::size_t i = 0; i < opts.calls.size(); ++i) {
@@ -564,14 +549,20 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
         ToolUseRenderOptions opts;
         bool expanded = false;
         int frame = 0;
+        std::size_t default_args_threshold = 1024;
     };
     auto s = std::make_shared<State>();
     s->opts = std::move(options);
+    s->default_args_threshold = s->opts.args_collapse_threshold;
     s->expanded = !s->opts.call.args_collapsed;
 
     return Renderer([s] {
         if (s->opts.call.status == ToolStatus::Running) ++s->frame;
         s->opts.show_result = s->expanded || s->opts.call.status == ToolStatus::Error;
+        // The size threshold is a preview default, not a veto on an explicit
+        // args expansion. The separate oversized-content guard still applies.
+        s->opts.args_collapse_threshold = s->opts.call.args_collapsed
+            ? s->default_args_threshold : std::numeric_limits<std::size_t>::max();
         return RenderToolUseMessage(s->opts, s->frame);
     }) | CatchEvent([s](Event e) -> bool {
         if (e == Event::Return || e == Event::Character(' ')) {
@@ -667,13 +658,16 @@ struct FaithfulToolUseData {
 
 /// Render a single tool-use header line: [dot] [BoldName] (message) [tag]
 [[nodiscard]] inline Element RenderFaithfulToolHeader(const FaithfulToolUseData& data) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements row;
 
-    // Leading dot (ToolUseLoader).
+    namespace figs = loom::ui::design::figures;
+
+    // Leading status glyph (ToolUseLoader).
     // Behavior:
     //   Queued/Running (unresolved) → dim, blinks when animated
-    //   Resolved success → solid "success" color (green)
-    //   Resolved error → solid "error" color (red)
+    //   Resolved success → check mark in the success color
+    //   Resolved error → cross in the danger color
     if (data.should_show_dot) {
         const bool is_unresolved =
             (data.status == FaithfulToolStatus::Queued ||
@@ -691,23 +685,26 @@ struct FaithfulToolUseData {
             // Space placeholder — maintains 2-cell minWidth
             row.push_back(text("  "));
         } else {
-            // BLACK_CIRCLE = ⏺ (U+23FA); we use the same visual glyph "●".
-            std::string glyph = "\xE2\x97\x8F ";  // ● + space (2 cells)
-            Color fg = Color{};
+            // Keep the glyph column two cells wide in every state.
+            std::string glyph = std::string{figs::kBullet};
+            Color fg = pal.muted;
             bool is_dim = false;
 
             if (is_unresolved) {
                 is_dim = true;  // dim when unresolved
-                // color=undefined → default text color
+                // Inactive state uses the current theme's muted color.
             } else if (data.status == FaithfulToolStatus::Error) {
-                fg = Color::Red;  // color="error"
+                fg = pal.danger;
+                glyph = figs::kCross;
             } else {
-                fg = Color::Green;  // color="success"
+                fg = pal.success;
+                glyph = figs::kTick;
             }
 
-            auto el = text(glyph);
+            // Resolved states differ by shape even in a monochrome theme.
+            auto el = text(glyph + " ") | size(WIDTH, EQUAL, 2);
             if (is_dim) el = el | ftxui::dim;
-            if (fg != Color{}) el = el | color(fg);
+            el = el | color(fg);
             row.push_back(std::move(el));
         }
     }

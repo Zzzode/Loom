@@ -21,10 +21,16 @@ import loom.ui.app.app;
 import loom.ui.app.paste_coordinator;
 import loom.ui.screens.repl_screen;
 import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;
+import loom.ui.dialogs.system;
+import loom.ui.screens.task_view_store;
+import loom.services.mcp.elicitation_handler;
+import loom.hooks.lifecycle_hooks;
 import loom.ui.messages.message_image;
 import loom.commands.registry;
 import loom.query.query_engine;
 import loom.tools.tool;
+import loom.tools.agent_runtime;
 import loom.teams.team_helpers;
 import loom.teams.swarm.helpers;
 import loom.constants.constants;
@@ -197,6 +203,36 @@ TEST(AppRuntime, CommandsAndStatusRenderWithoutTerminalLoop) {
     // --- /exit: triggers on_exit callback ---
     app->HandleCommand("/exit");
     EXPECT_TRUE(exited);
+
+    fs::remove_all(storage_root);
+}
+
+TEST(AppRuntime, SessionPickerRestoresSessionFromAdapterStorage) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_ui_session_picker_storage_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const std::string session_id = "session_picker_storage_only";
+    const auto session_dir = storage_root / session_id;
+    fs::create_directories(session_dir);
+    std::ofstream(session_dir / "metadata.json")
+        << R"({"session_id":"session_picker_storage_only","title":"Stored session","last_active":1,"message_count":1})";
+    std::ofstream(session_dir / "messages.jsonl")
+        << R"({"role":"user","content":"restore this session"})" << '\n';
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+    app->HandleCommand("/resume");
+    EXPECT_TRUE(test_seams(app).has_pending_dialog_for_testing());
+
+    EXPECT_TRUE(app->OnEvent(ftxui::Event::Return));
+    EXPECT_EQ(engine.session_id().str(), session_id);
+    EXPECT_FALSE(test_seams(app).has_pending_dialog_for_testing());
 
     fs::remove_all(storage_root);
 }
@@ -858,12 +894,21 @@ TEST(AppRuntime, CtrlCIdleRequiresDoublePressWithinWindow) {
     // only the second press inside 800ms exits.
 
     auto make_app = [](std::function<void()> on_exit) {
-        loom::core::ToolRegistry tools;
+        // App borrows its engine and commands; the engine borrows its registry.
+        // Keep all owners alive and destroy the App before its dependencies.
+        struct OwnedApp {
+            std::unique_ptr<loom::core::ToolRegistry> tools;
+            std::unique_ptr<loom::core::QueryEngine> engine;
+            std::unique_ptr<loom::commands::AppCommandRegistry> commands;
+            fs::path storage_root;
+            std::shared_ptr<loom::ui::AppAdapter> app;
+        };
+        auto tools = std::make_unique<loom::core::ToolRegistry>();
         loom::core::QueryEngineConfig config;
         config.context_window.auto_compact = false;
         config.cwd = fs::temp_directory_path().string();
         auto engine =
-            std::make_unique<loom::core::QueryEngine>(std::move(config), tools);
+            std::make_unique<loom::core::QueryEngine>(std::move(config), *tools);
         auto commands =
             std::make_unique<loom::commands::AppCommandRegistry>();
         const auto storage_root = fs::temp_directory_path() /
@@ -875,15 +920,16 @@ TEST(AppRuntime, CtrlCIdleRequiresDoublePressWithinWindow) {
         auto app = ftxui::Make<loom::ui::AppAdapter>(
             engine_ptr, nullptr, commands_ptr, storage_root,
             std::move(on_exit));
-        return std::tuple(std::move(app), std::move(engine),
-                          std::move(commands), storage_root);
+        return OwnedApp{std::move(tools), std::move(engine),
+                        std::move(commands), storage_root, std::move(app)};
     };
 
     // ── Double press inside the window exits ──────────────────────────
     {
         bool exited = false;
-        auto [app, engine, commands, storage_root] =
-            make_app([&] { exited = true; });
+        auto owned = make_app([&] { exited = true; });
+        const auto& app = owned.app;
+        const auto& storage_root = owned.storage_root;
 
         app->OnEvent(ftxui::Event::Character("typed text"));
         ASSERT_EQ(test_seams(app).input_text_for_testing(), "typed text");
@@ -908,8 +954,9 @@ TEST(AppRuntime, CtrlCIdleRequiresDoublePressWithinWindow) {
     // ── Expired first press re-arms instead of exiting ────────────────
     {
         bool exited = false;
-        auto [app, engine, commands, storage_root] =
-            make_app([&] { exited = true; });
+        auto owned = make_app([&] { exited = true; });
+        const auto& app = owned.app;
+        const auto& storage_root = owned.storage_root;
 
         EXPECT_TRUE(app->OnEvent(ftxui::Event::Special("\x03")));
         EXPECT_FALSE(exited);
@@ -959,7 +1006,8 @@ TEST(AppRuntime, StreamFallbackErrorIsRendered) {
     }, std::chrono::seconds(2)));
 
     auto rendered = strip_ansi(render_to_plain_text(app->Render(), 140, 36));
-    EXPECT_NE(rendered.find("Error:"), std::string::npos);
+    EXPECT_NE(rendered.find("Model request failed"), std::string::npos);
+    EXPECT_EQ(rendered.find("Retry request"), std::string::npos);
     EXPECT_NE(rendered.find("API error (400)"), std::string::npos);
     EXPECT_NE(rendered.find("bad model"), std::string::npos);
 
@@ -2272,3 +2320,894 @@ TEST(AppRuntime, VirtualRendererStateResetOnSessionRestore) {
     EXPECT_FALSE(test_seams(app).force_bottom_after_mode_switch_for_testing());
 }
 
+// ── Error card keyboard interactions (ESC dismiss, R retry) ──────────
+// Bug: the error card's CatchEvent component was never added to the FTXUI
+// component tree, so ESC/R did nothing and the interface appeared stuck.
+// The fix routes ESC/R through the screen-level event handler.
+
+TEST(AppRuntime, ErrorCardDismissedByEscape) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_ui_err_esc_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    TempDirGuard temp_dir(storage_root);
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Simulate a streaming error: start query, inject StreamError, end query.
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(
+        loom::core::StreamError{
+            .error_type = "overloaded_error",
+            .message = "Overloaded",
+        });
+    test_seams(app).set_query_running_for_testing(false);
+
+    // Render to trigger ConsumePendingResult → error card creation.
+    auto screen = ftxui::Screen::Create(
+        ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen, app->Render());
+    const std::string before = screen.ToString();
+    EXPECT_NE(before.find("Overloaded"), std::string::npos)
+        << "Error card should be visible before ESC";
+
+    // ESC dismisses the error card.
+    EXPECT_TRUE(app->OnEvent(ftxui::Event::Escape));
+
+    // Re-render and verify the error card is gone.
+    auto screen2 = ftxui::Screen::Create(
+        ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen2, app->Render());
+    const std::string after = screen2.ToString();
+    EXPECT_EQ(after.find("Overloaded"), std::string::npos)
+        << "Error card should be dismissed after ESC";
+}
+
+TEST(AppRuntime, ToolFailureDoesNotBecomeModelRequestError) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_ui_err_tool_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    TempDirGuard temp_dir(storage_root);
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Simulate a tool error (not retriable).
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(
+        loom::core::StreamError{
+            .error_type = "tool_error",
+            .message = "Tool 'Bash' failed: Command failed",
+        });
+    test_seams(app).set_query_running_for_testing(false);
+
+    // Render to trigger ConsumePendingResult → error card creation.
+    auto screen = ftxui::Screen::Create(
+        ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen, app->Render());
+    const std::string text = screen.ToString();
+
+    // Tool errors should NOT show the retry countdown.
+    EXPECT_EQ(text.find("Model request failed"), std::string::npos);
+    EXPECT_EQ(text.find("Retry request"), std::string::npos);
+    EXPECT_FALSE(std::ranges::any_of(
+        test_seams(app).screen_state_for_testing()->messages_store.messages,
+        [](const auto& message) { return message.is_model_error; }));
+    EXPECT_EQ(text.find("Retrying in"), std::string::npos)
+        << "Tool errors should not show a retry countdown";
+}
+
+TEST(AppRuntime, ErrorCardRetryResumesWithoutSubmittingPromptAgain) {
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_ui_err_retry_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    TempDirGuard temp_dir(storage_root);
+
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Submit a query so last_submitted_text_ is set (on_retry uses it).
+    for (char c : std::string("hello")) {
+        EXPECT_TRUE(app->OnEvent(ftxui::Event::Character(c)));
+    }
+    EXPECT_TRUE(app->OnEvent(ftxui::Event::Return));
+    // Wait for the first query to finish (it will fail without an API key).
+    for (int i = 0; i < 100 && test_seams(app).is_query_running_for_testing(); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    EXPECT_FALSE(test_seams(app).is_query_running_for_testing());
+
+    // Inject an API error and end the query to create the error card.
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(
+        loom::core::StreamError{
+            .error_type = "overloaded_error",
+            .message = "Overloaded",
+        });
+    test_seams(app).set_query_running_for_testing(false);
+
+    // Render to trigger ConsumePendingResult → error card creation.
+    auto screen = ftxui::Screen::Create(
+        ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen, app->Render());
+    EXPECT_NE(screen.ToString().find("Overloaded"), std::string::npos)
+        << "Error card should be visible before retry";
+
+    const auto submitted = test_seams(app).screen_state_for_testing()->prompt_store.submit_count;
+    const auto original = engine.get_conversation();
+    ASSERT_EQ(std::count_if(original.begin(), original.end(), [](const auto& message) {
+        return std::holds_alternative<loom::core::UserMessage>(message);
+    }), 1);
+    ASSERT_TRUE(std::holds_alternative<loom::core::UserMessage>(original.back()));
+    EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('r')));
+    EXPECT_EQ(test_seams(app).screen_state_for_testing()->prompt_store.submit_count, submitted);
+
+    // Clean up: wait for the retried query to finish.
+    for (int i = 0; i < 100 && test_seams(app).is_query_running_for_testing(); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    EXPECT_FALSE(test_seams(app).is_query_running_for_testing());
+    const auto resumed = engine.get_conversation();
+    ASSERT_EQ(resumed.size(), original.size());
+    EXPECT_EQ(std::get<loom::core::UserMessage>(resumed.back()).id,
+              std::get<loom::core::UserMessage>(original.back()).id);
+}
+
+
+
+namespace {
+class AppThreadBoundary : public testing::Test {
+protected:
+    const fs::path previous_cwd = fs::current_path();
+    TempDirGuard root{fs::temp_directory_path() /
+        ("loom_ui_thread_boundary_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()))};
+    loom::core::ToolRegistry tools;
+    loom::commands::AppCommandRegistry commands;
+    std::unique_ptr<loom::core::QueryEngine> engine;
+    std::shared_ptr<loom::ui::AppAdapter> app;
+
+    void SetUp() override {
+        loom::core::QueryEngineConfig config;
+        config.context_window.auto_compact = false;
+        config.cwd = root.path.string();
+        engine = std::make_unique<loom::core::QueryEngine>(std::move(config), tools);
+        app = ftxui::Make<loom::ui::AppAdapter>(
+            engine.get(), nullptr, &commands, root.path / "sessions", [] {});
+        (void)app->Render();
+    }
+    void TearDown() override {
+        app.reset();
+        // Draining local Bash results can project its cwd into the process.
+        // Restore it before the fixture removes that temporary directory.
+        std::error_code ec;
+        fs::current_path(previous_cwd, ec);
+        EXPECT_FALSE(ec) << ec.message();
+    }
+};
+}
+
+TEST(AppRuntime, ToolResultProjectionPreservesErrorAndCallIdentity) {
+    loom::core::ToolResultMessage result;
+    result.tool_use_id.value = "failed-call";
+    result.tool_name = "Bash";
+    result.is_error = true;
+    result.content.push_back(loom::core::TextBlock{"Command failed"});
+    const auto committed = loom::ui::project_message(result);
+    EXPECT_TRUE(committed.is_error);
+    EXPECT_EQ(committed.tool_use_id, std::optional<std::string>{"failed-call"});
+    EXPECT_FALSE(committed.is_model_error);
+    loom::core::UserMessage user;
+    user.content.push_back(loom::core::ToolResultBlock{
+        .tool_use_id = loom::core::ToolUseId{"failed-call"},
+        .content = std::string{"Command failed"}, .is_error = true});
+    const auto legacy = loom::ui::project_message(user);
+    EXPECT_TRUE(legacy.is_error);
+    EXPECT_EQ(legacy.tool_use_id, std::optional<std::string>{"failed-call"});
+    const auto split = loom::ui::project_messages(user);
+    ASSERT_EQ(split.size(), 1u);
+    EXPECT_TRUE(split[0].is_error);
+    EXPECT_EQ(split[0].tool_use_id, std::optional<std::string>{"failed-call"});
+}
+
+TEST_F(AppThreadBoundary, CommittedFailedBashStaysVisibleAndSameToolRetriesKeepTheirOwnStatus) {
+    loom::core::AssistantMessage calls;
+    calls.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"bash-failed"}, .name = "Bash",
+        .input_json = R"({"command":"cat missing-recovery-file"})"});
+    calls.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"bash-succeeded"}, .name = "Bash",
+        .input_json = R"({"command":"pwd"})"});
+    engine->append_message_for_testing(calls);
+    loom::core::ToolResultMessage failed;
+    failed.tool_use_id.value = "bash-failed";
+    failed.tool_name = "Bash";
+    failed.is_error = true;
+    failed.content.push_back(loom::core::TextBlock{
+        "Command failed:\ncat: missing-recovery-file: No such file or directory\nExit code: 1"});
+    engine->append_message_for_testing(failed);
+    loom::core::ToolResultMessage succeeded;
+    succeeded.tool_use_id.value = "bash-succeeded";
+    succeeded.tool_name = "Bash";
+    succeeded.content.push_back(loom::core::TextBlock{"working directory"});
+    engine->append_message_for_testing(succeeded);
+    loom::core::AssistantMessage answer;
+    answer.content.push_back(loom::core::TextBlock{"RECOVERY_OK"});
+    engine->append_message_for_testing(answer);
+    test_seams(app).notify_conversation_changed_for_testing();
+    for (const bool eager_sync : {false, true}) {
+        test_seams(app).set_query_running_for_testing(!eager_sync);
+        if (eager_sync) app->SyncState();
+        const auto rendered = render_to_plain_text(app->Render(), 120, 40);
+        EXPECT_NE(rendered.find("cat missing-recovery-file"), std::string::npos);
+        EXPECT_NE(rendered.find("No such file or directory"), std::string::npos);
+        EXPECT_NE(rendered.find("RECOVERY_OK"), std::string::npos);
+        EXPECT_EQ(rendered.find("Model request failed"), std::string::npos);
+        const auto& rows = test_seams(app).screen_state_for_testing()->messages_store.messages;
+        int matched = 0;
+        for (const auto& row : rows) {
+            if (!row.is_tool_use) continue;
+            if (row.tool_use_id == "bash-failed") {
+                ++matched;
+                EXPECT_EQ(row.tool_status, std::optional<std::string>{"error"});
+            } else if (row.tool_use_id == "bash-succeeded") {
+                ++matched;
+                EXPECT_EQ(row.tool_status, std::optional<std::string>{"success"});
+            }
+        }
+        EXPECT_EQ(matched, 2);
+    }
+}
+
+TEST_F(AppThreadBoundary, SuccessfulStreamClearsRecoveredRequestError) {
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamError{
+        .error_type = "overloaded_error", .message = "Temporary failure"});
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamEnd{
+        .stop_reason = "end_turn", .usage = {}});
+    test_seams(app).set_query_running_for_testing(false);
+    (void)app->Render();
+    EXPECT_FALSE(std::ranges::any_of(
+        test_seams(app).screen_state_for_testing()->messages_store.messages,
+        [](const auto& message) { return message.is_model_error; }));
+}
+
+TEST_F(AppThreadBoundary, LaterTerminalFailureSurvivesEarlierSuccessfulStream) {
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamEnd{
+        .stop_reason = "tool_use", .usage = {}});
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamError{
+        .error_type = "network_error", .message = "Connection interrupted"});
+    test_seams(app).set_query_running_for_testing(false);
+    (void)app->Render();
+    const auto& messages = test_seams(app).screen_state_for_testing()->messages_store.messages;
+    ASSERT_FALSE(messages.empty());
+    EXPECT_TRUE(messages.back().is_model_error);
+    EXPECT_TRUE(messages.back().can_retry);
+}
+
+TEST_F(AppThreadBoundary, PermanentRequestFailuresDoNotOfferRetryOrDeleteConversation) {
+    loom::core::UserMessage original;
+    original.content.push_back(loom::core::TextBlock{"original prompt"});
+    engine->append_message_for_testing(original);
+    const auto original_size = engine->get_conversation().size();
+    for (const auto* type : {"authentication_error", "invalid_request_error"}) {
+        test_seams(app).set_query_running_for_testing(true);
+        test_seams(app).inject_stream_event_for_testing(loom::core::StreamError{
+            .error_type = type, .message = "Check request configuration"});
+        test_seams(app).set_query_running_for_testing(false);
+        (void)app->Render();
+        const auto& messages = test_seams(app).screen_state_for_testing()->messages_store.messages;
+        ASSERT_FALSE(messages.empty());
+        EXPECT_TRUE(messages.back().is_model_error);
+        EXPECT_FALSE(messages.back().can_retry);
+        EXPECT_FALSE(messages.back().session_expired);
+        (void)app->OnEvent(ftxui::Event::Character('r'));
+        EXPECT_FALSE(test_seams(app).is_query_running_for_testing());
+        EXPECT_EQ(engine->get_conversation().size(), original_size);
+        (void)app->OnEvent(ftxui::Event::Backspace);
+    }
+}
+
+TEST_F(AppThreadBoundary, RetryCannotStartAfterConversationWasCleared) {
+    loom::core::UserMessage original;
+    original.content.push_back(loom::core::TextBlock{"previous prompt"});
+    engine->append_message_for_testing(original);
+    engine->clear_conversation();
+    const auto cleared_size = engine->get_conversation().size();
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamError{
+        .error_type = "overloaded_error", .message = "Temporary failure"});
+    test_seams(app).set_query_running_for_testing(false);
+    (void)app->Render();
+    EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('r')));
+    EXPECT_FALSE(test_seams(app).is_query_running_for_testing());
+    EXPECT_EQ(engine->get_conversation().size(), cleared_size);
+}
+
+TEST_F(AppThreadBoundary, StreamSpinnerChangesOnlyWhenUiDrains) {
+    namespace repl = loom::ui::repl_screen;
+    test_seams(app).set_query_running_for_testing(true);
+    const auto state = test_seams(app).screen_state_for_testing();
+    std::jthread tool_event([&] {
+        test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockStart{
+            .index = 0,
+            .block = loom::core::ToolUseBlock{
+                .id = loom::core::ToolUseId{"thread-tool"}, .name = "Bash", .input_json = "{}"}});
+    });
+    tool_event.join();
+    EXPECT_EQ(state->task_view_store.spinner_mode, repl::SpinnerMode::Requesting);
+    (void)app->Render();
+    EXPECT_EQ(state->task_view_store.spinner_mode, repl::SpinnerMode::ToolUse);
+    EXPECT_EQ(state->task_view_store.spinner_verb, std::optional<std::string>{"Bash"});
+
+    std::jthread thinking_event([&] {
+        test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockStart{
+            .index = 1, .block = loom::core::ThinkingBlock{.thinking = "thinking", .signature = ""}});
+    });
+    thinking_event.join();
+    EXPECT_EQ(state->task_view_store.spinner_mode, repl::SpinnerMode::ToolUse);
+    (void)app->Render();
+    EXPECT_EQ(state->task_view_store.spinner_mode, repl::SpinnerMode::Thinking);
+
+    std::jthread text_event([&] {
+        test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockStart{
+            .index = 2, .block = loom::core::TextBlock{.text = ""}});
+        test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockDelta{
+            .index = 2, .delta_text = "hello"});
+    });
+    text_event.join();
+    EXPECT_EQ(state->task_view_store.spinner_mode, repl::SpinnerMode::Thinking);
+    (void)app->OnEvent(ftxui::Event::Custom);
+    EXPECT_EQ(state->task_view_store.spinner_mode, repl::SpinnerMode::Responding);
+    EXPECT_FALSE(state->task_view_store.spinner_verb.has_value());
+    test_seams(app).set_query_running_for_testing(false);
+}
+
+TEST_F(AppThreadBoundary, StreamEndKeepsBodyUntilCommitWithoutDuplicatingIt) {
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamStart{
+        .message_id = loom::core::MessageId{"layout-stream"}, .model = "test"});
+    test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockStart{
+        .index = 0, .block = loom::core::TextBlock{.text = ""}});
+    test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockDelta{
+        .index = 0, .delta_text = "Keep this body visible."});
+    (void)app->Render();
+    const auto before = test_seams(app).messages_for_testing();
+    ASSERT_EQ(before.size(), 1u);
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamEnd{
+        .stop_reason = "end_turn", .usage = {}});
+    (void)app->Render();
+    EXPECT_EQ(test_seams(app).messages_for_testing(), before);
+    loom::core::AssistantMessage message;
+    message.id.value = "layout-stream";
+    message.timestamp = std::chrono::system_clock::now();
+    message.content.push_back(loom::core::TextBlock{"Keep this body visible."});
+    engine->append_message_for_testing(message);
+    test_seams(app).notify_conversation_changed_for_testing();
+    (void)app->Render();
+    EXPECT_EQ(test_seams(app).messages_for_testing(), before);
+    test_seams(app).set_query_running_for_testing(false);
+}
+
+TEST_F(AppThreadBoundary, ToolStopAndNonAssistantCommitKeepCurrentStreamBody) {
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamStart{
+        .message_id = loom::core::MessageId{"tool-layout-stream"}, .model = "test"});
+    test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockStart{
+        .index = 0, .block = loom::core::TextBlock{.text = ""}});
+    test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockDelta{
+        .index = 0, .delta_text = "Keep this announcement."});
+    test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockStart{
+        .index = 1, .block = loom::core::ToolUseBlock{
+            .id = loom::core::ToolUseId{"tool-layout"}, .name = "Bash", .input_json = "{}"}});
+    test_seams(app).inject_stream_event_for_testing(loom::core::ContentBlockStop{.index = 1});
+    (void)app->Render();
+    auto contains_body = [&] {
+        const auto messages = test_seams(app).messages_for_testing();
+        return std::ranges::any_of(messages, [](const std::string& row) {
+            return row.find("Keep this announcement.") != std::string::npos;
+        });
+    };
+    EXPECT_TRUE(contains_body());
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamEnd{
+        .stop_reason = "tool_use", .usage = {}});
+    loom::core::UserMessage notification;
+    notification.timestamp = std::chrono::system_clock::now();
+    notification.content.push_back(loom::core::TextBlock{"Background notification"});
+    engine->append_message_for_testing(notification);
+    test_seams(app).notify_conversation_changed_for_testing();
+    (void)app->Render();
+    EXPECT_TRUE(contains_body());
+    test_seams(app).set_query_running_for_testing(false);
+}
+
+TEST_F(AppThreadBoundary, PermissionDialogIsStagedUntilUiEvent) {
+    const auto callback = app->get_permission_callback();
+    auto response = std::async(std::launch::async, [callback] {
+        return callback("Write", "Modify a file");
+    });
+    const bool staged = wait_until([&] {
+        return test_seams(app).pending_ui_action_count_for_testing() != 0;
+    }, std::chrono::seconds(2));
+    EXPECT_TRUE(staged);
+    EXPECT_FALSE(test_seams(app).has_pending_dialog_for_testing());
+    (void)app->Render();
+    EXPECT_TRUE(test_seams(app).has_pending_dialog_for_testing());
+    (void)app->OnEvent(ftxui::Event::Character('n'));
+    if (response.wait_for(std::chrono::seconds(2)) != std::future_status::ready) {
+        (void)test_seams(app).stop_background_workers_for_testing();
+        ADD_FAILURE() << "permission did not resolve";
+    }
+    EXPECT_FALSE(response.get());
+}
+
+TEST_F(AppThreadBoundary, ShutdownCancelsQueuedPermissionAndLateCopiedCallback) {
+    const auto callback = app->get_permission_callback();
+    auto response = std::async(std::launch::async, [callback] {
+        return callback("Bash", "waiting for approval");
+    });
+    EXPECT_TRUE(wait_until([&] {
+        return test_seams(app).pending_ui_action_count_for_testing() != 0;
+    }, std::chrono::seconds(2)));
+    app.reset();
+    EXPECT_EQ(response.wait_for(std::chrono::seconds(2)), std::future_status::ready);
+    EXPECT_FALSE(response.get());
+    // An external owner may retain a responder after AppAdapter is gone.
+    // Its closed handoff and shared cancellation state must remain safe.
+    EXPECT_FALSE(callback("Write", "late request"));
+}
+
+TEST_F(AppThreadBoundary, ShutdownDrainsRegistryBorrowersBeforeAppDestructionReturns) {
+    EnvironmentGuard runtime_dir("LOOM_AGENT_RUNTIME_DIR", (root.path / "agents").string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    auto record = loom::tools::agent_runtime::make_native_agent_record("app-exit-agent", "runtime");
+    record.background = true;
+    store.upsert(std::move(record));
+    const auto permission = app->get_permission_callback();
+    const auto owner = tools.background_stop_token();
+    std::binary_semaphore stopped{0};
+    std::promise<void> entered;
+    std::atomic<bool> cleaned_up{false};
+    std::atomic<int> drains{0};
+    ASSERT_TRUE(tools.set_shutdown_handler([&](std::stop_token token) {
+        ++drains;
+        store.cancel_and_wait_for_background_agents(token);
+    }));
+    store.run_background_agent("app-exit-agent", [&] {
+        std::stop_callback on_stop(owner, [&] { stopped.release(); });
+        store.mark_running("app-exit-agent");
+        entered.set_value();
+        stopped.acquire();
+        // Permission handoff has closed, but its state is still alive while
+        // the registry joins the borrower during AppAdapter teardown.
+        EXPECT_FALSE(permission("Write", "request during app shutdown"));
+        store.append_transcript("app-exit-agent", "system: app exit cleanup finished");
+        store.finish_agent("app-exit-agent", std::string("result before shutdown"));
+        cleaned_up = true;
+    }, owner);
+    entered.get_future().wait();
+    app.reset();
+    EXPECT_TRUE(owner.stop_requested());
+    EXPECT_TRUE(cleaned_up);
+    EXPECT_EQ(drains.load(), 1);
+    // Also close explicitly so a missing AppAdapter barrier cannot strand a
+    // worker on the failure path, and verify shutdown remains idempotent.
+    tools.shutdown();
+    EXPECT_EQ(drains.load(), 1);
+    const auto cancelled = store.get("app-exit-agent");
+    ASSERT_TRUE(cancelled.has_value());
+    EXPECT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+    EXPECT_TRUE(std::ranges::contains(cancelled->transcript, "system: app exit cleanup finished"));
+}
+
+TEST(AppRuntime, ShutdownSignalsToolCancellationBeforeJoiningForegroundQuery) {
+    httplib::Server server;
+    server.new_task_queue = [] { return new httplib::ThreadPool(2); };
+    server.Post("/v1/messages", [](const httplib::Request&, httplib::Response& response) {
+        response.set_content(R"(event: message_start
+data: {"type":"message_start","message":{"id":"exit-query","type":"message","role":"assistant","model":"test","content":[],"usage":{"input_tokens":1,"output_tokens":0}}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"exit-tool","name":"ShutdownProbe","input":{}}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":1}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+)", "text/event-stream");
+    });
+    const int port = server.bind_to_any_port("127.0.0.1");
+    ASSERT_GT(port, 0);
+    std::jthread listener([&] { server.listen_after_bind(); });
+    struct ServerCleanup {
+        httplib::Server& server;
+        ~ServerCleanup() { server.stop(); }
+    } server_cleanup{server};
+    server.wait_until_ready();
+    TempDirGuard root{fs::temp_directory_path() / ("loom_ui_foreground_exit_" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
+    loom::core::ToolRegistry tools;
+    const auto owner = tools.background_stop_token();
+    std::promise<void> entered;
+    std::atomic<bool> tool_finished{false};
+    std::atomic<int> drains{0};
+    class ShutdownProbe final : public loom::core::ITool {
+    public:
+        ShutdownProbe(std::stop_token owner, std::promise<void>& entered, std::atomic<bool>& finished)
+            : owner_(owner), entered_(entered), finished_(finished) {}
+        const loom::core::ToolDefinition& definition() const override { return definition_; }
+        loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+            std::binary_semaphore stopped{0};
+            std::stop_callback on_stop(owner_, [&] { stopped.release(); });
+            entered_.set_value();
+            stopped.acquire();
+            finished_ = true;
+            return loom::core::ToolResult::error("owner shutdown requested");
+        }
+        bool check_permission(const loom::core::ToolInput&) const override { return true; }
+    private:
+        std::stop_token owner_;
+        std::promise<void>& entered_;
+        std::atomic<bool>& finished_;
+        loom::core::ToolDefinition definition_{
+            .name = "ShutdownProbe",
+            .description = "Wait for registry shutdown",
+            .input_schema = {},
+            .permission = loom::core::ToolPermission::ReadOnly,
+        };
+    };
+    tools.register_tool(std::make_unique<ShutdownProbe>(owner, entered, tool_finished));
+    ASSERT_TRUE(tools.set_shutdown_handler([&](std::stop_token token) {
+        EXPECT_TRUE(token.stop_requested());
+        EXPECT_TRUE(tool_finished);
+        ++drains;
+    }));
+    loom::core::QueryEngineConfig config;
+    config.api_key = "test-key";
+    config.base_url = "http://127.0.0.1:" + std::to_string(port);
+    config.context_window.auto_compact = false;
+    config.cwd = root.path.string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, root.path / "sessions", [] {});
+    auto started = entered.get_future();
+    app->HandleSubmit("Run ShutdownProbe");
+    const bool tool_entered = started.wait_for(std::chrono::seconds(2)) == std::future_status::ready;
+    EXPECT_TRUE(tool_entered);
+    if (!tool_entered) {
+        tools.request_shutdown();
+        app.reset();
+        return;
+    }
+    auto shutdown = std::async(std::launch::async, [app = std::move(app)]() mutable { app.reset(); });
+    EXPECT_EQ(shutdown.wait_for(std::chrono::seconds(2)), std::future_status::ready);
+    // Failure cleanup releases the same owner wait so the regression does not
+    // hang when the pre-join signal is missing.
+    tools.request_shutdown();
+    shutdown.get();
+    EXPECT_TRUE(tool_finished);
+    EXPECT_EQ(drains.load(), 1);
+}
+
+TEST_F(AppThreadBoundary, BusyQueryRejectsEngineCommandsAndBash) {
+    const auto messages = test_seams(app).messages_for_testing();
+    const auto status = test_seams(app).status_message_for_testing();
+    test_seams(app).set_query_running_for_testing(true);
+    app->HandleSubmit("/cost");
+    app->HandleCommand("/cost");
+    app->HandleCommand("/clear");
+    app->HandleSubmit("!printf should-not-run");
+    EXPECT_EQ(test_seams(app).messages_for_testing(), messages);
+    EXPECT_EQ(test_seams(app).status_message_for_testing(), status);
+    EXPECT_FALSE(test_seams(app).is_local_bash_running_for_testing());
+    test_seams(app).set_query_running_for_testing(false);
+    app->HandleCommand("/cost");
+    EXPECT_TRUE(test_seams(app).status_message_for_testing().starts_with("Cost:"));
+}
+
+TEST(AppRuntime, QueryEndSuggestionIsStagedAndLateCallbackIsSafe) {
+    TempDirGuard root{fs::temp_directory_path() /
+        ("loom_ui_suggestion_handoff_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()))};
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = root.path.string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::hooks::LifecycleHookRegistry hooks;
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, &hooks, &commands, root.path / "sessions", [] {});
+    (void)app->Render();
+    test_seams(app).set_next_action_suggestion_for_testing("keep until drain");
+    const auto state = test_seams(app).screen_state_for_testing();
+    const loom::hooks::QueryEndEvent event{
+        .success = false, .rounds = 0, .tools_executed = 0,
+        .duration = std::chrono::milliseconds(0),
+        .timestamp = std::chrono::system_clock::now()};
+    std::jthread worker([&] { hooks.emit_query_end(event); });
+    worker.join();
+    EXPECT_EQ(state->next_action_suggestion, "keep until drain");
+    EXPECT_GT(test_seams(app).pending_ui_action_count_for_testing(), 0u);
+    (void)app->Render();
+    EXPECT_FALSE(state->next_action_suggestion.has_value());
+    app.reset();
+    hooks.emit_query_end(event);
+}
+
+TEST_F(AppThreadBoundary, BashCwdChangesOnlyAfterUiDrain) {
+    const auto previous_cwd = fs::current_path();
+    fs::create_directory(root.path / "sub");
+    app->HandleSubmit("!cd sub && printf cwd-result");
+    ASSERT_TRUE(wait_until([&] {
+        return !test_seams(app).is_local_bash_running_for_testing();
+    }, std::chrono::seconds(2)));
+    EXPECT_EQ(engine->working_directory(), root.path.string());
+    EXPECT_EQ(test_seams(app).screen_state_for_testing()->cwd, root.path.string());
+    EXPECT_EQ(fs::current_path(), previous_cwd);
+    // A direct follow-up submission must drain the previous cwd too,
+    // without relying on an intervening Render/OnEvent call.
+    app->HandleSubmit("!printf followup");
+    const bool followup_finished = wait_until([&] {
+        return !test_seams(app).is_local_bash_running_for_testing();
+    }, std::chrono::seconds(2));
+    EXPECT_TRUE(followup_finished);
+    (void)app->Render();
+    EXPECT_EQ(fs::canonical(engine->working_directory()), fs::canonical(root.path / "sub"));
+    EXPECT_EQ(fs::current_path(), fs::canonical(root.path / "sub"));
+    fs::current_path(previous_cwd);
+}
+
+TEST_F(AppThreadBoundary, ShutdownWaitsForRunningBashBeforeDestroyingItsResults) {
+    const auto started = root.path / "started";
+    const auto release = root.path / "release";
+    app->HandleSubmit("!printf ready > '" + started.string() +
+        "'; while [ ! -e '" + release.string() +
+        "' ]; do sleep 0.01; done; printf shutdown-result");
+    const bool running = wait_until([&] { return fs::exists(started); }, std::chrono::seconds(2));
+    if (!running) { std::ofstream(release) << "release"; }
+    ASSERT_TRUE(running);
+    std::promise<void> stopping;
+    auto stopping_started = stopping.get_future();
+    auto shutdown = std::async(std::launch::async,
+        [owned_app = std::move(app), &stopping]() mutable {
+            stopping.set_value();
+            const bool joined = test_seams(owned_app).stop_background_workers_for_testing();
+            const auto rendered = strip_ansi(render_to_plain_text(owned_app->Render(), 120, 36));
+            owned_app.reset();
+            return std::pair{joined, rendered};
+        });
+    stopping_started.wait();
+    EXPECT_EQ(shutdown.wait_for(std::chrono::milliseconds(20)), std::future_status::timeout);
+    std::ofstream(release) << "release";
+    const auto [joined, rendered] = shutdown.get();
+    EXPECT_TRUE(joined);
+    EXPECT_NE(rendered.find("shutdown-result"), std::string::npos);
+}
+
+TEST(AppRuntime, QueryCompletionReachesUiOnlyOnDrain) {
+    LocalErrorMessagesStreamServer server;
+    ASSERT_TRUE(server.valid());
+    TempDirGuard root{fs::temp_directory_path() /
+        ("loom_ui_query_handoff_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()))};
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.api_key = "test-key";
+    config.base_url = server.base_url();
+    config.context_window.auto_compact = false;
+    config.cwd = root.path.string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, root.path / "sessions", [] {});
+    app->HandleSubmit("hello");
+    ASSERT_TRUE(server.wait_for_requests(2));
+    ASSERT_TRUE(wait_until([&] { return !test_seams(app).is_query_running_for_testing(); },
+        std::chrono::seconds(2)));
+    EXPECT_TRUE(test_seams(app).screen_state_for_testing()->query_running);
+    (void)app->Render();
+    EXPECT_FALSE(test_seams(app).screen_state_for_testing()->query_running);
+    EXPECT_FALSE(test_seams(app).is_loading_for_testing());
+}
+
+
+TEST_F(AppThreadBoundary, ElicitationIsStagedAndLateRequestIsCancelledAfterDestruction) {
+    auto response = std::async(std::launch::async, [] {
+        return loom::services::mcp::handle_elicitation({
+            .server_name = "thread-boundary-server", .message = "May I proceed?", .schema = {}});
+    });
+    EXPECT_TRUE(wait_until([&] {
+        return test_seams(app).pending_ui_action_count_for_testing() != 0;
+    }, std::chrono::seconds(2)));
+    EXPECT_FALSE(test_seams(app).has_pending_dialog_for_testing());
+    (void)app->Render();
+    EXPECT_TRUE(test_seams(app).has_pending_dialog_for_testing());
+    (void)app->OnEvent(ftxui::Event::Character('n'));
+    if (response.wait_for(std::chrono::seconds(2)) != std::future_status::ready) {
+        (void)test_seams(app).stop_background_workers_for_testing();
+        ADD_FAILURE() << "elicitation did not resolve";
+    }
+    EXPECT_FALSE(response.get().has_value());
+    app.reset();
+    EXPECT_FALSE(loom::services::mcp::handle_elicitation({
+        .server_name = "thread-boundary-server", .message = "late", .schema = {}}).has_value());
+}
+
+TEST(AppRuntime, SettingsWatcherStagesChangesUntilUiDrain) {
+    TempDirGuard root{fs::temp_directory_path() /
+        ("loom_ui_settings_handoff_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()))};
+    ScopedEnvVar home("HOME");
+    ScopedEnvVar config_dir("LOOM_CONFIG_DIR");
+    ScopedEnvVar command("LOOM_STATUS_LINE_COMMAND");
+    ScopedEnvVar padding("LOOM_STATUS_LINE_PADDING");
+    home.set(root.path.string());
+    config_dir.set((root.path / ".loom").string());
+    fs::create_directories(root.path / ".loom");
+    const auto file = root.path / ".loom" / "settings.json";
+    std::ofstream(file) << R"({"statusLine":{"command":"","padding":"2"}})";
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = root.path.string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, root.path / "sessions", [] {});
+    (void)app->Render();
+    ASSERT_EQ(test_seams(app).status_line_padding_for_testing(), 2);
+    std::ofstream(file) << R"({"statusLine":{"command":"","padding":"77"}})";
+    EXPECT_TRUE(wait_until([&] {
+        return test_seams(app).pending_ui_action_count_for_testing() != 0;
+    }, std::chrono::seconds(5)));
+    EXPECT_EQ(test_seams(app).status_line_padding_for_testing(), 2);
+    (void)app->OnEvent(ftxui::Event::Custom);
+    EXPECT_EQ(test_seams(app).status_line_padding_for_testing(), 77);
+}
+
+TEST_F(AppThreadBoundary, ToolRoundBudgetPauseIsNotAnApiErrorAndContinueKeepsProgress) {
+    loom::core::UserMessage prompt;
+    prompt.content.push_back(loom::core::TextBlock{"run once"});
+    engine->append_message_for_testing(prompt);
+    loom::core::AssistantMessage tool_call;
+    tool_call.content.push_back(loom::core::ToolUseBlock{
+        .id = loom::core::ToolUseId{"budget-once"}, .name = "Bash", .input_json = "{}"});
+    engine->append_message_for_testing(tool_call);
+    loom::core::ToolResultMessage result;
+    result.tool_use_id.value = "budget-once";
+    result.tool_name = "Bash";
+    result.content.push_back(loom::core::TextBlock{"completed once"});
+    engine->append_message_for_testing(result);
+    const auto original = engine->get_conversation();
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamError{
+        "tool_round_limit", "Tool-round budget reached (1). Progress saved."});
+    test_seams(app).set_query_running_for_testing(false);
+    auto screen = ftxui::Screen::Create(
+        ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
+    ftxui::Render(screen, app->Render());
+    auto state = test_seams(app).screen_state_for_testing();
+    ASSERT_FALSE(state->messages_store.messages.empty());
+    EXPECT_TRUE(state->messages_store.messages.back().can_continue);
+    EXPECT_FALSE(state->messages_store.messages.back().is_error);
+    EXPECT_FALSE(state->messages_store.messages.back().is_model_error);
+    EXPECT_NE(screen.ToString().find("Continue"), std::string::npos);
+    EXPECT_EQ(screen.ToString().find("Retry request"), std::string::npos);
+    const auto submissions = state->prompt_store.submit_count;
+    EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('c')));
+    EXPECT_EQ(state->prompt_store.submit_count, submissions);
+    for (int i = 0; i < 100 && test_seams(app).is_query_running_for_testing(); ++i)
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    ASSERT_FALSE(test_seams(app).is_query_running_for_testing());
+    (void)app->Render();
+    const auto conversation = engine->get_conversation();
+    ASSERT_EQ(conversation.size(), original.size());
+    const auto user = std::ranges::find_if(conversation, [](const auto& message) {
+        return std::holds_alternative<loom::core::UserMessage>(message);
+    });
+    ASSERT_NE(user, conversation.end());
+    EXPECT_EQ(std::get<loom::core::UserMessage>(*user).id, prompt.id);
+    EXPECT_EQ(std::get<loom::core::ToolResultMessage>(conversation.back()).tool_use_id.value,
+              "budget-once");
+    EXPECT_FALSE(std::ranges::any_of(state->messages_store.messages,
+        [](const auto& message) { return message.can_continue; }));
+}
+
+TEST_F(AppThreadBoundary, ContinueCannotStartAfterPausedConversationWasCleared) {
+    loom::core::UserMessage prompt;
+    prompt.content.push_back(loom::core::TextBlock{"paused"});
+    engine->append_message_for_testing(prompt);
+    test_seams(app).set_query_running_for_testing(true);
+    test_seams(app).inject_stream_event_for_testing(loom::core::StreamError{
+        "tool_round_limit", "Tool-round budget reached (1). Progress saved."});
+    test_seams(app).set_query_running_for_testing(false);
+    (void)app->Render();
+    engine->clear_conversation();
+    const auto cleared = engine->get_conversation();
+    EXPECT_TRUE(app->OnEvent(ftxui::Event::Character('c')));
+    EXPECT_FALSE(test_seams(app).is_query_running_for_testing());
+    EXPECT_EQ(engine->get_conversation().size(), cleared.size());
+}
+
+TEST(AppRuntime, ContinueMouseAndKeyboardShareGuardsAndHiddenActionsHaveNoHitBox) {
+    namespace repl = loom::ui::repl_screen;
+    auto state = std::make_shared<repl::ReplScreenState>();
+    repl::MessageDisplayEntry pause;
+    pause.role = "system";
+    pause.content_preview = "Tool-round budget reached (1). Progress saved.";
+    pause.can_continue = true;
+    state->messages_store.messages.push_back(pause);
+    int continued = 0;
+    repl::ReplScreenCallbacks callbacks;
+    callbacks.on_continue = [&] { ++continued; };
+    auto component = repl::ReplScreen(state, callbacks);
+    auto render = [&] {
+        auto screen = ftxui::Screen::Create(
+            ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
+        ftxui::Render(screen, component->Render());
+        return screen.ToString();
+    };
+    EXPECT_NE(render().find("Continue"), std::string::npos);
+    const auto bounds = state->messages_store.continue_action_box;
+    ASSERT_GE(bounds.x_max, bounds.x_min);
+    ASSERT_GE(bounds.y_max, bounds.y_min);
+    ftxui::Mouse mouse;
+    mouse.button = ftxui::Mouse::Left;
+    mouse.motion = ftxui::Mouse::Released;
+    mouse.x = bounds.x_min;
+    mouse.y = bounds.y_min;
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('C')));
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Mouse("", mouse)));
+    EXPECT_EQ(continued, 2);
+
+    for (int guard = 0; guard < 6; ++guard) {
+        state->query_running = guard == 0;
+        state->input_text = guard == 1 ? "typed" : "";
+        state->mode = guard == 2 ? repl::ReplMode::SettingsView : repl::ReplMode::Normal;
+        state->messages_store.messages = {pause};
+        if (guard == 3) state->messages_store.messages.back().can_continue = false;
+        if (guard == 4) state->messages_store.messages.clear();
+        if (guard == 5) {
+            loom::ui::dialogs::system::GenericDialogPayload dialog;
+            dialog.id = "continue-guard";
+            dialog.title = "Modal guard";
+            state->dialog_store.dialog_queue.push_modal(
+                loom::ui::dialogs::system::DialogPayloadVariant{dialog});
+        }
+        EXPECT_EQ(render().find("[Continue]"), std::string::npos);
+        EXPECT_LT(state->messages_store.continue_action_box.x_max,
+                  state->messages_store.continue_action_box.x_min);
+        (void)component->OnEvent(ftxui::Event::Mouse("", mouse));
+        (void)component->OnEvent(ftxui::Event::Character('c'));
+        EXPECT_EQ(continued, 2) << guard;
+    }
+}

@@ -19,16 +19,8 @@
 ///       the initial system prompt at construction time
 ///       (build_and_add_system_prompt via get_conversation()).
 ///
-/// What is intentionally NOT covered here:
-///   - SSE event parsing. The streaming parser in query_engine.cppm is an
-///     inline lambda (parse_sse_event at ~L2183) that captures private member
-///     state and is only reachable through stream_single_api_call's live HTTP
-///     content_receiver. There is no exported seam to feed it synthetic
-///     chunks, so exercising it would require either exporting the parser or
-///     a full httplib content_receiver mock — out of scope for a tests-only
-///     change. The independent loom::services::api::SseBuffer/StreamParser used
-///     by the SDK path ARE already covered by test_sse_mock.cpp /
-///     test_services.cpp.
+///   (5) Streaming tool-error recovery and resuming a failed model request,
+///       using scripted HTTP/SSE responses through the public stream_query API.
 ///
 /// All tests use exported/public surfaces only (QueryEngine public methods,
 /// build_output_config_json_for_testing, execute_single_tool_for_testing,
@@ -329,6 +321,82 @@ TEST(QueryEngineFix, OutputConfigOmittedWhenNeitherBudgetNorSchema) {
 // ===========================================================================
 // (4) discovered_skills_ tracking via execute_single_tool_for_testing
 // ===========================================================================
+
+namespace {
+struct ModelContextProbe final : loom::core::ITool {
+    loom::core::ToolDefinition definition_{};
+    std::vector<std::optional<std::string>> models;
+    std::vector<std::string> inputs;
+    ModelContextProbe() {
+        definition_.name = "model_probe";
+        definition_.permission = loom::core::ToolPermission::ReadOnly;
+    }
+    const loom::core::ToolDefinition& definition() const override { return definition_; }
+    loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput& input) override {
+        models.push_back(input.parent_model);
+        inputs.emplace_back(input.json());
+        return loom::core::ToolResult::success("observed");
+    }
+    bool check_permission(const loom::core::ToolInput&) const override { return true; }
+};
+}
+
+TEST(QueryEngineFix, ToolModelContextTracksRuntimeModelChangesWithoutChangingJson) {
+    loom::core::ToolRegistry registry;
+    auto probe = std::make_unique<ModelContextProbe>();
+    auto* observed = probe.get();
+    registry.register_tool(std::move(probe));
+    loom::core::QueryEngineConfig config;
+    config.model_params.model = "configured-model";
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), registry);
+    loom::core::ToolUseBlock call{
+        .id = loom::core::ToolUseId{.value = "model-context"},
+        .name = "model_probe",
+        .input_json = R"({"model":"explicit-child-model"})",
+    };
+    (void)engine.execute_single_tool_for_testing(call);
+    auto params = engine.model_params();
+    params.model = "switched-model";
+    engine.set_model_params(std::move(params));
+    (void)engine.execute_single_tool_for_testing(call);
+    ASSERT_EQ(observed->models.size(), 2u);
+    EXPECT_EQ(observed->models[0], "configured-model");
+    EXPECT_EQ(observed->models[1], "switched-model");
+    EXPECT_EQ(observed->inputs, (std::vector<std::string>{call.input_json, call.input_json}));
+}
+
+TEST(QueryEngineFix, ToolModelContextUsesActualFallbackModel) {
+    ScriptedHttpServer server({
+        {.status = 529, .body = R"({"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}})"},
+        {.status = 200, .body = R"({"id":"msg_tool","type":"message","role":"assistant","model":"fallback-model","content":[{"type":"tool_use","id":"tool_probe","name":"model_probe","input":{}}],"stop_reason":"tool_use","usage":{"input_tokens":1,"output_tokens":1}})"},
+        {},
+    });
+    ASSERT_NE(server.port(), 0);
+    const auto root = fs::temp_directory_path() / "loom_query_engine_fallback_context_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    loom::core::ToolRegistry registry;
+    auto probe = std::make_unique<ModelContextProbe>();
+    auto* observed = probe.get();
+    registry.register_tool(std::move(probe));
+    loom::core::QueryEngineConfig config;
+    config.api_key = "test-key";
+    config.base_url = server.base_url();
+    config.cwd = root.string();
+    config.retry_policy.max_retries = 1;
+    config.model_params.model = "primary-model";
+    config.fallback_models = {"fallback-model"};
+    config.context_window.auto_compact = false;
+    config.tools = registry.get_visible_definitions();
+    loom::core::QueryEngine engine(std::move(config), registry);
+    auto response = engine.query("probe fallback model");
+    ASSERT_TRUE(response.has_value()) << response.error().message;
+    ASSERT_EQ(observed->models.size(), 1u);
+    EXPECT_EQ(observed->models[0], "fallback-model");
+    fs::remove_all(root);
+}
 
 TEST(QueryEngineFix, DiscoveredSkillsTracksSkillToolInvocations) {
     struct StubSkillTool final : loom::core::ITool {
@@ -889,4 +957,634 @@ TEST(QueryEngineFix, AutoMemPathResolvesCanonicalLayoutAndOverride) {
     EXPECT_FALSE(loom::memdir::get_auto_mem_path(project).has_value());
 
     fs::remove_all(root);
+}
+
+
+namespace {
+
+std::string recovery_sse_event(std::string_view type, std::string_view payload) {
+    return std::format("event: {}\ndata: {}\n\n", type, payload);
+}
+
+std::string recovery_json_string(std::string_view value) {
+    loom::utils::json::JsonMutDoc doc;
+    doc.set_root(doc.string(value));
+    return doc.to_string();
+}
+
+std::string recovery_message_start() {
+    return recovery_sse_event("message_start",
+        R"({"type":"message_start","message":{"id":"recovery-message","type":"message","role":"assistant","model":"recovery-model","content":[],"usage":{"input_tokens":1}}})");
+}
+
+std::string recovery_message_end(std::string_view stop_reason) {
+    return recovery_sse_event("content_block_stop", R"({"index":0})") +
+        recovery_sse_event("message_delta", std::format(
+            R"({{"delta":{{"stop_reason":{}}},"usage":{{"output_tokens":1}}}})",
+            recovery_json_string(stop_reason))) +
+        recovery_sse_event("message_stop", R"({"type":"message_stop"})");
+}
+
+ScriptedHttpServer::Response recovery_tool_call(
+    std::string_view id, std::string_view name, std::string_view input) {
+    return {.status = 200, .body = recovery_message_start() +
+        recovery_sse_event("content_block_start", std::format(
+            R"({{"index":0,"content_block":{{"type":"tool_use","id":{},"name":{},"input":{{}}}}}})",
+            recovery_json_string(id), recovery_json_string(name))) +
+        recovery_sse_event("content_block_delta", std::format(
+            R"({{"index":0,"delta":{{"type":"input_json_delta","partial_json":{}}}}})",
+            recovery_json_string(input))) + recovery_message_end("tool_use")};
+}
+
+ScriptedHttpServer::Response recovery_final_reply() {
+    return {.status = 200, .body = recovery_message_start() +
+        recovery_sse_event("content_block_start",
+            R"({"index":0,"content_block":{"type":"text","text":""}})") +
+        recovery_sse_event("content_block_delta",
+            R"({"index":0,"delta":{"type":"text_delta","text":"Recovered successfully"}})") +
+        recovery_message_end("end_turn")};
+}
+
+struct RecoveryTool final : loom::core::ITool {
+    loom::core::ToolDefinition definition_{};
+    bool permitted = true;
+    mutable int permission_checks = 0;
+    std::vector<std::string> executed_inputs;
+
+    explicit RecoveryTool(std::string name) {
+        definition_.name = std::move(name);
+        definition_.permission = loom::core::ToolPermission::ReadOnly;
+    }
+    const loom::core::ToolDefinition& definition() const override { return definition_; }
+    loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput& input) override {
+        executed_inputs.emplace_back(input.json());
+        if (input.json().find("broken") != std::string_view::npos) {
+            return loom::core::ToolResult::error("bash: syntax error near unexpected token");
+        }
+        return loom::core::ToolResult::success("tool completed");
+    }
+    bool check_permission(const loom::core::ToolInput&) const override {
+        ++permission_checks;
+        return permitted;
+    }
+};
+
+loom::core::QueryEngineConfig recovery_config(
+    const ScriptedHttpServer& server, const loom::core::ToolRegistry& registry) {
+    loom::core::QueryEngineConfig config;
+    config.api_key = "test-key";
+    config.base_url = server.base_url();
+    config.cwd = fs::temp_directory_path().string();
+    config.retry_policy.max_retries = 0;
+    config.model_params.model = "recovery-model";
+    config.context_window.auto_compact = false;
+    config.tools = registry.get_visible_definitions();
+    return config;
+}
+
+std::vector<loom::core::ToolResultMessage> recovery_tool_results(
+    const std::vector<loom::core::Message>& messages) {
+    std::vector<loom::core::ToolResultMessage> results;
+    for (const auto& message : messages) {
+        if (const auto* result = std::get_if<loom::core::ToolResultMessage>(&message)) {
+            results.push_back(*result);
+        }
+    }
+    return results;
+}
+
+void expect_one_recovery_prompt(const std::vector<loom::core::Message>& messages) {
+    EXPECT_EQ(std::count_if(messages.begin(), messages.end(), [](const auto& message) {
+        return std::holds_alternative<loom::core::UserMessage>(message);
+    }), 1);
+}
+
+void expect_recovery_completed(const std::vector<loom::core::Message>& messages) {
+    ASSERT_FALSE(messages.empty());
+    const auto* assistant = std::get_if<loom::core::AssistantMessage>(&messages.back());
+    ASSERT_NE(assistant, nullptr);
+    ASSERT_EQ(assistant->content.size(), 1u);
+    ASSERT_TRUE(std::holds_alternative<loom::core::TextBlock>(assistant->content[0]));
+    EXPECT_EQ(std::get<loom::core::TextBlock>(assistant->content[0]).text,
+              "Recovered successfully");
+}
+
+void expect_wire_tool_result(std::string_view body, std::string_view id, bool error) {
+    auto parsed = loom::utils::json::parse(body);
+    ASSERT_TRUE(parsed.has_value());
+    bool found = false;
+    parsed->root().get("messages").iter([&](auto message) {
+        message.get("content").iter([&](auto block) {
+            if (block.get("type").as_str() == "tool_result" &&
+                block.get("tool_use_id").as_str() == id) {
+                found = true;
+                EXPECT_EQ(block.get("is_error").as_bool(), error);
+            }
+        });
+    });
+    EXPECT_TRUE(found) << "Missing tool result " << id;
+}
+
+} // namespace
+
+TEST(QueryEngineFix, StreamingBashFailureRecoversWithinOriginalTurn) {
+    ScriptedHttpServer server({
+        recovery_tool_call("bash-bad", "Bash", R"({"command":"broken"})"),
+        recovery_tool_call("bash-corrected", "Bash", R"({"command":"printf fixed"})"),
+        recovery_final_reply(),
+    });
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    auto tool = std::make_unique<RecoveryTool>("Bash");
+    auto* observed = tool.get();
+    registry.register_tool(std::move(tool));
+    loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+    std::vector<loom::core::StreamEvent> events;
+    loom::core::QueryOptions options;
+    options.on_event = [&](const auto& event) { events.push_back(event); };
+    engine.stream_query("run the command", options);
+
+    EXPECT_EQ(observed->executed_inputs, (std::vector<std::string>{
+        R"({"command":"broken"})", R"({"command":"printf fixed"})"}));
+    const auto conversation = engine.get_conversation();
+    expect_one_recovery_prompt(conversation);
+    expect_recovery_completed(conversation);
+    const auto results = recovery_tool_results(conversation);
+    ASSERT_EQ(results.size(), 2u);
+    EXPECT_EQ(results[0].tool_use_id.value, "bash-bad");
+    EXPECT_TRUE(results[0].is_error);
+    EXPECT_EQ(results[1].tool_use_id.value, "bash-corrected");
+    EXPECT_FALSE(results[1].is_error);
+    EXPECT_EQ(std::count_if(events.begin(), events.end(), [](const auto& event) {
+        return std::holds_alternative<loom::core::StreamError>(event);
+    }), 0);
+    std::vector<bool> execution_errors;
+    for (const auto& event : events) {
+        if (const auto* ended = std::get_if<loom::core::ToolExecutionEnd>(&event)) {
+            execution_errors.push_back(ended->is_error);
+        }
+    }
+    EXPECT_EQ(execution_errors, (std::vector<bool>{true, false}));
+    const auto bodies = server.wait_for_bodies(3);
+    ASSERT_TRUE(bodies.has_value());
+    ASSERT_EQ(bodies->size(), 3u);
+    expect_wire_tool_result((*bodies)[1], "bash-bad", true);
+    expect_wire_tool_result((*bodies)[2], "bash-bad", true);
+    expect_wire_tool_result((*bodies)[2], "bash-corrected", false);
+}
+
+TEST(QueryEngineFix, StreamingPermissionDenialContinuesWithoutReexecutingDeniedBash) {
+    ScriptedHttpServer server({
+        recovery_tool_call("bash-denied", "Bash", R"({"command":"read sources"})"),
+        recovery_tool_call("grep-allowed", "Grep", R"({"pattern":"sources"})"),
+        recovery_final_reply(),
+    });
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    auto bash = std::make_unique<RecoveryTool>("Bash");
+    auto* denied = bash.get();
+    bash->permitted = false;
+    registry.register_tool(std::move(bash));
+    auto grep = std::make_unique<RecoveryTool>("Grep");
+    auto* allowed = grep.get();
+    registry.register_tool(std::move(grep));
+    loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+    std::vector<loom::core::StreamEvent> events;
+    loom::core::QueryOptions options;
+    options.on_event = [&](const auto& event) { events.push_back(event); };
+    engine.stream_query("inspect sources", options);
+
+    EXPECT_EQ(denied->permission_checks, 1);
+    EXPECT_TRUE(denied->executed_inputs.empty());
+    EXPECT_FALSE(denied->permitted);
+    EXPECT_EQ(allowed->executed_inputs.size(), 1u);
+    const auto conversation = engine.get_conversation();
+    expect_one_recovery_prompt(conversation);
+    expect_recovery_completed(conversation);
+    const auto results = recovery_tool_results(conversation);
+    ASSERT_EQ(results.size(), 2u);
+    EXPECT_TRUE(results[0].is_error);
+    ASSERT_FALSE(results[0].content.empty());
+    ASSERT_TRUE(std::holds_alternative<loom::core::TextBlock>(results[0].content[0]));
+    EXPECT_NE(std::get<loom::core::TextBlock>(results[0].content[0]).text.find("Permission denied"),
+              std::string::npos);
+    EXPECT_FALSE(results[1].is_error);
+    EXPECT_EQ(std::count_if(events.begin(), events.end(), [](const auto& event) {
+        return std::holds_alternative<loom::core::StreamError>(event);
+    }), 0);
+    const auto bodies = server.wait_for_bodies(3);
+    ASSERT_TRUE(bodies.has_value());
+    ASSERT_EQ(bodies->size(), 3u);
+    expect_wire_tool_result((*bodies)[1], "bash-denied", true);
+    expect_wire_tool_result((*bodies)[2], "bash-denied", true);
+    expect_wire_tool_result((*bodies)[2], "grep-allowed", false);
+}
+
+TEST(QueryEngineFix, StreamingApiRetryResumesCommittedConversationWithoutRepeatingBash) {
+    const ScriptedHttpServer::Response overloaded{
+        .status = 529,
+        .body = R"({"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}})",
+    };
+    ScriptedHttpServer server({
+        recovery_tool_call("bash-once", "Bash", R"({"command":"printf once"})"),
+        overloaded,
+        overloaded,
+        recovery_final_reply(),
+    });
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    auto tool = std::make_unique<RecoveryTool>("Bash");
+    auto* observed = tool.get();
+    registry.register_tool(std::move(tool));
+    loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+    std::vector<loom::core::StreamEvent> events;
+    loom::core::QueryOptions options;
+    options.attachments = {loom::core::TextBlock{"attached source contents"}};
+    options.on_event = [&](const auto& event) { events.push_back(event); };
+    engine.stream_query("inspect @source", options);
+    ASSERT_EQ(std::count_if(events.begin(), events.end(), [](const auto& event) {
+        return std::holds_alternative<loom::core::StreamError>(event);
+    }), 1);
+    const auto prior_results = recovery_tool_results(engine.get_conversation());
+    ASSERT_EQ(prior_results.size(), 1u);
+    EXPECT_FALSE(prior_results[0].is_error);
+    ASSERT_EQ(observed->executed_inputs.size(), 1u);
+
+    events.clear();
+    options.resume_from_conversation = true;
+    engine.stream_query("inspect @source", options);
+
+    EXPECT_EQ(observed->executed_inputs.size(), 1u);
+    const auto conversation = engine.get_conversation();
+    expect_one_recovery_prompt(conversation);
+    expect_recovery_completed(conversation);
+    const auto results = recovery_tool_results(conversation);
+    ASSERT_EQ(results.size(), 1u);
+    EXPECT_EQ(results[0].tool_use_id.value, prior_results[0].tool_use_id.value);
+    EXPECT_EQ(results[0].is_error, prior_results[0].is_error);
+    EXPECT_EQ(std::get<loom::core::TextBlock>(results[0].content[0]).text,
+              std::get<loom::core::TextBlock>(prior_results[0].content[0]).text);
+    for (const auto& message : conversation) {
+        if (const auto* user = std::get_if<loom::core::UserMessage>(&message)) {
+            ASSERT_EQ(user->content.size(), 2u);
+            EXPECT_EQ(std::get<loom::core::TextBlock>(user->content[0]).text, "inspect @source");
+            EXPECT_EQ(std::get<loom::core::TextBlock>(user->content[1]).text,
+                      "attached source contents");
+        }
+    }
+    EXPECT_EQ(std::count_if(events.begin(), events.end(), [](const auto& event) {
+        return std::holds_alternative<loom::core::StreamError>(event);
+    }), 0);
+    const auto bodies = server.wait_for_bodies(4);
+    ASSERT_TRUE(bodies.has_value());
+    ASSERT_EQ(bodies->size(), 4u);
+    const auto failed_request = loom::utils::json::parse((*bodies)[1]);
+    const auto fallback_request = loom::utils::json::parse((*bodies)[2]);
+    const auto resumed_request = loom::utils::json::parse((*bodies)[3]);
+    ASSERT_TRUE(failed_request.has_value());
+    ASSERT_TRUE(fallback_request.has_value());
+    ASSERT_TRUE(resumed_request.has_value());
+    EXPECT_EQ(failed_request->root().get("messages").to_string(),
+              fallback_request->root().get("messages").to_string());
+    EXPECT_EQ(failed_request->root().get("messages").to_string(),
+              resumed_request->root().get("messages").to_string());
+    expect_wire_tool_result((*bodies)[3], "bash-once", false);
+}
+
+TEST(QueryEngineFix, StreamingRetryRejectsEmptyAndCompletedConversation) {
+    loom::core::ToolRegistry registry;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    loom::core::QueryEngine engine(std::move(config), registry);
+    std::vector<std::string> errors;
+    loom::core::QueryOptions options;
+    options.resume_from_conversation = true;
+    options.on_event = [&](const auto& event) {
+        if (const auto* error = std::get_if<loom::core::StreamError>(&event))
+            errors.push_back(error->error_type);
+    };
+    const auto initial_size = engine.get_conversation().size();
+    engine.stream_query("must not append", options);
+    EXPECT_EQ(engine.get_conversation().size(), initial_size);
+    loom::core::AssistantMessage completed;
+    completed.content.push_back(loom::core::TextBlock{"Completed answer"});
+    engine.append_message_for_testing(completed);
+    engine.stream_query("must not append", options);
+    EXPECT_EQ(engine.get_conversation().size(), initial_size + 1);
+    EXPECT_EQ(errors, (std::vector<std::string>{"invalid_retry", "invalid_retry"}));
+}
+
+TEST(QueryEngineFix, StreamingRecoveryStopsAtExistingToolRoundLimit) {
+    ScriptedHttpServer server({
+        recovery_tool_call("bash-bad", "Bash", R"({"command":"broken"})"),
+    });
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    auto tool = std::make_unique<RecoveryTool>("Bash");
+    auto* observed = tool.get();
+    registry.register_tool(std::move(tool));
+    loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+    std::vector<std::string> errors;
+    loom::core::QueryOptions options;
+    options.max_tool_rounds = 1;
+    options.on_event = [&](const auto& event) {
+        if (const auto* error = std::get_if<loom::core::StreamError>(&event))
+            errors.push_back(error->error_type);
+    };
+    engine.stream_query("run the command", options);
+    EXPECT_EQ(observed->executed_inputs.size(), 1u);
+    const auto results = recovery_tool_results(engine.get_conversation());
+    ASSERT_EQ(results.size(), 1u);
+    EXPECT_TRUE(results[0].is_error);
+    EXPECT_EQ(errors, (std::vector<std::string>{"tool_round_limit"}));
+}
+
+TEST(QueryEngineFix, StreamingUnlimitedToolRoundBudgetCompletesBeyondTwentyRounds) {
+    std::vector<ScriptedHttpServer::Response> responses;
+    for (int round = 0; round < 21; ++round) {
+        responses.push_back(recovery_tool_call(std::format("bash-{}", round), "Bash",
+            std::format(R"({{"command":"printf round-{}"}})", round)));
+    }
+    responses.push_back(recovery_final_reply());
+    ScriptedHttpServer server(std::move(responses));
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    auto tool = std::make_unique<RecoveryTool>("Bash");
+    auto* observed = tool.get();
+    registry.register_tool(std::move(tool));
+    loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+    std::vector<std::string> errors;
+    loom::core::QueryOptions options;
+    options.max_tool_rounds = std::nullopt;
+    options.on_event = [&](const auto& event) {
+        if (const auto* error = std::get_if<loom::core::StreamError>(&event))
+            errors.push_back(error->error_type);
+    };
+    engine.stream_query("complete every round", options);
+
+    ASSERT_EQ(observed->executed_inputs.size(), 21u);
+    EXPECT_EQ(observed->executed_inputs.back(), R"({"command":"printf round-20"})");
+    const auto conversation = engine.get_conversation();
+    expect_one_recovery_prompt(conversation);
+    expect_recovery_completed(conversation);
+    const auto results = recovery_tool_results(conversation);
+    ASSERT_EQ(results.size(), 21u);
+    EXPECT_EQ(results.back().tool_use_id.value, "bash-20");
+    EXPECT_TRUE(errors.empty());
+    const auto bodies = server.wait_for_bodies(22);
+    ASSERT_TRUE(bodies.has_value());
+    ASSERT_EQ(bodies->size(), 22u);
+    expect_wire_tool_result(bodies->back(), "bash-0", false);
+    expect_wire_tool_result(bodies->back(), "bash-20", false);
+    EXPECT_EQ(engine.get_usage().input_tokens, 22u);
+    EXPECT_EQ(engine.get_usage().output_tokens, 22u);
+}
+
+TEST(QueryEngineFix, StreamingDefaultToolRoundBudgetPreservesNoninteractiveLimit) {
+    std::vector<ScriptedHttpServer::Response> responses;
+    for (int round = 0; round < 21; ++round) {
+        responses.push_back(recovery_tool_call(std::format("bash-{}", round), "Bash",
+            std::format(R"({{"command":"printf round-{}"}})", round)));
+    }
+    ScriptedHttpServer server(std::move(responses));
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    auto tool = std::make_unique<RecoveryTool>("Bash");
+    auto* observed = tool.get();
+    registry.register_tool(std::move(tool));
+    loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+    std::vector<loom::core::StreamError> errors;
+    loom::core::QueryOptions options;
+    options.on_event = [&](const auto& event) {
+        if (const auto* error = std::get_if<loom::core::StreamError>(&event))
+            errors.push_back(*error);
+    };
+    engine.stream_query("bounded unattended work", options);
+
+    EXPECT_EQ(observed->executed_inputs.size(), 20u);
+    const auto conversation = engine.get_conversation();
+    expect_one_recovery_prompt(conversation);
+    ASSERT_TRUE(std::holds_alternative<loom::core::ToolResultMessage>(conversation.back()));
+    const auto results = recovery_tool_results(conversation);
+    ASSERT_EQ(results.size(), 20u);
+    EXPECT_EQ(results.back().tool_use_id.value, "bash-19");
+    ASSERT_EQ(errors.size(), 1u);
+    EXPECT_EQ(errors[0].error_type, "tool_round_limit");
+    EXPECT_EQ(errors[0].message, "Tool-round budget reached (20). Progress saved.");
+    const auto bodies = server.wait_for_bodies(20);
+    ASSERT_TRUE(bodies.has_value());
+    EXPECT_EQ(bodies->size(), 20u);
+}
+
+TEST(QueryEngineFix, StreamingToolRoundBudgetContinuesWithoutRepeatingPromptAttachmentsOrTools) {
+    ScriptedHttpServer server({
+        recovery_tool_call("bash-first", "Bash", R"({"command":"printf first"})"),
+        recovery_tool_call("bash-second", "Bash", R"({"command":"printf second"})"),
+        recovery_final_reply(),
+    });
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    auto tool = std::make_unique<RecoveryTool>("Bash");
+    auto* observed = tool.get();
+    registry.register_tool(std::move(tool));
+    loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+    std::vector<loom::core::StreamError> errors;
+    std::vector<loom::core::Message> committed;
+    loom::core::QueryOptions options;
+    options.max_tool_rounds = 1;
+    options.attachments = {loom::core::TextBlock{"attached source contents"}};
+    options.on_commit = [&](const auto& message) { committed.push_back(message); };
+    options.on_event = [&](const auto& event) {
+        if (const auto* error = std::get_if<loom::core::StreamError>(&event))
+            errors.push_back(*error);
+    };
+    engine.stream_query("inspect @source", options);
+    ASSERT_EQ(errors.size(), 1u);
+    EXPECT_EQ(errors.back().error_type, "tool_round_limit");
+    EXPECT_EQ(errors.back().message, "Tool-round budget reached (1). Progress saved.");
+    ASSERT_EQ(recovery_tool_results(engine.get_conversation()).size(), 1u);
+
+    options.resume_from_conversation = true;
+    engine.stream_query("must not append another prompt", options);
+    ASSERT_EQ(errors.size(), 2u);
+    EXPECT_EQ(errors.back().error_type, "tool_round_limit");
+    ASSERT_EQ(recovery_tool_results(engine.get_conversation()).size(), 2u);
+    engine.stream_query("must not append another prompt", options);
+
+    EXPECT_EQ(errors.size(), 2u);
+    EXPECT_EQ(observed->executed_inputs, (std::vector<std::string>{
+        R"({"command":"printf first"})", R"({"command":"printf second"})"}));
+    const auto conversation = engine.get_conversation();
+    expect_one_recovery_prompt(conversation);
+    expect_recovery_completed(conversation);
+    for (const auto& message : conversation) {
+        if (const auto* user = std::get_if<loom::core::UserMessage>(&message)) {
+            ASSERT_EQ(user->content.size(), 2u);
+            EXPECT_EQ(std::get<loom::core::TextBlock>(user->content[0]).text, "inspect @source");
+            EXPECT_EQ(std::get<loom::core::TextBlock>(user->content[1]).text,
+                      "attached source contents");
+        }
+    }
+    expect_one_recovery_prompt(committed);
+    ASSERT_EQ(committed.size(), 6u);
+    EXPECT_EQ(recovery_tool_results(committed).size(), 2u);
+    const auto bodies = server.wait_for_bodies(3);
+    ASSERT_TRUE(bodies.has_value());
+    ASSERT_EQ(bodies->size(), 3u);
+    expect_wire_tool_result((*bodies)[1], "bash-first", false);
+    expect_wire_tool_result((*bodies)[2], "bash-first", false);
+    expect_wire_tool_result((*bodies)[2], "bash-second", false);
+    EXPECT_EQ(engine.get_usage().input_tokens, 3u);
+    EXPECT_EQ(engine.get_usage().output_tokens, 3u);
+}
+
+TEST(QueryEngineFix, StreamingToolRoundContinueApiFailureRetryPreservesCommittedHistory) {
+    const ScriptedHttpServer::Response overloaded{
+        .status = 529,
+        .body = R"({"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}})",
+    };
+    ScriptedHttpServer server({
+        recovery_tool_call("bash-first", "Bash", R"({"command":"printf first"})"),
+        overloaded,
+        overloaded,
+        recovery_tool_call("bash-second", "Bash", R"({"command":"printf second"})"),
+        recovery_final_reply(),
+    });
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    auto tool = std::make_unique<RecoveryTool>("Bash");
+    auto* observed = tool.get();
+    registry.register_tool(std::move(tool));
+    loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+    std::vector<std::string> errors;
+    loom::core::QueryOptions options;
+    options.max_tool_rounds = 1;
+    options.on_event = [&](const auto& event) {
+        if (const auto* error = std::get_if<loom::core::StreamError>(&event))
+            errors.push_back(error->error_type);
+    };
+    engine.stream_query("perform both commands", options);
+    ASSERT_EQ(errors, (std::vector<std::string>{"tool_round_limit"}));
+    const auto paused_size = engine.get_conversation().size();
+    options.resume_from_conversation = true;
+    engine.stream_query({}, options);
+    ASSERT_EQ(errors, (std::vector<std::string>{"tool_round_limit", "overloaded_error"}));
+    EXPECT_EQ(engine.get_conversation().size(), paused_size);
+    ASSERT_EQ(observed->executed_inputs.size(), 1u);
+
+    engine.stream_query({}, options);
+    ASSERT_EQ(errors, (std::vector<std::string>{
+        "tool_round_limit", "overloaded_error", "tool_round_limit"}));
+    engine.stream_query({}, options);
+    EXPECT_EQ(errors.size(), 3u);
+    EXPECT_EQ(observed->executed_inputs, (std::vector<std::string>{
+        R"({"command":"printf first"})", R"({"command":"printf second"})"}));
+    expect_one_recovery_prompt(engine.get_conversation());
+    expect_recovery_completed(engine.get_conversation());
+    ASSERT_EQ(recovery_tool_results(engine.get_conversation()).size(), 2u);
+    const auto bodies = server.wait_for_bodies(5);
+    ASSERT_TRUE(bodies.has_value());
+    ASSERT_EQ(bodies->size(), 5u);
+    const auto failed = loom::utils::json::parse((*bodies)[1]);
+    const auto fallback = loom::utils::json::parse((*bodies)[2]);
+    const auto retried = loom::utils::json::parse((*bodies)[3]);
+    ASSERT_TRUE(failed.has_value());
+    ASSERT_TRUE(fallback.has_value());
+    ASSERT_TRUE(retried.has_value());
+    EXPECT_EQ(failed->root().get("messages").to_string(),
+              fallback->root().get("messages").to_string());
+    EXPECT_EQ(failed->root().get("messages").to_string(),
+              retried->root().get("messages").to_string());
+    expect_wire_tool_result((*bodies)[4], "bash-first", false);
+    expect_wire_tool_result((*bodies)[4], "bash-second", false);
+}
+
+TEST(QueryEngineFix, StreamingCancellationAtToolRoundBoundaryDoesNotReportBudgetPause) {
+    ScriptedHttpServer server({
+        recovery_tool_call("bash-once", "Bash", R"({"command":"printf once"})"),
+        recovery_final_reply(),
+    });
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    auto tool = std::make_unique<RecoveryTool>("Bash");
+    auto* observed = tool.get();
+    registry.register_tool(std::move(tool));
+    loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+    std::vector<std::string> errors;
+    loom::core::QueryOptions options;
+    options.max_tool_rounds = 1;
+    options.on_commit = [&](const auto& message) {
+        if (std::holds_alternative<loom::core::ToolResultMessage>(message)) engine.abort();
+    };
+    options.on_event = [&](const auto& event) {
+        if (const auto* error = std::get_if<loom::core::StreamError>(&event))
+            errors.push_back(error->error_type);
+    };
+    engine.stream_query("run once", options);
+    EXPECT_TRUE(errors.empty());
+    ASSERT_EQ(recovery_tool_results(engine.get_conversation()).size(), 1u);
+    ASSERT_EQ(observed->executed_inputs.size(), 1u);
+    options.resume_from_conversation = true;
+    engine.stream_query({}, options);
+    EXPECT_TRUE(errors.empty());
+    EXPECT_EQ(observed->executed_inputs.size(), 1u);
+    expect_recovery_completed(engine.get_conversation());
+}
+
+TEST(QueryEngineFix, StreamingUnlimitedRoundsDoNotBypassDollarBudgetOnContinue) {
+    ScriptedHttpServer server({
+        recovery_tool_call("bash-once", "Bash", R"({"command":"printf once"})"),
+        recovery_final_reply(),
+    });
+    ASSERT_NE(server.port(), 0);
+    loom::core::ToolRegistry registry;
+    auto tool = std::make_unique<RecoveryTool>("Bash");
+    auto* observed = tool.get();
+    registry.register_tool(std::move(tool));
+    auto config = recovery_config(server, registry);
+    config.max_budget_usd = 0.000000001;
+    loom::core::QueryEngine engine(std::move(config), registry);
+    std::vector<std::string> errors;
+    loom::core::QueryOptions options;
+    options.max_tool_rounds = std::nullopt;
+    options.on_event = [&](const auto& event) {
+        if (const auto* error = std::get_if<loom::core::StreamError>(&event))
+            errors.push_back(error->error_type);
+    };
+    engine.stream_query("respect the cost limit", options);
+    ASSERT_EQ(errors, (std::vector<std::string>{"budget_exceeded"}));
+    EXPECT_TRUE(engine.budget_tracker().budget_exceeded);
+    EXPECT_GE(engine.budget_tracker().current_spend_usd,
+              engine.budget_tracker().max_budget_usd);
+    const auto paused_size = engine.get_conversation().size();
+    options.resume_from_conversation = true;
+    engine.stream_query({}, options);
+    EXPECT_EQ(errors, (std::vector<std::string>{"budget_exceeded", "budget_exceeded"}));
+    EXPECT_EQ(engine.get_conversation().size(), paused_size);
+    EXPECT_EQ(observed->executed_inputs.size(), 1u);
+    const auto bodies = server.wait_for_bodies(1);
+    ASSERT_TRUE(bodies.has_value());
+    EXPECT_EQ(bodies->size(), 1u);
+}
+
+TEST(QueryEngineFix, StreamingHttpFailuresPreservePermanentAndRetryableCategories) {
+    for (const auto& [status, expected] : std::vector<std::pair<int, std::string>>{
+             {401, "authentication_error"}, {403, "authentication_error"},
+             {400, "invalid_request_error"}, {429, "rate_limit_error"},
+             {529, "overloaded_error"}}) {
+        const ScriptedHttpServer::Response failure{.status = status,
+            .body = R"({"type":"error","error":{"message":"request failed"}})"};
+        ScriptedHttpServer server({failure, failure});
+        ASSERT_NE(server.port(), 0);
+        loom::core::ToolRegistry registry;
+        loom::core::QueryEngine engine(recovery_config(server, registry), registry);
+        std::vector<std::string> errors;
+        loom::core::QueryOptions options;
+        options.on_event = [&](const auto& event) {
+            if (const auto* error = std::get_if<loom::core::StreamError>(&event))
+                errors.push_back(error->error_type);
+        };
+        engine.stream_query("hello", options);
+        EXPECT_EQ(errors, (std::vector<std::string>{expected})) << status;
+    }
 }

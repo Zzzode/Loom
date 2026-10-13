@@ -39,7 +39,8 @@ namespace fs = std::filesystem;
 /// Play a fixture through a fresh AppAdapter + QueryEngine and return the
 /// checkpoint snapshots. All objects are local and destroyed before return.
 [[nodiscard]] std::map<std::string, std::string> play_fixture(
-    std::string_view fixture_name) {
+    std::string_view fixture_name,
+    std::optional<std::chrono::seconds> frame_gap = std::nullopt) {
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
@@ -64,14 +65,22 @@ namespace fs = std::filesystem;
     auto steps = loom::testing::load_fixture(fixture_name);
     loom::testing::InvariantChecker checker(steps);
     loom::testing::StreamReplayHarness harness(*app, engine);
+    const auto replay_start = std::chrono::steady_clock::time_point{
+        std::chrono::seconds(3'000'000)};
     auto snapshots = harness.play_with_invariants(steps,
-        [&checker](std::string_view screen, std::size_t step_idx) {
+        [&checker, frame_gap, replay_start](std::string_view screen, std::size_t step_idx) {
             checker.check(screen, step_idx);
-        });
+            if (frame_gap) {
+                loom::ui::clock::set_steady_now_for_testing(
+                    replay_start + *frame_gap * (step_idx + 1));
+            }
+        }, 120, 40, frame_gap
+            ? std::optional{replay_start} : std::nullopt);
 
     // Tear down the app before removing its storage root so background
     // flush threads cannot repopulate the directory mid-remove_all.
     app.reset();
+    if (frame_gap) loom::ui::clock::set_steady_now_for_testing(std::nullopt);
     std::error_code ec;
     fs::remove_all(storage_root, ec);
 
@@ -316,6 +325,25 @@ TEST(StreamingMigration, McpToolResultSuppressedInToolUseCardDuringStreaming) {
         EXPECT_EQ(after_tool.find("Output:"), std::string_view::npos)
             << "'Output:' found inside the tool_use card area — the result "
                "should only be in the separate ⎿ row.";
+    }
+}
+
+/// Tool results are committed content: scheduler delays must not make them
+/// expire with the thinking grace period. Advance the existing clock seam
+/// across that period between every replay step, without wall-clock sleeps.
+TEST(StreamingMigration, McpToolResultSurvivesDelayedFrames) {
+    for (const auto fixture : {"e2e_tool_result_separate_card",
+                              "e2e_result_summary_raw",
+                              "e2e_no_output_in_tooluse"}) {
+        SCOPED_TRACE(fixture);
+        const auto immediate = play_fixture(fixture, std::chrono::seconds(0));
+        const auto delayed = play_fixture(fixture, std::chrono::seconds(60));
+        ASSERT_TRUE(delayed.contains("after_tool_result"));
+        EXPECT_NE(delayed.at("after_tool_result").find("\xe2\x8e\xbf"),
+                  std::string::npos);
+        EXPECT_NE(delayed.at("after_tool_result").find("result_summary"),
+                  std::string::npos);
+        EXPECT_EQ(delayed, immediate);
     }
 }
 

@@ -23,6 +23,15 @@ import loom.constants.paths;
 namespace loom::ui {
 
 struct AppImpl {
+    struct UiActions {
+        std::mutex mutex;
+        std::vector<std::function<void()>> pending;
+        std::function<void()> notify;
+        bool closed = false;
+    };
+    // The shared handoff survives copied external callbacks. Closing it
+    // makes those callbacks no-ops without exposing AppAdapter's lifetime.
+    std::shared_ptr<UiActions> ui_actions = std::make_shared<UiActions>();
     // Type-erased constructor collaborators. Plain pointers need no complete
     // type; every consumer casts after importing the owning module.
     void* engine_ = nullptr;
@@ -48,6 +57,36 @@ struct AppImpl {
         .double_press_window = std::chrono::milliseconds{800}}};
 
 };
+
+AppAdapter::UiDispatcher AppAdapter::ui_dispatcher() {
+    return [queue = impl_->ui_actions](std::function<void()> action) {
+        std::lock_guard lk(queue->mutex);
+        if (queue->closed) return;
+        if (action) queue->pending.push_back(std::move(action));
+        queue->notify();
+    };
+}
+
+void AppAdapter::DrainUiActions() {
+    std::vector<std::function<void()>> pending;
+    {
+        std::lock_guard lk(impl_->ui_actions->mutex);
+        pending.swap(impl_->ui_actions->pending);
+    }
+    for (auto& action : pending) action();
+}
+
+void AppAdapter::CloseUiActions() {
+    std::lock_guard lk(impl_->ui_actions->mutex);
+    impl_->ui_actions->closed = true;
+    impl_->ui_actions->notify = {};
+    impl_->ui_actions->pending.clear();
+}
+
+std::size_t AppTestingSeams::pending_ui_action_count_for_testing() const {
+    std::lock_guard lk(app->impl_->ui_actions->mutex);
+    return app->impl_->ui_actions->pending.size();
+}
 
 // ── Vim accessors (keep VimMode/VimStateMachine out of the interface) ───────
 bool AppAdapter::vim_enabled() const noexcept {
@@ -116,6 +155,7 @@ void AppAdapter::construct_impl(void* engine, void* lifecycle_hooks,
                                 void* cmd_registry,
                                 std::optional<std::filesystem::path> sessions_dir) {
     impl_.reset(new AppImpl());
+    impl_->ui_actions->notify = [this] { PostRenderEvent(); };
     impl_->engine_ = engine;
     impl_->lifecycle_hooks_ = lifecycle_hooks;
     impl_->cmd_registry_ = cmd_registry;

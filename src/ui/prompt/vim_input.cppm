@@ -161,19 +161,18 @@ struct VimInputOptions {
 }
 
 /// Get mode display label and color.
-/// Color coding: green=normal, blue=insert, magenta=visual, red=replace,
-/// yellow=command.
+/// Theme roles distinguish insertion, selection, and overwrite modes.
 [[nodiscard]] inline std::pair<std::string, Color> mode_display(VimMode mode) {
     switch (mode) {
-        case VimMode::Normal:      return {"NORMAL",      Color::Green};
-        case VimMode::Insert:      return {"INSERT",      Color::Blue};
-        case VimMode::Visual:      return {"VISUAL",      Color::Magenta};
-        case VimMode::VisualLine:  return {"V-LINE",      Color::Magenta};
-        case VimMode::VisualBlock: return {"V-BLOCK",     Color::Magenta};
-        case VimMode::Replace:     return {"REPLACE",     Color::Red};
-        case VimMode::Command:     return {"COMMAND",     Color::Yellow};
+        case VimMode::Normal:      return {"NORMAL",      loom::ui::design::theme::current_theme().palette->muted};
+        case VimMode::Insert:      return {"INSERT",      loom::ui::design::theme::current_theme().palette->primary};
+        case VimMode::Visual:      return {"VISUAL",      loom::ui::design::theme::current_theme().palette->selection_bg};
+        case VimMode::VisualLine:  return {"V-LINE",      loom::ui::design::theme::current_theme().palette->selection_bg};
+        case VimMode::VisualBlock: return {"V-BLOCK",     loom::ui::design::theme::current_theme().palette->selection_bg};
+        case VimMode::Replace:     return {"REPLACE",     loom::ui::design::theme::current_theme().palette->danger};
+        case VimMode::Command:     return {"COMMAND",     loom::ui::design::theme::current_theme().palette->primary};
     }
-    return {"???", Color::White};
+    return {"???", loom::ui::design::theme::current_theme().palette->text};
 }
 
 /// Render the vim input line with cursor and mode indicator
@@ -182,7 +181,7 @@ struct VimInputOptions {
 
     // Mode indicator badge
     auto mode_badge = text(" " + mode_label + " ") | bold
-                      | color(Color::White) | bgcolor(mode_color);
+                      | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bgcolor(mode_color);
 
     // Text with cursor
     Elements text_parts;
@@ -206,7 +205,7 @@ struct VimInputOptions {
                 if (state.vim.mode == VimMode::Normal || is_visual) {
                     text_parts.push_back(text(ch) | inverted | bold);
                 } else {
-                    text_parts.push_back(text("|") | color(Color::Cyan) | blink);
+                    text_parts.push_back(text("|") | color(loom::ui::design::theme::current_theme().palette->info) | blink);
                     text_parts.push_back(text(ch));
                 }
             } else {
@@ -214,7 +213,7 @@ struct VimInputOptions {
                 if (state.vim.mode == VimMode::Normal || is_visual) {
                     text_parts.push_back(text(" ") | inverted);
                 } else {
-                    text_parts.push_back(text("|") | color(Color::Cyan) | blink);
+                    text_parts.push_back(text("|") | color(loom::ui::design::theme::current_theme().palette->info) | blink);
                 }
             }
         } else if (i < len) {
@@ -230,7 +229,7 @@ struct VimInputOptions {
     auto input_line = hbox(text_parts);
     if (state.text.empty() && state.vim.mode == VimMode::Insert) {
         input_line = hbox({
-            text("|") | color(Color::Cyan) | blink,
+            text("|") | color(loom::ui::design::theme::current_theme().palette->info) | blink,
             text("Type your message...") | dim,
         });
     }
@@ -238,10 +237,10 @@ struct VimInputOptions {
     // Status bar at bottom
     Elements status_parts = {mode_badge, text(" ")};
     if (!state.vim.pending_operator.empty()) {
-        status_parts.push_back(text(state.vim.pending_operator) | color(Color::Yellow));
+        status_parts.push_back(text(state.vim.pending_operator) | color(loom::ui::design::theme::current_theme().palette->warning));
     }
     if (state.vim.count_prefix > 0) {
-        status_parts.push_back(text(std::to_string(state.vim.count_prefix)) | color(Color::Cyan));
+        status_parts.push_back(text(std::to_string(state.vim.count_prefix)) | color(loom::ui::design::theme::current_theme().palette->info));
     }
     status_parts.push_back(filler());
     if (!state.status_message.empty()) {
@@ -258,9 +257,9 @@ struct VimInputOptions {
             input_line | flex,
             separator() | dim,
             hbox({
-                text(":") | color(Color::Yellow) | bold,
+                text(":") | color(loom::ui::design::theme::current_theme().palette->warning) | bold,
                 text(state.command_line),
-                text("|") | color(Color::Cyan) | blink,
+                text("|") | color(loom::ui::design::theme::current_theme().palette->info) | blink,
             }),
         });
     }

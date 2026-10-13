@@ -58,6 +58,26 @@ namespace brief_detail {
     return {};
 }
 
+/// Failed calls and their results are actionable diagnostics, not background
+/// activity. Keep them visible even when neighboring successful tools collapse.
+[[nodiscard]] bool is_failed_tool_row(const MessageRowPayload& payload) {
+    namespace tu = ::loom::ui::messages::tool_use_message;
+    const auto failed_call = [](const tu::ToolUseCallData& call) {
+        return call.status == tu::ToolStatus::Error ||
+               call.status == tu::ToolStatus::Cancelled;
+    };
+    if (const auto* opts = std::get_if<tu::ToolUseRenderOptions>(&payload)) {
+        return failed_call(opts->call);
+    }
+    if (const auto* group = std::get_if<tu::GroupedToolsOptions>(&payload)) {
+        return std::any_of(group->calls.begin(), group->calls.end(), failed_call);
+    }
+    if (const auto* result = std::get_if<::loom::ui::messages::ToolResultOptions>(&payload)) {
+        return result->status != ::loom::ui::messages::ToolResultStatus::Success;
+    }
+    return false;
+}
+
 }  // namespace brief_detail
 
 /// Returns true if the row at index `i` should be VISIBLE in brief mode.
@@ -66,6 +86,8 @@ auto passes_brief_filter(
     const MessageRowPayload& payload) -> bool {
     using S = MessageShape;
     namespace bd = brief_detail;
+
+    if (bd::is_failed_tool_row(payload)) return true;
 
     switch (shape) {
         // System rows: always visible (system messages must stay visible
@@ -425,6 +447,16 @@ auto passes_filters(MessageShape s, const Filters& f) -> bool {
     return {};
 }
 
+// Extract the wall-clock tool-use start time (zero = not set).
+[[nodiscard]] auto extract_tool_start(
+    const MessageRowPayload& p) -> std::chrono::steady_clock::time_point {
+    if (auto* opts = std::get_if<
+            tool_use_message::ToolUseRenderOptions>(&p)) {
+        return opts->call.start_time;
+    }
+    return {};
+}
+
 // Add one tool call to the breakdown vector (increment count or append).
 void add_tool_to_breakdown(
     std::vector<std::pair<std::string, std::size_t>>& breakdown,
@@ -580,11 +612,12 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
     // Consecutive compressible rows (thinking, tool_use, tool_result, grouped
     // tools, bash I/O) are compressed into a single summary row.  The chain
     // does NOT need to start at a thinking block — pure tool sequences are
-    // compressed too.  Only three things stop a chain and are shown
+    // compressed too.  These rows stop a chain and are shown
     // individually:
     //   • user messages (any User* shape)
     //   • assistant text (AssistantText)
     //   • update tools (Edit/Write, via is_file_edit_tool)
+    //   • failed tools and their diagnostic results
     // The streaming tail IS included in the chain — during streaming the
     // chain renders as a live status row (spinner + elapsed timer + tool
     // activity).  Skipped entirely in transcript mode and search mode.
@@ -642,6 +675,8 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
             // Chain can start at ANY compressible row.
             if (!is_chain_compressible(shape)) continue;
 
+            if (brief_detail::is_failed_tool_row(input.rows[i])) continue;
+
             // Update tools (Edit/Write) are never compressed.
             if (i < input.rows.size() &&
                 is_update_tool_row(shape, input.rows[i])) continue;
@@ -672,8 +707,15 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
             if (shape == MessageShape::AssistantToolUse ||
                 shape == MessageShape::AssistantGroupedTools) {
                 ++tool_turns;
-                if (i < input.rows.size())
+                if (i < input.rows.size()) {
                     count_row_tools(shape, input.rows[i], tool_counts);
+                    auto ts = extract_tool_start(input.rows[i]);
+                    if (ts.time_since_epoch().count() != 0 &&
+                        (earliest_start.time_since_epoch().count() == 0 ||
+                         ts < earliest_start)) {
+                        earliest_start = ts;
+                    }
+                }
             }
 
             while (chain_end < N) {
@@ -684,6 +726,8 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
                 if (chain_end >= input.shapes.size()) break;
 
                 const auto sh = input.shapes[chain_end];
+
+                if (brief_detail::is_failed_tool_row(input.rows[chain_end])) break;
 
                 // Assistant text stops the chain (shown individually).
                 if (sh == MessageShape::AssistantText) break;
@@ -713,8 +757,15 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
                     if (sh == MessageShape::AssistantToolUse ||
                         sh == MessageShape::AssistantGroupedTools) {
                         ++tool_turns;
-                        if (chain_end < input.rows.size())
+                        if (chain_end < input.rows.size()) {
                             count_row_tools(sh, input.rows[chain_end], tool_counts);
+                            auto ts = extract_tool_start(input.rows[chain_end]);
+                            if (ts.time_since_epoch().count() != 0 &&
+                                (earliest_start.time_since_epoch().count() == 0 ||
+                                 ts < earliest_start)) {
+                                earliest_start = ts;
+                            }
+                        }
                     }
                     ++chain_end;
                 } else {
@@ -770,6 +821,12 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
                         elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                             now - earliest_start);
                     }
+                    // Never go backwards: when streaming thinking projections
+                    // are pruned (3s grace expiry) or cleared (StreamStart),
+                    // earliest_start shifts forward and the wall-clock formula
+                    // jumps backwards.  max() with the static sum prevents this,
+                    // mirroring effective_duration() in thinking_message.cppm.
+                    elapsed = std::max(elapsed, thinking_duration);
                     start_to_chain[i] = ChainInfo{
                         .thinking_count   = thinking_count,
                         .tool_turns       = tool_turns,

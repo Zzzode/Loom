@@ -30,6 +30,8 @@ module;
 export module loom.ui.permissions.single_prompt;
 
 import std;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.theme_provider;
 
 import loom.security.permissions_engine;
 import loom.ui.permissions.components;
@@ -195,18 +197,20 @@ namespace detail {
             }
             return vbox(els);
         } else if constexpr (std::is_same_v<T, DetailFileEdit>) {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             return vbox({
                 hbox({ text("File: ") | dim,
                        pc::PathLabel(d.file_path, 70) }),
                 text(""),
-                hbox({ text("- ") | color(Color::Red),
+                hbox({ text("- ") | color(pal.danger),
                        text(pc::HeadEllipsisCommand(d.old_snippet, 78))
-                       | color(Color::Red) }),
-                hbox({ text("+ ") | color(Color::Green),
+                       | color(pal.danger) }),
+                hbox({ text("+ ") | color(pal.success),
                        text(pc::HeadEllipsisCommand(d.new_snippet, 78))
-                       | color(Color::Green) }),
+                       | color(pal.success) }),
             });
         } else if constexpr (std::is_same_v<T, DetailFileWrite>) {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             return vbox({
                 hbox({ text("File: ") | dim,
                        pc::PathLabel(d.file_path, 70) }),
@@ -214,7 +218,7 @@ namespace detail {
                        text(std::format("{} bytes (~{} line{})",
                            d.content_bytes, d.content_lines,
                            d.content_lines == 1 ? "" : "s")) | dim }),
-                (d.creates_file ? hbox({ text("new file") | color(Color::Yellow) | dim })
+                (d.creates_file ? hbox({ text("new file") | color(pal.warning) | dim })
                                 : text("")),
             });
         } else if constexpr (std::is_same_v<T, DetailFileRead>) {
@@ -227,25 +231,28 @@ namespace detail {
                 line_el,
             });
         } else if constexpr (std::is_same_v<T, DetailNetwork>) {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             auto tag = d.is_upload
-                ? hbox({ text(" UPLOAD ") | color(Color::White)
-                                     | bgcolor(Color::Red) | bold })
-                : hbox({ text(" fetch ") | color(Color::White)
-                                     | bgcolor(Color::Blue) | dim });
+                ? hbox({ text(" UPLOAD ") | color(pal.inverse_text)
+                                     | bgcolor(pal.danger) | bold })
+                : hbox({ text(" fetch ") | color(pal.inverse_text)
+                                     | bgcolor(pal.info) | dim });
             return hbox({ tag, text("  "), pc::PathLabel(d.url_or_domain, 70) });
         } else if constexpr (std::is_same_v<T, DetailMCP>) {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             return vbox({
                 hbox({ text("MCP server: ") | dim,
-                       text(d.server_id) | color(Color::Purple) }),
+                       text(d.server_id) | color(pal.primary) }),
                 hbox({ text("Tool: ") | dim,
                        text(d.tool_name) | bold }),
                 (d.description.empty() ? text("")
                      : paragraph(d.description) | dim),
             });
         } else if constexpr (std::is_same_v<T, DetailSkill>) {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             return vbox({
                 hbox({ text("Skill: ") | dim,
-                       text(d.skill_name) | color(Color::Magenta) | bold }),
+                       text(d.skill_name) | color(pal.primary) | bold }),
                 (d.description.empty() ? text("")
                      : paragraph(d.description) | dim),
             });
@@ -259,10 +266,11 @@ namespace detail {
             }
             return vbox(els);
         } else if constexpr (std::is_same_v<T, DetailComputerUse>) {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             Elements els;
             els.push_back(hbox({
-                text(" COMPUTER USE ") | color(Color::White)
-                                      | bgcolor(Color::Magenta) | bold,
+                text(" COMPUTER USE ") | color(pal.inverse_text)
+                                      | bgcolor(pal.primary) | bold,
                 text("  "),
                 text(d.action_label) | bold,
             }));
@@ -281,7 +289,7 @@ namespace detail {
             }
             if (d.first_use_in_session) {
                 els.push_back(hbox({
-                    text("  First computer use in this session") | color(Color::Yellow),
+                    text("  First computer use in this session") | color(pal.warning),
                 }));
             }
             return vbox(els);
@@ -296,6 +304,7 @@ namespace detail {
     const std::vector<std::string>& paths,
     std::optional<std::string_view>)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (paths.empty()) return text("");
     Elements header = {
         hbox({ text(" Affected paths") | bold, filler() }),
@@ -307,17 +316,18 @@ namespace detail {
     }
     Elements all = header;
     all.insert(all.end(), list.begin(), list.end());
-    return vbox(all) | color(Color::GrayLight);
+    return vbox(all) | color(pal.text_muted);
 }
 
 /// Render matched-rule explanation footnote.
 [[nodiscard]] inline Element RenderRuleExplanation(
     std::string_view explanation)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (explanation.empty()) return text("");
     return hbox({
         text(" rule: ") | dim,
-        text(std::string{explanation}) | dim | color(Color::Cyan),
+        text(std::string{explanation}) | dim | color(pal.info),
     });
 }
 
@@ -341,11 +351,12 @@ struct PromptState {
 
 /// Render the complete single-prompt dialog body.
 [[nodiscard]] inline Element RenderSinglePrompt(std::shared_ptr<PromptState> st) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const auto& p = st->props;
 
     auto title_bar = detail::RenderTitleBar(p);
     auto detail_el = detail::RenderToolDetail(p.detail);
-    auto desc_el   = paragraph(p.description) | color(Color::White);
+    auto desc_el   = paragraph(p.description) | color(pal.text);
     auto paths_el  = detail::RenderAffectedPaths(p.affected_paths,
                         p.workspace_root ?
                             std::optional<std::string_view>{*p.workspace_root}
@@ -355,36 +366,39 @@ struct PromptState {
     // ---- Footer: button row ----
     // Buttons: [x] Deny + chk  |  [✓] Allow once + chk  |  Sandbox toggle
     auto deny_btn = [&] {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         auto focused = st->focused_button == 1;
         auto el = hbox({
-            text("× ") | bold | color(Color::Red),
+            text("× ") | bold | color(pal.danger),
             text("Deny"),
         });
         if (focused) el = el | inverted | bold;
         return hbox({ text(" "), el, text(" ") })
-               | borderStyled(Color::Red) | color(Color::Red);
+               | borderStyled(pal.danger) | color(pal.danger);
     }();
     auto always_deny_cb = pc::CheckboxBox(st->always_deny_checkbox);
 
     auto allow_btn = [&] {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         auto focused = st->focused_button == 0;
         auto el = hbox({
-            text("✓ ") | bold | color(Color::Green),
+            text("✓ ") | bold | color(pal.success),
             text("Allow once"),
         });
         if (focused) el = el | inverted | bold;
         return hbox({ text(" "), el, text(" ") })
-               | borderStyled(Color::Green) | color(Color::Green);
+               | borderStyled(pal.success) | color(pal.success);
     }();
     auto always_allow_cb = pc::CheckboxBox(st->always_allow_checkbox);
 
     auto sandbox_btn = [&] {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         auto on = st->sandbox_toggle;
         return hbox({
             text("Sandbox ") | dim,
-            on ? text("[ON]")  | color(Color::Cyan) | bold
+            on ? text("[ON]")  | color(pal.info) | bold
                : text("[OFF]") | dim,
-        }) | borderStyled(Color::GrayDark);
+        }) | borderStyled(pal.muted);
     }();
 
     auto footer = vbox({
@@ -438,17 +452,18 @@ struct PromptState {
     auto body = vbox(body_els) | xflex;
 
     auto border_col = [&] {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         switch (p.risk_level) {
-            case RiskLevel::Low:      return Color::Cyan;
-            case RiskLevel::Medium:   return Color::Yellow;
-            case RiskLevel::High:     return Color::Red;
-            case RiskLevel::Critical: return Color::RedLight;
+            case RiskLevel::Low:      return pal.info;
+            case RiskLevel::Medium:   return pal.warning;
+            case RiskLevel::High:     return pal.danger;
+            case RiskLevel::Critical: return pal.danger;
         }
-        return Color::GrayLight;
+        return pal.text_muted;
     }();
 
     return window(
-        text(" \U0001F510 Permission ") | bold | color(Color::Yellow),
+        text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} + " Permission ")) | bold | color(pal.warning),
         body | xflex
     ) | color(border_col) | size(WIDTH, LESS_THAN, 90);
 }

@@ -50,7 +50,7 @@ struct ChromeStore {
 
     // ── Welcome-header data (shown when messages is empty) ──────────────
     std::string model_display_name;
-    // LogoV2/CondensedLogo row 2 separator billing_type token (e.g.
+    // Logo/CondensedLogo row 2 separator billing_type token (e.g.
     // "API Usage Billing" / "Team Seat" / "Rate Limited").  Empty = row 2
     // shows only the model name without " · <billing>" suffix.
     std::string billing_type;
@@ -64,7 +64,7 @@ struct ChromeStore {
     std::string user_display_name;
 
     // ── Feed content (full-logo horizontal mode right column) ───────────
-    // P0 Gap logov2-render-modes-missing: pre-rendered feed content for the
+    // P0 Gap logo-render-modes: pre-rendered feed content for the
     // full-logo horizontal mode's right column. Populated by the engine layer
     // from session storage (recent activity) and changelog parser (what's
     // new). Empty vectors fall back to placeholders defined in RenderWelcomeHeader.

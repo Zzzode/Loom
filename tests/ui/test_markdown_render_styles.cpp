@@ -25,6 +25,7 @@
 #include <ftxui/screen/screen.hpp>
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 import loom.ui.visual.markdown;
 
@@ -266,12 +267,12 @@ TEST(MarkdownRenderStyles, FootnoteRefDimmed) {
         << "footnote ref did not produce dim pixel style";
 }
 
-TEST(MarkdownRenderStyles, MathCyanColor) {
+TEST(MarkdownRenderStyles, MathUsesInfoToken) {
     auto screen = render_to_screen("The formula $x^2 + y^2 = z^2$ holds");
     auto ref = find_pixel_with_text(screen, "x^2");
     ASSERT_TRUE(ref.has_value()) << "math text not found in rendered output";
-    EXPECT_EQ(ref->pixel->foreground_color, ftxui::Color::CyanLight)
-        << "inline math did not produce CyanLight pixel color";
+    EXPECT_EQ(ref->pixel->foreground_color, loom::ui::design::theme::current_theme().palette->info)
+        << "inline math should use the current info token";
 }
 
 TEST(MarkdownRenderStyles, EscapeNotBold) {

@@ -16,6 +16,8 @@
 module;
 
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/string.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
@@ -104,30 +106,80 @@ inline constexpr std::size_t kTruncateTailChars = 2'500;
 // the truncation head/tail of a paste with no spaces), we need manual
 // character-level wrapping.
 namespace wrap_detail {
-inline constexpr std::size_t kPromptWrapWidth = 78;  // 80 - 2 for "❯ " prefix
+inline constexpr int kPromptChromeColumns = 3;  // "❯ " and right padding.
 
-/// Wrap `text` to at most `width` display columns, breaking mid-codepoint
-/// if necessary (with UTF-8 safety).  Returns individual wrapped lines.
+/// Wrap at terminal cells, keeping fullwidth and combining glyphs together.
 [[nodiscard]] inline std::vector<std::string> WrapToWidth(std::string_view text,
-                                                           std::size_t width) {
-    std::vector<std::string> lines;
-    if (width == 0) width = 1;
-    std::size_t pos = 0;
-    while (pos < text.size()) {
-        std::size_t end = std::min(pos + width, text.size());
-        // UTF-8 safety: don't split a multi-byte sequence.
-        // Continuation bytes are 0x80..0xBF.
-        while (end < text.size() &&
-               (static_cast<unsigned char>(text[end]) & 0xC0) == 0x80 &&
-               end > pos) {
-            --end;
+                                                         std::size_t width) {
+    width = std::max<std::size_t>(1, width);
+    const auto glyphs = Utf8ToGlyphs(std::string(text));
+    std::vector<std::string> lines(1);
+    std::size_t columns = 0;
+    for (const auto& glyph : glyphs) {
+        // Utf8ToGlyphs reserves a second, empty cell for fullwidth glyphs.
+        if (glyph.empty()) continue;
+        const auto cells = static_cast<std::size_t>(string_width(glyph));
+        if (columns != 0 && columns + cells > width) {
+            lines.emplace_back();
+            columns = 0;
         }
-        lines.emplace_back(text.substr(pos, end - pos));
-        pos = end;
+        lines.back() += glyph;
+        columns += cells;
     }
-    if (lines.empty()) lines.emplace_back("");
     return lines;
 }
+
+/// Preserve logical newlines, including empty and trailing lines.
+[[nodiscard]] inline std::vector<std::string> WrappedPromptLines(
+    std::string_view text, int content_columns) {
+    std::vector<std::string> lines;
+    std::size_t start = 0;
+    do {
+        const auto newline = text.find('\n', start);
+        const auto end = newline == std::string_view::npos ? text.size() : newline;
+        auto wrapped = WrapToWidth(text.substr(start, end - start),
+                                   std::max(1, content_columns));
+        for (auto& line : wrapped) lines.push_back(std::move(line));
+        if (newline == std::string_view::npos) break;
+        start = newline + 1;
+    } while (start <= text.size());
+    return lines;
+}
+
+/// Resolve wrapping after the parent assigns the available FTXUI box width.
+/// Like flexbox, request another layout pass when that width changes.
+class PromptBody : public Node {
+  public:
+    explicit PromptBody(std::string text) : text_(std::move(text)) {}
+
+    void ComputeRequirement() override {
+        Elements lines;
+        for (auto& line : WrappedPromptLines(text_, columns_))
+            lines.push_back(ftxui::text(std::move(line)));
+        children_ = {vbox(std::move(lines))};
+        children_[0]->ComputeRequirement();
+        requirement_ = children_[0]->requirement();
+        requirement_.min_x = 0;
+        requirement_.flex_grow_x = 1;
+        computed_columns_ = columns_;
+    }
+
+    void SetBox(Box box) override {
+        Node::SetBox(box);
+        columns_ = std::max(1, box.x_max - box.x_min + 1);
+        children_[0]->SetBox(box);
+    }
+
+    void Check(Status* status) override {
+        Node::Check(status);
+        status->need_iteration |= columns_ != computed_columns_;
+    }
+
+  private:
+    std::string text_;
+    int columns_ = std::numeric_limits<int>::max();
+    int computed_columns_ = 0;
+};
 }  // namespace wrap_detail
 
 // ─── Component ─────────────────────────────────────────────────────────
@@ -150,8 +202,8 @@ class UserTextMessageComponent : public ComponentBase {
         // Right-side header: timestamp + role tag
         auto header_right = hbox({
             text(" ") | size(WIDTH, EQUAL, 1),
-            text(render_timestamp(data_.timestamp)) | dim | color(Color::GrayDark),
-            text(" 👤 You") | color(Color::Blue),
+            text(render_timestamp(data_.timestamp)) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
+            text((" " + std::string(loom::ui::design::figures::kPointer) + " You")) | color(loom::ui::design::theme::current_theme().palette->brief_label_you),
         });
 
         // User message is right-aligned. We indent from the left so that
@@ -164,7 +216,7 @@ class UserTextMessageComponent : public ComponentBase {
             hbox({
                 filler(),
                 vbox(std::move(bubble_body))
-                    | (hovered_ ? bgcolor(Color::DarkBlue) : nothing)
+                    | (hovered_ ? bgcolor(loom::ui::design::theme::current_theme().palette->surface_selected) : nothing)
                     | flex_shrink,
             }),
         });
@@ -199,7 +251,7 @@ class UserTextMessageComponent : public ComponentBase {
             auto lines = SplitLines(*data_.quoted_reply);
             for (auto& line : lines) {
                 out.push_back(hbox({
-                    text("│ ") | color(Color::GrayDark),
+                    text("│ ") | color(loom::ui::design::theme::current_theme().palette->muted),
                     text(std::move(line)) | dim,
                 }));
             }
@@ -209,7 +261,7 @@ class UserTextMessageComponent : public ComponentBase {
         // Command chip
         if (data_.command_name) {
             out.push_back(hbox({
-                text(" $ ") | bold | color(Color::Green),
+                text(" $ ") | bold | color(loom::ui::design::theme::current_theme().palette->primary),
                 text(*data_.command_name) | bold,
             }));
         }
@@ -221,7 +273,7 @@ class UserTextMessageComponent : public ComponentBase {
         auto lines = SplitLines(display_body);
         for (auto& line : lines) {
             out.push_back(text(std::move(line))
-                              | color(Color::White)
+                              | color(loom::ui::design::theme::current_theme().palette->text)
                               | (data_.is_transcript_mode ? dim : nothing));
         }
 
@@ -265,7 +317,7 @@ class UserTextMessageComponent : public ComponentBase {
         hbox({
             filler(),
             text(render_timestamp(data.timestamp)) | dim,
-            text(" 👤") | color(Color::Blue),
+            text((" " + std::string(loom::ui::design::figures::kPointer))) | color(loom::ui::design::theme::current_theme().palette->brief_label_you),
         }),
         hbox({ filler(), vbox(std::move(body)) }),
     });
@@ -293,8 +345,8 @@ class UserTextMessageComponent : public ComponentBase {
 ///   - `text()` does NOT auto-wrap.
 ///   - `paragraphAlignLeft()` only wraps at word boundaries; long unbroken
 ///     strings (base64, minified code) would overflow the screen.
-///   - We use manual character-level wrapping via WrapToWidth() to guarantee
-///     all content is visible within the terminal width.
+///   - PromptBody wraps at the width assigned by the parent layout, using
+///     terminal-cell widths rather than UTF-8 byte counts.
 [[nodiscard]] inline Element RenderUserPromptMessage(const UserTextMessageData& data,
                                                      bool is_selected = false,
                                                      bool add_margin = true) {
@@ -312,67 +364,16 @@ class UserTextMessageComponent : public ComponentBase {
     const Decorator prefix_style =
         data.is_transcript_mode ? (dim | color(prefix_color)) : color(prefix_color);
 
-    // Truncate long text.
-    // Result may contain \n separators from the truncation or natural user
-    // input newlines.
-    std::string display_text = TruncateUserPromptText(data.content);
-
-    // Split by \n to get logical lines (handles truncation separator + any
-    // natural newlines in user input).
-    std::vector<std::string_view> logical_lines;
-    {
-        std::size_t start = 0;
-        while (start < display_text.size()) {
-            auto nl = display_text.find('\n', start);
-            if (nl == std::string::npos) {
-                logical_lines.emplace_back(display_text.data() + start,
-                                           display_text.size() - start);
-                break;
-            }
-            logical_lines.emplace_back(display_text.data() + start, nl - start);
-            start = nl + 1;
-        }
-        if (logical_lines.empty()) logical_lines.emplace_back("");
-    }
-
-    // Wrap each logical line and build visual line elements.
-    // Available width = terminal - prefix(2) - right-padding(1) - 1 safety = 76.
-    // But we use kPromptWrapWidth=78 and let the trailing space handle overflow.
-    const std::size_t wrap_w = wrap_detail::kPromptWrapWidth - 2;  // -2 for "❯ "
-
-    Elements visual_lines;
-    bool first_line = true;
-    for (auto logical_line : logical_lines) {
-        auto wrapped = wrap_detail::WrapToWidth(logical_line, wrap_w);
-        for (auto& wline : wrapped) {
-            Elements row;
-            if (first_line) {
-                row.push_back(text(std::string(loom::ui::design::figures::kPointer))
-                              | prefix_style);
-                row.push_back(text(" ") | prefix_style);
-            } else {
-                // Indent continuation lines to align with the prefix column.
-                row.push_back(text("  ") | prefix_style);
-            }
-            row.push_back(text(std::move(wline)) | body_style);
-            // right padding = 1 — trailing space so bg reaches the right edge.
-            row.push_back(text(" ") | color(kText));
-
-            Element line_el = hbox(std::move(row));
-            if (!data.is_transcript_mode) {
-                // Full-width background: flex on content + trailing bg spacer.
-                line_el = hbox({line_el | bgcolor(bg) | flex,
-                                text(" ") | bgcolor(bg)});
-            }
-            visual_lines.push_back(std::move(line_el));
-            first_line = false;
-        }
-    }
-
-    Element body = vbox(std::move(visual_lines));
+    Element body = hbox({
+        text(std::string(loom::ui::design::figures::kPointer) + " ") | prefix_style,
+        std::make_shared<wrap_detail::PromptBody>(TruncateUserPromptText(data.content))
+            | body_style,
+        text(" ") | color(kText),
+    });
+    if (!data.is_transcript_mode) body = body | bgcolor(bg);
 
     if (data.is_transcript_mode) {
-        Element content = hbox({std::move(body), filler()});
+        Element content = std::move(body) | xflex;
         if (add_margin) return vbox({text(""), std::move(content)});
         return content;
     }
@@ -382,7 +383,7 @@ class UserTextMessageComponent : public ComponentBase {
     // <MessageResponse> prepends "  ⎿  " (U+23BF connector).
     return hbox({
         text("  \xe2\x8e\xbf  ") | dim,
-        std::move(body),
+        std::move(body) | xflex,
     });
 }
 

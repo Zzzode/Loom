@@ -51,15 +51,24 @@ IndividualHookConfig make_command_hook(HookEventType event,
     return h;
 }
 
+// CTest launches each test in its own process. Atomically reserve a directory
+// so concurrent hook cases never delete another fixture's working directory.
+fs::path create_hook_test_root() {
+    const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    for (std::uint64_t attempt = 0;; ++attempt) {
+        auto root = fs::temp_directory_path() /
+            std::format("loom-hooks-integration-test-{}-{}", stamp, attempt);
+        if (fs::create_directory(root)) return root;
+    }
+}
+
 /// Minimal QueryEngine fixture with a single "Echo" tool registered. The tool
 /// is registered with ReadOnly permission and auto-approval (no permission
 /// hook is installed), so execute_single_tool reaches the hook dispatch path.
 class HooksIntegrationTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        root_ = fs::temp_directory_path() / "loom-hooks-integration-test";
-        fs::remove_all(root_);
-        fs::create_directories(root_);
+        root_ = create_hook_test_root();
 
         QueryEngineConfig config;
         config.api_key = "test-key";
@@ -101,6 +110,23 @@ ToolUseBlock make_echo_call(std::string text) {
 }
 
 }  // namespace
+
+TEST(HooksIntegrationFixture, ConcurrentRootsSurviveIndependentCleanup) {
+    auto first = std::async(std::launch::async, create_hook_test_root);
+    auto second = std::async(std::launch::async, create_hook_test_root);
+    const auto first_root = first.get();
+    const auto second_root = second.get();
+    EXPECT_NE(first_root, second_root);
+    const auto retained_file = second_root / "owned.txt";
+    { std::ofstream output(retained_file); output << "owned by second fixture"; }
+    fs::remove_all(first_root);
+    EXPECT_TRUE(fs::exists(retained_file));
+    std::ifstream input(retained_file);
+    std::string content;
+    std::getline(input, content);
+    EXPECT_EQ(content, "owned by second fixture");
+    fs::remove_all(second_root);
+}
 
 // ---------------------------------------------------------------------------
 // PreToolUse: a hook that exits 2 (CommandHookRunner maps exit-2 to

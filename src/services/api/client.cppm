@@ -630,6 +630,8 @@ public:
         , rate_limiter_(60)
         , auth_ctx_(std::make_unique<loom::services::auth::byoc::EnterpriseAuthContext>()) {}
 
+    ~MessagesClient();
+
     [[nodiscard]] static loom::utils::Error error_from_http_response(
         int status_code,
         std::string_view body,
@@ -827,13 +829,13 @@ public:
             (auth_ctx_->provider() != EProv::FirstParty);
         auto auth_ctx_ptr = auth_ctx_.get();
 
-        // Launch streaming CURL transfer in a detached thread.
-        // The parser is shared between the producer thread and the consumer.
-        std::thread([url = std::move(url),
+        // The producer parser has no transfer owner; only consumer copies do.
+        // This avoids a cycle and ensures the joining owner never dies here.
+        auto transfer = std::make_shared<StreamTransfer>([url = std::move(url),
                      json_body = std::move(json_body),
                      headers = std::move(headers),
                      timeout = config_.timeout,
-                     parser, auth_ctx_ptr, is_enterprise_provider]() {
+                     parser, auth_ctx_ptr, is_enterprise_provider](std::stop_token stop) {
             auto curl_result = CurlHandle::create();
             if (!curl_result) {
                 ApiErrorDetails details;
@@ -878,8 +880,43 @@ public:
             curl.setopt(CURLOPT_WRITEFUNCTION, write_cb);
             curl.setopt(CURLOPT_WRITEDATA, &ctx);
 
-            // Perform the streaming request
-            auto res = curl_easy_perform(static_cast<CURL*>(curl.get()));
+            // A multi transfer can be woken while waiting for headers or a
+            // stalled body, without waiting for the HTTP timeout to expire.
+            auto* handle = static_cast<CURL*>(curl.get());
+            std::unique_ptr<CURLM, decltype(&curl_multi_cleanup)> multi(
+                curl_multi_init(), &curl_multi_cleanup);
+            CURLcode res = CURLE_FAILED_INIT;
+            if (multi && curl_multi_add_handle(multi.get(), handle) == CURLM_OK) {
+                {
+                    std::stop_callback wake(stop, [&multi] {
+                        curl_multi_wakeup(multi.get());
+                    });
+                    int running = 0;
+                    res = CURLE_OK;
+                    do {
+                        if (stop.stop_requested()) {
+                            res = CURLE_ABORTED_BY_CALLBACK;
+                            break;
+                        }
+                        if (curl_multi_perform(multi.get(), &running) != CURLM_OK) {
+                            res = CURLE_RECV_ERROR;
+                            break;
+                        }
+                        if (running && curl_multi_poll(multi.get(), nullptr, 0,
+                                                       1000, nullptr) != CURLM_OK) {
+                            res = CURLE_RECV_ERROR;
+                            break;
+                        }
+                    } while (running);
+                    if (res == CURLE_OK) {
+                        int remaining = 0;
+                        while (auto* message = curl_multi_info_read(multi.get(), &remaining)) {
+                            if (message->msg == CURLMSG_DONE) res = message->data.result;
+                        }
+                    }
+                }
+                curl_multi_remove_handle(multi.get(), handle);
+            }
             curl_slist_free_all(header_list);
 
             // Signal completion/error to the parser
@@ -907,11 +944,16 @@ public:
                     parser->finish();
                 }
             }
-        }).detach();
+        });
+        {
+            std::scoped_lock lock(transfers_mutex_);
+            std::erase_if(transfers_, [](const auto& weak) { return weak.expired(); });
+            transfers_.push_back(transfer);
+        }
 
-        // Return a StreamParser by value; the returned copy and curl thread share
-        // parser state, so next_event()/process_events() observe producer writes.
-        return *parser;
+        auto consumer = *parser;
+        consumer.own_transfer(std::move(transfer));
+        return consumer;
     }
 
     // Verify API key
@@ -1112,6 +1154,8 @@ private:
     Config config_;
     RateLimiter rate_limiter_;
     std::unique_ptr<loom::services::auth::byoc::EnterpriseAuthContext> auth_ctx_;
+    std::mutex transfers_mutex_;
+    std::vector<std::weak_ptr<StreamTransfer>> transfers_;
 };
 
 } // namespace loom::services::api

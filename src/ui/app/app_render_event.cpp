@@ -126,18 +126,7 @@ AppAdapter::~AppAdapter() {
         loom::utils::pane_observer::unsubscribe_changed(pane_observer_token_);
         pane_observer_token_ = 0;
     }
-    if (leader_inbox_thread_.joinable()) {
-        leader_inbox_thread_.request_stop();
-    }
-    if (query_running_.load() && static_cast<loom::core::QueryEngine*>(engine_raw())) {
-        static_cast<loom::core::QueryEngine*>(engine_raw())->abort();
-    }
-    if (query_thread_.joinable()) query_thread_.request_stop();
-    if (spinner_thread_.joinable()) spinner_thread_.request_stop();
-    statusline_.Stop();  // P3-1c: coordinator owns the jthread
-    if (bash_thread_.joinable()) bash_thread_.request_stop();
-    // P4-1d: unblock all pending permission/elicitation/ask-user waits.
-    permission_.abort_all();
+    StopBackgroundWorkers();
 
     // RFC 0007 Phase 1: shutdown the clipboard coordinator — cancels any
     // active job, joins the owner thread. Bounded to ~1.1s worst case.
@@ -147,6 +136,38 @@ AppAdapter::~AppAdapter() {
     if (skills_changed_unsubscribe_) {
         try { skills_changed_unsubscribe_(); } catch (...) {}
     }
+}
+
+void AppAdapter::StopBackgroundWorkers() {
+    CloseUiActions();
+    if (teammate_.inbox_thread().joinable()) teammate_.inbox_thread().request_stop();
+    if (leader_inbox_thread_.joinable()) leader_inbox_thread_.request_stop();
+    if (query_running_.load() && static_cast<loom::core::QueryEngine*>(engine_raw())) {
+        static_cast<loom::core::QueryEngine*>(engine_raw())->abort();
+    }
+    if (query_thread_.joinable()) query_thread_.request_stop();
+    if (spinner_thread_.joinable()) spinner_thread_.request_stop();
+    if (bash_thread_.joinable()) bash_thread_.request_stop();
+    // A foreground Agent polls its registry owner, independently of query
+    // abort. Signal it before joining the query that is blocked inside it.
+    if (auto* engine = static_cast<loom::core::QueryEngine*>(engine_raw())) {
+        engine->request_tool_shutdown();
+    }
+    // P4-1d: unblock all pending permission/elicitation/ask-user waits.
+    permission_->abort_all();
+    // request_stop is cooperative. jthread's destructor joins too late:
+    // later-declared result queues/mutexes would already be destroyed.
+    if (leader_inbox_thread_.joinable()) leader_inbox_thread_.join();
+    if (teammate_.inbox_thread().joinable()) teammate_.inbox_thread().join();
+    if (query_thread_.joinable()) query_thread_.join();
+    if (auto* engine = static_cast<loom::core::QueryEngine*>(engine_raw())) {
+        engine->shutdown_tools();
+    }
+    if (spinner_thread_.joinable()) spinner_thread_.join();
+    if (bash_thread_.joinable()) bash_thread_.join();
+    statusline_.Stop();
+    paste_.Stop();
+    StopSettingsWatcher();
 }
 
 // RFC 0001 Phase C batch 2: folded from app.cppm — sole callers are the
@@ -184,6 +205,7 @@ std::size_t AppAdapter::DrainPendingAtMentionInserts() {
 }
 
 Element AppAdapter::Render() {
+    DrainUiActions();
     this->ProjectRuntimeMetadataToScreenState();
     this->ProjectTodosToScreenState();
     ConsumePendingResult();
@@ -256,14 +278,19 @@ Element AppAdapter::Render() {
                 for (const auto& cached_row : projected) {
                     auto e = cached_row;
                     e.id = u24;
-                    // Enrich committed thinking entries with cached duration.
+                    // Enrich committed thinking entries with cached timing.
                     // ThinkingBlock in the core types has no timing info, so
-                    // the duration was cached when the streaming block completed.
+                    // duration + start_time were cached when the streaming
+                    // block completed.  The start_time is essential: without
+                    // it the chain compressor's earliest_start shifts forward
+                    // when the streaming entry is pruned, causing the live
+                    // elapsed timer to jump backwards.
                     if (e.is_thinking && e.thinking_duration.count() == 0 &&
                         !e.full_content.empty()) {
                         auto it = thinking_duration_cache_.find(e.full_content);
                         if (it != thinking_duration_cache_.end()) {
-                            e.thinking_duration = it->second;
+                            e.thinking_duration = it->second.duration;
+                            e.thinking_start_time = it->second.start_time;
                         }
                     }
                     new_messages.push_back(std::move(e));
@@ -271,6 +298,7 @@ Element AppAdapter::Render() {
                 ++tick_msg_idx;
             }
             committed_projection_cache_.resize(source_index);
+            reconcile_tool_result_statuses(new_messages);
             // Append local-command messages (same logic as
             // AppendLocalMessagesToScreenState, but into the local vector).
             {
@@ -315,11 +343,8 @@ Element AppAdapter::Render() {
                              !streaming_tools_.empty() ||
                              !streaming_thinking_.empty();
 
-        // If any streaming tool has complete=true (ContentBlockStop received),
-        // the AssistantMessage for this turn was already committed to the
-        // conversation (append_message fires after all blocks finish streaming).
-        // All streaming blocks (text + thinking + tool-use) from this turn
-        // are now duplicates of what the committed path already projected.
+        // ContentBlockStop only finishes streaming a block. The committed
+        // replacement arrives later through the engine's on_commit callback.
 
         // Prune thinking entries whose 3-second grace period has expired.
         // Done before has_in_flight so stale entries don't keep the
@@ -347,7 +372,8 @@ Element AppAdapter::Render() {
         thinking_collapse_deadline_ms_.store(next_collapse);
 
         if (has_in_flight) {
-            bool all_tools_complete = !streaming_tools_.empty() &&
+            bool all_tools_complete = streaming_message_committed_ &&
+                !streaming_tools_.empty() &&
                 std::ranges::all_of(streaming_tools_, [](const auto& p) {
                     return p.second.complete;
                 });
@@ -357,10 +383,8 @@ Element AppAdapter::Render() {
             // period, even if all tools have completed.
             bool thinking_visible = is_streaming_thinking_visible();
             if (all_tools_complete && !thinking_visible) has_in_flight = false;
-            // Once all tool blocks have stopped (ContentBlockStop received),
-            // the AssistantMessage was committed to the conversation before
-            // tool execution began (query_engine_loop.cpp: append_message
-            // runs before execute_pending_tools).  The streaming text is
+            // Once all tool blocks have stopped AND the AssistantMessage
+            // has been committed, the streaming text is
             // now a duplicate of the committed row — clear it so the
             // thinking grace period doesn't keep the text row alive.
             if (all_tools_complete) {
@@ -492,18 +516,27 @@ Element AppAdapter::Render() {
                     e.is_error = tlu->second.is_error;
                     e.timestamp = now;
                     e.id = streaming_uuid24;
+                    // Wall-clock start time for the chain compressor's live
+                    // elapsed timer (includes tool call time, not just thinking).
+                    if (tlu->second.streaming_started_at) {
+                        e.tool_start_time = *tlu->second.streaming_started_at;
+                    }
                     new_messages.push_back(std::move(e));
                     continue;
                 }
                 // Text block (streaming)
                 if (!streaming_text_.empty() && idx == text_idx) {
-                    repl::MessageDisplayEntry e;
-                    e.role = "assistant";
-                    e.content_preview = streaming_text_;
-                    e.is_streaming = true;
-                    e.timestamp = now;
-                    e.id = streaming_uuid24;
-                    new_messages.push_back(std::move(e));
+                    // StreamEnd precedes the engine's commit. Keep the body
+                    // until the committed replacement is actually available.
+                    if (!streaming_message_committed_) {
+                        repl::MessageDisplayEntry e;
+                        e.role = "assistant";
+                        e.content_preview = streaming_text_;
+                        e.is_streaming = !streaming_finalizing_;
+                        e.timestamp = now;
+                        e.id = streaming_uuid24;
+                        new_messages.push_back(std::move(e));
+                    }
                     continue;
                 }
             }
@@ -537,8 +570,11 @@ Element AppAdapter::Render() {
     this->DrainCompletedPastesAndSubmit();
     // RFC 0007 Phase 1: drain pending clipboard copy results.
     this->DrainCopyResult();
+    // One inline surface for progress, confirmed native copy, an unconfirmed
+    // terminal request, or failure. RenderReplScreen populates bottom_float.
+    screen_state_->copy_toast_text = text_selection_.copy_feedback;
     auto el = repl_component_->Render() | dc::cursor_reset();
-    // Drag-to-select: paint the selection rectangle's background after
+    // Drag-to-select: paint the linear selection's background after
     // the normal render pass.  SelectionHighlightNode (defined in
     // app_text_selection.cpp) follows FTXUI's own `inverted` decorator
     // pattern (render children, then modify pixels in-place).
@@ -547,12 +583,40 @@ Element AppAdapter::Render() {
 }
 
 bool AppAdapter::OnEvent(Event event) {
+    DrainUiActions();
+    ConsumePendingResult();
     if (event == Event::Return && pending_paste_submission_) return true;
     // Drain any background-thread paste results that completed since the
     // last event.  Must happen on the render thread (we mutate
     // paste_.pasted_contents() and possibly input_text).
     this->DrainCompletedPastesAndSubmit();
-    // RFC 0007 Phase 1: drain pending clipboard copy results.
+    // F2: toggle mouse tracking at runtime.  When off, the terminal handles
+    // mouse natively (drag to select, Cmd+C to copy).  When on, LOOM receives
+    // wheel/click events (scroll transcript, click links).  Only active when
+    // mouseMode: true in config (FTXUI TrackMouse on at Install).
+    if (event == Event::F2 && mouse_mode_) {
+        ClearTextSelection();
+        ToggleMouseTracking();
+        return true;
+    }
+
+    // Clear an active selection on any key press (mouse press is handled
+    // in HandleTextSelectionMouse).  Event::Custom is excluded to avoid
+    // a loop with PostRenderEvent.
+    if ((text_selection_.active || text_selection_.potential) &&
+        !event.is_mouse() && event != Event::Custom) {
+        ClearTextSelection();
+        PostRenderEvent();
+    }
+
+    // A new press supersedes the old selection before a pending result can
+    // emit its fallback. Motion reports are also Pressed, so retain a drag.
+    if (event.is_mouse() && event.mouse().button == Mouse::Left &&
+        event.mouse().motion == Mouse::Pressed && !text_selection_.potential &&
+        text_selection_.active) {
+        ClearTextSelection();
+        PostRenderEvent();
+    }
     this->DrainCopyResult();
 
     // Pane-teammate inbox delivery: the inbox worker posts Custom events when

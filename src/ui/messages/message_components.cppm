@@ -8,9 +8,30 @@ export module loom.ui.messages.message_components;
 
 import std;
 
+import loom.ui.foundation.component_primitives;
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.foundation.design_figures;  // kBlackCircleFallback (● U+25CF) — single source of truth
 
 export namespace loom::ui::messages {
+
+// Message affordances share one style: underlined labels are mouse actions;
+// inverted key caps describe keyboard commands without implying click support.
+[[nodiscard]] inline ftxui::Element message_action(
+    std::string_view label,
+    ftxui::Color fg = loom::ui::design::theme::current_theme().palette->text_link) {
+    using namespace ftxui;
+    return text("[" + std::string(label) + "]") | underlined | bold
+        | color(fg);
+}
+
+[[nodiscard]] inline ftxui::Element message_key_hint(
+    std::string_view key, std::string_view label) {
+    using namespace ftxui;
+    return hbox({loom::ui::design::primitives::kbd("[" + std::string(key) + "]"),
+                 text(std::string(label))})
+        | color(loom::ui::design::theme::current_theme().palette->text);
+}
 
 // --- Error constants ---
 inline constexpr std::string_view kApiErrorPrefix = "API Error: ";

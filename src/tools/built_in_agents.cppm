@@ -124,7 +124,7 @@ inline constexpr std::string_view kExploreWhenToUse =
 inline constexpr int kExploreAgentMinQueries = 3;
 
 // --- Plan agent ---
-[[nodiscard]] inline std::string get_plan_v2_system_prompt() {
+[[nodiscard]] inline std::string get_plan_system_prompt() {
     const std::string search_tools_hint = kHasEmbeddedSearchTools
         ? std::format("`find`, `grep`, and {}", kFileReadToolName)
         : std::format("{}, {}, and {}", kGlobToolName, kGrepToolName, kFileReadToolName);
@@ -661,7 +661,7 @@ inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
         .source = "built-in",
         .filename = std::nullopt,
         .path = std::nullopt,
-        .system_prompt = get_plan_v2_system_prompt(),
+        .system_prompt = get_plan_system_prompt(),
         .tools = {"Read", "Glob", "Grep"},
         .disallowed_tools = {
             std::string{kAgentToolName},

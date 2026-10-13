@@ -2,7 +2,7 @@
 
 █░█░█░█░█  Loom
 ░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+█░█░█░█░█  <tmpdir>
 
 ● Modern C++ codebases face a persistent tension between compile-time encapsulation and runtime flexibility, and the
   choice between header-only interfaces, named modules, and dynamic polymorphism shapes everything from incremental
@@ -36,4 +36,4 @@
 ──────────────────────────────────────────────────────────────────────────────────
  ❯ Try "fix lint errors"
 ──────────────────────────────────────────────────────────────────────────────────
-   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K
+   <tmpdir>  ctx ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

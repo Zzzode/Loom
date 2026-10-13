@@ -26,6 +26,8 @@ import loom.ui.foundation.theme_provider;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 import loom.commands.plugin_ui_data;
 import loom.commands.plugin_details_helpers;
 import loom.commands.plugin_trust_text;
@@ -175,9 +177,10 @@ namespace detail {
 [[nodiscard]] inline Element RenderSourceStep(
     const SourceStepData& data, int selected)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
-        text(" 🛒  Installation Source ") | bold | color(Color::Cyan),
+        text(" Installation Source ") | bold | color(pal.info),
         filler(),
         text("Pick where to install the plugin from") | dim,
     }));
@@ -185,34 +188,34 @@ namespace detail {
     rows.push_back(text(""));
 
     struct SourceItem {
-        const char* icon;
+        std::string icon;
         const char* name;
         const char* subtitle;
         Color       accent;
     };
-    static const SourceItem k_items[] = {
-        {"🛍️", "From Marketplace",
-            "Browse available marketplaces and pick a plugin", Color::Cyan},
-        {"📁", "From local file or directory",
-            "Install from a downloaded .zip or a local folder", Color::Green},
-        {"🔗", "From URL",
-            "Install directly from a manifest or zip URL", Color::Blue},
-        {"🌿", "From Git repository",
-            "Clone from a git repo (HTTPS or SSH)", Color::Magenta},
+    const SourceItem k_items[] = {
+        {std::string(loom::ui::design::figures::kDiamond), "From Marketplace",
+            "Browse available marketplaces and pick a plugin", pal.info},
+        {std::string(loom::ui::design::figures::kTriangleRightSmall), "From local file or directory",
+            "Install from a downloaded .zip or a local folder", pal.text_accent},
+        {std::string(loom::ui::design::figures::kArrowRight), "From URL",
+            "Install directly from a manifest or zip URL", pal.info},
+        {std::string(loom::ui::design::figures::kForkGlyph), "From Git repository",
+            "Clone from a git repo (HTTPS or SSH)", pal.primary},
     };
     for (int i = 0; i < 4; ++i) {
         const bool sel = (i == selected);
         const auto& it = k_items[i];
         auto row = hbox({
-            text(sel ? "▶ " : "  ") | color(it.accent),
+            text(sel ? std::string(loom::ui::design::figures::kPlay) + " " : "  ") | color(it.accent),
             text(it.icon),
             text(" "),
             vbox({
-                text(it.name) | bold | color(sel ? Color::White : it.accent),
+                text(it.name) | bold | color(sel ? pal.text : it.accent),
                 text("  " + std::string{it.subtitle}) | dim,
             }) | flex,
         });
-        if (sel) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
+        if (sel) row = row | bgcolor(pal.surface_tint_3);
         rows.push_back(std::move(row));
         if (i + 1 < 4) rows.push_back(separator() | dim);
     }
@@ -244,26 +247,26 @@ namespace detail {
             break;
     }
     rows.push_back(hbox({
-        text("  " + label) | bold | color(Color::GrayLight),
+        text("  " + label) | bold | color(pal.muted),
         text(value.empty() ? placeholder : value)
-             | color(value.empty() ? Color::GrayDark : Color::White),
-        text("│") | blink | color(Color::Cyan),
+             | color(value.empty() ? pal.muted : pal.text),
+        text("│") | blink | color(pal.info),
     }) | borderLight);
 
     if (sel_enum == InstallSource::GitRepo && !data.git_ref.empty()) {
         rows.push_back(text(""));
         rows.push_back(hbox({
             text("  ref: ") | dim,
-            text(data.git_ref) | color(Color::BlueLight),
+            text(data.git_ref) | color(pal.info),
         }));
     }
     rows.push_back(text(""));
 
     rows.push_back(text(" Navigation:") | dim);
     rows.push_back(hbox({
-        text(" ↑↓/j/k") | bold | color(Color::Cyan), text(" select source  "),
-        text("Tab") | bold | color(Color::Cyan), text(" focus input  "),
-        text("⏎") | bold | color(Color::Cyan), text(" next"),
+        text(" ↑↓/j/k") | bold | color(pal.info), text(" select source  "),
+        text("Tab") | bold | color(pal.info), text(" focus input  "),
+        text("⏎") | bold | color(pal.info), text(" next"),
     }) | dim);
     return vbox(std::move(rows));
 }
@@ -271,9 +274,10 @@ namespace detail {
 // --- Step 2: Review ---------------------------------------------------------
 
 [[nodiscard]] inline Element RenderReviewStep(const ReviewStepData& r) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
-        text(" 📋  Review Plugin Details ") | bold | color(Color::Blue),
+        text(" Review Plugin Details ") | bold | color(pal.info),
         filler(),
         text("Verify everything looks correct") | dim,
     }));
@@ -283,17 +287,17 @@ namespace detail {
     rows.push_back(hbox({
         vbox({
             hbox({
-                text(" " + r.name + " ") | bold | color(Color::Cyan) | size(HEIGHT, EQUAL, 1),
+                text(" " + r.name + " ") | bold | color(pal.info) | size(HEIGHT, EQUAL, 1),
                 text(" v" + r.version) | dim,
             }),
             text("  by " + (r.author.empty() ? std::string{"(unknown)"} : r.author))
-                | dim | color(Color::GrayLight),
+                | dim | color(pal.muted),
         }) | flex,
         text(" "),
         hbox({
             text("[" + r.install_scope + "] ")
-                | bold | color(r.install_scope == "user" ? Color::Cyan
-                    : (r.install_scope == "project" ? Color::Green : Color::Yellow)),
+                | bold | color(r.install_scope == "user" ? pal.info
+                    : (r.install_scope == "project" ? pal.text_accent : pal.text_muted)),
             text(r.size_str.empty() ? "—" : r.size_str) | dim,
         }) | align_right,
     }));
@@ -303,25 +307,25 @@ namespace detail {
     rows.push_back(text(""));
     rows.push_back(paragraph(
         "  " + (r.description.empty() ? "(no description)" : r.description))
-        | dim | color(Color::GrayLight));
+        | dim | color(pal.muted));
     rows.push_back(text(""));
 
     // Metadata table
     if (r.homepage) {
         rows.push_back(hbox({
             text("  Homepage: ") | dim,
-            text(*r.homepage) | underlined | color(Color::Cyan),
+            text(*r.homepage) | underlined | color(pal.info),
         }));
     }
     if (r.license) {
         rows.push_back(hbox({
             text("  License:  ") | dim,
-            text(*r.license) | color(Color::Yellow),
+            text(*r.license) | color(pal.text),
         }));
     }
     rows.push_back(hbox({
         text("  Files:    ") | dim,
-        text(std::format("~{} files", r.estimated_file_count)) | color(Color::White),
+        text(std::format("~{} files", r.estimated_file_count)) | color(pal.text),
     }));
     rows.push_back(text(""));
 
@@ -331,13 +335,13 @@ namespace detail {
         rows.push_back(text("   (none)") | dim);
     } else {
         for (const auto& p : r.permissions) {
-            Color c = Color::White;
+            Color c = pal.text;
             if (p.find("unsafe") != std::string::npos || p.find("bash") != std::string::npos)
-                c = Color::Red;
+                c = pal.danger;
             else if (p.find("write") != std::string::npos)
-                c = Color::Yellow;
+                c = pal.warning;
             else if (p.find("read") != std::string::npos)
-                c = Color::Cyan;
+                c = pal.info;
             rows.push_back(hbox({
                 text("   • ") | color(c),
                 text(p) | color(c),
@@ -350,9 +354,9 @@ namespace detail {
     if (!r.tools.empty() || !r.commands.empty()) {
         rows.push_back(hbox({
             text(" Provides ") | dim,
-            text(std::to_string(r.tools.size())) | bold | color(Color::Magenta),
+            text(std::to_string(r.tools.size())) | bold | color(pal.primary),
             text(" tool(s) and ") | dim,
-            text(std::to_string(r.commands.size())) | bold | color(Color::Yellow),
+            text(std::to_string(r.commands.size())) | bold | color(pal.warning),
             text(" command(s)") | dim,
         }));
     }
@@ -361,11 +365,11 @@ namespace detail {
     rows.push_back(text(""));
     rows.push_back(vbox({
         hbox({
-            text(" ⚠ ") | color(Color::Yellow),
-            text(std::string{pt::trust_warning_header()}) | bold | color(Color::Yellow),
+            text(" " + std::string(loom::ui::design::figures::kWarning) + " ") | color(pal.warning),
+            text(std::string{pt::trust_warning_header()}) | bold | color(pal.warning),
         }),
-        paragraph("   " + pt::build_trust_warning_text()) | dim | color(Color::GrayLight),
-    }) | border | color(Color::Yellow) | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg));
+        paragraph("   " + pt::build_trust_warning_text()) | dim | color(pal.muted),
+    }) | border | color(pal.warning) | bgcolor(pal.warning_tint_bg));
 
     return vbox(std::move(rows));
 }
@@ -375,9 +379,10 @@ namespace detail {
 [[nodiscard]] inline Element RenderTrustStep(
     const TrustStepData& t, const Element& trust_dialog_panel)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
-        text(" 🔒  Trust & Safety ") | bold | color(Color::Magenta),
+        text(" Trust & Safety ") | bold | color(pal.primary),
         filler(),
         text("Required before installation can begin") | dim,
     }));
@@ -387,9 +392,9 @@ namespace detail {
     // If the plugin is fully verified, show a green banner + skip.
     if (t.is_verified) {
         rows.push_back(hbox({
-            text(" 🛡 ") | color(Color::Green) | bold,
+            text(" " + std::string(loom::ui::design::figures::kTick) + " ") | color(pal.success) | bold,
             text("This plugin is verified and trusted.")
-                | bold | color(Color::Green),
+                | bold | color(pal.success),
         }));
         rows.push_back(text("") | size(HEIGHT, EQUAL, 1));
     }
@@ -403,9 +408,10 @@ namespace detail {
 // --- Step 4: Install progress ----------------------------------------------
 
 [[nodiscard]] inline Element RenderInstallStep(const InstallProgressData& p) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
-        text(" 📦  Installing… ") | bold | color(Color::Green),
+        text(" Installing… ") | bold | color(pal.info),
         filler(),
         text(std::format("{}%", p.percent)) | dim,
     }));
@@ -413,11 +419,11 @@ namespace detail {
     rows.push_back(text(""));
 
     // Stage label
-    Color stage_color = Color::Cyan;
-    if (p.stage == InstallStage::Failed)   stage_color = Color::Red;
-    if (p.stage == InstallStage::Complete) stage_color = Color::Green;
+    Color stage_color = pal.info;
+    if (p.stage == InstallStage::Failed)   stage_color = pal.danger;
+    if (p.stage == InstallStage::Complete) stage_color = pal.success;
     rows.push_back(hbox({
-        text(p.stage == InstallStage::Pending ? "○" : "●") | color(stage_color),
+        text(p.stage == InstallStage::Pending ? std::string(loom::ui::design::figures::kEffortLow) : std::string(loom::ui::design::figures::kBullet)) | color(stage_color),
         text(" " + (p.stage_label.empty() ? "Preparing…" : p.stage_label))
              | bold | color(stage_color),
     }));
@@ -434,7 +440,7 @@ namespace detail {
         for (int i = filled; i < bar_width; ++i) bar += "░";
         rows.push_back(hbox({
             text(" "),
-            text(bar) | color(pct >= 100 ? Color::Green : Color::Cyan),
+            text(bar) | color(pct >= 100 ? pal.success : pal.info),
             text(std::format(" {}%", pct)) | dim,
         }));
     }
@@ -443,10 +449,10 @@ namespace detail {
     // Error (if any)
     if (p.error) {
         rows.push_back(vbox({
-            hbox({text(" ✗ ") | color(Color::Red) | bold,
-                  text("Installation failed") | color(Color::Red) | bold}),
-            paragraph("   " + *p.error) | color(Color::RedLight) | dim,
-        }) | border | color(Color::Red));
+            hbox({text(" " + std::string(loom::ui::design::figures::kCross) + " ") | color(pal.danger) | bold,
+                  text("Installation failed") | color(pal.danger) | bold}),
+            paragraph("   " + *p.error) | color(pal.danger) | dim,
+        }) | border | color(pal.danger));
     }
 
     // Log lines (last 8)
@@ -456,7 +462,7 @@ namespace detail {
     int start = (int)std::max<std::ptrdiff_t>(0,
         (std::ptrdiff_t)p.log_lines.size() - 8);
     for (int i = start; i < (int)p.log_lines.size(); ++i) {
-        rows.push_back(text("   " + p.log_lines[i]) | color(Color::GrayLight) | dim);
+        rows.push_back(text("   " + p.log_lines[i]) | color(pal.muted) | dim);
     }
 
     return vbox(std::move(rows));
@@ -465,27 +471,28 @@ namespace detail {
 // --- Step 5: Complete -------------------------------------------------------
 
 [[nodiscard]] inline Element RenderCompleteStep(const CompleteStepData& d) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (!d.success) {
         return vbox({
             hbox({
-                text(" ❌  Installation Failed ") | bold | color(Color::Red),
+                text(" Installation Failed ") | bold | color(pal.danger),
                 filler(),
             }),
             separator(),
             text(""),
-            text(" The plugin could not be installed.") | color(Color::Red),
+            text(" The plugin could not be installed.") | color(pal.danger),
             text(" Check the log above for details, or try a different source.") | dim,
             text(""),
             hbox({
-                text(" [Esc] ") | bold | color(Color::Cyan), text("close   "),
-                text("[R]") | bold | color(Color::Cyan), text(" retry"),
+                text(" [Esc] ") | bold | color(pal.info), text("close   "),
+                text("[R]") | bold | color(pal.info), text(" retry"),
             }) | dim,
         });
     }
 
     Elements rows;
     rows.push_back(hbox({
-        text(" 🎉  Installation Complete ") | bold | color(Color::Green),
+        text(" Installation Complete ") | bold | color(pal.success),
         filler(),
         text("The plugin is ready to use") | dim,
     }));
@@ -493,14 +500,14 @@ namespace detail {
     rows.push_back(text(""));
 
     rows.push_back(hbox({
-        text(" ✓ ") | color(Color::Green) | bold,
-        text("Successfully installed ") | color(Color::Green),
-        text(d.installed_id) | bold | color(Color::Cyan),
+        text(" " + std::string(loom::ui::design::figures::kTick) + " ") | color(pal.success) | bold,
+        text("Successfully installed ") | color(pal.success),
+        text(d.installed_id) | bold | color(pal.info),
         text(" v" + d.installed_version) | dim,
     }));
     rows.push_back(hbox({
         text("   scope: [") | dim,
-        text(d.install_scope) | color(Color::Yellow),
+        text(d.install_scope) | color(pal.warning),
         text("]") | dim,
     }));
 
@@ -509,8 +516,8 @@ namespace detail {
         rows.push_back(text(" New tools available:") | bold);
         for (const auto& t : d.provided_tools) {
             rows.push_back(hbox({
-                text("   🔧 ") | color(Color::Magenta),
-                text(t) | color(Color::MagentaLight),
+                text("   " + std::string(loom::ui::design::figures::kPointerSmall) + " ") | color(pal.primary),
+                text(t) | color(pal.primary),
             }));
         }
     }
@@ -519,8 +526,8 @@ namespace detail {
         rows.push_back(text(" New slash commands:") | bold);
         for (const auto& c : d.provided_commands) {
             rows.push_back(hbox({
-                text("   ⌘ /") | color(Color::Yellow),
-                text(c) | color(Color::YellowLight),
+                text("   ⌘ /") | color(pal.warning),
+                text(c) | color(pal.warning),
             }));
         }
     }
@@ -528,26 +535,26 @@ namespace detail {
     if (d.post_install_hint) {
         rows.push_back(text(""));
         rows.push_back(vbox({
-            hbox({text(" 💡 ") | color(Color::Cyan),
-                  text("Next steps") | bold | color(Color::Cyan)}),
+            hbox({text(" " + std::string(loom::ui::design::figures::kInfo) + " ") | color(pal.info),
+                  text("Next steps") | bold | color(pal.info)}),
             paragraph("   " + *d.post_install_hint) | dim,
-        }) | borderLight | color(Color::Cyan));
+        }) | borderLight | color(pal.info));
     }
 
     if (d.first_run_hotkey) {
         rows.push_back(text(""));
         rows.push_back(hbox({
             text(" Tip: press ") | dim,
-            text(*d.first_run_hotkey) | bold | color(Color::Yellow),
+            text(*d.first_run_hotkey) | bold | color(pal.warning),
             text(" to start using the plugin now") | dim,
         }));
     }
 
     rows.push_back(text(""));
     rows.push_back(hbox({
-        text(" [⏎] ") | bold | color(Color::Cyan), text("close   "),
-        text("[L]") | bold | color(Color::Cyan), text(" launch plugin   "),
-        text("[C]") | bold | color(Color::Cyan), text(" configure"),
+        text(" [⏎] ") | bold | color(pal.info), text("close   "),
+        text("[L]") | bold | color(pal.info), text(" launch plugin   "),
+        text("[C]") | bold | color(pal.info), text(" configure"),
     }) | dim);
 
     return vbox(std::move(rows));

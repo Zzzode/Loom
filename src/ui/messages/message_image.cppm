@@ -32,6 +32,10 @@ export module loom.ui.messages.message_image;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.messages.message_timestamp;
 import loom.media.image_store;
 import loom.platform.hyperlink;
@@ -86,13 +90,13 @@ struct ImageMessageData {
 /// Source type icon
 [[nodiscard]] inline const char* source_icon(ImageSource s) {
     switch (s) {
-        case ImageSource::File:      return "📁";
-        case ImageSource::URL:       return "🌐";
-        case ImageSource::Base64:    return "📋";
-        case ImageSource::Clipboard: return "📎";
-        case ImageSource::StoreId:   return "🖼️";
+        case ImageSource::File:      return "file";
+        case ImageSource::URL:       return "url";
+        case ImageSource::Base64:    return "base64";
+        case ImageSource::Clipboard: return "clipboard";
+        case ImageSource::StoreId:   return "stored";
     }
-    return "🖼️";
+    return "stored";
 }
 
 /// Try to resolve image metadata from image_store if source_type is StoreId.
@@ -162,17 +166,17 @@ inline void resolve_from_store(ImageMessageData& data) {
         // Clickable Link when supported
         std::string file_url = "file://" + data.source;
         label_el = hbox({
-            text("\xf0\x9f\x96\xbc ") | color(Color::BlueLight),
-            text(label) | bold | color(Color::Cyan) | hyperlink(file_url),
+            text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->icon_default),
+            text(label) | bold | color(loom::ui::design::theme::current_theme().palette->text_link) | hyperlink(file_url),
             meta_suffix.empty() ? text("")
-                : text("  " + meta_suffix) | dim | color(Color::GrayLight),
+                : text("  " + meta_suffix) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted),
         });
     } else {
         label_el = hbox({
-            text("\xf0\x9f\x96\xbc ") | color(Color::BlueLight),
-            text(label) | bold | color(Color::BlueLight),
+            text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->icon_default),
+            text(label) | bold | color(loom::ui::design::theme::current_theme().palette->icon_default),
             meta_suffix.empty() ? text("")
-                : text("  " + meta_suffix) | dim | color(Color::GrayLight),
+                : text("  " + meta_suffix) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted),
         });
     }
 
@@ -204,7 +208,7 @@ inline void resolve_from_store(ImageMessageData& data) {
                 hbox({
                     text("  ") | dim,
                     text(std::string(source_icon(data.source_type)) + " ") | dim,
-                    text(display_source) | color(Color::Cyan) |
+                    text(display_source) | color(loom::ui::design::theme::current_theme().palette->text_link) |
                         (supports_hyperlinks() ? hyperlink(file_url) : nothing),
                 })
             );
@@ -242,8 +246,8 @@ class ImageMessageComponent : public ComponentBase {
         // Right-side header: timestamp + role tag
         auto header_right = hbox({
             text(" ") | size(WIDTH, EQUAL, 1),
-            text(render_timestamp(data_.timestamp)) | dim | color(Color::GrayDark),
-            text(" 👤 You") | color(Color::Blue),
+            text(render_timestamp(data_.timestamp)) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
+            text((" " + std::string(loom::ui::design::figures::kPointer) + " You")) | color(loom::ui::design::theme::current_theme().palette->brief_label_you),
         });
 
         // User message is right-aligned
@@ -256,8 +260,8 @@ class ImageMessageComponent : public ComponentBase {
                 filler(),
                 vbox({
                     std::move(body)
-                        | (hovered_ ? bgcolor(Color::DarkBlue) : nothing)
-                        | borderLight | color(Color::Blue),
+                        | (hovered_ ? bgcolor(loom::ui::design::theme::current_theme().palette->surface_selected) : nothing)
+                        | borderLight | color(loom::ui::design::theme::current_theme().palette->brief_label_you),
                 }) | flex_shrink,
             }),
         });
@@ -316,7 +320,7 @@ class ImageMessageComponent : public ComponentBase {
 [[nodiscard]] inline Element RenderImageBubble(const ImageMessageData& data) {
     ImageMessageData d = data;
     resolve_from_store(d);
-    return render(d) | borderLight | color(Color::Blue);
+    return render(d) | borderLight | color(loom::ui::design::theme::current_theme().palette->brief_label_you);
 }
 
 } // namespace loom::ui::messages::image

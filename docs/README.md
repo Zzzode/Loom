@@ -33,6 +33,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 |---|---|
 | [`dev/markdown-conformance.md`](dev/markdown-conformance.md) | CommonMark 0.31.2 + GFM conformance suite: architecture, fixtures, HTML serializer, floor system, JSON output + dashboard. Baseline: 1350/1354 (99.7%). |
 | [`dev/error-handling-conventions.md`](dev/error-handling-conventions.md) | `std::expected` / `Result<T>` error-handling conventions for the C++ tree. |
+| [`dev/ui-glossary.md`](dev/ui-glossary.md) | Canonical UI vocabulary: framework terms (Element/Component/Box/Screen) vs project terms (Block/Row/Panel/Pane/Store/…), deprecated terms. |
 
 ### Design documents (`design/`)
 
@@ -57,8 +58,10 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0004-session-recording-for-replay.md`](rfcs/0004-session-recording-for-replay.md) | **Implementable.** `loom record` command: capture live API sessions as JSONL replay fixtures compatible with the RFC 0003 harness. |
 | [`rfcs/0005-property-based-fuzz-testing.md`](rfcs/0005-property-based-fuzz-testing.md) | **Implementable.** Property-based fuzz testing: generate random valid streaming event sequences, run through the invariant checker (INV-01–07). |
 | [`rfcs/0006-design-system-governance.md`](rfcs/0006-design-system-governance.md) | **Provisional.** Design system governance: token lint, hard-coded color sweep, transparent canvas + OSC-11 auto theme, surface vocabulary, emoji/motion policy. |
-| [`rfcs/0007-native-text-selection-and-clipboard.md`](rfcs/0007-native-text-selection-and-clipboard.md) | **Implementable.** Reliable copy pipeline (four-state feedback, terminable async, SSH-aware), native text selection by default (mouse tracking off). F2 runtime toggle deferred to follow-up RFC (FTXUI lifecycle). |
+| [`rfcs/0007-native-text-selection-and-clipboard.md`](rfcs/0007-native-text-selection-and-clipboard.md) | **Implementable.** Reliable copy pipeline (four-state feedback, terminable async, SSH-aware), Historical native-selection default revised by RFC 0010; original reliability and lifecycle rationale retained. |
 | [`rfcs/0008-virtual-renderer-threshold-hysteresis.md`](rfcs/0008-virtual-renderer-threshold-hysteresis.md) | **Implementable.** Hysteresis band for the static↔virtual message-list renderer threshold (enter > 80, exit < 60) to prevent mode oscillation at the boundary. Field flicker benefit pending PTY verification (§11.4). |
+| [`rfcs/0009-optional-interactive-tool-round-budget.md`](rfcs/0009-optional-interactive-tool-round-budget.md) | **Implemented.** Optional interactive tool-round budgets with committed-progress continuation; no implicit interactive limit. |
+| [`rfcs/0010-in-app-selection-copy.md`](rfcs/0010-in-app-selection-copy.md) | **Implemented.** Clipboard infrastructure owns OSC 52; default in-app selection automatically copies with accurate inline feedback. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

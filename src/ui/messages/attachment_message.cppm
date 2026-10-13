@@ -15,6 +15,10 @@ export module loom.ui.messages.attachment_message;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 export namespace loom::ui::messages::attachment_message {
 using namespace ftxui;
 
@@ -94,34 +98,23 @@ inline std::string format_bytes(std::size_t n) {
 
 inline const char* kind_icon(AttachmentKind k) {
     switch (k) {
-        case AttachmentKind::File:         return "📄";
-        case AttachmentKind::Image:        return "🖼️";
-        case AttachmentKind::Table:        return "📊";
-        case AttachmentKind::Text:         return "📝";
-        case AttachmentKind::Audio:        return "🎵";
-        case AttachmentKind::PDF:          return "📕";
-        case AttachmentKind::Video:        return "🎬";
-        case AttachmentKind::Archive:      return "🗜️";
-        case AttachmentKind::Memory:       return "🧠";
-        case AttachmentKind::ToolArtifact: return "🧰";
+        case AttachmentKind::File:         return "File";
+        case AttachmentKind::Image:        return "Image";
+        case AttachmentKind::Table:        return "Table";
+        case AttachmentKind::Text:         return "Text";
+        case AttachmentKind::Audio:        return "Audio";
+        case AttachmentKind::PDF:          return "PDF";
+        case AttachmentKind::Video:        return "Video";
+        case AttachmentKind::Archive:      return "Archive";
+        case AttachmentKind::Memory:       return "Memory";
+        case AttachmentKind::ToolArtifact: return "Artifact";
     }
-    return "📄";
+    return "File";
 }
 
 inline Color kind_color(AttachmentKind k) {
-    switch (k) {
-        case AttachmentKind::File:         return Color::BlueLight;
-        case AttachmentKind::Image:        return Color::Magenta;
-        case AttachmentKind::Table:        return Color::GreenLight;
-        case AttachmentKind::Text:         return Color::White;
-        case AttachmentKind::Audio:        return Color::Cyan;
-        case AttachmentKind::PDF:          return Color::Red;
-        case AttachmentKind::Video:        return Color::Yellow;
-        case AttachmentKind::Archive:      return Color::Orange1;
-        case AttachmentKind::Memory:       return Color::DeepPink1Bis;
-        case AttachmentKind::ToolArtifact: return Color::SteelBlue;
-    }
-    return Color::White;
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    return k == AttachmentKind::Memory ? pal.remember : pal.icon_default;
 }
 
 /// Generate ASCII ▓-art rows of W x H that vary deterministically based on id.
@@ -182,7 +175,7 @@ inline std::vector<std::string> generate_default_thumbnail(
     if (thumb_rows.empty()) {
         // Text-style fallback: one-line "icon" glyph block
         thumb_rows.push_back(
-            text(std::string(28, ' ')) | color(Color::GrayDark));
+            text(std::string(28, ' ')) | color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     // Name + size
@@ -203,7 +196,7 @@ inline std::vector<std::string> generate_default_thumbnail(
         right_side += std::format("{} lines", *a.line_count);
     }
     if (!right_side.empty()) {
-        meta.push_back(text("  " + right_side) | dim | color(Color::GrayLight));
+        meta.push_back(text("  " + right_side) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted));
     }
 
     if (!a.mime_or_ext.empty() || !a.caption.empty()) {
@@ -213,7 +206,7 @@ inline std::vector<std::string> generate_default_thumbnail(
             if (!line.empty()) line += " · ";
             line += a.caption;
         }
-        meta.push_back(text("  " + line) | dim | color(Color::GrayDark));
+        meta.push_back(text("  " + line) | dim | color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     // Action hint row
@@ -221,7 +214,7 @@ inline std::vector<std::string> generate_default_thumbnail(
     if (a.can_preview) actions.push_back(text("[p]vw ") | dim);
     if (a.can_open)    actions.push_back(text("[o]pn ") | dim);
     if (a.can_delete)  actions.push_back(text("[d]el ") | dim);
-    meta.push_back(hbox(actions) | color(Color::GrayDark));
+    meta.push_back(hbox(actions) | color(loom::ui::design::theme::current_theme().palette->muted));
 
     auto card = vbox({
         vbox(thumb_rows) | border | color(kind_color(a.kind)) | center,
@@ -232,7 +225,7 @@ inline std::vector<std::string> generate_default_thumbnail(
     if (focused) {
         card = card | borderRounded | inverted;
     } else {
-        card = card | borderRounded | color(Color::GrayDark);
+        card = card | borderRounded | color(loom::ui::design::theme::current_theme().palette->muted);
     }
     return card;
 }
@@ -255,18 +248,18 @@ inline std::vector<std::string> generate_default_thumbnail(
     // --- Header ---
     {
         Elements h;
-        h.push_back(text("📎 ") | color(Color::Cyan));
+        h.push_back(text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->info));
         if (!opts.title.empty()) {
-            h.push_back(text(opts.title) | bold | color(Color::Cyan));
+            h.push_back(text(opts.title) | bold | color(loom::ui::design::theme::current_theme().palette->info));
         } else {
             h.push_back(text(std::format("Attachments ({})", total))
-                        | bold | color(Color::Cyan));
+                        | bold | color(loom::ui::design::theme::current_theme().palette->info));
         }
         h.push_back(filler());
         if (total > static_cast<std::size_t>(page_size)) {
             h.push_back(text(std::format(" page {}/{}", page + 1, max_page + 1))
                         | dim);
-            h.push_back(text("  [←/→] page") | dim | color(Color::GrayDark));
+            h.push_back(text("  [←/→] page") | dim | color(loom::ui::design::theme::current_theme().palette->muted));
         }
         all.push_back(hbox(h));
         all.push_back(separator());
@@ -309,7 +302,7 @@ inline std::vector<std::string> generate_default_thumbnail(
         if (total > static_cast<std::size_t>(end)) {
             foot.push_back(
                 text(std::format(" …{} more on next page", total - end))
-                | color(Color::GrayDark) | dim);
+                | color(loom::ui::design::theme::current_theme().palette->muted) | dim);
         }
         all.push_back(separator());
         all.push_back(hbox(foot));

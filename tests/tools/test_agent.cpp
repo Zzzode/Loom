@@ -40,6 +40,7 @@ import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
 import loom.tools.agent_runtime;
+import loom.tools.agent_display;
 import loom.tools.file_read;
 import loom.tools.file_write;
 import loom.tools.todo_write;
@@ -58,6 +59,7 @@ import loom.tools.tool;
 import loom.serdes.json;
 import loom.security.tool_deny_rules;
 import loom.query.query_engine;
+import loom.query.assembly;
 import loom.teams.swarm.backends;
 import loom.teams.swarm.helpers;
 import loom.teams.team_helpers;
@@ -209,8 +211,9 @@ std::string shell_quote_for_test(std::string_view value) {
 
 class LocalSlowMessagesStreamServer {
 public:
-    explicit LocalSlowMessagesStreamServer(std::chrono::milliseconds delay)
-        : delay_(delay) {
+    explicit LocalSlowMessagesStreamServer(std::chrono::milliseconds delay, bool hold_response = false)
+        : delay_(delay), hold_response_(hold_response) {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             {
                 std::lock_guard lock(mutex_);
@@ -219,7 +222,12 @@ public:
             }
             cv_.notify_all();
 
-            std::this_thread::sleep_for(delay_);
+            if (hold_response_) {
+                std::unique_lock lock(mutex_);
+                cv_.wait(lock, [this] { return response_released_; });
+            } else {
+                std::this_thread::sleep_for(delay_);
+            }
             res.set_content(
                 "event: message_start\n"
                 "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_slow\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
@@ -244,8 +252,17 @@ public:
     }
 
     ~LocalSlowMessagesStreamServer() {
+        release_response();
         server_.stop();
         if (thread_.joinable()) thread_.join();
+    }
+
+    void release_response() {
+        {
+            std::lock_guard lock(mutex_);
+            response_released_ = true;
+        }
+        cv_.notify_all();
     }
 
     [[nodiscard]] bool valid() const {
@@ -281,6 +298,8 @@ public:
 
 private:
     std::chrono::milliseconds delay_;
+    bool hold_response_ = false;
+    bool response_released_ = false;
     httplib::Server server_;
     int port_{0};
     std::thread thread_;
@@ -296,6 +315,7 @@ public:
         std::string command,
         std::string final_text = "scripted bash complete"
     ) : command_(std::move(command)), final_text_(std::move(final_text)) {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             std::size_t count = 0;
             {
@@ -406,6 +426,7 @@ public:
         tool_input_json_(std::move(tool_input_json)),
         tool_use_id_(std::move(tool_use_id)),
         final_text_(std::move(final_text)) {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             std::size_t count = 0;
             {
@@ -504,6 +525,7 @@ private:
 class LocalPerTurnBashPwdMessagesServer {
 public:
     LocalPerTurnBashPwdMessagesServer() {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             {
                 std::lock_guard lock(mutex_);
@@ -961,6 +983,15 @@ TEST(Tools, BuiltInAgentDefinitionsHonorNativeFeatureGates) {
         auto enabled = loom::tools::agent_runtime::built_in_agent_definitions();
         EXPECT_TRUE(has_agent(enabled, "Explore"));
         EXPECT_TRUE(has_agent(enabled, "Plan"));
+        const auto plan = std::ranges::find_if(enabled, [](const auto& agent) {
+            return agent.agent_type == "Plan";
+        });
+        ASSERT_NE(plan, enabled.end());
+        EXPECT_NE(plan->system_prompt.find("software architect and planning specialist for Loom"), std::string::npos);
+        EXPECT_NE(plan->system_prompt.find("READ-ONLY MODE - NO FILE MODIFICATIONS"), std::string::npos);
+        EXPECT_EQ(plan->tools, (std::vector<std::string>{"Read", "Glob", "Grep"}));
+        EXPECT_TRUE(std::ranges::contains(plan->disallowed_tools, "Edit"));
+        EXPECT_TRUE(std::ranges::contains(plan->disallowed_tools, "Write"));
     }
 
     {
@@ -1247,6 +1278,346 @@ Do focused work.
     }
 
     fs::remove_all(root);
+}
+
+TEST(Tools, AgentToolInheritsEnvironmentModelAndPreservesExplicitModelPrecedence) {
+    for (const auto* source : {"environment", "config", "definition", "request"}) {
+        SCOPED_TRACE(source);
+        const auto root = fs::temp_directory_path() / std::format("loom_agent_model_precedence_{}", source);
+        fs::remove_all(root);
+        fs::create_directories(root / ".loom" / "agents");
+        {
+            std::ofstream definition(root / ".loom" / "agents" / "model-probe.md");
+            definition << "---\nname: model-probe\ndescription: Tests inherited model selection\n";
+            if (std::string_view(source) == "definition" || std::string_view(source) == "request") {
+                definition << "model: definition-model\n";
+            } else {
+                definition << "model: inherit\n";
+            }
+            definition << "---\nCall Bash and finish.\n";
+        }
+        LocalScriptedBashToolUseMessagesServer server("printf model-probe", "model selection complete");
+        ASSERT_TRUE(server.valid());
+        EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
+        EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+        EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
+        EnvironmentGuard model_guard("LOOM_MODEL", "environment-model");
+        auto& store = loom::tools::agent_runtime::native_agent_store();
+        store.clear_for_testing();
+        std::string expected_model = "environment-model";
+        {
+            CurrentPathGuard cwd(root);
+            loom::core::ToolRegistry registry;
+            loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
+                .permission_check = test_allow_all_check(),
+            });
+            loom::tools::AgentConfig config;
+            if (std::string_view(source) != "environment") {
+                config.default_model = "config-model";
+                expected_model = "config-model";
+            }
+            if (std::string_view(source) == "definition") expected_model = "definition-model";
+            if (std::string_view(source) == "request") expected_model = "request-model";
+            loom::tools::AgentTool tool(config, 0, &registry);
+            auto input = std::string(R"({"description":"Inspect selected model","prompt":"Call Bash and finish","subagent_type":"model-probe","name":"model-selection-probe")");
+            if (std::string_view(source) == "request") input += R"(,"model":"request-model")";
+            input += "}";
+            auto result = tool.execute(loom::core::ToolInput::from_json(input));
+            ASSERT_TRUE(result.has_value()) << result.error().format();
+            ASSERT_FALSE(result->is_error);
+            ASSERT_TRUE(server.wait_for_request_count(2));
+            for (std::size_t index = 0; index < 2; ++index) {
+                auto body = server.request_body(index);
+                ASSERT_TRUE(body.has_value());
+                auto parsed = loom::utils::json::parse(*body);
+                ASSERT_TRUE(parsed.has_value()) << parsed.error().format();
+                EXPECT_EQ(parsed->root().get("model").as_str(), expected_model);
+            }
+            auto record = store.get("model-selection-probe");
+            ASSERT_TRUE(record.has_value());
+            EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Completed);
+        }
+        store.clear_for_testing();
+        fs::remove_all(root);
+    }
+}
+
+TEST(Tools, RegisteredAgentUsesResolvedModelAndCurrentParentBeforeEnvironmentFallback) {
+    for (const bool background : {false, true}) {
+        for (const auto* source : {"registered", "parent", "definition", "request", "empty", "inherit", "empty-parent"}) {
+            SCOPED_TRACE(std::format("{} background={}", source, background));
+            const auto root = fs::temp_directory_path() /
+                std::format("loom_registered_agent_model_{}_{}", source, background);
+            fs::remove_all(root);
+            fs::create_directories(root / ".loom" / "agents");
+            const bool definition_override = std::string_view(source) == "definition" ||
+                                             std::string_view(source) == "request";
+            {
+                std::ofstream definition(root / ".loom" / "agents" / "model-probe.md");
+                definition << "---\nname: model-probe\ndescription: Registered model inheritance probe\nmodel: "
+                           << (definition_override ? "definition-model" : "inherit")
+                           << "\n---\nCall Bash and finish.\n";
+            }
+            LocalScriptedBashToolUseMessagesServer server("printf registered-model-probe");
+            ASSERT_TRUE(server.valid());
+            EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
+            EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+            EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
+            EnvironmentGuard model_guard("LOOM_MODEL", "stale-environment-model");
+            auto& store = loom::tools::agent_runtime::native_agent_store();
+            store.clear_for_testing();
+            {
+                CurrentPathGuard cwd(root);
+                loom::core::ToolRegistry registry;
+                loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
+                    .permission_check = test_allow_all_check(),
+                    .permission_hook_valid_for_background = true,
+                    .default_model = "resolved-session-model",
+                });
+                auto json = std::string(R"({"description":"Inspect inherited model","prompt":"Call Bash and finish","subagent_type":"model-probe","name":"registered-model-probe")");
+                if (background) json += R"(,"run_in_background":true)";
+                if (std::string_view(source) == "request") json += R"(,"model":"request-model")";
+                if (std::string_view(source) == "empty") json += R"(,"model":"")";
+                if (std::string_view(source) == "inherit") json += R"(,"model":"inherit")";
+                json += "}";
+                auto input = loom::core::ToolInput::from_json(json);
+                std::string expected_model = "resolved-session-model";
+                if (std::string_view(source) != "registered") {
+                    input.parent_model = "current-parent-model";
+                    expected_model = "current-parent-model";
+                }
+                if (std::string_view(source) == "empty-parent") {
+                    input.parent_model = "";
+                    expected_model = "resolved-session-model";
+                }
+                if (std::string_view(source) == "definition") expected_model = "definition-model";
+                if (std::string_view(source) == "request") expected_model = "request-model";
+                auto result = registry.execute("Agent", input);
+                ASSERT_TRUE(result.has_value()) << result.error().format();
+                ASSERT_FALSE(result->is_error);
+                if (background) {
+                    ASSERT_TRUE(wait_for_native_agent_status(
+                        "registered-model-probe", loom::tools::agent_runtime::NativeAgentStatus::Completed,
+                        std::chrono::seconds(3)));
+                    store.wait_for_background_agents();
+                }
+                ASSERT_TRUE(server.wait_for_request_count(2));
+                for (std::size_t index = 0; index < 2; ++index) {
+                    auto body = server.request_body(index);
+                    ASSERT_TRUE(body.has_value());
+                    auto parsed = loom::utils::json::parse(*body);
+                    ASSERT_TRUE(parsed.has_value()) << parsed.error().format();
+                    EXPECT_EQ(parsed->root().get("model").as_str(), expected_model);
+                }
+                auto record = store.get("registered-model-probe");
+                ASSERT_TRUE(record.has_value());
+                EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Completed);
+            }
+            store.clear_for_testing();
+            fs::remove_all(root);
+        }
+    }
+}
+
+TEST(Tools, RecursiveAgentInheritsImmediateParentModelAndHonorsItsOwnOverrides) {
+    EnvironmentGuard nested_agents_guard("LOOM_ENABLE_NESTED_AGENTS", "1");
+    for (const auto* source : {"parent-request", "parent-definition", "child-definition", "child-request"}) {
+        SCOPED_TRACE(source);
+        const auto root = fs::temp_directory_path() / std::format("loom_recursive_agent_model_{}", source);
+        fs::remove_all(root);
+        fs::create_directories(root / ".loom" / "agents");
+        const bool parent_definition = std::string_view(source) == "parent-definition";
+        const bool child_definition = std::string_view(source) == "child-definition" ||
+                                      std::string_view(source) == "child-request";
+        {
+            std::ofstream definition(root / ".loom" / "agents" / "outer-model-probe.md");
+            definition << "---\nname: outer-model-probe\ndescription: Recursive parent model probe\nmodel: "
+                       << (parent_definition ? "outer-definition-model" : "inherit")
+                       << "\n---\nDelegate to the child Agent and finish.\n";
+            std::ofstream child(root / ".loom" / "agents" / "inner-model-probe.md");
+            child << "---\nname: inner-model-probe\ndescription: Recursive child model probe\nmodel: "
+                  << (child_definition ? "inner-definition-model" : "inherit")
+                  << "\n---\nFinish the delegated task.\n";
+        }
+        auto child_json = std::string(R"({"description":"Recursive model probe","prompt":"Finish the task","subagent_type":"inner-model-probe","name":"inner-model-probe")");
+        if (std::string_view(source) == "child-request") child_json += R"(,"model":"inner-request-model")";
+        else child_json += R"(,"model":"inherit")";
+        child_json += "}";
+        LocalScriptedToolUseMessagesServer server("Agent", child_json, "toolu_recursive_model_probe");
+        ASSERT_TRUE(server.valid());
+        EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
+        EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+        EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
+        EnvironmentGuard model_guard("LOOM_MODEL", "stale-environment-model");
+        auto& store = loom::tools::agent_runtime::native_agent_store();
+        store.clear_for_testing();
+        {
+            CurrentPathGuard cwd(root);
+            loom::core::ToolRegistry registry;
+            loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
+                .permission_check = test_allow_all_check(),
+                .default_model = "resolved-session-model",
+            });
+            auto json = std::string(R"({"description":"Outer model probe","prompt":"Delegate and finish","subagent_type":"outer-model-probe","name":"outer-model-probe")");
+            if (!parent_definition) json += R"(,"model":"outer-request-model")";
+            json += "}";
+            auto input = loom::core::ToolInput::from_json(json);
+            input.parent_model = "current-root-model";
+            auto result = registry.execute("Agent", input);
+            ASSERT_TRUE(result.has_value()) << result.error().format();
+            ASSERT_FALSE(result->is_error);
+            ASSERT_TRUE(server.wait_for_request_count(3));
+            const std::string outer_model = parent_definition ? "outer-definition-model" : "outer-request-model";
+            std::string inner_model = outer_model;
+            if (std::string_view(source) == "child-definition") inner_model = "inner-definition-model";
+            if (std::string_view(source) == "child-request") inner_model = "inner-request-model";
+            const std::array expected_models{outer_model, inner_model, outer_model};
+            for (std::size_t index = 0; index < expected_models.size(); ++index) {
+                auto body = server.request_body(index);
+                ASSERT_TRUE(body.has_value());
+                auto parsed = loom::utils::json::parse(*body);
+                ASSERT_TRUE(parsed.has_value()) << parsed.error().format();
+                EXPECT_EQ(parsed->root().get("model").as_str(), expected_models[index]);
+            }
+            for (const auto* id : {"outer-model-probe", "inner-model-probe"}) {
+                auto record = store.get(id);
+                ASSERT_TRUE(record.has_value());
+                EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Completed);
+            }
+        }
+        store.clear_for_testing();
+        fs::remove_all(root);
+    }
+}
+
+TEST(Tools, RuntimeTeamCreateAndTerminalResumeForwardCurrentParentModel) {
+    const auto root = fs::temp_directory_path() / "loom_team_model_context_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
+    EnvironmentGuard agent_runtime_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
+    EnvironmentGuard team_name_guard("LOOM_TEAM_NAME", "model-context-team");
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    auto& team_store = loom::tools::global_team_store();
+    auto& agent_store = loom::tools::agent_runtime::native_agent_store();
+    team_store.clear_for_testing();
+    agent_store.clear_for_testing();
+    {
+        CurrentPathGuard cwd(root);
+        std::vector<loom::core::ToolInput> member_inputs;
+        class AgentContextProbe final : public loom::core::ITool {
+        public:
+            explicit AgentContextProbe(std::vector<loom::core::ToolInput>& inputs) : inputs_(inputs) {}
+            const loom::core::ToolDefinition& definition() const override { return definition_; }
+            bool check_permission(const loom::core::ToolInput&) const override { return true; }
+            loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput& input) override {
+                inputs_.push_back(input);
+                return loom::core::ToolResult::success("member started");
+            }
+        private:
+            std::vector<loom::core::ToolInput>& inputs_;
+            loom::core::ToolDefinition definition_{.name = "Agent", .permission = loom::core::ToolPermission::ReadOnly};
+        };
+        loom::core::ToolRegistry registry;
+        // Register the probe first: runtime registration preserves already-installed tools.
+        registry.register_tool(std::make_unique<AgentContextProbe>(member_inputs));
+        loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
+            .permission_check = test_allow_all_check(),
+            .default_model = "stale-registered-model",
+        });
+        auto input = loom::core::ToolInput::from_json(R"({
+          "team_id":"model-context-team", "team_name":"model-context-team", "start_native_agents":true,
+          "members":[
+            {"agent_id":"inherited-member", "subagent_type":"general-purpose"},
+            {"agent_id":"second-member", "subagent_type":"general-purpose"}
+          ]
+        })");
+        input.parent_model = "current-parent-model";
+        auto result = registry.execute("team_create", input);
+        ASSERT_TRUE(result.has_value()) << result.error().format();
+        ASSERT_FALSE(result->is_error);
+        ASSERT_EQ(member_inputs.size(), 2u);
+        for (const auto& member_input : member_inputs) {
+            EXPECT_EQ(member_input.parent_model, std::optional<std::string>{"current-parent-model"});
+            EXPECT_EQ(member_input.json().find("current-parent-model"), std::string_view::npos);
+        }
+        agent_store.mark_completed("inherited-member", "initial member task complete");
+        auto resume_input = loom::core::ToolInput::from_json(R"({
+          "target_agent":"inherited-member", "content":"Continue the task", "from_agent":"team-lead"
+        })");
+        resume_input.parent_model = "updated-parent-model";
+        auto resumed = registry.execute("send_message", resume_input);
+        ASSERT_TRUE(resumed.has_value()) << resumed.error().format();
+        ASSERT_FALSE(resumed->is_error);
+        ASSERT_EQ(member_inputs.size(), 3u);
+        EXPECT_EQ(member_inputs.back().parent_model, std::optional<std::string>{"updated-parent-model"});
+        EXPECT_EQ(member_inputs.back().json().find("updated-parent-model"), std::string_view::npos);
+        auto resumed_body = loom::utils::json::parse(member_inputs.back().json());
+        ASSERT_TRUE(resumed_body.has_value());
+        EXPECT_EQ(resumed_body->root().get("agent_id").as_str(), "inherited-member");
+        EXPECT_TRUE(resumed_body->root().get("resume_existing").as_bool());
+    }
+    team_store.clear_for_testing();
+    agent_store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(Tools, QueryAssemblyRegistersFinalResolvedModelForDirectAgentCalls) {
+    for (const bool overridden : {false, true}) {
+        SCOPED_TRACE(overridden);
+        const auto root = fs::temp_directory_path() / std::format("loom_assembly_direct_agent_model_{}", overridden);
+        fs::remove_all(root);
+        fs::create_directories(root);
+        LocalScriptedBashToolUseMessagesServer server("printf assembly-model-probe");
+        ASSERT_TRUE(server.valid());
+        EnvironmentGuard runtime_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
+        EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+        EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
+        EnvironmentGuard model_guard("LOOM_MODEL", "stale-environment-model");
+        auto& store = loom::tools::agent_runtime::native_agent_store();
+        store.clear_for_testing();
+        {
+            CurrentPathGuard cwd(root);
+            loom::core::Settings settings;
+            settings.model.default_model = "file-config-model";
+            settings.network.api_key = "test-key";
+            settings.network.base_url = server.base_url();
+            loom::query::AssemblyOverrides overrides;
+            if (overridden) overrides.requested_model = "requested-model";
+            auto engine_config = loom::query::resolve_engine_config(settings, overrides);
+            ASSERT_TRUE(engine_config.has_value()) << engine_config.error().format();
+            bool callback_called = false;
+            loom::query::AssemblyConfig assembly_config;
+            assembly_config.engine = *engine_config;
+            // Exercise registration before QueryEngine exists, so its per-call
+            // parent context cannot conceal a missing registration default.
+            assembly_config.register_extra_tools = [&](loom::core::ToolRegistry& registry) {
+                callback_called = true;
+                auto result = registry.execute("Agent", loom::core::ToolInput::from_json(R"({
+                  "description":"Assembly model probe", "prompt":"Call Bash and finish",
+                  "subagent_type":"general-purpose", "name":"assembly-model-probe"
+                })"));
+                ASSERT_TRUE(result.has_value()) << result.error().format();
+                ASSERT_FALSE(result->is_error);
+            };
+            loom::query::AssemblyCallbacks callbacks;
+            callbacks.permission_check = test_allow_all_check();
+            auto assembled = loom::query::assemble(assembly_config, callbacks);
+            ASSERT_TRUE(assembled.has_value()) << assembled.error().format();
+            ASSERT_TRUE(callback_called);
+            ASSERT_TRUE(server.wait_for_request_count(2));
+            const auto expected_model = overridden ? "requested-model" : "file-config-model";
+            for (std::size_t index = 0; index < 2; ++index) {
+                auto body = server.request_body(index);
+                ASSERT_TRUE(body.has_value());
+                auto parsed = loom::utils::json::parse(*body);
+                ASSERT_TRUE(parsed.has_value());
+                EXPECT_EQ(parsed->root().get("model").as_str(), expected_model);
+            }
+        }
+        store.clear_for_testing();
+        fs::remove_all(root);
+    }
 }
 
 TEST(Tools, AgentToolAppliesAgentEffortToApiRequest) {
@@ -2107,6 +2478,680 @@ Review with hooks.
     fs::remove_all(root);
 }
 
+TEST(NativeAgentStore, ActiveCancellationWaitsForCleanupAndWinsOverSuccess) {
+    const auto root = fs::temp_directory_path() / "loom_agent_store_cancel_cleanup_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    auto record = loom::tools::agent_runtime::make_native_agent_record("cleanup-agent", "runtime");
+    record.background = true;
+    store.upsert(std::move(record));
+
+    std::promise<void> entered;
+    std::promise<void> release_cleanup;
+    auto cleanup_gate = release_cleanup.get_future();
+    store.run_background_agent("cleanup-agent", [&] {
+        store.mark_running("cleanup-agent");
+        entered.set_value();
+        cleanup_gate.wait();
+        store.append_transcript("cleanup-agent", "system: cleanup finished");
+        // Cancellation must win even if the loop produced a successful result
+        // before the request arrived during cleanup.
+        store.finish_agent("cleanup-agent", std::string("finished result"));
+    });
+    entered.get_future().wait();
+    store.request_cancel("cleanup-agent", "stop requested");
+    const auto pending = store.get("cleanup-agent");
+    EXPECT_TRUE(pending.has_value());
+    if (pending) {
+        EXPECT_EQ(pending->status, loom::tools::agent_runtime::NativeAgentStatus::Running);
+        EXPECT_TRUE(pending->cancel_requested);
+    }
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+
+    release_cleanup.set_value();
+    store.wait_for_background_agents();
+    const auto cancelled = store.get("cleanup-agent");
+    ASSERT_TRUE(cancelled.has_value());
+    EXPECT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+    EXPECT_TRUE(std::ranges::contains(cancelled->transcript, "system: cleanup finished"));
+    EXPECT_FALSE(cancelled->output.has_value());
+    EXPECT_EQ(store.take_pending_task_notifications().size(), 1u);
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(NativeAgentStore, ClearWaitsForWorkerExitAfterTerminalStatus) {
+    const auto root = fs::temp_directory_path() / "loom_agent_store_clear_cleanup_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    store.upsert(loom::tools::agent_runtime::make_native_agent_record("clear-agent", "runtime"));
+    std::promise<void> terminal_published;
+    std::promise<void> release_worker;
+    auto worker_gate = release_worker.get_future();
+    store.run_background_agent("clear-agent", [&] {
+        store.mark_completed("clear-agent", "finished result");
+        terminal_published.set_value();
+        worker_gate.wait();
+        store.append_transcript("clear-agent", "system: worker exited after cleanup");
+    });
+    terminal_published.get_future().wait();
+    std::promise<void> clear_started;
+    auto clear = std::async(std::launch::async, [&] {
+        clear_started.set_value();
+        store.clear_for_testing();
+    });
+    clear_started.get_future().wait();
+    EXPECT_EQ(clear.wait_for(std::chrono::milliseconds(10)), std::future_status::timeout);
+    release_worker.set_value();
+    clear.get();
+
+    // Clear drains cleanup writes before releasing its in-memory records. The
+    // persisted record remains loadable and cannot race directory removal.
+    const auto persisted = loom::tools::agent_runtime::load_native_agent_record("clear-agent");
+    ASSERT_TRUE(persisted.has_value());
+    EXPECT_TRUE(std::ranges::contains(persisted->transcript, "system: worker exited after cleanup"));
+    fs::remove_all(root);
+}
+
+TEST(NativeAgentStore, BackgroundExceptionPublishesFailureAndReleasesWorker) {
+    const auto root = fs::temp_directory_path() / "loom_agent_store_worker_exception_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    store.upsert(loom::tools::agent_runtime::make_native_agent_record("throwing-agent", "runtime"));
+    store.run_background_agent("throwing-agent", [] {
+        throw std::runtime_error("forced worker exception");
+    });
+    store.wait_for_background_agents();
+    const auto failed = store.get("throwing-agent");
+    ASSERT_TRUE(failed.has_value());
+    EXPECT_EQ(failed->status, loom::tools::agent_runtime::NativeAgentStatus::Failed);
+    ASSERT_TRUE(failed->error.has_value());
+    EXPECT_EQ(*failed->error, "forced worker exception");
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(NativeAgentStore, WorkerCannotJoinItsOwnStore) {
+    const auto root = fs::temp_directory_path() / "loom_agent_store_self_join_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    store.upsert(loom::tools::agent_runtime::make_native_agent_record("self-join-agent", "runtime"));
+    store.run_background_agent("self-join-agent", [&] { store.wait_for_background_agents(); });
+    store.wait_for_background_agents();
+    const auto failed = store.get("self-join-agent");
+    ASSERT_TRUE(failed.has_value());
+    EXPECT_EQ(failed->status, loom::tools::agent_runtime::NativeAgentStatus::Failed);
+    ASSERT_TRUE(failed->error.has_value());
+    EXPECT_NE(failed->error->find("cannot wait for its own store workers"), std::string::npos);
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(NativeAgentStore, RepeatedBackgroundLaunchesPublishEachCompletionOnce) {
+    const auto root = fs::temp_directory_path() / "loom_agent_store_repeated_launch_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    constexpr int worker_count = 16;
+    for (int index = 0; index < worker_count; ++index) {
+        const auto agent_id = std::format("repeated-agent-{}", index);
+        auto record = loom::tools::agent_runtime::make_native_agent_record(agent_id, "runtime");
+        record.background = true;
+        store.upsert(std::move(record));
+        auto completed = std::make_shared<std::promise<void>>();
+        auto completion = completed->get_future();
+        store.run_background_agent(agent_id, [&, agent_id, completed] {
+            store.finish_agent(agent_id, std::string("finished result"));
+            completed->set_value();
+        });
+        completion.wait();
+    }
+    store.wait_for_background_agents();
+    const auto records = store.list();
+    ASSERT_EQ(records.size(), worker_count);
+    for (const auto& record : records) {
+        EXPECT_EQ(record.status, loom::tools::agent_runtime::NativeAgentStatus::Completed);
+        EXPECT_EQ(std::ranges::count(record.transcript, "assistant: finished result"), 1);
+    }
+    EXPECT_EQ(store.take_pending_task_notifications().size(), worker_count);
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(NativeAgentStore, OwnerShutdownDrainsOnlyItsWorkersAndRejectsNestedLaunches) {
+    const auto root = fs::temp_directory_path() / "loom_agent_owner_shutdown_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    std::stop_source owner_a;
+    std::stop_source owner_b;
+    for (const auto* id : {"owner-a-agent", "owner-b-agent", "nested-agent"}) {
+        auto record = loom::tools::agent_runtime::make_native_agent_record(id, "runtime");
+        record.background = true;
+        store.upsert(std::move(record));
+    }
+    std::binary_semaphore stop_a{0};
+    std::binary_semaphore stop_b{0};
+    std::binary_semaphore cleanup_a{0};
+    std::promise<void> entered_a;
+    std::promise<void> entered_b;
+    std::promise<void> cancellation_seen_a;
+    std::atomic<bool> nested_executed{false};
+    store.run_background_agent("owner-a-agent", [&] {
+        std::stop_callback cancelled(owner_a.get_token(), [&] { stop_a.release(); });
+        store.mark_running("owner-a-agent");
+        entered_a.set_value();
+        stop_a.acquire();
+        cancellation_seen_a.set_value();
+        cleanup_a.acquire();
+        // A child cannot extend the owner's lifetime once shutdown has started.
+        EXPECT_THROW(store.run_background_agent("nested-agent", [&] {
+            nested_executed = true;
+        }, owner_a.get_token()), std::runtime_error);
+        store.append_transcript("owner-a-agent", "system: owner cleanup finished");
+        store.finish_agent("owner-a-agent", std::string("result before shutdown"));
+    }, owner_a.get_token());
+    store.run_background_agent("owner-b-agent", [&] {
+        std::stop_callback cancelled(owner_b.get_token(), [&] { stop_b.release(); });
+        store.mark_running("owner-b-agent");
+        entered_b.set_value();
+        stop_b.acquire();
+        store.finish_agent("owner-b-agent", std::string("result before shutdown"));
+    }, owner_b.get_token());
+    entered_a.get_future().wait();
+    entered_b.get_future().wait();
+    auto shutdown_a = std::async(std::launch::async, [&] {
+        owner_a.request_stop();
+        store.cancel_and_wait_for_background_agents(owner_a.get_token());
+    });
+    cancellation_seen_a.get_future().wait();
+    const auto pending_a = store.get("owner-a-agent");
+    EXPECT_TRUE(pending_a.has_value());
+    if (pending_a) EXPECT_EQ(pending_a->status, loom::tools::agent_runtime::NativeAgentStatus::Running);
+    cleanup_a.release();
+    shutdown_a.get();
+    const auto completed_a = store.get("owner-a-agent");
+    const auto running_b = store.get("owner-b-agent");
+    EXPECT_TRUE(completed_a.has_value());
+    EXPECT_TRUE(running_b.has_value());
+    if (completed_a) {
+        EXPECT_EQ(completed_a->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+        EXPECT_TRUE(std::ranges::contains(completed_a->transcript, "system: owner cleanup finished"));
+    }
+    if (running_b) {
+        EXPECT_EQ(running_b->status, loom::tools::agent_runtime::NativeAgentStatus::Running);
+        EXPECT_FALSE(running_b->cancel_requested);
+    }
+    EXPECT_FALSE(owner_b.stop_requested());
+    EXPECT_FALSE(nested_executed);
+    owner_b.request_stop();
+    store.cancel_and_wait_for_background_agents(owner_b.get_token());
+    const auto completed_b = store.get("owner-b-agent");
+    ASSERT_TRUE(completed_b.has_value());
+    EXPECT_EQ(completed_b->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(NativeAgentStore, ClosedOwnerRejectsForegroundExecutionWithoutPublishingBeforeCleanup) {
+    const auto root = fs::temp_directory_path() / "loom_agent_closed_owner_foreground_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    store.upsert(loom::tools::agent_runtime::make_native_agent_record("closed-foreground", "runtime"));
+    std::stop_source owner;
+    owner.request_stop();
+    EXPECT_THROW(store.begin_execution("closed-foreground", owner.get_token()), std::runtime_error);
+    const auto rejected = store.get("closed-foreground");
+    ASSERT_TRUE(rejected.has_value());
+    EXPECT_EQ(rejected->status, loom::tools::agent_runtime::NativeAgentStatus::Queued);
+    EXPECT_TRUE(rejected->cancel_requested);
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    store.append_transcript("closed-foreground", "system: rejected execution cleanup finished");
+    store.finish_agent("closed-foreground", std::unexpected(std::string("owner is shutting down")));
+    const auto finished = store.get("closed-foreground");
+    ASSERT_TRUE(finished.has_value());
+    EXPECT_EQ(finished->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(NativeAgentStore, ForegroundCancellationWaitsForCleanupAndPublishesOnce) {
+    const auto root = fs::temp_directory_path() / "loom_agent_foreground_cancel_cleanup_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    store.upsert(loom::tools::agent_runtime::make_native_agent_record("foreground-cleanup", "runtime"));
+    std::binary_semaphore cleanup_gate{0};
+    std::promise<void> entered_cleanup;
+    auto execution = std::async(std::launch::async, [&] {
+        store.begin_execution("foreground-cleanup");
+        store.mark_running("foreground-cleanup");
+        entered_cleanup.set_value();
+        cleanup_gate.acquire();
+        store.append_transcript("foreground-cleanup", "system: foreground cleanup finished");
+        store.finish_agent("foreground-cleanup", std::string("finished result"));
+        store.end_execution("foreground-cleanup");
+    });
+    entered_cleanup.get_future().wait();
+    store.request_cancel("foreground-cleanup", "stop during foreground cleanup");
+    const auto pending = store.get("foreground-cleanup");
+    EXPECT_TRUE(pending.has_value());
+    if (pending) {
+        EXPECT_EQ(pending->status, loom::tools::agent_runtime::NativeAgentStatus::Running);
+        EXPECT_TRUE(pending->cancel_requested);
+    }
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    cleanup_gate.release();
+    execution.get();
+    const auto cancelled = store.get("foreground-cleanup");
+    ASSERT_TRUE(cancelled.has_value());
+    EXPECT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+    EXPECT_TRUE(std::ranges::contains(cancelled->transcript, "system: foreground cleanup finished"));
+    EXPECT_FALSE(cancelled->output.has_value());
+    // Repeated finalization cannot overwrite cancellation or duplicate its transcript.
+    const auto transcript = cancelled->transcript;
+    store.finish_agent("foreground-cleanup", std::string("late success"));
+    EXPECT_EQ(store.get("foreground-cleanup")->transcript, transcript);
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(NativeAgentStore, FinalizationPreservesPublishedResultsAndDeliveredNotifications) {
+    const auto root = fs::temp_directory_path() / "loom_agent_finalization_idempotence_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    auto completed_record = loom::tools::agent_runtime::make_native_agent_record("published-completion", "runtime");
+    completed_record.background = true;
+    std::stop_source completion_owner;
+    store.begin_execution(std::move(completed_record), completion_owner.get_token());
+    store.mark_running("published-completion");
+    store.finish_agent("published-completion", std::string("published success"));
+    const auto completed = store.get("published-completion");
+    ASSERT_TRUE(completed.has_value());
+    ASSERT_EQ(completed->status, loom::tools::agent_runtime::NativeAgentStatus::Completed);
+    ASSERT_EQ(store.take_pending_task_notifications().size(), 1u);
+    // Owner shutdown also sees the brief interval between finalization and unregistration.
+    completion_owner.request_stop();
+    store.cancel_and_wait_for_background_agents(completion_owner.get_token());
+    const auto owner_shutdown_completion = store.get("published-completion");
+    ASSERT_TRUE(owner_shutdown_completion.has_value());
+    EXPECT_EQ(owner_shutdown_completion->status, loom::tools::agent_runtime::NativeAgentStatus::Completed);
+    EXPECT_FALSE(owner_shutdown_completion->cancel_requested);
+    EXPECT_EQ(owner_shutdown_completion->output, completed->output);
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    // The execution remains registered briefly after finalization while its caller unwinds.
+    store.request_cancel("published-completion", "late cancellation after successful finalization");
+    store.finish_agent("published-completion", std::unexpected(std::string("late conflicting failure")));
+    store.end_execution("published-completion");
+    const auto unchanged_completion = store.get("published-completion");
+    ASSERT_TRUE(unchanged_completion.has_value());
+    EXPECT_EQ(unchanged_completion->status, completed->status);
+    EXPECT_EQ(unchanged_completion->output, completed->output);
+    EXPECT_EQ(unchanged_completion->error, completed->error);
+    EXPECT_EQ(unchanged_completion->cancel_requested, completed->cancel_requested);
+    EXPECT_EQ(unchanged_completion->transcript, completed->transcript);
+    EXPECT_TRUE(unchanged_completion->notification_delivered);
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+
+    auto cancelled_record = loom::tools::agent_runtime::make_native_agent_record("published-cancellation", "runtime");
+    cancelled_record.background = true;
+    store.begin_execution(std::move(cancelled_record));
+    store.mark_running("published-cancellation");
+    store.request_cancel("published-cancellation", "stop requested");
+    store.append_transcript("published-cancellation", "system: cancellation cleanup finished");
+    store.finish_agent("published-cancellation", std::unexpected(std::string("cancelled while cleaning up")));
+    const auto cancelled = store.get("published-cancellation");
+    ASSERT_TRUE(cancelled.has_value());
+    ASSERT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+    ASSERT_EQ(store.take_pending_task_notifications().size(), 1u);
+    store.request_cancel("published-cancellation", "late conflicting cancellation request");
+    store.finish_agent("published-cancellation", std::unexpected(std::string("late conflicting cancellation reason")));
+    store.finish_agent("published-cancellation", std::string("late conflicting success"));
+    store.end_execution("published-cancellation");
+    const auto unchanged_cancellation = store.get("published-cancellation");
+    ASSERT_TRUE(unchanged_cancellation.has_value());
+    EXPECT_EQ(unchanged_cancellation->status, cancelled->status);
+    EXPECT_EQ(unchanged_cancellation->output, cancelled->output);
+    EXPECT_EQ(unchanged_cancellation->error, cancelled->error);
+    EXPECT_EQ(unchanged_cancellation->transcript, cancelled->transcript);
+    EXPECT_TRUE(unchanged_cancellation->notification_delivered);
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(NativeAgentStore, RecordRegistrationMakesQueuedAndRunningExecutionsActiveAtomically) {
+    const auto root = fs::temp_directory_path() / "loom_agent_atomic_execution_registration_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    for (const auto status : {loom::tools::agent_runtime::NativeAgentStatus::Queued,
+                              loom::tools::agent_runtime::NativeAgentStatus::Running}) {
+        const auto agent_id = std::format("registered-{}", loom::tools::agent_runtime::native_agent_status_name(status));
+        auto record = loom::tools::agent_runtime::make_native_agent_record(agent_id, "runtime");
+        record.status = status;
+        store.begin_execution(std::move(record));
+        const auto registered = store.get(agent_id);
+        ASSERT_TRUE(registered.has_value());
+        EXPECT_EQ(registered->status, status);
+        store.request_cancel(agent_id, "stop immediately after registration");
+        const auto pending = store.get(agent_id);
+        ASSERT_TRUE(pending.has_value());
+        // There is no visible record without its active execution registration.
+        EXPECT_EQ(pending->status, status);
+        EXPECT_TRUE(pending->cancel_requested);
+        EXPECT_TRUE(store.take_pending_task_notifications().empty());
+        store.append_transcript(agent_id, "system: registered execution cleanup finished");
+        store.finish_agent(agent_id, std::string("result before cancellation"));
+        store.end_execution(agent_id);
+        const auto cancelled = store.get(agent_id);
+        ASSERT_TRUE(cancelled.has_value());
+        EXPECT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+        EXPECT_TRUE(std::ranges::contains(cancelled->transcript, "system: registered execution cleanup finished"));
+        EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    }
+    std::stop_source closed_owner;
+    closed_owner.request_stop();
+    EXPECT_THROW(store.begin_execution(
+        loom::tools::agent_runtime::make_native_agent_record("registered-closed-owner", "runtime"),
+        closed_owner.get_token()), std::runtime_error);
+    const auto rejected = store.get("registered-closed-owner");
+    ASSERT_TRUE(rejected.has_value());
+    EXPECT_EQ(rejected->status, loom::tools::agent_runtime::NativeAgentStatus::Queued);
+    EXPECT_TRUE(rejected->cancel_requested);
+    store.append_transcript("registered-closed-owner", "system: closed owner cleanup finished");
+    store.finish_agent("registered-closed-owner", std::unexpected(std::string("owner is shutting down")));
+    const auto cancelled = store.get("registered-closed-owner");
+    ASSERT_TRUE(cancelled.has_value());
+    EXPECT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+    EXPECT_TRUE(std::ranges::contains(cancelled->transcript, "system: closed owner cleanup finished"));
+    EXPECT_TRUE(store.take_pending_task_notifications().empty());
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(Tools, RegistryShutdownDrainsWorkersBeforeDestroyingBorrowedToolsAndHandlers) {
+    static_assert(!std::is_move_constructible_v<loom::core::ToolRegistry>);
+    static_assert(!std::is_move_assignable_v<loom::core::ToolRegistry>);
+    const auto root = fs::temp_directory_path() / "loom_registry_borrowed_worker_shutdown_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", root.string());
+    loom::tools::agent_runtime::NativeAgentStore store;
+    auto record = loom::tools::agent_runtime::make_native_agent_record("borrowed-worker", "runtime");
+    record.background = true;
+    store.upsert(std::move(record));
+    std::atomic<bool> tool_destroyed{false};
+    std::atomic<int> tool_calls{0};
+    std::atomic<int> permission_calls{0};
+    std::atomic<int> missing_calls{0};
+    std::atomic<int> shutdown_calls{0};
+    class BorrowedTool final : public loom::core::ITool {
+    public:
+        BorrowedTool(std::atomic<bool>& destroyed, std::atomic<int>& calls)
+            : destroyed_(destroyed), calls_(calls) {}
+        ~BorrowedTool() override { destroyed_ = true; }
+        const loom::core::ToolDefinition& definition() const override { return definition_; }
+        loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+            EXPECT_FALSE(destroyed_);
+            ++calls_;
+            return loom::core::ToolResult::success("borrowed tool remains live");
+        }
+        bool check_permission(const loom::core::ToolInput&) const override { return true; }
+    private:
+        std::atomic<bool>& destroyed_;
+        std::atomic<int>& calls_;
+        loom::core::ToolDefinition definition_{.name = "BorrowedTool", .permission = loom::core::ToolPermission::ReadOnly};
+    };
+    auto permission = [&] { ++permission_calls; return true; };
+    auto registry = std::make_unique<loom::core::ToolRegistry>();
+    auto* borrowed_registry = registry.get();
+    registry->register_tool(std::make_unique<BorrowedTool>(tool_destroyed, tool_calls));
+    auto handler_lifetime = std::make_shared<int>(0);
+    std::weak_ptr<int> handler_observer = handler_lifetime;
+    registry->set_missing_tool_handler([&, lifetime = std::move(handler_lifetime)](
+        std::string_view, const loom::core::ToolInput&) -> loom::core::Result<loom::core::ToolResult> {
+        EXPECT_FALSE(handler_observer.expired());
+        ++*lifetime;
+        ++missing_calls;
+        return loom::core::ToolResult::success("missing-tool handler remains live");
+    });
+    EXPECT_TRUE(registry->set_shutdown_handler([&](std::stop_token owner) {
+        ++shutdown_calls;
+        EXPECT_TRUE(owner.stop_requested());
+        store.cancel_and_wait_for_background_agents(owner);
+    }));
+    // Repeated AgentTool bindings must not replace the first owner's drain.
+    EXPECT_TRUE(registry->set_shutdown_handler([&](std::stop_token) { shutdown_calls += 100; }));
+    const auto owner = registry->background_stop_token();
+    std::binary_semaphore stopped{0};
+    std::promise<void> entered;
+    store.run_background_agent("borrowed-worker", [&] {
+        std::stop_callback cancelled(owner, [&] { stopped.release(); });
+        store.mark_running("borrowed-worker");
+        entered.set_value();
+        stopped.acquire();
+        EXPECT_TRUE(permission());
+        auto tool = borrowed_registry->execute("BorrowedTool", loom::core::ToolInput::from_json("{}"));
+        EXPECT_TRUE(tool.has_value());
+        auto missing = borrowed_registry->execute("UnregisteredTool", loom::core::ToolInput::from_json("{}"));
+        EXPECT_TRUE(missing.has_value());
+        store.append_transcript("borrowed-worker", "system: borrowed dependency cleanup finished");
+        store.finish_agent("borrowed-worker", std::string("worker result"));
+    }, owner);
+    entered.get_future().wait();
+    registry.reset();
+    EXPECT_TRUE(tool_destroyed);
+    EXPECT_TRUE(handler_observer.expired());
+    EXPECT_EQ(tool_calls.load(), 1);
+    EXPECT_EQ(permission_calls.load(), 1);
+    EXPECT_EQ(missing_calls.load(), 1);
+    EXPECT_EQ(shutdown_calls.load(), 1);
+    const auto cancelled = store.get("borrowed-worker");
+    ASSERT_TRUE(cancelled.has_value());
+    EXPECT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+    EXPECT_TRUE(std::ranges::contains(cancelled->transcript, "system: borrowed dependency cleanup finished"));
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(Tools, AgentToolBindsRegistryShutdownToCancelAndDrainItsBackgroundWorker) {
+    const auto root = fs::temp_directory_path() / "loom_agent_registry_shutdown_integration_test";
+    fs::remove_all(root);
+    fs::create_directories(root);
+    LocalSlowMessagesStreamServer server(std::chrono::milliseconds(0), true);
+    ASSERT_TRUE(server.valid());
+    EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
+    EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+    EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
+    EnvironmentGuard model_guard("LOOM_MODEL", "registry-shutdown-test-model");
+    auto& store = loom::tools::agent_runtime::native_agent_store();
+    store.clear_for_testing();
+    {
+        CurrentPathGuard cwd(root);
+        auto registry = std::make_unique<loom::core::ToolRegistry>();
+        loom::tools::register_runtime_tools(*registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+        loom::tools::AgentTool tool({}, 0, registry.get(), test_allow_all_check(), true);
+        auto started = tool.execute(loom::core::ToolInput::from_json(R"({
+          "description": "Exit with a streaming background agent",
+          "prompt": "Wait for registry shutdown",
+          "run_in_background": true,
+          "name": "registry-owned-agent"
+        })"));
+        ASSERT_TRUE(started.has_value()) << started.error().format();
+        ASSERT_FALSE(started->is_error);
+        ASSERT_TRUE(server.wait_for_request());
+        ASSERT_TRUE(wait_for_native_agent_status(
+            "registry-owned-agent",
+            loom::tools::agent_runtime::NativeAgentStatus::Running,
+            std::chrono::seconds(2)));
+        const auto owner = registry->background_stop_token();
+        registry.reset();
+        EXPECT_TRUE(owner.stop_requested());
+        const auto cancelled = store.get("registry-owned-agent");
+        EXPECT_TRUE(cancelled.has_value());
+        if (cancelled) {
+            EXPECT_EQ(cancelled->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+            EXPECT_TRUE(cancelled->cancel_requested);
+        }
+        // No explicit drain is needed before the borrowed registry is released.
+        server.release_response();
+    }
+    store.clear_for_testing();
+    fs::remove_all(root);
+}
+
+TEST(Tools, ForegroundAgentFinalizesSuccessFailureAndExceptionAfterOwnedCleanup) {
+    if (std::system("git --version >/dev/null 2>&1") != 0) {
+        GTEST_SKIP() << "git is required for worktree isolation";
+    }
+    for (const auto* outcome : {"success", "start-hook-failure", "tool-exception", "tool-cancellation", "owner-cancellation"}) {
+        SCOPED_TRACE(outcome);
+        const auto root = fs::temp_directory_path() / std::format("loom_foreground_agent_cleanup_{}", outcome);
+        fs::remove_all(root);
+        fs::create_directories(root / ".loom" / "agents");
+        {
+            std::ofstream readme(root / "README.md");
+            readme << "foreground lifecycle cleanup\n";
+        }
+        {
+            std::ofstream definition(root / ".loom" / "agents" / "lifecycle.md");
+            definition << "---\nname: lifecycle-reviewer\ndescription: Tests foreground lifecycle\n";
+            if (std::string_view(outcome) == "start-hook-failure") {
+                definition << "hooks:\n  SubagentStart:\n    - command: 'echo forced-start-hook-failure >&2; exit 1'\n";
+            }
+            definition << "---\nTest lifecycle cleanup.\n";
+        }
+        ASSERT_EQ(std::system(std::format("git -C \"{}\" init -q --template=", root.string()).c_str()), 0);
+        ASSERT_EQ(std::system(std::format("git -C \"{}\" config user.email test@example.com", root.string()).c_str()), 0);
+        ASSERT_EQ(std::system(std::format("git -C \"{}\" config user.name Test", root.string()).c_str()), 0);
+        ASSERT_EQ(std::system(std::format("git -C \"{}\" add README.md", root.string()).c_str()), 0);
+        ASSERT_EQ(std::system(std::format("git -C \"{}\" commit -q --no-verify -m init", root.string()).c_str()), 0);
+        LocalScriptedToolUseMessagesServer server("LifecycleProbe", "{}", "lifecycle-probe", "foreground finished");
+        ASSERT_TRUE(server.valid());
+        EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
+        EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
+        EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
+        EnvironmentGuard base_url_guard("LOOM_BASE_URL", server.base_url());
+        EnvironmentGuard model_guard("LOOM_MODEL", "foreground-lifecycle-test-model");
+        auto& store = loom::tools::agent_runtime::native_agent_store();
+        store.clear_for_testing();
+        const auto agent_id = std::format("foreground-{}", outcome);
+        auto& team_store = loom::tools::global_team_store();
+        team_store.clear_for_testing();
+        auto team = team_store.create("lifecycle-team", "lifecycle-team", {
+            loom::tools::TeamMember{
+                .agent_id = agent_id,
+                .role = loom::tools::MemberRole::Worker,
+                .status = loom::tools::MemberStatus::Working,
+            },
+        });
+        ASSERT_TRUE(team.has_value()) << std::string(loom::tools::format_error(team.error()));
+        // Populate an owned todo before execution so every exit path must run its guard.
+        ASSERT_TRUE(loom::tools::todo_write_store().execute(loom::tools::TodoWriteRequest{
+            .items = {loom::tools::TodoItem{.id = "owned-todo", .content = "clear on agent exit"}},
+            .agent_id = agent_id,
+        }).has_value());
+        {
+            CurrentPathGuard cwd(root);
+            loom::core::ToolRegistry registry;
+            class LifecycleProbe final : public loom::core::ITool {
+            public:
+                LifecycleProbe(std::string id, bool throws, bool cancels, loom::core::ToolRegistry* owner_registry)
+                    : agent_id_(std::move(id)), throws_(throws), cancels_(cancels), owner_registry_(owner_registry) {}
+                const loom::core::ToolDefinition& definition() const override { return definition_; }
+                loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+                    const auto record = loom::tools::agent_runtime::native_agent_store().get(agent_id_);
+                    EXPECT_TRUE(record.has_value());
+                    if (record) EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Running);
+                    EXPECT_FALSE(loom::tools::todo_write_store().get_items(agent_id_).empty());
+                    if (throws_) throw std::runtime_error("forced foreground tool exception");
+                    if (cancels_) {
+                        loom::tools::agent_runtime::native_agent_store().request_cancel(
+                            agent_id_, "cancel requested by foreground lifecycle probe");
+                    }
+                    if (owner_registry_) {
+                        // The worker requests its owner's stop without joining itself.
+                        owner_registry_->request_shutdown();
+                    }
+                    return loom::core::ToolResult::success("lifecycle probe complete");
+                }
+                bool check_permission(const loom::core::ToolInput&) const override { return true; }
+            private:
+                std::string agent_id_;
+                bool throws_;
+                bool cancels_;
+                loom::core::ToolRegistry* owner_registry_;
+                loom::core::ToolDefinition definition_{.name = "LifecycleProbe", .permission = loom::core::ToolPermission::ReadOnly};
+            };
+            registry.register_tool(std::make_unique<LifecycleProbe>(agent_id,
+                std::string_view(outcome) == "tool-exception",
+                std::string_view(outcome) == "tool-cancellation",
+                std::string_view(outcome) == "owner-cancellation" ? &registry : nullptr));
+            loom::tools::AgentTool tool({}, 0, &registry, test_allow_all_check());
+            auto result = tool.execute(loom::core::ToolInput::from_json(std::format(
+                R"({{"description":"Check foreground cleanup","prompt":"Run LifecycleProbe","subagent_type":"lifecycle-reviewer","agent_id":"{}","team_name":"lifecycle-team","isolation":"worktree"}})",
+                agent_id)));
+            ASSERT_TRUE(result.has_value()) << result.error().format();
+            const bool success = std::string_view(outcome) == "success";
+            const bool cancelled = std::string_view(outcome) == "tool-cancellation" ||
+                std::string_view(outcome) == "owner-cancellation";
+            EXPECT_EQ(result->is_error, !success);
+            const auto record = store.get(agent_id);
+            ASSERT_TRUE(record.has_value());
+            EXPECT_EQ(record->status, success
+                ? loom::tools::agent_runtime::NativeAgentStatus::Completed
+                : cancelled ? loom::tools::agent_runtime::NativeAgentStatus::Cancelled
+                            : loom::tools::agent_runtime::NativeAgentStatus::Failed);
+            EXPECT_TRUE(record->worktree_cleanup_performed);
+            EXPECT_FALSE(record->worktree_path.has_value());
+            EXPECT_FALSE(fs::exists(root / ".loom" / "worktrees" / agent_id));
+            EXPECT_TRUE(loom::tools::todo_write_store().get_items(agent_id).empty());
+            EXPECT_TRUE(store.take_pending_task_notifications().empty());
+            auto completed_team = team_store.get("lifecycle-team");
+            ASSERT_TRUE(completed_team.has_value());
+            const auto member = std::ranges::find_if((*completed_team)->members, [&](const auto& candidate) {
+                return candidate.agent_id == agent_id;
+            });
+            ASSERT_NE(member, (*completed_team)->members.end());
+            EXPECT_EQ(member->status, success ? loom::tools::MemberStatus::Done : loom::tools::MemberStatus::Error);
+            EXPECT_EQ(member->last_result, success ? record->output : record->error);
+            if (success) {
+                ASSERT_TRUE(record->output.has_value());
+                EXPECT_EQ(*record->output, "foreground finished");
+                EXPECT_EQ(std::ranges::count(record->transcript, "assistant: foreground finished"), 1);
+            } else {
+                ASSERT_TRUE(record->error.has_value());
+                EXPECT_NE(record->error->find(std::string_view(outcome) == "tool-exception"
+                    ? "forced foreground tool exception" : cancelled ? "cancelled" : "SubagentStart"), std::string::npos);
+            }
+        }
+        store.clear_for_testing();
+        team_store.clear_for_testing();
+        fs::remove_all(root);
+    }
+}
+
 TEST(Tools, AgentToolExecutesSubagentStopHookWhenBackgroundAgentIsCancelled) {
     auto root = fs::temp_directory_path() / "loom_agent_stop_hook_cancel_test";
     fs::remove_all(root);
@@ -2125,7 +3170,7 @@ Review with stop hooks.
 )MD";
     }
 
-    LocalSlowMessagesStreamServer server(std::chrono::milliseconds(750));
+    LocalSlowMessagesStreamServer server(std::chrono::milliseconds(0), true);
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
@@ -2156,24 +3201,17 @@ Review with stop hooks.
         ASSERT_TRUE(stopped.has_value());
         ASSERT_FALSE(stopped->is_error);
 
-        bool observed_marker = false;
-        for (int attempt = 0; attempt < 100; ++attempt) {
-            if (fs::exists(marker)) {
-                observed_marker = true;
-                break;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        }
-        ASSERT_TRUE(observed_marker);
+        ASSERT_TRUE(wait_for_native_agent_status(
+            "hooked-stop-agent",
+            loom::tools::agent_runtime::NativeAgentStatus::Cancelled,
+            std::chrono::seconds(3)));
+        loom::tools::agent_runtime::native_agent_store().wait_for_background_agents();
+        ASSERT_TRUE(fs::exists(marker));
         std::ifstream marker_in(marker);
         std::string marker_text;
         std::getline(marker_in, marker_text);
         EXPECT_EQ(marker_text, "stop-hooked-stop-agent");
 
-        ASSERT_TRUE(wait_for_native_agent_status(
-            "hooked-stop-agent",
-            loom::tools::agent_runtime::NativeAgentStatus::Cancelled,
-            std::chrono::seconds(3)));
         auto record = loom::tools::agent_runtime::native_agent_store().get("hooked-stop-agent");
         ASSERT_TRUE(record.has_value());
         EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
@@ -2591,6 +3629,8 @@ TEST(Tools, AgentToolBackgroundAgentPreservesLivePermissionHook) {
             "background-live-permission-agent",
             loom::tools::agent_runtime::NativeAgentStatus::Completed,
             std::chrono::seconds(3)));
+        // The borrowed registry and permission callback must outlive worker cleanup.
+        loom::tools::agent_runtime::native_agent_store().wait_for_background_agents();
     }
 
     ASSERT_EQ(calls.size(), 1u);
@@ -4928,4 +5968,22 @@ TEST(Tools, AgentToolBackgroundAgentCwdIsScopedPerToolWithoutChangingProcessCwd)
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
+}
+
+TEST(AgentDisplay, CanonicalDisplayResolvesOverridesAndModelWithoutScaffolds) {
+    namespace display = loom::tools::agent_display;
+    using loom::tools::agent_runtime::AgentDefinition;
+    AgentDefinition builtin;
+    builtin.agent_type = "Explore";
+    builtin.source = "built-in";
+    AgentDefinition project = builtin;
+    project.source = "projectSettings";
+    project.model = "custom-model";
+    const auto resolved = display::resolve_agent_overrides({builtin, project, project}, {project});
+    ASSERT_EQ(resolved.size(), 2u);
+    EXPECT_EQ(resolved[0].overridden_by, "projectSettings");
+    EXPECT_FALSE(resolved[1].overridden_by);
+    EXPECT_EQ(display::resolve_agent_model_display(resolved[0].definition, "default-model"), "default-model");
+    EXPECT_EQ(display::resolve_agent_model_display(resolved[1].definition, "default-model"), "custom-model");
+    EXPECT_EQ(display::override_source_label(*resolved[0].overridden_by), "project");
 }

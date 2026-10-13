@@ -309,7 +309,6 @@ namespace tool_names {
     inline constexpr std::string_view kCronListTool = "cron_list";
     inline constexpr std::string_view kEnterPlanModeTool = "enter_plan_mode";
     inline constexpr std::string_view kEnterWorktreeTool = "enter_worktree";
-    inline constexpr std::string_view kExitPlanModeV2Tool = "exit_plan_mode_v2";
     inline constexpr std::string_view kExitWorktreeTool = "exit_worktree";
     inline constexpr std::string_view kFileEditTool = "file_edit";
     inline constexpr std::string_view kFileReadTool = "file_read";

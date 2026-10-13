@@ -25,6 +25,7 @@ export module loom.ui.permissions.components;
 import loom.ui.foundation.theme_provider;
 
 import std;
+import loom.ui.foundation.design_figures;
 
 import loom.security.permissions_engine;
 
@@ -43,38 +44,38 @@ using MatchStrategy = loom::utils::permissions::MatchStrategy;
     // File tools
     if (tool_name == "FileReadTool" || tool_name == "file_read" ||
         tool_name == "Read" || tool_name == "FileRead")
-        return "📖";
+        return loom::ui::design::figures::kArrowDown;
     if (tool_name == "FileWriteTool" || tool_name == "file_write" ||
         tool_name == "Write" || tool_name == "FileWrite")
-        return "✏️";
+        return loom::ui::design::figures::kDiamond;
     if (tool_name == "FileEditTool" || tool_name == "file_edit" ||
         tool_name == "Edit" || tool_name == "FileEdit")
-        return "🔧";
-    if (tool_name == "GlobTool" || tool_name == "glob")     return "🔍";
-    if (tool_name == "GrepTool" || tool_name == "grep")     return "🔎";
+        return loom::ui::design::figures::kDiamond;
+    if (tool_name == "GlobTool" || tool_name == "glob")     return loom::ui::design::figures::kInfo;
+    if (tool_name == "GrepTool" || tool_name == "grep")     return loom::ui::design::figures::kInfo;
     // Shell tools
-    if (tool_name == "BashTool" || tool_name == "bash")     return "⚡";
-    if (tool_name == "PowerShellTool" || tool_name == "powershell") return "⚡";
-    if (tool_name == "SedEditTool")                         return "🔧";
+    if (tool_name == "BashTool" || tool_name == "bash")     return loom::ui::design::figures::kPlay;
+    if (tool_name == "PowerShellTool" || tool_name == "powershell") return loom::ui::design::figures::kPlay;
+    if (tool_name == "SedEditTool")                         return loom::ui::design::figures::kDiamond;
     // Network tools
-    if (tool_name == "WebFetchTool" || tool_name == "web_fetch") return "🌐";
-    if (tool_name == "WebSearchTool" || tool_name == "web_search") return "🔎";
+    if (tool_name == "WebFetchTool" || tool_name == "web_fetch") return loom::ui::design::figures::kArrowRight;
+    if (tool_name == "WebSearchTool" || tool_name == "web_search") return loom::ui::design::figures::kInfo;
     // Agent / planning
-    if (tool_name == "AgentTool" || tool_name == "agent")   return "🤖";
-    if (tool_name == "SkillTool" || tool_name == "skill")   return "🧩";
-    if (tool_name == "EnterPlanModeTool" || tool_name == "EnterPlanMode") return "📋";
-    if (tool_name == "ExitPlanModeV2Tool" || tool_name == "ExitPlanMode") return "✅";
-    if (tool_name == "TaskCreateTool" || tool_name == "task_create") return "📝";
-    if (tool_name == "TaskUpdateTool" || tool_name == "task_update") return "📝";
-    if (tool_name == "TeamCreateTool" || tool_name == "team_create") return "👥";
+    if (tool_name == "AgentTool" || tool_name == "agent")   return loom::ui::design::figures::kDiamond;
+    if (tool_name == "SkillTool" || tool_name == "skill")   return loom::ui::design::figures::kDiamond;
+    if (tool_name == "EnterPlanModeTool" || tool_name == "EnterPlanMode") return loom::ui::design::figures::kReferenceMark;
+    if (tool_name == "exit_plan_mode" || tool_name == "ExitPlanMode") return loom::ui::design::figures::kTick;
+    if (tool_name == "TaskCreateTool" || tool_name == "task_create") return loom::ui::design::figures::kDiamond;
+    if (tool_name == "TaskUpdateTool" || tool_name == "task_update") return loom::ui::design::figures::kDiamond;
+    if (tool_name == "TeamCreateTool" || tool_name == "team_create") return loom::ui::design::figures::kCircleDouble;
     // MCP / Bridge
-    if (tool_name == "MCPTool" || tool_name == "mcp")       return "🔌";
-    if (tool_name == "NotebookEditTool")                    return "📓";
+    if (tool_name == "MCPTool" || tool_name == "mcp")       return loom::ui::design::figures::kArrowRight;
+    if (tool_name == "NotebookEditTool")                    return loom::ui::design::figures::kReferenceMark;
     // User interaction
-    if (tool_name == "AskUserQuestionTool" || tool_name == "AskUserQuestion") return "❓";
-    if (tool_name == "ComputerUseApproval" || tool_name == "ComputerUse")     return "🖥️";
+    if (tool_name == "AskUserQuestionTool" || tool_name == "AskUserQuestion") return loom::ui::design::figures::kQuestionMarkPrefix;
+    if (tool_name == "ComputerUseApproval" || tool_name == "ComputerUse")     return loom::ui::design::figures::kSquare;
     // Generic
-    return "🛠️";
+    return loom::ui::design::figures::kDiamond;
 }
 
 /// Render a tool icon as an FTXUI Element (fixed 2-cell width)
@@ -99,30 +100,31 @@ enum class ActionKind : std::uint8_t {
 
 [[nodiscard]] inline std::string_view ActionIconGlyph(ActionKind kind) {
     switch (kind) {
-        case ActionKind::Read:        return "📖";
-        case ActionKind::Write:       return "✏️";
-        case ActionKind::Execute:     return "▶";
-        case ActionKind::Network:     return "🌐";
-        case ActionKind::MCP:         return "🔌";
-        case ActionKind::Environment: return "🔐";
-        case ActionKind::Plan:        return "📋";
-        case ActionKind::Other:       return "🛠️";
+        case ActionKind::Read:        return loom::ui::design::figures::kArrowDown;
+        case ActionKind::Write:       return loom::ui::design::figures::kDiamond;
+        case ActionKind::Execute:     return loom::ui::design::figures::kPlay;
+        case ActionKind::Network:     return loom::ui::design::figures::kArrowRight;
+        case ActionKind::MCP:         return loom::ui::design::figures::kArrowRight;
+        case ActionKind::Environment: return loom::ui::design::figures::kQuestionMarkPrefix;
+        case ActionKind::Plan:        return loom::ui::design::figures::kReferenceMark;
+        case ActionKind::Other:       return loom::ui::design::figures::kDiamond;
     }
-    return "🛠️";
+    return loom::ui::design::figures::kDiamond;
 }
 
 [[nodiscard]] inline Color ActionColor(ActionKind kind) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (kind) {
-        case ActionKind::Read:        return Color::Cyan;
-        case ActionKind::Write:       return Color::Yellow;
-        case ActionKind::Execute:     return Color::Magenta;
-        case ActionKind::Network:     return Color::BlueLight;
-        case ActionKind::MCP:         return Color::Purple;
-        case ActionKind::Environment: return Color::Orange1;
-        case ActionKind::Plan:        return Color::GreenLight;
-        case ActionKind::Other:       return Color::GrayLight;
+        case ActionKind::Read:        return pal.info;
+        case ActionKind::Write:       return pal.warning;
+        case ActionKind::Execute:     return pal.primary;
+        case ActionKind::Network:     return pal.info;
+        case ActionKind::MCP:         return pal.primary;
+        case ActionKind::Environment: return pal.permission;
+        case ActionKind::Plan:        return pal.plan_mode;
+        case ActionKind::Other:       return pal.text_muted;
     }
-    return Color::White;
+    return pal.text;
 }
 
 /// Render an action icon with its color as an FTXUI Element
@@ -173,11 +175,12 @@ enum class ActionKind : std::uint8_t {
 [[nodiscard]] inline Element PathLabel(std::string_view path,
                                        std::size_t max_len = 50,
                                        std::optional<std::string_view> workspace_root = {}) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto el = text(MiddleEllipsisPath(path, max_len));
     if (workspace_root && IsInsideWorkspace(path, *workspace_root)) {
         return hbox({
             el,
-            text(" w") | dim | color(Color::Green),
+            text(" w") | dim | color(pal.success),
         });
     }
     return el;
@@ -190,9 +193,10 @@ enum class ActionKind : std::uint8_t {
     bool is_dangerous,
     std::size_t max_len = 50)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto el = text(MiddleEllipsisPath(path, max_len));
     if (is_dangerous) {
-        return el | bold | color(Color::Red);
+        return el | bold | color(pal.danger);
     }
     return el;
 }
@@ -209,23 +213,21 @@ enum class RiskLevel : std::uint8_t {
 };
 
 [[nodiscard]] inline Color RiskPillBgColor(RiskLevel level) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (level) {
-        case RiskLevel::Low:      return Color::Green;
-        case RiskLevel::Medium:   return Color::Yellow;
-        case RiskLevel::High:     return Color::Red;
-        case RiskLevel::Critical: return Color::RedLight;
+        case RiskLevel::Low:      return pal.success;
+        case RiskLevel::Medium:   return pal.warning;
+        case RiskLevel::High:     return pal.danger;
+        case RiskLevel::Critical: return pal.danger;
     }
-    return Color::GrayDark;
+    return pal.muted;
 }
 
 [[nodiscard]] inline Color RiskPillFgColor(RiskLevel level) {
-    switch (level) {
-        case RiskLevel::Low:      return Color::Black;
-        case RiskLevel::Medium:   return Color::Black;
-        case RiskLevel::High:     return Color::White;
-        case RiskLevel::Critical: return Color::White;
-    }
-    return Color::White;
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    // Status fills remain readable when semantic colors collapse in monochrome.
+    (void)level;
+    return pal.inverse_text;
 }
 
 [[nodiscard]] inline std::string_view RiskLabel(RiskLevel level) {
@@ -289,7 +291,8 @@ enum class RiskLevel : std::uint8_t {
 /// for the pre-existing uncoloured in-dialog section separators.
 [[nodiscard]] inline Element ThinDivider(
     std::optional<Color> col = std::nullopt) {
-    return separator() | color(col.value_or(Color::GrayDark));
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    return separator() | color(col.value_or(pal.muted));
 }
 
 // ============================================================
@@ -304,18 +307,29 @@ enum class ItemStatus : std::uint8_t {
 };
 
 [[nodiscard]] inline Color StatusDotColor(ItemStatus s) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (s) {
-        case ItemStatus::Pending:  return Color::Yellow;
-        case ItemStatus::Approved: return Color::Green;
-        case ItemStatus::Denied:   return Color::Red;
-        case ItemStatus::Always:   return Color::Cyan;
+        case ItemStatus::Pending:  return pal.warning;
+        case ItemStatus::Approved: return pal.success;
+        case ItemStatus::Denied:   return pal.danger;
+        case ItemStatus::Always:   return pal.info;
     }
-    return Color::GrayDark;
+    return pal.muted;
 }
 
-/// Render a 2-cell status dot (unicode bullet + 1 space).
+/// Render a 2-cell status marker; shape retains the status in monochrome.
 [[nodiscard]] inline Element StatusDot(ItemStatus s) {
-    return text("● ") | color(StatusDotColor(s));
+    namespace figs = loom::ui::design::figures;
+    const auto glyph = [&] {
+        switch (s) {
+            case ItemStatus::Pending:  return figs::kCircle;
+            case ItemStatus::Approved: return figs::kTick;
+            case ItemStatus::Denied:   return figs::kCross;
+            case ItemStatus::Always:   return figs::kCircleDouble;
+        }
+        return figs::kCircle;
+    }();
+    return text(std::string{glyph} + " ") | color(StatusDotColor(s));
 }
 
 // ============================================================
@@ -342,14 +356,15 @@ enum class PathScope : std::uint8_t {
 }
 
 [[nodiscard]] inline Color PathScopeColor(PathScope s) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (s) {
-        case PathScope::Read:    return Color::Cyan;
-        case PathScope::Write:   return Color::Yellow;
-        case PathScope::Execute: return Color::Magenta;
-        case PathScope::Network: return Color::BlueLight;
-        case PathScope::All:     return Color::Green;
+        case PathScope::Read:    return pal.info;
+        case PathScope::Write:   return pal.warning;
+        case PathScope::Execute: return pal.primary;
+        case PathScope::Network: return pal.info;
+        case PathScope::All:     return pal.success;
     }
-    return Color::White;
+    return pal.text;
 }
 
 /// Render a small scope badge, e.g. `[R]` or `[W]`.
@@ -390,9 +405,10 @@ struct KeyHint {
 {
     Elements parts;
     for (std::size_t i = 0; i < hints.size(); ++i) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto& h = hints[i];
         parts.push_back(text("[") | dim);
-        parts.push_back(text(h.key) | color(Color::Cyan) | bold | dim);
+        parts.push_back(text(h.key) | color(pal.info) | bold | dim);
         parts.push_back(text("] ") | dim);
         parts.push_back(text(h.action) | dim);
         if (i + 1 < hints.size()) parts.push_back(text("  ") | dim);
@@ -406,8 +422,9 @@ struct KeyHint {
 
 /// Render a checkbox state (static label — for embedding in a row).
 [[nodiscard]] inline Element CheckboxBox(bool checked) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return checked
-        ? hbox({text("[") | dim, text("x") | color(Color::Green) | bold, text("]") | dim})
+        ? hbox({text("[") | dim, text("x") | color(pal.success) | bold, text("]") | dim})
         : hbox({text("[") | dim, text(" "),                        text("]") | dim});
 }
 
@@ -471,6 +488,7 @@ struct CheckboxState {
     int max_shown = 5,
     std::size_t max_path_len = 50)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements els;
     int shown = 0;
     for (const auto& p : paths) {
@@ -483,7 +501,7 @@ struct CheckboxState {
     }
     if (paths.size() > static_cast<std::size_t>(max_shown)) {
         auto remaining = paths.size() - static_cast<std::size_t>(max_shown);
-        els.push_back(text(std::format("… and {} more", remaining)) | dim | color(Color::GrayLight));
+        els.push_back(text(std::format("… and {} more", remaining)) | dim | color(pal.text_muted));
     }
     return els;
 }
@@ -505,9 +523,10 @@ struct CheckboxState {
 /// Render a shell command with a "$ " prefix and optional truncation.
 [[nodiscard]] inline Element CommandPreview(std::string_view cmd,
                                             std::size_t max_len = 80) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return hbox({
-        text("$ ") | color(Color::Yellow) | bold,
-        text(HeadEllipsisCommand(cmd, max_len)) | color(Color::Yellow),
+        text("$ ") | color(pal.warning) | bold,
+        text(HeadEllipsisCommand(cmd, max_len)) | color(pal.warning),
     });
 }
 
@@ -520,12 +539,13 @@ struct CheckboxState {
 [[nodiscard]] inline Element DestructiveWarningBanner(
     std::string_view reason = "This command may permanently delete or overwrite files.")
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
         hbox({
-            text("⚠ ") | color(Color::Yellow) | bold,
-            text(std::string{reason}) | color(Color::Yellow) | bold,
+            text("⚠ ") | color(pal.warning) | bold,
+            text(std::string{reason}) | color(pal.warning) | bold,
         }),
-    }) | borderStyled(Color::Yellow) | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg);
+    }) | borderStyled(pal.warning) | bgcolor(pal.warning_tint_bg);
 }
 
 } // namespace loom::ui::permissions::components

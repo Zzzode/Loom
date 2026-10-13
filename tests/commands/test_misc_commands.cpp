@@ -14,6 +14,7 @@ import loom.tools.tool;
 import loom.types.types;
 import loom.commands.agents;
 import loom.commands.clear;
+import loom.commands.copy_cmd;
 import loom.commands.config;
 import loom.config.config;
 import loom.commands.help;
@@ -279,6 +280,7 @@ TEST(TerminalSetupCommand, PathToFileUrlEncodingAndHyperlinkGate) {
 // sessions found."  execute() now loads from ~/.loom/sessions directly.
 TEST(ResumeCommand, ListsSessionsFromDisk) {
     // Override HOME so load_sessions() resolves ~/.loom/sessions to a temp dir.
+    EnvironmentUnsetGuard config_dir_guard("LOOM_CONFIG_DIR");
     const char* old_home = std::getenv("HOME");
     const auto temp_home = fs::temp_directory_path() /
         ("loom_resume_cmd_test_" +
@@ -324,6 +326,7 @@ TEST(ResumeCommand, ListsSessionsFromDisk) {
 
 TEST(ResumeCommand, FiltersEmptySessionsAndShowsUsefulInfo) {
     // Override HOME so load_sessions() resolves ~/.loom/sessions to a temp dir.
+    EnvironmentUnsetGuard config_dir_guard("LOOM_CONFIG_DIR");
     const char* old_home = std::getenv("HOME");
     const auto temp_home = fs::temp_directory_path() /
         ("loom_resume_filter_test_" +
@@ -392,6 +395,7 @@ TEST(ResumeCommand, FiltersEmptySessionsAndShowsUsefulInfo) {
 // array of content blocks ({"content":[{"type":"text","text":"…"}]}) rather
 // than a plain string must still extract the first user message as the title.
 TEST(ResumeCommand, TitleExtractionHandlesArrayContent) {
+    EnvironmentUnsetGuard config_dir_guard("LOOM_CONFIG_DIR");
     const char* old_home = std::getenv("HOME");
     const auto temp_home = fs::temp_directory_path() /
         ("loom_resume_array_test_" +
@@ -419,4 +423,74 @@ TEST(ResumeCommand, TitleExtractionHandlesArrayContent) {
     if (old_home) setenv("HOME", old_home, 1);
     else unsetenv("HOME");
     fs::remove_all(temp_home);
+}
+
+TEST(ResumeCommand, FindsPickerVisibleSessionBeyondFirstTwenty) {
+    const auto temp_home = fs::temp_directory_path() /
+        ("loom_resume_window_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    EnvironmentUnsetGuard config_dir_guard("LOOM_CONFIG_DIR");
+    EnvironmentGuard home_guard("HOME", temp_home.string());
+    const auto sessions_dir = temp_home / ".loom" / "sessions";
+    fs::create_directories(sessions_dir);
+
+    std::string target_id;
+    for (int i = 0; i < 25; ++i) {
+        const auto id = std::format("session_1791000000_{:08x}", i);
+        const auto dir = sessions_dir / id;
+        fs::create_directories(dir);
+        std::ofstream(dir / "metadata.json")
+            << std::format(
+                R"({{"id":"{}","last_active":{},"message_count":1}})",
+                id, 1000 - i);
+        std::ofstream(dir / "messages.jsonl")
+            << R"({"role":"user","content":"resume fixture"})" << '\n';
+        if (i == 24) target_id = id;
+    }
+
+    loom::commands::ResumeCommand cmd;
+    auto resumed = cmd.execute(ctx({target_id}));
+    ASSERT_TRUE(resumed.has_value()) << resumed.error().message;
+    ASSERT_TRUE(resumed->metadata.has_value());
+    EXPECT_EQ(*resumed->metadata, "UI:resume:" + target_id);
+
+    fs::remove_all(temp_home);
+}
+
+// ============================================================================
+// /copy --osc52 reports request emission rather than clipboard acceptance.
+// ============================================================================
+
+TEST(CopyCommand, Osc52EmitsRequestAndReportsUnconfirmedDelivery) {
+    const auto tmp = fs::temp_directory_path() /
+        ("loom-copy-command-test-" + std::to_string(::getpid()));
+    fs::create_directories(tmp);
+    struct TempDirectoryGuard {
+        fs::path path;
+        ~TempDirectoryGuard() {
+            std::error_code ec;
+            fs::remove_all(path, ec);
+        }
+    } cleanup{tmp};
+    EnvironmentGuard tmpdir("TMPDIR", tmp.string());
+
+    loom::commands::CopyCommand command;
+    command.record_response("abc");
+    // GoogleTest's capture restores stdout on destruction of its capture object.
+    testing::internal::CaptureStdout();
+    const auto result = command.execute(ctx({"--osc52"}));
+    const auto output = testing::internal::GetCapturedStdout();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(result->ok);
+    EXPECT_EQ(output, "\033]52;c;YWJj\a");
+    EXPECT_TRUE(result->message.starts_with(
+        "Copy sent to terminal · paste to verify"));
+    EXPECT_EQ(result->message.find("Copied"), std::string::npos);
+    EXPECT_NE(result->message.find("3 bytes"), std::string::npos);
+    EXPECT_NE(result->message.find("Also written to"), std::string::npos);
+    std::ifstream saved(tmp / "loom" / "response.md", std::ios::binary);
+    const std::string content((std::istreambuf_iterator<char>(saved)),
+                              std::istreambuf_iterator<char>());
+    EXPECT_EQ(content, "abc");
 }

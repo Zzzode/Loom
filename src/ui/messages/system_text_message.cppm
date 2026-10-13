@@ -24,6 +24,8 @@ export module loom.ui.messages.system_text_message;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 import loom.ui.messages.message_components;
 import loom.ui.messages.message_timestamp;
 import loom.ui.foundation.design_figures;  // kReferenceMark, kTeardropAsterisk, kBlackCircle (single source of truth)
@@ -61,18 +63,18 @@ struct SystemTextMessageData {
 
 inline auto SubtypeIcon(SystemMessageSubtype t) -> std::string_view {
     switch (t) {
-        case SystemMessageSubtype::TurnDuration:    return "⏱";
-        case SystemMessageSubtype::MemorySaved:     return "🧠";
-        case SystemMessageSubtype::BridgeStatus:    return "🔌";
-        case SystemMessageSubtype::ThinkingSummary: return "💭";
-        case SystemMessageSubtype::HookSummary:     return "🪝";
-        case SystemMessageSubtype::ModelSwitch:     return "🔀";
-        case SystemMessageSubtype::AwaySummary:     return "☕";
-        case SystemMessageSubtype::BackgroundTask:  return "📋";
+        case SystemMessageSubtype::TurnDuration:    return loom::ui::design::figures::kCircle.data();
+        case SystemMessageSubtype::MemorySaved:     return loom::ui::design::figures::kReferenceMark.data();
+        case SystemMessageSubtype::BridgeStatus:    return loom::ui::design::figures::kCircleDouble.data();
+        case SystemMessageSubtype::ThinkingSummary: return loom::ui::design::figures::kDiamondOpen.data();
+        case SystemMessageSubtype::HookSummary:     return loom::ui::design::figures::kRefreshArrow.data();
+        case SystemMessageSubtype::ModelSwitch:     return loom::ui::design::figures::kRefreshArrow.data();
+        case SystemMessageSubtype::AwaySummary:     return loom::ui::design::figures::kPauseIcon.data();
+        case SystemMessageSubtype::BackgroundTask:  return loom::ui::design::figures::kSquare.data();
         case SystemMessageSubtype::Plain:
-        case SystemMessageSubtype::Other:           return "⚙";
+        case SystemMessageSubtype::Other:           return loom::ui::design::figures::kInfo.data();
     }
-    return "⚙";
+    return loom::ui::design::figures::kInfo.data();
 }
 
 inline auto SubtypeLabel(SystemMessageSubtype t) -> std::string_view {
@@ -110,34 +112,34 @@ class SystemTextMessageComponent : public ComponentBase {
         const bool has_detail = !data_.detail.empty();
 
         auto header = hbox({
-            text(icon + " ") | color(Color::Yellow),
-            text("System") | dim | color(Color::Yellow),
-            text("  [" + label + "]") | dim | color(Color::GrayDark),
+            text(icon + " ") | color(loom::ui::design::theme::current_theme().palette->info),
+            text("System") | dim | color(loom::ui::design::theme::current_theme().palette->info),
+            text("  [" + label + "]") | dim | color(loom::ui::design::theme::current_theme().palette->muted),
             filler(),
-            text(render_timestamp(data_.timestamp)) | dim | color(Color::GrayDark),
+            text(render_timestamp(data_.timestamp)) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
             text(" "),
             has_detail
                 ? text(expanded_ ? "▾ hide" : "▸ expand")
-                    | bold | color(Color::Cyan)
+                    | bold | color(loom::ui::design::theme::current_theme().palette->info)
                 : text(""),
         });
 
         // Summary (always visible)
-        auto summary = text(data_.summary) | dim | color(Color::GrayLight);
+        auto summary = text(data_.summary) | dim | color(loom::ui::design::theme::current_theme().palette->text_muted);
 
         // Detail (only when expanded + present)
         Elements detail_box;
         if (expanded_ && has_detail) {
             for (auto& line : SplitLines(data_.detail)) {
                 detail_box.push_back(text(std::move(line))
-                                         | dim | color(Color::GrayLight));
+                                         | dim | color(loom::ui::design::theme::current_theme().palette->text_muted));
             }
         }
 
         // Transcript: fully minimal
         if (data_.is_transcript_mode) {
             return vbox({
-                text("· " + data_.summary) | dim | color(Color::GrayDark),
+                text("· " + data_.summary) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
             });
         }
 
@@ -152,8 +154,8 @@ class SystemTextMessageComponent : public ComponentBase {
 
         // Grey "pill" background to differentiate from user/assistant
         return vbox(std::move(rows))
-             | bgcolor(Color::GrayDark)
-             | color(Color::GrayLight)
+             | bgcolor(loom::ui::design::theme::current_theme().palette->muted)
+             | color(loom::ui::design::theme::current_theme().palette->text_muted)
              | borderEmpty
              | padding(1);
     }
@@ -208,7 +210,7 @@ class SystemTextMessageComponent : public ComponentBase {
 [[nodiscard]] inline Element RenderSystemTextMessageBubble(const SystemTextMessageData& data) {
     return vbox({
         hbox({
-            text(std::string(SubtypeIcon(data.subtype)) + " ") | color(Color::Yellow),
+            text(std::string(SubtypeIcon(data.subtype)) + " ") | color(loom::ui::design::theme::current_theme().palette->info),
             text(std::string(SubtypeLabel(data.subtype))) | dim,
             filler(),
             text(render_timestamp(data.timestamp)) | dim,
@@ -274,7 +276,7 @@ class SystemTextMessageComponent : public ComponentBase {
 /// text dim).
 [[nodiscard]] inline Element RenderSystemAgentsKilled(bool add_margin = true) {
     auto glyph = hbox({text(std::string(loom::ui::design::figures::kBlackCircle)),
-                       text(" ")}) | color(Color::Red) | size(WIDTH, EQUAL, 2);
+                       text(" ")}) | color(loom::ui::design::theme::current_theme().palette->danger) | size(WIDTH, EQUAL, 2);
     auto content = text("All background agents stopped") | dim;
     return RenderSystemEventRow(std::move(glyph), std::move(content), add_margin);
 }

@@ -2,7 +2,7 @@
 /// @brief FTXUI component for assistant text messages
 ///
 /// Visual layout:
-///   [🤖 assistant  │ model X │ ⏱ HH:MM]
+///   [Assistant | model X | HH:MM]
 ///   ┌──────────────────────────────────┐
 ///   │   (content, auto-wrapped)         │
 ///   │   Markdown-rendered body          │
@@ -238,31 +238,44 @@ class AssistantTextMessageComponent : public ComponentBase {
           on_regen_(std::move(on_regen)),
           on_rate_limit_(std::move(on_rl))
     {
+        auto button_style = ButtonOption::Simple();
+        button_style.transform = [](const EntryState& entry) {
+            Element el = message_action(entry.label);
+            if (entry.focused) el = el | inverted;
+            return el;
+        };
         if (on_copy_) {
             copy_btn_ = Button("Copy", [this] {
                 if (on_copy_) on_copy_(data_.content);
-            }) | size(WIDTH, EQUAL, 10);
+            }, button_style) | size(WIDTH, EQUAL, 10);
             Add(copy_btn_);
         }
         if (on_regen_) {
             regen_btn_ = Button("Regenerate", [this] {
                 if (on_regen_) on_regen_();
-            }) | size(WIDTH, EQUAL, 14);
+            }, button_style) | size(WIDTH, EQUAL, 14);
             Add(regen_btn_);
         }
         if (on_rl) {
+            auto rate_limit_style = button_style;
+            rate_limit_style.transform = [](const EntryState& entry) {
+                Element el = message_action(entry.label,
+                    loom::ui::design::theme::current_theme().palette->warning);
+                if (entry.focused) el = el | inverted;
+                return el;
+            };
             rl_btn_ = Button("RateLimit options", [this] {
                 if (on_rate_limit_) on_rate_limit_();
-            }) | color(Color::Yellow);
+            }, rate_limit_style);
             Add(rl_btn_);
         }
     }
 
     Element Render() override {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         // Header row: role + optional model + timestamp + streaming cursor
         Elements header;
-        header.push_back(text("🤖 ") | color(Color::Purple4));
-        header.push_back(text("Assistant") | bold | color(Color::Purple4));
+        header.push_back(text("Assistant") | bold | color(pal.role_pill_assistant));
 
         if (data_.model_name) {
             header.push_back(text("  ") | dim);
@@ -271,10 +284,10 @@ class AssistantTextMessageComponent : public ComponentBase {
 
         header.push_back(text("   ") | nothing);
         header.push_back(text(render_timestamp(data_.timestamp))
-                             | dim | color(Color::GrayDark));
+                             | dim | color(pal.muted));
 
         if (data_.is_streaming) {
-            header.push_back(text(" ▍") | blink | color(Color::Cyan));
+            header.push_back(text(" ▍") | blink | color(pal.info));
         }
 
         auto header_line = hbox(std::move(header));
@@ -284,7 +297,7 @@ class AssistantTextMessageComponent : public ComponentBase {
             (data_.content.empty() && data_.show_dot)) {
             return vbox({
                 std::move(header_line),
-                text("●") | dim | color(Color::GrayDark),
+                text("●") | dim | color(pal.muted),
             });
         }
 
@@ -295,9 +308,8 @@ class AssistantTextMessageComponent : public ComponentBase {
         Elements footer;
         if (data_.input_tokens > 0 || data_.output_tokens > 0) {
             footer.push_back(hbox({
-                text("🔢 ") | dim,
-                text(std::to_string(data_.input_tokens) + " in / "
-                     + std::to_string(data_.output_tokens) + " out") | dim,
+                text("Input: " + std::to_string(data_.input_tokens) + " / Output: "
+                     + std::to_string(data_.output_tokens)) | dim,
             }));
         }
 
@@ -314,7 +326,9 @@ class AssistantTextMessageComponent : public ComponentBase {
         if (data_.kind == AssistantMessageKind::RateLimit && rl_btn_) {
             actions.push_back(rl_btn_->Render());
         }
-        auto action_row = hbox(std::move(actions)) | dim;
+        if (!data_.verbose) actions.push_back(message_key_hint("V", "Toggle verbose"));
+        if (on_copy_) actions.push_back(message_key_hint("Ctrl+C", "Copy"));
+        auto action_row = hbox(std::move(actions));
 
         return vbox({
             std::move(header_line),
@@ -346,6 +360,7 @@ class AssistantTextMessageComponent : public ComponentBase {
 
   private:
     auto BuildBody() const -> Elements {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         Elements out;
         const bool raw = verbose_override_ || data_.verbose;
         constexpr std::size_t kPreviewLines = 20;
@@ -374,30 +389,24 @@ class AssistantTextMessageComponent : public ComponentBase {
 
             out.push_back(::loom::ui::render_markdown(content));
             if (truncated) {
-                out.push_back(text("... (press E to expand)")
-                                  | dim | color(Color::GrayDark));
+                out.push_back(message_key_hint("E", "Show more"));
             }
+            if (expanded_ && SplitLines(content).size() > kPreviewLines)
+                out.push_back(message_key_hint("E", "Show less"));
             if (out.empty()) out.push_back(text(""));
             return out;
         }
 
         auto lines = SplitLines(data_.content);
 
-        std::size_t rendered = 0;
         for (auto& line : lines) {
-            if (!expanded_ && !raw && rendered >= kPreviewLines) {
-                out.push_back(text("... (press E to expand)")
-                                  | dim | color(Color::GrayDark));
-                break;
-            }
             // Very minimal heuristic: lines starting with "    " or "```"
             // are treated as code (monospace-like visual via dim + italic).
             Decorator dec = nothing;
             if (line.starts_with("```") || line.starts_with("    ")) {
-                dec = color(Color::CyanLight) | dim;
+                dec = color(pal.info) | dim;
             }
             out.push_back(text(line) | dec);
-            ++rendered;
         }
         if (out.empty()) out.push_back(text(""));
         return out;
@@ -444,12 +453,12 @@ class AssistantTextMessageComponent : public ComponentBase {
 
 /// Stateless element renderer (no interactions).
 [[nodiscard]] inline Element RenderAssistantTextMessageBubble(const AssistantTextMessageData& data) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     std::string cleaned = detail::unescape_literal_newlines(
         detail::strip_prompt_xml_tags(data.content));
     return vbox({
         hbox({
-            text("🤖") | color(Color::Purple4),
-            text(" Assistant  "),
+            text("Assistant  ") | bold | color(pal.role_pill_assistant),
             text(render_timestamp(data.timestamp)) | dim,
         }),
         ::loom::ui::render_markdown(cleaned),
@@ -495,12 +504,8 @@ class AssistantTextMessageComponent : public ComponentBase {
         row.push_back(std::move(glyph));
     }
     row.push_back(std::move(body));
-    // Streaming assistant message appends a blinking block cursor
-    // (▌) at the end of the text to indicate live generation.  The old
-    // "generating…" tail row was removed — the cursor lives inline here.
-    if (data.is_streaming) {
-        row.push_back(text(" \xe2\x96\x8c") | blink | color(pal.suggestion));
-    }
+    // Generation feedback lives in the status area. An extra cursor column
+    // changes the body's available width and reflows text on completion.
 
     Element content = hbox(std::move(row));
     // R7: when selected, wrap the entire row in message_actions_background
@@ -520,8 +525,8 @@ class AssistantTextMessageComponent : public ComponentBase {
 /// renderer swap needed).
 ///
 /// When `streaming_md` is non-null and data.is_streaming is true, the body
-/// is rendered via StreamingMarkdown::update() (stable-prefix cache, only
-/// re-parses the unstable suffix) instead of full render_markdown().
+/// is rendered via StreamingMarkdown::update(), preserving complete-document
+/// context and reusing the frame when its content has not changed.
 [[nodiscard]] inline Element RenderAssistantTextMessageFaithful(
     const AssistantTextMessageData& data,
     bool add_margin = true,
@@ -532,8 +537,8 @@ class AssistantTextMessageComponent : public ComponentBase {
     // clipped line and markdown line-boundary patterns (* list, headings) fail.
     std::string cleaned = detail::unescape_literal_newlines(
         detail::strip_prompt_xml_tags(data.content));
-    // Streaming text uses StreamingMarkdown (stable prefix + unstable suffix)
-    // to avoid re-parsing the entire growing document on every token delta.
+    // Streaming text uses StreamingMarkdown (complete-document context)
+    // so live and committed text share parsing and layout rules.
     Element body = (data.is_streaming && streaming_md)
         ? streaming_md->update(cleaned)
         : ::loom::ui::render_markdown(cleaned);

@@ -1,5 +1,5 @@
 /// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, LogoV2, PromptInput, ReplScreen (SLOC budget fix)
+/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput, ReplScreen (SLOC budget fix)
 
 #include <cstdlib>
 
@@ -649,6 +649,42 @@ TEST(ReplScreen, VirtualEstimateRowHeightRespectsTermCols) {
         << "40-col estimate should exceed 120-col for wrapping text";
 }
 
+TEST(ReplScreen, UserPromptHeightEstimatesMatchCellsWidthAndExplicitNewlines) {
+    namespace ml = loom::ui::messages_list;
+    namespace repl = loom::ui::repl_screen;
+    namespace msg = loom::ui::messages;
+    const std::vector<std::pair<std::string, int>> cases{
+        {"站在全球顶尖 UI/UX 设计师的视角看，你觉得我们现在的 Terminal UI 设计有什么问题吗？", 120},
+        {"中文abc中文abc", 10},
+        {"first\n\n第二行\n", 120},
+        {std::string(96, 'x'), 40},
+    };
+    for (const auto& [content, width] : cases) {
+        SCOPED_TRACE(std::to_string(width) + ": " + content);
+        ml::MessagesListInput input;
+        msg::UserTextMessageData data;
+        data.content = content;
+        input.rows.push_back(ml::MessageRowPayload{data});
+        input.shapes.push_back(ml::MessageShape::UserPrompt);
+        const auto visible = ml::build_visible_rows(input);
+        ASSERT_EQ(visible.size(), 1u);
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                           ftxui::Dimension::Fixed(12));
+        ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data),
+                                          ftxui::text("AFTER")}));
+        int rendered_rows = -1;
+        for (int y = 0; y < screen.dimy(); ++y) {
+            if (screen.PixelAt(0, y).character == "A") rendered_rows = y;
+        }
+        ASSERT_GE(rendered_rows, 2);
+        EXPECT_EQ(ml::detail::estimate_row_height(visible[0], input, width), rendered_rows);
+        repl::MessageDisplayEntry entry;
+        entry.role = "user";
+        entry.content_preview = content;
+        EXPECT_EQ(repl::EstimateTranscriptRows({entry}, width), rendered_rows);
+    }
+}
+
 TEST(ReplScreen, VirtualEstimateRowHeightSameForShortText) {
     namespace ml = loom::ui::messages_list;
 
@@ -1188,10 +1224,7 @@ TEST(ReplScreen, WheelUpMovesScreenAwayFromBottom) {
     namespace repl = loom::ui::repl_screen;
     using loom::ui::messages_list::VirtualRendererMode;
 
-    // Use Virtual mode (100 messages) so the virtual list's line-level
-    // scroll handles wheel events correctly. The static path's
-    // focusPosition(0, scroll_offset) cannot scroll within a single
-    // tall message (only 1 child element).
+    // Exercise the virtual path separately from static transcript geometry.
     auto state = std::make_shared<repl::ReplScreenState>();
     state->messages_store.virtual_renderer_mode =
         VirtualRendererMode::Virtual;
@@ -1219,4 +1252,147 @@ TEST(ReplScreen, WheelUpMovesScreenAwayFromBottom) {
     // One more frame: position preserved (no snap-back to bottom).
     text = RenderThrough(component);
     EXPECT_EQ(text.find("wheel-away message 099"), std::string::npos);
+}
+
+TEST(ReplScreen, FirstWheelUpMovesStaticChineseMarkdownFromBottom) {
+    auto state = std::make_shared<rs::ReplScreenState>();
+    rs::MessageDisplayEntry prompt;
+    prompt.id = "scroll-prompt";
+    prompt.role = "user";
+    prompt.content_preview = "Review this interface";
+    state->messages_store.messages.push_back(std::move(prompt));
+    rs::MessageDisplayEntry answer;
+    answer.id = "scroll-answer";
+    answer.role = "assistant";
+    for (int i = 0; i < 60; ++i) {
+        answer.content_preview += std::format("段落 {:02}：", i);
+        for (int j = 0; j < 25; ++j) answer.content_preview += "中文";
+        answer.content_preview += "\n\n";
+    }
+    answer.content_preview += "SCROLL_TAIL_MARKER";
+    state->messages_store.messages.push_back(std::move(answer));
+    auto component = MakeComponent(state);
+    auto before = RenderThrough(component);
+    before = RenderThrough(component);
+    ASSERT_FALSE(state->messages_store.virtual_list_active);
+    ASSERT_NE(before.find("SCROLL_TAIL_MARKER"), std::string::npos);
+    ftxui::Mouse wheel;
+    wheel.button = ftxui::Mouse::WheelUp;
+    ASSERT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
+    auto after = RenderThrough(component);
+    EXPECT_NE(before, after);
+    EXPECT_FALSE(state->messages_store.scroll_pinned_to_bottom);
+    EXPECT_EQ(after.find("SCROLL_TAIL_MARKER"), std::string::npos);
+    EXPECT_EQ(RenderThrough(component), after);
+    wheel.button = ftxui::Mouse::WheelDown;
+    ASSERT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
+    EXPECT_NE(RenderThrough(component).find("SCROLL_TAIL_MARKER"), std::string::npos);
+    EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+}
+
+TEST(ReplScreen, StaticScrollBoundsIgnoreCollapsedToolOutput) {
+    auto state = std::make_shared<rs::ReplScreenState>();
+    for (int i = 0; i < 12; ++i) {
+        rs::MessageDisplayEntry call;
+        call.id = std::format("scroll-tool-{}", i);
+        call.role = "assistant";
+        call.is_tool_use = true;
+        call.tool_name = "Bash";
+        call.tool_status = "success";
+        call.tool_use_id = call.id;
+        call.tool_input_json = R"({"command":"printf test"})";
+        state->messages_store.messages.push_back(call);
+        rs::MessageDisplayEntry result;
+        result.id = std::format("scroll-result-{}", i);
+        result.role = "tool";
+        result.tool_name = "Bash";
+        result.tool_use_id = call.id;
+        for (int line = 0; line < 100; ++line)
+            result.content_preview += "Long output hidden by the completed tool chain\n";
+        state->messages_store.messages.push_back(std::move(result));
+    }
+    rs::MessageDisplayEntry answer;
+    answer.id = "tool-scroll-answer";
+    answer.role = "assistant";
+    answer.content_preview = "```text\n";
+    for (int i = 0; i < 60; ++i)
+        answer.content_preview += std::format("review line {:02}\n", i);
+    answer.content_preview += "TOOL_SCROLL_TAIL\n```";
+    state->messages_store.messages.push_back(std::move(answer));
+    auto component = MakeComponent(state);
+    auto before = RenderThrough(component);
+    before = RenderThrough(component);
+    ASSERT_FALSE(state->messages_store.virtual_list_active);
+    ASSERT_NE(before.find("TOOL_SCROLL_TAIL"), std::string::npos);
+    ftxui::Mouse wheel;
+    wheel.button = ftxui::Mouse::WheelUp;
+    ASSERT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
+    auto after = RenderThrough(component);
+    EXPECT_NE(before, after);
+    EXPECT_EQ(after.find("TOOL_SCROLL_TAIL"), std::string::npos);
+    EXPECT_EQ(RenderThrough(component), after);
+    ASSERT_TRUE(component->OnEvent(ftxui::Event::ArrowDownCtrl));
+    EXPECT_NE(RenderThrough(component).find("TOOL_SCROLL_TAIL"), std::string::npos);
+    EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+}
+
+TEST(ReplScreen, StaticPausedTranscriptScrollsAfterResize) {
+    auto state = std::make_shared<rs::ReplScreenState>();
+    rs::MessageDisplayEntry answer;
+    answer.id = "resizing-answer";
+    answer.role = "assistant";
+    for (int i = 0; i < 60; ++i) {
+        answer.content_preview += std::format("review {:02}: ", i);
+        for (int j = 0; j < 30; ++j) answer.content_preview += "中文 ";
+        answer.content_preview += "\n\n";
+    }
+    answer.content_preview += "RESIZE_SCROLL_TAIL";
+    state->messages_store.messages.push_back(std::move(answer));
+    rs::MessageDisplayEntry pause;
+    pause.id = "resizing-pause";
+    pause.role = "system";
+    pause.content_preview = "Tool-round budget reached (1). Progress saved.";
+    pause.can_continue = true;
+    state->messages_store.messages.push_back(std::move(pause));
+    rs::ReplScreenCallbacks callbacks;
+    callbacks.on_continue = [] {};
+    auto component = rs::ReplScreen(state, std::move(callbacks));
+    const auto render = [&](int width, int height) {
+        return strip_ansi(render_to_plain_text(component->Render(), width, height));
+    };
+    std::optional<int> previous_height;
+    for (const auto [width, height] : {std::pair{120, 40}, {72, 24}, {140, 42}}) {
+        SCOPED_TRACE(std::format("{}x{}", width, height));
+        auto before = render(width, height);
+        before = render(width, height);
+        ASSERT_FALSE(state->messages_store.virtual_list_active);
+        ASSERT_NE(before.find("RESIZE_SCROLL_TAIL"), std::string::npos);
+        ASSERT_NE(before.find("Continue from saved progress"), std::string::npos);
+        ASSERT_TRUE(state->messages_store.rendered_content_height_lines);
+        if (previous_height)
+            EXPECT_NE(*state->messages_store.rendered_content_height_lines, *previous_height);
+        previous_height = state->messages_store.rendered_content_height_lines;
+        const auto viewport = state->messages_store.viewport_height_lines;
+        EXPECT_LT(viewport, state->messages_store.scrollable_box.y_max -
+            state->messages_store.scrollable_box.y_min + 1);
+        ftxui::Mouse wheel;
+        wheel.button = ftxui::Mouse::WheelUp;
+        ASSERT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
+        auto after = render(width, height);
+        EXPECT_NE(before, after);
+        EXPECT_EQ(state->messages_store.viewport_height_lines, viewport);
+        EXPECT_EQ(render(width, height), after);
+        wheel.button = ftxui::Mouse::WheelDown;
+        ASSERT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
+        EXPECT_NE(render(width, height).find("RESIZE_SCROLL_TAIL"), std::string::npos);
+        EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
+    }
+    state->messages_store.messages.clear();
+    rs::reset_virtual_renderer_state(state->messages_store);
+    EXPECT_FALSE(state->messages_store.rendered_content_height_lines);
+    render(120, 40);
+    render(120, 40);
+    ftxui::Mouse wheel;
+    wheel.button = ftxui::Mouse::WheelUp;
+    EXPECT_FALSE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
 }

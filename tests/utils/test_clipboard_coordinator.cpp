@@ -182,6 +182,10 @@ TEST(ClipboardCoordinator, GenerationCounterIncrements) {
 
 // ── Cancel/reap/start serialization ─────────────────────────────────────
 
+// The fake-slow-backend mechanism drives the Linux xclip resolution path;
+// macOS resolves pbcopy unconditionally, so the cancel/shutdown races these
+// tests exercise cannot be reproduced there.
+#if defined(__linux__)
 TEST(ClipboardCoordinator, SlowJobCancelledBeforeNewJobStarts) {
     // Use a fake slow xclip so the first job takes a long time.
     // The coordinator should cancel/reap it before starting the second.
@@ -242,9 +246,11 @@ TEST(ClipboardCoordinator, SlowJobCancelledBeforeNewJobStarts) {
 
     coordinator.shutdown();
 }
+#endif  // defined(__linux__)
 
 // ── Shutdown during active copy ─────────────────────────────────────────
 
+#if defined(__linux__)
 TEST(ClipboardCoordinator, ShutdownDuringActiveCopyDoesNotHang) {
     // Use a fake slow xclip so the job is still running when we shut down.
     FakeSlowBackend fake;
@@ -277,3 +283,4 @@ TEST(ClipboardCoordinator, ShutdownDuringActiveCopyDoesNotHang) {
             << "job should have been cancelled on shutdown";
     }
 }
+#endif  // defined(__linux__)

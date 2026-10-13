@@ -247,7 +247,7 @@ bool AgentMenuListBase::OnEvent(Event ev) {
     }
 
 [[nodiscard]] Element AgentMenuListBase::render_create_row(bool selected, Color suggestion) {
-        const auto c = selected ? suggestion : Color::Default;
+        const auto c = selected ? suggestion : Color{};
         return hbox({
             text(selected ? "  › " : "    ") | color(c) | bold,
             text("Create new agent") | color(c),
@@ -261,7 +261,7 @@ bool AgentMenuListBase::OnEvent(Event ev) {
         Color suggestion,
         Color muted) {
         const bool dimmed = !selectable;
-        const auto c = selected ? suggestion : Color::Default;
+        const auto c = selected ? suggestion : Color{};
         const auto model = resolved_model_label(agent);
         Elements parts;
         parts.push_back(text(selectable ? (selected ? "  › " : "    ") : "    ")

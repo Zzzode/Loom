@@ -30,6 +30,8 @@ export module loom.ui.screens.resume_screen;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
 
@@ -68,28 +70,28 @@ class ResumeScreenImpl;
 // ===========================================================================
 namespace token {
 
-    constexpr std::string_view kIconWelcome    = "👋";
-    constexpr std::string_view kIconSession    = "📝";
-    constexpr std::string_view kIconModel      = "🧠";
-    constexpr std::string_view kIconMsg        = "💬";
-    constexpr std::string_view kIconClock      = "⏱";
-    constexpr std::string_view kIconCost       = "💰";
-    constexpr std::string_view kIconSearch     = "🔍";
-    constexpr std::string_view kIconSort       = "↕";
-    constexpr std::string_view kIconFilter     = "▼";
-    constexpr std::string_view kIconNew        = "✨";
-    constexpr std::string_view kIconImport     = "⬇";
-    constexpr std::string_view kIconBrowse     = "📂";
-    constexpr std::string_view kIconEdit       = "✎";
-    constexpr std::string_view kIconDelete     = "🗑";
-    constexpr std::string_view kIconShare      = "↗";
-    constexpr std::string_view kIconResume     = "▶";
-    constexpr std::string_view kIconOpen       = "📖";
-    constexpr std::string_view kIconCancel     = "✕";
-    constexpr std::string_view kIconUser       = "👤";
-    constexpr std::string_view kIconAssistant  = "🤖";
-    constexpr std::string_view kIconSystem     = "ℹ";
-    constexpr std::string_view kIconTool       = "🔧";
+    constexpr std::string_view kIconWelcome    = loom::ui::design::figures::kPointerSmall;
+    constexpr std::string_view kIconSession    = loom::ui::design::figures::kSquareSmall;
+    constexpr std::string_view kIconModel      = loom::ui::design::figures::kCircleFilled;
+    constexpr std::string_view kIconMsg        = loom::ui::design::figures::kBullet;
+    constexpr std::string_view kIconClock      = loom::ui::design::figures::kCircle;
+    constexpr std::string_view kIconCost       = loom::ui::design::figures::kCircleFilled;
+    constexpr std::string_view kIconSearch     = loom::ui::design::figures::kInfo;
+    constexpr std::string_view kIconSort       = loom::ui::design::figures::kArrowDown;
+    constexpr std::string_view kIconFilter     = loom::ui::design::figures::kTriangleDownSmall;
+    constexpr std::string_view kIconNew        = loom::ui::design::figures::kStar;
+    constexpr std::string_view kIconImport     = loom::ui::design::figures::kArrowDown;
+    constexpr std::string_view kIconBrowse     = loom::ui::design::figures::kTriangleRightSmall;
+    constexpr std::string_view kIconEdit       = loom::ui::design::figures::kPointerSmall;
+    constexpr std::string_view kIconDelete     = loom::ui::design::figures::kCross;
+    constexpr std::string_view kIconShare      = loom::ui::design::figures::kArrowRight;
+    constexpr std::string_view kIconResume     = loom::ui::design::figures::kTriangleRightSmall;
+    constexpr std::string_view kIconOpen       = loom::ui::design::figures::kSquareSmall;
+    constexpr std::string_view kIconCancel     = loom::ui::design::figures::kCross;
+    constexpr std::string_view kIconUser       = loom::ui::design::figures::kCircle;
+    constexpr std::string_view kIconAssistant  = loom::ui::design::figures::kBullet;
+    constexpr std::string_view kIconSystem     = loom::ui::design::figures::kInfo;
+    constexpr std::string_view kIconTool       = loom::ui::design::figures::kSquareSmallFilled;
 } // namespace token
 
 // ===========================================================================
@@ -419,20 +421,20 @@ struct FilteredIndex {
 
     // Big title
     body.push_back(hbox({
-        text("  ") | color(Color::Default),
-        text("👋 Welcome back!") | bold | color(palette.success)
+        text("  ") | color(Color{}),
+        text((std::string{loom::ui::design::figures::kPointerSmall} + " Welcome back!")) | bold | color(palette.success)
             | size(HEIGHT, EQUAL, 1),
         filler(),
     }) | size(HEIGHT, EQUAL, 2));
 
     body.push_back(paragraph(
         "Pick up right where you left off, or start a brand new conversation."
-    ) | dim | color(Color::GrayLight));
+    ) | dim | color(loom::ui::design::theme::current_theme().palette->text));
     body.push_back(text(""));
 
     // Primary button: Create new
     body.push_back(hbox({
-        text("▶ ") | color(palette.success),
+        text((std::string{loom::ui::design::figures::kTriangleRightSmall} + " ")) | color(palette.success),
         text("[Enter] ") | bold | color(palette.info),
         text("Create new conversation")
             | bold | color(palette.success),
@@ -441,12 +443,12 @@ struct FilteredIndex {
 
     // Secondary actions
     body.push_back(hbox({
-        text("  ⬇ ") | dim,
+        text(("  " + std::string{loom::ui::design::figures::kArrowDown} + " ")) | dim,
         text("[I] ") | color(palette.info) | dim,
         text("Import conversation") | dim,
     }));
     body.push_back(hbox({
-        text("  📂 ") | dim,
+        text(("  " + std::string{loom::ui::design::figures::kTriangleRightSmall} + " ")) | dim,
         text("[B] ") | color(palette.info) | dim,
         text("Browse history ") | dim,
         text(show_quick_picks ? "(show all)" : "(no sessions yet)") | dim,
@@ -619,7 +621,7 @@ struct RowViewState {
     // Selection chevron on the far left.
     const std::string chevron = vs.selected ? " ❯ " : "   ";
     return hbox({
-        text(chevron) | color(vs.selected ? palette.success : Color::Default),
+        text(chevron) | color(vs.selected ? palette.success : Color{}),
         card | flex,
     });
 }
@@ -637,7 +639,7 @@ struct RowViewState {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     // Search field
     Element search = hbox({
-        text(search_focused ? " / " : " 🔍 ")
+        text(search_focused ? " / " : (" " + std::string{loom::ui::design::figures::kInfo} + " "))
             | color(search_focused ? palette.info : palette.muted),
         query.empty()
             ? text("Search sessions...") | dim
@@ -762,12 +764,12 @@ struct RoleBadge {
 
 [[nodiscard]] inline RoleBadge role_badge(Role r) {
     switch (r) {
-        case Role::User:      return {token::kIconUser,      Color::Cyan,  "User"};
-        case Role::Assistant: return {token::kIconAssistant, Color::Green, "Assistant"};
-        case Role::System:    return {token::kIconSystem,    Color::Yellow,"System"};
-        case Role::Tool:      return {token::kIconTool,      Color::Orange1,"Tool"};
+        case Role::User:      return {token::kIconUser,      loom::ui::design::theme::current_theme().palette->role_pill_user,  "User"};
+        case Role::Assistant: return {token::kIconAssistant, loom::ui::design::theme::current_theme().palette->role_pill_assistant, "Assistant"};
+        case Role::System:    return {token::kIconSystem,    loom::ui::design::theme::current_theme().palette->role_pill_system,"System"};
+        case Role::Tool:      return {token::kIconTool,      loom::ui::design::theme::current_theme().palette->role_pill_tool,"Tool"};
     }
-    return {"?", Color::White, "?"};
+    return {"?", loom::ui::design::theme::current_theme().palette->text, "?"};
 }
 
 /// Render a single preview message line (avatar + role + collapsed content).
@@ -908,7 +910,7 @@ struct RoleBadge {
     {
         const bool sel = (idx == primary_selection);
         Elements p = {
-            text(sel ? "▶ " : "  ") | color(c),
+            text(sel ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ") : "  ") | color(c),
             text(std::string{icon} + " ") | (sel ? color(c) : dim),
             text(std::string{label}) | (sel ? (bold | color(c)) : dim),
             text(" "),

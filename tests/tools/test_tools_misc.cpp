@@ -69,6 +69,7 @@ import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
 import loom.tools.destructive_command_warning;
+import loom.tools.script_diagnostics;
 
 namespace fs = std::filesystem;
 
@@ -229,6 +230,7 @@ struct LocalBridgeIngressRequest {
 class LocalBridgeIngressServer {
 public:
     LocalBridgeIngressServer() {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post(R"(/v1/sessions/([^/]+)/events)", [&](const httplib::Request& req, httplib::Response& res) {
             LocalBridgeIngressRequest request;
             request.target_session_id = req.matches.size() > 1 ? req.matches[1].str() : std::string{};
@@ -472,8 +474,9 @@ std::string shell_quote_for_test(std::string_view value) {
 
 class LocalSlowMessagesStreamServer {
 public:
-    explicit LocalSlowMessagesStreamServer(std::chrono::milliseconds delay)
-        : delay_(delay) {
+    explicit LocalSlowMessagesStreamServer(std::chrono::milliseconds delay, bool hold_response = false)
+        : delay_(delay), hold_response_(hold_response) {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             {
                 std::lock_guard lock(mutex_);
@@ -482,7 +485,12 @@ public:
             }
             cv_.notify_all();
 
-            std::this_thread::sleep_for(delay_);
+            if (hold_response_) {
+                std::unique_lock lock(mutex_);
+                cv_.wait(lock, [this] { return response_released_; });
+            } else {
+                std::this_thread::sleep_for(delay_);
+            }
             res.set_content(
                 "event: message_start\n"
                 "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_slow\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
@@ -507,6 +515,11 @@ public:
     }
 
     ~LocalSlowMessagesStreamServer() {
+        {
+            std::lock_guard lock(mutex_);
+            response_released_ = true;
+        }
+        cv_.notify_all();
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
@@ -544,6 +557,8 @@ public:
 
 private:
     std::chrono::milliseconds delay_;
+    bool hold_response_ = false;
+    bool response_released_ = false;
     httplib::Server server_;
     int port_{0};
     std::thread thread_;
@@ -556,6 +571,7 @@ private:
 class LocalSleepToolUseMessagesServer {
 public:
     LocalSleepToolUseMessagesServer() {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             std::size_t count = 0;
             {
@@ -650,6 +666,7 @@ private:
 class LocalBashToolUseMessagesServer {
 public:
     LocalBashToolUseMessagesServer() {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             std::size_t count = 0;
             {
@@ -752,6 +769,7 @@ public:
         tool_input_json_(std::move(tool_input_json)),
         tool_use_id_(std::move(tool_use_id)),
         final_text_(std::move(final_text)) {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             std::size_t count = 0;
             {
@@ -827,6 +845,11 @@ public:
         return cv_.wait_for(lock, timeout, [this, expected] { return request_count_ >= expected; });
     }
 
+    [[nodiscard]] std::size_t request_count() const {
+        std::lock_guard lock(mutex_);
+        return request_count_;
+    }
+
     [[nodiscard]] std::optional<std::string> request_body(std::size_t index) const {
         std::lock_guard lock(mutex_);
         if (index >= request_bodies_.size()) return std::nullopt;
@@ -853,6 +876,7 @@ public:
         std::string command,
         std::string final_text = "bash command complete"
     ) : command_(std::move(command)), final_text_(std::move(final_text)) {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             {
                 std::lock_guard lock(mutex_);
@@ -941,17 +965,20 @@ private:
     std::vector<std::string> request_bodies_;
 };
 
-class LocalSlowContentServer {
+class LocalHeldContentServer {
 public:
-    explicit LocalSlowContentServer(std::chrono::milliseconds delay)
-        : delay_(delay) {
+    LocalHeldContentServer() {
+        server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Get("/slow", [&](const httplib::Request&, httplib::Response& res) {
             {
                 std::lock_guard lock(mutex_);
                 ++request_count_;
             }
             cv_.notify_all();
-            std::this_thread::sleep_for(delay_);
+            {
+                std::unique_lock lock(mutex_);
+                cv_.wait(lock, [this] { return response_released_; });
+            }
             res.set_content("slow web body", "text/plain");
         });
 
@@ -962,7 +989,12 @@ public:
         server_.wait_until_ready();
     }
 
-    ~LocalSlowContentServer() {
+    ~LocalHeldContentServer() {
+        {
+            std::lock_guard lock(mutex_);
+            response_released_ = true;
+        }
+        cv_.notify_all();
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
@@ -981,7 +1013,7 @@ public:
     }
 
 private:
-    std::chrono::milliseconds delay_;
+    bool response_released_ = false;
     httplib::Server server_;
     int port_{0};
     std::thread thread_;
@@ -1057,6 +1089,60 @@ TEST(ToolRegistry, RegistersRuntimeTools) {
     EXPECT_TRUE(registry.contains("lsp"));
     EXPECT_TRUE(registry.contains("skill"));
     EXPECT_TRUE(registry.contains("task_create"));
+}
+
+TEST(ToolRegistry, TaskToolsRegistrationMatchesDiscovery) {
+    loom::core::ToolRegistry registry;
+    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
+        .permission_check = test_allow_all_check(),
+    });
+    const auto advertised = loom::tools::runtime_tool_names();
+    auto searched = registry.execute("tool_search", loom::core::ToolInput::from_json(
+        R"({"query":"task_"})"));
+    ASSERT_TRUE(searched.has_value());
+    ASSERT_FALSE(searched->is_error);
+    ASSERT_FALSE(searched->content.empty());
+
+    for (const auto* name : {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
+        SCOPED_TRACE(name);
+        EXPECT_TRUE(registry.contains(name));
+        EXPECT_EQ(std::ranges::count(advertised, std::string_view{name}), 1);
+        EXPECT_NE(searched->content.front().text.find(std::string{"- "} + name + "\n"), std::string::npos);
+    }
+    // Scoped checklist updates remain a separate operation from execution tasks.
+    EXPECT_TRUE(registry.contains("todo_write"));
+    EXPECT_EQ(std::ranges::count(advertised, std::string_view{"todo_write"}), 1);
+    EXPECT_EQ(searched->content.front().text.find("todo_write"), std::string::npos);
+}
+
+TEST(ScriptDiagnostics, ParsesCompilerLevelsAndLocations) {
+    const auto diagnostics = loom::tools::parse_compiler_output(
+        "main.cpp:3:4: error: invalid expression\n"
+        "main.cpp:5:6: warning: unused variable\n"
+        "main.cpp:7:8: note: declared here\n"
+        "input.ts(9,10): error TS2322: type mismatch\n"
+        "File \"script.py\", line 11\n"
+        "  failing_call()\n"
+        "ValueError: bad input\n");
+    ASSERT_EQ(diagnostics.size(), 5u);
+    using loom::tools::DiagnosticLevel;
+    EXPECT_EQ(diagnostics[0].level, DiagnosticLevel::Error);
+    EXPECT_EQ(diagnostics[1].level, DiagnosticLevel::Warning);
+    EXPECT_EQ(diagnostics[2].level, DiagnosticLevel::Info);
+    EXPECT_EQ(diagnostics[3].level, DiagnosticLevel::Error);
+    EXPECT_EQ(diagnostics[3].code, "TS2322");
+    EXPECT_EQ(diagnostics[3].source, "typescript");
+    EXPECT_EQ(diagnostics[3].line, 9u);
+    EXPECT_EQ(diagnostics[3].column, 10u);
+    EXPECT_EQ(diagnostics[4].file, "script.py");
+    EXPECT_EQ(diagnostics[4].line, 11u);
+    EXPECT_EQ(diagnostics[4].column, 0u);
+    EXPECT_EQ(diagnostics[4].message, "ValueError: bad input");
+    // Numeric levels remain aligned with external LSP severity values.
+    EXPECT_EQ(static_cast<int>(DiagnosticLevel::Error), 1);
+    EXPECT_EQ(static_cast<int>(DiagnosticLevel::Warning), 2);
+    EXPECT_EQ(static_cast<int>(DiagnosticLevel::Info), 3);
+    EXPECT_EQ(static_cast<int>(DiagnosticLevel::Hint), 4);
 }
 
 TEST(ToolRegistry, RuntimeSimpleToolsHonorPermissionCheckOption) {
@@ -2264,7 +2350,7 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringModelStream) {
     auto root = fs::temp_directory_path() / "loom_native_agent_stream_cancel_test";
     fs::remove_all(root);
     fs::create_directories(root);
-    LocalSlowMessagesStreamServer server(std::chrono::milliseconds(750));
+    LocalSlowMessagesStreamServer server(std::chrono::milliseconds(0), true);
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
@@ -2294,23 +2380,14 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringModelStream) {
     ASSERT_TRUE(stopped.has_value());
     ASSERT_FALSE(stopped->is_error);
     ASSERT_FALSE(stopped->content.empty());
-    EXPECT_NE(stopped->content.front().text.find("stream-cancel-agent [cancelled]"), std::string::npos);
+    EXPECT_NE(stopped->content.front().text.find("stream-cancel-agent"), std::string::npos);
+    const auto requested = loom::tools::agent_runtime::native_agent_store().get("stream-cancel-agent");
+    ASSERT_TRUE(requested.has_value());
+    EXPECT_TRUE(requested->cancel_requested);
 
-    bool observed_stream_cancel = false;
-    for (int attempt = 0; attempt < 100; ++attempt) {
-        auto record = loom::tools::agent_runtime::native_agent_store().get("stream-cancel-agent");
-        ASSERT_TRUE(record.has_value());
-        if (record->status == loom::tools::agent_runtime::NativeAgentStatus::Cancelled &&
-            record->error &&
-            record->error->find("while waiting for model stream") != std::string::npos) {
-            observed_stream_cancel = true;
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    }
-    EXPECT_TRUE(observed_stream_cancel);
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(900));
+    // The response stays held until fixture destruction. The worker must stop
+    // consuming the stream and finish cleanup without waiting for that response.
+    loom::tools::agent_runtime::native_agent_store().wait_for_background_agents();
     auto record = loom::tools::agent_runtime::native_agent_store().get("stream-cancel-agent");
     ASSERT_TRUE(record.has_value());
     EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
@@ -2409,7 +2486,7 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringWebFetchToolExecution) {
     auto root = fs::temp_directory_path() / "loom_native_agent_webfetch_cancel_test";
     fs::remove_all(root);
     fs::create_directories(root);
-    LocalSlowContentServer content_server(std::chrono::seconds(2));
+    LocalHeldContentServer content_server;
     ASSERT_TRUE(content_server.valid());
     const auto fetch_input = std::format(
         R"({{"url":"{}"}})",
@@ -2440,31 +2517,21 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringWebFetchToolExecution) {
     ASSERT_TRUE(server.wait_for_request_count(1));
     ASSERT_TRUE(content_server.wait_for_request());
 
-    const auto stop_started = std::chrono::steady_clock::now();
     auto stopped = registry.execute("task_stop", loom::core::ToolInput::from_json(R"({
       "task_id": "webfetch-cancel-agent"
     })"));
     ASSERT_TRUE(stopped.has_value());
     ASSERT_FALSE(stopped->is_error);
 
-    bool observed_webfetch_cancel = false;
-    for (int attempt = 0; attempt < 100; ++attempt) {
-        auto record = loom::tools::agent_runtime::native_agent_store().get("webfetch-cancel-agent");
-        ASSERT_TRUE(record.has_value());
-        if (record->status == loom::tools::agent_runtime::NativeAgentStatus::Cancelled &&
-            record->error &&
-            record->error->find("while executing tool WebFetch") != std::string::npos) {
-            observed_webfetch_cancel = true;
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    }
-    EXPECT_TRUE(observed_webfetch_cancel);
-    EXPECT_LT(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - stop_started).count(),
-        2000);
-    EXPECT_FALSE(server.wait_for_request_count(2, std::chrono::milliseconds(250)));
+    // The response stays blocked until fixture destruction. Joining therefore
+    // proves cancellation interrupts curl rather than waiting for a slow response.
+    loom::tools::agent_runtime::native_agent_store().wait_for_background_agents();
+    auto record = loom::tools::agent_runtime::native_agent_store().get("webfetch-cancel-agent");
+    ASSERT_TRUE(record.has_value());
+    EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
+    ASSERT_TRUE(record->error.has_value());
+    EXPECT_NE(record->error->find("while executing tool WebFetch"), std::string::npos);
+    EXPECT_EQ(server.request_count(), 1u);
 
     auto output = registry.execute("task_output", loom::core::ToolInput::from_json(R"({
       "task_id": "webfetch-cancel-agent"

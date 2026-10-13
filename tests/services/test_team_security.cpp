@@ -235,64 +235,20 @@ void c14_await_ready(int fd) {
     return true;
 }
 
-void c16_raw_truncating_writer(const fs::path& path,
-                               std::string half1,
-                               std::string half2,
-                               int duration_ms) {
-    constexpr struct timespec kGap1{0, 300 * 1000};   // 300us
-    constexpr struct timespec kGap2{0, 200 * 1000};   // 200us
-    const auto deadline = std::chrono::steady_clock::now() +
-                          std::chrono::milliseconds(duration_ms);
-    while (std::chrono::steady_clock::now() < deadline) {
-        const int fd = ::open(path.c_str(),
-                              O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (fd < 0) _exit(20);
-        ::nanosleep(&kGap1, nullptr);  // post-truncate empty window
-        const ssize_t n1 =
-            ::write(fd, half1.data(), half1.size());
-        ::nanosleep(&kGap2, nullptr);  // partial-content window
-        const ssize_t n2 =
-            ::write(fd, half2.data(), half2.size());
-        if (n1 < 0 || n2 < 0) {
-            ::close(fd);
-            _exit(21);
-        }
-        ::close(fd);
-    }
-    _exit(0);
-}
-
 struct C16TornCounters {
     std::atomic<std::uint64_t> attempts{0};
     std::atomic<std::uint64_t> torn{0};
 };
 
-void c16_raw_array_reader(const fs::path& path,
-                          C16TornCounters& counters,
-                          std::atomic<bool>* stop,
-                          std::uint64_t max_attempts) {
-    while (!stop->load(std::memory_order_relaxed) &&
-           counters.attempts.load(std::memory_order_relaxed) < max_attempts) {
-        auto parsed = loom::utils::json::parse_file(path);
-        counters.attempts.fetch_add(1, std::memory_order_relaxed);
-        if (!parsed || !parsed->root().is_arr()) {
-            counters.torn.fetch_add(1, std::memory_order_relaxed);
-        }
-    }
-}
-
 void c16_storm_writer_child(std::string teams_root,
                             std::string team,
                             std::string agent,
-                            int duration_ms) {
+                            int iterations) {
     ::setenv("LOOM_TEAM_RUNTIME_DIR", teams_root.c_str(), 1);
     const auto inbox =
         fs::path{loom::utils::get_inbox_path(agent,
                     std::optional<std::string_view>{team})};
-    const auto deadline = std::chrono::steady_clock::now() +
-                          std::chrono::milliseconds(duration_ms);
-    std::uint64_t seq = 0;
-    while (std::chrono::steady_clock::now() < deadline) {
+    for (int seq = 0; seq < iterations; ++seq) {
         {
             loom::utils::ScopedInboxLock flock(inbox);
             if (!flock.locked()) _exit(30);
@@ -327,7 +283,6 @@ void c16_storm_writer_child(std::string teams_root,
             }
             if (!loom::utils::write_team_file(team, record)) _exit(32);
         }
-        ++seq;
     }
     _exit(0);
 }
@@ -652,74 +607,54 @@ TEST(AtomicReplaceC16, SymlinkDanglingAndFifoLeavesRefusedFast) {
 }
 
 
-// BEFORE/AFTER measurement. The same 8-process rewrite storm, read 4-way:
-//   * raw truncating writers + unlocked reads (the pre-c16 hazard) measure
-//     a non-zero torn/parse-failure rate and log it;
-//   * the production c16 writers (LOCK_EX + unique-tmp atomic replace) with
-//     the production LOCK_SH readers must show ZERO torn reads across at
-//     least 100 000 production read attempts, and finish with valid data.
+// Force the old truncating writer's partial-content window instead of hoping
+// a reader samples it during a fixed time budget. The producer cannot commit
+// until the reader has observed the incomplete JSON.
+TEST(TeamDataC16, TruncatingWriterExposesPartialJsonUntilCommit) {
+    C14TeamEnv env;
+    const auto path = env.root / "raw.json";
+    constexpr std::string_view first = R"([{"from":"lead","text":")";
+    constexpr std::string_view second = R"(complete"}])";
+    std::binary_semaphore partial_ready{0};
+    std::binary_semaphore finish_write{0};
+    std::atomic<bool> writes_ok{false};
+    std::jthread writer([&] {
+        const int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        const bool first_ok = fd >= 0 &&
+            ::write(fd, first.data(), first.size()) == static_cast<ssize_t>(first.size());
+        partial_ready.release();
+        finish_write.acquire();
+        const bool second_ok = fd >= 0 &&
+            ::write(fd, second.data(), second.size()) == static_cast<ssize_t>(second.size());
+        if (fd >= 0) ::close(fd);
+        writes_ok.store(first_ok && second_ok);
+    });
+    // Release before the jthread destructor even if a test assertion aborts.
+    struct FinishWriter {
+        std::binary_semaphore& gate;
+        bool released = false;
+        ~FinishWriter() { if (!released) gate.release(); }
+        void release() { gate.release(); released = true; }
+    } finish{finish_write};
+    partial_ready.acquire();
+    EXPECT_EQ(c14_read_file(path), first);
+    EXPECT_FALSE(loom::utils::json::parse_file(path));
+    finish.release();
+    writer.join();
+    EXPECT_TRUE(writes_ok.load());
+    auto parsed = loom::utils::json::parse_file(path);
+    ASSERT_TRUE(parsed);
+    ASSERT_TRUE(parsed->root().is_arr());
+    EXPECT_EQ(parsed->root().size(), 1u);
+}
 
+// Fixed work, rather than a wall-clock throughput threshold: eight processes
+// each commit both data files 256 times while eight readers sample at least
+// 100 000 times in total. Readers remain active until every writer is reaped.
 TEST(TeamDataC16, StormReadersMeasureZeroTornAcrossInboxAndTeamFile) {
     constexpr int kWriters = 8;
+    constexpr int kWriterIterations = 256;
     constexpr std::uint64_t kMinReads = 100'000;
-
-    // ── Baseline: old-style truncating storm (measurement only) ──────────
-    {
-        C14TeamEnv env;
-        const auto path = c14_inbox_path("raw", "c16rawteam");
-        fs::create_directories(path.parent_path());
-        const std::string whole =
-            "[{\"from\":\"a\",\"text\":\"" + std::string(220, 'x') +
-            "\",\"timestamp\":\"1\",\"read\":false}]";
-        const std::string h1 = whole.substr(0, whole.size() / 2);
-        const std::string h2 = whole.substr(whole.size() / 2);
-        {
-            std::ofstream seed(path, std::ios::binary);
-            seed << whole;
-        }
-        constexpr int kRawMs = 1500;
-        pid_t pids[kWriters];
-        for (int w = 0; w < kWriters; ++w) {
-            const pid_t pid = ::fork();
-            if (pid < 0) _exit(2);
-            if (pid == 0) {
-                c16_raw_truncating_writer(path, h1, h2, kRawMs);
-            }
-            pids[w] = pid;
-        }
-        C16TornCounters raw;
-        std::atomic<bool> stop{false};
-        std::vector<std::thread> readers;
-        for (int r = 0; r < 4; ++r) {
-            readers.emplace_back([&] {
-                c16_raw_array_reader(path, raw, &stop,
-                                     std::numeric_limits<std::uint64_t>::max());
-            });
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(kRawMs));
-        stop.store(true, std::memory_order_relaxed);
-        for (auto& t : readers) t.join();
-        for (pid_t pid : pids) {
-            int status = 0;
-            ASSERT_EQ(::waitpid(pid, &status, 0), pid);
-            ASSERT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0);
-        }
-        const auto attempts = raw.attempts.load();
-        const auto torn = raw.torn.load();
-        const double rate = attempts
-            ? (100.0 * static_cast<double>(torn) /
-               static_cast<double>(attempts))
-            : 0.0;
-        std::printf(
-            "[c16] PRE-FIX raw truncating storm: %llu torn / %llu reads "
-            "(%.2f%%) — the transient parse-failure window c16 removes\n",
-            static_cast<unsigned long long>(torn),
-            static_cast<unsigned long long>(attempts), rate);
-        // Informational baseline: never flake the suite if the window was
-        // not sampled on a fast scheduler; the post-fix assertion is the
-        // load-bearing one below.
-        EXPECT_GT(attempts, 1000u);
-    }
 
     // ── Production c16 storm: locked atomic writers, SH readers ──────────
     C14TeamEnv env;
@@ -736,25 +671,38 @@ TEST(TeamDataC16, StormReadersMeasureZeroTornAcrossInboxAndTeamFile) {
         ASSERT_TRUE(loom::utils::write_team_file(team, record));
     }
 
-    constexpr int kStormMs = 6000;
+    int start_pipe[2];
+    ASSERT_EQ(::pipe(start_pipe), 0);
     pid_t pids[kWriters];
     for (int w = 0; w < kWriters; ++w) {
         const pid_t pid = ::fork();
         if (pid < 0) _exit(2);
         if (pid == 0) {
+            ::close(start_pipe[1]);
+            char token;
+            ssize_t received;
+            do { received = ::read(start_pipe[0], &token, 1); }
+            while (received < 0 && errno == EINTR);
+            ::close(start_pipe[0]);
+            if (received != 1) _exit(33);
             c16_storm_writer_child(
-                (env.root / "teams").string(), team, "worker", kStormMs);
+                (env.root / "teams").string(), team, "worker", kWriterIterations);
         }
         pids[w] = pid;
     }
 
+    ::close(start_pipe[0]);
     C16TornCounters inbox_counts;
     C16TornCounters team_counts;
-    std::atomic<bool> stop{false};
+    std::atomic<bool> writers_finished{false};
+    std::barrier readers_ready{9};
     std::vector<std::thread> readers;
     for (int r = 0; r < 4; ++r) {
         readers.emplace_back([&] {
-            while (!stop.load(std::memory_order_relaxed)) {
+            readers_ready.arrive_and_wait();
+            std::uint64_t reads = 0;
+            while (!writers_finished.load() || reads < kMinReads / 8) {
+                ++reads;
                 auto msgs = loom::utils::read_inbox(
                     "worker", std::optional<std::string_view>{team});
                 inbox_counts.attempts.fetch_add(1, std::memory_order_relaxed);
@@ -771,7 +719,10 @@ TEST(TeamDataC16, StormReadersMeasureZeroTornAcrossInboxAndTeamFile) {
     }
     for (int r = 0; r < 4; ++r) {
         readers.emplace_back([&] {
-            while (!stop.load(std::memory_order_relaxed)) {
+            readers_ready.arrive_and_wait();
+            std::uint64_t reads = 0;
+            while (!writers_finished.load() || reads < kMinReads / 8) {
+                ++reads;
                 auto file = loom::utils::read_team_file(team);
                 team_counts.attempts.fetch_add(1, std::memory_order_relaxed);
                 if (!file) team_counts.torn.fetch_add(1,
@@ -780,28 +731,27 @@ TEST(TeamDataC16, StormReadersMeasureZeroTornAcrossInboxAndTeamFile) {
             }
         });
     }
-    // Reap the storm writers first (they self-exit after kStormMs). The
-    // LOCK_SH readers keep running; once the writers are gone the readers
-    // are uncontended, so the 100k floor is reached deterministically
-    // regardless of machine speed or load (the torn count is what the
-    // storm-under-contention phase proves; extra uncontended reads simply
-    // keep being torn-free).
+    readers_ready.arrive_and_wait();
+    constexpr std::string_view start_tokens = "SSSSSSSS";
+    EXPECT_EQ(::write(start_pipe[1], start_tokens.data(), start_tokens.size()),
+              static_cast<ssize_t>(start_tokens.size()));
+    ::close(start_pipe[1]);
+    // Fork before creating reader threads; release all writers only after the
+    // readers have reached the same barrier. Reap writers before stopping reads.
+    bool writers_ok = true;
     for (pid_t pid : pids) {
         int status = 0;
-        ASSERT_EQ(::waitpid(pid, &status, 0), pid);
-        ASSERT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0)
-            << "storm writer failed: " << WEXITSTATUS(status);
+        pid_t reaped;
+        do { reaped = ::waitpid(pid, &status, 0); }
+        while (reaped < 0 && errno == EINTR);
+        EXPECT_EQ(reaped, pid);
+        const bool exited_ok = reaped == pid && WIFEXITED(status) && WEXITSTATUS(status) == 0;
+        EXPECT_TRUE(exited_ok) << "storm writer failed: pid=" << pid << " status=" << status;
+        writers_ok = writers_ok && exited_ok;
     }
-    const auto read_deadline =
-        std::chrono::steady_clock::now() + std::chrono::seconds(20);
-    while (std::chrono::steady_clock::now() < read_deadline) {
-        const std::uint64_t total =
-            inbox_counts.attempts.load() + team_counts.attempts.load();
-        if (total >= kMinReads) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    }
-    stop.store(true, std::memory_order_relaxed);
+    writers_finished.store(true);
     for (auto& t : readers) t.join();
+    ASSERT_TRUE(writers_ok);
 
     const auto inbox_attempts = inbox_counts.attempts.load();
     const auto team_attempts = team_counts.attempts.load();

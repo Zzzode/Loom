@@ -15,6 +15,8 @@ import loom.ui.foundation.theme_provider;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 export namespace loom::ui::hooks_ui {
 using namespace ftxui;
 
@@ -101,14 +103,15 @@ using HooksMenuMode = std::variant<
 
 /// Get icon/color for hook event
 [[nodiscard]] inline std::pair<std::string, Color> hook_event_display(HookEvent ev) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (ev) {
-        case HookEvent::PreToolUse:   return {"⟨", Color::Cyan};
-        case HookEvent::PostToolUse:  return {"⟩", Color::Blue};
-        case HookEvent::Notification: return {"🔔", Color::Yellow};
-        case HookEvent::Stop:         return {"⏹", Color::Red};
-        case HookEvent::SubagentStop: return {"⏹", Color::Magenta};
+        case HookEvent::PreToolUse:   return {"⟨", pal.info};
+        case HookEvent::PostToolUse:  return {"⟩", pal.info};
+        case HookEvent::Notification: return {std::string(loom::ui::design::figures::kInfo), pal.warning};
+        case HookEvent::Stop:         return {std::string(loom::ui::design::figures::kSquare), pal.danger};
+        case HookEvent::SubagentStop: return {std::string(loom::ui::design::figures::kSquare), pal.primary};
     }
-    return {"?", Color::White};
+    return {"?", pal.text};
 }
 
 /// Get hook event display name
@@ -125,15 +128,16 @@ using HooksMenuMode = std::variant<
 
 /// Get icon/color for hook exec status
 [[nodiscard]] inline std::pair<std::string, Color> hook_exec_status_display(HookExecStatus s) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (s) {
-        case HookExecStatus::Pending:   return {"○", Color::GrayLight};
-        case HookExecStatus::Running:   return {"◐", Color::Cyan};
-        case HookExecStatus::Succeeded: return {"✓", Color::Green};
-        case HookExecStatus::Failed:    return {"✗", Color::Red};
-        case HookExecStatus::TimedOut:  return {"⏱", Color::Yellow};
-        case HookExecStatus::Skipped:   return {"⊘", Color::GrayDark};
+        case HookExecStatus::Pending:   return {std::string(loom::ui::design::figures::kEffortLow), pal.muted};
+        case HookExecStatus::Running:   return {std::string(loom::ui::design::figures::kEffortMedium), pal.info};
+        case HookExecStatus::Succeeded: return {std::string(loom::ui::design::figures::kTick), pal.success};
+        case HookExecStatus::Failed:    return {std::string(loom::ui::design::figures::kCross), pal.danger};
+        case HookExecStatus::TimedOut:  return {std::string(loom::ui::design::figures::kEllipsis), pal.warning};
+        case HookExecStatus::Skipped:   return {std::string(loom::ui::design::figures::kCircle), pal.muted};
     }
-    return {"?", Color::White};
+    return {"?", pal.text};
 }
 
 /// Get hook type badge
@@ -154,12 +158,13 @@ using HooksMenuMode = std::variant<
 /// Render a hook execution result row
 [[nodiscard]] inline Element RenderHookExecRow(
     const HookExecResult& result, bool selected) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     auto [icon, icon_color] = hook_exec_status_display(result.status);
 
     Elements parts = {
         text(" " + icon + " ") | color(icon_color),
-        text(result.hook_name) | (selected ? bold : nothing) | color(Color::White),
+        text(result.hook_name) | (selected ? bold : nothing) | color(pal.text),
         filler(),
         text(std::format(" {}ms ", result.duration.count())) | dim,
     };
@@ -171,7 +176,7 @@ using HooksMenuMode = std::variant<
     if (result.error && result.status == HookExecStatus::Failed) {
         result_parts.push_back(hbox({
             text("   ") | dim,
-            text("⚠ " + *result.error) | color(Color::Red) | dim,
+            text("⚠ " + *result.error) | color(pal.danger) | dim,
         }));
     }
 
@@ -181,13 +186,13 @@ using HooksMenuMode = std::variant<
         auto preview = result.output->substr(0, 80);
         result_parts.push_back(hbox({
             text("   ") | dim,
-            text(preview) | dim | color(Color::GrayLight),
+            text(preview) | dim | color(pal.muted),
         }));
     }
 
     auto el = vbox(result_parts);
     if (selected) {
-        el = el | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
+        el = el | bgcolor(pal.surface_tint_1);
     }
     return el;
 }
@@ -206,6 +211,7 @@ struct HookEventSummary {
 /// Render the event selection list
 [[nodiscard]] inline Element RenderSelectEventMode(
     const std::vector<HookEventSummary>& events, int selected_index) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     Elements items;
     for (int i = 0; i < static_cast<int>(events.size()); ++i) {
@@ -216,13 +222,13 @@ struct HookEventSummary {
         auto row = hbox({
             text(" " + icon + " ") | color(ic),
             text(hook_event_name(ev.event))
-                | (sel ? bold : nothing) | color(Color::White),
+                | (sel ? bold : nothing) | color(pal.text),
             filler(),
             text(std::format(" {} matchers, {} hooks ",
                 ev.matcher_count, ev.hook_count)) | dim,
         });
 
-        if (sel) row = row | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
+        if (sel) row = row | bgcolor(pal.surface_tint_1);
         items.push_back(row);
     }
 
@@ -231,13 +237,13 @@ struct HookEventSummary {
     }
 
     return vbox({
-        text(" Hook Events ") | bold | color(Color::Blue),
+        text(" Hook Events ") | bold | color(pal.info),
         separator(),
         vbox(items) | vscroll_indicator | yframe | flex,
         separator(),
         hbox({
-            text(" [Enter]") | color(Color::Cyan), text(" drill in "),
-            text("[Esc]") | color(Color::Cyan), text(" close "),
+            text(" [Enter]") | color(pal.info), text(" drill in "),
+            text("[Esc]") | color(pal.info), text(" close "),
         }) | dim,
     }) | borderRounded;
 }
@@ -248,29 +254,30 @@ struct HookEventSummary {
 
 /// Render individual hook detail view
 [[nodiscard]] inline Element RenderHookDetail(const IndividualHookConfig& hook) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
 
     rows.push_back(hbox({
         text(" Name: ") | bold,
-        text(hook.name) | color(Color::White),
+        text(hook.name) | color(pal.text),
     }));
     rows.push_back(hbox({
         text(" Type: ") | bold,
-        text(hook_type_badge(hook.type)) | color(Color::Cyan),
+        text(hook_type_badge(hook.type)) | color(pal.info),
     }));
     rows.push_back(hbox({
         text(" Event: ") | bold,
-        text(hook_event_name(hook.event)) | color(Color::Blue),
+        text(hook_event_name(hook.event)) | color(pal.info),
     }));
     rows.push_back(hbox({
         text(" Matcher: ") | bold,
         text(hook.matcher.tool_name.empty() ? "*" : hook.matcher.tool_name)
-            | color(Color::Yellow),
+            | color(pal.warning),
     }));
     rows.push_back(hbox({
         text(" Enabled: ") | bold,
         text(hook.enabled ? "yes" : "no")
-            | color(hook.enabled ? Color::Green : Color::Red),
+            | color(hook.enabled ? pal.success : pal.danger),
     }));
 
     rows.push_back(separator());

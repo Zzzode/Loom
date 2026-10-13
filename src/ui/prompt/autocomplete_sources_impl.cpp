@@ -9,6 +9,8 @@ module loom.ui.prompt.autocomplete_sources;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 import loom.skills.skill;
 import loom.skills.load_skills_dir;
 import loom.tools.agent_runtime;
@@ -679,7 +681,7 @@ std::vector<FormattedSuggestion> build_agent_suggestions(
             .replacement_end = token_end,
             .submit_on_return = false,
             .id = (ag.is_subagent ? "teammate:" : "agent:") + ag.name,
-            .icon = ag.is_subagent ? "👤" : "🤖",
+            .icon = ag.is_subagent ? loom::ui::design::figures::kPointer.data() : loom::ui::design::figures::kBullet.data(),
             .color_name = ag.color.value_or(""),
         });
     }

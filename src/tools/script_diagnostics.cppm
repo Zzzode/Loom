@@ -18,19 +18,13 @@ export namespace loom::tools {
 // Diagnostic data structure
 // =========================================================================
 
-/// Diagnostic severity level — matches the LSP DiagnosticSeverity enum
-/// and the Level previously defined in this module (kept as Level for
-/// backward compatibility with parse_compiler_output callers).
+/// Diagnostic severity level — matches the LSP DiagnosticSeverity values.
 enum class DiagnosticLevel : uint8_t {
     Error   = 1,
     Warning = 2,
     Info    = 3,
     Hint    = 4,
 };
-
-/// Backward-compatible alias — parse_compiler_output historically used
-/// `Diagnostic::Level` so we keep the short name.
-using DiagnosticSeverity [[deprecated("use DiagnosticLevel")]] = DiagnosticLevel;
 
 /// A single compiler / LSP / type-checker diagnostic.
 ///
@@ -57,11 +51,6 @@ struct Diagnostic {
     /// The source line the diagnostic points at. Used to render a
     /// `line_text / ^^^` snippet under the diagnostic header.
     std::optional<std::string> line_text;
-
-    // ------------------------------------------------------------------
-    // Legacy `Level` alias — keeps parse_compiler_output compiling.
-    // ------------------------------------------------------------------
-    using Level [[deprecated("use DiagnosticLevel")]] = DiagnosticLevel;
 };
 
 // =========================================================================

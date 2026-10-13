@@ -88,10 +88,14 @@ std::string settings_with_mouse_mode(bool enabled) {
     return std::format("{{\"mouseMode\": {}}}", enabled ? "true" : "false");
 }
 
-/// Parse a JSON string into a JsonVal for set_user_setting.
-[[nodiscard]] loom::utils::json::JsonVal parse_json(std::string_view text) {
+/// Parse a JSON string into a JsonDoc for set_user_setting. JsonVal is a
+/// non-owning view into the doc, so the doc must outlive the call — callers
+/// must use parse_json(...).root() inline so the temporary lives through the
+/// full expression.
+[[nodiscard]] loom::utils::json::JsonDoc parse_json(std::string_view text) {
     auto doc = loom::utils::json::parse(text);
-    return doc ? doc->root() : loom::utils::json::JsonVal{};
+    if (doc) return std::move(*doc);
+    return loom::utils::json::JsonDoc{};
 }
 
 }  // namespace
@@ -100,11 +104,11 @@ std::string settings_with_mouse_mode(bool enabled) {
 
 TEST(ConfigRwSplit, ReadsFromAgentsFallbackWhenLoomAbsent) {
     TempHome home;
-    home.write_settings(".agents", settings_with_mouse_mode(true));
+    home.write_settings(".agents", settings_with_mouse_mode(false));
 
     loom::core::ConfigManager cm;
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_TRUE(cm.settings().display.mouse_mode)
+    EXPECT_FALSE(cm.settings().display.mouse_mode)
         << "mouseMode should be read from ~/.agents/settings.json";
 }
 
@@ -123,22 +127,22 @@ TEST(ConfigRwSplit, ReturnsWritePathWhenNoSettingsFileExists) {
     TempHome home;
     loom::core::ConfigManager cm;
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_FALSE(cm.settings().display.mouse_mode)
-        << "default mouse_mode is false when no settings file exists";
+    EXPECT_TRUE(cm.settings().display.mouse_mode)
+        << "default mouse_mode is true when no settings file exists";
 }
 
 // ── Write path: always ~/.loom, never ~/.agents ─────────────────────────
 
 TEST(ConfigRwSplit, SaveUserWritesToLoomNotAgents) {
     TempHome home;
-    home.write_settings(".agents", settings_with_mouse_mode(true));
+    home.write_settings(".agents", settings_with_mouse_mode(false));
 
     loom::core::ConfigManager cm;
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_TRUE(cm.settings().display.mouse_mode);
+    EXPECT_FALSE(cm.settings().display.mouse_mode);
 
     // Change a setting and save to user tier.
-    auto result = cm.set_user_setting("mouseMode", parse_json("false"));
+    auto result = cm.set_user_setting("mouseMode", parse_json("true").root());
     ASSERT_TRUE(result.has_value()) << "set_user_setting should succeed";
 
     // ~/.loom/settings.json should now exist.
@@ -146,13 +150,13 @@ TEST(ConfigRwSplit, SaveUserWritesToLoomNotAgents) {
         << "save_user should create ~/.loom/settings.json";
 
     // ~/.agents/settings.json should be byte-unchanged.
-    EXPECT_EQ(home.read_settings(".agents"), settings_with_mouse_mode(true))
+    EXPECT_EQ(home.read_settings(".agents"), settings_with_mouse_mode(false))
         << "~/.agents/settings.json must remain byte-unchanged";
 }
 
 TEST(ConfigRwSplit, UserConfigPathReturnsWritePath) {
     TempHome home;
-    home.write_settings(".agents", settings_with_mouse_mode(true));
+    home.write_settings(".agents", settings_with_mouse_mode(false));
 
     loom::core::ConfigManager cm;
     ASSERT_TRUE(cm.load().has_value());
@@ -167,19 +171,19 @@ TEST(ConfigRwSplit, UserConfigPathReturnsWritePath) {
 
 TEST(ConfigRwSplit, SameInstanceTakeoverAfterSaveUser) {
     TempHome home;
-    home.write_settings(".agents", settings_with_mouse_mode(true));
+    home.write_settings(".agents", settings_with_mouse_mode(false));
 
     loom::core::ConfigManager cm;
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_TRUE(cm.settings().display.mouse_mode);
+    EXPECT_FALSE(cm.settings().display.mouse_mode);
 
     // Write to user tier — creates ~/.loom/settings.json.
-    auto result = cm.set_user_setting("mouseMode", parse_json("false"));
+    auto result = cm.set_user_setting("mouseMode", parse_json("true").root());
     ASSERT_TRUE(result.has_value());
 
     // Reload on the SAME instance — should pick up ~/.loom.
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_FALSE(cm.settings().display.mouse_mode)
+    EXPECT_TRUE(cm.settings().display.mouse_mode)
         << "after write + reload, same instance should read from ~/.loom";
 }
 
@@ -205,11 +209,11 @@ TEST(ConfigRwSplit, ExplicitPathConstructorUsesFixedPaths) {
 
 TEST(ConfigRwSplit, SingleProjectConstructorHasNoUserTier) {
     TempHome home;
-    home.write_settings(".agents", settings_with_mouse_mode(true));
+    home.write_settings(".agents", settings_with_mouse_mode(false));
 
     loom::core::ConfigManager cm(home.root() / "project.json");
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_FALSE(cm.settings().display.mouse_mode)
+    EXPECT_TRUE(cm.settings().display.mouse_mode)
         << "single-project constructor should have no user tier";
     EXPECT_TRUE(cm.user_config_path().empty())
         << "single-project constructor should have empty user write path";
@@ -219,8 +223,8 @@ TEST(ConfigRwSplit, SingleProjectConstructorHasNoUserTier) {
 
 TEST(ConfigRwSplit, LoomConfigDirOverrideIsUnconditional) {
     TempHome home;
-    home.write_settings(".agents", settings_with_mouse_mode(true));
-    home.write_settings(".loom", settings_with_mouse_mode(true));
+    home.write_settings(".agents", settings_with_mouse_mode(false));
+    home.write_settings(".loom", settings_with_mouse_mode(false));
 
     // Set LOOM_CONFIG_DIR to an empty directory — no settings.json.
     auto isolated = home.root() / "isolated";
@@ -229,7 +233,7 @@ TEST(ConfigRwSplit, LoomConfigDirOverrideIsUnconditional) {
 
     loom::core::ConfigManager cm;
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_FALSE(cm.settings().display.mouse_mode)
+    EXPECT_TRUE(cm.settings().display.mouse_mode)
         << "LOOM_CONFIG_DIR should be unconditional — no downgrade to HOME paths";
 
     // user_config_path should also be under LOOM_CONFIG_DIR.
@@ -241,7 +245,7 @@ TEST(ConfigRwSplit, LoomConfigDirOverrideIsUnconditional) {
 
 TEST(ConfigRwSplit, UnparseableLoomFileDoesNotSilentlyDowngrade) {
     TempHome home;
-    home.write_settings(".agents", settings_with_mouse_mode(true));
+    home.write_settings(".agents", settings_with_mouse_mode(false));
     home.write_settings(".loom", "{ invalid json !!!");
 
     loom::core::ConfigManager cm;
@@ -252,7 +256,7 @@ TEST(ConfigRwSplit, UnparseableLoomFileDoesNotSilentlyDowngrade) {
     if (result) {
         // If load succeeded (soft tier), the mouseMode from ~/.agents should
         // NOT be loaded because ~/.loom is the higher-priority file.
-        EXPECT_FALSE(cm.settings().display.mouse_mode)
+        EXPECT_TRUE(cm.settings().display.mouse_mode)
             << "unparseable ~/.loom should not silently downgrade to ~/.agents";
     }
 }
@@ -261,31 +265,32 @@ TEST(ConfigRwSplit, UnparseableLoomFileDoesNotSilentlyDowngrade) {
 
 TEST(ConfigRwSplit, NewInstancePrefersLoomAfterWrite) {
     TempHome home;
-    home.write_settings(".agents", settings_with_mouse_mode(true));
+    home.write_settings(".agents", settings_with_mouse_mode(false));
 
     {
         loom::core::ConfigManager cm;
         ASSERT_TRUE(cm.load().has_value());
-        EXPECT_TRUE(cm.settings().display.mouse_mode);
+        EXPECT_FALSE(cm.settings().display.mouse_mode);
 
-        auto result = cm.set_user_setting("mouseMode", parse_json("false"));
+        auto result = cm.set_user_setting("mouseMode", parse_json("true").root());
         ASSERT_TRUE(result.has_value());
     }
 
     // New instance should read from ~/.loom (which now exists).
     loom::core::ConfigManager cm2;
     ASSERT_TRUE(cm2.load().has_value());
-    EXPECT_FALSE(cm2.settings().display.mouse_mode)
+    EXPECT_TRUE(cm2.settings().display.mouse_mode)
         << "new instance should prefer ~/.loom over ~/.agents";
 }
 
 // ── mouseMode config parse/save ──────────────────────────────────────────
 
-TEST(ConfigRwSplit, MouseModeDefaultIsFalse) {
+TEST(ConfigRwSplit, MouseModeDefaultIsTrue) {
     TempHome home;
+    home.write_settings(".loom", "{}");
     loom::core::ConfigManager cm;
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_FALSE(cm.settings().display.mouse_mode);
+    EXPECT_TRUE(cm.settings().display.mouse_mode);
 }
 
 TEST(ConfigRwSplit, MouseModeParsedFromSettingsJson) {
@@ -297,22 +302,36 @@ TEST(ConfigRwSplit, MouseModeParsedFromSettingsJson) {
     EXPECT_TRUE(cm.settings().display.mouse_mode);
 }
 
+TEST(ConfigRwSplit, MouseModeExplicitFalsePreservesNativeSelection) {
+    TempHome home;
+    home.write_settings(".loom", settings_with_mouse_mode(false));
+
+    loom::core::ConfigManager cm;
+    ASSERT_TRUE(cm.load().has_value());
+    EXPECT_FALSE(cm.settings().display.mouse_mode);
+}
+
 TEST(ConfigRwSplit, MouseModeSavedToSettingsJson) {
     TempHome home;
     home.write_settings(".loom", "{}");
 
     loom::core::ConfigManager cm;
     ASSERT_TRUE(cm.load().has_value());
+    EXPECT_TRUE(cm.settings().display.mouse_mode);
 
-    auto result = cm.set_user_setting("mouseMode", parse_json("true"));
+    auto result = cm.set_user_setting("mouseMode", parse_json("false").root());
     ASSERT_TRUE(result.has_value());
 
-    // Verify the saved file contains mouseMode: true.
-    auto saved = home.read_settings(".loom");
-    EXPECT_NE(saved.find("\"mouseMode\""), std::string::npos)
-        << "saved settings should contain mouseMode key";
-    EXPECT_NE(saved.find("true"), std::string::npos)
-        << "saved settings should contain true value";
+    // Verify the explicit opt-out survives serialization and a fresh load.
+    auto saved = loom::utils::json::parse(home.read_settings(".loom"));
+    ASSERT_TRUE(saved.has_value());
+    auto mouse_mode = saved->root().get("mouseMode");
+    ASSERT_TRUE(mouse_mode.is_bool());
+    EXPECT_FALSE(mouse_mode.as_bool());
+
+    loom::core::ConfigManager reloaded;
+    ASSERT_TRUE(reloaded.load().has_value());
+    EXPECT_FALSE(reloaded.settings().display.mouse_mode);
 }
 
 // ── ~/.loom directory exists but no settings.json ───────────────────────
@@ -322,11 +341,11 @@ TEST(ConfigRwSplit, LoomDirExistsButNoSettingsFileFallsToAgents) {
     // Create ~/.loom DIRECTORY but no settings.json (simulates a failed
     // save_user that created the directory but not the file).
     fs::create_directories(home.root() / ".loom");
-    home.write_settings(".agents", settings_with_mouse_mode(true));
+    home.write_settings(".agents", settings_with_mouse_mode(false));
 
     loom::core::ConfigManager cm;
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_TRUE(cm.settings().display.mouse_mode)
+    EXPECT_FALSE(cm.settings().display.mouse_mode)
         << "directory-level existence must not shadow the file-level fallback";
 }
 
@@ -334,11 +353,11 @@ TEST(ConfigRwSplit, LoomDirExistsButNoSettingsFileFallsToAgents) {
 
 TEST(ConfigRwSplit, FailedWriteDoesNotRebindReadPath) {
     TempHome home;
-    home.write_settings(".agents", settings_with_mouse_mode(true));
+    home.write_settings(".agents", settings_with_mouse_mode(false));
 
     loom::core::ConfigManager cm;
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_TRUE(cm.settings().display.mouse_mode);
+    EXPECT_FALSE(cm.settings().display.mouse_mode);
     EXPECT_TRUE(cm.is_user_fallback());
 
     // Create ~/.loom directory but make it read-only so the write fails.
@@ -350,7 +369,7 @@ TEST(ConfigRwSplit, FailedWriteDoesNotRebindReadPath) {
                     fs::perm_options::replace);
 
     // Attempt to write — should fail because the directory is read-only.
-    auto result = cm.set_user_setting("mouseMode", parse_json("false"));
+    auto result = cm.set_user_setting("mouseMode", parse_json("true").root());
     EXPECT_FALSE(result.has_value())
         << "write to read-only ~/.loom should fail";
 
@@ -362,7 +381,7 @@ TEST(ConfigRwSplit, FailedWriteDoesNotRebindReadPath) {
     // The read path must still be ~/.agents — the failed write must NOT
     // rebind the read path to ~/.loom.
     ASSERT_TRUE(cm.load().has_value());
-    EXPECT_TRUE(cm.settings().display.mouse_mode)
+    EXPECT_FALSE(cm.settings().display.mouse_mode)
         << "after failed write, same instance must still read ~/.agents";
     EXPECT_TRUE(cm.is_user_fallback())
         << "after failed write, the instance must still be in fallback mode";
@@ -370,12 +389,12 @@ TEST(ConfigRwSplit, FailedWriteDoesNotRebindReadPath) {
     // A NEW instance must also still read ~/.agents.
     loom::core::ConfigManager cm2;
     ASSERT_TRUE(cm2.load().has_value());
-    EXPECT_TRUE(cm2.settings().display.mouse_mode)
+    EXPECT_FALSE(cm2.settings().display.mouse_mode)
         << "after failed write, new instance must still read ~/.agents";
     EXPECT_TRUE(cm2.is_user_fallback())
         << "after failed write, new instance must still be in fallback mode";
 
     // ~/.agents/settings.json must be byte-unchanged.
-    EXPECT_EQ(home.read_settings(".agents"), settings_with_mouse_mode(true))
+    EXPECT_EQ(home.read_settings(".agents"), settings_with_mouse_mode(false))
         << "~/.agents/settings.json must remain byte-unchanged after failed write";
 }

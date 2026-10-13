@@ -2,6 +2,7 @@
 /// @brief Service layer tests split from test_services.cpp.
 
 #include <cctype>
+#include <cerrno>
 #include <cstdint>
 #include <cstdlib>
 #include <atomic>
@@ -103,6 +104,254 @@ struct EnvironmentGuard {
 };
 
 } // namespace
+
+namespace {
+
+// A real peer keeps the response open until the client closes its socket.
+// Gates distinguish cancellation from an HTTP timeout or normal completion.
+class StreamingRequestPeer {
+public:
+    explicit StreamingRequestPeer(bool send_body = false, bool denied = false)
+        : accepted_(accepted_signal_.get_future()),
+          closed_(closed_signal_.get_future()),
+          response_gate_(response_signal_.get_future().share()) {
+        listener_ = socket(AF_INET, SOCK_STREAM, 0);
+        if (listener_ < 0) return;
+        sockaddr_in address{};
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        if (bind(listener_, reinterpret_cast<sockaddr*>(&address), sizeof(address)) != 0 ||
+            listen(listener_, 1) != 0) return;
+        socklen_t length = sizeof(address);
+        if (getsockname(listener_, reinterpret_cast<sockaddr*>(&address), &length) != 0) return;
+        port_ = ntohs(address.sin_port);
+        worker_ = std::thread([this, send_body, denied] {
+            const int peer = accept(listener_, nullptr, nullptr);
+            if (peer < 0) return;
+            {
+                std::scoped_lock lock(peer_mutex_);
+                peer_ = peer;
+            }
+#ifdef SO_NOSIGPIPE
+            int no_sigpipe = 1;
+            setsockopt(peer, SOL_SOCKET, SO_NOSIGPIPE, &no_sigpipe, sizeof(no_sigpipe));
+#endif
+            char bytes[8192];
+            if (recv(peer, bytes, sizeof(bytes), 0) <= 0) {
+                close_peer(peer);
+                return;
+            }
+            accepted_signal_.set_value();
+            if (denied) {
+                response_gate_.wait();
+                write_response(peer, "HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n");
+            } else if (send_body) {
+                write_response(peer, "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\n"
+                                     "Connection: close\r\n\r\nevent: ping\ndata: {}\n\n");
+            }
+            while (!stopping_.load()) {
+                const auto count = recv(peer, bytes, sizeof(bytes), 0);
+                if (count < 0 && errno == EINTR) continue;
+                if (count <= 0) {
+                    // Closing with an unread raced 403 response may reset TCP
+                    // rather than send FIN. Both prove the transfer released
+                    // its socket; unrelated receive failures remain failures.
+                    closed_signal_.set_value(count == 0 || errno == ECONNRESET);
+                    break;
+                }
+            }
+            close_peer(peer);
+        });
+    }
+
+    ~StreamingRequestPeer() {
+        release_response();
+        stopping_.store(true);
+        {
+            std::scoped_lock lock(peer_mutex_);
+            if (peer_ >= 0) shutdown(peer_, SHUT_RDWR);
+        }
+        if (listener_ >= 0) shutdown(listener_, SHUT_RDWR);
+        if (worker_.joinable()) worker_.join();
+        if (listener_ >= 0) close(listener_);
+    }
+
+    int port() const { return port_; }
+    std::string url() const { return std::format("http://127.0.0.1:{}", port_); }
+    bool wait_for_request() { return accepted_.wait_for(std::chrono::seconds(5)) == std::future_status::ready; }
+    bool wait_for_close() {
+        return closed_.wait_for(std::chrono::seconds(5)) == std::future_status::ready && closed_.get();
+    }
+    void release_response() {
+        if (!released_.exchange(true)) response_signal_.set_value();
+    }
+
+private:
+    static void write_response(int peer, std::string_view response) {
+        while (!response.empty()) {
+#ifdef MSG_NOSIGNAL
+            const auto count = send(peer, response.data(), response.size(), MSG_NOSIGNAL);
+#else
+            const auto count = send(peer, response.data(), response.size(), 0);
+#endif
+            if (count <= 0) return;
+            response.remove_prefix(static_cast<size_t>(count));
+        }
+    }
+    void close_peer(int peer) {
+        std::scoped_lock lock(peer_mutex_);
+        peer_ = -1;
+        close(peer);
+    }
+
+    int listener_ = -1;
+    int port_ = -1;
+    int peer_ = -1;
+    std::mutex peer_mutex_;
+    std::thread worker_;
+    std::promise<void> accepted_signal_;
+    std::future<void> accepted_;
+    std::promise<bool> closed_signal_;
+    std::future<bool> closed_;
+    std::promise<void> response_signal_;
+    std::shared_future<void> response_gate_;
+    std::atomic<bool> released_{false};
+    std::atomic<bool> stopping_{false};
+};
+
+loom::services::api::CreateMessageRequest lifecycle_stream_request() {
+    loom::services::api::CreateMessageRequest request;
+    request.model = "test-model";
+    request.max_tokens = 8;
+    request.messages.push_back(loom::services::api::Message::from_text("user", "test"));
+    return request;
+}
+
+} // namespace
+
+TEST(ApiStreamingLifecycle, DroppingLastConsumerCancelsBeforeResponseHeaders) {
+    EnvironmentGuard bedrock("LOOM_USE_BEDROCK", "0");
+    EnvironmentGuard vertex("LOOM_USE_VERTEX", "0");
+    EnvironmentGuard foundry("LOOM_USE_FOUNDRY", "0");
+    StreamingRequestPeer peer;
+    ASSERT_GT(peer.port(), 0);
+    loom::services::api::MessagesClient::Config config;
+    config.base_url = peer.url();
+    config.api_key = "test";
+    loom::services::api::MessagesClient client(std::move(config));
+    auto stream = client.create_message_stream(lifecycle_stream_request());
+    ASSERT_TRUE(stream);
+    ASSERT_TRUE(peer.wait_for_request());
+    auto consumer_copy = *stream;
+    stream = std::unexpected(loom::utils::Error(loom::utils::ErrorCode::cancelled, "consumer released"));
+    // The surviving consumer remains usable; only its final release cancels.
+    EXPECT_FALSE(consumer_copy.is_finished());
+    consumer_copy = loom::services::api::StreamParser{};
+    EXPECT_TRUE(peer.wait_for_close());
+}
+
+TEST(ApiStreamingLifecycle, DroppingLastConsumerCancelsStalledBody) {
+    EnvironmentGuard bedrock("LOOM_USE_BEDROCK", "0");
+    EnvironmentGuard vertex("LOOM_USE_VERTEX", "0");
+    EnvironmentGuard foundry("LOOM_USE_FOUNDRY", "0");
+    StreamingRequestPeer peer(true);
+    ASSERT_GT(peer.port(), 0);
+    loom::services::api::MessagesClient::Config config;
+    config.base_url = peer.url();
+    config.api_key = "test";
+    loom::services::api::MessagesClient client(std::move(config));
+    auto stream = client.create_message_stream(lifecycle_stream_request());
+    ASSERT_TRUE(stream);
+    ASSERT_TRUE(peer.wait_for_request());
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    bool saw_ping = false;
+    while (!saw_ping && std::chrono::steady_clock::now() < deadline) {
+        auto event = stream->next_event();
+        ASSERT_TRUE(event);
+        saw_ping = event->has_value();
+        if (!saw_ping) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    ASSERT_TRUE(saw_ping);
+    stream = std::unexpected(loom::utils::Error(loom::utils::ErrorCode::cancelled, "consumer released"));
+    EXPECT_TRUE(peer.wait_for_close());
+}
+
+TEST(ApiStreamingLifecycle, ClientDestructionCancelsLiveConsumer) {
+    EnvironmentGuard bedrock("LOOM_USE_BEDROCK", "0");
+    EnvironmentGuard vertex("LOOM_USE_VERTEX", "0");
+    EnvironmentGuard foundry("LOOM_USE_FOUNDRY", "0");
+    StreamingRequestPeer peer;
+    ASSERT_GT(peer.port(), 0);
+    loom::services::api::MessagesClient::Config config;
+    config.base_url = peer.url();
+    config.api_key = "test";
+    auto client = std::make_unique<loom::services::api::MessagesClient>(std::move(config));
+    auto stream = client->create_message_stream(lifecycle_stream_request());
+    ASSERT_TRUE(stream);
+    ASSERT_TRUE(peer.wait_for_request());
+    client.reset();
+    EXPECT_TRUE(peer.wait_for_close());
+    EXPECT_TRUE(stream->is_finished());
+    EXPECT_TRUE(stream->has_error());
+}
+
+TEST(ApiStreamingLifecycle, ConcurrentClientAndConsumerDestructionWithPendingEnterpriseError) {
+    EnvironmentGuard bedrock("LOOM_USE_BEDROCK", "0");
+    EnvironmentGuard vertex("LOOM_USE_VERTEX", "0");
+    EnvironmentGuard foundry("LOOM_USE_FOUNDRY", "1");
+    EnvironmentGuard skip_auth("LOOM_SKIP_FOUNDRY_AUTH", "1");
+    StreamingRequestPeer peer(false, true);
+    ASSERT_GT(peer.port(), 0);
+    EnvironmentGuard endpoint("LOOM_FOUNDRY_BASE_URL", peer.url());
+    loom::services::api::MessagesClient::Config config;
+    config.base_url = peer.url();
+    config.api_key = "test";
+    auto client = std::make_unique<loom::services::api::MessagesClient>(std::move(config));
+    auto stream = client->create_message_stream(lifecycle_stream_request());
+    ASSERT_TRUE(stream);
+    ASSERT_TRUE(peer.wait_for_request());
+    std::barrier teardown(3);
+    std::thread destroy_consumer([&] {
+        teardown.arrive_and_wait();
+        stream = std::unexpected(loom::utils::Error(loom::utils::ErrorCode::cancelled, "consumer released"));
+    });
+    std::thread destroy_client([&] {
+        teardown.arrive_and_wait();
+        client.reset();
+    });
+    teardown.arrive_and_wait();
+    peer.release_response();
+    destroy_consumer.join();
+    destroy_client.join();
+    EXPECT_TRUE(peer.wait_for_close());
+}
+
+TEST(ApiStreamingLifecycle, EnterpriseErrorRemainsReadableAfterClientDestruction) {
+    EnvironmentGuard bedrock("LOOM_USE_BEDROCK", "0");
+    EnvironmentGuard vertex("LOOM_USE_VERTEX", "0");
+    EnvironmentGuard foundry("LOOM_USE_FOUNDRY", "1");
+    EnvironmentGuard skip_auth("LOOM_SKIP_FOUNDRY_AUTH", "1");
+    StreamingRequestPeer peer(false, true);
+    ASSERT_GT(peer.port(), 0);
+    EnvironmentGuard endpoint("LOOM_FOUNDRY_BASE_URL", peer.url());
+    loom::services::api::MessagesClient::Config config;
+    config.base_url = peer.url();
+    config.api_key = "test";
+    auto client = std::make_unique<loom::services::api::MessagesClient>(std::move(config));
+    auto stream = client->create_message_stream(lifecycle_stream_request());
+    ASSERT_TRUE(stream);
+    ASSERT_TRUE(peer.wait_for_request());
+    peer.release_response();
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (!stream->is_finished() && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    ASSERT_TRUE(stream->is_finished());
+    client.reset();
+    ASSERT_TRUE(stream->error_details());
+    EXPECT_EQ(stream->error_details()->http_status, 403);
+    EXPECT_TRUE(peer.wait_for_close());
+}
 
 TEST(ApiErrors, ClassifiesHttpStatusCodes) {
     using loom::services::api::errors::ApiErrorCategory;

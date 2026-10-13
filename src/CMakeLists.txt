@@ -140,13 +140,13 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_skills.cmake")
 # link it.
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_orchestration.cmake")
 # RFC 0002 F4 — loom_ui area libraries, included in dependency order
-# (UI9_RANK ascending, leaves first: visual/tools rank 1, foundation rank 2,
+# (UI9_RANK ascending, leaves first: foundation/tools rank 1, visual rank 2,
 # chrome rank 3, prompt rank 4, widgets rank 5, permissions rank 6,
 # messages rank 7, features rank 8, dialogs rank 9, screens rank 10,
 # app rank 11). Each area library must exist before loom_ui links it.
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_foundation.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_visual.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_tools.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_foundation.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_chrome.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_prompt.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/targets/loom_ui_widgets.cmake")

@@ -186,7 +186,7 @@ def main() -> int:
             "export module loom.ui.foundation.other;\n",
     })
     check(not t["passes"], "gate fails")
-    check(any("must be in loom_ui_foundation" in v for v in t["grouping"]),
+    check(any("must be in a loom_ui_foundation" in v for v in t["grouping"]),
           f"file-side grouping violation (got {t['grouping']})")
 
     print("7. temp tree: pre-split layout passes grouping vacuously")

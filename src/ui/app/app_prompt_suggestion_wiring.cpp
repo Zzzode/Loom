@@ -21,22 +21,20 @@ import loom.hooks.lifecycle_hooks;
 import loom.types.types;
 import loom.hooks.lifecycle_hooks;
 import loom.services.prompt_suggestion;
-import loom.ui.screens.repl_screen;
-import loom.ui.screens.repl_state;
 
 namespace loom::ui {
 
 // SL-11: register a QueryEnd hook that reads the engine conversation, runs the
 // deterministic PromptSuggestionService ranker (no LLM / speculation — those
-// subsystems don't exist in cpp), and stores the top suggestion on
-// ReplScreenState::next_action_suggestion for the empty-prompt renderer.
+// subsystems don't exist in cpp), and publishes an owned result for the UI
+// thread to apply to the empty-prompt renderer.
 void wire_prompt_suggestion_hook(void* hooks_v, void* engine_v,
-                                 std::shared_ptr<repl_screen::ReplScreenState> state) {
+                                 std::function<void(std::optional<std::string>)> publish) {
     auto& hooks = *static_cast<loom::hooks::LifecycleHookRegistry*>(hooks_v);
     auto* engine = static_cast<core::QueryEngine*>(engine_v);
-    hooks.on_query_end([engine, state](const loom::hooks::QueryEndEvent& ev) {
+    hooks.on_query_end([engine, publish = std::move(publish)](const loom::hooks::QueryEndEvent& ev) {
         if (!ev.success) {
-            state->next_action_suggestion.reset();
+            publish(std::nullopt);
             return;
         }
         try {
@@ -69,12 +67,12 @@ void wire_prompt_suggestion_hook(void* hooks_v, void* engine_v,
             const auto ranked =
                 loom::services::prompt_suggestion::PromptSuggestionService{}.suggest(req);
             if (ranked && !ranked->empty() && !(*ranked)[0].text.empty()) {
-                state->next_action_suggestion = (*ranked)[0].text;
+                publish((*ranked)[0].text);
             } else {
-                state->next_action_suggestion.reset();
+                publish(std::nullopt);
             }
         } catch (...) {
-            state->next_action_suggestion.reset();
+            publish(std::nullopt);
         }
     });
 }

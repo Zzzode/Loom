@@ -547,7 +547,8 @@ void append_hook_additional_context_messages(
     return path.string();
 }
 
-void upsert_agent_record_for_plan(const AgentExecutionPlan& plan) {
+void upsert_agent_record_for_plan(const AgentExecutionPlan& plan,
+    std::optional<std::stop_token> execution_owner) {
     loom::tools::agent_runtime::NativeAgentRecord record{
         .agent_id = plan.agent_id,
         .agent_type = plan.agent_type,
@@ -615,7 +616,9 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan) {
         }
     }
 
-    loom::tools::agent_runtime::native_agent_store().upsert(std::move(record));
+    auto& store = loom::tools::agent_runtime::native_agent_store();
+    if (execution_owner) store.begin_execution(std::move(record), *execution_owner);
+    else store.upsert(std::move(record));
 }
 
 [[nodiscard]] std::string agent_output_file_path(std::string_view agent_id) {

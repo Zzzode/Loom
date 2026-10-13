@@ -33,6 +33,8 @@ module;
 export module loom.ui.dialogs.wizard_dialog;
 
 import std;
+import loom.ui.foundation.design_figures;
+import loom.ui.foundation.theme_provider;
 
 export namespace loom::ui::wizard_dialog {
 using namespace ftxui;
@@ -111,15 +113,16 @@ enum class WizardColor : std::uint8_t {
 
 /// Convert wizard color to FTXUI color.
 [[nodiscard]] inline Color to_ftxui_color(WizardColor c) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (c) {
-        case WizardColor::suggestion: return Color::Cyan;
-        case WizardColor::permission: return Color::Magenta;
-        case WizardColor::warning:    return Color::Yellow;
-        case WizardColor::info:       return Color::Blue;
-        case WizardColor::success:    return Color::Green;
-        case WizardColor::danger:     return Color::Red;
+        case WizardColor::suggestion: return pal.suggestion;
+        case WizardColor::permission: return pal.permission;
+        case WizardColor::warning:    return pal.warning;
+        case WizardColor::info:       return pal.info;
+        case WizardColor::success:    return pal.success;
+        case WizardColor::danger:     return pal.danger;
     }
-    return Color::White;
+    return pal.text;
 }
 
 /// Shared wizard state passed to every step callback.
@@ -226,13 +229,14 @@ struct WizardContext {
 /// Deferred(animation): FTXUI has no built-in fade/transition; hook into a ticker
 /// once the main screen_loop is wired for per-frame redraws.
 [[nodiscard]] inline Element RenderSpinner(std::string label = " Loading…") {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // Use a deterministic spinner glyph; consumers relying on animation can
     // replace this with a per-frame index later.
     static constexpr const char* kFrames = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
     static std::size_t s_counter = 0;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
     char glyph = kFrames[(s_counter++) % 10];
     return hbox({
-        text(std::string(1, glyph)) | color(Color::Cyan) | bold,
+        text(std::string(1, glyph)) | color(pal.info) | bold,
         text(" " + std::move(label)) | dim,
     });
 }
@@ -247,6 +251,7 @@ struct WizardContext {
 
 /// Render a progress bar (0.0 ~ 1.0) using block characters.
 [[nodiscard]] inline Element RenderProgressBar(double fraction, int width = 40) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     fraction = std::clamp(fraction, 0.0, 1.0);
     int filled = static_cast<int>(fraction * static_cast<double>(width));
     filled = std::clamp(filled, 0, width);
@@ -261,7 +266,7 @@ struct WizardContext {
     int pct = static_cast<int>(fraction * 100.0);
     return hbox({
         text(" "),
-        text(std::string{"["} + bar + "]") | color(Color::Cyan),
+        text(std::string{"["} + bar + "]") | color(pal.info),
         text(std::format(" {:3d}%", pct)) | dim,
     });
 }
@@ -273,22 +278,23 @@ struct WizardContext {
 [[nodiscard]] inline Element RenderBreadcrumb(const WizardContext& ctx) {
     Elements items;
     for (int i = 0; i < static_cast<int>(ctx.steps.size()); ++i) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto& s = ctx.steps[i];
         std::string label = s.title.empty() ? s.id : s.title;
         Element line;
         if (i < ctx.current_step) {
             line = hbox({
-                text("✓ ") | color(Color::Green),
-                text(label) | color(Color::Green) | dim,
+                text("✓ ") | color(pal.success),
+                text(label) | color(pal.success) | dim,
             });
         } else if (i == ctx.current_step) {
             line = hbox({
-                text("→ ") | color(Color::Cyan) | bold,
+                text("→ ") | color(pal.info) | bold,
                 text(label) | bold,
             });
         } else {
             line = hbox({
-                text("○ ") | color(Color::GrayDark),
+                text("○ ") | color(pal.muted),
                 text(label) | dim,
             });
         }
@@ -302,13 +308,14 @@ struct WizardContext {
 
 /// Render the error strip (only when the current step has an error).
 [[nodiscard]] inline Element RenderErrorStrip(const WizardContext& ctx) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     std::string msg = ctx.current_error();
     if (msg.empty()) return text("");
     return hbox({
         text(" "),
         hbox({
-            text(" ✗ ") | bgcolor(Color::Red) | color(Color::Yellow) | bold,
-            text(" " + msg + " ") | bgcolor(Color::Red) | color(Color::Yellow),
+            text(" ✗ ") | bgcolor(pal.danger) | color(pal.inverse_text) | bold,
+            text(" " + msg + " ") | bgcolor(pal.danger) | color(pal.inverse_text),
         }),
         text(" "),
     });
@@ -337,22 +344,24 @@ struct WizardFooterProps {
 /// wizard itself handles keyboard events so no component focus management is
 /// needed for the footer itself.
 [[nodiscard]] inline Element RenderFooterButtons(const WizardFooterProps& p) {
-    auto btn = [](std::string label, bool enabled, Color col = Color::Cyan) {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
+    auto btn = [](std::string label, bool enabled, Color col = loom::ui::design::theme::current_theme().palette->info) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         auto body = text(" " + std::move(label) + " ");
         if (enabled) {
             return body | border | color(col) | bold;
         }
-        return body | border | dim | color(Color::GrayDark);
+        return body | border | dim | color(pal.muted);
     };
 
     Elements row;
     // Back button
-    row.push_back(btn(p.back_label, p.can_go_back && !p.busy, Color::Blue));
+    row.push_back(btn(p.back_label, p.can_go_back && !p.busy, pal.info));
     row.push_back(text(" "));
 
     // Skip (for optional steps)
     if (p.is_optional) {
-        row.push_back(btn("Skip", !p.busy, Color::Yellow));
+        row.push_back(btn("Skip", !p.busy, pal.warning));
         row.push_back(text(" "));
     }
 
@@ -360,7 +369,7 @@ struct WizardFooterProps {
     row.push_back(filler());
 
     // Cancel
-    row.push_back(btn(p.cancel_label, !p.busy, Color::Red));
+    row.push_back(btn(p.cancel_label, !p.busy, pal.danger));
     row.push_back(text(" "));
 
     // Next / Finish
@@ -368,7 +377,7 @@ struct WizardFooterProps {
         ? (p.is_last ? "Finish" : "Next")
         : p.next_label;
     row.push_back(btn(std::move(lbl), p.can_go_next && !p.busy,
-                      p.is_last ? Color::Green : Color::Cyan));
+                      p.is_last ? pal.success : pal.info));
 
     Elements result = { hbox(std::move(row)) };
 
@@ -376,11 +385,11 @@ struct WizardFooterProps {
     if (p.instructions) {
         Elements hints;
         hints.push_back(text(" "));
-        hints.push_back(text("←/B:back") | dim | color(Color::GrayLight));
+        hints.push_back(text("←/B:back") | dim | color(pal.text_muted));
         hints.push_back(text("  "));
-        hints.push_back(text("→/N/Enter:next") | dim | color(Color::GrayLight));
+        hints.push_back(text("→/N/Enter:next") | dim | color(pal.text_muted));
         hints.push_back(text("  "));
-        hints.push_back(text("Esc:cancel") | dim | color(Color::GrayLight));
+        hints.push_back(text("Esc:cancel") | dim | color(pal.text_muted));
         hints.push_back(text("  "));
         hints.push_back(text(*p.instructions) | dim);
         result.push_back(hbox(std::move(hints)));
@@ -610,6 +619,7 @@ namespace internal {
 
     // ---- Render function ----
     return Renderer([ctx, compute_footer] {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         // Header
         std::string title = ctx->title.empty() ? "Wizard" : ctx->title;
         if (ctx->show_step_counter && ctx->total_steps > 0) {
@@ -660,7 +670,7 @@ namespace internal {
                 }
                 step_content = vbox(el);
             } else {
-                step_content = text("  (invalid step index)") | dim | color(Color::Red);
+                step_content = text("  (invalid step index)") | dim | color(pal.danger);
             }
         }
         body_parts.push_back(step_content | flex);
@@ -835,11 +845,12 @@ struct ConfirmationSummary {
         info.title = "Information";
         info.description = "Review what you're about to do.";
         info.render = [](WizardContext& c) -> Element {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             Elements el;
             auto t = c.get<std::string>("__summary_title");
             auto d = c.get<std::string>("__summary_desc");
             el.push_back(text(""));
-            el.push_back(hbox({ text("  ℹ  "), text(t.value_or("")) | bold | color(Color::Cyan) }));
+            el.push_back(hbox({ text("  ℹ  "), text(t.value_or("")) | bold | color(pal.info) }));
             if (d && !d->empty()) {
                 el.push_back(text(""));
                 el.push_back(paragraph("  " + *d) | dim);
@@ -856,16 +867,17 @@ struct ConfirmationSummary {
         review.title = "Review";
         review.description = "Please verify all details below.";
         review.render = [](WizardContext& c) -> Element {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text("  📋  "), text("Detailed Review") | bold | color(Color::Yellow) }));
+            el.push_back(hbox({ text(("  " + std::string{loom::ui::design::figures::kReferenceMark} + "  ")), text("Detailed Review") | bold | color(pal.warning) }));
             el.push_back(text(""));
             auto details = c.get<std::vector<std::pair<std::string, std::string>>>("__details");
             if (details && !details->empty()) {
                 for (const auto& [k, v] : *details) {
                     el.push_back(hbox({
                         text("    " + k + ": ") | dim,
-                        text(v.empty() ? std::string{"(empty)"} : v) | color(Color::White),
+                        text(v.empty() ? std::string{"(empty)"} : v) | color(pal.text),
                     }));
                 }
             } else {
@@ -893,14 +905,15 @@ struct ConfirmationSummary {
             return StepCheckResult::pass();
         };
         exec.render = [](WizardContext& c) -> Element {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text("  ⚠  "), text("Final Confirmation") | bold | color(Color::Yellow) }));
+            el.push_back(hbox({ text("  ⚠  "), text("Final Confirmation") | bold | color(pal.warning) }));
             el.push_back(text(""));
             auto t = c.get<std::string>("__summary_title");
-            el.push_back(paragraph("  You are about to: " + std::string(t.value_or("proceed with the operation")) + ".") | color(Color::Yellow));
+            el.push_back(paragraph("  You are about to: " + std::string(t.value_or("proceed with the operation")) + ".") | color(pal.warning));
             el.push_back(text(""));
-            el.push_back(text("  This action cannot be undone.") | color(Color::Red) | dim);
+            el.push_back(text("  This action cannot be undone.") | color(pal.danger) | dim);
             el.push_back(text(""));
             el.push_back(text("  Press Enter / Finish to proceed.") | dim);
             return vbox(std::move(el)) | flex;
@@ -962,14 +975,15 @@ struct InputAndConfirmConfig {
         input.description = cfg.input_hint;
         input.render = [label = std::move(cfg.input_label),
                         placeholder = std::move(cfg.placeholder)](WizardContext& c) -> Element {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             auto value = c.get<std::string>("input_value").value_or("");
             std::string display = value.empty() ? placeholder : value;
             Elements el;
             el.push_back(text(""));
             el.push_back(hbox({
                 text("  " + label + ": ") | dim,
-                text(display) | (value.empty() ? dim : bold) | color(Color::Cyan),
-                text("▌") | color(Color::Cyan),  // cursor
+                text(display) | (value.empty() ? dim : bold) | color(pal.info),
+                text("▌") | color(pal.info),  // cursor
             }));
             el.push_back(text(""));
             el.push_back(text("  Type to edit, Backspace to delete, Enter/→ when ready.") | dim);
@@ -1009,12 +1023,13 @@ struct InputAndConfirmConfig {
         confirm.title = "Confirm";
         confirm.description = "Verify your input.";
         confirm.render = [label = cfg.input_label](WizardContext& c) -> Element {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             auto v = c.get<std::string>("input_value").value_or("");
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text("  ✔  "), text("Review your input") | bold | color(Color::Green) }));
+            el.push_back(hbox({ text("  ✔  "), text("Review your input") | bold | color(pal.success) }));
             el.push_back(text(""));
-            el.push_back(hbox({ text("    " + label + ": ") | dim, text(v) | bold | color(Color::Cyan) }));
+            el.push_back(hbox({ text("    " + label + ": ") | dim, text(v) | bold | color(pal.info) }));
             el.push_back(text(""));
             el.push_back(text("  Press Enter / Finish to confirm.") | dim);
             return vbox(std::move(el)) | flex;
@@ -1109,15 +1124,17 @@ inline std::vector<std::string> split_lines(std::string_view s) {
                 return false;
             };
             src.render = [&paths = cfg.source_paths](WizardContext& c) -> Element {
+                const auto& pal = *loom::ui::design::theme::current_theme().palette;
                 int sel = c.get<int>("source_index").value_or(0);
                 Elements el;
                 el.push_back(text(""));
-                el.push_back(hbox({ text("  📂 "), text("Source file") | bold | color(Color::Yellow) }));
+                el.push_back(hbox({ text(("  " + std::string{loom::ui::design::figures::kArrowDown} + " ")), text("Source file") | bold | color(pal.warning) }));
                 el.push_back(text(""));
                 for (int i = 0; i < static_cast<int>(paths.size()); ++i) {
+                    const auto& pal = *loom::ui::design::theme::current_theme().palette;
                     std::string prefix = (i == sel) ? "  > " : "    ";
                     Element line = text(prefix + paths[i]);
-                    if (i == sel) line = line | bold | color(Color::Cyan);
+                    if (i == sel) line = line | bold | color(pal.info);
                     else line = line | dim;
                     el.push_back(line);
                 }
@@ -1141,16 +1158,17 @@ inline std::vector<std::string> split_lines(std::string_view s) {
         path.title = "Output path";
         path.description = "Enter the destination file path.";
         path.render = [](WizardContext& c) -> Element {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             auto v = c.get<std::string>("output_path").value_or("");
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text("  💾 "), text("Output path") | bold | color(Color::Yellow) }));
+            el.push_back(hbox({ text(("  " + std::string{loom::ui::design::figures::kArrowRight} + " ")), text("Output path") | bold | color(pal.warning) }));
             el.push_back(text(""));
             el.push_back(hbox({
                 text("    Path: ") | dim,
                 text(v.empty() ? "(type a path)" : v)
-                    | (v.empty() ? dim : bold) | color(Color::Cyan),
-                text("▌") | color(Color::Cyan),
+                    | (v.empty() ? dim : bold) | color(pal.info),
+                text("▌") | color(pal.info),
             }));
             el.push_back(text(""));
             el.push_back(text("  Type characters, Backspace to delete, ←/→ to switch steps.") | dim);
@@ -1183,12 +1201,13 @@ inline std::vector<std::string> split_lines(std::string_view s) {
         preview.title = "Preview";
         preview.description = "Verify the content that will be written.";
         preview.render = [](WizardContext& c) -> Element {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             auto content = c.get<std::string>("file_content").value_or("");
             auto limit = c.get<std::size_t>("preview_line_limit").value_or(25);
             auto lines = split_lines(content);
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text("  👀 "), text("Content preview") | bold | color(Color::Yellow) }));
+            el.push_back(hbox({ text(("  " + std::string{loom::ui::design::figures::kInfo} + " ")), text("Content preview") | bold | color(pal.warning) }));
             el.push_back(text(std::format("    {} bytes, {} line{}",
                                           content.size(),
                                           lines.size(),
@@ -1224,17 +1243,18 @@ inline std::vector<std::string> split_lines(std::string_view s) {
             return StepCheckResult::pass();
         };
         write.render = [](WizardContext& c) -> Element {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             auto p = c.get<std::string>("output_path").value_or("");
             auto content = c.get<std::string>("file_content").value_or("");
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text("  ⚠  "), text("Confirm file write") | bold | color(Color::Yellow) }));
+            el.push_back(hbox({ text("  ⚠  "), text("Confirm file write") | bold | color(pal.warning) }));
             el.push_back(text(""));
-            el.push_back(hbox({ text("    Path:   ") | dim, text(p) | bold | color(Color::Cyan) }));
+            el.push_back(hbox({ text("    Path:   ") | dim, text(p) | bold | color(pal.info) }));
             el.push_back(hbox({ text("    Size:   ") | dim,
-                                text(std::format("{} bytes", content.size())) | color(Color::White) }));
+                                text(std::format("{} bytes", content.size())) | color(pal.text) }));
             el.push_back(text(""));
-            el.push_back(text("  This will OVERWRITE the file if it exists.") | color(Color::Red) | dim);
+            el.push_back(text("  This will OVERWRITE the file if it exists.") | color(pal.danger) | dim);
             el.push_back(text("  Press Enter / Finish to write.") | dim);
             return vbox(std::move(el)) | flex;
         };

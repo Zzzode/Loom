@@ -40,8 +40,8 @@ using rl::PermTab;
 inline constexpr std::array<const char*, 4> kPermTabNames = {
     "All Rules", "Recent Denials", "Workspaces", "Create Rule",
 };
-inline const std::array<Color, 4> kPermTabAccents = {
-    Color::Cyan, Color::Red, Color::Blue, Color::Green,
+inline constexpr std::array<dt::Role, 4> kPermTabRoles = {
+    dt::Role::Permission, dt::Role::Danger, dt::Role::Info, dt::Role::Success,
 };
 inline constexpr std::array<const char*, 4> kPermTabIcons = {
     "#",      // shield placeholder
@@ -63,8 +63,10 @@ namespace detail {
 {
     Elements bits;
     for (std::size_t i = 0; i < kPermTabNames.size(); ++i) {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const bool sel = (i == static_cast<std::size_t>(active));
-        const Color accent = kPermTabAccents[i];
+        const Color accent = dt::token_by_role(
+            *loom::ui::design::theme::current_theme().palette, kPermTabRoles[i]);
 
         Elements label_parts = {
             text(std::string{kPermTabIcons[i]}) | color(accent),
@@ -75,19 +77,19 @@ namespace detail {
         if (i == 1 && denials_count > 0) {
             label_parts.push_back(text(" "));
             label_parts.push_back(text(std::format("{}", denials_count))
-                                  | bold | color(Color::White)
-                                  | bgcolor(Color::Red));
+                                  | bold | color(pal.inverse_text)
+                                  | bgcolor(pal.danger));
         }
         if (i == 2 && workspace_count > 0) {
             label_parts.push_back(text(" "));
             label_parts.push_back(text(std::format("{}", workspace_count))
-                                  | dim | color(Color::BlueLight));
+                                  | dim | color(pal.info));
         }
 
         auto label = hbox(std::move(label_parts));
         auto cell = hbox({text(" "), std::move(label), text(" ")})
                   | (sel ? (bold | color(accent) |
-                            bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_5) | underlined)
+                            bgcolor(pal.surface_tint_5) | underlined)
                          : dim);
         bits.push_back(std::move(cell));
         if (i + 1 < kPermTabNames.size())
@@ -118,6 +120,7 @@ namespace detail {
     auto inner = rl::BuildPermissionsTabs(tabs_state, active);
 
     return Renderer(inner, [active, inner] {
+        const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto denials_vec =
             peng::recent_denials(50);
         const auto workspaces_vec =
@@ -128,7 +131,7 @@ namespace detail {
         auto header = vbox({
             hbox({
                 text(" Permission Rules ")
-                    | bold | color(dt::palette::dark().primary),
+                    | bold | color(pal.primary),
                 filler(),
                 text("[1/2/3/4] jump  [Left/Right] switch tab  [Esc] close")
                     | dim,
@@ -141,7 +144,7 @@ namespace detail {
             header,
             pc::ThinDivider(),
             inner->Render() | yflex_grow,
-        }) | yflex_grow | borderLight | color(dt::palette::dark().primary);
+        }) | yflex_grow | borderLight | color(pal.primary);
     }) | CatchEvent([active](Event e) -> bool {
         // Global tab-switching keys.
         if (e == Event::ArrowRight || e == Event::Character('l')

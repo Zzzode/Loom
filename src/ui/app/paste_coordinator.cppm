@@ -19,15 +19,17 @@ import loom.types.types;  // loom::core::ImageBlock, loom::core::ImageBlockSourc
 
 export namespace loom::ui {
 
-/// Owns the async clipboard paste state.  The background worker thread
-/// is detached (AppAdapter outlives any paste worker — the app object
-/// lives for the whole session).
+/// Owns the async clipboard paste state and joins clipboard workers before
+/// their result storage or completion callback dependencies can be destroyed.
 class PasteCoordinator {
 public:
-    PasteCoordinator() = default;
-    ~PasteCoordinator() = default;
+    using ImageReader = std::function<std::optional<std::vector<std::uint8_t>>()>;
 
-    // Non-copyable, non-movable (owns mutex + detached threads).
+    // An empty reader uses the platform clipboard backend.
+    explicit PasteCoordinator(ImageReader read_image = {});
+    ~PasteCoordinator();
+
+    // Non-copyable, non-movable (owns mutex + worker threads).
     PasteCoordinator(const PasteCoordinator&) = delete;
     PasteCoordinator& operator=(const PasteCoordinator&) = delete;
 
@@ -46,6 +48,10 @@ public:
     void SpawnPasteWorker(int id,
                           std::function<void()> post_render,
                           bool no_real_paste_worker = false);
+
+    /// UI-thread shutdown: wait for active reads and completion callbacks.
+    /// Call while callback dependencies are alive. Repeated calls are safe.
+    void Stop();
 
     // ── State accessors (for AppAdapter::ProcessCompletedPastes) ──────
 
@@ -105,6 +111,15 @@ public:
     }
 
 private:
+    struct Worker {
+        std::jthread thread;
+        std::shared_ptr<std::atomic<bool>> completed;
+    };
+
+    ImageReader read_image_;
+    std::vector<Worker> workers_; // UI-thread-owned; completed workers are reaped on spawn
+    bool stopped_ = false; // UI-thread-only
+
     // Pasted content (render-thread-only).
     std::unordered_map<int, loom::core::ImageBlock> pasted_contents_;
     std::unordered_map<int, std::string> pasted_text_contents_;

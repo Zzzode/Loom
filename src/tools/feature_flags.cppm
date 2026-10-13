@@ -58,7 +58,7 @@ constexpr bool FEATURE_BASH_TOOL_ENABLED = true;
 constexpr bool FEATURE_EMBEDDED_SEARCH_TOOLS = false;
 
 // Enabled in CPP — task tools are fully implemented.
-constexpr bool FEATURE_TODO_V2 = true;
+constexpr bool FEATURE_TASK_TOOLS = true;
 
 // Enabled in CPP — LSP tool has a working implementation.
 constexpr bool FEATURE_ENABLE_LSP_TOOL = true;
@@ -136,8 +136,8 @@ inline constexpr bool kBashToolEnabled = FEATURE_BASH_TOOL_ENABLED;
 /// Embedded search tools (ant-native bfs/ugrep).
 inline constexpr bool kEmbeddedSearchTools = FEATURE_EMBEDDED_SEARCH_TOOLS;
 
-/// Todo V2 (TaskCreate/Get/Update/List).
-inline constexpr bool kTodoV2 = FEATURE_TODO_V2;
+/// Task lifecycle tools (create/get/list/output/stop/update).
+inline constexpr bool kTaskTools = FEATURE_TASK_TOOLS;
 
 /// LSP tool.
 inline constexpr bool kEnableLspTool = FEATURE_ENABLE_LSP_TOOL;

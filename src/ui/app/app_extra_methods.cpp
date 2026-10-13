@@ -87,21 +87,21 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
     command = trim_ascii_copy(command);
     if (command.empty()) return;
 
+    // Local '!' commands are sequential. Apply the previous command's
+    // staged cwd before capturing the next command's working directory.
+    if (bash_thread_.joinable()) bash_thread_.join();
+    ConsumePendingResult();
+
     // Show the command row immediately (render thread — HandleSubmit runs
     // here).  Mirrors createUserMessage(`<bash-input>…`).
     AppendLocalCommandInputMessage(command);
     this->SyncState();
     PostRenderEvent();
 
-    // If a previous bash command is still running, join it first so we
-    // don't overlap workers (local `!` commands are strictly sequential in
-    // too — the prompt is blocked on the single BashTool.call).
-    if (bash_thread_.joinable()) bash_thread_.join();
-
     bash_running_.store(true);
     const std::string cwd = static_cast<loom::core::QueryEngine*>(engine_raw()) ? static_cast<loom::core::QueryEngine*>(engine_raw())->working_directory() : std::string{};
     bash_thread_ = std::jthread(
-        [this, command, cwd](std::stop_token st) {
+        [this, command, cwd, session_id = current_session_id_](std::stop_token st) {
             // POSIX single-quote helper for paths with spaces/quotes.
             auto sq = [](std::string_view s) {
                 std::string out = "'";
@@ -117,7 +117,7 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
             // can't collide with the cwd data.  Use && so pwd -P only runs
             // on success (failed commands shouldn't change cwd).
             const auto cwd_file = std::filesystem::temp_directory_path() /
-                ("loom-cwd-" + current_session_id_);
+                ("loom-cwd-" + session_id);
             const std::string cwd_file_str = cwd_file.string();
 
             std::string full;
@@ -167,19 +167,12 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
                 std::filesystem::remove(cwd_file, ec);
             }
 
-            // Update process cwd if the command changed it.
-            if (!new_cwd.empty() && new_cwd != cwd) {
-                std::error_code ec;
-                std::filesystem::current_path(new_cwd, ec);
-                if (!ec) {
-                    screen_state_->cwd = new_cwd;
-                    if (static_cast<loom::core::QueryEngine*>(engine_raw())) static_cast<loom::core::QueryEngine*>(engine_raw())->set_working_directory(new_cwd);
-                }
-            }
             {
                 std::lock_guard lk(bash_result_mutex_);
                 pending_bash_result_ = PendingBashResult{
-                    .output = std::move(output), .is_error = is_error};
+                    .output = std::move(output), .is_error = is_error,
+                    .cwd = new_cwd != cwd ? std::move(new_cwd) : std::string{},
+                    .session_id = session_id};
             }
             bash_running_.store(false);
             PostRenderEvent();
@@ -188,6 +181,10 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
 
 // ── ProjectRuntimeMetadataToScreenState (moved out of app.cppm) ─────────
 void AppAdapter::ProjectRuntimeMetadataToScreenState() {
+    // Preserve the last completed snapshot while the engine owns mutable
+    // usage/budget/config state. query_running_'s completion store publishes
+    // those writes before the UI reads the next snapshot.
+    if (query_running_.load()) return;
     const auto& model_id = static_cast<loom::core::QueryEngine*>(engine_raw())->model_params().model;
     screen_state_->chrome_store.status_bar.model_name = model_id;
     screen_state_->chrome_store.model_display_name =
@@ -221,7 +218,24 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
 // ── set_mouse_mode_label (RFC 0007 Phase 2) ────────────────────────────
 void AppAdapter::set_mouse_mode_label(bool mouse_mode) {
     screen_state_->chrome_store.status_bar.mouse_mode_label =
-        mouse_mode ? "Mouse mode: drag to select" : "Select text to copy";
+        mouse_mode ? "Select to copy (F2)" : "Native select";
+}
+
+// ── ToggleMouseTracking (F2 runtime toggle) ────────────────────────────
+void AppAdapter::ToggleMouseTracking() {
+    mouse_tracking_on_ = !mouse_tracking_on_;
+    if (mouse_tracking_on_) {
+        // Re-enable all DEC private mouse modes (same set FTXUI enables
+        // in Install(): 1000 normal, 1003 any-event, 1015 urxvt, 1006 SGR).
+        std::fputs("\x1b[?1000h\x1b[?1003h\x1b[?1015h\x1b[?1006h", stdout);
+    } else {
+        // Disable all mouse modes — terminal handles mouse natively.
+        std::fputs("\x1b[?1000l\x1b[?1003l\x1b[?1015l\x1b[?1006l", stdout);
+    }
+    std::fflush(stdout);
+    screen_state_->chrome_store.status_bar.mouse_mode_label =
+        mouse_tracking_on_ ? "Select to copy (F2)" : "Native select (F2)";
+    PostRenderEvent();
 }
 
 // ── ProjectTodosToScreenState ───────────────────────────────────────────
@@ -403,5 +417,7 @@ void AppAdapter::ProcessCompletedPastes() {
         }
     }
 }
+
+void AppAdapter::set_mouse_mode(bool active) { mouse_mode_ = active; }
 
 } // namespace loom::ui

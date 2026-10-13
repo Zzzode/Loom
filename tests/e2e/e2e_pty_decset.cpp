@@ -2,9 +2,9 @@
 /// @brief E2E-4: PTY byte-level tests for terminal DECSET sequences emitted by
 ///        the loom binary at startup, based on the mouseMode config setting.
 ///
-/// RFC 0007 Phase 2 changed loom's default: FTXUI mouse tracking is DISABLED
-/// by default (so users can select text natively in their terminal). When
-/// mouseMode: true is set in settings.json, FTXUI mouse tracking is ENABLED.
+/// RFC 0010 enables FTXUI mouse tracking by default for in-app drag selection
+/// and automatic copy. Explicit mouseMode: false preserves native terminal
+/// selection; explicit true and settings cascade behavior remain supported.
 ///
 /// FTXUI's ScreenInteractive::Install() sends these DECSET escape sequences:
 ///   ESC[?1049h — alternate screen buffer (ALWAYS sent, confirms TUI running)
@@ -31,13 +31,16 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <limits.h>
+#if defined(__APPLE__)
+#include <util.h>  // forkpty
+#else
 #include <pty.h>
+#endif
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <termios.h>
-#include <time.h>
 #include <unistd.h>
 
 namespace fs = std::filesystem;
@@ -124,13 +127,22 @@ struct PtyResult {
     bool        spawn_ok = false;
 };
 
-/// Spawn `binary_path` in a PTY with the given environment, read output for
-/// up to `read_duration_sec` seconds (with early exit once ?1049h is seen),
-/// then kill the child and reap it.
+/// Install() flushes alternate-screen and mouse modes before Draw() emits
+/// the first cursor visibility sequence. Waiting for that sequence observes
+/// the complete installation even when the PTY splits it across reads.
+static bool has_completed_terminal_install(std::string_view output) {
+    const auto alt = output.find(SEQ_ALT_SCREEN);
+    if (alt == std::string_view::npos) return false;
+    const auto after_alt = output.substr(alt + SEQ_ALT_SCREEN.size());
+    return contains(after_alt, "\x1b[?25h") || contains(after_alt, "\x1b[?25l");
+}
+
+/// Spawn `binary_path` in a PTY, capture until terminal installation is
+/// observable (or the child closes the PTY), then kill and reap it. CTest's
+/// existing process timeout bounds a child that never reaches readiness.
 static PtyResult run_pty_and_capture(
     const std::string& binary_path,
-    const std::vector<EnvVar>& env_vars,
-    int read_duration_sec = 5)
+    const std::vector<EnvVar>& env_vars)
 {
     PtyResult result;
 
@@ -164,32 +176,21 @@ static PtyResult run_pty_and_capture(
 
     // parent: read from master_fd
     result.spawn_ok = true;
-    const auto start = std::time(nullptr);
-    auto deadline = start + read_duration_sec;
     std::array<char, 8192> buffer{};
 
-    while (std::time(nullptr) < deadline) {
+    while (!has_completed_terminal_install(result.output)) {
         fd_set rfds;
         FD_ZERO(&rfds);
         FD_SET(master_fd, &rfds);
-        struct timeval tv{ .tv_sec = 1, .tv_usec = 0 };
-        int sel = ::select(master_fd + 1, &rfds, nullptr, nullptr, &tv);
+        int sel = ::select(master_fd + 1, &rfds, nullptr, nullptr, nullptr);
         if (sel < 0) {
             if (errno == EINTR) continue;
             break;
         }
-        if (sel == 0) continue;  // 1s select timeout; keep looping until deadline
 
         ssize_t n = ::read(master_fd, buffer.data(), buffer.size());
         if (n > 0) {
             result.output.append(buffer.data(), static_cast<size_t>(n));
-            // Early exit: once ?1049h (alternate screen) is seen, the TUI has
-            // started and Install() has emitted all DECSET sequences. Read for
-            // 1 more second to catch late bursts, then stop.
-            if (contains(result.output, SEQ_ALT_SCREEN)) {
-                const auto now = std::time(nullptr);
-                deadline = std::min(deadline, now + 1);
-            }
         } else if (n == 0) {
             break;  // EOF — child exited
         } else {
@@ -203,7 +204,7 @@ static PtyResult run_pty_and_capture(
     ::close(master_fd);
 
     int status = 0;
-    ::waitpid(pid, &status, 0);
+    while (::waitpid(pid, &status, 0) < 0 && errno == EINTR) {}
     if (WIFEXITED(status)) result.exit_code = WEXITSTATUS(status);
     else if (WIFSIGNALED(status)) result.exit_code = -WTERMSIG(status);
 
@@ -306,6 +307,34 @@ int main(int /*argc*/, char* argv[]) {
         }
     };
 
+    // Regression: startup logging/cursor controls and incomplete DECSET
+    // bursts must not be mistaken for completion. Feed one byte at a time
+    // so readiness also works when the PTY splits escape sequences.
+    {
+        printf("\n[E2E-4] Regression: wait for complete terminal installation\n");
+        const std::string install = std::string(SEQ_ALT_SCREEN) +
+            "\x1b[?7l" + std::string(SEQ_MOUSE_X11) +
+            std::string(SEQ_MOUSE_MOTION) + std::string(SEQ_MOUSE_URXVT) +
+            std::string(SEQ_MOUSE_SGR);
+        std::string captured = "startup\x1b[?25h";
+        bool premature = has_completed_terminal_install(captured);
+        for (const char byte : install) {
+            captured += byte;
+            premature = premature || has_completed_terminal_install(captured);
+        }
+        const std::string first_frame_end = "\x1b[?25l";
+        for (std::size_t i = 0; i + 1 < first_frame_end.size(); ++i) {
+            captured += first_frame_end[i];
+            premature = premature || has_completed_terminal_install(captured);
+        }
+        check("partial startup/DECSET/frame bytes do not end capture", !premature);
+        captured += first_frame_end.back();
+        check("complete first frame ends capture", has_completed_terminal_install(captured));
+        check("all mouse sequences captured before readiness",
+              std::all_of(MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
+                  [&](std::string_view seq) { return contains(captured, seq); }));
+    }
+
     // On failure, print captured output for debugging.
     auto dump_on_fail = [&](const PtyResult& r) {
         if (r.output.empty()) {
@@ -320,10 +349,10 @@ int main(int /*argc*/, char* argv[]) {
     };
 
     // =======================================================================
-    // Test 1: Default config (no mouseMode) -> no mouse DECSET
+    // Test 1: Default config (no mouseMode) -> mouse DECSET present
     // =======================================================================
     {
-        printf("\n[E2E-4] Test 1: Default config (no mouseMode) -> no mouse DECSET\n");
+        printf("\n[E2E-4] Test 1: Default config (no mouseMode) -> mouse DECSET present\n");
 
         const std::string cfg_dir = make_temp_dir();
         const std::string home_dir = make_temp_dir();
@@ -343,14 +372,14 @@ int main(int /*argc*/, char* argv[]) {
             printf("  exit=%d, captured %zu bytes\n", r.exit_code, r.output.size());
 
             const bool has_alt   = contains(r.output, SEQ_ALT_SCREEN);
-            const bool has_mouse = std::any_of(
+            const bool has_mouse = std::all_of(
                 MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
                 [&](std::string_view seq) { return contains(r.output, seq); });
 
             check("?1049h present (TUI started)", has_alt);
-            check("no mouse DECSET sequences", !has_mouse);
+            check("all mouse DECSET sequences present by default", has_mouse);
 
-            if (!has_alt || has_mouse) dump_on_fail(r);
+            if (!has_alt || !has_mouse) dump_on_fail(r);
 
             fs::remove_all(cfg_dir);
             fs::remove_all(home_dir);
@@ -513,6 +542,70 @@ int main(int /*argc*/, char* argv[]) {
             check("mouse DECSET present (~/.agents fallback)", has_mouse);
 
             if (!has_mouse) dump_on_fail(r);
+
+            fs::remove_all(home_dir);
+        }
+    }
+
+    // =======================================================================
+    // Test 6: Explicit mouseMode: false -> native selection, no mouse DECSET
+    // =======================================================================
+    {
+        printf("\n[E2E-4] Test 6: mouseMode=false -> no mouse DECSET\n");
+
+        const std::string cfg_dir = make_temp_dir();
+        const std::string home_dir = make_temp_dir();
+        if (cfg_dir.empty() || home_dir.empty()) {
+            printf("  FAIL: cannot create temp dirs\n");
+            ++failed;
+        } else {
+            write_file(fs::path(cfg_dir) / "settings.json",
+                       "{\"model\": \"test-model\", \"mouseMode\": false}");
+
+            auto envs = base_env(home_dir);
+            set_env(envs, "LOOM_CONFIG_DIR", cfg_dir);
+            PtyResult r = run_pty_and_capture(bin, envs);
+            printf("  exit=%d, captured %zu bytes\n", r.exit_code, r.output.size());
+
+            const bool has_alt = contains(r.output, SEQ_ALT_SCREEN);
+            const bool has_mouse = std::any_of(
+                MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
+                [&](std::string_view seq) { return contains(r.output, seq); });
+            check("?1049h present (TUI started)", has_alt);
+            check("explicit false emits no mouse DECSET sequences", !has_mouse);
+            if (!has_alt || has_mouse) dump_on_fail(r);
+
+            fs::remove_all(cfg_dir);
+            fs::remove_all(home_dir);
+        }
+    }
+
+    // =======================================================================
+    // Test 7: ~/.agents fallback false overrides the enabled default
+    // =======================================================================
+    {
+        printf("\n[E2E-4] Test 7: ~/.agents mouseMode=false overrides default\n");
+
+        const std::string home_dir = make_temp_dir();
+        if (home_dir.empty()) {
+            printf("  FAIL: cannot create temp dir\n");
+            ++failed;
+        } else {
+            write_file(fs::path(home_dir) / ".agents" / "settings.json",
+                       "{\"model\": \"test-model\", \"mouseMode\": false}");
+
+            auto envs = base_env(home_dir);
+            unset_env(envs, "LOOM_CONFIG_DIR");
+            PtyResult r = run_pty_and_capture(bin, envs);
+            printf("  exit=%d, captured %zu bytes\n", r.exit_code, r.output.size());
+
+            const bool has_alt = contains(r.output, SEQ_ALT_SCREEN);
+            const bool has_mouse = std::any_of(
+                MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
+                [&](std::string_view seq) { return contains(r.output, seq); });
+            check("?1049h present (TUI started)", has_alt);
+            check("fallback false emits no mouse DECSET sequences", !has_mouse);
+            if (!has_alt || has_mouse) dump_on_fail(r);
 
             fs::remove_all(home_dir);
         }

@@ -84,7 +84,8 @@ def main() -> int:
                           "loom.ui.screens.messages_store",
                           "loom.ui.screens.permission_store",
                           "loom.ui.screens.prompt_store",
-                          "loom.ui.screens.task_view_store"],
+                          "loom.ui.screens.task_view_store",
+                          "loom.ui.screens.todo_store"],
           f"F3 stores found (got {s['stores']})")
     proc = subprocess.run(
         [sys.executable, str(HERE / "graph_check.py"), "--store-lint"],

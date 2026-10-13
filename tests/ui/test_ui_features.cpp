@@ -3,13 +3,19 @@
 /// Split from test_ui_runtime.cpp (SLOC budget).
 
 #include <cstdlib>
+#if defined(__APPLE__) || defined(__linux__)
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/component/loop.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <ftxui/component/screen_interactive.hpp>
 #include <gtest/gtest.h>
 #include <httplib.h>
 
@@ -19,7 +25,9 @@ import std;
 import loom.ui.app.app;
 import loom.ui.app.paste_coordinator;
 import loom.ui.screens.repl_screen;
+import loom.ui.screens.task_view_store;
 import loom.ui.screens.repl_state;
+import loom.ui.screens.messages_store;
 import loom.ui.messages.message_image;
 import loom.commands.registry;
 import loom.query.query_engine;
@@ -30,6 +38,7 @@ import loom.constants.constants;
 import loom.ui.prompt.autocomplete_sources;
 import loom.ui.features.teams.live_teammates;
 import loom.platform.clipboard_coordinator;  // CopyResult (re-exported)
+import loom.diagnostics.log;
 
 namespace {
 namespace fs = std::filesystem;
@@ -444,8 +453,406 @@ TEST(TextSelectionThreshold, SameCoordinateDoesNotActivateSelection) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// RFC 0007 Phase 1: copy result pipeline tests
+// Persistent selection + inline toast (Claude Code alignment)
 // ═══════════════════════════════════════════════════════════════════════════
+
+TEST(TextSelection, PersistsAfterRelease) {
+    // After mouse release, the selection stays highlighted (active=true)
+    // so the user can see what was copied.  Cleared on next interaction.
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_sel_persist_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Press at (5, 5) → potential.
+    auto press = ftxui::Mouse{
+        ftxui::Mouse::Button::Left, ftxui::Mouse::Motion::Pressed,
+        false, false, false, 5, 5,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", press));
+
+    // Motion to (10, 5) → active.
+    auto motion = ftxui::Mouse{
+        ftxui::Mouse::Button::Left, ftxui::Mouse::Motion::Pressed,
+        false, false, false, 10, 5,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", motion));
+    EXPECT_TRUE(test_seams(app).text_selection_active_for_testing());
+
+    // Release at (10, 5).  No screen in test, so copied won't be set,
+    // but active must NOT be cleared.
+    auto release = ftxui::Mouse{
+        ftxui::Mouse::Button::Left, ftxui::Mouse::Motion::Released,
+        false, false, false, 10, 5,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", release));
+    EXPECT_TRUE(test_seams(app).text_selection_active_for_testing())
+        << "selection should persist after release";
+    EXPECT_FALSE(test_seams(app).text_selection_potential_for_testing())
+        << "potential should be cleared after release";
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+TEST(TextSelection, ClearsOnKeyPress) {
+    // After a simulated copy, any key press clears the selection + toast.
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_sel_keyclear_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Simulate a completed copy.
+    test_seams(app).simulate_copy_for_testing(42);
+    EXPECT_TRUE(test_seams(app).text_selection_active_for_testing());
+    EXPECT_TRUE(test_seams(app).text_selection_copied_for_testing());
+
+    // Send a key press — should clear the selection.
+    app->OnEvent(ftxui::Event::Character('a'));
+    EXPECT_FALSE(test_seams(app).text_selection_active_for_testing())
+        << "key press should clear the selection";
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing())
+        << "key press should clear the copied flag";
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+TEST(TextSelection, ClearsOnMousePress) {
+    // After a simulated copy, a new mouse press clears the old selection
+    // before starting a new potential selection.
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_sel_mouseclear_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Simulate a completed copy.
+    test_seams(app).simulate_copy_for_testing(10);
+    EXPECT_TRUE(test_seams(app).text_selection_active_for_testing());
+    EXPECT_TRUE(test_seams(app).text_selection_copied_for_testing());
+
+    // New mouse press — should clear the old selection and start fresh.
+    auto press = ftxui::Mouse{
+        ftxui::Mouse::Button::Left, ftxui::Mouse::Motion::Pressed,
+        false, false, false, 3, 3,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", press));
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing())
+        << "new mouse press should clear the copied flag";
+    EXPECT_TRUE(test_seams(app).text_selection_potential_for_testing())
+        << "new mouse press should start a new potential selection";
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+TEST(TextSelection, NewPressClearsActiveSelectionEvenWithoutCopied) {
+    // Regression: after drag+release, active=true but copied=false (no
+    // screen in test, or copy failed).  A new press must still clear the
+    // old selection and start fresh — otherwise the old start position
+    // is kept and the selection extends instead of resetting.
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_sel_nocopy_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Drag: press(5,5) → motion(10,5) → release(10,5).
+    // No screen → copied stays false, but active stays true.
+    auto press = ftxui::Mouse{
+        ftxui::Mouse::Button::Left, ftxui::Mouse::Motion::Pressed,
+        false, false, false, 5, 5,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", press));
+    auto motion = ftxui::Mouse{
+        ftxui::Mouse::Button::Left, ftxui::Mouse::Motion::Pressed,
+        false, false, false, 10, 5,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", motion));
+    auto release = ftxui::Mouse{
+        ftxui::Mouse::Button::Left, ftxui::Mouse::Motion::Released,
+        false, false, false, 10, 5,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", release));
+    EXPECT_TRUE(test_seams(app).text_selection_active_for_testing());
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing());
+
+    // New press at (20, 10) — must clear old selection and start fresh.
+    auto press2 = ftxui::Mouse{
+        ftxui::Mouse::Button::Left, ftxui::Mouse::Motion::Pressed,
+        false, false, false, 20, 10,
+    };
+    app->OnEvent(ftxui::Event::Mouse("", press2));
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing())
+        << "new press should clear the old selection";
+    EXPECT_TRUE(test_seams(app).text_selection_potential_for_testing())
+        << "new press should start a new potential selection";
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+TEST(TextSelection, SimulateCopySetsState) {
+    // Verify simulate_copy_for_testing sets all fields correctly.
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_sel_sim_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    EXPECT_FALSE(test_seams(app).text_selection_active_for_testing());
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing());
+
+    test_seams(app).simulate_copy_for_testing(123);
+    EXPECT_TRUE(test_seams(app).text_selection_active_for_testing());
+    EXPECT_TRUE(test_seams(app).text_selection_copied_for_testing());
+    EXPECT_EQ(test_seams(app).text_selection_copied_chars_for_testing(), 123u);
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+TEST(TextSelection, F2ToggleMouseTracking) {
+    // F2 toggles mouse tracking at runtime when mouseMode: true.
+    // When off, the terminal handles mouse natively (drag to select).
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_sel_toggle_" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch().count()));
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+
+    // Explicit native mode opts out of the F2 application toggle.
+    app->set_mouse_mode(false);
+    app->OnEvent(ftxui::Event::F2);
+    EXPECT_TRUE(test_seams(app).mouse_tracking_on_for_testing())
+        << "F2 should be inactive when mouseMode is false";
+
+    // Enable mouse mode (simulates mouseMode: true in config).
+    app->set_mouse_mode(true);
+    EXPECT_TRUE(test_seams(app).mouse_tracking_on_for_testing());
+
+    // F2 toggles off.
+    app->OnEvent(ftxui::Event::F2);
+    EXPECT_FALSE(test_seams(app).mouse_tracking_on_for_testing())
+        << "F2 should toggle mouse tracking off";
+
+    // F2 toggles back on.
+    app->OnEvent(ftxui::Event::F2);
+    EXPECT_TRUE(test_seams(app).mouse_tracking_on_for_testing())
+        << "F2 should toggle mouse tracking back on";
+
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+#if defined(__APPLE__) || defined(__linux__)
+class TextSelectionInteractiveCopy : public testing::TestWithParam<int> {};
+
+TEST_P(TextSelectionInteractiveCopy, CopiesDisplayedTextAfterFrameIsCleared) {
+    const auto storage_root = fs::temp_directory_path() /
+        ("loom_selection_frame_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    fs::create_directories(storage_root);
+    const auto copied_file = storage_root / "copied.txt";
+    // Capture the actual native backend's stdin without changing the user's
+    // clipboard. This exercises extraction, coordinator, spawn and pipe I/O.
+    for (const auto* name : {"pbcopy", "xclip", "wl-copy"}) {
+        const auto backend = storage_root / name;
+        std::ofstream script(backend);
+        script << "#!/bin/sh\n/bin/cat > \"$LOOM_SELECTION_COPY_FILE\"\n";
+        script.close();
+        fs::permissions(backend, fs::perms::owner_all);
+    }
+    ScopedEnvVar path_env("PATH");
+    path_env.set(storage_root.string() + ":" +
+                 (std::getenv("PATH") ? std::getenv("PATH") : ""));
+    ScopedEnvVar output_env("LOOM_SELECTION_COPY_FILE");
+    output_env.set(copied_file.string());
+    ScopedEnvVar ssh_connection("SSH_CONNECTION");
+    ScopedEnvVar ssh_tty("SSH_TTY");
+    ssh_connection.unset();
+    ssh_tty.unset();
+
+    loom::core::ToolRegistry tools;
+    loom::core::QueryEngineConfig config;
+    config.context_window.auto_compact = false;
+    config.cwd = fs::temp_directory_path().string();
+    const std::string expected = GetParam() == 1
+        ? "selection-中文🙂-probe" : "selection-copy-probe";
+    config.model_params.model = expected;
+    loom::core::QueryEngine engine(std::move(config), tools);
+    loom::commands::AppCommandRegistry commands;
+    auto app = ftxui::Make<loom::ui::AppAdapter>(
+        &engine, nullptr, &commands, storage_root, [] {});
+    app->SyncState();
+
+    auto screen = ftxui::ScreenInteractive::FixedSize(120, 28);
+    // Locate real rendered text before entering the interactive loop.
+    ftxui::Render(screen, app->Render());
+    int start_x = -1;
+    int start_y = -1;
+    int end_x = -1;
+    for (int y = 0; y < screen.dimy(); ++y) {
+        for (int x = 0; x < screen.dimx(); ++x) {
+            std::string candidate;
+            for (int end = x; end < screen.dimx(); ++end) {
+                candidate += screen.PixelAt(end, y).character;
+                if (candidate == expected) {
+                    start_x = x;
+                    start_y = y;
+                    end_x = end;
+                    break;
+                }
+                if (!expected.starts_with(candidate)) break;
+            }
+            if (start_x >= 0) break;
+        }
+        if (start_x >= 0) break;
+    }
+    ASSERT_GE(start_x, 0);
+    app->set_screen(&screen);
+    // Direct delivery lets us observe progress before Render drains the
+    // background completion, without relying on backend timing.
+    ftxui::Render(screen, app->Render());
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Pressed,
+        false, false, false, start_x, start_y}));
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Released,
+        false, false, false, end_x, start_y}));
+    EXPECT_EQ(test_seams(app).copy_feedback_for_testing(), "Copying…");
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing());
+    // The real loop below starts a new selection and confirms its result.
+    std::string copied;
+    {
+        // CTest supplies EOF on stdin. FTXUI's terminal reader otherwise
+        // busy-spins on select/read, adding artificial CPU pressure.
+        // Keep an input stream open as a real terminal would; mouse events
+        // still travel through ScreenInteractive::PostEvent.
+        struct StdinGuard {
+            int saved;
+            int read_end{-1};
+            int write_end{-1};
+            ~StdinGuard() {
+                if (saved >= 0) {
+                    (void)::dup2(saved, STDIN_FILENO);
+                    ::close(saved);
+                }
+                if (read_end >= 0) ::close(read_end);
+                if (write_end >= 0) ::close(write_end);
+            }
+        } stdin_guard{::dup(STDIN_FILENO)};
+        ASSERT_GE(stdin_guard.saved, 0);
+        ASSERT_EQ(::fcntl(stdin_guard.saved, F_SETFD, FD_CLOEXEC), 0);
+        int input_pipe[2];
+        ASSERT_EQ(::pipe(input_pipe), 0);
+        stdin_guard.read_end = input_pipe[0];
+        stdin_guard.write_end = input_pipe[1];
+        ASSERT_EQ(::fcntl(input_pipe[0], F_SETFD, FD_CLOEXEC), 0);
+        ASSERT_EQ(::fcntl(input_pipe[1], F_SETFD, FD_CLOEXEC), 0);
+        ASSERT_EQ(::dup2(input_pipe[0], STDIN_FILENO), STDIN_FILENO);
+        testing::internal::CaptureStdout();
+        ftxui::Loop loop(&screen, app);
+        loop.RunOnce();
+        // Draw() flushed the visible frame and called Screen::Clear().
+        EXPECT_EQ(screen.PixelAt(start_x, start_y).character, " ");
+        const bool reverse = GetParam() == 1;
+        // Terminal mouse reports are 1-based; ScreenInteractive subtracts
+        // the frame origin before delivering events to AppAdapter.
+        screen.PostEvent(ftxui::Event::Mouse("", {
+            ftxui::Mouse::Left, ftxui::Mouse::Pressed,
+            false, false, false, (reverse ? end_x : start_x) + 1, start_y + 1}));
+        if (GetParam() != 1) loop.RunOnce();
+        if (GetParam() == 2) {
+            screen.PostEvent(ftxui::Event::Mouse("", {
+                ftxui::Mouse::Left, ftxui::Mouse::Pressed,
+                false, false, false, end_x, start_y + 1}));
+            loop.RunOnce();
+        }
+        // Cases cover no motion, reversed batched press/release, and a drag
+        // with an intermediate highlighted frame and a new release endpoint.
+        screen.PostEvent(ftxui::Event::Mouse("", {
+            ftxui::Mouse::Left, ftxui::Mouse::Released,
+            false, false, false, (reverse ? start_x : end_x) + 1, start_y + 1}));
+        loop.RunOnce();
+        const auto deadline = std::chrono::steady_clock::now() +
+                              std::chrono::seconds(5);
+        while (std::chrono::steady_clock::now() < deadline) {
+            loop.RunOnce();
+            std::ifstream file(copied_file);
+            copied.assign(std::istreambuf_iterator<char>(file), {});
+            if (copied == expected &&
+                test_seams(app).text_selection_copied_for_testing()) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+    const auto terminal_output = testing::internal::GetCapturedStdout();
+    if (copied != expected) {
+        for (const auto& error : loom::utils::log::get_in_memory_errors())
+            ADD_FAILURE() << error.error;
+    }
+    EXPECT_EQ(copied, expected) << terminal_output;
+    EXPECT_TRUE(test_seams(app).text_selection_copied_for_testing());
+    app->set_screen(nullptr);
+    app.reset();
+    std::error_code ec;
+    fs::remove_all(storage_root, ec);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    RenderedFrames, TextSelectionInteractiveCopy, testing::Values(0, 1, 2));
+#endif
 
 TEST(CopyResultPipeline, StaleResultIsDiscarded) {
     loom::core::ToolRegistry tools;
@@ -484,7 +891,8 @@ TEST(CopyResultPipeline, StaleResultIsDiscarded) {
     fs::remove_all(storage_root, ec);
 }
 
-TEST(CopyResultPipeline, NativeCopiedShowsCopiedNotification) {
+TEST(CopyResultPipeline, NativeCopiedDoesNotShowFooterNotification) {
+    // The inline toast confirms a completed copy, never an optimistic one.
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
     config.context_window.auto_compact = false;
@@ -500,6 +908,14 @@ TEST(CopyResultPipeline, NativeCopiedShowsCopiedNotification) {
 
     namespace clip = loom::utils::clipboard;
 
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Pressed,
+        false, false, false, 5, 5}));
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Released,
+        false, false, false, 10, 5}));
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing());
+
     // Generation 0 matches the initial copy_generation_ (0).
     clip::CopyResult result;
     result.status = clip::CopyResult::Status::NativeCopied;
@@ -509,12 +925,16 @@ TEST(CopyResultPipeline, NativeCopiedShowsCopiedNotification) {
         0, std::move(result), "test text");
 
     test_seams(app).drain_copy_result_for_testing();
+    EXPECT_TRUE(test_seams(app).text_selection_copied_for_testing());
+    EXPECT_EQ(test_seams(app).text_selection_copied_chars_for_testing(), 9u);
     auto notification = test_seams(app).footer_notification_text_for_testing();
-    EXPECT_NE(notification.find("Copied"), std::string::npos)
-        << "native copy success should show 'Copied' notification, got: "
+    EXPECT_TRUE(notification.empty())
+        << "native copy success should NOT show footer notification "
+           "(inline toast handles it), got: "
         << notification;
-    EXPECT_NE(notification.find("xclip"), std::string::npos)
-        << "notification should include backend name";
+    (void)app->Render();
+    EXPECT_EQ(test_seams(app).screen_state_for_testing()->copy_toast_text,
+              "Copied 9 chars to clipboard");
 
     app.reset();
     std::error_code ec;
@@ -545,12 +965,438 @@ TEST(CopyResultPipeline, NativeFailedFallsBackToOsc52) {
     test_seams(app).inject_copy_result_for_testing(
         0, std::move(result), "test text");
 
+    testing::internal::CaptureStdout();
     test_seams(app).drain_copy_result_for_testing();
-    auto notification = test_seams(app).footer_notification_text_for_testing();
-    EXPECT_NE(notification.find("OSC 52"), std::string::npos)
-        << "native failure should fall back to OSC 52, got: " << notification;
+    const auto emitted = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(emitted, "\x1b]52;c;dGVzdCB0ZXh0\a");
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing());
+    EXPECT_TRUE(test_seams(app).footer_notification_text_for_testing().empty());
+    (void)app->Render();
+    EXPECT_EQ(test_seams(app).screen_state_for_testing()->copy_toast_text,
+              "Copy sent to terminal · paste to verify");
 
     app.reset();
     std::error_code ec;
     fs::remove_all(storage_root, ec);
+}
+
+// The same range calculation drives copied text and visible highlights.
+class LinearSelectionGeometry : public testing::TestWithParam<bool> {};
+
+TEST_P(LinearSelectionGeometry, SelectsFirstTailWholeMiddleAndLastPrefix) {
+    auto content = ftxui::vbox({ftxui::text("abcdefgh"), ftxui::text("ijklmnop"),
+                               ftxui::text("qrstuvwx")});
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(8),
+                                       ftxui::Dimension::Fixed(3));
+    ftxui::Render(screen, content);
+    const auto background = screen.PixelAt(0, 0).background_color;
+    const bool reverse = GetParam();
+    const int x0 = reverse ? 4 : 2, y0 = reverse ? 2 : 0;
+    const int x1 = reverse ? 2 : 4, y1 = reverse ? 0 : 2;
+    EXPECT_EQ(loom::ui::AppTestingSeams::selected_text_for_testing(
+                  screen, x0, y0, x1, y1), "cdefgh\nijklmnop\nqrstu");
+    ftxui::Render(screen, loom::ui::AppTestingSeams::selection_highlight_for_testing(
+                              content, x0, y0, x1, y1));
+    const auto highlight = screen.PixelAt(2, 0).background_color;
+    ASSERT_NE(highlight, background);
+    for (int y = 0; y < 3; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            const bool selected = (y == 0 && x >= 2) || y == 1 || (y == 2 && x <= 4);
+            EXPECT_EQ(screen.PixelAt(x, y).background_color,
+                      selected ? highlight : background) << x << ',' << y;
+        }
+    }
+}
+
+TEST_P(LinearSelectionGeometry, PreservesLeadingEmptyRowAndInteriorSpaces) {
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(8),
+                                       ftxui::Dimension::Fixed(3));
+    ftxui::Render(screen, ftxui::vbox({ftxui::text(""), ftxui::text("a b"),
+                                     ftxui::text("xyz")}));
+    const bool reverse = GetParam();
+    EXPECT_EQ(loom::ui::AppTestingSeams::selected_text_for_testing(
+                  screen, reverse ? 1 : 5, reverse ? 2 : 0,
+                  reverse ? 5 : 1, reverse ? 0 : 2), "\na b\nxy");
+}
+
+INSTANTIATE_TEST_SUITE_P(ForwardAndReverse, LinearSelectionGeometry,
+                        testing::Bool());
+
+class WideSelectionGeometry
+    : public testing::TestWithParam<std::tuple<bool, int, int>> {};
+
+TEST_P(WideSelectionGeometry, HighlightsAndCopiesOwnersAndContinuationsTogether) {
+    auto content = ftxui::vbox({ftxui::text("a中🙂 z"), ftxui::text("b中🙂 q")});
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(8),
+                                       ftxui::Dimension::Fixed(2));
+    ftxui::Render(screen, content);
+    ASSERT_EQ(screen.PixelAt(2, 0).character, ""); // CJK continuation.
+    ASSERT_EQ(screen.PixelAt(4, 1).character, ""); // Emoji continuation.
+    const auto background = screen.PixelAt(0, 0).background_color;
+    const auto [reverse, first_column, last_column] = GetParam();
+    const int x0 = reverse ? last_column : first_column, y0 = reverse ? 1 : 0;
+    const int x1 = reverse ? first_column : last_column, y1 = reverse ? 0 : 1;
+    EXPECT_EQ(loom::ui::AppTestingSeams::selected_text_for_testing(
+                  screen, x0, y0, x1, y1), "中🙂 z\nb中🙂");
+    ftxui::Render(screen, loom::ui::AppTestingSeams::selection_highlight_for_testing(
+                              content, x0, y0, x1, y1));
+    const auto highlight = screen.PixelAt(1, 0).background_color;
+    ASSERT_NE(highlight, background);
+    for (int y = 0; y < 2; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            const bool selected = y == 0 ? x >= 1 : x <= 4;
+            EXPECT_EQ(screen.PixelAt(x, y).background_color,
+                      selected ? highlight : background) << x << ',' << y;
+        }
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(Endpoints, WideSelectionGeometry,
+    testing::Combine(testing::Bool(), testing::Values(1, 2), testing::Values(3, 4)));
+
+TEST(LinearSelection, EmptyFrameAndOutOfBoundsEndpointsAreSafe) {
+    auto empty = ftxui::Screen::Create(ftxui::Dimension::Fixed(0),
+                                      ftxui::Dimension::Fixed(0));
+    EXPECT_TRUE(loom::ui::AppTestingSeams::selected_text_for_testing(
+                    empty, -1, -1, 99, 99).empty());
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(3),
+                                       ftxui::Dimension::Fixed(1));
+    ftxui::Render(screen, ftxui::text("abc"));
+    EXPECT_EQ(loom::ui::AppTestingSeams::selected_text_for_testing(
+                  screen, -1, -1, 99, 99), "abc");
+}
+
+class SelectionCopyFeedback : public testing::Test {
+protected:
+    loom::core::ToolRegistry tools;
+    loom::commands::AppCommandRegistry commands;
+    std::unique_ptr<loom::core::QueryEngine> engine;
+    std::shared_ptr<loom::ui::AppAdapter> app;
+    fs::path storage;
+
+    void SetUp() override {
+        loom::core::QueryEngineConfig config;
+        config.context_window.auto_compact = false;
+        config.cwd = fs::temp_directory_path().string();
+        engine = std::make_unique<loom::core::QueryEngine>(std::move(config), tools);
+        storage = fs::temp_directory_path() / ("loom_copy_feedback_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+        app = ftxui::Make<loom::ui::AppAdapter>(
+            engine.get(), nullptr, &commands, storage, [] {});
+    }
+    void TearDown() override {
+        app.reset();
+        engine.reset();
+        std::error_code ec;
+        fs::remove_all(storage, ec);
+    }
+    void inject(loom::utils::clipboard::CopyResult::Status status) {
+        loom::utils::clipboard::CopyResult result;
+        result.status = status;
+        test_seams(app).inject_copy_result_for_testing(0, std::move(result), "中文🙂");
+    }
+    std::string feedback() {
+        (void)app->Render();
+        return test_seams(app).screen_state_for_testing()->copy_toast_text.value_or("");
+    }
+};
+
+TEST_F(SelectionCopyFeedback, UnsupportedNativeCopyReportsOnlyTerminalRequest) {
+    inject(loom::utils::clipboard::CopyResult::Status::Unsupported);
+    testing::internal::CaptureStdout();
+    test_seams(app).drain_copy_result_for_testing();
+    EXPECT_EQ(testing::internal::GetCapturedStdout(), "\x1b]52;c;5Lit5paH8J+Zgg==\a");
+    EXPECT_EQ(feedback(), "Copy sent to terminal · paste to verify");
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing());
+}
+
+#if defined(__APPLE__) || defined(__linux__)
+TEST_F(SelectionCopyFeedback, TerminalWriteFailureShowsFailedInsteadOfCopied) {
+    inject(loom::utils::clipboard::CopyResult::Status::Unsupported);
+    // Restore and clear stdout before any assertions; discard buffered failed
+    // OSC bytes so they cannot later reach the user's real terminal.
+    struct ReadOnlyStdout {
+        int saved = ::dup(STDOUT_FILENO);
+        bool ready = false;
+        ReadOnlyStdout() {
+            std::fflush(stdout);
+            const int fd = ::open("/dev/null", O_RDONLY);
+            if (fd >= 0) {
+                ready = saved >= 0 && ::dup2(fd, STDOUT_FILENO) >= 0;
+                ::close(fd);
+            }
+            std::clearerr(stdout);
+        }
+        ~ReadOnlyStdout() {
+            if (ready && std::ferror(stdout)) (void)std::freopen("/dev/null", "w", stdout);
+            if (saved >= 0) {
+                (void)::dup2(saved, STDOUT_FILENO);
+                ::close(saved);
+            }
+            std::clearerr(stdout);
+        }
+    };
+    bool redirected;
+    {
+        ReadOnlyStdout output;
+        redirected = output.ready;
+        if (redirected) test_seams(app).drain_copy_result_for_testing();
+    }
+    ASSERT_TRUE(redirected);
+    EXPECT_EQ(feedback(), "Copy failed · try again");
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing());
+}
+#endif
+
+class SelectionCopyCancellation : public SelectionCopyFeedback,
+                                  public testing::WithParamInterface<int> {};
+
+TEST_P(SelectionCopyCancellation, DismissalInvalidatesPendingTerminalFallback) {
+    test_seams(app).simulate_copy_for_testing(3);
+    inject(loom::utils::clipboard::CopyResult::Status::Unsupported);
+    testing::internal::CaptureStdout();
+    if (GetParam() == 0) app->OnEvent(ftxui::Event::Character('a'));
+    if (GetParam() == 1) app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Pressed, false, false, false, 1, 1}));
+    if (GetParam() == 2) app->OnEvent(ftxui::Event::F2);
+    EXPECT_EQ(testing::internal::GetCapturedStdout().find("\x1b]52;"), std::string::npos);
+    EXPECT_TRUE(feedback().empty());
+    EXPECT_FALSE(test_seams(app).text_selection_copied_for_testing());
+    // Completion arriving after cancellation is stale as well.
+    inject(loom::utils::clipboard::CopyResult::Status::Unsupported);
+    testing::internal::CaptureStdout();
+    test_seams(app).drain_copy_result_for_testing();
+    EXPECT_TRUE(testing::internal::GetCapturedStdout().empty());
+    EXPECT_TRUE(feedback().empty());
+}
+
+INSTANTIATE_TEST_SUITE_P(KeyPressMousePressAndF2, SelectionCopyCancellation,
+                        testing::Values(0, 1, 2));
+
+TEST_F(SelectionCopyFeedback, ExplicitNativeModeDoesNotHandleSelectionEvents) {
+    app->set_mouse_mode(false);
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Pressed, false, false, false, 1, 1}));
+    app->OnEvent(ftxui::Event::Mouse("", {
+        ftxui::Mouse::Left, ftxui::Mouse::Released, false, false, false, 5, 1}));
+    EXPECT_FALSE(test_seams(app).text_selection_active_for_testing());
+    EXPECT_FALSE(test_seams(app).text_selection_potential_for_testing());
+    EXPECT_TRUE(feedback().empty());
+}
+
+TEST(MessageInteractions, ReplShortcutsPreservePromptAndThinkingExpansion) {
+    namespace repl = loom::ui::repl_screen;
+    auto state = std::make_shared<repl::ReplScreenState>();
+    state->input_text = "draft prompt";
+    state->input_cursor = 5;
+    repl::MessageDisplayEntry tool;
+    tool.id = "tool-1";
+    tool.role = "tool";
+    tool.tool_name = "Read";
+    for (int i = 0; i < 14; ++i) tool.content_preview += "result-" + std::to_string(i) + "\n";
+    state->messages_store.messages.push_back(tool);
+    state->expanded_keys.insert("thinking-row");
+    auto component = repl::ReplScreen(state, {});
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('\x05')));
+    EXPECT_TRUE(state->expanded_keys.contains("Read"));
+    EXPECT_TRUE(state->expanded_keys.contains("thinking-row"));
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('\x05')));
+    EXPECT_FALSE(state->expanded_keys.contains("Read"));
+    EXPECT_TRUE(state->expanded_keys.contains("thinking-row"));
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('\x0F')));
+    EXPECT_TRUE(state->is_transcript_mode);
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('\x05')));
+    EXPECT_TRUE(state->show_all_in_transcript);
+    EXPECT_FALSE(state->expanded_keys.contains("Read"));
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('\x0F')));
+    EXPECT_FALSE(state->is_transcript_mode);
+    EXPECT_FALSE(state->show_all_in_transcript);
+    EXPECT_EQ(state->input_text, "draft prompt");
+    EXPECT_EQ(state->input_cursor, 5u);
+}
+
+TEST(MessageInteractions, ReplToolActionClickExpandsAndCollapsesRealOutput) {
+    namespace repl = loom::ui::repl_screen;
+    auto state = std::make_shared<repl::ReplScreenState>();
+    repl::MessageDisplayEntry tool;
+    tool.id = "clickable-tool";
+    tool.role = "tool";
+    tool.tool_name = "Bash";
+    for (int i = 0; i < 14; ++i) tool.content_preview += "result-" + std::to_string(i) + "\n";
+    state->messages_store.messages.push_back(tool);
+    auto component = repl::ReplScreen(state, {});
+    auto render = [&] {
+        return strip_ansi(render_to_plain_text(component->Render(), 120, 40));
+    };
+    auto click_action = [&](std::string_view label) {
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
+        ftxui::Render(screen, component->Render());
+        for (int y = 0; y < 40; ++y) {
+            std::string line;
+            for (int x = 0; x < 120; ++x) line += screen.PixelAt(x, y).character;
+            auto x = line.find(label);
+            if (x != std::string::npos) {
+                ftxui::Mouse mouse;
+                mouse.button = ftxui::Mouse::Left;
+                mouse.motion = ftxui::Mouse::Released;
+                // Prefix includes the multi-byte connector. Find the matching
+                // screen cell rather than using the UTF-8 byte offset as x.
+                for (int col = 0; col < 120; ++col) {
+                    if (screen.PixelAt(col, y).character == "[" && screen.PixelAt(col, y).underlined) {
+                        mouse.x = col;
+                        mouse.y = y;
+                        return component->OnEvent(ftxui::Event::Mouse("", mouse));
+                    }
+                }
+            }
+        }
+        return false;
+    };
+    EXPECT_NE(render().find("[Show details]"), std::string::npos) << render();
+    EXPECT_TRUE(click_action("[Show details]"));
+    EXPECT_TRUE(state->expanded_keys.contains("chain:clickable-tool"));
+    EXPECT_NE(render().find("[Ctrl+E] Toggle tools"), std::string::npos) << render();
+    EXPECT_TRUE(click_action("[Show more]"));
+    EXPECT_TRUE(state->expanded_keys.contains("Bash"));
+    EXPECT_NE(render().find("result-13"), std::string::npos);
+    EXPECT_TRUE(click_action("[Show less]"));
+    EXPECT_FALSE(state->expanded_keys.contains("Bash"));
+    EXPECT_EQ(render().find("result-13"), std::string::npos);
+    EXPECT_TRUE(click_action("[Hide details]"));
+    EXPECT_FALSE(state->expanded_keys.contains("chain:clickable-tool"));
+    EXPECT_NE(render().find("[Show details]"), std::string::npos);
+    component->OnEvent(ftxui::Event::Character('\x0F'));
+    EXPECT_EQ(render().find("[Ctrl+E] Toggle tools"), std::string::npos);
+    EXPECT_TRUE(click_action("[Show more]"));
+    EXPECT_TRUE(state->expanded_keys.contains("Bash"));
+}
+
+TEST(MessageInteractions, TranscriptCapUsesKeyboardHintForMessageLimit) {
+    namespace repl = loom::ui::repl_screen;
+    auto state = std::make_shared<repl::ReplScreenState>();
+    for (int i = 0; i < 32; ++i) {
+        repl::MessageDisplayEntry row;
+        row.id = "transcript-row-" + std::to_string(i);
+        row.role = "user";
+        row.content_preview = "message-" + std::to_string(i);
+        state->messages_store.messages.push_back(std::move(row));
+    }
+    auto component = repl::ReplScreen(state, {});
+    component->OnEvent(ftxui::Event::Character('\x0F'));
+    state->messages_store.scroll_pinned_to_bottom = false;
+    auto before = strip_ansi(render_to_plain_text(component->Render(), 120, 110));
+    EXPECT_NE(before.find("[Ctrl+E] Show all messages"), std::string::npos);
+    EXPECT_EQ(before.find("message-0"), std::string::npos);
+    component->OnEvent(ftxui::Event::Character('\x05'));
+    auto after = strip_ansi(render_to_plain_text(component->Render(), 120, 110));
+    EXPECT_EQ(after.find("Show all messages"), std::string::npos);
+    EXPECT_NE(after.find("message-0"), std::string::npos);
+}
+
+TEST(MessageInteractions, CurrentErrorShortcutsAreShownOnlyInTheirScreenContext) {
+    namespace repl = loom::ui::repl_screen;
+    auto state = std::make_shared<repl::ReplScreenState>();
+    repl::MessageDisplayEntry error;
+    error.id = "error-card";
+    error.role = "system";
+    error.is_error = true;
+    error.is_model_error = true;
+    error.can_retry = true;
+    error.content_preview = "provider failed";
+    state->messages_store.messages.push_back(error);
+    int retried = 0;
+    repl::ReplScreenCallbacks callbacks;
+    callbacks.on_retry = [&] { ++retried; };
+    auto component = repl::ReplScreen(state, callbacks);
+    auto rendered = [&] { return strip_ansi(render_to_plain_text(component->Render(), 120, 40)); };
+    EXPECT_NE(rendered().find("[R] Retry request"), std::string::npos);
+    EXPECT_NE(rendered().find("[Esc] Dismiss error"), std::string::npos);
+    EXPECT_EQ(rendered().find("[Enter]"), std::string::npos);
+    EXPECT_NE(rendered().find("Model request failed"), std::string::npos);
+    EXPECT_EQ(rendered().find("System"), std::string::npos);
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('R')));
+    EXPECT_EQ(retried, 1);
+    state->input_text = "draft";
+    EXPECT_EQ(rendered().find("[R] Retry request"), std::string::npos);
+    component->OnEvent(ftxui::Event::Character('r'));
+    EXPECT_EQ(retried, 1);
+    state->input_text.clear();
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Escape));
+    EXPECT_TRUE(state->messages_store.messages.empty());
+    EXPECT_EQ(rendered().find("Dismiss error"), std::string::npos);
+}
+
+TEST(MessageInteractions, ToolAndCommandFailuresDoNotOfferRequestRecoveryOrDeleteResults) {
+    namespace repl = loom::ui::repl_screen;
+    for (const auto& role : {"tool", "system"}) {
+        auto state = std::make_shared<repl::ReplScreenState>();
+        repl::MessageDisplayEntry error;
+        error.id = "execution-error";
+        error.role = role;
+        error.is_error = true;
+        error.content_preview = "Permission denied for tool Bash";
+        if (error.role == "tool") error.tool_name = "Bash";
+        state->messages_store.messages.push_back(error);
+        int retried = 0;
+        repl::ReplScreenCallbacks callbacks;
+        callbacks.on_retry = [&] { ++retried; };
+        auto component = repl::ReplScreen(state, callbacks);
+        auto text = strip_ansi(render_to_plain_text(component->Render(), 120, 40));
+        EXPECT_EQ(text.find("Retry request"), std::string::npos);
+        EXPECT_EQ(text.find("Dismiss error"), std::string::npos);
+        EXPECT_EQ(text.find("Model request failed"), std::string::npos);
+        component->OnEvent(ftxui::Event::Character('R'));
+        EXPECT_EQ(retried, 0);
+        EXPECT_EQ(state->input_text, "R");
+        state->input_text.clear();
+        component->OnEvent(ftxui::Event::Escape);
+        ASSERT_EQ(state->messages_store.messages.size(), 1u);
+        EXPECT_EQ(state->messages_store.messages.front().id, error.id);
+    }
+}
+
+TEST(MessageInteractions, ModelRequestRecoveryRequiresRetryabilityAndIdleState) {
+    namespace repl = loom::ui::repl_screen;
+    auto state = std::make_shared<repl::ReplScreenState>();
+    repl::MessageDisplayEntry error;
+    error.id = "model-error";
+    error.role = "system";
+    error.is_error = true;
+    error.is_model_error = true;
+    error.content_preview = "HTTP 401: invalid API credentials";
+    state->messages_store.messages.push_back(error);
+    int retried = 0, interrupted = 0;
+    repl::ReplScreenCallbacks callbacks;
+    callbacks.on_retry = [&] { ++retried; };
+    callbacks.on_interrupt = [&] { ++interrupted; };
+    auto component = repl::ReplScreen(state, callbacks);
+    const auto render = [&] {
+        return strip_ansi(render_to_plain_text(component->Render(), 120, 40));
+    };
+    EXPECT_NE(render().find("Model request failed"), std::string::npos);
+    EXPECT_NE(render().find("HTTP 401: invalid API credentials"), std::string::npos);
+    EXPECT_EQ(render().find("Retry request"), std::string::npos);
+    component->OnEvent(ftxui::Event::Character('R'));
+    EXPECT_EQ(retried, 0);
+    state->input_text.clear();
+    state->messages_store.messages.back().can_retry = true;
+    state->query_running = true;
+    state->task_view_store.spinner_mode = repl::SpinnerMode::Thinking;
+    EXPECT_EQ(render().find("Retry request"), std::string::npos);
+    EXPECT_EQ(render().find("Dismiss error"), std::string::npos);
+    component->OnEvent(ftxui::Event::Character('R'));
+    EXPECT_EQ(retried, 0);
+    state->input_text.clear();
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Escape));
+    EXPECT_EQ(interrupted, 1);
+    ASSERT_EQ(state->messages_store.messages.size(), 1u);
+    state->query_running = false;
+    state->task_view_store.spinner_mode = repl::SpinnerMode::Hidden;
+    EXPECT_NE(render().find("[R] Retry request"), std::string::npos);
+    EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('R')));
+    EXPECT_EQ(retried, 1);
+    state->messages_store.messages.back().session_expired = true;
+    EXPECT_EQ(render().find("Retry request"), std::string::npos);
+    component->OnEvent(ftxui::Event::Character('R'));
+    EXPECT_EQ(retried, 1);
 }

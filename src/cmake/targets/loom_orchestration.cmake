@@ -24,6 +24,7 @@ target_sources(loom_orchestration
 )
 target_sources(loom_orchestration
     PRIVATE
+        orchestration/agent/agent_tool.cpp
         # loom.orchestration.agent.utils implementation units.
         orchestration/agent/agent_sub_utils_json.cpp
         orchestration/agent/agent_sub_utils_config.cpp

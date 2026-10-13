@@ -56,10 +56,10 @@ class ColoredTextLine : public Node {
                 }
                 auto& pixel = screen.PixelAt(x, y);
                 pixel.character = cell;
-                if (seg.foreground != Color::Default) {
+                if (seg.foreground != Color{}) {
                     pixel.foreground_color = seg.foreground;
                 }
-                if (seg.background != Color::Default) {
+                if (seg.background != Color{}) {
                     pixel.background_color = seg.background;
                 }
                 ++x;

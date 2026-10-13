@@ -1,7 +1,6 @@
 // @file clipboard.cppm
-// @brief System clipboard image detection + read (macOS). Uses the
-// osascript fallback for clipboard access. Linux/Windows return
-// false/nullopt.
+// @brief Native clipboard access and OSC 52 terminal clipboard requests.
+// Image reads use osascript on macOS; text backends are platform-specific.
 module;
 
 #include <cerrno>
@@ -16,10 +15,16 @@ export module loom.platform.clipboard;
 import std;
 
 import loom.crypto.crypto;
+import loom.utils.error;
 import loom.platform.find_executable;       // find_executable (PATH + X_OK)
 import loom.process.bash.bash_execution;   // exec_write (pbcopy / xclip / wl-copy)
 
 export namespace loom::utils::clipboard {
+
+/// Emit an OSC 52 clipboard request and flush it to stdout. Success confirms
+/// terminal delivery only; terminal clipboard acceptance cannot be verified.
+/// The caller must serialize this with terminal rendering on the UI thread.
+[[nodiscard]] loom::utils::VoidResult emit_osc52(std::string_view text);
 
 // ── osascript invocation gotcha (macOS) ─────────────────────────────────
 // loom runs the terminal in raw mode (FTXUI termios: ICANON/ECHO off).
@@ -316,9 +321,8 @@ extract_png_from_html_clipboard() {
 /// `wl-copy` / `xclip`, Windows: `clip.exe`).  Uses exec_write() to pipe
 /// the text to the command's stdin.  Returns true on success.
 ///
-/// This is the native-clipboard fallback for OSC 52: some terminals (e.g.
-/// macOS Terminal.app) do not support the OSC 52 clipboard sequence, so
-/// drag-to-select copies via both paths to guarantee delivery.
+/// Synchronous native write helper. The interactive selection pipeline uses
+/// ClipboardCoordinator instead, so native writes do not block the UI thread.
 [[nodiscard]] inline bool write_text(std::string_view text) noexcept {
     const char* cmd = nullptr;
 #if defined(__APPLE__)

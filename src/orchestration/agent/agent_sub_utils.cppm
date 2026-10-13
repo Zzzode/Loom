@@ -572,7 +572,8 @@ void append_hook_additional_context_messages(
     const std::optional<std::string>& cwd
 );
 
-void upsert_agent_record_for_plan(const AgentExecutionPlan& plan);
+void upsert_agent_record_for_plan(const AgentExecutionPlan& plan,
+    std::optional<std::stop_token> execution_owner = std::nullopt);
 
 // Worktree cleanup (result + entry point) lives on the zero-facade leaf
 // loom.tools.agent_worktree (RFC-0001 B14); re-export under the utils spelling

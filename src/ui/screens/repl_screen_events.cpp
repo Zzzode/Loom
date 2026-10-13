@@ -43,7 +43,7 @@ using namespace ftxui;
         // UI3: SettingsView modal — render the tabbed settings dialog
         // over the dimmed REPL background.
         if (state->mode == ReplMode::SettingsView) {
-            Element base = RenderReplScreen(*state, cb->on_retry, cb->on_clear_session, cb->streaming_md);
+            Element base = RenderReplScreen(*state, cb->on_retry, cb->on_clear_session, cb->streaming_md, cb->on_dismiss_error, cb->on_continue);
             Element settings_content = dialog_router::render_settings(state, cb);
             return dbox({
                 base | dim,
@@ -71,17 +71,17 @@ using namespace ftxui;
                        filler() }) | flex_shrink,
                 filler() }) | flex;
         }
-        return RenderReplScreen(*state, cb->on_retry, cb->on_clear_session, cb->streaming_md);
+        return RenderReplScreen(*state, cb->on_retry, cb->on_clear_session, cb->streaming_md, cb->on_dismiss_error, cb->on_continue);
     })
          | CatchEvent([state, cb](Event ev) -> bool {
     // --- M7: dialog_queue event dispatch (priority 0) ---
     // Standalone > Modal > Overlay > Bottom.  This block runs FIRST
     // so that a ToolPermission overlay consumes y/n/a before the
     // legacy in_dialog / input paths see it.
-    bool tool_animating = IsToolAnimating(state->task_view_store);
+    const bool tool_animating = IsToolAnimating(state->task_view_store);
     if (dialog_queue_render::DispatchDialogQueueEvents(
             *state, ev, state->is_prompt_input_active,
-            /*allow_dialogs_with_animation=*/!tool_animating)) {
+            /*allow_dialogs_with_animation=*/!state->is_tool_animation_active)) {
         return true;
     }
 
@@ -264,14 +264,15 @@ using namespace ftxui;
             state->show_all_in_transcript = !state->show_all_in_transcript;
         } else {
             // Normal mode: expand or collapse all tool rows.
-            if (state->expanded_keys.empty()) {
-                for (const auto& m : state->messages_store.messages) {
-                    if (m.tool_name && !m.tool_name->empty()) {
-                        state->expanded_keys.insert(*m.tool_name);
-                    }
+            const bool any_tool_expanded = std::ranges::any_of(
+                state->messages_store.messages, [&](const auto& m) {
+                    return m.tool_name && state->expanded_keys.contains(*m.tool_name);
+                });
+            for (const auto& m : state->messages_store.messages) {
+                if (m.tool_name && !m.tool_name->empty()) {
+                    if (any_tool_expanded) state->expanded_keys.erase(*m.tool_name);
+                    else state->expanded_keys.insert(*m.tool_name);
                 }
-            } else {
-                state->expanded_keys.clear();
             }
         }
         return true;
@@ -334,6 +335,19 @@ using namespace ftxui;
         return true;
     }
 
+    const bool can_continue = state->mode == ReplMode::Normal &&
+        state->dialog_store.dialog_queue.empty() && cb->on_continue &&
+        !state->query_running && state->input_text.empty() &&
+        !state->messages_store.messages.empty() &&
+        state->messages_store.messages.back().can_continue;
+    if (can_continue &&
+        (ev == Event::Character('c') || ev == Event::Character('C') ||
+         (ev.is_mouse() && ev.mouse().button == Mouse::Left &&
+          ev.mouse().motion == Mouse::Released &&
+          state->messages_store.continue_action_box.Contain(ev.mouse().x, ev.mouse().y)))) {
+        cb->on_continue();
+        return true;
+    }
     if (!in_dialog && ev.is_mouse()) {
         if (ev.mouse().button == Mouse::WheelUp ||
             ev.mouse().button == Mouse::WheelDown) {
@@ -377,6 +391,23 @@ using namespace ftxui;
 
     // 3) Input-context events
     const bool accept_input = !in_dialog;
+
+    // r/R: retry on API error card.  Only fires when the last message is
+    // an error card and the input is empty, so it doesn't conflict with
+    // typing 'r' into the prompt.
+    if (accept_input &&
+        (ev == Event::Character('r') || ev == Event::Character('R')) &&
+        state->input_text.empty() && !state->query_running &&
+        !state->messages_store.messages.empty() &&
+        state->messages_store.messages.back().is_error &&
+        state->messages_store.messages.back().is_model_error &&
+        state->messages_store.messages.back().can_retry &&
+        !state->messages_store.messages.back().session_expired) {
+        if (cb->on_retry) {
+            cb->on_retry();
+            return true;
+        }
+    }
     if (accept_input) {
         const int asn = static_cast<int>(state->autocomplete_suggestions.size());
         // Enter
@@ -609,6 +640,16 @@ using namespace ftxui;
                 : state->autocomplete_index - 1; return true; }
         // Esc
         if (ev == Event::Escape) {
+            // Dismiss error card first — before interrupt/autocomplete/etc.
+            // The error card's own CatchEvent component is never added to
+            // the FTXUI component tree, so its keyboard handler is dead;
+            // this screen-level handler makes ESC work.
+            if (!state->query_running && !state->messages_store.messages.empty() &&
+                state->messages_store.messages.back().is_error &&
+                state->messages_store.messages.back().is_model_error) {
+                state->messages_store.messages.pop_back();
+                return true;
+            }
             // ESC interrupts a running query — the footer advertises
             // "esc to interrupt" while loading.  Ctrl+C also interrupts
             // via the global shortcut above; ESC is the discoverable

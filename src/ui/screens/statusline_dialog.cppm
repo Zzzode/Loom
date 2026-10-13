@@ -27,6 +27,10 @@ export module loom.ui.screens.statusline_dialog;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
+import loom.ui.foundation.theme_provider;
+
 import loom.config.config;
 import loom.ui.dialogs.system;
 import loom.ui.screens.repl_state;
@@ -56,13 +60,13 @@ struct SegmentRow {
 };
 
 inline constexpr std::array<SegmentRow, 7> kSegments = {{
-    {"Folder",  "📁",
+    {"Folder",  std::string{loom::ui::design::figures::kSquareSmall},
      [](const StatusBarSegments& s) { return s.cwd; },
      [](StatusBarSegments& s, bool v) { s.cwd = v; }},
-    {"Git",     "🌿",
+    {"Git",     std::string{loom::ui::design::figures::kLozenge},
      [](const StatusBarSegments& s) { return s.git; },
      [](StatusBarSegments& s, bool v) { s.git = v; }},
-    {"Model",   "🤖",
+    {"Model",   std::string{loom::ui::design::figures::kBullet},
      [](const StatusBarSegments& s) { return s.model; },
      [](StatusBarSegments& s, bool v) { s.model = v; }},
     {"Tokens",  "▮",
@@ -71,10 +75,10 @@ inline constexpr std::array<SegmentRow, 7> kSegments = {{
     {"Cost",    "$",
      [](const StatusBarSegments& s) { return s.cost; },
      [](StatusBarSegments& s, bool v) { s.cost = v; }},
-    {"Tasks",   "⚙",
+    {"Tasks",   std::string{loom::ui::design::figures::kCircleFilled},
      [](const StatusBarSegments& s) { return s.tasks; },
      [](StatusBarSegments& s, bool v) { s.tasks = v; }},
-    {"Agent",   "👤",
+    {"Agent",   std::string{loom::ui::design::figures::kCircle},
      [](const StatusBarSegments& s) { return s.agent; },
      [](StatusBarSegments& s, bool v) { s.agent = v; }},
 }};
@@ -207,7 +211,7 @@ struct DialogState {
 
         // Title
         rows.push_back(hbox({
-            text(" Status Bar Segments ") | bold | color(Color::Magenta),
+            text(" Status Bar Segments ") | bold | color(loom::ui::design::theme::current_theme().palette->primary),
             filler(),
         }));
         rows.push_back(separator());
@@ -216,13 +220,13 @@ struct DialogState {
         {
             bool focused = (state->focus_row == 0);
             auto toggle = text(state->master_enabled ? " [ON]  " : " [OFF] ")
-                        | color(state->master_enabled ? Color::Green : Color::GrayDark)
+                        | color(state->master_enabled ? loom::ui::design::theme::current_theme().palette->success : loom::ui::design::theme::current_theme().palette->muted)
                         | (focused ? inverted : nothing);
             auto label = text(" Status Bar")
                        | size(WIDTH, EQUAL, 14)
                        | (focused ? bold : nothing);
             auto hint = text(state->master_enabled ? "visible" : "hidden")
-                       | dim | color(Color::GrayLight);
+                       | dim | color(loom::ui::design::theme::current_theme().palette->text);
             rows.push_back(hbox({toggle, label, text("  "), hint}));
         }
 
@@ -236,7 +240,7 @@ struct DialogState {
             bool dimmed = !state->master_enabled;
 
             auto toggle = text(on ? " [x]  " : " [ ] ")
-                        | color(on ? Color::Green : Color::GrayDark)
+                        | color(on ? loom::ui::design::theme::current_theme().palette->success : loom::ui::design::theme::current_theme().palette->muted)
                         | (focused ? inverted : nothing)
                         | (dimmed ? dim : nothing);
             auto label = text(" " + seg.label)
@@ -244,7 +248,7 @@ struct DialogState {
                        | (focused ? bold : nothing)
                        | (dimmed ? dim : nothing);
             auto preview = text(preview_for(i, *state->screen))
-                          | dim | color(Color::GrayLight);
+                          | dim | color(loom::ui::design::theme::current_theme().palette->text);
 
             rows.push_back(hbox({toggle, label, text("  "), preview}));
         }
@@ -253,25 +257,25 @@ struct DialogState {
 
         // Footer
         auto footer = hbox({
-            text(" Space ") | color(Color::Green),
+            text(" Space ") | color(loom::ui::design::theme::current_theme().palette->success),
             text("toggle  "),
-            text(" Ctrl+S ") | color(Color::Green),
+            text(" Ctrl+S ") | color(loom::ui::design::theme::current_theme().palette->success),
             text("save  "),
-            text(" Esc ") | color(Color::Red),
+            text(" Esc ") | color(loom::ui::design::theme::current_theme().palette->danger),
             text("close"),
             filler(),
-            state->dirty ? text(" * unsaved") | color(Color::Yellow) | dim
+            state->dirty ? text(" * unsaved") | color(loom::ui::design::theme::current_theme().palette->warning) | dim
                          : text(""),
         });
         rows.push_back(footer);
 
         if (state->toast_active()) {
-            rows.push_back(text(" " + state->toast) | color(Color::Green));
+            rows.push_back(text(" " + state->toast) | color(loom::ui::design::theme::current_theme().palette->success));
         }
 
-        return window(text(" Status Line ") | bold | color(Color::Magenta),
+        return window(text(" Status Line ") | bold | color(loom::ui::design::theme::current_theme().palette->primary),
                       vbox(std::move(rows)))
-             | color(Color::Magenta);
+             | color(loom::ui::design::theme::current_theme().palette->primary);
     }) | CatchEvent([state, save](Event event) -> bool {
         // Close
         if (event == Event::Escape) {

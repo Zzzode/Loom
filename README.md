@@ -165,7 +165,7 @@ flag payload:
   "theme": "auto",
   "verbose": false,
   "vimMode": false,
-  "mouseMode": false,
+  "mouseMode": true,
   "mcpServers": { ... },
   "permissions": { "deny": [...] }
 }
@@ -202,18 +202,27 @@ that shadows the fallback.
 
 ### Text selection and clipboard
 
-By default, Loom does **not** enable terminal mouse tracking, so your
-terminal's native text selection (click-drag) works without modifier keys.
-Selected text is auto-copied according to your terminal's configuration
-(e.g., Ghostty `copy-on-select`, iTerm2 "Applications in terminal may access
-clipboard").
+Loom enables in-app mouse tracking by default. Drag across visible text and
+release to copy it automatically. A toast at the lower-right of the interface
+shows `Copying…` while the asynchronous copy runs, confirms a successful native
+copy, reports `Copy sent to terminal · paste to verify` for a terminal request,
+or shows a copy failure.
 
-Set `"mouseMode": true` in `settings.json` to enable FTXUI mouse tracking
-(for in-app scrolling and clicking). In mouse mode, hold the terminal's
-bypass key (Shift on most terminals, Option on iTerm2) to select text
-natively.
+On a local machine, Loom tries the native clipboard first and falls back to
+OSC 52, a terminal control sequence that requests clipboard access. Over SSH,
+Loom skips native clipboard tools on the remote machine and sends OSC 52 to your
+terminal. Sending the request does not confirm that the terminal accepted it;
+paste to verify the result. Terminal permissions and multiplexers such as tmux
+can affect whether the request reaches the clipboard.
 
-| Terminal | Native selection (default) | Auto-copy target | Bypass key (mouse mode) |
+Set `"mouseMode": false` in `settings.json` to persistently use native terminal
+selection. In mouse mode, F2 offers an immediate, best-effort toggle; FTXUI can
+restore mouse tracking when it reinstalls terminal I/O, for example after
+suspend/resume. You can also hold your terminal's mouse bypass modifier while
+dragging. Native selection and its copy-on-select behavior follow your terminal
+configuration.
+
+| Terminal | Native selection (`mouseMode: false`) | Auto-copy target | Bypass key (mouse mode) |
 |----------|---------------------------|------------------|-------------------------|
 | iTerm2 | ✓ | CLIPBOARD | Option+drag |
 | Ghostty | ✓ | PRIMARY (default); CLIPBOARD via `copy-on-select=clipboard` | Shift+drag |
@@ -223,10 +232,6 @@ natively.
 | WezTerm | ✓ | CLIPBOARD + PRIMARY | Shift+drag |
 | tmux | ✓ (own copy-mode) | Depends on config | Outer terminal's bypass key |
 | VS Code | ✓ | None (config) | Shift / Alt / Option |
-
-Over SSH, native clipboard tools (xclip, wl-copy) write to the remote
-machine's clipboard. Loom detects SSH and skips the native path by default;
-OSC 52 (terminal passthrough) still works if your terminal supports it.
 
 ## Slash commands
 

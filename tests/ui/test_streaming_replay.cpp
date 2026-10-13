@@ -138,6 +138,33 @@ void expect_streaming_snapshot(std::string_view fixture_name,
 
 }  // namespace
 
+TEST(StreamingReplay, PlainFooterTempPathNormalization) {
+    using loom::testing::normalize_screen;
+    const std::string divider = "────────────────────\n";
+    const std::string usage = "  ctx ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K";
+    const std::string expected = divider + "   <tmpdir>" + usage;
+    for (const auto stem : {"tmp", "mac-temp-hash/T"}) {
+        const auto normalized = normalize_screen(divider + "   " + stem + usage);
+        EXPECT_EQ(normalized, expected);
+        EXPECT_EQ(normalize_screen(normalized), normalized);
+        const std::string small_usage = "  ctx ▯▯▯▯▯▯▯▯▯▯ 0% 512/200.0K";
+        EXPECT_EQ(normalize_screen(divider + "   " + stem + small_usage),
+                  divider + "   <tmpdir>" + small_usage);
+        EXPECT_EQ(normalize_screen("────────────────────     \n   " +
+                    std::string(stem) + small_usage + " \n"),
+                  divider + "   <tmpdir>" + small_usage);
+    }
+    EXPECT_EQ(normalize_screen(divider + "   \xF0\x9F\x93\x81 tmp" + usage),
+              divider + "   \xF0\x9F\x93\x81 <tmpdir>" + usage);
+    for (const auto& content : {divider + "   Loom/project" + usage,
+            "body\n   tmp" + usage, "body\n   mac-hash/T" + usage,
+            divider + "   tmp  ctx usage", divider + "   tmp" + usage + "\nbody",
+            std::string{"body\n   tmp  ctx usage"},
+            std::string{"body\n   mac-hash/T  ctx usage"}}) {
+        EXPECT_EQ(normalize_screen(content), content);
+    }
+}
+
 TEST(StreamingReplay, TextSimple) {
     auto snapshots = play_fixture("text_simple");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
@@ -343,13 +370,9 @@ namespace {
 constexpr std::string_view kExpandedThinkingLabel =
     "\xE2\x88\xB4 Thinking\xE2\x80\xA6";
 
-/// " (ctrl+o to expand)" — the COLLAPSED-label hint (kCtrlOHint in
-/// thinking_message.cppm). It is emitted ONLY by
-/// RenderThinkingMessageCollapsed, so its presence marks a collapsed
-/// thinking row. The collapsed label reads
-/// `∴ Thinking  <summary> (ctrl+o to expand)` (duration=0 for a committed
-/// block), so the hint — not the glyph — is the reliable marker.
-constexpr std::string_view kCollapsedThinkingHint = " (ctrl+o to expand)";
+/// Only collapsed rows advertise the Show thinking click action; use it as
+/// the marker rather than the glyph shared with the expanded heading.
+constexpr std::string_view kCollapsedThinkingHint = "[Show thinking]";
 
 }  // namespace
 
@@ -558,4 +581,53 @@ TEST(StreamingReplay, ClockResetBetweenFixtures) {
 
     // Clean up (defensive — play() already cleared it).
     loom::ui::clock::set_steady_now_for_testing(std::nullopt);
+}
+
+TEST(StreamingReplay, ToolSpinnerPhasesPreserveLabelsAndMessageContent) {
+    using loom::testing::normalize_screen;
+    const std::string prompt = "\n────────────────────\n ❯ draft";
+    for (const auto label : {"analyze_image", "mcp__server_2__read-file"}) {
+        for (const auto glyph : {"✻", "❋", "✦", "✧", "✶", "✷", "✸", "✹"}) {
+            for (const auto dots : {".", "..", "..."}) {
+                const auto spinner = std::string("  ") + glyph + " " + label + "…" + dots;
+                const auto normalized = normalize_screen(spinner + prompt);
+                EXPECT_EQ(normalized, std::string("  ✻ ") + label + "…." + prompt);
+                EXPECT_EQ(normalize_screen(normalized), normalized);
+                EXPECT_EQ(normalize_screen(spinner + "   \n────────────────────   \n ❯ draft"),
+                          normalized);
+                for (const auto& body : {spinner, "body\n" + spinner + "\nnext",
+                         "quoted " + spinner + prompt,
+                         spinner + "\n────────────────────\nbody"}) {
+                    EXPECT_EQ(normalize_screen(body), body);
+                }
+                EXPECT_EQ(normalize_screen(std::string("  ") + glyph + " Thinking…" + dots),
+                          "  <spinner> <verb>….");
+            }
+        }
+    }
+}
+
+TEST(StreamingReplay, DetailsActionsKeepBlinkingDotSnapshotsDeterministic) {
+    using loom::testing::normalize_screen;
+    for (std::string_view action : {"[Show details]", "[Hide details]"}) {
+        const std::string visible = "● Working… " + std::string(action);
+        const std::string hidden = "  Working… " + std::string(action);
+        EXPECT_EQ(normalize_screen(visible), normalize_screen(hidden));
+        const auto normalized = normalize_screen(visible);
+        EXPECT_NE(normalized.find(action), std::string::npos);
+        EXPECT_EQ(normalize_screen(normalized), normalized);
+        auto aligned = [&](std::string label) {
+            return label + std::string(60 - label.size(), ' ') + std::string(action);
+        };
+        for (const auto& labels : {
+                 std::pair{"Thought for 0s, ran 1 shell command", "Thought, ran 1 shell command"},
+                 std::pair{"Thought for 12s", "Thought"},
+                 std::pair{"Thinking for 0s…", "Thinking…"}}) {
+            const auto timed = normalize_screen("● " + aligned(labels.first));
+            const auto untimed = normalize_screen("● " + aligned(labels.second));
+            EXPECT_EQ(timed, untimed);
+            EXPECT_EQ(normalize_screen(timed), timed);
+        }
+    }
+    EXPECT_EQ(normalize_screen("● ordinary assistant text"), "● ordinary assistant text");
 }

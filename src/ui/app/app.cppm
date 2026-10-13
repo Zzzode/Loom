@@ -21,6 +21,7 @@ import loom.types.types;
 import loom.ui.visual.markdown;  // arch-check: keep-import (StreamingMarkdown field)
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;   // MessageDisplayEntry (project_message / local_command_messages_)
+import loom.ui.screens.task_view_store;  // PendingSpinner mode
 import loom.ui.prompt.autocomplete_sources;
 // P0-2: 7-stage message pipeline utilities (dedup / tag filter / tool augment).
 import loom.ui.messages.message_pipeline;
@@ -74,7 +75,7 @@ struct BridgeState {
 // heavy loom.services.prompt_suggestion import out of this thin module (clang
 // 2GB source-location budget).
 void wire_prompt_suggestion_hook(void* hooks, void* engine,
-                                 std::shared_ptr<loom::ui::repl_screen::ReplScreenState> state);
+                                 std::function<void(std::optional<std::string>)> publish);
 
 using namespace ftxui;
 using namespace loom::core;
@@ -151,6 +152,8 @@ struct AutocompleteToken {
 [[nodiscard]] std::vector<repl::MessageDisplayEntry>
 project_messages(const Message& msg);
 
+void reconcile_tool_result_statuses(std::vector<repl::MessageDisplayEntry>& rows);
+
 // ============================================================
 // Convenience: render a single core Message to an Element.
 // Used by tests and callers that want a quick rendering of one message.
@@ -168,6 +171,8 @@ class AppAdapter : public ComponentBase {
     friend struct AppTestingSeams;
 
 private:
+    // UI-thread configured; snapshotted when launching a query worker.
+    std::optional<std::uint32_t> tool_round_budget_;
     std::unique_ptr<AppImpl, AppImplDeleter> impl_;
     // P3-1a: teammate inbox/permission cluster.  Owns the PIMPL that
     // used to live here as unique_ptr<TeammateState, TeammateStateDeleter>.
@@ -268,7 +273,23 @@ private:
     };
     std::optional<PendingPasteSubmission> pending_paste_submission_;
     std::mutex result_mutex_;
-    std::optional<std::string> pending_error_;
+    /// Pending error from a StreamError event.  Carries the error_type so
+    /// ConsumePendingResult can distinguish API/network errors (retriable,
+    /// show countdown + Retry button) from tool errors (not retriable,
+    /// show Dismiss only).
+    struct PendingError {
+        std::string type;
+        std::string message;
+    };
+    std::optional<PendingError> pending_error_;
+    // Worker-owned stream transitions; applied to the plain store on the UI thread.
+    struct PendingSpinner {
+        repl::SpinnerMode mode;
+        std::optional<std::string> verb;
+    };
+    std::optional<PendingSpinner> pending_spinner_;
+    bool pending_markdown_reset_ = false;
+    std::atomic<bool> statusline_update_pending_{false};
     // P4-1b: async clipboard paste state + worker extracted to
     // PasteCoordinator.  AppAdapter keeps ProcessCompletedPastes and
     // DrainCompletedPastesAndSubmit (they need screen_state_) and accesses the
@@ -282,6 +303,8 @@ private:
     struct PendingBashResult {
         std::string output;   // combined stdout+stderr (already trimmed)
         bool is_error = false;
+        std::string cwd;
+        std::string session_id;
     };
     std::optional<PendingBashResult> pending_bash_result_;  // bg→UI
     // AT-09: inbound IDE at_mentioned tokens staged by the MCP receive
@@ -299,9 +322,14 @@ private:
     /// (thinking → text → tool_use).  Tracking the actual index ensures the
     /// streaming projection places text in the correct order.
     std::optional<std::uint32_t> streaming_text_index_;
-    /// StreamingMarkdown stable-prefix cache for the streaming-text tail
+    /// StreamEnd stops live-generation styling; it does not remove the body.
+    bool streaming_finalizing_ = false;
+    /// Set only after this API round's AssistantMessage has been committed.
+    /// Protected by result_mutex_, along with the streaming buffers.
+    bool streaming_message_committed_ = false;
+    /// StreamingMarkdown frame cache for the streaming-text tail
     /// row.  Reset alongside streaming_text_ so each new model response
-    /// starts with a fresh stable prefix.  Used by
+    /// starts with a fresh frame.  Used by
     /// RenderAssistantTextMessageFaithful via MessagesListInput.streaming_md.
     ::loom::ui::StreamingMarkdown streaming_markdown_;
     struct StreamingToolPreview {
@@ -317,6 +345,10 @@ private:
         bool complete = false;       ///< ContentBlockStop: input_json fully streamed
         bool exec_done = false;      ///< ToolExecutionEnd: tool has finished executing
         bool is_error = false;
+        /// Wall-clock start time (steady_clock) — set on ContentBlockStart.
+        /// Used by the chain compressor to include tool call time in the
+        /// live elapsed timer (now - earliest_start across thinking + tools).
+        std::optional<std::chrono::steady_clock::time_point> streaming_started_at;
     };
     // StreamingThinking preview { text, complete, streaming_ended_at,
     // streaming_started_at }.  streaming_ended_at enables the 3s grace
@@ -332,11 +364,19 @@ private:
     std::map<std::uint32_t, StreamingToolPreview> streaming_tools_;
     std::map<std::uint32_t, StreamingThinkingPreview> streaming_thinking_;
 
-    // Cache of thinking durations, keyed by thinking text content.
+    // Cache of thinking timing, keyed by thinking text content.
     // Populated when a streaming thinking block completes (ContentBlockStop);
     // consumed when projecting committed thinking entries (which lack timing
     // info because ThinkingBlock in the core types has no duration field).
-    std::unordered_map<std::string, std::chrono::milliseconds>
+    // The start_time is cached so the chain compressor's live elapsed timer
+    // (now - earliest_start) survives the streaming→committed transition —
+    // without it, earliest_start shifts forward when the streaming entry is
+    // pruned and the elapsed time jumps backwards.
+    struct ThinkingTiming {
+        std::chrono::milliseconds duration{0};
+        std::chrono::steady_clock::time_point start_time{};
+    };
+    std::unordered_map<std::string, ThinkingTiming>
         thinking_duration_cache_;
 
     // Returns true when any streaming thinking block is still being streamed,
@@ -361,10 +401,17 @@ private:
     struct TextSelection {
         bool active = false;     // true once drag threshold exceeded
         bool potential = false;  // true after press, before threshold
+        bool copied = false;     // true only after native clipboard completion
+        std::size_t copied_chars = 0;  // UTF-8 char count for the toast
+        std::optional<std::string> copy_feedback; // Confirmed copy or unconfirmed terminal request.
         int start_x = 0, start_y = 0;
         int end_x = 0, end_y = 0;
     };
     TextSelection text_selection_;
+    // ScreenInteractive clears its pixels after flushing each frame. Keep the
+    // last rendered frame for selection extraction between render passes.
+    // Shared ownership lets a returned render node safely retain the snapshot.
+    std::shared_ptr<ftxui::Screen> text_selection_frame_;
 
     // Generation counter for stale-result detection: advanced on each copy
     // request post; re-checked in the result callback to discard stale
@@ -391,6 +438,16 @@ private:
     // mutex/optional are destroyed (defense-in-depth, P2-3).
     loom::utils::clipboard::ClipboardCoordinator clipboard_coordinator_;
 
+    // ── Mouse tracking runtime toggle (F2) ──────────────────────────────
+    // mouse_mode_ is the config value (mouseMode: true → FTXUI TrackMouse
+    // on).  mouse_tracking_on_ is the runtime toggle state — F2 switches
+    // between LOOM receiving mouse events (scroll wheel, clicks, in-app
+    // drag-select) and the terminal handling mouse natively (drag to
+    // select, Cmd+C to copy).  Only active when mouse_mode_ is true.
+    bool mouse_mode_ = true;
+    bool mouse_tracking_on_ = true;
+    void ToggleMouseTracking();
+
     // ── Drag-to-select text selection (body in app_text_selection.cpp) ──
     // Handle mouse drag events for text selection. Returns true if the
     // event was consumed (drag active or completed).
@@ -401,11 +458,13 @@ private:
     // RFC 0007 Phase 1: drain pending clipboard copy results from the
     // worker thread onto the UI thread. Called from OnEvent/Render.
     void DrainCopyResult();
+    // Clear all text selection state (active, potential, copied, chars).
+    void ClearTextSelection();
 
     // P4-1d: tool-permission + MCP-elicitation + ask-user blocking-response
     // state extracted to PermissionCoordinator.  AppAdapter keeps the dialog
     // display logic and calls the coordinator's reset/wait/resolve methods.
-    PermissionCoordinator permission_;
+    std::shared_ptr<PermissionCoordinator> permission_ = std::make_shared<PermissionCoordinator>();
 
     // Vim mode — state lives in AppImpl (:impl partition). Accessors keep the
     // VimMode/VimStateMachine types out of this interface.
@@ -457,6 +516,14 @@ private:
     // Advance the bounded welcome intro and post one-shot expiry events.
     // Query spinner frames advance through stream/commit-driven renders.
     void StartUiAnimationTicker();
+    // Stop/unblock/join workers while all of their dependencies are alive.
+    void StopBackgroundWorkers();
+    // App-local handoff for callbacks that may outlive their originating worker.
+    using UiDispatcher = std::function<void(std::function<void()>)>;
+    [[nodiscard]] UiDispatcher ui_dispatcher();
+    void DrainUiActions();
+    void CloseUiActions();
+    void StopSettingsWatcher();
 
     // Post(Event::Custom) helper — body in app_animation.cpp (RFC 0001
     // Phase C batch 2). Private member; callable from member functions in
@@ -466,6 +533,7 @@ private:
     // Stream-event handler — body in app_handle_submit.cpp. The query
     // thread's on_event callback and the test seam both delegate here.
     void handle_stream_event(const core::StreamEvent& ev);
+    void handle_committed_message(const Message& message);
 
     // AT-09: drain the MCP at_mentioned staging queue (at_mention_mutex_ /
     // pending_at_mention_inserts_) into screen_state_->mcp_status_store on
@@ -498,6 +566,13 @@ private:
 
     void AppendLocalCommandMessage(std::string message, bool is_error = false,
                                    bool as_system = false);
+
+    /// Restore a session from the same storage root that produced its picker
+    /// entry.  Kept in the app layer because command handlers do not own the
+    /// adapter's explicit session-storage override.
+    bool ResumeSessionFromDirectory(const std::filesystem::path& sessions_dir,
+                                    std::string_view session_id,
+                                    std::string_view status_message);
 
 
     // Run a user-initiated `!` command LOCALLY (never an LLM turn).  It runs
@@ -569,7 +644,10 @@ public:
 
     void HandleSubmit(const std::string& text,
                       repl::InputMode submit_mode = repl::InputMode::Normal,
-                      bool wait_for_pastes = true);
+                      bool wait_for_pastes = true,
+                      bool retry_request = false);
+
+    void set_tool_round_budget(std::optional<std::uint32_t> budget);
 
     void HandleCommand(std::string_view cmd);
 
@@ -589,6 +667,10 @@ public:
     /// bar. Called once at startup from RunApp with the config-derived
     /// mouse_mode value.
     void set_mouse_mode_label(bool mouse_mode);
+
+    /// Hybrid mouse mode: store whether FTXUI mouse tracking is active.
+    /// When true, F2 toggles mouse tracking at runtime.
+    void set_mouse_mode(bool active);
 
     /// Trigger an async statusline update (debounced).
     /// P3-1c: delegates to StatuslineCoordinator.  Kept as a thin wrapper
@@ -810,6 +892,12 @@ private:
     // RFC 0007: text selection state for threshold/unit tests.
     [[nodiscard]] bool text_selection_active_for_testing() const noexcept;
     [[nodiscard]] bool text_selection_potential_for_testing() const noexcept;
+    [[nodiscard]] bool text_selection_copied_for_testing() const noexcept;
+    [[nodiscard]] std::size_t text_selection_copied_chars_for_testing() const noexcept;
+    /// Simulate a completed copy: sets active + copied + copied_chars.
+    void simulate_copy_for_testing(std::size_t chars);
+    /// F2 toggle: current mouse tracking state.
+    [[nodiscard]] bool mouse_tracking_on_for_testing() const noexcept;
 
     // RFC 0007: copy result pipeline for stale-result/OSC 52 tests.
     void inject_copy_result_for_testing(
@@ -849,6 +937,18 @@ private:
 
 struct AppTestingSeams {
     AppAdapter* app;
+
+    // Exercise production geometry on deterministic rendered cells.
+    [[nodiscard]] static std::string selected_text_for_testing(
+        const ftxui::Screen& screen, int x0, int y0, int x1, int y1);
+    [[nodiscard]] static ftxui::Element selection_highlight_for_testing(
+        ftxui::Element child, int x0, int y0, int x1, int y1);
+    [[nodiscard]] std::optional<std::string> copy_feedback_for_testing() const;
+
+    // UI-thread-only inspection; workers must never mutate the returned state.
+    [[nodiscard]] std::shared_ptr<const repl::ReplScreenState> screen_state_for_testing() const;
+    [[nodiscard]] bool stop_background_workers_for_testing();
+    [[nodiscard]] std::size_t pending_ui_action_count_for_testing() const;
 
     // ── Teammate inbox seams ──────────────────────────────────────
     void configure_teammate_for_testing(std::string agent_name, std::string team);
@@ -918,6 +1018,12 @@ struct AppTestingSeams {
     // ── Text selection (RFC 0007) ──────────────────────────────────
     [[nodiscard]] bool text_selection_active_for_testing() const noexcept;
     [[nodiscard]] bool text_selection_potential_for_testing() const noexcept;
+    [[nodiscard]] bool text_selection_copied_for_testing() const noexcept;
+    [[nodiscard]] std::size_t text_selection_copied_chars_for_testing() const noexcept;
+    /// Simulate a completed copy: sets active + copied + copied_chars.
+    void simulate_copy_for_testing(std::size_t chars);
+    /// F2 toggle: current mouse tracking state.
+    [[nodiscard]] bool mouse_tracking_on_for_testing() const noexcept;
 
     // ── Copy result pipeline (RFC 0007) ────────────────────────────
     /// Inject a pending copy result as if the worker thread posted it.

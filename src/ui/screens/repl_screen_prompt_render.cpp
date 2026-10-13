@@ -443,15 +443,15 @@ using namespace ftxui;
         // Colored dot for agent/teammate suggestions.
         if (!item.color_name.empty()) {
             auto agent_color = [&]() -> Color {
-                if (item.color_name == "red") return Color::Red;
-                if (item.color_name == "blue") return Color::Blue;
-                if (item.color_name == "green") return Color::Green;
-                if (item.color_name == "yellow") return Color::Yellow;
-                if (item.color_name == "purple") return Color::Magenta;
-                if (item.color_name == "orange") return Color::Yellow;
-                if (item.color_name == "pink") return Color::MagentaLight;
-                if (item.color_name == "cyan") return Color::Cyan;
-                return Color::Default;
+                if (item.color_name == "red") return loom::ui::design::theme::current_theme().palette->subagent_red;
+                if (item.color_name == "blue") return loom::ui::design::theme::current_theme().palette->subagent_blue;
+                if (item.color_name == "green") return loom::ui::design::theme::current_theme().palette->subagent_green;
+                if (item.color_name == "yellow") return loom::ui::design::theme::current_theme().palette->subagent_yellow;
+                if (item.color_name == "purple") return loom::ui::design::theme::current_theme().palette->subagent_purple;
+                if (item.color_name == "orange") return loom::ui::design::theme::current_theme().palette->subagent_orange;
+                if (item.color_name == "pink") return loom::ui::design::theme::current_theme().palette->subagent_pink;
+                if (item.color_name == "cyan") return loom::ui::design::theme::current_theme().palette->subagent_cyan;
+                return Color{};
             }();
             label_parts.push_back(text("● ") | color(agent_color) | bold);
             used += 2;  // "● " is 2 display columns

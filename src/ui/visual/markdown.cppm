@@ -10,7 +10,7 @@
 /// - LRU token cache for fast re-renders (virtual scrolling)
 /// - Fast-path: skip lexing for plain text with no markdown markers
 /// - Theme-aware coloring with dim option
-/// - Streaming Markdown: stable prefix + unstable suffix for live output
+/// - Streaming Markdown: complete-document layout with repeated-frame caching
 /// - Interactive MarkdownComponent with scroll support
 module;
 
@@ -24,6 +24,7 @@ module;
 export module loom.ui.visual.markdown;
 
 import std;
+import loom.ui.foundation.design_tokens;
 
 export namespace loom::ui {
 
@@ -39,8 +40,8 @@ struct MarkdownOptions {
     bool dim_color = false;
     /// Enable syntax highlighting in code blocks
     bool syntax_highlighting = true;
-    /// Theme name for code highlighting ("dark", "light", "monokai", etc.)
-    std::string theme_name = "dark";
+    /// Empty follows the active UI theme; a named syntax theme is an explicit override.
+    std::string theme_name;
     /// Maximum number of cached tokenized documents (LRU)
     std::size_t cache_max_size = 256;
 };
@@ -611,14 +612,9 @@ namespace detail {
 // Streaming Markdown
 // ============================================================
 
-/// Streaming markdown renderer optimized for live output.
-/// Maintains a "stable prefix" that has been fully parsed and cached,
-/// and re-parses only the growing "unstable suffix" on each update.
-///
-/// Algorithm: find the last top-level block boundary. Everything before
-/// that boundary is stable (memoized via the token cache) and only the
-/// final block is re-parsed per delta. Code fences are correctly handled
-/// as single tokens even when unclosed.
+/// Uses the final renderer's complete-document context during live output.
+/// Repeated UI frames with identical content reuse the rendered element;
+/// FTXUI still lays it out against the current viewport on each render.
 class StreamingMarkdown {
 public:
     /// Update the content and return rendered element.
@@ -627,18 +623,10 @@ public:
     /// Reset the streaming state
     void reset();
 
-    /// Get current stable prefix length (for debugging)
-    [[nodiscard]] std::size_t stable_length() const {
-        return stable_prefix_.size();
-    }
-
 private:
-    std::string stable_prefix_;
-
-    /// Find the last safe block boundary in content.
-    /// A safe boundary is a double-newline or a closing code fence.
-    [[nodiscard]] static std::size_t find_block_boundary(
-        std::string_view content);
+    std::string last_content_;
+    Element last_render_;
+    const loom::ui::design::tokens::Palette* last_palette_ = nullptr;
 };
 
 // ============================================================

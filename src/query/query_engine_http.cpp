@@ -560,7 +560,19 @@ void QueryEngine::parse_content_block(loom::utils::json::JsonVal block,
             result.message = std::move(fallback->message);
             result.usage = fallback->usage;
         } else {
-            emit_stream_error("api_error", fallback.error().format());
+            std::string type = "api_error";
+            switch (fallback.error().code) {
+                case ErrorCode::AuthenticationFailed: type = "authentication_error"; break;
+                case ErrorCode::InvalidRequest:
+                case ErrorCode::ContextWindowExceeded: type = "invalid_request_error"; break;
+                case ErrorCode::RateLimited: type = "rate_limit_error"; break;
+                case ErrorCode::OverloadedError: type = "overloaded_error"; break;
+                case ErrorCode::ConnectionFailed:
+                case ErrorCode::NetworkTimeout:
+                case ErrorCode::SSLError: type = "network_error"; break;
+                default: break;
+            }
+            emit_stream_error(std::move(type), fallback.error().format());
             return result;
         }
     } else if (result.failed && blocks.empty()) {

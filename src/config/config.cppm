@@ -127,7 +127,7 @@ struct DisplaySettings {
     std::string theme = "auto";               // Color theme (auto, dark, light)
     bool verbose = false;                      // Flat key: verbose
     bool vim_mode = false;                     // Flat key: vimMode
-    bool mouse_mode = false;                   // Flat key: mouseMode (RFC 0007 Phase 2)
+    bool mouse_mode = true;                    // Flat key: mouseMode (RFC 0010)
 };
 
 /// Network and API connection settings
@@ -3943,14 +3943,6 @@ ConfigManager::user_setting_specs() noexcept {
          "Allow network requests"},
     };
     return specs;
-}
-
-[[nodiscard]] inline const UserSettingSpec*
-ConfigManager::find_user_setting(std::string_view dotted) noexcept {
-    for (const auto& spec : user_setting_specs()) {
-        if (spec.key == dotted) return &spec;
-    }
-    return nullptr;
 }
 
 [[nodiscard]] inline std::span<const BlockedSetting>

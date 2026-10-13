@@ -46,6 +46,8 @@ export module loom.ui.screens.log_selector;
 
 import std;
 
+import loom.ui.foundation.design_figures;
+
 import loom.ui.dialogs.trust_dialog;
 import loom.ui.dialogs.trust_utils;
 import loom.ui.foundation.design_tokens;
@@ -92,12 +94,12 @@ enum class Tab : std::uint8_t {
 
 [[nodiscard]] constexpr std::string_view tab_icon(Tab t) {
     switch (t) {
-        case Tab::Recent:   return "🕘";
-        case Tab::Projects: return "📁";
-        case Tab::Drafts:   return "📝";
-        case Tab::Archive:  return "🗄";
-        case Tab::Remote:   return "☁";
-        case Tab::Trash:    return "🗑";
+        case Tab::Recent:   return loom::ui::design::figures::kEllipsis;
+        case Tab::Projects: return loom::ui::design::figures::kSquareSmall;
+        case Tab::Drafts:   return loom::ui::design::figures::kSquareSmall;
+        case Tab::Archive:  return loom::ui::design::figures::kSquareSmallFilled;
+        case Tab::Remote:   return loom::ui::design::figures::kArrowUp;
+        case Tab::Trash:    return loom::ui::design::figures::kCross;
     }
     return "•";
 }
@@ -123,15 +125,15 @@ enum class Status : std::uint8_t {
     return "Active";
 }
 
-[[nodiscard]] constexpr Color status_color(Status s) {
+[[nodiscard]] Color status_color(Status s) {
     switch (s) {
-        case Status::Active:   return Color::Green;
-        case Status::Draft:    return Color::Yellow;
-        case Status::Archived: return Color::GrayLight;
-        case Status::Trashed:  return Color::Red;
-        case Status::Remote:   return Color::Cyan;
+        case Status::Active:   return loom::ui::design::theme::current_theme().palette->success;
+        case Status::Draft:    return loom::ui::design::theme::current_theme().palette->warning;
+        case Status::Archived: return loom::ui::design::theme::current_theme().palette->text;
+        case Status::Trashed:  return loom::ui::design::theme::current_theme().palette->danger;
+        case Status::Remote:   return loom::ui::design::theme::current_theme().palette->info;
     }
-    return Color::White;
+    return loom::ui::design::theme::current_theme().palette->text;
 }
 
 /// Batch toolbar operations triggered by pill keys and the footer.
@@ -370,7 +372,7 @@ namespace ui19_style {
         Elements left_col;
         const std::string title = truncate(r.title, 45);
         left_col.push_back(hbox({
-            text(std::string(pinned ? "📌" : "📝") + " ") | dim,
+            text(std::string(pinned ? std::string{loom::ui::design::figures::kStar} : std::string{loom::ui::design::figures::kSquareSmall}) + " ") | dim,
             text(title) | (selected ? (bold | color(palette.success))
                                     : (bold | color(palette.text))),
         }));
@@ -381,10 +383,10 @@ namespace ui19_style {
         const std::string model = r.model ? *r.model : std::string{"(model)"};
         left_col.push_back(hbox({
             text("    ") | dim,
-            text("🧠 ") | dim,
+            text((std::string{loom::ui::design::figures::kCircleFilled} + " ")) | dim,
             text(truncate(model, 28)) | dim | color(palette.info),
             text("  ") | dim,
-            text("⏱ ") | dim,
+            text((std::string{loom::ui::design::figures::kCircle} + " ")) | dim,
             text(format_relative(r.updated)) | dim | color(palette.muted),
         }));
 
@@ -408,7 +410,7 @@ namespace ui19_style {
         }
         if (r.project) {
             right_col.push_back(hbox({
-                text("🏷 ") | dim,
+                text((std::string{loom::ui::design::figures::kLozenge} + " ")) | dim,
                 text(truncate(*r.project, 20)) | dim | color(palette.warning),
             }));
         }
@@ -439,7 +441,7 @@ namespace ui19_style {
 
         const std::string chev = selected ? " ❯ " : "   ";
         return hbox({
-            text(chev) | color(selected ? palette.success : Color::Default),
+            text(chev) | color(selected ? palette.success : Color{}),
             card | flex,
         });
     }
@@ -619,7 +621,7 @@ inline void SelectorState_rebuild_project_cursor(SelectorState& /*s*/) {
 
 [[nodiscard]] inline Element TabBadge(std::size_t count) {
     if (count == 0) return text("");
-    return text(std::format(" ({})", count)) | dim | color(Color::GrayLight);
+    return text(std::format(" ({})", count)) | dim | color(loom::ui::design::theme::current_theme().palette->text);
 }
 
 [[nodiscard]] inline Element RenderSidebar(SelectorState& s) {
@@ -644,11 +646,11 @@ inline void SelectorState_rebuild_project_cursor(SelectorState& /*s*/) {
     // Search box
     const bool sf = s.search_focused;
     items.push_back(hbox({
-        text(sf ? " / " : " 🔍 ")
-            | color(sf ? Color::Cyan : Color::GrayLight),
+        text(sf ? " / " : (" " + std::string{loom::ui::design::figures::kInfo} + " "))
+            | color(sf ? loom::ui::design::theme::current_theme().palette->info : loom::ui::design::theme::current_theme().palette->text),
         s.search.empty()
             ? text("Search…") | dim
-            : text(s.search) | color(Color::White),
+            : text(s.search) | color(loom::ui::design::theme::current_theme().palette->text),
         text(sf ? "│" : " ") | (sf ? blink : nothing),
     }) | borderLight | size(WIDTH, EQUAL, 26));
 
@@ -657,17 +659,17 @@ inline void SelectorState_rebuild_project_cursor(SelectorState& /*s*/) {
     // Tabs
     for (const auto& r : rows) {
         const bool sel = (s.tab == r.t);
-        Color chev_col = sel ? Color(Color::Green) : Color(Color::Default);
+        Color chev_col = sel ? Color(loom::ui::design::theme::current_theme().palette->success) : Color(Color{});
         Element line = hbox({
-            text(sel ? "▶ " : "  ") | color(chev_col),
+            text(sel ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ") : "  ") | color(chev_col),
             text(std::string{tab_icon(r.t)}) | dim,
             text(" ") | dim,
             text(std::string{to_string(r.t)})
-                | (sel ? (bold | color(Color::Green)) : color(Color::White)),
+                | (sel ? (bold | color(loom::ui::design::theme::current_theme().palette->success)) : color(loom::ui::design::theme::current_theme().palette->text)),
             filler(),
             TabBadge(r.count),
             text(" [") | dim,
-            text(std::string{r.hotkey}) | bold | color(Color::Cyan),
+            text(std::string{r.hotkey}) | bold | color(loom::ui::design::theme::current_theme().palette->info),
             text("]") | dim,
         });
         if (sel) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
@@ -679,8 +681,8 @@ inline void SelectorState_rebuild_project_cursor(SelectorState& /*s*/) {
 
     // New session button
     items.push_back(hbox({
-        text("✨ ") | color(Color::Yellow),
-        text("[N] New session") | bold | color(Color::Yellow),
+        text((std::string{loom::ui::design::figures::kStar} + " ")) | color(loom::ui::design::theme::current_theme().palette->warning),
+        text("[N] New session") | bold | color(loom::ui::design::theme::current_theme().palette->warning),
     }) | size(WIDTH, EQUAL, 28));
 
     return vbox(std::move(items))
@@ -738,7 +740,7 @@ struct ChipDef {
 [[nodiscard]] inline Element RenderFilterChips(SelectorState& s) {
     const auto chips = MakeChips(s);
     Elements row;
-    row.push_back(text(" [f] filter ") | bold | color(Color::Cyan));
+    row.push_back(text(" [f] filter ") | bold | color(loom::ui::design::theme::current_theme().palette->info));
     for (std::size_t i = 0; i < chips.size(); ++i) {
         const bool focus = (i == static_cast<std::size_t>(s.filter_chip_cursor));
         const auto& c = chips[i];
@@ -746,11 +748,11 @@ struct ChipDef {
             text(c.label) | dim,
             text("=") | dim,
             text(c.value) | color(c.value == "any" || c.value == "all"
-                                      ? Color::GrayLight
-                                      : Color::Cyan),
+                                      ? loom::ui::design::theme::current_theme().palette->text
+                                      : loom::ui::design::theme::current_theme().palette->info),
         });
         if (focus) chip = chip | bold | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1)
-                                | borderStyled(Color::Green);
+                                | borderStyled(loom::ui::design::theme::current_theme().palette->success);
         else        chip = chip | borderLight;
         chip = chip | padding(0, 1);
         row.push_back(text(" "));
@@ -777,14 +779,14 @@ struct ChipDef {
     Elements cards;
     // Header
     cards.push_back(hbox({
-        text(" " + std::string{to_string(s.tab)} + " ") | bold | color(Color::Green),
+        text(" " + std::string{to_string(s.tab)} + " ") | bold | color(loom::ui::design::theme::current_theme().palette->success),
         text(std::format("({})", s.view.size())) | dim,
         filler(),
         text(s.selected_ids.empty()
                  ? std::string{}
                  : std::format("{} selected ", s.selected_ids.size()))
-            | color(Color::Cyan),
-        text(s.visual_mode ? "VISUAL" : "") | color(Color::Yellow) | bold,
+            | color(loom::ui::design::theme::current_theme().palette->info),
+        text(s.visual_mode ? "VISUAL" : "") | color(loom::ui::design::theme::current_theme().palette->warning) | bold,
     }));
     cards.push_back(separator());
     cards.push_back(RenderFilterChips(s));
@@ -830,10 +832,10 @@ struct ChipDef {
         cards.push_back(separatorLight());
         if (s.remote_loading) {
             cards.push_back(hbox({
-                text(" ⠋ ") | blink | color(Color::Cyan),
+                text(" ⠋ ") | blink | color(loom::ui::design::theme::current_theme().palette->info),
                 text(std::format(" Loading more… ({} fetched so far) ",
                                  s.remote_fetched))
-                    | color(Color::Cyan),
+                    | color(loom::ui::design::theme::current_theme().palette->info),
             }));
         } else {
             cards.push_back(hbox({
@@ -854,7 +856,7 @@ struct ChipDef {
 [[nodiscard]] inline Element RenderProjects(SelectorState& s) {
     Elements cards;
     cards.push_back(hbox({
-        text(" Projects ") | bold | color(Color::Blue),
+        text(" Projects ") | bold | color(loom::ui::design::theme::current_theme().palette->info),
         text(std::format("({})", s.projects.size())) | dim,
         filler(),
     }));
@@ -882,22 +884,22 @@ struct ChipDef {
             s.collapsed_projects.begin(), s.collapsed_projects.end(),
             [&](const auto& n) { return n == p.name; });
         const bool header_focus = (flat_index == s.project_cursor);
-        Color hdr_fg = header_focus ? Color(Color::Green) : Color(Color::Default);
+        Color hdr_fg = header_focus ? Color(loom::ui::design::theme::current_theme().palette->success) : Color(Color{});
 
         // Group header
         {
             Element hdr = hbox({
-                text(header_focus ? "▶ " : "  ")
+                text(header_focus ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ") : "  ")
                     | color(hdr_fg),
                 text(is_collapsed ? "▸ " : "▾ ")
-                    | color(Color::Cyan) | bold,
-                text("📁 ") | dim,
-                text(p.name) | bold | color(Color::Blue),
+                    | color(loom::ui::design::theme::current_theme().palette->info) | bold,
+                text((std::string{loom::ui::design::figures::kSquareSmall} + " ")) | dim,
+                text(p.name) | bold | color(loom::ui::design::theme::current_theme().palette->info),
                 text(std::format(" ({} sessions)", p.sessions.size())) | dim,
                 filler(),
                 text(p.total_cost_usd > 0
                          ? std::format("${:.2f}", p.total_cost_usd)
-                         : "") | color(Color::Green) | dim,
+                         : "") | color(loom::ui::design::theme::current_theme().palette->success) | dim,
                 text("  "),
                 text(format_relative(p.last_activity)) | dim,
             });
@@ -927,7 +929,7 @@ struct ChipDef {
 [[nodiscard]] inline Element RenderArchive(SelectorState& s) {
     Elements cards;
     cards.push_back(hbox({
-        text(" Archive ") | bold | color(Color::GrayLight),
+        text(" Archive ") | bold | color(loom::ui::design::theme::current_theme().palette->text),
         text("(read-only — use [r] to restore)") | dim,
         filler(),
     }));
@@ -944,12 +946,12 @@ struct ChipDef {
     std::size_t flat = 0;
     for (const auto& [month, rows] : s.archive_groups) {
         const bool hdr_sel = (flat == s.archive_cursor);
-        Color hdr_col = hdr_sel ? Color(Color::Green) : Color(Color::Default);
+        Color hdr_col = hdr_sel ? Color(loom::ui::design::theme::current_theme().palette->success) : Color(Color{});
         cards.push_back(hbox({
-            text(hdr_sel ? "▶ " : "  ")
+            text(hdr_sel ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ") : "  ")
                 | color(hdr_col),
-            text(" 📅 ") | dim,
-            text(month) | bold | color(Color::Yellow),
+            text(" " + std::string{loom::ui::design::figures::kCircle} + " ") | dim,
+            text(month) | bold | color(loom::ui::design::theme::current_theme().palette->warning),
             text(std::format(" ({} entries)", rows.size())) | dim,
             filler(),
         }) | padding(0, 1));
@@ -1003,7 +1005,7 @@ struct ChipDef {
 
     Elements body;
     body.push_back(hbox({
-        text("🔎 Preview") | bold | color(Color::Blue),
+        text(std::string{loom::ui::design::figures::kInfo} + " Preview") | bold | color(loom::ui::design::theme::current_theme().palette->info),
         filler(),
     }));
     body.push_back(separator());
@@ -1025,12 +1027,12 @@ struct ChipDef {
 
     // Metadata
     body.push_back(hbox({
-        text(truncate(entry->title, 30)) | bold | color(Color::Green),
+        text(truncate(entry->title, 30)) | bold | color(loom::ui::design::theme::current_theme().palette->success),
     }));
     body.push_back(hbox({
         text(std::string{to_string(entry->status)})
             | color(status_color(entry->status)) | bold,
-        entry->pinned ? text(" 📌") : text(""),
+        entry->pinned ? text((" " + std::string{loom::ui::design::figures::kStar} + "")) : text(""),
         filler(),
         text("#" + entry->id.substr(0, 8)) | dim,
     }));
@@ -1038,17 +1040,17 @@ struct ChipDef {
 
     body.push_back(hbox({
         text("Model:   ") | dim,
-        text(entry->model ? *entry->model : "-") | color(Color::Cyan),
+        text(entry->model ? *entry->model : "-") | color(loom::ui::design::theme::current_theme().palette->info),
     }));
     body.push_back(hbox({
         text("Msgs:    ") | dim,
-        text(std::to_string(entry->msg_count)) | color(Color::White),
+        text(std::to_string(entry->msg_count)) | color(loom::ui::design::theme::current_theme().palette->text),
         text("  Turns: ") | dim,
         text(std::to_string(entry->turns)),
     }));
     body.push_back(hbox({
         text("Cost:    ") | dim,
-        text(std::format("${:.3f}", entry->cost_usd)) | color(Color::Green),
+        text(std::format("${:.3f}", entry->cost_usd)) | color(loom::ui::design::theme::current_theme().palette->success),
         text("  Tokens: ") | dim,
         text(std::format("{}k/{}k",
             (entry->tokens_in + 500) / 1000,
@@ -1061,13 +1063,13 @@ struct ChipDef {
     if (entry->project) {
         body.push_back(hbox({
             text("Project: ") | dim,
-            text(*entry->project) | color(Color::Yellow),
+            text(*entry->project) | color(loom::ui::design::theme::current_theme().palette->warning),
         }));
     }
     if (!entry->tags.empty()) {
         Elements tags_els;
         for (const auto& t : entry->tags) {
-            tags_els.push_back(text(" " + t + " ") | borderLight | color(Color::Cyan));
+            tags_els.push_back(text(" " + t + " ") | borderLight | color(loom::ui::design::theme::current_theme().palette->info));
         }
         body.push_back(hbox({
             text("Tags:    ") | dim,
@@ -1078,7 +1080,7 @@ struct ChipDef {
 
     // Messages (compressed)
     body.push_back(hbox({
-        text("Last 10 messages") | bold | color(Color::Blue),
+        text("Last 10 messages") | bold | color(loom::ui::design::theme::current_theme().palette->info),
     }));
     body.push_back(text(""));
 
@@ -1086,12 +1088,12 @@ struct ChipDef {
         body.push_back(text(" (no preview)") | dim);
     } else {
         for (const auto& [role, text_] : *entry->preview_messages) {
-            Color col = Color::White;
+            Color col = loom::ui::design::theme::current_theme().palette->text;
             std::string icon = "  ";
-            if (role == "user")      { col = Color::Cyan;   icon = "👤 "; }
-            else if (role == "assistant") { col = Color::Green;  icon = "🤖 "; }
-            else if (role == "tool")      { col = Color::Orange1;icon = "🔧 "; }
-            else if (role == "system")    { col = Color::Yellow; icon = "ℹ "; }
+            if (role == "user")      { col = loom::ui::design::theme::current_theme().palette->role_pill_user;   icon = (std::string{loom::ui::design::figures::kCircle} + " "); }
+            else if (role == "assistant") { col = loom::ui::design::theme::current_theme().palette->role_pill_assistant;  icon = (std::string{loom::ui::design::figures::kBullet} + " "); }
+            else if (role == "tool")      { col = loom::ui::design::theme::current_theme().palette->role_pill_tool;icon = (std::string{loom::ui::design::figures::kSquareSmallFilled} + " "); }
+            else if (role == "system")    { col = loom::ui::design::theme::current_theme().palette->role_pill_system; icon = (std::string{loom::ui::design::figures::kInfo} + " "); }
             body.push_back(hbox({
                 text(icon) | color(col),
                 text(truncate(text_, 60)) | color(col) | dim,
@@ -1118,17 +1120,17 @@ struct ChipDef {
         });
     };
     Element row = hbox({
-        pill("a", "archive", Color::Yellow),
-        pill("d", "delete",  Color::Red),
-        pill("r", "restore", Color::Green),
-        pill("e", "export",  Color::Cyan),
-        pill("i", "import",  Color::Cyan),
-        pill("p", "pin",     Color::Blue),
-        pill("t", "tag",     Color::Magenta),
+        pill("a", "archive", loom::ui::design::theme::current_theme().palette->warning),
+        pill("d", "delete",  loom::ui::design::theme::current_theme().palette->danger),
+        pill("r", "restore", loom::ui::design::theme::current_theme().palette->success),
+        pill("e", "export",  loom::ui::design::theme::current_theme().palette->info),
+        pill("i", "import",  loom::ui::design::theme::current_theme().palette->info),
+        pill("p", "pin",     loom::ui::design::theme::current_theme().palette->info),
+        pill("t", "tag",     loom::ui::design::theme::current_theme().palette->primary),
         filler(),
-        pill("/", "search",  Color::Cyan),
-        pill("Enter", "open", Color::Green),
-        pill("Esc/q", "close", Color::Red),
+        pill("/", "search",  loom::ui::design::theme::current_theme().palette->info),
+        pill("Enter", "open", loom::ui::design::theme::current_theme().palette->success),
+        pill("Esc/q", "close", loom::ui::design::theme::current_theme().palette->danger),
     });
     std::string extra;
     if (s.visual_mode)            extra += "  VISUAL-MODE (v to exit) ";
@@ -1137,7 +1139,7 @@ struct ChipDef {
     return vbox({
         separatorLight(),
         row,
-        extra.empty() ? text("") : text(extra) | color(Color::Yellow) | dim,
+        extra.empty() ? text("") : text(extra) | color(loom::ui::design::theme::current_theme().palette->warning) | dim,
     });
 }
 
@@ -1148,33 +1150,33 @@ struct ChipDef {
 [[nodiscard]] inline Element RenderImportDialog(SelectorState& s) {
     Elements body;
     body.push_back(hbox({
-        text("⬇ Import JSONL session file") | bold | color(Color::Cyan),
+        text((std::string{loom::ui::design::figures::kArrowDown} + " Import JSONL session file")) | bold | color(loom::ui::design::theme::current_theme().palette->info),
     }));
     body.push_back(separator());
     body.push_back(text(" Path to .jsonl / .json export:") | dim);
     body.push_back(text(""));
     Element field = hbox({
-        text(" 📄 ") | dim,
+        text((" " + std::string{loom::ui::design::figures::kSquareSmall} + " ")) | dim,
         text(s.import_path.empty() ? std::string{"(enter path)"} : s.import_path)
-            | color(s.import_error ? Color::Red : Color::White),
-        text("│") | blink | color(Color::Cyan),
+            | color(s.import_error ? loom::ui::design::theme::current_theme().palette->danger : loom::ui::design::theme::current_theme().palette->text),
+        text("│") | blink | color(loom::ui::design::theme::current_theme().palette->info),
     });
-    if (s.import_error) field = field | borderStyled(Color::Red)
+    if (s.import_error) field = field | borderStyled(loom::ui::design::theme::current_theme().palette->danger)
                                        | bgcolor(loom::ui::design::theme::current_theme().palette->danger_tint_bg);
     else                field = field | borderLight;
     body.push_back(field | padding(1));
     if (s.import_error) {
         body.push_back(hbox({
-            text(" ⚠ ") | color(Color::Red),
-            text("File not found — enter a valid path.") | color(Color::Red),
+            text(" ⚠ ") | color(loom::ui::design::theme::current_theme().palette->danger),
+            text("File not found — enter a valid path.") | color(loom::ui::design::theme::current_theme().palette->danger),
         }));
     }
     body.push_back(text(""));
     body.push_back(separatorLight());
     body.push_back(hbox({
-        text(" Enter") | bold | color(Color::Green),
+        text(" Enter") | bold | color(loom::ui::design::theme::current_theme().palette->success),
         text(" import   "),
-        text("Esc") | bold | color(Color::Red),
+        text("Esc") | bold | color(loom::ui::design::theme::current_theme().palette->danger),
         text(" cancel   "),
         text("Tab") | bold | dim,
         text(" paste (clipboard path via manual input)") | dim,
@@ -1212,11 +1214,11 @@ struct ChipDef {
 
     Element full = vbox({
         hbox({
-            text(" 📚 Log Selector ") | bold | color(Color::Green),
+            text((" " + std::string{loom::ui::design::figures::kSquareSmall} + " Log Selector ")) | bold | color(loom::ui::design::theme::current_theme().palette->success),
             filler(),
             text(s.search_focused ? " SEARCH " : " LIST ")
-                | color(Color::Cyan) | bold,
-            s.import_open ? text(" · IMPORT") | color(Color::Yellow) | bold
+                | color(loom::ui::design::theme::current_theme().palette->info) | bold,
+            s.import_open ? text(" · IMPORT") | color(loom::ui::design::theme::current_theme().palette->warning) | bold
                           : text(""),
         }),
         separator(),

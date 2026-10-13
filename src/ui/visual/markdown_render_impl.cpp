@@ -13,6 +13,7 @@ module;
 module loom.ui.visual.markdown;
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 namespace loom::ui {
 namespace detail {
@@ -411,14 +412,14 @@ std::vector<std::string> split_for_wrapping(std::string_view text,
             }
             case InlineTokenKind::Code: {
                 // codespan -> color('permission', theme). Dark theme
-                // permission = rgb(87,105,247). No background inversion.
+                // uses the active semantic token. No background inversion.
                 // Code spans preserve leading spaces (they are content,
                 // not paragraph indentation).
                 auto words = split_for_wrapping(tok.text, at_paragraph_start,
                                                 /*trim_leading_space=*/false);
                 for (auto& word : words) {
                     Element el = ftxui::text(word) |
-                                 color(Color::RGB(87, 105, 247));
+                                 color(loom::ui::design::theme::current_theme().palette->permission);
                     if (opts.dim_color) el = el | dim;
                     elements.push_back(std::move(el));
                 }
@@ -501,7 +502,7 @@ std::vector<std::string> split_for_wrapping(std::string_view text,
                 auto words = split_for_wrapping(tok.text, at_paragraph_start);
                 for (auto& word : words) {
                     Element el = ftxui::text(word) | hyperlink(tok.url) |
-                                 color(Color::RGB(87, 105, 247));
+                                 color(loom::ui::design::theme::current_theme().palette->text_link);
                     if (opts.dim_color) el = el | dim;
                     elements.push_back(std::move(el));
                 }
@@ -521,7 +522,7 @@ std::vector<std::string> split_for_wrapping(std::string_view text,
                 // the web UI; in a terminal we approximate with a distinct cyan color.
                 auto words = split_for_wrapping(tok.text, at_paragraph_start);
                 for (auto& word : words) {
-                    Element el = ftxui::text(word) | color(Color::CyanLight);
+                    Element el = ftxui::text(word) | color(loom::ui::design::theme::current_theme().palette->info);
                     if (opts.dim_color) el = el | dim;
                     elements.push_back(std::move(el));
                 }
@@ -677,7 +678,7 @@ namespace detail {
         case BlockTokenKind::HtmlBlock:
             return render_html_block(sub, opts);
         case BlockTokenKind::MathBlock:
-            return text(sub.math_content) | color(Color::CyanLight);
+            return text(sub.math_content) | color(loom::ui::design::theme::current_theme().palette->info);
         case BlockTokenKind::FootnoteDef:
             // Footnote definitions are hoisted to the footnotes section
             // (HTML serializer only); no terminal output here.
@@ -908,7 +909,7 @@ namespace detail {
                     parts.push_back(render_html_block(sub, opts));
                     break;
                 case BlockTokenKind::MathBlock:
-                    parts.push_back(text(sub.math_content) | color(Color::CyanLight));
+                    parts.push_back(text(sub.math_content) | color(loom::ui::design::theme::current_theme().palette->info));
                     break;
                 case BlockTokenKind::FootnoteDef:
                     // Hoisted to footnotes section (HTML serializer only).

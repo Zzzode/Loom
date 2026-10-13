@@ -42,6 +42,8 @@ jobs:
       # TLL graph acyclicity + file-to-library grouping.
       - name: TLL acyclicity + grouping lint
         run: python3 tools/arch/graph_check.py --tll-lint
+      - name: UI semantic color and icon lint
+        run: python3 tools/arch/test_message_theme_lint.py
       # Negative tests: verify the lints themselves catch violations.
       - name: Arch lint negative tests
         run: |

@@ -121,6 +121,7 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
         ? options.agent_tool_factory
         : slot_factory;
     AgentConfig agent_config;
+    agent_config.default_model = std::move(options.default_model);
     agent_config.parent_permission_mode = std::move(options.parent_permission_mode);
     if (agent_factory) {
         registry.register_tool(agent_factory(
@@ -413,7 +414,7 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
     registry.register_tool(simple("synthetic_output", "Return provided synthetic output content",
         ToolPermission::ReadOnly, {prop("content", "string", "Content", true)}, "testing"));
 
-    if constexpr (features::kTodoV2) {
+    if constexpr (features::kTaskTools) {
         for (const auto& name : {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
             registry.register_tool(simple(name, std::format("Runtime task operation {}", name), ToolPermission::Write,
                 {

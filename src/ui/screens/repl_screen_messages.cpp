@@ -6,6 +6,7 @@
 module;
 
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
 
 module loom.ui.screens.repl_screen;
 
@@ -32,6 +33,30 @@ namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 namespace {
+// The static yframe knows its full content requirement after Markdown layout.
+// Capture it here so scrolling uses the rendered, filtered transcript rather
+// than raw messages whose tool output or UTF-8 bytes can vastly overestimate it.
+class TranscriptGeometryNode final : public Node {
+public:
+    TranscriptGeometryNode(Element child, MessagesStore& store)
+        : Node({std::move(child)}), store_(store) {}
+
+    void ComputeRequirement() override {
+        Node::ComputeRequirement();
+        requirement_ = children_[0]->requirement();
+    }
+
+    void SetBox(Box box) override {
+        Node::SetBox(box);
+        children_[0]->SetBox(box);
+        store_.rendered_content_height_lines = requirement_.min_y;
+        store_.viewport_height_lines = std::max(1, box.y_max - box.y_min + 1);
+    }
+
+private:
+    MessagesStore& store_;
+};
+
 // Exact comparisons keep in-place streaming/status changes visible without
 // relying on IDs, lengths, hashes, or append-only source rows.
 bool same_projected_source(const MessageDisplayEntry& a,
@@ -45,7 +70,8 @@ bool same_projected_source(const MessageDisplayEntry& a,
             m.tool_input_json, m.tool_result_preview, m.agent_display_name,
             m.agent_color_name, m.timestamp, m.thinking_duration,
             m.estimated_height_lines, m.system_subtype, m.retry_after_ms,
-            m.retry_attempt, m.max_retries, m.session_expired);
+            m.retry_attempt, m.max_retries, m.session_expired,
+            m.is_model_error, m.can_retry, m.can_continue);
     };
     if (fields(a) != fields(b)) return false;
     if (a.image_block.has_value() != b.image_block.has_value()) return false;
@@ -89,16 +115,15 @@ bool same_projected_source(const MessageDisplayEntry& a,
     bool show_all_in_transcript,
     bool disable_chain_compression,
     bool query_running,
-    // GAP 3: msg-system-api-error-retry — callback for the Retry button on
-    // SystemAPIError rich cards.  When set, the API error card renders a
-    // clickable Retry pill that invokes this to re-send the last user message.
+    // Model-request recovery callback. Static transcript rows have no
+    // component actions; the screen owns the request-scoped keyboard shortcut.
     std::function<void()> on_retry,
     // P2 gap api-error-retry: callback for "Clear session" button on
     // session-expired error cards.  onClearSession prop — invoked when
     // auth has expired and user chooses to clear the session to
     // re-authenticate.
     std::function<void()> on_clear_session,
-    // StreamingMarkdown stable-prefix cache for the streaming-text tail
+    // StreamingMarkdown repeated-frame cache for the streaming-text tail
     // row.  When non-null,
     // RenderAssistantTextMessageFaithful uses update() instead of full
     // render_markdown() for is_streaming rows.
@@ -108,7 +133,9 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // Optional store for virtual-list scroll bounds.
     MessagesStore* store,
     // Terminal column width for the virtual-path height estimator.
-    int term_cols) {
+    int term_cols,
+    // Dismiss callback for API error cards (ESC / q).
+    std::function<void()> on_dismiss_error) {
     // NOTE: We no longer early-return on empty entries.  The leading_element
     // (welcome/logo card) must always be rendered inside the yframe so it
     // scrolls with messages.  The messages_list handles empty rows gracefully
@@ -142,7 +169,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
             // Callbacks can change independently of the source message.
             if (auto* error = std::get_if<messages::api_error_message::APIErrorOptions>(
                     &input.rows[index])) {
-                error->on_retry = on_retry;
+                error->on_retry = m.can_retry && !query_running ? on_retry : nullptr;
                 error->on_clear_session = on_clear_session;
             }
             continue;
@@ -283,6 +310,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
                 opts.call.parameters_language = "json";
                 opts.call.status = messages::tool_use_message::parse_tool_status(
                     m.tool_status.value_or("pending"));
+                opts.call.start_time = m.tool_start_time;
                 projected.rows.push_back(std::move(opts));
             } else {
                 projected.shapes.push_back(messages::MessageShape::AssistantText);
@@ -305,15 +333,12 @@ bool same_projected_source(const MessageDisplayEntry& a,
                 .is_truncated = false,
                 .is_transcript_mode = is_transcript_mode,
                 .content_items = m.tool_result_content_items});
-        } else if (m.is_error) {
-            // GAP 3: msg-system-api-error-retry — route system error messages
-            // through the rich SystemAPIError card (severity borders + pills)
-            // instead of the plain SystemText glyph.  The Retry button calls
-            // on_retry to re-send the last user message.
+        } else if (m.is_error && m.is_model_error) {
+            // Only model-request failures use this diagnostic row. Tool and
+            // command failures retain their own inline result rendering.
             namespace aem = loom::ui::messages::api_error_message;
             aem::APIErrorData err_data;
             err_data.message = m.content_preview;
-            err_data.provider = "API";
             err_data.severity = aem::ErrorSeverity::Error;
             // P2 gap api-error-retry: thread retry metadata from the entry.
             // retryInMs, retryAttempt,
@@ -324,11 +349,16 @@ bool same_projected_source(const MessageDisplayEntry& a,
             err_data.session_expired  = m.session_expired;
             aem::APIErrorOptions err_opts;
             err_opts.error = std::move(err_data);
-            err_opts.on_retry = on_retry;
+            err_opts.on_retry = m.can_retry && !query_running ? on_retry : nullptr;
             // P2 gap: clear-session callback for expired auth sessions.
             // Wired through ReplScreenCallbacks.on_clear_session below.
             err_opts.on_clear_session = on_clear_session;
-            err_opts.show_buttons = true;
+            // Dismiss callback for ESC / q.  The component's CatchEvent is
+            // not in the FTXUI tree (see messages_list_payload_row.cpp), so
+            // the screen-level handler in repl_screen_events.cpp is the
+            // primary path; this is wired for when the component is added.
+            err_opts.on_dismiss = on_dismiss_error;
+            err_opts.show_buttons = false;
             projected.shapes.push_back(messages::MessageShape::SystemAPIError);
             projected.rows.push_back(std::move(err_opts));
         } else {
@@ -373,7 +403,8 @@ bool same_projected_source(const MessageDisplayEntry& a,
                 return ST::Plain;
             };
             projected.rows.push_back(messages::SystemTextMessageData{
-                .subtype = derive_subtype(m.content_preview, m.system_subtype),
+                .subtype = m.can_continue ? messages::SystemMessageSubtype::Plain
+                    : derive_subtype(m.content_preview, m.system_subtype),
                 .summary = m.content_preview,
                 .detail = {},
                 .timestamp = m.timestamp,
@@ -438,8 +469,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // error cards.
     input.on_clear_session = on_clear_session;
     // Thread the shared StreamingMarkdown instance so the streaming-text
-    // tail row uses
-    // stable-prefix caching instead of full re-parse per token.
+    // tail row can reuse frames whose content has not changed.
     input.streaming_md = streaming_md;
     input.row_click_tracker = row_click_tracker;
     namespace ml = loom::ui::messages_list;
@@ -494,9 +524,12 @@ bool same_projected_source(const MessageDisplayEntry& a,
         }
         if (input.virtual_jh_out) {
             store->virtual_list_active = true;
+            store->rendered_content_height_lines.reset();
             store->virtual_jh = std::move(*input.virtual_jh_out);
         } else {
             store->virtual_list_active = false;
+            return std::make_shared<TranscriptGeometryNode>(
+                std::move(element) | flex, *store);
         }
     }
     return std::move(element) | flex;

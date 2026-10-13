@@ -23,6 +23,7 @@ module;
 export module loom.ui.dialogs.session_picker;
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 import loom.ui.dialogs.system;
 import loom.ui.dialogs.frame;
@@ -96,6 +97,7 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
     const dsys::SessionPickerPayload& p,
     const dsys::DialogRenderContext& ctx)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto filtered = filter_sessions(p.sessions, p.query);
     int count = static_cast<int>(filtered.size());
     int selected = p.selected_index;
@@ -127,11 +129,12 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
         );
     } else {
         for (int i = start; i < end; ++i) {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
             const auto& s = filtered[i];
             bool is_selected = (i == selected);
 
             auto prefix = is_selected
-                ? text("❯ ") | color(Color::Cyan)
+                ? text("❯ ") | color(pal.info)
                 : text("  ");
 
             auto title_el = is_selected
@@ -146,7 +149,7 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
 
             auto row = hbox(std::move(row_els));
             if (is_selected) {
-                row = row | bgcolor(Color::BlueLight) | color(Color::White);
+                row = row | bgcolor(pal.surface_selected) | color(pal.text);
             }
             list_els.push_back(row);
         }
@@ -181,7 +184,7 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
         : text(p.query) | bold;
 
     auto search_row = hbox({
-        text("❯ ") | color(Color::Cyan),
+        text("❯ ") | color(pal.info),
         query_display,
         filler(),
         text(std::to_string(count) + " sessions") | dim,
@@ -205,7 +208,6 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
     props.inner_padding_x = 1;
     props.inner_padding_y = 1;
     props.full_border = true;
-    props.rounded = true;
     props.pane_variant = dframe::PaneVariant::PanelPadded;
 
     const int avail_cols = std::max(40, ctx.term_cols - 2);

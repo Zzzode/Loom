@@ -38,13 +38,15 @@ target_sources(loom_ui_visual PRIVATE
     # HTML serializer for CommonMark/GFM conformance testing.
     ui/visual/markdown_html_impl.cpp
 )
-# External deps only: loom.types.types (code_highlight), loom.fs.edit.file_edit /
+# Semantic UI colors are resolved through loom_ui_foundation.
+# Other deps: loom.types.types (code_highlight), loom.fs.edit.file_edit /
 # loom.text.string_utils (structured_diff, file_edit_tool_diff), and FTXUI
 # (DOM/component headers). loom_std's `import std;` BMI arrives via the
 # directory-level link_libraries(loom_std). Over-linking is safe (and matches
 # the previous loom_ui.cmake behaviour).
 target_link_libraries(loom_ui_visual
     PUBLIC
+        loom_ui_foundation
         loom_types
         loom_utils
         ftxui::screen

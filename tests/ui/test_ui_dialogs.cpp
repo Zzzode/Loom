@@ -479,7 +479,7 @@ TEST(Permissions, RuleCRUD) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MCP Elicitation 2.0 — payload contract + form renderer + keyboard events
+// MCP Elicitation — payload contract + form renderer + keyboard events
 // ═══════════════════════════════════════════════════════════════════════════════
 
 namespace mcp = loom::ui::mcp_dialogs;
@@ -768,53 +768,93 @@ TEST(McpElicitation, Keyboard_SingleLetterShortcuts) {
     EXPECT_EQ(r2->action, "approve");
 }
 
-// Legacy adapter: ElicitationDialogProps → on_response(bool) wrapper.
-TEST(McpElicitation, BackwardCompat_BoolCallbackViaLegacyFromBoolCb) {
-    bool approved = false;
-    auto props = mcp::ElicitationDialogProps::from_bool_cb(
-        "legacy-mcp", "Old style caller", [&](bool ok) { approved = ok; });
-    auto comp = mcp::ElicitationDialogComponent(std::move(props));
-    comp->OnEvent(ftxui::Event::Return);
-    EXPECT_TRUE(approved);
-
-    auto props2 = mcp::ElicitationDialogProps::from_bool_cb(
-        "legacy-mcp", "Old style caller", [&](bool ok) { approved = ok; });
-    auto c2 = mcp::ElicitationDialogComponent(std::move(props2));
-    c2->OnEvent(ftxui::Event::Escape);
-    EXPECT_FALSE(approved);
-}
-
-// Legacy adapter: set_old_action_response flat-string map on submit.
-TEST(McpElicitation, BackwardCompat_LegacyElicitActionFlattensValues) {
-    mcp::ElicitationDialogProps props;
-    props.server_name = "old-mcp";
-    props.fields = { mk_text("name", "Name"), mk_bool("active", "Active?", true) };
-    std::optional<mcp::ElicitAction> action;
-    std::map<std::string, std::string> flat;
-    props.on_response = [&](mcp::ElicitAction a, std::map<std::string, std::string> f) {
-        action = a; flat = std::move(f);
+// All response actions keep typed values instead of flattening them to strings.
+TEST(McpElicitation, StructuredResponsesRetainTypedContentForEveryAction) {
+    const std::vector<std::pair<ftxui::Event, std::string>> actions = {
+        {ftxui::Event::Return, "approve"},
+        {ftxui::Event::Character('d'), "decline"},
+        {ftxui::Event::Escape, "cancel"},
     };
-    auto comp = mcp::ElicitationDialogComponent(std::move(props));
-    // type 'z' into field 0
-    comp->OnEvent(ftxui::Event::Character(std::string("z")));
-    // Tab to field 1 (bool), press space (turns off), Enter to submit.
-    comp->OnEvent(ftxui::Event::Tab);
-    comp->OnEvent(ftxui::Event::Character(' '));
-    comp->OnEvent(ftxui::Event::Return);
-    ASSERT_TRUE(action.has_value());
-    EXPECT_EQ(*action, mcp::ElicitAction::submit);
-    EXPECT_EQ(flat["name"], "z");
-    EXPECT_EQ(flat["active"], "false"); // bool false stringifies
+    for (const auto& [event, action] : actions) {
+        SCOPED_TRACE(action);
+        mcp::ElicitationPayload p;
+        p.server_name = "typed-mcp";
+        p.values_buffer = {
+            {"name", std::string("ops")},
+            {"count", int64_t{42}},
+            {"ratio", 0.25},
+            {"enabled", false},
+            {"regions", mcp::ElicitMulti{"us-east", "eu-west"}},
+            {"missing", mcp::ElicitNull{}},
+        };
+        std::optional<mcp::ElicitationResult> result;
+        int callbacks = 0;
+        p.on_response = [&](mcp::ElicitationResult r) {
+            ++callbacks;
+            result = std::move(r);
+        };
+        auto comp = mcp::ElicitationDialogComponent(std::move(p));
+        EXPECT_TRUE(comp->OnEvent(event));
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result->action, action);
+        ASSERT_EQ(result->content.size(), 6u);
+        EXPECT_EQ(std::get<std::string>(result->content.at("name")), "ops");
+        EXPECT_EQ(std::get<int64_t>(result->content.at("count")), 42);
+        EXPECT_DOUBLE_EQ(std::get<double>(result->content.at("ratio")), 0.25);
+        EXPECT_FALSE(std::get<bool>(result->content.at("enabled")));
+        EXPECT_EQ(std::get<mcp::ElicitMulti>(result->content.at("regions")),
+                  (mcp::ElicitMulti{"us-east", "eu-west"}));
+        EXPECT_TRUE(std::holds_alternative<mcp::ElicitNull>(result->content.at("missing")));
+        EXPECT_FALSE(comp->OnEvent(ftxui::Event::Return));
+        EXPECT_FALSE(comp->OnEvent(ftxui::Event::Escape));
+        EXPECT_EQ(callbacks, 1);
+    }
 }
 
-// set_bool_response direct adapter.
-TEST(McpElicitation, BackwardCompat_SetBoolResponseAdapter) {
-    bool approved = false;
-    mcp::ElicitationPayload p = make_four_field_payload();
-    p.set_bool_response([&](bool ok) { approved = ok; });
+// Component construction seeds schema defaults without overwriting live values.
+TEST(McpElicitation, ComponentSeedsTypedDefaultsWithoutOverwritingValues) {
+    mcp::ElicitationPayload p;
+    auto count = mk_text("count", "Count");
+    count.type = mcp::ElicitFieldType::number;
+    count.default_int = 7;
+    auto ratio = mk_text("ratio", "Ratio");
+    ratio.type = mcp::ElicitFieldType::number;
+    ratio.default_number = 0.5;
+    auto regions = mk_multi("regions", "Regions", {"us-east", "eu-west"});
+    regions.default_multi = mcp::ElicitMulti{"eu-west"};
+    p.fields = {
+        mk_text("name", "Name", false, "", "default-name"),
+        std::move(count), std::move(ratio),
+        mk_bool("enabled", "Enabled", true), std::move(regions),
+    };
+    p.values_buffer["name"] = std::string("edited-name");
+    p.values_buffer["enabled"] = false;
+    std::optional<mcp::ElicitationResult> result;
+    p.on_response = [&](mcp::ElicitationResult r) { result = std::move(r); };
     auto comp = mcp::ElicitationDialogComponent(std::move(p));
-    comp->OnEvent(ftxui::Event::Character('d')); // decline
-    EXPECT_FALSE(approved);
+    comp->OnEvent(ftxui::Event::Return);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->action, "approve");
+    ASSERT_EQ(result->content.size(), 5u);
+    EXPECT_EQ(std::get<std::string>(result->content.at("name")), "edited-name");
+    EXPECT_EQ(std::get<int64_t>(result->content.at("count")), 7);
+    EXPECT_DOUBLE_EQ(std::get<double>(result->content.at("ratio")), 0.5);
+    EXPECT_FALSE(std::get<bool>(result->content.at("enabled")));
+    EXPECT_EQ(std::get<mcp::ElicitMulti>(result->content.at("regions")),
+              (mcp::ElicitMulti{"eu-west"}));
+}
+
+// Explicit cancel callbacks take priority over the structured response callback.
+TEST(McpElicitation, ExplicitCancelCallbackDoesNotEmitStructuredResponse) {
+    auto p = make_four_field_payload();
+    int cancelled = 0;
+    int responses = 0;
+    p.on_cancel = [&] { ++cancelled; };
+    p.on_response = [&](mcp::ElicitationResult) { ++responses; };
+    auto comp = mcp::ElicitationDialogComponent(std::move(p));
+    EXPECT_TRUE(comp->OnEvent(ftxui::Event::Escape));
+    EXPECT_EQ(cancelled, 1);
+    EXPECT_EQ(responses, 0);
 }
 
 // Multi-select CheckboxGrid interactive: Space toggles a choice.

@@ -189,8 +189,10 @@ void worker_main_impl(
     // Blocking it makes write() return -1/EPIPE instead.
     {
         sigset_t mask;
-        ::sigemptyset(&mask);
-        ::sigaddset(&mask, SIGPIPE);
+        // No leading :: — sigemptyset/sigaddset are macros on macOS,
+        // functions on Linux; unqualified calls work on both.
+        sigemptyset(&mask);
+        sigaddset(&mask, SIGPIPE);
         ::pthread_sigmask(SIG_BLOCK, &mask, nullptr);
     }
 
@@ -255,7 +257,7 @@ void worker_main_impl(
     }
 
     sigset_t empty_mask;
-    ::sigemptyset(&empty_mask);
+    sigemptyset(&empty_mask);
     if (::posix_spawnattr_setsigmask(&attr, &empty_mask) != 0) {
         ::posix_spawnattr_destroy(&attr);
         ::posix_spawn_file_actions_destroy(&actions);

@@ -2,15 +2,15 @@
 
 █░█░█░█░█  Loom
 ░█░█░█░█░  model_api/experimental_0812_256k
-█░█░█░█░█  /var/folders/v6/yr2gx5bs62lbw5_n3db2xrg80000gn/T/
+█░█░█░█░█  <tmpdir>
 
-<dot> Thought  (click to expand)
+<dot> Thought                                                                                                [Show details]
 
 ● The streaming replay harness injects events directly into the App handler, bypassing HTTP and SSE entirely.
 
-<dot> Thought  (click to expand)
+<dot> Thinking…                                                                                              [Show details]
 
-● The streaming replay harness injects events directly into the App handler, bypassing HTTP and SSE entirely. ▌
+
 
 
 
@@ -36,4 +36,4 @@
 ──────────────────────────────────────────────────────────────────────────────────
  ❯ Try "fix lint errors"
 ──────────────────────────────────────────────────────────────────────────────────
-   📁 yr2gx5bs62lbw5_n3db2xrg80000gn/T  ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K
+   <tmpdir>  ctx ▯▯▯▯▯▯▯▯▯▯ 0% 0K/200.0K

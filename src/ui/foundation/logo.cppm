@@ -11,6 +11,7 @@ module;
 export module loom.ui.foundation.logo;
 
 import std;
+import loom.ui.foundation.design_figures;
 
 import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
@@ -193,7 +194,7 @@ enum class LogoLayoutMode {
 
 // Column thresholds for layout mode selection.
 inline constexpr int kHorizontalMinCols = 70;
-inline constexpr int kWelcomeV2FixedWidth = 58;
+inline constexpr int kWelcomeFixedWidth = 58;
 
 // Decide layout mode purely from terminal width.
 [[nodiscard]] constexpr auto layout_mode_from_cols(int cols) noexcept
@@ -215,7 +216,7 @@ inline constexpr int kWelcomeV2FixedWidth = 58;
 // concerns — no IO inside UI rendering). The ReplScreen / caller is
 // expected to populate these fields from their config source; default
 // values produce the safe "minimal condensed" look with no side-effects.
-struct LogoV2Options {
+struct LogoOptions {
   // --- Identity / chrome (same as LogoDisplayData) ---
   std::string cwd;
   std::string billing_type;
@@ -311,7 +312,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
   } else {
     using namespace detail;
     return pad2(hbox({
-      text("\xE2\x9A\xA1 ") | color(kLoomAccent()) | bold,   // ⚡ U+26A1
+      text(std::string{loom::ui::design::figures::kLightningBolt} + " ") | color(kLoomAccent()) | bold,   // ⚡ U+26A1
       text("Channels beta: join live conversations") | color(kMuted()) | dim,
     }));
   }
@@ -321,7 +322,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 //     Vertical column, left padding = 2:
 //       Warning: "Debug mode enabled"
 //       Dim: "Logging to: {stderr | path}"
-[[nodiscard]] inline auto RenderDebugNotice(const LogoV2Options& o) -> Element {
+[[nodiscard]] inline auto RenderDebugNotice(const LogoOptions& o) -> Element {
   if (!o.is_debug_mode) return Element();
   using namespace detail;
   Elements lines;
@@ -341,7 +342,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 //       Horizontal row, left padding = 2:
 //         Warning: "⚠"
 //         Dim: emergency-tip text
-[[nodiscard]] inline auto RenderEmergencyTip(const LogoV2Options& o) -> Element {
+[[nodiscard]] inline auto RenderEmergencyTip(const LogoOptions& o) -> Element {
   if (!o.emergency_tip.has_value()) return Element();
   using namespace detail;
   return pad2(hbox({
@@ -351,7 +352,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 }
 
 // --- 3f. Tmux session notice.
-[[nodiscard]] inline auto RenderTmuxNotice(const LogoV2Options& o) -> Element {
+[[nodiscard]] inline auto RenderTmuxNotice(const LogoOptions& o) -> Element {
   if (!o.tmux_session.has_value()) return Element();
   using namespace detail;
   Elements lines;
@@ -375,7 +376,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 //     Vertical column, left padding = 2:
 //       [optional dim: "Message from {org_name}:"]
 //       announcement text
-[[nodiscard]] inline auto RenderOrgAnnouncement(const LogoV2Options& o) -> Element {
+[[nodiscard]] inline auto RenderOrgAnnouncement(const LogoOptions& o) -> Element {
   if (!o.company_announcement.has_value()) return Element();
   using namespace detail;
   Elements lines;
@@ -393,7 +394,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 // --- 3h. Sandbox warning (compact/horizontal only).
 //     <Text color="warning">Your bash commands will be sandboxed.
 //                            Disable with /sandbox.</Text>
-[[nodiscard]] inline auto RenderSandboxNotice(const LogoV2Options& o) -> Element {
+[[nodiscard]] inline auto RenderSandboxNotice(const LogoOptions& o) -> Element {
   if (!o.show_sandbox_status) return Element();
   using namespace detail;
   return pad2(hbox({
@@ -405,7 +406,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 
 // --- 3i. GuestPassesUpsell (also shown in feed).
 //     Structure: three [✻] glyphs + "N guest passes at /passes" dimText.
-[[nodiscard]] inline auto RenderGuestPassesUpsell(const LogoV2Options& o,
+[[nodiscard]] inline auto RenderGuestPassesUpsell(const LogoOptions& o,
                                                  int count = 3) -> Element {
   if (!o.show_guest_passes) return Element();
   using namespace detail;
@@ -428,7 +429,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 // --- 3j. OverageCreditUpsell.
 //     Structure varies; faithful fallback: orange ⚠ + dimText "You have used 90% of your
 //     credit this period · see /billing for details".
-[[nodiscard]] inline auto RenderOverageCreditUpsell(const LogoV2Options& o) -> Element {
+[[nodiscard]] inline auto RenderOverageCreditUpsell(const LogoOptions& o) -> Element {
   if (!o.show_overage_credit) return Element();
   using namespace detail;
   return pad2(vbox({
@@ -447,7 +448,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 // --- 3k. StatusNotices (exactly 6 definitions).
 //     We accept pre-rendered rows so callers
 //     decide which are active (keeping this file IO-free).
-[[nodiscard]] inline auto RenderStatusNotices(const LogoV2Options& o) -> Elements {
+[[nodiscard]] inline auto RenderStatusNotices(const LogoOptions& o) -> Elements {
   using namespace detail;
   Elements out;
   out.reserve(o.status_notices.size());
@@ -474,7 +475,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 // render them last in the aggregated stack so both paths can consume
 // this helper; CondensedLogo callers may hide them by setting bools off
 // and rendering them via a dedicated call if stricter fidelity is needed.)
-[[nodiscard]] inline auto RenderNoticeStackAggregated(const LogoV2Options& o)
+[[nodiscard]] inline auto RenderNoticeStackAggregated(const LogoOptions& o)
     -> Elements {
   Elements out;
   out.reserve(6 + o.status_notices.size() + 3);
@@ -498,10 +499,10 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 }
 
 // --------------------------------------------------------------------
-// §4b  WelcomeV2 theme selector
+// §4b  Welcome theme selector
 // --------------------------------------------------------------------
-// WelcomeV2 theme dispatch:
-//   1. env.terminal === "Apple_Terminal" → AppleTerminalWelcomeV2
+// Welcome theme dispatch:
+//   1. env.terminal === "Apple_Terminal" → AppleTerminalWelcome
 //      which internally branches on isLightTheme (L209).
 //   2. ["light", "light-daltonized", "light-ansi"].includes(theme) → light variant
 //   3. else → dark variant
@@ -509,7 +510,7 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 // We expose all 4 combinations as a single enum so callers can dispatch
 // in one step.  AppleTerminal variants use ▗/▖ + background colour for the
 // clawd (negative-style) instead of solid █ foreground blocks.
-enum class WelcomeV2Theme {
+enum class WelcomeTheme {
   Dark,               // Normal terminal + dark/non-light theme
   Light,              // Normal terminal + light theme
   AppleTerminalDark,  // Apple Terminal + dark theme
@@ -517,12 +518,12 @@ enum class WelcomeV2Theme {
 };
 
 // --------------------------------------------------------------------
-// §5  WelcomeV2 58-col fixed-width static ASCII clawd card
+// §5  Welcome 58-col fixed-width static ASCII clawd card
 // --------------------------------------------------------------------
 // The dark-themed variant is a completely
 // STATIC 14-row × 58-col string of block chars. There is NO per-frame
-// animation; the only variables are theme (dark/light/apple-terminal)
-// and version-string substitution on row 0. The "scattered *" glyphs
+// animation; only the theme (dark/light/apple-terminal) varies.
+// The "scattered *" glyphs
 // throughout are plain string literal '*' characters — NOT a starfield
 // engine, NOT particle system, NOT per-frame position updates.
 //
@@ -531,8 +532,8 @@ enum class WelcomeV2Theme {
 // Loom mascot sits at rows 12-14 (body █████████ / ██▄█████▄██ / █████████)
 // with a moon/planet to the right built from ░░/▒▒/██ gradient block chars.
 namespace detail {
-inline constexpr std::array<std::string_view, 15> kWelcomeV2DarkRows = {{
-  // t0: header line (we append v{version} in place of the dynamic part)
+inline constexpr std::array<std::string_view, 15> kWelcomeDarkRows = {{
+  // t0: header line (rendered separately as "Welcome to Loom")
   "",
   // t1: 58 × U+2026 HORIZONTAL ELLIPSIS separator
   "\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6"
@@ -600,14 +601,14 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2DarkRows = {{
   "     *                                   ",
 }};
 
-// Light-theme WelcomeV2 rows.
+// Light-theme Welcome rows.
 // The light variant has a cloud-shape in the upper-left (6 ░ + 10 ░ + 19 ░)
 // and a smaller moon/planet in the upper-right (██, ██▒▒██, ▒▒ patterns).
 // Loom mascot sits at rows 12-14 in the lower-left, same as dark but with a
 // different ground/horizon line (▒▒░░▒▒ etc.).
 //
 // Row layout (15 rows, indexed 0..14):
-//   [0]  header (built dynamically — "Welcome to Loom vX.X.X")
+//   [0]  header (rendered separately — "Welcome to Loom")
 //   [1]  58 × … ellipsis separator (same as dark, reused from dark array)
 //   [2]  58 spaces  (blank)
 //   [3]  58 spaces  (blank)
@@ -627,7 +628,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2DarkRows = {{
 // store the full-row strings here and colourise them at render time.
 // For rows [12]-[14], the clawd body segment is colourised with
 // loom_body (and clawd_background bg for row 13) at render time.
-inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
+inline constexpr std::array<std::string_view, 15> kWelcomeLightRows = {{
   // [0] header placeholder
   "",
   // [1] ellipsis separator (reused from dark array at render time)
@@ -834,8 +835,8 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
 
 } // namespace detail
 
-// Produce the 58-col fixed-width WelcomeV2 card. Version fills the
-// header line as "Welcome to Loom vX.X.X " (t0). Returns a
+// Produce the 58-col fixed-width welcome card. The header reads
+// "Welcome to Loom". Returns a
 // single Element; caller is responsible for wrapping in `flex` or
 // `center` if the terminal is wider than 58 cols.
 //
@@ -844,15 +845,15 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
 //   Light             — cloud shape (░) + small planet (██▒▒██) + solid clawd + ground (▒▒░░)
 //   AppleTerminalDark — starfield + ▗/▖ negative clawd (bg-color workaround)
 //   AppleTerminalLight— cloud + ▗/▖ negative clawd
-[[nodiscard]] inline auto RenderWelcomeV2(
-    WelcomeV2Theme theme = WelcomeV2Theme::Dark) -> Element {
+[[nodiscard]] inline auto RenderWelcome(
+    WelcomeTheme theme = WelcomeTheme::Dark) -> Element {
   using namespace detail;
   using ftxui::bgcolor;
 
-  const bool is_light = (theme == WelcomeV2Theme::Light ||
-                         theme == WelcomeV2Theme::AppleTerminalLight);
-  const bool is_apple = (theme == WelcomeV2Theme::AppleTerminalDark ||
-                         theme == WelcomeV2Theme::AppleTerminalLight);
+  const bool is_light = (theme == WelcomeTheme::Light ||
+                         theme == WelcomeTheme::AppleTerminalLight);
+  const bool is_apple = (theme == WelcomeTheme::AppleTerminalDark ||
+                         theme == WelcomeTheme::AppleTerminalLight);
 
   // --- Common header (all themes): t0 ---
   Element header = text("Welcome to Loom        ") | color(kLoomAccent());
@@ -862,7 +863,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
   art.push_back(std::move(header));
 
   // --- Ellipsis separator (t1, same for all themes) ---
-  art.push_back(text(std::string(kWelcomeV2DarkRows[1])));
+  art.push_back(text(std::string(kWelcomeDarkRows[1])));
 
   if (is_light) {
     // ================================================================
@@ -870,13 +871,13 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
     // ================================================================
     // t2-t8: simple rows (blank + cloud shape + blank)
     for (std::size_t i = 2; i <= 8; ++i) {
-      art.push_back(text(std::string(kWelcomeV2LightRows[i])));
+      art.push_back(text(std::string(kWelcomeLightRows[i])));
     }
 
     // t9: dim ░░░░ segment + normal ██ segment
     // Dim part: 27 spaces + 4 ░ = 31 terminal chars = 27 + 12 = 39 bytes
     {
-      std::string_view row = kWelcomeV2LightRows[9];
+      std::string_view row = kWelcomeLightRows[9];
       constexpr std::size_t kDimBytes = 39;
       art.push_back(hbox({
         text(std::string(row.substr(0, kDimBytes))) | dim | color(kMuted()),
@@ -887,7 +888,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
     // t10: dim ░░░░░░░░░░ segment + normal ██▒▒██ segment
     // Dim part: 25 spaces + 10 ░ = 35 terminal chars = 25 + 30 = 55 bytes
     {
-      std::string_view row = kWelcomeV2LightRows[10];
+      std::string_view row = kWelcomeLightRows[10];
       constexpr std::size_t kDimBytes = 55;
       art.push_back(hbox({
         text(std::string(row.substr(0, kDimBytes))) | dim | color(kMuted()),
@@ -896,7 +897,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
     }
 
     // t11: simple row — ▒▒ + ██ art (no color segmentation)
-    art.push_back(text(std::string(kWelcomeV2LightRows[11])));
+    art.push_back(text(std::string(kWelcomeLightRows[11])));
 
     // --- Loom mascot rows (t12-t14) ---
     if (is_apple) {
@@ -965,13 +966,13 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
     // ================================================================
     // t2-t6, t8: plain rows (no * styling needed)
     for (std::size_t i : {2u, 3u, 4u, 5u, 6u, 8u}) {
-      art.push_back(text(std::string(kWelcomeV2DarkRows[i])));
+      art.push_back(text(std::string(kWelcomeDarkRows[i])));
     }
 
     // t7: scattered ░ + bold '*' + moon/planet gradient
     // The '*' is the only '*' in this row. Find it and render bold.
     {
-      std::string_view row7 = kWelcomeV2DarkRows[7];
+      std::string_view row7 = kWelcomeDarkRows[7];
       auto star_pos = row7.find('*');
       if (star_pos != std::string_view::npos) {
         art.push_back(hbox({
@@ -989,7 +990,7 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
     //   t10: "          ░░░░░░░░              "
     //   t11: "        ░░░░░░░░░░░░░░░░        "
     for (std::size_t i : {9u, 10u, 11u}) {
-      art.push_back(text(std::string(kWelcomeV2DarkRows[i])) | dim | color(kMuted()));
+      art.push_back(text(std::string(kWelcomeDarkRows[i])) | dim | color(kMuted()));
     }
 
     if (is_apple) {
@@ -1075,19 +1076,19 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
       // t12: body = 9 █ (27 bytes), star = dim, no body bg
       // Suffix has dim '*' at the end
       art.push_back(render_dark_clawd_row(
-          kWelcomeV2DarkRows[12], /*body_pos=*/6, /*body_len=*/27,
+          kWelcomeDarkRows[12], /*body_pos=*/6, /*body_len=*/27,
           /*star_mode=*/0, /*body_bg=*/false));
 
       // t13: body = 9 █ (27 bytes), star = bold, body has bg
       // Clawd body has background colour clawd_background, star is bold
       art.push_back(render_dark_clawd_row(
-          kWelcomeV2DarkRows[13], /*body_pos=*/6, /*body_len=*/27,
+          kWelcomeDarkRows[13], /*body_pos=*/6, /*body_len=*/27,
           /*star_mode=*/1, /*body_bg=*/true));
 
       // t14: body = 9 █ (27 bytes), star = normal, no body bg
       // Suffix has normal '*' (no dim, no bold)
       art.push_back(render_dark_clawd_row(
-          kWelcomeV2DarkRows[14], /*body_pos=*/6, /*body_len=*/27,
+          kWelcomeDarkRows[14], /*body_pos=*/6, /*body_len=*/27,
           /*star_mode=*/2, /*body_bg=*/false));
     }
   }
@@ -1096,34 +1097,34 @@ inline constexpr std::array<std::string_view, 15> kWelcomeV2LightRows = {{
   art.push_back(is_apple ? BuildAppleFooter(is_light)
                          : BuildRegularFooter(is_light));
 
-  return vbox(std::move(art)) | size(WIDTH, EQUAL, kWelcomeV2FixedWidth);
+  return vbox(std::move(art)) | size(WIDTH, EQUAL, kWelcomeFixedWidth);
 }
 
 // --------------------------------------------------------------------
-// Convenience: resolve WelcomeV2Theme from theme string + terminal type.
+// Convenience: resolve WelcomeTheme from theme string + terminal type.
 // Dispatch:
 //   env.terminal === "Apple_Terminal" → AppleTerminal variant
 //   ["light", "light-daltonized", "light-ansi"].includes(theme) → Light
 //   else → Dark
-[[nodiscard]] inline auto ResolveWelcomeV2Theme(
+[[nodiscard]] inline auto ResolveWelcomeTheme(
     std::string_view theme_name,
-    bool is_apple_terminal) -> WelcomeV2Theme {
+    bool is_apple_terminal) -> WelcomeTheme {
   const bool is_light =
       (theme_name == "light" || theme_name == "light-daltonized" ||
        theme_name == "light-ansi");
   if (is_apple_terminal) {
-    return is_light ? WelcomeV2Theme::AppleTerminalLight
-                    : WelcomeV2Theme::AppleTerminalDark;
+    return is_light ? WelcomeTheme::AppleTerminalLight
+                    : WelcomeTheme::AppleTerminalDark;
   }
-  return is_light ? WelcomeV2Theme::Light : WelcomeV2Theme::Dark;
+  return is_light ? WelcomeTheme::Light : WelcomeTheme::Dark;
 }
 
 // Convenience: render with a theme string + Apple Terminal flag.
-[[nodiscard]] inline auto RenderWelcomeV2(
+[[nodiscard]] inline auto RenderWelcome(
     std::string_view theme_name,
     bool is_apple_terminal) -> Element {
-  return RenderWelcomeV2(
-                         ResolveWelcomeV2Theme(theme_name, is_apple_terminal));
+  return RenderWelcome(
+                         ResolveWelcomeTheme(theme_name, is_apple_terminal));
 }
 
 // --------------------------------------------------------------------
@@ -1324,8 +1325,8 @@ inline constexpr int kContentPadding  = 2;
 //   username empty/null OR longer than MAX_USERNAME_LENGTH(20) → "Welcome back!"
 //   Otherwise → "Welcome back {username}!"
 // NOTE: The first-run "Welcome to Loom" variant is NOT produced by
-// this function — it is handled separately by the WelcomeV2 card renderer
-// (see RenderWelcomeV2).
+// this function — it is handled separately by the Welcome card renderer
+// (see RenderWelcome).
 [[nodiscard]] inline auto format_welcome_message(
     const std::optional<std::string>& username) -> std::string {
   if (!username.has_value() || username->empty()
@@ -1361,7 +1362,7 @@ inline constexpr int kContentPadding  = 2;
 // border stroke. FTXUI's closest equivalent is ftxui::window(title, body) which
 // paints title inside a ╭─{title}─…─╮ box. The visual structure (inset title on
 // the top border, rounded-style border) is preserved.
-[[nodiscard]] inline auto RenderCompactLayout(const LogoV2Options& o,
+[[nodiscard]] inline auto RenderCompactLayout(const LogoOptions& o,
                                                int term_cols,
                                                int /*is_new_user_unused*/ = 0)
     -> Element {
@@ -1452,7 +1453,7 @@ inline constexpr int kContentPadding  = 2;
 // Outer structure (faithful):
 //   Offscreen freeze wrapper:
 //     Vertical column, rounded border in loom color,
-//     border title = border title text  ← " Loom vX.X.X "
+//     border title = border title text  ← " Loom "
 //     Horizontal row, horizontal padding = 1, gap = 1:
 //       LEFT_PANEL
 //       VERTICAL_DIVIDER (when horizontal layout)
@@ -1488,12 +1489,12 @@ inline constexpr int kContentPadding  = 2;
 //   show_overage_credit    → [RecentActivity, OverageCredit]
 //   (default)              → [RecentActivity, What'sNew]
 //
-// We accept feeds as a vector<FeedConfig> via LogoV2Options; if empty we fall
+// We accept feeds as a vector<FeedConfig> via LogoOptions; if empty we fall
 // back to the default two-feed layout [RecentActivity, What'sNew] using the
 // placeholders provided by the repl_screen caller data.
 
 [[nodiscard]] inline auto RenderHorizontalLayout(
-    const LogoV2Options& o,
+    const LogoOptions& o,
     int term_cols,
     int /*is_new_user_unused*/ = 0,
     std::vector<FeedConfig> feeds = std::vector<FeedConfig>(),
@@ -1735,7 +1736,7 @@ inline constexpr int kContentPadding  = 2;
 }
 
 // --------------------------------------------------------------------
-// §7  Top-level render_logo_v2 dispatch
+// §7  Top-level render_logo dispatch
 // --------------------------------------------------------------------
 // Complete render return paths.
 //
@@ -1743,7 +1744,7 @@ inline constexpr int kContentPadding  = 2;
 //   1. is_condensed_mode → CondensedLogo + aggregatedNoticeStack
 //   2. else layout_mode_from_cols(term_cols) → Compact or Horizontal
 //        card + aggregatedNoticeStack
-struct LogoV2Result {
+struct LogoResult {
   Element root;                      // combined vbox(card, notices)
   Element header;                    // just the card / condensed header
   Elements notices;                 // just the aggregated notice rows
@@ -1753,11 +1754,11 @@ struct LogoV2Result {
   int right_width = 0;
 };
 
-[[nodiscard]] inline auto RenderLogoV2(const LogoV2Options& o,
+[[nodiscard]] inline auto RenderLogo(const LogoOptions& o,
                                        int term_cols,
                                        std::vector<FeedConfig> feeds = std::vector<FeedConfig>(),
                                        Element feed_column_override = Element())
-    -> LogoV2Result {
+    -> LogoResult {
   if (o.is_condensed_mode) {
     // --- CONDENSED path ---
     LogoDisplayData inner;
@@ -1803,11 +1804,11 @@ struct LogoV2Result {
 
 // Convenience overload: returns just the combined-root Element (the
 // common case in repl_screen::RenderWelcomeHeader).
-[[nodiscard]] inline auto render_logo_v2(const LogoV2Options& o,
+[[nodiscard]] inline auto render_logo(const LogoOptions& o,
                                           int term_cols = 120,
                                           std::vector<FeedConfig> feeds = {})
     -> Element {
-  return RenderLogoV2(o, term_cols, std::move(feeds)).root;
+  return RenderLogo(o, term_cols, std::move(feeds)).root;
 }
 
 /// Thin sticky logo header bar (1 line).  Sits ABOVE the message list
@@ -1821,7 +1822,7 @@ struct LogoV2Result {
 {
     using namespace ftxui;
     Elements parts;
-    parts.push_back(text("\xe2\x97\x86 ") | color(Color::Cyan));  // ◆ diamond
+    parts.push_back(text(std::string{loom::ui::design::figures::kDiamond} + " ") | color(loom::ui::design::theme::current_theme().palette->primary));  // ◆ diamond
     parts.push_back(text("Loom") | bold);
     if (!model_display_name.empty()) {
         parts.push_back(text("  \xc2\xb7 ") | dim);  // · separator

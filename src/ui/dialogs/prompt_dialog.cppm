@@ -35,6 +35,7 @@ module;
 export module loom.ui.dialogs.prompt_dialog;
 
 import std;
+import loom.ui.foundation.theme_provider;
 
 export namespace loom::ui::dialogs::prompt_dialog {
 
@@ -107,6 +108,7 @@ namespace detail {
                                              int one_based_index,
                                              bool focused)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto prefix = text(std::to_string(one_based_index) + ". ") | dim;
     auto label  = text(opt.label);
     if (focused) label = label | bold;
@@ -124,7 +126,7 @@ namespace detail {
         description | xflex,
     });
 
-    if (focused) row = row | inverted | color(Color::Cyan);
+    if (focused) row = row | inverted | color(pal.info);
     return row;
 }
 
@@ -132,9 +134,10 @@ namespace detail {
 [[nodiscard]] inline Element RenderSubtitle(
     const std::optional<std::string>& tool_input_summary)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (!tool_input_summary || tool_input_summary->empty()) return text("");
     return paragraph(std::string{*tool_input_summary})
-         | color(Color::Yellow) | dim;
+         | color(pal.warning) | dim;
 }
 
 } // namespace detail
@@ -147,6 +150,7 @@ namespace detail {
 [[nodiscard]] inline Element RenderSelectMode(
     const std::shared_ptr<PromptDialogPayload>& p)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const int n = static_cast<int>(p->options.size());
     const int sel = detail::wrap_index(p->selected_index, n);
 
@@ -181,9 +185,9 @@ namespace detail {
 
     const std::string title = p->title.empty() ? "Select an option" : p->title;
     return window(
-        text(" " + title + " ") | bold | color(Color::Cyan),
+        text(" " + title + " ") | bold | color(pal.info),
         vbox(std::move(body)) | xflex
-    ) | color(Color::Cyan) | size(WIDTH, LESS_THAN, 92);
+    ) | color(pal.info) | size(WIDTH, LESS_THAN, 92);
 }
 
 // =========================================================================
@@ -198,6 +202,7 @@ namespace detail {
     const std::shared_ptr<std::string>& buffer,
     const std::shared_ptr<int>& cursor)
 {
+    const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     auto subtitle_el = detail::RenderSubtitle(p->tool_input_summary);
     if (subtitle_el != text("")) {
@@ -216,7 +221,7 @@ namespace detail {
             : "Type your response…";
 
     body.push_back(hbox({
-        text(display) | color(Color::White),
+        text(display) | color(pal.text),
         text("  ") | dim,
         text(hint) | dim,
     }) | xflex);
@@ -231,9 +236,9 @@ namespace detail {
 
     const std::string title = p->title.empty() ? "Response" : p->title;
     return window(
-        text(" " + title + " ") | bold | color(Color::Cyan),
+        text(" " + title + " ") | bold | color(pal.info),
         vbox(std::move(body)) | xflex
-    ) | color(Color::Cyan) | size(WIDTH, LESS_THAN, 92);
+    ) | color(pal.info) | size(WIDTH, LESS_THAN, 92);
 }
 
 // =========================================================================

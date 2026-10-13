@@ -12,6 +12,8 @@ export module loom.ui.messages.message_tool_result;
 
 import std;
 
+import loom.ui.foundation.theme_provider;
+
 import loom.types.types;
 import loom.constants.xml;
 // RFC 0002 F1 row 8: the ANSI/SGR -> FTXUI helpers (sgr_color_value_to_ftxui,
@@ -285,10 +287,10 @@ struct ToolResultOptions {
 [[nodiscard]] inline Element render_tool_result(const ToolResultOptions& opts) {
     auto status_indicator = [&]() -> Element {
         switch (opts.status) {
-            case ToolResultStatus::Success: return text("✓") | color(Color::Green);
-            case ToolResultStatus::Error: return text("✗") | color(Color::Red);
-            case ToolResultStatus::Timeout: return text("⏱") | color(Color::Yellow);
-            case ToolResultStatus::Cancelled: return text("⊘") | color(Color::GrayDark);
+            case ToolResultStatus::Success: return text("✓") | color(loom::ui::design::theme::current_theme().palette->success);
+            case ToolResultStatus::Error: return text("✗") | color(loom::ui::design::theme::current_theme().palette->danger);
+            case ToolResultStatus::Timeout: return text("Timeout") | color(loom::ui::design::theme::current_theme().palette->warning);
+            case ToolResultStatus::Cancelled: return text("⊘") | color(loom::ui::design::theme::current_theme().palette->muted);
         }
         return text("?");
     }();
@@ -312,7 +314,7 @@ struct ToolResultOptions {
         elements.push_back(vbox(std::move(*ansi_elems)) | dim);
     }
     if (opts.error_message) {
-        elements.push_back(text(*opts.error_message) | color(Color::Red));
+        elements.push_back(text(*opts.error_message) | color(loom::ui::design::theme::current_theme().palette->danger));
     }
     if (opts.is_truncated) {
         elements.push_back(text("  (output truncated)") | dim);
@@ -530,8 +532,18 @@ constexpr int kMaxRenderedLines = 10;
 }
 
 /// Render the fallback error message.
+[[nodiscard]] inline Element output_expansion_hint(
+    std::string_view summary, bool expanded, bool is_transcript_mode) {
+    Elements parts{ text(std::string(summary) + " "),
+                    message_action(expanded ? "Show less" : "Show more") };
+    if (!is_transcript_mode) {
+        parts.push_back(message_key_hint("Ctrl+E", "Toggle tools"));
+    }
+    return flexbox(std::move(parts));
+}
+
 [[nodiscard]] inline Element render_fallback_error(
-    std::string_view error_text, bool verbose) {
+    std::string_view error_text, bool verbose, bool is_transcript_mode) {
     std::string extracted = xml_tags::extract_tag(error_text, "tool_use_error")
         .value_or(std::string(error_text));
     std::string without_sandbox = remove_sandbox_tags(extracted);
@@ -565,9 +577,12 @@ constexpr int kMaxRenderedLines = 10;
     {
         auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
             ansi_to_ftxui_elements(display_text));
-        lines.push_back(vbox(std::move(*ansi_elems)) | color(Color::Red));
+        lines.push_back(vbox(std::move(*ansi_elems)) | color(loom::ui::design::theme::current_theme().palette->danger));
     }
 
+    if (verbose && plus_lines > 0) {
+        lines.push_back(output_expansion_hint("", true, is_transcript_mode));
+    }
     if (!verbose && plus_lines > 0) {
         std::string hint;
         hint.reserve(32);
@@ -575,8 +590,7 @@ constexpr int kMaxRenderedLines = 10;
         hint += std::to_string(plus_lines);
         hint += " line";
         if (plus_lines != 1) hint += 's';
-        hint += " (ctrl+o to see all)";
-        lines.push_back(text(hint) | dim);
+        lines.push_back(output_expansion_hint(hint, false, is_transcript_mode));
     }
 
     Element body = vbox(std::move(lines));
@@ -609,12 +623,12 @@ constexpr int kMaxRenderedLines = 10;
     }
 
     Element plan_box = vbox(std::move(plan_lines))
-        | borderStyled(BorderStyle::ROUNDED, Color::Purple)
+        | borderStyled(BorderStyle::ROUNDED, loom::ui::design::theme::current_theme().palette->plan_mode)
         | padding(/*top=*/0, /*right=*/1, /*bottom=*/0, /*left=*/1);
 
     Elements inner;
     inner.push_back(
-        text("User rejected Loom's plan:") | color(Color::GrayLight));
+        text("User rejected Loom's plan:") | color(loom::ui::design::theme::current_theme().palette->text_muted));
     inner.push_back(std::move(plan_box));
 
     return wrap_message_response(vbox(std::move(inner)));
@@ -668,7 +682,7 @@ constexpr int kMaxRenderedLines = 10;
         case K::Error: {
             // UserToolErrorMessage fallback path
             std::string content = data.content.value_or("Tool execution failed");
-            result = detail::render_fallback_error(content, data.verbose);
+            result = detail::render_fallback_error(content, data.verbose, data.is_transcript_mode);
             break;
         }
 
@@ -714,6 +728,7 @@ constexpr int kMaxRenderedLines = 10;
                                                 : detail::kMaxRenderedLines;
 
                 for (const auto& item : *data.content_items) {
+                    if (!data.verbose && lines_budget <= 0) break;
                     if (item.type == "text") {
                         std::string text_content = item.text;
                         if (auto unwrapped = detail::try_unwrap_text_payload(text_content)) {
@@ -747,15 +762,18 @@ constexpr int kMaxRenderedLines = 10;
                             --lines_budget;
                     }
                 }
-                // "+N lines (ctrl+o to see all)" hint when truncated.
+                // Recoverable preview truncation uses the row click action and mode-specific shortcut.
+                if (data.verbose && plus_lines > 0) {
+                    elems.push_back(detail::wrap_message_response(
+                        detail::output_expansion_hint("", true, data.is_transcript_mode)));
+                }
                 if (!data.verbose && plus_lines > 0) {
                     std::string hint = "\xe2\x80\xa6 +";
                     hint += std::to_string(plus_lines);
                     hint += " line";
                     if (plus_lines != 1) hint += 's';
-                    hint += " (ctrl+o to see all)";
                     elems.push_back(detail::wrap_message_response(
-                        text(std::move(hint)) | dim));
+                        detail::output_expansion_hint(hint, false, data.is_transcript_mode)));
                 }
             } else {
                 std::string output = *data.content;
@@ -763,9 +781,7 @@ constexpr int kMaxRenderedLines = 10;
                     output = std::move(*unwrapped);
                 }
                 constexpr std::size_t kMaxLen = 4000;
-                if (output.size() > kMaxLen) {
-                    output = output.substr(0, kMaxLen) + "\xE2\x80\xA6";
-                }
+                const bool chars_hidden = output.size() > kMaxLen;
                 // Line-count truncation: when not verbose, show at most
                 // kMaxRenderedLines (10) with a "+N lines" hint.  Matches
                 // Claude Code / Codex behaviour where long tool output
@@ -778,6 +794,14 @@ constexpr int kMaxRenderedLines = 10;
                 } else {
                     display_output = detail::take_first_lines(
                         output, detail::kMaxRenderedLines);
+                }
+                if (!data.verbose && display_output.size() > kMaxLen) {
+                    // Do not cut through a UTF-8 code point at the preview boundary.
+                    std::size_t end = kMaxLen;
+                    while (end > 0 && (static_cast<unsigned char>(display_output[end]) & 0xC0) == 0x80)
+                        --end;
+                    display_output.resize(end);
+                    display_output += "…";
                 }
                 // Collect all lines into a single vbox, then wrap once so
                 // the ⎿ connector appears only on the first line (not on
@@ -797,15 +821,19 @@ constexpr int kMaxRenderedLines = 10;
                 }
                 elems.push_back(detail::wrap_message_response(
                     vbox(std::move(line_elems))));
-                // "+N lines (ctrl+o to see all)" hint when truncated.
-                if (!data.verbose && plus_lines > 0) {
+                // Recoverable preview truncation uses the row click action and mode-specific shortcut.
+                if (data.verbose && (plus_lines > 0 || chars_hidden)) {
+                    elems.push_back(detail::wrap_message_response(
+                        detail::output_expansion_hint("", true, data.is_transcript_mode)));
+                }
+                if (!data.verbose && (plus_lines > 0 || chars_hidden)) {
                     std::string hint = "\xe2\x80\xa6 +";
                     hint += std::to_string(plus_lines);
                     hint += " line";
                     if (plus_lines != 1) hint += 's';
-                    hint += " (ctrl+o to see all)";
+                    if (plus_lines <= 0) hint = "… output preview";
                     elems.push_back(detail::wrap_message_response(
-                        text(std::move(hint)) | dim));
+                        detail::output_expansion_hint(hint, false, data.is_transcript_mode)));
                 }
             }
 

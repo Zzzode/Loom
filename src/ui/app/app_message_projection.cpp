@@ -75,6 +75,8 @@ namespace loom::ui {
                         e.role = "tool";
                         e.is_tool_use = false;
                         e.tool_status = trb->is_error ? "error" : "success";
+                        e.is_error = trb->is_error;
+                        e.tool_use_id = trb->tool_use_id.value;
                     }
                     e.content_preview += e.content_preview.empty() ? "" : "\n";
                     e.content_preview += tool_result_content_text(*trb);
@@ -93,6 +95,7 @@ namespace loom::ui {
                 } else if (const auto* tool = std::get_if<ToolUseBlock>(&block)) {
                     e.is_tool_use = true;
                     e.tool_name = tool->name;
+                    e.tool_use_id = tool->id.value;
                     e.tool_input_json = tool->input_json;
                 }
             }
@@ -111,6 +114,8 @@ namespace loom::ui {
             // appears as its own transcript card.
             e.is_tool_use = false;
             e.tool_status = m.is_error ? "error" : "success";
+            e.is_error = m.is_error;
+            e.tool_use_id = m.tool_use_id.value;
             // Propagate the tool name from the result message so the
             // renderer can show "Bash" / "Edit" instead of generic "tool".
             // The old code left tool_name unset → BuildMessagesList fell back
@@ -236,6 +241,7 @@ project_messages(const Message& msg) {
                     tu.role = "assistant";
                     tu.is_tool_use = true;
                     tu.tool_name = tool->name;
+                    tu.tool_use_id = tool->id.value;
                     tu.tool_input_json = tool->input_json;
                     // The AssistantMessage commits before tool execution
                     // (query_engine_loop.cpp: append_message runs before
@@ -318,6 +324,8 @@ project_messages(const Message& msg) {
                     // separate card.
                     tr.is_tool_use = false;
                     tr.tool_status = trb->is_error ? "error" : "success";
+                    tr.is_error = trb->is_error;
+                    tr.tool_use_id = trb->tool_use_id.value;
                     // tool_name not available from ToolResultBlock (it
                     // only has tool_use_id); renderer falls back to
                     // "tool" via m.tool_name.value_or("tool").
@@ -381,3 +389,21 @@ project_messages(const Message& msg) {
 }
 
 }  // namespace loom::ui
+
+namespace loom::ui {
+// Both retained rendering and explicit SyncState use the same committed result
+// status. Tool names cannot distinguish retries or parallel calls of one tool.
+void reconcile_tool_result_statuses(std::vector<repl::MessageDisplayEntry>& rows) {
+    std::unordered_map<std::string, std::size_t> calls;
+    for (std::size_t i = 0; i < rows.size(); ++i) {
+        if (rows[i].is_tool_use && rows[i].tool_use_id && !rows[i].tool_use_id->empty())
+            calls[*rows[i].tool_use_id] = i;
+    }
+    for (const auto& result : rows) {
+        if (result.role != "tool" || !result.tool_use_id || result.tool_use_id->empty()) continue;
+        const auto found = calls.find(*result.tool_use_id);
+        if (found == calls.end()) continue;
+        rows[found->second].tool_status = result.is_error ? "error" : "success";
+    }
+}
+} // namespace loom::ui

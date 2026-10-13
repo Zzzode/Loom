@@ -102,6 +102,11 @@ public:
     }
 
 private:
+    // Must cover the same recent-session window offered by the interactive
+    // picker.  Otherwise a picker-visible session can fail the command's
+    // second lookup when it falls outside a smaller command-only window.
+    inline static constexpr std::size_t kRecentSessionLimit = 50;
+
     /// Load recent sessions from disk into recent_sessions_.  Uses
     /// loom::constants::paths::sessions_dir() so the list matches what the
     /// app actually persists.  list_recent_sessions sorts by last_active
@@ -114,7 +119,9 @@ private:
     /// engine appends to the file but doesn't update the metadata count.
     void load_sessions() {
         const auto sessions_dir = loom::constants::paths::sessions_dir();
-        auto metas = loom::session::list_recent_sessions(sessions_dir, 20);
+        loaded_sessions_dir_ = sessions_dir;
+        auto metas = loom::session::list_recent_sessions(
+            loaded_sessions_dir_, kRecentSessionLimit);
         recent_sessions_.clear();
         recent_sessions_.reserve(metas.size());
         for (auto& m : metas) {
@@ -131,18 +138,16 @@ private:
     }
 
     std::vector<SessionSummary> recent_sessions_;
+    std::filesystem::path loaded_sessions_dir_;
 
     [[nodiscard]] std::string format_recent_sessions() const {
         if (recent_sessions_.empty()) {
             return "No recent sessions found.\nStart a new conversation to create a session.";
         }
-        const char* home = std::getenv("HOME");
-        const auto sessions_dir =
-            std::filesystem::path{home ? home : "/tmp"} / ".loom" / "sessions";
         std::string out = "Recent sessions:\n";
         for (const auto& s : recent_sessions_) {
             auto age = format_time_ago(s.last_active);
-            const auto display_title = effective_title(s, sessions_dir);
+            const auto display_title = effective_title(s, loaded_sessions_dir_);
             out += std::format("  {} — {} ({} msgs, {})\n",
                 short_id(s.id.str()), display_title, s.message_count, age);
         }

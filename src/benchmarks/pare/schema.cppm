@@ -148,7 +148,7 @@ struct AggregateDelta {
     double avg_duration_pct;
 };
 
-struct V2AggregateSummary {
+struct AggregateEvaluationSummary {
     int64_t runs_per_case;
     int64_t evaluated_cases;
     int64_t skipped_cases;
@@ -185,7 +185,7 @@ struct ComparisonResult {
         AggregateResult baseline;
         AggregateResult candidate;
         AggregateDelta delta;
-        std::optional<V2AggregateSummary> v2;
+        std::optional<AggregateEvaluationSummary> evaluation;
     } aggregate;
     struct {
         GroupedSummary baseline;

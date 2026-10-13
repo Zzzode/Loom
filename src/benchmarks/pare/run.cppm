@@ -296,7 +296,7 @@ inline std::optional<RunBenchmarkResult> run_benchmark(const RunBenchmarkParams&
         }
     }
     
-    comparison.aggregate.v2 = V2AggregateSummary{
+    comparison.aggregate.evaluation = AggregateEvaluationSummary{
         .runs_per_case = static_cast<int64_t>(std::max<size_t>(1, params.runs_per_case)),
         .evaluated_cases = evaluated_cases,
         .skipped_cases = skipped_cases,

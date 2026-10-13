@@ -364,9 +364,9 @@ inline int cli_main(int argc, const char* argv[]) {
     std::cout << "Pass rate: baseline=" << (base.pass_rate * 100) << "% candidate=" << (cand.pass_rate * 100) << "% delta=" << (delta.pass_rate * 100) << "%\n";
     std::cout << "Execution errors: baseline=" << base.error_count << " (" << (base.error_rate * 100) << "%) candidate=" << cand.error_count << " (" << (cand.error_rate * 100) << "%) delta=" << (cand.error_count - base.error_count) << "\n";
     
-    if (comp.aggregate.v2) {
-        const auto& v2 = *comp.aggregate.v2;
-        std::cout << "V2 metrics: runs_per_case=" << v2.runs_per_case << " evaluated=" << v2.evaluated_cases << " skipped=" << v2.skipped_cases << " unavailable=" << v2.unavailable_cases << " weighted_token_reduction=" << (v2.weighted_token_reduction_pct * 100) << "%\n";
+    if (comp.aggregate.evaluation) {
+        const auto& evaluation = *comp.aggregate.evaluation;
+        std::cout << "Evaluation metrics: runs_per_case=" << evaluation.runs_per_case << " evaluated=" << evaluation.evaluated_cases << " skipped=" << evaluation.skipped_cases << " unavailable=" << evaluation.unavailable_cases << " weighted_token_reduction=" << (evaluation.weighted_token_reduction_pct * 100) << "%\n";
     }
     
     if (cand.error_count > 0) {

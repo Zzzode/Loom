@@ -20,3 +20,8 @@ target_link_libraries(bench_core
         benchmark::benchmark
         benchmark::benchmark_main
 )
+
+# Native regressions for Pare execution, aggregation, and CLI reporting.
+add_executable(test_pare test_pare.cpp)
+target_link_libraries(test_pare PRIVATE loom_benchmarks GTest::gtest_main)
+gtest_discover_tests(test_pare DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

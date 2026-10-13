@@ -217,6 +217,9 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     // Execute via registry
     auto input = ToolInput::from_json(effective_input_json);
     input.parent_model = config_.model_params.model;
+    input.is_cancelled = [this, shutdown = tool_registry_->background_stop_token()] {
+        return shutdown.stop_requested() || should_abort();
+    };
     auto exec_result = tool_registry_->execute(tool_use.name, input);
 
     ToolResultMessage result_msg{};

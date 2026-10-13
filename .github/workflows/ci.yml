@@ -31,7 +31,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install cmake ninja llvm lld curl openssl sccache
+          brew install cmake ninja llvm lld curl openssl sccache ripgrep
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
           # clang resolves -fuse-ld=lld as <toolchain>/bin/ld64.lld; llvm 23
           # already ships the binary, so this symlink is redundant but kept

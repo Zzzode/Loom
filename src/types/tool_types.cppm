@@ -18,6 +18,9 @@ struct ToolInput {
     std::string raw_json;   // Raw JSON string of parameters
     // Internal execution context; never serialized as model-supplied input.
     std::optional<std::string> parent_model = std::nullopt;
+    // Queried only during execute(); must be non-blocking and non-throwing.
+    // Captures must outlive that execution.
+    std::function<bool()> is_cancelled = {};
 
     /// Get the raw JSON as string view
     [[nodiscard]] std::string_view json() const noexcept { return raw_json; }

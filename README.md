@@ -40,6 +40,15 @@ Under active development. It builds and its test suite passes on Linux
 
 ### Prerequisites
 
+The `Grep` tool requires [ripgrep](https://github.com/BurntSushi/ripgrep)
+(`rg`) on `PATH`. Directory searches respect `.gitignore` and `.ignore`
+and skip hidden and binary files. The default output contains matching
+lines; `output_mode` also accepts `files_with_matches` and `count` (matching
+lines per file). Searches have a 10-second default deadline, configurable
+with `timeout_ms` up to 120 seconds, and stop when the query is cancelled.
+`glob`, `type`, `head_limit` and `offset` narrow or page results. Bounded
+results report truncation; errors and cancellation never mean no matches.
+
 - **CMake ≥ 3.28** and **Ninja**.
 - **Clang ≥ 23** with a matching `clang-scan-deps`. C++23 named modules need a
   matched `clang++` / `clang-scan-deps` pair; AppleClang does not qualify (it

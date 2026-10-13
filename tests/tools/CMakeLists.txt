@@ -32,6 +32,11 @@ add_executable(test_bash test_bash.cpp)
 target_link_libraries(test_bash PRIVATE ${TOOL_TEST_LIBS})
 gtest_discover_tests(test_bash DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
+add_executable(test_grep test_grep.cpp)
+target_link_libraries(test_grep PRIVATE ${TOOL_TEST_LIBS})
+gtest_discover_tests(test_grep DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 30)
+
 add_executable(test_computer_use test_computer_use.cpp test_runtime_backends_install.cpp)
 target_link_libraries(test_computer_use PRIVATE ${TOOL_TEST_LIBS})
 gtest_discover_tests(test_computer_use DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})

@@ -90,6 +90,7 @@ target_sources(loom_tools
 # (`module loom.tools.runtime_registry;`), not interface units.
 target_sources(loom_tools
     PRIVATE
+        tools/grep_tool.cpp
         tools/runtime_registry_json.cpp
         tools/runtime_registry_executors.cpp
         tools/runtime_registry_native_agents.cpp

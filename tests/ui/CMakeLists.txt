@@ -17,7 +17,7 @@ set(_ui_test_libs
         loom_test_main    # deterministic terminal env for golden snapshots
 )
 
-add_executable(test_ui_light test_ui_light.cpp ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
+add_executable(test_ui_light test_ui_light.cpp test_prompt_wrap.cpp ${LOOM_TEST_SUPPORT_DIR}/test_ui_helpers.h)
 target_link_libraries(test_ui_light ${_ui_test_libs})
 gtest_discover_tests(test_ui_light DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 

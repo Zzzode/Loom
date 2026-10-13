@@ -163,6 +163,32 @@ TEST(StreamingReplay, PlainFooterTempPathNormalization) {
             std::string{"body\n   mac-hash/T  ctx usage"}}) {
         EXPECT_EQ(normalize_screen(content), content);
     }
+    const std::string input = divider + " ❯ wrapped input\n   continuation\n" + divider;
+    auto temp_path = fs::temp_directory_path().lexically_normal();
+    while (temp_path.filename().empty() && temp_path.has_relative_path())
+        temp_path = temp_path.parent_path();
+    std::string runtime_stem = temp_path.filename().string();
+    const auto parent = temp_path.parent_path().filename().string();
+    if (!parent.empty()) runtime_stem = parent + "/" + runtime_stem;
+    const std::string abbreviated = runtime_stem.substr(0, std::min<std::size_t>(3, runtime_stem.size())) + "…";
+    for (const auto& stem : {std::string{"tmp"}, runtime_stem, abbreviated}) {
+        for (const auto fields : {" · 0%", " · test-model · 14% 28.0K/200.0K · $0.1234",
+                " · 2% 512/200.0K"}) {
+            const auto raw = input + "  " + stem + fields + "  \n  2 tasks";
+            const auto expected_semantic = input + "  <tmpdir>" + fields + "\n  2 tasks";
+            const auto normalized = normalize_screen(raw);
+            EXPECT_EQ(normalized, expected_semantic);
+            EXPECT_EQ(normalize_screen(normalized), normalized);
+        }
+    }
+    for (const auto& content : {input + "  project/longdirname… · 0%",
+            input + "  arbitrary… · 0%", input + "  tmp · usage 0%",
+            input + "  tmp · 0% invalid-counts", divider + "  " + abbreviated + " · 0%",
+            std::string{"body\n  "} + abbreviated + " · 0%",
+            input + "  project/T · 0%", input + "  tmp · 0% garbage/200K"}) {
+        EXPECT_EQ(normalize_screen(content), content);
+    }
+
 }
 
 TEST(StreamingReplay, TextSimple) {

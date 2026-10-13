@@ -34,7 +34,7 @@ using ftxui::EQUAL;
 using ftxui::GREATER_THAN;
 using ftxui::Color;
 
-// --- formatWelcomeMessage (upstream logo utilities) ---
+// --- Welcome greeting ---
 // Rule: empty/null username OR username longer than MAX_USERNAME_LENGTH(20)
 // → "Welcome back!".  Otherwise → "Welcome back {user}!".
 // The first-run banner caption ("Welcome to Loom") is handled
@@ -64,124 +64,19 @@ struct LogoDisplayData {
 //   2: {model} [· {billing}]                                    — all dim
 //   3: [@{agent} · ] {truncate-path(cwd)}                       — all dim
 // ============================================================
-[[nodiscard]] inline auto RenderCondensedLogoElement(
-    const LogoDisplayData& data, int term_cols) -> ftxui::Element {
-    using namespace ftxui;
-
-    // Theme tokens.  The palette accessors are function-local statics, so
-    // they are immune to the inline-variable static-init-order fiasco that
-    // previously forced hardcoded brand colors here.
-    const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    const Color kText  = pal.text;
-    const Color kMuted = pal.muted;
-    const Color kLoomBody = pal.loom_body;
-    const Color icon_color = kLoomBody;
-
-    // --- Loom brand icon: plain-weave (over-under fabric) 9 cols × 3 rows.
-    //
-    // A weaving metaphor for "Loom": alternating █ (U+2588 full block) and
-    // ░ (U+2591 light shade), with row 2 inverted so it reads as woven
-    // over-under.  Each row is exactly 9 columns.
-    //
-    //   Row 1: █░█░█░█░█
-    //   Row 2: ░█░█░█░█░
-    //   Row 3: █░█░█░█░█
-    const std::string_view kWeaveRowA = "\xE2\x96\x88\xE2\x96\x91\xE2\x96\x88\xE2\x96\x91"
-                                        "\xE2\x96\x88\xE2\x96\x91\xE2\x96\x88\xE2\x96\x91"
-                                        "\xE2\x96\x88";  // █░█░█░█░█
-    const std::string_view kWeaveRowB = "\xE2\x96\x91\xE2\x96\x88\xE2\x96\x91\xE2\x96\x88"
-                                        "\xE2\x96\x91\xE2\x96\x88\xE2\x96\x91\xE2\x96\x88"
-                                        "\xE2\x96\x91";  // ░█░█░█░█░
-
-    Element weave_icon = vbox({
-        text(std::string(kWeaveRowA)) | color(icon_color),
-        text(std::string(kWeaveRowB)) | color(icon_color),
-        text(std::string(kWeaveRowA)) | color(icon_color),
-    });
-
-    // --- Text column: 3 rows, width = max(term_cols - 15, 20)
-    // (15 = 9 icon + 2 gap + 4 pad).
-    const int text_width = std::max(term_cols - 15, 20);
-
-    // Row 1: <Text bold>Loom</Text>
-    Element row1 = text("Loom") | bold | color(kText);
-
-    // Row 2: model [· billing]
-    // formatModelAndBilling — when model+billing fits on one
-    // line we render "{model} · {billing}", else two separate dim lines
-    // (here simplify: single line since truncation is handled elsewhere by
-    // the text container; text_width limit truncates overflow naturally).
-    Element row2_body;
-    if (data.billing_type.empty()) {
-        row2_body = text(data.model_display_name);
-    } else {
-        row2_body = hbox({
-            text(data.model_display_name),
-            text(" \xC2\xB7 ") | color(kMuted),  // · U+00B7 MIDDLE DOT
-            text(data.billing_type),
-        });
-    }
-    Element row2 = std::move(row2_body) | dim | color(kMuted);
-
-    // Row 3: [@{agent} · ] truncate-path(cwd)
-    // MIDDLE truncation with U+2026 "…" as the
-    // ellipsis between the first segment and the trailing segments.  For
-    // simplicity we approximate with "prefix … /last/segment" when overflow.
-    std::optional<std::string> agent_prefix;
-    int agent_width = 0;
-    if (data.agent_name.has_value() && !data.agent_name->empty()) {
-        agent_prefix = "@" + *data.agent_name + " \xC2\xB7 ";
-        agent_width  = static_cast<int>(agent_prefix->size());
-    }
-    int cwd_max = std::max(text_width - agent_width, 8);
-    std::string cwd_display = data.cwd;
-    if (static_cast<int>(cwd_display.size()) > cwd_max) {
-        // Middle-truncate approx: keep first segment + " … " + last segment
-        auto first_slash = cwd_display.find('/', 1);
-        auto last_slash  = cwd_display.rfind('/');
-        if (first_slash != std::string::npos && last_slash != std::string::npos
-            && last_slash > first_slash + 1) {
-            std::string head = cwd_display.substr(0, first_slash + 1);
-            std::string tail = cwd_display.substr(last_slash);
-            cwd_display = head + "\xE2\x80\xA6" + tail;  // … U+2026
-            // If still too long, fall back to suffix truncation.
-            if (static_cast<int>(cwd_display.size()) > cwd_max) {
-                cwd_display = "\xE2\x80\xA6" + cwd_display.substr(
-                    cwd_display.size() - static_cast<std::size_t>(cwd_max - 3));
-            }
-        } else {
-            cwd_display = "\xE2\x80\xA6" + cwd_display.substr(
-                cwd_display.size() - static_cast<std::size_t>(cwd_max - 3));
-        }
-    }
-    Elements row3_parts;
-    if (agent_prefix) {
-        row3_parts.push_back(text(*agent_prefix));
-    }
-    row3_parts.push_back(text(cwd_display));
-    Element row3 = hbox(std::move(row3_parts)) | dim | color(kMuted);
-
-    Element text_col = vbox({
-        std::move(row1),
-        std::move(row2),
-        std::move(row3),
-    });
-
-    // Outer layout: hbox with 2-column gap.
-    // gap = 2 means two whitespace columns between the icon and text col.
-    return hbox({
-        std::move(weave_icon),
-        text("  "),
-        std::move(text_col),
-    });
+namespace detail {
+[[nodiscard]] auto make_weave_icon() -> Element;
 }
+
+[[nodiscard]] auto RenderCondensedLogoElement(
+    const LogoDisplayData& data, int term_cols) -> Element;
 
 // --------------------------------------------------------------------
 // §1  Layout-mode enum + column thresholds
 // --------------------------------------------------------------------
 // Layout mode from column count:
 //   columns < 70 → "compact"   (single-column rounded border-card, no feed)
-//   columns >= 70 → "horizontal"  (rounded border-card, LEFT=meta+clawd,
+//   columns >= 70 → "horizontal"  (rounded border-card, LEFT=meta+weave,
 //                                   RIGHT=feed column, vertical divider)
 // "condensed" mode is NOT a layout mode; it is an early return
 // path gated by the condensed-mode flag (no changelog/onboarding/force).
@@ -272,33 +167,11 @@ namespace detail {
 inline const Color& kWarningColor()       { return loom::ui::design::theme::current_theme().palette->warning; }
 inline const Color& kIdeColor()           { return loom::ui::design::theme::current_theme().palette->ide; }
 inline const Color& kLoomAccent()         { return loom::ui::design::theme::current_theme().palette->loom_body; }
-inline const Color& kLoomMascotBody()     { return loom::ui::design::theme::current_theme().palette->loom_body; }
-inline const Color& kLoomMascotBackground() { return loom::ui::design::theme::current_theme().palette->clawd_background; }
 inline const Color& kMuted()              { return loom::ui::design::theme::current_theme().palette->muted; }
 
 // Padding-left 2 columns.
 [[nodiscard]] inline auto pad2(Element e) -> Element {
   return hbox({ text("  "), std::move(e) });
-}
-
-// Loom brand icon: plain-weave (over-under fabric) 9 cols × 3 rows.
-// A weaving metaphor for "Loom" — alternating █ (U+2588 full block) and
-// ░ (U+2591 light shade), with row 2 inverted so it reads as woven
-// over-under.  Rendered in kLoomMascotBody(), the canonical loom_body
-// orange (== CLAWDED #D77757), read from the active theme's palette.
-[[nodiscard]] inline auto make_weave_icon() -> Element {
-  const Color icon_color = kLoomMascotBody();
-  const std::string_view row_a = "\xE2\x96\x88\xE2\x96\x91\xE2\x96\x88\xE2\x96\x91"
-                                 "\xE2\x96\x88\xE2\x96\x91\xE2\x96\x88\xE2\x96\x91"
-                                 "\xE2\x96\x88";  // █░█░█░█░█
-  const std::string_view row_b = "\xE2\x96\x91\xE2\x96\x88\xE2\x96\x91\xE2\x96\x88"
-                                 "\xE2\x96\x91\xE2\x96\x88\xE2\x96\x91\xE2\x96\x88"
-                                 "\xE2\x96\x91";  // ░█░█░█░█░
-  return vbox({
-    text(std::string(row_a)) | color(icon_color),
-    text(std::string(row_b)) | color(icon_color),
-    text(std::string(row_a)) | color(icon_color),
-  }) | ftxui::center;
 }
 
 } // namespace detail
@@ -501,15 +374,8 @@ template <bool KAIROS = false, bool KAIROS_CHANNELS = false>
 // --------------------------------------------------------------------
 // §4b  Welcome theme selector
 // --------------------------------------------------------------------
-// Welcome theme dispatch:
-//   1. env.terminal === "Apple_Terminal" → AppleTerminalWelcome
-//      which internally branches on isLightTheme (L209).
-//   2. ["light", "light-daltonized", "light-ansi"].includes(theme) → light variant
-//   3. else → dark variant
-//
-// We expose all 4 combinations as a single enum so callers can dispatch
-// in one step.  AppleTerminal variants use ▗/▖ + background colour for the
-// clawd (negative-style) instead of solid █ foreground blocks.
+// Retain the terminal/theme selector for callers. Artwork is the same Loom
+// weave in all variants; foreground colors come from the active palette.
 enum class WelcomeTheme {
   Dark,               // Normal terminal + dark/non-light theme
   Light,              // Normal terminal + light theme
@@ -518,587 +384,11 @@ enum class WelcomeTheme {
 };
 
 // --------------------------------------------------------------------
-// §5  Welcome 58-col fixed-width static ASCII clawd card
+// §5  Fixed-width Loom welcome banner
 // --------------------------------------------------------------------
-// The dark-themed variant is a completely
-// STATIC 14-row × 58-col string of block chars. There is NO per-frame
-// animation; only the theme (dark/light/apple-terminal) varies.
-// The "scattered *" glyphs
-// throughout are plain string literal '*' characters — NOT a starfield
-// engine, NOT particle system, NOT per-frame position updates.
-//
-// We reproduce the dark-theme 14 rows exactly (char-for-char). Rows are
-// indexed as t0 (header) → t1 (ellipsis separator) → t2..t15 (art).
-// Loom mascot sits at rows 12-14 (body █████████ / ██▄█████▄██ / █████████)
-// with a moon/planet to the right built from ░░/▒▒/██ gradient block chars.
-namespace detail {
-inline constexpr std::array<std::string_view, 15> kWelcomeDarkRows = {{
-  // t0: header line (rendered separately as "Welcome to Loom")
-  "",
-  // t1: 58 × U+2026 HORIZONTAL ELLIPSIS separator
-  "\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6"
-  "\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6"
-  "\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6"
-  "\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6"
-  "\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6"
-  "\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6"
-  "\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6"
-  "\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6\xE2\x80\xA6",
-  // t2: 58 spaces
-  "                                                          ",
-  // t3: "*" + 39 spaces + 5 ██ + 2 ▓▓ + 1 ░ + 5 spaces
-  "     *                                       \xE2\x96\x88\xE2\x96\x88"
-  "\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x93\xE2\x96\x93\xE2\x96\x91"
-  "     ",
-  // t4: 41 spaces + 3 ██ + 1 ▓ + 2 ░ + 5 spaces + 2 ░░ + 3 spaces
-  "                                 *         \xE2\x96\x88\xE2\x96\x88"
-  "\xE2\x96\x88\xE2\x96\x93\xE2\x96\x91     \xE2\x96\x91\xE2\x96\x91   ",
-  // t5: 12 spaces + 6 ░░░░░░ + 24 spaces + 3 ██ + 1 ▓ + 1 ░ + 11 spaces
-  "            \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91                        \xE2\x96\x88\xE2\x96\x88\xE2\x96\x88"
-  "\xE2\x96\x93\xE2\x96\x91           ",
-  // t6: 4 spaces + 3 ░░░ + 3 spaces + 10 ░░░░░░░░░░ + 22 spaces + 3 ██ +
-  //     1 ▓ + 1 ░ + 11 spaces
-  "    \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91   \xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91                      \xE2\x96\x88\xE2\x96\x88"
-  "\xE2\x96\x88\xE2\x96\x93\xE2\x96\x91           ",
-  // t7: 19 × ░ + 1 × "*" + 16 spaces + 2 ██ + 2 ▓░ + 2 ░░ + 6 spaces +
-  //     1 ▓ + 3 spaces
-  "   \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91    *                \xE2\x96\x88\xE2\x96\x88"
-  "\xE2\x96\x93\xE2\x96\x91\xE2\x96\x91      \xE2\x96\x93   ",
-  // t8: 45 spaces + 2 ░░ + 2 ▓▓ + 3 ██ + 2 ▓▓ + 1 ░ + 4 spaces
-  "                                             \xE2\x96\x91\xE2\x96\x93"
-  "\xE2\x96\x93\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x93\xE2\x96\x93"
-  "\xE2\x96\x91    ",
-  // t9: leading dim "*" + 33 spaces + 4 ░░ + 19 spaces
-  " *                                 \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91                   ",
-  // t10: 33 spaces + 8 ░░░░░░░░ + 17 spaces
-  "                                 \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91                 ",
-  // t11: 31 spaces + 16 ░░░░░░░░░░░░░░░░ + 9 spaces
-  "                               \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91           ",
-  // t12: (clawd row 1) 6 spaces + loom_body █████████ + 39 spaces +
-  //      dim "*" + 1 space
-  "       \xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88"
-  "\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88"
-  "                                        * ",
-  // t13: (clawd row 2) 6 spaces + ██▄█████▄██ loom_body + 24 spaces +
-  //      bold "*" + 16 spaces
-  "       \xE2\x96\x88\xE2\x96\x88\xE2\x96\x84\xE2\x96\x88\xE2\x96\x88"
-  "\xE2\x96\x88\xE2\x96\x88\xE2\x96\x84\xE2\x96\x88\xE2\x96\x88"
-  "                        *                ",
-  // t14: (clawd row 3) 6 spaces + loom_body █████████ + 5 spaces + dim
-  //      "*" + 35 spaces
-  "       \xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88"
-  "\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88"
-  "     *                                   ",
-}};
-
-// Light-theme Welcome rows.
-// The light variant has a cloud-shape in the upper-left (6 ░ + 10 ░ + 19 ░)
-// and a smaller moon/planet in the upper-right (██, ██▒▒██, ▒▒ patterns).
-// Loom mascot sits at rows 12-14 in the lower-left, same as dark but with a
-// different ground/horizon line (▒▒░░▒▒ etc.).
-//
-// Row layout (15 rows, indexed 0..14):
-//   [0]  header (rendered separately — "Welcome to Loom")
-//   [1]  58 × … ellipsis separator (same as dark, reused from dark array)
-//   [2]  58 spaces  (blank)
-//   [3]  58 spaces  (blank)
-//   [4]  58 spaces  (blank)
-//   [5]  12 spaces + 6 ░ + 40 spaces
-//   [6]  4 spaces + 3 ░ + 3 spaces + 10 ░ + 38 spaces
-//   [7]  3 spaces + 19 ░ + 36 spaces
-//   [8]  58 spaces  (blank)
-//   [9]  dim-segment: 27 spaces + 4 ░  +  normal-segment: 21 spaces + 2 ██ + 4 spaces
-//   [10] dim-segment: 25 spaces + 10 ░ +  normal-segment: 15 spaces + ██▒▒██ + 2 spaces
-//   [11] 44 spaces + 2 ▒▒ + 6 spaces + 2 ██ + 3 spaces + 1 ▒
-//   [12] clawd row 1: 6 spaces + " █████████ " + 25 spaces + ▒▒░░▒▒ + 6 spaces + ▒ + space + ▒▒
-//   [13] clawd row 2: 6 spaces + "██▄█████▄██" (bg) + 27 spaces + 2 ▒▒ + 9 spaces + 2 ▒▒ + space
-//   [14] clawd row 3: 6 spaces + " █████████ " + 26 spaces + 1 ░ + 10 spaces + 1 ▒ + 3 spaces
-//
-// For rows [9] and [10], the leading ░ segment is dim; we
-// store the full-row strings here and colourise them at render time.
-// For rows [12]-[14], the clawd body segment is colourised with
-// loom_body (and clawd_background bg for row 13) at render time.
-inline constexpr std::array<std::string_view, 15> kWelcomeLightRows = {{
-  // [0] header placeholder
-  "",
-  // [1] ellipsis separator (reused from dark array at render time)
-  "",
-  // [2] 58 spaces
-  "                                                          ",
-  // [3] 58 spaces
-  "                                                          ",
-  // [4] 58 spaces
-  "                                                          ",
-  // [5] 12 spaces + 6 ░ (U+2591) + 40 spaces
-  "            \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91                                        ",
-  // [6] 4 spaces + 3 ░ + 3 spaces + 10 ░ + 38 spaces
-  "    \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91   \xE2\x96\x91\xE2\x96"
-  "\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91                                      ",
-  // [7] 3 spaces + 19 ░ + 36 spaces
-  "   \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2"
-  "\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96"
-  "\x91\xE2\x96\x91\xE2\x96\x91                                    ",
-  // [8] 58 spaces
-  "                                                          ",
-  // [9] 27 spaces + 4 ░ + 21 spaces + 2 █ (U+2588) + 4 spaces
-  //     (first 31 chars = dim segment, rest = normal)
-  "                           \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91                     \xE2\x96\x88\xE2\x96\x88    ",
-  // [10] 25 spaces + 10 ░ + 15 spaces + ██▒▒ (U+2588 U+2588 U+2592 U+2592) ██ + 2 spaces
-  //      (first 35 chars = dim segment, rest = normal)
-  "                         \xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2"
-  "\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91\xE2\x96\x91"
-  "\xE2\x96\x91               \xE2\x96\x88\xE2\x96\x88\xE2\x96\x92\xE2"
-  "\x96\x92\xE2\x96\x88\xE2\x96\x88  ",
-  // [11] 44 spaces + 2 ▒ (U+2592) + 6 spaces + 2 █ + 3 spaces + 1 ▒
-  "                                            \xE2\x96\x92\xE2\x96"
-  "\x92      \xE2\x96\x88\xE2\x96\x88   \xE2\x96\x92",
-  // [12] clawd row 1 placeholder (built from segments at render)
-  "",
-  // [13] clawd row 2 placeholder (built from segments at render)
-  "",
-  // [14] clawd row 3 placeholder (built from segments at render)
-  "",
-}};
-
-// ------------------------------------------------------------------
-// Apple Terminal clawd helpers.
-// The clawd is rendered using ▗/▖ (U+2597/U+2596)
-// quadrant characters with background colour loom_body — a "negative"
-// or "reverse-video" style that works around Apple Terminal's block-
-// character rendering quirks.  Faithful structure:
-//
-//   Top row:  ▗(loom_body) + [space+▗+5 spaces+▖+space] (fg=clawd_bg, bg=loom_body) + ▖(loom_body)
-//   Mid row:  9 spaces with bg=loom_body (solid orange bar)
-//   Footer:   … + [bg-space] + [space] + [bg-space] + "   " + [bg-space] + [space] + [bg-space] + …
-// ------------------------------------------------------------------
-
-// Apple Terminal clawd — top row (▗/▖ style).
-//   leading_spaces: number of space chars before the ▗ glyph
-//   suffix:         trailing art string appended after the ▖ glyph
-//   suffix_bold_star_col: column position (0-indexed) of a bold '*' within
-//                         the suffix (used by dark variant; std::nullopt for light)
-[[nodiscard]] inline auto BuildAppleLoomMascotTopRow(
-    int leading_spaces,
-    std::string_view suffix,
-    std::optional<int> suffix_bold_star_col = std::nullopt) -> Element {
-  using ftxui::bgcolor;
-
-  Elements parts;
-  // Leading spaces.
-  parts.push_back(text(std::string(static_cast<std::size_t>(leading_spaces), ' ')));
-  // Left shoulder: ▗ in loom_body foreground, no bg.
-  parts.push_back(text("\xE2\x96\x97") | color(kLoomMascotBody()));  // ▗ U+2597
-  // Body cavity: fg = clawd_background, bg = loom_body.
-  //   Content: " " + "▗" + "     " + "▖" + " "
-  parts.push_back(text(" \xE2\x96\x97     \xE2\x96\x96 ")
-                  | color(kLoomMascotBackground()) | bgcolor(kLoomMascotBody()));
-  // Right shoulder: ▖ in loom_body foreground, no bg.
-  parts.push_back(text("\xE2\x96\x96") | color(kLoomMascotBody()));  // ▖ U+2596
-
-  // Suffix: optionally with a bold '*' at a given column.
-  if (suffix_bold_star_col.has_value() && *suffix_bold_star_col >= 0
-      && static_cast<std::size_t>(*suffix_bold_star_col) < suffix.size()) {
-    const int col = *suffix_bold_star_col;
-    // Build suffix parts: before_star + bold_star + after_star.
-    // We work in byte offsets since suffix is UTF-8.
-    // Approximate: each '*' is 1 byte, each space is 1 byte.
-    // For the dark variant suffix "                       *                "
-    // the star is at byte position 23 (0-indexed from suffix start).
-    if (col < static_cast<int>(suffix.size())) {
-      parts.push_back(text(std::string(suffix.substr(0, static_cast<std::size_t>(col)))));
-      parts.push_back(text(std::string(suffix.substr(static_cast<std::size_t>(col), 1))) | bold);
-      parts.push_back(text(std::string(suffix.substr(static_cast<std::size_t>(col + 1)))));
-    } else {
-      parts.push_back(text(std::string(suffix)));
-    }
-  } else {
-    parts.push_back(text(std::string(suffix)));
-  }
-
-  return hbox(std::move(parts));
-}
-
-// Apple Terminal clawd — middle bar row (9 bg-colored spaces).
-//   leading_spaces: spaces before the bar
-//   suffix:         trailing art after the bar
-//   suffix_dim_star_col: column of a dim '*' in suffix (std::nullopt if none)
-[[nodiscard]] inline auto BuildAppleLoomMascotBarRow(
-    int leading_spaces,
-    std::string_view suffix,
-    std::optional<int> suffix_dim_star_col = std::nullopt) -> Element {
-  using ftxui::bgcolor;
-
-  Elements parts;
-  parts.push_back(text(std::string(static_cast<std::size_t>(leading_spaces), ' ')));
-  // 9 spaces with background colour loom_body — solid orange bar.
-  parts.push_back(text("         ") | bgcolor(kLoomMascotBody()));
-
-  if (suffix_dim_star_col.has_value() && *suffix_dim_star_col >= 0) {
-    const int col = *suffix_dim_star_col;
-    if (col < static_cast<int>(suffix.size())) {
-      parts.push_back(text(std::string(suffix.substr(0, static_cast<std::size_t>(col)))));
-      parts.push_back(text(std::string(suffix.substr(static_cast<std::size_t>(col), 1)))
-                      | dim | color(kMuted()));
-      parts.push_back(text(std::string(suffix.substr(static_cast<std::size_t>(col + 1)))));
-    } else {
-      parts.push_back(text(std::string(suffix)));
-    }
-  } else {
-    parts.push_back(text(std::string(suffix)));
-  }
-
-  return hbox(std::move(parts));
-}
-
-// Apple Terminal footer — paws rendered as bg-colored spaces.
-//   "………" + <bg=loom_body> </> + <> </> + <bg=loom_body> </> + <>"   "</> +
-//   <bg=loom_body> </> + <> </> + <bg=loom_body> </> + "………(░…▒…)"
-// The trailing part is "………" for dark, "………░…▒…" for light.
-[[nodiscard]] inline auto BuildAppleFooter(bool is_light) -> Element {
-  using ftxui::bgcolor;
-
-  // Build 7 × … (21 bytes).
-  std::string e7;
-  e7.reserve(21);
-  for (int i = 0; i < 7; ++i) e7 += "\xE2\x80\xA6";
-
-  // Build trailing … string.
-  // Dark: 42 × … = 126 bytes
-  // Light: 27 × … + ░ + 4 × … + ▒ + 4 × … = 27*3 + 3 + 4*3 + 3 + 4*3 = 81+3+12+3+12 = 111 bytes
-  std::string trail;
-  if (is_light) {
-    for (int i = 0; i < 27; ++i) trail += "\xE2\x80\xA6";
-    trail += "\xE2\x96\x91";  // ░
-    for (int i = 0; i < 4; ++i) trail += "\xE2\x80\xA6";
-    trail += "\xE2\x96\x92";  // ▒
-    for (int i = 0; i < 4; ++i) trail += "\xE2\x80\xA6";
-  } else {
-    for (int i = 0; i < 42; ++i) trail += "\xE2\x80\xA6";
-  }
-
-  return hbox({
-    text(e7),                                           // 7 × …
-    text(" ") | bgcolor(kLoomMascotBody()),                    // paw 1 (bg)
-    text(" "),                                          // gap
-    text(" ") | bgcolor(kLoomMascotBody()),                    // paw 2 (bg)
-    text("   "),                                        // 3-space inter-paw gap
-    text(" ") | bgcolor(kLoomMascotBody()),                    // paw 3 (bg)
-    text(" "),                                          // gap
-    text(" ") | bgcolor(kLoomMascotBody()),                    // paw 4 (bg)
-    text(std::move(trail)),                             // trailing …
-  });
-}
-
-// Regular (non-Apple) footer — paws rendered as loom_body foreground █ chars.
-// "………" + "█ █   █ █" (loom_body) + "………(░…▒…)"
-[[nodiscard]] inline auto BuildRegularFooter(bool is_light) -> Element {
-  std::string e7;
-  e7.reserve(21);
-  for (int i = 0; i < 7; ++i) e7 += "\xE2\x80\xA6";
-
-  std::string trail;
-  if (is_light) {
-    // 27 × … + ░ + 4 × … + ▒ + 4 × …
-    for (int i = 0; i < 27; ++i) trail += "\xE2\x80\xA6";
-    trail += "\xE2\x96\x91";
-    for (int i = 0; i < 4; ++i) trail += "\xE2\x80\xA6";
-    trail += "\xE2\x96\x92";
-    for (int i = 0; i < 4; ++i) trail += "\xE2\x80\xA6";
-  } else {
-    // 42 × …
-    for (int i = 0; i < 42; ++i) trail += "\xE2\x80\xA6";
-  }
-
-  // "█ █   █ █" in loom_body color.
-  const std::string paws = "\xE2\x96\x88 \xE2\x96\x88   \xE2\x96\x88 \xE2\x96\x88";
-
-  return hbox({
-    text(e7),
-    text(paws) | color(kLoomMascotBody()),
-    text(std::move(trail)),
-  });
-}
-
-} // namespace detail
-
-// Produce the 58-col fixed-width welcome card. The header reads
-// "Welcome to Loom". Returns a
-// single Element; caller is responsible for wrapping in `flex` or
-// `center` if the terminal is wider than 58 cols.
-//
-// Theme dispatch:
-//   Dark              — starfield + solid █ clawd + moon/planet gradient
-//   Light             — cloud shape (░) + small planet (██▒▒██) + solid clawd + ground (▒▒░░)
-//   AppleTerminalDark — starfield + ▗/▖ negative clawd (bg-color workaround)
-//   AppleTerminalLight— cloud + ▗/▖ negative clawd
-[[nodiscard]] inline auto RenderWelcome(
-    WelcomeTheme theme = WelcomeTheme::Dark) -> Element {
-  using namespace detail;
-  using ftxui::bgcolor;
-
-  const bool is_light = (theme == WelcomeTheme::Light ||
-                         theme == WelcomeTheme::AppleTerminalLight);
-  const bool is_apple = (theme == WelcomeTheme::AppleTerminalDark ||
-                         theme == WelcomeTheme::AppleTerminalLight);
-
-  // --- Common header (all themes): t0 ---
-  Element header = text("Welcome to Loom        ") | color(kLoomAccent());
-
-  Elements art;
-  art.reserve(18);
-  art.push_back(std::move(header));
-
-  // --- Ellipsis separator (t1, same for all themes) ---
-  art.push_back(text(std::string(kWelcomeDarkRows[1])));
-
-  if (is_light) {
-    // ================================================================
-    // LIGHT THEME
-    // ================================================================
-    // t2-t8: simple rows (blank + cloud shape + blank)
-    for (std::size_t i = 2; i <= 8; ++i) {
-      art.push_back(text(std::string(kWelcomeLightRows[i])));
-    }
-
-    // t9: dim ░░░░ segment + normal ██ segment
-    // Dim part: 27 spaces + 4 ░ = 31 terminal chars = 27 + 12 = 39 bytes
-    {
-      std::string_view row = kWelcomeLightRows[9];
-      constexpr std::size_t kDimBytes = 39;
-      art.push_back(hbox({
-        text(std::string(row.substr(0, kDimBytes))) | dim | color(kMuted()),
-        text(std::string(row.substr(kDimBytes))),
-      }));
-    }
-
-    // t10: dim ░░░░░░░░░░ segment + normal ██▒▒██ segment
-    // Dim part: 25 spaces + 10 ░ = 35 terminal chars = 25 + 30 = 55 bytes
-    {
-      std::string_view row = kWelcomeLightRows[10];
-      constexpr std::size_t kDimBytes = 55;
-      art.push_back(hbox({
-        text(std::string(row.substr(0, kDimBytes))) | dim | color(kMuted()),
-        text(std::string(row.substr(kDimBytes))),
-      }));
-    }
-
-    // t11: simple row — ▒▒ + ██ art (no color segmentation)
-    art.push_back(text(std::string(kWelcomeLightRows[11])));
-
-    // --- Loom mascot rows (t12-t14) ---
-    if (is_apple) {
-      // Apple Terminal Light: 2 clawd rows (top ▗/▖ + middle bar)
-
-      // t12: 6 spaces + ▗(clawd) + [body cavity] + ▖(clawd) + ▒▒ art
-      const std::string suffix12 =
-          "                           \xE2\x96\x92\xE2\x96\x92"
-          "         \xE2\x96\x92\xE2\x96\x92 ";
-      art.push_back(BuildAppleLoomMascotTopRow(/*leading=*/6, suffix12));
-
-      // t13: 7 spaces + 9 bg-spaces bar + ░/▒ art
-      const std::string suffix13 =
-          "                           \xE2\x96\x91"
-          "          \xE2\x96\x92   ";
-      art.push_back(BuildAppleLoomMascotBarRow(/*leading=*/7, suffix13));
-
-      // Note: Apple Terminal light has only 2 clawd rows (not 3).
-      // The light variant shows top + bar,
-      // no separate clawd row before the footer.
-
-    } else {
-      // Regular Light: 3 solid clawd rows
-
-      // t12: 6 spaces + " █████████ " (loom_body) + ▒▒░░▒▒ + ▒ ▒▒
-      const std::string clawd_top =
-          " \xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88"
-          "\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88 ";
-      const std::string light_suffix12 =
-          "                         \xE2\x96\x92\xE2\x96\x92"
-          "\xE2\x96\x91\xE2\x96\x91\xE2\x96\x92\xE2\x96\x92"
-          "      \xE2\x96\x92 \xE2\x96\x92\xE2\x96\x92";
-      art.push_back(hbox({
-        text("      "),
-        text(clawd_top) | color(kLoomMascotBody()),
-        text(light_suffix12),
-      }));
-
-      // t13: 6 spaces + "██▄█████▄██" (loom_body + clawd_background bg) + ▒▒
-      const std::string clawd_mid =
-          "\xE2\x96\x88\xE2\x96\x88\xE2\x96\x84\xE2\x96\x88\xE2\x96\x88"
-          "\xE2\x96\x88\xE2\x96\x88\xE2\x96\x84\xE2\x96\x88\xE2\x96\x88";
-      const std::string light_suffix13 =
-          "                           \xE2\x96\x92\xE2\x96\x92"
-          "         \xE2\x96\x92\xE2\x96\x92 ";
-      art.push_back(hbox({
-        text("      "),
-        text(clawd_mid) | color(kLoomMascotBody()) | bgcolor(kLoomMascotBackground()),
-        text(light_suffix13),
-      }));
-
-      // t14: 6 spaces + " █████████ " (loom_body) + ░ + ▒
-      const std::string light_suffix14 =
-          "                          \xE2\x96\x91"
-          "          \xE2\x96\x92   ";
-      art.push_back(hbox({
-        text("      "),
-        text(clawd_top) | color(kLoomMascotBody()),
-        text(light_suffix14),
-      }));
-    }
-
-  } else {
-    // ================================================================
-    // DARK THEME
-    // ================================================================
-    // t2-t6, t8: plain rows (no * styling needed)
-    for (std::size_t i : {2u, 3u, 4u, 5u, 6u, 8u}) {
-      art.push_back(text(std::string(kWelcomeDarkRows[i])));
-    }
-
-    // t7: scattered ░ + bold '*' + moon/planet gradient
-    // The '*' is the only '*' in this row. Find it and render bold.
-    {
-      std::string_view row7 = kWelcomeDarkRows[7];
-      auto star_pos = row7.find('*');
-      if (star_pos != std::string_view::npos) {
-        art.push_back(hbox({
-          text(std::string(row7.substr(0, star_pos))),
-          text("*") | ftxui::bold,
-          text(std::string(row7.substr(star_pos + 1))),
-        }));
-      } else {
-        art.push_back(text(std::string(row7)));
-      }
-    }
-
-    // t9, t10, t11: entire rows are dim
-    //   t9:  " *        ░░░░                   "
-    //   t10: "          ░░░░░░░░              "
-    //   t11: "        ░░░░░░░░░░░░░░░░        "
-    for (std::size_t i : {9u, 10u, 11u}) {
-      art.push_back(text(std::string(kWelcomeDarkRows[i])) | dim | color(kMuted()));
-    }
-
-    if (is_apple) {
-      // Apple Terminal Dark: repositioned clawd
-      //
-      // In Apple Terminal dark, the clawd shifts down by one row
-      // compared to regular dark:
-      //   t12 (was solid clawd row 1) → scattered * only
-      //   t13 (was solid clawd row 2) → Apple ▗/▖ top
-      //   t14 (was solid clawd row 3) → Apple bg-color bar
-
-      // t12: 54 spaces + dim '*' + "  "
-      art.push_back(hbox({
-        text("                                                      "),
-        text("*") | dim | color(kMuted()),
-        text(" "),
-      }));
-
-      // t13: 8 spaces + Apple ▗/▖ top + 23 spaces + bold '*' + 16 spaces
-      const std::string suffix13 =
-          "                       *                ";
-      // Bold '*' is at byte position 23 within suffix (0-indexed).
-      art.push_back(BuildAppleLoomMascotTopRow(
-          /*leading=*/8, suffix13, /*bold_star_col=*/23));
-
-      // t14: 8 spaces + 9 bg-spaces bar + 5 spaces + dim '*' + 35 spaces
-      const std::string suffix14 =
-          "      *                                   ";
-      // Dim '*' at byte position 6 within suffix.
-      art.push_back(BuildAppleLoomMascotBarRow(
-          /*leading=*/8, suffix14, /*dim_star_col=*/6));
-
-    } else {
-      // Regular Dark: 3 solid clawd rows at position 6
-      //
-      // Faithful rendering:
-      //   t12: "      " + loom_body(" █████████ ") +
-      //               "                                       " + dim("*") + " "
-      //   t13: "      " + loom_body+bg("██▄█████▄██") +
-      //               "                        " + bold("*") + "                "
-      //   t14: "      " + loom_body(" █████████ ") +
-      //               "     *                                   "
-
-      // Helper: split a dark clawd row into (prefix, body, suffix)
-      // and render with per-row * styling.
-      //   body_pos:  byte offset of body within row (always 6 = 6 spaces)
-      //   body_len:  byte length of body (9 █ = 27 bytes, or 11-char body w/ spaces)
-      //   star_mode: how to render '*' in the suffix: 0=dim, 1=bold, 2=normal
-      //   body_bg:   if true, apply bgcolor(kLoomMascotBackground()) to body
-      auto render_dark_clawd_row =
-          [&](std::string_view row, std::size_t body_pos, std::size_t body_len,
-              int star_mode, bool body_bg) -> Element {
-        if (row.size() < body_pos + body_len) {
-          return text(std::string(row));
-        }
-        std::string prefix(row.substr(0, body_pos));
-        std::string body(row.substr(body_pos, body_len));
-        std::string suffix(row.substr(body_pos + body_len));
-
-        auto body_el = text(body) | color(kLoomMascotBody());
-        if (body_bg) body_el = body_el | bgcolor(kLoomMascotBackground());
-
-        // Find '*' in suffix and apply styling
-        auto star_pos = suffix.find('*');
-        if (star_pos == std::string::npos) {
-          return hbox({text(prefix), body_el, text(suffix)});
-        }
-
-        std::string pre_star(suffix.substr(0, star_pos));
-        std::string post_star(suffix.substr(star_pos + 1));
-
-        Element star_el;
-        switch (star_mode) {
-          case 0: star_el = text("*") | dim | color(kMuted()); break;
-          case 1: star_el = text("*") | ftxui::bold; break;
-          default: star_el = text("*"); break;
-        }
-
-        return hbox({text(prefix), body_el,
-                     text(pre_star), star_el, text(post_star)});
-      };
-
-      // t12: body = 9 █ (27 bytes), star = dim, no body bg
-      // Suffix has dim '*' at the end
-      art.push_back(render_dark_clawd_row(
-          kWelcomeDarkRows[12], /*body_pos=*/6, /*body_len=*/27,
-          /*star_mode=*/0, /*body_bg=*/false));
-
-      // t13: body = 9 █ (27 bytes), star = bold, body has bg
-      // Clawd body has background colour clawd_background, star is bold
-      art.push_back(render_dark_clawd_row(
-          kWelcomeDarkRows[13], /*body_pos=*/6, /*body_len=*/27,
-          /*star_mode=*/1, /*body_bg=*/true));
-
-      // t14: body = 9 █ (27 bytes), star = normal, no body bg
-      // Suffix has normal '*' (no dim, no bold)
-      art.push_back(render_dark_clawd_row(
-          kWelcomeDarkRows[14], /*body_pos=*/6, /*body_len=*/27,
-          /*star_mode=*/2, /*body_bg=*/false));
-    }
-  }
-
-  // --- Footer (t15 / t16 / t18) ---
-  art.push_back(is_apple ? BuildAppleFooter(is_light)
-                         : BuildRegularFooter(is_light));
-
-  return vbox(std::move(art)) | size(WIDTH, EQUAL, kWelcomeFixedWidth);
-}
+// Reuse the same Loom weave and wordmark as the condensed and card layouts.
+[[nodiscard]] auto RenderWelcome(
+    WelcomeTheme theme = WelcomeTheme::Dark) -> Element;
 
 // --------------------------------------------------------------------
 // Convenience: resolve WelcomeTheme from theme string + terminal type.
@@ -1347,7 +637,7 @@ inline constexpr int kContentPadding  = 2;
 //     horizontal padding = 1, vertical padding = 1,
 //     centred, width = columns:
 //       Bold welcome message
-//       Mascot (top margin 1)
+//       Loom weave (top margin 1)
 //       Dim model display name
 //       Dim billing type
 //       Dim agent·cwd line
@@ -1467,7 +757,7 @@ inline constexpr int kContentPadding  = 2;
 //   Vertical column, width = left_width,
 //   space-between layout, centred, min-height = 9:
 //     Top margin 1, bold welcome message
-//     Loom mascot
+//     Loom weave
 //     Vertical column, centred:
 //       Dim model line
 //       Dim cwd line
@@ -1555,7 +845,7 @@ inline constexpr int kContentPadding  = 2;
   // --- calculateOptimalLeftWidth ---
   auto sw = [](const std::string& s){ return static_cast<int>(s.size()); };
   const int content_width = std::max({
-      sw(welcome), sw(cwd_line_full), sw(model_line_full), 20 /* min for clawd */ });
+      sw(welcome), sw(cwd_line_full), sw(model_line_full), 20 /* minimum metadata width */ });
   const int optimal_left_width = std::min(content_width + 4, kMaxLeftWidth);
 
   // --- calculateLayoutDimensions, horizontal branch ---

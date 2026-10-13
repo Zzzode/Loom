@@ -166,7 +166,7 @@ struct Palette {
     // every theme variant today (both = electric violet).
     ftxui::Color auto_accept;
 
-    // this stays at the canonical clawd orange rgb(215,119,87) while
+    // this stays at the canonical Loom accent while
     // `primary`/`loom` shifts to a CVD-safe orange rgb(255,153,51).
     // Logo/mascot rendering MUST use loom_body, not primary, to avoid
     // color shifts in daltonized variants.
@@ -212,7 +212,6 @@ struct Palette {
     // ─── Miscellaneous tokens ──────────────────────────────────────────────
     ftxui::Color professional_blue;
     ftxui::Color chrome_yellow;
-    ftxui::Color clawd_background;
     ftxui::Color selection_bg;
     ftxui::Color bash_message_background;
     ftxui::Color memory_background;
@@ -327,9 +326,9 @@ struct Palette {
 // grayscale for accessibility testing and reduced-color terminals.
 namespace palette {
 
-// rgb(215,119,87) — Loom's canonical "clawd" orange
-inline const auto CLAWDED      = ftxui::Color::RGB(215, 119,  87);
-inline const auto CLAWDED_SHIM = ftxui::Color::RGB(235, 159, 127);
+// Loom brand accent and its shimmer variant.
+inline const auto LOOM_ACCENT      = ftxui::Color::RGB(215, 119,  87);
+inline const auto LOOM_ACCENT_SHIMMER = ftxui::Color::RGB(235, 159, 127);
 
 const Palette& dark() noexcept;
 

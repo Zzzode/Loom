@@ -192,11 +192,12 @@ TEST(StreamingMigration, StatuslineVisibleAfterSubmit) {
     expect_streaming_snapshot("e2e_statusline", "after_end_query",
                               snapshots.at("after_end_query"));
 
-    // The statusline footer shows context usage "0K/200.0K" (0 tokens used,
-    // 200k window). This is stable across runs and proves the bottom bar is
-    // present after the query completes.
-    expect_contains(snapshots.at("after_end_query"), "0K/200.0K",
-                    "statusline context usage");
+    // At this fixture's narrow width the status row keeps the complete
+    // context percentage, anchored below the prompt's lower divider.
+    const auto& final_screen = snapshots.at("after_end_query");
+    const auto status_start = final_screen.rfind("\n  <tmpdir> · 0%");
+    ASSERT_NE(status_start, std::string::npos);
+    EXPECT_EQ(final_screen.substr(status_start).find("ctx "), std::string::npos);
 }
 
 /// Migrated from E2E_Gate.McpToolUseBlockRendersWithNameAndInput.

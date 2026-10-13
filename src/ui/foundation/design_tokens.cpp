@@ -11,8 +11,8 @@ namespace loom::ui::design::tokens::palette {
 
 const Palette& dark() noexcept {
     static const Palette p = {
-    .primary             = CLAWDED,
-    .primary_shimmer     = CLAWDED_SHIM,
+    .primary             = LOOM_ACCENT,
+    .primary_shimmer     = LOOM_ACCENT_SHIMMER,
     .info                = ftxui::Color::RGB(177, 185, 249),
     .success             = ftxui::Color::RGB( 78, 186, 101),
     .warning             = ftxui::Color::RGB(255, 193,   7),
@@ -36,7 +36,7 @@ const Palette& dark() noexcept {
     .chrome              = ftxui::Color::RGB( 55,  57,  61),
     .rate_limit_fill     = ftxui::Color::RGB(177, 185, 249),
     .rate_limit_empty    = ftxui::Color::RGB( 80,  83, 112),
-    .brief_label         = CLAWDED,
+    .brief_label         = LOOM_ACCENT,
     //   userMessageBackground      = rgb(55, 55, 55)      (dark slate bubble)
     //   messageActionsBackground   = rgb(44, 50, 62)      (cool-gray selection)
     //   userMessageBackgroundHover = rgb(70, 70, 70)      (slightly lighter slate)
@@ -70,7 +70,7 @@ const Palette& dark() noexcept {
     .prompt_border       = ftxui::Color::RGB(136, 136, 136),
     .permission          = ftxui::Color::RGB(177, 185, 249),
     .auto_accept         = ftxui::Color::RGB(175, 135, 255),
-    .loom_body          = CLAWDED,
+    .loom_body          = LOOM_ACCENT,
     // ── Shimmer tokens ──
     .permission_shimmer     = ftxui::Color::RGB(207, 215, 255),
     .inactive_shimmer       = ftxui::Color::RGB(193, 193, 193),
@@ -109,12 +109,11 @@ const Palette& dark() noexcept {
     // ── Misc ──
     .professional_blue     = ftxui::Color::RGB(106, 155, 204),
     .chrome_yellow         = ftxui::Color::RGB(251, 188,   4),
-    .clawd_background      = ftxui::Color::RGB(  0,   0,   0),
     .selection_bg          = ftxui::Color::RGB( 38,  79, 120),
     .bash_message_background = ftxui::Color::RGB( 65,  60,  65),
     .memory_background     = ftxui::Color::RGB( 55,  65,  70),
     .brief_label_you       = ftxui::Color::RGB(122, 180, 232),
-    .brief_label_loom    = CLAWDED,
+    .brief_label_loom    = LOOM_ACCENT,
     // ── Individual rainbow fields ──
     .rainbow_red           = ftxui::Color::RGB(235,  95,  87),
     .rainbow_orange        = ftxui::Color::RGB(245, 139,  87),
@@ -133,7 +132,7 @@ const Palette& dark() noexcept {
     // ── Semantic derived tokens (dark theme) ──
     .text_muted            = ftxui::Color::RGB(153, 153, 153),  // = muted
     .text_link             = ftxui::Color::RGB(177, 185, 249),  // = suggestion
-    .text_accent           = CLAWDED,                            // = primary
+    .text_accent           = LOOM_ACCENT,                            // = primary
     .border_subtle         = ftxui::Color::RGB( 55,  57,  61),  // = chrome
     .border_default        = ftxui::Color::RGB(136, 136, 136),  // = prompt_border
     .border_accent         = ftxui::Color::RGB(177, 185, 249),  // = permission
@@ -144,7 +143,7 @@ const Palette& dark() noexcept {
     .surface_memory        = ftxui::Color::RGB( 55,  65,  70),  // = memory_background
     .icon_default          = ftxui::Color::RGB(255, 255, 255),  // = text (white on dark)
     .icon_muted            = ftxui::Color::RGB(153, 153, 153),  // = muted
-    .icon_accent           = CLAWDED,                            // = primary
+    .icon_accent           = LOOM_ACCENT,                            // = primary
     .status_bar_background = ftxui::Color::RGB( 20,  20,  22),
     .spinner_gold          = ftxui::Color::RGB(217, 154,  56),
     // ── Message list role tokens ──
@@ -196,7 +195,7 @@ const Palette& dark() noexcept {
 
 const Palette& light() noexcept {
     static const Palette p = {
-    .primary             = CLAWDED,
+    .primary             = LOOM_ACCENT,
     .primary_shimmer     = ftxui::Color::RGB(245, 149, 117),
     // (clr-light-palette-17-p1).  `info` carries the permission/suggestion
     // accent = rgb(87,105,247) medium blue.
@@ -214,7 +213,7 @@ const Palette& light() noexcept {
     .chrome              = ftxui::Color::RGB(220, 220, 220),
     .rate_limit_fill     = ftxui::Color::RGB( 87, 105, 247),
     .rate_limit_empty    = ftxui::Color::RGB( 39,  47, 111),
-    .brief_label         = CLAWDED,
+    .brief_label         = LOOM_ACCENT,
     // Light-mode equivalents of the message chrome tokens:
     //   userMessageBackground      = rgb(240, 240, 240)  near-white bubble
     //   messageActionsBackground   = rgb(232, 236, 244)  cool gray
@@ -238,7 +237,7 @@ const Palette& light() noexcept {
     .prompt_border       = ftxui::Color::RGB(153, 153, 153),
     .permission          = ftxui::Color::RGB( 87, 105, 247),
     .auto_accept         = ftxui::Color::RGB(135,   0, 255),
-    .loom_body          = CLAWDED,
+    .loom_body          = LOOM_ACCENT,
     // ── Shimmer tokens ──
     .permission_shimmer     = ftxui::Color::RGB(137, 155, 255),
     .inactive_shimmer       = ftxui::Color::RGB(142, 142, 142),
@@ -269,12 +268,11 @@ const Palette& light() noexcept {
     // ── Misc ──
     .professional_blue     = ftxui::Color::RGB(106, 155, 204),
     .chrome_yellow         = ftxui::Color::RGB(251, 188,   4),
-    .clawd_background      = ftxui::Color::RGB(  0,   0,   0),
     .selection_bg          = ftxui::Color::RGB(180, 213, 255),
     .bash_message_background = ftxui::Color::RGB(250, 245, 250),
     .memory_background     = ftxui::Color::RGB(230, 245, 250),
     .brief_label_you       = ftxui::Color::RGB( 37,  99, 235),
-    .brief_label_loom    = CLAWDED,
+    .brief_label_loom    = LOOM_ACCENT,
     // ── Individual rainbow fields ──
     .rainbow_red           = ftxui::Color::RGB(235,  95,  87),
     .rainbow_orange        = ftxui::Color::RGB(245, 139,  87),
@@ -293,7 +291,7 @@ const Palette& light() noexcept {
     // ── Semantic derived tokens (light theme) ──
     .text_muted            = ftxui::Color::RGB(102, 102, 102),  // = muted
     .text_link             = ftxui::Color::RGB( 87, 105, 247),  // = suggestion
-    .text_accent           = CLAWDED,                            // = primary
+    .text_accent           = LOOM_ACCENT,                            // = primary
     .border_subtle         = ftxui::Color::RGB(175, 175, 175),  // = subtle
     .border_default        = ftxui::Color::RGB(153, 153, 153),  // = prompt_border
     .border_accent         = ftxui::Color::RGB( 87, 105, 247),  // = permission
@@ -304,7 +302,7 @@ const Palette& light() noexcept {
     .surface_memory        = ftxui::Color::RGB(230, 245, 250),  // = memory_background
     .icon_default          = ftxui::Color::RGB(  0,   0,   0),  // = text (black on light)
     .icon_muted            = ftxui::Color::RGB(102, 102, 102),  // = muted
-    .icon_accent           = CLAWDED,                            // = primary
+    .icon_accent           = LOOM_ACCENT,                            // = primary
     .status_bar_background = ftxui::Color::RGB(240, 240, 240),
     .spinner_gold          = ftxui::Color::RGB(180, 120,  40),
     // ── Message list role tokens ──
@@ -395,7 +393,7 @@ const Palette& dark_daltonized() noexcept {
     .permission          = ftxui::Color::RGB(153, 204, 255),
     .auto_accept         = ftxui::Color::RGB(175, 135, 255),
     // orange (unlike `primary`/`loom` which shifts to rgb(255,153,51) for CVD).
-    .loom_body          = CLAWDED,
+    .loom_body          = LOOM_ACCENT,
     // ── Shimmer tokens ──
     .permission_shimmer     = ftxui::Color::RGB(183, 224, 255),
     .inactive_shimmer       = ftxui::Color::RGB(193, 193, 193),
@@ -426,7 +424,6 @@ const Palette& dark_daltonized() noexcept {
     // ── Misc ──
     .professional_blue     = ftxui::Color::RGB(106, 155, 204),
     .chrome_yellow         = ftxui::Color::RGB(251, 188,   4),
-    .clawd_background      = ftxui::Color::RGB(  0,   0,   0),
     .selection_bg          = ftxui::Color::RGB( 38,  79, 120),
     .bash_message_background = ftxui::Color::RGB( 65,  60,  65),
     .memory_background     = ftxui::Color::RGB( 55,  65,  70),
@@ -549,7 +546,7 @@ const Palette& light_daltonized() noexcept {
     .permission          = ftxui::Color::RGB( 51, 102, 255),
     .auto_accept         = ftxui::Color::RGB(135,   0, 255),
     // orange (unlike `primary`/`loom` which shifts to rgb(255,153,51) for CVD).
-    .loom_body          = CLAWDED,
+    .loom_body          = LOOM_ACCENT,
     // ── Shimmer tokens ──
     .permission_shimmer     = ftxui::Color::RGB(101, 152, 255),
     .inactive_shimmer       = ftxui::Color::RGB(142, 142, 142),
@@ -580,7 +577,6 @@ const Palette& light_daltonized() noexcept {
     // ── Misc ──
     .professional_blue     = ftxui::Color::RGB(106, 155, 204),
     .chrome_yellow         = ftxui::Color::RGB(251, 188,   4),
-    .clawd_background      = ftxui::Color::RGB(  0,   0,   0),
     .selection_bg          = ftxui::Color::RGB(180, 213, 255),
     .bash_message_background = ftxui::Color::RGB(250, 245, 250),
     .memory_background     = ftxui::Color::RGB(230, 245, 250),
@@ -741,7 +737,6 @@ const Palette& light_ansi() noexcept {
     // ── Misc ──
     .professional_blue     = ftxui::Color{ftxui::Color::Palette16::BlueLight},
     .chrome_yellow         = ftxui::Color{ftxui::Color::Palette16::Yellow},
-    .clawd_background      = ftxui::Color{ftxui::Color::Palette16::Black},
     .selection_bg          = ftxui::Color{ftxui::Color::Palette16::Cyan},
     .bash_message_background = ftxui::Color{ftxui::Color::Palette16::White},
     .memory_background     = ftxui::Color{ftxui::Color::Palette16::GrayLight},
@@ -902,7 +897,6 @@ const Palette& dark_ansi() noexcept {
     // ── Misc ──
     .professional_blue     = ftxui::Color::RGB(106, 155, 204),
     .chrome_yellow         = ftxui::Color{ftxui::Color::Palette16::YellowLight},
-    .clawd_background      = ftxui::Color{ftxui::Color::Palette16::Black},
     .selection_bg          = ftxui::Color{ftxui::Color::Palette16::Blue},
     .bash_message_background = ftxui::Color{ftxui::Color::Palette16::Black},
     .memory_background     = ftxui::Color{ftxui::Color::Palette16::GrayDark},
@@ -1058,7 +1052,6 @@ const Palette& monochrome() noexcept {
     // ── Misc (monochrome) ──
     .professional_blue     = ftxui::Color::White,
     .chrome_yellow         = ftxui::Color::White,
-    .clawd_background      = ftxui::Color::Black,
     .selection_bg          = ftxui::Color::GrayDark,
     .bash_message_background = ftxui::Color::GrayDark,
     .memory_background     = ftxui::Color::GrayDark,

@@ -55,13 +55,14 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
         120,
         16));
 
-    // Phase 2 Faithful: CondensedLogo 3-line strip
-    // (replaces the old ASCII-card + Recent activity / What's new feed).
+    // The default welcome header is the three-line Loom weave strip.
     EXPECT_NE(rendered.find("Loom"), std::string::npos);
+    EXPECT_NE(rendered.find("█░█░█░█░█"), std::string::npos);
+    EXPECT_NE(rendered.find("░█░█░█░█░"), std::string::npos);
     EXPECT_NE(rendered.find("GLM-5.2"), std::string::npos);
     EXPECT_NE(rendered.find("/tmp/cpp_migration"), std::string::npos);
 
-    // Old feed-card fields that no longer appear in the faithful layout.
+    // The default strip omits the full welcome card and feeds.
     EXPECT_EQ(rendered.find("Welcome back!"), std::string::npos);
     EXPECT_EQ(rendered.find("Recent activity"), std::string::npos);
     EXPECT_EQ(rendered.find("What's new"), std::string::npos);
@@ -162,16 +163,9 @@ TEST(ReplScreen, WelcomeHeaderWidthAndColorTrackTerminal) {
     // when cwd is long enough to need it.
     EXPECT_GE(max_line_width_bytes(wide), 40u);
 
-    // Faithful condensed logo uses the brand accent (same as TS
-    // Logo's Loom icon accent RGB(215,119,87) = #D77757) on the weave
-    // glyph, instead of the old primary-palette border decoration.  The
-    // accent must appear somewhere in the rendered header.  Compare against
-    // the theme's actual color rather than a freshly-constructed Color:
-    // FTXUI quantizes Color::RGB at construction time based on the global
-    // color-support mode, and design tokens are constructed during static
-    // init (before loom_test_main forces TrueColor), so a new Color(215,119,87)
-    // would be TrueColor while the theme's copy is Palette256 — the == would
-    // fail despite being the same visual color.
+    // Compare the weave against the active palette token. FTXUI can quantize
+    // tokens before test main enables TrueColor, so reconstructing RGB here
+    // would produce a different Color representation.
     const ftxui::Color kBrandAccent = thm::current_theme().palette->loom_body;
     bool has_brand_accent_pixel = false;
     for (int y = 0; y < 16 && !has_brand_accent_pixel; ++y) {
@@ -197,7 +191,7 @@ TEST(ReplScreen, WelcomeHeaderWidthAndColorTrackTerminal) {
 
 
 
-TEST(ReplScreen, WelcomeHeaderAnimatesAsteriskColor) {
+TEST(ReplScreen, WelcomeHeaderLoomWeaveIsStatic) {
     namespace repl = loom::ui::repl_screen;
 
     repl::ReplScreenState state;
@@ -212,12 +206,7 @@ TEST(ReplScreen, WelcomeHeaderAnimatesAsteriskColor) {
         120,
         16);
 
-    // Phase 2 + P0-4 Faithful CondensedLogo: the welcome strip is a
-    // static 3-line logo + notice stack (gated notices).
-    // There is NO per-frame asterisk animation — both frames must
-    // therefore render byte-for-byte identical, and no "asterisk-like"
-    // glyph is allowed in the output; the old rotating `✦✧✶` spinner
-    // chars embedded inside the old ASCII-art card must NOT appear.
+    // Welcome branding is static; spinner frames must not alter the weave.
     EXPECT_EQ(frame0, frame8);
     // Sanity: condensed-logo branding present.
     EXPECT_NE(strip_ansi(frame0).find("Loom"), std::string::npos);

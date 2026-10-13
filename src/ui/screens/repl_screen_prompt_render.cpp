@@ -71,41 +71,9 @@ using namespace ftxui;
     return ph::ComputePlaceholder(ctx);
 }
 
-// UI2: prompt input shell.
-//
-// M3 — WIRED TO THE REAL COMPONENT.  Previously this was a ~90-line
-// hand-rolled body that IGNORED the real ui::components::TextInputImpl
-// (cursor tracking, selection, vim modes, autocomplete, multiline, masking)
-// and was flagged 0/25 faithful by the 1:1 audit.  We now delegate the
-// caret/multiline/selection painting to a TextInputImpl that is SYNCED from
-// ReplScreenState each render — mirroring the declared-cursor pattern
-// (which parks the real terminal cursor at the insertion
-// point and lets screen readers follow the input).
-//
-// The pure-function signature `Element RenderPromptInput(const
-// ReplScreenState&)` is PRESERVED so app.cppm's input handling (which writes
-// s.input_text / s.prompt_store.input_mode / s.autocomplete_* between frames and forwards
-// keystrokes via ReplScreen's CatchEvent) is untouched.  The TextInputImpl
-// is used purely as a render primitive here — it is rebuilt per-frame from
-// the projection, never as the interactive event target.
-//
-// Rendered faithfully:
-//   * Prompt glyph figures.pointer "❯" (green) for normal mode,
-//     "!" (red) for bash, "❮" (yellow/magenta) for vim Normal/Visual —
-//     driven by s.prompt_store.input_mode.
-//   * DECLARED CARET at the insertion point: TextInputImpl.Render() draws an
-//     inverted glyph at the cursor offset (the real terminal cursor is parked
-//     there; we render a visible caret that lands on
-//     the same byte offset).  Multi-line content lays out as a vbox.
-//   * Contextual placeholder when empty, styled dim.
-//   * Selection highlight — provided by the real
-//     impl when a selection range is set.
-//   * Vim-mode badge (-- INSERT -- / -- NORMAL -- / -- VISUAL --),
-//     driven by the existing vim_input::mode_display() helper.
-//   * Prompt chrome uses top and bottom horizontal rules,
-//     rounded border with left/right borders disabled.
+// Project into a held input widget; visual wrapping never changes the buffer.
 [[nodiscard]] Element RenderPromptInput(const ReplScreenState& s,
-                                                  int term_cols) {
+                                                  int term_cols, int max_input_rows) {
     namespace uic   = ::ui::components;
     namespace vim   = loom::ui::prompt::vim_input;
     namespace figs  = loom::ui::design::figures;
@@ -207,6 +175,8 @@ using namespace ftxui;
         s.prompt_render_input = std::make_shared<uic::TextInputImpl>(initial);
     }
     uic::RenderOptions opts;
+    opts.columns = std::max(1, term_cols - 1);
+    opts.max_visible_rows = max_input_rows;
     // Compute contextual placeholder via the cascade.
     // If the cascade returns nullopt (no condition matched), fall back to
     // the static input_placeholder string for backward compatibility with
@@ -217,6 +187,7 @@ using namespace ftxui;
         opts.placeholder = s.prompt_store.input_placeholder;
     }
     opts.prefix       = std::move(prefix_str);   // ← RENDERED INSIDE now (BUG-2 fix)
+    opts.prefix_bold = false;
     opts.prefix_color = prefix_color;            // ← new field: explicit color for prefix
     opts.argument_hint      = s.pending_argument_hint;  // SL-03
     opts.inline_ghost_text = s.pending_ghost_text;      // SL-05
@@ -231,42 +202,6 @@ using namespace ftxui;
 
     // --- 3. Render the input area from the REAL component ---------------
     Element input_area = impl->RenderInputAreaPub();
-
-    // --- 3b. Declared cursor (IME / accessibility) ----------------------
-    // Park the real terminal cursor at
-    // the insertion point so IME preedit renders inline and screen readers /
-    // magnifiers can follow the input.
-    //
-    // NOTE on cursor-display math (BUG-2 FIXED):
-    //   We previously rendered the prefix OUTSIDE TextInputImpl in a separate
-    //   hbox, but left opts.prefix empty.  declared_cursor then used
-    //   `string_width(opts.prefix) = 0` as the prefix width, so the native
-    //   cursor parked 3-4 display columns to the LEFT of actual text start.
-    //
-    //   After this commit: opts.prefix contains the rendered 2-cell glyph,
-    //   impl->cursor_display_col() includes prefix width in its return, and
-    //   declared_cursor below positions the terminal cursor EXACTLY over the
-    //   character where the next keystroke will insert.  No arithmetic tricks
-    //   are required — TextInputImpl's own prefix logic (see RenderInputArea
-    //   inside text_input.cppm) already accounts for it.
-    //
-    //   We ALSO add 1 column for the left-side " " padding space rendered in
-    //   hbox #5 (the `text(" ")` before the text area hbox row — this is a
-    //   pure layout margin that TextInputImpl does NOT know about so we
-    //   account for it here manually).
-    {
-        // Native terminal cursor parks at the screen bottom-right (Hidden) via
-        // the root CursorResetNode in app.cppm.  We intentionally do NOT declare
-        // the prompt caret position here: FTXUI's ScreenInteractive emits a
-        // cursor-MOVE sequence every frame (from bottom-right to the declared
-        // position) even when nothing else changed, and many terminals render
-        // those hidden-cursor moves as visible flicker during the ~20Hz idle
-        // re-render.  Leaving the cursor at bottom-right makes the move delta
-        // zero, so FTXUI emits no move and the idle frame is flicker-free.
-        // The visible caret is still drawn by TextInputImpl (inverted glyph), so
-        // the user sees their caret; only the hidden native cursor (IME/a11y
-        // anchor) parks at the corner instead of over the caret.
-    }
 
     Elements box_body;
 
@@ -328,28 +263,18 @@ using namespace ftxui;
     Element top_rule    = separator() | color(frame_color);
     Element bottom_rule = separator() | color(frame_color);
 
-    // ── Declared cursor (IME / accessibility) ──────────────────────────────
-    // Park the real terminal cursor at
-    // the insertion point so IME preedit renders inline and screen readers /
-    // magnifiers can follow the input.
-    //
-    // Cursor position relative to the returned vbox:
-    //   rel_y = 1 (top_rule) + (vim_badge ? 1 : 0)
-    //   rel_x = 1 (leading space in hbox) + prefix_width + cursor_display_col()
-    //
-    // NOTE: cursor_display_col() returns width of text up to caret (NOT
-    // including prefix), so we add prefix_width manually.
+    // Native caret shares the widget's wrapped, scrolled coordinates.
     namespace dc = loom::ui::common::declared_cursor;
-    const int prefix_width = ftxui::string_width(opts.prefix);
-    const int caret_col = impl->cursor_display_col();
-    const int rel_y = 1 + (vim_badge ? 1 : 0);
-    const int rel_x = 1 + prefix_width + caret_col;
+    const auto [caret_col, caret_row] = impl->visual_cursor_position();
+    const int rel_y = 1 + (vim_badge ? 1 : 0)
+        + (s.prompt_store.stashed_prompt.has_value() ? 1 : 0) + caret_row;
+    const int rel_x = 1 + caret_col;
 
     auto result = vbox({
         std::move(top_rule),
         content,
         std::move(bottom_rule),
-    }) | size(WIDTH, EQUAL, std::max(term_cols, 40));
+    }) | size(WIDTH, EQUAL, std::max(term_cols, 1));
 
     // Apply declared_cursor so the hidden native cursor parks at the caret
     // position.  This overrides cursor_reset()'s

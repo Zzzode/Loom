@@ -26,6 +26,7 @@ target_sources(loom_ui_foundation
 target_sources(loom_ui_foundation PRIVATE
     ui/foundation/clock.cpp
     ui/foundation/design_tokens.cpp
+    ui/foundation/logo.cpp
 )
 # External deps only: loom.vim.vim_types (ui_types.cppm) + FTXUI. loom_std's
 # `import std;` BMI arrives via the directory-level link_libraries(loom_std).

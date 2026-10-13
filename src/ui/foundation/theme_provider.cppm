@@ -308,8 +308,6 @@ inline void set_theme(Theme t) noexcept {
         return p.professional_blue;
     if (color == "chromeYellow" || color == "chrome_yellow")
         return p.chrome_yellow;
-    if (color == "clawd_background")
-        return p.clawd_background;
     if (color == "selectionBg" || color == "selection_bg")
         return p.selection_bg;
     if (color == "bashMessageBackgroundColor" || color == "bash_message_background")

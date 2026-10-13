@@ -277,7 +277,7 @@ void move_prompt_cursor_right(const std::shared_ptr<ReplScreenState>& state);
 // The pure-function prompt-input renderer: TextInputImpl synced from the
 // projection, vim badge, stash notice, declared caret.
 [[nodiscard]] Element RenderPromptInput(const ReplScreenState& s,
-                                        int term_cols);
+                                        int term_cols, int max_input_rows = 0);
 
 [[nodiscard]] std::string pad_to_columns(std::string text, int width);
 

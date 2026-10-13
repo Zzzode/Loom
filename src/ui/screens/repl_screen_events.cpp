@@ -23,6 +23,7 @@ import loom.ui.dialogs.cost_threshold_dialog;
 import loom.ui.foundation.design_figures;
 import loom.ui.foundation.theme_provider;
 import loom.ui.prompt.prompt_input_footer;
+import loom.ui.widgets.text_input;
 
 namespace loom::ui::repl_screen {
 using namespace ftxui;
@@ -627,6 +628,18 @@ using namespace ftxui;
             state->autocomplete_index = state->autocomplete_index < 0 ||
                 state->autocomplete_index >= asn - 1
                 ? 0 : state->autocomplete_index + 1; return true; }
+        // Display-row navigation follows history and autocomplete precedence.
+        if (asn == 0 && (ev == Event::ArrowUp || ev == Event::ArrowDown) &&
+            state->prompt_render_input) {
+            const auto& input = state->prompt_render_input;
+            if (input->text() != state->input_text) input->set_text(state->input_text);
+            input->move_cursor(static_cast<int>(input_cursor_or_end(*state)) - input->cursor(), false);
+            if (input->move_visual_row(ev == Event::ArrowUp ? -1 : 1)) {
+                state->input_cursor = static_cast<std::size_t>(input->cursor());
+                state->last_keystroke = std::chrono::steady_clock::now();
+                return true;
+            }
+        }
         // Ctrl+N (\x0e) / Ctrl+P (\x10) navigate autocomplete suggestions:
         // next wraps selected>=length-1 -> 0; previous wraps selected<=0 ->
         // length-1. Both early-return when suggestions are empty. When

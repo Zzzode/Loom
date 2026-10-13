@@ -87,8 +87,8 @@ TEST(StatusLine, BuiltinUsesTextLabelsWithoutDecorativeEmoji) {
     data.segments.agent = true;
     const auto text = strip_ansi(render_to_plain_text(
         pif::RenderBuiltinStatusLine(data), 200, 1));
-    for (const auto label : {"tmp/project", "git feature", "model test-model",
-            "agent worker", "2 teams", "ctx ", "28.0K/200.0K", "$0.1234", "Select text to copy"}) {
+    for (const auto label : {"tmp/project", "feature", "test-model",
+            "@worker", "2 teams", "14%", "28.0K/200.0K", "$0.1234", "Select text to copy"}) {
         EXPECT_NE(text.find(label), std::string::npos) << label;
     }
     EXPECT_EQ(text.find("\xf0"), std::string::npos);
@@ -801,7 +801,7 @@ TEST(StatusLine, BuiltinShowsWithoutConfiguredCommand) {
     EXPECT_NE(rendered.find("opus-4.8"), std::string::npos);
 }
 
-TEST(PromptInputFooter, AlignsRightColumnWithStatusLineRow) {
+TEST(PromptInputFooter, StatusLineHasDedicatedRowAboveRightControls) {
     namespace pif = loom::ui::prompt::footer;
 
     pif::FooterOptions opts;
@@ -824,9 +824,139 @@ TEST(PromptInputFooter, AlignsRightColumnWithStatusLineRow) {
     auto bridge_pos = rendered.find("Remote Control");
     ASSERT_NE(status_pos, std::string::npos);
     ASSERT_NE(bridge_pos, std::string::npos);
-    EXPECT_EQ(
+    EXPECT_LT(
         std::count(rendered.begin(), rendered.begin() + static_cast<std::ptrdiff_t>(status_pos), '\n'),
         std::count(rendered.begin(), rendered.begin() + static_cast<std::ptrdiff_t>(bridge_pos), '\n'));
+}
+
+
+TEST(StatusLine, NarrowLayoutKeepsContextAndWholeFields) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::BuiltinStatusLineData data;
+    data.cwd = "/Users/dev/Develop/LongProjectName";
+    data.git_branch = "feature/very-long-branch";
+    data.model_name = "experimental-model-with-a-very-long-name";
+    data.context_token_count = 10000;
+    data.context_window_size = 200000;
+    data.cost_usd = 0.125;
+    data.mouse_mode_label = "Select to copy (F2)";
+    data.columns = 26;
+    auto element = pif::RenderBuiltinStatusLine(data);
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(26), ftxui::Dimension::Fit(element));
+    ftxui::Render(screen, element);
+    EXPECT_EQ(screen.dimy(), 1);
+    const auto rendered = strip_ansi(screen.ToString());
+    EXPECT_NE(rendered.find("5%"), std::string::npos);
+    EXPECT_NE(rendered.find("experim…"), std::string::npos);
+    EXPECT_NE(rendered.find("Develop…"), std::string::npos);
+    EXPECT_EQ(rendered.find("git "), std::string::npos);
+    EXPECT_EQ(rendered.find("model "), std::string::npos);
+    EXPECT_EQ(rendered.find("ctx "), std::string::npos);
+    EXPECT_EQ(rendered.find("▯"), std::string::npos);
+    EXPECT_EQ(rendered.find("$0."), std::string::npos);
+    auto end = rendered.find_last_not_of(' ');
+    ASSERT_NE(end, std::string::npos);
+    EXPECT_EQ(rendered.substr(end - 1, 2), "5%");
+}
+
+TEST(StatusLine, WidthAbbreviationPreservesWideAndCombiningGlyphs) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::BuiltinStatusLineData data;
+    data.cwd = "/项目/织机目录";
+    data.model_name = "模型🙂é很长名称";
+    data.context_token_count = 10000;
+    data.columns = 26;
+    const auto rendered = strip_ansi(render_to_plain_text(
+        pif::RenderBuiltinStatusLine(data), 26, 1));
+    EXPECT_NE(rendered.find("项目/织…"), std::string::npos);
+    EXPECT_NE(rendered.find("模型🙂é…"), std::string::npos);
+    EXPECT_NE(rendered.find("5%"), std::string::npos);
+    EXPECT_EQ(rendered.find("�"), std::string::npos);
+}
+
+TEST(StatusLine, SegmentMasksAndMasterSwitchRemainEffective) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::BuiltinStatusLineData data;
+    data.cwd = "/tmp/project";
+    data.model_name = "test-model";
+    data.git_branch = "main";
+    data.cost_usd = 0.1234;
+    data.segments.cwd = false;
+    data.segments.model = false;
+    data.segments.tokens = false;
+    data.segments.git = false;
+    auto rendered = strip_ansi(render_to_plain_text(pif::RenderBuiltinStatusLine(data), 40, 1));
+    EXPECT_NE(rendered.find("$0.1234"), std::string::npos);
+    EXPECT_EQ(rendered.find(" · "), std::string::npos);
+    EXPECT_EQ(rendered.find("project"), std::string::npos);
+    data.status_bar_enabled = false;
+    rendered = strip_ansi(render_to_plain_text(pif::RenderBuiltinStatusLine(data), 40, 1));
+    EXPECT_EQ(rendered.find("$"), std::string::npos);
+}
+
+TEST(StatusLine, TinyWidthsNeverLeavePartialValuesOrSeparators) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::BuiltinStatusLineData data;
+    data.cwd = "/tmp/project";
+    data.model_name = "test-model";
+    data.context_token_count = 10000;
+    for (int columns = 1; columns <= 10; ++columns) {
+        data.columns = columns;
+        const auto rendered = strip_ansi(render_to_plain_text(
+            pif::RenderBuiltinStatusLine(data), columns, 1));
+        EXPECT_FALSE(rendered.starts_with(" · ")) << columns;
+        const auto end = rendered.find_last_not_of(' ');
+        if (end != std::string::npos) EXPECT_EQ(rendered[end], '%') << columns;
+        if (columns >= 2) EXPECT_NE(rendered.find("5%"), std::string::npos) << columns;
+        else EXPECT_EQ(rendered.find("5"), std::string::npos);
+    }
+}
+
+TEST(PromptInputFooter, NarrowActiveControlsCannotStealStatusWidthOrPadding) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::FooterOptions opts;
+    pif::BuiltinStatusLineData data;
+    data.cwd = "/tmp/project";
+    data.model_name = "test-model";
+    data.context_token_count = 10000;
+    opts.status_line.should_display = true;
+    opts.status_line.columns = 36;
+    opts.status_line.padding_x = 2;
+    opts.status_line.builtin = data;
+    opts.notification.dynamic_text = "Notice";
+    opts.bridge.status = pif::BridgeStatus::Connected;
+    opts.bridge.explicit_remote = true;
+    const auto rendered = strip_ansi(render_to_plain_text(
+        pif::RenderPromptInputFooter(opts), 40, 3));
+    const auto first_row = rendered.substr(0, rendered.find('\n'));
+    EXPECT_EQ(first_row.substr(0, 4), "    ");
+    EXPECT_NE(first_row.find("test-model"), std::string::npos);
+    EXPECT_NE(first_row.find("5%"), std::string::npos);
+    EXPECT_EQ(first_row.find("Notice"), std::string::npos);
+    EXPECT_EQ(first_row.find("Remote"), std::string::npos);
+    EXPECT_NE(rendered.find("Notice"), std::string::npos);
+    EXPECT_NE(rendered.find("Remote Control"), std::string::npos);
+}
+
+TEST(StatusLine, ExternalCommandKeepsPriorityPaddingAndAnsiStyles) {
+    namespace pif = loom::ui::prompt::footer;
+    pif::StatusLineOptions opts;
+    opts.should_display = true;
+    opts.content = "\033[1;38;5;44mCUSTOM\033[0m";
+    opts.padding_x = 2;
+    opts.columns = 20;
+    pif::BuiltinStatusLineData builtin;
+    builtin.cwd = "/tmp/hidden";
+    opts.builtin = builtin;
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(20), ftxui::Dimension::Fixed(1));
+    ftxui::Render(screen, pif::RenderStatusLine(opts));
+    EXPECT_EQ(screen.PixelAt(2, 0).character, "C");
+    EXPECT_TRUE(screen.PixelAt(2, 0).bold);
+    EXPECT_TRUE(screen.PixelAt(2, 0).dim);
+    EXPECT_EQ(screen.PixelAt(2, 0).foreground_color, ftxui::Color::Palette256(44));
+    const auto rendered = strip_ansi(screen.ToString());
+    EXPECT_NE(rendered.find("CUSTOM"), std::string::npos);
+    EXPECT_EQ(rendered.find("hidden"), std::string::npos);
 }
 
 TEST(Panels, PanelTypeNamesAreStable) {

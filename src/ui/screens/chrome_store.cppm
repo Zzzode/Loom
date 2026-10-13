@@ -27,6 +27,7 @@ struct StatusBarData {
     std::optional<std::string> session_name, agent_name;
     std::optional<double> cost_usd;
     int input_tokens = 0, output_tokens = 0, context_token_count = 0;
+    std::int64_t context_window_size = 200000;
     bool is_fast_mode = false, is_auto_mode = false, is_brief_mode = false;
     std::optional<std::string> effort_level;
     int swarm_session_count = 0;

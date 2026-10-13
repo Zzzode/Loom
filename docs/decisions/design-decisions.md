@@ -3731,3 +3731,24 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Dependencies:** `loom.terminal` has rank 2 in graph_check, just like other
   utility domains. Adding a public module never bypasses graph validation by
   leaving its area unclassified.
+
+
+## Prompt geometry and Loom chrome (RFC 0012)
+
+- **Input:** `loom.ui.widgets.text_input` owns source-byte visual row spans.
+  The REPL supplies total usable cells and a bounded input height; prefix and
+  line numbers are deducted inside the widget. Painting, selection, masking,
+  image chips, native caret and display-row navigation use this geometry.
+  Soft wrapping never inserts bytes into submitted text. Width/height zero
+  preserve unconstrained standalone callers. Held component state survives
+  reflow.
+- **Footer:** built-in status has its own full-width row above mode and right
+  controls. Deduct outer padding and configured status padding before choosing
+  fields. Context percentage, model and folder have priority; lower-priority
+  fields may be omitted, while abbreviated values end at glyph boundaries.
+  External commands and segment/master switches retain their precedence.
+  The App projects the engine's actual context window instead of assuming 200K.
+- **Brand:** welcome and all logo layouts share the Loom weave and wordmark.
+  Delete obsolete vendor artwork and unused brand tokens; palette accent names
+  refer to Loom. Preserve theme accessibility, layout thresholds, metadata,
+  notices and feed order. No alternate mascot selector is introduced.

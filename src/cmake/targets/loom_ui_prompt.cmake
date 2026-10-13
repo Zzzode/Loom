@@ -35,6 +35,7 @@ target_sources(loom_ui_prompt
 target_sources(loom_ui_prompt PRIVATE
     ui/prompt/at_attachments_impl.cpp
     ui/prompt/autocomplete_sources_impl.cpp
+    ui/prompt/prompt_input_footer.cpp
 )
 # loom.ui.foundation.* (design_tokens / design_figures / theme_provider /
 # ui_types) and loom.ui.chrome.* (ansi_render / layout). External deps:

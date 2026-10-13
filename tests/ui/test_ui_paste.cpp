@@ -387,42 +387,70 @@ TEST(Logo, LayoutModeThresholdsMatchTSSpec) {
 }
 
 
-// T6: Welcome static 58-col card renders EXACTLY: width capped to 58 cols,
-//     shows "Welcome to Loom v<ver>" in the header, contains the
-//     ellipsis separator row (…), the 3-row █████████ clawd body, at least
-//     4 scattered '*' glyphs (asterisk dust baked into the art), and a paws
-//     footer row with "█ █   █ █" clawd feet + ░/▒ planets.
-TEST(Logo, WelcomeStaticCardMatchesTSSpec) {
+// Every terminal/theme variant uses the same Loom identity. Palette colors,
+// rather than alternate vendor artwork, provide dark/light accessibility.
+TEST(Logo, WelcomeBannerUsesLoomWeaveAcrossTerminalAndThemeVariants) {
     namespace logo = loom::ui::logo;
+    namespace theme = loom::ui::design::theme;
+    RestoreLogoTheme restore;
+    for (auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+             theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+             theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+             theme::ThemeVariant::LightAnsi}) {
+        theme::set_theme(variant);
+        const auto& palette = *theme::current_theme().palette;
+        for (auto welcome : {logo::WelcomeTheme::Dark, logo::WelcomeTheme::Light,
+                 logo::WelcomeTheme::AppleTerminalDark,
+                 logo::WelcomeTheme::AppleTerminalLight}) {
+            SCOPED_TRACE(std::string(theme::variant_name(variant)) +
+                         " welcome=" + std::to_string(static_cast<int>(welcome)));
+            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
+                                               ftxui::Dimension::Fixed(20));
+            ftxui::Render(screen, logo::RenderWelcome(welcome));
+            const auto rendered = strip_ansi(screen.ToString());
+            EXPECT_NE(rendered.find("Welcome to Loom"), std::string::npos);
+            EXPECT_NE(rendered.find("█░█░█░█░█"), std::string::npos);
+            EXPECT_NE(rendered.find("░█░█░█░█░"), std::string::npos);
+            for (const auto* legacy : {"▄", "▗", "▖", "▓", "▒", "*"}) {
+                EXPECT_EQ(rendered.find(legacy), std::string::npos) << legacy;
+            }
+            int weave_cells = 0;
+            int wordmarks = 0;
+            for (int y = 0; y < screen.dimy(); ++y) {
+                for (int x = 0; x < screen.dimx(); ++x) {
+                    const auto& pixel = screen.PixelAt(x, y);
+                    if (pixel.character != " ") {
+                        EXPECT_LT(x, logo::kWelcomeFixedWidth);
+                    }
+                    if (pixel.character == "█" || pixel.character == "░") {
+                        ++weave_cells;
+                        EXPECT_EQ(pixel.foreground_color, palette.loom_body);
+                    }
+                    if (pixel.character == "L" && pixel.bold) {
+                        ++wordmarks;
+                        EXPECT_EQ(pixel.foreground_color,
+                                  wordmarks == 1 ? palette.text : palette.loom_body);
+                    }
+                }
+            }
+            EXPECT_EQ(weave_cells, 27);
+            EXPECT_EQ(wordmarks, 2);
+        }
+    }
+}
 
-    ftxui::Element card = logo::RenderWelcome();
-    std::string s = strip_ansi(render_to_plain_text(card, 120, 20));
-
-    // Header row.
-    EXPECT_NE(s.find("Welcome to Loom"), std::string::npos);
-    // Ellipsis ruler (U+2026 repeated). TS WELCOME_WIDTH=58, but the string
-    // literal stores 58 × … = 58 × 3 bytes = 174 bytes; look for one '…'.
-    EXPECT_NE(s.find("\xE2\x80\xA6"), std::string::npos)
-        << "Welcome t1 row must contain ellipsis ruler chars";
-    // Loom mascot body: 3 rows of █ chars start, 2nd row contains ▄ (U+2584) segments.
-    EXPECT_NE(s.find("\xE2\x96\x88\xE2\x96\x88\xE2\x96\x88"), std::string::npos)
-        << "Welcome t12-t14 rows must contain clawd ███ body";
-    EXPECT_NE(s.find("\xE2\x96\x84"), std::string::npos)
-        << "Welcome t13 clawd row must contain ▄ segments";
-    // Scattered '*' asterisk dust.  The welcome artwork explicitly places 6 '*'
-    // glyphs at fixed (row,col) coordinates; we require at least 4 present.
-    int asterisk_count = 0;
-    for (char c : s) if (c == '*') ++asterisk_count;
-    EXPECT_GE(asterisk_count, 4)
-        << "Welcome art contains baked asterisk dust; got " << asterisk_count;
-    // Footer paws: "█ █   █ █" + ░ + ▓ gradient planets.
-    // Dark theme uses ░ (light shade) + ▓ (dark shade) + █ (full block)
-    // for the planet gradient (the dark welcome artwork).
-    // ▒ (medium shade) only appears in the Light theme (TS L70-101).
-    EXPECT_NE(s.find("\xE2\x96\x91"), std::string::npos)
-        << "Welcome must render ░ chevron/planet shading (dark theme)";
-    EXPECT_NE(s.find("\xE2\x96\x93"), std::string::npos)
-        << "Welcome must render ▓ dark-shade planet gradient (dark theme)";
+TEST(Logo, WelcomeThemeSelectorRetainsTerminalAndThemeDispatch) {
+    namespace logo = loom::ui::logo;
+    for (const auto* name : {"light", "light-daltonized", "light-ansi"}) {
+        EXPECT_EQ(logo::ResolveWelcomeTheme(name, false), logo::WelcomeTheme::Light);
+        EXPECT_EQ(logo::ResolveWelcomeTheme(name, true),
+                  logo::WelcomeTheme::AppleTerminalLight);
+    }
+    for (const auto* name : {"dark", "dark-daltonized", "dark-ansi", "monochrome"}) {
+        EXPECT_EQ(logo::ResolveWelcomeTheme(name, false), logo::WelcomeTheme::Dark);
+        EXPECT_EQ(logo::ResolveWelcomeTheme(name, true),
+                  logo::WelcomeTheme::AppleTerminalDark);
+    }
 }
 
 

@@ -317,9 +317,7 @@ using namespace ftxui;
         builtin_data.output_tokens = s.chrome_store.status_bar.output_tokens;
         builtin_data.context_token_count = s.chrome_store.status_bar.context_token_count;
         builtin_data.cost_usd = s.chrome_store.status_bar.cost_usd;
-        // Context window size: use 200k default; model-specific overrides
-        // could be added later from model metadata.
-        builtin_data.context_window_size = 200000;
+        builtin_data.context_window_size = s.chrome_store.status_bar.context_window_size;
         builtin_data.task_count = s.task_view_store.teammate_count;
         builtin_data.agent_name = s.chrome_store.status_bar.agent_name.value_or("");
         builtin_data.segments = s.status_bar_segments;
@@ -327,6 +325,7 @@ using namespace ftxui;
         builtin_data.mouse_mode_label = s.chrome_store.status_bar.mouse_mode_label;
 
         pif::StatusLineOptions status_line_opts;
+        status_line_opts.columns = std::max(1, term_cols - 4);
         status_line_opts.content = s.status_line_text;
         status_line_opts.builtin = std::move(builtin_data);
         // Show statusline when:
@@ -398,7 +397,7 @@ using namespace ftxui;
                 /*is_overlay=*/is_fullscreen,
                 /*term_rows=*/term_rows));
         }
-        L.push_back(RenderPromptInput(s, term_cols));
+        L.push_back(RenderPromptInput(s, term_cols, std::clamp((term_rows - 6) / 3, 1, 12)));
         // PromptInputFooter: LeftSide carries mode/tasks/teams via
         // ModeIndicatorOptions; StatusLine is its own nested struct.
         pif::LeftSideOptions left_opts;

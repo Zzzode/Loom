@@ -686,6 +686,61 @@ std::size_t occurrences(const std::string& text, const std::string& needle) {
     return count;
 }
 
+// Inspect complete real-screen frames, not historical output or the input
+// buffer: both boundary glyphs must be visible on distinct physical rows.
+int prompt_row_distance(const std::string& frame) {
+    const auto head = frame.find("首");
+    const auto tail = frame.find("終");
+    if (head == std::string::npos || tail == std::string::npos || tail <= head)
+        return -1;
+    return static_cast<int>(std::count(
+        frame.begin() + static_cast<std::ptrdiff_t>(head),
+        frame.begin() + static_cast<std::ptrdiff_t>(tail), '\n'));
+}
+
+void run_prompt_wrap_case(const std::string& binary, const fs::path& root) {
+    std::ofstream(root / "config" / "settings.json") <<
+        R"({"mouseMode":false,"permissionMode":"default","extendedThinking":false})";
+    ModelServer server(false, false, root / "unused.txt", true);
+    Terminal terminal(binary, root, server.url(), ModelOptions{});
+    server.start();
+    require(terminal.wait([&] { return terminal.installed(); }),
+            "terminal installation not observed");
+    std::string prompt = "首 中文🙂 ";
+    for (int i = 0; i < 4; ++i)
+        prompt += "block-" + std::to_string(i) + "-abcdefghijklmnopqrstuv 中文🙂 ";
+    prompt += "終";
+    terminal.input(prompt);
+    require(terminal.wait([&] {
+        return prompt_row_distance(terminal.latest_frame_text()) >= 1;
+    }), "long mixed prompt tail was clipped instead of appearing on a wrapped row");
+    const auto wide_rows = prompt_row_distance(terminal.latest_frame_text());
+    require(server.requests.load() == 0, "typing unexpectedly submitted the prompt");
+
+    terminal.resize(60, 40);
+    require(terminal.wait([&] {
+        return prompt_row_distance(terminal.latest_frame_text()) > wide_rows;
+    }), "real PTY resize did not reflow the prompt while keeping both ends visible");
+    const auto resized_frame = terminal.latest_frame_text();
+    require(resized_frame.find("中文") != std::string::npos &&
+            resized_frame.find("🙂") != std::string::npos,
+            "resize lost Chinese or emoji glyphs");
+    require(server.requests.load() == 0, "resize unexpectedly submitted the prompt");
+
+    terminal.input("\r");
+    require(terminal.wait([&] {
+        return terminal.idle_response_visible("direct model probe complete");
+    }), "wrapped prompt did not submit and finish through the local model fixture");
+    const auto bodies = server.request_bodies();
+    require(bodies.size() == 1, "wrapped prompt caused duplicate model requests");
+    const auto messages = request_messages(bodies.front());
+    require(messages.find("\"content\":\"" + escape_json(prompt) + "\"") != std::string::npos &&
+            occurrences(messages, prompt) == 1,
+            "visual wrapping or resize changed the original submitted prompt bytes");
+    terminal.input("\x04");
+    terminal.verify_exit(0);
+}
+
 void run_recovery_case(const std::string& binary, const std::string& scenario, const fs::path& root) {
     const bool retry = scenario.starts_with("api-retry");
     std::ofstream(root / "config" / "settings.json") <<
@@ -1423,6 +1478,10 @@ void run_case(const std::string& binary, const std::string& scenario, const fs::
     }
     if (scenario.starts_with("selection-")) {
         run_selection_case(binary, scenario, root);
+        return;
+    }
+    if (scenario == "prompt-wrap") {
+        run_prompt_wrap_case(binary, root);
         return;
     }
     if (scenario == "round-cli") {

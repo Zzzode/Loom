@@ -583,6 +583,94 @@ namespace loom::testing {
                 after_divider = is_divider;
                 line_start = line_end + 1;
             }
+            // RFC 0012 semantic status: only the row immediately below the
+            // lower input divider qualifies. An abbreviated stem must match
+            // the actual runtime temp path, never an arbitrary project ellipsis.
+            std::string runtime_stem;
+            try {
+                auto path = std::filesystem::temp_directory_path().lexically_normal();
+                while (path.filename().empty() && path.has_relative_path())
+                    path = path.parent_path();
+                runtime_stem = path.filename().string();
+                const auto parent = path.parent_path().filename().string();
+                if (!parent.empty()) runtime_stem = parent + "/" + runtime_stem;
+            } catch (...) {
+                // Without runtime path evidence, abbreviated stems stay visible.
+            }
+            const auto is_runtime_stem = [&runtime_stem](std::string_view stem) {
+                if (stem == "tmp" || (!runtime_stem.empty() && stem == runtime_stem))
+                    return true;
+                if (!stem.ends_with("…") || runtime_stem.empty()) return false;
+                stem.remove_suffix(std::string_view("…").size());
+                return !stem.empty() && runtime_stem.starts_with(stem);
+            };
+            const auto is_semantic_usage = [](std::string_view fields) {
+                constexpr std::string_view separator = " · ";
+                while (fields.starts_with(separator)) {
+                    fields.remove_prefix(separator.size());
+                    const auto next = fields.find(separator);
+                    auto field = fields.substr(0, next);
+                    while (!field.empty() && (field.back() == ' ' || field.back() == '\r'))
+                        field.remove_suffix(1);
+                    const auto percent = field.find('%');
+                    if (percent != std::string_view::npos && percent > 0 &&
+                        field.substr(0, percent).find_first_not_of("0123456789") == std::string_view::npos) {
+                        field.remove_prefix(percent + 1);
+                        if (field.empty()) return true;
+                        if (field.starts_with(' ')) {
+                            field.remove_prefix(1);
+                            const auto slash = field.find('/');
+                            const auto is_count = [](std::string_view count) {
+                                if (count.empty()) return false;
+                                if (count.ends_with('K')) count.remove_suffix(1);
+                                return !count.empty() &&
+                                    count.find_first_not_of("0123456789.") == std::string_view::npos;
+                            };
+                            if (slash != std::string_view::npos &&
+                                is_count(field.substr(0, slash)) && is_count(field.substr(slash + 1)))
+                                return true;
+                        }
+                    }
+                    if (next == std::string_view::npos) return false;
+                    fields.remove_prefix(next);
+                }
+                return false;
+            };
+            line_start = 0;
+            bool saw_upper_divider = false;
+            bool saw_input = false;
+            bool after_input_divider = false;
+            while (line_start < clean.size()) {
+                auto line_end = clean.find('\n', line_start);
+                if (line_end == std::string::npos) line_end = clean.size();
+                const std::string_view line{clean.data() + line_start, line_end - line_start};
+                auto divider = line;
+                while (!divider.empty() && (divider.back() == ' ' || divider.back() == '\r'))
+                    divider.remove_suffix(1);
+                const bool has_divider = !divider.empty();
+                while (divider.starts_with("─")) divider.remove_prefix(3);
+                const bool is_divider = has_divider && divider.empty();
+                const bool is_input = line.starts_with(" ❯ ");
+                if (after_input_divider && line.starts_with("  ")) {
+                    const auto stem_start = line.find_first_not_of(' ');
+                    const auto stem_end = line.find(" · ", stem_start);
+                    if (stem_start != std::string_view::npos && stem_end != std::string_view::npos &&
+                        is_runtime_stem(line.substr(stem_start, stem_end - stem_start)) &&
+                        is_semantic_usage(line.substr(stem_end))) {
+                        const auto original_length = stem_end - stem_start;
+                        clean.replace(line_start + stem_start, original_length, "<tmpdir>");
+                        line_end = line_end - original_length + 8;
+                    }
+                }
+                after_input_divider = is_divider && saw_upper_divider && saw_input;
+                if (is_divider) {
+                    saw_upper_divider = true;
+                    saw_input = false;
+                } else if (saw_upper_divider && is_input) {
+                    saw_input = true;
+                }
+                line_start = line_end + 1;
+            }
         }
     }
 

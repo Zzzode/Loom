@@ -129,6 +129,10 @@ struct TextInputOptions {
     // callers (dialogs, widgets) inherit this default, so it MUST match the
     // canonical pointer glyph.
     std::string prefix = "❯ ";
+    /// Total input width in terminal cells; zero leaves explicit lines unwrapped.
+    int columns = 0;
+    /// Maximum visible input rows; zero leaves all rows visible.
+    int max_visible_rows = 0;
     bool multiline = true;
     bool show_line_numbers = true;
     /// Vim mode: nullopt = vim disabled (standard readline bindings),
@@ -206,6 +210,8 @@ struct TextInputOptions {
 /// not the full TextInputOptions, since callbacks and edit state must not
 /// be reset on a render update.
 struct RenderOptions {
+    int columns = 0;
+    int max_visible_rows = 0;
     std::string placeholder = "Type your message here...";
     std::string prefix = "❯ ";
     std::string inline_ghost_text;
@@ -289,6 +295,8 @@ public:
     /// component.  Does NOT touch text, cursor, history, undo state, vim
     /// state, or any callback — edit/event semantics are unchanged.
     void update_render_options(const RenderOptions& opts) noexcept {
+        options_.columns           = opts.columns;
+        options_.max_visible_rows  = opts.max_visible_rows;
         options_.placeholder       = opts.placeholder;
         options_.prefix            = opts.prefix;
         options_.inline_ghost_text = opts.inline_ghost_text;
@@ -311,6 +319,10 @@ public:
     /// Unlike `compute_cursor_position` which returns byte offset, this
     /// accounts for full-width CJK characters that occupy 2 terminal cells.
     [[nodiscard]] int cursor_display_col() const;
+    /// Column/row within the visible input, including prefix and line numbers.
+    [[nodiscard]] std::pair<int, int> visual_cursor_position() const;
+    /// Move to the adjacent display row, preserving the current cell column.
+    bool move_visual_row(int direction);
     bool has_selection() const {
         return sel_start_ >= 0 && sel_end_ >= 0 && sel_start_ != sel_end_;
     }

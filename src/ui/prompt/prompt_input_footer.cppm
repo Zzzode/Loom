@@ -1,22 +1,14 @@
 /// =========================================================================
 /// @file prompt_input_footer.cppm
-/// @brief The area below the prompt input with left/right columns containing
-///        mode indicators, tasks, teams, hints, and status info.
+/// @brief Full-width status row and left/right prompt controls below input.
 ///
 /// MODULE:   loom.ui.prompt.prompt_input_footer
 /// LICENCE:  Exported.  Imported by repl_screen.cppm (bottom slot assembly).
 ///
 /// Layout structure:
-///   Horizontal row, space-between layout:
-///     Vertical column:                    // Left column
-///       StatusLine                        // optional, user-configurable
-///       PromptInputFooterLeftSide
-///     Right column:
-///       Notifications                     // non-fullscreen only
-///       undercover                        // ant-only
-///       BridgeStatusIndicator
-///   </Box>
-///   {CoordinatorTaskPanel}                      // ant-only
+///   StatusLine                              // optional, full-width row
+///   PromptInputFooterLeftSide | Notifications / BridgeStatusIndicator
+///   Narrow layouts stack the control columns below the status row.
 ///
 /// Left side contents:
 ///   - Exit message (dim: "Press <key> again to exit")
@@ -42,11 +34,6 @@ export module loom.ui.prompt.prompt_input_footer;
 
 import std;
 
-// ANSI → FTXUI element converter (used by StatusLine for colored command output).
-// RFC 0002 F1 row 8: lives in the chrome leaf loom.ui.chrome.ansi_render (the
-// prompt -> messages back edge through message_tool_result is severed; the
-// function stays in loom::ui::messages namespace, reached via the msgs alias).
-import loom.ui.chrome.ansi_render;
 // P0-1: palette tokens (bash_border / prompt_border color resolution).
 import loom.ui.foundation.design_tokens;
 // P0-1: active theme provider for bash-border consistency (BUG-3 fix).
@@ -395,7 +382,7 @@ struct LeftSideOptions {
 // StatusLine (simplified — user-configurable command output)
 // ============================================================
 // StatusLine executes a user-defined shell command and renders ANSI output
-// in the footer's left column.  We provide a minimal placeholder that can
+// in a dedicated full-width row. We provide a placeholder that can
 // be populated by the engine with pre-formatted text.
 //
 // P0-6: When the user's command returns empty (or no statusLine is
@@ -413,7 +400,7 @@ struct StatusBarSegments {
     bool cwd = true;       // last 2 path components
     bool git = true;       // git branch name
     bool model = true;     // model display name
-    bool tokens = true;    // ▮ context usage bar + percentage
+    bool tokens = true;    // context usage percentage + token counts
     bool cost = true;      // $ session cost
     bool tasks = false;    // N teams
     bool agent = false;    // current agent name
@@ -427,24 +414,25 @@ struct BuiltinStatusLineData {
     int output_tokens = 0;          ///< Output tokens used this session
     int context_token_count = 0;    ///< Total context tokens (in+out)
     std::optional<double> cost_usd; ///< Session cost in USD
-    int context_window_size = 200000; ///< Context window size (default 200k)
+    std::int64_t context_window_size = 200000; ///< Context window size (default 200k)
     int task_count = 0;             ///< Background task/teammate count
     std::string agent_name;         ///< Current agent display name
     StatusBarSegments segments;     ///< Per-segment enable mask
     bool status_bar_enabled = true; ///< Master switch (false = hide entirely)
-    std::string mouse_mode_label;   ///< RFC 0007 Phase 2: mouse-mode hint (empty = hidden)
+    std::string mouse_mode_label;   ///< Mouse-mode hint (empty = hidden)
+    int columns = 0;                ///< Usable terminal cells; zero is unconstrained
 };
 
 /// Extract the last N path components for display.
 /// e.g. "/a/b/c/d" with n=2 → "c/d"
-[[nodiscard]] inline std::string GetLastPathComponents(
+[[nodiscard]] std::string GetLastPathComponents(
     const std::string& cwd, int n = 2);
 
 /// Format token count as "K" string (e.g. 28000 → "28.0K")
-[[nodiscard]] inline std::string FormatTokensK(int tokens);
+[[nodiscard]] std::string FormatTokensK(std::int64_t tokens);
 
 /// Render the built-in statusline (defined after RenderStatusLine).
-[[nodiscard]] inline Element RenderBuiltinStatusLine(
+[[nodiscard]] Element RenderBuiltinStatusLine(
     const BuiltinStatusLineData& data);
 
 struct StatusLineOptions {
@@ -457,6 +445,7 @@ struct StatusLineOptions {
     // content is empty, RenderBuiltinStatusLine() is used instead of blank
     // placeholder.  Provides folder/git/model/token info for standalone mode.
     std::optional<BuiltinStatusLineData> builtin;
+    int columns = 0;         // Row width before status padding; zero is unconstrained
 };
 
 /// Render the user-configurable StatusLine.
@@ -467,252 +456,7 @@ struct StatusLineOptions {
 ///   - Single line, truncated if too long
 ///   - In fullscreen mode, reserves a row even while loading (stable height)
 ///   - Horizontal padding from settings.statusLine.padding
-[[nodiscard]] inline Element RenderStatusLine(const StatusLineOptions& opts) {
-    if (!opts.should_display) {
-        // Not configured — nothing to render (zero height)
-        return text("");
-    }
-
-    // Fullscreen + no content yet → try builtin statusline, then blank row.
-    // P0-6: When user's command returns empty (or no command configured),
-    // show the built-in statusline with folder/git/model/token info.
-    if (opts.content.empty()) {
-        if (opts.builtin) {
-            return RenderBuiltinStatusLine(*opts.builtin)
-                 | size(HEIGHT, EQUAL, 1);
-        }
-        if (opts.is_fullscreen) {
-            return text(" ") | size(HEIGHT, EQUAL, 1);
-        }
-        return text("");
-    }
-
-    // Parse ANSI codes into colored FTXUI elements.
-    //
-    // The rendered node is wrapped in dim (SGR 2) so user shell colors are
-    // always slightly muted.  We
-    // apply `dim` here.  (We deliberately do NOT paint a row background: an
-    // earlier revision forced RGB(20,20,22) to subdue external-script SGR
-    // bgcolor bleed, but that hardcoded strip itself clashed with the
-    // terminal's actual background.  `dim` alone keeps script colors subdued
-    // without painting a background.)
-    namespace msgs = loom::ui::messages;
-    // ansi_to_ftxui_elements returns its per-line vector type-erased as
-    // shared_ptr<void> (see ansi_render.cppm); cast it back and compose.
-    auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
-        msgs::ansi_to_ftxui_elements(opts.content));
-    Element content = vbox(std::move(*ansi_elems))
-                   | dim;
-
-    // Apply horizontal padding.
-    // Padding is applied equally on left and right sides.
-    if (opts.padding_x > 0) {
-        std::string pad_str(static_cast<std::size_t>(opts.padding_x), ' ');
-        content = hbox({
-            text(pad_str),
-            std::move(content),
-            text(pad_str),
-        });
-    }
-
-    return hbox({ std::move(content) }) | size(HEIGHT, EQUAL, 1);
-}
-
-// ============================================================
-// BuiltinStatusLine (P0-6: default statusline for standalone mode)
-// ============================================================
-// When the user's statusLine.command returns empty output (e.g. Flux Island
-// wrapper without Flux running), this built-in statusline provides useful
-// info: folder, git branch, model, context usage, and cost.
-//
-// This is a CPP-only enhancement for standalone usability.  The visual
-// style is inspired by the user's Flux Island statusline:
-//   LOOM/cpp_migration  git master  model GLM-5.2  ctx ▮ 14% 28.0K/200.0K  $0.12
-//
-// The user's configured command output takes priority when available.
-//
-// The BuiltinStatusLineData struct and helper prototypes are declared above
-// (before StatusLineOptions) so the options struct can hold the fallback data.
-
-/// Extract the last N path components for display.
-/// e.g. "/a/b/c/d" with n=2 → "c/d"
-[[nodiscard]] inline std::string GetLastPathComponents(
-    const std::string& cwd, int n)
-{
-    if (cwd.empty()) return "";
-    fs::path p(cwd);
-    std::vector<std::string> parts;
-    for (const auto& comp : p) {
-        if (!comp.empty() && comp != "/") {
-            parts.push_back(comp.string());
-        }
-    }
-    if (parts.empty()) return cwd;
-    int start = std::max(0, static_cast<int>(parts.size()) - n);
-    std::string result;
-    for (int i = start; i < static_cast<int>(parts.size()); ++i) {
-        if (!result.empty()) result += "/";
-        result += parts[i];
-    }
-    return result;
-}
-
-/// Format token count as "K" string (e.g. 28000 → "28.0K", 1500 → "1.5K")
-[[nodiscard]] inline std::string FormatTokensK(int tokens) {
-    if (tokens <= 0) return "0K";
-    if (tokens < 1000) return std::to_string(tokens);
-    double k = tokens / 1000.0;
-    // Show 1 decimal for thousands
-    char buf[32];
-    std::snprintf(buf, sizeof(buf), "%.1fK", k);
-    return std::string(buf);
-}
-
-/// Render the built-in statusline.
-/// Produces a single-row element with colored pills.
-/// Each segment is guarded by the corresponding flag in
-/// BuiltinStatusLineData::segments; the master switch
-/// status_bar_enabled hides the bar entirely.
-[[nodiscard]] inline Element RenderBuiltinStatusLine(
-    const BuiltinStatusLineData& data)
-{
-    using ftxui::text;
-    using ftxui::Element;
-    using ftxui::Elements;
-    using ftxui::hbox;
-    using ftxui::color;
-    using ftxui::bold;
-    using ftxui::dim;
-
-    // Master switch: hidden entirely when disabled.
-    if (!data.status_bar_enabled) return text("");
-
-    // Resolve colors from active theme palette.
-    // Uses real Palette fields (see foundation/design_tokens.cppm).
-    namespace theme_ns = loom::ui::design::theme;
-    auto theme = theme_ns::current_theme();
-    const auto& pal = *theme.palette;
-
-    const Color kFolderColor = pal.muted;            // dim text
-    const Color kBranchColor = pal.success;          // green
-    const Color kModelColor = pal.info;              // blue/cyan
-    const Color kCostColor = pal.success;            // green
-    const Color kTasksColor = pal.warning;           // amber
-    const Color kAgentColor = pal.info;              // blue/cyan
-
-    // Build each segment as its own Elements vector.  Only visible
-    // segments are pushed; separators are inserted between adjacent
-    // visible ones so there are never dangling gaps.
-    std::vector<Elements> segs;
-
-    // ── Folder pill ──────────────────────────────────────
-    if (data.segments.cwd) {
-        std::string folder_display = GetLastPathComponents(data.cwd, 2);
-        if (folder_display.empty()) folder_display = "~";
-        segs.push_back({
-            text(folder_display) | dim | color(kFolderColor),
-        });
-    }
-
-    // ── Git branch pill ──────────────────────────────────
-    if (data.segments.git && !data.git_branch.empty()) {
-        segs.push_back({
-            text("git ") | dim | color(kBranchColor),
-            text(data.git_branch) | dim | color(kBranchColor),
-        });
-    }
-
-    // ── Model pill ───────────────────────────────────────
-    if (data.segments.model && !data.model_name.empty()) {
-        segs.push_back({
-            text("model ") | dim | color(kModelColor),
-            text(data.model_name) | bold | color(kModelColor),
-        });
-    }
-
-    // ── ▮ Context usage bar ─────────────────────────────────
-    if (data.segments.tokens) {
-        // Calculate usage percentage
-        double pct = 0.0;
-        if (data.context_window_size > 0) {
-            pct = 100.0 * data.context_token_count /
-                  static_cast<double>(data.context_window_size);
-        }
-        int pct_int = static_cast<int>(std::round(pct));
-
-        // Build a mini progress bar: ▮▮▮▮▯▯▯▯ (10 segments)
-        constexpr int kBarSegments = 10;
-        int filled = static_cast<int>(std::round(
-            pct / 100.0 * kBarSegments));
-        filled = std::clamp(filled, 0, kBarSegments);
-        std::string bar;
-        for (int i = 0; i < filled; ++i) bar += "▮";
-        for (int i = filled; i < kBarSegments; ++i) bar += "▯";
-
-        // Color: green < 50%, amber 50-80%, red > 80%
-        Color bar_color = pal.success;                  // green
-        if (pct >= 80.0) bar_color = pal.danger;        // red
-        else if (pct >= 50.0) bar_color = pal.warning;  // amber
-
-        // Percentage + token counts
-        std::string ctx_str = FormatTokensK(data.context_token_count);
-        std::string win_str = FormatTokensK(data.context_window_size);
-        segs.push_back({
-            text("ctx ") | dim,
-            text(bar) | color(bar_color),
-            text(std::format(" {}% {}/{}",
-                              pct_int, ctx_str, win_str)) | dim,
-        });
-    }
-
-    // ── $ Cost ──────────────────────────────────────────────
-    if (data.segments.cost && data.cost_usd && *data.cost_usd > 0.0) {
-        char cost_buf[32];
-        std::snprintf(cost_buf, sizeof(cost_buf), "$%.4f", *data.cost_usd);
-        segs.push_back({
-            text(cost_buf) | dim | color(kCostColor),
-        });
-    }
-
-    // ── Tasks pill ────────────────────────────────────────
-    if (data.segments.tasks && data.task_count > 0) {
-        segs.push_back({
-            text(std::format("{} teams", data.task_count))
-                | dim | color(kTasksColor),
-        });
-    }
-
-    // ── Agent pill ───────────────────────────────────────
-    if (data.segments.agent && !data.agent_name.empty()) {
-        segs.push_back({
-            text("agent ") | dim | color(kAgentColor),
-            text(data.agent_name) | dim | color(kAgentColor),
-        });
-    }
-
-    // ── Mouse mode hint (RFC 0007 Phase 2) ───────────────
-    // Persistent label: "Select text to copy" (native) or
-    // "Mouse mode: drag to select" (config). Empty = hidden.
-    if (!data.mouse_mode_label.empty()) {
-        segs.push_back({
-            text(data.mouse_mode_label) | dim | color(kFolderColor),
-        });
-    }
-
-    // Flatten with two-space separators between adjacent visible segments.
-    Elements parts;
-    for (std::size_t i = 0; i < segs.size(); ++i) {
-        if (i > 0) parts.push_back(text("  ") | dim);
-        for (auto& el : segs[i]) parts.push_back(std::move(el));
-    }
-
-    // No row background: a hardcoded bgcolor strip clashes with the
-    // terminal's actual background (same lesson as RenderStatusLine above —
-    // an earlier revision forced RGB(20,20,22) here too).  Text colors alone
-    // keep the bar readable without painting a strip.
-    return hbox({ text(" "), hbox(std::move(parts)), text(" ") })
-         | size(HEIGHT, EQUAL, 1);
-}
+[[nodiscard]] Element RenderStatusLine(const StatusLineOptions& opts);
 
 // ============================================================
 // BridgeStatusIndicator
@@ -1690,144 +1434,9 @@ struct FooterOptions {
     Element suggestions_content;       // pre-rendered suggestions list
 };
 
-/// Render the full PromptInputFooter with left/right column layout.
-///
-/// Structure:
-///   Row (space-between):
-///     Left column (vbox): StatusLine? + LeftSide
-///     Right column (vbox): Notifications? + undercover? + BridgeStatus
-///
-/// STABLE HEIGHT: The footer reserves space for the StatusLine + LeftSide
-///   on the left.  In fullscreen mode this is a fixed height so scroll
-///   content never shifts.
-[[nodiscard]] inline Element RenderPromptInputFooter(const FooterOptions& opts) {
-    // ── Special: suggestions overlay replaces entire footer ──────────
-    if (opts.has_suggestions && opts.suggestions_content) {
-        return hbox({ text("  "), std::move(opts.suggestions_content) });
-    }
-
-    // ── Special: help menu replaces entire footer ────────────────────
-    if (opts.help_open) {
-        // Help menu content would be injected here; for now show placeholder
-        return hbox({ text("  Help menu") | dim });
-    }
-
-    // ── Left column ────────────────────────────────────────────────────
-    Elements left_col;
-    left_col.reserve(2);
-
-    // StatusLine (shown only when the caller's visibility gate allows it).
-    // In fullscreen mode, reserves a blank row even while loading so the
-    // footer height never shifts (stable height — same trick as LeftSide).
-    // Exit message / pasting / history search affect only LeftSide (below),
-    // not StatusLine — they are separate rows in the left column.
-    // P0-6: Also show when builtin fallback data is available (standalone mode
-    // where user's command returns empty or no statusLine configured).
-    const bool has_builtin = opts.status_line.builtin.has_value();
-    bool show_status_line = opts.status_line.should_display
-        && (opts.is_fullscreen || !opts.status_line.content.empty() || has_builtin);
-    if (show_status_line) {
-        left_col.push_back(RenderStatusLine(opts.status_line));
-    }
-
-    // LeftSide (always present — ModeIndicator reserves 1 row)
-    left_col.push_back(RenderLeftSide(opts.left_side));
-
-    Element left_el = vbox(std::move(left_col)) | flex;
-
-    // ── Right column ───────────────────────────────────────────────────
-    // Right side is a vertical column: notifications stack on top,
-    // undercover + bridge status form a bottom row.
-    Elements right_col;
-
-    // Notifications (shown in both fullscreen and non-fullscreen in CPP
-    // since we reserve stable height; the BuiltinStatusLine already covers
-    // the info need).
-    {
-        Element notif_el = RenderNotifications(opts.notification);
-        // Check if the notification element has actual content (not just
-        // a blank placeholder row).  We detect this by checking if the
-        // notification data has any active field.
-        const auto& nd = opts.notification;
-        const bool has_active =
-            QueueHasItems(nd.queue) ||
-            (nd.dynamic_text && !nd.dynamic_text->empty()) ||
-            nd.ide.connected ||
-            nd.is_overage_mode ||
-            nd.api_key_status == ApiKeyStatus::Invalid ||
-            nd.api_key_status == ApiKeyStatus::Missing ||
-            nd.debug_mode ||
-            (nd.verbose && nd.api_key_status == ApiKeyStatus::Valid && nd.token_usage > 0) ||
-            // P1: typed notification pills (footer-notifications-stub)
-            nd.auto_updater.has_value() ||
-            nd.new_release.has_value() ||
-            (nd.pro_renewal.has_value()
-             && nd.pro_renewal->days_remaining > 0
-             && nd.pro_renewal->days_remaining < 7);
-
-        if (has_active) {
-            right_col.push_back(hbox({
-                filler(),   // right-align
-                std::move(notif_el),
-            }));
-        }
-    }
-
-    // Bottom row: undercover + bridge status (inline items)
-    Elements bottom_row;
-
-    // Undercover (ant-only)
-    if (opts.is_undercover) {
-        if (!bottom_row.empty()) bottom_row.push_back(text(" ") | dim);
-        bottom_row.push_back(text("undercover") | dim);
-    }
-
-    // Bridge status indicator
-    if (opts.bridge.status != BridgeStatus::Disabled
-        && (opts.bridge.explicit_remote
-            || opts.bridge.status == BridgeStatus::Reconnecting))
-    {
-        if (!bottom_row.empty()) bottom_row.push_back(text(" ") | dim);
-        bottom_row.push_back(RenderBridgeStatus(opts.bridge));
-    }
-
-    if (!bottom_row.empty()) {
-        right_col.push_back(hbox({
-            filler(),
-            hbox(std::move(bottom_row)),
-        }));
-    }
-
-    const bool has_right = !right_col.empty();
-    Element right_el = has_right ? vbox(std::move(right_col)) : text("");
-
-    // The outer Box switches row -> column at narrow widths.  The StatusLine
-    // remains inside the left column, so right-column content top-aligns with
-    // the StatusLine row when it is present.
-    if (opts.is_narrow) {
-        Elements rows;
-        rows.push_back(hbox({
-            text("  "),
-            std::move(left_el),
-            text("  "),
-        }));
-        if (has_right) {
-            rows.push_back(hbox({
-                text("  "),
-                std::move(right_el),
-                text("  "),
-            }));
-        }
-        return vbox(std::move(rows));
-    }
-
-    return hbox({
-        text("  "),   // horizontal padding = 2
-        std::move(left_el),
-        filler(),
-        std::move(right_el),
-        text("  "),   // horizontal padding = 2
-    });
-}
+/// Render the status row above the mode and notification/bridge controls.
+/// Status uses the full available width independently of right controls.
+/// Fullscreen status and left controls each reserve a row while loading.
+[[nodiscard]] Element RenderPromptInputFooter(const FooterOptions& opts);
 
 } // namespace loom::ui::prompt::footer

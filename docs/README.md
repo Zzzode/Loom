@@ -63,6 +63,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0009-optional-interactive-tool-round-budget.md`](rfcs/0009-optional-interactive-tool-round-budget.md) | **Implemented.** Optional interactive tool-round budgets with committed-progress continuation; no implicit interactive limit. |
 | [`rfcs/0010-in-app-selection-copy.md`](rfcs/0010-in-app-selection-copy.md) | **Implemented.** Default in-app selection automatically copies with accurate inline feedback; OSC ownership is refined by RFC 0011. |
 | [`rfcs/0011-common-osc-protocol.md`](rfcs/0011-common-osc-protocol.md) | **Implemented.** Centralize Loom-owned OSC encoding and separate protocol, terminal output, platform capabilities and UI. |
+| [`rfcs/0012-loom-prompt-and-chrome.md`](rfcs/0012-loom-prompt-and-chrome.md) | **Implemented.** Cell-aware prompt wrapping, responsive built-in statusline and Loom-only welcome artwork. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

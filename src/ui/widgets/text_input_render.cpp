@@ -145,250 +145,223 @@ Element TextInputImpl::RenderSuggestionsFromListPub(const std::vector<Suggestion
     return out;
 }
 
+namespace {
+struct InputRow {
+    int begin;
+    int end;
+    int line;
+    bool continuation;
+};
+struct InputLayout {
+    std::vector<InputRow> rows;
+    int prefix_width;
+    int number_width;
+    int text_width;
+    int cursor_row = 0;
+    int cursor_col = 0;
+    int first_row = 0;
+};
+
+// Source-byte ranges are shared by painting, navigation and the native caret.
+// Wrapping changes presentation only; explicit newlines stay in the buffer.
+int next_display_glyph(const std::string& value, int pos, bool masked) {
+    int end = detail::glyph_forward(value, pos);
+    if (!masked) {
+        while (end < static_cast<int>(value.size()) && value[end] != '\n') {
+            const int next = detail::glyph_forward(value, end);
+            if (string_width(value.substr(end, next - end)) != 0) break;
+            end = next;
+        }
+    }
+    return end;
+}
+int display_width(const std::string& value, int begin, int end, bool masked) {
+    if (!masked) return string_width(value.substr(begin, end - begin));
+    int width = 0;
+    while (begin < end) { begin = detail::glyph_forward(value, begin); ++width; }
+    return width;
+}
+InputLayout input_layout(const std::string& value, int cursor,
+                         const TextInputOptions& options) {
+    InputLayout out;
+    out.prefix_width = string_width(options.prefix);
+    const int line_count = 1 + static_cast<int>(std::count(value.begin(), value.end(), '\n'));
+    out.number_width = options.show_line_numbers && line_count > 1
+        ? std::max(2, static_cast<int>(std::to_string(line_count).size())) + 1 : 0;
+    out.text_width = options.columns > 0
+        ? std::max(1, options.columns - out.prefix_width - out.number_width)
+        : std::numeric_limits<int>::max();
+    int begin = 0;
+    for (int line = 0; line < line_count; ++line) {
+        int end = begin;
+        while (end < static_cast<int>(value.size()) && value[end] != '\n') ++end;
+        int row_begin = begin, pos = begin, cells = 0;
+        bool continuation = false;
+        while (pos < end) {
+            const int next = next_display_glyph(value, pos, options.mask_input);
+            const int width = display_width(value, pos, next, options.mask_input);
+            if (cells > 0 && cells + width > out.text_width) {
+                out.rows.push_back({row_begin, pos, line, continuation});
+                row_begin = pos;
+                cells = 0;
+                continuation = true;
+            }
+            cells += width;
+            pos = next;
+        }
+        out.rows.push_back({row_begin, end, line, continuation});
+        // A caret at the end of a full row needs its own visible cell.
+        if (cursor == end && cells >= out.text_width) {
+            out.rows.push_back({end, end, line, true});
+        }
+        begin = end + 1;
+    }
+    for (int i = 0; i < static_cast<int>(out.rows.size()); ++i) {
+        const auto& row = out.rows[i];
+        if (cursor >= row.begin && cursor <= row.end) {
+            out.cursor_row = i;
+            out.cursor_col = display_width(value, row.begin, cursor, options.mask_input);
+        }
+    }
+    if (options.max_visible_rows > 0) {
+        out.first_row = std::max(0, out.cursor_row - options.max_visible_rows + 1);
+    }
+    return out;
+}
+std::string fit_display_text(const std::string& value, int columns) {
+    int pos = 0, cells = 0;
+    while (pos < static_cast<int>(value.size())) {
+        const int next = next_display_glyph(value, pos, false);
+        const int width = string_width(value.substr(pos, next - pos));
+        if (width > columns - cells) break;
+        cells += width;
+        pos = next;
+    }
+    return value.substr(0, pos);
+}
+} // namespace
+
+std::pair<int, int> TextInputImpl::visual_cursor_position() const {
+    const auto layout = input_layout(text_, cursor_, options_);
+    return {layout.prefix_width + layout.number_width + layout.cursor_col,
+            layout.cursor_row - layout.first_row};
+}
+
+bool TextInputImpl::move_visual_row(int direction) {
+    const auto layout = input_layout(text_, cursor_, options_);
+    const int target = layout.cursor_row + direction;
+    if (target < 0 || target >= static_cast<int>(layout.rows.size())) return false;
+    const auto& row = layout.rows[target];
+    int pos = row.begin, cells = 0;
+    while (pos < row.end) {
+        const int next = next_display_glyph(text_, pos, options_.mask_input);
+        const int width = display_width(text_, pos, next, options_.mask_input);
+        if (cells + width > layout.cursor_col) break;
+        cells += width;
+        pos = next;
+    }
+    // A shared boundary belongs to the following row, so stop on the last
+    // glyph when the target row is followed by a soft continuation.
+    if (pos == row.end && target + 1 < static_cast<int>(layout.rows.size()) &&
+        layout.rows[target + 1].begin == row.end && pos > row.begin) {
+        pos = detail::glyph_back(text_, pos);
+    }
+    move_cursor(pos - cursor_, false);
+    return true;
+}
+
 Element TextInputImpl::RenderInputArea() {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    using namespace ftxui;
-    Elements lines_elements;
-    std::vector<std::string_view> lines = split_lines();
-    int byte_offset = 0;
-    const int total_lines = static_cast<int>(lines.size());
-    const int sel_beg = has_selection() ? std::min(sel_start_, sel_end_) : -1;
-    const int sel_fin = has_selection() ? std::max(sel_start_, sel_end_) : -1;
-    int cursor_line = 0, cursor_col = 0;
-    compute_cursor_position(cursor_line, cursor_col);
-
-    // Parse [Image #N] refs from the displayed value so we can invert
-    // the chip when the cursor parks at its start (the "selected"
-    // state; backspace-delete is visually obvious because the whole
-    // chip is highlighted).
-    const auto all_refs = loom::utils::parse_references(text_);
-    std::vector<loom::utils::ReferenceMatch> image_refs;
-    image_refs.reserve(all_refs.size());
-    for (const auto& r : all_refs) {
-        if (r.match.starts_with("[Image")) image_refs.push_back(r);
+    const auto layout = input_layout(text_, cursor_, options_);
+    if (text_.empty()) {
+        namespace ph = loom::ui::placeholder;
+        const auto placeholder = fit_display_text(options_.placeholder, layout.text_width);
+        auto rendered = ph::RenderPlaceholder(
+            placeholder.empty() ? std::nullopt : std::optional<std::string_view>(placeholder),
+            "", blink_visible_, blink_visible_, options_.terminal_focus,
+            options_.prefix, options_.prefix_color.value_or(pal.prompt_border));
+        if (rendered.element) return *std::move(rendered.element);
+        return hbox({ftxui::text(options_.prefix) |
+                     color(options_.prefix_color.value_or(pal.prompt_border)),
+                     ftxui::text(" ") | inverted | color(pal.text)});
     }
-
-    for (int li = 0; li < total_lines; ++li) {
-        Elements line_parts;
-
-        // Line prefix (first line) or indent (subsequent lines).
-        // NOTE (P0-1 glyph unification):
-        //   The REPL faithful path passes a PER-MODE prefix_color and sets
-        //   prefix_bold=false to match the mode-indicator semantics.
-        //   Standalone usages resolve the prompt border token with bold
-        //   via fallback.  The default prefix was also changed from "▶ "
-        //   (U+25B6, a CPP-only invention) to "❯ " (figures.pointer U+276F),
-        //   matching the canonical pointer glyph exactly.
-        if (li == 0) {
-            using namespace ftxui;
-            Decorator prefix_decor = nothing;
-            if (options_.prefix_color.has_value()) {
-                prefix_decor = prefix_decor | color(*options_.prefix_color);
-            } else {
-                // Resolve the default at render time so held inputs follow theme changes.
-                prefix_decor = prefix_decor | color(pal.prompt_border) | bold;
-            }
-            if (options_.prefix_bold && !options_.prefix_color.has_value()) {
-                prefix_decor = prefix_decor | bold;
-            }
-            line_parts.push_back(ftxui::text(options_.prefix) | prefix_decor);
-        } else {
-            // Prefix-width-preserving indent so wrapped lines don't drift
-            // out of column with the prefix on line 0.  Use string_width()
-            // (not prefix.size()) to handle wide UTF-8 glyphs (❯ = 2 bytes
-            // but 1 display cell, vs some emoji 2 cells).
-            const int display_w = ftxui::string_width(options_.prefix);
-            line_parts.push_back(ftxui::text(std::string(
-                static_cast<std::size_t>(display_w > 0 ? display_w : 0), ' ')));
+    const int sel_begin = has_selection() ? std::min(sel_start_, sel_end_) : -1;
+    const int sel_end = has_selection() ? std::max(sel_start_, sel_end_) : -1;
+    int chip_end = cursor_;
+    for (const auto& ref : loom::utils::parse_references(text_)) {
+        if (ref.match.starts_with("[Image") && static_cast<int>(ref.index) == cursor_) {
+            chip_end += static_cast<int>(ref.match.size());
+            break;
         }
-
-        // Line numbers
-        if (options_.show_line_numbers && total_lines > 1) {
-            int label_width =
-                std::max(2, (int)std::format("{}", total_lines).size());
-            line_parts.push_back(
-                ftxui::text(std::format("{:>{}} ", li + 1, label_width)) |
+    }
+    Elements rows;
+    const int last = options_.max_visible_rows > 0
+        ? std::min(static_cast<int>(layout.rows.size()), layout.first_row + options_.max_visible_rows)
+        : static_cast<int>(layout.rows.size());
+    for (int index = layout.first_row; index < last; ++index) {
+        const auto& row = layout.rows[index];
+        Elements parts;
+        if (index == 0) {
+            auto prefix = ftxui::text(options_.prefix) |
+                color(options_.prefix_color.value_or(pal.prompt_border));
+            if (options_.prefix_bold) prefix = prefix | bold;
+            parts.push_back(std::move(prefix));
+        } else {
+            parts.push_back(ftxui::text(std::string(layout.prefix_width, ' ')));
+        }
+        if (layout.number_width > 0) {
+            parts.push_back(ftxui::text(row.continuation
+                ? std::string(layout.number_width, ' ')
+                : std::format("{:>{}} ", row.line + 1, layout.number_width - 1)) |
                 dim | color(pal.muted));
         }
-
-        const std::string_view& line = lines[li];
-        const int line_len = static_cast<int>(line.size());
-        const int line_start_byte = byte_offset;
-        const int line_end_byte = byte_offset + line_len;
-
-        // Apply masking for display
-        std::string display_line_str;
-        std::string_view display_line;
-        if (options_.mask_input) {
-            display_line_str = mask_text(std::string(line));
-            display_line = display_line_str;
-        } else {
-            display_line = line;
-        }
-
-        // Determine segments for selection highlighting
-        struct Segment { int start; int end; bool selected; };
-        std::vector<Segment> segs;
-        if (!has_selection()) {
-            segs.push_back({0, line_len, false});
-        } else {
-            int abs_sel_beg = std::max(sel_beg, line_start_byte) - line_start_byte;
-            int abs_sel_fin = std::min(sel_fin, line_end_byte) - line_start_byte;
-            abs_sel_beg = std::clamp(abs_sel_beg, 0, line_len);
-            abs_sel_fin = std::clamp(abs_sel_fin, 0, line_len);
-            if (abs_sel_beg > 0) segs.push_back({0, abs_sel_beg, false});
-            if (abs_sel_fin > abs_sel_beg) segs.push_back({abs_sel_beg, abs_sel_fin, true});
-            if (abs_sel_fin < line_len) segs.push_back({abs_sel_fin, line_len, false});
-            if (segs.empty()) segs.push_back({0, line_len, false});
-        }
-
-        bool is_cursor_line = (li == cursor_line);
-
-        for (const auto& seg : segs) {
-            if (seg.start == seg.end) continue;
-            std::string seg_text{display_line.substr(seg.start, seg.end - seg.start)};
-
-            if (is_cursor_line) {
-                // Split around cursor within segment if applicable
-                int cur_rel_start = cursor_col - seg.start;
-                if (cur_rel_start >= 0 && cur_rel_start <= (int)seg_text.size() &&
-                    !seg.selected) {
-                    // Cursor is inside or at edge of this non-selected segment
-                    std::string before = seg_text.substr(0, cur_rel_start);
-                    std::string after = seg_text.substr(cur_rel_start);
-                    if (!before.empty()) line_parts.push_back(ftxui::text(before));
-
-                    // Invert the entire [Image #N] chip when the cursor
-                    // is parked at its start (chip.start is the "selected"
-                    // state).  This makes backspace-to-delete visually
-                    // obvious because the whole chip is highlighted, not
-                    // just the first character.  The cursor_ absolute byte
-                    // offset is compared against ref.index (also absolute
-                    // bytes).
-                    const loom::utils::ReferenceMatch* chip_at_cursor = nullptr;
-                    for (const auto& ref : image_refs) {
-                        if (static_cast<int>(ref.index) == cursor_) {
-                            chip_at_cursor = &ref;
-                            break;
-                        }
-                    }
-
-                    if (chip_at_cursor && after.starts_with(chip_at_cursor->match)) {
-                        // Cursor at start of an [Image #N] chip — invert
-                        // the ENTIRE chip text (not just the first char).
-                        // Always visible (no blink) because the inverted
-                        // chip itself serves as the cursor indicator.
-                        const std::size_t chip_len = chip_at_cursor->match.size();
-                        std::string chip_text = after.substr(0, chip_len);
-                        std::string after_chip = after.substr(chip_len);
-                        line_parts.push_back(ftxui::text(chip_text) | inverted |
-                                             color(pal.text));
-                        if (!after_chip.empty())
-                            line_parts.push_back(ftxui::text(after_chip));
-                    } else if (!after.empty() && blink_visible_) {
-                        std::string cursor_ch{after[0]};
-                        // Keep rest UTF-8 valid by appending continuations
-                        size_t cc = 1;
-                        while (cc < after.size() && detail::is_utf8_continuation(
-                                   static_cast<unsigned char>(after[cc]))) {
-                            cursor_ch.push_back(after[cc]);
-                            ++cc;
-                        }
-                        line_parts.push_back(ftxui::text(cursor_ch) | inverted |
-                                             color(pal.text));
-                        std::string rest = after.substr(cc);
-                        if (!rest.empty()) line_parts.push_back(ftxui::text(rest));
-                    } else {
-                        // End of line cursor — declared-caret style
-                        // (same inverse-glyph pattern used mid-line and in
-                        // the declared-cursor pattern).  A blank space + inverted
-                        // paints a solid block in fg/bg swap = consistent
-                        // visual with the mid-line caret.
-                        line_parts.push_back(ftxui::text(
-                            blink_visible_ ? " " : "") |
-                            inverted | color(pal.text));
-                        if (!after.empty()) line_parts.push_back(ftxui::text(after));
-                    }
-                } else if (seg.selected) {
-                    line_parts.push_back(ftxui::text(seg_text) | bgcolor(pal.selection_bg) |
-                                         color(pal.text));
-                } else {
-                    line_parts.push_back(ftxui::text(seg_text));
-                }
-            } else if (seg.selected) {
-                line_parts.push_back(ftxui::text(seg_text) | bgcolor(pal.selection_bg) |
-                                     color(pal.text));
-            } else {
-                line_parts.push_back(ftxui::text(seg_text));
+        enum class Paint { Plain, Selection, Caret };
+        Paint previous = Paint::Plain;
+        std::string run;
+        auto flush = [&] {
+            if (run.empty()) return;
+            auto el = ftxui::text(std::exchange(run, {}));
+            if (previous == Paint::Selection) el = el | bgcolor(pal.selection_bg) | color(pal.text);
+            if (previous == Paint::Caret) el = el | inverted | color(pal.text);
+            parts.push_back(std::move(el));
+        };
+        for (int pos = row.begin; pos < row.end;) {
+            const int next = next_display_glyph(text_, pos, options_.mask_input);
+            Paint paint = Paint::Plain;
+            if (pos < sel_end && next > sel_begin && has_selection()) {
+                paint = Paint::Selection;
+            } else if ((pos >= cursor_ && pos < chip_end) ||
+                       (pos == cursor_ && blink_visible_)) {
+                paint = Paint::Caret;
             }
+            if (paint != previous) { flush(); previous = paint; }
+            run += options_.mask_input ? std::string(1, options_.mask_char)
+                                       : text_.substr(pos, next - pos);
+            pos = next;
         }
-
-        // Inline ghost text (auto-completion preview) — only on last line
-        // when we're at end of line and no selection and no mask
-        if (is_cursor_line && !has_selection() && !options_.mask_input &&
-            !options_.inline_ghost_text.empty() &&
-            cursor_col >= line_len) {
-            line_parts.push_back(
-                ftxui::text(options_.inline_ghost_text) | dim | color(pal.muted));
+        flush();
+        int used = display_width(text_, row.begin, row.end, options_.mask_input);
+        const bool cursor_at_end = index == layout.cursor_row && cursor_ == row.end;
+        if (cursor_at_end && !has_selection() && used < layout.text_width) {
+            parts.push_back(ftxui::text(" ") |
+                (blink_visible_ ? inverted : nothing) | color(pal.text));
+            ++used;
         }
-
-        // Argument hint (shown on first line for slash commands)
-        if (li == 0 && !options_.argument_hint.empty() && cursor_col > 0) {
-            // Only show if the first char indicates a command
-            if (!text_.empty() && text_[0] == '/') {
-                line_parts.push_back(
-                    ftxui::text("  " + options_.argument_hint) | dim | color(pal.info));
-            }
+        auto append_hint = [&](const std::string& value, Color hint_color) {
+            auto fitted = fit_display_text(value, layout.text_width - used);
+            used += string_width(fitted);
+            parts.push_back(ftxui::text(fitted) | dim | color(hint_color));
+        };
+        if (cursor_at_end && !has_selection() && !options_.mask_input) {
+            append_hint(options_.inline_ghost_text, pal.muted);
         }
-
-        // Empty line placeholder — declared-caret style (same as the
-        // mid-line / end-of-line caret: inverted blank space = solid
-        // foreground block, matching the declared-cursor pattern).
-        if (line_len == 0 && is_cursor_line && !has_selection()) {
-            line_parts.push_back(ftxui::text(
-                blink_visible_ ? " " : "") |
-                inverted | color(pal.text));
+        if (row.line == 0 && !row.continuation && text_.starts_with('/') &&
+            cursor_ > 0 && !options_.argument_hint.empty()) {
+            append_hint("  " + options_.argument_hint, pal.info);
         }
-
-        lines_elements.push_back(hbox(line_parts));
-        byte_offset += line_len + 1; // +1 for the '\n'
+        rows.push_back(hbox(std::move(parts)));
     }
-
-    // --- Placeholder rendering for empty input ---
-    // Delegated to loom::ui::placeholder::RenderPlaceholder:
-    //   * cursor+focus+terminal-focus → invert(placeholder[0]) + dim(rest)
-    //   * no cursor / no focus     → dim(full placeholder)
-    //   * value empty + has text   → show placeholder
-    // Prefix (options_.prefix) is passed through for visual consistency.
-    if (lines_elements.size() == 1 && lines[0].empty()) {
-        namespace ph = loom::ui::placeholder;
-
-        std::optional<std::string_view> placeholder_sv;
-        if (!options_.placeholder.empty()) {
-            placeholder_sv = std::string_view(options_.placeholder);
-        }
-
-        // blink_visible_ serves as proxy for both "show cursor" and "focused"
-        // in the TextInputImpl context — blink is only active when the widget
-        // has focus and the cursor timer is in the visible phase.
-        auto rendered = ph::RenderPlaceholder(
-            placeholder_sv,
-            /*value=*/"",           // empty because lines[0].empty()
-            /*show_cursor=*/blink_visible_,
-            /*focused=*/blink_visible_,
-            /*terminal_focus=*/options_.terminal_focus,
-            /*prefix=*/options_.prefix,
-            /*prefix_color=*/options_.prefix_color.value_or(pal.prompt_border));
-
-        if (rendered.element.has_value()) {
-            return *std::move(rendered.element);
-        }
-        // Fallback: keep the same prefix color when no placeholder is configured.
-        return ftxui::text(options_.prefix)
-            | color(options_.prefix_color.value_or(pal.prompt_border));
-    }
-
-    return vbox(lines_elements);
+    return vbox(std::move(rows));
 }
 
 Element TextInputImpl::RenderSuggestionsDropdown() const {

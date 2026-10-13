@@ -197,6 +197,8 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
         static_cast<int>(usage.output_tokens);
     screen_state_->chrome_store.status_bar.cost_usd =
         static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd;
+    screen_state_->chrome_store.status_bar.context_window_size =
+        static_cast<loom::core::QueryEngine*>(engine_raw())->max_context_tokens();
     screen_state_->chrome_store.status_bar.context_token_count =
         static_cast<int>(usage.input_tokens + usage.output_tokens);
 
